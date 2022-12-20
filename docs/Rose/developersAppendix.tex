@@ -4715,7 +4715,7 @@ File.setDataPrototype ( "bool", "F77\_only", "= false",
 \end{verbatim} 
 }
 
-The look for the names (e.g. "F77\_only") in "sage\_support.cpp" in ROSE/src/frontend/SageIII/sage\_support
+The look for the names (e.g. "F77\_only") in "sage\_support.C" in ROSE/src/frontend/SageIII/sage\_support
 and put in the command line processing support as in:
 {
 \indent
@@ -4746,7 +4746,7 @@ in src/ROSETTA/Grammar:
 }
 
 If your option takes a parameter, then you have to make this clear by adding it to the
-function (located in sage\_support.cpp):
+function (located in sage\_support.C):
 {
 \indent
 \begin{verbatim}
@@ -4754,7 +4754,7 @@ function (located in sage\_support.cpp):
 \end{verbatim} 
 }
 
-Also, don't forget to document your option in SgFile::usage() (also in sage\_support/cmdline.cpp).
+Also, don't forget to document your option in SgFile::usage() (also in sage\_support/cmdline.C).
 
 
 \section{Managing Hudson}

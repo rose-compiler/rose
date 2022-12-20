@@ -242,12 +242,12 @@ void addTestToSuite( concolic::Database::Ptr db,
  */
 void runTestcase(concolic::Database::Ptr db, concolic::TestCaseId testcaseId)
 {
-  concolic::LinuxExecutorPtr exec     = concolic::LinuxExecutor::instance(db);
-  concolic::TestCasePtr      testcase = db->object(testcaseId, concolic::Update::YES);
+    auto exec = concolic::I386Linux::ExitStatusExecutor::instance(db);
+    concolic::TestCasePtr testcase = db->object(testcaseId, concolic::Update::YES);
 
-  assert(testcase.getRawPointer());
-  std::cout << "dbtest: executing testcase " << testcase->name() << std::endl;
-  exec->execute(testcase);
+    assert(testcase.getRawPointer());
+    std::cout << "dbtest: executing testcase " << testcase->name() << std::endl;
+    exec->execute(testcase);
 }
 
 /** Functor to run a new testcase.

@@ -4,8 +4,10 @@
 #include <Rose/BinaryAnalysis/Reachability.h>
 
 #include <Rose/BinaryAnalysis/DataFlow.h>
-#include <Rose/CommandLine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/CommandLine.h>
+
 #include <Sawyer/Stopwatch.h>
 #include <Sawyer/ThreadWorkers.h>
 #include <Sawyer/Tracker.h>
@@ -292,13 +294,14 @@ Reachability::clearReachability() {
 }
 
 void
-Reachability::resize(const P2::Partitioner &partitioner) {
-    intrinsicReachability_.resize(partitioner.cfg().nVertices(), ReasonFlags());
-    reachability_.resize(partitioner.cfg().nVertices(), ReasonFlags());
+Reachability::resize(const P2::Partitioner::ConstPtr &partitioner) {
+    ASSERT_not_null(partitioner);
+    intrinsicReachability_.resize(partitioner->cfg().nVertices(), ReasonFlags());
+    reachability_.resize(partitioner->cfg().nVertices(), ReasonFlags());
 }
 
 size_t
-Reachability::markStartingPoints(const P2::Partitioner &partitioner, MemoryMap::Ptr map/*=NULL*/) {
+Reachability::markStartingPoints(const P2::Partitioner::ConstPtr &partitioner, MemoryMap::Ptr map/*=NULL*/) {
     Sawyer::Message::Stream trace(mlog[TRACE]);
     SAWYER_MESG(trace) <<"marking starting addresss:";
     Sawyer::Stopwatch timer;
@@ -314,7 +317,7 @@ Reachability::markStartingPoints(const P2::Partitioner &partitioner, MemoryMap::
 
     if (settings_.markingExplicitMemoryReferents.isAnySet()) {
         if (!map)
-            map = partitioner.memoryMap();
+            map = partitioner->memoryMap();
         nChanges += markExplicitMemoryReferents(partitioner, map, 0, 0, ByteOrder::ORDER_UNSPECIFIED,
                                                 settings_.markingExplicitMemoryReferents);
     }
@@ -324,16 +327,17 @@ Reachability::markStartingPoints(const P2::Partitioner &partitioner, MemoryMap::
 }
 
 size_t
-Reachability::markEntryFunctions(const P2::Partitioner &partitioner, ReasonFlags how) {
+Reachability::markEntryFunctions(const P2::Partitioner::ConstPtr &partitioner, ReasonFlags how) {
+    ASSERT_not_null(partitioner);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     SAWYER_MESG(debug) <<"marking entry functions";
     Sawyer::Stopwatch timer;
 
     resize(partitioner);
     size_t nChanges = 0;
-    for (const P2::Function::Ptr &func: partitioner.functions()) {
-        P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner.findPlaceholder(func->address());
-        ASSERT_require(partitioner.cfg().isValidVertex(vertex));
+    for (const P2::Function::Ptr &func: partitioner->functions()) {
+        P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner->findPlaceholder(func->address());
+        ASSERT_require(partitioner->cfg().isValidVertex(vertex));
         if (0 != (func->reasons() & SgAsmFunction::FUNC_ENTRY_POINT)) {
             ReasonFlags wasReachable = isIntrinsicallyReachable(vertex->id());
             ReasonFlags reachable = wasReachable | how;
@@ -349,16 +353,17 @@ Reachability::markEntryFunctions(const P2::Partitioner &partitioner, ReasonFlags
 }
 
 size_t
-Reachability::markExportFunctions(const P2::Partitioner &partitioner, ReasonFlags how) {
+Reachability::markExportFunctions(const P2::Partitioner::ConstPtr &partitioner, ReasonFlags how) {
+    ASSERT_not_null(partitioner);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     SAWYER_MESG(debug) <<"marking export functions";
     Sawyer::Stopwatch timer;
 
     resize(partitioner);
     size_t nChanges = 0;
-    for (const P2::Function::Ptr &func: partitioner.functions()) {
-        P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner.findPlaceholder(func->address());
-        ASSERT_require(partitioner.cfg().isValidVertex(vertex));
+    for (const P2::Function::Ptr &func: partitioner->functions()) {
+        P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner->findPlaceholder(func->address());
+        ASSERT_require(partitioner->cfg().isValidVertex(vertex));
         if (0 != (func->reasons() & SgAsmFunction::FUNC_EXPORT)) {
             ReasonFlags wasReachable = isIntrinsicallyReachable(vertex->id());
             ReasonFlags reachable = wasReachable | how;
@@ -373,7 +378,7 @@ Reachability::markExportFunctions(const P2::Partitioner &partitioner, ReasonFlag
 }
 
 size_t
-Reachability::markExplicitInstructionReferents(const P2::Partitioner &partitioner, const P2::BasicBlock::Ptr &bb,
+Reachability::markExplicitInstructionReferents(const P2::Partitioner::ConstPtr &partitioner, const P2::BasicBlock::Ptr &bb,
                                                ReasonFlags how) {
     ASSERT_not_null(bb);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
@@ -385,8 +390,8 @@ Reachability::markExplicitInstructionReferents(const P2::Partitioner &partitione
 }
 
 size_t
-Reachability::markExplicitMemoryReferents(const P2::Partitioner &partitioner, const MemoryMap::Ptr &map, size_t bytesPerWord,
-                                          size_t alignment, ByteOrder::Endianness sex, ReasonFlags how) {
+Reachability::markExplicitMemoryReferents(const P2::Partitioner::ConstPtr &partitioner, const MemoryMap::Ptr &map,
+                                          size_t bytesPerWord, size_t alignment, ByteOrder::Endianness sex, ReasonFlags how) {
     ASSERT_not_null(map);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     SAWYER_MESG(debug) <<"marking explicit memory referents";
@@ -399,7 +404,7 @@ Reachability::markExplicitMemoryReferents(const P2::Partitioner &partitioner, co
 }
 
 size_t
-Reachability::markImplicitFunctionReferents(const P2::Partitioner &partitioner, const P2::Function::Ptr &function,
+Reachability::markImplicitFunctionReferents(const P2::Partitioner::ConstPtr &partitioner, const P2::Function::Ptr &function,
                                             ReasonFlags how) {
     ASSERT_not_null(function);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
@@ -413,7 +418,9 @@ Reachability::markImplicitFunctionReferents(const P2::Partitioner &partitioner, 
 }
 
 size_t
-Reachability::markSpecifiedVas(const P2::Partitioner &partitioner, const std::vector<AddressInterval> &where, ReasonFlags how) {
+Reachability::markSpecifiedVas(const P2::Partitioner::ConstPtr &partitioner, const std::vector<AddressInterval> &where,
+                               ReasonFlags how) {
+    ASSERT_not_null(partitioner);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     SAWYER_MESG(debug) <<"marking specified addresses";
     Sawyer::Stopwatch timer;
@@ -421,11 +428,11 @@ Reachability::markSpecifiedVas(const P2::Partitioner &partitioner, const std::ve
     resize(partitioner);
     size_t nChanges = 0;
     for (const AddressInterval &interval: where) {
-        std::vector<SgAsmInstruction*> insns = partitioner.instructionsOverlapping(interval);
+        std::vector<SgAsmInstruction*> insns = partitioner->instructionsOverlapping(interval);
         for (SgAsmInstruction *insn: insns) {
-            P2::BasicBlock::Ptr bb = partitioner.basicBlockContainingInstruction(insn->get_address());
+            P2::BasicBlock::Ptr bb = partitioner->basicBlockContainingInstruction(insn->get_address());
             ASSERT_not_null(bb);
-            if (intrinsicallyReachable(partitioner.findPlaceholder(bb->address())->id(), how))
+            if (intrinsicallyReachable(partitioner->findPlaceholder(bb->address())->id(), how))
                 ++nChanges;
         }
     }
@@ -509,22 +516,23 @@ Reachability::reachableVertices(ReasonFlags any, ReasonFlags all, ReasonFlags no
 }
 
 size_t
-Reachability::propagate(const P2::Partitioner &partitioner) {
+Reachability::propagate(const P2::Partitioner::ConstPtr &partitioner) {
     return propagateImpl(partitioner, NULL);
 }
 
 size_t
-Reachability::propagate(const P2::Partitioner &partitioner, std::vector<size_t> &vertexIds) {
+Reachability::propagate(const P2::Partitioner::ConstPtr &partitioner, std::vector<size_t> &vertexIds) {
     return propagateImpl(partitioner, &vertexIds);
 }
 
 std::set<size_t>
-Reachability::findExplicitInstructionReferents(const P2::Partitioner &partitioner, const P2::BasicBlock::Ptr &bb) {
+Reachability::findExplicitInstructionReferents(const P2::Partitioner::ConstPtr &partitioner, const P2::BasicBlock::Ptr &bb) {
+    ASSERT_not_null(partitioner);
     ASSERT_not_null(bb);
     std::set<size_t> vertexIds;
     for (rose_addr_t constant: bb->explicitConstants()) {
-        P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner.findPlaceholder(constant);
-        if (vertex != partitioner.cfg().vertices().end() && vertex->value().type() == P2::V_BASIC_BLOCK)
+        P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner->findPlaceholder(constant);
+        if (vertex != partitioner->cfg().vertices().end() && vertex->value().type() == P2::V_BASIC_BLOCK)
             vertexIds.insert(vertex->id());
     }
     return vertexIds;
@@ -537,14 +545,15 @@ Reachability::findExplicitInstructionReferents(const P2::Partitioner &partitione
 //   4. We need to watch out for addresses that would span two of our buffer-sized windows read from memory
 //   5. We need to be careful of addresses that are 2^32 (or 2^64) to avoid overflow when incrementing
 std::set<size_t>
-Reachability::findExplicitMemoryReferents(const P2::Partitioner &partitioner, const MemoryMap::Ptr &map, size_t bytesPerWord,
-                                          size_t alignment, ByteOrder::Endianness sex) {
+Reachability::findExplicitMemoryReferents(const P2::Partitioner::ConstPtr &partitioner, const MemoryMap::Ptr &map,
+                                          size_t bytesPerWord, size_t alignment, ByteOrder::Endianness sex) {
+    ASSERT_not_null(partitioner);
     ASSERT_not_null(map);
 
     if (0 == bytesPerWord)
         bytesPerWord = settings_.addressNBytes;
     if (0 == bytesPerWord)
-        bytesPerWord = partitioner.instructionProvider().instructionPointerRegister().nBits() / 8;
+        bytesPerWord = partitioner->instructionProvider().instructionPointerRegister().nBits() / 8;
 
     if (0 == alignment)
         alignment = settings_.addressAlignment;
@@ -554,7 +563,7 @@ Reachability::findExplicitMemoryReferents(const P2::Partitioner &partitioner, co
     if (ByteOrder::ORDER_UNSPECIFIED == sex)
         sex = settings_.byteOrder;
     if (ByteOrder::ORDER_UNSPECIFIED == sex)
-        sex = partitioner.instructionProvider().defaultByteOrder();
+        sex = partitioner->instructionProvider().defaultByteOrder();
 
     ASSERT_require(bytesPerWord <= sizeof(rose_addr_t));
     ASSERT_not_null(map);
@@ -602,8 +611,8 @@ Reachability::findExplicitMemoryReferents(const P2::Partitioner &partitioner, co
                         targetVa = (targetVa << 8) | buf[bufOffset+i];
                     break;
             }
-            P2::ControlFlowGraph::ConstVertexIterator targetVertex = partitioner.findPlaceholder(targetVa);
-            if (targetVertex != partitioner.cfg().vertices().end())
+            P2::ControlFlowGraph::ConstVertexIterator targetVertex = partitioner->findPlaceholder(targetVa);
+            if (targetVertex != partitioner->cfg().vertices().end())
                 vertexIds.insert(targetVertex->id());
             ++bufOffset;
         }
@@ -613,24 +622,27 @@ Reachability::findExplicitMemoryReferents(const P2::Partitioner &partitioner, co
 }
 
 std::set<size_t>
-Reachability::findImplicitFunctionReferents(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
+Reachability::findImplicitFunctionReferents(const P2::Partitioner::ConstPtr &partitioner, const P2::Function::Ptr &function) {
+    ASSERT_not_null(partitioner);
     ASSERT_not_null(function);
     std::set<size_t> vertexIds;
 
-    for (rose_addr_t constant: partitioner.functionDataFlowConstants(function)) {
-        P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner.findPlaceholder(constant);
-        if (vertex != partitioner.cfg().vertices().end() && vertex->value().type() == P2::V_BASIC_BLOCK)
+    for (rose_addr_t constant: partitioner->functionDataFlowConstants(function)) {
+        P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner->findPlaceholder(constant);
+        if (vertex != partitioner->cfg().vertices().end() && vertex->value().type() == P2::V_BASIC_BLOCK)
             vertexIds.insert(vertex->id());
     }
     return vertexIds;
 }
 
 struct DataFlowReferences {
-    const P2::Partitioner &partitioner;
+    P2::Partitioner::ConstPtr partitioner;              // not null
     Reachability::FunctionToVertexMap &byFunction;
 
-    DataFlowReferences(const P2::Partitioner &partitioner, Reachability::FunctionToVertexMap &byFunction)
-        : partitioner(partitioner), byFunction(byFunction) {}
+    DataFlowReferences(const P2::Partitioner::ConstPtr &partitioner, Reachability::FunctionToVertexMap &byFunction)
+        : partitioner(partitioner), byFunction(byFunction) {
+        ASSERT_not_null(partitioner);
+    }
 
     void operator()(size_t /*taskId*/, P2::Function::Ptr &function) {
         ASSERT_not_null(function);
@@ -643,14 +655,15 @@ struct DataFlowReferences {
 };
 
 void
-Reachability::cacheAllImplicitFunctionReferents(const P2::Partitioner &partitioner) {
-    std::vector<P2::Function::Ptr> functions = partitioner.functions();
+Reachability::cacheAllImplicitFunctionReferents(const P2::Partitioner::ConstPtr &partitioner) {
+    ASSERT_not_null(partitioner);
+    std::vector<P2::Function::Ptr> functions = partitioner->functions();
     std::set<P2::Function::Ptr> functionSet(functions.begin(), functions.end());
     cacheImplicitFunctionReferents(partitioner, functionSet);
 }
 
 void
-Reachability::cacheImplicitFunctionReferents(const P2::Partitioner &partitioner,
+Reachability::cacheImplicitFunctionReferents(const P2::Partitioner::ConstPtr &partitioner,
                                              const std::set<P2::Function::Ptr> &functions) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     SAWYER_MESG(debug) <<"finding implicit function referents";
@@ -691,7 +704,8 @@ struct MergeFunction {
 };
 
 size_t
-Reachability::propagateImpl(const P2::Partitioner &partitioner, std::vector<size_t> *vertexIds) {
+Reachability::propagateImpl(const P2::Partitioner::ConstPtr &partitioner, std::vector<size_t> *vertexIds) {
+    ASSERT_not_null(partitioner);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     SAWYER_MESG(debug) <<"propagating";
     Sawyer::Stopwatch timer;
@@ -700,12 +714,12 @@ Reachability::propagateImpl(const P2::Partitioner &partitioner, std::vector<size
     typedef DataFlow::Engine<const P2::ControlFlowGraph, ReasonFlags, TransferFunction, MergeFunction> DfEngine;
     TransferFunction xfer;
     MergeFunction merge;
-    DfEngine dfEngine(partitioner.cfg(), xfer, merge);
+    DfEngine dfEngine(partitioner->cfg(), xfer, merge);
     dfEngine.name("reachability");
     dfEngine.reset(NOT_REACHABLE);
 
     // Initialize the data-flow states for vertices with intrinsic reachability.
-    for (size_t i=0; i<partitioner.cfg().nVertices(); ++i) {
+    for (size_t i=0; i<partitioner->cfg().nVertices(); ++i) {
         ReasonFlags r = intrinsicReachability_[i];
         if (r.isAnySet())
             dfEngine.insertStartingVertex(i, r);
@@ -717,8 +731,8 @@ Reachability::propagateImpl(const P2::Partitioner &partitioner, std::vector<size
     // Copy out all the vertex final states from the data-flow engine.
     size_t nChanges = 0;
     if (vertexIds != NULL)
-        vertexIds->reserve(partitioner.cfg().nVertices());
-    for (size_t vertexId = 0; vertexId < partitioner.cfg().nVertices(); ++vertexId) {
+        vertexIds->reserve(partitioner->cfg().nVertices());
+    for (size_t vertexId = 0; vertexId < partitioner->cfg().nVertices(); ++vertexId) {
         if (dfEngine.getFinalState(vertexId) != reachability_[vertexId]) {
             reachability_[vertexId] = dfEngine.getFinalState(vertexId);
             ++nChanges;
@@ -736,13 +750,14 @@ Reachability::propagateImpl(const P2::Partitioner &partitioner, std::vector<size
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 size_t
-Reachability::iterationMarking(const P2::Partitioner &partitioner, const std::vector<size_t> &vertexIds) {
+Reachability::iterationMarking(const P2::Partitioner::ConstPtr &partitioner, const std::vector<size_t> &vertexIds) {
+    ASSERT_not_null(partitioner);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     size_t nMarked = 0;
     std::set<P2::Function::Ptr> functionsToAnalyze;
 
     for (size_t vertexId: vertexIds) {
-        P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner.cfg().findVertex(vertexId);
+        P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner->cfg().findVertex(vertexId);
         P2::BasicBlock::Ptr bblock;
         if (vertex->value().type() == P2::V_BASIC_BLOCK)
             bblock = vertex->value().bblock();
@@ -753,7 +768,7 @@ Reachability::iterationMarking(const P2::Partitioner &partitioner, const std::ve
 
         // Find functions that need to have the data-flow constants calculated
         if (settings_.markingImplicitFunctionReferents.isAnySet() && bblock) {
-            std::vector<P2::Function::Ptr> functions = partitioner.functionsOwningBasicBlock(bblock);
+            std::vector<P2::Function::Ptr> functions = partitioner->functionsOwningBasicBlock(bblock);
             for (const P2::Function::Ptr &function: functions) {
                 if (!dfReferents_.exists(function))
                     functionsToAnalyze.insert(function);
@@ -771,7 +786,7 @@ Reachability::iterationMarking(const P2::Partitioner &partitioner, const std::ve
 }
 
 void
-Reachability::iterate(const P2::Partitioner &partitioner) {
+Reachability::iterate(const P2::Partitioner::ConstPtr &partitioner) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     resize(partitioner);
 

@@ -63,8 +63,8 @@ int main() {
     // Run the "exp2" test suite concretely, which should all exit with non-zero value
     for (auto testCaseId: db->needConcreteTesting(10)) {
         auto testCase = db->object(testCaseId);
-        auto executor = LinuxExecutor::instance(db);
-        auto result = dynamic_cast<LinuxExecutor::Result*>(executor->execute(testCase)); // leaked?
+        auto executor = I386Linux::ExitStatusExecutor::instance(db);
+        auto result = executor->execute(testCase).dynamicCast<I386Linux::ExitStatusResult>();
         int status = result->exitStatus();
         ASSERT_always_require(WIFEXITED(status) && WEXITSTATUS(status) != 0);
         db->saveConcreteResult(testCase, result);
@@ -74,8 +74,8 @@ int main() {
     db->testSuite(exp);
     for (auto testCaseId: db->needConcreteTesting(10)) {
         auto testCase = db->object(testCaseId);
-        auto executor = LinuxExecutor::instance(db);
-        auto result = dynamic_cast<LinuxExecutor::Result*>(executor->execute(testCase)); // leaked?
+        auto executor = I386Linux::ExitStatusExecutor::instance(db);
+        auto result = executor->execute(testCase).dynamicCast<I386Linux::ExitStatusResult>();
         int status = result->exitStatus();
         ASSERT_always_require(WIFEXITED(status) && WEXITSTATUS(status) == 0);
         db->saveConcreteResult(testCase, result);

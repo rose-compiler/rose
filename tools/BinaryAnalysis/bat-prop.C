@@ -11,6 +11,7 @@ static const char *description =
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/CommandLine.h>
 
 
@@ -33,7 +34,7 @@ public:
     virtual ~Property() {}
     virtual std::string name() const = 0;
     virtual std::string doc() const = 0;
-    virtual void eval(const P2::Partitioner&) const = 0;
+    virtual void eval(const P2::Partitioner::ConstPtr&) const = 0;
 };
 
 class IsaProperty: public Property {
@@ -46,8 +47,8 @@ public:
         return "Instruction set architecture.";
     }
 
-    void eval(const P2::Partitioner &partitioner) const {
-        if (Disassembler::Base::Ptr d = partitioner.instructionProvider().disassembler()) {
+    void eval(const P2::Partitioner::ConstPtr &partitioner) const {
+        if (Disassembler::Base::Ptr d = partitioner->instructionProvider().disassembler()) {
             std::cout <<d->name() <<"\n";
         } else {
             std::cout <<"none\n";
@@ -65,8 +66,8 @@ public:
         return "Nominal size of data for architecture, measured in bits.";
     }
 
-    void eval(const P2::Partitioner &partitioner) const {
-        std::cout <<partitioner.instructionProvider().instructionPointerRegister().nBits() <<"\n";
+    void eval(const P2::Partitioner::ConstPtr &partitioner) const {
+        std::cout <<partitioner->instructionProvider().instructionPointerRegister().nBits() <<"\n";
     }
 };
 
@@ -81,8 +82,8 @@ public:
             "might be defined as a \"function\" in the source code.";
     }
 
-    void eval(const P2::Partitioner &partitioner) const {
-        std::cout <<partitioner.nFunctions() <<"\n";
+    void eval(const P2::Partitioner::ConstPtr &partitioner) const {
+        std::cout <<partitioner->nFunctions() <<"\n";
     }
 };
 
@@ -96,8 +97,8 @@ public:
         return "Number of basic blocks.";
     }
 
-    void eval(const P2::Partitioner &partitioner) const {
-        std::cout <<partitioner.nBasicBlocks() <<"\n";
+    void eval(const P2::Partitioner::ConstPtr &partitioner) const {
+        std::cout <<partitioner->nBasicBlocks() <<"\n";
     }
 };
 
@@ -111,8 +112,8 @@ public:
         return "Number of static data blocks.";
     }
 
-    void eval(const P2::Partitioner &partitioner) const {
-        std::cout <<partitioner.nDataBlocks() <<"\n";
+    void eval(const P2::Partitioner::ConstPtr &partitioner) const {
+        std::cout <<partitioner->nDataBlocks() <<"\n";
     }
 };
 
@@ -126,8 +127,8 @@ public:
         return "Number of instructions appearing in the global control flow graph.";
     }
 
-    void eval(const P2::Partitioner &partitioner) const {
-        std::cout <<partitioner.nInstructions() <<"\n";
+    void eval(const P2::Partitioner::ConstPtr &partitioner) const {
+        std::cout <<partitioner->nInstructions() <<"\n";
     }
 };
 
@@ -141,8 +142,8 @@ public:
         return "Name of instruction set architecture.";
     }
 
-    void eval(const P2::Partitioner &partitioner) const {
-        std::cout <<partitioner.instructionProvider().disassembler()->name() <<"\n";
+    void eval(const P2::Partitioner::ConstPtr &partitioner) const {
+        std::cout <<partitioner->instructionProvider().disassembler()->name() <<"\n";
     }
 };
 
@@ -181,7 +182,7 @@ public:
         return status;
     }
                 
-    void eval(const std::string &name, const P2::Partitioner &partitioner) {
+    void eval(const std::string &name, const P2::Partitioner::ConstPtr &partitioner) {
         Property *property = NULL;
         if (properties_.getOptional(name).assignTo(property)) {
             property->eval(partitioner);
@@ -191,7 +192,7 @@ public:
         }
     }
 
-    void evalAll(const P2::Partitioner &partitioner) {
+    void evalAll(const P2::Partitioner::ConstPtr &partitioner) {
         for (Property *property: properties_.values()) {
             std::cout <<property->name() <<": ";
             property->eval(partitioner);
@@ -255,15 +256,15 @@ main(int argc, char *argv[]) {
     properties.define(new InsnCountProperty);
     properties.define(new IsaNameProperty);
 
-    P2::Engine engine;
-    std::vector<std::string> args = parseCommandLine(argc, argv, engine, properties);
+    P2::Engine *engine = P2::Engine::instance();
+    std::vector<std::string> args = parseCommandLine(argc, argv, *engine, properties);
     boost::filesystem::path inputFileName = args[0];
     args.erase(args.begin());
     if (!properties.check(args, mlog[FATAL]))
         exit(1);
     size_t showAllProperties = std::count(args.begin(), args.end(), "all");
 
-    P2::Partitioner partitioner = engine.loadPartitioner(inputFileName, stateFormat);
+    P2::Partitioner::Ptr partitioner = engine->loadPartitioner(inputFileName, stateFormat);
 
     if (showAllProperties) {
         properties.evalAll(partitioner);
@@ -271,6 +272,7 @@ main(int argc, char *argv[]) {
         for (const std::string &property: args)
             properties.eval(property, partitioner);
     }
+    delete engine;
 
     return properties.nErrors() > 0;
 }

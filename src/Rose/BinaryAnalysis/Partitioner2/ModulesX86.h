@@ -2,9 +2,9 @@
 #define ROSE_BinaryAnalysis_Partitioner2_ModulesX86_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 
 #include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Thunk.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -26,11 +26,16 @@ namespace ModulesX86 {
  *  and RBP, RSP for the amd64 family). */
 class MatchStandardPrologue: public FunctionPrologueMatcher {
 protected:
-    Function::Ptr function_;
+    FunctionPtr function_;
+protected:
+    MatchStandardPrologue();
 public:
-    static Ptr instance() { return Ptr(new MatchStandardPrologue); } /**< Allocating constructor. */
-    virtual std::vector<Function::Ptr> functions() const override { return std::vector<Function::Ptr>(1, function_); }
-    virtual bool match(const Partitioner &partitioner, rose_addr_t anchor) override;
+    ~MatchStandardPrologue();
+
+public:
+    static Ptr instance();                              /**< Allocating constructor. */
+    virtual std::vector<FunctionPtr> functions() const override;
+    virtual bool match(const PartitionerConstPtr&, rose_addr_t anchor) override;
 };
 
 /** Matches an x86 function prologue with hot patch.
@@ -44,38 +49,43 @@ public:
 class MatchHotPatchPrologue: public MatchStandardPrologue {
 public:
     static Ptr instance() { return Ptr(new MatchHotPatchPrologue); } /**< Allocating constructor. */
-    virtual std::vector<Function::Ptr> functions() const override { return std::vector<Function::Ptr>(1, function_); }
-    virtual bool match(const Partitioner &partitioner, rose_addr_t anchor) override;
+    virtual std::vector<FunctionPtr> functions() const override { return std::vector<FunctionPtr>(1, function_); }
+    virtual bool match(const PartitionerConstPtr&, rose_addr_t anchor) override;
 };
 
 /** Matches an x86 <code>MOV EDI,EDI; PUSH ESI</code> function prologe. */
 class MatchAbbreviatedPrologue: public FunctionPrologueMatcher {
 protected:
-    Function::Ptr function_;
+    FunctionPtr function_;
+protected:
+    MatchAbbreviatedPrologue();
 public:
-    static Ptr instance() { return Ptr(new MatchAbbreviatedPrologue); }
-    virtual std::vector<Function::Ptr> functions() const override { return std::vector<Function::Ptr>(1, function_); }
-    virtual bool match(const Partitioner &partitioner, rose_addr_t anchor) override;
+    ~MatchAbbreviatedPrologue();
+
+public:
+    static Ptr instance();                              /**< Allocating constructor. */
+    virtual std::vector<FunctionPtr> functions() const override;
+    virtual bool match(const PartitionerConstPtr&, rose_addr_t anchor) override;
 };
 
 /** Matches an x86 "ENTER xxx, 0" prologue. */
 class MatchEnterPrologue: public FunctionPrologueMatcher {
 protected:
-    Function::Ptr function_;
+    FunctionPtr function_;
 public:
     static Ptr instance() { return Ptr(new MatchEnterPrologue); } /**< Allocating constructor. */
-    virtual std::vector<Function::Ptr> functions() const override { return std::vector<Function::Ptr>(1, function_); }
-    virtual bool match(const Partitioner &partitioner, rose_addr_t anchor) override;
+    virtual std::vector<FunctionPtr> functions() const override { return std::vector<FunctionPtr>(1, function_); }
+    virtual bool match(const PartitionerConstPtr&, rose_addr_t anchor) override;
 };
 
 /** Match RET followed by PUSH with intervening no-op padding. */
 class MatchRetPadPush: public FunctionPrologueMatcher {
 protected:
-    Function::Ptr function_;
+    FunctionPtr function_;
 public:
     static Ptr instance() { return Ptr(new MatchRetPadPush); } /**< Allocating constructor. */
-    virtual std::vector<Function::Ptr> functions() const override { return std::vector<Function::Ptr>(1, function_); }
-    virtual bool match(const Partitioner &partitioner, rose_addr_t anchor) override;
+    virtual std::vector<FunctionPtr> functions() const override { return std::vector<FunctionPtr>(1, function_); }
+    virtual bool match(const PartitionerConstPtr&, rose_addr_t anchor) override;
 };
 
 /** Basic block callback to detect function returns.
@@ -111,35 +121,35 @@ public:
 private:
     bool matchPattern1(SgAsmExpression *jmpArg);
     bool matchPattern2(const BasicBlockPtr&, SgAsmInstruction *jmp);
-    bool matchPattern3(const Partitioner&, const BasicBlockPtr&, SgAsmInstruction *jmp);
-    bool matchPatterns(const Partitioner&, const BasicBlockPtr&);
+    bool matchPattern3(const PartitionerConstPtr&, const BasicBlockPtr&, SgAsmInstruction *jmp);
+    bool matchPatterns(const PartitionerConstPtr&, const BasicBlockPtr&);
 };
 
 /** Matches "ENTER x, 0" */
-bool matchEnterAnyZero(const Partitioner&, SgAsmX86Instruction*);
+bool matchEnterAnyZero(const PartitionerConstPtr&, SgAsmX86Instruction*);
 
 /** Matches "JMP constant".
  *
  *  Returns the constant if matched, nothing otherwise. */
-Sawyer::Optional<rose_addr_t> matchJmpConst(const Partitioner&, SgAsmX86Instruction*);
+Sawyer::Optional<rose_addr_t> matchJmpConst(const PartitionerConstPtr&, SgAsmX86Instruction*);
 
 /** Matches "LEA ECX, [EBP + constant]" or variant. */
-bool matchLeaCxMemBpConst(const Partitioner&, SgAsmX86Instruction*);
+bool matchLeaCxMemBpConst(const PartitionerConstPtr&, SgAsmX86Instruction*);
 
 /** Matches "JMP [address]" or variant. */
-bool matchJmpMem(const Partitioner&, SgAsmX86Instruction*);
+bool matchJmpMem(const PartitionerConstPtr&, SgAsmX86Instruction*);
 
 /** Matches "MOV EBP, ESP" or variant. */
-bool matchMovBpSp(const Partitioner&, SgAsmX86Instruction*);
+bool matchMovBpSp(const PartitionerConstPtr&, SgAsmX86Instruction*);
 
 /** Matches "MOV EDI, EDI" or variant. */
-bool matchMovDiDi(const Partitioner&, SgAsmX86Instruction*);
+bool matchMovDiDi(const PartitionerConstPtr&, SgAsmX86Instruction*);
 
 /** Matches "PUSH EBP" or variant. */
-bool matchPushBp(const Partitioner&, SgAsmX86Instruction*);
+bool matchPushBp(const PartitionerConstPtr&, SgAsmX86Instruction*);
 
 /** Matches "PUSH SI" or variant. */
-bool matchPushSi(const Partitioner&, SgAsmX86Instruction*);
+bool matchPushSi(const PartitionerConstPtr&, SgAsmX86Instruction*);
 
 /** Reads a table of code addresses.
  *
@@ -156,7 +166,7 @@ bool matchPushSi(const Partitioner&, SgAsmX86Instruction*);
  *  Upon return, the @p tableLimits is adjusted to be the addresses where valid table entries were found unioned with the
  *  addresses of the optional post-table indexes.  The return value is the valid table entries in the order they occur in the
  *  table. */
-std::vector<rose_addr_t> scanCodeAddressTable(const Partitioner&, AddressInterval &tableLimits /*in,out*/,
+std::vector<rose_addr_t> scanCodeAddressTable(const PartitionerConstPtr&, AddressInterval &tableLimits /*in,out*/,
                                               const AddressInterval &targetLimits,
                                               SwitchSuccessors::EntryType tableEntryType, size_t tableEntrySizeBytes,
                                               Sawyer::Optional<rose_addr_t> probableStartVa = Sawyer::Nothing(),

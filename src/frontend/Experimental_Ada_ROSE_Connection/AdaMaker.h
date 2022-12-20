@@ -266,7 +266,15 @@ namespace Ada_ROSE_Translation
 
   /// creates a loop statement with body \ref body.
   SgAdaLoopStmt&
-  mkLoopStmt(SgBasicBlock& body);
+  mkAdaLoopStmt(SgBasicBlock& body);
+
+  /// creates a select statement of type \ref select_type
+  SgAdaSelectStmt&
+  mkAdaSelectStmt(SgAdaSelectStmt::select_type_enum select_type);
+
+  /// creates an Ada select alternative statement
+  SgAdaSelectAlternativeStmt&
+  mkAdaSelectAlternativeStmt(SgExpression& guard, SgBasicBlock& body);
 
   /// creates a for loop statement with body \ref body and an *empty*
   ///   loop header (i.e., init-stmt, test, and increment are nullptr).
@@ -860,6 +868,9 @@ namespace Ada_ROSE_Translation
   SgUnaryOp&
   mkForLoopIncrement(bool forward, SgVariableDeclaration& var);
 
+  /// creates a loop test
+  SgExprStatement&
+  mkForLoopTest(bool forward, SgVariableDeclaration& var);
 
   /// creates an  expression list from \ref exprs
   SgExprListExp&
@@ -886,15 +897,19 @@ namespace Ada_ROSE_Translation
 
   /// creates and if statement
   SgIfStmt&
-  mkIfStmt();
+  mkIfStmt(bool elseIfPath = false);
 
   //
   // special Ada symbols
 
-  /// creates a symbol for the inherited function \ref fn for inherited type \ref declaredDerivedType.
+  /// creates a symbol for the inherited function \ref fn for inherited type \ref derivedType.
   ///   adds the symbol to the scope \ref scope of the derived type.
+  /// \details
+  ///    currently derived type can either be an Ada derived type or an extension record ("class").
+  /// \todo
+  ///    support derived enum types
   SgAdaInheritedFunctionSymbol&
-  mkAdaInheritedFunctionSymbol(SgFunctionDeclaration& fn, SgTypedefType& declaredDerivedType, SgScopeStatement& scope);
+  mkAdaInheritedFunctionSymbol(SgFunctionDeclaration& fn, SgType& derivedType, SgScopeStatement& scope);
 
   //
   // conversions

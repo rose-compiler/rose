@@ -1860,14 +1860,27 @@ SageBuilder::buildTemplateTypedefDeclaration_nfi(const SgName & name, SgType* ba
      return type_decl;
    }
 
+#define DEBUG__SageBuilder__buildTemplateInstantiationTypedefDeclaration_nfi 0
+
 ROSE_DLL_API SgTemplateInstantiationTypedefDeclaration*
-SageBuilder::buildTemplateInstantiationTypedefDeclaration_nfi(SgName & name, SgType* base_type, SgScopeStatement* scope, bool has_defining_base, SgTemplateTypedefDeclaration* templateTypedefDeclaration, SgTemplateArgumentPtrList & templateArgumentsList)
-   {
+SageBuilder::buildTemplateInstantiationTypedefDeclaration_nfi(
+  SgName & name, SgType* base_type, SgScopeStatement* scope, bool has_defining_base,
+  SgTemplateTypedefDeclaration* templateTypedefDeclaration,
+  SgTemplateArgumentPtrList & templateArgumentsList
+) {
+#if DEBUG__SageBuilder__buildTemplateInstantiationTypedefDeclaration_nfi
+     std::cout << "SageBuilder::buildTemplateInstantiationTypedefDeclaration_nfi" << std::endl;
+     std::cout << "  name = " << name.getString() << std::endl;
+     std::cout << "  base_type = " << std::hex << base_type << " : " << ( base_type ? base_type->class_name() : "" ) << std::endl;
+#endif
      ROSE_ASSERT (base_type != NULL);
 
      SgName nameWithoutTemplateArguments = name;
-     SgName nameWithTemplateArguments    = nameWithoutTemplateArguments;
-     nameWithTemplateArguments = appendTemplateArgumentsToName(nameWithoutTemplateArguments,templateArgumentsList);
+     SgName nameWithTemplateArguments    = appendTemplateArgumentsToName(nameWithoutTemplateArguments,templateArgumentsList);
+#if DEBUG__SageBuilder__buildTemplateInstantiationTypedefDeclaration_nfi
+     std::cout << "  nameWithoutTemplateArguments = " << nameWithoutTemplateArguments.getString() << std::endl;
+     std::cout << "  nameWithTemplateArguments    = " << nameWithTemplateArguments.getString() << std::endl;
+#endif
 
   // We don't yet support bottom up construction for this node yet
      ROSE_ASSERT(scope != NULL);
@@ -1911,6 +1924,12 @@ SageBuilder::buildTemplateInstantiationTypedefDeclaration_nfi(SgName & name, SgT
      SgTemplateInstantiationTypedefDeclaration* type_decl =
           new SgTemplateInstantiationTypedefDeclaration(nameWithTemplateArguments, base_type, typedefType, base_decl, parent_scope, templateTypedefDeclaration, templateArgumentsList);
      ROSE_ASSERT(type_decl != NULL);
+     ROSE_ASSERT(type_decl->get_base_type() == base_type);
+
+#if DEBUG__SageBuilder__buildTemplateInstantiationTypedefDeclaration_nfi
+     std::cout << "  type_decl = " << std::hex << type_decl << " : " << ( type_decl ? type_decl->class_name() : "" ) << std::endl;
+     std::cout << "    ->get_base_type() = " << std::hex << type_decl->get_base_type() << " : " << ( type_decl->get_base_type() ? type_decl->get_base_type()->class_name() : "" ) << std::endl;
+#endif
 
   // DQ (2/27/2018): This is a change in the constructor semantics, we now have to build the type explicitly.
   // printf ("We now have to build the type explicitly \n");
@@ -1960,6 +1979,11 @@ SageBuilder::buildTemplateInstantiationTypedefDeclaration_nfi(SgName & name, SgT
      ROSE_ASSERT(type_decl->get_type() != NULL);
      ROSE_ASSERT(scope != NULL);
 
+#if DEBUG__SageBuilder__buildTemplateInstantiationTypedefDeclaration_nfi
+     std::cout << "  type_decl = " << std::hex << type_decl << " : " << ( type_decl ? type_decl->class_name() : "" ) << std::endl;
+     std::cout << "    ->get_base_type() = " << std::hex << type_decl->get_base_type() << " : " << ( type_decl->get_base_type() ? type_decl->get_base_type()->class_name() : "" ) << std::endl;
+#endif
+
      if (scope != NULL)
         {
           if (scope->lookup_template_typedef_symbol(nameWithTemplateArguments) != NULL)
@@ -1976,6 +2000,11 @@ SageBuilder::buildTemplateInstantiationTypedefDeclaration_nfi(SgName & name, SgT
           type_decl->set_parent(scope);
           ROSE_ASSERT(scope->lookup_template_typedef_symbol(nameWithTemplateArguments) != NULL);
         }
+
+#if DEBUG__SageBuilder__buildTemplateInstantiationTypedefDeclaration_nfi
+     std::cout << "  type_decl = " << std::hex << type_decl << " : " << ( type_decl ? type_decl->class_name() : "" ) << std::endl;
+     std::cout << "    ->get_base_type() = " << std::hex << type_decl->get_base_type() << " : " << ( type_decl->get_base_type() ? type_decl->get_base_type()->class_name() : "" ) << std::endl;
+#endif
 
      return type_decl;
    }
@@ -18961,7 +18990,274 @@ SgJavaWildcardType *SageBuilder::getUniqueJavaWildcardSuper(SgType *type) {
 
     return isSgJavaWildcardType(attribute -> getNode());
 }
+
+
 //-----------------------------------------------------------------------------
 #endif // ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 //-----------------------------------------------------------------------------
+
+
+namespace Rose {
+  namespace Builder {
+    namespace Templates {
+
+SgTemplateArgument * buildTemplateArgument(SgType * t) {
+  ROSE_ASSERT(t != nullptr);
+  SgTemplateArgument * r = new SgTemplateArgument(SgTemplateArgument::type_argument, false, t, nullptr, nullptr);
+  return r;
+}
+
+SgTemplateArgument * buildTemplateArgument(SgExpression * e) {
+  ROSE_ASSERT(e != nullptr);
+  SgTemplateArgument * r = new SgTemplateArgument(SgTemplateArgument::nontype_argument, false, nullptr, e, nullptr);
+  e->set_parent(r);
+  return r;
+}
+
+SgTemplateArgument * buildTemplateArgument(int v) {
+  SgExpression * e = SageBuilder::buildIntVal_nfi(v);
+  SgTemplateArgument * r = new SgTemplateArgument(SgTemplateArgument::nontype_argument, false, nullptr, e, nullptr);
+  e->set_parent(r);
+  return r;
+}
+
+SgTemplateArgument * buildTemplateArgument(bool v) {
+  SgExpression * e = SageBuilder::buildBoolValExp(v);
+  SgTemplateArgument * r = new SgTemplateArgument(SgTemplateArgument::nontype_argument, false, nullptr, e, nullptr);
+  e->set_parent(r);
+  return r;
+}
+
+std::string strTemplateArgument(int v) {
+  std::ostringstream oss;
+  oss << v;
+  return oss.str();
+}
+
+std::string strTemplateArgument(bool v) {
+  std::ostringstream oss;
+  if (v) oss << "true";
+  else   oss << "false";
+  return oss.str();
+}
+
+std::string strTemplateArgument(SgNamedType * nt) {
+  std::ostringstream oss;
+  oss << nt->get_qualified_name().getString();
+  return oss.str();
+}
+
+std::string strTemplateArgument(SgType * t) {
+  std::ostringstream oss;
+  oss << t->unparseToString();
+  return oss.str();
+}
+
+std::string strTemplateArgument(SgExpression * e) {
+  std::ostringstream oss;
+  oss << e->unparseToString();
+  return oss.str();
+}
+
+#define DEBUG_Rose_Builder_Templates_instantiateNonrealRefExps 0
+
+SgExpression * instantiateNonrealRefExps(
+  SgExpression * expr,
+  std::vector<SgTemplateParameter *> & tpl_params,
+  std::vector<SgTemplateArgument *> & tpl_args
+) {
+#if DEBUG_Rose_Builder_Templates_instantiateNonrealRefExps
+  std::cout << "Rose::Builder::Templates::instantiateNonrealRefExps" << std::endl;
+  std::cout << "  expr    = " << std::hex << expr << " : " << ( expr ? expr->class_name() : "" ) << std::endl;
+#endif
+  if (!expr) {
+    return nullptr;
+  } else if (isSgNonrealRefExp(expr)) {
+    ROSE_ABORT();
+  } else if (isSgVarRefExp(expr)) {
+    SgVarRefExp * vref = (SgVarRefExp*)expr;
+    SgInitializedName * iname = vref->get_symbol()->get_declaration();
+    ROSE_ASSERT(iname);
+#if DEBUG_Rose_Builder_Templates_instantiateNonrealRefExps
+    std::cout << "  iname    = " << std::hex << iname << " : " << ( iname ? iname->class_name() : "" ) << std::endl;
+    std::cout << "  iname->get_name()    = " << iname->get_name() << std::endl;
+    std::cout << "  iname->get_initializer()    = " << std::hex << iname->get_initializer() << " : " << ( iname->get_initializer() ? iname->get_initializer()->class_name() : "" ) << std::endl;
+    std::cout << "  iname->get_parent()    = " << std::hex << iname->get_parent() << " : " << ( iname->get_parent() ? iname->get_parent()->class_name() : "" ) << std::endl;
+    std::cout << "  iname->get_parent()->get_parent()    = " << std::hex << iname->get_parent()->get_parent() << " : " << ( iname->get_parent()->get_parent() ? iname->get_parent()->get_parent()->class_name() : "" ) << std::endl;
+#endif
+
+    unsigned pos = 0;
+    for (auto tpl_param: tpl_params) {
+      if (tpl_param->get_initializedName()) {
+#if DEBUG_Rose_Builder_Templates_instantiateNonrealRefExps
+        std::cout << "  tpl_param->get_initializedName() = " << std::hex << tpl_param->get_initializedName() << std::endl;
+        std::cout << "  tpl_param->get_initializedName()->get_name() = " << tpl_param->get_initializedName()->get_name() << std::endl;
+#endif
+        if (tpl_param->get_initializedName()->get_name() == iname->get_name()) {
+          iname = tpl_param->get_initializedName();
+          break;
+        }
+      }
+      pos++;
+    }
+
+    if (pos < tpl_params.size() && pos < tpl_args.size()) {
+      ROSE_ASSERT(tpl_args[pos]->get_expression());
+      return tpl_args[pos]->get_expression();
+    } else if (pos < tpl_params.size()) {
+      SgExpression * dft = tpl_params[pos]->get_defaultExpressionParameter();
+      ROSE_ASSERT(dft);
+      return instantiateNonrealRefExps(dft, tpl_params, tpl_args);
+    }
+
+    return vref;
+  } else if (isSgValueExp(expr)) {
+    return expr;
+  } else if (isSgConditionalExp(expr)) {
+    SgConditionalExp * cond = (SgConditionalExp*)expr;
+    cond->set_conditional_exp(instantiateNonrealRefExps(cond->get_conditional_exp(), tpl_params, tpl_args));
+    cond->set_true_exp(instantiateNonrealRefExps(cond->get_true_exp(), tpl_params, tpl_args));
+    cond->set_false_exp(instantiateNonrealRefExps(cond->get_false_exp(), tpl_params, tpl_args));
+    return cond;
+  } else if (isSgSizeOfOp(expr)) {
+    SgSizeOfOp * szo = (SgSizeOfOp*)expr;
+    szo->set_operand_expr(instantiateNonrealRefExps(szo->get_operand_expr(), tpl_params, tpl_args));
+    szo->set_operand_type(instantiateNonrealTypes(szo->get_operand_type(), tpl_params, tpl_args));
+    return szo;
+  } else if (isSgCastExp(expr)) {
+    SgCastExp * cast = (SgCastExp*)expr;
+    cast->set_operand_i(instantiateNonrealRefExps(cast->get_operand_i(), tpl_params, tpl_args));
+    cast->set_type(instantiateNonrealTypes(cast->get_type(), tpl_params, tpl_args));
+    return cast;
+  } else if (isSgUnaryOp(expr)) {
+    SgUnaryOp * uop = (SgUnaryOp*)expr;
+    uop->set_operand_i(instantiateNonrealRefExps(uop->get_operand_i(), tpl_params, tpl_args));
+    return uop;
+  } else if (isSgBinaryOp(expr)) {
+    SgBinaryOp * bop = (SgBinaryOp*)expr;
+    bop->set_lhs_operand_i(instantiateNonrealRefExps(bop->get_lhs_operand_i(), tpl_params, tpl_args));
+    bop->set_rhs_operand_i(instantiateNonrealRefExps(bop->get_rhs_operand_i(), tpl_params, tpl_args));
+    return bop;
+  } else {
+    std::cerr << "!!! expr = " << std::hex << expr << " : " << ( expr ? expr->class_name() : "" ) << std::endl;
+    ROSE_ABORT();
+  }
+}
+
+#define DEBUG_Rose_Builder_Templates_instantiateNonrealTypes 0
+
+SgType * instantiateNonrealTypes(
+  SgType * type,
+  std::vector<SgTemplateParameter *> & tpl_params,
+  std::vector<SgTemplateArgument *> & tpl_args
+) {
+#if DEBUG_Rose_Builder_Templates_instantiateNonrealTypes
+  std::cout << "Rose::Builder::Templates::instantiateNonrealTypes" << std::endl;
+  std::cout << "  type    = " << std::hex << type << " : " << ( type ? type->class_name() : "" ) << std::endl;
+#endif
+  if (!type) {
+    return nullptr;
+  } else if (isSgNonrealType(type)) {
+    SgNonrealType * nrtype = (SgNonrealType*)type;
+    SgNonrealDecl * nrdecl = isSgNonrealDecl(nrtype->get_declaration());
+    ROSE_ASSERT(nrdecl != nullptr);
+#if DEBUG_Rose_Builder_Templates_instantiateNonrealTypes
+    std::cout << "  nrdecl  = " << std::hex << nrdecl << " : " << nrdecl->class_name() << std::endl;
+    std::cout << "    ->get_tpl_args()                    = " << std::dec << nrdecl->get_tpl_args().size() << std::endl;
+    std::cout << "    ->get_tpl_params()                  = " << std::dec << nrdecl->get_tpl_params().size() << std::endl;
+    std::cout << "    ->get_is_class_member()             = " << ( nrdecl->get_is_class_member() ? "true" : "false" ) << std::endl;
+    std::cout << "    ->get_is_template_param()           = " << ( nrdecl->get_is_template_param() ? "true" : "false" ) << std::endl;
+    std::cout << "    ->get_is_template_template_param()  = " << ( nrdecl->get_is_template_template_param() ? "true" : "false" ) << std::endl;
+    std::cout << "    ->get_is_nonreal_template()         = " << ( nrdecl->get_is_nonreal_template() ? "true" : "false" ) << std::endl;
+    std::cout << "    ->get_is_nonreal_function()         = " << ( nrdecl->get_is_nonreal_function() ? "true" : "false" ) << std::endl;
+#endif
+    SgDeclarationStatement * tpldecl = nrdecl->get_templateDeclaration();
+    if (tpldecl != nullptr) {
+#if DEBUG_Rose_Builder_Templates_instantiateNonrealTypes
+      std::cout << "  tpldecl = " << std::hex << tpldecl << " : " << tpldecl->class_name() << std::endl;
+#endif
+
+      SgTemplateClassDeclaration * xtpldecl = isSgTemplateClassDeclaration(tpldecl);
+      if (xtpldecl != nullptr) {
+#if DEBUG_Rose_Builder_Templates_instantiateNonrealTypes
+        std::cout << "    xtpldecl->get_name() = " << xtpldecl->get_name() << std::endl;
+#endif
+        std::vector<SgTemplateArgument *> inst_tpl_args;
+        for (SgTemplateArgument * tplarg: nrdecl->get_tpl_args()) {
+          if (tplarg->get_type()) {
+#if DEBUG_Rose_Builder_Templates_instantiateNonrealTypes
+            std::cout << "      tplarg->get_type() = " << std::hex << tplarg->get_type() << " : " << ( tplarg->get_type() ? tplarg->get_type()->class_name() : "" ) << std::endl;
+#endif
+            auto inst_tplarg = instantiateNonrealTypes(tplarg->get_type(), tpl_params, tpl_args);
+            if (inst_tplarg)
+              inst_tpl_args.push_back(buildTemplateArgument(inst_tplarg));
+            else
+              break; // nullptr is interpreted as "use default argument from this one"
+          } else if (tplarg->get_expression()) {
+#if DEBUG_Rose_Builder_Templates_instantiateNonrealTypes
+            std::cout << "      tplarg->get_expression() = " << std::hex << tplarg->get_expression() << " : " << ( tplarg->get_expression() ? tplarg->get_expression()->class_name() : "" ) << std::endl;
+            std::cout << "        ->unparseToString() = " << tplarg->get_expression()->unparseToString() << std::endl;
+#endif
+            auto inst_tplarg = instantiateNonrealRefExps(SageInterface::copyExpression(tplarg->get_expression()), tpl_params, tpl_args);
+#if DEBUG_Rose_Builder_Templates_instantiateNonrealTypes
+            std::cout << "      inst_tplarg = " << std::hex << inst_tplarg << " : " << ( inst_tplarg ? inst_tplarg->class_name() : "" ) << std::endl;
+            std::cout << "      inst_tplarg->unparseToString() = " << ( inst_tplarg ? inst_tplarg->unparseToString() : "" ) << std::endl;
+#endif
+            if (inst_tplarg)
+              inst_tpl_args.push_back(buildTemplateArgument(inst_tplarg));
+            else
+              break; // nullptr is interpreted as "use default argument from this one"
+          } else if (tplarg->get_templateDeclaration()) {
+#if DEBUG_Rose_Builder_Templates_instantiateNonrealTypes
+            std::cout << "      tplarg->get_templateDeclaration() = " << std::hex << tplarg->get_templateDeclaration() << " : " << ( tplarg->get_templateDeclaration() ? tplarg->get_templateDeclaration()->class_name() : "" ) << std::endl;
+#endif
+            ROSE_ABORT(); // TODO
+          } else {
+            ROSE_ABORT();
+          }
+        }
+        SgTemplateInstantiationDecl * inst_decl = isSgTemplateInstantiationDecl(SageBuilder::buildClassDeclaration_nfi(
+            xtpldecl->get_name(), SgClassDeclaration::e_struct, xtpldecl->get_scope(), nullptr, true, &inst_tpl_args
+        ));
+        ROSE_ASSERT(inst_decl);
+#if DEBUG_Rose_Builder_Templates_instantiateNonrealTypes
+        std::cout << "    inst_decl = " << std::hex << inst_decl << " : " << inst_decl->class_name() << std::endl;
+        std::cout << "    inst_decl->get_firstNondefiningDeclaration() = " << std::hex << inst_decl->get_firstNondefiningDeclaration() << std::endl;
+        std::cout << "    inst_decl->get_definingDeclaration() = " << std::hex << inst_decl->get_definingDeclaration() << std::endl;
+#endif
+        ROSE_ASSERT(inst_decl->get_definingDeclaration());
+        ROSE_ASSERT(inst_decl->get_definingDeclaration() == inst_decl);
+        inst_decl->set_templateDeclaration(xtpldecl);
+        ((SgTemplateInstantiationDecl *)(inst_decl->get_firstNondefiningDeclaration()))->set_templateDeclaration(xtpldecl);
+
+        xtpldecl->get_scope()->append_statement(inst_decl);
+        return inst_decl->get_type();
+      } else {
+        ROSE_ABORT(); // TODO probably typedef
+      }
+    } else if (nrdecl->get_is_template_param()) {
+#if DEBUG_Rose_Builder_Templates_instantiateNonrealTypes
+      std::cout << "    ->get_template_parameter_position() = " << std::dec << nrdecl->get_template_parameter_position() << std::endl;
+      std::cout << "    ->get_template_parameter_depth() = " << std::dec << nrdecl->get_template_parameter_depth() << std::endl;
+#endif
+      ROSE_ASSERT(nrdecl->get_template_parameter_position() > 0);
+      if (nrdecl->get_template_parameter_position() <= tpl_args.size()) {
+        return tpl_args[nrdecl->get_template_parameter_position()-1]->get_type();
+//      } else if (nrdecl->get_template_parameter_position() <= tpl_params.size()) {
+//        SgType * dft_tpl_arg = tpl_params[nrdecl->get_template_parameter_position()-1]->get_defaultTypeParameter();
+//        return instantiateNonrealTypes(dft_tpl_arg, tpl_params, tpl_args);
+      } else {
+        return nullptr;
+      }
+    }
+  } else if (isSgTypedefType(type) || isSgTypeUnsignedLong(type) || isSgTypeUnsignedInt(type)) {
+    return type;
+  } else {
+    std::cerr << "!!! type = " << std::hex << type << " : " << ( type ? type->class_name() : "" ) << std::endl;
+    ROSE_ABORT(); // TODO maybe pointer/reference/const type
+  }
+  return nullptr;
+}
+
+} } }
 

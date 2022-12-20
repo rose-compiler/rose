@@ -5,18 +5,19 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/BasicTypes.h>
-#include <Rose/BinaryAnalysis/Unparser/EdgeArrows.h>
-#include <Rose/BinaryAnalysis/Reachability.h>
-#include <Rose/BinaryAnalysis/Unparser/Settings.h>
-#include <Rose/BitFlags.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h>
 #include <Rose/BinaryAnalysis/Partitioner2/FunctionCallGraph.h>
+#include <Rose/BinaryAnalysis/Reachability.h>
 #include <Rose/BinaryAnalysis/RegisterNames.h>
+#include <Rose/BinaryAnalysis/Unparser/EdgeArrows.h>
+#include <Rose/BinaryAnalysis/Unparser/Settings.h>
+#include <Rose/BitFlags.h>
+#include <Rose/Progress.h>
+
 #include <Sawyer/Map.h>
 #include <Sawyer/Message.h>
 #include <Sawyer/SharedObject.h>
-#include <Rose/Progress.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -202,7 +203,7 @@ public:
     typedef Sawyer::Container::Map<rose_addr_t, std::string> AddrString;/**< Map from address to string. */
 
 private:
-    const Partitioner2::Partitioner &partitioner_;
+    Partitioner2::PartitionerConstPtr partitioner_;
     Partitioner2::FunctionCallGraph cg_;
     Partitioner2::FunctionPtr currentFunction_;
     Partitioner2::BasicBlockPtr currentBasicBlock_;
@@ -220,11 +221,11 @@ private:
     StyleStack styleStack_;                                           // styles
 
 public:
-    State(const Partitioner2::Partitioner&, const Settings&, const Base &frontUnparser);
-    State(const Partitioner2::Partitioner&, const RegisterDictionaryPtr&, const Settings&, const Base &frontUnparser);
+    State(const Partitioner2::PartitionerConstPtr&, const Settings&, const Base &frontUnparser);
+    State(const Partitioner2::PartitionerConstPtr&, const RegisterDictionaryPtr&, const Settings&, const Base &frontUnparser);
     virtual ~State();
 
-    const Partitioner2::Partitioner& partitioner() const;
+    Partitioner2::PartitionerConstPtr partitioner() const;
 
     const Partitioner2::FunctionCallGraph& cg() const;
 
@@ -406,7 +407,7 @@ public:
  *  To instantiate this parser from a @p Partitioner2::Partitioner object named @c partitioner, do this:
  *
  * @code
- *  BinaryAnalysis::Unparser::Base::Ptr unparser = partitioner.unparser();
+ *  BinaryAnalysis::Unparser::Base::Ptr unparser = partitioner->unparser();
  *  unparser->settings() = settings.unparser; // See Rose::BinaryAnalysis::Unparser::Settings for starters
  *  unparser = MyUnparser::instance(unparser);
  * @endcode */
@@ -459,25 +460,11 @@ public:
      *  arguments causes all functions to be emitted.
      *
      *  @{ */
-    void operator()(std::ostream &out, const Partitioner2::Partitioner &p) const /*final*/ {
-        unparse(out, p);
-    }
-    void operator()(std::ostream &out, const Partitioner2::Partitioner &p,
-                    SgAsmInstruction *insn) const /*final*/ {
-        unparse(out, p, insn);
-    }
-    void operator()(std::ostream &out, const Partitioner2::Partitioner &p,
-                    const Partitioner2::BasicBlockPtr &bb) const /*final*/{
-        unparse(out, p, bb);
-    }
-    void operator()(std::ostream &out, const Partitioner2::Partitioner &p,
-                    const Partitioner2::DataBlockPtr &db) const /*final*/ {
-        unparse(out, p, db);
-    }
-    void operator()(std::ostream &out, const Partitioner2::Partitioner &p,
-                    const Partitioner2::FunctionPtr &f) const /*final*/ {
-        unparse(out, p, f);
-    }
+    void operator()(std::ostream&, const Partitioner2::PartitionerConstPtr&) const /*final*/;
+    void operator()(std::ostream&, const Partitioner2::PartitionerConstPtr&, SgAsmInstruction*) const /*final*/;
+    void operator()(std::ostream&, const Partitioner2::PartitionerConstPtr&, const Partitioner2::BasicBlockPtr&) const /*final*/;
+    void operator()(std::ostream&, const Partitioner2::PartitionerConstPtr&, const Partitioner2::DataBlockPtr&) const /*final*/;
+    void operator()(std::ostream&, const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&) const /*final*/;
     /** @} */
 
     /** Emit the entity to a string.
@@ -485,25 +472,12 @@ public:
      *  This is just a convenience wrapper around the three-argument form.
      *
      * @{ */
-    std::string operator()(const Partitioner2::Partitioner &p, const Progress::Ptr &progress = Progress::Ptr()) const /*final*/ {
-        return unparse(p, progress);
-    }
-    std::string operator()(const Partitioner2::Partitioner &p, SgAsmInstruction *insn) const /*final*/ {
-        return unparse(p, insn);
-    }
-    std::string operator()(const Partitioner2::Partitioner &p, const Partitioner2::BasicBlockPtr &bb) const /*final*/ {
-        return unparse(p, bb);
-    }
-    std::string operator()(const Partitioner2::Partitioner &p, const Partitioner2::DataBlockPtr &db) const /*final*/ {
-        return unparse(p, db);
-    }
-    std::string operator()(const Partitioner2::Partitioner &p, const Partitioner2::FunctionPtr &f) const /*final*/ {
-        return unparse(p, f);
-    }
+    std::string operator()(const Partitioner2::PartitionerConstPtr&, const Progress::Ptr& = Progress::Ptr()) const /*final*/;
+    std::string operator()(const Partitioner2::PartitionerConstPtr&, SgAsmInstruction*) const /*final*/;
+    std::string operator()(const Partitioner2::PartitionerConstPtr&, const Partitioner2::BasicBlockPtr&) const /*final*/;
+    std::string operator()(const Partitioner2::PartitionerConstPtr&, const Partitioner2::DataBlockPtr&) const /*final*/;
+    std::string operator()(const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&) const /*final*/;
     /** @} */
-
-
-
 
 public:
     /** High-level unparsing function.
@@ -511,17 +485,17 @@ public:
      *  This function does the same thing as the function operator that has the same arguments.
      *
      * @{ */
-    void unparse(std::ostream&, const Partitioner2::Partitioner&, const Progress::Ptr &progress = Progress::Ptr()) const /*final*/;
-    void unparse(std::ostream&, const Partitioner2::Partitioner&, SgAsmInstruction*) const /*final*/;
-    void unparse(std::ostream&, const Partitioner2::Partitioner&, const Partitioner2::BasicBlockPtr&) const /*final*/;
-    void unparse(std::ostream&, const Partitioner2::Partitioner&, const Partitioner2::DataBlockPtr&) const /*final*/;
-    void unparse(std::ostream&, const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&) const /*final*/;
+    void unparse(std::ostream&, const Partitioner2::PartitionerConstPtr&, const Progress::Ptr& = Progress::Ptr()) const /*final*/;
+    void unparse(std::ostream&, const Partitioner2::PartitionerConstPtr&, SgAsmInstruction*) const /*final*/;
+    void unparse(std::ostream&, const Partitioner2::PartitionerConstPtr&, const Partitioner2::BasicBlockPtr&) const /*final*/;
+    void unparse(std::ostream&, const Partitioner2::PartitionerConstPtr&, const Partitioner2::DataBlockPtr&) const /*final*/;
+    void unparse(std::ostream&, const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&) const /*final*/;
 
-    std::string unparse(const Partitioner2::Partitioner&, const Progress::Ptr &progress = Progress::Ptr()) const /*final*/;
-    std::string unparse(const Partitioner2::Partitioner&, SgAsmInstruction*) const /*final*/;
-    std::string unparse(const Partitioner2::Partitioner&, const Partitioner2::BasicBlockPtr&) const /*final*/;
-    std::string unparse(const Partitioner2::Partitioner&, const Partitioner2::DataBlockPtr&) const /*final*/;
-    std::string unparse(const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&) const /*final*/;
+    std::string unparse(const Partitioner2::PartitionerConstPtr&, const Progress::Ptr& = Progress::Ptr()) const /*final*/;
+    std::string unparse(const Partitioner2::PartitionerConstPtr&, SgAsmInstruction*) const /*final*/;
+    std::string unparse(const Partitioner2::PartitionerConstPtr&, const Partitioner2::BasicBlockPtr&) const /*final*/;
+    std::string unparse(const Partitioner2::PartitionerConstPtr&, const Partitioner2::DataBlockPtr&) const /*final*/;
+    std::string unparse(const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&) const /*final*/;
     /** @} */
 
 public:
@@ -663,14 +637,14 @@ public:
      *  Returns the incoming CFG edges for the specified basic block in the order that they should be displayed in the listing.
      *  The order is defined by @ref ascendingSourceAddress. */
     static std::vector<Partitioner2::ControlFlowGraph::ConstEdgeIterator>
-    orderedBlockPredecessors(const Partitioner2::Partitioner&, const Partitioner2::BasicBlock::Ptr&);
+    orderedBlockPredecessors(const Partitioner2::PartitionerConstPtr&, const Partitioner2::BasicBlockPtr&);
 
     /** Ordered outgoing CFG edges.
      *
      *  Returns the outgoing CFG edges for the specified basic block in the order that they should be displayed in the listing.
      *  The order is defined by @ref ascendingTargetAddress. */
     static std::vector<Partitioner2::ControlFlowGraph::ConstEdgeIterator>
-    orderedBlockSuccessors(const Partitioner2::Partitioner&, const Partitioner2::BasicBlock::Ptr&);
+    orderedBlockSuccessors(const Partitioner2::PartitionerConstPtr&, const Partitioner2::BasicBlockPtr&);
 };
 
 
@@ -690,11 +664,11 @@ public:
         ASSERT_not_null(base);
     }
 
-    std::string unparse(const Partitioner2::Partitioner &p) const {
+    std::string unparse(const Partitioner2::PartitionerConstPtr &p) const {
         return base_->unparse(p);
     }
 
-    void print(const Partitioner2::Partitioner &p) const {
+    void print(const Partitioner2::PartitionerConstPtr &p) const {
         base_->unparse(std::cout, p);
     }
 };

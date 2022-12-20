@@ -86,7 +86,7 @@ namespace RoseHPCT
       std::string result;
       //toString() will entail the value string with ** if it is derived.
       result= name_ + "\t" + toString();
-      return const_cast<char *>(result.c_str());
+      return const_cast<char *>(strdup(result.c_str())); // leaked, but at least not dangling
     } ;
     virtual void unpacked_data(int size, char* data)
     {

@@ -2,8 +2,10 @@
 #include <rose.h>
 
 #include <Rose/Diagnostics.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Sawyer/CommandLine.h>
 
 static const char* purpose = "obtains a function control flow graph from a binary specimen";
@@ -20,8 +22,8 @@ int
 main(int argc, char *argv[]) {
     //! [setup]
     ROSE_INITIALIZE;                                    // see Rose::initialize
-    Partitioner2::Engine engine;
-    std::vector<std::string> specimen = engine.parseCommandLine(argc, argv, purpose, description).unreachedArgs();
+    Partitioner2::Engine *engine = Partitioner2::Engine::instance();
+    std::vector<std::string> specimen = engine->parseCommandLine(argc, argv, purpose, description).unreachedArgs();
     if (specimen.empty()) {
         mlog[FATAL] <<"no binary specimen specified; see --help\n";
         exit(1);
@@ -29,13 +31,13 @@ main(int argc, char *argv[]) {
     //! [setup]
     
     //! [partition]
-    Partitioner2::Partitioner partitioner = engine.partition(specimen);
+    Partitioner2::Partitioner::Ptr partitioner = engine->partition(specimen);
     //! [partition]
 
     //! [function cfg]
-    BOOST_FOREACH (const Partitioner2::Function::Ptr &function, partitioner.functions()) {
+    for (const Partitioner2::Function::Ptr &function : partitioner->functions()) {
         // global control flow graph
-        Partitioner2::ControlFlowGraph cfg = partitioner.cfg();
+        Partitioner2::ControlFlowGraph cfg = partitioner->cfg();
 
         // Erase all vertices that don't belong to the function of interest, and their incident edges
         Partitioner2::ControlFlowGraph::VertexIterator vi = cfg.vertices().begin();
@@ -50,11 +52,13 @@ main(int argc, char *argv[]) {
         // Print the results
         std::cout <<"CFG for " <<function->printableName() <<"\n"
                   <<"  Vertices:\n";
-        BOOST_FOREACH (const Partitioner2::ControlFlowGraph::Vertex &v, cfg.vertices())
-            std::cout <<"    " <<partitioner.vertexName(v) <<"\n";
+        for (const Partitioner2::ControlFlowGraph::Vertex &v : cfg.vertices())
+            std::cout <<"    " <<partitioner->vertexName(v) <<"\n";
         std::cout <<"  Edges:\n";
-        BOOST_FOREACH (const Partitioner2::ControlFlowGraph::Edge &e, cfg.edges())
-            std::cout <<"    " <<partitioner.edgeName(e) <<"\n";
+        for (const Partitioner2::ControlFlowGraph::Edge &e : cfg.edges())
+            std::cout <<"    " <<partitioner->edgeName(e) <<"\n";
     }
     //! [function cfg]
+
+    delete engine;
 }

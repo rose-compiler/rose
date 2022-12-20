@@ -3,6 +3,9 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ModelChecker/FailureUnit.h>
 
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Formatter.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RiscOperators.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/State.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Tag.h>
 #include <Rose/BinaryAnalysis/ModelChecker/SemanticCallbacks.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>

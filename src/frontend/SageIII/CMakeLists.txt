@@ -22,9 +22,9 @@ set(SAGE3_SOURCES
   attachPreprocessingInfoTraversal.C
   attributeListMap.C
   manglingSupport.C
-  sage_support/sage_support.cpp
-  sage_support/cmdline.cpp
-  sage_support/keep_going.cpp
+  sage_support/sage_support.C
+  sage_support/cmdline.C
+  sage_support/keep_going.C
   fixupCopy_scopes.C
   fixupCopy_symbols.C
   fixupCopy_references.C

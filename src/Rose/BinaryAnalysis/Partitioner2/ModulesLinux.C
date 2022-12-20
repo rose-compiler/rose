@@ -1,6 +1,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesLinux.h>
 
 #include <Rose/BinaryAnalysis/SystemCall.h>
@@ -16,14 +17,15 @@ namespace Partitioner2 {
 namespace ModulesLinux {
 
 SystemCall
-systemCallAnalyzer(const Partitioner &partitioner, const boost::filesystem::path &syscallHeader) {
+systemCallAnalyzer(const Partitioner::ConstPtr &partitioner, const boost::filesystem::path &syscallHeader) {
+    ASSERT_not_null(partitioner);
     SystemCall analyzer;
 
     // We only support x86 Linux (32- or 64-bit)
-    if (partitioner.instructionProvider().disassembler().dynamicCast<Disassembler::X86>()) {
+    if (partitioner->instructionProvider().disassembler().dynamicCast<Disassembler::X86>()) {
         if (!syscallHeader.empty())
             analyzer.declare(syscallHeader);
-        switch (partitioner.instructionProvider().instructionPointerRegister().nBits()) {
+        switch (partitioner->instructionProvider().instructionPointerRegister().nBits()) {
             case 32:
                 if (syscallHeader.empty())
                     analyzer.declare("/usr/include/asm/unistd_32.h");
@@ -40,12 +42,12 @@ systemCallAnalyzer(const Partitioner &partitioner, const boost::filesystem::path
     return analyzer;
 }
 
-SyscallSuccessors::SyscallSuccessors(const Partitioner &partitioner, const boost::filesystem::path &syscallHeader)
+SyscallSuccessors::SyscallSuccessors(const Partitioner::ConstPtr &partitioner, const boost::filesystem::path &syscallHeader)
     : analyzer_(systemCallAnalyzer(partitioner, syscallHeader)) {}
 
 // class method
 SyscallSuccessors::Ptr
-SyscallSuccessors::instance(const Partitioner &partitioner, const boost::filesystem::path &syscallHeader) {
+SyscallSuccessors::instance(const Partitioner::ConstPtr &partitioner, const boost::filesystem::path &syscallHeader) {
     return Ptr(new SyscallSuccessors(partitioner, syscallHeader));
 }
 
@@ -63,7 +65,7 @@ SyscallSuccessors::operator()(bool chain, const Args &args) {
 
     try {
         SystemCall::Declaration decl;
-        if (analyzer_.analyze(args.partitioner, args.bblock, syscallInsn, args.partitioner.smtSolver()).assignTo(decl)) {
+        if (analyzer_.analyze(args.partitioner, args.bblock, syscallInsn, args.partitioner->smtSolver()).assignTo(decl)) {
             if (decl.name == "exit") {
                 // This system call doesn't return
                 args.bblock->successors(BasicBlock::Successors()); // defined, but empty
@@ -72,8 +74,8 @@ SyscallSuccessors::operator()(bool chain, const Args &args) {
                 // returns to the fall through address. Therefore, create two edges: one for the function call and the other
                 // for the call return.
                 args.bblock->successors(BasicBlock::Successors()); // remove existing successors
-                size_t wordsize = args.partitioner.instructionProvider().instructionPointerRegister().nBits();
-                BaseSemantics::SValue::Ptr indeterminateVa = args.partitioner.newOperators()->undefined_(wordsize);
+                size_t wordsize = args.partitioner->instructionProvider().instructionPointerRegister().nBits();
+                BaseSemantics::SValue::Ptr indeterminateVa = args.partitioner->newOperators()->undefined_(wordsize);
                 args.bblock->insertSuccessor(indeterminateVa, E_FUNCTION_CALL);
                 args.bblock->insertSuccessor(args.bblock->fallthroughVa(), wordsize, E_CALL_RETURN);
             }
@@ -86,13 +88,14 @@ SyscallSuccessors::operator()(bool chain, const Args &args) {
 }
 
 void
-nameSystemCalls(const Partitioner &partitioner, const boost::filesystem::path &/*syscallHeader*/) {
+nameSystemCalls(const Partitioner::ConstPtr &partitioner, const boost::filesystem::path &/*syscallHeader*/) {
+    ASSERT_not_null(partitioner);
     SystemCall analyzer = systemCallAnalyzer(partitioner);
-    for (const BasicBlock::Ptr &bb: partitioner.basicBlocks()) {
+    for (const BasicBlock::Ptr &bb: partitioner->basicBlocks()) {
         if (SgAsmInstruction *insn = analyzer.hasSystemCall(bb)) {
             SystemCall::Declaration decl;
             try {
-                if (analyzer.analyze(partitioner, bb, insn, partitioner.smtSolver()).assignTo(decl))
+                if (analyzer.analyze(partitioner, bb, insn, partitioner->smtSolver()).assignTo(decl))
                     insn->set_comment(decl.name);
             } catch (...) {
                 // Not an error if we can't figure out the system call name.
@@ -102,9 +105,10 @@ nameSystemCalls(const Partitioner &partitioner, const boost::filesystem::path &/
 }
 
 BaseSemantics::SValue::Ptr
-LibcStartMain::readStack(const Partitioner &partitioner, const BaseSemantics::Dispatcher::Ptr &cpu, int byteOffset,
+LibcStartMain::readStack(const Partitioner::ConstPtr &partitioner, const BaseSemantics::Dispatcher::Ptr &cpu, int byteOffset,
                          size_t nBits, RegisterDescriptor segmentRegister) {
-    const RegisterDescriptor SP = partitioner.instructionProvider().stackPointerRegister();
+    ASSERT_not_null(partitioner);
+    const RegisterDescriptor SP = partitioner->instructionProvider().stackPointerRegister();
     if (SP.isEmpty())
         return BaseSemantics::SValue::Ptr();
     BaseSemantics::SValue::Ptr sp = cpu->operators()->peekRegister(SP, cpu->undefined_(SP.nBits()));
@@ -122,13 +126,13 @@ LibcStartMain::operator()(bool chain, const Args &args) {
     // Look at this block only if it's a function call
     if (!chain || !args.bblock || args.bblock->nInstructions() == 0)
         return chain;
-    if (!args.partitioner.basicBlockIsFunctionCall(args.bblock))
+    if (!args.partitioner->basicBlockIsFunctionCall(args.bblock))
         return chain;
 
     // It must call a function named "__libc_start_main@plt"
     bool foundCallToLibcStartMain = false;
-    for (const rose_addr_t &succVa: args.partitioner.basicBlockConcreteSuccessors(args.bblock)) {
-        Function::Ptr func = args.partitioner.functionExists(succVa);
+    for (const rose_addr_t &succVa: args.partitioner->basicBlockConcreteSuccessors(args.bblock)) {
+        Function::Ptr func = args.partitioner->functionExists(succVa);
         if (func && (func->name() == "__libc_start_main@plt" || func->name() == "__libc_start_main")) {
             foundCallToLibcStartMain = true;
             break;
@@ -148,9 +152,9 @@ LibcStartMain::operator()(bool chain, const Args &args) {
     BaseSemantics::RiscOperators::Ptr ops;
     BaseSemantics::State::Ptr state;
     try {
-        ops = args.partitioner.newOperators(MAP_BASED_MEMORY);
+        ops = args.partitioner->newOperators(MAP_BASED_MEMORY);
         if (ops) {
-            dispatcher = args.partitioner.newDispatcher(ops);
+            dispatcher = args.partitioner->newDispatcher(ops);
             if (dispatcher) {
                 for (SgAsmInstruction *insn: args.bblock->instructions())
                     dispatcher->processInstruction(insn);
@@ -168,7 +172,7 @@ LibcStartMain::operator()(bool chain, const Args &args) {
     std::vector<BaseSemantics::SValue::Ptr> functionPtrs;
 
     // Location and size of argument varies by architecture
-    RegisterDictionary::Ptr regs = args.partitioner.instructionProvider().registerDictionary();
+    RegisterDictionary::Ptr regs = args.partitioner->instructionProvider().registerDictionary();
     if (isSgAsmX86Instruction(args.bblock->instructions().back())) {
         if (dispatcher->addressWidth() == 64) {
             // Amd64 integer arguments are passed in registers: rdi, rsi, rdx, rcx, r8, and r9
@@ -180,9 +184,9 @@ LibcStartMain::operator()(bool chain, const Args &args) {
             BaseSemantics::SValue::Ptr fifthArg = state->peekRegister(FIFTH_ARG, dispatcher->undefined_(64), ops.get());
 
             if (firstArg->isConcrete() && fourthArg->isConcrete() && fifthArg->isConcrete() &&
-                args.partitioner.memoryMap()->at(firstArg->toUnsigned().get()).require(MemoryMap::EXECUTABLE).exists() &&
-                args.partitioner.memoryMap()->at(fourthArg->toUnsigned().get()).require(MemoryMap::EXECUTABLE).exists() &&
-                args.partitioner.memoryMap()->at(fifthArg->toUnsigned().get()).require(MemoryMap::EXECUTABLE).exists()) {
+                args.partitioner->memoryMap()->at(firstArg->toUnsigned().get()).require(MemoryMap::EXECUTABLE).exists() &&
+                args.partitioner->memoryMap()->at(fourthArg->toUnsigned().get()).require(MemoryMap::EXECUTABLE).exists() &&
+                args.partitioner->memoryMap()->at(fifthArg->toUnsigned().get()).require(MemoryMap::EXECUTABLE).exists()) {
                 // Sometimes the address of main is passed as the first argument (rdi) with __libc_csu_init and __libc_csu_fini
                 // passed as the fourth (rcx) and fifth (r8) arguments. By this point in the disassembly process, would not
                 // have discovered PLT function yet. So if the first, fourth, and fifth arguments seem to point at executable
@@ -195,7 +199,7 @@ LibcStartMain::operator()(bool chain, const Args &args) {
                 functionPtrs.push_back(fifthArg);
 
             } else if (fourthArg->toUnsigned() &&
-                       args.partitioner.memoryMap()->at(fourthArg->toUnsigned().get()).require(MemoryMap::EXECUTABLE).exists()) {
+                       args.partitioner->memoryMap()->at(fourthArg->toUnsigned().get()).require(MemoryMap::EXECUTABLE).exists()) {
                 // Sometimes then address of main is passed as the fourth argument (in rcx).
                 SAWYER_MESG(debug) <<"LibcStartMain analysis: amd64 with main as the fourth argument\n";
                 mainVa_ = fourthArg->toUnsigned().get();
@@ -248,9 +252,10 @@ LibcStartMain::operator()(bool chain, const Args &args) {
 
 
 void
-LibcStartMain::nameMainFunction(const Partitioner &partitioner) const {
+LibcStartMain::nameMainFunction(const Partitioner::ConstPtr &partitioner) const {
+    ASSERT_not_null(partitioner);
     if (mainVa_) {
-        if (Function::Ptr main = partitioner.functionExists(*mainVa_)) {
+        if (Function::Ptr main = partitioner->functionExists(*mainVa_)) {
             if (main->name().empty())
                 main->name("main");
         }

@@ -110,7 +110,7 @@ public:
      *  Returns true if any part of @p reg is present in this container. The @p reg need not be entirely present. See also @ref
      *  existsAll. */
     bool existsAny(RegisterDescriptor reg) const {
-        return map_.exists(reg) && map_[reg].isOverlapping(bitRange(reg));
+        return map_.exists(reg) && map_[reg].overlaps(bitRange(reg));
     }
 
     /** Predicate checking if all of a register is present.

@@ -1,0 +1,9 @@
+START
+DEF PROC MAIN() ;
+BEGIN
+  ITEM PTR1 U;
+  ITEM PTR2 U;
+%extra credit if this passes%
+  IF PTR1 = PTR2; main = 0;
+END
+TERM

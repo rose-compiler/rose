@@ -1,0 +1,35 @@
+%Before start%
+START
+%Before Procedure%
+DEF PROC main() S;
+BEGIN
+%In Procedure%
+  ITEM ITEM1 U;
+%Before IF%
+  IF ITEM1 = 9;
+    BEGIN
+%In IF at begining%
+      ITEM1 = 12;
+      ITEM1 = 13;
+%In IF at END%
+    END %END of IF%
+%Before else if%
+  ELSE
+    IF ITEM1 = 17;
+      BEGIN
+%In else if at begining%
+        ITEM1 = 20;
+        ITEM1 = 21;
+%IN else if at end%
+      END %END of else if%
+%Before else%
+    ELSE
+      BEGIN
+%In else at begining%
+        ITEM1 = 28;
+        ITEM1 = 29;
+%In else at end%
+      END %END of else%
+END %END Proc line%
+%After END Proc%
+TERM

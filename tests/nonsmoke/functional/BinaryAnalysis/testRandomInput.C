@@ -105,17 +105,17 @@ main(int argc, char *argv[]) {
         std::cerr <<"test is being skipped\n";
         return 0; // lack of a disassembler is not a test failure
     }
-    P2::Engine engine;
-    engine.settings().disassembler.isaName = settings.isa;
-    P2::Partitioner partitioner = engine.createPartitioner();
-    Disassembler::Base::Ptr disassembler = partitioner.instructionProvider().disassembler();
+    P2::Engine *engine = P2::Engine::instance();
+    engine->settings().disassembler.isaName = settings.isa;
+    P2::Partitioner::Ptr partitioner = engine->createPartitioner();
+    Disassembler::Base::Ptr disassembler = partitioner->instructionProvider().disassembler();
     ASSERT_not_null(disassembler);
 
     // Configure unparser
-    partitioner.insnUnparser()->settings().insn.bytes.showing = true;
+    partitioner->insnUnparser()->settings().insn.bytes.showing = true;
 #if 1 // FIXME: this is just here for A64 debugging
-    partitioner.insnUnparser()->settings().insn.bytes.perLine = 4;
-    partitioner.insnUnparser()->settings().insn.bytes.fieldWidth = 11;
+    partitioner->insnUnparser()->settings().insn.bytes.perLine = 4;
+    partitioner->insnUnparser()->settings().insn.bytes.fieldWidth = 11;
 #endif
 
     // Obtain an instruction semantics dispatcher if possible.
@@ -157,7 +157,7 @@ main(int argc, char *argv[]) {
         }
 
         if (insn && settings.showingInsns)
-            std::cerr <<"                            " <<partitioner.unparse(insn) <<"\n";
+            std::cerr <<"                            " <<partitioner->unparse(insn) <<"\n";
 
         // Run semantics. We use a fresh input state each time, otherwise the state would eventually get too large.
         if (cpu && insn && !insn->isUnknown()) {
@@ -184,4 +184,6 @@ main(int argc, char *argv[]) {
     std::cout <<"unknown instructions:   " <<nUnknown <<"\n";
     std::cout <<"disassembly exceptions: " <<nDisExceptions <<"\n";
     std::cout <<"semantic exceptions:    " <<nSemExceptions <<"\n";
+
+    delete engine;
 }

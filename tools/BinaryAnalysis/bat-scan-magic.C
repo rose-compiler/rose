@@ -95,15 +95,15 @@ main(int argc, char *argv[]) {
     Bat::checkRoseVersionNumber(MINIMUM_ROSE_LIBRARY_VERSION, mlog[FATAL]);
     Bat::registerSelfTests();
 
-    P2::Engine engine;
     Settings settings;
-    boost::filesystem::path rbaFile = parseCommandLine(argc, argv, engine, settings /*in,out*/);
-    P2::Partitioner partitioner = engine.loadPartitioner(rbaFile, settings.stateFormat);
+    P2::Engine *engine = P2::Engine::instance();
+    boost::filesystem::path rbaFile = parseCommandLine(argc, argv, *engine, settings /*in,out*/);
+    P2::Partitioner::Ptr partitioner = engine->loadPartitioner(rbaFile, settings.stateFormat);
 
 
     BinaryAnalysis::MagicNumber analyzer;
     analyzer.maxBytesToCheck(settings.maxBytes);
-    MemoryMap::Ptr map = partitioner.memoryMap();
+    MemoryMap::Ptr map = partitioner->memoryMap();
     map->dump(mlog[INFO]);
 
     size_t step = std::max(size_t(1), settings.step);
@@ -128,4 +128,6 @@ main(int argc, char *argv[]) {
                 break;                                  // prevent overflow at top of address space
         }
     }
+
+    delete engine;
 }

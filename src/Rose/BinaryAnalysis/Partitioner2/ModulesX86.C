@@ -1,15 +1,19 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
-
-#include "AsmUnparser_compat.h"
-#include <Rose/Diagnostics.h>
-
-#include <Rose/BitOps.h>
-#include <boost/format.hpp>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesX86.h>
+
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
+#include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
+#include <Rose/BitOps.h>
+#include <Rose/Diagnostics.h>
+
+#include "AsmUnparser_compat.h"
+
+#include <boost/format.hpp>
 #include <stringify.h>
 
 using namespace Rose::Diagnostics;
@@ -19,22 +23,38 @@ namespace BinaryAnalysis {
 namespace Partitioner2 {
 namespace ModulesX86 {
 
+MatchStandardPrologue::MatchStandardPrologue() {}
+
+MatchStandardPrologue::~MatchStandardPrologue() {}
+
+MatchStandardPrologue::Ptr
+MatchStandardPrologue::instance() {
+    return Ptr(new MatchStandardPrologue);
+}
+
+std::vector<Function::Ptr>
+MatchStandardPrologue::functions() const {
+    return std::vector<Function::Ptr>(1, function_);
+}
+
 bool
-MatchStandardPrologue::match(const Partitioner &partitioner, rose_addr_t anchor) {
+MatchStandardPrologue::match(const Partitioner::ConstPtr &partitioner, rose_addr_t anchor) {
+    ASSERT_not_null(partitioner);
+
     // Look for PUSH EBP
     SgAsmX86Instruction *insn = NULL;
     rose_addr_t pushVa = anchor;
-    if (partitioner.instructionExists(pushVa))
+    if (partitioner->instructionExists(pushVa))
         return false;                                   // already in the CFG/AUM
-    insn = isSgAsmX86Instruction(partitioner.discoverInstruction(pushVa));
+    insn = isSgAsmX86Instruction(partitioner->discoverInstruction(pushVa));
     if (!matchPushBp(partitioner, insn))
         return false;
 
     // Look for MOV RBP,RSP following the PUSH.
     rose_addr_t moveVa = insn->get_address() + insn->get_size();
-    if (partitioner.instructionExists(moveVa))
+    if (partitioner->instructionExists(moveVa))
         return false;                                   // already in the CFG/AUM
-    insn = isSgAsmX86Instruction(partitioner.discoverInstruction(moveVa));
+    insn = isSgAsmX86Instruction(partitioner->discoverInstruction(moveVa));
     if (!matchMovBpSp(partitioner, insn))
         return false;
 
@@ -44,12 +64,14 @@ MatchStandardPrologue::match(const Partitioner &partitioner, rose_addr_t anchor)
 }
 
 bool
-MatchHotPatchPrologue::match(const Partitioner &partitioner, rose_addr_t anchor) {
+MatchHotPatchPrologue::match(const Partitioner::ConstPtr &partitioner, rose_addr_t anchor) {
+    ASSERT_not_null(partitioner);
+
     // Match MOV EDI, EDI
     rose_addr_t moveVa = anchor;
-    if (partitioner.instructionExists(moveVa))
+    if (partitioner->instructionExists(moveVa))
         return false;                               // already in the CFG/AUM
-    SgAsmX86Instruction *insn = isSgAsmX86Instruction(partitioner.discoverInstruction(moveVa));
+    SgAsmX86Instruction *insn = isSgAsmX86Instruction(partitioner->discoverInstruction(moveVa));
     if (!matchMovDiDi(partitioner, insn))
         return false;
 
@@ -62,22 +84,38 @@ MatchHotPatchPrologue::match(const Partitioner &partitioner, rose_addr_t anchor)
     return true;
 }
 
+MatchAbbreviatedPrologue::MatchAbbreviatedPrologue() {}
+
+MatchAbbreviatedPrologue::~MatchAbbreviatedPrologue() {}
+
+MatchAbbreviatedPrologue::Ptr
+MatchAbbreviatedPrologue::instance() {
+    return Ptr(new MatchAbbreviatedPrologue);
+}
+
+std::vector<Function::Ptr>
+MatchAbbreviatedPrologue::functions() const {
+    return std::vector<Function::Ptr>(1, function_);
+}
+
 // Example function pattern matcher: matches x86 "MOV EDI, EDI; PUSH ESI" as a function prologue.
 bool
-MatchAbbreviatedPrologue::match(const Partitioner &partitioner, rose_addr_t anchor) {
+MatchAbbreviatedPrologue::match(const Partitioner::ConstPtr &partitioner, rose_addr_t anchor) {
+    ASSERT_not_null(partitioner);
+
     // Look for MOV EDI, EDI
     rose_addr_t movVa = anchor;
-    if (partitioner.instructionExists(movVa))
+    if (partitioner->instructionExists(movVa))
         return false;                                   // already in the CFG/AUM
-    SgAsmX86Instruction *insn = isSgAsmX86Instruction(partitioner.discoverInstruction(movVa));
+    SgAsmX86Instruction *insn = isSgAsmX86Instruction(partitioner->discoverInstruction(movVa));
     if (!matchMovDiDi(partitioner, insn))
         return false;
 
     // Look for PUSH ESI
     rose_addr_t pushVa = insn->get_address() + insn->get_size();
-    if (partitioner.instructionExists(pushVa))
+    if (partitioner->instructionExists(pushVa))
         return false;                                   // already in the CFG/AUM
-    insn = isSgAsmX86Instruction(partitioner.discoverInstruction(pushVa));
+    insn = isSgAsmX86Instruction(partitioner->discoverInstruction(pushVa));
     if (!matchPushSi(partitioner, insn))
         return false;
 
@@ -88,10 +126,11 @@ MatchAbbreviatedPrologue::match(const Partitioner &partitioner, rose_addr_t anch
 }
 
 bool
-MatchEnterPrologue::match(const Partitioner &partitioner, rose_addr_t anchor) {
-    if (partitioner.instructionExists(anchor))
+MatchEnterPrologue::match(const Partitioner::ConstPtr &partitioner, rose_addr_t anchor) {
+    ASSERT_not_null(partitioner);
+    if (partitioner->instructionExists(anchor))
         return false;                                   // already in the CFG/AUM
-    SgAsmX86Instruction *insn = isSgAsmX86Instruction(partitioner.discoverInstruction(anchor));
+    SgAsmX86Instruction *insn = isSgAsmX86Instruction(partitioner->discoverInstruction(anchor));
     if (!matchEnterAnyZero(partitioner, insn))
         return false;
     function_ = Function::instance(anchor, SgAsmFunction::FUNC_PATTERN);
@@ -100,16 +139,18 @@ MatchEnterPrologue::match(const Partitioner &partitioner, rose_addr_t anchor) {
 }
 
 bool
-MatchRetPadPush::match(const Partitioner &partitioner, rose_addr_t anchor) {
+MatchRetPadPush::match(const Partitioner::ConstPtr &partitioner, rose_addr_t anchor) {
+    ASSERT_not_null(partitioner);
+
     // RET (prior to anchor) must already exist in the CFG/AUM
     // The RET instruction can be 1 or 3 bytes.
     SgAsmX86Instruction *ret = NULL;
-    if (partitioner.instructionExists(anchor-1) &&
-        (ret = isSgAsmX86Instruction(partitioner.discoverInstruction(anchor-1))) &&
+    if (partitioner->instructionExists(anchor-1) &&
+        (ret = isSgAsmX86Instruction(partitioner->discoverInstruction(anchor-1))) &&
         ret->get_kind() == x86_ret && ret->get_size()==1) {
         // found RET
-    } else if (partitioner.instructionExists(anchor-3) &&
-               (ret = isSgAsmX86Instruction(partitioner.discoverInstruction(anchor-3))) &&
+    } else if (partitioner->instructionExists(anchor-3) &&
+               (ret = isSgAsmX86Instruction(partitioner->discoverInstruction(anchor-3))) &&
                ret->get_kind() == x86_ret && ret->get_size()==3) {
         // found RET x
     } else {
@@ -118,9 +159,9 @@ MatchRetPadPush::match(const Partitioner &partitioner, rose_addr_t anchor) {
 
     // Optional padding (NOP; or INT3; or MOV EDI,EDI)
     rose_addr_t padVa = anchor;
-    if (partitioner.instructionExists(padVa))
+    if (partitioner->instructionExists(padVa))
         return false;
-    SgAsmX86Instruction *pad = isSgAsmX86Instruction(partitioner.discoverInstruction(padVa));
+    SgAsmX86Instruction *pad = isSgAsmX86Instruction(partitioner->discoverInstruction(padVa));
     if (!pad)
         return false;
     if (pad->get_kind() != x86_nop && pad->get_kind() != x86_int3 && !matchMovDiDi(partitioner, pad))
@@ -128,9 +169,9 @@ MatchRetPadPush::match(const Partitioner &partitioner, rose_addr_t anchor) {
 
     // PUSH x
     rose_addr_t pushVa = padVa + (pad ? pad->get_size() : 0);
-    if (partitioner.instructionExists(pushVa))
+    if (partitioner->instructionExists(pushVa))
         return false;
-    SgAsmX86Instruction *push = isSgAsmX86Instruction(partitioner.discoverInstruction(pushVa));
+    SgAsmX86Instruction *push = isSgAsmX86Instruction(partitioner->discoverInstruction(pushVa));
     if (!push || push->get_kind()!=x86_push)
         return false;
 
@@ -158,7 +199,7 @@ FunctionReturnDetector::operator()(bool chain, const Args &args) {
         // A RET/RETF that has a single successor that is concrete probably isn't a real function return. Sometimes these
         // instructions are used to hide unconditional branches, like "PUSH label; RET".
         bool isComplete = false;
-        std::vector<rose_addr_t> concreteSuccessors = args.partitioner.basicBlockConcreteSuccessors(args.bblock, &isComplete);
+        std::vector<rose_addr_t> concreteSuccessors = args.partitioner->basicBlockConcreteSuccessors(args.bblock, &isComplete);
         if (1==concreteSuccessors.size() && isComplete) {
             args.bblock->isFunctionReturn() = false;
             return chain;
@@ -171,7 +212,7 @@ FunctionReturnDetector::operator()(bool chain, const Args &args) {
 };
 
 bool
-matchEnterAnyZero(const Partitioner&, SgAsmX86Instruction *enter) {
+matchEnterAnyZero(const Partitioner::ConstPtr&, SgAsmX86Instruction *enter) {
 #if 1 // FIXME[Robb Matzke 2015-12-17]
     // This matcher looks at only two bytes of input (0xc8, 0x??, 0x??, 0x00) and thus gets too many false positives. A better
     // approach ight be to look at the entire block starting at the ENTER instruction and measure how reasonable it looks
@@ -196,7 +237,7 @@ matchEnterAnyZero(const Partitioner&, SgAsmX86Instruction *enter) {
 }
 
 Sawyer::Optional<rose_addr_t>
-matchJmpConst(const Partitioner&, SgAsmX86Instruction *jmp) {
+matchJmpConst(const Partitioner::ConstPtr&, SgAsmX86Instruction *jmp) {
     if (!jmp || jmp->get_kind()!=x86_jmp)
         return Sawyer::Nothing();
 
@@ -212,7 +253,7 @@ matchJmpConst(const Partitioner&, SgAsmX86Instruction *jmp) {
 }
 
 bool
-matchJmpMem(const Partitioner&, SgAsmX86Instruction *jmp) {
+matchJmpMem(const Partitioner::ConstPtr&, SgAsmX86Instruction *jmp) {
     if (!jmp || jmp->get_kind()!=x86_jmp || jmp->nOperands() != 1)
         return false;                                   // not a JMP instruction
     SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(jmp->operand(0));
@@ -229,7 +270,8 @@ matchJmpMem(const Partitioner&, SgAsmX86Instruction *jmp) {
 }
 
 bool
-matchLeaCxMemBpConst(const Partitioner &partitioner, SgAsmX86Instruction *lea) {
+matchLeaCxMemBpConst(const Partitioner::ConstPtr &partitioner, SgAsmX86Instruction *lea) {
+    ASSERT_not_null(partitioner);
     if (!lea || lea->get_kind()!=x86_lea)
         return false;
 
@@ -238,7 +280,7 @@ matchLeaCxMemBpConst(const Partitioner &partitioner, SgAsmX86Instruction *lea) {
         return false;
 
     const RegisterDescriptor CX(x86_regclass_gpr, x86_gpr_cx, 0,
-                                partitioner.instructionProvider().instructionPointerRegister().nBits());
+                                partitioner->instructionProvider().instructionPointerRegister().nBits());
     SgAsmDirectRegisterExpression *cxReg = isSgAsmDirectRegisterExpression(leaArgs[0]);
     if (!cxReg || cxReg->get_descriptor()!=CX)
         return false;
@@ -252,7 +294,7 @@ matchLeaCxMemBpConst(const Partitioner &partitioner, SgAsmX86Instruction *lea) {
         return false;
 
     const RegisterDescriptor BP(x86_regclass_gpr, x86_gpr_bp, 0,
-                                partitioner.instructionProvider().stackPointerRegister().nBits());
+                                partitioner->instructionProvider().stackPointerRegister().nBits());
     SgAsmDirectRegisterExpression *bpReg = isSgAsmDirectRegisterExpression(sum->get_lhs());
     if (!bpReg || bpReg->get_descriptor()!=BP)
         return false;
@@ -267,7 +309,8 @@ matchLeaCxMemBpConst(const Partitioner &partitioner, SgAsmX86Instruction *lea) {
 }
 
 bool
-matchMovBpSp(const Partitioner &partitioner, SgAsmX86Instruction *mov) {
+matchMovBpSp(const Partitioner::ConstPtr &partitioner, SgAsmX86Instruction *mov) {
+    ASSERT_not_null(partitioner);
     if (!mov || mov->get_kind()!=x86_mov)
         return false;
 
@@ -275,7 +318,7 @@ matchMovBpSp(const Partitioner &partitioner, SgAsmX86Instruction *mov) {
     if (opands.size()!=2)
         return false;                                   // crazy operands!
 
-    const RegisterDescriptor SP = partitioner.instructionProvider().stackPointerRegister();
+    const RegisterDescriptor SP = partitioner->instructionProvider().stackPointerRegister();
     const RegisterDescriptor BP(x86_regclass_gpr, x86_gpr_bp, 0, SP.nBits());
     SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(opands[0]);
     if (!rre || rre->get_descriptor()!=BP)
@@ -289,7 +332,8 @@ matchMovBpSp(const Partitioner &partitioner, SgAsmX86Instruction *mov) {
 }
 
 bool
-matchMovDiDi(const Partitioner &partitioner, SgAsmX86Instruction *mov) {
+matchMovDiDi(const Partitioner::ConstPtr &partitioner, SgAsmX86Instruction *mov) {
+    ASSERT_not_null(partitioner);
     if (!mov || mov->get_kind()!=x86_mov)
         return false;
 
@@ -298,7 +342,7 @@ matchMovDiDi(const Partitioner &partitioner, SgAsmX86Instruction *mov) {
         return false;
 
     const RegisterDescriptor DI(x86_regclass_gpr, x86_gpr_di, 0,
-                                partitioner.instructionProvider().instructionPointerRegister().nBits());
+                                partitioner->instructionProvider().instructionPointerRegister().nBits());
     SgAsmDirectRegisterExpression *dst = isSgAsmDirectRegisterExpression(opands[0]);
     if (!dst || dst->get_descriptor()!=DI)
         return false;
@@ -311,7 +355,8 @@ matchMovDiDi(const Partitioner &partitioner, SgAsmX86Instruction *mov) {
 }
 
 bool
-matchPushBp(const Partitioner &partitioner, SgAsmX86Instruction *push) {
+matchPushBp(const Partitioner::ConstPtr &partitioner, SgAsmX86Instruction *push) {
+    ASSERT_not_null(partitioner);
     if (!push || push->get_kind()!=x86_push)
         return false;
 
@@ -320,7 +365,7 @@ matchPushBp(const Partitioner &partitioner, SgAsmX86Instruction *push) {
         return false;                                   // crazy operands!
 
     const RegisterDescriptor BP(x86_regclass_gpr, x86_gpr_bp, 0,
-                                partitioner.instructionProvider().stackPointerRegister().nBits());
+                                partitioner->instructionProvider().stackPointerRegister().nBits());
     SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(opands[0]);
     if (!rre || rre->get_descriptor()!=BP)
         return false;
@@ -329,7 +374,8 @@ matchPushBp(const Partitioner &partitioner, SgAsmX86Instruction *push) {
 }
 
 bool
-matchPushSi(const Partitioner &partitioner, SgAsmX86Instruction *push) {
+matchPushSi(const Partitioner::ConstPtr &partitioner, SgAsmX86Instruction *push) {
+    ASSERT_not_null(partitioner);
     if (!push || push->get_kind()!=x86_push)
         return false;
 
@@ -338,7 +384,7 @@ matchPushSi(const Partitioner &partitioner, SgAsmX86Instruction *push) {
         return false;                                   // crazy operands!
 
     const RegisterDescriptor SI(x86_regclass_gpr, x86_gpr_si, 0,
-                                partitioner.instructionProvider().instructionPointerRegister().nBits());
+                                partitioner->instructionProvider().instructionPointerRegister().nBits());
     SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(opands[0]);
     if (!rre || rre->get_descriptor()!=SI)
         return false;
@@ -346,8 +392,31 @@ matchPushSi(const Partitioner &partitioner, SgAsmX86Instruction *push) {
     return true;
 }
 
+// Is this table entry a valid target? If valid, returns nullptr, otherwise a reason for being invalid.
+static const char*
+isInvalidTarget(rose_addr_t target, const AddressInterval &targetLimits, const Partitioner::ConstPtr &partitioner) {
+    ASSERT_not_null(partitioner);
+    if (!targetLimits.contains(target)) {
+        return "target is not within target limits";
+    } else if (!partitioner->memoryMap()->at(target).require(MemoryMap::EXECUTABLE).exists()) {
+        return "target is not in executable memory";
+    } else {
+        SgAsmInstruction *targetInsn = partitioner->instructionProvider()[target];
+        if (!targetInsn || targetInsn->isUnknown()) {
+            return "target does not point to a valid instruction";
+        } else {
+            std::vector<SgAsmInstruction*> overlappingInsns = partitioner->instructionsOverlapping(target);
+            for (SgAsmInstruction *insn: overlappingInsns) {
+                if (insn->get_address() != target)
+                    return "target overlaps existing instruction";
+            }
+        }
+    }
+    return nullptr;
+}
+
 std::vector<rose_addr_t>
-scanCodeAddressTable(const Partitioner &partitioner, AddressInterval &tableLimits /*in,out*/,
+scanCodeAddressTable(const Partitioner::ConstPtr &partitioner, AddressInterval &tableLimits /*in,out*/,
                      const AddressInterval &targetLimits, SwitchSuccessors::EntryType tableEntryType,
                      size_t tableEntrySizeBytes, Sawyer::Optional<rose_addr_t> probableStartVa, size_t nSkippable) {
     ASSERT_require(tableEntrySizeBytes > 0 && tableEntrySizeBytes <= sizeof(rose_addr_t));
@@ -366,7 +435,7 @@ scanCodeAddressTable(const Partitioner &partitioner, AddressInterval &tableLimit
 
     if (tableLimits.isEmpty() || targetLimits.isEmpty())
         return tableEntries;
-    MemoryMap::Ptr map = partitioner.memoryMap();
+    MemoryMap::Ptr map = partitioner->memoryMap();
 
     // Look forward from the probable start address, but possibly allow the table to start with some addresses that are out of
     // range (which are skipped and not officially part of the table).
@@ -376,7 +445,7 @@ scanCodeAddressTable(const Partitioner &partitioner, AddressInterval &tableLimit
         // Read table entry to get target address
         uint8_t bytes[sizeof(rose_addr_t)];
         rose_addr_t tableEntryVa = actualStartVa + tableEntries.size() * tableEntrySizeBytes;
-        if (!tableLimits.isContaining(AddressInterval::baseSize(tableEntryVa, tableEntrySizeBytes))) {
+        if (!tableLimits.contains(AddressInterval::baseSize(tableEntryVa, tableEntrySizeBytes))) {
             SAWYER_MESG(debug) <<"  entry at " <<StringUtility::addrToString(tableEntryVa) <<" falls outside table boundary\n";
             break;
         }
@@ -396,21 +465,24 @@ scanCodeAddressTable(const Partitioner &partitioner, AddressInterval &tableLimit
                 SAWYER_MESG(debug) <<"  entry at " <<StringUtility::addrToString(tableEntryVa)
                                    <<" raw value = " <<StringUtility::addrToString(target) <<"\n";
                 target = (BitOps::signExtend<rose_addr_t>(target, 8*tableEntrySizeBytes) + actualStartVa) &
-                         BitOps::lowMask<rose_addr_t>(partitioner.instructionProvider().instructionPointerRegister().nBits());
+                         BitOps::lowMask<rose_addr_t>(partitioner->instructionProvider().instructionPointerRegister().nBits());
                 break;
         }
 
         // Save or skip the table entry
-        if (targetLimits.isContaining(target) && map->at(target).require(MemoryMap::EXECUTABLE).exists()) {
+        const char *invalidReason = isInvalidTarget(target, targetLimits, partitioner);
+        if (!invalidReason) {
             tableEntries.push_back(target);
         } else if (tableEntries.empty() && nSkippedEntries < nSkippable) {
             ++nSkippedEntries;
             actualStartVa += tableEntrySizeBytes;
             SAWYER_MESG(debug) <<"  entry at " <<StringUtility::addrToString(tableEntryVa) <<" is skipped"
-                               <<": value is " <<StringUtility::addrToString(target) <<"\n";
+                               <<": target is " <<StringUtility::addrToString(target)
+                               <<" (" <<invalidReason <<")\n";
         } else {
             SAWYER_MESG(debug) <<"  entry at " <<StringUtility::addrToString(tableEntryVa) <<" is invalid"
-                               <<": value is " <<StringUtility::addrToString(target) <<"\n";
+                               <<": target is " <<StringUtility::addrToString(target)
+                               <<" (" <<invalidReason <<")\n";
             break;
         }
     }
@@ -420,7 +492,7 @@ scanCodeAddressTable(const Partitioner &partitioner, AddressInterval &tableLimit
     size_t nBackwardEntries = 0;
     if (0 == nSkippedEntries) {
         while (actualStartVa >= tableEntrySizeBytes &&
-               tableLimits.isContaining(AddressInterval::baseSize(actualStartVa-tableEntrySizeBytes, tableEntrySizeBytes))) {
+               tableLimits.contains(AddressInterval::baseSize(actualStartVa-tableEntrySizeBytes, tableEntrySizeBytes))) {
             uint8_t bytes[sizeof(rose_addr_t)];
             rose_addr_t tableEntryVa = actualStartVa - tableEntrySizeBytes;
             if (tableEntrySizeBytes != (map->at(tableEntryVa).limit(tableEntrySizeBytes)
@@ -431,13 +503,17 @@ scanCodeAddressTable(const Partitioner &partitioner, AddressInterval &tableLimit
                 target |= bytes[i] << (8*i);            // x86 is little endian
 
             // Save entry if valid, otherwise we've reached the beginning of the table
-            if (targetLimits.isContaining(target) && map->at(target).require(MemoryMap::EXECUTABLE).exists()) {
+            const char *invalidReason = isInvalidTarget(target, targetLimits, partitioner);
+            if (invalidReason) {
+                SAWYER_MESG(debug) <<"  entry at " <<StringUtility::addrToString(tableEntryVa) <<" is invalid"
+                                   <<": target is " <<StringUtility::addrToString(target)
+                                   <<" (" <<invalidReason <<")\n";
+                break;
+            } else {
                 tableEntries.insert(tableEntries.begin(), target);
                 actualStartVa -= tableEntrySizeBytes;
                 ++nBackwardEntries;
                 SAWYER_MESG(debug) <<"  entry at " <<StringUtility::addrToString(tableEntryVa) <<" found by backward search\n";
-            } else {
-                break;
             }
         }
     }
@@ -504,7 +580,7 @@ scanCodeAddressTable(const Partitioner &partitioner, AddressInterval &tableLimit
     // Return values
     AddressInterval actualTableLocation =
         AddressInterval::baseSize(actualStartVa, tableEntries.size() * tableEntrySizeBytes + nIndexes);
-    ASSERT_require(tableLimits.isContaining(actualTableLocation));
+    ASSERT_require(tableLimits.contains(actualTableLocation));
     tableLimits = actualTableLocation;
     SAWYER_MESG(debug) <<"  actual table location = " <<StringUtility::addrToString(actualTableLocation) <<"\n";
     return tableEntries;
@@ -617,7 +693,7 @@ SwitchSuccessors::matchPattern2(const BasicBlock::Ptr &bb, SgAsmInstruction *jmp
 // This pattern is used for position independent AMD64 code. The table, starting at base, contains offsets from the start of
 // the table to the target basic block. Representative specimen: wget2 email-20201209 df4ea624fc0d2a890c5cf6d0344ece52
 bool
-SwitchSuccessors::matchPattern3(const Partitioner &partitioner, const BasicBlock::Ptr &bb, SgAsmInstruction *jmp) {
+SwitchSuccessors::matchPattern3(const Partitioner::ConstPtr &partitioner, const BasicBlock::Ptr &bb, SgAsmInstruction *jmp) {
     ASSERT_not_null(bb);
     ASSERT_always_not_null(jmp);
     size_t nInsns = bb->nInstructions();
@@ -692,11 +768,11 @@ SwitchSuccessors::matchPattern3(const Partitioner &partitioner, const BasicBlock
     SgAsmBinaryAdd *leaSrcAdd = isSgAsmBinaryAdd(leaSrc->get_address());
     SgAsmDirectRegisterExpression *leaSrcRip = isSgAsmDirectRegisterExpression(leaSrcAdd->get_lhs());
     SgAsmIntegerValueExpression *leaSrcOffset = NULL;
-    if (leaSrcRip && leaSrcRip->get_descriptor() == partitioner.instructionProvider().instructionPointerRegister()) {
+    if (leaSrcRip && leaSrcRip->get_descriptor() == partitioner->instructionProvider().instructionPointerRegister()) {
         leaSrcOffset = isSgAsmIntegerValueExpression(leaSrcAdd->get_rhs());
     } else {
         leaSrcRip = isSgAsmDirectRegisterExpression(leaSrcAdd->get_rhs());
-        if (!leaSrcRip || leaSrcRip->get_descriptor() != partitioner.instructionProvider().instructionPointerRegister())
+        if (!leaSrcRip || leaSrcRip->get_descriptor() != partitioner->instructionProvider().instructionPointerRegister())
             return false;
         leaSrcOffset = isSgAsmIntegerValueExpression(leaSrcAdd->get_lhs());
     }
@@ -704,7 +780,7 @@ SwitchSuccessors::matchPattern3(const Partitioner &partitioner, const BasicBlock
         return false;
 
     tableVa_ = (lea->get_address() + lea->get_size() + leaSrcOffset->get_absoluteValue()) &
-               BitOps::lowMask<rose_addr_t>(partitioner.instructionProvider().instructionPointerRegister().nBits());
+               BitOps::lowMask<rose_addr_t>(partitioner->instructionProvider().instructionPointerRegister().nBits());
     if (!tableVa_)
         return false;
 
@@ -714,7 +790,7 @@ SwitchSuccessors::matchPattern3(const Partitioner &partitioner, const BasicBlock
 }
 
 bool
-SwitchSuccessors::matchPatterns(const Partitioner &partitioner, const BasicBlock::Ptr &bblock) {
+SwitchSuccessors::matchPatterns(const Partitioner::ConstPtr &partitioner, const BasicBlock::Ptr &bblock) {
     ASSERT_not_null(bblock);
 
     // Block always ends with JMP with one argument.
@@ -759,10 +835,11 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
     if (!matchPatterns(args.partitioner, args.bblock))
         return chain;
     ASSERT_require(tableVa_);
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
 
     // Set some limits on the location of the target address table, besides those restrictions that will be imposed during the
     // table-reading loop (like table is mapped read-only).
-    size_t wordSizeBytes = args.partitioner.instructionProvider().instructionPointerRegister().nBits() / 8;
+    size_t wordSizeBytes = args.partitioner->instructionProvider().instructionPointerRegister().nBits() / 8;
     AddressInterval whole = AddressInterval::hull(0, BitOps::lowMask<rose_addr_t>(8*wordSizeBytes));
     AddressInterval tableLimits;
     SgAsmInstruction *lastInsn = args.bblock->instructions().back();
@@ -777,7 +854,7 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
     // Set some limits on allowable target addresses contained in the table, besides those restrictions that will be imposed
     // during the table-reading loop (like targets must be mapped with execute permission).
     AddressInterval targetLimits = AddressInterval::whole();
-    std::vector<Function::Ptr> functions = args.partitioner.functions();
+    std::vector<Function::Ptr> functions = args.partitioner->functions();
     {
         // If there's a function that precedes this basic block (possibly the one that will eventually own this block) then the
         // switch statement targets are almost certainly not before the beginning of that function.
@@ -807,7 +884,7 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
             targetLimits = targetLimits & AddressInterval::hull(0, nextFunction->address()-1);
         }
     }
-    SAWYER_MESG(mlog[DEBUG]) <<"switch table target limits: " <<StringUtility::addrToString(targetLimits) <<"\n";
+    SAWYER_MESG(debug) <<"switch table target limits: " <<StringUtility::addrToString(targetLimits) <<"\n";
     if (targetLimits.isEmpty())
         return chain;                                   // not even room for one case label
 
@@ -834,19 +911,19 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
     args.bblock->insertDataBlock(addressTable);
 
     // Debugging
-    if (mlog[DEBUG]) {
+    if (debug) {
         using namespace StringUtility;
-        mlog[DEBUG] <<"ModulesX86::SwitchSuccessors: found \"switch\" statement\n";
-        mlog[DEBUG] <<"  basic block: " <<addrToString(args.bblock->address()) <<"\n";
-        mlog[DEBUG] <<"  instruction: " <<args.bblock->instructions()[nInsns-1]->toString() <<"\n";
-        mlog[DEBUG] <<"  table va:    " <<addrToString(tableLimits.least()) <<"\n";
-        mlog[DEBUG] <<"  table size:  " <<plural(tableEntries.size(), "entries")
-                    <<", " <<plural(tableLimits.size(), "bytes") <<"\n";
-        mlog[DEBUG] <<"  successors:  " <<plural(successors.size(), "distinct addresses") <<"\n";
-        mlog[DEBUG] <<"   ";
+        debug <<"ModulesX86::SwitchSuccessors: found \"switch\" statement\n";
+        debug <<"  basic block: " <<addrToString(args.bblock->address()) <<"\n";
+        debug <<"  instruction: " <<args.bblock->instructions()[nInsns-1]->toString() <<"\n";
+        debug <<"  table va:    " <<addrToString(tableLimits.least()) <<"\n";
+        debug <<"  table size:  " <<plural(tableEntries.size(), "entries")
+              <<", " <<plural(tableLimits.size(), "bytes") <<"\n";
+        debug <<"  successors:  " <<plural(successors.size(), "distinct addresses") <<"\n";
+        debug <<"   ";
         for (rose_addr_t va: successors)
-            mlog[DEBUG] <<" " <<addrToString(va);
-        mlog[DEBUG] <<"\n";
+            debug <<" " <<addrToString(va);
+        debug <<"\n";
     }
 
     return chain;

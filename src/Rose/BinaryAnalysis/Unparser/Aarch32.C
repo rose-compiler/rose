@@ -27,7 +27,7 @@ unparseAarch32Expression(SgAsmExpression *expr, const LabelMap *labels, Register
         registers = RegisterDictionary::instanceAarch32();
     auto unparser = Aarch32::instance(Aarch32Settings());
     std::ostringstream ss;
-    Partitioner2::Partitioner p;
+    auto p = Partitioner2::Partitioner::instance();
     State state(p, registers, unparser->settings(), *unparser);
     unparser->emitOperand(ss, expr, state);
     return ss.str();

@@ -1,3 +1,4 @@
+#include <sage3basic.h>
 #include <Rose/Progress.h>
 
 #include <boost/algorithm/string/join.hpp>

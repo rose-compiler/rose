@@ -7,11 +7,13 @@ static const char *description =
     "whose standard input is opened in binary mode, such as Unix-like systems.";
 
 #include <rose.h>
-#include <BinaryVxcoreParser.h>                         // rose
-#include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
-#include <Sawyer/Stopwatch.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/SRecord.h>
+#include <Rose/CommandLine.h>
+#include <Sawyer/Stopwatch.h>
+
+#include <BinaryVxcoreParser.h>                         // rose
 
 #include <batSupport.h>
 
@@ -125,7 +127,7 @@ public:
         MemoryMap::ConstNodeIterator inode = map->at(dataInterval.least()).nodes().begin();
         ASSERT_forbid(inode == map->nodes().end());
         const AddressInterval &segmentInterval = inode->key();
-        ASSERT_require(segmentInterval.isContaining(dataInterval));
+        ASSERT_require(segmentInterval.contains(dataInterval));
         const MemoryMap::Segment &segment = inode->value();
         if (const uint8_t *data = segment.buffer()->data()) {
             rose_addr_t bufferOffset = segment.offset() + dataInterval.least() - segmentInterval.least();
@@ -214,15 +216,15 @@ main(int argc, char *argv[]) {
     Bat::checkRoseVersionNumber(MINIMUM_ROSE_LIBRARY_VERSION, mlog[FATAL]);
     Bat::registerSelfTests();
 
-    P2::Engine engine;
     Settings settings;
-    boost::filesystem::path inputFileName = parseCommandLine(argc, argv, engine, settings);
-    P2::Partitioner partitioner = engine.loadPartitioner(inputFileName, settings.stateFormat);
-    MemoryMap::Ptr map = partitioner.memoryMap();
+    P2::Engine *engine = P2::Engine::instance();
+    boost::filesystem::path inputFileName = parseCommandLine(argc, argv, *engine, settings);
+    P2::Partitioner::Ptr partitioner = engine->loadPartitioner(inputFileName, settings.stateFormat);
+    MemoryMap::Ptr map = partitioner->memoryMap();
     ASSERT_not_null(map);
 
     if (OutputFormat::NONE == settings.outputFormat) {
-        switch (partitioner.memoryMap()->byteOrder()) {
+        switch (partitioner->memoryMap()->byteOrder()) {
             case ByteOrder::ORDER_LSB:
                 std::cout <<"default byte order is little-endian\n";
                 break;
@@ -233,7 +235,7 @@ main(int argc, char *argv[]) {
                 std::cout <<"default byte order is unspecified\n";
                 break;
         }
-        partitioner.memoryMap()->dump(std::cout);
+        partitioner->memoryMap()->dump(std::cout);
 
     } else if (OutputFormat::VXCORE == settings.outputFormat) {
         if (settings.outputPrefix.empty()) {
@@ -298,4 +300,5 @@ main(int argc, char *argv[]) {
             }
         }
     }
+    delete engine;
 }

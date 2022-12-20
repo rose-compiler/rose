@@ -39,7 +39,7 @@ namespace BinaryAnalysis {
             void visit(SgNode* n);
             
             // @brief For the Partitioner Interface, traverses a basic block
-            void appendBasicBlock(Rose::BinaryAnalysis::Partitioner2::BasicBlock::Ptr bb );
+            void appendBasicBlock(Rose::BinaryAnalysis::Partitioner2::BasicBlockPtr bb );
 
             // @brief Gets the Rose::Combinatorics::Hasher
             const boost::shared_ptr<Rose::Combinatorics::Hasher> hasher() const { return hasher_; }; 

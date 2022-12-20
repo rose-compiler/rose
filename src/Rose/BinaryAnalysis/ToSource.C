@@ -4,6 +4,10 @@
 #include <Rose/BinaryAnalysis/ToSource.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
+#include <Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/CommandLine.h>
 
@@ -46,8 +50,9 @@ BinaryToSource::BinaryToSource(const Settings &settings)
 BinaryToSource::~BinaryToSource() {}
 
 void
-BinaryToSource::init(const P2::Partitioner &partitioner) {
-    disassembler_ = partitioner.instructionProvider().disassembler();
+BinaryToSource::init(const P2::Partitioner::ConstPtr &partitioner) {
+    ASSERT_not_null(partitioner);
+    disassembler_ = partitioner->instructionProvider().disassembler();
     RegisterDictionary::Ptr regDict = disassembler_->registerDictionary();
     raisingOps_ = RiscOperators::instanceFromRegisters(regDict, SmtSolverPtr());
     BaseSemantics::Dispatcher::Ptr protoCpu = disassembler_->dispatcher();
@@ -123,7 +128,7 @@ BinaryToSource::commandLineSwitches(Settings &settings) {
 }
 
 void
-BinaryToSource::emitFilePrologue(const P2::Partitioner&, std::ostream &out) {
+BinaryToSource::emitFilePrologue(const P2::Partitioner::ConstPtr&, std::ostream &out) {
     out <<"#include <assert.h>\n"
         <<"#include <signal.h>\n"
         <<"#include <stdint.h>\n"
@@ -262,7 +267,9 @@ BinaryToSource::emitInstruction(SgAsmInstruction *insn, std::ostream &out) {
 }
 
 void
-BinaryToSource::emitBasicBlock(const P2::Partitioner &partitioner, const P2::BasicBlock::Ptr &bblock, std::ostream &out) {
+BinaryToSource::emitBasicBlock(const P2::Partitioner::ConstPtr &partitioner, const P2::BasicBlock::Ptr &bblock,
+                               std::ostream &out) {
+    ASSERT_not_null(partitioner);
     out <<"            case " <<StringUtility::addrToString(bblock->address()) <<":\n";
 
     rose_addr_t fallThroughVa = 0;
@@ -274,12 +281,12 @@ BinaryToSource::emitBasicBlock(const P2::Partitioner &partitioner, const P2::Bas
 
     // If this bblock is a binary function call, then call the corresponding source function.  We can't do this
     // directly because the call might be indirect. Therefore all calls go through a function call dispatcher.
-    if (partitioner.basicBlockIsFunctionCall(bblock))
+    if (partitioner->basicBlockIsFunctionCall(bblock))
         out <<"                function_call();\n";
 
     bool needBreak = true;
-    P2::ControlFlowGraph::ConstVertexIterator placeholder = partitioner.findPlaceholder(bblock->address());
-    ASSERT_require(partitioner.cfg().isValidVertex(placeholder));
+    P2::ControlFlowGraph::ConstVertexIterator placeholder = partitioner->findPlaceholder(bblock->address());
+    ASSERT_require(partitioner->cfg().isValidVertex(placeholder));
     if (placeholder->nOutEdges() == 0) {
         out <<"                assert(!\"not reachable\");\n";
         needBreak = false;
@@ -295,7 +302,8 @@ BinaryToSource::emitBasicBlock(const P2::Partitioner &partitioner, const P2::Bas
 }
 
 void
-BinaryToSource::emitFunction(const P2::Partitioner &partitioner, const P2::Function::Ptr &function, std::ostream &out) {
+BinaryToSource::emitFunction(const P2::Partitioner::ConstPtr &partitioner, const P2::Function::Ptr &function, std::ostream &out) {
+    ASSERT_not_null(partitioner);
     std::string name = function->name();
     name = boost::replace_all_copy(name, "*/", "*\\/");
     out <<"\n";
@@ -309,8 +317,8 @@ BinaryToSource::emitFunction(const P2::Partitioner &partitioner, const P2::Funct
         <<"    while (" <<raisingOps_->registerVariableName(IP) <<" != ret_va) {\n"
         <<"        switch (" <<raisingOps_->registerVariableName(IP) <<") {\n";
     for (rose_addr_t bblockVa: function->basicBlockAddresses()) {
-        P2::ControlFlowGraph::ConstVertexIterator placeholder = partitioner.findPlaceholder(bblockVa);
-        ASSERT_require(partitioner.cfg().isValidVertex(placeholder));
+        P2::ControlFlowGraph::ConstVertexIterator placeholder = partitioner->findPlaceholder(bblockVa);
+        ASSERT_require(partitioner->cfg().isValidVertex(placeholder));
         ASSERT_require(placeholder->value().type() == P2::V_BASIC_BLOCK);
         P2::BasicBlock::Ptr bblock = placeholder->value().bblock();
         emitBasicBlock(partitioner, bblock, out);
@@ -323,13 +331,15 @@ BinaryToSource::emitFunction(const P2::Partitioner &partitioner, const P2::Funct
 }
 
 void
-BinaryToSource::emitAllFunctions(const P2::Partitioner &partitioner, std::ostream &out) {
-    for (const P2::Function::Ptr &function: partitioner.functions())
+BinaryToSource::emitAllFunctions(const P2::Partitioner::ConstPtr &partitioner, std::ostream &out) {
+    ASSERT_not_null(partitioner);
+    for (const P2::Function::Ptr &function: partitioner->functions())
         emitFunction(partitioner, function, out);
 }
 
 void
-BinaryToSource::emitFunctionDispatcher(const P2::Partitioner &partitioner, std::ostream &out) {
+BinaryToSource::emitFunctionDispatcher(const P2::Partitioner::ConstPtr &partitioner, std::ostream &out) {
+    ASSERT_not_null(partitioner);
     out <<"\n"
         <<"void\n"
         <<"function_call(void) {\n";
@@ -350,7 +360,7 @@ BinaryToSource::emitFunctionDispatcher(const P2::Partitioner &partitioner, std::
 
     // Emit the dispatch table
     out <<"    switch (" <<raisingOps_->registerVariableName(IP) <<") {\n";
-    for (const P2::Function::Ptr &function: partitioner.functions()) {
+    for (const P2::Function::Ptr &function: partitioner->functions()) {
         out <<"        case " <<StringUtility::addrToString(function->address()) <<": ";
         out <<"            F_" <<StringUtility::addrToString(function->address()).substr(2) <<"(returnTarget); ";
         out <<"            break;";
@@ -367,7 +377,8 @@ BinaryToSource::emitFunctionDispatcher(const P2::Partitioner &partitioner, std::
 }
 
 void
-BinaryToSource::emitMemoryInitialization(const P2::Partitioner &partitioner, std::ostream &out) {
+BinaryToSource::emitMemoryInitialization(const P2::Partitioner::ConstPtr &partitioner, std::ostream &out) {
+    ASSERT_not_null(partitioner);
     out <<"\n"
         <<"void\n"
         <<"initialize_memory(void) {\n";
@@ -376,9 +387,9 @@ BinaryToSource::emitMemoryInitialization(const P2::Partitioner &partitioner, std
     if (settings_.allocateMemoryArray) {
         if (0 == *settings_.allocateMemoryArray) {
             if (settings_.zeroMemoryArray) {
-                out <<"    mem = calloc(" <<StringUtility::addrToString(partitioner.memoryMap()->greatest()+1) <<"UL, 1);\n";
+                out <<"    mem = calloc(" <<StringUtility::addrToString(partitioner->memoryMap()->greatest()+1) <<"UL, 1);\n";
             } else {
-                out <<"    mem = malloc(" <<StringUtility::addrToString(partitioner.memoryMap()->greatest()+1) <<"UL);\n";
+                out <<"    mem = malloc(" <<StringUtility::addrToString(partitioner->memoryMap()->greatest()+1) <<"UL);\n";
             }
         } else {
             if (settings_.zeroMemoryArray) {
@@ -392,13 +403,13 @@ BinaryToSource::emitMemoryInitialization(const P2::Partitioner &partitioner, std
     // Initialize the memory array with the contents of the memory map
     rose_addr_t va = 0;
     uint8_t buf[8192];
-    while (AddressInterval where = partitioner.memoryMap()->atOrAfter(va).limit(sizeof buf).read(buf)) {
+    while (AddressInterval where = partitioner->memoryMap()->atOrAfter(va).limit(sizeof buf).read(buf)) {
         uint8_t *bufptr = buf;
         for (va = where.least(); va <= where.greatest(); ++va, ++bufptr) {
             out <<"    mem[" <<StringUtility::addrToString(va) <<"]"
                 <<"= " <<StringUtility::toHex2(*bufptr, 8, false, false) <<";\n";
         }
-        if (va <= partitioner.memoryMap()->hull().least())
+        if (va <= partitioner->memoryMap()->hull().least())
             break;                                      // overflow of ++va
     }
 
@@ -406,7 +417,8 @@ BinaryToSource::emitMemoryInitialization(const P2::Partitioner &partitioner, std
 }
 
 void
-BinaryToSource::emitMain(const P2::Partitioner &partitioner, std::ostream &out) {
+BinaryToSource::emitMain(const P2::Partitioner::ConstPtr &partitioner, std::ostream &out) {
+    ASSERT_not_null(partitioner);
     out <<"\n"
         <<"int\n"
         <<"main() {\n"
@@ -417,7 +429,7 @@ BinaryToSource::emitMain(const P2::Partitioner &partitioner, std::ostream &out) 
     if (settings_.initialInstructionPointer) {
         initialIp = *settings_.initialInstructionPointer;
     } else {
-        for (const P2::Function::Ptr &f: partitioner.functions()) {
+        for (const P2::Function::Ptr &f: partitioner->functions()) {
             if (f->name() == "_start") {
                 initialIp = f->address();
                 break;
@@ -452,7 +464,7 @@ BinaryToSource::emitMain(const P2::Partitioner &partitioner, std::ostream &out) 
 }
 
 void
-BinaryToSource::generateSource(const P2::Partitioner &partitioner, std::ostream &out) {
+BinaryToSource::generateSource(const P2::Partitioner::ConstPtr &partitioner, std::ostream &out) {
     init(partitioner);
     emitFilePrologue(partitioner, out);
     declareGlobalRegisters(out);

@@ -4,17 +4,12 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Sawyer/Set.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
-
-namespace Partitioner2 {
-    class Partitioner;
-    class Function;
-}
-
 
 /** Pointer detection analysis.
  *
@@ -279,7 +274,7 @@ public:
      *  This analysis method uses @ref Partitioner2 data structures which are generally faster than using the AST. The
      *  specified function need not be attached to the partitioner. Results of the analysis are stored in this analysis object
      *  to be queried after the analysis completes. */
-    void analyzeFunction(const Partitioner2::Partitioner&, const Sawyer::SharedPointer<Partitioner2::Function>&);
+    void analyzeFunction(const Partitioner2::PartitionerConstPtr&, const Sawyer::SharedPointer<Partitioner2::Function>&);
 
     /** Whether a function has been analyzed.
      *
@@ -343,11 +338,11 @@ private:
     void init(const Disassembler::BasePtr&);
 
     InstructionSemantics::BaseSemantics::RiscOperatorsPtr
-    makeRiscOperators(const Partitioner2::Partitioner&) const;
+    makeRiscOperators(const Partitioner2::PartitionerConstPtr&) const;
 
     // Prints instructions to the mlog[DEBUG] diagnostic stream if that stream is enabled.
     void
-    printInstructionsForDebugging(const Partitioner2::Partitioner&, const Sawyer::SharedPointer<Partitioner2::Function>&);
+    printInstructionsForDebugging(const Partitioner2::PartitionerConstPtr&, const Sawyer::SharedPointer<Partitioner2::Function>&);
 
     // Given a potential pointer's r-value, determine if the r-value is a pointer and if so, store its address in the
     // result. The pointer's value and the defining instructions are added to the two sets, and the result is not updated for

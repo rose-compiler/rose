@@ -54,8 +54,9 @@ findErrorHandlingFunctions(SgAsmInterpretation *interp) {
 }
 
 SgAsmInstruction*
-PltEntryMatcher::matchNop(const Partitioner &partitioner, rose_addr_t va) {
-    if (SgAsmX86Instruction *insn = isSgAsmX86Instruction(partitioner.discoverInstruction(va))) {
+PltEntryMatcher::matchNop(const Partitioner::ConstPtr &partitioner, rose_addr_t va) {
+    ASSERT_not_null(partitioner);
+    if (SgAsmX86Instruction *insn = isSgAsmX86Instruction(partitioner->discoverInstruction(va))) {
         if (insn->get_kind() == x86_nop)
             return insn;
     }
@@ -63,11 +64,12 @@ PltEntryMatcher::matchNop(const Partitioner &partitioner, rose_addr_t va) {
 }
 
 SgAsmInstruction*
-PltEntryMatcher::matchPush(const Partitioner &partitioner, rose_addr_t va, rose_addr_t &n /*out*/) {
+PltEntryMatcher::matchPush(const Partitioner::ConstPtr &partitioner, rose_addr_t va, rose_addr_t &n /*out*/) {
+    ASSERT_not_null(partitioner);
     n = 0;
 
     // match "push C" where C is a constant
-    if (SgAsmX86Instruction *insn = isSgAsmX86Instruction(partitioner.discoverInstruction(va))) {
+    if (SgAsmX86Instruction *insn = isSgAsmX86Instruction(partitioner->discoverInstruction(va))) {
         if (insn->get_kind() == x86_push && insn->nOperands() == 1) {
             if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(insn->operand(0))) {
                 n = ival->get_absoluteValue();
@@ -79,8 +81,9 @@ PltEntryMatcher::matchPush(const Partitioner &partitioner, rose_addr_t va, rose_
 }
 
 SgAsmInstruction*
-PltEntryMatcher::matchDirectJump(const Partitioner &partitioner, rose_addr_t va) {
-    if (SgAsmX86Instruction *insn = isSgAsmX86Instruction(partitioner.discoverInstruction(va))) {
+PltEntryMatcher::matchDirectJump(const Partitioner::ConstPtr &partitioner, rose_addr_t va) {
+    ASSERT_not_null(partitioner);
+    if (SgAsmX86Instruction *insn = isSgAsmX86Instruction(partitioner->discoverInstruction(va))) {
         if (insn->nOperands() == 1 && isSgAsmIntegerValueExpression(insn->operand(0)))
             return insn;
     }
@@ -88,12 +91,13 @@ PltEntryMatcher::matchDirectJump(const Partitioner &partitioner, rose_addr_t va)
 }
 
 SgAsmInstruction*
-PltEntryMatcher::matchIndirectJump(const Partitioner &partitioner, rose_addr_t va,
+PltEntryMatcher::matchIndirectJump(const Partitioner::ConstPtr &partitioner, rose_addr_t va,
                                    rose_addr_t &indirectVa /*out*/, size_t &indirectNBytes /*out*/) {
+    ASSERT_not_null(partitioner);
     indirectVa = 0;
     indirectNBytes = 0;
-    const RegisterDescriptor REG_IP = partitioner.instructionProvider().instructionPointerRegister();
-    if (SgAsmX86Instruction *insn = isSgAsmX86Instruction(partitioner.discoverInstruction(va))) {
+    const RegisterDescriptor REG_IP = partitioner->instructionProvider().instructionPointerRegister();
+    if (SgAsmX86Instruction *insn = isSgAsmX86Instruction(partitioner->discoverInstruction(va))) {
         if (x86InstructionIsUnconditionalBranch(insn) && insn->nOperands() == 1 &&
             isSgAsmMemoryReferenceExpression(insn->operand(0))) {
             SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(insn->operand(0));
@@ -125,12 +129,13 @@ PltEntryMatcher::matchIndirectJump(const Partitioner &partitioner, rose_addr_t v
 }
 
 SgAsmInstruction*
-PltEntryMatcher::matchIndirectJumpEbx(const Partitioner &partitioner, rose_addr_t va,
+PltEntryMatcher::matchIndirectJumpEbx(const Partitioner::ConstPtr &partitioner, rose_addr_t va,
                                       rose_addr_t &indirectOffset /*out*/, size_t &indirectNBytes /*out*/) {
+    ASSERT_not_null(partitioner);
     indirectOffset = 0;
     indirectNBytes = 0;
 
-    SgAsmX86Instruction *insn = isSgAsmX86Instruction(partitioner.discoverInstruction(va));
+    SgAsmX86Instruction *insn = isSgAsmX86Instruction(partitioner->discoverInstruction(va));
     if (!insn || !x86InstructionIsUnconditionalBranch(insn) || insn->nOperands() != 1)
         return NULL;
 
@@ -151,7 +156,7 @@ PltEntryMatcher::matchIndirectJumpEbx(const Partitioner &partitioner, rose_addr_
     if (!ival || !dre)
         return NULL;
 
-    const RegisterDescriptor EBX = partitioner.instructionProvider().registerDictionary()->find("ebx");
+    const RegisterDescriptor EBX = partitioner->instructionProvider().registerDictionary()->find("ebx");
     if (dre->get_descriptor() != EBX)
         return NULL;
 
@@ -161,11 +166,12 @@ PltEntryMatcher::matchIndirectJumpEbx(const Partitioner &partitioner, rose_addr_
 }
 
 SgAsmInstruction*
-PltEntryMatcher::matchAarch64Adrp(const Partitioner &partitioner, rose_addr_t va, rose_addr_t &value /*out*/) {
+PltEntryMatcher::matchAarch64Adrp(const Partitioner::ConstPtr &partitioner, rose_addr_t va, rose_addr_t &value /*out*/) {
+    ASSERT_not_null(partitioner);
     value = 0;
 #ifdef ROSE_ENABLE_ASM_AARCH64
     // match "adrp X, I" where I is an integer that will be returned through the "value" argument
-    if (SgAsmAarch64Instruction *insn = isSgAsmAarch64Instruction(partitioner.discoverInstruction(va))) {
+    if (SgAsmAarch64Instruction *insn = isSgAsmAarch64Instruction(partitioner->discoverInstruction(va))) {
         if (insn->get_kind() == Aarch64InstructionKind::ARM64_INS_ADRP) {
             SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(insn->operand(1));
             ASSERT_not_null(ival);
@@ -178,13 +184,14 @@ PltEntryMatcher::matchAarch64Adrp(const Partitioner &partitioner, rose_addr_t va
 }
 
 SgAsmInstruction*
-PltEntryMatcher::matchAarch64Ldr(const Partitioner &partitioner, rose_addr_t va, rose_addr_t &indirectVa /*in,out*/,
+PltEntryMatcher::matchAarch64Ldr(const Partitioner::ConstPtr &partitioner, rose_addr_t va, rose_addr_t &indirectVa /*in,out*/,
                                  rose_addr_t &indirectNBytes /*out*/) {
+    ASSERT_not_null(partitioner);
     indirectNBytes = 0;
 #ifdef ROSE_ENABLE_ASM_AARCH64
     // match "ldr R1, [ R2 + C ]" where R1 and R2 are registers and C is a constant. The initial value of R2 is
     // provided as "indirectVa", which will be incremented by C upon return.
-    if (SgAsmAarch64Instruction *insn = isSgAsmAarch64Instruction(partitioner.discoverInstruction(va))) {
+    if (SgAsmAarch64Instruction *insn = isSgAsmAarch64Instruction(partitioner->discoverInstruction(va))) {
         if (insn->get_kind() != Aarch64InstructionKind::ARM64_INS_LDR || insn->nOperands() != 2)
             return NULL;
         SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(insn->operand(1));
@@ -215,9 +222,10 @@ PltEntryMatcher::matchAarch64Ldr(const Partitioner &partitioner, rose_addr_t va,
 }
 
 SgAsmInstruction*
-PltEntryMatcher::matchAarch64Add(const Partitioner &partitioner, rose_addr_t va) {
+PltEntryMatcher::matchAarch64Add(const Partitioner::ConstPtr &partitioner, rose_addr_t va) {
+    ASSERT_not_null(partitioner);
 #ifdef ROSE_ENABLE_ASM_AARCH64
-    if (SgAsmAarch64Instruction *insn = isSgAsmAarch64Instruction(partitioner.discoverInstruction(va))) {
+    if (SgAsmAarch64Instruction *insn = isSgAsmAarch64Instruction(partitioner->discoverInstruction(va))) {
         if (insn->get_kind() == Aarch64InstructionKind::ARM64_INS_ADD)
             return insn;
     }
@@ -226,9 +234,10 @@ PltEntryMatcher::matchAarch64Add(const Partitioner &partitioner, rose_addr_t va)
 }
 
 SgAsmInstruction*
-PltEntryMatcher::matchAarch64Br(const Partitioner &partitioner, rose_addr_t va) {
+PltEntryMatcher::matchAarch64Br(const Partitioner::ConstPtr &partitioner, rose_addr_t va) {
+    ASSERT_not_null(partitioner);
 #ifdef ROSE_ENABLE_ASM_AARCH64
-    if (SgAsmAarch64Instruction *insn = isSgAsmAarch64Instruction(partitioner.discoverInstruction(va))) {
+    if (SgAsmAarch64Instruction *insn = isSgAsmAarch64Instruction(partitioner->discoverInstruction(va))) {
         if (insn->get_kind() == Aarch64InstructionKind::ARM64_INS_BR)
             return insn;
     }
@@ -237,10 +246,11 @@ PltEntryMatcher::matchAarch64Br(const Partitioner &partitioner, rose_addr_t va) 
 }
 
 SgAsmInstruction*
-PltEntryMatcher::matchAarch32CopyPcToIp(const Partitioner &partitioner, rose_addr_t va, uint32_t &result) {
+PltEntryMatcher::matchAarch32CopyPcToIp(const Partitioner::ConstPtr &partitioner, rose_addr_t va, uint32_t &result) {
+    ASSERT_not_null(partitioner);
     // Matches: "add ip, pc, ror(X,Y)" where X and Y are constants. The resulting IP value is returned via "value" argument.
 #ifdef ROSE_ENABLE_ASM_AARCH32
-    auto insn = isSgAsmAarch32Instruction(partitioner.discoverInstruction(va));
+    auto insn = isSgAsmAarch32Instruction(partitioner->discoverInstruction(va));
     if (!insn || insn->get_kind() != Aarch32InstructionKind::ARM_INS_ADD || insn->nOperands() != 3)
         return nullptr;
 
@@ -272,10 +282,11 @@ PltEntryMatcher::matchAarch32CopyPcToIp(const Partitioner &partitioner, rose_add
 }
 
 SgAsmInstruction*
-PltEntryMatcher::matchAarch32AddConstToIp(const Partitioner &partitioner, rose_addr_t va, uint32_t &addend /*out*/) {
+PltEntryMatcher::matchAarch32AddConstToIp(const Partitioner::ConstPtr &partitioner, rose_addr_t va, uint32_t &addend /*out*/) {
+    ASSERT_not_null(partitioner);
     // Matches "add ip, ip, ADDEND" where ADDEND is a constant returned via "addend" argument.
 #ifdef ROSE_ENABLE_ASM_AARCH32
-    auto insn = isSgAsmAarch32Instruction(partitioner.discoverInstruction(va));
+    auto insn = isSgAsmAarch32Instruction(partitioner->discoverInstruction(va));
     if (!insn || insn->get_kind() != Aarch32InstructionKind::ARM_INS_ADD || insn->nOperands() != 3)
         return nullptr;
 
@@ -298,10 +309,11 @@ PltEntryMatcher::matchAarch32AddConstToIp(const Partitioner &partitioner, rose_a
 }
 
 SgAsmInstruction*
-PltEntryMatcher::matchAarch32IndirectBranch(const Partitioner &partitioner, rose_addr_t va, uint32_t &addend /*out*/) {
+PltEntryMatcher::matchAarch32IndirectBranch(const Partitioner::ConstPtr &partitioner, rose_addr_t va, uint32_t &addend /*out*/) {
+    ASSERT_not_null(partitioner);
     // Matches "ldr pc, u32 [ip += ADDEND]" where ADDEND is a constant returned via "addend" argument.
 #ifdef ROSE_ENABLE_ASM_AARCH32
-    auto insn = isSgAsmAarch32Instruction(partitioner.discoverInstruction(va));
+    auto insn = isSgAsmAarch32Instruction(partitioner->discoverInstruction(va));
     if (!insn || insn->get_kind() != Aarch32InstructionKind::ARM_INS_LDR || insn->nOperands() != 2)
         return nullptr;
 
@@ -331,14 +343,15 @@ PltEntryMatcher::matchAarch32IndirectBranch(const Partitioner &partitioner, rose
 }
 
 bool
-PltEntryMatcher::match(const Partitioner &partitioner, rose_addr_t anchor) {
+PltEntryMatcher::match(const Partitioner::ConstPtr &partitioner, rose_addr_t anchor) {
+    ASSERT_not_null(partitioner);
     nBytesMatched_ = 0;
     gotEntryVa_ = 0;
     gotEntry_ = 0;
     gotEntryNBytes_ = 0;
     functionNumber_ = 0;
 
-    SgAsmInstruction *insn = partitioner.discoverInstruction(anchor);
+    SgAsmInstruction *insn = partitioner->discoverInstruction(anchor);
     if (!insn)
         return false;
 
@@ -510,9 +523,9 @@ PltEntryMatcher::match(const Partitioner &partitioner, rose_addr_t anchor) {
         //    4e fb 01 71: jmp ([%pc, addr])
         //    00 00 00 00: replaced with offset to .got+8
         //    00 00 00 00: pad out to 20 bytes
-        if (partitioner.memoryMap() != NULL) {
+        if (partitioner->memoryMap() != NULL) {
             uint8_t entry[20];
-            size_t nRead = partitioner.memoryMap()->at(anchor).limit(sizeof entry).read(entry).size();
+            size_t nRead = partitioner->memoryMap()->at(anchor).limit(sizeof entry).read(entry).size();
             if (nRead == sizeof entry && entry[8] == 0x2f && entry[9] == 0x3c && entry[14] == 0x60 && entry[15] == 0xff) {
                 rose_addr_t gotOffset = (entry[4] << 24) | (entry[5] << 16) | (entry[6] << 8) | entry[7];
                 gotEntryVa_ = (anchor + gotOffset + 2) & 0xffffffffUL;
@@ -535,22 +548,22 @@ PltEntryMatcher::match(const Partitioner &partitioner, rose_addr_t anchor) {
     }
 
     // Read the GOT entry if it's mapped
-    if (nBytesMatched_ > 0 && partitioner.memoryMap() != NULL) {
+    if (nBytesMatched_ > 0 && partitioner->memoryMap() != NULL) {
         switch (gotEntryNBytes_) {
             case 0:
                 gotEntry_ = 0;
                 break;
             case 1:
-                gotEntry_ = partitioner.memoryMap()->readUnsigned<uint8_t>(gotEntryVa_).orElse(0);
+                gotEntry_ = partitioner->memoryMap()->readUnsigned<uint8_t>(gotEntryVa_).orElse(0);
                 break;
             case 2:
-                gotEntry_ = partitioner.memoryMap()->readUnsigned<uint16_t>(gotEntryVa_).orElse(0);
+                gotEntry_ = partitioner->memoryMap()->readUnsigned<uint16_t>(gotEntryVa_).orElse(0);
                 break;
             case 4:
-                gotEntry_ = partitioner.memoryMap()->readUnsigned<uint32_t>(gotEntryVa_).orElse(0);
+                gotEntry_ = partitioner->memoryMap()->readUnsigned<uint32_t>(gotEntryVa_).orElse(0);
                 break;
             case 8:
-                gotEntry_ = partitioner.memoryMap()->readUnsigned<uint64_t>(gotEntryVa_).orElse(0);
+                gotEntry_ = partitioner->memoryMap()->readUnsigned<uint64_t>(gotEntryVa_).orElse(0);
                 break;
             default:
                 ASSERT_not_reachable("invalid GOT entry size: " + StringUtility::numberToString(gotEntryNBytes_));
@@ -561,7 +574,7 @@ PltEntryMatcher::match(const Partitioner &partitioner, rose_addr_t anchor) {
 }
 
 PltInfo
-findPlt(const Partitioner &partitioner, SgAsmGenericSection *got, SgAsmElfFileHeader *elfHeader) {
+findPlt(const Partitioner::ConstPtr &partitioner, SgAsmGenericSection *got, SgAsmElfFileHeader *elfHeader) {
     if (elfHeader) {
         // The procedure lookup table can be in a variety of places.
         bool foundSection = false;
@@ -629,11 +642,11 @@ findPlt(const Partitioner &partitioner, SgAsmGenericSection *got, SgAsmElfFileHe
 }
 
 size_t
-findPltFunctions(Partitioner &partitioner, SgAsmElfFileHeader *elfHeader, std::vector<Function::Ptr> &functions) {
+findPltFunctions(const Partitioner::Ptr &partitioner, SgAsmElfFileHeader *elfHeader, std::vector<Function::Ptr> &functions) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
 
     // Find important sections
-    SgAsmGenericSection *got = partitioner.elfGot(elfHeader);
+    SgAsmGenericSection *got = partitioner->elfGot(elfHeader);
     PltInfo plt = findPlt(partitioner, got, elfHeader);
     if (!plt.section || !plt.section->is_mapped() || !got || !got->is_mapped() || 0 == plt.entrySize)
         return 0;
@@ -707,28 +720,31 @@ findPltFunctions(Partitioner &partitioner, SgAsmElfFileHeader *elfHeader, std::v
 }
 
 bool
-isImport(const Partitioner &partitioner, const Function::Ptr &function) {
+isImport(const Partitioner::ConstPtr &partitioner, const Function::Ptr &function) {
+    ASSERT_not_null(partitioner);
     if (!function)
         return false;
     if (0 == (function->reasons() & SgAsmFunction::FUNC_IMPORT))
         return false;
-    PltEntryMatcher matcher(partitioner.elfGotVa().orElse(0));
+    PltEntryMatcher matcher(partitioner->elfGotVa().orElse(0));
     return matcher.match(partitioner, function->address());
 }
 
 bool
-isLinkedImport(const Partitioner &partitioner, const Function::Ptr &function) {
+isLinkedImport(const Partitioner::ConstPtr &partitioner, const Function::Ptr &function) {
+    ASSERT_not_null(partitioner);
+
     // Is function an import?
     if (!function)
         return false;
     if (0 == (function->reasons() & SgAsmFunction::FUNC_IMPORT))
         return false;
-    PltEntryMatcher matcher(partitioner.elfGotVa().orElse(0));
+    PltEntryMatcher matcher(partitioner->elfGotVa().orElse(0));
     if (!matcher.match(partitioner, function->address()))
         return false;
     if (matcher.gotEntryVa() == 0)
         return false;
-    SgAsmInstruction *insn = partitioner.instructionProvider()[function->address()];
+    SgAsmInstruction *insn = partitioner->instructionProvider()[function->address()];
     if (!insn)
         return false;
 
@@ -738,18 +754,20 @@ isLinkedImport(const Partitioner &partitioner, const Function::Ptr &function) {
 }
 
 bool
-isUnlinkedImport(const Partitioner &partitioner, const Function::Ptr &function) {
+isUnlinkedImport(const Partitioner::ConstPtr &partitioner, const Function::Ptr &function) {
+    ASSERT_not_null(partitioner);
+
     // Is function an import?
     if (!function)
         return false;
     if (0 == (function->reasons() & SgAsmFunction::FUNC_IMPORT))
         return false;
-    PltEntryMatcher matcher(partitioner.elfGotVa().orElse(0));
+    PltEntryMatcher matcher(partitioner->elfGotVa().orElse(0));
     if (!matcher.match(partitioner, function->address()))
         return false;
     if (matcher.gotEntryVa() == 0)
         return false;
-    SgAsmInstruction *insn = partitioner.instructionProvider()[function->address()];
+    SgAsmInstruction *insn = partitioner->instructionProvider()[function->address()];
     if (!insn)
         return false;
 
@@ -930,14 +948,14 @@ extractStaticArchive(const boost::filesystem::path &directory, const boost::file
 }
 
 std::vector<Function::Ptr>
-findPltFunctions(Partitioner &partitioner, SgAsmElfFileHeader *elfHeader) {
+findPltFunctions(const Partitioner::Ptr &partitioner, SgAsmElfFileHeader *elfHeader) {
     std::vector<Function::Ptr> functions;
     findPltFunctions(partitioner, elfHeader, functions);
     return functions;
 }
 
 std::vector<Function::Ptr>
-findPltFunctions(Partitioner &partitioner, SgAsmInterpretation *interp) {
+findPltFunctions(const Partitioner::Ptr &partitioner, SgAsmInterpretation *interp) {
     std::vector<Function::Ptr> functions;
     if (interp!=NULL) {
         for (SgAsmGenericHeader *fileHeader: interp->get_headers()->get_headers())
@@ -962,10 +980,12 @@ findSectionsByName(SgAsmInterpretation *interp, const std::string &name) {
 }
 
 void
-buildMayReturnLists(Partitioner &p) {
+buildMayReturnLists(const Partitioner::Ptr &partitioner) {
+    ASSERT_not_null(partitioner);
+
     // Most of these were obtained by searching for "noreturn" in all the header files on Debian Squeeze.
     // Please keep this list alphabetical (ignoring leading underscores).
-    Configuration &c = p.configuration();
+    Configuration &c = partitioner->configuration();
 
     c.insertMaybeFunction("abort@plt").mayReturn(false);
     c.insertMaybeFunction("abort@plt").mayReturn(false);

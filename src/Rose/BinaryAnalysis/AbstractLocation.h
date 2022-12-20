@@ -5,7 +5,6 @@
 
 #include <Rose/Location.h>
 #include <Rose/BinaryAnalysis/BasicTypes.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h>
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 
 #include <ostream>

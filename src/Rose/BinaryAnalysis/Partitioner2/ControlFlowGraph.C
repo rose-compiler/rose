@@ -2,7 +2,9 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Sawyer/GraphTraversal.h>
 
@@ -11,8 +13,67 @@ namespace BinaryAnalysis {
 namespace Partitioner2 {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// CfgAdjustmentCallback
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+CfgAdjustmentCallback::AttachedBasicBlock::AttachedBasicBlock(const Partitioner::Ptr &partitioner, rose_addr_t startVa,
+                                                              const BasicBlock::Ptr &bblock)
+    : partitioner(partitioner), startVa(startVa), bblock(bblock) {
+    ASSERT_not_null(partitioner);
+}
+
+CfgAdjustmentCallback::AttachedBasicBlock::~AttachedBasicBlock() {}
+
+CfgAdjustmentCallback::DetachedBasicBlock::DetachedBasicBlock(const Partitioner::Ptr &partitioner, rose_addr_t startVa,
+                                                              const BasicBlock::Ptr &bblock)
+    : partitioner(partitioner), startVa(startVa), bblock(bblock) {
+    ASSERT_not_null(partitioner);
+}
+
+CfgAdjustmentCallback::DetachedBasicBlock::~DetachedBasicBlock() {}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // CfgVertex
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+CfgVertex::CfgVertex()
+    : type_(V_USER_DEFINED), startVa_(0) {}
+
+CfgVertex::~CfgVertex() {}
+
+CfgVertex::CfgVertex(rose_addr_t startVa)
+    : type_(V_BASIC_BLOCK), startVa_(startVa) {}
+
+CfgVertex::CfgVertex(const BasicBlock::Ptr &bb)
+    : type_(V_BASIC_BLOCK), bblock_(bb) {
+    ASSERT_not_null(bb);
+    startVa_ = bb->address();
+}
+
+CfgVertex::CfgVertex(VertexType type)
+    : type_(type), startVa_(0) {
+    ASSERT_forbid2(type==V_BASIC_BLOCK, "this constructor does not create basic block or placeholder vertices");
+}
+
+VertexType
+CfgVertex::type() const {
+    return type_;
+}
+
+rose_addr_t
+CfgVertex::address() const {
+    ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_ || V_NONEXISTING==type_);
+    return startVa_;
+}
+
+void
+CfgVertex::address(rose_addr_t va) {
+    ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_ || V_NONEXISTING==type_);
+    startVa_ = va;
+}
+
+
 
 AddressIntervalSet
 CfgVertex::addresses() const {
@@ -63,6 +124,51 @@ CfgVertex::optionalLastAddress() const {
     }
 }
 
+const BasicBlock::Ptr&
+CfgVertex::bblock() const {
+    return bblock_;
+}
+
+void
+CfgVertex::bblock(const BasicBlock::Ptr &bb) {
+    ASSERT_require(V_BASIC_BLOCK == type_ || V_USER_DEFINED == type_);
+    bblock_ = bb;
+}
+
+bool
+CfgVertex::insertOwningFunction(const Function::Ptr &function) {
+    ASSERT_require(V_BASIC_BLOCK == type_ || V_USER_DEFINED == type_ || V_NONEXISTING == type_);
+    ASSERT_not_null(function);
+    return owningFunctions_.insert(function);
+}
+
+void
+CfgVertex::eraseOwningFunction(const Function::Ptr &function) {
+    ASSERT_require(V_BASIC_BLOCK == type_ || V_USER_DEFINED == type_ || V_NONEXISTING == type_);
+    if (function != NULL)
+        owningFunctions_.erase(function);
+}
+
+bool
+CfgVertex::isOwningFunction(const Function::Ptr &function) const {
+    return owningFunctions_.exists(function);
+}
+
+size_t
+CfgVertex::nOwningFunctions() const {
+    return owningFunctions_.size();
+}
+
+const FunctionSet&
+CfgVertex::owningFunctions() const {
+    return owningFunctions_;
+}
+
+FunctionSet&
+CfgVertex::owningFunctions() {
+    return owningFunctions_;
+}
+
 Function::Ptr
 CfgVertex::isEntryBlock() const {
     Function::Ptr retval;
@@ -83,6 +189,40 @@ CfgVertex::isEntryBlock() const {
     }
     return retval;
 }
+
+void
+CfgVertex::nullify() {
+    ASSERT_require(V_BASIC_BLOCK == type_);
+    bblock_ = BasicBlockPtr();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// CfgEdge
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+CfgEdge::~CfgEdge() {}
+
+CfgEdge::CfgEdge()
+    : type_(E_NORMAL), confidence_(ASSUMED) {}
+
+CfgEdge::CfgEdge(EdgeType type, Confidence confidence)
+    : type_(type), confidence_(confidence) {}
+
+EdgeType
+CfgEdge::type() const {
+    return type_;
+}
+
+Confidence
+CfgEdge::confidence() const {
+    return confidence_;
+}
+
+void
+CfgEdge::confidence(Confidence c) {
+    confidence_ = c;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Free functions
@@ -138,7 +278,7 @@ findCalledFunctions(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVe
 }
 
 CfgConstEdgeSet
-findCallReturnEdges(const Partitioner &partitioner, const ControlFlowGraph &cfg) {
+findCallReturnEdges(const Partitioner::ConstPtr &partitioner, const ControlFlowGraph &cfg) {
     CfgConstEdgeSet retval;
     for (ControlFlowGraph::ConstEdgeIterator edge = cfg.edges().begin(); edge != cfg.edges().end(); ++edge) {
         if (edge->value().type() == E_CALL_RETURN)
@@ -232,17 +372,18 @@ reverseMapped(const CfgConstVertexSet &vertices, const CfgVertexMap &vmap) {
 }
 
 Sawyer::Container::Map<Function::Ptr, CfgConstEdgeSet>
-findFunctionReturnEdges(const Partitioner &partitioner) {
-    return findFunctionReturnEdges(partitioner, partitioner.cfg());
+findFunctionReturnEdges(const Partitioner::ConstPtr &partitioner) {
+    return findFunctionReturnEdges(partitioner, partitioner->cfg());
 }
 
 Sawyer::Container::Map<Function::Ptr, CfgConstEdgeSet>
-findFunctionReturnEdges(const Partitioner &partitioner, const ControlFlowGraph &cfg) {
+findFunctionReturnEdges(const Partitioner::ConstPtr &partitioner, const ControlFlowGraph &cfg) {
+    ASSERT_not_null(partitioner);
     Sawyer::Container::Map<Function::Ptr, CfgConstEdgeSet> retval;
     for (ControlFlowGraph::ConstEdgeIterator edge = cfg.edges().begin(); edge != cfg.edges().end(); ++edge) {
         if (edge->value().type() == E_FUNCTION_RETURN) {
             if (BasicBlock::Ptr bblock = edge->source()->value().bblock()) {
-                std::vector<Function::Ptr> functions = partitioner.functionsOwningBasicBlock(bblock);
+                std::vector<Function::Ptr> functions = partitioner->functionsOwningBasicBlock(bblock);
                 for (const Function::Ptr &function: functions)
                     retval.insertMaybeDefault(function).insert(edge);
             }
@@ -252,7 +393,8 @@ findFunctionReturnEdges(const Partitioner &partitioner, const ControlFlowGraph &
 }
 
 void
-expandFunctionReturnEdges(const Partitioner &partitioner, ControlFlowGraph &cfg/*in,out*/) {
+expandFunctionReturnEdges(const Partitioner::ConstPtr &partitioner, ControlFlowGraph &cfg/*in,out*/) {
+    ASSERT_not_null(partitioner);
     Sawyer::Container::Map<Function::Ptr, CfgConstEdgeSet> fre = findFunctionReturnEdges(partitioner, cfg);
     CfgConstEdgeSet edgesToErase;                       // erased after iterating
 
@@ -266,7 +408,7 @@ expandFunctionReturnEdges(const Partitioner &partitioner, ControlFlowGraph &cfg/
                 continue; // functionCallEdge is not a call to a known function, so ignore it
 
             BasicBlock::Ptr functionBlock = callEdge->target()->value().bblock();
-            std::vector<Function::Ptr> functions = partitioner.functionsOwningBasicBlock(functionBlock);
+            std::vector<Function::Ptr> functions = partitioner->functionsOwningBasicBlock(functionBlock);
             for (const Function::Ptr &function: functions) {
                 for (const ControlFlowGraph::ConstEdgeIterator &oldReturnEdge: fre.getOrDefault(function).values()) {
                     edgesToErase.insert(oldReturnEdge);

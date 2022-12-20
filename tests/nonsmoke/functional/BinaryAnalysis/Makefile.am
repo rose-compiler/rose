@@ -1672,6 +1672,23 @@ testInterpRegs.passed: $(top_srcdir)/scripts/test_exit_status testInterpRegs
 		CMD="$$(pwd)/testInterpRegs $(top_srcdir)/tests/nonsmoke/specimens/binary/i386-pop"	\
 		$< $@
 
+########################################################################################################################
+# Test the debugger attaching to a Motorola M68k specimen
+########################################################################################################################
+
+noinst_PROGRAMS += testGdb
+testGdb_SOURCES = testGdb.C
+testGdb_LDADD = $(ROSE_SEPARATE_LIBS)
+
+TEST_TARGETS += testGdb.passed
+testGdb.passed: $(top_srcdir)/scripts/test_exit_status testGdb
+	@$(RTH_RUN)										\
+		TITLE="test debugging M68k executable [$@]"					\
+		DISABLED="$$(./conditionalDisable)"						\
+		USE_SUBDIR=yes									\
+		CMD="$$(pwd)/testGdb $(top_srcdir)/tests/nonsmoke/specimens/binary/m68k-gdb"	\
+		$< $@
+
 ###############################################################################################################################
 # Standard boilerplate
 ###############################################################################################################################

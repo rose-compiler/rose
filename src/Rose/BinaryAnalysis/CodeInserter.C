@@ -4,6 +4,8 @@
 
 #include <Rose/BinaryAnalysis/CodeInserter.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/StringUtility.h>
@@ -30,6 +32,23 @@ CodeInserter::initDiagnostics() {
         Diagnostics::mfacilities.insertAndAdjust(mlog);
     }
 }
+
+CodeInserter::CodeInserter(const P2::PartitionerConstPtr &partitioner)
+    : partitioner_(partitioner), minChunkAllocationSize_(8192), chunkAllocationAlignment_(4096),
+      chunkAllocationName_("new code"), aggregationDirection_(AGGREGATE_PREDECESSORS | AGGREGATE_SUCCESSORS),
+      nopPadding_(PAD_NOP_BACK) {
+    ASSERT_not_null(partitioner);
+    ASSERT_not_null(partitioner->memoryMap());
+    if (!partitioner->memoryMap()->isEmpty() &&
+        partitioner->memoryMap()->hull().greatest() < AddressInterval::whole().greatest()) {
+        chunkAllocationRegion_ = AddressInterval::hull(partitioner->memoryMap()->hull().greatest() + 1,
+                                                       AddressInterval::whole().greatest());
+    } else {
+        chunkAllocationRegion_ = AddressInterval::whole();
+    }
+}
+
+CodeInserter::~CodeInserter() {}
 
 void
 CodeInserter::chunkAllocationAlignment(size_t n) {
@@ -79,7 +98,7 @@ CodeInserter::replaceBlockInsns(const P2::BasicBlock::Ptr &bb, size_t index, siz
     if (debug) {
         debug <<"replaceBlockInsns:\n";
         debug <<"  basic block with insertion point and deletions:\n";
-        if (Unparser::Base::Ptr unparser = partitioner_.unparser()) {
+        if (Unparser::Base::Ptr unparser = partitioner_->unparser()) {
             unparser->settings().function.cg.showing = false;
             unparser->settings().insn.stackDelta.showing = false;
             for (size_t i=0; i<bb->nInstructions(); ++i) {
@@ -158,6 +177,31 @@ CodeInserter::replaceBlockInsns(const P2::BasicBlock::Ptr &bb, size_t index, siz
 }
 
 bool
+CodeInserter::replaceInsnsAtFront(const P2::BasicBlock::Ptr &bb, size_t nInsns, const std::vector<uint8_t> &replacement,
+                                  const std::vector<Relocation> &relocations) {
+    return replaceBlockInsns(bb, 0, nInsns, replacement, relocations);
+}
+
+bool
+CodeInserter::replaceInsnsAtBack(const P2::BasicBlock::Ptr &bb, size_t nInsns, const std::vector<uint8_t> &replacement,
+                                 const std::vector<Relocation> &relocations) {
+    ASSERT_require(nInsns <= bb->nInstructions());
+    return replaceBlockInsns(bb, bb->nInstructions()-nInsns, nInsns, replacement, relocations);
+}
+
+bool
+CodeInserter::prependInsns(const P2::BasicBlock::Ptr &bb, const std::vector<uint8_t> &replacement,
+                           const std::vector<Relocation> &relocations) {
+    return replaceInsnsAtFront(bb, 0, replacement, relocations);
+}
+
+bool
+CodeInserter::appendInsns(const P2::BasicBlock::Ptr &bb, const std::vector<uint8_t> &replacement,
+                             const std::vector<Relocation> &relocations) {
+    return replaceInsnsAtBack(bb, 0, replacement, relocations);
+}
+
+bool
 CodeInserter::replaceInsns(const std::vector<SgAsmInstruction*> &toReplace, const std::vector<uint8_t> &replacement,
                            const std::vector<Relocation> &relocations) {
     ASSERT_forbid(toReplace.empty());
@@ -175,7 +219,7 @@ CodeInserter::replaceInsns(const std::vector<SgAsmInstruction*> &toReplace, cons
         debug <<"replaceInsns:\n";
         debug <<"  instructions to replace:\n";
         for (SgAsmInstruction *insn: toReplace)
-            debug <<"    " <<partitioner_.unparse(insn) <<"\n";
+            debug <<"    " <<partitioner_->unparse(insn) <<"\n";
         debug <<"  replacement = [";
         for (uint8_t byte: replacement)
             Diagnostics::mfprintf(debug)(" 0x%02x", byte);
@@ -192,7 +236,7 @@ void
 CodeInserter::fillWithNops(const AddressIntervalSet &where) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
 
-    std::string isa = partitioner_.instructionProvider().disassembler()->name();
+    std::string isa = partitioner_->instructionProvider().disassembler()->name();
     for (const AddressInterval &interval: where.intervals()) {
         SAWYER_MESG(debug) <<"filling " <<StringUtility::addrToString(interval) <<" with no-op instructions\n";
 
@@ -215,7 +259,7 @@ CodeInserter::fillWithNops(const AddressIntervalSet &where) {
         }
 
         // Write the vector to memory
-        if (partitioner_.memoryMap()->at(interval.least()).write(nops).size() != nops.size()) {
+        if (partitioner_->memoryMap()->at(interval.least()).write(nops).size() != nops.size()) {
             mlog[ERROR] <<"short write of " <<interval.size() <<"-byte NOP sequence at "
                         <<StringUtility::addrToString(interval.least()) <<"\n";
         }
@@ -226,14 +270,14 @@ void
 CodeInserter::fillWithRandom(const AddressIntervalSet &where) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
 
-    std::string isa = partitioner_.instructionProvider().disassembler()->name();
+    std::string isa = partitioner_->instructionProvider().disassembler()->name();
     for (const AddressInterval &interval: where.intervals()) {
         SAWYER_MESG(debug) <<"filling " <<StringUtility::addrToString(interval) <<" with random data\n";
         std::vector<uint8_t> data;
         data.reserve(interval.size());
         for (size_t i=0; i<interval.size(); ++i)
             data.push_back(Sawyer::fastRandomIndex(256));
-        if (partitioner_.memoryMap()->at(interval.least()).write(data).size() != data.size()) {
+        if (partitioner_->memoryMap()->at(interval.least()).write(data).size() != data.size()) {
             mlog[ERROR] <<"short write of " <<interval.size() <<"-byte random sequence at "
                         <<StringUtility::addrToString(interval) <<"\n";
         }
@@ -244,7 +288,7 @@ std::vector<uint8_t>
 CodeInserter::encodeJump(rose_addr_t srcVa, rose_addr_t tgtVa) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     std::vector<uint8_t> retval;
-    std::string isa = partitioner_.instructionProvider().disassembler()->name();
+    std::string isa = partitioner_->instructionProvider().disassembler()->name();
     if ("i386" == isa || "amd64" == isa) {
         // For now, just use a jump with a 4-byte operand.
         rose_addr_t delta = tgtVa - (srcVa + 5);
@@ -499,15 +543,15 @@ CodeInserter::allocateMemory(size_t nBytes, rose_addr_t jmpTargetVa, Commit::Boo
     //AddressInterval chunkArea = AddressInterval::hull(0x80000000, 0xbfffffff); // restrinctions on chunk locations
     size_t chunkSize = std::max(nBytes + maxJmpEncodedSize, minChunkAllocationSize_);
     rose_addr_t chunkVa = 0;
-    if (!partitioner_.memoryMap()->findFreeSpace(chunkSize, chunkAllocationAlignment_, chunkAllocationRegion_)
+    if (!partitioner_->memoryMap()->findFreeSpace(chunkSize, chunkAllocationAlignment_, chunkAllocationRegion_)
         .assignTo(chunkVa))
         return AddressInterval();               // no virtual address space available
 
     // Create the chunk and map it
     AddressInterval chunkVas = AddressInterval::baseSize(chunkVa, chunkSize);
-    partitioner_.memoryMap()->insert(chunkVas,
-                                     MemoryMap::Segment(MemoryMap::AllocatingBuffer::instance(chunkSize),
-                                                        0, MemoryMap::READ_EXECUTE, chunkAllocationName_));
+    partitioner_->memoryMap()->insert(chunkVas,
+                                      MemoryMap::Segment(MemoryMap::AllocatingBuffer::instance(chunkSize),
+                                                         0, MemoryMap::READ_EXECUTE, chunkAllocationName_));
     freeSpace_ |= chunkVas;
     allocatedChunks_ |= chunkVas;
 
@@ -571,7 +615,7 @@ CodeInserter::replaceByOverwrite(const AddressIntervalSet &toReplaceVas, const A
 
     // Write the replacement to memory
     std::vector<uint8_t> patched = applyRelocations(replacementVa, replacement, relocations, relocStart, insnInfoMap);
-    if (partitioner_.memoryMap()->at(replacementVas).write(patched).size() != patched.size()) {
+    if (partitioner_->memoryMap()->at(replacementVas).write(patched).size() != patched.size()) {
         SAWYER_MESG(debug) <<"  replaceByOverwrite failed: short write to memory map at "
                            <<StringUtility::addrToString(replacementVas) <<"\n";
         return false;
@@ -608,7 +652,7 @@ CodeInserter::replaceByTransfer(const AddressIntervalSet &toReplaceVas, const Ad
               <<", " <<StringUtility::plural(entryInterval.size(), "bytes") <<"\n";
         debug <<"  instructions to be moved:\n";
         for (SgAsmInstruction *insn: toReplace)
-            debug <<"    " <<partitioner_.unparse(insn) <<"\n";
+            debug <<"    " <<partitioner_->unparse(insn) <<"\n";
         debug <<"  replacement = [";
         for (uint8_t byte: replacement)
             Diagnostics::mfprintf(debug)(" 0x%02x", byte);
@@ -628,7 +672,7 @@ CodeInserter::replaceByTransfer(const AddressIntervalSet &toReplaceVas, const Ad
 
     // Insert the replacement
     std::vector<uint8_t> patched = applyRelocations(replacementVas.least(), replacement, relocations, relocStart, insnInfoMap);
-    if (partitioner_.memoryMap()->at(replacementVas).write(patched).size() != patched.size()) {
+    if (partitioner_->memoryMap()->at(replacementVas).write(patched).size() != patched.size()) {
         SAWYER_MESG(debug) <<"  replaceByTransfer failed: short write to memory map at "
                            <<StringUtility::addrToString(replacementVas) <<"\n";
         return false;                               // write failed
@@ -637,7 +681,7 @@ CodeInserter::replaceByTransfer(const AddressIntervalSet &toReplaceVas, const Ad
     // Insert the jump back from the replacement
     rose_addr_t replacementFallThroughVa = replacementVas.least() + replacement.size();
     std::vector<uint8_t> jmpFrom = encodeJump(replacementFallThroughVa, toReplaceFallThroughVa);
-    if (partitioner_.memoryMap()->at(replacementFallThroughVa).write(jmpFrom).size() != jmpFrom.size()) {
+    if (partitioner_->memoryMap()->at(replacementFallThroughVa).write(jmpFrom).size() != jmpFrom.size()) {
         SAWYER_MESG(debug) <<"  replaceByTransfer failed: short write to memory map for returning branch at "
                            <<StringUtility::addrToString(replacementFallThroughVa) <<"\n";
         return false;                               // write failed
@@ -663,7 +707,7 @@ CodeInserter::replaceByTransfer(const AddressIntervalSet &toReplaceVas, const Ad
         jmpTo = newJmpTo;
     }
     AddressInterval jmpToVas = AddressInterval::baseSize(jmpToSite, jmpTo.size());
-    if (partitioner_.memoryMap()->at(jmpToVas).write(jmpTo).size() != jmpTo.size()) {
+    if (partitioner_->memoryMap()->at(jmpToVas).write(jmpTo).size() != jmpTo.size()) {
         SAWYER_MESG(debug) <<"  replaceByTransfer failed: short write to memory map for branch to moved code at "
                            <<StringUtility::addrToString(jmpToVas) <<"\n";
         return false;                               // write failed

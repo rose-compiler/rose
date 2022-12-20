@@ -3,6 +3,11 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ModelChecker/ExternalFunctionUnit.h>
 
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch32.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch64.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherPowerpc.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RiscOperators.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/ModelChecker/SemanticCallbacks.h>

@@ -8,6 +8,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #else
 
 #include <rose.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
@@ -25,9 +26,10 @@ main(int argc, char *argv[]) {
     --argc;
 
     /* Parse the binary file */
-    P2::Engine engine;
-    std::vector<std::string> specimen = engine.parseCommandLine(argc, argv, purpose, description).unreachedArgs();
-    P2::Partitioner partitioner = engine.partition(specimen);
+    P2::Engine *engine = P2::Engine::instance();
+    std::vector<std::string> specimen = engine->parseCommandLine(argc, argv, purpose, description).unreachedArgs();
+    P2::Partitioner::Ptr partitioner = engine->partition(specimen);
+    delete engine;
 
     /* Calculate plain old CFG. */
     if (algorithm=="A") {
@@ -45,7 +47,7 @@ main(int argc, char *argv[]) {
     /* Build a pseudo call-graph by first building a CFG and then copying it to filter out non-call edges.  The result
      * should be the same as for algorithm B, assuming our edge filter is semantically equivalent. */
     if (algorithm=="C") {
-        P2::ControlFlowGraph cfg = partitioner.cfg();
+        P2::ControlFlowGraph cfg = partitioner->cfg();
         P2::ControlFlowGraph::EdgeIterator ei = cfg.edges().begin();
         while (ei != cfg.edges().end()) {
             if (ei->value().type() == P2::E_FUNCTION_CALL) {

@@ -117,7 +117,7 @@ public:
 
 private:
   void unparseCommentsBefore(SgStatement* stmt, SgUnparse_Info& info);
-  void unparseCommentsAfter (SgStatement* stmt, SgUnparse_Info& info);
+  void unparseCommentsAfter (SgStatement* stmt, SgUnparse_Info& info, bool newline=false);
 
   std::string ws_prefix(int nesting_level)
   {

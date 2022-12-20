@@ -51,15 +51,23 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/Concolic/Architecture.C						\
 	BinaryAnalysis/Concolic/ConcolicExecutor.C					\
 	BinaryAnalysis/Concolic/ConcreteExecutor.C					\
+	BinaryAnalysis/Concolic/ConcreteResult.C					\
 	BinaryAnalysis/Concolic/Database.C						\
 	BinaryAnalysis/Concolic/ExecutionEvent.C					\
 	BinaryAnalysis/Concolic/ExecutionLocation.C					\
 	BinaryAnalysis/Concolic/ExecutionManager.C					\
+	BinaryAnalysis/Concolic/I386Linux/Architecture.C				\
+	BinaryAnalysis/Concolic/I386Linux/ExitStatusExecutor.C				\
+	BinaryAnalysis/Concolic/I386Linux/ExitStatusManager.C				\
+	BinaryAnalysis/Concolic/I386Linux/ExitStatusResult.C				\
+	BinaryAnalysis/Concolic/I386Linux/TracingExecutor.C				\
+	BinaryAnalysis/Concolic/I386Linux/TracingManager.C				\
+	BinaryAnalysis/Concolic/I386Linux/TracingResult.C				\
 	BinaryAnalysis/Concolic/InputVariables.C					\
-	BinaryAnalysis/Concolic/LinuxExecutor.C						\
-	BinaryAnalysis/Concolic/LinuxExitStatus.C					\
-	BinaryAnalysis/Concolic/LinuxI386.C						\
-	BinaryAnalysis/Concolic/LinuxTraceExecutor.C					\
+	BinaryAnalysis/Concolic/M68kSystem/Architecture.C				\
+	BinaryAnalysis/Concolic/M68kSystem/TracingExecutor.C				\
+	BinaryAnalysis/Concolic/M68kSystem/TracingManager.C				\
+	BinaryAnalysis/Concolic/M68kSystem/TracingResult.C				\
 	BinaryAnalysis/Concolic/SharedMemory.C						\
 	BinaryAnalysis/Concolic/Specimen.C						\
 	BinaryAnalysis/Concolic/SystemCall.C						\
@@ -93,6 +101,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/FunctionSimilarity.C						\
 	BinaryAnalysis/HotPatch.C							\
 	BinaryAnalysis/InstructionCache.C						\
+	BinaryAnalysis/InstructionProvider.C						\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/BaseSemantics.C		\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/BinaryAnalysis		\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.C			\
@@ -170,7 +179,6 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/Partitioner2/FunctionCallGraph.C					\
 	BinaryAnalysis/Partitioner2/FunctionNoop.C					\
 	BinaryAnalysis/Partitioner2/GraphViz.C						\
-	BinaryAnalysis/Partitioner2/InstructionProvider.C				\
 	BinaryAnalysis/Partitioner2/MayReturnAnalysis.C					\
 	BinaryAnalysis/Partitioner2/Modules.C						\
 	BinaryAnalysis/Partitioner2/ModulesElf.C					\

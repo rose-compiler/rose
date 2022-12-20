@@ -23,14 +23,14 @@ main(int argc, char *argv[]) {
         "UTF-16 little-endian strings, two-byte little-endian length-encoded "
         "ASCII strings, and some other common formats.";
 
-    Partitioner2::Engine engine;
+    Partitioner2::Engine *engine = Partitioner2::Engine::instance();
     std::vector<std::string> specimen =
-        engine.parseCommandLine(argc, argv, purpose, description).unreachedArgs();
+        engine->parseCommandLine(argc, argv, purpose, description).unreachedArgs();
     //! [commandline]
 
     //! [load]
-    MemoryMap::Ptr map = engine.loadSpecimens(specimen);
-    ByteOrder::Endianness sex = engine.obtainDisassembler()->byteOrder();
+    MemoryMap::Ptr map = engine->loadSpecimens(specimen);
+    ByteOrder::Endianness sex = engine->obtainDisassembler()->byteOrder();
     //! [load]
 
     //! [analysis]
@@ -43,10 +43,12 @@ main(int argc, char *argv[]) {
 
     //! [output]
     // Output, or just do "std::cout <<finder" if you're not picky.
-    BOOST_FOREACH (const Strings::EncodedString &string, finder.strings()) {
+    for (const Strings::EncodedString &string : finder.strings()) {
         std::cout <<"string at " <<string.address() <<" for " <<string.size() <<" bytes\n";
         std::cout <<"encoding: " <<string.encoder()->name() <<"\n";
         std::cout <<"narrow value: \"" <<StringUtility::cEscape(string.narrow()) <<"\"\n";
     }
     //! [output]
+
+    delete engine;
 }

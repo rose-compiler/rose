@@ -2,6 +2,7 @@
 #define ROSE_BinaryAnalysis_Partitioner2_GraphViz_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 
 #include <Rose/BinaryAnalysis/NoOperation.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h>
@@ -424,7 +425,7 @@ protected:
  *  emitters that combine a "select" method of the same name with @ref emit.
  *
  * @code
- *  Partitioner partitioner = ...;
+ *  Partitioner::Ptr partitioner = ...;
  *  Function::Ptr f1=..., f2=...;
  *  GraphViz::CfgEmitter gv(partitioner);
  *  gv.showInstructions(true);
@@ -433,7 +434,7 @@ protected:
  *  gv.emit(std::cout);
  * @endcode */
 class ROSE_DLL_API CfgEmitter: public BaseEmitter<ControlFlowGraph> {
-    const Partitioner &partitioner_;
+    PartitionerConstPtr partitioner_;                   // not null
     bool useFunctionSubgraphs_;                         // should called functions be shown as subgraphs?
     bool showReturnEdges_;                              // show E_FUNCTION_RETURN edges?
     bool showInstructions_;                             // show instructions or only block address?
@@ -457,8 +458,8 @@ public:
      *  hold a reference to the partitioner, therefore the partitioner should not be deleted before the GraphViz object.
      *
      * @{ */
-    explicit CfgEmitter(const Partitioner&);
-    CfgEmitter(const Partitioner&, const ControlFlowGraph&);
+    explicit CfgEmitter(const PartitionerConstPtr&);
+    CfgEmitter(const PartitionerConstPtr&, const ControlFlowGraph&);
     /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -467,7 +468,7 @@ public:
     /** Property: partitioner.
      *
      *  The partitioner that's being used, set when this emitter was constructed. */
-    const Partitioner& partitioner() { return partitioner_; }
+    PartitionerConstPtr partitioner() { return partitioner_; }
 
     /** Property: use function subgraphs.
      *
@@ -606,18 +607,18 @@ public:
     void selectInterval(const AddressInterval&);
 
     /** Select vertices and intra-function edges for one function. */
-    void selectIntraFunction(const Function::Ptr&);
+    void selectIntraFunction(const FunctionPtr&);
 
     /** Select outgoing edges to neighboring vertices.
      *
      *  These edges typically represent calls to other functions. */
-    void selectFunctionCallees(const Function::Ptr&);
+    void selectFunctionCallees(const FunctionPtr&);
 
     /** Select incoming edges from neighboring vertices.
      *
      *  These edges typically represent calls from other functions.  When possible, multiple edges from the same function will
      *  be replaced with a single pseudo-edge coming from that function's entry vertex. */
-    void selectFunctionCallers(const Function::Ptr&);
+    void selectFunctionCallers(const FunctionPtr&);
 
     /** Deselect all function return edges.
      *
@@ -650,7 +651,7 @@ public:
      *  Selects all vertices and edges that are part of the specified function.  Additionally, any inter-function edges to/from
      *  this function and their incident vertices are also selected according to @ref selectFunctionCallees and @ref
      *  selectFunctionCallers. */
-    CfgEmitter& selectFunctionGraph(const Function::Ptr&);
+    CfgEmitter& selectFunctionGraph(const FunctionPtr&);
 
     /** Selects vertices that start within some interval.
      *
@@ -665,24 +666,17 @@ public:
     /** Dump entire control flow graph.
      *
      *  This is a convenient wrapper around @ref selectWholeGraph and @ref emit. */
-    void emitWholeGraph(std::ostream &out) {
-        selectWholeGraph().emit(out);
-    }
+    void emitWholeGraph(std::ostream&);
 
     /** Dump control flow graph for one function.
      *
      *  This is a convenient wrapper around @ref selectFunctionGraph and @ref emit. */
-    void emitFunctionGraph(std::ostream &out, const Function::Ptr &function) {
-        selectFunctionGraph(function).emit(out);
-    }
+    void emitFunctionGraph(std::ostream&, const FunctionPtr&);
 
     /** Dump control flow graph for some address interval.
      *
      *  This is a convenient wrapper around @ref selectIntervalGraph and @ref emit. */
-    void emitIntervalGraph(std::ostream &out, const AddressInterval &interval) {
-        selectIntervalGraph(interval).emit(out);
-    }
-    
+    void emitIntervalGraph(std::ostream&, const AddressInterval&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Low-level emitters
@@ -694,7 +688,7 @@ public:
      *
      * @{ */
     static bool isInterFunctionEdge(const ControlFlowGraph::Edge&);
-    static bool isInterFunctionEdge(const ControlFlowGraph::ConstEdgeIterator &e) { return isInterFunctionEdge(*e); }
+    static bool isInterFunctionEdge(const ControlFlowGraph::ConstEdgeIterator&);
     /** @} */
 
     /** First function that owns a vertex.
@@ -703,8 +697,8 @@ public:
      *  set returned by @ref CfgVertex::owningFunctions.  Returns null if there are no owning functions.
      *
      * @{ */
-    static Function::Ptr firstOwningFunction(const ControlFlowGraph::Vertex&);
-    static Function::Ptr firstOwningFunction(const ControlFlowGraph::ConstVertexIterator &v) {
+    static FunctionPtr firstOwningFunction(const ControlFlowGraph::Vertex&);
+    static FunctionPtr firstOwningFunction(const ControlFlowGraph::ConstVertexIterator &v) {
         return firstOwningFunction(*v);
     }
     /** @} */
@@ -716,7 +710,7 @@ public:
      *
      *  @{ */
     static FunctionSet owningFunctions(const ControlFlowGraph::Vertex&);
-    static FunctionSet owningFunctions(const ControlFlowGraph::ConstVertexIterator &v) { return owningFunctions(*v); }
+    static FunctionSet owningFunctions(const ControlFlowGraph::ConstVertexIterator&);
     /** @} */
 
     /** Assign vertices and edges to subgraphs.
@@ -782,10 +776,10 @@ public:
     /** Label for function vertex.
      *
      *  The returned label must include the delimiting double quotes or angle brackets and have proper escaping of contents. */
-    virtual std::string functionLabel(const Function::Ptr&) const;
+    virtual std::string functionLabel(const FunctionPtr&) const;
 
     /** Attributes for function vertex. */
-    virtual Attributes functionAttributes(const Function::Ptr&) const;
+    virtual Attributes functionAttributes(const FunctionPtr&) const;
 
 private:
     void init();
@@ -807,10 +801,10 @@ class ROSE_DLL_API CgEmitter: public BaseEmitter<FunctionCallGraph::Graph> {
     Color::HSV functionHighlightColor_;                 // highlight certain functions
     boost::regex highlightNameMatcher_;                 // which functions to highlight
 public:
-    explicit CgEmitter(const Partitioner &partitioner);
-    CgEmitter(const Partitioner &partitioner, const FunctionCallGraph &cg);
-    virtual std::string functionLabel(const Function::Ptr&) const;
-    virtual Attributes functionAttributes(const Function::Ptr&) const;
+    explicit CgEmitter(const PartitionerConstPtr &partitioner);
+    CgEmitter(const PartitionerConstPtr &partitioner, const FunctionCallGraph &cg);
+    virtual std::string functionLabel(const FunctionPtr&) const;
+    virtual Attributes functionAttributes(const FunctionPtr&) const;
     virtual void emitCallGraph(std::ostream &out) const;
     virtual const FunctionCallGraph& callGraph() const { return cg_; }
     virtual void callGraph(const FunctionCallGraph &cg);
@@ -834,16 +828,16 @@ private:
  *  thus the name of the class. */
 class ROSE_DLL_API CgInlinedEmitter: public CgEmitter {
     boost::regex nameMatcher_;
-    typedef std::vector<Function::Ptr> InlinedFunctions;
-    typedef Sawyer::Container::Map<Function::Ptr, InlinedFunctions> Inlines;
+    typedef std::vector<FunctionPtr> InlinedFunctions;
+    typedef Sawyer::Container::Map<FunctionPtr, InlinedFunctions> Inlines;
     Inlines inlines_;
 public:
-    CgInlinedEmitter(const Partitioner &partitioner, const boost::regex &nameMatcher);
-    CgInlinedEmitter(const Partitioner &partitioner, const FunctionCallGraph &cg, const boost::regex &nameMatcher);
+    CgInlinedEmitter(const PartitionerConstPtr &partitioner, const boost::regex &nameMatcher);
+    CgInlinedEmitter(const PartitionerConstPtr &partitioner, const FunctionCallGraph &cg, const boost::regex &nameMatcher);
     virtual const FunctionCallGraph& callGraph() const override { return CgEmitter::callGraph(); }
     virtual void callGraph(const FunctionCallGraph&) override;
-    virtual std::string functionLabel(const Function::Ptr&) const override;
-    virtual bool shouldInline(const Function::Ptr&) const;
+    virtual std::string functionLabel(const FunctionPtr&) const override;
+    virtual bool shouldInline(const FunctionPtr&) const;
 };
 
 

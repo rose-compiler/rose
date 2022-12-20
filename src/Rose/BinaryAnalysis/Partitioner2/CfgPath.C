@@ -3,9 +3,12 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Partitioner2/CfgPath.h>
 
-#include <Combinatorics.h>
-#include <Rose/Diagnostics.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/Diagnostics.h>
+
+#include <Combinatorics.h>
+
 #include <Sawyer/GraphTraversal.h>
 
 using namespace Rose::Diagnostics;
@@ -233,6 +236,11 @@ CfgPath::nCalls(const Function::Ptr &function) const {
 }
 
 size_t
+CfgPath::nCalls() const {
+    return nCalls(Function::Ptr());
+}
+
+size_t
 CfgPath::nReturns(const Function::Ptr &function) const {
     size_t retval = 0;
     for (const ControlFlowGraph::ConstEdgeIterator &edge: edges_) {
@@ -246,6 +254,11 @@ CfgPath::nReturns(const Function::Ptr &function) const {
         }
     }
     return retval;
+}
+
+size_t
+CfgPath::nReturns() const {
+    return nReturns(Function::Ptr());
 }
 
 ssize_t
@@ -271,6 +284,11 @@ CfgPath::callDepth(const Function::Ptr &function) const {
     return depth;
 }
 
+ssize_t
+CfgPath::callDepth() const {
+    return callDepth(Function::Ptr());
+}
+
 size_t
 CfgPath::maxCallDepth(const Function::Ptr &function) const {
     ssize_t depth = 0;
@@ -294,6 +312,11 @@ CfgPath::maxCallDepth(const Function::Ptr &function) const {
         retval = std::max(retval, depth);
     }
     return retval;
+}
+
+size_t
+CfgPath::maxCallDepth() const {
+    return maxCallDepth(Function::Ptr());
 }
 
 std::vector<ControlFlowGraph::ConstEdgeIterator>
@@ -771,37 +794,40 @@ inlineOneCallee(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::Cons
 }
 
 Inliner::HowInline
-Inliner::ShouldInline::operator()(const Partitioner &partitioner, const ControlFlowGraph::ConstEdgeIterator cfgCallEdge,
+Inliner::ShouldInline::operator()(const Partitioner::ConstPtr &partitioner, const ControlFlowGraph::ConstEdgeIterator cfgCallEdge,
                                   const ControlFlowGraph &paths, const ControlFlowGraph::ConstVertexIterator &pathsCallSite,
                                   size_t callDepth) {
-    ASSERT_always_require(partitioner.cfg().isValidEdge(cfgCallEdge));
+    ASSERT_not_null(partitioner);
+    ASSERT_always_require(partitioner->cfg().isValidEdge(cfgCallEdge));
     ASSERT_always_require(paths.isValidVertex(pathsCallSite));
     return callDepth <= maxCallDepth_ ? INLINE_NORMAL : INLINE_NONE;
 }
 
 // class method
 ControlFlowGraph::ConstVertexIterator
-Inliner::pathToCfg(const Partitioner &partitioner, const ControlFlowGraph::ConstVertexIterator &pathVertex) {
+Inliner::pathToCfg(const Partitioner::ConstPtr &partitioner, const ControlFlowGraph::ConstVertexIterator &pathVertex) {
+    ASSERT_not_null(partitioner);
     switch (pathVertex->value().type()) {
         case V_BASIC_BLOCK:
-            return partitioner.findPlaceholder(pathVertex->value().address());
+            return partitioner->findPlaceholder(pathVertex->value().address());
         case V_INDETERMINATE:
-            return partitioner.indeterminateVertex();
+            return partitioner->indeterminateVertex();
         case V_NONEXISTING:
-            return partitioner.nonexistingVertex();
+            return partitioner->nonexistingVertex();
         case V_UNDISCOVERED:
-            return partitioner.undiscoveredVertex();
+            return partitioner->undiscoveredVertex();
         case V_USER_DEFINED:
-            return partitioner.cfg().vertices().end();
+            return partitioner->cfg().vertices().end();
     }
     ASSERT_not_reachable("invalid vertex type");
 }
 
 // class method
 bool
-Inliner::isFunctionCall(const Partitioner &partitioner, const ControlFlowGraph::ConstVertexIterator &pathVertex) {
+Inliner::isFunctionCall(const Partitioner::ConstPtr &partitioner, const ControlFlowGraph::ConstVertexIterator &pathVertex) {
+    ASSERT_not_null(partitioner);
     ControlFlowGraph::ConstVertexIterator cfgVertex = pathToCfg(partitioner, pathVertex);
-    ASSERT_require(partitioner.cfg().isValidVertex(cfgVertex));
+    ASSERT_require(partitioner->cfg().isValidVertex(cfgVertex));
     for (ControlFlowGraph::Edge edge: cfgVertex->outEdges()) {
         if (edge.value().type() == E_FUNCTION_CALL)
             return true;
@@ -810,10 +836,10 @@ Inliner::isFunctionCall(const Partitioner &partitioner, const ControlFlowGraph::
 }
 
 void
-Inliner::reset(const Partitioner &partitioner, const CfgConstVertexSet &cfgBeginVertices,
+Inliner::reset(const Partitioner::ConstPtr &partitioner, const CfgConstVertexSet &cfgBeginVertices,
               const CfgConstVertexSet &cfgEndVertices, const CfgConstVertexSet &cfgAvoidVertices,
               const CfgConstEdgeSet &cfgAvoidEdges) {
-
+    ASSERT_not_null(partitioner);
     paths_.clear();
     vmap_.clear();
     workList_.clear();
@@ -822,7 +848,7 @@ Inliner::reset(const Partitioner &partitioner, const CfgConstVertexSet &cfgBegin
 
     // Find top-level paths. These paths don't traverse into function calls unless they must do so in order to reach an ending
     // vertex.
-    findInterFunctionPaths(partitioner.cfg(), paths_/*out*/, vmap_/*out*/,
+    findInterFunctionPaths(partitioner->cfg(), paths_/*out*/, vmap_/*out*/,
                            cfgBeginVertices, cfgEndVertices, cfgAvoidVertices, cfgAvoidEdges);
     if (paths_.isEmpty()) {
         pathsBeginVertices_.clear();
@@ -840,10 +866,10 @@ Inliner::reset(const Partitioner &partitioner, const CfgConstVertexSet &cfgBegin
 }
 
 void
-Inliner::inlinePaths(const Partitioner &partitioner, const CfgConstVertexSet &cfgBeginVertices,
+Inliner::inlinePaths(const Partitioner::ConstPtr &partitioner, const CfgConstVertexSet &cfgBeginVertices,
                      const CfgConstVertexSet &cfgEndVertices, const CfgConstVertexSet &cfgAvoidVertices,
                      const CfgConstEdgeSet &cfgAvoidEdges) {
-
+    ASSERT_not_null(partitioner);
     reset(partitioner, cfgBeginVertices, cfgEndVertices, cfgAvoidVertices, cfgAvoidEdges);
 
     // When finding paths through a called function, avoid the usual vertices and edges, but also avoid those vertices that
@@ -864,7 +890,7 @@ Inliner::inlinePaths(const Partitioner &partitioner, const CfgConstVertexSet &cf
                     break;
                 case INLINE_NORMAL: {
                     std::vector<ControlFlowGraph::ConstVertexIterator> insertedVertices;
-                    inlineOneCallee(paths_, work.pathsVertex, partitioner.cfg(), cfgCallEdge->target(),
+                    inlineOneCallee(paths_, work.pathsVertex, partitioner->cfg(), cfgCallEdge->target(),
                                     calleeCfgAvoidVertices, cfgAvoidEdges, &insertedVertices);
                     for (const ControlFlowGraph::ConstVertexIterator &vertex: insertedVertices) {
                         if (isFunctionCall(partitioner, vertex) && !findCallReturnEdges(vertex).empty())

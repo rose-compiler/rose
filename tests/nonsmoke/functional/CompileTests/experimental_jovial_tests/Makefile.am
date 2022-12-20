@@ -232,9 +232,14 @@ JOVIAL_TESTCODES = \
  gitlab-issue-41.jov                    \
  gitlab-issue-84.jov                    \
  gitlab-issue-162.jov                   \
+ gitlab-issue-181.jov                   \
+ gitlab-issue-182.jov                   \
  charlie.jov                            \
  shadow.jov                             \
- comments.jov
+ comments.jov                           \
+ comments_assign.jov                    \
+ comments_start_term.jov                \
+ comments_start_term_procmod.jov
 
 JOVIAL_PARSER_TESTCODES = \
  fixed_cast.jov                         \
@@ -357,7 +362,8 @@ COMPOOL_TESTCODES = \
  gitlab-issue-17.cpl                    \
  gitlab-issue-74.cpl                    \
  beta.cpl                               \
- parttype.cpl
+ parttype.cpl                           \
+ comments_start_term.cpl
 
 COMPOOL_DIRECTIVE_TESTCODES = \
  9_1_compool_directive.cpl              \

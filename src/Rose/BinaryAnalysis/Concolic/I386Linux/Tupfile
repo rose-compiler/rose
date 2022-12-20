@@ -1,0 +1,20 @@
+include_rules
+
+run $(public_header) -o include/rose/Rose/BinaryAnalysis/Concolic/I386Linux	\
+    Architecture.h								\
+    BasicTypes.h								\
+    ExitStatusExecutor.h							\
+    ExitStatusManager.h								\
+    ExitStatusResult.h								\
+    TracingExecutor.h								\
+    TracingManager.h								\
+    TracingResult.h
+
+run $(librose_compile)				\
+    Architecture.C				\
+    ExitStatusExecutor.C			\
+    ExitStatusManager.C				\
+    ExitStatusResult.C				\
+    TracingExecutor.C				\
+    TracingManager.C				\
+    TracingResult.C

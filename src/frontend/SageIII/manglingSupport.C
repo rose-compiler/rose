@@ -734,7 +734,7 @@ mangleTypesToString (const SgTypePtrList::const_iterator b,
           printf ("In mangleTypesToString(): in loop: is_first = %s type_p = %p = %s \n",is_first ? "true" : "false",type_p,type_p->class_name().c_str());
 #endif
 
-#if 0
+#if 0 /* X1 */
        // DQ (2/14/2016): Adding support for VLA types (it is better to add this support directly to the SgArrayType::get_mangled() function).
           SgArrayType* arrayType = isSgArrayType(*p);
           bool is_variable_length_array = false;
@@ -745,7 +745,7 @@ mangleTypesToString (const SgTypePtrList::const_iterator b,
 #endif
             // is_variable_length_array = arrayType->get_is_variable_length_array();
              }
-#endif
+#endif /* X1 */
 
           if (is_first == true)
              {
@@ -769,9 +769,9 @@ mangleTypesToString (const SgTypePtrList::const_iterator b,
        //    1) All vla types are equivalent, so no further name mangling is useful.
        //    2) If we proceed then we will cause endless recursion in the evaluation
        //       of the scope of the array index variable reference expressions.
-#if 1
+#if 1 /* Y1 */
           SgName mangled_p = (const_cast<SgType *>(type_p))->get_mangled();
-#else
+#else /* Y1 */
           SgName mangled_p;
           if (is_variable_length_array == true)
              {
@@ -784,7 +784,7 @@ mangleTypesToString (const SgTypePtrList::const_iterator b,
              {
                mangled_p = (const_cast<SgType *>(type_p))->get_mangled();
              }
-#endif
+#endif /* Y1 */
 #if 0
           printf ("In mangleTypesToString(): mangled_p = %s \n",mangled_p.str());
 #endif

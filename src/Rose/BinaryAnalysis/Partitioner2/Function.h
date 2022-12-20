@@ -2,12 +2,11 @@
 #define ROSE_BinaryAnalysis_Partitioner2_Function_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-
-#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
-#include <Rose/BinaryAnalysis/CallingConvention.h>
-#include <Rose/BinaryAnalysis/StackDelta.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
-#include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
+
+#include <Rose/BinaryAnalysis/CallingConvention.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/StackDelta.h>
 #include <Rose/SourceLocation.h>
 
 #include <Sawyer/Attribute.h>
@@ -58,10 +57,10 @@ private:
     unsigned reasons_;                                  // reason bits from SgAsmFunction::FunctionReason
     std::string reasonComment_;                         // additional commentary about reasons_
     std::set<rose_addr_t> bblockVas_;                   // addresses of basic blocks
-    std::vector<DataBlock::Ptr> dblocks_;               // data blocks owned by this function, sorted by starting address
+    std::vector<DataBlockPtr> dblocks_;                 // data blocks owned by this function, sorted by starting address
     bool isFrozen_;                                     // true if function is represented by the CFG
     CallingConvention::Analysis ccAnalysis_;            // analysis computing how registers etc. are used
-    CallingConvention::Definition::Ptr ccDefinition_;   // best definition or null
+    CallingConvention::DefinitionPtr ccDefinition_;     // best definition or null
     StackDelta::Analysis stackDeltaAnalysis_;           // analysis computing stack deltas for each block and whole function
     InstructionSemantics::BaseSemantics::SValuePtr stackDeltaOverride_; // special value to override stack delta analysis
     SourceLocation sourceLocation_;                     // corresponding location of function in source code if known
@@ -101,42 +100,37 @@ private:
     }
 #endif
     
+public:
+    ~Function();
+
 protected:
     // Needed for serialization
-    Function()
-        : entryVa_(0), reasons_(0), isFrozen_(false) {}
+    Function();
 
     // Use instance() instead
-    explicit Function(rose_addr_t entryVa, const std::string &name, unsigned reasons)
-        : entryVa_(entryVa), name_(name), reasons_(reasons), isFrozen_(false) {
-        bblockVas_.insert(entryVa);
-    }
+    explicit Function(rose_addr_t entryVa, const std::string &name, unsigned reasons);
 
 public:
     /** Static allocating constructor.  Creates a new function having the specified characteristics.
      *
      *  @{ */
-    static Ptr instance(rose_addr_t entryVa, const std::string &name="", unsigned reasons=0) {
-        return Ptr(new Function(entryVa, name, reasons));
-    }
-    static Ptr instance(rose_addr_t entryVa, unsigned reasons) {
-        return Ptr(new Function(entryVa, "", reasons));
-    }
+    static Ptr instance(rose_addr_t entryVa, const std::string &name="", unsigned reasons=0);
+    static Ptr instance(rose_addr_t entryVa, unsigned reasons);
     /** @} */
 
     /** Read-only property: Entry address.
      *
      *  The entry address also serves as an identifier for the function since the CFG can only hold one function per entry
      *  address.  Detached functions need not have unique entry addresses. */
-    rose_addr_t address() const { return entryVa_; }
+    rose_addr_t address() const;
 
     /** Property: Optional function name.
      *
      *  This is the official name. See also @ref demangledName, which can also return the value of this @ref name property.
      *
      *  @{ */
-    const std::string& name() const { return name_; }
-    void name(const std::string &name) { name_ = name; }
+    const std::string& name() const;
+    void name(const std::string&);
     /** @} */
 
     /** Property: Optional demangled name.
@@ -146,7 +140,7 @@ public:
      *
      * @{ */
     const std::string& demangledName() const;
-    void demangledName(const std::string &name) { demangledName_ = name; }
+    void demangledName(const std::string&);
     /** @} */
 
     /** Property: Optional function comment.
@@ -154,42 +148,42 @@ public:
      *  Comments are multi-line, plain-text (not HTML), ASCII.
      *
      * @{ */
-    const std::string& comment() const { return comment_; }
-    void comment(const std::string &s) { comment_ = s; }
+    const std::string& comment() const;
+    void comment(const std::string&);
     /** @} */
 
     /** Property: Location of function definition in source code, if known.
      *
      * @{ */
-    const SourceLocation& sourceLocation() const { return sourceLocation_; }
-    void sourceLocation(const SourceLocation &loc) { sourceLocation_ = loc; }
+    const SourceLocation& sourceLocation() const;
+    void sourceLocation(const SourceLocation&);
     /** @} */
 
     /** Property: Bit vector of function reasons.  These are SgAsmFunction::FunctionReason bits.
      *
      *  @{ */
-    unsigned reasons() const { return reasons_; }
-    void reasons(unsigned reasons) { reasons_ = reasons; }
+    unsigned reasons() const;
+    void reasons(unsigned);
     /** @} */
 
     /** Insert additional function reason bits.
      *
      *  The high-order bits 16 bits are OR'd into the @ref reasons property, while the low-order 16 bits given in the argument
      *  replace the low-order 16 bits stored in the @ref reasons property. */
-    void insertReasons(unsigned reasons) { reasons_ = (reasons_ & 0xffff0000) | reasons; }
+    void insertReasons(unsigned reasons);
 
     /** Remove function reason bits.
      *
      *  Removes the high-order 16 bits that appear in the argument from the @ref reasons property. The low-order 16 bits are
      *  all cleared if any of the low-order 16 bits of the argument are set. */
-    void eraseReasons(unsigned reasons) { reasons_ &= ~((0xffff0000 & reasons) | ((reasons & 0xffff) != 0 ? 0xffff : 0x0)); }
+    void eraseReasons(unsigned reasons);
     /** @} */
 
     /** Property: Additional comment for why function was detected.
      *
      * @{ */
-    const std::string& reasonComment() const { return reasonComment_; }
-    void reasonComment(const std::string &s) { reasonComment_ = s; }
+    const std::string& reasonComment() const;
+    void reasonComment(const std::string&);
     /** @} */
 
     /** Returns basic block addresses.  Because functions can exist in a detatched state, a function stores basic block
@@ -197,12 +191,10 @@ public:
      *  definition without requiring that the blocks actually exist.  When a detached function is inserted into the CFG then
      *  basic block placeholders will be created for any basic blocks that don't exist in the CFG (see @ref
      *  Partitioner::attachFunction). */
-    const std::set<rose_addr_t>& basicBlockAddresses() const { return bblockVas_; }
+    const std::set<rose_addr_t>& basicBlockAddresses() const;
 
     /** Predicate to test whether a function owns a basic block address. */
-    bool ownsBasicBlock(rose_addr_t bblockVa) const {
-        return bblockVas_.find(bblockVa) != bblockVas_.end();
-    }
+    bool ownsBasicBlock(rose_addr_t bblockVa) const;
 
     /** Add a basic block to this function.
      *
@@ -212,29 +204,18 @@ public:
      *  function then it is not added a second time.
      *
      *  Returns true if the block is inserted, false if the block was already part of this function. */
-    bool insertBasicBlock(rose_addr_t bblockVa) {
-        ASSERT_forbid(isFrozen_);
-        bool wasInserted = bblockVas_.insert(bblockVa).second;
-        if (wasInserted)
-            clearCache();
-        return wasInserted;
-    }
+    bool insertBasicBlock(rose_addr_t bblockVa);
 
     /** Remove a basic block from this function.  This method does not adjust the partitioner CFG.  Basic blocks cannot be
      * removed by this method when this function is attached to the CFG since it would cause the CFG to become outdated with
      * respect to this function, but as long as the function is detached blocks can be inserted and removed arbitrarily.  If
      * the specified address is not a basic block address for this function then this is a no-op.  Removing the function's
      * entry address is never permitted. */
-    void eraseBasicBlock(rose_addr_t bblockVa) {        // no-op if not existing
-        ASSERT_forbid(isFrozen_);
-        ASSERT_forbid2(bblockVa==entryVa_, "function entry block cannot be removed");
-        clearCache();
-        bblockVas_.erase(bblockVa);
-    }
+    void eraseBasicBlock(rose_addr_t bblockVa);         // no-op if not existing
 
     /** Returns data blocks owned by this function.  Returns the data blocks that are owned by this function in order of their
      *  starting address. */
-    const std::vector<DataBlock::Ptr>& dataBlocks() const { return dblocks_; }
+    const std::vector<DataBlockPtr>& dataBlocks() const;
 
     /** Add a data block to this function.
      *
@@ -243,7 +224,7 @@ public:
      *  function is detached blocks can be inserted and removed arbitrarily.  The specified data block cannot be a null
      *  pointer. If the data block is already owned by this function then nothing happens and this method returns false;
      *  otherwise the data block is inserted and the method returns true. */
-    bool insertDataBlock(const DataBlock::Ptr&);
+    bool insertDataBlock(const DataBlockPtr&);
 
     /** Remove specified or equivalent data block from this function.
      *
@@ -252,7 +233,7 @@ public:
      *
      *  It is an error to invoke this method on function that is attached to the CFG/AUM, for which @ref isFrozen returns
      *  true. This method is a no-op if the specified data block is a null pointer. */
-    DataBlock::Ptr eraseDataBlock(const DataBlock::Ptr&);
+    DataBlockPtr eraseDataBlock(const DataBlockPtr&);
 
     /** Determine if this function contains the specified data block, or equivalent.
      *
@@ -260,7 +241,7 @@ public:
      *  existing data block, otherwise it returns the null pointer.
      *
      *  Thread safety: This method is not thread safe. */
-    DataBlock::Ptr dataBlockExists(const DataBlock::Ptr&) const;
+    DataBlockPtr dataBlockExists(const DataBlockPtr&) const;
 
     /** Addresses that are part of static data.
      *
@@ -272,7 +253,7 @@ public:
     /** Determines whether a function is frozen.  The ownership relations (instructions, basic blocks, and data blocks) cannot
      *  be adjusted while a function is in a frozen state.  All functions that are represented in the control flow graph are in
      *  a frozen state; detaching a function from the CFG thaws it. */
-    bool isFrozen() const { return isFrozen_; }
+    bool isFrozen() const;
 
     /** True if function is a thunk.
      *
@@ -284,10 +265,10 @@ public:
     bool isThunk() const;
 
     /** Number of basic blocks in the function. */
-    size_t nBasicBlocks() const { return bblockVas_.size(); }
+    size_t nBasicBlocks() const;
 
     /** Number of data blocks in the function. */
-    size_t nDataBlocks() const { return dblocks_.size(); }
+    size_t nDataBlocks() const;
 
     /** Property: Stack delta.
      *
@@ -321,8 +302,8 @@ public:
      *  whether the results are valid, respectively.
      *
      * @{ */
-    const StackDelta::Analysis& stackDeltaAnalysis() const { return stackDeltaAnalysis_; }
-    StackDelta::Analysis& stackDeltaAnalysis() { return stackDeltaAnalysis_; }
+    const StackDelta::Analysis& stackDeltaAnalysis() const;
+    StackDelta::Analysis& stackDeltaAnalysis();
     /** @} */
 
     /** Property: Calling convention analysis results.
@@ -339,8 +320,8 @@ public:
      *  whether the results are valid, respectively.
      *
      * @{ */
-    const CallingConvention::Analysis& callingConventionAnalysis() const { return ccAnalysis_; }
-    CallingConvention::Analysis& callingConventionAnalysis() { return ccAnalysis_; }
+    const CallingConvention::Analysis& callingConventionAnalysis() const;
+    CallingConvention::Analysis& callingConventionAnalysis();
     /** @} */
 
     /** Property: Best calling convention definition.
@@ -352,8 +333,8 @@ public:
      *  defintion which is usually the "best" one.
      *
      * @{ */
-    CallingConvention::Definition::Ptr callingConventionDefinition() { return ccDefinition_; }
-    void callingConventionDefinition(const CallingConvention::Definition::Ptr &ccdef) { ccDefinition_ = ccdef; }
+    CallingConvention::DefinitionPtr callingConventionDefinition();
+    void callingConventionDefinition(const CallingConvention::DefinitionPtr&);
     /** @} */
 
     /** A printable name for the function.
@@ -366,19 +347,16 @@ public:
      *
      *  If a value is cached, then the analysis has run and the cached value is true if the analysis proved that the function
      *  is a no-op. */
-    const Sawyer::Cached<bool>& isNoop() const { return isNoop_; }
+    const Sawyer::Cached<bool>& isNoop() const;
 
 private:
     friend class Partitioner;
-    void freeze() { isFrozen_ = true; }
-    void thaw() { isFrozen_ = false; }
+    void freeze();
+    void thaw();
 
     // Find an equivalent data block and replace it with the specified data block, or insert the specified data block
-    void replaceOrInsertDataBlock(const DataBlock::Ptr&);
+    void replaceOrInsertDataBlock(const DataBlockPtr&);
 };
-
-typedef Sawyer::Container::Map<rose_addr_t, Function::Ptr> Functions;
-typedef Sawyer::Container::Set<Function::Ptr> FunctionSet;
 
 } // namespace
 } // namespace

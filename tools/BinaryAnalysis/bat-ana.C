@@ -14,9 +14,11 @@ static const char *description =
 #include <rose.h>
 #include <batSupport.h>
 
-#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/BestMapAddress.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
 
@@ -111,10 +113,10 @@ private:
     std::vector<SValueSValue> rewrites_;
 
 protected:
-    IpRewrite(const P2::Partitioner &partitioner, const std::vector<rose_addr_t> &vaPairs) {
+    IpRewrite(const P2::Partitioner::ConstPtr &partitioner, const std::vector<rose_addr_t> &vaPairs) {
         ASSERT_require(vaPairs.size() % 2 == 0);
-        const RegisterDescriptor REG_IP = partitioner.instructionProvider().instructionPointerRegister();
-        InstructionSemantics::BaseSemantics::RiscOperators::Ptr ops = partitioner.newOperators();
+        const RegisterDescriptor REG_IP = partitioner->instructionProvider().instructionPointerRegister();
+        InstructionSemantics::BaseSemantics::RiscOperators::Ptr ops = partitioner->newOperators();
         for (size_t i=0; i < vaPairs.size(); i += 2) {
             P2::Semantics::SValue::Ptr oldVal = P2::Semantics::SValue::promote(ops->number_(REG_IP.nBits(), vaPairs[i+0]));
             P2::Semantics::SValue::Ptr newVal = P2::Semantics::SValue::promote(ops->number_(REG_IP.nBits(), vaPairs[i+1]));
@@ -123,8 +125,8 @@ protected:
     }
 
 public:
-    static Ptr instance(const P2::Partitioner &p, const std::vector<rose_addr_t> &vaPairs) {
-        return Ptr(new IpRewrite(p, vaPairs));
+    static Ptr instance(const P2::Partitioner::ConstPtr &partitioner, const std::vector<rose_addr_t> &vaPairs) {
+        return Ptr(new IpRewrite(partitioner, vaPairs));
     }
 
     virtual bool operator()(bool chain, const Args &args) {
@@ -160,19 +162,19 @@ main(int argc, char *argv[]) {
     Bat::checkRoseVersionNumber(MINIMUM_ROSE_LIBRARY_VERSION, mlog[FATAL]);
     Bat::registerSelfTests();
 
-    P2::Engine engine;
     Settings settings;
-    std::vector<std::string> specimen = parseCommandLine(argc, argv, engine, settings);
+    P2::Engine *engine = P2::Engine::instance();
+    std::vector<std::string> specimen = parseCommandLine(argc, argv, *engine, settings);
     Bat::checkRbaOutput(settings.outputFileName, mlog);
 
-    MemoryMap::Ptr map = engine.loadSpecimens(specimen);
+    MemoryMap::Ptr map = engine->loadSpecimens(specimen);
     map->dump(mlog[INFO]);
 
     if (settings.doRemap) {
-        P2::Engine::Settings settings = engine.settings();
+        P2::Engine::Settings settings = engine->settings();
         settings.partitioner.doingPostAnalysis = false;
         if (settings.disassembler.isaName.empty()) {
-            Disassembler::Base::Ptr disassembler = engine.obtainDisassembler();
+            Disassembler::Base::Ptr disassembler = engine->obtainDisassembler();
             if (!disassembler) {
                 mlog[FATAL] <<"no disassembler found and none specified\n";
                 exit(1);
@@ -182,25 +184,27 @@ main(int argc, char *argv[]) {
         MemoryMap::Ptr newMap = BestMapAddress::align(map, settings);
         mlog[INFO] <<"Remapped addresses:\n";
         newMap->dump(mlog[INFO]);
-        engine.memoryMap(newMap);
+        engine->memoryMap(newMap);
     }
 
-    P2::Partitioner partitioner;
-    if (engine.doDisassemble()) {
-        mlog[INFO] <<"using the " <<engine.obtainDisassembler()->name() <<" disassembler\n";
-        partitioner = engine.partition(specimen);
+    P2::Partitioner::Ptr partitioner;
+    if (engine->settings().disassembler.doDisassemble) {
+        mlog[INFO] <<"using the " <<engine->obtainDisassembler()->name() <<" disassembler\n";
+        partitioner = engine->partition(specimen);
     } else {
-        partitioner = engine.createPartitioner();
-        engine.runPartitionerInit(partitioner);
-        engine.runPartitionerFinal(partitioner);
+        partitioner = engine->createPartitioner();
+        engine->runPartitionerInit(partitioner);
+        engine->runPartitionerFinal(partitioner);
     }
 
 #if 0 // DEBUGGING [Robb Matzke 2018-10-24]
-    partitioner.showStatistics();                       // debugging
+    partitioner->showStatistics();                      // debugging
 #endif
 
     if (!settings.skipOutput) {
-        partitioner.basicBlockDropSemantics();
-        engine.savePartitioner(partitioner, settings.outputFileName, settings.stateFormat);
+        partitioner->basicBlockDropSemantics();
+        engine->savePartitioner(partitioner, settings.outputFileName, settings.stateFormat);
     }
+
+    delete engine;
 }

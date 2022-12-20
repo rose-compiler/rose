@@ -10,6 +10,7 @@ static const char *description =
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/CommandLine.h>
 #include <Rose/FormattedTable.h>
@@ -144,14 +145,14 @@ main(int argc, char *argv[]) {
     Bat::checkRoseVersionNumber(MINIMUM_ROSE_LIBRARY_VERSION, mlog[FATAL]);
     Bat::registerSelfTests();
 
-    P2::Engine engine;
     Settings settings;
-    boost::filesystem::path inputFileName = parseCommandLine(argc, argv, engine, settings);
-    P2::Partitioner partitioner = engine.loadPartitioner(inputFileName, settings.stateFormat);
-    MemoryMap::Ptr map = partitioner.memoryMap();
+    P2::Engine *engine = P2::Engine::instance();
+    boost::filesystem::path inputFileName = parseCommandLine(argc, argv, *engine, settings);
+    P2::Partitioner::Ptr partitioner = engine->loadPartitioner(inputFileName, settings.stateFormat);
+    MemoryMap::Ptr map = partitioner->memoryMap();
     ASSERT_not_null(map);
 
-    BinaryAnalysis::Unparser::Base::Ptr unparser = partitioner.unparser();
+    BinaryAnalysis::Unparser::Base::Ptr unparser = partitioner->unparser();
     ASSERT_not_null(unparser);
     unparser->settings().function.cg.showing = false;
     unparser->settings().insn.stackDelta.showing = false;
@@ -160,7 +161,7 @@ main(int argc, char *argv[]) {
                         Sawyer::Message::StreamSink::instance(std::cout, Sawyer::Message::Prefix::silentInstance()));
     IS::BaseSemantics::Dispatcher::Ptr cpu;
     if (settings.showSideEffects) {
-        if (IS::BaseSemantics::RiscOperators::Ptr ops = partitioner.newOperators()) {
+        if (IS::BaseSemantics::RiscOperators::Ptr ops = partitioner->newOperators()) {
             if (settings.showSemanticTrace) {
                 IS::TraceSemantics::RiscOperators::Ptr tops = IS::TraceSemantics::RiscOperators::instance(ops);
                 ASSERT_not_null(tops);
@@ -171,7 +172,7 @@ main(int argc, char *argv[]) {
                 ops = tops;
             }
 
-            cpu = partitioner.newDispatcher(ops);
+            cpu = partitioner->newDispatcher(ops);
             if (!cpu)
                 mlog[WARN] <<"no semantics available for this architecture\n";
         }
@@ -185,12 +186,12 @@ main(int argc, char *argv[]) {
     Sawyer::Optional<rose_addr_t> lastSeenVa;
     while (map->atOrAfter(va).require(MemoryMap::EXECUTABLE).next().assignTo(va)) {
         va = alignUp(va, settings.alignment);
-        if (!settings.where.isContaining(va))
+        if (!settings.where.contains(va))
             break;
         if (lastSeenVa && lastSeenVa.get()+1 != va)
             std::cout <<"\n";
 
-        if (SgAsmInstruction *insn = partitioner.instructionProvider()[va]) {
+        if (SgAsmInstruction *insn = partitioner->instructionProvider()[va]) {
             unparser->unparse(std::cout, partitioner, insn);
             std::cout <<"\n";
 
@@ -253,4 +254,6 @@ main(int argc, char *argv[]) {
         table.insert(sorted.size(), 3, "100.000%", right);
         std::cout <<table;
     }
+
+    delete engine;
 }

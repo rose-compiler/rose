@@ -9,7 +9,9 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include <Rose/BinaryAnalysis/NoOperation.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 
 #include <Sawyer/CommandLine.h>
 
@@ -48,25 +50,24 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 int
 main(int argc, char *argv[]) {
     Settings settings;
-    P2::Engine engine;
-    engine.usingSemantics(true); // test specimens contain opaque predicates
-    engine.followingGhostEdges(false);
-    engine.findingIntraFunctionCode(false);
-    P2::Partitioner partitioner = engine.partition(parseCommandLine(argc, argv, engine, settings));
+    P2::Engine *engine = P2::Engine::instance();
+    engine->settings().partitioner.base.usingSemantics = true; // test specimens contain opaque predicates
+    engine->settings().partitioner.followingGhostEdges = false;
+    engine->settings().partitioner.findingIntraFunctionCode = false;
+    P2::Partitioner::Ptr partitioner = engine->partition(parseCommandLine(argc, argv, *engine, settings));
 
     // Get a list of basic blocks to analyze, sorted by starting address.
     std::vector<P2::BasicBlock::Ptr> bblocks;
-    BOOST_FOREACH (const P2::ControlFlowGraph::Vertex &vertex, partitioner.cfg().vertices()) {
+    for (const P2::ControlFlowGraph::Vertex &vertex : partitioner->cfg().vertices()) {
         if (vertex.value().type() == P2::V_BASIC_BLOCK)
             bblocks.push_back(vertex.value().bblock());
     }
     std::sort(bblocks.begin(), bblocks.end(), P2::sortBasicBlocksByAddress);
-    
 
     // Analyze each basic block to find no-op equivalents
-    NoOperation nopAnalyzer(engine.disassembler());
+    NoOperation nopAnalyzer(engine->disassembler());
     nopAnalyzer.initialStackPointer(settings.initialStackPointer);
-    BOOST_FOREACH (const P2::BasicBlock::Ptr &bblock, bblocks) {
+    for (const P2::BasicBlock::Ptr &bblock : bblocks) {
         std::cout <<bblock->printableName() <<":\n";
         const std::vector<SgAsmInstruction*> &insns = bblock->instructions();
         NoOperation::IndexIntervals allSequences = nopAnalyzer.findNoopSubsequences(insns);
@@ -77,12 +78,12 @@ main(int argc, char *argv[]) {
         for (size_t i=0; i<insns.size(); ++i) {
             std::cout <<"    [" <<std::setw(2) <<i <<"] "
                       <<(isNoop[i] ? " X " : "   ")
-                      <<partitioner.unparse(insns[i]) <<"\n";
+                      <<partitioner->unparse(insns[i]) <<"\n";
         }
 
         if (allSequences.size() > 1) {
             std::cout <<"  All no-op sequences:\n";
-            BOOST_FOREACH (const NoOperation::IndexInterval &where, allSequences) {
+            for (const NoOperation::IndexInterval &where : allSequences) {
                 if (where.isSingleton()) {
                     std::cout <<"    " <<where.least() <<"\n";
                 } else {
@@ -91,6 +92,7 @@ main(int argc, char *argv[]) {
             }
         }
     }
+    delete engine;
 }
 
 #endif

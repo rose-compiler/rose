@@ -3,9 +3,13 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
-#include <rose_strtoull.h>
+#include <Rose/BinaryAnalysis/Concolic/I386Linux/BasicTypes.h>
+#include <Rose/BinaryAnalysis/Concolic/M68kSystem/BasicTypes.h>
+
+#include <Rose/StringUtility/Escape.h>
 
 #include <Rose/Exception.h>
+#include <rose_strtoull.h>
 
 #include <Sawyer/Callbacks.h>
 #include <Sawyer/Message.h>
@@ -88,7 +92,9 @@ using ConcolicExecutorPtr = Sawyer::SharedPointer<ConcolicExecutor>;
 
 class ConcreteExecutor;
 using ConcreteExecutorPtr = Sawyer::SharedPointer<ConcreteExecutor>;
-class ConcreteExecutorResult;
+
+class ConcreteResult;
+using ConcreteResultPtr = Sawyer::SharedPointer<ConcreteResult>;
 
 class Database;
 using DatabasePtr = Sawyer::SharedPointer<Database>;
@@ -108,12 +114,6 @@ using ExecutionManagerPtr = Sawyer::SharedPointer<ExecutionManager>;
 
 class InputVariables;
 using InputVariablesPtr = Sawyer::SharedPointer<InputVariables>;
-
-class LinuxExecutor;
-using LinuxExecutorPtr = Sawyer::SharedPointer<LinuxExecutor>;
-
-class LinuxI386;
-using LinuxI386Ptr = Sawyer::SharedPointer<LinuxI386>;
 
 class SharedMemoryCallback;
 using SharedMemoryCallbackPtr = Sawyer::SharedPointer<SharedMemoryCallback>;
@@ -137,9 +137,6 @@ using TestCasePtr = Sawyer::SharedPointer<TestCase>;
 
 class TestSuite;
 using TestSuitePtr = Sawyer::SharedPointer<TestSuite>;
-
-class LinuxExitStatus;
-using LinuxExitStatusPtr = Sawyer::SharedPointer<LinuxExitStatus>;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Database

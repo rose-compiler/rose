@@ -3,9 +3,86 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Reference.h>
 
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
+
+Reference::~Reference() {}
+
+Reference::Reference(const Function::Ptr &function)
+    : function_(function), insn_(nullptr) {}
+
+Reference::Reference(const Function::Ptr &function, const BasicBlock::Ptr &bblock, SgAsmInstruction *insn,
+                     const Sawyer::Optional<rose_addr_t> &address)
+    : function_(function), bblock_(bblock), insn_(insn), address_(address) {}
+
+Reference::Reference(const BasicBlock::Ptr &bblock, SgAsmInstruction *insn, const Sawyer::Optional<rose_addr_t> &address)
+    : bblock_(bblock), insn_(insn), address_(address) {}
+
+Reference::Reference(SgAsmInstruction *insn, const Sawyer::Optional<rose_addr_t> &address)
+    : insn_(insn), address_(address) {}
+
+Reference::Reference(rose_addr_t address)
+    : insn_(nullptr), address_(address) {}
+
+Reference::Reference()
+    : insn_(nullptr) {}
+
+Reference::Granularity
+Reference::granularity() const {
+    if (address_)
+        return ADDRESS;
+    if (insn_)
+        return INSTRUCTION;
+    if (bblock_)
+        return BASIC_BLOCK;
+    if (function_)
+        return FUNCTION;
+    return EMPTY;
+}
+
+bool
+Reference::isEmpty() const {
+    return granularity() == EMPTY;
+}
+
+bool
+Reference::hasFunction() const {
+    return function_ != nullptr;
+}
+
+Function::Ptr
+Reference::function() const {
+    return function_;
+}
+
+bool
+Reference::hasBasicBlock() const {
+    return bblock_ != nullptr;
+}
+
+BasicBlock::Ptr
+Reference::basicBlock() const {
+    return bblock_;
+}
+
+bool
+Reference::hasInstruction() const {
+    return insn_ != nullptr;
+}
+
+SgAsmInstruction*
+Reference::instruction() const {
+    return insn_;
+}
+
+bool
+Reference::hasExplicitAddress() const {
+    return address_;
+}
 
 rose_addr_t
 Reference::address() const {

@@ -4,7 +4,8 @@
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
-#include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
+#include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Reachability.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
@@ -169,10 +170,11 @@ StyleGuard::restore() const {
 //                                      State
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-State::State(const P2::Partitioner &p, const Settings &settings, const Base &frontUnparser)
-    : partitioner_(p), registerNames_(p.instructionProvider().registerDictionary()), frontUnparser_(frontUnparser) {
+State::State(const P2::Partitioner::ConstPtr &partitioner, const Settings &settings, const Base &frontUnparser)
+    : partitioner_(partitioner), registerNames_(partitioner->instructionProvider().registerDictionary()),
+      frontUnparser_(frontUnparser) {
     if (settings.function.cg.showing)
-        cg_ = p.functionCallGraph(P2::AllowParallelEdges::NO);
+        cg_ = partitioner->functionCallGraph(P2::AllowParallelEdges::NO);
     intraFunctionCfgArrows_.arrows.arrowStyle(settings.arrow.style, EdgeArrows::LEFT);
     intraFunctionBlockArrows_.arrows.arrowStyle(settings.arrow.style, EdgeArrows::LEFT);
     globalBlockArrows_.arrows.arrowStyle(settings.arrow.style, EdgeArrows::LEFT);
@@ -181,10 +183,11 @@ State::State(const P2::Partitioner &p, const Settings &settings, const Base &fro
     styleStack_.colorization(settings.colorization.merge(CommandLine::genericSwitchArgs.colorization));
 }
 
-State::State(const P2::Partitioner &p, const RegisterDictionary::Ptr &regdict, const Settings &settings, const Base &frontUnparser)
-    : partitioner_(p), registerNames_(regdict), frontUnparser_(frontUnparser) {
+State::State(const P2::Partitioner::ConstPtr &partitioner, const RegisterDictionary::Ptr &regdict, const Settings &settings,
+             const Base &frontUnparser)
+    : partitioner_(partitioner), registerNames_(regdict), frontUnparser_(frontUnparser) {
     if (settings.function.cg.showing)
-        cg_ = p.functionCallGraph(P2::AllowParallelEdges::NO);
+        cg_ = partitioner->functionCallGraph(P2::AllowParallelEdges::NO);
     intraFunctionCfgArrows_.arrows.arrowStyle(settings.arrow.style, EdgeArrows::LEFT);
     intraFunctionBlockArrows_.arrows.arrowStyle(settings.arrow.style, EdgeArrows::LEFT);
     globalBlockArrows_.arrows.arrowStyle(settings.arrow.style, EdgeArrows::LEFT);
@@ -195,7 +198,7 @@ State::State(const P2::Partitioner &p, const RegisterDictionary::Ptr &regdict, c
 
 State::~State() {}
 
-const P2::Partitioner&
+P2::Partitioner::ConstPtr
 State::partitioner() const {
     return partitioner_;
 }
@@ -786,49 +789,98 @@ commandLineSwitches(Settings &settings) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Top-level
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void
+Base::operator()(std::ostream &out, const P2::Partitioner::ConstPtr &partitioner) const {
+    unparse(out, partitioner);
+}
+
+void
+Base::operator()(std::ostream &out, const P2::Partitioner::ConstPtr &partitioner, SgAsmInstruction *insn) const {
+    unparse(out, partitioner, insn);
+}
+
+void
+Base::operator()(std::ostream &out, const P2::Partitioner::ConstPtr &partitioner, const P2::BasicBlock::Ptr &bb) const {
+    unparse(out, partitioner, bb);
+}
+
+void
+Base::operator()(std::ostream &out, const P2::Partitioner::ConstPtr &partitioner, const P2::DataBlock::Ptr &db) const {
+    unparse(out, partitioner, db);
+}
+
+void
+Base::operator()(std::ostream &out, const P2::Partitioner::ConstPtr &partitioner, const P2::Function::Ptr &f) const {
+    unparse(out, partitioner, f);
+}
 
 std::string
-Base::unparse(const P2::Partitioner &p, const Progress::Ptr &progress) const {
+Base::operator()(const P2::Partitioner::ConstPtr &partitioner, const Progress::Ptr &progress) const {
+    return unparse(partitioner, progress);
+}
+
+std::string
+Base::operator()(const P2::Partitioner::ConstPtr &partitioner, SgAsmInstruction *insn) const {
+    return unparse(partitioner, insn);
+}
+
+std::string
+Base::operator()(const P2::Partitioner::ConstPtr &partitioner, const P2::BasicBlock::Ptr &bb) const {
+    return unparse(partitioner, bb);
+}
+
+std::string
+Base::operator()(const P2::Partitioner::ConstPtr &partitioner, const P2::DataBlock::Ptr &db) const {
+        return unparse(partitioner, db);
+}
+
+std::string
+Base::operator()(const P2::Partitioner::ConstPtr &partitioner, const P2::Function::Ptr &f) const {
+    return unparse(partitioner, f);
+}
+
+std::string
+Base::unparse(const P2::Partitioner::ConstPtr &partitioner, const Progress::Ptr &progress) const {
     std::ostringstream ss;
-    unparse(ss, p, progress);
+    unparse(ss, partitioner, progress);
     return ss.str();
 }
 
 std::string
-Base::unparse(const P2::Partitioner &p, SgAsmInstruction *insn) const {
+Base::unparse(const P2::Partitioner::ConstPtr &partitioner, SgAsmInstruction *insn) const {
     std::ostringstream ss;
-    unparse(ss, p, insn);
+    unparse(ss, partitioner, insn);
     return ss.str();
 }
 
 std::string
-Base::unparse(const P2::Partitioner &p, const Partitioner2::BasicBlock::Ptr &bb) const {
+Base::unparse(const P2::Partitioner::ConstPtr &partitioner, const Partitioner2::BasicBlock::Ptr &bb) const {
     std::ostringstream ss;
-    unparse(ss, p, bb);
+    unparse(ss, partitioner, bb);
     return ss.str();
 }
 
 std::string
-Base::unparse(const P2::Partitioner &p, const Partitioner2::DataBlock::Ptr &db) const {
+Base::unparse(const P2::Partitioner::ConstPtr &partitioner, const Partitioner2::DataBlock::Ptr &db) const {
     std::ostringstream ss;
-    unparse(ss, p, db);
+    unparse(ss, partitioner, db);
     return ss.str();
 }
 
 std::string
-Base::unparse(const P2::Partitioner &p, const Partitioner2::Function::Ptr &f) const {
+Base::unparse(const P2::Partitioner::ConstPtr &partitioner, const Partitioner2::Function::Ptr &f) const {
     std::ostringstream ss;
-    unparse(ss, p, f);
+    unparse(ss, partitioner, f);
     return ss.str();
 }
 
 void
-Base::unparse(std::ostream &out, const Partitioner2::Partitioner &p, const Progress::Ptr &progress) const {
-    Sawyer::ProgressBar<size_t> progressBar(p.nFunctions(), mlog[MARCH], "unparse");
+Base::unparse(std::ostream &out, const Partitioner2::Partitioner::ConstPtr &partitioner, const Progress::Ptr &progress) const {
+    Sawyer::ProgressBar<size_t> progressBar(partitioner->nFunctions(), mlog[MARCH], "unparse");
     progressBar.suffix(" functions");
-    State state(p, settings(), *this);
+    State state(partitioner, settings(), *this);
     initializeState(state);
-    for (P2::Function::Ptr f: p.functions()) {
+    for (P2::Function::Ptr f: partitioner->functions()) {
         ++progressBar;
         if (progress)
             progress->update(Progress::Report("unparse", progressBar.ratio()));
@@ -837,29 +889,29 @@ Base::unparse(std::ostream &out, const Partitioner2::Partitioner &p, const Progr
 }
 
 void
-Base::unparse(std::ostream &out, const P2::Partitioner &p, SgAsmInstruction *insn) const {
-    State state(p, settings(), *this);
+Base::unparse(std::ostream &out, const P2::Partitioner::ConstPtr &partitioner, SgAsmInstruction *insn) const {
+    State state(partitioner, settings(), *this);
     initializeState(state);
     emitInstruction(out, insn, state);
 }
 
 void
-Base::unparse(std::ostream &out, const P2::Partitioner &p, const P2::BasicBlock::Ptr &bb) const {
-    State state(p, settings(), *this);
+Base::unparse(std::ostream &out, const P2::Partitioner::ConstPtr &partitioner, const P2::BasicBlock::Ptr &bb) const {
+    State state(partitioner, settings(), *this);
     initializeState(state);
     emitBasicBlock(out, bb, state);
 }
 
 void
-Base::unparse(std::ostream &out, const P2::Partitioner &p, const P2::DataBlock::Ptr &db) const {
-    State state(p, settings(), *this);
+Base::unparse(std::ostream &out, const P2::Partitioner::ConstPtr &partitioner, const P2::DataBlock::Ptr &db) const {
+    State state(partitioner, settings(), *this);
     initializeState(state);
     emitDataBlock(out, db, state);
 }
 
 void
-Base::unparse(std::ostream &out, const P2::Partitioner &p, const P2::Function::Ptr &f) const {
-    State state(p, settings(), *this);
+Base::unparse(std::ostream &out, const P2::Partitioner::ConstPtr &partitioner, const P2::Function::Ptr &f) const {
+    State state(partitioner, settings(), *this);
     initializeState(state);
     emitFunction(out, f, state);
 }
@@ -1050,7 +1102,7 @@ Base::emitFunctionBody(std::ostream &out, const P2::Function::Ptr &function, Sta
         std::vector<InsnsOrData> blocks;
         blocks.reserve(function->nBasicBlocks() + function->nDataBlocks());
         for (rose_addr_t bbVa: function->basicBlockAddresses()) {
-            if (P2::BasicBlock::Ptr bb = state.partitioner().basicBlockExists(bbVa)) {
+            if (P2::BasicBlock::Ptr bb = state.partitioner()->basicBlockExists(bbVa)) {
                 blocks.push_back(bb);
                 for (const P2::DataBlock::Ptr &db: bb->dataBlocks())
                     dblocks.insert(db);
@@ -1290,7 +1342,7 @@ Base::emitFunctionCallingConvention(std::ostream &out, const P2::Function::Ptr &
                 state.frontUnparser().emitCommentBlock(out, ss.str(), state, ";;;   ");
 
                 // Calling convention dictionary matches
-                CallingConvention::Dictionary matches = state.partitioner().functionCallingConventionDefinitions(function);
+                CallingConvention::Dictionary matches = state.partitioner()->functionCallingConventionDefinitions(function);
                 std::string s = "calling convention definitions:";
                 if (!matches.empty()) {
                     for (const CallingConvention::Definition::Ptr &ccdef: matches)
@@ -1330,7 +1382,7 @@ Base::emitFunctionMayReturn(std::ostream &out, const P2::Function::Ptr &function
     if (nextUnparser()) {
         nextUnparser()->emitFunctionMayReturn(out, function, state);
     } else {
-        if (!state.partitioner().functionOptionalMayReturn(function).orElse(true)) {
+        if (!state.partitioner()->functionOptionalMayReturn(function).orElse(true)) {
             state.frontUnparser().emitLinePrefix(out, state);
             StyleGuard style(state.styleStack(), settings().comment.line.style);
             out <<style.render();
@@ -1461,7 +1513,7 @@ Base::emitBasicBlockSharing(std::ostream &out, const P2::BasicBlock::Ptr &bb, St
     if (nextUnparser()) {
         nextUnparser()->emitBasicBlockSharing(out, bb, state);
     } else {
-        std::vector<P2::Function::Ptr> functions = state.partitioner().functionsOwningBasicBlock(bb);
+        std::vector<P2::Function::Ptr> functions = state.partitioner()->functionsOwningBasicBlock(bb);
         std::vector<P2::Function::Ptr>::iterator current =
             std::find(functions.begin(), functions.end(), state.currentFunction());
         if (current != functions.end())
@@ -1542,7 +1594,7 @@ Base::emitBasicBlockSuccessors(std::ostream &out, const P2::BasicBlock::Ptr &bb,
     } else {
         // Get the CFG edges in the order they should be displayed even though we actually emit the basicBlockSuccessors
         std::vector<P2::ControlFlowGraph::ConstEdgeIterator> edges = orderedBlockSuccessors(state.partitioner(), bb);
-        P2::BasicBlock::Successors successors = state.partitioner().basicBlockSuccessors(bb);
+        P2::BasicBlock::Successors successors = state.partitioner()->basicBlockSuccessors(bb);
         for (P2::ControlFlowGraph::ConstEdgeIterator edge: edges) {
             Sawyer::Optional<rose_addr_t> targetVa = edge->target()->value().optionalAddress();
 
@@ -1641,8 +1693,8 @@ Base::emitBasicBlockReachability(std::ostream &out, const P2::BasicBlock::Ptr &b
     if (nextUnparser()) {
         nextUnparser()->emitBasicBlockReachability(out, bb, state);
     } else if (!state.cfgVertexReachability().empty()) {
-        P2::ControlFlowGraph::ConstVertexIterator vertex = state.partitioner().findPlaceholder(bb->address());
-        if (vertex != state.partitioner().cfg().vertices().end()) {
+        P2::ControlFlowGraph::ConstVertexIterator vertex = state.partitioner()->findPlaceholder(bb->address());
+        if (vertex != state.partitioner()->cfg().vertices().end()) {
             Reachability::ReasonFlags reachable = state.isCfgVertexReachable(vertex->id());
             StyleGuard style(state.styleStack(), settings().comment.line.style);
             if (reachable.isAnySet()) {
@@ -1690,7 +1742,7 @@ Base::emitDataBlockPrologue(std::ostream &out, const P2::DataBlock::Ptr &db, Sta
         }
         if (P2::Function::Ptr function = state.currentFunction()) {
             for (rose_addr_t bbVa: function->basicBlockAddresses()) {
-                if (P2::BasicBlock::Ptr bb = state.partitioner().basicBlockExists(bbVa)) {
+                if (P2::BasicBlock::Ptr bb = state.partitioner()->basicBlockExists(bbVa)) {
                     if (bb->dataBlockExists(db)) {
                         state.frontUnparser().emitLinePrefix(out, state);
                         StyleGuard style(state.styleStack(), settings().comment.line.style);
@@ -1713,7 +1765,7 @@ Base::emitDataBlockBody(std::ostream &out, const P2::DataBlock::Ptr &db, State &
     if (nextUnparser()) {
         nextUnparser()->emitDataBlockBody(out, db, state);
     } else if (AddressInterval where = db->extent()) {
-        if (MemoryMap::Ptr map = state.partitioner().memoryMap()) {
+        if (MemoryMap::Ptr map = state.partitioner()->memoryMap()) {
             // hexdump format
             std::ostringstream prefix;
             state.frontUnparser().emitLinePrefix(prefix, state);
@@ -1725,7 +1777,7 @@ Base::emitDataBlockBody(std::ostream &out, const P2::DataBlock::Ptr &db, State &
             while (where) {
                 uint8_t buf[8192];                      // multiple of 16
                 size_t maxSize = std::min(where.size(), (rose_addr_t)(sizeof buf));
-                AddressInterval read = state.partitioner().memoryMap()->atOrAfter(where.least()).limit(maxSize).read(buf);
+                AddressInterval read = state.partitioner()->memoryMap()->atOrAfter(where.least()).limit(maxSize).read(buf);
                 SgAsmExecutableFileFormat::hexdump(out, read.least(), buf, read.size(), fmt);
                 if (read.greatest() == where.greatest())
                     break;                              // avoid possible overflow
@@ -2016,11 +2068,11 @@ void
 Base::emitInstructionSemantics(std::ostream &out, SgAsmInstruction *insn, State &state) const {
     ASSERT_not_null(insn);
     if (settings().insn.semantics.showing) {
-        S2::BaseSemantics::RiscOperators::Ptr ops = state.partitioner().newOperators();
+        S2::BaseSemantics::RiscOperators::Ptr ops = state.partitioner()->newOperators();
         if (settings().insn.semantics.tracing)
             ops = S2::TraceSemantics::RiscOperators::instance(ops);
 
-        if (S2::BaseSemantics::Dispatcher::Ptr cpu = state.partitioner().newDispatcher(ops)) {
+        if (S2::BaseSemantics::Dispatcher::Ptr cpu = state.partitioner()->newDispatcher(ops)) {
             try {
                 cpu->processInstruction(insn);
                 S2::BaseSemantics::Formatter fmt = settings().insn.semantics.formatter;
@@ -2083,11 +2135,11 @@ Base::emitAddress(std::ostream &out, rose_addr_t va, State &state, bool always) 
             out <<"basic block " <<label;
             return true;
         }
-        if (P2::Function::Ptr f = state.partitioner().functionExists(va)) {
+        if (P2::Function::Ptr f = state.partitioner()->functionExists(va)) {
             out <<f->printableName();
             return true;
         }
-        if (P2::BasicBlock::Ptr bb = state.partitioner().basicBlockExists(va)) {
+        if (P2::BasicBlock::Ptr bb = state.partitioner()->basicBlockExists(va)) {
             out <<bb->printableName();
             return true;
         }
@@ -2123,8 +2175,8 @@ Base::emitInteger(std::ostream &out, const Sawyer::Container::BitVector &bv, Sta
         std::vector<std::string> comments;
         std::string label;
 
-        if (!state.partitioner().isDefaultConstructed() &&
-            bv.size() == state.partitioner().instructionProvider().instructionPointerRegister().nBits() &&
+        if (!state.partitioner()->isDefaultConstructed() &&
+            bv.size() == state.partitioner()->instructionProvider().instructionPointerRegister().nBits() &&
             state.frontUnparser().emitAddress(out, bv, state, false)) {
             // address with a label, existing basic block, or existing function.
         } else if (bv.isEqualToZero()) {
@@ -2317,9 +2369,9 @@ Base::ascendingTargetAddress(P2::ControlFlowGraph::ConstEdgeIterator a, P2::Cont
 
 // class method
 std::vector<P2::ControlFlowGraph::ConstEdgeIterator>
-Base::orderedBlockPredecessors(const P2::Partitioner &partitioner, const P2::BasicBlock::Ptr &bb) {
+Base::orderedBlockPredecessors(const P2::Partitioner::ConstPtr &partitioner, const P2::BasicBlock::Ptr &bb) {
     ASSERT_not_null(bb);
-    P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner.findPlaceholder(bb->address());
+    P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner->findPlaceholder(bb->address());
     std::vector<P2::ControlFlowGraph::ConstEdgeIterator> retval;
     retval.reserve(vertex->nInEdges());
     for (P2::ControlFlowGraph::ConstEdgeIterator edge = vertex->inEdges().begin(); edge != vertex->inEdges().end(); ++edge)
@@ -2330,9 +2382,9 @@ Base::orderedBlockPredecessors(const P2::Partitioner &partitioner, const P2::Bas
 
 // class method
 std::vector<P2::ControlFlowGraph::ConstEdgeIterator>
-Base::orderedBlockSuccessors(const P2::Partitioner &partitioner, const P2::BasicBlock::Ptr &bb) {
+Base::orderedBlockSuccessors(const P2::Partitioner::ConstPtr &partitioner, const P2::BasicBlock::Ptr &bb) {
     ASSERT_not_null(bb);
-    P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner.findPlaceholder(bb->address());
+    P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner->findPlaceholder(bb->address());
     std::vector<P2::ControlFlowGraph::ConstEdgeIterator> retval;
     retval.reserve(vertex->nOutEdges());
     for (P2::ControlFlowGraph::ConstEdgeIterator edge = vertex->outEdges().begin(); edge != vertex->outEdges().end(); ++edge)

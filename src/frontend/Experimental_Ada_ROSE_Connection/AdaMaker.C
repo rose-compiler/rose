@@ -471,7 +471,7 @@ mkWhileStmt(SgExpression& cond, SgBasicBlock& body)
 }
 
 SgAdaLoopStmt&
-mkLoopStmt(SgBasicBlock& body)
+mkAdaLoopStmt(SgBasicBlock& body)
 {
   SgAdaLoopStmt& sgnode = mkLocatedNode<SgAdaLoopStmt>();
 
@@ -493,13 +493,14 @@ mkForStatement(SgBasicBlock& body)
 
 
 SgIfStmt&
-mkIfStmt()
+mkIfStmt(bool elseIfPath)
 // SgExpression& cond, SgStatement& thenBranch, SgStatement* elseBranch_opt)
 {
   SgIfStmt& sgnode = SG_DEREF( sb::buildIfStmt_nfi(nullptr, nullptr, nullptr) );
 
   markCompilerGenerated(sgnode);
   setSymbolTableCaseSensitivity(sgnode);
+  sgnode.set_is_else_if_statement(elseIfPath);
   return sgnode;
 }
 
@@ -560,6 +561,26 @@ mkWhenOthersPath(SgBasicBlock& blk)
   sgnode.set_has_fall_through(false);
   return sgnode;
 }
+
+SgAdaSelectStmt&
+mkAdaSelectStmt(SgAdaSelectStmt::select_type_enum select_type)
+{
+  SgAdaSelectStmt& sgnode = mkLocatedNode<SgAdaSelectStmt>();
+
+  sgnode.set_select_type(select_type);
+  return sgnode;
+}
+
+SgAdaSelectAlternativeStmt&
+mkAdaSelectAlternativeStmt(SgExpression& guard, SgBasicBlock& body)
+{
+  SgAdaSelectAlternativeStmt& sgnode = mkLocatedNode<SgAdaSelectAlternativeStmt>();
+
+  sg::linkParentChild(sgnode, guard, &SgAdaSelectAlternativeStmt::set_guard);
+  sg::linkParentChild(sgnode, body, &SgAdaSelectAlternativeStmt::set_body);
+  return sgnode;
+}
+
 
 
 SgAdaDelayStmt&
@@ -1170,8 +1191,6 @@ namespace
                        std::function<SgScopeStatement&()> scopeMaker
                      )
   {
-    //~ std::cerr << nm << "() -> " << &retty << std::endl;
-
     SgFunctionParameterList& lst       = mkFunctionParameterList();
     SgScopeStatement&        parmScope = scopeMaker();
 
@@ -1188,7 +1207,7 @@ namespace
 
     markCompilerGenerated(lst); // this is overwritten in buildNondefiningFunctionDeclaration
     markCompilerGenerated(sgnode);
-    // std::cerr << nm << "'() -> " << sgnode.get_type()->get_return_type() << std::endl;
+    //~ logError() << "1: " << nm << " " << sgnode.get_type()->get_mangled() << std::endl;
     return sgnode;
   }
 }
@@ -1264,7 +1283,6 @@ mkProcedureDecl( SgFunctionDeclaration& ndef,
   linkDeclDef(funcSy, sgnode);
   sgnode.set_definingDeclaration(&sgnode);
   sgnode.unsetForward();
-
   return sgnode;
 }
 
@@ -1909,6 +1927,25 @@ mkForLoopIncrement(bool forward, SgVariableDeclaration& var)
   return *sgnode;
 }
 
+SgExprStatement&
+mkForLoopTest(bool forward, SgVariableDeclaration& var)
+{
+  SgVarRefExp&         varref = SG_DEREF( sb::buildVarRefExp(&var) );
+  SgInitializedName&   inivar = SG_DEREF( var.get_variables().front() );
+  SgAssignInitializer& iniini = SG_DEREF( isSgAssignInitializer(inivar.get_initializer()) );
+  SgExpression&        range  = SG_DEREF( iniini.get_operand() );
+  SgExpression&        rngcp  = SG_DEREF( si::deepCopy(&range) );
+  SgExpression&        test   = SG_DEREF( sb::buildMembershipOp(&varref, &rngcp) );
+  SgExprStatement&     sgnode = mkExprStatement(test);
+
+  markCompilerGenerated(varref);
+  markCompilerGenerated(rngcp);
+  markCompilerGenerated(test);
+  markCompilerGenerated(sgnode);
+  return sgnode;
+}
+
+
 
 SgExprListExp&
 mkExprListExp(const std::vector<SgExpression*>& exprs)
@@ -2223,18 +2260,18 @@ namespace
   }
 
   SgType&
-  convertType(SgType& actual, SgType& orig, SgTypedefType& derv)
+  convertType(SgType& actual, SgType& orig, SgType& derv)
   {
     return &orig == &actual ? derv : actual;
   }
 
 
-  /// replaces the original type of \ref declaredDerivedType with \ref declaredDerivedType in \ref funcTy.
+  /// replaces the original type of with \ref declaredDerivedType in \ref funcTy.
   /// returns \ref funcTy to indicate an error.
   SgFunctionType&
-  convertToDerivedType(SgFunctionType& funcTy, SgTypedefType& declaredDerivedType)
+  convertToDerivedType(SgFunctionType& funcTy, SgType& derivedType)
   {
-    SgDeclarationStatement* baseTypeDecl = si::Ada::baseDeclaration(declaredDerivedType.get_base_type());
+    SgDeclarationStatement* baseTypeDecl = si::Ada::baseDeclaration(derivedType);
 
     if (baseTypeDecl == nullptr)
       return funcTy;
@@ -2242,13 +2279,13 @@ namespace
     SgType*              origTypePtr  = si::getDeclaredType(baseTypeDecl);
     SgType&              originalType = SG_DEREF(origTypePtr);
     SgType&              origRetTy    = SG_DEREF(funcTy.get_return_type());
-    SgType&              dervRetTy    = convertType(origRetTy, originalType, declaredDerivedType);
+    SgType&              dervRetTy    = convertType(origRetTy, originalType, derivedType);
     int                  numUpdTypes  = (&dervRetTy != &origRetTy);
     std::vector<SgType*> newTypeList;
 
     for (SgType* origArgTy : funcTy.get_arguments())
     {
-      SgType* newArgTy = &convertType(SG_DEREF(origArgTy), originalType, declaredDerivedType);
+      SgType* newArgTy = &convertType(SG_DEREF(origArgTy), originalType, derivedType);
 
       newTypeList.push_back(newArgTy);
       if (newArgTy != origArgTy) ++numUpdTypes;
@@ -2270,17 +2307,17 @@ namespace
 
 
 SgAdaInheritedFunctionSymbol&
-mkAdaInheritedFunctionSymbol(SgFunctionDeclaration& fn, SgTypedefType& declaredDerivedType, SgScopeStatement& scope)
+mkAdaInheritedFunctionSymbol(SgFunctionDeclaration& fn, SgType& derivedType, SgScopeStatement& scope)
 {
   SgFunctionType& functy = SG_DEREF(fn.get_type());
-  SgFunctionType& dervty = convertToDerivedType(functy, declaredDerivedType);
+  SgFunctionType& dervty = convertToDerivedType(functy, derivedType);
 
   if (&functy == &dervty)
   {
     // \todo in a first step, just report the errors in the log.
     //       => fix this issues for all ROSE and ACATS tests.
-    logError() << "Inherited subroutine w/o type modification: " << fn.get_name()
-               << std::endl;
+    logWarn() << "Inherited subroutine w/o type modification: " << fn.get_name()
+              << std::endl;
   }
 
   SgAdaInheritedFunctionSymbol& sgnode = mkBareNode<SgAdaInheritedFunctionSymbol>(&fn, &dervty);

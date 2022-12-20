@@ -33,6 +33,56 @@ RiscOperators::RiscOperators(const InstructionSemantics::BaseSemantics::State::P
 
 RiscOperators::~RiscOperators() {}
 
+RiscOperators::Ptr
+RiscOperators::instance(const RegisterDictionary::Ptr &regdict) {
+    return instance(regdict, SmtSolver::Ptr(), LIST_BASED_MEMORY);
+}
+
+RiscOperators::Ptr
+RiscOperators::instance(const RegisterDictionary::Ptr &regdict, const SmtSolver::Ptr &solver,
+                        SemanticMemoryParadigm memoryParadigm) {
+    InstructionSemantics::BaseSemantics::SValue::Ptr protoval = SValue::instance();
+    InstructionSemantics::BaseSemantics::RegisterState::Ptr registers = RegisterState::instance(protoval, regdict);
+    InstructionSemantics::BaseSemantics::MemoryState::Ptr memory;
+    switch (memoryParadigm) {
+        case LIST_BASED_MEMORY:
+            memory = MemoryListState::instance(protoval, protoval);
+            break;
+        case MAP_BASED_MEMORY:
+            memory = MemoryMapState::instance(protoval, protoval);
+            break;
+    }
+    InstructionSemantics::BaseSemantics::State::Ptr state = State::instance(registers, memory);
+    return Ptr(new RiscOperators(state, solver));
+}
+
+RiscOperators::Ptr
+RiscOperators::instance(const InstructionSemantics::BaseSemantics::SValue::Ptr &protoval) {
+    return Ptr(new RiscOperators(protoval, SmtSolver::Ptr()));
+}
+
+RiscOperators::Ptr
+RiscOperators::instance(const InstructionSemantics::BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver) {
+    return Ptr(new RiscOperators(protoval, solver));
+}
+
+RiscOperators::Ptr
+RiscOperators::instance(const InstructionSemantics::BaseSemantics::StatePtr &state) {
+    return Ptr(new RiscOperators(state, SmtSolver::Ptr()));
+}
+
+RiscOperators::Ptr
+RiscOperators::instance(const InstructionSemantics::BaseSemantics::StatePtr &state, const SmtSolver::Ptr &solver) {
+    return Ptr(new RiscOperators(state, solver));
+}
+
+RiscOperators::Ptr
+RiscOperators::promote(const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &x) {
+    Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+    ASSERT_not_null(retval);
+    return retval;
+}
+
 void
 RiscOperators::startInstruction(SgAsmInstruction *insn) {
     ASSERT_not_null(currentState());

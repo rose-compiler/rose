@@ -7,10 +7,13 @@ static const char *description =
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
+
 int main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
 
-    SgAsmBlock *gblock = Rose::BinaryAnalysis::Partitioner2::Engine().frontend(argc, argv, purpose, description);
+    P2::Engine *engine = P2::Engine::instance();
+    SgAsmBlock *gblock = engine->frontend(argc, argv, purpose, description);
     ASSERT_always_not_null2(gblock, "Engine::frontend didn't return a SgAsmBlock pointer");
 
     SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(gblock);
@@ -19,4 +22,6 @@ int main(int argc, char *argv[]) {
     Rose::BinaryAnalysis::RegisterDictionary::Ptr registerDictionary =
         Rose::BinaryAnalysis::RegisterDictionary::instanceForIsa(interp);
     ASSERT_always_not_null2(registerDictionary, "The SgAsmInterpretation::registers property should not be null");
+
+    delete engine;
 }

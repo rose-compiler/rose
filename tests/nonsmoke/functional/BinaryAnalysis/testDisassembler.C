@@ -3,6 +3,7 @@
 #include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <rose_getline.h>
 #include <rose_strtoull.h>
 
@@ -85,15 +86,15 @@ int main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
 
     BinaryAnalysis::Unparser::Settings upSettings;
-    P2::Engine engine;
-    std::string fileName = parseCommandLine(argc, argv, engine, upSettings);
+    P2::Engine *engine = P2::Engine::instance();
+    std::string fileName = parseCommandLine(argc, argv, *engine, upSettings);
     std::ifstream input(fileName.c_str());
     
     P2::mlog[WARN].disable(); // warnings about empty memory map
-    P2::Partitioner partitioner = engine.createPartitioner();
-    Disassembler::Base::Ptr disassembler = engine.obtainDisassembler();
+    P2::Partitioner::Ptr partitioner = engine->createPartitioner();
+    Disassembler::Base::Ptr disassembler = engine->obtainDisassembler();
     ASSERT_always_not_null(disassembler);
-    BinaryAnalysis::Unparser::BasePtr unparser = partitioner.unparser();
+    BinaryAnalysis::Unparser::BasePtr unparser = partitioner->unparser();
     ASSERT_always_not_null(unparser);
     unparser->settings(upSettings);
 
@@ -131,12 +132,14 @@ int main(int argc, char *argv[]) {
 
         if (runSemantics) {
             // Process instruction semantics
-            I2::BaseSemantics::RiscOperators::Ptr ops = partitioner.newOperators();
-            I2::BaseSemantics::Dispatcher::Ptr cpu = partitioner.newDispatcher(ops);
+            I2::BaseSemantics::RiscOperators::Ptr ops = partitioner->newOperators();
+            I2::BaseSemantics::Dispatcher::Ptr cpu = partitioner->newDispatcher(ops);
             cpu->processInstruction(insn);
             std::ostringstream ss;
             ss <<*ops;
             std::cout <<StringUtility::prefixLines(ss.str(), "       ");
         }
     }
+
+    delete engine;
 }

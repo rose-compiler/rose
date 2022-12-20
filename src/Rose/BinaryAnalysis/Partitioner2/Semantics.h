@@ -242,11 +242,9 @@ private:
 protected:
     RiscOperators();                                    // for serialization
 
-    explicit RiscOperators(const InstructionSemantics::BaseSemantics::SValuePtr &protoval,
-                           const SmtSolverPtr &solver = SmtSolverPtr());
+    RiscOperators(const InstructionSemantics::BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver);
 
-    explicit RiscOperators(const InstructionSemantics::BaseSemantics::StatePtr &state,
-                           const SmtSolverPtr &solver = SmtSolverPtr());
+    RiscOperators(const InstructionSemantics::BaseSemantics::StatePtr &state, const SmtSolverPtr &solver);
 
 public:
     ~RiscOperators();
@@ -254,35 +252,27 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors
 public:
-    /** Instantiate a new RiscOperators object and configure it using default values. */
-    static RiscOperatorsPtr instance(const RegisterDictionaryPtr &regdict, const SmtSolverPtr &solver = SmtSolverPtr(),
-                                     SemanticMemoryParadigm memoryParadigm = LIST_BASED_MEMORY) {
-        InstructionSemantics::BaseSemantics::SValuePtr protoval = SValue::instance();
-        InstructionSemantics::BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
-        InstructionSemantics::BaseSemantics::MemoryStatePtr memory;
-        switch (memoryParadigm) {
-            case LIST_BASED_MEMORY:
-                memory = MemoryListState::instance(protoval, protoval);
-                break;
-            case MAP_BASED_MEMORY:
-                memory = MemoryMapState::instance(protoval, protoval);
-                break;
-        }
-        InstructionSemantics::BaseSemantics::StatePtr state = State::instance(registers, memory);
-        return RiscOperatorsPtr(new RiscOperators(state, solver));
-    }
+    /** Instantiate a new RiscOperators object and configure it using default values.
+     *
+     * @{ */
+    static RiscOperatorsPtr instance(const RegisterDictionaryPtr&);
+    static RiscOperatorsPtr instance(const RegisterDictionaryPtr&, const SmtSolverPtr&,
+                                     SemanticMemoryParadigm memoryParadigm = LIST_BASED_MEMORY);
+    /** @} */
 
-    /** Instantiate a new RiscOperators object with specified prototypical values. */
-    static RiscOperatorsPtr
-    instance(const InstructionSemantics::BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr()) {
-        return RiscOperatorsPtr(new RiscOperators(protoval, solver));
-    }
+    /** Instantiate a new RiscOperators object with specified prototypical values.
+     *
+     * @{ */
+    static RiscOperatorsPtr instance(const InstructionSemantics::BaseSemantics::SValuePtr &protoval);
+    static RiscOperatorsPtr instance(const InstructionSemantics::BaseSemantics::SValuePtr &protoval, const SmtSolverPtr&);
+    /** @} */
 
-    /** Instantiate a new RiscOperators with specified state. */
-    static RiscOperatorsPtr
-    instance(const InstructionSemantics::BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr()) {
-        return RiscOperatorsPtr(new RiscOperators(state, solver));
-    }
+    /** Instantiate a new RiscOperators with specified state.
+     *
+     * @{ */
+    static RiscOperatorsPtr instance(const InstructionSemantics::BaseSemantics::StatePtr&);
+    static RiscOperatorsPtr instance(const InstructionSemantics::BaseSemantics::StatePtr&, const SmtSolverPtr&);
+    /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual constructors
@@ -304,13 +294,8 @@ public:
 public:
     /** Run-time promotion of a base RiscOperators pointer to our operators. This is a checked conversion--it
      *  will fail if @p x does not point to our object. */
-    static RiscOperatorsPtr
-    promote(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &x) {
-        RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
-        assert(retval!=NULL);
-        return retval;
-    }
-    
+    static RiscOperatorsPtr promote(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override methods from base class.
 public:

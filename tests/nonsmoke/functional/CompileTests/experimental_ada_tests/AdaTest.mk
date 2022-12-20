@@ -161,7 +161,7 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   default_function_argument.adb        \
   qualified_expression.adb             \
   type_in_local_pkg.adb                \
-  very_large_value.adb                 
+  very_large_value.adb
 
 ADA_TRANSLATOR_FAILING_TESTS :=        \
   ada_packages.adb                     \
@@ -177,6 +177,9 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   choice_parameter_specification.adb   \
   complex.ads                          \
   complex.adb                          \
+  dbase.ads                            \
+  dbase.adb                            \
+  dbase_test.adb                       \
   deref_test.adb                                    \
   discriminant.adb                     \
   discriminant_constraint.ads          \
@@ -187,15 +190,18 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   entry_declaration.ads                \
   entry_body_declaration.adb           \
   entry_index_specification.adb        \
+  enum_routine.adb                     \
   exception_rename.ads                 \
   fixed_point_definition.ads           \
   generic_package_renaming_declaration.adb          \
+  genex.adb                            \
   gentask.ads                          \
   gentask.adb                          \
   gentask-share.adb                    \
   generic_package_declaration.adb      \
   generic_procedure_renaming_declaration.ads  \
   generic_function_renaming_declaration.ads   \
+  gen_overloaded_funcs.adb             \
   inherited_primitive_operation.adb    \
   iterate_range.adb                    \
   digital.ads                          \
@@ -221,11 +227,17 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   renaming_as_body.adb                 \
   requeue_statement_2.adb              \
   requeue_statements.adb               \
+  rep_e_queue.adb                      \
+  rep_e_queue.ads                      \
+  rep_e_queue-queue1.adb               \
   rep_database.ads                     \
   rep_database-mgr.ads                 \
   rep_common_types-data.ads            \
   rep_common_types-menu.ads            \
   rep_common_types.ads                 \
+  rep_sym.ads                          \
+  rep_sym.adb                          \
+  rep_sym-set.adb                      \
   select_accept.adb                    \
   simple_select_accept.adb             \
   simple_select_accept_guarded.adb     \
@@ -243,6 +255,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   test_unit.ads                        \
   test.adb                             \
   test_unit.adb                        \
+  types_operators.adb                  \
   usegenericinstance.adb               \
   unit_2.adb                           \
   unit_2.ads                           \
@@ -251,7 +264,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   variant_record.ads                   \
   variable_variant_record.adb
 
-ADA_TRANSLATOR_PENDING_TESTS :=       
+ADA_TRANSLATOR_PENDING_TESTS :=
 
 # defines tests that are fully supported by ROSE
 ROSE_PASSING_ADA_TESTS :=                           \
@@ -261,13 +274,14 @@ ROSE_PASSING_ADA_TESTS :=                           \
   $(ADA_TRANSLATOR_FAILING_TESTS)
 
 
-# ROSE_PASSING_IMCOMPLETE_ADA_TESTS :=                
+# ROSE_PASSING_IMCOMPLETE_ADA_TESTS :=
 
 ROSE_FAILING_ADA_TESTS :=                           \
   aspect_spec.ads                                   \
   blockreference.adb                                \
   sq_pkg_fun_overload.adb                           \
   delay_until.adb                                   \
+  mangle_disctypes.adb                 \
   mpiuse.ads
 
 # defines tests that are supported by ASIS

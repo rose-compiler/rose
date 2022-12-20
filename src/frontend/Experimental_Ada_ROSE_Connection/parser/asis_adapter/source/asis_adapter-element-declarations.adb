@@ -221,7 +221,7 @@ package body Asis_Adapter.Element.Declarations is
                State.Add_To_Dot_Label ("Corresponding_Subprogram_Derivation", ID);
             end if;
          Result.Corresponding_Subprogram_Derivation := ID;
-         end;
+      end;
 
       --Asis will only accept this call on subprograms that are implicit?
       --So we need to check that before we call into ASIS
@@ -871,7 +871,9 @@ package body Asis_Adapter.Element.Declarations is
          State.Add_Not_Implemented (Ada_2005);
 
       when A_Null_Procedure_Declaration => -- A2005
-         State.Add_Not_Implemented (Ada_2005);
+         Add_Is_Not_Overriding_Declaration;
+         Add_Is_Overriding_Declaration;
+         Add_Parameter_Profile;
 
       when An_Expression_Function_Declaration =>  -- A2012
          State.Add_Not_Implemented (Ada_2012);
@@ -1147,5 +1149,39 @@ package body Asis_Adapter.Element.Declarations is
       State.A_Element.Element_Kind := a_nodes_h.A_Declaration;
       State.A_Element.The_Union.Declaration := Result;
    end Do_Pre_Child_Processing;
+
+
+
+   procedure Do_Post_Child_Processing
+     (Element : in Asis.Element; State : in out Class)
+   is
+      Parent_Name : constant String := Module_Name;
+      Module_Name : constant String := Parent_Name & ".Do_Post_Child_Processing";
+      Declaration_Kind : Asis.Declaration_Kinds :=
+        Asis.Elements.Declaration_Kind (Element);
+      use all type Asis.Declaration_Kinds;
+
+      procedure Append_Formal_Package_Corresponding_Declaration
+      is
+         decl : Asis.Declaration := Asis.Declarations.Corresponding_Declaration (Element);
+      begin
+         state.Process_Element_Tree(
+          Element => decl,
+          Outputs => State.Outputs );
+      end Append_Formal_Package_Corresponding_Declaration;
+
+      -----------------------------------------------------------------------
+
+   begin -- Do_Post_Child_Processing
+     -- Currently this post-processing is only needed to complete
+     -- the dot graph and node structure to include implicit elements.
+
+     If Declaration_Kind = A_Formal_Package_Declaration_With_Box then
+       begin
+           PUT_LINE("post process A_Formal_Package_Declaration_With_Box");
+           Append_Formal_Package_Corresponding_Declaration;
+       end;
+     end if;
+   end Do_Post_Child_Processing;
 
 end Asis_Adapter.Element.Declarations;

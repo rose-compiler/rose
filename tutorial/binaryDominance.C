@@ -10,6 +10,7 @@ static const char *programDescription =
     "calculates the immediate dominator for each vertex, and shows the results.";
 
 #include <rose.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Sawyer/GraphAlgorithm.h>
@@ -22,22 +23,23 @@ int
 main(int argc, char *argv[])
 {
     ROSE_INITIALIZE;
-    P2::Engine engine;
-    engine.doingPostAnalysis(false);                    // not needed for this tool, and faster without
-    engine.namingSystemCalls(false);                    // for consistent results w.r.t. the answer file since the system...
-    engine.systemCallHeader("/dev/null");               // ...call mapping comes from run-time files.
-    std::vector<std::string> specimen = engine.parseCommandLine(argc, argv, programPurpose, programDescription).unreachedArgs();
-    P2::Partitioner partitioner = engine.partition(specimen);
+    P2::Engine *engine = P2::Engine::instance();
+    P2::Engine::Settings &settings = engine->settings();
+    settings.partitioner.doingPostAnalysis = false;      // not needed for this tool, and faster without
+    settings.partitioner.namingSyscalls = false;         // for consistent results w.r.t. the answer file since the system...
+    settings.partitioner.syscallHeader = "/dev/null";    // ...call mapping comes from run-time files.
+    std::vector<std::string> specimen = engine->parseCommandLine(argc, argv, programPurpose, programDescription).unreachedArgs();
+    P2::Partitioner::Ptr partitioner = engine->partition(specimen);
     //! [init]
 
     //! [iterate]
-    BOOST_FOREACH (P2::Function::Ptr function, partitioner.functions()) {
+    for (P2::Function::Ptr function : partitioner->functions()) {
         std::cout <<"CFG dominators for function " <<Rose::StringUtility::addrToString(function->address()) <<":\n"; // or function->printableName()
         //! [iterate]
 
         //! [cfg_enter]
-        P2::ControlFlowGraph cfg = partitioner.cfg();
-        P2::ControlFlowGraph::VertexIterator entryVertex = cfg.findVertex(partitioner.findPlaceholder(function->address())->id());
+        P2::ControlFlowGraph cfg = partitioner->cfg();
+        P2::ControlFlowGraph::VertexIterator entryVertex = cfg.findVertex(partitioner->findPlaceholder(function->address())->id());
         //! [cfg_enter]
         ASSERT_require(cfg.isValidVertex(entryVertex));
 
@@ -71,4 +73,6 @@ main(int argc, char *argv[])
         }
         //! [results]
     }
+
+    delete engine;
 }

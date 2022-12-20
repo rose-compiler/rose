@@ -10,8 +10,8 @@ static const char *description =
 
 #include <Rose/BinaryAnalysis/Debugger/Linux.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/InstructionProvider.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
-#include <Rose/BinaryAnalysis/Partitioner2/InstructionProvider.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
 
@@ -104,9 +104,9 @@ main(int argc, char *argv[]) {
     Bat::registerSelfTests();
 
     // Parse command-line
-    P2::Engine engine;
+    P2::Engine *engine = P2::Engine::instance();
     Settings settings;
-    std::vector<std::string> args = parseCommandLine(argc, argv, engine, settings);
+    std::vector<std::string> args = parseCommandLine(argc, argv, *engine, settings);
     if (args.empty()) {
         ::mlog[FATAL] <<"no specimen supplied on command-line; see --help\n";
         exit(1);
@@ -122,7 +122,7 @@ main(int argc, char *argv[]) {
     std::ostream traceOutput(outputFileName.empty() ? std::cout.rdbuf() : &fb);
 
     // Load specimen into ROSE's simulated memory
-    if (!engine.loadSpecimens(args.front())) {
+    if (!engine->loadSpecimens(args.front())) {
         ::mlog[FATAL] <<"cannot parse specimen binary container\n";
         exit(1);
     }
@@ -130,9 +130,9 @@ main(int argc, char *argv[]) {
     InstructionProvider::Ptr instructionProvider;
 
     if (WITH_INSTRUCTION_PROVIDER)
-        instructionProvider = makeInstructionProvider(engine);
+        instructionProvider = makeInstructionProvider(*engine);
 
-    Disassembler::Base::Ptr disassembler = engine.obtainDisassembler();
+    Disassembler::Base::Ptr disassembler = engine->obtainDisassembler();
     if (!disassembler) {
         ::mlog[FATAL] <<"no disassembler for this architecture\n";
         exit(1);
@@ -178,6 +178,8 @@ main(int argc, char *argv[]) {
 
     std::cerr <<debugger->howTerminated() <<"\n";
     std::cerr <<StringUtility::plural(nSteps, "instructions") <<" executed\n";
+
+    delete engine;
 }
 
 #else

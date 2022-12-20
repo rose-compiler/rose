@@ -57,7 +57,7 @@ namespace
   {
     return isPureVirtual(SG_DEREF(fn));
   }
-  
+
   std::string functionName(FunctionKeyType fn)
   {
     return SG_DEREF(fn).get_name();
@@ -1088,6 +1088,14 @@ RoseCompatibilityBridge::isAutoGeneratable(ClassKeyType clkey, FunctionKeyType f
   }
 
   return res;
+}
+
+bool
+RoseCompatibilityBridge::isAbstract(ClassKeyType clkey) const
+{
+  ASSERT_not_null(clkey);
+
+  return clkey->get_isAbstract();
 }
 
 

@@ -5,6 +5,7 @@ with Asis.Iterator;
 --  -- GNAT-specific:
 with Asis.Set_Get;
 with Asis.Text;
+with Types;       use Types;
 
 with Asis_Adapter.Element.Associations;
 with Asis_Adapter.Element.Clauses;
@@ -494,7 +495,9 @@ package body Asis_Adapter.Element is
          State.Dot_Node.Add_Label (State.Dot_Label);
          State.Outputs.Graph.Append_Stmt
            (new Dot.Node_Stmt.Class'(State.Dot_Node));
-         State.Outputs.A_Nodes.Push (Result);
+         if Asis.Set_Get.Parenth_Count(Element) <= 1 then
+           State.Outputs.A_Nodes.Push (Result);
+         end if;
       end;
 
       use all type Asis.Element_Kinds;
@@ -558,6 +561,10 @@ package body Asis_Adapter.Element is
 
       If Element_Kind = A_Definition then
          Definitions.Do_Post_Child_Processing (Element, State);
+      end if;
+      
+      If Element_Kind = A_Declaration then
+         Declarations.Do_Post_Child_Processing (Element, State);
       end if;
       
       end if;

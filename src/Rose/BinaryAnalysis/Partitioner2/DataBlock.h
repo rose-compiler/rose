@@ -2,10 +2,10 @@
 #define ROSE_BinaryAnalysis_Partitioner2_DataBlock_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
-#include <SageBuilderAsm.h>
+
 #include <Rose/SourceLocation.h>
+#include <SageBuilderAsm.h>
 
 #include <boost/serialization/access.hpp>
 #include <Sawyer/Attribute.h>
@@ -120,8 +120,8 @@ public:
     /** Property: Optional location of data in source code.
      *
      * @{ */
-    const SourceLocation& sourceLocation() const { return sourceLocation_; }
-    void sourceLocation(const SourceLocation &loc) { sourceLocation_ = loc; }
+    const SourceLocation& sourceLocation() const;
+    void sourceLocation(const SourceLocation&);
     /** @} */
 
     /** Number of attached basic block and function owners.
@@ -150,7 +150,7 @@ public:
      *  be retrieved from the memory map without needing to know how to use the quite extensive memory map API.  This
      *  method reads this object's data from the provided memory map and returns a vector of the bytes.  The returned
      *  vector will be truncated if any of the bytes of this data block are not present in the map. */
-    std::vector<uint8_t> read(const MemoryMap::Ptr&) const;
+    std::vector<uint8_t> read(const MemoryMapPtr&) const;
 
 private:
     friend class Partitioner;

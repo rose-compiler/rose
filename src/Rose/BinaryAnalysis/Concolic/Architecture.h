@@ -5,7 +5,7 @@
 
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Concolic/ExecutionLocation.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/RegisterDescriptor.h>
 #include <Rose/BinaryAnalysis/SmtSolver.h>
@@ -32,10 +32,11 @@ public:
     using SharedMemoryMap = Sawyer::Container::IntervalMap<AddressInterval, SharedMemoryCallbacks>;
 
 private:
+    std::string name_;                                  // architecture name for factory matching
     DatabasePtr db_;
     TestCaseId testCaseId_;
     TestCasePtr testCase_;
-    const Partitioner2::Partitioner &partitioner_;
+    Partitioner2::PartitionerConstPtr partitioner_;
     ExecutionLocation currentLocation_;                 // incremented when the instruction begins execution
     SystemCallMap systemCalls_;                         // callbacks for syscalls
     SharedMemoryMap sharedMemory_;                      // callbacks for shared memory
@@ -43,36 +44,109 @@ private:
 
 protected:
     // See "instance" methods in subclasses
-    Architecture(const DatabasePtr&, TestCaseId, const Partitioner2::Partitioner&);
+    explicit Architecture(const std::string&);
+    Architecture(const DatabasePtr&, TestCaseId, const Partitioner2::PartitionerConstPtr&);
 public:
     virtual ~Architecture();
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Factory
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Register an architecture as a factory.
+     *
+     *  The specified architecture is added to the end of a list of architecture prototypical objects. When a new architecture
+     *  is needed, this list is scanned in reverse order until one of the @c matchFactory predicates for the prototypical
+     *  object returns true, at which time a new copy of that prototypical object is created by passing the lookup arguments to
+     *  its virtual @c instanceFromFactory constructor.
+     *
+     *  Thread safety: This method is thread safe. */
+    static void registerFactory(const Ptr &factory);
+
+    /** Remove an architecture factory from the registry.
+     *
+     *  The last occurrence of the specified factory is removed from the list of registered factories. This function returns
+     *  true if a factory was removed, and false if no registered factories match.
+     *
+     *  Thread safety: This method is thread safe. */
+    static bool deregisterFactory(const Ptr &factory);
+
+    /** List of all registered factories.
+     *
+     *  The returned list contains the registered factories in the order they were registered, which is the reverse order
+     *  of how they're searched.
+     *
+     *  Thread safety: This method is thread safe. */
+    static std::vector<Ptr> registeredFactories();
+
+    /** Creates a suitable architecture by name.
+     *
+     *  Scans the @ref registeredFactories list in the reverse order looking for a factory whose @ref matchFactory predicate
+     *  (which accepts all but the first three arguments of this function) returns true. The first factory whose predicate
+     *  returns true is used to create and return a new architecture object by invoking the factory's virtual @c
+     *  instanceFromFactory constructor with the first three arguments of this function.
+     *
+     *  Thread safety: This method is thread safe.
+     *
+     * @{ */
+    static Ptr forge(const DatabasePtr&, TestCaseId, const Partitioner2::PartitionerConstPtr&,
+                     const std::string&);
+    static Ptr forge(const DatabasePtr&, const TestCasePtr&, const Partitioner2::PartitionerConstPtr&,
+                     const std::string&);
+    /** @} */
+
+    /** Predicate for matching an architecture factory by name. */
+    virtual bool matchFactory(const std::string &name) const = 0;
+
+    /** Virtual constructor for factories.
+     *
+     *  This creates a new object by calling the class method @c instance for the class of which @c this is a type. All
+     *  arguments are passed to @c instance. */
+    virtual Ptr instanceFromFactory(const DatabasePtr&, TestCaseId, const Partitioner2::PartitionerConstPtr&) const = 0;
+
+    /** Returns true if this object is a factory.
+     *
+     *  Factories are created by the @c factory class methods rather than the usual @c instance class methods. A factory
+     *  object should only be used to create other (non-factory) objects by registering it as a factory and eventually
+     *  calling (directly or indirectly) its @ref instanceFromFactory object method. */
+    bool isFactory() const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Property: Name.
+     *
+     *  The name of the architecture originally comes from the architecture factory, but can be changed on a per object
+     *  basis.
+     *
+     * @{ */
+    const std::string& name() const;
+    void name(const std::string&);
+    /** @} */
+
     /** Property: Database.
      *
      *  Returns the database used as backing store for parts of this object. This property is read-only, set by the
-     *  constructor. It is always non-null. */
+     *  constructor. It is always non-null except in factories. */
     DatabasePtr database() const;
 
     /** Property: Test case ID.
      *
      *  Returns the test case ID within the database. This property is read-only, set by the constructor. The return value is
-     *  always a valid ID. */
+     *  always a valid ID except in factories. */
     TestCaseId testCaseId() const;
 
     /** Property: Test case.
      *
      *  Returns the test case being executed. This property is read-only, set by the constructor. The return value is always
-     *  non-null. */
+     *  non-null except in factories. */
     TestCasePtr testCase() const;
 
     /** Property: Partitioner.
      *
      *  This holds information about the disassembly of the specimen, such as functions, basic blocks, and instructions. */
-    const Partitioner2::Partitioner& partitioner() const;
+    Partitioner2::PartitionerConstPtr partitioner() const;
 
     /** Property: Current execution location.
      *
@@ -207,7 +281,7 @@ public:
      *  This is normally called immediately after @ref load. It processes all the events recorded in the database for this
      *  test case, causing the concrete execution to return to the state it was in after the last event.  Returns the number
      *  of events processed. */
-    size_t playAllEvents(const Partitioner2::Partitioner&);
+    size_t playAllEvents(const Partitioner2::PartitionerConstPtr&);
 
     /** Replay an execution event.
      *
@@ -220,7 +294,7 @@ public:
     /** Run to the specified event.
      *
      *  While the current instruction is less than the specified event location, execute the instruction. */
-    virtual void runToEvent(const ExecutionEventPtr&, const Partitioner2::Partitioner&);
+    virtual void runToEvent(const ExecutionEventPtr&, const Partitioner2::PartitionerConstPtr&);
 
     /** Read memory bytes as an unsigned integer.
      *
@@ -290,7 +364,7 @@ public:
      *  Executes the instruction and increments the length of the execution path.
      *
      * @{ */
-    virtual void executeInstruction(const Partitioner2::Partitioner&) = 0;
+    virtual void executeInstruction(const Partitioner2::PartitionerConstPtr&) = 0;
     virtual void executeInstruction(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&, SgAsmInstruction*) = 0;
     /** @} */
 
@@ -326,7 +400,7 @@ public:
      *  to the @ref inputVariables property.
      *
      *  Any interedependencies or other constraints on input variables should be added to the supplied SMT solver. */
-    virtual void createInputVariables(const Partitioner2::Partitioner&, const Emulation::RiscOperatorsPtr&,
+    virtual void createInputVariables(const Partitioner2::PartitionerConstPtr&, const Emulation::RiscOperatorsPtr&,
                                       const SmtSolver::Ptr&) = 0;
 
     /** Restore initial input variables.
@@ -346,7 +420,7 @@ public:
      *  @li The SMT solver's assertions have been initialized to be the same as when the parent test case created this test
      *  case. In particular, the solver contains the assertions for the current execution path in terms of input variables, as
      *  well as all the assertions for input variables from the parent test case. */
-    virtual void restoreInputVariables(const Partitioner2::Partitioner&, const Emulation::RiscOperatorsPtr&,
+    virtual void restoreInputVariables(const Partitioner2::PartitionerConstPtr&, const Emulation::RiscOperatorsPtr&,
                                        const SmtSolver::Ptr&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -357,7 +431,8 @@ public:
      *
      *  This function is called after a system call instruction has been executed symbolically and the system call has been
      *  entered concretely. */
-    virtual void systemCall(const Partitioner2::Partitioner&, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) {}
+    virtual void systemCall(const Partitioner2::PartitionerConstPtr&,
+                            const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) {}
 
     /** Called immediately when shared memory is accessed.
      *
@@ -365,7 +440,7 @@ public:
      *  RiscOperators::readMemory operation. For memory reads, it should either perform the operation and return the result, or
      *  return null in which case the caller will do the usual operation. */
     virtual std::pair<ExecutionEventPtr, SymbolicExpressionPtr>
-    sharedMemoryAccess(const SharedMemoryCallbacks&, const Partitioner2::Partitioner&, const Emulation::RiscOperatorsPtr&,
+    sharedMemoryAccess(const SharedMemoryCallbacks&, const Partitioner2::PartitionerConstPtr&, const Emulation::RiscOperatorsPtr&,
                        rose_addr_t memVa, size_t nBytes);
 
     /** Run after-instruction shared memory callbacks.
@@ -407,7 +482,7 @@ public:
     void printSharedMemoryEvents(const ExecutionEventPtr &sharedMemoryEvent, const Emulation::RiscOperatorsPtr&);
 
     /** Called after an instruction accesses shared memory. */
-    virtual void sharedMemoryAccessPost(const Partitioner2::Partitioner&, const Emulation::RiscOperatorsPtr&);
+    virtual void sharedMemoryAccessPost(const Partitioner2::PartitionerConstPtr&, const Emulation::RiscOperatorsPtr&);
 };
 
 } // namespace

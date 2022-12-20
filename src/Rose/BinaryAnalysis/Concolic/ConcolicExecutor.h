@@ -5,11 +5,8 @@
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 
 #include <Rose/BinaryAnalysis/BasicTypes.h>
-#include <Rose/BinaryAnalysis/Concolic/LinuxI386.h>
-#include <Rose/BinaryAnalysis/Debugger.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Sawyer/FileSystem.h>
 
 namespace Rose {
@@ -69,7 +66,7 @@ private:
     Settings settings_;                                 // emulation settings
     DatabasePtr db_;                                    // concolic database connection
     TestCasePtr testCase_;                              // test case whose instructions are being processed
-    const Partitioner2::Partitioner &partitioner_;      // ROSE disassembly info about the specimen
+    Partitioner2::PartitionerConstPtr partitioner_;     // ROSE disassembly info about the specimen
     ArchitecturePtr process_;                           // subordinate process, concrete state
     bool hadSystemCall_ = false;                        // true if we need to call process_->systemCall, cleared each insn
     ExecutionEventPtr hadSharedMemoryAccess_;           // set when shared memory is read, cleared each instruction
@@ -77,13 +74,15 @@ private:
 
 protected:
     /** Allocating constructor. */
-    RiscOperators(const Settings&, const DatabasePtr&, const TestCasePtr&, const Partitioner2::Partitioner&,
+    RiscOperators(const Settings&, const DatabasePtr&, const TestCasePtr&, const Partitioner2::PartitionerConstPtr&,
                   const ArchitecturePtr&, const InstructionSemantics::BaseSemantics::StatePtr&, const SmtSolverPtr&);
+public:
+    ~RiscOperators();
 
 public:
     /** Allocating constructor. */
     static RiscOperatorsPtr instance(const Settings &settings, const DatabasePtr&, const TestCasePtr&,
-                                     const Partitioner2::Partitioner&, const ArchitecturePtr &process,
+                                     const Partitioner2::PartitionerConstPtr&, const ArchitecturePtr &process,
                                      const InstructionSemantics::BaseSemantics::SValuePtr &protoval,
                                      const SmtSolverPtr &solver = SmtSolverPtr());
 
@@ -93,27 +92,19 @@ public:
     // Overrides documented in base class
     virtual InstructionSemantics::BaseSemantics::RiscOperatorsPtr
     create(const InstructionSemantics::BaseSemantics::SValuePtr &/*protoval*/,
-           const SmtSolverPtr& = SmtSolverPtr()) const override {
-        ASSERT_not_implemented("[Robb Matzke 2019-09-24]");
-    }
+           const SmtSolverPtr& = SmtSolverPtr()) const override;
     virtual InstructionSemantics::BaseSemantics::RiscOperatorsPtr
     create(const InstructionSemantics::BaseSemantics::StatePtr &/*state*/,
-           const SmtSolverPtr& = SmtSolverPtr()) const override {
-        ASSERT_not_implemented("[Robb Matzke 2019-09-24]");
-    }
+           const SmtSolverPtr& = SmtSolverPtr()) const override;
 
 public:
     /** Property: Settings.
      *
      *  The settings are read-only, set when this object was created. */
-    const Settings& settings() const {
-        return settings_;
-    }
+    const Settings& settings() const;
 
     /** Property: Partitioner. */
-    const Partitioner2::Partitioner& partitioner() const {
-        return partitioner_;
-    }
+    Partitioner2::PartitionerConstPtr partitioner() const;
 
     /** Property: Test case. */
     TestCasePtr testCase() const;
@@ -122,9 +113,7 @@ public:
     DatabasePtr database() const;
 
     /** Property: Concrete half of the concolic executor semantics. */
-    ArchitecturePtr process() const {
-        return process_;
-    }
+    ArchitecturePtr process() const;
 
     /** Property: Input variables.
      *
@@ -141,12 +130,8 @@ public:
      *  namely stepping into the system call but not yet performing it.
      *
      * @{ */
-    bool hadSystemCall() const {
-        return hadSystemCall_;
-    }
-    void hadSystemCall(bool b) {
-        hadSystemCall_ = b;
-    }
+    bool hadSystemCall() const;
+    void hadSystemCall(bool);
     /** @} */
 
     /** Property: Had a shared memory access.
@@ -155,12 +140,8 @@ public:
      *  shared memory.
      *
      * @{ */
-    ExecutionEventPtr hadSharedMemoryAccess() const {
-        return hadSharedMemoryAccess_;
-    }
-    void hadSharedMemoryAccess(const ExecutionEventPtr &e) {
-        hadSharedMemoryAccess_ = e;
-    }
+    ExecutionEventPtr hadSharedMemoryAccess() const;
+    void hadSharedMemoryAccess(const ExecutionEventPtr&);
     /** @} */
 
     /** Property: Recursive calls through user code.
@@ -169,12 +150,8 @@ public:
      *  when the user code returns. If the test is true, then the user code is skipped.
      *
      * @{ */
-    bool isRecursive() const {
-        return isRecursive_;
-    }
-    void isRecursive(bool b) {
-        isRecursive_ = b;
-    }
+    bool isRecursive() const;
+    void isRecursive(bool);
     /** @} */
 
     /** Number of bits in a word.
@@ -217,9 +194,7 @@ public:
     readRegister(RegisterDescriptor reg, const InstructionSemantics::BaseSemantics::SValuePtr &dflt) override;
 
     virtual InstructionSemantics::BaseSemantics::SValuePtr
-    readRegister(RegisterDescriptor reg) override {
-        return readRegister(reg, undefined_(reg.nBits()));
-    }
+    readRegister(RegisterDescriptor reg) override;
 
     virtual InstructionSemantics::BaseSemantics::SValuePtr
     peekRegister(RegisterDescriptor reg, const InstructionSemantics::BaseSemantics::SValuePtr &dflt) override;
@@ -241,24 +216,26 @@ public:
 };
 
 /**< Pointer to virtual CPU. */
-typedef boost::shared_ptr<class Dispatcher> DispatcherPtr;
+using DispatcherPtr = Sawyer::SharedPointer<class Dispatcher>;
 
-/** CPU for concolic emulation. */
-class Dispatcher: public InstructionSemantics::DispatcherX86 {
-    typedef InstructionSemantics::DispatcherX86 Super;
+class Dispatcher: public Sawyer::SharedObject {
 public:
-    using Ptr = boost::shared_ptr<Dispatcher>;
+    using Ptr = DispatcherPtr;
+
+private:
+    InstructionSemantics::BaseSemantics::DispatcherPtr inner_;
 
 protected:
-    /** Constructor. */
-    explicit Dispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops)
-        : Super(ops, unwrapEmulationOperators(ops)->wordSizeBits(), unwrapEmulationOperators(ops)->registerDictionary()) {}
+    explicit Dispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
+public:
+    ~Dispatcher();
 
 public:
-    /** Allocating constructor. */
-    static DispatcherPtr instance(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops) {
-        return DispatcherPtr(new Dispatcher(ops));
-    }
+    static Ptr instance(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
+
+public:
+    // These functions are similar to InstructionSemantics::BaseSemantics::Dispatcher
+    InstructionSemantics::BaseSemantics::RiscOperators::Ptr operators() const;
 
 public:
     /** Concrete instruction pointer. */
@@ -279,12 +256,11 @@ public:
     /** Unrwap the RISC operators if tracing is enabled. */
     static RiscOperatorsPtr unwrapEmulationOperators(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
 
+    /** Process one instruction concretely and symbolically. */
+    virtual void processInstruction(SgAsmInstruction*);
+
     /** The concrete half of processInstruction. */
     void processConcreteInstruction(SgAsmInstruction*);
-
-public:
-    // overrides
-    virtual void processInstruction(SgAsmInstruction*) override;
 };
 
 } // namespace
@@ -342,7 +318,7 @@ private:
     TestCasePtr testCase_;                              // currently executing test case
     TestCaseId testCaseId_;                             // database ID for currently executing test case
     DatabasePtr db_;                                    // database for all this stuff
-    Partitioner2::Partitioner partitioner_;             // used during execution
+    Partitioner2::PartitionerPtr partitioner_;          // used during execution
     ArchitecturePtr process_;                           // the concrete half of the execution
     Emulation::DispatcherPtr cpu_;                      // the symbolic half of the execution
 
@@ -364,8 +340,8 @@ public:
      *  Thread safety: Not thread safe.
      *
      * @{ */
-    const Settings& settings() const { return settings_; }
-    Settings& settings() { return settings_; }
+    const Settings& settings() const;
+    Settings& settings();
     /** @} */
 
     /** Property: SMT solver to use during execution.
@@ -407,7 +383,7 @@ public:
      *  This property is initialized by @ref configureExecution.
      *
      *  Thread safety: Not thread safe. */
-    const Partitioner2::Partitioner& partitioner() const;
+    Partitioner2::PartitionerConstPtr partitioner() const;
 
     /** Property: The concrete half of execution.
      *
@@ -435,23 +411,24 @@ public:
     /** Called before execution starts.
      *
      *  This can be called by the user, or is called automatically by @ref execute. Calling it separately allows the user
-     *  to make some adjustments before execution starts, such as registering various callbacks. */
-    void configureExecution(const DatabasePtr&, const TestCasePtr&);
+     *  to make some adjustments before execution starts, such as registering various callbacks. The @p architectureName
+     *  must be a valid name for an architecture factory. */
+    void configureExecution(const DatabasePtr&, const TestCasePtr&, const std::string &architectureName);
 
     /** Execute the test case.
      *
      *  Executes the test case to produce new test cases. If you've alreay called @ref configureExecution, then you don't
-     *  need to pass the database and test case again (if you do, they better be the same as before).
+     *  need to pass the database, test case, or architecture name again (if you do, they better be the same as before).
      *
      * @{ */
     std::vector<TestCasePtr> execute();
-    std::vector<TestCasePtr> execute(const DatabasePtr&, const TestCasePtr&);
+    std::vector<TestCasePtr> execute(const DatabasePtr&, const TestCasePtr&, const std::string &architectureName);
     /** @} */
 
 private:
     // Disassemble the specimen and cache the result in the database. If the specimen has previously been disassembled
     // then reconstitute the analysis results from the database.
-    Partitioner2::Partitioner partition(const SpecimenPtr&);
+    Partitioner2::PartitionerPtr partition(const SpecimenPtr&, const std::string &architectureName);
 
     // Create the dispatcher, operators, and memory and register state for the symbolic execution.
     Emulation::DispatcherPtr makeDispatcher(const ArchitecturePtr&);

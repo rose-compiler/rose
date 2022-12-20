@@ -86,9 +86,10 @@ SystemCall::hasSystemCall(const Partitioner2::BasicBlock::Ptr &bblock) const {
 }
 
 Sawyer::Optional<SystemCall::Declaration>
-SystemCall::analyze(const Partitioner2::Partitioner &partitioner, const Partitioner2::BasicBlock::Ptr &bblock,
+SystemCall::analyze(const Partitioner2::Partitioner::ConstPtr &partitioner, const Partitioner2::BasicBlock::Ptr &bblock,
                     SgAsmInstruction *syscallInsn, const SmtSolver::Ptr &solver /*=null*/) const {
     using namespace Rose::BinaryAnalysis::InstructionSemantics;
+    ASSERT_not_null(partitioner);
     ASSERT_not_null(bblock);
 
     if (!ident_.isValid())
@@ -99,8 +100,8 @@ SystemCall::analyze(const Partitioner2::Partitioner &partitioner, const Partitio
         return Sawyer::Nothing();
     
     // Instantiate the instruction semantics layers
-    BaseSemantics::RiscOperators::Ptr ops = partitioner.newOperators();
-    BaseSemantics::Dispatcher::Ptr cpu = partitioner.newDispatcher(ops);
+    BaseSemantics::RiscOperators::Ptr ops = partitioner->newOperators();
+    BaseSemantics::Dispatcher::Ptr cpu = partitioner->newDispatcher(ops);
     if (!cpu)
         throw Exception("no instruction semantics for architecture");
 

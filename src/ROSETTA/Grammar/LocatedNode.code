@@ -1141,7 +1141,6 @@ SgLocatedNode::get_physical_file_id()
 void
 SgLocatedNode::addToAttachedPreprocessingInfo(
      PreprocessingInfo *prepInfoPtr,
-  // PositionOfPreprocessingInfoInListType locationInList )
      PreprocessingInfo::RelativePositionType locationInList )
    {
   // DQ (11/23/2008): Is this comment still true?  Is there something to fix here?
@@ -1200,6 +1199,7 @@ SgLocatedNode::addToAttachedPreprocessingInfo(
                break;
              }
 
+          case PreprocessingInfo::end_of:
           case PreprocessingInfo::after:
              {
             // (9/10/2003) DQ: Force new comments to be attached closest to the target statement
@@ -1477,13 +1477,13 @@ void SgAdaRangeConstraint::post_construction_initialization() {};
 std::string SgAdaRangeConstraint::displayString() const
 {
   SgExpression* rng = get_range();
+  ASSERT_not_null(rng);
 
-  ROSE_ASSERT(rng);
+  std::stringstream out;
 
-  std::stringstream buf;
-
-  buf << " range " << get_range()->unparseToString();
-  return buf.str();
+  // out << "$ada$range$" << rng->unparseToString();
+  out << "$ada$rngc$" << this;
+  return out.str();
 }
 
 void SgAdaRangeConstraint::display ( std::string label ) const
@@ -1505,8 +1505,19 @@ void SgAdaIndexConstraint::post_construction_initialization() {};
 
 std::string SgAdaIndexConstraint::displayString() const
 {
-  // \todo \pp
-  return "SgAdaIndexConstraint";
+  std::stringstream out;
+
+  //out << "$ada$idxc(";
+  //for (const SgExpression* exp : get_indexRanges())
+  //{
+  //  out << exp->unparseToString() << ',';
+  //}
+  //out << ')';
+
+  // PP(10/27/22) use address in defense against SageBuilder's
+  //              mangled name based type sharing.
+  out << "$ada$idxc" << this;
+  return out.str();
 }
 
 void SgAdaIndexConstraint::display ( std::string label ) const
@@ -1530,16 +1541,14 @@ std::string SgAdaDigitsConstraint::displayString() const
 {
   SgExpression*        exp = get_digits();
   SgAdaTypeConstraint* sub = get_subConstraint();
+  ASSERT_not_null(exp);
 
-  ROSE_ASSERT(exp);
+  std::stringstream out;
 
-  std::stringstream buf;
+  out << "ada$digc$" << exp->unparseToString()
+      << (sub ? sub->displayString() : "");
 
-  buf << "digits " << exp->unparseToString();
-
-  if (sub) buf << sub->displayString();
-
-  return buf.str();
+  return out.str();
 }
 
 void SgAdaDigitsConstraint::display ( std::string label ) const
@@ -1562,16 +1571,14 @@ std::string SgAdaDeltaConstraint::displayString() const
 {
   SgExpression*        exp = get_delta();
   SgAdaTypeConstraint* sub = get_subConstraint();
+  ASSERT_not_null(exp);
 
-  ROSE_ASSERT(exp);
+  std::stringstream out;
 
-  std::stringstream buf;
+  out << "$ada$delc$" << exp->unparseToString()
+      << (sub ? sub->displayString() : "");
 
-  buf << "digits " << exp->unparseToString();
-
-  if (sub) buf << sub->displayString();
-
-  return buf.str();
+  return out.str();
 }
 
 void SgAdaDeltaConstraint::display ( std::string label ) const
@@ -1593,7 +1600,7 @@ void SgAdaNullConstraint::post_construction_initialization() {};
 
 std::string SgAdaNullConstraint::displayString() const
 {
-  return std::string{};
+  return "$ada$nulc";
 }
 
 void SgAdaNullConstraint::display ( std::string label ) const
@@ -1615,8 +1622,15 @@ void SgAdaDiscriminantConstraint::post_construction_initialization() {};
 
 std::string SgAdaDiscriminantConstraint::displayString() const
 {
-  // \todo \pp
-  return "SgAdaDiscriminantConstraint";
+  std::stringstream out;
+
+  out << "$ada$discr(";
+  for (const SgExpression* exp : get_discriminants())
+    out << exp->unparseToString() << ',';
+
+  out << ')';
+
+  return out.str();
 }
 
 void SgAdaDiscriminantConstraint::display ( std::string label ) const
