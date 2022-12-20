@@ -391,7 +391,7 @@ public:
    void insertConcreteResults(const TestCasePtr &testCase, const ConcreteResult& details);
 #endif
 
-   /** Tests if there are more test cases that require concrete testing.
+   /** Tests if there are more test cases that require concrete or concolic testing.
     *
     * Thread safety: thread safe
     */
