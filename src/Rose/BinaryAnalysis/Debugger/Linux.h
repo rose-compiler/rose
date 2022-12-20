@@ -4,8 +4,10 @@
 #ifdef ROSE_ENABLE_DEBUGGER_LINUX
 
 #include <Rose/BinaryAnalysis/Debugger/Base.h>
+#include <Rose/BinaryAnalysis/SystemCall.h>
 
 #include <Sawyer/Optional.h>
+#include <sys/ptrace.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -178,22 +180,29 @@ public:
         char** prepareEnvAdjustments() const;
     };
 
-    /** Opaque collection of register values. */
-    using RegisterPage = std::array<uint8_t, 512>;
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Private types
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+private:
+    using UserRegDefs = Sawyer::Container::Map<RegisterDescriptor, size_t>;
 
-    /** Normal and floating point register values. */
-    struct AllRegisters {
-        RegisterPage regs;
-        RegisterPage fpregs;
+    // What type of register values are cached?
+    enum class RegCacheType { NONE, REGS, FPREGS };
+
+    // Low-level collection of register values.
+    using RegPage = std::array<uint8_t, 512>;
+
+    // Low-level structure containing values for all registers.
+    struct AllRegValues {
+        RegPage regs;                                   // integer registers
+        RegPage fpregs;                                 // floating-point registers
     };
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
-    using UserRegDefs = Sawyer::Container::Map<RegisterDescriptor, size_t>;
-    enum class RegPage { NONE, REGS, FPREGS };
-
     Specimen specimen_;                                 // description of specimen being debugged
     int child_ = 0;                                     // process being debugged (int, not pid_t, for Windows portability)
     DetachMode autoDetach_ = DetachMode::KILL;          // how to detach from the subordinate when deleting this debugger
@@ -203,10 +212,10 @@ private:
     UserRegDefs userRegDefs_;                           // how registers map to user_regs_struct in <sys/user.h>
     UserRegDefs userFpRegDefs_;                         // how registers map to user_fpregs_struct in <sys/user.h>
     size_t kernelWordSize_ = 0;                         // cached width in bits of kernel's words
-    RegisterPage regsPage_;                             // latest register information read from subordinate
-    RegPage regsPageStatus_ = RegPage::NONE;            // what are the contents of regsPage_?
-    Disassembler::BasePtr disassembler_;                // how to disassemble instructions
+    RegPage regCache_;                                  // latest register information read from subordinate
+    RegCacheType regCacheType_ = RegCacheType::NONE;    // what are the contents of regsPage_?
     Sawyer::Optional<rose_addr_t> syscallVa_;           // address of some executable system call instruction.
+    SystemCall syscallDecls_;                           // to get declarations for system calls
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Initialization and destruction.
@@ -271,20 +280,6 @@ public:
     void runToSystemCall(ThreadId);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Register operations
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-public:
-    /** Read all registers.
-     *
-     *  The return value is opaque but can be used to restore registers with writeAllRegisters. */
-    virtual AllRegisters readAllRegisters(ThreadId);
-
-    /** Write all registers.
-     *
-     *  Restores registers that were read earlier. */
-    virtual void writeAllRegisters(ThreadId, const AllRegisters&);
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // System calls
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
@@ -344,11 +339,11 @@ public:
     virtual std::vector<uint8_t> readMemory(rose_addr_t va, size_t nBytes) override;
     virtual Sawyer::Container::BitVector readMemory(rose_addr_t va, size_t nBytes, ByteOrder::Endianness order) override;
     virtual size_t writeMemory(rose_addr_t va, size_t nBytes, const uint8_t *bytes) override;
-    virtual std::string readCString(rose_addr_t va, size_t maxBytes = UNLIMITED) override;
     virtual bool isTerminated() override;
     virtual std::string howTerminated() override;
-    virtual RegisterDictionaryPtr registerDictionary() const override;
-    virtual Disassembler::BasePtr disassembler() const override;
+    virtual std::vector<RegisterDescriptor> availableRegisters() override;
+    virtual Sawyer::Container::BitVector readAllRegisters(ThreadId) override;
+    virtual void writeAllRegisters(ThreadId, const Sawyer::Container::BitVector&) override;
 
 private:
     // Wait for subordinate or throw on error
@@ -364,6 +359,21 @@ private:
 
     // Address of a system call instruction. The initial search can be expensive, so the result is cached.
     Sawyer::Optional<rose_addr_t> findSystemCall();
+
+    // Low-level methods to read and write data for all known registers.
+    AllRegValues loadAllRegisters(ThreadId);
+    void saveAllRegisters(ThreadId, const AllRegValues&);
+
+    // Update the register cache to contain the specified register. Return the offset to the start of the register
+    // inside the register cache.
+    size_t updateRegCache(RegisterDescriptor);
+
+    // Send a ptrace command
+    long sendCommand(__ptrace_request, void *addr = nullptr, void *data = nullptr);
+    long sendCommandInt(__ptrace_request, void *addr, int i);
+
+    // Load system call declarations from the appropriate header file
+    void declareSystemCalls(size_t nBits);
 };
 
 std::ostream& operator<<(std::ostream&, const Linux::Specimen&);

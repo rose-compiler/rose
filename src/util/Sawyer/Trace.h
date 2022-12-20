@@ -14,7 +14,7 @@
 #include <Sawyer/Sawyer.h>
 #include <Sawyer/Set.h>
 #include <boost/foreach.hpp>
-#include <boost/iterator.hpp>
+#include <boost/range.hpp>
 #include <set>
 #include <vector>
 

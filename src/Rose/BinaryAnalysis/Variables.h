@@ -3,7 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellState.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
@@ -270,7 +270,7 @@ using StackVariables = Sawyer::Container::IntervalMap<OffsetInterval, StackVaria
  *
  *  This output includes such things as the function to which they belong and the defining instructions. The output is
  *  multi-line, intended for debugging. */
-void print(const StackVariables&, const Partitioner2::Partitioner&, std::ostream &out, const std::string &prefix = "");
+void print(const StackVariables&, const Partitioner2::PartitionerConstPtr&, std::ostream &out, const std::string &prefix = "");
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Global variable descriptors
@@ -355,7 +355,7 @@ typedef Sawyer::Container::IntervalMap<AddressInterval, GlobalVariable> GlobalVa
  *
  *  This output includes such things as their addresses, sizes, and the defining instructions. The output is
  *  multi-line, intended for debugging. */
-void print(const GlobalVariables&,const Partitioner2::Partitioner&, std::ostream &out, const std::string &prefix = "");
+void print(const GlobalVariables&,const Partitioner2::PartitionerConstPtr&, std::ostream &out, const std::string &prefix = "");
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // StackFrame
@@ -441,8 +441,8 @@ public:
      *  exceptions.
      *
      * @{ */
-    StackVariables findStackVariables(const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&);
-    StackVariables findStackVariables(const Partitioner2::Partitioner&, SgAsmInstruction*);
+    StackVariables findStackVariables(const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&);
+    StackVariables findStackVariables(const Partitioner2::PartitionerConstPtr&, SgAsmInstruction*);
     /** @} */
 
     /** Find global variables.
@@ -464,7 +464,7 @@ public:
      * @endcode
      *
      * If previous results are already cached then they're returned, otherwise new results are computed, cached, and returned. */
-    GlobalVariables findGlobalVariables(const Partitioner2::Partitioner&);
+    GlobalVariables findGlobalVariables(const Partitioner2::PartitionerConstPtr&);
 
     /** Removed cached information.
      *
@@ -473,7 +473,7 @@ public:
      *
      * @{ */
     void evict(const Partitioner2::FunctionPtr&);
-    void evict(const Partitioner2::Partitioner&);
+    void evict(const Partitioner2::PartitionerConstPtr&);
     /** @} */
 
     /** Test whether local variable information is cached.
@@ -483,7 +483,7 @@ public:
     bool isCached(const Partitioner2::FunctionPtr&);
 
     /** Figure out attributes describing the stack frame for the specified function. */
-    StackFrame detectFrameAttributes(const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&);
+    StackFrame detectFrameAttributes(const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&);
 
     /** Initilialize offsets for function prologue.
      *
@@ -491,7 +491,7 @@ public:
      *  powerpc after the function prologue sets up the stack frame, we know that the stack frame header contain two 4-byte
      *  quantities: the pointer to the parent frame, and the LR save area for callees and therefore we can add the three offsets
      *  that delimit the boundaries of these two "variables". */
-    void initializeFrameBoundaries(const StackFrame&, const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&,
+    void initializeFrameBoundaries(const StackFrame&, const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&,
                                    StackVariable::Boundaries &boundaries /*in,out*/);
 
 #if 0 // [Robb Matzke 2021-10-27]
@@ -509,13 +509,13 @@ public:
      *
      *  Given an instruction, look for operand subexpressions that reference memory based from a stack frame pointer, such as
      *  x86 "mov eax, [ebp - 12]". Returns the set of offsets from the frame pointer. */
-    std::set<int64_t> findFrameOffsets(const StackFrame&, const Partitioner2::Partitioner&, SgAsmInstruction*);
+    std::set<int64_t> findFrameOffsets(const StackFrame&, const Partitioner2::PartitionerConstPtr&, SgAsmInstruction*);
 
     /** Function that owns an instruction.
      *
      *  Given an instruction, return one of the owning functions chosen arbitrarily.  This is the method used by the version
      *  of @ref findStackVariables that takes an instruction argument. */
-    Partitioner2::FunctionPtr functionForInstruction(const Partitioner2::Partitioner&, SgAsmInstruction*);
+    Partitioner2::FunctionPtr functionForInstruction(const Partitioner2::PartitionerConstPtr&, SgAsmInstruction*);
 
     /** Find global variable addresses.
      *
@@ -552,7 +552,7 @@ public:
      *          return s;
      *      }
      * @endcode */
-    AddressToAddresses findGlobalVariableVas(const Partitioner2::Partitioner&);
+    AddressToAddresses findGlobalVariableVas(const Partitioner2::PartitionerConstPtr&);
 
     /** Find address constants in an expression.
      *
@@ -588,7 +588,7 @@ public:
      *  frame instead of being removed entirely.
      *
      *  If the frame's upper address is known, then any boundary above that address is removed from the list. */
-    void removeOutliers(const StackFrame&, const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&,
+    void removeOutliers(const StackFrame&, const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&,
                         StackVariable::Boundaries &sortedBoundaries /*in,out*/);
 };
 

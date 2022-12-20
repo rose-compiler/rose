@@ -2,8 +2,8 @@
 #define ROSE_BinaryAnalysis_Partitioner2_FunctionCallGraph_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
+
 #include <Sawyer/Graph.h>
 #include <Sawyer/Map.h>
 

@@ -7,7 +7,9 @@
 #include <Rose/BinaryAnalysis/NoOperation.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
+#include <Rose/BinaryAnalysis/Partitioner2/FunctionCallGraph.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Sawyer/GraphAlgorithm.h>
 #include <Sawyer/GraphTraversal.h>
@@ -110,17 +112,17 @@ done:
 }
 
 struct FunctionNoopWorker {
-    const Partitioner &partitioner;
+    Partitioner::ConstPtr partitioner;
     Sawyer::ProgressBar<size_t> &progress;
 
-    FunctionNoopWorker(const Partitioner &partitioner, Sawyer::ProgressBar<size_t> &progress)
+    FunctionNoopWorker(const Partitioner::ConstPtr &partitioner, Sawyer::ProgressBar<size_t> &progress)
         : partitioner(partitioner), progress(progress) {}
 
     void operator()(size_t /*workId*/, const Function::Ptr &function) {
 #if 0 // DEBUGGING [Robb Matzke 2016-02-26]
         std::cerr <<"ROBB: starting " <<function->printableName() <<"\n";
 #endif
-        partitioner.functionIsNoop(function);
+        partitioner->functionIsNoop(function);
         ++progress;
 #if 0 // DEBUGGING [Robb Matzke 2016-02-26]
         std::cerr <<"      ending   " <<function->printableName() <<"\n";
@@ -138,7 +140,7 @@ Partitioner::allFunctionIsNoop() const {
     Sawyer::Message::FacilitiesGuard guard;
     if (nThreads != 1)
         mlog[MARCH].disable();                          // lots of threads doing progress reports won't look too good
-    Sawyer::workInParallel(cg, nThreads, FunctionNoopWorker(*this, progress));
+    Sawyer::workInParallel(cg, nThreads, FunctionNoopWorker(sharedFromThis(), progress));
 }
 
 void

@@ -455,7 +455,7 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
   AC_MSG_NOTICE([Fortran back-end compiler minor version number = "$BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER"])
 
 ## Test that we have correctly evaluated the major and minor versions numbers...
-#  If incorrect better to fail here rather than in build (sage_support.cpp),
+#  If incorrect better to fail here rather than in build (sage_support.C),
 #  but only fail if Fortran support is requested [Rasmussen 2019.02.21]
 #
   if test "x$support_fortran_frontend" = "xyes" ; then

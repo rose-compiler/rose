@@ -5,7 +5,7 @@
 
 #include <Rose/BinaryAnalysis/ModelChecker/PathQueue.h>
 
-#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Sawyer/Stopwatch.h>

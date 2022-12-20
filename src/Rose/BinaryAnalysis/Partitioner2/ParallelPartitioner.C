@@ -858,7 +858,6 @@ void
 Partitioner::dumpInsnCfg(std::ostream &out, const Rose::BinaryAnalysis::Partitioner2::Partitioner &p) const {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     Unparser::Base::Ptr unparser = insnCache_->decoder()->unparser();
-    Rose::BinaryAnalysis::Partitioner2::Partitioner emptyPartitioner{};
 
     for (auto vertex: insnCfg_.vertices()) {
         out <<"vertex #" <<vertex.id() <<" ";
@@ -958,7 +957,7 @@ Partitioner::remap() {
 }
 
 void
-Partitioner::transferResults(Rose::BinaryAnalysis::Partitioner2::Partitioner &out) {
+Partitioner::transferResults(const Rose::BinaryAnalysis::Partitioner2::Partitioner::Ptr &out) {
     ASSERT_forbid2(isRunning(), "not thread safe");
 
     // Create the basic blocks
@@ -1012,8 +1011,8 @@ Partitioner::transferResults(Rose::BinaryAnalysis::Partitioner2::Partitioner &ou
                 bblock->insertSuccessor(ops->undefined_(IP.nBits()), E_NORMAL);
         }
 
-        out.detachBasicBlock(bblock);
-        out.attachBasicBlock(bblock);
+        out->detachBasicBlock(bblock);
+        out->attachBasicBlock(bblock);
     }
 
     // Create the functions
@@ -1030,7 +1029,7 @@ Partitioner::transferResults(Rose::BinaryAnalysis::Partitioner2::Partitioner &ou
         auto function = Function::instance(funcVa, funcEntry->functionReasons().vector());
         for (rose_addr_t bbVa: bbVas.values())
             function->insertBasicBlock(bbVa);
-        out.attachOrMergeFunction(function);
+        out->attachOrMergeFunction(function);
     }
 }
 

@@ -14,6 +14,7 @@ static const char *gDescription =
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/LibraryIdentification.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
 
@@ -121,18 +122,18 @@ hashLibrary(const MemoryMap::Ptr &map) {
 
 static void
 copyFromRba(const Settings &settings, Flir &dst, const std::string &rbaName) {
-    P2::Engine engine;
-    P2::Partitioner partitioner = engine.loadPartitioner(rbaName, settings.stateFormat);
+    P2::Engine *engine = P2::Engine::instance();
+    P2::Partitioner::Ptr partitioner = engine->loadPartitioner(rbaName, settings.stateFormat);
 
     std::string libraryHash = settings.libraryHash;
     if (libraryHash.empty()) {
-        libraryHash = hashLibrary(partitioner.memoryMap());
+        libraryHash = hashLibrary(partitioner->memoryMap());
         mlog[INFO] <<"library hash is " <<libraryHash <<"\n";
     }
 
     std::string libraryArchitecture = settings.libraryArchitecture;
     if (libraryArchitecture.empty()) {
-        libraryArchitecture = partitioner.instructionProvider().disassembler()->name();
+        libraryArchitecture = partitioner->instructionProvider().disassembler()->name();
         mlog[INFO] <<"library architecture is " <<libraryArchitecture <<"\n";
     }
 
@@ -141,6 +142,8 @@ copyFromRba(const Settings &settings, Flir &dst, const std::string &rbaName) {
                                        libraryArchitecture);
     size_t nInserted = dst.insertLibrary(lib, partitioner);
     mlog[INFO] <<"inserted/updated " <<StringUtility::plural(nInserted, "functions") <<"\n";
+
+    delete engine;
 }
 
 static void

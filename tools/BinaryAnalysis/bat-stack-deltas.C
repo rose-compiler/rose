@@ -5,10 +5,12 @@ static const char *description =
     "or unspecified.";
 
 #include <rose.h>
-#include <Rose/CommandLine.h>
-#include <Rose/Diagnostics.h>
+
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
 
 #include <batSupport.h>
 #include <boost/filesystem.hpp>
@@ -144,31 +146,31 @@ main(int argc, char *argv[]) {
 
     Settings settings;
     boost::filesystem::path inputFileName = parseCommandLine(argc, argv, settings);
-    P2::Engine engine;
-    P2::Partitioner partitioner = engine.loadPartitioner(inputFileName, settings.stateFormat);
+    P2::Engine *engine = P2::Engine::instance();
+    P2::Partitioner::Ptr partitioner = engine->loadPartitioner(inputFileName, settings.stateFormat);
 
     // Accumulate deltas in a map
     Sawyer::Stopwatch timer;
     mlog[INFO] <<"calculating stack deltas";
     StackDeltaMap sdmap;
-    for (const P2::Function::Ptr &function: partitioner.functions()) {
+    for (const P2::Function::Ptr &function: partitioner->functions()) {
         if (SD_FUNCTION == settings.domain) {
-            BaseSemantics::SValue::Ptr postDelta = partitioner.functionStackDelta(function);
-            insertDeltaPairs(sdmap, partitioner.functionBasicBlockExtent(function), postDelta);
+            BaseSemantics::SValue::Ptr postDelta = partitioner->functionStackDelta(function);
+            insertDeltaPairs(sdmap, partitioner->functionBasicBlockExtent(function), postDelta);
         } else {
             for (const rose_addr_t bbva: function->basicBlockAddresses()) {
-                if (P2::BasicBlock::Ptr bb = partitioner.basicBlockExists(bbva)) {
+                if (P2::BasicBlock::Ptr bb = partitioner->basicBlockExists(bbva)) {
                     if (SD_BASIC_BLOCK == settings.domain) {
-                        BaseSemantics::SValue::Ptr preDelta = partitioner.basicBlockStackDeltaIn(bb, function);
-                        BaseSemantics::SValue::Ptr postDelta = partitioner.basicBlockStackDeltaOut(bb, function);
-                        insertDeltaPairs(sdmap, partitioner.basicBlockInstructionExtent(bb), preDelta, postDelta);
+                        BaseSemantics::SValue::Ptr preDelta = partitioner->basicBlockStackDeltaIn(bb, function);
+                        BaseSemantics::SValue::Ptr postDelta = partitioner->basicBlockStackDeltaOut(bb, function);
+                        insertDeltaPairs(sdmap, partitioner->basicBlockInstructionExtent(bb), preDelta, postDelta);
                     } else {
                         ASSERT_require(SD_INSTRUCTION == settings.domain);
                         const BinaryAnalysis::StackDelta::Analysis &sda = function->stackDeltaAnalysis();
                         for (SgAsmInstruction *insn: bb->instructions()) {
                             BaseSemantics::SValue::Ptr preDelta = sda.instructionInputStackDeltaWrtFunction(insn);
                             BaseSemantics::SValue::Ptr postDelta = sda.instructionOutputStackDeltaWrtFunction(insn);
-                            insertDeltaPairs(sdmap, partitioner.instructionExtent(insn), preDelta, postDelta);
+                            insertDeltaPairs(sdmap, partitioner->instructionExtent(insn), preDelta, postDelta);
                         }
                     }
                 }
@@ -192,4 +194,6 @@ main(int argc, char *argv[]) {
             std::cout <<"nan\n";
         }
     }
+
+    delete engine;
 }

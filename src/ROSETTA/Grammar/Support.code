@@ -6035,7 +6035,7 @@ HEADER_APPLICATION_SOURCE_FILE_START
           int build_Python_AST();
           int build_X10_AST(const std::vector<std::string>& p_argv);
 
-       // DQ (8/25/2017): Adding multiple langauge support (function definitions in src/frontend/SageIII/sage_support/sage_support.cpp).
+       // DQ (8/25/2017): Adding multiple language support (function definitions in src/frontend/SageIII/sage_support/sage_support.C).
           int build_Csharp_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
           int build_Ada_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
           int build_Jovial_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );

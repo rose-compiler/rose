@@ -478,11 +478,11 @@ Grammar::setUpTypes ()
      AdaProtectedType.setFunctionSource   ( "SOURCE_ADA_PROTECTED_TYPE", "../Grammar/Type.code");
 
   // PP (8/5/21): Adding ADA types
-     //~ AdaDiscriminatedType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+     AdaDiscriminatedType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      AdaDiscriminatedType.setFunctionSource        ( "SOURCE_ADA_DISCRIMINATED_TYPE", "../Grammar/Type.code");
 
   // MS (5/1/21): Ada formal types
-     //~ AdaFormalType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code" );
+     AdaFormalType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code" );
      AdaFormalType.setFunctionSource        ( "SOURCE_ADA_FORMAL_TYPE", "../Grammar/Type.code");
 #endif /* 1 */
 

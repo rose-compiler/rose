@@ -9,6 +9,7 @@ static const char *gDescription =
 
 #include <Rose/BinaryAnalysis/LibraryIdentification.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
 
@@ -73,14 +74,14 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 }
 
 static size_t
-nInsns(const P2::Partitioner &p, const P2::Function::Ptr &f) {
-    return Flir::nInsns(p, f);
+nInsns(const P2::Partitioner::ConstPtr &partitioner, const P2::Function::Ptr &function) {
+    return Flir::nInsns(partitioner, function);
 }
 
 class Worker {
     Flir::Settings settings_;
     const std::string &dbName_;
-    const P2::Partitioner &partitioner_;
+    P2::Partitioner::ConstPtr partitioner_;             // not null
     std::shared_ptr<Flir> flir_;
     Sawyer::ProgressBar<size_t> &progress_;
 
@@ -90,10 +91,12 @@ class Worker {
     Libraries &libraries_;
 
 public:
-    Worker(const Flir::Settings &settings, const std::string &dbName, const P2::Partitioner &partitioner,
+    Worker(const Flir::Settings &settings, const std::string &dbName, const P2::Partitioner::ConstPtr &partitioner,
            Sawyer::ProgressBar<size_t> &progress, SAWYER_THREAD_TRAITS::Mutex &mutex, Functions &functions, Libraries &libraries)
         : settings_(settings), dbName_(dbName), partitioner_(partitioner), progress_(progress), mutex_(mutex),
-          functions_(functions), libraries_(libraries) {}
+          functions_(functions), libraries_(libraries) {
+        ASSERT_not_null(partitioner);
+    }
 
     void operator()(size_t, const P2::Function::Ptr &function) {
         if (!flir_) {
@@ -124,22 +127,22 @@ main(int argc, char *argv[]) {
 
     // Command-line parsing
     Settings settings;
-    P2::Engine engine;
+    P2::Engine *engine = P2::Engine::instance();
     std::vector<std::string> args = parseCommandLine(argc, argv, settings);
     ASSERT_require(args.size() >= 2);
     std::string rbaFileName = args.front();
     args.erase(args.begin(), args.begin()+1);
-    P2::Partitioner partitioner = engine.loadPartitioner(rbaFileName, settings.stateFormat);
+    P2::Partitioner::Ptr partitioner = engine->loadPartitioner(rbaFileName, settings.stateFormat);
 
     // Match each function against the databases. It's fastest to open each database just once.
     SAWYER_THREAD_TRAITS::Mutex resultMutex;            // guards 'functions' and 'libraries' as they're being initialized
     Functions functions;                                // specimen functions and the corresponding database functions
     Libraries libraries;
 
-    Sawyer::ProgressBar<size_t> progress(args.size() * partitioner.nFunctions(), mlog[MARCH]);
+    Sawyer::ProgressBar<size_t> progress(args.size() * partitioner->nFunctions(), mlog[MARCH]);
     for (const std::string &dbName: args) {
         Sawyer::Container::Graph<P2::Function::Ptr> work;
-        for (const P2::Function::Ptr &function: partitioner.functions())
+        for (const P2::Function::Ptr &function: partitioner->functions())
             work.insertVertex(function);
         Sawyer::workInParallel(work, Rose::CommandLine::genericSwitchArgs.threads,
                                Worker(settings.flir, dbName, partitioner, progress, resultMutex, functions, libraries));
@@ -148,7 +151,7 @@ main(int argc, char *argv[]) {
     // Print information about matched functions
     if (settings.showDetails) {
         for (const Functions::Node &node: functions.nodes()) {
-            P2::Function::Ptr function = partitioner.functionExists(node.key());
+            P2::Function::Ptr function = partitioner->functionExists(node.key());
             ASSERT_not_null(function);                      // because we found it earlier
             std::cout <<function->printableName()
                       <<" with " <<StringUtility::plural(nInsns(partitioner, function), "instructions") <<" matches:\n";
@@ -169,7 +172,7 @@ main(int argc, char *argv[]) {
 
     // How many matches from each library?
     if (settings.showSummary) {
-        std::cout <<"specimen contains " <<StringUtility::plural(partitioner.nFunctions(), "functions") <<"\n";
+        std::cout <<"specimen contains " <<StringUtility::plural(partitioner->nFunctions(), "functions") <<"\n";
         std::cout <<StringUtility::plural(functions.size(), "functions") <<" are matched to database entries\n";
         std::vector<LibraryCountPair> sorted(libraries.values().begin(), libraries.values().end());
         std::sort(sorted.begin(), sorted.end(), [](const LibraryCountPair &a, const LibraryCountPair &b) {
@@ -182,6 +185,8 @@ main(int argc, char *argv[]) {
                       <<" arch \"" <<StringUtility::cEscape(pair.first->architecture()) <<"\"\n";
         }
     }
+
+    delete engine;
 }
 
 #else // LibraryIdentification is not enable...

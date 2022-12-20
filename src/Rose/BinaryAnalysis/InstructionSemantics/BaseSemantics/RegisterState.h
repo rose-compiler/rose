@@ -155,6 +155,13 @@ public:
      *  This is similar to @ref readRegister except it doesn't modify the register state in any way. */
     virtual SValuePtr peekRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops) = 0;
 
+    /** Update register properties after reading a register.
+     *
+     *  This should be called by all implementations of @ref BaseSemantics::RiscOperators::readRegister. Depending on the
+     *  semantic domain, it usually adds the READ property to all bits of the register, and conditionally adds READ_BEFORE_WRITE
+     *  and/or READ_UNINITIALIZED properties to parts of the register. */
+    virtual void updateReadProperties(RegisterDescriptor) = 0;
+
     /** Write a value to a register.
      *
      *  The register descriptor, @p reg, not only describes which register, but also which bits of that register (e.g., "al",
@@ -162,6 +169,12 @@ public:
      *  register). The RISC operations are provided so that they can be used to insert the @p value bits into a wider the
      *  hardware register if necessary. See @ref RiscOperators::readRegister for more details. */
     virtual void writeRegister(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops) = 0;
+
+    /** Update register properties after writing to a register.
+     *
+     *  This should be called by all implementations of @ref BaseSemantics::RiscOperators::writeRegister. Depending on the
+     *  domain, it usually adds the WRITE or INIT property to the bits of the rgister. */
+    virtual void updateWriteProperties(RegisterDescriptor, InputOutputProperty) = 0;
 
     /** Hash the register state.
      *

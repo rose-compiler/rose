@@ -43,22 +43,24 @@ struct ExprPrinter: AstPrePostProcessing {
 
 // Attach semantic information about side effects to each instruction, printing them as we go.
 struct SemanticsAttacher: AstSimpleProcessing {
-    const P2::Partitioner &partitioner;
+    P2::Partitioner::ConstPtr partitioner;
     IS::BaseSemantics::RiscOperators::Ptr traceOps;
 
     // Build a symbolic CPU
-    explicit SemanticsAttacher(const P2::Partitioner &partitioner)
+    explicit SemanticsAttacher(const P2::Partitioner::ConstPtr &partitioner)
         : partitioner(partitioner),
-          traceOps(IS::TraceSemantics::RiscOperators::instance(partitioner.newOperators())) {}
+          traceOps(IS::TraceSemantics::RiscOperators::instance(partitioner->newOperators())) {
+        ASSERT_not_null(partitioner);
+    }
 
     // Visit each instruction and attach the semantic side effects to the SgAsmInstruction node, but run the same instruction
     // through a symbolic tracing dispatcher to show us the steps that occur.
     void visit(SgNode *node) override {
         if (auto insn = isSgAsmInstruction(node)) {
-            std::cerr <<partitioner.unparse(insn) <<"\n";
+            std::cerr <<partitioner->unparse(insn) <<"\n";
 
             // Symbolic execution of this single instruction all by itself.
-            IS::BaseSemantics::Dispatcher::Ptr cpu = partitioner.newDispatcher(traceOps);
+            IS::BaseSemantics::Dispatcher::Ptr cpu = partitioner->newDispatcher(traceOps);
             try {
                 cpu->processInstruction(insn);
             } catch (...) {
@@ -66,7 +68,7 @@ struct SemanticsAttacher: AstSimpleProcessing {
             }
 
             // Now build the side effect trees for this same single instruciton and print the results
-            IS::StaticSemantics::attachInstructionSemantics(insn, partitioner.instructionProvider().disassembler());
+            IS::StaticSemantics::attachInstructionSemantics(insn, partitioner->instructionProvider().disassembler());
             if (!insn->get_semantics() || insn->get_semantics()->get_expressions().empty()) {
                 std::cerr <<"  no side effects\n";
             } else {
@@ -84,12 +86,14 @@ int main(int argc, char *argv[]) {
     Rose::Diagnostics::initAndRegister(&mlog, "tool");
     mlog[TRACE].enable();
 
-    P2::Engine engine;
-    std::vector<std::string> specimen = engine.parseCommandLine(argc, argv, purpose, description).unreachedArgs();
-    P2::Partitioner partitioner = engine.partition(specimen);
+    P2::Engine *engine = P2::Engine::instance();
+    std::vector<std::string> specimen = engine->parseCommandLine(argc, argv, purpose, description).unreachedArgs();
+    P2::Partitioner::Ptr partitioner = engine->partition(specimen);
 
     SgAsmBlock *ast = P2::Modules::buildAst(partitioner);
     SemanticsAttacher(partitioner).traverse(ast, preorder);
+
+    delete engine;
 }
 
 #else

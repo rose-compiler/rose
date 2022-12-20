@@ -177,6 +177,7 @@ registerFactory(const Base::Ptr &factory) {
 bool
 deregisterFactory(const Base::Ptr &factory) {
     ASSERT_not_null(factory);
+    initRegistry();
     SAWYER_THREAD_TRAITS::LockGuard lock(registryMutex);
     for (auto iter = registry.rbegin(); iter != registry.rend(); ++iter) {
         if (*iter == factory) {

@@ -3,9 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
-#include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/Exception.h>
 
 #include <stdexcept>
@@ -31,30 +29,27 @@ public:
 };
 
 class BasicBlockError: public Exception {
-    BasicBlock::Ptr bblock_;
+    BasicBlockPtr bblock_;
 public:
-    BasicBlockError(const BasicBlock::Ptr &bblock, const std::string &mesg)
-        : Exception(mesg), bblock_(bblock) {}
-    ~BasicBlockError() throw() {}
-    BasicBlock::Ptr bblock() const { return bblock_; }
+    BasicBlockError(const BasicBlockPtr&, const std::string &mesg);
+    ~BasicBlockError() throw();
+    BasicBlockPtr bblock() const;
 };
 
 class DataBlockError: public Exception {
-    DataBlock::Ptr dblock_;
+    DataBlockPtr dblock_;
 public:
-    DataBlockError(const DataBlock::Ptr &dblock, const std::string &mesg)
-        : Exception(mesg), dblock_(dblock) {}
-    ~DataBlockError() throw() {}
-    DataBlock::Ptr dblock() const { return dblock_; }
+    DataBlockError(const DataBlockPtr&, const std::string &mesg);
+    ~DataBlockError() throw();
+    DataBlockPtr dblock() const;
 };
 
 class FunctionError: public Exception {
-    Function::Ptr function_;
+    FunctionPtr function_;
 public:
-    FunctionError(const Function::Ptr &function, const std::string &mesg)
-        : Exception(mesg), function_(function) {}
-    ~FunctionError() throw() {}
-    Function::Ptr function() const { return function_; }
+    FunctionError(const FunctionPtr&, const std::string &mesg);
+    ~FunctionError() throw();
+    FunctionPtr function() const;
 };
 
 class FileError: public Exception {

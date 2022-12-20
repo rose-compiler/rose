@@ -63,7 +63,7 @@ all-local: roseh sage.docs
 # AM_CPPFLAGS = $(ROSE_INCLUDES) # -I$(top_srcdir)/src/frontend/EDG_SAGE_Connection -I$(top_srcdir)/src/frontend/EDG/EDG_3.3/src
 AM_CPPFLAGS = $(ROSE_INCLUDES)
 
-# DQ (3/13/2010): sage_support.cpp requires the OFP fortran source files to be made available.
+# DQ (3/13/2010): sage_support.C requires the OFP fortran source files to be made available.
 # if ROSE_USE_OPEN_FORTRAN_PARSER
 if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
    AM_CPPFLAGS += -I${top_builddir}/src/3rdPartyLibraries/fortran-parser

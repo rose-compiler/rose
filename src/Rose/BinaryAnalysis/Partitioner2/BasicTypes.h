@@ -8,6 +8,10 @@
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/nvp.hpp>
 #include <boost/serialization/version.hpp>
+#include <Sawyer/Graph.h>
+#include <Sawyer/Map.h>
+#include <Sawyer/Set.h>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -126,14 +130,14 @@ struct AstConstructionSettings {
      *
      *  If the partitioner contains no functions then either create an empty global block (top-level @ref SgAsmBlock) when
      *  this setting is true, or return a null global block pointer when this setting is false. */
-    bool allowEmptyGlobalBlock;
+    bool allowEmptyGlobalBlock = false;
 
     /** Whether to allow functions with no basic blocks.
      *
      *  If the the partitioner knows about a function but was unable to produce any basic blocks then we have two choices
      *  for constructing the @ref SgAsmFunction node in the AST: if this setting is true, then create a function node with
      *  no @ref SgAsmBlock children; otherwise return a null pointer and do not add ths function to the AST. */
-    bool allowFunctionWithNoBasicBlocks;
+    bool allowFunctionWithNoBasicBlocks = false;
 
     /** Whether to allow a basic block to be empty.
      *
@@ -141,7 +145,7 @@ struct AstConstructionSettings {
      *  mapped, then we have two choices when creating the corresponding @ref SgAsmBlock node in the AST: if this setting
      *  is true, then create a basic block with no @ref SgAsmInstruction children; otherwise return a null pointer and do
      *  not add the basic block to the AST. */
-    bool allowEmptyBasicBlocks;
+    bool allowEmptyBasicBlocks = false;
 
     /** Whether to allow shared instructions in the AST.
      *
@@ -154,7 +158,7 @@ struct AstConstructionSettings {
      *  a lattice) but each instruction can point to only one parent basic block (chosen arbitrarily). Thus, a depth-first
      *  traversal of the AST will find the same @ref SgAsmInstruction node more than once, yet following the instruction's
      *  parent pointer will always return the same basic block. */
-    bool copyAllInstructions;
+    bool copyAllInstructions = true;
 
 private:
     friend class boost::serialization::access;
@@ -168,11 +172,6 @@ private:
     }
 
 public:
-    /** Default constructor. */
-    AstConstructionSettings()
-        : allowEmptyGlobalBlock(false), allowFunctionWithNoBasicBlocks(false), allowEmptyBasicBlocks(false),
-          copyAllInstructions(true) {}
-
     /** Default strict settings.
      *
      *  These settings try to construct an AST that will work with all old AST-based analyses. Some information represented
@@ -226,53 +225,90 @@ enum MemoryDataAdjustment {
  *
  *  The runtime descriptions and command-line parser for these switches can be obtained from @ref Engine::loaderSwitches. */
 struct LoaderSettings {
-    size_t deExecuteZerosThreshold;                 /**< Size threshold for removing execute permission from zero data. If
-                                                     *   this data member is non-zero, then the memory map will be adjusted
-                                                     *   by removing execute permission from any region of memory that has
-                                                     *   at least this many consecutive zero bytes. The affected regions
-                                                     *   are adjusted by the @ref deExecuteZerosLeaveAtFront and @ref
-                                                     *   deExecuteZerosLeaveAtBack data members. This happens after the
-                                                     *   @ref memoryIsExecutable property is processed. */
-    size_t deExecuteZerosLeaveAtFront;              /**< Number of bytes at the beginning of each zero area to leave
-                                                     *   unaffected. */
-    size_t deExecuteZerosLeaveAtBack;               /**< Number of bytes at the end of each zero area to leave
-                                                     *   unaffected. */
-    MemoryDataAdjustment memoryDataAdjustment;      /**< How to globally adjust memory segment access bits for data
-                                                     *   areas. See the enum for details. The default is @ref
-                                                     *   DATA_NO_CHANGE, which causes the partitioner to use the
-                                                     *   user-supplied memory map without changing anything. */
-    bool memoryIsExecutable;                        /**< Determines whether all of memory should be made executable. The
-                                                     *   executability bit controls whether the partitioner is able to make
-                                                     *   instructions at that address.  The default, false, means that the
-                                                     *   engine will not modify executable bits in memory, but rather use
-                                                     *   the bits already set in the memory map. This happens before the
-                                                     *   processing related to removing execution permission from areas of
-                                                     *   memory containing only zero values. */
-    bool linkObjectFiles;                           /**< Link object files before parsing. */
-    bool linkStaticArchives;                        /**< Link static libraries before parsing. */
-    std::string linker;                             /**< Command to run to link object and archives.  ELF object files
-                                                     *   typically don't contain information about how the object is mapped
-                                                     *   into memory. If this setting is a non-empty string then a shell
-                                                     *   command is constructed and run on all the supplied object and library
-                                                     *   files and the resulting file is used instead.  The string should
-                                                     *   contain two variables of the form "%o" and "%f" which are the single
-                                                     *   output file name and the space separated list of input names. The
-                                                     *   names are escaped when the command is generated and therefore the "%o"
-                                                     *   and "%f" should not be quoted. */
-    std::vector<std::string> envEraseNames;         /**< List of environment variable names that should be removed before
-                                                     *   launching a "run:" specimen. These names are matched exactly. */
-    std::vector<boost::regex> envErasePatterns;     /**< List of regular expressions for removing environment variables
-                                                     *   before launching a "run:" specimen. The expressions match only the
-                                                     *   variable name, not its value. */
-    std::vector<std::string> envInsert;             /**< List of environment variable names and values to be inserted before
-                                                     *   launching a "run:" specimen. Each string must contain an equal sign
-                                                     *   that separates the name from the value (the first \"=\" if more
-                                                     *   than one. */
+    /** When to remove execute permission from zero bytes.
+     *
+     *  This is the number of consecutive zero bytes that must be present before execute permission is removed from this part
+     *  of the memory map.  A value of zero disables this feature.  The @ref deExecuteZerosThreshold is the number of
+     *  consecutive zero bytes that must be found to trigger this alteration, while the @ref deExecuteZerosLeaveAtFront and
+     *  @ref deExecuteZerosLeaveAtBack narrow each region slightly before removing execute permission in order to leave some
+     *  zeros unaffected.
+     *
+     *  This action happens after the @ref memoryIsExecutable property is processed.
+     *
+     * @{ */
+    size_t deExecuteZerosThreshold = 0;
+    size_t deExecuteZerosLeaveAtFront = 16;
+    size_t deExecuteZerosLeaveAtBack = 1;
+    /** @} */
 
-    LoaderSettings()
-        : deExecuteZerosThreshold(0), deExecuteZerosLeaveAtFront(16), deExecuteZerosLeaveAtBack(1),
-          memoryDataAdjustment(DATA_IS_INITIALIZED), memoryIsExecutable(false), linkObjectFiles(true),
-          linkStaticArchives(true), linker("ld -o %o --unresolved-symbols=ignore-all --whole-archive %f") {}
+    /** How to globally adjust memory segment access bits for data areas.
+     *
+     *  This property controls whether the partitioner makes any global adjustments to the memory map.  The readable, writable,
+     *  and initialized bits (see @ref MemoryMap) determine how the partitioner treats memory read operations.  Reading from
+     *  memory that is non-writable is treated as if the memory location holds a constant value; reading from memory that is
+     *  writable and initialized is treated as if the memory contains a valid initial value that can change during program
+     *  execution, and reading from memory that is writable and not initialized is treated as if it has no current value.
+     *
+     *  The default is to use the memory map supplied by the executable or the user without making any changes to these access
+     *  bits. */
+    MemoryDataAdjustment memoryDataAdjustment = DATA_IS_INITIALIZED;
+
+    /** Whether all of memory should be made executable.
+     *
+     *  If this property is set, then the engine will remap all memory to be executable.  Executability determines whether the
+     *  partitioner is able to make instructions at that address. The default, false, means that the engine will not globally
+     *  modify the execute bits in the memory map.  This action happens before the various de-execute-zeros stuff is processed
+     *  according to @ref deExecuteZerosThreshold et al. */
+    bool memoryIsExecutable = false;
+
+    /** Whether to link object files before parsing.
+     *
+     *  Object files (".o" files) typically don't contain information about how the object is mapped into virtual memory, and
+     *  thus machine instructions are not found. Turning on linking causes all the object files (and possibly library archives)
+     *  to be linked into an output file and the output file is analyzed instead.
+     *
+     *  See also, @ref linkStaticArchives, @ref linkerCommand. */
+    bool linkObjectFiles = true;
+
+    /** Whether to link library archives before parsing.
+     *
+     *  Static library archives (".a" files) contain object files that typically don't have information about where the object
+     *  is mapped in virtual memory. Turning on linking causes all archives (and possibly object files) to be linked into an
+     *  output file that is analyzed instead.
+     *
+     *  See also, @ref linkObjectFiles, @ref linkerCommand. */
+    bool linkStaticArchives = true;
+
+    /** Linker command.
+     *
+     *  ELF object files typically don't contain information about how the object is mapped into memory. If this setting is a
+     *  non-empty string then a shell command is constructed and run on all the supplied object and library files and the
+     *  resulting file is used instead.
+     *
+     *  This is the Bourne shell command used to link object files and static library archives depending on the @ref
+     *  linkObjectFiles and @ref linkStaticArchives properties.  The "%o" substring is replaced by the name of the linker
+     *  output file, and the "%f" substring is replaced by a space separated list of input files (the objects and
+     *  libraries). These substitutions are escaped using Bourne shell syntax and thus should not be quoted. */
+    std::string linker = "ld -o %o --unresolved-symbols=ignore-all --whole-archive %f";
+
+    /** Names to erase from the environment.
+     *
+     *  This property is a list of environment variable names that will be removed before launching a "run:" style specimen.
+     *  These names are matched exactly. */
+    std::vector<std::string> envEraseNames;
+
+    /** Patterns to erase from the environment.
+     *
+     *  This property is a list of regular expressions that will erase matching environment variable names before launching
+     *  a "run:" style specimen. The expressions match only the variable name, not its value. */
+    std::vector<boost::regex> envErasePatterns;
+
+    /** Environment variables to insert.
+     *
+     *  This property is a list of environment variables and values to insert before launching a "run:" style
+     *  specimen. Insertions always occur after all environment variable erasures have been processed.  Each string must
+     *  contain at least one equal sign ("="), the first of which separates the variable name from its value. */
+    std::vector<std::string> envInsert;
 
 private:
     friend class boost::serialization::access;
@@ -306,11 +342,18 @@ private:
  *  The runtime descriptions and command-line parser for these switches can be obtained from @ref
  *  Engine::disassemblerSwitches. */
 struct DisassemblerSettings {
-    bool doDisassemble;                             /**< Perform disassembly. If false, then it is not an error if no
-                                                     *   disassembler can be found. */
-    std::string isaName;                            /**< Name of the instruction set architecture. Specifying a non-empty
-                                                     *   ISA name will override the architecture that's chosen from the
-                                                     *   binary container(s) such as ELF or PE. */
+    /** Whether to disassemble instructions.
+     *
+     *  If true, then disassembly is performed, otherwise it's skipped. If false, then it is not an error if no
+     *  disassembler can be found. */
+    bool doDisassemble = true;
+
+    /** Instruction set architecture name.
+     *
+     *  The instruction set architecture name is used to obtain a disassembler and overrides the disassembler that would
+     *  otherwise be found by examining the binary container. Specifying a non-empty ISA name will override the architecture
+     *  that's chosen from the binary container(s) such as ELF or PE. */
+    std::string isaName;
 
 private:
     friend class boost::serialization::access;
@@ -321,10 +364,6 @@ private:
             s & BOOST_SERIALIZATION_NVP(doDisassemble);
         s & BOOST_SERIALIZATION_NVP(isaName);
     }
-
-public:
-    DisassemblerSettings()
-        : doDisassemble(true) {}
 };
 
 /** Controls whether the function may-return analysis runs. */
@@ -343,13 +382,35 @@ enum FunctionReturnAnalysis {
  *
  *  These settings are specific to a @ref Partitioner object. */
 struct BasePartitionerSettings {
-    bool usingSemantics;                            /**< Whether instruction semantics are used. If semantics are used,
-                                                     *   then the partitioner will have more accurate reasoning about the
-                                                     *   control flow graph.  For instance, semantics enable the detection
-                                                     *   of certain kinds of opaque predicates. */
-    bool checkingCallBranch;                        /**< Check for situations where CALL is used as a branch. */
-    bool basicBlockSemanticsAutoDrop;               /**< Conserve memory by dropping semantics for attached basic blocks. */
-    bool ignoringUnknownInsns;                      /**< Whether to ignore unkonwn insns when extending basic blocks. */
+    /** Whether instruction semantics are used.
+     *
+     *  If semantics are used, then the partitioner will have more accurate reasoning about the control flow graph.  For
+     *  instance, semantics enable the detection of certain kinds of opaque predicates. */
+    bool usingSemantics = false;
+
+    /** Whether to look for function calls used as branches.
+     *
+     *  If this property is set, then function call instructions are not automatically assumed to be actual function calls. */
+    bool checkingCallBranch = false;
+
+    /** Whether to automatically drop semantics for attached basic blocks.
+     *
+     *  Basic blocks normally cache their semantic state as they're being discovered so that the state does not need to be
+     *  recomputed from the beginning of the block each time a new instruction is appended.  However, caching this information
+     *  can consume a large number of symbolic expression nodes which are seldom needed once the basic block is fully
+     *  discovered.  Therefore, setting this property to true will cause a basic block's semantic information to be forgotten
+     *  as soon as the basic block is attached to the CFG.
+     *
+     *  @sa Partitioner::basicBlockDropSemantics */
+    bool basicBlockSemanticsAutoDrop = true;
+
+    /** Whether unknown instructions are ignored.
+     *
+     *  If set, then instructions that cannot be disassembled are treated like no-ops for the purpose of building the global
+     *  control flow graph (otherwise they terminate a basic block). This is useful when working with fixed-width instruction
+     *  set architectures for which ROSE has an incomplete disassembler. For instance, PowerPC architectures that are augmented
+     *  with additional undocumented co-processor instructions. */
+    bool ignoringUnknownInsns = false;
 
 private:
     friend class boost::serialization::access;
@@ -362,10 +423,6 @@ private:
         if (version >= 1)
             s & BOOST_SERIALIZATION_NVP(ignoringUnknownInsns);
     }
-
-public:
-    BasePartitionerSettings()
-        : usingSemantics(false), checkingCallBranch(false), basicBlockSemanticsAutoDrop(true), ignoringUnknownInsns(false) {}
 };
 
 /** Settings that control the engine partitioning.
@@ -377,53 +434,254 @@ public:
  *  The runtime descriptions and command-line parser for these switches can be obtained from @ref
  *  Engine::partitionerSwitches. */
 struct PartitionerSettings {
+    /** Base partitioner settings. */
     BasePartitionerSettings base;
-    std::vector<rose_addr_t> functionStartingVas;   /**< Addresses at which to start recursive disassembly. These
-                                                     *   addresses are in addition to entry addresses, addresses from
-                                                     *   symbols, addresses from configuration files, etc. */
-    bool followingGhostEdges;                       /**< Should ghost edges be followed during disassembly?  A ghost edge
-                                                     *   is a CFG edge that is apparent from the instruction but which is
-                                                     *   not taken according to semantics. For instance, a branch
-                                                     *   instruction might have two outgoing CFG edges apparent by looking
-                                                     *   at the instruction syntax, but a semantic analysis might determine
-                                                     *   that only one of those edges can ever be taken. Thus, the branch
-                                                     *   has an opaque predicate with one actual edge and one ghost edge. */
-    bool discontiguousBlocks;                       /**< Should basic blocks be allowed to be discontiguous. If set, then
-                                                     *   the instructions of a basic block do not need to follow one after
-                                                     *   the other in memory--the block can have internal unconditional
-                                                     *   branches. */
-    size_t maxBasicBlockSize;                       /**< Maximum basic block size. Number of instructions. 0 => no limit. */
-    std::vector<rose_addr_t> ipRewrites;            /**< Pairs of addresses for rewriting CFG edges. */
-    bool findingFunctionPadding;                    /**< Look for padding before each function entry point? */
-    bool findingDeadCode;                           /**< Look for unreachable basic blocks? */
-    rose_addr_t peScramblerDispatcherVa;            /**< Run the PeDescrambler module if non-zero. */
-    size_t findingIntraFunctionCode;                /**< Suck up unused addresses as intra-function code (number of passes). */
-    bool findingIntraFunctionData;                  /**< Suck up unused addresses as intra-function data. */
-    bool findingInterFunctionCalls;                 /**< Look for function calls between functions. */
-    bool findingFunctionCallFunctions;              /**< Create functions from function calls. */
-    bool findingEntryFunctions;                     /**< Create functions at the program entry point(s). */
-    bool findingErrorFunctions;                     /**< Create functions from error handling and exception information. */
-    bool findingImportFunctions;                    /**< Create functions at import addresses. */
-    bool findingExportFunctions;                    /**< Create functions at export addresses. */
-    bool findingSymbolFunctions;                    /**< Create functions according to symbol tables. */
-    AddressInterval interruptVector;                /**< Table of interrupt handling functions. */
-    bool doingPostAnalysis;                         /**< Perform enabled post-partitioning analyses? */
-    bool doingPostFunctionMayReturn;                /**< Run function-may-return analysis if doingPostAnalysis is set? */
-    bool doingPostFunctionStackDelta;               /**< Run function-stack-delta analysis if doingPostAnalysis is set? */
-    bool doingPostCallingConvention;                /**< Run calling-convention analysis if doingPostAnalysis is set? */
-    bool doingPostFunctionNoop;                     /**< Find and name functions that are effectively no-ops. */
-    FunctionReturnAnalysis functionReturnAnalysis;  /**< How to run the function may-return analysis. */
-    size_t functionReturnAnalysisMaxSorts;          /**< Number of times functions are sorted before using unsorted lists. */
-    bool findingDataFunctionPointers;               /**< Look for function pointers in static data. */
-    bool findingCodeFunctionPointers;               /**< Look for function pointers in instructions. */
-    bool findingThunks;                             /**< Look for common thunk patterns in undiscovered areas. */
-    bool splittingThunks;                           /**< Split thunks into their own separate functions. */
-    SemanticMemoryParadigm semanticMemoryParadigm;  /**< Container used for semantic memory states. */
-    AddressInterval namingConstants;                /**< Give possible names to constants if they're in this range. */
-    AddressInterval namingStrings;                  /**< Addresses that might be string literals for commenting integers. */
-    bool namingSyscalls;                            /**< Give names (comments) to system calls if possible. */
-    boost::filesystem::path syscallHeader;          /**< Name of header file containing system call numbers. */
-    bool demangleNames;                             /**< Run all names through a demangling step. */
+
+    /** Starting addresses for disassembly.
+     *
+     *  This is a list of addresses where functions will be created to start recursive disassembly. These addresses are in
+     *  addition to entry addresses, addresses from symbols, addresses from configuration files, etc. */
+    std::vector<rose_addr_t> functionStartingVas;
+
+    /** Whether to follow ghost edges.
+     *
+     *  A "ghost edge" is a control flow graph (CFG) edge that would be present if the CFG-building analysis looked only at
+     *  individual instructions, but would be absent when the analysis considers coarser units of code.  For instance, consider
+     *  the following x86 instructions:
+     *
+     * @code
+     *  1: mov eax, 0
+     *  2: cmp eax, 0
+     *  3: jne 5
+     *  4: nop
+     *  5: hlt
+     * @endcode
+     *
+     *  If the analysis looks only at instruction 3, then it appears to have two CFG successors: instructions 4 and 5. But if
+     *  the analysis looks at the first three instructions collectively it will ascertain that instruction 3 has an opaque
+     *  predicate, that the only valid CFG successor is instruction 4, and that the edge from 3 to 5 is a \"ghost\". In fact,
+     *  if there are no other incoming edges to these instructions, then instructions 1 through 4 will form a basic block with
+     *  the (unconditional) branch instruction in its interior.  The ability to look at larger units of code than single
+     *  instructions is controlled by the @ref usingSemantics property.
+     *
+     *  If this @ref followingGhostEdges property is true then ghost edges will be added back into the CFG as real edges,
+     *  which might force a basic block to end, as in this example, at the branch instruction and may attempt to disassemble
+     *  additional code by folowing all edges. */
+    bool followingGhostEdges = false;
+
+    /** Whether to allow discontiguous basic blocks.
+     *
+     *  ROSE's definition of a basic block allows two consecutive instructions, A and B, to be arranged in memory such that B
+     *  does not immediately follow A.  Clearing this property prevents this and would force A and B to belong to separate
+     *  basic blocks. */
+    bool discontiguousBlocks = true;
+
+    /** Maximum size for basic blocks.
+     *
+     *  This property is the maximum size for basic blocks measured in number of instructions. Any basic block that would
+     *  contain more than this number of instructions is split into multiple basic blocks.  Having smaller basic blocks makes
+     *  some intra-block analysis faster, but they have less information.  A value of zero indicates no limit. */
+    size_t maxBasicBlockSize = 0;
+
+    /** CFG edge rewrite pairs.
+     *
+     *  This property is a list of old/new instruction pointer pairs that describe how to rewrite edges of the global control
+     *  flow graph. Whenever an instruction has a successor whose address is an old address, it will be replaced with a successor
+     *  edge that points to the new address.  This list must have an even number of elements where element <code>2*i+0</code> is
+     *  and old address and element <code>2*i+1</code> is the corresponding new address. */
+    std::vector<rose_addr_t> ipRewrites;
+
+    /** Whether to find function padding.
+     *
+     *  If set, then the partitioner will look for certain padding bytes appearing before the lowest address of a function and
+     *  add those bytes to the function as static data. */
+    bool findingFunctionPadding = true;
+
+    /** Whether to find dead code.
+     *
+     *  If ghost edges are being discovered (see @ref usingSemantics and @ref followingGhostEdges) and are not being inserted
+     *  into the global CFG, then the target address of the ghost edges might not be used as code addresses during the code
+     *  discovery phase.  This property, when true, will cause the target address of ghost edges to be used to discover
+     *  additional instructions even if they have no incoming CFG edges. */
+    bool findingDeadCode = true;
+
+    /** PE-Scrambler dispatcher address.
+     *
+     *  If non-zero then the partitioner defeats PE-scrambled binary obfuscation by replacing control flow edges that go
+     *  through this function with the de-scrambled control flow edge. */
+    rose_addr_t peScramblerDispatcherVa = 0;
+
+    /** Whether to find intra-function code.
+     *
+     *  If positive, the partitioner will look for parts of memory that were not disassembled and occur between other parts of
+     *  the same function, and will attempt to disassemble that missing part and link it into the surrounding function. It will
+     *  perform up to @p n passes across the entire address space. */
+    size_t findingIntraFunctionCode = 10;
+
+    /** Whether to find intra-function data.
+     *
+     *  If set, the partitioner will look for parts of memory that were not disassembled and occur between other parts of the
+     *  same function, and will treat the missing part as static data belonging to that function. */
+    bool findingIntraFunctionData = true;
+
+    /** Whether to search for function calls between exiting functions.
+     *
+     *  If set, then @ref Engine::makeFunctionFromInterFunctionCalls is invoked, which looks for call-like code between
+     *  existing functions in order to create new functions at the call target addresses. */
+    bool findingInterFunctionCalls = true;
+
+    /** Whether to turn function call targets into functions.
+     *
+     *  If set, then sequences of instructions that behave like a function call (including plain old function call
+     *  instructions) will cause a function to be created at the call's target address under most circumstances. */
+    bool findingFunctionCallFunctions = true;
+
+    /** Whether to make functions at program entry points.
+     *
+     *  If set, then all program entry points are assumed to be the start of a function. */
+    bool findingEntryFunctions = true;
+
+    /** Whether to make error handling functions.
+     *
+     *  If set and information is available about error handling and exceptions, then that information is used to create entry
+     *  points for functions. */
+    bool findingErrorFunctions = true;
+
+    /** Whether to make functions at import addresses.
+     *
+     *  If set and the file contains a table describing the addresses of imported functions, then each of those addresses is
+     *  assumed to be the entry point of a function. */
+    bool findingImportFunctions = true;
+
+    /** Whether to make functions at export addresses.
+     *
+     *  If set and the file contains a table describing the addresses of exported functions, then each of those addresses is
+     *  assumed to be the entry point of a function. */
+    bool findingExportFunctions = true;
+
+    /** Whether to make functions according to symbol tables.
+     *
+     *  If set and the file contains symbol tables, then symbols that define function addresses cause functions to be created
+     *  at those addresses. */
+    bool findingSymbolFunctions = true;
+
+    /** Property: Location of machine interrupt vector.
+     *
+     *  If non-empty, the partitioner will treat the specified area as a machine interrupt vector. The effect of the vector
+     *  varies by architecture. */
+    AddressInterval interruptVector;
+
+    /** Whether to perform any post-partitioning analysis steps.
+     *
+     *  If set, then each of the enabled post-partitioning analysis steps are executed.  Some of these can be quite expensive,
+     *  but they can be enabled and disabled individually. Those that are enabled are only run if this property also is set. */
+    bool doingPostAnalysis = true;
+
+    /** Whether to run the function may-return analysis.
+     *
+     *  Determines whether the may-return analysis is run when @ref doingPostAnalysis is true. */
+    bool doingPostFunctionMayReturn = true;
+
+    /** Whether to run the function stack delta analysis.
+     *
+     *  Determines whether the stack delta analysis is run when @ref doingPostAnalysis is true. */
+    bool doingPostFunctionStackDelta = true;
+
+    /** Whether to run calling-convention analysis.
+     *
+     *  Determines whether calling convention analysis is run on each function when @ref doingPostAnalysis is true. */
+    bool doingPostCallingConvention = false;
+
+    /** Whether to run no-op function analysis.
+     *
+     *  Determines whether function no-op analysis is run on each function when @ref doingPostAnalysis is true. This analysis
+     *  determines whether a function is effectively a no-op and gives it a name indicative of a no-op if it is one. */
+    bool doingPostFunctionNoop = false;
+
+    /** How to run the function may-return analysis.
+     *
+     *  The caller can decide if and how may-return analysis runs and whether an indeterminate result should be
+     *  considered true or false. */
+    FunctionReturnAnalysis functionReturnAnalysis = MAYRETURN_DEFAULT_YES;
+
+    /** Maximum number of function may-return sorting operations.
+     *
+     *  If function may-return analysis is being run, the functions are normally sorted according to their call depth (after
+     *  arbitrarily breaking cycles) and the analysis is run from the leaf functions to the higher functions in order to
+     *  minimize forward dependencies. However, the functions need to be resorted each time a new function is discovered and/or
+     *  when the global CFG is sufficiently modified. Therefore, the total cost of the sorting can be substantial for large
+     *  specimens. This property limits the total number of sorting operations and reverts to unsorted analysis once the limit
+     *  is reached. This allows smaller specimens to be handled as accurately as possible, but still allows large specimens to
+     *  be processed in a reasonable amount of time.  The limit is based on the number of sorting operations rather than the
+     *  specimen size. */
+    size_t functionReturnAnalysisMaxSorts = 50;
+
+    /** Whether to search static data for function pointers.
+     *
+     *  If this property is set, then the partitioner will scan static data to look for things that might be pointers to
+     *  functions. */
+    bool findingDataFunctionPointers = false;
+
+    /** Whether to search existing instructions for function pointers.
+     *
+     *  If this property is set, then the partitioner scans existing instructions to look for constants that seem to be
+     *  pointers to functions that haven't been discovered yet. */
+    bool findingCodeFunctionPointers = false;
+
+    /** Whether to match thunk patterns.
+     *
+     *  If set, then the partitioner expands the list of function prologue patterns to include common thunk patterns when
+     *  searching for funcitons in undiscovered areas of memory.  This setting does not control whether thunk instructions are
+     *  split into their own functions (see @ref splittingThunks). */
+    bool findingThunks = true;
+
+    /** Whether to split thunk instructions into mini functions.
+     *
+     *  If set, then functions whose entry instructions match a thunk pattern are split so that those thunk instructions are in
+     *  their own function. */
+    bool splittingThunks = false;
+
+    /** Type of container for semantic memory.
+     *
+     *  Determines whether @ref Partitioner objects created by this engine will be configured to use list-based or map-based
+     *  semantic memory states.  The list-based states are more precise, but they're also slower. */
+    SemanticMemoryParadigm semanticMemoryParadigm = LIST_BASED_MEMORY;
+
+    /** Whether to give names to constants.
+     *
+     *  Within instruciton operands, any constants that fall within this set of addresses and which have a label associated
+     *  with them (such as names of symbols) are given a comment consisting of that label. Setting this to empty disables
+     *  assigning such labels to integer values.
+     *
+     *  See also, @ref Modules::nameConstants. */
+    AddressInterval namingConstants = AddressInterval::hull(4096, AddressInterval::whole().greatest());
+
+    /** Addresses where strings might start.
+     *
+     *  Within instruction operands, any constants that fall within this set of addresses are checked to see if they point into
+     *  an ASCII C-style NUL-terminated string. If so, and if the constant doesn't already have a comment, then a comment is
+     *  attached describing the string.  Setting this to empty disables assigning string literal comments to integer values. */
+    AddressInterval namingStrings = AddressInterval::hull(4096, AddressInterval::whole().greatest());
+
+    /** Whether to give names to system calls.
+     *
+     *  If this property is set, then the partitioner makes a pass after the control flow graph is finalized and tries to give
+     *  names to system calls using the @ref Rose::BinaryAnalysis::SystemCall analysis. */
+    bool namingSyscalls = true;
+
+    /** Header file in which system calls are defined.
+     *
+     *  If this property is not empty, then the specified Linux header file is parsed to obtain the mapping between system call
+     *  numbers and their names. Otherwise, any analysis that needs system call names obtains them by looking in predetermined
+     *  system header files. */
+
+    boost::filesystem::path syscallHeader;
+
+    /** Whether to demangle names.
+     *
+     *  If this property is set, then names are passed through a demangle step, which generally converts them from a low-level
+     *  format to a source language format. */
+    bool demangleNames = true;
 
 private:
     friend class boost::serialization::access;
@@ -511,20 +769,6 @@ private:
                 syscallHeader = temp;
         }
     }
-
-public:
-    PartitionerSettings()
-        : followingGhostEdges(false), discontiguousBlocks(true), maxBasicBlockSize(0), findingFunctionPadding(true),
-          findingDeadCode(true), peScramblerDispatcherVa(0), findingIntraFunctionCode(10), findingIntraFunctionData(true),
-          findingInterFunctionCalls(true), findingFunctionCallFunctions(true), findingEntryFunctions(true),
-          findingErrorFunctions(true), findingImportFunctions(true), findingExportFunctions(true), findingSymbolFunctions(true),
-          doingPostAnalysis(true), doingPostFunctionMayReturn(true), doingPostFunctionStackDelta(true),
-          doingPostCallingConvention(false), doingPostFunctionNoop(false), functionReturnAnalysis(MAYRETURN_DEFAULT_YES),
-          functionReturnAnalysisMaxSorts(50), findingDataFunctionPointers(false), findingCodeFunctionPointers(false),
-          findingThunks(true), splittingThunks(false), semanticMemoryParadigm(LIST_BASED_MEMORY),
-          namingConstants(AddressInterval::hull(4096, AddressInterval::whole().greatest())),
-          namingStrings(AddressInterval::hull(4096, AddressInterval::whole().greatest())),
-          namingSyscalls(true), demangleNames(true) {}
 };
 
 // BOOST_CLASS_VERSION(PartitionerSettings, 1); -- see end of file (cannot be in a namespace)
@@ -534,11 +778,18 @@ public:
  *  These settings control the behavior of the engine itself irrespective of how the partitioner is configured. The runtime
  *  descriptions and command-line parser for these switches can be obtained from the @ref Engine::settings property. */
 struct EngineSettings {
-    std::vector<std::string> configurationNames;    /**< List of configuration files and/or directories. */
-    bool exitOnError;                               /**< If true, emit error message and exit non-zero, else throw. */
+    /** Configuration files names.
+     *
+     *  A list of configuration files or directories. */
+    std::vector<std::string> configurationNames;
 
-    EngineSettings()
-        : exitOnError(true) {}
+    /** Setting: Error handling.
+     *
+     *  If an exception occurs during certain high-level functions and this property is set, then the exception is caught, its
+     *  text is written to a fatal error stream, and exit is called with a non-zero value.  Since the error message is more
+     *  user-friendly and professional looking than the uncaught exception message produced by the C++ runtime, the default is
+     *  that exceptions are caught.  If a tool needs to perform its own error handling, then it should clear this property. */
+    bool exitOnError = true;
 
 private:
     friend class boost::serialization::access;
@@ -550,16 +801,68 @@ private:
     }
 };
 
-// Additional declarations w/out definitions yet.
-class Partitioner;
-class Function;
-typedef Sawyer::SharedPointer<Function> FunctionPtr;
+// Additional declarations incomplete definitions.
+class AddressUser;
+class AddressUsers;
+class AddressUsageMap;
+
 class BasicBlock;
-typedef Sawyer::SharedPointer<BasicBlock> BasicBlockPtr;
+using BasicBlockPtr = Sawyer::SharedPointer<BasicBlock>; /**< Shared-ownersip pointer for @ref BasicBlock. */
+
+class BasicBlockError;
+
+class BasicBlockCallback;
+using BasicBlockCallbackPtr = Sawyer::SharedPointer<BasicBlockCallback>; /**< Shared ownership pointer. */
+
+class BasicBlockSuccessor;
+using BasicBlockSuccessors = std::vector<BasicBlockSuccessor>; /**< All successors in no particular order. */
+
+class CfgAdjustmentCallback;
+
+class CfgEdge;
+
+class CfgVertex;
+
+using ControlFlowGraph = Sawyer::Container::Graph<CfgVertex, CfgEdge>; /**< Control flow graph. */
+
+class Configuration;
+
 class DataBlock;
-typedef Sawyer::SharedPointer<DataBlock> DataBlockPtr;
+using DataBlockPtr = Sawyer::SharedPointer<DataBlock>;  /**< Shared-ownership pointer for @ref DataBlock. */
+
+class DataBlockError;
+
+class Exception;
+
+class Function;
+using FunctionPtr = Sawyer::SharedPointer<Function>;    /**< Shared-ownership pointer for @ref Function. */
+
+using Functions = Sawyer::Container::Map<rose_addr_t, FunctionPtr>; /**< Mapping from address to function. */
+
+class FunctionCallGraph;
+
+class FunctionPaddingMatcher;
+using FunctionPaddingMatcherPtr = Sawyer::SharedPointer<FunctionPaddingMatcher>; /**< Shared ownership pointer. */
+
+class FunctionPrologueMatcher;
+using FunctionPrologueMatcherPtr = Sawyer::SharedPointer<FunctionPrologueMatcher>; /**< Shared ownership pointer. */
+
+using FunctionSet = Sawyer::Container::Set<FunctionPtr>; /**< Set of functions. */
+
+class FunctionError;
+
+class Partitioner;
+using PartitionerPtr = Sawyer::SharedPointer<Partitioner>;            /**< Shared-ownership pointer for @ref Partitioner. */
+using PartitionerConstPtr = Sawyer::SharedPointer<const Partitioner>; /**< Shared-ownership pointer for @ref Partitioner. */
+
+class PlaceholderError;
+
+class Reference;
+using ReferenceSet = std::set<Reference>;                                /**< Set of references. */
+using CrossReferences = Sawyer::Container::Map<Reference, ReferenceSet>; /**< Cross references. */
+
 class ThunkPredicates;
-typedef Sawyer::SharedPointer<ThunkPredicates> ThunkPredicatesPtr;
+using ThunkPredicatesPtr = Sawyer::SharedPointer<ThunkPredicates>; /**< Shared-ownership pointer for @ref ThunkPredicates. */
 
 } // namespace
 } // namespace

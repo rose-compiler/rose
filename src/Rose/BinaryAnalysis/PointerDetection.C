@@ -8,6 +8,7 @@
 #include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellList.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
@@ -297,21 +298,23 @@ public:
 
 
 BaseSemantics::RiscOperators::Ptr
-Analysis::makeRiscOperators(const P2::Partitioner &partitioner) const {
-    RegisterDictionary::Ptr regdict = partitioner.instructionProvider().registerDictionary();
-    auto retval = RiscOperators::instance(regdict, partitioner.smtSolver());
+Analysis::makeRiscOperators(const P2::Partitioner::ConstPtr &partitioner) const {
+    ASSERT_not_null(partitioner);
+    RegisterDictionary::Ptr regdict = partitioner->instructionProvider().registerDictionary();
+    auto retval = RiscOperators::instance(regdict, partitioner->smtSolver());
     retval->trimThreshold(settings_.symbolicTrimThreshold);
     return retval;
 }
 
 void
-Analysis::printInstructionsForDebugging(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
+Analysis::printInstructionsForDebugging(const P2::Partitioner::ConstPtr &partitioner, const P2::Function::Ptr &function) {
+    ASSERT_not_null(partitioner);
     if (mlog[DEBUG]) {
         mlog[DEBUG] <<"  function instructions:\n";
         for (rose_addr_t bbVa: function->basicBlockAddresses()) {
-            if (P2::BasicBlock::Ptr bb = partitioner.basicBlockExists(bbVa)) {
+            if (P2::BasicBlock::Ptr bb = partitioner->basicBlockExists(bbVa)) {
                 for (SgAsmInstruction *insn: bb->instructions()) {
-                    mlog[DEBUG] <<"    " <<partitioner.unparse(insn) <<"\n";
+                    mlog[DEBUG] <<"    " <<partitioner->unparse(insn) <<"\n";
                 }
             }
         }
@@ -450,7 +453,7 @@ Analysis::pruneResults(PointerDescriptors &descriptors) {
 }
 
 void
-Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
+Analysis::analyzeFunction(const P2::Partitioner::ConstPtr &partitioner, const P2::Function::Ptr &function) {
     mlog[DEBUG] <<"analyzeFunction(" <<function->printableName() <<")\n";
     printInstructionsForDebugging(partitioner, function);
 
@@ -462,7 +465,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     // point for the function we're analyzing and which belong to that function.  All return points in the function will flow
     // into a special CALLRET vertex (which is absent if there are no returns).
     typedef P2::DataFlow::DfCfg DfCfg;
-    DfCfg dfCfg = P2::DataFlow::buildDfCfg(partitioner, partitioner.cfg(), partitioner.findPlaceholder(function->address()));
+    DfCfg dfCfg = P2::DataFlow::buildDfCfg(partitioner, partitioner->cfg(), partitioner->findPlaceholder(function->address()));
     size_t startVertexId = 0;
     DfCfg::ConstVertexIterator returnVertex = dfCfg.vertices().end();
     for (const DfCfg::Vertex &vertex: dfCfg.vertices()) {
@@ -479,7 +482,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     // Build the dataflow engine.
     typedef DataFlow::Engine<DfCfg, BaseSemantics::State::Ptr, P2::DataFlow::TransferFunction, DataFlow::SemanticsMerge> DfEngine;
     BaseSemantics::RiscOperators::Ptr ops = makeRiscOperators(partitioner);
-    BaseSemantics::Dispatcher::Ptr cpu = partitioner.newDispatcher(ops);
+    BaseSemantics::Dispatcher::Ptr cpu = partitioner->newDispatcher(ops);
     P2::DataFlow::MergeFunction merge(cpu);
     P2::DataFlow::TransferFunction xfer(cpu);
     DfEngine dfEngine(dfCfg, xfer, merge);
@@ -556,7 +559,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     if (settings_.saveCodePointers) {
         SAWYER_MESG(mlog[DEBUG]) <<"  potential code pointers:\n";
         Sawyer::Container::Set<SymbolicExpression::Hash> addrSeen;
-        const RegisterDescriptor IP = partitioner.instructionProvider().instructionPointerRegister();
+        const RegisterDescriptor IP = partitioner->instructionProvider().instructionPointerRegister();
         for (size_t vertexId = 0; vertexId < dfCfg.nVertices(); ++vertexId) {
             if (BaseSemantics::State::Ptr state = dfEngine.getFinalState(vertexId)) {
                 SymbolicSemantics::SValue::Ptr ip =

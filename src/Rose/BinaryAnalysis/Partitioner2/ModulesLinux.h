@@ -5,7 +5,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
 
 #include <Rose/BinaryAnalysis/SystemCall.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -15,7 +15,7 @@ namespace Partitioner2 {
 namespace ModulesLinux {
 
 /** Create a system call analyzer suitable for this architecture. */
-SystemCall systemCallAnalyzer(const Partitioner&, const boost::filesystem::path &syscallHeader = "");
+SystemCall systemCallAnalyzer(const PartitionerConstPtr&, const boost::filesystem::path &syscallHeader = "");
 
 /** Basic block callback to detect system calls that don't return.
  *
@@ -24,12 +24,12 @@ SystemCall systemCallAnalyzer(const Partitioner&, const boost::filesystem::path 
 class SyscallSuccessors: public BasicBlockCallback {
     SystemCall analyzer_;
 protected:
-    SyscallSuccessors(const Partitioner&, const boost::filesystem::path &syscallHeader);
+    SyscallSuccessors(const PartitionerConstPtr&, const boost::filesystem::path &syscallHeader);
 public:
     /** Allocating constructor.
      *
      *  An optional Linux system call header file can be provided to override the default. */
-    static Ptr instance(const Partitioner&, const boost::filesystem::path &syscallHeader = "");
+    static Ptr instance(const PartitionerConstPtr&, const boost::filesystem::path &syscallHeader = "");
 
     virtual bool operator()(bool chain, const Args&) override;
 };
@@ -48,12 +48,12 @@ public:
     virtual bool operator()(bool chain, const Args&) override;
 
     /** Give the name "main" to the main function if it has no name yet. */
-    void nameMainFunction(const Partitioner&) const;
+    void nameMainFunction(const PartitionerConstPtr&) const;
 
 private:
     // Read a value from the stack
     InstructionSemantics::BaseSemantics::SValuePtr
-    readStack(const Partitioner &partitioner, const InstructionSemantics::BaseSemantics::DispatcherPtr &cpu, int byteOffset,
+    readStack(const PartitionerConstPtr &partitioner, const InstructionSemantics::BaseSemantics::DispatcherPtr &cpu, int byteOffset,
               size_t nBitsToRead, RegisterDescriptor segmentRegister);
 };
 
@@ -61,7 +61,7 @@ private:
  *
  *  Adds a comment to each system call instruction for which the actual system call can be identified. A Linux header file can
  *  be provided to override the default location. */
-void nameSystemCalls(const Partitioner&, const boost::filesystem::path &syscallHeader = "");
+void nameSystemCalls(const PartitionerConstPtr&, const boost::filesystem::path &syscallHeader = "");
 
 } // namespace
 } // namespace

@@ -515,31 +515,34 @@ LibraryIdentification::createFunction(const Function::Ptr &function) {
 }
 
 std::string
-LibraryIdentification::hash(const Partitioner2::Partitioner &partitioner, const Partitioner2::Function::Ptr &function) const {
+LibraryIdentification::hash(const Partitioner2::Partitioner::ConstPtr &partitioner,
+                            const Partitioner2::Function::Ptr &function) const {
+    ASSERT_not_null(partitioner);
     ASSERT_not_null(function);
 
     auto hasher = Combinatorics::Hasher::HasherFactory::Instance().createHasher("SHA256");
     AstHash astHash(hasher);
     for (rose_addr_t va: function->basicBlockAddresses()) {
-        if (Partitioner2::BasicBlock::Ptr bb = partitioner.basicBlockExists(va))
+        if (Partitioner2::BasicBlock::Ptr bb = partitioner->basicBlockExists(va))
             astHash.appendBasicBlock(bb);
     }
     return hasher->toString();
 }
 
 size_t
-LibraryIdentification::nInsns(const Partitioner2::Partitioner &partitioner, const Partitioner2::Function::Ptr &function) {
+LibraryIdentification::nInsns(const Partitioner2::Partitioner::ConstPtr &partitioner, const Partitioner2::Function::Ptr &function) {
+    ASSERT_not_null(partitioner);
     ASSERT_not_null(function);
     size_t nInsns = 0;
     for (rose_addr_t bbVa: function->basicBlockAddresses()) {
-        if (Partitioner2::BasicBlock::Ptr bb = partitioner.basicBlockExists(bbVa))
+        if (Partitioner2::BasicBlock::Ptr bb = partitioner->basicBlockExists(bbVa))
             nInsns += bb->nInstructions();
     }
     return nInsns;
 }
 
 LibraryIdentification::Function::Ptr
-LibraryIdentification::insertFunction(const Library::Ptr &library, const Partitioner2::Partitioner &partitioner,
+LibraryIdentification::insertFunction(const Library::Ptr &library, const Partitioner2::Partitioner::ConstPtr &partitioner,
                                       const Partitioner2::Function::Ptr &function) {
     ASSERT_not_null(library);
     ASSERT_not_null(function);
@@ -586,7 +589,7 @@ LibraryIdentification::isIncluded(const Function::Ptr &function) {
 }
 
 bool
-LibraryIdentification::isIncluded(const Partitioner2::Partitioner&, const Partitioner2::Function::Ptr &function) {
+LibraryIdentification::isIncluded(const Partitioner2::Partitioner::ConstPtr&, const Partitioner2::Function::Ptr &function) {
     ASSERT_not_null(function);
 
     // Include based on function name
@@ -627,7 +630,8 @@ LibraryIdentification::isExcluded(const Function::Ptr &function) {
 }
 
 bool
-LibraryIdentification::isExcluded(const Partitioner2::Partitioner &partitioner, const Partitioner2::Function::Ptr &function) {
+LibraryIdentification::isExcluded(const Partitioner2::Partitioner::ConstPtr &partitioner,
+                                  const Partitioner2::Function::Ptr &function) {
     ASSERT_not_null(function);
 
     // Exclude based on number of instructions
@@ -659,18 +663,20 @@ LibraryIdentification::isConsidered(const Function::Ptr &function) {
 }
 
 bool
-LibraryIdentification::isConsidered(const Partitioner2::Partitioner &partitioner, const Partitioner2::Function::Ptr &function) {
+LibraryIdentification::isConsidered(const Partitioner2::Partitioner::ConstPtr &partitioner,
+                                    const Partitioner2::Function::Ptr &function) {
     ASSERT_not_null(function);
     cacheFiles();
     return isIncluded(partitioner, function) || !isExcluded(partitioner, function);
 }
 
 size_t
-LibraryIdentification::insertLibrary(const Library::Ptr &library, const Partitioner2::Partitioner &partitioner) {
+LibraryIdentification::insertLibrary(const Library::Ptr &library, const Partitioner2::Partitioner::ConstPtr &partitioner) {
+    ASSERT_not_null(partitioner);
     ASSERT_not_null(library);
     size_t nInserted = 0;
-    Sawyer::ProgressBar<size_t> progress(partitioner.nFunctions(), mlog[MARCH], "functions");
-    for (const Partitioner2::Function::Ptr &function: partitioner.functions()) {
+    Sawyer::ProgressBar<size_t> progress(partitioner->nFunctions(), mlog[MARCH], "functions");
+    for (const Partitioner2::Function::Ptr &function: partitioner->functions()) {
         ++progress;
         if (insertFunction(library, partitioner, function))
             ++nInserted;
@@ -679,7 +685,7 @@ LibraryIdentification::insertLibrary(const Library::Ptr &library, const Partitio
 }
 
 std::vector<LibraryIdentification::Function::Ptr>
-LibraryIdentification::search(const Partitioner2::Partitioner &partitioner, const Partitioner2::Function::Ptr &function) {
+LibraryIdentification::search(const Partitioner2::Partitioner::ConstPtr &partitioner, const Partitioner2::Function::Ptr &function) {
     ASSERT_not_null(function);
     std::vector<Function::Ptr> retval;
 

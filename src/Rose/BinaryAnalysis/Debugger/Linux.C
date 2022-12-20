@@ -6,11 +6,13 @@
 #include <Rose/BinaryAnalysis/Debugger/Exception.h>
 #include <Rose/BinaryAnalysis/Disassembler/X86.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/StringUtility/NumberToString.h>
 
+#include <boost/algorithm/string/case_conv.hpp>
+#include <boost/lexical_cast.hpp>
 #include <dirent.h>
 #include <fcntl.h>
 #include <sys/personality.h>
-#include <sys/ptrace.h>
 #include <sys/user.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -228,27 +230,31 @@ freeStringList(char **list) {
 // Linux
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static long
-sendCommand(__ptrace_request request, int child, void *addr = nullptr, void *data = nullptr) {
-    ASSERT_require2(child, "must be attached to a subordinate process");
+long
+Linux::sendCommand(__ptrace_request request, void *addr, void *data) {
+    ASSERT_require2(child_, "must be attached to a subordinate process");
     errno = 0;
-    long result = ptrace(request, child, addr, data);
-    if (result == -1 && errno != 0)
-        throw Exception("Rose::BinaryAnalysis::Debugger::Linux::sendCommand failed: " +
-                        boost::to_lower_copy(std::string(strerror(errno))));
+    long result = ptrace(request, child_, addr, data);
+    if (result == -1 && errno != 0) {
+        const std::string ts = howTerminated();
+        throw Exception("Rose::BinaryAnalysis::Debugger::Linux::sendCommand failed for PID " +
+                        boost::lexical_cast<std::string>(child_) + ": " +
+                        boost::to_lower_copy(std::string(strerror(errno))) +
+                        (ts.empty() ? "" : "; " + ts));
+    }
     return result;
 }
 
-static long
-sendCommandInt(__ptrace_request request, int child, void *addr, int i) {
+long
+Linux::sendCommandInt(__ptrace_request request, void *addr, int i) {
     // Avoid doing a cast because that will cause a G++ warning.
     void *ptr = 0;
     ASSERT_require(sizeof i <= sizeof ptr);
     memcpy(&ptr, &i, sizeof i);
-    return sendCommand(request, child, addr, ptr);
+    return sendCommand(request, addr, ptr);
 }
 
-#if defined(BOOST_WINDOWS) || __WORDSIZE==32 || (defined(__APPLE__) && defined(__MACH__))
+#if __WORDSIZE==32
 static rose_addr_t
 getInstructionPointer(const user_regs_struct &regs) {
     return regs.eip;
@@ -274,9 +280,20 @@ operator<<(std::ostream &out, const Debugger::Linux::Specimen &specimen) {
     return out;
 }
 
+void
+Linux::declareSystemCalls(size_t nBits) {
+    boost::filesystem::path h = "/usr/include/x86_64-linux-gnu/asm/unistd_" + boost::lexical_cast<std::string>(nBits) + ".h";
+    if (boost::filesystem::exists(h)) {
+        SAWYER_MESG(mlog[DEBUG]) <<"parsing system call information from " <<h <<"\n";
+        syscallDecls_.declare(SystemCall::parseHeaderFile(h));
+    } else {
+        SAWYER_MESG(mlog[DEBUG]) <<"cannot find system call declarations\n";
+    }
+}
+
 Linux::Linux() {
     syscallVa_.reset();
-    memset(regsPage_.data(), 0, regsPage_.size() * sizeof(RegisterPage::value_type));
+    memset(regCache_.data(), 0, regCache_.size() * sizeof(RegPage::value_type));
 
     // Initialize register information.  This is very architecture and OS-dependent. See <sys/user.h> for details, but be
     // warned that even <sys/user.h> is only a guideline!  The header defines two versions of user_regs_struct, one for 32-bit
@@ -287,7 +304,8 @@ Linux::Linux() {
     // The userRegDefs map assigns an offset in the returned (not necessarily the defined) user_regs_struct. The register
     // descriptors in this table have sizes that correspond to the data member in the user_regs_struct, not necessarily the
     // natural size of the register (e.g., The 16-bit segment registers are listed as 32 or 64 bits).
-#if defined(__linux) && defined(__x86_64) && __WORDSIZE==64
+#if defined(__x86_64) && __WORDSIZE==64
+    declareSystemCalls(32);
     disassembler_ = Disassembler::X86::instance(8 /*bytes*/);
 
     //------------------------------------                                                 struct  struct
@@ -358,7 +376,8 @@ Linux::Linux() {
     userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_xmm,     15,               0, 64), 0x0190); // 16
     //                                                                                       0x01a0
 
-#elif defined(__linux) && defined(__x86) && __WORDSIZE==32
+#elif defined(__x86) && __WORDSIZE==32
+    declareSystemCalls(64);
     disassembler_ = new Disassembler::X86(4 /*bytes*/);
 
     //------------------------------------                                                 struct  struct
@@ -438,17 +457,6 @@ Linux::processId() const {
     }
 }
 
-RegisterDictionary::Ptr
-Linux::registerDictionary() const {
-    ASSERT_not_null(disassembler_);
-    return disassembler_->registerDictionary();
-}
-
-Disassembler::Base::Ptr
-Linux::disassembler() const {
-    return disassembler_;
-}
-
 bool
 Linux::isTerminated() {
     return WIFEXITED(wstat_) || WIFSIGNALED(wstat_);
@@ -466,7 +474,7 @@ Linux::waitForChild() {
         throw Exception("Rose::BinaryAnalysis::Debugger::Linux::waitForChild failed: "
                         + boost::to_lower_copy(std::string(strerror(errno))));
     sendSignal_ = WIFSTOPPED(wstat_) && WSTOPSIG(wstat_)!=SIGTRAP ? WSTOPSIG(wstat_) : 0;
-    regsPageStatus_ = RegPage::NONE;
+    regCacheType_ = RegCacheType::NONE;
 }
 
 std::string
@@ -493,6 +501,7 @@ Linux::detachMode(DetachMode m) {
 void
 Linux::detach() {
     if (child_ && !isTerminated()) {
+        mlog[DEBUG] <<"PID " <<child_ <<": detaching\n";
         switch (autoDetach_) {
             case DetachMode::NOTHING:
                 break;
@@ -500,15 +509,15 @@ Linux::detach() {
                 kill(child_, SIGCONT);
                 break;
             case DetachMode::DETACH:
-                sendCommand(PTRACE_DETACH, child_);
+                sendCommand(PTRACE_DETACH);
                 break;
             case DetachMode::KILL:
-                sendCommand(PTRACE_KILL, child_);
+                sendCommand(PTRACE_KILL);
                 waitForChild();
         }
     }
     child_ = 0;
-    regsPageStatus_ = RegPage::NONE;
+    regCacheType_ = RegCacheType::NONE;
     syscallVa_.reset();
 }
 
@@ -525,6 +534,8 @@ Linux::threadIds() {
 
 void
 Linux::attach(const Specimen &specimen, Sawyer::Optional<DetachMode> onDelete) {
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+
     if (!specimen.program().empty()) {
         // Attach to an executable program by running it.
         detach();
@@ -557,6 +568,12 @@ Linux::attach(const Specimen &specimen, Sawyer::Optional<DetachMode> onDelete) {
                 }
                 closedir(dir);
             }
+        }
+
+        if (debug) {
+            debug <<"attach: forking child process:\n";
+            for (int i = 0; argv[i]; ++i)
+                debug <<"  argv[" <<i <<"]: \"" <<StringUtility::cEscape(argv[i]) <<"\n";
         }
 
         char **envAdjustments = specimen.prepareEnvAdjustments();
@@ -598,6 +615,7 @@ Linux::attach(const Specimen &specimen, Sawyer::Optional<DetachMode> onDelete) {
             _Exit(1);
         }
 
+        SAWYER_MESG(debug) <<"  child PID is " <<child_ <<"\n";
         argv = freeStringList(argv);
         envAdjustments = freeStringList(envAdjustments);
 
@@ -613,13 +631,15 @@ Linux::attach(const Specimen &specimen, Sawyer::Optional<DetachMode> onDelete) {
             // do nothing
         } else if (specimen.flags().isSet(Flag::ATTACH)) {
             child_ = specimen.process();
-            sendCommand(PTRACE_ATTACH, child_);
+            SAWYER_MESG(debug) <<"attach: attaching to PID " <<child_ <<"\n";
+            sendCommand(PTRACE_ATTACH);
             autoDetach_ = onDelete.orElse(DetachMode::DETACH);
             waitForChild();
             if (SIGSTOP==sendSignal_)
                 sendSignal_ = 0;
         } else {
             child_ = specimen.process();
+            SAWYER_MESG(debug) <<"attach: PID set to " <<child_ <<"\n";
             autoDetach_ = onDelete.orElse(DetachMode::NOTHING);
         }
         specimen_ = specimen;
@@ -641,9 +661,10 @@ Linux::devNullTo(int targetFd, int openFlags) {
 void
 Linux::executionAddress(ThreadId, rose_addr_t va) {
     user_regs_struct regs;
-    sendCommand(PTRACE_GETREGS, child_, 0, &regs);
+    sendCommand(PTRACE_GETREGS, 0, &regs);
     setInstructionPointer(regs, va);
-    sendCommand(PTRACE_SETREGS, child_, 0, &regs);
+    sendCommand(PTRACE_SETREGS, 0, &regs);
+    SAWYER_MESG(mlog[DEBUG]) <<"PID " <<child_ <<": set execution address to " <<StringUtility::addrToString(va) <<"\n";
 }
 
 rose_addr_t
@@ -653,28 +674,33 @@ Linux::executionAddress(ThreadId tid) {
 
 void
 Linux::setBreakPoint(const AddressInterval &va) {
+    SAWYER_MESG(mlog[DEBUG]) <<"PID " <<child_ <<": set breakpoint " <<StringUtility::addrToString(va) <<"\n";
     breakPoints_.insert(va);
 }
 
 void
 Linux::clearBreakPoint(const AddressInterval &va) {
+    SAWYER_MESG(mlog[DEBUG]) <<"PID " <<child_ <<": clear breakpoint " <<StringUtility::addrToString(va) <<"\n";
     breakPoints_.erase(va);
 }
 
 void
 Linux::clearBreakPoints() {
+    SAWYER_MESG(mlog[DEBUG]) <<"PID " <<child_ <<": clear all breakpoints\n";
     breakPoints_.clear();
 }
 
 void
 Linux::singleStep(ThreadId) {
-    sendCommandInt(PTRACE_SINGLESTEP, child_, 0, sendSignal_);
+    SAWYER_MESG(mlog[DEBUG]) <<"PID " <<child_ <<": single step\n";
+    sendCommandInt(PTRACE_SINGLESTEP, 0, sendSignal_);
     waitForChild();
 }
 
 void
 Linux::stepIntoSystemCall(ThreadId) {
-    sendCommandInt(PTRACE_SYSCALL, child_, 0, sendSignal_);
+    SAWYER_MESG(mlog[DEBUG]) <<"PID " <<child_ <<": step into syscall\n";
+    sendCommandInt(PTRACE_SYSCALL, 0, sendSignal_);
     waitForChild();
 }
 
@@ -682,7 +708,7 @@ Linux::stepIntoSystemCall(ThreadId) {
 Sawyer::Optional<Linux::SyscallEntry>
 Linux::syscallEntryInfo() {
     __ptrace_syscall_info info;
-    sendCommand(PTRACE_GET_SYSCALL_INFO, child_, reinterpret_cast<void*>(sizeof info), &info);
+    sendCommand(PTRACE_GET_SYSCALL_INFO, reinterpret_cast<void*>(sizeof info), &info);
     if (PTRACE_SYSCALL_INFO_ENTRY == info.op) {
         return SyscallEntry(info.entry.nr, info.entry.args);
     } else {
@@ -693,7 +719,7 @@ Linux::syscallEntryInfo() {
 Sawyer::Optional<Linux::SyscallExit>
 Linux::syscallExitInfo() {
     __ptrace_syscall_info info;
-    sendCommand(PTRACE_GET_SYSCALL_INFO, child_, reinterpret_cast<void*>(sizeof info), &info);
+    sendCommand(PTRACE_GET_SYSCALL_INFO, reinterpret_cast<void*>(sizeof info), &info);
     if (PTRACE_SYSCALL_INFO_EXIT == info.op) {
         return SyscallExit(info.exit.rval, info.exit.is_error);
     } else {
@@ -708,7 +734,7 @@ Linux::kernelWordSize() {
         static const uint8_t magic = 0xb7;              // arbitrary
         uint8_t userRegs[4096];                         // arbitrary size, but plenty large for any user_regs_struct
         memset(userRegs, magic, sizeof userRegs);
-        sendCommand(PTRACE_GETREGS, child_, 0, &userRegs);
+        sendCommand(PTRACE_GETREGS, 0, &userRegs);
 
         // How much was written, approximately?
         size_t highWater = sizeof userRegs;
@@ -727,101 +753,165 @@ Linux::kernelWordSize() {
     return kernelWordSize_;
 }
 
-Linux::AllRegisters
-Linux::readAllRegisters(ThreadId) {
-    AllRegisters retval;
-    if (RegPage::REGS == regsPageStatus_) {
-        retval.regs = regsPage_;
-        sendCommand(PTRACE_GETFPREGS, child_, 0, regsPage_.data());
-        retval.fpregs = regsPage_;
-        regsPageStatus_ = RegPage::FPREGS;
-    } else if (RegPage::FPREGS == regsPageStatus_) {
-        retval.fpregs = regsPage_;
-        sendCommand(PTRACE_GETREGS, child_, 0, regsPage_.data());
-        retval.regs = regsPage_;
-        regsPageStatus_ = RegPage::REGS;
+std::vector<RegisterDescriptor>
+Linux::availableRegisters() {
+    using RegOff = std::pair<RegisterDescriptor, size_t /*offset*/>;
+    std::vector<RegOff> all;
+    all.reserve(userRegDefs_.size() + userFpRegDefs_.size());
+    for (const UserRegDefs::Node &node: userRegDefs_.nodes())
+        all.push_back(RegOff(node.key(), node.value()));
+    for (const UserRegDefs::Node &node: userFpRegDefs_.nodes())
+        all.push_back(RegOff(node.key(), node.value()));
+    std::sort(all.begin(), all.end(), [](const RegOff &a, const RegOff &b) {
+        return a.second < b.second;
+    });
+    std::vector<RegisterDescriptor> retval;
+    retval.reserve(all.size());
+    for (const RegOff &p: all)
+        retval.push_back(p.first);
+    return retval;
+}
+
+Sawyer::Container::BitVector
+Linux::readAllRegisters(ThreadId tid) {
+    // Load all registers from the low level API, then copy those bytes into the returned bit vector.
+    SAWYER_MESG(mlog[DEBUG]) <<"PID " <<child_ <<": read all registers\n";
+    using BvRange = Sawyer::Container::BitVector::BitRange;
+    AllRegValues allBytes = loadAllRegisters(tid);
+    size_t nBits = 8 * (allBytes.regs.size() + allBytes.fpregs.size());
+    Sawyer::Container::BitVector retval(nBits);
+    for (size_t i = 0; i < allBytes.regs.size(); ++i)
+        retval.fromInteger(BvRange::baseSize(i*8, 8), allBytes.regs[i]);
+    for (size_t i = 0; i < allBytes.regs.size(); ++i)
+        retval.fromInteger(BvRange::baseSize(8*(allBytes.regs.size() + i), 8), allBytes.fpregs[i]);
+    return retval;
+}
+
+void
+Linux::writeAllRegisters(ThreadId tid, const Sawyer::Container::BitVector &values) {
+    // Copy the bit vector into the parts of the low-level API's data structure, then save those bytes using the low-level API.
+    SAWYER_MESG(mlog[DEBUG]) <<"PID " <<child_ <<": write all registers\n";
+    using BvRange = Sawyer::Container::BitVector::BitRange;
+    AllRegValues allBytes;
+    ASSERT_require(values.size() == 8 * (allBytes.regs.size() + allBytes.fpregs.size()));
+    for (size_t i = 0; i < allBytes.regs.size(); ++i)
+        allBytes.regs[i] = values.toInteger(BvRange::baseSize(i*8, 8));
+    for (size_t i = 0; i < allBytes.fpregs.size(); ++i)
+        allBytes.fpregs[i] = values.toInteger(BvRange::baseSize(8 * (allBytes.regs.size() + i), 8));
+    saveAllRegisters(tid, allBytes);
+
+#if 1 // DEBUGGING [Robb Matzke 2022-11-18]
+    const Sawyer::Container::BitVector v2 = readAllRegisters(tid);
+    ASSERT_require(v2.equalTo(values));
+#endif
+}
+
+Linux::AllRegValues
+Linux::loadAllRegisters(ThreadId) {
+    AllRegValues retval;
+    if (RegCacheType::REGS == regCacheType_) {
+        retval.regs = regCache_;
+        sendCommand(PTRACE_GETFPREGS, 0, regCache_.data());
+        retval.fpregs = regCache_;
+        regCacheType_ = RegCacheType::FPREGS;
+    } else if (RegCacheType::FPREGS == regCacheType_) {
+        retval.fpregs = regCache_;
+        sendCommand(PTRACE_GETREGS, 0, regCache_.data());
+        retval.regs = regCache_;
+        regCacheType_ = RegCacheType::REGS;
     } else {
-        sendCommand(PTRACE_GETFPREGS, child_, 0, regsPage_.data());
-        retval.fpregs = regsPage_;
-        sendCommand(PTRACE_GETREGS, child_, 0, regsPage_.data());
-        retval.regs = regsPage_;
-        regsPageStatus_ = RegPage::REGS;
+        sendCommand(PTRACE_GETFPREGS, 0, regCache_.data());
+        retval.fpregs = regCache_;
+        sendCommand(PTRACE_GETREGS, 0, regCache_.data());
+        retval.regs = regCache_;
+        regCacheType_ = RegCacheType::REGS;
     }
     return retval;
 }
 
 void
-Linux::writeAllRegisters(ThreadId, const AllRegisters &all) {
-    sendCommand(PTRACE_SETFPREGS, child_, 0, (void*)all.fpregs.data());
-    sendCommand(PTRACE_SETREGS, child_, 0, (void*)all.regs.data());
-    regsPage_ = all.regs;
-    regsPageStatus_ = RegPage::REGS;
+Linux::saveAllRegisters(ThreadId, const AllRegValues &all) {
+    sendCommand(PTRACE_SETFPREGS, 0, (void*)all.fpregs.data());
+    sendCommand(PTRACE_SETREGS, 0, (void*)all.regs.data());
+    regCache_ = all.regs;
+    regCacheType_ = RegCacheType::REGS;
+}
+
+size_t
+Linux::updateRegCache(RegisterDescriptor desc) {
+    const RegisterDescriptor base(desc.majorNumber(), desc.minorNumber(), 0, kernelWordSize());
+    size_t userOffset = 0;
+    if (userRegDefs_.getOptional(base).assignTo(userOffset)) {
+        if (regCacheType_ != RegCacheType::REGS) {
+            sendCommand(PTRACE_GETREGS, 0, regCache_.data());
+            regCacheType_ = RegCacheType::REGS;
+        }
+    } else if (userFpRegDefs_.getOptional(base).assignTo(userOffset)) {
+        if (regCacheType_ != RegCacheType::FPREGS) {
+            sendCommand(PTRACE_GETFPREGS, 0, regCache_.data());
+            regCacheType_ = RegCacheType::FPREGS;
+        }
+    } else {
+        throw Exception("register is not available");
+    }
+    return userOffset;
 }
 
 Sawyer::Container::BitVector
 Linux::readRegister(ThreadId, RegisterDescriptor desc) {
     using namespace Sawyer::Container;
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    SAWYER_MESG(debug) <<"PID " <<child_ <<": read register " <<registerName(desc) <<" = ";
 
     // Lookup register according to kernel word size rather than the actual size of the register.
-    RegisterDescriptor base(desc.majorNumber(), desc.minorNumber(), 0, kernelWordSize());
-    size_t userOffset = 0;
-    if (userRegDefs_.getOptional(base).assignTo(userOffset)) {
-        if (regsPageStatus_ != RegPage::REGS) {
-            sendCommand(PTRACE_GETREGS, child_, 0, regsPage_.data());
-            regsPageStatus_ = RegPage::REGS;
-        }
-    } else if (userFpRegDefs_.getOptional(base).assignTo(userOffset)) {
-        if (regsPageStatus_ != RegPage::FPREGS) {
-            sendCommand(PTRACE_GETFPREGS, child_, 0, regsPage_.data());
-            regsPageStatus_ = RegPage::FPREGS;
-        }
-    } else {
-        throw Exception("register is not available");
-    }
+    const size_t userOffset = updateRegCache(desc);
 
     // Extract the necessary data members from the struct. Assume that memory is little endian.
-    size_t nUserBytes = (desc.offset() + desc.nBits() + 7) / 8;
-    ASSERT_require(userOffset + nUserBytes <= regsPage_.size());
+    const size_t nUserBytes = (desc.offset() + desc.nBits() + 7) / 8;
+    ASSERT_require(userOffset + nUserBytes <= regCache_.size());
     BitVector bits(8 * nUserBytes);
     for (size_t i=0; i<nUserBytes; ++i)
-        bits.fromInteger(BitVector::BitRange::baseSize(i*8, 8), regsPage_[userOffset+i]);
+        bits.fromInteger(BitVector::BitRange::baseSize(i*8, 8), regCache_[userOffset+i]);
 
     // Adjust the data to return only the bits we want.
     bits.shiftRight(desc.offset());
     bits.resize(desc.nBits());
+    SAWYER_MESG(debug) <<"0x" <<bits.toHex() <<"\n";
     return bits;
 }
 
 void
 Linux::writeRegister(ThreadId tid, RegisterDescriptor desc, const Sawyer::Container::BitVector &bits) {
     using namespace Sawyer::Container;
+    SAWYER_MESG(mlog[DEBUG]) <<"PID " <<child_ <<": write register " <<registerName(desc) <<" = 0x" <<bits.toHex() <<"\n";
 
-    // Side effect is to update regsPage_ if necessary.
-    (void) readRegister(tid, desc);
+    updateRegCache(desc);
 
     // Look up register according to kernel word size rather than the actual size of the register.
-    RegisterDescriptor base(desc.majorNumber(), desc.minorNumber(), 0, kernelWordSize());
+    const RegisterDescriptor base(desc.majorNumber(), desc.minorNumber(), 0, kernelWordSize());
 
     // Update the register page with the new data and write it to the process. Assume that memory is little endian.
-    size_t nUserBytes = (desc.offset() + desc.nBits() + 7) / 8;
+    const size_t nUserBytes = (desc.offset() + desc.nBits() + 7) / 8;
     size_t userOffset = 0;
     if (userRegDefs_.getOptional(base).assignTo(userOffset)) {
-        ASSERT_require(userOffset + nUserBytes <= regsPage_.size());
+        ASSERT_require(userOffset + nUserBytes <= regCache_.size());
         for (size_t i = 0; i < nUserBytes; ++i)
-            regsPage_[userOffset + i] = bits.toInteger(BitVector::BitRange::baseSize(i*8, 8));
-        sendCommand(PTRACE_SETREGS, child_, 0, regsPage_.data());
+            regCache_[userOffset + i] = bits.toInteger(BitVector::BitRange::baseSize(i*8, 8));
+        sendCommand(PTRACE_SETREGS, 0, regCache_.data());
     } else if (userFpRegDefs_.getOptional(base).assignTo(userOffset)) {
-#ifdef __linux
-        ASSERT_require(userOffset + nUserBytes <= regsPage_.size());
+        ASSERT_require(userOffset + nUserBytes <= regCache_.size());
         for (size_t i = 0; i < nUserBytes; ++i)
-            regsPage_[userOffset + i] = bits.toInteger(BitVector::BitRange::baseSize(i*8, 8));
-        sendCommand(PTRACE_SETFPREGS, child_, 0, regsPage_.data());
-#else
-        ROSE_PRAGMA_MESSAGE("unable to save FP registers on this platform")
-#endif
+            regCache_[userOffset + i] = bits.toInteger(BitVector::BitRange::baseSize(i*8, 8));
+        sendCommand(PTRACE_SETFPREGS, 0, regCache_.data());
     } else {
         throw Exception("register is not available");
     }
+
+#if 1 // DEBUGGING [Robb Matzke 2022-11-18]
+    const Sawyer::Container::BitVector bits2 = readRegister(tid, desc);
+    regCacheType_ = RegCacheType::NONE;
+    ASSERT_require(bits.equalTo(bits2));
+#endif
 }
 
 void
@@ -857,7 +947,7 @@ Linux::readMemory(rose_addr_t va, size_t nBytes, ByteOrder::Endianness sex) {
                 where = BitVector::BitRange::baseSize(8*i, 8);
                 break;
             case ByteOrder::ORDER_MSB:
-                where = BitVector::BitRange::baseSize(8*nBytes-(i+1), 8);
+                where = BitVector::BitRange::baseSize(8*(nBytes-(i+1)), 8);
                 break;
             default:
                 ASSERT_not_reachable("invalid byte order");
@@ -877,9 +967,12 @@ Linux::readMemory(rose_addr_t va, size_t nBytes) {
 
 size_t
 Linux::readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) {
-#ifdef __linux__
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    SAWYER_MESG(debug) <<"PID " <<child_ <<": read " <<StringUtility::plural(nBytes, "bytes")
+                       <<" from va " <<StringUtility::addrToString(va) <<"\n";
     if (0 == nBytes)
         return 0;
+    const size_t nBytesDesired = nBytes;
 
     struct T {
         int fd;
@@ -904,9 +997,9 @@ Linux::readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) {
         if (-1 == nread) {
             if (EINTR == errno)
                 continue;
-            return totalRead;                           // error
+            break;                                      // error
         } else if (0 == nread) {
-            return totalRead;                           // short read
+            break;                                      // short read
         } else {
             ASSERT_require(nread > 0);
             ASSERT_require((size_t)nread <= nBytes);
@@ -915,18 +1008,31 @@ Linux::readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) {
             totalRead += nread;
         }
     }
+
+    if (debug) {
+        if (totalRead < nBytesDesired)
+            debug <<"  short read: only " <<StringUtility::plural(totalRead, "bytes") <<" read from memory\n";
+        if (totalRead > 0) {
+            HexdumpFormat fmt;
+            fmt.prefix = "  ";
+            debug <<fmt.prefix;
+            SgAsmExecutableFileFormat::hexdump(debug, va, buffer, totalRead, fmt);
+            debug <<"\n";
+        }
+    }
+
     return totalRead;
-#else
-    ROSE_PRAGMA_MESSAGE("reading from subordinate memory is not supported on this platform");
-    throw Exception("reading from subordinate memory is not supported on this platform");
-#endif
 }
 
 size_t
 Linux::writeMemory(rose_addr_t va, size_t nBytes, const uint8_t *buffer) {
-#ifdef __linux__
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    SAWYER_MESG(debug) <<"PID " <<child_ <<": write " <<StringUtility::plural(nBytes, "bytes")
+                       <<" from va " <<StringUtility::addrToString(va) <<"\n";
+
     if (0 == nBytes)
         return 0;
+    const size_t nBytesDesired = nBytes;
 
     struct T {
         int fd;
@@ -952,7 +1058,7 @@ Linux::writeMemory(rose_addr_t va, size_t nBytes, const uint8_t *buffer) {
             if (EINTR == errno)
                 continue;
         } else if (0 == nWritten) {
-            return totalWritten;
+            break;
         } else {
             ASSERT_require(nWritten > 0);
             ASSERT_require((size_t)nWritten <= nBytes);
@@ -961,38 +1067,27 @@ Linux::writeMemory(rose_addr_t va, size_t nBytes, const uint8_t *buffer) {
             totalWritten += nWritten;
         }
     }
-    return totalWritten;
-#else
-    ROSE_PRAGMA_MESSAGE("writing to subordinate memory is not supported on this platform");
-    throw Exception("writing to subordinate memory is not supported on this platform");
-#endif
-}
 
-std::string
-Linux::readCString(rose_addr_t va, size_t maxBytes) {
-    std::string retval;
-    while (maxBytes > 0) {
-        uint8_t buf[32];
-        size_t nRead = readMemory(va, std::min(maxBytes, sizeof buf), buf);
-        if (0 == nRead)
-            break;
-        for (size_t i = 0; i < nRead; ++i) {
-            if (0 == buf[i]) {
-                return retval;                          // NUL terminated
-            } else {
-                retval += (char)buf[i];
-            }
+    if (debug) {
+        if (totalWritten < nBytesDesired)
+            debug <<"  short write: only " <<StringUtility::plural(totalWritten, "bytes") <<" written to memory\n";
+        if (totalWritten > 0) {
+            HexdumpFormat fmt;
+            fmt.prefix = "  ";
+            debug <<fmt.prefix;
+            SgAsmExecutableFileFormat::hexdump(debug, va, buffer, totalWritten, fmt);
+            debug <<"\n";
         }
-        maxBytes -= nRead;
-        va += nRead;
     }
-    return retval;                                      // buffer overflow
+
+    return totalWritten;
 }
 
 void
 Linux::runToBreakPoint(ThreadId tid) {
+    SAWYER_MESG(mlog[DEBUG]) <<"PID " <<child_ <<": run to break point\n";
     if (breakPoints_.isEmpty()) {
-        sendCommandInt(PTRACE_CONT, child_, 0, sendSignal_);
+        sendCommandInt(PTRACE_CONT, 0, sendSignal_);
         waitForChild();
     } else {
         while (1) {
@@ -1000,7 +1095,7 @@ Linux::runToBreakPoint(ThreadId tid) {
             if (isTerminated())
                 break;
             user_regs_struct regs;
-            sendCommand(PTRACE_GETREGS, child_, 0, &regs);
+            sendCommand(PTRACE_GETREGS, 0, &regs);
             if (breakPoints_.exists(getInstructionPointer(regs)))
                 break;
         }
@@ -1009,7 +1104,8 @@ Linux::runToBreakPoint(ThreadId tid) {
 
 void
 Linux::runToSystemCall(ThreadId) {
-    sendCommandInt(PTRACE_SYSCALL, child_, 0, sendSignal_);
+    SAWYER_MESG(mlog[DEBUG]) <<"PID " <<child_ <<": run to system call\n";
+    sendCommandInt(PTRACE_SYSCALL, 0, sendSignal_);
     waitForChild();
 }
 
@@ -1103,10 +1199,23 @@ Linux::remoteSystemCall(ThreadId tid, int syscallNumber, uint64_t arg1, uint64_t
 
 int64_t
 Linux::remoteSystemCall(ThreadId tid, int syscallNumber, std::vector<uint64_t> args) {
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    if (debug) {
+        const auto decl = syscallDecls_.lookup(syscallNumber);
+        debug <<"PID " <<child_ <<": remote system call " <<syscallNumber <<(decl ? " (" + decl->name + ")" : "") <<"\n";
+        debug <<"  arguments:\n";
+        for (size_t i = 0; i < args.size(); ++i)
+            debug <<"    arg " <<i <<": " <<StringUtility::toHex(args[i]) <<"\n";
+    }
+
     // Find a system call that we can hijack to do our bidding.
     Sawyer::Optional<rose_addr_t> syscallVa = findSystemCall();
-    if (!syscallVa)
+    if (!syscallVa) {
+        SAWYER_MESG(debug) <<"syscall failed: cannot find a system call instruction\n";
         return -1;
+    } else {
+        SAWYER_MESG(debug) <<"  subverting system call instruction at " <<StringUtility::addrToString(*syscallVa) <<"\n";
+    }
 
     // Registers that we'll need later, one per syscall argument.
     // FIXME[Robb Matzke 2020-08-26]: This is i386 specific, but I'm not sure what the best way is to figure out whether the
@@ -1156,6 +1265,12 @@ Linux::remoteSystemCall(ThreadId tid, int syscallNumber, std::vector<uint64_t> a
     for (size_t i = 0; i < args.size(); ++i)
         writeRegister(tid, regs[i], savedRegs[i]);
     writeRegister(tid, syscallReg, savedSyscallReg);
+
+    if (debug) {
+        const auto decl = syscallDecls_.lookup(syscallNumber);
+        debug <<"system call " <<syscallNumber <<(decl ? " (" + decl->name + ")" : "")
+              <<" returned " <<StringUtility::toHex(retval) <<"\n";
+    }
     return retval;
 }
 

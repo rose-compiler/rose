@@ -3,8 +3,11 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_LIBRARY_IDENTIFICATION
 
-#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
+
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+
 
 // Deprecated [Robb Matzke 2022-01-20]
 namespace LibraryIdentification {
@@ -23,8 +26,8 @@ public:
     //
     // @param[in] partitioner Required to get the basic blocks of the function
     // @param[in] function Binary AST Function Node
-    FunctionInfo(const Rose::BinaryAnalysis::Partitioner2::Partitioner& partitioner,
-                 Rose::BinaryAnalysis::Partitioner2::Function::Ptr function)
+    FunctionInfo(const Rose::BinaryAnalysis::Partitioner2::PartitionerConstPtr& partitioner,
+                 Rose::BinaryAnalysis::Partitioner2::FunctionPtr function)
         : funcName(function->name()), binaryFunction(function) {}
 
     // True if the first hash is less than the second hash.
@@ -49,7 +52,7 @@ public:
     // Optional pointer to the function definition.
     //
     // Null if the function definition is not available. */
-    Rose::BinaryAnalysis::Partitioner2::Function::Ptr binaryFunction;
+    Rose::BinaryAnalysis::Partitioner2::FunctionPtr binaryFunction;
 };
 
 } // namespace

@@ -4,6 +4,7 @@
 
 #include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Configuration.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 #include <Rose/Yaml.h>

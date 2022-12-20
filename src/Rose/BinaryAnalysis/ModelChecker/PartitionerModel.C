@@ -17,6 +17,7 @@
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
@@ -268,7 +269,7 @@ findStackVariable(const FunctionCallStack &callStack, const AddressInterval &loc
         for (const Variables::StackVariable &var: fcall.stackVariables().values()) {
             if (AddressInterval varAddrs = shiftAddresses(fcall.initialStackPointer() + fcall.framePointerDelta(),
                                                           var.interval(), stackLimits)) {
-                if (varAddrs.isContaining(location)) {
+                if (varAddrs.contains(location)) {
                     if (!foundInterval || varAddrs.size() < foundInterval.size()) {
                         foundInterval = varAddrs;
                         foundVariable = var;
@@ -284,7 +285,7 @@ findStackVariable(const FunctionCallStack &callStack, const AddressInterval &loc
 // Function call stack
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-FunctionCall::FunctionCall(const Partitioner2::FunctionPtr &function, rose_addr_t initialStackPointer,
+FunctionCall::FunctionCall(const Partitioner2::Function::Ptr &function, rose_addr_t initialStackPointer,
                            Sawyer::Optional<rose_addr_t> returnAddress, const Variables::StackVariables &vars)
     : function_(function), initialStackPointer_(initialStackPointer), returnAddress_(returnAddress), stackVariables_(vars) {}
 
@@ -473,11 +474,12 @@ State::callStack() {
 // Instruction semantics RISC operators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-RiscOperators::RiscOperators(const Settings &settings, const P2::Partitioner &partitioner,
+RiscOperators::RiscOperators(const Settings &settings, const P2::Partitioner::ConstPtr &partitioner,
                              ModelChecker::SemanticCallbacks *semantics, const BS::SValue::Ptr &protoval,
                              const SmtSolver::Ptr &solver, const Variables::VariableFinder::Ptr &varFinder)
     : Super(protoval, solver), settings_(settings), partitioner_(partitioner),
       semantics_(dynamic_cast<PartitionerModel::SemanticCallbacks*>(semantics)), variableFinder_unsync(varFinder) {
+    ASSERT_not_null(partitioner);
     ASSERT_not_null(semantics_);
     ASSERT_not_null(variableFinder_unsync);
     (void)SValue::promote(protoval);
@@ -485,16 +487,16 @@ RiscOperators::RiscOperators(const Settings &settings, const P2::Partitioner &pa
 
     // Calculate the stack limits.  Start by assuming the stack can occupy all of memory. Then make that smaller based on
     // other information.
-    const size_t nBits = partitioner.instructionProvider().instructionPointerRegister().nBits();
+    const size_t nBits = partitioner->instructionProvider().instructionPointerRegister().nBits();
     stackLimits_ = AddressInterval::hull(0, BitOps::lowMask<rose_addr_t>(nBits));
     if (settings_.initialStackVa) {
         // The stack should extend down to the top of the next lower mapped address.
-        ASSERT_forbid(partitioner.memoryMap()->at(*settings_.initialStackVa).exists());
-        if (auto prev = partitioner.memoryMap()->atOrBefore(*settings_.initialStackVa).next(Sawyer::Container::MATCH_BACKWARD))
+        ASSERT_forbid(partitioner->memoryMap()->at(*settings_.initialStackVa).exists());
+        if (auto prev = partitioner->memoryMap()->atOrBefore(*settings_.initialStackVa).next(Sawyer::Container::MATCH_BACKWARD))
             stackLimits_ = stackLimits_ & AddressInterval::hull(*prev + 1, stackLimits_.greatest());
 
         // The stack should extend up to the bottom of the next higher mapped address.
-        if (auto next = partitioner.memoryMap()->atOrAfter(*settings_.initialStackVa).next())
+        if (auto next = partitioner->memoryMap()->atOrAfter(*settings_.initialStackVa).next())
             stackLimits_ = stackLimits_ & AddressInterval::hull(stackLimits_.least(), *next - 1);
 
         // The stack should extend only a few bytes above it's initial location.
@@ -507,8 +509,8 @@ RiscOperators::RiscOperators(const Settings &settings, const P2::Partitioner &pa
 RiscOperators::~RiscOperators() {}
 
 RiscOperators::Ptr
-RiscOperators::instance(const Settings &settings, const P2::Partitioner &partitioner, ModelChecker::SemanticCallbacks *semantics,
-                        const BS::SValue::Ptr &protoval, const SmtSolver::Ptr &solver,
+RiscOperators::instance(const Settings &settings, const P2::Partitioner::ConstPtr &partitioner,
+                        ModelChecker::SemanticCallbacks *semantics, const BS::SValue::Ptr &protoval, const SmtSolver::Ptr &solver,
                         const Variables::VariableFinder::Ptr &varFinder) {
     ASSERT_not_null(protoval);
     return Ptr(new RiscOperators(settings, partitioner, semantics, protoval, solver, varFinder));
@@ -536,7 +538,7 @@ RiscOperators::promote(const BS::RiscOperators::Ptr &x) {
     return retval;
 }
 
-const Partitioner2::Partitioner&
+Partitioner2::Partitioner::ConstPtr
 RiscOperators::partitioner() const {
     return partitioner_;
 }
@@ -636,7 +638,7 @@ RiscOperators::checkOobAccess(const BS::SValue::Ptr &addrSVal_, TestMode testMod
             if (AddressInterval referencedRegion = addrSVal->region()) {
                 ProgressTask task(modelCheckerSolver_->progress(), "oob");
                 AddressInterval accessedRegion = AddressInterval::baseSizeSat(*va, nBytes);
-                if (!referencedRegion.isContaining(accessedRegion)) {
+                if (!referencedRegion.contains(accessedRegion)) {
 
                     // Get information about the variable that was intended to be accessed, and the variable (if any) that was
                     // actually accessed.
@@ -683,7 +685,7 @@ RiscOperators::checkUninitVar(const BS::SValue::Ptr &addrSVal_, TestMode testMod
         if (auto va = addrSVal->toUnsigned()) {
             if (AddressInterval referencedRegion = addrSVal->region()) {
                 AddressInterval accessedRegion = AddressInterval::baseSize(*va, nBytes);
-                if (referencedRegion.isContaining(accessedRegion)) {
+                if (referencedRegion.contains(accessedRegion)) {
                     // If there are no writers for this address, then this is an uninitialized variable read
                     auto mem = BS::MemoryCellState::promote(currentState()->memoryState());
                     if (mem->getWritersUnion(addrSVal, 8*nBytes, this, this).isEmpty()) {
@@ -721,7 +723,7 @@ RiscOperators::maybeInitCallStack(rose_addr_t insnVa) {
     if (computeMemoryRegions_) {
         FunctionCallStack &callStack = State::promote(currentState())->callStack();
         if (callStack.isEmpty()) {
-            std::vector<P2::Function::Ptr> functions = partitioner_.functionsSpanning(insnVa);
+            std::vector<P2::Function::Ptr> functions = partitioner_->functionsSpanning(insnVa);
             P2::Function::Ptr function;
             if (functions.empty()) {
                 SAWYER_MESG(mlog[WARN]) <<"no function containing instruction at " <<StringUtility::addrToString(insnVa) <<"\n";
@@ -733,7 +735,7 @@ RiscOperators::maybeInitCallStack(rose_addr_t insnVa) {
             }
 
             if (function) {
-                const RegisterDescriptor SP = partitioner_.instructionProvider().stackPointerRegister();
+                const RegisterDescriptor SP = partitioner_->instructionProvider().stackPointerRegister();
                 const BS::SValue::Ptr spSValue = peekRegister(SP, undefined_(SP.nBits()));
                 const rose_addr_t sp = spSValue->toUnsigned().get();      // must be concrete
                 pushCallStack(function, sp, Sawyer::Nothing());
@@ -746,7 +748,7 @@ void
 RiscOperators::pushCallStack(const P2::Function::Ptr &callee, rose_addr_t initialSp, Sawyer::Optional<rose_addr_t> returnVa) {
     if (computeMemoryRegions_) {
         FunctionCallStack &callStack = State::promote(currentState())->callStack();
-        const size_t nBits = partitioner_.instructionProvider().wordSize();
+        const size_t nBits = partitioner_->instructionProvider().wordSize();
 
         while (!callStack.isEmpty() && callStack.top().initialStackPointer() <= initialSp) {
             const FunctionCall &fcall = callStack.top();
@@ -763,7 +765,7 @@ RiscOperators::pushCallStack(const P2::Function::Ptr &callee, rose_addr_t initia
             frameSize = variableFinder_unsync->detectFrameAttributes(partitioner_, callee).size;
         }
         callStack.push(FunctionCall(callee, initialSp, returnVa, lvars));
-        const std::string isa = partitioner_.instructionProvider().disassembler()->name();
+        const std::string isa = partitioner_->instructionProvider().disassembler()->name();
         if ("a32" == isa || "t32" == isa || "a64" == isa || "coldfire" == isa) {
             callStack[0].framePointerDelta(-4);
         } else if (frameSize) {
@@ -780,7 +782,7 @@ RiscOperators::popCallStack() {
     ASSERT_forbid(callStack.isEmpty());
     if (mlog[DEBUG]) {
         const FunctionCall &fcall = callStack.top();
-        const size_t nBits = partitioner_.instructionProvider().wordSize();
+        const size_t nBits = partitioner_->instructionProvider().wordSize();
         mlog[DEBUG] <<"    returned from " <<fcall.printableName(nBits) <<"\n";
     }
 
@@ -820,7 +822,7 @@ RiscOperators::popCallStack() {
     // return value pushed by the caller.
     if (poppedInitialSp) {
         rose_addr_t stackBoundary = *poppedInitialSp;
-        const std::string isaName = partitioner_.instructionProvider().disassembler()->name();
+        const std::string isaName = partitioner_->instructionProvider().disassembler()->name();
         if ("i386" == isaName) {
             // x86 "call" pushes a 4-byte return address that's popped when the function returns. The stack grows down.
             stackBoundary += 4;
@@ -838,7 +840,7 @@ RiscOperators::popCallStack() {
             ASSERT_not_implemented("isaName = " + isaName);
         }
 
-        const size_t wordSize = partitioner_.instructionProvider().stackPointerRegister().nBits();
+        const size_t wordSize = partitioner_->instructionProvider().stackPointerRegister().nBits();
         ASSERT_require(wordSize > 8 && wordSize <= 64);
         SymbolicExpression::Ptr highBoundaryExclusive = SymbolicExpression::makeIntegerConstant(wordSize, stackBoundary);
         SymbolicExpression::Ptr lowBoundaryInclusive = SymbolicExpression::makeIntegerConstant(wordSize, stackLimits_.least());
@@ -861,10 +863,10 @@ RiscOperators::pruneCallStack() {
     size_t nPopped = 0;
     if (computeMemoryRegions_) {
         FunctionCallStack &callStack = State::promote(currentState())->callStack();
-        const size_t nBits = partitioner_.instructionProvider().wordSize();
+        const size_t nBits = partitioner_->instructionProvider().wordSize();
 
         // Pop functions whose initial stack pointer is beyond the end of the current stack.
-        const RegisterDescriptor SP = partitioner_.instructionProvider().stackPointerRegister();
+        const RegisterDescriptor SP = partitioner_->instructionProvider().stackPointerRegister();
         auto sp = peekRegister(SP, undefined_(SP.nBits()))->toUnsigned();
         if (sp) {
             while (!callStack.isEmpty() && callStack.top().initialStackPointer() < *sp) {
@@ -881,7 +883,7 @@ RiscOperators::pruneCallStack() {
         // is equal to the current instruction pointer.
         if (!callStack.isEmpty()) {
             const FunctionCall &fcall = callStack.top();
-            const RegisterDescriptor IP = partitioner_.instructionProvider().instructionPointerRegister();
+            const RegisterDescriptor IP = partitioner_->instructionProvider().instructionPointerRegister();
             auto ip = peekRegister(IP, undefined_(IP.nBits()))->toUnsigned();
             auto funcRet = fcall.returnAddress();
             if (ip && funcRet && *ip == *funcRet && sp && fcall.initialStackPointer() == *sp) {
@@ -897,13 +899,13 @@ RiscOperators::pruneCallStack() {
         // Architecture specific stuff
         if (!callStack.isEmpty()) {
             const FunctionCall &fcall = callStack.top();
-            const std::string isa = partitioner_.instructionProvider().disassembler()->name();
+            const std::string isa = partitioner_->instructionProvider().disassembler()->name();
             if ("a32" == isa || "t32" == isa || "a64" == isa) {
                 // ARM AArch32 or AArch64 instructions. Returning based on the current value of the link register (LR) is not
                 // possible because the LR is not a callee-saved register. The callee (function about to return) pushes the
                 // initial LR value onto the stack at the beginning, but instead of popping it back into the LR at the end, it
                 // pops it into the instruction pointer register (PC) directly in order to effect the return.
-                const RegisterDescriptor IP = partitioner_.instructionProvider().instructionPointerRegister();
+                const RegisterDescriptor IP = partitioner_->instructionProvider().instructionPointerRegister();
                 auto ip = peekRegister(IP, undefined_(IP.nBits()))->toUnsigned();
                 auto funcRet = fcall.returnAddress();
                 if (ip && funcRet && *ip == *funcRet && sp && fcall.initialStackPointer() == *sp) {
@@ -921,8 +923,8 @@ RiscOperators::pruneCallStack() {
                 // the initial stack pointer for the top callee, and the current instruction pointer is the same as the link
                 // register, then we must have just returned from that function, so pop it.
                 if (sp && callStack.top().initialStackPointer() == *sp) {
-                    const RegisterDescriptor IP = partitioner_.instructionProvider().instructionPointerRegister();
-                    const RegisterDescriptor LR = partitioner_.instructionProvider().callReturnRegister();
+                    const RegisterDescriptor IP = partitioner_->instructionProvider().instructionPointerRegister();
+                    const RegisterDescriptor LR = partitioner_->instructionProvider().callReturnRegister();
                     if (IP && LR) {
                         auto ip = peekRegister(IP, undefined_(IP.nBits()))->toUnsigned();
                         auto lr = peekRegister(LR, undefined_(LR.nBits()))->toUnsigned();
@@ -952,7 +954,7 @@ RiscOperators::printCallStack(std::ostream &out, const std::string &prefix) {
         if (callStack.isEmpty()) {
             out <<prefix <<"  empty\n";
         } else {
-            const size_t nBits = partitioner_.instructionProvider().wordSize();
+            const size_t nBits = partitioner_->instructionProvider().wordSize();
             for (size_t i = callStack.size(); i > 0; --i) {
                 const FunctionCall &fcall = callStack[i-1];
                 out <<prefix <<"  " <<fcall.function()->printableName()
@@ -1043,18 +1045,18 @@ RiscOperators::finishInstruction(SgAsmInstruction *insn) {
     // and function stack arguments.
     if (computeMemoryRegions_) {
         bool isFunctionCall = false;
-        if (P2::BasicBlock::Ptr bb = partitioner_.basicBlockContainingInstruction(insn->get_address())) {
-            isFunctionCall = partitioner_.basicBlockIsFunctionCall(bb);
+        if (P2::BasicBlock::Ptr bb = partitioner_->basicBlockContainingInstruction(insn->get_address())) {
+            isFunctionCall = partitioner_->basicBlockIsFunctionCall(bb);
         } else {
             isFunctionCall = insn->isFunctionCallFast(std::vector<SgAsmInstruction*>{insn}, nullptr, nullptr);
         }
         if (isFunctionCall) {
-            const RegisterDescriptor IP = partitioner_.instructionProvider().instructionPointerRegister();
+            const RegisterDescriptor IP = partitioner_->instructionProvider().instructionPointerRegister();
             BS::SValue::Ptr ipSValue = peekRegister(IP, undefined_(IP.nBits()));
             if (auto ip = ipSValue->toUnsigned()) {
-                if (P2::Function::Ptr callee = partitioner_.functionExists(*ip)) {
+                if (P2::Function::Ptr callee = partitioner_->functionExists(*ip)) {
                     // We are calling a function, so push a record onto the call stack.
-                    const RegisterDescriptor SP = partitioner_.instructionProvider().stackPointerRegister();
+                    const RegisterDescriptor SP = partitioner_->instructionProvider().stackPointerRegister();
                     const BS::SValue::Ptr spSValue = peekRegister(SP, undefined_(SP.nBits()));
                     if (auto sp = spSValue->toUnsigned())
                         pushCallStack(callee, *sp, insn->get_address() + insn->get_size());
@@ -1154,8 +1156,8 @@ RiscOperators::readRegister(RegisterDescriptor reg, const BS::SValue::Ptr &dflt)
         // The stack pointer and frame pointers are typically used by adding or subtracting something from them to access a
         // *different* local variable than they point to directly. The whole point of adding and subtracting is to access a
         // different variable rather than being an out-of-bounds access for the directly pointed variable.
-        if (partitioner_.instructionProvider().stackPointerRegister() == reg ||
-            partitioner_.instructionProvider().stackFrameRegister() == reg)
+        if (partitioner_->instructionProvider().stackPointerRegister() == reg ||
+            partitioner_->instructionProvider().stackFrameRegister() == reg)
             retval->region(AddressInterval());
         return retval;
     } else {
@@ -1168,13 +1170,13 @@ RiscOperators::writeRegister(RegisterDescriptor reg, const BS::SValue::Ptr &valu
     if (computeMemoryRegions_) {
         // If we're writing to the frame pointer register, then update the top function of the call stack to indicate how the
         // frame pointer is related to the initial stack pointer.
-        const RegisterDescriptor FP = partitioner_.instructionProvider().stackFrameRegister();
+        const RegisterDescriptor FP = partitioner_->instructionProvider().stackFrameRegister();
         FunctionCallStack &callStack = State::promote(currentState())->callStack();
         if (FP == reg && !callStack.isEmpty()) {
             FunctionCall &fcall = callStack.top();
             if (auto fp = value->toUnsigned()) {
                 if (*fp <= fcall.initialStackPointer()) { // probably part of a function call return instruction
-                    const size_t nBits = partitioner_.instructionProvider().wordSize();
+                    const size_t nBits = partitioner_->instructionProvider().wordSize();
                     const rose_addr_t oldFp = fcall.framePointer(nBits);
                     const rose_addr_t oldDelta = fcall.framePointerDelta();
                     const rose_addr_t newDelta = *fp - fcall.initialStackPointer();
@@ -1229,9 +1231,9 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BS::SValue::Ptr &addr
     const size_t nBytes = dflt->nBits() / 8;
     uint8_t buf[8];
     if (adjustedVa->toUnsigned() && nBytes <= sizeof(buf) &&
-        nBytes == (partitioner_.memoryMap()->at(adjustedVa->toUnsigned().get()).limit(nBytes)
+        nBytes == (partitioner_->memoryMap()->at(adjustedVa->toUnsigned().get()).limit(nBytes)
                    .require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE).read(buf).size())) {
-        switch (partitioner_.memoryMap()->byteOrder()) {
+        switch (partitioner_->memoryMap()->byteOrder()) {
             case ByteOrder::ORDER_UNSPECIFIED:
             case ByteOrder::ORDER_LSB: {
                 uint64_t value = 0;
@@ -1282,9 +1284,10 @@ RiscOperators::writeMemory(RegisterDescriptor segreg, const BS::SValue::Ptr &add
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 SemanticCallbacks::SemanticCallbacks(const ModelChecker::Settings::Ptr &mcSettings, const Settings &settings,
-                                     const P2::Partitioner &partitioner)
+                                     const P2::Partitioner::ConstPtr &partitioner)
     : ModelChecker::SemanticCallbacks(mcSettings), settings_(settings), partitioner_(partitioner) {
 
+    ASSERT_not_null(partitioner);
     variableFinder_ = Variables::VariableFinder::instance();
 
     if (!settings_.initialStackVa) {
@@ -1295,8 +1298,8 @@ SemanticCallbacks::SemanticCallbacks(const ModelChecker::Settings::Ptr &mcSettin
         auto where = AddressInterval::hull(0x80000000, 0xffffffff); // where to look in the address space
 
         Sawyer::Optional<rose_addr_t> va =
-            partitioner.memoryMap()->findFreeSpace(RESERVE_BELOW + RESERVE_ABOVE, STACK_ALIGNMENT, where,
-                                                   Sawyer::Container::MATCH_BACKWARD);
+            partitioner->memoryMap()->findFreeSpace(RESERVE_BELOW + RESERVE_ABOVE, STACK_ALIGNMENT, where,
+                                                    Sawyer::Container::MATCH_BACKWARD);
         if (!va) {
             mlog[ERROR] <<"no room for a stack anywhere in " <<StringUtility::addrToString(where) <<"\n"
                         <<"falling back to abstract stack address\n";
@@ -1311,7 +1314,7 @@ SemanticCallbacks::~SemanticCallbacks() {}
 
 SemanticCallbacks::Ptr
 SemanticCallbacks::instance(const ModelChecker::Settings::Ptr &mcSettings, const Settings &settings,
-                            const P2::Partitioner &partitioner) {
+                            const P2::Partitioner::ConstPtr &partitioner) {
     return Ptr(new SemanticCallbacks(mcSettings, settings, partitioner));
 }
 
@@ -1367,7 +1370,7 @@ SemanticCallbacks::nSolverFailures() const {
     return nSolverFailures_;
 }
 
-const P2::Partitioner&
+P2::Partitioner::ConstPtr
 SemanticCallbacks::partitioner() const {
     return partitioner_;
 }
@@ -1379,7 +1382,7 @@ SemanticCallbacks::protoval() {
 
 BS::RegisterState::Ptr
 SemanticCallbacks::createInitialRegisters() {
-    return BS::RegisterStateGeneric::instance(protoval(), partitioner_.instructionProvider().registerDictionary());
+    return BS::RegisterStateGeneric::instance(protoval(), partitioner_->instructionProvider().registerDictionary());
 }
 
 BS::MemoryState::Ptr
@@ -1393,7 +1396,7 @@ SemanticCallbacks::createInitialMemory() {
             mem = IS::SymbolicSemantics::MemoryMapState::instance(protoval(), protoval());
             break;
     }
-    mem->set_byteOrder(partitioner_.instructionProvider().defaultByteOrder());
+    mem->set_byteOrder(partitioner_->instructionProvider().defaultByteOrder());
     return mem;
 }
 
@@ -1428,7 +1431,7 @@ SemanticCallbacks::createRiscOperators() {
 void
 SemanticCallbacks::initializeState(const BS::RiscOperators::Ptr &ops) {
     ASSERT_not_null(ops);
-    const RegisterDescriptor SP = partitioner_.instructionProvider().stackPointerRegister();
+    const RegisterDescriptor SP = partitioner_->instructionProvider().stackPointerRegister();
     if (settings_.initialStackVa) {
         BS::SValue::Ptr sp = ops->number_(SP.nBits(), *settings_.initialStackVa);
         ops->writeRegister(SP, sp);
@@ -1438,8 +1441,8 @@ SemanticCallbacks::initializeState(const BS::RiscOperators::Ptr &ops) {
 BS::Dispatcher::Ptr
 SemanticCallbacks::createDispatcher(const BS::RiscOperators::Ptr &ops) {
     ASSERT_not_null(ops);
-    ASSERT_not_null2(partitioner_.instructionProvider().dispatcher(), "no semantics for this ISA");
-    return partitioner_.instructionProvider().dispatcher()->create(ops, 0, RegisterDictionary::Ptr());
+    ASSERT_not_null2(partitioner_->instructionProvider().dispatcher(), "no semantics for this ISA");
+    return partitioner_->instructionProvider().dispatcher()->create(ops, 0, RegisterDictionary::Ptr());
 }
 
 SmtSolver::Ptr
@@ -1519,7 +1522,7 @@ SemanticCallbacks::unitsReached() const {
 BS::SValue::Ptr
 SemanticCallbacks::instructionPointer(const BS::RiscOperators::Ptr &ops) {
     ASSERT_not_null(ops);
-    const RegisterDescriptor IP = partitioner_.instructionProvider().instructionPointerRegister();
+    const RegisterDescriptor IP = partitioner_->instructionProvider().instructionPointerRegister();
     return ops->peekRegister(IP);
 }
 
@@ -1587,10 +1590,10 @@ SemanticCallbacks::findUnit(rose_addr_t va, const Progress::Ptr &progress) {
         return unit;                                    // preexisting
 
     // Compute the next unit
-    P2::Function::Ptr func = partitioner_.functionExists(va);
+    P2::Function::Ptr func = partitioner_->functionExists(va);
     if (func && boost::ends_with(func->name(), "@plt")) {
-        unit = ExternalFunctionUnit::instance(func, partitioner_.sourceLocations().get(va));
-    } else if (P2::BasicBlock::Ptr bb = partitioner_.basicBlockExists(va)) {
+        unit = ExternalFunctionUnit::instance(func, partitioner_->sourceLocations().get(va));
+    } else if (P2::BasicBlock::Ptr bb = partitioner_->basicBlockExists(va)) {
         // Depending on partitioner settings, sometimes a basic block could have an internal loop. For instance, some x86
         // instructions have an optional repeat prefix. Since execution units need to know how many steps they are (so we can
         // inforce the K limit), and since the content of the execution unit needs to be immutable, and since we can't really
@@ -1607,10 +1610,10 @@ SemanticCallbacks::findUnit(rose_addr_t va, const Progress::Ptr &progress) {
             // We intentionally don't use an SMT solver here because it's not usually needed--we're only processing a single
             // basic block. If the Z3 solver is used here, we find that Z3 eventually hangs during the z3check call on some
             // threads even when we tell it to time out after a few seconds.
-            auto ops = partitioner_.newOperators(P2::MAP_BASED_MEMORY);
+            auto ops = partitioner_->newOperators(P2::MAP_BASED_MEMORY);
             IS::SymbolicSemantics::RiscOperators::promote(ops)->trimThreshold(mcSettings()->maxSymbolicSize);
-            auto cpu = partitioner_.newDispatcher(ops);
-            const RegisterDescriptor IP = partitioner_.instructionProvider().instructionPointerRegister();
+            auto cpu = partitioner_->newDispatcher(ops);
+            const RegisterDescriptor IP = partitioner_->instructionProvider().instructionPointerRegister();
             for (size_t i = 0; i < bb->nInstructions() - 1; ++i) {
                 SgAsmInstruction *insn = bb->instructions()[i];
                 try {
@@ -1625,16 +1628,16 @@ SemanticCallbacks::findUnit(rose_addr_t va, const Progress::Ptr &progress) {
                 if (actualIp->toUnsigned().orElse(expectedIp+1) != expectedIp) {
                     SAWYER_MESG(mlog[DEBUG]) <<"    " <<bb->printableName()
                                              <<" sequence error after " <<insn->toString() <<"; switched to insn\n";
-                    unit = InstructionUnit::instance(bb->instructions()[0], partitioner_.sourceLocations().get(va));
+                    unit = InstructionUnit::instance(bb->instructions()[0], partitioner_->sourceLocations().get(va));
                     break;
                 }
             }
         }
         if (!unit && bb->nInstructions() > 0)
             unit = BasicBlockUnit::instance(partitioner_, bb);
-    } else if (SgAsmInstruction *insn = partitioner_.instructionProvider()[va]) {
+    } else if (SgAsmInstruction *insn = partitioner_->instructionProvider()[va]) {
         SAWYER_MESG(mlog[DEBUG]) <<"    no basic block at " <<StringUtility::addrToString(va) <<"; switched to insn\n";
-        unit = InstructionUnit::instance(insn, partitioner_.sourceLocations().get(va));
+        unit = InstructionUnit::instance(insn, partitioner_->sourceLocations().get(va));
     }
 
     // Save the result, but if some other thread beat us to this point, use their result instead.
@@ -1710,13 +1713,13 @@ SemanticCallbacks::nextUnits(const Path::Ptr&, const BS::RiscOperators::Ptr &ops
                 if (ExecutionUnit::Ptr unit = findUnit(va, solver->progress())) {
                     units.push_back({unit, assertion, solver->evidenceByName()});
                 } else if (settings_.nullRead != TestMode::OFF && va <= settings_.maxNullAddress) {
-                    SourceLocation sloc = partitioner_.sourceLocations().get(va);
-                    BS::SValue::Ptr addr = ops->number_(partitioner_.instructionProvider().wordSize(), va);
+                    SourceLocation sloc = partitioner_->sourceLocations().get(va);
+                    BS::SValue::Ptr addr = ops->number_(partitioner_->instructionProvider().wordSize(), va);
                     auto tag = NullDereferenceTag::instance(0, TestMode::MUST, IoMode::READ, nullptr, addr);
                     auto fail = FailureUnit::instance(va, sloc, "invalid instruction address", tag);
                     units.push_back({fail, assertion, SmtSolver::Evidence()});
                 } else {
-                    SourceLocation sloc = partitioner_.sourceLocations().get(va);
+                    SourceLocation sloc = partitioner_->sourceLocations().get(va);
                     auto tag = ErrorTag::instance(0, "invalid instruction pointer", "no instruction at address", nullptr, va);
                     units.push_back({FailureUnit::instance(va, sloc, "invalid instruction address", tag), assertion,
                                      SmtSolver::Evidence()});
@@ -1776,7 +1779,7 @@ SemanticCallbacks::parsePath(const YAML::Node &root, const std::string &sourceNa
             if (!root[i]["vertex-address"])
                 throw ParseError(sourceName, where + "must have a \"vertex-address\" field");
             rose_addr_t va = root[i]["vertex-address"].as<rose_addr_t>();
-            if (P2::BasicBlock::Ptr bb = partitioner().basicBlockExists(va)) {
+            if (P2::BasicBlock::Ptr bb = partitioner()->basicBlockExists(va)) {
                 retval.push_back(BasicBlockUnit::instance(partitioner(), bb));
             } else {
                 throw ParseError(sourceName, where + "no such basic block at " + StringUtility::addrToString(va));
@@ -1786,8 +1789,8 @@ SemanticCallbacks::parsePath(const YAML::Node &root, const std::string &sourceNa
             if (!root[i]["vertex-address"])
                 throw ParseError(sourceName, where + "must have a \"vertex-address\" field");
             rose_addr_t va = root[i]["vertex-address"].as<rose_addr_t>();
-            if (SgAsmInstruction *insn = partitioner().instructionProvider()[va]) {
-                retval.push_back(InstructionUnit::instance(insn, partitioner().sourceLocations().get(va)));
+            if (SgAsmInstruction *insn = partitioner()->instructionProvider()[va]) {
+                retval.push_back(InstructionUnit::instance(insn, partitioner()->sourceLocations().get(va)));
             } else {
                 throw ParseError(sourceName, where + "no instruction at " + StringUtility::addrToString(va));
             }
@@ -1796,8 +1799,8 @@ SemanticCallbacks::parsePath(const YAML::Node &root, const std::string &sourceNa
             if (!root[i]["vertex-address"])
                 throw ParseError(sourceName, where + "must have a \"vertex-address\" field");
             rose_addr_t va = root[i]["vertex-address"].as<rose_addr_t>();
-            if (P2::Function::Ptr function = partitioner().functionExists(va)) {
-                retval.push_back(ExternalFunctionUnit::instance(function, partitioner().sourceLocations().get(va)));
+            if (P2::Function::Ptr function = partitioner()->functionExists(va)) {
+                retval.push_back(ExternalFunctionUnit::instance(function, partitioner()->sourceLocations().get(va)));
             } else {
                 throw ParseError(sourceName, where + "no function at " + StringUtility::addrToString(va));
             }
@@ -1827,7 +1830,7 @@ SemanticCallbacks::parsePath(const Yaml::Node &root, const std::string &sourceNa
             if (!root[i]["vertex-address"])
                 throw ParseError(sourceName, where + "must have a \"vertex-address\" field");
             rose_addr_t va = root[i]["vertex-address"].as<rose_addr_t>();
-            if (P2::BasicBlock::Ptr bb = partitioner().basicBlockExists(va)) {
+            if (P2::BasicBlock::Ptr bb = partitioner()->basicBlockExists(va)) {
                 retval.push_back(BasicBlockUnit::instance(partitioner(), bb));
             } else {
                 throw ParseError(sourceName, where + "no such basic block at " + StringUtility::addrToString(va));
@@ -1837,8 +1840,8 @@ SemanticCallbacks::parsePath(const Yaml::Node &root, const std::string &sourceNa
             if (!root[i]["vertex-address"])
                 throw ParseError(sourceName, where + "must have a \"vertex-address\" field");
             rose_addr_t va = root[i]["vertex-address"].as<rose_addr_t>();
-            if (SgAsmInstruction *insn = partitioner().instructionProvider()[va]) {
-                retval.push_back(InstructionUnit::instance(insn, partitioner().sourceLocations().get(va)));
+            if (SgAsmInstruction *insn = partitioner()->instructionProvider()[va]) {
+                retval.push_back(InstructionUnit::instance(insn, partitioner()->sourceLocations().get(va)));
             } else {
                 throw ParseError(sourceName, where + "no instruction at " + StringUtility::addrToString(va));
             }
@@ -1847,8 +1850,8 @@ SemanticCallbacks::parsePath(const Yaml::Node &root, const std::string &sourceNa
             if (!root[i]["vertex-address"])
                 throw ParseError(sourceName, where + "must have a \"vertex-address\" field");
             rose_addr_t va = root[i]["vertex-address"].as<rose_addr_t>();
-            if (P2::Function::Ptr function = partitioner().functionExists(va)) {
-                retval.push_back(ExternalFunctionUnit::instance(function, partitioner().sourceLocations().get(va)));
+            if (P2::Function::Ptr function = partitioner()->functionExists(va)) {
+                retval.push_back(ExternalFunctionUnit::instance(function, partitioner()->sourceLocations().get(va)));
             } else {
                 throw ParseError(sourceName, where + "no function at " + StringUtility::addrToString(va));
             }

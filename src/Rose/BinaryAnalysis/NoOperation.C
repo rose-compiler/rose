@@ -312,7 +312,7 @@ NoOperation::largestEarliestNonOverlapping(const NoOperation::IndexIntervals &in
     std::sort(sorted.begin(), sorted.end(), sortBySizeAddress);
     Sawyer::Container::IntervalSet<IndexInterval> seen;
     for (const NoOperation::IndexInterval &where: sorted) {
-        if (!seen.isOverlapping(where)) {
+        if (!seen.overlaps(where)) {
             retval.push_back(where);
             seen.insert(where);
         }

@@ -604,7 +604,7 @@ public:
      *  This analysis method uses @ref Partitioner2 data structures which are generally faster than using the AST. The
      *  specified function need not be attached to the partitioner. Results of the analysis are stored in this analysis
      *  object to be queried after the analysis completes. */
-    void analyzeFunction(const Partitioner2::Partitioner&, const Sawyer::SharedPointer<Partitioner2::Function>&);
+    void analyzeFunction(const Partitioner2::PartitionerConstPtr&, const Sawyer::SharedPointer<Partitioner2::Function>&);
 
     /** Whether a function has been analyzed.
      *

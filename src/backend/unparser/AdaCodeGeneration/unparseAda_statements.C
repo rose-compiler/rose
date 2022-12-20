@@ -884,7 +884,9 @@ namespace
 
     void handle(SgTypedefDeclaration& n)
     {
-      prn(typedeclSyntax(n.get_base_type()));
+      SgType* basety = n.get_base_type();
+
+      prn(typedeclSyntax(basety));
       prn(" ");
       prn(n.get_name());
 
@@ -895,7 +897,7 @@ namespace
       const bool requiresIs      = (  requiresPrivate
                                    || hasModifiers(n)
                                    //~ || declwords.second.size() != 0
-                                   || !isSgTypeDefault(n.get_base_type())
+                                   || !isSgTypeDefault(basety)
                                    );
 
       if (requiresIs)
@@ -903,7 +905,7 @@ namespace
 
       modifiers(n);
       prn(" ");
-      type(n, n.get_base_type());
+      type(n, basety);
 
       if (requiresPrivate)
         prn(" private");
@@ -1144,6 +1146,17 @@ namespace
       if (reverse) prn("reverse ");
       expr(ini.get_initializer());
       prn(" ");
+    }
+
+    // added to support independent unparsing of SgForInitStatement
+    void handle(SgForInitStatement& n)
+    {
+      bool isReverse = false;
+
+      if (SgForStatement* forStmt = isSgForStatement(n.get_parent()))
+        isReverse = isSgMinusMinusOp(forStmt->get_increment());
+
+      forInitStmt(n, isReverse);
     }
 
     void handle(SgForStatement& n)
@@ -1591,10 +1604,20 @@ namespace
       list(n.get_members());
     }
 
+    bool isOnlyStatementInBlock(SgTryStmt& n)
+    {
+      SgBasicBlock* blk = isSgBasicBlock(n.get_parent());
+
+      return blk && blk->get_statements().size() == 1;
+    }
+
     void handle(SgTryStmt& n)
     {
       // skip the block, just print the statements
-      const bool    requiresBeginEnd = !(si::Ada::isFunctionTryBlock(n) || si::Ada::isPackageTryBlock(n));
+      const bool    requiresBeginEnd = (  !si::Ada::isFunctionTryBlock(n)
+                                       && !si::Ada::isPackageTryBlock(n)
+                                       && !isOnlyStatementInBlock(n) // \todo does this include the two previous conditions?
+                                       );
       SgBasicBlock& blk = SG_DEREF(isSgBasicBlock(n.get_body()));
 
       if (requiresBeginEnd) prn("begin\n");
@@ -1782,7 +1805,7 @@ namespace
     //   statement sequences in Ada, but are not true Ada scopes.
     struct AdaStmtSequence : sg::DispatchHandler<bool>
     {
-      void handle(SgNode&)                          { /* default: false */ }
+      void handle(SgNode& n)                        { /* default: false */ }
       void handle(SgTryStmt&)                       { res = true; }
       void handle(SgIfStmt&)                        { res = true; }
       void handle(SgWhileStmt&)                     { res = true; }
@@ -1807,14 +1830,13 @@ namespace
 
   void AdaStatementUnparser::handleBasicBlock(SgBasicBlock& n, bool functionbody)
   {
-    //~ ScopeUpdateGuard             scopeGuard{unparser, info, n};
-
     SgStatementPtrList&          stmts    = n.get_statements();
     SgStatementPtrList::iterator aa       = stmts.begin();
     SgStatementPtrList::iterator zz       = stmts.end();
     SgStatementPtrList::iterator dcllimit = si::Ada::declarationLimit(stmts);
     const std::string            label    = n.get_string_label();
     const bool                   requiresBeginEnd = !adaStmtSequence(n);
+
     //~ ROSE_ASSERT(aa == dcllimit || requiresBeginEnd);
 
     // was: ( functionbody || (aa != dcllimit) || label.size() );

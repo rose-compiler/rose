@@ -3,11 +3,12 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_MODEL_CHECKER
 
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/ModelChecker/SemanticCallbacks.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
+#include <Rose/BinaryAnalysis/Variables.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Stack.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -311,7 +312,7 @@ public:
 
 private:
     const Settings settings_;
-    const Partitioner2::Partitioner &partitioner_;
+    Partitioner2::PartitionerConstPtr partitioner_;     // not null
     SmtSolver::Ptr modelCheckerSolver_;                 // solver used for model checking, different than RISC operators
     size_t nInstructions_ = 0;
     SemanticCallbacks *semantics_ = nullptr;
@@ -322,14 +323,14 @@ private:
     Variables::VariableFinderPtr variableFinder_unsync;       // shared by all RiscOperator objects
 
 protected:
-    RiscOperators(const Settings&, const Partitioner2::Partitioner&, ModelChecker::SemanticCallbacks*,
+    RiscOperators(const Settings&, const Partitioner2::PartitionerConstPtr&, ModelChecker::SemanticCallbacks*,
                   const InstructionSemantics::BaseSemantics::SValuePtr &protoval, const SmtSolverPtr&,
                   const Variables::VariableFinderPtr&);
 
 public: // Standard public construction-like functions
     ~RiscOperators();
 
-    static Ptr instance(const Settings&, const Partitioner2::Partitioner&, ModelChecker::SemanticCallbacks*,
+    static Ptr instance(const Settings&, const Partitioner2::PartitionerConstPtr&, ModelChecker::SemanticCallbacks*,
                         const InstructionSemantics::BaseSemantics::SValuePtr &protoval, const SmtSolverPtr&,
                         const Variables::VariableFinderPtr&);
 
@@ -345,7 +346,7 @@ public: // Supporting functions
     /** Property: Partitioner.
      *
      *  The partitioner specified when this object was constructed. */
-    const Partitioner2::Partitioner& partitioner() const;
+    Partitioner2::PartitionerConstPtr partitioner() const;
 
     /** Property: Model checker SMT solver.
      *
@@ -531,7 +532,7 @@ public:
 
 private:
     Settings settings_;                                 // settings are set by the constructor and not modified thereafter
-    const Partitioner2::Partitioner &partitioner_;      // generally shouldn't be changed once model checking starts
+    Partitioner2::PartitionerConstPtr partitioner_;     // generally shouldn't be changed once model checking starts, non-null
     SmtSolver::Memoizer::Ptr smtMemoizer_;              // memoizer shared among all solvers
 
     mutable SAWYER_THREAD_TRAITS::Mutex unitsMutex_;    // protects only the units_ data member
@@ -554,16 +555,16 @@ private:
     std::list<ExecutionUnitPtr> onePath_;               // execution units yet to be consumed by findUnit
 
 protected:
-    SemanticCallbacks(const ModelChecker::SettingsPtr&, const Settings&, const Partitioner2::Partitioner&);
+    SemanticCallbacks(const ModelChecker::SettingsPtr&, const Settings&, const Partitioner2::PartitionerConstPtr&);
 public:
     ~SemanticCallbacks();
 
 public:
-    static Ptr instance(const ModelChecker::SettingsPtr&, const Settings&, const Partitioner2::Partitioner&);
+    static Ptr instance(const ModelChecker::SettingsPtr&, const Settings&, const Partitioner2::PartitionerConstPtr&);
 
 public:
     /** Property: Partitioner being used. */
-    const Partitioner2::Partitioner& partitioner() const;
+    Partitioner2::PartitionerConstPtr partitioner() const;
 
 public:
     /** Cause this model to follow only one path through the specimen.

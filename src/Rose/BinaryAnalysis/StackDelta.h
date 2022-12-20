@@ -15,7 +15,6 @@ namespace BinaryAnalysis {
 
 // Forwards
 namespace Partitioner2 {
-    class Partitioner;
     namespace DataFlow {
         class InterproceduralPredicate;
     }
@@ -138,7 +137,7 @@ public:
      *  specified function need not be attached to the partitioner. Results of the analysis are stored in this analysis object
      *  to be queried after the analysis completes. */
     void
-    analyzeFunction(const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&,
+    analyzeFunction(const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&,
                     Partitioner2::DataFlow::InterproceduralPredicate&);
 
     /** Whether a function has been analyzed.

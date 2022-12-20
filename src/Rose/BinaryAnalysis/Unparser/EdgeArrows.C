@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/Unparser/EdgeArrows.h>
 
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
@@ -79,7 +80,7 @@ EdgeArrows::computeLayout(const Graph &graph, const std::vector<VertexId> &order
     for (const Arrow &arrow: arrows) {
         bool inserted = false;
         for (size_t i = 0; i < columns_.size() && !inserted; ++i) {
-            if (!columns_[i].isOverlapping(arrow.location)) {
+            if (!columns_[i].overlaps(arrow.location)) {
                 columns_[i].insert(arrow.location, arrow);
                 inserted = true;
             }
@@ -93,15 +94,15 @@ EdgeArrows::computeLayout(const Graph &graph, const std::vector<VertexId> &order
 }
 
 void
-EdgeArrows::computeCfgBlockLayout(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
+EdgeArrows::computeCfgBlockLayout(const P2::Partitioner::ConstPtr &partitioner, const P2::Function::Ptr &function) {
     ASSERT_not_null(function);
 
     // We use the basic block addresses as the arrow vertex names since the unparser will emit the basic blocks in order of
     // their starting address.
     Graph graph;                                        // the arrows (edges) and their endpoints (vertices)
     for (rose_addr_t sourceVa: function->basicBlockAddresses()) {
-        P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner.findPlaceholder(sourceVa);
-        ASSERT_require(vertex != partitioner.cfg().vertices().end());
+        P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner->findPlaceholder(sourceVa);
+        ASSERT_require(vertex != partitioner->cfg().vertices().end());
         for (const P2::ControlFlowGraph::Edge &edge: vertex->outEdges()) {
             if (edge.target()->value().type() == P2::V_BASIC_BLOCK) {
                 rose_addr_t targetVa = edge.target()->value().address();
@@ -115,7 +116,7 @@ EdgeArrows::computeCfgBlockLayout(const P2::Partitioner &partitioner, const P2::
 
 
 void
-EdgeArrows::computeCfgEdgeLayout(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
+EdgeArrows::computeCfgEdgeLayout(const P2::Partitioner::ConstPtr &partitioner, const P2::Function::Ptr &function) {
     ASSERT_not_null(function);
 
     // Process basic blocks in the order they're emitted by the unparser (i.e., by increasing starting address), and for each
@@ -128,7 +129,7 @@ EdgeArrows::computeCfgEdgeLayout(const P2::Partitioner &partitioner, const P2::F
     Graph graph;                                        // the arrows (edges) and their endpoints (vertices)
 
     for (rose_addr_t sourceVa: function->basicBlockAddresses()) {
-        P2::BasicBlock::Ptr bb = partitioner.basicBlockExists(sourceVa);
+        P2::BasicBlock::Ptr bb = partitioner->basicBlockExists(sourceVa);
         ASSERT_not_null(bb);
 
         // Incoming edges for the basic block (and we do the arrow at the same time)

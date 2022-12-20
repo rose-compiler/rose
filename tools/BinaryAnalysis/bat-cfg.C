@@ -5,11 +5,14 @@ static const char *description =
     "specified then the state is read from standard input.";
 
 #include <rose.h>
-#include <Rose/CommandLine.h>
-#include <Rose/Diagnostics.h>
+
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
+
 #include <rose_strtoull.h>                              // rose
 
 #include <batSupport.h>
@@ -207,7 +210,7 @@ makeGraphVizFileName(const std::string &prefix, const std::string &base) {
 }
 
 void
-emitGraphVizFunctionCfg(std::ostream &out, const P2::Partitioner &partitioner, const P2::Function::Ptr &function,
+emitGraphVizFunctionCfg(std::ostream &out, const P2::Partitioner::ConstPtr &partitioner, const P2::Function::Ptr &function,
                         const Settings &settings) {
     P2::GraphViz::CfgEmitter gv(partitioner);
     gv.defaultGraphAttributes().insert("overlap", "scale");
@@ -220,7 +223,7 @@ emitGraphVizFunctionCfg(std::ostream &out, const P2::Partitioner &partitioner, c
 }
 
 void
-emitGraphVizGlobalCfg(std::ostream &out, const P2::Partitioner &partitioner, const Settings &settings) {
+emitGraphVizGlobalCfg(std::ostream &out, const P2::Partitioner::ConstPtr &partitioner, const Settings &settings) {
     P2::GraphViz::CfgEmitter gv(partitioner);
     gv.defaultGraphAttributes().insert("overlap", "scale");
     gv.useFunctionSubgraphs(settings.usingSubgraphs);
@@ -231,13 +234,15 @@ emitGraphVizGlobalCfg(std::ostream &out, const P2::Partitioner &partitioner, con
 
 class VertexLabels {
     Sawyer::Container::GraphIteratorMap<P2::ControlFlowGraph::ConstVertexIterator, std::string> labels_;
-    const P2::Partitioner &partitioner_;
+    P2::Partitioner::ConstPtr partitioner_;             // not null
     P2::Function::Ptr function_;
     size_t nLocalBlocks_;
 
 public:
-    VertexLabels(const P2::Partitioner &p, const P2::Function::Ptr &f)
-        : partitioner_(p), function_(f), nLocalBlocks_(0) {}
+    VertexLabels(const P2::Partitioner::ConstPtr &partitioner, const P2::Function::Ptr &f)
+        : partitioner_(partitioner), function_(f), nLocalBlocks_(0) {
+        ASSERT_not_null(partitioner);
+    }
     
     std::string operator()(P2::ControlFlowGraph::ConstVertexIterator vertex) {
         std::string retval;
@@ -262,7 +267,7 @@ public:
                     retval = "B" + StringUtility::numberToString(++nLocalBlocks_) + " ";
                 if (bb->address() == function_->address()) {
                     retval += "function entry point";
-                } else if (P2::Function::Ptr f = partitioner_.functionExists(bb->address())) {
+                } else if (P2::Function::Ptr f = partitioner_->functionExists(bb->address())) {
                     retval += f->printableName();
                 } else {
                     retval += bb->printableName();
@@ -289,15 +294,16 @@ edgeTypeName(const P2::ControlFlowGraph::Edge &edge) {
 }
 
 void
-emitTextFunctionCfg(std::ostream &out, const P2::Partitioner &partitioner, const P2::Function::Ptr &function,
+emitTextFunctionCfg(std::ostream &out, const P2::Partitioner::ConstPtr &partitioner, const P2::Function::Ptr &function,
                     const Settings &settings) {
+    ASSERT_not_null(partitioner);
     out <<function->printableName() <<"\n";
     VertexLabels vertexLabels(partitioner, function);
 
     // Emit information about each basic block
     for (rose_addr_t bbVa: function->basicBlockAddresses()) {
-        P2::ControlFlowGraph::ConstVertexIterator placeholder = partitioner.findPlaceholder(bbVa);
-        if (!partitioner.cfg().isValidVertex(placeholder)) {
+        P2::ControlFlowGraph::ConstVertexIterator placeholder = partitioner->findPlaceholder(bbVa);
+        if (!partitioner->cfg().isValidVertex(placeholder)) {
             out <<"  " <<StringUtility::addrToString(bbVa) <<": not present in CFG\n";
         } else {
             // Block label
@@ -308,16 +314,16 @@ emitTextFunctionCfg(std::ostream &out, const P2::Partitioner &partitioner, const
                 out <<"    " <<edgeTypeName(edge) <<" edge from " <<vertexLabels(edge.source()) <<"\n";
             
             // Vertex content
-            P2::BasicBlock::Ptr bb = partitioner.basicBlockExists(bbVa);
+            P2::BasicBlock::Ptr bb = partitioner->basicBlockExists(bbVa);
             if (bb && settings.showingInstructions) {
                 for (SgAsmInstruction *insn: bb->instructions())
                     out <<"      " <<unparseInstructionWithAddress(insn) <<"\n";
             }
 
             // Vertex properties
-            if (partitioner.basicBlockIsFunctionCall(bb))
+            if (partitioner->basicBlockIsFunctionCall(bb))
                 out <<"    block is a function call\n";
-            if (partitioner.basicBlockIsFunctionReturn(bb))
+            if (partitioner->basicBlockIsFunctionReturn(bb))
                 out <<"    block is a function return\n";
 
             // Owning functions
@@ -337,8 +343,9 @@ emitTextFunctionCfg(std::ostream &out, const P2::Partitioner &partitioner, const
 }
 
 void
-emitTextGlobalCfg(std::ostream &out, const P2::Partitioner &partitioner, const Settings &settings) {
-    for (P2::Function::Ptr function: partitioner.functions())
+emitTextGlobalCfg(std::ostream &out, const P2::Partitioner::ConstPtr &partitioner, const Settings &settings) {
+    ASSERT_not_null(partitioner);
+    for (P2::Function::Ptr function: partitioner->functions())
         emitTextFunctionCfg(out, partitioner, function, settings);
 }
 
@@ -355,11 +362,11 @@ main(int argc, char *argv[]) {
 
     Settings settings;
     boost::filesystem::path inputFileName = parseCommandLine(argc, argv, settings);
-    P2::Engine engine;
-    P2::Partitioner partitioner = engine.loadPartitioner(inputFileName, settings.stateFormat);
+    P2::Engine *engine = P2::Engine::instance();
+    P2::Partitioner::Ptr partitioner = engine->loadPartitioner(inputFileName, settings.stateFormat);
 
     // Get a list of functions
-    std::vector<P2::Function::Ptr> selectedFunctions = partitioner.functions();
+    std::vector<P2::Function::Ptr> selectedFunctions = partitioner->functions();
     if (!settings.functionNames.empty()) {
         selectedFunctions = Bat::selectFunctionsByNameOrAddress(selectedFunctions, settings.functionNames, mlog[WARN]);
         if (selectedFunctions.empty())
@@ -422,6 +429,7 @@ main(int argc, char *argv[]) {
                 ASSERT_not_implemented("output format");
         }
     }
+    delete engine;
 
     return hadErrors ? 1 : 0;
 }

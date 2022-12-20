@@ -2,9 +2,8 @@
 #define ROSE_BinaryAnalysis_Partitioner2_BasicBlock_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
-#include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
+
 #include <Rose/BinaryAnalysis/Partitioner2/Semantics.h>
 #include <Rose/SourceLocation.h>
 
@@ -103,6 +102,49 @@ public:
     }
 };
 
+/** Basic block successor. */
+class BasicBlockSuccessor {
+private:
+    Semantics::SValuePtr expr_;
+    EdgeType type_;
+    Confidence confidence_;
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        s & BOOST_SERIALIZATION_NVP(expr_);
+        s & BOOST_SERIALIZATION_NVP(type_);
+        s & BOOST_SERIALIZATION_NVP(confidence_);
+    }
+#endif
+
+public: // "protected" fails for boost-1.58.
+    // intentionally undocumented; needed for serialization
+    BasicBlockSuccessor()
+        : type_(E_USER_DEFINED), confidence_(ASSUMED) {}
+
+public:
+    explicit BasicBlockSuccessor(const Semantics::SValuePtr &expr, EdgeType type=E_NORMAL, Confidence confidence=ASSUMED)
+        : expr_(expr), type_(type), confidence_(confidence) {}
+
+    /** Symbolic expression for the successor address. */
+    const Semantics::SValuePtr& expr() const { return expr_; }
+
+    /** Type of successor. */
+    EdgeType type() const { return type_; }
+    void type(EdgeType t) { type_ = t; }
+
+    /** Confidence level of this successor.  Did we prove that this is a successor, or only assume it is?
+     *
+     * @{ */
+    Confidence confidence() const { return confidence_; }
+    void confidence(Confidence c) { confidence_ = c; }
+    /** @} */
+};
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // BasicBlock
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -134,50 +176,10 @@ public:
     typedef Sawyer::SharedPointer<BasicBlock> Ptr;
 
     /** Basic block successor. */
-    class Successor {
-    private:
-        Semantics::SValuePtr expr_;
-        EdgeType type_;
-        Confidence confidence_;
-
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-    private:
-        friend class boost::serialization::access;
-
-        template<class S>
-        void serialize(S &s, const unsigned /*version*/) {
-            s & BOOST_SERIALIZATION_NVP(expr_);
-            s & BOOST_SERIALIZATION_NVP(type_);
-            s & BOOST_SERIALIZATION_NVP(confidence_);
-        }
-#endif
-
-    public: // "protected" fails for boost-1.58.
-        // intentionally undocumented; needed for serialization
-        Successor()
-            : type_(E_USER_DEFINED), confidence_(ASSUMED) {}
-
-    public:
-        explicit Successor(const Semantics::SValuePtr &expr, EdgeType type=E_NORMAL, Confidence confidence=ASSUMED)
-            : expr_(expr), type_(type), confidence_(confidence) {}
-
-        /** Symbolic expression for the successor address. */
-        const Semantics::SValuePtr& expr() const { return expr_; }
-
-        /** Type of successor. */
-        EdgeType type() const { return type_; }
-        void type(EdgeType t) { type_ = t; }
-
-        /** Confidence level of this successor.  Did we prove that this is a successor, or only assume it is?
-         *
-         * @{ */
-        Confidence confidence() const { return confidence_; }
-        void confidence(Confidence c) { confidence_ = c; }
-        /** @} */
-    };
+    using Successor = BasicBlockSuccessor;
 
     /** All successors in no particular order. */
-    typedef std::vector<Successor> Successors;
+    using Successors = BasicBlockSuccessors;
 
 private:
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_;
@@ -187,7 +189,7 @@ private:
     std::string comment_;                               // Mutli-line plain-text comment
     std::vector<SgAsmInstruction*> insns_;              // Instructions in the order they're executed
     BasicBlockSemantics semantics_;                     // All semantics-related information
-    std::vector<DataBlock::Ptr> dblocks_;               // Data blocks owned by this basic block, sorted
+    std::vector<DataBlockPtr> dblocks_;                 // Data blocks owned by this basic block, sorted
     SourceLocation sourceLocation_;                     // Optional location of basic block in source code
 
     // When a basic block gets lots of instructions some operations become slow due to the linear nature of the instruction
@@ -206,27 +208,9 @@ private:
     Sawyer::Cached<bool> isFunctionReturn_;             // is this block semantically a return from the function?
     Sawyer::Cached<bool> mayReturn_;                    // a function return is reachable from this basic block in the CFG
     Sawyer::Cached<bool> popsStack_;                    // basic block has a net popping effect
-
-    void clearCacheNS() const {
-        successors_.clear();
-        ghostSuccessors_.clear();
-        isFunctionCall_.clear();
-        isFunctionReturn_.clear();
-        mayReturn_.clear();
-        popsStack_.clear();
-    }
-
+    void clearCacheNS() const;
 public:
-    void copyCache(const BasicBlock::Ptr &other) {
-        ASSERT_not_null(other);
-        SAWYER_THREAD_TRAITS::LockGuard2 lock(mutex_, other->mutex_);
-        successors_ = other->successors_;
-        ghostSuccessors_ = other->ghostSuccessors_;
-        isFunctionCall_ = other->isFunctionCall_;
-        isFunctionReturn_ = other->isFunctionReturn_;
-        mayReturn_ = other->mayReturn_;
-        popsStack_ = other->popsStack_;
-    }
+    void copyCache(const BasicBlockPtr &other);
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -267,15 +251,12 @@ private:
     //                                  Constructors
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 protected:
-    BasicBlock()                                        // needed for serialization
-        : isFrozen_(false), startVa_(0) {}
+    BasicBlock();                                       // needed for serialization
 
     // use instance() instead
-    BasicBlock(rose_addr_t startVa, const Partitioner &partitioner)
-        : isFrozen_(false), startVa_(startVa) {
-        semantics_.usingDispatcher = true;
-        init(partitioner);
-    }
+    BasicBlock(rose_addr_t startVa, const PartitionerConstPtr&);
+public:
+    ~BasicBlock();
 
 public:
     /** Static allocating constructor.
@@ -283,7 +264,7 @@ public:
      *  The @p startVa is the starting address for this basic block.  The @p partitioner is the partitioner on whose behalf
      *  this basic block is created.  The partitioner is not stored in the basic block, but is only used to initialize
      *  certain data members of the block (such as its instruction dispatcher). */
-    static Ptr instance(rose_addr_t startVa, const Partitioner &partitioner) {
+    static Ptr instance(rose_addr_t startVa, const PartitionerConstPtr &partitioner) {
         return Ptr(new BasicBlock(startVa, partitioner));
     }
 
@@ -292,7 +273,7 @@ public:
      *  The @p startVa is the starting address for this basic block.  The @p partitioner is the partitioner on whose behalf
      *  this basic block is created.  The partitioner is not stored in the basic block, but is only used to initialize
      *  certain data members of the block (such as its instruction dispatcher). */
-    virtual Ptr create(rose_addr_t startVa, const Partitioner &partitioner) const {
+    virtual Ptr create(rose_addr_t startVa, const PartitionerConstPtr &partitioner) const {
         return instance(startVa, partitioner);
     }
 
@@ -445,7 +426,7 @@ public:
      * @endcode
      *
      *  Thread safety: This method is not thread safe. */
-    void append(const Partitioner&, SgAsmInstruction*);
+    void append(const PartitionerConstPtr&, SgAsmInstruction*);
 
     /** Undo the latest append.
      *
@@ -471,10 +452,7 @@ public:
     /** Get the number of data blocks owned.
      *
      *  Thread safety: This method is thread safe. */
-    size_t nDataBlocks() const {
-        SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-        return dblocks_.size();
-    }
+    size_t nDataBlocks() const;
 
     /** Addresses that are part of static data.
      *
@@ -489,7 +467,7 @@ public:
      *  existing data block, otherwise it returns the null pointer.
      *
      *  Thread safety: This method is not thread safe. */
-    DataBlock::Ptr dataBlockExists(const DataBlock::Ptr&) const;
+    DataBlockPtr dataBlockExists(const DataBlockPtr&) const;
 
     /** Make this basic block own the specified data block or equivalent data block.
      *
@@ -499,7 +477,7 @@ public:
      *  block cannot be inserted when this basic block is frozen.
      *
      *  Thread safety: This method is not thread safe. */
-    bool insertDataBlock(const DataBlock::Ptr&);
+    bool insertDataBlock(const DataBlockPtr&);
 
     /** Remove specified or equivalent data block from this basic block.
      *
@@ -508,14 +486,14 @@ public:
      *
      *  It is an error to invoke this method on basic block that is attached to the CFG/AUM, for which @ref isFrozen returns
      *  true. This method is a no-op if the specified data block is a null pointer. */
-    DataBlock::Ptr eraseDataBlock(const DataBlock::Ptr&);
+    DataBlockPtr eraseDataBlock(const DataBlockPtr&);
 
     /** Data blocks owned.
      *
      *  Returned vector is sorted according to data block starting address.
      *
      *  Thread safety: This method is not thread safe since it returns a reference. */
-    const std::vector<DataBlock::Ptr>& dataBlocks() const { return dblocks_; }
+    const std::vector<DataBlockPtr>& dataBlocks() const { return dblocks_; }
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -537,7 +515,7 @@ public:
      *  adjusting the instruction semantics framework for the block.
      *
      *  Thread safety: This method is thread safe. */
-    void dropSemantics(const Partitioner&);
+    void dropSemantics(const PartitionerConstPtr&);
 
     /** Undrop semantics.
      *
@@ -546,7 +524,7 @@ public:
      *  semantics framework for the block.
      *
      *  Thread safety: This method is thread safe. */
-    BasicBlockSemantics undropSemantics(const Partitioner&);
+    BasicBlockSemantics undropSemantics(const PartitionerConstPtr&);
 
 
 
@@ -658,13 +636,13 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
     friend class Partitioner;
-    void init(const Partitioner&);
+    void init(const PartitionerConstPtr&);
     void freeze() { isFrozen_ = true; semantics_.optionalPenultimateState = Sawyer::Nothing(); }
     void thaw() { isFrozen_ = false; }
-    BasicBlockSemantics undropSemanticsNS(const Partitioner&);
+    BasicBlockSemantics undropSemanticsNS(const PartitionerConstPtr&);
 
     // Find an equivalent data block and replace it with the specified data block, or insert the specified data block.
-    void replaceOrInsertDataBlock(const DataBlock::Ptr&);
+    void replaceOrInsertDataBlock(const DataBlockPtr&);
 };
 
 } // namespace

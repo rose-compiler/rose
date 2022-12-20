@@ -81,7 +81,7 @@ Base::mark_referenced_instructions(SgAsmInterpretation *interp, const MemoryMap:
 
             while (nbytes>0) {
                 /* Find the memory map segment and the file that goes with that segment (if any) */
-                if (si==map->nodes().end() || !si->key().isContaining(va)) {
+                if (si==map->nodes().end() || !si->key().contains(va)) {
                     if (file) {
                         file->set_tracking_references(was_tracking);
                         file = NULL;

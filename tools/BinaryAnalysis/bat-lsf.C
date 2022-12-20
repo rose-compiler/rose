@@ -5,10 +5,14 @@ static const char *description =
     "specified. Standard input is supported only on those systems where it's opened in binary mode, such as Linux.";
 
 #include <rose.h>
+
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
+#include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/FunctionCallGraph.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/FormattedTable.h>
 
 #include <batSupport.h>
@@ -88,7 +92,7 @@ toString(size_t a, size_t b) {
 
 // Print a pretty table with information about functions.
 void
-printFunctions(const P2::Partitioner &p) {
+printFunctions(const P2::Partitioner::ConstPtr &partitioner) {
     FormattedTable table;
     table.columnHeader(0, 0, "Entry VA");
     table.columnHeader(0, 1, "Lowest/Highest VA");
@@ -98,13 +102,13 @@ printFunctions(const P2::Partitioner &p) {
     table.columnHeader(0, 5, "Callers/Callees");
     table.columnHeader(0, 6, "Name");
 
-    P2::FunctionCallGraph cg = p.functionCallGraph(P2::AllowParallelEdges::NO);
+    P2::FunctionCallGraph cg = partitioner->functionCallGraph(P2::AllowParallelEdges::NO);
 
-    for (const P2::Function::Ptr &function: p.functions()) {
-        AddressIntervalSet fe = p.functionExtent(function);
+    for (const P2::Function::Ptr &function: partitioner->functions()) {
+        AddressIntervalSet fe = partitioner->functionExtent(function);
         size_t nInsns = 0;
         for (rose_addr_t bbva: function->basicBlockAddresses()) {
-            if (P2::BasicBlock::Ptr bb = p.basicBlockExists(bbva))
+            if (P2::BasicBlock::Ptr bb = partitioner->basicBlockExists(bbva))
                 nInsns += bb->nInstructions();
         }
         size_t nDBlockBytes = 0;
@@ -136,9 +140,11 @@ main(int argc, char *argv[]) {
     Bat::checkRoseVersionNumber(MINIMUM_ROSE_LIBRARY_VERSION, mlog[FATAL]);
     Bat::registerSelfTests();
 
-    P2::Engine engine;
+    P2::Engine *engine = P2::Engine::instance();
     boost::filesystem::path inputFileName = parseCommandLine(argc, argv);
-    P2::Partitioner partitioner = engine.loadPartitioner(inputFileName, stateFormat);
+    P2::Partitioner::Ptr partitioner = engine->loadPartitioner(inputFileName, stateFormat);
 
     printFunctions(partitioner);
+
+    delete engine;
 }

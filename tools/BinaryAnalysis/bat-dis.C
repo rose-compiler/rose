@@ -8,15 +8,18 @@ static const char *description =
     "systems whose standard input is opened in binary mode, such as Unix-like systems.";
 
 #include <rose.h>
+
 #include <Rose/BinaryAnalysis/NoOperation.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/CommandLine.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
-#include <Sawyer/Stopwatch.h>
 
 #include <batSupport.h>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem.hpp>
+#include <Sawyer/Stopwatch.h>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
@@ -107,8 +110,8 @@ public:
 
     void emitBasicBlockBody(std::ostream &out, const P2::BasicBlockPtr &bb, BinaryAnalysis::Unparser::State &state) const override {
         ASSERT_not_null(bb);
-        InstructionSemantics::BaseSemantics::RiscOperators::Ptr ops = state.partitioner().newOperators();
-        if (InstructionSemantics::BaseSemantics::Dispatcher::Ptr cpu = state.partitioner().newDispatcher(ops)) {
+        InstructionSemantics::BaseSemantics::RiscOperators::Ptr ops = state.partitioner()->newOperators();
+        if (InstructionSemantics::BaseSemantics::Dispatcher::Ptr cpu = state.partitioner()->newDispatcher(ops)) {
             // Find the largest non-overlapping instruction sequences that are effectively no-ops
             NoOperation nopAnalyzer(cpu);
             nopAnalyzer.initialStackPointer(0xceed0000); // arbitrary
@@ -120,7 +123,7 @@ public:
             for (size_t i=0; i<bb->nInstructions(); ++i) {
                 bool isGoodInstruction = true;
                 for (const NoOperation::IndexInterval &interval: nopIndexes) {
-                    if (interval.isContaining(i)) {
+                    if (interval.contains(i)) {
                         isGoodInstruction = false;
                         break;
                     }
@@ -170,12 +173,12 @@ main(int argc, char *argv[]) {
     Bat::checkRoseVersionNumber(MINIMUM_ROSE_LIBRARY_VERSION, mlog[FATAL]);
     Bat::registerSelfTests();
 
-    P2::Engine engine;
     Settings settings;
+    P2::Engine *engine = P2::Engine::instance();
     if (boost::ends_with(argv[0], "-simple"))
         settings.unparser = BinaryAnalysis::Unparser::Settings::minimal();
-    boost::filesystem::path inputFileName = parseCommandLine(argc, argv, engine, settings);
-    P2::Partitioner partitioner = engine.loadPartitioner(inputFileName, settings.stateFormat);
+    boost::filesystem::path inputFileName = parseCommandLine(argc, argv, *engine, settings);
+    P2::Partitioner::Ptr partitioner = engine->loadPartitioner(inputFileName, settings.stateFormat);
 
     // Make sure output directories exit
     boost::filesystem::path dir = boost::filesystem::path(settings.fileNamePrefix).parent_path();
@@ -185,7 +188,7 @@ main(int argc, char *argv[]) {
     }
 
     // Obtain an unparser
-    BinaryAnalysis::Unparser::Base::Ptr unparser = partitioner.unparser();
+    BinaryAnalysis::Unparser::Base::Ptr unparser = partitioner->unparser();
     unparser->settings() = settings.unparser;
     if (settings.discardNops)
         unparser = MyUnparser::instance(unparser);
@@ -194,7 +197,7 @@ main(int argc, char *argv[]) {
         // Output only selected functions (all to stdout or each to its own file)
         unparser->settings().function.cg.showing = false; // slow
         std::vector<P2::Function::Ptr> selectedFunctions =
-            Bat::selectFunctionsByNameOrAddress(partitioner.functions(), settings.functionNames, mlog[WARN]);
+            Bat::selectFunctionsByNameOrAddress(partitioner->functions(), settings.functionNames, mlog[WARN]);
         for (const P2::Function::Ptr &f: Bat::selectFunctionsContainingInstruction(partitioner, settings.addresses))
             P2::insertUnique(selectedFunctions, f, P2::sortFunctionsByAddress);
         if (selectedFunctions.empty())
@@ -214,7 +217,7 @@ main(int argc, char *argv[]) {
 
     } else if (!settings.fileNamePrefix.empty()) {
         // Output all functions, each to its own file
-        for (const P2::Function::Ptr &function: partitioner.functions()) {
+        for (const P2::Function::Ptr &function: partitioner->functions()) {
             std::ofstream file(functionFileName(settings, function).c_str());
             unparser->unparse(file, partitioner, Progress::instance());
         }
@@ -223,4 +226,6 @@ main(int argc, char *argv[]) {
         // Output all functions to standard output
         unparser->unparse(std::cout, partitioner, Progress::instance());
     }
+
+    delete engine;
 }

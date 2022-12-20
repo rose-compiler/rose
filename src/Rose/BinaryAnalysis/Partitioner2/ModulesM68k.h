@@ -2,9 +2,9 @@
 #define ROSE_BinaryAnalysis_Partitioner2_ModulesM68k_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 
-#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -18,12 +18,17 @@ namespace ModulesM68k {
  *  Matches a "LINK.W A6, ###" instruction where "###" is zero or negative, and creates a function at that address. */
 class MatchLink: public FunctionPrologueMatcher {
 protected:
-    Function::Ptr function_;
+    FunctionPtr function_;
+
+protected:
+    MatchLink();
 public:
+    ~MatchLink();
+
     /** Allocating constructor. */
-    static Ptr instance() { return Ptr(new MatchLink); }
-    virtual std::vector<Function::Ptr> functions() const override { return std::vector<Function::Ptr>(1, function_); }
-    virtual bool match(const Partitioner&, rose_addr_t anchor) override;
+    static Ptr instance();
+    virtual std::vector<FunctionPtr> functions() const override;
+    virtual bool match(const PartitionerConstPtr&, rose_addr_t anchor) override;
 };
 
 /** Matches M68k function padding. */
@@ -31,7 +36,7 @@ class MatchFunctionPadding: public FunctionPaddingMatcher {
 public:
     /** Allocating constructor. */
     static Ptr instance() { return Ptr(new MatchFunctionPadding); }
-    virtual rose_addr_t match(const Partitioner&, rose_addr_t anchor) override;
+    virtual rose_addr_t match(const PartitionerConstPtr&, rose_addr_t anchor) override;
 };
 
 /** Adjusts basic block successors for M68k "switch" statements. */
@@ -46,7 +51,7 @@ public:
  *
  *  M68k interrupt vectors have 256 4-byte addresses, for a total of 1024 bytes.  This function, when given an interrupt vector
  *  base address, will read the memory and create up to 256 new functions. */
-std::vector<Function::Ptr> findInterruptFunctions(const Partitioner&, rose_addr_t vectorVa);
+std::vector<FunctionPtr> findInterruptFunctions(const PartitionerConstPtr&, rose_addr_t vectorVa);
 
 } // namespace
 } // namespace

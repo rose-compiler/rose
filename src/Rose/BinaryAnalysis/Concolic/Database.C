@@ -4,13 +4,17 @@
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <boost/archive/binary_iarchive.hpp>            // included before ROSE headers
 #include <boost/archive/binary_oarchive.hpp>            // included before ROSE headers
+#include <boost/archive/xml_iarchive.hpp>               // included before ROSE headers
+#include <boost/archive/xml_oarchive.hpp>               // included bofore ROSE headers
 
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
 
 #include <Rose/BinaryAnalysis/Concolic/ConcreteExecutor.h>
 #include <Rose/BinaryAnalysis/Concolic/ExecutionEvent.h>
-#include <Rose/BinaryAnalysis/Concolic/LinuxTraceExecutor.h>
+#include <Rose/BinaryAnalysis/Concolic/I386Linux/ExitStatusResult.h>
+#include <Rose/BinaryAnalysis/Concolic/I386Linux/TracingResult.h>
+#include <Rose/BinaryAnalysis/Concolic/M68kSystem/TracingResult.h>
 #include <Rose/BinaryAnalysis/Concolic/Specimen.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 #include <Rose/BinaryAnalysis/Concolic/TestSuite.h>
@@ -72,6 +76,9 @@ static void
 registerTypes(Archive &archive) {
     archive.template register_type<IS::SymbolicSemantics::MemoryListState>();
     archive.template register_type<IS::SymbolicSemantics::MemoryMapState>();
+    archive.template register_type<I386Linux::ExitStatusResult>();
+    archive.template register_type<I386Linux::TracingResult>();
+    archive.template register_type<M68kSystem::TracingResult>();
 }
 
 // Return the file name part of an SQLite connection URL
@@ -293,6 +300,7 @@ updateObject(const Database::Ptr &db, TestCaseId id, const TestCase::Ptr &obj) {
     if (auto assertions = iter->get<std::string>(10)) {
         std::istringstream ss(*assertions);
         boost::archive::binary_iarchive archive(ss);
+        registerTypes(archive);
         std::vector<SymbolicExpression::Ptr> v;
         archive >>v;
         obj->assertions(v);
@@ -363,6 +371,7 @@ updateDb(const Database::Ptr &db, TestCaseId id, const TestCase::Ptr &obj) {
         std::ostringstream ss;
         {
             boost::archive::binary_oarchive archive(ss);
+            registerTypes(archive);
             archive <<obj->assertions();
         }
         stmt.bind("assertions", ss.str());
@@ -964,7 +973,7 @@ Database::concreteResultExists(TestCaseId id) {
 }
 
 void
-Database::saveConcreteResult(const TestCase::Ptr &testCase, const ConcreteExecutorResult *details) {
+Database::saveConcreteResult(const TestCase::Ptr &testCase, const ConcreteResult::Ptr &details) {
     ASSERT_not_null(testCase);
     TestCaseId id = save(testCase);
 
@@ -977,7 +986,7 @@ Database::saveConcreteResult(const TestCase::Ptr &testCase, const ConcreteExecut
         std::stringstream ss;
         {
             boost::archive::xml_oarchive archive(ss);
-            archive.register_type<LinuxTraceExecutor::Result>();
+            registerTypes(archive);
             archive <<BOOST_SERIALIZATION_NVP(details);
         }
         connection().stmt("update test_cases"
@@ -1006,19 +1015,21 @@ Database::saveConcreteResult(const TestCase::Ptr &testCase, const ConcreteExecut
     save(testCase);
 }
 
-std::unique_ptr<ConcreteExecutorResult>
+ConcreteResult::Ptr
 Database::readConcreteResult(TestCaseId id) {
-    ConcreteExecutorResult *details = nullptr;
     Sawyer::Optional<std::string> bytes = connection().stmt("select concrete_result from test_cases where id = ?id")
                                           .bind("id", *id)
                                           .get<std::string>();
     if (bytes) {
         std::istringstream ss(*bytes);
         boost::archive::xml_iarchive archive(ss);
-        archive.register_type<LinuxTraceExecutor::Result>();
+        registerTypes(archive);
+        ConcreteResult::Ptr details;
         archive >> BOOST_SERIALIZATION_NVP(details);
+        return details;
+    } else {
+        return {};
     }
-    return std::unique_ptr<ConcreteExecutorResult>(details);
 }
 
 void

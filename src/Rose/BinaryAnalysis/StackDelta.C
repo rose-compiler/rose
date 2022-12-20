@@ -5,6 +5,7 @@
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
@@ -134,8 +135,9 @@ public:
 };
 
 void
-Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::FunctionPtr &function,
+Analysis::analyzeFunction(const P2::Partitioner::ConstPtr &partitioner, const P2::FunctionPtr &function,
                           Partitioner2::DataFlow::InterproceduralPredicate &ipPredicate) {
+    ASSERT_not_null(partitioner);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     SAWYER_MESG(debug) <<"analyzeFunction(" <<function->printableName() <<")\n";
     clearResults();
@@ -144,7 +146,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     // point for the function we're analyzing and which belong to that function.  All return points in the function will flow
     // into a special CALLRET vertex (which is absent if there are no returns).
     typedef P2::DataFlow::DfCfg DfCfg;
-    DfCfg dfCfg = P2::DataFlow::buildDfCfg(partitioner, partitioner.cfg(), partitioner.findPlaceholder(function->address()),
+    DfCfg dfCfg = P2::DataFlow::buildDfCfg(partitioner, partitioner->cfg(), partitioner->findPlaceholder(function->address()),
                                            ipPredicate);
     size_t startVertexId = 0;
     DfCfg::ConstVertexIterator returnVertex = dfCfg.vertices().end();
@@ -162,11 +164,11 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     // Build the dataflow engine. If an instruction dispatcher is already provided then use it, otherwise create one and store
     // it in this analysis object.
     typedef DataFlow::Engine<DfCfg, BaseSemantics::State::Ptr, TransferFunction, DataFlow::SemanticsMerge> DfEngine;
-    if (!cpu_ && NULL==(cpu_ = partitioner.newDispatcher(partitioner.newOperators()))) {
+    if (!cpu_ && NULL==(cpu_ = partitioner->newDispatcher(partitioner->newOperators()))) {
         SAWYER_MESG(debug) <<"  no instruction semantics\n";
         return;
     }
-    const CallingConvention::Dictionary &ccDefs = partitioner.instructionProvider().callingConventions();
+    const CallingConvention::Dictionary &ccDefs = partitioner->instructionProvider().callingConventions();
     P2::DataFlow::MergeFunction merge(cpu_);
     TransferFunction xfer(this);
     xfer.defaultCallingConvention(ccDefs.empty() ? CallingConvention::Definition::Ptr() : ccDefs.front());

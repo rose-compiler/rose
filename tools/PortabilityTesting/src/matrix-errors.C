@@ -137,6 +137,7 @@ updateDatabase(DB::Connection db, const std::vector<int> &testIds) {
                      "|Assertion `.*'' failed\\.$"             // failed <cassert> assertion
                      "|^.*: undefined reference to `.*"        // GNU linker error
                      "|No space left on device"
+                     "|tup error: (.*)"                        // such as 'FUSE did not appear to release all...'
                      "|relocation R_X86_64_32S against `.*'' can not be used when making a shared object.*"
                      "|31;1m\\d+ TESTS FAILED. See above list for details\\." // Markus' STL tests
                      "|^make\\[[0-9]+\\]: \\*\\*\\* No rule to make target.*"

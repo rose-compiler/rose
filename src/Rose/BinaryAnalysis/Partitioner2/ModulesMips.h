@@ -15,14 +15,16 @@ namespace ModulesMips {
 /** Matches a MIPS function prologue that's a return followed by ADDIU instruction. */
 class MatchRetAddiu: public FunctionPrologueMatcher {
 protected:
-    Function::Ptr function_;
+    FunctionPtr function_;
+protected:
+    MatchRetAddiu();
 public:
-    /** Allocating constructor. */
-    static Ptr instance() { return Ptr(new MatchRetAddiu); }
-    virtual std::vector<Function::Ptr> functions() const override {
-        return std::vector<Function::Ptr>(1, function_);
-    }
-    virtual bool match(const Partitioner&, rose_addr_t anchor) override;
+    ~MatchRetAddiu();
+
+public:
+    static Ptr instance();                              /**< Allocating constructor. */
+    virtual std::vector<FunctionPtr> functions() const override;
+    virtual bool match(const PartitionerConstPtr&, rose_addr_t anchor) override;
 };
 
 } // namespace

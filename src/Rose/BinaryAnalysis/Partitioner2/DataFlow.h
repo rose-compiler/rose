@@ -2,11 +2,11 @@
 #define ROSE_BinaryAnalysis_Partitioner2_DataFlow_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 
 #include <Rose/BinaryAnalysis/DataFlow.h>
-#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
-#include <Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
+#include <Rose/BinaryAnalysis/Variables.h>
 #include <Sawyer/Graph.h>
 
 namespace Rose {
@@ -35,55 +35,50 @@ public:
 
 private:
     Type type_;
-    BasicBlock::Ptr bblock_;                            // attached to BBLOCK vertices
-    Function::Ptr callee_;                              // function represented by FAKED_CALL
-    Function::Ptr parentFunction_;                      // function "owning" this vertex
+    BasicBlockPtr bblock_;                              // attached to BBLOCK vertices
+    FunctionPtr callee_;                                // function represented by FAKED_CALL
+    FunctionPtr parentFunction_;                        // function "owning" this vertex
     size_t inliningId_;                                 // invocation ID for inlining functions during inter-procedural
 
 public:
+    ~DfCfgVertex();
+
     /** Construct a basic block vertex.  The basic block pointer should not be a null pointer. */
-    explicit DfCfgVertex(const BasicBlock::Ptr &bblock, const Function::Ptr &parentFunction, size_t inliningId)
-        : type_(BBLOCK), bblock_(bblock), parentFunction_(parentFunction), inliningId_(inliningId) {
-        ASSERT_not_null(bblock);
-    }
+    DfCfgVertex(const BasicBlockPtr&, const FunctionPtr &parentFunction, size_t inliningId);
 
     /** Construct a faked call vertex. The function may be null if indeterminate. */
-    explicit DfCfgVertex(const Function::Ptr &function, const Function::Ptr &parentFunction, size_t inliningId)
-        : type_(FAKED_CALL), callee_(function), parentFunction_(parentFunction), inliningId_(inliningId) {}
+    DfCfgVertex(const FunctionPtr &function, const FunctionPtr &parentFunction, size_t inliningId);
 
     /** Construct a vertex of specified type that takes no auxiliary data. */
-    explicit DfCfgVertex(Type type, const Function::Ptr &parentFunction, size_t inliningId)
-        : type_(type), parentFunction_(parentFunction), inliningId_(inliningId) {
-        ASSERT_require2(BBLOCK!=type && FAKED_CALL!=type, "use a different constructor");
-    }
+    DfCfgVertex(Type type, const FunctionPtr &parentFunction, size_t inliningId);
 
     /** Type of the vertex.
      *
      *  Vertex types are immutable, defined when the vertex is created. Every vertex has a type. */
-    Type type() const { return type_; }
+    Type type() const;
 
     /** Basic block.
      *
      *  The basic block for a vertex is immutable, defined when the vertex is created.  Only basic block vertices have a basic
      *  block; other vertex types will return a null pointer. */
-    const BasicBlock::Ptr& bblock() const { return bblock_; }
+    const BasicBlockPtr& bblock() const;
 
     /** Function represented by faked call. */
-    const Function::Ptr& callee() const { return callee_; }
+    const FunctionPtr& callee() const;
 
     /** Function owning this vertex.
      *
      *  Pointer to the function to which this vertex belongs. For basic blocks, it's a function to which the basic block
      *  belongs; for faked calls, its the caller function; for function returns, it's the function returning; for the
      *  indeterminate vertex it's a null pointer. */
-    Function::Ptr parentFunction() const { return parentFunction_; }
+    FunctionPtr parentFunction() const;
 
     /** Inlining invocation number.
      *
      *  For a graph constructed for interprocedural data-flow, some function calls are replaced by the called function's
      *  body. Each time this inlining happens, a counter is incremented and all new vertices are created using this
      *  counter. The counter starts at zero. */
-    size_t inliningId() const { return inliningId_; }
+    size_t inliningId() const;
 
     /** Virtual address of vertex.
      *
@@ -112,7 +107,7 @@ public:
  *      there is one (usually the fall-through address). A data-flow analysis often needs to perform some special action for
  *      the call-return, thus a call-return edge in the global CFG gets transformed to an edge-vertex-edge sequence in the
  *      data-flow CFG where the middle vertex is a special CALLRET vertex with no instructions. */
-typedef Sawyer::Container::Graph<DfCfgVertex> DfCfg;
+using DfCfg = Sawyer::Container::Graph<DfCfgVertex>;
 
 /** Predicate that decides when to use inter-procedural data-flow.
  *
@@ -143,7 +138,7 @@ std::vector<SgAsmInstruction*> vertexUnpacker(const DfCfgVertex&);
  *  reached vertex belongs to the same function as @p startVertex.
  *
  *  @sa DfCfg */
-DfCfg buildDfCfg(const Partitioner&, const ControlFlowGraph&, const ControlFlowGraph::ConstVertexIterator &startVertex,
+DfCfg buildDfCfg(const PartitionerConstPtr&, const ControlFlowGraph&, const ControlFlowGraph::ConstVertexIterator &startVertex,
                  InterproceduralPredicate &predicate = NOT_INTERPROCEDURAL);
 
 /** Emit a data-flow CFG as a GraphViz file. */
@@ -154,7 +149,7 @@ void dumpDfCfg(std::ostream&, const DfCfg&);
  *  When replacing a function call edge with a function summary, we insert a data-flow vertex that points to a function. During
  *  the data-flow processing, the function's information summarizes the data-flow state changes that are necessary. If multiple
  *  functions own the target block of a function call edge then we need to choose the "best" function to use. */
-Function::Ptr bestSummaryFunction(const FunctionSet &functions);
+FunctionPtr bestSummaryFunction(const FunctionSet &functions);
 
 /** Find the return vertex.
  *
@@ -185,28 +180,26 @@ findReturnVertex(DfCfg &dfCfg) {
 
 /** Data-Flow transfer functor. */
 class TransferFunction {
-    BaseSemantics::DispatcherPtr cpu_;
-    BaseSemantics::SValuePtr callRetAdjustment_;
+    InstructionSemantics::BaseSemantics::DispatcherPtr cpu_;
+    InstructionSemantics::BaseSemantics::SValuePtr callRetAdjustment_;
     const RegisterDescriptor STACK_POINTER_REG;
     const RegisterDescriptor INSN_POINTER_REG;
     CallingConvention::DefinitionPtr defaultCallingConvention_;
 public:
+    ~TransferFunction();
+
     /** Construct from a CPU.
      *
      *  Constructs a new transfer function using the specified @p cpu. */
-    explicit TransferFunction(const BaseSemantics::DispatcherPtr &cpu)
-        : cpu_(cpu), STACK_POINTER_REG(cpu->stackPointerRegister()), INSN_POINTER_REG(cpu->instructionPointerRegister()) {
-        size_t adjustment = STACK_POINTER_REG.nBits() / 8; // sizeof return address on top of stack
-        callRetAdjustment_ = cpu->number_(STACK_POINTER_REG.nBits(), adjustment);
-    }
+    explicit TransferFunction(const InstructionSemantics::BaseSemantics::DispatcherPtr&);
 
     /** Construct an initial state. */
-    BaseSemantics::StatePtr initialState() const;
+    InstructionSemantics::BaseSemantics::StatePtr initialState() const;
 
     /** Property: Virtual CPU.
      *
      *  This is the same pointer specified in the constructor. */
-    BaseSemantics::DispatcherPtr cpu() const { return cpu_; }
+    InstructionSemantics::BaseSemantics::DispatcherPtr cpu() const;
 
     /** Property: Default calling convention.
      *
@@ -216,15 +209,16 @@ public:
      *  absolutely nothing is known about the convention of non-analyzed functions.
      *
      * @{ */
-    CallingConvention::DefinitionPtr defaultCallingConvention() const { return defaultCallingConvention_; }
-    void defaultCallingConvention(const CallingConvention::DefinitionPtr &x) { defaultCallingConvention_ = x; }
+    CallingConvention::DefinitionPtr defaultCallingConvention() const;
+    void defaultCallingConvention(const CallingConvention::DefinitionPtr&);
     /** @} */
 
     // Required by data-flow engine
-    std::string toString(const BaseSemantics::StatePtr &state);
+    std::string toString(const InstructionSemantics::BaseSemantics::StatePtr &state);
 
     // Required by data-flow engine: compute new output state given a vertex and input state.
-    BaseSemantics::StatePtr operator()(const DfCfg&, size_t vertexId, const BaseSemantics::StatePtr &incomingState) const;
+    InstructionSemantics::BaseSemantics::StatePtr
+    operator()(const DfCfg&, size_t vertexId, const InstructionSemantics::BaseSemantics::StatePtr &incomingState) const;
 };
 
 /** Data-flow merge function.
@@ -234,7 +228,10 @@ public:
 typedef Rose::BinaryAnalysis::DataFlow::SemanticsMerge MergeFunction;
 
 /** Data-Flow engine. */
-typedef Rose::BinaryAnalysis::DataFlow::Engine<DfCfg, BaseSemantics::StatePtr, TransferFunction, MergeFunction> Engine;
+using Engine = Rose::BinaryAnalysis::DataFlow::Engine<DfCfg,
+                                                      InstructionSemantics::BaseSemantics::StatePtr,
+                                                      TransferFunction,
+                                                      MergeFunction>;
 
 /** Returns the list of all known stack variables.
  *
@@ -247,31 +244,33 @@ typedef Rose::BinaryAnalysis::DataFlow::Engine<DfCfg, BaseSemantics::StatePtr, T
  *  The @p ops provides the operators for comparing stack pointers, and also provides the state which is examined to find the
  *  stack variables.  The underlying memory state should be of type @ref InstructionSemantics::BaseSemantics::MemoryCellList
  *  "MemoryCellList" or a subclass, or else no stack variables will be found. */
-Variables::StackVariables findStackVariables(const FunctionPtr &function, const BaseSemantics::RiscOperatorsPtr &ops,
-                                             const BaseSemantics::SValuePtr &initialStackPointer);
+Variables::StackVariables findStackVariables(const FunctionPtr &function,
+                                             const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops,
+                                             const InstructionSemantics::BaseSemantics::SValuePtr &initialStackPointer);
 
 /** Returns the list of all known local variables.
  *
  *  A local variable is any stack variable whose starting address is less than the specified stack pointer.  For the definition
  *  of stack variable, see @ref findStackVariables. */
-Variables::StackVariables findLocalVariables(const FunctionPtr &function, const BaseSemantics::RiscOperatorsPtr &ops,
-                                             const BaseSemantics::SValuePtr &initialStackPointer);
+Variables::StackVariables findLocalVariables(const FunctionPtr &function,
+                                             const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops,
+                                             const InstructionSemantics::BaseSemantics::SValuePtr &initialStackPointer);
 
 /** Returns the list of all known function arguments.
  *
  *  A function argument is any stack variable whose starting address is greater than or equal to the specified stack pointer.
  *  For the definition of stack variable, see @ref findStackVariables.  On architectures that pass a return address on the top
  *  of the stack, that return address is considered to be the first argument of the function. */
-Variables::StackVariables findFunctionArguments(const FunctionPtr &function, const BaseSemantics::RiscOperatorsPtr &ops,
-                                                const BaseSemantics::SValuePtr &initialStackPointer);
+Variables::StackVariables findFunctionArguments(const FunctionPtr &function,
+                                                const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops,
+                                                const InstructionSemantics::BaseSemantics::SValuePtr &initialStackPointer);
 
 /** Returns a list of global variables.
  *
  *  The returned abstract locations all point to memory. The @p wordNBytes is the maximum size for any returned variable;
  *  larger units of memory written to by the same instruction will be broken into smaller variables. */
-std::vector<AbstractLocation> findGlobalVariables(const BaseSemantics::RiscOperatorsPtr &ops, size_t wordNBytes);
-
-
+std::vector<AbstractLocation> findGlobalVariables(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops,
+                                                  size_t wordNBytes);
 
 } // namespace
 } // namespace

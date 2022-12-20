@@ -5,7 +5,7 @@
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCell.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryState.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
@@ -127,6 +127,19 @@ public:
      *
      *  Traverse cells and optionally modify them. */
     virtual void traverse(MemoryCell::Visitor&) = 0;
+
+    /** Adjust I/O properties after reading memory.
+     *
+     *  Adjust I/O properties in the specified cells to make it look like they were just read.  This adds the READ property and
+     *  may also add READ_AFTER_WRITE, READ_BEFORE_WRITE, and/or READ_UNINITIALIZED. This should be called automatically by
+     *  each @ref BaseSemantics::MemoryState::readMemory implementation. */
+    virtual void updateReadProperties(const CellList&);
+
+    /** Adjust I/O properties after writing memory.
+     *
+     *  Adjust I/O properties in the specified cells to make it look like they were just read. This adds the specified
+     *  properties to the list of I/O properties for the cell. */
+    virtual void updateWriteProperties(const CellList&, InputOutputPropertySet);
 
     /** Erase cells that have no writers. */
     void eraseNonWritten() {

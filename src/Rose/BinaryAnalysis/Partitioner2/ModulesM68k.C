@@ -3,6 +3,10 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesM68k.h>
 
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
+#include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 
 #include <integerOps.h>
@@ -17,12 +21,27 @@ namespace ModulesM68k {
 
 using namespace Rose::Diagnostics;
 
+MatchLink::MatchLink() {}
+
+MatchLink::~MatchLink() {}
+
+MatchLink::Ptr
+MatchLink::instance() {
+    return Ptr(new MatchLink);
+}
+
+std::vector<Function::Ptr>
+MatchLink::functions() const {
+    return std::vector<Function::Ptr>(1, function_);
+}
+
 bool
-MatchLink::match(const Partitioner &partitioner, rose_addr_t anchor) {
+MatchLink::match(const Partitioner::ConstPtr &partitioner, rose_addr_t anchor) {
+    ASSERT_not_null(partitioner);
     if (anchor & 1)
         return false;                               // m68k instructions must be 16-bit aligned
     static const RegisterDescriptor REG_A6(m68k_regclass_addr, 6, 0, 32);
-    if (SgAsmM68kInstruction *insn = isSgAsmM68kInstruction(partitioner.discoverInstruction(anchor))) {
+    if (SgAsmM68kInstruction *insn = isSgAsmM68kInstruction(partitioner->discoverInstruction(anchor))) {
         const SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
         SgAsmDirectRegisterExpression *rre = NULL;
         SgAsmIntegerValueExpression *offset = NULL;
@@ -41,8 +60,9 @@ MatchLink::match(const Partitioner &partitioner, rose_addr_t anchor) {
 // For m68k, padding is either 2-byte TRAPF instructions (0x51 0xfc) or zero bytes.  Patterns we've seen are 51 fc, 51 fc 00
 // 51 fc, 00 00, 51 fc 51 fc, but we'll allow any combination.
 rose_addr_t
-MatchFunctionPadding::match(const Partitioner &partitioner, rose_addr_t anchor) {
-    MemoryMap::Ptr m = partitioner.memoryMap();
+MatchFunctionPadding::match(const Partitioner::ConstPtr &partitioner, rose_addr_t anchor) {
+    ASSERT_not_null(partitioner);
+    MemoryMap::Ptr m = partitioner->memoryMap();
     if (0==anchor)
         return anchor;
 
@@ -65,7 +85,7 @@ MatchFunctionPadding::match(const Partitioner &partitioner, rose_addr_t anchor) 
         }
 
         // Make sure that what we matched is not already part of some other instruction
-        if (!partitioner.instructionsOverlapping(matched).empty())
+        if (!partitioner->instructionsOverlapping(matched).empty())
             break;
 
         // This match appears to be valid padding
@@ -98,7 +118,7 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
     const SgAsmExpressionPtrList &jmp_args = jmp->get_operandList()->get_operands();
     if (movea_args.size()!=2 || jmp_args.size()!=1)
         return chain;
-    const RegisterDescriptor REG_PC = args.partitioner.instructionProvider().instructionPointerRegister();
+    const RegisterDescriptor REG_PC = args.partitioner->instructionProvider().instructionPointerRegister();
 
     // MOVEA first argument is: (+ (+ PC 6) (* Dx 2))
     //   prog variables: sum1 ---^  ^ ^^ ^   ^ ^^ ^---- scale1
@@ -149,7 +169,7 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
     size_t tableIdx = 0;
     rose_addr_t leastCodeVa = (rose_addr_t)(-1);
     std::set<rose_addr_t> codeVas;
-    MemoryMap::Ptr map = args.partitioner.memoryMap();
+    MemoryMap::Ptr map = args.partitioner->memoryMap();
     while (1) {
         // Where is the offset in memory?  It must be between the end of the JMP instruction (watch out for overflow) and the
         // lowest address for a switch case.
@@ -163,7 +183,7 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
         // a case that's pointed to by the offset table.  But it will only catch those situations if we already know about such
         // a basic block.  This seems to work okay for well-formed (non-obfuscated) code when the recursive basic block
         // discovery follows higher-address blocks before lower-address blocks.
-        if (args.partitioner.placeholderExists(offsetVa) || !args.partitioner.basicBlocksOverlapping(offsetExtent).empty())
+        if (args.partitioner->placeholderExists(offsetVa) || !args.partitioner->basicBlocksOverlapping(offsetExtent).empty())
             break;
         
         // Read the offset from the offset table.  Something went wrong if we can't read it because we know that the code for
@@ -209,13 +229,14 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
 }
 
 std::vector<Function::Ptr>
-findInterruptFunctions(const Partitioner &partitioner, rose_addr_t vectorVa) {
+findInterruptFunctions(const Partitioner::ConstPtr &partitioner, rose_addr_t vectorVa) {
+    ASSERT_not_null(partitioner);
     std::vector<Function::Ptr> functions;
     std::set<rose_addr_t> functionVas;
     for (size_t i=0; i<256; ++i) {
         rose_addr_t elmtVa = vectorVa + 4*i;
         uint32_t functionVa;
-        if (4 == partitioner.memoryMap()->at(elmtVa).limit(4).read((uint8_t*)&functionVa).size()) {
+        if (4 == partitioner->memoryMap()->at(elmtVa).limit(4).read((uint8_t*)&functionVa).size()) {
             functionVa = ByteOrder::be_to_host(functionVa);
             std::string name;
             unsigned reasons = SgAsmFunction::FUNC_EXCEPTION_HANDLER;

@@ -49,7 +49,7 @@ void generateLibraryIdentificationDataBase(const std::string& databaseName,
                                            const std::string& libraryName,
                                            const std::string& libraryVersion,
                                            const std::string& libraryHash,
-                                           const Rose::BinaryAnalysis::Partitioner2::Partitioner& partitioner,
+                                           const Rose::BinaryAnalysis::Partitioner2::PartitionerPtr& partitioner,
                                            enum DUPLICATE_OPTION dupOption = COMBINE)
     ROSE_DEPRECATED("use Rose::BinaryAnalysis::LibraryIdentification::insertLibrary instead");
 
@@ -68,7 +68,7 @@ void generateLibraryIdentificationDataBase(const std::string& databaseName,
 // @return libToFuncsMap Libraries->set(Functions) unmatched functions under "UNKNOWN", multimatched functions returned in
 // "MULTIPLE_LIBS"
 LibToFuncsMap matchLibraryIdentificationDataBase(const std::string& databaseName,
-                                                 const Rose::BinaryAnalysis::Partitioner2::Partitioner& partitioner)
+                                                 const Rose::BinaryAnalysis::Partitioner2::PartitionerPtr& partitioner)
     ROSE_DEPRECATED("use Rose::BinaryAnalysis::LibraryIdentification::search in a loop instead");
 
 // Deprecated [Robb Matzke 2022-01-20]: but not marked as such because the implementations of the two functions above still

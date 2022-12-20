@@ -290,15 +290,27 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/Concolic/BasicTypes.h					\
 	Rose/BinaryAnalysis/Concolic/ConcolicExecutor.h					\
 	Rose/BinaryAnalysis/Concolic/ConcreteExecutor.h					\
+	Rose/BinaryAnalysis/Concolic/ConcreteResult.h					\
 	Rose/BinaryAnalysis/Concolic/Database.h						\
 	Rose/BinaryAnalysis/Concolic/ExecutionEvent.h					\
 	Rose/BinaryAnalysis/Concolic/ExecutionLocation.h				\
 	Rose/BinaryAnalysis/Concolic/ExecutionManager.h					\
+	Rose/BinaryAnalysis/Concolic/I386Linux.h					\
+	Rose/BinaryAnalysis/Concolic/I386Linux/Architecture.h				\
+	Rose/BinaryAnalysis/Concolic/I386Linux/BasicTypes.h				\
+	Rose/BinaryAnalysis/Concolic/I386Linux/ExitStatusExecutor.h			\
+	Rose/BinaryAnalysis/Concolic/I386Linux/ExitStatusManager.h			\
+	Rose/BinaryAnalysis/Concolic/I386Linux/ExitStatusResult.h			\
+	Rose/BinaryAnalysis/Concolic/I386Linux/TracingExecutor.h			\
+	Rose/BinaryAnalysis/Concolic/I386Linux/TracingManager.h				\
+	Rose/BinaryAnalysis/Concolic/I386Linux/TracingResult.h				\
 	Rose/BinaryAnalysis/Concolic/InputVariables.h					\
-	Rose/BinaryAnalysis/Concolic/LinuxExecutor.h					\
-	Rose/BinaryAnalysis/Concolic/LinuxExitStatus.h					\
-	Rose/BinaryAnalysis/Concolic/LinuxI386.h					\
-	Rose/BinaryAnalysis/Concolic/LinuxTraceExecutor.h				\
+	Rose/BinaryAnalysis/Concolic/M68kSystem.h					\
+	Rose/BinaryAnalysis/Concolic/M68kSystem/Architecture.h				\
+	Rose/BinaryAnalysis/Concolic/M68kSystem/BasicTypes.h				\
+	Rose/BinaryAnalysis/Concolic/M68kSystem/TracingExecutor.h			\
+	Rose/BinaryAnalysis/Concolic/M68kSystem/TracingManager.h			\
+	Rose/BinaryAnalysis/Concolic/M68kSystem/TracingResult.h				\
 	Rose/BinaryAnalysis/Concolic/SharedMemory.h					\
 	Rose/BinaryAnalysis/Concolic/Specimen.h						\
 	Rose/BinaryAnalysis/Concolic/SystemCall.h					\
@@ -344,7 +356,9 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/InstructionEnumsMips.h					\
 	Rose/BinaryAnalysis/InstructionEnumsPowerpc.h					\
 	Rose/BinaryAnalysis/InstructionEnumsX86.h					\
+	Rose/BinaryAnalysis/InstructionProvider.h					\
 	Rose/BinaryAnalysis/InstructionSemantics.h					\
+	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h		\
 	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.h		\
 	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Exception.h		\
 	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Formatter.h		\
@@ -360,7 +374,6 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/State.h			\
 	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h			\
 	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SymbolicMemory.h		\
-	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h			\
 	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h			\
 	Rose/BinaryAnalysis/InstructionSemantics/ConcreteSemantics.h			\
 	Rose/BinaryAnalysis/InstructionSemantics/DataFlowSemantics.h			\
@@ -463,7 +476,6 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/Partitioner2/Function.h					\
 	Rose/BinaryAnalysis/Partitioner2/FunctionCallGraph.h				\
 	Rose/BinaryAnalysis/Partitioner2/GraphViz.h					\
-	Rose/BinaryAnalysis/Partitioner2/InstructionProvider.h				\
 	Rose/BinaryAnalysis/Partitioner2/Modules.h					\
 	Rose/BinaryAnalysis/Partitioner2/ModulesElf.h					\
 	Rose/BinaryAnalysis/Partitioner2/ModulesLinux.h					\

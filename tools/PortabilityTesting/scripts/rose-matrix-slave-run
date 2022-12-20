@@ -244,7 +244,7 @@ matrix-get-initial-configuration() {
 
     echo
     echo "Trying AWS EC2 User Data"
-    if wget -O matrix-config.tmp http://169.254.169.254/latest/user-data; then
+    if wget -O matrix-config.tmp --tries=1 http://169.254.169.254/latest/user-data; then
 	AWS_EC2_INSTANCE=yes
 	cat -n matrix-config.tmp
 	source matrix-config.tmp

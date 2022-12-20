@@ -9,8 +9,10 @@ static const char *description =
 #include <rose.h>                                       // must be first ROSE header
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ParallelPartitioner.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/Color.h>
 #include <Rose/CommandLine.h>
 
@@ -32,21 +34,21 @@ initializeParallelPartitioner(PP::Partitioner &pp) {
 
 // Initialize the parallel partitioner from a serial partitioner.
 void
-initializeParallelPartitioner(PP::Partitioner &pp, P2::Partitioner &p) {
+initializeParallelPartitioner(PP::Partitioner &pp, P2::Partitioner::Ptr &p) {
     Sawyer::Message::Stream info(mlog[INFO]);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     initializeParallelPartitioner(pp);
 
     info <<"inserting starting points from old partitioner";
 #if 1
-    for (auto function: p.functions()) {
+    for (auto function: p->functions()) {
         debug <<"inserting starting point " <<StringUtility::addrToString(function->address()) <<" as function\n";
         PP::InsnInfo::Ptr insnInfo = pp.makeInstruction(function->address());
         insnInfo->functionReasons(function->reasons());
         pp.scheduleDecodeInstruction(function->address());
     }
 #else
-    for (auto cfgVertex: p.cfg().vertices()) {
+    for (auto cfgVertex: p->cfg().vertices()) {
         if (auto addr = cfgVertex.value().optionalAddress()) {
             debug <<"insert starting point " <<StringUtility::addrToString(*addr) <<" from CFG\n";
             pp.makeInstruction(*addr);
@@ -58,7 +60,7 @@ initializeParallelPartitioner(PP::Partitioner &pp, P2::Partitioner &p) {
 
     info <<"inserting function prologue patterns";
     for (rose_addr_t searchVa = 0; true; ++searchVa) {
-        auto functions = p.nextFunctionPrologue(searchVa, searchVa /*out*/);
+        auto functions = p->nextFunctionPrologue(searchVa, searchVa /*out*/);
         if (functions.empty())
             break;
         for (auto function: functions) {
@@ -68,7 +70,7 @@ initializeParallelPartitioner(PP::Partitioner &pp, P2::Partitioner &p) {
             insn->functionReasons(function->reasons());
             pp.scheduleDecodeInstruction(function->address());
         }
-        if (searchVa == p.memoryMap()->hull().greatest())
+        if (searchVa == p->memoryMap()->hull().greatest())
             break;
     }
     info <<"; done\n";
@@ -113,9 +115,9 @@ insnsByAddr(PP::Partitioner &pp) {
 }
 
 std::vector<SgAsmInstruction*>
-insnsByAddr(P2::Partitioner &p) {
+insnsByAddr(const P2::Partitioner::Ptr &p) {
     std::vector<SgAsmInstruction*> insns;
-    for (auto &vertex: p.cfg().vertices()) {
+    for (auto &vertex: p->cfg().vertices()) {
         if (vertex.value().type() == P2::V_BASIC_BLOCK) {
             if (P2::BasicBlock::Ptr bb = vertex.value().bblock()) {
                 for (auto insn: bb->instructions())
@@ -136,17 +138,17 @@ insnsByAddr(P2::Partitioner &p) {
 
 // Print the CFG instructions in address order.
 void
-printCfgInstructions(PP::Partitioner &pp, P2::Partitioner &p) {
+printCfgInstructions(PP::Partitioner &pp, const P2::Partitioner::Ptr &p) {
     for (auto &insnInfo: insnsByAddr(pp)) {
         LockedInstruction lock = insnInfo->ast().lock();
         SgAsmInstruction *insn = lock.get();
-        std::cout <<p.unparse(insn) <<"\n";
+        std::cout <<p->unparse(insn) <<"\n";
     }
 }
 
 // Print all instructions linearly, and highlight the ones that appear in the CFG
 void
-printAllInstructions(PP::Partitioner &pp, P2::Partitioner &p) {
+printAllInstructions(PP::Partitioner &pp, const P2::Partitioner::Ptr &p) {
     using namespace Rose::StringUtility;
     std::string green = Rose::Color::HSV(0.3, 1.0, 0.4).toAnsi(Rose::Color::Layer::FOREGROUND);
     std::string red = Rose::Color::HSV(0.0, 1.0, 0.4).toAnsi(Rose::Color::Layer::BACKGROUND);
@@ -170,7 +172,7 @@ printAllInstructions(PP::Partitioner &pp, P2::Partitioner &p) {
                 std::cout <<green <<addrToString(cfgVa) <<": not decoded" <<endColor <<"\n";
                 maxPrintedVa = cfgInsns.back()->address();
             } else if (auto insn = cfgInsns.back()->ast()) {
-                std::cout <<green <<p.unparse(insn.lock().get()) <<endColor <<"\n";
+                std::cout <<green <<p->unparse(insn.lock().get()) <<endColor <<"\n";
                 maxPrintedVa = cfgInsns.back()->hull().get().greatest();
             } else {
                 std::cout <<green <<addrToString(cfgVa) <<": invalid address" <<endColor <<"\n";
@@ -191,7 +193,7 @@ printAllInstructions(PP::Partitioner &pp, P2::Partitioner &p) {
         // Print linear instructions up to next CFG instruction
         while (!where.isEmpty() && (cfgInsns.empty() || where.least() < cfgInsns.back()->address())) {
             if (auto insn = pp.instructionCache().get(where.least())) {
-                std::cout <<red <<p.unparse(insn.lock().get()) <<endColor <<"\n";
+                std::cout <<red <<p->unparse(insn.lock().get()) <<endColor <<"\n";
                 maxPrintedVa = insn->get_address() + insn->get_size() - 1;
             } else {
                 std::cout <<red <<addrToString(where.least()) <<": invalid address" <<endColor <<"\n";
@@ -209,7 +211,7 @@ printAllInstructions(PP::Partitioner &pp, P2::Partitioner &p) {
 
 // Compare instructions from two different disassemblers, giving precedence to those from the first partitioner.
 void
-printInsnsFromBoth(PP::Partitioner &pp, P2::Partitioner &p) {
+printInsnsFromBoth(PP::Partitioner &pp, const P2::Partitioner::Ptr &p) {
     using namespace Rose::StringUtility;
     const std::string green = Rose::Color::HSV(0.3, 1.0, 0.4).toAnsi(Rose::Color::Layer::FOREGROUND);
     const std::string red = Rose::Color::HSV(0.0, 1.0, 0.4).toAnsi(Rose::Color::Layer::BACKGROUND);
@@ -258,7 +260,7 @@ printInsnsFromBoth(PP::Partitioner &pp, P2::Partitioner &p) {
             insns2.pop_back();
         }
 
-        std::cout <<color <<(insn ? p.unparse(insn) : addrToString(va)+": invalid memory") <<endColor <<"\n";
+        std::cout <<color <<(insn ? p->unparse(insn) : addrToString(va)+": invalid memory") <<endColor <<"\n";
     }
 }
 
@@ -281,10 +283,10 @@ int main(int argc, char *argv[]) {
 
     // Get, parse, and load the specimen.
     mlog[INFO] <<"parsing container\n";
-    P2::Engine engine;
-    std::vector<std::string> specimenName = engine.parseCommandLine(argc, argv, purpose, description).unreachedArgs();
-    MemoryMap::Ptr memory = engine.loadSpecimens(specimenName);
-    Disassembler::Base::Ptr decoder = engine.obtainDisassembler();
+    P2::Engine *engine = P2::Engine::instance();
+    std::vector<std::string> specimenName = engine->parseCommandLine(argc, argv, purpose, description).unreachedArgs();
+    MemoryMap::Ptr memory = engine->loadSpecimens(specimenName);
+    Disassembler::Base::Ptr decoder = engine->obtainDisassembler();
 
     // Create the parallel partitioner
     PP::Settings ppSettings;
@@ -296,13 +298,13 @@ int main(int argc, char *argv[]) {
 
 #if 1 // [Robb Matzke 2020-07-30]
     mlog[INFO] <<"searching for starting points (serial)\n";
-    P2::Partitioner p = engine.createPartitioner();
-    engine.runPartitionerInit(p);
+    P2::Partitioner::Ptr p = engine->createPartitioner();
+    engine->runPartitionerInit(p);
     initializeParallelPartitioner(pp, p);
 #elif 1
     mlog[INFO] <<"adding memory starting points\n";
     initializeParallelPartitioner(pp);
-    P2::Partitioner p = engine.createPartitioner();
+    P2::Partitioner::Ptr p = engine->createPartitioner();
 #else
     mlog[INFO] <<"reading start points from standard input";
     initializeParallelPartitioner(pp, std::cin);
@@ -347,18 +349,20 @@ int main(int argc, char *argv[]) {
     mlog[INFO] <<"; took " <<timer <<"\n";
     mlog[INFO] <<"generating output\n";
     //printInsnsFromBoth(pp, p);
-    engine.savePartitioner(p, "x.rba");
+    engine->savePartitioner(p, "x.rba");
 
 #else
     mlog[INFO] <<"running serial partitioner";
     timer.restart();
-    engine.doingPostAnalysis(false);
-    P2::Partitioner p2 = engine.partition(specimenName);
+    engine->doingPostAnalysis(false);
+    P2::Partitioner::Ptr p2 = engine->partition(specimenName);
     mlog[INFO] <<"; took " <<timer <<"\n";
 
     mlog[INFO] <<"generating output\n";
     printInsnsFromBoth(pp, p2);
 #endif
+
+    delete engine;
 }
 
 #else

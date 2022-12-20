@@ -7,7 +7,7 @@
 #include <boost/numeric/conversion/cast.hpp>
 #include <ctype.h>
 #include <rose_strtoull.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 #include <Sawyer/BiMap.h>
 #include <Sawyer/Database.h>
 #include <Sawyer/Optional.h>
@@ -345,13 +345,13 @@ public:
      *  results for this test case are removed.
      *
      *  The concrete results are copied by this function. The caller continues to own the pointer. */
-    void saveConcreteResult(const TestCasePtr&, const ConcreteExecutorResult*);
+    void saveConcreteResult(const TestCasePtr&, const ConcreteResultPtr&);
 
     /** Read concrete results from the database.
      *
      *  Reads concrete results from the database and returns a pointer to them. If the test case has no concrete results then a
      *  null pointer is returned. */
-    std::unique_ptr<ConcreteExecutorResult> readConcreteResult(TestCaseId);
+    ConcreteResultPtr readConcreteResult(TestCaseId);
 
    /** Returns @p n test cases without concrete results.
     *
@@ -388,7 +388,7 @@ public:
     *
     * Thread safety: thread safe
     */
-   void insertConcreteResults(const TestCasePtr &testCase, const ConcreteExecutorResult& details);
+   void insertConcreteResults(const TestCasePtr &testCase, const ConcreteResult& details);
 #endif
 
    /** Tests if there are more test cases that require concrete testing.
@@ -407,21 +407,6 @@ private:
 } // namespace
 } // namespace
 } // namespace
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Forward declarations for boost::serialization for classes that are serialized or de-serialized above. This must occur after
-// the #include for the various boost archive headers, such as boost/archive/xml_oarchive.hpp. These must be at global scope.
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-#include <boost/archive/xml_iarchive.hpp>
-#include <boost/archive/xml_oarchive.hpp>
-
-#include <Rose/BinaryAnalysis/Concolic/LinuxExecutor.h>
-BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Concolic::LinuxExecutor::Result);
-
-#include <Rose/BinaryAnalysis/Concolic/LinuxTraceExecutor.h>
-BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Concolic::LinuxTraceExecutor::Result);
 
 #endif
 #endif

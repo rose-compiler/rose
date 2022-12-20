@@ -306,7 +306,7 @@ public:
      *  returns a false value.
      *
      * @{ */
-    Function::Ptr insertFunction(const Library::Ptr&, const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&);
+    Function::Ptr insertFunction(const Library::Ptr&, const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&);
     bool insertFunction(const Function::Ptr&);
     /** @} */
 
@@ -316,7 +316,7 @@ public:
      *  inclusion and exclusion. Each of the functions is associated with the specified library.
      *
      *  Returns the number of funcitons inserted and/or updated. */
-    size_t insertLibrary(const Library::Ptr&, const Partitioner2::Partitioner&);
+    size_t insertLibrary(const Library::Ptr&, const Partitioner2::PartitionerConstPtr&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions for querying a database.
@@ -344,7 +344,7 @@ public:
     /** @} */
 
     /** Find database functions that match a given function. */
-    std::vector<Function::Ptr> search(const Partitioner2::Partitioner &partitioner, const Partitioner2::FunctionPtr&);
+    std::vector<Function::Ptr> search(const Partitioner2::PartitionerConstPtr &partitioner, const Partitioner2::FunctionPtr&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Utilities
@@ -358,10 +358,10 @@ public:
     /** Compute the hash for a function.
      *
      *  This is how functions are identified and matched. */
-    std::string hash(const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&) const;
+    std::string hash(const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&) const;
 
     /** Compute the number of instructions in a function. */
-    static size_t nInsns(const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&);
+    static size_t nInsns(const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&);
 
 private:
     // Throws an Exception if the database driver version is not adequate.
@@ -387,16 +387,16 @@ private:
     // Whether the current settings specifically include this function from consideration. Exactly one of f1 or f2 should be
     // non-null.
     bool isIncluded(const Function::Ptr&);
-    bool isIncluded(const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&);
+    bool isIncluded(const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&);
 
     // Whether the current settings exclude a function from consideration. Exactly one of f1 or f2 should be non-null.
     bool isExcluded(const Function::Ptr&);
-    bool isExcluded(const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&);
+    bool isExcluded(const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&);
 
     // Whether to consider a function for insertion into a database or as a possible match of a database function to a
     // non-database function.
     bool isConsidered(const Function::Ptr&);
-    bool isConsidered(const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&);
+    bool isConsidered(const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&);
 
     // Load function names from files if necessary.
     void cacheFiles();

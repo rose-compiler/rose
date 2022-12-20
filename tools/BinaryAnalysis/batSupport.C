@@ -1,15 +1,19 @@
 // Library for all bat toolstState
 
 #include <rose.h>
+
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/State.h>
-#include <Rose/BinaryAnalysis/Unparser/Base.h>
-#include <Rose/CommandLine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
+#include <Rose/BinaryAnalysis/Unparser/Base.h>
+#include <Rose/CommandLine.h>
+#include <Rose/StringUtility.h>
+
 #include <rose_strtoull.h>                              // rose
 #include <stringify.h>                                  // rose
-#include <Rose/StringUtility.h>
 
 #include <batSupport.h>
 #include <boost/format.hpp>
@@ -82,8 +86,8 @@ PlainTextFormatter::objectAddress(std::ostream &out, const SymbolicExpression::P
 }
 
 void
-PlainTextFormatter::finalInsn(std::ostream &out, const P2::Partitioner &partitioner, SgAsmInstruction *insn) {
-    out <<"  at instruction " <<partitioner.unparse(insn) <<"\n";
+PlainTextFormatter::finalInsn(std::ostream &out, const P2::Partitioner::ConstPtr &partitioner, SgAsmInstruction *insn) {
+    out <<"  at instruction " <<partitioner->unparse(insn) <<"\n";
 }
 
 void
@@ -149,7 +153,8 @@ PlainTextFormatter::frameRelative(std::ostream &out, const Variables::StackVaria
 }
 
 void
-PlainTextFormatter::localVarsFound(std::ostream &out, const Variables::StackVariables &vars, const P2::Partitioner &partitioner) {
+PlainTextFormatter::localVarsFound(std::ostream &out, const Variables::StackVariables &vars,
+                                   const P2::Partitioner::ConstPtr &partitioner) {
     out <<"  these local variables were found:\n";
     Variables::print(vars, partitioner, out, "    ");
 }
@@ -189,9 +194,10 @@ void
 PlainTextFormatter::insnListIntro(std::ostream&) {}
 
 void
-PlainTextFormatter::insnStep(std::ostream &out, size_t idx, const P2::Partitioner &partitioner, SgAsmInstruction *insn) {
+PlainTextFormatter::insnStep(std::ostream &out, size_t idx, const P2::Partitioner::ConstPtr &partitioner, SgAsmInstruction *insn) {
+    ASSERT_not_null(partitioner);
     ASSERT_not_null(insn);
-    out <<"      #" <<(boost::format("%-6d") % idx) <<" " <<partitioner.unparse(insn) <<"\n";
+    out <<"      #" <<(boost::format("%-6d") % idx) <<" " <<partitioner->unparse(insn) <<"\n";
 }
 
 void
@@ -316,8 +322,9 @@ YamlFormatter::objectAddress(std::ostream &out, const SymbolicExpression::Ptr &a
 }
 
 void
-YamlFormatter::finalInsn(std::ostream &out, const P2::Partitioner &partitioner, SgAsmInstruction *insn) {
-    writeln(out, "  instruction:", partitioner.unparse(insn));
+YamlFormatter::finalInsn(std::ostream &out, const P2::Partitioner::ConstPtr &partitioner, SgAsmInstruction *insn) {
+    ASSERT_not_null(partitioner);
+    writeln(out, "  instruction:", partitioner->unparse(insn));
 }
 
 void
@@ -383,7 +390,8 @@ YamlFormatter::frameRelative(std::ostream &out, const Variables::StackVariable &
 }
 
 void
-YamlFormatter::localVarsFound(std::ostream &out, const Variables::StackVariables &vars, const P2::Partitioner &partitioner) {
+YamlFormatter::localVarsFound(std::ostream &out, const Variables::StackVariables &vars,
+                              const P2::Partitioner::ConstPtr &partitioner) {
     writeln(out, "  local-variables:");
     Variables::print(vars, partitioner, out, "    - ");
 }
@@ -430,11 +438,12 @@ YamlFormatter::insnListIntro(std::ostream &out) {
 }
 
 void
-YamlFormatter::insnStep(std::ostream &out, size_t idx, const P2::Partitioner &partitioner, SgAsmInstruction *insn) {
+YamlFormatter::insnStep(std::ostream &out, size_t idx, const P2::Partitioner::ConstPtr &partitioner, SgAsmInstruction *insn) {
+    ASSERT_not_null(partitioner);
     ASSERT_not_null(insn);
     writeln(out, "        - step:", idx);
     writeln(out, "          address:", Rose::StringUtility::addrToString(insn->get_address()));
-    writeln(out, "          instruction:", partitioner.unparsePlain(insn));
+    writeln(out, "          instruction:", partitioner->unparsePlain(insn));
 }
 
 void
@@ -631,11 +640,12 @@ selectFunctionsByNameOrAddress(const std::vector<P2::Function::Ptr> &functions, 
 }
 
 std::vector<P2::Function::Ptr>
-selectFunctionsContainingInstruction(const P2::Partitioner &partitioner, const std::set<rose_addr_t> &insnVas) {
+selectFunctionsContainingInstruction(const P2::Partitioner::ConstPtr &partitioner, const std::set<rose_addr_t> &insnVas) {
+    ASSERT_not_null(partitioner);
     std::vector<P2::Function::Ptr> retval;
 
     for (rose_addr_t insnVa: insnVas) {
-        std::vector<P2::Function::Ptr> found = partitioner.functionsOverlapping(insnVa);
+        std::vector<P2::Function::Ptr> found = partitioner->functionsOverlapping(insnVa);
         for (const P2::Function::Ptr &f: found)
             P2::insertUnique(retval, f, P2::sortFunctionsByAddress);
     }
@@ -653,7 +663,7 @@ struct CheckRbaIo: Rose::CommandLine::SelfTest {
             SerialOutput::Ptr output = SerialOutput::instance();
             output->format(SerialIo::BINARY);
             output->open(tempRbaFile.name());
-            P2::Partitioner partitioner;
+            auto partitioner = P2::Partitioner::instance();
             output->savePartitioner(partitioner);
         }
 
@@ -661,7 +671,7 @@ struct CheckRbaIo: Rose::CommandLine::SelfTest {
             SerialInput::Ptr input = SerialInput::instance();
             input->format(SerialIo::BINARY);
             input->open(tempRbaFile.name());
-            P2::Partitioner partitioner = input->loadPartitioner();
+            P2::Partitioner::Ptr partitioner = input->loadPartitioner();
         }
 
         return true; // failure would have thrown an exception by now
@@ -676,13 +686,13 @@ registerSelfTests() {
 std::pair<std::string, std::string>
 pathEndpointFunctionNames(const FeasiblePath &fpAnalysis, const P2::CfgPath &path, size_t lastVertexIdx) {
     // Find the starting function and the function in which the flaw occurs
-    const P2::Partitioner &partitioner = fpAnalysis.partitioner();
+    P2::Partitioner::ConstPtr partitioner = fpAnalysis.partitioner();
     std::string firstName, lastName;
     P2::CfgPath::Vertices vertices = path.vertices();
     if (!vertices.empty()) {
         if (vertices.front()->value().type() == P2::V_BASIC_BLOCK) {
             P2::BasicBlock::Ptr bb = vertices.front()->value().bblock();
-            P2::Function::Ptr f = partitioner.functionsOwningBasicBlock(bb->address()).front();
+            P2::Function::Ptr f = partitioner->functionsOwningBasicBlock(bb->address()).front();
             firstName = f->name();
         } else if (vertices.front()->value().type() == P2::V_USER_DEFINED) {
             const FeasiblePath::FunctionSummary &summary = fpAnalysis.functionSummary(vertices.front()->value().address());
@@ -694,7 +704,7 @@ pathEndpointFunctionNames(const FeasiblePath &fpAnalysis, const P2::CfgPath &pat
             lastName = firstName;
         } else if (vertices[lastVertexIdx]->value().type() == P2::V_BASIC_BLOCK) {
             P2::BasicBlock::Ptr bb = vertices[lastVertexIdx]->value().bblock();
-            P2::Function::Ptr f = partitioner.functionsOwningBasicBlock(bb->address()).front();
+            P2::Function::Ptr f = partitioner->functionsOwningBasicBlock(bb->address()).front();
             lastName = f->name();
         } else if (vertices[lastVertexIdx]->value().type() == P2::V_INDETERMINATE) {
             lastName = "intedeterminate";
@@ -711,7 +721,7 @@ printPath(std::ostream &out, const FeasiblePath &fpAnalysis, const P2::CfgPath &
           const BS::RiscOperators::Ptr &cpu, SgAsmInstruction *lastInsn, ShowStates::Flag showStates,
           const OutputFormatter::Ptr &formatter) {
     ASSERT_not_null(formatter);
-    const P2::Partitioner &partitioner = fpAnalysis.partitioner();
+    P2::Partitioner::ConstPtr partitioner = fpAnalysis.partitioner();
 
     // We need to prevent the output of two or more paths from being interleaved
     static SAWYER_THREAD_TRAITS::Mutex mutex;
@@ -734,18 +744,18 @@ printPath(std::ostream &out, const FeasiblePath &fpAnalysis, const P2::CfgPath &
     // List the path
     formatter->pathLength(out, lastVertexIdx+1, lastInsnIdx+1);
     formatter->pathIntro(out);
-    Rose::BinaryAnalysis::Unparser::Base::Ptr unparser = partitioner.unparser();
+    Rose::BinaryAnalysis::Unparser::Base::Ptr unparser = partitioner->unparser();
     P2::CfgPath::Vertices vertices = path.vertices();
     for (size_t vertexIdx=0, insnIdx=0; vertexIdx <= lastVertexIdx; ++vertexIdx) {
 #if 1 // DEBUGGING [Robb Matzke 2020-02-27]
         if (vertexIdx > 0)
-            formatter->edge(out, partitioner.edgeName(path.edges()[vertexIdx-1]));
+            formatter->edge(out, partitioner->edgeName(path.edges()[vertexIdx-1]));
 #endif
 
         P2::ControlFlowGraph::ConstVertexIterator vertex = vertices[vertexIdx];
         if (vertex->value().type() == P2::V_BASIC_BLOCK) {
             P2::BasicBlock::Ptr bb = vertex->value().bblock();
-            P2::Function::Ptr function = partitioner.functionsOwningBasicBlock(bb->address()).front();
+            P2::Function::Ptr function = partitioner->functionsOwningBasicBlock(bb->address()).front();
             formatter->bbVertex(out, vertexIdx, bb, function->printableName());
             if (bb->sourceLocation())
                 formatter->bbSrcLoc(out, bb->sourceLocation());
@@ -770,7 +780,7 @@ printPath(std::ostream &out, const FeasiblePath &fpAnalysis, const P2::CfgPath &
 
         // Show virtual machine state after each vertex
         if (ShowStates::YES == showStates) {
-            RegisterDictionary::Ptr regdict = fpAnalysis.partitioner().instructionProvider().registerDictionary();
+            RegisterDictionary::Ptr regdict = fpAnalysis.partitioner()->instructionProvider().registerDictionary();
             if (vertexIdx == lastVertexIdx) {
                 formatter->state(out, vertexIdx, "state at detected operation:", cpu->currentState(), regdict);
             } else if (BS::State::Ptr state = fpAnalysis.pathPostState(path, vertexIdx)) {
@@ -785,44 +795,46 @@ printPath(std::ostream &out, const FeasiblePath &fpAnalysis, const P2::CfgPath &
 }
 
 P2::ControlFlowGraph::ConstVertexIterator
-vertexForInstruction(const P2::Partitioner &partitioner, const std::string &nameOrVa) {
+vertexForInstruction(const P2::Partitioner::ConstPtr &partitioner, const std::string &nameOrVa) {
+    ASSERT_not_null(partitioner);
     const char *s = nameOrVa.c_str();
     char *rest;
     errno = 0;
     rose_addr_t va = rose_strtoull(s, &rest, 0);
     if (*rest || errno!=0) {
         size_t nFound = 0;
-        for (const P2::Function::Ptr &function: partitioner.functions()) {
+        for (const P2::Function::Ptr &function: partitioner->functions()) {
             if (function->name() == nameOrVa) {
                 va = function->address();
                 ++nFound;
             }
         }
         if (0==nFound)
-            return partitioner.cfg().vertices().end();
+            return partitioner->cfg().vertices().end();
         if (nFound > 1)
             throw std::runtime_error("vertex \"" + Rose::StringUtility::cEscape(nameOrVa) + "\" is ambiguous");
     }
-    return partitioner.instructionVertex(va);
+    return partitioner->instructionVertex(va);
 }
 
 P2::ControlFlowGraph::ConstEdgeIterator
-edgeForInstructions(const P2::Partitioner &partitioner,
+edgeForInstructions(const P2::Partitioner::ConstPtr &partitioner,
                     const P2::ControlFlowGraph::ConstVertexIterator &source,
                     const P2::ControlFlowGraph::ConstVertexIterator &target) {
-    if (source == partitioner.cfg().vertices().end() || target == partitioner.cfg().vertices().end())
-        return partitioner.cfg().edges().end();         // sourceVa or targetVa is not an instruction starting address
+    ASSERT_not_null(partitioner);
+    if (source == partitioner->cfg().vertices().end() || target == partitioner->cfg().vertices().end())
+        return partitioner->cfg().edges().end();        // sourceVa or targetVa is not an instruction starting address
     ASSERT_require(source->value().type() == P2::V_BASIC_BLOCK);
     ASSERT_require(target->value().type() == P2::V_BASIC_BLOCK);
     for (P2::ControlFlowGraph::ConstEdgeIterator edge=source->outEdges().begin(); edge!=source->outEdges().end(); ++edge) {
         if (edge->target() == target)
             return edge;
     }
-    return partitioner.cfg().edges().end();
+    return partitioner->cfg().edges().end();
 }
 
 P2::ControlFlowGraph::ConstEdgeIterator
-edgeForInstructions(const P2::Partitioner &partitioner, const std::string &sourceNameOrVa,
+edgeForInstructions(const P2::Partitioner::ConstPtr &partitioner, const std::string &sourceNameOrVa,
                     const std::string &targetNameOrVa) {
     return edgeForInstructions(partitioner,
                                vertexForInstruction(partitioner, sourceNameOrVa),
@@ -830,12 +842,13 @@ edgeForInstructions(const P2::Partitioner &partitioner, const std::string &sourc
 }
 
 void
-assignCallingConventions(const P2::Partitioner &partitioner) {
-    const CallingConvention::Dictionary &ccDict = partitioner.instructionProvider().callingConventions();
+assignCallingConventions(const P2::Partitioner::ConstPtr &partitioner) {
+    ASSERT_not_null(partitioner);
+    const CallingConvention::Dictionary &ccDict = partitioner->instructionProvider().callingConventions();
     CallingConvention::Definition::Ptr defaultCc;
     if (!ccDict.empty())
         defaultCc = ccDict[0];
-    partitioner.allFunctionCallingConventionDefinition(defaultCc);
+    partitioner->allFunctionCallingConventionDefinition(defaultCc);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

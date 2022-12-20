@@ -4,7 +4,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SourceAstSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 #include <Rose/Diagnostics.h>
@@ -101,7 +101,7 @@ public:
      *  entire binary specimen contained in the partitioner. This method takes a partitioner rather than a binary AST because
      *  the partitioner's data structures are more efficient for anaysis. A partitioner can be constructed from an AST if
      *  necessary. */
-    void generateSource(const Partitioner2::Partitioner&, std::ostream&);
+    void generateSource(const Partitioner2::PartitionerConstPtr&, std::ostream&);
 
 #if 0 // [Robb P. Matzke 2015-10-06]: not implemented yet
     /** Build a C source AST from a binary AST.
@@ -109,15 +109,15 @@ public:
      *  Given a disassembled and partitioned binary, create a corresponding C source code AST.  This method takes a partitioner
      *  rather than a binary AST because the partitioner's data structures are more efficient for anaysis. A partitioner can be
      *  constructed from an AST if necessary.  */
-    void generateSource(const Partitioner2::Partitioner&, SgSourceFile *sourceAst);
+    void generateSource(const Partitioner2::PartitionerConstPtr&, SgSourceFile *sourceAst);
 #endif
 
 private:
     // (Re)initialize the instruction semantics machinery so it is suitable for this architecture.
-    void init(const Partitioner2::Partitioner&);
+    void init(const Partitioner2::PartitionerConstPtr&);
 
     // Emit the file prologue, #include statements, extern declarations, etc.
-    void emitFilePrologue(const Partitioner2::Partitioner&, std::ostream&);
+    void emitFilePrologue(const Partitioner2::PartitionerConstPtr&, std::ostream&);
 
     // Declare the global register variables
     void declareGlobalRegisters(std::ostream&);
@@ -132,22 +132,22 @@ private:
     void emitInstruction(SgAsmInstruction*, std::ostream&);
 
     // Emit code for one basic block
-    void emitBasicBlock(const Partitioner2::Partitioner&, const Partitioner2::BasicBlock::Ptr&, std::ostream&);
+    void emitBasicBlock(const Partitioner2::PartitionerConstPtr&, const Partitioner2::BasicBlockPtr&, std::ostream&);
 
     // Emit code for one function
-    void emitFunction(const Partitioner2::Partitioner&, const Partitioner2::Function::Ptr&, std::ostream&);
+    void emitFunction(const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&, std::ostream&);
 
     // Emit code for all functions
-    void emitAllFunctions(const Partitioner2::Partitioner&, std::ostream&);
+    void emitAllFunctions(const Partitioner2::PartitionerConstPtr&, std::ostream&);
 
     // Emit the function_call dispatcher that decides which C function should be called next.
-    void emitFunctionDispatcher(const Partitioner2::Partitioner&, std::ostream&);
+    void emitFunctionDispatcher(const Partitioner2::PartitionerConstPtr&, std::ostream&);
 
     // Emit the initialize_memory function.
-    void emitMemoryInitialization(const Partitioner2::Partitioner&, std::ostream&);
+    void emitMemoryInitialization(const Partitioner2::PartitionerConstPtr&, std::ostream&);
 
     // Emit the "main" function.
-    void emitMain(const Partitioner2::Partitioner&, std::ostream&);
+    void emitMain(const Partitioner2::PartitionerConstPtr&, std::ostream&);
 };
 
 } // namespace

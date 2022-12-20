@@ -2,19 +2,23 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
-#include <AsmUnparser_compat.h>
-#include <Rose/Color.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellList.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
+#include <Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesElf.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
-#include <Sawyer/GraphTraversal.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
+#include <Rose/Color.h>
+
+#include <AsmUnparser_compat.h>
 
 #include <boost/range/adaptor/reversed.hpp>
+#include <Sawyer/GraphTraversal.h>
 #include <sstream>
 
 using namespace Sawyer::Container;
@@ -30,7 +34,7 @@ NotInterprocedural NOT_INTERPROCEDURAL;
 // private class
 class DfCfgBuilder {
 public:
-    const Partitioner &partitioner;
+    Partitioner::ConstPtr partitioner;
     const ControlFlowGraph &cfg;                             // global control flow graph
     DfCfg dfCfg;                                             // dataflow control flow graph we are building
     InterproceduralPredicate &interproceduralPredicate;      // returns true when a call should be inlined
@@ -56,7 +60,7 @@ public:
     size_t maxCallStackSize;                            // safety to prevent infinite recursion
     size_t nextInliningId;                              // next ID when crating a CallFrame
     
-    DfCfgBuilder(const Partitioner &partitioner, const ControlFlowGraph &cfg, InterproceduralPredicate &predicate)
+    DfCfgBuilder(const Partitioner::ConstPtr &partitioner, const ControlFlowGraph &cfg, InterproceduralPredicate &predicate)
         : partitioner(partitioner), cfg(cfg), interproceduralPredicate(predicate),
           maxCallStackSize(10), nextInliningId(0) {}
 
@@ -117,7 +121,8 @@ public:
             retval = insertVertex(DfCfgVertex(bblock, parentFunction, inliningId), cfgVertex);
 
             // All function return basic blocks will point only to the special FUNCRET vertex.
-            if (partitioner.basicBlockIsFunctionReturn(bblock)) {
+            ASSERT_not_null(partitioner);
+            if (partitioner->basicBlockIsFunctionReturn(bblock)) {
                 if (!dfCfg.isValidVertex(callFrame.functionReturnVertex))
                     callFrame.functionReturnVertex = insertVertex(DfCfgVertex::FUNCRET, parentFunction, inliningId);
                 dfCfg.insertEdge(retval, callFrame.functionReturnVertex);
@@ -146,7 +151,8 @@ public:
 
     // top-level build function.
     DfCfgBuilder& build(const ControlFlowGraph::ConstVertexIterator &startVertex) {
-        Function::Ptr parentFunction = partitioner.functionExists(startVertex->value().address());
+        ASSERT_not_null(partitioner);
+        Function::Ptr parentFunction = partitioner->functionExists(startVertex->value().address());
         ASSERT_not_null(parentFunction);
         callStack.push_back(CallFrame(dfCfg, parentFunction, nextInliningId++));
         buildRecursively(startVertex);
@@ -168,7 +174,7 @@ public:
                 // function.
                 if (t.vertex()->value().type() == V_BASIC_BLOCK) {
                     findOrInsertBasicBlockVertex(t.vertex(), callStack.back().function, callStack.back().inliningId);
-                    if (partitioner.basicBlockIsFunctionReturn(t.vertex()->value().bblock()))
+                    if (partitioner->basicBlockIsFunctionReturn(t.vertex()->value().bblock()))
                         t.skipChildren();               // we're handling return successors explicitly
                 } else {
                     insertVertex(DfCfgVertex::INDET, t.vertex(), callStack.back().function, callStack.back().inliningId);
@@ -262,7 +268,7 @@ bestSummaryFunction(const FunctionSet &functions) {
 }
 
 DfCfg
-buildDfCfg(const Partitioner &partitioner,
+buildDfCfg(const Partitioner::ConstPtr &partitioner,
            const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &startVertex,
            InterproceduralPredicate &predicate) {
     return DfCfgBuilder(partitioner, cfg, predicate).build(startVertex).dfCfg;
@@ -538,6 +544,46 @@ findGlobalVariables(const BaseSemantics::RiscOperators::Ptr &ops, size_t wordNBy
 // DfCfgVertex
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+DfCfgVertex::~DfCfgVertex() {}
+
+DfCfgVertex::DfCfgVertex(const BasicBlock::Ptr &bblock, const Function::Ptr &parentFunction, size_t inliningId)
+    : type_(BBLOCK), bblock_(bblock), parentFunction_(parentFunction), inliningId_(inliningId) {
+    ASSERT_not_null(bblock);
+}
+
+DfCfgVertex::DfCfgVertex(const Function::Ptr &function, const Function::Ptr &parentFunction, size_t inliningId)
+    : type_(FAKED_CALL), callee_(function), parentFunction_(parentFunction), inliningId_(inliningId) {}
+
+DfCfgVertex::DfCfgVertex(Type type, const Function::Ptr &parentFunction, size_t inliningId)
+    : type_(type), parentFunction_(parentFunction), inliningId_(inliningId) {
+    ASSERT_require2(BBLOCK!=type && FAKED_CALL!=type, "use a different constructor");
+}
+
+DfCfgVertex::Type
+DfCfgVertex::type() const {
+    return type_;
+}
+
+const BasicBlock::Ptr&
+DfCfgVertex::bblock() const {
+    return bblock_;
+}
+
+const Function::Ptr&
+DfCfgVertex::callee() const {
+    return callee_;
+}
+
+Function::Ptr
+DfCfgVertex::parentFunction() const {
+    return parentFunction_;
+}
+
+size_t
+DfCfgVertex::inliningId() const {
+    return inliningId_;
+}
+
 Sawyer::Optional<rose_addr_t>
 DfCfgVertex::address() const {
     switch (type_) {
@@ -560,6 +606,14 @@ DfCfgVertex::address() const {
 // TransferFunction
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+TransferFunction::~TransferFunction() {}
+
+TransferFunction::TransferFunction(const BaseSemantics::Dispatcher::Ptr &cpu)
+    : cpu_(cpu), STACK_POINTER_REG(cpu->stackPointerRegister()), INSN_POINTER_REG(cpu->instructionPointerRegister()) {
+    size_t adjustment = STACK_POINTER_REG.nBits() / 8; // sizeof return address on top of stack
+    callRetAdjustment_ = cpu->number_(STACK_POINTER_REG.nBits(), adjustment);
+}
+
 // Construct a new state from scratch
 BaseSemantics::State::Ptr
 TransferFunction::initialState() const {
@@ -578,6 +632,21 @@ TransferFunction::initialState() const {
     regState->writeRegister(STACK_POINTER_REG, ops->undefined_(STACK_POINTER_REG.nBits()), ops.get());
 
     return newState;
+}
+
+BaseSemantics::Dispatcher::Ptr
+TransferFunction::cpu() const {
+    return cpu_;
+}
+
+CallingConvention::Definition::Ptr
+TransferFunction::defaultCallingConvention() const {
+    return defaultCallingConvention_;
+}
+
+void
+TransferFunction::defaultCallingConvention(const CallingConvention::Definition::Ptr &x) {
+    defaultCallingConvention_ = x;
 }
 
 // Required by dataflow engine: compute new output state given a vertex and input state.

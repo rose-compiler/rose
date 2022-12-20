@@ -277,7 +277,7 @@ namespace Rose
   // supports these boolean values to be inlined via the SageInterface::is_<language kind>_language() functions.
   // And the compute_language_kind() function is called from the:
   //    SgFile* determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project );
-  // contained in the sage_support.cpp file.  This function is the single point at whcuh all of the SgFile IR nodes
+  // contained in the sage_support.C file.  This function is the single point at whcuh all of the SgFile IR nodes
   // (including SgSourceFile, and SgBinaryFile) are generated.
 
   // Note: the semantics is that there is at least one of the language kind files processed by ROSE, across all 

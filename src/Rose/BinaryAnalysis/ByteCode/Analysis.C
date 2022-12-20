@@ -1,9 +1,12 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
-#include <iostream>
-
 #include <Rose/BinaryAnalysis/ByteCode/Analysis.h>
+
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+
+#include <iostream>
 
 #define DEBUG_PRINT 0
 
@@ -32,12 +35,33 @@ std::set<rose_addr_t> Method::targets() const {
   return retval;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Method
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Method::Method() {}
+
+Method::~Method() {}
+
+const std::vector<BasicBlock::Ptr>&
+Method::blocks() const {
+    return blocks_;
+}
+
+void
+Method::append(BasicBlock::Ptr bb) {
+    blocks_.push_back(bb);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Class
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Class::partition()
 {
   const size_t nBits = 64;
 
-  Partitioner2::Partitioner partitioner{};
+  auto partitioner = Partitioner2::Partitioner::instance();
 
   for (auto constMethod : methods()) {
     bool needNewBlock{true};

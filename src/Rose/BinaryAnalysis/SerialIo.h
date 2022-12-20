@@ -49,10 +49,6 @@
 namespace Rose {
 namespace BinaryAnalysis {
 
-namespace Partitioner2 {
-class Partitioner;
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SerialIo
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -80,7 +76,7 @@ class Partitioner;
  *  namespace P2 = Rose::BinaryAnalysis::Partitioner2;
  *  std::vector<double> myVector = ...;
  *  const SerialIo::Savable myVectorTypeId = SerialIo::USER_DEFINED; // maybe add some constant
- *  P2::Partitioner partitioner = ....;
+ *  P2::Partitioner::Ptr partitioner = ....;
  *  boost::filesystem::path fileName = "....";
  *  SerialOutput::Ptr saver = SerialOutput::instance();
  *
@@ -310,7 +306,7 @@ public:
      *
      *  Thread safety: This method is not thread-safe. No other thread should be using this object, and no other thread
      *  should be modifying the partitioner. */
-    void savePartitioner(const Partitioner2::Partitioner&);
+    void savePartitioner(const Partitioner2::PartitionerConstPtr&);
 
     /** Save a binary AST.
      *
@@ -486,7 +482,7 @@ public:
      *
      *  Throws an @ref Exception if no file is attached to this I/O object or if the next object to be read from the
      *  input is not a partitioner, or if any other errors occur while reading the partitioner. */
-    Partitioner2::Partitioner loadPartitioner();
+    Partitioner2::PartitionerPtr loadPartitioner();
 
     /** Load an AST from the input stream.
      *

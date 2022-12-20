@@ -132,7 +132,7 @@ public:
      *  instruction.  This method assumes that the unparser emits a function's basic blocks in order of their starting address.
      *
      *  See also, @ref computeCfgEdgeLayout */
-    void computeCfgBlockLayout(const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&);
+    void computeCfgBlockLayout(const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&);
 
     /** Compute arrow layout for a control flow graph for a function.
      *
@@ -144,7 +144,7 @@ public:
      *  assumes that "predecessors" are listed before "successors".
      *
      *  See also, @ref computeCfgBlockLayout */
-    void computeCfgEdgeLayout(const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&);
+    void computeCfgEdgeLayout(const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&);
 
     /** Endpoint ID for CFG edge arrows.
      *

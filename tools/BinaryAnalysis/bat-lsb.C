@@ -9,10 +9,12 @@ static const char *description =
     "by white space.}";
 
 #include <rose.h>
-#include <Rose/CommandLine.h>
-#include <Rose/Diagnostics.h>
+
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
 
 #include <batSupport.h>
 #include <boost/filesystem.hpp>
@@ -64,19 +66,21 @@ main(int argc, char *argv[]) {
     Bat::checkRoseVersionNumber(MINIMUM_ROSE_LIBRARY_VERSION, mlog[FATAL]);
     Bat::registerSelfTests();
 
-    P2::Engine engine;
+    P2::Engine *engine = P2::Engine::instance();
     boost::filesystem::path inputFileName = parseCommandLine(argc, argv);
-    P2::Partitioner partitioner = engine.loadPartitioner(inputFileName, format);
+    P2::Partitioner::Ptr partitioner = engine->loadPartitioner(inputFileName, format);
 
-    for (const P2::ControlFlowGraph::Vertex &vertex: partitioner.cfg().vertices()) {
+    for (const P2::ControlFlowGraph::Vertex &vertex: partitioner->cfg().vertices()) {
         using namespace StringUtility;
         if (vertex.value().type() == P2::V_BASIC_BLOCK) {
             P2::BasicBlock::Ptr bb = vertex.value().bblock();
             std::cout <<addrToString(bb->address()) <<" " <<std::setw(6) <<bb->nInstructions();
-            AddressIntervalSet bbExtent = partitioner.basicBlockInstructionExtent(bb);
+            AddressIntervalSet bbExtent = partitioner->basicBlockInstructionExtent(bb);
             for (const AddressInterval &interval: bbExtent.intervals())
                 std::cout <<" " <<addrToString(interval.least()) <<" " <<addrToString(interval.greatest());
             std::cout <<"\n";
         }
     }
+
+    delete engine;
 }
