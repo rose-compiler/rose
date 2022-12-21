@@ -73,7 +73,9 @@ main(int argc, char *argv[]) {
 
     // Run the concolic executor on the test case
     Concolic::ConcolicExecutor::Ptr executor = Concolic::ConcolicExecutor::instance();
-    executor->execute(db, testCase, "I386Linux");
+    auto config = Rose::Yaml::parse("architecture: I386Linux\n"
+                                    "concrete: ExitStatus");
+    executor->execute(db, testCase, config);
 }
 
 #else

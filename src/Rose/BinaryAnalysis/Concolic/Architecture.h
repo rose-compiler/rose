@@ -11,6 +11,8 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/RegisterDescriptor.h>
 #include <Rose/BinaryAnalysis/SmtSolver.h>
+#include <Rose/Yaml.h>
+
 #include <ByteOrder.h>
 
 #include <Sawyer/BitVector.h>
@@ -83,7 +85,7 @@ public:
      *  Thread safety: This method is thread safe. */
     static std::vector<Ptr> registeredFactories();
 
-    /** Creates a suitable architecture by name.
+    /** Creates a suitable architecture according to configuration information.
      *
      *  Scans the @ref registeredFactories list in the reverse order looking for a factory whose @ref matchFactory predicate
      *  (which accepts all but the first two arguments of this function) returns true. The first factory whose predicate
@@ -93,18 +95,18 @@ public:
      *  Thread safety: This method is thread safe.
      *
      * @{ */
-    static Ptr forge(const DatabasePtr&, TestCaseId, const std::string&);
-    static Ptr forge(const DatabasePtr&, const TestCasePtr&, const std::string&);
+    static Ptr forge(const DatabasePtr&, TestCaseId, const Yaml::Node &config);
+    static Ptr forge(const DatabasePtr&, const TestCasePtr&, const Yaml::Node &config);
     /** @} */
 
-    /** Predicate for matching an architecture factory by name. */
-    virtual bool matchFactory(const std::string &name) const = 0;
+    /** Predicate for matching an architecture factory. */
+    virtual bool matchFactory(const Yaml::Node &config) const = 0;
 
     /** Virtual constructor for factories.
      *
      *  This creates a new object by calling the class method @c instance for the class of which @c this is a type. All
      *  arguments are passed to @c instance. */
-    virtual Ptr instanceFromFactory(const DatabasePtr&, TestCaseId) const = 0;
+    virtual Ptr instanceFromFactory(const DatabasePtr&, TestCaseId, const Yaml::Node &config) const = 0;
 
     /** Returns true if this object is a factory.
      *
@@ -236,11 +238,20 @@ public:
     /** Configures shared memory behavior.
      *
      *  This function declares how shared memory regions are handled and is called from the @c instance methods
-     *  (constructors). */
-    virtual void configureSharedMemory() = 0;
+     *  (constructors). The base class is responsible for installing shared memory callbacks that are described by
+     *  the configuration passed in as an argument. The node should be a sequence of maps, one map per memory handler. */
+    virtual void configureSharedMemory(const Yaml::Node &config);
 
-    /** Add a shared memory callback for a range of addresses. */
-    void sharedMemory(const AddressInterval&, const SharedMemoryCallbackPtr&);
+    /** Add a shared memory callback for a range of addresses.
+     *
+     *  A callback normally knows the range of addresses for which it is responsible. That same range is used when registering
+     *  the callback unless a specific range is specified. Specifying a range does not modify the @ref registrationVas range
+     *  that's inside the callback.  This can be useful when the same callback needs to be registered at multiple addresses.
+     *
+     * @{ */
+    void sharedMemory(const SharedMemoryCallbackPtr&);
+    void sharedMemory(const SharedMemoryCallbackPtr&, const AddressInterval&);
+    /** @} */
 
     /** Add a callback for a system call number. */
     void systemCalls(size_t syscallId, const SyscallCallbackPtr&);

@@ -65,6 +65,9 @@ public:
      *  to desribe the lowest address in this shared memory region, and the "size" of the region measured in bytes. The YAML
      *  map is passed to the initializer for the object that handles the memory.
      *
+     *  @li "concolic-stride" is an optional positive integer that indicates the maximum number of test cases that are run
+     *  concolically at a time, before running any pending concrete tests. The default is one.
+     *
      *  A reference to the YAML configuration tree is stored in the returned object. The existing database is opened and will
      *  be closed by the destructor. A particular test suite within the database is active. */
     static Ptr instance(const Yaml::Node&);

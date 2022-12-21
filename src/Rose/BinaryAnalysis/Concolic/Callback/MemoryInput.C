@@ -13,14 +13,42 @@ namespace BinaryAnalysis {
 namespace Concolic {
 namespace Callback {
 
+static const char *defaultName = "input";
+
 MemoryInput::~MemoryInput() {}
 
-MemoryInput::MemoryInput(ByteOrder::Endianness sex)
-    : byteOrder_(sex) {}
+MemoryInput::MemoryInput(const std::string &name)
+    : SharedMemoryCallback(name) {}
+
+MemoryInput::MemoryInput(const AddressInterval &where, const std::string &name, ByteOrder::Endianness sex)
+    : SharedMemoryCallback(where, name), byteOrder_(sex) {}
 
 MemoryInput::Ptr
-MemoryInput::instance(ByteOrder::Endianness sex) {
-    return Ptr(new MemoryInput(sex));
+MemoryInput::instance(const AddressInterval &where, ByteOrder::Endianness sex) {
+    return Ptr(new MemoryInput(where, defaultName, sex));
+}
+
+MemoryInput::Ptr
+MemoryInput::factory() {
+    return Ptr(new MemoryInput(defaultName));
+}
+
+SharedMemoryCallback::Ptr
+MemoryInput::instanceFromFactory(const AddressInterval &where, const Yaml::Node &config) const {
+    Ptr retval = instance(where, byteOrder());
+    retval->name(name());
+    if (config["byte-order"]) {
+        const std::string order = config["byte-order"].as<std::string>();
+        if (order == "be" || order == "big-endian") {
+            retval->byteOrder(ByteOrder::ORDER_MSB);
+        } else if (order == "le" || order == "el" || order == "little-endian") {
+            retval->byteOrder(ByteOrder::ORDER_LSB);
+        } else {
+            throw Exception("unrecognized byte order \"" + StringUtility::cEscape(order) + "\"");
+        }
+    }
+
+    return retval;
 }
 
 ByteOrder::Endianness
@@ -35,7 +63,7 @@ MemoryInput::byteOrder(ByteOrder::Endianness sex) {
 
 void
 MemoryInput::handlePreSharedMemory(SharedMemoryContext &ctx) {
-    hello("shared memory input", ctx);
+    hello(ctx);
     if (IoDirection::READ == ctx.direction) {
 
         // Implementation simplification: We must access the memory the same way each time. That is, using the same address and
@@ -59,7 +87,7 @@ MemoryInput::handlePreSharedMemory(SharedMemoryContext &ctx) {
 
 void
 MemoryInput::playback(SharedMemoryContext &ctx) {
-    hello("shared memory input", ctx);
+    hello(ctx);
 }
 
 } // namespace

@@ -24,24 +24,28 @@ namespace Callback {
  *
  *  @li The exit status is 255. */
 class MemoryExit: public SharedMemoryCallback {
-private:
-    Sawyer::Optional<uint8_t> status_;
-
 public:
     /** Shared ownership pointer. */
     using Ptr = MemoryExitPtr;
 
+private:
+    Sawyer::Optional<uint8_t> status_;
+
 protected:
-    MemoryExit();
+    explicit MemoryExit(const std::string &name);
+    MemoryExit(const AddressInterval&, const std::string &name, const Sawyer::Optional<uint8_t> &status);
 public:
     ~MemoryExit();
 
 public:
     /** Allocating constructor. */
-    static Ptr instance();
+    static Ptr instance(const AddressInterval&);
 
     /** Allocating constructor with specified exit status. */
-    static Ptr instance(uint8_t);
+    static Ptr instance(const AddressInterval&, const Sawyer::Optional<uint8_t> &status);
+
+    /** Allocating constructor for a new factory instance. */
+    static Ptr factory();
 
     /** Property: Exit status.
      *
@@ -53,8 +57,9 @@ public:
     /** @} */
 
 public:
-    void playback(SharedMemoryContext&) override;
-    void handlePreSharedMemory(SharedMemoryContext &ctx) override;
+    virtual SharedMemoryCallbackPtr instanceFromFactory(const AddressInterval&, const Yaml::Node &config) const override;
+    virtual void playback(SharedMemoryContext&) override;
+    virtual void handlePreSharedMemory(SharedMemoryContext &ctx) override;
 };
 
 } // namespace

@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Concolic/I386Linux/Architecture.h>
 
+#include <Rose/BinaryAnalysis/Concolic/Callback/MemoryExit.h>
 #include <Rose/BinaryAnalysis/Concolic/ConcolicExecutor.h>
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
 #include <Rose/BinaryAnalysis/Concolic/Emulation.h>
@@ -952,29 +953,15 @@ Architecture::configureSystemCalls() {
 // Shared memory behaviors
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Any access to this memory exits the program.
-class NullDeref: public SharedMemoryCallback {
-public:
-    static Ptr instance() {
-        return Ptr(new NullDeref);
-    }
-
-    void playback(SharedMemoryContext&) override {}
-
-    void handlePreSharedMemory(SharedMemoryContext &ctx) override {
-        hello("null-deref-handler", ctx);
-        auto ops = Emulation::RiscOperators::promote(ctx.ops);
-        ops->doExit(255); // FIXME[Robb Matzke 2021-09-08]: perhaps a way to simulate a segfault instead
-    }
-};
-
 void
-Architecture::configureSharedMemory() {
-    // These are the generally useful configurations. Feel free to override these to accomplish whatever kind of testing you
-    // need.
+Architecture::configureSharedMemory(const Yaml::Node &config) {
+    Super::configureSharedMemory(config);
 
     // Null dereferences
-    sharedMemory(AddressInterval::baseSize(0, 4096), NullDeref::instance());
+    auto handler = Callback::MemoryExit::instance(AddressInterval::baseSize(0, 4096), 255);
+    handler->name("null pointer dereference"),
+
+    sharedMemory(handler);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -995,31 +982,31 @@ Architecture::factory() {
 }
 
 Architecture::Ptr
-Architecture::instance(const Database::Ptr &db, TestCaseId tcid) {
+Architecture::instance(const Database::Ptr &db, TestCaseId tcid, const Yaml::Node &config) {
     ASSERT_not_null(db);
     ASSERT_require(tcid);
     auto retval = Ptr(new Architecture(db, tcid));
     retval->configureSystemCalls();
-    retval->configureSharedMemory();
+    retval->configureSharedMemory(config);
     return retval;
 }
 
 Architecture::Ptr
-Architecture::instance(const Database::Ptr &db, const TestCase::Ptr &tc) {
-    return instance(db, db->id(tc));
+Architecture::instance(const Database::Ptr &db, const TestCase::Ptr &tc, const Yaml::Node &config) {
+    return instance(db, db->id(tc), config);
 }
 
 Concolic::Architecture::Ptr
-Architecture::instanceFromFactory(const Database::Ptr &db, TestCaseId tcid) const {
+Architecture::instanceFromFactory(const Database::Ptr &db, TestCaseId tcid, const Yaml::Node &config) const {
     ASSERT_require(isFactory());
-    auto retval = instance(db, tcid);
+    auto retval = instance(db, tcid, config);
     retval->name(name());
     return retval;
 }
 
 bool
-Architecture::matchFactory(const std::string &s) const {
-    return s == name();
+Architecture::matchFactory(const Yaml::Node &config) const {
+    return config["architecture"].as<std::string>() == name();
 }
 
 Debugger::Linux::Ptr

@@ -44,31 +44,31 @@ Architecture::factory() {
 }
 
 Architecture::Ptr
-Architecture::instance(const Database::Ptr &db, TestCaseId tcid) {
+Architecture::instance(const Database::Ptr &db, TestCaseId tcid, const Yaml::Node &config) {
     ASSERT_not_null(db);
     ASSERT_require(tcid);
     auto retval = Ptr(new Architecture(db, tcid));
     retval->configureSystemCalls();
-    retval->configureSharedMemory();
+    retval->configureSharedMemory(config);
     return retval;
 }
 
 Architecture::Ptr
-Architecture::instance(const Database::Ptr &db, const TestCase::Ptr &tc) {
-    return instance(db, db->id(tc));
+Architecture::instance(const Database::Ptr &db, const TestCase::Ptr &tc, const Yaml::Node &config) {
+    return instance(db, db->id(tc), config);
 }
 
 Concolic::Architecture::Ptr
-Architecture::instanceFromFactory(const Database::Ptr &db, TestCaseId tcid) const {
+Architecture::instanceFromFactory(const Database::Ptr &db, TestCaseId tcid, const Yaml::Node &config) const {
     ASSERT_require(isFactory());
-    auto retval = instance(db, tcid);
+    auto retval = instance(db, tcid, config);
     retval->name(name());
     return retval;
 }
 
 bool
-Architecture::matchFactory(const std::string &s) const {
-    return s == name();
+Architecture::matchFactory(const Yaml::Node &config) const {
+    return config["architecture"].as<std::string>()  == name();
 }
 
 P2::Partitioner::Ptr
@@ -80,12 +80,6 @@ Architecture::partition(P2::Engine *engine, const std::string &specimenName) {
 void
 Architecture::configureSystemCalls() {
     // No system calls on bare metal
-}
-
-void
-Architecture::configureSharedMemory() {
-    sharedMemory(AddressInterval::baseSize(0x8000213c, 4), Callback::MemoryExit::instance(100));
-    sharedMemory(AddressInterval::baseSize(0x80002140, 1), Callback::MemoryInput::instance(ByteOrder::ORDER_MSB));
 }
 
 BS::Dispatcher::Ptr

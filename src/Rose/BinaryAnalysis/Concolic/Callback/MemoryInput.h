@@ -30,13 +30,17 @@ public:
     using Ptr = MemoryInputPtr;
 
 protected:
-    explicit MemoryInput(ByteOrder::Endianness);
+    MemoryInput(const std::string &name);               // for factories
+    MemoryInput(const AddressInterval &where, const std::string &name, ByteOrder::Endianness);
 public:
     ~MemoryInput();
 
 public:
     /** Allocating constructor. */
-    static Ptr instance(ByteOrder::Endianness);
+    static Ptr instance(const AddressInterval &where, ByteOrder::Endianness = ByteOrder::ORDER_UNSPECIFIED);
+
+    /** Allocating constructor for a factory. */
+    static Ptr factory();
 
     /** Property: Byte order.
      *
@@ -48,8 +52,9 @@ public:
     /** @} */
 
 public:
-    void handlePreSharedMemory(SharedMemoryContext&) override;
-    void playback(SharedMemoryContext&) override;
+    virtual SharedMemoryCallbackPtr instanceFromFactory(const AddressInterval&, const Yaml::Node &config) const override;
+    virtual void handlePreSharedMemory(SharedMemoryContext&) override;
+    virtual void playback(SharedMemoryContext&) override;
 };
 
 } // namespace

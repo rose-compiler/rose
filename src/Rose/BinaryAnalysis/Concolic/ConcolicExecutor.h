@@ -6,6 +6,8 @@
 
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Concolic/Emulation.h>
+#include <Rose/Yaml.h>
+
 #include <Sawyer/FileSystem.h>
 
 namespace Rose {
@@ -158,9 +160,11 @@ public:
     /** Called before execution starts.
      *
      *  This can be called by the user, or is called automatically by @ref execute. Calling it separately allows the user
-     *  to make some adjustments before execution starts, such as registering various callbacks. The @p architectureName
-     *  must be a valid name for an architecture factory. */
-    void configureExecution(const DatabasePtr&, const TestCasePtr&, const std::string &architectureName);
+     *  to make some adjustments before execution starts, such as registering various callbacks.
+     *
+     *  The configuration is a YAML document. The top-level node must be a map with the keys described in the documentation
+     *  for @ref Concolic::ExecutionManager::instance. */
+    void configureExecution(const DatabasePtr&, const TestCasePtr&, const Yaml::Node &config);
 
     /** Execute the test case.
      *
@@ -169,7 +173,7 @@ public:
      *
      * @{ */
     std::vector<TestCasePtr> execute();
-    std::vector<TestCasePtr> execute(const DatabasePtr&, const TestCasePtr&, const std::string &architectureName);
+    std::vector<TestCasePtr> execute(const DatabasePtr&, const TestCasePtr&, const Yaml::Node &config);
     /** @} */
 
 private:
