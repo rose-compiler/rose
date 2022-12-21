@@ -26,17 +26,22 @@ private:
     SymbolicExpression::Ptr prevRead_;                  // value previously read by this callback
 
 protected:
-    MemoryTime();
+    explicit MemoryTime(const std::string &name);       // for factories
+    MemoryTime(const AddressInterval &where, const std::string &name);
 public:
     ~MemoryTime();
 
 public:
     /** Allocating constructor. */
-    static Ptr instance();
+    static Ptr instance(const AddressInterval &where);
+
+    /** Allocating constructor for factory. */
+    static Ptr factory();
 
 public:
-    void handlePreSharedMemory(SharedMemoryContext&) override;
-    void playback(SharedMemoryContext&) override;
+    virtual SharedMemoryCallbackPtr instanceFromFactory(const AddressInterval&, const Yaml::Node &config) const override;
+    virtual void handlePreSharedMemory(SharedMemoryContext&) override;
+    virtual void playback(SharedMemoryContext&) override;
 };
 
 } // namespace

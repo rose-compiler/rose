@@ -6,6 +6,7 @@
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
+#include <Rose/Yaml.h>
 
 #include <Sawyer/Optional.h>
 #include <Sawyer/SharedObject.h>
@@ -93,13 +94,62 @@ public:
 
 /** Base class for shared memory callbacks. */
 class SharedMemoryCallback: public Sawyer::SharedObject {
-    AddressInterval registeredVas_;                     // where in memory this callback was initially registered
-
 public:
     /** Reference counting pointer. */
     using Ptr = SharedMemoryCallbackPtr;
 
-    virtual ~SharedMemoryCallback() {}
+private:
+    AddressInterval registrationVas_;                   // where in memory this callback was initially registered
+    std::string name_;                                  // name of the callback in registrations and debugging
+
+public:
+    virtual ~SharedMemoryCallback();
+protected:
+    SharedMemoryCallback(const std::string &name);      // for factories
+    SharedMemoryCallback(const AddressInterval&, const std::string &name);
+
+public:
+    /** Register a callback factory. */
+    static void registerFactory(const Ptr &factory);
+
+    /** Remove a registered factory.
+     *
+     *  The last occurrence of the specified factory is removed from the list of registered factories. This function returns
+     *  true if a factory was removed, and false if no registered factories match. */
+    static bool deregisterFactory(const Ptr &factory);
+
+    /** List of all registered factories.
+     *
+     *  The returned list contains the registered factories in the order they were registered, which is the reverse order of
+     *  how they're searched. */
+    static std::vector<Ptr> registeredFactories();
+
+    /** Instantiate a suitable object from the registered factories.
+     *
+     *  Scans the @ref registeredFactories list in the reverse order looking for a factory whose @ref matchFactory predicate
+     *  returns true. The first factory whose predicate returns true is used to create and return a new object by invoking the
+     *  factory's @c instanceFromFactory constructor. */
+    static Ptr forge(const AddressInterval &where, const Yaml::Node &config);
+
+    /** Predicate for matching a factory. */
+    virtual bool matchFactory(const Yaml::Node &config) const;
+
+    /** Virtual constructor for factories.
+     *
+     *  When invoked on a factory for which @ref matchFactory returns true, the factory will instantiate a new object with the
+     *  same dynamic type as the factory. */
+    virtual Ptr instanceFromFactory(const AddressInterval &where, const Yaml::Node &config) const;
+
+    /** Returns true if this object is a factory. */
+    bool isFactory() const;
+
+public:
+    /** Property: Name of callback.
+     *
+     * @{ */
+    const std::string& name() const;
+    void name(const std::string&);
+    /** @} */
 
     /** Property: Describes where the shared memory is registered.
      *
@@ -109,14 +159,12 @@ public:
      *  separate callbacks for each registration.
      *
      * @{ */
-    const AddressInterval& registeredVas() const;
-    void registeredVas(const AddressInterval&);
+    const AddressInterval& registrationVas() const;
+    void registrationVas(const AddressInterval&);
     /** @} */
 
-    /** Prints callback name and memory information.
-     *
-     *  If @p myName is empty, then use the name from the shared memory event in the provided context. */
-    void hello(const std::string &myName, const SharedMemoryContext&) const;
+    /** Prints callback name and memory information. */
+    void hello(const SharedMemoryContext&) const;
 
     /** Callback for shared memory playback.
      *

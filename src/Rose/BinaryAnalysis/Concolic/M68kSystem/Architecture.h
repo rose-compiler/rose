@@ -5,6 +5,7 @@
 
 #include <Rose/BinaryAnalysis/Concolic/Architecture.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
+#include <Rose/Yaml.h>
 
 #include <boost/process/child.hpp>
 
@@ -39,8 +40,8 @@ public:
      *  Constructs a new executor for the specified test case.
      *
      * @{ */
-    static Ptr instance(const DatabasePtr&, TestCaseId);
-    static Ptr instance(const DatabasePtr&, const TestCasePtr&);
+    static Ptr instance(const DatabasePtr&, TestCaseId, const Yaml::Node &config);
+    static Ptr instance(const DatabasePtr&, const TestCasePtr&, const Yaml::Node &config);
     /** @} */
 
     /** Allocating constructor to create a factory. */
@@ -48,11 +49,10 @@ public:
 
 public:
     // These are documented in the base class.
-    virtual bool matchFactory(const std::string&) const override;
-    virtual Super::Ptr instanceFromFactory(const DatabasePtr&, TestCaseId) const override;
+    virtual bool matchFactory(const Yaml::Node&) const override;
+    virtual Super::Ptr instanceFromFactory(const DatabasePtr&, TestCaseId, const Yaml::Node &config) const override;
     virtual Partitioner2::PartitionerPtr partition(Partitioner2::Engine*, const std::string &specimen) override;
     virtual void configureSystemCalls() override;
-    virtual void configureSharedMemory() override;
     virtual void load(const boost::filesystem::path&) override;
     virtual ByteOrder::Endianness memoryByteOrder() override;
     virtual std::vector<ExecutionEventPtr> createMemoryHashEvents() override;

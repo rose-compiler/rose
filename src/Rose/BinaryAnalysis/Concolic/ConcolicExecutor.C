@@ -197,9 +197,11 @@ ConcolicExecutor::startDispatcher() {
 }
 
 void
-ConcolicExecutor::configureExecution(const Database::Ptr &db, const TestCase::Ptr &testCase, const std::string &architectureName) {
+ConcolicExecutor::configureExecution(const Database::Ptr &db, const TestCase::Ptr &testCase, const Yaml::Node &config) {
     ASSERT_not_null(db);
     ASSERT_not_null(testCase);
+
+    const std::string architectureName = config["architecture"].as<std::string>();
 
     if (testCase == testCase_) {
         ASSERT_require(db == db_);
@@ -221,7 +223,7 @@ ConcolicExecutor::configureExecution(const Database::Ptr &db, const TestCase::Pt
             solver_ = SmtSolver::instance("best");
 
         // Create the a new process from the executable.
-        process_ = Architecture::forge(db, testCase, architectureName);
+        process_ = Architecture::forge(db, testCase, config);
         if (!process_)
             throw Exception("unknown architecture \"" + StringUtility::cEscape(architectureName) + "\"");
         partitioner_ = partition(testCase->specimen(), process_);
@@ -299,11 +301,11 @@ ConcolicExecutor::execute() {
 }
 
 std::vector<TestCase::Ptr>
-ConcolicExecutor::execute(const Database::Ptr &db, const TestCase::Ptr &testCase, const std::string &architectureName) {
+ConcolicExecutor::execute(const Database::Ptr &db, const TestCase::Ptr &testCase, const Yaml::Node &config) {
     ASSERT_not_null(db);
     ASSERT_not_null(testCase);
 
-    configureExecution(db, testCase, architectureName);
+    configureExecution(db, testCase, config);
     return execute();
 }
 

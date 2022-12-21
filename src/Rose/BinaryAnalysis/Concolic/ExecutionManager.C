@@ -10,6 +10,7 @@
 #include <Rose/BinaryAnalysis/Concolic/Specimen.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 #include <Rose/BinaryAnalysis/Concolic/TestSuite.h>
+#include <Rose/StringUtility/StringToNumber.h>
 
 using namespace Sawyer::Message::Common;
 
@@ -151,8 +152,13 @@ ExecutionManager::run() {
     ASSERT_not_null(config_);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
 
+    // Configuration -- these are documented and checked in `instance`
     const std::string architectureName = config_["architecture"].as<std::string>();
     const std::string concreteName = architectureName + "::" + config_["concrete"].as<std::string>();
+    const size_t concolicStride =
+        std::max(StringUtility::toNumber<size_t>(config_["concolic-stride"].as<std::string>()).ok().orElse(1),
+                 size_t{1});
+
     SAWYER_MESG(debug) <<"execution manager running\n"
                        <<"  architecture = \"" <<StringUtility::cEscape(architectureName) <<"\"\n"
                        <<"  concrete = \"" <<StringUtility::cEscape(concreteName) <<"\"\n";
@@ -172,10 +178,10 @@ ExecutionManager::run() {
         // Now that all the test cases have run concretely, run a few of the "best" ones concolically.  The "best" is defined
         // either by the ranks returned from the concrete executor, or by this class overriding pendingConcolicResult (which we
         // haven't done).
-        for (TestCaseId testCaseId: pendingConcolicResults(10 /*arbitrary*/)) {
+        for (TestCaseId testCaseId: pendingConcolicResults(concolicStride)) {
             TestCase::Ptr testCase = database()->object(testCaseId);
             auto concolicExecutor = ConcolicExecutor::instance();
-            concolicExecutor->configureExecution(database_, testCase, architectureName);
+            concolicExecutor->configureExecution(database_, testCase, config_);
             std::vector<TestCase::Ptr> newTestCases = concolicExecutor->execute();
             insertConcolicResults(testCase, newTestCases);
         }

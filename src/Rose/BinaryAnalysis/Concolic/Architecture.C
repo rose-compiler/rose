@@ -19,6 +19,7 @@
 #include <Rose/BinaryAnalysis/Concolic/M68kSystem/Architecture.h>
 
 #include <boost/format.hpp>
+#include <boost/lexical_cast.hpp>
 
 using namespace Sawyer::Message::Common;
 namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
@@ -92,28 +93,64 @@ Architecture::registeredFactories() {
 }
 
 Architecture::Ptr
-Architecture::forge(const Database::Ptr &db, TestCaseId tcid, const std::string &name) {
+Architecture::forge(const Database::Ptr &db, TestCaseId tcid, const Yaml::Node &config) {
     ASSERT_not_null(db);
     ASSERT_require(tcid);
     initRegistry();
     SAWYER_THREAD_TRAITS::LockGuard lock(registryMutex);
     for (auto factory = registry.rbegin(); factory != registry.rend(); ++factory) {
-        if ((*factory)->matchFactory(name))
-            return (*factory)->instanceFromFactory(db, tcid);
+        if ((*factory)->matchFactory(config))
+            return (*factory)->instanceFromFactory(db, tcid, config);
     }
     return {};
 }
 
 Architecture::Ptr
-Architecture::forge(const Database::Ptr &db, const TestCase::Ptr &tc, const std::string &name) {
+Architecture::forge(const Database::Ptr &db, const TestCase::Ptr &tc, const Yaml::Node &config) {
     ASSERT_not_null(db);
     ASSERT_not_null(tc);
-    return forge(db, db->id(tc), name);
+    return forge(db, db->id(tc), config);
 }
 
 bool
 Architecture::isFactory() const {
     return !db_;
+}
+
+void
+Architecture::configureSharedMemory(const Yaml::Node &config) {
+    if (auto list = config["memory-drivers"]) {
+        if (!list.isSequence())
+            throw Exception("configuration \"memory-drivers\" must be a YAML sequence");
+
+        for (size_t i = 0; i < list.size(); ++i) {
+            const std::string err = "configuration memory-drivers[" + boost::lexical_cast<std::string>(i) + "]";
+            if (!list[i].isMap())
+                throw Exception(err + " must be a YAML map");
+            const std::string driverName = list[i]["driver"].as<std::string>();
+            if (driverName.empty())
+                throw Exception(err + "[driver] is not specified or is not valid");
+
+            const auto va = StringUtility::toNumber<rose_addr_t>(list[i]["address"].as<std::string>()).ok();
+            if (!va)
+                throw Exception(err + "[address] is not specified or is not valid");
+
+            const auto nBytes = StringUtility::toNumber<size_t>(list[i]["size"].as<std::string>()).ok();
+            if (!nBytes || *nBytes == 0)
+                throw Exception(err + "[size] is not specified or is not valid");
+
+            const AddressInterval where = AddressInterval::baseSize(*va, *nBytes);
+            auto driver = SharedMemoryCallback::forge(where, list[i]);
+            if (!driver)
+                throw Exception(err + " driver \"" + StringUtility::cEscape(driverName) + "\" not found");
+
+            const std::string message = list[i]["message"].as<std::string>();
+            if (!message.empty())
+                driver->name(message);
+
+            sharedMemory(driver);
+        }
+    }
 }
 
 const std::string&
@@ -340,11 +377,15 @@ Architecture::sharedMemory() const {
 }
 
 void
-Architecture::sharedMemory(const AddressInterval &where, const SharedMemoryCallback::Ptr &callback) {
+Architecture::sharedMemory(const SharedMemoryCallback::Ptr &callback) {
+    ASSERT_not_null(callback);
+    sharedMemory(callback, callback->registrationVas());
+}
+
+void
+Architecture::sharedMemory(const SharedMemoryCallback::Ptr &callback, const AddressInterval &where) {
     ASSERT_forbid(where.isEmpty());
     ASSERT_not_null(callback);
-    if (callback->registeredVas().isEmpty())
-        callback->registeredVas(where);
 
     AddressInterval remaining = where;
     while (!remaining.isEmpty()) {

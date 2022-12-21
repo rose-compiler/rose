@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/Concolic/SharedMemory.h>
 
 #include <Rose/BinaryAnalysis/Concolic/Architecture.h>
+#include <Rose/BinaryAnalysis/Concolic/Callback.h>
 #include <Rose/BinaryAnalysis/Concolic/ConcolicExecutor.h>
 #include <Rose/BinaryAnalysis/Concolic/ExecutionEvent.h>
 #include <Rose/BinaryAnalysis/Concolic/InputVariables.h>
@@ -60,18 +61,121 @@ SharedMemoryContext::~SharedMemoryContext() {}
 // SharedMemoryCallback
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static SAWYER_THREAD_TRAITS::Mutex registryMutex;
+static std::vector<SharedMemoryCallback::Ptr> registry;
+static boost::once_flag registryInitFlag = BOOST_ONCE_INIT;
+
+static void
+initRegistryHelper() {
+    SAWYER_THREAD_TRAITS::LockGuard lock(registryMutex);
+    registry.push_back(Callback::MemoryExit::factory());
+    registry.push_back(Callback::MemoryInput::factory());
+    registry.push_back(Callback::MemoryTime::factory());
+}
+
+static void
+initRegistry() {
+    boost::call_once(&initRegistryHelper, registryInitFlag);
+}
+
+SharedMemoryCallback::~SharedMemoryCallback() {}
+
+SharedMemoryCallback::SharedMemoryCallback(const std::string &name)
+    : name_(name) {
+    ASSERT_forbid(name.empty());
+}
+
+SharedMemoryCallback::SharedMemoryCallback(const AddressInterval &where, const std::string &name)
+    : registrationVas_(where), name_(name) {
+    ASSERT_forbid(name.empty());
+}
+
+void
+SharedMemoryCallback::registerFactory(const Ptr &factory) {
+    ASSERT_not_null(factory);
+    ASSERT_require(factory->isFactory());
+    initRegistry();
+    SAWYER_THREAD_TRAITS::LockGuard lock(registryMutex);
+    registry.push_back(factory);
+}
+
+bool
+SharedMemoryCallback::deregisterFactory(const Ptr &factory) {
+    ASSERT_not_null(factory);
+    ASSERT_require(factory->isFactory());
+    initRegistry();
+    SAWYER_THREAD_TRAITS::LockGuard lock(registryMutex);
+    for (auto iter = registry.rbegin(); iter != registry.rend(); ++iter) {
+        if (*iter == factory) {
+            registry.erase(std::next(iter).base());
+            return true;
+        }
+    }
+    return false;
+}
+
+std::vector<SharedMemoryCallback::Ptr>
+SharedMemoryCallback::registeredFactories() {
+    initRegistry();
+    std::vector<Ptr> retval;
+    SAWYER_THREAD_TRAITS::LockGuard lock(registryMutex);
+    retval.reserve(registry.size());
+    for (const Ptr &factory: registry)
+        retval.push_back(factory);
+    return retval;
+}
+
+bool
+SharedMemoryCallback::matchFactory(const Yaml::Node &config) const {
+    ASSERT_require(isFactory());
+    return config["driver"].as<std::string>() == name();
+}
+
+SharedMemoryCallback::Ptr
+SharedMemoryCallback::forge(const AddressInterval &where, const Yaml::Node &config) {
+    ASSERT_forbid(where.isEmpty());
+    initRegistry();
+    SAWYER_THREAD_TRAITS::LockGuard lock(registryMutex);
+    for (auto factory = registry.rbegin(); factory != registry.rend(); ++factory) {
+        if ((*factory)->matchFactory(config))
+            return (*factory)->instanceFromFactory(where, config);
+    }
+    return {};
+}
+
+SharedMemoryCallback::Ptr
+SharedMemoryCallback::instanceFromFactory(const AddressInterval&, const Yaml::Node&) const {
+    ASSERT_not_reachable("subclasses that use factories must implement this method; optional otherwise");
+}
+
+bool
+SharedMemoryCallback::isFactory() const {
+    return registrationVas_.isEmpty();
+}
+
+const std::string&
+SharedMemoryCallback::name() const {
+    return name_;
+}
+
+void
+SharedMemoryCallback::name(const std::string &s) {
+    ASSERT_forbid(s.empty());
+    name_ = s;
+}
+
 const AddressInterval&
-SharedMemoryCallback::registeredVas() const {
-    return registeredVas_;
+SharedMemoryCallback::registrationVas() const {
+    return registrationVas_;
 }
 
 void
-SharedMemoryCallback::registeredVas(const AddressInterval &i) {
-    registeredVas_ = i;
+SharedMemoryCallback::registrationVas(const AddressInterval &i) {
+    registrationVas_ = i;
 }
 
 void
-SharedMemoryCallback::hello(const std::string &myName, const SharedMemoryContext &ctx) const {
+SharedMemoryCallback::hello(const SharedMemoryContext &ctx) const {
     Sawyer::Message::Stream out = mlog[WHERE] ? mlog[WHERE] : mlog[DEBUG];
     if (out) {
         switch (ctx.phase) {
@@ -85,8 +189,7 @@ SharedMemoryCallback::hello(const std::string &myName, const SharedMemoryContext
                 out <<"finishing ";
                 break;
         }
-        out <<(myName.empty() ? ctx.sharedMemoryEvent->name() : myName)
-            <<" at instruction " <<StringUtility::addrToString(ctx.ip)
+        out <<"shared memory \"" <<name() <<"\" at instruction " <<StringUtility::addrToString(ctx.ip)
             <<", addresses " <<StringUtility::addrToString(ctx.accessedVas)
             <<" (" <<StringUtility::plural(ctx.accessedVas.size(), "bytes") <<")\n";
         if (mlog[DEBUG] && ConcolicPhase::REPLAY == ctx.phase) {

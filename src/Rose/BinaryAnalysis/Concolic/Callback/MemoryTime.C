@@ -13,24 +13,42 @@ namespace BinaryAnalysis {
 namespace Concolic {
 namespace Callback {
 
+static const char *defaultName = "time";
+
 MemoryTime::~MemoryTime() {}
 
-MemoryTime::MemoryTime() {}
+MemoryTime::MemoryTime(const std::string &name)
+    : SharedMemoryCallback(name) {}
+
+MemoryTime::MemoryTime(const AddressInterval &where, const std::string &name)
+    : SharedMemoryCallback(where, name) {}
 
 MemoryTime::Ptr
-MemoryTime::instance() {
-    return Ptr(new MemoryTime);
+MemoryTime::instance(const AddressInterval &where) {
+    return Ptr(new MemoryTime(where, defaultName));
+}
+
+MemoryTime::Ptr
+MemoryTime::factory() {
+    return Ptr(new MemoryTime(defaultName));
+}
+
+SharedMemoryCallback::Ptr
+MemoryTime::instanceFromFactory(const AddressInterval &where, const Yaml::Node &config) const {
+    Ptr retval = instance(where);
+    retval->name(name());
+    return retval;
 }
 
 void
 MemoryTime::playback(SharedMemoryContext &ctx) {
-    hello("simulated Unix time", ctx);
+    hello(ctx);
     prevRead_ = ctx.sharedMemoryEvent->calculateResult(ctx.architecture->inputVariables()->bindings());
 }
 
 void
 MemoryTime::handlePreSharedMemory(SharedMemoryContext &ctx) {
-    hello("simulated Unix time", ctx);
+    hello(ctx);
     if (IoDirection::READ == ctx.direction) {
         if (prevRead_) {
             SymbolicExpression::Ptr increasing = SymbolicExpression::makeGe(ctx.valueRead, prevRead_);
