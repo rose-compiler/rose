@@ -348,8 +348,8 @@ public:
      *  Converts node to scalar type if needed.
      *
      *  @{ */
-    Node(const std::string &value);
-    Node(const char* value);
+    explicit Node(const std::string &value);
+    explicit Node(const char* value);
     /** @} */
 
     /** Destructor. */
@@ -507,17 +507,16 @@ void Parse(Node &root, std::iostream&);
 void Parse(Node &root, const std::string &data);
 void Parse(Node &root, const char *data, const size_t size);
 
-/** Parse YAML from file into node. */
-void parse(Node &root, const boost::filesystem::path&);
+/** Parse YAML from file. */
+Yaml::Node parse(const boost::filesystem::path&);
 
-/** Parse YAML from stream into node. */
-void parse(Node &root, std::iostream&);
+/** Parse YAML from stream. */
+Yaml::Node parse(std::istream&);
 
-/** Parse YAML from data into node.
- *
+/** Parse YAML from string.
  * @{ */
-void parse(Node &root, const std::string &data);
-void parse(Node &root, const char *data);
+Yaml::Node parse(const std::string&);
+Yaml::Node parse(const char*);
 /** @} */
 
 /** Serialization configuration structure, describing output behavior. */
