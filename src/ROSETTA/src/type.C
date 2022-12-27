@@ -192,15 +192,8 @@ Grammar::setUpTypes ()
   // PP 01/11/22
      NEW_TERMINAL_MACRO ( AdaProtectedType , "AdaProtectedType", "T_ADA_PROTECTED_TYPE" );
 
-  // NEW_NONTERMINAL_MACRO (NamedType,
-  //                        ClassType | TemplateInstantiationType | EnumType | TypedefType,
-  //                        "NamedType","T_NAME");
-#if 0
-  // DQ (2/10/2014): Original code
-     NEW_NONTERMINAL_MACRO (NamedType,
-                            ClassType | JavaParameterizedType | JavaQualifiedType | EnumType | TypedefType,
-                            "NamedType","T_NAME", false);
-#else
+     NEW_TERMINAL_MACRO ( ScopedType , "ScopedType", "T_SCOPED_TYPE" );
+
   // DQ (2/10/2014): Added SgNamedType IR nodes for Philippe.
   // Rasmussen (5/10/2019): Added a Table type for Jovial (tables are structs with array dimensions)
      NEW_NONTERMINAL_MACRO (ClassType,
@@ -209,9 +202,8 @@ Grammar::setUpTypes ()
      NEW_NONTERMINAL_MACRO (NamedType,
                             ClassType             | EnumType          | TypedefType      | NonrealType |
                             JavaParameterizedType | JavaQualifiedType | JavaWildcardType | AdaTaskType |
-                            AdaProtectedType      | AdaFormalType     | AdaDiscriminatedType,
+                            AdaProtectedType      | AdaFormalType     | AdaDiscriminatedType | ScopedType,
                             "NamedType","T_NAME", false);
-#endif
 
   // DQ (5/11/2011): This is no longer used, and has not be used since the 3rd rewite of the name qualification
   // support in 2007.  We are now working on the 4rh rewrite of this horrible subject and it is not clear if it
@@ -499,12 +491,6 @@ Grammar::setUpTypes ()
         typeObjectName.editSubstitute           ( "CREATE_TYPE_PARAMETER", parameterString ); \
         typeObjectName.setFunctionSource        ( sourceCodeName, "../Grammar/Type.code" );
 
-#if 0
-     // DQ (10/12/2014): This is no longer used (commented out code).
-        typeObjectName.setFunctionPrototype     ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" ); \
-        typeObjectName.setFunctionSource        ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-#endif
-
      CUSTOM_CREATE_TYPE_MACRO(TypeInt,
             "SOURCE_CREATE_TYPE_FOR_TYPE_INT_TYPE",
             "int sz = 0");
@@ -653,6 +639,11 @@ Grammar::setUpTypes ()
             "SOURCE_CREATE_TYPE_FOR_STRING_TYPE",
             "SgExpression* expr = NULL, size_t length = 0");
 
+     ScopedType.excludeFunctionPrototype ( "HEADER_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
+     ScopedType.excludeFunctionSource    ( "SOURCE_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
+     ScopedType.editSubstitute           ( "CREATE_TYPE_PARAMETER", "SgNamedType * lhs = NULL" );
+     ScopedType.editSubstitute           ( "CREATE_TYPE_PARAMETER", "SgNamedType * rhs = NULL" );
+
 #if 0
   // DQ (8/27/2006): Complex types should just take an enum value to indicate their size (float, double, long double).
      CUSTOM_CREATE_TYPE_MACRO(TypeComplex,
@@ -783,12 +774,8 @@ Grammar::setUpTypes ()
 
      NonrealType.setFunctionPrototype ( "HEADER_NONREAL_TYPE", "../Grammar/Type.code" );
      NonrealType.setFunctionPrototype ( "HEADER_GET_NAME",     "../Grammar/Type.code" );
-//   NonrealType.excludeFunctionPrototype ( "HEADER_GET_NAME",     "../Grammar/Type.code" );
-//   NonrealType.excludeFunctionPrototype ( "HEADER_GET_MANGLED",  "../Grammar/Type.code" );
 
      AutoType.setFunctionPrototype        ( "HEADER_AUTO_TYPE",   "../Grammar/Type.code" );
-//   AutoType.excludeFunctionPrototype    ( "HEADER_GET_NAME",    "../Grammar/Type.code" );
-//   AutoType.excludeFunctionPrototype    ( "HEADER_GET_MANGLED", "../Grammar/Type.code" );
 
      JavaParameterizedType.setFunctionPrototype ("HEADER_JAVA_PARAMETERIZED_TYPE", "../Grammar/Type.code" );
      JavaParameterizedType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
@@ -1213,11 +1200,9 @@ Grammar::setUpTypes ()
 
      ClassType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
 
-//   NonrealType.excludeFunctionSource    ( "SOURCE_GET_NAME",    "../Grammar/Type.code");
      NonrealType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      NonrealType.setFunctionSource        ( "SOURCE_NONREAL_TYPE", "../Grammar/Type.code");
 
-//   AutoType.excludeFunctionSource    ( "SOURCE_GET_NAME",    "../Grammar/Type.code");
      AutoType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      AutoType.setFunctionSource        ( "SOURCE_AUTO_TYPE", "../Grammar/Type.code");
 

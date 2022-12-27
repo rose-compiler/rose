@@ -18,10 +18,6 @@ Grammar::setUpSymbols ()
      NEW_TERMINAL_MACRO ( TemplateVariableSymbol, "TemplateVariableSymbol", "TEMPLATE_VARIABLE_NAME" );
      NEW_NONTERMINAL_MACRO ( VariableSymbol, TemplateVariableSymbol, "VariableSymbol", "VARIABLE_NAME", true);
 
-  //
-  // [DT] 5/3/2000 -- Added TypeSymbol (as an experiment).
-  //
-  // NEW_TERMINAL_MACRO ( TypeSymbol,           "TypeSymbol",           "TYPE_NAME" );
      NEW_TERMINAL_MACRO ( FunctionTypeSymbol,   "FunctionTypeSymbol",   "FUNCTYPE_NAME" );
 
   // DQ (12/26/2011): Added TemplateClassSymbol and changed ClassSymbol to be a non-AstNodeClass.
@@ -33,23 +29,12 @@ Grammar::setUpSymbols ()
   // [DT] 5/10/2000
      NEW_TERMINAL_MACRO ( TemplateSymbol,       "TemplateSymbol",       "TEMPLATE_NAME" );
 
-#if 0
-     //
-     // [DT] 5/11/2000 -- Added TemplateInstantiationSymbol.
-     //
-     NEW_TERMINAL_MACRO ( TemplateInstantiationSymbol,
-                         "TemplateInstantiationSymbol",
-                         "TEMPLATE_INSTANTIATION_NAME" );
-#endif
-
      NEW_TERMINAL_MACRO ( EnumSymbol,           "EnumSymbol",           "ENUM_NAME" );
      NEW_TERMINAL_MACRO ( EnumFieldSymbol,      "EnumFieldSymbol",      "FIELD_NAME" );
 
-  // NEW_TERMINAL_MACRO ( TypedefSymbol,        "TypedefSymbol",        "TYPEDEF_NAME" );
      NEW_TERMINAL_MACRO    ( TemplateTypedefSymbol,  "TemplateTypedefSymbol",  "TEMPLATE_TYPEDEF_NAME" );
      NEW_NONTERMINAL_MACRO ( TypedefSymbol, TemplateTypedefSymbol, "TypedefSymbol", "TYPEDEF_NAME", true);
 
-  // NEW_TERMINAL_MACRO ( MemberFunctionSymbol, "MemberFunctionSymbol", "MEMBER_FUNC_NAME" );
      NEW_TERMINAL_MACRO ( TemplateFunctionSymbol, "TemplateFunctionSymbol", "TEMPLATE_FUNC_NAME" );
      NEW_TERMINAL_MACRO ( TemplateMemberFunctionSymbol, "TemplateMemberFunctionSymbol", "TEMPLATE_MEMBER_FUNC_NAME" );
 
@@ -83,10 +68,13 @@ Grammar::setUpSymbols ()
      NEW_TERMINAL_MACRO ( AdaInheritedFunctionSymbol, "AdaInheritedFunctionSymbol", "ADA_INHERITED_FUNCTION_SYMBOL" );
 
   // DQ (12/27/2011): Added more support for template declaration details in the AST.
-  // NEW_NONTERMINAL_MACRO ( FunctionSymbol,MemberFunctionSymbol | RenameSymbol,"FunctionSymbol","FUNCTION_NAME", true);
      NEW_NONTERMINAL_MACRO ( MemberFunctionSymbol,TemplateMemberFunctionSymbol,"MemberFunctionSymbol","MEMBER_FUNC_NAME", true);
      NEW_NONTERMINAL_MACRO ( FunctionSymbol, MemberFunctionSymbol | TemplateFunctionSymbol | RenameSymbol | AdaInheritedFunctionSymbol,
                              "FunctionSymbol","FUNCTION_NAME", true);
+
+     NEW_NONTERMINAL_MACRO ( TypeSymbol, 
+                             ClassSymbol | TypedefSymbol | EnumSymbol,
+                             "TypeSymbol","TYPE_NAME", true);
 
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
   // DQ (5/3/2010): Added symbol table support to the binary analysis within ROSE.  Values that
@@ -118,8 +106,8 @@ Grammar::setUpSymbols ()
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
      NEW_NONTERMINAL_MACRO (Symbol,
           VariableSymbol   | NonrealSymbol            | FunctionSymbol         | FunctionTypeSymbol |
-          ClassSymbol      | TemplateSymbol           | EnumSymbol             | EnumFieldSymbol    |
-          TypedefSymbol    | LabelSymbol              | DefaultSymbol          | NamespaceSymbol    |
+          TemplateSymbol   | EnumFieldSymbol          | TypeSymbol             |
+          LabelSymbol      | DefaultSymbol            | NamespaceSymbol        |
           IntrinsicSymbol  | ModuleSymbol             | InterfaceSymbol        | CommonSymbol       |
           AliasSymbol      | AsmBinaryAddressSymbol   | AsmBinaryDataSymbol    | JavaLabelSymbol    |
           AdaPackageSymbol | AdaTaskSymbol            | AdaProtectedSymbol     | AdaRenamingSymbol  |
@@ -128,8 +116,8 @@ Grammar::setUpSymbols ()
 #else
      NEW_NONTERMINAL_MACRO (Symbol,
           VariableSymbol   | NonrealSymbol            | FunctionSymbol         | FunctionTypeSymbol |
-          ClassSymbol      | TemplateSymbol           | EnumSymbol             | EnumFieldSymbol    |
-          TypedefSymbol    | LabelSymbol              | DefaultSymbol          | NamespaceSymbol    |
+          TemplateSymbol   | EnumFieldSymbol          | TypeSymbol             |
+          LabelSymbol      | DefaultSymbol            | NamespaceSymbol        |
           IntrinsicSymbol  | ModuleSymbol             | InterfaceSymbol        | CommonSymbol       |
           AliasSymbol      |                                                     JavaLabelSymbol    |
           AdaPackageSymbol | AdaTaskSymbol            | AdaProtectedSymbol     | AdaRenamingSymbol  |
@@ -516,4 +504,6 @@ Grammar::setUpSymbols ()
      AsmBinaryAddressSymbol.setFunctionSource ( "SOURCE_ASM_BINARY_ADDRESS_SYMBOL", "../Grammar/Symbol.code" );
      AsmBinaryDataSymbol.setFunctionSource    ( "SOURCE_ASM_BINARY_DATA_SYMBOL",    "../Grammar/Symbol.code" );
 #endif
+
+     TypeSymbol.setFunctionSource        ( "SOURCE_TYPE_SYMBOL", "../Grammar/Symbol.code" );
    }

@@ -2904,25 +2904,43 @@ Grammar::setUpExpressions () {
                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     // Merged support for SgReferenceExp as a group
+
+     NEW_TERMINAL_MACRO (ScopedRefExp, "ScopedRefExp", "SCOPED_REF" );
+     ScopedRefExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     ScopedRefExp.setDataPrototype ( "SgReferenceExp * ", "lhs", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     ScopedRefExp.setDataPrototype ( "SgReferenceExp * ", "rhs", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     ScopedRefExp.setFunctionSource ( "SOURCE_SCOPED_REFEXP_GET_TYPE","../Grammar/Expression.code" );
+
+     NEW_TERMINAL_MACRO (TypeRefExp, "TypeRefExp", "NTYPE_REF" );
+     TypeRefExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     TypeRefExp.setDataPrototype ( "SgNamedType * ", "named_type", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TypeRefExp.setFunctionSource ( "SOURCE_TYPE_REFEXP_GET_TYPE","../Grammar/Expression.code" );
+
+     NEW_NONTERMINAL_MACRO (ReferenceExp,
+          VarRefExp | LabelRefExp | ClassNameRefExp | NonrealRefExp | ScopedRefExp | TypeRefExp |
+          FunctionRefExp | MemberFunctionRefExp | TemplateFunctionRefExp | TemplateMemberFunctionRefExp,
+          "ReferenceExp", "ReferenceExpTag", false);
+     ReferenceExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     ReferenceExp.setFunctionSource ( "SOURCE_REFERENCE_EXPRESSION_GET_TYPE", "../Grammar/Expression.code" );
+
+     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
      // DQ (9/4/2013): Added compound literal support.
      // DQ (7/12/2013): Moved the TypeTraitBuiltinOperator to be derived from Expression.
      NEW_NONTERMINAL_MACRO (Expression,
-                            UnaryOp                  | BinaryOp                 | ExprListExp             | VarRefExp           | ClassNameRefExp          |
-                            FunctionRefExp           | MemberFunctionRefExp     | ValueExp                | CallExpression      | SizeOfOp                 |
+                            UnaryOp                  | BinaryOp                 | ExprListExp             | ValueExp            | CallExpression           |
                             UpcLocalsizeofExpression | UpcBlocksizeofExpression | UpcElemsizeofExpression | JavaInstanceOfOp    | SuperExp                 |
                             TypeIdOp                 | ConditionalExp           | NewExp                  | DeleteExp           | ThisExp                  |
                             RefExp                   | Initializer              | VarArgStartOp           | VarArgOp            | VarArgEndOp              |
                             VarArgCopyOp             | VarArgStartOneOperandOp  | NullExpression          | VariantExpression   | SubscriptExpression      |
-                            ColonShapeExp            | AsteriskShapeExp         | /*UseOnlyExpression     |*/ ImpliedDo         | IOItemExpression         |
-                            /* UseRenameExpression      | */ StatementExpression   | AsmOp                   | LabelRefExp         | ActualArgumentExpression |
-                            UnknownArrayOrFunctionReference               | PseudoDestructorRefExp | CAFCoExpression  |
-                            CudaKernelExecConfig    |  /* TV (04/22/2010): CUDA support */
-                            LambdaRefExp        | DictionaryExp           | KeyDatumPair             |
-                            Comprehension       | ListComprehension       | SetComprehension         | DictionaryComprehension      | NaryOp |
-                            StringConversion    | YieldExpression         | TemplateFunctionRefExp   | TemplateMemberFunctionRefExp | AlignOfOp |
-                            RangeExp            | MagicColonExp           | //SK(08/20/2015): RangeExp and MagicColonExp for Matlab
+                            ColonShapeExp            | AsteriskShapeExp         | ImpliedDo               | IOItemExpression    | ActualArgumentExpression |
+                            StatementExpression      | AsmOp                    | CudaKernelExecConfig    |
+                            UnknownArrayOrFunctionReference               | PseudoDestructorRefExp | CAFCoExpression | SizeOfOp |
+                            LambdaRefExp        | DictionaryExp           | KeyDatumPair             | ReferenceExp                 |
+                            Comprehension       | ListComprehension       | SetComprehension         | DictionaryComprehension      | NaryOp         |
+                            StringConversion    | YieldExpression         | AlignOfOp                | RangeExp                     | MagicColonExp  |
                             TypeTraitBuiltinOperator | CompoundLiteralExp | JavaAnnotation           | JavaTypeExpression           | TypeExpression |
-                            ClassExp            | FunctionParameterRefExp | LambdaExp | HereExp | AtExp | FinishExp | NoexceptOp | NonrealRefExp |
+                            ClassExp            | FunctionParameterRefExp | LambdaExp | HereExp | AtExp | FinishExp | NoexceptOp |
                             AdaTaskRefExp       | AdaProtectedRefExp      | FoldExpression | AwaitExpression | ChooseExpression | AdaAttributeExp |
                             JovialTablePresetExp| JovialPresetPositionExp | AdaOthersExp | AdaRenamingRefExp |
                             AdaUnitRefExp, "Expression", "ExpressionTag", false);

@@ -1060,3 +1060,8 @@ SgRangeType
 SgAsmCilExceptionData
 SgAsmCilMethodData
 SgTemplateVariableInstantiation
+SgReferenceExp
+SgTypeRefExp
+SgScopedRefExp
+SgScopedType
+SgTypeSymbol

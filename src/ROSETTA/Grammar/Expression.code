@@ -1742,3 +1742,28 @@ $CLASSNAME::get_decl() const
   return res;
 }
 SOURCE_DECLARATION_FROM_SYMBOL_UNIT_REF_END
+
+SOURCE_REFERENCE_EXPRESSION_GET_TYPE_START
+
+SgType * SgReferenceExp::get_type() const {
+  ROSE_ABORT();
+  return nullptr;
+}
+
+SOURCE_REFERENCE_EXPRESSION_GET_TYPE_END
+
+SOURCE_SCOPED_REFEXP_GET_TYPE_START
+
+SgType * SgScopedRefExp::get_type() const {
+  return p_rhs->get_type();
+}
+
+SOURCE_SCOPED_REFEXP_GET_TYPE_END
+
+SOURCE_TYPE_REFEXP_GET_TYPE_START
+
+SgType * SgTypeRefExp::get_type() const {
+  return p_named_type;
+}
+
+SOURCE_TYPE_REFEXP_GET_TYPE_END
