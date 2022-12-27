@@ -601,6 +601,8 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BitFlags.h									\
 	Rose/BitOps.h									\
 	Rose/CodeGen.h									\
+	Rose/CodeGen/SymbolScanner.h							\
+	Rose/CodeGen/SymbolScanner.txx							\
 	Rose/CodeGen/API.h								\
 	Rose/CodeGen/API.txx								\
 	Rose/CodeGen/Driver.h								\

@@ -287,6 +287,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/Variables/VariableFinder.C					\
 	BinaryAnalysis/VxworksTerminal.C						\
 	BinaryAnalysis/Z3Solver.C							\
+	CodeGen/SymbolScanner.C								\
 	CodeGen/API.C									\
 	CodeGen/Driver.C								\
 	CodeGen/Factory.C								\

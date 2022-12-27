@@ -6,6 +6,8 @@
 
 #include <iostream>
 
+#include <Rose/CodeGen/SymbolScanner.h>
+
 namespace Rose { namespace CodeGen {
 
 template <typename CRT>
@@ -127,58 +129,6 @@ void API<CRT>::load_headers(Driver & driver) {
 
   ROSE_ASSERT(SageBuilder::topScopeStack() == NULL); // Sanity check
 }
-
-#define DEBUG_Rose_CodeGen_SymbolScanner 0
-
-template <typename API>
-struct SymbolScanner : public ROSE_VisitTraversal {
-  API & api;
-
-  SymbolScanner(API & api_) : api(api_) {}
-
-  template <typename SymT>
-  void visit(SymT * sym, std::map<std::string, SymT * API::* > const & objmap) {
-#if DEBUG_Rose_CodeGen_SymbolScanner
-    std::cout << "SymbolScanner::visit( sym = " << sym << " : " << sym->class_name() << " )" << std::endl;
-    std::cout << "  sym->get_declaration() = " << sym->get_declaration() << " : " << sym->get_declaration()->class_name() << ")" << std::endl;
-    std::cout << "  sym->get_scope() = " << sym->get_scope() << " : " << sym->get_scope()->class_name() << ")" << std::endl;
-    if (sym->get_scope()) {
-      std::cout << "  sym->get_scope()->get_parent() = " << sym->get_scope()->get_parent() << " : " << sym->get_scope()->get_parent()->class_name() << ")" << std::endl;
-    }
-#endif
-    auto str = sym->get_declaration()->get_qualified_name().getString();
-#if DEBUG_Rose_CodeGen_SymbolScanner
-    std::cout << "  str = " << str << std::endl;
-#endif
-    auto it = objmap.find(str);
-    if (it != objmap.end()) {
-      api.*(it->second) = sym;
-    }
-  }
-
-  void visit(SgNode * node) {
-    switch (node->variantT()) {
-      case V_SgNamespaceSymbol:              visit<SgNamespaceSymbol> ( (SgNamespaceSymbol*)node, API::namespaces); break;
-
-      case V_SgClassSymbol:                  visit<SgClassSymbol>     ( (SgClassSymbol*)node,     API::classes);    break;
-      case V_SgTemplateClassSymbol:          visit<SgClassSymbol>     ( (SgClassSymbol*)node,     API::classes);    break;
-
-      case V_SgTypedefSymbol:                visit<SgTypedefSymbol>   ( (SgTypedefSymbol*)node,   API::typedefs);   break;
-      case V_SgTemplateTypedefSymbol:        visit<SgTypedefSymbol>   ( (SgTypedefSymbol*)node,   API::typedefs);   break;
-
-      case V_SgVariableSymbol:               visit<SgVariableSymbol>  ( (SgVariableSymbol*)node,  API::variables);  break;
-      case V_SgTemplateVariableSymbol:       visit<SgVariableSymbol>  ( (SgVariableSymbol*)node,  API::variables);  break;
-
-      case V_SgFunctionSymbol:               visit<SgFunctionSymbol>  ( (SgFunctionSymbol*)node,  API::functions);  break;
-      case V_SgMemberFunctionSymbol:         visit<SgFunctionSymbol>  ( (SgFunctionSymbol*)node,  API::functions);  break;
-      case V_SgTemplateFunctionSymbol:       visit<SgFunctionSymbol>  ( (SgFunctionSymbol*)node,  API::functions);  break;
-      case V_SgTemplateMemberFunctionSymbol: visit<SgFunctionSymbol>  ( (SgFunctionSymbol*)node,  API::functions);  break;
-
-      default:
-	      ROSE_ABORT();
-    }
-  }
-};
 
 template <typename CRT>
 void API<CRT>::load_api(Driver & driver) {

@@ -52,8 +52,8 @@ class API {
     void load_headers(Driver & driver);
     void load_api(Driver & driver);
 
-  template <typename API>
-  friend struct SymbolScanner;
+  template <typename>
+  friend struct SymbolScannerBase;
 };
 
 } }
