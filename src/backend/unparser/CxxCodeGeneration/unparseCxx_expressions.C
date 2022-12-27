@@ -215,6 +215,9 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
        // DQ (7/26/2020): Adding support for C++20 fold operator.
           case CHOOSE_EXPR:  { unparseChooseExpression(expr,info); break; }
 
+          case SCOPED_REF:  { unparseScopedRefExp(expr,info); break; }
+          case NTYPE_REF:   { unparseTypeRefExp(expr,info); break; }
+
        // PP (11/16/22): \todo why is this unparsed here?
           case ADA_ATTRIBUTE_EXP: { curprint(" /* Ada'Attribute */ "); break; }
 
@@ -2358,37 +2361,17 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
 #if DEBUG_FUNCTION_REFERENCE_SUPPORT
                printf ("declaration->get_declarationModifier().isFriend() = %s \n",declaration->get_declarationModifier().isFriend() ? "true" : "false");
 #endif
-            // DQ (12/2/2004): Added diff == 0 to avoid qualification of operators (avoids "i__gnu_cxx::!=0")
-            // added some extra spaces to make it more clear if it is ever wrong again (i.e. "i __gnu_cxx:: != 0")
-            // DQ (11/13/2004) Modified to avoid qualified name for friend functions
-            // DQ (11/12/2004) Added support for qualification of function names output as function calls
-            // if ( (declaration->get_declarationModifier().isFriend() == false) && (diff == 0) )
-               bool useNameQualification = ( (declaration->get_declarationModifier().isFriend() == false) && (diff == 0) );
-
-            // DQ (4/1/2014): Force name qualification where it was computed to be required (see test2014_28.C).
-            // Even friends can need name qualification.  However, this causes other test codes to fail.
-               useNameQualification = true;
-               useNameQualification = useNameQualification && (uses_operator_syntax == false);
+               bool useNameQualification = useNameQualification && (uses_operator_syntax == false);
+               useNameQualification = useNameQualification && !isSgScopedRefExp(expr->get_parent());
 
                if ( useNameQualification == true )
                   {
-                 // DQ (8/6/2007): Now that we have a more sophisticated name qualifiation mechanism using
-                 // hidden declaration lists, we don't have to force the qualification of function names.
-                 // DQ (10/15/2006): Force output of any qualified names for function calls.
-                 // info.set_forceQualifiedNames();
-
                  // curprint ( "/* unparseFuncRef calling info.set_forceQualifiedNames() */ ";
 
-                 // DQ (5/12/2011): Support for new name qualification.
                     SgUnparse_Info tmp_info(info);
                     tmp_info.set_name_qualification_length(func_ref->get_name_qualification_length());
                     tmp_info.set_global_qualification_required(func_ref->get_global_qualification_required());
 
-                 // SgName nameQualifier = unp->u_name->generateNameQualifier( declaration, info );
-                 // SgName nameQualifier = unp->u_name->generateNameQualifier( declaration, tmp_info );
-
-                 // DQ (5/29/2011): Newest refactored support for name qualification.
-                 // printf ("In unparseFuncRef(): Looking for name qualification for SgFunctionRefExp = %p \n",func_ref);
                     SgName nameQualifier = func_ref->get_qualified_name_prefix();
 #if DEBUG_FUNCTION_REFERENCE_SUPPORT
                     printf ("In unparseFuncRef(): nameQualifier = %s \n",nameQualifier.str());
@@ -2396,20 +2379,7 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
                     printf ("In unparseFuncRef(): Testing name in map: for SgFunctionRefExp = %p qualified name = %s \n",func_ref,func_ref->get_qualified_name_prefix().str());
                  // curprint ( "\n /* unparseFuncRef using nameQualifier = " + nameQualifier.str() + " */ \n";
 #endif
-#if 0
-                    SgFunctionCallExp* functionCallExpression = isSgFunctionCallExp(expr->get_parent());
-                    if (functionCallExpression != NULL)
-                       {
-                         printf ("Found the function call, global qualification is defined here functionCallExpression->get_global_qualified_name() = %s \n",
-                              functionCallExpression->get_global_qualified_name() == true ? "true" : "false");
-                         if (functionCallExpression->get_global_qualified_name() == true)
-                            {
-                              curprint ("::");
-                            }
-                       }
-#endif
                     curprint (nameQualifier.str());
-                 // curprint (nameQualifier.str() + " ";
                   }
                  else
                   {
@@ -4486,6 +4456,23 @@ Unparse_ExprStmt::unparseChooseExpression(SgExpression*, SgUnparse_Info &)
      ROSE_ABORT();
    }
 
+void
+Unparse_ExprStmt::unparseScopedRefExp(SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgScopedRefExp * refexp = (SgScopedRefExp*)expr;
+     unparseExpression(refexp->get_lhs(), info);
+     curprint("::");
+     // TODO stop namequal
+     unparseExpression(refexp->get_rhs(), info);
+   }
+
+void
+Unparse_ExprStmt::unparseTypeRefExp(SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgTypeRefExp * refexp = (SgTypeRefExp*)expr;
+     SgUnparse_Info info_(info);
+     unp->u_type->unparseType(refexp->get_named_type(), info_);
+   }
 
 // DQ (7/26/2020): Adding support for C++20 expression folding expression.
 void

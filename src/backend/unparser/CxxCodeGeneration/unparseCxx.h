@@ -192,6 +192,9 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
        // DQ (2/5/2015): Added missing C++11 support.
           virtual void unparseNoexceptOp              (SgExpression* expr, SgUnparse_Info& info);  
 
+          virtual void unparseScopedRefExp            (SgExpression* expr, SgUnparse_Info& info);
+          virtual void unparseTypeRefExp              (SgExpression* expr, SgUnparse_Info& info);
+
        // DQ (2/12/2011): Added support for UPC specific sizeof operators.
           virtual void unparseUpcLocalSizeOfOp        (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseUpcBlockSizeOfOp        (SgExpression* expr, SgUnparse_Info& info);
