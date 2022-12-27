@@ -215,15 +215,6 @@ libroseLibraries = \
    $(libroseSqlite3xConnection) \
    $(libroseQtExtension)
 
-if ROSE_WITH_LIBHARU
-libroseLibraries += \
-   $(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src/libhpdf.la
-endif
-
-# DQ (6/10/2017): Added libhpdf.la library and removed it from LIBADD rule.
-# This is being done to fix the "make install" rule (which failes for me).
-# Added: $(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src/libhpdf.la above.
-
 # DQ (12/18/2016): Moved below to make POET optional.
 #  $(top_builddir)/src/3rdPartyLibraries/POET/libpoet.la
 endif
@@ -652,7 +643,7 @@ librose_la_LDFLAGS = -no-undefined $(ROSE_RPATHS)
 
 #librose_la_LDFLAGS = $(ROSE_DWARF_LIBS_WITH_PATH)
 #if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
-#  librose_la_LDFLAGS += -R ${DOT_ASIS_LIB_DIR_} 
+#  librose_la_LDFLAGS += -R ${DOT_ASIS_LIB_DIR_}
 #endif
 
 # DQ (4/12/2016): This is required for use with clang (not clear how to compile ROSE with out it).
@@ -667,7 +658,7 @@ librose_la_LDFLAGS += -fno-rtti
 librose_la_DEPENDENCIES = $(libroseLibraries)
 
 if OS_MACOSX
-  librose_la_LDFLAGS += $(ROSE_LINK_RPATHS) 
+  librose_la_LDFLAGS += $(ROSE_LINK_RPATHS)
 endif
 
 # if ROSE_USE_OPEN_FORTRAN_PARSER
@@ -708,7 +699,7 @@ rose_config_LDADD = $(ROSE_LIBS)
 
 if ROSE_USE_INTERNAL_JAVA_SUPPORT
 if OS_MACOSX
-  rose_config_LDFLAGS += $(ROSE_LINK_RPATHS) 
+  rose_config_LDFLAGS += $(ROSE_LINK_RPATHS)
 endif
 endif
 
@@ -830,7 +821,7 @@ endif
 
 if ROSE_USE_INTERNAL_JAVA_SUPPORT
 if OS_MACOSX
-  ROSEBIN_LDFLAGS += $(ROSE_LINK_RPATHS) 
+  ROSEBIN_LDFLAGS += $(ROSE_LINK_RPATHS)
 endif
 endif
 
@@ -980,4 +971,3 @@ endif
 	rm -f frontend/SageIII/Cxx_Grammar.lo
 	rm -f roseSupport/templateSupport.lo
 	$(MAKE)
-

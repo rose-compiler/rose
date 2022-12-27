@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 SUBDIRS =
 
-PHONY: test test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration test_testPDFGeneration testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator test_exampleIdentityTranslator
+PHONY: test test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration test_testJSONGeneration testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator test_exampleIdentityTranslator
 
 include $(top_srcdir)/tests/nonsmoke/functional/input_codes/Makefile.for.input.codes
 
@@ -73,6 +73,7 @@ noinst_PROGRAMS = \
    testTranslator \
    testTranslatorUnfoldedConstants \
    testTranslatorFoldedConstants \
+   testJSONGeneration \
    testGraphGeneration \
    testTokenGeneration \
    testTemplates \
@@ -81,10 +82,6 @@ noinst_PROGRAMS = \
 
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
    noinst_PROGRAMS += testLinearDisassembler3
-endif
-
-if ROSE_WITH_LIBHARU
-   noinst_PROGRAMS += testPDFGeneration
 endif
 
 if ROSE_WITH_ATERM
@@ -126,10 +123,8 @@ testTranslatorFoldedConstants_SOURCES   = testTranslatorFoldedConstants.C
 # This tests the ability to generate dot file (AST and WholeGraph) for the input application.
 testGraphGeneration_SOURCES = testGraphGeneration.C
 
-if ROSE_WITH_LIBHARU
-# This tests the ability to generate pdf file (AST) for the input application.
-testPDFGeneration_SOURCES = testPDFGeneration.C
-endif
+# This tests the ability to generate json file (AST) for the input application.
+testJSONGeneration_SOURCES = testJSONGeneration.C
 
 # This tests the token generation capabilities which are an option in ROSE used to support the
 # generation of patches to define transformations of large scale applications.
@@ -398,9 +393,7 @@ if !ROSE_USE_CLANG_FRONTEND
 
 test_testGraphGeneration: testGraphGeneration
 
-if ROSE_WITH_LIBHARU
-test_testPDFGeneration: testPDFGeneration
-endif
+test_testJSONGeneration: testJSONGeneration
 
 # DQ (74/6/2017): Adding test for the version of identityTranslator that is distributed
 # in the exampleTranslators/documentedExamples/simpleTranslatorExamples directory.
@@ -427,17 +420,9 @@ endif
 # Rule to run all the example translator tests
 # test: test_testAnalysis test_testCodeGeneration test_testTranslator testSimpleLinkFileTranslator
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-if ROSE_WITH_LIBHARU
-   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration test_testPDFGeneration testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator test_readFileTwice
+   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration testJSONGeneration testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator test_readFileTwice
 else
-   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator test_readFileTwice
-endif
-else
-if ROSE_WITH_LIBHARU
-   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration test_testPDFGeneration testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator test_exampleIdentityTranslator test_readFileTwice
-else
-   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator test_exampleIdentityTranslator test_readFileTwice
-endif
+   test: test_testTokenGeneration test_testAnalysis test_testCodeGeneration test_testTranslator test_testTemplates test_testGraphGeneration test_testJSONGeneration testSimpleLinkFileTranslator testTranslatorFoldedConstants testTranslatorUnfoldedConstants testKeepGoingTranslator test_exampleIdentityTranslator test_readFileTwice
 endif
 
 # Liao, 4/12/2017 restrict_template_parameter.C will trigger frontend error.
@@ -486,4 +471,3 @@ myCleanRule:
 	rm -f a.out *.dot *.binary
 	rm -f *.C_identity
 	rm -rf rose_minimal.cpp rose-passed_files.txt rose-failed_files.txt
-

@@ -36,10 +36,6 @@ main( int argc, char * argv[] )
 
      cout << "EDG/SAGE Processing DONE! (manipulate with ROSE ...) " << endl;
 
-  // Output the source code file (as represented by the SAGE AST) as a PDF file (with bookmarks)
-     AstPDFGeneration pdftest;
-     pdftest.generateInputFiles(project);
-
   // MyTraversal myTraversal(*sageProject);
      MyTraversal myTraversal;
 
@@ -54,7 +50,6 @@ main( int argc, char * argv[] )
   // Initialize with a statement we expect to find in the original application
      string previousNewCodeString = "int x;";
 
-#if 1
   // Now remove some of the newly added strings from the AST through replacement
      int i;
      for (i = HighLevelInterfaceNodeCollection::SurroundingScope;
@@ -81,32 +76,18 @@ main( int argc, char * argv[] )
                             tempString,"$SCOPE_NAME",
                             HighLevelInterfaceNodeCollection::getRelativeScopeString(HighLevelRewrite::ScopeIdentifierEnum(i)));
 
-       // printf ("tempString = %s \n",tempString.c_str());
-
           inheritedAttribute.newCodeString = tempString;
 
        // Save the new code string so that we can search for it and replace it next time
           previousNewCodeString            = tempString;
-       // printf ("previousNewCodeString = %s \n",previousNewCodeString.c_str());
-
-       // printf ("inheritedAttribute.targetCodeString = %s \n",inheritedAttribute.targetCodeString.c_str());
-       // printf ("inheritedAttribute.newCodeString    = %s \n",inheritedAttribute.newCodeString.c_str());
 
           testPermutation (project,inheritedAttribute);
 
        // Clear the flags after modifying the tree processing the tree
-//        printf ("In testRewriteReplacementPermutations (test code): clear internal visit flags \n");
 //        cleanTreeFlags.traverse(project);
 
           string projectString = project->unparseToString().c_str();
           string newCodeString = inheritedAttribute.newCodeString;
-
-#if 0
-          printf ("################################################################### \n");
-          printf ("newCodeString = -->%s<-- \n",newCodeString.c_str());
-          printf ("project->unparseToString() = \n%s\n",projectString.c_str());
-          printf ("################################################################### \n");
-#endif
 
           bool replacementVerified = StringUtility::isContainedIn(projectString,newCodeString);
 
@@ -116,29 +97,6 @@ main( int argc, char * argv[] )
        // the application's AST.
           ROSE_ASSERT ((replacementVerified == true) || (i == HighLevelInterfaceNodeCollection::Preamble));
         }
-#else
-  // First insert the new string
-     inheritedAttribute.removeTargetCode = false;
-  // inheritedAttribute.scope            = HighLevelInterfaceNodeCollection::SurroundingScope;
-     inheritedAttribute.scope            = HighLevelInterfaceNodeCollection::GlobalScope;
-     inheritedAttribute.location         = HighLevelInterfaceNodeCollection::ReplaceCurrentPosition;
-
-  // Search for this string in the AST
-     inheritedAttribute.targetCodeString = "int x;";
-
-  // default setting for debugging AST rewrite mechanism
-     inheritedAttribute.newCodeString    = "int y;";
-
-  // Control the creation of strings in a new scope (true) or not (false)
-     inheritedAttribute.buildInNewScope = false;
-
-     testPermutation (project,inheritedAttribute);
-#endif
-
-#if 0
-     printf ("Exiting after call to testPermutation ... \n");
-     ROSE_ABORT();
-#endif
 
   // Generate the final C++ source code from the potentially modified SAGE AST
      project->unparse();

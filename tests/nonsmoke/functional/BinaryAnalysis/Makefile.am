@@ -1420,38 +1420,6 @@ testSageSerialization.passed: testSageSerialization conditionalDisable
 		CMD="$$(pwd)/testSageSerialization"				\
 		$(top_srcdir)/scripts/test_exit_status $@
 
-#############################################################################################
-# PDF File Generation for Binaries
-#############################################################################################
-
-# DQ (3/26/2017): Added PDF test for ROSE evaluation (forces testing of parts of ROSE for lcov)
-test_pdf_translator = $(abspath ../testPDFGeneration)
-test_pdf_small_specimen = $(top_srcdir)/tests/nonsmoke/specimens/binary/i386-pop
-test_pdf_large_specimen = $(top_srcdir)/tests/nonsmoke/specimens/binary/pocketputty.exe
-
-$(test_pdf_translator):
-	$(MAKE) -C $(dir $(test_pdf_translator)) $(notdir $(test_pdf_translator))
-
-TEST_TARGETS += test_small_pdf_generation.passed test_large_pdf_generation.passed
-
-test_small_pdf_generation.passed: $(test_pdf_small_specimen) $(test_pdf_translator) conditionalDisable
-	@$(RTH_RUN)								\
-		TITLE="generation of small PDF file [$@]"			\
-		DISABLED="$$(./conditionalDisable)"				\
-		USE_SUBDIR=yes							\
-		CMD="$(test_pdf_translator) -rose:verbose 0 $< && ls -l *.pdf"	\
-		$(TEST_EXIT_STATUS) $@
-
-# Matzke (2017-05-08): Disabled because it can take >900 seconds when debugging is enabled, and the
-# functionality is already mostly tested by test_small_pdf_generation.passed
-test_large_pdf_generation.passed: $(test_pdf_large_specimen) $(test_pdf_translator) conditionalDisable
-	@$(RTH_RUN)								\
-		TITLE="generation of large PDF file [$@]"			\
-		DISABLED="takes too long"					\
-		USE_SUBDIR=yes							\
-		CMD="$(test_pdf_translator) -rose:verbose 0 $< && ls -l *.pdf"	\
-		$(TEST_EXIT_STATUS) $@
-
 ###############################################################################################################################
 # Symbolic substitution in huge expressions with many common subexpressions
 ###############################################################################################################################

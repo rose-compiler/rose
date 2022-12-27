@@ -832,9 +832,6 @@ else()
   set(use_rose_in_build_tree_var, FALSE)
 endif()
 
-set(LIBHARU_SOURCE_DIR ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/libharu-200910170404)
-set(LIBHARU_BINARY_DIR ${ROSE_TOP_BINARY_DIR}/src/3rdPartyLibraries/libharu-200910170404)
-
 ########################################################################################################################
 # Back-end compilers
 ########################################################################################################################
@@ -1147,12 +1144,9 @@ set(ROSE_INCLUDES
   ${ROSE_TOP_SRC_DIR}/src/midend/programTransformation/runtimeTransformation
   ${ROSE_TOP_SRC_DIR}/src/roseSupport
   ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/MSTL
-  ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/libharu-2.1.0/include
-  ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/libharu-2.1.0/include
   ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Framework
   ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Widgets
   ${ROSE_TOP_SRC_DIR}/src/util/graphs
-  ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/libharu-2.1.0/win32/include/
   ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/astInterface)
 
 if(SQLITE3_FOUND_LIB)

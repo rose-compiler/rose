@@ -4,6 +4,7 @@ mAstProcessing_la_sources=\
 	$(mAstProcessingPath)/AstNodeVisitMapping.C \
 	$(mAstProcessingPath)/AstTextAttributesHandling.C \
 	$(mAstProcessingPath)/AstDOTGeneration.C \
+	$(mAstProcessingPath)/AstJSONGeneration.C \
 	$(mAstProcessingPath)/AstProcessing.C \
 	$(mAstProcessingPath)/plugin.C \
 	$(mAstProcessingPath)/AstSimpleProcessing.C \
@@ -18,10 +19,6 @@ mAstProcessing_la_sources=\
 if !ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 mAstProcessing_la_sources+=\
 	$(mAstProcessingPath)/AstRestructure.C
-if ROSE_WITH_LIBHARU
-mAstProcessing_la_sources+=\
-	$(mAstProcessingPath)/AstPDFGeneration.C 
-endif
 endif
 
 mAstProcessing_libadd=\
@@ -32,6 +29,7 @@ mAstProcessing_includeHeaders=\
 	$(mAstProcessingPath)/AstAttributeMechanism.h \
 	$(mAstProcessingPath)/AstTextAttributesHandling.h \
 	$(mAstProcessingPath)/AstDOTGeneration.h \
+	$(mAstProcessingPath)/AstJSONGeneration.h \
 	$(mAstProcessingPath)/AstProcessing.h \
 	$(mAstProcessingPath)/plugin.h \
 	$(mAstProcessingPath)/AstSimpleProcessing.h \
@@ -55,11 +53,6 @@ mAstProcessing_includeHeaders=\
 	$(mAstProcessingPath)/graphTemplate.h \
         $(mAstProcessingPath)/SgGraphTemplate.h
 
-if ROSE_WITH_LIBHARU
-mAstProcessing_includeHeaders+=\
-	$(mAstProcessingPath)/AstPDFGeneration.h 
-endif
-
 mAstProcessing_extraDist=\
 	$(mAstProcessingPath)/CMakeLists.txt \
 	$(mAstProcessingPath)/AstProcessing.docs
@@ -78,4 +71,3 @@ mAstProcessing_distCleanLocal=\
 # TOO (11/22/2011): TODO: (flattening this makefile) what to do about "-I." ?
 test_code_size:
 	g++ -E -I$(top_builddir) -I. $(ROSE_INCLUDES) $(mAstProcessingPath)/AstNodeVisitMapping.C | wc -l
-

@@ -1,6 +1,9 @@
 /*
  *  [#125] AstPDFGeneration::generate(std::string filename, SgNode* node) crashes when iostream is included
     This tests the generation of a pdf file representing the AST.
+
+    9/2022 [MS] : PDF generation has been replaced with JSON generation.  Retaining this test for the
+    time being but it may no longer be necessary if the underlying bug was related to PDFs only.
  */
 
 #include "rose.h"
@@ -26,17 +29,17 @@ main (int argc, char *argv[])
      AstTests::runAllTests(project);
 
 #if DEBUG_PROGRESS
-     printf ("Build the AstPDFGeneration object \n");
+     printf ("Build the AstJSONGeneration object \n");
 #endif
 
-     AstPDFGeneration pdf;
+     AstJSONGeneration json;
 
 #if DEBUG_PROGRESS
-     printf ("Build the PDF from the AST \n");
+     printf ("Build the JSON from the AST \n");
 #endif
 
   // DQ (11/11/2012): Fixed filename to correspond to this test.
-     pdf.generate("test125",project);
+     json.generate("test125",project);
 
 #if DEBUG_PROGRESS
      printf ("Unparse and compile code from the AST \n");

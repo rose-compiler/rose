@@ -2025,7 +2025,7 @@ endif
 if !USING_INTEL_COMPILER
 # DQ (9/19/2020): this test fails with the Intel v17 compiler (something regarding boost).
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
-   test2017_63.C 
+   test2017_63.C
 endif
 
 
@@ -2464,16 +2464,16 @@ endif
 if ROSE_USING_GCC_VERSION_LATER_4_8
 if !USING_CLANG_COMPILER
   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
-     test2015_126.C 
+     test2015_126.C
 endif
   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
      test2015_127.C \
-     test2015_129.C 
+     test2015_129.C
 else
   TESTCODE_CURRENTLY_FAILING += \
      test2015_126.C \
      test2015_127.C \
-     test2015_129.C 
+     test2015_129.C
 endif
 
 if ROSE_USING_GCC_VERSION_LATER_6_0
@@ -2491,11 +2491,11 @@ endif
 if ROSE_USING_BOOST_VERSION_1_57
   TESTCODE_CURRENTLY_FAILING += \
      test2014_77.C \
-     test2014_78.C 
+     test2014_78.C
 else
   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
      test2014_77.C \
-     test2014_78.C 
+     test2014_78.C
 endif
 
 if USING_CLANG_COMPILER
@@ -2524,7 +2524,7 @@ if USING_CLANG_COMPILER
      test2012_90.C \
      test2013_63.C \
      test2013_246.C \
-     test2013_235.C 
+     test2013_235.C
 else
   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
      test2014_71.C \
@@ -2541,7 +2541,7 @@ else
      test2012_90.C \
      test2013_63.C \
      test2013_246.C \
-     test2013_235.C 
+     test2013_235.C
 
 if !USING_INTEL_COMPILER
     EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
@@ -2597,7 +2597,7 @@ if OS_MACOSX
      test2012_09.C \
      test2013_09.C \
      test2013_164.C \
-     test2013_212.C 
+     test2013_212.C
 else
   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
      test2004_77.C \
@@ -2607,14 +2607,14 @@ else
      test2012_09.C \
      test2013_09.C \
      test2013_164.C \
-     test2013_212.C 
+     test2013_212.C
 endif
 
 
 # DQ (9/17/2020): This is a new organization of the files that are passing only specific compilers.
 if USING_INTEL_COMPILER
 # INTEL compiler
-#      EXAMPLE_TESTCODES_REQUIRED_TO_PASS += 
+#      EXAMPLE_TESTCODES_REQUIRED_TO_PASS +=
 
 else
 if USING_CLANG_COMPILER
@@ -2635,20 +2635,20 @@ if USING_CLANG_COMPILER
    test2016_17.C \
    test2016_18.C \
    test2016_89.C \
-   test2017_50.C 
+   test2017_50.C
 
 else
 if OS_MACOSX
-#      EXAMPLE_TESTCODES_REQUIRED_TO_PASS += 
+#      EXAMPLE_TESTCODES_REQUIRED_TO_PASS +=
 else
-#  EXAMPLE_TESTCODES_REQUIRED_TO_PASS += 
+#  EXAMPLE_TESTCODES_REQUIRED_TO_PASS +=
 
 # GNU compiler
 if ROSE_USING_GCC_VERSION_LATER_10_1
       # skip these codes when using GNU 10.1 (testing)
 else
       # DQ (7/23/2020): These are failing code for EDG 6.0 and GNU 10.1 (debugging this).
-#     EXAMPLE_TESTCODES_REQUIRED_TO_PASS += 
+#     EXAMPLE_TESTCODES_REQUIRED_TO_PASS +=
 endif
  # The test codes fail CLANG 10.0
       EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
@@ -2663,7 +2663,7 @@ endif
    test2016_18.C \
    test2016_89.C \
    test2017_50.C \
-   test2020_02.C 
+   test2020_02.C
 endif
 endif
 endif
@@ -2679,12 +2679,12 @@ endif
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
 TESTCODES = \
-   $(TESTCODES_REQUIRED_TO_PASS) 
+   $(TESTCODES_REQUIRED_TO_PASS)
 
 # QMTest allows both passing and failing tests.
 ALL_TESTCODES = \
    $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS) \
-   $(TESTCODE_CURRENTLY_FAILING) 
+   $(TESTCODE_CURRENTLY_FAILING)
 
 # Note the quotes and escapes that are required:
 # ADDRESS_SANITIZER_OPTIONS = "ASAN_OPTIONS=symbolize=1 ASAN_SYMBOLIZER_PATH=\`which llvm-symbolizer\`"
@@ -2693,8 +2693,8 @@ VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-l
 # VALGRIND = valgrind $(VALGRIND_OPTIONS)
 # VALGRIND =
 
-# DQ (11/5/2016): Adding support for address sanitizer (borrowing the VALGRIND variable to support 
-# this, this implementation needs review).  It might be better to prepend the information to the 
+# DQ (11/5/2016): Adding support for address sanitizer (borrowing the VALGRIND variable to support
+# this, this implementation needs review).  It might be better to prepend the information to the
 # CC and CXX variables. I think that the purify support uses this approach.
 if ROSE_USE_SANITIZER
 VALGRIND = $(ADDRESS_SANITIZER_OPTIONS)
@@ -2762,7 +2762,7 @@ TEST_Objects_FoldedConstants = ${EXAMPLE_TESTCODES_REQUIRED_TO_PASS_FOLDED_CONST
 TEST_Objects_UnfoldedConstants = ${ALL_TESTCODES:.C=.unfoldedConstants-o}
 
 if ROSE_USE_EDG_VERSION_5_0
-# EDG versions 6.0 and later do not require the -rose:unparse_edg_normalized_method_ROSE_1392 
+# EDG versions 6.0 and later do not require the -rose:unparse_edg_normalized_method_ROSE_1392
 # option (it appears that template declarations mihgt no longer be normalized).
 method-defn-in-tpldecl-0.C.passed: $(srcdir)/method-defn-in-tpldecl-0.C $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
 	@$(RTH_RUN) \
@@ -2772,7 +2772,7 @@ method-defn-in-tpldecl-0.C.passed: $(srcdir)/method-defn-in-tpldecl-0.C $(TEST_T
 endif
 
 if ROSE_USE_EDG_VERSION_5_0
-# EDG versions 6.0 and later do not require the -rose:unparse_edg_normalized_method_ROSE_1392 
+# EDG versions 6.0 and later do not require the -rose:unparse_edg_normalized_method_ROSE_1392
 # option (it appears that template declarations mihgt no longer be normalized).
 method-defn-in-tpldecl-1.C.passed: $(srcdir)/method-defn-in-tpldecl-1.C $(srcdir)/method-defn-in-tpldecl-1.h $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
 	@$(RTH_RUN) \
@@ -2863,14 +2863,14 @@ testOption:
 
 TEST_TEMPLATE_TRANSLATOR = ../../testTemplates
 
-# DQ (7/20/2015): Added template tests using new testTemplates translator that forces 
+# DQ (7/20/2015): Added template tests using new testTemplates translator that forces
 # output of instantiated templates (part of ongoing improvements to template support).
 # This test translator will work for test2015_32.C - test2015_36.C
 # I will make this in the a better organized set of tests later.
 # DQ (10/12/2015): Note that tests test2015_37.C through test2015_54.C are these tests.
 testTemplateExample: testTemplateExample_1 testTemplateExample_2 testTemplateExample_3 testTemplateExample_4 testTemplateExample_5
 
-testTemplateExample_1: $(TEST_TEMPLATE_TRANSLATOR) 
+testTemplateExample_1: $(TEST_TEMPLATE_TRANSLATOR)
 	$(TEST_TEMPLATE_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/test2015_32.C
 
 testTemplateExample_2: $(TEST_TEMPLATE_TRANSLATOR)
@@ -2886,12 +2886,10 @@ testTemplateExample_5: $(TEST_TEMPLATE_TRANSLATOR)
 	$(TEST_TEMPLATE_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/test2015_36.C
 
 
-if ROSE_WITH_LIBHARU
-TEST_PDF_TRANSLATOR = ../../testPDFGeneration
+TEST_JSON_TRANSLATOR = ../../testJSONGeneration
 
-$(TEST_PDF_TRANSLATOR):
-	cd ../..; $(MAKE) testPDFGeneration
-endif
+$(TEST_JSON_TRANSLATOR):
+	cd ../..; $(MAKE) testJSONGeneration
 
 ../../testTranslatorFoldedConstants:
 	cd ../..; $(MAKE) testTranslatorFoldedConstants
@@ -2925,7 +2923,7 @@ EXTRA_DIST = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
 # test2001_05.h  test2001_18A.h  test2003_09.h   test2003_24.h  test2005_133.h  test2005_158.h  test2005_160.h  test2005_81.h  test2006_187a.h  test2006_36.h    test2007_101.h  test2007_136.h  test2007_160.h   test2007_41.h   test2007_48.h
 
 # This was a bug specific to the normalization of source file names to absolute paths
-# DQ (12/11/2009): At the moment it is an failing test because "thisIsAnError" will be 
+# DQ (12/11/2009): At the moment it is an failing test because "thisIsAnError" will be
 # interpreted to be a file.
 testUsingBadCommandline: $(TEST_TRANSLATOR)
 	echo "class A { int x; float y;}; int main() { int x=0; return x; }" > roseTestProgram.C; \
@@ -2963,21 +2961,21 @@ test_MPI_LAM:
 	$(TEST_TRANSLATOR) -rose:verbose 0 -I$(MPI_LOCATION)/LAM_MPI/include -c $(MPI_LOCATION)/tests/input.C
 
 test_multiple_files: $(srcdir)/test2012_246a.C $(srcdir)/test2012_246b.C
-	../../testTranslator -rose:verbose 1 -c $(srcdir)/test2012_246a.C $(srcdir)/test2012_246b.C 
+	../../testTranslator -rose:verbose 1 -c $(srcdir)/test2012_246a.C $(srcdir)/test2012_246b.C
 
 # DQ (7/24/2018): Test for output spew from multiple files on the same command line.
 test_multiple_files_2: $(srcdir)/test2018_01.C $(srcdir)/test2018_02.C
-	../../testTranslator -rose:verbose 0 -c $(srcdir)/test2018_01.C $(srcdir)/test2018_02.C 
+	../../testTranslator -rose:verbose 0 -c $(srcdir)/test2018_01.C $(srcdir)/test2018_02.C
 
-test_multiple_files_3: $(srcdir)/test2019_30a.C $(srcdir)/test2019_30b.C $(srcdir)/test2019_30.h 
-	../../testTranslator -rose:verbose 0 -c $(srcdir)/test2019_30a.C $(srcdir)/test2019_30b.C 
+test_multiple_files_3: $(srcdir)/test2019_30a.C $(srcdir)/test2019_30b.C $(srcdir)/test2019_30.h
+	../../testTranslator -rose:verbose 0 -c $(srcdir)/test2019_30a.C $(srcdir)/test2019_30b.C
 
-# DQ (7/9/2019): This test demonstrates a failing case for older versions of EDG (pre 5.0) 
+# DQ (7/9/2019): This test demonstrates a failing case for older versions of EDG (pre 5.0)
 # when using at least GNU 5.1.  Not clear if we should worry about this since we are moving
 # to have EDG 5.0 be the default shortly.  This issue reproduces a problem that is only see
 # in one of the CFG tests.  It is not a problem with EDG 5.0, as I understand it.
-test_multiple_files_4: $(srcdir)/test2019_42a.C $(srcdir)/test2019_42b.C 
-	../../testTranslator -rose:verbose 0 -c $(srcdir)/test2019_42a.C $(srcdir)/test2019_42b.C 
+test_multiple_files_4: $(srcdir)/test2019_42a.C $(srcdir)/test2019_42b.C
+	../../testTranslator -rose:verbose 0 -c $(srcdir)/test2019_42a.C $(srcdir)/test2019_42b.C
 
 test_bug_980: $(srcdir)/cpp_vector.C
 	../../testTranslator -rose:verbose 0 -c $^
@@ -2992,17 +2990,13 @@ print_testcodes:
 performance_timing:
 	../../testGraphGeneration --edg:no_warnings -w -rose:verbose 3 -rose:skip_unparse_asm_commands -rose:skipAstConsistancyTests -rose:skip_commentsAndDirectives -rose:skip_unparse -I$(srcdir) -c $(srcdir)/testPerformance.C
 
-if ROSE_WITH_LIBHARU
 # DQ (3/17/2017): Added PDF test for ROSE evaluation (forces testing of parts of ROSE for lcov):
-test_pdf_generation: $(TEST_PDF_TRANSLATOR)
-	../../testPDFGeneration --edg:no_warnings -w -rose:verbose 0 -rose:skip_unparse_asm_commands -rose:skipAstConsistancyTests -rose:skip_commentsAndDirectives -rose:skip_unparse -I$(srcdir) -c $(srcdir)/test2004_77.C
-	ls -l *.pdf
-	@echo "Removing the generated PDF file because it is up to 150Meg and we want to save disk space."
-	rm *.pdf
-else
-test_pdf_generation:
-	@echo "libharu support is not enabled"
-endif
+# MS (9/27/2022): PDF -> JSON change
+test_json_generation: $(TEST_JSON_TRANSLATOR)
+	../../testJSONGeneration --edg:no_warnings -w -rose:verbose 0 -rose:skip_unparse_asm_commands -rose:skipAstConsistancyTests -rose:skip_commentsAndDirectives -rose:skip_unparse -I$(srcdir) -c $(srcdir)/test2004_77.C
+	ls -l *.json
+	@echo "Removing the generated JSON file because it is up to 150Meg and we want to save disk space."
+	rm *.json
 
 # DQ (11/19/2012): HPCToolKit use.  This makes some significant assumptions on how we have setup HPCToolKit.
 hpctoolkit:
@@ -3013,10 +3007,10 @@ hpctoolkit:
 
 check-local:
 #	@$(MAKE) $(PASSING_TEST_Source_passed)
-	@$(MAKE) test_pdf_generation $(PASSING_TEST_Source_passed) \
+	@$(MAKE) test_json_generation $(PASSING_TEST_Source_passed) \
           test_unparse_includes_option.passed test_unparse_includes_option_with_link.passed \
           test_common_configure_test_with_link_part_1.passed test_common_configure_test_with_link_part_2.passed testTemplateExample
-#	@$(MAKE) test_pdf_generation
+#	@$(MAKE) test_json_generation
 #	I'm not sure why these are coded to run in serial [RPM 2014-08-29]
 	@$(MAKE) test_unparse_includes_option.passed
 	@$(MAKE) test_unparse_includes_option_with_link.passed
@@ -3030,7 +3024,7 @@ check-local:
 	@echo "*******************************************************************************************************************"
 
 clean-local:
-	rm -f a.out *.o rose_*.[cC] roseTestProgram.C *.dot *.ti *.pdf
+	rm -f a.out *.o rose_*.[cC] roseTestProgram.C *.dot *.ti *.json
 	rm -f *.foldedConstants-o
 	rm -f *.unfoldedConstants-o
 	rm -rf QMTest
@@ -3086,11 +3080,11 @@ clean-local:
 #  TIMEOUT_TOLERANCE    $gnu_time * $TIMEOUT_TOLERANCE (threshold tests only)
 #------------------------------------------------------------------------------
 
-# DQ (6/30/2013): Increased this to support compiling Boost example tests. We 
-# need to rethink how we want to handl this. I suggest restricting this to a 
+# DQ (6/30/2013): Increased this to support compiling Boost example tests. We
+# need to rethink how we want to handl this. I suggest restricting this to a
 # few tests instead of each test. Compiling with optimization also makes about
 # a factor of four difference for test2013_241.C (boost example test code).
-# Since Jenkins testing is currently done without optimization we need the 
+# Since Jenkins testing is currently done without optimization we need the
 # larger timeout value just to handle the newer boost test codes.
 # TIMEOUT            ?= 60  # Default timeout value
 TIMEOUT            ?= 420  # Default timeout value
@@ -3130,4 +3124,3 @@ $(TEST_Source_passed:.C.passed=.timed_with_threshold):
 
 status:
 	@$(MAKE) $(TEST_Source_passed)
-

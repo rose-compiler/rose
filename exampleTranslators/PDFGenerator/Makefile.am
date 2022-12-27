@@ -3,16 +3,14 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 AM_CPPFLAGS = $(ROSE_INCLUDES)
 AM_LDFLAGS = $(ROSE_RPATHS)
 
-bin_PROGRAMS = pdfGenerator
+bin_PROGRAMS = jsonGenerator
 
-pdfGenerator_SOURCES = pdfGenerator.C
+jsonGenerator_SOURCES = jsonGenerator.C
 
 LDADD = $(ROSE_LIBS)
 
-EXTRA_DIST = CMakeLists.txt 
-CLEANFILES = 
+EXTRA_DIST = CMakeLists.txt
+CLEANFILES =
 
 clean-local:
-	rm -rf *.o pdfGenerator Templates.DB ii_files ti_files
-
-
+	rm -rf *.o jsonGenerator Templates.DB ii_files ti_files
