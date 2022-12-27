@@ -182,12 +182,9 @@ void
 Grammar::addGrammarElement ( AstNodeClass & X )
    {
      ROSE_ASSERT (this != NULL);
-  // terminalList.display("START of Grammar::addGrammarElement(AstNodeClass)");
      X.setGrammar(this);
      const AstNodeClass *const &Y = &X;
      terminalList.push_back ( (AstNodeClass *const &) Y );
-  // terminalList.display("END of Grammar::addGrammarElement(AstNodeClass)");
-  // terminalList.consistencyCheck();
      astVariantToTerminalMap[this->getVariantForTerminal(X)] = &X;
    }
 
@@ -257,8 +254,8 @@ Grammar::nonTerminalConstructor ( const string& lexeme, Grammar& X, const string
    {
   // These functions build AstNodeClass and nonterminal objects to be associated with this grammar
   // Using a member function to construct these serves several purposes:
-  // 1) organizes terminals and nonterminals with there respective grammar (without ambiguity)
-  // 2) avoids or deferes the implementation of the envelop/letter interface mechanism so
+  // 1) organizes terminals and nonterminals with their respective grammar (without ambiguity)
+  // 2) avoids or defers the implementation of the envelop/letter interface mechanism so
   //    that the letter will have a scope longer than the envelope
 
      AstNodeClass* nt = new AstNodeClass ( lexeme, X, stringVar, tagString, canHaveInstances, builder );
@@ -1042,7 +1039,6 @@ Grammar::buildStringForSource ( AstNodeClass & node )
                                        &GrammarString::getFunctionPrototypeString );
 
   // DQ (9/28/2022): Fixing compiler warning for argument not used.
-  // StringUtility::FileWithLineNumbers variantFunctionDefinition     = buildStringForVariantFunctionSource      (node);
      StringUtility::FileWithLineNumbers variantFunctionDefinition     = buildStringForVariantFunctionSource      ();
      StringUtility::FileWithLineNumbers isClassnameFunctionDefinition = buildStringForIsClassNameFunctionSource  (node);
 
@@ -2201,7 +2197,6 @@ Grammar::buildSourceFiles( AstNodeClass & node, StringUtility::FileWithLineNumbe
          string sourceHeader = "#include \"sage3basic.h\"   // sage3 from grammar.C \nusing namespace std;\n\n";
      sourceBeforeInsertion.push_back(StringUtility::StringWithLineNumber(sourceHeader, "", 1));
 #else
-  // StringUtility::FileWithLineNumbers sourceBeforeInsertion = buildHeaderStringBeforeMarker(sourceFileInsertionSeparator, fileName);
      sourceBeforeInsertion += buildHeaderStringBeforeMarker(sourceFileInsertionSeparator, fileName);
 #endif
 
@@ -3729,16 +3724,6 @@ string Grammar::generateRTICode(GrammarString* gs, string dataMemberContainerNam
   ostringstream ss;
 
   ss << "doRTI(\"" << memberVariableName << "\", (void*)(&p_" << memberVariableName << "), sizeof(p_" << memberVariableName << "), (void*)this, \"" << className << "\", \"" << typeString << "\", \"p_" << memberVariableName << "\", toStringForRTI(p_" << memberVariableName << "), " << dataMemberContainerName << "[" << index << "]);\n";
-#if 0
-  ss << "#if ROSE_USE_VALGRIND\n";
-  ss << "doUninitializedFieldCheck(\"" << memberVariableName << "\", (void*)(&p_" << memberVariableName << "), sizeof(p_" << memberVariableName << "), (void*)this, \"" << className << "\");\n";
-  ss << "#endif\n";
-  ss << dataMemberContainerName << ".push_back(RTIMemberData("
-  << "\"" << typeString << "\"" << ", "
-  << "\"p_" << memberVariableName << "\"" << ", "
-  << "toStringForRTI(p_" << memberVariableName << ")"
-  << "));" << endl;
-#endif
   return ss.str();
 }
 

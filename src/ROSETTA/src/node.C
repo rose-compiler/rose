@@ -174,12 +174,9 @@ Grammar::setUpNodes ()
 
   // DQ (3/24/2007): Added support for tokens in the IR (to support threading of the token stream
   // onto the AST as part of an alternative, and exact, form of code generation within ROSE.
-  // NEW_NONTERMINAL_MACRO (LocatedNode, Expression | Statement, "LocatedNode", "LocatedNodeTag" );
-
      NEW_TERMINAL_MACRO (Token, "Token", "TOKEN" );
 
   // Liao 11/2/2010, LocatedNodeSupport is promoted to the first location since SgInitializedName's internal type is used in some Statement
-  // NEW_NONTERMINAL_MACRO (LocatedNode, LocatedNodeSupport| Statement | Expression | Token, "LocatedNode", "LocatedNodeTag", false );
      NEW_NONTERMINAL_MACRO (LocatedNode, Token | LocatedNodeSupport| Statement | Expression, "LocatedNode", "LocatedNodeTag", false );
 
      AstNodeClass & Type    = *lookupTerminal(terminalList, "Type");
@@ -198,10 +195,6 @@ Grammar::setUpNodes ()
   // NEW_TERMINAL_MACRO (Aterm, "Aterm", "ATERM" );
 
   // DQ (3/14/2007): Added IR support for binaries
-  // NEW_NONTERMINAL_MACRO (Node, Type | Symbol | LocatedNode | Support, "Node", "NodeTag" );
-  // NEW_NONTERMINAL_MACRO (Node, Support | Type | LocatedNode | Symbol | AsmNode, "Node", "NodeTag", false );
-  // NEW_NONTERMINAL_MACRO (Node, Type | Symbol | LocatedNode | Support, "Node", "NodeTag" );
-  // NEW_NONTERMINAL_MACRO (Node, Support | Type | LocatedNode | Symbol | AsmNode | Aterm, "Node", "NodeTag", false );
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
      NEW_NONTERMINAL_MACRO (Node, Support | Type | LocatedNode | Symbol | AsmNode, "Node", "NodeTag", false );
 #else
@@ -243,28 +236,6 @@ Grammar::setUpNodes ()
   // Build it everywhere for now (though it is likely only required on the leaves)
      Node.setSubTreeFunctionPrototype    ( "HEADER_PARSER", "../Grammar/Node.code");
 
-#if 0
-  // DQ (8/18/2004): This is not used so remove it!
-  // Node.excludeFunctionPrototype( "HEADER_IS_CLASSNAME", "../Grammar/Node.code");
-     Node.setDataPrototype               ( "SgAttribute*","singleAttribute","= NULL",
-                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
-  // MK: Node.excludeSubTreeDataPrototype( "SgAttribute*","attribute","= NULL");
-
-  // MS 12/18/01: attribute support
-     Node.setDataPrototype               ( "SgAttributePtrList","uattributes","",
-                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
-
-#if 0
-  // DQ (8/18/2004): This is not used so remove it!
-  // (Consider using a smart pointer to provide a better implementation)
-  // Added (2/24/2001) to start support for reference counting
-     Node.setDataPrototype               ( "int","referenceCount","= 1",
-                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE,
-                                           NO_COPY_DATA);
-     Node.excludeSubTreeDataPrototype( "int","referenceCount","= 1");
-#endif
-
   // MK: I moved the following data member declaration from ../Grammar/Node.code to this position,
   // we rely on the access functions to be defined in the .code files, maybe this should be changed;
      Node.setDataPrototype("SgNode*","parent","= NULL",
@@ -281,32 +252,9 @@ Grammar::setUpNodes ()
      Node.setDataPrototype("bool","containsTransformation","= false",
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
-#if 0
-  // DQ (7/23/2005): Remove this flag since it is no longer used.  It is not particularly eligant to store
-  // the state associated with the traversal within the AST. Some state is required to avoid retraversal
-  // of IR nodes, but that state should be stored in the traversal directly.
-
-  // MK: we need a boolean flag for the tree traversal
-     Node.setDataPrototype("bool","isVisited","= false",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
-     // MS: make file_info accessible in every AST node. Only set in SgLocatedNode(s)
-     //Node.setDataPrototype("Sg_File_Info*","file_info","= NULL",
-     //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
-#endif
-
   // DQ (10/21/2005): Adding memory pool support variable via ROSETTA so that file I/O can be supported.
-  // Node.setDataPrototype("$CLASSNAME *","freepointer","= NULL",
-  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      Node.setDataPrototype("$CLASSNAME*","freepointer","= AST_FileIO::IS_VALID_POINTER()",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
-
-#if 0
-  // DQ (4/10/2006): By deleting this from SgNode we save huge amounts of space in the Sg_File_Info
-  // objects which there are a LOT of and which don't need to be given an attribute mechanism.
-  // DQ (1/2/2006): Added attribute via ROSETTA (changed to pointer to AstAttributeMechanism)
-     Node.setDataPrototype("AstAttributeMechanism*","attribute","= NULL",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
-#endif
 
   // DQ (1/31/2006): We can introduce this here since it will be set in each constructor call.
   // but the trick is to set the initializer to an empty string so that the initialization in
@@ -316,8 +264,6 @@ Grammar::setUpNodes ()
   // we have to build special version of the access functions (so that the access member functions
   // will be static as well).
   // Support for SgFunctionTypeTable* SgNode::globalFunctionTypeTable = new SgFunctionTypeTable();
-  // Node.setDataPrototype("static SgFunctionTypeTable*","globalFunctionTypeTable","= new SgFunctionTypeTable()",
-  //        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      Node.setDataPrototype("static SgFunctionTypeTable*","globalFunctionTypeTable","",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
@@ -326,8 +272,6 @@ Grammar::setUpNodes ()
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
   // DQ (3/12/2007): Added static mangled name map, used to improve performance of mangled name lookup.
-  // Node.setDataPrototype("static SgMangledNameListPtr","globalMangledNameMap","",
-  //        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      Node.setDataPrototype("static std::map<SgNode*,std::string>","globalMangledNameMap","",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
   // DQ (6/26/2007): Added support from Jeremiah for shortened mangle names
@@ -360,19 +304,6 @@ Grammar::setUpNodes ()
   // node to the statement refering to the type.
      Node.setDataPrototype("static std::map<SgNode*,std::map<SgNode*,std::string> >","globalQualifiedNameMapForMapsOfTypes","",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
-
-#if 0
-  // DQ (6/21/2011): Since this type "std::set<SgNode*>" is not supported by our AST file I/O I will
-  // implement this in a way that does not require such support.
-  // DQ (6/21/2011): Added support for global handling of list of seen declarations to be used to
-  // support the name qualification.  Name qualification is used at different locations defferently
-  // depending upon if the declaration has been seen and what  sort of scope it was declared in and
-  // if it was a defining declaration, etc.
-  // Node.setDataPrototype("static std::set<SgNode*>","globalReferencedNameSet","",
-  //        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
-     Node.setDataPrototype("static SgNodeSet","globalReferencedNameSet","",
-            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
-#endif
 
   // Not clear how to best to this, perhaps ROSETTA should define a function.
   // DQ (11/25/2007): Language classification field.  Now that we are supporting multiple languages
