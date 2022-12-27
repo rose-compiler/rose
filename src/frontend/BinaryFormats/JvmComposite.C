@@ -2,10 +2,65 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
+#include <util/Sawyer/FileSystem.h>
 
 using std::string;
 using std::vector;
 using namespace Rose::Diagnostics; // for mlog, INFO, WARN, ERROR, FATAL, etc.
+
+static
+vector<string> getFilesInDir(string &path, string &extension) {
+  vector<string> files;
+  boost::filesystem::path dir(path);
+  if (boost::filesystem::exists(path) && boost::filesystem::is_directory(path)) {
+    boost::filesystem::recursive_directory_iterator it(path);
+    boost::filesystem::recursive_directory_iterator endit;
+
+    while (it != endit) {
+      if (boost::filesystem::is_regular_file(*it) && (extension=="")?true:it->path().extension() == extension) {
+        files.push_back(it->path().string());
+      }
+      ++it;
+    }
+  }
+  return files;
+}
+
+// Extract class files from a jar file
+static vector<string> extractClassFiles(string &jar)
+{
+  vector<string> classes{};
+
+  if (!CommandlineProcessing::isJavaJarFileSuffix(Rose::StringUtility::fileNameSuffix(jar))) {
+    mlog[WARN] << "In SgJvmComposite::extractClassFiles(): expected file to be path "
+               << "to a jar file: is " << jar << std::endl;
+    return std::move(classes);
+  }
+  else {
+    mlog[WARN] << "In SgJvmComposite::buildAST(): jar files not fully support yet, "
+               << "name is " << jar << std::endl;
+  }
+
+  // Make system call to extract the class files
+  Sawyer::FileSystem::TemporaryDirectory tmpDir{};
+  // TODO: work around this (by passing temp directory in?
+  tmpDir.keep(true);
+  std::cout << "---> extractClassFiles: tmp directory is " << tmpDir.name() << std::endl;
+
+  string commandString{};
+  commandString += "cd " + tmpDir.name().string() + "; ";
+  commandString += "jar xvf " + jar + "; ";
+  commandString += "cd -";
+  std::cout << "---> extractClassFiles: running system command: " << commandString << std::endl;
+
+  if (system(commandString.c_str()) != 0) {
+    mlog[WARN] << "In SgJvmComposite::buildAST(): failed system command: " << commandString << std::endl;
+  }
+
+  // TODO: add paths to extracted class files
+
+  return std::move(classes);
+}
 
 SgJvmComposite::SgJvmComposite(vector<string> & argv, SgProject* project)
   : SgBinaryComposite(argv, project)
@@ -41,23 +96,38 @@ int
 SgJvmComposite::buildAST(vector<string> argv, vector<string> /*inputCommandLine*/)
 {
   int result{1};
+  vector<string> classes{};
 
-  // argv is expected to contain executable and file name
+  // argv is expected to contain executable and file name (for now, TODO: multiple files)
   ROSE_ASSERT(argv.size() == 2);
-  if (CommandlineProcessing::isJvmFileNameSuffix(Rose::StringUtility::fileNameSuffix(argv[0]))) {
-    mlog[WARN] << "In SgJvmComposite::buildAST(): expected argv[0] to be path "
-               << "to command line executable: is " << argv[0] << std::endl;
+  string fileName{argv[1]};
+  string suffix{Rose::StringUtility::fileNameSuffix(fileName)};
+
+  // Obtain/extract class file(s)
+  if (CommandlineProcessing::isJavaClassFileSuffix((suffix))) {
+    classes.push_back(fileName);
+  }
+  else if (CommandlineProcessing::isJavaJarFileSuffix((suffix))) {
+    classes = extractClassFiles(fileName);
+  }
+  else {
+    mlog[WARN] << "In SgJvmComposite::buildAST(): expected fileName to be path "
+               << "to class or jar file: is " << fileName << std::endl;
     return result;
   }
 
-  auto gf = new SgAsmGenericFile{};
-  gf->parse(argv[1]); /* this loads file into memory, does no reading of file */
+  // Parse the class files
+  for (auto className : classes) {
+    auto gf = new SgAsmGenericFile{};
+    gf->parse(className); /* this loads file into memory, does no reading of file */
 
-  auto header = new SgAsmJvmFileHeader(gf);
-  if (header->parse()) {
-    p_genericFileList->get_files().push_back(gf);
-    result = 0;
+    auto header = new SgAsmJvmFileHeader(gf);
+    if (header->parse()) {
+      p_genericFileList->get_files().push_back(gf);
+      result = 0;
+    }
   }
+
   return result;
 }
 

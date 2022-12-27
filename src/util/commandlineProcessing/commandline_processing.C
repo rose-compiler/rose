@@ -1103,9 +1103,27 @@ CommandlineProcessing::isJavaFileNameSuffix ( const std::string & suffix )
    }
 
 bool
+CommandlineProcessing::isJavaClassFileSuffix ( const std::string & suffix )
+   {
+     if (suffix == "class") {
+        return true;
+     }
+     return false;
+   }
+
+bool
+CommandlineProcessing::isJavaJarFileSuffix ( const std::string & suffix )
+   {
+     if (suffix == "jar") {
+        return true;
+     }
+     return false;
+   }
+
+bool
 CommandlineProcessing::isJvmFileNameSuffix ( const std::string & suffix )
    {
-     if (suffix == "class" || suffix == "jar") {
+     if (isJavaClassFileSuffix(suffix) || isJavaJarFileSuffix(suffix)) {
         return true;
      }
      return false;

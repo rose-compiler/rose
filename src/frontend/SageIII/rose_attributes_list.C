@@ -176,22 +176,8 @@ void PreprocessingInfo::unpacked( char* storePointer )
      printf ("DONE: Before overwriting memory: Calling display on unpacked Sg_File_Info object \n");
 #endif
 
-  // std::cout << " in PreprocessingInfo::unpacked ... " << std::endl;
-  // printf ("Error, need to build a new SgFileInfo object! \n");
-  // ROSE_ASSERT(false);
-#if 0
-  // DQ (2/28/2010): This is a pointer to an IR node and they are handled using global index values
-  // that are mapped back to pointer values after reading. This will trash a properly set value!
-     memcpy ( (char*)(&file_info), storePointer, sizeof(file_info) );
-#endif
-
   // DQ (2/28/2010): But jump over the file_info data member so that all ther other data members will be unpacked properly.
      storePointer += sizeof(file_info);
-
-  // memcpy ( (char*)(&lineNumber), storePointer, sizeof(lineNumber) );
-  // storePointer += sizeof(lineNumber);
-  // memcpy ( (char*)(&columnNumber), storePointer, sizeof(columnNumber) );
-  // storePointer += sizeof(columnNumber);
 
      memcpy ( (char*)(&numberOfLines), storePointer, sizeof(numberOfLines) );
      storePointer += sizeof(numberOfLines);
@@ -202,13 +188,7 @@ void PreprocessingInfo::unpacked( char* storePointer )
      int stringSize = 0;
      memcpy ( (char*)(&stringSize), storePointer, sizeof(stringSize) );
      storePointer +=  sizeof(stringSize);
-#if 0
-     cout << " getting in trouble at String ... " << endl;
-#endif
      internalString = string ( storePointer, stringSize );
-#if 0
-     cout << " but survived " << endl;
-#endif
 
 #if 0
      printf ("In PreprocessingInfo::unpacked(%p) internalString = %s \n",storePointer,internalString.c_str());
@@ -218,22 +198,16 @@ void PreprocessingInfo::unpacked( char* storePointer )
 #endif
 
 #ifndef ROSE_SKIP_COMPILATION_OF_WAVE
-// DQ (11/29/2009): MSVC does not understnad use of "true" in macros.
-// #if CAN_NOT_COMPILE_WITH_ROSE != true
-// #if (CAN_NOT_COMPILE_WITH_ROSE == 0)
-// #ifndef USE_ROSE
   // DQ and AS (6/23/2006): and the stuff of Wave specific macro support ...
      tokenStream      = NULL;
      macroDef         = NULL;
      macroCall        = NULL;
      includeDirective = NULL;
-// #endif
 #endif
 
   // DQ (2/28/2010): Some assertion checking that will be done later in the unparser.
   // This test helps debug if any of the data members are set at an offset to there
   // proper positions.
-  // printf ("In PreprocessingInfo::unpacked(): getTypeOfDirective() = %d \n",getTypeOfDirective());
      ROSE_ASSERT (getTypeOfDirective() != PreprocessingInfo::CpreprocessorUnknownDeclaration);
    }
 
@@ -243,11 +217,6 @@ void PreprocessingInfo::unpacked( char* storePointer )
 // ********************************************
 
 #ifndef ROSE_SKIP_COMPILATION_OF_WAVE
-// DQ (11/29/2009): MSVC does not understnad use of "true" in macros.
-// #if CAN_NOT_COMPILE_WITH_ROSE != true
-// #if (CAN_NOT_COMPILE_WITH_ROSE == 0)
-// #ifndef USE_ROSE
-// AS(012006) Added to support macros
 PreprocessingInfo::rose_macro_call*
 PreprocessingInfo::get_macro_call()
    {
@@ -316,12 +285,7 @@ PreprocessingInfo::PreprocessingInfo(token_container tokCont, DirectiveType type
 
   // DQ (12/23/2006): Mark this as a comment or directive (mostly so that we can know that the parent being NULL is not meaningful).
      file_info->setCommentOrDirective();
-
-  // lineNumber   = lineNo;//macroDef->macrodef.lineNumber;
-  // columnNumber = colNo; //macroDef->macrodef.columnNumber;
-
      (*tokenStream)= tokCont;
-
      internalString = string(boost::wave::util::impl::as_string(*tokenStream).c_str());
 
   // DQ (1/15/2015): Adding support for token-based unparsing, initialization of new data member.
@@ -331,12 +295,9 @@ PreprocessingInfo::PreprocessingInfo(token_container tokCont, DirectiveType type
      if (whatSortOfDirective == PreprocessingInfo::CpreprocessorDefineDeclaration)
         {
           string name = getMacroName();
-#if 0
-          printf ("In PreprocessingInfo(): After calling getMacroName(): name = %s \n",name.c_str());
-#endif
         }
 
-     if(SgProject::get_verbose() >= 1)
+     if (SgProject::get_verbose() >= 1)
          std::cout << " String for declaration:" << internalString<< " at line: " << lineNo << " and col:" << colNo << std::endl;
 
    }

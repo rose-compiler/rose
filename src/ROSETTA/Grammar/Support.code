@@ -6150,7 +6150,7 @@ HEADER_APPLICATION_JVM_COMPOSITE_START
 
                 template<class S>
                 void serialize(S &s, const unsigned /*version*/) {
-                     s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgFile);
+                     s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgBinaryComposite);
                 }
 
      public:

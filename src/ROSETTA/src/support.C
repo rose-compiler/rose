@@ -91,24 +91,22 @@ Grammar::setUpSupport ()
   // DQ (9/2/2008): Separate out the handling of source files from binary files.
   // Note that we may at a later point distinguish source file into: ScriptFile,
   // FortranFile, CppFile, CFile, etc. It is not clear if that is useful. For now
-  // we seperate out BinaryFile since it should not be a pointer from SgFile and
+  // we separate out BinaryFile since it should not be a pointer from SgFile and
   // shared with a source file because there are so many ways that a binary file
   // can be related to a source file (and many source files).  The mapping is left
   // to an analysis phase to define and not defined in the structure of the AST.
      NEW_TERMINAL_MACRO (SourceFile, "SourceFile", "SourceFileTag" );
+     NEW_TERMINAL_MACRO (UnknownFile, "UnknownFile", "UnknownFileTag" );
+
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
      NEW_TERMINAL_MACRO (JvmComposite, "JvmComposite", "JvmCompositeTag" );
      JvmComposite.isBoostSerializable(true);
-#endif
-     NEW_TERMINAL_MACRO (UnknownFile, "UnknownFile", "UnknownFileTag" );
-
-  // Mark this as being able to be an IR node for now and later make it false.
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
-     NEW_NONTERMINAL_MACRO (BinaryComposite, JvmComposite, "BinaryComposite", "BinaryCompositeTag", false);
-     NEW_NONTERMINAL_MACRO (File, SourceFile | BinaryComposite | UnknownFile , "File", "FileTag", false);
+     NEW_NONTERMINAL_MACRO (BinaryComposite, JvmComposite, "BinaryComposite", "BinaryCompositeTag", true);
      BinaryComposite.isBoostSerializable(true);
+
+     NEW_NONTERMINAL_MACRO (File, SourceFile | UnknownFile | BinaryComposite, "File", "FileTag", false);
 #else
-     NEW_NONTERMINAL_MACRO (File, SourceFile |                   UnknownFile , "File", "FileTag", false);
+     NEW_NONTERMINAL_MACRO (File, SourceFile | UnknownFile, "File", "FileTag", false);
 #endif
      NEW_TERMINAL_MACRO (FileList, "FileList", "FileListTag" );
      NEW_TERMINAL_MACRO (Directory, "Directory", "DirectoryTag" );
@@ -152,14 +150,6 @@ Grammar::setUpSupport ()
      NEW_TERMINAL_MACRO (NonrealBaseClass, "NonrealBaseClass", "NonrealBaseClassTag" );
      NEW_NONTERMINAL_MACRO (BaseClass, ExpBaseClass | NonrealBaseClass, "BaseClass", "BaseClassTag", false );
 
-// #define OLD_GRAPH_NODES 0
-// #if OLD_GRAPH_NODES
-
-
-  // Type for graph node:
-  // DQ (8/18/2008): This should be removed in the final version; added for backward compatability!
-  //   NEW_TERMINAL_MACRO (DirectedGraphNode, "DirectedGraphNode", "DirectedGraphNodeTag" );
-
   // Types of graph edges:
      NEW_TERMINAL_MACRO (UndirectedGraphEdge, "UndirectedGraphEdge", "UndirectedGraphEdgeTag" );
      NEW_TERMINAL_MACRO (DirectedGraphEdge,   "DirectedGraphEdge",   "DirectedGraphEdgeTag" );
@@ -174,11 +164,10 @@ Grammar::setUpSupport ()
      NEW_NONTERMINAL_MACRO (BidirectionalGraph,  StringKeyedBidirectionalGraph | IntKeyedBidirectionalGraph,  "BidirectionalGraph",     "BidirectionalGraphTag" , false);
 
   // A bi-directional graph is a type of directed graph (also called an Incidence Directed Graph)
-     NEW_NONTERMINAL_MACRO (IncidenceDirectedGraph, BidirectionalGraph,    "IncidenceDirectedGraph",     "IncidenceDirectedGraphTag" , false);
+     NEW_NONTERMINAL_MACRO (IncidenceDirectedGraph, BidirectionalGraph, "IncidenceDirectedGraph", "IncidenceDirectedGraphTag", false);
 
   // Types of graphs:
   // DQ (8/18/2008): Added support for compatability with older IR nodes (will be removed later!)
-     //NEW_TERMINAL_MACRO (DirectedGraph,     "DirectedGraph",     "DirectedGraphTag" );
      NEW_TERMINAL_MACRO (IncidenceUndirectedGraph,     "IncidenceUndirectedGraph",     "IncidenceUndirectedGraphTag" );
      NEW_NONTERMINAL_MACRO (Graph, IncidenceDirectedGraph | IncidenceUndirectedGraph  ,"Graph", "GraphTag", false);
 
@@ -232,7 +221,6 @@ Grammar::setUpSupport ()
      NEW_TERMINAL_MACRO (HeaderFileReport, "HeaderFileReport", "HeaderFileReportTag" );
 
 // DQ (3/30/2009): This is the moved because "#if !0" is a problem for MSVS.
-// Note that OLD_GRAPH_NODES is set to "1" above...
      NEW_NONTERMINAL_MACRO (Support,
           Modifier              | Name                      | SymbolTable              |
           Attribute             | File_Info                 | File                     | Project              |
@@ -354,15 +342,14 @@ Grammar::setUpSupport ()
           Attribute.excludeFunctionSource    ( "SOURCE_PARSER", "../Grammar/parserSourceCode.macro" );
         }
 
-     SourceFile.setFunctionPrototype          ( "HEADER_APPLICATION_SOURCE_FILE", "../Grammar/Support.code");
-  // SourceFile.setAutomaticGenerationOfConstructor(false);
+     SourceFile.setFunctionPrototype         ( "HEADER_APPLICATION_SOURCE_FILE", "../Grammar/Support.code");
 
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-     BinaryComposite.setFunctionPrototype     ( "HEADER_APPLICATION_BINARY_COMPOSITE", "../Grammar/Support.code");
-     JvmComposite.setFunctionPrototype        ( "HEADER_APPLICATION_JVM_COMPOSITE"   , "../Grammar/Support.code");
+     BinaryComposite.setFunctionPrototype    ( "HEADER_APPLICATION_BINARY_COMPOSITE", "../Grammar/Support.code");
+     JvmComposite.setFunctionPrototype       ( "HEADER_APPLICATION_JVM_COMPOSITE"   , "../Grammar/Support.code");
 #endif
 
-     UnknownFile.setFunctionPrototype          ( "HEADER_APPLICATION_UNKNOWN_FILE", "../Grammar/Support.code");
+     UnknownFile.setFunctionPrototype        ( "HEADER_APPLICATION_UNKNOWN_FILE", "../Grammar/Support.code");
 
 
 
@@ -784,23 +771,16 @@ Grammar::setUpSupport ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (11/10/2018): Define a link to the SgIncludeFile that is associated with this SgSourceFile (valid pointer only if isHeaderFile == true).
-     SourceFile.setDataPrototype   ( "SgIncludeFile*", "associated_include_file", "= nullptr",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
-
-  // DQ (11/6/2018): Added to support unparsing of headers and source files for whole applications having
-  // multiple levels of directory structure.
-  // SourceFile.setDataPrototype("std::string", "applicationRootDirectory", "= \"\"",
-  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // SourceFile.setDataPrototype("bool", "usingApplicationRootDirectory", "= false",
-  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     SourceFile.setDataPrototype("SgIncludeFile*", "associated_include_file", "= nullptr",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
 
   // DQ (11/18/2019): Header file unparsing can depend on which SgGlobal (global scope) is used from which source file.
   // Where the IR nodes are not shared across multiple files, getting the header file from the correct source file is important.
   // When the CPP directives and comments are collected are added for a header file, the nodes that are not shared in global
   // scope will not have attached CPP directives and comments.  If those are the node in the global scope of the SgSourceFile
   // that represents a header file then we don't unparse the header file correctly.
-     SourceFile.setDataPrototype   ( "bool", "processedToIncludeCppDirectivesAndComments", "= false",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     SourceFile.setDataPrototype ( "bool", "processedToIncludeCppDirectivesAndComments", "= false",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // TV: List of node that must be traversed by generateNameQualificationSupport before it is applied to this file
      SourceFile.setDataPrototype ( "SgNodePtrList" , "extra_nodes_for_namequal_init", "" ,
@@ -812,7 +792,7 @@ Grammar::setUpSupport ()
      SourceFile.setDataPrototype   ( "bool", "isDynamicLibrary", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     UnknownFile.setDataPrototype   ( "SgGlobal*", "globalScope", "= nullptr",
+     UnknownFile.setDataPrototype  ( "SgGlobal*", "globalScope", "= nullptr",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (9/18/2018): Adding support for building the include file tree for each source file.
@@ -1027,7 +1007,7 @@ Grammar::setUpSupport ()
   // Fortran with *.F?? extension an explicitly set to false for fortran with *.f?? extension and binaries).
      File.setDataPrototype         ( "bool", "requires_C_preprocessor", "= true",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#if 1
+
   // DQ (2/5/2009): I think we need to make each file as binary or not and also record the setting on the command line.
   // DQ (2/4/2009): Moved this to the SgProject since it applies to the command line and all files.
   // DQ (1/9/2008): This permits a file to be marked explicitly as a binary file and avoids
@@ -1035,7 +1015,6 @@ Grammar::setUpSupport ()
   // and the object file could be interpreted as being provided for binary analysis).
      File.setDataPrototype         ( "bool", "binary_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
 
   // DQ (8/19/2007): Added more options specific to Fortran support
      File.setDataPrototype         ( "SgFile::outputFormatOption_enum", "inputFormat", "= SgFile::e_unknown_output_format",
@@ -1439,13 +1418,11 @@ Grammar::setUpSupport ()
      File.setDataPrototype ("bool", "unparse_template_ast", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-#if 1
   // DQ (2/17/2013): Added support to skip AST consistancy testing AstTests::runAllTests(SgProject*)
   // This testing is useful but interferes with performance testing using HPCToolKit.
   // Note that the AstTests::runAllTests() function must be called explicitly in the user's translator.
      File.setDataPrototype("bool", "skipAstConsistancyTests", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
 
   // DQ (4/28/2014): This might be improved it it were moved to the translator directly.  The result
   // would be the demonstration of a more general mechansim requireing no modification to ROSE directly.
@@ -1606,18 +1583,6 @@ Grammar::setUpSupport ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
      GraphEdge.setFunctionPrototype ( "HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
      GraphEdge.setFunctionSource    ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
-
-  // DQ (8/18/2008): NOTE: "SgIntegerStringMapPtrList" does not cause ROSETTA to generate the
-  // correct code, where as "std::map<int, std::string>" appears to work better.
-  // GraphEdge.setDataPrototype("std::string","type","= \"\"",
-  //                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // GraphEdge.setDataPrototype("int","graph_id", "= 0",
-  //                       CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // GraphEdge.setDataPrototype("std::map<int, std::string>","properties", "",
-  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // GraphEdge.setDataPrototype("SgIntegerStringMapPtrList","properties", "",
-  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
 
      // tps : todo : remove me
      GraphEdge.setDataPrototype("std::map<int, std::string>","properties", "",
@@ -1912,28 +1877,25 @@ Grammar::setUpSupport ()
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Project.setDataPrototype("SgStringList","excludeFileList", "",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#if 1
+
   // DQ (2/4/2009): Moved this to the SgProject since it applies to the command line and all files.
   // DQ (1/9/2008): This permits a file to be marked explicitly as a binary file and avoids
   // confusion when processing object files within linking (where no source file is present
   // and the object file could be interpreted as being provided for binary analysis).
      Project.setDataPrototype ( "bool", "binary_only", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
 
   // DQ (5/1/2009): Requested feature by Andreas (controls use of SQLite database for analysis).
   // This permits multiple files to be handled separately in that program analysis which supports it.
      Project.setDataPrototype("std::string","dataBaseFilename", "= \"\"",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-#if 1
   // DQ (1/20/2010): Added list of directories to the SgProject to represent large scale projects
   // (as can be useful for code generation).
   // Note that this is marked as NO_TRAVERSAL because it will otherwise interfere with "SgFilePtrList fileList"
   // This can be changed later, but it could effect a number of interfaces internally, so don't change it yet.
      Project.setDataPrototype ("SgDirectoryList*", "directoryList", "= nullptr",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
 
   // DQ (4/7/2010): Support for C, C++, and Fortran. The SgProject needs this state so that
   // it can save information from the command line when there are no files such as when it
@@ -2549,8 +2511,6 @@ Specifiers that can have only one value (implemented with a protected enum varia
 
   // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/12/2011): Added information required for new name qualification support.
-  // TemplateArgument.setDataPrototype("bool","global_qualification_required_for_type","= false",
-  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateArgument.setDataPrototype("bool","global_qualification_required_for_type","= false",
                                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
@@ -2561,8 +2521,6 @@ Specifiers that can have only one value (implemented with a protected enum varia
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (2/10/2019): Need to be able to specify function parameters that are a part of C++11 parameter pack associated with variadic templates.
-  // TemplateArgument.setDataPrototype     ( "bool", "is_parameter_pack", "= false",
-  //           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateArgument.setDataPrototype     ( "bool", "is_pack_element", "= false",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
