@@ -83,7 +83,7 @@ get_version () {
 # of the form X.Y.Z where X, Y, and Z are non-negative integers. Returns not-ok (1) otherwise.
 version_ok () {
     local have="$1" need="$2"
-        
+
     local have_major=$(echo $have |cut -d. -f1)
     local have_minor=$(echo $have |cut -d. -f2)
     local have_patch=$(echo $have |cut -d. -f3)
@@ -178,15 +178,15 @@ elif version_ok "$LIBTOOL_VERSION" "$LIBTOOL_VERSION_PREREQ"; then
     echo "+ $libtoolize_name --force --copy --ltdl --automake"
     $libtoolize_name --force --copy --ltdl --automake
     if [ $? -ne 0 ]; then
-        echo "libtool error: you may need to install libtool development package"; 
-        echo "               build stopped"; 
+        echo "libtool error: you may need to install libtool development package";
+        echo "               build stopped";
         exit 1;
     else
         cd libltdl
         echo "+ autoreconf"
         autoreconf
         if [ $? -ne 0 ]; then
-            echo "autoreconf error: build stopped"; 
+            echo "autoreconf error: build stopped";
             exit 1;
         fi
         cd ..       # cd back to top directory
@@ -213,7 +213,7 @@ fi
 
 ###############################################################################################################################
 # Test version of automake.  Having the wrong version of automake is a common problem.  We can't test for it in the
-# configure.in and we want to catch the problem as early as possible.  So we test for it here. This appears to be the only 
+# configure.in and we want to catch the problem as early as possible.  So we test for it here. This appears to be the only
 # place to test for the correct version of automake -- autoconf can use the AC_PREREQ macro, but there is no AM_PREREQ macro
 # for automake. [DQ 2009-09-26]
 ###############################################################################################################################
@@ -276,7 +276,7 @@ if [ "$rose_version" = "" ]; then
 fi
 
 sed -i~ -e '/^AC_INIT(/ s/^\(AC_INIT *(\[.*\], *\[\).*\(\] *).*\)/\1'"$rose_version"'\2/' configure.ac
-        
+
 ###############################################################################################################################
 # Run autoconf tools: aclocal, autoheader, autoconf, and automake
 ###############################################################################################################################
@@ -355,21 +355,21 @@ patch -p0 <<'EOF'
  srcdir=
  verbose=
 @@ -2238,7 +2238,7 @@
- 
+
    -q | -quiet | --quiet | --quie | --qui | --qu | --q \
    | -silent | --silent | --silen | --sile | --sil)
 -    silent=yes ;;
 +    silent=yes verbose= ;;
- 
+
    -runstatedir | --runstatedir | --runstatedi | --runstated \
    | --runstate | --runstat | --runsta | --runst | --runs \
 @@ -2289,7 +2289,7 @@
      target_alias=$ac_optarg ;;
- 
+
    -v | -verbose | --verbose | --verbos | --verbo | --verb)
 -    verbose=yes ;;
 +    verbose=yes silent= ;;
- 
+
    -version | --version | --versio | --versi | --vers | -V)
      ac_init_version=: ;;
 EOF
@@ -384,11 +384,12 @@ touch stamp-h1.in
 
 # When timing is selected, add a "time" command to the front of the compiles.  This must be done before the --quiet
 # handler below is run to get the right output command.
-if [[ -n "$do_timing" ]]; then
-    echo "$0: converting makefiles for timing (use --no-timing to prevent this)" 2>&1
-    find . -name Makefile.in | grep -v libharu | grep -v libltdl | xargs sed -i~ \
-        -e "s:^\(LT\)\{0,1\}\(CXX\)\{0,1\}COMPILE =:& echo \"\`pwd\`/\$@\" >> `pwd`/compile_times; /usr/bin/time -o `pwd`/compile_times -a :"
-fi
+## MS 9/22: commented out stuff below since it references libharu which was just removed
+#if [[ -n "$do_timing" ]]; then
+#    echo "$0: converting makefiles for timing (use --no-timing to prevent this)" 2>&1
+#    find . -name Makefile.in | grep -v libharu | grep -v libltdl | xargs sed -i~ \
+#        -e "s:^\(LT\)\{0,1\}\(CXX\)\{0,1\}COMPILE =:& echo \"\`pwd\`/\$@\" >> `pwd`/compile_times; /usr/bin/time -o `pwd`/compile_times -a :"
+#fi
 
 # Save "--srcpath" value so rosegit-env can pick it up.  No need to do this for ROSE itself, just projects using the
 # ROSE build script.

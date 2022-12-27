@@ -1,5 +1,5 @@
 set(astProcessing_SRC
-  AstPDFGeneration.C
+  AstJSONGeneration.C
   AstNodeVisitMapping.C
   AstTextAttributesHandling.C
   AstDOTGeneration.C
@@ -23,11 +23,14 @@ endif()
 add_library(astProcessing OBJECT ${astProcessing_SRC})
 add_dependencies(astProcessing rosetta_generated)
 
+include_directories(
+  ${CMAKE_SOURCE_DIR}/src/3rdPartyLibraries/json
+)
 
 ########### install files ###############
 
 set(files_to_install
-  AstPDFGeneration.h AstNodeVisitMapping.h AstAttributeMechanism.h
+  AstJSONGeneration.h AstNodeVisitMapping.h AstAttributeMechanism.h
   AstTextAttributesHandling.h AstDOTGeneration.h AstProcessing.h
   AstSimpleProcessing.h AstTraverseToRoot.h AstNodePtrs.h
   AstSuccessorsSelectors.h AstReverseProcessing.h

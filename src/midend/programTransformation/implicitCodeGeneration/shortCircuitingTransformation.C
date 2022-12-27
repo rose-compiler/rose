@@ -8,9 +8,7 @@
 #include <iostream>
 #include <analysisUtils.h>
 
-#if ROSE_WITH_LIBHARU
-#include "AstPDFGeneration.h"
-#endif
+#include "AstJSONGeneration.h"
 
 #include <shortCircuitingTransformation.h>
 
@@ -147,7 +145,7 @@ inline void rewriteConditionals(SgNode *n)
 
           SgExpression *lhs = booleanOp->get_lhs_operand();
           SgExpression *rhs = booleanOp->get_rhs_operand();
-          
+
           SgConditionalExp *condExp = createEquivalentConditional(booleanOp);
 
           SgExpression *booleanOpParent = isSgExpression(booleanOp->get_parent());
@@ -208,7 +206,7 @@ static SgStatement* replaceContinues(SgStatement *stmt, SgLabelStatement *dest)
 // statement itself, as it may be used in a different way (e.g. condition of if statement).
 // Caveat: for constructor initializers this is not the correct behavior (as
 // 0-argument constructor called first) but the best we
-// can do if we want the initializer in an expression statement.  
+// can do if we want the initializer in an expression statement.
 SgExprStatement *splitVarDecl(SgVariableDeclaration *varDecl)
    {
      SgInitializedName *in = varDecl->get_variables().front();
@@ -345,7 +343,7 @@ void initialTransformation(SgNode *n)
 
           SgExpression *lhs = andOp->get_lhs_operand();
           SgExpression *rhs = andOp->get_rhs_operand();
-          
+
 
           SgConditionalExp *condExp = 0;
           SgExpression *andOpParent = isSgExpression(andOp->get_parent());
@@ -362,8 +360,8 @@ void initialTransformation(SgNode *n)
 #endif
      rewriteConditionals<SgAndOp, V_SgAndOp, isSgAndOp>(n);
 #if 0
-     AstPDFGeneration pdf;
-     pdf.generate("shortCircuitingStage1", n);
+     AstJSONGeneration json;
+     json.generate("shortCircuitingStage1", n);
 #endif
      rewriteConditionals<SgOrOp, V_SgOrOp, isSgOrOp>(n);
 
@@ -372,7 +370,7 @@ void initialTransformation(SgNode *n)
         {
           SgIfStmt *ifStmt = isSgIfStmt(*i);
           ROSE_ASSERT(ifStmt != NULL);
-          
+
           SgBasicBlock *ifStmtParent = isSgBasicBlock(ifStmt->get_parent());
           ROSE_ASSERT(ifStmtParent != NULL);
 
@@ -495,7 +493,7 @@ void initialTransformation(SgNode *n)
 
                whileStmt->set_condition(trueStmt);
                trueStmt->set_parent(whileStmt);
-               
+
                SgBasicBlock *trueBody = new SgBasicBlock(SgNULL_FILE);
 
                SgBreakStmt *breakStmt = new SgBreakStmt(SgNULL_FILE);
@@ -573,7 +571,7 @@ void initialTransformation(SgNode *n)
 
                dowhileStmt->set_condition(trueStmt);
                trueStmt->set_parent(dowhileStmt);
-               
+
                static int counter = 0;
 
                stringstream labelNameSS;
@@ -790,8 +788,8 @@ void ifConstOptimization(SgExpression *expr)
                               replacementStmtParent = isSgStatement(replacementStmtParent->get_parent());
                               cout << "replacementStmtParent is now " << replacementStmtParent << " " << replacementStmtParent->class_name() << endl;
                             }
-                             
-#else                    
+
+#else
                          if (constIfStmtParent->get_statements().size() == 1
                                  && isSgStatement(constIfStmtParent->get_parent()))
                             {
@@ -824,20 +822,20 @@ void ifConstOptimization(SgExpression *expr)
              }
         }
    }
-                         
+
 bool reduceIfStmtsWithSCchild(SgProject *prj)
    {
      bool retVal = false;
      Rose_STL_Container<SgExpression *> appSCs = findApplicableSCs(prj);
      static int callCount = 0;
      callCount++;
-     
+
      for (Rose_STL_Container<SgExpression *>::iterator i = appSCs.begin(); i != appSCs.end(); ++i)
         {
           SgExpression *expr = *i;
           cout << "reduceIfStmtsWithSCchild: doing " << expr << " iter " << callCount << endl;
           SgStatement *stmt = findStatementForExpression(expr);
-          pair<SgBasicBlock *, SgNode *> bbPair = findBasicBlockForStmt(stmt); 
+          pair<SgBasicBlock *, SgNode *> bbPair = findBasicBlockForStmt(stmt);
           SgBasicBlock *basicBlock = bbPair.first;
           SgStatement *basicBlockChild = isSgStatement(bbPair.second);
           ROSE_ASSERT(basicBlockChild != NULL);
@@ -871,11 +869,8 @@ bool reduceIfStmtsWithSCchild(SgProject *prj)
                default:
                      {
 
-#if ROSE_WITH_LIBHARU
-                       AstPDFGeneration().generate("error", prj);
-#else
-                       cout << "Warning: libharu support is not enabled" << endl;
-#endif
+                       AstJSONGeneration().generate("error", prj);
+
                        cerr << "Error: reduceIfStmtsWithSCchild: basicBlockChild has unknown type " << basicBlockChild->class_name() << basicBlockChild << endl;
                        ROSE_ABORT();
                      }
@@ -950,11 +945,11 @@ bool reduceIfStmtsWithSCchild(SgProject *prj)
                        SgNode *condCopyNode = ctc.get_copyList()[0];
                        SgExpression *condCopy = isSgExpression(condCopyNode);
                        ROSE_ASSERT(condCopy != NULL);
-                       
+
                        SgNode *condCopyParentNode = condCopy->get_parent();
                        SgExpression *condCopyParent = isSgExpression(condCopyParentNode);
 
-          // DQ (12/16/2006): Need to handle separate case of where the parent is a SgExpression 
+          // DQ (12/16/2006): Need to handle separate case of where the parent is a SgExpression
           // or a SgStatement (might could be a SgInitializedName, which is not handled yet).
                     // ROSE_ASSERT(condCopyParent != NULL);
                     // condCopyParent->replace_expression(condCopy, trueExp);
@@ -981,7 +976,7 @@ bool reduceIfStmtsWithSCchild(SgProject *prj)
                        ROSE_ABORT();
                      }
                 }
-                       
+
 #ifdef SCDBG
                        static int optCounter = 0;
 
@@ -990,22 +985,14 @@ bool reduceIfStmtsWithSCchild(SgProject *prj)
 
                        stringstream beforeNameSS;
                        beforeNameSS << "beforeIfConst" << optCounter;
-#if ROSE_WITH_LIBHARU
-                       AstPDFGeneration().generate(beforeNameSS.str(), prj);
-#else
-                       cout << "Warning: libharu support is not enabled" << endl;
+                       AstJSONGeneration().generate(beforeNameSS.str(), prj);
 #endif
-#endif
-                       
+
                        ifConstOptimization(trueExp);
 #ifdef SCDBG
                        stringstream afterNameSS;
                        afterNameSS << "afterIfConst" << optCounter;
-#if ROSE_WITH_LIBHARU
-                       AstPDFGeneration().generate(afterNameSS.str(), prj);
-#else
-                       cout << "Warning: libharu support is not enabled" << endl;
-#endif
+                       AstJSONGeneration().generate(afterNameSS.str(), prj);
 #endif
 
                     // Build the false branch of the if statement into fullStmtBlock
@@ -1016,7 +1003,7 @@ bool reduceIfStmtsWithSCchild(SgProject *prj)
                        SgNode *condParent = condExp->get_parent();
                        SgExpression *condParentExp = isSgExpression(condParent);
 
-          // DQ (12/16/2006): Need to handle separate case of where the parent is a SgExpression 
+          // DQ (12/16/2006): Need to handle separate case of where the parent is a SgExpression
           // or a SgStatement (might could be a SgInitializedName, which is not handled yet).
           // ROSE_ASSERT(condParentExp != NULL);
           // condParentExp->replace_expression(condExp, falseExp);
@@ -1045,21 +1032,13 @@ bool reduceIfStmtsWithSCchild(SgProject *prj)
 
                        stringstream beforeNameSS2;
                        beforeNameSS2 << "beforeIfConst" << optCounter;
-#if ROSE_WITH_LIBHARU
-                       AstPDFGeneration().generate(beforeNameSS2.str(), prj);
-#else
-                       cout << "Warning: libharu support is not enabled" << endl;
-#endif
+                       AstJSONGeneration().generate(beforeNameSS2.str(), prj);
 #endif
                        ifConstOptimization(falseExp);
 #ifdef SCDBG
                        stringstream afterNameSS2;
                        afterNameSS2 << "afterIfConst" << optCounter;
-#if ROSE_WITH_LIBHARU
-                       AstPDFGeneration().generate(afterNameSS2.str(), prj);
-#else
-                       cout << "Warning: libharu support is not enabled" << endl;
-#endif
+                       AstJSONGeneration().generate(afterNameSS2.str(), prj);
 #endif
 
                     // done creating branches, now create if statement
@@ -1089,9 +1068,9 @@ bool reduceIfStmtsWithSCchild(SgProject *prj)
                             conditionExp->set_parent(conditionExpStmt);
 
                             SgIfStmt *ifStmt = new SgIfStmt(SgNULL_FILE, conditionExpStmt, fullStmtBlockCopy, fullStmtBlock);
-                            conditionExpStmt->set_parent(ifStmt); 
-                            fullStmtBlockCopy->set_parent(ifStmt); 
-                            fullStmtBlock->set_parent(ifStmt); 
+                            conditionExpStmt->set_parent(ifStmt);
+                            fullStmtBlockCopy->set_parent(ifStmt);
+                            fullStmtBlock->set_parent(ifStmt);
                             MarkSCGenerated(ifStmt);
 
                          // if the parent statement is an if statement, then it must have an
@@ -1137,11 +1116,7 @@ void shortCircuitingTransformation(SgProject *prj)
      do {
           stringstream ss;
           ss << "scdbg_p" << pass++;
-#if ROSE_WITH_LIBHARU
-          AstPDFGeneration().generate(ss.str(), prj);
-#else
-          cout << "Warning: libharu support is not enabled" << endl;
-#endif
+          AstJSONGeneration().generate(ss.str(), prj);
           AstTests::runAllTests(prj);
           ss << ".C";
           ofstream f(ss.str().c_str());

@@ -4,10 +4,7 @@
 #include "checkIsModifiedFlag.h"
 #include <Rose/CommandLine.h>
 
-#if ROSE_WITH_LIBHARU
-#include "AstPDFGeneration.h"
-#endif
-
+#include "AstJSONGeneration.h"
 #include "AstDOTGeneration.h"
 
 #include "wholeAST_API.h"
@@ -1212,13 +1209,9 @@ generatePDF ( const SgProject & project )
           printf ("Inside of generatePDF \n");
 
   // Output the source code file (as represented by the SAGE AST) as a PDF file (with bookmarks)
-#if ROSE_WITH_LIBHARU
-     AstPDFGeneration pdftest;
+     AstJSONGeneration jsontest;
      SgProject & nonconstProject = (SgProject &) project;
-     pdftest.generateInputFiles(&nonconstProject);
-#else
-     printf("Warning: libharu support is not enabled\n");
-#endif
+     jsontest.generateInputFiles(&nonconstProject);
 
 #endif
    }
@@ -2106,10 +2099,3 @@ Rose::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /
 
      return previousStatement;
    }
-
-
-
-
-
-
-

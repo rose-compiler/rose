@@ -389,11 +389,6 @@ if ROSE_USE_VISUALIZATION
 else
 	@echo "Automake conditional ROSE_USE_VISUALIZATION: NOT defined"
 endif
-if ROSE_USE_WGET
-	@echo "Automake conditional ROSE_USE_WGET: DEFINED"
-else
-	@echo "Automake conditional ROSE_USE_WGET: NOT defined"
-endif
 if ROSE_USE_WINDOWS_ANALYSIS_SUPPORT
 	@echo "Automake conditional ROSE_USE_WINDOWS_ANALYSIS_SUPPORT: DEFINED"
 else

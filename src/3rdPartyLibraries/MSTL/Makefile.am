@@ -10,11 +10,7 @@ libmstlSources = \
    DOTGraphInterface.C
 else
 libmstlSources = \
-   DOTGraphInterface.C
-if ROSE_WITH_LIBHARU
-libmstlSources += \
-   PDFGeneration.C 
-endif
+   DOTGraphInterface.C JSONGeneration.C
 endif
 
 # lib_LIBRARIES = libmstl.a
@@ -34,17 +30,6 @@ pkginclude_HEADERS = \
    DOTGeneration.h DOTRepresentation.h \
    Translator.h DOTSubgraphRepresentation.h DOTGraphInterface.h TreeTraversal.h \
    DOTRepresentationImpl.h DOTGenerationImpl.h \
-   DOTSubgraphRepresentationImpl.h
-if ROSE_WITH_LIBHARU
-pkginclude_HEADERS += \
-   PDFGeneration.h 
-endif
+   DOTSubgraphRepresentationImpl.h JSONGeneration.h
 
 EXTRA_DIST = CMakeLists.txt MSTL.docs
-
-
-
-
-
-
-
