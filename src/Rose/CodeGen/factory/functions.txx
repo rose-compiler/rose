@@ -30,7 +30,7 @@ struct __factory_helper_t<CRT, API, Object::a_function> {
   );
 };
 
-#define DEBUG___factory_helper_t__a_function__instantiate 0
+#define DEBUG___factory_helper_t__a_function__instantiate 1
 
 template <typename CRT, typename API>
 declaration_t<Object::a_function> * __factory_helper_t<CRT, API, Object::a_function>::instantiate(
@@ -42,11 +42,78 @@ declaration_t<Object::a_function> * __factory_helper_t<CRT, API, Object::a_funct
 #if DEBUG___factory_helper_t__a_function__instantiate
   std::cout << "__factory_helper_t<CRT, API, Object::a_function>::instantiate" << std::endl;
   std::cout << "  sym    = " << std::hex << sym << " : " << ( sym ? sym->class_name() : "" ) << std::endl;
-  std::cout << "  sym->get_declaration()    = " << std::hex << sym->get_declaration() << " : " << ( sym->get_declaration() ? sym->get_declaration()->class_name() : "" ) << std::endl;
+  std::cout << "  parent = " << std::hex << parent << " : " << ( parent ? parent->class_name() : "" ) << std::endl;
 #endif
 
-  ROSE_ABORT(); // TODO
-  return nullptr;
+  SgName fname(sym->get_name().getString());
+  SgName fname_tplargs = SageBuilder::appendTemplateArgumentsToName(fname, tpl_args);
+
+  SgFunctionDeclaration * decl = isSgFunctionDeclaration(sym->get_declaration());
+  ROSE_ASSERT(decl);
+#if DEBUG___factory_helper_t__a_function__instantiate
+  std::cout << "  decl    = " << std::hex << decl << " : " << ( decl ? decl->class_name() : "" ) << std::endl;
+#endif
+
+  SgTemplateFunctionDeclaration * tpl_fdecl = isSgTemplateFunctionDeclaration(decl);
+  SgTemplateMemberFunctionDeclaration * tpl_mfdecl = isSgTemplateMemberFunctionDeclaration(decl);
+  ROSE_ASSERT((tpl_fdecl != nullptr) xor (tpl_mfdecl != nullptr));
+  ROSE_ASSERT(!tpl_fdecl || !parent);
+  ROSE_ASSERT(!tpl_mfdecl || parent);
+
+  SgType * rtype = decl->get_type()->get_return_type();
+#if DEBUG___factory_helper_t__a_function__instantiate
+  std::cout << "  rtype    = " << std::hex << rtype << " : " << ( rtype ? rtype->class_name() : "" ) << std::endl;
+#endif
+  if (tpl_fdecl) {
+    rtype = Rose::Builder::Templates::instantiateNonrealTypes(rtype, tpl_fdecl->get_templateParameters(), tpl_args);
+  } else if (tpl_mfdecl) {
+    rtype = Rose::Builder::Templates::instantiateNonrealTypes(rtype, tpl_mfdecl->get_templateParameters(), tpl_args);
+  }
+  ROSE_ASSERT(rtype);
+#if DEBUG___factory_helper_t__a_function__instantiate
+  std::cout << "  rtype    = " << std::hex << rtype << " : " << ( rtype ? rtype->class_name() : "" ) << std::endl;
+#endif
+
+  SgFunctionParameterTypeList * ptypes = SageBuilder::buildFunctionParameterTypeList(); // TODO instantiate function parameter types
+  SgFunctionType * ftype = SageBuilder::buildFunctionType(rtype, ptypes); // TODO add parameter types
+
+  SgScopeStatement * defn_scope = nullptr;
+  SgFunctionDeclaration * inst_decl = nullptr;
+  if (tpl_fdecl) {
+    defn_scope = decl->get_scope();
+    ROSE_ABORT(); // TODO SgTemplateInstantiationFunctionDecl
+
+  } else if (tpl_mfdecl) {
+
+    while (isSgTypedefType(parent)) {
+      parent = isSgNamedType(((SgTypedefType*)parent)->get_base_type());
+      ROSE_ASSERT(parent);
+    }
+
+    SgTemplateInstantiationDecl * inst_pdecl = isSgTemplateInstantiationDecl(parent->get_declaration());
+    ROSE_ASSERT(inst_pdecl);
+#if DEBUG___factory_helper_t__a_function__instantiate
+    std::cout << "  inst_pdecl    = " << std::hex << inst_pdecl << " : " << ( inst_pdecl ? inst_pdecl->class_name() : "" ) << std::endl;
+#endif
+    inst_pdecl = isSgTemplateInstantiationDecl(inst_pdecl->get_definingDeclaration());
+    ROSE_ASSERT(inst_pdecl);
+    defn_scope = inst_pdecl->get_definition();
+
+    SgMemberFunctionDeclaration * inst_mfdecl = new SgTemplateInstantiationMemberFunctionDecl(
+        fname_tplargs, ftype, nullptr, tpl_mfdecl, tpl_args
+    );
+
+    inst_mfdecl->set_scope(defn_scope);
+    inst_mfdecl->set_parent(defn_scope);
+    
+    inst_decl = inst_mfdecl;
+  }
+
+//  defn_scope->append_statement(inst_decl);
+
+  defn_scope->insert_symbol(fname_tplargs, new SgFunctionSymbol(inst_decl));
+
+  return inst_decl;
 }
 
 template <typename CRT, typename API>
@@ -62,6 +129,9 @@ declaration_t<Object::a_function> * __factory_helper_t<CRT, API, Object::a_funct
   return instantiate(factory, sym, parent, tpl_args);
 }
 
+
+#define DEBUG___factory_helper_t__a_function__instantiate 1
+
 template <typename CRT, typename API>
 template <typename... Args>
 reference_t<Object::a_function> * __factory_helper_t<CRT, API, Object::a_function>::reference(
@@ -70,7 +140,12 @@ reference_t<Object::a_function> * __factory_helper_t<CRT, API, Object::a_functio
   SgNamedType * parent,
   Args... args
 ) {
-  ROSE_ASSERT(!parent); // TODO case of a field or method
+#if DEBUG___factory_helper_t__a_function__instantiate
+  std::cout << "__factory_helper_t<CRT, API, Object::a_function>::reference" << std::endl;
+  std::cout << "  sym    = " << std::hex << sym << " : " << ( sym ? sym->class_name() : "" ) << std::endl;
+  std::cout << "  parent = " << std::hex << parent << " : " << ( parent ? parent->class_name() : "" ) << std::endl;
+#endif
+//  ROSE_ASSERT(!parent); // TODO case of a field or method
   return SageBuilder::buildFunctionRefExp(sym);
 }
 

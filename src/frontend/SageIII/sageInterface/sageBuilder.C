@@ -19787,7 +19787,16 @@ SgType * instantiateNonrealTypes(
         return nullptr;
       }
     } else if (nrdecl->get_is_class_member()) {
-      return nullptr; // TODO case such as "template <unsigned depth=0> static constexpr typename range_at_depth_t<depth>::Base ub;"
+#if DEBUG_Rose_Builder_Templates_instantiateNonrealTypes
+      std::cout << "  Case of a non-real class member will return INT." << std::endl;
+#endif
+      // TODO case such as "template <unsigned depth=0> static constexpr typename range_at_depth_t<depth>::Base ub;"
+      //  -> retrieve parent type
+      //  -> instantiate parent type
+      //  -> lookup member(s) in original parent type
+      //  -> instantiate (matching) member inside instantiated parent type
+
+      return SageBuilder::buildIntType();
     } else {
       ROSE_ABORT();
     }
