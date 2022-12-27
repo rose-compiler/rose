@@ -3458,39 +3458,6 @@ Unparse_Type::unparseTypedefType(SgType* type, SgUnparse_Info& info)
        // since I could not figure out why it was not being set in the post processing which sets parents.
           ASSERT_not_null(typedef_type->get_declaration()->get_parent());
 
-#if 0
-          SgName qualifiedName = typedef_type->get_qualified_name();
-
-#error "DEAD CODE!"
-
-#if 0
-          if ( typedef_type->get_name() == "Zone" )
-             {
-               printf ("In unparseTypedefType() name = %s qualifiedName = %s \n",typedef_type->get_name().str(),qualifiedName.str());
-               printf ("     Zone: unp->u_name->generateNameQualifier( tdecl , info ) = %s \n",unp->u_name->generateNameQualifier( tdecl , info, 1 ).str());
-             }
-#endif
-#if 0
-          printf ("typedef_type->get_declaration() = %p = %s  name = %s \n",
-               typedef_type->get_declaration(),typedef_type->get_declaration()->sage_class_name(),
-               typedef_type->get_name().str());
-          printf ("#0 typedef_type->get_name() = %s typedef_type->get_qualified_name() = %s \n",
-               typedef_type->get_name().str(),qualifiedName.str());
-          printf ("typedef_type->get_declaration()->get_firstNondefiningDeclaration() = %p \n",
-               typedef_type->get_declaration()->get_firstNondefiningDeclaration());
-          printf ("typedef_type->get_declaration()->get_definingDeclaration() = %p \n",
-               typedef_type->get_declaration()->get_definingDeclaration());
-#endif
-
-#error "DEAD CODE!"
-
-       // printf ("In unparseTypedefType(): qualifiedName = %s \n",qualifiedName.str());
-       // DQ (11/14/2004): It seems that we ALWAY output the qualified name!
-       // curprint ( " /* unparse qualified typedef name " + qualifiedName.str() + " */ \n";
-          unparseQualifiedNameList(typedef_type->get_qualifiedNameList());
-          curprint ( qualifiedName.str() + " ");
-#else
-
           if (SageInterface::is_C_language() == true || SageInterface::is_C99_language() == true)
              {
             // DQ (10/11/2006): I think that now that we fill in all enmpty name as a post-processing step, we can assert this now!
@@ -3499,67 +3466,6 @@ Unparse_Type::unparseTypedefType(SgType* type, SgUnparse_Info& info)
              }
             else
              {
-#if 0
-       // DQ (10/11/2006): As part of new implementation of qualified names we now default to the generation of all qualified names unless they are skipped.
-          if (info.SkipQualifiedNames() == false)
-             {
-
-#error "DEAD CODE!"
-
-#if 0
-            // DQ (10/10/2006): New support for qualified names for types.
-            // ASSERT_not_null(info.get_qualifiedNameList());
-               if (info.get_qualifiedNameList() != NULL && info.get_qualifiedNameList()->empty() == false)
-                  {
-                    printf ("Put out the global qualification for SgTypedefType type = %p = %s info.get_qualifiedNameList()->size() = %ld \n",
-                         typedef_type,typedef_type->class_name().c_str(),info.get_qualifiedNameList()->size());
-                    unparseQualifiedNameList(*(info.get_qualifiedNameList()));
-                  }
-
-#error "DEAD CODE!"
-
-                 else
-                  {
-                 // DQ (10/10/2006): If the qualified list was not built, then only output global qualification if we are currently in a namespace.
-                    if (info.get_current_namespace() != NULL)
-                       {
-                         curprint ( ":: /* default explicit global qualifier for typedef */ ");
-                       }
-                  }
-#endif
-
-#error "DEAD CODE!"
-
-               SgName qualifiedName = typedef_type->get_qualified_name();
-               curprint ( qualifiedName.str() + " ");
-             }
-#else
-            // The C++ support is more complex and can require qualified names!
-
-            // DQ (6/22/2011): I don't think we can assert this for anything than internal testing.  The unparseToString tests will fail with this assertion in place.
-            // ASSERT_not_null(info.get_reference_node_for_qualification());
-            // SgName nameQualifier = unp->u_name->generateNameQualifier( tdecl , info );
-            // SgName nameQualifier = unp->u_name->generateNameQualifier( tdecl, info, true );
-            // printf ("info.get_reference_node_for_qualification() = %p = %s \n",info.get_reference_node_for_qualification(),info.get_reference_node_for_qualification()->class_name().c_str());
-
-            // printf ("In unparseTypedefType(): info.get_current_scope() = %p \n",info.get_current_scope());
-#if 0
-            // DQ (6/2/2011): Newest support for name qualification...
-               SgName nameQualifier = unp->u_name->lookup_generated_qualified_name(info.get_reference_node_for_qualification());
-
-            // printf ("In unparseTypedefType(): nameQualifier (from unp->u_name->generateNameQualifier function) = %s \n",nameQualifier.str());
-            // curprint ( "\n/* nameQualifier (from unp->u_name->generateNameQualifier function) = " + nameQualifier + " */ \n ";
-
-#error "DEAD CODE!"
-
-               curprint ( nameQualifier.str());
-               SgName nm = typedef_type->get_name();
-               if (nm.getString() != "")
-                  {
-                 // printf ("Output qualifier of current types to the name = %s \n",nm.str());
-                    curprint ( nm.getString() + " ");
-                  }
-#else
 
 #if 0
             // DQ (4/14/2018): Check if this is associated with the template instantiation.
@@ -3592,17 +3498,6 @@ Unparse_Type::unparseTypedefType(SgType* type, SgUnparse_Info& info)
 
                  // DQ (4/14/2018): This is not the correct way to handle the output of template instantations since this uses the internal name (with unqualified template arguments).
 
-#if 0
-                 // DQ (4/15/2018): Original code (which unparsed using the name which would embedd template arguments, but without name qualification).
-                    SgName nm = typedef_type->get_name();
-                    if (nm.getString() != "")
-                       {
-#if 0
-                         printf ("In unparseTypedefType(): Output qualifier of current types to the name = %s \n",nm.str());
-#endif
-                         curprint ( nm.getString() + " ");
-                       }
-#else
                  // DQ (4/15/2018): New code (which unparses the template name (without template arguments, and unparsed the template arguments with name qualification).
                  // DQ (4/2/2018): Adding support for alternative and more sophisticated handling of the function name
                  // (e.g. with template arguments correctly qualified, etc.).
@@ -3634,92 +3529,8 @@ Unparse_Type::unparseTypedefType(SgType* type, SgUnparse_Info& info)
                               curprint ( nm.getString() + " ");
                             }
                        }
-#endif
                   }
-#endif
-#endif
              }
-#endif
-
-#if 0
-#if PRINT_DEVELOPER_WARNINGS
-          if (tdecl->get_parent() == NULL)
-               printf ("Warning: SgTypedefDeclaration does not have a parent (tdecl->get_parent() == NULL) in %s on line %d \n",__FILE__,__LINE__);
-#endif
-       // ASSERT_not_null(tdecl->get_parent());
-
-#error "DEAD CODE!"
-
-#if 1
-          ASSERT_not_null(tdecl->get_parent());
-          SgClassDefinition *cdefn = isSgClassDefinition(tdecl->get_parent());
-       // printf ("In unparseTypedefType(): cdefn = %p \n",cdefn);
-          if (cdefn != NULL)
-#else
-       // Alternative fix that might help Beata except that it does not enforce the parent pointers
-       // so we have to think about this a little more when we work on the Sage III interface to
-       // constructing AST fragments directly.
-          if (tdecl->get_parent() != NULL && isSgClassDefinition(tdecl->get_parent()))
-#endif
-             {
-               SgClassDefinition *cdefn    = isSgClassDefinition(tdecl->get_parent());
-               SgNamedType *ptype = isSgNamedType(cdefn->get_declaration()->get_type());
-            // if(!ptype || (info.get_current_context() == ptype))
-               if ( (ptype == NULL) || (info.get_current_context() == ptype) )
-                  {
-                 // printf ("#1 typedef_type->get_name() = %s \n",typedef_type->get_name().str());
-
-#error "DEAD CODE!"
-
-                    curprint ( typedef_type->get_name().str() + " ");
-                  }
-                 else
-                  {
-                 // add qualifier of current types to the name
-                    SgName nm = cdefn->get_declaration()->get_qualified_name();
-                 // if(!nm.is_null())
-                    if ( nm.is_null() == false )
-                       {
-                      // printf ("nm = %s :: typedef_type->get_name() = %s \n",nm.str(),typedef_type->get_name().str());
-
-#error "DEAD CODE!"
-
-                         curprint ( nm.str() + "::" + typedef_type->get_name().str() + " ");
-                       }
-                      else
-                       {
-                      // printf ("#2 typedef_type->get_name() = %s \n",typedef_type->get_name().str());
-                         curprint ( typedef_type->get_name().str() + " ");
-                       }
-                  }
-
-#error "DEAD CODE!"
-
-             }
-            else
-             {
-            // printf ("#3 typedef_type->get_name() = %s \n",typedef_type->get_name().str());
-               curprint ( typedef_type->get_name().str() + " ");
-             }
-
-#error "DEAD CODE!"
-
-#endif
-
-
-#if 0
-       // DQ (4/14/2018): Check if this is associated with the template instantiation.
-          SgTemplateInstantiationTypedefDeclaration* templateInstantiationTypedefDeclaration = isSgTemplateInstantiationTypedefDeclaration(tdecl);
-          if (templateInstantiationTypedefDeclaration != NULL)
-             {
-               printf ("We need to process the template arguments (and name qualification) for this SgTemplateInstantiationTypedefDeclaration \n");
-               curprint ("/* We need to process the template arguments to include name qualification */ ");
-#if 0
-               printf ("Exiting as a test! \n");
-               ROSE_ABORT();
-#endif
-             }
-#endif
         }
 
 #if DEBUG_TYPEDEF_TYPE

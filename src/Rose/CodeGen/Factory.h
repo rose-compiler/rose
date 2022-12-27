@@ -93,7 +93,9 @@ class Factory {
         // FIXME sanity-check: `args` is empty
       }
 
-      return __factory_helper_t<CRT, API, otag>::reference(*this, sym, parent, args...);
+      reference_t<otag> * res = __factory_helper_t<CRT, API, otag>::reference(*this, sym, parent, args...);
+      SageInterface::setSourcePositionForTransformation(res);
+      return res;
     }
 
     /**
@@ -119,17 +121,20 @@ class Factory {
         ptype = ((SgPointerType*)ptype)->get_base_type(); // TODO strip type modifiers and references
       }
 
-      SgClassType * xtype = isSgClassType(ptype);
-      ROSE_ASSERT(xtype != nullptr);
+      SgNamedType * ntype = isSgNamedType(ptype);
+      ROSE_ASSERT(ntype != nullptr);
 
-      reference_t<otag> * rhs = reference(obj, ptype, args...);
+      reference_t<otag> * rhs = reference<otag>(obj, ntype, args...);
       ROSE_ASSERT(rhs != nullptr);
 
+      SgExpression * res = nullptr;
       if (lhs_has_ptr_type) {
-        return SageBuilder::buildArrowExp(parent, rhs);
+        res = SageBuilder::buildArrowExp(parent, rhs);
       } else {
-        return SageBuilder::buildDotExp(parent, rhs);
+        res = SageBuilder::buildDotExp(parent, rhs);
       }
+      SageInterface::setSourcePositionForTransformation(res);
+      return res;
     }
 
 
@@ -143,6 +148,19 @@ class Factory {
     template <Object otag>
     using access_return_t = std::conditional_t<otag == Object::a_class || otag == Object::a_typedef, SgType, SgExpression>;
 
+    template <Object otag, std::enable_if_t<otag == Object::a_class || otag == Object::a_typedef> * = nullptr>
+    static SgScopedType * build_scoped_ref(SgNamedType * lhs, reference_t<otag> * rhs) {
+      return new SgScopedType(lhs, rhs);
+    }
+
+    template <Object otag, std::enable_if_t<otag != Object::a_class && otag != Object::a_typedef> * = nullptr>
+    static SgScopedRefExp * build_scoped_ref(SgNamedType * lhs, reference_t<otag> * rhs) {
+      SgTypeRefExp * lhs_e = new SgTypeRefExp(lhs);
+      SgScopedRefExp * res = new SgScopedRefExp(lhs_e, rhs);
+      lhs_e->set_parent(res);
+      rhs->set_parent(res);
+      return res;
+    }
 
   public:
     /**
@@ -158,9 +176,10 @@ class Factory {
      */
     template <Object otag, typename... Args>
     access_return_t<otag> * access(symbol_t<otag> * API::* obj, SgNamedType * parent, Args... args) const {
-      reference_t<otag> * rhs = reference(obj, parent, args...);
-      // TODO build either SgScopedRefType SgScopedRefExp
-      return rhs;
+      reference_t<otag> * rhs = reference<otag>(obj, parent, args...);
+      access_return_t<otag> * res =  parent ? (access_return_t<otag> *)build_scoped_ref<otag>(parent, rhs) : (access_return_t<otag> *)rhs;
+      SageInterface::setSourcePositionForTransformation(res);
+      return res;
     }
 };
 

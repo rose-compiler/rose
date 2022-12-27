@@ -1998,6 +1998,8 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info&)
    {
 #if DEBUG__Unparse_ExprStmt__unparseVarRef
      printf ("In Unparse_ExprStmt::unparseVarRef():\n");
+     printf ("  expr = %p : %s\n", expr, expr->class_name().c_str());
+     printf ("    ->get_parent() = %p : %s\n", expr->get_parent(), expr->get_parent()->class_name().c_str());
 #endif
      SgVarRefExp* var_ref = isSgVarRefExp(expr);
      ASSERT_not_null(var_ref);
@@ -2019,11 +2021,13 @@ Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info&)
      if (name == "__assert_fail") {
        curprint ("__PRETTY_FUNCTION__");
      } else if (!isAnonymousName) {
-       SgName nameQualifier = var_ref->get_qualified_name_prefix();
+       if (!isSgScopedRefExp(expr->get_parent())) {
+         SgName nameQualifier = var_ref->get_qualified_name_prefix();
 #if DEBUG__Unparse_ExprStmt__unparseVarRef
-       printf ("  nameQualifier = %s\n", nameQualifier.str());
+         printf ("  nameQualifier = %s\n", nameQualifier.str());
 #endif
-       curprint(nameQualifier.str());
+         curprint(nameQualifier.str());
+       }
        curprint(name.c_str());
      }
 
@@ -4460,9 +4464,13 @@ void
 Unparse_ExprStmt::unparseScopedRefExp(SgExpression* expr, SgUnparse_Info& info)
    {
      SgScopedRefExp * refexp = (SgScopedRefExp*)expr;
-     unparseExpression(refexp->get_lhs(), info);
+
+     SgUnparse_Info info_lhs(info);
+     info_lhs.set_SkipClassSpecifier();
+     unparseExpression(refexp->get_lhs(), info_lhs);
+
      curprint("::");
-     // TODO stop namequal
+
      unparseExpression(refexp->get_rhs(), info);
    }
 
@@ -4470,7 +4478,9 @@ void
 Unparse_ExprStmt::unparseTypeRefExp(SgExpression* expr, SgUnparse_Info& info)
    {
      SgTypeRefExp * refexp = (SgTypeRefExp*)expr;
+
      SgUnparse_Info info_(info);
+     info_.set_reference_node_for_qualification(nullptr);
      unp->u_type->unparseType(refexp->get_named_type(), info_);
    }
 

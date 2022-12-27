@@ -30,7 +30,7 @@ struct __factory_helper_t<CRT, API, Object::a_function> {
   );
 };
 
-#define DEBUG___factory_helper_t__a_function__instantiate 1
+#define DEBUG___factory_helper_t__a_function__instantiate 0
 
 template <typename CRT, typename API>
 declaration_t<Object::a_function> * __factory_helper_t<CRT, API, Object::a_function>::instantiate(
@@ -130,7 +130,7 @@ declaration_t<Object::a_function> * __factory_helper_t<CRT, API, Object::a_funct
 }
 
 
-#define DEBUG___factory_helper_t__a_function__instantiate 1
+#define DEBUG___factory_helper_t__a_function__reference 0
 
 template <typename CRT, typename API>
 template <typename... Args>
@@ -140,13 +140,14 @@ reference_t<Object::a_function> * __factory_helper_t<CRT, API, Object::a_functio
   SgNamedType * parent,
   Args... args
 ) {
-#if DEBUG___factory_helper_t__a_function__instantiate
+#if DEBUG___factory_helper_t__a_function__reference
   std::cout << "__factory_helper_t<CRT, API, Object::a_function>::reference" << std::endl;
   std::cout << "  sym    = " << std::hex << sym << " : " << ( sym ? sym->class_name() : "" ) << std::endl;
   std::cout << "  parent = " << std::hex << parent << " : " << ( parent ? parent->class_name() : "" ) << std::endl;
 #endif
-//  ROSE_ASSERT(!parent); // TODO case of a field or method
-  return SageBuilder::buildFunctionRefExp(sym);
+  reference_t<Object::a_function> *  res = SageBuilder::buildFunctionRefExp(sym);
+  SageInterface::setSourcePositionForTransformation(res);
+  return res;
 }
 
 } }

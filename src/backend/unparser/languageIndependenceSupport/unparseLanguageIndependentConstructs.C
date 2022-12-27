@@ -9528,7 +9528,8 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
 
        // DQ (11/28/2020): Adding support for a expression that appeared in the Clang to ROSE translation.
           case V_SgCompoundInitializer: precedence_value = 0; break;
-          case V_SgScopedRefExp: precedence_value = 0; break;
+          case V_SgScopedRefExp: precedence_value = 17; break;
+          case V_SgTypeRefExp: precedence_value = 16; break;
 
           default:
              {
@@ -9830,7 +9831,7 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
 #endif
 
   // DQ (1/26/2013): Moved to be located after the debugging information.
-     if (isSgSubscriptExpression(expr) != NULL || isSgDotExp(expr) || isSgCAFCoExpression(expr) || isSgPntrArrRefExp(expr) )
+     if (isSgSubscriptExpression(expr) != NULL || isSgDotExp(expr) || isSgCAFCoExpression(expr) || isSgPntrArrRefExp(expr) || isSgScopedRefExp(expr) || isSgTypeRefExp(expr) )
         {
 #if DEBUG_PARENTHESIS_PLACEMENT
           printf ("In requiresParentheses(): Case 1: Output false \n");
