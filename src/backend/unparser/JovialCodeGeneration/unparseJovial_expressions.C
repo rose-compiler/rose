@@ -77,7 +77,10 @@ void UnparseJovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpa
              std::cout << "error: unparseExpression() is unimplemented for " << expr->class_name() << std::endl;
              ROSE_ABORT();
        }
-   }
+
+    // unparse comments after the expression
+    unparseCommentsAfter(expr, info);
+  }
 
 void
 UnparseJovial::unparseJovialBitVal(SgExpression* expr, SgUnparse_Info& info)
@@ -594,3 +597,19 @@ UnparseJovial::unparseDimInfo(SgExprListExp* dim_info, SgUnparse_Info& info)
 
       curprint(") ");
    }
+
+void
+UnparseJovial::unparseCommentsAfter(SgExpression* expr, SgUnparse_Info& info)
+{
+  // unparse comments after the expression
+  const AttachedPreprocessingInfoType* preprocInfo = expr->get_attachedPreprocessingInfoPtr();
+  if (preprocInfo) {
+    for (PreprocessingInfo* info : *preprocInfo) {
+      auto pos = info->getRelativePosition();
+      if (pos == PreprocessingInfo::end_of || pos == PreprocessingInfo::after) {
+        curprint(" ");
+        curprint(info->getString());
+      }
+    }
+  }
+}

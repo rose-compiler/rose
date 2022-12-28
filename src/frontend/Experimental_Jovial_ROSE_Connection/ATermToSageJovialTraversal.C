@@ -4806,15 +4806,18 @@ ATbool ATermToSageJovialTraversal::traverse_ForStatement(ATerm term)
       for_stmt->set_by_or_then_expression(by_or_then_expr);
       for_stmt->set_loop_statement_type(loop_type_enum);
 
+      // Attach comments after ForClause and before body
+      if (while_expr) {
+        sage_tree_builder.attachComments(while_expr, getLocation(t_clause), /*at_end*/true);
+      }
+      sage_tree_builder.attachComments(for_stmt->get_loop_body(), getLocation(t_stmt));
+
       // Match ControlledStatement (body of loop)
       if (traverse_Statement(t_stmt)) {
          // MATCHED Statement
       } else return ATfalse;
    }
    else return ATfalse;
-
-   ROSE_ASSERT(for_stmt);
-   setSourcePosition(for_stmt, term);
 
 // End SageTreeBuilder
    sage_tree_builder.Leave(for_stmt);

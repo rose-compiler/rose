@@ -238,6 +238,7 @@ JOVIAL_TESTCODES = \
  shadow.jov                             \
  comments.jov                           \
  comments_assign.jov                    \
+ comments_loop.jov                      \
  comments_start_term.jov                \
  comments_start_term_procmod.jov
 

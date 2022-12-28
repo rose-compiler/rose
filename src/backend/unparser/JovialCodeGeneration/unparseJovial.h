@@ -116,8 +116,9 @@ public:
           void unparseDimInfo (SgExprListExp* dim_info, SgUnparse_Info& info);
 
 private:
-  void unparseCommentsBefore(SgStatement* stmt, SgUnparse_Info& info);
-  void unparseCommentsAfter (SgStatement* stmt, SgUnparse_Info& info, bool newline=false);
+  void unparseCommentsBefore(SgStatement* stmt,  SgUnparse_Info& info);
+  void unparseCommentsAfter (SgStatement* stmt,  SgUnparse_Info& info, bool newline=false);
+  void unparseCommentsAfter (SgExpression* expr, SgUnparse_Info& info);
 
   std::string ws_prefix(int nesting_level)
   {

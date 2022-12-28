@@ -10,8 +10,6 @@
 
 #define PRINT_WARNINGS 0
 #define PRINT_ATTACH_COMMENT 0
-#define ATTACH_EOL_COMMENT 1
-#define APPEND_BEFORE_LEAVE 1
 
 namespace Rose {
 namespace builder {
@@ -63,10 +61,10 @@ SageTreeBuilder::attachComments(SgLocatedNode* node, bool at_end)
 void
 SageTreeBuilder::attachComments(SgLocatedNode* node, const PosInfo &pos, bool at_end)
 {
-  PreprocessingInfo::RelativePositionType commentPosition{PreprocessingInfo::before};
+  auto jovialStyle{PreprocessingInfo::JovialStyleComment};
 
-  // Attach comments at end of statement
-  if (at_end && isSgStatement(node)) {
+  // Attach comments at end of a statement or expression
+  if (at_end && (isSgStatement(node) || isSgExpression(node))) {
     boost::optional<const Token&> token{};
 
     // If a scope, some comments should be attached to last statement in scope
@@ -75,24 +73,18 @@ SageTreeBuilder::attachComments(SgLocatedNode* node, const PosInfo &pos, bool at
       last = scope->lastStatement();
     }
 
-    while ((token = tokens_->getNextToken()) && token->getEndLine() <= pos.getEndLine()) {
+    while ((token = tokens_->getNextToken()) && token->getStartLine() <= pos.getEndLine()) {
       if (last && token->getEndLine() < pos.getEndLine()) {
 #if PRINT_ATTACH_COMMENT
 std::cout << "---> attach end comment to last stmt: " << last->class_name() << ": " << token << "\n";
 #endif
-        SI::attachComment(last, token->getLexeme(), PreprocessingInfo::after, PreprocessingInfo::JovialStyleComment);
-      } else {
-#if PRINT_ATTACH_COMMENT
-std::cout << "---> attach end comment to: " << node->class_name() << ": " << token << "\n";
-#endif
-#if ATTACH_EOL_COMMENT
+        SI::attachComment(last, token->getLexeme(), PreprocessingInfo::after, jovialStyle);
+      }
+      else {
 #if PRINT_ATTACH_COMMENT
 std::cout << "---> attach end_of comment to: " << node->class_name() << ": " << token << "\n";
 #endif
-        SI::attachComment(node, token->getLexeme(), PreprocessingInfo::end_of, PreprocessingInfo::JovialStyleComment);
-#else
-        SI::attachComment(node, token->getLexeme(), PreprocessingInfo::after, PreprocessingInfo::JovialStyleComment);
-#endif
+        SI::attachComment(node, token->getLexeme(), PreprocessingInfo::end_of, jovialStyle);
       }
       tokens_->consumeNextToken();
     }
@@ -106,7 +98,7 @@ std::cout << "---> attach end_of comment to: " << node->class_name() << ": " << 
 #if PRINT_ATTACH_COMMENT
       std::cout << "---> attach comment before scoping unit: " << token << std::endl;
 #endif
-      SI::attachComment(node, token->getLexeme(), PreprocessingInfo::before, PreprocessingInfo::JovialStyleComment);
+      SI::attachComment(node, token->getLexeme(), PreprocessingInfo::before, jovialStyle);
       tokens_->consumeNextToken();
     }
     return;
@@ -117,7 +109,7 @@ std::cout << "---> attach end_of comment to: " << node->class_name() << ": " << 
     while ((token = tokens_->getNextToken()) && token->getStartLine() <= pos.getStartLine()) {
       SgLocatedNode* commentNode{stmt};
       if (token->getTokenType() == JovialEnum::comment) {
-        commentPosition = PreprocessingInfo::before;
+        auto commentPosition = PreprocessingInfo::before;
         if (token->getStartLine() == pos.getStartLine()) {
           commentPosition = PreprocessingInfo::end_of;
           // check for comment following a variable initializer
@@ -138,13 +130,14 @@ std::cout << "---> attach end_of comment to: " << node->class_name() << ": " << 
         std::cout << "---> attach comment for: " << commentNode->class_name() << ": "
                   << token << ": " << commentPosition << "\n";
 #endif
-        SI::attachComment(commentNode, token->getLexeme(), commentPosition, PreprocessingInfo::JovialStyleComment);
+        SI::attachComment(commentNode, token->getLexeme(), commentPosition, jovialStyle);
       }
       tokens_->consumeNextToken();
     }
   }
-  else if (SgEnumVal* expr = isSgEnumVal(node)) {
+  else if (auto expr = isSgEnumVal(node)) {
     boost::optional<const Token&> token{};
+    auto commentPosition = PreprocessingInfo::before;
     // try only attaching comments from same line (what about multi-line comments)
     while ((token = tokens_->getNextToken()) && token->getStartLine() == pos.getStartLine()) {
       if (token->getTokenType() == JovialEnum::comment) {
@@ -154,7 +147,7 @@ std::cout << "---> attach end_of comment to: " << node->class_name() << ": " << 
 #if PRINT_ATTACH_COMMENT
         std::cout << "---> attach comment for: " << expr->class_name() << ": " << token << "\n";
 #endif
-        SI::attachComment(expr, token->getLexeme(), commentPosition, PreprocessingInfo::JovialStyleComment);
+        SI::attachComment(expr, token->getLexeme(), commentPosition, jovialStyle);
       }
       tokens_->consumeNextToken();
     }
@@ -170,7 +163,7 @@ std::cout << "---> attach end_of comment to: " << node->class_name() << ": " << 
 /** Attach comments from a vector */
 void
 SageTreeBuilder::attachComments(SgLocatedNode* node, const std::vector<Token> &tokens, bool at_end) {
-  PreprocessingInfo::RelativePositionType commentPosition{PreprocessingInfo::before};
+  auto commentPosition{PreprocessingInfo::before};
   if (at_end) {
     commentPosition = PreprocessingInfo::after;
   }
@@ -362,21 +355,15 @@ void SageTreeBuilder::Enter(SgBasicBlock* &block)
    // Set the parent (at least temporarily) so that symbols can be traced.
    block = SageBuilder::buildBasicBlock_nfi(SageBuilder::topScopeStack());
 
-#if APPEND_BEFORE_LEAVE
 // Append now (before Leave is called) so that symbol lookup will work
    SageInterface::appendStatement(block, SageBuilder::topScopeStack());
-#endif
    SageBuilder::pushScopeStack(block);
 }
 
 void SageTreeBuilder::Leave(SgBasicBlock* block)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgBasicBlock*) \n";
-
    SageBuilder::popScopeStack();  // this basic block
-#if APPEND_BEFORE_LEAVE==0
-   SageInterface::appendStatement(block, SageBuilder::topScopeStack());
-#endif
 }
 
 void SageTreeBuilder::
@@ -821,23 +808,17 @@ Enter(SgDerivedTypeStatement* & derived_type_stmt, const std::string & name)
    SgClassDefinition* class_defn = derived_type_stmt->get_definition();
    ROSE_ASSERT(class_defn);
    ROSE_ASSERT(SageBuilder::topScopeStack()->isCaseInsensitive());
-#if APPEND_BEFORE_LEAVE
+
 // Append now (before Leave is called) so that symbol lookup will work
    SageInterface::appendStatement(derived_type_stmt, SageBuilder::topScopeStack());
    SageBuilder::pushScopeStack(class_defn);
-#endif
 }
 
 void SageTreeBuilder::
 Leave(SgDerivedTypeStatement* derived_type_stmt)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgDerivedTypeStatement*) \n";
-   ROSE_ASSERT(derived_type_stmt);
-
    SageBuilder::popScopeStack();  // class definition
-#if APPEND_BEFORE_LEAVE==0
-   SageInterface::appendStatement(derived_type_stmt, SageBuilder::topScopeStack());
-#endif
 }
 
 // Statements

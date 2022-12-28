@@ -75,15 +75,7 @@ UnparseJovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Inf
      ASSERT_not_null(stmt);
 
      // unparse comments preceding the expression
-     auto preprocInfo = stmt->get_attachedPreprocessingInfoPtr();
-     if (preprocInfo) {
-       for (PreprocessingInfo* info : *preprocInfo) {
-         if (info->getRelativePosition() == PreprocessingInfo::before) {
-           curprint(info->getString());
-           curprint("\n");
-         }
-       }
-     }
+     unparseCommentsBefore(stmt, info);
 
      switch (stmt->variantT())
         {
@@ -632,9 +624,14 @@ UnparseJovial::unparseJovialForThenStmt(SgStatement* stmt, SgUnparse_Info& info)
 
   // Loop body
   //
-  // Due to wierd construction (basic block containing a basic block) the basic block for the loop
+  // Due to weird construction (basic block containing a basic block) the basic block for the loop
   // may be the last statement. The other statement (if present) will be the compiler generated control
   // variable declaration. However a SimpleStatement for the loop body won't have the extra basic block.
+  //
+  // In any case, comments may be attached before outer block loop body (not to actual loop body, see note
+  // above about about weird construction and code below finding loop_body).
+     unparseCommentsBefore(loop_body, info);
+
      if (loop_body->get_statements().size() == 1) {
         loop_body = isSgBasicBlock(for_stmt->get_loop_body()->get_statements()[0]);
      }
@@ -1290,10 +1287,10 @@ UnparseJovial::unparseCommentsBefore(SgStatement* stmt, SgUnparse_Info& info)
     for (PreprocessingInfo* info : *preprocInfo) {
       if (info->getRelativePosition() == PreprocessingInfo::before) {
         curprint(info->getString());
+        curprint("\n");
       }
     }
   }
-  curprint("\n");
 }
 
 void
@@ -1318,6 +1315,6 @@ UnparseJovial::unparseCommentsAfter(SgStatement* stmt, SgUnparse_Info& info, boo
         curprint("\n");
       }
     }
-    if (newline) curprint("\n");
   }
+  if (newline) curprint("\n");
 }

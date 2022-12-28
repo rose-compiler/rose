@@ -1,0 +1,22 @@
+START
+PROGRAM testloop;
+BEGIN
+  ITEM ivar U;
+  ITEM ibbr U;
+  ivar = 0;
+  ibbr = 1;
+% before FOR %
+  FOR ivar:0 THEN 33 WHILE ivar < 25 % EOS FOR %;
+% before BEGIN 1 %
+% before BEGIN 2 %
+  BEGIN
+% after BEGIN %
+    ibbr = ibbr + 0;
+    ibbr = ibbr + 2;
+% before END %
+  END
+% after END FOR block 1 %
+% after END FOR block 2 %
+END
+% after END PROGRAN block %
+TERM
