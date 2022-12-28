@@ -45,7 +45,7 @@ declaration_t<Object::a_variable> * __factory_helper_t<CRT, API, Object::a_varia
   std::cout << "  parent = " << std::hex << parent << " : " << ( parent ? parent->class_name() : "" ) << std::endl;
 #endif
   SgInitializedName * iname = sym->get_declaration();
-  ROSE_ASSERT(iname != nullptr);
+  ROSE_ASSERT(iname);
 #if DEBUG___factory_helper_t__a_variable__instantiate
   std::cout << "  iname = " << std::hex << iname << " : " << ( iname ? iname->class_name() : "" ) << std::endl;
   std::cout << "    ->get_qualified_name() = " << iname->get_qualified_name().getString() << std::endl;
@@ -55,7 +55,6 @@ declaration_t<Object::a_variable> * __factory_helper_t<CRT, API, Object::a_varia
   SgName vname_tplargs = SageBuilder::appendTemplateArgumentsToName(vname, tpl_args);
 
   SgTemplateVariableDeclaration * tpl_decl = isSgTemplateVariableDeclaration(sym->get_declaration()->get_parent());
-  ROSE_ASSERT(tpl_decl != nullptr);
 #if DEBUG___factory_helper_t__a_variable__instantiate
   std::cout << "  tpl_decl = " << std::hex << tpl_decl << " : " << ( tpl_decl ? tpl_decl->class_name() : "" ) << std::endl;
   std::cout << "    ->get_parent() = " << std::hex << tpl_decl->get_parent() << " : " << ( tpl_decl->get_parent() ? tpl_decl->get_parent()->class_name() : "" ) << std::endl;
@@ -67,43 +66,45 @@ declaration_t<Object::a_variable> * __factory_helper_t<CRT, API, Object::a_varia
     while (isSgTypedefType(parent)) {
       parent = isSgNamedType(((SgTypedefType*)parent)->get_base_type());
     }
-    ROSE_ASSERT(parent != nullptr);
+    ROSE_ASSERT(parent);
 #if DEBUG___factory_helper_t__a_variable__instantiate
     std::cout << "  parent = " << std::hex << parent << " : " << ( parent ? parent->class_name() : "" ) << std::endl;
 #endif
     SgClassType * xtype = isSgClassType(parent);
-    ROSE_ASSERT(xtype != nullptr);
+    ROSE_ASSERT(xtype);
     SgClassDeclaration * xdecl = isSgClassDeclaration(xtype->get_declaration());
-    ROSE_ASSERT(xdecl != nullptr);
+    ROSE_ASSERT(xdecl);
 #if DEBUG___factory_helper_t__a_variable__instantiate
     std::cout << "  xdecl = " << std::hex << xdecl << " : " << ( xdecl ? xdecl->class_name() : "" ) << std::endl;
 #endif
     xdecl = isSgClassDeclaration(xdecl->get_definingDeclaration());
-    ROSE_ASSERT(xdecl != nullptr);
+    ROSE_ASSERT(xdecl);
     defn_scope = xdecl->get_definition();
 
     // TODO tpl_decl should also be updated to point to the partial instantiation inside parent
   }
-  ROSE_ASSERT(defn_scope != nullptr);
+  ROSE_ASSERT(defn_scope);
 
   SgType * iname_type = iname->get_type();
-  ROSE_ASSERT(iname_type != nullptr);
+  ROSE_ASSERT(iname_type);
 #if DEBUG___factory_helper_t__a_variable__instantiate
   std::cout << "  iname_type = " << std::hex << iname_type << " : " << ( iname_type ? iname_type->class_name() : "" ) << std::endl;
 #endif
-  iname_type = Rose::Builder::Templates::instantiateNonrealTypes(iname_type, tpl_decl->get_templateParameters(), tpl_args);
-  if (iname_type == nullptr) {
-    // TODO some complex case such as "template <unsigned depth=0> static constexpr typename range_at_depth_t<depth>::Base ub;"
-    iname_type = SageBuilder::buildIntType();
-  }
+  if (tpl_decl) iname_type = Rose::Builder::Templates::instantiateNonrealTypes(iname_type, tpl_decl->get_templateParameters(), tpl_args);
+  ROSE_ASSERT(iname_type);
 #if DEBUG___factory_helper_t__a_variable__instantiate
   std::cout << "  iname_type = " << std::hex << iname_type << " : " << ( iname_type ? iname_type->class_name() : "" ) << std::endl;
 #endif
 
-  SgTemplateVariableInstantiation * vdecl = SageBuilder::buildTemplateVariableInstantiation(vname_tplargs, iname_type, nullptr, defn_scope, tpl_decl, tpl_args);
+  SgVariableDeclaration * vdecl = nullptr;
+  if (tpl_decl) {
+    vdecl = SageBuilder::buildTemplateVariableInstantiation(vname_tplargs, iname_type, nullptr, defn_scope, tpl_decl, tpl_args);
 #if DEBUG___factory_helper_t__a_variable__instantiate
-  std::cout << "  vdecl = " << std::hex << vdecl << " : " << ( vdecl ? vdecl->class_name() : "" ) << std::endl;
+    std::cout << "  vdecl = " << std::hex << vdecl << " : " << ( vdecl ? vdecl->class_name() : "" ) << std::endl;
 #endif
+  } else {
+    vdecl = SageBuilder::buildVariableDeclaration(vname, iname_type, nullptr, defn_scope);
+  }
   vdecl->set_parent(defn_scope);
   defn_scope->insert_symbol(vname_tplargs, new SgVariableSymbol(vdecl->get_variables()[0]));
 
@@ -111,6 +112,7 @@ declaration_t<Object::a_variable> * __factory_helper_t<CRT, API, Object::a_varia
     tpl_arg->set_parent(vdecl);
   }
 
+  SageInterface::setSourcePositionForTransformation(vdecl);
   return vdecl;
 }
 

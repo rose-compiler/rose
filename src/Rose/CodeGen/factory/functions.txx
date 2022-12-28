@@ -113,6 +113,7 @@ declaration_t<Object::a_function> * __factory_helper_t<CRT, API, Object::a_funct
 
   defn_scope->insert_symbol(fname_tplargs, new SgFunctionSymbol(inst_decl));
 
+  SageInterface::setSourcePositionForTransformation(inst_decl);
   return inst_decl;
 }
 

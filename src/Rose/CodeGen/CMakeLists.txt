@@ -9,7 +9,7 @@ install(FILES
   DESTINATION ${INCLUDE_INSTALL_DIR}/Rose/CodeGen)
 
 install(FILES
-  factory/namespaces.txx factory/classes.txx factory/typedefs.txx factory/variables.txx factory/functions.txx
+  factory/factory.txx factory/namespaces.txx factory/classes.txx factory/typedefs.txx factory/variables.txx factory/functions.txx
   DESTINATION ${INCLUDE_INSTALL_DIR}/Rose/CodeGen/factory)
 
 install(FILES ../CodeGen.h DESTINATION ${INCLUDE_INSTALL_DIR}/Rose)

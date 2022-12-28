@@ -607,6 +607,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/CodeGen/API.txx								\
 	Rose/CodeGen/Driver.h								\
 	Rose/CodeGen/Factory.h								\
+	Rose/CodeGen/factory/factory.txx						\
 	Rose/CodeGen/factory/classes.txx						\
 	Rose/CodeGen/factory/functions.txx						\
 	Rose/CodeGen/factory/namespaces.txx						\
