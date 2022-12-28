@@ -14731,7 +14731,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
      printf ("In SageBuilder::buildFile(): calling astPostProcessing() \n");
 #endif
 
-     AstPostProcessing(result);
+     if (!project->get_skip_post_processing()) AstPostProcessing(result);
 
 #if 0
      printf ("In SageBuilder::buildFile(): DONE: calling astPostProcessing() \n");

@@ -2010,6 +2010,9 @@ Grammar::setUpSupport ()
   // Project.setDataPrototype("bool","unparseAllHeaderFiles", "= false",
   //        NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     Project.setDataPrototype("bool", "skip_post_processing", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      Attribute.setDataPrototype    ( "std::string"  , "name", "= \"\"",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      BitAttribute.setDataPrototype ( "unsigned long int"  , "bitflag", "= 0",
