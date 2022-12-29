@@ -772,6 +772,12 @@ void ClangToDotTranslator::VisitTemplateName(const clang::TemplateName & templat
         }
         case clang::TemplateName::QualifiedTemplate:
             oss << " qualified_template";
+#if (__clang__)  && (__clang_major__ > 14)
+            VisitNestedNameSpecifier(template_name.getAsQualifiedTemplateName()->getQualifier(), node_desc, oss.str() + "nested_name_specifier");
+            node_desc.successors.push_back(
+                std::pair<std::string, std::string>(oss.str() + "declaration", Traverse(template_name.getAsQualifiedTemplateName()->getUnderlyingTemplate().getAsTemplateDecl()))
+            );
+#else
             VisitNestedNameSpecifier(template_name.getAsQualifiedTemplateName()->getQualifier(), node_desc, oss.str() + "nested_name_specifier");
             node_desc.successors.push_back(
                 std::pair<std::string, std::string>(oss.str() + "declaration", Traverse(template_name.getAsQualifiedTemplateName()->getDecl()))
@@ -779,6 +785,7 @@ void ClangToDotTranslator::VisitTemplateName(const clang::TemplateName & templat
             node_desc.successors.push_back(
                 std::pair<std::string, std::string>(oss.str() + "template_declaration", Traverse(template_name.getAsQualifiedTemplateName()->getTemplateDecl()))
             );
+#endif
             break;
         case clang::TemplateName::DependentTemplate:
          // assert(DEBUG_TODO == 0); // TODO
