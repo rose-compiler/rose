@@ -706,11 +706,11 @@ rose_config_DEPENDENCIES = $(REQUIRED_LIBS)
 rose_config_CPPFLAGS = -DLIBDIR='"$(libdir)"'
 rose_config_LDADD = $(ROSE_LIBS)
 
-if ROSE_USE_INTERNAL_JAVA_SUPPORT
+# if ROSE_USE_INTERNAL_JAVA_SUPPORT
 if OS_MACOSX
   rose_config_LDFLAGS += $(ROSE_LINK_RPATHS) 
 endif
-endif
+# endif
 
 # DQ (4/12/2016): This is required for use with clang (not clear how to compile ROSE with out it).
 if USING_CLANG_COMPILER
@@ -858,6 +858,12 @@ rose_fortran_DEPENDENCIES = $(REQUIRED_LIBS)
 rose_fortran_CPPFLAGS     = -DROSE_COMPILER_FOR_LANGUAGE="\"fortran\""
 rose_fortran_LDADD        = $(ROSEBIN_LDADD)
 
+if OS_MACOSX
+  rose_compiler_LDFLAGS += $(ROSE_LINK_RPATHS) 
+  rose_cc_LDFLAGS += $(ROSE_LINK_RPATHS) 
+  rose_c___LDFLAGS += $(ROSE_LINK_RPATHS) 
+  rose_fortran_LDFLAGS += $(ROSE_LINK_RPATHS) 
+endif
 ########################################################################################################################
 # Test that a simple ROSE program can run, and as a side effect, print some version numbers.
 
