@@ -41,6 +41,12 @@
 #  define BOOST_HAS_BRANCH_PATH has_branch_path
 #endif
 
+#if BOOST_VERSION >= 108100
+#  define BOOST_BRANCH_PATH parent_path
+#else
+#  define BOOST_BRANCH_PATH branch_path
+#endif
+
 using namespace std;
 using namespace Rose;
 
@@ -362,7 +368,7 @@ using namespace Rose;
                 path p = fileName;
                 while (p.BOOST_HAS_BRANCH_PATH())
                 {
-                    p = p.branch_path();
+                    p = p.BOOST_BRANCH_PATH();
                     if(exists(p / path("rose.h")))
                         return Rose::StringUtility::FILENAME_LIBRARY_ROSE;
 
