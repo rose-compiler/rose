@@ -34,5 +34,5 @@ BEGIN
 END
 % 14:Post PROC END %
 % 15:Pre TERM %
-TERM
 % 16:Post TERM %
+TERM

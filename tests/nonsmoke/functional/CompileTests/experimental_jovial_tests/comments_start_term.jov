@@ -1,11 +1,11 @@
-% before START %
-START % same START %
-% after START %
+%1 before START %
+START %2 same START %
+%3 after START %
 PROGRAM main;
 BEGIN
   ITEM ii U;
   ii = 5;
 END
-% before TERM %
-TERM % same TERM %
-% after TERM %
+%4 before TERM %
+TERM %5 same TERM %
+%6 after TERM %

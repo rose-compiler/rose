@@ -1,9 +1,9 @@
-% before START %
-START % same START %
-% after START %
+%2 before START %
+START %2 same START %
+%3 after START %
   DEF PROC sub1 ;
       ;
   PROC sub2 ;;
-% before TERM %
-TERM % same TERM %
-% after TERM %
+%4 before TERM %
+TERM %5 same TERM %
+%6 after TERM %

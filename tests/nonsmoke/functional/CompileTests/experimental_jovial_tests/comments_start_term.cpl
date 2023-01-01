@@ -1,8 +1,8 @@
-% before START %
-START % same START %
-% after START %
+%1 before START %
+START %2 same START %
+%3 after START %
 COMPOOL comments;
   DEF ITEM ii U;
-% before TERM %
+%4 before TERM %
 TERM % same TERM %
-% after TERM %
+%5 after TERM %
