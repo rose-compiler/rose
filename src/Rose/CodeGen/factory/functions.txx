@@ -81,7 +81,14 @@ declaration_t<Object::a_function> * __factory_helper_t<CRT, API, Object::a_funct
   SgFunctionDeclaration * inst_decl = nullptr;
   if (tpl_fdecl) {
     defn_scope = decl->get_scope();
-    ROSE_ABORT(); // TODO SgTemplateInstantiationFunctionDecl
+    SgTemplateInstantiationFunctionDecl * inst_fdecl = new SgTemplateInstantiationFunctionDecl(
+        fname_tplargs, ftype, nullptr, tpl_fdecl, tpl_args
+    );
+
+    inst_fdecl->set_templateName(fname);
+    inst_fdecl->set_template_argument_list_is_explicit(true);
+
+    inst_decl = inst_fdecl;
 
   } else if (tpl_mfdecl) {
 
@@ -103,14 +110,11 @@ declaration_t<Object::a_function> * __factory_helper_t<CRT, API, Object::a_funct
         fname_tplargs, ftype, nullptr, tpl_mfdecl, tpl_args
     );
 
-    inst_mfdecl->set_scope(defn_scope);
-    inst_mfdecl->set_parent(defn_scope);
-    
     inst_decl = inst_mfdecl;
   }
 
-//  defn_scope->append_statement(inst_decl);
-
+  inst_decl->set_scope(defn_scope);
+  inst_decl->set_parent(defn_scope);
   defn_scope->insert_symbol(fname_tplargs, new SgFunctionSymbol(inst_decl));
 
   SageInterface::setSourcePositionForTransformation(inst_decl);

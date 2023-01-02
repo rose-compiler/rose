@@ -3278,19 +3278,14 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
                   }
              }
 
+       // DQ (2/18/2019): Adding support for C++11 base type specification syntax.
        // DQ (1/6/2020): When this is used as a argument we only want to unparse the name (e.g. sizeof opterator).
-          if (info.inArgList() == false)
-             {
-            // DQ (2/18/2019): Adding support for C++11 base type specification syntax.
-               if (edecl->get_field_type() != NULL)
-                  {
-                    curprint(" : ");
-
-                 // Make a new SgUnparse_Info object.
-                    SgUnparse_Info ninfo(info);
-                    unp->u_type->unparseType(edecl->get_field_type(),ninfo);
-                  }
-             }
+       // TV: Should it ever be unparsed here? It seems it should only be when unparsing the decl. Added "not SkipEnumDefinition" condition to fix my use case...
+          if (!info.inArgList() && !info.SkipEnumDefinition() && edecl->get_field_type() != NULL) {
+            curprint(" : ");
+            SgUnparse_Info ninfo(info);
+            unp->u_type->unparseType(edecl->get_field_type(),ninfo);
+          }
         }
 
 
