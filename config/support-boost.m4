@@ -192,7 +192,7 @@ AX_BOOST_WAVE
 AX_BOOST_IOSTREAMS
 
 # AM_CONDITIONAL(ROSE_USE_BOOST_WAVE,test "$with_wave" = true)
-AM_COND_IF([OS_MACOSX],[LDFLAGS="-Xlinker -rpath $ac_boost_path/lib $LDFLAGS"],[])
+AM_COND_IF([OS_MACOSX],[LDFLAGS="-Xlinker -rpath -Xlinker $ac_boost_path/lib $LDFLAGS"],[])
 
 # End macro ROSE_SUPPORT_BOOST.
 ])

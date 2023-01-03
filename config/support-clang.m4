@@ -27,8 +27,15 @@ if test "x$CONFIG_HAS_ROSE_ENABLE_CLANG_FRONTEND" = "xyes"; then
      
      AC_MSG_CHECKING([for Clang ld flags])
          if test -z "$CLANG_LDFLAGS"; then
-             llvm_ldflags="`$LLVM_CONFIG --ldflags` -lclangFrontendTool -lclangStaticAnalyzerFrontend -lclangStaticAnalyzerCheckers -lclangStaticAnalyzerCore -lclangIndex -lclangFrontend -lclangCodeGen  -lclangARCMigrate -lclangRewrite -lclangSerialization -lclangDriver -lclangParse -lclangSema -lclangAnalysis -lclangAST -lclangLex -lclangBasic -lclangEdit -lclangLex "
-             llvm_ldflags+="`$LLVM_CONFIG --libs engine ipo bitwriter linker asmparser instrumentation option frontendopenmp` "
+             AC_MSG_CHECKING([for Clang version])
+             CLANG_VERSION_MAJOR=`${srcdir}/config/getAppleCxxMajorVersionNumber.sh`
+             if test $CLANG_VERSION_MAJOR -ge 15; then
+                 llvm_ldflags="`$LLVM_CONFIG --ldflags` -lclangFrontendTool -lclangStaticAnalyzerFrontend -lclangStaticAnalyzerCheckers -lclangStaticAnalyzerCore -lclangIndex -lclangFrontend -lclangCodeGen  -lclangARCMigrate -lclangRewrite -lclangSerialization -lclangDriver -lclangParse -lclangSema -lclangAnalysis -lclangAST -lclangLex -lclangBasic -lclangEdit -lclangLex -lclangSupport "
+                 llvm_ldflags+="`$LLVM_CONFIG --libs engine ipo bitwriter linker asmparser instrumentation option frontendopenmp windowsdriver` "
+             else
+                 llvm_ldflags="`$LLVM_CONFIG --ldflags` -lclangFrontendTool -lclangStaticAnalyzerFrontend -lclangStaticAnalyzerCheckers -lclangStaticAnalyzerCore -lclangIndex -lclangFrontend -lclangCodeGen  -lclangARCMigrate -lclangRewrite -lclangSerialization -lclangDriver -lclangParse -lclangSema -lclangAnalysis -lclangAST -lclangLex -lclangBasic -lclangEdit -lclangLex "
+                 llvm_ldflags+="`$LLVM_CONFIG --libs engine ipo bitwriter linker asmparser instrumentation option frontendopenmp` "
+             fi
              llvm_ldflags+="`$LLVM_CONFIG --system-libs` "
              if test -n "${llvm_ldflags}"; then
                  llvm_ldflags="$llvm_ldflags"
@@ -42,6 +49,7 @@ if test "x$CONFIG_HAS_ROSE_ENABLE_CLANG_FRONTEND" = "xyes"; then
      AC_SUBST([CLANG_LIBDIR])
 
      AC_DEFINE([ROSE_USE_CLANG_FRONTEND], [], [Use Clang for parsing C/C++-like languages])
+     AM_COND_IF([OS_MACOSX],[LDFLAGS="-Xlinker -rpath -Xlinker [$CLANG_LIBDIR] $LDFLAGS"],[])
   else
      ROSE_MSG_ERROR([requested Clang frontend, but llvm-config was not found])
   fi
