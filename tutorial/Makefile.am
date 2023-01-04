@@ -831,7 +831,6 @@ generatedCodeExamples = \
    rose_inputCode_tauInstrumenter.C \
    inputCode_ASTGraphGenerator.pdf \
    inputCode_ASTGraphGeneratorCustomized.pdf \
-   inputCode_AST_PDF_Generator.pdf \
    inputCode_ASTWholeGraphGenerator_small.pdf \
    inputCode_ASTWholeGraphGenerator_large.pdf \
    rose_inputCode_IdentityTranslator.C \
