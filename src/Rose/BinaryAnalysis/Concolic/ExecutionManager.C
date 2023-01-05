@@ -167,6 +167,7 @@ ExecutionManager::run() {
         // Run as many test cases concretely as possible.
         while (TestCaseId testCaseId = pendingConcreteResult()) {
             TestCase::Ptr testCase = database()->object(testCaseId);
+            std::cerr <<testCase->printableName(database()) <<" running concretely...\n";
             auto concreteExecutor = ConcreteExecutor::forge(database_, concreteName);
             if (!concreteExecutor)
                 throw Exception("cannot instantiate concrete executor \"" + StringUtility::cEscape(concreteName) + "\"");
@@ -180,6 +181,7 @@ ExecutionManager::run() {
         // haven't done).
         for (TestCaseId testCaseId: pendingConcolicResults(concolicStride)) {
             TestCase::Ptr testCase = database()->object(testCaseId);
+            std::cerr <<testCase->printableName(database()) <<" running concolically...\n";
             auto concolicExecutor = ConcolicExecutor::instance();
             concolicExecutor->configureExecution(database_, testCase, config_);
             std::vector<TestCase::Ptr> newTestCases = concolicExecutor->execute();
