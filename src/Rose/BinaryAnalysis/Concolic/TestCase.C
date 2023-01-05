@@ -100,17 +100,35 @@ TestCase::toYaml(std::ostream &out, const Database::Ptr &db, std::string prefix,
         out <<prefix <<"  parent: none\n";
     }
 
-    if (ShowEvents::YES == showEvents) {
-        std::vector<ExecutionEventId> events = db->executionEvents(tcid);
-        if (!events.empty()) {
-            out <<prefix <<"  execution-events:\n";
-            for (ExecutionEventId eeid: events) {
-                ExecutionEvent::Ptr ee = db->object(eeid);
-                ee->toYaml(out, db, prefix + "    - ");
+    switch (showEvents) {
+        case ShowEvents::NONE:
+            out <<prefix <<"  execution-events: " <<db->executionEvents(tcid).size() <<"\n";
+            break;
+
+        case ShowEvents::INPUT: {
+            std::vector<ExecutionEventId> events = db->executionEvents(tcid);
+            if (!events.empty()) {
+                out <<prefix <<"  execution-events:\n";
+                for (ExecutionEventId eeid: events) {
+                    ExecutionEvent::Ptr ee = db->object(eeid);
+                    if (ee->inputType() != InputType::NONE)
+                        ee->toYaml(out, db, prefix + "    - ");
+                }
             }
+            break;
         }
-    } else {
-        out <<prefix <<"  execution-events: " <<db->executionEvents(tcid).size() <<"\n";
+
+        case ShowEvents::ALL: {
+            std::vector<ExecutionEventId> events = db->executionEvents(tcid);
+            if (!events.empty()) {
+                out <<prefix <<"  execution-events:\n";
+                for (ExecutionEventId eeid: events) {
+                    ExecutionEvent::Ptr ee = db->object(eeid);
+                    ee->toYaml(out, db, prefix + "    - ");
+                }
+            }
+            break;
+        }
     }
 
     if (ShowAssertions::YES == showAssertions) {

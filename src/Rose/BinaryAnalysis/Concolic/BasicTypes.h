@@ -29,7 +29,12 @@ namespace Concolic {
 
 enum class Update { NO, YES };
 
-enum class ShowEvents { NO, YES };
+/** Whether to show execution events. */
+enum class ShowEvents {
+    NONE,                                               /**< Do not show events. */
+    INPUT,                                              /**< Show only input events. */
+    ALL                                                 /**< Show all events. */
+};
 
 enum class ShowAssertions { NO, YES };
 
