@@ -8875,7 +8875,31 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #if DEBUG_COMPILER_COMMAND_LINE
                      printf ("In SgFile::buildCompilerCommandLineOptions: Found object file as specified = %s \n",(*j).c_str());
 #endif
-                     set_objectFileNameWithPath(*j);
+
+#if DEBUG_COMPILER_COMMAND_LINE
+                  // DQ (12/10/2022): If the user reset the objectFileNameWithPath, then we are mistakenly overriding it with the original specification.
+                     printf (" --- get_objectFileNameWithPath() = %s \n",get_objectFileNameWithPath().c_str());
+                     printf (" --- resetting using *j = %s \n",(*j).c_str());
+#endif
+                  // DQ (12/10/2022): If the user reset the objectFileNameWithPath, then we are mistakenly overriding it with the original specification.
+                  // set_objectFileNameWithPath(*j);
+                     if (get_objectFileNameWithPath() == "")
+                        {
+#if DEBUG_COMPILER_COMMAND_LINE
+                          printf ("Calling set_objectFileNameWithPath(*j): *j = %s \n",(*j).c_str());
+#endif
+                          set_objectFileNameWithPath(*j);
+                        }
+                       else
+                        {
+                          if (*j != get_objectFileNameWithPath())
+                             {
+#if DEBUG_COMPILER_COMMAND_LINE
+                               printf ("resetting the string with the object file: using get_objectFileNameWithPath(*j): *j = %s \n",get_objectFileNameWithPath().c_str());
+#endif
+                               *j = get_objectFileNameWithPath();
+                             }
+                        }
                   }
 
                ROSE_ASSERT(objectNameSpecified == false);
@@ -8926,7 +8950,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #endif
                       // deleteList.push_back(i);
                          deleteList.push_back(*i);
-#if 0
+#if 1
                          for (size_t k = 0; k < deleteList.size(); k++)
                             {
                            // printf ("deleteList[k=%zu] = %s \n",k,(*deleteList[k]).c_str());
@@ -8940,7 +8964,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #endif
                       // deleteList.push_back(j);
                          deleteList.push_back(*j);
-#if 0
+#if 1
                          for (size_t k = 0; k < deleteList.size(); k++)
                             {
                            // printf ("deleteList[k=%zu] = %s \n",k,(*deleteList[k]).c_str());
@@ -9117,7 +9141,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      printf ("In buildCompilerCommandLineOptions: test 2: argcArgvList       = \n%s\n",CommandlineProcessing::generateStringFromArgList(argcArgvList,false,false).c_str());
 #endif
 
-#if 0
+#if DEBUG_COMPILER_COMMAND_LINE || 0
      printf ("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ \n");
      printf ("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ \n");
      printf ("INSERTING argcArgvList INTO compilerNameString \n");

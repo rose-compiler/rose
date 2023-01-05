@@ -815,7 +815,6 @@ Grammar::setUpSupport ()
      SourceFile.setDataPrototype   ( "bool", "isDynamicLibrary", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-<<<<<<< HEAD
   // DQ (5/20/2021): Save the first and last statement associated with the source file (required to support the 
   // token-based unparsing (e.g. detecting the last statement so that we can output the trailing whitespace).
      SourceFile.setDataPrototype ( "SgStatement*", "firstStatement", " = NULL",
@@ -824,10 +823,7 @@ Grammar::setUpSupport ()
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
 
-     UnknownFile.setDataPrototype   ( "SgGlobal*", "globalScope", "= NULL",
-=======
      UnknownFile.setDataPrototype   ( "SgGlobal*", "globalScope", "= nullptr",
->>>>>>> origin/master
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (9/18/2018): Adding support for building the include file tree for each source file.

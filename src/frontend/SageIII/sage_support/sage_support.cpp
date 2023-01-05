@@ -2352,33 +2352,6 @@ SgProject::parse()
                     printf ("############### Setting file->set_header_file_unparsing_optimization_header_file(true):  file = %p = %s \n",file,file->class_name().c_str());
 #endif
 
-<<<<<<< HEAD
-
-#if 0
-                 // file->set_header_file_unparsing_optimization_header_file(true);
-
-#error "DEAD CODE!"
-
-#if 0
-                    printf ("Perform collection of comments and CPP directives only on the header files \n");
-                    printf ("####################################################### \n");
-                    printf ("Processing comments and CPP directives for header files \n");
-                    printf ("####################################################### \n");
-#endif
-                 // printf ("Commented out specific header file collection of comments and CPP directives \n");
-                    file->secondaryPassOverSourceFile();
-#if 0
-                    printf ("Exiting after test! processed second phase of collecting comments and CPP directives for header files) \n");
-                    ROSE_ABORT();
-#endif
-#if 0
-                    printf ("############### Setting file->set_header_file_unparsing_optimization_header_file(false): file = %p = %s \n",file,file->class_name().c_str());
-#endif
-#error "DEAD CODE!"
-                 // file->set_header_file_unparsing_optimization_header_file(false);
-#endif
-=======
->>>>>>> origin/master
 #endif
                  // DQ (4/25/2021): Test without this assertion.
                  // DQ (9/18/2019): I think this is true, though it might depend on the command-line options.
@@ -6226,7 +6199,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                   }
              }
 
-#if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS
+#if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS || 1
        // DQ (2/6/2022): Set to "1" to output the backend compiler command line.
           printf ("In SgFile::compileOutput(): Calling systemFromVector(): compilerCmdLine = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerCmdLine,false,false).c_str());
 #endif
@@ -6571,16 +6544,7 @@ SgProject::compileOutput()
                ROSE_ABORT();
              }
 
-<<<<<<< HEAD
-#if 0
-          printf ("Exiting as a test! \n");
-          ROSE_ABORT();
-#endif
-
           if ( SgProject::get_verbose() > -1 )
-=======
-          if ( SgProject::get_verbose() > 0 )
->>>>>>> origin/master
              {
                printf ("In SgProject::compileOutput(): listToString(originalCommandLine) = %s \n",StringUtility::listToString(originalCommandLine).c_str());
              }

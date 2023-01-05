@@ -635,7 +635,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2021_16.c \
      test2021_17.c \
      test2021_18.c \
-<<<<<<< HEAD
      test2021_20.c \
      test2021_21.c \
      test2021_22.c \
@@ -645,12 +644,11 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2021_27.c \
      test2021_28.c \
      test2022_01.c 
-=======
-     test2022_01.c \
-     test2022_02.c \
-     test2022_03.c \
-     test2022_04.c 
->>>>>>> origin/master
+
+//   test2022_01.c 
+//   test2022_02.c 
+//   test2022_03.c 
+//   test2022_04.c 
 
 
 TESTCODE_CURRENTLY_FAILING = \
