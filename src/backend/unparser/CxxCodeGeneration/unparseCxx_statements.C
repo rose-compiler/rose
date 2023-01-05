@@ -2922,7 +2922,7 @@ Unparse_ExprStmt::unparseUsingDeclarationStatement (SgStatement* stmt, SgUnparse
                       }
                      else
                       {
-                        printf ("WARNING: In unparseUsingDeclarationStatement(): declarationStatement = %s templateDeclaration == NULL \n",declarationStatement->sage_class_name());
+                     // printf ("NOTE: In unparseUsingDeclarationStatement(): declarationStatement = %s templateDeclaration == NULL \n",declarationStatement->sage_class_name());
                       }
                     break;
                   }
