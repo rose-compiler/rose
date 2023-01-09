@@ -809,7 +809,7 @@ if((NOT WIN32) AND (enable-binary-analysis))
 endif()
 
 find_package(FLEX)
-if(NOT FLEX_FOUND)
+if((NOT FLEX_FOUND) AND (enable-c))
   message(FATAL_ERROR "Could not find flex command")
 endif()
 
