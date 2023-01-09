@@ -227,16 +227,10 @@ endif
 
 noinst_LTLIBRARIES = libsage3.la
 
-# libsage3_la_SOURCES = $(libsage3Sources) preproc.ll rose_paths.h omplexer.ll ompparser.yy
-# libsage3_la_SOURCES = $(libsage3Sources) preproc.ll omplexer.ll ompparser.yy
 libsage3_la_SOURCES = $(libsage3Sources)
-
 if ROSE_BUILD_CPP_LANGUAGE_SUPPORT
 libsage3_la_SOURCES += preproc-c.ll
-if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-else
 libsage3_la_SOURCES += omplexer.ll ompparser.yy
-endif
 endif
 
 
