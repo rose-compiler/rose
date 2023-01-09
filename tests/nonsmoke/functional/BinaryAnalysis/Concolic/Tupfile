@@ -3,6 +3,8 @@ include_rules
 ifeq (@(ENABLE_TESTS),yes)
 ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
 
+run $(tool_compile_linkexe) isRunningInContainer.C
+
 #------------------------------------------------------------------------------------------------------------------------
 # Database tests
 
@@ -36,10 +38,12 @@ run $(test) --extra=testDefineTests.db testDefineTests \
 
 run $(tool_compile_linkexe) testRun1.C
 run $(test) --extra=testRun1.db testRun1 \
+    --disabled-by=./isRunningInContainer --input=isRunningInContainer \
     './testRun1 && touch testRun1.db'
 
 run $(tool_compile_linkexe) testRun10.C
 run $(test) --extra=testRun10.db testRun10 \
+    --disabled-by=./isRunningInContainer --input=isRunningInContainer \
     './testRun10 && touch testRun10.db'
 
 run $(tool_compile_linkexe) testDefineFail.C
@@ -48,14 +52,18 @@ run $(test) --extra=testDefineFail.db testDefineFail \
 
 run $(tool_compile_linkexe) testCombined.C
 run $(test) --extra=testCombined.db ./testCombined \
+    --disabled-by=./isRunningInContainer --input=isRunningInContainer \
     './testCombined && touch testCombined.db'
 
 run $(tool_compile_linkexe) testExport.C
 run $(test) --input=sampleExecutable --extra=testExport.db testExport \
+    --disabled-by=./isRunningInContainer --input=isRunningInContainer \
     './testExport && touch testExport.db'
 
 run $(tool_compile_linkexe) testAddressRandomization.C
-run $(test) --input=sampleExecutable --extra=testAddressRandomization.db testAddressRandomization \
+run $(test) --input=sampleExecutable --extra=testAddressRandomization.db \
+    testAddressRandomization \
+    --disabled-by=./isRunningInContainer --input=isRunningInContainer \
     './testAddressRandomization && touch testAddressRandomization.db'
     
 #FIXME# Reported by Matzke 2019-09-23
@@ -103,6 +111,7 @@ run $(test) --extra testTestCase.db testTestCase \
 run $(tool_compile_linkexe) testConcolicExecutor.C
 run $(test) testConcolicExecutor \
     --extra testConcolicExecutor-1.db \
+    --disabled-by=./isRunningInContainer --input=isRunningInContainer \
     './testConcolicExecutor --log "Rose::BinaryAnalysis::Concolic(debug)" --database=testConcolicExecutor-1.db $(ROSE)/tests/nonsmoke/specimens/binary/concolic-specimen-01 && touch testConcolicExecutor-1.db'
 
 endif
