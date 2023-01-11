@@ -545,15 +545,16 @@ namespace
                     while (res && (i < numParams))
                     {
                       SgInitializedName& parm = SG_DEREF(fn->get_args().at(i));
+                      SgType*            argRootTy = si::Ada::typeRoot(suppl.args()->at(i));
 
                       // \todo consider to replace the simple type check with a proper overload resolution
-                      res = si::Ada::typeRoot(parm.get_type()) == si::Ada::typeRoot(suppl.args()->at(i));
+                      res = si::Ada::typeRoot(parm.get_type()) == argRootTy;
 
-                      //~ if (!res)
-                        //~ logWarn() << i << ". parm/arg: "
-                                  //~ << si::Ada::typeRoot(parm.get_type())->class_name() << " / "
-                                  //~ << (si::Ada::typeRoot(arg) ? si::Ada::typeRoot(arg)->class_name() : std::string{"<null>"})
-                                  //~ << std::endl;
+                      if (false && !res)
+                        logWarn() << i << ". parm/arg: "
+                                  << si::Ada::typeRoot(parm.get_type())->class_name() << " / "
+                                  << (argRootTy ? argRootTy->class_name() : std::string{"<null>"})
+                                  << std::endl;
 
                       ++i;
                     }
@@ -667,6 +668,12 @@ namespace
 
   bool isGeneratableOperator(AdaIdentifier name, OperatorCallSupplement suppl, AstContext ctx)
   {
+    // this function returns true if an operator can be generated.
+    // \todo it is unclear whether the ROSE frontend needs to validate based on argument and return types
+    //       as defined by the Ada Standard, since the frontend should have already done it.
+    //       Currently, the validation checking is implemented for a few relational operators but
+    //       left as todo item for others (12/16/22).
+
     // imprecise .. see below
     if ((name == "=" || name == "/="))
       return true;
@@ -712,19 +719,15 @@ namespace
              //~ );
     }
 
-    if (  ((name == "+") || (name == "-"))
-       // && (unaryCall(suppl, ctx))
-       )
-    {
-      return true; // \todo
-    }
-
     if ( (  name == "+"   || name == "-"   || name == "*"
          || name == "/"   || name == "mod" || name == "rem"
          || name == "abs" || name == "not"
+         || name == "&"
+         || name == "**"
          )
        )
     {
+      // \todo check whether thie types match
       return true;
     }
 
@@ -767,6 +770,7 @@ namespace
        || name == "and"
        || name == "or"
        || name == "xor"
+       || name == "**"
        )
     {
       suppl.result(suppl.args()->front());
@@ -775,13 +779,9 @@ namespace
 
     if (name == "&")
     {
-      // \todo
-      return;
-    }
-
-    if (name == "**")
-    {
-      // \todo
+      // \todo return an open array type based on the array as the first or second argument.
+      //       just picking the first type is wrong, because it may be bounded; or not be an array at all.
+      suppl.result(suppl.args()->front());
       return;
     }
   }
