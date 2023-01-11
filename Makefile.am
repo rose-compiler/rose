@@ -1,5 +1,4 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
-include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 EXTRA_DIST =
 
 # DQ "config" and "src" must preceed any other directories, and 
@@ -88,8 +87,6 @@ core:
 tools:
 	$(MAKE) -C $(top_builddir)/tools
 	$(MAKE) -C $(top_builddir)/exampleTranslators
-	$(MAKE) -C $(top_builddir)/projects/compass
-	$(MAKE) -C $(top_builddir)/projects/arrayOptimization
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
 	$(MAKE) -C $(top_builddir)/tutorial
 endif
@@ -102,8 +99,6 @@ install-core: core rosePublicConfig.h
 install-tools: install-core tools
 	$(MAKE) install -C $(top_builddir)/tools
 	$(MAKE) install -C $(top_builddir)/exampleTranslators
-	$(MAKE) install -C $(top_builddir)/projects/compass
-	$(MAKE) install -C $(top_builddir)/projects/arrayOptimization
 	$(MAKE) install -C $(top_builddir)/tests/nonsmoke/functional/roseTests/astInliningTests
 	$(MAKE) install -C $(top_builddir)/tests/nonsmoke/functional/roseTests/astOutliningTests
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
@@ -151,15 +146,9 @@ check-hard:
 check-tools: tools
 	$(MAKE) check -C $(top_builddir)/tools
 	$(MAKE) check -C $(top_builddir)/exampleTranslators
-	$(MAKE) check -C $(top_builddir)/projects/compass
-	$(MAKE) check -C $(top_builddir)/projects/arrayOptimization
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
 	$(MAKE) check -C $(top_builddir)/tutorial
 endif
-
-install-compass: install-core
-	$(MAKE) -C $(top_builddir)/projects/compass
-	$(MAKE) install -C $(top_builddir)/projects/compass
 
 # Install ONLY the library components (no examples, no tests, no projects). This is even more "core" than "core" but I'm
 # not changing "install-core" because users use that and expect certain behavior. The purpose of this target is mainly for

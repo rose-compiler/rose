@@ -1,5 +1,0 @@
-View elem
-{
-	Field { arr1:i }
-	Field { arr2:i } 
-}

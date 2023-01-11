@@ -1,5 +1,0 @@
-This directory contains header files that are included directly into 
-compass.[Ch] that make the components of the Compass prerequisite mechanism.
-Any prerequisite defined in this directory may be used across files at global
-scope by any checker; the standard example is ProjectPrerequisite which is
-required by the majority of checkers performing AST traversals. 

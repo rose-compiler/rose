@@ -1,1 +1,0 @@
-AsynchronousSignalHandler: asynchronousSignalHandlerTest1.C:19.3-22: SgFunctionCallExp: non async safe function found in signal handler

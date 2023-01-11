@@ -1,9 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(top_srcdir)/tests/nonsmoke/functional/input_codes/Makefile.for.input.codes
 
-# DQ (2/6/2010): I don't understand why this is required in every Makefile.am through out ROSE.
-include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
-
 # When debugging latex documentation skip using the --interaction=batchmode option
 # PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests:.: pdflatex --interaction=batchmode
 # Liao 12/18/2009, use normal mode to ease finding bugs from hudson logs

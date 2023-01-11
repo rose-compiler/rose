@@ -1,1 +1,0 @@
-DoNotDeleteThis: doNotDeleteThisTest1.C:10.5-15: SgDeleteExp: This checker checks that 'this' is not the argument to 'delete'

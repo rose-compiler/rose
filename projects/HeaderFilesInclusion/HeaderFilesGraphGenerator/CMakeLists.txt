@@ -1,3 +1,0 @@
-
-add_executable(headerFilesGraphGenerator headerFilesGraphGenerator.C)
-target_link_libraries(headerFilesGraphGenerator ROSE_DLL ${Boost_LIBRARIES})
