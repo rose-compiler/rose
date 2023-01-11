@@ -1967,61 +1967,6 @@ exampleTranslators/documentedExamples/dataBaseExamples/Makefile
 exampleTranslators/documentedExamples/simpleTranslatorExamples/Makefile
 exampleTranslators/documentedExamples/simpleTranslatorExamples/exampleMakefile
 LicenseInformation/Makefile
-projects/CertSecureCodeProject/Makefile
-projects/CloneDetection/Makefile
-projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
-projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
-projects/HeaderFilesInclusion/Makefile
-projects/Makefile
-projects/ManyCoreRuntime/Makefile
-projects/ManyCoreRuntime/docs/Makefile
-projects/MapleDSL/Makefile
-projects/QtDesignerPlugins/Makefile
-projects/RoseBlockLevelTracing/Makefile
-projects/RoseBlockLevelTracing/src/Makefile
-projects/RoseQt/AstViewer/Makefile
-projects/RoseQt/Makefile
-projects/SMTPathFeasibility/Makefile
-projects/ShiftCalculus4/Makefile
-projects/amrShiftDSLcompiler/AMRShift/Makefile
-projects/amrShiftDSLcompiler/Makefile
-projects/arrayDSLcompiler/Makefile
-projects/POET_ROSE/Makefile
-projects/POET_ROSE/test/Makefile
-projects/POET_ROSE/manycore-stencil/Makefile
-projects/POET_ROSE/manycore-stencil/include/Makefile
-projects/POET_ROSE/manycore-stencil/benchmarks/Makefile
-projects/arrayOptimization/Makefile
-projects/arrayOptimization/test/Makefile
-projects/compass/Makefile
-projects/compass/src/Makefile
-projects/compass/src/compassSupport/Makefile
-projects/compass/src/util/C-API/Makefile
-projects/compass/src/util/MPIAbstraction/Makefile
-projects/compass/src/util/MPIAbstraction/alt-mpi-headers/Makefile
-projects/compass/src/util/MPIAbstraction/alt-mpi-headers/mpich-1.2.7p1/Makefile
-projects/compass/src/util/MPIAbstraction/alt-mpi-headers/mpich-1.2.7p1/include/Makefile
-projects/compass/src/util/MPIAbstraction/alt-mpi-headers/mpich-1.2.7p1/include/mpi2c++/Makefile
-projects/compass/src/util/Makefile
-projects/compass/tools/Makefile
-projects/compass/tools/compass/Makefile
-projects/compass/tools/compass/buildInterpreter/Makefile
-projects/compass/tools/compass/doc/Makefile
-projects/compass/tools/compass/doc/compass.tex
-projects/compass/tools/compass/gui/Makefile
-projects/compass/tools/compass/gui2/Makefile
-projects/compass/tools/compass/tests/Compass_C_tests/Makefile
-projects/compass/tools/compass/tests/Compass_Cxx_tests/Makefile
-projects/compass/tools/compass/tests/Compass_OpenMP_tests/Makefile
-projects/compass/tools/compass/tests/Makefile
-projects/compass/tools/compassVerifier/Makefile
-projects/compass/tools/sampleCompassSubset/Makefile
-projects/dsl_infrastructure/Makefile
-projects/fuse/Makefile
-projects/fuse/src/Makefile
-projects/fuse/tests/Makefile
-projects/interpreter/Makefile
-projects/palette/Makefile
 python/Makefile
 python/Rose/Makefile
 python/Rose/BinaryAnalysis/Makefile
@@ -2389,47 +2334,6 @@ tutorial/roseHPCT/Makefile
 
 # DQ (11/14/2017): Removed GNAT test directory since it is redundant with the ADA test directory.
 # tests/nonsmoke/functional/CompileTests/gnat_tests/Makefile
-
-# Liao, 1/16/2014, comment out a few directories which are turned off for EDG 4.x upgrade
-#projects/BinaryDataStructureRecognition/Makefile
-#tests/nonsmoke/functional/CompileTests/CAF2_tests/Makefile
-
-
-# DQ (10/27/2010): New Fortran tests (from gfortan test suite).
-# tests/nonsmoke/functional/CompileTests/Fortran_tests/gfortranTestSuite/Makefile
-# tests/nonsmoke/functional/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.fortran-torture/Makefile
-# tests/nonsmoke/functional/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.dg/Makefile
-
-# DQ (8/12/2010): We want to get permission to distribute these files as test codes.
-# tests/nonsmoke/functional/CompileTests/Fortran_tests/LANL_POP/Makefile
-
-# DQ (10/24/2009): We don't need to support EDG 3.10 anymore.
-# src/frontend/CxxFrontend/EDG_3.10/Makefile
-# src/frontend/CxxFrontend/EDG_3.10/misc/Makefile
-# src/frontend/CxxFrontend/EDG_3.10/src/Makefile
-# src/frontend/CxxFrontend/EDG_3.10/src/disp/Makefile
-# src/frontend/CxxFrontend/EDG_3.10/lib/Makefile
-
-# DQ (12/31/2008): Skip these, since we don't have SPEC and NAS benchmarks setup yet.
-# developersScratchSpace/Dan/Fortran_tests/NPB3.2-SER/Makefile
-# developersScratchSpace/Dan/Fortran_tests/NPB3.2-SER/BT/Makefile
-# developersScratchSpace/Dan/SpecCPU2006/Makefile
-# developersScratchSpace/Dan/SpecCPU2006/config/Makefile
-# developersScratchSpace/Dan/SpecCPU2006/config/rose.cfg
-
-# DQ (9/12/2008): Removed older version of QRose (now an external project)
-# src/roseIndependentSupport/graphicalUserInterface/Makefile
-# src/roseIndependentSupport/graphicalUserInterface/src/Makefile
-# src/roseIndependentSupport/graphicalUserInterface/src/QRTree/Makefile
-# src/roseIndependentSupport/graphicalUserInterface/src/QRCodeBox/Makefile
-# src/roseIndependentSupport/graphicalUserInterface/src/QRGui/Makefile
-# src/roseIndependentSupport/graphicalUserInterface/src/QRGui/icons22/Makefile
-# src/roseIndependentSupport/graphicalUserInterface/src/QRQueryBox/Makefile
-# exampleTranslators/graphicalUserInterfaceExamples/Makefile
-# exampleTranslators/graphicalUserInterfaceExamples/slicing/Makefile
-# exampleTranslators/graphicalUserInterfaceExamples/attributes/Makefile
-# exampleTranslators/graphicalUserInterfaceExamples/query/Makefile
-# exampleTranslators/graphicalUserInterfaceExamples/layout/Makefile
 
 # End macro ROSE_SUPPORT_ROSE_PART_6.
 ]

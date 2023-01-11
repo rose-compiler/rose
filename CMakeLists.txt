@@ -585,7 +585,6 @@ option(disable-binary-analysis-tests "Disable tests of ROSE binary analysis code
 option(disable-example-translators-directory "Disable compilation and testing of exampleTranslators directory" ON)
 option(disable-tests-directory "Disable compilation and testing of the ROSE/tests directory" OFF)
 option(disable-tutorial-directory "Disable compilation and testing of the ROSE/tutorial directory" OFF)
-option(enable-projects-directory "Build projects ('projects' directory)" ON)
 
 option(enable-advanced-warnings "Support for an advanced uniform warning level for ROSE development" OFF)
 if(enable-advanced-warnings)
@@ -1342,7 +1341,6 @@ add_subdirectory(tools)
 enable_testing()
 add_subdirectory(tests)
 add_subdirectory(tutorial)
-#add_subdirectory(projects)
 
 ########################################################################################################################
 # Miscellaneous final actions
