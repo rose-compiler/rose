@@ -819,7 +819,7 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
   // DQ (2/4/2009): The specification of "-rose:binary" causes filenames to be interpreted
   // differently if they are object files or libary archive files.
   // DQ (4/21/2006): New version of source file name handling (set the source file name early)
-     ROSE_ASSERT(project != NULL);
+     ASSERT_not_null(project);
      Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(argv,project->get_binary_only());
 
 #if 0
