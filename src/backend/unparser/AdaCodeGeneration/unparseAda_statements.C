@@ -461,7 +461,6 @@ namespace
 
     void handle(SgGlobal& n)
     {
-      //~ ScopeUpdateGuard        scopeGuard{unparser, info, n};
       si::Ada::StatementRange pkgRange = si::Ada::declsInPackage(n, unparser.getFileName());
 
       list(pkgRange.first, pkgRange.second);
@@ -680,22 +679,16 @@ namespace
 
     void handle(SgAdaTaskSpec& n)
     {
-      //~ ScopeUpdateGuard scopeGuard{unparser, info, n};
-
       list(n.get_declarations(), n.get_hasPrivate());
     }
 
     void handle(SgAdaProtectedSpec& n)
     {
-      //~ ScopeUpdateGuard scopeGuard{unparser, info, n};
-
       list(n.get_declarations(), n.get_hasPrivate());
     }
 
     void handle(SgAdaTaskBody& n)
     {
-      //~ ScopeUpdateGuard scopeGuard{unparser, info, n};
-
       SgStatementPtrList&          stmts    = n.get_statements();
       SgStatementPtrList::iterator aa       = stmts.begin();
       SgStatementPtrList::iterator zz       = stmts.end();
@@ -710,8 +703,6 @@ namespace
 
     void handle(SgAdaProtectedBody& n)
     {
-      //~ ScopeUpdateGuard scopeGuard{unparser, info, n};
-
       list(n.get_statements());
       prn("end"); // omit newline, which will be added by the parent
     }
@@ -762,8 +753,6 @@ namespace
 
     void handle(SgAdaPackageSpec& n)
     {
-      //~ ScopeUpdateGuard scopeGuard{unparser, info, n};
-
       list(n.get_declarations(), n.get_hasPrivate());
     }
 
@@ -771,7 +760,6 @@ namespace
     {
       using Iterator = SgStatementPtrList::iterator;
 
-      //~ ScopeUpdateGuard    scopeGuard(unparser, info, n);
       SgStatementPtrList& stmts = n.get_statements();
       SgBasicBlock*       block = nullptr;
       SgTryStmt*          trystmt = nullptr;
@@ -961,8 +949,6 @@ namespace
 
     void handle(SgFunctionDefinition& n)
     {
-      //~ ScopeUpdateGuard scopeGuard{unparser, info, n};
-
       handleBasicBlock(n.get_body(), true /* function body */);
     }
 
@@ -1599,8 +1585,6 @@ namespace
 
     void handle(SgClassDefinition& n)
     {
-      //~ ScopeUpdateGuard scopeGuard{unparser, info, n}; // \todo not required any more?
-
       list(n.get_members());
     }
 
@@ -2007,8 +1991,12 @@ namespace
 
     if (!def)
     {
-      if (n.get_declarationModifier().isAdaSeparate())
+      SgDeclarationModifier& mod = n.get_declarationModifier();
+
+      if (mod.isAdaSeparate())
         prn(" is separate");
+      else if (mod.isAdaAbstract())
+        prn(" is abstract");
 
       prn(STMT_SEP);
       return;
@@ -2254,6 +2242,8 @@ namespace
     sg::dispatch(*this, s);
   }
 
+
+#if OBSOLETE_CODE
   struct ScopeName : sg::DispatchHandler<std::string>
   {
       void withName(const std::string& name);
@@ -2322,13 +2312,12 @@ namespace
       void handle(const SgAdaPackageSpec& n) { res = isNormalPkg(n); }
   };
 
-#if OBSOLETE_CODE
+
   /// returns true iff \ref n requires scope qualification
   bool requiresScopeQual(const SgScopeStatement* n)
   {
     return sg::dispatch(RequiresScopeQual{}, n);
   }
-#endif /* OBSOLETE_CODE */
 
   /// \brief stores a path from an innermost scope to the global scope (not part of the path)
   ///        in form of a sequence of Sage nodes that represent scopes
@@ -2387,6 +2376,7 @@ namespace
     return qual.str();
     //~ return std::move(qual).str(); // C++-20
   }
+#endif /* OBSOLETE_CODE */
 }
 
 
