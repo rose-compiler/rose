@@ -429,12 +429,18 @@ std::string version_message() {
     ss <<"  ---   ARM AArch32 (A32/T32):    enabled\n";
 #else
     ss <<"  ---   ARM AArch32 (A32/T32):    disabled\n";
+#if !defined(ROSE_HAVE_CAPSTONE)
+    ss <<"          missing capstone library\n";
+#endif
 #endif
 
 #ifdef ROSE_ENABLE_ASM_AARCH64
     ss <<"  ---   ARM AArch64 (A64):        enabled\n";
 #else
     ss <<"  ---   ARM AArch64 (A64):        disabled\n";
+#if !defined(ROSE_HAVE_CAPSTONE)
+    ss <<"          missing capstone library\n";
+#endif
 #endif
 
     ss <<"  ---   MIPS (be and le):         enabled\n";
@@ -447,6 +453,55 @@ std::string version_message() {
     ss <<"  ---   concolic testing:         enabled\n";
 #else
     ss <<"  ---   concolic testing:         disabled\n";
+#if !defined(__linux__)
+    ss <<"          this is not Linux\n";
+#endif
+#if !defined(ROSE_HAVE_SQLITE3) && !defined(ROSE_HAVE_LIBPQXX)
+    ss <<"          no SQL database driver\n";
+#endif
+#if BOOST_VERSION < 106400
+    ss <<"          Boost library is too old\n";
+#endif
+#if !defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
+    ss <<"          Boost serialization is not available\n";
+#endif
+#if !defined(ROSE_ENABLE_DEBUGGER_LINXU)
+    ss <<"          PTRACE facility is not available\n";
+#endif
+#endif
+
+#ifdef ROSE_ENABLE_DEBUGGER_LINUX
+    ss <<"  ---   Linux PTRACE debugging    enabled\n";
+#else
+    ss <<"  ---   Linux PTRACE debugging    disabled\n";
+#endif
+
+#ifdef ROSE_ENABLE_DEBUGGER_GDB
+    ss <<"  ---   GDB debugger interface    enabled\n";
+#else
+    ss <<"  ---   GDB debugger interface    disabled\n";
+    ss <<"          Boost version is too old\n";
+#endif
+
+#ifdef ROSE_ENABLE_LIBRARY_IDENTIFICATION
+    ss <<"  ---   fast lib identification   enabled\n";
+#else
+    ss <<"  ---   fast lib identification   disabled\n";
+#if !defined(ROSE_HAVE_SQLITE3) && !defined(ROSE_HAVE_LIBPQXX)
+    ss <<"          no SQL database driver\n";
+#endif
+#if defined(__APPLE__) || defined(__MACH__)
+    ss <<"          not supported on macOS\n";
+#endif
+#endif
+
+#ifdef ROSE_ENABLE_MODEL_CHECKER
+    ss <<"  ---   model checking            enabled\n";
+#else
+    ss <<"  ---   model checking            disabled\n";
+#if !defined(_REENTRANT)
+    ss <<"          multi-threading is disabled\n";
+#endif
 #endif
 
 #ifdef ROSE_HAVE_CAPSTONE
