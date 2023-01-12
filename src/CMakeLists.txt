@@ -143,6 +143,9 @@ set(rose_LIB_OBJS
   roseBinaryAnalysis
   roseBinaryAnalysisByteCode
   roseBinaryAnalysisConcolic
+  roseBinaryAnalysisConcolicCallback
+  roseBinaryAnalysisConcolicI386Linux
+  roseBinaryAnalysisConcolicM68kSystem
   roseBinaryAnalysisDebugger
   roseBinaryAnalysisDisassembler
   roseBinaryAnalysisInstructionSemantics
