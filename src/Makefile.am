@@ -699,6 +699,15 @@ rose_config_DEPENDENCIES = $(REQUIRED_LIBS)
 rose_config_CPPFLAGS = -DLIBDIR='"$(libdir)"'
 rose_config_LDADD = $(ROSE_LIBS)
 
+# This tool outputs some information about featureTests.h, which
+# controls which features are to be enabled in ROSE.
+bin_PROGRAMS += rose-feature-tests
+rose_feature_tests_SOURCES = featureTests.C
+rose_feature_tests_LDFLAGS =
+rose_feature_tests_DEPENDENCIES =
+rose_feature_tests_CPPFLAGS =
+rose_feature_tests_LDADD =
+
 # if ROSE_USE_INTERNAL_JAVA_SUPPORT
 if OS_MACOSX
   rose_config_LDFLAGS += $(ROSE_LINK_RPATHS)
