@@ -149,6 +149,9 @@ TEST_Source_passed = ${ALL_TESTCODES:.C=.C.passed}
 testCompiler:
 	ln -s `which @BACKEND_CXX_COMPILER@` testCompiler
 
+../../echoCompiler:
+	cd ../..; $(MAKE) echoCompiler
+
 TEST_TRANSLATOR=../../testTranslator
 
 #########
@@ -229,7 +232,7 @@ clean-local:
 	rm -f *.unfoldedConstants-o
 	rm -rf QMTest
 	rm -f *.int.c
-	rm -f *.passed
+	rm -f *.passed *.failed
 
 status:
 	@$(MAKE) $(TEST_Source_passed)

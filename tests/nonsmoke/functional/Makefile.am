@@ -149,6 +149,10 @@ if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 testLinearDisassembler3_SOURCES = testLinearDisassembler3.C
 endif
 
+# can be used to capture all compile tests (C/C++ dialects only)
+echoCompiler:
+	ln -s `which echo` echoCompiler
+
 # DQ (7/3/2013): Added support to output some pre-defined macro values.
 # Program to output predefined relevant macros.
 # predefinedMacros_SOURCES = predefinedMacros.C

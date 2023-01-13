@@ -78,6 +78,9 @@ TEST_Source_passed = ${ALL_TESTCODES:.c=.c.passed}
 testCompiler:
 	ln -s `which @BACKEND_C_COMPILER@` testCompiler
 
+../../echoCompiler:
+	cd ../..; $(MAKE) echoCompiler
+
 TEST_TRANSLATOR=../../testTranslator
 
 #########
@@ -145,6 +148,7 @@ endif # USING_GNU_COMPILER
 clean-local:
 	rm -f a.out *.o rose_*.[cC] roseTestProgram.C *.dot
 	rm -f *.int.c
+	rm -f *.failed *.passed
 
 status:
 	@$(MAKE) $(TEST_Source_passed)

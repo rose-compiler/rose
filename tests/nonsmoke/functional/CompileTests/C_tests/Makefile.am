@@ -1030,6 +1030,9 @@ TEST_Source_passed = ${ALL_TESTCODES:.c=.c.passed}
 testCompiler:
 	ln -s `which @BACKEND_C_COMPILER@` testCompiler
 
+../../echoCompiler:
+	cd ../..; $(MAKE) echoCompiler
+
 TEST_TRANSLATOR=../../testTranslator
 
 #########

@@ -2722,6 +2722,9 @@ TEST_Source_passed = ${ALL_TESTCODES:.C=.C.passed}
 testCompiler:
 	ln -s `which @BACKEND_CXX_COMPILER@` testCompiler
 
+../../echoCompiler:
+	cd ../..; $(MAKE) echoCompiler
+
 TEST_TRANSLATOR=../../testTranslator
 
 #########
@@ -3124,3 +3127,4 @@ $(TEST_Source_passed:.C.passed=.timed_with_threshold):
 
 status:
 	@$(MAKE) $(TEST_Source_passed)
+

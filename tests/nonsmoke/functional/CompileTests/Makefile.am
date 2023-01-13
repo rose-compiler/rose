@@ -221,4 +221,6 @@ status:
 	@$(srcdir)/status.sh backend
 	@$(srcdir)/status.sh translator
 
+samples:
+	@$(srcdir)/scan-samples.sh
 

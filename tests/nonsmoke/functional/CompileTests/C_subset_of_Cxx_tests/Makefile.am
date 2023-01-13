@@ -262,6 +262,9 @@ TEST_Source_passed = ${ALL_TESTCODES:.C=.C.passed}
 testCompiler:
 	ln -s `which @BACKEND_C_COMPILER@` testCompiler
 
+../../echoCompiler:
+	cd ../..; $(MAKE) echoCompiler
+
 TEST_TRANSLATOR=../../testTranslator
 
 #########
@@ -284,7 +287,6 @@ $(TEST_Source_passed): %.passed: $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_e
 	   CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests -c $(@:.C.passed=.c)" \
 	   TITLE="TEST: $(TEST_TRANSLATOR) $(@:.C.passed=.C)" \
 	   $(top_srcdir)/scripts/test_exit_status $@
-	@rm -f $(@:.C.passed=.c)
 
 test2005_56.C.passed: $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
 	@cp $(srcdir)/../Cxx_tests/$(@:.C.passed=.C) $(@:.C.passed=.c)
@@ -292,7 +294,6 @@ test2005_56.C.passed: $(TEST_TRANSLATOR) $(top_srcdir)/scripts/test_exit_status
 	   CMD="$(TEST_TRANSLATOR) $(LANG_FLAGS) $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests -DTEST_STRING_MACRO=\"\\\"Thu Apr 14 08:18:33 PDT 2005\"\\\" -c $(@:.C.passed=.c)" \
 	   TITLE="TEST: $(TEST_TRANSLATOR) $(@:.C.passed=.C)" \
 	   $(top_srcdir)/scripts/test_exit_status $@
-	@rm -f $(@:.C.passed=.c)
 
 #
 ############
@@ -307,8 +308,9 @@ check-local:
 	@echo "***********************************************************************************************************"
 
 clean-local:
-	rm -f *.o rose_*.[cC]
+	rm -f *.o *.c rose_*.[cC]
 	rm -rf QMTest
+	rm -f *.passed *.failed
 
 status:
 	@$(MAKE) $(TEST_Source_passed)
