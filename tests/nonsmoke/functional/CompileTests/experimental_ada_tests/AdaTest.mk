@@ -178,6 +178,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   choice_parameter_specification.adb   \
   complex.ads                          \
   complex.adb                          \
+  concat.adb                           \  
   dbase.ads                            \
   dbase.adb                            \
   dbase_test.adb                       \
@@ -224,6 +225,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   package_renaming_declaration.ads     \
   parent-child.adb                     \
   pkgrename.ads                        \
+  pragma_import.adb                    \
   private_derived_formal_type.adb      \
   procedure_renaming.adb               \
   protected_object.adb                 \
@@ -290,8 +292,9 @@ ROSE_FAILING_ADA_TESTS :=                           \
   blockreference.adb                                \
   sq_pkg_fun_overload.adb                           \
   delay_until.adb                                   \
-  mangle_disctypes.adb                 \
-  mpiuse.ads
+  mangle_disctypes.adb                              \
+  mpiuse.ads                                        \
+  pragma_placement.adb  
 
 # defines tests that are supported by ASIS
 ASIS_PASSING_TESTS :=                               \
