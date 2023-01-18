@@ -26,6 +26,7 @@ run $(tool_compile_linkexe) --install -I. bat-linear.C            libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-lsb.C               libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-lsd.C               libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-lsf.C               libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-lsv.C               libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-mem.C               libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-native-trace.C      libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-pardis.C            libbatSupport
@@ -61,6 +62,7 @@ ifeq (@(ENABLE_TESTS),yes)
     run $(test) bat-linear            ./bat-linear            --self-test --no-error-if-disabled
     run $(test) bat-lsb               ./bat-lsb               --self-test --no-error-if-disabled
     run $(test) bat-lsf               ./bat-lsf               --self-test --no-error-if-disabled
+    run $(test) bat-lsv               ./bat-lsv               --self-test --no-error-if-disabled
     run $(test) bat-mem               ./bat-mem               --self-test --no-error-if-disabled
     run $(test) bat-native-trace      ./bat-native-trace      --self-test --no-error-if-disabled
     run $(test) bat-pardis            ./bat-pardis            --self-test --no-error-if-disabled

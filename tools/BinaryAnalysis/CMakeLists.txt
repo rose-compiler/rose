@@ -82,6 +82,10 @@ if(enable-binary-analysis)
   target_link_libraries(bat-lsf bat ROSE_DLL)
   install(TARGETS bat-lsf DESTINATION bin)
 
+  add_executable(bat-lsv bat-lsv.C)
+  target_link_libraries(bat-lsv bat ROSE_DLL)
+  install(TARGETS bat-lsv DESTINATION bin)
+
   add_executable(bat-mem bat-mem.C)
   target_link_libraries(bat-mem bat ROSE_DLL)
   install(TARGETS bat-mem DESTINATION bin)
