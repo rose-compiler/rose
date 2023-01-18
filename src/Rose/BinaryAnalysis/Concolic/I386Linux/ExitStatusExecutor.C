@@ -81,7 +81,10 @@ void redirectStream(const std::string& ofile, int num)
 
 void setPersonality(ExitStatusExecutor::Persona persona)
 {
-  if (persona) personality(persona.get());
+    if (persona) {
+        if (-1 == personality(persona.get()))
+            throw Exception("cannot set personality");
+    }
 }
 
 // Returns the exit status as documented by waitpid[2], which is not the same as the argument to the child's exit[3] call.
