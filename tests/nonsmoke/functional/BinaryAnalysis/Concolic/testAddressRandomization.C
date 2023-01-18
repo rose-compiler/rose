@@ -6,6 +6,20 @@
 #define DB_URL "sqlite://testAddressRandomization.db"
 #endif
 
+#include <boost/lexical_cast.hpp>
+#include <string>
+#include <vector>
+
+static std::string
+howTerminated(const int status) {
+    if (WIFEXITED(status)) {
+        return "exited with status " + boost::lexical_cast<std::string>(WEXITSTATUS(status));
+    } else if (WIFSIGNALED(status)) {
+        return "terminated by signal (" + boost::to_lower_copy(std::string(strsignal(WTERMSIG(status)))) + ")";
+    } else {
+        return "";                                      // not terminated yet
+    }
+}
 
 int main() {
     using namespace Rose::BinaryAnalysis::Concolic;
@@ -22,6 +36,7 @@ int main() {
         executor->useAddressRandomization(true);
         auto result = executor->execute(e01).dynamicCast<I386Linux::ExitStatusResult>();
         int status = result->exitStatus();
+        std::cerr <<"specimen " <<howTerminated(status) <<"\n";
         ASSERT_always_require(WIFEXITED(status) && WEXITSTATUS(status) == 0);
     }
 
@@ -34,6 +49,7 @@ int main() {
         executor->useAddressRandomization(false);
         auto result = executor->execute(e02).dynamicCast<I386Linux::ExitStatusResult>();
         int status = result->exitStatus();
+        std::cerr <<"specimen " <<howTerminated(status) <<"\n";
         ASSERT_always_require(WIFEXITED(status) && WEXITSTATUS(status) == 0);
     }
 }

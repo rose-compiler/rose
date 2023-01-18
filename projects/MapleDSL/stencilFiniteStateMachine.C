@@ -1,3 +1,0 @@
-
-#include "../ShiftCalculus/stencilFiniteStateMachine.C"
-

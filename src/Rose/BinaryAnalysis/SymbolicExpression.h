@@ -166,6 +166,7 @@ public:
         CMT_SILENT,                             /**< Do not show comments. */
         CMT_AFTER,                              /**< Show comments after the node. */
         CMT_INSTEAD,                            /**< Like CMT_AFTER, but show comments instead of variable names. */
+        CMT_BEFORE,                             /**< Like CMT_INSTEAD, but show the name as a comment. */
     };
     Formatter()
         : show_comments(CMT_INSTEAD), do_rename(false), add_renames(true), use_hexadecimal(true),

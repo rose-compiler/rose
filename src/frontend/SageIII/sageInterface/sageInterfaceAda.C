@@ -1197,6 +1197,7 @@ namespace Ada
         const bool useThisDecl = (  isSgAdaDerivedType(basety)
                                  || isSgAdaAccessType(basety)
                                  || isSgAdaModularType(basety)
+                                 // || isSgArrayType(basety) // this differs from the DeclScopeFinder code
                                  || fromRootType(isSgAdaSubtype(basety))
                                  );
 
@@ -1335,10 +1336,12 @@ namespace Ada
         if (defdcl != nullptr) dcl = defdcl;
 
         SgType*    basety      = dcl->get_base_type();
+        // \todo skip (constant) modifier type on base
 
         const bool useThisDecl = (  isSgAdaDerivedType(basety)
                                  || isSgAdaAccessType(basety)
                                  || isSgAdaModularType(basety)
+                                 || isSgArrayType(basety) // commented out in RootTypeFinder
                                  || fromRootType(isSgAdaSubtype(basety))
                                  );
 

@@ -3,10 +3,12 @@ include_rules
 run $(public_header) -o include/rose/Rose/BinaryAnalysis/Concolic	\
     Architecture.h							\
     BasicTypes.h							\
+    Callback.h								\
     ConcolicExecutor.h							\
     ConcreteExecutor.h							\
     ConcreteResult.h							\
     Database.h								\
+    Emulation.h								\
     ExecutionEvent.h							\
     ExecutionLocation.h							\
     ExecutionManager.h							\
@@ -25,6 +27,7 @@ run $(librose_compile)				\
     ConcreteExecutor.C				\
     ConcreteResult.C				\
     Database.C					\
+    Emulation.C					\
     ExecutionEvent.C				\
     ExecutionLocation.C				\
     ExecutionManager.C				\

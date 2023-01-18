@@ -1,8 +1,0 @@
-# This is a comment
-# 
-# This is commented out but shows the way parameters are specified.
-# LineLengthChecker.maximumLineLength=80
-computationalFunctions.maxIntOps=100
-computationalFunctions.maxFloatOps=100
-
-

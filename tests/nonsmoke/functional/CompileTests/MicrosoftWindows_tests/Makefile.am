@@ -1,8 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# Should this be here!
-include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
-
 ##################################################################################
 # These are C testcodes targeting aspects of C that might not be a subset of C++ #
 ##################################################################################

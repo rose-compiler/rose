@@ -3,8 +3,10 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Concolic/I386Linux/Architecture.h>
 
+#include <Rose/BinaryAnalysis/Concolic/Callback/MemoryExit.h>
 #include <Rose/BinaryAnalysis/Concolic/ConcolicExecutor.h>
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
+#include <Rose/BinaryAnalysis/Concolic/Emulation.h>
 #include <Rose/BinaryAnalysis/Concolic/ExecutionEvent.h>
 #include <Rose/BinaryAnalysis/Concolic/InputVariables.h>
 #include <Rose/BinaryAnalysis/Concolic/SharedMemory.h>
@@ -12,6 +14,7 @@
 #include <Rose/BinaryAnalysis/Concolic/SystemCall.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 #include <Rose/BinaryAnalysis/Debugger/Linux.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
@@ -950,29 +953,15 @@ Architecture::configureSystemCalls() {
 // Shared memory behaviors
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Any access to this memory exits the program.
-class NullDeref: public SharedMemoryCallback {
-public:
-    static Ptr instance() {
-        return Ptr(new NullDeref);
-    }
-
-    void playback(SharedMemoryContext&) override {}
-
-    void handlePreSharedMemory(SharedMemoryContext &ctx) override {
-        hello("null-deref-handler", ctx);
-        auto ops = Emulation::RiscOperators::promote(ctx.ops);
-        ops->doExit(255); // FIXME[Robb Matzke 2021-09-08]: perhaps a way to simulate a segfault instead
-    }
-};
-
 void
-Architecture::configureSharedMemory() {
-    // These are the generally useful configurations. Feel free to override these to accomplish whatever kind of testing you
-    // need.
+Architecture::configureSharedMemory(const Yaml::Node &config) {
+    Super::configureSharedMemory(config);
 
     // Null dereferences
-    sharedMemory(AddressInterval::baseSize(0, 4096), NullDeref::instance());
+    auto handler = Callback::MemoryExit::instance(AddressInterval::baseSize(0, 4096), 255);
+    handler->name("null pointer dereference"),
+
+    sharedMemory(handler);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -982,8 +971,8 @@ Architecture::configureSharedMemory() {
 Architecture::Architecture(const std::string &name)
     : Concolic::Architecture(name) {}
 
-Architecture::Architecture(const Database::Ptr &db, TestCaseId tcid, const P2::PartitionerConstPtr &partitioner)
-    : Concolic::Architecture(db, tcid, partitioner) {}
+Architecture::Architecture(const Database::Ptr &db, TestCaseId tcid)
+    : Concolic::Architecture(db, tcid) {}
 
 Architecture::~Architecture() {}
 
@@ -993,36 +982,54 @@ Architecture::factory() {
 }
 
 Architecture::Ptr
-Architecture::instance(const Database::Ptr &db, TestCaseId tcid, const P2::PartitionerConstPtr &partitioner) {
+Architecture::instance(const Database::Ptr &db, TestCaseId tcid, const Yaml::Node &config) {
     ASSERT_not_null(db);
     ASSERT_require(tcid);
-    auto retval = Ptr(new Architecture(db, tcid, partitioner));
+    auto retval = Ptr(new Architecture(db, tcid));
     retval->configureSystemCalls();
-    retval->configureSharedMemory();
+    retval->configureSharedMemory(config);
     return retval;
 }
 
 Architecture::Ptr
-Architecture::instance(const Database::Ptr &db, const TestCase::Ptr &tc, const P2::PartitionerConstPtr &partitioner) {
-    return instance(db, db->id(tc), partitioner);
+Architecture::instance(const Database::Ptr &db, const TestCase::Ptr &tc, const Yaml::Node &config) {
+    return instance(db, db->id(tc), config);
 }
 
 Concolic::Architecture::Ptr
-Architecture::instanceFromFactory(const Database::Ptr &db, TestCaseId tcid, const P2::PartitionerConstPtr &partitioner) const {
+Architecture::instanceFromFactory(const Database::Ptr &db, TestCaseId tcid, const Yaml::Node &config) const {
     ASSERT_require(isFactory());
-    auto retval = instance(db, tcid, partitioner);
+    auto retval = instance(db, tcid, config);
     retval->name(name());
     return retval;
 }
 
 bool
-Architecture::matchFactory(const std::string &s) const {
-    return s == name();
+Architecture::matchFactory(const Yaml::Node &config) const {
+    return config["architecture"].as<std::string>() == name();
 }
 
 Debugger::Linux::Ptr
 Architecture::debugger() const {
-    return debugger_;
+    ASSERT_not_null(Super::debugger());
+    auto retval = Super::debugger().dynamicCast<Debugger::Linux>();
+    ASSERT_not_null(retval);
+    return retval;
+}
+
+P2::Partitioner::Ptr
+Architecture::partition(P2::Engine *engine, const std::string &specimenName) {
+    const std::string specimenArg = "run:replace:" + specimenName;
+    SAWYER_MESG(mlog[DEBUG]) <<"partitioning " <<specimenArg;
+    return engine->partition(specimenArg);
+}
+
+BS::Dispatcher::Ptr
+Architecture::makeDispatcher(const BS::RiscOperators::Ptr &ops) {
+    ASSERT_not_null(ops);
+    return IS::DispatcherX86::instance(ops,
+                                       Emulation::Dispatcher::unwrapEmulationOperators(ops)->wordSizeBits(),
+                                       Emulation::Dispatcher::unwrapEmulationOperators(ops)->registerDictionary());
 }
 
 void
@@ -1064,21 +1071,9 @@ Architecture::load(const boost::filesystem::path &targetDir) {
         .set(Debugger::Linux::Flag::CLOSE_FILES);
 
     // Create the process
-    debugger_ = Debugger::Linux::instance(ds);
-    SAWYER_MESG(mlog[DEBUG]) <<"loaded pid=" <<*debugger_->processId() <<" " <<exeName <<"\n";
+    Super::debugger(Debugger::Linux::instance(ds));
+    SAWYER_MESG(mlog[DEBUG]) <<"loaded pid=" <<*debugger()->processId() <<" " <<exeName <<"\n";
     mapScratchPage();
-}
-
-bool
-Architecture::isTerminated() {
-    ASSERT_forbid(isFactory());
-    return !debugger_ || debugger_->isTerminated();
-}
-
-std::string
-Architecture::readCString(rose_addr_t va, size_t maxBytes) {
-    ASSERT_forbid(isFactory());
-    return debugger_->readCString(va, maxBytes);
 }
 
 ByteOrder::Endianness
@@ -1086,59 +1081,14 @@ Architecture::memoryByteOrder() {
     return ByteOrder::ORDER_LSB;
 }
 
-rose_addr_t
-Architecture::ip() {
-    ASSERT_forbid(isFactory());
-    return debugger_->executionAddress(Debugger::ThreadId::unspecified());
-}
-
-void
-Architecture::ip(rose_addr_t va) {
-    ASSERT_forbid(isFactory());
-    debugger_->executionAddress(Debugger::ThreadId::unspecified(), va);
-}
-
 std::vector<ExecutionEvent::Ptr>
 Architecture::createMemoryRestoreEvents() {
     ASSERT_forbid(isFactory());
     SAWYER_MESG(mlog[DEBUG]) <<"saving subordinate memory\n";
-    std::vector<ExecutionEvent::Ptr> events;
     auto map = MemoryMap::instance();
     std::vector<MemoryMap::ProcessMapRecord> segments = disposableMemory();
-    map->insertProcessPid(*debugger_->processId(), segments);
-
-    for (const MemoryMap::Node &node: map->nodes()) {
-        const AddressInterval &where = node.key();
-        const MemoryMap::Segment &segment = node.value();
-
-        if (where.least() != scratchVa_) {
-            SAWYER_MESG(mlog[DEBUG]) <<"  memory at " <<StringUtility::addrToString(where)
-                                     <<", " <<StringUtility::plural(where.size(), "bytes");
-            if (mlog[DEBUG]) {
-                std::string protStr;
-                if ((segment.accessibility() & MemoryMap::READABLE) != 0)
-                    protStr += "r";
-                if ((segment.accessibility() & MemoryMap::WRITABLE) != 0)
-                    protStr += "w";
-                if ((segment.accessibility() & MemoryMap::EXECUTABLE) != 0)
-                    protStr += "x";
-                SAWYER_MESG(mlog[DEBUG]) <<", perm=" <<(protStr.empty() ? "none" : protStr) <<"\n";
-            }
-
-            auto eeMap = ExecutionEvent::bulkMemoryMap(TestCase::Ptr(), ExecutionLocation(), ip(), where,
-                                                       segment.accessibility());
-            eeMap->name("map " + segment.name());
-            events.push_back(eeMap);
-
-            std::vector<uint8_t> buf(where.size());
-            size_t nRead = map->at(where).read(buf).size();
-            ASSERT_always_require(nRead == where.size());
-            auto eeWrite = ExecutionEvent::bulkMemoryWrite(TestCase::Ptr(), ExecutionLocation(), ip(), where, buf);
-            eeWrite->name("init " + segment.name());
-            events.push_back(eeWrite);
-        }
-    }
-    return events;
+    map->insertProcessPid(*debugger()->processId(), segments);
+    return Super::createMemoryRestoreEvents(map);
 }
 
 std::vector<ExecutionEvent::Ptr>
@@ -1184,7 +1134,7 @@ Architecture::createMemoryAdjustEvents(const MemoryMap::Ptr &oldMap, rose_addr_t
     std::vector<ExecutionEvent::Ptr> events;
     auto newMap = MemoryMap::instance();
     std::vector<MemoryMap::ProcessMapRecord> segments = disposableMemory();
-    newMap->insertProcessPid(*debugger_->processId(), segments);
+    newMap->insertProcessPid(*debugger()->processId(), segments);
 
 #if 1 // DEBUGGING [Robb Matzke 2021-12-20]
     if (mlog[DEBUG]) {
@@ -1289,7 +1239,7 @@ Architecture::createMemoryHashEvents() {
     std::vector<ExecutionEvent::Ptr> events;
     auto map = MemoryMap::instance();
     std::vector<MemoryMap::ProcessMapRecord> segments = disposableMemory();
-    map->insertProcessPid(*debugger_->processId(), segments);
+    map->insertProcessPid(*debugger()->processId(), segments);
     for (const MemoryMap::Node &node: map->nodes()) {
         SAWYER_MESG(mlog[DEBUG]) <<"  memory at " <<StringUtility::addrToString(node.key())
                                  <<StringUtility::plural(node.key().size(), "bytes") <<"\n";
@@ -1302,15 +1252,6 @@ Architecture::createMemoryHashEvents() {
     return events;
 }
 
-std::vector<ExecutionEvent::Ptr>
-Architecture::createRegisterRestoreEvents() {
-    ASSERT_forbid(isFactory());
-    SAWYER_MESG(mlog[DEBUG]) <<"saving all registers\n";
-    Sawyer::Container::BitVector allRegisters = debugger_->readAllRegisters(Debugger::ThreadId::unspecified());
-    auto event = ExecutionEvent::bulkRegisterWrite(TestCase::Ptr(), ExecutionLocation(), ip(), allRegisters);
-    return {event};
-}
-
 bool
 Architecture::playEvent(const ExecutionEvent::Ptr &event) {
     ASSERT_forbid(isFactory());
@@ -1318,13 +1259,6 @@ Architecture::playEvent(const ExecutionEvent::Ptr &event) {
     bool handled = Super::playEvent(event);
 
     switch (event->action()) {
-        case ExecutionEvent::Action::BULK_REGISTER_WRITE: {
-            SAWYER_MESG(mlog[DEBUG]) <<"  restore registers\n";
-            Sawyer::Container::BitVector allRegisters = event->registerValues();
-            debugger_->writeAllRegisters(Debugger::ThreadId::unspecified(), allRegisters);
-            return true;
-        }
-
         case ExecutionEvent::Action::OS_SYSCALL:
             if (!handled) {
                 // If it wasn't handled by Super, then it must be because there are no callbacks.
@@ -1361,8 +1295,8 @@ Architecture::mapMemory(const AddressInterval &where, unsigned permissions) {
         prot |= PROT_EXEC;
     }
     SAWYER_MESG(mlog[DEBUG]) <<" at " <<StringUtility::addrToString(where) <<", flags=private|anonymous|fixed\n";
-    int32_t status = debugger_->remoteSystemCall(Debugger::ThreadId::unspecified(), i386_NR_mmap, where.least(), where.size(), prot,
-                                                 MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
+    int32_t status = debugger()->remoteSystemCall(Debugger::ThreadId::unspecified(), i386_NR_mmap, where.least(), where.size(),
+                                                  prot, MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
     if (status < 0 && status > -4096) {
         mlog[ERROR] <<"MAP_MEMORY event failed to map memory (" <<strerror(-status) <<")\n";
     } else {
@@ -1376,120 +1310,39 @@ Architecture::unmapMemory(const AddressInterval &where) {
     ASSERT_forbid(where.isEmpty());
     SAWYER_MESG(mlog[DEBUG]) <<"unmap " <<StringUtility::plural(where.size(), "bytes")
                              << " at " <<StringUtility::addrToString(where) <<"\n";
-    int64_t status = debugger_->remoteSystemCall(Debugger::ThreadId::unspecified(), i386_NR_munmap, where.least(), where.size());
+    int64_t status = debugger()->remoteSystemCall(Debugger::ThreadId::unspecified(), i386_NR_munmap, where.least(), where.size());
     if (status < 0)
         mlog[ERROR] <<"UNMAP_MEMORY event failed to unmap memory\n";
-}
-
-size_t
-Architecture::writeMemory(rose_addr_t va, const std::vector<uint8_t> &bytes) {
-    ASSERT_forbid(isFactory());
-    return debugger_->writeMemory(va, bytes.size(), bytes.data());
-}
-
-std::vector<uint8_t>
-Architecture::readMemory(rose_addr_t va, size_t nBytes) {
-    ASSERT_forbid(isFactory());
-    return debugger_->readMemory(va, nBytes);
-}
-
-void
-Architecture::writeRegister(RegisterDescriptor reg, uint64_t value) {
-    ASSERT_forbid(isFactory());
-    debugger_->writeRegister(Debugger::ThreadId::unspecified(), reg, value);
-}
-
-void
-Architecture::writeRegister(RegisterDescriptor reg, const Sawyer::Container::BitVector &bv) {
-    ASSERT_forbid(isFactory());
-    debugger_->writeRegister(Debugger::ThreadId::unspecified(), reg, bv);
-}
-
-Sawyer::Container::BitVector
-Architecture::readRegister(RegisterDescriptor reg) {
-    ASSERT_forbid(isFactory());
-    return debugger_->readRegister(Debugger::ThreadId::unspecified(), reg);
-}
-
-void
-Architecture::executeInstruction(const P2::PartitionerConstPtr &partitioner) {
-    ASSERT_forbid(isFactory());
-    if (mlog[DEBUG]) {
-        rose_addr_t va = debugger_->executionAddress(Debugger::ThreadId::unspecified());
-        if (SgAsmInstruction *insn = partitioner->instructionProvider()[va]) {
-            mlog[DEBUG] <<"concretely executing insn #" <<currentLocation().primary()
-                        <<" " <<partitioner->unparse(insn) <<"\n";
-        } else {
-            mlog[DEBUG] <<"concretely executing insn #" <<currentLocation().primary()
-                        <<" " <<StringUtility::addrToString(va) <<": null instruction\n";
-        }
-    }
-
-    debugger_->singleStep(Debugger::ThreadId::unspecified());
-}
-
-void
-Architecture::executeInstruction(const BS::RiscOperators::Ptr &ops_, SgAsmInstruction *insn) {
-    ASSERT_forbid(isFactory());
-    auto ops = Emulation::RiscOperators::promote(ops_);
-    ASSERT_not_null(ops);
-    ASSERT_not_null(insn);
-    rose_addr_t va = insn->get_address();
-
-    // Make sure the executable has the same instruction in those bytes.
-    std::vector<uint8_t> buf = debugger_->readMemory(va, insn->get_size());
-    if (buf.size() != insn->get_size() || !std::equal(buf.begin(), buf.end(), insn->get_raw_bytes().begin())) {
-        if (mlog[ERROR]) {
-            mlog[ERROR] <<"symbolic instruction doesn't match concrete instruction at " <<StringUtility::addrToString(va) <<"\n"
-                        <<"  symbolic insn:  " <<insn->toString() <<"\n"
-                        <<"  symbolic bytes:";
-            for (uint8_t byte: insn->get_raw_bytes())
-                mlog[ERROR] <<(boost::format(" %02x") % (unsigned)byte);
-            mlog[ERROR] <<"\n"
-                        <<"  concrete bytes:";
-            for (uint8_t byte: buf)
-                mlog[ERROR] <<(boost::format(" %02x") % (unsigned)byte);
-            mlog[ERROR] <<"\n";
-        }
-        throw Exception("symbolic instruction doesn't match concrete instructon at " + StringUtility::addrToString(va));
-    }
-
-    debugger_->executionAddress(Debugger::ThreadId::unspecified(), va);
-    if (ops->hadSystemCall()) {
-        debugger_->stepIntoSystemCall(Debugger::ThreadId::unspecified());
-    } else {
-        debugger_->singleStep(Debugger::ThreadId::unspecified());
-    }
 }
 
 void
 Architecture::mapScratchPage() {
     ASSERT_forbid(isFactory());
-    ASSERT_require(debugger_->isAttached());
+    ASSERT_require(debugger()->isAttached());
 
     // Create the scratch page
-    int64_t status = debugger_->remoteSystemCall(Debugger::ThreadId::unspecified(), i386_NR_mmap, 0, 4096,
-                                                 PROT_EXEC | PROT_READ | PROT_WRITE,
-                                                 MAP_ANONYMOUS | MAP_PRIVATE,
-                                                 -1, 0);
+    int64_t status = debugger()->remoteSystemCall(Debugger::ThreadId::unspecified(), i386_NR_mmap, 0, 4096,
+                                                  PROT_EXEC | PROT_READ | PROT_WRITE,
+                                                  MAP_ANONYMOUS | MAP_PRIVATE,
+                                                  -1, 0);
     if (status < 0 && status > -4096) {
         mlog[ERROR] <<"mmap system call failed for scratch page: " <<strerror(-status) <<"\n";
     } else {
-        scratchVa_ = (uint64_t)(uint32_t)status;
-        SAWYER_MESG(mlog[DEBUG]) <<"scratch page mapped at " <<StringUtility::addrToString(scratchVa_) <<"\n";
-    }
+        scratchVa((uint64_t)(uint32_t)status);
+        SAWYER_MESG(mlog[DEBUG]) <<"scratch page mapped at " <<StringUtility::addrToString(scratchVa()) <<"\n";
 
-    // Write an "INT 0x80" instruction to the beginning of the page.
-    static const uint8_t int80[] = {0xcd, 0x80};
-    size_t nWritten = debugger_->writeMemory(scratchVa_, 2, int80);
-    if (nWritten != 2)
-        mlog[ERROR] <<"cannot write INT 0x80 instruction to scratch page\n";
+        // Write an "INT 0x80" instruction to the beginning of the page.
+        static const uint8_t int80[] = {0xcd, 0x80};
+        size_t nWritten = debugger()->writeMemory(*scratchVa(), 2, int80);
+        if (nWritten != 2)
+            mlog[ERROR] <<"cannot write INT 0x80 instruction to scratch page\n";
+    }
 }
 
 std::vector<MemoryMap::ProcessMapRecord>
 Architecture::disposableMemory() {
     ASSERT_forbid(isFactory());
-    std::vector<MemoryMap::ProcessMapRecord> segments = MemoryMap::readProcessMap(*debugger_->processId());
+    std::vector<MemoryMap::ProcessMapRecord> segments = MemoryMap::readProcessMap(*debugger()->processId());
     for (auto segment = segments.begin(); segment != segments.end(); /*void*/) {
         ASSERT_forbid(segment->interval.isEmpty());
         if ("[vvar]" == segment->comment) {
@@ -1498,7 +1351,7 @@ Architecture::disposableMemory() {
         } else if ("[vdso]" == segment->comment) {
             // Pointless to read and write this segment -- its contents never changes
             segment = segments.erase(segment);
-        } else if (segment->interval.least() == scratchVa_) {
+        } else if (scratchVa() && segment->interval.least() == *scratchVa()) {
             // This segment is for our own personal use
             segment = segments.erase(segment);
         } else {
@@ -1515,8 +1368,8 @@ Architecture::unmapAllMemory() {
     std::vector<MemoryMap::ProcessMapRecord> segments = disposableMemory();
     for (const MemoryMap::ProcessMapRecord &segment: segments) {
         SAWYER_MESG(mlog[DEBUG]) <<"  at " <<StringUtility::addrToString(segment.interval) <<": " <<segment.comment <<"\n";
-        int64_t status = debugger_->remoteSystemCall(Debugger::ThreadId::unspecified(), i386_NR_munmap, segment.interval.least(),
-                                                     segment.interval.size());
+        int64_t status = debugger()->remoteSystemCall(Debugger::ThreadId::unspecified(), i386_NR_munmap, segment.interval.least(),
+                                                      segment.interval.size());
         if (status < 0) {
             mlog[ERROR] <<"unamp memory failed at " <<StringUtility::addrToString(segment.interval)
                         <<" for " <<segment.comment <<"\n";
@@ -1845,7 +1698,7 @@ Architecture::systemCall(const P2::PartitionerConstPtr &partitioner, const BS::R
     auto ops = Emulation::RiscOperators::promote(ops_);
     ASSERT_not_null(ops);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
-    const rose_addr_t ip = debugger_->executionAddress(Debugger::ThreadId::unspecified());
+    const rose_addr_t ip = debugger()->executionAddress(Debugger::ThreadId::unspecified());
 
     //-------------------------------------
     // Create system call execution event.
@@ -1914,6 +1767,19 @@ Architecture::systemCall(const P2::PartitionerConstPtr &partitioner, const BS::R
     for (const ExecutionEvent::Ptr &event: ctx.relatedEvents) {
         database()->save(event);
         SAWYER_MESG(mlog[DEBUG]) <<"  " <<event->printableName(database()) <<"\n";
+    }
+}
+
+void
+Architecture::advanceExecution(const BS::RiscOperators::Ptr &ops_) {
+    ASSERT_not_null(ops_);
+    ASSERT_forbid(isFactory());
+    auto ops = Emulation::RiscOperators::promote(ops_);
+
+    if (ops->hadSystemCall()) {
+        debugger()->stepIntoSystemCall(Debugger::ThreadId::unspecified());
+    } else {
+        Super::advanceExecution(ops);
     }
 }
 

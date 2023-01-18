@@ -3,11 +3,9 @@
 
 static void
 testSequence() {
-    Rose::Yaml::Node root;
-    Rose::Yaml::parse(root,
-                      "- a\n"
-                      "- b\n"
-                      "- c\n");
+    auto root = Rose::Yaml::parse("- a\n"
+                                  "- b\n"
+                                  "- c\n");
 
     ASSERT_always_require(root.size() == 3);
     Rose::Yaml::Iterator i1 = root.begin();
@@ -37,8 +35,7 @@ testSequence() {
 
 static void
 testConversion() {
-    Rose::Yaml::Node root;
-    Rose::Yaml::parse(root,
+    auto root = Rose::Yaml::parse(
                       "a: 123\n"
                       "b: 0123\n"                       // 83
                       "c: 0x123\n"                      // 291
@@ -86,8 +83,7 @@ static void
 testBoolean() {
     Rose::Yaml::Node n1;
 
-    Rose::Yaml::Node n2;
-    Rose::Yaml::parse(n2,
+    auto n2 = Rose::Yaml::parse(
                       "a: foo\n"
                       "b:\n"
                       "  - one\n"
@@ -101,8 +97,7 @@ testBoolean() {
 
 static void
 testConst() {
-    Rose::Yaml::Node root_rw;
-    Rose::Yaml::parse(root_rw,
+    auto root_rw = Rose::Yaml::parse(
                       "a: foo\n"
                       "b:\n"
                       "  - zero\n"
@@ -122,8 +117,7 @@ testConst() {
 
 static void
 testIterator() {
-    Rose::Yaml::Node root_rw;
-    Rose::Yaml::parse(root_rw,
+    auto root_rw = Rose::Yaml::parse(
                       "- a\n"
                       "- b\n"
                       "- c\n");

@@ -13,6 +13,13 @@ static const bool onLinux = true;
 static const bool onLinux = false;
 #endif /* __linux__ */
 
+enum ExitStatus {
+    FAIL_MALFORMED_ENV = 1,
+    FAIL_ENV_UNDEFINED = 2,
+    FAIL_ENV_NONMATCH = 3,
+    FAIL_NOT_LINUX = 4,
+    FAIL_BAD_RANDOMIZATION = 5,
+};
 
 typedef std::pair<std::string, std::string> KeyValue;
 
@@ -21,7 +28,11 @@ static const std::string check_rndaddr  = "--address-randomization=";
 static const std::string check_segfault = "--seg-fault";
 static const std::string check_exitcode = "--exit=";
 
-void fail() { std::exit(1); }
+void fail(const std::string &mesg, const ExitStatus exitStatus) {
+    if (!mesg.empty())
+        std::cerr <<"specimen error: " <<mesg <<"\n";
+    std::exit((int)exitStatus);
+}
 
 KeyValue keyValue(const std::string& arg)
 {
@@ -29,7 +40,7 @@ KeyValue keyValue(const std::string& arg)
   const size_t val = arg.find('=');
 
   if (val == std::string::npos)
-    fail();
+      fail("cannot find \"=\" in \"" + arg + "\"\n", FAIL_MALFORMED_ENV);
     
   return std::make_pair(arg.substr(0, val), arg.substr(val+1));
 }
@@ -55,7 +66,7 @@ bool addressRandomization()
 #if defined(__linux__)
   return (personality(QUERY_PERSONA) & ADDR_NO_RANDOMIZE) == 0;
 #else
-  return false;
+  fail("personality only exists on Linux", FAIL_NOT_LINUX);
 #endif /* __linux__ */
 }
 
@@ -74,9 +85,15 @@ void check(std::string arg)
   {
     KeyValue    dsc = keyValue(arg.substr(check_env.size()));
     const char* val = std::getenv(dsc.first.c_str());
-  
-    if (!val || dsc.second != val)
-      fail();
+
+    if (!val)
+        fail("environment variable \"" + dsc.first + "\" is not defined", FAIL_ENV_UNDEFINED);
+
+    if (dsc.second != std::string(val)) {
+        fail("environment variable \"" + dsc.first + "\" value \"" + std::string(val) + "\""
+             " does not match \"" + dsc.second + "\"",
+             FAIL_ENV_NONMATCH);
+    }
 
     return;
   }
@@ -86,8 +103,14 @@ void check(std::string arg)
     const bool  expected = trueFalseValue(arg.substr(check_rndaddr.size()));
     const bool  rndaddr  = addressRandomization();
 
-    if (!onLinux || (expected != rndaddr))
-      fail();
+    if (!onLinux)
+        fail("not running on Linux", FAIL_NOT_LINUX);
+
+    if (expected != rndaddr) {
+        fail("address randomization was " + std::string(rndaddr ? "true" : "false") +
+             " but was expected to be " + std::string(expected ? "true" : "false"),
+             FAIL_BAD_RANDOMIZATION);
+    }
 
     return;
   }

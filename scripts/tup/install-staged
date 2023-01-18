@@ -283,6 +283,19 @@ elif [ "$rpath_changer" != patchelf -a "$rpath_changer" != chrpath -a "$rpath_ch
     die "invalid rpath changer: $rpath_changer"
 fi
 
+# Return success if file is a dynamically linked ELF executable, failure otherwise
+is_dynamically_linked() {
+    local file="$1"
+    local kind="$(file "$file")"
+    if [ "${kind/ELF}" = "$kind" ]; then
+	return 1 # not ELF
+    elif [ "${kind/dynamically linked}" = "$kind" ]; then
+	return 1 # not dynamically linked
+    else
+	return 0
+    fi
+}
+
 # Returns the current rpath for the given shared ELF executable.
 # The return value is a colon-separated list of directory names.
 current_rpath() {
@@ -428,7 +441,7 @@ for manifest in $(find install-staging -name MANIFEST); do
 			$libtool --mode=install --quiet install "$srcfile" "$dstfile"
 		    else
 			cp --dereference -p "$srcfile" "$dstfile"
-			if file "$dstfile" |grep ': ELF' >/dev/null 2>&1; then
+			if is_dynamically_linked "$dstfile"; then
 			    old_rpath_string=$(current_rpath "$dstfile")
 			    old_rpath=($(echo "$old_rpath_string" |tr : ' '))
 

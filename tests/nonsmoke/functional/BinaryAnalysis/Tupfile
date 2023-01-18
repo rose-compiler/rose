@@ -489,15 +489,6 @@ run for isa in $(testRandomInput_ISA); do \
 run $(tool_compile_linkexe) testSageSerialization.C
 run $(test) testSageSerialization
 
-#############################################################################################
-# PDF File Generation for Binaries
-#############################################################################################
-testPDFGeneration = ../testPDFGeneration
-run $(test) $(testPDFGeneration) -o small -x i386-pop.pdf \
-    $(testPDFGeneration) -rose:verbose 0 $(ROSE)/tests/nonsmoke/specimens/binary/i386-pop
-run $(test) $(testPDFGeneration) -o large --disabled "takes too long" \
-    $(testPDFGeneration) -rose:verbose 0 $(ROSE)/tests/nonsmoke/specimens/binary/pocketputty.exe
-
 ###############################################################################################################################
 # Symbolic substitution in huge expressions with many common subexpressions
 ###############################################################################################################################

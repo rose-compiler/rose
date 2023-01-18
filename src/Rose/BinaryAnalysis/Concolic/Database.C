@@ -837,9 +837,9 @@ Database::erase(ExecutionEventId id) {
 
 TestSuite::Ptr
 Database::findTestSuite(const std::string &nameOrId) {
-    if (auto id = connection_.stmt("select id from test_suites where name = ?name").bind("name", nameOrId).get<size_t>())
-        return object(TestSuiteId(*id));
     try {
+        if (auto id = connection_.stmt("select id from test_suites where name = ?name").bind("name", nameOrId).get<size_t>())
+            return object(TestSuiteId(*id));
         TestSuiteId id(nameOrId);
         return object(id);
     } catch (...) {
@@ -1077,7 +1077,7 @@ Database::needConcolicTesting(size_t n) {
 
 bool
 Database::hasUntested() {
-    return !needConcreteTesting(1).empty();
+    return !needConcreteTesting(1).empty() || !needConcolicTesting(1).empty();
 }
 
 } // namespace

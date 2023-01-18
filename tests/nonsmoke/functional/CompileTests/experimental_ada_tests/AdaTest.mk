@@ -165,6 +165,7 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
 
 ADA_TRANSLATOR_FAILING_TESTS :=        \
   ada_packages.adb                     \
+  abstract_fun.adb                     \
   accept_statement.adb                 \
   accept_statement_task_decl.adb       \
   access_to_subprogram.ads             \
@@ -212,7 +213,14 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   namequal_with_renamed_1.adb          \
   namequal_with_renamed_2.adb          \
   nested_package.ads                   \
+  nullproc.adb                         \
   opaque.ads                           \
+  opergen3.adb                         \
+  opergen4.adb                         \
+  opergen5.adb                         \
+  opergen6.adb                         \
+  opergen7.adb                         \
+  opergen8.adb                         \
   package_renaming_declaration.ads     \
   parent-child.adb                     \
   pkgrename.ads                        \
@@ -257,6 +265,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   test_unit.adb                        \
   types_operators.adb                  \
   usegenericinstance.adb               \
+  usetype.adb                          \
   unit_2.adb                           \
   unit_2.ads                           \
   unknown_discriminant.ads             \

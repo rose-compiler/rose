@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
+#include <Rose/BinaryAnalysis/Concolic/Callback/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Concolic/I386Linux/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Concolic/M68kSystem/BasicTypes.h>
 
@@ -28,7 +29,12 @@ namespace Concolic {
 
 enum class Update { NO, YES };
 
-enum class ShowEvents { NO, YES };
+/** Whether to show execution events. */
+enum class ShowEvents {
+    NONE,                                               /**< Do not show events. */
+    INPUT,                                              /**< Show only input events. */
+    ALL                                                 /**< Show all events. */
+};
 
 enum class ShowAssertions { NO, YES };
 
@@ -79,6 +85,11 @@ public:
     explicit Exception(const std::string &mesg): Rose::Exception(mesg) {}
     ~Exception() throw () {}
 };
+
+/** Test whether calling process is running in a container.
+ *
+ *  Returns true if the current process appears to be running in a container such as Docker or Podman. */
+bool isRunningInContainer();
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Forward references

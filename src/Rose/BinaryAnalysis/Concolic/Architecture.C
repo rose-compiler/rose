@@ -10,6 +10,7 @@
 #include <Rose/BinaryAnalysis/Concolic/SharedMemory.h>
 #include <Rose/BinaryAnalysis/Concolic/SystemCall.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
+#include <Rose/BinaryAnalysis/Debugger/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
@@ -18,9 +19,11 @@
 #include <Rose/BinaryAnalysis/Concolic/M68kSystem/Architecture.h>
 
 #include <boost/format.hpp>
+#include <boost/lexical_cast.hpp>
 
 using namespace Sawyer::Message::Common;
 namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
+namespace IS = Rose::BinaryAnalysis::InstructionSemantics;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 namespace Rose {
@@ -46,8 +49,8 @@ initRegistry() {
 Architecture::Architecture(const std::string &name)
     : name_(name) {}
 
-Architecture::Architecture(const Database::Ptr &db, TestCaseId testCaseId, const P2::PartitionerConstPtr &partitioner)
-    : db_(db), testCaseId_(testCaseId), partitioner_(partitioner) {
+Architecture::Architecture(const Database::Ptr &db, TestCaseId testCaseId)
+    : db_(db), testCaseId_(testCaseId) {
     ASSERT_not_null(db);
     testCase_ = db->object(testCaseId, Update::NO);
     ASSERT_not_null(testCase_);
@@ -90,30 +93,64 @@ Architecture::registeredFactories() {
 }
 
 Architecture::Ptr
-Architecture::forge(const Database::Ptr &db, TestCaseId tcid, const P2::PartitionerConstPtr &partitioner,
-                    const std::string &name) {
+Architecture::forge(const Database::Ptr &db, TestCaseId tcid, const Yaml::Node &config) {
     ASSERT_not_null(db);
     ASSERT_require(tcid);
     initRegistry();
     SAWYER_THREAD_TRAITS::LockGuard lock(registryMutex);
     for (auto factory = registry.rbegin(); factory != registry.rend(); ++factory) {
-        if ((*factory)->matchFactory(name))
-            return (*factory)->instanceFromFactory(db, tcid, partitioner);
+        if ((*factory)->matchFactory(config))
+            return (*factory)->instanceFromFactory(db, tcid, config);
     }
     return {};
 }
 
 Architecture::Ptr
-Architecture::forge(const Database::Ptr &db, const TestCase::Ptr &tc, const P2::PartitionerConstPtr &partitioner,
-                    const std::string &name) {
+Architecture::forge(const Database::Ptr &db, const TestCase::Ptr &tc, const Yaml::Node &config) {
     ASSERT_not_null(db);
     ASSERT_not_null(tc);
-    return forge(db, db->id(tc), partitioner, name);
+    return forge(db, db->id(tc), config);
 }
 
 bool
 Architecture::isFactory() const {
     return !db_;
+}
+
+void
+Architecture::configureSharedMemory(const Yaml::Node &config) {
+    if (auto list = config["memory-drivers"]) {
+        if (!list.isSequence())
+            throw Exception("configuration \"memory-drivers\" must be a YAML sequence");
+
+        for (size_t i = 0; i < list.size(); ++i) {
+            const std::string err = "configuration memory-drivers[" + boost::lexical_cast<std::string>(i) + "]";
+            if (!list[i].isMap())
+                throw Exception(err + " must be a YAML map");
+            const std::string driverName = list[i]["driver"].as<std::string>();
+            if (driverName.empty())
+                throw Exception(err + "[driver] is not specified or is not valid");
+
+            const auto va = StringUtility::toNumber<rose_addr_t>(list[i]["address"].as<std::string>()).ok();
+            if (!va)
+                throw Exception(err + "[address] is not specified or is not valid");
+
+            const auto nBytes = StringUtility::toNumber<size_t>(list[i]["size"].as<std::string>()).ok();
+            if (!nBytes || *nBytes == 0)
+                throw Exception(err + "[size] is not specified or is not valid");
+
+            const AddressInterval where = AddressInterval::baseSize(*va, *nBytes);
+            auto driver = SharedMemoryCallback::forge(where, list[i]);
+            if (!driver)
+                throw Exception(err + " driver \"" + StringUtility::cEscape(driverName) + "\" not found");
+
+            const std::string message = list[i]["message"].as<std::string>();
+            if (!message.empty())
+                driver->name(message);
+
+            sharedMemory(driver);
+        }
+    }
 }
 
 const std::string&
@@ -153,6 +190,33 @@ Architecture::partitioner() const {
     return partitioner_;
 }
 
+void
+Architecture::partitioner(const P2::Partitioner::ConstPtr &p) {
+    ASSERT_forbid(isFactory());
+    ASSERT_not_null(p);
+    partitioner_ = p;
+}
+
+Debugger::Base::Ptr
+Architecture::debugger() const {
+    return debugger_;
+}
+
+void
+Architecture::debugger(const Debugger::Base::Ptr &d) {
+    debugger_ = d;
+}
+
+Sawyer::Optional<rose_addr_t>
+Architecture::scratchVa() const {
+    return scratchVa_;
+}
+
+void
+Architecture::scratchVa(const Sawyer::Optional<rose_addr_t> &va) {
+    scratchVa_ = va;
+}
+
 ExecutionLocation
 Architecture::currentLocation() const {
     ASSERT_forbid(isFactory());
@@ -175,6 +239,126 @@ Architecture::inputVariables(const InputVariables::Ptr &iv) {
     inputVariables_ = iv;
 }
 
+bool
+Architecture::isTerminated() {
+    ASSERT_forbid(isFactory());
+    return !debugger() || debugger()->isTerminated();
+}
+
+rose_addr_t
+Architecture::ip() {
+    ASSERT_forbid(isFactory());
+    return debugger()->executionAddress(Debugger::ThreadId::unspecified());
+}
+
+void
+Architecture::ip(rose_addr_t va) {
+    ASSERT_forbid(isFactory());
+    debugger()->executionAddress(Debugger::ThreadId::unspecified(), va);
+}
+
+std::vector<ExecutionEvent::Ptr>
+Architecture::createRegisterRestoreEvents() {
+    ASSERT_forbid(isFactory());
+    SAWYER_MESG(mlog[DEBUG]) <<"saving all registers\n";
+    Sawyer::Container::BitVector allRegisters = debugger()->readAllRegisters(Debugger::ThreadId::unspecified());
+    auto event = ExecutionEvent::bulkRegisterWrite(TestCase::Ptr(), ExecutionLocation(), ip(), allRegisters);
+    return {event};
+}
+
+size_t
+Architecture::writeMemory(rose_addr_t va, const std::vector<uint8_t> &bytes) {
+    ASSERT_forbid(isFactory());
+    return debugger()->writeMemory(va, bytes.size(), bytes.data());
+}
+
+std::vector<uint8_t>
+Architecture::readMemory(rose_addr_t va, size_t nBytes) {
+    ASSERT_forbid(isFactory());
+    return debugger()->readMemory(va, nBytes);
+}
+
+void
+Architecture::writeRegister(RegisterDescriptor reg, uint64_t value) {
+    ASSERT_forbid(isFactory());
+    debugger()->writeRegister(Debugger::ThreadId::unspecified(), reg, value);
+}
+
+void
+Architecture::writeRegister(RegisterDescriptor reg, const Sawyer::Container::BitVector &bv) {
+    ASSERT_forbid(isFactory());
+    debugger()->writeRegister(Debugger::ThreadId::unspecified(), reg, bv);
+}
+
+Sawyer::Container::BitVector
+Architecture::readRegister(RegisterDescriptor reg) {
+    ASSERT_forbid(isFactory());
+    return debugger()->readRegister(Debugger::ThreadId::unspecified(), reg);
+}
+
+void
+Architecture::executeInstruction(const P2::PartitionerConstPtr &partitioner) {
+    ASSERT_forbid(isFactory());
+    if (mlog[DEBUG]) {
+        rose_addr_t va = debugger()->executionAddress(Debugger::ThreadId::unspecified());
+        if (SgAsmInstruction *insn = partitioner->instructionProvider()[va]) {
+            mlog[DEBUG] <<"concretely executing insn #" <<currentLocation().primary()
+                        <<" " <<partitioner->unparse(insn) <<"\n";
+        } else {
+            mlog[DEBUG] <<"concretely executing insn #" <<currentLocation().primary()
+                        <<" " <<StringUtility::addrToString(va) <<": null instruction\n";
+        }
+    }
+
+    debugger()->singleStep(Debugger::ThreadId::unspecified());
+}
+
+void
+Architecture::checkInstruction(SgAsmInstruction *insn) {
+    ASSERT_not_null(insn);
+    std::vector<uint8_t> buf = debugger()->readMemory(insn->get_address(), insn->get_size());
+    if (buf.size() != insn->get_size() || !std::equal(buf.begin(), buf.end(), insn->get_raw_bytes().begin())) {
+        if (mlog[ERROR]) {
+            mlog[ERROR] <<"symbolic instruction doesn't match concrete instruction at "
+                        <<StringUtility::addrToString(insn->get_address()) <<"\n"
+                        <<"  symbolic insn:  " <<insn->toString() <<"\n"
+                        <<"  symbolic bytes:";
+            for (uint8_t byte: insn->get_raw_bytes())
+                mlog[ERROR] <<(boost::format(" %02x") % (unsigned)byte);
+            mlog[ERROR] <<"\n"
+                        <<"  concrete bytes:";
+            for (uint8_t byte: buf)
+                mlog[ERROR] <<(boost::format(" %02x") % (unsigned)byte);
+            mlog[ERROR] <<"\n";
+        }
+        throw Exception("symbolic instruction doesn't match concrete instructon at " +
+                        StringUtility::addrToString(insn->get_address()));
+    }
+}
+
+void
+Architecture::advanceExecution(const BS::RiscOperators::Ptr&) {
+    debugger()->singleStep(Debugger::ThreadId::unspecified());
+}
+
+void
+Architecture::executeInstruction(const BS::RiscOperators::Ptr &ops, SgAsmInstruction *insn) {
+    ASSERT_forbid(isFactory());
+    ASSERT_not_null(ops);
+    ASSERT_not_null(insn);
+    rose_addr_t va = insn->get_address();
+
+    checkInstruction(insn);
+    debugger()->executionAddress(Debugger::ThreadId::unspecified(), va);
+    advanceExecution(ops);
+}
+
+std::string
+Architecture::readCString(rose_addr_t va, size_t maxBytes) {
+    ASSERT_forbid(isFactory());
+    return debugger()->readCString(va, maxBytes);
+}
+
 const Architecture::SystemCallMap&
 Architecture::systemCalls() const {
     return systemCalls_;
@@ -193,11 +377,15 @@ Architecture::sharedMemory() const {
 }
 
 void
-Architecture::sharedMemory(const AddressInterval &where, const SharedMemoryCallback::Ptr &callback) {
+Architecture::sharedMemory(const SharedMemoryCallback::Ptr &callback) {
+    ASSERT_not_null(callback);
+    sharedMemory(callback, callback->registrationVas());
+}
+
+void
+Architecture::sharedMemory(const SharedMemoryCallback::Ptr &callback, const AddressInterval &where) {
     ASSERT_forbid(where.isEmpty());
     ASSERT_not_null(callback);
-    if (callback->registeredVas().isEmpty())
-        callback->registeredVas(where);
 
     AddressInterval remaining = where;
     while (!remaining.isEmpty()) {
@@ -382,6 +570,13 @@ Architecture::playEvent(const ExecutionEvent::Ptr &event) {
             return true;
         }
 
+        case ExecutionEvent::Action::BULK_REGISTER_WRITE: {
+            SAWYER_MESG(mlog[DEBUG]) <<"  restore registers\n";
+            Sawyer::Container::BitVector allRegisters = event->registerValues();
+            debugger()->writeAllRegisters(Debugger::ThreadId::unspecified(), allRegisters);
+            return true;
+        }
+
         case ExecutionEvent::Action::OS_SYSCALL: {
             // This is only the start of a system call. Additional following events for the same instruction will describe the
             // effects of the system call.
@@ -446,19 +641,6 @@ Architecture::readMemoryUnsigned(rose_addr_t va, size_t nBytes) {
     return retval;
 }
 
-std::string
-Architecture::readCString(rose_addr_t va, size_t maxBytes) {
-    ASSERT_forbid(isFactory());
-    std::string retval;
-    while (retval.size() < maxBytes) {
-        auto byte = readMemory(va++, 1);
-        if (byte.empty() || byte[0] == 0)
-            break;
-        retval += (char)byte[0];
-    }
-    return retval;
-}
-
 void
 Architecture::mapMemory(const AddressInterval&, unsigned /*permissions*/) {}
 
@@ -479,6 +661,46 @@ Architecture::nextEventLocation(When when) {
     return currentLocation_;
 }
 
+std::vector<ExecutionEvent::Ptr>
+Architecture::createMemoryRestoreEvents(const MemoryMap::Ptr &map) {
+    ASSERT_not_null(map);
+    std::vector<ExecutionEvent::Ptr> events;
+    for (const MemoryMap::Node &node: map->nodes()) {
+        const AddressInterval &where = node.key();
+        const MemoryMap::Segment &segment = node.value();
+
+        // Don't save our own scratch space
+        if (scratchVa() && where.least() == *scratchVa())
+            continue;
+
+        SAWYER_MESG(mlog[DEBUG]) <<"  memory at " <<StringUtility::addrToString(where)
+                                 <<", " <<StringUtility::plural(where.size(), "bytes");
+        if (mlog[DEBUG]) {
+            std::string protStr;
+            if ((segment.accessibility() & MemoryMap::READABLE) != 0)
+                protStr += "r";
+            if ((segment.accessibility() & MemoryMap::WRITABLE) != 0)
+                protStr += "w";
+            if ((segment.accessibility() & MemoryMap::EXECUTABLE) != 0)
+                protStr += "x";
+            SAWYER_MESG(mlog[DEBUG]) <<", perm=" <<(protStr.empty() ? "none" : protStr) <<"\n";
+        }
+
+        auto eeMap = ExecutionEvent::bulkMemoryMap(TestCase::Ptr(), ExecutionLocation(), ip(), where,
+                                                   segment.accessibility());
+        eeMap->name("map " + segment.name());
+        events.push_back(eeMap);
+
+        std::vector<uint8_t> buf(where.size());
+        size_t nRead = map->at(where).read(buf).size();
+        ASSERT_always_require(nRead == where.size());
+        auto eeWrite = ExecutionEvent::bulkMemoryWrite(TestCase::Ptr(), ExecutionLocation(), ip(), where, buf);
+        eeWrite->name("init " + segment.name());
+        events.push_back(eeWrite);
+    }
+    return events;
+}
+
 void
 Architecture::restoreInputVariables(const Partitioner2::PartitionerConstPtr&, const Emulation::RiscOperators::Ptr&,
                                     const SmtSolver::Ptr&) {
@@ -490,8 +712,8 @@ Architecture::restoreInputVariables(const Partitioner2::PartitionerConstPtr&, co
 }
 
 std::pair<ExecutionEvent::Ptr, SymbolicExpression::Ptr>
-Architecture::sharedMemoryAccess(const SharedMemoryCallbacks &callbacks, const P2::PartitionerConstPtr&,
-                                 const Emulation::RiscOperators::Ptr &ops, rose_addr_t addr, size_t nBytes) {
+Architecture::sharedMemoryRead(const SharedMemoryCallbacks &callbacks, const P2::Partitioner::ConstPtr&,
+                               const Emulation::RiscOperators::Ptr &ops, rose_addr_t addr, size_t nBytes) {
     // A shared memory read has just been encountered, and we're in the middle of executing the instruction that caused it.
     ASSERT_forbid(isFactory());
     ASSERT_not_null(ops);
@@ -538,6 +760,28 @@ Architecture::sharedMemoryAccess(const SharedMemoryCallbacks &callbacks, const P
     database()->save(sharedMemoryEvent);            // just in case the user modified it.
     return {ctx.sharedMemoryEvent, ctx.valueRead};
 }
+
+bool
+Architecture::sharedMemoryWrite(const SharedMemoryCallbacks &callbacks, const P2::Partitioner::ConstPtr&,
+                                const Emulation::RiscOperators::Ptr &ops, rose_addr_t addr, const BS::SValue::Ptr &value) {
+    // A shared memory write has just been encountered, and we're in the middle of executing the instruction that caused it.
+    ASSERT_forbid(isFactory());
+    ASSERT_not_null(ops);
+    ASSERT_not_null2(ops->currentInstruction(), "must be called during instruction execution");
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+
+    const rose_addr_t ip = ops->currentInstruction()->get_address();
+    SAWYER_MESG(debug) <<"  shared memory write at instruction " <<StringUtility::addrToString(ip)
+                       <<" to memory address " <<StringUtility::addrToString(addr)
+                       <<" writing " <<*value <<"\n";
+
+    // Invoke the callback
+    SharedMemoryContext ctx(sharedFromThis(), ops, ops->currentInstruction()->get_address(), addr,
+                            IS::SymbolicSemantics::SValue::promote(value)->get_expression());
+    const bool handled = callbacks.apply(false, ctx);
+    return handled;
+}
+
 
 void
 Architecture::runSharedMemoryPostCallbacks(const ExecutionEvent::Ptr &sharedMemoryEvent, const Emulation::RiscOperators::Ptr &ops) {
@@ -645,7 +889,7 @@ Architecture::fixupSharedMemoryEvents(const ExecutionEvent::Ptr &sharedMemoryEve
             SymbolicExpression::Ptr registerValue = relatedEvent->calculateResult(inputVariables()->bindings());
             ASSERT_require(registerValue->isScalarConstant());
             SAWYER_MESG(debug) <<"    for " <<relatedEvent->printableName(database()) <<"\n"
-                               <<"      writing " <<*registerValue <<"to register " <<relatedEvent->registerDescriptor() <<"\n";
+                               <<"      writing " <<*registerValue <<" to register " <<relatedEvent->registerDescriptor() <<"\n";
             writeRegister(relatedEvent->registerDescriptor(), registerValue->isLeafNode()->bits());
         }
     }

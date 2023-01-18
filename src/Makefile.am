@@ -279,10 +279,15 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/ConcreteLocation.h						\
 	Rose/BinaryAnalysis/Concolic/Architecture.h					\
 	Rose/BinaryAnalysis/Concolic/BasicTypes.h					\
+	Rose/BinaryAnalysis/Concolic/Callback/BasicTypes.h				\
+	Rose/BinaryAnalysis/Concolic/Callback/MemoryExit.h				\
+	Rose/BinaryAnalysis/Concolic/Callback/MemoryInput.h				\
+	Rose/BinaryAnalysis/Concolic/Callback/MemoryTime.h				\
 	Rose/BinaryAnalysis/Concolic/ConcolicExecutor.h					\
 	Rose/BinaryAnalysis/Concolic/ConcreteExecutor.h					\
 	Rose/BinaryAnalysis/Concolic/ConcreteResult.h					\
 	Rose/BinaryAnalysis/Concolic/Database.h						\
+	Rose/BinaryAnalysis/Concolic/Emulation.h					\
 	Rose/BinaryAnalysis/Concolic/ExecutionEvent.h					\
 	Rose/BinaryAnalysis/Concolic/ExecutionLocation.h				\
 	Rose/BinaryAnalysis/Concolic/ExecutionManager.h					\
@@ -290,17 +295,14 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/Concolic/I386Linux/Architecture.h				\
 	Rose/BinaryAnalysis/Concolic/I386Linux/BasicTypes.h				\
 	Rose/BinaryAnalysis/Concolic/I386Linux/ExitStatusExecutor.h			\
-	Rose/BinaryAnalysis/Concolic/I386Linux/ExitStatusManager.h			\
 	Rose/BinaryAnalysis/Concolic/I386Linux/ExitStatusResult.h			\
 	Rose/BinaryAnalysis/Concolic/I386Linux/TracingExecutor.h			\
-	Rose/BinaryAnalysis/Concolic/I386Linux/TracingManager.h				\
 	Rose/BinaryAnalysis/Concolic/I386Linux/TracingResult.h				\
 	Rose/BinaryAnalysis/Concolic/InputVariables.h					\
 	Rose/BinaryAnalysis/Concolic/M68kSystem.h					\
 	Rose/BinaryAnalysis/Concolic/M68kSystem/Architecture.h				\
 	Rose/BinaryAnalysis/Concolic/M68kSystem/BasicTypes.h				\
 	Rose/BinaryAnalysis/Concolic/M68kSystem/TracingExecutor.h			\
-	Rose/BinaryAnalysis/Concolic/M68kSystem/TracingManager.h			\
 	Rose/BinaryAnalysis/Concolic/M68kSystem/TracingResult.h				\
 	Rose/BinaryAnalysis/Concolic/SharedMemory.h					\
 	Rose/BinaryAnalysis/Concolic/Specimen.h						\
@@ -696,6 +698,15 @@ rose_config_LDFLAGS = $(ROSE_RPATHS)
 rose_config_DEPENDENCIES = $(REQUIRED_LIBS)
 rose_config_CPPFLAGS = -DLIBDIR='"$(libdir)"'
 rose_config_LDADD = $(ROSE_LIBS)
+
+# This tool outputs some information about featureTests.h, which
+# controls which features are to be enabled in ROSE.
+bin_PROGRAMS += rose-feature-tests
+rose_feature_tests_SOURCES = featureTests.C
+rose_feature_tests_LDFLAGS =
+rose_feature_tests_DEPENDENCIES =
+rose_feature_tests_CPPFLAGS =
+rose_feature_tests_LDADD =
 
 # if ROSE_USE_INTERNAL_JAVA_SUPPORT
 if OS_MACOSX
