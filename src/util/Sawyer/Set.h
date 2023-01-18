@@ -217,7 +217,21 @@ public:
         return (set_.size() != other.set_.size() ||
                 std::mismatch(set_.begin(), set_.end(), other.set_.begin()).first != set_.end());
     }
-    
+
+    /** Whether the set is non-empty.
+     *
+     *  Returns true if the set is not empty, false if empty. */
+    explicit operator bool() const {
+        return !isEmpty();
+    }
+
+    /** Whether the set is empty.
+     *
+     *  Returns true if the set is empty, false if not empty. */
+    bool operator!() const {
+        return isEmpty();
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Mutators
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
