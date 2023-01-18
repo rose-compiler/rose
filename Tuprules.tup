@@ -676,6 +676,7 @@ support_compile         = $(COMPILER_RULES) --phase=support --link=none --begin-
 librose_INCDIRS = \
  $(support_INCDIRS) \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/Rose \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/3rdPartyLibraries/json \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/3rdPartyLibraries/MSTL \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/backend/asmUnparser \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/backend/unparser \

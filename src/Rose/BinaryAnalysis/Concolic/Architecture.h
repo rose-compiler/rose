@@ -5,10 +5,14 @@
 
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Concolic/ExecutionLocation.h>
+#include <Rose/BinaryAnalysis/Debugger/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/RegisterDescriptor.h>
 #include <Rose/BinaryAnalysis/SmtSolver.h>
+#include <Rose/Yaml.h>
+
 #include <ByteOrder.h>
 
 #include <Sawyer/BitVector.h>
@@ -37,15 +41,17 @@ private:
     TestCaseId testCaseId_;
     TestCasePtr testCase_;
     Partitioner2::PartitionerConstPtr partitioner_;
+    Debugger::BasePtr debugger_;
     ExecutionLocation currentLocation_;                 // incremented when the instruction begins execution
     SystemCallMap systemCalls_;                         // callbacks for syscalls
     SharedMemoryMap sharedMemory_;                      // callbacks for shared memory
     InputVariablesPtr inputVariables_;                  // info about variables for events and inputs
+    Sawyer::Optional<rose_addr_t> scratchVa_;           // scratch page for internal use in subordinate address space
 
 protected:
     // See "instance" methods in subclasses
-    explicit Architecture(const std::string&);
-    Architecture(const DatabasePtr&, TestCaseId, const Partitioner2::PartitionerConstPtr&);
+    explicit Architecture(const std::string&);          // for factories
+    Architecture(const DatabasePtr&, TestCaseId);       // for non-factories
 public:
     virtual ~Architecture();
 
@@ -79,30 +85,28 @@ public:
      *  Thread safety: This method is thread safe. */
     static std::vector<Ptr> registeredFactories();
 
-    /** Creates a suitable architecture by name.
+    /** Creates a suitable architecture according to configuration information.
      *
      *  Scans the @ref registeredFactories list in the reverse order looking for a factory whose @ref matchFactory predicate
-     *  (which accepts all but the first three arguments of this function) returns true. The first factory whose predicate
+     *  (which accepts all but the first two arguments of this function) returns true. The first factory whose predicate
      *  returns true is used to create and return a new architecture object by invoking the factory's virtual @c
-     *  instanceFromFactory constructor with the first three arguments of this function.
+     *  instanceFromFactory constructor with the first two arguments of this function.
      *
      *  Thread safety: This method is thread safe.
      *
      * @{ */
-    static Ptr forge(const DatabasePtr&, TestCaseId, const Partitioner2::PartitionerConstPtr&,
-                     const std::string&);
-    static Ptr forge(const DatabasePtr&, const TestCasePtr&, const Partitioner2::PartitionerConstPtr&,
-                     const std::string&);
+    static Ptr forge(const DatabasePtr&, TestCaseId, const Yaml::Node &config);
+    static Ptr forge(const DatabasePtr&, const TestCasePtr&, const Yaml::Node &config);
     /** @} */
 
-    /** Predicate for matching an architecture factory by name. */
-    virtual bool matchFactory(const std::string &name) const = 0;
+    /** Predicate for matching an architecture factory. */
+    virtual bool matchFactory(const Yaml::Node &config) const = 0;
 
     /** Virtual constructor for factories.
      *
      *  This creates a new object by calling the class method @c instance for the class of which @c this is a type. All
      *  arguments are passed to @c instance. */
-    virtual Ptr instanceFromFactory(const DatabasePtr&, TestCaseId, const Partitioner2::PartitionerConstPtr&) const = 0;
+    virtual Ptr instanceFromFactory(const DatabasePtr&, TestCaseId, const Yaml::Node &config) const = 0;
 
     /** Returns true if this object is a factory.
      *
@@ -147,6 +151,26 @@ public:
      *
      *  This holds information about the disassembly of the specimen, such as functions, basic blocks, and instructions. */
     Partitioner2::PartitionerConstPtr partitioner() const;
+    void partitioner(const Partitioner2::PartitionerConstPtr&);
+
+    /** Property: Debugger.
+     *
+     *  The debugger represents the concrete state of the specimen.
+     *
+     * @{ */
+    Debugger::BasePtr debugger() const;
+    void debugger(const Debugger::BasePtr&);
+    /** @} */
+
+    /** Property: Scratch page address.
+     *
+     *  Address of an optional scratch page in the concrete memory map. A scratch page is sometimes needed by the concrete
+     *  executor in order to execute special code needed by the executor that isn't part of the normal process's image.
+     *
+     * @{ */
+    Sawyer::Optional<rose_addr_t> scratchVa() const;
+    void scratchVa(const Sawyer::Optional<rose_addr_t>&);
+    /** @} */
 
     /** Property: Current execution location.
      *
@@ -203,6 +227,9 @@ public:
     // Functions that can be called before execution starts.
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Partition the specimen. */
+    virtual Partitioner2::PartitionerPtr partition(Partitioner2::Engine*, const std::string &specimenName) = 0;
+
     /** Configures system call behavior.
      *
      *  This function declares how system calls are handled and is called from the @c instance methods (construction). */
@@ -211,11 +238,20 @@ public:
     /** Configures shared memory behavior.
      *
      *  This function declares how shared memory regions are handled and is called from the @c instance methods
-     *  (constructors). */
-    virtual void configureSharedMemory() = 0;
+     *  (constructors). The base class is responsible for installing shared memory callbacks that are described by
+     *  the configuration passed in as an argument. The node should be a sequence of maps, one map per memory handler. */
+    virtual void configureSharedMemory(const Yaml::Node &config);
 
-    /** Add a shared memory callback for a range of addresses. */
-    void sharedMemory(const AddressInterval&, const SharedMemoryCallbackPtr&);
+    /** Add a shared memory callback for a range of addresses.
+     *
+     *  A callback normally knows the range of addresses for which it is responsible. That same range is used when registering
+     *  the callback unless a specific range is specified. Specifying a range does not modify the @ref registrationVas range
+     *  that's inside the callback.  This can be useful when the same callback needs to be registered at multiple addresses.
+     *
+     * @{ */
+    void sharedMemory(const SharedMemoryCallbackPtr&);
+    void sharedMemory(const SharedMemoryCallbackPtr&, const AddressInterval&);
+    /** @} */
 
     /** Add a callback for a system call number. */
     void systemCalls(size_t syscallId, const SyscallCallbackPtr&);
@@ -235,7 +271,11 @@ public:
      *
      *  If a process is in the terminated state, then most of the functions that query or modify the execution state are no
      *  longer well defined and should not be called. */
-    virtual bool isTerminated() = 0;
+    virtual bool isTerminated();
+
+    /** Build the symbolic instruction executor. */
+    virtual InstructionSemantics::BaseSemantics::DispatcherPtr
+    makeDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) = 0;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions that create execution events. These query the concrete state but do not modify it.
@@ -246,6 +286,7 @@ public:
      *  Reads all memory from the active test case (see constructor) and creates events that would map these memory segments
      *  and initialize them. The new events have no location or test case and are not yet written to a database. */
     virtual std::vector<ExecutionEventPtr> createMemoryRestoreEvents() = 0;
+    std::vector<ExecutionEventPtr> createMemoryRestoreEvents(const MemoryMapPtr&);
 
     /** Create events that check memory hashes.
      *
@@ -264,7 +305,7 @@ public:
      *
      *  This function reads all registers and creates events that when replayed would restore the registers to their saved
      *  values. */
-    virtual std::vector<ExecutionEventPtr> createRegisterRestoreEvents() = 0;
+    virtual std::vector<ExecutionEventPtr> createRegisterRestoreEvents();
 
     /** Saves a list of events.
      *
@@ -320,8 +361,8 @@ public:
     /** Current execution address.
      *
      *  @{ */
-    virtual rose_addr_t ip() = 0;
-    virtual void ip(rose_addr_t) = 0;
+    virtual rose_addr_t ip();
+    virtual void ip(rose_addr_t);
     /** @} */
 
     /** Map a memory region.
@@ -338,13 +379,13 @@ public:
     /** Write bytes to memory.
      *
      *  Returns the number of bytes written, which might be fewer than the number requested if there is some kind of error. */
-    virtual size_t writeMemory(rose_addr_t startVa, const std::vector<uint8_t> &bytes) = 0;
+    virtual size_t writeMemory(rose_addr_t startVa, const std::vector<uint8_t> &bytes);
 
     /** Read memory.
      *
      *  Reads the specified number of bytes from memory beginning at the specified address. Returns the number of bytes
      *  actually read, which might be fewer than the number requested if there is some kind of error. */
-    virtual std::vector<uint8_t> readMemory(rose_addr_t startVa, size_t nBytes) = 0;
+    virtual std::vector<uint8_t> readMemory(rose_addr_t startVa, size_t nBytes);
 
     /** Write a value to a register.
      *
@@ -352,20 +393,32 @@ public:
      *  the value can be specified as a @c uint64_t. Other values will need to be specified as a bit vector.
      *
      * @{ */
-    virtual void writeRegister(RegisterDescriptor, uint64_t value) = 0;
-    virtual void writeRegister(RegisterDescriptor, const Sawyer::Container::BitVector&) = 0;
+    virtual void writeRegister(RegisterDescriptor, uint64_t value);
+    virtual void writeRegister(RegisterDescriptor, const Sawyer::Container::BitVector&);
     /** @} */
 
     /** Read a value from a register. */
-    virtual Sawyer::Container::BitVector readRegister(RegisterDescriptor) = 0;
+    virtual Sawyer::Container::BitVector readRegister(RegisterDescriptor);
+
+    /** Make sure the executable has the same instruction in those bytes.
+     *
+     *  Looks at the concrete executable to see if it has the specified instruction at the instruction's address, and
+     *  shows an error (optional) and throws an exception if not. */
+    virtual void checkInstruction(SgAsmInstruction*);
+
+    /** Execute an instruction concretely.
+     *
+     *  Executes the instruction concretely. For system calls, this only enters the system call. For other instructions
+     *  it executes the current instruction concretely. */
+    virtual void advanceExecution(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
 
     /** Execute current or specified instruction.
      *
      *  Executes the instruction and increments the length of the execution path.
      *
      * @{ */
-    virtual void executeInstruction(const Partitioner2::PartitionerConstPtr&) = 0;
-    virtual void executeInstruction(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&, SgAsmInstruction*) = 0;
+    virtual void executeInstruction(const Partitioner2::PartitionerConstPtr&);
+    virtual void executeInstruction(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&, SgAsmInstruction*);
     /** @} */
 
     /** Increment the primary part of the current location.
@@ -437,11 +490,22 @@ public:
     /** Called immediately when shared memory is accessed.
      *
      *  This function is called as soon as shared memory is accessed, right during the middle of an instruction from within the
-     *  RiscOperators::readMemory operation. For memory reads, it should either perform the operation and return the result, or
-     *  return null in which case the caller will do the usual operation. */
+     *  RiscOperators::readMemory operation.
+     *
+     *  For memory reads, it should either perform the operation and return the result, or return null in which case the caller
+     *  will do the usual operation.
+     *
+     *  For memory writes, it should either perform the operation and return true, or return false in which case the caller
+     *  will do the usual operation.
+     *
+     * @{ */
     virtual std::pair<ExecutionEventPtr, SymbolicExpressionPtr>
-    sharedMemoryAccess(const SharedMemoryCallbacks&, const Partitioner2::PartitionerConstPtr&, const Emulation::RiscOperatorsPtr&,
+    sharedMemoryRead(const SharedMemoryCallbacks&, const Partitioner2::PartitionerConstPtr&, const Emulation::RiscOperatorsPtr&,
                        rose_addr_t memVa, size_t nBytes);
+    virtual bool
+    sharedMemoryWrite(const SharedMemoryCallbacks&, const Partitioner2::PartitionerConstPtr&, const Emulation::RiscOperatorsPtr&,
+                      rose_addr_t memVa, const InstructionSemantics::BaseSemantics::SValuePtr&);
+    /** @} */
 
     /** Run after-instruction shared memory callbacks.
      *

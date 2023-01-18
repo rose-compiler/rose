@@ -7,7 +7,7 @@ $foundInDir  = "";
 
 #-------------------------------------------------------------------------------
 #
-#   Copyright 1985-99,2000-21 James Frederick Reus
+#   Copyright 1985-99,2000-23 Dr. James Frederick Reus
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -27,21 +27,21 @@ $foundInDir  = "";
 
 $mkinstaller_ver_major = "2";
 $mkinstaller_ver_minor = "6";
-$mkinstaller_ver_build = "21";
+$mkinstaller_ver_build = "26";
 $mkinstaller_ver_patch = "1";
-$mkinstaller_ver_name  = "2.6.21.1";
-$mkinstaller_ver_time  = "10May2022,20:09:34z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.21.1 - 10May2022,20:09:34z";
+$mkinstaller_ver_name  = "2.6.26.1";
+$mkinstaller_ver_time  = " 5Jan2023,00:39:32z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.26.1 -  5Jan2023,00:39:32z";
 
 # MyUniqueFileId: d34be5e4-1cfc-49b6-d988-25ab878c795f
 
 $perl_library_ver_major = "2";
 $perl_library_ver_minor = "0";
-$perl_library_ver_build = "11";
-$perl_library_ver_patch = "";
-$perl_library_ver_name  = "2.0.11";
-$perl_library_ver_time  = " 4Apr2022,14:43:01z";
-$perl_library_ver_id    = "@(#)perl_library 2.0.11 -  4Apr2022,14:43:01z";
+$perl_library_ver_build = "14";
+$perl_library_ver_patch = "1";
+$perl_library_ver_name  = "2.0.14.1";
+$perl_library_ver_time  = " 5Jan2023,00:36:37z";
+$perl_library_ver_id    = "@(#)perl_library 2.0.14.1 -  5Jan2023,00:36:37z";
 
 #{------------------------------------------------------------------------------
 #
@@ -100,29 +100,29 @@ $TBG_LIB_PFX    = "lib";
 #
 #---------------------------------------
 
-$TBG_PREFIX     = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8";
-$TBG_BinDir     = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/bin";
-$TBG_HtmlDir    = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/html";
-$TBG_Html1Dir   = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/html/html1";
-$TBG_Html2Dir   = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/html/html2";
-$TBG_Html3Dir   = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/html/html3";
-$TBG_Html4Dir   = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/html/html4";
-$TBG_Html5Dir   = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/html/html5";
-$TBG_Html6Dir   = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/html/html6";
-$TBG_Html7Dir   = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/html/html7";
-$TBG_Html8Dir   = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/html/html8";
-$TBG_IncludeDir = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/include";
-$TBG_LibDir     = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/lib";
-$TBG_ManDir     = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/man";
-$TBG_Man1Dir    = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/man/man1";
-$TBG_Man2Dir    = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/man/man2";
-$TBG_Man3Dir    = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/man/man3";
-$TBG_Man4Dir    = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/man/man4";
-$TBG_Man5Dir    = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/man/man5";
-$TBG_Man6Dir    = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/man/man6";
-$TBG_Man7Dir    = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/man/man7";
-$TBG_Man8Dir    = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/man/man8";
-$TBG_SrcDir     = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/src";
+$TBG_PREFIX     = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4";
+$TBG_BinDir     = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/bin";
+$TBG_HtmlDir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html";
+$TBG_Html1Dir   = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html/html1";
+$TBG_Html2Dir   = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html/html2";
+$TBG_Html3Dir   = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html/html3";
+$TBG_Html4Dir   = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html/html4";
+$TBG_Html5Dir   = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html/html5";
+$TBG_Html6Dir   = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html/html6";
+$TBG_Html7Dir   = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html/html7";
+$TBG_Html8Dir   = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html/html8";
+$TBG_IncludeDir = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/include";
+$TBG_LibDir     = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/lib";
+$TBG_ManDir     = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man";
+$TBG_Man1Dir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man/man1";
+$TBG_Man2Dir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man/man2";
+$TBG_Man3Dir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man/man3";
+$TBG_Man4Dir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man/man4";
+$TBG_Man5Dir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man/man5";
+$TBG_Man6Dir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man/man6";
+$TBG_Man7Dir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man/man7";
+$TBG_Man8Dir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man/man8";
+$TBG_SrcDir     = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/src";
 
 #----------------------------------------
 #
@@ -130,18 +130,18 @@ $TBG_SrcDir     = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/src";
 #
 #----------------------------------------
 
-$TBG_DataDir    = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/data";
-$TBG_DocDir     = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/doc";
-$TBG_DocTextDir = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/doc/text";
-$TBG_FontDir    = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/fonts";
-$TBG_IconDir    = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/icons";
-$TBG_ImageDir   = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/images";
+$TBG_DataDir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/data";
+$TBG_DocDir     = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/doc";
+$TBG_DocTextDir = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/doc/text";
+$TBG_FontDir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/fonts";
+$TBG_IconDir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/icons";
+$TBG_ImageDir   = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/images";
 $TBG_WWWDir     = "";
 
 #}------------------------------------------------------------------------------
 
 @defaultCopyrightOwners
-  = ( "Copyright 1985-99,2000-21 James Frederick Reus\n"
+  = ( "Copyright 1985-99,2000-23 Dr. James Frederick Reus\n"
     );
 
 @defaultCopyrightStatement
@@ -16328,12 +16328,12 @@ sub pKit_alreadyOnSearchPATH {
 #
 #  see: totebag/src/pKit/basename.psub
 #
-#  Dated: 04Jul2020 pKit_basename
+#  Dated: 26Oct2022 pKit_basename
 #
 #-------------------------------------------------------------------------------
 
 sub pKit_basename {
-   my $pathname = shift(@_);
+   my $pathname = shift;
    print DBGOUT "pKit_basename[ pathname=\"$pathname\"...\n" if $debugging;
    my $result   = "";
    my $adjusted = pKit_fixpath($pathname);
@@ -20829,7 +20829,7 @@ sub pKit_getTotebagId {
    #
    #---------------------------------------
 
-   my $TBG_PrefixDir  = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8";
+   my $TBG_PrefixDir  = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4";
 
    #}--------------------------------------
 
@@ -20863,7 +20863,7 @@ sub pKit_getTotebagId {
    #
    #---------------------------------------
 
-   my $TBG_uniqueId = "ca7f145b5f4d1380b422df89be177c90c973b1b293b81848165cf39011a0dfb4";
+   my $TBG_uniqueId = "3766f880edbe40e505a10b85cf874c407f4d858490922f7b5fcdfc5af22f6885";
 
    #}--------------------------------------
 
@@ -22677,12 +22677,12 @@ sub pKit_splitTheSearchPATH {
 #
 #  see: totebag/src/pKit/suffix.psub
 #
-#  Dated: 04Jul2020 pKit_suffix
+#  Dated: 26Oct2022 pKit_suffix
 #
 #-------------------------------------------------------------------------------
 
 sub pKit_suffix {
-   my $pathname = shift(@_);
+   my $pathname = shift;
    print DBGOUT "pKit_suffix[ pathname=\"$pathname\"...\n" if $debugging;
    my $result   = "";
    if ( $pathname =~ /^(.+)(\.[^\/\\.]+)$/ ) {

@@ -636,6 +636,8 @@ void
 ExecutionEvent::toYaml(std::ostream &out, const Database::Ptr &db, std::string prefix) {
     ASSERT_not_null(db);
     ExecutionEventId id = db->id(sharedFromThis(), Update::NO);
+    SymbolicExpression::Formatter fmt;
+    fmt.show_comments = SymbolicExpression::Formatter::CMT_BEFORE;
 
     auto nameValue = boost::format("%-16s %s\n");
     auto nameValueIJ = boost::format("%-16s %s[%d][%d]\n");
@@ -650,7 +652,7 @@ ExecutionEvent::toYaml(std::ostream &out, const Database::Ptr &db, std::string p
     out <<prefix <<(nameValue % "name:" % StringUtility::yamlEscape(name()));
 
     if (variable_) {
-        out <<prefix <<(nameValue % "variable:" % *variable_);
+        out <<prefix <<(nameValue % "variable:" % (*variable_ + fmt));
         switch (inputType_) {
             case InputType::NONE:
                 out <<prefix <<(nameValue % "input-type:" % "none");
@@ -733,12 +735,12 @@ ExecutionEvent::toYaml(std::ostream &out, const Database::Ptr &db, std::string p
             out <<prefix <<(nameValue % "where:" % StringUtility::addrToString(memoryLocation().least()));
             out <<prefix <<(nameValue % "size:" % StringUtility::plural(memoryLocation().size(), "# bytes"));
             if (value()) {
-                out <<prefix <<(nameValue % "value:" % *value());
+                out <<prefix <<(nameValue % "value:" % (*value() + fmt));
             } else {
                 out <<prefix <<(nameValue % "value:" % "none");
             }
             if (expression()) {
-                out <<prefix <<(nameValue % "expression:" % *expression());
+                out <<prefix <<(nameValue % "expression:" % (*expression() + fmt));
             } else {
                 out <<prefix <<(nameValue % "expression:" % "none");
             }
@@ -758,12 +760,12 @@ ExecutionEvent::toYaml(std::ostream &out, const Database::Ptr &db, std::string p
             out <<prefix <<(nameValue % "action:" % "register-write");
             out <<prefix <<(nameValue % "register:" % registerDescriptor().toString());
             if (value()) {
-                out <<prefix <<(nameValue % "value:" % *value());
+                out <<prefix <<(nameValue % "value:" % (*value() + fmt));
             } else {
                 out <<prefix <<(nameValue % "value:" % "none");
             }
             if (expression()) {
-                out <<prefix <<(nameValue % "expression:" % *expression());
+                out <<prefix <<(nameValue % "expression:" % (*expression() + fmt));
             } else {
                 out <<prefix <<(nameValue % "expression:" % "none");
             }
@@ -784,12 +786,12 @@ ExecutionEvent::toYaml(std::ostream &out, const Database::Ptr &db, std::string p
             out <<prefix <<(nameValue % "memory-address:" % StringUtility::addrToString(memoryLocation().least()));
             out <<prefix <<(nameValue % "size:" % StringUtility::plural(memoryLocation().size(), "# bytes"));
             if (value()) {
-                out <<prefix <<(nameValue % "value:" % *value());
+                out <<prefix <<(nameValue % "value:" % (*value() + fmt));
             } else {
                 out <<prefix <<(nameValue % "value:" % "none");
             }
             if (expression()) {
-                out <<prefix <<(nameValue % "expression:" % *expression());
+                out <<prefix <<(nameValue % "expression:" % (*expression() + fmt));
             } else {
                 out <<prefix <<(nameValue % "expression:" % "none");
             }

@@ -655,6 +655,14 @@ namespace
     setModifiers(dcl, info.Has_Abstract, info.Has_Limited, false);
   }
 
+
+  template <class AsisStruct>
+  void
+  setAbstractModifier(SgDeclarationStatement& dcl, const AsisStruct& info)
+  {
+    setModifiers(dcl, info.Has_Abstract, false, false);
+  }
+
   /// creates a ROSE declaration depending on the provided type/definition
   struct TypeDeclMaker : sg::DispatchHandler<SgDeclarationStatement*>
   {
@@ -2215,8 +2223,12 @@ namespace
 
           AdaIdentifier ident{usedEl.fullName};
 
-          used = findFirst(adaPkgs(), ident);
-          // if (!used) used = findFirst(adaTypes(), ident);
+          used = findFirst(adaPkgs(), ident); 
+          if (!used)
+          {
+            if (SgNamedType* ty = isSgNamedType(findFirst(adaTypes(), ident)))
+              used = ty->get_declaration();
+          }
         }
 
         SgUsingDeclarationStatement& sgnode = mkUseClause(SG_DEREF(used));
@@ -3690,6 +3702,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
                                             : mkProcedureDecl_nondef(ident, logicalScope, rettype, std::move(complete))
                                             ;
 
+        setAbstractModifier(sgnode, decl);
         setOverride(sgnode, decl.Is_Overriding_Declaration);
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
@@ -3699,7 +3712,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         ctx.appendStatement(sgnode);
 
         /* unhandled fields
-             bool                          Has_Abstract
              bool                          Is_Not_Overriding_Declaration
              bool                          Is_Dispatching_Operation
              Declaration_ID                Corresponding_Declaration

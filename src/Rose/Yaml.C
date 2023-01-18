@@ -1858,9 +1858,11 @@ private:
 // Parsing functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void
-parse(Node &root, const boost::filesystem::path &fileName) {
+Node
+parse(const boost::filesystem::path &fileName) {
+    Node root;
     Parse(root, fileName);
+    return root;
 }
 
 void Parse(Node &root, const boost::filesystem::path &fileName) {
@@ -1879,9 +1881,11 @@ void Parse(Node &root, const boost::filesystem::path &fileName) {
     Parse(root, data.get(), fileSize);
 }
 
-void
-parse(Node &root, std::iostream &stream) {
+Node
+parse(std::iostream &stream) {
+    Node root;
     Parse(root, stream);
+    return root;
 }
 
 void
@@ -1898,9 +1902,11 @@ Parse(Node &root, std::iostream &stream) {
     }
 }
 
-void
-parse(Node& root, const std::string &data) {
+Node
+parse(const std::string &data) {
+    Node root;
     Parse(root, data);
+    return root;
 }
 
 void
@@ -1909,10 +1915,12 @@ Parse(Node &root, const std::string &string) {
     Parse(root, ss);
 }
 
-void
-parse(Node &root, const char *data) {
+Node
+parse(const char *data) {
     ASSERT_not_null(data);
+    Node root;
     Parse(root, data, strlen(data));
+    return root;
 }
 
 void

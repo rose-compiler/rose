@@ -100,13 +100,9 @@ AM_CPPFLAGS=\
 	$(AM_CPPFLAGS_OMP)
 
 
-BUILT_SOURCES=\
-	$(mpaAnnotationLanguageParser_builtSources)
-
 
 noinst_LTLIBRARIES=\
 	libprogramAnalysis.la \
-	$(mpaAnnotationLanguageParser_noinstLTLIBRARIES) \
 	$(mpaDistributedMemoryAnalysis_noinstLTLIBRARIES)
 
 ##################################################################
@@ -161,17 +157,11 @@ pkginclude_HEADERS=\
 	$(mpaVariableRenaming_includeHeaders) \
 	$(mpaEditDistance_includeHeaders)
 
-
-noinst_HEADERS=\
-	$(mpaAnnotationLanguageParser_noinstHeaders)
-
-
 EXTRA_DIST=\
 	CMakeLists.txt \
 	OpenAnalysis \
 	PolicyControl.txt \
 	$(mpaArithmeticIntensity_extraDist) \
-	$(mpaAnnotationLanguageParser_extraDist) \
 	$(mpaCallGraphAnalysis_extraDist) \
 	$(mpaCFG_extraDist) \
 	$(mpaBitvectorDataflow_extraDist) \
@@ -188,10 +178,19 @@ EXTRA_DIST=\
 	$(mpaVariableRenaming_extraDist) \
 	$(mpaEditDistance_extraDist)
 
+if ROSE_BUILD_CPP_LANGUAGE_SUPPORT
+BUILT_SOURCES=$(mpaAnnotationLanguageParser_builtSources)
+
+noinst_LTLIBRARIES+=$(mpaAnnotationLanguageParser_noinstLTLIBRARIES)
+
+noinst_HEADERS=$(mpaAnnotationLanguageParser_noinstHeaders)
+
+EXTRA_DIST+=$(mpaAnnotationLanguageParser_extraDist)
+endif
 
 clean-local:
 #	rm -rf Templates.DB ii_files ti_files cxx_templates
-	$(mpaArithmeticIntensity_cleanLocal) \
+	$(mpaArithmeticIntensity_cleanLocal)
 	$(mpaAnnotationLanguageParser_cleanLocal)
 	$(mpaCallGraphAnalysis_cleanLocal)
 	$(mpaCFG_cleanLocal)

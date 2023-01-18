@@ -49,24 +49,25 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/CallingConvention.C						\
 	BinaryAnalysis/CodeInserter.C							\
 	BinaryAnalysis/Concolic/Architecture.C						\
+	BinaryAnalysis/Concolic/Callback/MemoryExit.C					\
+	BinaryAnalysis/Concolic/Callback/MemoryInput.C					\
+	BinaryAnalysis/Concolic/Callback/MemoryTime.C					\
 	BinaryAnalysis/Concolic/ConcolicExecutor.C					\
 	BinaryAnalysis/Concolic/ConcreteExecutor.C					\
 	BinaryAnalysis/Concolic/ConcreteResult.C					\
 	BinaryAnalysis/Concolic/Database.C						\
+	BinaryAnalysis/Concolic/Emulation.C						\
 	BinaryAnalysis/Concolic/ExecutionEvent.C					\
 	BinaryAnalysis/Concolic/ExecutionLocation.C					\
 	BinaryAnalysis/Concolic/ExecutionManager.C					\
 	BinaryAnalysis/Concolic/I386Linux/Architecture.C				\
 	BinaryAnalysis/Concolic/I386Linux/ExitStatusExecutor.C				\
-	BinaryAnalysis/Concolic/I386Linux/ExitStatusManager.C				\
 	BinaryAnalysis/Concolic/I386Linux/ExitStatusResult.C				\
 	BinaryAnalysis/Concolic/I386Linux/TracingExecutor.C				\
-	BinaryAnalysis/Concolic/I386Linux/TracingManager.C				\
 	BinaryAnalysis/Concolic/I386Linux/TracingResult.C				\
 	BinaryAnalysis/Concolic/InputVariables.C					\
 	BinaryAnalysis/Concolic/M68kSystem/Architecture.C				\
 	BinaryAnalysis/Concolic/M68kSystem/TracingExecutor.C				\
-	BinaryAnalysis/Concolic/M68kSystem/TracingManager.C				\
 	BinaryAnalysis/Concolic/M68kSystem/TracingResult.C				\
 	BinaryAnalysis/Concolic/SharedMemory.C						\
 	BinaryAnalysis/Concolic/Specimen.C						\

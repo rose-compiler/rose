@@ -254,6 +254,8 @@ Gdb::attach(const Specimen &specimen) {
 
     std::vector<std::string> argv;
     argv.push_back(boost::process::search_path(specimen.gdbName()).string());
+    if (argv.back().empty())
+        throw Exception("cannot find GDB executable \"" + StringUtility::cEscape(specimen.gdbName().string()) + "\"");
     argv.push_back("-n");                               // skip initialization files
     argv.push_back("-q");                               // do not print introductory and copyright messages
     argv.push_back("--interpreter=mi");
@@ -414,7 +416,7 @@ void
 Gdb::singleStep(ThreadId) {
     if (!isAttached())
         throw Exception("not attached to subordinate process");
-    sendCommand("-exec-next-instruction");
+    sendCommand("-exec-step-instruction");
 }
 
 void
@@ -474,16 +476,20 @@ Gdb::availableRegisters() {
 
 Sawyer::Container::BitVector
 Gdb::readAllRegisters(ThreadId) {
-    Sawyer::Container::BitVector retval;
     resetResponses();
 
-    // offsets[i] is the bit offset in retval for the start of register i
+    // Find the offset for each register, and the total number of bits for all registers.
+    // offsets[i] is the bit offset in retval for the start of register i.
     std::vector<size_t> offsets;
+    size_t totalBits = 0;
     offsets.reserve(registers_.size());
-    for (size_t i = 0; i < registers_.size(); ++i)
+    for (size_t i = 0; i < registers_.size(); ++i) {
         offsets.push_back(i > 0 ? offsets.back() + registers_[i-1].second.nBits() : 0);
+        totalBits += registers_[i].second.nBits();
+    }
 
     // Ask GDB for all the register values
+    Sawyer::Container::BitVector retval(totalBits);
     for (const GdbResponse &response: sendCommand("-data-list-register-values x")) {
         if (GdbResponse::ResultClass::DONE == response.result.rclass) {
             if (const Yaml::Node sequence = response.result.results["register-values"]) {
@@ -549,18 +555,20 @@ Gdb::readRegister(ThreadId, RegisterDescriptor reg) {
 
 void
 Gdb::writeAllRegisters(ThreadId tid, const Sawyer::Container::BitVector &allValues) {
+    // Calculate the starting bit offset for each register, and the total number of bits needed.
     // offsets[i] is the bit offset in retval for the start of register i
     std::vector<size_t> offsets;
+    size_t totalBits = 0;
     offsets.reserve(registers_.size());
-    for (size_t i = 0; i < registers_.size(); ++i)
+    for (size_t i = 0; i < registers_.size(); ++i) {
         offsets.push_back(i > 0 ? offsets.back() + registers_[i-1].second.nBits() : 0);
+        totalBits += registers_[i].second.nBits();
+    }
+    ASSERT_always_require(allValues.size() >= totalBits);
 
     // GDB MI doesn't have a command to set multiple registers at the same time, so we have to do them one at a time.
-    size_t offset = 0;
     for (size_t i = 0; i < registers_.size(); ++i) {
-        if (i > 0)
-            offset += registers_[i-1].second.nBits();
-        const auto range = Sawyer::Container::BitVector::BitRange::baseSize(offset, registers_[i].second.nBits());
+        const auto range = Sawyer::Container::BitVector::BitRange::baseSize(offsets[i], registers_[i].second.nBits());
         const auto valueString = "0x" + allValues.toHex(range);
         sendCommand("-var-create temp_reg * $" + registers_[i].first);
         sendCommand("-var-assign temp_reg " + valueString);

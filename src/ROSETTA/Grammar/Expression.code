@@ -5769,8 +5769,15 @@ SgPntrArrRefExp::get_type() const
              }
           case V_SgArrayType:
              {
-               SgArrayType* arrayType = isSgArrayType(someType);
-               returnType = arrayType->get_base_type();
+               // PP (1/10/23): Ada support: arrvar(2..5) returns an array segment.
+               SgExprListExp* indices = isSgExprListExp(get_rhs_operand());
+               const bool     isArraySubRange = (  indices
+                                                && SageInterface::is_Ada_language()
+                                                && isSgRangeExp(indices->get_expressions().at(0))
+                                                );
+
+               returnType = isArraySubRange ? someType
+                                            : isSgArrayType(someType)->get_base_type();
                break;
              }
           case V_SgTypedefType:
