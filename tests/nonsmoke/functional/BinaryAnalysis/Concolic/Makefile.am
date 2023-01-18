@@ -21,6 +21,11 @@ TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 # whether they should test anything or trivially succeed. This approach uses only one mechanism for making that
 # determination (#ifdef ROSE_ENABLE_CONCOLIC_TESTING) rather than one mechanism for each build system.
 
+# However, we do make an exception for tests that can't run in containers.
+noinst_PROGRAMS += isRunningInContainer
+isRunningInContainer_SOURCES = isRunningInContainer.C
+isRunningInContainer_LDADD = $(ROSE_SEPARATE_LIBS)
+
 ########################################################################################################################
 # Utilities and sample codes
 ########################################################################################################################
@@ -110,6 +115,7 @@ TEST_TARGETS += testRun1.passed
 testRun1.passed: $(TEST_EXIT_STATUS) testRun1
 	@$(RTH_RUN) \
 		TITLE="concolic database run1 [$@]" \
+		DISABLED="$$(./isRunningInContainer)" \
 		CMD="./testRun1" \
 		$< $@
 
@@ -120,6 +126,7 @@ TEST_TARGETS += testRun10.passed
 testRun10.passed: $(TEST_EXIT_STATUS) testRun10
 	@$(RTH_RUN) \
 		TITLE="concolic database run10 [$@]" \
+		DISABLED="$$(./isRunningInContainer)" \
 		CMD="./testRun10" \
 		$< $@
 
@@ -140,6 +147,7 @@ TEST_TARGETS += testCombined.passed
 testCombined.passed: $(TEST_EXIT_STATUS) testCombined
 	@$(RTH_RUN) \
 		TITLE="concolic database combined [$@]" \
+		DISABLED="$$(./isRunningInContainer)" \
 		CMD="./testCombined" \
 		$< $@
 
@@ -150,6 +158,7 @@ TEST_TARGETS += testExport.passed
 testExport.passed: $(TEST_EXIT_STATUS) testExport sampleExecutable
 	@$(RTH_RUN) \
 		TITLE="concolic database testExport [$@]" \
+		DISABLED="$$(./isRunningInContainer)" \
 		CMD="./testExport" \
 		$< $@
 
@@ -160,6 +169,7 @@ TEST_TARGETS += testAddressRandomization.passed
 testAddressRandomization.passed: $(TEST_EXIT_STATUS) testAddressRandomization sampleExecutable
 	@$(RTH_RUN) \
 		TITLE="concolic database testAddressRandomization [$@]" \
+		DISABLED="$$(./isRunningInContainer)" \
 		CMD="./testAddressRandomization" \
 		$< $@
 
@@ -238,6 +248,7 @@ TEST_TARGETS += testConcolicExecutor.passed
 testConcolicExecutor.passed: $(TEST_EXIT_STATUS) testConcolicExecutor $(testConcolicExecutor_specimen)
 	@$(RTH_RUN)												\
 	    TITLE="concolic executor [$@]"									\
+	    DISABLED="$$(./isRunningInContainer)" \
 	    CMD="$$(pwd)/testConcolicExecutor $(testConcolicExecutor_flags) $(testConcolicExecutor_specimen)"	\
 	    $< $@
 

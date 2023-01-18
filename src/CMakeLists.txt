@@ -20,6 +20,9 @@ add_custom_target(
   generate_rosePublicConfig
   DEPENDS ${CMAKE_BINARY_DIR}/rosePublicConfig.h)
 
+add_executable(rose-feature-tests featureTests.C)
+
+
 ########################################################################################################################
 # ROSETTA
 ########################################################################################################################
@@ -140,6 +143,9 @@ set(rose_LIB_OBJS
   roseBinaryAnalysis
   roseBinaryAnalysisByteCode
   roseBinaryAnalysisConcolic
+  roseBinaryAnalysisConcolicCallback
+  roseBinaryAnalysisConcolicI386Linux
+  roseBinaryAnalysisConcolicM68kSystem
   roseBinaryAnalysisDebugger
   roseBinaryAnalysisDisassembler
   roseBinaryAnalysisInstructionSemantics

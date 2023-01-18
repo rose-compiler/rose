@@ -254,6 +254,8 @@ Gdb::attach(const Specimen &specimen) {
 
     std::vector<std::string> argv;
     argv.push_back(boost::process::search_path(specimen.gdbName()).string());
+    if (argv.back().empty())
+        throw Exception("cannot find GDB executable \"" + StringUtility::cEscape(specimen.gdbName().string()) + "\"");
     argv.push_back("-n");                               // skip initialization files
     argv.push_back("-q");                               // do not print introductory and copyright messages
     argv.push_back("--interpreter=mi");

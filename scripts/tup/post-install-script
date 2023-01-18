@@ -3,7 +3,12 @@ set -e
 arg0="${0##*/}"
 
 warning() {
-    echo "$arg0" "$@" >&2
+    echo "$arg0: warning:" "$@" >&2
+}
+
+die() {
+    echo "$arg0: error:" "$@" >&2
+    exit 1
 }
 
 # We can get the deployed installation directory from the command-line.
@@ -26,11 +31,41 @@ fi
 [ -d "$prefix/bin" ] || warning "missing installation directory: $prefix/bin"
 [ -d "$prefix/lib" ] || warning "missing installation directory: $prefix/lib"
 
+# The program we can use to change the rpath that's embedded in a dynamically linked ELF executable. The patchelf tool is a bit
+# slower than chrpath but can handle more cases, so we prefer it.  We don't report any errors here yet, but rather wait to see
+# if we're actually installing any dynamically linked executables.
+rpath_changer=
+if patchelf --version >/dev/null 2>&1; then
+    rpath_changer=patchelf
+elif chrpath --version >/dev/null 2>&1; then
+    rpath_changer=chrpath
+elif rpath --version >/dev/null 2>&1; then
+    rpath_changer=rpath
+else
+    die "error: no way to change rpaths; please install patchelf, chrpath, or rpath."
+fi
+
 # Patch all the libraries and executables so they have the correct rpath.
 for f in "$prefix"/bin/* "$prefix"/lib/lib*.so; do
     if [ -r "$f" ]; then
 	echo -n "adjusting rpath for $f... " >&2
-        echo $(patchelf --set-rpath "$prefix/lib" "$f" || true)
+	case "$rpath_changer" in
+	    patchelf)
+		echo $(patchelf --set-rpath "$prefix/lib" "$f" || true)
+		;;
+	    chrpath)
+		# chrpath is excessively noisy
+		chrpath --replace "$prefix/lib" "$f" >/dev/null || \
+		    chrpath --replace "$prefix/lib" "$f" || \
+		    true
+		;;
+	    rpath)
+		rpath "$prefix/lib" "$f"
+		;;
+	    *)
+		die "error: unknown rpath changer: $rpath_changer"
+		;;
+	esac
     fi
 done
 

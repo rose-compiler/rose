@@ -149,7 +149,7 @@ ExecutionManager::isFinished() const {
 void
 ExecutionManager::run() {
     ASSERT_not_null(database_);
-    ASSERT_not_null(config_);
+    ASSERT_require(config_);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
 
     // Configuration -- these are documented and checked in `instance`

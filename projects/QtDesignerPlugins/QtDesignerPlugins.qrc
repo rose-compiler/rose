@@ -1,8 +1,0 @@
-<RCC>
-  <qresource prefix="QtDesignerPlugins" >
-    <file>icons/Graph.gif</file>
-    <file>icons/Kiviat.gif</file>
-    <file>icons/PropTreeWidget.gif</file>
-    <file>icons/Rose.gif</file>
-  </qresource>
-</RCC>

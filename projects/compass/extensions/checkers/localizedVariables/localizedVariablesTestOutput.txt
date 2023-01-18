@@ -1,1 +1,0 @@
-LocalizedVariables: localizedVariablesTest1.C:5.3: SgInitializedName: Variable i does not seem to be used widely in that scope. Try to move it to an inner scope.

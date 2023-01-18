@@ -1,6 +1,6 @@
 add_subdirectory(Callback)
-add_subdirectory(M68kSystem)
 add_subdirectory(I386Linux)
+add_subdirectory(M68kSystem)
 
 add_library(roseBinaryAnalysisConcolic OBJECT
   Architecture.C
