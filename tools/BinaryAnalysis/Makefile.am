@@ -135,6 +135,13 @@ bat_lsf_LDFLAGS = $(ROSE_RPATHS)
 bat_lsf_LDADD = libbatSupport.a $(ROSE_LIBS)
 tests += bat-lsf.passed
 
+bin_PROGRAMS += bat-lsv
+bat_lsv_SOURCES = bat-lsv.C
+bat_lsv_CPPFLAGS = $(ROSE_INCLUDES)
+bat_lsv_LDFLAGS = $(ROSE_RPATHS)
+bat_lsv_LDADD = libbatSupport.a $(ROSE_LIBS)
+tests += bat-lsv.passed
+
 bin_PROGRAMS += bat-mem
 bat_mem_SOURCES = bat-mem.C
 bat_mem_CPPFLAGS = $(ROSE_INCLUDES)
