@@ -20,8 +20,8 @@ namespace ModelChecker {
 /** User-defined functions for model checking semantics.
  *
  *  This class contains functions that are called by the model checker engine and which are meant to be overridden by
- *  users. This base class provides some reasonable defaults for some of the functions, but some of the others are
- *  pure virtual. */
+ *  users. This base class provides some reasonable default implementations for some of the functions, but the others are pure
+ *  virtual. */
 class SemanticCallbacks {
 public:
     /** Shared-ownership pointer. */
@@ -141,7 +141,7 @@ public:
     /** Initialize the initial state.
      *
      *  This is useful if initializations were not done in @ref createInitialRegisters, @ref createInitialMemory, or @ref
-     *  createInitialState.  The benefit of doing it here si that the same code can be used for different semantic domains,
+     *  createInitialState.  The benefit of doing it here is that the same code can be used for different semantic domains,
      *  leaving the other functions to choose the domains.  Doing the initialization here also allows you to use the RISC
      *  operators to initialize the states.
      *
@@ -199,7 +199,7 @@ public:
      *  The default implementation does nothing.
      *
      *  Thread safety: The implementation must be thread safe, but the provided RISC operators will be thread local. The
-     *  current state to which the RISC operators pointsw ill have been copied by this thread. */
+     *  current state to which the RISC operators points will have been copied by this thread. */
     virtual std::vector<TagPtr>
     preExecute(const ExecutionUnitPtr&, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
 
@@ -211,7 +211,7 @@ public:
      *  The default implementation does nothing.
      *
      *  Thread safety: The implementation must be thread safe, but the provided RISC operators will be thread local. The
-     *  current state to which the RISC operators pointsw ill have been copied by this thread. */
+     *  current state to which the RISC operators points will have been copied by this thread. */
     virtual std::vector<TagPtr>
     postExecute(const ExecutionUnitPtr&, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
 
