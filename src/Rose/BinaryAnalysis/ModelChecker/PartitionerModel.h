@@ -318,21 +318,22 @@ private:
     SemanticCallbacks *semantics_ = nullptr;
     AddressInterval stackLimits_;                       // where the stack can exist in memory
     bool computeMemoryRegions_ = false;                 // compute memory regions. This is needed for OOB analysis.
+    const Variables::GlobalVariables &gvars_;
 
-    mutable SAWYER_THREAD_TRAITS::Mutex variableFinderMutex_; // protects the following data m
+    mutable SAWYER_THREAD_TRAITS::Mutex variableFinderMutex_; // protects the following data members
     Variables::VariableFinderPtr variableFinder_unsync;       // shared by all RiscOperator objects
 
 protected:
     RiscOperators(const Settings&, const Partitioner2::PartitionerConstPtr&, ModelChecker::SemanticCallbacks*,
                   const InstructionSemantics::BaseSemantics::SValuePtr &protoval, const SmtSolverPtr&,
-                  const Variables::VariableFinderPtr&);
+                  const Variables::VariableFinderPtr&, const Variables::GlobalVariables&);
 
 public: // Standard public construction-like functions
     ~RiscOperators();
 
     static Ptr instance(const Settings&, const Partitioner2::PartitionerConstPtr&, ModelChecker::SemanticCallbacks*,
                         const InstructionSemantics::BaseSemantics::SValuePtr &protoval, const SmtSolverPtr&,
-                        const Variables::VariableFinderPtr&);
+                        const Variables::VariableFinderPtr&, const Variables::GlobalVariables&);
 
     virtual InstructionSemantics::BaseSemantics::RiscOperatorsPtr
     create(const InstructionSemantics::BaseSemantics::SValuePtr&, const SmtSolverPtr&) const override;
@@ -544,6 +545,7 @@ private:
     size_t nSolverFailures_ = 0;                        // number of times the SMT solver failed
     UnitCounts unitsReached_;                           // number of times basic blocks were reached
     Variables::VariableFinderPtr variableFinder_;       // also shared by all RiscOperator objects
+    Variables::GlobalVariables gvars_;                  // all global variables identified by variableFinder_
 
     // This model is able to follow a single path specified by the user. In order to do that, the user should call
     // followOnePath to provide the ordered list of execution units. The nextCodeAddresses function is overridden to
