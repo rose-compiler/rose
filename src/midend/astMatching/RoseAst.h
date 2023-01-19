@@ -1,6 +1,6 @@
 
-#ifndef ROSE_AST_H
-#define ROSE_AST_H
+#ifndef ROSE_RoseAst_H
+#define ROSE_RoseAst_H
 
 /*************************************************************
  * Author   : Markus Schordan                                *
