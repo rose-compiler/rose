@@ -36,7 +36,8 @@ noinst_PROGRAMS = \
     buildCommonBlock doLoopNormalization buildLabelStatement2 replaceWithPattern \
     insertBeforeUsingCommaOp insertAfterUsingCommaOp deepCopy fixVariableReferences \
     buildJavaPackage createAbstractHandles buildStatementFromString \
-    getArrayElementType interfaceFunctionCoverage buildTemplateClass buildUsingDirectiveStatement
+    getArrayElementType interfaceFunctionCoverage buildTemplateClass buildUsingDirectiveStatement \
+    normalizeArrowExpWithAddressOfLeftOperand
 
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes --suppressions=$(top_srcdir)/scripts/rose-suppressions-for-valgrind
 # VALGRIND = valgrind $(VALGRIND_OPTIONS)
@@ -77,6 +78,7 @@ buildNullStatement_SOURCES               = buildNullStatement.C
 buildForStmt_SOURCES                     = buildForStmt.C
 canonicalLoop_SOURCES                    = canonicalLoop.C
 loopNormalization_SOURCES                = loopNormalization.C 
+normalizeArrowExpWithAddressOfLeftOperand_SOURCES = normalizeArrowExpWithAddressOfLeftOperand.C 
 collectReadWriteVariables_SOURCES        = collectReadWriteVariables.C
 typeTraits_SOURCES                       = typeTraits.C
 livenessAnalysis_SOURCES                 = livenessAnalysis.C
@@ -156,6 +158,7 @@ generatedCodeExamples = \
   rose_inputloopInterchange.C \
   rose_inputloopTiling.C \
   rose_inputloopNormalization.C \
+  rose_inputnormalizeArrowExpWithAddressOfLeftOperand.C \
   rose_inputinsertStatementBeforeFunction.C \
   rose_inputRemoveStatementCommentRelocation.C \
   rose_inputgenerateUniqueName.C \
@@ -232,6 +235,7 @@ group1 =						\
 	rose_inputbuildForStmt.C			\
 	rose_inputcanonicalLoop.C			\
 	rose_inputloopNormalization.C			\
+	rose_inputnormalizeArrowExpWithAddressOfLeftOperand.C \
 	rose_inputcollectReadWriteVariables.C		\
 	rose_inputtypeTraits.C				\
 	rose_inputinterfaceFunctionCoverage.C	        \
@@ -593,7 +597,7 @@ EXTRA_DIST = astInterface.conf inputBlank1.C inputBlank2.C inputfindMain.C input
        inputinsertAfterUsingCommaOp.C inputdeepCopy.C inputfixVariableReferences.C  inputcreateAbstractHandles.C \
        inputloopCollapsing_2.C  inputloopCollapsing_3.C  inputloopCollapsing_4.C  inputloopCollapsing_5.C \
        inputbuildJavaPackage.C inputloopCollapsing_1.C inputbuildStatementFromString.C inputinterfaceFunctionCoverage.C  \
-       inputbuildTemplateClass.C inputUsingDirectiveStatement.C
+       inputbuildTemplateClass.C inputUsingDirectiveStatement.C inputnormalizeArrowExpWithAddressOfLeftOperand.C
 
 # JP (10/4/14): Added the unit tests
 unit-tests:

@@ -27396,3 +27396,50 @@ void SageInterface::clearSharedGlobalScopes(SgProject * project) {
   ROSE_ASSERT(hmm != nullptr);
   hmm->clear();
 }
+
+//!  Convert all code within root matching the patern of (&left)->right, and translate them into left.right.  Return the number of matches of the pattern.
+/*
+  
+--- p_lhs_operand_i ->@0x7ff2fc3f1010 SgArrowExp c_rc-575-out.cpp 16:13
+   |--- p_lhs_operand_i ->@0x7ff2fc428010 SgAddressOfOp c_rc-575-out.cpp 16:4
+   |   |___ p_operand_i ->@0x7ff2fc582078 SgVarRefExp c_rc-575-out.cpp 16:5 init name@0x7ff2fcf03890 symbol name="table1"
+   |___ p_rhs_operand_i ->@0x7ff2fc5820e0 SgVarRefExp c_rc-575-out.cpp 16:16 init name@0x7ff2fcf03480 symbol name="item1"
+
+
+TODO: we only handle simplest pattern for now:  both leaf operands involved are SgVarRefExp. 
+ 
+ * */
+int SageInterface::normalizeArrowExpWithAddressOfLeftOperand(SgNode* root)
+{
+  int match_count = 0;
+  ROSE_ASSERT (root);
+  
+  // find all SgArrowExp, then try to match the expected pattern 
+  // SgArrowExp(SgAddressOfOp(SgVarRefExp:table1),SgVarRefExp:item1)
+  Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(root, V_SgArrowExp);
+
+  // reverse iterator is safer to use than forward iterator to support translation
+  for (Rose_STL_Container<SgNode *>::reverse_iterator i = nodeList.rbegin(); i != nodeList.rend(); i++)
+  {
+    SgArrowExp* a_exp = isSgArrowExp(*i);
+    ROSE_ASSERT (a_exp);
+    if (SgAddressOfOp* address_op = isSgAddressOfOp(a_exp->get_lhs_operand()) )  
+    {
+       if (SgVarRefExp* left = isSgVarRefExp(address_op->get_operand())) // match left side pattern  
+       {
+	 if (SgVarRefExp* right = isSgVarRefExp (a_exp->get_rhs_operand())) // match right side pattern
+	 {
+	    // do the transformation: copy two operands, making a dot exp instead
+	    SgDotExp* dot_exp = buildDotExp (deepCopy(left), deepCopy(right));
+	    replaceExpression (a_exp, dot_exp);
+	    match_count++;
+	 }
+       }
+    } 
+  } // end for   
+
+  return match_count;
+}
+
+
+
