@@ -259,6 +259,21 @@ public:
     std::string toString() const;
     /** @} */
 
+    /** Predicate to test whether variable is valid.
+     *
+     *  Returns true if the variable is valid, i.e., if it has a non-zero size. Default constructed variables have a zero
+     *  size. */
+    explicit operator bool() const {
+        return !interval().isEmpty();
+    }
+
+    /** Predicate to test whether variable is invalid.
+     *
+     *  Returns true if the variable is invalid, i.e., if it has a zero size. */
+    bool operator!() const {
+        return interval().isEmpty();
+    }
+
     /** Print local variable descriptor. */
     friend std::ostream& operator<<(std::ostream&, const Rose::BinaryAnalysis::Variables::StackVariable&);
 };
@@ -339,6 +354,21 @@ public:
     void print(std::ostream&) const;
     std::string toString() const;
     /** @} */
+
+    /** Predicate to test whether variable is valid.
+     *
+     *  Returns true if the variable is valid, i.e., if it has a non-zero size. Default constructed variables have a zero
+     *  size. */
+    explicit operator bool() const {
+        return !interval().isEmpty();
+    }
+
+    /** Predicate to test whether variable is invalid.
+     *
+     *  Returns true if the variable is invalid, i.e., if it has a zero size. */
+    bool operator!() const {
+        return interval().isEmpty();
+    }
 
     /** Print global variable descriptor. */
     friend std::ostream& operator<<(std::ostream&, const Rose::BinaryAnalysis::Variables::GlobalVariable&);
