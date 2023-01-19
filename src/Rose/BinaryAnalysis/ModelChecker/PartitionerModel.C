@@ -281,6 +281,18 @@ findStackVariable(const FunctionCallStack &callStack, const AddressInterval &loc
     return {foundInterval, foundVariable};
 }
 
+// Return the global variable at the specified location, but only if the variable contains the entire location.
+static Variables::GlobalVariable
+findGlobalVariable(const Variables::GlobalVariables &gvars, const AddressInterval &location) {
+    if (location) {
+        if (Variables::GlobalVariable gvar = gvars.getOrDefault(location.least())) {
+            if (gvar.interval().contains(location))
+                return gvar;
+        }
+    }
+    return {};
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Function call stack
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -476,9 +488,11 @@ State::callStack() {
 
 RiscOperators::RiscOperators(const Settings &settings, const P2::Partitioner::ConstPtr &partitioner,
                              ModelChecker::SemanticCallbacks *semantics, const BS::SValue::Ptr &protoval,
-                             const SmtSolver::Ptr &solver, const Variables::VariableFinder::Ptr &varFinder)
+                             const SmtSolver::Ptr &solver, const Variables::VariableFinder::Ptr &varFinder,
+                             const Variables::GlobalVariables &gvars)
     : Super(protoval, solver), settings_(settings), partitioner_(partitioner),
-      semantics_(dynamic_cast<PartitionerModel::SemanticCallbacks*>(semantics)), variableFinder_unsync(varFinder) {
+      semantics_(dynamic_cast<PartitionerModel::SemanticCallbacks*>(semantics)), gvars_(gvars),
+      variableFinder_unsync(varFinder) {
     ASSERT_not_null(partitioner);
     ASSERT_not_null(semantics_);
     ASSERT_not_null(variableFinder_unsync);
@@ -511,9 +525,9 @@ RiscOperators::~RiscOperators() {}
 RiscOperators::Ptr
 RiscOperators::instance(const Settings &settings, const P2::Partitioner::ConstPtr &partitioner,
                         ModelChecker::SemanticCallbacks *semantics, const BS::SValue::Ptr &protoval, const SmtSolver::Ptr &solver,
-                        const Variables::VariableFinder::Ptr &varFinder) {
+                        const Variables::VariableFinder::Ptr &varFinder, const Variables::GlobalVariables &gvars) {
     ASSERT_not_null(protoval);
-    return Ptr(new RiscOperators(settings, partitioner, semantics, protoval, solver, varFinder));
+    return Ptr(new RiscOperators(settings, partitioner, semantics, protoval, solver, varFinder, gvars));
 }
 
 BS::RiscOperators::Ptr
@@ -978,27 +992,34 @@ RiscOperators::assignRegion(const BS::SValue::Ptr &result_) {
         auto result = SValue::promote(result_);
         if (!result->region()) {
             if (auto va = result->toUnsigned()) {
-                FunctionCallStack &callStack = State::promote(currentState())->callStack();
-                auto whereWhat = findStackVariable(callStack, *va, stackLimits_);
-                if (whereWhat.first) {
-                    switch (whereWhat.second.purpose()) {
-                        case Variables::StackVariable::Purpose::RETURN_ADDRESS:
-                        case Variables::StackVariable::Purpose::FRAME_POINTER:
-                        case Variables::StackVariable::Purpose::SPILL_AREA:
-                            // These types of stack areas don't really have hard-and-fast boundaries because the compiler often
-                            // generates code to compute these addresses as part of accessing other areas of the stack frame.
-                            break;
+                auto state = State::promote(currentState());
 
-                        case Variables::StackVariable::Purpose::NORMAL:
-                            // The variable is known source-code. These are things we definitely want to check!
-                            result->region(whereWhat.first);
-                            break;
+                if (Variables::GlobalVariable gvar = findGlobalVariable(gvars_, *va)) {
+                    result->region(gvar.interval());
 
-                        case Variables::StackVariable::Purpose::UNKNOWN:
-                        case Variables::StackVariable::Purpose::OTHER:
-                            // We're not quite sure what's here, so treat it as if it were a source code variable.
-                            result->region(whereWhat.first);
-                            break;
+                } else {
+                    auto whereWhat = findStackVariable(state->callStack(), *va, stackLimits_);
+                    if (whereWhat.first) {
+                        switch (whereWhat.second.purpose()) {
+                            case Variables::StackVariable::Purpose::RETURN_ADDRESS:
+                            case Variables::StackVariable::Purpose::FRAME_POINTER:
+                            case Variables::StackVariable::Purpose::SPILL_AREA:
+                                // These types of stack areas don't really have hard-and-fast boundaries because the compiler
+                                // often generates code to compute these addresses as part of accessing other areas of the
+                                // stack frame.
+                                break;
+
+                            case Variables::StackVariable::Purpose::NORMAL:
+                                // The variable is known source-code. These are things we definitely want to check!
+                                result->region(whereWhat.first);
+                                break;
+
+                            case Variables::StackVariable::Purpose::UNKNOWN:
+                            case Variables::StackVariable::Purpose::OTHER:
+                                // We're not quite sure what's here, so treat it as if it were a source code variable.
+                                result->region(whereWhat.first);
+                                break;
+                        }
                     }
                 }
             }
@@ -1288,7 +1309,17 @@ SemanticCallbacks::SemanticCallbacks(const ModelChecker::Settings::Ptr &mcSettin
     : ModelChecker::SemanticCallbacks(mcSettings), settings_(settings), partitioner_(partitioner) {
 
     ASSERT_not_null(partitioner);
+
+    // Find global variables needed for uninitialized variable and buffer overflow model checkers. Although the variable
+    // finder is not thread safe, it's okay to use it here without obtaining a lock because no other thread could possibly
+    // be using it already since we just created it.
     variableFinder_ = Variables::VariableFinder::instance();
+    if (TestMode::OFF != settings_.oobRead || TestMode::OFF != settings_.oobWrite || TestMode::OFF != settings_.uninitVar) {
+        Sawyer::Message::Stream info(mlog[INFO]);
+        SAWYER_MESG(info) <<"searching for global variables";
+        gvars_ = variableFinder_->findGlobalVariables(partitioner_);
+        SAWYER_MESG(info) <<"; found " <<StringUtility::plural(gvars_.size(), "global variables") <<"\n";
+    }
 
     if (!settings_.initialStackVa) {
         // Choose an initial stack pointer that's unlikely to interfere with instructions or data.
@@ -1356,6 +1387,7 @@ SemanticCallbacks::reset() {
     nSolverFailures_ = 0;
     unitsReached_.clear();
     units_.clear();                                     // perhaps not necessary
+    gvars_.clear();
 }
 
 size_t
@@ -1409,7 +1441,7 @@ SemanticCallbacks::createInitialState() {
 
 BS::RiscOperators::Ptr
 SemanticCallbacks::createRiscOperators() {
-    auto ops = RiscOperators::instance(settings_, partitioner_, this, protoval(), SmtSolver::Ptr(), variableFinder_);
+    auto ops = RiscOperators::instance(settings_, partitioner_, this, protoval(), SmtSolver::Ptr(), variableFinder_, gvars_);
     ops->trimThreshold(mcSettings()->maxSymbolicSize);      // zero means no limit
     ops->initialState(nullptr);
     ops->currentState(nullptr);
