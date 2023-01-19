@@ -1,7 +1,7 @@
 // roseInternal.h -- internal header file for the ROSE Optimizing Preprocessor
 
-#ifndef ROSE_INTERNAL_H
-#define ROSE_INTERNAL_H
+#ifndef ROSE_roseInternal_H
+#define ROSE_roseInternal_H
 
 // DQ (3/22/2009): Added support for detection of Microsoft Compiler (MSVC) details.
 #include "rose_msvc.h"
