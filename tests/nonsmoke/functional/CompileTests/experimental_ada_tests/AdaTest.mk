@@ -294,7 +294,9 @@ ROSE_FAILING_ADA_TESTS :=                           \
   delay_until.adb                                   \
   mangle_disctypes.adb                              \
   mpiuse.ads                                        \
-  pragma_placement.adb  
+  pragma_placement.adb                              \
+  resolve_more_overloads.adb                        \
+  resolve_overloads.adb                             
 
 # defines tests that are supported by ASIS
 ASIS_PASSING_TESTS :=                               \
