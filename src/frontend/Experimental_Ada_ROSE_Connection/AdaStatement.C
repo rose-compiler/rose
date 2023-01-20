@@ -2854,6 +2854,9 @@ namespace
                 std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
               )
   {
+    // PP (20/1/23): why do we use the nondefining function's scope?
+    //               for one, ROSE scope fixup currently unifies the scopes.
+    //               see also SCOPE_COMMENT_1.
     return nondef ? mkProcedureDecl(*nondef, SG_DEREF(nondef->get_scope()), rettype, std::move(complete))
                   : mkProcedureDecl(name,    scope, rettype, std::move(complete));
   }
@@ -2867,6 +2870,8 @@ namespace
                 std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
               )
   {
+    // \todo PP (20/1/23) should we also use the first nondefining scope?
+    //                    see SCOPE_COMMENT_1 ..
     return nondef ? mkProcedureDecl_nondef(*nondef, scope, rettype, std::move(complete))
                   : mkProcedureDecl_nondef(name,    scope, rettype, std::move(complete));
   }
@@ -4398,12 +4403,21 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         //~ SgScopeStatement&       logicalScope = adaname.parent_scope();
         //~ SgAdaEntryDecl&         sgnode  = mkAdaEntryDef(entrydcl, logicalScope, ParameterCompletion{range, ctx});
         ElemIdRange             params  = idRange(usableParameterProfile(decl));
-        SgScopeStatement&       outer   = ctx.scope();
+
+        // PP (1/20/23): *SCOPE_COMMENT_1
+        //               replace outer with entrydcl.get_scope()
+        //               note, this will have entries use the same scope handling as
+        //                     functions and procedures.
+        //                     Not sure if this is correct, because by giving a definition
+        //                     in the body the scope of a spec, will make symbols
+        //                     in the body invisible, unless the physical scope is used
+        //                     for lookup.
+        // SgScopeStatement&       outer   = ctx.scope();
         SgAdaEntryDecl&         sgnode  = mkAdaEntryDefn( entrydcl,
-                                                          outer,
+                                                          SG_DEREF(entrydcl.get_scope()), // was: outer,
                                                           ParameterCompletion{params, ctx},
                                                           EntryIndexCompletion{decl.Entry_Index_Specification, ctx}
-                                                       );
+                                                        );
 
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
