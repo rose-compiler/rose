@@ -1029,6 +1029,94 @@ namespace
 
     checker.traverse(file, preorder);
   }
+
+
+#if IN_PROGRESS
+  void resolveInheritedFunctionOverloads(SgGlobal& scope)
+  {
+    using OverloadSet = std::vector<SgFunctionSymbol*>;
+
+    struct OverloadInfo : std::tuple<SgFunctionSymbol*, OverloadSet>
+    {
+      using base = std::tuple<SgFunctionSymbol*, OverloadSet>;
+      using base::base;
+
+      SgFunctionSymbol*  orig_sym() const { return std::get<0>(*this); }
+            OverloadSet& ovlset()         { return std::get<1>(*this); }
+      const OverloadSet& ovlset() const   { return std::get<1>(*this); }
+    };
+
+    using OverloadMap = std::map<SgFunctionRefExp*, OverloadInfo>;
+    using WorkItem    = OverloadMap::iterator;
+    using WorkItems   = std::vector<WorkItem>;
+
+    OverloadMap allrefs = collectAllFunctionRefExp(scope);
+    WorkItems   workset = createWorksetFrom(allrefs);
+
+    while (!workset.empty())
+    {
+      auto&             item     = *workset.back();
+      const std::size_t numcands = item.second.size();
+
+      workset.pop_back();
+
+      // nothing to be done ... go to next work item
+      if (candidates.size() < 2) continue;
+
+      OverloadSet& overloads = item.second.ovlset();
+
+      {
+        // ...
+        // disambiguate based on arguments and argument types
+        OverloadSet       viables;
+        SgFunctionSymbol& origSym  = item.second.orig_sym();
+        SgFunctionSymbol& funSym   = functionSymbol(*funDcl, origSym, arglst);
+        auto              isViable = [](SgFunctionSymbol*)->bool { return true };
+
+        std::copy_if( overloads.begin(), overloads.end(),
+                      std::back_inserter(viables)
+                      isViable
+                    );
+
+        // put in place candidates
+        if (viables.size())
+          overloads.swap(viables);
+      }
+
+      {
+        // ...
+        // disambiguate based on return types and context
+        OverloadSet  viables;
+        auto         isViableReturn = [](SgFunctionSymbol*)->bool { return true };
+
+        std::copy_if( overloads.begin(), overloads.end(),
+                      std::back_inserter(viables)
+                      isViableReturn
+                    );
+
+        // put in place candidates
+        overloads.swap(viables);
+      }
+
+      // was there any progress ?
+      if (numcands == workelem.second.size()) continue;
+
+      // after disambiguation, set the (new) symbol
+      if (overloads.size() == 0)
+      {
+        logWarn() << "empty overload set" << fnref.unparseToString() << std::endl;
+        fnref.set_symbol(item.second.orig_sym());
+      }
+      else
+      {
+        fnref.set_symbol(overloads.front());
+      }
+
+      // put parent and children call nodes in need of disambiguation back into the worklist
+      // ...
+    }
+  }
+#endif /* IN_PROGRESS */
 } // anonymous
 
 
@@ -1052,6 +1140,8 @@ void convertAsisToROSE(Nodes_Struct& headNodes, SgSourceFile* file)
 
   initializePkgStandard(astScope);
   std::for_each(units.begin(), units.end(), UnitCreator{AstContext{}.scope(astScope)});
+
+  // resolveInheritedFunctionOverloads(astScope);
   clearMappings();
 
   //~ std::string astDotFile = astDotFileName(*file);

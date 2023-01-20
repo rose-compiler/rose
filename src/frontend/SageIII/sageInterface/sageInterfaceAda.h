@@ -280,8 +280,8 @@ namespace
 
   /// returns the declaration node for the package body, if available
   /// @{
-  SgAdaPackageBodyDecl& getBodyDeclaration(const SgAdaPackageSpecDecl& specDecl);
-  SgAdaPackageBodyDecl* getBodyDeclaration(const SgAdaPackageSpecDecl* specDecl);
+  SgAdaPackageBodyDecl& getPackageBodyDeclaration(const SgAdaPackageSpecDecl& specDecl);
+  SgAdaPackageBodyDecl* getPackageBodyDeclaration(const SgAdaPackageSpecDecl* specDecl);
   /// @}
 
   /// returns the declaration node (either SgAdaTaskSpecDecl or SgAdaTaskTypeDecl) for the task specification
@@ -297,6 +297,16 @@ namespace
   SgDeclarationStatement* getSpecificationDeclaration(const SgAdaProtectedBodyDecl* bodyDecl);
   /// @}
 
+  /// returns the body scope (aka definition) of a task, package, or protected object.
+  /// \param  scope a task, package, protected object spec or body
+  /// \return the corresponding body scope (i.e., SgAdaProtectedBody, SgAdaPackageBody, SgAdaTaskBody)
+  ///         returns null when a body cannot be found
+  /// \details
+  ///   given a spec or body, the function returns the body, null otherwise
+  ///   e.g., getBodyScope(SgAdaPackageSpec) -> SgAdaPackageBody
+  ///         getBodyScope(SgAdaPackageBody) -> SgAdaPackageBody
+  ///         getBodyScope(SgFunctionDefinition) -> nullptr
+  const SgScopeStatement* correspondingBody(const SgScopeStatement* scope);
 
   /// returns the iterator to one past the last declaration (the limit)
   /// in the statement sequence.
@@ -403,6 +413,12 @@ namespace
   /// @{
   bool isSeparatedBody(const SgDeclarationStatement& n);
   bool isSeparatedBody(const SgDeclarationStatement* n);
+  /// @}
+
+  /// returns true iff \ref n is a separated function definition is separated
+  /// @{
+  bool isSeparatedDefinition(const SgFunctionDeclaration& n);
+  bool isSeparatedDefinition(const SgFunctionDeclaration* n);
   /// @}
 
   /// returns the most fundamental type

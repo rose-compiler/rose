@@ -430,7 +430,16 @@ namespace
 
     void handleStringLabel(const std::string& s);
 
-    void handleFunctionEntryDecl(SgFunctionDeclaration&, std::string keyword, bool hasReturn = false);
+    /// prints routine declarations
+    /// \param fn        the routine declaration
+    /// \param keyword   one of "function", "procedure", "entry"
+    /// \param hasReturn true, iff routine returns a value (true if fn is a function)
+    /// \param separated true, iff routine is a separated defn
+    void handleRoutineDecl( SgFunctionDeclaration& fn,
+                            std::string keyword,
+                            bool hasReturn = false,
+                            bool separated = false
+                          );
 
     void handleParameterList(const SgInitializedNamePtrList& params);
     void handleParameterList(const SgDeclarationStatementPtrList& params);
@@ -1649,22 +1658,23 @@ namespace
 
     void handle(SgFunctionDeclaration& n)
     {
-      prnSeparateQual(n, n.get_scope());
-
+      const bool      separate = si::Ada::isSeparatedDefinition(n);
       const bool      isFunc  = si::Ada::isFunction(n.get_type());
       std::string     keyword = isFunc ? "function" : "procedure";
+
+      if (separate) prnSeparateQual(n, n.get_scope());
 
       if (n.get_ada_formal_subprogram_decl())
         prn("with ");
       if (n.get_declarationModifier().isOverride())
         prn("overriding ");
 
-      handleFunctionEntryDecl(n, keyword, isFunc);
+      handleRoutineDecl(n, keyword, isFunc, separate);
     }
 
     void handle(SgAdaEntryDecl& n)
     {
-      handleFunctionEntryDecl(n, "entry");
+      handleRoutineDecl(n, "entry");
     }
 
     void stmt(SgStatement* s, SgAdaDiscriminatedTypeDecl* d = nullptr);
@@ -1917,15 +1927,16 @@ namespace
 
 
   void
-  AdaStatementUnparser::handleFunctionEntryDecl(SgFunctionDeclaration& n, std::string keyword, bool hasReturn)
+  AdaStatementUnparser::handleRoutineDecl(SgFunctionDeclaration& n, std::string keyword, bool hasReturn, bool separated)
   {
     std::string name = si::Ada::convertRoseOperatorNameToAdaName(n.get_name());
 
+    //~ std::cerr << keyword << " " << name << " " << separated << " " << n.get_scope() << std::endl;
+
     prn(keyword);
     prn(" ");
-    // \todo do we need to qualify the name?
-    //       note, separated bodies have qualified names, but they are printed before
-    //       in handle (SgFunctionDeclaration&).
+
+    if (!separated) prnNameQual(n, n.get_scope());
     prn(name);
 
     SgAdaEntryDecl* adaEntry = isSgAdaEntryDecl(&n);
@@ -2020,6 +2031,7 @@ namespace
     stmt(def);
 
     prn(" ");
+    if (!separated) prnNameQual(n, n.get_scope());
     prn(name);
     prn(STMT_SEP);
   }

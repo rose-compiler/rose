@@ -1370,14 +1370,24 @@ namespace
       ADA_ASSERT (lhs && rhs);
 
       if (lhs->get_line() < rhs->get_line())
+      {
+        //~ logError() << "ll< " << lhs->get_line() << "/" << rhs->get_line() << std::endl;
         return true;
+      }
 
       if (rhs->get_line() < lhs->get_line())
+      {
+        //~ logError() << "rl< " << lhs->get_line() << "/" << rhs->get_line() << std::endl;
         return false;
+      }
 
       if (lhs->get_col() < rhs->get_col())
+      {
+        //~ logError() << "lc< " << lhs->get_col() << "/" << rhs->get_col() << std::endl;
         return true;
+      }
 
+      //~ logError() << "ff< " << lhs->get_col() << "/" << rhs->get_col() << std::endl;
       return false;
     }
 
@@ -1385,13 +1395,30 @@ namespace
     {
       ADA_ASSERT (n);
 
+      //~ logError() << typeid(*n).name()
+                 //~ << " " << n->unparseToString()
+                 //~ << " " << n->isCompilerGenerated()
+                 //~ << std::endl;
       return (*this)(n->get_startOfConstruct(), rhs);
     }
   };
 
 
+
   struct PragmaPlacer
   {
+      //~ struct StmtInfo : std::tuple<SgStatement*, bool>
+      //~ {
+        //~ using base = std::tuple<SgStatement*, bool>;
+        //~ using base::base;
+
+        //~ StmtInfo(SgStatement* s) : base(s, false) {}
+
+        //~ SgStatement* stmt() const { return std::get<0>(*this); }
+        //~ bool         last() const { return std::get<1>(*this); }
+        //~ void         last(bool b) { std::get<1>(*this) = b; }
+      //~ };
+
       explicit
       PragmaPlacer(SgScopeStatement& one)
       : all(), last(one)
@@ -1408,23 +1435,34 @@ namespace
       template <class Iterator>
       void copyToAll(Iterator begin, Iterator limit)
       {
-        std::copy(begin, limit, std::back_inserter(all));
+        using SageStmtPtr = decltype(*begin);
+
+        auto  hasSourceLocation = [](SageStmtPtr p) -> bool { return !p->isCompilerGenerated(); };
+
+        std::copy_if( begin, limit,
+                      std::back_inserter(all),
+                      hasSourceLocation
+                    );
+      }
+
+      template <class Sequence>
+      void copyToAll(Sequence& seq)
+      {
+        copyToAll(seq.begin(), seq.end());
       }
 
       void copyToAll(SgScopeStatement& lst)
       {
+        //~ logError() << typeid(lst).name()
+                   //~ << " " << n->unparseToString()
+                   //~ << " " << lst.isCompilerGenerated()
+                   //~ << " " << lst.get_startOfConstruct()->get_line()
+                   //~ << std::endl;
+
         if (lst.containsOnlyDeclarations())
-        {
-          SgDeclarationStatementPtrList& stmts = lst.getDeclarationList();
-
-          copyToAll(stmts.begin(), stmts.end());
-        }
+          copyToAll(lst.getDeclarationList());
         else
-        {
-          SgStatementPtrList& stmts = lst.getStatementList();
-
-          copyToAll(stmts.begin(), stmts.end());
-        }
+          copyToAll(lst.getStatementList());
       }
 
 
@@ -1433,12 +1471,19 @@ namespace
         typedef std::vector<SgStatement*>::const_iterator const_iterator;
         ADA_ASSERT (pragma);
 
-        const_iterator pos = std::lower_bound( all.begin(), all.end(),
+        const_iterator beg = all.begin();
+        const_iterator lim = all.end();
+        const_iterator pos = std::lower_bound( beg, lim,
                                                pragma->get_startOfConstruct(),
                                                SourceLocationComparator{}
                                              );
 
-        if (pos != all.end())
+        // The following if-else structure gives preference
+        //   to inserting the pragma into the first scope.
+        //   \todo see pragmaplacenment.adb for examples where this method fails.
+        if (pos != beg)
+          SageInterface::insertStatementAfter(*--pos, pragma);
+        else if (pos != lim)
           SageInterface::insertStatementBefore(*pos, pragma);
         else
           SageInterface::appendStatement(pragma, &last);
@@ -2223,7 +2268,7 @@ namespace
 
           AdaIdentifier ident{usedEl.fullName};
 
-          used = findFirst(adaPkgs(), ident); 
+          used = findFirst(adaPkgs(), ident);
           if (!used)
           {
             if (SgNamedType* ty = isSgNamedType(findFirst(adaTypes(), ident)))
@@ -2809,6 +2854,9 @@ namespace
                 std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
               )
   {
+    // PP (20/1/23): why do we use the nondefining function's scope?
+    //               for one, ROSE scope fixup currently unifies the scopes.
+    //               see also SCOPE_COMMENT_1.
     return nondef ? mkProcedureDecl(*nondef, SG_DEREF(nondef->get_scope()), rettype, std::move(complete))
                   : mkProcedureDecl(name,    scope, rettype, std::move(complete));
   }
@@ -2822,6 +2870,8 @@ namespace
                 std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
               )
   {
+    // \todo PP (20/1/23) should we also use the first nondefining scope?
+    //                    see SCOPE_COMMENT_1 ..
     return nondef ? mkProcedureDecl_nondef(*nondef, scope, rettype, std::move(complete))
                   : mkProcedureDecl_nondef(name,    scope, rettype, std::move(complete));
   }
@@ -4353,12 +4403,21 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         //~ SgScopeStatement&       logicalScope = adaname.parent_scope();
         //~ SgAdaEntryDecl&         sgnode  = mkAdaEntryDef(entrydcl, logicalScope, ParameterCompletion{range, ctx});
         ElemIdRange             params  = idRange(usableParameterProfile(decl));
-        SgScopeStatement&       outer   = ctx.scope();
+
+        // PP (1/20/23): *SCOPE_COMMENT_1
+        //               replace outer with entrydcl.get_scope()
+        //               note, this will have entries use the same scope handling as
+        //                     functions and procedures.
+        //                     Not sure if this is correct, because by giving a definition
+        //                     in the body the scope of a spec, will make symbols
+        //                     in the body invisible, unless the physical scope is used
+        //                     for lookup.
+        // SgScopeStatement&       outer   = ctx.scope();
         SgAdaEntryDecl&         sgnode  = mkAdaEntryDefn( entrydcl,
-                                                          outer,
+                                                          SG_DEREF(entrydcl.get_scope()), // was: outer,
                                                           ParameterCompletion{params, ctx},
                                                           EntryIndexCompletion{decl.Entry_Index_Specification, ctx}
-                                                       );
+                                                        );
 
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
