@@ -1207,7 +1207,7 @@ namespace
 
     markCompilerGenerated(lst); // this is overwritten in buildNondefiningFunctionDeclaration
     markCompilerGenerated(sgnode);
-    //~ logError() << "1: " << nm << " " << sgnode.get_type()->get_mangled() << std::endl;
+    //~ logError() << "P " << nm << " " << sgnode.get_scope() << std::endl;
     return sgnode;
   }
 }
@@ -1389,13 +1389,11 @@ namespace
     // not used
     ADA_ASSERT(sgnode.get_parameterList_syntax() == nullptr);
 
-    SgFunctionSymbol*         funsy  = scope.find_symbol_by_type_of_function<SgFunctionDeclaration>(name, &funty, NULL, NULL);
+    if (nullptr == scope.find_symbol_by_type_of_function<SgFunctionDeclaration>(name, &funty, NULL, NULL))
+      scope.insert_symbol(name, &mkBareNode<SgFunctionSymbol>(&sgnode));
 
-    ADA_ASSERT(funsy == nullptr);
-    funsy = &mkBareNode<SgFunctionSymbol>(&sgnode);
-
-    scope.insert_symbol(name, funsy);
     markCompilerGenerated(lst);
+    //~ logError() << "E " << name << " " << sgnode.get_scope() << std::endl;
     return sgnode;
   }
 }

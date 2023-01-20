@@ -631,7 +631,7 @@ namespace Ada
 
 
   SgAdaPackageBodyDecl*
-  getBodyDeclaration(const SgAdaPackageSpecDecl* specDecl)
+  getPackageBodyDeclaration(const SgAdaPackageSpecDecl* specDecl)
   {
     if (!specDecl) return nullptr;
 
@@ -645,13 +645,37 @@ namespace Ada
   }
 
   SgAdaPackageBodyDecl&
-  getBodyDeclaration(const SgAdaPackageSpecDecl& specDecl)
+  getPackageBodyDeclaration(const SgAdaPackageSpecDecl& specDecl)
   {
     SgAdaPackageSpec&     spec = SG_DEREF(specDecl.get_definition());
     SgAdaPackageBody&     body = SG_DEREF(spec.get_body());
     SgAdaPackageBodyDecl* bodyDecl = isSgAdaPackageBodyDecl(body.get_parent());
 
     return SG_DEREF(bodyDecl);
+  }
+
+  namespace
+  {
+    struct CorrespondingBodyFinder : sg::DispatchHandler<const SgScopeStatement*>
+    {
+      void handle(const SgNode&)               { /* nothing to be done */ }
+      void handle(const SgAdaPackageSpec& n)   { res = n.get_body(); }
+      void handle(const SgAdaPackageBody& n)   { res = &n; /* n is the body */ }
+
+      void handle(const SgAdaTaskSpec& n)      { res = n.get_body(); }
+      void handle(const SgAdaTaskBody& n)      { res = &n; }
+
+      void handle(const SgAdaProtectedSpec& n) { res = n.get_body(); }
+      void handle(const SgAdaProtectedBody& n) { res = &n; }
+    };
+  }
+
+  const SgScopeStatement*
+  correspondingBody(const SgScopeStatement* scope)
+  {
+    ASSERT_not_null(scope);
+
+    return sg::dispatch(CorrespondingBodyFinder{}, scope);
   }
 
 
@@ -1024,6 +1048,59 @@ namespace Ada
   bool isSeparatedBody(const SgDeclarationStatement* n)
   {
     return n && isSeparatedBody(*n);
+  }
+
+  namespace
+  {
+    template <class SageNodeSequence>
+    const SgFunctionDeclaration*
+    findSecondaryFunctionDecl(const SageNodeSequence& seq, const SgFunctionDeclaration* key)
+    {
+      using const_iterator = typename SageNodeSequence::const_iterator;
+
+      auto sameFirstNondefining = [key](typename SageNodeSequence::value_type ptr) -> bool
+                                  {
+                                    const SgFunctionDeclaration* fndcl = isSgFunctionDeclaration(ptr);
+
+                                    return fndcl && (fndcl->get_firstNondefiningDeclaration() == key);
+                                  };
+
+      const_iterator lim = seq.end();
+      const_iterator pos = std::find_if(seq.begin(), lim, sameFirstNondefining);
+
+      return pos != lim ? isSgFunctionDeclaration(*pos) : nullptr;
+    }
+
+    const SgFunctionDeclaration*
+    findSecondaryFunctionDecl(const SgScopeStatement& scope, const SgFunctionDeclaration* key)
+    {
+      return scope.containsOnlyDeclarations()
+                  ? findSecondaryFunctionDecl(scope.getDeclarationList(), key)
+                  : findSecondaryFunctionDecl(scope.getStatementList(), key);
+    }
+  }
+
+  bool hasSeparatedDefinition(const SgFunctionDeclaration* nondef)
+  {
+    ASSERT_not_null(nondef);
+
+    if (const SgScopeStatement* bodyScope = correspondingBody(nondef->get_scope()))
+      if (const SgFunctionDeclaration* secondary = findSecondaryFunctionDecl(*bodyScope, nondef))
+        nondef = secondary;
+
+    return nondef->get_declarationModifier().isAdaSeparate();
+  }
+
+  bool isSeparatedDefinition(const SgFunctionDeclaration& n)
+  {
+    return (  (n.get_definition() != nullptr)
+           && hasSeparatedDefinition(isSgFunctionDeclaration(n.get_firstNondefiningDeclaration()))
+           );
+  }
+
+  bool isSeparatedDefinition(const SgFunctionDeclaration* n)
+  {
+    return n && isSeparatedDefinition(*n);
   }
 
   namespace
