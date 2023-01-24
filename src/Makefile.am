@@ -506,10 +506,12 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/TaintedFlow.h						\
 	Rose/BinaryAnalysis/ToSource.h							\
 	Rose/BinaryAnalysis/Unparser.h							\
-	Rose/BinaryAnalysis/Unparser/EdgeArrows.h					\
 	Rose/BinaryAnalysis/Unparser/Aarch32.h						\
 	Rose/BinaryAnalysis/Unparser/Aarch64.h						\
 	Rose/BinaryAnalysis/Unparser/Base.h						\
+	Rose/BinaryAnalysis/Unparser/Cil.h						\
+	Rose/BinaryAnalysis/Unparser/EdgeArrows.h					\
+	Rose/BinaryAnalysis/Unparser/Jvm.h						\
 	Rose/BinaryAnalysis/Unparser/M68k.h						\
 	Rose/BinaryAnalysis/Unparser/Mips.h						\
 	Rose/BinaryAnalysis/Unparser/Null.h						\
