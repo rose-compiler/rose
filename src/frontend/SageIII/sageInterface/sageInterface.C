@@ -27422,19 +27422,23 @@ int SageInterface::normalizeArrowExpWithAddressOfLeftOperand(SgNode* root)
   for (Rose_STL_Container<SgNode *>::reverse_iterator i = nodeList.rbegin(); i != nodeList.rend(); i++)
   {
     SgArrowExp* a_exp = isSgArrowExp(*i);
-    ROSE_ASSERT (a_exp);
+    if (!a_exp)
+    {
+      cerr<<"SageInterface::normalizeArrowExpWithAddressOfLeftOperand() expects SgArrowExp while encountering "<<(*i)->class_name()<<"@"<<(*i) <<endl;
+      ROSE_ASSERT (a_exp);
+    }
     if (SgAddressOfOp* address_op = isSgAddressOfOp(a_exp->get_lhs_operand()) )  
     {
-       if (SgVarRefExp* left = isSgVarRefExp(address_op->get_operand())) // match left side pattern  
-       {
-	 if (SgVarRefExp* right = isSgVarRefExp (a_exp->get_rhs_operand())) // match right side pattern
-	 {
-	    // do the transformation: copy two operands, making a dot exp instead
-	    SgDotExp* dot_exp = buildDotExp (deepCopy(left), deepCopy(right));
-	    replaceExpression (a_exp, dot_exp);
-	    match_count++;
-	 }
-       }
+      if (SgVarRefExp* left = isSgVarRefExp(address_op->get_operand())) // match left side pattern  
+      {
+        if (SgVarRefExp* right = isSgVarRefExp (a_exp->get_rhs_operand())) // match right side pattern
+        {
+          // do the transformation: copy two operands, making a dot exp instead
+          SgDotExp* dot_exp = buildDotExp (deepCopy(left), deepCopy(right));
+          replaceExpression (a_exp, dot_exp);
+          match_count++;
+        }
+      }
     } 
   } // end for   
 
