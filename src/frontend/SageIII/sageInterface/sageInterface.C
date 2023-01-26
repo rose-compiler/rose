@@ -27418,9 +27418,19 @@ int SageInterface::normalizeArrowExpWithAddressOfLeftOperand(SgNode* root)
   // SgArrowExp(SgAddressOfOp(SgVarRefExp:table1),SgVarRefExp:item1)
   Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(root, V_SgArrowExp);
 
+  // The jovial2cpp translator generates two source file ASTs: and they often share the same subtrees. 
+  // So we need to make sure the same subtree is only processed once
+  boost::unordered::unordered_map <SgNode*, bool> visited; 
+
   // reverse iterator is safer to use than forward iterator to support translation
   for (Rose_STL_Container<SgNode *>::reverse_iterator i = nodeList.rbegin(); i != nodeList.rend(); i++)
   {
+    // skip a node if it is previously processed.
+    if (visited.count(*i)==1)
+      continue;
+
+    visited[*i]=true; 
+
     SgArrowExp* a_exp = isSgArrowExp(*i);
     if (!a_exp)
     {
