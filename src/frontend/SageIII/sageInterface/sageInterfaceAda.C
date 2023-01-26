@@ -1052,11 +1052,36 @@ namespace Ada
 
   namespace
   {
+#if OBSOLETE_CODE_ALTERNATIVE
+    template <class SageNodeSequence, class Fn>
+    const SgFunctionDeclaration*
+    forAnySecondaryDeclaration(const SageNodeSequence& seq, const SgFunctionDeclaration* key, Fn fn)
+    {
+      std::for_each( seq.begin(), seq.end(),
+                     [key, op = std::move(fn)](typename SageNodeSequence::value_type ptr) -> void
+                     {
+                       if (const SgFunctionDeclaration* fndcl = isSgFunctionDeclaration(ptr))
+                         if (fndcl->get_firstNondefiningDeclaration() == key)
+                           op(fndcl);
+                     }
+                   );
+    }
+
+    template <class Fn>
+    const SgFunctionDeclaration*
+    forAnySecondaryDeclaration(const SgScopeStatement& scope, const SgFunctionDeclaration* key, Fn fn)
+    {
+      return scope.containsOnlyDeclarations()
+                  ? forAnySecondaryDeclaration(scope.getDeclarationList(), key, std::move(fn))
+                  : forAnySecondaryDeclaration(scope.getStatementList(), key, std::move(fn));
+    }
+#endif /* OBSOLETE_CODE_ALTERNATIVE */
+
     template <class SageNodeSequence>
     const SgFunctionDeclaration*
     findSecondaryFunctionDecl(const SageNodeSequence& seq, const SgFunctionDeclaration* key)
     {
-      using const_iterator = typename SageNodeSequence::const_iterator;
+      using iterator = typename SageNodeSequence::const_reverse_iterator;
 
       auto sameFirstNondefining = [key](typename SageNodeSequence::value_type ptr) -> bool
                                   {
@@ -1065,8 +1090,8 @@ namespace Ada
                                     return fndcl && (fndcl->get_firstNondefiningDeclaration() == key);
                                   };
 
-      const_iterator lim = seq.end();
-      const_iterator pos = std::find_if(seq.begin(), lim, sameFirstNondefining);
+      iterator lim = seq.rend();
+      iterator pos = std::find_if(seq.rbegin(), lim, sameFirstNondefining);
 
       return pos != lim ? isSgFunctionDeclaration(*pos) : nullptr;
     }
