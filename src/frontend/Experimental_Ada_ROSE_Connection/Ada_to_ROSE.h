@@ -69,9 +69,9 @@ struct AdaIdentifier : std::string
 };
 
 /// returns a map that collects inherited function symbols for
-struct InheritedSymbolKey : std::tuple<const SgFunctionDeclaration*, const SgType*>
+struct InheritedSymbolKey : std::tuple<const SgFunctionDeclaration*, const SgNamedType*>
 {
-  using base = std::tuple<const SgFunctionDeclaration*, const SgType*>;
+  using base = std::tuple<const SgFunctionDeclaration*, const SgNamedType*>;
   using base::base;
 
   std::tuple_element<0, base>::type function()        const { return std::get<0>(*this); }
@@ -119,6 +119,7 @@ namespace std
     }
   };
 
+/*
   template <>
   struct hash<::Ada_ROSE_Translation::InheritedSymbolKey>
   {
@@ -134,6 +135,7 @@ namespace std
              );
     }
   };
+*/
 
   template <>
   struct hash<::Ada_ROSE_Translation::OperatorKey>
@@ -197,7 +199,7 @@ map_t<AdaIdentifier, SgAdaPackageSpecDecl*>& adaPkgs();
 ///       as long as there is no proper Character Type.
 map_t<AdaIdentifier, SgInitializedName*>& adaVars();
 
-map_t<InheritedSymbolKey, SgAdaInheritedFunctionSymbol*>& inheritedSymbols();
+std::map<InheritedSymbolKey, SgAdaInheritedFunctionSymbol*>& inheritedSymbols();
 
 /// returns a map with all functions that a type supports
 /// \details

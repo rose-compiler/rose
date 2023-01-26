@@ -11,6 +11,7 @@ namespace
 {
   template <class TypedSageNode>
   void checkType(std::ostream& os, TypedSageNode* n)
+  try
   {
     if (!n) return;
 
@@ -33,6 +34,16 @@ namespace
     }
 
     os << std::endl;
+  }
+  catch (const std::exception& err)
+  {
+    os << "Err: " << n->unparseToString() << std::endl;
+    throw;
+  }
+  catch (...)
+  {
+    os << "Unknown Error" << std::endl;
+    throw;
   }
 
   void checkExpr(std::ostream& os, SgAdaAttributeExp* n)

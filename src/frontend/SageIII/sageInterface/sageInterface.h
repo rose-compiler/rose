@@ -320,10 +320,11 @@ int64_t getAsmSignedConstant(SgAsmValueExpression *e);
     */
      std::string get_name ( const SgToken* token );
 
-   /*! \brief Returns the type introduced by a declaration.
-    */
    // PP (11/22/2021): General function for extracting the type of declarations (when they declare types)
-     SgType* getDeclaredType(const SgDeclarationStatement* declaration);
+   /*! \brief Returns the type introduced by a declaration.
+    *  \note  If the type is not an SgNamedType, nullptr is returned
+    */
+     SgNamedType* getDeclaredType(const SgDeclarationStatement* declaration);
 
 
   // DQ (3/20/2016): Added to refactor some of the DSL infrastructure support.

@@ -888,13 +888,6 @@ namespace Ada_ROSE_Translation
   SgExpression&
   mkEnumeratorRef(SgEnumDeclaration&, SgInitializedName&);
 
-#if OBSOLETE
-  /// builds a reference to an enumerator in form of an SgVarRefExp
-  /// (special case for SgAdaEnumRepresentationClause - RC-1147)
-  SgExpression&
-  mkEnumeratorRef_repclause(SgEnumDeclaration&, SgInitializedName&);
-#endif /* OBSOLETE */
-
   /// creates and if statement
   SgIfStmt&
   mkIfStmt(bool elseIfPath = false);
@@ -902,14 +895,17 @@ namespace Ada_ROSE_Translation
   //
   // special Ada symbols
 
-  /// creates a symbol for the inherited function \ref fn for inherited type \ref derivedType.
+  /// creates a symbol for the inherited function \ref fn for inherited type \ref assocType.
   ///   adds the symbol to the scope \ref scope of the derived type.
-  /// \details
+  /// \param basesym   the symbol from which the new symbol is derived from
+  /// \param assocType the newly derived type that triggered the derivation
+  /// \param scope     the scope where the new symbol needs to be inserted
+  /// \note
   ///    currently derived type can either be an Ada derived type or an extension record ("class").
   /// \todo
   ///    support derived enum types
   SgAdaInheritedFunctionSymbol&
-  mkAdaInheritedFunctionSymbol(SgFunctionDeclaration& fn, SgType& derivedType, SgScopeStatement& scope);
+  mkAdaInheritedFunctionSymbol(const SgFunctionSymbol& basesym, SgNamedType& assocType, SgScopeStatement& scope);
 
   //
   // conversions
