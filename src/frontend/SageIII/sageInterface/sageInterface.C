@@ -27409,7 +27409,7 @@ void SageInterface::clearSharedGlobalScopes(SgProject * project) {
 TODO: we only handle simplest pattern for now:  both leaf operands involved are SgVarRefExp. 
  
  * */
-int SageInterface::normalizeArrowExpWithAddressOfLeftOperand(SgNode* root)
+int SageInterface::normalizeArrowExpWithAddressOfLeftOperand(SgNode* root, bool transformationGeneratedOnly /* =true */)
 {
   int match_count = 0;
   ROSE_ASSERT (root);
@@ -27425,18 +27425,26 @@ int SageInterface::normalizeArrowExpWithAddressOfLeftOperand(SgNode* root)
   // reverse iterator is safer to use than forward iterator to support translation
   for (Rose_STL_Container<SgNode *>::reverse_iterator i = nodeList.rbegin(); i != nodeList.rend(); i++)
   {
-    // skip a node if it is previously processed.
+      // skip a node if it is previously processed.
     if (visited.count(*i)==1)
       continue;
 
     visited[*i]=true; 
 
     SgArrowExp* a_exp = isSgArrowExp(*i);
+
     if (!a_exp)
     {
       cerr<<"SageInterface::normalizeArrowExpWithAddressOfLeftOperand() expects SgArrowExp while encountering "<<(*i)->class_name()<<"@"<<(*i) <<endl;
       ROSE_ASSERT (a_exp);
     }
+
+    if (transformationGeneratedOnly)
+    {
+      if (a_exp->get_file_info()->isTransformation())
+        continue;
+    }
+
     if (SgAddressOfOp* address_op = isSgAddressOfOp(a_exp->get_lhs_operand()) )  
     {
       if (SgVarRefExp* left = isSgVarRefExp(address_op->get_operand())) // match left side pattern  
