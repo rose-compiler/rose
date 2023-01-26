@@ -1718,7 +1718,11 @@ mkRecordParent(SgType& n)
     return mkBareNode<SgBaseClass>(&dcl, true /* direct base */);
   }
 
-  return mkBareNode<SgExpBaseClass>(nullptr, true /* direct base */, &mkTypeExpression(n));
+  SgTypeExpression& tyrep  = mkTypeExpression(n);
+  SgBaseClass&      sgnode = mkBareNode<SgExpBaseClass>(nullptr, true /* direct base */, &tyrep);
+
+  tyrep.set_parent(&sgnode);
+  return sgnode;
 }
 
 //
@@ -1999,14 +2003,6 @@ mkEnumeratorRef(SgEnumDeclaration& enumdecl, SgInitializedName& enumitem)
   return SG_DEREF( sb::buildEnumVal_nfi(enumval, &enumdecl, enumitem.get_name()) );
 }
 
-#if OBSOLETE
-SgExpression&
-mkEnumeratorRef_repclause(SgEnumDeclaration&, SgInitializedName& enumitem)
-{
-  return SG_DEREF( sb::buildVarRefExp(&enumitem, nullptr /* not needed */) );
-}
-#endif /* OBSOLETE */
-
 namespace
 {
   SgType& accessTypeAttr(SgExpression& expr, SgExprListExp&)
@@ -2123,7 +2119,7 @@ namespace
                                      , { "bit",                  &integralTypeAttr }
                                      , { "bit_order",            &voidTypeAttr }
                                      , { "body_version",         &stringTypeAttr }
-                                     //~ , { "class",                &unknownTypeAttr }
+                                     , { "class",                &exprTypeAttr }
                                      , { "callable",             &boolTypeAttr }
                                      , { "caller",               &stringTypeAttr } // should be Ada.Task_ID
                                      , { "ceiling",              &argTypeAttr }
@@ -2151,6 +2147,7 @@ namespace
                                      , { "has_same_storage",     &boolTypeAttr }
                                      , { "identity",             &stringTypeAttr } // should be an identity (TASK_ID, EXCEPTION_ID ...)
                                      , { "image",                &stringTypeAttr }
+                                     , { "img",                  &stringTypeAttr } // GNAT extension
                                      //~ , { "input",                &unknownTypeAttr }   // ???
                                      , { "last",                 &firstLastTypeAttr }
                                      , { "last_valid",           &exprTypeAttr }
@@ -2258,24 +2255,48 @@ namespace
   }
 
   SgType&
-  convertType(SgType& actual, SgType& orig, SgType& derv)
+  convertType(SgType& actual, SgType& origRoot, SgNamedType& derv)
   {
-    return &orig == &actual ? derv : actual;
+    // not strictly needed
+    //~ if (isSgTypeVoid(&actual)) return actual;
+
+    SgType*    actualRoot             = si::Ada::typeRoot(actual).typerep();
+    const bool replaceWithDerivedType = (&origRoot == actualRoot);
+
+    //~ if (actualRoot == nullptr) return actual;
+    //~ logWarn() << "repl  orig:" << &origRoot << " (" << typeid(origRoot).name() << ")   act:"
+              //~ << actualRoot << " (" << typeid(*actualRoot).name() << ")  -?>   derv: "
+              //~ << &derv << " (" << typeid(derv).name() << ")? "
+              //~ << replaceWithDerivedType
+              //~ << std::endl;
+
+    return replaceWithDerivedType ? derv : actual;
   }
 
 
   /// replaces the original type of with \ref declaredDerivedType in \ref funcTy.
   /// returns \ref funcTy to indicate an error.
   SgFunctionType&
-  convertToDerivedType(SgFunctionType& funcTy, SgType& derivedType)
+  convertToDerivedType(SgFunctionType& funcTy, SgNamedType& derivedType)
   {
+#if 0
     SgDeclarationStatement* baseTypeDecl = si::Ada::baseDeclaration(derivedType);
 
     if (baseTypeDecl == nullptr)
       return funcTy;
+    SgType*              baseType     = si::getDeclaredType(baseTypeDecl);
+#endif
 
-    SgType*              origTypePtr  = si::getDeclaredType(baseTypeDecl);
-    SgType&              originalType = SG_DEREF(origTypePtr);
+    SgType*              baseType     = si::Ada::baseType(derivedType);
+    SgType*              baseRootType = si::Ada::typeRoot(baseType).typerep();
+
+    if (baseRootType == nullptr)
+    {
+      logWarn() << "rootType unavailable" << std::endl;
+      return funcTy;
+    }
+
+    SgType&              originalType = SG_DEREF(baseRootType);
     SgType&              origRetTy    = SG_DEREF(funcTy.get_return_type());
     SgType&              dervRetTy    = convertType(origRetTy, originalType, derivedType);
     int                  numUpdTypes  = (&dervRetTy != &origRetTy);
@@ -2289,6 +2310,13 @@ namespace
       if (newArgTy != origArgTy) ++numUpdTypes;
     }
 
+    //~ logWarn() //<< si::get_name(baseTypeDecl) << " "
+              //~ << "tyupd: " << numUpdTypes
+              //~ << " @" << &funcTy << ": " << &originalType << '(' << typeid(originalType).name() << ')'
+              //~ << " -> " << &derivedType << '(' << typeid(derivedType).name() << ')'
+              //~ << std::endl;
+
+
     // only create new nodes if everything worked
     if (numUpdTypes == 0)
       return funcTy;
@@ -2301,14 +2329,24 @@ namespace
 
     return SG_DEREF( sb::buildFunctionType(&dervRetTy, &paramTyLst) );
   }
+
+  SgFunctionType&
+  baseFunctionType(const SgFunctionDeclaration& fn, const SgFunctionSymbol& baseSym)
+  {
+    if (const SgAdaInheritedFunctionSymbol* inhSym = isSgAdaInheritedFunctionSymbol(&baseSym))
+      return SG_DEREF(inhSym->get_derivedFunctionType());
+
+    return SG_DEREF(fn.get_type());
+  }
 }
 
 
 SgAdaInheritedFunctionSymbol&
-mkAdaInheritedFunctionSymbol(SgFunctionDeclaration& fn, SgType& derivedType, SgScopeStatement& scope)
+mkAdaInheritedFunctionSymbol(const SgFunctionSymbol& baseSym, SgNamedType& assocType, SgScopeStatement& scope)
 {
-  SgFunctionType& functy = SG_DEREF(fn.get_type());
-  SgFunctionType& dervty = convertToDerivedType(functy, derivedType);
+  SgFunctionDeclaration& fn     = SG_DEREF(baseSym.get_declaration());
+  SgFunctionType&        functy = baseFunctionType(fn, baseSym);
+  SgFunctionType&        dervty = convertToDerivedType(functy, assocType);
 
   if (&functy == &dervty)
   {
@@ -2318,9 +2356,11 @@ mkAdaInheritedFunctionSymbol(SgFunctionDeclaration& fn, SgType& derivedType, SgS
               << std::endl;
   }
 
-  SgAdaInheritedFunctionSymbol& sgnode = mkBareNode<SgAdaInheritedFunctionSymbol>(&fn, &dervty);
+  SgAdaInheritedFunctionSymbol& sgnode = mkBareNode<SgAdaInheritedFunctionSymbol>(&fn, &dervty, &assocType);
 
   scope.insert_symbol(fn.get_name(), &sgnode);
+
+  // \todo why is scope the parent and not the symbol table?
   sgnode.set_parent(&scope);
   return sgnode;
 }

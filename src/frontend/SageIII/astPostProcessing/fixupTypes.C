@@ -15,7 +15,7 @@ void
 ResetTypes::visit(SgNode* node)
    {
   // The purpose of this traversal is to fixup the AST to share types more uniformally shared.
-  // It appears that in the EDG/Sage translation some types are not shared properly, particularly 
+  // It appears that in the EDG/Sage translation some types are not shared properly, particularly
   // SgNamedTypes.
 
 #if 0
@@ -33,7 +33,7 @@ ResetTypes::visit(SgNode* node)
              {
             // printf ("ResetTypes::visit(): resetting the definition used in namedType = %p = %s \n",namedType,namedType->class_name().c_str());
 #if DEBUG_SAGE_ACCESS_FUNCTIONS || 0
-            // DQ (6/12/2007): New access function tests using DEBUG_SAGE_ACCESS_FUNCTIONS and 
+            // DQ (6/12/2007): New access function tests using DEBUG_SAGE_ACCESS_FUNCTIONS and
             // DEBUG_SAGE_ACCESS_FUNCTIONS_ASSERTION in sage3.h indicate this is required.
                if (namedType->get_declaration() != NULL)
                   {
@@ -83,7 +83,7 @@ ResetTypes::visit(SgNode* node)
                       // Set the name to that in the defining declaration
                       // DQ (6/12/2007): When this is executed we have a bug in ROSE!
 #if 1
-                      // DQ (6/12/2007): New access function tests using DEBUG_SAGE_ACCESS_FUNCTIONS and 
+                      // DQ (6/12/2007): New access function tests using DEBUG_SAGE_ACCESS_FUNCTIONS and
                       // DEBUG_SAGE_ACCESS_FUNCTIONS_ASSERTION in sage3.h indicate this is required.
                       // Avoid calling definingDeclaration->get_type() multiple times.
                       // printf ("definingDeclaration = %p = %s \n",definingDeclaration,definingDeclaration->class_name().c_str());
@@ -99,7 +99,7 @@ ResetTypes::visit(SgNode* node)
 #else
                       // DQ (6/12/2007): this version calls get_type too many times and causes a subtle bug which I don't understand.
 #if DEBUG_SAGE_ACCESS_FUNCTIONS || 0
-                      // DQ (6/12/2007): New access function tests using DEBUG_SAGE_ACCESS_FUNCTIONS and 
+                      // DQ (6/12/2007): New access function tests using DEBUG_SAGE_ACCESS_FUNCTIONS and
                       // DEBUG_SAGE_ACCESS_FUNCTIONS_ASSERTION in sage3.h indicate this is required.
                          SgType* newType = definingDeclaration->get_type();
                          if (declaration->get_type() != NULL && definingDeclaration->get_type() != NULL)
@@ -180,7 +180,7 @@ ResetTypes::visit(SgNode* node)
                                         ROSE_ABORT();
                                       }
                                  }
-                            }                         
+                            }
                          ROSE_ASSERT(definingDeclaration->get_type() == nondefiningDeclaration->get_type());
                        }
 #endif
@@ -198,6 +198,8 @@ ResetTypes::visit(SgNode* node)
                          if (declaration->get_type() != definingDeclaration->get_type())
                             {
                            // DQ (3/3/2009): Make this conditional upon it being a transformation, since they cause types to be build redundantly in the SageBuilder function (I think).
+                           // PP (11/2/2023): In Ada, types that are expression based are often not shared, triggering
+                           //                 this message.
                               if (declaration->get_file_info()->isTransformation() == false)
                                  {
                                    printf ("Error: types in declaration = %p = %s and definingDeclaration = %p not shared \n",declaration,declaration->class_name().c_str(),definingDeclaration);

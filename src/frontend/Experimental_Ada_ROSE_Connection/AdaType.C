@@ -1489,6 +1489,37 @@ namespace
 }
 
 
+#if PREMAPPED_NUMERIC_TYPES
+  // An earlier implementation used these type mappings in the AST.
+  //   They were replaced with a newer, more Ada-like representation below.
+  //   The original mappings are preserved for documentation, and in case
+  //   the translation to C++ effort receives renewed interest.
+
+  // FP types
+  SgType& adaIntType                = mkIntegralType();
+  SgType& intType                   = SG_DEREF(sb::buildIntType());
+  SgType& adaCharType               = SG_DEREF(sb::buildCharType());
+  SgType& adaWideCharType           = SG_DEREF(sb::buildChar16Type());
+  SgType& adaWideWideCharType       = SG_DEREF(sb::buildChar32Type());
+
+  adaTypes()["INTEGER"]             = &intType;
+  adaTypes()["CHARACTER"]           = &adaCharType;
+  adaTypes()["WIDE_CHARACTER"]      = &adaWideCharType;
+  adaTypes()["WIDE_WIDE_CHARACTER"] = &adaWideWideCharType;
+  adaTypes()["LONG_INTEGER"]        = sb::buildLongType(); // Long int
+  adaTypes()["LONG_LONG_INTEGER"]   = sb::buildLongLongType(); // Long long int
+  adaTypes()["SHORT_INTEGER"]       = sb::buildShortType(); // Long long int
+  adaTypes()["SHORT_SHORT_INTEGER"] = declareIntSubtype("Short_Short_Integer", -(1 << 7), (1 << 7)-1, stdspec).get_type();
+
+  SgType& adaRealType               = mkRealType();
+  SgType& realType                  = SG_DEREF(sb::buildFloatType());
+  adaTypes()["FLOAT"]               = &realType;
+  adaTypes()["SHORT_FLOAT"]         = &realType;
+  adaTypes()["LONG_FLOAT"]          = sb::buildDoubleType();
+  adaTypes()["LONG_LONG_FLOAT"]     = sb::buildLongDoubleType();
+#endif /* PREMAPPED_NUMERIC_TYPES */
+
+
 void initializePkgStandard(SgGlobal& global)
 {
   // make available declarations from the package standard
@@ -1517,23 +1548,6 @@ void initializePkgStandard(SgGlobal& global)
   adaTypes()["DURATION"]            = &adaDuration;
 
   // integral types
-#if PREMAPPED_NUMERIC_TYPES
-  SgType& adaIntType                = mkIntegralType();
-  SgType& intType                   = SG_DEREF(sb::buildIntType());
-  SgType& adaCharType               = SG_DEREF(sb::buildCharType());
-  SgType& adaWideCharType           = SG_DEREF(sb::buildChar16Type());
-  SgType& adaWideWideCharType       = SG_DEREF(sb::buildChar32Type());
-
-  adaTypes()["INTEGER"]             = &intType;
-  adaTypes()["CHARACTER"]           = &adaCharType;
-  adaTypes()["WIDE_CHARACTER"]      = &adaWideCharType;
-  adaTypes()["WIDE_WIDE_CHARACTER"] = &adaWideWideCharType;
-  adaTypes()["LONG_INTEGER"]        = sb::buildLongType(); // Long int
-  adaTypes()["LONG_LONG_INTEGER"]   = sb::buildLongLongType(); // Long long int
-  adaTypes()["SHORT_INTEGER"]       = sb::buildShortType(); // Long long int
-  adaTypes()["SHORT_SHORT_INTEGER"] = declareIntSubtype("Short_Short_Integer", -(1 << 7), (1 << 7)-1, stdspec).get_type();
-#endif /* PREMAPPED_NUMERIC_TYPES */
-
   SgType& adaIntType                = mkIntegralType(); // the root integer type in ROSE
 
   adaTypes()["SHORT_SHORT_INTEGER"] = declareIntSubtype<std::int8_t> ("Short_Short_Integer", stdspec).get_type();
@@ -1558,16 +1572,6 @@ void initializePkgStandard(SgGlobal& global)
   adaTypes()["CHARACTER"]           = &adaCharType;
   adaTypes()["WIDE_CHARACTER"]      = &adaWideCharType;
   adaTypes()["WIDE_WIDE_CHARACTER"] = &adaWideWideCharType;
-
-#if PREMAPPED_NUMERIC_TYPES
-  // FP types
-  SgType& adaRealType               = mkRealType();
-  SgType& realType                  = SG_DEREF(sb::buildFloatType());
-  adaTypes()["FLOAT"]               = &realType;
-  adaTypes()["SHORT_FLOAT"]         = &realType;
-  adaTypes()["LONG_FLOAT"]          = sb::buildDoubleType();
-  adaTypes()["LONG_LONG_FLOAT"]     = sb::buildLongDoubleType();
-#endif /* PREMAPPED_NUMERIC_TYPES */
 
   // from https://en.wikibooks.org/wiki/Ada_Programming/Libraries/Standard/GNAT
   // \todo consider using C++ min/max limits
