@@ -2454,8 +2454,8 @@ ROSE_DLL_API void cleanupNontransformedBasicBlockNode();
 //! Record where normalization have been done so that we can preform denormalizations as required for the token-based unparsing to generate minimal diffs.
 ROSE_DLL_API void recordNormalizations(SgStatement* s);
 
-//! Convert all code within root matching the patern of (&left)->right, and translate them into left.right.  Return the number of matches of the pattern.
-ROSE_DLL_API int normalizeArrowExpWithAddressOfLeftOperand(SgNode* root);
+//! Convert all code within root matching the patern of (&left)->right, and translate them into left.right.  Return the number of matches of the pattern. Be default, only transformation generated nodes will be normalized.
+ROSE_DLL_API int normalizeArrowExpWithAddressOfLeftOperand(SgNode* root, bool transformationGeneratedOnly=true);
 
 
 //! Check if a statement is a (true or false) body of a container-like parent, such as For, Upc_forall, Do-while,
