@@ -10,6 +10,9 @@ package body Rep_E_Queue is
     begin
       my_bool := in_bool;
     end proc1;
+
+   procedure LogRate(rate : in integer);
+   procedure LogRate(rate : in integer) is separate;
 begin
-   pkg_bool := False;
-end Rep_E_Queue; 
+   pkg_bool := True;
+end Rep_E_Queue;

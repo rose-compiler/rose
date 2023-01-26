@@ -240,6 +240,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   rep_e_queue.adb                      \
   rep_e_queue.ads                      \
   rep_e_queue-queue1.adb               \
+  rep_e_queue-lograte.adb              \  
   rep_database.ads                     \
   rep_database-mgr.ads                 \
   rep_common_types-data.ads            \
