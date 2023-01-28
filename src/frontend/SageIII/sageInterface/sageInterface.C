@@ -16970,18 +16970,23 @@ void SageInterface::cutPreprocessingInfo (SgLocatedNode* src_node, Preprocessing
 {
   ASSERT_not_null(src_node);
 
+  // [Rasmussen,Sottile 2023.01.10]: Replaced deleted bind2nd (as of 2017)
   AttachedPreprocessingInfoType* info = src_node->get_attachedPreprocessingInfoPtr();
   if (info)
   {
-    remove_copy_if (info->begin (), info->end (),
-        back_inserter (save_buf),
-        bind2nd (ptr_fun (isNotRelPos), pos));
+    // copy elements to save_buf where isRelPos() is false
+    remove_copy_if(info->begin(),
+                   info->end(),
+                   back_inserter(save_buf),
+                   [pos](auto x) { return !isRelPos(x, pos); }
+                  );
 
-    // DQ (9/26/2007): Commented out as part of move from std::list to std::vector
-    // info->remove_if (bind2nd (ptr_fun (isRelPos), pos));
-    // Liao (10/3/2007), implement list::remove_if for vector, which lacks sth. like erase_if
-    AttachedPreprocessingInfoType::iterator new_end =
-      remove_if(info->begin(),info->end(),bind2nd(ptr_fun (isRelPos), pos));
+    // delete copied elements from save_buf
+    AttachedPreprocessingInfoType::iterator
+    new_end = remove_if(info->begin(),
+                        info->end(),
+                        [pos](auto x) { return isRelPos(x, pos); }
+                       );
     info->erase(new_end, info->end());
   }
 }
