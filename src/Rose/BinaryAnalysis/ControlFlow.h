@@ -1046,8 +1046,9 @@ ControlFlow::write_graphviz(std::ostream &out, const CFG &cfg,
         if (!f.vertices.empty() || !f.edges.empty()) {
             SgNode *node = get_ast_node(cfg, f.vertices.front());
             SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(node, true);
-            char cluster_name[64];
-            sprintf(cluster_name, "cluster_F%" PRIx64, func->get_entry_va());
+            const size_t maxNameSize = 63;
+            char cluster_name[maxNameSize+1];
+            snprintf(cluster_name, maxNameSize, "cluster_F%" PRIx64, func->get_entry_va());
             out <<"  subgraph " <<cluster_name <<" {\n"
                 <<"    style=filled;\n"
                 <<"    color=lightgrey;\n"

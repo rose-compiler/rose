@@ -214,6 +214,8 @@ public:
     /** CIL register names */
     static Ptr instanceCil();
 
+    /** JVM register names */
+    static Ptr instanceJvm();
 
     /** Class method to choose an appropriate register dictionary for an instruction set architecture.
      *

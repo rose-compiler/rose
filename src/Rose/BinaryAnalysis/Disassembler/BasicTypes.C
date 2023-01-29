@@ -7,6 +7,7 @@
 #include <Rose/BinaryAnalysis/Disassembler/Aarch64.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Disassembler/Exception.h>
+#include <Rose/BinaryAnalysis/Disassembler/Jvm.h>
 #include <Rose/BinaryAnalysis/Disassembler/M68k.h>
 #include <Rose/BinaryAnalysis/Disassembler/Mips.h>
 #include <Rose/BinaryAnalysis/Disassembler/Null.h>
@@ -44,6 +45,7 @@ static void
 initRegistryHelper() {
     SAWYER_THREAD_TRAITS::LockGuard lock(registryMutex);
     registry.push_back(Null::instance());
+    registry.push_back(Jvm::instance());
 #ifdef ROSE_ENABLE_ASM_AARCH32
     registry.push_back(Aarch32::instanceA32());
     registry.push_back(Aarch32::instanceT32());

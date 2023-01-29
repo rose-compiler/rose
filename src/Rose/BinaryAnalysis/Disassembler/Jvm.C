@@ -95,15 +95,11 @@ Jvm::append_tableswitch(const MemoryMap::Ptr &map, rose_addr_t start,
   return nRead;
 }
 
-//TODO...................................
 Jvm::Jvm() {
-    name("null");
+    name("jvm");
     wordSizeBytes(1);
     byteOrder(ByteOrder::ORDER_LSB);
-    registerDictionary(RegisterDictionary::instanceNull());
-
-    REG_IP = registerDictionary()->findOrThrow("pc");
-    REG_SP = registerDictionary()->findOrThrow("sp");
+    registerDictionary(RegisterDictionary::instanceJvm());
 }
 
 Jvm::Ptr
@@ -119,8 +115,9 @@ Jvm::clone() const {
 }
 
 bool
-Jvm::canDisassemble(SgAsmGenericHeader*) const {
-    return false;
+Jvm::canDisassemble(SgAsmGenericHeader* header) const {
+    auto isa = header->get_isa();
+    return (isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_JVM;
 }
 
 Unparser::BasePtr

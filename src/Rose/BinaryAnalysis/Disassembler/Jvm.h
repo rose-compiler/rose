@@ -41,7 +41,7 @@ public:
   virtual Base::Ptr clone() const override;
   virtual bool canDisassemble(SgAsmGenericHeader*) const override;
   virtual Unparser::BasePtr unparser() const override;
-    virtual SgAsmInstruction* makeUnknownInstruction(const Disassembler::Exception&) override;
+  virtual SgAsmInstruction* makeUnknownInstruction(const Disassembler::Exception&) override;
   virtual SgAsmInstruction* disassembleOne(const MemoryMap::Ptr&, rose_addr_t va, AddressSet *successors = NULL) override;
 
 private:

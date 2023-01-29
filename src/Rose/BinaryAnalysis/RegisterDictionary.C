@@ -1500,9 +1500,21 @@ RegisterDictionary::instanceCil() {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
 
     static RegisterDictionary::Ptr regs;
-    if (!regs)
+    if (!regs) {
         regs = RegisterDictionary::instance("Cil");
+    }
+    return regs;
+}
 
+RegisterDictionary::Ptr
+RegisterDictionary::instanceJvm() {
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
+    static RegisterDictionary::Ptr regs;
+    if (!regs) {
+        regs = RegisterDictionary::instance("Jvm");
+    }
     return regs;
 }
 
