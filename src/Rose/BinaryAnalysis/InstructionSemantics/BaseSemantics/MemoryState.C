@@ -25,6 +25,24 @@ operator<<(std::ostream &o, const MemoryState::WithFormatter &x) {
     return o;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// MemoryState::WithFormatter
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+MemoryState::WithFormatter::~WithFormatter() {}
+
+MemoryState::WithFormatter::WithFormatter(const MemoryState::Ptr &obj, Formatter &fmt)
+    : obj(obj), fmt(fmt) {}
+
+void
+MemoryState::WithFormatter::print(std::ostream &stream) const {
+    obj->print(stream, fmt);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// MemoryState
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 MemoryState::MemoryState()
     : byteOrder_(ByteOrder::ORDER_UNSPECIFIED), byteRestricted_(true) {}
 
@@ -40,6 +58,12 @@ MemoryState::MemoryState(const MemoryState::Ptr &other)
 
 MemoryState::~MemoryState() {}
 
+MemoryState::Ptr
+MemoryState::promote(const MemoryState::Ptr &x) {
+    ASSERT_not_null(x);
+    return x;
+}
+
 Merger::Ptr
 MemoryState::merger() const {
     return merger_;
@@ -48,6 +72,36 @@ MemoryState::merger() const {
 void
 MemoryState::merger(const Merger::Ptr &m) {
     merger_ = m;
+}
+
+SValue::Ptr
+MemoryState::get_addr_protoval() const {
+    return addrProtoval_;
+}
+
+SValue::Ptr
+MemoryState::get_val_protoval() const {
+    return valProtoval_;
+}
+
+bool
+MemoryState::byteRestricted() const {
+    return byteRestricted_;
+}
+
+void
+MemoryState::byteRestricted(bool b) {
+    byteRestricted_ = b;
+}
+
+ByteOrder::Endianness
+MemoryState::get_byteOrder() const {
+    return byteOrder_;
+}
+
+void
+MemoryState::set_byteOrder(ByteOrder::Endianness bo) {
+    byteOrder_ = bo;
 }
 
 void
@@ -61,6 +115,16 @@ MemoryState::WithFormatter
 MemoryState::operator+(const std::string &linePrefix) {
     static Formatter fmt;
     fmt.set_line_prefix(linePrefix);
+    return with_format(fmt);
+}
+
+MemoryState::WithFormatter
+MemoryState::with_format(Formatter &fmt) {
+    return WithFormatter(shared_from_this(), fmt);
+}
+
+MemoryState::WithFormatter
+MemoryState::operator+(Formatter &fmt) {
     return with_format(fmt);
 }
     

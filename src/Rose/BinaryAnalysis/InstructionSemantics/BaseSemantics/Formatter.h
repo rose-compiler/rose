@@ -6,6 +6,8 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 
+#include <string>
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics {
@@ -15,9 +17,26 @@ namespace BaseSemantics {
  *  per-call basis.  This base class provides something they can subclass to do that.  A reference is passed to all print()
  *  methods for semantic objects. */
 class Formatter {
+protected:
+    RegisterDictionaryPtr regdict;
+    bool suppress_initial_values = false;
+    std::string line_prefix;
+    std::string indentation_suffix = "  ";
+    bool show_latest_writers = true;
+    bool show_properties = true;
+
 public:
-    Formatter();
     virtual ~Formatter();
+
+    /** Default formatter.
+     *
+     *  Using a default formatter is the same as using no formatter at all. */
+    Formatter();
+
+    /** Format for indentation.
+     *
+     *  Formatter that indents every line according to the given prefix. */
+    explicit Formatter(const std::string&);
 
     /** Property: Register dictionary.
      *
@@ -61,14 +80,6 @@ public:
     void set_show_properties(bool b=true) { show_properties = b; }
     void clear_show_properties() { show_properties = false; }
     /** @} */
-
-protected:
-    RegisterDictionaryPtr regdict;
-    bool suppress_initial_values;
-    std::string line_prefix;
-    std::string indentation_suffix;
-    bool show_latest_writers;
-    bool show_properties;
 };
 
 /** Adjusts a Formatter for one additional level of indentation.  The formatter's line prefix is adjusted by appending the
