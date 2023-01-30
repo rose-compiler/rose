@@ -233,7 +233,8 @@ my @extra_words = qw/
     CIL				# Common Intermediate Language
     GDB				# GNU Debugger
     JVM				# Java Virtual Machine
-    callbacks			# missing from dictionary
+    callback                    # executable code passed as an argument
+    callbacks			# list of executable code passed as an argument
     Concolic			# as in Concolic Testing
     demangler			# missing from dictionary
     dereference                 # act of obtaining a pointee from a pointer
