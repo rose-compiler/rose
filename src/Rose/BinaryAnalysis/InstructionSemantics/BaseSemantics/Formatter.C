@@ -10,12 +10,12 @@ namespace BinaryAnalysis {
 namespace InstructionSemantics {
 namespace BaseSemantics {
 
-Formatter::Formatter()
-    : suppress_initial_values(false), indentation_suffix("  "), show_latest_writers(true),
-      show_properties(true) {}
-
-
 Formatter::~Formatter() {}
+
+Formatter::Formatter() {}
+
+Formatter::Formatter(const std::string &prefix)
+    : line_prefix(prefix) {}
 
 RegisterDictionary::Ptr
 Formatter::registerDictionary() const {

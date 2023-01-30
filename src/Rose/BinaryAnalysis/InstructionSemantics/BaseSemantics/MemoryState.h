@@ -81,11 +81,8 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts.  No-op since this is the base class.
 public:
-    static MemoryStatePtr promote(const MemoryStatePtr &x) {
-        ASSERT_not_null(x);
-        return x;
-    }
-    
+    static MemoryStatePtr promote(const MemoryStatePtr&);
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first declared at this level of the class hierarchy
 public:
@@ -103,11 +100,11 @@ public:
 
     /** Return the address protoval.  The address protoval is used to construct other memory addresses via its virtual
      *  constructors. */
-    SValuePtr get_addr_protoval() const { return addrProtoval_; }
+    SValuePtr get_addr_protoval() const;
 
     /** Return the value protoval.  The value protoval is used to construct other stored values via its virtual
      *  constructors. */
-    SValuePtr get_val_protoval() const { return valProtoval_; }
+    SValuePtr get_val_protoval() const;
 
     /** Clear memory. Removes all memory cells from this memory state. */
     virtual void clear() = 0;
@@ -119,14 +116,14 @@ public:
      *  concatenate/extract individual bytes when reading/writing multi-byte values.
      *
      * @{ */
-    bool byteRestricted() const { return byteRestricted_; }
-    void byteRestricted(bool b) { byteRestricted_ = b; }
+    bool byteRestricted() const;
+    void byteRestricted(bool);
     /** @} */
 
     /** Memory byte order.
      *  @{ */
-    ByteOrder::Endianness get_byteOrder() const { return byteOrder_; }
-    void set_byteOrder(ByteOrder::Endianness bo) { byteOrder_ = bo; }
+    ByteOrder::Endianness get_byteOrder() const;
+    void set_byteOrder(ByteOrder::Endianness);
     /** @} */
 
     /** Merge memory states for data flow analysis.
@@ -193,8 +190,10 @@ public:
         MemoryStatePtr obj;
         Formatter &fmt;
     public:
-        WithFormatter(const MemoryStatePtr &obj, Formatter &fmt): obj(obj), fmt(fmt) {}
-        void print(std::ostream &stream) const { obj->print(stream, fmt); }
+        ~WithFormatter();
+        WithFormatter() = delete;
+        WithFormatter(const MemoryStatePtr&, Formatter&);
+        void print(std::ostream&) const;
     };
 
     /** Used for printing memory states with formatting. The usual way to use this is:
@@ -212,8 +211,8 @@ public:
      *  std::cout <<"Memory state:\n" <<*(obj + "    ");
      * @endcode
      * @{ */
-    WithFormatter with_format(Formatter &fmt) { return WithFormatter(shared_from_this(), fmt); }
-    WithFormatter operator+(Formatter &fmt) { return with_format(fmt); }
+    WithFormatter with_format(Formatter&);
+    WithFormatter operator+(Formatter&);
     WithFormatter operator+(const std::string &linePrefix);
     /** @} */
 };
