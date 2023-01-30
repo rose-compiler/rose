@@ -307,15 +307,22 @@ public:
      *
      *  The control flow graph and transfer function are specified in the engine's constructor.  The starting CFG vertex and
      *  its initial state are supplied when the engine starts to run. */
-    template<class CFG, class State, class TransferFunction, class MergeFunction,
-             class PathFeasibility = PathAlwaysFeasible<CFG, State> >
+    template<class Cfg_, class State_, class TransferFunction_, class MergeFunction_,
+             class PathFeasibility_ = PathAlwaysFeasible<Cfg_, State_> >
     class Engine {
     public:
-        typedef std::vector<State> VertexStates;        /**< Data-flow states indexed by vertex ID. */
+        using Cfg = Cfg_;                               /**< Type of the data-flow control flow graph. */
+        using State = State_;                           /**< Type of the states stored at each CFG vertex. */
+        using TransferFunction = TransferFunction_;     /**< Type of the transfer function that creates new states. */
+        using MergeFunction = MergeFunction_;           /**< Type of the function that merges two states into a single state. */
+        using PathFeasibility = PathFeasibility_;       /**< Predicate testing whether certain CFG edges should be followed. */
+        using VertexStates = std::vector<State>;        /**< Vector of states per vertex. */
+
+        using CFG = Cfg_;                               // Deprecated [Robb Matzke 2023-01-27]
 
     private:
         std::string name_;                              // optional name for debugging
-        const CFG &cfg_;
+        const Cfg &cfg_;
         TransferFunction &xfer_;
         MergeFunction merge_;
         VertexStates incomingState_;                    // incoming data-flow state per CFG vertex ID
@@ -332,7 +339,7 @@ public:
          *  Constructs a new data-flow engine that will operate over the specified control flow graph using the specified
          *  transfer function.  The control flow graph is incorporated into the engine by reference; the transfer functor is
          *  copied. */
-        Engine(const CFG &cfg, TransferFunction &xfer, MergeFunction merge = MergeFunction(),
+        Engine(const Cfg &cfg, TransferFunction &xfer, MergeFunction merge = MergeFunction(),
                PathFeasibility isFeasible = PathFeasibility())
             : cfg_(cfg), xfer_(xfer), merge_(merge), maxIterations_(-1), nIterations_(0), isFeasible_(isFeasible) {
             reset();
@@ -342,7 +349,7 @@ public:
          *
          *  Returns a reference to the control flow graph that's being used for the data-flow analysis. The return value is the
          *  same control flow graph as which was supplied to the constructor. */
-        const CFG &cfg() const {
+        const Cfg &cfg() const {
             return cfg_;
         }
         
@@ -412,7 +419,7 @@ public:
                 
                 ASSERT_require2(cfgVertexId < cfg_.nVertices(),
                                 "vertex " + boost::lexical_cast<std::string>(cfgVertexId) + " must be valid within CFG");
-                typename CFG::ConstVertexIterator vertex = cfg_.findVertex(cfgVertexId);
+                typename Cfg::ConstVertexIterator vertex = cfg_.findVertex(cfgVertexId);
                 State state = incomingState_[cfgVertexId];
                 if (mlog[DEBUG]) {
                     mlog[DEBUG] <<prefix() <<"  incoming state for vertex #" <<cfgVertexId <<":\n"
@@ -429,7 +436,7 @@ public:
                 // is modified as a result will have its CFG vertex added to the work list.
                 SAWYER_MESG(mlog[DEBUG]) <<prefix() <<"  forwarding vertex #" <<cfgVertexId <<" output state to "
                                          <<StringUtility::plural(vertex->nOutEdges(), "vertices", "vertex") <<"\n";
-                for (const typename CFG::Edge &edge: vertex->outEdges()) {
+                for (const typename Cfg::Edge &edge: vertex->outEdges()) {
                     size_t nextVertexId = edge.target()->id();
                     if (!isFeasible_(cfg_, edge, state, incomingState_[nextVertexId])) {
                         SAWYER_MESG(mlog[DEBUG]) <<prefix() <<"    path to vertex #" <<nextVertexId
