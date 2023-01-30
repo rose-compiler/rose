@@ -602,6 +602,43 @@ DfCfgVertex::address() const {
     return Sawyer::Nothing();
 }
 
+void
+DfCfgVertex::print(std::ostream &out) const {
+    switch (type()) {
+        case BBLOCK:
+            if (auto bb = bblock()) {
+                out <<bb->printableName();
+            } else {
+                out <<"basic block none";
+            }
+            break;
+        case FAKED_CALL:
+            if (auto func = callee()) {
+                out <<"call to " <<func->printableName();
+            } else {
+                out <<"call to nothing";
+            }
+            break;
+        case FUNCRET:
+            if (auto func = parentFunction()) {
+                out <<"return to " <<func->printableName();
+            } else {
+                out <<"return to nothing";
+            }
+            break;
+        case INDET:
+            out <<"indeterminate";
+            break;
+    }
+}
+
+std::string
+DfCfgVertex::toString() const {
+    std::ostringstream ss;
+    print(ss);
+    return ss.str();
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TransferFunction
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

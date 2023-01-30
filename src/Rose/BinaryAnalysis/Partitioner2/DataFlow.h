@@ -9,6 +9,9 @@
 #include <Rose/BinaryAnalysis/Variables.h>
 #include <Sawyer/Graph.h>
 
+#include <ostream>
+#include <string>
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
@@ -84,6 +87,16 @@ public:
      *
      *  Returns the virtual address if known, otherwise nothing. */
     Sawyer::Optional<rose_addr_t> address() const;
+
+    /** Print a short description of this vertex.
+     *
+     *  The description is a single-line string with no line termination. */
+    void print(std::ostream&) const;
+
+    /** Single-line description of this vertex.
+     *
+     *  The description is a single-line string with no line termination. */
+    std::string toString() const;
 };
 
 /** Control flow graph used by data-flow analysis.
