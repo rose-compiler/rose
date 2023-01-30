@@ -293,6 +293,20 @@ findGlobalVariable(const Variables::GlobalVariables &gvars, const AddressInterva
     return {};
 }
 
+// Find a global variable or a local variable.
+static FoundVariable
+findVariable(const AddressInterval &location, const Variables::GlobalVariables &gvars, const FunctionCallStack &callStack,
+             const AddressInterval &stackLimits) {
+    if (Variables::GlobalVariable gvar = findGlobalVariable(gvars, location))
+        return FoundVariable(gvar);
+
+    auto whereWhat = findStackVariable(callStack, location, stackLimits);
+    if (whereWhat.first)
+        return FoundVariable(whereWhat.first, whereWhat.second);
+
+    return {};
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Function call stack
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -686,39 +700,49 @@ RiscOperators::checkOobAccess(const BS::SValue::Ptr &addrSVal_, TestMode testMod
 
 void
 RiscOperators::checkUninitVar(const BS::SValue::Ptr &addrSVal_, TestMode testMode, size_t nBytes) {
-    if (computeMemoryRegions_) {
-        auto addrSVal = SValue::promote(addrSVal_);
+    if (!computeMemoryRegions_)
+        return;
 
-        // Uninitialized reads are only tested when we're actually executing an instruction.
-        if (!currentInstruction())
-            return;
-        if (TestMode::OFF == testMode)
-            return;
+    // Uninitialized reads are only tested when we're actually executing an instruction.
+    if (!currentInstruction())
+        return;
+    if (TestMode::OFF == testMode)
+        return;
 
-        // If the address is concrete and contained inside a variable region, then check for uninitialized value.
-        if (auto va = addrSVal->toUnsigned()) {
-            if (AddressInterval referencedRegion = addrSVal->region()) {
-                AddressInterval accessedRegion = AddressInterval::baseSize(*va, nBytes);
-                if (referencedRegion.contains(accessedRegion)) {
-                    // If there are no writers for this address, then this is an uninitialized variable read
-                    auto mem = BS::MemoryCellState::promote(currentState()->memoryState());
-                    if (mem->getWritersUnion(addrSVal, 8*nBytes, this, this).isEmpty()) {
-                        FunctionCallStack &callStack = State::promote(currentState())->callStack();
-                        auto whereWhatIntended = findStackVariable(callStack, referencedRegion, stackLimits_);
-                        if (!semantics_->filterUninitVar(addrSVal, referencedRegion, accessedRegion, currentInstruction(),
-                                                         testMode, whereWhatIntended.second, whereWhatIntended.first)) {
-                            SAWYER_MESG(mlog[DEBUG]) <<"      uninitialized variable rejected by user; this one is ignored\n";
-                        } else {
-                            currentState(BS::State::Ptr()); // indicates that execution failed
-                            throw ThrownTag{UninitializedVariableTag::instance(nInstructions(), testMode, currentInstruction(),
-                                                                               addrSVal, whereWhatIntended.second,
-                                                                               whereWhatIntended.first)};
-                        }
-                    }
-                }
-            }
-        }
+    // The address must be concrete and it must have an attached region that fully contains the memory bytes being accessed
+    // by the address (based on the address itself and the `nBytes` parameter.
+    const auto addrSVal = SValue::promote(addrSVal_);
+    const auto va = addrSVal->toUnsigned();
+    if (!va)
+        return;
+    const AddressInterval referencedRegion = addrSVal->region();
+    if (!referencedRegion)
+        return;
+    const AddressInterval accessedRegion = AddressInterval::baseSize(*va, nBytes);
+    if (!referencedRegion.contains(accessedRegion))
+        return;
+
+    // In order for the memory being accessed to be considered uninitialized, it must have no writers.
+    auto mem = BS::MemoryCellState::promote(currentState()->memoryState());
+    if (mem->getWritersUnion(addrSVal, 8*nBytes, this, this))
+        return;
+
+    // The region attached to the address must refer to a source code variable that was detected earlier by the variable
+    // analysis.
+    const FunctionCallStack &callStack = State::promote(currentState())->callStack();
+    const FoundVariable variable = findVariable(referencedRegion, gvars_, callStack, stackLimits_);
+    if (!variable)
+        return;
+
+    // We've found a read of an uninialized variable, but is it significant from the user's point of view?
+    if (!semantics_->filterUninitVar(addrSVal, referencedRegion, accessedRegion, currentInstruction(), testMode, variable)) {
+        SAWYER_MESG(mlog[DEBUG]) <<"      uninitialized variable rejected by user; this one is ignored\n";
+        return;
     }
+
+    // We've found a significant read of an uninitialized variable. Report it.
+    currentState(BS::State::Ptr());                 // indicates that execution failed
+    throw ThrownTag{UninitializedVariableTag::instance(nInstructions(), testMode, currentInstruction(), addrSVal, variable)};
 }
 
 size_t
@@ -1789,7 +1813,7 @@ SemanticCallbacks::filterOobAccess(const BS::SValue::Ptr &/*addr*/, const Addres
 bool
 SemanticCallbacks::filterUninitVar(const BS::SValue::Ptr &/*addr*/, const AddressInterval &/*referencedRegion*/,
                                    const AddressInterval &/*accessedRegion*/, SgAsmInstruction*, TestMode,
-                                   const Variables::StackVariable &/*variable*/, const AddressInterval &/*variableLocation*/) {
+                                   const FoundVariable &/*variable*/) {
     return true;
 }
 

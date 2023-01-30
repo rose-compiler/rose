@@ -164,6 +164,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/ModelChecker/SourceLister.C					\
 	BinaryAnalysis/ModelChecker/Tag.C						\
 	BinaryAnalysis/ModelChecker/UninitializedVariableTag.C				\
+	BinaryAnalysis/ModelChecker/Variables.C						\
 	BinaryAnalysis/ModelChecker/WorkerStatus.C					\
 	BinaryAnalysis/NoOperation.C							\
 	BinaryAnalysis/Partitioner2/AddressUsageMap.C					\

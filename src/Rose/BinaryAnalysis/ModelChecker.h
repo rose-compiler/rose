@@ -27,6 +27,7 @@
 #include <Rose/BinaryAnalysis/ModelChecker/Tag.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Types.h>
 #include <Rose/BinaryAnalysis/ModelChecker/UninitializedVariableTag.h>
+#include <Rose/BinaryAnalysis/ModelChecker/Variables.h>
 #include <Rose/BinaryAnalysis/ModelChecker/WorkerStatus.h>
 
 #endif

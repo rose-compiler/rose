@@ -18,7 +18,6 @@ static const char *description =
 #include <string>
 #include <vector>
 
-
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;

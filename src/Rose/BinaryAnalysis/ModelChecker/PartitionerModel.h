@@ -5,6 +5,7 @@
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/ModelChecker/SemanticCallbacks.h>
+#include <Rose/BinaryAnalysis/ModelChecker/Variables.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Variables.h>
 #include <Sawyer/CommandLine.h>
@@ -681,8 +682,7 @@ public:
 
     virtual bool filterUninitVar(const InstructionSemantics::BaseSemantics::SValuePtr &addr,
                                  const AddressInterval &referencedREgion, const AddressInterval &accessedRegion,
-                                 SgAsmInstruction *insn, TestMode testMode, const Variables::StackVariable &variable,
-                                 const AddressInterval &variableLocation);
+                                 SgAsmInstruction *insn, TestMode testMode, const FoundVariable &accessedVariable);
 
 public:
     virtual void reset() override;

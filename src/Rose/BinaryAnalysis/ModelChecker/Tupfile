@@ -24,6 +24,7 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis/ModelChecker \
     Tag.h \
     Types.h \
     UninitializedVariableTag.h \
+    Variables.h \
     WorkerStatus.h
 
 run $(librose_compile) \
@@ -48,4 +49,5 @@ run $(librose_compile) \
     SourceLister.C \
     Tag.C \
     UninitializedVariableTag.C \
+    Variables.C \
     WorkerStatus.C
