@@ -21,6 +21,7 @@ add_custom_target(
   DEPENDS ${CMAKE_BINARY_DIR}/rosePublicConfig.h)
 
 add_executable(rose-feature-tests featureTests.C)
+add_dependencies(rose-feature-tests generate_rosePublicConfig)
 
 
 ########################################################################################################################
