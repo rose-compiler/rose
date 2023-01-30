@@ -13,18 +13,18 @@ namespace BinaryAnalysis {
 namespace ModelChecker {
 
 UninitializedVariableTag::UninitializedVariableTag(size_t nodeStep, TestMode tm, SgAsmInstruction *insn,
-                                                   const BS::SValue::Ptr &addr, const Variables::StackVariable &variable,
-                                                   const AddressInterval &variableLocation)
-    : Tag(nodeStep), testMode_(tm), insn_(insn), addr_(addr), variable_(variable), variableLocation_(variableLocation) {}
+                                                   const BS::SValue::Ptr &addr, const FoundVariable &variable)
+    : Tag(nodeStep), testMode_(tm), insn_(insn), addr_(addr), variable_(variable) {}
 
 UninitializedVariableTag::~UninitializedVariableTag() {}
 
 UninitializedVariableTag::Ptr
 UninitializedVariableTag::instance(size_t nodeStep, TestMode tm, SgAsmInstruction *insn, const BS::SValue::Ptr &addr,
-                                   const Variables::StackVariable &variable, const AddressInterval &variableLocation) {
+                                   const FoundVariable &variable) {
     ASSERT_forbid(TestMode::OFF == tm);
     ASSERT_not_null(addr);
-    return Ptr(new UninitializedVariableTag(nodeStep, tm, insn, addr, variable, variableLocation));
+    ASSERT_require(variable);
+    return Ptr(new UninitializedVariableTag(nodeStep, tm, insn, addr, variable));
 }
 
 std::string
@@ -72,14 +72,10 @@ UninitializedVariableTag::print(std::ostream &out, const std::string &prefix) co
     out <<"\n";
 
     out <<prefix <<"  attempted read from address " <<*addr_ <<"\n";
-
-    if (variableLocation_) {
-        out <<prefix <<"  variable " <<variable_
-            <<" at " <<StringUtility::addrToString(variableLocation_);
-        if (auto function = variable_.function())
-            out <<" in " <<function->printableName();
-        out <<"\n";
-    }
+    out <<prefix <<"  variable " <<variable_;
+    if (auto function = variable_.function())
+        out <<" in " <<function->printableName();
+    out <<"\n";
 }
 
 void
@@ -106,12 +102,10 @@ UninitializedVariableTag::toYaml(std::ostream &out, const std::string &prefix1) 
 
     out <<prefix <<"memory-address: " <<StringUtility::yamlEscape(boost::lexical_cast<std::string>(*addr_)) <<"\n";
 
-    if (variableLocation_) {
-        out <<prefix <<"variable: " <<StringUtility::yamlEscape(variable_.toString()) <<"\n";
-        out <<prefix <<"location: " <<StringUtility::yamlEscape(StringUtility::addrToString(variableLocation_)) <<"\n";
-        if (auto function = variable_.function())
-            out <<prefix <<"function: " <<StringUtility::yamlEscape(function->printableName()) <<"\n";
-    }
+    out <<prefix <<"variable: " <<StringUtility::yamlEscape(variable_.toString()) <<"\n";
+    out <<prefix <<"location: " <<StringUtility::yamlEscape(StringUtility::addrToString(variable_.where())) <<"\n";
+    if (auto function = variable_.function())
+        out <<prefix <<"function: " <<StringUtility::yamlEscape(function->printableName()) <<"\n";
 }
 
 } // namespace

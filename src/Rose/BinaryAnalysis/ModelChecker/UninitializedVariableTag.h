@@ -4,6 +4,7 @@
 #ifdef ROSE_ENABLE_MODEL_CHECKER
 
 #include <Rose/BinaryAnalysis/ModelChecker/Tag.h>
+#include <Rose/BinaryAnalysis/ModelChecker/Variables.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Variables.h>
 
@@ -17,17 +18,16 @@ public:
     using Ptr = UninitializedVariableTagPtr;
 
 private:
-    const TestMode testMode_;                                    // may or must, but not off
-    const SgAsmInstruction *insn_;                               // instruction where the oob access occurs (optional)
+    const TestMode testMode_;                                   // may or must, but not off
+    const SgAsmInstruction *insn_;                              // instruction where the oob access occurs (optional)
     const InstructionSemantics::BaseSemantics::SValuePtr addr_; // memory address that is accessed
-    const Variables::StackVariable variable_;                    // variable that was read before being written
-    const AddressInterval variableLocation_;                     // location and size of stack variable in memory
+    const FoundVariable variable_;                              // variable that was read before being written
 
 protected:
     UninitializedVariableTag() = delete;
     UninitializedVariableTag(size_t nodeStep, TestMode, SgAsmInstruction*,
                              const InstructionSemantics::BaseSemantics::SValuePtr &addr,
-                             const Variables::StackVariable &variable, const AddressInterval &variableLocation);
+                             const FoundVariable &variable);
 
     UninitializedVariableTag(const UninitializedVariableTag&) = delete;
 
@@ -41,8 +41,7 @@ public:
      *
      *  Thread safety: This constructor is thread safe. */
     static Ptr instance(size_t nodeStep, TestMode, SgAsmInstruction*,
-                        const InstructionSemantics::BaseSemantics::SValuePtr &addr,
-                        const Variables::StackVariable &variable, const AddressInterval &variableLocation);
+                        const InstructionSemantics::BaseSemantics::SValuePtr &addr, const FoundVariable &variable);
 
 public:
     virtual std::string name() const override;

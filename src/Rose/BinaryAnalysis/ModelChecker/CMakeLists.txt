@@ -20,6 +20,7 @@ add_library(roseBinaryAnalysisModelChecker OBJECT
   SourceLister.C
   Tag.C
   UninitializedVariableTag.C
+  Variables.C
   WorkerStatus.C)
 
 add_dependencies(roseBinaryAnalysisModelChecker rosetta_generated)
@@ -48,6 +49,7 @@ install(FILES
   Tag.h
   Types.h
   UninitializedVariableTag.h
+  Variables.h
   WorkerStatus.h
 
   DESTINATION ${INCLUDE_INSTALL_DIR}/Rose/BinaryAnalysis/ModelChecker)
