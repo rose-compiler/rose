@@ -1522,6 +1522,14 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
      }
    }
 
+// Begin language specific constructs
+   setDeclarationModifier(var_decl, def_or_ref);
+   if (modifier_enum && *modifier_enum == e_storage_modifier_static) {
+      // Set static on both modifier attributes, JovialStatic is used for unparsing
+      var_decl->get_declarationModifier().setJovialStatic();
+      var_decl->get_declarationModifier().get_storageModifier().setStatic();
+   }
+
 // Set the structure specifier if present
    const StructureSpecifier& struct_spec = table_spec.struct_spec;
    if (struct_spec.is_parallel) {
@@ -2595,12 +2603,10 @@ ATbool ATermToSageJovialTraversal::traverse_BlockDeclaration(ATerm term, int def
 
    // Begin language specific constructs
    setDeclarationModifier(var_decl, def_or_ref);
-   if (modifier_enum) {
-      if (*modifier_enum == e_storage_modifier_static) {
+   if (modifier_enum && *modifier_enum == e_storage_modifier_static) {
       // Set static on both modifier attributes, JovialStatic is used for unparsing
-         var_decl->get_declarationModifier().setJovialStatic();
-         var_decl->get_declarationModifier().get_storageModifier().setStatic();
-      }
+      var_decl->get_declarationModifier().setJovialStatic();
+      var_decl->get_declarationModifier().get_storageModifier().setStatic();
    }
 
    if (is_anon) {
