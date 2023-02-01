@@ -3567,11 +3567,12 @@
 0x0804a31c: Successor blocks: 0x0804a31f
 
 0x0804a31f: Basic block reasons: 
-0x0804a31f: 5b                      |[       |          pop    ebx
-0x0804a320: 5e                      |^       |          pop    esi
-0x0804a321: 5f                      |_       |          pop    edi
-0x0804a322: 5d                      |]       |          pop    ebp
-0x0804a323: c3                      |.       |          ret    
+0x0804a31f: 5b                      |[       |<sp-16>   pop    ebx
+0x0804a320: 5e                      |^       |<sp-12>   pop    esi
+0x0804a321: 5f                      |_       |<sp-8 >   pop    edi
+0x0804a322: 5d                      |]       |<sp-4 >   pop    ebp
+0x0804a323: c3                      |.       |<sp+0 >   ret    
+0x0804a323: Outgoing stack delta: +4
 0x0804a323: Successor blocks: unknown
 
 0x0804a324: Basic block reasons: 

@@ -120,6 +120,7 @@ public:
     public:
         RegPair(RegisterDescriptor desc, const SValuePtr &value): desc(desc), value(value) {}
         BitRange location() const { return BitRange::baseSize(desc.offset(), desc.nBits()); }
+        SValuePtr get(RegisterDescriptor, RiscOperators*) const;
     };
 
     /** Vector of register/value pairs. */

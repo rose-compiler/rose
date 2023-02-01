@@ -11,6 +11,8 @@
 #include <Rose/Diagnostics.h>
 #include <Rose/FormatRestorer.h>
 
+#include <Sawyer/IntervalSet.h>
+
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/format.hpp>
 #include <boost/format.hpp>
@@ -34,6 +36,26 @@ static bool
 sortByOffset(const RegisterStateGeneric::RegPair &a, const RegisterStateGeneric::RegPair &b) {
     return a.desc.offset() < b.desc.offset();
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// RegisterStateGeneric::RegPair
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+SValue::Ptr
+RegisterStateGeneric::RegPair::get(RegisterDescriptor reg, RiscOperators *ops) const {
+    ASSERT_require(reg.isSubsetOf(desc));
+    if (reg == desc) {
+        return value;
+    } else {
+        const size_t begin = reg.offset() - desc.offset();
+        const size_t end = begin + reg.nBits();
+        return ops->extract(value, begin, end);
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// RegisterStateGeneric
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
 RegisterStateGeneric::clear()
@@ -774,16 +796,40 @@ RegisterStateGeneric::merge(const BaseSemantics::RegisterState::Ptr &other_, Ris
     ASSERT_not_null(ops);
     RegisterStateGeneric::Ptr other = boost::dynamic_pointer_cast<RegisterStateGeneric>(other_);
     ASSERT_not_null(other);
+    using Interval = Sawyer::Container::Interval<size_t>;
+    using IntervalSet = Sawyer::Container::IntervalSet<Interval>;
     bool changed = false;
 
     // Merge values stored in registers.
-    for (const RegPair &otherRegVal: other->get_stored_registers()) {
-        RegisterDescriptor otherReg = otherRegVal.desc;
-        const BaseSemantics::SValue::Ptr &otherValue = otherRegVal.value;
-        BaseSemantics::SValue::Ptr dflt = ops->undefined_(otherReg.nBits());
-        BaseSemantics::SValue::Ptr thisValue = readRegister(otherReg, dflt, ops);
-        if (BaseSemantics::SValue::Ptr merged = thisValue->createOptionalMerge(otherValue, merger(), ops->solver()).orDefault()) {
-            writeRegister(otherReg, merged, ops);
+    const RegPairs otherRegVals = other->get_stored_registers();
+    for (const RegPair &otherRegVal: otherRegVals) {
+
+        // Part of otherRegVal that remains to be processed.
+        IntervalSet remaining;
+        remaining |= Interval::baseSize(otherRegVal.desc.offset(), otherRegVal.desc.nBits());
+
+        // Where this register state contains a value for part of the other register, merge the values.
+        const RegPairs selfRegVals = overlappingRegisters(otherRegVal.desc); // copy since write (below) changes state
+        for (const RegPair &selfRegVal: selfRegVals) {
+            const RegisterDescriptor reg = otherRegVal.desc & selfRegVal.desc;
+            SValue::Ptr selfValue = selfRegVal.get(reg, ops);
+            SValue::Ptr otherValue = otherRegVal.get(reg, ops);
+            if (SValue::Ptr merged = selfValue->createOptionalMerge(otherValue, merger(), ops->solver()).orDefault()) {
+                writeRegister(reg, merged, ops);
+                changed = true;
+            }
+
+            const auto processed = Interval::baseSize(reg.offset(), reg.nBits());
+            remaining -= processed;
+        }
+
+        // Where this register state does not contain a value for part of the other register, use the other state's value
+        // without merging.
+        for (const Interval &where: remaining.intervals()) {
+            const RegisterDescriptor reg(otherRegVal.desc.majorNumber(), otherRegVal.desc.minorNumber(),
+                                         where.least(), where.size());
+            SValue::Ptr otherValue = otherRegVal.get(reg, ops);
+            writeRegister(reg, otherValue, ops);
             changed = true;
         }
     }
