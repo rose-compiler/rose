@@ -230,6 +230,16 @@ public:
         return data_ != other.data_;
     }
 
+    /** Compute the intersection of two regiter descriptors.
+     *
+     *  If the registers have the same major numbers and the same minor numbers and the offset and size cause them to overlap,
+     *  then the return value is a register descriptor with the same major and minor numbers and an offset and size that
+     *  represents the overlapping portion. Otherwise the return value is a default constructed register descriptor. */
+    RegisterDescriptor operator&(RegisterDescriptor other) const;
+
+    /** True if this descriptor is a subset of the specified descriptor. */
+    bool isSubsetOf(RegisterDescriptor other) const;
+
     /** Hash value.
      *
      *  Hash a descriptor. This is a perfect hash: every descriptor hashes to a distinct value. */

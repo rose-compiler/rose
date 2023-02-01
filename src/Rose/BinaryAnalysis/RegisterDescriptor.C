@@ -53,6 +53,35 @@ RegisterDescriptor::nBits(size_t width) {
     setOffsetWidth(offset(), width);
 }
 
+RegisterDescriptor
+RegisterDescriptor::operator&(RegisterDescriptor other) const {
+    if (majorNumber() == other.majorNumber() && minorNumber() == other.minorNumber()) {
+        const size_t begin1 = offset();
+        const size_t end1 = begin1 + nBits();
+        const size_t begin2 = other.offset();
+        const size_t end2 = begin2 + other.nBits();
+        const size_t begin = std::max(begin1, begin2);
+        const size_t end = std::min(end1, end2);
+        if (end <= begin) {
+            return RegisterDescriptor();
+        } else {
+            const size_t width = end - begin;
+            return RegisterDescriptor(majorNumber(), minorNumber(), begin, width);
+        }
+    } else {
+        return RegisterDescriptor();
+    }
+}
+
+bool
+RegisterDescriptor::isSubsetOf(RegisterDescriptor other) const {
+    if (const RegisterDescriptor intersection = *this & other) {
+        return intersection.offset() == offset() && intersection.nBits() == nBits();
+    } else {
+        return false;
+    }
+}
+
 std::string
 RegisterDescriptor::toString() const {
     std::ostringstream ss;
