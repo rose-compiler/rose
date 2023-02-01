@@ -588,5 +588,12 @@ run $(tool_compile_linkexe) testGdb.C
 run $(test) testGdb \
     ./testGdb $(ROSE)/tests/nonsmoke/specimens/binary/m68k-gdb
 
+########################################################################################################################
+# Test symbolic merge operations
+########################################################################################################################
+
+run $(tool_compile_linkexe) testSymbolicMerge.C
+run $(test) testSymbolicMerge
+
 endif
 endif

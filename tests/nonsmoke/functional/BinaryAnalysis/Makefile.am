@@ -1657,6 +1657,23 @@ testGdb.passed: $(top_srcdir)/scripts/test_exit_status testGdb
 		CMD="$$(pwd)/testGdb $(top_srcdir)/tests/nonsmoke/specimens/binary/m68k-gdb"	\
 		$< $@
 
+########################################################################################################################
+# Test symbolic merge operations
+########################################################################################################################
+
+noinst_PROGRAMS += testSymbolicMerge
+testSymbolicMerge_SOURCES = testSymbolicMerge.C
+testSymbolicMerge_LDADD = $(ROSE_SEPARATE_LIBS)
+
+TEST_TARGETS += testSymbolicMerge.passed
+testSymbolicMerge.passed: $(top_srcdir)/scripts/test_exit_status testSymbolicMerge
+	@$(RTH_RUN)					\
+		TITLE="test symbolic merge [$@]"	\
+		DISABLED="$$(./conditionalDisable)"	\
+		USE_SUBDIR=yes				\
+		CMD="$$(pwd)/testSymbolicMerge"		\
+		$< $@
+
 ###############################################################################################################################
 # Standard boilerplate
 ###############################################################################################################################
