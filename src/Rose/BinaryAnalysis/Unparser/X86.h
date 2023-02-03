@@ -16,8 +16,10 @@ std::string unparseX86Register(RegisterDescriptor, const RegisterDictionaryPtr&)
 std::string unparseX86Expression(SgAsmExpression*, const LabelMap*, const RegisterDictionaryPtr&, bool leaMode);
 std::string unparseX86Expression(SgAsmExpression*, const LabelMap*, const RegisterDictionaryPtr&);
 
+/** %Settings specific to the x86 unparser. */
 struct X86Settings: public Settings {};
 
+/** %Unparser for x86 instruction sets. */
 class X86: public Base {
     X86Settings settings_;
 

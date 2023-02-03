@@ -14,8 +14,10 @@ std::string unparseMipsMnemonic(SgAsmMipsInstruction*);
 std::string unparseMipsRegister(SgAsmInstruction*, RegisterDescriptor, RegisterDictionaryPtr);
 std::string unparseMipsExpression(SgAsmExpression*, const LabelMap*, const RegisterDictionaryPtr&);
 
+/** %Settings specific to the MIP unparser. */
 struct MipsSettings: public Settings {};
 
+/** %Unparser for the MIPS instruction set. */
 class Mips: public Base {
     MipsSettings settings_;
 

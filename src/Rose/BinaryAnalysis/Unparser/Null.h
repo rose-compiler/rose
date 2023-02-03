@@ -9,9 +9,10 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Unparser {
 
+/** %Settings specific to the null unparser. */
 struct NullSettings: public Settings {};
 
-/** Unparser for null architecture. */
+/** %Unparser for null architecture. */
 class Null: public Base {
     NullSettings settings_;
 

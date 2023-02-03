@@ -13,8 +13,10 @@ namespace Unparser {
 std::string unparseM68kMnemonic(SgAsmM68kInstruction*);
 std::string unparseM68kExpression(SgAsmExpression*, const LabelMap*, RegisterDictionaryPtr);
 
+/** %Settings specific to the M68k unparser. */
 struct M68kSettings: public Settings {};
 
+/** %Unparser for Motorola M68k and related instruction sets. */
 class M68k: public Base {
     M68kSettings settings_;
 

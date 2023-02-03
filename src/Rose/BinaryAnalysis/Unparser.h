@@ -14,4 +14,14 @@
 #include <Rose/BinaryAnalysis/Unparser/Settings.h>
 #include <Rose/BinaryAnalysis/Unparser/X86.h>
 
+namespace Rose {
+namespace BinaryAnalysis {
+
+/** Generates pseudo-assembly listings. */
+namespace Unparser {
+}
+
+} // namespace
+} // namespace
+
 #endif
