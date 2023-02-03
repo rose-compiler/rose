@@ -13,8 +13,10 @@ namespace Unparser {
 std::string unparseCilMnemonic(SgAsmCilInstruction*);
 std::string unparseCilExpression(SgAsmExpression*, const LabelMap*, RegisterDictionaryPtr);
 
+/** %Settings specific to the Cil unaprser. */
 struct CilSettings: public Settings {};
 
+/** %Unparser for CIL. */
 class Cil: public Base {
     CilSettings settings_;
 

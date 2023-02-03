@@ -9,9 +9,10 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Unparser {
 
+/** %Settings specific to the JVM unparser. */
 struct JvmSettings: public Settings {};
 
-/** Unparser for the JVM architecture. */
+/** %Unparser for the JVM architecture. */
 class Jvm: public Base {
     JvmSettings settings_;
 

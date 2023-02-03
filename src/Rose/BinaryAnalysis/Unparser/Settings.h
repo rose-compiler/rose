@@ -13,7 +13,7 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Unparser {
 
-/** Style of text. */
+/** %Style of text. */
 struct Style {
     Sawyer::Optional<Color::HSV> foreground;            /**< Optional foreground color. */
     Sawyer::Optional<Color::HSV> background;            /**< Optional background color. */
@@ -22,7 +22,7 @@ struct Style {
     std::string ansiStyle() const;
 };
 
-/** Settings that control unparsing.
+/** %Settings that control unparsing.
  *
  *  This struct holds all settings that control the output of the binary instruction unparser.  Particular subclasses of the
  *  basic unparser may have settings that derive from these base settings. The @ref commandLineSwitches function can be used to

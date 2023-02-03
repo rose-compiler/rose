@@ -13,6 +13,7 @@ namespace Unparser {
 std::string unparseAarch32Mnemonic(SgAsmAarch32Instruction*);
 std::string unparseAarch32Expression(SgAsmExpression*, const LabelMap*, RegisterDictionaryPtr);
 
+/** %Settings specific to the ARM AArch32 unparser. */
 struct Aarch32Settings: public Settings {};
 
 /** ARM Aarch32 A32/T32 disassembler.

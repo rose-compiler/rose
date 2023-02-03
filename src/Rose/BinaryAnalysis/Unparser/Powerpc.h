@@ -13,8 +13,10 @@ namespace Unparser {
 std::string unparsePowerpcMnemonic(SgAsmPowerpcInstruction*);
 std::string unparsePowerpcExpression(SgAsmExpression*, const LabelMap*, const RegisterDictionaryPtr&);
 
+/** %Settings specific to the PowerPC unparser. */
 struct PowerpcSettings: public Settings {};
 
+/** %Unparser for PowerPC instruction sets. */
 class Powerpc: public Base {
     PowerpcSettings settings_;
 

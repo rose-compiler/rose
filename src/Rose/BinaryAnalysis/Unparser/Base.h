@@ -22,7 +22,6 @@
 namespace Rose {
 namespace BinaryAnalysis {
 
-/** Generates pseudo-assembly listings. */
 namespace Unparser {
 
 /** Map from address to label. */
