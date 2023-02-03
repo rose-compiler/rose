@@ -112,7 +112,7 @@ RiscOperators::finishInstruction(SgAsmInstruction *insn) {
 
 void
 RiscOperators::comment(const std::string &comment) {
-    SAWYER_MESG(mlog[DEBUG]) <<StringUtility::prefixLines(comment, "// ");
+    SAWYER_MESG(mlog[DEBUG]) <<StringUtility::prefixLines(comment, "// ") <<"\n";
 }
 
 std::pair<SValue::Ptr /*low*/, SValue::Ptr /*high*/>

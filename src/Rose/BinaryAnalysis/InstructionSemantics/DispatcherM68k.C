@@ -1199,36 +1199,42 @@ struct IP_exg: P {
     }
 };
 
-struct IP_ext: P {
-    void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 1);
-        size_t dstNBits = args[0]->get_nBits();
-        size_t srcNBits = dstNBits / 2;
-        SValue::Ptr a0 = ops->unsignedExtend(d->read(args[0], dstNBits), srcNBits);
-        SValue::Ptr result = ops->signExtend(a0, dstNBits);
-        d->write(args[0], result);
-        
-        ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
-        ops->writeRegister(d->REG_CCR_V, ops->boolean_(false));
-        ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(a0));         // result==0 iff a0==0
-        ops->writeRegister(d->REG_CCR_N, ops->extract(a0, 7, 8));       // result<0  iff a0<0
-    }
-};
-
+// EXT, EXTB -- sign extend
 struct IP_extb: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         ASSERT_require(args[0]->get_nBits() >= 8);
-        size_t dstNBits = args[0]->get_nBits();
-        size_t srcNBits = dstNBits / 2;
-        SValue::Ptr a0 = ops->unsignedExtend(d->read(args[0], dstNBits), srcNBits);
-        SValue::Ptr result = ops->signExtend(a0, dstNBits);
+        ASSERT_require(insn->get_raw_bytes().size() >= 2);
+        const unsigned opMode = (((insn->get_raw_bytes()[0] << 8) | insn->get_raw_bytes()[1]) >> 6) & 0x7;
+        size_t srcNBits = 0, dstNBits = 0;
+        switch (opMode) {
+            case 0b010:                                 // sign extend low-order byte to word
+                srcNBits = 8;
+                dstNBits = 16;
+                break;
+            case 0b011:                                 // sign extend low-order word to longword
+                srcNBits = 16;
+                dstNBits = 32;
+                break;
+            case 0b111:                                 // sign extend low-order byte to longword
+                srcNBits = 8;
+                dstNBits = 32;
+                break;
+            default:
+                ASSERT_not_reachable("opMode = 0x" + StringUtility::unsignedToHex2(opMode, 4));
+        }
+        ASSERT_require(8 == srcNBits || 16 == srcNBits);
+        ASSERT_require(16 == dstNBits || 32 == dstNBits);
+        ASSERT_require(dstNBits > srcNBits);
+
+        SValue::Ptr src = d->read(args[0], srcNBits);
+        SValue::Ptr result = ops->signExtend(src, dstNBits);
         d->write(args[0], result);
 
         ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
         ops->writeRegister(d->REG_CCR_V, ops->boolean_(false));
-        ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(a0));         // result==0 iff a0==0
-        ops->writeRegister(d->REG_CCR_N, ops->extract(a0, 7, 8));       // result<0  iff a0<0
+        ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(result));
+        ops->writeRegister(d->REG_CCR_N, ops->extract(result, dstNBits-1, dstNBits));
     }
 };
 
@@ -3598,7 +3604,7 @@ DispatcherM68k::iproc_init() {
     iprocSet(m68k_eor,         new M68k::IP_eor);
     iprocSet(m68k_eori,        new M68k::IP_eori);
     iprocSet(m68k_exg,         new M68k::IP_exg);
-    iprocSet(m68k_ext,         new M68k::IP_ext);
+    iprocSet(m68k_ext,         new M68k::IP_extb);
     iprocSet(m68k_extb,        new M68k::IP_extb);
     iprocSet(m68k_fabs,        new M68k::IP_fabs);
     iprocSet(m68k_fsabs,       new M68k::IP_fsabs);
