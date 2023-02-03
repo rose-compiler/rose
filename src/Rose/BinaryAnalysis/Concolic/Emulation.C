@@ -208,6 +208,8 @@ RiscOperators::writeRegister(RegisterDescriptor reg, const BS::SValue::Ptr &valu
     if (currentInstruction() && hadSharedMemoryAccess()) {
         Sawyer::Message::Stream debug(mlog[DEBUG]);
 
+        RegisterDictionary::Ptr regdict = currentState()->registerState()->registerDictionary();
+
         // This probably writing a previously-read value from shared memory into a register. It's common on RISC
         // architectures to have an instruction that copies a value from memory into a register, in which case the value
         // being written here is just the variable we're using to represent what was read from shared memory. On CISC
@@ -218,7 +220,7 @@ RiscOperators::writeRegister(RegisterDescriptor reg, const BS::SValue::Ptr &valu
         // adjust all the side effects of the instruction that read the byte from memory.
         SymbolicExpression::Ptr valueExpr = Emulation::SValue::promote(value)->get_expression();
         SAWYER_MESG(debug) <<"  register update for shared memory read\n"
-                           <<"    register = " <<reg.toString() <<"\n"
+                           <<"    register = " <<regdict->quadAndName(reg) <<"\n"
                            <<"    value    = " <<*valueExpr <<"\n";
         auto event = ExecutionEvent::registerWrite(process()->testCase(), process()->nextEventLocation(When::POST),
                                                    currentInstruction()->get_address(), reg, SymbolicExpression::Ptr(),
