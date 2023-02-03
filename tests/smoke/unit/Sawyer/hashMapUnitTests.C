@@ -11,6 +11,7 @@
 #include <iostream>
 #include <Sawyer/Assert.h>
 #include <string>
+#include <map>
 
 template<class Key, class Value>
 std::ostream& operator<<(std::ostream &o, const Sawyer::Container::HashMap<Key, Value> &map) {
