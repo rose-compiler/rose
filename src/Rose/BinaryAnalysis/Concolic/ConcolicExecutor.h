@@ -2,10 +2,9 @@
 #define ROSE_BinaryAnalysis_Concolic_ConcolicExecutor_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
-#include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
+#include <Rose/BinaryAnalysis/Concolic/Settings.h>
 
 #include <Rose/BinaryAnalysis/BasicTypes.h>
-#include <Rose/BinaryAnalysis/Concolic/Emulation.h>
 #include <Rose/Yaml.h>
 
 #include <Sawyer/FileSystem.h>
@@ -26,21 +25,6 @@ public:
     /** Reference counting pointer to @ref ConcolicExecutor. */
     typedef Sawyer::SharedPointer<ConcolicExecutor> Ptr;
 
-    /** Settings to control various aspects of an executor. */
-    struct Settings {
-        Partitioner2::EngineSettings partitionerEngine;
-        Partitioner2::LoaderSettings loader;
-        Partitioner2::DisassemblerSettings disassembler;
-        Partitioner2::PartitionerSettings partitioner;
-        Emulation::RiscOperators::Settings emulationSettings;
-
-        bool traceSemantics;                            /** Whether to debug semantic steps by using a semantic tracer. */
-        AddressIntervalSet showingStates;               /** Instructions after which to show the semantic state. */
-
-        Settings()
-            : traceSemantics(false) {}
-    };
-
     /** Information about a called function. */
     struct FunctionCall {
         std::string printableName;                      /** Name suitable for printing in diagnostic messages. */
@@ -56,7 +40,7 @@ public:
     };
 
 private:
-    Settings settings_;
+    ConcolicExecutorSettings settings_;
     std::vector<FunctionCall> functionCallStack_;
     Sawyer::FileSystem::TemporaryDirectory tmpDir_;
 
@@ -89,8 +73,9 @@ public:
      *  Thread safety: Not thread safe.
      *
      * @{ */
-    const Settings& settings() const;
-    Settings& settings();
+    const ConcolicExecutorSettings& settings() const;
+    ConcolicExecutorSettings& settings();
+    void settings(const ConcolicExecutorSettings&);
     /** @} */
 
     /** Property: SMT solver to use during execution.
@@ -155,7 +140,7 @@ public:
      *
      *  The supplied @ref settings reference provides the defaults for the documentation, and is also captured and used later
      *  as the destination for command-line switch arguments when the command-line is parsed and applied. */
-    static std::vector<Sawyer::CommandLine::SwitchGroup> commandLineSwitches(Settings &settings /*in,out*/);
+    static std::vector<Sawyer::CommandLine::SwitchGroup> commandLineSwitches(ConcolicExecutorSettings &settings /*in,out*/);
 
     /** Called before execution starts.
      *

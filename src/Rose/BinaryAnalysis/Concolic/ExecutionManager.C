@@ -25,11 +25,11 @@ ExecutionManager::ExecutionManager(const Database::Ptr &db)
     ASSERT_not_null(db);
 }
 
-ExecutionManager::ExecutionManager(const Database::Ptr &db, const Yaml::Node &config)
-    : database_(db), config_(config) {}
+ExecutionManager::ExecutionManager(const Database::Ptr &db, const ConcolicExecutorSettings &settings, const Yaml::Node &config)
+    : database_(db), concolicExecutorSettings_(settings), config_(config) {}
 
 ExecutionManager::Ptr
-ExecutionManager::instance(const Yaml::Node &config) {
+ExecutionManager::instance(const ConcolicExecutorSettings &settings, const Yaml::Node &config) {
     ASSERT_require(config);
     ASSERT_require(config.isMap());
     if (!config["database"].isScalar())
@@ -52,7 +52,7 @@ ExecutionManager::instance(const Yaml::Node &config) {
         db->testSuite(ts);
     }
 
-    return Ptr(new ExecutionManager(db, config));
+    return Ptr(new ExecutionManager(db, settings, config));
 }
 
 ExecutionManager::Ptr
@@ -74,6 +74,21 @@ ExecutionManager::create(const std::string &databaseUrl, const boost::filesystem
     db->save(testCase0);
 
     return Ptr(new ExecutionManager(db));
+}
+
+const ConcolicExecutorSettings&
+ExecutionManager::concolicExecutorSettings() const {
+    return concolicExecutorSettings_;
+}
+
+ConcolicExecutorSettings&
+ExecutionManager::concolicExecutorSettings() {
+    return concolicExecutorSettings_;
+}
+
+void
+ExecutionManager::concolicExecutorSettings(const ConcolicExecutorSettings &s) {
+    concolicExecutorSettings_ = s;
 }
 
 Database::Ptr
@@ -183,6 +198,7 @@ ExecutionManager::run() {
             TestCase::Ptr testCase = database()->object(testCaseId);
             std::cerr <<testCase->printableName(database()) <<" running concolically...\n";
             auto concolicExecutor = ConcolicExecutor::instance();
+            concolicExecutor->settings(concolicExecutorSettings_);
             concolicExecutor->configureExecution(database_, testCase, config_);
             std::vector<TestCase::Ptr> newTestCases = concolicExecutor->execute();
             insertConcolicResults(testCase, newTestCases);

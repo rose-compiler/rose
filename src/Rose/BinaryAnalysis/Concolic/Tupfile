@@ -15,6 +15,7 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis/Concolic	\
     I386Linux.h								\
     InputVariables.h							\
     M68kSystem.h							\
+    Settings.h								\
     SharedMemory.h							\
     Specimen.h								\
     SystemCall.h							\
@@ -32,6 +33,7 @@ run $(librose_compile)				\
     ExecutionLocation.C				\
     ExecutionManager.C				\
     InputVariables.C				\
+    Settings.C					\
     SharedMemory.C				\
     Specimen.C					\
     SystemCall.C				\

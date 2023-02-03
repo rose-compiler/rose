@@ -2,7 +2,7 @@
 #define ROSE_BinaryAnalysis_Concolic_ExecutionManager_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
-#include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
+#include <Rose/BinaryAnalysis/Concolic/Settings.h>
 
 #include <Rose/Yaml.h>
 
@@ -31,6 +31,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
     DatabasePtr database_;
+    ConcolicExecutorSettings concolicExecutorSettings_;
     const Yaml::Node config_;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -40,7 +41,7 @@ public:
     virtual ~ExecutionManager();
 protected:
     explicit ExecutionManager(const DatabasePtr&);
-    ExecutionManager(const DatabasePtr&, const Yaml::Node&);
+    ExecutionManager(const DatabasePtr&, const ConcolicExecutorSettings&, const Yaml::Node&);
 
 public:
     /** Configure a manager from a YAML file.
@@ -70,7 +71,7 @@ public:
      *
      *  A reference to the YAML configuration tree is stored in the returned object. The existing database is opened and will
      *  be closed by the destructor. A particular test suite within the database is active. */
-    static Ptr instance(const Yaml::Node&);
+    static Ptr instance(const ConcolicExecutorSettings&, const Yaml::Node&);
 
     /** Allocating constructor to open an existing database.
      *
@@ -99,6 +100,14 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Property: Concolic executor settings.
+     *
+     * @{ */
+    const ConcolicExecutorSettings& concolicExecutorSettings() const;
+    ConcolicExecutorSettings& concolicExecutorSettings();
+    void concolicExecutorSettings(const ConcolicExecutorSettings&);
+    /** @} */
+
     /** Property: Database.
      *
      *  The database used by this manager.  The database is set in the constructor and cannot be changed later. */

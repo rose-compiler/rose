@@ -101,6 +101,8 @@ using ArchitecturePtr = Sawyer::SharedPointer<Architecture>;
 class ConcolicExecutor;
 using ConcolicExecutorPtr = Sawyer::SharedPointer<ConcolicExecutor>;
 
+class ConcolicExecutorSettings;
+
 class ConcreteExecutor;
 using ConcreteExecutorPtr = Sawyer::SharedPointer<ConcreteExecutor>;
 

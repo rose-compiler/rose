@@ -69,6 +69,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/Concolic/M68kSystem/Architecture.C				\
 	BinaryAnalysis/Concolic/M68kSystem/TracingExecutor.C				\
 	BinaryAnalysis/Concolic/M68kSystem/TracingResult.C				\
+	BinaryAnalysis/Concolic/Settings.C						\
 	BinaryAnalysis/Concolic/SharedMemory.C						\
 	BinaryAnalysis/Concolic/Specimen.C						\
 	BinaryAnalysis/Concolic/SystemCall.C						\
