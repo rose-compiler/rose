@@ -49,14 +49,19 @@ ConcolicExecutor::~ConcolicExecutor() {
     process_ = Architecture::Ptr();
 }
 
-const ConcolicExecutor::Settings&
+const ConcolicExecutorSettings&
 ConcolicExecutor::settings() const {
     return settings_;
 }
 
-ConcolicExecutor::Settings&
+ConcolicExecutorSettings&
 ConcolicExecutor::settings() {
     return settings_;
+}
+
+void
+ConcolicExecutor::settings(const ConcolicExecutorSettings &s) {
+    settings_ = s;
 }
 
 // class method
@@ -67,7 +72,7 @@ ConcolicExecutor::instance() {
 
 // class method
 std::vector<Sawyer::CommandLine::SwitchGroup>
-ConcolicExecutor::commandLineSwitches(Settings &settings /*in,out*/) {
+ConcolicExecutor::commandLineSwitches(ConcolicExecutorSettings &settings /*in,out*/) {
     using namespace Sawyer::CommandLine;
 
     std::vector<SwitchGroup> sgroups;

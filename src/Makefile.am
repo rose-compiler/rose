@@ -304,6 +304,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/Concolic/M68kSystem/BasicTypes.h				\
 	Rose/BinaryAnalysis/Concolic/M68kSystem/TracingExecutor.h			\
 	Rose/BinaryAnalysis/Concolic/M68kSystem/TracingResult.h				\
+	Rose/BinaryAnalysis/Concolic/Settings.h						\
 	Rose/BinaryAnalysis/Concolic/SharedMemory.h					\
 	Rose/BinaryAnalysis/Concolic/Specimen.h						\
 	Rose/BinaryAnalysis/Concolic/SystemCall.h					\

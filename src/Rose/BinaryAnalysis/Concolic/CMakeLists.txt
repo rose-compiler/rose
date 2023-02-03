@@ -13,6 +13,7 @@ add_library(roseBinaryAnalysisConcolic OBJECT
   ExecutionLocation.C
   ExecutionManager.C
   InputVariables.C
+  Settings.C
   SharedMemory.C
   Specimen.C
   SystemCall.C
@@ -37,6 +38,7 @@ install(FILES
   I386Linux.h
   InputVariables.h
   M68kSystem.h
+  Settings.h
   SharedMemory.h
   Specimen.h
   SystemCall.h

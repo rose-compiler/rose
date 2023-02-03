@@ -17,6 +17,7 @@
 #include <Rose/BinaryAnalysis/Concolic/I386Linux.h>
 #include <Rose/BinaryAnalysis/Concolic/InputVariables.h>
 #include <Rose/BinaryAnalysis/Concolic/M68kSystem.h>
+#include <Rose/BinaryAnalysis/Concolic/Settings.h>
 #include <Rose/BinaryAnalysis/Concolic/SharedMemory.h>
 #include <Rose/BinaryAnalysis/Concolic/Specimen.h>
 #include <Rose/BinaryAnalysis/Concolic/SystemCall.h>
