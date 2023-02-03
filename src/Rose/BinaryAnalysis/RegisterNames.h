@@ -7,6 +7,8 @@
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/RegisterDescriptor.h>
 
+#include <string>
+
 namespace Rose {
 namespace BinaryAnalysis {
 
@@ -29,12 +31,18 @@ public:
      *
      *  If a dictionary is supplied, then it will be used instead of the dictionary that was supplied to the constructor.
      *
+     *  If the register has a name then that name is returned. Otherwise, information about the register is returned, such as
+     *  its major and minor numbers, its offset, and/or its size. The format is controlled by the various data members for this
+     *  class.
+     *
      *  @{ */
     std::string operator()(RegisterDescriptor) const;
     std::string operator()(RegisterDescriptor, const RegisterDictionaryPtr &dict) const;
     /** @} */
 
     RegisterDictionaryPtr dictionary;    /**< Dictionary supplied to the constructor. */
+
+    // These are only used by operator()
     std::string prefix = "REG";          /**< The leading part of a register name. */
     std::string suffix;                  /**< String to print at the very end of the generated name. */
     int showOffset = -1;                 /**< 0=>never show offset; positive=>always show; negative=>show only when non-zero */

@@ -11,6 +11,7 @@
 #include <Rose/BinaryAnalysis/InstructionEnumsMips.h>
 #include <Rose/BinaryAnalysis/InstructionEnumsPowerpc.h>
 #include <Rose/BinaryAnalysis/InstructionEnumsX86.h>
+#include <Rose/StringUtility/Escape.h>
 
 #include <Sawyer/Assert.h>
 
@@ -1762,6 +1763,40 @@ RegisterDictionary::print(std::ostream &o) const {
 size_t
 RegisterDictionary::size() const {
     return forward_.size();
+}
+
+
+Sawyer::Optional<std::string>
+RegisterDictionary::name(RegisterDescriptor reg) const {
+    const std::string nm = lookup(reg);
+    if (nm.empty()) {
+        return {};
+    } else {
+        return nm;
+    }
+}
+
+std::string
+RegisterDictionary::nameOrQuad(RegisterDescriptor reg) const {
+    if (const auto s = name(reg)) {
+        return *s;
+    } else {
+        return reg.toString();
+    }
+}
+
+std::string
+RegisterDictionary::nameAndQuad(RegisterDescriptor reg) const {
+    const std::string q = reg.toString();
+    const auto s = name(reg);
+    return s ? "\"" + StringUtility::cEscape(*s) + "\" " + q : q;
+}
+
+std::string
+RegisterDictionary::quadAndName(RegisterDescriptor reg) const {
+    const std::string q = reg.toString();
+    const auto s = name(reg);
+    return s ? q + " \"" + StringUtility::cEscape(*s) + "\"" : q;
 }
 
 std::ostream&
