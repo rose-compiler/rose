@@ -137,6 +137,86 @@ test03(const BS::RiscOperators::Ptr &ops) {
     ASSERT_always_require(mid1->must_equal(mid2));
 }
 
+static void
+test04(const BS::RiscOperators::Ptr &ops) {
+    std::cout <<"\n"
+              <<"================================================================\n"
+              <<"Merge register A in state 1 having value 1 into state 2 where\n"
+              <<"register A has the value 2. The merge of 1 and 2 results in the\n"
+              <<"set {1,2}, but the default merger object has a maximum set size\n"
+              <<"property that's 1, which means it will replace the set with\n"
+              <<"BOTTOM.\n"
+              <<"\n";
+
+    const RegisterDescriptor A(0, 0, 0, 8);
+
+    // Source state 1
+    auto state1 = ops->currentState();
+    state1->clear();
+    auto a1 = ops->number_(A.nBits(), 1);
+    state1->writeRegister(A, a1, ops.get());
+
+    // Source state 2 (and eventual destination state)
+    auto state2 = state1->clone();
+    state2->clear();
+    auto a2 = ops->number_(A.nBits(), 2);
+    state2->writeRegister(A, a2, ops.get());
+
+    // Merge state 1 into state 2 using the default merger (max set size = 1)
+    std::cout <<"initial state1:\n" <<(*state1 + "  ")
+              <<"initial state2:\n" <<(*state2 + "  ");
+    bool changed = state2->merge(state1, ops.get());
+    std::cout <<"merged state1 into state2 to obtain new state2:\n" <<(*state2 + "  ");
+
+    // Test
+    ASSERT_always_require(changed);
+    auto m1 = state2->peekRegister(A, ops->undefined_(A.nBits()), ops.get());
+    ASSERT_always_require(m1->isBottom());
+}
+
+static void
+test05(const BS::RiscOperators::Ptr &ops) {
+    std::cout <<"\n"
+              <<"================================================================\n"
+              <<"Merge register A in state 1 having value 1 into state 2 where\n"
+              <<"register A has the value 2. The merge of 1 and 2 results in the\n"
+              <<"set {1,2}, but normally the default merger object replaces it\n"
+              <<"with BOTTOM. This test does the merge using a non-default merger\n"
+              <<"that allows sets of size 2 and therefore the final answer will\n"
+              <<"be the set {1,2} instead of BOTTOM.\n"
+              <<"\n";
+
+    const RegisterDescriptor A(0, 0, 0, 8);
+
+    // Source state 1
+    auto state1 = ops->currentState();
+    state1->clear();
+    auto a1 = ops->number_(A.nBits(), 1);
+    state1->writeRegister(A, a1, ops.get());
+
+    // Source state 2 (and eventual destination state)
+    auto state2 = state1->clone();
+    state2->clear();
+    auto a2 = ops->number_(A.nBits(), 2);
+    state2->writeRegister(A, a2, ops.get());
+
+    // Use a non-default symbolic merger when merging into state 2
+    state2->registerState()->merger(SS::Merger::instance(2));
+
+    // Merge state 1 into state 2 using the default merger (max set size = 1)
+    std::cout <<"initial state1:\n" <<(*state1 + "  ")
+              <<"initial state2:\n" <<(*state2 + "  ");
+    bool changed = state2->merge(state1, ops.get());
+    std::cout <<"merged state1 into state2 to obtain new state2:\n" <<(*state2 + "  ");
+
+    // Test
+    ASSERT_always_require(changed);
+    auto ans = SS::SValue::instance_symbolic(SymbolicExpression::makeSet(SymbolicExpression::makeIntegerConstant(A.nBits(), 2),
+                                                                         SymbolicExpression::makeIntegerConstant(A.nBits(), 1)));
+    auto m1 = state2->peekRegister(A, ops->undefined_(A.nBits()), ops.get());
+    ASSERT_always_require(m1->mustEqual(ans));
+}
+
 int
 main() {
     ROSE_INITIALIZE;
@@ -151,6 +231,8 @@ main() {
     test01(ops);
     test02(ops);
     test03(ops);
+    test04(ops);
+    test05(ops);
 }
 
 #endif
