@@ -14,6 +14,7 @@ JOVIAL_TESTCODES = \
  item_desc_conversion.jov               \
  parens.jov                             \
  typename_conv.jov                      \
+ static_item.jov                        \
  status_enumval.jov                     \
  use_table_types.jov                    \
  1_2_2_non-nested-subroutine_a.jov      \

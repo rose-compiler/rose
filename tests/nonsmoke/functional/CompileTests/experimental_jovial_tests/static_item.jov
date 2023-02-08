@@ -1,0 +1,7 @@
+START
+DEF PROC main() S;
+BEGIN
+  ITEM ii STATIC U;
+  main = ii - 13;
+END
+TERM
