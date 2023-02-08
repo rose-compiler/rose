@@ -652,6 +652,12 @@ ATbool ATermToSageJovialTraversal::traverse_ItemDeclaration(ATerm term, int def_
 // Begin language specific constructs
    setDeclarationModifier(var_decl, def_or_ref);
 
+   if (modifier_enum && *modifier_enum == e_storage_modifier_static) {
+      // Set static on both modifier attributes, JovialStatic is used for unparsing
+      var_decl->get_declarationModifier().setJovialStatic();
+      var_decl->get_declarationModifier().get_storageModifier().setStatic();
+   }
+
 // Jovial block and table members are visible in parent scope so create an alias
 // to the symbol if needed.
    sage_tree_builder.injectAliasSymbol(std::string(name));
@@ -1524,6 +1530,7 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
 
 // Begin language specific constructs
    setDeclarationModifier(var_decl, def_or_ref);
+
    if (modifier_enum && *modifier_enum == e_storage_modifier_static) {
       // Set static on both modifier attributes, JovialStatic is used for unparsing
       var_decl->get_declarationModifier().setJovialStatic();
@@ -2536,7 +2543,6 @@ ATbool ATermToSageJovialTraversal::traverse_BlockDeclaration(ATerm term, int def
       // 1. need block type declaration ("named anonymous")
       // 2. need variable declaration
       // 3. need source position information
-      // 4. make sure STATIC works
 
       is_anon = true;
 
@@ -2603,6 +2609,7 @@ ATbool ATermToSageJovialTraversal::traverse_BlockDeclaration(ATerm term, int def
 
    // Begin language specific constructs
    setDeclarationModifier(var_decl, def_or_ref);
+
    if (modifier_enum && *modifier_enum == e_storage_modifier_static) {
       // Set static on both modifier attributes, JovialStatic is used for unparsing
       var_decl->get_declarationModifier().setJovialStatic();
