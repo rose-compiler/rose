@@ -873,6 +873,7 @@ package body Asis_Adapter.Element.Declarations is
       when A_Null_Procedure_Declaration => -- A2005
          Add_Is_Not_Overriding_Declaration;
          Add_Is_Overriding_Declaration;
+         Add_Corresponding_Declaration;
          Add_Parameter_Profile;
 
       when An_Expression_Function_Declaration =>  -- A2012
