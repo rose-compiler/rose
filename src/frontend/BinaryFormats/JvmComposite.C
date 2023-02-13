@@ -31,7 +31,7 @@ static vector<string> extractClassFiles(string &jar)
 {
   vector<string> classes{};
 
-  if (!CommandlineProcessing::isJavaJarFileSuffix(Rose::StringUtility::fileNameSuffix(jar))) {
+  if (!CommandlineProcessing::isJavaJarFile(jar)) {
     mlog[WARN] << "In SgJvmComposite::extractClassFiles(): expected file to be path "
                << "to a jar file: is " << jar << std::endl;
     return std::move(classes);
@@ -101,14 +101,10 @@ SgJvmComposite::buildAST(vector<string> argv, vector<string> /*inputCommandLine*
   // argv is expected to contain executable and file name (for now, TODO: multiple files)
   ROSE_ASSERT(argv.size() == 2);
   string fileName{argv[1]};
-  string suffix{Rose::StringUtility::fileNameSuffix(fileName)};
 
   // Obtain/extract class file(s)
-  if (CommandlineProcessing::isJavaClassFileSuffix((suffix))) {
+  if (CommandlineProcessing::isJavaJvmFile(fileName)) {
     classes.push_back(fileName);
-  }
-  else if (CommandlineProcessing::isJavaJarFileSuffix((suffix))) {
-    classes = extractClassFiles(fileName);
   }
   else {
     mlog[WARN] << "In SgJvmComposite::buildAST(): expected fileName to be path "

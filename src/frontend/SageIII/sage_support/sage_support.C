@@ -879,12 +879,6 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
        // if we detect we are processing a source file using a C++ filename extension.
           string filenameExtension = StringUtility::fileNameSuffix(sourceFilename);
 
-#if 0
-          printf ("In determineFileType(): sourceFilename    = %s \n",sourceFilename.c_str());
-          printf ("In determineFileType(): filenameExtension = %s \n",filenameExtension.c_str());
-       // ROSE_ASSERT(false);
-#endif
-
        // DQ (1/8/2014): We need to handle the case of "/dev/null" being used as an input filename.
           if (filenameExtension == "/dev/null")
              {
@@ -1155,12 +1149,12 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                 // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
                                    Rose::is_OpenCL_language = true;
 
-                                // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
+                                // DQ (12/23/2008): This is the earliest point where the global scope can be set.
                                 // Note that file->get_requires_C_preprocessor() should be false.
                                    ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
                                    sourceFile->initializeGlobalScope();
                                  }
-                                else if ( CommandlineProcessing::isJavaFileNameSuffix(filenameExtension) == true )
+                                else if (CommandlineProcessing::isJavaFile(sourceFilename))
                                  {
                                 // DQ (10/11/2010): Adding support for Java.
                                    SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
@@ -1308,7 +1302,7 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                    sourceFile->initializeGlobalScope();
                                 }
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-                               else if (CommandlineProcessing::isJvmFileNameSuffix(filenameExtension))
+                               else if (CommandlineProcessing::isJavaJvmFile(sourceFilename))
                                 {
                                    file = new SgJvmComposite(argv, project);
                                 }
