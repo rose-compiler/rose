@@ -25069,14 +25069,14 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
       lnode->getAttachedPreprocessingInfo ();
 
     if (comments != NULL)
-    { 
+    {
 //      printf ("Found an IR node with preprocessing Info attached:\n");
-      out<<" AttachedPreprocessingInfoType@"<<comments;  
+      out<<" AttachedPreprocessingInfoType@"<<comments;
       int counter = 0;
       AttachedPreprocessingInfoType::iterator i;
       out <<"{";
       for (i = comments->begin (); i != comments->end (); i++)
-      { 
+      {
         out<<"<id=";
         out<<counter++<<" ";
   //        printf("-------------PreprocessingInfo #%d ----------- : \n",counter++);
@@ -25090,12 +25090,12 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
           out<<"inside";
         else if ((*i)->getRelativePosition () == PreprocessingInfo::before)
           out<<"inside";
-        else 
+        else
           out<<"after";
 
         out<<">";
       }
-      out <<"}"; 
+      out <<"}";
     }
   }
 
@@ -27357,14 +27357,17 @@ SageInterface::checkForInitializers( SgNode* node )
 
 namespace
 {
-  struct DeclaredType : sg::DispatchHandler<SgType*>
+  struct DeclaredType : sg::DispatchHandler<SgNamedType*>
   {
+    void setResult(SgNamedType* ty) { res = ty; }
+    void setResult(SgType*      ty) { /* not a named type */ }
+
     void handle(SgNode& n, SgNode&) { SG_UNEXPECTED_NODE(n); }
 
     template <class SageDeclarationStatement>
     void handle(SageDeclarationStatement& n, SgDeclarationStatement&)
     {
-      res = n.get_type();
+      setResult(n.get_type());
     }
 
     template <class SageNode>
@@ -27375,7 +27378,7 @@ namespace
   };
 }
 
-SgType* SageInterface::getDeclaredType(const SgDeclarationStatement* declaration)
+SgNamedType* SageInterface::getDeclaredType(const SgDeclarationStatement* declaration)
 {
   return sg::dispatch(DeclaredType{}, declaration);
 }
@@ -27404,28 +27407,28 @@ void SageInterface::clearSharedGlobalScopes(SgProject * project) {
 
 //!  Convert all code within root matching the patern of (&left)->right, and translate them into left.right.  Return the number of matches of the pattern.
 /*
-  
+
 --- p_lhs_operand_i ->@0x7ff2fc3f1010 SgArrowExp c_rc-575-out.cpp 16:13
    |--- p_lhs_operand_i ->@0x7ff2fc428010 SgAddressOfOp c_rc-575-out.cpp 16:4
    |   |___ p_operand_i ->@0x7ff2fc582078 SgVarRefExp c_rc-575-out.cpp 16:5 init name@0x7ff2fcf03890 symbol name="table1"
    |___ p_rhs_operand_i ->@0x7ff2fc5820e0 SgVarRefExp c_rc-575-out.cpp 16:16 init name@0x7ff2fcf03480 symbol name="item1"
 
 
-TODO: we only handle simplest pattern for now:  both leaf operands involved are SgVarRefExp. 
- 
+TODO: we only handle simplest pattern for now:  both leaf operands involved are SgVarRefExp.
+
  * */
 int SageInterface::normalizeArrowExpWithAddressOfLeftOperand(SgNode* root, bool transformationGeneratedOnly /* =true */)
 {
   int match_count = 0;
   ROSE_ASSERT (root);
-  
-  // find all SgArrowExp, then try to match the expected pattern 
+
+  // find all SgArrowExp, then try to match the expected pattern
   // SgArrowExp(SgAddressOfOp(SgVarRefExp:table1),SgVarRefExp:item1)
   Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(root, V_SgArrowExp);
 
-  // The jovial2cpp translator generates two source file ASTs: and they often share the same subtrees. 
+  // The jovial2cpp translator generates two source file ASTs: and they often share the same subtrees.
   // So we need to make sure the same subtree is only processed once
-  boost::unordered::unordered_map <SgNode*, bool> visited; 
+  boost::unordered::unordered_map <SgNode*, bool> visited;
 
   // reverse iterator is safer to use than forward iterator to support translation
   for (Rose_STL_Container<SgNode *>::reverse_iterator i = nodeList.rbegin(); i != nodeList.rend(); i++)
@@ -27434,7 +27437,7 @@ int SageInterface::normalizeArrowExpWithAddressOfLeftOperand(SgNode* root, bool 
     if (visited.count(*i)==1)
       continue;
 
-    visited[*i]=true; 
+    visited[*i]=true;
 
     SgArrowExp* a_exp = isSgArrowExp(*i);
 
@@ -27450,9 +27453,9 @@ int SageInterface::normalizeArrowExpWithAddressOfLeftOperand(SgNode* root, bool 
         continue;
     }
 
-    if (SgAddressOfOp* address_op = isSgAddressOfOp(a_exp->get_lhs_operand()) )  
+    if (SgAddressOfOp* address_op = isSgAddressOfOp(a_exp->get_lhs_operand()) )
     {
-      if (SgVarRefExp* left = isSgVarRefExp(address_op->get_operand())) // match left side pattern  
+      if (SgVarRefExp* left = isSgVarRefExp(address_op->get_operand())) // match left side pattern
       {
         if (SgVarRefExp* right = isSgVarRefExp (a_exp->get_rhs_operand())) // match right side pattern
         {
@@ -27462,8 +27465,8 @@ int SageInterface::normalizeArrowExpWithAddressOfLeftOperand(SgNode* root, bool 
           match_count++;
         }
       }
-    } 
-  } // end for   
+    }
+  } // end for
 
   return match_count;
 }

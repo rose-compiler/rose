@@ -421,19 +421,29 @@ namespace
   bool isSeparatedDefinition(const SgFunctionDeclaration* n);
   /// @}
 
+  struct TypeDescription : std::tuple<SgType*, bool>
+  {
+    using base = std::tuple<SgType*, bool>;
+    using base::base;
+
+    SgType* typerep()     const { return std::get<0>(*this); }
+    SgType& typerep_ref() const;
+    bool    polymorphic() const { return std::get<1>(*this); }
+  };
+
   /// returns the most fundamental type
-  ///   after skipping derived types, subtypes, typedefs, etc.
+  ///   after skipping subtypes, typedefs, etc.
   /// @{
-  SgType* typeRoot(SgType&);
-  SgType* typeRoot(SgType*);
+  TypeDescription typeRoot(SgType&);
+  TypeDescription typeRoot(SgType*);
   /// @}
 
   /// returns the type of an expression
   ///   corrects for some peculiarities in the AST
   /// \todo could be integrated into SgExpression::get_type ...
   /// @{
-  SgType* typeOfExpr(SgExpression&);
-  SgType* typeOfExpr(SgExpression*);
+  TypeDescription typeOfExpr(SgExpression&);
+  TypeDescription typeOfExpr(SgExpression*);
   /// @}
 
   /// returns the scope where \ref ty was defined
@@ -563,6 +573,13 @@ namespace
   primitiveParameterPositions(const SgFunctionDeclaration*);
   /// @}
 
+  /// returns a list of arguments with named arguments placed at the correct position
+  /// \note defaulted arguments are not represented and the list may contain holes (nullptr)
+  /// \{
+  SgExpressionPtrList
+  normalizedCallArguments(const SgFunctionCallExp& n);
+  /// \}
+
 
   /// finds the symbol with @ref name in the context of @ref scope or its logical parents in the range
   ///   [scope, limit).
@@ -628,11 +645,17 @@ namespace
   SgDeclarationStatement* associatedDeclaration(const SgType* ty);
   /// \}
 
-  /// returns the base type of a type
+  /// returns the base type of a type \ref ty
   /// \details
-  ///    A base type is either the base of a derived type or an extension record.
+  ///   In the following type hierarchy baseTypes(Y) would return { X, S1, S2 } but not Integer.
+  ///   \code
+  ///   type X is new Integer;
+  ///   subtype S1 is X range 0..X'Last;
+  ///   subtype S2 is S1 range 10..20;
+  ///   type Y is new S1;
+  ///   \endcode
   /// \todo
-  ///    extend for discriminated types, and enumerated types.
+  ///    extend for discriminated types.
   /// \{
   SgType*
   baseType(const SgType& ty);
@@ -640,7 +663,7 @@ namespace
   SgType*
   baseType(const SgType* ty);
   /// \}
-
+/*
   /// finds the declaration associated with ty's base type.
   /// \returns returns the first named base declaration of ty
   ///          nullptr if no declaration can be found.
@@ -655,7 +678,7 @@ namespace
   SgDeclarationStatement*
   baseDeclaration(const SgType* ty);
   /// \}
-
+*/
   /// finds the underlying enum declaration of a type \ref ty
   /// \returns an enum declaration associated with ty
   ///          nullptr if no declaration can be found

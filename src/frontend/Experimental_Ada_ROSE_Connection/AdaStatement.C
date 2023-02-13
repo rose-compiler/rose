@@ -2565,8 +2565,8 @@ namespace
 
   struct InheritedSymbolCreator
   {
-      InheritedSymbolCreator(SgType& dervType, AstContext astctx)
-      : dervivedType(dervType), ctx(astctx)
+      InheritedSymbolCreator(SgNamedType& sourceRootType,  SgNamedType& dervType, AstContext astctx)
+      : baseType(sourceRootType), dervivedType(dervType), ctx(astctx)
       {}
 
       void operator()(Element_Struct& elem)
@@ -2580,7 +2580,16 @@ namespace
           return;
         }
 
-        SgAdaInheritedFunctionSymbol& sgnode = mkAdaInheritedFunctionSymbol(*fn, dervivedType, ctx.scope());
+        SgFunctionSymbol*             fnsym  = findFirst(inheritedSymbols(), std::make_pair(fn, &baseType));
+        if (fnsym == nullptr) fnsym = isSgFunctionSymbol(fn->search_for_symbol_from_symbol_table());
+
+        if (fn == nullptr)
+        {
+          logError() << "unable to find (derived) function symbol for " << fn->get_name() << std::endl;
+          return;
+        }
+
+        SgAdaInheritedFunctionSymbol& sgnode = mkAdaInheritedFunctionSymbol(*fnsym, dervivedType, ctx.scope());
         const auto inserted = inheritedSymbols().insert(std::make_pair(InheritedSymbolKey{fn, &dervivedType}, &sgnode));
 
         //~ logError() << "create inh subroutine " << elem.ID
@@ -2591,8 +2600,9 @@ namespace
     }
 
     private:
-      SgType&    dervivedType;
-      AstContext ctx;
+      SgNamedType& baseType;
+      SgNamedType& dervivedType;
+      AstContext   ctx;
   };
 
   struct InheritedEnumeratorCreator
@@ -2653,26 +2663,38 @@ namespace
   };
 
   void
-  processInheritedSubroutines( SgType* ty,
-                               std::string name,
+  processInheritedSubroutines( SgNamedType& derivedType,
                                ElemIdRange subprograms,
                                ElemIdRange declarations,
                                AstContext ctx
                              )
   {
-    traverseIDs(subprograms, elemMap(), InheritedSymbolCreator{SG_DEREF(ty), ctx});
+    SgType*              baseType     = si::Ada::baseType(derivedType);
+    SgNamedType*         baseRootType = isSgNamedType(si::Ada::typeRoot(baseType).typerep());
+
+    if (baseRootType == nullptr)
+    {
+      logError() << "unable to find base-root for " << derivedType.get_name()
+                 << " / base = " << baseType
+                 << std::endl;
+      return;
+    }
+
+    traverseIDs(subprograms, elemMap(), InheritedSymbolCreator{*baseRootType, derivedType, ctx});
 
     if (!declarations.empty())
       logWarn() << "A derived/extension record type's implicit declaration is not empty: "
-                 << name
+                 << derivedType.get_name()
                  << std::endl;
   }
 
   void
-  processInheritedSubroutines(SgType* ty, std::string name, Type_Definition_Struct& tydef, AstContext ctx)
+  processInheritedSubroutines( SgNamedType* derivedTy,
+                               Type_Definition_Struct& tydef,
+                               AstContext ctx
+                             )
   {
-    processInheritedSubroutines( ty,
-                                 name,
+    processInheritedSubroutines( SG_DEREF(derivedTy),
                                  idRange(tydef.Implicit_Inherited_Subprograms),
                                  idRange(tydef.Implicit_Inherited_Declarations),
                                  ctx
@@ -2686,7 +2708,7 @@ namespace
                                AstContext ctx
                              )
   {
-    processInheritedSubroutines(tyDecl.get_type(), tyDecl.get_name(), tydef, ctx);
+    processInheritedSubroutines(tyDecl.get_type(), tydef, ctx);
   }
 
 
@@ -2730,10 +2752,18 @@ namespace
                             )
   {
     {
-      ElemIdRange range = idRange(tydef.Implicit_Inherited_Subprograms);
-      SgEnumType& enty  = SG_DEREF(derivedTypeDcl.get_type());
+      ElemIdRange  range        = idRange(tydef.Implicit_Inherited_Subprograms);
+      SgEnumType&  derivedType  = SG_DEREF(derivedTypeDcl.get_type());
+      SgType*      baseType     = si::Ada::baseType(derivedType);
+      SgNamedType* baseRootType = isSgNamedType(si::Ada::typeRoot(baseType).typerep());
 
-      traverseIDs(range, elemMap(), InheritedSymbolCreator{enty, ctx});
+      if (baseRootType == nullptr)
+      {
+        logError() << "unable to find base-root for " << derivedType.get_name() << std::endl;
+        return;
+      }
+
+      traverseIDs(range, elemMap(), InheritedSymbolCreator{*baseRootType, derivedType, ctx});
     }
 
     {
@@ -2993,8 +3023,7 @@ namespace
 
         if (tydef.Definition_Kind == A_Private_Extension_Definition)
         {
-          processInheritedSubroutines( si::getDeclaredType(&sgdecl),
-                                       adaname.ident,
+          processInheritedSubroutines( SG_DEREF(si::getDeclaredType(&sgdecl)),
                                        idRange(tydef.The_Union.The_Private_Extension_Definition.Implicit_Inherited_Subprograms),
                                        idRange(tydef.The_Union.The_Private_Extension_Definition.Implicit_Inherited_Declarations),
                                        ctx
@@ -3222,7 +3251,7 @@ void handleRepresentationClause(Element_Struct& elem, AstContext ctx)
 
         Expression_Struct&      inilist  = inielem.The_Union.Expression;
 
-        ADA_ASSERT (  inilist.Expression_Kind == A_Named_Array_Aggregate
+        ADA_ASSERT(  inilist.Expression_Kind == A_Named_Array_Aggregate
                   || inilist.Expression_Kind == A_Positional_Array_Aggregate
                   );
 
@@ -3795,12 +3824,11 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         SgFunctionDeclaration*  nondef  = getFunctionDeclaration(ndef ? ndef->get_firstNondefiningDeclaration() : nullptr);
         ADA_ASSERT(!ndef || nondef); // ndef => nondef
 
-        SgScopeStatement&       logicalScope = adaname.parent_scope();
-        //~ logWarn() << decl.Corresponding_Declaration << " / " << decl.Corresponding_Body_Stub
-                  //~ << "   : " << nondef << "  "
-                  //~ << &logicalScope << " <ls  nds> " << (ndef ? ndef->get_scope() : nullptr)
-                  //~ << std::endl;
+        //~ logError() << "proc body: " << nondef << std::endl;
 
+        // SCOPE_COMMENT_1: the logical scope is only used, if nondef is nullptr
+        //   createFunDef chooses the scope as needed.
+        SgScopeStatement&       logicalScope = adaname.parent_scope();
         SgFunctionDeclaration&  sgnode  = createFunDef(nondef, adaname.ident, logicalScope, rettype, ParameterCompletion{params, ctx});
         SgBasicBlock&           declblk = getFunctionBody(sgnode);
 
@@ -3906,10 +3934,10 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
                    << "\n  limited: " << decl.Has_Limited
                    << std::endl;
         // \todo this may only declare one name (use singleName)
-        NameData                adaname = singleName(decl, ctx);
+        NameData                    adaname = singleName(decl, ctx);
         ADA_ASSERT (adaname.fullName == adaname.ident);
 
-        SgScopeStatement*       parentScope = &ctx.scope();
+        SgScopeStatement*           parentScope = &ctx.scope();
         SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDeclID_opt(decl.Discriminant_Part, ctx);
 
         if (discr)
@@ -3917,11 +3945,10 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
           parentScope = discr->get_discriminantScope();
         }
 
-        SgScopeStatement&       scope = SG_DEREF(parentScope);
-        TypeData                ty   = getTypeFoundation(adaname.ident, decl, ctx.scope(scope));
-        Element_ID              id   = adaname.id();
+        SgScopeStatement&       scope  = SG_DEREF(parentScope);
+        TypeData                ty     = getTypeFoundation(adaname.ident, decl, ctx.scope(scope));
+        Element_ID              id     = adaname.id();
         SgDeclarationStatement* nondef = findFirst(asisTypes(), id);
-
         SgDeclarationStatement& sgdecl = sg::dispatch(TypeDeclMaker{adaname.ident, scope, ty, nondef}, &ty.sageNode());
 
         privatize(sgdecl, isPrivate);
@@ -4106,8 +4133,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         NameData               adaname = singleName(decl, ctx);
         ADA_ASSERT (adaname.fullName == adaname.ident);
 
-        SgType&                vartype = mkIntegralType(); // \todo
         SgExpression&          range   = getDefinitionExprID(decl.Specification_Subtype_Definition, ctx);
+        SgType&                vartype = si::Ada::typeOfExpr(range).typerep_ref();
         SgInitializedName&     loopvar = mkInitializedName(adaname.fullName, vartype, &range);
         SgScopeStatement&      scope   = ctx.scope();
 
@@ -4691,24 +4718,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         SgExpression&              renamedFun = getExprID(decl.Renamed_Entity, ctx, suppl);
 
         sgnode.set_renamed_function(&renamedFun);
-/*
-        Element_Struct&        renamedElemFull = retrieveAs(elemMap(), decl.Renamed_Entity);
-        NameData               renamedName = getQualName(renamedElemFull, ctx);
-        Element_Struct&        renamedElem = renamedName.elem();
-        ROSE_ASSERT(renamedElem.Element_Kind == An_Expression);
-
-        Expression_Struct&     renamedFuncRef = renamedElem.The_Union.Expression;
-        SgFunctionDeclaration* renamedDecl = queryFunctionDecl(renamedFuncRef, SG_DEREF(sgnode.get_parameterList()), ctx);
-
-        if (renamedDecl != nullptr)
-        {
-          sgnode.set_renamed_function(renamedDecl);
-        }
-        else
-        {
-          logError() << "cannot find renamed proc/func decl for:" << adaname.fullName << std::endl;
-        }
-*/
         privatize(sgnode, isPrivate);
         attachSourceLocation(sgnode, elem, ctx);
         ctx.appendStatement(sgnode);
@@ -4728,18 +4737,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         logKind("An_Object_Renaming_Declaration", elem.ID);
 
-        NameData           adaname = singleName(decl, ctx);
-/*
-        Element_Struct&     renamed_entity_elem = retrieveAs(elemMap(), decl.Renamed_Entity);
-        ObjBasePair         objpair = getObjectBase(renamed_entity_elem, ctx);
-        ADA_ASSERT (objpair.first || objpair.second);
-
-        SgScopeStatement&   scope   = ctx.scope();
-        SgAdaRenamingDecl&  sgnode  = objpair.first
-                                         ? mkAdaRenamingDecl(adaname.ident, *objpair.first,  &ty, scope)
-                                         : mkAdaRenamingDecl(adaname.ident, *objpair.second, &ty, scope);
-*/
-
+        NameData            adaname = singleName(decl, ctx);
         SgScopeStatement&   scope   = ctx.scope();
         Declaration_Struct& asisDcl = elem.The_Union.Declaration;
         SgType&             ty      = getDeclTypeID(asisDcl.Object_Declaration_View, ctx);
@@ -4762,26 +4760,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         logKind("An_Exception_Renaming_Declaration", elem.ID);
 
         NameData           adaname = singleName(decl, ctx);
-/*
-        if (isInvalidId(decl.Renamed_Entity))
-        {
-          logWarn() << "skipping unknown exception renaming: " << adaname.ident << "/" << adaname.fullName
-                    << ": " << elem.ID << " / " << decl.Renamed_Entity
-                    << std::endl;
-          return;
-        }
-
-        Element_Struct&    renamed_entity_elem = retrieveAs(elemMap(), decl.Renamed_Entity);
-        ExBasePair         expair = getExceptionBase(renamed_entity_elem, ctx);
-        ADA_ASSERT (expair.first || expair.second);
-
-        SgScopeStatement&  scope   = ctx.scope();
-        SgAdaRenamingDecl& sgnode
-                   = expair.first
-                       ? mkAdaRenamingDecl(adaname.ident, *expair.first,  expair.first->get_type(),  scope)
-                       : mkAdaRenamingDecl(adaname.ident, *expair.second, expair.second->get_type(), scope);
-*/
-
         SgScopeStatement&  scope   = ctx.scope();
         SgExpression&      renamed = getExprID(decl.Renamed_Entity, ctx);
         SgType&            excty   = lookupNode(adaTypes(), AdaIdentifier{"Exception"});
@@ -4810,21 +4788,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
                );
 
         NameData                adaname = singleName(decl, ctx);
-/*
-        if (isInvalidId(decl.Renamed_Entity))
-        {
-          logWarn() << "skipping unknown package renaming: " << adaname.ident << "/" << adaname.fullName
-                    << ": " << elem.ID << " / " << decl.Renamed_Entity
-                    << std::endl;
-          return;
-        }
-
-        SgDeclarationStatement* aliased = &getAliasedID(decl.Renamed_Entity, ctx);
-        SgFunctionDeclaration*  fundecl = getFunctionDeclaration(aliased);
-
-        if (fundecl) aliased = fundecl;
-*/
-
         SgExpression&           renamed = getExprID(decl.Renamed_Entity, ctx);
         SgScopeStatement&       scope   = ctx.scope();
         SgType*                 pkgtype = &mkTypeVoid(); // or nullptr or function type?

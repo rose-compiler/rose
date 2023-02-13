@@ -695,7 +695,7 @@ namespace
                             return shadowed;
                           };
 
-    bool const res = lim != std::find_if(beg, lim, pred);
+    bool const res = std::any_of(beg, lim, pred);
 
     //~ std::cerr << &n << " " << typeid(n).name() << " :" << dclname << ": " << res
               //~ << std::endl;

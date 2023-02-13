@@ -99,6 +99,7 @@ namespace
         res = &mkFunctionCallExp(n, arglst, !callSyntax);
       }
 
+#if OBSOLETE_CODE_FN
       SgAdaInheritedFunctionSymbol*
       inheritedFunctionSymbol(SgType* ty, SgFunctionSymbol& origSymbol)
       {
@@ -192,6 +193,7 @@ namespace
 
         return functionSymbol(primitiveArgs, args, fnsym);
       }
+#endif /* OBSOLETE_CODE_FN */
 
       void handle(SgNode& n)       { SG_UNEXPECTED_NODE(n); }
 
@@ -201,6 +203,10 @@ namespace
       void handle(SgFunctionRefExp& n)
       {
         SgExprListExp& arglst = mkExprListExp(args);
+
+#if OBSOLETE_CODE_FN
+        // the disambiguation has been moved to a post-processing phase (Ada_to_ROSE.C)
+        // where both the arguments and return context can be taken into account.
 
         if (SgFunctionDeclaration* funDcl = n.getAssociatedFunctionDeclaration())
         {
@@ -214,6 +220,7 @@ namespace
         {
           //~ logError() << "w/o fndcl" << std::endl;
         }
+#endif /* OBSOLETE_CODE_FN */
 
         res = &mkFunctionCallExp(n, arglst, !callSyntax);
       }
@@ -545,14 +552,14 @@ namespace
                     while (res && (i < numParams))
                     {
                       SgInitializedName& parm = SG_DEREF(fn->get_args().at(i));
-                      SgType*            argRootTy = si::Ada::typeRoot(suppl.args()->at(i));
+                      SgType*            argRootTy = si::Ada::typeRoot(suppl.args()->at(i)).typerep();
 
                       // \todo consider to replace the simple type check with a proper overload resolution
-                      res = si::Ada::typeRoot(parm.get_type()) == argRootTy;
+                      res = si::Ada::typeRoot(parm.get_type()).typerep() == argRootTy;
 
                       if (false && !res)
                         logWarn() << i << ". parm/arg: "
-                                  << si::Ada::typeRoot(parm.get_type())->class_name() << " / "
+                                  << si::Ada::typeRoot(parm.get_type()).typerep_ref().class_name() << " / "
                                   << (argRootTy ? argRootTy->class_name() : std::string{"<null>"})
                                   << std::endl;
 
@@ -596,7 +603,7 @@ namespace
 
   bool resultTypeIsBool(OperatorCallSupplement suppl, const AstContext&)
   {
-    SgType const* rootty = si::Ada::typeRoot(suppl.result());
+    SgType const* rootty = si::Ada::typeRoot(suppl.result()).typerep();
 
     //~ res = res->stripTypedefsAndModifiers();
     return isSgTypeBool(rootty) != nullptr;
@@ -625,7 +632,7 @@ namespace
     SgTypePtrList* argtypes = suppl.args();
     ADA_ASSERT(argtypes);
 
-    SgType const*  argty = si::Ada::typeRoot(argtypes->front());
+    SgType const*  argty = si::Ada::typeRoot(argtypes->front()).typerep();
 
     if (!argty) return false;
 
@@ -644,7 +651,7 @@ namespace
     SgTypePtrList const* argtypes = suppl.args();
     ADA_ASSERT(argtypes);
 
-    SgType const*        argty = si::Ada::typeRoot(argtypes->front());
+    SgType const*        argty = si::Ada::typeRoot(argtypes->front()).typerep();
     SgArrayType const*   arrty = isSgArrayType(argty);
 
     if (!arrty) return false;
@@ -652,9 +659,9 @@ namespace
     SgExprListExp const* idx = arrty->get_dim_info();
     if (!idx || (idx->get_expressions().size() != 1)) return false;
 
-    SgType const* elmty = si::Ada::typeRoot(arrty->get_base_type());
+    SgType const* elmty = si::Ada::typeRoot(arrty->get_base_type()).typerep();
 
-    if (elmty) return false;
+    if (elmty == nullptr) return false;
 
     return (  si::Ada::isModularType(*elmty)
            || si::Ada::isIntegerType(*elmty)
@@ -745,7 +752,7 @@ namespace
            );
   }
 
-  void setDefaultResultType(AdaIdentifier name, OperatorCallSupplement& suppl)
+  void setDefaultReturnType(AdaIdentifier name, OperatorCallSupplement& suppl)
   {
     if (suppl.result())
       return;
@@ -781,6 +788,7 @@ namespace
     {
       // \todo return an open array type based on the array as the first or second argument.
       //       just picking the first type is wrong, because it may be bounded; or not be an array at all.
+      logWarn() << "gen arg types .. [incomplete]" << std::endl;
       suppl.result(suppl.args()->front());
       return;
     }
@@ -792,7 +800,7 @@ namespace
   {
     ADA_ASSERT(expr.Expression_Kind == An_Operator_Symbol);
 
-    setDefaultResultType(name, suppl);
+    setDefaultReturnType(name, suppl);
 
     if ((suppl.args() == nullptr) || (suppl.result() == nullptr))
     {
@@ -977,7 +985,10 @@ namespace
         logWarn() << "unable to find definition for enum val " << enumstr
                   << std::endl;
 
-        res = sb::buildStringVal(enumstr);
+        SgStringVal& strval = SG_DEREF(sb::buildStringVal(enumstr));
+
+        strval.set_stringDelimiter(' ');
+        res = &strval;
       }
     }
 
@@ -2096,7 +2107,7 @@ SgExpression& createCall(Element_ID tgtid, ElemIdRange args, bool callSyntax, As
   std::vector<SgExpression*> arglist = traverseIDs(args, elemMap(), ArgListCreator{ctx});
   auto                       typeExtractor = [](SgExpression* exp)->SgType*
                                              {
-                                               return si::Ada::typeOfExpr(exp);
+                                               return si::Ada::typeOfExpr(exp).typerep();
                                              };
 
   SgTypePtrList              typlist;
