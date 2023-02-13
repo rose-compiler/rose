@@ -153,6 +153,7 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   representation_clause.ads            \
   representation_clause_2.ads          \
   scopequal.adb                        \
+  scopequal2.adb                       \
   simpleada-io.ads                     \
   simple_array_expressions.adb         \
   simple_hello_world.adb               \
@@ -249,6 +250,10 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   rep_sym.ads                          \
   rep_sym.adb                          \
   rep_sym-set.adb                      \
+  scopequal3.adb                       \
+  scopequal4.adb                       \
+  scopequal5.adb                       \
+  scopequal6.adb                       \
   select_accept.adb                    \
   simple_select_accept.adb             \
   simple_select_accept_guarded.adb     \
@@ -289,6 +294,7 @@ ROSE_PASSING_ADA_TESTS :=                           \
 # ROSE_PASSING_IMCOMPLETE_ADA_TESTS :=
 
 ROSE_FAILING_ADA_TESTS :=                           \
+  ancestors.adb                                     \
   aspect_spec.ads                                   \
   blockreference.adb                                \
   sq_pkg_fun_overload.adb                           \

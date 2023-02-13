@@ -2,6 +2,7 @@
 
 #include <type_traits>
 #include <algorithm>
+#include <deque>
 #include <boost/range/adaptor/reversed.hpp>
 
 #include "Rose/Diagnostics.h"
@@ -77,7 +78,7 @@ namespace
   map_t<AdaIdentifier, SgInitializedName*> adaVarsMap;
 
   /// map of inherited symbols
-  map_t<InheritedSymbolKey, SgAdaInheritedFunctionSymbol*> inheritedSymbolMap;
+  std::map<InheritedSymbolKey, SgAdaInheritedFunctionSymbol*> inheritedSymbolMap;
 
   /// maps generated operators
   map_t<OperatorKey, std::vector<OperatorDesc> > operatorSupportMap;
@@ -94,7 +95,7 @@ map_t<AdaIdentifier, SgInitializedName*>&                 adaExcps()         { r
 map_t<AdaIdentifier, SgAdaPackageSpecDecl*>&              adaPkgs()          { return adaPkgsMap;         }
 map_t<AdaIdentifier, SgInitializedName*>&                 adaVars()          { return adaVarsMap;         }
 //~ map_t<AdaIdentifier, FunctionVector>&                     adaFuncs()         { return adaFuncsMap;        }
-map_t<InheritedSymbolKey, SgAdaInheritedFunctionSymbol*>& inheritedSymbols() { return inheritedSymbolMap; }
+std::map<InheritedSymbolKey, SgAdaInheritedFunctionSymbol*>& inheritedSymbols() { return inheritedSymbolMap; }
 map_t<OperatorKey, std::vector<OperatorDesc> >&           operatorSupport()  { return operatorSupportMap; }
 
 //
@@ -1030,81 +1031,409 @@ namespace
     checker.traverse(file, preorder);
   }
 
+#if SCRATCH_PAD
+///
+  call1:     arg1.1,  arg1.2,    arg1.3  -> res1.*
+    cand1.1: parm1.1, parm1.2.1, parm1.3 -> res1.1
+    cand1.2: parm1.1, parm1.2.2, parm1.3 -> res1.2
+    cand1.3: parm1.1, parm1.2.3, parm1.3 -> res1.3
 
-#if IN_PROGRESS
+  call2:     arg2.1,  arg2.2,    res1.*  -> res2.*
+    cand2.1: parm2.1, parm2.2.1, parm2.3 -> res2.1
+    cand2.2: parm2.1, parm2.2.2, parm2.3 -> res2.2
+    cand2.3: parm2.1, parm2.2.3, parm2.3 -> res2.3
+
+  call3:     arg3.1,  res2.*  -> void
+    cand3.1: parm3.1, parm3.1 -> void
+    cand3.2: parm3.2, parm3.2 -> void
+    cand3.3: parm3.3, parm3.3 -> void
+
+  x = fn.2(a, b, fn.1(d, e, f))
+
+  -->
+
+  call:
+
+  struct Ty
+  {
+      SgType*
+    | Result(Call)
+  };
+
+  struct FnTy
+  {
+    std::vector<Ty*> args;
+    Ty*              ret;
+  };
+
+  struct Call
+  {
+    FnTy args
+
+    std::vector<FnTy> cands;
+    result -> Result*(cands)
+  };
+
+///
+#endif /* SCRATCH_PAD */
+
+  constexpr bool INFERENCE_SHORTCUT = false;
+
+  const SgFunctionCallExp* callNode(const SgFunctionRefExp& fnref)
+  {
+    return isSgFunctionCallExp(fnref.get_parent());
+  }
+
+/*
+  const SgExpressionPtrList& paramList(const SgCallExpression* call)
+  {
+    ASSERT_not_null(call);
+
+    return SG_DEREF(call->get_args()).get_expressions();
+  }
+*/
+
+  const SgCallExpression* parentCallNode(const SgCallExpression* call)
+  {
+    ASSERT_not_null(call);
+
+    const SgExprListExp* arglst = isSgExprListExp(call->get_parent());
+
+    return arglst ? isSgCallExpression(arglst->get_parent()) : nullptr;
+  }
+
+  using OverloadSet = std::vector<SgFunctionSymbol*>;
+
+  struct OverloadInfo : std::tuple<SgFunctionSymbol*, OverloadSet>
+  {
+    using base = std::tuple<SgFunctionSymbol*, OverloadSet>;
+    using base::base;
+
+    SgFunctionSymbol*  orig_sym() const { return std::get<0>(*this); }
+          OverloadSet& ovlset()         { return std::get<1>(*this); }
+    const OverloadSet& ovlset() const   { return std::get<1>(*this); }
+  };
+
+  using OverloadMap = std::map<SgFunctionRefExp*, OverloadInfo>;
+  using WorkItem    = OverloadMap::iterator;
+
+  struct WorkItems : private std::deque<WorkItem>
+  {
+    using base = std::deque<WorkItem>;
+
+    WorkItems() = default;
+
+    using base::size;
+
+    void add(WorkItem item) { base::push_back(item); }
+
+    WorkItem next()
+    {
+      WorkItem item = base::front();
+
+      base::pop_front();
+      return item;
+    }
+
+    bool empty() const { return base::size() == 0; }
+  };
+
+  struct AmbiguousCallExtractor : AstSimpleProcessing
+  {
+      explicit
+      AmbiguousCallExtractor(decltype(inheritedSymbolMap)& inhsymbols)
+      : AstSimpleProcessing(), m(), inhsyms(inhsymbols)
+      {}
+
+      void visit(SgNode* sageNode) override
+      {
+        using iterator   = decltype(inhsyms.begin());
+        using value_type = decltype(*inhsyms.begin());
+
+        SgFunctionCallExp*           call = isSgFunctionCallExp(sageNode);
+        if (call == nullptr) return;
+
+        SgFunctionRefExp*            fnref = isSgFunctionRefExp(call->get_function());
+        if (fnref == nullptr) return;
+
+        const SgFunctionDeclaration* fndcl = fnref->getAssociatedFunctionDeclaration();
+        if (fndcl == nullptr) return;
+
+        iterator const beg = inhsyms.lower_bound(std::make_pair(fndcl,   nullptr));
+        iterator const lim = inhsyms.lower_bound(std::make_pair(fndcl+1, nullptr));
+
+        if (INFERENCE_SHORTCUT && (beg == lim)) return;
+
+        if (beg != lim) ++reqdisambig;
+
+        OverloadSet       overloads;
+        SgFunctionSymbol* fnsym = fnref->get_symbol();
+
+        overloads.emplace_back(fnsym);
+        std::transform( beg, lim,
+                        std::back_inserter(overloads),
+                        [](value_type& val) -> SgFunctionSymbol*
+                        {
+                          return val.second;
+                        }
+                      );
+
+        m.emplace(fnref, OverloadInfo{fnsym, std::move(overloads)});
+      }
+
+      operator OverloadMap () &&
+      {
+        return std::move(m);
+      }
+
+      int                           reqdisambig = 0;
+    private:
+      OverloadMap                   m;
+      decltype(inheritedSymbolMap)& inhsyms;
+  };
+
+  OverloadMap collectAllFunctionRefExp(SgGlobal& scope)
+  {
+    AmbiguousCallExtractor extractor{inheritedSymbols()};
+
+    extractor.traverse(&scope, preorder);
+
+    logInfo() << "Calls requiring disambiguation: " << extractor.reqdisambig << std::endl;
+    return std::move(extractor);
+  }
+
+  WorkItems createWorksetFrom(OverloadMap& m)
+  {
+    WorkItems res;
+
+    for (WorkItem pos = m.begin(), lim = m.end(); pos != lim; ++pos)
+      res.add(pos);
+
+    return res;
+  }
+
+  struct ArgParamTypeCompatibility
+  {
+    static
+    bool areCompatible(const SgType& arg, const SgType& prm)
+    {
+      // a constant's type is determined by the context
+      //   \note returning always true oversimplifies...
+      if (isSgAutoType(&arg)) return true;
+
+      // currently we do not resolve pointer types
+      // \note not sure if type derivation can be pointer based
+      // \todo revise and complete as needed
+      if (isSgAdaAccessType(&arg)) return true;
+
+      si::Ada::TypeDescription prmRoot = si::Ada::typeRoot(const_cast<SgType&>(prm));
+
+      // \todo this assumes that the argument is a subtype of prmRoot
+      if (prmRoot.polymorphic()) return true;
+
+      si::Ada::TypeDescription argRoot = si::Ada::typeRoot(const_cast<SgType&>(arg));
+      const bool               res = (  (argRoot.typerep() != nullptr)
+                                     && (argRoot.typerep() == prmRoot.typerep())
+                                     );
+      if (false)
+      {
+        logError() << res << '\n'
+                   << " * a " << (argRoot.typerep() ? typeid(*argRoot.typerep()).name() : std::string{})
+                   << " " << argRoot.typerep() << " / "
+                   << typeid(arg).name() << " " << &arg << '\n'
+                   << " * p " << (prmRoot.typerep() ? typeid(*prmRoot.typerep()).name() : std::string{})
+                   << " " << prmRoot.typerep() << " / "
+                   << typeid(prm).name() << " " << &prm << '\n'
+                   << std::flush;
+
+        if (SgTypedefType* tydef = isSgTypedefType(prmRoot.typerep()))
+        {
+          logError() << "prmtydef: " << tydef->get_name() << " -> "
+                     << typeid(*isSgTypedefDeclaration(tydef->get_declaration())->get_base_type()).name()
+                     << std::endl;
+        }
+      }
+
+      return res;
+    }
+
+    bool operator()(const std::set<const SgType*>& args, const SgType* prm) const
+    {
+      ASSERT_not_null(prm);
+
+      // when the set is empty, the argument does not participate in overload resolution
+      //   e.g., the set is empty when an argument is defaulted.
+      if (args.empty()) return true;
+
+      auto areTypeCompatible = [prm](const SgType* arg) -> bool
+                               {
+                                 return areCompatible(SG_DEREF(arg), *prm);
+                               };
+
+      return std::any_of( args.begin(), args.end(), areTypeCompatible );
+    }
+  };
+
+  std::set<const SgType*>
+  simpleExpressionType(const SgExpression& arg)
+  {
+    // literals are convertible to derived types
+    //    without further type resolution, it is unclear what type this
+    //    literals have. Thus, exclude literals from participating in
+    //    overload resolution for now.
+    if (isSgValueExp(&arg)) return { /* empty set */ };
+
+    //~ return { si::Ada::typeOfExpr(arg) };
+    return { arg.get_type() };
+  }
+
+  std::set<const SgType*>
+  resultTypes(const SgExpression* parg, OverloadMap& allrefs)
+  {
+    using ResultType = decltype(resultTypes(parg, allrefs));
+
+    if (parg == nullptr)
+      return { /* empty set */ };
+
+    const SgExpression& arg   = *parg;
+    SgFunctionRefExp*   fnref = nullptr;
+
+    if (const SgCallExpression* call = isSgCallExpression(&arg))
+      fnref = isSgFunctionRefExp(call->get_function());
+
+    if (fnref == nullptr)
+      return simpleExpressionType(arg);
+
+    OverloadMap::const_iterator pos = allrefs.find(fnref);
+
+    if (pos == allrefs.end())
+      return { arg.get_type() };
+
+    ResultType res;
+
+    for (SgFunctionSymbol* sym : pos->second.ovlset())
+    {
+      ASSERT_not_null(sym);
+
+      const SgFunctionDeclaration&        fndcl  = SG_DEREF(sym->get_declaration());
+      const SgAdaInheritedFunctionSymbol* inhsym = isSgAdaInheritedFunctionSymbol(sym);
+      const SgFunctionType*               fnty   = inhsym ? inhsym->get_derivedFunctionType()
+                                                          : fndcl.get_type();
+      ASSERT_not_null(fnty);
+
+      res.insert(fnty->get_return_type());
+    }
+
+    return res;
+  }
+
+  std::vector<std::set<const SgType*> >
+  argumentTypes(const SgExpressionPtrList& args, OverloadMap& allrefs)
+  {
+    decltype(argumentTypes(args, allrefs)) res;
+
+    for (const SgExpression* arg : args)
+      res.emplace_back(resultTypes(arg, allrefs));
+
+    return res;
+  }
+
+  const std::vector<SgType*>&
+  parameterTypes(const SgFunctionSymbol* sym)
+  {
+    ASSERT_not_null(sym);
+
+    if (const SgAdaInheritedFunctionSymbol* inhsym = isSgAdaInheritedFunctionSymbol(sym))
+      return SG_DEREF(inhsym->get_derivedFunctionType()).get_arguments();
+
+    const SgFunctionDeclaration& fndcl = SG_DEREF(sym->get_declaration());
+
+    return SG_DEREF(fndcl.get_type()).get_arguments();
+  }
+
+  SgExpressionPtrList
+  normalizedArguments(const SgFunctionCallExp* fncall)
+  {
+    if (fncall == nullptr) return {};
+
+    return si::Ada::normalizedCallArguments(*fncall);
+  }
+
   void resolveInheritedFunctionOverloads(SgGlobal& scope)
   {
-    using OverloadSet = std::vector<SgFunctionSymbol*>;
-
-    struct OverloadInfo : std::tuple<SgFunctionSymbol*, OverloadSet>
-    {
-      using base = std::tuple<SgFunctionSymbol*, OverloadSet>;
-      using base::base;
-
-      SgFunctionSymbol*  orig_sym() const { return std::get<0>(*this); }
-            OverloadSet& ovlset()         { return std::get<1>(*this); }
-      const OverloadSet& ovlset() const   { return std::get<1>(*this); }
-    };
-
-    using OverloadMap = std::map<SgFunctionRefExp*, OverloadInfo>;
-    using WorkItem    = OverloadMap::iterator;
-    using WorkItems   = std::vector<WorkItem>;
-
     OverloadMap allrefs = collectAllFunctionRefExp(scope);
     WorkItems   workset = createWorksetFrom(allrefs);
 
+    logInfo() << "resolveInheritedFunctionOverloads " << workset.size() << std::endl;
+
     while (!workset.empty())
     {
-      auto&             item     = *workset.back();
-      const std::size_t numcands = item.second.size();
-
-      workset.pop_back();
+      OverloadMap::value_type& item      = *workset.next();
+      OverloadSet&             overloads = item.second.ovlset();
+      const std::size_t        numcands  = overloads.size();
 
       // nothing to be done ... go to next work item
-      if (candidates.size() < 2) continue;
+      if (INFERENCE_SHORTCUT && (numcands < 2)) continue;
 
-      OverloadSet& overloads = item.second.ovlset();
+      SgFunctionRefExp&         fnref  = SG_DEREF(item.first);
+      const SgFunctionCallExp*  fncall = callNode(fnref);
+      const SgExpressionPtrList args   = normalizedArguments(fncall);
+
+      logInfo() << "resolve: " << fnref.get_parent()->unparseToString() << " " << numcands
+                //~ << " - " << args.size()
+                << std::endl;
 
       {
         // ...
         // disambiguate based on arguments and argument types
-        OverloadSet       viables;
-        SgFunctionSymbol& origSym  = item.second.orig_sym();
-        SgFunctionSymbol& funSym   = functionSymbol(*funDcl, origSym, arglst);
-        auto              isViable = [](SgFunctionSymbol*)->bool { return true };
+        OverloadSet                viables;
+
+        std::vector<std::set<const SgType*> > argTypes = argumentTypes(args, allrefs);
+
+        auto isViable = [&argTypes](SgFunctionSymbol* fnsy)->bool
+                        {
+                          const std::vector<SgType*>& parmTypes = parameterTypes(fnsy);
+
+                          return std::equal( argTypes.begin(),  argTypes.end(),
+                                             parmTypes.begin(), parmTypes.end(),
+                                             ArgParamTypeCompatibility{}
+                                           );
+                        };
 
         std::copy_if( overloads.begin(), overloads.end(),
-                      std::back_inserter(viables)
+                      std::back_inserter(viables),
                       isViable
                     );
 
         // put in place candidates
-        if (viables.size())
+        if (!INFERENCE_SHORTCUT || viables.size())
           overloads.swap(viables);
       }
 
+/*    ** TO BE COMPLETED **
       {
         // ...
         // disambiguate based on return types and context
         OverloadSet  viables;
-        auto         isViableReturn = [](SgFunctionSymbol*)->bool { return true };
+        auto         isViableReturn = [](SgFunctionSymbol*)->bool { return true; };
 
         std::copy_if( overloads.begin(), overloads.end(),
-                      std::back_inserter(viables)
+                      std::back_inserter(viables),
                       isViableReturn
                     );
 
         // put in place candidates
         overloads.swap(viables);
       }
-
-      // was there any progress ?
-      if (numcands == workelem.second.size()) continue;
+*/
+      // was there any progress (i.e., was the overloadset reduced) ?
+      if (numcands == overloads.size()) continue;
 
       // after disambiguation, set the (new) symbol
+
       if (overloads.size() == 0)
       {
-        logWarn() << "empty overload set" << fnref.unparseToString() << std::endl;
+        logWarn() << "empty overload set " << fnref.unparseToString() << std::endl;
         fnref.set_symbol(item.second.orig_sym());
       }
       else
@@ -1113,10 +1442,41 @@ namespace
       }
 
       // put parent and children call nodes in need of disambiguation back into the worklist
-      // ...
+      auto appendWorkItem = [&allrefs, &workset]
+                            (const SgCallExpression* call) -> void
+                            {
+                              if (call == nullptr) return;
+
+                              WorkItem pos = allrefs.find(isSgFunctionRefExp(call->get_function()));
+
+                              if (pos != allrefs.end())
+                                workset.add(pos);
+                            };
+
+      for (const SgExpression* exp : args)
+        appendWorkItem(isSgCallExpression(exp));
+
+      appendWorkItem(parentCallNode(fncall));
+    }
+
+    // sanity check
+    if (!INFERENCE_SHORTCUT)
+    {
+      logTrace() << "checking fun calls.." << std::endl;
+
+      for (const OverloadMap::value_type& item : allrefs)
+      {
+        const SgExpression* exp = callNode(SG_DEREF(item.first));
+
+        if (item.second.ovlset().size() != 1)
+        {
+          logError() << "disambig: " << (exp ? exp->unparseToString() : std::string{"<null>"})
+                                     << " " << item.second.ovlset().size()
+                                     << std::endl;
+        }
+      }
     }
   }
-#endif /* IN_PROGRESS */
 } // anonymous
 
 
@@ -1141,7 +1501,7 @@ void convertAsisToROSE(Nodes_Struct& headNodes, SgSourceFile* file)
   initializePkgStandard(astScope);
   std::for_each(units.begin(), units.end(), UnitCreator{AstContext{}.scope(astScope)});
 
-  // resolveInheritedFunctionOverloads(astScope);
+  resolveInheritedFunctionOverloads(astScope);
   clearMappings();
 
   //~ std::string astDotFile = astDotFileName(*file);

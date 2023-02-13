@@ -233,7 +233,12 @@ Grammar::setUpSymbols ()
 
      AdaInheritedFunctionSymbol.setFunctionPrototype     ( "HEADER_ADA_INHERITED_FUNCTION_SYMBOL", "../Grammar/Symbol.code" );
 
-     AdaInheritedFunctionSymbol.setDataPrototype ( "SgFunctionType*",   "derivedType", "= NULL",
+     // stores the function type of the inherited symbol
+     AdaInheritedFunctionSymbol.setDataPrototype ( "SgFunctionType*", "derivedFunctionType", "= nullptr",
+                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     // stores the type that is associated with the derivation
+     AdaInheritedFunctionSymbol.setDataPrototype ( "SgNamedType*",    "associatedDerivedType", "= nullptr",
                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 

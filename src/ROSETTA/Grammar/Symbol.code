@@ -1627,7 +1627,7 @@ SgName
 SgAdaInheritedFunctionSymbol::get_name() const
 {
   SgFunctionDeclaration* dcl = get_declaration();
-  ROSE_ASSERT(dcl);
+  ASSERT_not_null(dcl);
 
   return dcl->get_name();
 }
@@ -1641,7 +1641,7 @@ SgAdaInheritedFunctionSymbol::get_symbol_basis() const
 SgType*
 SgAdaInheritedFunctionSymbol::get_type() const
 {
-  return get_derivedType();
+  return get_derivedFunctionType();
 }
 
 SgScopeStatement*
@@ -1649,7 +1649,7 @@ SgAdaInheritedFunctionSymbol::get_scope() const
 {
   SgScopeStatement* res = isSgScopeStatement(get_parent());
 
-  ROSE_ASSERT(res);
+  ASSERT_not_null(res);
   return res;
 }
 
