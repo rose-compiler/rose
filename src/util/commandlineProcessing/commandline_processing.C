@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <Rose/Diagnostics.h>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/filesystem.hpp>
 #include <rose_paths.h>
 
 // Use Brian Gunney's String List Assignent (SLA) library
@@ -1084,50 +1085,39 @@ CommandlineProcessing::isOpenCLFileNameSuffix ( const std::string & suffix )
    }
 
 bool
-CommandlineProcessing::isJavaFileNameSuffix ( const std::string & suffix )
-   {
-     bool returnValue = false;
-
-  // For now define CASE_SENSITIVE_SYSTEM to be true, as we are currently a UNIXish project.
-
-#if(CASE_SENSITIVE_SYSTEM == 1)
-     if ( suffix == "java" )
-#else//It is a case insensitive system
-     if ( suffix == "java" )
-#endif
-        {
-          returnValue = true;
-        }
-
-     return returnValue;
-   }
+CommandlineProcessing::isJavaFile(const std::string &fileName) {
+ // Replace boost::filesystem with std::filesystem in C++17
+    if (boost::filesystem::path(fileName).extension() == ".java") {
+        return true;
+    }
+    return false;
+}
 
 bool
-CommandlineProcessing::isJavaClassFileSuffix ( const std::string & suffix )
-   {
-     if (suffix == "class") {
+CommandlineProcessing::isJavaClassFile(const std::string &fileName) {
+ // Replace boost::filesystem with std::filesystem in C++17
+    if (boost::filesystem::path(fileName).extension() == ".class") {
         return true;
-     }
-     return false;
-   }
+    }
+    return false;
+}
 
 bool
-CommandlineProcessing::isJavaJarFileSuffix ( const std::string & suffix )
-   {
-     if (suffix == "jar") {
+CommandlineProcessing::isJavaJarFile(const std::string &fileName) {
+ // Replace boost::filesystem with std::filesystem in C++17
+    if (boost::filesystem::path(fileName).extension() == ".jar") {
         return true;
-     }
-     return false;
-   }
+    }
+    return false;
+}
 
 bool
-CommandlineProcessing::isJvmFileNameSuffix ( const std::string & suffix )
-   {
-     if (isJavaClassFileSuffix(suffix) || isJavaJarFileSuffix(suffix)) {
+CommandlineProcessing::isJavaJvmFile(const std::string &fileName) {
+    if (isJavaClassFile(fileName) || isJavaJarFile(fileName)) {
         return true;
-     }
-     return false;
-   }
+    }
+    return false;
+}
 
 bool
 CommandlineProcessing::isX10FileNameSuffix (const std::string & suffix)
