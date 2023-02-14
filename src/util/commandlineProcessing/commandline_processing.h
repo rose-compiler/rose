@@ -127,10 +127,11 @@ namespace CommandlineProcessing
           ROSE_UTIL_API bool isOpenCLFileNameSuffix ( const std::string & suffix );
 
        // DQ (10/11/2010): Adding Java support.
-          ROSE_UTIL_API bool isJavaFileNameSuffix ( const std::string & suffix );
-          ROSE_UTIL_API bool isJavaClassFileSuffix( const std::string & suffix );
-          ROSE_UTIL_API bool isJavaJarFileSuffix  ( const std::string & suffix );
-          ROSE_UTIL_API bool isJvmFileNameSuffix  ( const std::string & suffix );
+       // Modified API to use C++17 std::filesystem for portability [Rasmussen 2022.02.05]
+          ROSE_UTIL_API bool isJavaFile(const std::string &fileName);
+          ROSE_UTIL_API bool isJavaClassFile(const std::string &fileName);
+          ROSE_UTIL_API bool isJavaJarFile(const std::string &fileName);
+          ROSE_UTIL_API bool isJavaJvmFile(const std::string &fileName);
 
           ROSE_UTIL_API bool isX10FileNameSuffix  ( const std::string & suffix );
 
