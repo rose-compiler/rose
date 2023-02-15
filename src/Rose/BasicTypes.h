@@ -2,8 +2,7 @@
 #define ROSE_BasicTypes_H
 
 // Recursively includes all basic types. These are mostly forward declarations. Try to keep other things to a bare minimum.
-
-#include <Rose/BinaryAnalysis/BasicTypes.h>
+// #include's for subdirectories are at the *end* of this header file.
 
 namespace Rose {
 
@@ -17,4 +16,8 @@ using ProgressPtr = Sawyer::SharedPointer<Progress>;
 class SourceLocation;
 
 } // namespace
+
+// #include's for subdirectories
+#include <Rose/BinaryAnalysis/BasicTypes.h>
+
 #endif

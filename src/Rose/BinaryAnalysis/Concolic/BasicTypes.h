@@ -3,10 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
-#include <Rose/BinaryAnalysis/Concolic/Callback/BasicTypes.h>
-#include <Rose/BinaryAnalysis/Concolic/I386Linux/BasicTypes.h>
-#include <Rose/BinaryAnalysis/Concolic/M68kSystem/BasicTypes.h>
-
+// Subdirectory/subnamespace #include's are at the *end* of this file.
 #include <Rose/StringUtility/Escape.h>
 
 #include <Rose/Exception.h>
@@ -281,4 +278,10 @@ struct ObjectTraits<ExecutionEvent> {
 } // namespace
 
 #endif
+
+// #include's for subdirectories
+#include <Rose/BinaryAnalysis/Concolic/Callback/BasicTypes.h>
+#include <Rose/BinaryAnalysis/Concolic/I386Linux/BasicTypes.h>
+#include <Rose/BinaryAnalysis/Concolic/M68kSystem/BasicTypes.h>
+
 #endif
