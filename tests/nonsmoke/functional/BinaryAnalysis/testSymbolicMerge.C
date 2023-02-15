@@ -155,12 +155,15 @@ test04(const BS::RiscOperators::Ptr &ops) {
     state1->clear();
     auto a1 = ops->number_(A.nBits(), 1);
     state1->writeRegister(A, a1, ops.get());
+    auto addr = ops->number_(32, 0);
+    state1->writeMemory(addr, a1, ops.get(), ops.get());
 
     // Source state 2 (and eventual destination state)
     auto state2 = state1->clone();
     state2->clear();
     auto a2 = ops->number_(A.nBits(), 2);
     state2->writeRegister(A, a2, ops.get());
+    state2->writeMemory(addr, a2, ops.get(), ops.get());
 
     // Merge state 1 into state 2 using the default merger (max set size = 1)
     std::cout <<"initial state1:\n" <<(*state1 + "  ")
@@ -172,6 +175,8 @@ test04(const BS::RiscOperators::Ptr &ops) {
     ASSERT_always_require(changed);
     auto m1 = state2->peekRegister(A, ops->undefined_(A.nBits()), ops.get());
     ASSERT_always_require(m1->isBottom());
+    auto m2 = state2->peekMemory(addr, ops->undefined_(A.nBits()), ops.get(), ops.get());
+    ASSERT_always_require(m2->isBottom());
 }
 
 static void
@@ -193,15 +198,22 @@ test05(const BS::RiscOperators::Ptr &ops) {
     state1->clear();
     auto a1 = ops->number_(A.nBits(), 1);
     state1->writeRegister(A, a1, ops.get());
+    auto addr = ops->number_(32, 0);
+    state1->writeMemory(addr, a1, ops.get(), ops.get());
 
     // Source state 2 (and eventual destination state)
     auto state2 = state1->clone();
     state2->clear();
     auto a2 = ops->number_(A.nBits(), 2);
     state2->writeRegister(A, a2, ops.get());
+    state2->writeMemory(addr, a2, ops.get(), ops.get());
 
-    // Use a non-default symbolic merger when merging into state 2
+    // Use a non-default symbolic merger when merging into state 2, and test that cloning the state also (shallow) copies the
+    // merger object.
     state2->registerState()->merger(SS::Merger::instance(2));
+    state2->memoryState()->merger(state2->registerState()->merger());
+    ASSERT_always_require(state2->registerState()->merger() == state2->clone()->registerState()->merger());
+    ASSERT_always_require(state2->memoryState()->merger() == state2->clone()->memoryState()->merger());
 
     // Merge state 1 into state 2 using the default merger (max set size = 1)
     std::cout <<"initial state1:\n" <<(*state1 + "  ")
@@ -215,6 +227,8 @@ test05(const BS::RiscOperators::Ptr &ops) {
                                                                          SymbolicExpression::makeIntegerConstant(A.nBits(), 1)));
     auto m1 = state2->peekRegister(A, ops->undefined_(A.nBits()), ops.get());
     ASSERT_always_require(m1->mustEqual(ans));
+    auto m2 = state2->peekMemory(addr, ops->undefined_(A.nBits()), ops.get(), ops.get());
+    ASSERT_always_require(m2->mustEqual(ans));
 }
 
 int
