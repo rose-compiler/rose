@@ -145,7 +145,7 @@ STRIP_FROM_PATH        =
 # are normally passed to the compiler using the -I flag.
 
 STRIP_FROM_INC_PATH    = @top_pwd@/src/frontend/SageIII \
-                         @top_pwd@/src/Rose \
+                         @top_pwd@/src \
                          @top_srcdir@/src/frontend/SageIII \
                          @top_srcdir@/src/
 

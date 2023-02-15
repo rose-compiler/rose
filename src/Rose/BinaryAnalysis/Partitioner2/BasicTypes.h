@@ -94,7 +94,7 @@ enum EdgeType {
                                                          *   (e.g., x86 @c RET, m68k @c RTS, etc.). */
     E_CALL_RETURN       = 0x00000008,                   /**< Edge is a function return from the call site. Such edges are from
                                                          *   a caller basic block to (probably) the fall-through address of the
-                                                         *   call and don't actually exist directly in the specimen.  The
+                                                         *   call and don't actually exist directly in the specimen.  They
                                                          *   represent the fact that the called function eventually returns
                                                          *   even if the instructions for the called function are not available
                                                          *   to analyze. */
