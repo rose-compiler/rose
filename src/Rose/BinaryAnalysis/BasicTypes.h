@@ -3,13 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
-#include <Rose/BinaryAnalysis/Debugger/BasicTypes.h>
-#include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
-#include <Rose/BinaryAnalysis/ModelChecker/Types.h>
-#include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
-
+// #include's for subdirectories and sub-namespaces are at the end of this header.
 #include <Sawyer/SharedPointer.h>
 #include <memory>
 
@@ -125,6 +119,7 @@ class Simplifier;
 class Type;
 class Visitor;
 } // namespace
+using SymbolicExpresssionPtr = SymbolicExpression::Ptr;
 
 namespace Variables {
 class BaseVariable;
@@ -139,4 +134,13 @@ using VariableFinderPtr = Sawyer::SharedPointer<VariableFinder>; /**< Reference 
 } // namespace
 
 #endif
+
+// #include's for sub-namespaces and sub-directories
+#include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
+#include <Rose/BinaryAnalysis/Debugger/BasicTypes.h>
+#include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
+#include <Rose/BinaryAnalysis/ModelChecker/Types.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
+
 #endif
