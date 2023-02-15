@@ -195,7 +195,7 @@ SharedMemoryCallback::hello(const SharedMemoryContext &ctx) const {
         if (mlog[DEBUG] && ConcolicPhase::REPLAY == ctx.phase) {
             ASSERT_not_null(ctx.sharedMemoryEvent);
             if (SymbolicExpression::Ptr value = ctx.sharedMemoryEvent->value()) {
-                SAWYER_MESG(mlog[DEBUG]) <<"  value = " <<*value <<"\n";
+                SAWYER_MESG(mlog[DEBUG]) <<"  value = " <<toString(value) <<"\n";
             } else {
                 SAWYER_MESG(mlog[DEBUG]) <<"  no concrete value (treated as non-shared memory)\n";
             }
@@ -220,7 +220,7 @@ SharedMemoryCallback::notAnInput(SharedMemoryContext &ctx) const {
 void
 SharedMemoryCallback::returns(SharedMemoryContext &ctx, const SymbolicExpression::Ptr &value) const {
     ASSERT_not_null(value);
-    SAWYER_MESG(mlog[DEBUG]) <<"    returning " <<*value <<"\n";
+    SAWYER_MESG(mlog[DEBUG]) <<"    returning " <<toString(value) <<"\n";
     if (value->isConstant()) {
         ctx.ops->inputVariables()->deactivate(ctx.sharedMemoryEvent);
         ctx.sharedMemoryEvent->variable(SymbolicExpression::Ptr());

@@ -91,6 +91,17 @@ public:
  *  Returns true if the current process appears to be running in a container such as Docker or Podman. */
 bool isRunningInContainer();
 
+/** Print expression or value with additional data on one line.
+ *
+ *  For example, a one-byte constant would print the numeric value and a character value.
+ *
+ * @{ */
+std::string toString(const SymbolicExpression::Ptr&, SymbolicExpression::Formatter&);
+std::string toString(const SymbolicExpression::Ptr&);
+std::string toString(uint64_t value, size_t nBits);
+/** @} */
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Forward references
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -735,12 +735,12 @@ ExecutionEvent::toYaml(std::ostream &out, const Database::Ptr &db, std::string p
             out <<prefix <<(nameValue % "where:" % StringUtility::addrToString(memoryLocation().least()));
             out <<prefix <<(nameValue % "size:" % StringUtility::plural(memoryLocation().size(), "# bytes"));
             if (value()) {
-                out <<prefix <<(nameValue % "value:" % (*value() + fmt));
+                out <<prefix <<(nameValue % "value:" % toString(value(), fmt));
             } else {
                 out <<prefix <<(nameValue % "value:" % "none");
             }
             if (expression()) {
-                out <<prefix <<(nameValue % "expression:" % (*expression() + fmt));
+                out <<prefix <<(nameValue % "expression:" % toString(expression(), fmt));
             } else {
                 out <<prefix <<(nameValue % "expression:" % "none");
             }
@@ -760,12 +760,12 @@ ExecutionEvent::toYaml(std::ostream &out, const Database::Ptr &db, std::string p
             out <<prefix <<(nameValue % "action:" % "register-write");
             out <<prefix <<(nameValue % "register:" % registerDescriptor().toString());
             if (value()) {
-                out <<prefix <<(nameValue % "value:" % (*value() + fmt));
+                out <<prefix <<(nameValue % "value:" % toString(value(), fmt));
             } else {
                 out <<prefix <<(nameValue % "value:" % "none");
             }
             if (expression()) {
-                out <<prefix <<(nameValue % "expression:" % (*expression() + fmt));
+                out <<prefix <<(nameValue % "expression:" % toString(expression(), fmt));
             } else {
                 out <<prefix <<(nameValue % "expression:" % "none");
             }
@@ -786,12 +786,12 @@ ExecutionEvent::toYaml(std::ostream &out, const Database::Ptr &db, std::string p
             out <<prefix <<(nameValue % "memory-address:" % StringUtility::addrToString(memoryLocation().least()));
             out <<prefix <<(nameValue % "size:" % StringUtility::plural(memoryLocation().size(), "# bytes"));
             if (value()) {
-                out <<prefix <<(nameValue % "value:" % (*value() + fmt));
+                out <<prefix <<(nameValue % "value:" % toString(value(), fmt));
             } else {
                 out <<prefix <<(nameValue % "value:" % "none");
             }
             if (expression()) {
-                out <<prefix <<(nameValue % "expression:" % (*expression() + fmt));
+                out <<prefix <<(nameValue % "expression:" % toString(expression(), fmt));
             } else {
                 out <<prefix <<(nameValue % "expression:" % "none");
             }
