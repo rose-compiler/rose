@@ -1877,7 +1877,8 @@ namespace Rose {
           return strTemplateArgument(v);
         }
         static void fill(std::vector<SgTemplateArgument *> & tpl_args, T v) {
-          tpl_args.push_back(buildTemplateArgument(v));
+          SgTemplateArgument * arg = buildTemplateArgument(v);
+          if (arg != nullptr) tpl_args.push_back(arg);
         }
       };
 
@@ -1887,8 +1888,11 @@ namespace Rose {
           return strTemplateArgument(v) + ", " + TemplateArgumentList<Args...>::str(args...);
         }
         static void fill(std::vector<SgTemplateArgument *> & tpl_args, T v, Args... args) {
-          tpl_args.push_back(buildTemplateArgument(v));
-          TemplateArgumentList<Args...>::fill(tpl_args, args...);
+          SgTemplateArgument * arg = buildTemplateArgument(v);
+          if (arg != nullptr) {
+            tpl_args.push_back(arg);
+            TemplateArgumentList<Args...>::fill(tpl_args, args...);
+          }
         }
       };
 

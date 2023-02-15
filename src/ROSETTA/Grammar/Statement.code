@@ -10006,7 +10006,7 @@ SgDeclarationStatement::search_for_symbol_from_symbol_table() const
 
 #if DEBUG__SgDeclarationStatement__search_for_symbol_from_symbol_table
      printf("In search_for_symbol_from_symbol_table():\n");
-     printf("  this = %p : $s:\n", this, this->class_name().c_str());
+     printf("  this = %p : %s\n", this, this->class_name().c_str());
 #endif
      SgDeclarationStatement* declaration = get_declaration_associated_with_symbol();
      if (declaration == NULL)
@@ -10028,7 +10028,7 @@ SgDeclarationStatement::get_declaration_associated_with_symbol() const
    {
 #if DEBUG__SgDeclarationStatement__search_for_symbol_from_symbol_table
      printf("In get_declaration_associated_with_symbol():\n");
-     printf("  this = %p : $s:\n", this, this->class_name().c_str());
+     printf("  this = %p : %s\n", this, this->class_name().c_str());
 #endif
      ROSE_ASSERT(this != NULL);
 

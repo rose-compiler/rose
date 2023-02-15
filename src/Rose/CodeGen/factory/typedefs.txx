@@ -41,8 +41,15 @@ declaration_t<Object::a_typedef> * __factory_helper_t<CRT, API, Object::a_typede
 ) {
 #if DEBUG___factory_helper_t__a_typedef__instantiate
   std::cout << "__factory_helper_t<CRT, API, Object::a_typedef>::instantiate" << std::endl;
-  std::cout << "  sym    = " << std::hex << sym << " : " << ( sym ? sym->class_name() : "" ) << std::endl;
+  std::cout << "  sym             = " << std::hex << sym << " : " << ( sym ? sym->class_name() : "" ) << std::endl;
+  std::cout << "  tpl_args.size() = " << std::dec << tpl_args.size() << std::endl;
 #endif
+
+  SgName fname(sym->get_name().getString());
+  SgName fname_tplargs = SageBuilder::appendTemplateArgumentsToName(fname, tpl_args);
+  if (tpl_args.size() == 0) {
+    fname_tplargs += "<>";
+  }
 
   SgTemplateTypedefDeclaration * tpl_decl = isSgTemplateTypedefDeclaration(sym->get_declaration());
   ROSE_ASSERT(tpl_decl);
@@ -56,19 +63,22 @@ declaration_t<Object::a_typedef> * __factory_helper_t<CRT, API, Object::a_typede
 #endif
 
   SgScopeStatement * defn_scope = tpl_decl->get_scope();
-  SgName type_name(sym->get_name().getString());
-  SgTemplateInstantiationTypedefDeclaration * tddecl = SageBuilder::buildTemplateInstantiationTypedefDeclaration_nfi(
-    type_name, base_type, defn_scope, false, tpl_decl, tpl_args
+  
+  SgTemplateInstantiationTypedefDeclaration * tddecl = new SgTemplateInstantiationTypedefDeclaration(
+      fname_tplargs, base_type, nullptr,        nullptr,                 nullptr,    tpl_decl,                      tpl_args
   );
   ROSE_ASSERT(tddecl != nullptr);
 #if DEBUG___factory_helper_t__a_typedef__instantiate
   std::cout << "  tddecl    = " << std::hex << tddecl << " : " << ( tddecl ? tddecl->class_name() : "" ) << std::endl;
   std::cout << "    ->get_base_type()    = " << std::hex << tddecl->get_base_type() << " : " << ( tddecl->get_base_type() ? tddecl->get_base_type()->class_name() : "" ) << std::endl;
 #endif
-  if (tddecl->get_base_type() != base_type) {
-    tddecl->set_base_type(base_type); // Found previously built typedef but base-type different => comes from frontend and is probably incomplete
-  }
-  defn_scope->append_statement(tddecl);
+  tddecl->set_parent(defn_scope);
+  tddecl->set_templateName(fname);
+  tddecl->set_scope(defn_scope);
+  defn_scope->insert_symbol(fname_tplargs, new SgTypedefSymbol(tddecl));
+  tddecl->set_firstNondefiningDeclaration(tddecl);
+
+  tddecl->set_type(SgTypedefType::createType(tddecl));
 
   for (auto tpl_arg: tpl_args) {
     tpl_arg->set_parent(tddecl);

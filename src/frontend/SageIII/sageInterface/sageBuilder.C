@@ -2161,6 +2161,9 @@ SageBuilder::buildTemplateInstantiationTypedefDeclaration_nfi(
         {
           SgDeclarationStatement* declarationStatement = prexisting_template_typedef_symbol->get_declaration();
           ROSE_ASSERT(declarationStatement != NULL);
+#if DEBUG__SageBuilder__buildTemplateInstantiationTypedefDeclaration_nfi
+          std::cout << "  declarationStatement = " << declarationStatement << " : " << declarationStatement->class_name() << std::endl;
+#endif
           SgTemplateInstantiationTypedefDeclaration* return_declaration = isSgTemplateInstantiationTypedefDeclaration(declarationStatement);
           ROSE_ASSERT(return_declaration != NULL);
           return return_declaration;
@@ -19475,13 +19478,13 @@ namespace Rose {
     namespace Templates {
 
 SgTemplateArgument * buildTemplateArgument(SgType * t) {
-  ROSE_ASSERT(t != nullptr);
+  if (t == nullptr) return nullptr;
   SgTemplateArgument * r = new SgTemplateArgument(SgTemplateArgument::type_argument, false, t, nullptr, nullptr);
   return r;
 }
 
 SgTemplateArgument * buildTemplateArgument(SgExpression * e) {
-  ROSE_ASSERT(e != nullptr);
+  if (e == nullptr) return nullptr;
   SgTemplateArgument * r = new SgTemplateArgument(SgTemplateArgument::nontype_argument, false, nullptr, e, nullptr);
   e->set_parent(r);
   return r;

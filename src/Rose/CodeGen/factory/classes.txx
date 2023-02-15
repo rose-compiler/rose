@@ -44,9 +44,70 @@ declaration_t<Object::a_class> * __factory_helper_t<CRT, API, Object::a_class>::
   std::cout << "  sym    = " << std::hex << sym << " : " << ( sym ? sym->class_name() : "" ) << std::endl;
 #endif
 
-  ROSE_ABORT(); // TODO
-  return nullptr;
+  SgName fname(sym->get_name().getString());
+  SgName fname_tplargs = SageBuilder::appendTemplateArgumentsToName(fname, tpl_args);
+
+  SgTemplateClassDeclaration * tpl_decl = isSgTemplateClassDeclaration(sym->get_declaration());
+  ROSE_ASSERT(tpl_decl);
+#if DEBUG___factory_helper_t__a_class__instantiate
+  std::cout << "  tpl_decl    = " << std::hex << tpl_decl << " : " << ( tpl_decl ? tpl_decl->class_name() : "" ) << std::endl;
+#endif
+
+  SgScopeStatement * defn_scope = tpl_decl->get_scope();
+  SgTemplateInstantiationDecl * xdecl = new SgTemplateInstantiationDecl(fname_tplargs, tpl_decl->get_class_type(), nullptr, nullptr, tpl_decl, tpl_args);
+  ROSE_ASSERT(xdecl != nullptr);
+#if DEBUG___factory_helper_t__a_class__instantiate
+  std::cout << "  xdecl    = " << std::hex << xdecl << " : " << ( xdecl ? xdecl->class_name() : "" ) << std::endl;
+#endif
+  xdecl->set_parent(defn_scope);
+  xdecl->set_templateName(fname);
+  xdecl->set_scope(defn_scope);
+  defn_scope->insert_symbol(fname_tplargs, new SgClassSymbol(xdecl));
+
+  // We need it to be first defining to create a type
+  xdecl->set_firstNondefiningDeclaration(xdecl);
+  xdecl->set_type(SgClassType::createType(xdecl));
+
+  // We really need a definition to instantiate members (FIXME what does SgTemplateInstantiationDefn bring?)
+  SgTemplateInstantiationDefn * xdefn = new SgTemplateInstantiationDefn();
+  xdecl->set_definition(xdefn);
+  xdefn->set_parent(xdecl);
+  xdecl->set_definingDeclaration(xdecl);
+
+  SageInterface::setSourcePositionForTransformation(xdecl);
+
+  for (auto tpl_arg: tpl_args) {
+    tpl_arg->set_parent(xdecl);
+  }
+  
+  return xdecl;
 }
+
+#ifdef NOTDEFN
+  SgType * base_type = Rose::Builder::Templates::instantiateNonrealTypes(tpl_decl->get_base_type(), tpl_decl->get_templateParameters(), tpl_args);
+#if DEBUG___factory_helper_t__a_class__instantiate
+  std::cout << "  base_type    = " << std::hex << base_type << " : " << ( base_type ? base_type->class_name() : "" ) << std::endl;
+#endif
+
+  SgScopeStatement * defn_scope = tpl_decl->get_scope();
+  SgName type_name(sym->get_name().getString());
+  SgTemplateInstantiationTypedefDeclaration * tddecl = SageBuilder::buildTemplateInstantiationTypedefDeclaration_nfi(
+    type_name, base_type, defn_scope, false, tpl_decl, tpl_args
+  );
+  ROSE_ASSERT(tddecl != nullptr);
+#if DEBUG___factory_helper_t__a_class__instantiate
+  std::cout << "  tddecl    = " << std::hex << tddecl << " : " << ( tddecl ? tddecl->class_name() : "" ) << std::endl;
+  std::cout << "    ->get_base_type()    = " << std::hex << tddecl->get_base_type() << " : " << ( tddecl->get_base_type() ? tddecl->get_base_type()->class_name() : "" ) << std::endl;
+#endif
+  if (tddecl->get_base_type() != base_type) {
+    tddecl->set_base_type(base_type); // Found previously built typedef but base-type different => comes from frontend and is probably incomplete
+  }
+  defn_scope->append_statement(tddecl);
+
+  for (auto tpl_arg: tpl_args) {
+    tpl_arg->set_parent(tddecl);
+  }
+#endif
 
 template <typename CRT, typename API>
 template <typename... Args>
