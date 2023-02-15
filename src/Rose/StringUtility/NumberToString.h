@@ -63,9 +63,20 @@ ROSE_UTIL_API std::string toHex2(uint64_t value, size_t nbits,
 ROSE_UTIL_API std::string signedToHex2(uint64_t value, size_t nbits);
 ROSE_UTIL_API std::string unsignedToHex2(uint64_t value, size_t nbits);
 
-template<typename T> std::string toHex(T value) { return toHex2((uint64_t)value, 8*sizeof(T)); }
-template<typename T> std::string signedToHex(T value) { return signedToHex2((uint64_t)value, 8*sizeof(T)); }
-template<typename T> std::string unsignedToHex(T value) { return unsignedToHex2((uint64_t)value, 8*sizeof(T)); }
+template<typename T>
+std::string toHex(T value) {
+    return toHex2((uint64_t)value, 8*sizeof(T));
+}
+
+template<typename T>
+std::string signedToHex(T value) {
+    return signedToHex2((uint64_t)value, 8*sizeof(T));
+}
+
+template<typename T>
+std::string unsignedToHex(T value) {
+    return unsignedToHex2((uint64_t)value, 8*sizeof(T));
+}
 /** @} */
 
 /** Convert a virtual address to a string.
