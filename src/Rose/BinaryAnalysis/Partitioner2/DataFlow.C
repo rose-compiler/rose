@@ -621,9 +621,9 @@ DfCfgVertex::print(std::ostream &out) const {
             break;
         case FUNCRET:
             if (auto func = parentFunction()) {
-                out <<"return to " <<func->printableName();
+                out <<"return from " <<func->printableName();
             } else {
-                out <<"return to nothing";
+                out <<"return from nothing";
             }
             break;
         case INDET:
