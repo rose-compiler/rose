@@ -362,7 +362,7 @@ main(int argc, char *argv[]) {
 
     Settings settings;
     boost::filesystem::path inputFileName = parseCommandLine(argc, argv, settings);
-    P2::Engine *engine = P2::Engine::instance();
+    auto engine = P2::Engine::instance();
     P2::Partitioner::Ptr partitioner = engine->loadPartitioner(inputFileName, settings.stateFormat);
 
     // Get a list of functions
