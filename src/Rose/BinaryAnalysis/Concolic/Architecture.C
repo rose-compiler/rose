@@ -565,7 +565,7 @@ Architecture::playEvent(const ExecutionEvent::Ptr &event) {
             const RegisterDescriptor reg = event->registerDescriptor();
             const uint64_t concreteValue = event->calculateResult(inputVariables()->bindings())->toUnsigned().get();
             SAWYER_MESG(debug) <<"  write register "
-                               <<reg <<" = " <<StringUtility::toHex2(concreteValue, reg.nBits()) <<"\n";
+                               <<reg <<" = " <<toString(concreteValue, reg.nBits()) <<"\n";
             writeRegister(reg, concreteValue);
             return true;
         }

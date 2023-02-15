@@ -203,7 +203,7 @@ public:
      *
      *  This is a map indexed by concrete address. The values of the contain two types of information:
      *
-     *  @li Information about how the shared memory region should behave. For instance, a reads from shared memory that's
+     *  @li Information about how the shared memory region should behave. For instance, reads from shared memory that's
      *  attached to a timer would probably return monotonically increasing values.
      *
      *  @li Information to make the declared behavior possible. For instance, the concrete and symbolic values returned
