@@ -45,9 +45,9 @@ SgAsmExecutableFileFormat::unparseBinaryFormat(std::ostream &f, SgAsmGenericFile
 SgAsmGenericFile *
 SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
 {
-    SgAsmGenericFile *ef=NULL;
+    SgAsmGenericFile *ef=nullptr;
     std::vector<DataConverter*> converters;
-    converters.push_back(NULL); /*no conversion*/
+    converters.push_back(nullptr); /*no conversion*/
     converters.push_back(new Rot13);
 
     struct Cleanup {
@@ -70,7 +70,7 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
     for (size_t ci=0; !ef && ci<converters.size(); ci++) {
         ef = new SgAsmGenericFile();
         ef->set_data_converter(converters[ci]);
-        converters[ci] = NULL;
+        converters[ci] = nullptr;
         ef->parse(name);
 
         if (SgAsmElfFileHeader::is_ELF(ef)) {
@@ -98,7 +98,7 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
         } else {
             if (ef) delete ef->get_data_converter();
             SageInterface::deleteAST(ef);      /* ~SgAsmGenericFile() closes ef->p_fd if it was opened. */
-            ef = NULL;
+            ef = nullptr;
         }
     }
 
@@ -122,7 +122,7 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
             dup2(child_stdout[1], 1);
             close(child_stdout[0]);
             close(child_stdout[1]);
-            execlp("file", "file", "-b", name, NULL);
+            execlp("file", "file", "-b", name, nullptr);
             exit(1);
         } else if (pid>0) {
             char buf[4096];
@@ -134,7 +134,7 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
             }
             buf[sizeof(buf)-1] = '\0';
             if (char *nl = strchr(buf, '\n')) *nl = '\0'; /*keep only first line w/o LF*/
-            waitpid(pid, NULL, 0);
+            waitpid(pid, nullptr, 0);
             char mesg[64+sizeof buf];
             sprintf(mesg, "unrecognized file format for \"%s\": %s", StringUtility::cEscape(name).c_str(), buf);
             throw FormatError(mesg);

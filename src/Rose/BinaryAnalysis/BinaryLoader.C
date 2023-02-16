@@ -238,13 +238,13 @@ BinaryLoader::findSimilarHeaders(SgAsmGenericHeader *match, SgAsmGenericHeaderPt
     SgAsmGenericHeaderPtrList retval;
     Disassembler::Base::Ptr d1 = Disassembler::lookup(match);
 
-    for (SgAsmGenericHeaderPtrList::iterator ci=candidates.begin(); ci!=candidates.end(); ++ci) {
-        Disassembler::Base::Ptr d2 = d1 ? Disassembler::lookup(*ci) : Disassembler::Base::Ptr();
+    for (auto candidate: candidates) {
+        Disassembler::Base::Ptr d2 = d1 ? Disassembler::lookup(candidate) : Disassembler::Base::Ptr();
         if (!d1 && !d2) {
-            if (match->variantT() == (*ci)->variantT())
-                retval.push_back(*ci);
+            if (match->variantT() == candidate->variantT())
+                retval.push_back(candidate);
         } else if (d1->name() == d2->name()) {
-            retval.push_back(*ci);
+            retval.push_back(candidate);
         }
     }
     return retval;
@@ -315,8 +315,8 @@ BinaryLoader::remap(SgAsmInterpretation* interp) {
     /* Process each file header in the order it appears in the AST. This is also the order that the link() method parsed
      * dependencies (usually by a breadth-first search). */
     const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
-    for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi)
-        remap(map, *hi);
+    for (auto header: headers)
+        remap(map, header);
 }
 
 /* Maps the sections of a single header. */
@@ -339,8 +339,7 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header) {
     }
 
     try {
-        for (SgAsmGenericSectionPtrList::iterator si=sections.begin(); si!=sections.end(); ++si) {
-            SgAsmGenericSection *section = *si;
+        for (auto section: sections) {
             section->set_mapped_actual_va(0); /*reset in case previously mapped*/
             unsigned mapperms = mappingPermissions(section);
 
@@ -584,8 +583,8 @@ BinaryLoader::dependencies(SgAsmGenericHeader *header) {
     ASSERT_not_null(header);
     std::vector<std::string> retval;
     const SgAsmGenericDLLPtrList &dlls = header->get_dlls();
-    for (SgAsmGenericDLLPtrList::const_iterator di=dlls.begin(); di!=dlls.end(); ++di)
-        retval.push_back((*di)->get_name()->get_string());
+    for (auto dll: dlls)
+        retval.push_back(dll->get_name()->get_string());
     return retval;
 }
 
