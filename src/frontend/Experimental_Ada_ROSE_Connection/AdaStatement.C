@@ -2438,6 +2438,12 @@ namespace
       return DefinitionDetails{declname.id(), A_Task_Type_Declaration, Not_A_Type_Definition};
     }
 
+    if (complDecl.Declaration_Kind == A_Protected_Type_Declaration)
+    {
+      logKind("A_Protected_Type_Declaration", complElem.ID);
+
+      return DefinitionDetails{declname.id(), A_Protected_Type_Declaration, Not_A_Type_Definition};
+    }
 
     if (complDecl.Declaration_Kind == An_Ordinary_Type_Declaration)
       logKind("An_Ordinary_Type_Declaration", complElem.ID);
@@ -2674,9 +2680,9 @@ namespace
 
     if (baseRootType == nullptr)
     {
-      logError() << "unable to find base-root for " << derivedType.get_name()
-                 << " / base = " << baseType
-                 << std::endl;
+      logWarn() << "unable to find base-root for " << derivedType.get_name()
+                << " / base = " << baseType
+                << std::endl;
       return;
     }
 
@@ -2759,7 +2765,9 @@ namespace
 
       if (baseRootType == nullptr)
       {
-        logError() << "unable to find base-root for " << derivedType.get_name() << std::endl;
+        logWarn() << "unable to find base-root for enum " << derivedType.get_name()
+                  << " / base = " << baseType
+                  << std::endl;
         return;
       }
 
@@ -2816,6 +2824,8 @@ namespace
 
     if (detail.declKind() == A_Task_Type_Declaration)
       res = &mkAdaTaskTypeDecl(adaname.ident, nullptr /* no spec */, scope);
+    else if (detail.declKind() == A_Protected_Type_Declaration)
+      res = &mkAdaProtectedTypeDecl(adaname.ident, nullptr /* no spec */, scope);
     else
     {
       switch (detail.typeKind())
@@ -2836,9 +2846,7 @@ namespace
 
         case An_Enumeration_Type_Definition:
           {
-            SgEnumDeclaration& sgnode = mkEnumDecl(adaname.ident, scope);
-
-            res = &sgnode;
+            res = &mkEnumDecl(adaname.ident, scope);
             break;
           }
 
@@ -2886,7 +2894,7 @@ namespace
   {
     // PP (20/1/23): why do we use the nondefining function's scope?
     //               for one, ROSE scope fixup currently unifies the scopes.
-    //               see also SCOPE_COMMENT_1.
+    //               see also SCOPE_COMMENT_1 .
     return nondef ? mkProcedureDecl(*nondef, SG_DEREF(nondef->get_scope()), rettype, std::move(complete))
                   : mkProcedureDecl(name,    scope, rettype, std::move(complete));
   }

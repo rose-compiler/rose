@@ -217,6 +217,8 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   nested_package.ads                   \
   nullproc.adb                         \
   opaque.ads                           \
+  opaque2.ads                          \
+  opaque3.ads                          \
   opergen3.adb                         \
   opergen4.adb                         \
   opergen5.adb                         \

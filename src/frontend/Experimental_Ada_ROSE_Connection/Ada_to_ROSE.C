@@ -1077,6 +1077,7 @@ namespace
 ///
 #endif /* SCRATCH_PAD */
 
+  // when set to true inference becomes more permissive, b/c it may stop early.
   constexpr bool INFERENCE_SHORTCUT = false;
 
   const SgFunctionCallExp* callNode(const SgFunctionRefExp& fnref)
@@ -1338,6 +1339,18 @@ namespace
     return res;
   }
 
+  std::set<const SgType*>
+  expectedTypes(const SgFunctionCallExp* /*call*/, OverloadMap& /*allrefs*/)
+  {
+    return {};
+  }
+
+  const SgType*
+  functionReturnType(const SgFunctionSymbol* /*fnsy*/)
+  {
+    return nullptr;
+  }
+
   const std::vector<SgType*>&
   parameterTypes(const SgFunctionSymbol* sym)
   {
@@ -1386,11 +1399,9 @@ namespace
       {
         // ...
         // disambiguate based on arguments and argument types
-        OverloadSet                viables;
-
-        std::vector<std::set<const SgType*> > argTypes = argumentTypes(args, allrefs);
-
-        auto isViable = [&argTypes](SgFunctionSymbol* fnsy)->bool
+        OverloadSet viables;
+        auto isViable = [argTypes = argumentTypes(args, allrefs)]
+                        (SgFunctionSymbol* fnsy)->bool
                         {
                           const std::vector<SgType*>& parmTypes = parameterTypes(fnsy);
 
@@ -1410,12 +1421,16 @@ namespace
           overloads.swap(viables);
       }
 
-/*    ** TO BE COMPLETED **
+      if (false)
       {
         // ...
         // disambiguate based on return types and context
-        OverloadSet  viables;
-        auto         isViableReturn = [](SgFunctionSymbol*)->bool { return true; };
+        OverloadSet viables;
+        auto isViableReturn = [expTypes = expectedTypes(fncall, allrefs)]
+                              (SgFunctionSymbol* fnsy)->bool
+                              {
+                                return true; // ArgParamTypeCompatibility{}(functionReturnType(fnsy), expTypes);
+                              };
 
         std::copy_if( overloads.begin(), overloads.end(),
                       std::back_inserter(viables),
@@ -1423,9 +1438,10 @@ namespace
                     );
 
         // put in place candidates
-        overloads.swap(viables);
+        if (!INFERENCE_SHORTCUT || viables.size())
+          overloads.swap(viables);
       }
-*/
+
       // was there any progress (i.e., was the overloadset reduced) ?
       if (numcands == overloads.size()) continue;
 
