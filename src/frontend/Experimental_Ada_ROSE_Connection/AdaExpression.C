@@ -1986,9 +1986,17 @@ namespace
   SgExpression&
   getDiscreteRange(Element_Struct& el, AstContext ctx)
   {
+    if (el.Element_Kind == A_Definition)
+      return getDiscreteRange(el, el.The_Union.Definition, ctx);
+
+    logError() << "unexpected range kind: " << el.Element_Kind << std::endl;
+    return mkUnresolvedName("UNKNOWN_RANGE", ctx.scope());
+
+#if 0
     ADA_ASSERT(el.Element_Kind == A_Definition);
 
     return getDiscreteRange(el, el.The_Union.Definition, ctx);
+#endif /* 0 */
   }
 
   SgExpression&
