@@ -1912,6 +1912,9 @@ namespace Ada
 
     if (pos == zzz)
     {
+      // \todo this currently occurs for derived types, where the publicly
+      //       declared ancestor type differs from the actual parent.
+      //       see test case: ancestors.adb
       using namespace Rose::Diagnostics;
       mlog[FATAL] << "cannot find argument position for " << name << std::endl;
       ROSE_ABORT();
@@ -1999,7 +2002,7 @@ namespace Ada
     extend(res, parmList.size()); // make arglist as long as function parameter list
 
     std::for_each( pos, zzz,
-                   [&parmList, &res, &n](SgExpression* e) -> void
+                   [&parmList, &res](SgExpression* e) -> void
                    {
                      SgActualArgumentExpression& arg = SG_DEREF(isSgActualArgumentExpression(e));
                      const std::size_t           pos = namedArgumentPosition(parmList, arg.get_argument_name());
