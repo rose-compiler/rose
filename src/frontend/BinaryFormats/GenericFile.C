@@ -22,27 +22,27 @@ using namespace Rose::BinaryAnalysis;
 void
 SgAsmGenericFile::ctor()
 {
-    ROSE_ASSERT(this != NULL);
+    ASSERT_not_null(this);
 
-    ROSE_ASSERT(p_fd == -1);
-    ROSE_ASSERT(p_holes == NULL);
-    ROSE_ASSERT(p_truncate_zeros == false);
+    ASSERT_require(p_fd == -1);
+    ASSERT_require(p_holes == nullptr);
+    ASSERT_require(p_truncate_zeros == false);
 
-    ROSE_ASSERT(p_headers == NULL);
+    ASSERT_require(p_headers == nullptr);
     p_headers  = new SgAsmGenericHeaderList();
-    ROSE_ASSERT(p_headers != NULL);
+    ASSERT_not_null(p_headers);
     p_headers->set_parent(this);
 
-    ROSE_ASSERT(p_holes == NULL);
+    ASSERT_require(p_holes == nullptr);
     p_holes  = new SgAsmGenericSectionList();
-    ROSE_ASSERT(p_holes != NULL);
+    ASSERT_not_null(p_holes);
     p_holes->set_parent(this);
 }
 
 SgAsmGenericFile *
 SgAsmGenericFile::parse(std::string fileName)
 {
-    ROSE_ASSERT(p_fd < 0); /*can call parse() only once per object*/
+    ASSERT_require(p_fd < 0); /*can call parse() only once per object*/
 
     set_name(fileName);
     p_fd = open(fileName.c_str(), O_RDONLY);
@@ -103,8 +103,8 @@ SgAsmGenericFile::get_current_size() const
 {
     rose_addr_t retval=0;
     SgAsmGenericSectionPtrList sections = get_sections();
-    for (SgAsmGenericSectionPtrList::iterator i=sections.begin(); i!=sections.end(); ++i) {
-        retval = std::max(retval, (*i)->get_end_offset());
+    for (auto section: sections) {
+        retval = std::max(retval, section->get_end_offset());
     }
     return retval;
 }
@@ -115,7 +115,7 @@ SgAsmGenericFile::mark_referenced_extent(rose_addr_t offset, rose_addr_t size)
     if (get_tracking_references()) {
         p_referenced_extents.insert(AddressInterval::baseSize(offset, size));
         delete p_unreferenced_cache;
-        p_unreferenced_cache = NULL;
+        p_unreferenced_cache = nullptr;
     }
 }
 
@@ -137,11 +137,11 @@ SgAsmGenericFile::read_content(rose_addr_t offset, void *dst_buf, rose_addr_t si
         retval = size;
     } else if (offset > p_data.size()) {
         if (strict)
-            throw ShortRead(NULL, offset, size);
+            throw ShortRead(nullptr, offset, size);
         retval = 0;
     } else {
         if (strict)
-            throw ShortRead(NULL, p_data.size(), offset+size - (p_data.size()+offset));
+            throw ShortRead(nullptr, p_data.size(), offset+size - (p_data.size()+offset));
         retval = p_data.size() - offset;
     }
     if (retval>0)
@@ -155,7 +155,7 @@ SgAsmGenericFile::read_content(rose_addr_t offset, void *dst_buf, rose_addr_t si
 size_t
 SgAsmGenericFile::read_content(const MemoryMap::Ptr &map, rose_addr_t start_va, void *dst_buf, rose_addr_t size, bool strict)
 {
-    ROSE_ASSERT(map!=NULL);
+    ASSERT_not_null(map);
 
     /* Note: This is the same algorithm as used by MemoryMap::read() except we do it here so that we have an opportunity
      *       to track the file byte references. */
@@ -189,7 +189,7 @@ SgAsmGenericFile::read_content(const MemoryMap::Ptr &map, rose_addr_t start_va, 
 std::string
 SgAsmGenericFile::read_content_str(const MemoryMap::Ptr &map, rose_addr_t va, bool strict)
 {
-    static char *buf=NULL;
+    static char *buf=nullptr;
     static size_t nalloc=0;
     size_t nused=0;
 
@@ -199,7 +199,7 @@ SgAsmGenericFile::read_content_str(const MemoryMap::Ptr &map, rose_addr_t va, bo
         if (nused >= nalloc) {
             nalloc = std::max((size_t)32, 2*nalloc);
             buf = (char*)realloc(buf, nalloc);
-            ROSE_ASSERT(buf!=NULL);
+            ASSERT_not_null(buf);
         }
 
         unsigned char byte;
@@ -213,7 +213,7 @@ SgAsmGenericFile::read_content_str(const MemoryMap::Ptr &map, rose_addr_t va, bo
 std::string
 SgAsmGenericFile::read_content_str(rose_addr_t offset, bool strict)
 {
-    static char *buf=NULL;
+    static char *buf=nullptr;
     static size_t nalloc=0;
     size_t nused=0;
 
@@ -223,7 +223,7 @@ SgAsmGenericFile::read_content_str(rose_addr_t offset, bool strict)
         if (nused >= nalloc) {
             nalloc = std::max((size_t)32, 2*nalloc);
             buf = (char*)realloc(buf, nalloc);
-            ROSE_ASSERT(buf!=NULL);
+            ASSERT_not_null(buf);
         }
 
         unsigned char byte;
@@ -240,14 +240,14 @@ SgAsmGenericFile::content(rose_addr_t offset, rose_addr_t size)
     if (offset+size <= p_data.size()) {
         return SgFileContentList(p_data, offset, size);
     } else {
-        throw ShortRead(NULL, offset, size);
+        throw ShortRead(nullptr, offset, size);
     }
 }
 
 void
 SgAsmGenericFile::add_header(SgAsmGenericHeader *header)
 {
-    ROSE_ASSERT(p_headers!=NULL);
+    ASSERT_not_null(p_headers);
     p_headers->set_isModified(true);
 
 #ifndef NDEBUG
@@ -263,8 +263,8 @@ SgAsmGenericFile::add_header(SgAsmGenericHeader *header)
 void
 SgAsmGenericFile::remove_header(SgAsmGenericHeader *hdr)
 {
-    if (hdr!=NULL) {
-        ROSE_ASSERT(p_headers  != NULL);
+    if (hdr!=nullptr) {
+        ASSERT_not_null(p_headers);
         SgAsmGenericHeaderPtrList::iterator i = find(p_headers->get_headers().begin(), p_headers->get_headers().end(), hdr);
         if (i != p_headers->get_headers().end()) {
             p_headers->get_headers().erase(i);
@@ -276,7 +276,7 @@ SgAsmGenericFile::remove_header(SgAsmGenericHeader *hdr)
 void
 SgAsmGenericFile::add_hole(SgAsmGenericSection *hole)
 {
-    ROSE_ASSERT(p_holes!=NULL);
+    ASSERT_not_null(p_holes);
     p_holes->set_isModified(true);
 
 #ifndef NDEBUG
@@ -292,8 +292,8 @@ SgAsmGenericFile::add_hole(SgAsmGenericSection *hole)
 void
 SgAsmGenericFile::remove_hole(SgAsmGenericSection *hole)
 {
-    if (hole!=NULL) {
-        ROSE_ASSERT(p_holes!=NULL);
+    if (hole!=nullptr) {
+        ASSERT_not_null(p_holes);
         SgAsmGenericSectionPtrList::iterator i = find(p_holes->get_sections().begin(), p_holes->get_sections().end(), hole);
         if (i != p_holes->get_sections().end()) {
             p_holes->get_sections().erase(i);
@@ -313,9 +313,9 @@ SgAsmGenericFile::get_sections(bool include_holes) const
         retval.insert(retval.end(), p_holes->get_sections().begin(), p_holes->get_sections().end());
 
     /* Add sections pointed to by headers. */
-    for (SgAsmGenericHeaderPtrList::iterator i=p_headers->get_headers().begin(); i!=p_headers->get_headers().end(); ++i) {
-        if ((*i)->get_sections()!=NULL) {
-            const SgAsmGenericSectionPtrList &recurse = (*i)->get_sections()->get_sections();
+    for (auto header: p_headers->get_headers()) {
+        if (header->get_sections() != nullptr) {
+            const SgAsmGenericSectionPtrList &recurse = header->get_sections()->get_sections();
             retval.insert(retval.end(), recurse.begin(), recurse.end());
         }
     }
@@ -340,16 +340,16 @@ SgAsmGenericFile::get_sections_by_id(int id) const
     SgAsmGenericSectionPtrList retval;
 
     /* Holes */
-    for (SgAsmGenericSectionPtrList::iterator i=p_holes->get_sections().begin(); i!=p_holes->get_sections().end(); ++i) {
-        if ((*i)->get_id()==id)
-            retval.push_back(*i);
+    for (auto section: p_holes->get_sections()) {
+        if (section->get_id()==id)
+            retval.push_back(section);
     }
 
     /* Headers and their sections */
-    for (SgAsmGenericHeaderPtrList::iterator i=p_headers->get_headers().begin(); i!=p_headers->get_headers().end(); ++i) {
-        if ((*i)->get_id()==id)
-            retval.push_back(*i);
-        const SgAsmGenericSectionPtrList &recurse = (*i)->get_sections_by_id(id);
+    for (auto header: p_headers->get_headers()) {
+        if (header->get_id()==id)
+            retval.push_back(header);
+        const SgAsmGenericSectionPtrList &recurse = header->get_sections_by_id(id);
         retval.insert(retval.end(), recurse.begin(), recurse.end());
     }
     return retval;
@@ -360,7 +360,7 @@ SgAsmGenericFile::get_section_by_id(int id, size_t *nfound/*optional*/) const
 {
     SgAsmGenericSectionPtrList possible = get_sections_by_id(id);
     if (nfound) *nfound = possible.size();
-    return possible.size()==1 ? possible[0] : NULL;
+    return possible.size()==1 ? possible[0] : nullptr;
 }
 
 SgAsmGenericSectionPtrList
@@ -376,29 +376,29 @@ SgAsmGenericFile::get_sections_by_name(std::string name, char sep/*or NUL*/) con
     }
 
     /* Holes */
-    for (SgAsmGenericSectionPtrList::iterator i=p_holes->get_sections().begin(); i!=p_holes->get_sections().end(); ++i) {
-        std::string secname = (*i)->get_name()->get_string();
+    for (auto section: p_holes->get_sections()) {
+        std::string secname = section->get_name()->get_string();
         if (sep) {
             size_t pos = secname.find(sep);
             if (pos!=secname.npos)
                 secname.erase(pos);
         }
         if (0==secname.compare(name))
-            retval.push_back(*i);
+            retval.push_back(section);
     }
 
     /* Headers and their sections */
-    for (SgAsmGenericHeaderPtrList::iterator i=p_headers->get_headers().begin(); i!=p_headers->get_headers().end(); ++i) {
-        std::string secname = (*i)->get_name()->get_string();
+    for (auto header: p_headers->get_headers()) {
+        std::string secname = header->get_name()->get_string();
         if (sep) {
             size_t pos = secname.find(sep);
             if (pos!=secname.npos)
                 secname.erase(pos);
         }
         if (0==secname.compare(name))
-            retval.push_back(*i);
+            retval.push_back(header);
 
-        const SgAsmGenericSectionPtrList &recurse = (*i)->get_sections_by_name(name, sep);
+        const SgAsmGenericSectionPtrList &recurse = header->get_sections_by_name(name, sep);
         retval.insert(retval.end(), recurse.begin(), recurse.end());
     }
     return retval;
@@ -409,7 +409,7 @@ SgAsmGenericFile::get_section_by_name(const std::string &name, char sep/*or NUL*
 {
     SgAsmGenericSectionPtrList possible = get_sections_by_name(name, sep);
     if (nfound) *nfound = possible.size();
-    return possible.size()==1 ? possible[0] : NULL;
+    return possible.size()==1 ? possible[0] : nullptr;
 }
 
 SgAsmGenericSectionPtrList
@@ -418,20 +418,20 @@ SgAsmGenericFile::get_sections_by_offset(rose_addr_t offset, rose_addr_t size) c
     SgAsmGenericSectionPtrList retval;
 
     /* Holes */
-    for (SgAsmGenericSectionPtrList::iterator i=p_holes->get_sections().begin(); i!=p_holes->get_sections().end(); ++i) {
-        if (offset >= (*i)->get_offset() &&
-            offset < (*i)->get_offset()+(*i)->get_size() &&
-            offset-(*i)->get_offset() + size <= (*i)->get_size())
-            retval.push_back(*i);
+    for (auto section: p_holes->get_sections()) {
+        if (offset >= section->get_offset() &&
+            offset < section->get_offset()+section->get_size() &&
+            offset-section->get_offset() + size <= section->get_size())
+            retval.push_back(section);
     }
 
     /* Headers and their sections */
-    for (SgAsmGenericHeaderPtrList::iterator i=p_headers->get_headers().begin(); i!=p_headers->get_headers().end(); ++i) {
-        if (offset >= (*i)->get_offset() &&
-            offset < (*i)->get_offset()+(*i)->get_size() &&
-            offset-(*i)->get_offset() + size <= (*i)->get_size())
-            retval.push_back(*i);
-        const SgAsmGenericSectionPtrList &recurse = (*i)->get_sections_by_offset(offset, size);
+    for (auto header: p_headers->get_headers()) {
+        if (offset >= header->get_offset() &&
+            offset < header->get_offset()+header->get_size() &&
+            offset-header->get_offset() + size <= header->get_size())
+            retval.push_back(header);
+        const SgAsmGenericSectionPtrList &recurse = header->get_sections_by_offset(offset, size);
         retval.insert(retval.end(), recurse.begin(), recurse.end());
     }
     return retval;
@@ -442,7 +442,7 @@ SgAsmGenericFile::get_section_by_offset(rose_addr_t offset, rose_addr_t size, si
 {
     SgAsmGenericSectionPtrList possible = get_sections_by_offset(offset, size);
     if (nfound) *nfound = possible.size();
-    return possible.size()==1 ? possible[0] : NULL;
+    return possible.size()==1 ? possible[0] : nullptr;
 }
 
 SgAsmGenericSectionPtrList
@@ -451,18 +451,18 @@ SgAsmGenericFile::get_sections_by_rva(rose_addr_t rva) const
     SgAsmGenericSectionPtrList retval;
 
     /* Holes (probably not mapped anyway) */
-    for (SgAsmGenericSectionPtrList::iterator i=p_holes->get_sections().begin(); i!=p_holes->get_sections().end(); ++i) {
-        if ((*i)->is_mapped() &&
-            rva >= (*i)->get_mapped_preferred_rva() && rva < (*i)->get_mapped_preferred_rva() + (*i)->get_mapped_size())
-            retval.push_back(*i);
+    for (auto section: p_holes->get_sections()) {
+        if (section->is_mapped() &&
+            rva >= section->get_mapped_preferred_rva() && rva < section->get_mapped_preferred_rva() + section->get_mapped_size())
+            retval.push_back(section);
     }
 
     /* Headers and their sections */
-    for (SgAsmGenericHeaderPtrList::iterator i=p_headers->get_headers().begin(); i!=p_headers->get_headers().end(); ++i) {
-        if ((*i)->is_mapped() &&
-            rva >= (*i)->get_mapped_preferred_rva() && rva < (*i)->get_mapped_preferred_rva() + (*i)->get_mapped_size())
-            retval.push_back(*i);
-        const SgAsmGenericSectionPtrList &recurse = (*i)->get_sections_by_rva(rva);
+    for (auto header: p_headers->get_headers()) {
+        if (header->is_mapped() &&
+            rva >= header->get_mapped_preferred_rva() && rva < header->get_mapped_preferred_rva() + header->get_mapped_size())
+            retval.push_back(header);
+        const SgAsmGenericSectionPtrList &recurse = header->get_sections_by_rva(rva);
         retval.insert(retval.end(), recurse.begin(), recurse.end());
     }
     return retval;
@@ -473,7 +473,7 @@ SgAsmGenericFile::get_section_by_rva(rose_addr_t rva, size_t *nfound/*optional*/
 {
     SgAsmGenericSectionPtrList possible = get_sections_by_rva(rva);
     if (nfound) *nfound = possible.size();
-    return possible.size()==1 ? possible[0] : NULL;
+    return possible.size()==1 ? possible[0] : nullptr;
 }
 
 SgAsmGenericSectionPtrList
@@ -482,23 +482,23 @@ SgAsmGenericFile::get_sections_by_va(rose_addr_t va) const
     SgAsmGenericSectionPtrList retval;
 
     /* Holes (probably not mapped anyway) */
-    for (SgAsmGenericSectionPtrList::iterator i=p_holes->get_sections().begin(); i!=p_holes->get_sections().end(); ++i) {
+    for (auto section: p_holes->get_sections()) {
         rose_addr_t rva = va; /* Holes don't belong to any header and therefore have a zero base_va */
-        if ((*i)->is_mapped() &&
-            rva >= (*i)->get_mapped_preferred_rva() && rva < (*i)->get_mapped_preferred_rva() + (*i)->get_mapped_size())
-            retval.push_back(*i);
+        if (section->is_mapped() &&
+            rva >= section->get_mapped_preferred_rva() && rva < section->get_mapped_preferred_rva() + section->get_mapped_size())
+            retval.push_back(section);
     }
 
     /* Headers and their sections */
-    for (SgAsmGenericHeaderPtrList::iterator i=p_headers->get_headers().begin(); i!=p_headers->get_headers().end(); ++i) {
+    for (auto header: p_headers->get_headers()) {
         /* Headers probably aren't mapped, but just in case... */
         rose_addr_t rva = va; /* Headers don't belong to any header and therefore have a zero base_va */
-        if ((*i)->is_mapped() &&
-            rva >= (*i)->get_mapped_preferred_rva() && rva < (*i)->get_mapped_preferred_rva() + (*i)->get_mapped_size())
-            retval.push_back(*i);
+        if (header->is_mapped() &&
+            rva >= header->get_mapped_preferred_rva() && rva < header->get_mapped_preferred_rva() + header->get_mapped_size())
+            retval.push_back(header);
 
         /* Header sections */
-        const SgAsmGenericSectionPtrList &recurse = (*i)->get_sections_by_va(va, true);
+        const SgAsmGenericSectionPtrList &recurse = header->get_sections_by_va(va, true);
         retval.insert(retval.end(), recurse.begin(), recurse.end());
     }
     return retval;
@@ -509,7 +509,7 @@ SgAsmGenericFile::get_section_by_va(rose_addr_t va, size_t *nfound/*optional*/) 
 {
     SgAsmGenericSectionPtrList possible = get_sections_by_va(va);
     if (nfound) *nfound = possible.size();
-    return possible.size()==1 ? possible[0] : NULL;
+    return possible.size()==1 ? possible[0] : nullptr;
 }
 
 SgAsmGenericSection *
@@ -524,7 +524,7 @@ SgAsmGenericFile::get_best_section_by_va(rose_addr_t va, size_t *nfound/*optiona
 SgAsmGenericSection *
 SgAsmGenericFile::best_section_by_va(const SgAsmGenericSectionPtrList &sections, rose_addr_t va)
 {
-    SgAsmGenericSection *best = NULL;
+    SgAsmGenericSection *best = nullptr;
     rose_addr_t file_offset = 0;
     for (SgAsmGenericSectionPtrList::const_iterator si=sections.begin(); si!=sections.end(); ++si) {
         SgAsmGenericSection *section = *si;
@@ -535,7 +535,7 @@ SgAsmGenericFile::best_section_by_va(const SgAsmGenericSectionPtrList &sections,
             best = section;
             file_offset = section->get_offset() + (va - section->get_mapped_actual_va());
         } else if (file_offset != section->get_offset() + (va - section->get_mapped_actual_va())) {
-            return NULL; // error
+            return nullptr; // error
         } else if (best->get_mapped_size() > section->get_mapped_size()) {
             best = section;
         } else if (best->get_name()->get_string().empty() && !section->get_name()->get_string().empty()) {
@@ -552,9 +552,9 @@ SgAsmGenericFile::get_next_section_offset(rose_addr_t offset)
 {
     rose_addr_t found = ~(rose_addr_t)0;
     const SgAsmGenericSectionPtrList &sections = get_sections();
-    for (SgAsmGenericSectionPtrList::const_iterator i=sections.begin(); i!=sections.end(); ++i) {
-        if ((*i)->get_offset() >= offset && (*i)->get_offset() < found)
-            found = (*i)->get_offset();
+    for (auto section: sections) {
+        if (section->get_offset() >= offset && section->get_offset() < found)
+            found = section->get_offset();
     }
     return found;
 }
@@ -562,9 +562,9 @@ SgAsmGenericFile::get_next_section_offset(rose_addr_t offset)
 void
 SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr_t sn, AddressSpace space, Elasticity elasticity)
 {
-    ROSE_ASSERT(s!=NULL);
-    ROSE_ASSERT(s->get_file()==this);
-    ROSE_ASSERT((space & (ADDRSP_FILE|ADDRSP_MEMORY)) != 0);
+    ASSERT_not_null(s);
+    ASSERT_require(s->get_file()==this);
+    ASSERT_require((space & (ADDRSP_FILE|ADDRSP_MEMORY)) != 0);
 
     const bool debug = false;
     static size_t ncalls=0;
@@ -786,7 +786,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
         /* Are there any sections to the right of neighborhood(S)? If so, find the one with the lowest start address and use
          * that to define the size of the hole right of neighborhood(S). */
         if (0==villagers.size()) break;
-        SgAsmGenericSection *after_hole = NULL;
+        SgAsmGenericSection *after_hole = nullptr;
         Extent hp(0, 0);
         for (size_t i=0; i<villagers.size(); i++) {
             SgAsmGenericSection *a = villagers[i];
@@ -926,7 +926,7 @@ void
 SgAsmGenericFile::dump_all(const std::string &dump_name)
 {
     FILE *dumpFile = fopen(dump_name.c_str(), "wb");
-    ROSE_ASSERT(dumpFile != NULL);
+    ASSERT_not_null(dumpFile);
     try {
         // The file type should be the first; test harness depends on it
         fprintf(dumpFile, "%s\n", format_name());
@@ -938,13 +938,13 @@ SgAsmGenericFile::dump_all(const std::string &dump_name)
         const SgAsmGenericSectionPtrList &sections = get_sections();
         for (size_t i = 0; i < sections.size(); i++) {
             fprintf(dumpFile, "Section [%zd]:\n", i);
-            ROSE_ASSERT(sections[i] != NULL);
+            ASSERT_not_null(sections[i]);
             sections[i]->dump(dumpFile, "  ", -1);
         }
 
         /* Dump interpretations that point only to this file. */
         SgBinaryComposite *binary = SageInterface::getEnclosingNode<SgBinaryComposite>(this);
-        ROSE_ASSERT(binary!=NULL);
+        ASSERT_not_null(binary);
         const SgAsmInterpretationPtrList &interps = binary->get_interpretations()->get_interpretations();
         for (size_t i=0; i<interps.size(); i++) {
             SgAsmGenericFilePtrList interp_files = interps[i]->get_files();
@@ -1091,8 +1091,8 @@ SgAsmGenericFile::fill_holes()
     /* Get the list of file extents referenced by all file sections */
     ExtentMap refs;
     SgAsmGenericSectionPtrList sections = get_sections();
-    for (SgAsmGenericSectionPtrList::iterator i=sections.begin(); i!=sections.end(); ++i) {
-        refs.insert(Extent((*i)->get_offset(), (*i)->get_size()));
+    for (auto section: sections) {
+        refs.insert(Extent(section->get_offset(), section->get_size()));
     }
 
     /* The hole extents are everything other than the sections */
@@ -1101,7 +1101,7 @@ SgAsmGenericFile::fill_holes()
     /* Create the sections representing the holes */
     for (ExtentMap::iterator i=holes.begin(); i!=holes.end(); ++i) {
         Extent e = i->first;
-        SgAsmGenericSection *hole = new SgAsmGenericSection(this, NULL);
+        SgAsmGenericSection *hole = new SgAsmGenericSection(this, nullptr);
         hole->set_offset(e.first());
         hole->set_size(e.size());
         hole->parse();
@@ -1135,14 +1135,14 @@ SgAsmGenericFile::reallocate()
         reallocated = false;
 
         /* holes */
-        for (SgAsmGenericSectionPtrList::iterator i=p_holes->get_sections().begin(); i!=p_holes->get_sections().end(); ++i) {
-            if ((*i)->reallocate())
+        for (auto section: p_holes->get_sections()) {
+            if (section->reallocate())
                 reallocated = true;
         }
 
         /* file headers (and indirectly, all that they reference) */
-        for (SgAsmGenericHeaderPtrList::iterator i=p_headers->get_headers().begin(); i!=p_headers->get_headers().end(); ++i) {
-            if ((*i)->reallocate())
+        for (auto header: p_headers->get_headers()) {
+            if (header->reallocate())
                 reallocated = true;
         }
     } while (reallocated);
@@ -1174,12 +1174,12 @@ SgAsmGenericFile::unparse(std::ostream &f) const
 #endif
 
     /* Write unreferenced sections (i.e., "holes") back to disk */
-    for (SgAsmGenericSectionPtrList::iterator i=p_holes->get_sections().begin(); i!=p_holes->get_sections().end(); ++i)
-        (*i)->unparse(f);
+    for (auto section: p_holes->get_sections())
+        section->unparse(f);
 
     /* Write file headers (and indirectly, all that they reference) */
-    for (SgAsmGenericHeaderPtrList::iterator i=p_headers->get_headers().begin(); i!=p_headers->get_headers().end(); ++i)
-        (*i)->unparse(f);
+    for (auto header: p_headers->get_headers())
+        header->unparse(f);
 
     /* Extend the file to the full size. The unparser will not write zero bytes at the end of a file because some files
      * actually use the fact that sections that extend past the EOF will be zero padded.  For the time being we'll extend the
@@ -1209,10 +1209,10 @@ SgAsmGenericFile::format_name() const
 SgAsmGenericHeader *
 SgAsmGenericFile::get_header(SgAsmGenericFormat::ExecFamily efam)
 {
-    SgAsmGenericHeader *retval = NULL;
+    SgAsmGenericHeader *retval = nullptr;
     for (size_t i = 0; i < p_headers->get_headers().size(); i++) {
         if (p_headers->get_headers()[i]->get_exec_format()->get_family() == efam) {
-            ROSE_ASSERT(NULL == retval);
+            ASSERT_require(nullptr == retval);
             retval = p_headers->get_headers()[i];
         }
     }

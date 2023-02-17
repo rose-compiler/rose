@@ -69,8 +69,8 @@ bool
 SgAsmGenericHeader::reallocate()
 {
     bool reallocated = false;
-    for (SgAsmGenericSectionPtrList::iterator i=p_sections->get_sections().begin(); i!=p_sections->get_sections().end(); ++i) {
-        if ((*i)->reallocate())
+    for (auto section: p_sections->get_sections()) {
+        if (section->reallocate())
             reallocated = true;
     }
     return reallocated;
@@ -82,8 +82,8 @@ SgAsmGenericHeader::unparse(std::ostream &f) const
     SgAsmGenericSection::unparse(f);
 
     /* Unparse each section */
-    for (SgAsmGenericSectionPtrList::iterator i=p_sections->get_sections().begin(); i!=p_sections->get_sections().end(); ++i)
-        (*i)->unparse(f);
+    for (auto section: p_sections->get_sections())
+        section->unparse(f);
 }
 
 rose_addr_t
@@ -148,9 +148,9 @@ SgAsmGenericSectionPtrList
 SgAsmGenericHeader::get_mapped_sections() const
 {
     SgAsmGenericSectionPtrList retval;
-    for (SgAsmGenericSectionPtrList::iterator i=p_sections->get_sections().begin(); i!=p_sections->get_sections().end(); ++i) {
-        if ((*i)->is_mapped()) {
-            retval.push_back(*i);
+    for (auto section: p_sections->get_sections()) {
+        if (section->is_mapped()) {
+            retval.push_back(section);
         }
     }
     return retval;
@@ -160,9 +160,9 @@ SgAsmGenericSectionPtrList
 SgAsmGenericHeader::get_sections_by_id(int id) const
 {
     SgAsmGenericSectionPtrList retval;
-    for (SgAsmGenericSectionPtrList::iterator i=p_sections->get_sections().begin(); i!=p_sections->get_sections().end(); ++i) {
-        if ((*i)->get_id() == id) {
-            retval.push_back(*i);
+    for (auto section: p_sections->get_sections()) {
+        if (section->get_id() == id) {
+            retval.push_back(section);
         }
     }
     return retval;
@@ -186,15 +186,15 @@ SgAsmGenericHeader::get_sections_by_name(std::string name, char sep/*or NUL*/) c
     }
 
     SgAsmGenericSectionPtrList retval;
-    for (SgAsmGenericSectionPtrList::iterator i=p_sections->get_sections().begin(); i!=p_sections->get_sections().end(); ++i) {
-        std::string secname = (*i)->get_name()->get_string();
+    for (auto section: p_sections->get_sections()) {
+        std::string secname = section->get_name()->get_string();
         if (sep) {
             size_t pos = secname.find(sep);
             if (pos!=secname.npos)
                 secname.erase(pos);
         }
         if (0==secname.compare(name))
-            retval.push_back(*i);
+            retval.push_back(section);
     }
     return retval;
 }
@@ -211,8 +211,7 @@ SgAsmGenericSectionPtrList
 SgAsmGenericHeader::get_sections_by_offset(rose_addr_t offset, rose_addr_t size) const
 {
     SgAsmGenericSectionPtrList retval;
-    for (SgAsmGenericSectionPtrList::iterator i=p_sections->get_sections().begin(); i!=p_sections->get_sections().end(); ++i) {
-        SgAsmGenericSection *section = *i;
+    for (auto section: p_sections->get_sections()) {
         if (offset >= section->get_offset() &&
             offset < section->get_offset()+section->get_size() &&
             offset-section->get_offset() + size <= section->get_size())
@@ -233,8 +232,7 @@ SgAsmGenericSectionPtrList
 SgAsmGenericHeader::get_sections_by_rva(rose_addr_t rva) const
 {
     SgAsmGenericSectionPtrList retval;
-    for (SgAsmGenericSectionPtrList::iterator i = p_sections->get_sections().begin(); i!=p_sections->get_sections().end(); ++i) {
-        SgAsmGenericSection *section = *i;
+    for (auto section: p_sections->get_sections()) {
         if (section->is_mapped() &&
             rva >= section->get_mapped_preferred_rva() && rva < section->get_mapped_preferred_rva() + section->get_mapped_size()) {
             retval.push_back(section);
