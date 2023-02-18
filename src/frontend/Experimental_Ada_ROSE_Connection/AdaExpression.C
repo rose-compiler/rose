@@ -525,11 +525,14 @@ namespace
   }
 
   SgFunctionDeclaration*
-  disambiguateOperators(std::vector<SgFunctionDeclaration*>& cands, OperatorCallSupplement suppl)
+  disambiguateOperators( const AdaIdentifier& dbgname,
+                         std::vector<SgFunctionDeclaration*>& cands,
+                         OperatorCallSupplement suppl
+                       )
   {
     if ((suppl.args() == nullptr) || (suppl.args()->size() == 0))
     {
-      logWarn() << "unable to disambiguate operator w/o arguments. "
+      logWarn() << "unable to disambiguate operator " << dbgname << " w/o arguments "
                 << (suppl.args() ? int(suppl.args()->size()) : -1)
                 << std::endl;
       return nullptr;
@@ -572,7 +575,8 @@ namespace
 
     if (res.size() != 1)
     {
-      logWarn() << "unable to disambiguate operator. " << res.size() << " viable candidates found."
+      logWarn() << "unable to disambiguate operator " << dbgname << ": " << res.size()
+                << " viable candidates found."
                 << std::endl;
     }
 
@@ -922,7 +926,7 @@ namespace
 
     if (!overloadSet.empty())
     {
-      if (SgFunctionDeclaration* fundcl = disambiguateOperators(overloadSet, suppl))
+      if (SgFunctionDeclaration* fundcl = disambiguateOperators(fnname, overloadSet, suppl))
       {
         //~ logWarn() << "ok2" << std::endl;
         return SG_DEREF(sb::buildFunctionRefExp(fundcl));

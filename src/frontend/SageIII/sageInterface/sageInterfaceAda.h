@@ -575,10 +575,24 @@ namespace
 
   /// returns a list of arguments with named arguments placed at the correct position
   /// \note defaulted arguments are not represented and the list may contain holes (nullptr)
+  /// \throws std::logic_error when there is no function associated with the call,
+  ///         or when named arguments cannot be identified.
+  ///         For an example for the latter, see test case ancestors.adb
   /// \{
   SgExpressionPtrList
   normalizedCallArguments(const SgFunctionCallExp& n);
   /// \}
+
+  /// returns the parameter position of arg in the callee, after the parameters have been
+  /// normalized.
+  /// \throws a std::logic_error when a position cannot be found.
+  /// \details
+  ///    assume declaration: procedure X(left, right : integer := 1);
+  ///              and call: X(right => 3)
+  ///    then normalizedArgumentPosition(call, "3") -> 1
+  std::size_t
+  normalizedArgumentPosition(const SgFunctionCallExp& call, const SgExpression& arg);
+
 
 
   /// finds the symbol with @ref name in the context of @ref scope or its logical parents in the range

@@ -1897,7 +1897,7 @@ namespace Ada
     return SG_DEREF(n.get_args()).get_expressions();
   }
 
-  int
+  std::size_t
   namedArgumentPosition(const SgInitializedNamePtrList& paramList, const std::string& name)
   {
     SgInitializedNamePtrList::const_iterator aaa = paramList.begin();
@@ -1915,9 +1915,7 @@ namespace Ada
       // \todo this currently occurs for derived types, where the publicly
       //       declared ancestor type differs from the actual parent.
       //       see test case: ancestors.adb
-      using namespace Rose::Diagnostics;
-      mlog[FATAL] << "cannot find argument position for " << name << std::endl;
-      ROSE_ABORT();
+      throw std::logic_error(std::string{"unable to find argument position for "} + name);
     }
 
     return std::distance(aaa, pos);
@@ -1994,6 +1992,9 @@ namespace Ada
     res.reserve(orig.size());
     std::copy(aaa, pos, std::back_inserter(res));
 
+    SgFunctionDeclaration*        pfn = n.getAssociatedFunctionDeclaration();
+    if (pfn == nullptr) throw std::logic_error("unable to retrieve associated function");
+
     SgFunctionDeclaration&        fndecl   = SG_DEREF(n.getAssociatedFunctionDeclaration());
     SgFunctionParameterList&      fnparms  = SG_DEREF(fndecl.get_parameterList());
     SgInitializedNamePtrList&     parmList = fnparms.get_args();
@@ -2015,6 +2016,20 @@ namespace Ada
     return res;
   }
 
+  std::size_t
+  normalizedArgumentPosition(const SgFunctionCallExp& call, const SgExpression& arg)
+  {
+    ROSE_ASSERT(isSgActualArgumentExpression(&arg) == nullptr);
+
+    SgExpressionPtrList                 normargs = si::Ada::normalizedCallArguments(call);
+    SgExpressionPtrList::iterator const beg = normargs.begin();
+    SgExpressionPtrList::iterator const lim = normargs.end();
+    SgExpressionPtrList::iterator const pos = std::find(beg, lim, &arg);
+
+    if (pos == lim) throw std::logic_error{"si::Ada::normalizedArgumentPosition: unable to find argument position"};
+
+    return std::distance(beg, pos);
+  }
 
 
   void conversionTraversal(std::function<void(SgNode*)>&& fn, SgNode* root)

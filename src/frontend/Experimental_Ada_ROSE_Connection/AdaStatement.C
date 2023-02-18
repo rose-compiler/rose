@@ -2614,23 +2614,18 @@ namespace
   struct InheritedEnumeratorCreator
   {
       InheritedEnumeratorCreator(SgEnumDeclaration& enumDcl, SgEnumDeclaration& orig, AstContext astctx)
-      : derivedDcl(enumDcl), // origAA(orig.get_enumerators().begin()), origZZ(orig.get_enumerators().end()),
-        ctx(astctx)
-      {
-        //~ logError() << "|| " << std::distance(origAA, origZZ) << std::endl;
-      }
+      : derivedDcl(enumDcl), ctx(astctx)
+      {}
 
       // assuming that the inherited enumerators appear in the same order
       void operator()(Element_ID id)
       {
-        //~ ROSE_ASSERT(origAA != origZZ);
-
         // PP (01/25/22) new code: the old code tried to link the enumerators to their original definition
         // by setting the initializer to the old value. However, derived enumerators can have
         // different representation values, and to support JACCEL-265 and the translation to C++
         // in general, the link to the original declaration is no longer maintained.
         // Instead, the initializer now links to the representation value. The relationshio to the
-        // inherited values is no implied.
+        // inherited values is now implied.
         // \todo The code is most similar to the normal EnumeratorCreator in AdaType.C and
         //       could be refactored to eliminate code duplication.
         SgType&             enumTy = SG_DEREF(derivedDcl.get_type());
@@ -2657,14 +2652,10 @@ namespace
         ADA_ASSERT (sgnode.get_parent() == &derivedDcl);
 
         recordNode(asisVars(), name.id(), sgnode);
-
-        //~ ++origAA;
       }
 
     private:
       SgEnumDeclaration&                             derivedDcl;
-//      SgInitializedNamePtrList::const_iterator       origAA;
-//      const SgInitializedNamePtrList::const_iterator origZZ;
       AstContext                                     ctx;
   };
 
