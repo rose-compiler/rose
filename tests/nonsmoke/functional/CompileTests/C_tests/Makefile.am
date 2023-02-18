@@ -147,7 +147,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_107.c \
      test2012_108.c \
      test2012_115.c \
-     test2012_116.c \
      test2012_117.c \
      test2012_118.c \
      test2012_119.c \
@@ -199,7 +198,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2013_03.c \
      test2013_05.c \
      test2013_06.c \
-     test2013_08.c \
      test2013_09.c \
      test2013_10.c \
      test2013_11.c \
@@ -234,8 +232,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2013_43.c \
      test2013_44.c \
      test2013_45.c \
-     test2013_46.c \
-     test2013_47.c \
      test2013_48.c \
      test2013_49.c \
      test2013_50.c \
@@ -399,14 +395,11 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2015_13.c \
      test2015_19.c \
      test2015_22.c \
-     test2015_23.c \
      test2015_24.c \
      test2015_25.c \
      test2015_26.c \
      test2015_27.c \
      test2015_28.c \
-     test2015_29.c \
-     test2015_30.c \
      test2015_31.c \
      test2015_32.c \
      test2015_33.c \
@@ -641,16 +634,26 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_58.c \
      test2012_82.c \
      test2012_100.c \
+     test2012_116.c \
      test2012_133.c \
      test2012_141.c \
      test2013_07.c \
+     test2013_08.c \
      test2013_17.c \
+     test2013_46.c \
+     test2013_47.c \
      test2013_76.c \
      test2014_29.c \
      test2014_41.c \
      test2014_66.c \
      test2014_91.c \
      test2015_09.c \
+     test2015_23.c \
+     test2015_29.c \
+     test2015_30.c \
+     test2015_43.c \
+     test2015_44.c \
+     test2015_45.c \
      test2015_116.c \
      test2015_137.c \
      test2015_138.c \
@@ -679,16 +682,26 @@ TESTCODE_CURRENTLY_FAILING = \
      test2012_58.c \
      test2012_82.c \
      test2012_100.c \
+     test2012_116.c \
      test2012_133.c \
      test2012_141.c \
      test2013_07.c \
+     test2013_08.c \
      test2013_17.c \
+     test2013_46.c \
+     test2013_47.c \
      test2013_76.c \
      test2014_29.c \
      test2014_41.c \
      test2014_66.c \
      test2014_91.c \
      test2015_09.c \
+     test2015_23.c \
+     test2015_29.c \
+     test2015_30.c \
+     test2015_43.c \
+     test2015_44.c \
+     test2015_45.c \
      test2015_116.c \
      test2015_137.c \
      test2015_138.c \
@@ -741,9 +754,6 @@ TESTCODES_REQUIRED_TO_PASS += \
      test2015_40.c \
      test2015_41.c \
      test2015_42.c \
-     test2015_43.c \
-     test2015_44.c \
-     test2015_45.c \
      test2015_47.c \
      test2015_50.c \
      test2015_51.c \
