@@ -64,7 +64,7 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
    fi
 
  # DQ (9/19/2010): Copy the upc.h header file from the config directory to our include-staging/${BACKEND_CXX_COMPILER}_HEADERS directory.
- # It might be that these should be put into a UPC specific subdirectory (so that the C compiler can't accedentally find them), but this should be discussed.
+ # It might be that these should be put into a UPC specific subdirectory (so that the C compiler can't accidentally find them), but this should be discussed.
    AC_MSG_NOTICE([copying UPC++ header files into ./include-staging/${compilerName}_HEADERS directory])
    cp ${srcdir}/config/upc.h ./include-staging/${compilerName}_HEADERS
    cp ${srcdir}/config/upc_io.h ./include-staging/${compilerName}_HEADERS
@@ -253,7 +253,7 @@ AC_DEFUN([GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS],
  # exit 1
 
  # DQ (9/15/2010): Copy the upc.h header file from the config directory to our include-staging/${compilerName}_HEADERS directory.
- # It might be that these should be put into a UPC specific subdirectory (so that the C compiler can't accedentally find them), but this should be discussed.
+ # It might be that these should be put into a UPC specific subdirectory (so that the C compiler can't accidentally find them), but this should be discussed.
    AC_MSG_NOTICE([copying UPC header files into ./include-staging/${compilerName}_HEADERS directory])
    cp ${srcdir}/config/upc.h ./include-staging/${compilerName}_HEADERS
    cp ${srcdir}/config/upc_io.h ./include-staging/${compilerName}_HEADERS
