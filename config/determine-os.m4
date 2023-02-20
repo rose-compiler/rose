@@ -104,8 +104,11 @@ AC_DEFUN([DETERMINE_OS_VENDOR],
                     darwin21*)
                         OS_release=12.3
                         ;;
+                    darwin22*)
+                        OS_release=13.2
+                        ;;
                     *)
-                        AC_MSG_ERROR([Apple macOS X minor version not recognized as either darwin13 through darwin21 (macOS 10.9-12.3) ... (build_os = $build_os)])
+                        AC_MSG_ERROR([Apple macOS version not recognized as either darwin13 through darwin22 (macOS 10.9-13.2) ... (build_os = $build_os)])
                         ;;
                 esac
                 ;;
