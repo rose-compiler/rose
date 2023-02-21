@@ -486,6 +486,10 @@ bool ClangToSageTranslator::VisitAccessSpecDecl(clang::AccessSpecDecl * access_s
 #endif
     bool res = true;
 
+    clang::AccessSpecifier accessSpec = access_spec_decl->getAccess();
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitAccessSpecDecl " << accessSpec << std::endl;
+#endif
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
     return VisitDecl(access_spec_decl, node) && res;
@@ -962,9 +966,32 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
 bool ClangToSageTranslator::VisitCXXRecordDecl(clang::CXXRecordDecl * cxx_record_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
     std::cerr << "ClangToSageTranslator::VisitCXXRecordDecl" << std::endl;
+    std:: cerr << "isAggregate() " << cxx_record_decl->isAggregate() << "\n";
+    std:: cerr << "hasInClassInitializer() " << cxx_record_decl->hasInClassInitializer() << "\n";
+    std:: cerr << "hasUninitializedReferenceMember() " << cxx_record_decl->hasUninitializedReferenceMember() << "\n";
+    std:: cerr << "isPOD() " << cxx_record_decl->isPOD() << "\n";
+    std:: cerr << "isCLike() " << cxx_record_decl->isCLike() << "\n";
+    std:: cerr << "isEmpty() " << cxx_record_decl->isEmpty() << "\n";
+    std:: cerr << "hasInitMethod() " << cxx_record_decl->hasInitMethod() << "\n";
+    std:: cerr << "hasProtectedFields() " << cxx_record_decl->hasProtectedFields() << "\n";
+    std:: cerr << "hasPrivateFields() " << cxx_record_decl->hasPrivateFields() << "\n";
+    std:: cerr << "hasDirectFields() " << cxx_record_decl->hasDirectFields() << "\n";
+    std:: cerr << "isPolymorphic() " << cxx_record_decl->isPolymorphic() << "\n";
+    std:: cerr << "isAbstract () " << cxx_record_decl->isAbstract () << "\n";
+    std:: cerr << "isStandardLayout() " << cxx_record_decl->isStandardLayout() << "\n";
+    std:: cerr << "isCXX11StandardLayout () " << cxx_record_decl->isCXX11StandardLayout () << "\n";
+    std:: cerr << "hasMutableFields() " << cxx_record_decl->hasMutableFields() << "\n";
+    std:: cerr << "hasVariantMembers() " << cxx_record_decl->hasVariantMembers() << "\n";
+    std:: cerr << "hasTrivialDefaultConstructor() " << cxx_record_decl->hasTrivialDefaultConstructor() << "\n";
+    std:: cerr << "hasNonTrivialDefaultConstructor() " << cxx_record_decl->hasNonTrivialDefaultConstructor() << "\n";
+    std:: cerr << "isAnonymousStructOrUnion() " << cxx_record_decl->isAnonymousStructOrUnion() << "\n";
+    // to be filled up for full list
 #endif
     bool res = VisitRecordDecl(cxx_record_decl, node);
+    SgClassDeclaration* CxxRecordDeclaration = isSgClassDeclaration(*node);
+    ROSE_ASSERT(CxxRecordDeclaration); 
 
+    SageBuilder::pushScopeStack(CxxRecordDeclaration->get_definition());
     clang::CXXRecordDecl::base_class_iterator it_base;
     for (it_base = cxx_record_decl->bases_begin(); it_base !=  cxx_record_decl->bases_end(); it_base++) {
         // TODO add base classes
@@ -973,11 +1000,26 @@ bool ClangToSageTranslator::VisitCXXRecordDecl(clang::CXXRecordDecl * cxx_record
     clang::CXXRecordDecl::method_iterator it_method;
     for (it_method = cxx_record_decl->method_begin(); it_method !=  cxx_record_decl->method_end(); it_method++) {
         // TODO
+#if DEBUG_VISIT_DECL
+        std::cerr << "ClangToSageTranslator::VisitCXXRecordDecl visit method " << (*it_method)->getNameAsString() << std::endl;
+#endif
+        SgNode* methodNode = Traverse(*it_method);
+        SgDeclarationStatement* methodDeclStmt = isSgDeclarationStatement(methodNode);
+        ROSE_ASSERT(methodDeclStmt);
+        methodDeclStmt->set_scope(CxxRecordDeclaration->get_definition());
+        CxxRecordDeclaration->get_definition()->append_member(methodDeclStmt);
+        if((*it_method)->isImplicit())
+        {
+           methodDeclStmt->setCompilerGenerated();
+        }
     }
 
     clang::CXXRecordDecl::ctor_iterator it_ctor;
     for (it_ctor = cxx_record_decl->ctor_begin(); it_ctor != cxx_record_decl->ctor_end(); it_ctor++) {
         // TODO if not tranversed as methods
+#if DEBUG_VISIT_DECL
+        std::cerr << "ClangToSageTranslator::VisitCXXRecordDecl visit ctor "  << std::endl;
+#endif
     }
 
     clang::CXXRecordDecl::friend_iterator it_friend;
@@ -988,6 +1030,7 @@ bool ClangToSageTranslator::VisitCXXRecordDecl(clang::CXXRecordDecl * cxx_record
     clang::CXXDestructorDecl * destructor = cxx_record_decl->getDestructor();
     // TODO
 
+    SageBuilder::popScopeStack();
     return res;
 }
 
@@ -1562,6 +1605,7 @@ bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode
 bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
     std::cerr << "ClangToSageTranslator::VisitFunctionDecl" << std::endl;
+    std:: cerr << "ClangToSageTranslator::VisitFunctionDecl isThisDeclarationADefinition " << function_decl->isThisDeclarationADefinition() << "\n";
 #endif
     bool res = true;
 
@@ -1596,6 +1640,9 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
     declScope->set_parent(SageBuilder::topScopeStack());
     SageBuilder::pushScopeStack(declScope);
     
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitFunctionDecl NumParams:" << function_decl->getNumParams() << std::endl;
+#endif
 
     for (unsigned i = 0; i < function_decl->getNumParams(); i++) {
         if(funcProtoType != nullptr && function_decl->getParamDecl(i)->getType() != funcProtoType->getParamType(i))
@@ -1656,8 +1703,21 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
 
     SgFunctionDeclaration * sg_function_decl;
 
-    if (function_decl->isThisDeclarationADefinition()) {
-        sg_function_decl = SageBuilder::buildDefiningFunctionDeclaration(name, ret_type, param_list, NULL);
+    if (function_decl->isThisDeclarationADefinition() && function_decl->hasBody()) {
+        if(llvm::isa<clang::CXXMethodDecl>(function_decl))
+        {
+          SgClassDeclaration* cxxRecordDecl = NULL;
+          SgScopeStatement* methodScope = NULL;
+          if(p_decl_translation_map.find(((clang::CXXMethodDecl *)function_decl)->getParent()) != p_decl_translation_map.end())
+          {
+             cxxRecordDecl = isSgClassDeclaration(Traverse(((clang::CXXMethodDecl *)function_decl)->getParent()));
+             std::cerr << "defining method is in CxxRecordDecl: " << cxxRecordDecl << std::endl;
+             methodScope = isSgScopeStatement(cxxRecordDecl->get_definition());
+          }
+          sg_function_decl = SageBuilder::buildDefiningMemberFunctionDeclaration(name, ret_type, param_list, methodScope);
+        }
+        else
+          sg_function_decl = SageBuilder::buildDefiningFunctionDeclaration(name, ret_type, param_list, NULL);
         sg_function_decl->set_definingDeclaration(sg_function_decl);
 
         if (function_decl->isVariadic()) {
@@ -1752,7 +1812,20 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
         }
     }
     else {
-        sg_function_decl = SageBuilder::buildNondefiningFunctionDeclaration(name, ret_type, param_list, NULL);
+        if(llvm::isa<clang::CXXMethodDecl>(function_decl))
+        {
+          SgClassDeclaration* cxxRecordDecl = NULL;
+          SgScopeStatement* methodScope = NULL;
+          if(p_decl_translation_map.find(((clang::CXXMethodDecl *)function_decl)->getParent()) != p_decl_translation_map.end())
+          {
+             cxxRecordDecl = isSgClassDeclaration(Traverse(((clang::CXXMethodDecl *)function_decl)->getParent()));
+             std::cerr << "Nondefining method is in CxxRecordDecl: " << cxxRecordDecl << std::endl;
+             methodScope = isSgScopeStatement(cxxRecordDecl->get_definition());
+          }
+          sg_function_decl = SageBuilder::buildNondefiningMemberFunctionDeclaration(name, ret_type, param_list, methodScope);
+        }
+        else
+          sg_function_decl = SageBuilder::buildNondefiningFunctionDeclaration(name, ret_type, param_list, NULL);
 
         if (function_decl->isVariadic()) sg_function_decl->hasEllipses();
 
@@ -1840,25 +1913,102 @@ bool ClangToSageTranslator::VisitCXXDeductionGuideDecl(clang::CXXDeductionGuideD
 }
 
 bool ClangToSageTranslator::VisitCXXMethodDecl(clang::CXXMethodDecl * cxx_method_decl, SgNode ** node) {
+    SgName name(cxx_method_decl->getNameAsString());
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitCXXMethodDecl" << std::endl;
+    std::cerr << "ClangToSageTranslator::VisitCXXMethodDecl " << name.getString() << std::endl;
+    std::cerr << "ClangToSageTranslator::VisitCXXMethodDecl isStatic = " << cxx_method_decl->isStatic() << "\n";
+    std::cerr << "ClangToSageTranslator::VisitCXXMethodDecl isInstance = " << cxx_method_decl->isInstance() << "\n";
+    std::cerr << "ClangToSageTranslator::VisitCXXMethodDecl isVolatile = " << cxx_method_decl->isVolatile() << "\n";
+    std::cerr << "ClangToSageTranslator::VisitCXXMethodDecl isVirtual = " << cxx_method_decl->isVirtual() << "\n";
+    std::cerr << "ClangToSageTranslator::VisitCXXMethodDecl isCopyAssignmentOperator = " << cxx_method_decl->isCopyAssignmentOperator() << "\n";
+    std::cerr << "ClangToSageTranslator::VisitCXXMethodDecl isMoveAssignmentOperator = " << cxx_method_decl->isMoveAssignmentOperator() << "\n";
+    std::cerr << "ClangToSageTranslator::VisitCXXMethodDecl hasInlineBody = " << cxx_method_decl->hasInlineBody() << "\n";
+    std::cerr << "ClangToSageTranslator::VisitCXXMethodDecl isLambdaStaticInvoker = " << cxx_method_decl->isLambdaStaticInvoker() << "\n";
 #endif
-    bool res = true;
+    bool res = VisitFunctionDecl(cxx_method_decl, node);
 
-    ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
-    return VisitFunctionDecl(cxx_method_decl, node) && res;
+
+//    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+//    SgClassDeclaration* CxxRecordDeclaration = isSgClassDeclaration(Traverse(cxx_method_decl->getParent()));
+//    ROSE_ASSERT(CxxRecordDeclaration); 
+//    CxxRecordDeclaration->get_definition()->append_member(functionDecl);
+    SgDeclarationStatement* methodDeclStmt = isSgDeclarationStatement(*node);
+    clang::AccessSpecifier accessSpec = cxx_method_decl->getAccess();
+    switch(accessSpec){
+      case clang::AS_public:
+        methodDeclStmt->get_declarationModifier().get_accessModifier().setPublic();
+        break;
+      case clang::AS_protected:
+        methodDeclStmt->get_declarationModifier().get_accessModifier().setProtected();
+        break;
+      case clang::AS_private:
+        methodDeclStmt->get_declarationModifier().get_accessModifier().setPrivate();
+        break;
+      case clang::AS_none:
+        methodDeclStmt->get_declarationModifier().get_accessModifier().setDefault();
+        break;
+      default:
+        std::cerr << "no accessSpecifier is valid" << std::endl;
+    }
+    ROSE_ASSERT(methodDeclStmt);
+
+    return res;
 }
 
 bool ClangToSageTranslator::VisitCXXConstructorDecl(clang::CXXConstructorDecl * cxx_constructor_decl, SgNode ** node) {
-#if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitCXXConstructorDecl" << std::endl;
-#endif
     bool res = true;
+    SgName name(cxx_constructor_decl->getNameAsString());
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitCXXConstructorDecl name:" << name.getString() << std::endl;
+    std::cerr << "isDefaultConstructor = " << cxx_constructor_decl->isDefaultConstructor() << "\n";
+    std::cerr << "isCopyConstructor = " << cxx_constructor_decl->isCopyConstructor() << "\n";
+    std::cerr << "isMoveConstructor = " << cxx_constructor_decl->isMoveConstructor() << "\n";
+    std::cerr << "isInheritingConstructor = " << cxx_constructor_decl->isInheritingConstructor() << "\n";
+    std::cerr << "isExplicit = " << cxx_constructor_decl->isExplicit() << "\n";
+    std::cerr << "isImplicit = " << cxx_constructor_decl->isImplicit() << "\n";
+#endif
 
-    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+    // getting ctorInitializer
+//    SgCtorInitializerList* ctorInitializerList = SageBuilder::buildCtorInitializerList_nfi();
 
-    return VisitCXXMethodDecl(cxx_constructor_decl, node) && res;
+//    clang::CXXConstructorDecl::init_range ctorInitRange = cxx_constructor_decl->inits();
+//    for(auto initializer=ctorInitRange.begin(); initializer != ctorInitRange.end(); initializer++)
+//    {
+//#if DEBUG_VISIT_DECL
+//      std::cerr << "isBaseInitializer = " << (*initializer)->isBaseInitializer() << "\n";
+//      std::cerr << "isMemberInitializer = " << (*initializer)->isMemberInitializer() << "\n";
+//      std::cerr << "isAnyMemberInitializer  = " << (*initializer)->isAnyMemberInitializer() << "\n";
+//      std::cerr << "isIndirectMemberInitializer = " << (*initializer)->isIndirectMemberInitializer() << "\n";
+//#endif
+//      if((*initializer)->isMemberInitializer())
+//      {
+//         clang::FieldDecl * field_decl = (*initializer)->getMember();
+//         SgName fieldName(field_decl->getNameAsString());
+//         SgVariableDeclaration* initializedMember = isSgVariableDeclaration(Traverse(field_decl));
+//         ctorInitializerList->append_ctor_initializer(initializedMember->get_decl_item(fieldName)); 
+//      }
+//    }
+//
+//    SgFunctionParameterList * param_list = SageBuilder::buildFunctionParameterList_nfi();
+
+//    SgMemberFunctionDeclaration* memberFunctionDecl = SageBuilder::buildDefiningMemberFunctionDeclaration(name,ret_type, param_list, SageBuilder::topScopeStack());
+
+//    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+
+//    *node = memberFunctionDecl;
+    res = VisitCXXMethodDecl(cxx_constructor_decl, node);
+    SgMemberFunctionDeclaration* cxxConstructorDecl = isSgMemberFunctionDeclaration(*node);
+    cxxConstructorDecl->get_specialFunctionModifier().setConstructor();
+    if(cxx_constructor_decl->isDefaultConstructor())
+    {
+#if DEBUG_VISIT_DECL
+      std::cerr << "set as Default constructor\n";
+#endif
+      cxxConstructorDecl->get_functionModifier().setDefault(); 
+    }
+
+    return res;
 }
 
 bool ClangToSageTranslator::VisitCXXConversionDecl(clang::CXXConversionDecl * cxx_conversion_decl, SgNode ** node) {
@@ -1878,9 +2028,12 @@ bool ClangToSageTranslator::VisitCXXDestructorDecl(clang::CXXDestructorDecl * cx
 #endif
     bool res = true;
 
-    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+    //ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
-    return VisitCXXMethodDecl(cxx_destructor_decl, node) && res;
+    res = VisitCXXMethodDecl(cxx_destructor_decl, node);
+    SgMemberFunctionDeclaration* cxxDestructorDecl = isSgMemberFunctionDeclaration(*node);
+    cxxDestructorDecl->get_specialFunctionModifier().setDestructor();
+    return res;
 }
 
 bool ClangToSageTranslator::VisitMSPropertyDecl(clang::MSPropertyDecl * ms_property_decl, SgNode ** node) {
@@ -2394,7 +2547,6 @@ bool ClangToSageTranslator::VisitTranslationUnitDecl(clang::TranslationUnitDecl 
     SageBuilder::pushScopeStack(global_scope);
 
     clang::DeclContext * decl_context = (clang::DeclContext *)translation_unit_decl; // useless but more clear
-
     bool res = true;
     clang::DeclContext::decl_iterator it;
     for (it = decl_context->decls_begin(); it != decl_context->decls_end(); it++) {
