@@ -3274,9 +3274,27 @@ SageBuilder::buildNondefiningMemberFunctionDeclaration(const SgName& name, SgTyp
 SgMemberFunctionDeclaration*
 SageBuilder::buildDefiningMemberFunctionDeclaration(const SgName& name, SgType* return_type, SgFunctionParameterList* paralist, SgScopeStatement* scope)
    {
+     if (scope == NULL)
+        {
+          scope = SageBuilder::topScopeStack();
+        }
+
      unsigned int memberFunctionModifiers = 0;
+     SgFunctionParameterTypeList* param_type_list = buildFunctionParameterTypeList(paralist);
+     SgMemberFunctionDeclaration* nondefining_decl = NULL;
+     SgMemberFunctionType* member_func_type = buildMemberFunctionType(return_type,param_type_list, scope, memberFunctionModifiers);
+     SgFunctionSymbol* func_symbol = scope->find_symbol_by_type_of_function<SgMemberFunctionDeclaration>(name,member_func_type,NULL,NULL);
+     SgMemberFunctionSymbol* member_func_symbol = isSgMemberFunctionSymbol(func_symbol);
+
+     if (member_func_symbol != NULL)
+        {
+          nondefining_decl = member_func_symbol->get_declaration();
+        }
+       else
+        {
   // each defining member function decl must have a non-defining counter part now. 11/27/2012, Liao
-     SgMemberFunctionDeclaration* nondefining_decl = buildNondefiningMemberFunctionDeclaration (name, return_type, paralist, scope,NULL, memberFunctionModifiers, false, NULL);
+          nondefining_decl = buildNondefiningMemberFunctionDeclaration (name, return_type, paralist, scope,NULL, memberFunctionModifiers, false, NULL);
+        }
      return buildDefiningMemberFunctionDeclaration (name,return_type,paralist,scope,NULL,false,memberFunctionModifiers,nondefining_decl,NULL);
    }
 
