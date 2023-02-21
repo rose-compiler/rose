@@ -296,7 +296,8 @@ int clang_to_dot_main(int argc, char ** argv)
 
     llvm::ErrorOr<const clang::FileEntry *> ret  = compiler_instance->getFileManager().getFile(input_file);
     const clang::FileEntry * input_file_entry = ret.get(); 
-    clang::FileID mainFileID = compiler_instance->getSourceManager().createFileID(input_file_entry, clang::SourceLocation(), compiler_instance->getSourceManager().getFileCharacteristic(clang::SourceLocation()));
+    //clang::FileID mainFileID = compiler_instance->getSourceManager().createFileID(input_file_entry, clang::SourceLocation(), compiler_instance->getSourceManager().getFileCharacteristic(clang::SourceLocation()));
+    clang::FileID mainFileID = compiler_instance->getSourceManager().createFileID(input_file_entry, clang::SourceLocation(), clang::SrcMgr::C_User);
 
     compiler_instance->getSourceManager().setMainFileID(mainFileID);
 

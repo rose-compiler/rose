@@ -370,6 +370,10 @@ SgNode * ClangToSageTranslator::Traverse(clang::Stmt * stmt) {
             ret_status = VisitCXXBoolLiteralExpr((clang::CXXBoolLiteralExpr *)stmt, &result);
             ROSE_ASSERT(result != NULL);
             break;
+        case clang::Stmt::CXXConstructExprClass:
+            ret_status = VisitCXXConstructExpr((clang::CXXConstructExpr *)stmt, &result);
+            ROSE_ASSERT(result != NULL);
+            break;
         case clang::Stmt::CXXTemporaryObjectExprClass:
             ret_status = VisitCXXTemporaryObjectExpr((clang::CXXTemporaryObjectExpr *)stmt, &result);
             ROSE_ASSERT(result != NULL);
@@ -2518,12 +2522,37 @@ bool ClangToSageTranslator::VisitCXXBoolLiteralExpr(clang::CXXBoolLiteralExpr * 
 bool ClangToSageTranslator::VisitCXXConstructExpr(clang::CXXConstructExpr * cxx_construct_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
     std::cerr << "ClangToSageTranslator::VisitCXXConstructExpr" << std::endl;
+    std::cerr << "isElidable " << cxx_construct_expr->isElidable() << std::endl;
+    std::cerr << "hadMultipleCandidates " << cxx_construct_expr->hadMultipleCandidates() << std::endl;
+    std::cerr << "isListInitialization " << cxx_construct_expr->isListInitialization() << std::endl;
+    std::cerr << "isStdInitListInitialization " << cxx_construct_expr->isStdInitListInitialization() << std::endl;
+    std::cerr << "requiresZeroInitialization " << cxx_construct_expr->requiresZeroInitialization() << std::endl;
 #endif
     bool res = true;
 
-    // TODO
+    // 
+    clang::CXXConstructorDecl* cxx_constructor_decl = cxx_construct_expr->getConstructor();
+    SgMemberFunctionDeclaration* cxxConstructorDecl = isSgMemberFunctionDeclaration(Traverse(cxx_constructor_decl));
 
-    return VisitExpr(cxx_construct_expr, node) && res;
+    SgExprListExp * param_list = SageBuilder::buildExprListExp_nfi();
+        applySourceRange(param_list, cxx_construct_expr->getSourceRange());
+
+    clang::CXXConstructExpr::arg_iterator it;
+    for (it = cxx_construct_expr->arg_begin(); it != cxx_construct_expr->arg_end(); ++it) {
+        SgNode * tmp_expr = Traverse(*it);
+        SgExpression * expr = isSgExpression(tmp_expr);
+        if (tmp_expr != NULL && expr == NULL) {
+            std::cerr << "Runtime error: tmp_expr != NULL && expr == NULL" << std::endl;
+            res = false;
+            continue;
+        }
+        param_list->append_expression(expr);
+    }
+    SgConstructorInitializer* constructorInitilizer = SageBuilder::buildConstructorInitializer(cxxConstructorDecl, param_list, cxxConstructorDecl->get_orig_return_type(), true, false, false, false );
+
+    *node = constructorInitilizer;
+
+    return VisitExpr(cxx_construct_expr, node); 
 }
 
 bool ClangToSageTranslator::VisitCXXTemporaryObjectExpr(clang::CXXTemporaryObjectExpr * cxx_temporary_object_expr, SgNode ** node) {
@@ -2683,10 +2712,14 @@ bool ClangToSageTranslator::VisitCXXStdInitializerListExpr(clang::CXXStdInitiali
 bool ClangToSageTranslator::VisitCXXThisExpr(clang::CXXThisExpr * cxx_this_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
     std::cerr << "ClangToSageTranslator::VisitCXXThisExpr" << std::endl;
+    std::cerr << "isImplicit: " << cxx_this_expr->isImplicit() << std::endl;
 #endif
     bool res = true;
-
+    const clang::CXXRecordDecl* cxxRecordDecl = cxx_this_expr->getBestDynamicClassType();
+    SgSymbol * symbol = GetSymbolFromSymbolTable(const_cast<clang::CXXRecordDecl*>(cxxRecordDecl));
+    SgThisExp* thisExpr = SageBuilder::buildThisExp(symbol);
     // TODO
+    *node = thisExpr;
 
     return VisitExpr(cxx_this_expr, node) && res;
 }
@@ -3272,6 +3305,8 @@ bool ClangToSageTranslator::VisitMaterializeTemporaryExpr(clang::MaterializeTemp
 #endif
     bool res = true;
 
+    clang::Expr* subExpr = materialize_temporary_expr->getSubExpr();
+    *node = Traverse(subExpr);
     // TODO
 
     return VisitExpr(materialize_temporary_expr, node) && res;

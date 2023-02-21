@@ -798,10 +798,13 @@ bool ClangToSageTranslator::VisitReferenceType(clang::ReferenceType * reference_
 bool ClangToSageTranslator::VisitLValueReferenceType(clang::LValueReferenceType * lvalue_reference_type, SgNode ** node) {
 #if DEBUG_VISIT_TYPE
     std::cerr << "ClangToSageTranslator::LValueReferenceType" << std::endl;
+    std::cerr << "isSugared " << lvalue_reference_type->isSugared() << std::endl;
 #endif
     bool res = true;
 
-    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+    SgType * type = buildTypeFromQualifiedType(lvalue_reference_type->getPointeeType());
+    *node = SageBuilder::buildReferenceType(type);
+    //ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
     return VisitReferenceType(lvalue_reference_type, node) && res;
 }
@@ -809,10 +812,13 @@ bool ClangToSageTranslator::VisitLValueReferenceType(clang::LValueReferenceType 
 bool ClangToSageTranslator::VisitRValueReferenceType(clang::RValueReferenceType * rvalue_reference_type, SgNode ** node) {
 #if DEBUG_VISIT_TYPE
     std::cerr << "ClangToSageTranslator::RValueReferenceType" << std::endl;
+    std::cerr << "isSugared " << rvalue_reference_type->isSugared() << std::endl;
 #endif
     bool res = true;
+    SgType * type = buildTypeFromQualifiedType(rvalue_reference_type->getPointeeType());
+    *node = SageBuilder::buildRvalueReferenceType(type);
 
-    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+    //ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
     return VisitReferenceType(rvalue_reference_type, node) && res;
 }
