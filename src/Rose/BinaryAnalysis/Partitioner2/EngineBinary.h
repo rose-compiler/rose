@@ -574,25 +574,6 @@ public:
      *  string. */
     virtual void loadNonContainers(const std::vector<std::string> &names);
 
-#ifdef NOT_DEPRECATED
-    /** Adjust memory map post-loading.
-     *
-     *  Make adjustments to the memory map after the specimen is loaded. */
-    virtual void adjustMemoryMap();
-
-    /** Property: memory map
-     *
-     *  Returns the memory map resulting from the @ref loadSpecimens step.  This is a combination of the memory map created by
-     *  the BinaryLoader (via @ref loadContainers) and stored in the interpretation, and the application of any memory map
-     *  resources (via @ref loadNonContainers). During partitioning operations the memory map comes from the partitioner
-     *  itself.  See @ref loadSpecimens.
-     *
-     * @{ */
-    MemoryMapPtr memoryMap() const /*final*/;
-    virtual void memoryMap(const MemoryMapPtr&);
-    /** @} */
-#endif
-
 
 #ifdef NOT_DEPRECATED
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
