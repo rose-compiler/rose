@@ -1437,28 +1437,6 @@ EngineBinary::loadVxCore(const std::string &spec) {
         settings().disassembler.isaName = parser.isaName();
 }
 
-#ifdef NOT_DEPRECATED
-void
-EngineBinary::adjustMemoryMap() {
-    ASSERT_not_null(map_);
-    if (settings().loader.memoryIsExecutable)
-        map_->any().changeAccess(MemoryMap::EXECUTABLE, 0);
-    Modules::deExecuteZeros(map_/*in,out*/, settings().loader.deExecuteZerosThreshold,
-                            settings().loader.deExecuteZerosLeaveAtFront, settings().loader.deExecuteZerosLeaveAtBack);
-
-    switch (settings().loader.memoryDataAdjustment) {
-        case DATA_IS_CONSTANT:
-            map_->any().changeAccess(0, MemoryMap::WRITABLE);
-            break;
-        case DATA_IS_INITIALIZED:
-            map_->any().changeAccess(MemoryMap::INITIALIZED, 0);
-            break;
-        case DATA_NO_CHANGE:
-            break;
-    }
-}
-#endif
-
 MemoryMap::Ptr
 EngineBinary::loadSpecimens(const std::vector<std::string> &fileNames) {
     try {
