@@ -8,7 +8,6 @@ static const char *description =
 
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/FunctionCallGraph.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/CommandLine.h>
@@ -140,11 +139,8 @@ main(int argc, char *argv[]) {
     Bat::checkRoseVersionNumber(MINIMUM_ROSE_LIBRARY_VERSION, mlog[FATAL]);
     Bat::registerSelfTests();
 
-    auto engine = P2::Engine::instance();
     boost::filesystem::path inputFileName = parseCommandLine(argc, argv);
-    P2::Partitioner::Ptr partitioner = engine->loadPartitioner(inputFileName, stateFormat);
+    auto partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, stateFormat);
 
     printFunctions(partitioner);
-
-    delete engine;
 }

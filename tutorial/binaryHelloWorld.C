@@ -20,7 +20,7 @@ main(int argc, char *argv[]) {
     //! [commandline]
 
     //! [disassembly]
-    Rose::BinaryAnalysis::Partitioner2::Engine *engine = Rose::BinaryAnalysis::Partitioner2::Engine::instance();
+    Rose::BinaryAnalysis::Partitioner2::EnginePtr engine = Rose::BinaryAnalysis::Partitioner2::Engine::forge();
     SgAsmBlock *gblock = engine->frontend(argc, argv, purpose, description);
     //! [disassembly]
 

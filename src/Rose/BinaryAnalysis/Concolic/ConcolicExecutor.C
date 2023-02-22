@@ -105,7 +105,7 @@ ConcolicExecutor::partition(const Specimen::Ptr &specimen, const Architecture::P
     SpecimenId specimenId = database()->id(specimen, Update::NO);
     ASSERT_require2(specimenId, "specimen must be in the database");
 
-    P2::Engine *engine = P2::Engine::instance();
+    P2::EnginePtr engine = P2::Engine::forge();
     engine->settings().engine = settings_.partitionerEngine;
     engine->settings().loader = settings_.loader;
     engine->settings().disassembler = settings_.disassembler;
@@ -135,7 +135,6 @@ ConcolicExecutor::partition(const Specimen::Ptr &specimen, const Architecture::P
         database()->extractRbaFile(rbaFile.name(), specimenId);
         partitioner = engine->loadPartitioner(rbaFile.name());
     }
-    delete engine;
 
     ASSERT_not_null(partitioner);
     return partitioner;

@@ -266,10 +266,9 @@ main(int argc, char *argv[]) {
     P2::Partitioner::Ptr partitioner;
     if (settings.showingInsns) {
         std::string specimen = "proc:noattach:" + boost::lexical_cast<std::string>(*process->processId());
-        P2::Engine *engine = P2::Engine::instance();
+        P2::EnginePtr engine = P2::Engine::forge();
         engine->settings().disassembler.isaName = "i386";// FIXME[Robb Matzke 2019-12-12]
         partitioner = engine->partition(specimen);
-        delete engine;
     } else {
         partitioner = P2::Partitioner::instance();
     }

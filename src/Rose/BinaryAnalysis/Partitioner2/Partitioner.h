@@ -11,6 +11,7 @@
 
 #include <Rose/BinaryAnalysis/InstructionProvider.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/SerialIo.h>
 #include <Rose/BinaryAnalysis/SourceLocations.h>
 #include <Rose/BinaryAnalysis/Unparser/Settings.h>
 #include <Rose/Progress.h>
@@ -473,12 +474,17 @@ public:
      *  partitioner by value or reference. */
     static Ptr instance();
 
-
     /** Construct a partitioner.
      *
      *  The partitioner must be provided with a disassembler, which also determines the specimen's target architecture, and a
      *  memory map that represents a (partially) loaded instance of the specimen (i.e., a process). */
     static Ptr instance(const Disassembler::BasePtr&, const MemoryMap::Ptr&);
+
+    /** Construct a partitioner by loading it and an AST from a file.
+     *
+     *  The specified RBA file is opened and read to create a new @ref Partitioner object and associated AST. The @ref
+     *  partition function also understands how to open RBA files. */
+    static PartitionerPtr instanceFromRbaFile(const boost::filesystem::path&, SerialIo::Format = SerialIo::BINARY);
 
 #ifdef ROSE_PARTITIONER_MOVE
     /** Move constructor. */

@@ -75,10 +75,11 @@ void const JvmMethod::decode(const Disassembler::Base::Ptr &disassembler) const 
       insn->set_parent(insnList);
     }
     else {
-      ROSE_ASSERT(false && "disassembly failed");
+      //TODO: throw exception?
+      ASSERT_require(false && "disassembly failed");
     }
   }
-  ROSE_ASSERT((va - code_.offset()) == code_.size());
+  ASSERT_require((va - code_.offset()) == code_.size());
 }
 
 const std::string JvmInterface::name() const

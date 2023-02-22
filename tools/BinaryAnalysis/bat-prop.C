@@ -10,7 +10,6 @@ static const char *description =
 #include <batSupport.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/CommandLine.h>
 
@@ -211,7 +210,7 @@ public:
 // Parses the command-line and returns the positional arguments, the first of which is always present and is the name of the
 // RBA file.
 std::vector<std::string>
-parseCommandLine(int argc, char *argv[], P2::Engine&, const Properties &properties) {
+parseCommandLine(int argc, char *argv[], const Properties &properties) {
     using namespace Sawyer::CommandLine;
 
     //---------- Generic Switches ----------
@@ -256,15 +255,14 @@ main(int argc, char *argv[]) {
     properties.define(new InsnCountProperty);
     properties.define(new IsaNameProperty);
 
-    P2::Engine *engine = P2::Engine::instance();
-    std::vector<std::string> args = parseCommandLine(argc, argv, *engine, properties);
+    std::vector<std::string> args = parseCommandLine(argc, argv, properties);
     boost::filesystem::path inputFileName = args[0];
     args.erase(args.begin());
     if (!properties.check(args, mlog[FATAL]))
         exit(1);
     size_t showAllProperties = std::count(args.begin(), args.end(), "all");
 
-    P2::Partitioner::Ptr partitioner = engine->loadPartitioner(inputFileName, stateFormat);
+    auto partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, stateFormat);
 
     if (showAllProperties) {
         properties.evalAll(partitioner);
@@ -272,7 +270,6 @@ main(int argc, char *argv[]) {
         for (const std::string &property: args)
             properties.eval(property, partitioner);
     }
-    delete engine;
 
     return properties.nErrors() > 0;
 }

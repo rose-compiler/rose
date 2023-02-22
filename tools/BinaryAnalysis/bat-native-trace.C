@@ -104,7 +104,7 @@ main(int argc, char *argv[]) {
     Bat::registerSelfTests();
 
     // Parse command-line
-    P2::Engine *engine = P2::Engine::instance();
+    P2::EnginePtr engine = P2::Engine::forge();
     Settings settings;
     std::vector<std::string> args = parseCommandLine(argc, argv, *engine, settings);
     if (args.empty()) {
@@ -178,8 +178,6 @@ main(int argc, char *argv[]) {
 
     std::cerr <<debugger->howTerminated() <<"\n";
     std::cerr <<StringUtility::plural(nSteps, "instructions") <<" executed\n";
-
-    delete engine;
 }
 
 #else

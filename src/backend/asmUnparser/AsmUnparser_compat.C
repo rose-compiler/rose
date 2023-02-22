@@ -9,6 +9,8 @@
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/Unparser/Aarch32.h>
 #include <Rose/BinaryAnalysis/Unparser/Aarch64.h>
+#include <Rose/BinaryAnalysis/Unparser/Cil.h>
+#include <Rose/BinaryAnalysis/Unparser/Jvm.h>
 #include <Rose/BinaryAnalysis/Unparser/M68k.h>
 #include <Rose/BinaryAnalysis/Unparser/Mips.h>
 #include <Rose/BinaryAnalysis/Unparser/Powerpc.h>
@@ -73,6 +75,8 @@ std::string unparseMnemonic(SgAsmInstruction *insn) {
             return unparseMipsMnemonic(isSgAsmMipsInstruction(insn));
         case V_SgAsmM68kInstruction:
             return unparseM68kMnemonic(isSgAsmM68kInstruction(insn));
+        case V_SgAsmJvmInstruction:
+            return unparseJvmMnemonic(isSgAsmJvmInstruction(insn));
         default:
             ASSERT_not_reachable("unhandled variant: " + insn->class_name());
     }

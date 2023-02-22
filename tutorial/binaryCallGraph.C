@@ -52,7 +52,7 @@ main(int argc, char *argv[]) {
     //! [setup]
     ROSE_INITIALIZE;
     Settings settings;
-    Partitioner2::Engine *engine = Partitioner2::Engine::instance();
+    Partitioner2::EnginePtr engine = Partitioner2::Engine::forge();
     std::vector<std::string> specimen = parseCommandLine(argc, argv, *engine, settings);
     if (specimen.empty()) {
         mlog[FATAL] <<"no binary specimen specified; see --help\n";
@@ -73,6 +73,4 @@ main(int argc, char *argv[]) {
     Partitioner2::GraphViz::CgEmitter emitter(partitioner, callgraph);
     emitter.emitCallGraph(output);
     //! [emit]
-
-    delete engine;
 }

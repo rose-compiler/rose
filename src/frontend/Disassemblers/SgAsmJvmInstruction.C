@@ -9,6 +9,31 @@ using namespace Rose;                                   // temporary until this 
 using namespace Rose::BinaryAnalysis;
 using JvmOp = JvmInstructionKind;
 
+// Make a (moderately) deep copy of this instruction.
+// The parent is set to null so that it is detached from the ROSE AST.
+SgAsmJvmInstruction*
+SgAsmJvmInstruction::copy() const {
+  auto insn = new SgAsmJvmInstruction(get_address(), get_mnemonic(), get_kind());
+
+  insn->set_parent(nullptr); // SgNode member
+  insn->set_comment(get_comment()); // SgAsmNode member
+  insn->set_raw_bytes(get_raw_bytes()); // SgAsmInstruction member
+
+  // Create new operand list
+  auto operands = new SgAsmOperandList;
+  insn->set_operandList(operands);
+  operands->set_parent(insn);
+
+  // Copy operands (warning they become aliased)
+  for (auto expr: get_operandList()->get_operands()) {
+    // At moment the operand isn't attached? Whine to inform of the need for exploration.
+    ASSERT_require(expr->get_parent() == nullptr);
+    operands->append_operand(expr);
+  }
+
+  return insn;
+}
+
 unsigned
 SgAsmJvmInstruction::get_anyKind() const {
   return static_cast<unsigned>(p_kind);
@@ -83,13 +108,38 @@ SgAsmJvmInstruction::terminatesBasicBlock() {
 bool
 SgAsmJvmInstruction::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va)
 {
+  SgAsmJvmInstruction* last{nullptr};
+
+  if (!insns.empty() && (last=isSgAsmJvmInstruction(insns.back()))) {
+    // Quick method based only on the kind of instruction
+    switch (last->get_kind()) {
+      case JvmOp::invokevirtual:
+      case JvmOp::invokespecial:
+      case JvmOp::invokestatic:
+      case JvmOp::invokeinterface:
+      case JvmOp::invokedynamic:
+//    case JvmOp::jsr: ???
+
+        if (target) {
+          last->branchTarget().assignTo(*target);
+        }
+        if (return_va) {
+          *return_va = last->get_address() + last->get_size();
+        }
+        return true;
+
+      default:
+        return false;
+    }
+  }
+
   return false;
 }
 
 bool
 SgAsmJvmInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va)
 {
-  return false;
+  return isFunctionCallFast(insns, target, return_va);
 }
 
 bool
@@ -98,6 +148,7 @@ SgAsmJvmInstruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &
   if (iJvm) {
     switch (iJvm->get_kind()) {
       case JvmOp::ret:
+      case JvmOp::ireturn:
       case JvmOp::lreturn:
       case JvmOp::freturn:
       case JvmOp::dreturn:

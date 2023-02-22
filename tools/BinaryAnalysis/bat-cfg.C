@@ -7,7 +7,6 @@ static const char *description =
 #include <rose.h>
 
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/CommandLine.h>
@@ -362,8 +361,7 @@ main(int argc, char *argv[]) {
 
     Settings settings;
     boost::filesystem::path inputFileName = parseCommandLine(argc, argv, settings);
-    auto engine = P2::Engine::instance();
-    P2::Partitioner::Ptr partitioner = engine->loadPartitioner(inputFileName, settings.stateFormat);
+    auto partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, settings.stateFormat);
 
     // Get a list of functions
     std::vector<P2::Function::Ptr> selectedFunctions = partitioner->functions();
@@ -429,7 +427,6 @@ main(int argc, char *argv[]) {
                 ASSERT_not_implemented("output format");
         }
     }
-    delete engine;
 
     return hadErrors ? 1 : 0;
 }

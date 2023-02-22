@@ -185,7 +185,7 @@ main(int argc, char *argv[]) {
 
     // Parse command-line
     Settings settings;
-    P2::Engine *engine = P2::Engine::instance();
+    P2::EnginePtr engine = P2::Engine::forge();
     std::vector<std::string> args = parseCommandLine(argc, argv, *engine, settings);
     ASSERT_always_require2(args.size() >= 2, "incorrect usage; see --help");
 
@@ -260,8 +260,6 @@ main(int argc, char *argv[]) {
                 std::cout <<"    " <<addrToString(addrCount.key()) <<"\t" <<addrCount.value() <<"\n";
         }
     }
-
-    delete engine;
 }
 
 #else

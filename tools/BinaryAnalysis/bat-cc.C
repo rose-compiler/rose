@@ -214,8 +214,7 @@ main(int argc, char *argv[]) {
     boost::filesystem::path inputFileName = parseCommandLine(argc, argv, settings);
     
     // Read the state file
-    P2::Engine *engine = P2::Engine::instance();
-    P2::Partitioner::Ptr partitioner = engine->loadPartitioner(inputFileName, settings.stateFormat);
+    P2::PartitionerPtr partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, settings.stateFormat);
 
     // Create the output state file early so that the user will get an error early if the file can't be created. The alternative
     // is to wait until after all calling convention analysis is completed, which could be a while!
@@ -253,10 +252,13 @@ main(int argc, char *argv[]) {
     }
 
     // Write to the output state if desired.
-    if (!settings.outputFileName.empty())
+    if (!settings.outputFileName.empty()) {
+        P2::EnginePtr engine = P2::Engine::forge();
         engine->savePartitioner(partitioner, settings.outputFileName, settings.stateFormat);
-    if (settings.removeAnalysis)
+    }
+    if (settings.removeAnalysis) {
         return 0;
+    }
 
     //---- The rest of this file is for output ----
 
@@ -278,6 +280,4 @@ main(int argc, char *argv[]) {
     if (settings.showingRankedDefnNames) {
         show(countDefNames);
     }
-
-    delete engine;
 }

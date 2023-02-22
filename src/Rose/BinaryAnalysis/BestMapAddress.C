@@ -203,7 +203,7 @@ BestMapAddress::align(const MemoryMap::Ptr &map, const P2::Engine::Settings &set
         }
 
         // Partitioning engine used by the BestMapAddress analysis.
-        P2::Engine *engine = P2::Engine::instance(settings);
+        P2::Engine::EnginePtr engine = P2::Engine::forge();
         engine->memoryMap(tmpMap);
         engine->settings().partitioner.doingPostAnalysis = false;
         if (progress)
@@ -273,8 +273,6 @@ BestMapAddress::align(const MemoryMap::Ptr &map, const P2::Engine::Settings &set
             rose_addr_t adjustedEntryVa = (origEntryVa + bestDelta) & mask;
             entryAddresses.insert(adjustedEntryVa);
         }
-
-        delete engine;
     }
 
     return retval;

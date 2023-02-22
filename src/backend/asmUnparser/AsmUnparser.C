@@ -337,8 +337,9 @@ AsmUnparser::unparse(std::ostream &output, SgNode *ast)
     switch (get_organization()) {
         case ORGANIZED_BY_AST: {
             std::vector<SgNode*> unparsable = find_unparsable_nodes(ast);
-            for (std::vector<SgNode*>::iterator ui=unparsable.begin(); ui!=unparsable.end(); ++ui)
-                unparse_one_node(output, *ui);
+            for (auto node: unparsable) {
+                unparse_one_node(output, node);
+            }
             retval = unparsable.size();
             break;
         }

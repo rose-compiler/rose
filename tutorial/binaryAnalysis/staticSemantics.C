@@ -86,14 +86,12 @@ int main(int argc, char *argv[]) {
     Rose::Diagnostics::initAndRegister(&mlog, "tool");
     mlog[TRACE].enable();
 
-    P2::Engine *engine = P2::Engine::instance();
+    P2::EnginePtr engine = P2::Engine::forge();
     std::vector<std::string> specimen = engine->parseCommandLine(argc, argv, purpose, description).unreachedArgs();
     P2::Partitioner::Ptr partitioner = engine->partition(specimen);
 
     SgAsmBlock *ast = P2::Modules::buildAst(partitioner);
     SemanticsAttacher(partitioner).traverse(ast, preorder);
-
-    delete engine;
 }
 
 #else
