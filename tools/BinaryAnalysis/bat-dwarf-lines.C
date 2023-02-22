@@ -51,7 +51,7 @@ main(int argc, char *argv[]) {
     Bat::registerSelfTests();
 
     Settings settings;
-    P2::Engine *engine = P2::Engine::instance();
+    P2::EnginePtr engine = P2::Engine::forge();
     std::vector<std::string> specimen = parseCommandLine(argc, argv, *engine, settings);
     engine->parseContainers(specimen);
 
@@ -60,6 +60,4 @@ main(int argc, char *argv[]) {
     lineMapper.insertFromDebug(project);
     lineMapper.printSrcToAddr(std::cout);
     lineMapper.printAddrToSrc(std::cout);
-
-    delete engine;
 }

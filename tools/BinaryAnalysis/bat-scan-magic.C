@@ -6,7 +6,6 @@ const char *description =
 #include <batSupport.h>
 
 #include <Rose/BinaryAnalysis/MagicNumber.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 #include <Rose/CommandLine.h>
@@ -27,7 +26,7 @@ struct Settings {
 };
 
 static boost::filesystem::path
-parseCommandLine(int argc, char *argv[], BinaryAnalysis::Partitioner2::Engine&, Settings &settings /*in,out*/) {
+parseCommandLine(int argc, char *argv[], Settings &settings /*in,out*/) {
     using namespace Sawyer::CommandLine;
 
     SwitchGroup gen = Rose::CommandLine::genericSwitches();
@@ -96,9 +95,8 @@ main(int argc, char *argv[]) {
     Bat::registerSelfTests();
 
     Settings settings;
-    P2::Engine *engine = P2::Engine::instance();
-    boost::filesystem::path rbaFile = parseCommandLine(argc, argv, *engine, settings /*in,out*/);
-    P2::Partitioner::Ptr partitioner = engine->loadPartitioner(rbaFile, settings.stateFormat);
+    boost::filesystem::path rbaFile = parseCommandLine(argc, argv, settings /*in,out*/);
+    auto partitioner = P2::Partitioner::instanceFromRbaFile(rbaFile, settings.stateFormat);
 
 
     BinaryAnalysis::MagicNumber analyzer;
@@ -128,6 +126,4 @@ main(int argc, char *argv[]) {
                 break;                                  // prevent overflow at top of address space
         }
     }
-
-    delete engine;
 }

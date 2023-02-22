@@ -44,7 +44,7 @@ main(int argc, char *argv[]) {
 
     // Parse the command-line switches
     Settings settings;
-    P2::Engine *engine = P2::Engine::instance();
+    P2::EnginePtr engine = P2::Engine::forge();
     std::vector<std::string> args = parseCommandLine(argc, argv, *engine, settings);
     if (args.empty()) {
         mlog[FATAL] <<"no binary specimen specified; see --help\n";
@@ -56,6 +56,4 @@ main(int argc, char *argv[]) {
 
     // Process the binary to add its instructions to the source template
     BinaryToSource(settings.generator).generateSource(binary, std::cout);
-
-    delete engine;
 }

@@ -417,7 +417,7 @@ main(int argc, char *argv[]) {
     Stream info(mlog[INFO]);
 
     // Parse command-line
-    P2::Engine *engine = P2::Engine::instance();
+    P2::EnginePtr engine = P2::Engine::forge();
     Settings settings;
     std::pair<boost::filesystem::path, boost::filesystem::path> rbaFiles = parseCommandLine(argc, argv, *engine, settings);
     size_t nThreads = Rose::CommandLine::genericSwitchArgs.threads;
@@ -538,8 +538,6 @@ main(int argc, char *argv[]) {
                    <<" (" <<(100.0*nClashes/assignments.size()) <<" percent)"
                    <<(1==nClashes?" was":" were") <<" between functions with different names\n";
     }
-
-    delete engine;
 }
 
 #else

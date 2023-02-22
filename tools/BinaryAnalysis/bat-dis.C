@@ -11,7 +11,6 @@ static const char *description =
 
 #include <Rose/BinaryAnalysis/NoOperation.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/CommandLine.h>
@@ -44,7 +43,7 @@ struct Settings {
 
 // Parses the command-line and returns the name of the input file if any (the ROSE binary state).
 boost::filesystem::path
-parseCommandLine(int argc, char *argv[], P2::Engine&, Settings &settings) {
+parseCommandLine(int argc, char *argv[], Settings &settings) {
     using namespace Sawyer::CommandLine;
 
     SwitchGroup gen = Rose::CommandLine::genericSwitches();
@@ -174,11 +173,10 @@ main(int argc, char *argv[]) {
     Bat::registerSelfTests();
 
     Settings settings;
-    P2::Engine *engine = P2::Engine::instance();
     if (boost::ends_with(argv[0], "-simple"))
         settings.unparser = BinaryAnalysis::Unparser::Settings::minimal();
-    boost::filesystem::path inputFileName = parseCommandLine(argc, argv, *engine, settings);
-    P2::Partitioner::Ptr partitioner = engine->loadPartitioner(inputFileName, settings.stateFormat);
+    boost::filesystem::path inputFileName = parseCommandLine(argc, argv, settings);
+    auto partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, settings.stateFormat);
 
     // Make sure output directories exit
     boost::filesystem::path dir = boost::filesystem::path(settings.fileNamePrefix).parent_path();
@@ -226,6 +224,4 @@ main(int argc, char *argv[]) {
         // Output all functions to standard output
         unparser->unparse(std::cout, partitioner, Progress::instance());
     }
-
-    delete engine;
 }

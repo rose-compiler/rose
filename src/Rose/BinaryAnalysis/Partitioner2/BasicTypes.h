@@ -832,6 +832,15 @@ using DataBlockPtr = Sawyer::SharedPointer<DataBlock>;  /**< Shared-ownership po
 
 class DataBlockError;
 
+class Engine;
+using EnginePtr = Sawyer::SharedPointer<Engine>;  /**< Shared-ownership pointer for @ref Engine. */;
+
+class EngineBinary;
+using EngineBinaryPtr = Sawyer::SharedPointer<EngineBinary>;  /**< Shared-ownership pointer for @ref EngineBinary. */;
+
+class EngineJvm;
+using EngineJvmPtr = Sawyer::SharedPointer<EngineJvm>;  /**< Shared-ownership pointer for @ref EngineJvm. */;
+
 class Exception;
 
 class Function;

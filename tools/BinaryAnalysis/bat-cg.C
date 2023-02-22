@@ -7,7 +7,6 @@ static const char *description =
 #include <rose.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <rose_strtoull.h>                              // rose
@@ -217,8 +216,7 @@ main(int argc, char *argv[]) {
 
     Settings settings;
     boost::filesystem::path inputFileName = parseCommandLine(argc, argv, settings);
-    P2::Engine *engine = P2::Engine::instance();
-    P2::Partitioner::Ptr partitioner = engine->loadPartitioner(inputFileName, settings.stateFormat);
+    auto partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, settings.stateFormat);
 
     switch (settings.outputFormat) {
         case FORMAT_GRAPHVIZ:
@@ -244,6 +242,4 @@ main(int argc, char *argv[]) {
         default:
             ASSERT_not_implemented("output format");
     }
-
-    delete engine;
 }

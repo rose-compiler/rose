@@ -31,7 +31,7 @@ struct Settings {
 SgProject*
 buildAst(int argc, char *argv[], Settings &settings) {
     using namespace Sawyer::CommandLine;
-    P2::Engine *engine = P2::Engine::instance();
+    P2::EnginePtr engine = P2::Engine::forge();
 
     // Parse the commane-line
     Parser p = engine->commandLineParser("transcode to LLVM", "Convert an ELF/PE specimen to LLVM assembly for testing.");
@@ -70,7 +70,6 @@ buildAst(int argc, char *argv[], Settings &settings) {
         ::mlog[FATAL] <<"This tool only supports ELF/PE specimens.\n";
         exit(1);
     }
-    delete engine;
     
     return project;
 }

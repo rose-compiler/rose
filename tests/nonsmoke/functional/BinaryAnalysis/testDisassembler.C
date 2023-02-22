@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
 
     BinaryAnalysis::Unparser::Settings upSettings;
-    P2::Engine *engine = P2::Engine::instance();
+    P2::EnginePtr engine = P2::Engine::forge();
     std::string fileName = parseCommandLine(argc, argv, *engine, upSettings);
     std::ifstream input(fileName.c_str());
     
@@ -140,6 +140,4 @@ int main(int argc, char *argv[]) {
             std::cout <<StringUtility::prefixLines(ss.str(), "       ");
         }
     }
-
-    delete engine;
 }

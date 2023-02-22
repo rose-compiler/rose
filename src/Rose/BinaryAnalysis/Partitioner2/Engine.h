@@ -2,112 +2,24 @@
 #define ROSE_BinaryAnalysis_Partitioner2_Engine_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <Rose/BasicTypes.h>
 
-#include <Rose/BinaryAnalysis/Partitioner2/Exception.h>
-#include <Rose/BinaryAnalysis/Partitioner2/ModulesLinux.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
+#include <Rose/BasicTypes.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
 #include <Rose/BinaryAnalysis/SerialIo.h>
 
-#include <boost/noncopyable.hpp>
-#include <boost/regex.hpp>
 #include <Sawyer/DistinctList.h>
-#include <stdexcept>
-
-#ifdef ROSE_ENABLE_PYTHON_API
-#undef slots                                            // stupid Qt pollution
-#include <boost/python.hpp>
-#endif
+#include <Sawyer/SharedObject.h>
+#include <Sawyer/SharedPointer.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
-/** Base class for engines driving the partitioner.
- *
- *  An engine serves these main purposes:
- *
- *  @li It holds configuration information related to disassembling and partitioning and provides methods for initializing that
- *      configuration information.
- *
- *  @li It provides methods for creating components (disassembler, partitioner) from stored configuration information.
- *
- *  @li It provides methods that implement the basic steps a program typically goes through in order to disassemble a specimen,
- *      such as parsing the binary container, mapping files and container sections into simulated specimen memory, calling a
- *      dynamic linker, disassembling and partitioning, and building an abstract syntax tree.
- *
- *  @li It provides a set of behaviors for the partitioner that are suitable for various situations.  For instance, the engine
- *      controls the order that functions and basic blocks are discovered, what happens when the partitioner encounters
- *      conflicts when assigning basic blocks to functions, etc.
- *
- *  Use of an engine is entirely optional.  All of the engine's actions are implemented in terms of public APIs on other
- *  objects such as @ref Disassembler and @ref Partitioner.  In fact, this particular engine base class is designed so that
- *  users can pick and choose to use only those steps they need, or perhaps to call the main actions one step at a time with
- *  the user making adjustments between steps.
- *
- *  @section extensibility Customization
- *
- *  The actions taken by an engine can be customized in a number of ways:
- *
- *  @li The engine can be subclassed. All object methods that are intended to be overridable in a subclass are declared as
- *      virtual.  Some simple functions, like those that return property values, are not virtual since they're not things that
- *      one normally overrides.  This engine's methods are also designed to be as modular as possible--each method does exactly
- *      one thing, and higher-level methods sew those things together into sequences.
- *
- *  @li Instead of calling one function that does everything from parsing the command-line to generating the final abstract
- *      syntax tree, the engine breaks things into steps. The user can invoke one step at a time and make adjustments between
- *      steps.  This is actually the most common customization within the tools distributed with ROSE.
- *
- *  @li The behavior of the @ref Partitioner itself can be modified by attaching callbacks to it. In fact, if the engine is
- *      used to create a partitioner then certain engine-defined callbacks are added to the partitioner.
- *
- *  @section basic Basic usage
- *
- *  The most basic use case for the engine is to pass it the command-line arguments and have it do everything, eventually
- *  returning an abstract syntax tree.
- *
- *  @code
- *   #include <rose.h>
- *   #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
- *   using namespace Rose;
- *   namespace P2 = Rose::BinaryAnalysis::Partitioner2;
- *
- *   int main(int argc, char *argv[]) {
- *       std::string purpose = "disassembles a binary specimen";
- *       std::string description =
- *           "This tool disassembles the specified specimen and presents the "
- *           "results as a pseudo assembly listing, that is, a listing intended "
- *           "for human consumption rather than assembly.";
- *       SgAsmBlock *gblock = P2::Engine().frontend(argc, argv, purpose, description);
- *  @endcode
- *
- *  @section topsteps High level operations
- *
- *  While @ref frontend does everything, it's often useful to break it down to individual steps so that adjustments can be made
- *  along the way. This next level of steps are:
- *
- *  @li Parse the command-line to adjust engine settings. See @ref parseCommandLine.
- *
- *  @li Parse binary containers to create a container abstract syntax tree.  This step parses things like section tables,
- *      symbol tables, import and export tables, etc. but does not disassemble any instructions.  See @ref parseContainers.
- *
- *  @li Create a memory map that simulates process address space for the specimen.  This consists of running a dynamic linker,
- *      loading raw data into the simulated address space, and adjusting the memory map . All of these steps are optional. See
- *      @ref loadSpecimens.
- *
- *  @li Create a partitioner.  The partitioner is responsible for driving the disassembler based on control flow information
- *      obtained by examining previously disassembled instructions, user-specified configuration files, command-line switches,
- *      etc. See @ref createPartitioner.
- *
- *  @li Run partitioner.  This step uses the disassembler and partitioner to discover instructions, basic blocks, data blocks,
- *      and functions and updates the partitioner's internal data structures. See @ref runPartitioner.
- *
- *  @li Create an abstract syntax tree from the partitioner's data structures.  Most of ROSE is designed to operate on an AST,
- *      although many binary analysis capabilities are built directly on the more efficient partitioner data structures.
- *      Because of this, the partitioner also has a mechanism by which its data structures can be initialized from an AST.
- */
-class ROSE_DLL_API Engine: private boost::noncopyable {
+class Engine: public Sawyer::SharedObject {
 public:
+    /** Shared ownership pointer. */
+    using EnginePtr = Sawyer::SharedPointer<Engine>;
+
     /** Settings for the engine.
      *
      *  The engine is configured by adjusting these settings, usually shortly after the engine is created. */
@@ -127,18 +39,10 @@ public:
         }
     };
 
-    /** Errors from the engine. */
-    class Exception: public Partitioner2::Exception {
-    public:
-        Exception(const std::string &mesg)
-            : Partitioner2::Exception(mesg) {}
-        ~Exception() throw () {}
-    };
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Internal data structures
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-private:
+protected:
     // Engine callback for handling instructions added to basic blocks.  This is called when a basic block is discovered,
     // before it's attached to a partitioner, so it shouldn't really be modifying any state in the engine, but rather only
     // preparing the basic block to be processed.
@@ -153,6 +57,7 @@ private:
         void addPossibleIndeterminateEdge(const Args&);
     };
 
+private:
     // Basic blocks that need to be worked on next. These lists are adjusted whenever a new basic block (or placeholder) is
     // inserted or erased from the CFG.
     class BasicBlockWorkList: public CfgAdjustmentCallback {
@@ -194,6 +99,7 @@ private:
         void moveAndSortCallReturn(const PartitionerConstPtr&);
     };
 
+protected:
     // A work list providing constants from instructions that are part of the CFG.
     class CodeConstants: public CfgAdjustmentCallback {
     public:
@@ -210,6 +116,7 @@ private:
 
     public:
         static Ptr instance() { return Ptr(new CodeConstants); }
+        rose_addr_t inProgress() {return inProgress_;}
 
         // Possibly insert more instructions into the work list when a basic block is added to the CFG
         virtual bool operator()(bool chain, const AttachedBasicBlock &attached) override;
@@ -225,42 +132,101 @@ private:
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Data members
+    // Data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
+    std::string name_;                                  // factory name
     Settings settings_;                                 // Settings for the partitioner.
     SgAsmInterpretation *interp_;                       // interpretation set by loadSpecimen
-    BinaryLoaderPtr binaryLoader_;                      // how to remap, link, and fixup
     Disassembler::BasePtr disassembler_;                // not ref-counted yet, but don't destroy it since user owns it
     MemoryMapPtr map_;                                  // memory map initialized by load()
     BasicBlockWorkList::Ptr basicBlockWorkList_;        // what blocks to work on next
     CodeConstants::Ptr codeFunctionPointers_;           // generates constants that are found in instruction ASTs
     ProgressPtr progress_;                              // optional progress reporting
-    ModulesLinux::LibcStartMain::Ptr libcStartMain_;    // looking for "main" by analyzing libc_start_main?
-    ThunkPredicatesPtr functionMatcherThunks_;          // predicates to find thunks when looking for functions
-    ThunkPredicatesPtr functionSplittingThunks_;        // predicates for splitting thunks from front of functions
+    std::vector<std::string> specimen_;                 // list of additional command line arguments (often file names)
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Constructors
+    // Constructors
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 protected:
-    /** Default constructor. Deleted, use factory method instance() instead. */
+    /** Default constructor.  Constructor is deleted and class noncopyable. */
     Engine() = delete;
+    Engine(const Engine&) = delete;
+    Engine& operator=(const Engine&) = delete;
 
-    /** Construct engine with settings. Private, use factory method instance(Settings &) instead. */
+protected:
+    /** Allocating `instance` constructors are implemented by the non-abstract subclasses.
+     *
+     * @{ */
+    explicit Engine(const std::string &name);      // for instantiating factories
     explicit Engine(const Settings &settings);
+    /** @} */
+
+    void init();
 
 public:
     virtual ~Engine();
 
-    /** Factory method returning an Engine instance of type EngineBinary. */
-    static Engine* instance();
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Factories
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Register an engine as a factory.
+     *
+     *  The specified engine is added to the end of a list of engine prototypical factory objects. When a new engine is
+     *  needed, this list is scanned in reverse order until one of the @c matchFactory predicates for the prototypical object
+     *  returns true, at which time a new copy of that object is created by passing the lookup arguments to its virtual @c
+     *  instanceFromFactory constructor.
+     *
+     *  Thread safety: This method is thread safe. */
+    static void registerFactory(const EnginePtr &factory);
 
-    /** Factory method returning an Engine instance of type based on settings. */
-    static Engine* instance(const Settings&);
+    /** Remove a concrete engine factory from the registry.
+     *
+     *  The last occurrence of the specified factory is removed from the list of registered factories. This function returns
+     *  true if a factory was removed, and false if no registered factories match.
+     *
+     *  Thread safety: This method is thread safe. */
+    static bool deregisterFactory(const EnginePtr &factory);
+
+    /** List of all registered factories.
+     *
+     *  The returned list contains the registered factories in the order they were registereed, which is the reverse order
+     *  of how they're searched.
+     *
+     *  Thread safety: This method is thread safe. */
+    static std::vector<EnginePtr> registeredFactories();
+
+    /** Creates a suitable engine based on the specimen.
+     *
+     *  Scans the @ref registeredFactories list in the reverse order looking for a factory whose @ref matchFactory predicate
+     *  (which accepts all but the first argument to this function) returns true. The first factory whose predicate returns
+     *  true is used to create and return a new concrete engine object by invoking the factory's virtual @c
+     *  instanceFromFactory constructor with the first argument of this function.
+     *
+     *  Thread safety: This method is thread safe. */
+    static EnginePtr forge();
+    static EnginePtr forge(const std::vector<std::string> &specimen);
+    static EnginePtr forge(int argc, char *argv[], Sawyer::CommandLine::Parser&);
+
+    /** Predicate for matching a concrete engine factory by settings and specimen. */
+    virtual bool matchFactory(const std::vector<std::string> &specimen) const = 0;
+
+    /** Virtual constructor for factories.
+     *
+     *  This creates a new object by calling the class method @c instance for the class of which @c this is a type. All
+     *  arguments are passed to @c instance. */
+    virtual EnginePtr instanceFromFactory() = 0;
+
+    /** Returns true if this object is a factory.
+     *
+     *  Factories are created by the @c factory class methods rather than the usual @c instance class methods. A factory
+     *  object should only be used to create other (non-factory) objects by registering it as a factory and eventually
+     *  calling (directly or indirectly) its @ref instanceFromFactory object method. */
+    bool isFactory() const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  The very top-level use case
+    //                                  Top-level, do everything functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Most basic usage of the partitioner.
@@ -290,7 +256,7 @@ public:
     SgAsmBlock* frontend(int argc, char *argv[],
                          const std::string &purpose, const std::string &description);
     virtual SgAsmBlock* frontend(const std::vector<std::string> &args,
-                                 const std::string &purpose, const std::string &description);
+                                 const std::string &purpose, const std::string &description) = 0;
     /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -302,7 +268,7 @@ public:
      *  This does not reset the settings properties since that can be done easily by constructing a new engine.  It only resets
      *  the interpretation, binary loader, disassembler, and memory map so all the top-level steps get executed again. This is
      *  a useful way to re-use the same partitioner to process multiple specimens. */
-    void reset();
+    virtual void reset();
 
     /** Parse the command-line.
      *
@@ -336,13 +302,52 @@ public:
                                                                const std::string &purpose, const std::string &description);
     /** @} */
 
+    /** Obtain an abstract syntax tree.
+     *
+     *  Constructs a new abstract syntax tree (AST) from partitioner information with these steps:
+     *
+     *  @li If the partitioner has not been run yet, then do that now with the same arguments.  The zero-argument version
+     *      invokes the zero-argument @ref partition, which requires that the specimen has already been loaded by @ref
+     *      loadSpecimens.
+     *
+     *  @li Call Modules::buildAst to build the AST.
+     *
+     *  If an <code>std::runtime_exception</code> occurs and the @ref exitOnError property is set, then the exception is caught,
+     *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
+     *
+     * @{ */
+    virtual SgAsmBlock* buildAst(const std::vector<std::string> &fileNames = std::vector<std::string>()) = 0;
+    /** @} */
+
+    /** Save a partitioner and AST to a file.
+     *
+     *  The specified partitioner and the binary analysis components of the AST are saved into the specified file, which is
+     *  created if it doesn't exist and truncated if it does exist. The name should end with a ".rba" extension. The file can
+     *  be loaded by passing its name to the @ref partition function or by calling @ref loadPartitioner. */
+    virtual void savePartitioner(const PartitionerConstPtr&, const boost::filesystem::path&, SerialIo::Format = SerialIo::BINARY);
+
+//TODO: use Partitioner::instanceFromRbaFile() instead if not an engine?
+protected:
+    /** Load a partitioner and an AST from a file.
+     *
+     *  The specified RBA file is opened and read to create a new @ref Partitioner object and associated AST. The @ref
+     *  partition function also understands how to open RBA files. */
+    // instanceFromRbaFile() rename
+    virtual PartitionerPtr loadPartitioner(const boost::filesystem::path&, SerialIo::Format = SerialIo::BINARY);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Command-line parsing
+    //
+    // top-level: parseCommandLine
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
     /** Parse specimen binary containers.
      *
      *  Parses the ELF and PE binary containers to create an abstract syntax tree (AST).  If @p fileNames contains names that
      *  are recognized as raw data or other non-containers then they are skipped over at this stage but processed during the
      *  @ref loadSpecimens stage.
      *
-     *  This method tries to allocate a disassember if none is set and an ISA name is specified in the settings, otherwise the
+     *  This method tries to allocate a disassembler if none is set and an ISA name is specified in the settings, otherwise the
      *  disassembler is chosen later.  It also resets the interpretation to be the return value (see below), and clears the
      *  memory map.
      *
@@ -355,7 +360,7 @@ public:
      *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
      *
      * @{ */
-    virtual SgAsmInterpretation* parseContainers(const std::vector<std::string> &fileNames);
+    virtual SgAsmInterpretation* parseContainers(const std::vector<std::string> &fileNames) = 0;
     SgAsmInterpretation* parseContainers(const std::string &fileName) /*final*/;
     /** @} */
 
@@ -379,7 +384,7 @@ public:
      *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
      *
      * @{ */
-    virtual MemoryMapPtr loadSpecimens(const std::vector<std::string> &fileNames = std::vector<std::string>());
+    virtual MemoryMapPtr loadSpecimens(const std::vector<std::string> &fileNames = std::vector<std::string>()) = 0;
     MemoryMapPtr loadSpecimens(const std::string &fileName) /*final*/;
     /** @} */
 
@@ -402,47 +407,10 @@ public:
      *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
      *
      * @{ */
-    virtual PartitionerPtr partition(const std::vector<std::string> &fileNames = std::vector<std::string>());
+    virtual PartitionerPtr partition(const std::vector<std::string> &fileNames = std::vector<std::string>()) = 0;
     PartitionerPtr partition(const std::string &fileName) /*final*/;
     /** @} */
 
-    /** Obtain an abstract syntax tree.
-     *
-     *  Constructs a new abstract syntax tree (AST) from partitioner information with these steps:
-     *
-     *  @li If the partitioner has not been run yet, then do that now with the same arguments.  The zero-argument version
-     *      invokes the zero-argument @ref partition, which requires that the specimen has already been loaded by @ref
-     *      loadSpecimens.
-     *
-     *  @li Call Modules::buildAst to build the AST.
-     *
-     *  If an <code>std::runtime_exception</code> occurs and the @ref exitOnError property is set, then the exception is caught,
-     *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
-     *
-     * @{ */
-    SgAsmBlock* buildAst(const std::vector<std::string> &fileNames = std::vector<std::string>()) /*final*/;
-    SgAsmBlock* buildAst(const std::string &fileName) /*final*/;
-    /** @} */
-
-    /** Save a partitioner and AST to a file.
-     *
-     *  The specified partitioner and the binary analysis components of the AST are saved into the specified file, which is
-     *  created if it doesn't exist and truncated if it does exist. The name should end with a ".rba" extension. The file can
-     *  be loaded by passing its name to the @ref partition function or by calling @ref loadPartitioner. */
-    virtual void savePartitioner(const PartitionerConstPtr&, const boost::filesystem::path&, SerialIo::Format = SerialIo::BINARY);
-
-    /** Load a partitioner and an AST from a file.
-     *
-     *  The specified RBA file is opened and read to create a new @ref Partitioner object and associated AST. The @ref
-     *  partition function also understands how to open RBA files. */
-    virtual PartitionerPtr loadPartitioner(const boost::filesystem::path&, SerialIo::Format = SerialIo::BINARY);
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Command-line parsing
-    //
-    // top-level: parseCommandLine
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-public:
     /** Command-line switches related to the loader.
      *
      * @{ */
@@ -518,20 +486,14 @@ public:
      *
      *  Certain strings are recognized as special instructions for how to adjust a memory map and are not intended to be passed
      *  to ROSE's @c frontend function.  This predicate returns true for such strings. */
-    virtual bool isNonContainer(const std::string&);
+    virtual bool isNonContainer(const std::string&) = 0;
 
     /** Returns true if containers are parsed.
      *
      *  Specifically, returns true if the engine has a non-null interpretation.  If it has a null interpretation then
      *  @ref parseContainers might have already been called but no binary containers specified, in which case calling it again
      *  with the same file names will have no effect. */
-    virtual bool areContainersParsed() const;
-
-    /** Parses a vxcore specification and initializes memory.
-     *
-     *  Parses a VxWorks core dump in the format defined by Jim Leek and loads the data into ROSE's analysis memory. The argument
-     *  should be everything after the first colon in the URL "vxcore:[MEMORY_ATTRS]:[FILE_ATTRS]:FILE_NAME". */
-    virtual void loadVxCore(const std::string &spec);
+    virtual bool areContainersParsed() const = 0;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Load specimens
@@ -543,40 +505,6 @@ public:
      *
      *  Specifically, returns true if the memory map is non-empty. */
     virtual bool areSpecimensLoaded() const;
-
-    /** Obtain a binary loader.
-     *
-     *  Find a suitable binary loader by one of the following methods (in this order):
-     *
-     *  @li If this engine's @ref binaryLoader property is non-null, then return that loader.
-     *
-     *  @li If a binary container was parsed (@ref areContainersParsed returns true and @ref interpretation is non-null) then
-     *      a loader is chosen based on the interpretation, and configured to map container sections into memory but not
-     *      perform any linking or relocation fixups.
-     *
-     *  @li If a @p hint is supplied, use it.
-     *
-     *  @li Fail by throwing an <code>std::runtime_error</code>.
-     *
-     *  In any case, the @ref binaryLoader property is set to this method's return value.
-     *
-     * @{ */
-    virtual BinaryLoaderPtr obtainLoader(const BinaryLoaderPtr &hint);
-    virtual BinaryLoaderPtr obtainLoader();
-    /** @} */
-
-    /** Loads memory from binary containers.
-     *
-     *  If the engine has an interpretation whose memory map is missing or empty, then the engine obtains a binary loader via
-     *  @ref obtainLoader and invokes its @c load method on the interpretation.  It then copies the interpretation's memory map
-     *  into the engine (if present, or leaves it as is). */
-    virtual void loadContainers(const std::vector<std::string> &fileNames);
-
-    /** Loads memory from non-containers.
-     *
-     *  Processes each non-container string (as determined by @ref isNonContainer) and modifies the memory map according to the
-     *  string. */
-    virtual void loadNonContainers(const std::vector<std::string> &names);
 
     /** Adjust memory map post-loading.
      *
@@ -594,7 +522,6 @@ public:
     MemoryMapPtr memoryMap() const /*final*/;
     virtual void memoryMap(const MemoryMapPtr&);
     /** @} */
-
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Disassembler
@@ -641,6 +568,7 @@ public:
      *  steps. */
     virtual PartitionerPtr createBarePartitioner();
 
+#ifdef DELETE_ME
     /** Create a generic partitioner.
      *
      *  A generic partitioner should work for any architecture but is not fine-tuned for any particular architecture. The
@@ -660,28 +588,28 @@ public:
      *  Partitioner data structures are often more useful and more efficient for analysis than an AST. This method initializes
      *  the engine and a new partitioner with information from the AST. */
     virtual PartitionerPtr createPartitionerFromAst(SgAsmInterpretation*);
+#endif
 
     /** Create partitioner.
      *
-     *  This is the method usually called to create a new partitioner.  The base class just calls @ref
-     *  createTunedPartitioner. */
-    virtual PartitionerPtr createPartitioner();
+     *  This is the method usually called to create a new partitioner. */
+    virtual PartitionerPtr createPartitioner() = 0;
 
     /** Finds interesting things to work on initially.
      *
      *  Seeds the partitioner with addresses and functions where recursive disassembly should begin. */
-    virtual void runPartitionerInit(const PartitionerPtr&);
+    virtual void runPartitionerInit(const PartitionerPtr&) = 0;
 
     /** Runs the recursive part of partioning.
      *
      *  This is the long-running guts of the partitioner. */
-    virtual void runPartitionerRecursive(const PartitionerPtr&);
+    virtual void runPartitionerRecursive(const PartitionerPtr&) = 0;
 
     /** Runs the final parts of partitioning.
      *
      *  This does anything necessary after the main part of partitioning is finished. For instance, it might give names to some
      *  functions that don't have names yet. */
-    virtual void runPartitionerFinal(const PartitionerPtr&);
+    virtual void runPartitionerFinal(const PartitionerPtr&) = 0;
 
     /** Partitions instructions into basic blocks and functions.
      *
@@ -689,7 +617,6 @@ public:
      *  instantiate functions and then uses the specified partitioner to discover basic blocks and use the CFG to assign basic
      *  blocks to functions.  It is often overridden by subclasses. */
     virtual void runPartitioner(const PartitionerPtr&);
-
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner mid-level functions
@@ -714,22 +641,7 @@ public:
      *  Uses the supplied function configuration information to make functions. */
     virtual std::vector<FunctionPtr> makeConfiguredFunctions(const PartitionerPtr&, const Configuration&);
 
-    /** Make functions at specimen entry addresses.
-     *
-     *  A function is created at each specimen entry address for all headers in the specified interpretation and adds them to
-     *  the specified partitioner's CFG/AUM.
-     *
-     *  Returns a list of such functions, some of which may have existed prior to this call. */
-    virtual std::vector<FunctionPtr> makeEntryFunctions(const PartitionerPtr&, SgAsmInterpretation*);
-
-    /** Make functions at error handling addresses.
-     *
-     *  Makes a function at each error handling address in the specified interpratation and inserts the function into the
-     *  specified partitioner's CFG/AUM.
-     *
-     *  Returns the list of such functions, some of which may have existed prior to this call. */
-    virtual std::vector<FunctionPtr> makeErrorHandlingFunctions(const PartitionerPtr&, SgAsmInterpretation*);
-
+#ifdef DELETE_ME
     /** Make functions at import trampolines.
      *
      *  Makes a function at each import trampoline and inserts them into the specified partitioner's CFG/AUM. An import
@@ -741,22 +653,6 @@ public:
      *  Returns a list of such functions, some of which may have existed prior to this call. */
     virtual std::vector<FunctionPtr> makeImportFunctions(const PartitionerPtr&, SgAsmInterpretation*);
 
-    /** Make functions at export addresses.
-     *
-     *  Makes a function at each address that is indicated as being an exported function, and inserts them into the specified
-     *  partitioner's CFG/AUM.
-     *
-     *  Returns a list of such functions, some of which may have existed prior to this call. */
-    virtual std::vector<FunctionPtr> makeExportFunctions(const PartitionerPtr&, SgAsmInterpretation*);
-
-    /** Make functions for symbols.
-     *
-     *  Makes a function for each function symbol in the various symbol tables under the specified interpretation and inserts
-     *  them into the specified partitioner's CFG/AUM.
-     *
-     *  Returns a list of such functions, some of which may have existed prior to this call. */
-    virtual std::vector<FunctionPtr> makeSymbolFunctions(const PartitionerPtr&, SgAsmInterpretation*);
-
     /** Make functions based on specimen container.
      *
      *  Traverses the specified interpretation parsed from, for example, related ELF or PE containers, and make functions at
@@ -765,191 +661,7 @@ public:
      *
      *  Returns a list of such functions, some of which may have existed prior to this call. */
     virtual std::vector<FunctionPtr> makeContainerFunctions(const PartitionerPtr&, SgAsmInterpretation*);
-
-    /** Make functions from an interrupt vector.
-     *
-     *  Reads the interrupt vector and builds functions for its entries.  The functions are inserted into the partitioner's
-     *  CFG/AUM.
-     *
-     *  Returns the list of such functions, some of which may have existed prior to this call. */
-    virtual std::vector<FunctionPtr> makeInterruptVectorFunctions(const PartitionerPtr&, const AddressInterval &vector);
-
-    /** Make a function at each specified address.
-     *
-     *  A function is created at each address and is attached to the partitioner's CFG/AUM. Returns a list of such functions,
-     *  some of which may have existed prior to this call. */
-    virtual std::vector<FunctionPtr> makeUserFunctions(const PartitionerPtr&, const std::vector<rose_addr_t>&);
-
-    /** Discover as many basic blocks as possible.
-     *
-     *  Processes the "undiscovered" work list until the list becomes empty.  This list is the list of basic block placeholders
-     *  for which no attempt has been made to discover instructions.  This method implements a recursive descent disassembler,
-     *  although it does not process the control flow edges in any particular order. Subclasses are expected to override this
-     *  to implement a more directed approach to discovering basic blocks. */
-    virtual void discoverBasicBlocks(const PartitionerPtr&);
-
-    /** Scan read-only data to find function pointers.
-     *
-     *  Scans read-only data beginning at the specified address in order to find pointers to code, and makes a new function at
-     *  when found.  The pointer must be word aligned and located in memory that's mapped read-only (not writable and not
-     *  executable), and it must not point to an unknown instruction or an instruction that overlaps with any instruction
-     *  that's already in the CFG/AUM.
-     *
-     *  Returns a pointer to a newly-allocated function that has not yet been attached to the CFG/AUM, or a null pointer if no
-     *  function was found.  In any case, the startVa is updated so it points to the next read-only address to check.
-     *
-     *  Functions created in this manner have the @c SgAsmFunction::FUNC_SCAN_RO_DATA reason. */
-    virtual FunctionPtr makeNextDataReferencedFunction(const PartitionerConstPtr&, rose_addr_t &startVa /*in,out*/);
-
-    /** Scan instruction ASTs to function pointers.
-     *
-     *  Scans each instruction to find pointers to code and makes a new function when found.  The pointer must be word aligned
-     *  and located in memory that's mapped read-only (not writable and not executable), and it most not point to an unknown
-     *  instruction of an instruction that overlaps with any instruction that's already in the CFG/AUM.
-     *
-     *  This function requires that the partitioner has been initialized to track instruction ASTs as they are added to and
-     *  removed from the CFG/AUM.
-     *
-     *  Returns a pointer to a newly-allocated function that has not yet been attached to the CFG/AUM, or a null pointer if no
-     *  function was found.
-     *
-     *  Functions created in this manner have the @c SgAsmFunction::FUNC_INSN_RO_DATA reason. */
-    virtual FunctionPtr makeNextCodeReferencedFunction(const PartitionerConstPtr&);
-
-    /** Make functions for function call edges.
-     *
-     *  Scans the partitioner's CFG to find edges that are marked as function calls and makes a function at each target address
-     *  that is concrete.  The function is added to the specified partitioner's CFG/AUM.
-     *
-     *  Returns a list of such functions, some of which may have existed prior to this call. */
-    virtual std::vector<FunctionPtr> makeCalledFunctions(const PartitionerPtr&);
-
-    /** Make function at prologue pattern.
-     *
-     *  Scans executable memory starting at the specified address and which is not represented in the CFG/AUM and looks for
-     *  byte patterns and/or instruction patterns that indicate the start of a function.  When a pattern is found a function
-     *  (or multiple functions, depending on the type of matcher) is created and inserted into the specified partitioner's
-     *  CFG/AUM.
-     *
-     *  Patterns are found by calling the @ref Partitioner::nextFunctionPrologue method, which most likely invokes a variety of
-     *  predefined and user-defined callbacks to search for the next pattern.
-     *
-     *  Returns a vector of non-null function pointers pointer for the newly inserted functions, otherwise returns an empty
-     *  vector. If the @p lastSearchedVa is provided, it will be set to the highest address at which a function prologue was
-     *  searched.
-     *
-     * @{ */
-    virtual std::vector<FunctionPtr> makeNextPrologueFunction(const PartitionerPtr&, rose_addr_t startVa);
-    virtual std::vector<FunctionPtr> makeNextPrologueFunction(const PartitionerPtr&, rose_addr_t startVa,
-                                                              rose_addr_t &lastSearchedVa);
-    /** @} */
-
-    /** Make functions from inter-function calls.
-     *
-     *  This method scans the unused executable areas between existing functions to look for additional function calls and
-     *  creates new functions for those calls.  It starts the scan at @p startVa which is updated upon return to be the next
-     *  address that needs to be scanned. The @p startVa is never incremented past the end of the address space (i.e., it never
-     *  wraps back around to zero), so care should be taken to not call this in an infinite loop when the end of the address
-     *  space is reached.
-     *
-     *  The scanner tries to discover new basic blocks in the unused portion of the address space. These basic blocks are not
-     *  allowed to overlap with existing, attached basic blocks, data blocks, or functions since that is an indication that we
-     *  accidentally disassembled non-code.  If the basic block looks like a function call and the target address(es) is not
-     *  pointing into the middle of an existing basic block, data-block, or function then a new function is created at the
-     *  target address. The basic blocks which were scanned are not explicitly attached to the partitioner's CFG since we
-     *  cannot be sure we found their starting address, but they might be later attached by following the control flow from the
-     *  functions we did discover.
-     *
-     *  Returns the new function(s) for the first basic block that satisfied the requirements outlined above, and updates @p
-     *  startVa to be a greater address which is not part of the basic block that was scanned. */
-    virtual std::vector<FunctionPtr>
-    makeFunctionFromInterFunctionCalls(const PartitionerPtr&, rose_addr_t &startVa /*in,out*/);
-
-    /** Discover as many functions as possible.
-     *
-     *  Discover as many functions as possible by discovering as many basic blocks as possible (@ref discoverBasicBlocks), Each
-     *  time we run out of basic blocks to try, we look for another function prologue pattern at the lowest possible address
-     *  and then recursively discover more basic blocks.  When this procedure is exhausted a call to @ref
-     *  attachBlocksToFunctions tries to attach each basic block to a function. */
-    virtual void discoverFunctions(const PartitionerPtr&);
-
-    /** Attach dead code to function.
-     *
-     *  Examines the ghost edges for the basic blocks that belong to the specified function in order to discover basic blocks
-     *  that are not reachable according the CFG, adds placeholders for those basic blocks, and causes the function to own
-     *  those blocks.
-     *
-     *  If @p maxIterations is larger than one then multiple iterations are performed.  Between each iteration @ref
-     *  makeNextBasicBlock is called repeatedly to recursively discover instructions for all pending basic blocks, and then the
-     *  CFG is traversed to add function-reachable basic blocks to the function.  The loop terminates when the maximum number
-     *  of iterations is reached, or when no more dead code can be found within this function.
-     *
-     *  Returns the set of newly discovered addresses for unreachable code.  These are the ghost edge target addresses
-     *  discovered at each iteration of the loop and do not include addresses of basic blocks that are reachable from the ghost
-     *  target blocks. */
-    virtual std::set<rose_addr_t> attachDeadCodeToFunction(const PartitionerPtr&, const FunctionPtr&,
-                                                           size_t maxIterations=size_t(-1));
-
-    /** Attach function padding to function.
-     *
-     *  Examines the memory immediately prior to the specified function's entry address to determine if it is alignment
-     *  padding.  If so, it creates a data block for the padding and adds it to the function.
-     *
-     *  Returns the padding data block, which might have existed prior to this call.  Returns null if the function apparently
-     *  has no padding. */
-    virtual DataBlockPtr attachPaddingToFunction(const PartitionerPtr&, const FunctionPtr&);
-
-    /** Attach padding to all functions.
-     *
-     *  Invokes @ref attachPaddingToFunction for each known function and returns the set of data blocks that were returned by
-     *  the individual calls. */
-    virtual std::vector<DataBlockPtr> attachPaddingToFunctions(const PartitionerPtr&);
-
-    /** Attach  all possible intra-function basic blocks to functions.
-     *
-     *  This is similar to @ref attachSurroundedCodeToFunctions except it calls that method repeatedly until it cannot do
-     *  anything more.  Between each call it also follows the CFG for the newly discovered blocks to discover as many blocks as
-     *  possible, creates more functions by looking for function calls, and attaches additional basic blocks to functions by
-     *  following the CFG for each function.
-     *
-     *  This method is called automatically by @ref Engine::runPartitioner if the @ref findingIntraFunctionCode property is set.
-     *
-     *  Returns the sum from all the calls to @ref attachSurroundedCodeToFunctions. */
-    virtual size_t attachAllSurroundedCodeToFunctions(const PartitionerPtr&);
-
-    /** Attach intra-function basic blocks to functions.
-     *
-     *  This method scans the unused address intervals (those addresses that are not represented by the CFG/AUM). For each
-     *  unused interval, if the interval is immediately surrounded by a single function then a basic block placeholder is
-     *  created at the beginning of the interval and added to the function.
-     *
-     *  Returns the number of new placeholders created. */
-    virtual size_t attachSurroundedCodeToFunctions(const PartitionerPtr&);
-
-    /** Attach basic blocks to functions.
-     *
-     *  Calls @ref Partitioner::discoverFunctionBasicBlocks once for each known function the partitioner's CFG/AUM in a
-     *  sophomoric attempt to assign existing basic blocks to functions. */
-    virtual void attachBlocksToFunctions(const PartitionerPtr&);
-
-    /** Attach dead code to functions.
-     *
-     *  Calls @ref attachDeadCodeToFunction once for each function that exists in the specified partitioner's CFG/AUM, passing
-     *  along @p maxIterations each time.
-     *
-     *  Returns the union of the dead code addresses discovered for each function. */
-    virtual std::set<rose_addr_t> attachDeadCodeToFunctions(const PartitionerPtr&, size_t maxIterations=size_t(-1));
-
-    /** Attach intra-function data to functions.
-     *
-     *  Looks for addresses that are not part of the partitioner's CFG/AUM and which are surrounded immediately below and above
-     *  by the same function and add that address interval as a data block to the surrounding function.  Returns the list of
-     *  such data blocks added.
-     *
-     *  @todo In @ref attachSurroundedDataToFunctions: We can add a single-function version of this if necessary. It was done
-     *  this way because it is more efficient to iterate over all unused addresses and find the surrounding functions than it
-     *  is to iterate over one function's unused addresses at a time. [Robb P. Matzke 2014-09-08] */
-    virtual std::vector<DataBlockPtr> attachSurroundedDataToFunctions(const PartitionerPtr&);
+#endif
 
     /** Runs various analysis passes.
      *
@@ -958,7 +670,6 @@ public:
      *  and blocks for which an analysis was not performed. */
     virtual void updateAnalysisResults(const PartitionerPtr&);
 
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner low-level functions
     //
@@ -966,40 +677,6 @@ public:
     // the way the interact with one another.
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Insert a call-return edge and discover its basic block.
-     *
-     *  Inserts a call-return (@ref E_CALL_RETURN) edge for some function call that lacks such an edge and for which the callee
-     *  may return.  The @p assumeCallReturns parameter determines whether a call-return edge should be added or not for
-     *  callees whose may-return analysis is indeterminate.  If @p assumeCallReturns is true then an indeterminate callee will
-     *  have a call-return edge added; if false then no call-return edge is added; if indeterminate then no call-return edge is
-     *  added at this time but the vertex is saved so it can be reprocessed later.
-     *
-     *  Returns true if a new call-return edge was added to some call, or false if no such edge could be added. A post
-     *  condition for a false return is that the pendingCallReturn list is empty. */
-    virtual bool makeNextCallReturnEdge(const PartitionerPtr&, boost::logic::tribool assumeCallReturns);
-
-    /** Discover basic block at next placeholder.
-     *
-     *  Discovers a basic block at some arbitrary placeholder.  Returns a pointer to the new basic block if a block was
-     *  discovered, or null if no block is discovered.  A postcondition for a null return is that the CFG has no edges coming
-     *  into the "undiscovered" vertex. */
-    virtual BasicBlockPtr makeNextBasicBlockFromPlaceholder(const PartitionerPtr&);
-
-    /** Discover a basic block.
-     *
-     *  Discovers another basic block if possible.  A variety of methods will be used to determine where to discover the next
-     *  basic block:
-     *
-     *  @li Discover a block at a placeholder by calling @ref makeNextBasicBlockFromPlaceholder
-     *
-     *  @li Insert a new call-return (@ref E_CALL_RETURN) edge for a function call that may return.  Insertion of such an
-     *      edge may result in a new placeholder for which this method then discovers a basic block.  The call-return insertion
-     *      happens in two passes: the first pass only adds an edge for a callee whose may-return analysis is positive; the
-     *      second pass relaxes that requirement and inserts an edge for any callee whose may-return is indeterminate (i.e., if
-     *      ROSE can't prove that a callee never returns then assume it may return).
-     *
-     *  Returns the basic block that was discovered, or the null pointer if there are no pending undiscovered blocks. */
-    virtual BasicBlockPtr makeNextBasicBlock(const PartitionerPtr&);
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1009,11 +686,19 @@ public:
     // Used internally by ROSE's ::frontend disassemble instructions to build the AST that goes under each SgAsmInterpretation.
     static void disassembleForRoseFrontend(SgAsmInterpretation*);
 
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Settings and properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Property: Name.
+     *
+     *  The name of the engine comes from the engine factory, will be empty if not a factory.
+     *
+     * @{ */
+    const std::string& name() const /*final*/ {return name_;}
+    void name(std::string n) {name_ = n;}
+    /** @} */
+
     /** Property: All settings.
      *
      *  Returns a reference to the engine settings structures.  Alternatively, some settings also have a corresponding engine
@@ -1022,6 +707,23 @@ public:
      * @{ */
     const Settings& settings() const /*final*/ { return settings_; }
     Settings& settings() /*final*/ { return settings_; }
+    /** @} */
+
+    /** Property: BasicBlock work list.
+     *
+     *  This property holds the list of what blocks to work on next.
+     *
+     * @{ */
+    BasicBlockWorkList::Ptr basicBlockWorkList() const /*final*/ { return basicBlockWorkList_; }
+    void basicBlockWorkList(const BasicBlockWorkList::Ptr &l) /*final*/ { basicBlockWorkList_ = l; }
+
+    /** Property: Instruction AST constants.
+     *
+     *  This property holds constants that are found in instruction ASTs.
+     *
+     * @{ */
+    CodeConstants::Ptr codeFunctionPointers() const /*final*/ { return codeFunctionPointers_; }
+    void codeFunctionPointers(const CodeConstants::Ptr &c) /*final*/ { codeFunctionPointers_ = c; }
     /** @} */
 
     /** Property: Disassembler.
@@ -1054,59 +756,21 @@ public:
     virtual void progress(const ProgressPtr&);
     /** @} */
 
-    /** Property: binary loader.
+    /** Property: specimen.
      *
-     *  The binary loader that maps a binary container's sections into simulated memory and optionally performs dynamic linking
-     *  and relocation fixups.  If none is specified then the engine will choose one based on the container.
-     *
-     * @{ */
-    BinaryLoaderPtr binaryLoader() const /*final*/;
-    virtual void binaryLoader(const BinaryLoaderPtr&);
-    /** @} */
-
-    /** Property: Predicate for finding functions that are thunks.
-     *
-     *  This collective predicate is used when searching for function prologues in order to create new functions. Its purpose
-     *  is to try to match sequences of instructions that look like thunks and then create a function at that address. A suitable
-     *  default list of predicates is created when the engine is initialized, and can either be replaced by a new list, an empty
-     *  list, or the list itself can be adjusted.  The list is consulted only when @ref findingThunks is set.
+     *  The specimen is a list of additional command line arguments. It is often a list of file names.
      *
      * @{ */
-    ThunkPredicatesPtr functionMatcherThunks() const /*final*/;
-    virtual void functionMatcherThunks(const ThunkPredicatesPtr&);
+    std::vector<std::string> specimen() const /*final*/ { return specimen_; }
+    virtual void specimen(const std::vector<std::string> &specimen) {specimen_ = specimen; }
     /** @} */
-
-    /** Property: Predicate for finding thunks at the start of functions.
-     *
-     *  This collective predicate is used when searching for thunks at the beginnings of existing functions in order to split
-     *  those thunk instructions into their own separate function.  A suitable default list of predicates is created when the
-     *  engine is initialized, and can either be replaced by a new list, an empty list, or the list itself can be adjusted.
-     *  The list is consulted only when @ref splittingThunks is set.
-     *
-     * @{ */
-    ThunkPredicatesPtr functionSplittingThunks() const /*final*/;
-    virtual void functionSplittingThunks(const ThunkPredicatesPtr&);
-    /** @} */
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Python API support functions
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#ifdef ROSE_ENABLE_PYTHON_API
-
-    // Similar to frontend, but returns a partitioner rather than an AST since the Python API doesn't yet support ASTs.
-    PartitionerPtr pythonParseVector(boost::python::list &pyArgs, const std::string &purpose, const std::string &description);
-    PartitionerPtr pythonParseSingle(const std::string &specimen, const std::string &purpose, const std::string &description);
-
-#endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Internal stuff
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-private:
-    void init();
-
+protected:
     // Similar to ::frontend but a lot less complicated.
-    SgProject* roseFrontendReplacement(const std::vector<boost::filesystem::path> &fileNames);
+    virtual SgProject* roseFrontendReplacement(const std::vector<boost::filesystem::path> &fileNames) = 0;
 };
 
 } // namespace

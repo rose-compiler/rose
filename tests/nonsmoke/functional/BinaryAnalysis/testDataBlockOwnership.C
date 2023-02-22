@@ -1824,7 +1824,7 @@ main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
     ASSERT_always_require(argc > 1);
     std::vector<std::string> names(argv+1, argv+argc);
-    P2::Engine *engine = P2::Engine::instance();
+    P2::EnginePtr engine = P2::Engine::forge();
     P2::Partitioner::Ptr partitioner = engine->partition(names);
 
     testNoOwner();
@@ -1841,6 +1841,4 @@ main(int argc, char *argv[]) {
     testDelayedFunction(partitioner);
     testPartialOverlaps(partitioner);
     testJiraRose2084(partitioner);
-
-    delete engine;
 }

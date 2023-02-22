@@ -32,7 +32,7 @@ int main() {
     ROSE_INITIALIZE;
 
     // Disassemble a small example specimen
-    P2::Engine *engine = P2::Engine::instance();
+    P2::EnginePtr engine = P2::Engine::forge();
     engine->settings().disassembler.isaName = "i386";
     engine->settings().partitioner.functionStartingVas.push_back(0x10000000);
     P2::Partitioner::Ptr partitioner = engine->partition("data:0x10000000=rx::"      // i386 assembly:
@@ -73,7 +73,6 @@ int main() {
                            "initial saved memory was modified by executing instructions");
     ASSERT_always_require2(memBeforeRunning.str() != memCurrent.str(),
                            "executing instructions should have changed the current memory state");
-    delete engine;
 }
 
 #else

@@ -6,7 +6,6 @@ static const char *description =
 #include <rose.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 
 #include <batSupport.h>
@@ -80,12 +79,10 @@ main(int argc, char *argv[]) {
 
     // Compute the histogram
     for (const boost::filesystem::path &rbaFile: rbaFiles) {
-        P2::Engine *engine = P2::Engine::instance();
-        P2::Partitioner::Ptr partitioner = engine->loadPartitioner(rbaFile, stateFormat);
+        auto partitioner = P2::Partitioner::instanceFromRbaFile(rbaFile, stateFormat);
         MemoryMap::Ptr map = partitioner->memoryMap();
         ASSERT_not_null(map);
         mergeInsnHistogram(histogram, computeInsnHistogram(partitioner->instructionProvider(), map));
-        delete engine;
     }
     
     // Emit results

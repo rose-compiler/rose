@@ -71,7 +71,7 @@ main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
     SymbolicExpression::serializeVariableIds = true;
     Settings settings;
-    P2::Engine *engine = P2::Engine::instance();
+    P2::EnginePtr engine = P2::Engine::forge();
     std::vector<std::string> specimen = parseCommandLine(argc, argv, *engine, settings);
     if (specimen.empty()) {
         mlog[FATAL] <<"no binary specimen specified; see --help\n";
@@ -114,8 +114,6 @@ main(int argc, char *argv[]) {
             //! [documentation guts]
         }
     }
-
-    delete engine;
 }
 
 #endif

@@ -283,7 +283,7 @@ main(int argc, char *argv[]) {
     Diagnostics::initAndRegister(&::mlog, "tool");
 
     // Parse command-line
-    P2::Engine *engine = P2::Engine::instance();
+    P2::EnginePtr engine = P2::Engine::forge();
     Settings settings;
     std::vector<std::string> args = parseCommandLine(argc, argv, *engine, settings);
     if (args.empty())
@@ -359,7 +359,6 @@ main(int argc, char *argv[]) {
         if (insn && !checkOps->checkRegisters(insn))
             std::cerr <<trace.str();
     }
-    delete engine;
 }
 
 #endif

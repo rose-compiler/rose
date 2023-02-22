@@ -283,7 +283,7 @@ int main(int argc, char *argv[]) {
 
     // Get, parse, and load the specimen.
     mlog[INFO] <<"parsing container\n";
-    P2::Engine *engine = P2::Engine::instance();
+    P2::EnginePtr engine = P2::Engine::forge();
     std::vector<std::string> specimenName = engine->parseCommandLine(argc, argv, purpose, description).unreachedArgs();
     MemoryMap::Ptr memory = engine->loadSpecimens(specimenName);
     Disassembler::Base::Ptr decoder = engine->obtainDisassembler();
@@ -361,8 +361,6 @@ int main(int argc, char *argv[]) {
     mlog[INFO] <<"generating output\n";
     printInsnsFromBoth(pp, p2);
 #endif
-
-    delete engine;
 }
 
 #else

@@ -49,9 +49,9 @@ struct Settings {
     Settings(): outputFileName("-"), stateFormat(SerialIo::BINARY), doRemap(false), skipOutput(false) {}
 };
 
-// Parse command-line and return arguments that represent the specimen.
-std::vector<std::string>
-parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings) {
+// Build a command line parser without running it
+Sawyer::CommandLine::Parser
+buildCommandLineParser(Settings &settings) {
     using namespace Sawyer::CommandLine;
 
     SwitchGroup output("Output switches");
@@ -80,29 +80,12 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 
     Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
     parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{specimen}");
-    parser.doc("Specimens", engine.specimenNameDocumentation());
+    parser.doc("Specimens", P2::Engine::specimenNameDocumentation());
     parser.errorStream(mlog[FATAL]);
-    parser.with(engine.engineSwitches());
-    parser.with(engine.loaderSwitches());
-    parser.with(engine.disassemblerSwitches());
-    parser.with(engine.partitionerSwitches());
     parser.with(output);
     parser.with(tool);
 
-    std::vector<std::string> specimen = parser.parse(argc, argv).apply().unreachedArgs();
-
-    // Check some informational switches before we die for lack of specimen.
-    if (engine.settings().disassembler.isaName == "list") {
-        for (const std::string &name: Disassembler::isaNames())
-	    std::cout <<name <<"\n";
-        exit(0);
-    }
-
-    if (specimen.empty()) {
-        mlog[FATAL] <<"no binary specimen specified; see --help\n";
-        exit(1);
-    }
-    return specimen;
+    return parser;
 }
 
 // Rewrites the global CFG as the program is disassembled.
@@ -162,14 +145,32 @@ main(int argc, char *argv[]) {
     Bat::checkRoseVersionNumber(MINIMUM_ROSE_LIBRARY_VERSION, mlog[FATAL]);
     Bat::registerSelfTests();
 
+    // Build command line parser (without any knowledge of engine settings)
     Settings settings;
-    P2::Engine *engine = P2::Engine::instance();
-    std::vector<std::string> specimen = parseCommandLine(argc, argv, *engine, settings);
+    auto parser = buildCommandLineParser(settings);
+
+    P2::Engine::EnginePtr engine = P2::Engine::forge(argc, argv, parser/*inout*/);
+
+    // Apply all settings added by the engine to obtain a binary specimen
+    std::vector<std::string> specimen = parser.parse(argc, argv).apply().unreachedArgs();
+
+    // Check some informational switches before we die for lack of specimen.
+    if (engine->settings().disassembler.isaName == "list") {
+        for (const std::string &name: Disassembler::isaNames())
+            std::cout <<name <<"\n";
+        exit(0);
+    }
+    if (specimen.empty()) {
+        mlog[FATAL] <<"no binary specimen specified; see --help\n";
+        exit(1);
+    }
+
     Bat::checkRbaOutput(settings.outputFileName, mlog);
 
     MemoryMap::Ptr map = engine->loadSpecimens(specimen);
     map->dump(mlog[INFO]);
 
+    //TODO: should be skipped for JVM (throw error if jvm)
     if (settings.doRemap) {
         P2::Engine::Settings settings = engine->settings();
         settings.partitioner.doingPostAnalysis = false;
@@ -205,6 +206,4 @@ main(int argc, char *argv[]) {
         partitioner->basicBlockDropSemantics();
         engine->savePartitioner(partitioner, settings.outputFileName, settings.stateFormat);
     }
-
-    delete engine;
 }

@@ -50,7 +50,7 @@ main(int argc, char *argv[]) {
     std::string purpose = "demonstrate inter-function disassembly";
     std::string description =
         "Disassembles and partitions the specimen(s), then tries to disassemble things between the functions.";
-    P2::Engine *engine = P2::Engine::instance();
+    P2::EnginePtr engine = P2::Engine::forge();
     std::vector<std::string> specimens = engine->parseCommandLine(argc, argv, purpose, description).unreachedArgs();
     P2::Partitioner::Ptr partitioner = engine->partition(specimens);
 
@@ -127,8 +127,6 @@ main(int argc, char *argv[]) {
     unparser.add_control_flow_graph(ControlFlow().build_block_cfg_from_ast<ControlFlow::BlockGraph>(gblock));
     unparser.staticDataDisassembler.init(engine->disassembler());
     unparser.unparse(std::cout, gblock);
-
-    delete engine;
 }
 
 #endif
