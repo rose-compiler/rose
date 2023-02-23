@@ -574,57 +574,12 @@ public:
      *  string. */
     virtual void loadNonContainers(const std::vector<std::string> &names);
 
-
-#ifdef NOT_DEPRECATED
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Disassembler
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-public:
-    /** Obtain a disassembler.
-     *
-     *  Chooses a disassembler based on one of the following (in this order):
-     *
-     *  @li If this engine's @ref disassembler property is non-null, then return that disassembler.
-     *
-     *  @li If this engine's ISA name setting is non-empty, then use it to obtain a disassembler.
-     *
-     *  @li If a binary container was parsed (@ref areContainersParsed returns true and @ref interpretation is non-null) then
-     *      try to obtain a disassembler based on the interpretation.
-     *
-     *  @li If a @p hint is supplied, then use it.
-     *
-     *  @li If the engine @ref doDisassemble property is false, return no disassembler (nullptr).
-     *
-     *  @li Fail by throwing an <code>std::runtime_error</code>.
-     *
-     *  In any case, the @ref disassembler property is set to this method's return value. */
-    virtual Disassembler::BasePtr obtainDisassembler();
-    virtual Disassembler::BasePtr obtainDisassembler(const Disassembler::BasePtr &hint);
-    /** @} */
-#endif
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner high-level functions
     //
     // top-level: partition
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-#ifdef NOT_MOVED_TO_ENGINE
-    /** Check that we have everything necessary to create a partitioner. */
-    virtual void checkCreatePartitionerPrerequisites() const;
-#endif
-
-#ifdef NOT_MOVED_TO_ENGINE
-    /** Create a bare partitioner.
-     *
-     *  A bare partitioner, as far as the engine is concerned, is one that has characteristics that are common across all
-     *  architectures but which is missing all architecture-specific functionality.  Using the partitioner's own constructor is
-     *  not quite the same--that would produce an even more bare partitioner!  The engine must have @ref disassembler (if @ref
-     *  doDisassemble is set) and @ref memoryMap properties already either assigned explicitly or as the result of earlier
-     *  steps. */
-    virtual PartitionerPtr createBarePartitioner();
-#endif
-
     /** Create a generic partitioner.
      *
      *  A generic partitioner should work for any architecture but is not fine-tuned for any particular architecture. The

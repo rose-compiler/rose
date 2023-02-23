@@ -568,28 +568,6 @@ public:
      *  steps. */
     virtual PartitionerPtr createBarePartitioner();
 
-#ifdef DELETE_ME
-    /** Create a generic partitioner.
-     *
-     *  A generic partitioner should work for any architecture but is not fine-tuned for any particular architecture. The
-     *  engine must have @ref disassembler (if @ref doDisassemble property is set) and @ref memoryMap properties assigned
-     *  already, either explicitly or as the result of earlier steps. */
-    virtual PartitionerPtr createGenericPartitioner();
-
-    /** Create a tuned partitioner.
-     *
-     *  Returns a partitioner that is tuned to operate on a specific instruction set architecture. The engine must have @ref
-     *  disassembler (if @ref doDisassemble property is set) and @ref memoryMap properties assigned already, either explicitly
-     *  or as the result of earlier steps. */
-    virtual PartitionerPtr createTunedPartitioner();
-
-    /** Create a partitioner from an AST.
-     *
-     *  Partitioner data structures are often more useful and more efficient for analysis than an AST. This method initializes
-     *  the engine and a new partitioner with information from the AST. */
-    virtual PartitionerPtr createPartitionerFromAst(SgAsmInterpretation*);
-#endif
-
     /** Create partitioner.
      *
      *  This is the method usually called to create a new partitioner. */
@@ -640,28 +618,6 @@ public:
      *
      *  Uses the supplied function configuration information to make functions. */
     virtual std::vector<FunctionPtr> makeConfiguredFunctions(const PartitionerPtr&, const Configuration&);
-
-#ifdef DELETE_ME
-    /** Make functions at import trampolines.
-     *
-     *  Makes a function at each import trampoline and inserts them into the specified partitioner's CFG/AUM. An import
-     *  trampoline is a thunk that branches to a dynamically loaded/linked function. Since ROSE does not necessarily load/link
-     *  dynamic functions, they often don't appear in the executable.  Therefore, this function can be called to create
-     *  functions from the trampolines and give them the same name as the function they would have called had the link step
-     *  been performed.
-     *
-     *  Returns a list of such functions, some of which may have existed prior to this call. */
-    virtual std::vector<FunctionPtr> makeImportFunctions(const PartitionerPtr&, SgAsmInterpretation*);
-
-    /** Make functions based on specimen container.
-     *
-     *  Traverses the specified interpretation parsed from, for example, related ELF or PE containers, and make functions at
-     *  certain addresses that correspond to specimen entry points, imports and exports, symbol tables, etc.  This method only
-     *  calls many of the other "make*Functions" methods and accumulates their results.
-     *
-     *  Returns a list of such functions, some of which may have existed prior to this call. */
-    virtual std::vector<FunctionPtr> makeContainerFunctions(const PartitionerPtr&, SgAsmInterpretation*);
-#endif
 
     /** Runs various analysis passes.
      *
