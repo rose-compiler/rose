@@ -2218,7 +2218,7 @@ namespace
 
     if ((bldr == &argTypeAttr) && (args.get_expressions().size() == 0))
     {
-      logError() << ident << " with zero arguments." << std::endl;
+      logFatal() << ident << " with zero arguments." << std::endl;
       ADA_ASSERT(false);
     }
 
@@ -2434,7 +2434,7 @@ mkAdaIntegerLiteral(const char* textrep)
 
   if (!res)
   {
-    logError() << "Unable to represent " << textrep << " within the bounds of long long int"
+    logFatal() << "Unable to represent " << textrep << " within the bounds of long long int"
                << std::endl;
     ADA_ASSERT(false);
   }
