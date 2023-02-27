@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/Variables.h>
 
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
+#include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
@@ -16,10 +17,12 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/integer_traits.hpp>
+#include <regex>
 
 using namespace Sawyer::Message::Common;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 namespace S2 = Rose::BinaryAnalysis::InstructionSemantics;
+namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -874,10 +877,10 @@ VariableFinder::referencedFrameArea(const Partitioner2::Partitioner &partitioner
 std::set<int64_t>
 VariableFinder::findFrameOffsets(const StackFrame &frame, const P2::Partitioner::ConstPtr &partitioner, SgAsmInstruction *insn) {
     ASSERT_not_null(partitioner);
-    const RegisterDescriptor REG_SP = partitioner->instructionProvider().stackPointerRegister();
 
 #ifdef ROSE_ENABLE_ASM_AARCH32
     // Look for ARM AArch32 "sub DEST_REG, fp, N" where DEST_REG is not the stack pointer register
+    const RegisterDescriptor REG_SP = partitioner->instructionProvider().stackPointerRegister();
     if (isSgAsmAarch32Instruction(insn) &&
         isSgAsmAarch32Instruction(insn)->get_kind() == Aarch32InstructionKind::ARM_INS_SUB &&
         insn->nOperands() == 3 &&
@@ -1226,26 +1229,180 @@ VariableFinder::findAddressConstants(const S2::BaseSemantics::MemoryCellState::P
     return retval;
 }
 
-AddressToAddresses
-VariableFinder::findGlobalVariableVas(const P2::Partitioner::ConstPtr &partitioner) {
+class FollowNamedEdges: public P2::DataFlow::InterproceduralPredicate {
+    std::regex functionNameRe;
+
+public:
+    explicit FollowNamedEdges(const std::string &re)
+        : functionNameRe(re) {}
+
+public:
+    virtual bool operator()(const P2::ControlFlowGraph &cfg, const P2::ControlFlowGraph::ConstEdgeIterator &edge, size_t depth) {
+        const P2::FunctionSet &functions = edge->target()->value().owningFunctions();
+        for (const P2::Function::Ptr &function: functions.values()) {
+            const std::string name = function->name();
+            if (std::regex_match(name, functionNameRe))
+                return true;
+        }
+        return false;
+    }
+};
+
+bool
+VariableFinder::regionContainsInstructions(const P2::Partitioner::ConstPtr &partitioner, const AddressInterval &region) {
     ASSERT_not_null(partitioner);
+    return !partitioner->instructionsOverlapping(region).empty();
+}
+
+bool
+VariableFinder::regionIsFullyMapped(const P2::Partitioner::ConstPtr &partitioner, const AddressInterval &region) {
+    ASSERT_not_null(partitioner);
+    if (MemoryMap::Ptr map = partitioner->memoryMap()) {
+        return !map->findFreeSpace(1, 1, region);
+    } else {
+        return false;
+    }
+}
+
+bool
+VariableFinder::regionIsFullyReadWrite(const P2::Partitioner::ConstPtr &partitioner, const AddressInterval &region) {
+    ASSERT_not_null(partitioner);
+    if (MemoryMap::Ptr map = partitioner->memoryMap()) {
+        AddressInterval where = map->at(region).require(MemoryMap::READ_WRITE).available();
+        return (where & region) == region;
+    } else {
+        return false;
+    }
+}
+
+AddressToAddresses
+VariableFinder::findGlobalVariableVasMethod1(const P2::Partitioner::ConstPtr &partitioner) {
+    ASSERT_not_null(partitioner);
+    AddressToAddresses retval;
     Sawyer::Message::Stream debug(mlog[DEBUG]);
-    Sawyer::Message::Stream info(mlog[INFO]);
-    info <<"Finding global variable addresses";
-    Sawyer::Stopwatch timer;
+    SAWYER_MESG(debug) <<"looking for global variable addresses (method 1: data-flow)\n";
+
+    // For x86 ELF executables, global variables live in a particular section, such as .bss. The compiler typically generates
+    // code that computes the global variable address as an offset from the function's own address. It does this by calling
+    // __x86.get_pc_thunk.ax (or similar) which returns the address of the instruction following the call, and then adding a
+    // constant to the returned value. This computes the starting address of the section (base address), to which additional
+    // offsets are added to get to the various global variables.  Since the base address is computed in one basic block and
+    // used in subsequent basic blocks, we use a data flow analysis to propagate the base address to the other blocks.
+    using Df = P2::DataFlow::Engine;
+    using Cfg = Df::Cfg;
+
+    // FIXME[Robb Matzke 2023-02-14]: This could be parallel
+    for (const P2::Function::Ptr &function: partitioner->functions()) {
+        SAWYER_MESG(debug) <<"  analyzing " <<function->printableName() <<"\n";
+
+        // Create the data-flow CFG
+        P2::ControlFlowGraph::ConstVertexIterator cfgRoot = partitioner->findPlaceholder(function->address());
+        ASSERT_require(cfgRoot != partitioner->cfg().vertices().end());
+        FollowNamedEdges predicate(".+\\.get_pc_thunk\\..+");
+        Cfg cfg = P2::DataFlow::buildDfCfg(partitioner, partitioner->cfg(), cfgRoot, predicate);
+
+        // Create the data-flow transfer and merge functors
+        BS::Dispatcher::Ptr cpu = partitioner->newDispatcher(partitioner->newOperators());
+        Df::TransferFunction xfer(cpu);
+        xfer.ignoringSemanticFailures(true);
+        Df::MergeFunction merger(cpu);
+
+        // Create the initial state, and cause it to use a simple merge function that doesn't account for aliasing
+        BS::State::Ptr initialState = xfer.initialState();
+        initialState->memoryState()->merger(BS::Merger::instance());
+        initialState->memoryState()->merger()->memoryAddressesMayAlias(false);
+
+        // Run the dataflow with a low number of iterations
+        Df df(cfg, xfer, merger);
+        df.insertStartingVertex(0, initialState);
+
+        for (size_t i = 0; i < cfg.nVertices() * 3 /*arbitrary*/; ++i) {
+            if (!df.runOneIteration())
+                break;
+        }
+
+        // Find all constants that appear in memory address expressions and organize them according to what instruction(s) wrote to
+        // that address. We could organize by memory reads also, but alas, the memory state does not track readers--only writers.
+        using Map = Sawyer::Container::IntervalSetMap<AddressInterval, Sawyer::Container::Set<rose_addr_t>>;
+        struct Accumulator: BS::MemoryCell::Visitor {
+            VariableFinder &variableFinder;
+            Sawyer::Message::Stream &debug;
+            Map map;
+            Accumulator(VariableFinder &variableFinder, Sawyer::Message::Stream &debug)
+                : variableFinder(variableFinder), debug(debug) {}
+            void operator()(BS::MemoryCell::Ptr &cell) override {
+                SymbolicExpression::Ptr address = S2::SymbolicSemantics::SValue::promote(cell->address())->get_expression();
+                if (debug) {
+                    debug <<"      memory address: " <<*address <<"\n"
+                          <<"        writers = {";
+                    for (rose_addr_t va: cell->getWriters().values())
+                        debug <<" " <<StringUtility::addrToString(va);
+                    debug <<" }\n";
+                }
+                std::set<rose_addr_t> constants = variableFinder.findConstants(address);
+                for (rose_addr_t c: constants) {
+                    SAWYER_MESG(debug) <<"        constant = " <<StringUtility::addrToString(c) <<"\n";
+                    map.insert(c, cell->getWriters());
+                }
+            }
+        };
+
+        Accumulator accumulator(*this, debug);
+        for (size_t i = 0; i < cfg.nVertices(); ++i) {
+            SAWYER_MESG(debug) <<"    final state for vertex " <<i <<": " <<cfg.findVertex(i)->value().toString() <<"\n";
+            if (auto state = df.getFinalState(i)) {
+                SAWYER_MESG(debug) <<(*state+"      ") <<"\n";
+                auto mem = BS::MemoryCellState::promote(state->memoryState());
+                mem->traverse(accumulator);
+            }
+        }
+
+        SAWYER_MESG(debug) <<"  summary for " <<function->printableName() <<":\n";
+        for (const auto &node: accumulator.map.nodes()) {
+            if (debug) {
+                debug <<"    variable va: " <<StringUtility::addrToString(node.key()) <<"; insns:";
+                for (rose_addr_t va: node.value().values())
+                    debug <<" " <<StringUtility::addrToString(va);
+                debug <<"\n";
+            }
+
+            if (regionContainsInstructions(partitioner, node.key())) {
+                SAWYER_MESG(debug) <<"      skipped because region overlaps with instructions\n";
+                continue;
+            }
+            if (!regionIsFullyMapped(partitioner, node.key())) {
+                SAWYER_MESG(debug) <<"      skipped because sub-region is not fully mapped\n";
+                continue;
+            }
+            if (!regionIsFullyReadWrite(partitioner, node.key())) {
+                SAWYER_MESG(debug) <<"      skipped because sub-region is not fully read+write\n";
+                continue;
+            }
+
+            retval[node.key().least()].insert(node.value());
+        }
+    }
+
+    return retval;
+}
+
+AddressToAddresses
+VariableFinder::findGlobalVariableVasMethod2(const P2::Partitioner::ConstPtr &partitioner) {
+    ASSERT_not_null(partitioner);
+    AddressToAddresses retval;
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    SAWYER_MESG(debug) <<"looking for global variable addresses (method 2: insn memory address constants)\n";
 
     S2::SymbolicSemantics::RiscOperators::Ptr ops =
         S2::SymbolicSemantics::RiscOperators::instanceFromRegisters(partitioner->instructionProvider().registerDictionary());
     S2::BaseSemantics::Dispatcher::Ptr cpu = partitioner->newDispatcher(ops);
     ASSERT_not_null(cpu);
-    AddressToAddresses retval;
 
     // FIXME[Robb Matzke 2019-12-06]: This could be parallel
     for (const P2::ControlFlowGraph::Vertex &vertex: partitioner->cfg().vertices()) {
         if (vertex.value().type() == P2::V_BASIC_BLOCK) {
             for (SgAsmInstruction *insn: vertex.value().bblock()->instructions()) {
                 SAWYER_MESG(debug) <<"  " <<insn->toString() <<"\n";
-#if 1 // This method uses instruction semantics and then looks at the resulting memory state
                 ops->currentState()->clear();
                 try {
                     cpu->processInstruction(insn);
@@ -1257,18 +1414,17 @@ VariableFinder::findGlobalVariableVas(const P2::Partitioner::ConstPtr &partition
                 S2::BaseSemantics::MemoryCellState::Ptr mem =
                     S2::BaseSemantics::MemoryCellState::promote(cpu->currentState()->memoryState());
                 std::set<rose_addr_t> constants = findAddressConstants(mem);
-#else // This method just looks for constants within the instructions themselves (i.e., immediates)
-                std::set<rose_addr_t> constants = findConstants(insn);
-#endif
 
-                // Compute the contiguous regions formed by those constants. E.g., an instruction that reads four bytes of
-                // memory might have four consecutive constants.
+                // Compute the contiguous regions formed by those constants. E.g., an instruction that reads four bytes of memory
+                // might have four consecutive constants.
                 AddressIntervalSet regions;
                 for (rose_addr_t c: constants) {
-                    if (partitioner->instructionExists(c))
+                    if (regionContainsInstructions(partitioner, c))
                         continue;                       // not a variable pointer if it points to an instruction
-                    if (!partitioner->memoryMap()->at(c).exists())
+                    if (!regionIsFullyMapped(partitioner, c))
                         continue;                       // global variables always have storage
+                    if (!regionIsFullyReadWrite(partitioner, c))
+                        continue;
 
                     regions.insert(c);
                 }
@@ -1281,6 +1437,64 @@ VariableFinder::findGlobalVariableVas(const P2::Partitioner::ConstPtr &partition
             }
         }
     }
+    return retval;
+}
+
+AddressToAddresses
+VariableFinder::findGlobalVariableVasMethod3(const P2::Partitioner::ConstPtr &partitioner) {
+    ASSERT_not_null(partitioner);
+    AddressToAddresses retval;
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    SAWYER_MESG(debug) <<"looking for global variable addresses (method 2: insn immediate values)\n";
+
+    for (const P2::ControlFlowGraph::Vertex &vertex: partitioner->cfg().vertices()) {
+        if (vertex.value().type() == P2::V_BASIC_BLOCK) {
+            for (SgAsmInstruction *insn: vertex.value().bblock()->instructions()) {
+                SAWYER_MESG(debug) <<"  " <<insn->toString() <<"\n";
+
+                // Find constants in the instruction AST
+                std::set<rose_addr_t> constants = findConstants(insn);
+                AddressIntervalSet regions;
+                for (rose_addr_t c: constants) {
+                    if (regionContainsInstructions(partitioner, c))
+                        continue;                       // not a variable pointer if it points to an instruction
+                    if (!regionIsFullyMapped(partitioner, c))
+                        continue;                       // global variables always have storage
+                    if (!regionIsFullyReadWrite(partitioner, c))
+                        continue;
+                    regions.insert(c);
+                }
+
+                // Save only the lowest constant in each contiguous region.
+                for (const AddressInterval &interval: regions.intervals()) {
+                    SAWYER_MESG(debug) <<"      " <<StringUtility::addrToString(interval.least()) <<"\n";
+                    retval[interval.least()].insert(insn->get_address());
+                }
+            }
+        }
+    }
+    return retval;
+}
+
+void
+VariableFinder::merge(AddressToAddresses &result, const AddressToAddresses &src) {
+    for (const auto &node: src)
+        result[node.first].insert(node.second);
+}
+
+AddressToAddresses
+VariableFinder::findGlobalVariableVas(const P2::Partitioner::ConstPtr &partitioner) {
+    ASSERT_not_null(partitioner);
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    Sawyer::Message::Stream info(mlog[INFO]);
+    info <<"Finding global variable addresses";
+    Sawyer::Stopwatch timer;
+
+    AddressToAddresses retval;
+    merge(retval, findGlobalVariableVasMethod1(partitioner));
+    merge(retval, findGlobalVariableVasMethod2(partitioner));
+    merge(retval, findGlobalVariableVasMethod3(partitioner));
+
     info <<"; took " <<timer <<"\n";
     return retval;
 }
@@ -1306,7 +1520,7 @@ VariableFinder::findGlobalVariables(const P2::Partitioner::ConstPtr &partitioner
 
         // The variable will not extend beyond one segment of the memory map
         MemoryMap::ConstNodeIterator node = partitioner->memoryMap()->at(iter->first).findNode();
-        ASSERT_require(node != partitioner->memoryMap()->nodes().end());
+        ASSERT_require2(node != partitioner->memoryMap()->nodes().end(), StringUtility::addrToString(iter->first));
         lastVa = std::min(lastVa, node->key().greatest());
 
         gvars.insert(AddressInterval::hull(iter->first, lastVa), iter->first);
