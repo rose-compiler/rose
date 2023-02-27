@@ -620,6 +620,34 @@ public:
      *  If the frame's upper address is known, then any boundary above that address is removed from the list. */
     void removeOutliers(const StackFrame&, const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&,
                         StackVariable::Boundaries &sortedBoundaries /*in,out*/);
+
+private:
+    // Searches for global variables using a per-function data-flow analysis and distinguishing between global variable
+    // addresses based on which instructions wrote to those addresses. The data-flow is inter-procedural only for calls to
+    // certain functions (such as the x86 get_pc_thunk variety of functions).
+    //
+    // The return value is a list of global variable addresses and the instructions at which each global variable address
+    // was detected.
+    AddressToAddresses findGlobalVariableVasMethod1(const Partitioner2::PartitionerConstPtr&);
+
+    // Searches for global variables by running each instruction individually in symbolic semantics and then searching
+    // the memory state addresses. All constants found in address expressions are gathered together.
+    //
+    // The return value is a list of global variable addresses and the instructions at which each global address was detected.
+    AddressToAddresses findGlobalVariableVasMethod2(const Partitioner2::PartitionerConstPtr&);
+
+    // Searches for global variables by looking for constants in instruction ASTs.
+    //
+    // The retun value is the list of constants and the instructions in which each constant appeared.
+    AddressToAddresses findGlobalVariableVasMethod3(const Partitioner2::PartitionerConstPtr&);
+
+    // Merge one set of addresses and their defining instructions into another.
+    static void merge(AddressToAddresses&, const AddressToAddresses&);
+
+    // Memory properties
+    static bool regionContainsInstructions(const Partitioner2::PartitionerConstPtr&, const AddressInterval&);
+    static bool regionIsFullyMapped(const Partitioner2::PartitionerConstPtr&, const AddressInterval&);
+    static bool regionIsFullyReadWrite(const Partitioner2::PartitionerConstPtr&, const AddressInterval&);
 };
 
 } // namespace
