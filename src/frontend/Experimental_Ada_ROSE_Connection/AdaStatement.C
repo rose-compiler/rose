@@ -113,7 +113,7 @@ namespace
       return queryScopeOfID(expr.Selector, ctx);
 
     if (expr.Expression_Kind != An_Identifier)
-      logError() << "unexpected identifier" << expr.Expression_Kind;
+      logError() << "unexpected identifier: " << expr.Expression_Kind;
 
     ADA_ASSERT (expr.Expression_Kind == An_Identifier);
     logKind("An_Identifier", elem.ID);
@@ -122,7 +122,7 @@ namespace
 
     if (dcl == nullptr)
     {
-      logError() << "Unable to find scope/declaration for " << expr.Name_Image
+      logFatal() << "Unable to find scope/declaration for " << expr.Name_Image
                  << std::endl;
       ADA_ASSERT(false);
     }
@@ -616,7 +616,7 @@ namespace
 
     // if nondefdcl is set, it must be a SgClassDeclaration
     if (nondefdcl)
-      logError() << name << " " << typeid(*nondefdcl).name() << std::endl;
+      logFlaw() << name << " " << typeid(*nondefdcl).name() << std::endl;
 
     ADA_ASSERT (!nondefdcl);
     return mkRecordDecl(name, def, scope);
@@ -2451,8 +2451,8 @@ namespace
       logKind("A_Formal_Type_Declaration", complElem.ID);
     else
     {
-      logError() << "unexpected decl kind [queryDefinitionData]: " << complDecl.Declaration_Kind
-                    << std::endl;
+      logFlaw() << "unexpected decl kind [queryDefinitionData]: " << complDecl.Declaration_Kind
+                << std::endl;
     }
 
     Element_Struct&     typeElem = retrieveAs(elemMap(), complDecl.Type_Declaration_View);
@@ -2481,8 +2481,8 @@ namespace
         break;
 
       default:
-        logError() << "unexpected def kind [queryDefinitionData]: " << typeDefn.Definition_Kind
-                      << std::endl;
+        logFatal() << "unexpected def kind [queryDefinitionData]: " << typeDefn.Definition_Kind
+                   << std::endl;
         ADA_ASSERT(false);
     }
 
@@ -2582,7 +2582,7 @@ namespace
 
         if (fn == nullptr)
         {
-          logError() << "unable to find function with Asis element ID " << elem.ID << std::endl;
+          logFlaw() << "unable to find function with Asis element ID " << elem.ID << std::endl;
           return;
         }
 
@@ -2591,7 +2591,7 @@ namespace
 
         if (fn == nullptr)
         {
-          logError() << "unable to find (derived) function symbol for " << fn->get_name() << std::endl;
+          logFlaw() << "unable to find (derived) function symbol for " << fn->get_name() << std::endl;
           return;
         }
 
@@ -2732,7 +2732,7 @@ namespace
 
     if (basedecl == nullptr)
     {
-      logError() << typeid(*baseTy).name() << std::endl;
+      logFlaw() << "basedecl == nullptr: " << typeid(*baseTy).name() << std::endl;
       ASSERT_not_null(basedecl);
     }
 
@@ -4830,17 +4830,17 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         Expression_Struct&        baseexpr = baseelem.The_Union.Expression;
         SgDeclarationStatement*   basedecl = findFirst(asisDecls(), baseexpr.Corresponding_Name_Declaration, baseexpr.Corresponding_Name_Definition);
 
-        if (true && basedecl == nullptr)
+        if (false && basedecl == nullptr)
         {
           // Integer_IO: 24138136 and 24551081 not found
-          logError() << basename.ident << ": "
-                     << baseexpr.Corresponding_Name_Declaration << " and "
-                     << baseexpr.Corresponding_Name_Definition << " not found"
-                     << std::endl;
+          logFlaw() << basename.ident << ": "
+                    << baseexpr.Corresponding_Name_Declaration << " and "
+                    << baseexpr.Corresponding_Name_Definition << " not found"
+                    << std::endl;
 
-          logError() << elemMap().at(baseexpr.Corresponding_Name_Declaration)->Element_Kind
-                     << " / " << elemMap().at(baseexpr.Corresponding_Name_Definition)->Element_Kind
-                     << std::endl;
+          logFlaw() << elemMap().at(baseexpr.Corresponding_Name_Declaration)->Element_Kind
+                    << " / " << elemMap().at(baseexpr.Corresponding_Name_Definition)->Element_Kind
+                    << std::endl;
         }
 
         // PP (2/2/22): the base decl can also be a renamed generic declaration

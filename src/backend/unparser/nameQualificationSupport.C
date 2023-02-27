@@ -1288,7 +1288,12 @@ namespace
 
         // set the scope to the logical parent before type qualification of
         //   parameter and return types are computed.
-        res.set_currentScope(n.get_scope());
+        //~ res.set_currentScope(n.get_scope());
+        SgScopeStatement* fnscope = n.get_definition();
+
+        if (fnscope == nullptr) fnscope = n.get_functionParameterScope();
+
+        res.set_currentScope(fnscope);
 
         // parameters are handled by the traversal, so just qualify
         //   the return type, if this is a function.

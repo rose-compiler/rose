@@ -25,6 +25,8 @@
 namespace Ada_ROSE_Translation
 {
 
+static constexpr bool LOG_FLAW_AS_ERROR = true;
+
 //
 // logging
 
@@ -488,6 +490,15 @@ namespace
   void logInit() {}
 #endif /* USE_SIMPLE_STD_LOGGER */
 
+  inline
+  auto logFlaw() -> decltype(Ada_ROSE_Translation::mlog[Sawyer::Message::ERROR])
+  {
+    decltype(Ada_ROSE_Translation::mlog[Sawyer::Message::ERROR]) res = (LOG_FLAW_AS_ERROR ? logError() : logWarn());
+
+    res << " *FLAW* ";
+    return res;
+  }
+
   /// records a node (value) \ref val with key \ref key in map \ref m.
   /// \param m       the map
   /// \param key     the recorded key
@@ -500,9 +511,6 @@ namespace
   void
   recordNode(MapT& m, typename MapT::key_type key, ValT& val, bool replace = false)
   {
-    //~ if (key == 17172136 || key == 17585081)
-      //~ logError() << "found " << key << std::endl;
-
     //~ ADA_ASSERT(replace || m.find(key) == m.end());
     if (!(replace || m.find(key) == m.end()))
     {

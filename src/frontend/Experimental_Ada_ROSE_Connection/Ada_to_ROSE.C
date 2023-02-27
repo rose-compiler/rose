@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <deque>
 #include <boost/range/adaptor/reversed.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include "Rose/Diagnostics.h"
 #include "rose_config.h"
@@ -1203,20 +1204,20 @@ namespace
                                      );
       if (false)
       {
-        logError() << res << '\n'
-                   << " * a " << (argRoot.typerep() ? typeid(*argRoot.typerep()).name() : std::string{})
-                   << " " << argRoot.typerep() << " / "
-                   << typeid(arg).name() << " " << &arg << '\n'
-                   << " * p " << (prmRoot.typerep() ? typeid(*prmRoot.typerep()).name() : std::string{})
-                   << " " << prmRoot.typerep() << " / "
-                   << typeid(prm).name() << " " << &prm << '\n'
-                   << std::flush;
+        logFlaw() << res << '\n'
+                  << " * a " << (argRoot.typerep() ? typeid(*argRoot.typerep()).name() : std::string{})
+                  << " " << argRoot.typerep() << " / "
+                  << typeid(arg).name() << " " << &arg << '\n'
+                  << " * p " << (prmRoot.typerep() ? typeid(*prmRoot.typerep()).name() : std::string{})
+                  << " " << prmRoot.typerep() << " / "
+                  << typeid(prm).name() << " " << &prm << '\n'
+                  << std::flush;
 
         if (SgTypedefType* tydef = isSgTypedefType(prmRoot.typerep()))
         {
-          logError() << "prmtydef: " << tydef->get_name() << " -> "
-                     << typeid(*isSgTypedefDeclaration(tydef->get_declaration())->get_base_type()).name()
-                     << std::endl;
+          logFlaw() << "prmtydef: " << tydef->get_name() << " -> "
+                    << typeid(*isSgTypedefDeclaration(tydef->get_declaration())->get_base_type()).name()
+                    << std::endl;
         }
       }
 
@@ -1243,7 +1244,7 @@ namespace
     {
       if (arg == nullptr)
       {
-        logError() << "null function return" << std::endl;
+        logFlaw() << "null function return" << std::endl;
         return true;
       }
 
@@ -1260,6 +1261,20 @@ namespace
     }
   };
 
+  bool
+  isAdaLiteralList(const SgExpression* arg)
+  {
+    return isSgAggregateInitializer(arg);
+    //~ const SgExprListExp* lst = isSgExprListExp(arg);
+    //~ if (!lst) return false;
+
+    //~ const SgExpressionPtrList& exprs = lst->get_expressions();
+
+    //~ return std::all_of( exprs.begin(), exprs.end(),
+                        //~ [](const SgExpression* e) { return isSgValueExp(e); }
+                      //~ );
+  }
+
   std::set<const SgType*>
   simpleExpressionType(const SgExpression& arg)
   {
@@ -1267,14 +1282,15 @@ namespace
     //    without further type resolution, it is unclear what type this
     //    literals have. Thus, exclude literals from participating in
     //    overload resolution for now.
-    if (isSgValueExp(&arg)) return { /* empty set */ };
+    if (isSgValueExp(&arg) || isAdaLiteralList(&arg))
+      return {};
 
     //~ return { si::Ada::typeOfExpr(arg) };
     return { arg.get_type() };
   }
 
   std::set<const SgType*>
-  resultTypes(const SgExpression* parg, OverloadMap& allrefs)
+  resultTypes(const SgExpression* parg, const OverloadMap& allrefs)
   {
     using ResultType = decltype(resultTypes(parg, allrefs));
 
@@ -1339,7 +1355,60 @@ namespace
            );
   }
 
+  bool isComparisonOperator(const SgFunctionDeclaration& fn)
+  {
+    static const std::string eq  = si::Ada::roseOperatorPrefix + "=";
+    static const std::string neq = si::Ada::roseOperatorPrefix + "/=";
 
+    const std::string name = fn.get_name();
+
+    return (  boost::iequals(name, eq)
+           || boost::iequals(name, neq)
+           );
+  }
+
+  SgExpressionPtrList
+  normalizedArguments(const SgFunctionCallExp* fncall)
+  {
+    try
+    {
+      if (fncall != nullptr)
+        return si::Ada::normalizedCallArguments(*fncall);
+    }
+    catch (const std::logic_error& e)
+    {
+      logError() << e.what() << " in call "
+                 << (fncall ? fncall->unparseToString() : "<nullptr>")
+                 << std::endl;
+    }
+
+    return {};
+  }
+
+  std::set<const SgType*>
+  typesFromCallContext( const SgFunctionCallExp& parentCall,
+                        const SgFunctionCallExp& childCall,
+                        const OverloadMap& allrefs
+                      );
+
+
+  std::set<const SgType*>
+  callTypeEqualityConstraint( const SgFunctionCallExp& parentCall,
+                              std::size_t pos,
+                              const OverloadMap& allrefs
+                            )
+  {
+    const SgExpression* arg = normalizedArguments(&parentCall).at(pos);
+
+    return resultTypes(arg, allrefs);
+  }
+
+
+  /// returns eligible return types of a childcall when the
+  ///   child is part of an argument list of a parent call.
+  /// returns the empty set when the contextual types shall not be used
+  /// (due to current inaccuracies, for example, when the parent call
+  /// call a compiler generated operator.)
   std::set<const SgType*>
   typesFromCallContext( const SgFunctionCallExp& parentCall,
                         const SgFunctionCallExp& childCall,
@@ -1362,9 +1431,18 @@ namespace
     const SgFunctionDeclaration* fndcl = fnref->getAssociatedFunctionDeclaration();
 
     // do not trust arguments of compiler generated functions
-    if (fndcl == nullptr || testProperty(*fndcl, &Sg_File_Info::isCompilerGenerated))
+    if (fndcl == nullptr)
     {
       //~ logTrace() << "typesFromCallContext: ret {} @ 2" << std::endl;
+      return {};
+    }
+
+    const bool compilerGenerated     = testProperty(*fndcl, &Sg_File_Info::isCompilerGenerated);
+    const bool compilerGenComparison = compilerGenerated && isComparisonOperator(*fndcl);
+
+    if (compilerGenerated && !compilerGenComparison)
+    {
+      //~ logTrace() << "typesFromCallContext: ret {} @ 3" << std::endl;
       return {};
     }
 
@@ -1373,17 +1451,29 @@ namespace
     try
     {
       // \todo instead of computing the normalizedArgumentPosition every time,
-      //       the information could computed initially and then maintained
-      //       in the OverloadMap.
+      //       the information could memoized or stored in the OverloadMap.
       std::size_t argpos = si::Ada::normalizedArgumentPosition(parentCall, childCall);
 
-      for (SgFunctionSymbol* fnsym : ovpos->second.ovlset())
+      if (!compilerGenComparison)
       {
-        const SgAdaInheritedFunctionSymbol* inhsym = isSgAdaInheritedFunctionSymbol(fnsym);
-        const SgFunctionType*               fnty   = inhsym ? inhsym->get_derivedFunctionType()
-                                                            : isSgFunctionType(fnsym->get_type());
+        //~ logTrace() << "typesFromCallContext: normal" << std::endl;
 
-        res.insert(fnty->get_arguments().at(argpos));
+        for (SgFunctionSymbol* fnsym : ovpos->second.ovlset())
+        {
+          const SgAdaInheritedFunctionSymbol* inhsym = isSgAdaInheritedFunctionSymbol(fnsym);
+          const SgFunctionType*               fnty   = inhsym ? inhsym->get_derivedFunctionType()
+                                                              : isSgFunctionType(fnsym->get_type());
+
+          res.insert(fnty->get_arguments().at(argpos));
+        }
+      }
+      else
+      {
+        //~ logTrace() << "typesFromCallContext: compgen" << std::endl;
+        ADA_ASSERT(ovpos->second.ovlset().size() < 2);
+        ADA_ASSERT(argpos == 0 || argpos == 1);
+
+        res = callTypeEqualityConstraint(parentCall, 1 - argpos, allrefs);
       }
     }
     catch (const std::logic_error&)
@@ -1452,8 +1542,8 @@ namespace
       return {};
 
     ASSERT_not_null(parentNode);
-    logError() << "unrecognizedCall context: " << typeid(*parentNode).name()
-               << std::endl;
+    logFlaw() << "unrecognizedCall context: " << typeid(*parentNode).name()
+              << std::endl;
     return {};
   }
 
@@ -1476,24 +1566,6 @@ namespace
     const SgFunctionDeclaration& fndcl = SG_DEREF(sym->get_declaration());
 
     return SG_DEREF(fndcl.get_type()).get_arguments();
-  }
-
-  SgExpressionPtrList
-  normalizedArguments(const SgFunctionCallExp* fncall)
-  {
-    try
-    {
-      if (fncall != nullptr)
-        return si::Ada::normalizedCallArguments(*fncall);
-    }
-    catch (const std::logic_error& e)
-    {
-      logError() << e.what() << " in call "
-                 << (fncall ? fncall->unparseToString() : "<nullptr>")
-                 << std::endl;
-    }
-
-    return {};
   }
 
   void resolveInheritedFunctionOverloads(SgGlobal& scope)
@@ -1615,9 +1687,9 @@ namespace
 
         if (item.second.ovlset().size() != 1)
         {
-          logError() << "disambig: " << (exp ? exp->unparseToString() : std::string{"<null>"})
-                                     << " " << item.second.ovlset().size()
-                                     << std::endl;
+          logFlaw() << "disambig: " << (exp ? exp->unparseToString() : std::string{"<null>"})
+                                    << " " << item.second.ovlset().size()
+                                    << std::endl;
         }
       }
     }
