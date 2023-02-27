@@ -440,10 +440,10 @@ namespace
 
       // void handle(SgImportStatement& n)
 
-      void handle(SgClassDeclaration& n)   { set(n.get_type()); }
-      void handle(SgTypedefDeclaration& n) { set(n.get_type()); }
-      void handle(SgEnumDeclaration& n)    { set(n.get_type()); }
-      void handle(SgAdaFormalTypeDecl& n)  { set(n.get_type()); }
+      void handle(SgClassDeclaration& n)     { set(n.get_type()); }
+      void handle(SgTypedefDeclaration& n)   { set(n.get_type()); }
+      void handle(SgEnumDeclaration& n)      { set(n.get_type()); }
+      void handle(SgAdaFormalTypeDecl& n)    { set(n.get_type()); }
       void handle(SgAdaTaskTypeDecl& n)      { set(n.get_type()); }
       void handle(SgAdaProtectedTypeDecl& n) { set(n.get_type()); }
 
@@ -561,7 +561,7 @@ namespace
                       res = si::Ada::typeRoot(parm.get_type()).typerep() == argRootTy;
 
                       if (false && !res)
-                        logWarn() << i << ". parm/arg: "
+                        logFlaw() << i << ". parm/arg: "
                                   << si::Ada::typeRoot(parm.get_type()).typerep_ref().class_name() << " / "
                                   << (argRootTy ? argRootTy->class_name() : std::string{"<null>"})
                                   << std::endl;
@@ -792,7 +792,7 @@ namespace
     {
       // \todo return an open array type based on the array as the first or second argument.
       //       just picking the first type is wrong, because it may be bounded; or not be an array at all.
-      logWarn() << "gen arg types .. [incomplete]" << std::endl;
+      logFlaw() << "gen arg types .. [incomplete]" << std::endl;
       suppl.result(suppl.args()->front());
       return;
     }
@@ -934,8 +934,8 @@ namespace
     }
     else
     {
-      logError() << "Operator name not registered: '" << expr.Name_Image << "'"
-                 << std::endl;
+      logFlaw() << "Operator name not registered: '" << expr.Name_Image << "'"
+                << std::endl;
     }
 
     // try to generate the operator
@@ -986,7 +986,7 @@ namespace
         res = sb::buildBoolValExp(0);
       else
       {
-        logWarn() << "unable to find definition for enum val " << enumstr
+        logFlaw() << "unable to find definition for enum val " << enumstr
                   << std::endl;
 
         SgStringVal& strval = SG_DEREF(sb::buildStringVal(enumstr));
@@ -1076,7 +1076,7 @@ namespace
       return true;
     }
 
-    logWarn() << "roseRequiresPrefixID: untested expression-kind: "
+    logFlaw() << "roseRequiresPrefixID: untested expression-kind: "
               << expr.Expression_Kind
               << std::endl;
     ADA_ASSERT(!FAIL_ON_ERROR(ctx) && "untested expression-kind");
@@ -1862,7 +1862,7 @@ namespace
       case A_For_Some_Quantified_Expression:          // Ada 2012
       case Not_An_Expression: /* break; */            // An unexpected element
       default:
-        logWarn() << "unhandled expression: " << expr.Expression_Kind << "   id: " << elem.ID << std::endl;
+        logFlaw() << "unhandled expression: " << expr.Expression_Kind << "   id: " << elem.ID << std::endl;
         res = sb::buildIntVal();
         ADA_ASSERT(!FAIL_ON_ERROR(ctx));
     }
@@ -1918,7 +1918,7 @@ getExprID_opt(Element_ID el, AstContext ctx, OperatorCallSupplement suppl)
 {
   if (isInvalidId(el))
   {
-    logWarn() << "uninitialized expression id " << el << std::endl;
+    logFlaw() << "uninitialized expression id " << el << std::endl;
     return mkNullExpression();
   }
 
@@ -1968,7 +1968,7 @@ namespace
 
       case Not_A_Discrete_Range:                  // An unexpected element
       default:
-        logWarn() << "Unhandled range: " << range.Discrete_Range_Kind << "  id: " << el.ID << std::endl;
+        logFlaw() << "Unhandled range: " << range.Discrete_Range_Kind << "  id: " << el.ID << std::endl;
         res = &mkRangeExp();
         ADA_ASSERT(!FAIL_ON_ERROR(ctx));
     }
@@ -2090,7 +2090,7 @@ getDefinitionExpr(Element_Struct& el, AstContext ctx)
       break;
 
     default:
-      logWarn() << "Unhandled definition expr: " << def.Definition_Kind << "  id: " << el.ID << std::endl;
+      logFlaw() << "Unhandled definition expr: " << def.Definition_Kind << "  id: " << el.ID << std::endl;
       res = &mkNullExpression();
       ADA_ASSERT(!FAIL_ON_ERROR(ctx));
   }
