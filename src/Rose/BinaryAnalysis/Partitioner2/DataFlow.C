@@ -23,6 +23,7 @@
 
 using namespace Sawyer::Container;
 using namespace Sawyer::Container::Algorithm;
+using namespace Sawyer::Message::Common;
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -646,7 +647,8 @@ DfCfgVertex::toString() const {
 TransferFunction::~TransferFunction() {}
 
 TransferFunction::TransferFunction(const BaseSemantics::Dispatcher::Ptr &cpu)
-    : cpu_(cpu), STACK_POINTER_REG(cpu->stackPointerRegister()), INSN_POINTER_REG(cpu->instructionPointerRegister()) {
+    : cpu_(cpu), STACK_POINTER_REG(cpu->stackPointerRegister()), INSN_POINTER_REG(cpu->instructionPointerRegister()),
+      ignoringSemanticFailures_(false) {
     size_t adjustment = STACK_POINTER_REG.nBits() / 8; // sizeof return address on top of stack
     callRetAdjustment_ = cpu->number_(STACK_POINTER_REG.nBits(), adjustment);
 }
@@ -684,6 +686,16 @@ TransferFunction::defaultCallingConvention() const {
 void
 TransferFunction::defaultCallingConvention(const CallingConvention::Definition::Ptr &x) {
     defaultCallingConvention_ = x;
+}
+
+bool
+TransferFunction::ignoringSemanticFailures() const {
+    return ignoringSemanticFailures_;
+}
+
+void
+TransferFunction::ignoringSemanticFailures(bool b) {
+    ignoringSemanticFailures_ = b;
 }
 
 // Required by dataflow engine: compute new output state given a vertex and input state.
@@ -785,8 +797,17 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
         // Build a new state using the retval created above, then execute instructions to update it.
         ASSERT_require(vertex->value().type() == DfCfgVertex::BBLOCK);
         ASSERT_not_null(vertex->value().bblock());
-        for (SgAsmInstruction *insn: vertex->value().bblock()->instructions())
-            cpu_->processInstruction(insn);
+        for (SgAsmInstruction *insn: vertex->value().bblock()->instructions()) {
+            if (ignoringSemanticFailures_) {
+                try {
+                    cpu_->processInstruction(insn);
+                } catch (const BaseSemantics::Exception &e) {
+                    SAWYER_MESG(mlog[WHERE]) <<"semantic failure for " <<insn->toString() <<"\n";
+                }
+            } else {
+                cpu_->processInstruction(insn);
+            }
+        }
     }
     return retval;
 }
