@@ -229,6 +229,7 @@ public:
   bool IsIOInputStmt( const AstNodePtr& s, AstList* varlist = 0);
   bool IsIOOutputStmt( const AstNodePtr& s, AstList* explist = 0);
 
+  bool IsAddressOfOp( const AstNodePtr& _s);
   bool IsMemoryAccess( const AstNodePtr& s);
   static AstNodePtr IsExpression( const AstNodePtr& s, AstNodeType* exptype =0);
   AstNodeType GetExpressionType( const AstNodePtr& s);
