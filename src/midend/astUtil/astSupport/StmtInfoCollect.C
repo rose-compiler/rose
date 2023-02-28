@@ -1,3 +1,4 @@
+#include <sage3basic.h>
 
 #include <iostream>
 #include <sstream>
@@ -142,11 +143,16 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s,
          AppendFuncCall(fa, s);
          Skip(s);
      }
-     if ( fa.IsMemoryAccess(s)) {
+     // Jim Leek 2023/02/07  Added IsSgAddressOfOp because I want it
+     // to behave the same as a memory access, although it isn't one exactly
+     if ( fa.IsMemoryAccess(s) || fa.IsAddressOfOp(s)) {
         if (!fa.IsSameVarRef(s, fa.GetParent(s))) { /*QY: skip s if it refers to the same thing as parent*/
           ModMap *mp = modstack.size()?  &modstack.back().modmap : 0;
-          if (mp == 0 || mp->find(s) == mp->end() || (*mp)[s].readlhs)
-             AppendReadLoc(fa, s);
+          if (mp == 0 || mp->find(s) == mp->end() || (*mp)[s].readlhs) {
+              AppendReadLoc(fa, s);
+             
+          }
+          
         }
         AstNodeList arglist;
         if (fa.IsArrayAccess(s, 0, &arglist))  {
@@ -157,6 +163,7 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s,
            }
            Skip(s);
         }
+        
       }
    }
  }
@@ -260,8 +267,10 @@ AppendReadLoc( AstInterface& fa, const AstNodePtr& read)
       if (DebugLocalInfoCollect()) {
           std::cerr << "appending reading " << AstInterface::AstToString(read) << std::endl;
       }
-       if (readcollect != 0)
+      if (readcollect != 0) {          
                (*readcollect)(std::pair<AstNodePtr,AstNodePtr>(read, curstmt));
+      }
+      
     }
 
 void StmtSideEffectCollect::
