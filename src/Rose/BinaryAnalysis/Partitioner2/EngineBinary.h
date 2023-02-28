@@ -3,21 +3,13 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#ifdef NOT_MOVED_TO_ENGINE
-#include <Rose/BasicTypes.h>
-#endif
-
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Exception.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesLinux.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 #include <Rose/BinaryAnalysis/SerialIo.h>
 
 #include <boost/noncopyable.hpp>
 #include <boost/regex.hpp>
-#ifdef NOT_MOVED_TO_ENGINE
-#include <Sawyer/DistinctList.h>
-#endif
 #include <stdexcept>
 
 #ifdef ROSE_ENABLE_PYTHON_API
@@ -29,48 +21,15 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
-/** Base class for engines driving the partitioner.
+/** Base class for binary engines driving the partitioner.
  *
- *  An engine serves these main purposes:
+ *  A binary engine operates on purely binary, not bytecode (JVM or CIL) specimens.
  *
- *  @li It holds configuration information related to disassembling and partitioning and provides methods for initializing that
- *      configuration information.
+ *  @section creation Binary engine instance
  *
- *  @li It provides methods for creating components (disassembler, partitioner) from stored configuration information.
- *
- *  @li It provides methods that implement the basic steps a program typically goes through in order to disassemble a specimen,
- *      such as parsing the binary container, mapping files and container sections into simulated specimen memory, calling a
- *      dynamic linker, disassembling and partitioning, and building an abstract syntax tree.
- *
- *  @li It provides a set of behaviors for the partitioner that are suitable for various situations.  For instance, the engine
- *      controls the order that functions and basic blocks are discovered, what happens when the partitioner encounters
- *      conflicts when assigning basic blocks to functions, etc.
- *
- *  Use of an engine is entirely optional.  All of the engine's actions are implemented in terms of public APIs on other
- *  objects such as @ref Disassembler and @ref Partitioner.  In fact, this particular engine base class is designed so that
- *  users can pick and choose to use only those steps they need, or perhaps to call the main actions one step at a time with
- *  the user making adjustments between steps.
- *
- *  @section extensibility Customization
- *
- *  The actions taken by an engine can be customized in a number of ways:
- *
- *  @li The engine can be subclassed. All object methods that are intended to be overridable in a subclass are declared as
- *      virtual.  Some simple functions, like those that return property values, are not virtual since they're not things that
- *      one normally overrides.  This engine's methods are also designed to be as modular as possible--each method does exactly
- *      one thing, and higher-level methods sew those things together into sequences.
- *
- *  @li Instead of calling one function that does everything from parsing the command-line to generating the final abstract
- *      syntax tree, the engine breaks things into steps. The user can invoke one step at a time and make adjustments between
- *      steps.  This is actually the most common customization within the tools distributed with ROSE.
- *
- *  @li The behavior of the @ref Partitioner itself can be modified by attaching callbacks to it. In fact, if the engine is
- *      used to create a partitioner then certain engine-defined callbacks are added to the partitioner.
- *
- *  @section basic Basic usage
- *
- *  The most basic use case for the engine is to pass it the command-line arguments and have it do everything, eventually
- *  returning an abstract syntax tree.
+ *  An engine instance is obtained from the engine factory via a call to a forge(args...) function,
+ *  the type returned is a Rose::BinaryAnalysis::Partitioner2::EnginePtr. The default engine type for
+ *  a call to forge() with no arguments is an EnginePtr to an EngineBinary instance.
  *
  *  @code
  *   #include <rose.h>
@@ -84,159 +43,20 @@ namespace Partitioner2 {
  *           "This tool disassembles the specified specimen and presents the "
  *           "results as a pseudo assembly listing, that is, a listing intended "
  *           "for human consumption rather than assembly.";
- *       SgAsmBlock *gblock = P2::Engine().frontend(argc, argv, purpose, description);
+         P2::EnginePtr engine = P2::Engine::forge();
+ *       SgAsmBlock *gblock = engine->frontend(argc, argv, purpose, description);
  *  @endcode
  *
- *  @section topsteps High level operations
- *
- *  While @ref frontend does everything, it's often useful to break it down to individual steps so that adjustments can be made
- *  along the way. This next level of steps are:
- *
- *  @li Parse the command-line to adjust engine settings. See @ref parseCommandLine.
- *
- *  @li Parse binary containers to create a container abstract syntax tree.  This step parses things like section tables,
- *      symbol tables, import and export tables, etc. but does not disassemble any instructions.  See @ref parseContainers.
- *
- *  @li Create a memory map that simulates process address space for the specimen.  This consists of running a dynamic linker,
- *      loading raw data into the simulated address space, and adjusting the memory map . All of these steps are optional. See
- *      @ref loadSpecimens.
- *
- *  @li Create a partitioner.  The partitioner is responsible for driving the disassembler based on control flow information
- *      obtained by examining previously disassembled instructions, user-specified configuration files, command-line switches,
- *      etc. See @ref createPartitioner.
- *
- *  @li Run partitioner.  This step uses the disassembler and partitioner to discover instructions, basic blocks, data blocks,
- *      and functions and updates the partitioner's internal data structures. See @ref runPartitioner.
- *
- *  @li Create an abstract syntax tree from the partitioner's data structures.  Most of ROSE is designed to operate on an AST,
- *      although many binary analysis capabilities are built directly on the more efficient partitioner data structures.
- *      Because of this, the partitioner also has a mechanism by which its data structures can be initialized from an AST.
  */
 class EngineBinary: public Engine {
 public:
     /** Shared ownership pointer. */
     using EngineBinaryPtr = Sawyer::SharedPointer<EngineBinary>;
 
-#ifdef NOT_MOVED_TO_ENGINE
-    /** Settings for the engine.
-     *
-     *  The engine is configured by adjusting these settings, usually shortly after the engine is created. */
-    struct Settings {
-        LoaderSettings loader;                          /**< Settings used during specimen loading. */
-        DisassemblerSettings disassembler;              /**< Settings for creating the disassembler. */
-        PartitionerSettings partitioner;                /**< Settings for creating a partitioner. */
-        EngineSettings engine;                          /**< Settings that control engine behavior. */
-        AstConstructionSettings astConstruction;        /**< Settings for constructing the AST. */
-
-    private:
-        friend class boost::serialization::access;
-
-        template<class S>
-        void serialize(S &s, unsigned version) {
-            s & loader & disassembler & partitioner & engine & astConstruction;
-        }
-    };
-#endif
-
-    /** Errors from the engine. */
-    class Exception: public Partitioner2::Exception {
-    public:
-        Exception(const std::string &mesg)
-            : Partitioner2::Exception(mesg) {}
-        ~Exception() throw () {}
-    };
-
-#ifdef NOT_MOVED_TO_ENGINE
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Internal data structures
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-private:
-    // Engine callback for handling instructions added to basic blocks.  This is called when a basic block is discovered,
-    // before it's attached to a partitioner, so it shouldn't really be modifying any state in the engine, but rather only
-    // preparing the basic block to be processed.
-    class BasicBlockFinalizer: public BasicBlockCallback {
-        typedef Sawyer::Container::Map<rose_addr_t /*target*/, std::vector<rose_addr_t> /*sources*/> WorkList;
-    public:
-        static Ptr instance() { return Ptr(new BasicBlockFinalizer); }
-        virtual bool operator()(bool chain, const Args &args) override;
-    private:
-        void fixFunctionReturnEdge(const Args&);
-        void fixFunctionCallEdges(const Args&);
-        void addPossibleIndeterminateEdge(const Args&);
-    };
 
-    // Basic blocks that need to be worked on next. These lists are adjusted whenever a new basic block (or placeholder) is
-    // inserted or erased from the CFG.
-    class BasicBlockWorkList: public CfgAdjustmentCallback {
-        // The following lists are used for adding outgoing E_CALL_RETURN edges to basic blocks based on whether the basic
-        // block is a call to a function that might return.  When a new basic block is inserted into the CFG (or a previous
-        // block is removed, modified, and re-inserted), the operator() is called and conditionally inserts the block into the
-        // "pendingCallReturn" list (if the block is a function call that lacks an E_CALL_RETURN edge and the function is known
-        // to return or the analysis was incomplete).
-        //
-        // When we run out of other ways to create basic blocks, we process the pendingCallReturn list from back to front. If
-        // the back block (which gets popped) has a positive may-return result then an E_CALL_RETURN edge is added to the CFG
-        // and the normal recursive BB discovery is resumed. Otherwise if the analysis is incomplete the basic block is moved
-        // to the processedCallReturn list.  The entire pendingCallReturn list is processed before proceeding.
-        //
-        // If there is no more pendingCallReturn work to be done, then the processedCallReturn blocks are moved to the
-        // finalCallReturn list and finalCallReturn is sorted by approximate CFG height (i.e., leafs first). The contents
-        // of the finalCallReturn list is then analyzed and the result (or the default may-return value for failed analyses)
-        // is used to decide whether a new CFG edge should be created, possibly adding new basic block addresses to the
-        // list of undiscovered blocks.
-        //
-        Sawyer::Container::DistinctList<rose_addr_t> pendingCallReturn_;   // blocks that might need an E_CALL_RETURN edge
-        Sawyer::Container::DistinctList<rose_addr_t> processedCallReturn_; // call sites whose may-return was indeterminate
-        Sawyer::Container::DistinctList<rose_addr_t> finalCallReturn_;     // indeterminate call sites awaiting final analysis
-
-        Sawyer::Container::DistinctList<rose_addr_t> undiscovered_;        // undiscovered basic block list (last-in-first-out)
-        Engine *engine_;                                                   // engine to which this callback belongs
-        size_t maxSorts_;                                                  // max sorts before using unsorted lists
-    protected:
-        BasicBlockWorkList(Engine *engine, size_t maxSorts): engine_(engine), maxSorts_(maxSorts) {}
-    public:
-        typedef Sawyer::SharedPointer<BasicBlockWorkList> Ptr;
-        static Ptr instance(Engine *engine, size_t maxSorts) { return Ptr(new BasicBlockWorkList(engine, maxSorts)); }
-        virtual bool operator()(bool chain, const AttachedBasicBlock &args) override;
-        virtual bool operator()(bool chain, const DetachedBasicBlock &args) override;
-        Sawyer::Container::DistinctList<rose_addr_t>& pendingCallReturn() { return pendingCallReturn_; }
-        Sawyer::Container::DistinctList<rose_addr_t>& processedCallReturn() { return processedCallReturn_; }
-        Sawyer::Container::DistinctList<rose_addr_t>& finalCallReturn() { return finalCallReturn_; }
-        Sawyer::Container::DistinctList<rose_addr_t>& undiscovered() { return undiscovered_; }
-        void moveAndSortCallReturn(const PartitionerConstPtr&);
-    };
-
-    // A work list providing constants from instructions that are part of the CFG.
-    class CodeConstants: public CfgAdjustmentCallback {
-    public:
-        typedef Sawyer::SharedPointer<CodeConstants> Ptr;
-
-    private:
-        std::set<rose_addr_t> toBeExamined_;            // instructions waiting to be examined
-        std::set<rose_addr_t> wasExamined_;             // instructions we've already examined
-        rose_addr_t inProgress_;                        // instruction that is currently in progress
-        std::vector<rose_addr_t> constants_;            // constants for the instruction in progress
-
-    protected:
-        CodeConstants(): inProgress_(0) {}
-
-    public:
-        static Ptr instance() { return Ptr(new CodeConstants); }
-
-        // Possibly insert more instructions into the work list when a basic block is added to the CFG
-        virtual bool operator()(bool chain, const AttachedBasicBlock &attached) override;
-
-        // Possibly remove instructions from the worklist when a basic block is removed from the CFG
-        virtual bool operator()(bool chain, const DetachedBasicBlock &detached) override;
-
-        // Return the next available constant if any.
-        Sawyer::Optional<rose_addr_t> nextConstant(const PartitionerConstPtr &partitioner);
-
-        // Address of instruction being examined.
-        rose_addr_t inProgress() const { return inProgress_; }
-    };
-#endif
-    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -310,40 +130,6 @@ public:
      *  the interpretation, binary loader, disassembler, and memory map so all the top-level steps get executed again. This is
      *  a useful way to re-use the same partitioner to process multiple specimens. */
     virtual void reset() override;
-
-#ifdef NOT_DEPRECATED
-    /** Parse the command-line.
-     *
-     *  This method parses the command-line and uses it to update this engine's settings.  Since a command line is usually more
-     *  than just engine-related switches, the more usual approach is for the user to obtain engine-related command-line switch
-     *  declarations and parse the command-line in user code.
-     *
-     *  This function automatically applies the command-line when it's successfully parsed, thereby updating this engine's
-     *  settings.  If something goes wrong with the command-line then an <code>std::runtime_error</code> is thrown.
-     *
-     *  The command-line can be provided as a typical @c argc and @c argv pair, or as a vector of arguments. In the latter
-     *  case, the vector should not include <code>argv[0]</code> or <code>argv[argc]</code> (which is always a null pointer).
-     *
-     *  The @p purpose should be a single line string that will be shown in the title of the man page and should
-     *  not start with an upper-case letter, a hyphen, white space, or the name of the command. E.g., a disassembler tool might
-     *  specify the purpose as "disassembles a binary specimen".
-     *
-     *  The @p description is a full, multi-line description written in the Sawyer markup language where "@" characters have
-     *  special meaning.
-     *
-     *  If the tool requires additional switches, an opportunity to adjust the parser, or other special handling, it can call
-     *  @ref commandLineParser to obtain a parser and then call its @c parse and @c apply methods explicitly.
-     *
-     *  If an <code>std::runtime_exception</code> occurs and the @ref exitOnError property is set, then the exception is caught,
-     *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
-     *
-     * @{ */
-    Sawyer::CommandLine::ParserResult parseCommandLine(int argc, char *argv[],
-                                                       const std::string &purpose, const std::string &description) /*final*/;
-    virtual Sawyer::CommandLine::ParserResult parseCommandLine(const std::vector<std::string> &args,
-                                                               const std::string &purpose, const std::string &description);
-    /** @} */
-#endif
 
     /** Parse specimen binary containers.
      *
@@ -429,85 +215,11 @@ public:
     virtual SgAsmBlock* buildAst(const std::vector<std::string> &fileNames = std::vector<std::string>()) override;
     /** @} */
 
-#ifdef NOT_DEPRECATED
-    /** Save a partitioner and AST to a file.
-     *
-     *  The specified partitioner and the binary analysis components of the AST are saved into the specified file, which is
-     *  created if it doesn't exist and truncated if it does exist. The name should end with a ".rba" extension. The file can
-     *  be loaded by passing its name to the @ref partition function or by calling @ref loadPartitioner. */
-    virtual void savePartitioner(const PartitionerConstPtr&, const boost::filesystem::path&, SerialIo::Format = SerialIo::BINARY);
-
-    /** Load a partitioner and an AST from a file.
-     *
-     *  The specified RBA file is opened and read to create a new @ref Partitioner object and associated AST. The @ref
-     *  partition function also understands how to open RBA files. */
-    virtual PartitionerPtr loadPartitioner(const boost::filesystem::path&, SerialIo::Format = SerialIo::BINARY);
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Command-line parsing
     //
     // top-level: parseCommandLine
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-public:
-    /** Command-line switches related to the loader.
-     *
-     * @{ */
-    virtual Sawyer::CommandLine::SwitchGroup loaderSwitches();
-    static Sawyer::CommandLine::SwitchGroup loaderSwitches(LoaderSettings&);
-    /** @} */
-
-    /** Command-line switches related to the disassembler.
-     *
-     * @{ */
-    virtual Sawyer::CommandLine::SwitchGroup disassemblerSwitches();
-    static Sawyer::CommandLine::SwitchGroup disassemblerSwitches(DisassemblerSettings&);
-    /** @} */
-
-    /** Command-line switches related to the partitioner.
-     *
-     * @{ */
-    virtual Sawyer::CommandLine::SwitchGroup partitionerSwitches();
-    static Sawyer::CommandLine::SwitchGroup partitionerSwitches(PartitionerSettings&);
-    /** @} */
-
-    /** Command-line switches related to engine behavior.
-     *
-     * @{ */
-    virtual Sawyer::CommandLine::SwitchGroup engineSwitches();
-    static Sawyer::CommandLine::SwitchGroup engineSwitches(EngineSettings&);
-    /** @} */
-
-    /** Command-line switches related to AST construction.
-     *
-     * @{ */
-    virtual Sawyer::CommandLine::SwitchGroup astConstructionSwitches();
-    static Sawyer::CommandLine::SwitchGroup astConstructionSwitches(AstConstructionSettings&);
-    /** @} */
-
-    /** Documentation for specimen names. */
-    static std::string specimenNameDocumentation();
-
-    /** Creates a command-line parser.
-     *
-     *  Creates and returns a command-line parser suitable for parsing command-line switches and arguments needed by the
-     *  disassembler.
-     *
-     *  The @p purpose should be a single line string that will be shown in the title of the man page and should
-     *  not start with an upper-case letter, a hyphen, white space, or the name of the command. E.g., a disassembler tool might
-     *  specify the purpose as "disassembles a binary specimen".
-     *
-     *  The @p description is a full, multi-line description written in the Sawyer markup language where "@" characters have
-     *  special meaning. */
-    virtual Sawyer::CommandLine::Parser commandLineParser(const std::string &purpose, const std::string &description);
-
-    /** Check settings after command-line is processed.
-     *
-     *  This does some checks and further configuration immediately after processing the command line. It's also called by most
-     *  of the top-level operations.
-     *
-     *  If an ISA name is specified in the settings and no disassembler has been set yet, then a disassembler is allocated. */
-    virtual void checkSettings();
-#endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Container parsing
@@ -622,15 +334,6 @@ public:
      *  functions that don't have names yet. */
     virtual void runPartitionerFinal(const PartitionerPtr&) override;
 
-#ifdef NOT_MOVED_TO_ENGINE
-    /** Partitions instructions into basic blocks and functions.
-     *
-     *  This method is a wrapper around a number of lower-level partitioning steps that uses the specified interpretation to
-     *  instantiate functions and then uses the specified partitioner to discover basic blocks and use the CFG to assign basic
-     *  blocks to functions.  It is often overridden by subclasses. */
-    virtual void runPartitioner(const PartitionerPtr&);
-#endif
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner mid-level functions
     //
@@ -638,24 +341,6 @@ public:
     // although it is more likely that the high-level stuff is overridden.
    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-#ifdef NOT_MOVED_TO_ENGINE
-    /** Label addresses.
-     *
-     *  Labels addresses according to symbols, etc.  Address labels are used for things like giving an unnamed function a name
-     *  when it's attached to the partitioner's CFG/AUM. */
-    virtual void labelAddresses(const PartitionerPtr&, const Configuration&);
-
-    /** Make data blocks based on configuration.
-     *
-     *  NOTE: for now, all this does is label the datablock addresses. FIXME[Robb P. Matzke 2015-05-12] */
-    virtual std::vector<DataBlockPtr> makeConfiguredDataBlocks(const PartitionerPtr&, const Configuration&);
-
-    /** Make functions based on configuration information.
-     *
-     *  Uses the supplied function configuration information to make functions. */
-    virtual std::vector<FunctionPtr> makeConfiguredFunctions(const PartitionerPtr&, const Configuration&);
-#endif
-
     /** Make functions at specimen entry addresses.
      *
      *  A function is created at each specimen entry address for all headers in the specified interpretation and adds them to
@@ -893,15 +578,6 @@ public:
      *  is to iterate over one function's unused addresses at a time. [Robb P. Matzke 2014-09-08] */
     virtual std::vector<DataBlockPtr> attachSurroundedDataToFunctions(const PartitionerPtr&);
 
-#ifdef NOT_MOVED_TO_ENGINE
-    /** Runs various analysis passes.
-     *
-     *  Runs each analysis over all functions to ensure that results are cached.  This should typically be done after functions
-     *  are discovered and before the final AST is generated, otherwise the AST will not contain cached results for functions
-     *  and blocks for which an analysis was not performed. */
-    virtual void updateAnalysisResults(const PartitionerPtr&);
-#endif
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner low-level functions
     //
@@ -945,62 +621,14 @@ public:
     virtual BasicBlockPtr makeNextBasicBlock(const PartitionerPtr&);
 
 
-#ifdef NOT_MOVED_TO_ENGINE
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Build AST
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-public:
-    // Used internally by ROSE's ::frontend disassemble instructions to build the AST that goes under each SgAsmInterpretation.
-    static void disassembleForRoseFrontend(SgAsmInterpretation*);
-#endif
-
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Settings and properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-#ifdef NOT_MOVED_TO_ENGINE
-    /** Property: All settings.
-     *
-     *  Returns a reference to the engine settings structures.  Alternatively, some settings also have a corresponding engine
-     *  member function to query or adjust the setting directly.
-     *
-     * @{ */
-    const Settings& settings() const /*final*/ { return settings_; }
-    Settings& settings() /*final*/ { return settings_; }
-    /** @} */
-
-    /** Property: Disassembler.
-     *
-     *  This property holds the disassembler to use whenever a new partitioner is created. If null, then the engine will choose
-     *  a disassembler based on the binary container (unless @ref doDisassemble property is clear).
-     *
-     * @{ */
-    Disassembler::BasePtr disassembler() const;
-    virtual void disassembler(const Disassembler::BasePtr&);
-    /** @} */
-
-    /** Property: interpretation
-     *
-     *  The interpretation which is being analyzed. The interpretation is chosen when an ELF or PE container is parsed, and the
-     *  user can set it to something else if desired. For instance, parsing a PE file will set the interpretation to PE, but
-     *  the user can reset it to DOS to disassemble the DOS part of the executable.
-     *
-     * @{ */
-    SgAsmInterpretation* interpretation() const /*final*/ { return interp_; }
-    virtual void interpretation(SgAsmInterpretation *interp) { interp_ = interp; }
-    /** @} */
-
-    /** Property: progress reporting.
-     *
-     *  The optional object to receive progress reports.
-     *
-     * @{ */
-    ProgressPtr progress() const /*final*/;
-    virtual void progress(const ProgressPtr&);
-    /** @} */
-#endif
-
     /** Property: binary loader.
      *
      *  The binary loader that maps a binary container's sections into simulated memory and optionally performs dynamic linking
