@@ -228,7 +228,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Partition the specimen. */
-    virtual Partitioner2::PartitionerPtr partition(Partitioner2::Engine*, const std::string &specimenName) = 0;
+    virtual Partitioner2::PartitionerPtr partition(const Partitioner2::EnginePtr&, const std::string &specimenName) = 0;
 
     /** Configures system call behavior.
      *
