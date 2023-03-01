@@ -1548,6 +1548,16 @@ void Grammar::setUpBinaryInstructions() {
         size_t cacheLockCount() const;
         void adjustCacheLockCount(int increment);
         /** @} */
+
+        /** Rewrite certain addressing modes for operands.
+         *
+         *  The addressing mode: <code>REG1 + REG2 * SIZE + OFFSET</code> is changed from <code>(+ (+ REG1 (* REG2 SIZE))
+         *  OFFSET)</code> to <code>(+ (+ REG1 OFFSET) (* REG2 SIZE))</code>, which during instruction semantic executions causes
+         *  the base register and offset to be added first to obtain the starting address of an array, and then an additional offset
+         *  added to obtain the address of the desired element of that array.
+         *
+         *  Returns true if anything changed, false otherwise. */
+        bool normalizeOperands();
 #endif // SgAsmInstruction_OTHERS
 
 #ifdef DOCUMENTATION
