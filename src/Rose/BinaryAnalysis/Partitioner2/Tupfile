@@ -9,12 +9,13 @@ run $(librose_compile)				\
     DataBlock.C					\
     DataFlow.C					\
     Engine.C					\
+    EngineBinary.C				\
+    EngineJvm.C					\
     Exception.C					\
     Function.C					\
     FunctionCallGraph.C				\
     FunctionNoop.C				\
     GraphViz.C					\
-    EngineJvm.C					\
     MayReturnAnalysis.C				\
     Modules.C					\
     ModulesElf.C				\
@@ -42,11 +43,12 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis/Partitioner2	\
     DataBlock.h								\
     DataFlow.h								\
     Engine.h								\
+    EngineBinary.h							\
+    EngineJvm.h								\
     Exception.h								\
     Function.h								\
     FunctionCallGraph.h							\
     GraphViz.h								\
-    EngineJvm.h								\
     Modules.h								\
     ModulesElf.h							\
     ModulesLinux.h							\
