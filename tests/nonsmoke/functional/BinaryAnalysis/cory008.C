@@ -88,7 +88,7 @@ printIntegersByHeading(const IntegersByHeading &ibh) {
 
 int
 main(int argc, char *argv[]) {
-    P2::EnginePtr engine = P2::Engine::forge();
+    P2::Engine::Ptr engine = P2::Engine::forge();
     SgAsmBlock *gblock = engine->frontend(argc, argv, purpose, description);
     GatherIntegers gatherer;
     gatherer.traverse(gblock, preorder);

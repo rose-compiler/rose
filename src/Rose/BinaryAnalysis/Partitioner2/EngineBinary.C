@@ -88,7 +88,7 @@ EngineBinary::matchFactory(const std::vector<std::string> &specimen) const {
     return true;
 }
 
-EnginePtr
+Engine::Ptr
 EngineBinary::instanceFromFactory() {
     ASSERT_require(isFactory());
     return instance();

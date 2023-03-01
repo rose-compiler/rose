@@ -253,7 +253,7 @@ main(int argc, char *argv[]) {
 
     // Write to the output state if desired.
     if (!settings.outputFileName.empty()) {
-        P2::EnginePtr engine = P2::Engine::forge();
+        P2::Engine::Ptr engine = P2::Engine::forge();
         engine->savePartitioner(partitioner, settings.outputFileName, settings.stateFormat);
     }
     if (settings.removeAnalysis) {

@@ -31,7 +31,7 @@ struct Settings {
 SgProject*
 buildAst(int argc, char *argv[], Settings &settings) {
     using namespace Sawyer::CommandLine;
-    P2::EnginePtr engine = P2::Engine::forge();
+    P2::Engine::Ptr engine = P2::Engine::forge();
 
     // Parse the commane-line
     Parser p = engine->commandLineParser("transcode to LLVM", "Convert an ELF/PE specimen to LLVM assembly for testing.");

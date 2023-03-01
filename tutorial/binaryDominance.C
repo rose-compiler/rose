@@ -23,7 +23,7 @@ int
 main(int argc, char *argv[])
 {
     ROSE_INITIALIZE;
-    P2::EnginePtr engine = P2::Engine::forge();
+    P2::Engine::Ptr engine = P2::Engine::forge();
     P2::Engine::Settings &settings = engine->settings();
     settings.partitioner.doingPostAnalysis = false;      // not needed for this tool, and faster without
     settings.partitioner.namingSyscalls = false;         // for consistent results w.r.t. the answer file since the system...

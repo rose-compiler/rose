@@ -329,7 +329,7 @@ main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
     Diagnostics::initAndRegister(&::mlog, "tool");
 
-    P2::EnginePtr engine = P2::Engine::forge();
+    P2::Engine::Ptr engine = P2::Engine::forge();
     std::vector<std::string> specimen = engine->parseCommandLine(argc, argv, "tests semantics initial states", description)
                                         .unreachedArgs();
     P2::Partitioner::Ptr partitioner = engine->partition(specimen);

@@ -28,8 +28,8 @@ namespace Partitioner2 {
  *  @section creation Binary engine instance
  *
  *  An engine instance is obtained from the engine factory via a call to a forge(args...) function,
- *  the type returned is a Rose::BinaryAnalysis::Partitioner2::EnginePtr. The default engine type for
- *  a call to forge() with no arguments is an EnginePtr to an EngineBinary instance.
+ *  the type returned is a Rose::BinaryAnalysis::Partitioner2::Engine::Ptr. The default engine type for
+ *  a call to forge() with no arguments is an Engine::Ptr to an EngineBinary instance.
  *
  *  @code
  *   #include <rose.h>
@@ -43,7 +43,7 @@ namespace Partitioner2 {
  *           "This tool disassembles the specified specimen and presents the "
  *           "results as a pseudo assembly listing, that is, a listing intended "
  *           "for human consumption rather than assembly.";
-         P2::EnginePtr engine = P2::Engine::forge();
+         P2::Engine::Ptr engine = P2::Engine::forge();
  *       SgAsmBlock *gblock = engine->frontend(argc, argv, purpose, description);
  *  @endcode
  *

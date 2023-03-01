@@ -283,7 +283,7 @@ main(int argc, char *argv[]) {
     Diagnostics::initAndRegister(&::mlog, "tool");
 
     // Parse command-line
-    P2::EnginePtr engine = P2::Engine::forge();
+    P2::Engine::Ptr engine = P2::Engine::forge();
     Settings settings;
     std::vector<std::string> args = parseCommandLine(argc, argv, *engine, settings);
     if (args.empty())

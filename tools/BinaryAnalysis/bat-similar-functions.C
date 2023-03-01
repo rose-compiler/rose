@@ -397,10 +397,11 @@ munkresCost(const dlib::matrix<double> &src, T scale, dlib::matrix<T> &dst /*out
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static std::vector<SgAsmFunction*>
-loadFunctions(const boost::filesystem::path rbaName, P2::Engine &engine) {
-    engine.reset();                                            // clear all but config properties
-    engine.settings().partitioner.doingPostAnalysis = false;   // not needed for this tool
-    SgAsmBlock *gblock = engine.buildAst(rbaName.string());    // parse, load, link, disassemble, partition, build AST
+loadFunctions(const boost::filesystem::path rbaName, const P2::Engine::Ptr &engine) {
+    ASSERT_not_null(engine);
+    engine->reset();                                           // clear all but config properties
+    engine->settings().partitioner.doingPostAnalysis = false;  // not needed for this tool
+    SgAsmBlock *gblock = engine->buildAst(rbaName.string());   // parse, load, link, disassemble, partition, build AST
     return SageInterface::querySubTree<SgAsmFunction>(gblock); // return just the functions
 }
 
@@ -417,15 +418,15 @@ main(int argc, char *argv[]) {
     Stream info(mlog[INFO]);
 
     // Parse command-line
-    P2::EnginePtr engine = P2::Engine::forge();
+    P2::Engine::Ptr engine = P2::Engine::forge();
     Settings settings;
     std::pair<boost::filesystem::path, boost::filesystem::path> rbaFiles = parseCommandLine(argc, argv, *engine, settings);
     size_t nThreads = Rose::CommandLine::genericSwitchArgs.threads;
     if (0 == nThreads)
         nThreads = boost::thread::hardware_concurrency();
 
-    std::vector<SgAsmFunction*> functions1 = loadFunctions(rbaFiles.first, *engine);
-    std::vector<SgAsmFunction*> functions2 = loadFunctions(rbaFiles.second, *engine);
+    std::vector<SgAsmFunction*> functions1 = loadFunctions(rbaFiles.first, engine);
+    std::vector<SgAsmFunction*> functions2 = loadFunctions(rbaFiles.second, engine);
     info <<"specimen1 has " <<plural(functions1.size(), "functions") <<" containing " <<treeSize(functions1) <<" AST nodes.\n";
     info <<"specimen2 has " <<plural(functions2.size(), "functions")<<" containing " <<treeSize(functions2) <<" AST nodes.\n";
     if (functions1.empty() || functions2.empty())

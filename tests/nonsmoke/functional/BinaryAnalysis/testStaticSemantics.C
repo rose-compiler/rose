@@ -24,7 +24,7 @@ main(int argc, char *argv[]) {
         "from other platforms might be more accustomed to having semantics represented statically as part of an "
         "abstract syntax tree. ROSE can build these static semantics ASTs from its StaticSemantics domain in the "
         "Semantics2 API, and that is what this program tests.";
-    P2::EnginePtr engine = P2::Engine::forge();
+    P2::Engine::Ptr engine = P2::Engine::forge();
     SgAsmBlock *gblock = engine->frontend(argc, argv, purpose, description);
     InstructionSemantics::StaticSemantics::attachInstructionSemantics(gblock, engine->disassembler());
 

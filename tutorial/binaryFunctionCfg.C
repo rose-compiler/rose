@@ -22,7 +22,7 @@ int
 main(int argc, char *argv[]) {
     //! [setup]
     ROSE_INITIALIZE;                                    // see Rose::initialize
-    Partitioner2::EnginePtr engine = Partitioner2::Engine::forge();
+    Partitioner2::Engine::Ptr engine = Partitioner2::Engine::forge();
     std::vector<std::string> specimen = engine->parseCommandLine(argc, argv, purpose, description).unreachedArgs();
     if (specimen.empty()) {
         mlog[FATAL] <<"no binary specimen specified; see --help\n";

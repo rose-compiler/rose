@@ -50,7 +50,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 int
 main(int argc, char *argv[]) {
     Settings settings;
-    P2::EnginePtr engine = P2::Engine::forge();
+    P2::Engine::Ptr engine = P2::Engine::forge();
     engine->settings().partitioner.base.usingSemantics = true; // test specimens contain opaque predicates
     engine->settings().partitioner.followingGhostEdges = false;
     engine->settings().partitioner.findingIntraFunctionCode = false;

@@ -185,7 +185,7 @@ main(int argc, char *argv[]) {
 
     // Parse command-line
     Settings settings;
-    P2::EnginePtr engine = P2::Engine::forge();
+    P2::Engine::Ptr engine = P2::Engine::forge();
     std::vector<std::string> args = parseCommandLine(argc, argv, *engine, settings);
     ASSERT_always_require2(args.size() >= 2, "incorrect usage; see --help");
 

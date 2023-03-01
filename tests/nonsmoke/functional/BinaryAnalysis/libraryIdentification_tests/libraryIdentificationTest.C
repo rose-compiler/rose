@@ -55,7 +55,7 @@ int
 main(int argc, char** argv) {
     ROSE_INITIALIZE;
     TimingPerformance timer ("AST Library Identification checker (main): time (sec) = ",true);
-    P2::EnginePtr engine = P2::Engine::forge();
+    P2::Engine::Ptr engine = P2::Engine::forge();
     engine->settings().partitioner.doingPostFunctionStackDelta = false; // We don't need StackDelta analysis
 
     //----------------------------------------------------------

@@ -11,7 +11,7 @@ int
 main(int argc, char *argv[]) {
     std::string purpose = "tests Partitioner2";
     std::string description = "Parses, disassembles, and partitions the specimens given as command-line arguments.";
-    P2::EnginePtr engine = P2::Engine::forge();
+    P2::Engine::Ptr engine = P2::Engine::forge();
     engine->settings().partitioner.namingSyscalls = false;      // for consistent results w.r.t. the answer file since the system...
     engine->settings().partitioner.syscallHeader = "/dev/null"; // ...call mapping comes from run-time files.
     

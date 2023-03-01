@@ -149,7 +149,7 @@ main(int argc, char *argv[]) {
     Settings settings;
     auto parser = buildCommandLineParser(settings);
 
-    P2::Engine::EnginePtr engine = P2::Engine::forge(argc, argv, parser/*inout*/);
+    P2::Engine::Ptr engine = P2::Engine::forge(argc, argv, parser/*inout*/);
 
     // Apply all settings added by the engine to obtain a binary specimen
     std::vector<std::string> specimen = parser.parse(argc, argv).apply().unreachedArgs();
