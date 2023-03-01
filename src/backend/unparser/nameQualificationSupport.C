@@ -1737,7 +1737,19 @@ namespace
     if (/*const SgCastExp* castexp =*/ isSgCastExp(e))
       return;
 
-    SG_UNEXPECTED_NODE(SG_DEREF(e));
+    if (/*const SgEnumVal* castexp =*/ isSgEnumVal(e))
+      return;
+
+    if (e == nullptr)
+    {
+      mlog[WARN] << "nullptr in AdaPreNameQualifier::addRenamedScopeIfNeeded"
+                 << std::endl;
+    }
+    else
+    {
+      mlog[WARN] << "unexpected type in AdaPreNameQualifier::addRenamedScopeIfNeeded" << typeid(*e).name()
+                 << std::endl;
+    }
   }
 
   void
