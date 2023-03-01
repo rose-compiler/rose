@@ -1355,7 +1355,22 @@ SemanticCallbacks::SemanticCallbacks(const ModelChecker::Settings::Ptr &mcSettin
         Sawyer::Message::Stream debug(mlog[DEBUG]);
         SAWYER_MESG_FIRST(info, debug) <<"searching for global variables";
         gvars_ = variableFinder_->findGlobalVariables(partitioner_);
-        gvars_.erase(AddressInterval::baseSize(0, 256));
+
+        // Don't allow variables at very low memory addresses because lots of pointer arithmetic uses these constants and
+        // might get assigned global variable memory regions in this area. For instance,
+        //    mov eax, 0x1000  // not a global variable address
+        //    mov ecx, 4       // size, but happens to be a (miscalculated) global variable address
+        //    mul ecx, [esp+4] // ecx is now outside the the (miscalculated) global variable area
+        //    mov eax, [eax + ecx] // buffer overflow detected
+        Variables::erase(gvars_, AddressInterval::baseSize(0, 256));
+
+        // Don't allow global variables at the first byte of any read+write segment of memory. This is because the segment address
+        // is sometimes an intermediate calculation before adding an offset to get to the global variable. If a variable exists at
+        // the beginning of the segment, then the calculation would become locked to that variable's region and any subsequent
+        // offset to get to the intended variable would look like an out-of-bounds access.
+        for (const auto &node: partitioner->memoryMap()->require(MemoryMap::READ_WRITE).nodes())
+            Variables::erase(gvars_, node.key().least());
+
         SAWYER_MESG_FIRST(info, debug) <<"; found " <<StringUtility::plural(gvars_.nIntervals(), "global variables") <<"\n";
         for (const Variables::GlobalVariable &gvar: gvars_.values())
             SAWYER_MESG(debug) <<"  found " <<gvar <<"\n";
