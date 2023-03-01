@@ -702,7 +702,7 @@ RiscOperators::checkOobAccess(const BS::SValue::Ptr &addrSVal_, TestMode testMod
             return;
         }
 
-        // We've found a significant out-of-b ounds access. Report it.
+        // We've found a significant out-of-bounds access. Report it.
         currentState(BS::State::Ptr());                 // indicates that execution failed
         throw ThrownTag{OutOfBoundsTag::instance(nInstructions(), testMode, ioMode, currentInstruction(), addrSVal,
                                                  intendedVariable, accessedVariable)};
@@ -779,7 +779,8 @@ RiscOperators::maybeInitCallStack(rose_addr_t insnVa) {
             } else if (functions.size() == 1) {
                 function = functions[0];
             } else {
-                SAWYER_MESG(mlog[WARN]) <<"multiple functions containing instruction at " <<StringUtility::addrToString(insnVa) <<"\n";
+                SAWYER_MESG(mlog[WARN]) <<"multiple functions containing instruction at "
+                                        <<StringUtility::addrToString(insnVa) <<"\n";
                 function = functions[0];                    // arbitrary
             }
 
