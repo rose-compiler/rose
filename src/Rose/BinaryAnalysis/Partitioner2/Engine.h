@@ -126,14 +126,17 @@ public:
         void serialize(S &s, unsigned version) {
             s & loader & disassembler & partitioner & engine & astConstruction;
         }
+
+    public:
+        ~Settings();
+        Settings();
     };
 
     /** Errors from the engine. */
     class Exception: public Partitioner2::Exception {
     public:
-        Exception(const std::string &mesg)
-            : Partitioner2::Exception(mesg) {}
-        ~Exception() throw () {}
+        ~Exception() throw ();
+        Exception(const std::string&);
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -146,7 +149,11 @@ protected:
     class BasicBlockFinalizer: public BasicBlockCallback {
         typedef Sawyer::Container::Map<rose_addr_t /*target*/, std::vector<rose_addr_t> /*sources*/> WorkList;
     public:
-        static Ptr instance() { return Ptr(new BasicBlockFinalizer); }
+        ~BasicBlockFinalizer();
+    protected:
+        BasicBlockFinalizer();
+    public:
+        static Ptr instance();
         virtual bool operator()(bool chain, const Args &args) override;
     private:
         void fixFunctionReturnEdge(const Args&);
@@ -180,19 +187,21 @@ private:
         Sawyer::Container::DistinctList<rose_addr_t> finalCallReturn_;     // indeterminate call sites awaiting final analysis
 
         Sawyer::Container::DistinctList<rose_addr_t> undiscovered_;        // undiscovered basic block list (last-in-first-out)
-        Engine *engine_;                                                   // engine to which this callback belongs
+        EnginePtr engine_;                                                 // engine to which this callback belongs
         size_t maxSorts_;                                                  // max sorts before using unsorted lists
-    protected:
-        BasicBlockWorkList(Engine *engine, size_t maxSorts): engine_(engine), maxSorts_(maxSorts) {}
     public:
-        typedef Sawyer::SharedPointer<BasicBlockWorkList> Ptr;
-        static Ptr instance(Engine *engine, size_t maxSorts) { return Ptr(new BasicBlockWorkList(engine, maxSorts)); }
+        ~BasicBlockWorkList();
+    protected:
+        BasicBlockWorkList(const EnginePtr &engine, size_t maxSorts);
+    public:
+        using Ptr = Sawyer::SharedPointer<BasicBlockWorkList>;
+        static Ptr instance(const EnginePtr &engine, size_t maxSorts);
         virtual bool operator()(bool chain, const AttachedBasicBlock &args) override;
         virtual bool operator()(bool chain, const DetachedBasicBlock &args) override;
-        Sawyer::Container::DistinctList<rose_addr_t>& pendingCallReturn() { return pendingCallReturn_; }
-        Sawyer::Container::DistinctList<rose_addr_t>& processedCallReturn() { return processedCallReturn_; }
-        Sawyer::Container::DistinctList<rose_addr_t>& finalCallReturn() { return finalCallReturn_; }
-        Sawyer::Container::DistinctList<rose_addr_t>& undiscovered() { return undiscovered_; }
+        Sawyer::Container::DistinctList<rose_addr_t>& pendingCallReturn();
+        Sawyer::Container::DistinctList<rose_addr_t>& processedCallReturn();
+        Sawyer::Container::DistinctList<rose_addr_t>& finalCallReturn();
+        Sawyer::Container::DistinctList<rose_addr_t>& undiscovered();
         void moveAndSortCallReturn(const PartitionerConstPtr&);
     };
 
@@ -200,7 +209,7 @@ protected:
     // A work list providing constants from instructions that are part of the CFG.
     class CodeConstants: public CfgAdjustmentCallback {
     public:
-        typedef Sawyer::SharedPointer<CodeConstants> Ptr;
+        using Ptr = Sawyer::SharedPointer<CodeConstants>;
 
     private:
         std::set<rose_addr_t> toBeExamined_;            // instructions waiting to be examined
@@ -208,12 +217,16 @@ protected:
         rose_addr_t inProgress_;                        // instruction that is currently in progress
         std::vector<rose_addr_t> constants_;            // constants for the instruction in progress
 
+    public:
+        ~CodeConstants();
     protected:
-        CodeConstants(): inProgress_(0) {}
+        CodeConstants();
 
     public:
-        static Ptr instance() { return Ptr(new CodeConstants); }
-        rose_addr_t inProgress() {return inProgress_;}
+        static Ptr instance();
+
+        // Address of instruction being examined.
+        rose_addr_t inProgress();
 
         // Possibly insert more instructions into the work list when a basic block is added to the CFG
         virtual bool operator()(bool chain, const AttachedBasicBlock &attached) override;
@@ -223,9 +236,6 @@ protected:
 
         // Return the next available constant if any.
         Sawyer::Optional<rose_addr_t> nextConstant(const PartitionerConstPtr &partitioner);
-
-        // Address of instruction being examined.
-        rose_addr_t inProgress() const { return inProgress_; }
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
