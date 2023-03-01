@@ -72,7 +72,7 @@ Architecture::matchFactory(const Yaml::Node &config) const {
 }
 
 P2::Partitioner::Ptr
-Architecture::partition(P2::Engine *engine, const std::string &specimenName) {
+Architecture::partition(const P2::Engine::Ptr &engine, const std::string &specimenName) {
     SAWYER_MESG(mlog[DEBUG]) <<"partitioning " <<specimenName;
     return engine->partition(specimenName);
 }

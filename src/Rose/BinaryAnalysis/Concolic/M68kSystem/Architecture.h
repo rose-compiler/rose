@@ -51,7 +51,7 @@ public:
     // These are documented in the base class.
     virtual bool matchFactory(const Yaml::Node&) const override;
     virtual Super::Ptr instanceFromFactory(const DatabasePtr&, TestCaseId, const Yaml::Node &config) const override;
-    virtual Partitioner2::PartitionerPtr partition(Partitioner2::Engine*, const std::string &specimen) override;
+    virtual Partitioner2::PartitionerPtr partition(const Partitioner2::EnginePtr&, const std::string &specimen) override;
     virtual void configureSystemCalls() override;
     virtual void load(const boost::filesystem::path&) override;
     virtual ByteOrder::Endianness memoryByteOrder() override;
