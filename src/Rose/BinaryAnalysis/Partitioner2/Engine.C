@@ -25,6 +25,21 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
+Engine::Engine(const std::string &name)
+    : name_{name}, settings_{Settings()}, interp_{nullptr}, progress_{Progress::instance()} {
+}
+
+Engine::Engine(const Settings &settings)
+    : name_{}, settings_{settings}, interp_{nullptr}, progress_{Progress::instance()} {
+    init();
+}
+
+Engine::~Engine() {}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Factories
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static SAWYER_THREAD_TRAITS::Mutex registryMutex;
 static std::vector<Engine::Ptr> registry;
 static boost::once_flag registryInitFlag = BOOST_ONCE_INIT;
@@ -41,16 +56,39 @@ initRegistry() {
     boost::call_once(&initRegistryHelper, registryInitFlag);
 }
 
-Engine::Engine(const std::string &name)
-    : name_{name}, settings_{Settings()}, interp_{nullptr}, progress_{Progress::instance()} {
+void
+Engine::registerFactory(const Engine::Ptr &factory) {
+    ASSERT_not_null(factory);
+    ASSERT_require(factory->isFactory());
+    initRegistry();
+    SAWYER_THREAD_TRAITS::LockGuard lock(registryMutex);
+    registry.push_back(factory);
 }
 
-Engine::Engine(const Settings &settings)
-    : name_{}, settings_{settings}, interp_{nullptr}, progress_{Progress::instance()} {
-    init();
+bool
+Engine::deregisterFactory(const Ptr &factory) {
+    ASSERT_not_null(factory);
+    ASSERT_require(factory->isFactory());
+    SAWYER_THREAD_TRAITS::LockGuard lock(registryMutex);
+    for (auto iter = registry.rbegin(); iter != registry.rend(); ++iter) {
+        if (*iter == factory) {
+            registry.erase(std::next(iter).base());
+            return true;
+        }
+    }
+    return false;
 }
 
-Engine::~Engine() {}
+std::vector<Engine::Ptr>
+Engine::registeredFactories() {
+    initRegistry();
+    std::vector<Ptr> retval;
+    SAWYER_THREAD_TRAITS::LockGuard lock(registryMutex);
+    retval.reserve(registry.size());
+    for (const Ptr &factory: registry)
+        retval.push_back(factory);
+    return retval;
+}
 
 Engine::Ptr
 Engine::forge() {
@@ -109,7 +147,7 @@ Engine::isFactory() const {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      Utility functions
+//                                      Construction functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
