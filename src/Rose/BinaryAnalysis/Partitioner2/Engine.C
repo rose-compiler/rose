@@ -9,6 +9,7 @@
 
 #include <Rose/BinaryAnalysis/BinaryLoader.h>
 #include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Configuration.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
@@ -18,12 +19,29 @@
 #include <Rose/CommandLine.h>
 
 #include <Sawyer/FileSystem.h>
+#include <Sawyer/GraphAlgorithm.h>
 
 using namespace Rose::Diagnostics;
 
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Static utility functions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef std::pair<rose_addr_t, size_t> AddressOrder;
+
+static bool
+isSecondZero(const AddressOrder &a) {
+    return 0 == a.second;
+}
+
+static bool
+sortBySecond(const AddressOrder &a, const AddressOrder &b) {
+    return a.second < b.second;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Engine::Settings
@@ -249,19 +267,6 @@ Sawyer::Container::DistinctList<rose_addr_t>&
 Engine::BasicBlockWorkList::undiscovered() {
     return undiscovered_;
 }
-
-typedef std::pair<rose_addr_t, size_t> AddressOrder;
-
-static bool
-isSecondZero(const AddressOrder &a) {
-    return 0 == a.second;
-}
-
-static bool
-sortBySecond(const AddressOrder &a, const AddressOrder &b) {
-    return a.second < b.second;
-}
-
 
 // Move pendingCallReturn items into the finalCallReturn list and (re)sort finalCallReturn items according to the CFG so that
 // descendents appear after their ancestors (i.e., descendents will be processed first since we always use popBack).  This is a
@@ -526,7 +531,7 @@ void
 Engine::init() {
     ASSERT_require(map_ == nullptr);
     Rose::initialize(nullptr);
-    basicBlockWorkList_ = BasicBlockWorkList::instance(this, settings().partitioner.functionReturnAnalysisMaxSorts);
+    basicBlockWorkList_ = BasicBlockWorkList::instance(sharedFromThis(), settings().partitioner.functionReturnAnalysisMaxSorts);
 #if ROSE_PARTITIONER_EXPENSIVE_CHECKS == 1
     static bool emitted = false;
     if (!emitted) {
@@ -541,7 +546,7 @@ Engine::reset() {
     interpretation(nullptr);
     disassembler_ = Disassembler::Base::Ptr();
     map_ = MemoryMap::Ptr();
-    basicBlockWorkList_ = BasicBlockWorkList::instance(this, settings().partitioner.functionReturnAnalysisMaxSorts);
+    basicBlockWorkList_ = BasicBlockWorkList::instance(sharedFromThis(), settings().partitioner.functionReturnAnalysisMaxSorts);
 }
 
 
