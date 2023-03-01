@@ -152,6 +152,35 @@ Trigger::switches(Settings &settings) {
     return switches;
 }
 
+boost::logic::tribool
+hasAnyCalleeReturn(const Partitioner::ConstPtr &partitioner, const ControlFlowGraph::ConstVertexIterator &caller) {
+    ASSERT_not_null(partitioner);
+    bool hasIndeterminateCallee = false;
+    for (ControlFlowGraph::ConstEdgeIterator edge=caller->outEdges().begin(); edge != caller->outEdges().end(); ++edge) {
+        if (edge->value().type() == E_FUNCTION_CALL) {
+            bool mayReturn = false;
+            if (!partitioner->basicBlockOptionalMayReturn(edge->target()).assignTo(mayReturn)) {
+                hasIndeterminateCallee = true;
+            } else if (mayReturn) {
+                return true;
+            }
+        }
+    }
+    if (hasIndeterminateCallee)
+        return boost::logic::indeterminate;
+    return false;
+}
+
+bool
+hasCallReturnEdges(const ControlFlowGraph::ConstVertexIterator &vertex) {
+    for (const ControlFlowGraph::Edge &edge: vertex->outEdges()) {
+        if (edge.value().type() == E_CALL_RETURN)
+            return true;
+    }
+    return false;
+}
+
+
 // class method
 std::string
 Trigger::docString() {
