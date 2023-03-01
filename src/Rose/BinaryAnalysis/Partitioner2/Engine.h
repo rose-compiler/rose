@@ -747,8 +747,8 @@ public:
      *  The name of the engine comes from the engine factory, will be empty if not a factory.
      *
      * @{ */
-    const std::string& name() const /*final*/ {return name_;}
-    void name(std::string n) {name_ = n;}
+    const std::string& name() const /*final*/;
+    void name(const std::string&);
     /** @} */
 
     /** Property: All settings.
@@ -757,8 +757,8 @@ public:
      *  member function to query or adjust the setting directly.
      *
      * @{ */
-    const Settings& settings() const /*final*/ { return settings_; }
-    Settings& settings() /*final*/ { return settings_; }
+    const Settings& settings() const /*final*/;
+    Settings& settings() /*final*/;
     /** @} */
 
     /** Property: BasicBlock work list.
@@ -766,16 +766,16 @@ public:
      *  This property holds the list of what blocks to work on next.
      *
      * @{ */
-    BasicBlockWorkList::Ptr basicBlockWorkList() const /*final*/ { return basicBlockWorkList_; }
-    void basicBlockWorkList(const BasicBlockWorkList::Ptr &l) /*final*/ { basicBlockWorkList_ = l; }
+    BasicBlockWorkList::Ptr basicBlockWorkList() const /*final*/;
+    void basicBlockWorkList(const BasicBlockWorkList::Ptr&) /*final*/;
 
     /** Property: Instruction AST constants.
      *
      *  This property holds constants that are found in instruction ASTs.
      *
      * @{ */
-    CodeConstants::Ptr codeFunctionPointers() const /*final*/ { return codeFunctionPointers_; }
-    void codeFunctionPointers(const CodeConstants::Ptr &c) /*final*/ { codeFunctionPointers_ = c; }
+    CodeConstants::Ptr codeFunctionPointers() const /*final*/;
+    void codeFunctionPointers(const CodeConstants::Ptr&) /*final*/;
     /** @} */
 
     /** Property: Disassembler.
@@ -795,8 +795,8 @@ public:
      *  the user can reset it to DOS to disassemble the DOS part of the executable.
      *
      * @{ */
-    SgAsmInterpretation* interpretation() const /*final*/ { return interp_; }
-    virtual void interpretation(SgAsmInterpretation *interp) { interp_ = interp; }
+    SgAsmInterpretation* interpretation() const /*final*/;
+    virtual void interpretation(SgAsmInterpretation*);
     /** @} */
 
     /** Property: progress reporting.
@@ -813,8 +813,8 @@ public:
      *  The specimen is a list of additional command line arguments. It is often a list of file names.
      *
      * @{ */
-    std::vector<std::string> specimen() const /*final*/ { return specimen_; }
-    virtual void specimen(const std::vector<std::string> &specimen) {specimen_ = specimen; }
+    const std::vector<std::string>& specimen() const /*final*/;
+    virtual void specimen(const std::vector<std::string>&);
     /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
