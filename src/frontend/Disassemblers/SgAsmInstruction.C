@@ -275,4 +275,36 @@ SgAsmInstruction::adjustCacheLockCount(int amount) {
     }
 }
 
+bool
+SgAsmInstruction::normalizeOperands() {
+    bool changed = false;
+    for (size_t i = 0; i < nOperands(); ++i) {
+        // match (+ (+ reg1 (* reg2 sz)) offset)
+        if (auto mre = isSgAsmMemoryReferenceExpression(operand(i))) {
+            if (auto add1 = isSgAsmBinaryAdd(mre->get_address())) {
+                if (auto add2 = isSgAsmBinaryAdd(add1->get_lhs())) {
+                    if (/*auto reg1 = */isSgAsmDirectRegisterExpression(add2->get_lhs())) {
+                        if (auto mul = isSgAsmBinaryMultiply(add2->get_rhs())) {
+                            if (/*auto reg2 = */isSgAsmDirectRegisterExpression(mul->get_lhs())) {
+                                if (/*auto sz = */isSgAsmIntegerValueExpression(mul->get_rhs())) {
+                                    if (auto offset = isSgAsmIntegerValueExpression(add1->get_rhs())) {
+                                        // Swap the offset and multiplication to result in
+                                        //   (+ (+ reg1 offset) (* reg2 sz))
+                                        add2->set_rhs(offset);
+                                        offset->set_parent(add2);
+                                        add1->set_rhs(mul);
+                                        mul->set_parent(add1);
+                                        changed = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return changed;
+}
+
 #endif
