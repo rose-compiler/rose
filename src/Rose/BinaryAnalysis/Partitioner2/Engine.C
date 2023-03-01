@@ -1393,6 +1393,66 @@ Engine::progress(const Progress::Ptr &progress) {
     progress_ = progress;
 }
 
+const std::string&
+Engine::name() const /*final*/ {
+    return name_;
+}
+
+void
+Engine::name(const std::string &n) {
+    name_ = n;
+}
+
+const Engine::Settings&
+Engine::settings() const /*final*/ {
+    return settings_;
+}
+
+Engine::Settings&
+Engine::settings() /*final*/ {
+    return settings_;
+}
+
+Engine::BasicBlockWorkList::Ptr
+Engine::basicBlockWorkList() const /*final*/ {
+    return basicBlockWorkList_;
+}
+
+void
+Engine::basicBlockWorkList(const BasicBlockWorkList::Ptr &l) /*final*/ {
+    basicBlockWorkList_ = l;
+}
+
+Engine::CodeConstants::Ptr
+Engine::codeFunctionPointers() const /*final*/ {
+    return codeFunctionPointers_;
+}
+
+void
+Engine::codeFunctionPointers(const CodeConstants::Ptr &c) /*final*/ {
+    codeFunctionPointers_ = c;
+}
+
+SgAsmInterpretation*
+Engine::interpretation() const /*final*/ {
+    return interp_;
+}
+
+void
+Engine::interpretation(SgAsmInterpretation *interp) {
+    interp_ = interp;
+}
+
+const std::vector<std::string>&
+Engine::specimen() const /*final*/ {
+    return specimen_;
+}
+
+void
+Engine::specimen(const std::vector<std::string> &specimen) {
+    specimen_ = specimen;
+}
+
 } // namespace
 } // namespace
 } // namespace
