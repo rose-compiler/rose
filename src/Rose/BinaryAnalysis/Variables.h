@@ -381,11 +381,28 @@ public:
  *  from 0x4000 (inclusive) to 0x4100 (exclusive). */
 typedef Sawyer::Container::IntervalMap<AddressInterval, GlobalVariable> GlobalVariables;
 
+/** Erase some global variables.
+ *
+ *  Erases global variables from the specified memory region. It is not sufficient to only remove addresses from the map; the
+ *  addresses stored in the variables themselves (values in the map) may need to be adjusted so they don't overlap with the erased
+ *  range. */
+void erase(GlobalVariables&, const AddressInterval &toErase);
+
 /** Print info about multiple global variables.
  *
  *  This output includes such things as their addresses, sizes, and the defining instructions. The output is
  *  multi-line, intended for debugging. */
 void print(const GlobalVariables&,const Partitioner2::PartitionerConstPtr&, std::ostream &out, const std::string &prefix = "");
+
+/** Check that the map is consistent.
+ *
+ *  Test that the keys of the map match up with the variables contained therein. If a map node is found where the interval key for
+ *  the node doesn't match the addresses of the global variable stored in that node, then the map contains an inconsistency.  When
+ *  an inconsistency is found, and the output stream is enabled then the map is printed and all inconsistencies are highlighted.
+ *
+ *  Returns the first address interval (key) where an inconsistency is detected, or an empty interval if there are no
+ *  inconsistencies. */
+AddressInterval isInconsistent(const GlobalVariables&, Sawyer::Message::Stream&);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // StackFrame

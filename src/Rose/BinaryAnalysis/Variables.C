@@ -409,6 +409,64 @@ operator<<(std::ostream &out, const Rose::BinaryAnalysis::Variables::GlobalVaria
     return out;
 }
 
+void
+erase(GlobalVariables &gvars, const AddressInterval &where) {
+    if (where) {
+        ASSERT_forbid(isInconsistent(gvars, mlog[ERROR]));
+        gvars.erase(where);
+
+        // If we erased the beginning of a variable, then adjust the variable's starting address and maximum size.
+        auto next = gvars.upperBound(where.greatest());
+        if (next != gvars.nodes().end()
+            && next->key().least() == where.greatest() + 1
+            && where.contains(next->value().address())) {
+            const uint64_t less = where.greatest() + 1 - next->value().address();
+            next->value().address(where.greatest() + 1);
+            next->value().maxSizeBytes(next->value().maxSizeBytes() - less);
+        }
+
+        // If we erased the middle of a variable, then we should leave only the part that is before `where`.  For now, we'll just
+        // erase the following node from the `gvars` map without changing the variable. Next we're going to find the prior entries
+        // and adjust the variable's location.
+        if (next != gvars.nodes().end()
+            && next->key().least() == where.greatest() + 1
+            && next->value().address() < where.least()) {
+            gvars.erase(next->key());
+        }
+
+        // If there's a variable immediately before what we erased and it's size extends into the part we erased, then adjust its
+        // size so it doesn't go into the erased area.
+        auto prior = gvars.findPrior(where.least());
+        if (prior != gvars.nodes().end()
+            && prior->key().greatest() + 1 == where.least()
+            && prior->value().address() + prior->value().maxSizeBytes() > where.least()) {
+            prior->value().maxSizeBytes(where.least() - prior->value().address());
+        }
+        ASSERT_forbid(isInconsistent(gvars, mlog[ERROR]));
+    }
+}
+
+AddressInterval
+isInconsistent(const GlobalVariables &gvars, Sawyer::Message::Stream &out) {
+    for (const auto &node: gvars.nodes()) {
+        if (node.key() != AddressInterval::baseSize(node.value().address(), node.value().maxSizeBytes())) {
+            if (out) {
+                for (const auto &n: gvars.nodes()) {
+                    const auto i = AddressInterval::baseSize(node.value().address(), node.value().maxSizeBytes());
+                    out <<(n.key() == i ? "    " : "  * ")
+                        <<"key = " <<StringUtility::addrToString(n.key())
+                        <<" (" <<StringUtility::plural(n.key().size(), "bytes") <<")"
+                        <<"; var_location = " <<StringUtility::addrToString(i)
+                        <<" (" <<StringUtility::plural(i.size(), "bytes") <<")"
+                        <<", variable = " <<n.value() <<"\n";
+                }
+            }
+            return node.key();
+        }
+    }
+    return {};
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Semantics for finding local variables. This works by intercepting each memory I/O and examining the address to see whether
 // it's an offset from the frame pointer.
