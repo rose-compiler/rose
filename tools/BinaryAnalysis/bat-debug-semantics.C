@@ -338,7 +338,7 @@ main(int argc, char *argv[]) {
     MemoryMap::Ptr memory = parseBytes(args.begin()+1, args.end());
 
     // Create the decoder and semantics
-    P2::EnginePtr engine = P2::Engine::forge();
+    P2::Engine::Ptr engine = P2::Engine::forge();
     engine->settings().disassembler.isaName = isa;
     engine->memoryMap(memory);
     P2::Partitioner::Ptr partitioner = engine->createPartitioner();

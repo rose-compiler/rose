@@ -64,7 +64,7 @@ EngineJvm::matchFactory(const std::vector<std::string> &specimen) const {
     return specimen.size()>0;
 }
 
-EnginePtr
+Engine::Ptr
 EngineJvm::instanceFromFactory() {
     ASSERT_require(isFactory());
     return instance();

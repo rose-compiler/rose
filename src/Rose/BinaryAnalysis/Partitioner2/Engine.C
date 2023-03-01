@@ -26,7 +26,7 @@ namespace BinaryAnalysis {
 namespace Partitioner2 {
 
 static SAWYER_THREAD_TRAITS::Mutex registryMutex;
-static std::vector<Engine::EnginePtr> registry;
+static std::vector<Engine::Ptr> registry;
 static boost::once_flag registryInitFlag = BOOST_ONCE_INIT;
 
 static void
@@ -52,12 +52,12 @@ Engine::Engine(const Settings &settings)
 
 Engine::~Engine() {}
 
-Engine::EnginePtr
+Engine::Ptr
 Engine::forge() {
   return forge(std::vector<std::string>{});
 }
 
-Engine::EnginePtr
+Engine::Ptr
 Engine::forge(const std::vector<std::string> &specimen) {
     initRegistry();
     SAWYER_THREAD_TRAITS::LockGuard lock(registryMutex);
@@ -70,13 +70,13 @@ Engine::forge(const std::vector<std::string> &specimen) {
     return {};
 }
 
-Engine::EnginePtr
+Engine::Ptr
 Engine::forge(int argc, char *argv[], Sawyer::CommandLine::Parser& p) {
     initRegistry();
     SAWYER_THREAD_TRAITS::LockGuard lock(registryMutex);
 
     for (auto f = registry.rbegin(); f != registry.rend(); ++f) {
-        Engine::EnginePtr factory = *f;
+        Ptr factory = *f;
         Settings settings = factory->settings();
 
         // Obtain potential specimen from command line arguments using a copy of the parser
@@ -1349,7 +1349,7 @@ Engine::disassembleForRoseFrontend(SgAsmInterpretation *interp) {
     }
 
     //TODO: Warning, forge() returns EngineBinary as default. Base engine instance on interpretation?
-    EnginePtr engine = Engine::forge();
+    Ptr engine = Engine::forge();
 
     engine->memoryMap(interp->get_map()->shallowCopy()); // copied so we can make local changes
     engine->adjustMemoryMap();

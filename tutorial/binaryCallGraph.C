@@ -52,7 +52,7 @@ main(int argc, char *argv[]) {
     //! [setup]
     ROSE_INITIALIZE;
     Settings settings;
-    Partitioner2::EnginePtr engine = Partitioner2::Engine::forge();
+    Partitioner2::Engine::Ptr engine = Partitioner2::Engine::forge();
     std::vector<std::string> specimen = parseCommandLine(argc, argv, *engine, settings);
     if (specimen.empty()) {
         mlog[FATAL] <<"no binary specimen specified; see --help\n";

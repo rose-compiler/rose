@@ -74,7 +74,7 @@ namespace Partitioner2 {
  *
  *       // Create an engine instance from the engine factory using an empty parser
  *       Sawyer::CommandLine::Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
- *       P2::Engine::EnginePtr engine = P2::Engine::forge(argc, argv, parser);
+ *       P2::Engine::Ptr engine = P2::Engine::forge(argc, argv, parser);
  *       // Create the AST
  *       SgAsmBlock *gblock = engine->frontend(argc, argv, purpose, description);
  *  @endcode
@@ -107,7 +107,7 @@ namespace Partitioner2 {
 class Engine: public Sawyer::SharedObject {
 public:
     /** Shared ownership pointer. */
-    using EnginePtr = Sawyer::SharedPointer<Engine>;
+    using Ptr = EnginePtr;
 
     /** Settings for the engine.
      *
@@ -424,7 +424,6 @@ public:
     virtual void savePartitioner(const PartitionerConstPtr&, const boost::filesystem::path&, SerialIo::Format = SerialIo::BINARY);
 
 //TODO: use Partitioner::instanceFromRbaFile() instead if not an engine?
-protected:
     /** Load a partitioner and an AST from a file.
      *
      *  The specified RBA file is opened and read to create a new @ref Partitioner object and associated AST. The @ref
