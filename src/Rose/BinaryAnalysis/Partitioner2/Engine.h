@@ -414,6 +414,7 @@ public:
      *
      * @{ */
     virtual SgAsmBlock* buildAst(const std::vector<std::string> &fileNames = std::vector<std::string>()) = 0;
+    SgAsmBlock *buildAst(const std::string &fileName) /*final*/;
     /** @} */
 
     /** Save a partitioner and AST to a file.
