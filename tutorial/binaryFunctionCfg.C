@@ -3,7 +3,7 @@
 
 #include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 #include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Sawyer/CommandLine.h>
@@ -22,7 +22,7 @@ int
 main(int argc, char *argv[]) {
     //! [setup]
     ROSE_INITIALIZE;                                    // see Rose::initialize
-    Partitioner2::Engine::Ptr engine = Partitioner2::Engine::forge();
+    Partitioner2::Engine::Ptr engine = Partitioner2::EngineBinary::instance();
     std::vector<std::string> specimen = engine->parseCommandLine(argc, argv, purpose, description).unreachedArgs();
     if (specimen.empty()) {
         mlog[FATAL] <<"no binary specimen specified; see --help\n";

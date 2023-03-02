@@ -5,7 +5,6 @@ static const char *description =
 #include <rose.h>
 
 #include <Rose/BinaryAnalysis/SerialIo.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Variables.h>
 #include <Rose/CommandLine.h>

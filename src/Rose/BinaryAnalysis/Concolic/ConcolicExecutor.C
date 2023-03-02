@@ -13,7 +13,7 @@
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
@@ -76,9 +76,9 @@ ConcolicExecutor::commandLineSwitches(ConcolicExecutorSettings &settings /*in,ou
     using namespace Sawyer::CommandLine;
 
     std::vector<SwitchGroup> sgroups;
-    sgroups.push_back(P2::Engine::loaderSwitches(settings.loader));
-    sgroups.push_back(P2::Engine::disassemblerSwitches(settings.disassembler));
-    sgroups.push_back(P2::Engine::partitionerSwitches(settings.partitioner));
+    sgroups.push_back(P2::EngineBinary::loaderSwitches(settings.loader));
+    sgroups.push_back(P2::EngineBinary::disassemblerSwitches(settings.disassembler));
+    sgroups.push_back(P2::EngineBinary::partitionerSwitches(settings.partitioner));
 
     SwitchGroup ce("Concolic executor switches");
 
@@ -105,7 +105,7 @@ ConcolicExecutor::partition(const Specimen::Ptr &specimen, const Architecture::P
     SpecimenId specimenId = database()->id(specimen, Update::NO);
     ASSERT_require2(specimenId, "specimen must be in the database");
 
-    P2::Engine::Ptr engine = P2::Engine::forge();
+    P2::Engine::Ptr engine = P2::EngineBinary::instance();
     engine->settings().engine = settings_.partitionerEngine;
     engine->settings().loader = settings_.loader;
     engine->settings().disassembler = settings_.disassembler;
