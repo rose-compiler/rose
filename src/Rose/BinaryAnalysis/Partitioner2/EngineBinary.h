@@ -118,6 +118,7 @@ public:
      *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
      *
      * @{ */
+    using Engine::frontend;
     SgAsmBlock* frontend(const std::vector<std::string> &args,
                          const std::string &purpose, const std::string &description) override;
     /** @} */
@@ -152,6 +153,7 @@ public:
      *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
      *
      * @{ */
+    using Engine::parseContainers;
     virtual SgAsmInterpretation* parseContainers(const std::vector<std::string> &fileNames) override;
     /** @} */
 
@@ -175,6 +177,7 @@ public:
      *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
      *
      * @{ */
+    using Engine::loadSpecimens;
     virtual MemoryMapPtr loadSpecimens(const std::vector<std::string> &fileNames = std::vector<std::string>()) override;
     /** @} */
 
@@ -197,6 +200,7 @@ public:
      *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
      *
      * @{ */
+    using Engine::partition;
     virtual PartitionerPtr partition(const std::vector<std::string> &fileNames = std::vector<std::string>()) override;
     /** @} */
 
@@ -214,14 +218,45 @@ public:
      *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
      *
      * @{ */
+    using Engine::buildAst;
     virtual SgAsmBlock* buildAst(const std::vector<std::string> &fileNames = std::vector<std::string>()) override;
     /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Command-line parsing
-    //
-    // top-level: parseCommandLine
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    virtual std::list<Sawyer::CommandLine::SwitchGroup> commandLineSwitches() override;
+    virtual std::pair<std::string, std::string> specimenNameDocumentation() override;
+
+    /** Command-line switches related to the general engine behavior.
+     *
+     *  The switches are configured to adjust the specified settings object when parsed. */
+    static Sawyer::CommandLine::SwitchGroup engineSwitches(EngineSettings&);
+
+    /** Command-line switches related to loading specimen into memory.
+     *
+     *  The switches are configured to adjust the specified settings object when parsed. */
+    static Sawyer::CommandLine::SwitchGroup loaderSwitches(LoaderSettings&);
+
+    /** Command-line switches related to decoding instructions.
+     *
+     *  The switches are configured to adjust the specified settings object when parsed. */
+    static Sawyer::CommandLine::SwitchGroup disassemblerSwitches(DisassemblerSettings&);
+
+    /** Command-line switches related to partitioning instructions.
+     *
+     *  The switches are configured to adjust the specified settings object when parsed. */
+    static Sawyer::CommandLine::SwitchGroup partitionerSwitches(PartitionerSettings&);
+
+    /** Command-line switches related to constructing an AST from the partitioner.
+     *
+     *  The switches are configured to adjust the specified settings object when parsed. */
+    static Sawyer::CommandLine::SwitchGroup astConstructionSwitches(AstConstructionSettings&);
+
+
+
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Container parsing

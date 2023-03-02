@@ -105,10 +105,15 @@ namespace Partitioner2 {
  *      Because of this, the partitioner also has a mechanism by which its data structures can be initialized from an AST.
  */
 class Engine: public Sawyer::SharedObject, public Sawyer::SharedFromThis<Engine> {
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Internal data structures
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Shared ownership pointer. */
     using Ptr = EnginePtr;
 
+    //--------------------------------------------------------------------------------------------------------------------------
+public:
     /** Settings for the engine.
      *
      *  The engine is configured by adjusting these settings, usually shortly after the engine is created. */
@@ -132,16 +137,61 @@ public:
         Settings();
     };
 
+    //--------------------------------------------------------------------------------------------------------------------------
+public:
     /** Errors from the engine. */
     class Exception: public Partitioner2::Exception {
     public:
         ~Exception() throw ();
-        Exception(const std::string&);
+
+        /** Construct an exception with a message string. */
+        explicit Exception(const std::string&);
     };
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Internal data structures
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //--------------------------------------------------------------------------------------------------------------------------
+public:
+    /** How to parse positional command-line arguments. */
+    class PositionalArgumentParser {
+    public:
+        virtual ~PositionalArgumentParser();
+        PositionalArgumentParser();
+
+        /** Return specimen from positional arguments.
+         *
+         *  Given a list of positional arguments from the command-line (i.e., the stuff that comes after the switches),
+         *  return those positional arguments that represent the specimen and which are used to choose the engine subclass.
+         *
+         *  The default implementation in the @c Engine base class just returns all input arguments. */
+        virtual std::vector<std::string> specimen(const std::vector<std::string>&) const = 0;
+    };
+
+    /** Return all positional arguments as the specimen. */
+    class AllPositionalArguments: public PositionalArgumentParser {
+    public:
+        virtual std::vector<std::string> specimen(const std::vector<std::string>&) const override;
+    };
+
+    /** Up to first N arguments are the specimen. */
+    class FirstPositionalArguments: public PositionalArgumentParser {
+        size_t n_;
+    public:
+        /** Constructor returning up to @p n arguments. */
+        explicit FirstPositionalArguments(size_t n);
+        virtual std::vector<std::string> specimen(const std::vector<std::string>&) const override;
+    };
+
+    /** Nth group of arguments are the specimen. */
+    class GroupedPositionalArguments: public PositionalArgumentParser {
+        size_t n_ = 0;
+    public:
+        /** Constructor returning first group of arguments. */
+        GroupedPositionalArguments();
+        /** Constructor returning nth group of arguments. */
+        explicit GroupedPositionalArguments(size_t);
+        virtual std::vector<std::string> specimen(const std::vector<std::string>&) const override;
+    };
+
+    //--------------------------------------------------------------------------------------------------------------------------
 protected:
     // Engine callback for handling instructions added to basic blocks.  This is called when a basic block is discovered,
     // before it's attached to a partitioner, so it shouldn't really be modifying any state in the engine, but rather only
@@ -161,6 +211,7 @@ protected:
         void addPossibleIndeterminateEdge(const Args&);
     };
 
+    //--------------------------------------------------------------------------------------------------------------------------
 private:
     // Basic blocks that need to be worked on next. These lists are adjusted whenever a new basic block (or placeholder) is
     // inserted or erased from the CFG.
@@ -205,6 +256,7 @@ private:
         void moveAndSortCallReturn(const PartitionerConstPtr&);
     };
 
+    //--------------------------------------------------------------------------------------------------------------------------
 protected:
     // A work list providing constants from instructions that are part of the CFG.
     class CodeConstants: public CfgAdjustmentCallback {
@@ -253,8 +305,11 @@ private:
     std::vector<std::string> specimen_;                 // list of additional command line arguments (often file names)
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Constructors
+    //                                  Construction and destruction
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    virtual ~Engine();
+
 protected:
     /** Default constructor.  Constructor is deleted and class noncopyable. */
     Engine() = delete;
@@ -269,13 +324,97 @@ protected:
     explicit Engine(const Settings &settings);
     /** @} */
 
+public:
+    // [Robb Matzke 2023-03-03]: deprecated.
+    // This used to create a binary engine, so we leave it in place for a while for improved backward compatibility
+    static EngineBinaryPtr instance() ROSE_DEPRECATED("use Engine::forge or EngineBinary::instance");
+
+private:
     void init();
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Command-line processing
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    virtual ~Engine();
+
+    /** Command-line switches for a particular engine.
+     *
+     *  Returns the list of switch groups that declare the command-line switches specific to a particular engine. Since every @c
+     *  Engine subclass needs its own particular switches (possibly in addition to the base class switches), this is implemented in
+     *  each subclass that needs switches. The base class returns a list of switch groups that are applicable to all engines,
+     *  although the subclasses can refine this list, and the subclass implementations should augment what the base implementation
+     *  returns.
+     *
+     *  In order to implement the "--help" switch to show the man page, we need a way to include the switch documentation for all
+     *  possible engine subclasses at once. Therefore, the returned command line switch groups must have names and prefixes that
+     *  are unique across all subclasses, and the descriptions should refer to the name of the subclass. For instance, the @ref
+     *  EngineBinary class, which returns many switch groups, will name the switch groups like "binary-load", "binary-dis",
+     *  "binary-part", "binary-ast", etc. and will make it clear in each group description that these switches are intended for the
+     *  binary engine.
+     *
+     *  See @ref allCommandLineSwitches for details about how the \"--help\" man page is constructed. */
+    virtual std::list<Sawyer::CommandLine::SwitchGroup> commandLineSwitches();
+
+    /** List of command-line switches for all engines.
+     *
+     *  This function is used to construct the man page for a tool. It invokes @ref commandLineSwitches for the base class and every
+     *  registered subclass in the opposite order they were registered (i.e., the same order they're matched). It then traverses the
+     *  list and removes any group that has the same name or prefix as an earlier group. The final list is returned. */
+    std::list<Sawyer::CommandLine::SwitchGroup> allCommandLineSwitches();
+
+    /** Documentation about how the specimen is specified.
+     *
+     *  The documentation string that's returned is expected to be used in a command-line parser description and thus may contain
+     *  special formatting constructs. For most engine subclasses, this will be a description of those command-line positional
+     *  arguments that describe the specimen. For instance, the @ref EngineJvm subclass would probably document that the specimen
+     *  consists of one or more file names ending with the string \".class\".
+     *
+     *  In order to support the --help switch that generates the man page, it must be possible to include the documentation for
+     *  all subclasses concurrently. Therefore, each subclass returns both a section title and the section documentation string.
+     *  The section title and documentation string should make it clear that this part of the documentation applies only to that
+     *  particular subclass. */
+    virtual std::pair<std::string/*title*/, std::string /*doc*/> specimenNameDocumentation() = 0;
+
+    /** Documentation for all specimen specifications.
+     *
+     *  This function calls the @ref specimenNameDocumentation for all registered subclasses in the reverse order their factories
+     *  were registered, which is the same order they're matched. It then combines (and warns) documentation that has the same title
+     *  and returns the (possibly modified) list. The list consists of pairs where the first of each pair is the unique section
+     *  title and the second is the documentation tht goes into that section. */
+    static std::list<std::pair<std::string /*title*/, std::string /*doc*/>> allSpecimenNameDocumentation();
+
+    /** Add switches and sections to command-line parser.
+     *
+     *  The switches and special documentation sections for the particular parser are added to the specified command-line parser.
+     *
+     *  Note that if you intend to create a parser that recognizes more than one engine type, it is better to use @ref
+     *  addAllToParser since that function is better for this purpose. If you want to include only a few engines, consider
+     *  clearing the engine factory list and replacing it with only those you want before calling @ref addAllToParser. */
+    virtual void addToParser(Sawyer::CommandLine::Parser&);
+
+    /** Add switches and sections to command-line parser.
+     *
+     *  This function adds switch groups and descriptions for all available engine subclases, thus producing a parser that's
+     *  suitable for generating a man page. It uses @ref allCommandLineSwitches and @ref allSpecimenNameDocumentation to acheive
+     *  this goal. */
+    void addAllToParser(Sawyer::CommandLine::Parser&);
+
+    /** Creates a command-line parser.
+     *
+     *  This creates and returns a command-line parser that contains the switch groups and documentation sections for all registered
+     *  engines. No other switches are included in the parser, particularly the switches defined by @ref
+     *  Rose::CommandLine::genericSwitches.
+     *
+     *  The @p purpose should be a single line string that will be shown in the title of the man page and should
+     *  not start with an upper-case letter, a hyphen, white space, or the name of the command. E.g., a disassembler tool might
+     *  specify the purpose as "disassembles a binary specimen".
+     *
+     *  The @p description is a full, multi-line description written in the Sawyer markup language where "@" characters have
+     *  special meaning. */
+    virtual Sawyer::CommandLine::Parser commandLineParser(const std::string &purpose, const std::string &description);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Factories
+    //                                  Factories
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Register an engine as a factory.
@@ -306,15 +445,70 @@ public:
 
     /** Creates a suitable engine based on the specimen.
      *
-     *  Scans the @ref registeredFactories list in the reverse order looking for a factory whose @ref matchFactory predicate
-     *  (which accepts all but the first argument to this function) returns true. The first factory whose predicate returns
-     *  true is used to create and return a new concrete engine object by invoking the factory's virtual @c
-     *  instanceFromFactory constructor with the first argument of this function.
+     *  Scans the @ref registeredFactories list in the reverse order looking for a factory whose @ref matchFactory predicate returns
+     *  true. The first factory whose predicate returns true is used to create and return a new concrete engine object by invoking
+     *  the factory's virtual @c instanceFromFactory constructor with the first argument of this function.
      *
-     *  Thread safety: This method is thread safe. */
-    static EnginePtr forge();
+     *  The version that takes a string or vector of strings, the "specimen", returns a new engine from the first factory that says
+     *  it can handle those strings. For instance, if the @ref EngineJvm can handle a specimen whose name is a class file having the
+     *  extension \".class\".
+     *
+     *  The versions that takes a command-line switch parser and a an optional command-line positional argument parser attempts to
+     *  parse the command-line to obtain the specimen, which is then passed to the version that takes a specimen. The incoming
+     *  parser should not have definitions for switches that adjust the engine settings--they will be added automatically to the
+     *  parser before returning. The returned parser will be augmented with switches for all engines so that \"--help\" and friends
+     *  work propertly, however only the switches applicable to the returned engine will be linked to the returned engine (switches
+     *  for other engine types are linked to their respective factories as a holding area, although they're never used for
+     *  anything).
+     *
+     *  If settings are specified, then they are the defaults to be adjusted by the command-line parser. These defaults will also
+     *  show up in the man page.
+     *
+     *  Thread safety: This method is thread safe.
+     *
+     * @{ */
+
+    //---------------------------------------------------------
+    // These operate on specimens
+    //---------------------------------------------------------
+
     static EnginePtr forge(const std::vector<std::string> &specimen);
+    static EnginePtr forge(const std::string &specimen);
+
+    //---------------------------------------------------------
+    // These operate on arguments as std::vector<std::string>
+    //---------------------------------------------------------
+
+    // all args
+    static EnginePtr forge(const std::vector<std::string> &arguments, Sawyer::CommandLine::Parser&,
+                           const PositionalArgumentParser&, const Settings&);
+
+    // default settings
+    static EnginePtr forge(const std::vector<std::string> &arguments, Sawyer::CommandLine::Parser&,
+                           const PositionalArgumentParser&);
+
+    // default positional parser
+    static EnginePtr forge(const std::vector<std::string> &arguments, Sawyer::CommandLine::Parser&, const Settings&);
+
+    // default positional parser and settings
+    static EnginePtr forge(const std::vector<std::string> &arguments, Sawyer::CommandLine::Parser&);
+
+    //---------------------------------------------------------
+    // These operate on arguments as argc and argv
+    //---------------------------------------------------------
+
+    // all args
+    static EnginePtr forge(int argc, char *argv[], Sawyer::CommandLine::Parser&, const PositionalArgumentParser&, const Settings&);
+
+    // default settings
+    static EnginePtr forge(int argc, char *argv[], Sawyer::CommandLine::Parser&, const PositionalArgumentParser&);
+
+    // default positional parser
+    static EnginePtr forge(int argc, char *argv[], Sawyer::CommandLine::Parser&, const Settings&);
+
+    // default positional parser and settings
     static EnginePtr forge(int argc, char *argv[], Sawyer::CommandLine::Parser&);
+    /** @} */
 
     /** Predicate for matching a concrete engine factory by settings and specimen. */
     virtual bool matchFactory(const std::vector<std::string> &specimen) const = 0;
@@ -427,25 +621,25 @@ public:
     SgAsmBlock *buildAst(const std::string &fileName) /*final*/;
     /** @} */
 
-    /** Save a partitioner and AST to a file.
-     *
-     *  The specified partitioner and the binary analysis components of the AST are saved into the specified file, which is
-     *  created if it doesn't exist and truncated if it does exist. The name should end with a ".rba" extension. The file can
-     *  be loaded by passing its name to the @ref partition function or by calling @ref loadPartitioner. */
-    virtual void savePartitioner(const PartitionerConstPtr&, const boost::filesystem::path&, SerialIo::Format = SerialIo::BINARY);
+    // [Robb Matzke 2023-03-03]: deprecated
+    // Save a partitioner and AST to a file.
+    //
+    // The specified partitioner and the binary analysis components of the AST are saved into the specified file, which is
+    // created if it doesn't exist and truncated if it does exist. The name should end with a ".rba" extension. The file can
+    // be loaded by passing its name to the @ref partition function or by calling @ref loadPartitioner.
+    virtual void savePartitioner(const PartitionerConstPtr&, const boost::filesystem::path&, SerialIo::Format = SerialIo::BINARY)
+        ROSE_DEPRECATED("use Partitioner::saveAsRbaFile");
 
-//TODO: use Partitioner::instanceFromRbaFile() instead if not an engine?
-    /** Load a partitioner and an AST from a file.
-     *
-     *  The specified RBA file is opened and read to create a new @ref Partitioner object and associated AST. The @ref
-     *  partition function also understands how to open RBA files. */
-    // instanceFromRbaFile() rename
-    virtual PartitionerPtr loadPartitioner(const boost::filesystem::path&, SerialIo::Format = SerialIo::BINARY);
+    // [Robb Matzke 2023-03-03]: deprecated
+    // Load a partitioner and an AST from a file.
+    //
+    // The specified RBA file is opened and read to create a new @ref Partitioner object and associated AST. The @ref
+    // partition function also understands how to open RBA files.
+    virtual PartitionerPtr loadPartitioner(const boost::filesystem::path&, SerialIo::Format = SerialIo::BINARY)
+        ROSE_DEPRECATED("use Partitioner::instanceFromRbaFile");
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Command-line parsing
-    //
-    // top-level: parseCommandLine
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Parse specimen binary containers.
@@ -517,57 +711,6 @@ public:
     virtual PartitionerPtr partition(const std::vector<std::string> &fileNames = std::vector<std::string>()) = 0;
     PartitionerPtr partition(const std::string &fileName) /*final*/;
     /** @} */
-
-    /** Command-line switches related to the loader.
-     *
-     * @{ */
-    virtual Sawyer::CommandLine::SwitchGroup loaderSwitches();
-    static Sawyer::CommandLine::SwitchGroup loaderSwitches(LoaderSettings&);
-    /** @} */
-
-    /** Command-line switches related to the disassembler.
-     *
-     * @{ */
-    virtual Sawyer::CommandLine::SwitchGroup disassemblerSwitches();
-    static Sawyer::CommandLine::SwitchGroup disassemblerSwitches(DisassemblerSettings&);
-    /** @} */
-
-    /** Command-line switches related to the partitioner.
-     *
-     * @{ */
-    virtual Sawyer::CommandLine::SwitchGroup partitionerSwitches();
-    static Sawyer::CommandLine::SwitchGroup partitionerSwitches(PartitionerSettings&);
-    /** @} */
-
-    /** Command-line switches related to engine behavior.
-     *
-     * @{ */
-    virtual Sawyer::CommandLine::SwitchGroup engineSwitches();
-    static Sawyer::CommandLine::SwitchGroup engineSwitches(EngineSettings&);
-    /** @} */
-
-    /** Command-line switches related to AST construction.
-     *
-     * @{ */
-    virtual Sawyer::CommandLine::SwitchGroup astConstructionSwitches();
-    static Sawyer::CommandLine::SwitchGroup astConstructionSwitches(AstConstructionSettings&);
-    /** @} */
-
-    /** Documentation for specimen names. */
-    static std::string specimenNameDocumentation();
-
-    /** Creates a command-line parser.
-     *
-     *  Creates and returns a command-line parser suitable for parsing command-line switches and arguments needed by the
-     *  disassembler.
-     *
-     *  The @p purpose should be a single line string that will be shown in the title of the man page and should
-     *  not start with an upper-case letter, a hyphen, white space, or the name of the command. E.g., a disassembler tool might
-     *  specify the purpose as "disassembles a binary specimen".
-     *
-     *  The @p description is a full, multi-line description written in the Sawyer markup language where "@" characters have
-     *  special meaning. */
-    virtual Sawyer::CommandLine::Parser commandLineParser(const std::string &purpose, const std::string &description);
 
     /** Check settings after command-line is processed.
      *
@@ -770,6 +913,7 @@ public:
      * @{ */
     const Settings& settings() const /*final*/;
     Settings& settings() /*final*/;
+    void settings(const Settings&) /*final*/;
     /** @} */
 
     /** Property: BasicBlock work list.

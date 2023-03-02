@@ -339,6 +339,7 @@ private:
     Configuration config_;                              // configuration information about functions, blocks, etc.
     InstructionProvider::Ptr instructionProvider_;      // cache for all disassembled instructions
     MemoryMap::Ptr memoryMap_;                          // description of memory, especially insns and non-writable
+    SgAsmInterpretation *interpretation_;               // Interpretation corresponding to the memory map
     ControlFlowGraph cfg_;                              // basic blocks that will become part of the ROSE AST
     CfgVertexIndex vertexIndex_;                        // Vertex-by-address index for the CFG
     AddressUsageMap aum_;                               // How addresses are used for each address represented by the CFG
@@ -411,6 +412,8 @@ private:
         // s & config_;                         -- FIXME[Robb P Matzke 2016-11-08]
         s & BOOST_SERIALIZATION_NVP(instructionProvider_);
         s & BOOST_SERIALIZATION_NVP(memoryMap_);
+        if (version >= 3)
+            s & BOOST_SERIALIZATION_NVP(interpretation_);
         s & BOOST_SERIALIZATION_NVP(cfg_);
         // s & vertexIndex_;                    -- initialized by rebuildVertexIndices
         s & BOOST_SERIALIZATION_NVP(aum_);
@@ -486,6 +489,9 @@ public:
      *  partition function also understands how to open RBA files. */
     static PartitionerPtr instanceFromRbaFile(const boost::filesystem::path&, SerialIo::Format = SerialIo::BINARY);
 
+    /** Save this partitioner as an RBA file. */
+    void saveAsRbaFile(const boost::filesystem::path &name, SerialIo::Format fmt) const;
+
 #ifdef ROSE_PARTITIONER_MOVE
     /** Move constructor. */
     Partitioner(BOOST_RV_REF(Partitioner));
@@ -537,6 +543,13 @@ public:
      *
      *  Thread safety: Not thread safe. */
     MemoryMap::Ptr memoryMap() const;
+
+    /** Property: Interpretation corresponding to the memory map.
+     *
+     * @{ */
+    SgAsmInterpretation *interpretation() const;
+    void interpretation(SgAsmInterpretation*);
+    /** @} */
 
     /** Returns true if address is executable.
      *
@@ -2597,7 +2610,7 @@ private:
 } // namespace
 
 // Class versions must be at global scope
-BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::Partitioner, 2);
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::Partitioner, 3);
 
 #endif
 #endif
