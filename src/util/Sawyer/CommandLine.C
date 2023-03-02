@@ -2116,6 +2116,11 @@ Parser::doc(const std::string &sectionName, const std::string &docKey, const std
     return *this;
 }
 
+SAWYER_EXPORT Parser&
+Parser::doc(const std::pair<std::string, std::string> &pair) {
+    return doc(pair.first, pair.second);
+}
+
 SAWYER_EXPORT std::vector<std::string>
 Parser::docSections() const {
     std::vector<std::string> retval;
