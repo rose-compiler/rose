@@ -67,24 +67,22 @@ EngineBinary::EngineBinary(const Settings &settings)
 
 EngineBinary::~EngineBinary() {}
 
-EngineBinaryPtr
+EngineBinary::Ptr
 EngineBinary::instance() {
-    return EngineBinaryPtr(new EngineBinary(Settings{}));
+    auto engine = Ptr(new EngineBinary(Settings{}));
+    engine->name((boost::format("binary-%x") % (&*engine)).str());
+    return engine;
 }
 
-EngineBinary::EngineBinaryPtr
+EngineBinary::Ptr
 EngineBinary::factory() {
-    return EngineBinaryPtr(new EngineBinary("EngineBinary"));
+    return Ptr(new EngineBinary("binary"));
 }
 
 bool
 EngineBinary::matchFactory(const std::vector<std::string> &specimen) const {
-    // EngineBinary is the default, return false if the specimen contains any JVM files
-    for (auto file: specimen) {
-        if (CommandlineProcessing::isJavaJvmFile(file)) {
-            return false;
-        }
-    }
+    // EngineBinary is the default. It treats all inputs as binaries even if they are something else. Therefore,
+    // this engine class is usually the first one registered and therefore the last one matched.
     return true;
 }
 
