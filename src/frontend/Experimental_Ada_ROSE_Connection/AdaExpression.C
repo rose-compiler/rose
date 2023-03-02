@@ -99,102 +99,6 @@ namespace
         res = &mkFunctionCallExp(n, arglst, !callSyntax);
       }
 
-#if OBSOLETE_CODE_FN
-      SgAdaInheritedFunctionSymbol*
-      inheritedFunctionSymbol(SgType* ty, SgFunctionSymbol& origSymbol)
-      {
-        const SgDeclarationStatement* tydcl = si::Ada::associatedDeclaration(ty);
-        const bool                    supported = (  isSgTypedefDeclaration(tydcl)
-                                                  || isSgClassDeclaration(tydcl)
-                                                  || isSgEnumDeclaration(tydcl)
-                                                  );
-
-        if (!supported)
-        {
-          //~ logError() << "not a supported type derivation (i.e., extension record, derived type, derived enum)"
-                     //~ << std::endl;
-          return nullptr;
-        }
-
-        InheritedSymbolKey            key{origSymbol.get_declaration(), si::getDeclaredType(tydcl)};
-
-        return findFirst(inheritedSymbols(), key);
-      }
-
-      SgFunctionSymbol&
-      functionSymbol( const std::vector<si::Ada::PrimitiveParameterDesc>& primitiveArgs,
-                      const SgExprListExp& args,
-                      SgFunctionSymbol& implSymbol
-                    )
-      {
-        using PrimitiveParmIterator = std::vector<si::Ada::PrimitiveParameterDesc>::const_iterator;
-        using ArgumentIterator      = SgExpressionPtrList::const_iterator;
-
-        if (primitiveArgs.size() == 0)
-          return implSymbol;
-
-        const SgExpressionPtrList& arglst      = args.get_expressions();
-        const size_t               posArgLimit = si::Ada::positionalArgumentLimit(args);
-        PrimitiveParmIterator      aa          = primitiveArgs.begin();
-        PrimitiveParmIterator      zz          = primitiveArgs.end();
-
-        // check all positional arguments
-        while ((aa != zz) && (aa->pos() < posArgLimit))
-        {
-          const SgExpression* arg = arglst.at(aa->pos());
-
-          if (SgAdaInheritedFunctionSymbol* inhSym = inheritedFunctionSymbol(arg->get_type(), implSymbol))
-          {
-            //~ logError() << "inh fnsym" << std::endl;
-            return *inhSym;
-          }
-
-          ++aa;
-        }
-
-        ROSE_ASSERT(posArgLimit <= arglst.size());
-        ArgumentIterator firstNamed = arglst.begin() + posArgLimit;
-        ArgumentIterator argLimit   = arglst.end();
-
-        // check all named arguments
-        while (aa != zz)
-        {
-          const std::string& parmName = SG_DEREF(aa->name()).get_name();
-          auto               sameNamePred = [&parmName](const SgExpression* arg) -> bool
-                                            {
-                                              const SgActualArgumentExpression* actarg = isSgActualArgumentExpression(arg);
-
-                                              ROSE_ASSERT(actarg);
-                                              const std::string& argName = actarg->get_argument_name().getString();
-
-                                              return boost::iequals(parmName, argName);
-                                            };
-          ArgumentIterator argpos   = std::find_if(firstNamed, argLimit, sameNamePred);
-
-          ++aa;
-
-          if (argpos == argLimit)
-            continue;
-
-          if (SgAdaInheritedFunctionSymbol* inhSym = inheritedFunctionSymbol((*argpos)->get_type(), implSymbol))
-          {
-            //~ logError() << "inh2 fnsym" << std::endl;
-            return *inhSym;
-          }
-        }
-
-        return implSymbol;
-      }
-
-      SgFunctionSymbol&
-      functionSymbol(SgFunctionDeclaration& dcl, SgFunctionSymbol& fnsym, SgExprListExp& args)
-      {
-        auto primitiveArgs = si::Ada::primitiveParameterPositions(fnsym.get_declaration());
-
-        return functionSymbol(primitiveArgs, args, fnsym);
-      }
-#endif /* OBSOLETE_CODE_FN */
-
       void handle(SgNode& n)       { SG_UNEXPECTED_NODE(n); }
 
       // default
@@ -203,24 +107,6 @@ namespace
       void handle(SgFunctionRefExp& n)
       {
         SgExprListExp& arglst = mkExprListExp(args);
-
-#if OBSOLETE_CODE_FN
-        // the disambiguation has been moved to a post-processing phase (Ada_to_ROSE.C)
-        // where both the arguments and return context can be taken into account.
-
-        if (SgFunctionDeclaration* funDcl = n.getAssociatedFunctionDeclaration())
-        {
-          SgFunctionSymbol& origSym = SG_DEREF(n.get_symbol());
-          SgFunctionSymbol& funSym  = functionSymbol(*funDcl, origSym, arglst);
-
-          if (&origSym != &funSym)
-            n.set_symbol(&funSym);
-        }
-        else
-        {
-          //~ logError() << "w/o fndcl" << std::endl;
-        }
-#endif /* OBSOLETE_CODE_FN */
 
         res = &mkFunctionCallExp(n, arglst, !callSyntax);
       }
@@ -812,8 +698,9 @@ namespace
       return nullptr;
     }
 
+    logWarn() << "gen ma operator" << std::endl;
     const SgType*          ty     = suppl.args()->front();
-    SgScopeStatement*      scope  = si::Ada::operatorScope(ty, isRelationalOperator(name));
+    SgScopeStatement*      scope  = si::Ada::operatorScope(ty);
 
     if (scope == nullptr)
     {
@@ -1674,12 +1561,6 @@ namespace
       case A_Named_Array_Aggregate:                   // 4.3
         {
           res = &getArrayAggregate(elem, expr, ctx);
-          /*
-          SgExprListExp& explst = getArrayAggregate(elem, expr, ctx);
-
-          res = sb::buildAggregateInitializer(&explst);
-          ADA_ASSERT(explst.get_parent());
-          */
           break;
         }
 
@@ -1734,8 +1615,7 @@ namespace
         {
           logKind("A_Parenthesized_Expression", elem.ID);
 
-          // \todo remove _opt when the asis connection implements A_Parenthesized_Expression
-          res = &getExprID_opt(expr.Expression_Parenthesized, ctx);
+          res = &getExprID(expr.Expression_Parenthesized, ctx);
           res->set_need_paren(true);
 
           /* unused fields: (Expression_Struct)
@@ -1816,14 +1696,6 @@ namespace
           SgType&            ty  = getDeclTypeID(allocExpr.Converted_Or_Qualified_Subtype_Mark, ctx);
           SgExpression&      arg = getExprID_undecorated(allocExpr.Converted_Or_Qualified_Expression, ctx);
           SgExprListExp&     inilst = createExprListExpIfNeeded(arg);
-
-  /*
-          Element_Struct&    initElem = retrieveAs(elemMap(), allocExpr.Converted_Or_Qualified_Expression);
-          ADA_ASSERT(initElem.Element_Kind == An_Expression);
-          Expression_Struct& initExpr = initElem.The_Union.Expression;
-
-          SgExprListExp&     tyinit  = getAggregate(initElem, initExpr, ctx);
-  */
 
           res = &mkNewExp(ty, &inilst);
 
