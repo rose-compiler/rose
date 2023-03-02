@@ -92,7 +92,7 @@ namespace Partitioner2 {
 class EngineJvm: public Engine {
 public:
     /** Shared ownership pointer. */
-    using EngineJvmPtr = Sawyer::SharedPointer<EngineJvm>;
+    using Ptr = EngineJvmPtr;
 
   //TODO:DELETE_ME/MOVE_ME
     /** Errors from the engine. */
@@ -130,10 +130,10 @@ public:
     ~EngineJvm();
 
     /** Allocating constructor. */
-    static EngineJvmPtr instance();
+    static Ptr instance();
 
     /** Allocate a factory. */
-    static EngineJvmPtr factory();
+    static Ptr factory();
 
     virtual bool matchFactory(const std::vector<std::string> &specimen) const override;
     virtual EnginePtr instanceFromFactory() override;

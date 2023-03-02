@@ -12,6 +12,7 @@
 
 #include <Sawyer/FileSystem.h>
 #include <boost/filesystem.hpp>
+#include <boost/format.hpp>
 
 using namespace Rose::Diagnostics;
 using AddressSegment = Sawyer::Container::AddressSegment<rose_addr_t,uint8_t>;
@@ -33,7 +34,7 @@ EngineJvm::EngineJvm(const Settings &settings)
 EngineJvm::~EngineJvm() {}
 
 //TODO: should be protected/private?
-EngineJvmPtr
+EngineJvm::Ptr
 EngineJvm::instance() {
     // Turn off some post analysis settings
     Settings settings{};
@@ -44,12 +45,14 @@ EngineJvm::instance() {
     settings.partitioner.doingPostFunctionStackDelta = false;
     settings.partitioner.doingPostCallingConvention = false;
 
-    return EngineJvmPtr(new EngineJvm(settings));
+    auto engine = Ptr(new EngineJvm(settings));
+    engine->name((boost::format("JVM-%x") % (&*engine)).str());
+    return engine;
 }
 
-EngineJvm::EngineJvmPtr
+EngineJvm::Ptr
 EngineJvm::factory() {
-    return EngineJvmPtr(new EngineJvm("EngineJvm"));
+    return Ptr(new EngineJvm("JVM"));
 }
 
 bool
