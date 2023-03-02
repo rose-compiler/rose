@@ -2,9 +2,6 @@
 #ifndef _ADA_TO_ROSE
 #define _ADA_TO_ROSE 1
 
-// not sure why the policy checker prevents this
-//~ #include "sage3basic.h"
-
 #include <map>
 #include <unordered_map>
 #include <vector>

@@ -1145,7 +1145,7 @@ namespace
                       );
 
         m.emplace(fnref, OverloadInfo{fnsym, std::move(overloads)});
-        logTrace() << "adding " << fnref << std::endl;
+        //~ logTrace() << "adding " << fnref << std::endl;
       }
 
       operator OverloadMap () &&

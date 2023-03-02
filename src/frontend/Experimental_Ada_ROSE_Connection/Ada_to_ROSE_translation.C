@@ -31,12 +31,7 @@ ada_to_ROSE_translation(Nodes_Struct& head_nodes, SgSourceFile* file)
 
      while (current_element)
         {
-           //~ logInfo() << "current_element = " << current_element
-                     //~ << "\nInitial traversal: current_element: Next_Count = "
-                     //~ << current_element->Next_Count
-                     //~ << std::endl;
-
-           // Build the asisMap of Element ids to Element_Struct pointers.
+        // Build the asisMap of Element ids to Element_Struct pointers.
            Element_Struct& element    = current_element->Element;
            Element_ID      element_id = element.ID;
 
@@ -48,7 +43,7 @@ ada_to_ROSE_translation(Nodes_Struct& head_nodes, SgSourceFile* file)
            if (!emplaced.second)
            {
              // element was already inserted
-             logWarn() << "ERROR: element_id = " << element_id << " already processed (skipping additional instance) \n";
+             logFlaw() << " element_id = " << element_id << " already processed (skipping additional instance) \n";
            }
 
            current_element = current_element->Next;

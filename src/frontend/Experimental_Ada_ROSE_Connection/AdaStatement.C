@@ -2624,7 +2624,7 @@ namespace
         // by setting the initializer to the old value. However, derived enumerators can have
         // different representation values, and to support JACCEL-265 and the translation to C++
         // in general, the link to the original declaration is no longer maintained.
-        // Instead, the initializer now links to the representation value. The relationshio to the
+        // Instead, the initializer now links to the representation value. The relationship to the
         // inherited values is now implied.
         // \todo The code is most similar to the normal EnumeratorCreator in AdaType.C and
         //       could be refactored to eliminate code duplication.
@@ -2991,11 +2991,6 @@ namespace
     SgScopeStatement&       scope  = SG_DEREF(parentScope);
     Element_ID              id     = adaname.id();
     SgDeclarationStatement& sgdecl = createOpaqueDecl(adaname, decl, defdata, ctx.scope(scope));
-
-    /*
-    TypeData                ty   = getTypeFoundation(adaname.ident, decl, ctx.scope(scope));
-    processInheritedElementsOfDerivedTypes(ty, sgdecl, ctx);
-    */
 
     attachSourceLocation(sgdecl, elem, ctx);
     privatize(sgdecl, isPrivate);
@@ -3468,18 +3463,6 @@ namespace
        )
       return decl.Parameter_Profile;
 
-/*
-    Declaration_Struct& firstDecl = firstDeclaration(decl);
-
-    if (firstDecl == nullptr) return decl.Parameter_Profile;
-
-    ADA_ASSERT(  (firstDecl->Declaration_Kind == A_Procedure_Declaration)
-              || (firstDecl->Declaration_Kind == A_Function_Declaration)
-              || (firstDecl->Declaration_Kind == A_Generic_Procedure_Declaration)
-              || (firstDecl->Declaration_Kind == A_Generic_Function_Declaration)
-              || (firstDecl->Declaration_Kind == An_Entry_Declaration)
-              );
-*/
     return firstDeclaration(decl).Parameter_Profile;
   }
 }
@@ -3667,7 +3650,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         // private items
         {
           ElemIdRange range = idRange(decl.Private_Part_Declarative_Items);
-          //ADA_ASSERT ((!range.empty()) == decl.Is_Private_Present);
 
           traverseIDs(range, elemMap(), ElemCreator{ctx.scope(pkgspec), true});
         }

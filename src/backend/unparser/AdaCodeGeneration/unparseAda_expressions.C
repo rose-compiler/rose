@@ -641,9 +641,10 @@ namespace
       expr(ext->get_ancestor());
       prn(" with ");
 
-      if (info.nullRecord())
-        prn("null record");
     }
+
+    if (info.nullRecord())
+      prn("null record");
 
     exprlst(info.begin(), info.end());
   }

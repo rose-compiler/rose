@@ -1212,7 +1212,7 @@ namespace Ada
 
     bool fromRootType(SgAdaSubtype* ty)
     {
-      return ty && ty->get_fromRootType();
+      return ty && ty->get_fromRootType() && !isFixedType(ty->get_base_type());
     }
 
     struct RootTypeFinder : sg::DispatchHandler<TypeDescription>
@@ -1470,7 +1470,7 @@ namespace Ada
         const bool useThisDecl = (  isSgAdaDerivedType(basety)
                                  || isSgAdaAccessType(basety)
                                  || isSgAdaModularType(basety)
-                                 || isSgArrayType(basety) // commented out in RootTypeFinder
+                                 || isSgArrayType(basety)
                                  || fromRootType(isSgAdaSubtype(basety))
                                  );
 
@@ -1583,18 +1583,14 @@ namespace Ada
     return exp ? typeOfExpr(*exp) : TypeDescription{nullptr, false};
   }
 
-  SgScopeStatement* operatorScope(const SgType& ty, bool isRelational)
+  SgScopeStatement* operatorScope(const SgType& ty)
   {
-    //~ std::cerr << "osc: " << isRelational << " " << typeid(ty).name()
-              //~ << std::endl;
-
-    return isRelational ? DeclScopeFinder::find(const_cast<SgType*>(&ty))
-                        : pkgStandardScope();
+    return DeclScopeFinder::find(const_cast<SgType*>(&ty));
   }
 
-  SgScopeStatement* operatorScope(const SgType* ty, bool isRelational)
+  SgScopeStatement* operatorScope(const SgType* ty)
   {
-    return ty ? operatorScope(*ty, isRelational) : nullptr;
+    return ty ? operatorScope(*ty) : nullptr;
   }
 
   SgDeclarationStatement* associatedDeclaration(const SgType& ty)

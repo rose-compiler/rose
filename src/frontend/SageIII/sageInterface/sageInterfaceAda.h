@@ -448,8 +448,8 @@ namespace
 
   /// returns the scope where \ref ty was defined
   /// \{
-  SgScopeStatement* operatorScope(const SgType& ty, bool isRelational);
-  SgScopeStatement* operatorScope(const SgType* ty, bool isRelational);
+  SgScopeStatement* operatorScope(const SgType& ty);
+  SgScopeStatement* operatorScope(const SgType* ty);
   /// \}
 
   /// describes properties of imported units
