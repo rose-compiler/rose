@@ -30,12 +30,13 @@ boost::filesystem::path outputFileName;
 
 namespace {
 inline Rose::BinaryAnalysis::InstructionProvider::Ptr
-makeInstructionProvider(P2::Engine &engine) {
+makeInstructionProvider(const P2::Engine::Ptr &engine) {
     using Rose::BinaryAnalysis::Disassembler::Base;
     using Rose::BinaryAnalysis::MemoryMap;
+    ASSERT_not_null(engine);
 
-    Disassembler::Base::Ptr disasm = engine.obtainDisassembler();
-    MemoryMap::Ptr memmap = engine.memoryMap();
+    Disassembler::Base::Ptr disasm = engine->obtainDisassembler();
+    MemoryMap::Ptr memmap = engine->memoryMap();
 
     if (!disasm) {
         ::mlog[FATAL] << "no disassembler for this architecture\n";
@@ -69,8 +70,8 @@ struct Settings {
     bool listingEachInsn = true;                        // show each instruction as it's executed
 };
 
-static std::vector<std::string>
-parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings) {
+static Sawyer::CommandLine::Parser
+makeSwitchParser(Settings &settings) {
     using namespace Sawyer::CommandLine;
 
     SwitchGroup out("Output switches");
@@ -82,16 +83,14 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                                            "Output one line per executed instruction, containing a hexadecimal address, a colon "
                                            "and space, and the disassembled instruction.");
 
-    Parser parser;
-    parser
-        .purpose(purpose)
-        .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
-        .chapter(1, "ROSE Command-line Tools")
+    return Rose::CommandLine::createEmptyParser(purpose, description)
         .doc("Synopsis", "@prop{programName} [@v{switches}] @v{specimen} [@v{args}...]")
-        .doc("Description", description)
-        .with(engine.engineSwitches())
+        .with(Rose::CommandLine::genericSwitches())
         .with(out);
+}
 
+static std::vector<std::string>
+parseCommandLine(int argc, char *argv[], Sawyer::CommandLine::Parser &parser) {
     return parser.parse(argc, argv).apply().unreachedArgs();
 }
 
@@ -104,9 +103,10 @@ main(int argc, char *argv[]) {
     Bat::registerSelfTests();
 
     // Parse command-line
-    P2::Engine::Ptr engine = P2::Engine::forge();
     Settings settings;
-    std::vector<std::string> args = parseCommandLine(argc, argv, *engine, settings);
+    Sawyer::CommandLine::Parser switchParser = makeSwitchParser(settings);
+    auto engine = P2::Engine::forge(argc, argv, switchParser /*in,out*/, P2::Engine::FirstPositionalArguments(1));
+    std::vector<std::string> args = parseCommandLine(argc, argv, switchParser);
     if (args.empty()) {
         ::mlog[FATAL] <<"no specimen supplied on command-line; see --help\n";
         exit(1);
@@ -130,7 +130,7 @@ main(int argc, char *argv[]) {
     InstructionProvider::Ptr instructionProvider;
 
     if (WITH_INSTRUCTION_PROVIDER)
-        instructionProvider = makeInstructionProvider(*engine);
+        instructionProvider = makeInstructionProvider(engine);
 
     Disassembler::Base::Ptr disassembler = engine->obtainDisassembler();
     if (!disassembler) {

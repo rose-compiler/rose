@@ -51,19 +51,8 @@ struct Settings {
 
 // Build a command line parser without running it
 Sawyer::CommandLine::Parser
-buildCommandLineParser(Settings &settings) {
+buildSwitchParser(Settings &settings) {
     using namespace Sawyer::CommandLine;
-
-    SwitchGroup output("Output switches");
-    output.insert(Switch("output", 'o')
-                  .argument("filename", anyParser(settings.outputFileName))
-                  .doc("Send binary state information to the specified file instead of standard output. The output becomes "
-                       "the input for subsequent binary analysis tools. This tool will refuse to write binary data to standard "
-                       "output if it appears to be the terminal; if you really need that, pipe this tool's output through "
-                       "@man{cat}{1}.  Specifying the output name \"-\" (a single hyphen) is the explicit way of saying that "
-                       "output should be sent to standard output."));
-
-    output.insert(Bat::stateFileFormatSwitch(settings.stateFormat));
 
     SwitchGroup tool("Tool specific switches");
     tool.name("tool");
@@ -78,12 +67,23 @@ buildCommandLineParser(Settings &settings) {
     CommandLine::insertBooleanSwitch(tool, "skip-output", settings.skipOutput,
                                      "Skip the output step even if @s{output} is specified. This is mainly for performance testing.");
 
+    SwitchGroup output("Output switches");
+    output.insert(Switch("output", 'o')
+                  .argument("filename", anyParser(settings.outputFileName))
+                  .doc("Send binary state information to the specified file instead of standard output. The output becomes "
+                       "the input for subsequent binary analysis tools. This tool will refuse to write binary data to standard "
+                       "output if it appears to be the terminal; if you really need that, pipe this tool's output through "
+                       "@man{cat}{1}.  Specifying the output name \"-\" (a single hyphen) is the explicit way of saying that "
+                       "output should be sent to standard output."));
+
+    output.insert(Bat::stateFileFormatSwitch(settings.stateFormat));
+
     Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
     parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{specimen}");
-    parser.doc("Specimens", P2::Engine::specimenNameDocumentation());
     parser.errorStream(mlog[FATAL]);
-    parser.with(output);
+    parser.with(Rose::CommandLine::genericSwitches());
     parser.with(tool);
+    parser.with(output);
 
     return parser;
 }
@@ -145,13 +145,12 @@ main(int argc, char *argv[]) {
     Bat::checkRoseVersionNumber(MINIMUM_ROSE_LIBRARY_VERSION, mlog[FATAL]);
     Bat::registerSelfTests();
 
-    // Build command line parser (without any knowledge of engine settings)
+    // Build command line parser (without any knowledge of engine settings), choose the appropriate partitioner engine type, and
+    // parse and apply the command-line to the settings, engine, etc. using the appropriately modified command-line parser.
     Settings settings;
-    auto parser = buildCommandLineParser(settings);
-
-    P2::Engine::Ptr engine = P2::Engine::forge(argc, argv, parser/*inout*/);
-
-    // Apply all settings added by the engine to obtain a binary specimen
+    auto parser = buildSwitchParser(settings);
+    P2::Engine::Ptr engine = P2::Engine::forge(argc, argv, parser/*in,out*/);
+    mlog[INFO] <<"using the " <<engine->name() <<" partitioning engine\n";
     std::vector<std::string> specimen = parser.parse(argc, argv).apply().unreachedArgs();
 
     // Check some informational switches before we die for lack of specimen.
