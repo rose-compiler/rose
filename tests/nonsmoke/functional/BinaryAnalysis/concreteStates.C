@@ -3,7 +3,7 @@
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/ConcreteSemantics.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <sstream>
 
@@ -32,7 +32,7 @@ int main() {
     ROSE_INITIALIZE;
 
     // Disassemble a small example specimen
-    P2::Engine::Ptr engine = P2::Engine::forge();
+    P2::Engine::Ptr engine = P2::EngineBinary::instance();
     engine->settings().disassembler.isaName = "i386";
     engine->settings().partitioner.functionStartingVas.push_back(0x10000000);
     P2::Partitioner::Ptr partitioner = engine->partition("data:0x10000000=rx::"      // i386 assembly:

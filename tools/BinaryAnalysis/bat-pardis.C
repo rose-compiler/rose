@@ -10,7 +10,7 @@ static const char *description =
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ParallelPartitioner.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/Color.h>
@@ -283,7 +283,7 @@ int main(int argc, char *argv[]) {
 
     // Get, parse, and load the specimen.
     mlog[INFO] <<"parsing container\n";
-    P2::Engine::Ptr engine = P2::Engine::forge();
+    P2::Engine::Ptr engine = P2::EngineBinary::instance();
     std::vector<std::string> specimenName = engine->parseCommandLine(argc, argv, purpose, description).unreachedArgs();
     MemoryMap::Ptr memory = engine->loadSpecimens(specimenName);
     Disassembler::Base::Ptr decoder = engine->obtainDisassembler();

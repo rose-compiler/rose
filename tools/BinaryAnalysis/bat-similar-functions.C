@@ -14,7 +14,7 @@ static const char *description =
 #include <batSupport.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 #include <Rose/CommandLine.h>
 #include <Rose/FormattedTable.h>
 
@@ -67,7 +67,7 @@ struct Settings {
 
 // Parse command-line and apply to settings. Return the two RBA file names.
 static std::pair<boost::filesystem::path, boost::filesystem::path>
-parseCommandLine(int argc, char *argv[], P2::Engine&, Settings &settings) {
+parseCommandLine(int argc, char *argv[], Settings &settings) {
     using namespace Sawyer::CommandLine;
 
     SwitchGroup gen = Rose::CommandLine::genericSwitches();
@@ -418,9 +418,9 @@ main(int argc, char *argv[]) {
     Stream info(mlog[INFO]);
 
     // Parse command-line
-    P2::Engine::Ptr engine = P2::Engine::forge();
+    P2::Engine::Ptr engine = P2::EngineBinary::instance();
     Settings settings;
-    std::pair<boost::filesystem::path, boost::filesystem::path> rbaFiles = parseCommandLine(argc, argv, *engine, settings);
+    std::pair<boost::filesystem::path, boost::filesystem::path> rbaFiles = parseCommandLine(argc, argv, settings);
     size_t nThreads = Rose::CommandLine::genericSwitchArgs.threads;
     if (0 == nThreads)
         nThreads = boost::thread::hardware_concurrency();

@@ -5,6 +5,7 @@
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
+#include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/CommandLine.h>
 
@@ -203,7 +204,7 @@ BestMapAddress::align(const MemoryMap::Ptr &map, const P2::Engine::Settings &set
         }
 
         // Partitioning engine used by the BestMapAddress analysis.
-        P2::Engine::Ptr engine = P2::Engine::forge();
+        P2::Engine::Ptr engine = P2::EngineBinary::instance();
         engine->memoryMap(tmpMap);
         engine->settings().partitioner.doingPostAnalysis = false;
         if (progress)

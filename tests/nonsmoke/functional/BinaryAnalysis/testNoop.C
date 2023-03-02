@@ -10,7 +10,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 
 #include <Sawyer/CommandLine.h>
@@ -50,7 +50,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 int
 main(int argc, char *argv[]) {
     Settings settings;
-    P2::Engine::Ptr engine = P2::Engine::forge();
+    P2::Engine::Ptr engine = P2::EngineBinary::instance();
     engine->settings().partitioner.base.usingSemantics = true; // test specimens contain opaque predicates
     engine->settings().partitioner.followingGhostEdges = false;
     engine->settings().partitioner.findingIntraFunctionCode = false;

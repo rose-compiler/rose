@@ -10,7 +10,7 @@ static const char *description =
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/StaticSemantics.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 
@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
     Rose::Diagnostics::initAndRegister(&mlog, "tool");
     mlog[TRACE].enable();
 
-    P2::Engine::Ptr engine = P2::Engine::forge();
+    P2::Engine::Ptr engine = P2::EngineBinary::instance();
     std::vector<std::string> specimen = engine->parseCommandLine(argc, argv, purpose, description).unreachedArgs();
     P2::Partitioner::Ptr partitioner = engine->partition(specimen);
 

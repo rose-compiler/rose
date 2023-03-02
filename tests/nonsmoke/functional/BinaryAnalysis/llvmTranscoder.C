@@ -8,7 +8,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #define __STDC_FORMAT_MACROS
 #include "rose.h"
 #include <Rose/BinaryAnalysis/InstructionSemantics/LlvmSemantics.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 #include <Sawyer/CommandLine.h>
 
 using namespace Rose;
@@ -31,7 +31,7 @@ struct Settings {
 SgProject*
 buildAst(int argc, char *argv[], Settings &settings) {
     using namespace Sawyer::CommandLine;
-    P2::Engine::Ptr engine = P2::Engine::forge();
+    P2::Engine::Ptr engine = P2::EngineBinary::instance();
 
     // Parse the commane-line
     Parser p = engine->commandLineParser("transcode to LLVM", "Convert an ELF/PE specimen to LLVM assembly for testing.");

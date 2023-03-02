@@ -8,7 +8,7 @@ static const char *description =
 
 #include <rose.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Sawyer/GraphAlgorithm.h>
 
@@ -17,7 +17,7 @@ namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 int main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
 
-    P2::Engine::Ptr engine = P2::Engine::forge();
+    P2::Engine::Ptr engine = P2::EngineBinary::instance();
     std::vector<std::string> specimen = engine->parseCommandLine(argc, argv, purpose, description).unreachedArgs();
     P2::Partitioner::Ptr partitioner = engine->partition(specimen);
 

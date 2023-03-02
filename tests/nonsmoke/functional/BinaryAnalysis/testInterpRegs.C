@@ -4,7 +4,7 @@ static const char *description =
     "return value has a SgAsmInterpretation parent whose registers property is non-null.";
 
 #include <rose.h>                                       // must be first
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
@@ -12,7 +12,7 @@ namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 int main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
 
-    P2::Engine::Ptr engine = P2::Engine::forge();
+    P2::Engine::Ptr engine = P2::EngineBinary::instance();
     SgAsmBlock *gblock = engine->frontend(argc, argv, purpose, description);
     ASSERT_always_not_null2(gblock, "Engine::frontend didn't return a SgAsmBlock pointer");
 

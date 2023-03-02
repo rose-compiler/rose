@@ -24,7 +24,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/ConcreteSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/RegisterNames.h>
 #include <Rose/Diagnostics.h>
@@ -50,7 +50,7 @@ struct Settings {
 };
 
 static std::vector<std::string>
-parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings) {
+parseCommandLine(int argc, char *argv[], const P2::EngineBinary::Ptr &engine, Settings &settings) {
     using namespace Sawyer::CommandLine;
 
     std::string purpose = "test concrete instruction semantics";
@@ -67,8 +67,8 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
         .purpose(purpose)
         .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
         .chapter(1, "ROSE Command-line Tools")
-        .with(engine.engineSwitches())
-        .with(engine.disassemblerSwitches())
+        .with(engine->engineSwitches(engine->settings().engine))
+        .with(engine->disassemblerSwitches(engine->settings().disassembler))
         .doc("Description", description)
         .doc("Synopsis", "@prop{programName} [@v{switches}] [--] @v{specimen} [@v{arguments}...]")
         .doc("Bugs",
@@ -283,9 +283,9 @@ main(int argc, char *argv[]) {
     Diagnostics::initAndRegister(&::mlog, "tool");
 
     // Parse command-line
-    P2::Engine::Ptr engine = P2::Engine::forge();
+    auto engine = P2::EngineBinary::instance();
     Settings settings;
-    std::vector<std::string> args = parseCommandLine(argc, argv, *engine, settings);
+    std::vector<std::string> args = parseCommandLine(argc, argv, engine, settings);
     if (args.empty())
         throw std::runtime_error("no specimen name specified; see --help");
 

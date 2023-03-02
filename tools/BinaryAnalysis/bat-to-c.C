@@ -7,10 +7,12 @@ static const char *description =
 #include <rose.h>
 #include <batSupport.h>
 
-#include <Rose/BinaryAnalysis/ToSource.h>
-#include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/ToSource.h>
+#include <Rose/CommandLine/Parser.h>
+#include <Rose/Diagnostics.h>
+
 #include <Sawyer/CommandLine.h>
 
 using namespace Sawyer::Message::Common;
@@ -25,13 +27,15 @@ struct Settings {
 };
 
 static std::vector<std::string>
-parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings) {
+parseCommandLine(int argc, char *argv[], const P2::Engine::Ptr &engine, Settings &settings) {
     using namespace Sawyer::CommandLine;
 
-    Parser parser = engine.commandLineParser(purpose, description);
+    Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
     parser.errorStream(mlog[FATAL]);
-    SwitchGroup generator = BinaryToSource::commandLineSwitches(settings.generator);
-    return parser.with(generator).parse(argc, argv).apply().unreachedArgs();
+    parser.with(Rose::CommandLine::genericSwitches());
+    engine->addToParser(parser);
+    parser.with(BinaryToSource::commandLineSwitches(settings.generator));
+    return parser.parse(argc, argv).apply().unreachedArgs();
 }
 
 int
@@ -44,8 +48,8 @@ main(int argc, char *argv[]) {
 
     // Parse the command-line switches
     Settings settings;
-    P2::Engine::Ptr engine = P2::Engine::forge();
-    std::vector<std::string> args = parseCommandLine(argc, argv, *engine, settings);
+    P2::Engine::Ptr engine = P2::EngineBinary::instance();
+    std::vector<std::string> args = parseCommandLine(argc, argv, engine, settings);
     if (args.empty()) {
         mlog[FATAL] <<"no binary specimen specified; see --help\n";
         exit(1);

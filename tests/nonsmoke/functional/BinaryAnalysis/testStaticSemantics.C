@@ -8,7 +8,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/StaticSemantics.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 
 
 using namespace Rose;
@@ -24,7 +24,7 @@ main(int argc, char *argv[]) {
         "from other platforms might be more accustomed to having semantics represented statically as part of an "
         "abstract syntax tree. ROSE can build these static semantics ASTs from its StaticSemantics domain in the "
         "Semantics2 API, and that is what this program tests.";
-    P2::Engine::Ptr engine = P2::Engine::forge();
+    P2::Engine::Ptr engine = P2::EngineBinary::instance();
     SgAsmBlock *gblock = engine->frontend(argc, argv, purpose, description);
     InstructionSemantics::StaticSemantics::attachInstructionSemantics(gblock, engine->disassembler());
 

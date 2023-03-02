@@ -597,7 +597,7 @@ int main(int argc, char *argv[])
     Rose::Diagnostics::initAndRegister(&::mlog, "tool");
 
     // Parse the command-line
-    P2::Engine::Ptr engine = P2::Engine::forge();
+    P2::Engine::Ptr engine = P2::EngineBinary::instance();
     Settings settings;
     std::vector<std::string> specimenNames = parseCommandLine(argc, argv, *engine, settings);
 
