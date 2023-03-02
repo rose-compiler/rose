@@ -12,7 +12,6 @@
 
 #include <Sawyer/FileSystem.h>
 #include <boost/filesystem.hpp>
-#include <boost/format.hpp>
 
 using namespace Rose::Diagnostics;
 using AddressSegment = Sawyer::Container::AddressSegment<rose_addr_t,uint8_t>;
@@ -46,7 +45,7 @@ EngineJvm::instance() {
     settings.partitioner.doingPostCallingConvention = false;
 
     auto engine = Ptr(new EngineJvm(settings));
-    engine->name((boost::format("JVM-%x") % (&*engine)).str());
+    engine->name("JVM");
     return engine;
 }
 
@@ -101,6 +100,20 @@ EngineJvm::frontend(const std::vector<std::string> &args, const std::string &pur
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Command-line parsing
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::pair<std::string, std::string>
+EngineJvm::specimenNameDocumentation() {
+    return {
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        "JVM specimens",
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        "The Rose::BinaryAnalysis::Partitioner2::EngineJvm class recognizes the following command-line positional arguments "
+        "for specifying Java Virtual Machine specimens:"
+
+        "@bullet{Any positional argument which looks like a file name having a \".class\" extension.}"
+    };
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Partitioner high-level functions
