@@ -1970,25 +1970,7 @@ bool ClangToSageTranslator::VisitCXXConstructorDecl(clang::CXXConstructorDecl * 
 #endif
 
     // getting ctorInitializer
-//    SgCtorInitializerList* ctorInitializerList = SageBuilder::buildCtorInitializerList_nfi();
 
-//    clang::CXXConstructorDecl::init_range ctorInitRange = cxx_constructor_decl->inits();
-//    for(auto initializer=ctorInitRange.begin(); initializer != ctorInitRange.end(); initializer++)
-//    {
-//#if DEBUG_VISIT_DECL
-//      std::cerr << "isBaseInitializer = " << (*initializer)->isBaseInitializer() << "\n";
-//      std::cerr << "isMemberInitializer = " << (*initializer)->isMemberInitializer() << "\n";
-//      std::cerr << "isAnyMemberInitializer  = " << (*initializer)->isAnyMemberInitializer() << "\n";
-//      std::cerr << "isIndirectMemberInitializer = " << (*initializer)->isIndirectMemberInitializer() << "\n";
-//#endif
-//      if((*initializer)->isMemberInitializer())
-//      {
-//         clang::FieldDecl * field_decl = (*initializer)->getMember();
-//         SgName fieldName(field_decl->getNameAsString());
-//         SgVariableDeclaration* initializedMember = isSgVariableDeclaration(Traverse(field_decl));
-//         ctorInitializerList->append_ctor_initializer(initializedMember->get_decl_item(fieldName)); 
-//      }
-//    }
 //
 //    SgFunctionParameterList * param_list = SageBuilder::buildFunctionParameterList_nfi();
 
@@ -1999,7 +1981,47 @@ bool ClangToSageTranslator::VisitCXXConstructorDecl(clang::CXXConstructorDecl * 
 //    *node = memberFunctionDecl;
     res = VisitCXXMethodDecl(cxx_constructor_decl, node);
     SgMemberFunctionDeclaration* cxxConstructorDecl = isSgMemberFunctionDeclaration(*node);
+    SgMemberFunctionDeclaration* cxxDefiningConstructorDecl = isSgMemberFunctionDeclaration(cxxConstructorDecl->get_definingDeclaration());
     cxxConstructorDecl->get_specialFunctionModifier().setConstructor();
+
+    // apply ctorInitializer
+    if(cxx_constructor_decl->getNumCtorInitializers() != 0 && cxxDefiningConstructorDecl != NULL)
+    {
+      SgCtorInitializerList* ctorInitializerList = SageBuilder::buildCtorInitializerList_nfi();
+      clang::CXXConstructorDecl::init_iterator initializer;
+      unsigned cnt = 0;
+      for (initializer = cxx_constructor_decl->init_begin(); initializer != cxx_constructor_decl->init_end(); initializer++) 
+      {
+        cnt++;
+  #if DEBUG_VISIT_DECL
+        std::cerr << "isBaseInitializer = " << (*initializer)->isBaseInitializer() << "\n";
+        std::cerr << "isMemberInitializer = " << (*initializer)->isMemberInitializer() << "\n";
+        std::cerr << "isAnyMemberInitializer  = " << (*initializer)->isAnyMemberInitializer() << "\n";
+        std::cerr << "isIndirectMemberInitializer = " << (*initializer)->isIndirectMemberInitializer() << "\n";
+  #endif
+        if((*initializer)->isMemberInitializer())
+        {
+           clang::FieldDecl * field_decl = (*initializer)->getMember();
+           SgName fieldName(field_decl->getNameAsString());
+           SgVariableDeclaration* fieldMemberDecl = isSgVariableDeclaration(Traverse(field_decl));
+           SgInitializedName* fieldInitializedName = fieldMemberDecl->get_decl_item(fieldName);
+           SgType* fieldType = fieldInitializedName->get_type();
+
+
+           SgExpression* initExpr = isSgExpression(Traverse((*initializer)->getInit())); 
+           SgInitializer* sgCtorInitializer = SageBuilder::buildAssignInitializer_nfi(initExpr, fieldType);
+           SgInitializedName* sgCtorInitializedName = SageBuilder::buildInitializedName(fieldName,fieldType, sgCtorInitializer);
+           sgCtorInitializer->set_parent(sgCtorInitializedName);
+           ctorInitializerList->append_ctor_initializer(sgCtorInitializedName);
+           sgCtorInitializedName->set_parent(ctorInitializerList); 
+           sgCtorInitializedName->set_scope(SageBuilder::topScopeStack()); 
+        }
+      }
+      cxxDefiningConstructorDecl->set_CtorInitializerList(ctorInitializerList);
+      ctorInitializerList->set_parent(cxxDefiningConstructorDecl);
+      ctorInitializerList->set_definingDeclaration(ctorInitializerList);
+      ctorInitializerList->set_firstNondefiningDeclaration(ctorInitializerList);
+    }
     if(cxx_constructor_decl->isDefaultConstructor())
     {
 #if DEBUG_VISIT_DECL
