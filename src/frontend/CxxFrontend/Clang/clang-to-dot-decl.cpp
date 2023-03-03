@@ -2719,7 +2719,7 @@ bool ClangToDotTranslator::VisitCXXMethodDecl(clang::CXXMethodDecl * cxx_method_
 
      node_desc.kind_hierarchy.push_back("CXXMethodDecl");
 
-     ROSE_ASSERT(FAIL_TODO == 0); // TODO
+//     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
      return VisitFunctionDecl(cxx_method_decl, node_desc) && res;
    }
@@ -2754,12 +2754,21 @@ bool ClangToDotTranslator::VisitCXXConstructorDecl(clang::CXXConstructorDecl * c
         std::ostringstream oss;
         oss << "init[" << cnt++ << "]";
 //      node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(*it)));
-        node_desc.attributes.push_back(std::pair<std::string, std::string>(oss.str(), ""));
+        if((*it)->isMemberInitializer())
+        {
+          clang::FieldDecl * field_decl = (*it)->getMember();
+          node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse((*it)->getInit())));
+          node_desc.attributes.push_back(std::pair<std::string, std::string>(oss.str(), field_decl->getNameAsString()));
+        }
     }
+    if(cxx_constructor_decl->isDefaultConstructor())
+        node_desc.attributes.push_back(std::pair<std::string, std::string>("is_default_constructor", "true"));
 
-    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+//    ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
-    return VisitCXXMethodDecl(cxx_constructor_decl, node_desc) && res;
+    res = VisitCXXMethodDecl(cxx_constructor_decl, node_desc);
+
+    return res;
 }
 #endif
 
