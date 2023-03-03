@@ -349,7 +349,7 @@ int main(int argc, char *argv[]) {
     mlog[INFO] <<"; took " <<timer <<"\n";
     mlog[INFO] <<"generating output\n";
     //printInsnsFromBoth(pp, p);
-    engine->savePartitioner(p, "x.rba");
+    p->saveAsRbaFile("x.rba", SerialIo::BINARY);
 
 #else
     mlog[INFO] <<"running serial partitioner";
