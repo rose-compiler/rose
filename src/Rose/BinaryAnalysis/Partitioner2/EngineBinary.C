@@ -1651,7 +1651,9 @@ EngineBinary::partition(const std::vector<std::string> &fileNames) {
                 throw Exception("specifying an RBA file excludes all other inputs");
         }
         if (fileNames.size() == 1 && isRbaFile(fileNames[0])) {
-            return loadPartitioner(fileNames[0]);
+            auto partitioner = Partitioner::instanceFromRbaFile(fileNames[0], SerialIo::BINARY);
+            interpretation(partitioner->interpretation());
+            return partitioner;
         } else {
             if (!areSpecimensLoaded())
                 loadSpecimens(fileNames);

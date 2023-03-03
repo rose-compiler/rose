@@ -203,6 +203,6 @@ main(int argc, char *argv[]) {
 
     if (!settings.skipOutput) {
         partitioner->basicBlockDropSemantics();
-        engine->savePartitioner(partitioner, settings.outputFileName, settings.stateFormat);
+        partitioner->saveAsRbaFile(settings.outputFileName, settings.stateFormat);
     }
 }
