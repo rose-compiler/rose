@@ -32,11 +32,13 @@ EngineJvm::EngineJvm(const Settings &settings)
 
 EngineJvm::~EngineJvm() {}
 
-//TODO: should be protected/private?
 EngineJvm::Ptr
 EngineJvm::instance() {
-    // Turn off some post analysis settings
-    Settings settings{};
+    return instance(Settings());
+}
+
+EngineJvm::Ptr
+EngineJvm::instance(const Settings &settings) {
     // Turn of higher level one also (covering all post function analysis)
     settings.partitioner.doingPostAnalysis = false;
     settings.partitioner.doingPostFunctionNoop = false;

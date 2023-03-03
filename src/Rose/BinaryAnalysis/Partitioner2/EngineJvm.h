@@ -132,6 +132,9 @@ public:
     /** Allocating constructor. */
     static Ptr instance();
 
+    /** Allocating constructor with settings. */
+    static Ptr instance(const Settings&);
+
     /** Allocate a factory. */
     static Ptr factory();
 

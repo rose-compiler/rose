@@ -84,6 +84,9 @@ public:
     /** Allocating constructor. */
     static EngineBinaryPtr instance();
 
+    /** Allocating constructor with settings. */
+    static EngineBinaryPtr instance(const Settings&);
+
     /** Allocate a factory. */
     static EngineBinaryPtr factory();
 
