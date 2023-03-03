@@ -68,7 +68,12 @@ EngineBinary::~EngineBinary() {}
 
 EngineBinary::Ptr
 EngineBinary::instance() {
-    auto engine = Ptr(new EngineBinary(Settings{}));
+    return instance(Settings());
+}
+
+EngineBinary::Ptr
+EngineBinary::instance(const Settings &settings) {
+    auto engine = Ptr(new EngineBinary(settings));
     engine->name("binary");
     return engine;
 }
