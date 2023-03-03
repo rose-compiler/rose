@@ -317,12 +317,8 @@ protected:
     Engine& operator=(const Engine&) = delete;
 
 protected:
-    /** Allocating `instance` constructors are implemented by the non-abstract subclasses.
-     *
-     * @{ */
-    explicit Engine(const std::string &name);      // for instantiating factories
-    explicit Engine(const Settings &settings);
-    /** @} */
+    /** Allocating `instance` constructors are implemented by the non-abstract subclasses. */
+    Engine(const std::string &name, const Settings &settings);
 
 public:
     // [Robb Matzke 2023-03-03]: deprecated.

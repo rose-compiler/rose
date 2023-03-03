@@ -55,12 +55,8 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
-EngineBinary::EngineBinary(const std::string &name)
-    : Engine{name} {
-}
-
 EngineBinary::EngineBinary(const Settings &settings)
-    : Engine{settings} {
+    : Engine("binary", settings) {
     init();
 }
 
@@ -73,14 +69,12 @@ EngineBinary::instance() {
 
 EngineBinary::Ptr
 EngineBinary::instance(const Settings &settings) {
-    auto engine = Ptr(new EngineBinary(settings));
-    engine->name("binary");
-    return engine;
+    return Ptr(new EngineBinary(settings));
 }
 
 EngineBinary::Ptr
 EngineBinary::factory() {
-    return Ptr(new EngineBinary("binary"));
+    return Ptr(new EngineBinary(Settings()));
 }
 
 bool

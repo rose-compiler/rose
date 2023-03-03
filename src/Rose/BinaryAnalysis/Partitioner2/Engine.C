@@ -451,12 +451,8 @@ Engine::CodeConstants::nextConstant(const Partitioner::ConstPtr &partitioner) {
 // Engine construction
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Engine::Engine(const std::string &name)
-    : name_{name}, settings_{Settings()}, interp_{nullptr}, progress_{Progress::instance()} {
-}
-
-Engine::Engine(const Settings &settings)
-    : name_{}, settings_{settings}, interp_{nullptr}, progress_{Progress::instance()} {
+Engine::Engine(const std::string &name, const Settings &settings)
+    : name_{name}, settings_{settings}, interp_{nullptr}, progress_{Progress::instance()} {
     init();
 }
 
