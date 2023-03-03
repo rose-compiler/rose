@@ -123,7 +123,6 @@ public:
     EngineJvm& operator=(const EngineJvm&) = delete;
 
 protected:
-    explicit EngineJvm(const std::string &name);
     explicit EngineJvm(const Settings &settings);
 
 public:

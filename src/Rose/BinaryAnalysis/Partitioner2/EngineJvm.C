@@ -22,12 +22,8 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
-EngineJvm::EngineJvm(const std::string &name)
-    : Engine{name} {
-}
-
 EngineJvm::EngineJvm(const Settings &settings)
-    : Engine(settings) {
+    : Engine("JVM", settings) {
 }
 
 EngineJvm::~EngineJvm() {}
@@ -39,21 +35,21 @@ EngineJvm::instance() {
 
 EngineJvm::Ptr
 EngineJvm::instance(const Settings &settings) {
-    // Turn of higher level one also (covering all post function analysis)
-    settings.partitioner.doingPostAnalysis = false;
-    settings.partitioner.doingPostFunctionNoop = false;
-    settings.partitioner.doingPostFunctionMayReturn = false;
-    settings.partitioner.doingPostFunctionStackDelta = false;
-    settings.partitioner.doingPostCallingConvention = false;
-
     auto engine = Ptr(new EngineJvm(settings));
-    engine->name("JVM");
+
+    // Turn off all post function analysis regardless of what user requested
+    engine->settings().partitioner.doingPostAnalysis = false;
+    engine->settings().partitioner.doingPostFunctionNoop = false;
+    engine->settings().partitioner.doingPostFunctionMayReturn = false;
+    engine->settings().partitioner.doingPostFunctionStackDelta = false;
+    engine->settings().partitioner.doingPostCallingConvention = false;
+
     return engine;
 }
 
 EngineJvm::Ptr
 EngineJvm::factory() {
-    return Ptr(new EngineJvm("JVM"));
+    return Ptr(new EngineJvm(Settings()));
 }
 
 bool

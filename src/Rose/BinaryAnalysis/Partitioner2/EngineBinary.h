@@ -75,8 +75,7 @@ protected:
     /** Default constructor. Deleted, use factory method instance() instead. */
     EngineBinary() = delete;
 
-    explicit EngineBinary(const std::string &name); // for creating a factory
-    explicit EngineBinary(const Settings &settings);
+    explicit EngineBinary(const Settings&);
 
 public:
     virtual ~EngineBinary();
