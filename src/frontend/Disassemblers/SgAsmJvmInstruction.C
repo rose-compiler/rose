@@ -257,7 +257,7 @@ SgAsmJvmInstruction::getSuccessors(bool &complete) {
     case JvmOp::lookupswitch: // "Access jump table by key match and jump";
       return switchSuccessors(this, complete);
 
- // A branch instruction but branch target (an offset) is not available
+ // A branch instruction but branch target is not immediately available
     case JvmOp::invokevirtual:   // "Invoke instance method; dispatch based on class";
     case JvmOp::invokespecial:   // "Invoke instance method; direct invocation...";
     case JvmOp::invokestatic:    // "Invoke a class (static) method";
@@ -265,8 +265,9 @@ SgAsmJvmInstruction::getSuccessors(bool &complete) {
     case JvmOp::invokedynamic:   // "Invoke a dynamically-computed call site";
     case JvmOp::monitorenter: // "Enter monitor for object";
     case JvmOp::monitorexit:  // "Exit monitor for object";
-      // Instruction falls through to the next instruction
-      return AddressSet{get_address() + get_size()};
+      // Don't assume a CALL instruction returns to the fall-through address, but
+      // by default, EngineJvm reverses this with partitioner->autoAddCallReturnEdges(true)
+      return AddressSet{};
 
     case JvmOp::athrow: // "Throw exception or error";
       return AddressSet{};

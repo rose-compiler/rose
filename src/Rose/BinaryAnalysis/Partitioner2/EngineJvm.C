@@ -333,6 +333,9 @@ EngineJvm::runPartitionerInit(const Partitioner::Ptr &partitioner) {
     ASSERT_not_null(interp = interpretation());
     //TODO: check on interp family
     // ASSERT_require(interp->name() == "jvm");
+
+    // Assume the JVM will return from a function call
+    partitioner->autoAddCallReturnEdges(true);
 }
 
 void
