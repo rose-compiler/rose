@@ -128,9 +128,6 @@ protected:
 public:
     ~EngineJvm();
 
-    /** Allocating constructor. */
-    static Ptr instance();
-
     /** Allocating constructor with settings. */
     static Ptr instance(const Settings&);
 
@@ -138,7 +135,7 @@ public:
     static Ptr factory();
 
     virtual bool matchFactory(const std::vector<std::string> &specimen) const override;
-    virtual EnginePtr instanceFromFactory() override;
+    virtual EnginePtr instanceFromFactory(const Settings&) override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  The very top-level use case
