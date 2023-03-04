@@ -533,7 +533,7 @@ Engine::forge(const std::vector<std::string> &specimen) {
     const auto factories = registeredFactories();
     for (const Engine::Ptr &factory: boost::adaptors::reverse(factories)) {
         if (factory->matchFactory(specimen))
-            return factory->instanceFromFactory();
+            return factory->instanceFromFactory(Settings());
     }
     return {};
 }
@@ -561,8 +561,7 @@ Engine::forge(const std::vector<std::string> &args, Sawyer::CommandLine::Parser 
         // If the factory can handle the situation, use it to create a new engine and add the engine's command-line parsing to the
         // supplied switch parser. Save the specimen in the engine, although it can be adjusted after the return.
         if (factory->matchFactory(specimen)) {
-            Engine::Ptr engine = factory->instanceFromFactory();
-            engine->settings(settings);
+            Engine::Ptr engine = factory->instanceFromFactory(settings);
             engine->addAllToParser(switchParser);
             engine->specimen(specimen);
             return engine;

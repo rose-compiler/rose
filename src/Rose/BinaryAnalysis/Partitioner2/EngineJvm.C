@@ -29,11 +29,6 @@ EngineJvm::EngineJvm(const Settings &settings)
 EngineJvm::~EngineJvm() {}
 
 EngineJvm::Ptr
-EngineJvm::instance() {
-    return instance(Settings());
-}
-
-EngineJvm::Ptr
 EngineJvm::instance(const Settings &settings) {
     auto engine = Ptr(new EngineJvm(settings));
 
@@ -65,9 +60,9 @@ EngineJvm::matchFactory(const std::vector<std::string> &specimen) const {
 }
 
 Engine::Ptr
-EngineJvm::instanceFromFactory() {
+EngineJvm::instanceFromFactory(const Settings &settings) {
     ASSERT_require(isFactory());
-    return instance();
+    return instance(settings);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -337,7 +332,7 @@ EngineJvm::runPartitionerInit(const Partitioner::Ptr &partitioner) {
     SgAsmInterpretation* interp{nullptr};
     ASSERT_not_null(interp = interpretation());
     //TODO: check on interp family
-    //    ASSERT_require(interp->name() == "jvm");
+    // ASSERT_require(interp->name() == "jvm");
 }
 
 void
