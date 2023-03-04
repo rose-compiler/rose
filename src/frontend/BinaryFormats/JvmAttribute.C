@@ -51,8 +51,9 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::create_attribute(SgAsmJvmConstantPool* poo
 
 SgAsmJvmAttributeTable::SgAsmJvmAttributeTable()
 {
-  ROSE_ASSERT(false && "WARNING: attribute table parent not set");
+  // Default constructor needed for serialization
 }
+
 SgAsmJvmAttributeTable::SgAsmJvmAttributeTable(SgAsmJvmFileHeader* jfh, SgAsmNode* parent)
 {
   set_parent(parent);
