@@ -3,21 +3,19 @@
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/CommandLine.h>
 
-#include <Sawyer/CommandLine.h>
 #include <Sawyer/Message.h>
 
+using namespace Sawyer::Message::Common;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
-
-// DQ (12/16/2021): Added to support use of STL types.
-//~ using namespace std;
 
 Sawyer::Message::Facility mlog;
 
 namespace // anonymous
 {
 
-// Convenient struct to hold settings from the command-line all in one place.
+// Tool-specific command-line settings
 struct Settings {
     rose_addr_t startVa;
     rose_addr_t alignment;
@@ -25,32 +23,15 @@ struct Settings {
     Settings(): startVa(0), alignment(1), runSemantics(false) {}
 };
 
-// Describe and parse the command-line
-
-std::vector<std::string>
-parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
-{
+// Build a command line parser without running it
+Sawyer::CommandLine::Parser
+buildSwitchParser(Settings &settings) {
     using namespace Sawyer::CommandLine;
 
     std::string purpose = "disassembles files one address at a time";
     std::string description =
         "This program is a very simple disassembler that tries to disassemble in instruction at each executable "
         "address, one instruction after the next.";
-
-    // The parser is the same as that created by Engine::commandLineParser except we don't need any partitioning switches since
-    // this tool doesn't partition.
-    Parser parser;
-    parser
-        .purpose(purpose)
-        .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
-        .chapter(1, "ROSE Command-line Tools")
-        .doc("Synopsis",
-             "@prop{programName} [@v{switches}] @v{specimen_names}")
-        .doc("Description", description)
-        .doc("Specimens", engine.specimenNameDocumentation())
-        .with(engine.engineSwitches())
-        .with(engine.loaderSwitches())
-        .with(engine.disassemblerSwitches());
 
     SwitchGroup switches("Tool-specific switches");
     switches.name("tool");
@@ -73,7 +54,13 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                     .intrinsicValue(false, settings.runSemantics)
                     .hidden(true));
 
-    return parser.with(switches).parse(argc, argv).apply().unreachedArgs();
+    Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
+    parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{specimen_names}");
+    parser.errorStream(mlog[FATAL]);
+    parser.with(Rose::CommandLine::genericSwitches());
+    parser.with(switches);
+
+    return parser;
 }
 
 
@@ -584,8 +571,6 @@ void forAllMetadataRoots(const SgProject& prj, std::function<void(const SgAsmCil
   }
 }
 
-
-
 } // anonymous namespace
 
 
@@ -596,10 +581,13 @@ int main(int argc, char *argv[])
     ROSE_INITIALIZE;
     Rose::Diagnostics::initAndRegister(&::mlog, "tool");
 
-    // Parse the command-line
-    P2::Engine::Ptr engine = P2::EngineBinary::instance();
+    // Build command line parser (without any knowledge of engine settings), choose the appropriate partitioner engine type, and
+    // parse and apply the command-line to the settings, engine, etc. using the appropriately modified command-line parser.
     Settings settings;
-    std::vector<std::string> specimenNames = parseCommandLine(argc, argv, *engine, settings);
+    auto parser = buildSwitchParser(settings);
+    P2::Engine::Ptr engine = P2::Engine::forge(argc, argv, parser/*in,out*/);
+    mlog[INFO] <<"using the " <<engine->name() <<" partitioning engine\n";
+    std::vector<std::string> specimenNames = parser.parse(argc, argv).apply().unreachedArgs();
 
     // Load the specimen as raw data or an ELF or PE container
     /* MemoryMap::Ptr map = */ engine->loadSpecimens(specimenNames);
