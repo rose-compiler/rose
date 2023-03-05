@@ -2571,7 +2571,7 @@ namespace
 
   struct InheritedSymbolCreator
   {
-      InheritedSymbolCreator(SgNamedType& sourceRootType,  SgNamedType& dervType, AstContext astctx)
+      InheritedSymbolCreator(SgNamedType& sourceRootType, SgNamedType& dervType, AstContext astctx)
       : baseType(sourceRootType), dervivedType(dervType), ctx(astctx)
       {}
 
@@ -2671,11 +2671,14 @@ namespace
 
     if (baseRootType == nullptr)
     {
-      logWarn() << "unable to find base-root for " << derivedType.get_name()
+      logFlaw() << "unable to find base-root for " << derivedType.get_name()
                 << " / base = " << baseType
                 << std::endl;
       return;
     }
+
+    //~ logWarn() << "drv: " << derivedType.get_name() << " / " << baseRootType->get_name()
+              //~ << std::endl;
 
     traverseIDs(subprograms, elemMap(), InheritedSymbolCreator{*baseRootType, derivedType, ctx});
 
@@ -2795,6 +2798,8 @@ namespace
       processInheritedSubroutines(tydef, *classTypeDcl, ctx);
     else if (SgEnumDeclaration* derivedEnumDcl = isSgEnumDeclaration(&dcl))
       processInheritedEnumValues(tydef, *derivedEnumDcl, ctx);
+    else if (SgAdaDiscriminatedTypeDecl* discrTypeDcl = isSgAdaDiscriminatedTypeDecl(&dcl))
+      processInheritedSubroutines(tydef, *discrTypeDcl, ctx);
     else
       ADA_ASSERT(false);
   }
@@ -3017,7 +3022,9 @@ namespace
 
         if (tydef.Definition_Kind == A_Private_Extension_Definition)
         {
-          processInheritedSubroutines( SG_DEREF(si::getDeclaredType(&sgdecl)),
+          SgDeclarationStatement* tydcl = discr ? discr : &sgdecl;
+
+          processInheritedSubroutines( SG_DEREF(si::getDeclaredType(tydcl)),
                                        idRange(tydef.The_Union.The_Private_Extension_Definition.Implicit_Inherited_Subprograms),
                                        idRange(tydef.The_Union.The_Private_Extension_Definition.Implicit_Inherited_Declarations),
                                        ctx
@@ -3940,7 +3947,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         {
           ADA_ASSERT(&ctx.scope() == parentScope);
           ctx.appendStatement(sgdecl);
-          processInheritedElementsOfDerivedTypes(ty, sgdecl, ctx);
         }
         else
         {
@@ -3948,6 +3954,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
           completeDiscriminatedDecl(*discr, nondef, id, sgdecl, elem, isPrivate, ctx);
         }
 
+        processInheritedElementsOfDerivedTypes(ty, discr ? *discr : sgdecl, ctx);
 
         /* unused fields
             bool                           Has_Abstract;

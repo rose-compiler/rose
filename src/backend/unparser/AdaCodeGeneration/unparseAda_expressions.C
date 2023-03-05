@@ -13,6 +13,7 @@ namespace si = SageInterface;
 
 namespace
 {
+/*
   const SgExprListExp* callArguments(const SgFunctionRefExp& n)
   {
     if (const SgCallExpression* callexp = isSgCallExpression(n.get_parent()))
@@ -20,7 +21,7 @@ namespace
 
     return nullptr;
   }
-
+*/
   std::string
   operator_sym(SgNode& n)
   {

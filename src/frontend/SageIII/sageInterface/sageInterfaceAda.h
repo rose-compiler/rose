@@ -447,9 +447,11 @@ namespace
   /// @}
 
   /// returns the scope where \ref ty was defined
+  /// \param ty           the type
+  /// \param isRelational true, if the lookup is made for a relational (e.g., operator "=", "/=", ..)
   /// \{
-  SgScopeStatement* operatorScope(const SgType& ty);
-  SgScopeStatement* operatorScope(const SgType* ty);
+  SgScopeStatement* operatorScope(const SgType& ty, bool isRelational);
+  SgScopeStatement* operatorScope(const SgType* ty, bool isRelational);
   /// \}
 
   /// describes properties of imported units
