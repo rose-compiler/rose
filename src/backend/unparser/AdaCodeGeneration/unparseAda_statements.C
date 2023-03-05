@@ -844,6 +844,9 @@ namespace
 
       associationList(SG_DEREF(args));
       prn(STMT_SEP);
+
+      // for debugging purposes
+      // stmt(n.get_instantiatedScope());
     }
 
     void handle(SgAdaRenamingDecl& n)

@@ -698,9 +698,8 @@ namespace
       return nullptr;
     }
 
-    logWarn() << "gen ma operator" << std::endl;
     const SgType*          ty     = suppl.args()->front();
-    SgScopeStatement*      scope  = si::Ada::operatorScope(ty);
+    SgScopeStatement*      scope  = si::Ada::operatorScope(ty, isRelationalOperator(name));
 
     if (scope == nullptr)
     {

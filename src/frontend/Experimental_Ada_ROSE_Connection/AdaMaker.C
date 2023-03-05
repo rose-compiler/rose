@@ -755,6 +755,7 @@ namespace
     SgAdaParameterList& sgnode = mkLocatedNode<SgAdaParameterList>();
 
     //~ sgnode.set_scope(&outer);
+    sgnode.set_firstNondefiningDeclaration(&sgnode);
     return sgnode;
   }
 }
@@ -768,6 +769,7 @@ mkAdaDiscriminatedTypeDecl(SgScopeStatement& scope)
 
   dclscope.set_parent(&sgnode);
   params.set_parent(&sgnode);
+  sgnode.set_firstNondefiningDeclaration(&sgnode);
   return sgnode;
 }
 
@@ -2279,14 +2281,6 @@ namespace
   SgFunctionType&
   convertToDerivedType(SgFunctionType& funcTy, SgNamedType& derivedType)
   {
-#if 0
-    SgDeclarationStatement* baseTypeDecl = si::Ada::baseDeclaration(derivedType);
-
-    if (baseTypeDecl == nullptr)
-      return funcTy;
-    SgType*              baseType     = si::getDeclaredType(baseTypeDecl);
-#endif
-
     SgType*              baseType     = si::Ada::baseType(derivedType);
     SgType*              baseRootType = si::Ada::typeRoot(baseType).typerep();
 
@@ -2305,6 +2299,12 @@ namespace
     for (SgType* origArgTy : funcTy.get_arguments())
     {
       SgType* newArgTy = &convertType(SG_DEREF(origArgTy), originalType, derivedType);
+
+      //~ logWarn() << "arg/repl: "
+                //~ << " oa: " << typeid(SG_DEREF(origArgTy)).name() << " " << origArgTy
+                //~ << " or: " << typeid(originalType).name()        << " " << &originalType
+                //~ << " dv: " << typeid(derivedType).name()         << " " << &derivedType
+                //~ << std::endl;
 
       newTypeList.push_back(newArgTy);
       if (newArgTy != origArgTy) ++numUpdTypes;
