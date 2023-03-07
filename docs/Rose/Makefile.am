@@ -185,9 +185,9 @@ leftmenu.html: leftmenu.html.in
 
 # Liao, 6/11/2008. Added a new directory (Projects) for various ROSE projects 
 # compass_build_tooldir=$(top_builddir)/projects/compass/tools
-COMPASS_MANUAL = $(compass_build_tooldir)/compass/doc/compass.pdf
-$(COMPASS_MANUAL):
-	cd $(compass_build_tooldir)/compass/doc && $(MAKE) docs
+#COMPASS_MANUAL = $(compass_build_tooldir)/compass/doc/compass.pdf
+#$(COMPASS_MANUAL):
+#	cd $(compass_build_tooldir)/compass/doc && $(MAKE) docs
 
 # Liao, 8/11/2009. QROSE Manual
 QROSE_MANUAL = $(top_srcdir)/src/3rdPartyLibraries/qrose/docs/QROSE.pdf
@@ -203,7 +203,7 @@ if !OS_MACOSX
 #	$(DOXYGEN) roseQtWidgets.doxygen
 endif
 # Liao, 2014/1/10, comment out $(HASKELLPORT_APIDOCS) to migrate to EDG 4.7 based rose
-make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf ROSE_Exam.pdf ROSE_DeveloperInstructions.pdf ROSE_DemoGuide.pdf footer.html leftmenu.html $(COMPASS_MANUAL) RoseQtDoc
+make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf ROSE_Exam.pdf ROSE_DeveloperInstructions.pdf ROSE_DemoGuide.pdf footer.html leftmenu.html RoseQtDoc
 	cd Tutorial; $(MAKE) make-web-pages
 	mkdir -p ROSE_WebPages
 	mkdir -p ROSE_WebPages/ROSE_HTML_Reference;
@@ -219,7 +219,7 @@ make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-U
 	cp -f $(srcdir)/highlights.html ROSE_WebPages/highlights.html
 	cp -f $(srcdir)/news.html ROSE_WebPages/news.html
 	cp -f $(srcdir)/regressionTest.html ROSE_WebPages/regressionTest.html
-	cp -f $(COMPASS_MANUAL) ROSE_WebPages/
+#	cp -f $(COMPASS_MANUAL) ROSE_WebPages/
 	cp -f $(QROSE_MANUAL) ROSE_WebPages/
 #	mkdir -p ROSE_WebPages/ROSE_HaskellAPI
 #	cp -fr $(HASKELLPORT_APIDOCS)/* ROSE_WebPages/ROSE_HaskellAPI/
