@@ -801,6 +801,7 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
     std:: cerr << "isLinkageValid () " << record_decl->isLinkageValid () << "\n";
     std:: cerr << "hasLinkageBeenComputed() " << record_decl->hasLinkageBeenComputed() << "\n";
     std:: cerr << "isModulePrivate() " << record_decl->isModulePrivate() << "\n";
+    std:: cerr << "isThisDeclarationADefinition() " << record_decl->isThisDeclarationADefinition() << "\n";
 #endif
 
     SgClassDeclaration * sg_class_decl = NULL;
@@ -1008,10 +1009,12 @@ bool ClangToSageTranslator::VisitCXXRecordDecl(clang::CXXRecordDecl * cxx_record
         ROSE_ASSERT(methodDeclStmt);
         methodDeclStmt->set_scope(CxxRecordDeclaration->get_definition());
         CxxRecordDeclaration->get_definition()->append_member(methodDeclStmt);
+/* Tentatively turn on everything 
         if((*it_method)->isImplicit())
         {
            methodDeclStmt->setCompilerGenerated();
         }
+*/
     }
 
     clang::CXXRecordDecl::ctor_iterator it_ctor;
@@ -1631,7 +1634,7 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
     SgType * ret_type = buildTypeFromQualifiedType(function_decl->getReturnType());
 
     SgFunctionParameterList * param_list = SageBuilder::buildFunctionParameterList_nfi();
-      applySourceRange(param_list, function_decl->getSourceRange()); // FIXME find the good SourceRange (should be stored by Clang...)
+    applySourceRange(param_list, function_decl->getParametersSourceRange()); // FIXME find the good SourceRange (should be stored by Clang...)
 
     if(funcProtoType != nullptr && funcProtoType->getNumParams() != function_decl->getNumParams())
         diffInProtoType = true;
@@ -1703,7 +1706,8 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
 
     SgFunctionDeclaration * sg_function_decl;
 
-    if (function_decl->isThisDeclarationADefinition() && function_decl->hasBody()) {
+    //if (function_decl->isThisDeclarationADefinition() && function_decl->hasBody()) {
+    if (function_decl->isThisDeclarationADefinition()) {
         if(llvm::isa<clang::CXXMethodDecl>(function_decl))
         {
           SgClassDeclaration* cxxRecordDecl = NULL;
@@ -1724,10 +1728,6 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
             sg_function_decl->hasEllipses();
         }
 
-        if (!function_decl->hasBody()) {
-            std::cerr << "Defining function declaration without body..." << std::endl;
-            res = false;
-        }
 /*
         if (sg_function_decl->get_definition() != NULL) SageInterface::deleteAST(sg_function_decl->get_definition());
 
@@ -1750,7 +1750,16 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
 
         SageBuilder::pushScopeStack(function_definition);
 
-        SgNode * tmp_body = Traverse(function_decl->getBody());
+        SgNode * tmp_body;
+        if (!function_decl->hasBody()) {
+            std::cerr << "Defining function declaration without body..." << std::endl;
+            //res = false;
+            tmp_body = SageBuilder::buildBasicBlock();
+        }
+        else
+        {
+            tmp_body = Traverse(function_decl->getBody());
+        }
         SgBasicBlock * body = isSgBasicBlock(tmp_body);
 
         SageBuilder::popScopeStack();
@@ -1896,6 +1905,7 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
       sg_function_decl->get_declarationModifier().get_storageModifier().setExtern();
     }
 
+    applySourceRange(sg_function_decl, function_decl->getSourceRange());
     *node = sg_function_decl;
 
     return VisitDeclaratorDecl(function_decl, node) && res;
@@ -2007,11 +2017,12 @@ bool ClangToSageTranslator::VisitCXXConstructorDecl(clang::CXXConstructorDecl * 
            SgInitializedName* fieldInitializedName = fieldMemberDecl->get_decl_item(fieldName);
            SgType* fieldType = fieldInitializedName->get_type();
 
-
            SgExpression* initExpr = isSgExpression(Traverse((*initializer)->getInit())); 
            SgInitializer* sgCtorInitializer = SageBuilder::buildAssignInitializer_nfi(initExpr, fieldType);
            SgInitializedName* sgCtorInitializedName = SageBuilder::buildInitializedName(fieldName,fieldType, sgCtorInitializer);
+           applySourceRange(sgCtorInitializedName, (*initializer)->getSourceRange());
            sgCtorInitializer->set_parent(sgCtorInitializedName);
+           applySourceRange(sgCtorInitializer, ((*initializer)->getInit())->getSourceRange());
            ctorInitializerList->append_ctor_initializer(sgCtorInitializedName);
            sgCtorInitializedName->set_parent(ctorInitializerList); 
            sgCtorInitializedName->set_scope(SageBuilder::topScopeStack()); 
@@ -2199,7 +2210,11 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
     SgExprListExp * expr_list_expr = isSgExprListExp(expr);
 
     SgInitializer * init = NULL;
-    if (expr_list_expr != NULL)
+    if (isSgInitializer(tmp_init))
+    {
+        init = isSgInitializer(tmp_init);
+    }
+    else if (expr_list_expr != NULL)
         init = SageBuilder::buildAggregateInitializer(expr_list_expr, type);
     else if (expr != NULL)
         init = SageBuilder::buildAssignInitializer_nfi(expr, expr->get_type());
@@ -2362,6 +2377,7 @@ bool ClangToSageTranslator::VisitParmVarDecl(clang::ParmVarDecl * param_var_decl
     }
 
     *node = SageBuilder::buildInitializedName(name, type, init);
+    applySourceRange(*node, param_var_decl->getSourceRange());
 
     return VisitDeclaratorDecl(param_var_decl, node) && res;
 }
