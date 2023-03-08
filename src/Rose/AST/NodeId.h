@@ -66,8 +66,17 @@ private:
   
     //! \brief The node this ID applies to
     SgNode* node;
-
-  
+    
+    /** \brief A hash uniquely identifing the command line and ROSE version
+     *
+     *  NodeIDs are only stable if the same files are input and the same version
+     *  of ROSE is used. (Well, there are probably other ways to screw it up, 
+     *  like building ROSE with different compilers)  So this hash is to ensure that
+     *  the input files and the ROSE version are the same when the NodeId is read
+     *  and written.
+     **/
+    static std::string run_hash;
+    
 public:
   //! \brief default constructor required for containers, but only makes invalid NodeIds 
   NodeId() : poolIndex(std::numeric_limits<size_t>::max()), nodeIndex(std::numeric_limits<size_t>::max()), node(nullptr) {}
