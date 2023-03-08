@@ -1,13 +1,18 @@
 
 #include "sage3basic.h"
+#include "sageInterface.h"
 
 #include "SgNodeHelper.h"
+#include "Combinatorics.h"  //Rose hashers
 #include "Rose/AST/NodeId.h"
 #include <boost/tokenizer.hpp>
 
 namespace Rose {
 namespace AST 
 {
+  //define the static hash
+  std::string NodeId::run_hash; 
+
   NodeId::NodeId(SgNode *inNode) : node(inNode) {
     //ROSETTA code required to generate this for every AST
     //subclass...
@@ -19,6 +24,21 @@ namespace AST
     std::string nodeStr = stringId.substr(pos+1);
     poolIndex = stoull(poolStr, NULL);
     nodeIndex = stoull(nodeStr, NULL);
+
+    if(run_hash.size() == 0) {
+      Rose::Combinatorics::HasherFnv fnv;
+      SgProject* root = SageInterface::getProject(inNode);
+      ROSE_ASSERT(root != NULL);
+      
+      fnv.insert(std::to_string(ROSE_VERSION));
+      auto fileList = root->get_fileList_ptr()->get_listOfFiles();
+      for(auto file : fileList) {
+        std::cout << file->getFileName() <<std::endl;
+        fnv.insert(file->getFileName());
+      }
+      run_hash = fnv.toString();
+    }
+    
   }
 
   //! \brief Get the Node ID for a particular SgNode*
@@ -45,9 +65,9 @@ namespace AST
         size_t nodeIndex = stoull(*token, NULL);
 #if NODEID_INCLUDE_ROSE_VERSION
         ++token;
-        size_t rose_version = stoull(*token, NULL);
+        std::string in_run_hash = *token;
 #endif //NODEID_INCLUDE_ROSE_VERSION
-        ROSE_ASSERT(rose_version == ROSE_VERSION);
+        ROSE_ASSERT(run_hash == in_run_hash);
         SgNode* sgnode = SgNode::getNodeByNodeId(variantT, poolIndex, nodeIndex); 
         ROSE_ASSERT(sgnode->variantT() == variantT);  
         //Range is checked in getId(size_t)
@@ -69,7 +89,7 @@ namespace AST
         ss << "_" << poolIndex; 
         ss << "_" << nodeIndex;  
 #if NODEID_INCLUDE_ROSE_VERSION
-        ss << "_" << ROSE_VERSION;        //Optional check on ROSE_VERSION
+        ss << "_" << run_hash;        //Optional check on ROSE_VERSION
 #endif //NODEID_INCLUDE_ROSE_VERSION
         return ss.str();
   };
