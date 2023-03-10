@@ -1,0 +1,5 @@
+% Handle case insensitive part 2 %
+START
+COMPOOL TEST21COMP;
+DEF ITEM sitem STATUS (V(AA),V(BB)) ;
+TERM

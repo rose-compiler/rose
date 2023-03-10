@@ -1,0 +1,9 @@
+% Const function used for item size %
+START
+TYPE why U;
+DEF PROC main;
+BEGIN
+   ITEM UINT U ;
+   UINT = (*U BITSIZE(WHY)*)(UINT);
+END
+TERM

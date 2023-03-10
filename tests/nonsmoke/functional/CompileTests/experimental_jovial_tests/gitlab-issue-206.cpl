@@ -1,0 +1,8 @@
+% Joival frontend failure with define in name %
+START
+COMPOOL TEST1;
+DEF TABLE SOMETHING'DEFINE W 2 ; " COMMENT "
+BEGIN
+   ITEM RANDOM B 16 POS(*,0);
+END
+TERM

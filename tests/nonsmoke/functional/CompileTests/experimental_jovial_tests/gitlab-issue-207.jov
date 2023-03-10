@@ -1,0 +1,11 @@
+% Frontend failure with multiple assigns %
+START
+DEF PROC main S;
+BEGIN
+   ITEM ITEM1 S;
+   ITEM ITEM2 S;
+   TABLE TABLE1(1:5) U;
+   TABLE1(ITEM1),ITEM2 = 10;
+   ITEM1,ITEM2,TABLE1(4),TABLE1(ITEM1) = 10;
+END
+TERM

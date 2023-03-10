@@ -1,0 +1,7 @@
+% Frontend treat cast as intval %
+START
+COMPOOL TEST12 ;
+   DEF ITEM STATE STATUS(
+   ((*S 15*)(4B'0000'))V(BAD),
+   ((*S 15*)(4B'1234'))V(GOOD));
+TERM
