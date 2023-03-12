@@ -210,7 +210,7 @@ namespace
   ArrayBounds::ReturnType
   ArrayBounds::recurse(SgType* n)
   {
-    return sg::dispatch(ArrayBounds(), n);
+    return sg::dispatch(ArrayBounds{}, n);
   }
 
   struct IntegralValue : sg::DispatchHandler<long long int>
@@ -425,7 +425,7 @@ namespace Ada
   long long int
   staticIntegralValue(SgExpression* n)
   {
-    return sg::dispatch(IntegralValue(), n);
+    return sg::dispatch(IntegralValue{}, n);
   }
 
   int
@@ -1008,6 +1008,67 @@ namespace Ada
 
   namespace
   {
+    struct TypeResolver : sg::DispatchHandler<bool>
+    {
+        using base = sg::DispatchHandler<bool>;
+
+        static
+        SgScopeStatement* find(SgNode*, bool fixedSpecial = false);
+
+        explicit
+        TypeResolver(std::function<bool (const SgType&)> typetest)
+        : base(), checker(typetest)
+        {}
+
+        void checkChild(const SgType*);
+
+        void handle(SgNode& n)              { SG_UNEXPECTED_NODE(n); }
+
+        //
+        // expression based types
+        // ...
+
+        //
+        // types
+
+        void handle(SgType& n)              { res = checker(n); }
+        void handle(SgModifierType& n)      { checkChild(n.get_base_type()); }
+        void handle(SgAdaSubtype& n)        { checkChild(n.get_base_type()); }
+        void handle(SgAdaDerivedType& n)    { checkChild(n.get_base_type()); }
+
+        void handle(SgTypedefType& n)
+        {
+          SgTypedefDeclaration* dcl    = isSgTypedefDeclaration(n.get_declaration());
+          ASSERT_not_null(dcl);
+          SgTypedefDeclaration* defdcl = isSgTypedefDeclaration(dcl->get_definingDeclaration());
+
+          if (defdcl != nullptr) dcl = defdcl;
+
+          checkChild(dcl->get_base_type());
+        }
+
+      private:
+        std::function<bool (const SgType&)> checker;
+    };
+
+    void TypeResolver::checkChild(const SgType* ty)
+    {
+      res = ty && sg::dispatch(TypeResolver{std::move(checker)}, ty);
+    }
+  }
+
+  bool resolvesToFixedType(const SgType& ty)
+  {
+    return sg::dispatch(TypeResolver{[](const SgType& t)->bool { return isFixedType(t); }}, &ty);
+  }
+
+  bool resolvesToFixedType(const SgType* ty)
+  {
+    return ty && resolvesToFixedType(*ty);
+  }
+
+  namespace
+  {
     bool isDecimalConstraint(SgAdaTypeConstraint* constr)
     {
       SgAdaDeltaConstraint* delta = isSgAdaDeltaConstraint(constr);
@@ -1052,31 +1113,6 @@ namespace Ada
 
   namespace
   {
-#if OBSOLETE_CODE_ALTERNATIVE
-    template <class SageNodeSequence, class Fn>
-    const SgFunctionDeclaration*
-    forAnySecondaryDeclaration(const SageNodeSequence& seq, const SgFunctionDeclaration* key, Fn fn)
-    {
-      std::for_each( seq.begin(), seq.end(),
-                     [key, op = std::move(fn)](typename SageNodeSequence::value_type ptr) -> void
-                     {
-                       if (const SgFunctionDeclaration* fndcl = isSgFunctionDeclaration(ptr))
-                         if (fndcl->get_firstNondefiningDeclaration() == key)
-                           op(fndcl);
-                     }
-                   );
-    }
-
-    template <class Fn>
-    const SgFunctionDeclaration*
-    forAnySecondaryDeclaration(const SgScopeStatement& scope, const SgFunctionDeclaration* key, Fn fn)
-    {
-      return scope.containsOnlyDeclarations()
-                  ? forAnySecondaryDeclaration(scope.getDeclarationList(), key, std::move(fn))
-                  : forAnySecondaryDeclaration(scope.getStatementList(), key, std::move(fn));
-    }
-#endif /* OBSOLETE_CODE_ALTERNATIVE */
-
     template <class SageNodeSequence>
     const SgFunctionDeclaration*
     findSecondaryFunctionDecl(const SageNodeSequence& seq, const SgFunctionDeclaration* key)
@@ -1168,7 +1204,8 @@ namespace Ada
       // by default use the expression's type
       void handle(SgExpression& n)        { res = TypeDescription{n.get_type(), false}; }
 
-      // by default use the expression's type
+      // If a var is just constant, take the type from the initializer
+      // NOTE: this is not correct, as the type should be determined by the context
       void handle(SgVarRefExp& n)
       {
         res = TypeDescription{n.get_type(), false};
@@ -1182,6 +1219,16 @@ namespace Ada
           if (SgAssignInitializer* init = isSgAssignInitializer(var.get_initializer()))
             res = typeRoot(SG_DEREF(init->get_operand()).get_type());
         }
+      }
+
+      // SgRangeExp::get_type returns TypeDefault
+      //   returning the type of the range elements seems more appropriate
+      // \todo it seems appropriate to introduce a RangeType with underlying type?
+      void handle(SgRangeExp& n)
+      {
+        const SgExpression& lhs = SG_DEREF(n.get_start());
+
+        res = TypeDescription{lhs.get_type(), false};
       }
 
       // SgTypeString does not preserve the 'wideness', so let's just get
@@ -1199,6 +1246,9 @@ namespace Ada
         res = TypeDescription{strty, false};
       }
 
+      // Currently, we have no concept of class-wide type,
+      //   thus the information is returned as flag.
+      // \todo it seems appropriate to introduce a AdaClassType with underlying type?
       void handle(SgAdaAttributeExp& n)
       {
         static const std::string CLASS_ATTR = "class";
@@ -1213,16 +1263,6 @@ namespace Ada
     bool fromRootType(SgAdaSubtype* ty)
     {
       return ty && ty->get_fromRootType();
-    }
-
-    // fromRootType with special handling of fixed types
-    bool fromRootTypeWithFixedSpecial(SgAdaSubtype* ty, bool isRelational)
-    {
-      //~ std::cerr << "rel?" << isRelational << std::endl;
-      // fixed types seem to have weird rules
-      //   arithmetic operators are in package standard
-      //   relational operators are in the surrounding package
-      return fromRootType && (isRelational || !isFixedType(ty->get_base_type()));
     }
 
     struct RootTypeFinder : sg::DispatchHandler<TypeDescription>
@@ -1331,6 +1371,9 @@ namespace Ada
         if (defdcl != nullptr) dcl = defdcl;
 
         SgType*               basety = dcl->get_base_type();
+        ASSERT_not_null(basety);
+
+        basety = basety->stripType(SgType::STRIP_MODIFIER_TYPE);
 
         const bool useThisDecl = (  isSgAdaDerivedType(basety)
                                  || isSgAdaAccessType(basety)
@@ -1373,12 +1416,7 @@ namespace Ada
         using base = sg::DispatchHandler<SgScopeStatement*>;
 
         static
-        SgScopeStatement* find(SgNode*, bool isRelational = false);
-
-        explicit
-        DeclScopeFinder(bool relop)
-        : base(), isRelational(relop)
-        {}
+        SgScopeStatement* find(SgNode*);
 
         void handle(SgNode& n)              { SG_UNEXPECTED_NODE(n); }
 
@@ -1481,31 +1519,34 @@ namespace Ada
           if (defdcl != nullptr) dcl = defdcl;
 
           SgType*    basety      = dcl->get_base_type();
-          // \todo skip (constant) modifier type on base
+          ASSERT_not_null(basety);
+
+          basety = basety->stripType(SgType::STRIP_MODIFIER_TYPE);
 
           const bool useThisDecl = (  isSgAdaDerivedType(basety)
                                    || isSgAdaAccessType(basety)
                                    || isSgAdaModularType(basety)
                                    || isSgArrayType(basety)
-                                   || fromRootTypeWithFixedSpecial(isSgAdaSubtype(basety), isRelational)
+                                   || fromRootType(isSgAdaSubtype(basety))
                                    );
 
+          //~ std::cerr << "DeclScopeFinder: " << (basety ? typeid(*basety).name() : std::string{"0"})
+                    //~ << ": " << n.get_name() << " " << useThisDecl
+                    //~ << std::endl;
+
           if (useThisDecl)
-            handle(sg::asBaseType(n));
+            res = dcl->get_scope();
           else
             res = find(basety);
         }
 
         //
         void handle(SgDeclType& n)          { res = find(n.get_base_expression()); }
-
-      private:
-        bool isRelational;
     };
 
-    SgScopeStatement* DeclScopeFinder::find(SgNode* n, bool isRelational)
+    SgScopeStatement* DeclScopeFinder::find(SgNode* n)
     {
-      return sg::dispatch(DeclScopeFinder{isRelational}, n);
+      return sg::dispatch(DeclScopeFinder{}, n);
     }
 
     /// \todo remove after adding Ada specific types to stripType
@@ -1602,14 +1643,47 @@ namespace Ada
     return exp ? typeOfExpr(*exp) : TypeDescription{nullptr, false};
   }
 
-  SgScopeStatement* operatorScope(const SgType& ty, bool isRelational)
+  namespace
   {
-    return DeclScopeFinder::find(const_cast<SgType*>(&ty), isRelational);
+    // function checks if special handling under the assumption that its arguments
+    //   have fixed type.
+    bool isFixedSpecial(const std::string& opname, const SgTypePtrList& argtypes)
+    {
+      // PP: operator scope for fixed types is weirdly bizarre.
+      //     behavior re-engineered from ACATS tests.
+      //     see types_operators.adb for some test cases.
+      if (opname != "*" && opname != "/")
+        return false;
+
+      ROSE_ASSERT(argtypes.size() == 2);
+      return resolvesToFixedType(argtypes.front()) && resolvesToFixedType(argtypes.back());
+    }
+
+    const SgType*
+    chooseTypeWithNamedRootIfAvail(const SgTypePtrList& argtypes)
+    {
+      SgType* lhsty = argtypes.front();
+
+      if (argtypes.size() == 1 || isSgNamedType(typeRoot(lhsty).typerep()))
+        return lhsty;
+
+      SgType* rhsty = argtypes.back();
+
+      if (isSgNamedType(typeRoot(rhsty).typerep()))
+        return rhsty;
+
+      return lhsty;
+    }
   }
 
-  SgScopeStatement* operatorScope(const SgType* ty, bool isRelational)
+  SgScopeStatement* operatorScope(std::string opname, SgTypePtrList argtypes)
   {
-    return ty ? operatorScope(*ty, isRelational) : nullptr;
+    ROSE_ASSERT(argtypes.size());
+
+    if (isFixedSpecial(opname, argtypes))
+      return pkgStandardScope();
+
+    return DeclScopeFinder::find(const_cast<SgType*>(chooseTypeWithNamedRootIfAvail(argtypes)));
   }
 
   SgDeclarationStatement* associatedDeclaration(const SgType& ty)

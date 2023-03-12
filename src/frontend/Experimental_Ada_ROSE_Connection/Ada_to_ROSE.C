@@ -1102,6 +1102,22 @@ namespace
     bool empty() const { return base::size() == 0; }
   };
 
+  bool
+  testProperty(const Sg_File_Info* n, bool (Sg_File_Info::*property)() const)
+  {
+    return n && (n->*property)();
+  }
+
+  bool
+  testProperty(const SgLocatedNode& n, bool (Sg_File_Info::*property)() const)
+  {
+    return (  testProperty(n.get_file_info(),        property)
+           || testProperty(n.get_startOfConstruct(), property)
+           || testProperty(n.get_endOfConstruct(),   property)
+           );
+  }
+
+
   struct AmbiguousCallExtractor : AstSimpleProcessing
   {
       explicit
@@ -1306,6 +1322,10 @@ namespace
     if (fnref == nullptr)
       return simpleExpressionType(arg);
 
+    const SgFunctionDeclaration* fndcl = fnref->getAssociatedFunctionDeclaration();
+    if (fndcl && testProperty(*fndcl, &Sg_File_Info::isCompilerGenerated))
+      return {};
+
     OverloadMap::const_iterator pos = allrefs.find(fnref);
 
     if (pos == allrefs.end())
@@ -1338,21 +1358,6 @@ namespace
       res.emplace_back(resultTypes(arg, allrefs));
 
     return res;
-  }
-
-  bool
-  testProperty(const Sg_File_Info* n, bool (Sg_File_Info::*property)() const)
-  {
-    return n && (n->*property)();
-  }
-
-  bool
-  testProperty(const SgLocatedNode& n, bool (Sg_File_Info::*property)() const)
-  {
-    return (  testProperty(n.get_file_info(),        property)
-           || testProperty(n.get_startOfConstruct(), property)
-           || testProperty(n.get_endOfConstruct(),   property)
-           );
   }
 
   bool isComparisonOperator(const SgFunctionDeclaration& fn)
@@ -1408,7 +1413,7 @@ namespace
   ///   child is part of an argument list of a parent call.
   /// returns the empty set when the contextual types shall not be used
   /// (due to current inaccuracies, for example, when the parent call
-  /// call a compiler generated operator.)
+  /// calls a compiler generated operator.)
   std::set<const SgType*>
   typesFromCallContext( const SgFunctionCallExp& parentCall,
                         const SgFunctionCallExp& childCall,
@@ -1433,7 +1438,7 @@ namespace
     // do not trust arguments of compiler generated functions
     if (fndcl == nullptr)
     {
-      //~ logTrace() << "typesFromCallContext: ret {} @ 2" << std::endl;
+      logTrace() << "typesFromCallContext: ret {} @ 2" << std::endl;
       return {};
     }
 
@@ -1442,7 +1447,7 @@ namespace
 
     if (compilerGenerated && !compilerGenComparison)
     {
-      //~ logTrace() << "typesFromCallContext: ret {} @ 3" << std::endl;
+      logTrace() << "typesFromCallContext: ret {} @ 3" << std::endl;
       return {};
     }
 
@@ -1456,7 +1461,7 @@ namespace
 
       if (!compilerGenComparison)
       {
-        //~ logTrace() << "typesFromCallContext: normal" << std::endl;
+        logTrace() << "typesFromCallContext: normal" << std::endl;
 
         for (SgFunctionSymbol* fnsym : ovpos->second.ovlset())
         {
@@ -1469,7 +1474,7 @@ namespace
       }
       else
       {
-        //~ logTrace() << "typesFromCallContext: compgen" << std::endl;
+        logTrace() << "typesFromCallContext: compgen" << std::endl;
         ADA_ASSERT(ovpos->second.ovlset().size() < 2);
         ADA_ASSERT(argpos == 0 || argpos == 1);
 
@@ -1479,7 +1484,7 @@ namespace
     catch (const std::logic_error&)
     {
       /* catches exceptions from normalizedArgumentPosition. */
-      //~ logTrace() << "typesFromCallContext: ex " << std::endl;
+      logTrace() << "typesFromCallContext: ex " << std::endl;
       ADA_ASSERT(res.empty());
     }
 
@@ -1538,7 +1543,18 @@ namespace
     if (const SgAssignInitializer* assignIni = isSgAssignInitializer(parentNode))
       return typesFromAssignInitializer(*assignIni, *call, allrefs);
 
-    if (isSgStatement(parentNode)) // procedure call
+    if (isSgOrOp(parentNode) || isSgAndOp(parentNode))
+      return { sb::buildBoolType() };
+
+    if (const SgReturnStmt* retstmt = isSgReturnStmt(parentNode))
+    {
+      const SgFunctionDeclaration& fndcl = sg::ancestor<SgFunctionDeclaration>(*retstmt);
+      const SgFunctionType&        fnty  = SG_DEREF(fndcl.get_type());
+
+      return { fnty.get_return_type() };
+    }
+
+    if (isSgExprStatement(parentNode)) // procedure call
       return {};
 
     ASSERT_not_null(parentNode);
@@ -1588,9 +1604,10 @@ namespace
       const SgFunctionCallExp*  fncall = callNode(fnref);
       const SgExpressionPtrList args   = normalizedArguments(fncall);
 
-      logInfo() << "resolve: " << fnref.get_parent()->unparseToString() << " " << numcands
-                //~ << " - " << args.size()
-                << std::endl;
+      if (numcands != 1)
+        logInfo() << "resolve: " << fnref.get_parent()->unparseToString() << " " << numcands
+                  //~ << " - " << args.size()
+                  << std::endl;
 
       {
         // ...
@@ -1618,8 +1635,9 @@ namespace
       }
 
       {
-        logInfo() << "result-resolve: " << overloads.size()
-                  << std::endl;
+        //~ if (overloads.size() != 1)
+          logInfo() << "result-resolve: " << fnref.get_parent()->unparseToString() << " " << overloads.size()
+                    << std::endl;
 
         // ...
         // disambiguate based on return types and context
@@ -1627,6 +1645,7 @@ namespace
         auto isViableReturn = [expTypes = expectedTypes(fncall, allrefs)]
                               (SgFunctionSymbol* fnsy)->bool
                               {
+                                logInfo() << "result-size: " << expTypes.size() << std::endl;
                                 if (expTypes.empty()) return true;
 
                                 return ArgParamTypeCompatibility{}(functionReturnType(fnsy), expTypes);

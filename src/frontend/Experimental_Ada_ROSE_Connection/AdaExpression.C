@@ -461,7 +461,7 @@ namespace
 
     if (res.size() != 1)
     {
-      logWarn() << "unable to disambiguate operator " << dbgname << ": " << res.size()
+      logInfo() << "unable to disambiguate operator " << dbgname << ": " << res.size()
                 << " viable candidates found."
                 << std::endl;
     }
@@ -481,14 +481,18 @@ namespace
 
   bool equalArgumentTypes(OperatorCallSupplement suppl, const AstContext&)
   {
+    return true;
+    /*
     SgTypePtrList* argtypes = suppl.args();
     ADA_ASSERT(argtypes && argtypes->size() == 2);
 
-    // \todo do we need to find root types?
-    SgType*        lhsty = argtypes->front();
-    SgType*        rhsty = argtypes->back();
+    SgType* lhsty = argtypes->front();
+    SgType* rhsty = argtypes->back();
 
-    return lhsty == rhsty;
+    return (  lhsty == rhsty // shortcut
+           || si::Ada::typeRoot(lhsty).typerep() == si::Ada::typeRoot(rhs).typerep()
+           );
+    */
   }
 
   bool resultTypeIsBool(OperatorCallSupplement suppl, const AstContext&)
@@ -517,23 +521,31 @@ namespace
     return false;
   }
 
-  bool isScalarType(OperatorCallSupplement suppl, const AstContext&)
+  bool isScalarType(SgType* ty, const AstContext& ctx)
+  {
+    ty = si::Ada::typeRoot(ty).typerep();
+
+    if (!ty) return false;
+
+    if (SgTypedefType* tydef = isSgTypedefType(ty))
+      return isScalarType(tydef->get_base_type(), ctx);
+
+    return (  si::Ada::isModularType(*ty)
+           || si::Ada::isIntegerType(*ty)
+           || si::Ada::isFloatingPointType(*ty)
+           || si::Ada::isDiscreteType(*ty)
+           || si::Ada::isFixedType(*ty)
+           || si::Ada::isDecimalFixedType(*ty)
+           || isSgEnumType(ty)
+           );
+  }
+
+  bool isScalarType(OperatorCallSupplement suppl, const AstContext& ctx)
   {
     SgTypePtrList* argtypes = suppl.args();
     ADA_ASSERT(argtypes);
 
-    SgType const*  argty = si::Ada::typeRoot(argtypes->front()).typerep();
-
-    if (!argty) return false;
-
-    return (  si::Ada::isModularType(*argty)
-           || si::Ada::isIntegerType(*argty)
-           || si::Ada::isFloatingPointType(*argty)
-           || si::Ada::isDiscreteType(*argty)
-           || si::Ada::isFixedType(*argty)
-           || si::Ada::isDecimalFixedType(*argty)
-           || isSgEnumType(argty)
-           );
+    return isScalarType(argtypes->front(), ctx);
   }
 
   bool isDiscreteArrayType(OperatorCallSupplement suppl, const AstContext&)
@@ -542,8 +554,10 @@ namespace
     ADA_ASSERT(argtypes);
 
     SgType const*        argty = si::Ada::typeRoot(argtypes->front()).typerep();
-    SgArrayType const*   arrty = isSgArrayType(argty);
+    argty = argty ? argty->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_TYPEDEF_TYPE)
+                  : nullptr;
 
+    SgArrayType const*   arrty = isSgArrayType(argty);
     if (!arrty) return false;
 
     SgExprListExp const* idx = arrty->get_dim_info();
@@ -602,13 +616,23 @@ namespace
 
     if ((name == "<") || (name == "<=") || (name == ">") || (name == ">="))
     {
-      return (  (isScalarType(suppl, ctx) || isDiscreteArrayType(suppl, ctx))
-             && equalArgumentTypes(suppl, ctx)
-             && resultTypeIsBool(suppl, ctx)
-             );
+      bool res = (  (isScalarType(suppl, ctx) || isDiscreteArrayType(suppl, ctx))
+                 && equalArgumentTypes(suppl, ctx)
+                 && resultTypeIsBool(suppl, ctx)
+                 );
+
+      if (!res)
+        logWarn() << "(sca: " << isScalarType(suppl, ctx)
+                  << " | dsc: " << isDiscreteArrayType(suppl, ctx)
+                  << ") & equ: " << equalArgumentTypes(suppl, ctx)
+                  << "& t/f: " << resultTypeIsBool(suppl, ctx)
+                  << " -> : " << res
+                  << std::endl;
+
+      return res;
     }
 
-    if (name == "and" || name == "or" || name == "xor")
+    if (name == "AND" || name == "OR" || name == "XOR")
     {
       return equalArgumentTypes(suppl, ctx);
       //~ (  (argIsBoolean() || argIsModularType() || (argIsBoolArray()))
@@ -617,14 +641,14 @@ namespace
     }
 
     if ( (  name == "+"   || name == "-"   || name == "*"
-         || name == "/"   || name == "mod" || name == "rem"
-         || name == "abs" || name == "not"
+         || name == "/"   || name == "MOD" || name == "REM"
+         || name == "ABS" || name == "NOT"
          || name == "&"
          || name == "**"
          )
        )
     {
-      // \todo check whether thie types match
+      // \todo in case of binary operators, check whether the types match
       return true;
     }
 
@@ -660,13 +684,13 @@ namespace
        || name == "-"
        || name == "*"
        || name == "/"
-       || name == "mod"
-       || name == "rem"
-       || name == "abs"
-       || name == "not"
-       || name == "and"
-       || name == "or"
-       || name == "xor"
+       || name == "MOD"
+       || name == "REM"
+       || name == "ABS"
+       || name == "NOT"
+       || name == "AND"
+       || name == "OR"
+       || name == "XOR"
        || name == "**"
        )
     {
@@ -698,14 +722,11 @@ namespace
       return nullptr;
     }
 
-    const SgType*          ty     = suppl.args()->front();
-    SgScopeStatement*      scope  = si::Ada::operatorScope(ty, isRelationalOperator(name));
+    SgScopeStatement*      scope  = si::Ada::operatorScope(name, SG_DEREF(suppl.args()));
 
     if (scope == nullptr)
     {
-      logWarn() << "unable to get scope of type declaration: "
-                << (ty ? typeid(*ty).name() : std::string{"<null>"}) << std::flush
-                << ": " << ty->unparseToString()
+      logWarn() << "unable to get scope of type declaration: " << name
                 << std::endl;
       return nullptr;
     }
@@ -1982,12 +2003,14 @@ SgExpression& createCall(Element_ID tgtid, ElemIdRange args, bool callSyntax, As
 
   // Create the arguments first. They may be needed to disambiguate operator calls
   std::vector<SgExpression*> arglist = traverseIDs(args, elemMap(), ArgListCreator{ctx});
-  auto                       typeExtractor = [](SgExpression* exp)->SgType*
-                                             {
-                                               return si::Ada::typeOfExpr(exp).typerep();
-                                             };
-
   SgTypePtrList              typlist;
+  auto typeExtractor = [](SgExpression* exp)->SgType*
+                       {
+                         // exclude literals as they are convertible to derived types
+                         //~ return isSgValueExp(exp) ? nullptr : si::Ada::typeOfExpr(exp).typerep();
+                         return si::Ada::typeOfExpr(exp).typerep();
+                       };
+
 
   typlist.reserve(arglist.size());
   std::transform(arglist.begin(), arglist.end(), std::back_inserter(typlist), typeExtractor);

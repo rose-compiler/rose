@@ -1993,7 +1993,9 @@ namespace
     {
       SgDeclarationModifier& mod = n.get_declarationModifier();
 
-      if (mod.isAdaSeparate())
+      if (n.get_ada_formal_decl_with_box())
+        prn(" is <>");
+      else if (mod.isAdaSeparate())
         prn(" is separate");
       else if (mod.isAdaAbstract())
         prn(" is abstract");
