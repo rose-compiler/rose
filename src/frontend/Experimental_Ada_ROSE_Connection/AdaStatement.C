@@ -2667,19 +2667,24 @@ namespace
                              )
   {
     SgType*              baseType     = si::Ada::baseType(derivedType);
-    SgNamedType*         baseRootType = isSgNamedType(si::Ada::typeRoot(baseType).typerep());
+    SgType*              baseRootRaw  = si::Ada::typeRoot(baseType).typerep();
+    SgNamedType*         baseRootType = isSgNamedType(baseRootRaw);
 
     if (baseRootType == nullptr)
     {
-      logFlaw() << "unable to find base-root for " << derivedType.get_name()
-                << " / base = " << baseType
-                << std::endl;
+      // if baseRootRaw != nullptr
+      //   it will correspond to a universal type in package standard.
+      //   -> not an error
+
+      if (baseRootRaw == nullptr)
+        logFlaw() << "unable to find base-root for " << derivedType.get_name()
+                  << " / base = " << baseType
+                  << std::endl;
       return;
     }
 
     //~ logWarn() << "drv: " << derivedType.get_name() << " / " << baseRootType->get_name()
               //~ << std::endl;
-
     traverseIDs(subprograms, elemMap(), InheritedSymbolCreator{*baseRootType, derivedType, ctx});
 
     if (!declarations.empty())
@@ -2759,7 +2764,7 @@ namespace
 
       if (baseRootType == nullptr)
       {
-        logWarn() << "unable to find base-root for enum " << derivedType.get_name()
+        logFlaw() << "unable to find base-root for enum " << derivedType.get_name()
                   << " / base = " << baseType
                   << std::endl;
         return;
@@ -4004,20 +4009,21 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
     case A_Formal_Procedure_Declaration:           // 12.6(2)
     case A_Formal_Function_Declaration:            // 12.6(2)
       {
-        logKind(decl.Declaration_Kind == A_Formal_Procedure_Declaration
-                    ? "A_Formal_Procedure_Declaration" : "A_Formal_Function_Declaration"
+        // \todo instead of modeling function parameters as functions,
+        //       consider modeling them as variables of functions..
+
+        const bool        isFormalFuncDecl = decl.Declaration_Kind == A_Formal_Function_Declaration;
+
+        logKind( isFormalFuncDecl ? "A_Formal_Function_Declaration" : "A_Formal_Procedure_Declaration"
                , elem.ID
                );
 
-        const bool        isFormalFuncDecl = decl.Declaration_Kind == A_Formal_Function_Declaration;
         NameData          adaname          = singleName(decl, ctx);
         ElemIdRange       range            = idRange(decl.Parameter_Profile);
-        SgType&           rettype          = isFormalFuncDecl
-          ? getDeclTypeID(decl.Result_Profile, ctx)
-          : mkTypeVoid();
+        SgType&           rettype          = isFormalFuncDecl ? getDeclTypeID(decl.Result_Profile, ctx)
+                                                              : mkTypeVoid();
 
         ADA_ASSERT (adaname.fullName == adaname.ident);
-
         SgScopeStatement&     logicalScope = adaname.parent_scope();
 
         // create a function declaration for formal function/procedure declaration.
@@ -4027,6 +4033,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
                                                                 ParameterCompletion{range, ctx}
                                                               );
         sgnode.set_ada_formal_subprogram_decl(true);
+        sgnode.set_ada_formal_decl_with_box(decl.Default_Kind == A_Box_Default);
+
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
 

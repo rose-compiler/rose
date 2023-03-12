@@ -192,32 +192,35 @@ namespace
       }
   };
 
-#if OBSOLETE_CODE
-  /// returns the name of the scope represented by \ref n
-  std::string
-  scopeName(const SgStatement* n);
 
-  std::string
-  ScopePath::path(const_reverse_iterator pos) const
+  struct ScopeDetails : std::tuple<std::string, bool>
   {
-    std::stringstream qual;
+    using base = std::tuple<std::string, bool>;
+    using base::base;
 
-    for ( ; pos != rend(); ++pos)
-    {
-      std::string name = scopeName(*pos);
+    std::string const& name()        const { return std::get<0>(*this); }
+    bool               qualBarrier() const { return std::get<1>(*this); }
+    // \todo rename scopeBarrier to compilerGenerated and set for all nodes
+  };
 
-      if (name.size())
-        qual << name << '.';
-    }
-
-    return qual.str();
-    //~ return std::move(qual).str(); // C++-20
+  bool
+  nodeProperty(const Sg_File_Info* n, bool (Sg_File_Info::*property)() const)
+  {
+    return n && (n->*property)();
   }
-#endif /* OBSOLETE_CODE */
 
-  struct ScopeName : sg::DispatchHandler<std::string>
+  bool
+  nodeProperty(const SgLocatedNode& n, bool (Sg_File_Info::*property)() const)
   {
-      void withName(const std::string& name);
+    return (  nodeProperty(n.get_file_info(),        property)
+           || nodeProperty(n.get_startOfConstruct(), property)
+           || nodeProperty(n.get_endOfConstruct(),   property)
+           );
+  }
+
+  struct ScopeName : sg::DispatchHandler<ScopeDetails>
+  {
+      void withName(const std::string& name, bool actsAsBarrier = false);
       void withoutName() {}
 
       void checkParent(const SgScopeStatement& n);
@@ -229,7 +232,6 @@ namespace
 
       // scopes that may have names
       // \todo do we also need named loops?
-      void handle(const SgBasicBlock& n)           { withName(n.get_string_label()); }
       void handle(const SgAdaTaskSpec& n)          { checkParent(n); }
       void handle(const SgAdaTaskBody& n)          { checkParent(n); }
       void handle(const SgAdaProtectedSpec& n)     { checkParent(n); }
@@ -239,6 +241,13 @@ namespace
       void handle(const SgFunctionDefinition& n)   { checkParent(n); }
       // FunctionDefinition, ..
 
+      void handle(const SgBasicBlock& n)
+      {
+        const std::string blockName   = n.get_string_label();
+        const bool        qualBarrier = blockName.empty() && !nodeProperty(n, &Sg_File_Info::isCompilerGenerated);
+
+        withName(blockName, qualBarrier);
+      }
 
       // parent handlers
       void handle(const SgDeclarationStatement& n) { withoutName(); }
@@ -253,9 +262,9 @@ namespace
       // FunctionDeclaration, ..
   };
 
-  void ScopeName::withName(const std::string& s)
+  void ScopeName::withName(const std::string& s, bool actsAsBarrier)
   {
-    res = s;
+    res = {s, actsAsBarrier};
   }
 
   void ScopeName::checkParent(const SgScopeStatement& n)
@@ -264,12 +273,11 @@ namespace
     res = sg::dispatch(ScopeName{}, n.get_parent());
   }
 
-  std::string
+  ScopeDetails
   scopeName(const SgStatement* n)
   {
     return sg::dispatch(ScopeName{}, n);
   }
-
 
 
   struct NameQualificationInheritedAttributeAda : NameQualificationInheritedAttribute
@@ -730,11 +738,18 @@ namespace
                        ref = scope;
                      }
 
-                     std::string name = scopeName(ref);
+                     ScopeDetails scopedet = scopeName(ref);
 
-                     if (!name.empty())
+                     if (scopedet.qualBarrier())
                      {
-                       qual += name;
+                       // names cannot be qualified across unnamed
+                       //   blocks.
+                       ROSE_ASSERT(scopedet.name().empty());
+                       qual.clear();
+                     }
+                     else if (!scopedet.name().empty())
+                     {
+                       qual += scopedet.name();
                        //~ qual += "(";
                        //~ qual += typeid(*ref).name();
                        //~ qual += ")";
@@ -1168,7 +1183,7 @@ namespace
         traversal.openScope(n);
         res.set_currentScope(const_cast<SgScopeStatement*>(&n));
 
-        if (scopeName(&n).size())
+        if (scopeName(&n).name().size())
           traversal.addVisibleScope(&n);
       }
 
