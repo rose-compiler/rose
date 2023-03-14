@@ -545,19 +545,21 @@ namespace
     {
       if (SgAdaTaskSpec* spec = n.get_definition())
       {
-      prn("task type ");
-      prn(n.get_name());
-        if (!spec->get_hasMembers())
-      {
-        prn(STMT_SEP);
-        return;
-      }
+        prn("task type ");
+        prn(n.get_name());
+        printPendingDiscriminants();
 
-      prn(" is\n");
+        if (!spec->get_hasMembers())
+        {
+          prn(STMT_SEP);
+          return;
+        }
+
+        prn(" is\n");
         stmt(spec);
 
-      prn("end ");
-      prn(n.get_name());
+        prn("end ");
+        prn(n.get_name());
       }
       else
       {
@@ -565,6 +567,7 @@ namespace
         // \todo refactor code into a single location to handle these
         prn("type ");
         prn(n.get_name());
+        printPendingDiscriminants();
 
         const bool requiresPrivate = si::Ada::withPrivateDefinition(&n);
         const bool requiresIs      = requiresPrivate || hasModifiers(n);
@@ -586,13 +589,14 @@ namespace
 
       if (SgAdaProtectedSpec* spec = n.get_definition())
       {
-      prn("protected type ");
-      prn(n.get_name());
-      prn(" is\n");
+        prn("protected type ");
+        prn(n.get_name());
+        printPendingDiscriminants();
+        prn(" is\n");
         stmt(spec);
 
-      prn("end ");
-      prn(n.get_name());
+        prn("end ");
+        prn(n.get_name());
       }
       else
       {
@@ -600,6 +604,7 @@ namespace
         // \todo refactor code into a single location to handle these
         prn("type ");
         prn(n.get_name());
+        printPendingDiscriminants();
 
         const bool requiresPrivate = si::Ada::withPrivateDefinition(&n);
         const bool requiresIs      = requiresPrivate || hasModifiers(n);

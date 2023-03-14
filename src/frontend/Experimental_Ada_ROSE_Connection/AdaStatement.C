@@ -4161,26 +4161,46 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         ADA_ASSERT (adaname.fullName == adaname.ident);
 
 
-        Element_ID              nameId  = adaname.id();
-        SgDeclarationStatement* incomp  = findFirst(asisTypes(), nameId);
-        SgAdaProtectedTypeDecl* nondef  = isSgAdaProtectedTypeDecl(incomp);
+        Element_ID                  id      = adaname.id();
+        SgDeclarationStatement*     incomp  = findFirst(asisTypes(), id);
+        SgAdaProtectedTypeDecl*     nondef  = isSgAdaProtectedTypeDecl(incomp);
         ADA_ASSERT(!incomp || nondef);
 
-        SgAdaProtectedTypeDecl& sgnode  = nondef ? mkAdaProtectedTypeDecl(*nondef, SG_DEREF(spec.first), ctx.scope())
-                                                 : mkAdaProtectedTypeDecl(adaname.fullName, spec.first, ctx.scope());
+        SgScopeStatement*           parentScope = &ctx.scope();
+        SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDeclID_opt(decl.Discriminant_Part, ctx);
 
-        attachSourceLocation(sgnode, elem, ctx);
-        privatize(sgnode, isPrivate);
-        ctx.appendStatement(sgnode);
-        recordNode(asisTypes(), adaname.id(), sgnode, nondef != nullptr);
-        recordNode(asisDecls(), adaname.id(), sgnode);
-        recordNode(asisDecls(), elem.ID, sgnode);
+        if (discr)
+        {
+          parentScope = discr->get_discriminantScope();
+          ADA_ASSERT(parentScope != nullptr);
+        }
+
+        SgAdaProtectedTypeDecl& sgdecl  = nondef ? mkAdaProtectedTypeDecl(*nondef, SG_DEREF(spec.first), *parentScope)
+                                                 : mkAdaProtectedTypeDecl(adaname.fullName, spec.first,  *parentScope);
+
+        attachSourceLocation(sgdecl, elem, ctx);
+        privatize(sgdecl, isPrivate);
+
+        recordNode(asisTypes(), id, sgdecl, nondef != nullptr);
+        recordNode(asisDecls(), id, sgdecl);
+        recordNode(asisDecls(), elem.ID, sgdecl);
+
+        if (!discr)
+        {
+          ADA_ASSERT(&ctx.scope() == parentScope);
+          ctx.appendStatement(sgdecl);
+        }
+        else
+        {
+          sg::linkParentChild(*discr, static_cast<SgDeclarationStatement&>(sgdecl), &SgAdaDiscriminatedTypeDecl::set_discriminatedDecl);
+          completeDiscriminatedDecl(*discr, nullptr /* no nondef dcl */, id, sgdecl, elem, isPrivate, ctx);
+        }
+
         spec.second(); // complete the body
 
         /* unused fields:
              bool                           Has_Protected;
              Element_ID                     Corresponding_End_Name;
-             Definition_ID                  Discriminant_Part;
              Definition_ID                  Type_Declaration_View;
              Declaration_ID                 Corresponding_Type_Declaration;
              Declaration_ID                 Corresponding_Type_Partial_View
@@ -4199,30 +4219,50 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         logKind("A_Task_Type_Declaration", elem.ID);
 
-        auto               spec    = getTaskSpecForTaskType(decl, ctx);
-        NameData           adaname = singleName(decl, ctx);
+        auto                        spec    = getTaskSpecForTaskType(decl, ctx);
+        NameData                    adaname = singleName(decl, ctx);
         ADA_ASSERT (adaname.fullName == adaname.ident);
 
-        Element_ID              nameId  = adaname.id();
-        SgDeclarationStatement* ndef    = findFirst(asisTypes(), nameId);
-        SgAdaTaskTypeDecl*      nondef  = isSgAdaTaskTypeDecl(ndef);
+        Element_ID                  id     = adaname.id();
+        SgDeclarationStatement*     ndef   = findFirst(asisTypes(), id);
+        SgAdaTaskTypeDecl*          nondef = isSgAdaTaskTypeDecl(ndef);
         ADA_ASSERT(!ndef || nondef); // ndef => nondef
 
-        SgAdaTaskTypeDecl& sgnode  = nondef ? mkAdaTaskTypeDecl(*nondef, SG_DEREF(spec.first), ctx.scope())
-                                            : mkAdaTaskTypeDecl(adaname.fullName, spec.first, ctx.scope());
+        SgScopeStatement*           parentScope = &ctx.scope();
+        SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDeclID_opt(decl.Discriminant_Part, ctx);
 
-        attachSourceLocation(sgnode, elem, ctx);
-        privatize(sgnode, isPrivate);
-        ctx.appendStatement(sgnode);
+        if (discr)
+        {
+          parentScope = discr->get_discriminantScope();
+          ADA_ASSERT(parentScope != nullptr);
+        }
 
-        recordNode(asisTypes(), nameId, sgnode, nondef != nullptr);
-        recordNode(asisDecls(), nameId, sgnode);
-        recordNode(asisDecls(), elem.ID, sgnode);
+        SgAdaTaskTypeDecl& sgdecl  = nondef ? mkAdaTaskTypeDecl(*nondef, SG_DEREF(spec.first), *parentScope)
+                                            : mkAdaTaskTypeDecl(adaname.fullName, spec.first,  *parentScope);
+
+        attachSourceLocation(sgdecl, elem, ctx);
+        privatize(sgdecl, isPrivate);
+
+        recordNode(asisTypes(), id, sgdecl, nondef != nullptr);
+        recordNode(asisDecls(), id, sgdecl);
+        recordNode(asisDecls(), elem.ID, sgdecl);
+
+        if (!discr)
+        {
+          ADA_ASSERT(&ctx.scope() == parentScope);
+          ctx.appendStatement(sgdecl);
+        }
+        else
+        {
+          sg::linkParentChild(*discr, static_cast<SgDeclarationStatement&>(sgdecl), &SgAdaDiscriminatedTypeDecl::set_discriminatedDecl);
+          completeDiscriminatedDecl(*discr, nullptr /* no nondef dcl */, id, sgdecl, elem, isPrivate, ctx);
+        }
+
         spec.second(); // complete the body
+
         /* unused fields:
              bool                           Has_Task;
              Element_ID                     Corresponding_End_Name;
-             Definition_ID                  Discriminant_Part;
              Definition_ID                  Type_Declaration_View;
              Declaration_ID                 Corresponding_Type_Declaration;
              Declaration_ID                 Corresponding_Type_Partial_View;
