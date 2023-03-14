@@ -1438,7 +1438,7 @@ namespace
     // do not trust arguments of compiler generated functions
     if (fndcl == nullptr)
     {
-      logTrace() << "typesFromCallContext: ret {} @ 2" << std::endl;
+      //~ logTrace() << "typesFromCallContext: ret {} @ 2" << std::endl;
       return {};
     }
 
@@ -1447,7 +1447,7 @@ namespace
 
     if (compilerGenerated && !compilerGenComparison)
     {
-      logTrace() << "typesFromCallContext: ret {} @ 3" << std::endl;
+      //~ logTrace() << "typesFromCallContext: ret {} @ 3" << std::endl;
       return {};
     }
 
@@ -1461,7 +1461,7 @@ namespace
 
       if (!compilerGenComparison)
       {
-        logTrace() << "typesFromCallContext: normal" << std::endl;
+        //~ logTrace() << "typesFromCallContext: normal" << std::endl;
 
         for (SgFunctionSymbol* fnsym : ovpos->second.ovlset())
         {
@@ -1474,7 +1474,7 @@ namespace
       }
       else
       {
-        logTrace() << "typesFromCallContext: compgen" << std::endl;
+        //~ logTrace() << "typesFromCallContext: compgen" << std::endl;
         ADA_ASSERT(ovpos->second.ovlset().size() < 2);
         ADA_ASSERT(argpos == 0 || argpos == 1);
 
@@ -1484,7 +1484,7 @@ namespace
     catch (const std::logic_error&)
     {
       /* catches exceptions from normalizedArgumentPosition. */
-      logTrace() << "typesFromCallContext: ex " << std::endl;
+      //~ logTrace() << "typesFromCallContext: ex " << std::endl;
       ADA_ASSERT(res.empty());
     }
 
@@ -1635,7 +1635,7 @@ namespace
       }
 
       {
-        //~ if (overloads.size() != 1)
+        if (overloads.size() != 1)
           logInfo() << "result-resolve: " << fnref.get_parent()->unparseToString() << " " << overloads.size()
                     << std::endl;
 
@@ -1645,7 +1645,6 @@ namespace
         auto isViableReturn = [expTypes = expectedTypes(fncall, allrefs)]
                               (SgFunctionSymbol* fnsy)->bool
                               {
-                                logInfo() << "result-size: " << expTypes.size() << std::endl;
                                 if (expTypes.empty()) return true;
 
                                 return ArgParamTypeCompatibility{}(functionReturnType(fnsy), expTypes);
