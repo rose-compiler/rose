@@ -169,5 +169,13 @@ LineVector::location(size_t charIdx) const {
     return std::make_pair(lineIdx, colIdx);
 }
 
+std::string
+LineVector::contentAsString(size_t begin, size_t end) const {
+    end = std::min(end, buffer_->size());
+    if (end <= begin)
+        return "";
+    return std::string(charBuf_ + begin, charBuf_ + end);
+}
+
 } // namespace
 } // namespace

@@ -5,7 +5,7 @@ include_rules
 run $(support_compile_linklib) -o sawyer --objects=OBJECTS \
     Assert.C Attribute.C Clexer.C CommandLine.C CommandLineBoost.C RoseDatabase.C DocumentBaseMarkup.C DocumentMarkup.C \
     DocumentPodMarkup.C DocumentTextMarkup.C GraphTraversal.C LineVector.C Message.C ProgressBar.C Sawyer.C SmallObject.C \
-    Stopwatch.C Synchronization.C Time.C
+    Stopwatch.C Synchronization.C Time.C Yaml.C
 : {OBJECTS} |> !for_librose |>
 
 run $(public_header) -o include/Sawyer --license=LICENSE \

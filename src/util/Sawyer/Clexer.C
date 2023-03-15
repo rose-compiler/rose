@@ -11,6 +11,7 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>
 #include <iostream>
+#include <sstream>
 
 namespace Sawyer {
 namespace Language {
@@ -27,6 +28,7 @@ toString(TokenType tt) {
         case TOK_NUMBER: return "number";
         case TOK_WORD: return "word";
         case TOK_CPP: return "cpp";
+        case TOK_COMMENT: return "comment";
         case TOK_OTHER: return "other";
     }
     ASSERT_not_reachable("invalid token type");
@@ -63,7 +65,13 @@ TokenStream::lexeme(const Token &t) const {
 
 std::string
 TokenStream::toString(const Token &t) const {
-    return Sawyer::Language::Clexer::toString(t.type()) + " " + lexeme(t);
+    const auto lineCol = location(t);
+    std::ostringstream ss;
+    ss <<Sawyer::Language::Clexer::toString(t.type())
+       <<" @" <<t.prior() <<"." <<t.begin() <<"." <<t.end()
+       <<" L" <<(lineCol.first+1) <<":" <<(lineCol.second+1)
+       <<" " + lexeme(t);
+    return ss.str();
 }
 
 std::string
@@ -89,6 +97,15 @@ TokenStream::matches(const Token &token, const char *s2) const {
     return 0 == strncmp(s1, s2, n1);
 }
 
+bool
+TokenStream::startsWith(const Token &token, const char *prefix) const {
+    size_t prefixSize = strlen(prefix);
+    if (token.size() < prefixSize)
+        return false;
+    const char *lexeme = content_.characters(token.begin_);
+    return 0 == strncmp(lexeme, prefix, prefixSize);
+}
+
 void
 TokenStream::emit(std::ostream &out, const std::string &fileName, const Token &token, const std::string &message) const {
     emit(out, fileName, token, token, token, message);
@@ -104,7 +121,8 @@ TokenStream::emit(std::ostream &out, const std::string &fileName, const Token &b
     std::pair<size_t, size_t> loc4 = content_.location(end.end_);
 
     // Emit "NAME:LINE:COL: MESG" to show the beginning of the locus
-    out <<fileName <<":" <<(loc2.first+1) <<":" <<(loc2.second+1) <<": " <<message <<"\n";
+    if (!message.empty())
+        out <<fileName <<":" <<(loc2.first+1) <<":" <<(loc2.second+1) <<": " <<message <<"\n";
 
     // Emit context matched lines
     for (size_t lineIdx = loc1.first; lineIdx <= loc4.first; ++lineIdx) {
@@ -176,15 +194,20 @@ TokenStream::location(const Token &token) const {
     return content_.location(token.begin_);
 }
 
+int
+TokenStream::getChar(size_t position) {
+    return parseRegion_.contains(position) ? content_.character(position) : EOF;
+}
+
 void
 TokenStream::scanString() {
-    int q = content_.character(at_);
+    int q = getChar(at_);
     ASSERT_require('\''==q || '"'==q);
-    int c = content_.character(++at_);
+    int c = getChar(++at_);
     while (EOF != c && c != q) {
         if ('\\' == c)
             ++at_;                                      // skipping next char is sufficient
-        c = content_.character(++at_);
+        c = getChar(++at_);
     }
     ++at_;                                              // skip closing quote
 }
@@ -193,92 +216,114 @@ void
 TokenStream::makeNextToken() {
     if (!tokens_.empty() && tokens_.back().type() == TOK_EOF)
         return;
-    while (isspace(content_.character(at_)))
+    while (isspace(getChar(at_)))
            ++at_;
-    int c = content_.character(at_);
+    int c = getChar(at_);
     if (EOF == c) {
-        tokens_.push_back(Token(TOK_EOF, at_, at_));
+        tokens_.push_back(Token(TOK_EOF, prior_, at_, at_));
+        prior_ = at_;
     } else if ('\'' == c || '"' == c) {
-        size_t begin = at_;
+        const size_t begin = at_;
         scanString();
-        tokens_.push_back(Token('"'==c ? TOK_STRING : TOK_CHAR, begin, at_));
-    } else if ('/' == c && '/' == content_.character(at_+1)) {
+        tokens_.push_back(Token('"'==c ? TOK_STRING : TOK_CHAR, prior_, begin, at_));
+        prior_ = at_;
+    } else if ('/' == c && '/' == getChar(at_+1)) {
+        const size_t begin = at_;
         at_ = content_.characterIndex(content_.lineIndex(at_) + 1);
-        makeNextToken();
-    } else if ('/' == c && '*' == content_.character(at_+1)) {
+        if (skipCommentTokens_) {
+            makeNextToken();
+        } else {
+            tokens_.push_back(Token(TOK_COMMENT, prior_, begin, at_));
+            prior_ = at_;
+        }
+    } else if ('/' == c && '*' == getChar(at_+1)) {
+        const size_t begin = at_;
         at_ += 2;
-        while (EOF != (c = content_.character(at_))) {
-            if (content_.character(at_) == '*' && content_.character(at_+1) == '/') {
+        while (EOF != (c = getChar(at_))) {
+            if (getChar(at_) == '*' && getChar(at_+1) == '/') {
                 at_ = at_ + 2;
                 break;
             }
             ++at_;
         }
-        makeNextToken();
+        if (skipCommentTokens_) {
+            makeNextToken();
+        } else {
+            tokens_.push_back(Token(TOK_COMMENT, prior_, begin, at_));
+            prior_ = at_;
+        }
     } else if (isalpha(c) || c=='_') {
-        size_t begin = at_++;
-        while (isalnum(c=content_.character(at_)) || '_'==c)
+        const size_t begin = at_++;
+        while (isalnum(c = getChar(at_)) || '_'==c)
             ++at_;
-        tokens_.push_back(Token(TOK_WORD, begin, at_));
+        tokens_.push_back(Token(TOK_WORD, prior_, begin, at_));
+        prior_ = at_;
     } else if ('('==c || '{'==c || '['==c) {
         ++at_;
-        tokens_.push_back(Token(TOK_LEFT, at_-1, at_));
+        tokens_.push_back(Token(TOK_LEFT, prior_, at_-1, at_));
+        prior_ = at_;
     } else if (')'==c || '}'==c || ']'==c) {
         ++at_;
-        tokens_.push_back(Token(TOK_RIGHT, at_-1, at_));
-    } else if (isdigit(c) || (('-'==c || '+'==c) && isdigit(content_.character(at_+1)))) {
-        size_t begin = at_;
+        tokens_.push_back(Token(TOK_RIGHT, prior_, at_-1, at_));
+        prior_ = at_;
+    } else if (isdigit(c) || (('-'==c || '+'==c) && isdigit(getChar(at_+1)))) {
+        const size_t begin = at_;
         if (!isdigit(c))
             ++at_;
-        if ('0'==content_.character(at_) && 'x'==content_.character(at_+1)) {
+        if ('0' == getChar(at_) && 'x' == getChar(at_+1)) {
             at_ += 2;
-            while (isxdigit(content_.character(at_)))
+            while (isxdigit(getChar(at_)))
                 ++at_;
-        } else if ('0'==content_.character(at_) && 'b'==content_.character(at_+1)) {
+        } else if ('0' == getChar(at_) && 'b' == getChar(at_+1)) {
             at_ += 2;
-            while (strchr("01", content_.character(at_)))
+            while (strchr("01", getChar(at_)))
                 ++at_;
-        } else if ('0'==content_.character(at_)) {
+        } else if ('0' == getChar(at_)) {
             ++at_;
-            while ((c=content_.character(at_)) >= '0' && c <= '7')
+            while ((c = getChar(at_)) >= '0' && c <= '7')
                 ++at_;
         } else {
             ++at_;
-            while (isdigit(content_.character(at_)))
+            while (isdigit(getChar(at_)))
                 ++at_;
         }
-        tokens_.push_back(Token(TOK_NUMBER, begin, at_));
+        tokens_.push_back(Token(TOK_NUMBER, prior_, begin, at_));
+        prior_ = at_;
     } else if ('#' == c) {
-        size_t begin = at_;
+        const size_t begin = at_;
         at_ = content_.characterIndex(content_.lineIndex(at_) + 1);
-        while (at_>=2 && at_ < content_.nCharacters() && content_.character(at_-2)=='\\' && content_.character(at_-1)=='\n')
+        while (at_>=2 && at_ < content_.nCharacters() && getChar(at_-2)=='\\' && getChar(at_-1)=='\n')
             at_ = content_.characterIndex(content_.lineIndex(at_) + 1);
         if (skipPreprocessorTokens_) {
             makeNextToken();
         } else {
-            tokens_.push_back(Token(TOK_CPP, begin, at_));
+            tokens_.push_back(Token(TOK_CPP, prior_, begin, at_));
+            prior_ = at_;
         }
-    } else if (('<' == c && content_.character(at_+1) == '<' && content_.character(at_+2) == '=') ||
-               ('>' == c && content_.character(at_+1) == '>' && content_.character(at_+2) == '=') ||
-               ('<' == c && content_.character(at_+1) == '=' && content_.character(at_+2) == '>') ||
-               ('-' == c && content_.character(at_+1) == '>' && content_.character(at_+2) == '*')) {
-        tokens_.push_back(Token(TOK_OTHER, at_, at_+3));
+    } else if (('<' == c && getChar(at_+1) == '<' && getChar(at_+2) == '=') ||
+               ('>' == c && getChar(at_+1) == '>' && getChar(at_+2) == '=') ||
+               ('<' == c && getChar(at_+1) == '=' && getChar(at_+2) == '>') ||
+               ('-' == c && getChar(at_+1) == '>' && getChar(at_+2) == '*')) {
+        tokens_.push_back(Token(TOK_OTHER, prior_, at_, at_+3));
         at_ += 3;
-    } else if ((content_.character(at_+1) == '=' && strchr("|&^*/%+-!<>=", c)) ||
-               ('|' == c && content_.character(at_+1) == '|') ||
-               ('&' == c && content_.character(at_+1) == '&') ||
-               ('<' == c && content_.character(at_+1) == '<') ||
-               ('>' == c && content_.character(at_+1) == '>') ||
-               ('.' == c && content_.character(at_+1) == '*') ||
-               ('+' == c && content_.character(at_+1) == '+') ||
-               ('-' == c && content_.character(at_+1) == '-') ||
-               ('-' == c && content_.character(at_+1) == '>') ||
-               (':' == c && content_.character(at_+1) == ':')) {
-        tokens_.push_back(Token(TOK_OTHER, at_, at_+2));
+        prior_ = at_;
+    } else if ((getChar(at_+1) == '=' && strchr("|&^*/%+-!<>=", c)) ||
+               ('|' == c && getChar(at_+1) == '|') ||
+               ('&' == c && getChar(at_+1) == '&') ||
+               ('<' == c && getChar(at_+1) == '<') ||
+               ('>' == c && getChar(at_+1) == '>') ||
+               ('.' == c && getChar(at_+1) == '*') ||
+               ('+' == c && getChar(at_+1) == '+') ||
+               ('-' == c && getChar(at_+1) == '-') ||
+               ('-' == c && getChar(at_+1) == '>') ||
+               (':' == c && getChar(at_+1) == ':')) {
+        tokens_.push_back(Token(TOK_OTHER, prior_, at_, at_+2));
         at_ += 2;
+        prior_ = at_;
     } else {
-        tokens_.push_back(Token(TOK_OTHER, at_, at_+1));
+        tokens_.push_back(Token(TOK_OTHER, prior_, at_, at_+1));
         ++at_;
+        prior_ = at_;
     }
 }
 

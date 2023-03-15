@@ -1,7 +1,7 @@
 add_library(util_sawyer OBJECT
   Assert.C Attribute.C Clexer.C CommandLine.C CommandLineBoost.C DocumentBaseMarkup.C RoseDatabase.C DocumentMarkup.C
   DocumentPodMarkup.C DocumentTextMarkup.C GraphTraversal.C LineVector.C
-  Message.C ProgressBar.C Sawyer.C SmallObject.C Stopwatch.C Synchronization.C Time.C)
+  Message.C ProgressBar.C Sawyer.C SmallObject.C Stopwatch.C Synchronization.C Time.C Yaml.C)
 
 install(FILES
   Access.h AddressMap.h AddressSegment.h AllocatingBuffer.h Assert.h Attribute.h BiMap.h BitFlags.h BitVector.h BitVectorSupport.h Buffer.h

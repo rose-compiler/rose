@@ -666,7 +666,7 @@ private:
  *  class Parent: public Tree::Node {
  *  public:
  *      Tree::ChildEdge<ChildType1> first;                // a.k.a., children[0]
- *      Tree::ChildEdge<Tree::ListNode<ChildType2> list;  // a.k.a., children[1]
+ *      Tree::ChildEdge<Tree::ListNode<ChildType2>> list; // a.k.a., children[1]
  *      Tree::ChildEdge<ChildType3> last;                 // a.k.a., children[2] regardless of list's size
  *
  *      Parent()
@@ -674,11 +674,11 @@ private:
  *  }
  * @endcode
  *
- *  A common practice when creating a @ref ListNode is to allocate then node when the parent is constructed:
+ *  A common practice when creating a @ref ListNode is to allocate the node when the parent is constructed:
  *
  * @code
  *  Parent::Parent()
- *      : first(this), list(this, std::make_shared<Tree::ListNode<ChildType2> >()), last(this) {}
+ *      : first(this), list(this, std::make_shared<Tree::ListNode<ChildType2>>()), last(this) {}
  * @endcode
  *
  *  If you follow the recommendation of always allocating @ref ListNode data members, then the 10th child (index 9) of the

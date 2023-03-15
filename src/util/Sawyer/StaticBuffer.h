@@ -90,6 +90,13 @@ public:
     }
     /** @} */
 
+    /** True if the buffer is read-only.
+     *
+     *  A buffer created from a const value is read only. */
+    bool isReadOnly() const {
+        return rdonly_;
+    }
+
     // It doesn't make sense to exactly copy a static buffer because the point is to create a new buffer that points to data
     // that is independent of the source buffer.  Therefore we create an allocating buffer instead.
     typename Buffer<A, T>::Ptr copy() const /*override*/ {
