@@ -40,7 +40,7 @@ for f in                                                                        
     GraphBoost GraphIteratorBiMap GraphIteratorMap GraphIteratorSet GraphTraversal IndexedList Interval IntervalMap IntervalSet         \
     IntervalSetMap HashMap Lexer LineVector Map MappedBuffer Message NullBuffer Optional Parse PoolAllocator ProgressBar Result Sawyer  \
     Set SharedObject SharedPointer SmallObject Stack StackAllocator StaticBuffer Stopwatch Synchronization ThreadWorkers Time Trace     \
-    Tracker Tree Type WarningsOff WarningsRestore WorkList;                                                                             \
+    Tracker Tree Type WarningsOff WarningsRestore WorkList Yaml;                                                                        \
 do
     srcbase="$SAWYER_ROOT/Sawyer/$f";
     ( emit_cpp_warning; cat "$srcbase.h" ) > ./$f.h

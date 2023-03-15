@@ -4,8 +4,7 @@ run $(librose_compile)				\
     FormattedTable.C				\
     Initialize.C				\
     Progress.C					\
-    SourceLocation.C				\
-    Yaml.C
+    SourceLocation.C
 
 run $(public_header) -o include/rose/Rose	\
     AST.h					\

@@ -3163,6 +3163,7 @@ public:
      * @{ */
     Parser& doc(const std::string &sectionName, const std::string &docKey, const std::string &text);
     Parser& doc(const std::string &sectionName, const std::string &text) { return doc(sectionName, sectionName, text); }
+    Parser& doc(const std::pair<std::string /*sectionName*/, std::string /*text*/>&);
     std::vector<std::string> docSections() const;
     std::string docForSwitches() const;
     std::string docForSection(const std::string &sectionName) const;

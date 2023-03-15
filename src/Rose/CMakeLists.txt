@@ -22,8 +22,7 @@ add_library(roseNamespace OBJECT
   FormattedTable.C
   Initialize.C
   Progress.C
-  SourceLocation.C
-  Yaml.C)
+  SourceLocation.C)
 
 add_dependencies(roseNamespace rosetta_generated)
 

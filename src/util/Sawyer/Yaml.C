@@ -1,3 +1,10 @@
+// WARNING: Changes to this file must be contributed back to Sawyer or else they will
+//          be clobbered by the next update from Sawyer.  The Sawyer repository is at
+//          https://github.com/matzke1/sawyer.
+
+
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // This is mini-yaml version 22d3dcf5684a11f9c0508c1ad8b3282a1d888319 subsequently modified by the ROSE team.
 //
@@ -29,8 +36,9 @@
 * SOFTWARE.
 *
 */
-#include <sage3basic.h>
-#include <Rose/Yaml.h>
+#include <Sawyer/Yaml.h>
+
+#include <Sawyer/Assert.h>
 
 #include <memory>
 #include <fstream>
@@ -46,7 +54,7 @@
 #define TYPE_IMP static_cast<NodeImp*>(m_pImp)->m_pImp
 #define IT_IMP static_cast<IteratorImp*>(m_pImp)
 
-namespace Rose {
+namespace Sawyer {
 namespace Yaml {
 class ReaderLine;
 
