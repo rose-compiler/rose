@@ -47,13 +47,27 @@ namespace Rose { namespace AST {
  * sorted_insert, and then when an ID is generated for an SgNode, we
  * will have to use linear search.  I haven't seen this in testing. -Jim Leek
  * 
+ * The NodeId also has a hash for error checking.  The hash checks the
+ * ROSE_VERSION and the ordered set of input files.  However, there is
+ * one possible FUTURE problem.  Currently ROSE only allows a single
+ * SgProject node.  And we need to SgProject to get the list of files
+ * for the hash.  So there is only a single static hash field.
+ * If, in the future, we allow multiple projects in the AST, this will
+ * be a problem.  Because each hash will have to be associated with a
+ * project, so the user will have to provide an SgNode (from which the
+ * project may be queried) to calls like getId(string) where one it
+ * not required now. 
  */
-class ROSE_DLL_API NodeId {
+    class ROSE_DLL_API NodeId {
 
-private:  
+    private:  
 
-  // \brief private internal constructor
+    // \brief private internal constructor
     NodeId(size_t poolId, size_t nodeId, SgNode* inNode) : poolIndex(poolId), nodeIndex(nodeId), node(inNode) {} 
+
+    //! \brief Initialize the run_hash variable for error checking.
+    //(Never called publically)
+    static void initRunHash(); 
 
     
     //DATA---------------------  
@@ -74,76 +88,83 @@ private:
      *  like building ROSE with different compilers)  So this hash is to ensure that
      *  the input files and the ROSE version are the same when the NodeId is read
      *  and written.
+     *
+     *  Dan would prefer that this hash was associated directly with
+     *  the SgProject node, so, if one day we actually managed to have
+     *  more than one SgProject node in the AST, this would be easier
+     *  to adapt.  But the problem is that would mean we'd have to
+     *  pass an SgNode to getNodeId(string) which would be possible,
+     *  but weird.  So I'm going with this for now.  2023/03/15
      **/
     static std::string run_hash;
     
-public:
-  //! \brief default constructor required for containers, but only makes invalid NodeIds 
-  NodeId() : poolIndex(std::numeric_limits<size_t>::max()), nodeIndex(std::numeric_limits<size_t>::max()), node(nullptr) {}
+    public:
+    //! \brief default constructor required for containers, but only makes invalid NodeIds 
+    NodeId() : poolIndex(std::numeric_limits<size_t>::max()), nodeIndex(std::numeric_limits<size_t>::max()), node(nullptr) {}
 
-  NodeId(SgNode* sgnode); 
+    NodeId(SgNode* sgnode); 
 
-  //! \brief copy constructor
-  NodeId(const NodeId &rhs) : poolIndex(rhs.poolIndex), nodeIndex(rhs.nodeIndex), node(rhs.node) {}
+    //! \brief copy constructor
+    NodeId(const NodeId &rhs) : poolIndex(rhs.poolIndex), nodeIndex(rhs.nodeIndex), node(rhs.node) {}
 
-  //! \brief assignment operator
-  NodeId& operator=(const NodeId& rhs) {
-    poolIndex = rhs.poolIndex;
-    nodeIndex = rhs.nodeIndex;
-    node = rhs.node;
-    return *this;
-  }
-  
-  //! \brief Get the Node ID for a particular SgNode*
-  static NodeId getId(SgNode *node);
-
-  //! \brief Get the Node ID from a string (e.g. from json)
-  static NodeId getId(const std::string& nodeIdString); 
-
-  //! \brief Get the SgNode from a string (convinience function)
-  static SgNode *getNode(const std::string& nodeIdString) {
-    return getId(nodeIdString).getNode();
-  }
-
-  //! \brief Get the SgNode* contained in this NodeId
-  SgNode* getNode() const { return node;};
-  
-  //! \brief Get this node ID as a string
-  std::string toString() const;
-
-  bool operator==(const NodeId& rhs) const {
-    if(poolIndex == rhs.poolIndex &&
-       nodeIndex == rhs.nodeIndex &&
-       node == rhs.node) {
-      return true;
+    //! \brief assignment operator
+    NodeId& operator=(const NodeId& rhs) {
+      poolIndex = rhs.poolIndex;
+      nodeIndex = rhs.nodeIndex;
+      node = rhs.node;
+      return *this;
     }
-    return false;
-  }
-
-  bool operator!=(const NodeId& rhs) const { return !(this->operator==(rhs)); }
-  bool operator< (const NodeId& rhs) const {     
-    if(poolIndex < rhs.poolIndex ||
-       nodeIndex < rhs.nodeIndex ||
-       node < rhs.node) { //Should never reach this comparison...  
-      return true;
-    }
-    return false;
-  }
-  bool operator<= (const NodeId& rhs) const {     
-    if(poolIndex <= rhs.poolIndex ||
-       nodeIndex <= rhs.nodeIndex ||
-       node <= rhs.node) { //Should never reach this comparison...  
-      return true;
-    }
-    return false;
-  }
-
-  bool operator> (const NodeId& rhs) const { return !(this->operator<=(rhs));}
-  bool operator>=(const NodeId& rhs) const { return !(this->operator< (rhs));}
   
-};
+    //! \brief Get the Node ID for a particular SgNode*
+    static NodeId getId(SgNode *node);
+
+    //! \brief Get the Node ID from a string (e.g. from json)
+    static NodeId getId(const std::string& nodeIdString); 
+
+    //! \brief Get the SgNode from a string (convinience function)
+    static SgNode *getNode(const std::string& nodeIdString) {
+      return getId(nodeIdString).getNode();
+    }
+
+    //! \brief Get the SgNode* contained in this NodeId
+    SgNode* getNode() const { return node;};
+  
+    //! \brief Get this node ID as a string
+    std::string toString() const;
+
+    bool operator==(const NodeId& rhs) const {
+      if(poolIndex == rhs.poolIndex &&
+         nodeIndex == rhs.nodeIndex &&
+         node == rhs.node) {
+        return true;
+      }
+      return false;
+    }
+
+    bool operator!=(const NodeId& rhs) const { return !(this->operator==(rhs)); }
+    bool operator< (const NodeId& rhs) const {     
+      if(poolIndex < rhs.poolIndex ||
+         nodeIndex < rhs.nodeIndex ||
+         node < rhs.node) { //Should never reach this comparison...  
+        return true;
+      }
+      return false;
+    }
+    bool operator<= (const NodeId& rhs) const {     
+      if(poolIndex <= rhs.poolIndex ||
+         nodeIndex <= rhs.nodeIndex ||
+         node <= rhs.node) { //Should never reach this comparison...  
+        return true;
+      }
+      return false;
+    }
+
+    bool operator> (const NodeId& rhs) const { return !(this->operator<=(rhs));}
+    bool operator>=(const NodeId& rhs) const { return !(this->operator< (rhs));}
+  
+    };
     
-} }
+  } }
 
 #endif /* ROSE_AST_NodeId_H */
 
