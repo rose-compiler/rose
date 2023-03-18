@@ -2071,7 +2071,7 @@ Grammar::setUpSupport ()
   // DQ (11/6/2018): Added to support unparsing of headers and source files for whole applications having
   // multiple levels of directory structure.
      Project.setDataPrototype("std::string", "applicationRootDirectory", "= \"\"",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Project.setDataPrototype("bool", "usingApplicationRootDirectory", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 

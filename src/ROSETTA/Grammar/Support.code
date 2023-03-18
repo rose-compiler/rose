@@ -6348,6 +6348,10 @@ HEADER_APPLICATION_PROJECT_START
           static int get_verbose (void);
           static void set_verbose (int);
 
+      //! Jim Leek 2023/03/17: Modified to check that the application root is sane
+         std::string get_applicationRootDirectory() const;
+         void set_applicationRootDirectory(std::string applicationRootDirectory);
+
        // DQ (4/4/2020): Added debugging support for feature specific unparsing of header files.
           static int get_unparseHeaderFilesDebug (void);
           static void set_unparseHeaderFilesDebug (int);
@@ -16244,6 +16248,57 @@ SgProject::set_verbose ( int x )
    {
      p_verbose = x;
    }
+
+std::string 
+SgProject::get_applicationRootDirectory () const
+   {
+     ROSE_ASSERT (this != NULL);
+
+#if 0
+  // DQ (6/12/2015): Added debugging support to trace setting of isModified flag 
+  // used to trigger marking transformations for the token-based unparsing.
+     printf ("SgProject::get_applicationRootDirectory = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     return p_applicationRootDirectory;
+   }
+
+//! Jim Leek 2023/03/17: Modified to check that the application root is sane
+//! Assumes we have boost::filesystem availible from sage3basic.h
+void
+SgProject::set_applicationRootDirectory ( std::string applicationRootDirectory )
+  {
+    ROSE_ASSERT (this != NULL);
+
+#if 0
+    // DQ (6/12/2015): Added debugging support to trace setting of isModified flag 
+    // used to trigger marking transformations for the token-based unparsing.
+    printf ("SgProject::set_applicationRootDirectory = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+    p_applicationRootDirectory = applicationRootDirectory;
+
+    set_isModified(true);
+    boost::filesystem::path rootPath = boost::filesystem::weakly_canonical(applicationRootDirectory);  
+
+    if(!boost::filesystem::is_directory(rootPath)) {
+      printf("ERROR: applicationRootDirectory %s does not exist\n", rootPath.c_str());
+      ROSE_ABORT();
+    }
+  
+
+    auto fileList = this->get_fileList_ptr()->get_listOfFiles();
+    for(auto file : fileList) {
+      boost::filesystem::path filePath = boost::filesystem::weakly_canonical(file->getFileName());  
+      if(! (filePath.native().substr(0, rootPath.native().size()) == rootPath)) {
+        printf("ERROR: file: %s\n", filePath.c_str());
+        printf("         does not seem to be in applicationRootDirectory: %s\n", rootPath.c_str());
+  	ROSE_ABORT();
+      }
+    }
+  
+  return;
+}
 
 // DQ (4/4/2020): Adding support for unparse headers feature specific diagnostics.
 // DQ (1/5/2008): I think this could be an automatically generated function!
