@@ -467,12 +467,12 @@ namespace Ada
     return withPrivateDefinition(SG_DEREF(n));
   }
 
-  std::pair<SgArrayType*, std::vector<SgExpression*> >
+  FlatArrayType
   getArrayTypeInfo(SgType* atype)
   {
     SgArrayType* restype = ArrayType::find(atype);
 
-    return std::make_pair(restype, ArrayBounds::find(atype, restype));
+    return { restype, ArrayBounds::find(atype, restype) };
   }
 
   std::vector<IfExpressionInfo>

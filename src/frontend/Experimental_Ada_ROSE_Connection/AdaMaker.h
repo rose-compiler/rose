@@ -138,6 +138,8 @@ namespace Ada_ROSE_Translation
   mkExceptionType(SgExpression& n);
 
   /// returns a type representing all discrete types in Ada
+  /// \note used exclusively as formal type constraint
+  /// \todo consider renaming to SgAdaDiscreteFormalType
   SgAdaDiscreteType&
   mkAdaDiscreteType();
 

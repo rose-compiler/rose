@@ -695,6 +695,7 @@ mkRecordDecl(SgClassDeclaration& nondef, SgClassDefinition& def, SgScopeStatemen
 
   sg::linkParentChild(sgnode, def, &SgClassDeclaration::set_definition);
   sgnode.unsetForward();
+
   sgnode.set_definingDeclaration(&sgnode);
   nondef.set_definingDeclaration(&sgnode);
   sgnode.set_firstNondefiningDeclaration(&nondef);
@@ -704,6 +705,7 @@ mkRecordDecl(SgClassDeclaration& nondef, SgClassDefinition& def, SgScopeStatemen
 SgClassDeclaration&
 mkRecordDecl(const std::string& name, SgScopeStatement& scope)
 {
+
   SgClassDeclaration& sgnode = SG_DEREF( sb::buildNondefiningClassDeclaration_nfi( name,
                                                                                    SgClassDeclaration::e_struct,
                                                                                    &scope,
@@ -711,7 +713,7 @@ mkRecordDecl(const std::string& name, SgScopeStatement& scope)
                                                                                    nullptr /* template parameter list */
                                                                                  ));
 
-  sgnode.set_firstNondefiningDeclaration(&sgnode);
+  ADA_ASSERT(sgnode.get_firstNondefiningDeclaration() == &sgnode);
   return sgnode;
 }
 
@@ -1185,6 +1187,26 @@ namespace
     return mkScopeStmt<SgFunctionParameterScope>(&mkFileInfo());
   }
 
+  void checkParamTypes(const SgInitializedNamePtrList& parms, const SgTypePtrList& types)
+  {
+    ADA_ASSERT(parms.size() == types.size());
+
+    auto plim = parms.end();
+    bool ok   = plim == std::mismatch( parms.begin(), plim,
+                                       types.begin(), types.end(),
+                                       [](const SgInitializedName* prm, const SgType* typ)->bool
+                                       {
+                                         return prm->get_type() == typ;
+                                       }
+                                     ).first;
+
+    if (!ok)
+    {
+      logFlaw() << "function parameter/function type mismatch"
+                << std::endl;
+    }
+  }
+
   SgFunctionDeclaration&
   mkProcedureInternal( const std::string& nm,
                        SgScopeStatement& scope,
@@ -1204,6 +1226,8 @@ namespace
     SgFunctionDeclaration&   sgnode    = SG_DEREF(sb::buildNondefiningFunctionDeclaration(nm, &retty, &lst, &scope, nullptr));
 
     ADA_ASSERT(sgnode.get_type() != nullptr);
+
+    checkParamTypes(lst.get_args(), sgnode.get_type()->get_arguments());
 
     linkParameterScope(sgnode, lst, parmScope);
 
@@ -2068,7 +2092,7 @@ namespace
 
     si::Ada::FlatArrayType flatty = si::Ada::getArrayTypeInfo(basety);
 
-    if (flatty.first == nullptr)
+    if (flatty.type() == nullptr)
       return SG_DEREF(basety);
 
     SgType* resty = nullptr;
@@ -2077,7 +2101,7 @@ namespace
     {
       const int dim = si::Ada::firstLastDimension(args);
 
-      resty = SG_DEREF(flatty.second.at(dim-1)).get_type();
+      resty = SG_DEREF(flatty.dims().at(dim-1)).get_type();
     }
     catch (...)
     {
@@ -2300,11 +2324,12 @@ namespace
     {
       SgType* newArgTy = &convertType(SG_DEREF(origArgTy), originalType, derivedType);
 
-      //~ logWarn() << "arg/repl: "
-                //~ << " oa: " << typeid(SG_DEREF(origArgTy)).name() << " " << origArgTy
-                //~ << " or: " << typeid(originalType).name()        << " " << &originalType
-                //~ << " dv: " << typeid(derivedType).name()         << " " << &derivedType
-                //~ << std::endl;
+      if (false)
+        logWarn() << "arg/repl: "
+                  << " oa: " << typeid(SG_DEREF(origArgTy)).name() << " " << origArgTy
+                  << " or: " << typeid(originalType).name()        << " " << &originalType
+                  << " dv: " << typeid(derivedType).name()         << " " << &derivedType
+                  << std::endl;
 
       newTypeList.push_back(newArgTy);
       if (newArgTy != origArgTy) ++numUpdTypes;

@@ -616,7 +616,8 @@ namespace
 
     // if nondefdcl is set, it must be a SgClassDeclaration
     if (nondefdcl)
-      logFlaw() << name << " " << typeid(*nondefdcl).name() << std::endl;
+      logFlaw() << name << " " << typeid(*nondefdcl).name() << " not a class declaration!"
+                << std::endl;
 
     ADA_ASSERT (!nondefdcl);
     return mkRecordDecl(name, def, scope);
@@ -2589,11 +2590,19 @@ namespace
         SgFunctionSymbol*             fnsym  = findFirst(inheritedSymbols(), std::make_pair(fn, &baseType));
         if (fnsym == nullptr) fnsym = isSgFunctionSymbol(fn->search_for_symbol_from_symbol_table());
 
-        if (fn == nullptr)
+        if (fnsym == nullptr)
         {
           logFlaw() << "unable to find (derived) function symbol for " << fn->get_name() << std::endl;
           return;
         }
+
+        SgDeclarationStatement const* symdcl = fnsym->get_declaration();
+        if (symdcl && (symdcl->get_firstNondefiningDeclaration() != fn->get_firstNondefiningDeclaration()))
+        {
+          logFlaw() << fn->get_name() << " sym/dcl mismatch"
+                    << std::endl;
+        }
+
 
         SgAdaInheritedFunctionSymbol& sgnode = mkAdaInheritedFunctionSymbol(*fnsym, dervivedType, ctx.scope());
         const auto inserted = inheritedSymbols().insert(std::make_pair(InheritedSymbolKey{fn, &dervivedType}, &sgnode));
@@ -2915,17 +2924,17 @@ namespace
                   : mkProcedureDecl_nondef(name,    scope, rettype, std::move(complete));
   }
 
-  void completeDiscriminatedDecl( SgAdaDiscriminatedTypeDecl& sgnode,
-                                  SgDeclarationStatement* nondef,
-                                  Element_ID id,
-                                  SgDeclarationStatement& child,
+  void completeDiscriminatedDecl( Element_ID id,
                                   Element_Struct& elem,
+                                  SgAdaDiscriminatedTypeDecl& sgnode,
+                                  SgDeclarationStatement& sgdecl,
                                   bool isPrivate,
                                   AstContext ctx
                                 )
   {
+    sg::linkParentChild(sgnode, sgdecl, &SgAdaDiscriminatedTypeDecl::set_discriminatedDecl);
     privatize(sgnode, isPrivate);
-    recordNode(asisTypes(), id, child, true /* replace */);
+    recordNode(asisTypes(), id, sgdecl, true /* replace */);
     attachSourceLocation(sgnode, elem, ctx);
 
     ADA_ASSERT (sgnode.get_parent() == &ctx.scope());
@@ -3014,8 +3023,7 @@ namespace
     }
     else
     {
-      sg::linkParentChild(*discr, sgdecl, &SgAdaDiscriminatedTypeDecl::set_discriminatedDecl);
-      completeDiscriminatedDecl(*discr, nullptr /* no nondef dcl */, id, sgdecl, elem, isPrivate, ctx);
+      completeDiscriminatedDecl(id, elem, *discr, sgdecl, isPrivate, ctx);
     }
 
     if (decl.Declaration_Kind == A_Private_Extension_Declaration)
@@ -3955,8 +3963,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         }
         else
         {
-          sg::linkParentChild(*discr, sgdecl, &SgAdaDiscriminatedTypeDecl::set_discriminatedDecl);
-          completeDiscriminatedDecl(*discr, nondef, id, sgdecl, elem, isPrivate, ctx);
+          completeDiscriminatedDecl(id, elem, *discr, sgdecl, isPrivate, ctx);
         }
 
         processInheritedElementsOfDerivedTypes(ty, discr ? *discr : sgdecl, ctx);
@@ -4192,8 +4199,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         }
         else
         {
-          sg::linkParentChild(*discr, static_cast<SgDeclarationStatement&>(sgdecl), &SgAdaDiscriminatedTypeDecl::set_discriminatedDecl);
-          completeDiscriminatedDecl(*discr, nullptr /* no nondef dcl */, id, sgdecl, elem, isPrivate, ctx);
+          completeDiscriminatedDecl(id, elem, *discr, sgdecl, isPrivate, ctx);
         }
 
         spec.second(); // complete the body
@@ -4254,8 +4260,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         }
         else
         {
-          sg::linkParentChild(*discr, static_cast<SgDeclarationStatement&>(sgdecl), &SgAdaDiscriminatedTypeDecl::set_discriminatedDecl);
-          completeDiscriminatedDecl(*discr, nullptr /* no nondef dcl */, id, sgdecl, elem, isPrivate, ctx);
+          completeDiscriminatedDecl(id, elem, *discr, sgdecl, isPrivate, ctx);
         }
 
         spec.second(); // complete the body

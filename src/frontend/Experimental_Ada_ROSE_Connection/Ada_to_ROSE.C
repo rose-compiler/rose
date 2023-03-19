@@ -1516,6 +1516,81 @@ namespace
     return { };
   }
 
+  std::set<const SgType*>
+  typesFromExpression(const SgExpression* exp)
+  {
+    const SgType* ty = si::Ada::typeOfExpr(const_cast<SgExpression*>(exp)).typerep();
+
+    if (ty == nullptr)
+      return {};
+
+    return { ty };
+  }
+
+  struct ExpectedTypes : sg::DispatchHandler<std::set<const SgType*> >
+  {
+    using base = sg::DispatchHandler<std::set<const SgType*> >;
+
+    ExpectedTypes(const SgFunctionCallExp& call, const OverloadMap& om)
+    : base(), origCall(call), allrefs(om)
+    {}
+
+    void handle(const SgNode& n)
+    {
+      // SG_UNEXPECTED_NODE(n);
+      logFlaw() << "unrecognizedCall context: " << typeid(n).name()
+                << std::endl;
+    }
+
+    //
+    // Expression contexts
+
+    // assignment and initialization
+    void handle(const SgAssignOp& n)                 { res = typesFromAssignContext(n, origCall, allrefs); }
+    void handle(const SgAssignInitializer& n)        { res = typesFromAssignInitializer(n, origCall, allrefs); };
+
+    // calls
+    // void handle(const SgFunctionCallExp& n)          {  }
+
+    // logical operators
+    void handle(const SgOrOp&)                       { res = { sb::buildBoolType() }; }
+    void handle(const SgAndOp&)                      { res = { sb::buildBoolType() }; }
+
+    // other expressions
+    void handle(const SgCastExp&)                    { /* we cannot make any assumption */ }
+    void handle(const SgActualArgumentExpression& n) { res = sg::dispatch(*this, n.get_parent()); }
+    void handle(const SgMembershipOp& n)             { res = typesFromExpression(n.get_rhs_operand()); }
+    void handle(const SgNonMembershipOp& n)          { res = typesFromExpression(n.get_rhs_operand()); }
+
+    void handle(const SgExprListExp& n)
+    {
+      if (const SgFunctionCallExp* call = isSgFunctionCallExp(n.get_parent()))
+      {
+        res = typesFromCallContext(*call, origCall, allrefs);
+        return;
+      }
+
+      handle(static_cast<const SgNode&>(n));
+    }
+
+    //
+    // Relevant statements
+
+    void handle(const SgExprStatement& n)            { /* procedure call */ }
+
+    void handle(const SgReturnStmt& n)
+    {
+      const SgFunctionDeclaration& fndcl = sg::ancestor<SgFunctionDeclaration>(n);
+      const SgFunctionType&        fnty  = SG_DEREF(fndcl.get_type());
+
+      res = { fnty.get_return_type() };
+    }
+
+    private:
+      const SgFunctionCallExp& origCall;
+      const OverloadMap&       allrefs;
+  };
+
 
 
   // computes the types as expected from the call context
@@ -1524,43 +1599,7 @@ namespace
   std::set<const SgType*>
   expectedTypes(const SgFunctionCallExp* call, const OverloadMap& allrefs)
   {
-    ASSERT_not_null(call);
-
-    const SgNode* parentNode = call->get_parent();
-
-    if (const SgActualArgumentExpression* parentNamed = isSgActualArgumentExpression(parentNode))
-      parentNode = parentNamed->get_parent();
-
-    if (const SgFunctionCallExp* parentCall = parentCallNode(isSgExprListExp(parentNode)))
-      return typesFromCallContext(*parentCall, *call, allrefs);
-
-    if (const SgAssignOp* assignExp = isSgAssignOp(parentNode))
-      return typesFromAssignContext(*assignExp, *call, allrefs);
-
-    if (/*const SgCastExp* castExp =*/ isSgCastExp(parentNode))
-      return { }; // we cannot assume anything about the operand type
-
-    if (const SgAssignInitializer* assignIni = isSgAssignInitializer(parentNode))
-      return typesFromAssignInitializer(*assignIni, *call, allrefs);
-
-    if (isSgOrOp(parentNode) || isSgAndOp(parentNode))
-      return { sb::buildBoolType() };
-
-    if (const SgReturnStmt* retstmt = isSgReturnStmt(parentNode))
-    {
-      const SgFunctionDeclaration& fndcl = sg::ancestor<SgFunctionDeclaration>(*retstmt);
-      const SgFunctionType&        fnty  = SG_DEREF(fndcl.get_type());
-
-      return { fnty.get_return_type() };
-    }
-
-    if (isSgExprStatement(parentNode)) // procedure call
-      return {};
-
-    ASSERT_not_null(parentNode);
-    logFlaw() << "unrecognizedCall context: " << typeid(*parentNode).name()
-              << std::endl;
-    return {};
+    return sg::dispatch(ExpectedTypes{SG_DEREF(call), allrefs}, call->get_parent());
   }
 
   const SgType*

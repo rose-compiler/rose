@@ -211,7 +211,15 @@ namespace
   /// \}
 
   /// defines the result type for \ref getArrayTypeInfo
-  using FlatArrayType = std::pair<SgArrayType*, std::vector<SgExpression*> >;
+  struct FlatArrayType : std::tuple<SgArrayType*, std::vector<SgExpression*> >
+  {
+    using base = std::tuple<SgArrayType*, std::vector<SgExpression*> >;
+    using base::base;
+
+    SgArrayType*                      type() const { return std::get<0>(*this); }
+    std::vector<SgExpression*> const& dims() const { return std::get<1>(*this); }
+    std::vector<SgExpression*>&       dims()       { return std::get<1>(*this); }
+  };
 
   /// returns a flattened representation of Ada array types.
   /// \param   atype the type of the array to be flattened.
