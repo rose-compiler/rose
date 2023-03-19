@@ -550,20 +550,14 @@ namespace
 
   bool isDiscreteArrayType(OperatorCallSupplement suppl, const AstContext&)
   {
-    SgTypePtrList const* argtypes = suppl.args();
-    ADA_ASSERT(argtypes);
+    SgTypePtrList const&   argtypes = SG_DEREF(suppl.args());
+    si::Ada::FlatArrayType arrinfo  = si::Ada::getArrayTypeInfo(argtypes.at(0));
+    SgArrayType const*     arrty    = arrinfo.type();
 
-    SgType const*        argty = si::Ada::typeRoot(argtypes->front()).typerep();
-    argty = argty ? argty->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_TYPEDEF_TYPE)
-                  : nullptr;
+    if ((arrty == nullptr) || (arrinfo.dims().size() > 1))
+      return false;
 
-    SgArrayType const*   arrty = isSgArrayType(argty);
-    if (!arrty) return false;
-
-    SgExprListExp const* idx = arrty->get_dim_info();
-    if (!idx || (idx->get_expressions().size() != 1)) return false;
-
-    SgType const* elmty = si::Ada::typeRoot(arrty->get_base_type()).typerep();
+    SgType const*          elmty = si::Ada::typeRoot(arrty->get_base_type()).typerep();
 
     if (elmty == nullptr) return false;
 
