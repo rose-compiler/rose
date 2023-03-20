@@ -2241,6 +2241,7 @@ namespace
         ADA_ASSERT (el.Element_Kind == An_Expression);
 
         NameData                usedEl = getName(el, ctx); // either unit or type
+        AdaIdentifier           fullName{usedEl.fullName};
         Expression_Struct&      expr   = asisExpression(usedEl.elem());
         SgDeclarationStatement* used   = findFirst(m, expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration);
 
@@ -2250,9 +2251,8 @@ namespace
         {
           // try to look up the symbol from the context by name
           const SgSymbol*       sym = nullptr;
-          AdaIdentifier         ident{usedEl.fullName};
 
-          std::tie(std::ignore, sym) = si::Ada::findSymbolInContext(ident, ctx.scope());
+          std::tie(std::ignore, sym) = si::Ada::findSymbolInContext(fullName, ctx.scope());
 
           // do we need to check the symbol type?
           if (sym) used = si::Ada::associatedDeclaration(*sym);
@@ -2267,17 +2267,24 @@ namespace
                     << "\n   in scope type: " << typeid(ctx.scope()).name()
                     << std::endl;
 
-          AdaIdentifier ident{usedEl.fullName};
-
-          used = findFirst(adaPkgs(), ident);
+          used = findFirst(adaPkgs(), fullName);
           if (!used)
           {
-            if (SgNamedType* ty = isSgNamedType(findFirst(adaTypes(), ident)))
+            if (SgNamedType* ty = isSgNamedType(findFirst(adaTypes(), fullName)))
               used = ty->get_declaration();
           }
         }
 
         SgUsingDeclarationStatement& sgnode = mkUseClause(SG_DEREF(used));
+
+        if (fullName.find("'") != std::string::npos)
+        {
+          ADA_ASSERT(boost::algorithm::ends_with(fullName, "CLASS"));
+
+          // \todo introduce proper flag
+          sgnode.set_is_ada_class_wide(true);
+        }
+
 
         //~ std::cerr
         //~ logError() << "use decl: " << usedEl.fullName
@@ -5138,8 +5145,18 @@ getQualName(Element_Struct& elem, AstContext ctx)
     return NameData{ ident, ident, ctx.scope(), elem };
   }
 
+  if (idex.Expression_Kind == An_Attribute_Reference)
+  {
+    NameData prefix = getNameID(idex.Prefix, ctx);
+    NameData attr   = getNameID(idex.Attribute_Designator_Identifier, ctx);
+
+    return NameData{ prefix.ident, prefix.fullName + "'" + attr.fullName, ctx.scope(), prefix.elem() };
+  }
+
   if (idex.Expression_Kind != A_Selected_Component)
     logError() << "Unexpected Expression_kind [getQualName]: " << idex.Expression_Kind
+               << ( elem.Source_Location.Unit_Name ? elem.Source_Location.Unit_Name : "" )
+               << " @" << elem.Source_Location.First_Line << ":" << elem.Source_Location.First_Column
                << std::endl;
 
   ADA_ASSERT (idex.Expression_Kind == A_Selected_Component);

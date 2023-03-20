@@ -628,6 +628,8 @@ mkLabelStmt(const std::string& label, SgStatement& stmt, SgScopeStatement& scope
   SgLabelStatement& sgnode = SG_DEREF( sb::buildLabelStatement(label, &stmt, &scope) );
 
   sg::linkParentChild(sgnode, stmt, &SgLabelStatement::set_statement);
+  //~ SgLabelSymbol&    lblsym = mkBareNode<SgLabelSymbol>(&sgnode);
+  //~ scope.insert(label, lblsym);
   return sgnode;
 }
 
