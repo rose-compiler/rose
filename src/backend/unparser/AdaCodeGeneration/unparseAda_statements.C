@@ -887,6 +887,10 @@ namespace
       prn(useSyntax.keyword());
       prnNameQual(n, origScope);
       prn(useSyntax.name());
+
+      if (n.get_is_ada_class_wide())
+        prn("'class");
+
       prn(STMT_SEP);
     }
 
@@ -2105,7 +2109,17 @@ namespace
 
       void handle(const SgAdaRenamingSymbol& n)
       {
+        // \todo can this still be reached?
+
         SgAdaRenamingDecl& dcl = SG_DEREF(n.get_declaration());
+
+        res = AdaStatementUnparser::renamingSyntax(dcl.get_renamed());
+        //~ res.renamedName() = n.get_name();
+      }
+
+      void handle(const SgAdaRenamingRefExp& n)
+      {
+        SgAdaRenamingDecl& dcl = SG_DEREF(n.get_decl());
 
         res = AdaStatementUnparser::renamingSyntax(dcl.get_renamed());
         //~ res.renamedName() = n.get_name();

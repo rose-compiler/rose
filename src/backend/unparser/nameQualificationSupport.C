@@ -1322,6 +1322,13 @@ namespace
         }
       }
 
+      void handle(const SgAdaDiscriminatedTypeDecl& n)
+      {
+        handle(sg::asBaseType(n));
+
+        res.set_currentScope(n.get_discriminantScope());
+      }
+
       void handle(const SgAdaTaskBodyDecl& n)
       {
         handle(sg::asBaseType(n));
