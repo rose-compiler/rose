@@ -1139,6 +1139,17 @@ bool ClangToDotTranslator::VisitTagDecl(clang::TagDecl * tag_decl, NodeDescripto
 
      ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
 
+     clang::DeclContext* declContext = static_cast<clang::DeclContext*>(tag_decl);
+     clang::DeclContext::decl_iterator dit;
+     unsigned cnt = 0;
+     for (clang::Decl* tmpDecl : declContext->decls()) {
+          if(tmpDecl->isImplicit())
+             continue;
+          std::ostringstream oss;
+          oss << "DeclContext::decls["<< cnt++ << "]";
+          node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(tmpDecl)));
+     }
+
      return VisitTypeDecl(tag_decl, node_desc) && res;
    }
 #endif
@@ -1739,7 +1750,7 @@ bool ClangToDotTranslator::VisitEnumDecl(clang::EnumDecl * enum_decl, NodeDescri
 
      node_desc.successors.push_back(std::pair<std::string, std::string>("promotion_type", Traverse(enum_decl->getPromotionType().getTypePtr())));
 
-     return VisitDecl(enum_decl, node_desc) && res;
+     return VisitTagDecl(enum_decl, node_desc) && res;
 }
 #endif
 
