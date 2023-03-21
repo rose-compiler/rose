@@ -2962,7 +2962,7 @@ Grammar::buildCode ()
   // Build tree representing the type hierarchy
   // buildTree();
   // Get the root node (the only one without a parent)
-  // Also, add the grammar prefix to each node
+  // Also, add the grammar prefix to each and every node
      this->setRootOfGrammar(NULL);
      for (vector<AstNodeClass*>::const_iterator i = terminalList.begin(); i != terminalList.end(); ++i)
         {
@@ -2970,7 +2970,6 @@ Grammar::buildCode ()
           if ((*i)->getBaseClass() == NULL)
              {
                this->setRootOfGrammar(*i);
-               break;
              }
         }
      ROSE_ASSERT (this->getRootOfGrammar());
