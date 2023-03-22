@@ -463,6 +463,30 @@ bool ClangToSageTranslator::VisitDecl(clang::Decl * decl, SgNode ** node) {
     if (!isSgGlobal(*node))
         applySourceRange(*node, decl->getSourceRange());
 
+    if(isSgDeclarationStatement(*node))
+    {
+      SgDeclarationStatement* declStmt = isSgDeclarationStatement(*node);
+      ROSE_ASSERT(declStmt);
+      clang::AccessSpecifier accessSpec = decl->getAccess();
+      switch(accessSpec){
+        case clang::AS_public:
+          declStmt->get_declarationModifier().get_accessModifier().setPublic();
+          break;
+        case clang::AS_protected:
+          declStmt->get_declarationModifier().get_accessModifier().setProtected();
+          break;
+        case clang::AS_private:
+          declStmt->get_declarationModifier().get_accessModifier().setPrivate();
+          break;
+        case clang::AS_none:
+          declStmt->get_declarationModifier().get_accessModifier().setDefault();
+          break;
+        default:
+          std::cerr << "no accessSpecifier is valid" << std::endl;
+      }
+    }
+
+
     // TODO attributes
 /*
     std::cerr << "Attribute list for " << decl->getDeclKindName() << " (" << decl << "): ";
@@ -608,6 +632,15 @@ bool ClangToSageTranslator::VisitImportDecl(clang::ImportDecl * import_decl, SgN
 bool ClangToSageTranslator::VisitNamedDecl(clang::NamedDecl * named_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
     std::cerr << "ClangToSageTranslator::VisitNamedDecl" << std::endl;
+    std::cerr << "hasLinkage() " << named_decl->hasLinkage() << "\n";
+    std::cerr << "isCXXClassMember() " << named_decl->isCXXClassMember() << "\n";
+    std::cerr << "isCXXInstanceMember() " << named_decl->isCXXInstanceMember() << "\n";
+    std::cerr << "hasExternalFormalLinkage() " << named_decl->hasExternalFormalLinkage() << "\n";
+    std::cerr << "isExternallyVisible () " << named_decl->isExternallyVisible () << "\n";
+    std::cerr << "isExternallyDeclarable () " << named_decl->isExternallyDeclarable () << "\n";
+    std::cerr << "isLinkageValid () " << named_decl->isLinkageValid () << "\n";
+    std::cerr << "hasLinkageBeenComputed() " << named_decl->hasLinkageBeenComputed() << "\n";
+    std::cerr << "isModulePrivate() " << named_decl->isModulePrivate() << "\n";
 #endif
     bool res = true;
 
@@ -765,6 +798,20 @@ bool ClangToSageTranslator::VisitTypeDecl(clang::TypeDecl * type_decl, SgNode **
 bool ClangToSageTranslator::VisitTagDecl(clang::TagDecl * tag_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
     std::cerr << "ClangToSageTranslator::VisitTagDecl" << std::endl;
+    std::cerr << "isThisDeclarationADefinition() " << tag_decl->isThisDeclarationADefinition() << "\n";
+    std::cerr << "isCompleteDefinition() " << tag_decl->isCompleteDefinition() << "\n";
+    std::cerr << "isCompleteDefinitionRequired() " << tag_decl->isCompleteDefinitionRequired() << "\n";
+    std::cerr << "isBeingDefined() " << tag_decl->isBeingDefined() << "\n";
+    std::cerr << "isEmbeddedInDeclarator() " << tag_decl->isEmbeddedInDeclarator() << "\n";
+    std::cerr << "isFreeStanding() " << tag_decl->isFreeStanding() << "\n";
+    std::cerr << "mayHaveOutOfDateDef() " << tag_decl->mayHaveOutOfDateDef() << "\n";
+    std::cerr << "isDependentType() " << tag_decl->isDependentType() << "\n";
+    std::cerr << "isThisDeclarationADemotedDefinition() " << tag_decl->isThisDeclarationADemotedDefinition() << "\n";
+    std::cerr << "isStruct () " << tag_decl->isStruct () << "\n";
+    std::cerr << "isInterface () " << tag_decl->isInterface () << "\n";
+    std::cerr << "isUnion () " << tag_decl->isUnion () << "\n";
+    std::cerr << "isEnum () " << tag_decl->isEnum () << "\n";
+    std::cerr << "hasNameForLinkage () " << tag_decl->hasNameForLinkage () << "\n";
 #endif
 
     bool res = true;
@@ -784,24 +831,24 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
     bool res = true;
 #if DEBUG_VISIT_DECL
     std::cerr << "ClangToSageTranslator::VisitRecordDecl name:" <<record_decl->getNameAsString() <<  "\n";
-    std:: cerr << "isAnonymousStructOrUnion() " << record_decl->isAnonymousStructOrUnion() << "\n";
-    std:: cerr << "isThisDeclarationADefinition() " << record_decl->isThisDeclarationADefinition() << "\n";
-    std:: cerr << "isCompleteDefinition() " << record_decl->isCompleteDefinition() << "\n";
-    std:: cerr << "isCompleteDefinitionRequired() " << record_decl->isCompleteDefinitionRequired() << "\n";
-    std:: cerr << "isBeingDefined() " << record_decl->isBeingDefined() << "\n";
-    std:: cerr << "isEmbeddedInDeclarator() " << record_decl->isEmbeddedInDeclarator() << "\n";
-    std:: cerr << "isFreeStanding() " << record_decl->isFreeStanding() << "\n";
-    std:: cerr << "mayHaveOutOfDateDef() " << record_decl->mayHaveOutOfDateDef() << "\n";
-    std:: cerr << "isDependentType() " << record_decl->isDependentType() << "\n";
-    std:: cerr << "hasNameForLinkage () " << record_decl->hasNameForLinkage () << "\n";
-    std:: cerr << "hasLinkage() " << record_decl->hasLinkage() << "\n";
-    std:: cerr << "hasExternalFormalLinkage() " << record_decl->hasExternalFormalLinkage() << "\n";
-    std:: cerr << "isExternallyVisible () " << record_decl->isExternallyVisible () << "\n";
-    std:: cerr << "isExternallyDeclarable () " << record_decl->isExternallyDeclarable () << "\n";
-    std:: cerr << "isLinkageValid () " << record_decl->isLinkageValid () << "\n";
-    std:: cerr << "hasLinkageBeenComputed() " << record_decl->hasLinkageBeenComputed() << "\n";
-    std:: cerr << "isModulePrivate() " << record_decl->isModulePrivate() << "\n";
-    std:: cerr << "isThisDeclarationADefinition() " << record_decl->isThisDeclarationADefinition() << "\n";
+    std::cerr << "isAnonymousStructOrUnion() " << record_decl->isAnonymousStructOrUnion() << "\n";
+    std::cerr << "hasObjectMember() " << record_decl->hasObjectMember() << "\n";
+    std::cerr << "hasVolatileMember() " << record_decl->hasVolatileMember() << "\n";
+    std::cerr << "hasLoadedFieldsFromExternalStorage() " << record_decl->hasLoadedFieldsFromExternalStorage() << "\n";
+    std::cerr << "isNonTrivialToPrimitiveDefaultInitialize() " << record_decl->isNonTrivialToPrimitiveDefaultInitialize() << "\n";
+    std::cerr << "isNonTrivialToPrimitiveCopy() " << record_decl->isNonTrivialToPrimitiveCopy() << "\n";
+    std::cerr << "isNonTrivialToPrimitiveDestroy() " << record_decl->isNonTrivialToPrimitiveDestroy() << "\n";
+    std::cerr << "hasNonTrivialToPrimitiveDefaultInitializeCUnion() " << record_decl->hasNonTrivialToPrimitiveDefaultInitializeCUnion() << "\n";
+    std::cerr << "hasNonTrivialToPrimitiveDestructCUnion() " << record_decl->hasNonTrivialToPrimitiveDestructCUnion() << "\n";
+    std::cerr << "hasNonTrivialToPrimitiveCopyCUnion() " << record_decl->hasNonTrivialToPrimitiveCopyCUnion() << "\n";
+    std::cerr << "canPassInRegisters() " << record_decl->canPassInRegisters() << "\n";
+    std::cerr << "isParamDestroyedInCallee() " << record_decl->isParamDestroyedInCallee() << "\n";
+    std::cerr << "isRandomized() " << record_decl->isRandomized() << "\n";
+    std::cerr << "isInjectedClassName() " << record_decl->isInjectedClassName() << "\n";
+    std::cerr << "isLambda() " << record_decl->isLambda() << "\n";
+    std::cerr << "isCapturedRecord() " << record_decl->isCapturedRecord() << "\n";
+    std::cerr << "isOrContainsUnion() " << record_decl->isOrContainsUnion() << "\n";
+    std::cerr << "field_empty() " << record_decl->field_empty() << "\n";
 #endif
 
     SgClassDeclaration * sg_class_decl = NULL;
@@ -1943,25 +1990,6 @@ bool ClangToSageTranslator::VisitCXXMethodDecl(clang::CXXMethodDecl * cxx_method
 //    SgClassDeclaration* CxxRecordDeclaration = isSgClassDeclaration(Traverse(cxx_method_decl->getParent()));
 //    ROSE_ASSERT(CxxRecordDeclaration); 
 //    CxxRecordDeclaration->get_definition()->append_member(functionDecl);
-    SgDeclarationStatement* methodDeclStmt = isSgDeclarationStatement(*node);
-    clang::AccessSpecifier accessSpec = cxx_method_decl->getAccess();
-    switch(accessSpec){
-      case clang::AS_public:
-        methodDeclStmt->get_declarationModifier().get_accessModifier().setPublic();
-        break;
-      case clang::AS_protected:
-        methodDeclStmt->get_declarationModifier().get_accessModifier().setProtected();
-        break;
-      case clang::AS_private:
-        methodDeclStmt->get_declarationModifier().get_accessModifier().setPrivate();
-        break;
-      case clang::AS_none:
-        methodDeclStmt->get_declarationModifier().get_accessModifier().setDefault();
-        break;
-      default:
-        std::cerr << "no accessSpecifier is valid" << std::endl;
-    }
-    ROSE_ASSERT(methodDeclStmt);
 
     return res;
 }
@@ -2301,6 +2329,12 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
     // Pei-Hung (06/16/22) added "static" modifier
     bool isStaticDecl = var_decl->isStaticLocal();
     if(isStaticDecl)
+    {
+      sg_var_decl->get_declarationModifier().get_storageModifier().setStatic();
+    }
+    bool isStaticDataMember = var_decl->isStaticDataMember();
+    // Pei-Hung (03/14/23) added "static" modifier for data member
+    if(isStaticDataMember)
     {
       sg_var_decl->get_declarationModifier().get_storageModifier().setStatic();
     }
