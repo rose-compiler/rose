@@ -923,6 +923,7 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgOpenclAccessModeModifier::access_mode_modifier_enum") ||
                  ( varTypeString == "SgAsmFunction::MayReturn") ||
                  ( varTypeString == "SgAsmRiscOperation::RiscOperator") ||
+                 ( varTypeString == "RiscOperator") ||  // another name for SgAsmRiscOperation
               // DQ (11/26/2013): Added to support use of enums from SgToken class.
                  ( varTypeString == "SgToken::ROSE_Fortran_Operators" ) ||
                  ( varTypeString == "SgToken::ROSE_Fortran_Keywords" ) ||
