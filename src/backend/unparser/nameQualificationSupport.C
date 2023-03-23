@@ -850,21 +850,21 @@ namespace
     return remMin;
   }
 
+#if DBG_SCOPE_PATH
+  struct DebugSeqPrinter
+  {
+    const ScopePath& el;
+  };
 
-  //~ struct DebugSeqPrinter
-  //~ {
-    //~ const ScopePath& el;
-  //~ };
+  std::ostream& operator<<(std::ostream& os, const DebugSeqPrinter& s)
+  {
+    for (const SgScopeStatement* scope : s.el)
+      os << ", " << typeid(*scope).name()
+         << " (" << scope << ")";
 
-  //~ std::ostream& operator<<(std::ostream& os, const DebugSeqPrinter& s)
-  //~ {
-    //~ for (const SgScopeStatement* scope : s.el)
-      //~ os << ", " << typeid(*scope).name()
-         //~ << " (" << scope << ")";
-
-    //~ return os;
-  //~ }
-
+    return os;
+  }
+#endif /* DBG_SCOPE_PATH */
 
   std::string
   NameQualificationTraversalAda::computeNameQual( const SgNode& quasiDecl,
@@ -876,9 +876,11 @@ namespace
 
     ScopePath remotePath = pathToGlobal(remote);
 
-    //~ std::cerr << "rp = " << remotePath.path()
-              //~ << " scope = " << typeid(remote).name() << " " << &remote
-              //~ << std::endl;
+#if DBG_SCOPE_PATH
+    std::cerr << "rp = " << DebugSeqPrinter{remotePath}
+              << " scope = " << typeid(remote).name() << " " << &remote
+              << std::endl;
+#endif /* DBG_SCOPE_PATH */
 
     if (remotePath.size() == 0)
       return "";
@@ -940,14 +942,17 @@ namespace
     PathIterator    remoteEnd    = std::unique(remotePos, remotePath.rend(), areSpecAndBody);
 
     std::string res = nameQualString(remotePos, remoteEnd);
-    //~ std::cerr << "--- len> " << std::distance(mismPos.first, localPath.rend())
-              //~ << "/" << localPath.size() << DebugSeqPrinter{localPath}
-              //~ << "/" << nameQualString(localPath.rbegin(), localPath.rend())
-              //~ << " <> " << std::distance(mismPos.second, remotePath.rend())
-              //~ << "/" << std::distance(remotePos, remoteEnd)
-              //~ << " /" << nameQualString(remotePath.rbegin(), remotePath.rend())
-              //~ << "  => " << res
-              //~ << std::endl;
+
+#if DBG_SCOPE_PATH
+    std::cerr << "--- len> " << std::distance(mismPos.first, localPath.rend())
+              << "/" << localPath.size() << DebugSeqPrinter{localPath}
+              << "/" << nameQualString(localPath.rbegin(), localPath.rend())
+              << " <> " << std::distance(mismPos.second, remotePath.rend())
+              << "/" << std::distance(remotePos, remoteEnd)
+              << " /" << nameQualString(remotePath.rbegin(), remotePath.rend())
+              << "  => " << res
+              << std::endl;
+#endif /* DBG_SCOPE_PATH */
 
     return res;
   }
@@ -1191,13 +1196,9 @@ namespace
       {
         handle(sg::asBaseType(n));
 
-
-        SgExpression& orig = SG_DEREF(n.get_renamed());
-
-        //~ recordNameQualIfNeeded(n, orig.get_scope());
         computeNameQualForShared(n, n.get_type());
-        computeNameQualForShared(n, &orig);
-        addRenamedScopeIfNeeded(&orig, n);
+        computeNameQualForShared(n, n.get_renamed());
+        addRenamedScopeIfNeeded(n.get_renamed(), n);
       }
 
       void handle(const SgTypedefDeclaration& n)
@@ -1489,7 +1490,15 @@ namespace
       void handle(const SgAdaUnitRefExp& n)
       {
         if (!elideNameQualification(n))
-          recordNameQualIfNeeded(n, declOf(n).get_scope());
+        {
+          const SgDeclarationStatement* dcl = &declOf(n);
+
+          if (const SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(dcl))
+            dcl = gendcl->get_declaration();
+
+          //~ std::cerr << "uref " << &declOf(n) << std::endl;
+          recordNameQualIfNeeded(n, SG_DEREF(dcl).get_scope());
+        }
       }
 
       void handle(const SgAdaRenamingRefExp& n)
@@ -1814,6 +1823,7 @@ namespace
       return;
     }
 
+#if 0
     if (/*const SgImportStatement* impstm =*/ isSgImportStatement(n))
       return; // traversal.addUsedScope();
 
@@ -1833,7 +1843,8 @@ namespace
     if (/*const SgEnumDeclaration* enudcl =*/ isSgEnumDeclaration(n))
       return; // traversal.addUsedScope();
 
-    SG_UNEXPECTED_NODE(SG_DEREF(n));
+    // SG_UNEXPECTED_NODE(SG_DEREF(n));
+#endif
   }
 
   void
