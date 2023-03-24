@@ -1267,6 +1267,8 @@ namespace
         const SgExpression&           importElem = si::Ada::importedElement(n);
         const SgDeclarationStatement& importDecl = importedDecl(n);
 
+        //~ std::cerr << importElem->unparseToString() << typeid(*importDecl.get_scope()).name() << std::endl;
+
         recordNameQualIfNeeded(importElem, importDecl.get_scope());
 
         // check whether a renamed unit was imported
