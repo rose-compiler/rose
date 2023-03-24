@@ -34,7 +34,7 @@ static vector<string> extractClassFiles(string &jar)
   if (!CommandlineProcessing::isJavaJarFile(jar)) {
     mlog[WARN] << "In SgJvmComposite::extractClassFiles(): expected file to be path "
                << "to a jar file: is " << jar << std::endl;
-    return std::move(classes);
+    return classes;
   }
   else {
     mlog[WARN] << "In SgJvmComposite::buildAST(): jar files not fully support yet, "
@@ -59,7 +59,7 @@ static vector<string> extractClassFiles(string &jar)
 
   // TODO: add paths to extracted class files
 
-  return std::move(classes);
+  return classes;
 }
 
 SgJvmComposite::SgJvmComposite(vector<string> & argv, SgProject* project)
