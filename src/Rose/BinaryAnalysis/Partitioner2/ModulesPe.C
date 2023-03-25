@@ -8,6 +8,8 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 
+#include <Sawyer/StaticBuffer.h>
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
@@ -144,6 +146,21 @@ findImportFunctions(const Partitioner::ConstPtr &partitioner, SgAsmInterpretatio
     return functions;
 }
 
+static void
+makeMemoryWritable(const MemoryMap::Ptr &mem, const AddressIntervalSet &where) {
+    for (const AddressInterval &interval: where.intervals()) {
+        const auto node = mem->find(interval.least());
+        if (node != mem->intervals().end()) {
+            if (const auto existingBuffer = node->value().buffer().dynamicCast<MemoryMap::StaticBuffer>()) {
+                if (existingBuffer->isReadOnly()) {
+                    auto newBuffer = MemoryMap::AllocatingBuffer::instance(interval.size());
+                    mem->insert(interval, MemoryMap::Segment(newBuffer, 0, MemoryMap::READ_WRITE, "IAT modified address"));
+                }
+            }
+        }
+    }
+}
+
 void
 rebaseImportAddressTables(const Partitioner::Ptr &partitioner, const ImportIndex &index) {
     ASSERT_not_null(partitioner);
@@ -154,10 +171,22 @@ rebaseImportAddressTables(const Partitioner::Ptr &partitioner, const ImportIndex
         return;
     }
 
+    // We need to make sure the underlying buffers are writable before we start writing to them. The easiest way to do this is to
+    // just make new buffers over the top of the any read-only buffer. First, gather the addresses so we're creating as few new
+    // buffers as possible.
+    AddressIntervalSet toWrite;
+    for (const ImportIndex::Node &node: index.nodes()) {
+        if (node.value()->get_iat_written())
+            continue;
+        const rose_addr_t iatVa = node.value()->get_iat_entry_va();
+        toWrite |= AddressInterval::baseSize(iatVa, wordSize);
+    }
+    makeMemoryWritable(partitioner->memoryMap(), toWrite);
+
     // Write IAT entries into the newly mapped IATs
     for (const ImportIndex::Node &node: index.nodes()) {
         //First check if the loader already set the address
-        if(node.value()->get_iat_written()) continue;
+        if (node.value()->get_iat_written()) continue;
     
         // Pack it as little-endian
         uint8_t packed[8];
