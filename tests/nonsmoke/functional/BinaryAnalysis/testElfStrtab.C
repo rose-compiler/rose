@@ -108,12 +108,33 @@ MyTraversal::visit(SgNode* astNode)
                          "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ"
                          "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ"
                          "ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ");
-        //test->get_offset(); /*force reallocation*/
 
 #if 0
-        /* Test 12: It's not legal to (re)parse a new region of the string table after we've made modifications. */
-        fprintf(stderr, "TESTING: an error message and abort should follow this line.\n");
-        s2 = new SgAsmStoredString(strsec->get_strtab(), test->get_offset());
+        // force reallocation
+        test->get_offset();
+        const bool resetAlphabet = false;
+#elif 1
+        // If we didn't allocate space for the big string, then we can't expect to unparse the file either since the string hasn't
+        // been allocated.
+        test->set_string("");
+        strsec->get_strtab()->reallocate(false);
+        bool resetAlphabet = true;
+#else
+        // If the above setting of test = "" is omitted, then the unparser will eventually warn that the long alphabetical string is
+        // not allocated in the string table and will be discarded from the output.
+        bool resetAlphabet = false;
+#endif
+
+
+#if 0
+        if (!resetAlphabet) {
+            /* Test 12: It's not legal to (re)parse a new region of the string table after we've made modifications. */
+            fprintf(stderr, "TESTING: an error message and abort should follow this line.\n");
+            s2 = new SgAsmStoredString(strsec->get_strtab(), test->get_offset());
+        }
+#else
+        if (resetAlphabet)
+            std::cerr <<"    unparsing should pass\n";
 #endif
 
         fputs("*** End of test\n", stdout);
