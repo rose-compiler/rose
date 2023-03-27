@@ -23,7 +23,7 @@ my %index;
 for my $file (FileLister->new(@ARGV)->all_files()) {
     # utility_functionsImpl.C is misnamed -- it's actually a header file.
     next unless $file =~ /\.(h|hh|hpp)$/ || $file =~ /\/utility_functionsImpl.C$/;
-    next if $file =~ /\b(tests|projects)\//;
+    next if $file =~ /\b(tests|projects|src\/AstNodes)\//;
     my($basename) = $file =~ /([^\/]+)$/;
     my($key) = lc $basename;
     $index{$key} = [] unless exists $index{$key};
@@ -80,10 +80,12 @@ while (my $file = $files->next_file) {
 # Report failures
 my @remaining = map {@$_} values %index;
 
-# Lowered the number of unused headers by removing unused headers from: ./tests/nonsmoke/functional/CompileTests/OvertureCode
-# $warning = "" if @remaining > 281; # as of 2010-11-06 there are 281 violations; do not allow more!
-# $warning = "" if @remaining > 199;
-$warning = "" if @remaining > 205;
+# Max number of permissible unused headers
+#my $max_unused_headers = 281; # 2010-11-06
+#my $max_unused_headers = 199; # 2014-07-31
+my $max_unused_headers = 143; # 2023-03-27
+
+$warning = "" if @remaining > $max_unused_headers;
 
 print $desc if @remaining;
 print "  $_$warning\n" for sort @remaining;
@@ -91,6 +93,6 @@ print "  $_$warning\n" for sort @remaining;
 # DQ (11/20/2010): Added the total file could so we can measure progress/failure.
 #$size = @remaining;
 #print "Remaining file count: $size.\n";
-print "Number of remaining unused header files: " . @remaining . " (max allowed: 199).\n";
+print "Number of remaining unused header files: " . @remaining . " (max allowed: $max_unused_heders).\n";
 
 exit(@remaining ? ($warning?128:1) : 0);
