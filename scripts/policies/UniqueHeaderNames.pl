@@ -29,8 +29,12 @@ for my $dir (qw(/usr/include /usr/local/include)) {
 }
 
 # Headers in ROSE
-push @{$index{lc((/([^\/]+)$/)[0])}||=[]}, $_ for grep {/\.(h|hh|hpp)/} FileLister->new()->all_files;
-
+for my $file (FileLister->new()->all_files()) {
+    next if unless $file =~ /\.(h|hh|hpp)$/;
+    next if $file =~ /\bsrc\/Rose\//;             # included with directory, as in <Rose/...>
+    my $header_key = lc((/([^\/]+)$/)[0]);
+    push @{index{$header_key} ||= []};
+}
 
 # Report failures
 my $nfail = 0;

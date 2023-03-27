@@ -126,7 +126,7 @@ my @policies = (
 	<Rose/Foo/Bar/*.h>). A temporary exception to this rule is that there is
 	no <Rose.h> file that #include\'s everything for the ::Rose namespace.',
 
-	reason => 
+	reason =>
 	'This permits users to obtain with a single #include all declarations
 	that are necessary in order to use a particular namespace. This
 	addresses the concern that having finer granularity header files will
@@ -206,12 +206,31 @@ my @policies = (
 	that states that all ROSE-related C preprocessor symbols begin with
 	"ROSE_".'
     },
+
+    #------------------------------------------------------------------------
+    {
+	name => 'unique_file_names',
+
+	policy =>
+	'A single directory cannot contain two or more files that have the same
+        name when converted to all lower case.',
+
+	reason =>
+	'The often used file system configuration on OS X is not POSIX conformant
+        and is thus unable to handle some situations where two files have names
+        that differ only in the case of some letters.
+
+	By the way, it is fine for header files in two different directories to
+  	have the same name because all headers under the "Rose" namespace are
+  	included with their directory, as in "#include <Rose/...>".'
+    },
+
 );
 
 # Policies indexed by name
 my %policies;
 $policies{$_->{name}} = $_ for @policies;
-    
+
 ###############################################################################################################################
 # List of ROSE words that don't appear in the dictionary.
 #
@@ -275,7 +294,7 @@ my %bad_words = (
     'utils'             => 'Utility',             # StringUtility, etc.
     'utilities'         => 'Utility',             # StringUtility, etc.
     );
-    
+
 
 
 
@@ -287,7 +306,7 @@ sub severity {
     my($file_name, $policy_name) = @_;
     my($disabled,$info) = is_disabled_in_dir($file_name, $policy_name);
     my($w) = $disabled ? "warning: " : "error: ";
-    
+
     my($extra) = "";
     for my $key (keys %$info) {
 	$extra .= "\n" . $key . ": " . $info->{$key} unless $key eq 'disabled';
@@ -366,7 +385,7 @@ sub loadWords {
 	$_ = lc $_;
 	if (/^[a-z]+$/) {
 	    $words{$_} = 1;
-	    
+	
 	    # Source code often makes words by adding "er" to a verb, like "loader"
 	    if (/e$/) {
 		$words{$_ . "r"} = 2;
@@ -523,7 +542,20 @@ $violations{$_} = [] for keys %policies;
 my $files = FileLister->new(@ARGV);
 my %docdirs = doxygenInputDirectories($files);
 my %words = loadWords;
+my %dir_files;
 while (my $filename = $files->next_file) {
+    # Check for unique case-insensitive file names. We assume every file is non-unique for now and push a provisional
+    # violation to $dir_files. Later, we'll copy the actual violations to $violations. The $dir_files is a hash of hashes of
+    # arrays. The first key is the directory name, the second key is the lower-case file name within the directory, and the
+    # array has one provisional violation string per file name.
+    if ($filename =~ /^.*(\/src\/Rose.*)\/([^\/]+)$/) {
+	my ($dir, $file) = ($1, $2);
+	$dir_files{$dir} ||= {};
+	$dir_files{$dir}{lc $file} ||= [];
+	my($w,$u) = severity($filename, 'unique_file_names');
+	push @{$dir_files{$dir}{lc $file}}, "${w}file \"$file\" is not case-insensitive unique within \"$dir\"${u}";
+    }
+
     if ($filename =~ /^(.*\/src)\/(Rose\/.*)\.(h|hpp|h\+\+|H)/) {
         my ($root, $nsFile, $extension) = ($1, $2, $3);
         my @nsParts = split("/", $nsFile);
@@ -554,7 +586,7 @@ while (my $filename = $files->next_file) {
 		push @{$violations{english_words}}, map("${w}in \"$ns\", $_${u}", @badWords);
 	    }
 	}
-	    
+	
 	# Namespace symbol must be PascalCase
 	my $nsLastCase = $nsParts[-1];
 	$nsLastCase =~ s/[A-Z]/X/g;
@@ -629,6 +661,15 @@ while (my $filename = $files->next_file) {
 foreach (keys %docdirs) {
     if ($docdirs{$_} == 1) {
 	push @{$violations{doxygen_input}}, "directory \"src/$_\" is listed as a doxygen input but is not used";
+    }
+}
+
+# Look at the provisional violations for unique_file_names. For any directory that contains two of more files that compare
+# equal in a case insensitive manner, copy those real violations to $violations to be output later.
+foreach my $dir (sort keys %dir_files) {
+    foreach my $provisional_violations (values %{$dir_files{$dir}}) {
+	my $n = @{$provisional_violations};
+	push @{$violations{unique_file_names}}, @{$provisional_violations} if $n > 1;
     }
 }
 

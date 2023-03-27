@@ -2,7 +2,13 @@
 # DO NOT DISABLE without first checking with a ROSE core developer
 
 # Number of failures allowed
-my $limit = 1540; # ONLY DECREASE THIS VALUE!
+# ONLY DECREASE THIS VALUE!
+#my $limit = 1480; # 2010-10-18 Robb Matzke
+#my $limit = 1481; # 2012-05-30 Tristan Vanderbruggen
+#my $limit = 1454; # 2013-03-12 Robb Matzke
+#my $limit = 1435; # 2015-02-05 Robb Matzke
+#my $limit = 1540; # 2015-03-07 Dan Quinlan
+my $limit = 383; # 2023-03-31 Robb Matzke
 
 my $desc = <<EOF;
 All source files should be mentioned in the build system (makefiles).
@@ -38,7 +44,7 @@ my $warning = " (warning)";	# non-empty means issue warnings rather than errors,
 my %index;
 for my $file (FileLister->new(@ARGV)->all_files()) {
     next unless $file =~ /\.(h|hh|hpp|c|C|cpp)$/;
-    next if $file =~ /\b(tests|projects)\//;
+    next if $file =~ /\b(tests|projects|src\/AstNodes)\//;
     my($basename) = $file =~ /([^\/]+)$/;
     my($key) = lc $basename;
     $index{$key} = [] unless exists $index{$key};
