@@ -21958,8 +21958,10 @@ SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& rea
   // Actual side effect analysis
   if (!AnalyzeStmtRefs(fa, s1, cwRef1, crRef1))
   {
-    mlog[Sawyer::Message::Common::WARN] << "Side Effect Analysis incomplete on " << funcDef->get_declaration()->get_qualified_name() << endl;
-    //It's incomplete, but it's not useless, we still want the reflist returned. -Jim
+    //False returned here just means that the function called a
+    //function that was not annotated with Qing's RWset annotation
+    //method.  This doesn't matter for my tool. -Jim Leek 03/21/2023
+    mlog[Sawyer::Message::Common::DEBUG] << "Function: " << funcDef->get_declaration()->get_qualified_name() << " calls at least one function that has not been annotated." << endl;
     retVal = false;
   }
 
