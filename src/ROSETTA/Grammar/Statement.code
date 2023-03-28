@@ -21233,10 +21233,13 @@ SgAdaDiscriminatedTypeDecl::get_mangled_name() const
 {
   static const std::string name = "ada$disc$";
 
+  SgScopeStatement* scope = get_scope();
+  ROSE_ASSERT(scope != NULL);
+
   SgDeclarationStatement* child = get_discriminatedDecl();
   ROSE_ASSERT(child);
 
-  return name + child->get_mangled_name();
+  return scope->get_mangled_name() + name + child->get_mangled_name();
 }
 
 SOURCE_ADA_DISCRIMINATED_TYPE_DECL_STATEMENT_END
@@ -21266,7 +21269,7 @@ void SgAdaRepresentationClause::post_construction_initialization() {}
 SgName
 SgAdaRepresentationClause::get_mangled_name() const
 {
-  std::string res = "ada$representation$clause";
+  std::string res = "ada$rep$clause";
 
   res += get_recordType()->get_mangled();
   return res;
@@ -21297,7 +21300,7 @@ void SgAdaEnumRepresentationClause::post_construction_initialization() {}
 SgName
 SgAdaEnumRepresentationClause::get_mangled_name() const
 {
-  std::string res = "ada$enumrepresentation$clause";
+  std::string res = "ada$enumrep$clause";
 
   res += get_enumType()->get_mangled();
   return res;

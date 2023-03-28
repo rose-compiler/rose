@@ -25,6 +25,10 @@ procedure types_operators is
 begin
   d  := d*d;
   d  := Standard."*"(d, d);
+  d  := "*"(d, d);
+  d  := "/"(d, d);
+  d  := P."*"(d, 1);
+  d  := P."+"(d, d);
   ok := P."/="(d, d);
   ok := P."="(d, d);
   

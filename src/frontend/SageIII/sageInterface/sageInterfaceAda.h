@@ -211,7 +211,15 @@ namespace
   /// \}
 
   /// defines the result type for \ref getArrayTypeInfo
-  using FlatArrayType = std::pair<SgArrayType*, std::vector<SgExpression*> >;
+  struct FlatArrayType : std::tuple<SgArrayType*, std::vector<SgExpression*> >
+  {
+    using base = std::tuple<SgArrayType*, std::vector<SgExpression*> >;
+    using base::base;
+
+    SgArrayType*                      type() const { return std::get<0>(*this); }
+    std::vector<SgExpression*> const& dims() const { return std::get<1>(*this); }
+    std::vector<SgExpression*>&       dims()       { return std::get<1>(*this); }
+  };
 
   /// returns a flattened representation of Ada array types.
   /// \param   atype the type of the array to be flattened.
@@ -366,6 +374,14 @@ namespace
   bool isFixedType(const SgType& ty);
   /// @}
 
+  /// returns if the type @ref ty resolves to a fixed point type
+  /// \details
+  ///    also return true for decimal fixed points
+  /// @{
+  bool resolvesToFixedType(const SgType* ty);
+  bool resolvesToFixedType(const SgType& ty);
+  /// @}
+
   /// returns if the type @ref ty is a decimal fixed point type
   /// \details
   ///    implementation is incomplete and only detects formal decimal fixed point constraints
@@ -446,10 +462,12 @@ namespace
   TypeDescription typeOfExpr(SgExpression*);
   /// @}
 
-  /// returns the scope where \ref ty was defined
+  /// returns the scope where an operator with name \ref opname and argument types
+  ///    in \ref argtypes should be defined.
+  /// \param opname   the operarator name
+  /// \param argtypes a list of argument types
   /// \{
-  SgScopeStatement* operatorScope(const SgType& ty, bool isRelational);
-  SgScopeStatement* operatorScope(const SgType* ty, bool isRelational);
+  SgScopeStatement* operatorScope(std::string opname, SgTypePtrList argtypes);
   /// \}
 
   /// describes properties of imported units

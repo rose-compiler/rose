@@ -198,6 +198,8 @@ class TransferFunction {
     const RegisterDescriptor STACK_POINTER_REG;
     const RegisterDescriptor INSN_POINTER_REG;
     CallingConvention::DefinitionPtr defaultCallingConvention_;
+    bool ignoringSemanticFailures_;
+
 public:
     ~TransferFunction();
 
@@ -224,6 +226,17 @@ public:
      * @{ */
     CallingConvention::DefinitionPtr defaultCallingConvention() const;
     void defaultCallingConvention(const CallingConvention::DefinitionPtr&);
+    /** @} */
+
+    /** Property: Whether to ignore instructions with unknown semantics.
+     *
+     *  If true, then an instruction with unknown semantics will cause the state to be updated in some way that is not
+     *  well defined, depending on exactly when the semantic error occurs during the semantic execution of the instruction. If false,
+     *  then an exception is thrown.
+     *
+     * @{ */
+    bool ignoringSemanticFailures() const;
+    void ignoringSemanticFailures(bool);
     /** @} */
 
     // Required by data-flow engine

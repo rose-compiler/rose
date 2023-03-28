@@ -1,0 +1,11 @@
+% Handle case insensitive part 2 %
+START
+!COMPOOL 'TEST21COMP' SITEM;
+DEF PROC main ;
+   BEGIN
+   SITEM=V(AA) ;
+   SITEM=V(bb) ;
+   sitem=V(AA) ;
+   sitem=V(bb) ;
+   END
+TERM

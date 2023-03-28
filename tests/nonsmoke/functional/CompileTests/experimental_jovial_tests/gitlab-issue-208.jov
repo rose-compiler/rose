@@ -1,0 +1,12 @@
+% New directive for frontend %
+START
+DEF PROC main S;
+BEGIN
+   TABLE INTDATA(2);
+   BEGIN
+      ITEM INTCHAR B 16 ;
+   END
+   !ALWAYS'STORE INTEGER'CHAR ;
+   INTCHAR(1) = 4B'0';
+END
+TERM

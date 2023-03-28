@@ -17,11 +17,11 @@ namespace
 
     si::Ada::FlatArrayType res = si::Ada::getArrayTypeInfo(n->get_type());
 
-    if (!res.first) { return; }
+    if (!res.type()) { return; }
 
     os << "Found ArrayType: " << n->unparseToString() << std::flush;
 
-    for (SgExpression* exp : res.second)
+    for (SgExpression* exp : res.dims())
     {
       // test that the range is given in one of the known forms
       ROSE_ASSERT(  isSgRangeExp(exp)

@@ -381,11 +381,28 @@ public:
  *  from 0x4000 (inclusive) to 0x4100 (exclusive). */
 typedef Sawyer::Container::IntervalMap<AddressInterval, GlobalVariable> GlobalVariables;
 
+/** Erase some global variables.
+ *
+ *  Erases global variables from the specified memory region. It is not sufficient to only remove addresses from the map; the
+ *  addresses stored in the variables themselves (values in the map) may need to be adjusted so they don't overlap with the erased
+ *  range. */
+void erase(GlobalVariables&, const AddressInterval &toErase);
+
 /** Print info about multiple global variables.
  *
  *  This output includes such things as their addresses, sizes, and the defining instructions. The output is
  *  multi-line, intended for debugging. */
 void print(const GlobalVariables&,const Partitioner2::PartitionerConstPtr&, std::ostream &out, const std::string &prefix = "");
+
+/** Check that the map is consistent.
+ *
+ *  Test that the keys of the map match up with the variables contained therein. If a map node is found where the interval key for
+ *  the node doesn't match the addresses of the global variable stored in that node, then the map contains an inconsistency.  When
+ *  an inconsistency is found, and the output stream is enabled then the map is printed and all inconsistencies are highlighted.
+ *
+ *  Returns the first address interval (key) where an inconsistency is detected, or an empty interval if there are no
+ *  inconsistencies. */
+AddressInterval isInconsistent(const GlobalVariables&, Sawyer::Message::Stream&);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // StackFrame
@@ -620,6 +637,34 @@ public:
      *  If the frame's upper address is known, then any boundary above that address is removed from the list. */
     void removeOutliers(const StackFrame&, const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&,
                         StackVariable::Boundaries &sortedBoundaries /*in,out*/);
+
+private:
+    // Searches for global variables using a per-function data-flow analysis and distinguishing between global variable
+    // addresses based on which instructions wrote to those addresses. The data-flow is inter-procedural only for calls to
+    // certain functions (such as the x86 get_pc_thunk variety of functions).
+    //
+    // The return value is a list of global variable addresses and the instructions at which each global variable address
+    // was detected.
+    AddressToAddresses findGlobalVariableVasMethod1(const Partitioner2::PartitionerConstPtr&);
+
+    // Searches for global variables by running each instruction individually in symbolic semantics and then searching
+    // the memory state addresses. All constants found in address expressions are gathered together.
+    //
+    // The return value is a list of global variable addresses and the instructions at which each global address was detected.
+    AddressToAddresses findGlobalVariableVasMethod2(const Partitioner2::PartitionerConstPtr&);
+
+    // Searches for global variables by looking for constants in instruction ASTs.
+    //
+    // The retun value is the list of constants and the instructions in which each constant appeared.
+    AddressToAddresses findGlobalVariableVasMethod3(const Partitioner2::PartitionerConstPtr&);
+
+    // Merge one set of addresses and their defining instructions into another.
+    static void merge(AddressToAddresses&, const AddressToAddresses&);
+
+    // Memory properties
+    static bool regionContainsInstructions(const Partitioner2::PartitionerConstPtr&, const AddressInterval&);
+    static bool regionIsFullyMapped(const Partitioner2::PartitionerConstPtr&, const AddressInterval&);
+    static bool regionIsFullyReadWrite(const Partitioner2::PartitionerConstPtr&, const AddressInterval&);
 };
 
 } // namespace

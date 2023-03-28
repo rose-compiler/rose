@@ -1,0 +1,5 @@
+% Handle case insensitive part 1 %
+START
+COMPOOL TEST15COMP ;
+   DEF ITEM ABcDeF S ;
+TERM

@@ -1,0 +1,18 @@
+% Handle sub procedure %
+START 
+DEF PROC main; 
+BEGIN
+   ITEM XX B 16 ; 
+   ITEM YY U ; 
+   OVERLAY XX:YY; 
+   ITEM SOME U ; 
+   ITEM THING U ; 
+   SUB'PROC;
+   RETURN ; 
+   PROC SUB'PROC(); 
+      BEGIN 
+      ITEM WHY B ; 
+      WHY=FALSE ; 
+      END
+   END 
+TERM 

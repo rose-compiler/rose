@@ -1,0 +1,11 @@
+% Handle case insensitive part 1 %
+START
+!COMPOOL 'TEST15COMP' ABcdEF;
+DEF PROC main ;
+BEGIN
+    ABCDEF = 5;
+    AbCdEf = 6;
+    ABCdef = 9;
+    abcdef = 10;
+END
+TERM

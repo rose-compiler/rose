@@ -1066,6 +1066,8 @@ Grammar::setUpStatements ()
      // MS (01/24/22) support for Ada formal subprogram declarations */
      FunctionDeclaration.setDataPrototype ( "bool", "ada_formal_subprogram_decl", "= false",
                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     FunctionDeclaration.setDataPrototype ( "bool", "ada_formal_decl_with_box", "= false",
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      FunctionParameterList.setFunctionPrototype ( "HEADER_FUNCTION_PARAMETER_LIST", "../Grammar/Statement.code" );
 
@@ -2740,6 +2742,11 @@ Grammar::setUpStatements ()
 
   // DQ (1/10/2019): Adding support for C++11 inheriting constructor.
      UsingDeclarationStatement.setDataPrototype("bool","is_inheriting_constructor","= false",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // PP (3/20/2023): Ada uses UsingDeclarationStatement for modeling use/use type directives
+  //                 Attributes can be used to specify class wide application: use some.type'class
+     UsingDeclarationStatement.setDataPrototype("bool","is_ada_class_wide","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 

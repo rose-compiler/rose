@@ -4,6 +4,7 @@
 #ifdef ROSE_ENABLE_MODEL_CHECKER
 
 #include <Rose/BinaryAnalysis/ModelChecker/Tag.h>
+#include <Rose/BinaryAnalysis/ModelChecker/Variables.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Variables.h>
 
@@ -21,17 +22,14 @@ private:
     const IoMode ioMode_;                                        // read or write
     const SgAsmInstruction *insn_;                               // instruction where the oob access occurs (optional)
     const InstructionSemantics::BaseSemantics::SValuePtr addr_; // memory address that is accessed
-    const Variables::StackVariable intendedVariable_;            // variable that was incorrectly accessed
-    const AddressInterval intendedVariableLocation_;             // location and size of stack variable in memory
-    const Variables::StackVariable accessedVariable_;            // optional info about variable actually accessed
-    const AddressInterval accessedVariableLocation_;             // optional location and size of variable actually accessed
+    const FoundVariable intendedVariable_;                      // variable that was incorrectly accessed
+    const FoundVariable accessedVariable_;                      // optional info about variable actually accessed
 
 protected:
     OutOfBoundsTag() = delete;
     OutOfBoundsTag(size_t nodeStep, TestMode, IoMode, SgAsmInstruction*,
                    const InstructionSemantics::BaseSemantics::SValuePtr &addr,
-                   const Variables::StackVariable &intendedVariable, const AddressInterval &intendedVariableLocation,
-                   const Variables::StackVariable &accessedVariable, const AddressInterval &accessedVariableLocation);
+                   const FoundVariable &intendedVariable, const FoundVariable &accessedVariable);
 
     OutOfBoundsTag(const OutOfBoundsTag&) = delete;
 
@@ -50,8 +48,7 @@ public:
      *  Thread safety: This constructor is thread safe. */
     static Ptr instance(size_t nodeStep, TestMode, IoMode, SgAsmInstruction*,
                         const InstructionSemantics::BaseSemantics::SValuePtr &addr,
-                        const Variables::StackVariable &intendedVariable, const AddressInterval &intendedVariableLocation,
-                        const Variables::StackVariable &accessedVariable, const AddressInterval &accessedVariableLocation);
+                        const FoundVariable &intendedVariable, const FoundVariable &accessedVariable);
 
 public:
     virtual std::string name() const override;
