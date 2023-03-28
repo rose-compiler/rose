@@ -322,6 +322,38 @@ makeRiscOperators(const Settings &settings, const P2::Partitioner::ConstPtr &par
     }
 }
 
+static void
+printAst(std::ostream &out, SgAsmInstruction *insn, const std::string &prefix) {
+    struct Visitor: AstPrePostProcessing {
+        std::ostream &out;
+        size_t depth = 0;
+        const std::string &prefix;
+
+        Visitor(std::ostream &out, const std::string &prefix)
+            : out(out), prefix(prefix) {}
+
+        void preOrderVisit(SgNode *node) override {
+            out <<prefix <<"|";
+            for (size_t i = 0; i < depth; ++i)
+                out <<"   |";
+            ++depth;
+            out <<node->class_name();
+            if (auto insn = isSgAsmInstruction(node))
+                out <<" " <<insn->toString();
+            if (auto rre = isSgAsmRegisterReferenceExpression(node))
+                out <<" " <<rre->get_descriptor().toString();
+            if (auto ive = isSgAsmIntegerValueExpression(node))
+                out <<" " <<StringUtility::toHex2(ive->get_absoluteValue(), ive->get_significantBits());
+            out <<"\n";
+        }
+
+        void postOrderVisit(SgNode*) override {
+            --depth;
+        }
+    };
+    Visitor(out, prefix).traverse(insn);
+}
+
 int
 main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
@@ -350,6 +382,7 @@ main(int argc, char *argv[]) {
     size_t va = memory->hull().least();
     while (SgAsmInstruction *insn = partitioner->instructionProvider()[va]) {
         std::cerr <<partitioner->unparse(insn) <<"\n";
+        printAst(std::cout, insn, "");
         if (cpu) {
             cpu->processInstruction(insn);
             std::cerr <<*ops->currentState();

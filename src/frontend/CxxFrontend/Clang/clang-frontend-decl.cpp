@@ -463,6 +463,30 @@ bool ClangToSageTranslator::VisitDecl(clang::Decl * decl, SgNode ** node) {
     if (!isSgGlobal(*node))
         applySourceRange(*node, decl->getSourceRange());
 
+    if(isSgDeclarationStatement(*node))
+    {
+      SgDeclarationStatement* declStmt = isSgDeclarationStatement(*node);
+      ROSE_ASSERT(declStmt);
+      clang::AccessSpecifier accessSpec = decl->getAccess();
+      switch(accessSpec){
+        case clang::AS_public:
+          declStmt->get_declarationModifier().get_accessModifier().setPublic();
+          break;
+        case clang::AS_protected:
+          declStmt->get_declarationModifier().get_accessModifier().setProtected();
+          break;
+        case clang::AS_private:
+          declStmt->get_declarationModifier().get_accessModifier().setPrivate();
+          break;
+        case clang::AS_none:
+          declStmt->get_declarationModifier().get_accessModifier().setDefault();
+          break;
+        default:
+          std::cerr << "no accessSpecifier is valid" << std::endl;
+      }
+    }
+
+
     // TODO attributes
 /*
     std::cerr << "Attribute list for " << decl->getDeclKindName() << " (" << decl << "): ";
@@ -608,6 +632,15 @@ bool ClangToSageTranslator::VisitImportDecl(clang::ImportDecl * import_decl, SgN
 bool ClangToSageTranslator::VisitNamedDecl(clang::NamedDecl * named_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
     std::cerr << "ClangToSageTranslator::VisitNamedDecl" << std::endl;
+    std::cerr << "hasLinkage() " << named_decl->hasLinkage() << "\n";
+    std::cerr << "isCXXClassMember() " << named_decl->isCXXClassMember() << "\n";
+    std::cerr << "isCXXInstanceMember() " << named_decl->isCXXInstanceMember() << "\n";
+    std::cerr << "hasExternalFormalLinkage() " << named_decl->hasExternalFormalLinkage() << "\n";
+    std::cerr << "isExternallyVisible () " << named_decl->isExternallyVisible () << "\n";
+    std::cerr << "isExternallyDeclarable () " << named_decl->isExternallyDeclarable () << "\n";
+    std::cerr << "isLinkageValid () " << named_decl->isLinkageValid () << "\n";
+    std::cerr << "hasLinkageBeenComputed() " << named_decl->hasLinkageBeenComputed() << "\n";
+    std::cerr << "isModulePrivate() " << named_decl->isModulePrivate() << "\n";
 #endif
     bool res = true;
 
@@ -765,6 +798,20 @@ bool ClangToSageTranslator::VisitTypeDecl(clang::TypeDecl * type_decl, SgNode **
 bool ClangToSageTranslator::VisitTagDecl(clang::TagDecl * tag_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
     std::cerr << "ClangToSageTranslator::VisitTagDecl" << std::endl;
+    std::cerr << "isThisDeclarationADefinition() " << tag_decl->isThisDeclarationADefinition() << "\n";
+    std::cerr << "isCompleteDefinition() " << tag_decl->isCompleteDefinition() << "\n";
+    std::cerr << "isCompleteDefinitionRequired() " << tag_decl->isCompleteDefinitionRequired() << "\n";
+    std::cerr << "isBeingDefined() " << tag_decl->isBeingDefined() << "\n";
+    std::cerr << "isEmbeddedInDeclarator() " << tag_decl->isEmbeddedInDeclarator() << "\n";
+    std::cerr << "isFreeStanding() " << tag_decl->isFreeStanding() << "\n";
+    std::cerr << "mayHaveOutOfDateDef() " << tag_decl->mayHaveOutOfDateDef() << "\n";
+    std::cerr << "isDependentType() " << tag_decl->isDependentType() << "\n";
+    std::cerr << "isThisDeclarationADemotedDefinition() " << tag_decl->isThisDeclarationADemotedDefinition() << "\n";
+    std::cerr << "isStruct () " << tag_decl->isStruct () << "\n";
+    std::cerr << "isInterface () " << tag_decl->isInterface () << "\n";
+    std::cerr << "isUnion () " << tag_decl->isUnion () << "\n";
+    std::cerr << "isEnum () " << tag_decl->isEnum () << "\n";
+    std::cerr << "hasNameForLinkage () " << tag_decl->hasNameForLinkage () << "\n";
 #endif
 
     bool res = true;
@@ -784,23 +831,24 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
     bool res = true;
 #if DEBUG_VISIT_DECL
     std::cerr << "ClangToSageTranslator::VisitRecordDecl name:" <<record_decl->getNameAsString() <<  "\n";
-    std:: cerr << "isAnonymousStructOrUnion() " << record_decl->isAnonymousStructOrUnion() << "\n";
-    std:: cerr << "isThisDeclarationADefinition() " << record_decl->isThisDeclarationADefinition() << "\n";
-    std:: cerr << "isCompleteDefinition() " << record_decl->isCompleteDefinition() << "\n";
-    std:: cerr << "isCompleteDefinitionRequired() " << record_decl->isCompleteDefinitionRequired() << "\n";
-    std:: cerr << "isBeingDefined() " << record_decl->isBeingDefined() << "\n";
-    std:: cerr << "isEmbeddedInDeclarator() " << record_decl->isEmbeddedInDeclarator() << "\n";
-    std:: cerr << "isFreeStanding() " << record_decl->isFreeStanding() << "\n";
-    std:: cerr << "mayHaveOutOfDateDef() " << record_decl->mayHaveOutOfDateDef() << "\n";
-    std:: cerr << "isDependentType() " << record_decl->isDependentType() << "\n";
-    std:: cerr << "hasNameForLinkage () " << record_decl->hasNameForLinkage () << "\n";
-    std:: cerr << "hasLinkage() " << record_decl->hasLinkage() << "\n";
-    std:: cerr << "hasExternalFormalLinkage() " << record_decl->hasExternalFormalLinkage() << "\n";
-    std:: cerr << "isExternallyVisible () " << record_decl->isExternallyVisible () << "\n";
-    std:: cerr << "isExternallyDeclarable () " << record_decl->isExternallyDeclarable () << "\n";
-    std:: cerr << "isLinkageValid () " << record_decl->isLinkageValid () << "\n";
-    std:: cerr << "hasLinkageBeenComputed() " << record_decl->hasLinkageBeenComputed() << "\n";
-    std:: cerr << "isModulePrivate() " << record_decl->isModulePrivate() << "\n";
+    std::cerr << "isAnonymousStructOrUnion() " << record_decl->isAnonymousStructOrUnion() << "\n";
+    std::cerr << "hasObjectMember() " << record_decl->hasObjectMember() << "\n";
+    std::cerr << "hasVolatileMember() " << record_decl->hasVolatileMember() << "\n";
+    std::cerr << "hasLoadedFieldsFromExternalStorage() " << record_decl->hasLoadedFieldsFromExternalStorage() << "\n";
+    std::cerr << "isNonTrivialToPrimitiveDefaultInitialize() " << record_decl->isNonTrivialToPrimitiveDefaultInitialize() << "\n";
+    std::cerr << "isNonTrivialToPrimitiveCopy() " << record_decl->isNonTrivialToPrimitiveCopy() << "\n";
+    std::cerr << "isNonTrivialToPrimitiveDestroy() " << record_decl->isNonTrivialToPrimitiveDestroy() << "\n";
+    std::cerr << "hasNonTrivialToPrimitiveDefaultInitializeCUnion() " << record_decl->hasNonTrivialToPrimitiveDefaultInitializeCUnion() << "\n";
+    std::cerr << "hasNonTrivialToPrimitiveDestructCUnion() " << record_decl->hasNonTrivialToPrimitiveDestructCUnion() << "\n";
+    std::cerr << "hasNonTrivialToPrimitiveCopyCUnion() " << record_decl->hasNonTrivialToPrimitiveCopyCUnion() << "\n";
+    std::cerr << "canPassInRegisters() " << record_decl->canPassInRegisters() << "\n";
+    std::cerr << "isParamDestroyedInCallee() " << record_decl->isParamDestroyedInCallee() << "\n";
+    std::cerr << "isRandomized() " << record_decl->isRandomized() << "\n";
+    std::cerr << "isInjectedClassName() " << record_decl->isInjectedClassName() << "\n";
+    std::cerr << "isLambda() " << record_decl->isLambda() << "\n";
+    std::cerr << "isCapturedRecord() " << record_decl->isCapturedRecord() << "\n";
+    std::cerr << "isOrContainsUnion() " << record_decl->isOrContainsUnion() << "\n";
+    std::cerr << "field_empty() " << record_decl->field_empty() << "\n";
 #endif
 
     SgClassDeclaration * sg_class_decl = NULL;
@@ -1008,10 +1056,12 @@ bool ClangToSageTranslator::VisitCXXRecordDecl(clang::CXXRecordDecl * cxx_record
         ROSE_ASSERT(methodDeclStmt);
         methodDeclStmt->set_scope(CxxRecordDeclaration->get_definition());
         CxxRecordDeclaration->get_definition()->append_member(methodDeclStmt);
+/* Tentatively turn on everything 
         if((*it_method)->isImplicit())
         {
            methodDeclStmt->setCompilerGenerated();
         }
+*/
     }
 
     clang::CXXRecordDecl::ctor_iterator it_ctor;
@@ -1631,7 +1681,7 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
     SgType * ret_type = buildTypeFromQualifiedType(function_decl->getReturnType());
 
     SgFunctionParameterList * param_list = SageBuilder::buildFunctionParameterList_nfi();
-      applySourceRange(param_list, function_decl->getSourceRange()); // FIXME find the good SourceRange (should be stored by Clang...)
+    applySourceRange(param_list, function_decl->getParametersSourceRange()); // FIXME find the good SourceRange (should be stored by Clang...)
 
     if(funcProtoType != nullptr && funcProtoType->getNumParams() != function_decl->getNumParams())
         diffInProtoType = true;
@@ -1703,7 +1753,8 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
 
     SgFunctionDeclaration * sg_function_decl;
 
-    if (function_decl->isThisDeclarationADefinition() && function_decl->hasBody()) {
+    //if (function_decl->isThisDeclarationADefinition() && function_decl->hasBody()) {
+    if (function_decl->isThisDeclarationADefinition()) {
         if(llvm::isa<clang::CXXMethodDecl>(function_decl))
         {
           SgClassDeclaration* cxxRecordDecl = NULL;
@@ -1724,10 +1775,6 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
             sg_function_decl->hasEllipses();
         }
 
-        if (!function_decl->hasBody()) {
-            std::cerr << "Defining function declaration without body..." << std::endl;
-            res = false;
-        }
 /*
         if (sg_function_decl->get_definition() != NULL) SageInterface::deleteAST(sg_function_decl->get_definition());
 
@@ -1750,7 +1797,16 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
 
         SageBuilder::pushScopeStack(function_definition);
 
-        SgNode * tmp_body = Traverse(function_decl->getBody());
+        SgNode * tmp_body;
+        if (!function_decl->hasBody()) {
+            std::cerr << "Defining function declaration without body..." << std::endl;
+            //res = false;
+            tmp_body = SageBuilder::buildBasicBlock();
+        }
+        else
+        {
+            tmp_body = Traverse(function_decl->getBody());
+        }
         SgBasicBlock * body = isSgBasicBlock(tmp_body);
 
         SageBuilder::popScopeStack();
@@ -1896,6 +1952,7 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
       sg_function_decl->get_declarationModifier().get_storageModifier().setExtern();
     }
 
+    applySourceRange(sg_function_decl, function_decl->getSourceRange());
     *node = sg_function_decl;
 
     return VisitDeclaratorDecl(function_decl, node) && res;
@@ -1933,25 +1990,6 @@ bool ClangToSageTranslator::VisitCXXMethodDecl(clang::CXXMethodDecl * cxx_method
 //    SgClassDeclaration* CxxRecordDeclaration = isSgClassDeclaration(Traverse(cxx_method_decl->getParent()));
 //    ROSE_ASSERT(CxxRecordDeclaration); 
 //    CxxRecordDeclaration->get_definition()->append_member(functionDecl);
-    SgDeclarationStatement* methodDeclStmt = isSgDeclarationStatement(*node);
-    clang::AccessSpecifier accessSpec = cxx_method_decl->getAccess();
-    switch(accessSpec){
-      case clang::AS_public:
-        methodDeclStmt->get_declarationModifier().get_accessModifier().setPublic();
-        break;
-      case clang::AS_protected:
-        methodDeclStmt->get_declarationModifier().get_accessModifier().setProtected();
-        break;
-      case clang::AS_private:
-        methodDeclStmt->get_declarationModifier().get_accessModifier().setPrivate();
-        break;
-      case clang::AS_none:
-        methodDeclStmt->get_declarationModifier().get_accessModifier().setDefault();
-        break;
-      default:
-        std::cerr << "no accessSpecifier is valid" << std::endl;
-    }
-    ROSE_ASSERT(methodDeclStmt);
 
     return res;
 }
@@ -1970,25 +2008,7 @@ bool ClangToSageTranslator::VisitCXXConstructorDecl(clang::CXXConstructorDecl * 
 #endif
 
     // getting ctorInitializer
-//    SgCtorInitializerList* ctorInitializerList = SageBuilder::buildCtorInitializerList_nfi();
 
-//    clang::CXXConstructorDecl::init_range ctorInitRange = cxx_constructor_decl->inits();
-//    for(auto initializer=ctorInitRange.begin(); initializer != ctorInitRange.end(); initializer++)
-//    {
-//#if DEBUG_VISIT_DECL
-//      std::cerr << "isBaseInitializer = " << (*initializer)->isBaseInitializer() << "\n";
-//      std::cerr << "isMemberInitializer = " << (*initializer)->isMemberInitializer() << "\n";
-//      std::cerr << "isAnyMemberInitializer  = " << (*initializer)->isAnyMemberInitializer() << "\n";
-//      std::cerr << "isIndirectMemberInitializer = " << (*initializer)->isIndirectMemberInitializer() << "\n";
-//#endif
-//      if((*initializer)->isMemberInitializer())
-//      {
-//         clang::FieldDecl * field_decl = (*initializer)->getMember();
-//         SgName fieldName(field_decl->getNameAsString());
-//         SgVariableDeclaration* initializedMember = isSgVariableDeclaration(Traverse(field_decl));
-//         ctorInitializerList->append_ctor_initializer(initializedMember->get_decl_item(fieldName)); 
-//      }
-//    }
 //
 //    SgFunctionParameterList * param_list = SageBuilder::buildFunctionParameterList_nfi();
 
@@ -1999,7 +2019,48 @@ bool ClangToSageTranslator::VisitCXXConstructorDecl(clang::CXXConstructorDecl * 
 //    *node = memberFunctionDecl;
     res = VisitCXXMethodDecl(cxx_constructor_decl, node);
     SgMemberFunctionDeclaration* cxxConstructorDecl = isSgMemberFunctionDeclaration(*node);
+    SgMemberFunctionDeclaration* cxxDefiningConstructorDecl = isSgMemberFunctionDeclaration(cxxConstructorDecl->get_definingDeclaration());
     cxxConstructorDecl->get_specialFunctionModifier().setConstructor();
+
+    // apply ctorInitializer
+    if(cxx_constructor_decl->getNumCtorInitializers() != 0 && cxxDefiningConstructorDecl != NULL)
+    {
+      SgCtorInitializerList* ctorInitializerList = SageBuilder::buildCtorInitializerList_nfi();
+      clang::CXXConstructorDecl::init_iterator initializer;
+      unsigned cnt = 0;
+      for (initializer = cxx_constructor_decl->init_begin(); initializer != cxx_constructor_decl->init_end(); initializer++) 
+      {
+        cnt++;
+  #if DEBUG_VISIT_DECL
+        std::cerr << "isBaseInitializer = " << (*initializer)->isBaseInitializer() << "\n";
+        std::cerr << "isMemberInitializer = " << (*initializer)->isMemberInitializer() << "\n";
+        std::cerr << "isAnyMemberInitializer  = " << (*initializer)->isAnyMemberInitializer() << "\n";
+        std::cerr << "isIndirectMemberInitializer = " << (*initializer)->isIndirectMemberInitializer() << "\n";
+  #endif
+        if((*initializer)->isMemberInitializer())
+        {
+           clang::FieldDecl * field_decl = (*initializer)->getMember();
+           SgName fieldName(field_decl->getNameAsString());
+           SgVariableDeclaration* fieldMemberDecl = isSgVariableDeclaration(Traverse(field_decl));
+           SgInitializedName* fieldInitializedName = fieldMemberDecl->get_decl_item(fieldName);
+           SgType* fieldType = fieldInitializedName->get_type();
+
+           SgExpression* initExpr = isSgExpression(Traverse((*initializer)->getInit())); 
+           SgInitializer* sgCtorInitializer = SageBuilder::buildAssignInitializer_nfi(initExpr, fieldType);
+           SgInitializedName* sgCtorInitializedName = SageBuilder::buildInitializedName(fieldName,fieldType, sgCtorInitializer);
+           applySourceRange(sgCtorInitializedName, (*initializer)->getSourceRange());
+           sgCtorInitializer->set_parent(sgCtorInitializedName);
+           applySourceRange(sgCtorInitializer, ((*initializer)->getInit())->getSourceRange());
+           ctorInitializerList->append_ctor_initializer(sgCtorInitializedName);
+           sgCtorInitializedName->set_parent(ctorInitializerList); 
+           sgCtorInitializedName->set_scope(SageBuilder::topScopeStack()); 
+        }
+      }
+      cxxDefiningConstructorDecl->set_CtorInitializerList(ctorInitializerList);
+      ctorInitializerList->set_parent(cxxDefiningConstructorDecl);
+      ctorInitializerList->set_definingDeclaration(ctorInitializerList);
+      ctorInitializerList->set_firstNondefiningDeclaration(ctorInitializerList);
+    }
     if(cxx_constructor_decl->isDefaultConstructor())
     {
 #if DEBUG_VISIT_DECL
@@ -2177,7 +2238,11 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
     SgExprListExp * expr_list_expr = isSgExprListExp(expr);
 
     SgInitializer * init = NULL;
-    if (expr_list_expr != NULL)
+    if (isSgInitializer(tmp_init))
+    {
+        init = isSgInitializer(tmp_init);
+    }
+    else if (expr_list_expr != NULL)
         init = SageBuilder::buildAggregateInitializer(expr_list_expr, type);
     else if (expr != NULL)
         init = SageBuilder::buildAssignInitializer_nfi(expr, expr->get_type());
@@ -2267,6 +2332,12 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
     {
       sg_var_decl->get_declarationModifier().get_storageModifier().setStatic();
     }
+    bool isStaticDataMember = var_decl->isStaticDataMember();
+    // Pei-Hung (03/14/23) added "static" modifier for data member
+    if(isStaticDataMember)
+    {
+      sg_var_decl->get_declarationModifier().get_storageModifier().setStatic();
+    }
     //Pei-Hung (09/27/2022) setup linkage
     if(var_decl->hasExternalStorage())
     {
@@ -2340,6 +2411,7 @@ bool ClangToSageTranslator::VisitParmVarDecl(clang::ParmVarDecl * param_var_decl
     }
 
     *node = SageBuilder::buildInitializedName(name, type, init);
+    applySourceRange(*node, param_var_decl->getSourceRange());
 
     return VisitDeclaratorDecl(param_var_decl, node) && res;
 }

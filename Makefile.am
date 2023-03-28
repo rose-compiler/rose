@@ -452,8 +452,7 @@ docs: FORCE_DOCS_TO_BE_MADE
 	   $(MAKE) -Ctests/nonsmoke/functional/roseTests/astInterfaceTests check && \
 	   $(MAKE) -Ctests/nonsmoke/functional/roseTests/ompLoweringTests check && \
 	   $(MAKE) -Ctests/nonsmoke/functional/CompileTests/UPC_tests check && \
-	   $(MAKE) -Cdocs docs && \
-	   $(MAKE) -C$(compass_build_tooldir)/compass docs; \
+	   $(MAKE) -Cdocs docs; \
 	else \
 	   echo "Please look at the ROSE web site for documentation (www.roseCompiler.org)"; \
 	fi

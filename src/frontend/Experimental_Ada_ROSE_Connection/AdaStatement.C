@@ -113,7 +113,7 @@ namespace
       return queryScopeOfID(expr.Selector, ctx);
 
     if (expr.Expression_Kind != An_Identifier)
-      logError() << "unexpected identifier" << expr.Expression_Kind;
+      logError() << "unexpected identifier: " << expr.Expression_Kind;
 
     ADA_ASSERT (expr.Expression_Kind == An_Identifier);
     logKind("An_Identifier", elem.ID);
@@ -122,7 +122,7 @@ namespace
 
     if (dcl == nullptr)
     {
-      logError() << "Unable to find scope/declaration for " << expr.Name_Image
+      logFatal() << "Unable to find scope/declaration for " << expr.Name_Image
                  << std::endl;
       ADA_ASSERT(false);
     }
@@ -616,7 +616,8 @@ namespace
 
     // if nondefdcl is set, it must be a SgClassDeclaration
     if (nondefdcl)
-      logError() << name << " " << typeid(*nondefdcl).name() << std::endl;
+      logFlaw() << name << " " << typeid(*nondefdcl).name() << " not a class declaration!"
+                << std::endl;
 
     ADA_ASSERT (!nondefdcl);
     return mkRecordDecl(name, def, scope);
@@ -2240,6 +2241,7 @@ namespace
         ADA_ASSERT (el.Element_Kind == An_Expression);
 
         NameData                usedEl = getName(el, ctx); // either unit or type
+        AdaIdentifier           fullName{usedEl.fullName};
         Expression_Struct&      expr   = asisExpression(usedEl.elem());
         SgDeclarationStatement* used   = findFirst(m, expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration);
 
@@ -2249,9 +2251,8 @@ namespace
         {
           // try to look up the symbol from the context by name
           const SgSymbol*       sym = nullptr;
-          AdaIdentifier         ident{usedEl.fullName};
 
-          std::tie(std::ignore, sym) = si::Ada::findSymbolInContext(ident, ctx.scope());
+          std::tie(std::ignore, sym) = si::Ada::findSymbolInContext(fullName, ctx.scope());
 
           // do we need to check the symbol type?
           if (sym) used = si::Ada::associatedDeclaration(*sym);
@@ -2266,17 +2267,24 @@ namespace
                     << "\n   in scope type: " << typeid(ctx.scope()).name()
                     << std::endl;
 
-          AdaIdentifier ident{usedEl.fullName};
-
-          used = findFirst(adaPkgs(), ident);
+          used = findFirst(adaPkgs(), fullName);
           if (!used)
           {
-            if (SgNamedType* ty = isSgNamedType(findFirst(adaTypes(), ident)))
+            if (SgNamedType* ty = isSgNamedType(findFirst(adaTypes(), fullName)))
               used = ty->get_declaration();
           }
         }
 
         SgUsingDeclarationStatement& sgnode = mkUseClause(SG_DEREF(used));
+
+        if (fullName.find("'") != std::string::npos)
+        {
+          ADA_ASSERT(boost::algorithm::ends_with(fullName, "CLASS"));
+
+          // \todo introduce proper flag
+          sgnode.set_is_ada_class_wide(true);
+        }
+
 
         //~ std::cerr
         //~ logError() << "use decl: " << usedEl.fullName
@@ -2451,8 +2459,8 @@ namespace
       logKind("A_Formal_Type_Declaration", complElem.ID);
     else
     {
-      logError() << "unexpected decl kind [queryDefinitionData]: " << complDecl.Declaration_Kind
-                    << std::endl;
+      logFlaw() << "unexpected decl kind [queryDefinitionData]: " << complDecl.Declaration_Kind
+                << std::endl;
     }
 
     Element_Struct&     typeElem = retrieveAs(elemMap(), complDecl.Type_Declaration_View);
@@ -2481,8 +2489,8 @@ namespace
         break;
 
       default:
-        logError() << "unexpected def kind [queryDefinitionData]: " << typeDefn.Definition_Kind
-                      << std::endl;
+        logFatal() << "unexpected def kind [queryDefinitionData]: " << typeDefn.Definition_Kind
+                   << std::endl;
         ADA_ASSERT(false);
     }
 
@@ -2571,7 +2579,7 @@ namespace
 
   struct InheritedSymbolCreator
   {
-      InheritedSymbolCreator(SgNamedType& sourceRootType,  SgNamedType& dervType, AstContext astctx)
+      InheritedSymbolCreator(SgNamedType& sourceRootType, SgNamedType& dervType, AstContext astctx)
       : baseType(sourceRootType), dervivedType(dervType), ctx(astctx)
       {}
 
@@ -2582,18 +2590,26 @@ namespace
 
         if (fn == nullptr)
         {
-          logError() << "unable to find function with Asis element ID " << elem.ID << std::endl;
+          logFlaw() << "unable to find function with Asis element ID " << elem.ID << std::endl;
           return;
         }
 
         SgFunctionSymbol*             fnsym  = findFirst(inheritedSymbols(), std::make_pair(fn, &baseType));
         if (fnsym == nullptr) fnsym = isSgFunctionSymbol(fn->search_for_symbol_from_symbol_table());
 
-        if (fn == nullptr)
+        if (fnsym == nullptr)
         {
-          logError() << "unable to find (derived) function symbol for " << fn->get_name() << std::endl;
+          logFlaw() << "unable to find (derived) function symbol for " << fn->get_name() << std::endl;
           return;
         }
+
+        SgDeclarationStatement const* symdcl = fnsym->get_declaration();
+        if (symdcl && (symdcl->get_firstNondefiningDeclaration() != fn->get_firstNondefiningDeclaration()))
+        {
+          logFlaw() << fn->get_name() << " sym/dcl mismatch"
+                    << std::endl;
+        }
+
 
         SgAdaInheritedFunctionSymbol& sgnode = mkAdaInheritedFunctionSymbol(*fnsym, dervivedType, ctx.scope());
         const auto inserted = inheritedSymbols().insert(std::make_pair(InheritedSymbolKey{fn, &dervivedType}, &sgnode));
@@ -2624,7 +2640,7 @@ namespace
         // by setting the initializer to the old value. However, derived enumerators can have
         // different representation values, and to support JACCEL-265 and the translation to C++
         // in general, the link to the original declaration is no longer maintained.
-        // Instead, the initializer now links to the representation value. The relationshio to the
+        // Instead, the initializer now links to the representation value. The relationship to the
         // inherited values is now implied.
         // \todo The code is most similar to the normal EnumeratorCreator in AdaType.C and
         //       could be refactored to eliminate code duplication.
@@ -2667,16 +2683,24 @@ namespace
                              )
   {
     SgType*              baseType     = si::Ada::baseType(derivedType);
-    SgNamedType*         baseRootType = isSgNamedType(si::Ada::typeRoot(baseType).typerep());
+    SgType*              baseRootRaw  = si::Ada::typeRoot(baseType).typerep();
+    SgNamedType*         baseRootType = isSgNamedType(baseRootRaw);
 
     if (baseRootType == nullptr)
     {
-      logWarn() << "unable to find base-root for " << derivedType.get_name()
-                << " / base = " << baseType
-                << std::endl;
+      // if baseRootRaw != nullptr
+      //   it will correspond to a universal type in package standard.
+      //   -> not an error
+
+      if (baseRootRaw == nullptr)
+        logFlaw() << "unable to find base-root for " << derivedType.get_name()
+                  << " / base = " << baseType
+                  << std::endl;
       return;
     }
 
+    //~ logWarn() << "drv: " << derivedType.get_name() << " / " << baseRootType->get_name()
+              //~ << std::endl;
     traverseIDs(subprograms, elemMap(), InheritedSymbolCreator{*baseRootType, derivedType, ctx});
 
     if (!declarations.empty())
@@ -2732,7 +2756,7 @@ namespace
 
     if (basedecl == nullptr)
     {
-      logError() << typeid(*baseTy).name() << std::endl;
+      logFlaw() << "basedecl == nullptr: " << typeid(*baseTy).name() << std::endl;
       ASSERT_not_null(basedecl);
     }
 
@@ -2756,7 +2780,7 @@ namespace
 
       if (baseRootType == nullptr)
       {
-        logWarn() << "unable to find base-root for enum " << derivedType.get_name()
+        logFlaw() << "unable to find base-root for enum " << derivedType.get_name()
                   << " / base = " << baseType
                   << std::endl;
         return;
@@ -2795,6 +2819,8 @@ namespace
       processInheritedSubroutines(tydef, *classTypeDcl, ctx);
     else if (SgEnumDeclaration* derivedEnumDcl = isSgEnumDeclaration(&dcl))
       processInheritedEnumValues(tydef, *derivedEnumDcl, ctx);
+    else if (SgAdaDiscriminatedTypeDecl* discrTypeDcl = isSgAdaDiscriminatedTypeDecl(&dcl))
+      processInheritedSubroutines(tydef, *discrTypeDcl, ctx);
     else
       ADA_ASSERT(false);
   }
@@ -2905,17 +2931,17 @@ namespace
                   : mkProcedureDecl_nondef(name,    scope, rettype, std::move(complete));
   }
 
-  void completeDiscriminatedDecl( SgAdaDiscriminatedTypeDecl& sgnode,
-                                  SgDeclarationStatement* nondef,
-                                  Element_ID id,
-                                  SgDeclarationStatement& child,
+  void completeDiscriminatedDecl( Element_ID id,
                                   Element_Struct& elem,
+                                  SgAdaDiscriminatedTypeDecl& sgnode,
+                                  SgDeclarationStatement& sgdecl,
                                   bool isPrivate,
                                   AstContext ctx
                                 )
   {
+    sg::linkParentChild(sgnode, sgdecl, &SgAdaDiscriminatedTypeDecl::set_discriminatedDecl);
     privatize(sgnode, isPrivate);
-    recordNode(asisTypes(), id, child, true /* replace */);
+    recordNode(asisTypes(), id, sgdecl, true /* replace */);
     attachSourceLocation(sgnode, elem, ctx);
 
     ADA_ASSERT (sgnode.get_parent() == &ctx.scope());
@@ -2992,11 +3018,6 @@ namespace
     Element_ID              id     = adaname.id();
     SgDeclarationStatement& sgdecl = createOpaqueDecl(adaname, decl, defdata, ctx.scope(scope));
 
-    /*
-    TypeData                ty   = getTypeFoundation(adaname.ident, decl, ctx.scope(scope));
-    processInheritedElementsOfDerivedTypes(ty, sgdecl, ctx);
-    */
-
     attachSourceLocation(sgdecl, elem, ctx);
     privatize(sgdecl, isPrivate);
     recordNode(asisTypes(), id, sgdecl);
@@ -3009,8 +3030,7 @@ namespace
     }
     else
     {
-      sg::linkParentChild(*discr, sgdecl, &SgAdaDiscriminatedTypeDecl::set_discriminatedDecl);
-      completeDiscriminatedDecl(*discr, nullptr /* no nondef dcl */, id, sgdecl, elem, isPrivate, ctx);
+      completeDiscriminatedDecl(id, elem, *discr, sgdecl, isPrivate, ctx);
     }
 
     if (decl.Declaration_Kind == A_Private_Extension_Declaration)
@@ -3022,7 +3042,9 @@ namespace
 
         if (tydef.Definition_Kind == A_Private_Extension_Definition)
         {
-          processInheritedSubroutines( SG_DEREF(si::getDeclaredType(&sgdecl)),
+          SgDeclarationStatement* tydcl = discr ? discr : &sgdecl;
+
+          processInheritedSubroutines( SG_DEREF(si::getDeclaredType(tydcl)),
                                        idRange(tydef.The_Union.The_Private_Extension_Definition.Implicit_Inherited_Subprograms),
                                        idRange(tydef.The_Union.The_Private_Extension_Definition.Implicit_Inherited_Declarations),
                                        ctx
@@ -3468,18 +3490,6 @@ namespace
        )
       return decl.Parameter_Profile;
 
-/*
-    Declaration_Struct& firstDecl = firstDeclaration(decl);
-
-    if (firstDecl == nullptr) return decl.Parameter_Profile;
-
-    ADA_ASSERT(  (firstDecl->Declaration_Kind == A_Procedure_Declaration)
-              || (firstDecl->Declaration_Kind == A_Function_Declaration)
-              || (firstDecl->Declaration_Kind == A_Generic_Procedure_Declaration)
-              || (firstDecl->Declaration_Kind == A_Generic_Function_Declaration)
-              || (firstDecl->Declaration_Kind == An_Entry_Declaration)
-              );
-*/
     return firstDeclaration(decl).Parameter_Profile;
   }
 }
@@ -3667,7 +3677,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         // private items
         {
           ElemIdRange range = idRange(decl.Private_Part_Declarative_Items);
-          //ADA_ASSERT ((!range.empty()) == decl.Is_Private_Present);
 
           traverseIDs(range, elemMap(), ElemCreator{ctx.scope(pkgspec), true});
         }
@@ -3958,14 +3967,13 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         {
           ADA_ASSERT(&ctx.scope() == parentScope);
           ctx.appendStatement(sgdecl);
-          processInheritedElementsOfDerivedTypes(ty, sgdecl, ctx);
         }
         else
         {
-          sg::linkParentChild(*discr, sgdecl, &SgAdaDiscriminatedTypeDecl::set_discriminatedDecl);
-          completeDiscriminatedDecl(*discr, nondef, id, sgdecl, elem, isPrivate, ctx);
+          completeDiscriminatedDecl(id, elem, *discr, sgdecl, isPrivate, ctx);
         }
 
+        processInheritedElementsOfDerivedTypes(ty, discr ? *discr : sgdecl, ctx);
 
         /* unused fields
             bool                           Has_Abstract;
@@ -4015,20 +4023,21 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
     case A_Formal_Procedure_Declaration:           // 12.6(2)
     case A_Formal_Function_Declaration:            // 12.6(2)
       {
-        logKind(decl.Declaration_Kind == A_Formal_Procedure_Declaration
-                    ? "A_Formal_Procedure_Declaration" : "A_Formal_Function_Declaration"
+        // \todo instead of modeling function parameters as functions,
+        //       consider modeling them as variables of functions..
+
+        const bool        isFormalFuncDecl = decl.Declaration_Kind == A_Formal_Function_Declaration;
+
+        logKind( isFormalFuncDecl ? "A_Formal_Function_Declaration" : "A_Formal_Procedure_Declaration"
                , elem.ID
                );
 
-        const bool        isFormalFuncDecl = decl.Declaration_Kind == A_Formal_Function_Declaration;
         NameData          adaname          = singleName(decl, ctx);
         ElemIdRange       range            = idRange(decl.Parameter_Profile);
-        SgType&           rettype          = isFormalFuncDecl
-          ? getDeclTypeID(decl.Result_Profile, ctx)
-          : mkTypeVoid();
+        SgType&           rettype          = isFormalFuncDecl ? getDeclTypeID(decl.Result_Profile, ctx)
+                                                              : mkTypeVoid();
 
         ADA_ASSERT (adaname.fullName == adaname.ident);
-
         SgScopeStatement&     logicalScope = adaname.parent_scope();
 
         // create a function declaration for formal function/procedure declaration.
@@ -4038,6 +4047,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
                                                                 ParameterCompletion{range, ctx}
                                                               );
         sgnode.set_ada_formal_subprogram_decl(true);
+        sgnode.set_ada_formal_decl_with_box(decl.Default_Kind == A_Box_Default);
+
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
 
@@ -4164,26 +4175,45 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         ADA_ASSERT (adaname.fullName == adaname.ident);
 
 
-        Element_ID              nameId  = adaname.id();
-        SgDeclarationStatement* incomp  = findFirst(asisTypes(), nameId);
-        SgAdaProtectedTypeDecl* nondef  = isSgAdaProtectedTypeDecl(incomp);
+        Element_ID                  id      = adaname.id();
+        SgDeclarationStatement*     incomp  = findFirst(asisTypes(), id);
+        SgAdaProtectedTypeDecl*     nondef  = isSgAdaProtectedTypeDecl(incomp);
         ADA_ASSERT(!incomp || nondef);
 
-        SgAdaProtectedTypeDecl& sgnode  = nondef ? mkAdaProtectedTypeDecl(*nondef, SG_DEREF(spec.first), ctx.scope())
-                                                 : mkAdaProtectedTypeDecl(adaname.fullName, spec.first, ctx.scope());
+        SgScopeStatement*           parentScope = &ctx.scope();
+        SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDeclID_opt(decl.Discriminant_Part, ctx);
 
-        attachSourceLocation(sgnode, elem, ctx);
-        privatize(sgnode, isPrivate);
-        ctx.appendStatement(sgnode);
-        recordNode(asisTypes(), adaname.id(), sgnode, nondef != nullptr);
-        recordNode(asisDecls(), adaname.id(), sgnode);
-        recordNode(asisDecls(), elem.ID, sgnode);
+        if (discr)
+        {
+          parentScope = discr->get_discriminantScope();
+          ADA_ASSERT(parentScope != nullptr);
+        }
+
+        SgAdaProtectedTypeDecl& sgdecl  = nondef ? mkAdaProtectedTypeDecl(*nondef, SG_DEREF(spec.first), *parentScope)
+                                                 : mkAdaProtectedTypeDecl(adaname.fullName, spec.first,  *parentScope);
+
+        attachSourceLocation(sgdecl, elem, ctx);
+        privatize(sgdecl, isPrivate);
+
+        recordNode(asisTypes(), id, sgdecl, nondef != nullptr);
+        recordNode(asisDecls(), id, sgdecl);
+        recordNode(asisDecls(), elem.ID, sgdecl);
+
+        if (!discr)
+        {
+          ADA_ASSERT(&ctx.scope() == parentScope);
+          ctx.appendStatement(sgdecl);
+        }
+        else
+        {
+          completeDiscriminatedDecl(id, elem, *discr, sgdecl, isPrivate, ctx);
+        }
+
         spec.second(); // complete the body
 
         /* unused fields:
              bool                           Has_Protected;
              Element_ID                     Corresponding_End_Name;
-             Definition_ID                  Discriminant_Part;
              Definition_ID                  Type_Declaration_View;
              Declaration_ID                 Corresponding_Type_Declaration;
              Declaration_ID                 Corresponding_Type_Partial_View
@@ -4202,30 +4232,49 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         logKind("A_Task_Type_Declaration", elem.ID);
 
-        auto               spec    = getTaskSpecForTaskType(decl, ctx);
-        NameData           adaname = singleName(decl, ctx);
+        auto                        spec    = getTaskSpecForTaskType(decl, ctx);
+        NameData                    adaname = singleName(decl, ctx);
         ADA_ASSERT (adaname.fullName == adaname.ident);
 
-        Element_ID              nameId  = adaname.id();
-        SgDeclarationStatement* ndef    = findFirst(asisTypes(), nameId);
-        SgAdaTaskTypeDecl*      nondef  = isSgAdaTaskTypeDecl(ndef);
+        Element_ID                  id     = adaname.id();
+        SgDeclarationStatement*     ndef   = findFirst(asisTypes(), id);
+        SgAdaTaskTypeDecl*          nondef = isSgAdaTaskTypeDecl(ndef);
         ADA_ASSERT(!ndef || nondef); // ndef => nondef
 
-        SgAdaTaskTypeDecl& sgnode  = nondef ? mkAdaTaskTypeDecl(*nondef, SG_DEREF(spec.first), ctx.scope())
-                                            : mkAdaTaskTypeDecl(adaname.fullName, spec.first, ctx.scope());
+        SgScopeStatement*           parentScope = &ctx.scope();
+        SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDeclID_opt(decl.Discriminant_Part, ctx);
 
-        attachSourceLocation(sgnode, elem, ctx);
-        privatize(sgnode, isPrivate);
-        ctx.appendStatement(sgnode);
+        if (discr)
+        {
+          parentScope = discr->get_discriminantScope();
+          ADA_ASSERT(parentScope != nullptr);
+        }
 
-        recordNode(asisTypes(), nameId, sgnode, nondef != nullptr);
-        recordNode(asisDecls(), nameId, sgnode);
-        recordNode(asisDecls(), elem.ID, sgnode);
+        SgAdaTaskTypeDecl& sgdecl  = nondef ? mkAdaTaskTypeDecl(*nondef, SG_DEREF(spec.first), *parentScope)
+                                            : mkAdaTaskTypeDecl(adaname.fullName, spec.first,  *parentScope);
+
+        attachSourceLocation(sgdecl, elem, ctx);
+        privatize(sgdecl, isPrivate);
+
+        recordNode(asisTypes(), id, sgdecl, nondef != nullptr);
+        recordNode(asisDecls(), id, sgdecl);
+        recordNode(asisDecls(), elem.ID, sgdecl);
+
+        if (!discr)
+        {
+          ADA_ASSERT(&ctx.scope() == parentScope);
+          ctx.appendStatement(sgdecl);
+        }
+        else
+        {
+          completeDiscriminatedDecl(id, elem, *discr, sgdecl, isPrivate, ctx);
+        }
+
         spec.second(); // complete the body
+
         /* unused fields:
              bool                           Has_Task;
              Element_ID                     Corresponding_End_Name;
-             Definition_ID                  Discriminant_Part;
              Definition_ID                  Type_Declaration_View;
              Declaration_ID                 Corresponding_Type_Declaration;
              Declaration_ID                 Corresponding_Type_Partial_View;
@@ -4830,17 +4879,17 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         Expression_Struct&        baseexpr = baseelem.The_Union.Expression;
         SgDeclarationStatement*   basedecl = findFirst(asisDecls(), baseexpr.Corresponding_Name_Declaration, baseexpr.Corresponding_Name_Definition);
 
-        if (true && basedecl == nullptr)
+        if (false && basedecl == nullptr)
         {
           // Integer_IO: 24138136 and 24551081 not found
-          logError() << basename.ident << ": "
-                     << baseexpr.Corresponding_Name_Declaration << " and "
-                     << baseexpr.Corresponding_Name_Definition << " not found"
-                     << std::endl;
+          logFlaw() << basename.ident << ": "
+                    << baseexpr.Corresponding_Name_Declaration << " and "
+                    << baseexpr.Corresponding_Name_Definition << " not found"
+                    << std::endl;
 
-          logError() << elemMap().at(baseexpr.Corresponding_Name_Declaration)->Element_Kind
-                     << " / " << elemMap().at(baseexpr.Corresponding_Name_Definition)->Element_Kind
-                     << std::endl;
+          logFlaw() << elemMap().at(baseexpr.Corresponding_Name_Declaration)->Element_Kind
+                    << " / " << elemMap().at(baseexpr.Corresponding_Name_Definition)->Element_Kind
+                    << std::endl;
         }
 
         // PP (2/2/22): the base decl can also be a renamed generic declaration
@@ -5096,8 +5145,18 @@ getQualName(Element_Struct& elem, AstContext ctx)
     return NameData{ ident, ident, ctx.scope(), elem };
   }
 
+  if (idex.Expression_Kind == An_Attribute_Reference)
+  {
+    NameData prefix = getNameID(idex.Prefix, ctx);
+    NameData attr   = getNameID(idex.Attribute_Designator_Identifier, ctx);
+
+    return NameData{ prefix.ident, prefix.fullName + "'" + attr.fullName, ctx.scope(), prefix.elem() };
+  }
+
   if (idex.Expression_Kind != A_Selected_Component)
     logError() << "Unexpected Expression_kind [getQualName]: " << idex.Expression_Kind
+               << ( elem.Source_Location.Unit_Name ? elem.Source_Location.Unit_Name : "" )
+               << " @" << elem.Source_Location.First_Line << ":" << elem.Source_Location.First_Column
                << std::endl;
 
   ADA_ASSERT (idex.Expression_Kind == A_Selected_Component);

@@ -39,6 +39,8 @@ using FailureUnitPtr = std::shared_ptr<FailureUnit>;
 class FastestPathFirst;
 using FastestPathFirstPtr = std::shared_ptr<FastestPathFirst>;
 
+class FoundVariable;
+
 class HasFinalTags;
 using HasFinalTagsPtr = std::shared_ptr<HasFinalTags>;
 

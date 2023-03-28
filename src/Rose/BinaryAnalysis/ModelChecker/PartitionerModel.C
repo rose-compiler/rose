@@ -661,40 +661,51 @@ RiscOperators::checkOobAccess(const BS::SValue::Ptr &addrSVal_, TestMode testMod
         if (TestMode::OFF == testMode)
             return;
 
-        // If the address is concrete and refers to a region of memory but is outside that region, then we have an OOB access.
-        if (auto va = addrSVal->toUnsigned()) {
-            if (AddressInterval referencedRegion = addrSVal->region()) {
-                ProgressTask task(modelCheckerSolver_->progress(), "oob");
-                AddressInterval accessedRegion = AddressInterval::baseSizeSat(*va, nBytes);
-                if (!referencedRegion.contains(accessedRegion)) {
+        // The address must be concrete and it must have an attached region that does not fully contain the memory bytes being
+        // accessed they the address (based on the address itself and the `nBytes` parameter.
+        const auto va = addrSVal->toUnsigned();
+        if (!va)
+            return;
+        const AddressInterval referencedRegion = addrSVal->region();
+        if (!referencedRegion)
+            return;
+        const AddressInterval accessedRegion = AddressInterval::baseSizeSat(*va, nBytes);
+        ProgressTask task(modelCheckerSolver_->progress(), "oob");
+        if (referencedRegion.contains(accessedRegion))
+            return;                                     // in bounds
 
-                    // Get information about the variable that was intended to be accessed, and the variable (if any) that was
-                    // actually accessed.
-                    FunctionCallStack &callStack = State::promote(currentState())->callStack();
-                    auto whereWhatIntended = findStackVariable(callStack, referencedRegion, stackLimits_);
-                    auto whereWhatActual = findStackVariable(callStack, accessedRegion, stackLimits_);
-                    if (!whereWhatActual.first) {
-                        for (rose_addr_t accessedByteVa: accessedRegion) {
-                            whereWhatActual = findStackVariable(callStack, accessedByteVa, stackLimits_);
-                            if (whereWhatActual.first)
-                                break;
-                        }
-                    }
+        // The region attached to the address expression is the region for the variable that was intended to be accessed.  This
+        // variable must exist and have been detected earlier by the variable analysis.
+        FunctionCallStack &callStack = State::promote(currentState())->callStack();
+        const FoundVariable intendedVariable = findVariable(referencedRegion, gvars_, callStack, stackLimits_);
+        if (!intendedVariable)
+            return;
 
-                    // Optionally throw the tag that describes the OOB access
-                    if (!semantics_->filterOobAccess(addrSVal, referencedRegion, accessedRegion, currentInstruction(),
-                                                     testMode, ioMode, whereWhatIntended.second, whereWhatIntended.first,
-                                                     whereWhatActual.second, whereWhatActual.first)) {
-                        SAWYER_MESG(mlog[DEBUG]) <<"      buffer overflow rejected by user; this one is ignored\n";
-                    } else {
-                        currentState(BS::State::Ptr());         // indicates that execution failed
-                        throw ThrownTag{OutOfBoundsTag::instance(nInstructions(), testMode, ioMode, currentInstruction(), addrSVal,
-                                                                 whereWhatIntended.second, whereWhatIntended.first,
-                                                                 whereWhatActual.second, whereWhatActual.first)};
-                    }
-                }
+        // The region actually accessed might be the address for a known source code variable that was detected earlier by the
+        // variable analysis. If we can't find a whole variable, try the individual addresses. It's okay if we don't find
+        // anything, which just means that we had an OOB access for the intended variable that doesn't land in any particular
+        // actual variable.
+        const FoundVariable accessedVariable = [this, &accessedRegion, &callStack]() {
+            if (auto v = findVariable(accessedRegion, gvars_, callStack, stackLimits_))
+                return v;
+            for (rose_addr_t accessedByteVa: accessedRegion) {
+                if (auto v = findVariable(accessedByteVa, gvars_, callStack, stackLimits_))
+                    return v;
             }
+            return FoundVariable();
+        }();
+
+        // We've found an out-of-bounds access, but is it significant from the user's point of view?
+        if (!semantics_->filterOobAccess(addrSVal, referencedRegion, accessedRegion, currentInstruction(), testMode, ioMode,
+                                         intendedVariable, accessedVariable)) {
+            SAWYER_MESG(mlog[DEBUG]) <<"      buffer overflow rejected by user; this one is ignored\n";
+            return;
         }
+
+        // We've found a significant out-of-bounds access. Report it.
+        currentState(BS::State::Ptr());                 // indicates that execution failed
+        throw ThrownTag{OutOfBoundsTag::instance(nInstructions(), testMode, ioMode, currentInstruction(), addrSVal,
+                                                 intendedVariable, accessedVariable)};
     }
 }
 
@@ -768,7 +779,8 @@ RiscOperators::maybeInitCallStack(rose_addr_t insnVa) {
             } else if (functions.size() == 1) {
                 function = functions[0];
             } else {
-                SAWYER_MESG(mlog[WARN]) <<"multiple functions containing instruction at " <<StringUtility::addrToString(insnVa) <<"\n";
+                SAWYER_MESG(mlog[WARN]) <<"multiple functions containing instruction at "
+                                        <<StringUtility::addrToString(insnVa) <<"\n";
                 function = functions[0];                    // arbitrary
             }
 
@@ -1340,9 +1352,28 @@ SemanticCallbacks::SemanticCallbacks(const ModelChecker::Settings::Ptr &mcSettin
     variableFinder_ = Variables::VariableFinder::instance();
     if (TestMode::OFF != settings_.oobRead || TestMode::OFF != settings_.oobWrite || TestMode::OFF != settings_.uninitVar) {
         Sawyer::Message::Stream info(mlog[INFO]);
-        SAWYER_MESG(info) <<"searching for global variables";
+        Sawyer::Message::Stream debug(mlog[DEBUG]);
+        SAWYER_MESG_FIRST(info, debug) <<"searching for global variables";
         gvars_ = variableFinder_->findGlobalVariables(partitioner_);
-        SAWYER_MESG(info) <<"; found " <<StringUtility::plural(gvars_.size(), "global variables") <<"\n";
+
+        // Don't allow variables at very low memory addresses because lots of pointer arithmetic uses these constants and
+        // might get assigned global variable memory regions in this area. For instance,
+        //    mov eax, 0x1000  // not a global variable address
+        //    mov ecx, 4       // size, but happens to be a (miscalculated) global variable address
+        //    mul ecx, [esp+4] // ecx is now outside the the (miscalculated) global variable area
+        //    mov eax, [eax + ecx] // buffer overflow detected
+        Variables::erase(gvars_, AddressInterval::baseSize(0, 256));
+
+        // Don't allow global variables at the first byte of any read+write segment of memory. This is because the segment address
+        // is sometimes an intermediate calculation before adding an offset to get to the global variable. If a variable exists at
+        // the beginning of the segment, then the calculation would become locked to that variable's region and any subsequent
+        // offset to get to the intended variable would look like an out-of-bounds access.
+        for (const auto &node: partitioner->memoryMap()->require(MemoryMap::READ_WRITE).nodes())
+            Variables::erase(gvars_, node.key().least());
+
+        SAWYER_MESG_FIRST(info, debug) <<"; found " <<StringUtility::plural(gvars_.nIntervals(), "global variables") <<"\n";
+        for (const Variables::GlobalVariable &gvar: gvars_.values())
+            SAWYER_MESG(debug) <<"  found " <<gvar <<"\n";
     }
 
     if (!settings_.initialStackVa) {
@@ -1802,11 +1833,8 @@ SemanticCallbacks::filterNullDeref(const BS::SValue::Ptr &/*addr*/, SgAsmInstruc
 
 bool
 SemanticCallbacks::filterOobAccess(const BS::SValue::Ptr &/*addr*/, const AddressInterval &/*referencedRegion*/,
-                                   const AddressInterval &/*accessedRegion*/, SgAsmInstruction*, TestMode,
-                                   IoMode, const Variables::StackVariable &/*intendedVariable*/,
-                                   const AddressInterval &/*intendedVariableLocation*/,
-                                   const Variables::StackVariable &/*accessedVariable*/,
-                                   const AddressInterval &/*accessedVariableLocation*/) {
+                                   const AddressInterval &/*accessedRegion*/, SgAsmInstruction*, TestMode, IoMode,
+                                   const FoundVariable &/*intendedVariable*/, const FoundVariable &/*accessedVariable*/) {
     return true;
 }
 

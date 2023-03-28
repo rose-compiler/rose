@@ -2129,6 +2129,13 @@ AstInterface::GetArrayType(const AstNodeType& base, const AstNodeList& index)
 }
 
 bool AstInterface::
+IsAddressOfOp( const AstNodePtr& _s)
+{  
+  SgNode* s = AstNodePtrImpl(_s).get_ptr();
+  return (s->variantT() == V_SgAddressOfOp);  
+}
+
+bool AstInterface::
 IsMemoryAccess( const AstNodePtr& _s)
 {  
   SgNode* s = AstNodePtrImpl(_s).get_ptr();

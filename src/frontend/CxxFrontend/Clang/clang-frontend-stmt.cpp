@@ -2535,7 +2535,7 @@ bool ClangToSageTranslator::VisitCXXConstructExpr(clang::CXXConstructExpr * cxx_
     SgMemberFunctionDeclaration* cxxConstructorDecl = isSgMemberFunctionDeclaration(Traverse(cxx_constructor_decl));
 
     SgExprListExp * param_list = SageBuilder::buildExprListExp_nfi();
-        applySourceRange(param_list, cxx_construct_expr->getSourceRange());
+    applySourceRange(param_list, cxx_construct_expr->getParenOrBraceRange());
 
     clang::CXXConstructExpr::arg_iterator it;
     for (it = cxx_construct_expr->arg_begin(); it != cxx_construct_expr->arg_end(); ++it) {
@@ -2549,6 +2549,8 @@ bool ClangToSageTranslator::VisitCXXConstructExpr(clang::CXXConstructExpr * cxx_
         param_list->append_expression(expr);
     }
     SgConstructorInitializer* constructorInitilizer = SageBuilder::buildConstructorInitializer(cxxConstructorDecl, param_list, cxxConstructorDecl->get_orig_return_type(), true, false, false, false );
+    
+    applySourceRange(constructorInitilizer, cxx_construct_expr->getSourceRange());
 
     *node = constructorInitilizer;
 
@@ -2859,6 +2861,7 @@ bool ClangToSageTranslator::VisitDeclRefExpr(clang::DeclRefExpr * decl_ref_expr,
                        }
                   }
              }
+             applySourceRange(*node, decl_ref_expr->getSourceRange());
         }
        else
         {
@@ -3135,6 +3138,7 @@ bool ClangToSageTranslator::VisitFloatingLiteral(clang::FloatingLiteral * floati
         *node = SageBuilder::buildLongDoubleVal(std::stold(os.str()));
     else
         ROSE_ASSERT(!"In VisitFloatingLiteral: Unsupported float size");
+    applySourceRange(*node, floating_literal->getSourceRange());
 
     return VisitExpr(floating_literal, node);
 }
@@ -3148,7 +3152,9 @@ bool ClangToSageTranslator::VisitFullExpr(clang::FullExpr * full_expr, SgNode **
     SgNode * tmp_expr = Traverse(full_expr->getSubExpr());
     SgExpression * expr = isSgExpression(tmp_expr);
 
- // printf ("In VisitFullExpr(): built: expr = %p = %s \n",expr,expr->class_name().c_str());
+#if DEBUG_VISIT_STMT
+    std::cerr <<  "In VisitFullExpr(): built: expr = " << expr << " = " << expr->class_name().c_str() << std::endl;
+#endif
 
     *node = expr;
 
@@ -3284,6 +3290,7 @@ bool ClangToSageTranslator::VisitIntegerLiteral(clang::IntegerLiteral * integer_
 #endif
 
     *node = SageBuilder::buildIntVal(integer_literal->getValue().getSExtValue());
+    applySourceRange(*node, integer_literal->getSourceRange());
 
     return VisitExpr(integer_literal, node);
 }

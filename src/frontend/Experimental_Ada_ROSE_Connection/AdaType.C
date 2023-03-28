@@ -748,10 +748,7 @@ namespace
 
           SgClassDefinition& def = getRecordBodyID(typenode.Record_Definition, ctx);
 
-          (typenode.Has_Tagged ? logWarn() : logTrace())
-             << "Type_Definition_Struct::tagged set ? " << typenode.Has_Tagged
-             << std::endl;
-
+          // why not use Has_Tagged?
           res = TypeData{&typenode, &def, typenode.Has_Abstract, typenode.Has_Limited, typenode.Type_Kind == A_Tagged_Record_Type_Definition};
           /*
              unused fields (A_Record_Type_Definition):

@@ -677,8 +677,7 @@ public:
     virtual bool filterOobAccess(const InstructionSemantics::BaseSemantics::SValuePtr &addr,
                                  const AddressInterval &referencedRegion, const AddressInterval &accessedRegion,
                                  SgAsmInstruction *insn, TestMode testMode, IoMode ioMode,
-                                 const Variables::StackVariable &intendedVariable, const AddressInterval &intendedVariableLocation,
-                                 const Variables::StackVariable &accessedVariable, const AddressInterval &accessedVariableLocation);
+                                 const FoundVariable &intendedVariable, const FoundVariable &accessedVariable);
 
     virtual bool filterUninitVar(const InstructionSemantics::BaseSemantics::SValuePtr &addr,
                                  const AddressInterval &referencedREgion, const AddressInterval &accessedRegion,
