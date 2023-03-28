@@ -26,10 +26,6 @@ namespace si = SageInterface;
 
 Unparse_Ada::Unparse_Ada(Unparser* baseUnparser, std::string fname)
 : UnparseLanguageIndependentConstructs(baseUnparser, fname),
-  //~ visible_scopes(),
-  //~ use_scopes(),
-  //~ renamed_scopes(),
-  //~ scope_state(1, ScopeStackEntry{}),
   currentNameQualificationMap(&SgNode::get_globalQualifiedNameMapForNames()),
   oldLineWrap(baseUnparser->cur.get_linewrap())
 {
@@ -2301,7 +2297,6 @@ void Unparse_Ada::withNameQualificationMap(const NameQualMap& m)
 {
   currentNameQualificationMap = &m;
 }
-
 
 void
 Unparse_Ada::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info& info)
