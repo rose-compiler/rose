@@ -551,7 +551,7 @@ public:
      *
      *  This creates a new object by calling the class method @c instance for the class of which @c this is a type. All
      *  arguments are passed to @c instance. */
-    virtual EnginePtr instanceFromFactory() = 0;
+    virtual EnginePtr instanceFromFactory(const Settings&) = 0;
 
     /** Returns true if this object is a factory.
      *

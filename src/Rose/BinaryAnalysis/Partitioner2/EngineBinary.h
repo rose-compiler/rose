@@ -90,7 +90,7 @@ public:
     static EngineBinaryPtr factory();
 
     virtual bool matchFactory(const std::vector<std::string> &specimen) const override;
-    virtual EnginePtr instanceFromFactory() override;
+    virtual EnginePtr instanceFromFactory(const Settings&) override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  The very top-level use case
