@@ -10,85 +10,13 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
-/** Class for the JVM engine driving the partitioner.
+/** Engine for Java Virtual Machine (JVM) specimens.
  *
- *  An engine serves these main purposes:
+ *  This engine is reponsible for creating a partitioner for a specimen that has byte code for the Java Virtual Machine.
  *
- *  @li It holds configuration information related to disassembling and partitioning and provides methods for initializing that
- *      configuration information.
- *
- *  @li It provides methods for creating components (disassembler, partitioner) from stored configuration information.
- *
- *  @li It provides methods that implement the basic steps a program typically goes through in order to disassemble a specimen,
- *      such as parsing the binary container, mapping files and container sections into simulated specimen memory, calling a
- *      dynamic linker, disassembling and partitioning, and building an abstract syntax tree.
- *
- *  @li It provides a set of behaviors for the partitioner that are suitable for various situations.  For instance, the engine
- *      controls the order that functions and basic blocks are discovered, what happens when the partitioner encounters
- *      conflicts when assigning basic blocks to functions, etc.
- *
- *  Use of an engine is entirely optional.  All of the engine's actions are implemented in terms of public APIs on other
- *  objects such as @ref Disassembler and @ref Partitioner.  In fact, this particular engine base class is designed so that
- *  users can pick and choose to use only those steps they need, or perhaps to call the main actions one step at a time with
- *  the user making adjustments between steps.
- *
- *  @section EngineJvm_extensibility Customization
- *
- *  The actions taken by an engine can be customized in a number of ways:
- *
- *  @li The engine can be subclassed. All object methods that are intended to be overridable in a subclass are declared as
- *      virtual.  Some simple functions, like those that return property values, are not virtual since they're not things that
- *      one normally overrides.  This engine's methods are also designed to be as modular as possible--each method does exactly
- *      one thing, and higher-level methods sew those things together into sequences.
- *
- *  @li Instead of calling one function that does everything from parsing the command-line to generating the final abstract
- *      syntax tree, the engine breaks things into steps. The user can invoke one step at a time and make adjustments between
- *      steps.  This is actually the most common custimization within the tools distributed with ROSE.
- *
- *  @li The behavior of the @ref Partitioner itself can be modified by attaching callbacks to it. In fact, if the engine is
- *      used to create a partitioner then certain engine-defined callbacks are added to the partitioner.
- *
- *  @section EngineJvm_basic Basic usage
- *
- *  The most basic use case for the engine is to pass it the command-line arguments and have it do everything, eventually
- *  returning an abstract syntax tree.
- *
- *  @code
- *   #include <rose.h>
- *   #include <Rose/BinaryAnalysis/Partitioner2/EngineJvm.h>
- *   using namespace Rose;
- *   namespace P2 = Rose::BinaryAnalysis::Partitioner2;
- *
- *   int main(int argc, char *argv[]) {
- *       std::string purpose = "disassembles a binary specimen";
- *       std::string description =
- *           "This tool disassembles the specified specimen and presents the "
- *           "results as a pseudo assembly listing, that is, a listing intended "
- *           "for human consumption rather than assembly.";
- *       SgAsmBlock *gblock = P2::EngineJvm().frontend(argc, argv, purpose, description);
- *  @endcode
- *
- *  @section EngineJvm_topsteps High level operations
- *
- *  While @ref frontend does everything, it's often useful to break it down to individual steps so that adjustments can be made
- *  along the way. This next level of steps are:
- *
- *  @li Parse the command-line to adjust engine settings. See @ref parseCommandLine.
- *
- *  @li Parse binary containers to create a container abstract syntax tree.  This step parses things like section tables,
- *      symbol tables, import and export tables, etc. but does not disassemble any instructions.  See @ref parseContainers.
- *
- *  @li Create a partitioner.  The partitioner is responsible for driving the disassembler based on control flow information
- *      obtained by examining previously disassembled instructions, user-specified configuration files, command-line switches,
- *      etc. See @ref createPartitioner.
- *
- *  @li Run partitioner.  This step uses the disassembler and partitioner to discover instructions, basic blocks, data blocks,
- *      and functions and updates the partitioner's internal data structures. See @ref runPartitioner.
- *
- *  @li Create an abstract syntax tree from the partitioner's data structures.  Most of ROSE is designed to operate on an AST,
- *      although many binary analysis capabilities are built directly on the more efficient partitioner data structures.
- *      Because of this, the partitioner also has a mechanism by which its data structures can be initialized from an AST.
- */
+ *  This engine provides an @ref instance static member function that instantiates an engine of this type on the heap and returns a
+ *  shared-ownership pointer to the instance. Refer to the base class, @ref Partitioner2::Engine, to learn how to instantiate
+ *  engines from factories. */
 class EngineJvm: public Engine {
 public:
     /** Shared ownership pointer. */

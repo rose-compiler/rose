@@ -21,33 +21,29 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
-/** Base class for binary engines driving the partitioner.
+/** Engine for specimens containing machine instructions.
  *
- *  A binary engine operates on purely binary, not bytecode (JVM or CIL) specimens.
+ *  This engine is reponsible for creating a partitioner for a specimen that has machine instructions such as the Intel x86 family
+ *  of instruction sets, Arm instruction sets, PowerPC instructio sets, Motorola instruction sets, MIPS instruction sets, etc. It is
+ *  specifically not to be used for byte code targeting the likes of the Java Virtual Machine (JVM) or the Common Language Runtime
+ *  (CLR).
  *
- *  @section creation Binary engine instance
+ *  This engine provides an @ref instance static member function that instantiates an engine of this type on the heap and returns a
+ *  shared-ownership pointer to the instance. Refer to the base class, @ref Partitioner2::Engine, to learn how to instantiate
+ *  engines from factories.
  *
- *  An engine instance is obtained from the engine factory via a call to a forge(args...) function,
- *  the type returned is a Rose::BinaryAnalysis::Partitioner2::Engine::Ptr. The default engine type for
- *  a call to forge() with no arguments is an Engine::Ptr to an EngineBinary instance.
- *
- *  @code
- *   #include <rose.h>
- *   #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
- *   using namespace Rose;
- *   namespace P2 = Rose::BinaryAnalysis::Partitioner2;
- *
- *   int main(int argc, char *argv[]) {
- *       std::string purpose = "disassembles a binary specimen";
- *       std::string description =
- *           "This tool disassembles the specified specimen and presents the "
- *           "results as a pseudo assembly listing, that is, a listing intended "
- *           "for human consumption rather than assembly.";
-         P2::Engine::Ptr engine = P2::Engine::forge();
- *       SgAsmBlock *gblock = engine->frontend(argc, argv, purpose, description);
- *  @endcode
- *
- */
+ *  This engine uses a hybrid approach combining linear and recursvie diassembly. Linear disassembly progresses by starting at some
+ *  low address in the specimen address space, disassembling one instruction, and then moving on to the next (fallthrough) address
+ *  and repeating.  This approach is quite good at disassembling everything (especially for fixed length instructions) but makes no
+ *  attempt to organize instructions according to flow of control.  On the other hand, recursive disassembly uses a work list
+ *  containing known instruction addresses, disassembles an instruction from the worklist, determines its control flow successors,
+ *  and adds those addresses to the work list. As a side effect, it produces a control flow graph. ROSE's hybrid approach uses
+ *  linear disassembly to find starting points using heuristics such as common compiler function prologues and epilogues, references
+ *  from symbol tables of various types, and other available data. Once starting points are known, ROSE uses recursive disassembly
+ *  to follow the control flow. Various kinds of analysis and heuristics are used to control the finer points of recursive
+ *  disassembly. Part of the trick to a successful and accurate disassembly of what is essentially equivalent to the halting
+ *  problem, depends on finding the right balance between the pure recursive approach and the heuristics and analyses. This balance
+ *  is often different for each kind of specimens. */
 class EngineBinary: public Engine {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Types

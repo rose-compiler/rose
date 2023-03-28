@@ -18,130 +18,140 @@ namespace Partitioner2 {
 
 /** Base class for engines driving the partitioner.
  *
- *  An engine serves these main purposes:
+ * The @ref Partitioner2::Engine is an abstract base class whose derived classes implement the algorithms for creating functions,
+ * basic blocks, instructions, control flow graphs (CFGs), address usage maps (AUMs), static data blocks, and everything else that
+ * can be stored in a @ref Partitioner2::Partitioner "Partitioner".
  *
- *  @li It holds configuration information related to disassembling and partitioning and provides methods for initializing that
- *      configuration information.
+ * Although subclasses can be instantiated directly, it is often easier to do so through the base class's factory methods. For
+ * instance, a tool that operates on various kinds of specimens would want to decide what engine subclass to instantiate based on
+ * the types of specimens that are being analyzed. The ROSE library defines a few sublcasses, and the factory mechanism allows
+ * external tools to register their own subclasses.
  *
- *  @li It provides methods for creating components (disassembler, partitioner) from stored configuration information.
+ * @section Rose_BinaryAnalysis_Partitioner2_Engine_factories Factories
  *
- *  @li It provides methods that implement the basic steps a program typically goes through in order to disassemble a specimen,
- *      such as parsing the binary container, mapping files and container sections into simulated specimen memory, calling a
- *      dynamic linker, disassembling and partitioning, and building an abstract syntax tree.
+ * Using the engine factories is a two-step process: first the subclasses are registered with the ROSE library, then the ROSE
+ * library chooses which engine should be instantiated and does so.
  *
- *  @li It provides a set of behaviors for the partitioner that are suitable for various situations.  For instance, the engine
- *      controls the order that functions and basic blocks are discovered, what happens when the partitioner encounters
- *      conflicts when assigning basic blocks to functions, etc.
+ * A subclass is registered by instantiating a "factory instance" of the subclass and calling @ref registerFactory, which takes
+ * shared ownership of the factory instance. Additional member functions such as @ref deregisterFactory and @ref registeredFactories
+ * can be used to manipulate the factory list. The engine types that are built into ROSE are registered automatically and appear at
+ * the beginning of the list.
  *
- *  Use of an engine is entirely optional.  All of the engine's actions are implemented in terms of public APIs on other
- *  objects such as @ref Disassembler and @ref Partitioner.  In fact, this particular engine base class is designed so that
- *  users can pick and choose to use only those steps they need, or perhaps to call the main actions one step at a time with
- *  the user making adjustments between steps.
+ * To directly instantiate an instance of a subclass without going through the factory mechanism, one calls the static @c instance
+ * method of the subclass. The @c instance method allocates a new instance in the heap and returns a shared-ownership pointer to the
+ * new instance.  This is how almost all binary analysis works in ROSE.
  *
- *  @section extensibility Customization
+ * On the other hand, to instantiate an engine using the factory method, one calls the @ref Engine::forge static member
+ * function. The words "forge" and "factory" both start with "f" as a reminder that they go together in this API. The @ref forge
+ * method will scan the list of registered factories from the end toward the beginning and the first factory whose @ref matchFactory
+ * predicate returns true will be the type of engine to be used. The engine actually returned is not the registered factory
+ * directly, but the result of calling @ref instanceFromFactory on the registered factory.
  *
- *  The actions taken by an engine can be customized in a number of ways:
+ * @section Rose_BinaryAnalysis_Partitioner2_Engine_commandlineparsing Command-line parsing
  *
- *  @li The engine can be subclassed. All object methods that are intended to be overridable in a subclass are declared as
- *      virtual.  Some simple functions, like those that return property values, are not virtual since they're not things that
- *      one normally overrides.  This engine's methods are also designed to be as modular as possible--each method does exactly
- *      one thing, and higher-level methods sew those things together into sequences.
+ * Every engine instance has a @ref settings property. Currently this is shared by all engine types, but in the future we may make
+ * this more extensible. Every engine supports ROSE's command-line parsing (@ref Sawyer::CommandLine) to modify its settings from
+ * the command-line. There is a chicken-or-egg dilemma with command-line parsing: in order to choose the correct engine type, we
+ * need to find the command-line positional arguments that describe the specimen; in order to find the positional arguments, we need
+ * to be able to accurately parse the command-line switches; in order to parse the engine-specific command-line switches, we need to
+ * know which engine will be used for the parsing.
  *
- *  @li Instead of calling one function that does everything from parsing the command-line to generating the final abstract
- *      syntax tree, the engine breaks things into steps. The user can invoke one step at a time and make adjustments between
- *      steps.  This is actually the most common customization within the tools distributed with ROSE.
+ * The solution that ROSE uses isn't perfect, but works well in practice. Each engine type is able to register its command-line
+ * switches as a switch group within a command-line parser. As long as the switches don't conflict with each other, or can be
+ * disambiguated to not conflict, we're able to parse the command-line switches as the union of all the switches from all known
+ * engine types. Switches can be disambiguated by giving each engine type its own switch group name (i.e., optional switch
+ * prefix). For example, the JVM engine might use "--[jvm-]foo" while the binary machine engine uses "--[binary-]foo".
  *
- *  @li The behavior of the @ref Partitioner itself can be modified by attaching callbacks to it. In fact, if the engine is
- *      used to create a partitioner then certain engine-defined callbacks are added to the partitioner.
+ * In order to choose a matching factory from the list of factories, ROSE constructs a temporary command-line parser that handles
+ * the switches from all known engines and binds the parser to the registered factories (i.e., the presence of a switch modifies
+ * the settings in the factory instance). ROSE then parses the command-line to find the specimen positional arguments which it uses
+ * to choose a factory instance. Once the factory instance is chosen, ROSE instantiates a regular instance from the factory and
+ * constructs a new command-line parser with just that engine's switches, and bound to the engine being returned. Later, when the
+ * tool parses the command-line for real and applies the parse result, the returned engine's settings are updated.
  *
- *  @section engine_subclasses Engine subclasses
+ * Although this mechanism for handling engine-specific command-line switches is not perfect, we think it will provide a means by
+ * which tools can define their own command-line switches, and other factories besides @ref Partitioner2::Engine can operate in
+ * similar ways.
  *
- *  The Engine class is the base of a class hierarchy. The base class not only defines a common API, but also provides a mechanism
- *  by which subclasses can be registered and instantiated. The user can define subclasses and register them with the library at
- *  runtime and cause them to be used in certain situations.
+ * @section Rose_BinaryAnalysis_Partitioner2_Engine_basic Basic usage
  *
- *  To register a subclass, the user should instantiate an object of his subclass type that will serve as a factory for creating
- *  additional instances of that type. The factory is registered with the ROSE library using @ref registerFactory. Factories,
- *  including those pre-registered by the ROSE library, can be removed by calling @ref deregisterFactory.
+ * An engine drives the process of building a @ref Partitioner2::Partitioner which is then used as an efficient means of obtaining
+ * information that's needed during analysis. Although every engine can operate in a different way, there's a common API that's
+ * intended to be quite general. The engine API is divided into abstraction layers. The most abstract layer consists of functions
+ * that do the most things in one step, from parsing of command-lines to generation of the @ref Partitioner2::Partitioner
+ * "Partitioner" and/or abstract syntax tree (AST).  The next layer of less abstract functions does smaller parts, such as parsing
+ * containers like ELF or PE, loading parts of specimen files into memory, finding related specimens like shared libraries, linking
+ * specimens together into a common address space, organizing instructions into basic blocks and functions, creating an AST, etc.
+ * Finally, at the least level of abstraction, many of the functions are specific enough to be defined only in subclasses.
  *
- *  The Engine base class defines the @ref forge overloaded static member function whose purpose is to determine which subclass
- *  factory can handle the situation and then instantiate a new instance by calling the factory's @ref instanceFromFactory method.
- *  Choosing a factory can be as simple as providing a list of command-line arguments that define the specimen. The first factory
- *  that knows how to handle those names (in reverse order factories were registered) is the winner, and creates a new object.
- *  Unfortunately, one often doesn't know which command-line arguments define the specimen until after parsing the switch arguments
- *  that appear earlier on the command-line, and some of those switches can't be parsed until we know what engine subclass is going
- *  to be used. Furthermore, some of these switches might be defined by the user or other parts of ROSE. This chicken and egg
- *  problem can be solved by using @ref forge methods that include a command-line parser.
+ * Here's an example of basic usage of the engine to instantiate and populate a @ref Partitioner2::Partitioner "Partitioner" that
+ * can be used for analysis. First, the tool needs to define the necessary classes, which it can do by including either the
+ * top-level "Partitioner2.h" header, or the headers for the individual Partitioner2 types.
  *
- *  When using @ref forge methods that take a command-line parser, the user should pass a command-line parser that defines all
- *  the non-engine switches. When an engine is chosen, the command-line parser will be adjusted so it operates on the instantiated
- *  engine's settings. Furthermore, the parser will have documentation applicable to all registered parsers so that the man page
- *  generated by "--help" is complete.
- *
- *  @section basic Basic usage
- *
- *  The most basic use case for the engine is to pass it the command-line arguments and have it do everything, eventually
- *  returning an abstract syntax tree.
- *
- *  @code
+ * @code
  *   #include <rose.h>
- *   #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+ *   #include <Rose/BinaryAnalysis/Partitioner2.h>
  *   using namespace Rose;
  *   namespace P2 = Rose::BinaryAnalysis::Partitioner2;
+ * @endcode
  *
+ * Most tools, after initializing the ROSE library, will create a command-line parser to parse the tool's own switches.
+ *
+ * @code
  *   int main(int argc, char *argv[]) {
+ *       ROSE_INITIALIZE;
  *       std::string purpose = "disassembles a binary specimen";
  *       std::string description =
  *           "This tool disassembles the specified specimen and presents the "
  *           "results as a pseudo assembly listing, that is, a listing intended "
  *           "for human consumption rather than assembly.";
  *
- *       // Create an engine instance from the engine factory using an empty parser
- *       P2::Engine::Settings defaultEngineSettings = ...;
- *       Sawyer::CommandLine::Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
- *       parser.with(Rose::CommandLine::genericSwitches());
- *       auto engine = P2::Engine::forge(argc, argv, parser, defaultEngineSettings);
- *       std::vector<std::string> specimen = parseCommandLine(argc, argv, parser);
- *       // Create the partitioner
- *       auto partitioner = engine->partition(specimen);
- *  @endcode
+ *       ToolSettings settings;
+ *       Sawyer::CommandLine::Parser parser = buildSwitchParser(settings);
+ * @endcode
  *
- *  If you perform your own command-line parser then you'll have the engine settings and the specimen arguments already parsed,
- *  in which case you can create the engine with fewer steps:
+ * In order for the tool to choose the correct engine, it needs to be able to find the positional command-line arguments that
+ * describe the specimen. The tool could do all its own command-line parsing and adjust the values in a @ref Partitioner2::Settings
+ * object which it ultimately copies into an engine instance, or it could use ROSE's command-line parsing mechanism. We'll show
+ * the latter since we already started creating such a parser above.
  *
- *  @code
+ * Since we're using ROSE to parse the command-line, we pass the command-line and our partial command-line parser to the @ref
+ * Partitioner2::Engine::forge "forge" method like this:
+ *
+ * @code
+ *       P2::Engine::Ptr engine = P2::Engine::forge(argc, argv, parser);
+ * @endcode
+ *
+ * When the forge call returns, it also adjusts the parser so it knows how to parse the command-line switches that are specific to
+ * the returned engine type, and those switches are bound to the settings in that returned engine instance. Thus the tool is now
+ * able to parse the command-line, update the settings in the engine, and obtain the positional arguments that describe the
+ * specimen.
+ *
+ * @code
+ *       std::vector<std::string> specimen = parser.parse(argc, argv).apply().unreachedArgs();
+ * @endcode
+ *
+ * Finally, now that the engine has been obtained, the tool can cause the engine to produce a fully initialized @ref
+ * Parttioner2::Partitioner "Partitioner", or do any of the other things that an engine is designed to do.
+ *
+ * @code
+ *       P2::Partitioner::Ptr partitioner = engine.partition(specimen);
+ * @endcode
+ *
+ * On the other hand, if you perform your own command-line parser then you'll have the engine settings and the specimen arguments
+ * already parsed, in which case you can create the engine with fewer steps:
+ *
+ * @code
  *  int main(int argc, char *argv[]) {
  *      P2::Engine::Settings settings;
  *      std::vector<std::string> specimen = parseCommandLine(settings);
  *      auto engine = P2::Engine::forge(specimen);
  *      auto partitioner = engine->partition(specimen);
- *  @endcode
+ * @endcode
  *
- *  @section topsteps High level operations
+ * @section Rose_BinaryAnalysis_Partitioner2_Engine_sa See also
  *
- *  While @ref frontend does everything, it's often useful to break it down to individual steps so that adjustments can be made
- *  along the way. This next level of steps are:
- *
- *  @li Parse the command-line to adjust engine settings. See @ref parseCommandLine.
- *
- *  @li Parse binary containers to create a container abstract syntax tree.  This step parses things like section tables,
- *      symbol tables, import and export tables, etc. but does not disassemble any instructions.  See @ref parseContainers.
- *
- *  @li Create a memory map that simulates process address space for the specimen.  This consists of running a dynamic linker,
- *      loading raw data into the simulated address space, and adjusting the memory map . All of these steps are optional. See
- *      @ref loadSpecimens.
- *
- *  @li Create a partitioner.  The partitioner is responsible for driving the disassembler based on control flow information
- *      obtained by examining previously disassembled instructions, user-specified configuration files, command-line switches,
- *      etc. See @ref createPartitioner.
- *
- *  @li Run partitioner.  This step uses the disassembler and partitioner to discover instructions, basic blocks, data blocks,
- *      and functions and updates the partitioner's internal data structures. See @ref runPartitioner.
- *
- *  @li Create an abstract syntax tree from the partitioner's data structures.  Most of ROSE is designed to operate on an AST,
- *      although many binary analysis capabilities are built directly on the more efficient partitioner data structures.
- *      Because of this, the partitioner also has a mechanism by which its data structures can be initialized from an AST.
- */
+ * See also @ref Partitioner2::EngineBinary, @ref Partitioner2::EngineJvm, and the documentation for non-ROSE engines. */
 class Engine: public Sawyer::SharedObject, public Sawyer::SharedFromThis<Engine> {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Internal data structures

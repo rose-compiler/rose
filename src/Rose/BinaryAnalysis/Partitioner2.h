@@ -31,4 +31,25 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Thunk.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 
+namespace Rose {
+namespace BinaryAnalysis {
+
+/** Binary function detection.
+ *
+ *  This namespace consists of two major parts and a number of smaller parts.  The major parts are:
+ *
+ *  @li @ref Partitioner2::Partitioner "Partitioner": The partitioner has two slightly conflated roles. Its primary role is to serve
+ *  as a database that supports efficient queries for information that are needed during typical binary analysis. As such, it is
+ *  able to describe functions, basic blocks, static data blocks, memory maps, control flow graphs, address usage maps, and more and
+ *  has a fairly robust API.  Its second role, less important from the view of the end user, is to accumulate the above information
+ *  in a process known as <em>partitioning</em>.
+ *
+ *  @li @ref Partitioner2::Engine "Engine": The engine contains the higher-level functionality that drives the process by which
+ *  information is added to the partitioner, i.e., <em>partitioning</em>. The engine is customized by class derivation, and the base
+ *  class (@ref Partitioner2::Engine) is abstract. */
+namespace Partitioner2 {}
+
+} // namespace
+} // namespace
+
 #endif

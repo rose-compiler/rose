@@ -22,38 +22,6 @@
 
 namespace Rose {
 namespace BinaryAnalysis {
-
-/** Binary function detection.
- *
- *  This namespace consists of two major parts and a number of smaller parts.  The major parts are:
- *
- *  @li @ref Partitioner2::Partitioner "Partitioner": The partitioner is responsible for organizing instructions into basic
- *      blocks and basic blocks into functions. It has methods to discover new parts of the executable, and methods to control
- *      how those parts are organized into larger parts.  It queries a memory map and an instruction provider and updates a
- *      global control flow graph (CFG) and address usage map (AUM). Its operations are quite low-level and its behavior is
- *      customized primarily by callbacks.
- *
- *  @li @ref Partitioner2::Engine "Engine": The engine contains the higher-level functionality that drives the partitioner.
- *      Where the partitioner knows @em how to make a basic block or a function, the engine know @em where to make a basic
- *      block or function.  The engine is customized by subclassing it and overriding various methods.
- *
- *  Disassembly techniques fall into two broad categories: linear disassembly and recursive disassembly.  Linear disassembly
- *  progresses by starting at some low address in the specimen address space, disassembling one instruction, and then moving on
- *  to the next (fallthrough) address and repeating.  This approach is quite good at disassembling everything (especially for
- *  fixed length instructions) but makes no attempt to organize instructions according to flow of control.  On the other hand,
- *  recursive disassembly uses a work list containing known instruction addresses, disassembles an instruction from the
- *  worklist, determines its control flow successors, and adds those addresses to the work list. As a side effect, it produces
- *  a control flow graph.
- *
- *  ROSE supports both linear and recursive disassembly. Linear disassembly is trivial to implement: simply walk the memory map
- *  from beginning to end calling an @ref InstructionProvider at each address.  Recursive disassembly is where the rubber meets
- *  the road, so to speak, and the quality of the disassembly is intimately tied to the quality of the control flow graph.
- *  ROSE supports pure control flow reasoning, and combines that with heuristics to discover (or prevent discovery) where the
- *  control flow reasoning is deficient.  For example, a pure control flow approach will miss dead code, but heuristics might
- *  be able to find the dead code at which time the control flow approach can continue.  The trick is finding the right set of
- *  heuristics for a particular situation -- if to permissive, they'll find code where it doesn't exist and which might
- *  interfere with the control flow reasoning; to restrictive and they could easily miss large parts of a specimen.  Heuristics
- *  are mostly implemented as optional parts of an engine, or callbacks registered with the partitioner. */
 namespace Partitioner2 {
 
 /** Level of precision for analysis. */
