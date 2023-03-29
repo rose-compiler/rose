@@ -54,6 +54,7 @@ EndDirective
 BeginDirective
 SkipDirective
 CopyDirective
+AlwaysDirective
 Directive
 CompoolDirective
 OptNumber
@@ -2161,6 +2162,8 @@ context-free syntax
   InitializeDirective      -> Directive
   OrderDirective           -> Directive
 
+  AlwaysDirective          -> Directive  %% nonstandard, probably some odd compiler
+
   LinkageDirective         -> PostProcDirective  %% only after ProcedureHeading
   ReducibleDirective       -> PostProcDirective  %% only after FunctionHeading (but SEA compiler is flexible)
 
@@ -2246,7 +2249,7 @@ context-free syntax
 
 %% 9.8 REGISTER DIRECTIVES
 %%
-  '!BASE'   DataName
+  '!BASE' DataName
     IntegerLiteral   ';'         -> BaseDirective           {cons("BaseDirective")}
 
   '!ISBASE' DataName
@@ -2267,3 +2270,7 @@ context-free syntax
 %% 9.11 ALLOCATION ORDER DIRECTIVES
 %%
   '!ORDER' ';'                    -> OrderDirective         {cons("OrderDirective")}
+
+%% Nonstandard, must be some odd compiler
+%%
+  "!ALWAYS'STORE" DataName ';'    -> AlwaysDirective        {cons("AlwaysDirective")}

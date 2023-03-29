@@ -4434,7 +4434,9 @@ HEADER_JOVIAL_DIRECTIVE_STATEMENT_START
                e_left_right,           /*!<     LEFTRIGHT DIRECTIVE */
                e_rearrange,            /*!<     REARRANGE DIRECTIVE */
                e_initialize,           /*!< 9.10 INITIALIZATION DIRECTIVES */
-               e_order                 /*!< 9.11 ALLOCATION ORDER DIRECTIVES */
+               e_order,                /*!< 9.11 ALLOCATION ORDER DIRECTIVES */
+
+               e_always                /*!< ALWAYS'STORE DIRECTIVE, non-standard */
              };
 
           virtual SgName get_mangled_name() const override;
