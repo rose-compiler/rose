@@ -8064,6 +8064,9 @@ ATbool ATermToSageJovialTraversal::traverse_Directive(ATerm term)
    else if (traverse_OrderDirective(term)) {
       // MATCHED OrderDirective
    }
+   else if (traverse_AlwaysDirective(term)) {
+      // MATCHED AlwaysDirective
+   }
    else return ATfalse;
 
    return ATtrue;
@@ -8412,6 +8415,36 @@ ATbool ATermToSageJovialTraversal::traverse_OrderDirective(ATerm term)
 
    sage_tree_builder.Enter(directive_stmt, std::string(""));
    directive_stmt->set_directive_type(SgJovialDirectiveStatement::e_order);
+
+   sage_tree_builder.Leave(directive_stmt);
+
+   return ATtrue;
+}
+
+//========================================================================================
+// ALWAYS'STORE Directive: Non-standard, must be for odd compiler
+//----------------------------------------------------------------------------------------
+ATbool ATermToSageJovialTraversal::traverse_AlwaysDirective(ATerm term)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_AlwaysDirective: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_name;
+   std::string name;
+   SgJovialDirectiveStatement* directive_stmt = nullptr;
+
+   if (ATmatch(term, "AlwaysDirective(<term>)", &t_name)) {
+      // MATCHED AlwaysDirective
+   }
+   else return ATfalse;
+
+   if (traverse_Name(t_name, name)) {
+      // MATCHED Name
+   } else return ATfalse;
+
+   sage_tree_builder.Enter(directive_stmt, name);
+   directive_stmt->set_directive_type(SgJovialDirectiveStatement::e_always);
 
    sage_tree_builder.Leave(directive_stmt);
 
