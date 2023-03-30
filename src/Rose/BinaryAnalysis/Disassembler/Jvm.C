@@ -19,9 +19,19 @@ namespace Disassembler {
 using opcode = JvmInstructionKind;
 using namespace ByteOrder;
 
+rose_addr_t
+Jvm::codeOffset() {
+    return codeOffset_;
+}
+
+void
+Jvm::codeOffset(rose_addr_t offset) {
+    codeOffset_ = offset;
+}
+
 template <class T> size_t
-Jvm::append_operand(const MemoryMap::Ptr &map, rose_addr_t va,
-                                SgUnsignedCharList &chars, SgAsmOperandList* operands)
+Jvm::appendOperand(const MemoryMap::Ptr &map, rose_addr_t va,
+                   SgUnsignedCharList &chars, SgAsmOperandList* operands)
 {
   const size_t bufSize{sizeof(T)};
   uint8_t buf[bufSize];
@@ -46,13 +56,13 @@ Jvm::append_operand(const MemoryMap::Ptr &map, rose_addr_t va,
 }
 
 size_t
-Jvm::append_tableswitch(const MemoryMap::Ptr &map, rose_addr_t start,
+Jvm::appendTableswitch(const MemoryMap::Ptr &map, rose_addr_t start,
                                     SgUnsignedCharList &chars, SgAsmOperandList* operands)
 {
   rose_addr_t va{start};
 
   // switch default must begin on 4 byte boundary, skip padding
-  const size_t nPad{(4 - (code_offset()-va)%4)%4};
+  const size_t nPad{(4 - (codeOffset()-va)%4)%4};
   const size_t nBuf{nPad + 3*sizeof(int32_t)};
   uint8_t buf[nBuf];
 
@@ -75,7 +85,7 @@ Jvm::append_tableswitch(const MemoryMap::Ptr &map, rose_addr_t start,
   int32_t high = be_to_host(*(int32_t*) ptr);  ptr += sizeof(int32_t);
 
 #if DEBUG_ON
-  std::cout << "... append_tableswitch: "
+  std::cout << "... appendTableswitch: "
             << def << ": "
             << low << ": "
             << high << ": "
@@ -88,7 +98,7 @@ Jvm::append_tableswitch(const MemoryMap::Ptr &map, rose_addr_t start,
 
   int nOff{high-low+1};
   for (int i = 0; i < nOff; i++) {
-    auto count = append_operand<int32_t>(map, va, chars, operands);
+    auto count = appendOperand<int32_t>(map, va, chars, operands);
     nRead += count;
     va += count;
   }
@@ -194,43 +204,43 @@ Jvm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start, AddressSet*)
         break;
       case opcode::bipush: // 0x10 (16)
         mnemonic = "bipush";
-        va += append_operand<uint8_t>(map, va, chars, operands);
+        va += appendOperand<uint8_t>(map, va, chars, operands);
         break;
       case opcode::sipush: // 0x11 (17)
         mnemonic = "sipush";
-        va += append_operand<uint16_t>(map, va, chars, operands);
+        va += appendOperand<uint16_t>(map, va, chars, operands);
         break;
       case opcode::ldc: // 0x12 (18)
         mnemonic = "ldc";
-        va += append_operand<uint8_t>(map, va, chars, operands);
+        va += appendOperand<uint8_t>(map, va, chars, operands);
         break;
       case opcode::ldc_w: // 0x13 (19)
         mnemonic = "ldc_w";
-        va += append_operand<uint16_t>(map, va, chars, operands);
+        va += appendOperand<uint16_t>(map, va, chars, operands);
         break;
       case opcode::ldc2_w: // 0x14 (20)
         mnemonic = "ldc2_w";
-        va += append_operand<uint16_t>(map, va, chars, operands);
+        va += appendOperand<uint16_t>(map, va, chars, operands);
         break;
       case opcode::iload: // 0x15 (21)
         mnemonic = "iload";
-        va += append_operand<uint8_t>(map, va, chars, operands); // index
+        va += appendOperand<uint8_t>(map, va, chars, operands); // index
         break;
       case opcode::lload: // 0x16 (22)
         mnemonic = "lload";
-        va += append_operand<uint8_t>(map, va, chars, operands);
+        va += appendOperand<uint8_t>(map, va, chars, operands);
         break;
       case opcode::fload: // 0x17 (23)
         mnemonic = "fload";
-        va += append_operand<uint8_t>(map, va, chars, operands);
+        va += appendOperand<uint8_t>(map, va, chars, operands);
         break;
       case opcode::dload: // 0x18 (24)
         mnemonic = "dload";
-        va += append_operand<uint8_t>(map, va, chars, operands);
+        va += appendOperand<uint8_t>(map, va, chars, operands);
         break;
       case opcode::aload: // 0x19 (25)
         mnemonic = "aload";
-        va += append_operand<uint8_t>(map, va, chars, operands);
+        va += appendOperand<uint8_t>(map, va, chars, operands);
         break;
       case opcode::iload_0: // 0x1a (26)
         mnemonic = "iload_0";
@@ -318,23 +328,23 @@ Jvm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start, AddressSet*)
         break;
       case opcode::istore: // 0x36 (54)
         mnemonic = "istore";
-        va += append_operand<uint8_t>(map, va, chars, operands);
+        va += appendOperand<uint8_t>(map, va, chars, operands);
         break;
       case opcode::lstore: // 0x37 (55)
-        va += append_operand<uint8_t>(map, va, chars, operands);
+        va += appendOperand<uint8_t>(map, va, chars, operands);
         mnemonic = "lstore";
         break;
       case opcode::fstore: // 0x38 (56)
         mnemonic = "fstore";
-        va += append_operand<uint8_t>(map, va, chars, operands);
+        va += appendOperand<uint8_t>(map, va, chars, operands);
         break;
       case opcode::dstore: // 0x39 (57)
         mnemonic = "dstore";
-        va += append_operand<uint8_t>(map, va, chars, operands);
+        va += appendOperand<uint8_t>(map, va, chars, operands);
         break;
       case opcode::astore: // 0x3a (58)
         mnemonic = "astore";
-        va += append_operand<uint8_t>(map, va, chars, operands);
+        va += appendOperand<uint8_t>(map, va, chars, operands);
         break;
       case opcode::istore_0: // 0x3b (59)
         mnemonic = "istore_0";
@@ -557,8 +567,8 @@ Jvm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start, AddressSet*)
         break;
       case opcode::iinc: // 0x84 (132)
         mnemonic = "iinc";
-        va += append_operand<uint8_t>(map, va, chars, operands);
-        va += append_operand< int8_t>(map, va, chars, operands);
+        va += appendOperand<uint8_t>(map, va, chars, operands);
+        va += appendOperand< int8_t>(map, va, chars, operands);
         break;
       case opcode::i2l: // 0x85 (133)
         mnemonic = "i2l";
@@ -622,75 +632,75 @@ Jvm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start, AddressSet*)
         break;
       case opcode::ifeq: // 0x99 (153)
         mnemonic = "ifeq";
-        va += append_operand<int16_t>(map, va, chars, operands);
+        va += appendOperand<int16_t>(map, va, chars, operands);
         break;
       case opcode::ifne: // 0x9a (154)
         mnemonic = "ifne";
-        va += append_operand<int16_t>(map, va, chars, operands);
+        va += appendOperand<int16_t>(map, va, chars, operands);
         break;
       case opcode::iflt: // 0x9b (155)
         mnemonic = "iflt";
-        va += append_operand<int16_t>(map, va, chars, operands);
+        va += appendOperand<int16_t>(map, va, chars, operands);
         break;
       case opcode::ifge: // 0x9c (156)
         mnemonic = "ifge";
-        va += append_operand<int16_t>(map, va, chars, operands);
+        va += appendOperand<int16_t>(map, va, chars, operands);
         break;
       case opcode::ifgt: // 0x9d (157)
         mnemonic = "ifgt";
-        va += append_operand<int16_t>(map, va, chars, operands);
+        va += appendOperand<int16_t>(map, va, chars, operands);
         break;
       case opcode::ifle: // 0x9e (158)
         mnemonic = "ifle";
-        va += append_operand<int16_t>(map, va, chars, operands);
+        va += appendOperand<int16_t>(map, va, chars, operands);
         break;
       case opcode::if_icmpeq: // 0x9f (159)
         mnemonic = "if_icmpeq";
-        va += append_operand<int16_t>(map, va, chars, operands);
+        va += appendOperand<int16_t>(map, va, chars, operands);
         break;
       case opcode::if_icmpne: // 0xa0 (160)
         mnemonic = "if_icmpne";
-        va += append_operand<int16_t>(map, va, chars, operands);
+        va += appendOperand<int16_t>(map, va, chars, operands);
         break;
       case opcode::if_icmplt: // 0xa1 (161)
         mnemonic = "if_icmplt";
-        va += append_operand<int16_t>(map, va, chars, operands);
+        va += appendOperand<int16_t>(map, va, chars, operands);
         break;
       case opcode::if_icmpge: // 0xa2 (162)
         mnemonic = "if_icmpge";
-        va += append_operand<int16_t>(map, va, chars, operands);
+        va += appendOperand<int16_t>(map, va, chars, operands);
         break;
       case opcode::if_icmpgt: // 0xa3 (163)
         mnemonic = "if_icmpgt";
-        va += append_operand<int16_t>(map, va, chars, operands);
+        va += appendOperand<int16_t>(map, va, chars, operands);
         break;
       case opcode::if_icmple: // 0xa4 (164)
         mnemonic = "if_icmple";
-        va += append_operand<int16_t>(map, va, chars, operands);
+        va += appendOperand<int16_t>(map, va, chars, operands);
         break;
       case opcode::if_acmpeq: // 0xa5 (165)
         mnemonic = "if_acmpeq";
-        va += append_operand<int16_t>(map, va, chars, operands);
+        va += appendOperand<int16_t>(map, va, chars, operands);
         break;
       case opcode::if_acmpne: // 0xa6 (166)
         mnemonic = "if_acmpne";
-        va += append_operand<int16_t>(map, va, chars, operands);
+        va += appendOperand<int16_t>(map, va, chars, operands);
         break;
       case opcode::goto_: // 0xa7 (167)
         mnemonic = "goto";
-        va += append_operand<int16_t>(map, va, chars, operands);
+        va += appendOperand<int16_t>(map, va, chars, operands);
         break;
       case opcode::jsr: // 0xa8 (168)
         mnemonic = "jsr";
-        va += append_operand<int16_t>(map, va, chars, operands);
+        va += appendOperand<int16_t>(map, va, chars, operands);
         break;
       case opcode::ret: // 0xa9 (169)
         mnemonic = "ret";
-        va += append_operand<uint8_t>(map, va, chars, operands);
+        va += appendOperand<uint8_t>(map, va, chars, operands);
         break;
       case opcode::tableswitch: // 0xaa (170)
         mnemonic = "tableswitch";
-        va += append_tableswitch(map, va, chars, operands);
+        va += appendTableswitch(map, va, chars, operands);
         break;
 
 //    case opcode::lookupswitch: // 0xab (171)
@@ -715,55 +725,55 @@ Jvm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start, AddressSet*)
         break;
       case opcode::getstatic: // 0xb2 (178)
         mnemonic = "getstatic";
-        va += append_operand<uint16_t>(map, va, chars, operands);
+        va += appendOperand<uint16_t>(map, va, chars, operands);
         break;
       case opcode::putstatic: // 0xb3 (179)
         mnemonic = "putstatic";
-        va += append_operand<uint16_t>(map, va, chars, operands);
+        va += appendOperand<uint16_t>(map, va, chars, operands);
         break;
       case opcode::getfield: // 0xb4 (180)
         mnemonic = "getfield";
-        va += append_operand<uint16_t>(map, va, chars, operands);
+        va += appendOperand<uint16_t>(map, va, chars, operands);
         break;
       case opcode::putfield: // 0xb5 (181)
         mnemonic = "putfield";
-        va += append_operand<uint16_t>(map, va, chars, operands);
+        va += appendOperand<uint16_t>(map, va, chars, operands);
         break;
       case opcode::invokevirtual: // 0xb6 (182)
         mnemonic = "invokevirtual";
-        va += append_operand<uint16_t>(map, va, chars, operands);
+        va += appendOperand<uint16_t>(map, va, chars, operands);
         break;
       case opcode::invokespecial: // 0xb7 (183)
         mnemonic = "invokespecial";
-        va += append_operand<uint16_t>(map, va, chars, operands);
+        va += appendOperand<uint16_t>(map, va, chars, operands);
         break;
       case opcode::invokestatic: // 0xb8 (184)
         mnemonic = "invokestatic";
-        va += append_operand<uint16_t>(map, va, chars, operands);
+        va += appendOperand<uint16_t>(map, va, chars, operands);
         break;
       case opcode::invokeinterface: // 0xb9 (185)
         mnemonic = "invokeinterface";
-        va += append_operand<uint16_t>(map, va, chars, operands);
-        va += append_operand<uint8_t>(map, va, chars, operands);
-        va += append_operand<uint8_t>(map, va, chars, operands);
+        va += appendOperand<uint16_t>(map, va, chars, operands);
+        va += appendOperand<uint8_t>(map, va, chars, operands);
+        va += appendOperand<uint8_t>(map, va, chars, operands);
         break;
       case opcode::invokedynamic: // 0xba (186)
         mnemonic = "invokedynamic";
-        va += append_operand<uint16_t>(map, va, chars, operands);
-        va += append_operand<uint8_t>(map, va, chars, operands);
-        va += append_operand<uint8_t>(map, va, chars, operands);
+        va += appendOperand<uint16_t>(map, va, chars, operands);
+        va += appendOperand<uint8_t>(map, va, chars, operands);
+        va += appendOperand<uint8_t>(map, va, chars, operands);
         break;
       case opcode::new_: // 0xbb (187)
         mnemonic = "new";
-        va += append_operand<uint16_t>(map, va, chars, operands);
+        va += appendOperand<uint16_t>(map, va, chars, operands);
         break;
       case opcode::newarray: // 0xbc (188)
         mnemonic = "newarray";
-        va += append_operand<uint8_t>(map, va, chars, operands); // atype
+        va += appendOperand<uint8_t>(map, va, chars, operands); // atype
         break;
       case opcode::anewarray: // 0xbd (189)
         mnemonic = "anewarray";
-        va += append_operand<uint16_t>(map, va, chars, operands);
+        va += appendOperand<uint16_t>(map, va, chars, operands);
         break;
       case opcode::arraylength: // 0xbe (190)
         mnemonic = "arraylength";
@@ -773,11 +783,11 @@ Jvm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start, AddressSet*)
         break;
       case opcode::checkcast: // 0xc0 (192)
         mnemonic = "checkcast";
-        va += append_operand<uint16_t>(map, va, chars, operands);
+        va += appendOperand<uint16_t>(map, va, chars, operands);
         break;
       case opcode::instanceof: // 0xc1 (193)
         mnemonic = "instanceof";
-        va += append_operand<uint16_t>(map, va, chars, operands);
+        va += appendOperand<uint16_t>(map, va, chars, operands);
         break;
       case opcode::monitorenter: // 0xc2 (194)
         mnemonic = "monitorenter";
@@ -792,19 +802,19 @@ Jvm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start, AddressSet*)
 // TODO: Followibg needs test
       case opcode::ifnull: // 0xc6 (198)
         mnemonic = "ifnull";
-        va += append_operand<int16_t>(map, va, chars, operands);
+        va += appendOperand<int16_t>(map, va, chars, operands);
         break;
       case opcode::ifnonnull: // 0xc7 (199)
         mnemonic = "ifnonnull";
-        va += append_operand<int16_t>(map, va, chars, operands);
+        va += appendOperand<int16_t>(map, va, chars, operands);
         break;
       case opcode::goto_w: // 0xc8 (200)
         mnemonic = "goto_w";
-        va += append_operand<int32_t>(map, va, chars, operands);
+        va += appendOperand<int32_t>(map, va, chars, operands);
         break;
       case opcode::jsr_w: // 0xc9 (201)
         mnemonic = "jsr_w";
-        va += append_operand<int32_t>(map, va, chars, operands);
+        va += appendOperand<int32_t>(map, va, chars, operands);
         break;
 
 // 6.2 Reserved Opcodes (should not be encountered in valid class file)

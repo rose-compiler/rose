@@ -5,6 +5,7 @@ run $(librose_compile)				\
     Aarch64.C					\
     Base.C					\
     BasicTypes.C				\
+    Cil.C					\
     Exception.C					\
     Jvm.C					\
     M68k.C					\
@@ -18,6 +19,7 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis/Disassembler	\
     Aarch64.h								\
     Base.h								\
     BasicTypes.h							\
+    Cil.h								\
     Exception.h								\
     Jvm.h								\
     M68k.h								\

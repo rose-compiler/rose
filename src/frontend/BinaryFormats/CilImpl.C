@@ -7,8 +7,8 @@
 #include "sage3basic.h"
 
 #include <unordered_map>
+#include "Rose/BinaryAnalysis/Disassembler/Cil.h"
 #include "Rose/BinaryAnalysis/Disassembler/X86.h"
-#include "Rose/BinaryAnalysis/DisassemblerCil.h"
 #include "frontend/SageIII/sageInterface/SageBuilderAsm.h"
 
 namespace sb = Rose::SageBuilderAsm;
@@ -2183,7 +2183,7 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
     std::uint32_t  codeLen = mh.codeSize();
 
     std::vector<std::uint8_t> code(codeLen, 0);
-    std::size_t    nreadCode = fhdr->get_loader_map()->readQuick(code.data(), base_va + codeRVA, codeLen);
+    std::size_t nreadCode = fhdr->get_loader_map()->readQuick(code.data(), base_va + codeRVA, codeLen);
     ROSE_ASSERT(nreadCode == codeLen);
 
     SgAsmBlock* blk = nullptr;
@@ -2193,7 +2193,7 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
       namespace rb = Rose::BinaryAnalysis;
 
       case CIL_CODE:
-        blk = disassemble(m, mh, code, rb::DisassemblerCil::instance());
+        blk = disassemble(m, mh, code, rb::Disassembler::Cil::instance());
         break;
 
       case NATIVE_CODE:
