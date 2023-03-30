@@ -50,7 +50,7 @@ mipsValToLabel(uint64_t val, const LabelMap *labels) {
 
 static std::string
 mipsTypeToPtrName(SgAsmType* ty) {
-    if (NULL==ty) {
+    if (nullptr==ty) {
         mlog[ERROR] <<"mipsTypeToPtrName: null type\n";
         return "BAD_TYPE";
     }
@@ -69,7 +69,7 @@ mipsTypeToPtrName(SgAsmType* ty) {
 std::string
 unparseMipsExpression(SgAsmExpression *expr, const LabelMap *labels, const RegisterDictionary::Ptr &registers) {
     std::string result = "";
-    if (expr == NULL) return "BOGUS:NULL";
+    if (expr == nullptr) return "BOGUS:NULL";
 
     switch (expr->variantT()) {
         case V_SgAsmBinaryAdd:

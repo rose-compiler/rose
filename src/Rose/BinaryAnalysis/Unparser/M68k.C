@@ -15,7 +15,7 @@ namespace Unparser {
 
 std::string
 unparseM68kMnemonic(SgAsmM68kInstruction *insn) {
-    assert(insn!=NULL);
+    assert(insn!=nullptr);
     return insn->get_mnemonic();
 }
 
@@ -25,7 +25,7 @@ unparseM68kExpression(SgAsmExpression *expr, const LabelMap *labels, RegisterDic
         registers = RegisterDictionary::instanceColdfireEmac();
     RegisterNames name_of(registers);
     std::string result = "";
-    if (expr==NULL)
+    if (expr==nullptr)
         return "BUGUS:NULL";
 
     if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(expr)) {
@@ -44,7 +44,7 @@ unparseM68kExpression(SgAsmExpression *expr, const LabelMap *labels, RegisterDic
         result = unparseM68kExpression(mul->get_lhs(), labels, registers) + "*" +
                  unparseM68kExpression(mul->get_rhs(), labels, registers);
     } else if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(expr)) {
-        assert(ival!=NULL);
+        assert(ival!=nullptr);
         uint64_t value = ival->get_absoluteValue(); // not sign extended
         result = StringUtility::signedToHex2(value, ival->get_significantBits());
 
@@ -53,7 +53,7 @@ unparseM68kExpression(SgAsmExpression *expr, const LabelMap *labels, RegisterDic
         if (expr->get_comment().empty()) {
             std::string label;
             if (ival->get_significantBits()>8) {
-                if (0!=value && labels!=NULL) {
+                if (0!=value && labels!=nullptr) {
                     LabelMap::const_iterator li = labels->find(value);
                     if (li!=labels->end())
                         label = li->second;

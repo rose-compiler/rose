@@ -27,7 +27,7 @@ unparsePowerpcRegister(SgAsmInstruction *insn, RegisterDescriptor rdesc, Registe
 static std::string
 unparsePowerpcExpression(SgAsmExpression* expr, const LabelMap *labels, const RegisterDictionary::Ptr &registers, bool useHex) {
     std::string result = "";
-    if (expr == NULL) return "BOGUS:NULL";
+    if (expr == nullptr) return "BOGUS:NULL";
     switch (expr->variantT()) {
         case V_SgAsmBinaryAdd:
             result = unparsePowerpcExpression(isSgAsmBinaryExpression(expr)->get_lhs(), labels, registers, false) + " + " +
@@ -95,7 +95,7 @@ unparsePowerpcMnemonic(SgAsmPowerpcInstruction *insn) {
 std::string
 unparsePowerpcExpression(SgAsmExpression *expr, const LabelMap *labels, const RegisterDictionary::Ptr &registers) {
     /* Find the instruction with which this expression is associated. */
-    SgAsmPowerpcInstruction *insn = NULL;
+    SgAsmPowerpcInstruction *insn = nullptr;
     for (SgNode *node=expr; !insn && node; node=node->get_parent()) {
         insn = isSgAsmPowerpcInstruction(node);
     }
