@@ -23,7 +23,6 @@ add_library(roseBinaryAnalysis OBJECT
   ControlFlow.C
   DataFlow.C
   Demangler.C
-  DisassemblerCil.C
   FeasiblePath.C
   FunctionCall.C
   FunctionSimilarity.C
@@ -79,7 +78,6 @@ install(FILES
   Debugger.h
   Demangler.h
   Disassembler.h
-  DisassemblerCil.h
   FeasiblePath.h
   FunctionCall.h
   FunctionSimilarity.h

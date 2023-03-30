@@ -51,12 +51,22 @@ const std::string JvmMethod::name() const
   return std::string{""};
 }
 
+const Code &
+JvmMethod::code() const {
+    return code_;
+}
+
+const SgAsmInstructionList*
+JvmMethod::instructions() const {
+    return sgMethod_->get_instruction_list();
+}
+
 void const JvmMethod::decode(const Disassembler::Base::Ptr &disassembler) const {
   rose_addr_t va{code_.offset()};
   rose_addr_t endVa{code_.offset() + code_.size()};
 
   auto disassemblerJvm{disassembler.dynamicCast<Disassembler::Jvm>()};
-  disassemblerJvm->code_offset(va);
+  disassemblerJvm->codeOffset(va);
 
   MemoryMap::Ptr map = MemoryMap::instance();
   MemoryMap::Buffer::Ptr buf = MemoryMap::StaticBuffer::instance(code_.bytes(), code_.size());

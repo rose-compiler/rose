@@ -90,7 +90,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/Disassembler/Aarch64.C						\
 	BinaryAnalysis/Disassembler/Base.C						\
 	BinaryAnalysis/Disassembler/BasicTypes.C					\
-	BinaryAnalysis/DisassemblerCil.C						\
+	BinaryAnalysis/Disassembler/Cil.C						\
 	BinaryAnalysis/Disassembler/Exception.C						\
 	BinaryAnalysis/Disassembler/Jvm.C						\
 	BinaryAnalysis/Disassembler/M68k.C						\

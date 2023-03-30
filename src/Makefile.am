@@ -329,8 +329,8 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/Disassembler/Aarch64.h					\
 	Rose/BinaryAnalysis/Disassembler/Base.h						\
 	Rose/BinaryAnalysis/Disassembler/BasicTypes.h					\
-	Rose/BinaryAnalysis/DisassemblerCil.h						\
 	Rose/BinaryAnalysis/Disassembler/Exception.h					\
+	Rose/BinaryAnalysis/Disassembler/Cil.h						\
 	Rose/BinaryAnalysis/Disassembler/Jvm.h						\
 	Rose/BinaryAnalysis/Disassembler/M68k.h						\
 	Rose/BinaryAnalysis/Disassembler/Mips.h						\

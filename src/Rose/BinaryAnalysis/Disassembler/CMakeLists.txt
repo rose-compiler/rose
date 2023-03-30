@@ -3,6 +3,7 @@ add_library(roseBinaryAnalysisDisassembler OBJECT
   Aarch64.C
   Base.C
   BasicTypes.C
+  Cil.C
   Exception.C
   Jvm.C
   M68k.C
@@ -18,6 +19,7 @@ install(FILES
   Aarch64.h
   Base.h
   BasicTypes.h
+  Cil.h
   Exception.h
   Jvm.h
   M68k.h

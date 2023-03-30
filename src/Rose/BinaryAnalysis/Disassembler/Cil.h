@@ -1,5 +1,5 @@
-#ifndef ROSE_BinaryAnalysis_Disassembler_Jvm_H
-#define ROSE_BinaryAnalysis_Disassembler_Jvm_H
+#ifndef ROSE_BinaryAnalysis_Disassembler_Cil_H
+#define ROSE_BinaryAnalysis_Disassembler_Cil_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
@@ -11,29 +11,28 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Disassembler {
 
-/** JVM Disassembler.
+/** CIL Disassembler.
  *
- *  This disassembler decodes JVM instructions.
+ *  This disassembler decodes CIL instructions.
  */
-class Jvm: public Base {
+class Cil: public Base {
 public:
     /** Reference counting pointer. */
-    using Ptr = Sawyer::SharedPointer<Jvm>;
+    using Ptr = Sawyer::SharedPointer<Cil>;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Constructors
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 protected:
-    // Default constructor for serialization
-    Jvm();
+    Cil();
 
 public:
-  /** Allocating constructor. */
-  static Ptr instance();
+    /** Allocating constructor. */
+    static Ptr instance();
 
-  virtual ~Jvm();
+    virtual ~Cil();
 
-  virtual Base::Ptr clone() const override;
+    virtual Base::Ptr clone() const override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Public methods
@@ -49,18 +48,11 @@ public:
     virtual SgAsmInstruction* makeUnknownInstruction(const Disassembler::Exception&) override;
 
 private:
-    size_t appendTableswitch(const MemoryMap::Ptr &map, rose_addr_t start,
-                             SgUnsignedCharList &chars, SgAsmOperandList* operands);
-    template <class T>
-      size_t appendOperand(const MemoryMap::Ptr &map, rose_addr_t va,
-                           SgUnsignedCharList &chars, SgAsmOperandList* operands);
-
-    /* beginning offset to code segment being processed */
-    rose_addr_t codeOffset_;
-
-public:
-    rose_addr_t codeOffset();
-    void codeOffset(rose_addr_t offset);
+    SgAsmCilInstruction* makeUnknownInstruction(rose_addr_t address);
+    SgAsmCilInstruction* makeInstruction(rose_addr_t, CilInstructionKind,
+                                         const std::string&, SgAsmExpression* operand=nullptr) const;
+    SgAsmCilInstruction* makeInstruction(rose_addr_t, SgUnsignedCharList& bytes/*in,out*/, size_t, CilInstructionKind,
+                                         const std::string&, SgAsmExpression* operand=nullptr) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Serialization
@@ -70,8 +62,8 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Disassembler::Base);
+      void serialize(S &s, const unsigned /*version*/) {
+          s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Disassembler::Base);
     }
 #endif
 };

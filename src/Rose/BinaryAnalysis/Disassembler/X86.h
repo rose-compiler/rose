@@ -59,7 +59,7 @@ private:
               branchPredictionEnabled(false), rexPresent(false), rexW(false), rexR(false), rexX(false), rexB(false),
               sizeMustBe64Bit(false), operandSizeOverride(false), addressSizeOverride(false), lock(false),
               repeatPrefix(x86_repeat_none), modregrmByteSet(false), modregrmByte(0), modeField(0), regField(0),
-              rmField(0), modrm(NULL), reg(NULL), isUnconditionalJump(false) {}
+              rmField(0), modrm(nullptr), reg(nullptr), isUnconditionalJump(false) {}
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -118,8 +118,8 @@ public:
 
     virtual Unparser::BasePtr unparser() const override;
 
-    virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
-                                             AddressSet *successors=NULL) override;
+    virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va,
+                                             AddressSet *successors=nullptr) override;
 
     virtual SgAsmInstruction *makeUnknownInstruction(const Exception&) override;
 
@@ -256,8 +256,8 @@ private:
      *  correct number of raw instruction bytes (p_raw_bytes) it should be called after all the instruction bytes have been
      *  read, otherwise remember to call set_raw_bytes() explicitly. */
     SgAsmX86Instruction *makeInstruction(State &state, X86InstructionKind kind, const std::string &mnemonic,
-                                         SgAsmExpression *op1=NULL, SgAsmExpression *op2=NULL,
-                                         SgAsmExpression *op3=NULL, SgAsmExpression *op4=NULL) const;
+                                         SgAsmExpression *op1=nullptr, SgAsmExpression *op2=nullptr,
+                                         SgAsmExpression *op3=nullptr, SgAsmExpression *op4=nullptr) const;
 
     /** Constructs a register reference expression for the instruction pointer register. */
     SgAsmRegisterReferenceExpression *makeIP() const;
@@ -271,7 +271,7 @@ private:
     /** Constructs a register reference expression. The @p registerType is only used for vector registers that can have more
      *  than one type. */
     SgAsmRegisterReferenceExpression *makeRegister(State &state, uint8_t fullRegisterNumber, RegisterMode,
-                                                   SgAsmType *registerType=NULL) const;
+                                                   SgAsmType *registerType=nullptr) const;
 
     /* FIXME: documentation? */
     SgAsmRegisterReferenceExpression *makeRegisterEffective(State &state, uint8_t fullRegisterNumber) const {
@@ -306,7 +306,7 @@ private:
      *
      * The @p regMode is the register kind for the "R" bits and is used when constructing the X86::reg data member.
      * The @p rmMode is the register kind for the "RM" field when the mode refers to a register. */
-    void getModRegRM(State &state, RegisterMode regMode, RegisterMode rmMode, SgAsmType *t, SgAsmType *tForReg = NULL) const;
+    void getModRegRM(State &state, RegisterMode regMode, RegisterMode rmMode, SgAsmType *t, SgAsmType *tForReg = nullptr) const;
 
     /** Decodes the ModR/M byte to a memory reference expression. See makeModrmNormal(). */
     SgAsmMemoryReferenceExpression *decodeModrmMemory(State &state) const;
@@ -320,7 +320,7 @@ private:
 
     /** Builds the register reference expression for the ModR/M byte. See getModRegRM(). The @p mrType is only used for vector
      *  registers. */
-    SgAsmRegisterReferenceExpression *makeModrmRegister(State &state, RegisterMode, SgAsmType* mrType=NULL) const;
+    SgAsmRegisterReferenceExpression *makeModrmRegister(State &state, RegisterMode, SgAsmType* mrType=nullptr) const;
 
     /** Throw an exceptions if the instruction requires the "Mod" part of the ModR/M byte to have the value 3. */
     void requireMemory(State &state) const {
@@ -442,7 +442,7 @@ private:
 #if 0 // is this ever used?
     /** Resets disassembler state to beginning of an instruction for assembly. */
     void startInstruction(State &state, SgAsmX86Instruction *insn) const {
-        startInstruction(insn->get_address(), NULL, 0);
+        startInstruction(insn->get_address(), nullptr, 0);
         insnSize = insn->get_baseSize();
         state.lock = insn->get_lockPrefix();
         state.branchPrediction = insn->get_branchPrediction();
@@ -469,7 +469,7 @@ private:
         state.repeatPrefix = x86_repeat_none;
         state.modregrmByteSet = false;
         state.modregrmByte = state.modeField = state.regField = state.rmField = 0; /*arbitrary since modregrmByteSet is false*/
-        state.modrm = state.reg = NULL;
+        state.modrm = state.reg = nullptr;
         state.isUnconditionalJump = false;
     }
 
