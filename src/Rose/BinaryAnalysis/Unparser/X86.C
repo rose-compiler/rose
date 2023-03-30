@@ -53,7 +53,7 @@ unparseX86Register(SgAsmInstruction *insn, RegisterDescriptor reg, RegisterDicti
 
 std::string
 unparseX86Register(RegisterDescriptor reg, const RegisterDictionary::Ptr &registers) {
-    return unparseX86Register(NULL, reg, registers);
+    return unparseX86Register(nullptr, reg, registers);
 }
 
 static std::string
@@ -70,7 +70,7 @@ x86ValToLabel(uint64_t val, const LabelMap *labels) {
 
 static std::string
 x86TypeToPtrName(SgAsmType* ty) {
-    if (NULL==ty) {
+    if (nullptr==ty) {
         mlog[ERROR] <<"x86TypeToPtrName: null type\n";
         return "BAD_TYPE";
     }
@@ -99,7 +99,7 @@ x86TypeToPtrName(SgAsmType* ty) {
 std::string
 unparseX86Expression(SgAsmExpression *expr, const LabelMap *labels, const RegisterDictionary::Ptr &registers, bool leaMode) {
     std::string result = "";
-    if (expr == NULL) return "BOGUS:NULL";
+    if (expr == nullptr) return "BOGUS:NULL";
 
     switch (expr->variantT()) {
         case V_SgAsmBinaryAdd:
@@ -183,7 +183,7 @@ unparseX86Expression(SgAsmExpression *expr, const LabelMap *labels, const Regist
 std::string
 unparseX86Expression(SgAsmExpression *expr, const LabelMap *labels, const RegisterDictionary::Ptr &registers) {
     /* Find the instruction with which this expression is associated. */
-    SgAsmX86Instruction *insn = NULL;
+    SgAsmX86Instruction *insn = nullptr;
     for (SgNode *node=expr; !insn && node; node=node->get_parent()) {
         insn = isSgAsmX86Instruction(node);
     }
@@ -258,7 +258,7 @@ X86::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) const {
 
     } else if (SgAsmMemoryReferenceExpression *mr = isSgAsmMemoryReferenceExpression(expr)) {
         SgAsmX86Instruction *insn = SageInterface::getEnclosingNode<SgAsmX86Instruction>(expr);
-        bool isLea = insn != NULL && insn->get_kind() == x86_lea;
+        bool isLea = insn != nullptr && insn->get_kind() == x86_lea;
         if (!isLea) {
             state.frontUnparser().emitTypeName(out, mr->get_type(), state);
             out <<" ";

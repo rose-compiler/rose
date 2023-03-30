@@ -75,6 +75,8 @@ std::string unparseMnemonic(SgAsmInstruction *insn) {
             return unparseMipsMnemonic(isSgAsmMipsInstruction(insn));
         case V_SgAsmM68kInstruction:
             return unparseM68kMnemonic(isSgAsmM68kInstruction(insn));
+        case V_SgAsmCilInstruction:
+            return unparseCilMnemonic(isSgAsmCilInstruction(insn));
         case V_SgAsmJvmInstruction:
             return unparseJvmMnemonic(isSgAsmJvmInstruction(insn));
         default:
@@ -119,6 +121,10 @@ std::string unparseExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap
             return unparseMipsExpression(expr, labels, registers);
         case V_SgAsmM68kInstruction:
             return unparseM68kExpression(expr, labels, registers);
+        case V_SgAsmCilInstruction:
+            return unparseCilExpression(expr, labels, registers);
+        case V_SgAsmJvmInstruction:
+            return unparseJvmExpression(expr, labels, registers);
         default:
             ASSERT_not_reachable("unhandled variant: " + insn->class_name());
     }

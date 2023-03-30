@@ -72,7 +72,7 @@ invalidRegister(SgAsmInstruction *insn, RegisterDescriptor reg, const RegisterDi
              <<"  registers with the notation \"BAD_REGISTER(a.b.c.d)\" where \"a\" and \"b\" are the major\n"
              <<"  and minor numbers for the register, \"c\" is the bit offset within the underlying machine\n"
              <<"  register, and \"d\" is the number of significant bits.\n";
-        if (regdict!=NULL)
+        if (regdict!=nullptr)
             warn <<"  Dictionary in use at time of warning: " <<regdict->name() <<"\n";
         wasDescribed = true;
     }
@@ -2255,7 +2255,7 @@ Base::emitTypeName(std::ostream &out, SgAsmType *type, State &state) const {
     if (nextUnparser()) {
         nextUnparser()->emitTypeName(out, type, state);
     } else {
-        if (NULL == type) {
+        if (nullptr == type) {
             out <<"notype";
 
         } else if (SgAsmIntegerType *it = isSgAsmIntegerType(type)) {

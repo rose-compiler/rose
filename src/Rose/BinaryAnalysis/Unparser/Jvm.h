@@ -10,6 +10,7 @@ namespace BinaryAnalysis {
 namespace Unparser {
 
 std::string unparseJvmMnemonic(SgAsmJvmInstruction*);
+std::string unparseJvmExpression(SgAsmExpression*, const LabelMap*, RegisterDictionaryPtr);
 
 /** %Settings specific to the JVM unparser. */
 struct JvmSettings: public Settings {};
@@ -38,6 +39,10 @@ public:
 
 protected:
     void emitInstructionMnemonic(std::ostream&, SgAsmInstruction*, State&) const override;
+    void emitOperandBody(std::ostream&, SgAsmExpression*, State&) const override;
+
+private:
+    void outputExpr(std::ostream&, SgAsmExpression*, State&) const;
 };
 
 } // namespace
