@@ -17,7 +17,7 @@ rosebud_SOURCES =				\
 	Utility.C				\
 	YamlGenerator.C
 
-rosebud_LDADD = ../../util/Sawyer/libroseSawyer.la $(ROSE_BOOST_LIBS) $(RT_LIBS)
+rosebud_LDADD = $(top_builddir)/src/util/Sawyer/libroseSawyer.la $(ROSE_BOOST_LIBS) $(RT_LIBS)
 
 # Headers are mentioned here so the policy checkers think they're used. There's no reason
 # to install them.
