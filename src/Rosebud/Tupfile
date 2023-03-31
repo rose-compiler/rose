@@ -1,0 +1,11 @@
+include_rules
+
+run $(support_compile_linkexe) -I.. \
+    rosebud.C \
+    Ast.C \
+    BoostSerializer.C \
+    Generator.C \
+    RosettaGenerator.C \
+    Utility.C \
+    YamlGenerator.C \
+    $(ROSE)/src/util/Sawyer/libsawyer
