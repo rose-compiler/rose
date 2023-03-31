@@ -70,14 +70,14 @@ Partitioner::Thunk::~Thunk() {}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Partitioner::Partitioner()
-    : solver_(SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver)), autoAddCallReturnEdges_(false),
-      assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1), semanticMemoryParadigm_(LIST_BASED_MEMORY),
-      progress_(Progress::instance()), cfgProgressTotal_(0) {
+    : interpretation_(nullptr), solver_(SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver)),
+      autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
+      semanticMemoryParadigm_(LIST_BASED_MEMORY), progress_(Progress::instance()), cfgProgressTotal_(0) {
     init(Disassembler::Base::Ptr(), memoryMap_);
 }
 
 Partitioner::Partitioner(const Disassembler::Base::Ptr &disassembler, const MemoryMap::Ptr &map)
-    : memoryMap_(map), solver_(SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver)),
+    : memoryMap_(map), interpretation_(nullptr), solver_(SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver)),
       autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
       semanticMemoryParadigm_(LIST_BASED_MEMORY), progress_(Progress::instance()), cfgProgressTotal_(0) {
     init(disassembler, map);
@@ -93,6 +93,43 @@ Partitioner::instance(const Disassembler::Base::Ptr &disassembler, const MemoryM
     return Ptr(new Partitioner(disassembler, memoryMap));
 }
 
+Partitioner::Ptr
+Partitioner::instanceFromRbaFile(const boost::filesystem::path &name, SerialIo::Format fmt) {
+    Sawyer::Message::Stream info(mlog[INFO]);
+    info <<"reading RBA state from " <<name;
+    Sawyer::Stopwatch timer;
+    SerialInput::Ptr archive = SerialInput::instance();
+    archive->format(fmt);
+    archive->open(name);
+
+    Partitioner::Ptr partitioner = archive->loadPartitioner();
+
+    while (archive->objectType() == SerialIo::AST)
+        archive->loadAst();
+
+    info <<"; took " <<timer << "\n";
+    return partitioner;
+}
+
+void
+Partitioner::saveAsRbaFile(const boost::filesystem::path &name, SerialIo::Format fmt) const {
+    Sawyer::Message::Stream info(mlog[INFO]);
+    info <<"writing RBA state file to " <<name;
+    Sawyer::Stopwatch timer;
+    SerialOutput::Ptr archive = SerialOutput::instance();
+    archive->format(fmt);
+    archive->open(name);
+
+    archive->savePartitioner(sharedFromThis());
+
+    if (SgProject *project = SageInterface::getProject()) {
+        for (SgBinaryComposite *file: SageInterface::querySubTree<SgBinaryComposite>(project))
+            archive->saveAst(file);
+    }
+
+    info <<"; took " <<timer <<"\n";
+}
+
 #ifdef ROSE_PARTITIONER_MOVE
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Copy construction, assignment, destructor when move semantics are present
@@ -100,9 +137,9 @@ Partitioner::instance(const Disassembler::Base::Ptr &disassembler, const MemoryM
 
 // move constructor
 Partitioner::Partitioner(BOOST_RV_REF(Partitioner) other)
-    : solver_(SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver)), autoAddCallReturnEdges_(false),
-      assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1), semanticMemoryParadigm_(LIST_BASED_MEMORY),
-      progress_(Progress::instance()), cfgProgressTotal_(0) {
+    : interpretation_(nullptr), solver_(SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver)),
+      autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
+      semanticMemoryParadigm_(LIST_BASED_MEMORY), progress_(Progress::instance()), cfgProgressTotal_(0) {
     *this = boost::move(other);
 }
 
@@ -136,6 +173,9 @@ Partitioner::operator=(BOOST_RV_REF(Partitioner) other) {
 
     memoryMap_ = other.memoryMap_;
     other.memoryMap_ = MemoryMap::Ptr();
+
+    interpretation_ = other.interpretation_;
+    other.interpretation_ = nullptr;
 
     solver_ = other.solver_;
     other.solver_ = SmtSolver::Ptr();
@@ -218,6 +258,7 @@ Partitioner::operator=(const Partitioner &other) {
 
     instructionProvider_ = other.instructionProvider_;
     memoryMap_ = other.memoryMap_;
+    interpretation_ = other.interpretation_;
     solver_ = other.solver_;
     autoAddCallReturnEdges_ = other.autoAddCallReturnEdges_;
     assumeFunctionsReturn_ = other.assumeFunctionsReturn_;
@@ -316,6 +357,16 @@ Partitioner::instructionProvider() const {
 MemoryMap::Ptr
 Partitioner::memoryMap() const {
     return memoryMap_;
+}
+
+SgAsmInterpretation*
+Partitioner::interpretation() const {
+    return interpretation_;
+}
+
+void
+Partitioner::interpretation(SgAsmInterpretation *interp) {
+    interpretation_ = interp;
 }
 
 bool
@@ -1168,19 +1219,20 @@ Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb, Precision::Level pr
         return successors;
 
     SgAsmInstruction *lastInsn = bb->instructions().back();
-    RegisterDescriptor REG_IP = instructionProvider_->instructionPointerRegister();
 
     BasicBlockSemantics sem = bb->semantics();
     BaseSemantics::State::Ptr state;
     if (settings_.ignoringUnknownInsns && lastInsn->isUnknown()) {
         // Special case for "unknown" instructions... the successor is assumed to be the fall-through address.
         rose_addr_t va = lastInsn->get_address() + lastInsn->get_size();
+        size_t nBits = instructionProvider_->wordSize();
         BaseSemantics::RiscOperators::Ptr ops = newOperators();
-        successors.push_back(BasicBlock::Successor(Semantics::SValue::promote(ops->number_(REG_IP.nBits(), va))));
+        successors.push_back(BasicBlock::Successor(Semantics::SValue::promote(ops->number_(nBits, va))));
     } else if (precision > Precision::LOW && (state = sem.finalState())) {
         // Use our own semantics if we have them.
         ASSERT_not_null(sem.dispatcher);
         ASSERT_not_null(sem.operators);
+        RegisterDescriptor REG_IP = instructionProvider_->instructionPointerRegister();
         std::vector<Semantics::SValue::Ptr> worklist(1, Semantics::SValue::promote(sem.operators->peekRegister(REG_IP)));
         while (!worklist.empty()) {
             Semantics::SValue::Ptr pc = worklist.back();
@@ -1204,13 +1256,14 @@ Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb, Precision::Level pr
     } else {
         // We don't have semantics, so naively look at just the last instruction.
         bool complete = true;
+        size_t nBits = instructionProvider_->wordSize();
         AddressSet successorVas = lastInsn->getSuccessors(complete/*out*/);
 
         BaseSemantics::RiscOperators::Ptr ops = newOperators();
         for (rose_addr_t va: successorVas.values())
-            successors.push_back(BasicBlock::Successor(Semantics::SValue::promote(ops->number_(REG_IP.nBits(), va))));
+            successors.push_back(BasicBlock::Successor(Semantics::SValue::promote(ops->number_(nBits, va))));
         if (!complete)
-            successors.push_back(BasicBlock::Successor(Semantics::SValue::promote(ops->undefined_(REG_IP.nBits()))));
+            successors.push_back(BasicBlock::Successor(Semantics::SValue::promote(ops->undefined_(nBits))));
     }
 
     // We don't want parallel edges in the CFG, so remove duplicates.

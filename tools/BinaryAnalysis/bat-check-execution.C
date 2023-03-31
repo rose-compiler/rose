@@ -18,7 +18,8 @@ static const char* description =
 #include <rose_getline.h>
 #include <rose_strtoull.h>
 #include <Rose/BinaryAnalysis/Debugger/Linux.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
+#include <Rose/CommandLine/Parser.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Message.h>
 #include <Sawyer/ProgressBar.h>
@@ -47,23 +48,19 @@ struct Settings {
 
 // Describe and parse the command-line
 static std::vector<std::string>
-parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
+parseCommandLine(int argc, char *argv[], const P2::EngineBinary::Ptr &engine, Settings &settings)
 {
     using namespace Sawyer::CommandLine;
 
     // The parser is the same as that created by Engine::commandLineParser except we don't need any disassemler or partitioning
     // switches since this tool doesn't disassemble or partition.
-    Parser parser;
-    parser
-        .purpose(purpose)
-        .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
-        .chapter(1, "ROSE Command-line Tools")
-        .doc("Synopsis",
-             "@prop{programName} [@v{switches}] @v{address_file} @v{specimen_name} @v{specimen_arguments}...")
-        .doc("Description", description)
-        .doc("Specimens", engine.specimenNameDocumentation())
-        .with(engine.engineSwitches())
-        .with(engine.loaderSwitches());
+    Parser parser = Rose::CommandLine::createEmptyParser(purpose, description)
+                    .doc("Synopsis",
+                         "@prop{programName} [@v{switches}] @v{address_file} @v{specimen_name} @v{specimen_arguments}...")
+                    .with(Rose::CommandLine::genericSwitches())
+                    .doc(engine->specimenNameDocumentation())
+                    .with(engine->engineSwitches(engine->settings().engine))
+                    .with(engine->loaderSwitches(engine->settings().loader));
 
     SwitchGroup tool("Tool specific switches");
     tool.name("tool");
@@ -185,8 +182,8 @@ main(int argc, char *argv[]) {
 
     // Parse command-line
     Settings settings;
-    P2::Engine *engine = P2::Engine::instance();
-    std::vector<std::string> args = parseCommandLine(argc, argv, *engine, settings);
+    auto engine = P2::EngineBinary::instance();
+    std::vector<std::string> args = parseCommandLine(argc, argv, engine, settings);
     ASSERT_always_require2(args.size() >= 2, "incorrect usage; see --help");
 
     // Parse file containing instruction addresses
@@ -260,8 +257,6 @@ main(int argc, char *argv[]) {
                 std::cout <<"    " <<addrToString(addrCount.key()) <<"\t" <<addrCount.value() <<"\n";
         }
     }
-
-    delete engine;
 }
 
 #else

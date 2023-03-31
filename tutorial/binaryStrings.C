@@ -2,7 +2,7 @@
 #include <rose.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 #include <Rose/BinaryAnalysis/String.h>
 
 #include <boost/foreach.hpp>
@@ -23,7 +23,7 @@ main(int argc, char *argv[]) {
         "UTF-16 little-endian strings, two-byte little-endian length-encoded "
         "ASCII strings, and some other common formats.";
 
-    Partitioner2::Engine *engine = Partitioner2::Engine::instance();
+    Partitioner2::Engine::Ptr engine = Partitioner2::EngineBinary::instance();
     std::vector<std::string> specimen =
         engine->parseCommandLine(argc, argv, purpose, description).unreachedArgs();
     //! [commandline]
@@ -49,6 +49,4 @@ main(int argc, char *argv[]) {
         std::cout <<"narrow value: \"" <<StringUtility::cEscape(string.narrow()) <<"\"\n";
     }
     //! [output]
-
-    delete engine;
 }

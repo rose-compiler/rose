@@ -26,7 +26,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include <Rose/BinaryAnalysis/ControlFlow.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 
 #include <AsmUnparser.h>
@@ -50,7 +50,7 @@ main(int argc, char *argv[]) {
     std::string purpose = "demonstrate inter-function disassembly";
     std::string description =
         "Disassembles and partitions the specimen(s), then tries to disassemble things between the functions.";
-    P2::Engine *engine = P2::Engine::instance();
+    P2::Engine::Ptr engine = P2::EngineBinary::instance();
     std::vector<std::string> specimens = engine->parseCommandLine(argc, argv, purpose, description).unreachedArgs();
     P2::Partitioner::Ptr partitioner = engine->partition(specimens);
 
@@ -127,8 +127,6 @@ main(int argc, char *argv[]) {
     unparser.add_control_flow_graph(ControlFlow().build_block_cfg_from_ast<ControlFlow::BlockGraph>(gblock));
     unparser.staticDataDisassembler.init(engine->disassembler());
     unparser.unparse(std::cout, gblock);
-
-    delete engine;
 }
 
 #endif

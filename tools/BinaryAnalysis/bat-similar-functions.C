@@ -14,7 +14,7 @@ static const char *description =
 #include <batSupport.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 #include <Rose/CommandLine.h>
 #include <Rose/FormattedTable.h>
 
@@ -67,7 +67,7 @@ struct Settings {
 
 // Parse command-line and apply to settings. Return the two RBA file names.
 static std::pair<boost::filesystem::path, boost::filesystem::path>
-parseCommandLine(int argc, char *argv[], P2::Engine&, Settings &settings) {
+parseCommandLine(int argc, char *argv[], Settings &settings) {
     using namespace Sawyer::CommandLine;
 
     SwitchGroup gen = Rose::CommandLine::genericSwitches();
@@ -397,10 +397,11 @@ munkresCost(const dlib::matrix<double> &src, T scale, dlib::matrix<T> &dst /*out
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static std::vector<SgAsmFunction*>
-loadFunctions(const boost::filesystem::path rbaName, P2::Engine &engine) {
-    engine.reset();                                            // clear all but config properties
-    engine.settings().partitioner.doingPostAnalysis = false;   // not needed for this tool
-    SgAsmBlock *gblock = engine.buildAst(rbaName.string());    // parse, load, link, disassemble, partition, build AST
+loadFunctions(const boost::filesystem::path rbaName, const P2::Engine::Ptr &engine) {
+    ASSERT_not_null(engine);
+    engine->reset();                                           // clear all but config properties
+    engine->settings().partitioner.doingPostAnalysis = false;  // not needed for this tool
+    SgAsmBlock *gblock = engine->buildAst(rbaName.string());   // parse, load, link, disassemble, partition, build AST
     return SageInterface::querySubTree<SgAsmFunction>(gblock); // return just the functions
 }
 
@@ -417,15 +418,15 @@ main(int argc, char *argv[]) {
     Stream info(mlog[INFO]);
 
     // Parse command-line
-    P2::Engine *engine = P2::Engine::instance();
+    P2::Engine::Ptr engine = P2::EngineBinary::instance();
     Settings settings;
-    std::pair<boost::filesystem::path, boost::filesystem::path> rbaFiles = parseCommandLine(argc, argv, *engine, settings);
+    std::pair<boost::filesystem::path, boost::filesystem::path> rbaFiles = parseCommandLine(argc, argv, settings);
     size_t nThreads = Rose::CommandLine::genericSwitchArgs.threads;
     if (0 == nThreads)
         nThreads = boost::thread::hardware_concurrency();
 
-    std::vector<SgAsmFunction*> functions1 = loadFunctions(rbaFiles.first, *engine);
-    std::vector<SgAsmFunction*> functions2 = loadFunctions(rbaFiles.second, *engine);
+    std::vector<SgAsmFunction*> functions1 = loadFunctions(rbaFiles.first, engine);
+    std::vector<SgAsmFunction*> functions2 = loadFunctions(rbaFiles.second, engine);
     info <<"specimen1 has " <<plural(functions1.size(), "functions") <<" containing " <<treeSize(functions1) <<" AST nodes.\n";
     info <<"specimen2 has " <<plural(functions2.size(), "functions")<<" containing " <<treeSize(functions2) <<" AST nodes.\n";
     if (functions1.empty() || functions2.empty())
@@ -538,8 +539,6 @@ main(int argc, char *argv[]) {
                    <<" (" <<(100.0*nClashes/assignments.size()) <<" percent)"
                    <<(1==nClashes?" was":" were") <<" between functions with different names\n";
     }
-
-    delete engine;
 }
 
 #else

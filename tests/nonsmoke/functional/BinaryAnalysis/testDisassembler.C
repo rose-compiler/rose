@@ -2,7 +2,7 @@
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <rose_getline.h>
 #include <rose_strtoull.h>
@@ -20,7 +20,7 @@ namespace I2 = Rose::BinaryAnalysis::InstructionSemantics;
 bool runSemantics = false;
 
 static std::string
-parseCommandLine(int argc, char *argv[], P2::Engine &engine, BinaryAnalysis::Unparser::Settings &upSettings) {
+parseCommandLine(int argc, char *argv[], const P2::EngineBinary::Ptr &engine, BinaryAnalysis::Unparser::Settings &upSettings) {
     using namespace Sawyer::CommandLine;
 
     SwitchGroup output = BinaryAnalysis::Unparser::commandLineSwitches(upSettings);
@@ -30,7 +30,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, BinaryAnalysis::Unp
     Rose::CommandLine::insertBooleanSwitch(tool, "semantics", runSemantics, "Run instruction semantics.");
 
     // The ony switch we want is --isa=ISA.
-    SwitchGroup disassembler = P2::Engine::disassemblerSwitches(engine.settings().disassembler);
+    SwitchGroup disassembler = engine->disassemblerSwitches(engine->settings().disassembler);
     Switch isa = disassembler.getByName("isa");
     while (disassembler.nSwitches() > 0)
         disassembler.removeByIndex(0);
@@ -86,8 +86,8 @@ int main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
 
     BinaryAnalysis::Unparser::Settings upSettings;
-    P2::Engine *engine = P2::Engine::instance();
-    std::string fileName = parseCommandLine(argc, argv, *engine, upSettings);
+    auto engine = P2::EngineBinary::instance();
+    std::string fileName = parseCommandLine(argc, argv, engine, upSettings);
     std::ifstream input(fileName.c_str());
     
     P2::mlog[WARN].disable(); // warnings about empty memory map
@@ -140,6 +140,4 @@ int main(int argc, char *argv[]) {
             std::cout <<StringUtility::prefixLines(ss.str(), "       ");
         }
     }
-
-    delete engine;
 }

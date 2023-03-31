@@ -4434,7 +4434,9 @@ HEADER_JOVIAL_DIRECTIVE_STATEMENT_START
                e_left_right,           /*!<     LEFTRIGHT DIRECTIVE */
                e_rearrange,            /*!<     REARRANGE DIRECTIVE */
                e_initialize,           /*!< 9.10 INITIALIZATION DIRECTIVES */
-               e_order                 /*!< 9.11 ALLOCATION ORDER DIRECTIVES */
+               e_order,                /*!< 9.11 ALLOCATION ORDER DIRECTIVES */
+
+               e_always                /*!< ALWAYS'STORE DIRECTIVE, non-standard */
              };
 
           virtual SgName get_mangled_name() const override;
@@ -20970,10 +20972,12 @@ SgAdaTaskTypeDecl::get_symbol_from_symbol_table() const
 SgName
 SgAdaTaskTypeDecl::get_mangled_name() const
 {
-  std::string name = "ada$tsk$";
+  static const std::string name = "$ada$tsk$";
 
-  name.append(get_name());
-  return name;
+  SgScopeStatement* scope = get_scope();
+  ROSE_ASSERT(scope != NULL);
+
+  return scope->get_mangled_name() + name + get_name();
 }
 
 bool SgAdaTaskTypeDecl::hasExplicitScope() const { return true; }
@@ -21067,10 +21071,12 @@ SgAdaProtectedTypeDecl::get_symbol_from_symbol_table() const
 SgName
 SgAdaProtectedTypeDecl::get_mangled_name() const
 {
-  std::string name = "ada$prtctd$";
+  static const std::string name = "$ada$prot$";
 
-  name.append(get_name());
-  return name;
+  SgScopeStatement* scope = get_scope();
+  ROSE_ASSERT(scope != NULL);
+
+  return scope->get_mangled_name() + name + get_name();
 }
 
 bool SgAdaProtectedTypeDecl::hasExplicitScope() const { return true; }

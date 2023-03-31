@@ -13,7 +13,7 @@ static const char *description =
 #include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
@@ -329,7 +329,7 @@ main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
     Diagnostics::initAndRegister(&::mlog, "tool");
 
-    P2::Engine *engine = P2::Engine::instance();
+    P2::Engine::Ptr engine = P2::EngineBinary::instance();
     std::vector<std::string> specimen = engine->parseCommandLine(argc, argv, "tests semantics initial states", description)
                                         .unreachedArgs();
     P2::Partitioner::Ptr partitioner = engine->partition(specimen);
@@ -338,8 +338,6 @@ main(int argc, char *argv[]) {
     advancedReadTest(partitioner);
     for (const P2::Function::Ptr &function : partitioner->functions())
          analyzeFunction(partitioner, function);
-
-    delete engine;
 }
 
 #endif

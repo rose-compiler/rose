@@ -25,12 +25,12 @@ std::set<rose_addr_t> Method::targets() const {
   for (auto insn : instructions()->get_instructions()) {
     bool complete;
     auto successors = insn->getSuccessors(complete);
-      for (auto successor : successors.values()) {
+    for (auto successor : successors.values()) {
 #if DEBUG_PRINT
-        cout << "... Method::targets():adding successor target va:" << successor << endl;
+      cout << "... Method::targets():adding successor target va:" << successor << endl;
 #endif
-        retval.insert(successor);
-      }
+      retval.insert(successor);
+    }
   }
   return retval;
 }
@@ -57,15 +57,14 @@ Method::append(BasicBlock::Ptr bb) {
 // Class
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Class::partition()
+void Class::partition(const PartitionerPtr &partitioner) const
 {
   const size_t nBits = 64;
 
-  auto partitioner = Partitioner2::Partitioner::instance();
-
   for (auto constMethod : methods()) {
     bool needNewBlock{true};
-    BasicBlockPtr block;
+    FunctionPtr function{};
+    BasicBlockPtr block{};
 
     // Allow const_cast only here: TODO: consider fixing this (adding basic blocks)?
     Method* method = const_cast<Method*>(constMethod);
@@ -74,12 +73,20 @@ void Class::partition()
     auto instructions = method->instructions()->get_instructions();
     if (instructions.size() > 0) {
       auto va = instructions[0]->get_address();
-      auto function = Partitioner2::Function::instance(va, method->name());
+      function = Partitioner2::Function::instance(va, method->name());
 
-      for (auto insn : instructions) {
-        va = insn->get_address();
+      for (auto astInsn : instructions) {
+        // A copy of the instruction must be made so it is decoupled from ROSE's AST
+        SgAsmInstruction* insn{nullptr};
+        auto jvmInsn = dynamic_cast<SgAsmJvmInstruction*>(astInsn);
+        if (jvmInsn) {
+          insn = jvmInsn->copy();
+        }
+        //TODO: Make this work for CIL instructions
+        ASSERT_not_null(insn);
 
         // A new block is needed if this instruction is a target of a branch and nonterminal
+        va = insn->get_address();
         if (targets.find(va) != targets.end() && !insn->terminatesBasicBlock()) {
           // But a new block is not needed if this is the first instruction in the block
           if (!block->isEmpty() && va != block->address()) {
@@ -104,17 +111,26 @@ void Class::partition()
         }
 
         if (needNewBlock) {
+          if (block && !block->isEmpty() && va != block->address()) {
+            //TODO: find out why first block (va == block address) doesn't need to be added
+            // perhaps because functions address gets added?
+            partitioner->attachBasicBlock(block);
+          }
           block = Partitioner2::BasicBlock::instance(va, partitioner);
-          function->insertBasicBlock(va);
-          method->append(block);
           needNewBlock = false;
+          function->insertBasicBlock(va);
+          // Also update ByteCode::Analysis data allowing different way of testing
+          method->append(block);
         }
+
+        // Warning: this instruction can't be linked into ROSE's AST (parent must be null)
         block->append(partitioner, insn);
 
         // Add successors if this instruction terminates the block
+        //TODO: This probably mostly works if last instruction (look for ways to simplify)
         if (insn->terminatesBasicBlock() && insn != instructions.back()) {
           bool complete;
-          auto successors = insn->getSuccessors(complete); // complete is a return value
+          auto successors = insn->getSuccessors(complete/*out*/);
           for (auto successor : successors.values()) {
 #if DEBUG_PRINT
             cout << "... adding successor edge from va:" << va << " to:" << successor << endl;
@@ -133,7 +149,19 @@ void Class::partition()
         }
       }
     }
+
+    // Attach function return block
+    SgAsmInstruction* last = block->instructions().back();
+    ASSERT_not_null(last);
+    if (last->terminatesBasicBlock() && last->isFunctionReturnFast(block->instructions())) {
+      block->isFunctionReturn(true);
+    }
+
+    // Finally add terminating block and function to the CFG
+    partitioner->attachBasicBlock(block);
+    partitioner->attachFunction(function);
   }
+  // partitioner->dumpCfg(std::cout, "Worker:", true, false);
 }
 
 void Class::digraph()
@@ -182,9 +210,11 @@ void Class::digraph()
     }
 
     // Edge from method to first block
-    auto blockHead = method->blocks()[0];
-    dotFile << "  \"" << method->name() << "\" -> "
-            << "block_" << midx << "_0:" << blockHead->instructions()[0]->get_address() << endl;
+    if (method->blocks().size() > 0) {
+      auto blockHead = method->blocks()[0];
+      dotFile << "  \"" << method->name() << "\" -> "
+              << "block_" << midx << "_0:" << blockHead->instructions()[0]->get_address() << endl;
+    }
 
     for (size_t bidx = 0; bidx < method->blocks().size(); bidx++) {
       auto block = method->blocks()[bidx];

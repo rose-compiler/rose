@@ -7,7 +7,6 @@ static const char *description =
     "whose standard input is opened in binary mode, such as Unix-like systems.";
 
 #include <rose.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/SRecord.h>
 #include <Rose/CommandLine.h>
@@ -38,7 +37,7 @@ struct Settings {
 
 // Parses the command-line and returns the name of the input file if any (the ROSE binary state).
 boost::filesystem::path
-parseCommandLine(int argc, char *argv[], P2::Engine&, Settings &settings) {
+parseCommandLine(int argc, char *argv[], Settings &settings) {
     using namespace Sawyer::CommandLine;
 
     //---------- Generic Switches ----------
@@ -217,9 +216,8 @@ main(int argc, char *argv[]) {
     Bat::registerSelfTests();
 
     Settings settings;
-    P2::Engine *engine = P2::Engine::instance();
-    boost::filesystem::path inputFileName = parseCommandLine(argc, argv, *engine, settings);
-    P2::Partitioner::Ptr partitioner = engine->loadPartitioner(inputFileName, settings.stateFormat);
+    boost::filesystem::path inputFileName = parseCommandLine(argc, argv, settings);
+    auto partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, settings.stateFormat);
     MemoryMap::Ptr map = partitioner->memoryMap();
     ASSERT_not_null(map);
 
@@ -300,5 +298,4 @@ main(int argc, char *argv[]) {
             }
         }
     }
-    delete engine;
 }

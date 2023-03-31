@@ -47,9 +47,9 @@ struct Settings {
     }
 };
 
-// Parses the command-line and returns the name of the input file, if any.
-boost::filesystem::path
-parseCommandLine(int argc, char *argv[], Settings &settings) {
+// Build a command-line switch parser bound to the specified settings.
+Sawyer::CommandLine::Parser
+makeSwitchParser(Settings &settings) {
     using namespace Sawyer::CommandLine;
 
     Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
@@ -111,12 +111,20 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
                                            "results. This is intended to be used with the @s{output} switch to remove "
                                            "analysis results from a state file.");
 
-    std::vector<std::string> input = parser.with(gen).with(sel).with(cc).parse(argc, argv).apply().unreachedArgs();
+    return parser
+        .with(gen)
+        .with(sel)
+        .with(cc);
+}
+
+// Parses the command-line and returns the name of the input file, if any.
+boost::filesystem::path
+parseCommandLine(int argc, char *argv[], Sawyer::CommandLine::Parser &parser, Settings &settings) {
+    std::vector<std::string> input = parser.parse(argc, argv).apply().unreachedArgs();
     if (input.size() > 1) {
         mlog[FATAL] <<"incorrect usage; see --help\n";
         exit(1);
     }
-
     if (settings.isSilent())
         settings.showingRankedDefnNames = true;
 
@@ -211,11 +219,11 @@ main(int argc, char *argv[]) {
     Bat::registerSelfTests();
 
     Settings settings;
-    boost::filesystem::path inputFileName = parseCommandLine(argc, argv, settings);
+    Sawyer::CommandLine::Parser parser = makeSwitchParser(settings);
+    boost::filesystem::path inputFileName = parseCommandLine(argc, argv, parser, settings);
     
     // Read the state file
-    P2::Engine *engine = P2::Engine::instance();
-    P2::Partitioner::Ptr partitioner = engine->loadPartitioner(inputFileName, settings.stateFormat);
+    P2::PartitionerPtr partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, settings.stateFormat);
 
     // Create the output state file early so that the user will get an error early if the file can't be created. The alternative
     // is to wait until after all calling convention analysis is completed, which could be a while!
@@ -254,9 +262,10 @@ main(int argc, char *argv[]) {
 
     // Write to the output state if desired.
     if (!settings.outputFileName.empty())
-        engine->savePartitioner(partitioner, settings.outputFileName, settings.stateFormat);
-    if (settings.removeAnalysis)
+        partitioner->saveAsRbaFile(settings.outputFileName, settings.stateFormat);
+    if (settings.removeAnalysis) {
         return 0;
+    }
 
     //---- The rest of this file is for output ----
 
@@ -278,6 +287,4 @@ main(int argc, char *argv[]) {
     if (settings.showingRankedDefnNames) {
         show(countDefNames);
     }
-
-    delete engine;
 }

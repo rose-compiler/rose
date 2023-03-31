@@ -9,7 +9,7 @@ static const char *description =
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
@@ -105,7 +105,7 @@ main(int argc, char *argv[]) {
         std::cerr <<"test is being skipped\n";
         return 0; // lack of a disassembler is not a test failure
     }
-    P2::Engine *engine = P2::Engine::instance();
+    P2::Engine::Ptr engine = P2::EngineBinary::instance();
     engine->settings().disassembler.isaName = settings.isa;
     P2::Partitioner::Ptr partitioner = engine->createPartitioner();
     Disassembler::Base::Ptr disassembler = partitioner->instructionProvider().disassembler();
@@ -184,6 +184,4 @@ main(int argc, char *argv[]) {
     std::cout <<"unknown instructions:   " <<nUnknown <<"\n";
     std::cout <<"disassembly exceptions: " <<nDisExceptions <<"\n";
     std::cout <<"semantic exceptions:    " <<nSemExceptions <<"\n";
-
-    delete engine;
 }

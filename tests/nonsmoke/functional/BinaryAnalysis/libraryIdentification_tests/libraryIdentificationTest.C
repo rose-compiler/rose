@@ -12,7 +12,7 @@ static const char *description =
 #include <Rose/BinaryAnalysis/LibraryIdentification.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/CommandLine.h>
 
@@ -55,7 +55,7 @@ int
 main(int argc, char** argv) {
     ROSE_INITIALIZE;
     TimingPerformance timer ("AST Library Identification checker (main): time (sec) = ",true);
-    P2::Engine *engine = P2::Engine::instance();
+    P2::Engine::Ptr engine = P2::EngineBinary::instance();
     engine->settings().partitioner.doingPostFunctionStackDelta = false; // We don't need StackDelta analysis
 
     //----------------------------------------------------------
@@ -108,6 +108,4 @@ main(int argc, char** argv) {
 #else
     printf ("SKIPPING TEST OF BINARY AGAINST GENERATED DATABASE! \n");
 #endif
-
-    delete engine;
 }

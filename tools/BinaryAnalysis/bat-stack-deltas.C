@@ -7,7 +7,6 @@ static const char *description =
 #include <rose.h>
 
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
@@ -146,8 +145,7 @@ main(int argc, char *argv[]) {
 
     Settings settings;
     boost::filesystem::path inputFileName = parseCommandLine(argc, argv, settings);
-    P2::Engine *engine = P2::Engine::instance();
-    P2::Partitioner::Ptr partitioner = engine->loadPartitioner(inputFileName, settings.stateFormat);
+    auto partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, settings.stateFormat);
 
     // Accumulate deltas in a map
     Sawyer::Stopwatch timer;
@@ -194,6 +192,4 @@ main(int argc, char *argv[]) {
             std::cout <<"nan\n";
         }
     }
-
-    delete engine;
 }

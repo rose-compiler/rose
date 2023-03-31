@@ -3,7 +3,7 @@
 //! [rose include]
 
 //! [other includes]
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 #include <AsmUnparser.h>
 //! [other includes]
 
@@ -20,7 +20,7 @@ main(int argc, char *argv[]) {
     //! [commandline]
 
     //! [disassembly]
-    Rose::BinaryAnalysis::Partitioner2::Engine *engine = Rose::BinaryAnalysis::Partitioner2::Engine::instance();
+    Rose::BinaryAnalysis::Partitioner2::Engine::Ptr engine = Rose::BinaryAnalysis::Partitioner2::EngineBinary::instance();
     SgAsmBlock *gblock = engine->frontend(argc, argv, purpose, description);
     //! [disassembly]
 

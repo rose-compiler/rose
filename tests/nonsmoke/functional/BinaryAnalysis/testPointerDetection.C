@@ -10,7 +10,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
@@ -71,7 +71,7 @@ main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
     SymbolicExpression::serializeVariableIds = true;
     Settings settings;
-    P2::Engine *engine = P2::Engine::instance();
+    P2::Engine::Ptr engine = P2::EngineBinary::instance();
     std::vector<std::string> specimen = parseCommandLine(argc, argv, *engine, settings);
     if (specimen.empty()) {
         mlog[FATAL] <<"no binary specimen specified; see --help\n";
@@ -114,8 +114,6 @@ main(int argc, char *argv[]) {
             //! [documentation guts]
         }
     }
-
-    delete engine;
 }
 
 #endif

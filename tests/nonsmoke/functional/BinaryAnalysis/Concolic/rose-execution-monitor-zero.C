@@ -95,34 +95,18 @@ struct Settings
   bool                    disassembler;
 };
 
-
-static
-std::vector<std::string>
-parseCommandLine(int argc, char** argv, P2::Engine& engine, Settings& settings)
-{
+Sawyer::CommandLine::Parser
+buildCommandLineParser(Settings &settings) {
   using namespace Sawyer::CommandLine;
 
   SwitchGroup out("Output switches");
 
-  out.insert( Switch("output", 'o')
-              .argument("file", anyParser(settings.outputFileName))
-              .doc("Write the result to the specified file.")
-            );
+  out.insert(Switch("output", 'o')
+             .argument("file", anyParser(settings.outputFileName))
+             .doc("Write the result to the specified file.")
+             );
 
-  SwitchGroup decoding("Decoding switches");
-
-  Parser parser;
-  parser
-      .purpose(purpose)
-      .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
-      .chapter(1, "ROSE Command-line Tools")
-      .doc("Synopsis", "@prop{programName} [@v{switches}] @v{specimen} [@v{args}...]")
-      .doc("Description", description)
-      .with(engine.engineSwitches())
-      .with(out)
-      .with(decoding);
-
-  return parser.parse(argc, argv).apply().unreachedArgs();
+  return Rose::CommandLine::createEmptyParser(purpose, description).with(out);
 }
 
 
@@ -134,15 +118,16 @@ int main(int argc, char** argv)
   ROSE_INITIALIZE;
   Rose::Diagnostics::initAndRegister(&::mlog, "tool");
 
-  // Parse command-line
-  auto engine = P2::Engine::instance();
   Settings                 settings;
-  std::vector<std::string> specimenAndArgs = parseCommandLine(argc, argv, *engine, settings);
-  
-  if (specimenAndArgs.size() == 0)
-  {
-    ::mlog[FATAL] << "No specimen given (use --help)\n";
-    exit(1);
+  Sawyer::CommandLine::Parser parser = buildCommandLineParser(settings);
+  P2::Engine::Ptr engine = P2::Engine::forge(argc, argv, parser /*in,out*/);
+
+
+  // Parse command-line
+  std::vector<std::string> specimen = parser.parse(argc, argv).apply().unreachedArgs();
+  if (specimen.empty()) {
+      ::mlog[FATAL] << "No specimen given (use --help)\n";
+      exit(1);
   }
 
   // Trace output goes to either std::cout or some file.
@@ -156,7 +141,7 @@ int main(int argc, char** argv)
 
   std::ostream             traceOutput(useFile ? &fb : std::cout.rdbuf());
 
-  ExecutionMonitor         execmon(specimenAndArgs);
+  ExecutionMonitor         execmon(specimen);
 
   execmon.run();
 

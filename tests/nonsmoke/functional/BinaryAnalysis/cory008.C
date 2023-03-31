@@ -12,7 +12,7 @@ static const char *description = "Parses the specimen given on the command line 
 
 #include <rose.h>
 #include <AsmUnparser_compat.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 #include <Sawyer/Map.h>
 
 using namespace Rose;
@@ -88,14 +88,13 @@ printIntegersByHeading(const IntegersByHeading &ibh) {
 
 int
 main(int argc, char *argv[]) {
-    P2::Engine *engine = P2::Engine::instance();
+    P2::Engine::Ptr engine = P2::EngineBinary::instance();
     SgAsmBlock *gblock = engine->frontend(argc, argv, purpose, description);
     GatherIntegers gatherer;
     gatherer.traverse(gblock, preorder);
     std::pair<size_t, size_t> counts = printIntegersByHeading(gatherer.integers);
     std::cout <<"Number of SgAsmIntegerValueExpression nodes: " <<counts.first <<"\n";
     std::cout <<"Number of such nodes having a base object:   " <<counts.second <<"\n";
-    delete engine;
 }
 
 #endif

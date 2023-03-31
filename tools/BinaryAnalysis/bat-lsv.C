@@ -5,7 +5,6 @@ static const char *description =
 #include <rose.h>
 
 #include <Rose/BinaryAnalysis/SerialIo.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Variables.h>
 #include <Rose/CommandLine.h>
@@ -66,7 +65,7 @@ main(int argc, char *argv[]) {
 
     Settings settings;
     boost::filesystem::path inputName = parseCommandLine(argc, argv, settings);
-    P2::Partitioner::Ptr partitioner = P2::Engine::instance()->loadPartitioner(inputName, settings.stateFormat);
+    P2::Partitioner::Ptr partitioner = P2::Partitioner::instanceFromRbaFile(inputName, settings.stateFormat);
 
     auto analyzer = Variables::VariableFinder::instance();
     Variables::GlobalVariables gvars = analyzer->findGlobalVariables(partitioner);

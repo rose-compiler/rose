@@ -1018,7 +1018,7 @@ Architecture::debugger() const {
 }
 
 P2::Partitioner::Ptr
-Architecture::partition(P2::Engine *engine, const std::string &specimenName) {
+Architecture::partition(const P2::Engine::Ptr &engine, const std::string &specimenName) {
     const std::string specimenArg = "run:replace:" + specimenName;
     SAWYER_MESG(mlog[DEBUG]) <<"partitioning " <<specimenArg;
     return engine->partition(specimenArg);

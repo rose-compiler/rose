@@ -10,7 +10,7 @@ static const char *description =
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ParallelPartitioner.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/Color.h>
@@ -283,7 +283,7 @@ int main(int argc, char *argv[]) {
 
     // Get, parse, and load the specimen.
     mlog[INFO] <<"parsing container\n";
-    P2::Engine *engine = P2::Engine::instance();
+    P2::Engine::Ptr engine = P2::EngineBinary::instance();
     std::vector<std::string> specimenName = engine->parseCommandLine(argc, argv, purpose, description).unreachedArgs();
     MemoryMap::Ptr memory = engine->loadSpecimens(specimenName);
     Disassembler::Base::Ptr decoder = engine->obtainDisassembler();
@@ -349,7 +349,7 @@ int main(int argc, char *argv[]) {
     mlog[INFO] <<"; took " <<timer <<"\n";
     mlog[INFO] <<"generating output\n";
     //printInsnsFromBoth(pp, p);
-    engine->savePartitioner(p, "x.rba");
+    p->saveAsRbaFile("x.rba", SerialIo::BINARY);
 
 #else
     mlog[INFO] <<"running serial partitioner";
@@ -361,8 +361,6 @@ int main(int argc, char *argv[]) {
     mlog[INFO] <<"generating output\n";
     printInsnsFromBoth(pp, p2);
 #endif
-
-    delete engine;
 }
 
 #else
