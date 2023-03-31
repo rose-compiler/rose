@@ -104,8 +104,6 @@ DECLARE_HEADERS(AsmX86Instruction);
 #if defined(SgAsmX86Instruction_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionEnumsX86.h>
-
-
 #endif // SgAsmX86Instruction_HEADERS
 
 #ifdef DOCUMENTATION
@@ -182,10 +180,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_segmentOverride);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
 public:
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -197,9 +192,6 @@ public:
     void set_kind(Rose::BinaryAnalysis::X86InstructionKind const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -211,9 +203,6 @@ public:
     void set_baseSize(Rose::BinaryAnalysis::X86InstructionSize const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -225,9 +214,6 @@ public:
     void set_operandSize(Rose::BinaryAnalysis::X86InstructionSize const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -239,9 +225,6 @@ public:
     void set_addressSize(Rose::BinaryAnalysis::X86InstructionSize const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -253,9 +236,6 @@ public:
     void set_lockPrefix(bool const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -267,9 +247,6 @@ public:
     void set_repeatPrefix(Rose::BinaryAnalysis::X86RepeatPrefix const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -281,9 +258,6 @@ public:
     void set_branchPrediction(Rose::BinaryAnalysis::X86BranchPrediction const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -294,8 +268,6 @@ public:
     Rose::BinaryAnalysis::X86SegmentRegister const& get_segmentOverride() const;
     void set_segmentOverride(Rose::BinaryAnalysis::X86SegmentRegister const&);
     /** @} */
-
-
 public:
     /** Converts a size to an instruction size enum.
      *
@@ -335,7 +307,6 @@ public:
                                                            Rose::BinaryAnalysis::MemoryMap::Ptr()) override;
     virtual bool isUnknown() const override;
     virtual unsigned get_anyKind() const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmX86Instruction();
@@ -365,7 +336,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -421,7 +391,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmVectorType                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -462,8 +431,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -473,9 +440,6 @@ public:
      *  @{ */
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -484,8 +448,6 @@ public:
      *  
      *  @{ */
     /** @} */
-
-
 public:
     /** Construct a new vector type. */
     SgAsmVectorType(size_t nElmts, SgAsmType *elmtType);
@@ -500,7 +462,6 @@ public:
     virtual void check() const override;
     virtual std::string toString() const override;
     virtual size_t get_nBits() const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmVectorType();
@@ -521,7 +482,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -580,7 +540,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmUnaryTruncate                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -635,7 +594,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -694,7 +652,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmUnaryRrx                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -705,7 +662,6 @@ IS_SERIALIZABLE(AsmUnaryRrx);
 DECLARE_HEADERS(AsmUnaryRrx);
 #if defined(SgAsmUnaryRrx_HEADERS) || defined(DOCUMENTATION)
 // FIXME[Robb P Matzke 2016-10-31]: no idea what this is
-
 #endif // SgAsmUnaryRrx_HEADERS
 
 #ifdef DOCUMENTATION
@@ -750,7 +706,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -805,7 +760,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmUnaryMinus                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -856,7 +810,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -910,8 +863,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -922,7 +873,6 @@ public:
     SgAsmExpression* const& get_operand() const;
     void set_operand(SgAsmExpression* const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -950,7 +900,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmSynthesizedFieldDeclaration                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -961,7 +910,6 @@ IS_SERIALIZABLE(AsmSynthesizedFieldDeclaration);
 DECLARE_HEADERS(AsmSynthesizedFieldDeclaration);
 #if defined(SgAsmSynthesizedFieldDeclaration_HEADERS) || defined(DOCUMENTATION)
 // FIXME[Robb P Matzke 2017-02-13]: what is this?
-
 #endif // SgAsmSynthesizedFieldDeclaration_HEADERS
 
 #ifdef DOCUMENTATION
@@ -996,8 +944,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -1008,12 +954,8 @@ public:
     std::string const& get_name() const;
     void set_name(std::string const&);
     /** @} */
-
-
     // FIXME[Robb P Matzke 2017-02-13]: Is this bytes, bits, or what?
     // Not clear if we want to store the offset explicitly
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -1024,7 +966,6 @@ public:
     uint64_t const& get_offset() const;
     void set_offset(uint64_t const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -1050,7 +991,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1087,7 +1027,6 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmSynthesizedDeclaration);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
 protected:
       SgAsmSynthesizedDeclarationPtrList p_declarationList;
 
@@ -1096,7 +1035,6 @@ public:
     void append_declaration(SgAsmSynthesizedDeclaration *declaration) {
         p_declarationList.push_back(declaration);
     }
-
 public:
     /** Destructor. */
     virtual ~SgAsmSynthesizedDataStructureDeclaration();
@@ -1121,7 +1059,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1171,8 +1108,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -1184,9 +1119,6 @@ public:
     void set_strtab(SgAsmGenericStrtab* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -1198,9 +1130,6 @@ public:
     void set_string(std::string const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -1211,8 +1140,6 @@ public:
     rose_addr_t const& get_offset() const;
     void set_offset(rose_addr_t const&);
     /** @} */
-
-
 public:
     SgAsmStringStorage(SgAsmGenericStrtab *strtab, const std::string &string, rose_addr_t offset);
 
@@ -1226,7 +1153,6 @@ public:
  private:
       friend class SgAsmStoredString;                     /*allowed to set private data members*/
       friend class SgAsmStoredStrtab;                     /*allowed to set private data members*/
-
 public:
     /** Destructor. */
     virtual ~SgAsmStringStorage();
@@ -1247,7 +1173,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1283,8 +1208,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -1295,8 +1218,6 @@ public:
     SgAsmStringStorage* const& get_storage() const;
     void set_storage(SgAsmStringStorage* const&);
     /** @} */
-
-
 public:
     /** Construct a string existing in a string table. */
     SgAsmStoredString(SgAsmGenericStrtab*, rose_addr_t offset);
@@ -1332,7 +1253,6 @@ public:
      *
      *  If the string is not allocated then this call triggers an allocation. */
     virtual rose_addr_t get_offset() const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmStoredString();
@@ -1353,7 +1273,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1395,8 +1314,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -1407,14 +1324,11 @@ public:
     SgUnsignedCharList const& get_raw_bytes() const;
     void set_raw_bytes(SgUnsignedCharList const&);
     /** @} */
-
-
 public:
     /** Property: Size of static data in bytes.
      *
      *  This returns the number of raw data bytes rather than the size of any data type painted onto those bytes. */
     size_t get_size() const { return p_raw_bytes.size(); }
-
 public:
     /** Destructor. */
     virtual ~SgAsmStaticData();
@@ -1439,7 +1353,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1475,8 +1388,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -1487,7 +1398,6 @@ public:
     int const& get_stack_position() const;
     void set_stack_position(int const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -1513,7 +1423,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1562,7 +1471,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_operands);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1635,8 +1543,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Note that the qualification for the type is necessary only for ROSETTA. Remove it when ROSETTA finally goes away.
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -1648,9 +1554,6 @@ public:
     void set_riscOperator(SgAsmRiscOperation::RiscOperator const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -1661,7 +1564,6 @@ public:
     SgAsmExprListExp* const& get_operands() const;
     void set_operands(SgAsmExprListExp* const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -1687,7 +1589,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1730,8 +1631,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -1744,9 +1643,6 @@ public:
     void set_registers(SgAsmRegisterReferenceExpressionPtrList const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -1757,7 +1653,6 @@ public:
     unsigned const& get_mask() const;
     void set_mask(unsigned const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -1781,7 +1676,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmPowerpcInstruction                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1792,8 +1686,6 @@ IS_SERIALIZABLE(AsmPowerpcInstruction);
 DECLARE_HEADERS(AsmPowerpcInstruction);
 #if defined(SgAsmPowerpcInstruction_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/InstructionEnumsPowerpc.h>
-
-
 #endif // SgAsmPowerpcInstruction_HEADERS
 
 #ifdef DOCUMENTATION
@@ -1821,10 +1713,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_kind);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
 public:
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -1835,8 +1724,6 @@ public:
     Rose::BinaryAnalysis::PowerpcInstructionKind const& get_kind() const;
     void set_kind(Rose::BinaryAnalysis::PowerpcInstructionKind const&);
     /** @} */
-
-
 public:
     /** Description of conditional branch BO constant.
      *
@@ -1863,7 +1750,6 @@ public:
                                     rose_addr_t *target, rose_addr_t *retva) override;
     virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) override;
     virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmPowerpcInstruction();
@@ -1890,7 +1776,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1926,8 +1811,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -1938,8 +1821,6 @@ public:
     SgAsmCoffStrtab* const& get_strtab() const;
     void set_strtab(SgAsmCoffStrtab* const&);
     /** @} */
-
-
 public:
     SgAsmPEStringSection(SgAsmPEFileHeader*);
     virtual SgAsmPEStringSection* parse() override;
@@ -1947,7 +1828,6 @@ public:
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
     virtual void set_size(rose_addr_t newsize) override;
     virtual void unparse(std::ostream&) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmPEStringSection();
@@ -1968,7 +1848,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1996,7 +1875,6 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
 public:
     explicit SgAsmPESectionTable(SgAsmPEFileHeader*);
     virtual SgAsmPESectionTable* parse() override;
@@ -2009,7 +1887,6 @@ public:
     virtual bool reallocate() override;
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmPESectionTable();
@@ -2030,7 +1907,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2121,7 +1997,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_flags);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2189,9 +2064,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -2203,9 +2075,6 @@ public:
     void set_name(std::string const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -2217,9 +2086,6 @@ public:
     void set_virtual_size(rose_addr_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -2231,9 +2097,6 @@ public:
     void set_rva(rose_addr_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -2245,9 +2108,6 @@ public:
     void set_physical_size(rose_addr_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -2259,9 +2119,6 @@ public:
     void set_physical_offset(rose_addr_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -2273,9 +2130,6 @@ public:
     void set_coff_line_nums(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -2287,9 +2141,6 @@ public:
     void set_n_relocs(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -2301,9 +2152,6 @@ public:
     void set_n_coff_line_nums(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -2314,8 +2162,6 @@ public:
     unsigned const& get_flags() const;
     void set_flags(unsigned const&);
     /** @} */
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2326,7 +2172,6 @@ public:
     void update_from_section(SgAsmPESection *section);
     void *encode(SgAsmPESectionTableEntry::PESectionTableEntry_disk*) const;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmPESectionTableEntry();
@@ -2347,7 +2192,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2386,8 +2230,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -2399,11 +2241,8 @@ public:
     SgAsmPERVASizePairPtrList& get_pairs();
     void set_pairs(SgAsmPERVASizePairPtrList const&);
     /** @} */
-
-
 public:
     explicit SgAsmPERVASizePairList(SgAsmPEFileHeader *parent);
-
 public:
     /** Destructor. */
     virtual ~SgAsmPERVASizePairList();
@@ -2426,7 +2265,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmPERVASizePair                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2438,8 +2276,6 @@ IS_SERIALIZABLE(AsmPERVASizePair);
 /** RVA/size pair. */
 class SgAsmPERVASizePair: public SgAsmExecutableFileFormat {
 #endif // DOCUMENTATION
-#ifdef _MSC_VER
-#endif
 
 #ifndef DOCUMENTATION
     AsmPERVASizePair.setDataPrototype(
@@ -2475,7 +2311,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_section);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2501,9 +2336,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -2516,9 +2348,6 @@ public:
     void set_e_rva(rose_rva_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -2530,9 +2359,6 @@ public:
     void set_e_size(rose_addr_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -2541,8 +2367,6 @@ public:
      *  
      *  @{ */
     /** @} */
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2562,7 +2386,6 @@ public:
     SgAsmGenericSection *get_section() const;
 
     void *encode(SgAsmPERVASizePair::RVASizePair_disk *disk) const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmPERVASizePair();
@@ -2583,7 +2406,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2760,8 +2582,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -2772,8 +2592,6 @@ public:
     SgAsmPEImportDirectoryList* const& get_import_directories() const;
     void set_import_directories(SgAsmPEImportDirectoryList* const&);
     /** @} */
-
-
 public:
     explicit SgAsmPEImportSection(SgAsmPEFileHeader*);
     virtual SgAsmPEImportSection *parse() override;
@@ -2800,7 +2618,6 @@ public:
 
 private:
     static size_t mesg_nprinted; //counter for import_mesg()
-
 public:
     /** Destructor. */
     virtual ~SgAsmPEImportSection();
@@ -2821,7 +2638,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2860,8 +2676,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -2873,7 +2687,6 @@ public:
     SgAsmPEImportItemPtrList& get_vector();
     void set_vector(SgAsmPEImportItemPtrList const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -2895,7 +2708,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2986,8 +2798,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -2999,9 +2809,6 @@ public:
     void set_by_ordinal(bool const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -3013,9 +2820,6 @@ public:
     void set_ordinal(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -3027,9 +2831,6 @@ public:
     void set_hint(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -3041,9 +2842,6 @@ public:
     void set_name(SgAsmGenericString* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -3056,9 +2854,6 @@ public:
     void set_hintname_rva(rose_rva_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -3070,9 +2865,6 @@ public:
     void set_hintname_nalloc(size_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -3085,9 +2877,6 @@ public:
     void set_bound_rva(rose_rva_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -3098,8 +2887,6 @@ public:
     bool const& get_iat_written() const;
     void set_iat_written(bool const&);
     /** @} */
-
-
 public:
     explicit SgAsmPEImportItem(SgAsmPEImportItemList *parent);
     explicit SgAsmPEImportItem(SgAsmPEImportDirectory*);
@@ -3123,7 +2910,6 @@ public:
 
 private:
     void initFromParent(SgAsmPEImportItemList *parent);
-
 public:
     /** Destructor. */
     virtual ~SgAsmPEImportItem();
@@ -3144,7 +2930,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3183,8 +2968,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -3196,7 +2979,6 @@ public:
     SgAsmPEImportDirectoryPtrList& get_vector();
     void set_vector(SgAsmPEImportDirectoryPtrList const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -3220,7 +3002,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmPEImportDirectory                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3235,8 +3016,6 @@ IS_SERIALIZABLE(AsmPEImportDirectory);
  *  separate IR nodes. */
 class SgAsmPEImportDirectory: public SgAsmExecutableFileFormat {
 #endif // DOCUMENTATION
-#ifdef _MSC_VER
-#endif
 
 #ifndef DOCUMENTATION
     AsmPEImportDirectory.setDataPrototype(
@@ -3321,7 +3100,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_imports);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3347,9 +3125,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -3361,9 +3136,6 @@ public:
     void set_dll_name(SgAsmGenericString* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -3376,9 +3148,6 @@ public:
     void set_dll_name_rva(rose_rva_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -3390,9 +3159,6 @@ public:
     void set_dll_name_nalloc(size_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -3404,9 +3170,6 @@ public:
     void set_time(time_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -3418,9 +3181,6 @@ public:
     void set_forwarder_chain(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -3433,9 +3193,6 @@ public:
     void set_ilt_rva(rose_rva_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -3447,9 +3204,6 @@ public:
     void set_ilt_nalloc(size_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -3462,9 +3216,6 @@ public:
     void set_iat_rva(rose_rva_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -3476,9 +3227,6 @@ public:
     void set_iat_nalloc(size_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -3489,8 +3237,6 @@ public:
     SgAsmPEImportItemList* const& get_imports() const;
     void set_imports(SgAsmPEImportItemList* const&);
     /** @} */
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3547,7 +3293,6 @@ public:
 private:
     void parse_ilt_iat(const rose_rva_t &table_start, bool assume_bound);
     void unparse_ilt_iat(std::ostream&,const rose_rva_t &table_start, bool assume_bound, size_t nalloc) const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmPEImportDirectory();
@@ -3568,7 +3313,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3864,7 +3608,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_coff_symtab);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -4016,9 +3759,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4030,9 +3770,6 @@ public:
     void set_e_cpu_type(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4044,9 +3781,6 @@ public:
     void set_e_nsections(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4058,9 +3792,6 @@ public:
     void set_e_time(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4072,9 +3803,6 @@ public:
     void set_e_coff_symtab(rose_addr_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4086,9 +3814,6 @@ public:
     void set_e_nt_hdr_size(rose_addr_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4100,9 +3825,6 @@ public:
     void set_e_coff_nsyms(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4114,9 +3836,6 @@ public:
     void set_e_flags(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4128,9 +3847,6 @@ public:
     void set_e_opt_magic(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4142,9 +3858,6 @@ public:
     void set_e_lmajor(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4156,9 +3869,6 @@ public:
     void set_e_lminor(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4170,9 +3880,6 @@ public:
     void set_e_code_size(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4184,9 +3891,6 @@ public:
     void set_e_data_size(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4198,9 +3902,6 @@ public:
     void set_e_bss_size(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4213,9 +3914,6 @@ public:
     void set_e_code_rva(rose_rva_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4228,9 +3926,6 @@ public:
     void set_e_data_rva(rose_rva_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4242,9 +3937,6 @@ public:
     void set_e_section_align(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4256,9 +3948,6 @@ public:
     void set_e_file_align(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4270,9 +3959,6 @@ public:
     void set_e_os_major(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4284,9 +3970,6 @@ public:
     void set_e_os_minor(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4298,9 +3981,6 @@ public:
     void set_e_user_major(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4312,9 +3992,6 @@ public:
     void set_e_user_minor(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4326,9 +4003,6 @@ public:
     void set_e_subsys_major(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4340,9 +4014,6 @@ public:
     void set_e_subsys_minor(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4354,9 +4025,6 @@ public:
     void set_e_reserved9(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4368,9 +4036,6 @@ public:
     void set_e_image_size(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4382,9 +4047,6 @@ public:
     void set_e_header_size(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4396,9 +4058,6 @@ public:
     void set_e_file_checksum(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4410,9 +4069,6 @@ public:
     void set_e_subsystem(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4424,9 +4080,6 @@ public:
     void set_e_dll_flags(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4438,9 +4091,6 @@ public:
     void set_e_stack_reserve_size(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4452,9 +4102,6 @@ public:
     void set_e_stack_commit_size(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4466,9 +4113,6 @@ public:
     void set_e_heap_reserve_size(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4480,9 +4124,6 @@ public:
     void set_e_heap_commit_size(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4494,9 +4135,6 @@ public:
     void set_e_loader_flags(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4508,9 +4146,6 @@ public:
     void set_e_num_rvasize_pairs(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4522,9 +4157,6 @@ public:
     void set_rvasize_pairs(SgAsmPERVASizePairList* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4536,9 +4168,6 @@ public:
     void set_section_table(SgAsmPESectionTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4549,8 +4178,6 @@ public:
     SgAsmCoffSymbolTable* const& get_coff_symtab() const;
     void set_coff_symtab(SgAsmCoffSymbolTable* const&);
     /** @} */
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -4595,7 +4222,6 @@ private:
     void *encode(SgAsmPEFileHeader::PE32OptHeader_disk*) const;
     void *encode(SgAsmPEFileHeader::PE64OptHeader_disk*) const;
     Rose::BinaryAnalysis::MemoryMap::Ptr p_loader_map;
-
 public:
     /** Destructor. */
     virtual ~SgAsmPEFileHeader();
@@ -4616,7 +4242,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -4659,8 +4284,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4672,9 +4295,6 @@ public:
     void set_export_dir(SgAsmPEExportDirectory* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4685,8 +4305,6 @@ public:
     SgAsmPEExportEntryList* const& get_exports() const;
     void set_exports(SgAsmPEExportEntryList* const&);
     /** @} */
-
-
 public:
     /** The PE Export Address Table is an array of expaddr_n 4-byte RVAs.
      *
@@ -4709,7 +4327,6 @@ public:
     virtual SgAsmPEExportSection *parse() override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
     void add_entry(SgAsmPEExportEntry*);
-
 public:
     /** Destructor. */
     virtual ~SgAsmPEExportSection();
@@ -4730,7 +4347,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -4781,8 +4397,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4793,8 +4407,6 @@ public:
     SgAsmPESectionTableEntry* const& get_section_entry() const;
     void set_section_entry(SgAsmPESectionTableEntry* const&);
     /** @} */
-
-
 public:
     explicit SgAsmPESection(SgAsmPEFileHeader*);
 
@@ -4806,7 +4418,6 @@ public:
     SgAsmPESection *init_from_section_table(SgAsmPESectionTableEntry *entry, int id);
     virtual bool reallocate() override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmPESection();
@@ -4827,7 +4438,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -4866,8 +4476,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4879,7 +4487,6 @@ public:
     SgAsmPEExportEntryPtrList& get_exports();
     void set_exports(SgAsmPEExportEntryPtrList const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -4901,7 +4508,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -4958,8 +4564,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4969,13 +4573,8 @@ public:
      *  @{ */
     SgAsmGenericString* const& get_name() const;
     /** @} */
-
-
     void set_name(SgAsmGenericString*);
     /** @} */
-
-   
-    
 public:
     /** Property: Instruction kind.
      *
@@ -4987,9 +4586,6 @@ public:
     void set_ordinal(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -5002,9 +4598,6 @@ public:
     void set_export_rva(rose_rva_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -5014,8 +4607,6 @@ public:
      *  @{ */
     SgAsmGenericString* const& get_forwarder() const;
     /** @} */
-
-
     void set_forwarder(SgAsmGenericString*);
     /** @} */
 
@@ -5030,7 +4621,6 @@ public:
      *  This is a read-only value calculated by following the parent pointer to the SgAsmPEExportSection node and
      *  then down to its SgAsmPEExportDirectory. If any links are missing then an error is returned. */
     Sawyer::Result<unsigned /*ordinal*/, std::string /*reason*/> biasedOrdinal() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmPEExportEntry();
@@ -5053,7 +4643,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmPEExportDirectory                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -5065,8 +4654,6 @@ IS_SERIALIZABLE(AsmPEExportDirectory);
 /** Export directory. */
 class SgAsmPEExportDirectory: public SgAsmExecutableFileFormat {
 #endif // DOCUMENTATION
-#ifdef _MSC_VER
-#endif
 
 #ifndef DOCUMENTATION
     AsmPEExportDirectory.setDataPrototype(
@@ -5165,7 +4752,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_name);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -5198,9 +4784,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -5212,9 +4795,6 @@ public:
     void set_res1(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -5226,9 +4806,6 @@ public:
     void set_timestamp(time_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -5240,9 +4817,6 @@ public:
     void set_vmajor(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -5254,9 +4828,6 @@ public:
     void set_vminor(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -5269,9 +4840,6 @@ public:
     void set_name_rva(rose_rva_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -5283,9 +4851,6 @@ public:
     void set_ord_base(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -5297,9 +4862,6 @@ public:
     void set_expaddr_n(size_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -5311,9 +4873,6 @@ public:
     void set_nameptr_n(size_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -5326,9 +4885,6 @@ public:
     void set_expaddr_rva(rose_rva_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -5341,9 +4897,6 @@ public:
     void set_nameptr_rva(rose_rva_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -5356,9 +4909,6 @@ public:
     void set_ordinals_rva(rose_rva_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -5369,15 +4919,12 @@ public:
     SgAsmGenericString* const& get_name() const;
     void set_name(SgAsmGenericString* const&);
     /** @} */
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     explicit SgAsmPEExportDirectory(SgAsmPEExportSection*);
     void dump(FILE *f, const char *prefix, ssize_t idx) const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmPEExportDirectory();
@@ -5398,7 +4945,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -5434,8 +4980,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -5447,12 +4991,9 @@ public:
     SgAsmExpressionPtrList& get_operands();
     void set_operands(SgAsmExpressionPtrList const&);
     /** @} */
-
-
 public:
     /** Append another operand expression to this node. */
     void append_operand(SgAsmExpression* operand);
-
 public:
     /** Destructor. */
     virtual ~SgAsmOperandList();
@@ -5473,7 +5014,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -5500,7 +5040,6 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmInstruction);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
 public:
     // there's only one kind of null instruction
     enum Kind { null_unknown };
@@ -5521,7 +5060,6 @@ public: // overrides
                                                            Rose::BinaryAnalysis::MemoryMap::Ptr()) override;
     virtual bool isUnknown() const override;
     virtual unsigned get_anyKind() const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmNullInstruction();
@@ -5549,7 +5087,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmNEStringTable                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -5574,12 +5111,10 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
 public:
     SgAsmNEStringTable(SgAsmNEFileHeader *fhdr, rose_addr_t offset, rose_addr_t size);
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
     std::string get_string(rose_addr_t offset);
-
 public:
     /** Destructor. */
     virtual ~SgAsmNEStringTable();
@@ -5600,7 +5135,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -5656,7 +5190,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -5668,8 +5201,6 @@ public:
     void set_flags(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -5681,8 +5212,6 @@ public:
     void set_sector(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -5694,8 +5223,6 @@ public:
     void set_physical_size(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -5706,13 +5233,10 @@ public:
     rose_addr_t const& get_virtual_size() const;
     void set_virtual_size(rose_addr_t const&);
     /** @} */
-
-
 public:
     explicit SgAsmNESectionTable(SgAsmNEFileHeader*);
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmNESectionTable();
@@ -5733,7 +5257,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -5788,7 +5311,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_virtual_size);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -5835,8 +5357,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -5848,8 +5368,6 @@ public:
     void set_flags(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -5861,8 +5379,6 @@ public:
     void set_sector(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -5874,8 +5390,6 @@ public:
     void set_physical_size(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -5886,8 +5400,6 @@ public:
     rose_addr_t const& get_virtual_size() const;
     void set_virtual_size(rose_addr_t const&);
     /** @} */
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -5896,7 +5408,6 @@ public:
     void *encode(SgAsmNESectionTableEntry::NESectionTableEntry_disk*) const;
     virtual void dump(FILE *f, const char *prefix, ssize_t idx) const {dump(f, prefix, idx, NULL);}
     void dump(FILE*, const char *prefix, ssize_t idx, SgAsmNEFileHeader *fhdr) const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmNESectionTableEntry();
@@ -5917,7 +5428,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -5959,7 +5469,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -5971,8 +5480,6 @@ public:
     void set_st_entry(SgAsmNESectionTableEntry* const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -5983,13 +5490,10 @@ public:
     SgAsmNERelocTable* const& get_reloc_table() const;
     void set_reloc_table(SgAsmNERelocTable* const&);
     /** @} */
-
-
 public:
     explicit SgAsmNESection(SgAsmNEFileHeader *fhdr);
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmNESection();
@@ -6010,7 +5514,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -6045,7 +5548,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -6057,13 +5559,10 @@ public:
     SgAsmNERelocEntryPtrList& get_entries();
     void set_entries(SgAsmNERelocEntryPtrList const&);
     /** @} */
-
-
 public:
     explicit SgAsmNERelocTable(SgAsmNEFileHeader *fhdr, SgAsmNESection *section);
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmNERelocTable();
@@ -6084,7 +5583,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -6174,7 +5672,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_osfixup);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -6298,8 +5795,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -6311,8 +5806,6 @@ public:
     void set_src_type(SgAsmNERelocEntry::NERelocSrcType const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -6324,8 +5817,6 @@ public:
     void set_modifier(SgAsmNERelocEntry::NERelocModifiers const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -6337,8 +5828,6 @@ public:
     void set_tgt_type(SgAsmNERelocEntry::NERelocTgtType const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -6350,8 +5839,6 @@ public:
     void set_flags(SgAsmNERelocEntry::NERelocFlags const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -6363,8 +5850,6 @@ public:
     void set_src_offset(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -6376,8 +5861,6 @@ public:
     void set_iref(SgAsmNERelocEntry::iref_type const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -6389,8 +5872,6 @@ public:
     void set_iord(SgAsmNERelocEntry::iord_type const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -6402,8 +5883,6 @@ public:
     void set_iname(SgAsmNERelocEntry::iname_type const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -6414,8 +5893,6 @@ public:
     SgAsmNERelocEntry::osfixup_type const& get_osfixup() const;
     void set_osfixup(SgAsmNERelocEntry::osfixup_type const&);
     /** @} */
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -6423,7 +5900,6 @@ public:
     SgAsmNERelocEntry(SgAsmGenericSection *relocs, rose_addr_t at, rose_addr_t *rec_size);
     rose_addr_t unparse(std::ostream&, const SgAsmGenericSection*, rose_addr_t spos) const;
     void dump(FILE*, const char *prefix, ssize_t idx) const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmNERelocEntry();
@@ -6444,7 +5920,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -6486,7 +5961,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -6498,8 +5972,6 @@ public:
     void set_names(SgStringList const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -6510,14 +5982,11 @@ public:
     SgUnsignedList const& get_ordinals() const;
     void set_ordinals(SgUnsignedList const&);
     /** @} */
-
-
 public:
     SgAsmNENameTable(SgAsmNEFileHeader *fhdr, rose_addr_t offset);
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
     std::vector<std::string> get_names_by_ordinal(unsigned ordinal);
-
 public:
     /** Destructor. */
     virtual ~SgAsmNENameTable();
@@ -6538,7 +6007,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -6587,7 +6055,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -6599,8 +6066,6 @@ public:
     void set_strtab(SgAsmNEStringTable* const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -6612,8 +6077,6 @@ public:
     void set_name_offsets(SgAddressList const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -6624,13 +6087,10 @@ public:
     SgStringList const& get_names() const;
     void set_names(SgStringList const&);
     /** @} */
-
-
 public:
     SgAsmNEModuleTable(SgAsmNEFileHeader *fhdr, SgAsmNEStringTable *strtab, rose_addr_t offset, rose_addr_t size);
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmNEModuleTable();
@@ -6651,7 +6111,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -6923,7 +6382,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_entry_table);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -7007,7 +6465,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7019,8 +6476,6 @@ public:
     void set_e_linker_major(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7032,8 +6487,6 @@ public:
     void set_e_linker_minor(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7045,8 +6498,6 @@ public:
     void set_e_checksum(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7058,8 +6509,6 @@ public:
     void set_e_flags1(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7071,8 +6520,6 @@ public:
     void set_e_autodata_sn(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7084,8 +6531,6 @@ public:
     void set_e_bss_size(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7097,8 +6542,6 @@ public:
     void set_e_stack_size(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7110,8 +6553,6 @@ public:
     void set_e_csip(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7123,8 +6564,6 @@ public:
     void set_e_sssp(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7136,8 +6575,6 @@ public:
     void set_e_nsections(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7149,8 +6586,6 @@ public:
     void set_e_nmodrefs(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7162,8 +6597,6 @@ public:
     void set_e_nnonresnames(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7175,8 +6608,6 @@ public:
     void set_e_nmovable_entries(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7188,8 +6619,6 @@ public:
     void set_e_sector_align(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7201,8 +6630,6 @@ public:
     void set_e_nresources(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7214,8 +6641,6 @@ public:
     void set_e_exetype(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7227,8 +6652,6 @@ public:
     void set_e_flags2(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7240,8 +6663,6 @@ public:
     void set_e_res1(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7253,8 +6674,6 @@ public:
     void set_e_winvers(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7266,8 +6685,6 @@ public:
     void set_e_entrytab_rfo(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7279,8 +6696,6 @@ public:
     void set_e_entrytab_size(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7292,8 +6707,6 @@ public:
     void set_e_sectab_rfo(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7305,8 +6718,6 @@ public:
     void set_e_rsrctab_rfo(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7318,8 +6729,6 @@ public:
     void set_e_resnametab_rfo(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7331,8 +6740,6 @@ public:
     void set_e_modreftab_rfo(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7344,8 +6751,6 @@ public:
     void set_e_importnametab_rfo(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7357,8 +6762,6 @@ public:
     void set_e_nonresnametab_offset(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7370,8 +6773,6 @@ public:
     void set_e_fastload_sector(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7383,8 +6784,6 @@ public:
     void set_e_fastload_nsectors(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7396,8 +6795,6 @@ public:
     void set_dos2_header(SgAsmDOSExtendedHeader* const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7409,8 +6806,6 @@ public:
     void set_section_table(SgAsmNESectionTable* const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7422,8 +6817,6 @@ public:
     void set_resname_table(SgAsmNENameTable* const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7435,8 +6828,6 @@ public:
     void set_nonresname_table(SgAsmNENameTable* const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7448,8 +6839,6 @@ public:
     void set_module_table(SgAsmNEModuleTable* const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7460,8 +6849,6 @@ public:
     SgAsmNEEntryTable* const& get_entry_table() const;
     void set_entry_table(SgAsmNEEntryTable* const&);
     /** @} */
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -7476,7 +6863,6 @@ public:
 
 private:
     void *encode(SgAsmNEFileHeader::NEFileHeader_disk*) const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmNEFileHeader();
@@ -7497,7 +6883,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -7539,7 +6924,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7551,8 +6935,6 @@ public:
     void set_bundle_sizes(SgSizeTList const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7564,14 +6946,11 @@ public:
     SgAsmNEEntryPointPtrList& get_entries();
     void set_entries(SgAsmNEEntryPointPtrList const&);
     /** @} */
-
-
 public:
     SgAsmNEEntryTable(SgAsmNEFileHeader *fhdr, rose_addr_t offset, rose_addr_t size);
     void populate_entries();
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmNEEntryTable();
@@ -7592,7 +6971,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -7647,7 +7025,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_section_offset);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -7662,7 +7039,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7674,8 +7050,6 @@ public:
     void set_flags(SgAsmNEEntryPoint::NEEntryFlags const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7687,8 +7061,6 @@ public:
     void set_int3f(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7700,8 +7072,6 @@ public:
     void set_section_idx(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7712,15 +7082,12 @@ public:
     unsigned const& get_section_offset() const;
     void set_section_offset(unsigned const&);
     /** @} */
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     SgAsmNEEntryPoint(SgAsmNEEntryPoint::NEEntryFlags flags, unsigned int3f, unsigned s_idx, unsigned s_off);
     void dump(FILE*, const char *prefix, ssize_t idx) const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmNEEntryPoint();
@@ -7743,7 +7110,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmMipsInstruction                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -7754,8 +7120,6 @@ IS_SERIALIZABLE(AsmMipsInstruction);
 DECLARE_HEADERS(AsmMipsInstruction);
 #if defined(SgAsmMipsInstruction_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/InstructionEnumsMips.h>
-
-
 #endif // SgAsmMipsInstruction_HEADERS
 
 #ifdef DOCUMENTATION
@@ -7784,8 +7148,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7796,8 +7158,6 @@ public:
     Rose::BinaryAnalysis::MipsInstructionKind const& get_kind() const;
     void set_kind(Rose::BinaryAnalysis::MipsInstructionKind const&);
     /** @} */
-
-
 public:
     // Overrides are documented in the base class
     virtual std::string description() const override;
@@ -7812,7 +7172,6 @@ public:
     virtual bool isUnknown() const override;
     virtual Sawyer::Optional<rose_addr_t> branchTarget() override;
     virtual unsigned get_anyKind() const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmMipsInstruction();
@@ -7839,7 +7198,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -7882,8 +7240,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7895,9 +7251,6 @@ public:
     void set_address(SgAsmExpression* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7908,7 +7261,6 @@ public:
     SgAsmExpression* const& get_segment() const;
     void set_segment(SgAsmExpression* const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -7937,7 +7289,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmM68kInstruction                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -7948,7 +7299,6 @@ IS_SERIALIZABLE(AsmM68kInstruction);
 DECLARE_HEADERS(AsmM68kInstruction);
 #if defined(SgAsmM68kInstruction_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/InstructionEnumsM68k.h>
-
 #endif // SgAsmM68kInstruction_HEADERS
 
 #ifdef DOCUMENTATION
@@ -7975,10 +7325,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_kind);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
 public:
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -7989,8 +7336,6 @@ public:
     Rose::BinaryAnalysis::M68kInstructionKind const& get_kind() const;
     void set_kind(Rose::BinaryAnalysis::M68kInstructionKind const&);
     /** @} */
-
-
 public:
     // Overrides are documented in the base class
     virtual std::string description() const override;
@@ -8009,7 +7354,6 @@ public:
                                                            Rose::BinaryAnalysis::MemoryMap::Ptr()) override;
     virtual bool isUnknown() const override;
     virtual unsigned get_anyKind() const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmM68kInstruction();
@@ -8038,7 +7382,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmLESectionTable                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -8063,12 +7406,10 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
 public:
     SgAsmLESectionTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset, rose_addr_t size);
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmLESectionTable();
@@ -8089,7 +7430,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -8158,7 +7498,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_base_addr);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -8217,12 +7556,9 @@ public:
         SF_IO_PRIV          = 0x00008000    /**< Section I/O privilege level (80x86 specific; used only for 16:16 alias objects) */
     };
 
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -8234,8 +7570,6 @@ public:
     void set_flags(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -8247,8 +7581,6 @@ public:
     void set_pagemap_index(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -8260,8 +7592,6 @@ public:
     void set_pagemap_nentries(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -8273,8 +7603,6 @@ public:
     void set_res1(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -8286,8 +7614,6 @@ public:
     void set_mapped_size(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -8298,8 +7624,6 @@ public:
     rose_addr_t const& get_base_addr() const;
     void set_base_addr(rose_addr_t const&);
     /** @} */
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -8307,7 +7631,6 @@ public:
     SgAsmLESectionTableEntry(ByteOrder::Endianness sex, const SgAsmLESectionTableEntry::LESectionTableEntry_disk *disk);
     void *encode(ByteOrder::Endianness, SgAsmLESectionTableEntry::LESectionTableEntry_disk*) const;
     virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmLESectionTableEntry();
@@ -8328,7 +7651,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -8363,7 +7685,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -8374,12 +7695,9 @@ public:
     SgAsmLESectionTableEntry* const& get_st_entry() const;
     void set_st_entry(SgAsmLESectionTableEntry* const&);
     /** @} */
-
-
 public:
     explicit SgAsmLESection(SgAsmLEFileHeader*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmLESection();
@@ -8400,7 +7718,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -8435,7 +7752,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -8447,12 +7763,9 @@ public:
     SgAsmLERelocEntryPtrList& get_entries();
     void set_entries(SgAsmLERelocEntryPtrList const&);
     /** @} */
-
-
 public:
     SgAsmLERelocTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset);
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmLERelocTable();
@@ -8473,7 +7786,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -8508,7 +7820,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -8520,14 +7831,11 @@ public:
     SgAsmLEPageTableEntryPtrList& get_entries();
     void set_entries(SgAsmLEPageTableEntryPtrList const&);
     /** @} */
-
-
 public:
     SgAsmLEPageTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset, rose_addr_t size);
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
     SgAsmLEPageTableEntry *get_page(size_t idx);
-
 public:
     /** Destructor. */
     virtual ~SgAsmLEPageTable();
@@ -8550,7 +7858,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmLEPageTableEntry                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -8561,8 +7868,6 @@ IS_SERIALIZABLE(AsmLEPageTableEntry);
 #ifdef DOCUMENTATION
 class SgAsmLEPageTableEntry: public SgAsmExecutableFileFormat {
 #endif // DOCUMENTATION
-#ifdef _MSC_VER
-#endif
 
 #ifndef DOCUMENTATION
     AsmLEPageTableEntry.setDataPrototype(
@@ -8591,7 +7896,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_flags);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -8625,8 +7929,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -8638,8 +7940,6 @@ public:
     void set_pageno(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -8650,8 +7950,6 @@ public:
     unsigned const& get_flags() const;
     void set_flags(unsigned const&);
     /** @} */
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -8659,7 +7957,6 @@ public:
     SgAsmLEPageTableEntry(ByteOrder::Endianness sex, const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk);
     void dump(FILE*, const char *prefix, ssize_t idx) const;
     void *encode(ByteOrder::Endianness, SgAsmLEPageTableEntry::LEPageTableEntry_disk*) const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmLEPageTableEntry();
@@ -8680,7 +7977,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -8722,7 +8018,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -8734,8 +8029,6 @@ public:
     void set_names(SgStringList const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -8746,8 +8039,6 @@ public:
     SgUnsignedList const& get_ordinals() const;
     void set_ordinals(SgUnsignedList const&);
     /** @} */
-
-
 public:
     /* This table contains a module name followed by the list of exported function names. Each name is associated with an "ordinal"
      * which serves as an index into the Entry Table. The ordinal for the first string (module name) is meaningless and should be
@@ -8756,7 +8047,6 @@ public:
     SgAsmLENameTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset);
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmLENameTable();
@@ -8777,7 +8067,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -9175,7 +8464,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_reloc_table);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -9265,8 +8553,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9278,8 +8564,6 @@ public:
     void set_e_byte_order(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9291,8 +8575,6 @@ public:
     void set_e_word_order(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9304,8 +8586,6 @@ public:
     void set_e_format_level(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9317,8 +8597,6 @@ public:
     void set_e_cpu_type(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9330,8 +8608,6 @@ public:
     void set_e_os_type(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9343,8 +8619,6 @@ public:
     void set_e_module_version(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9356,8 +8630,6 @@ public:
     void set_e_flags(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9369,8 +8641,6 @@ public:
     void set_e_eip_section(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9382,8 +8652,6 @@ public:
     void set_e_esp_section(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9395,8 +8663,6 @@ public:
     void set_e_last_page_size(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9408,8 +8674,6 @@ public:
     void set_e_page_offset_shift(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9421,8 +8685,6 @@ public:
     void set_e_fixup_sect_cksum(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9434,8 +8696,6 @@ public:
     void set_e_loader_sect_cksum(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9447,8 +8707,6 @@ public:
     void set_e_secttab_nentries(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9460,8 +8718,6 @@ public:
     void set_e_rsrctab_nentries(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9473,8 +8729,6 @@ public:
     void set_e_fmtdirtab_nentries(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9486,8 +8740,6 @@ public:
     void set_e_import_modtab_nentries(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9499,8 +8751,6 @@ public:
     void set_e_preload_npages(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9512,8 +8762,6 @@ public:
     void set_e_nonresnametab_size(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9525,8 +8773,6 @@ public:
     void set_e_nonresnametab_cksum(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9538,8 +8784,6 @@ public:
     void set_e_auto_ds_section(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9551,8 +8795,6 @@ public:
     void set_e_debug_info_size(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9564,8 +8806,6 @@ public:
     void set_e_num_instance_preload(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9577,8 +8817,6 @@ public:
     void set_e_num_instance_demand(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9590,8 +8828,6 @@ public:
     void set_e_heap_size(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9603,8 +8839,6 @@ public:
     void set_e_npages(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9616,8 +8850,6 @@ public:
     void set_e_eip(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9629,8 +8861,6 @@ public:
     void set_e_esp(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9642,8 +8872,6 @@ public:
     void set_e_page_size(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9655,8 +8883,6 @@ public:
     void set_e_fixup_sect_size(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9668,8 +8894,6 @@ public:
     void set_e_loader_sect_size(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9681,8 +8905,6 @@ public:
     void set_e_secttab_rfo(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9694,8 +8916,6 @@ public:
     void set_e_pagetab_rfo(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9707,8 +8927,6 @@ public:
     void set_e_iterpages_offset(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9720,8 +8938,6 @@ public:
     void set_e_rsrctab_rfo(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9733,8 +8949,6 @@ public:
     void set_e_resnametab_rfo(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9746,8 +8960,6 @@ public:
     void set_e_entrytab_rfo(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9759,8 +8971,6 @@ public:
     void set_e_fmtdirtab_rfo(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9772,8 +8982,6 @@ public:
     void set_e_fixup_pagetab_rfo(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9785,8 +8993,6 @@ public:
     void set_e_fixup_rectab_rfo(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9798,8 +9004,6 @@ public:
     void set_e_import_modtab_rfo(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9811,8 +9015,6 @@ public:
     void set_e_import_proctab_rfo(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9824,8 +9026,6 @@ public:
     void set_e_ppcksumtab_rfo(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9837,8 +9037,6 @@ public:
     void set_e_data_pages_offset(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9850,8 +9048,6 @@ public:
     void set_e_nonresnametab_offset(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9863,8 +9059,6 @@ public:
     void set_e_debug_info_rfo(rose_addr_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9876,8 +9070,6 @@ public:
     void set_dos2_header(SgAsmDOSExtendedHeader* const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9889,8 +9081,6 @@ public:
     void set_section_table(SgAsmLESectionTable* const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9902,8 +9092,6 @@ public:
     void set_page_table(SgAsmLEPageTable* const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9915,8 +9103,6 @@ public:
     void set_resname_table(SgAsmLENameTable* const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9928,8 +9114,6 @@ public:
     void set_nonresname_table(SgAsmLENameTable* const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9941,8 +9125,6 @@ public:
     void set_entry_table(SgAsmLEEntryTable* const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -9953,8 +9135,6 @@ public:
     SgAsmLERelocTable* const& get_reloc_table() const;
     void set_reloc_table(SgAsmLERelocTable* const&);
     /** @} */
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -9971,7 +9151,6 @@ public:
 
 private:
     void *encode(ByteOrder::Endianness sex, SgAsmLEFileHeader::LEFileHeader_disk*) const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmLEFileHeader();
@@ -9992,7 +9171,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -10034,7 +9212,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -10046,8 +9223,6 @@ public:
     void set_bundle_sizes(SgSizeTList const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -10059,13 +9234,10 @@ public:
     SgAsmLEEntryPointPtrList& get_entries();
     void set_entries(SgAsmLEEntryPointPtrList const&);
     /** @} */
-
-
 public:
     SgAsmLEEntryTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset);
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmLEEntryTable();
@@ -10088,7 +9260,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmLEEntryPoint                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -10099,8 +9270,6 @@ IS_SERIALIZABLE(AsmLEEntryPoint);
 #ifdef DOCUMENTATION
 class SgAsmLEEntryPoint: public SgAsmExecutableFileFormat {
 #endif // DOCUMENTATION
-#ifdef _MSC_VER
-#endif
 
 #ifndef DOCUMENTATION
     AsmLEEntryPoint.setDataPrototype(
@@ -10157,7 +9326,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_entry_offset);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -10188,8 +9356,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -10202,8 +9368,6 @@ public:
     void set_entries(SgAsmLEEntryPointPtrList const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -10215,8 +9379,6 @@ public:
     void set_flags(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -10228,8 +9390,6 @@ public:
     void set_objnum(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -10241,8 +9401,6 @@ public:
     void set_entry_type(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -10254,8 +9412,6 @@ public:
     void set_res1(unsigned const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -10266,8 +9422,6 @@ public:
     rose_addr_t const& get_entry_offset() const;
     void set_entry_offset(rose_addr_t const&);
     /** @} */
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -10276,7 +9430,6 @@ public:
     SgAsmLEEntryPoint(ByteOrder::Endianness sex, unsigned flags);
     rose_addr_t unparse(std::ostream&, ByteOrder::Endianness, const SgAsmGenericSection*, rose_addr_t spos) const;
     void dump(FILE*, const char *prefix, ssize_t idx) const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmLEEntryPoint();
@@ -10297,7 +9450,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -10335,8 +9487,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -10347,15 +9497,12 @@ public:
     uint16_t const& get_sourcefile_index() const;
     void set_sourcefile_index(uint16_t const&);
     /** @} */
-
-
 public:
     /** Initialize the attribute by parsing the file. */
     virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool* pool) override;
 
     /** Print some debugging information */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmJvmSourceFile();
@@ -10376,7 +9523,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -10415,8 +9561,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -10427,15 +9571,12 @@ public:
     uint16_t const& get_signature_index() const;
     void set_signature_index(uint16_t const&);
     /** @} */
-
-
 public:
     /** Initialize the attribute by parsing the file. */
     virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool* pool) override;
 
     /** Print some debugging information */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmJvmSignature();
@@ -10456,7 +9597,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -10495,8 +9635,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -10507,15 +9645,12 @@ public:
     uint16_t const& get_main_class_index() const;
     void set_main_class_index(uint16_t const&);
     /** @} */
-
-
 public:
     /** Initialize the attribute by parsing the file. */
     virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool* pool) override;
 
     /** Print some debugging information */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmJvmModuleMainClass();
@@ -10536,7 +9671,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -10576,8 +9710,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -10589,8 +9721,6 @@ public:
     SgAsmJvmMethodPtrList& get_methods();
     void set_methods(SgAsmJvmMethodPtrList const&);
     /** @} */
-
-
 public:
     /** Initialize the method table before parsing.
      *
@@ -10605,7 +9735,6 @@ public:
 
     /** Print some debugging information */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmJvmMethodTable();
@@ -10626,7 +9755,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -10693,8 +9821,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -10706,9 +9832,6 @@ public:
     void set_access_flags(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -10720,9 +9843,6 @@ public:
     void set_name_index(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -10734,9 +9854,6 @@ public:
     void set_descriptor_index(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -10748,9 +9865,6 @@ public:
     void set_attribute_table(SgAsmJvmAttributeTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -10761,8 +9875,6 @@ public:
     SgAsmInstructionList* const& get_instruction_list() const;
     void set_instruction_list(SgAsmInstructionList* const&);
     /** @} */
-
-
 public:
     /** Initialize the object before parsing.
      *
@@ -10774,7 +9886,6 @@ public:
 
     /** Print some debugging information */
     void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmJvmMethod();
@@ -10795,7 +9906,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -10835,8 +9945,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -10848,8 +9956,6 @@ public:
     SgAsmJvmLineNumberEntryPtrList& get_line_number_table();
     void set_line_number_table(SgAsmJvmLineNumberEntryPtrList const&);
     /** @} */
-
-
 public:
     /** Initialize the LineNumberTable attribute before parsing.
      *
@@ -10861,7 +9967,6 @@ public:
 
     /** Print some debugging information */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmJvmLineNumberTable();
@@ -10882,7 +9987,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -10927,8 +10031,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -10940,9 +10042,6 @@ public:
     void set_start_pc(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -10953,8 +10052,6 @@ public:
     uint16_t const& get_line_number() const;
     void set_line_number(uint16_t const&);
     /** @} */
-
-
  public:
     /** Initialize the object before parsing.
      *
@@ -10966,7 +10063,6 @@ public:
 
     /** Print some debugging information */
     void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmJvmLineNumberEntry();
@@ -10989,7 +10085,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmJvmInstruction                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -11000,8 +10095,6 @@ IS_SERIALIZABLE(AsmJvmInstruction);
 DECLARE_HEADERS(AsmJvmInstruction);
 #if defined(SgAsmJvmInstruction_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/InstructionEnumsJvm.h>
-
-
 #endif // SgAsmJvmInstruction_HEADERS
 
 #ifdef DOCUMENTATION
@@ -11030,8 +10123,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -11042,9 +10133,10 @@ public:
     Rose::BinaryAnalysis::JvmInstructionKind const& get_kind() const;
     void set_kind(Rose::BinaryAnalysis::JvmInstructionKind const&);
     /** @} */
-
-
 public:
+    // Make a (moderately deep copy of this instruction.
+    SgAsmJvmInstruction* copy() const;
+
     // Overrides are documented in the base class
     virtual std::string description() const override;
     virtual bool terminatesBasicBlock() override;
@@ -11058,7 +10150,6 @@ public:
     virtual bool isUnknown() const override;
     virtual Sawyer::Optional<rose_addr_t> branchTarget() override;
     virtual unsigned get_anyKind() const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmJvmInstruction();
@@ -11085,7 +10176,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -11125,8 +10215,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -11138,8 +10226,6 @@ public:
     SgAsmJvmInnerClassesEntryPtrList& get_classes();
     void set_classes(SgAsmJvmInnerClassesEntryPtrList const&);
     /** @} */
-
-
 public:
     /** Initialize the InnerClasses attribute before parsing.
      *
@@ -11151,7 +10237,6 @@ public:
      *  Parses a JVM innerclasses attribute and constructs and parses all innerclasses entries reachable from the table. Returns a
      *  pointer to this object. */
     SgAsmJvmInnerClasses* parse(SgAsmJvmConstantPool*) override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmJvmInnerClasses();
@@ -11172,7 +10257,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -11232,8 +10316,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -11245,9 +10327,6 @@ public:
     void set_inner_class_info_index(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -11259,9 +10338,6 @@ public:
     void set_outer_class_info_index(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -11273,9 +10349,6 @@ public:
     void set_inner_name_index(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -11286,8 +10359,6 @@ public:
     uint16_t const& get_inner_class_access_flags() const;
     void set_inner_class_access_flags(uint16_t const&);
     /** @} */
-
-
 public:
     /** Initialize the object before parsing.
      *
@@ -11299,7 +10370,6 @@ public:
 
     /** Print some debugging information */
     void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmJvmInnerClassesEntry();
@@ -11320,7 +10390,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -11424,8 +10493,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -11437,9 +10504,6 @@ public:
     void set_minor_version(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -11451,9 +10515,6 @@ public:
     void set_major_version(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -11465,9 +10526,6 @@ public:
     void set_access_flags(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -11479,9 +10537,6 @@ public:
     void set_this_class(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -11493,9 +10548,6 @@ public:
     void set_super_class(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -11507,9 +10559,6 @@ public:
     void set_constant_pool(SgAsmJvmConstantPool* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -11522,9 +10571,6 @@ public:
     void set_interfaces(std::list<uint16_t> const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -11536,9 +10582,6 @@ public:
     void set_field_table(SgAsmJvmFieldTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -11550,9 +10593,6 @@ public:
     void set_method_table(SgAsmJvmMethodTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -11563,8 +10603,6 @@ public:
     SgAsmJvmAttributeTable* const& get_attribute_table() const;
     void set_attribute_table(SgAsmJvmAttributeTable* const&);
     /** @} */
-
-
 public:
     /** Construct a new JVM File Header with default values; ready to be initialized via parse(). */
     explicit SgAsmJvmFileHeader(SgAsmGenericFile *);
@@ -11578,7 +10616,6 @@ public:
 
     /** Returns true if a cursory look at the file indicates that it could be a JVM class file. */
     static bool is_JVM(SgAsmGenericFile*);
-
 public:
     /** Destructor. */
     virtual ~SgAsmJvmFileHeader();
@@ -11599,7 +10636,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -11639,8 +10675,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -11652,8 +10686,6 @@ public:
     SgAsmJvmFieldPtrList& get_fields();
     void set_fields(SgAsmJvmFieldPtrList const&);
     /** @} */
-
-
 public:
     /** Initialize the field table before parsing.
      *
@@ -11667,7 +10699,6 @@ public:
 
     /** Print some debugging information */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmJvmFieldTable();
@@ -11688,7 +10719,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -11747,8 +10777,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -11760,9 +10788,6 @@ public:
     void set_access_flags(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -11774,9 +10799,6 @@ public:
     void set_name_index(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -11788,9 +10810,6 @@ public:
     void set_descriptor_index(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -11801,8 +10820,6 @@ public:
     SgAsmJvmAttributeTable* const& get_attribute_table() const;
     void set_attribute_table(SgAsmJvmAttributeTable* const&);
     /** @} */
-
-
  public:
     /** Initialize the object before parsing.
      *
@@ -11814,7 +10831,6 @@ public:
 
     /** Print some debugging information */
     void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmJvmField();
@@ -11835,7 +10851,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -11873,8 +10888,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -11886,8 +10899,6 @@ public:
     SgAsmJvmExceptionPtrList& get_exceptions();
     void set_exceptions(SgAsmJvmExceptionPtrList const&);
     /** @} */
-
-
 public:
     /** Initialize the exception table before parsing.
      *
@@ -11899,7 +10910,6 @@ public:
      *  Parses a JVM exception table and constructs and parses all exceptions reachable from the table.  Returns a pointer to this
      *  object. */
     SgAsmJvmExceptionTable* parse(SgAsmJvmConstantPool*);
-
 public:
     /** Destructor. */
     virtual ~SgAsmJvmExceptionTable();
@@ -11920,7 +10930,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -11979,8 +10988,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -11992,9 +10999,6 @@ public:
     void set_start_pc(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -12006,9 +11010,6 @@ public:
     void set_end_pc(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -12020,9 +11021,6 @@ public:
     void set_handler_pc(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -12033,8 +11031,6 @@ public:
     uint16_t const& get_catch_type() const;
     void set_catch_type(uint16_t const&);
     /** @} */
-
-
  public:
     /** Initialize the object before parsing.
      *
@@ -12046,7 +11042,6 @@ public:
 
     /** Print some debugging information */
     void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmJvmException();
@@ -12067,7 +11062,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -12113,8 +11107,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -12126,9 +11118,6 @@ public:
     void set_class_index(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -12139,15 +11128,12 @@ public:
     uint16_t const& get_method_index() const;
     void set_method_index(uint16_t const&);
     /** @} */
-
-
 public:
     /** Initialize the attribute by parsing the file. */
     virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool* pool) override;
 
     /** Print some debugging information */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmJvmEnclosingMethod();
@@ -12168,7 +11154,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -12207,8 +11192,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -12219,15 +11202,12 @@ public:
     uint16_t const& get_constantvalue_index() const;
     void set_constantvalue_index(uint16_t const&);
     /** @} */
-
-
 public:
     /** Initialize the attribute by parsing the file. */
     virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool* pool) override;
 
     /** Print some debugging information */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmJvmConstantValue();
@@ -12248,7 +11228,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -12288,8 +11267,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -12301,8 +11278,6 @@ public:
     SgAsmJvmConstantPoolEntryPtrList& get_entries();
     void set_entries(SgAsmJvmConstantPoolEntryPtrList const&);
     /** @} */
-
-
 public:
     /** Non-parsing constructor. */
     explicit SgAsmJvmConstantPool(SgAsmJvmFileHeader*);
@@ -12330,7 +11305,6 @@ public:
 
     /** Print some debugging information */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmJvmConstantPool();
@@ -12351,7 +11325,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -12479,7 +11452,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_length);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -12618,9 +11590,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -12632,9 +11601,6 @@ public:
     void set_tag(SgAsmJvmConstantPoolEntry::Kind const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -12646,9 +11612,6 @@ public:
     void set_bytes(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -12660,9 +11623,6 @@ public:
     void set_hi_bytes(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -12674,9 +11634,6 @@ public:
     void set_low_bytes(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -12688,9 +11645,6 @@ public:
     void set_bootstrap_method_attr_index(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -12702,9 +11656,6 @@ public:
     void set_class_index(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -12716,9 +11667,6 @@ public:
     void set_descriptor_index(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -12730,9 +11678,6 @@ public:
     void set_name_index(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -12744,9 +11689,6 @@ public:
     void set_name_and_type_index(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -12758,9 +11700,6 @@ public:
     void set_reference_index(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -12772,9 +11711,6 @@ public:
     void set_reference_kind(uint8_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -12786,9 +11722,6 @@ public:
     void set_string_index(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -12799,15 +11732,11 @@ public:
     uint16_t const& get_length() const;
     void set_length(uint16_t const&);
     /** @} */
-
-
     // [Robb Matzke 2023-03-22]: I (and the serialization) have no idea what this points to, and therefore it cannot be
     // serialized. E.g., how many 'chars' should be serialized? Is the length stored in the `length` property? If so, `utf8_bytes`
     // should probably be an std::vector instead, which is a serializable thing. Furthermore, the data member cannot be 'const'
     // because that prevents it from being initialized by some de-serialization mechanisms (e.g., boost::serialize creates a default
     // constructed object and then fills it in).
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -12818,8 +11747,6 @@ public:
     char* const& get_utf8_bytes() const;
     void set_utf8_bytes(char* const&);
     /** @} */
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -12838,7 +11765,6 @@ public:
 
     /** Convert constant pool entry kind to a string */
     static std::string to_string(SgAsmJvmConstantPoolEntry::Kind);
-
 public:
     /** Destructor. */
     virtual ~SgAsmJvmConstantPoolEntry();
@@ -12859,7 +11785,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -12940,8 +11865,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -12953,9 +11876,6 @@ public:
     void set_max_stack(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -12967,9 +11887,6 @@ public:
     void set_max_locals(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -12980,11 +11897,7 @@ public:
     uint32_t const& get_code_length() const;
     void set_code_length(uint32_t const&);
     /** @} */
-
-
     // FIXME[Robb Matzke 2023-03-20]: is the no_serialize a bug?
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -12996,9 +11909,6 @@ public:
     void set_code(const char* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -13010,9 +11920,6 @@ public:
     void set_exception_table(SgAsmJvmExceptionTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -13024,9 +11931,6 @@ public:
     void set_attribute_table(SgAsmJvmAttributeTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -13037,15 +11941,12 @@ public:
     rose_addr_t const& get_code_offset() const;
     void set_code_offset(rose_addr_t const&);
     /** @} */
-
-
 public:
     /** Initialize the attribute by parsing the file. */
     virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool* pool) override;
 
     /** Print some debugging information */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmJvmCodeAttribute();
@@ -13066,7 +11967,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -13119,7 +12019,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmJvmAttributeTable                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -13157,8 +12056,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -13170,8 +12067,6 @@ public:
     SgAsmJvmAttributePtrList& get_attributes();
     void set_attributes(SgAsmJvmAttributePtrList const&);
     /** @} */
-
-
 public:
     /** Initialize the attribute table before parsing. */
     explicit SgAsmJvmAttributeTable(SgAsmJvmFileHeader*, SgAsmNode*);
@@ -13186,7 +12081,6 @@ public:
 
     /** Print some debugging information */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmJvmAttributeTable();
@@ -13207,7 +12101,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -13270,8 +12163,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -13283,9 +12174,6 @@ public:
     void set_attribute_name_index(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -13296,8 +12184,6 @@ public:
     uint32_t const& get_attribute_length() const;
     void set_attribute_length(uint32_t const&);
     /** @} */
-
-
 protected:
 #if 0 // [Robb Matzke 2023-03-23]: not defined anywhere?
     /** Protected constructor for derived classes. */
@@ -13313,7 +12199,6 @@ public:
 
     /** Print some debugging information */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmJvmAttribute();
@@ -13334,7 +12219,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -13383,11 +12267,9 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
 public:
     /** Print some debugging information. */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmJvmNode();
@@ -13408,7 +12290,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -13443,8 +12324,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -13456,7 +12335,6 @@ public:
     SgAsmInterpretationPtrList& get_interpretations();
     void set_interpretations(SgAsmInterpretationPtrList const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -13480,7 +12358,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmInterpretation                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -13492,8 +12369,6 @@ DECLARE_HEADERS(AsmInterpretation);
 #if defined(SgAsmInterpretation_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
-
-
 #endif // SgAsmInterpretation_HEADERS
 
 #ifdef DOCUMENTATION
@@ -13550,8 +12425,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -13563,9 +12436,6 @@ public:
     void set_headers(SgAsmGenericHeaderList* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -13576,12 +12446,8 @@ public:
     SgAsmBlock* const& get_global_block() const;
     void set_global_block(SgAsmBlock* const&);
     /** @} */
-
-
     // ROSETTA doesn't understand this type, but we want this treated like a property whose data member name is "p_map"
     // and which has automatically generator accessors and mutators named "get_map" and "set_map" and is serialized.
-    
-    
 private:
     Rose::BinaryAnalysis::MemoryMap::Ptr p_map;
 
@@ -13595,12 +12461,8 @@ public:
     Rose::BinaryAnalysis::MemoryMap::Ptr const& get_map() const;
     void set_map(Rose::BinaryAnalysis::MemoryMap::Ptr const&);
     /** @} */
-
-
     // ROSETTA doesn't understand this type, but we want it serialized. Therfore, we'll define it as a property, but we'll
     // supply our own accessor and no mutator.
-    
-    
 private:
     mutable InstructionMap instruction_map;
 
@@ -13617,9 +12479,6 @@ public:
     InstructionMap& get_instruction_map(bool recompute = false);
     void set_instruction_map(const InstructionMap&);
     /** @} */
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -13631,9 +12490,6 @@ public:
     void set_coverageComputed(bool const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -13644,8 +12500,6 @@ public:
     double const& get_percentageCoverage() const;
     void set_percentageCoverage(double const&);
     /** @} */
-
-
 public:
     /** Returns a list of all files referenced by an interpretation.
      *
@@ -13664,7 +12518,6 @@ public:
      *  This function traverses the AST rooted at the @ref get_global_block "global_block" and erases each encountered
      *  instruction from the provided @ref InstructionMap based on its starting virtual address. */
     void erase_instructions(InstructionMap&/*in,out*/);
-
 public:
     /** Destructor. */
     virtual ~SgAsmInterpretation();
@@ -13685,7 +12538,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -13735,8 +12587,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -13747,8 +12597,6 @@ public:
     SgNode* const& get_baseNode() const;
     void set_baseNode(SgNode* const&);
     /** @} */
-
-
 public:
     /** Construct a new value of specified type.
      *
@@ -13830,7 +12678,6 @@ public:
     void set_relativeValue(int64_t v, size_t nbits=64);
 
     uint64_t get_value() const { return get_absoluteValue(); }
-
 public:
     /** Destructor. */
     virtual ~SgAsmIntegerValueExpression();
@@ -13851,7 +12698,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -13887,8 +12733,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -13897,8 +12741,6 @@ public:
      *  
      *  @{ */
     /** @} */
-
-
     bool get_isSigned() const;
     /** @} */
 
@@ -13911,7 +12753,6 @@ public:
     // Overrides documented in base class
     virtual void check() const override;
     virtual std::string toString() const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmIntegerType();
@@ -13932,7 +12773,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -13968,8 +12808,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -13981,7 +12819,6 @@ public:
     SgAsmInstructionPtrList& get_instructions();
     void set_instructions(SgAsmInstructionPtrList const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -14003,7 +12840,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -14075,8 +12911,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -14088,9 +12922,6 @@ public:
     void set_stride(Rose::BinaryAnalysis::RegisterDescriptor const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -14102,9 +12933,6 @@ public:
     void set_offset(Rose::BinaryAnalysis::RegisterDescriptor const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -14116,9 +12944,6 @@ public:
     void set_index(size_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -14129,7 +12954,6 @@ public:
     size_t const& get_modulus() const;
     void set_modulus(size_t const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -14159,7 +12983,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -14198,8 +13021,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -14211,7 +13032,6 @@ public:
     SgAsmGenericSymbolPtrList& get_symbols();
     void set_symbols(SgAsmGenericSymbolPtrList const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -14233,7 +13053,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -14272,8 +13091,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -14285,7 +13102,6 @@ public:
     SgAsmGenericSectionPtrList& get_sections();
     void set_sections(SgAsmGenericSectionPtrList const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -14307,7 +13123,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -14346,8 +13161,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -14359,7 +13172,6 @@ public:
     SgAsmGenericHeaderPtrList& get_headers();
     void set_headers(SgAsmGenericHeaderPtrList const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -14381,7 +13193,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -14466,8 +13277,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -14479,9 +13288,6 @@ public:
     void set_family(SgAsmGenericFormat::ExecFamily const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -14493,9 +13299,6 @@ public:
     void set_purpose(SgAsmGenericFormat::ExecPurpose const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -14507,9 +13310,6 @@ public:
     void set_sex(ByteOrder::Endianness const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -14521,9 +13321,6 @@ public:
     void set_version(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -14535,9 +13332,6 @@ public:
     void set_is_current_version(bool const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -14549,9 +13343,6 @@ public:
     void set_abi(SgAsmGenericFormat::ExecABI const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -14563,9 +13354,6 @@ public:
     void set_abi_version(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -14576,12 +13364,9 @@ public:
     size_t const& get_word_size() const;
     void set_word_size(size_t const&);
     /** @} */
-
-
 public:
     /** Print some debugging info. */
     void dump(FILE*, const char *prefix, ssize_t idx) const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmGenericFormat();
@@ -14602,7 +13387,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -14641,8 +13425,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -14654,7 +13436,6 @@ public:
     SgAsmGenericFilePtrList& get_files();
     void set_files(SgAsmGenericFilePtrList const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -14678,7 +13459,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmGenericFile                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -14691,8 +13471,6 @@ DECLARE_HEADERS(AsmGenericFile);
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 #include "DataConversion.h"
 #include "StatSerializer.h"                         // non-intrusive serialization of struct stat
-
-
 #endif // SgAsmGenericFile_HEADERS
 
 #ifdef DOCUMENTATION
@@ -14789,7 +13567,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_neuter);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -14811,9 +13588,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -14825,9 +13599,6 @@ public:
     void set_dwarf_info(SgAsmDwarfCompilationUnitList* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -14839,9 +13610,6 @@ public:
     void set_name(std::string const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -14853,8 +13621,6 @@ public:
     void set_fd(int const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -14865,9 +13631,6 @@ public:
     struct stat const& get_sb() const;
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -14879,9 +13642,6 @@ public:
     void set_data(SgFileContentList const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -14893,9 +13653,6 @@ public:
     void set_headers(SgAsmGenericHeaderList* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -14907,9 +13664,6 @@ public:
     void set_holes(SgAsmGenericSectionList* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -14921,9 +13675,6 @@ public:
     void set_truncate_zeros(bool const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -14935,9 +13686,6 @@ public:
     void set_tracking_references(bool const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -14949,9 +13697,6 @@ public:
     void set_referenced_extents(AddressIntervalSet const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -14962,8 +13707,6 @@ public:
     bool const& get_neuter() const;
     void set_neuter(bool const&);
     /** @} */
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Non-property data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -15246,7 +13989,6 @@ public:
 protected:
     // Some extra clean-up actions on destruction
     virtual void destructorHelper() override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmGenericFile();
@@ -15267,7 +14009,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -15306,8 +14047,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -15319,7 +14058,6 @@ public:
     SgAsmGenericDLLPtrList& get_dlls();
     void set_dlls(SgAsmGenericDLLPtrList const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -15341,7 +14079,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -15384,8 +14121,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -15395,12 +14130,8 @@ public:
      *  @{ */
     SgAsmGenericString* const& get_name() const;
     /** @} */
-
     void set_name(SgAsmGenericString *s);
     /** @} */
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -15411,8 +14142,6 @@ public:
     SgStringList const& get_symbols() const;
     void set_symbols(SgStringList const&);
     /** @} */
-
-
 public:
     /** Constructor that initializes the name. */
     explicit SgAsmGenericDLL(SgAsmGenericString *s);
@@ -15424,7 +14153,6 @@ public:
     void add_symbol(const std::string &s) {
         p_symbols.push_back(s);
     }
-
 public:
     /** Destructor. */
     virtual ~SgAsmGenericDLL();
@@ -15445,7 +14173,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -15577,7 +14304,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_callingConvention);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -15692,9 +14418,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -15706,9 +14429,6 @@ public:
     void set_name(std::string const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -15720,9 +14440,6 @@ public:
     void set_reason(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -15734,9 +14451,6 @@ public:
     void set_reasonComment(std::string const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -15748,9 +14462,6 @@ public:
     void set_function_kind(SgAsmFunction::function_kind_enum const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -15762,9 +14473,6 @@ public:
     void set_may_return(SgAsmFunction::MayReturn const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -15776,9 +14484,6 @@ public:
     void set_name_md5(std::string const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -15790,10 +14495,7 @@ public:
     SgAsmStatementPtrList& get_statementList();
     void set_statementList(SgAsmStatementPtrList const&);
     /** @} */
-
-
     // FIXME[Robb P Matzke 2017-02-13]: unused?
-    
 public:
     /** Property: Instruction kind.
      *
@@ -15805,9 +14507,6 @@ public:
     void set_dest(SgAsmStatementPtrList const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -15819,9 +14518,6 @@ public:
     void set_entry_va(rose_addr_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -15832,10 +14528,7 @@ public:
     SgSymbolTable* const& get_symbol_table() const;
     void set_symbol_table(SgSymbolTable* const&);
     /** @} */
-
-
     // FIXME[Robb P Matzke 2017-02-13]: what is this?
-    
 public:
     /** Property: Instruction kind.
      *
@@ -15847,9 +14540,6 @@ public:
     void set_cached_vertex(size_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -15861,9 +14551,6 @@ public:
     void set_stackDelta(int64_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -15874,8 +14561,6 @@ public:
     std::string const& get_callingConvention() const;
     void set_callingConvention(std::string const&);
     /** @} */
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -15962,7 +14647,6 @@ public:
      *  gcrypt functions are not available. The optional @p selector argument can be used to limit the digest to only
      *  certain nodes of the function; by default, all instructions and static data are accumulated. */
     bool get_sha1(uint8_t digest[20]/*out*/, NodeSelector *selector=NULL);
-
 public:
     /** Destructor. */
     virtual ~SgAsmFunction();
@@ -15990,7 +14674,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -16065,7 +14748,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmFloatValueExpression                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -16096,7 +14778,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_nativeValueIsValid);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
 private:
     // This node stores its primary representation of the value in the p_bitVector of a parent class.  However, since we
     // often access the value as a native "double", and since converting to/from a bit vector is costly, we want to cache
@@ -16105,7 +14786,6 @@ private:
     // understand "mutable".
     //
     // However, Rosebud handles this just fine.
-    
 private:
     mutable double p_nativeValue;
 
@@ -16118,8 +14798,6 @@ public:
      *  @{ */
     /** @} */
 
-
-    
 private:
     mutable bool p_nativeValueIsValid;
 
@@ -16131,8 +14809,6 @@ public:
      *  
      *  @{ */
     /** @} */
-
-
 public:
     /** Construct specified floating-point value.
      *
@@ -16168,7 +14844,6 @@ public:
      *  Resets the cached native value from the bit vector. The bit vector is considered to be the canonical value of this
      *  AST node, and the native format value is a cached representation that can be used in arithmetic. */
     void updateNativeValue() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmFloatValueExpression();
@@ -16191,7 +14866,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmFloatType                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -16203,8 +14877,6 @@ DECLARE_HEADERS(AsmFloatType);
 #if defined(SgAsmFloatType_HEADERS) || defined(DOCUMENTATION)
 #include <Sawyer/BitVector.h>
 #include <Rose/BitFlags.h>
-
-
 #endif // SgAsmFloatType_HEADERS
 
 #ifdef DOCUMENTATION
@@ -16274,7 +14946,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_flags);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
 public:
     /** Individual bit flags for this floating-point type. */
     enum Flag {
@@ -16287,9 +14958,6 @@ public:
 
     /** Range of bits used for various purposes within the values of this type. */
     typedef Sawyer::Container::BitVector::BitRange BitRange;
-
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -16299,8 +14967,6 @@ public:
      *  @{ */
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -16310,8 +14976,6 @@ public:
      *  @{ */
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -16321,8 +14985,6 @@ public:
      *  @{ */
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -16332,8 +14994,6 @@ public:
      *  @{ */
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -16343,8 +15003,6 @@ public:
      *  @{ */
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -16354,8 +15012,6 @@ public:
      *  @{ */
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -16364,8 +15020,6 @@ public:
      *  
      *  @{ */
     /** @} */
-
-
 public:
     /** Construct a new floating-point type. */
     SgAsmFloatType(ByteOrder::Endianness, size_t nBits,
@@ -16410,7 +15064,6 @@ public:
     // Overrides documented in base class
     virtual void check() const override;
     virtual std::string toString() const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmFloatType();
@@ -16431,7 +15084,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -16502,7 +15154,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -16512,9 +15163,6 @@ public:
      *  @{ */
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -16524,9 +15172,6 @@ public:
      *  @{ */
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -16536,9 +15181,6 @@ public:
      *  @{ */
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -16547,8 +15189,6 @@ public:
      *  
      *  @{ */
     /** @} */
-
-
 protected:
     /** Construct a new scalar type.
      *
@@ -16572,7 +15212,6 @@ public:
     // Overrides documented in base class
     virtual void check() const override;
     virtual std::string toString() const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmScalarType();
@@ -16593,7 +15232,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -16635,7 +15273,6 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
 private:
     static Sawyer::Container::Map<std::string, SgAsmType*> p_typeRegistry;
 
@@ -16683,7 +15320,6 @@ public:
             delete toInsert;
         return retval;
     }
-
 public:
     /** Destructor. */
     virtual ~SgAsmType();
@@ -16704,7 +15340,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -16740,8 +15375,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -16753,7 +15386,6 @@ public:
     SgAsmExpressionPtrList& get_expressions();
     void set_expressions(SgAsmExpressionPtrList const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -16775,7 +15407,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -16814,8 +15445,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -16826,8 +15455,6 @@ public:
     SgAsmElfSymverEntryList* const& get_entries() const;
     void set_entries(SgAsmElfSymverEntryList* const&);
     /** @} */
-
-
 public:
     /** Construct section and link it into the AST. */
     explicit SgAsmElfSymverSection(SgAsmElfFileHeader*);
@@ -16846,7 +15473,6 @@ public:
 
     /** Print some debugging info */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmElfSymverSection();
@@ -16867,7 +15493,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -16907,8 +15532,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -16919,8 +15542,6 @@ public:
     SgAsmElfSymverNeededEntryList* const& get_entries() const;
     void set_entries(SgAsmElfSymverNeededEntryList* const&);
     /** @} */
-
-
 public:
     /** Constructor that links objec into AST.
      *
@@ -16951,7 +15572,6 @@ public:
 
     /** Print some debugging info */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmElfSymverNeededSection();
@@ -16972,7 +15592,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -17011,8 +15630,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -17024,7 +15641,6 @@ public:
     SgAsmElfSymverNeededEntryPtrList& get_entries();
     void set_entries(SgAsmElfSymverNeededEntryPtrList const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -17048,7 +15664,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmElfSymverNeededEntry                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -17060,8 +15675,6 @@ IS_SERIALIZABLE(AsmElfSymverNeededEntry);
 /** One entry of the ELF symbol version needed table. */
 class SgAsmElfSymverNeededEntry: public SgAsmExecutableFileFormat {
 #endif // DOCUMENTATION
-#ifdef _MSC_VER
-#endif
 
 #ifndef DOCUMENTATION
     AsmElfSymverNeededEntry.setDataPrototype(
@@ -17097,7 +15710,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_entries);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -17126,9 +15738,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -17140,9 +15749,6 @@ public:
     void set_version(size_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -17154,9 +15760,6 @@ public:
     void set_file_name(SgAsmGenericString* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -17167,8 +15770,6 @@ public:
     SgAsmElfSymverNeededAuxList* const& get_entries() const;
     void set_entries(SgAsmElfSymverNeededAuxList* const&);
     /** @} */
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -17184,7 +15785,6 @@ public:
 
     /** Print debugging information. */
     virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmElfSymverNeededEntry();
@@ -17205,7 +15805,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -17244,8 +15843,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -17257,7 +15854,6 @@ public:
     SgAsmElfSymverNeededAuxPtrList& get_entries();
     void set_entries(SgAsmElfSymverNeededAuxPtrList const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -17281,7 +15877,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmElfSymverNeededAux                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -17293,8 +15888,6 @@ IS_SERIALIZABLE(AsmElfSymverNeededAux);
 /** Auxiliary info for needed symbol version. */
 class SgAsmElfSymverNeededAux: public SgAsmExecutableFileFormat {
 #endif // DOCUMENTATION
-#ifdef _MSC_VER
-#endif
 
 #ifndef DOCUMENTATION
     AsmElfSymverNeededAux.setDataPrototype(
@@ -17337,7 +15930,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_name);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -17366,9 +15958,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -17380,9 +15969,6 @@ public:
     void set_hash(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -17394,9 +15980,6 @@ public:
     void set_flags(int const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -17408,9 +15991,6 @@ public:
     void set_other(size_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -17421,8 +16001,6 @@ public:
     SgAsmGenericString* const& get_name() const;
     void set_name(SgAsmGenericString* const&);
     /** @} */
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -17445,7 +16023,6 @@ public:
      *  Table. Note that this method is not normally called since @ref SgAsmElfSymverNeededEntry::dump prints the auxiliary
      *  information explicitly for a more compact listing. */
     virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmElfSymverNeededAux();
@@ -17466,7 +16043,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -17505,8 +16081,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -17518,7 +16092,6 @@ public:
     SgAsmElfSymverEntryPtrList& get_entries();
     void set_entries(SgAsmElfSymverEntryPtrList const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -17540,7 +16113,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -17576,8 +16148,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -17588,15 +16158,12 @@ public:
     size_t const& get_value() const;
     void set_value(size_t const&);
     /** @} */
-
-
 public:
     /** Constructor that links new entry into the AST. */
     explicit SgAsmElfSymverEntry(SgAsmElfSymverSection*);
 
     /** Prints some debugging info. */
     virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmElfSymverEntry();
@@ -17617,7 +16184,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -17657,8 +16223,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -17669,8 +16233,6 @@ public:
     SgAsmElfSymverDefinedEntryList* const& get_entries() const;
     void set_entries(SgAsmElfSymverDefinedEntryList* const&);
     /** @} */
-
-
 public:
     /** Constructor linking object into AST. */
     SgAsmElfSymverDefinedSection(SgAsmElfFileHeader *fhdr, SgAsmElfStringSection *strsec);
@@ -17756,7 +16318,6 @@ public:
 
     /** Print some debugging info. */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmElfSymverDefinedSection();
@@ -17777,7 +16338,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -17816,8 +16376,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -17829,7 +16387,6 @@ public:
     SgAsmElfSymverDefinedEntryPtrList& get_entries();
     void set_entries(SgAsmElfSymverDefinedEntryPtrList const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -17853,7 +16410,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmElfSymverDefinedEntry                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -17865,8 +16421,6 @@ IS_SERIALIZABLE(AsmElfSymverDefinedEntry);
 /** One entry from an ELF symbol version definition table. */
 class SgAsmElfSymverDefinedEntry: public SgAsmExecutableFileFormat {
 #endif // DOCUMENTATION
-#ifdef _MSC_VER
-#endif
 
 #ifndef DOCUMENTATION
     AsmElfSymverDefinedEntry.setDataPrototype(
@@ -17916,7 +16470,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_entries);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -17946,9 +16499,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -17960,9 +16510,6 @@ public:
     void set_version(size_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -17974,9 +16521,6 @@ public:
     void set_flags(int const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -17988,9 +16532,6 @@ public:
     void set_index(size_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -18002,9 +16543,6 @@ public:
     void set_hash(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -18015,8 +16553,6 @@ public:
     SgAsmElfSymverDefinedAuxList* const& get_entries() const;
     void set_entries(SgAsmElfSymverDefinedAuxList* const&);
     /** @} */
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -18032,7 +16568,6 @@ public:
 
     /** Print some debugging info. */
     virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmElfSymverDefinedEntry();
@@ -18053,7 +16588,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -18092,8 +16626,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -18105,7 +16637,6 @@ public:
     SgAsmElfSymverDefinedAuxPtrList& get_entries();
     void set_entries(SgAsmElfSymverDefinedAuxPtrList const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -18129,7 +16660,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmElfSymverDefinedAux                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -18140,8 +16670,6 @@ IS_SERIALIZABLE(AsmElfSymverDefinedAux);
 #ifdef DOCUMENTATION
 class SgAsmElfSymverDefinedAux: public SgAsmExecutableFileFormat {
 #endif // DOCUMENTATION
-#ifdef _MSC_VER
-#endif
 
 #ifndef DOCUMENTATION
     AsmElfSymverDefinedAux.setDataPrototype(
@@ -18163,7 +16691,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_name);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -18189,9 +16716,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -18202,8 +16726,6 @@ public:
     SgAsmGenericString* const& get_name() const;
     void set_name(SgAsmGenericString* const&);
     /** @} */
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -18225,7 +16747,6 @@ public:
      *  in order to have a more compact output, @ref SgAsmElfSymverDefinedEntry::dump prints the @ref
      *  SgAsmElfSymverDefinedAux objects explicitly rather than calling this method. */
     virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmElfSymverDefinedAux();
@@ -18246,7 +16767,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -18289,8 +16809,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -18302,9 +16820,6 @@ public:
     void set_is_dynamic(bool const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -18315,8 +16830,6 @@ public:
     SgAsmElfSymbolList* const& get_symbols() const;
     void set_symbols(SgAsmElfSymbolList* const&);
     /** @} */
-
-
 public:
     /** Non-parsing constructor */
     SgAsmElfSymbolSection(SgAsmElfFileHeader *fhdr, SgAsmElfStringSection *strsec);
@@ -18357,7 +16870,6 @@ public:
 
     /** Print some debugging info */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmElfSymbolSection();
@@ -18378,7 +16890,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -18413,8 +16924,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -18426,7 +16935,6 @@ public:
     SgAsmElfSymbolPtrList& get_symbols();
     void set_symbols(SgAsmElfSymbolPtrList const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -18450,7 +16958,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmElfSymbol                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -18465,8 +16972,6 @@ IS_SERIALIZABLE(AsmElfSymbol);
  *  documentation is not replicated here -- refer to the specification. */
 class SgAsmElfSymbol: public SgAsmGenericSymbol {
 #endif // DOCUMENTATION
-#ifdef _MSC_VER
-#endif
 
 #ifndef DOCUMENTATION
     AsmElfSymbol.setDataPrototype(
@@ -18516,7 +17021,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_extra);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -18576,9 +17080,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -18590,9 +17091,6 @@ public:
     void set_st_info(unsigned char const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -18604,9 +17102,6 @@ public:
     void set_st_res1(unsigned char const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -18618,9 +17113,6 @@ public:
     void set_st_shndx(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -18632,9 +17124,6 @@ public:
     void set_st_size(rose_addr_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -18646,8 +17135,6 @@ public:
     SgUnsignedCharList& get_extra();
     void set_extra(SgUnsignedCharList const&);
     /** @} */
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -18695,7 +17182,6 @@ public:
 
 private:
     void parse_common();                            // initialization common to all parse() methods
-
 public:
     /** Destructor. */
     virtual ~SgAsmElfSymbol();
@@ -18716,7 +17202,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -18744,7 +17229,6 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericStrtab);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
 public:
     /** Non-parsing constructor.
      *
@@ -18794,7 +17278,6 @@ public:
 
     /** Similar to create_storage() but uses a storage object that's already been allocated. */
     virtual void rebind(SgAsmStringStorage*, rose_addr_t) override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmElfStrtab();
@@ -18815,7 +17298,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -18853,8 +17335,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -18865,8 +17345,6 @@ public:
     SgAsmElfStrtab* const& get_strtab() const;
     void set_strtab(SgAsmElfStrtab* const&);
     /** @} */
-
-
 public:
     /** Constructor that links new object into AST. */
     explicit SgAsmElfStringSection(SgAsmElfFileHeader*);
@@ -18893,7 +17371,6 @@ public:
 
     /** Unparse an ElfStringSection by unparsing the ElfStrtab */
     virtual void unparse(std::ostream&) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmElfStringSection();
@@ -18914,7 +17391,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -18947,7 +17423,6 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
 public:
     /** Constuct segment table linked into the AST. */
     explicit SgAsmElfSegmentTable(SgAsmElfFileHeader*);
@@ -18986,7 +17461,6 @@ public:
 
     /** Print some debugging info */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmElfSegmentTable();
@@ -19007,7 +17481,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -19042,8 +17515,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -19055,7 +17526,6 @@ public:
     SgAsmElfSegmentTableEntryPtrList& get_entries();
     void set_entries(SgAsmElfSegmentTableEntryPtrList const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -19079,7 +17549,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmElfSegmentTableEntry                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -19091,8 +17560,6 @@ IS_SERIALIZABLE(AsmElfSegmentTableEntry);
 /** Represents one entry of a segment table. */
 class SgAsmElfSegmentTableEntry: public SgAsmExecutableFileFormat {
 #endif // DOCUMENTATION
-#ifdef _MSC_VER
-#endif
 
 #ifndef DOCUMENTATION
     AsmElfSegmentTableEntry.setDataPrototype(
@@ -19177,7 +17644,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_extra);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -19267,9 +17733,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -19281,9 +17744,6 @@ public:
     void set_index(size_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -19295,9 +17755,6 @@ public:
     void set_type(SgAsmElfSegmentTableEntry::SegmentType const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -19309,9 +17766,6 @@ public:
     void set_flags(SgAsmElfSegmentTableEntry::SegmentFlags const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -19323,9 +17777,6 @@ public:
     void set_offset(rose_addr_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -19337,9 +17788,6 @@ public:
     void set_vaddr(rose_addr_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -19351,9 +17799,6 @@ public:
     void set_paddr(rose_addr_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -19365,9 +17810,6 @@ public:
     void set_filesz(rose_addr_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -19379,9 +17821,6 @@ public:
     void set_memsz(rose_addr_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -19393,9 +17832,6 @@ public:
     void set_align(rose_addr_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -19407,8 +17843,6 @@ public:
     SgUnsignedCharList& get_extra();
     void set_extra(SgUnsignedCharList const&);
     /** @} */
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -19439,7 +17873,6 @@ public:
 
     /** Convert segment flags to string. */
     static std::string to_string(SgAsmElfSegmentTableEntry::SegmentFlags);
-
 public:
     /** Destructor. */
     virtual ~SgAsmElfSegmentTableEntry();
@@ -19460,7 +17893,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -19492,7 +17924,6 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
 public:
     /** Constructor creates section table within the AST. */
     explicit SgAsmElfSectionTable(SgAsmElfFileHeader*);
@@ -19529,7 +17960,6 @@ public:
 
     /** Print some debugging info */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmElfSectionTable();
@@ -19552,7 +17982,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmElfSectionTableEntry                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -19564,8 +17993,6 @@ IS_SERIALIZABLE(AsmElfSectionTableEntry);
 /** Represents one entry in an ELF section table. */
 class SgAsmElfSectionTableEntry: public SgAsmExecutableFileFormat {
 #endif // DOCUMENTATION
-#ifdef _MSC_VER
-#endif
 
 #ifndef DOCUMENTATION
     AsmElfSectionTableEntry.setDataPrototype(
@@ -19657,7 +18084,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_extra);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -19755,9 +18181,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -19769,9 +18192,6 @@ public:
     void set_sh_name(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -19783,9 +18203,6 @@ public:
     void set_sh_type(SgAsmElfSectionTableEntry::SectionType const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -19797,9 +18214,6 @@ public:
     void set_sh_link(unsigned long const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -19811,9 +18225,6 @@ public:
     void set_sh_info(unsigned long const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -19825,9 +18236,6 @@ public:
     void set_sh_flags(uint64_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -19839,9 +18247,6 @@ public:
     void set_sh_addr(rose_addr_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -19853,9 +18258,6 @@ public:
     void set_sh_offset(rose_addr_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -19867,9 +18269,6 @@ public:
     void set_sh_size(rose_addr_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -19881,9 +18280,6 @@ public:
     void set_sh_addralign(rose_addr_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -19895,9 +18291,6 @@ public:
     void set_sh_entsize(rose_addr_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -19909,8 +18302,6 @@ public:
     SgUnsignedCharList& get_extra();
     void set_extra(SgUnsignedCharList const&);
     /** @} */
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -19941,7 +18332,6 @@ public:
     // Use Rose::stringify... function instead.
     static std::string to_string(SgAsmElfSectionTableEntry::SectionType);
     static std::string to_string(SgAsmElfSectionTableEntry::SectionFlags);
-
 public:
     /** Destructor. */
     virtual ~SgAsmElfSectionTableEntry();
@@ -19962,7 +18352,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -20012,8 +18401,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -20025,9 +18412,6 @@ public:
     void set_uses_addend(bool const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -20039,9 +18423,6 @@ public:
     void set_target_section(SgAsmElfSection* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -20052,8 +18433,6 @@ public:
     SgAsmElfRelocEntryList* const& get_entries() const;
     void set_entries(SgAsmElfRelocEntryList* const&);
     /** @} */
-
-
 public:
     SgAsmElfRelocSection(SgAsmElfFileHeader *fhdr, SgAsmElfSymbolSection *symsec,SgAsmElfSection* targetsec);
 
@@ -20072,7 +18451,6 @@ public:
 
     /** Print some debugging info */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmElfRelocSection();
@@ -20093,7 +18471,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -20132,8 +18509,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -20145,7 +18520,6 @@ public:
     SgAsmElfRelocEntryPtrList& get_entries();
     void set_entries(SgAsmElfRelocEntryPtrList const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -20169,7 +18543,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmElfRelocEntry                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -20181,8 +18554,6 @@ IS_SERIALIZABLE(AsmElfRelocEntry);
 /** One entry of an ELF relocation table. */
 class SgAsmElfRelocEntry: public SgAsmExecutableFileFormat {
 #endif // DOCUMENTATION
-#ifdef _MSC_VER
-#endif
 
 #ifndef DOCUMENTATION
     AsmElfRelocEntry.setDataPrototype(
@@ -20232,7 +18603,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_extra);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -20353,9 +18723,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -20367,9 +18734,6 @@ public:
     void set_r_offset(rose_addr_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -20381,9 +18745,6 @@ public:
     void set_r_addend(rose_addr_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -20395,9 +18756,6 @@ public:
     void set_sym(unsigned long const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -20409,9 +18767,6 @@ public:
     void set_type(SgAsmElfRelocEntry::RelocType const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -20423,8 +18778,6 @@ public:
     SgUnsignedCharList& get_extra();
     void set_extra(SgUnsignedCharList const&);
     /** @} */
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -20461,7 +18814,6 @@ public:
 
     /** Convert relocation to string for debugging. */
     std::string reloc_name() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmElfRelocEntry();
@@ -20482,7 +18834,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -20517,8 +18868,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -20529,8 +18878,6 @@ public:
     SgAsmElfNoteEntryList* const& get_entries() const;
     void set_entries(SgAsmElfNoteEntryList* const&);
     /** @} */
-
-
 public:
     /** Non-parsing constructor */
     explicit SgAsmElfNoteSection(SgAsmElfFileHeader*);
@@ -20545,7 +18892,6 @@ public:
 
     /** Print some debugging information */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmElfNoteSection();
@@ -20566,7 +18912,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -20605,8 +18950,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -20618,7 +18961,6 @@ public:
     SgAsmElfNoteEntryPtrList& get_entries();
     void set_entries(SgAsmElfNoteEntryPtrList const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -20640,7 +18982,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -20690,8 +19031,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -20703,9 +19042,6 @@ public:
     void set_type(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -20715,9 +19051,6 @@ public:
      *  @{ */
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -20729,8 +19062,6 @@ public:
     SgUnsignedCharList& get_payload();
     void set_payload(SgUnsignedCharList const&);
     /** @} */
-
-
 public:
     /** Constructor adds the new note to the list of notes for the note section. */
     SgAsmElfNoteEntry(SgAsmElfNoteSection*);
@@ -20765,7 +19096,6 @@ public:
 
     /** Returns the number of bytes needed to store this note. */
     rose_addr_t calculate_size() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmElfNoteEntry();
@@ -20788,7 +19118,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmElfFileHeader                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -20807,8 +19136,6 @@ IS_SERIALIZABLE(AsmElfFileHeader);
  *  is not normally employed. */
 class SgAsmElfFileHeader: public SgAsmGenericHeader {
 #endif // DOCUMENTATION
-#ifdef _MSC_VER
-#endif
 
 #ifndef DOCUMENTATION
     AsmElfFileHeader.setDataPrototype(
@@ -20928,7 +19255,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_segment_table);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -21018,9 +19344,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -21032,9 +19355,6 @@ public:
     void set_e_ident_file_class(unsigned char const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -21046,9 +19366,6 @@ public:
     void set_e_ident_data_encoding(unsigned char const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -21060,9 +19377,6 @@ public:
     void set_e_ident_file_version(unsigned char const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -21074,9 +19388,6 @@ public:
     void set_e_ident_padding(SgUnsignedCharList const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -21088,9 +19399,6 @@ public:
     void set_e_type(unsigned long const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -21102,9 +19410,6 @@ public:
     void set_e_machine(unsigned long const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -21116,9 +19421,6 @@ public:
     void set_e_flags(unsigned long const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -21130,9 +19432,6 @@ public:
     void set_e_ehsize(unsigned long const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -21144,9 +19443,6 @@ public:
     void set_phextrasz(unsigned long const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -21158,9 +19454,6 @@ public:
     void set_e_phnum(unsigned long const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -21172,9 +19465,6 @@ public:
     void set_shextrasz(unsigned long const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -21186,9 +19476,6 @@ public:
     void set_e_shnum(unsigned long const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -21200,9 +19487,6 @@ public:
     void set_e_shstrndx(unsigned long const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -21214,9 +19498,6 @@ public:
     void set_section_table(SgAsmElfSectionTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -21227,8 +19508,6 @@ public:
     SgAsmElfSegmentTable* const& get_segment_table() const;
     void set_segment_table(SgAsmElfSegmentTable* const&);
     /** @} */
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -21285,7 +19564,6 @@ public:
 private:
     void *encode(ByteOrder::Endianness, SgAsmElfFileHeader::Elf32FileHeader_disk*) const;
     void *encode(ByteOrder::Endianness, SgAsmElfFileHeader::Elf64FileHeader_disk*) const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmElfFileHeader();
@@ -21306,7 +19584,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -21342,8 +19619,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -21354,8 +19629,6 @@ public:
     SgAsmElfEHFrameEntryCIList* const& get_ci_entries() const;
     void set_ci_entries(SgAsmElfEHFrameEntryCIList* const&);
     /** @} */
-
-
 public:
     /** Non-parsing constructor. */
     explicit SgAsmElfEHFrameSection(SgAsmElfFileHeader*);
@@ -21380,7 +19653,6 @@ public:
 
     /** Print some debugging info */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmElfEHFrameSection();
@@ -21401,7 +19673,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -21440,8 +19711,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -21453,7 +19722,6 @@ public:
     SgAsmElfEHFrameEntryFDPtrList& get_entries();
     void set_entries(SgAsmElfEHFrameEntryFDPtrList const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -21475,7 +19743,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -21532,8 +19799,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -21546,9 +19811,6 @@ public:
     void set_begin_rva(rose_rva_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -21560,9 +19822,6 @@ public:
     void set_size(rose_addr_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -21575,9 +19834,6 @@ public:
     void set_augmentation_data(SgUnsignedCharList const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -21589,8 +19845,6 @@ public:
     SgUnsignedCharList& get_instructions();
     void set_instructions(SgUnsignedCharList const&);
     /** @} */
-
-
 public:
     /** Non-parsing constructor */
     explicit SgAsmElfEHFrameEntryFD(SgAsmElfEHFrameEntryCI*);
@@ -21603,7 +19857,6 @@ public:
      *  Unparses the frame description entry (FDE) into a string but do not include the leading length field(s) or the CIE
      *  back pointer. */
     std::string unparse(const SgAsmElfEHFrameSection*, SgAsmElfEHFrameEntryCI*) const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmElfEHFrameEntryFD();
@@ -21624,7 +19877,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -21663,8 +19915,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -21676,7 +19926,6 @@ public:
     SgAsmElfEHFrameEntryCIPtrList& get_entries();
     void set_entries(SgAsmElfEHFrameEntryCIPtrList const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -21698,7 +19947,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -21827,8 +20075,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -21840,9 +20086,6 @@ public:
     void set_version(int const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -21854,9 +20097,6 @@ public:
     void set_augmentation_string(std::string const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -21868,9 +20108,6 @@ public:
     void set_eh_data(uint64_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -21882,9 +20119,6 @@ public:
     void set_code_alignment_factor(uint64_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -21896,9 +20130,6 @@ public:
     void set_data_alignment_factor(int64_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -21910,9 +20141,6 @@ public:
     void set_augmentation_data_length(uint64_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -21924,9 +20152,6 @@ public:
     void set_lsda_encoding(int const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -21938,9 +20163,6 @@ public:
     void set_prh_encoding(int const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -21952,9 +20174,6 @@ public:
     void set_prh_arg(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -21966,9 +20185,6 @@ public:
     void set_prh_addr(rose_addr_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -21980,9 +20196,6 @@ public:
     void set_addr_encoding(int const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -21994,9 +20207,6 @@ public:
     void set_sig_frame(bool const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -22009,9 +20219,6 @@ public:
     void set_instructions(SgUnsignedCharList const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -22022,8 +20229,6 @@ public:
     SgAsmElfEHFrameEntryFDList* const& get_fd_entries() const;
     void set_fd_entries(SgAsmElfEHFrameEntryFDList* const&);
     /** @} */
-
-
 public:
     /** Non-parsing constructor */
     explicit SgAsmElfEHFrameEntryCI(SgAsmElfEHFrameSection *ehframe);
@@ -22036,7 +20241,6 @@ public:
      *  Unparse one Common Information Entry (CIE) without unparsing the Frame Description Entries (FDE) to which it
      *  points. The initial length fields are not included in the result string. */
     std::string unparse(const SgAsmElfEHFrameSection*) const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmElfEHFrameEntryCI();
@@ -22057,7 +20261,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -22093,8 +20296,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -22105,8 +20306,6 @@ public:
     SgAsmElfDynamicEntryList* const& get_entries() const;
     void set_entries(SgAsmElfDynamicEntryList* const&);
     /** @} */
-
-
 public:
     /** Constructor that links object into the AST. */
     SgAsmElfDynamicSection(SgAsmElfFileHeader *fhdr, SgAsmElfStringSection *strsec);
@@ -22129,7 +20328,6 @@ public:
 
     /** Print some debugging info */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmElfDynamicSection();
@@ -22150,7 +20348,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -22221,8 +20418,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -22231,14 +20426,9 @@ public:
      *  
      *  @{ */
     /** @} */
-
-
     SgAsmElfSection* get_linked_section() const;
     virtual void set_linked_section(SgAsmElfSection*);
     /** @} */
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -22250,9 +20440,6 @@ public:
     void set_section_entry(SgAsmElfSectionTableEntry* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -22263,8 +20450,6 @@ public:
     SgAsmElfSegmentTableEntry* const& get_segment_entry() const;
     void set_segment_entry(SgAsmElfSegmentTableEntry* const&);
     /** @} */
-
-
 public:
     /** Constructor for sections not yet in a table.
      *
@@ -22341,7 +20526,6 @@ public:
      *
      *  This is just a convenience function so we don't need to constantly cast the return value from @ref get_header. */
     SgAsmElfFileHeader *get_elf_header() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmElfSection();
@@ -22362,7 +20546,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -22401,8 +20584,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -22414,7 +20595,6 @@ public:
     SgAsmElfDynamicEntryPtrList& get_entries();
     void set_entries(SgAsmElfDynamicEntryPtrList const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -22438,7 +20618,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmElfDynamicEntry                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -22449,16 +20628,12 @@ IS_SERIALIZABLE(AsmElfDynamicEntry);
 DECLARE_HEADERS(AsmElfDynamicEntry);
 #if defined(SgAsmElfDynamicEntry_HEADERS) || defined(DOCUMENTATION)
 #include <ByteOrder.h>
-
-
 #endif // SgAsmElfDynamicEntry_HEADERS
 
 #ifdef DOCUMENTATION
 /** One entry from the dynamic linking table. */
 class SgAsmElfDynamicEntry: public SgAsmExecutableFileFormat {
 #endif // DOCUMENTATION
-#ifdef _MSC_VER
-#endif
 
 #ifndef DOCUMENTATION
     AsmElfDynamicEntry.setDataPrototype(
@@ -22501,7 +20676,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_extra);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -22609,9 +20783,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -22623,9 +20794,6 @@ public:
     void set_d_tag(SgAsmElfDynamicEntry::EntryType const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -22638,9 +20806,6 @@ public:
     void set_d_val(rose_rva_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -22650,13 +20815,8 @@ public:
      *  @{ */
     SgAsmGenericString* const& get_name() const;
     /** @} */
-
-
     void set_name(SgAsmGenericString*);
     /** @} */
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -22668,8 +20828,6 @@ public:
     SgUnsignedCharList& get_extra();
     void set_extra(SgUnsignedCharList const&);
     /** @} */
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -22696,7 +20854,6 @@ public:
 
     /** Convert Dynamic Entry Tag to a string */
     static std::string to_string(SgAsmElfDynamicEntry::EntryType);
-
 public:
     /** Destructor. */
     virtual ~SgAsmElfDynamicEntry();
@@ -22717,7 +20874,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -22773,7 +20929,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfVariantPart                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -22825,7 +20980,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -22881,7 +21035,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfVariable                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -22933,7 +21086,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -22989,7 +21141,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfUpcSharedType                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -23041,7 +21192,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -23097,7 +21247,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfUnspecifiedType                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -23149,7 +21298,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -23205,7 +21353,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfUnknownConstruct                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -23259,7 +21406,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfUnionType                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -23292,7 +21438,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -23303,11 +21448,8 @@ public:
     SgAsmDwarfConstructList* const& get_body() const;
     void set_body(SgAsmDwarfConstructList* const&);
     /** @} */
-
-
 public:
     SgAsmDwarfConstructList* get_children() override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmDwarfUnionType();
@@ -23334,7 +21476,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -23390,7 +21531,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfTryBlock                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -23442,7 +21582,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -23498,7 +21637,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfTemplateValueParameter                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -23550,7 +21688,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -23606,7 +21743,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfSubroutineType                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -23639,7 +21775,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -23650,11 +21785,8 @@ public:
     SgAsmDwarfConstructList* const& get_body() const;
     void set_body(SgAsmDwarfConstructList* const&);
     /** @} */
-
-
 public:
     SgAsmDwarfConstructList* get_children() override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmDwarfSubroutineType();
@@ -23681,7 +21813,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -23737,7 +21868,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfSubprogram                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -23770,7 +21900,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -23781,11 +21910,8 @@ public:
     SgAsmDwarfConstructList* const& get_body() const;
     void set_body(SgAsmDwarfConstructList* const&);
     /** @} */
-
-
 public:
     SgAsmDwarfConstructList* get_children() override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmDwarfSubprogram();
@@ -23812,7 +21938,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -23847,7 +21972,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -23858,11 +21982,8 @@ public:
     SgAsmDwarfConstructList* const& get_body() const;
     void set_body(SgAsmDwarfConstructList* const&);
     /** @} */
-
-
 public:
     SgAsmDwarfConstructList* get_children() override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmDwarfStructureType();
@@ -23889,7 +22010,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -23945,7 +22065,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfSharedType                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -23997,7 +22116,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -24053,7 +22171,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfRestrictType                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -24105,7 +22222,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -24161,7 +22277,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfPtrToMemberType                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -24213,7 +22328,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -24269,7 +22383,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfPartialUnit                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -24321,7 +22434,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -24377,7 +22489,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfNamespace                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -24410,7 +22521,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -24421,11 +22531,8 @@ public:
     SgAsmDwarfConstructList* const& get_body() const;
     void set_body(SgAsmDwarfConstructList* const&);
     /** @} */
-
-
 public:
     SgAsmDwarfConstructList* get_children() override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmDwarfNamespace();
@@ -24452,7 +22559,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -24508,7 +22614,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfNamelist                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -24560,7 +22665,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -24616,7 +22720,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfModule                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -24668,7 +22771,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -24724,7 +22826,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfMacroList                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -24757,7 +22858,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -24768,7 +22868,6 @@ public:
     SgAsmDwarfMacroPtrList const& get_macro_list() const;
     void set_macro_list(SgAsmDwarfMacroPtrList const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -24790,7 +22889,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -24825,7 +22923,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -24836,7 +22933,6 @@ public:
     std::string const& get_macro_string() const;
     void set_macro_string(std::string const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -24858,7 +22954,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -24893,7 +22988,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -24905,8 +22999,6 @@ public:
     SgAsmDwarfLinePtrList& get_line_list();
     void set_line_list(SgAsmDwarfLinePtrList const&);
     /** @} */
-
-
 #if 0
     // I [DQ] am having trouble making these proper data members so just use function to return them, so that they are
     // computed dynamically.
@@ -24929,7 +23021,6 @@ public:
 
     static uint64_t sourceCodeToAddress ( FileIdLineColumnFilePosition sourcePosition );
     static FileIdLineColumnFilePosition addressToSourceCode ( uint64_t address );
-
 public:
     /** Destructor. */
     virtual ~SgAsmDwarfLineList();
@@ -24950,7 +23041,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -25006,7 +23096,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -25018,8 +23107,6 @@ public:
     void set_address(uint64_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -25031,8 +23118,6 @@ public:
     void set_file_id(int const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -25044,8 +23129,6 @@ public:
     void set_line(int const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -25056,7 +23139,6 @@ public:
     int const& get_column() const;
     void set_column(int const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -25085,7 +23167,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -25120,7 +23201,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -25131,11 +23211,8 @@ public:
     SgAsmDwarfConstructList* const& get_body() const;
     void set_body(SgAsmDwarfConstructList* const&);
     /** @} */
-
-
 public:
     SgAsmDwarfConstructList* get_children() override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmDwarfLexicalBlock();
@@ -25162,7 +23239,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -25218,7 +23294,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfInterfaceType                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -25272,7 +23347,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfInlinedSubroutine                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -25305,7 +23379,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -25316,11 +23389,8 @@ public:
     SgAsmDwarfConstructList* const& get_body() const;
     void set_body(SgAsmDwarfConstructList* const&);
     /** @} */
-
-
 public:
     SgAsmDwarfConstructList* get_children() override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmDwarfInlinedSubroutine();
@@ -25347,7 +23417,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -25403,7 +23472,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfImportedUnit                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -25455,7 +23523,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -25511,7 +23578,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfImportedDeclaration                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -25563,7 +23629,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -25619,7 +23684,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfFriend                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -25671,7 +23735,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -25727,7 +23790,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfFormalParameter                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -25779,7 +23841,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -25835,7 +23896,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfEnumerator                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -25889,7 +23949,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfEnumerationType                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -25922,8 +23981,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -25934,11 +23991,8 @@ public:
     SgAsmDwarfConstructList* const& get_body() const;
     void set_body(SgAsmDwarfConstructList* const&);
     /** @} */
-
-
 public:
     SgAsmDwarfConstructList* get_children() override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmDwarfEnumerationType();
@@ -25965,7 +24019,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -26021,7 +24074,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfDwarfProcedure                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -26073,7 +24125,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -26129,7 +24180,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfConstructList                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -26162,7 +24212,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -26174,7 +24223,6 @@ public:
     SgAsmDwarfConstructPtrList& get_list();
     void set_list(SgAsmDwarfConstructPtrList const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -26196,7 +24244,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -26252,7 +24299,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfCondition                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -26306,7 +24352,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfCompilationUnitList                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -26339,7 +24384,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -26351,7 +24395,6 @@ public:
     SgAsmDwarfCompilationUnitPtrList& get_cu_list();
     void set_cu_list(SgAsmDwarfCompilationUnitPtrList const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -26373,7 +24416,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -26478,7 +24520,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -26490,8 +24531,6 @@ public:
     void set_producer(std::string const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -26503,8 +24542,6 @@ public:
     void set_language(std::string const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -26516,8 +24553,6 @@ public:
     void set_low_pc(uint64_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -26529,8 +24564,6 @@ public:
     void set_hi_pc(uint64_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -26542,8 +24575,6 @@ public:
     void set_version_stamp(int const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -26555,8 +24586,6 @@ public:
     void set_abbrev_offset(uint64_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -26568,8 +24597,6 @@ public:
     void set_address_size(uint64_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -26581,8 +24608,6 @@ public:
     void set_offset_length(uint64_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -26594,8 +24619,6 @@ public:
     void set_line_info(SgAsmDwarfLineList* const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -26607,8 +24630,6 @@ public:
     void set_language_constructs(SgAsmDwarfConstructList* const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -26619,11 +24640,8 @@ public:
     SgAsmDwarfMacroList* const& get_macro_info() const;
     void set_macro_info(SgAsmDwarfMacroList* const&);
     /** @} */
-
-
 public:
     SgAsmDwarfConstructList* get_children() override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmDwarfCompilationUnit();
@@ -26650,7 +24668,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -26706,7 +24723,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfCommonBlock                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -26739,7 +24755,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -26750,11 +24765,8 @@ public:
     SgAsmDwarfConstructList* const& get_body() const;
     void set_body(SgAsmDwarfConstructList* const&);
     /** @} */
-
-
 public:
     SgAsmDwarfConstructList* get_children() override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmDwarfCommonBlock();
@@ -26781,7 +24793,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -26816,7 +24827,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -26827,11 +24837,8 @@ public:
     SgAsmDwarfConstructList* const& get_body() const;
     void set_body(SgAsmDwarfConstructList* const&);
     /** @} */
-
-
 public:
     SgAsmDwarfConstructList* get_children() override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmDwarfClassType();
@@ -26858,7 +24865,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -26914,7 +24920,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfCatchBlock                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -26966,7 +24971,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -27022,7 +25026,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfArrayType                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -27055,7 +25058,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -27066,11 +25068,8 @@ public:
     SgAsmDwarfConstructList* const& get_body() const;
     void set_body(SgAsmDwarfConstructList* const&);
     /** @} */
-
-
 public:
     SgAsmDwarfConstructList* get_children() override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmDwarfArrayType();
@@ -27097,7 +25096,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -27151,7 +25149,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -27290,12 +25287,10 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_source_position);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     // AsmDwarfConstruct.setFunctionPrototype("HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
     // AsmDwarfConstruct.setFunctionSource("SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
 
     // For now we will store the nesting level (just to support debugging), then it will be removed.
-    
 public:
     /** Property: Instruction kind.
      *
@@ -27307,8 +25302,6 @@ public:
     void set_nesting_level(int const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -27320,8 +25313,6 @@ public:
     void set_offset(uint64_t const&);
     /** @} */
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -27332,10 +25323,7 @@ public:
     uint64_t const& get_overall_offset() const;
     void set_overall_offset(uint64_t const&);
     /** @} */
-
-
     // A lot of constructs have a name so put the name into the base class
-    
 public:
     /** Property: Instruction kind.
      *
@@ -27346,11 +25334,8 @@ public:
     std::string const& get_name() const;
     void set_name(std::string const&);
     /** @} */
-
-
     // This is a data member that can be filled in via a separate analysis (we would have to read the line information before
     // hand).
-    
 public:
     /** Property: Instruction kind.
      *
@@ -27361,8 +25346,6 @@ public:
     SgAsmDwarfLine* const& get_source_position() const;
     void set_source_position(SgAsmDwarfLine* const&);
     /** @} */
-
-
     // [Robb Matzke 2023-03-22]: SgNode already has an attributeMechanism
     // [[using Rosebud: rosetta]]
     // AstAttributeMechanism* attributeMechanism = nullptr;
@@ -27372,7 +25355,6 @@ public:
     static SgAsmDwarfConstruct* createDwarfConstruct( int tag, int nesting_level, uint64_t offset, uint64_t overall_offset );
 
     virtual SgAsmDwarfConstructList* get_children();
-
 public:
     /** Destructor. */
     virtual ~SgAsmDwarfConstruct();
@@ -27399,7 +25381,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -27468,7 +25449,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDOSFileHeader                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -27483,8 +25463,6 @@ IS_SERIALIZABLE(AsmDOSFileHeader);
  *  properties are not documented in ROSE. */
 class SgAsmDOSFileHeader: public SgAsmGenericHeader {
 #endif // DOCUMENTATION
-#ifdef _MSC_VER
-#endif
 
 #ifndef DOCUMENTATION
     AsmDOSFileHeader.setDataPrototype(
@@ -27611,7 +25589,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_rm_section);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -27660,9 +25637,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -27674,9 +25648,6 @@ public:
     void set_e_last_page_size(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -27688,9 +25659,6 @@ public:
     void set_e_total_pages(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -27702,9 +25670,6 @@ public:
     void set_e_nrelocs(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -27716,9 +25681,6 @@ public:
     void set_e_header_paragraphs(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -27730,9 +25692,6 @@ public:
     void set_e_minalloc(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -27744,9 +25703,6 @@ public:
     void set_e_maxalloc(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -27758,9 +25714,6 @@ public:
     void set_e_ss(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -27772,9 +25725,6 @@ public:
     void set_e_sp(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -27786,9 +25736,6 @@ public:
     void set_e_cksum(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -27800,9 +25747,6 @@ public:
     void set_e_ip(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -27814,9 +25758,6 @@ public:
     void set_e_cs(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -27828,9 +25769,6 @@ public:
     void set_e_overlay(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -27842,9 +25780,6 @@ public:
     void set_e_relocs_offset(rose_addr_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -27856,9 +25791,6 @@ public:
     void set_e_res1(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -27870,9 +25802,6 @@ public:
     void set_relocs(SgAsmGenericSection* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -27883,8 +25812,6 @@ public:
     SgAsmGenericSection* const& get_rm_section() const;
     void set_rm_section(SgAsmGenericSection* const&);
     /** @} */
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -27916,7 +25843,6 @@ public:
 
 private:
     void *encode(SgAsmDOSFileHeader::DOSFileHeader_disk*) const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmDOSFileHeader();
@@ -27937,7 +25863,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -28033,8 +25958,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -28046,9 +25969,6 @@ public:
     void set_exec_format(SgAsmGenericFormat* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -28061,9 +25981,6 @@ public:
     void set_magic(SgCharList const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -28075,9 +25992,6 @@ public:
     void set_isa(SgAsmGenericFormat::InsSetArchitecture const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -28089,9 +26003,6 @@ public:
     void set_base_va(rose_addr_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -28104,9 +26015,6 @@ public:
     void set_entry_rvas(SgRVAList const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -28118,9 +26026,6 @@ public:
     void set_dlls(SgAsmGenericDLLList* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -28131,8 +26036,6 @@ public:
     SgAsmGenericSectionList* const& get_sections() const;
     void set_sections(SgAsmGenericSectionList* const&);
     /** @} */
-
-
 public:
     /** Constructor.
      *
@@ -28239,7 +26142,6 @@ public:
 
 protected:
     virtual void destructorHelper() override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmGenericHeader();
@@ -28262,7 +26164,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDOSExtendedHeader                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -28276,8 +26177,6 @@ IS_SERIALIZABLE(AsmDOSExtendedHeader);
  *  Most of the properties correspond to those defined in the PE/DOS specifications and that documentation is not repeated here. */
 class SgAsmDOSExtendedHeader: public SgAsmGenericSection {
 #endif // DOCUMENTATION
-#ifdef _MSC_VER
-#endif
 
 #ifndef DOCUMENTATION
     AsmDOSExtendedHeader.setDataPrototype(
@@ -28355,7 +26254,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_e_lfanew);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -28385,9 +26283,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -28399,9 +26294,6 @@ public:
     void set_e_res1(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -28413,9 +26305,6 @@ public:
     void set_e_oemid(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -28427,9 +26316,6 @@ public:
     void set_e_oeminfo(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -28441,9 +26327,6 @@ public:
     void set_e_res2(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -28455,9 +26338,6 @@ public:
     void set_e_res3(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -28469,9 +26349,6 @@ public:
     void set_e_res4(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -28483,9 +26360,6 @@ public:
     void set_e_res5(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -28497,9 +26371,6 @@ public:
     void set_e_res6(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -28510,8 +26381,6 @@ public:
     rose_addr_t const& get_e_lfanew() const;
     void set_e_lfanew(rose_addr_t const&);
     /** @} */
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -28521,7 +26390,6 @@ public:
     void *encode(SgAsmDOSExtendedHeader::DOSExtendedHeader_disk*) const;
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmDOSExtendedHeader();
@@ -28542,7 +26410,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -28595,7 +26462,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -28652,8 +26518,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -28665,9 +26529,6 @@ public:
     void set_descriptor(Rose::BinaryAnalysis::RegisterDescriptor const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -28678,7 +26539,6 @@ public:
     int const& get_adjustment() const;
     void set_adjustment(int const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -28706,7 +26566,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmControlFlagsExpression                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -28717,7 +26576,6 @@ IS_SERIALIZABLE(AsmControlFlagsExpression);
 DECLARE_HEADERS(AsmControlFlagsExpression);
 #if defined(SgAsmControlFlagsExpression_HEADERS) || defined(DOCUMENTATION)
 // FIXME[Robb P Matzke 2016-10-31]: no idea what this is
-
 #endif // SgAsmControlFlagsExpression_HEADERS
 
 #ifdef DOCUMENTATION
@@ -28745,7 +26603,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -28756,7 +26613,6 @@ public:
     unsigned long const& get_bit_flags() const;
     void set_bit_flags(unsigned long const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -28778,7 +26634,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -28805,8 +26660,6 @@ AsmConstantExpression.setAutomaticGenerationOfDestructor(false);
 DECLARE_HEADERS(AsmConstantExpression);
 #if defined(SgAsmConstantExpression_HEADERS) || defined(DOCUMENTATION)
 #include <Sawyer/BitVector.h>
-
-
 #endif // SgAsmConstantExpression_HEADERS
 
 #ifdef DOCUMENTATION
@@ -28838,8 +26691,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -28851,7 +26702,6 @@ public:
     Sawyer::Container::BitVector& get_bitVector();
     void set_bitVector(Sawyer::Container::BitVector const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -28873,7 +26723,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -28948,8 +26797,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -28961,9 +26808,6 @@ public:
     void set_unfolded_expression_tree(SgAsmValueExpression* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -28975,9 +26819,6 @@ public:
     void set_bit_offset(unsigned short const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -28989,9 +26830,6 @@ public:
     void set_bit_size(unsigned short const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -29002,7 +26840,6 @@ public:
     SgSymbol* const& get_symbol() const;
     void set_symbol(SgSymbol* const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -29026,7 +26863,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmCommonSubExpression                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -29037,7 +26873,6 @@ IS_SERIALIZABLE(AsmCommonSubExpression);
 DECLARE_HEADERS(AsmCommonSubExpression);
 #if defined(SgAsmCommonSubExpression_HEADERS) || defined(DOCUMENTATION)
 // FIXME[Robb P Matzke 2016-10-31]: no idea what this is
-
 #endif // SgAsmCommonSubExpression_HEADERS
 
 #ifdef DOCUMENTATION
@@ -29065,8 +26900,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-
-    
 public:
     /** Property: Instruction kind.
      *
@@ -29077,7 +26910,6 @@ public:
     SgAsmExpression* const& get_subexpression() const;
     void set_subexpression(SgAsmExpression* const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -29099,7 +26931,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -29144,8 +26975,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -29157,9 +26986,6 @@ public:
     void set_strtab(SgAsmGenericSection* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -29170,15 +26996,12 @@ public:
     SgAsmCoffSymbolList* const& get_symbols() const;
     void set_symbols(SgAsmCoffSymbolList* const&);
     /** @} */
-
-
 public:
     explicit SgAsmCoffSymbolTable(SgAsmPEFileHeader*);
     size_t get_nslots() const;
     virtual SgAsmCoffSymbolTable *parse() override;
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCoffSymbolTable();
@@ -29199,7 +27022,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -29235,8 +27057,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -29248,7 +27068,6 @@ public:
     SgAsmCoffSymbolPtrList& get_symbols();
     void set_symbols(SgAsmCoffSymbolPtrList const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -29272,7 +27091,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmCoffSymbol                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -29284,8 +27102,6 @@ IS_SERIALIZABLE(AsmCoffSymbol);
 /** COFF symbol. */
 class SgAsmCoffSymbol: public SgAsmGenericSymbol {
 #endif // DOCUMENTATION
-#ifdef _MSC_VER
-#endif
 
 #ifndef DOCUMENTATION
     AsmCoffSymbol.setDataPrototype(
@@ -29349,7 +27165,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_aux_data);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -29383,9 +27198,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties and data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -29397,9 +27209,6 @@ public:
     void set_st_name(std::string const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -29411,9 +27220,6 @@ public:
     void set_st_name_offset(rose_addr_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -29425,9 +27231,6 @@ public:
     void set_st_section_num(int const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -29439,9 +27242,6 @@ public:
     void set_st_type(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -29453,9 +27253,6 @@ public:
     void set_st_storage_class(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -29467,9 +27264,6 @@ public:
     void set_st_num_aux_entries(unsigned const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -29481,8 +27275,6 @@ public:
     SgUnsignedCharList& get_aux_data();
     void set_aux_data(SgUnsignedCharList const&);
     /** @} */
-
-
 public:
     static const unsigned int COFFSymbol_disk_size = 18;
 
@@ -29493,7 +27285,6 @@ public:
     SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAsmGenericSection *strtab, size_t idx);
     void *encode(SgAsmCoffSymbol::COFFSymbol_disk*) const;
     virtual void dump(FILE *f, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCoffSymbol();
@@ -29514,7 +27305,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -29609,7 +27399,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_name);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -29646,9 +27435,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -29660,9 +27446,6 @@ public:
     void set_def_state(SgAsmGenericSymbol::SymbolDefState const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -29674,9 +27457,6 @@ public:
     void set_binding(SgAsmGenericSymbol::SymbolBinding const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -29688,9 +27468,6 @@ public:
     void set_type(SgAsmGenericSymbol::SymbolType const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -29702,9 +27479,6 @@ public:
     void set_value(rose_addr_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -29716,9 +27490,6 @@ public:
     void set_size(rose_addr_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -29730,9 +27501,6 @@ public:
     void set_bound(SgAsmGenericSection* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -29741,8 +27509,6 @@ public:
      *  
      *  @{ */
     /** @} */
-
-
     SgAsmGenericString* get_name() const;
     void set_name(SgAsmGenericString*);
     /** @} */
@@ -29753,7 +27519,6 @@ public:
 public:
     /** Print some debugging info. */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmGenericSymbol();
@@ -29774,7 +27539,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -29802,14 +27566,12 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericStrtab);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
 public:
     explicit SgAsmCoffStrtab(class SgAsmPESection *containing_section);
     void destructorHelper() override;
     virtual void unparse(std::ostream&) const;
     virtual SgAsmStringStorage *create_storage(rose_addr_t offset, bool shared) override;
     virtual rose_addr_t get_storage_size(const SgAsmStringStorage*) override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCoffStrtab();
@@ -29830,7 +27592,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -29907,7 +27668,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_num_freed);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -29917,9 +27677,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -29931,9 +27688,6 @@ public:
     void set_container(SgAsmGenericSection* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -29945,9 +27699,6 @@ public:
     void set_storage_list(SgAsmGenericStrtab::referenced_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -29956,14 +27707,9 @@ public:
      *  
      *  @{ */
     /** @} */
-
-
     const AddressIntervalSet& get_freelist() const;
     AddressIntervalSet& get_freelist();
     /** @} */
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -29975,9 +27721,6 @@ public:
     void set_dont_free(SgAsmStringStorage* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -29988,8 +27731,6 @@ public:
     size_t const& get_num_freed() const;
     void set_num_freed(size_t const&);
     /** @} */
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -30032,12 +27773,10 @@ public:
      *  release address space that's no longer needed at the end of the table. */
     bool reallocate(bool shrink);
 
-
     //These should be pure virtual but ROSETTA apparently doesn't support that (RPM 2008-10-03)
     virtual SgAsmStringStorage *create_storage(rose_addr_t /*offset*/, bool /*shared*/) {abort(); return NULL;}
     virtual rose_addr_t get_storage_size(const SgAsmStringStorage*) {abort(); return 0;}
     virtual void rebind(SgAsmStringStorage*, rose_addr_t) {abort();}
-
 public:
     /** Destructor. */
     virtual ~SgAsmGenericStrtab();
@@ -30058,7 +27797,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -30179,8 +27917,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -30192,9 +27928,6 @@ public:
     void set_cb(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -30206,9 +27939,6 @@ public:
     void set_majorRuntimeVersion(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -30220,9 +27950,6 @@ public:
     void set_minorRuntimeVersion(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -30234,9 +27961,6 @@ public:
     void set_metaData(uint64_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -30248,9 +27972,6 @@ public:
     void set_flags(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -30262,9 +27983,6 @@ public:
     void set_entryPointToken(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -30276,9 +27994,6 @@ public:
     void set_resources(uint64_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -30290,9 +28005,6 @@ public:
     void set_strongNameSignature(uint64_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -30304,9 +28016,6 @@ public:
     void set_codeManagerTable(uint64_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -30318,9 +28027,6 @@ public:
     void set_vTableFixups(uint64_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -30332,9 +28038,6 @@ public:
     void set_exportAddressTableJumps(uint64_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -30345,11 +28048,7 @@ public:
     uint64_t const& get_managedNativeHeader() const;
     void set_managedNativeHeader(uint64_t const&);
     /** @} */
-
-
     // FIXME[Robb Matzke 2023-03-20]: is no_serialize a bug?
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -30360,8 +28059,6 @@ public:
     SgAsmCilMetadataRoot* const& get_metadataRoot() const;
     void set_metadataRoot(SgAsmCilMetadataRoot* const&);
     /** @} */
-
-
  public:
     /** Initialize the object before parsing.
      *
@@ -30373,7 +28070,6 @@ public:
 
     /** Print some debugging information */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCliHeader();
@@ -30394,7 +28090,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -30596,7 +28291,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_mapped_actual_va);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -30616,9 +28310,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -30630,9 +28321,6 @@ public:
     void set_file(SgAsmGenericFile* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -30644,9 +28332,6 @@ public:
     void set_header(SgAsmGenericHeader* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -30655,14 +28340,9 @@ public:
      *  
      *  @{ */
     /** @} */
-
-
     rose_addr_t get_size() const;
     virtual void set_size(rose_addr_t);
     /** @} */
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -30676,9 +28356,6 @@ public:
     rose_addr_t get_offset() const;
     virtual void set_offset(rose_addr_t);
     /** @} */
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -30690,9 +28367,6 @@ public:
     void set_file_alignment(rose_addr_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -30704,9 +28378,6 @@ public:
     void set_data(SgFileContentList const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -30718,9 +28389,6 @@ public:
     void set_purpose(SgAsmGenericSection::SectionPurpose const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -30732,9 +28400,6 @@ public:
     void set_synthesized(bool const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -30746,9 +28411,6 @@ public:
     void set_id(int const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -30757,14 +28419,9 @@ public:
      *  
      *  @{ */
     /** @} */
-
-
     SgAsmGenericString *get_name() const;
     void set_name(SgAsmGenericString *s);
     /** @} */
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -30773,14 +28430,9 @@ public:
      *  
      *  @{ */
     /** @} */
-
-
     std::string get_short_name() const;
     void set_short_name(const std::string&);
     /** @} */
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -30789,14 +28441,9 @@ public:
      *  
      *  @{ */
     /** @} */
-
-
     rose_addr_t get_mapped_preferred_rva() const;
     virtual void set_mapped_preferred_rva(rose_addr_t);
     /** @} */
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -30805,14 +28452,9 @@ public:
      *  
      *  @{ */
     /** @} */
-
-
     rose_addr_t get_mapped_size() const;
     virtual void set_mapped_size(rose_addr_t);
     /** @} */
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -30824,9 +28466,6 @@ public:
     void set_mapped_alignment(rose_addr_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -30838,9 +28477,6 @@ public:
     void set_mapped_rperm(bool const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -30852,9 +28488,6 @@ public:
     void set_mapped_wperm(bool const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -30866,9 +28499,6 @@ public:
     void set_mapped_xperm(bool const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -30880,9 +28510,6 @@ public:
     void set_contains_code(bool const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -30893,8 +28520,6 @@ public:
     rose_addr_t const& get_mapped_actual_va() const;
     void set_mapped_actual_va(rose_addr_t const&);
     /** @} */
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Non-property data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -31164,7 +28789,6 @@ public:
 
 protected:
     virtual void destructorHelper() override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmGenericSection();
@@ -31185,7 +28809,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -31221,7 +28844,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -31232,11 +28854,8 @@ public:
     std::vector<uint8_t> const& get_Stream() const;
     std::vector<uint8_t>& get_Stream();
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t startOfMetaData) override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilUint8Heap();
@@ -31264,7 +28883,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -31300,7 +28918,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -31311,11 +28928,8 @@ public:
     std::vector<uint32_t> const& get_Stream() const;
     std::vector<uint32_t>& get_Stream();
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t startOfMetaData) override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilUint32Heap();
@@ -31343,7 +28957,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -31379,7 +28992,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -31390,11 +29002,8 @@ public:
     std::vector<SgAsmCilTypeSpec*> const& get_elements() const;
     std::vector<SgAsmCilTypeSpec*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilTypeSpec;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilTypeSpecTable();
@@ -31415,7 +29024,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -31451,8 +29059,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -31463,13 +29069,10 @@ public:
     uint32_t const& get_Signature() const;
     void set_Signature(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
     const std::uint8_t* get_Signature_blob() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilTypeSpec();
@@ -31490,7 +29093,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -31526,7 +29128,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -31537,11 +29138,8 @@ public:
     std::vector<SgAsmCilTypeRef*> const& get_elements() const;
     std::vector<SgAsmCilTypeRef*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilTypeRef;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilTypeRefTable();
@@ -31562,7 +29160,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -31612,8 +29209,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -31625,9 +29220,6 @@ public:
     void set_ResolutionScope(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -31639,9 +29231,6 @@ public:
     void set_TypeName(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -31652,15 +29241,12 @@ public:
     uint32_t const& get_TypeNamespace() const;
     void set_TypeNamespace(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
     const SgAsmCilMetadata* get_ResolutionScope_object() const;
     const std::uint8_t* get_TypeName_string() const;
     const std::uint8_t* get_TypeNamespace_string() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilTypeRef();
@@ -31681,7 +29267,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -31717,7 +29302,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -31728,11 +29312,8 @@ public:
     std::vector<SgAsmCilTypeDef*> const& get_elements() const;
     std::vector<SgAsmCilTypeDef*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilTypeDef;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilTypeDefTable();
@@ -31753,7 +29334,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -31824,8 +29404,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -31837,9 +29415,6 @@ public:
     void set_Flags(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -31851,9 +29426,6 @@ public:
     void set_TypeName(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -31865,9 +29437,6 @@ public:
     void set_TypeNamespace(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -31879,9 +29448,6 @@ public:
     void set_Extends(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -31893,9 +29459,6 @@ public:
     void set_FieldList(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -31906,8 +29469,6 @@ public:
     uint32_t const& get_MethodList() const;
     void set_MethodList(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
@@ -31916,7 +29477,6 @@ public:
     const SgAsmCilMetadata* get_Extends_object() const;
     const SgAsmCilMetadata* get_FieldList_object() const;
     const SgAsmCilMetadata* get_MethodList_object() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilTypeDef();
@@ -31937,7 +29497,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -31973,7 +29532,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -31984,11 +29542,8 @@ public:
     std::vector<SgAsmCilStandAloneSig*> const& get_elements() const;
     std::vector<SgAsmCilStandAloneSig*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilStandAloneSig;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilStandAloneSigTable();
@@ -32009,7 +29564,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -32045,8 +29599,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -32057,13 +29609,10 @@ public:
     uint32_t const& get_Signature() const;
     void set_Signature(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
     const std::uint8_t* get_Signature_blob() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilStandAloneSig();
@@ -32084,7 +29633,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -32120,7 +29668,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -32131,11 +29678,8 @@ public:
     std::vector<SgAsmCilProperty*> const& get_elements() const;
     std::vector<SgAsmCilProperty*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilProperty;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilPropertyTable();
@@ -32156,7 +29700,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -32192,7 +29735,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -32203,11 +29745,8 @@ public:
     std::vector<SgAsmCilPropertyMap*> const& get_elements() const;
     std::vector<SgAsmCilPropertyMap*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilPropertyMap;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilPropertyMapTable();
@@ -32228,7 +29767,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -32271,8 +29809,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -32284,9 +29820,6 @@ public:
     void set_Parent(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -32297,14 +29830,11 @@ public:
     uint32_t const& get_PropertyList() const;
     void set_PropertyList(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
     const SgAsmCilMetadata* get_Parent_object() const;
     const SgAsmCilMetadata* get_PropertyList_object() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilPropertyMap();
@@ -32325,7 +29855,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -32375,8 +29904,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -32388,9 +29915,6 @@ public:
     void set_Flags(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -32402,9 +29926,6 @@ public:
     void set_Name(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -32415,14 +29936,11 @@ public:
     uint32_t const& get_Type() const;
     void set_Type(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
     const std::uint8_t* get_Name_string() const;
     const std::uint8_t* get_Type_blob() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilProperty();
@@ -32443,7 +29961,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -32479,7 +29996,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -32490,11 +30006,8 @@ public:
     std::vector<SgAsmCilParam*> const& get_elements() const;
     std::vector<SgAsmCilParam*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilParam;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilParamTable();
@@ -32515,7 +30028,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -32565,8 +30077,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -32578,9 +30088,6 @@ public:
     void set_Flags(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -32592,9 +30099,6 @@ public:
     void set_Sequence(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -32605,13 +30109,10 @@ public:
     uint32_t const& get_Name() const;
     void set_Name(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
     const std::uint8_t* get_Name_blob() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilParam();
@@ -32632,7 +30133,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -32668,7 +30168,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -32679,11 +30178,8 @@ public:
     std::vector<SgAsmCilNestedClass*> const& get_elements() const;
     std::vector<SgAsmCilNestedClass*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilNestedClass;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilNestedClassTable();
@@ -32704,7 +30200,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -32747,8 +30242,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -32760,9 +30253,6 @@ public:
     void set_NestedClass(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -32773,14 +30263,11 @@ public:
     uint32_t const& get_EnclosingClass() const;
     void set_EnclosingClass(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
     const SgAsmCilMetadata* get_NestedClass_object() const;
     const SgAsmCilMetadata* get_EnclosingClass_object() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilNestedClass();
@@ -32801,7 +30288,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -32837,7 +30323,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -32848,11 +30333,8 @@ public:
     std::vector<SgAsmCilModule*> const& get_elements() const;
     std::vector<SgAsmCilModule*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilModule;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilModuleTable();
@@ -32873,7 +30355,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -32909,7 +30390,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -32920,11 +30400,8 @@ public:
     std::vector<SgAsmCilModuleRef*> const& get_elements() const;
     std::vector<SgAsmCilModuleRef*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilModuleRef;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilModuleRefTable();
@@ -32945,7 +30422,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -32981,8 +30457,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -32993,13 +30467,10 @@ public:
     uint32_t const& get_Name() const;
     void set_Name(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
     const std::uint8_t* get_Name_string() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilModuleRef();
@@ -33020,7 +30491,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -33084,8 +30554,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -33097,9 +30565,6 @@ public:
     void set_Generation(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -33111,9 +30576,6 @@ public:
     void set_Name(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -33125,9 +30587,6 @@ public:
     void set_Mvid(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -33139,9 +30598,6 @@ public:
     void set_Encld(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -33152,8 +30608,6 @@ public:
     uint32_t const& get_EncBaseId() const;
     void set_EncBaseId(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
@@ -33161,7 +30615,6 @@ public:
     const std::uint32_t* get_Mvid_guid() const;
     const std::uint32_t* get_Encld_guid() const;
     const std::uint32_t* get_EncBaseId_guid() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilModule();
@@ -33182,7 +30635,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -33218,7 +30670,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -33229,11 +30680,8 @@ public:
     std::vector<SgAsmCilMethodSpec*> const& get_elements() const;
     std::vector<SgAsmCilMethodSpec*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilMethodSpec;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilMethodSpecTable();
@@ -33254,7 +30702,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -33297,8 +30744,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -33310,9 +30755,6 @@ public:
     void set_Method(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -33323,14 +30765,11 @@ public:
     uint32_t const& get_Instantiation() const;
     void set_Instantiation(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
     const SgAsmCilMetadata* get_Method_object() const;
     const std::uint8_t* get_Instantiation_blob() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilMethodSpec();
@@ -33351,7 +30790,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -33387,7 +30825,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -33398,11 +30835,8 @@ public:
     std::vector<SgAsmCilMethodSemantics*> const& get_elements() const;
     std::vector<SgAsmCilMethodSemantics*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilMethodSemantics;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilMethodSemanticsTable();
@@ -33423,7 +30857,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -33473,8 +30906,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -33486,9 +30917,6 @@ public:
     void set_Semantics(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -33500,9 +30928,6 @@ public:
     void set_Method(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -33513,14 +30938,11 @@ public:
     uint32_t const& get_Association() const;
     void set_Association(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
     const SgAsmCilMetadata* get_Method_object() const;
     const SgAsmCilMetadata* get_Association_object() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilMethodSemantics();
@@ -33541,7 +30963,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -33577,7 +30998,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -33588,11 +31008,8 @@ public:
     std::vector<SgAsmCilMethodImpl*> const& get_elements() const;
     std::vector<SgAsmCilMethodImpl*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilMethodImpl;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilMethodImplTable();
@@ -33613,7 +31030,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -33663,8 +31079,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -33676,9 +31090,6 @@ public:
     void set_Class(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -33690,9 +31101,6 @@ public:
     void set_MethodBody(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -33703,15 +31111,12 @@ public:
     uint32_t const& get_MethodDeclaration() const;
     void set_MethodDeclaration(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
     const SgAsmCilMetadata* get_Class_object() const;
     const SgAsmCilMetadata* get_MethodBody_object() const;
     const SgAsmCilMetadata* get_MethodDeclaration_object() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilMethodImpl();
@@ -33732,7 +31137,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -33768,7 +31172,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -33779,11 +31182,8 @@ public:
     std::vector<SgAsmCilMethodDef*> const& get_elements() const;
     std::vector<SgAsmCilMethodDef*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilMethodDef;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilMethodDefTable();
@@ -33804,7 +31204,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -33903,8 +31302,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -33916,9 +31313,6 @@ public:
     void set_RVA(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -33930,9 +31324,6 @@ public:
     void set_ImplFlags(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -33944,9 +31335,6 @@ public:
     void set_Flags(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -33958,9 +31346,6 @@ public:
     void set_Name(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -33972,9 +31357,6 @@ public:
     void set_Signature(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -33986,9 +31368,6 @@ public:
     void set_ParamList(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -34000,9 +31379,6 @@ public:
     void set_body(SgAsmBlock* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -34014,9 +31390,6 @@ public:
     void set_initLocals(bool const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -34028,9 +31401,6 @@ public:
     void set_stackSize(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -34041,15 +31411,12 @@ public:
     bool const& get_hasMoreSections() const;
     void set_hasMoreSections(bool const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
     const std::uint8_t* get_Name_string() const;
     const std::uint8_t* get_Signature_blob() const;
     const SgAsmCilMetadata* get_ParamList_object() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilMethodDef();
@@ -34070,7 +31437,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -34169,8 +31535,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -34182,9 +31546,6 @@ public:
     void set_Signature(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -34196,9 +31557,6 @@ public:
     void set_MajorVersion(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -34210,9 +31568,6 @@ public:
     void set_MinorVersion(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -34224,9 +31579,6 @@ public:
     void set_Reserved0(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -34238,9 +31590,6 @@ public:
     void set_Length(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -34252,9 +31601,6 @@ public:
     void set_Version(std::string const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -34266,9 +31612,6 @@ public:
     void set_VersionPadding(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -34280,9 +31623,6 @@ public:
     void set_Flags(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -34293,10 +31633,7 @@ public:
     uint16_t const& get_NumberOfStreams() const;
     void set_NumberOfStreams(uint16_t const&);
     /** @} */
-
-
     // FIXME[Robb Matzke 2023-03-22]: these were implemented elsewhere, but could be auto generated
-    
 public:
     /** Property: Instruction kind.
      *
@@ -34305,7 +31642,6 @@ public:
      *  
      *  @{ */
     /** @} */
-
     const std::vector<SgAsmCilDataStream*>& get_Streams() const;
     std::vector<SgAsmCilDataStream*>& get_Streams();
 
@@ -34344,7 +31680,6 @@ public:
     SgAsmCilUint32Heap*   get_GuidHeap() const;
     SgAsmCilMetadataHeap* get_MetadataHeap() const;
     /** }@ */
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilMetadataRoot();
@@ -34365,7 +31700,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -34723,8 +32057,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -34736,9 +32068,6 @@ public:
     void set_ReservedAlwaysZero(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -34750,9 +32079,6 @@ public:
     void set_MajorVersion(uint8_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -34764,9 +32090,6 @@ public:
     void set_MinorVersion(uint8_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -34778,9 +32101,6 @@ public:
     void set_HeapSizes(uint8_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -34792,9 +32112,6 @@ public:
     void set_ReservedAlwaysOne(uint8_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -34806,9 +32123,6 @@ public:
     void set_Valid(uint64_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -34820,9 +32134,6 @@ public:
     void set_Sorted(uint64_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -34834,9 +32145,6 @@ public:
     void set_NumberOfRows(std::vector<uint32_t> const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -34848,9 +32156,6 @@ public:
     void set_DataSizeFlags(uint64_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -34862,9 +32167,6 @@ public:
     void set_AssemblyTable(SgAsmCilAssemblyTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -34876,9 +32178,6 @@ public:
     void set_AssemblyOSTable(SgAsmCilAssemblyOSTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -34890,9 +32189,6 @@ public:
     void set_AssemblyProcessorTable(SgAsmCilAssemblyProcessorTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -34904,9 +32200,6 @@ public:
     void set_AssemblyRefTable(SgAsmCilAssemblyRefTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -34918,9 +32211,6 @@ public:
     void set_AssemblyRefOSTable(SgAsmCilAssemblyRefOSTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -34932,9 +32222,6 @@ public:
     void set_AssemblyRefProcessorTable(SgAsmCilAssemblyRefProcessorTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -34946,9 +32233,6 @@ public:
     void set_ClassLayoutTable(SgAsmCilClassLayoutTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -34960,9 +32244,6 @@ public:
     void set_ConstantTable(SgAsmCilConstantTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -34974,9 +32255,6 @@ public:
     void set_CustomAttributeTable(SgAsmCilCustomAttributeTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -34988,9 +32266,6 @@ public:
     void set_DeclSecurityTable(SgAsmCilDeclSecurityTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35002,9 +32277,6 @@ public:
     void set_EventTable(SgAsmCilEventTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35016,9 +32288,6 @@ public:
     void set_EventMapTable(SgAsmCilEventMapTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35030,9 +32299,6 @@ public:
     void set_ExportedTypeTable(SgAsmCilExportedTypeTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35044,9 +32310,6 @@ public:
     void set_FieldTable(SgAsmCilFieldTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35058,9 +32321,6 @@ public:
     void set_FieldLayoutTable(SgAsmCilFieldLayoutTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35072,9 +32332,6 @@ public:
     void set_FieldMarshalTable(SgAsmCilFieldMarshalTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35086,9 +32343,6 @@ public:
     void set_FieldRVATable(SgAsmCilFieldRVATable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35100,9 +32354,6 @@ public:
     void set_FileTable(SgAsmCilFileTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35114,9 +32365,6 @@ public:
     void set_GenericParamTable(SgAsmCilGenericParamTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35128,9 +32376,6 @@ public:
     void set_GenericParamConstraintTable(SgAsmCilGenericParamConstraintTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35142,9 +32387,6 @@ public:
     void set_ImplMapTable(SgAsmCilImplMapTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35156,9 +32398,6 @@ public:
     void set_InterfaceImplTable(SgAsmCilInterfaceImplTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35170,9 +32409,6 @@ public:
     void set_ManifestResourceTable(SgAsmCilManifestResourceTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35184,9 +32420,6 @@ public:
     void set_MemberRefTable(SgAsmCilMemberRefTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35198,9 +32431,6 @@ public:
     void set_MethodDefTable(SgAsmCilMethodDefTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35212,9 +32442,6 @@ public:
     void set_MethodImplTable(SgAsmCilMethodImplTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35226,9 +32453,6 @@ public:
     void set_MethodSemanticsTable(SgAsmCilMethodSemanticsTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35240,9 +32464,6 @@ public:
     void set_MethodSpecTable(SgAsmCilMethodSpecTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35254,9 +32475,6 @@ public:
     void set_ModuleTable(SgAsmCilModuleTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35268,9 +32486,6 @@ public:
     void set_ModuleRefTable(SgAsmCilModuleRefTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35282,9 +32497,6 @@ public:
     void set_NestedClassTable(SgAsmCilNestedClassTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35296,9 +32508,6 @@ public:
     void set_ParamTable(SgAsmCilParamTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35310,9 +32519,6 @@ public:
     void set_PropertyTable(SgAsmCilPropertyTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35324,9 +32530,6 @@ public:
     void set_PropertyMapTable(SgAsmCilPropertyMapTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35338,9 +32541,6 @@ public:
     void set_StandAloneSigTable(SgAsmCilStandAloneSigTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35352,9 +32552,6 @@ public:
     void set_TypeDefTable(SgAsmCilTypeDefTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35366,9 +32563,6 @@ public:
     void set_TypeRefTable(SgAsmCilTypeRefTable* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35379,8 +32573,6 @@ public:
     SgAsmCilTypeSpecTable* const& get_TypeSpecTable() const;
     void set_TypeSpecTable(SgAsmCilTypeSpecTable* const&);
     /** @} */
-
-
 public:
     /// reference kinds in the metadata tables
     enum ReferenceKind
@@ -35473,12 +32665,10 @@ public:
      */
     SgAsmCilMetadata* get_CodedMetadataNode(std::uint32_t refcode, ReferenceKind knd) const;
 
-
     /** looks up the node associated with the coded index @ref refcode in the metadata tables
      *  under the assumption that @refval is of kind @ref knd
      */
     SgAsmCilMetadata* get_MetadataNode(std::uint32_t refcode, ReferenceKind knd) const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilMetadataHeap();
@@ -35506,7 +32696,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -35542,7 +32731,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35553,11 +32741,8 @@ public:
     std::vector<SgAsmCilMemberRef*> const& get_elements() const;
     std::vector<SgAsmCilMemberRef*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilMemberRef;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilMemberRefTable();
@@ -35578,7 +32763,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -35628,8 +32812,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35641,9 +32823,6 @@ public:
     void set_Class(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35655,9 +32834,6 @@ public:
     void set_Name(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35668,15 +32844,12 @@ public:
     uint32_t const& get_Signature() const;
     void set_Signature(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
     const SgAsmCilMetadata* get_Class_object() const;
     const std::uint8_t* get_Name_string() const;
     const std::uint8_t* get_Signature_blob() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilMemberRef();
@@ -35697,7 +32870,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -35733,7 +32905,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35744,11 +32915,8 @@ public:
     std::vector<SgAsmCilManifestResource*> const& get_elements() const;
     std::vector<SgAsmCilManifestResource*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilManifestResource;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilManifestResourceTable();
@@ -35769,7 +32937,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -35826,8 +32993,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35839,9 +33004,6 @@ public:
     void set_Offset(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35853,9 +33015,6 @@ public:
     void set_Flags(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35867,9 +33026,6 @@ public:
     void set_Name(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35880,14 +33036,11 @@ public:
     uint32_t const& get_Implementation() const;
     void set_Implementation(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
     const std::uint8_t* get_Name_string() const;
     const SgAsmCilMetadata* get_Implementation_object() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilManifestResource();
@@ -35908,7 +33061,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -35944,7 +33096,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -35955,11 +33106,8 @@ public:
     std::vector<SgAsmCilInterfaceImpl*> const& get_elements() const;
     std::vector<SgAsmCilInterfaceImpl*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilInterfaceImpl;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilInterfaceImplTable();
@@ -35980,7 +33128,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -36023,8 +33170,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -36036,9 +33181,6 @@ public:
     void set_Class(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -36049,14 +33191,11 @@ public:
     uint32_t const& get_Interface() const;
     void set_Interface(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
     const SgAsmCilMetadata* get_Class_object() const;
     const SgAsmCilMetadata* get_Interface_object() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilInterfaceImpl();
@@ -36079,7 +33218,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmCilInstruction                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -36090,7 +33228,6 @@ IS_SERIALIZABLE(AsmCilInstruction);
 DECLARE_HEADERS(AsmCilInstruction);
 #if defined(SgAsmCilInstruction_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/InstructionEnumsCil.h>
-
 #endif // SgAsmCilInstruction_HEADERS
 
 #ifdef DOCUMENTATION
@@ -36118,8 +33255,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -36130,8 +33265,6 @@ public:
     Rose::BinaryAnalysis::CilInstructionKind const& get_kind() const;
     void set_kind(Rose::BinaryAnalysis::CilInstructionKind const&);
     /** @} */
-
-
 public:
     // Overrides are documented in the base class
     virtual std::string description() const override;
@@ -36150,7 +33283,6 @@ public:
                                                            Rose::BinaryAnalysis::MemoryMap::Ptr()) override;
     virtual bool isUnknown() const override;
     virtual unsigned get_anyKind() const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilInstruction();
@@ -36177,7 +33309,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -36213,7 +33344,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -36224,11 +33354,8 @@ public:
     std::vector<SgAsmCilImplMap*> const& get_elements() const;
     std::vector<SgAsmCilImplMap*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilImplMap;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilImplMapTable();
@@ -36249,7 +33376,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -36306,8 +33432,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -36319,9 +33443,6 @@ public:
     void set_MappingFlags(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -36333,9 +33454,6 @@ public:
     void set_MemberForwarded(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -36347,9 +33465,6 @@ public:
     void set_ImportName(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -36360,15 +33475,12 @@ public:
     uint32_t const& get_ImportScope() const;
     void set_ImportScope(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
     const SgAsmCilMetadata* get_MemberForwarded_object() const;
     const std::uint8_t* get_ImportName_string() const;
     const SgAsmCilMetadata* get_ImportScope_object() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilImplMap();
@@ -36389,7 +33501,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -36425,7 +33536,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -36436,11 +33546,8 @@ public:
     std::vector<SgAsmCilGenericParam*> const& get_elements() const;
     std::vector<SgAsmCilGenericParam*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilGenericParam;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilGenericParamTable();
@@ -36461,7 +33568,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -36518,8 +33624,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -36531,9 +33635,6 @@ public:
     void set_Number(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -36545,9 +33646,6 @@ public:
     void set_Flags(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -36559,9 +33657,6 @@ public:
     void set_Owner(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -36572,14 +33667,11 @@ public:
     uint32_t const& get_Name() const;
     void set_Name(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
     const SgAsmCilMetadata* get_Owner_object() const;
     const std::uint8_t* get_Name_string() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilGenericParam();
@@ -36600,7 +33692,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -36636,7 +33727,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -36647,11 +33737,8 @@ public:
     std::vector<SgAsmCilGenericParamConstraint*> const& get_elements() const;
     std::vector<SgAsmCilGenericParamConstraint*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilGenericParamConstraint;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilGenericParamConstraintTable();
@@ -36672,7 +33759,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -36715,8 +33801,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -36728,9 +33812,6 @@ public:
     void set_Owner(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -36741,14 +33822,11 @@ public:
     uint32_t const& get_Constraint() const;
     void set_Constraint(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
     const SgAsmCilMetadata* get_Owner_object() const;
     const SgAsmCilMetadata* get_Constraint_object() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilGenericParamConstraint();
@@ -36769,7 +33847,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -36805,7 +33882,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -36816,11 +33892,8 @@ public:
     std::vector<SgAsmCilFile*> const& get_elements() const;
     std::vector<SgAsmCilFile*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilFile;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilFileTable();
@@ -36841,7 +33914,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -36891,8 +33963,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -36904,9 +33974,6 @@ public:
     void set_Flags(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -36918,9 +33985,6 @@ public:
     void set_Name(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -36931,14 +33995,11 @@ public:
     uint32_t const& get_HashValue() const;
     void set_HashValue(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
     const std::uint8_t* get_Name_string() const;
     const std::uint8_t* get_HashValue_blob() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilFile();
@@ -36959,7 +34020,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -36995,7 +34055,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -37006,11 +34065,8 @@ public:
     std::vector<SgAsmCilField*> const& get_elements() const;
     std::vector<SgAsmCilField*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilField;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilFieldTable();
@@ -37031,7 +34087,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -37067,7 +34122,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -37078,11 +34132,8 @@ public:
     std::vector<SgAsmCilFieldRVA*> const& get_elements() const;
     std::vector<SgAsmCilFieldRVA*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilFieldRVA;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilFieldRVATable();
@@ -37103,7 +34154,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -37146,8 +34196,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -37159,9 +34207,6 @@ public:
     void set_RVA(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -37172,13 +34217,10 @@ public:
     uint32_t const& get_Field() const;
     void set_Field(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
     const SgAsmCilMetadata* get_Field_object() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilFieldRVA();
@@ -37199,7 +34241,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -37235,7 +34276,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -37246,11 +34286,8 @@ public:
     std::vector<SgAsmCilFieldMarshal*> const& get_elements() const;
     std::vector<SgAsmCilFieldMarshal*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilFieldMarshal;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilFieldMarshalTable();
@@ -37271,7 +34308,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -37314,8 +34350,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -37327,9 +34361,6 @@ public:
     void set_Parent(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -37340,14 +34371,11 @@ public:
     uint32_t const& get_NativeType() const;
     void set_NativeType(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
     const SgAsmCilMetadata* get_Parent_object() const;
     const std::uint8_t* get_NativeType_blob() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilFieldMarshal();
@@ -37368,7 +34396,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -37404,7 +34431,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -37415,11 +34441,8 @@ public:
     std::vector<SgAsmCilFieldLayout*> const& get_elements() const;
     std::vector<SgAsmCilFieldLayout*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilFieldLayout;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilFieldLayoutTable();
@@ -37440,7 +34463,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -37483,8 +34505,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -37496,9 +34516,6 @@ public:
     void set_Offset(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -37509,13 +34526,10 @@ public:
     uint32_t const& get_Field() const;
     void set_Field(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
     const SgAsmCilMetadata* get_Field_object() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilFieldLayout();
@@ -37536,7 +34550,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -37586,8 +34599,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -37599,9 +34610,6 @@ public:
     void set_Flags(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -37613,9 +34621,6 @@ public:
     void set_Name(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -37626,14 +34631,11 @@ public:
     uint32_t const& get_Signature() const;
     void set_Signature(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
     const std::uint8_t* get_Name_string() const;
     const std::uint8_t* get_Signature_blob() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilField();
@@ -37654,7 +34656,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -37690,7 +34691,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -37701,11 +34701,8 @@ public:
     std::vector<SgAsmCilExportedType*> const& get_elements() const;
     std::vector<SgAsmCilExportedType*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilExportedType;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilExportedTypeTable();
@@ -37726,7 +34723,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -37790,8 +34786,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -37803,9 +34797,6 @@ public:
     void set_EventFlags(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -37817,9 +34808,6 @@ public:
     void set_TypeDefIdName(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -37831,9 +34819,6 @@ public:
     void set_TypeName(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -37845,9 +34830,6 @@ public:
     void set_TypeNamespace(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -37858,15 +34840,12 @@ public:
     uint32_t const& get_Implementation() const;
     void set_Implementation(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
     const std::uint8_t* get_TypeName_string() const;
     const std::uint8_t* get_TypeNamespace_string() const;
     const SgAsmCilMetadata* get_Implementation_object() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilExportedType();
@@ -37887,7 +34866,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -37923,7 +34901,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -37934,11 +34911,8 @@ public:
     std::vector<SgAsmCilEvent*> const& get_elements() const;
     std::vector<SgAsmCilEvent*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilEvent;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilEventTable();
@@ -37959,7 +34933,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -37995,7 +34968,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -38006,11 +34978,8 @@ public:
     std::vector<SgAsmCilEventMap*> const& get_elements() const;
     std::vector<SgAsmCilEventMap*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilEventMap;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilEventMapTable();
@@ -38031,7 +35000,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -38074,8 +35042,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -38087,9 +35053,6 @@ public:
     void set_Parent(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -38100,14 +35063,11 @@ public:
     uint32_t const& get_EventList() const;
     void set_EventList(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
     const SgAsmCilMetadata* get_Parent_object() const;
     const SgAsmCilMetadata* get_EventList_object() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilEventMap();
@@ -38128,7 +35088,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -38177,10 +35136,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_EventType);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
 public:
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -38192,9 +35148,6 @@ public:
     void set_EventFlags(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -38206,9 +35159,6 @@ public:
     void set_Name(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -38219,14 +35169,11 @@ public:
     uint32_t const& get_EventType() const;
     void set_EventType(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
     const std::uint8_t* get_Name_string() const;
     const SgAsmCilMetadata* get_EventType_object() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilEvent();
@@ -38247,7 +35194,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -38283,7 +35229,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -38294,11 +35239,8 @@ public:
     std::vector<SgAsmCilDeclSecurity*> const& get_elements() const;
     std::vector<SgAsmCilDeclSecurity*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilDeclSecurity;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilDeclSecurityTable();
@@ -38319,7 +35261,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -38369,8 +35310,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -38382,9 +35321,6 @@ public:
     void set_Action(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -38396,9 +35332,6 @@ public:
     void set_Parent(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -38409,14 +35342,11 @@ public:
     uint32_t const& get_PermissionSet() const;
     void set_PermissionSet(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
     const SgAsmCilMetadata* get_Parent_object() const;
     const std::uint8_t* get_PermissionSet_blob() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilDeclSecurity();
@@ -38437,7 +35367,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -38509,8 +35438,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -38522,9 +35449,6 @@ public:
     void set_Offset(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -38536,9 +35460,6 @@ public:
     void set_Size(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -38550,9 +35471,6 @@ public:
     void set_Name(std::string const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -38563,8 +35481,6 @@ public:
     uint32_t const& get_NamePadding() const;
     void set_NamePadding(uint32_t const&);
     /** @} */
-
-
 public:
     /** Define constant strings for the known stream types
      *  @{
@@ -38587,7 +35503,6 @@ public:
      *   stream.
      */
     virtual void parse(std::vector<uint8_t>& buf, size_t startOfMetaData) { /* FIXME: should be abstract */ }
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilDataStream();
@@ -38615,7 +35530,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -38650,7 +35564,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -38661,11 +35574,8 @@ public:
     std::vector<SgAsmCilCustomAttribute*> const& get_elements() const;
     std::vector<SgAsmCilCustomAttribute*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilCustomAttribute;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilCustomAttributeTable();
@@ -38686,7 +35596,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -38736,8 +35645,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -38749,9 +35656,6 @@ public:
     void set_Parent(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -38763,9 +35667,6 @@ public:
     void set_Type(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -38776,15 +35677,12 @@ public:
     uint32_t const& get_Value() const;
     void set_Value(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
     const SgAsmCilMetadata* get_Parent_object() const;
     const SgAsmCilMetadata* get_Type_object() const;
     const std::uint8_t* get_Value_blob() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilCustomAttribute();
@@ -38805,7 +35703,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -38841,7 +35738,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -38852,11 +35748,8 @@ public:
     std::vector<SgAsmCilConstant*> const& get_elements() const;
     std::vector<SgAsmCilConstant*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilConstant;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilConstantTable();
@@ -38877,7 +35770,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -38934,8 +35826,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -38947,9 +35837,6 @@ public:
     void set_Type(uint8_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -38961,9 +35848,6 @@ public:
     void set_Padding(uint8_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -38975,9 +35859,6 @@ public:
     void set_Parent(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -38988,14 +35869,11 @@ public:
     uint32_t const& get_Value() const;
     void set_Value(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
     const SgAsmCilMetadata* get_Parent_object() const;
     const std::uint8_t* get_Value_blob() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilConstant();
@@ -39016,7 +35894,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -39052,7 +35929,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -39063,11 +35939,8 @@ public:
     std::vector<SgAsmCilClassLayout*> const& get_elements() const;
     std::vector<SgAsmCilClassLayout*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilClassLayout;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilClassLayoutTable();
@@ -39088,7 +35961,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -39138,8 +36010,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -39151,9 +36021,6 @@ public:
     void set_PackingSize(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -39165,9 +36032,6 @@ public:
     void set_ClassSize(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -39178,13 +36042,10 @@ public:
     uint32_t const& get_Parent() const;
     void set_Parent(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
     const SgAsmCilMetadata* get_Parent_object() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilClassLayout();
@@ -39205,7 +36066,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -39241,7 +36101,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -39252,11 +36111,8 @@ public:
     std::vector<SgAsmCilAssembly*> const& get_elements() const;
     std::vector<SgAsmCilAssembly*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilAssembly;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilAssemblyTable();
@@ -39277,7 +36133,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -39313,7 +36168,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -39324,11 +36178,8 @@ public:
     std::vector<SgAsmCilAssemblyRef*> const& get_elements() const;
     std::vector<SgAsmCilAssemblyRef*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilAssemblyRef;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilAssemblyRefTable();
@@ -39349,7 +36200,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -39385,7 +36235,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -39396,11 +36245,8 @@ public:
     std::vector<SgAsmCilAssemblyRefProcessor*> const& get_elements() const;
     std::vector<SgAsmCilAssemblyRefProcessor*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilAssemblyRefProcessor;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilAssemblyRefProcessorTable();
@@ -39421,7 +36267,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -39464,8 +36309,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -39477,9 +36320,6 @@ public:
     void set_Processor(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -39490,13 +36330,10 @@ public:
     uint32_t const& get_AssemblyRef() const;
     void set_AssemblyRef(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
     const SgAsmCilMetadata* get_AssemblyRef_object() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilAssemblyRefProcessor();
@@ -39517,7 +36354,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -39553,7 +36389,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -39564,11 +36399,8 @@ public:
     std::vector<SgAsmCilAssemblyRefOS*> const& get_elements() const;
     std::vector<SgAsmCilAssemblyRefOS*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilAssemblyRefOS;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilAssemblyRefOSTable();
@@ -39589,7 +36421,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -39646,8 +36477,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -39659,9 +36488,6 @@ public:
     void set_OSPlatformID(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -39673,9 +36499,6 @@ public:
     void set_OSMajorVersion(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -39687,9 +36510,6 @@ public:
     void set_OSMinorVersion(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -39700,13 +36520,10 @@ public:
     uint32_t const& get_AssemblyRefOS() const;
     void set_AssemblyRefOS(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
     const SgAsmCilMetadata* get_AssemblyRefOS_object() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilAssemblyRefOS();
@@ -39727,7 +36544,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -39819,8 +36635,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -39832,9 +36646,6 @@ public:
     void set_MajorVersion(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -39846,9 +36657,6 @@ public:
     void set_MinorVersion(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -39860,9 +36668,6 @@ public:
     void set_BuildNumber(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -39874,9 +36679,6 @@ public:
     void set_RevisionNumber(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -39888,9 +36690,6 @@ public:
     void set_Flags(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -39902,9 +36701,6 @@ public:
     void set_PublicKeyOrToken(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -39916,9 +36712,6 @@ public:
     void set_Name(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -39930,9 +36723,6 @@ public:
     void set_Culture(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -39943,8 +36733,6 @@ public:
     uint32_t const& get_HashValue() const;
     void set_HashValue(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
@@ -39952,7 +36740,6 @@ public:
     const std::uint8_t* get_Name_string() const;
     const std::uint8_t* get_Culture_string() const;
     const std::uint8_t* get_HashValue_blob() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilAssemblyRef();
@@ -39973,7 +36760,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -40009,7 +36795,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -40020,11 +36805,8 @@ public:
     std::vector<SgAsmCilAssemblyProcessor*> const& get_elements() const;
     std::vector<SgAsmCilAssemblyProcessor*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilAssemblyProcessor;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilAssemblyProcessorTable();
@@ -40045,7 +36827,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -40081,8 +36862,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -40093,11 +36872,8 @@ public:
     uint32_t const& get_Processor() const;
     void set_Processor(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilAssemblyProcessor();
@@ -40118,7 +36894,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -40154,7 +36929,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -40165,11 +36939,8 @@ public:
     std::vector<SgAsmCilAssemblyOS*> const& get_elements() const;
     std::vector<SgAsmCilAssemblyOS*>& get_elements();
     /** @} */
-
-
 public:
     using CilMetadataType = SgAsmCilAssemblyOS;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilAssemblyOSTable();
@@ -40190,7 +36961,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -40240,8 +37010,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -40253,9 +37021,6 @@ public:
     void set_OSPlatformID(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -40267,9 +37032,6 @@ public:
     void set_OSMajorVersion(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -40280,11 +37042,8 @@ public:
     uint32_t const& get_OSMinorVersion() const;
     void set_OSMinorVersion(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilAssemblyOS();
@@ -40305,7 +37064,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -40397,8 +37155,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -40410,9 +37166,6 @@ public:
     void set_HashAlgId(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -40424,9 +37177,6 @@ public:
     void set_MajorVersion(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -40438,9 +37188,6 @@ public:
     void set_MinorVersion(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -40452,9 +37199,6 @@ public:
     void set_BuildNumber(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -40466,9 +37210,6 @@ public:
     void set_RevisionNumber(uint16_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -40480,9 +37221,6 @@ public:
     void set_Flags(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -40494,9 +37232,6 @@ public:
     void set_PublicKey(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -40508,9 +37243,6 @@ public:
     void set_Name(uint32_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -40521,15 +37253,12 @@ public:
     uint32_t const& get_Culture() const;
     void set_Culture(uint32_t const&);
     /** @} */
-
-
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
     const std::uint8_t* get_PublicKey_blob() const;
     const std::uint8_t* get_Name_string() const;
     const std::uint8_t* get_Culture_string() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmCilAssembly();
@@ -40550,7 +37279,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -40689,7 +37417,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmCilNode                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -40753,7 +37480,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmByteOrder                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -40781,9 +37507,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-
-    
-    
 private:
     ByteOrder::Endianness byteOrder_;
 
@@ -40797,7 +37520,6 @@ public:
     ByteOrder::Endianness const& byteOrder() const;
     void byteOrder(ByteOrder::Endianness const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -40823,7 +37545,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -40932,7 +37653,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_stackDeltaOut);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -40972,8 +37692,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // FIXME[Robb Matzke 2023-03-18]: is the no_serialize a bug?
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -40985,9 +37703,6 @@ public:
     void set_id(rose_addr_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -40998,14 +37713,10 @@ public:
     unsigned const& get_reason() const;
     void set_reason(unsigned const&);
     /** @} */
-
-
     // statementList and successors should have been pointers to nodes that contain the list rather than being the lists
     // themselves because ROSETTA doesn't allow traversals on multiple list data members--we can traverse either one list or
     // the other, but not both.  It's too late to change how this part of the AST is structured because so much user code
     // already depends on it, therefore we can only traverse statementList and not successors. [Robb Matzke 2016-02-25]
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -41017,14 +37728,10 @@ public:
     SgAsmStatementPtrList& get_statementList();
     void set_statementList(SgAsmStatementPtrList const&);
     /** @} */
-
-
     // statementList and successors should have been pointers to nodes that contain the list rather than being the lists
     // themselves because ROSETTA doesn't allow traversals on multiple list data members--we can traverse either one list or
     // the other, but not both.  It's too late to change how this part of the AST is structured because so much user code
     // already depends on it, therefore we can only traverse statementList and not successors. [Robb Matzke 2016-02-25]
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -41037,9 +37744,6 @@ public:
     void set_successors(SgAsmIntegerValuePtrList const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -41051,9 +37755,6 @@ public:
     void set_successors_complete(bool const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -41065,9 +37766,6 @@ public:
     void set_immediate_dominator(SgAsmBlock* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -41079,9 +37777,6 @@ public:
     void set_cached_vertex(size_t const&);
     /** @} */
  // see BinaryAnalysis::ControlFlow
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -41093,9 +37788,6 @@ public:
     void set_code_likelihood(double const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -41106,8 +37798,6 @@ public:
     int64_t const& get_stackDeltaOut() const;
     void set_stackDeltaOut(int64_t const&);
     /** @} */
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -41181,7 +37871,6 @@ public:
      *  value are used for more than one bit.  For instance, the first character can be "L" for leftovers, "N" for padding,
      *  "E" for entry point, or "-" for none of the above. */
     static std::string reason_str(bool pad, unsigned reason);
-
 public:
     /** Destructor. */
     virtual ~SgAsmBlock();
@@ -41206,7 +37895,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -41262,7 +37950,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmBinaryRor                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -41314,7 +38001,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -41373,7 +38059,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmBinaryPostupdate                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -41430,7 +38115,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmBinaryMultiply                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -41482,7 +38166,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -41540,7 +38223,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmBinaryMod                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -41592,7 +38274,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -41648,7 +38329,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmBinaryLsl                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -41700,7 +38380,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -41756,7 +38435,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmBinaryConcat                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -41808,7 +38486,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -41864,7 +38541,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmBinaryAdd                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -41916,7 +38592,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -41984,8 +38659,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -41997,9 +38670,6 @@ public:
     void set_lhs(SgAsmExpression* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -42010,7 +38680,6 @@ public:
     SgAsmExpression* const& get_rhs() const;
     void set_rhs(SgAsmExpression* const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -42037,7 +38706,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -42076,7 +38744,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
 public:
     /** Property: Instruction kind.
      *
@@ -42085,7 +38752,6 @@ public:
      *  
      *  @{ */
     /** @} */
-
     virtual std::string get_string(bool escape=false) const override;
     virtual void set_string(const std::string&) override;
     virtual void set_string(rose_addr_t) override;
@@ -42100,7 +38766,6 @@ public:
 
     // Overrides documented in base class
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmBasicString();
@@ -42121,7 +38786,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -42163,7 +38827,6 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
 public:
     /** Constant for addresses of unallocated strings. */
     static const rose_addr_t unallocated;
@@ -42184,7 +38847,6 @@ public:
     virtual rose_addr_t get_offset() const {return unallocated;}
 
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmGenericString();
@@ -42205,7 +38867,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -42299,7 +38960,6 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -42650,7 +39310,6 @@ public:
     static std::string to_string(SgAsmExecutableFileFormat::ExecFamily);
     static std::string to_string(SgAsmExecutableFileFormat::ExecABI);
     static std::string to_string(SgAsmExecutableFileFormat::ExecPurpose);
-
 public:
     /** Destructor. */
     virtual ~SgAsmExecutableFileFormat();
@@ -42673,7 +39332,6 @@ protected:
 #endif // DOCUMENTATION
 
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmAarch64SysMoveOperand                  -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -42685,8 +39343,6 @@ IS_SERIALIZABLE(AsmAarch64SysMoveOperand);
 DECLARE_HEADERS(AsmAarch64SysMoveOperand);
 #if defined(SgAsmAarch64SysMoveOperand_HEADERS) || defined(DOCUMENTATION)
 #ifdef ROSE_ENABLE_ASM_AARCH64
-
-
 #endif
 #endif // SgAsmAarch64SysMoveOperand_HEADERS
 
@@ -42710,9 +39366,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-
-    
-    
 private:
     unsigned access_;
 
@@ -42726,7 +39379,6 @@ public:
     unsigned const& access() const;
     void access(unsigned const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -42752,9 +39404,7 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
-
-#endif // ROSE_ENABLE_ASM_AARCH64
+#endif
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -42770,8 +39420,6 @@ DECLARE_HEADERS(AsmAarch64PrefetchOperand);
 #ifdef ROSE_ENABLE_ASM_AARCH64
 
 #include <Rose/BinaryAnalysis/InstructionEnumsAarch64.h>
-
-
 #endif
 #endif // SgAsmAarch64PrefetchOperand_HEADERS
 
@@ -42795,9 +39443,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-
-    
-    
 private:
     Rose::BinaryAnalysis::Aarch64PrefetchOperation operation_;
 
@@ -42811,7 +39456,6 @@ public:
     Rose::BinaryAnalysis::Aarch64PrefetchOperation const& operation() const;
     void operation(Rose::BinaryAnalysis::Aarch64PrefetchOperation const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -42837,9 +39481,7 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
-
-#endif // ROSE_ENABLE_ASM_AARCH64
+#endif
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -42854,8 +39496,6 @@ DECLARE_HEADERS(AsmAarch64Instruction);
 #if defined(SgAsmAarch64Instruction_HEADERS) || defined(DOCUMENTATION)
 #ifdef ROSE_ENABLE_ASM_AARCH64
 #include <Rose/BinaryAnalysis/InstructionEnumsAarch64.h>
-
-
 #endif
 #endif // SgAsmAarch64Instruction_HEADERS
 
@@ -42898,8 +39538,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -42911,9 +39549,6 @@ public:
     void set_kind(Rose::BinaryAnalysis::Aarch64InstructionKind const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -42924,11 +39559,7 @@ public:
     Rose::BinaryAnalysis::Aarch64InstructionCondition const& get_condition() const;
     void set_condition(Rose::BinaryAnalysis::Aarch64InstructionCondition const&);
     /** @} */
-
-
     // FIXME[Robb Matzke 2023-03-18]: is the no_serialize a bug?
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -42939,8 +39570,6 @@ public:
     bool const& get_updatesFlags() const;
     void set_updatesFlags(bool const&);
     /** @} */
-
-
 public:
     // Overrides are documented in the base class
     virtual std::string description() const override;
@@ -42955,7 +39584,6 @@ public:
     virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) override;
     virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) override;
     virtual Sawyer::Optional<rose_addr_t> branchTarget() override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmAarch64Instruction();
@@ -42983,9 +39611,7 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
-
-#endif // ROSE_ENABLE_ASM_AARCH64
+#endif
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -42999,8 +39625,6 @@ IS_SERIALIZABLE(AsmAarch64CImmediateOperand);
 DECLARE_HEADERS(AsmAarch64CImmediateOperand);
 #if defined(SgAsmAarch64CImmediateOperand_HEADERS) || defined(DOCUMENTATION)
 #ifdef ROSE_ENABLE_ASM_AARCH64
-
-
 #endif
 #endif // SgAsmAarch64CImmediateOperand_HEADERS
 
@@ -43024,8 +39648,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 private:
     unsigned immediate_;
 
@@ -43039,7 +39661,6 @@ public:
     unsigned const& immediate() const;
     void immediate(unsigned const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -43065,9 +39686,7 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
-
-#endif // ROSE_ENABLE_ASM_AARCH64
+#endif
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -43083,8 +39702,6 @@ DECLARE_HEADERS(AsmAarch64BarrierOperand);
 #ifdef ROSE_ENABLE_ASM_AARCH64
 
 #include <Rose/BinaryAnalysis/InstructionEnumsAarch64.h>
-
-
 #endif
 #endif // SgAsmAarch64BarrierOperand_HEADERS
 
@@ -43108,8 +39725,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 private:
     Rose::BinaryAnalysis::Aarch64BarrierOperation operation_;
 
@@ -43123,7 +39738,6 @@ public:
     Rose::BinaryAnalysis::Aarch64BarrierOperation const& operation() const;
     void operation(Rose::BinaryAnalysis::Aarch64BarrierOperation const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -43149,9 +39763,7 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
-
-#endif // ROSE_ENABLE_ASM_AARCH64
+#endif
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -43167,8 +39779,6 @@ DECLARE_HEADERS(AsmAarch64AtOperand);
 #ifdef ROSE_ENABLE_ASM_AARCH64
 
 #include <Rose/BinaryAnalysis/InstructionEnumsAarch64.h>
-
-
 #endif
 #endif // SgAsmAarch64AtOperand_HEADERS
 
@@ -43192,8 +39802,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 private:
     Rose::BinaryAnalysis::Aarch64AtOperation operation_;
 
@@ -43207,7 +39815,6 @@ public:
     Rose::BinaryAnalysis::Aarch64AtOperation const& operation() const;
     void operation(Rose::BinaryAnalysis::Aarch64AtOperation const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -43233,9 +39840,7 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
-
-#endif // ROSE_ENABLE_ASM_AARCH64
+#endif
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -43250,8 +39855,6 @@ DECLARE_HEADERS(AsmAarch32Instruction);
 #if defined(SgAsmAarch32Instruction_HEADERS) || defined(DOCUMENTATION)
 #ifdef ROSE_ENABLE_ASM_AARCH32
 #include <Rose/BinaryAnalysis/InstructionEnumsAarch32.h>
-
-
 #endif
 #endif // SgAsmAarch32Instruction_HEADERS
 
@@ -43308,10 +39911,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_writesToIp);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
 public:
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -43323,9 +39923,6 @@ public:
     void set_kind(Rose::BinaryAnalysis::Aarch32InstructionKind const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -43337,9 +39934,6 @@ public:
     void set_condition(Rose::BinaryAnalysis::Aarch32InstructionCondition const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -43351,9 +39945,6 @@ public:
     void set_updatesFlags(bool const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -43365,9 +39956,6 @@ public:
     void set_writesBack(bool const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -43378,8 +39966,6 @@ public:
     bool const& get_writesToIp() const;
     void set_writesToIp(bool const&);
     /** @} */
-
-
 public:
     // Overrides are documented in the base class
     virtual std::string description() const override;
@@ -43394,7 +39980,6 @@ public:
     virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) override;
     virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) override;
     virtual Sawyer::Optional<rose_addr_t> branchTarget() override;
-
 public:
     /** Destructor. */
     virtual ~SgAsmAarch32Instruction();
@@ -43422,8 +40007,7 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
-#endif // ROSE_ENABLE_ASM_AARCH32
+#endif
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -43461,8 +40045,6 @@ AsmInstruction.setAutomaticGenerationOfDestructor(false);
 DECLARE_HEADERS(AsmInstruction);
 #if defined(SgAsmInstruction_HEADERS) || defined(DOCUMENTATION)
 #include <Rose/BinaryAnalysis/MemoryMap.h>
-
-
 #endif // SgAsmInstruction_HEADERS
 
 #ifdef DOCUMENTATION
@@ -43550,7 +40132,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_sources);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -43572,9 +40153,6 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -43586,9 +40164,6 @@ public:
     void set_mnemonic(std::string const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -43600,9 +40175,6 @@ public:
     void set_raw_bytes(SgUnsignedCharList const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -43614,9 +40186,6 @@ public:
     void set_operandList(SgAsmOperandList* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -43625,14 +40194,10 @@ public:
      *  
      *  @{ */
     /** @} */
-
-
     size_t cacheLockCount() const;
     void adjustCacheLockCount(int increment);
-    
 
     // FIXME[Robb P Matzke 2017-02-13]: unused?
-    
 public:
     /** Property: Instruction kind.
      *
@@ -43641,12 +40206,9 @@ public:
      *  
      *  @{ */
     /** @} */
-
     void appendSources( SgAsmInstruction* instruction );
 
     // FIXME[Robb Matzke 2023-03-18]: is the no_serialize a bug?
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -43657,11 +40219,7 @@ public:
     int64_t const& get_stackDeltaIn() const;
     void set_stackDeltaIn(int64_t const&);
     /** @} */
-
-
     // FIXME[Robb Matzke 2023-03-18]: is the no_serialize a bug?
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -43672,8 +40230,6 @@ public:
     SgAsmExprListExp* const& get_semantics() const;
     void set_semantics(SgAsmExprListExp* const&);
     /** @} */
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Non-property data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -44031,7 +40587,6 @@ public:
      *
      *  Returns true if anything changed, false otherwise. */
     bool normalizeOperands();
-
 public:
     /** Destructor. */
     virtual ~SgAsmInstruction();
@@ -44057,7 +40612,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -44119,8 +40673,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -44132,9 +40684,6 @@ public:
     void set_address(rose_addr_t const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -44145,7 +40694,6 @@ public:
     std::string const& get_comment() const;
     void set_comment(std::string const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -44171,7 +40719,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -44201,8 +40748,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 private:
     int coprocessor_;
 
@@ -44216,7 +40761,6 @@ public:
     int const& coprocessor() const;
     void coprocessor(int const&);
     /** @} */
-
 
 public:
     /** Destructor. */
@@ -44242,7 +40786,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -44325,8 +40868,6 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -44338,9 +40879,6 @@ public:
     void set_type(SgAsmType* const&);
     /** @} */
 
-
-    
-    
 public:
     /** Property: Instruction kind.
      *
@@ -44351,8 +40889,6 @@ public:
     std::string const& get_comment() const;
     void set_comment(std::string const&);
     /** @} */
-
-
 public:
     /** Property: Width of expression in bits.
      *
@@ -44370,7 +40906,6 @@ public:
      *  If this expression is an integer expression with a constant that fits in a 64-bit signed type, then return it,
      *  otherwise return nothing. */
     Sawyer::Optional<int64_t> asSigned() const;
-
 public:
     /** Destructor. */
     virtual ~SgAsmExpression();
@@ -44391,7 +40926,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -44442,7 +40976,6 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgNode);
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
-
 protected:
     // Rosebud generates call to destructorHelper in every destructor implementation. This gives the user a chance to do something
     // special. Any implementations should be prepared to handle multiple invocations on the same object, and should not access any
@@ -44470,7 +41003,6 @@ public:
         node->set_parent(parent);
         return node;
     }
-
 public:
     /** Destructor. */
     virtual ~SgAsmNode();
@@ -44491,7 +41023,6 @@ protected:
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
-
 
 #ifndef DOCUMENTATION
 } // Grammar::setUpBinaryInstruction
