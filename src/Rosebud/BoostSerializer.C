@@ -1,0 +1,41 @@
+#include <Rosebud/BoostSerializer.h>
+
+#include <Rosebud/Generator.h>
+
+#include <memory>
+#include <ostream>
+#include <string>
+
+namespace Rosebud {
+
+void
+BoostSerializer::generate(std::ostream &header, std::ostream &impl, const Ast::Class::Ptr &c,
+                          const Generator &generator) const {
+    ASSERT_not_null(c);
+
+    header <<"\n"
+           <<"    //----------------------- Boost serialization -----------------------\n"
+           <<"#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB\n"
+           <<"private:\n"
+           <<"    friend class boost::serialization::access;\n"
+           <<"\n"
+           <<"    template<class S>\n"
+           <<"    void serialize(S &s, const unsigned /*version*/) {\n";
+
+    // Serialize the base classes
+    for (const auto &super: c->inheritance)
+        header <<"        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(" <<super.second <<");\n";
+
+    // Serialize all properties that request serialization
+    for (const auto &p: *c->properties()) {
+        if (!p->findAttribute("Rosebud::no_serialize")) {
+            const std::string memberName = generator.propertyDataMemberName(p());
+            header <<"        s & BOOST_SERIALIZATION_NVP(" <<memberName <<");\n";
+        }
+    }
+
+    header <<"    }\n"
+           <<"#endif // ROSE_HAVE_BOOST_SERIALIZATION\n";
+}
+
+} // namespace

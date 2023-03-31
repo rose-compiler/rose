@@ -5,10 +5,10 @@ pkgdata_DATA =
 MOSTLYCLEANFILES =
 
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-SUBDIRS = util ROSETTA roseSupport Rose frontend midend backend \
+SUBDIRS = util Rosebud ROSETTA roseSupport Rose frontend midend backend \
           3rdPartyLibraries roseIndependentSupport
 else
-SUBDIRS = util ROSETTA roseSupport Rose frontend midend backend \
+SUBDIRS = util Rosebud ROSETTA roseSupport Rose frontend midend backend \
           3rdPartyLibraries roseIndependentSupport roseExtensions
 endif
 
