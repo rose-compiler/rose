@@ -360,6 +360,10 @@ bool ClangToDotTranslator::VisitDecl(clang::Decl * decl, NodeDescriptor & node_d
         }
 
      node_desc.successors.push_back(std::pair<std::string, std::string>("canonical_decl", Traverse(decl->getCanonicalDecl())));
+     if(decl->isImplicit())
+        {
+           node_desc.attributes.push_back(std::pair<std::string, std::string>("isImplicit", "Yes"));
+        }
 
      return true;
    }
@@ -806,7 +810,7 @@ bool ClangToDotTranslator::VisitNamespaceDecl(clang::NamespaceDecl * namespace_d
     unsigned cnt = 0;
     for (it = namespace_decl->decls_begin(); it != namespace_decl->decls_end(); it++) {
         std::ostringstream oss;
-        oss << "child[" << cnt++ << "]";
+        oss << "DeclContext::decls[" << cnt++ << "]";
         node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(*it)));
     }
 
@@ -1139,15 +1143,12 @@ bool ClangToDotTranslator::VisitTagDecl(clang::TagDecl * tag_decl, NodeDescripto
 
      ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
 
-     clang::DeclContext* declContext = static_cast<clang::DeclContext*>(tag_decl);
-     clang::DeclContext::decl_iterator dit;
+     clang::DeclContext::decl_iterator it;
      unsigned cnt = 0;
-     for (clang::Decl* tmpDecl : declContext->decls()) {
-          if(tmpDecl->isImplicit())
-             continue;
+     for (it = tag_decl->decls_begin(); it != tag_decl->decls_end(); it++) {
           std::ostringstream oss;
           oss << "DeclContext::decls["<< cnt++ << "]";
-          node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(tmpDecl)));
+          node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(*it)));
      }
 
      return VisitTypeDecl(tag_decl, node_desc) && res;
@@ -1456,6 +1457,7 @@ bool ClangToDotTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, Node
           oss << "field[" << cnt++ << "]";
           node_desc.successors.push_back(std::pair<std::string, std::string>(oss.str(), Traverse(*it)));
         }
+     node_desc.attributes.push_back(std::pair<std::string, std::string>("field_empty", record_decl->field_empty()?"True":"False"));
 
      return VisitTagDecl(record_decl, node_desc) && res;
 }
@@ -3757,7 +3759,7 @@ bool ClangToDotTranslator::VisitTranslationUnitDecl(clang::TranslationUnitDecl *
      for (it = translation_unit_decl->decls_begin(); it != translation_unit_decl->decls_end(); it++)
         {
           std::ostringstream oss;
-          oss << "child[" << cnt++ << "]";
+          oss << "DeclContext::decls[" << cnt++ << "]";
 #ifdef SHORT_CUT_BUILTIN
           if (cnt < 6) continue;
 #endif
