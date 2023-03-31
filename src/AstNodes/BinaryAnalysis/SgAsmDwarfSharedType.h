@@ -1,0 +1,1 @@
+class SgAsmDwarfSharedType: public SgAsmDwarfConstruct {};

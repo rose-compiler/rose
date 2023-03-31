@@ -1,0 +1,1 @@
+class SgAsmDwarfVolatileType: public SgAsmDwarfConstruct {};

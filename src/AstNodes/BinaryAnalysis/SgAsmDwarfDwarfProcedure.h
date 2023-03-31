@@ -1,0 +1,1 @@
+class SgAsmDwarfDwarfProcedure: public SgAsmDwarfConstruct {};

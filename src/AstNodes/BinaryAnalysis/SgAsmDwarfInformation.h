@@ -1,0 +1,1 @@
+class SgAsmDwarfInformation: public SgAsmExecutableFileFormat {};

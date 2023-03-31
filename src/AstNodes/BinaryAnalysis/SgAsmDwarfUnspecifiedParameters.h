@@ -1,0 +1,1 @@
+class SgAsmDwarfUnspecifiedParameters: public SgAsmDwarfConstruct {};

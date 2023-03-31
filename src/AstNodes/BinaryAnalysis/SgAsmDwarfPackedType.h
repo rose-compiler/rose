@@ -1,0 +1,1 @@
+class SgAsmDwarfPackedType: public SgAsmDwarfConstruct {};

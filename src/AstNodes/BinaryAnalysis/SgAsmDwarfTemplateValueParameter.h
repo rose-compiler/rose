@@ -1,0 +1,1 @@
+class SgAsmDwarfTemplateValueParameter: public SgAsmDwarfConstruct {};

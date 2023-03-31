@@ -1,0 +1,1 @@
+class SgAsmDwarfLabel: public SgAsmDwarfConstruct {};

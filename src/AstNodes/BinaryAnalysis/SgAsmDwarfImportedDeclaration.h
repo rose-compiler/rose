@@ -1,0 +1,1 @@
+class SgAsmDwarfImportedDeclaration: public SgAsmDwarfConstruct {};

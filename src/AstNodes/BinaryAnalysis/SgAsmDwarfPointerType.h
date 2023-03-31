@@ -1,0 +1,1 @@
+class SgAsmDwarfPointerType: public SgAsmDwarfConstruct {};

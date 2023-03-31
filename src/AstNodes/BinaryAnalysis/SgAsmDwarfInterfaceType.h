@@ -1,0 +1,1 @@
+class SgAsmDwarfInterfaceType: public SgAsmDwarfConstruct {};
