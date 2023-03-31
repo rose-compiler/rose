@@ -1741,6 +1741,7 @@ bool ClangToDotTranslator::VisitRecordType(clang::RecordType * record_type, Node
     }
 #endif
 
+     node_desc.successors.push_back(std::pair<std::string, std::string>("decl", Traverse(record_type->getDecl())));
      node_desc.kind_hierarchy.push_back("RecordType");
 
     return VisitType(record_type, node_desc);
