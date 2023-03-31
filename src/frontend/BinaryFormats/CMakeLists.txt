@@ -60,7 +60,8 @@ add_library(roseBinaryFormats OBJECT
   ### Other Formats (partial implementations and not so well tested) ###
   ExecDOS.C
   ExecNE.C
-  ExecLE.C)
+  ExecLE.C
+  Dwarf.C)
 
 add_dependencies(roseBinaryFormats rosetta_generated)
 

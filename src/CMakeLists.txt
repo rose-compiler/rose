@@ -98,6 +98,7 @@ add_subdirectory(roseIndependentSupport)
 add_definitions(-DROSE_DLL_EXPORTS)
 
 add_subdirectory(roseExtensions)
+add_subdirectory(generated)
 add_subdirectory(frontend)
 add_subdirectory(midend)
 add_subdirectory(backend)
@@ -162,6 +163,7 @@ set(rose_LIB_OBJS
   roseStringUtility
   RoseAST
   RoseCodeGen
+  roseGenerated
   mstl)
 
 set(rose_LIB_SRCS

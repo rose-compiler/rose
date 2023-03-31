@@ -13,16 +13,16 @@
 
 using namespace Rose;
 
-void
-SgAsmElfDynamicEntry::ctor(SgAsmElfDynamicSection *dynsec)
-{
-    ROSE_ASSERT(dynsec!=NULL);
+SgAsmElfDynamicEntry::SgAsmElfDynamicEntry(SgAsmElfDynamicSection *dynsec) {
+    initializeProperties();
 
-    set_name(NULL); /*only defined for DT_NEEDED entries; see SgAsmDynamicSection::parse*/
+    ASSERT_not_null(dynsec);
 
-    ROSE_ASSERT(dynsec->get_entries()!=NULL);
+    set_name(nullptr); /*only defined for DT_NEEDED entries; see SgAsmDynamicSection::parse*/
+
+    ASSERT_not_null(dynsec->get_entries());
     dynsec->get_entries()->get_entries().push_back(this);
-    ROSE_ASSERT(dynsec->get_entries()->get_entries().size()>0);
+    ASSERT_require(dynsec->get_entries()->get_entries().size() > 0);
     set_parent(dynsec->get_entries());
 }
 
@@ -106,13 +106,11 @@ SgAsmElfDynamicEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
 }
 
-void
-SgAsmElfDynamicSection::ctor(SgAsmElfStringSection *strings)
-{
-    p_entries = new SgAsmElfDynamicEntryList;
-    p_entries->set_parent(this);
-    ROSE_ASSERT(strings!=NULL);
-    p_linked_section = strings;
+SgAsmElfDynamicSection::SgAsmElfDynamicSection(SgAsmElfFileHeader *fhdr, SgAsmElfStringSection *strsec)
+    : SgAsmElfSection(fhdr) {
+    initializeProperties();
+    ASSERT_not_null(strsec);
+    p_linked_section = strsec;
 }
 
 SgAsmElfDynamicSection *

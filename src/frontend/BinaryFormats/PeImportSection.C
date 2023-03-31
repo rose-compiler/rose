@@ -19,9 +19,10 @@ SgAsmPEImportSection::show_import_mesg()
     return ++mesg_nprinted <= max_to_print;
 }
 
-void
-SgAsmPEImportSection::ctor()
-{
+SgAsmPEImportSection::SgAsmPEImportSection(SgAsmPEFileHeader *fhdr)
+    : SgAsmPESection(fhdr) {
+    initializeProperties();
+
     set_synthesized(true);
 
     SgAsmBasicString *name = new SgAsmBasicString("PE Section Table");
@@ -29,9 +30,6 @@ SgAsmPEImportSection::ctor()
     name->set_parent(this);
 
     set_purpose(SP_HEADER);
-
-    p_import_directories = new SgAsmPEImportDirectoryList();
-    p_import_directories->set_parent(this);
 }
 
 /* Parse a PE Import Section.  This parses an entire PE Import Section, by recursively parsing the section's Import

@@ -15,33 +15,34 @@
 
 // Construct a new DOS File Header with default values. The new section is placed at file offset zero and the size is
 // initially one byte (calling reallocate() or parse() will extend it as necessary).
-void
-SgAsmDOSFileHeader::ctor()
-{
-    ROSE_ASSERT(get_file()!=NULL);
-    ROSE_ASSERT(get_size()>0);
+SgAsmDOSFileHeader::SgAsmDOSFileHeader(SgAsmGenericFile *f)
+    : SgAsmGenericHeader(f) {
+    initializeProperties();
+
+    ASSERT_not_null(get_file());
+    ASSERT_require(get_size() > 0);
     
     set_name(new SgAsmBasicString("DOS File Header"));
     set_synthesized(true);
     set_purpose(SP_HEADER);
 
     /* Magic number */
-    p_magic.clear();
-    p_magic.push_back('M');
-    p_magic.push_back('Z');
+    get_magic().clear();
+    get_magic().push_back('M');
+    get_magic().push_back('Z');
 
     /* Executable Format */
-    ROSE_ASSERT(p_exec_format!=NULL);
-    p_exec_format->set_family(FAMILY_DOS);
-    p_exec_format->set_purpose(PURPOSE_EXECUTABLE);
-    p_exec_format->set_sex(ByteOrder::ORDER_LSB);
-    p_exec_format->set_abi(ABI_MSDOS);
-    p_exec_format->set_abi_version(0);
-    p_exec_format->set_word_size(2);
-    p_exec_format->set_version(0);
-    p_exec_format->set_is_current_version(true);
+    ASSERT_not_null(get_exec_format());
+    get_exec_format()->set_family(FAMILY_DOS);
+    get_exec_format()->set_purpose(PURPOSE_EXECUTABLE);
+    get_exec_format()->set_sex(ByteOrder::ORDER_LSB);
+    get_exec_format()->set_abi(ABI_MSDOS);
+    get_exec_format()->set_abi_version(0);
+    get_exec_format()->set_word_size(2);
+    get_exec_format()->set_version(0);
+    get_exec_format()->set_is_current_version(true);
 
-    p_isa = ISA_IA32_Family;
+    set_isa(ISA_IA32_Family);
 }
 
 bool
@@ -314,9 +315,9 @@ SgAsmDOSFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 // section belonging to the DOS File Header. The PE, NE, LE and LX File Header IR nodes usually also point to this section.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void
-SgAsmDOSExtendedHeader::ctor()
-{
+SgAsmDOSExtendedHeader::SgAsmDOSExtendedHeader(SgAsmDOSFileHeader *fhdr)
+    : SgAsmGenericSection(fhdr->get_file(), fhdr) {
+    initializeProperties();
     set_name(new SgAsmBasicString("DOS Extended Header"));
     set_offset(get_header()->get_size());
     set_synthesized(true);

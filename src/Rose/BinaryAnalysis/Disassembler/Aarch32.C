@@ -336,7 +336,7 @@ Aarch32::commentIpRelative(SgAsmInstruction *insn) {
 
 SgAsmInstruction*
 Aarch32::makeUnknownInstruction(const Exception &e) {
-    SgAsmAarch32Instruction *insn = new SgAsmAarch32Instruction(e.ip, "unknown", ARM_INS_INVALID);
+    SgAsmAarch32Instruction *insn = new SgAsmAarch32Instruction(e.ip, "unknown", ARM_INS_INVALID, ARM_CC_AL);
     SgAsmOperandList *operands = new SgAsmOperandList();
     insn->set_operandList(operands);
     operands->set_parent(insn);

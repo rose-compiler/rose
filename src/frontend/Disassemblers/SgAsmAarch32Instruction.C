@@ -1,5 +1,4 @@
-// SgAsmAarch32Instructoin member definitions. Do not move these to src/ROSETTA/Grammar/BinaryInstruction.code (or any other
-// *.code file) because then they won't be processed as C++ by IDEs.
+// SgAsmAarch32Instructoin member definitions.
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_ASM_AARCH32
 #include <sage3basic.h>

@@ -1,5 +1,4 @@
-/* SgAsmBlock member definitions.  Do not move them to src/ROSETTA/Grammar/BinaryInstruction.code (or any *.code file) because
- * then they won't get indexed/formatted/etc. by C-aware tools. */
+// SgAsmBlock member definitions.
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"

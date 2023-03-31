@@ -11,9 +11,9 @@ using namespace Rose::Diagnostics;
 using namespace Rose::BinaryAnalysis;
 
 /* Constructor */
-void
-SgAsmPEExportDirectory::ctor(SgAsmPEExportSection *section)
-{
+SgAsmPEExportDirectory::SgAsmPEExportDirectory(SgAsmPEExportSection *section) {
+    initializeProperties();
+
     SgAsmPEFileHeader *fhdr = isSgAsmPEFileHeader(section->get_header());
     ROSE_ASSERT(fhdr!=NULL);
     set_parent(section);
@@ -95,9 +95,10 @@ SgAsmPEExportDirectory::dump(FILE *f, const char *prefix, ssize_t idx) const
 }
 
 /* Constructor */
-void
-SgAsmPEExportEntry::ctor(SgAsmGenericString *fname, unsigned ordinal, rose_rva_t expaddr, SgAsmGenericString *forwarder)
-{
+SgAsmPEExportEntry::SgAsmPEExportEntry(SgAsmGenericString *fname, unsigned ordinal, rose_rva_t expaddr,
+                                       SgAsmGenericString *forwarder) {
+    initializeProperties();
+
     set_name(fname);
     if (fname)
         fname->set_parent(this);
@@ -150,11 +151,9 @@ SgAsmPEExportEntry::set_forwarder(SgAsmGenericString *forwarder)
 }
 
 /* Constructor */
-void
-SgAsmPEExportSection::ctor() {
-    ASSERT_forbid(p_exports);
-    p_exports = new SgAsmPEExportEntryList();
-    p_exports->set_parent(this);
+SgAsmPEExportSection::SgAsmPEExportSection(SgAsmPEFileHeader *fhdr)
+    : SgAsmPESection(fhdr) {
+    initializeProperties();
 }
 
 SgAsmPEExportSection*

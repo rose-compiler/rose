@@ -7,19 +7,23 @@
 using namespace Rose::Diagnostics;
 
 SgAsmFloatValueExpression::SgAsmFloatValueExpression(double value, SgAsmType *type) {
+    initializeProperties();
+
     ASSERT_not_null(type);
-    p_nativeValue = value;
+    set_nativeValue(value);
     p_nativeValueIsValid = true;
-    p_type = type;
+    set_type(type);
     updateBitVector();
 }
 
 SgAsmFloatValueExpression::SgAsmFloatValueExpression(const Sawyer::Container::BitVector &bv, SgAsmType *type) {
+    initializeProperties();
+
     ASSERT_always_not_null(type);
     ASSERT_require(bv.size() == type->get_nBits());
-    p_nativeValue = 0.0;
+    set_nativeValue(0.0);
     p_nativeValueIsValid = false;
-    p_bitVector = bv;
+    set_bitVector(bv);
     updateNativeValue();
 }
 

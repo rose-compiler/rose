@@ -860,7 +860,7 @@ Jvm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start, AddressSet*)
 
 SgAsmInstruction*
 Jvm::makeUnknownInstruction(const Disassembler::Exception &e) {
-    SgAsmInstruction *insn = new SgAsmJvmInstruction(e.ip, "unknown");
+    SgAsmInstruction *insn = new SgAsmJvmInstruction(e.ip, "unknown", opcode::unknown);
     SgAsmOperandList *operands = new SgAsmOperandList;
     insn->set_operandList(operands);
     operands->set_parent(insn);

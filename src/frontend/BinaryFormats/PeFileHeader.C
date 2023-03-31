@@ -53,9 +53,10 @@ SgAsmPEFileHeader::rvasize_pair_name(PairPurpose idx, const char **short_name)
 }
 
 /* Construct a new PE File Header with default values. */
-void
-SgAsmPEFileHeader::ctor()
-{
+SgAsmPEFileHeader::SgAsmPEFileHeader(SgAsmGenericFile *f)
+    : SgAsmGenericHeader(f) {
+    initializeProperties();
+
     ROSE_ASSERT(get_file()!=NULL);
     ROSE_ASSERT(get_size()>0);
 
@@ -365,8 +366,8 @@ SgAsmPEFileHeader::parse()
     /* Associate RVAs with particular sections so that if a section's mapping is changed the RVA gets adjusted automatically. */
     ROSE_ASSERT(get_entry_rvas().size()==1);
     get_entry_rvas()[0].bind(this);
-    set_e_code_rva(get_e_code_rva().bind(this));
-    set_e_data_rva(get_e_data_rva().bind(this));
+    get_e_code_rva().bind(this);
+    get_e_data_rva().bind(this);
 
     /* Turn header-specified tables (RVA/Size pairs) into generic sections */
     create_table_sections();
@@ -653,7 +654,7 @@ SgAsmPEFileHeader::create_table_sections()
         tabsec->set_mapped_wperm(false);
         tabsec->set_mapped_xperm(false);
         pair->set_section(tabsec);
-        pair->set_e_rva(pair->get_e_rva().set_section(tabsec));
+        pair->get_e_rva().set_section(tabsec);
     }
 
     /* Now parse the sections */

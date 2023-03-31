@@ -12,14 +12,13 @@ using namespace Rose;
 using namespace Rose::Diagnostics;
 using namespace Rose::BinaryAnalysis;
 
-void
-SgAsmGenericSection::ctor(SgAsmGenericFile *ef, SgAsmGenericHeader *hdr)
-{
-    ASSERT_always_not_null(ef);
+SgAsmGenericSection::SgAsmGenericSection(SgAsmGenericFile *ef, SgAsmGenericHeader *hdr) {
+    initializeProperties();
 
-    ROSE_ASSERT(p_name==NULL);
-    p_name = new SgAsmBasicString("");
-    p_name->set_parent(this);
+    ASSERT_not_null(ef);
+    p_file = ef;
+    p_size = 1;
+    p_offset = ef->get_current_size();
 
     /* Add this section to the header's section list */
     if (hdr)
@@ -27,7 +26,8 @@ SgAsmGenericSection::ctor(SgAsmGenericFile *ef, SgAsmGenericHeader *hdr)
 }
 
 /* Destructor must remove section/header link */
-SgAsmGenericSection::~SgAsmGenericSection()
+void
+SgAsmGenericSection::destructorHelper()
 {
     SgAsmGenericFile* ef = get_file();
     SgAsmGenericHeader *hdr = get_header();

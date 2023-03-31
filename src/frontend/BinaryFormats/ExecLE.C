@@ -18,10 +18,10 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // LE File Header
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
-void
-SgAsmLEFileHeader::ctor(SgAsmGenericFile *f, rose_addr_t offset)
-{
+SgAsmLEFileHeader::SgAsmLEFileHeader(SgAsmGenericFile *f, rose_addr_t offset)
+    : SgAsmGenericHeader(f) {
+    initializeProperties();
+
     set_offset(offset);
     set_size(sizeof(LEFileHeader_disk));
     grab_content();
@@ -401,9 +401,9 @@ SgAsmLEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Constructor */
-void
-SgAsmLEPageTableEntry::ctor(ByteOrder::Endianness sex, const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk)
-{
+SgAsmLEPageTableEntry::SgAsmLEPageTableEntry(ByteOrder::Endianness sex, const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk) {
+    initializeProperties();
+
     unsigned pageno_lo = ByteOrder::disk_to_host(sex, disk->pageno_lo);
     unsigned pageno_hi = ByteOrder::disk_to_host(sex, disk->pageno_hi);
     p_pageno      = (pageno_hi << 8) | pageno_lo;
@@ -438,15 +438,13 @@ SgAsmLEPageTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 }
 
 /* Constructor */
-void
-SgAsmLEPageTable::ctor(rose_addr_t offset, rose_addr_t size)
-{
+SgAsmLEPageTable::SgAsmLEPageTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset, rose_addr_t size)
+    : SgAsmGenericSection(fhdr->get_file(), fhdr) {
+    initializeProperties();
+
     set_offset(offset);
     set_size(size);
     grab_content();
-
-    SgAsmLEFileHeader *fhdr = dynamic_cast<SgAsmLEFileHeader*>(get_header());
-    ROSE_ASSERT(fhdr!=NULL);
 
     char section_name[64];
     sprintf(section_name, "%s Page Table", fhdr->format_name());
@@ -505,9 +503,9 @@ SgAsmLEPageTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Constructor */
-void
-SgAsmLESectionTableEntry::ctor(ByteOrder::Endianness sex, const LESectionTableEntry_disk *disk)
-{
+SgAsmLESectionTableEntry::SgAsmLESectionTableEntry(ByteOrder::Endianness sex, const LESectionTableEntry_disk *disk) {
+    initializeProperties();
+
     p_mapped_size      = ByteOrder::disk_to_host(sex, disk->mapped_size);
     p_base_addr        = ByteOrder::disk_to_host(sex, disk->base_addr);
     p_flags            = ByteOrder::disk_to_host(sex, disk->flags);
@@ -574,6 +572,11 @@ SgAsmLESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = 0x%08x\n",          p, w, "res1",             p_res1);
 }
     
+SgAsmLESection::SgAsmLESection(SgAsmLEFileHeader *fhdr)
+    : SgAsmGenericSection(fhdr->get_file(), fhdr) {
+    initializeProperties();
+}
+
 /* Print some debugging info. */
 void
 SgAsmLESection::dump(FILE *f, const char *prefix, ssize_t idx) const
@@ -592,15 +595,13 @@ SgAsmLESection::dump(FILE *f, const char *prefix, ssize_t idx) const
 }
 
 /* Constructor */
-void
-SgAsmLESectionTable::ctor(rose_addr_t offset, rose_addr_t size)
-{
+SgAsmLESectionTable::SgAsmLESectionTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset, rose_addr_t size)
+    : SgAsmGenericSection(fhdr->get_file(), fhdr) {
+    initializeProperties();
+
     set_offset(offset);
     set_size(size);
     grab_content();
-
-    SgAsmLEFileHeader *fhdr = dynamic_cast<SgAsmLEFileHeader*>(get_header());
-    ROSE_ASSERT(fhdr!=NULL);
 
     set_synthesized(true);
     char section_name[64];
@@ -717,15 +718,13 @@ SgAsmLESectionTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Constructor assumes SgAsmGenericSection is zero bytes long so far */
-void
-SgAsmLENameTable::ctor(rose_addr_t offset)
-{
+SgAsmLENameTable::SgAsmLENameTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset)
+    : SgAsmGenericSection(fhdr->get_file(), fhdr) {
+    initializeProperties();
+
     set_offset(offset);
     set_size(0);
     grab_content();
-
-    SgAsmLEFileHeader *fhdr = dynamic_cast<SgAsmLEFileHeader*>(get_header());
-    ROSE_ASSERT(fhdr!=NULL);
 
     set_synthesized(true);
     char section_name[64];
@@ -810,14 +809,18 @@ SgAsmLENameTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Constructor */
-void
-SgAsmLEEntryPoint::ctor(ByteOrder::Endianness sex, const SgAsmLEEntryPoint::LEEntryPoint_disk *disk)
-{
+SgAsmLEEntryPoint::SgAsmLEEntryPoint(ByteOrder::Endianness sex, const SgAsmLEEntryPoint::LEEntryPoint_disk *disk) {
+    initializeProperties();
+    ASSERT_not_null(disk);
     p_flags        = ByteOrder::disk_to_host(sex, disk->flags);
     p_objnum       = ByteOrder::disk_to_host(sex, disk->objnum);
     p_entry_type   = ByteOrder::disk_to_host(sex, disk->entry_type);
     p_entry_offset = ByteOrder::disk_to_host(sex, disk->entry_offset);
     p_res1         = ByteOrder::disk_to_host(sex, disk->res1);
+}
+
+SgAsmLEEntryPoint::SgAsmLEEntryPoint(ByteOrder::Endianness sex, unsigned flags) {
+    initializeProperties();
 }
 
 /* Write the entry information back to the disk at the specified section and section offset, returning the new section offset. */
@@ -875,15 +878,13 @@ SgAsmLEEntryPoint::dump(FILE *f, const char *prefix, ssize_t idx) const
 
 /* Constructor. We don't know the size of the LE Entry table until after reading the first byte. Therefore the SgAsmGenericSection is
  * created with an initial size of zero. */
-void
-SgAsmLEEntryTable::ctor(rose_addr_t offset)
-{
+SgAsmLEEntryTable::SgAsmLEEntryTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset)
+    : SgAsmGenericSection(fhdr->get_file(), fhdr) {
+    initializeProperties();
+
     set_offset(offset);
     set_size(0);
     grab_content();
-
-    SgAsmLEFileHeader *fhdr = dynamic_cast<SgAsmLEFileHeader*>(get_header());
-    ROSE_ASSERT(fhdr!=NULL);
 
     set_synthesized(true);
     char section_name[64];
@@ -961,15 +962,13 @@ SgAsmLEEntryTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Constructor. */
-void
-SgAsmLERelocTable::ctor(rose_addr_t offset)
-{
+SgAsmLERelocTable::SgAsmLERelocTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset)
+    : SgAsmGenericSection(fhdr->get_file(), fhdr) {
+    initializeProperties();
+
     set_offset(offset);
     set_size(0);
     grab_content();
-
-    SgAsmLEFileHeader *fhdr = dynamic_cast<SgAsmLEFileHeader*>(get_header());
-    ROSE_ASSERT(fhdr!=NULL);
 
     char name[64];
     sprintf(name, "%s Relocation Table", fhdr->format_name());

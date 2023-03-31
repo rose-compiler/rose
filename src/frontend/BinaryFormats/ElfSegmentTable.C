@@ -13,43 +13,34 @@
 
 using namespace Rose;
 
+/* Converts 32-bit disk representation to host representation */
 SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(ByteOrder::Endianness sex,
                                                      const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk *disk) {
-     ctor(sex, disk);
+    initializeProperties();
+    ASSERT_not_null(disk);
+    set_index (0);
+    set_type  ((SegmentType)ByteOrder::disk_to_host(sex, disk->p_type));
+    set_offset(ByteOrder::disk_to_host(sex, disk->p_offset));
+    set_vaddr (ByteOrder::disk_to_host(sex, disk->p_vaddr));
+    set_paddr (ByteOrder::disk_to_host(sex, disk->p_paddr));
+    set_filesz(ByteOrder::disk_to_host(sex, disk->p_filesz));
+    set_memsz (ByteOrder::disk_to_host(sex, disk->p_memsz));
+    set_flags ((SegmentFlags)ByteOrder::disk_to_host(sex, disk->p_flags));
+    set_align (ByteOrder::disk_to_host(sex, disk->p_align));
 }
 
 SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(ByteOrder::Endianness sex,
                                                      const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk *disk) {
-    ctor(sex, disk);
-}
-
-/* Converts 32-bit disk representation to host representation */
-void
-SgAsmElfSegmentTableEntry::ctor(ByteOrder::Endianness sex, const struct Elf32SegmentTableEntry_disk *disk) 
-{
-    p_index     = 0;
-    p_type      = (SegmentType)ByteOrder::disk_to_host(sex, disk->p_type);
-    p_offset    = ByteOrder::disk_to_host(sex, disk->p_offset);
-    p_vaddr     = ByteOrder::disk_to_host(sex, disk->p_vaddr);
-    p_paddr     = ByteOrder::disk_to_host(sex, disk->p_paddr);
-    p_filesz    = ByteOrder::disk_to_host(sex, disk->p_filesz);
-    p_memsz     = ByteOrder::disk_to_host(sex, disk->p_memsz);
-    p_flags     = (SegmentFlags)ByteOrder::disk_to_host(sex, disk->p_flags);
-    p_align     = ByteOrder::disk_to_host(sex, disk->p_align);
-}
-
-/* Converts 64-bit disk representation to host representation */
-void
-SgAsmElfSegmentTableEntry::ctor(ByteOrder::Endianness sex, const Elf64SegmentTableEntry_disk *disk) 
-{
-    p_type      = (SegmentType)ByteOrder::disk_to_host(sex, disk->p_type);
-    p_offset    = ByteOrder::disk_to_host(sex, disk->p_offset);
-    p_vaddr     = ByteOrder::disk_to_host(sex, disk->p_vaddr);
-    p_paddr     = ByteOrder::disk_to_host(sex, disk->p_paddr);
-    p_filesz    = ByteOrder::disk_to_host(sex, disk->p_filesz);
-    p_memsz     = ByteOrder::disk_to_host(sex, disk->p_memsz);
-    p_flags     = (SegmentFlags)ByteOrder::disk_to_host(sex, disk->p_flags);
-    p_align     = ByteOrder::disk_to_host(sex, disk->p_align);
+    initializeProperties();
+    ASSERT_not_null(disk);
+    set_type  ((SegmentType)ByteOrder::disk_to_host(sex, disk->p_type));
+    set_offset(ByteOrder::disk_to_host(sex, disk->p_offset));
+    set_vaddr (ByteOrder::disk_to_host(sex, disk->p_vaddr));
+    set_paddr (ByteOrder::disk_to_host(sex, disk->p_paddr));
+    set_filesz(ByteOrder::disk_to_host(sex, disk->p_filesz));
+    set_memsz (ByteOrder::disk_to_host(sex, disk->p_memsz));
+    set_flags ((SegmentFlags)ByteOrder::disk_to_host(sex, disk->p_flags));
+    set_align (ByteOrder::disk_to_host(sex, disk->p_align));
 }
 
 void *
@@ -194,13 +185,12 @@ SgAsmElfSegmentTableEntry::to_string(SegmentFlags val)
 }
 
 /* Non-parsing constructor for an ELF Segment (Program Header) Table */
-void
-SgAsmElfSegmentTable::ctor()
-{
+SgAsmElfSegmentTable::SgAsmElfSegmentTable(SgAsmElfFileHeader *fhdr)
+    : SgAsmGenericSection(fhdr->get_file(), fhdr) {
+    initializeProperties();
+
     /* There can be only one ELF Segment Table */
-    SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
-    ROSE_ASSERT(fhdr);
-    ROSE_ASSERT(fhdr->get_segment_table()==NULL);
+    ASSERT_require(fhdr->get_segment_table() == nullptr);
     fhdr->set_segment_table(this);
     
     set_synthesized(true);                              /* the segment table isn't part of any explicit section */

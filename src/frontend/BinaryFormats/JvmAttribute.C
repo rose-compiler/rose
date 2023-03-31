@@ -49,12 +49,9 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::create_attribute(SgAsmJvmConstantPool* poo
   return nullptr;
 }
 
-SgAsmJvmAttributeTable::SgAsmJvmAttributeTable()
-{
-  ROSE_ASSERT(false && "WARNING: attribute table parent not set");
-}
 SgAsmJvmAttributeTable::SgAsmJvmAttributeTable(SgAsmJvmFileHeader* jfh, SgAsmNode* parent)
 {
+  initializeProperties();
   set_parent(parent);
   set_header(jfh);
 }
@@ -193,6 +190,7 @@ void SgAsmJvmSourceFile::dump(FILE*f, const char* prefix, ssize_t idx) const
 SgAsmJvmException::SgAsmJvmException(SgAsmJvmExceptionTable* table)
 {
   cout << "\nSgAsmJvmException::ctor() ...\n";
+  initializeProperties();
   set_parent(table);
 }
 
@@ -212,7 +210,8 @@ void SgAsmJvmException::dump(FILE*f, const char* prefix, ssize_t idx) const
 
 SgAsmJvmExceptionTable::SgAsmJvmExceptionTable(SgAsmJvmCodeAttribute* parent)
 {
-  set_parent(parent);
+    initializeProperties();
+    set_parent(parent);
 }
 
 SgAsmJvmExceptionTable* SgAsmJvmExceptionTable::parse(SgAsmJvmConstantPool* pool)
@@ -238,6 +237,7 @@ SgAsmJvmExceptionTable* SgAsmJvmExceptionTable::parse(SgAsmJvmConstantPool* pool
 SgAsmJvmInnerClassesEntry::SgAsmJvmInnerClassesEntry(SgAsmJvmInnerClasses* table)
 {
   cout << "\nSgAsmJvmInnerClassesEntry::ctor() ...\n";
+  initializeProperties();
 }
 
 SgAsmJvmInnerClassesEntry* SgAsmJvmInnerClassesEntry::parse(SgAsmJvmConstantPool* pool)
@@ -254,6 +254,7 @@ void SgAsmJvmInnerClassesEntry::dump(FILE*f, const char* prefix, ssize_t idx) co
 SgAsmJvmInnerClasses::SgAsmJvmInnerClasses(SgAsmJvmAttribute* parent)
 {
   cout << "SgAsmJvmInnerClasses::ctor() ...\n";
+  initializeProperties();
 }
 
 SgAsmJvmInnerClasses* SgAsmJvmInnerClasses::parse(SgAsmJvmConstantPool* pool)
@@ -271,6 +272,7 @@ SgAsmJvmInnerClasses* SgAsmJvmInnerClasses::parse(SgAsmJvmConstantPool* pool)
 SgAsmJvmLineNumberTable::SgAsmJvmLineNumberTable(SgAsmJvmAttribute* parent)
 {
   cout << "\nSgAsmJvmLineNumberTable::ctor() ...\n";
+  initializeProperties();
   set_parent(parent);
 }
 
@@ -299,6 +301,7 @@ void SgAsmJvmLineNumberTable::dump(FILE* f, const char* prefix, ssize_t idx) con
 
 SgAsmJvmLineNumberEntry::SgAsmJvmLineNumberEntry(SgAsmJvmLineNumberTable* table)
 {
+  initializeProperties();
   set_parent(table);
 }
 

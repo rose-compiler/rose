@@ -18,18 +18,15 @@ using namespace Rose::BinaryAnalysis;
 
 /* Constructor. The constructor makes @p section the parent of this new import directory, and adds this new import
  *  directory to the import section. */
-void
-SgAsmPEImportDirectory::ctor(SgAsmPEImportSection *section, const std::string &dll_name)
-{
+SgAsmPEImportDirectory::SgAsmPEImportDirectory(SgAsmPEImportSection *section, const std::string &dll_name) {
+    initializeProperties();
+
     ROSE_ASSERT(section!=nullptr); /* needed for parsing */
     section->add_import_directory(this);
     p_time = time(nullptr);
 
     p_dll_name = new SgAsmBasicString(dll_name);
     p_dll_name->set_parent(this);
-
-    p_imports = new SgAsmPEImportItemList;
-    p_imports->set_parent(this);
 }
 
 size_t

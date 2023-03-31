@@ -11,22 +11,24 @@ using namespace Rose;
 
 
 
-SgAsmIntegerValueExpression::SgAsmIntegerValueExpression(uint64_t value, SgAsmType *type)
-    : p_baseNode(NULL) {
+SgAsmIntegerValueExpression::SgAsmIntegerValueExpression(uint64_t value, SgAsmType *type) {
+    initializeProperties();
+
     ASSERT_not_null(type);
     ASSERT_require2(0 == value || type->get_nBits() <= 8*sizeof(value), "ambiguous signed/unsigned interpretation");
     set_type(type);
-    p_bitVector.resize(type->get_nBits()).fromInteger(value);
+    get_bitVector().resize(type->get_nBits()).fromInteger(value);
 }
 
-SgAsmIntegerValueExpression::SgAsmIntegerValueExpression(const Sawyer::Container::BitVector &bv, SgAsmType *type)
-    : p_baseNode(NULL) {
+SgAsmIntegerValueExpression::SgAsmIntegerValueExpression(const Sawyer::Container::BitVector &bv, SgAsmType *type) {
+    initializeProperties();
+
     ASSERT_not_null(type);
     ASSERT_require2(bv.size()==type->get_nBits(),
                     "value width (" + StringUtility::plural(bv.size(), "bits") + ") does not match type width (" +
                     StringUtility::plural(type->get_nBits(), "bits") + ")");
     set_type(type);
-    p_bitVector = bv;
+    set_bitVector(bv);
 }
 
 uint64_t

@@ -12,10 +12,9 @@ using namespace Rose::Diagnostics; // for mlog, INFO, WARN, ERROR, FATAL, etc.
 constexpr bool TRACE_CONSTRUCTION = false;
 
 SgAsmJvmFileHeader::SgAsmJvmFileHeader(SgAsmGenericFile* f)
-  : SgAsmGenericHeader{f}, p_minor_version{0}, p_major_version{0}, p_access_flags{0},
-    p_this_class{0}, p_super_class{0}, p_constant_pool{nullptr}, p_field_table{nullptr},
-    p_method_table{nullptr}, p_attribute_table{nullptr}
-{
+  : SgAsmGenericHeader{f} {
+  initializeProperties();
+
   ASSERT_not_null(f);
   set_parent(f);
 

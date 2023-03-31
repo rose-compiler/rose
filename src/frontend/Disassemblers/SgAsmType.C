@@ -29,8 +29,11 @@ SgAsmType::get_nBytes() const {
 //                                      SgAsmScalarType
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-SgAsmScalarType::SgAsmScalarType(ByteOrder::Endianness sex, size_t nBits)
-    : p_minorOrder(sex), p_majorOrder(ByteOrder::ORDER_UNSPECIFIED), p_majorNBytes(0), p_nBits(nBits) {
+SgAsmScalarType::SgAsmScalarType(ByteOrder::Endianness sex, size_t nBits) {
+    initializeProperties();
+    p_minorOrder = sex;
+    p_nBits = nBits;
+
     check();
     if (p_nBits<=8)
         p_minorOrder = ByteOrder::ORDER_UNSPECIFIED;
@@ -91,7 +94,9 @@ SgAsmScalarType::get_majorNBytes() const {
 
 /** Construct a new integer type. */
 SgAsmIntegerType::SgAsmIntegerType(ByteOrder::Endianness sex, size_t nBits, bool isSigned)
-    : SgAsmScalarType(sex, nBits), p_isSigned(isSigned) {
+    : SgAsmScalarType(sex, nBits) {
+    initializeProperties();
+    p_isSigned = isSigned;
     check();
     if (1==nBits)
         isSigned = false;
@@ -124,7 +129,13 @@ SgAsmIntegerType::get_isSigned() const {
 SgAsmFloatType::SgAsmFloatType(ByteOrder::Endianness sex, size_t nBits,
                                const BitRange &significandBits, const BitRange exponentBits, size_t signBit,
                                uint64_t exponentBias, Flags flags)
-    : SgAsmScalarType(sex, nBits), p_signBitOffset(signBit), p_exponentBias(exponentBias), p_flags(flags.vector()) {
+    : SgAsmScalarType(sex, nBits) {
+    initializeProperties();
+
+    p_signBitOffset = signBit;
+    p_exponentBias = exponentBias;
+    p_flags = flags.vector();
+
     ASSERT_forbid(significandBits.isEmpty());
     ASSERT_forbid(exponentBits.isEmpty());
     p_significandOffset = significandBits.least();
@@ -209,7 +220,10 @@ SgAsmFloatType::implicitBitConvention() const {
 //                                      SgAsmVectorType
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-SgAsmVectorType::SgAsmVectorType(size_t nElmts, SgAsmType *elmtType): p_nElmts(nElmts), p_elmtType(elmtType) {
+SgAsmVectorType::SgAsmVectorType(size_t nElmts, SgAsmType *elmtType) {
+    initializeProperties();
+    p_nElmts = nElmts;
+    p_elmtType = elmtType;
     check();
 }
 
