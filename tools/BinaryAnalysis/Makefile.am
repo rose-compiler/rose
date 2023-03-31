@@ -30,6 +30,13 @@ bat_cfg_LDFLAGS = $(ROSE_RPATHS)
 bat_cfg_LDADD = libbatSupport.a $(ROSE_LIBS)
 tests += bat-cfg.passed
 
+bin_PROGRAMS += bat-cg
+bat_cg_SOURCES = bat-cg.C
+bat_cg_CPPFLAGS = $(ROSE_INCLUDES)
+bat_cg_LDFLAGS = $(ROSE_RPATHS)
+bat_cg_LDADD = libbatSupport.a $(ROSE_LIBS)
+tests += bat-cg.passed
+
 bin_PROGRAMS += bat-check-execution
 bat_check_execution_SOURCES = bat-check-execution.C
 bat_check_execution_CPPFLAGS = $(ROSE_INCLUDES)
@@ -127,6 +134,13 @@ bat_lsb_CPPFLAGS = $(ROSE_INCLUDES)
 bat_lsb_LDFLAGS = $(ROSE_RPATHS)
 bat_lsb_LDADD = libbatSupport.a $(ROSE_LIBS)
 tests += bat-lsb.passed
+
+bin_PROGRAMS += bat-lsd
+bat_lsd_SOURCES = bat-lsd.C
+bat_lsd_CPPFLAGS = $(ROSE_INCLUDES)
+bat_lsd_LDFLAGS = $(ROSE_RPATHS)
+bat_lsd_LDADD = libbatSupport.a $(ROSE_LIBS)
+tests += bat-lsd.passed
 
 bin_PROGRAMS += bat-lsf
 bat_lsf_SOURCES = bat-lsf.C
