@@ -256,6 +256,17 @@ public:
 /** Return the next serial number. */
 size_t serialNumber();
 
+/** May-return status for function callees.
+ *
+ *  Returns true if any callee may-return is positive; false if all callees are negative; indeterminate if any are indeterminate. */
+boost::logic::tribool
+hasAnyCalleeReturn(const PartitionerConstPtr&, const ControlFlowGraph::ConstVertexIterator&);
+
+/** Test whether vertex has at least one call-return edge.
+ *
+ *  Returns true if the specified vertex has at least one E_CALL_RETURN edge. */
+bool
+hasCallReturnEdges(const ControlFlowGraph::ConstVertexIterator&);
 
 
 } // namespace

@@ -6,7 +6,7 @@ static const char *description =
 #include <rose.h>
 #include <batSupport.h>
 
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
@@ -24,14 +24,15 @@ struct Settings {};
 static Sawyer::Message::Facility mlog;
 
 static std::vector<std::string>
-parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings&) {
+parseCommandLine(int argc, char *argv[], const P2::EngineBinary::Ptr &engine, Settings&) {
     using namespace Sawyer::CommandLine;
+    ASSERT_not_null(engine);
 
     Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
     parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{specimen}");
-    parser.doc("Specimens", engine.specimenNameDocumentation());
     parser.errorStream(mlog[FATAL]);
-    parser.with(engine.engineSwitches());
+    parser.with(Rose::CommandLine::genericSwitches());
+    engine->addToParser(parser);
     std::vector<std::string> args = parser.parse(argc, argv).apply().unreachedArgs();
 
     if (args.empty()) {
@@ -51,8 +52,8 @@ main(int argc, char *argv[]) {
     Bat::registerSelfTests();
 
     Settings settings;
-    P2::Engine *engine = P2::Engine::instance();
-    std::vector<std::string> specimen = parseCommandLine(argc, argv, *engine, settings);
+    auto engine = P2::EngineBinary::instance();
+    std::vector<std::string> specimen = parseCommandLine(argc, argv, engine, settings);
     engine->parseContainers(specimen);
 
     SgProject *project = SageInterface::getProject();
@@ -60,6 +61,4 @@ main(int argc, char *argv[]) {
     lineMapper.insertFromDebug(project);
     lineMapper.printSrcToAddr(std::cout);
     lineMapper.printAddrToSrc(std::cout);
-
-    delete engine;
 }

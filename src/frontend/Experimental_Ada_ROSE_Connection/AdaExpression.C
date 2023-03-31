@@ -615,7 +615,7 @@ namespace
                  && resultTypeIsBool(suppl, ctx)
                  );
 
-      if (!res)
+      if (false && !res)
         logWarn() << "(sca: " << isScalarType(suppl, ctx)
                   << " | dsc: " << isDiscreteArrayType(suppl, ctx)
                   << ") & equ: " << equalArgumentTypes(suppl, ctx)

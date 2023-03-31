@@ -11,7 +11,7 @@ static const char *programDescription =
 
 #include <rose.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Sawyer/GraphAlgorithm.h>
 
@@ -23,7 +23,7 @@ int
 main(int argc, char *argv[])
 {
     ROSE_INITIALIZE;
-    P2::Engine *engine = P2::Engine::instance();
+    P2::Engine::Ptr engine = P2::EngineBinary::instance();
     P2::Engine::Settings &settings = engine->settings();
     settings.partitioner.doingPostAnalysis = false;      // not needed for this tool, and faster without
     settings.partitioner.namingSyscalls = false;         // for consistent results w.r.t. the answer file since the system...
@@ -73,6 +73,4 @@ main(int argc, char *argv[])
         }
         //! [results]
     }
-
-    delete engine;
 }

@@ -6,7 +6,6 @@ static const char *description =
 #include <batSupport.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/PointerDetection.h>
 #include <Rose/CommandLine.h>
@@ -31,7 +30,7 @@ struct Settings {
 
 // Parses the command-line and returns the name of the input file if any (the ROSE binary state).
 static boost::filesystem::path
-parseCommandLine(int argc, char *argv[], P2::Engine&, Settings &settings) {
+parseCommandLine(int argc, char *argv[], Settings &settings) {
     using namespace Sawyer::CommandLine;
 
     SwitchGroup gen = Rose::CommandLine::genericSwitches();
@@ -118,9 +117,8 @@ main(int argc, char *argv[]) {
 
     // Parse command-line
     Settings settings;
-    P2::Engine *engine = P2::Engine::instance();
-    boost::filesystem::path inputFileName = parseCommandLine(argc, argv, *engine, settings);
-    P2::Partitioner::Ptr partitioner = engine->loadPartitioner(inputFileName, settings.stateFormat);
+    boost::filesystem::path inputFileName = parseCommandLine(argc, argv, settings);
+    auto partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, settings.stateFormat);
 
     // Select functions to analyze
     std::vector<P2::Function::Ptr> selectedFunctions;
@@ -147,6 +145,4 @@ main(int argc, char *argv[]) {
                                ++progress;
                                processFunction(partitioner, function);
                            });
-
-    delete engine;
 }

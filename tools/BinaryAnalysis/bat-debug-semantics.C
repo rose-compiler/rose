@@ -15,7 +15,7 @@ static const char *description =
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/CommandLine.h>
 
@@ -370,10 +370,10 @@ main(int argc, char *argv[]) {
     MemoryMap::Ptr memory = parseBytes(args.begin()+1, args.end());
 
     // Create the decoder and semantics
-    P2::Engine *engine = P2::Engine::instance();
+    P2::Engine::Ptr engine = P2::EngineBinary::instance();
     engine->settings().disassembler.isaName = isa;
     engine->memoryMap(memory);
-    P2::Partitioner::Ptr partitioner = engine->createTunedPartitioner();
+    P2::Partitioner::Ptr partitioner = engine->createPartitioner();
     auto innerOps = makeRiscOperators(settings, partitioner);
     auto ops = S2::TraceSemantics::RiscOperators::instance(innerOps);
     S2::BaseSemantics::Dispatcher::Ptr cpu = partitioner->newDispatcher(ops);
@@ -389,6 +389,4 @@ main(int argc, char *argv[]) {
         }
         va += insn->get_size();
     }
-
-    delete engine;
 }

@@ -1189,6 +1189,7 @@ namespace
     return mkScopeStmt<SgFunctionParameterScope>(&mkFileInfo());
   }
 
+  inline
   void checkParamTypes(const SgInitializedNamePtrList& parms, const SgTypePtrList& types)
   {
     ADA_ASSERT(parms.size() == types.size());

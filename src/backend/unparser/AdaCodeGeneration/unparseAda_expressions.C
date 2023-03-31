@@ -115,7 +115,7 @@ namespace
     void handle(const SgNode& n)                   { SG_UNEXPECTED_NODE(n); }
     void handle(const SgAdaPackageSpecDecl& n)     { res = n.get_name(); }
     void handle(const SgAdaGenericInstanceDecl& n) { res = si::Ada::convertRoseOperatorNameToAdaName(n.get_name()); }
-    void handle(const SgFunctionDeclaration& n)    { res = n.get_name(); }
+    void handle(const SgFunctionDeclaration& n)    { res = si::Ada::convertRoseOperatorNameToAdaName(n.get_name()); }
 
     void handle(const SgAdaGenericDecl& n)         { res = nameOfUnitRef(n.get_declaration()); }
   };

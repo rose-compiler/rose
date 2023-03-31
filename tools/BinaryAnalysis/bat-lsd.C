@@ -6,7 +6,6 @@ static const char *description =
 
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
@@ -75,9 +74,8 @@ main(int argc, char *argv[]) {
     Bat::registerSelfTests();
 
     Settings settings;
-    P2::Engine *engine = P2::Engine::instance();
     boost::filesystem::path inputFileName = parseCommandLine(argc, argv, settings);
-    P2::Partitioner::Ptr partitioner = engine->loadPartitioner(inputFileName, format);
+    auto partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, format);
 
     P2::AddressUsers allUsers = partitioner->aum().overlapping(partitioner->aum().hull());
     for (const P2::AddressUser &user: allUsers.addressUsers()) {
@@ -116,5 +114,4 @@ main(int argc, char *argv[]) {
             }
         }
     }
-    delete engine;
 }

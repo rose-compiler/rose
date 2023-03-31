@@ -176,6 +176,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/Partitioner2/DataBlock.C						\
 	BinaryAnalysis/Partitioner2/DataFlow.C						\
 	BinaryAnalysis/Partitioner2/Engine.C						\
+	BinaryAnalysis/Partitioner2/EngineBinary.C					\
 	BinaryAnalysis/Partitioner2/EngineJvm.C						\
 	BinaryAnalysis/Partitioner2/Exception.C						\
 	BinaryAnalysis/Partitioner2/Function.C						\

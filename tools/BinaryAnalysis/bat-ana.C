@@ -49,21 +49,10 @@ struct Settings {
     Settings(): outputFileName("-"), stateFormat(SerialIo::BINARY), doRemap(false), skipOutput(false) {}
 };
 
-// Parse command-line and return arguments that represent the specimen.
-std::vector<std::string>
-parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings) {
+// Build a command line parser without running it
+Sawyer::CommandLine::Parser
+buildSwitchParser(Settings &settings) {
     using namespace Sawyer::CommandLine;
-
-    SwitchGroup output("Output switches");
-    output.insert(Switch("output", 'o')
-                  .argument("filename", anyParser(settings.outputFileName))
-                  .doc("Send binary state information to the specified file instead of standard output. The output becomes "
-                       "the input for subsequent binary analysis tools. This tool will refuse to write binary data to standard "
-                       "output if it appears to be the terminal; if you really need that, pipe this tool's output through "
-                       "@man{cat}{1}.  Specifying the output name \"-\" (a single hyphen) is the explicit way of saying that "
-                       "output should be sent to standard output."));
-
-    output.insert(Bat::stateFileFormatSwitch(settings.stateFormat));
 
     SwitchGroup tool("Tool specific switches");
     tool.name("tool");
@@ -78,31 +67,25 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
     CommandLine::insertBooleanSwitch(tool, "skip-output", settings.skipOutput,
                                      "Skip the output step even if @s{output} is specified. This is mainly for performance testing.");
 
+    SwitchGroup output("Output switches");
+    output.insert(Switch("output", 'o')
+                  .argument("filename", anyParser(settings.outputFileName))
+                  .doc("Send binary state information to the specified file instead of standard output. The output becomes "
+                       "the input for subsequent binary analysis tools. This tool will refuse to write binary data to standard "
+                       "output if it appears to be the terminal; if you really need that, pipe this tool's output through "
+                       "@man{cat}{1}.  Specifying the output name \"-\" (a single hyphen) is the explicit way of saying that "
+                       "output should be sent to standard output."));
+
+    output.insert(Bat::stateFileFormatSwitch(settings.stateFormat));
+
     Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);
     parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{specimen}");
-    parser.doc("Specimens", engine.specimenNameDocumentation());
     parser.errorStream(mlog[FATAL]);
-    parser.with(engine.engineSwitches());
-    parser.with(engine.loaderSwitches());
-    parser.with(engine.disassemblerSwitches());
-    parser.with(engine.partitionerSwitches());
-    parser.with(output);
+    parser.with(Rose::CommandLine::genericSwitches());
     parser.with(tool);
+    parser.with(output);
 
-    std::vector<std::string> specimen = parser.parse(argc, argv).apply().unreachedArgs();
-
-    // Check some informational switches before we die for lack of specimen.
-    if (engine.settings().disassembler.isaName == "list") {
-        for (const std::string &name: Disassembler::isaNames())
-	    std::cout <<name <<"\n";
-        exit(0);
-    }
-
-    if (specimen.empty()) {
-        mlog[FATAL] <<"no binary specimen specified; see --help\n";
-        exit(1);
-    }
-    return specimen;
+    return parser;
 }
 
 // Rewrites the global CFG as the program is disassembled.
@@ -162,14 +145,31 @@ main(int argc, char *argv[]) {
     Bat::checkRoseVersionNumber(MINIMUM_ROSE_LIBRARY_VERSION, mlog[FATAL]);
     Bat::registerSelfTests();
 
+    // Build command line parser (without any knowledge of engine settings), choose the appropriate partitioner engine type, and
+    // parse and apply the command-line to the settings, engine, etc. using the appropriately modified command-line parser.
     Settings settings;
-    P2::Engine *engine = P2::Engine::instance();
-    std::vector<std::string> specimen = parseCommandLine(argc, argv, *engine, settings);
+    auto parser = buildSwitchParser(settings);
+    P2::Engine::Ptr engine = P2::Engine::forge(argc, argv, parser/*in,out*/);
+    mlog[INFO] <<"using the " <<engine->name() <<" partitioning engine\n";
+    std::vector<std::string> specimen = parser.parse(argc, argv).apply().unreachedArgs();
+
+    // Check some informational switches before we die for lack of specimen.
+    if (engine->settings().disassembler.isaName == "list") {
+        for (const std::string &name: Disassembler::isaNames())
+            std::cout <<name <<"\n";
+        exit(0);
+    }
+    if (specimen.empty()) {
+        mlog[FATAL] <<"no binary specimen specified; see --help\n";
+        exit(1);
+    }
+
     Bat::checkRbaOutput(settings.outputFileName, mlog);
 
     MemoryMap::Ptr map = engine->loadSpecimens(specimen);
     map->dump(mlog[INFO]);
 
+    //TODO: should be skipped for JVM (throw error if jvm)
     if (settings.doRemap) {
         P2::Engine::Settings settings = engine->settings();
         settings.partitioner.doingPostAnalysis = false;
@@ -203,8 +203,6 @@ main(int argc, char *argv[]) {
 
     if (!settings.skipOutput) {
         partitioner->basicBlockDropSemantics();
-        engine->savePartitioner(partitioner, settings.outputFileName, settings.stateFormat);
+        partitioner->saveAsRbaFile(settings.outputFileName, settings.stateFormat);
     }
-
-    delete engine;
 }

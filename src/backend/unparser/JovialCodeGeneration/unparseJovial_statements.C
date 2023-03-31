@@ -218,6 +218,13 @@ UnparseJovial::unparseDirectiveStmt(SgStatement* stmt, SgUnparse_Info& info)
               curprint_indented("!ORDER;\n", info);
               break;
            }
+        case SgJovialDirectiveStatement::e_always:
+           {
+              curprint_indented("!ALWAYS'STORE ", info);
+              curprint(content);
+              curprint(";\n");
+              break;
+           }
         default:
            {
               cout << "Warning: SgJovialDirectiveStmt directive type not handled is "

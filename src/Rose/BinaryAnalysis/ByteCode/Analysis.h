@@ -11,11 +11,14 @@ namespace BinaryAnalysis {
 namespace ByteCode {
 
 using BasicBlockPtr = Partitioner2::BasicBlockPtr;
+using PartitionerPtr = Partitioner2::PartitionerPtr;
 
 class Code {
 public:
   virtual const uint8_t* bytes() const = 0;
   virtual const size_t size() const = 0;
+  virtual const rose_addr_t offset() const = 0;
+
 protected:
   Code() {}
 };
@@ -72,7 +75,7 @@ public:
   virtual const std::vector<const Attribute*> &attributes() const = 0;
   virtual const std::vector<const Interface*> &interfaces() const = 0;
   virtual const std::vector<std::string> &strings() = 0;
-  virtual void partition();
+  virtual void partition(const PartitionerPtr &partitioner) const;
   virtual void digraph();
 protected:
   Class() {}

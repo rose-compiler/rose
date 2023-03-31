@@ -11,6 +11,7 @@
 
 #include <Rose/BinaryAnalysis/InstructionProvider.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/SerialIo.h>
 #include <Rose/BinaryAnalysis/SourceLocations.h>
 #include <Rose/BinaryAnalysis/Unparser/Settings.h>
 #include <Rose/Progress.h>
@@ -338,6 +339,7 @@ private:
     Configuration config_;                              // configuration information about functions, blocks, etc.
     InstructionProvider::Ptr instructionProvider_;      // cache for all disassembled instructions
     MemoryMap::Ptr memoryMap_;                          // description of memory, especially insns and non-writable
+    SgAsmInterpretation *interpretation_;               // Interpretation corresponding to the memory map
     ControlFlowGraph cfg_;                              // basic blocks that will become part of the ROSE AST
     CfgVertexIndex vertexIndex_;                        // Vertex-by-address index for the CFG
     AddressUsageMap aum_;                               // How addresses are used for each address represented by the CFG
@@ -410,6 +412,8 @@ private:
         // s & config_;                         -- FIXME[Robb P Matzke 2016-11-08]
         s & BOOST_SERIALIZATION_NVP(instructionProvider_);
         s & BOOST_SERIALIZATION_NVP(memoryMap_);
+        if (version >= 3)
+            s & BOOST_SERIALIZATION_NVP(interpretation_);
         s & BOOST_SERIALIZATION_NVP(cfg_);
         // s & vertexIndex_;                    -- initialized by rebuildVertexIndices
         s & BOOST_SERIALIZATION_NVP(aum_);
@@ -473,12 +477,20 @@ public:
      *  partitioner by value or reference. */
     static Ptr instance();
 
-
     /** Construct a partitioner.
      *
      *  The partitioner must be provided with a disassembler, which also determines the specimen's target architecture, and a
      *  memory map that represents a (partially) loaded instance of the specimen (i.e., a process). */
     static Ptr instance(const Disassembler::BasePtr&, const MemoryMap::Ptr&);
+
+    /** Construct a partitioner by loading it and an AST from a file.
+     *
+     *  The specified RBA file is opened and read to create a new @ref Partitioner object and associated AST. The @ref
+     *  partition function also understands how to open RBA files. */
+    static PartitionerPtr instanceFromRbaFile(const boost::filesystem::path&, SerialIo::Format = SerialIo::BINARY);
+
+    /** Save this partitioner as an RBA file. */
+    void saveAsRbaFile(const boost::filesystem::path &name, SerialIo::Format fmt) const;
 
 #ifdef ROSE_PARTITIONER_MOVE
     /** Move constructor. */
@@ -531,6 +543,13 @@ public:
      *
      *  Thread safety: Not thread safe. */
     MemoryMap::Ptr memoryMap() const;
+
+    /** Property: Interpretation corresponding to the memory map.
+     *
+     * @{ */
+    SgAsmInterpretation *interpretation() const;
+    void interpretation(SgAsmInterpretation*);
+    /** @} */
 
     /** Returns true if address is executable.
      *
@@ -2591,7 +2610,7 @@ private:
 } // namespace
 
 // Class versions must be at global scope
-BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::Partitioner, 2);
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::Partitioner, 3);
 
 #endif
 #endif

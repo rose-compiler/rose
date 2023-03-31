@@ -9,6 +9,8 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Unparser {
 
+std::string unparseJvmMnemonic(SgAsmJvmInstruction*);
+
 /** %Settings specific to the JVM unparser. */
 struct JvmSettings: public Settings {};
 
