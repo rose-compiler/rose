@@ -107,7 +107,6 @@ namespace // anonymous namespace for auxiliary functions
       ++index; ++strLen;
     }
 
-    // printf ("padding bytes value = %" PRIu32 "\n", res);
     return res;
   }
 
@@ -2118,16 +2117,23 @@ parseTinyHeader(std::uint8_t header)
 }
 
 SgAsmBlock*
-disassemble(SgAsmCilMethodDef* m, MethodHeader mh, std::vector<std::uint8_t>& buf, const Rose::BinaryAnalysis::Disassembler::Base::Ptr& disasm) // blame pirkelbauer
+disassemble(rose_addr_t base_va, SgAsmCilMethodDef* m, MethodHeader mh,
+            std::vector<std::uint8_t>& buf, const Rose::BinaryAnalysis::Disassembler::Base::Ptr& disasm)
 {
-  const std::size_t              sz = buf.size();
-  rose_addr_t                    addr = 0;
-  std::uint8_t*                  b = buf.data();
+  rose_addr_t        addr = 0;
+  const std::size_t  sz = buf.size();
   std::vector<SgAsmInstruction*> lst;
+
+  using Rose::BinaryAnalysis::MemoryMap;
+
+  MemoryMap::Ptr map = MemoryMap::instance();
+  map->insert(AddressInterval::baseSize(base_va, sz),
+              MemoryMap::Segment::staticInstance(buf.data(), sz,
+                                                 MemoryMap::READABLE|MemoryMap::EXECUTABLE, "CIL code segment"));
 
   while (addr < sz)
   {
-    SgAsmInstruction* instr = disasm->disassembleOne(b, 0, sz, addr);
+    SgAsmInstruction* instr = disasm->disassembleOne(map, base_va + addr);
     ASSERT_not_null(instr);
 
     lst.push_back(instr);
@@ -2161,7 +2167,7 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
   {
     ASSERT_not_null(m);
 
-    std::uint32_t  rva = m->get_RVA();
+    rose_addr_t rva = static_cast<std::uint32_t>(m->get_RVA());
     
     if (rva == 0) continue;
       
@@ -2179,7 +2185,7 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
     m->set_initLocals(mh.initLocals());
     
     // parse code
-    std::uint32_t  codeRVA = rva + mh.headerSize();
+    rose_addr_t    codeRVA = rva + mh.headerSize();
     std::uint32_t  codeLen = mh.codeSize();
 
     std::vector<std::uint8_t> code(codeLen, 0);
@@ -2193,11 +2199,11 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
       namespace rb = Rose::BinaryAnalysis;
 
       case CIL_CODE:
-        blk = disassemble(m, mh, code, rb::Disassembler::Cil::instance());
+        blk = disassemble(base_va, m, mh, code, rb::Disassembler::Cil::instance());
         break;
 
       case NATIVE_CODE:
-        blk = disassemble(m, mh, code, rb::Disassembler::X86::instance(4 /* word size */));
+        blk = disassemble(base_va, m, mh, code, rb::Disassembler::X86::instance(4 /* word size */));
         break;
 
       case RUNTIME_CODE:
