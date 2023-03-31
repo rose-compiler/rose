@@ -1,0 +1,1 @@
+class SgAsmDwarfEntryPoint: public SgAsmDwarfConstruct {};

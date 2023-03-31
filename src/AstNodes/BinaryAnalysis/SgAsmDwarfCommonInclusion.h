@@ -1,0 +1,1 @@
+class SgAsmDwarfCommonInclusion: public SgAsmDwarfConstruct {};

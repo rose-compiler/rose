@@ -1,0 +1,15 @@
+/** Base class for statement-like subclasses.
+ *
+ *  This is a base class for those binary analysis entities, such as instructions and basic blocks, that have a starting
+ *  address in the virtual address space. */
+class SgAsmStatement: public SgAsmNode {
+    /** Property: Starting virtual address.
+     *
+     *  Virtual address of first byte of instruction, block, or whatever, depending on subclass. */
+    [[using Rosebud: rosetta, ctor_arg]]
+    rose_addr_t address = 0;
+
+    /** Property: Commentary. */
+    [[using Rosebud: rosetta]]
+    std::string comment;
+};

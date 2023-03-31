@@ -1,0 +1,1 @@
+class SgAsmDwarfCatchBlock: public SgAsmDwarfConstruct {};

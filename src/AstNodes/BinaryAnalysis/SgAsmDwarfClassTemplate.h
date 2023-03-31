@@ -1,0 +1,1 @@
+class SgAsmDwarfClassTemplate: public SgAsmDwarfConstruct {};

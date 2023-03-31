@@ -1,0 +1,1 @@
+class SgAsmDwarfEnumerator: public SgAsmDwarfConstruct {};

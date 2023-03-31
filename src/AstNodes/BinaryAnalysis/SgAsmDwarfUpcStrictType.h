@@ -1,0 +1,1 @@
+class SgAsmDwarfUpcStrictType: public SgAsmDwarfConstruct {};

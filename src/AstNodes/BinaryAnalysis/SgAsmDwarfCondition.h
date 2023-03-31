@@ -1,0 +1,1 @@
+class SgAsmDwarfCondition: public SgAsmDwarfConstruct {};

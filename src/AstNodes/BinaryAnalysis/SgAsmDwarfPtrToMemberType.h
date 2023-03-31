@@ -1,0 +1,1 @@
+class SgAsmDwarfPtrToMemberType: public SgAsmDwarfConstruct {};

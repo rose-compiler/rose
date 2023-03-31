@@ -1,0 +1,1 @@
+class SgAsmDwarfFriend: public SgAsmDwarfConstruct {};

@@ -1,0 +1,1 @@
+class SgAsmDwarfSubrangeType: public SgAsmDwarfConstruct {};

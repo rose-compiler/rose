@@ -1,0 +1,1 @@
+class SgAsmDwarfVariantPart: public SgAsmDwarfConstruct {};
