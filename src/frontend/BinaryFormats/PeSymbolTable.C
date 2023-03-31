@@ -19,9 +19,9 @@ using namespace Rose::Diagnostics;
  * section and table index. The symbol occupies the specified table slot and st_num_aux_entries additional slots.
  *
  * See http://www.skyfree.org/linux/references/coff.pdf */
-void
-SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAsmGenericSection *strtab, size_t idx)
-{
+SgAsmCoffSymbol::SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAsmGenericSection *strtab, size_t idx) {
+    initializeProperties();
+
     ASSERT_not_null(fhdr);
     ASSERT_not_null(symtab);
     ASSERT_not_null(strtab);
@@ -341,16 +341,12 @@ SgAsmCoffSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const
     hexdump(f, 0, std::string(p)+"aux_data at ", p_aux_data);
 }
 
-/* Constructor */
-void
-SgAsmCoffSymbolTable::ctor()
-{
+SgAsmCoffSymbolTable::SgAsmCoffSymbolTable(SgAsmPEFileHeader *fhdr)
+    : SgAsmGenericSection(fhdr->get_file(), fhdr) {
+    initializeProperties();
     set_synthesized(true);
     set_name(new SgAsmBasicString("COFF Symbols"));
     set_purpose(SP_SYMTAB);
-
-    p_symbols = new SgAsmCoffSymbolList;
-    p_symbols->set_parent(this);
 }
 
 SgAsmCoffSymbolTable*

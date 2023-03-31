@@ -12,6 +12,8 @@ SUBDIRS = util Rosebud ROSETTA roseSupport Rose frontend midend backend \
           3rdPartyLibraries roseIndependentSupport roseExtensions
 endif
 
+SUBDIRS += generated
+
 # This lists a large number of directories.  If "make install"
 # is run then we only need a single directory
 AM_CPPFLAGS = -Winvalid-pch $(ROSE_INCLUDES)
@@ -188,6 +190,7 @@ libroseLibraries = \
    $(top_builddir)/src/3rdPartyLibraries/MSTL/libmstl.la \
    $(top_builddir)/src/backend/libbackend.la \
    $(top_builddir)/src/frontend/SageIII/libsage3.la \
+   $(top_builddir)/src/generated/libroseGenerated.la \
    $(libroseCxxlibraries) \
    $(libroseOpenFortranParserlibraries) \
    $(libroseExperimentalFlangParserlibraries) \

@@ -1,0 +1,19 @@
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Implementation for SgAsmCoffStrtab                -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#include <sage3basic.h>
+
+SgAsmCoffStrtab::~SgAsmCoffStrtab() {
+    destructorHelper();
+}
+
+SgAsmCoffStrtab::SgAsmCoffStrtab() {}
+
+void
+SgAsmCoffStrtab::initializeProperties() {
+}
+
+#endif // ROSE_ENABLE_BINARY_ANALYSIS

@@ -30,32 +30,22 @@ SgAsmGenericHeader::get_word_size() const
    }
 
 
-void
-SgAsmGenericHeader::ctor()
-{
+SgAsmGenericHeader::SgAsmGenericHeader(SgAsmGenericFile *ef)
+    : SgAsmGenericSection(ef, NULL) {
+    initializeProperties();
+
     set_synthesized(true);
     set_purpose(SP_HEADER);
 
     /* The bidirectional link between file and header */
+    ASSERT_not_null(get_file());
     get_file()->add_header(this);
-
-    /* Create child IR nodes and set their parent (initialized to null in real constructor) */
-    ROSE_ASSERT(p_dlls == NULL);
-    p_dlls    = new SgAsmGenericDLLList;
-    p_dlls->set_parent(this);
-
-    ROSE_ASSERT(p_exec_format == NULL);
-    p_exec_format = new SgAsmGenericFormat;
-    p_exec_format->set_parent(this);
-
-    ROSE_ASSERT(p_sections == NULL);
-    p_sections = new SgAsmGenericSectionList;
-    p_sections->set_parent(this);
 }
 
 /* Destructor must remove header/file link. Children in the AST have already been deleted when called from
  * SageInterface::deleteAST() */
-SgAsmGenericHeader::~SgAsmGenericHeader() 
+void
+SgAsmGenericHeader::destructorHelper()
 {
     /* Deletion of section children should have emptied the list of header-to-section links */
     ROSE_ASSERT(p_sections->get_sections().empty() == true);

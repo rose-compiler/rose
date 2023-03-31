@@ -29,14 +29,13 @@
  * SgAsmElfSymverEntry
  *======================================================================================================================== */
 
-void
-SgAsmElfSymverEntry::ctor(SgAsmElfSymverSection *symver)
-{
-    ROSE_ASSERT(NULL != symver);
-    
-    ROSE_ASSERT(symver->get_entries()!=NULL);
+SgAsmElfSymverEntry::SgAsmElfSymverEntry(SgAsmElfSymverSection *symver) {
+    initializeProperties();
+
+    ASSERT_not_null(symver);
+    ASSERT_not_null(symver->get_entries());
     symver->get_entries()->get_entries().push_back(this);
-    ROSE_ASSERT(symver->get_entries()->get_entries().size()>0);
+    ASSERT_require(symver->get_entries()->get_entries().size() > 0);
     set_parent(symver->get_entries());
 
     set_value(0);
@@ -62,11 +61,9 @@ SgAsmElfSymverEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 }
 
 /* Non-parsing constructor */
-void
-SgAsmElfSymverSection::ctor()
-{
-    p_entries = new SgAsmElfSymverEntryList;
-    p_entries->set_parent(this);
+SgAsmElfSymverSection::SgAsmElfSymverSection(SgAsmElfFileHeader *fhdr)
+    : SgAsmElfSection(fhdr) {
+    initializeProperties();
 }
 
 SgAsmElfSymverSection *
@@ -159,18 +156,18 @@ SgAsmElfSymverSection::dump(FILE *f, const char *prefix, ssize_t idx) const
  * SgAsmElfSymverDefinedAux, each pointing to a name string
  *======================================================================================================================== */
 
-void
-SgAsmElfSymverDefinedAux::ctor(SgAsmElfSymverDefinedEntry* entry, SgAsmElfSymverDefinedSection* symver)
-{
+SgAsmElfSymverDefinedAux::SgAsmElfSymverDefinedAux(SgAsmElfSymverDefinedEntry *entry, SgAsmElfSymverDefinedSection *symver) {
+    initializeProperties();
+
     SgAsmElfStringSection *strsec = isSgAsmElfStringSection(symver->get_linked_section());
-    ROSE_ASSERT(strsec!=NULL);
+    ASSERT_not_null(strsec);
 
     SgAsmStoredString *name = new SgAsmStoredString(strsec->get_strtab(), 0);
     set_name(name);
     name->set_parent(this);
   
-    ROSE_ASSERT(NULL != entry);
-    ROSE_ASSERT(NULL != entry->get_entries());
+    ASSERT_not_null(entry);
+    ASSERT_not_null(entry->get_entries());
     
     entry->get_entries()->get_entries().push_back(this);
     set_parent(entry->get_entries());
@@ -206,22 +203,14 @@ SgAsmElfSymverDefinedAux::encode(ByteOrder::Endianness sex, ElfSymverDefinedAux_
     return disk;
 }
 
-void
-SgAsmElfSymverDefinedEntry::ctor(SgAsmElfSymverDefinedSection *section)
-{
-    ROSE_ASSERT(NULL != section);
-  
-    ROSE_ASSERT(NULL != section->get_entries());
+SgAsmElfSymverDefinedEntry::SgAsmElfSymverDefinedEntry(SgAsmElfSymverDefinedSection *section) {
+    initializeProperties();
+
+    ASSERT_not_null(section);
+    ASSERT_not_null(section->get_entries());
     section->get_entries()->get_entries().push_back(this);
-
-    ROSE_ASSERT(section->get_entries()->get_entries().size()>0);
+    ASSERT_require(section->get_entries()->get_entries().size() > 0);
     set_parent(section->get_entries());
-
-    p_entries = new SgAsmElfSymverDefinedAuxList;
-    p_version  = 0;
-    p_flags  = 0;
-    p_index = 0;
-    p_hash  = 0;
 }
 
 void
@@ -265,14 +254,12 @@ SgAsmElfSymverDefinedEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 }
 
 /* Non-parsing constructor */
-void
-SgAsmElfSymverDefinedSection::ctor(SgAsmElfStringSection *strings)
-{
-    p_entries = new SgAsmElfSymverDefinedEntryList;
-    p_entries->set_parent(this);
-  
-    ROSE_ASSERT(NULL != strings);
-    p_linked_section = strings;
+SgAsmElfSymverDefinedSection::SgAsmElfSymverDefinedSection(SgAsmElfFileHeader *fhdr, SgAsmElfStringSection *strings)
+    : SgAsmElfSection(fhdr) {
+    initializeProperties();
+
+    ASSERT_not_null(strings);
+    set_linked_section(strings);
 }
 
 SgAsmElfSymverDefinedSection *
@@ -442,23 +429,19 @@ SgAsmElfSymverDefinedSection::dump(FILE *f, const char *prefix, ssize_t idx) con
  * SgAsmElfSymverNeededAux.
  *======================================================================================================================== */
 
-void
-SgAsmElfSymverNeededAux::ctor(SgAsmElfSymverNeededEntry* entry, SgAsmElfSymverNeededSection* symver)
-{
+SgAsmElfSymverNeededAux::SgAsmElfSymverNeededAux(SgAsmElfSymverNeededEntry* entry, SgAsmElfSymverNeededSection* symver) {
+    initializeProperties();
+
     SgAsmElfStringSection *strsec = isSgAsmElfStringSection(symver->get_linked_section());
-    ROSE_ASSERT(NULL != strsec);
+    ASSERT_not_null(strsec);
 
-    p_name = new SgAsmStoredString(strsec->get_strtab(), 0);
-    p_name->set_parent(this);
+    set_name(new SgAsmStoredString(strsec->get_strtab(), 0));
+    get_name()->set_parent(this);
 
-    ROSE_ASSERT(NULL != entry);
-    ROSE_ASSERT(NULL != entry->get_entries());
+    ASSERT_not_null(entry);
+    ASSERT_not_null(entry->get_entries());
     entry->get_entries()->get_entries().push_back(this);
     set_parent(entry->get_entries());
-
-    p_flags  = 0;
-    p_other = 0;
-    p_hash  = 0;
 }
 
 void
@@ -501,27 +484,21 @@ SgAsmElfSymverNeededAux::encode(ByteOrder::Endianness sex, ElfSymverNeededAux_di
     return disk;
 }
 
-void
-SgAsmElfSymverNeededEntry::ctor(SgAsmElfSymverNeededSection *section)
-{
-    ROSE_ASSERT(NULL != section);  
-    ROSE_ASSERT(NULL != section->get_entries());
-    section->get_entries()->get_entries().push_back(this);
+SgAsmElfSymverNeededEntry::SgAsmElfSymverNeededEntry(SgAsmElfSymverNeededSection *section) {
+    initializeProperties();
 
-    ROSE_ASSERT(section->get_entries()->get_entries().size()>0);
+    ASSERT_not_null(section);
+    ASSERT_not_null(section->get_entries());
+    section->get_entries()->get_entries().push_back(this);
+    ASSERT_require(section->get_entries()->get_entries().size() > 0);
     set_parent(section->get_entries());
 
     SgAsmElfStringSection *strsec = isSgAsmElfStringSection(section->get_linked_section());
-    ROSE_ASSERT(NULL != strsec);
+    ASSERT_not_null(strsec);
 
     SgAsmStoredString *name = new SgAsmStoredString(strsec->get_strtab(), 0);
     set_file_name(name);
     name->set_parent(this);
-
-    p_entries = new SgAsmElfSymverNeededAuxList;
-    p_entries->set_parent(this);
-
-    p_version  = 0;
 }
 
 void
@@ -576,14 +553,12 @@ SgAsmElfSymverNeededEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 }
 
 /* Non-parsing constructor */
-void
-SgAsmElfSymverNeededSection::ctor(SgAsmElfStringSection *strings)
-{
-    p_entries = new SgAsmElfSymverNeededEntryList;
-    p_entries->set_parent(this);
-  
-    ROSE_ASSERT(NULL != strings);
-    p_linked_section = strings;
+SgAsmElfSymverNeededSection::SgAsmElfSymverNeededSection(SgAsmElfFileHeader *fhdr, SgAsmElfStringSection *strings)
+    : SgAsmElfSection(fhdr) {
+    initializeProperties();
+
+    ASSERT_not_null(strings);
+    set_linked_section(strings);
 }
 
 SgAsmElfSymverNeededSection *

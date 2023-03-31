@@ -19,26 +19,6 @@
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
 
-void
-SgAsmGenericFile::ctor()
-{
-    ASSERT_not_null(this);
-
-    ASSERT_require(p_fd == -1);
-    ASSERT_require(p_holes == nullptr);
-    ASSERT_require(p_truncate_zeros == false);
-
-    ASSERT_require(p_headers == nullptr);
-    p_headers  = new SgAsmGenericHeaderList();
-    ASSERT_not_null(p_headers);
-    p_headers->set_parent(this);
-
-    ASSERT_require(p_holes == nullptr);
-    p_holes  = new SgAsmGenericSectionList();
-    ASSERT_not_null(p_holes);
-    p_holes->set_parent(this);
-}
-
 SgAsmGenericFile *
 SgAsmGenericFile::parse(std::string fileName)
 {
@@ -78,8 +58,8 @@ SgAsmGenericFile::parse(std::string fileName)
     return this;
 }
 
-SgAsmGenericFile::~SgAsmGenericFile()
-{
+void
+SgAsmGenericFile::destructorHelper() {
     /* AST child nodes have already been deleted if we're called from SageInterface::deleteAST() */
 
     /* Unmap and close */

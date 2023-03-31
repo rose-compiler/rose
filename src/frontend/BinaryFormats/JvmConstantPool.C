@@ -10,22 +10,16 @@
 using PoolEntry = SgAsmJvmConstantPoolEntry;
 
 SgAsmJvmConstantPool::SgAsmJvmConstantPool(SgAsmJvmFileHeader* jfh)
-{
-  /* Initialize the base class */
-  ASSERT_not_null(jfh);
-  auto gf = static_cast<SgAsmGenericFile*>(jfh->get_parent());
-  SgAsmGenericSection(gf, jfh);
-
-  set_parent(jfh);
-  set_header(jfh);
+    : SgAsmGenericSection(isSgAsmGenericFile(jfh->get_parent()), jfh) {
+    initializeProperties();
+    set_parent(jfh);
+    set_header(jfh);
 }
 
 // Constructor creating an object ready to be initialized via parse().
-SgAsmJvmConstantPoolEntry::SgAsmJvmConstantPoolEntry(PoolEntry::Kind tag)
-  : p_tag{tag}, p_bytes{0}, p_hi_bytes{0}, p_low_bytes{0}, p_bootstrap_method_attr_index{0}, p_class_index{0},
-    p_descriptor_index{0}, p_name_index{0}, p_name_and_type_index{0}, p_reference_index{0}, p_reference_kind{0},
-    p_string_index{0}, p_length{0}, p_utf8_bytes{nullptr}
-{
+SgAsmJvmConstantPoolEntry::SgAsmJvmConstantPoolEntry(PoolEntry::Kind tag) {
+    initializeProperties();
+    p_tag = tag;
 }
 
 SgAsmJvmConstantPoolEntry* SgAsmJvmConstantPool::get_entry(size_t index) const

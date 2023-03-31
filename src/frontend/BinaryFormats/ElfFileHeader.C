@@ -13,37 +13,37 @@
 
 using namespace Rose::Diagnostics;
 
-void
-SgAsmElfFileHeader::ctor()
-{
-    ROSE_ASSERT(get_file()!=NULL);
-    ROSE_ASSERT(get_size()>0);
+SgAsmElfFileHeader::SgAsmElfFileHeader(SgAsmGenericFile *f)
+    : SgAsmGenericHeader(f) {
+    initializeProperties();
+    ASSERT_not_null(get_file());
+    ASSERT_require(get_size() > 0);
 
     set_name(new SgAsmBasicString("ELF File Header"));
     set_synthesized(true);
     set_purpose(SP_HEADER);
 
     /* Magic number */
-    p_magic.clear();
-    p_magic.push_back(0x7f);
-    p_magic.push_back('E');
-    p_magic.push_back('L');
-    p_magic.push_back('F');
+    get_magic().clear();
+    get_magic().push_back(0x7f);
+    get_magic().push_back('E');
+    get_magic().push_back('L');
+    get_magic().push_back('F');
 
     /* Executable Format */
-    ROSE_ASSERT(p_exec_format!=NULL);
-    p_exec_format->set_family(FAMILY_ELF);
-    p_exec_format->set_purpose(PURPOSE_EXECUTABLE);
-    p_exec_format->set_sex(ByteOrder::ORDER_LSB);
-    p_exec_format->set_word_size(4);
-    p_exec_format->set_version(1);
-    p_exec_format->set_is_current_version(true);
-    p_exec_format->set_abi(ABI_UNSPECIFIED);
-    p_exec_format->set_abi_version(0);
+    ASSERT_not_null(get_exec_format());
+    get_exec_format()->set_family(FAMILY_ELF);
+    get_exec_format()->set_purpose(PURPOSE_EXECUTABLE);
+    get_exec_format()->set_sex(ByteOrder::ORDER_LSB);
+    get_exec_format()->set_word_size(4);
+    get_exec_format()->set_version(1);
+    get_exec_format()->set_is_current_version(true);
+    get_exec_format()->set_abi(ABI_UNSPECIFIED);
+    get_exec_format()->set_abi_version(0);
 
-    p_isa = ISA_IA32_386;
-    p_e_ident_data_encoding = 1;  /*LSB*/
-    p_e_ident_padding = SgUnsignedCharList(9, '\0');
+    set_isa(ISA_IA32_386);
+    set_e_ident_data_encoding(1);  /*LSB*/
+    set_e_ident_padding(SgUnsignedCharList(9, '\0'));
 }
 
 bool

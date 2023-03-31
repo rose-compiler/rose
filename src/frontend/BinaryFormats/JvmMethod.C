@@ -10,14 +10,12 @@
 
 SgAsmJvmMethod::SgAsmJvmMethod(SgAsmJvmMethodTable* table)
 {
+  initializeProperties();
   ASSERT_not_null(table);
   set_parent(table);
 
   auto header = dynamic_cast<SgAsmJvmFileHeader*>(table->get_header());
   p_attribute_table = new SgAsmJvmAttributeTable(header, this);
-
-  p_instruction_list = new SgAsmInstructionList;
-  p_instruction_list->set_parent(this);
 }
 
 SgAsmJvmMethod* SgAsmJvmMethod::parse(SgAsmJvmConstantPool* pool)
@@ -40,6 +38,7 @@ void SgAsmJvmMethod::dump(FILE*f, const char* prefix, ssize_t idx) const
 
 SgAsmJvmMethodTable::SgAsmJvmMethodTable(SgAsmJvmFileHeader* jfh)
 {
+  initializeProperties();
   set_parent(jfh);
   set_header(jfh);
 }

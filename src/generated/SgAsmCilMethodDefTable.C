@@ -1,0 +1,29 @@
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Implementation for SgAsmCilMethodDefTable                -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#include <sage3basic.h>
+
+std::vector<SgAsmCilMethodDef*> const&
+SgAsmCilMethodDefTable::get_elements() const {
+    return p_elements;
+}
+
+std::vector<SgAsmCilMethodDef*>&
+SgAsmCilMethodDefTable::get_elements() {
+    return p_elements;
+}
+
+SgAsmCilMethodDefTable::~SgAsmCilMethodDefTable() {
+    destructorHelper();
+}
+
+SgAsmCilMethodDefTable::SgAsmCilMethodDefTable() {}
+
+void
+SgAsmCilMethodDefTable::initializeProperties() {
+}
+
+#endif // ROSE_ENABLE_BINARY_ANALYSIS

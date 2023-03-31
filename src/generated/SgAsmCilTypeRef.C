@@ -1,0 +1,52 @@
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Implementation for SgAsmCilTypeRef                -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#include <sage3basic.h>
+
+uint16_t const&
+SgAsmCilTypeRef::get_ResolutionScope() const {
+    return p_ResolutionScope;
+}
+
+void
+SgAsmCilTypeRef::set_ResolutionScope(uint16_t const& x) {
+    this->p_ResolutionScope = x;
+    set_isModified(true);
+}
+
+uint32_t const&
+SgAsmCilTypeRef::get_TypeName() const {
+    return p_TypeName;
+}
+
+void
+SgAsmCilTypeRef::set_TypeName(uint32_t const& x) {
+    this->p_TypeName = x;
+    set_isModified(true);
+}
+
+uint32_t const&
+SgAsmCilTypeRef::get_TypeNamespace() const {
+    return p_TypeNamespace;
+}
+
+void
+SgAsmCilTypeRef::set_TypeNamespace(uint32_t const& x) {
+    this->p_TypeNamespace = x;
+    set_isModified(true);
+}
+
+SgAsmCilTypeRef::~SgAsmCilTypeRef() {
+    destructorHelper();
+}
+
+SgAsmCilTypeRef::SgAsmCilTypeRef() {}
+
+void
+SgAsmCilTypeRef::initializeProperties() {
+}
+
+#endif // ROSE_ENABLE_BINARY_ANALYSIS

@@ -3,6 +3,11 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
+SgAsmPESection::SgAsmPESection(SgAsmPEFileHeader *fhdr)
+    : SgAsmGenericSection(fhdr->get_file(), fhdr) {
+    set_section_entry(nullptr);
+}
+
 /* Pre-unparsing updates */
 bool
 SgAsmPESection::reallocate()

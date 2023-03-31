@@ -9,6 +9,8 @@
 
 SgAsmJvmField::SgAsmJvmField(SgAsmJvmFieldTable* table)
 {
+  initializeProperties();
+
   ASSERT_not_null(table);
   set_parent(table);
 
@@ -36,6 +38,7 @@ void SgAsmJvmField::dump(FILE*f, const char* prefix, ssize_t idx) const
 
 SgAsmJvmFieldTable::SgAsmJvmFieldTable(SgAsmJvmFileHeader* jfh)
 {
+  initializeProperties();
   set_parent(jfh);
   set_header(jfh);
 }

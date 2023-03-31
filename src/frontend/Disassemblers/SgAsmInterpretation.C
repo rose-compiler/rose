@@ -8,18 +8,6 @@
 
 using namespace Rose::BinaryAnalysis;
 
-SgAsmInterpretation::SgAsmInterpretation()
-    : coverageComputed(false), percentageCoverage(0.0), p_headers(nullptr), p_global_block(nullptr) {
-    ctor();
-}
-
-/* Finish constructing. */
-void SgAsmInterpretation::ctor() {
-    ROSE_ASSERT(p_headers==NULL);
-    p_headers = new SgAsmGenericHeaderList();
-    p_headers->set_parent(this);
-}
-
 SgAsmGenericFilePtrList
 SgAsmInterpretation::get_files() const
 {

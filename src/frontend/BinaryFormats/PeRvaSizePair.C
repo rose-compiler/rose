@@ -8,16 +8,23 @@
 #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
 #endif
 
-void
-SgAsmPERVASizePair::ctor(SgAsmPERVASizePairList *parent, const RVASizePair_disk *disk) {
+SgAsmPERVASizePairList::SgAsmPERVASizePairList(SgAsmPEFileHeader *parent) {
+    initializeProperties();
+    set_parent(parent);
+}
+
+SgAsmPERVASizePair::SgAsmPERVASizePair(SgAsmPERVASizePairList *parent, const RVASizePair_disk *disk) {
+    initializeProperties();
+
+    ASSERT_not_null(disk);
     p_e_rva  = ByteOrder::le_to_host(disk->e_rva);
     p_e_size = ByteOrder::le_to_host(disk->e_size);
     set_parent(parent);
 }
 
-void
-SgAsmPERVASizePair::ctor(SgAsmPERVASizePairList *parent, rose_addr_t rva, rose_addr_t size)
-{
+SgAsmPERVASizePair::SgAsmPERVASizePair(SgAsmPERVASizePairList *parent, rose_addr_t rva, rose_addr_t size) {
+    initializeProperties();
+
     p_e_rva = rva;
     p_e_size = size;
     set_parent(parent);

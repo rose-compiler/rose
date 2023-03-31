@@ -1,0 +1,19 @@
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Implementation for SgAsmCilMetadata                -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#include <sage3basic.h>
+
+SgAsmCilMetadata::~SgAsmCilMetadata() {
+    destructorHelper();
+}
+
+SgAsmCilMetadata::SgAsmCilMetadata() {}
+
+void
+SgAsmCilMetadata::initializeProperties() {
+}
+
+#endif // ROSE_ENABLE_BINARY_ANALYSIS

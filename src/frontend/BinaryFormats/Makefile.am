@@ -29,7 +29,7 @@ libroseBinaryFormats_la_SOURCES =											\
       ElfSegmentTable.C ElfStringTable.C ElfSymbolTable.C ElfSymbolVersion.C						\
       JvmNode.C JvmAttribute.C JvmComposite.C JvmConstantPool.C JvmField.C JvmFileHeader.C JvmMethod.C			\
       ExecDOS.C ExecNE.C ExecLE.C ExecGeneric.C PeSectionTable.C BinaryVxcoreParser.C \
-      CilImpl.C CliHeader.C
+      CilImpl.C CliHeader.C Dwarf.C
 
 pkginclude_HEADERS =												\
 	ByteOrder.h DataConversion.h IntelPinSupport.h WorkLists.h SgSharedVector.h	\

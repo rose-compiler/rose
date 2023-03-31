@@ -7,16 +7,9 @@
 
 using namespace Rose;
 
-void
-SgAsmGenericDLL::ctor() {
-    ASSERT_not_null(p_name);
-    p_name->set_parent(this);
-}
-
-SgAsmGenericString *
-SgAsmGenericDLL::get_name() const 
-{
-    return p_name;
+SgAsmGenericDLL::SgAsmGenericDLL(SgAsmGenericString *s) {
+    initializeProperties();
+    set_name(s);
 }
 
 void
@@ -54,16 +47,10 @@ SgAsmGenericDLL::dump(FILE *f, const char *prefix, ssize_t idx) const
 // Symbols and symbol tables
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void
-SgAsmGenericSymbol::ctor()
-{
-    p_name = new SgAsmBasicString("");
-    p_name->set_parent(this);
-}
-
 SgAsmGenericString *
 SgAsmGenericSymbol::get_name() const
 {
+    ASSERT_not_null(p_name);                            // [Robb Matzke 2023-03-21]
     return p_name;
 }
 void

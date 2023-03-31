@@ -497,12 +497,10 @@ buildX86MultibyteNopInstruction(size_t nBytes) {
 
 SgAsmMemoryReferenceExpression*
 buildMemoryReferenceExpression(SgAsmExpression *addr, SgAsmExpression *segment, SgAsmType *type) {
-    SgAsmMemoryReferenceExpression *r = new SgAsmMemoryReferenceExpression(addr);
+    SgAsmMemoryReferenceExpression *r = new SgAsmMemoryReferenceExpression(addr, segment);
     addr->set_parent(r);
-    if (segment) {
-        r->set_segment(segment);
+    if (segment)
         segment->set_parent(r);
-    }
     if (type)
         r->set_type(type);
     return r;

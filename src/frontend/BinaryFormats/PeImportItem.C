@@ -7,8 +7,8 @@
 using namespace Rose::BinaryAnalysis;
 
 void
-SgAsmPEImportItem::ctor(SgAsmPEImportItemList *parent)
-{
+SgAsmPEImportItem::initFromParent(SgAsmPEImportItemList *parent) {
+    ASSERT_not_null(parent);
     set_parent(parent);
     if (parent)
         parent->get_vector().push_back(this);
@@ -18,31 +18,40 @@ SgAsmPEImportItem::ctor(SgAsmPEImportItemList *parent)
     set_hintname_rva(0);
     set_hintname_nalloc(0);
     set_bound_rva(0);
-
-    SgAsmBasicString *name = new SgAsmBasicString("");
-    set_name(name);
-    name->set_parent(this);
 }
 
-void
-SgAsmPEImportItem::ctor(SgAsmPEImportDirectory *idir)
-{
-    ctor(idir->get_imports());
+SgAsmPEImportItem::SgAsmPEImportItem(SgAsmPEImportItemList *parent) {
+    initializeProperties();
+    initFromParent(parent);
 }
 
-void
-SgAsmPEImportItem::ctor(SgAsmPEImportDirectory *idir, const std::string &name, unsigned hint)
-{
-    ctor(idir);
+SgAsmPEImportItem::SgAsmPEImportItem(SgAsmPEImportDirectory *idir) {
+    initializeProperties();
+
+    ASSERT_not_null(idir);
+    SgAsmPEImportItemList *parent = idir->get_imports();
+    initFromParent(parent);
+}
+
+SgAsmPEImportItem::SgAsmPEImportItem(SgAsmPEImportDirectory *idir, const std::string &name, unsigned hint) {
+    initializeProperties();
+
+    ASSERT_not_null(idir);
+    SgAsmPEImportItemList *parent = idir->get_imports();
+    initFromParent(parent);
+
     set_by_ordinal(false);
     get_name()->set_string(name);
     set_hint(hint);
 }
 
-void
-SgAsmPEImportItem::ctor(SgAsmPEImportDirectory *idir, unsigned ordinal)
-{
-    ctor(idir);
+SgAsmPEImportItem::SgAsmPEImportItem(SgAsmPEImportDirectory *idir, unsigned ordinal) {
+    initializeProperties();
+
+    ASSERT_not_null(idir);
+    SgAsmPEImportItemList *parent = idir->get_imports();
+    initFromParent(parent);
+
     set_by_ordinal(true);
     set_ordinal(ordinal);
 }

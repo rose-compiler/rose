@@ -5,6 +5,9 @@
 
 using namespace Rose;
 
+const rose_addr_t
+SgAsmGenericString::unallocated = ~(rose_addr_t)0;
+
 std::string
 SgAsmGenericString::get_string(bool /*escape*/) const
 {
@@ -36,15 +39,14 @@ SgAsmGenericString::dump(FILE*, const char */*prefix*/, ssize_t /*idx*/) const
     abort();
 }
 
-/* Constructor */
-void
-SgAsmBasicString::ctor()
-{
-#if 0
-    fprintf(stderr, "SgAsmBasicString::ctor this=0x%08lx\n", (unsigned long)this);
-    if (this==(void*)0x685998)
-        abort(); /*DEBUGGING (rpm 2008-10-10)*/
-#endif
+SgAsmBasicString::SgAsmBasicString(const std::string &s) {
+    initializeProperties();
+    p_string = s;
+}
+
+SgAsmBasicString::SgAsmBasicString(const char *s) {
+    initializeProperties();
+    p_string = s;
 }
 
 /* Override ROSETTA because generated code doesn't match virtual signature in base class */
@@ -81,34 +83,23 @@ SgAsmBasicString::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = \"%s\"\n", p, w, "value", get_string(true).c_str());
 }
     
-void
-SgAsmStoredString::ctor(SgAsmGenericStrtab *strtab, rose_addr_t offset, bool shared)
-{
-    p_storage = strtab->create_storage(offset, shared);
+SgAsmStoredString::SgAsmStoredString(SgAsmGenericStrtab *strtab, rose_addr_t offset) {
+    initializeProperties();
+    ASSERT_not_null(strtab);
+    p_storage = strtab->create_storage(offset, false);
 }
-void
-SgAsmStoredString::ctor(SgAsmGenericStrtab *strtab, const std::string &s)
-{
+
+SgAsmStoredString::SgAsmStoredString(SgAsmGenericStrtab *strtab, const std::string &s) {
+    initializeProperties();
+    ASSERT_not_null(strtab);
     p_storage = strtab->create_storage(0, false);
     set_string(s);
 }
-void
-SgAsmStoredString::ctor(SgAsmStringStorage *storage)
-{
+
+SgAsmStoredString::SgAsmStoredString(SgAsmStringStorage *storage) {
+    initializeProperties();
     p_storage = storage;
 }
-#if 0
-// DQ (9/9/2008): Use the destructor built automatically by ROSETTA.
-SgAsmStoredString::~SgAsmStoredString()
-{
-#if 0 /* FIXME: Strings may share storage, so we can't free it. (RPM 2008-09-03) */
-    /* Free storage if it isn't associated with a string table. */
-    if (p_storage && NULL==p_storage->strtab)
-        delete p_storage;
-#endif
-    p_storage = NULL;
-}
-#endif
 
 std::string
 SgAsmStoredString::get_string(bool escape) const 
@@ -176,6 +167,13 @@ SgAsmStoredString::dump(FILE *f, const char *prefix, ssize_t idx) const
         get_storage()->dump(f, p, -1);
 }
 
+SgAsmStringStorage::SgAsmStringStorage(SgAsmGenericStrtab *strtab, const std::string &string, rose_addr_t offset) {
+    initializeProperties();
+    p_strtab = strtab;
+    p_string = string;
+    p_offset = offset;
+}
+
 /* Print some debugging info */
 void
 SgAsmStringStorage::dump(FILE *f, const char *prefix, ssize_t idx) const
@@ -203,6 +201,11 @@ SgAsmStringStorage::dump(FILE *f, const char *prefix, ssize_t idx) const
         fprintf(f, ", offset 0x%08" PRIx64 " (%" PRIu64 ")", get_offset(), get_offset());
     }
     fprintf(f, ", \"%s\"\n", escapeString(get_string()).c_str());
+}
+
+SgAsmGenericStrtab::SgAsmGenericStrtab(SgAsmGenericSection *container) {
+    initializeProperties();
+    set_container(container);
 }
 
 SgAsmStoredString *

@@ -13,12 +13,12 @@
 
 using namespace Rose;
 
-void
-SgAsmElfRelocEntry::ctor(SgAsmElfRelocSection *section)
-{
-    ROSE_ASSERT(section->get_entries()!=NULL);
+SgAsmElfRelocEntry::SgAsmElfRelocEntry(SgAsmElfRelocSection *section) {
+    initializeProperties();
+    ASSERT_not_null(section);
+    ASSERT_not_null(section->get_entries());
     section->get_entries()->get_entries().push_back(this);
-    ROSE_ASSERT(section->get_entries()->get_entries().size()>0);
+    ASSERT_require(section->get_entries()->get_entries().size() > 0);
     set_parent(section->get_entries());
 }
 
@@ -167,13 +167,11 @@ SgAsmElfRelocEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbo
     }
 }
 
-void
-SgAsmElfRelocSection::ctor(SgAsmElfSymbolSection *symbols, SgAsmElfSection *targetsec/*=NULL*/)
-{
-    p_entries = new SgAsmElfRelocEntryList;
-    p_entries->set_parent(this);
-    p_linked_section = symbols;         // may be null
-    p_target_section = targetsec;
+SgAsmElfRelocSection::SgAsmElfRelocSection(SgAsmElfFileHeader *fhdr, SgAsmElfSymbolSection *symsec,SgAsmElfSection* targetsec)
+    : SgAsmElfSection(fhdr) {
+    initializeProperties();
+    set_linked_section(symsec);                        // may be null
+    set_target_section(targetsec);
 }
 
 SgAsmElfRelocSection *

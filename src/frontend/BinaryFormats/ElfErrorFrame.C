@@ -15,16 +15,13 @@ using namespace Rose::Diagnostics;
 static const size_t WARNING_LIMIT=10;
 static size_t nwarnings=0;
 
-void
-SgAsmElfEHFrameEntryCI::ctor(SgAsmElfEHFrameSection *ehframe)
-{
-    ROSE_ASSERT(ehframe->get_ci_entries()!=NULL);
-    ehframe->get_ci_entries()->get_entries().push_back(this);
-    ROSE_ASSERT(ehframe->get_ci_entries()->get_entries().size()>0);
-    set_parent(ehframe->get_ci_entries());
+SgAsmElfEHFrameEntryCI::SgAsmElfEHFrameEntryCI(SgAsmElfEHFrameSection *ehframe) {
+    initializeProperties();
 
-    p_fd_entries = new SgAsmElfEHFrameEntryFDList;
-    p_fd_entries->set_parent(this);
+    ASSERT_not_null(ehframe->get_ci_entries());
+    ehframe->get_ci_entries()->get_entries().push_back(this);
+    ASSERT_require(ehframe->get_ci_entries()->get_entries().size() > 0);
+    set_parent(ehframe->get_ci_entries());
 }
 
 std::string
@@ -156,12 +153,13 @@ SgAsmElfEHFrameEntryCI::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
 }
 
-void
-SgAsmElfEHFrameEntryFD::ctor(SgAsmElfEHFrameEntryCI *cie)
-{
-    ROSE_ASSERT(cie->get_fd_entries()!=NULL);
+SgAsmElfEHFrameEntryFD::SgAsmElfEHFrameEntryFD(SgAsmElfEHFrameEntryCI *cie) {
+    initializeProperties();
+
+    ASSERT_not_null(cie);
+    ASSERT_not_null(cie->get_fd_entries());
     cie->get_fd_entries()->get_entries().push_back(this);
-    ROSE_ASSERT(cie->get_fd_entries()->get_entries().size()>0);
+    ASSERT_require(cie->get_fd_entries()->get_entries().size() > 0);
     set_parent(cie->get_fd_entries());
 }
 
@@ -246,11 +244,9 @@ SgAsmElfEHFrameEntryFD::dump(FILE *f, const char *prefix, ssize_t idx) const
     hexdump(f, 0, std::string(p)+"insns at ", get_instructions());
 }
 
-void
-SgAsmElfEHFrameSection::ctor()
-{
-    p_ci_entries = new SgAsmElfEHFrameEntryCIList;
-    p_ci_entries->set_parent(this);
+SgAsmElfEHFrameSection::SgAsmElfEHFrameSection(SgAsmElfFileHeader *fhdr)
+    : SgAsmElfSection(fhdr) {
+    initializeProperties();
 }
 
 SgAsmElfEHFrameSection *

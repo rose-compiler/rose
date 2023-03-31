@@ -17,11 +17,12 @@ using namespace Rose;
 using namespace Rose::Diagnostics;
     
 // Non-parsing constructor. The ELF String Table is constructed to contain one NUL byte.
-void
-SgAsmElfStringSection::ctor()
-{
+SgAsmElfStringSection::SgAsmElfStringSection(SgAsmElfFileHeader *fhdr)
+    : SgAsmElfSection(fhdr) {
+    initializeProperties();
+
     get_name()->set_string("ELF String Table");
-    if (get_size()==0)
+    if (get_size() == 0)
         set_size(1);
     p_strtab = new SgAsmElfStrtab(this);
 }
@@ -98,14 +99,13 @@ SgAsmElfStringSection::dump(FILE *f, const char *prefix, ssize_t idx) const
         hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
-
-void
-SgAsmElfStrtab::ctor()
-{
-    ROSE_ASSERT(get_container());
-    if (get_container()->get_size()==0)
+SgAsmElfStrtab::SgAsmElfStrtab(class SgAsmElfSection *containing_section)
+    : SgAsmGenericStrtab(containing_section) {
+    initializeProperties();
+    ASSERT_not_null(get_container());
+    if (get_container()->get_size() == 0)
         get_container()->set_size(1);
-    p_dont_free = create_storage(0, false);
+    set_dont_free(create_storage(0, false));
 }
 
 SgAsmElfStrtab *
@@ -129,8 +129,8 @@ SgAsmElfStrtab::parse()
     return this;
 }
 
-SgAsmElfStrtab::~SgAsmElfStrtab()
-{
+void
+SgAsmElfStrtab::destructorHelper() {
     for (referenced_t::iterator i = p_storage_list.begin(); i != p_storage_list.end(); ++i) {
         SgAsmStringStorage *storage = *i;
         storage->set_strtab(NULL);
@@ -236,9 +236,13 @@ SgAsmElfStrtab::unparse(std::ostream &f) const
     /* Write strings with NUL termination. Shared strings will be written more than once, but that's OK. */
     for (size_t i=0; i<p_storage_list.size(); i++) {
         SgAsmStringStorage *storage = p_storage_list[i];
-        ROSE_ASSERT(storage->get_offset()!=SgAsmGenericString::unallocated);
-        rose_addr_t at = container->write(f, storage->get_offset(), storage->get_string());
-        container->write(f, at, '\0');
+        if (storage->get_offset() == SgAsmGenericString::unallocated) {
+            mlog[WARN] <<"during unparsing, this string is unallocated in the string table and will be discarded: "
+                       <<"\"" <<StringUtility::cEscape(storage->get_string()) <<"\"\n";
+        } else {
+            rose_addr_t at = container->write(f, storage->get_offset(), storage->get_string());
+            container->write(f, at, '\0');
+        }
     }
     
     /* Fill free areas with zero */

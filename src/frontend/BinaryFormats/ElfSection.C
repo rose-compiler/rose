@@ -15,9 +15,9 @@ SgAsmElfSection::set_linked_section(SgAsmElfSection* linked_section) {
     p_linked_section = linked_section;
 }
 
-void
-SgAsmElfSection::ctor()
-{
+SgAsmElfSection::SgAsmElfSection(SgAsmGenericHeader *fhdr)
+    : SgAsmGenericSection(fhdr->get_file(), fhdr) {
+    initializeProperties();
     set_synthesized(false);
     set_purpose(SP_UNSPECIFIED);
 }

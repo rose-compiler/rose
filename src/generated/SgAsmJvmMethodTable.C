@@ -1,0 +1,35 @@
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Implementation for SgAsmJvmMethodTable                -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#include <sage3basic.h>
+
+SgAsmJvmMethodPtrList const&
+SgAsmJvmMethodTable::get_methods() const {
+    return p_methods;
+}
+
+SgAsmJvmMethodPtrList&
+SgAsmJvmMethodTable::get_methods() {
+    return p_methods;
+}
+
+void
+SgAsmJvmMethodTable::set_methods(SgAsmJvmMethodPtrList const& x) {
+    this->p_methods = x;
+    set_isModified(true);
+}
+
+SgAsmJvmMethodTable::~SgAsmJvmMethodTable() {
+    destructorHelper();
+}
+
+SgAsmJvmMethodTable::SgAsmJvmMethodTable() {}
+
+void
+SgAsmJvmMethodTable::initializeProperties() {
+}
+
+#endif // ROSE_ENABLE_BINARY_ANALYSIS

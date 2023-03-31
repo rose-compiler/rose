@@ -1,0 +1,19 @@
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Implementation for SgAsmPESectionTable                -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#include <sage3basic.h>
+
+SgAsmPESectionTable::~SgAsmPESectionTable() {
+    destructorHelper();
+}
+
+SgAsmPESectionTable::SgAsmPESectionTable() {}
+
+void
+SgAsmPESectionTable::initializeProperties() {
+}
+
+#endif // ROSE_ENABLE_BINARY_ANALYSIS

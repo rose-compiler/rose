@@ -17,9 +17,10 @@ using namespace Rose::Diagnostics;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Constructor */
-void
-SgAsmPEStringSection::ctor()
-{
+SgAsmPEStringSection::SgAsmPEStringSection(SgAsmPEFileHeader *fhdr)
+    : SgAsmPESection(fhdr), p_strtab(NULL) {
+    initializeProperties();
+
     get_name()->set_string("PE String Table");
     p_strtab = new SgAsmCoffStrtab(this);
 }
@@ -97,12 +98,17 @@ SgAsmPEStringSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 //    SgAsmGenericSection that contains them.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+SgAsmCoffStrtab::SgAsmCoffStrtab(class SgAsmPESection *containing_section)
+    : SgAsmGenericStrtab(containing_section) {
+    initializeProperties();
+}
+
 /* Free StringStorage objects associated with this string table. It may not be safe to blow them away yet since other objects
  * may still have SgAsmStoredStrings pointing to these storage objects. So instead, we will mark all this strtab's storage
  * objects as no longer being associated with a string table. This allows the SgAsmStoredString objects to still function
  * properly and their destructors (~SgAsmStoredString) will free their storage. */
-SgAsmCoffStrtab::~SgAsmCoffStrtab()
-{
+void
+SgAsmCoffStrtab::destructorHelper() {
     for (referenced_t::iterator i = p_storage_list.begin(); i != p_storage_list.end(); ++i) {
         SgAsmStringStorage *storage = *i;
         storage->set_strtab(NULL);

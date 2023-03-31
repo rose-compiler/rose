@@ -15,34 +15,36 @@
 using namespace Rose;
 using namespace Rose::Diagnostics;
 
-void
-SgAsmElfSectionTableEntry::ctor(ByteOrder::Endianness sex, const Elf32SectionTableEntry_disk *disk) 
-{
-    p_sh_name      = ByteOrder::disk_to_host(sex, disk->sh_name);
-    p_sh_type      = (SectionType)ByteOrder::disk_to_host(sex, disk->sh_type);
-    p_sh_flags     = ByteOrder::disk_to_host(sex, disk->sh_flags);
-    p_sh_addr      = ByteOrder::disk_to_host(sex, disk->sh_addr);
-    p_sh_offset    = ByteOrder::disk_to_host(sex, disk->sh_offset);
-    p_sh_size      = ByteOrder::disk_to_host(sex, disk->sh_size);
-    p_sh_link      = ByteOrder::disk_to_host(sex, disk->sh_link);
-    p_sh_info      = ByteOrder::disk_to_host(sex, disk->sh_info);
-    p_sh_addralign = ByteOrder::disk_to_host(sex, disk->sh_addralign);
-    p_sh_entsize   = ByteOrder::disk_to_host(sex, disk->sh_entsize);
+SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(ByteOrder::Endianness sex,
+                                                     const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk) {
+    initializeProperties();
+    ASSERT_not_null(disk);
+    set_sh_name     (ByteOrder::disk_to_host(sex, disk->sh_name));
+    set_sh_type     ((SectionType)ByteOrder::disk_to_host(sex, disk->sh_type));
+    set_sh_flags    (ByteOrder::disk_to_host(sex, disk->sh_flags));
+    set_sh_addr     (ByteOrder::disk_to_host(sex, disk->sh_addr));
+    set_sh_offset   (ByteOrder::disk_to_host(sex, disk->sh_offset));
+    set_sh_size     (ByteOrder::disk_to_host(sex, disk->sh_size));
+    set_sh_link     (ByteOrder::disk_to_host(sex, disk->sh_link));
+    set_sh_info     (ByteOrder::disk_to_host(sex, disk->sh_info));
+    set_sh_addralign(ByteOrder::disk_to_host(sex, disk->sh_addralign));
+    set_sh_entsize  (ByteOrder::disk_to_host(sex, disk->sh_entsize));
 }
     
-void
-SgAsmElfSectionTableEntry::ctor(ByteOrder::Endianness sex, const Elf64SectionTableEntry_disk *disk) 
-{
-    p_sh_name      = ByteOrder::disk_to_host(sex, disk->sh_name);
-    p_sh_type      = (SectionType)ByteOrder::disk_to_host(sex, disk->sh_type);
-    p_sh_flags     = ByteOrder::disk_to_host(sex, disk->sh_flags);
-    p_sh_addr      = ByteOrder::disk_to_host(sex, disk->sh_addr);
-    p_sh_offset    = ByteOrder::disk_to_host(sex, disk->sh_offset);
-    p_sh_size      = ByteOrder::disk_to_host(sex, disk->sh_size);
-    p_sh_link      = ByteOrder::disk_to_host(sex, disk->sh_link);
-    p_sh_info      = ByteOrder::disk_to_host(sex, disk->sh_info);
-    p_sh_addralign = ByteOrder::disk_to_host(sex, disk->sh_addralign);
-    p_sh_entsize   = ByteOrder::disk_to_host(sex, disk->sh_entsize);
+SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(ByteOrder::Endianness sex,
+                                                     const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk) {
+    initializeProperties();
+    ASSERT_not_null(disk);
+    set_sh_name     (ByteOrder::disk_to_host(sex, disk->sh_name));
+    set_sh_type     ((SectionType)ByteOrder::disk_to_host(sex, disk->sh_type));
+    set_sh_flags    (ByteOrder::disk_to_host(sex, disk->sh_flags));
+    set_sh_addr     (ByteOrder::disk_to_host(sex, disk->sh_addr));
+    set_sh_offset   (ByteOrder::disk_to_host(sex, disk->sh_offset));
+    set_sh_size     (ByteOrder::disk_to_host(sex, disk->sh_size));
+    set_sh_link     (ByteOrder::disk_to_host(sex, disk->sh_link));
+    set_sh_info     (ByteOrder::disk_to_host(sex, disk->sh_info));
+    set_sh_addralign(ByteOrder::disk_to_host(sex, disk->sh_addralign));
+    set_sh_entsize  (ByteOrder::disk_to_host(sex, disk->sh_entsize));
 }
 
 void *
@@ -78,36 +80,12 @@ SgAsmElfSectionTableEntry::encode(ByteOrder::Endianness sex, Elf64SectionTableEn
     return disk;
 }
 
-SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(ByteOrder::Endianness sex,
-                                                     const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk)
-{
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
-    ctor(sex, disk);
-#else
-    printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
-    ROSE_ABORT();
-#endif
-}
+SgAsmElfSectionTable::SgAsmElfSectionTable(SgAsmElfFileHeader *fhdr)
+    : SgAsmGenericSection(fhdr->get_file(), fhdr) {
+    initializeProperties();
 
-SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(ByteOrder::Endianness sex,
-                                                     const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk)
-{
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
-    ctor(sex, disk);
-#else
-    printf ("Error: ROSE not configured for binary analysis (this is a language specific build) \n");
-    ROSE_ABORT();
-#endif
-}
-
-/* Non-parsing constructor for an ELF Section Table */
-void
-SgAsmElfSectionTable::ctor()
-{
     /* There can be only one ELF Section Table */
-    SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
-    ROSE_ASSERT(fhdr);
-    ROSE_ASSERT(fhdr->get_section_table()==NULL);
+    ASSERT_require(fhdr->get_section_table() == nullptr);
 
     set_synthesized(true);                              /* the section table isn't really a section itself */
     set_name(new SgAsmBasicString("ELF Section Table"));

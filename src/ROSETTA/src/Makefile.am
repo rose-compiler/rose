@@ -52,7 +52,6 @@ GRAMMAR_SOURCE_FILES = \
      ../Grammar/dataMemberAccessFunctions.macro \
      ../Grammar/grammarMainClassParseFunctionSourceCode.macro \
      ../Grammar/Node.code \
-     ../Grammar/BinaryInstruction.code \
      ../Grammar/grammarClassDeclarationMacros.macro \
      ../Grammar/grammarMainClassSourceCodeMacros.macro \
      ../Grammar/grammarNewDeleteOperatorMacros.macro \

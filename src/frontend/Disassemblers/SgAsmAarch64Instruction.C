@@ -1,5 +1,4 @@
-/* SgAsmAarch64Instruction member definitions.  Do not move them to src/ROSETTA/Grammar/BinaryInstruction.code (or any *.code
- * file) because then they won't get indexed/formatted/etc. by C-aware tools. */
+// SgAsmAarch64Instruction member definitions.
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_ASM_AARCH64
 #include <sage3basic.h>

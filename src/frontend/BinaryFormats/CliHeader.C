@@ -12,12 +12,9 @@ using namespace Rose::BinaryAnalysis;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 SgAsmCliHeader::SgAsmCliHeader(SgAsmPEFileHeader *fhdr)
-  : SgAsmGenericSection(fhdr->get_file(), fhdr), p_cb{0}, p_majorRuntimeVersion{0}, p_minorRuntimeVersion{0}, 
-    p_metaData{0}, p_flags{0}, p_entryPointToken{0}, p_resources{0}, p_strongNameSignature{0},
-    p_codeManagerTable{0}, p_vTableFixups{0}, p_exportAddressTableJumps{0}, p_managedNativeHeader{0}
-
-{
-  get_name()->set_string("CLI Runtime Section");
+    : SgAsmGenericSection(fhdr->get_file(), fhdr) {
+    initializeProperties();
+    get_name()->set_string("CLI Runtime Section");
 }
 
 SgAsmCliHeader* SgAsmCliHeader::parse()

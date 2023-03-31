@@ -3,16 +3,13 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
-void
-SgAsmElfNoteEntry::ctor(SgAsmElfNoteSection *section)
-{
-    ROSE_ASSERT(section->get_entries()!=NULL);
-    section->get_entries()->get_entries().push_back(this);
-    ROSE_ASSERT(section->get_entries()->get_entries().size()>0);
-    set_parent(section->get_entries());
+SgAsmElfNoteEntry::SgAsmElfNoteEntry(SgAsmElfNoteSection *section) {
+    initializeProperties();
 
-    p_name = new SgAsmBasicString("");
-    p_name->set_parent(this);
+    ASSERT_not_null(section->get_entries());
+    section->get_entries()->get_entries().push_back(this);
+    ASSERT_require(section->get_entries()->get_entries().size() > 0);
+    set_parent(section->get_entries());
 }
 
 SgAsmGenericString *
@@ -155,11 +152,9 @@ SgAsmElfNoteEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
 }
 
-void
-SgAsmElfNoteSection::ctor()
-{
-    p_entries = new SgAsmElfNoteEntryList;
-    p_entries->set_parent(this);
+SgAsmElfNoteSection::SgAsmElfNoteSection(SgAsmElfFileHeader *fhdr)
+    : SgAsmElfSection(fhdr) {
+    initializeProperties();
 }
 
 /* Parse existing notes */

@@ -13,18 +13,17 @@
 
 using namespace Rose;
 
-void
-SgAsmElfSymbol::ctor(SgAsmElfSymbolSection *symtab)
-{
-    ROSE_ASSERT(symtab!=NULL);
+SgAsmElfSymbol::SgAsmElfSymbol(SgAsmElfSymbolSection *symtab) {
+    initializeProperties();
+    ASSERT_not_null(symtab);
     SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(symtab->get_linked_section());
-    ROSE_ASSERT(strsec!=NULL);
+    ASSERT_not_null(strsec);
     
     set_name(new SgAsmStoredString(strsec->get_strtab(), 0));
 
-    ROSE_ASSERT(symtab->get_symbols()!=NULL);
+    ASSERT_not_null(symtab->get_symbols());
     symtab->get_symbols()->get_symbols().push_back(this);
-    ROSE_ASSERT(symtab->get_symbols()->get_symbols().size()>0);
+    ASSERT_require(symtab->get_symbols()->get_symbols().size() > 0);
     set_parent(symtab->get_symbols());
 
     set_st_info(0);
@@ -197,13 +196,11 @@ SgAsmElfSymbol::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmGenericSecti
     }
 }
 
-void
-SgAsmElfSymbolSection::ctor(SgAsmElfStringSection *strings)
-{
-    p_symbols = new SgAsmElfSymbolList;
-    p_symbols->set_parent(this);
-    ROSE_ASSERT(strings!=NULL);
-    p_linked_section = strings;
+SgAsmElfSymbolSection::SgAsmElfSymbolSection(SgAsmElfFileHeader *fhdr, SgAsmElfStringSection *strings)
+    : SgAsmElfSection(fhdr) {
+    initializeProperties();
+    ASSERT_not_null(strings);
+    set_linked_section(strings);
 }
 
 SgAsmElfSymbolSection *

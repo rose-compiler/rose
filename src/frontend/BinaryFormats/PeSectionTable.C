@@ -18,18 +18,15 @@ using namespace Rose::Diagnostics;
 using namespace Rose::BinaryAnalysis;
 
 SgAsmPESectionTableEntry::SgAsmPESectionTableEntry(const SgAsmPESectionTableEntry::PESectionTableEntry_disk *disk) {
-    ctor(disk);
-}
+    initializeProperties();
 
-void
-SgAsmPESectionTableEntry::ctor(const PESectionTableEntry_disk *disk)
-{
     char name[9];
     strncpy(name, disk->name, 8);
     name[8] = '\0';
     this->set_name( name );
 
     /* Decode file format */
+    ASSERT_not_null(disk);
     p_virtual_size     = ByteOrder::le_to_host(disk->virtual_size);
     p_rva              = ByteOrder::le_to_host(disk->rva);
     p_physical_size    = ByteOrder::le_to_host(disk->physical_size);
@@ -195,10 +192,10 @@ SgAsmPESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 }
 
 /* Constructor */
-void
-SgAsmPESectionTable::ctor()
-{
-    SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(get_header());
+SgAsmPESectionTable::SgAsmPESectionTable(SgAsmPEFileHeader *fhdr)
+    : SgAsmGenericSection(fhdr->get_file(), fhdr) {
+    initializeProperties();
+
     ROSE_ASSERT(fhdr!=nullptr);
     fhdr->set_section_table(this);
 
