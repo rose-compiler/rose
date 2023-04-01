@@ -81,6 +81,8 @@ public:
     NodePtr operator()() const;
     NodePtr operator->() const;
 
+    bool operator==(const std::shared_ptr<Node>&) const;
+
     explicit operator bool() const {
         return parent_ != nullptr;
     }
@@ -108,6 +110,8 @@ public:
     const std::shared_ptr<T>& operator->() const;
     const std::shared_ptr<T>& operator()() const;
 
+    bool operator==(const std::shared_ptr<Node>&) const;
+
     ChildEdge& operator=(const std::shared_ptr<T> &child);
 
     explicit operator bool() const {
@@ -131,7 +135,7 @@ protected:
 
 public:
     /** Returns a shared pointer to this node. */
-    NodePtr shared();
+    Ptr pointer();
 
     /** Traverse upward following parent pointers.
      *
@@ -140,7 +144,7 @@ public:
      *  return value for the entire traversal. */
     template<class Visitor>
     auto traverseUpward(const Visitor &visitor) {
-        for (auto node = shared(); node; node = node->parent()) {
+        for (auto node = pointer(); node; node = node->parent()) {
             if (auto result = visitor(node))
                 return result;
         }
@@ -255,6 +259,13 @@ public:
     ChildEdge<T>& push_back(const std::shared_ptr<T>& elmt) {
         elmts_.push_back(std::make_unique<ChildEdge<T>>(*this, elmt));
         return *elmts_.back();
+    }
+
+    NodePtr pop_back() {
+        ASSERT_forbid(elmts_.empty());
+        NodePtr retval = (*elmts_.back())();
+        elmts_.pop_back();
+        return retval;
     }
 
     ChildEdge<T>& operator[](size_t i) {
@@ -572,15 +583,26 @@ ChildEdge<T>::operator()() const {
 }
 
 template<class T>
+bool
+ChildEdge<T>::operator==(const std::shared_ptr<Node> &other) const {
+    return child_ == other;
+}
+
+template<class T>
 ChildEdge<T>&
 ChildEdge<T>::operator=(const std::shared_ptr<T> &child) {
     if (child != child_) {
         // Check for errors
-        if (child->parent)
-            throw AttachmentError(child);
-        for (auto node = parent_.shared(); node; node = node->parent()) {
-            if (child == node)
-                throw CycleError(child);
+        if (child) {
+            if (child->parent)
+                throw AttachmentError(child);
+            parent_.traverseUpward([&child](const NodePtr &node) {
+                if (child == node) {
+                    throw CycleError(child);
+                } else {
+                    return false;
+                }
+            });
         }
 
         // Unlink the child from the tree

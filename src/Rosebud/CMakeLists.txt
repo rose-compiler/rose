@@ -9,7 +9,17 @@ add_executable(rosebud
   Utility.C
   YamlGenerator.C)
 
+add_executable(unitTest01
+  rosebud.C
+  Ast.C
+  BoostSerializer.C
+  Generator.C
+  RosettaGenerator.C
+  Utility.C
+  YamlGenerator.C)
+
 add_dependencies(rosebud util_sawyer)
+add_dependencies(unitTest01 util_sawyer)
 
 set(link_libs ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 if(WIN32)
@@ -17,3 +27,4 @@ if(WIN32)
 endif()
 
 target_link_libraries(rosebud ${link_libs} util_sawyer)
+target_link_libraries(unitTest01 ${link_libs} util_sawyer)

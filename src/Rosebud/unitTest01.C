@@ -1,8 +1,11 @@
-#include <Ast.h>
-
 // Make sure the assertions for the tests are enabled. We could have also used the ASSERT_always_* forms, but that's quite a bit
 // more to read.
 #undef NDEBUG
+
+#include <Rosebud/Ast.h>
+
+using namespace Rosebud;
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // How to declare nodes (the hard way)
@@ -31,7 +34,7 @@ public:
     // another, which is not generally possible for C++ constructors.
 protected:
     Rational()
-        : numerator(0), denominator(0), sign(1) {}
+        : numerator(0), denominator(0), negative(1) {}
     Rational(unsigned numerator, unsigned denominator, bool negative)
         : numerator(numerator), denominator(denominator), negative(negative) {}
 public:
@@ -63,6 +66,7 @@ public:
 //------------------------------------------------------------------------------------------------------------------------------
 // Here's a non-terminal node. I.e., a node that can appear in the interior of the tree instead of only at the leaves.
 class BinaryOperator: public Ast::Node {
+public:
     // One node can point to another. In this case, the edge from this node to the other is NOT considered part of the tree.  You
     // can use any kind of pointer you want, even raw pointers. For instance, here we decided that a binary operator must always
     // share ownership of the type, so we used a shared_ptr. On the other hand, the `printedType` is not owned by this node and is
@@ -84,7 +88,7 @@ protected:
 
     BinaryOperator(const std::shared_ptr<Rational> &lhs, const std::shared_ptr<Rational> &rhs,
                    const std::shared_ptr<Type> &type, const std::shared_ptr<Type> &printedType)
-        : type(tpye), printedType(printedType),
+        : type(type), printedType(printedType),
           lhs(*this, lhs), rhs(*this, rhs) {}
 
 public:
@@ -122,6 +126,24 @@ public:
 //------------------------------------------------------------------------------------------------------------------------------
 // A special `ListNode` type acts like a vector of pointers to children all of the same type.
 using ExpressionList = Ast::ListNode<BinaryOperator>;
+
+//------------------------------------------------------------------------------------------------------------------------------
+// Finally, so we can test cycles, a node that takes its own type as a child
+class PossibleCycles: public Ast::Node {
+public:
+    Ast::ChildEdge<PossibleCycles> child;
+
+protected:
+    PossibleCycles()
+        : child(*this) {}
+    PossibleCycles(const std::shared_ptr<PossibleCycles> &child)
+        : child(*this, child) {}
+
+public:
+    static std::shared_ptr<PossibleCycles> instance(const std::shared_ptr<PossibleCycles> &child = nullptr) {
+        return std::shared_ptr<PossibleCycles>(new PossibleCycles(child));
+    }
+};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Tests
@@ -161,7 +183,12 @@ static void test05() {
     auto v = Rational::instance();
     auto w = Rational::instance();
 
+    // Error message is something like this:
+    //   error: no match for 'operator=' (operand types are 'Rosebud::Ast::ParentEdge' and 'std::shared_ptr<Rational>')
+    //   note: candidate: 'Rosebud::Ast::ParentEdge& Rosebud::Ast::ParentEdge::operator=(....)' (deleted)
+#ifdef COMPILE_ERROR_05
     v->parent = w;                                      // this is a compile-time error
+#endif
 }
 
 // Child pointers are initialized to null
@@ -231,16 +258,60 @@ static void test11() {
 
 // Assigning a node as a child of itself is an error
 static void test12() {
-    ASSERT_not_implemented("[Robb Matzke 2023-03-31]");
+    auto p = PossibleCycles::instance();
+
+    try {
+        p->child = p;
+        ASSERT_not_reachable("result is no longer a tree");
+    } catch (const Ast::CycleError &e) {
+        ASSERT_require(e.node == p);
+        ASSERT_require(p->child == nullptr);
+        ASSERT_require(p->parent == nullptr);
+    }
+}
+
+// Attempting to assign a node as a child of itself does not change the node
+static void test13() {
+    auto p1 = PossibleCycles::instance();
+    auto p2 = PossibleCycles::instance();
+    p1->child = p2;
+    ASSERT_require(p1->child == p2);
+    ASSERT_require(p2->parent == p1);
+
+    try {
+        p2->child = p2;
+        ASSERT_not_reachable("result is no longer a tree");
+    } catch (const Ast::AttachmentError &e) {
+        ASSERT_require(e.node == p2);
+        ASSERT_require(p2->child == nullptr);
+        ASSERT_require(p2->parent == p1);
+    }
 }
 
 // Forming a cycle in the tree is a runtime error
-static void test13() {
-    ASSERT_not_implemented("[Robb Matzke 2023-03-31]");
+static void test14() {
+    auto p1 = PossibleCycles::instance();
+    auto p2 = PossibleCycles::instance();
+    auto p3 = PossibleCycles::instance();
+    auto p4 = PossibleCycles::instance();
+
+    p1->child = p2;
+    p2->child = p3;
+    p3->child = p4;
+
+    try {
+        p4->child = p1;
+        ASSERT_not_reachable("result is no longer a tree");
+    } catch (const Ast::CycleError &e) {
+        ASSERT_require(e.node == p1);
+        ASSERT_require(p1->child == p2);
+        ASSERT_require(p1->parent == nullptr);
+        ASSERT_require(p2->parent == p1);
+    }
 }
 
 // A list node is initialized to be empty
-static void test14() {
+static void test15() {
     auto e = ExpressionList::instance();
     ASSERT_not_null(e);
     ASSERT_require(e->empty());
@@ -249,7 +320,7 @@ static void test14() {
 }
 
 // Pushing something onto a list changes its size
-static void test15() {
+static void test16() {
     auto e = ExpressionList::instance();
 
     e->push_back(nullptr);
@@ -259,7 +330,7 @@ static void test15() {
 }
 
 // Pushing a null pointer onto a list is allowed
-static void test16() {
+static void test17() {
     auto e = ExpressionList::instance();
 
     e->push_back(nullptr);
@@ -270,7 +341,7 @@ static void test16() {
 }
 
 // Pushing a child onto a list node adjusts the child's parent pointer
-static void test16() {
+static void test18() {
     auto e = ExpressionList::instance();
     auto b = BinaryOperator::instance();
 
@@ -281,7 +352,7 @@ static void test16() {
 }
 
 // Replacing a null with a child changes the child's parent pointer
-static void test17() {
+static void test19() {
     auto e = ExpressionList::instance();
     e->push_back(nullptr);
 
@@ -293,7 +364,7 @@ static void test17() {
 }
 
 // Replacing a child with null resets the child's parent pointer
-static void test18() {
+static void test20() {
     auto e = ExpressionList::instance();
     auto b = BinaryOperator::instance();
     e->push_back(b);
@@ -305,7 +376,7 @@ static void test18() {
 }
 
 // Adding the same child twice is a runtime error
-static void test19() {
+static void test21() {
     auto e = ExpressionList::instance();
     auto b = BinaryOperator::instance();
     e->push_back(b);
@@ -313,8 +384,8 @@ static void test19() {
     try {
         e->push_back(b);
         ASSERT_not_reachable("result is no longer a tree");
-    } catch (const Ast::AttachmentError &e) {
-        ASSERT_require(e->node == b);
+    } catch (const Ast::AttachmentError &error) {
+        ASSERT_require(error.node == b);
         ASSERT_require(e->size() == 1);
         ASSERT_require(e->at(0) == b);
         ASSERT_require(b->parent == e);
@@ -322,7 +393,7 @@ static void test19() {
 }
 
 // Popping a child resets the child's parent pointer
-static void test20() {
+static void test22() {
     auto e = ExpressionList::instance();
     auto b = BinaryOperator::instance();
     e->push_back(b);
@@ -333,7 +404,7 @@ static void test20() {
 }
 
 // It is possible to iterate over children
-static void test21() {
+static void test23() {
     auto e = ExpressionList::instance();
     auto b0 = BinaryOperator::instance();
     auto b1 = BinaryOperator::instance();
@@ -398,4 +469,6 @@ int main() {
     test19();
     test20();
     test21();
+    test22();
+    test23();
 }
