@@ -44,7 +44,7 @@ ParentEdge::ParentEdge(Node &child)
 NodePtr
 ParentEdge::operator()() const {
     if (parent_) {
-        return parent_->shared();
+        return parent_->pointer();
     } else {
         return {};
     }
@@ -53,7 +53,12 @@ ParentEdge::operator()() const {
 NodePtr
 ParentEdge::operator->() const {
     ASSERT_not_null(parent_);
-    return parent_->shared();
+    return parent_->pointer();
+}
+
+bool
+ParentEdge::operator==(const std::shared_ptr<Node> &other) const {
+    return other.get() == parent_;
 }
 
 void
@@ -88,7 +93,7 @@ Node::Node()
     : parent(*this) {}
 
 NodePtr
-Node::shared() {
+Node::pointer() {
     return shared_from_this();
 }
 
