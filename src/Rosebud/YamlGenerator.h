@@ -13,6 +13,8 @@ public:
     virtual void adjustParser(Sawyer::CommandLine::Parser&) override;
     virtual void generate(const Ast::ProjectPtr&) override;
 private:
+    void genLocation(Sawyer::Yaml::Node&, const Ast::NodePtr&, const Token&);
+    void genLocation(Sawyer::Yaml::Node&, const Ast::NodePtr&, const std::vector<Token>&);
     void genClass(Sawyer::Yaml::Node&, const Ast::ClassPtr&, const Hierarchy&);
     void genDefinition(Sawyer::Yaml::Node&, const Ast::DefinitionPtr&);
     void genCppStack(Sawyer::Yaml::Node&, const Ast::CppStackPtr&);

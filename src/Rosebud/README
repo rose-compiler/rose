@@ -19,6 +19,3 @@ TODO
 
 * The RosettaGenerator needs to be able to generate CPP #line
   directives.
-
-* The YamlGenerator needs to be able to output source location
-  information.
