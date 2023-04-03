@@ -14,7 +14,7 @@ BoostSerializer::generate(std::ostream &header, std::ostream &impl, const Ast::C
     ASSERT_not_null(c);
 
     header <<"\n"
-           <<"    //----------------------- Boost serialization -----------------------\n"
+           <<THIS_LOCATION <<"    //----------------------- Boost serialization -----------------------\n"
            <<"#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB\n"
            <<"private:\n"
            <<"    friend class boost::serialization::access;\n"
@@ -24,17 +24,18 @@ BoostSerializer::generate(std::ostream &header, std::ostream &impl, const Ast::C
 
     // Serialize the base classes
     for (const auto &super: c->inheritance)
-        header <<"        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(" <<super.second <<");\n";
+        header <<THIS_LOCATION <<"        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(" <<super.second <<");\n";
 
     // Serialize all properties that request serialization
     for (const auto &p: *c->properties()) {
         if (!p->findAttribute("Rosebud::no_serialize")) {
             const std::string memberName = generator.propertyDataMemberName(p());
-            header <<"        s & BOOST_SERIALIZATION_NVP(" <<memberName <<");\n";
+            header <<locationDirective(p->findAncestor<Ast::File>(), p->startToken)
+                   <<"        s & BOOST_SERIALIZATION_NVP(" <<memberName <<");\n";
         }
     }
 
-    header <<"    }\n"
+    header <<THIS_LOCATION <<"    }\n"
            <<"#endif // ROSE_HAVE_BOOST_SERIALIZATION\n";
 }
 

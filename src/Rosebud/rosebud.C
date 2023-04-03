@@ -39,6 +39,7 @@ static const std::vector<std::string> validAttrNames {
 // Command line parsing
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// These are just the switches that are common to rosebud in general, or used by all (or at least most) of the backends.
 static Sawyer::CommandLine::Parser
 makeCommandLineParser() {
     using namespace Sawyer::CommandLine;
@@ -78,17 +79,26 @@ makeCommandLineParser() {
                      "@named{yaml}{Generate YAML output that can be parsed by standalone backends.}"
                      "@named{none}{Do not generate code, but only check the input.}"));
 
-    parser.with(Switch("location")
-                .intrinsicValue(true, settings.showingCppLineDirectives)
-                .doc("Emit CPP #line directives refering to the Rosebud input files."));
+    parser.with(Switch("locations")
+                .intrinsicValue(true, settings.showingLocations)
+                .doc("Code generators should include source location in their outputs. The @s{no-locations} switch disables "
+                     "source location information so compiler errors will refer to the generated code, not the source code. "
+                     "The default is to " + std::string(settings.showingLocations ? "" : "not ") +
+                     "show location information."));
+    parser.with(Switch("no-locations")
+                .intrinsicValue(false, settings.showingLocations)
+                .key("locations")
+                .hidden(true));
 
     parser.with(Switch("warnings")
                 .intrinsicValue(true, settings.showingWarnings)
-                .hidden(true));
+                .doc("Show warnings about questionable practices in the Rosebud input. The @s{no-warnings} switch disables "
+                     "these kinds of warnings. The default is to " + std::string(settings.showingWarnings ? "" : "not ") +
+                     "show these warnings."));
     parser.with(Switch("no-warnings")
                 .intrinsicValue(false, settings.showingWarnings)
                 .key("warnings")
-                .doc("Do not show warnings about questionable things in the input."));
+                .hidden(true));
 
     return parser;
 }
@@ -665,7 +675,7 @@ parseClassDefinitionBody(const Ast::File::Ptr &file, const Ast::Class::Ptr &c, A
             // Parse part of class definition before the property
             parsePriorRegion(file, property, runningCppStack, filePos, startOfProperty);
             checkClassCppDirectives(file, c->cppStack->stack, property->cppStack->stack, c->startToken, property->startToken);
-            property->priorText = file->trimmedContent(filePos, startOfProperty, property->docToken);
+            property->priorText = file->trimmedContent(filePos, startOfProperty, property->docToken, property->priorTextToken);
             c->properties->push_back(property);
             filePos = file->token().prior();          // end of property
 
@@ -721,7 +731,7 @@ parseClassDefinitionBody(const Ast::File::Ptr &file, const Ast::Class::Ptr &c, A
 
     // Accumulate the input that appears inside the class definition after the last property but before the definition's final
     // closing brace.
-    c->endText = file->trimmedContent(filePos, file->token().begin());
+    c->endText = file->trimmedContent(filePos, file->token().begin(), c->endTextToken);
 }
 
 // Parse an entire class definition if the token stream for the file is positioned at the beginning of a class definition. If it
@@ -794,7 +804,7 @@ parseFile(const Ast::File::Ptr &file) {
             if (auto c = parseClassDefinition(file, runningCppStack)) {
                 // Parse area before the class
                 parsePriorRegion(file, c, runningCppStack, filePos, startOfClass);
-                c->priorText = file->trimmedContent(filePos, startOfClass, c->docToken);
+                c->priorText = file->trimmedContent(filePos, startOfClass, c->docToken, c->priorTextToken);
                 file->classes->push_back(c);
                 filePos = file->token().prior();
 
@@ -813,7 +823,7 @@ parseFile(const Ast::File::Ptr &file) {
     }
 
     // Accumulate the part of the file that appears after the last class definition
-    file->endText = file->trimmedContent(filePos, file->token().end());
+    file->endText = file->trimmedContent(filePos, file->token().end(), file->endTextToken);
 
     // Warn about file problems
     if (file->classes->empty())

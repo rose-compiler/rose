@@ -16,6 +16,3 @@ TODO
 
 * Ast::ListNode needs const_iterator, reverse_iterator, and
   const_reverse_iterator types, functions, and unit tests.
-
-* The RosettaGenerator needs to be able to generate CPP #line
-  directives.

@@ -758,6 +758,11 @@ public:
      *  consecutive blank lines are replaced with a single blank line, and leading and trailing blank lines are removed. */
     std::string priorText;
 
+    /** Token describing the location of the prior text.
+     *
+     *  This is a generated token of type TOK_OTHER that encloses the @ref priorText value. */
+    Token priorTextToken;
+
 protected:
     /** Default constructor used only by derived classes. */
     Definition();
@@ -846,6 +851,11 @@ public:
      *  line, and removing leading and trailing blank lines. */
     std::string endText;
 
+    /** Token that encloses endText.
+     *
+     *  This generated token of type TOK_OTHER encloses the file content that produced `endText`. */
+    Token endTextToken;
+
 protected:
     /** Default constructor used only by derived classes. */
     Class();
@@ -878,6 +888,11 @@ public:
      *  The text is modified by removing trailing white space from each line, replacing consecutive blank lines with a single blank
      *  line, and removing leading and trailing blank lines. */
     std::string endText;
+
+    /** Token that encloses endText.
+     *
+     *  This generated token of type TOK_OTHER encloses the file content that produced `endText`. */
+    Token endTextToken;
 
 protected:
     File() = delete;
@@ -968,8 +983,8 @@ public:
      *  exclude token is specified, then its text is not included in the returned string.
      *
      * @{ */
-    std::string trimmedContent(size_t begin, size_t end);
-    std::string trimmedContent(size_t begin, size_t end, const Token &exclude);
+    std::string trimmedContent(size_t begin, size_t end, Token &outputToken);
+    std::string trimmedContent(size_t begin, size_t end, const Token &exclude, Token &outputToken);
     /** @} */
 
     /** Emit the context for a diagnostic message.

@@ -563,4 +563,35 @@ removeVolatileMutable(const std::string &type) {
     return retval;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// C preprocessor utilities
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::string
+locationDirective(size_t line, const std::string &fileName) {
+    if (settings.showingLocations) {
+        const std::string directory = [&fileName]() {
+            if (fileName.find('/') == std::string::npos) {
+                return "src/Rosebud/";
+            } else {
+                return "";
+            }
+        }();
+
+        return "#line " + boost::lexical_cast<std::string>(line) + " \"" + directory + fileName + "\"\n";
+    } else {
+        return "";
+    }
+}
+
+std::string
+locationDirective(const Ast::Node::Ptr &node, const Token &token) {
+    if (token) {
+        if (auto file = node->findAncestor<Ast::File>()) {
+            return locationDirective(file->tokenStream().location(token).first + 1, file->name());
+        }
+    }
+    return "";
+}
+
 } // namespace
