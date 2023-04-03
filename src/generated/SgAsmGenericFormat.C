@@ -1,103 +1,124 @@
+#line 164 "src/Rosebud/RosettaGenerator.C"
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Implementation for SgAsmGenericFormat                -- MACHINE GENERATED; DO NOT MODIFY --
+// Implementation for SgAsmGenericFormat            -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#line 167 "src/Rosebud/RosettaGenerator.C"
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#line 175 "src/Rosebud/RosettaGenerator.C"
 #include <sage3basic.h>
 
+#line 487 "src/Rosebud/RosettaGenerator.C"
 SgAsmGenericFormat::ExecFamily const&
 SgAsmGenericFormat::get_family() const {
     return p_family;
 }
 
+#line 507 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmGenericFormat::set_family(SgAsmGenericFormat::ExecFamily const& x) {
     this->p_family = x;
     set_isModified(true);
 }
 
+#line 487 "src/Rosebud/RosettaGenerator.C"
 SgAsmGenericFormat::ExecPurpose const&
 SgAsmGenericFormat::get_purpose() const {
     return p_purpose;
 }
 
+#line 507 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmGenericFormat::set_purpose(SgAsmGenericFormat::ExecPurpose const& x) {
     this->p_purpose = x;
     set_isModified(true);
 }
 
+#line 487 "src/Rosebud/RosettaGenerator.C"
 ByteOrder::Endianness const&
 SgAsmGenericFormat::get_sex() const {
     return p_sex;
 }
 
+#line 507 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmGenericFormat::set_sex(ByteOrder::Endianness const& x) {
     this->p_sex = x;
     set_isModified(true);
 }
 
+#line 487 "src/Rosebud/RosettaGenerator.C"
 unsigned const&
 SgAsmGenericFormat::get_version() const {
     return p_version;
 }
 
+#line 507 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmGenericFormat::set_version(unsigned const& x) {
     this->p_version = x;
     set_isModified(true);
 }
 
+#line 487 "src/Rosebud/RosettaGenerator.C"
 bool const&
 SgAsmGenericFormat::get_is_current_version() const {
     return p_is_current_version;
 }
 
+#line 507 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmGenericFormat::set_is_current_version(bool const& x) {
     this->p_is_current_version = x;
     set_isModified(true);
 }
 
+#line 487 "src/Rosebud/RosettaGenerator.C"
 SgAsmGenericFormat::ExecABI const&
 SgAsmGenericFormat::get_abi() const {
     return p_abi;
 }
 
+#line 507 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmGenericFormat::set_abi(SgAsmGenericFormat::ExecABI const& x) {
     this->p_abi = x;
     set_isModified(true);
 }
 
+#line 487 "src/Rosebud/RosettaGenerator.C"
 unsigned const&
 SgAsmGenericFormat::get_abi_version() const {
     return p_abi_version;
 }
 
+#line 507 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmGenericFormat::set_abi_version(unsigned const& x) {
     this->p_abi_version = x;
     set_isModified(true);
 }
 
+#line 487 "src/Rosebud/RosettaGenerator.C"
 size_t const&
 SgAsmGenericFormat::get_word_size() const {
     return p_word_size;
 }
 
+#line 507 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmGenericFormat::set_word_size(size_t const& x) {
     this->p_word_size = x;
     set_isModified(true);
 }
 
+#line 244 "src/Rosebud/RosettaGenerator.C"
 SgAsmGenericFormat::~SgAsmGenericFormat() {
     destructorHelper();
 }
 
+#line 273 "src/Rosebud/RosettaGenerator.C"
 SgAsmGenericFormat::SgAsmGenericFormat()
     : p_family(SgAsmGenericFormat::FAMILY_UNSPECIFIED)
     , p_purpose(SgAsmGenericFormat::PURPOSE_EXECUTABLE)
@@ -108,6 +129,7 @@ SgAsmGenericFormat::SgAsmGenericFormat()
     , p_abi_version(0)
     , p_word_size(0) {}
 
+#line 389 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmGenericFormat::initializeProperties() {
     p_family = SgAsmGenericFormat::FAMILY_UNSPECIFIED;
@@ -120,4 +142,5 @@ SgAsmGenericFormat::initializeProperties() {
     p_word_size = 0;
 }
 
+#line 183 "src/Rosebud/RosettaGenerator.C"
 #endif // ROSE_ENABLE_BINARY_ANALYSIS
