@@ -10,6 +10,7 @@ class RosettaGenerator: public Generator {
     boost::filesystem::path rosettaFileName;            // optional name of file into which ROSETTA source code is written
     boost::filesystem::path implDirectoryName;          // optional name of directory where node implementation files are created
     boost::filesystem::path nodeListFileName;           // optional name of file that contains list of all node types
+
 public:
     virtual void adjustParser(Sawyer::CommandLine::Parser&) override;
     virtual void generate(const Ast::ProjectPtr&) override;

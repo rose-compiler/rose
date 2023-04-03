@@ -46,15 +46,6 @@ YamlGenerator::adjustParser(Sawyer::CommandLine::Parser &parser) {
 
            "The following command-line switches are understood by this backend:");
 
-    sg.insert(Switch("locations")
-              .intrinsicValue(true, showingLocations)
-              .doc("Include location information in the generated YAML output. The @s{no-locations} switch turns this off. The "
-                   "default is to " + std::string(showingLocations ? "show" : "not show") + " location information."));
-    sg.insert(Switch("no-locations")
-              .intrinsicValue(false, showingLocations)
-              .key("locations")
-              .hidden(true));
-
     parser.with(sg);
 }
 
@@ -89,7 +80,7 @@ YamlGenerator::genCppStack(Sawyer::Yaml::Node &root, const Ast::CppStack::Ptr &c
             for (const Ast::CppStack::Directive &directive: level) {
                 auto &dirNode = levelNode.pushBack();
                 dirNode["directive"] = prefixLines(directive.lexeme, "|");
-                if (showingLocations)
+                if (settings.showingLocations)
                     genLocation(dirNode["directive_location"], cppStack, directive.token);
             }
         }
@@ -110,10 +101,11 @@ YamlGenerator::genDefinition(Sawyer::Yaml::Node &root, const Ast::Definition::Pt
     if (!defn->priorText.empty())
         root["prior_text"] = prefixLines(defn->priorText, "|");
 
-    if (showingLocations) {
+    if (settings.showingLocations) {
         genLocation(root["starting_location"], defn, defn->startToken);
         genLocation(root["name_location"], defn, defn->nameToken);
         genLocation(root["doc_location"], defn, defn->docToken);
+        genLocation(root["prior_text_location"], defn, defn->priorTextToken);
     }
 }
 
@@ -121,13 +113,13 @@ void
 YamlGenerator::genAttribute(Sawyer::Yaml::Node &root, const Ast::Attribute::Ptr &attribute) {
     ASSERT_not_null(attribute);
     root["name"] = attribute->fqName;
-    if (showingLocations)
+    if (settings.showingLocations)
         genLocation(root["name_location"], attribute, attribute->nameTokens);
     if (attribute->arguments && !attribute->arguments->empty()) {
         for (const auto &arg: *attribute->arguments()) {
             auto &argNode = root["arguments"].pushBack();
             argNode["argument"] = arg->string();
-            if (showingLocations)
+            if (settings.showingLocations)
                 genLocation(argNode["argument_location"], arg(), arg->tokens);
         }
     }
@@ -139,12 +131,12 @@ YamlGenerator::genProperty(Sawyer::Yaml::Node &root, const Ast::Property::Ptr &p
     genDefinition(root, property);
     if (property->cType) {
         root["type"]["c_code"] = prefixLines(property->cType->string(), "|");
-        if (showingLocations)
+        if (settings.showingLocations)
             genLocation(root["type"]["location"], property, property->cType->tokens);
     }
     if (property->cInit) {
         root["init"]["c_code"] = prefixLines(property->cInit->string(), "|");
-        if (showingLocations)
+        if (settings.showingLocations)
             genLocation(root["init"]["location"], property, property->cInit->tokens);
     }
 
@@ -189,8 +181,11 @@ YamlGenerator::genClass(Sawyer::Yaml::Node &root, const Ast::Class::Ptr &c, cons
         genProperty(node, property());
     }
 
-    if (!c->endText.empty())
+    if (!c->endText.empty()) {
         root["end_text"] = prefixLines(c->endText, "|");
+        if (settings.showingLocations)
+            genLocation(root["end_text_location"], c, c->endTextToken);
+    }
 
     const Classes dcs = derivedClasses(c, h);
     if (!dcs.empty()) {
@@ -213,8 +208,11 @@ YamlGenerator::generate(const Ast::Project::Ptr &project) {
         fileNode["name"] = file->tokenStream().fileName();
         fileNode["lines"] = file->tokenStream().content().nLines();
         fileNode["size"] = file->tokenStream().content().nCharacters();
-        if (!file->endText.empty())
+        if (!file->endText.empty()) {
             fileNode["end_text"] = prefixLines(file->endText, "|");
+            if (settings.showingLocations)
+                genLocation(fileNode["end_text_location"], file(), file->endTextToken);
+        }
     }
 
     // Information about classes

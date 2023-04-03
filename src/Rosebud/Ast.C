@@ -421,12 +421,12 @@ File::content(const std::vector<Token> &tokens, Expand expand) {
 }
 
 std::string
-File::trimmedContent(size_t begin, size_t end) {
-    return trimmedContent(begin, end, Token());
+File::trimmedContent(size_t begin, size_t end, Token &outputToken) {
+    return trimmedContent(begin, end, Token(), outputToken);
 }
 
 std::string
-File::trimmedContent(size_t begin, size_t end, const Token &exclude) {
+File::trimmedContent(size_t begin, size_t end, const Token &exclude, Token &outputToken) {
     using Interval = Sawyer::Container::Interval<size_t>;
     using IntervalSet = Sawyer::Container::IntervalSet<Interval>;
     IntervalSet where;
@@ -435,6 +435,14 @@ File::trimmedContent(size_t begin, size_t end, const Token &exclude) {
         where |= Interval::hull(begin, end-1);
     if (exclude.begin() < exclude.end())
         where -= Interval::hull(exclude.begin(), exclude.end() - 1);
+
+    // FIXME[Robb Matzke 2023-04-03]: it would be nice if this token were a little more accurate
+    if (where.isEmpty()) {
+        outputToken = Token();
+    } else {
+        outputToken = Token(Sawyer::Language::Clexer::TOK_OTHER,
+                            where.hull().least(), where.hull().least(), where.hull().greatest());
+    }
 
     std::string s;
     for (const Interval &interval: where.intervals())

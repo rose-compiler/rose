@@ -1,6 +1,7 @@
 #include <Rosebud/RosettaGenerator.h>
 
 #include <Rosebud/BoostSerializer.h>
+#include <Rosebud/Utility.h>
 
 #include <Sawyer/StaticBuffer.h>
 
@@ -8,6 +9,7 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <iostream>
 #include <fstream>
@@ -80,15 +82,15 @@ RosettaGenerator::shortName(const Ast::Class::Ptr &c) {
 // Output the beginning of the binaryInstruction.C file.
 void
 RosettaGenerator::genRosettaFileBegin(std::ostream &rosetta) {
-    rosetta <<makeTitleComment("THIS FILE IS MACHINE GENERATED", "", '/', outputWidth)
-            <<"//\n"
-            <<"// This file was generated with ROSE's \"rosebud\" tool by reading node definitions written in a C++-like language\n"
-            <<"// and emitting this ROSETTA input.\n"
+    rosetta <<THIS_LOCATION <<makeTitleComment("THIS FILE IS MACHINE GENERATED", "", '/', outputWidth)
+            << "//\n"
+            <<THIS_LOCATION <<"// This file was generated with ROSE's \"rosebud\" tool by reading node definitions written in a\n"
+            <<"// C++-like language and emitting this ROSETTA input.\n"
             <<"//\n"
             <<makeTitleComment("DO NOT MODIFY THIS FILE MANUALLY!", "", '/', outputWidth)
             <<"\n"
             <<"\n"
-            <<"#include <featureTests.h>\n"
+            <<THIS_LOCATION <<"#include <featureTests.h>\n"
             <<"#ifdef ROSE_ENABLE_BINARY_ANALYSIS\n"
             <<"#include \"ROSETTA_macros.h\"\n"
             <<"#include \"grammar.h\"\n"
@@ -136,13 +138,13 @@ RosettaGenerator::genRosettaFileBegin(std::ostream &rosetta) {
 
 void
 RosettaGenerator::genRosettaFileEnd(std::ostream &rosetta) {
-    rosetta <<"#endif // ROSE_ENABLE_BINARY_ANALYSIS\n";
+    rosetta <<THIS_LOCATION <<"#endif // ROSE_ENABLE_BINARY_ANALYSIS\n";
 }
 
 void
 RosettaGenerator::genRosettaFunctionBegin(std::ostream &rosetta) {
     rosetta <<"\n"
-            <<"#ifndef DOCUMENTATION\n"
+            <<THIS_LOCATION <<"#ifndef DOCUMENTATION\n"
             <<"void Grammar::setUpBinaryInstructions() {\n"
             <<"#endif // !DOCUMENTATION\n";
 }
@@ -150,7 +152,7 @@ RosettaGenerator::genRosettaFunctionBegin(std::ostream &rosetta) {
 void
 RosettaGenerator::genRosettaFunctionEnd(std::ostream &rosetta) {
     rosetta <<"\n"
-            <<"#ifndef DOCUMENTATION\n"
+            <<THIS_LOCATION <<"#ifndef DOCUMENTATION\n"
             <<"} // Grammar::setUpBinaryInstruction\n"
             <<"#endif // !DOCUMENTATION\n";
 }
@@ -159,10 +161,10 @@ void
 RosettaGenerator::genImplFileBegin(std::ostream &impl, const Ast::Class::Ptr &c) {
     ASSERT_not_null(c);
 
-    impl <<makeTitleComment("Implementation for " + c->name + "                -- MACHINE GENERATED; DO NOT MODIFY --",
+    impl <<THIS_LOCATION <<makeTitleComment("Implementation for " + c->name + "            -- MACHINE GENERATED; DO NOT MODIFY --",
                             "", '/', outputWidth)
          <<"\n"
-         <<"#include <featureTests.h>\n"
+         <<THIS_LOCATION <<"#include <featureTests.h>\n"
          <<"#ifdef ROSE_ENABLE_BINARY_ANALYSIS\n";
 
     // The CPP conditional compilation directives that appeared before the class definition in the Rosebud input need to also be in
@@ -170,7 +172,7 @@ RosettaGenerator::genImplFileBegin(std::ostream &impl, const Ast::Class::Ptr &c)
     // been emitted in the header file for this node (actually, in the monstrous Cxx_Grammar.h file, but we'll fix that later and
     // for now we'll include it by including <sage3basic.h> just like we do per policy in all other librose source files).
     c->cppStack->emitOpen(impl);
-    impl <<"#include <sage3basic.h>\n";
+    impl <<THIS_LOCATION <<"#include <sage3basic.h>\n";
 }
 
 void
@@ -178,7 +180,7 @@ RosettaGenerator::genImplFileEnd(std::ostream &impl, const Ast::Class::Ptr &c) {
     ASSERT_not_null(c);
     impl <<"\n";
     c->cppStack->emitClose(impl);
-    impl <<"#endif // ROSE_ENABLE_BINARY_ANALYSIS\n";
+    impl <<THIS_LOCATION <<"#endif // ROSE_ENABLE_BINARY_ANALYSIS\n";
 }
 
 // Output declarations for all classes used as base classes so Doxygen is sure to see them.
@@ -191,12 +193,13 @@ RosettaGenerator::genClassDeclarations(std::ostream &rosetta, const Classes &cla
     }
 
     rosetta <<"\n"
-            <<"// Since ROSETTA builds classes from the leaves up to the base, and C++ builds classes from the base down to the leaves, we\n"
-            <<"// need to make sure that doxygen sees the base classes before the derived classes. So just list all the non-leaf classes here.\n"
+            <<THIS_LOCATION <<"// Since ROSETTA builds classes from the leaves up to the base, and C++ builds classes from the\n"
+            <<"// base down to the leaves, we need to make sure that doxygen sees the base classes before the derived classes. So\n"
+            <<"// just list all the non-leaf classes here.\n"
             <<"#ifdef DOCUMENTATION\n";
     for (const std::string &name: bases)
-        rosetta <<"class " <<name <<";\n";
-    rosetta <<"#endif // DOCUMENTATION\n";
+        rosetta <<THIS_LOCATION <<"class " <<name <<";\n";
+    rosetta <<THIS_LOCATION <<"#endif // DOCUMENTATION\n";
 }
 
 // Output the "class NAME: SUPER {" line
@@ -205,14 +208,14 @@ RosettaGenerator::genClassBegin(std::ostream &rosetta, const Ast::Class::Ptr &c)
     ASSERT_not_null(c);
 
     rosetta <<"\n"
-            <<"#ifdef DOCUMENTATION\n";
+            <<THIS_LOCATION <<"#ifdef DOCUMENTATION\n";
 
     // Documentation
     if (!c->doc.empty())
-        rosetta <<c->doc <<"\n";
+        rosetta <<locationDirective(c, c->docToken) <<c->doc <<"\n";
 
     // Emit 'class' NAME (':' VISIBILITY SUPERNAME (',' VISIBILITY SUPERNAME)*)?
-    rosetta <<"class " <<c->name;
+    rosetta <<locationDirective(c, c->startToken) <<"class " <<c->name;
     for (size_t i = 0; i < c->inheritance.size(); ++i)
         rosetta <<(0 == i ? ": " : ", ") <<c->inheritance[i].first <<" " <<c->inheritance[i].second;
 
@@ -222,7 +225,7 @@ RosettaGenerator::genClassBegin(std::ostream &rosetta, const Ast::Class::Ptr &c)
 
 void
 RosettaGenerator::genClassEnd(std::ostream &rosetta, const Ast::Class::Ptr&) {
-    rosetta <<"#ifdef DOCUMENTATION\n"
+    rosetta <<THIS_LOCATION <<"#ifdef DOCUMENTATION\n"
             <<"};\n"
             <<"#endif // DOCUMENTATION\n";
 }
@@ -233,12 +236,12 @@ RosettaGenerator::genClassDestructor(std::ostream &header, std::ostream &impl, c
     ASSERT_not_null(c);
 
     header <<"\n"
-          <<"public:\n"
-          <<"    /** Destructor. */\n"
-          <<"    virtual ~" <<c->name <<"();\n";
+           <<THIS_LOCATION <<"public:\n"
+           <<"    /** Destructor. */\n"
+           <<"    virtual ~" <<c->name <<"();\n";
 
     impl <<"\n"
-         <<c->name <<"::~" <<c->name <<"() {\n"
+         <<THIS_LOCATION <<c->name <<"::~" <<c->name <<"() {\n"
          <<"    destructorHelper();\n"
          <<"}\n";
 }
@@ -261,13 +264,13 @@ RosettaGenerator::genClassConstructors(std::ostream &header, std::ostream &impl,
 
     // Default constructor declaration
     header <<"\n"
-           <<"public:\n"
+           <<THIS_LOCATION <<"public:\n"
            <<"    /** Default constructor. */\n"
            <<"    " <<c->name <<"();\n";
 
     // Default constructor implementation
     impl <<"\n"
-         <<c->name <<"::" <<c->name <<"()";
+         <<THIS_LOCATION <<c->name <<"::" <<c->name <<"()";
     size_t nInits = 0;
     for (const auto &p: *c->properties()) {
         if (p->cInit && !p->cInit->empty()) {
@@ -284,7 +287,7 @@ RosettaGenerator::genClassConstructors(std::ostream &header, std::ostream &impl,
     if (!args.empty()) {
         // Declaration
         header <<"\n"
-               <<"public:\n"
+               <<THIS_LOCATION <<"public:\n"
                <<"    /** Constructor. */\n"
                <<"    " <<(args.size() == 1 ? "explicit " : "") <<c->name <<"(";
         for (const auto &p: args) {
@@ -299,7 +302,7 @@ RosettaGenerator::genClassConstructors(std::ostream &header, std::ostream &impl,
 #if 1 // DEBUGGING [Robb Matzke 2023-03-19]
         // Show information about how the constructor args map to classes
         impl <<"\n"
-             <<"// The association between constructor arguments and their classes:\n";
+             <<THIS_LOCATION <<"// The association between constructor arguments and their classes:\n";
         for (const auto &p: args) {
             auto argClass = p->findAncestor<Ast::Class>();
             ASSERT_not_null(argClass);
@@ -307,7 +310,7 @@ RosettaGenerator::genClassConstructors(std::ostream &header, std::ostream &impl,
         }
 #endif
         // Implementation declaration
-        impl <<c->name <<"::" <<c->name <<"(";
+        impl <<THIS_LOCATION <<c->name <<"::" <<c->name <<"(";
         for (const auto &p: args) {
             auto pfile = p->findAncestor<Ast::File>();
             auto argClass = p->findAncestor<Ast::Class>();
@@ -373,7 +376,7 @@ RosettaGenerator::genInitProperties(std::ostream &header, std::ostream &impl, co
     ASSERT_not_null(file);
 
     header <<"\n"
-           <<"protected:\n"
+           <<THIS_LOCATION <<"protected:\n"
            <<"    /** Initialize all properties that have explicit initial values.\n"
            <<"     *\n"
            <<"     *  This function is mostly for use in user-defined constructors where the user desires to initialize\n"
@@ -383,7 +386,7 @@ RosettaGenerator::genInitProperties(std::ostream &header, std::ostream &impl, co
            <<"    void initializeProperties();\n";
 
     impl <<"\n"
-         <<"void\n"
+         <<THIS_LOCATION <<"void\n"
          <<c->name <<"::initializeProperties() {\n";
 
     // Initialize the properties of this class
@@ -447,8 +450,8 @@ RosettaGenerator::genProperty(std::ostream &rosetta, std::ostream &header, std::
     //     the source node to the destination node. We assume that all data members should be copied.
     if (p->findAttribute("Rosebud::rosetta")) {
         rosetta <<"\n"
-                <<"#ifndef DOCUMENTATION\n"
-                <<"    " <<shortName(c) <<".setDataPrototype(\n"
+                <<THIS_LOCATION <<"#ifndef DOCUMENTATION\n";
+        rosetta <<locationDirective(p, p->startToken) <<"    " <<shortName(c) <<".setDataPrototype(\n"
                 <<"        \"" <<p->cType->string(file) <<"\", \"" <<p->name <<"\", \"";
         if (p->cInit && !p->cInit->empty())
             rosetta <<"= " <<p->cInit->string(file);
@@ -456,38 +459,38 @@ RosettaGenerator::genProperty(std::ostream &rosetta, std::ostream &header, std::
                 <<"        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, "
                 <<(p->findAttribute("Rosebud::traverse") ? "DEF_TRAVERSAL" : "NO_TRAVERSAL") <<", "
                 <<"NO_DELETE, COPY_DATA);\n"
-                <<"#endif // !DOCUMENTATION\n";
+                <<THIS_LOCATION <<"#endif // !DOCUMENTATION\n";
     } else {
         header <<"\n"
-               <<"private:\n"
+               <<THIS_LOCATION <<"private:\n"
                <<"    " <<p->cType->string(file) <<" " <<propertyDataMemberName(p) <<";\n";
     }
 
     // Documentation
     header <<"\n"
-           <<"public:\n"
-           <<doc.first;
+           <<THIS_LOCATION <<"public:\n"
+           <<locationDirective(p, p->docToken) <<doc.first;
 
     // Accessor functions declarations
     const std::string origType = p->cType->string(file);
     const std::string constRefType = constRef(removeVolatileMutable(origType));
     const std::string refType = removeVolatileMutable(origType) + "&";
     for (const std::string &accessorName: propertyAccessorNames(p)) {
-        header <<"    " <<constRefType <<" " <<accessorName <<"() const;\n";
+        header <<THIS_LOCATION <<"    " <<constRefType <<" " <<accessorName <<"() const;\n";
         if (p->findAttribute("Rosebud::large"))
-            header <<"    " <<refType      <<" " <<accessorName <<"();\n";
+            header <<THIS_LOCATION <<"    " <<refType      <<" " <<accessorName <<"();\n";
     }
 
     // Accessor function implementations
     for (const std::string &accessorName: propertyAccessorNames(p)) {
         impl <<"\n"
-             <<constRefType <<"\n"
+             <<THIS_LOCATION <<constRefType <<"\n"
              <<c->name <<"::" <<accessorName <<"() const {\n"
              <<"    return " <<propertyDataMemberName(p) <<";\n"
              <<"}\n";
         if (p->findAttribute("Rosebud::large")) {
             impl <<"\n"
-                 <<refType <<"\n"
+                 <<THIS_LOCATION <<refType <<"\n"
                  <<c->name <<"::" <<accessorName <<"() {\n"
                  <<"    return " <<propertyDataMemberName(p) <<";\n"
                  <<"}\n";
@@ -496,12 +499,12 @@ RosettaGenerator::genProperty(std::ostream &rosetta, std::ostream &header, std::
 
     // Mutator function declarations
     for (const std::string &mutatorName: propertyMutatorNames(p))
-        header <<"    void " <<mutatorName <<"(" <<constRefType <<");\n";
+        header <<THIS_LOCATION <<"    void " <<mutatorName <<"(" <<constRefType <<");\n";
 
     // Mutator function implementations
     for (const std::string &mutatorName: propertyMutatorNames(p)) {
         impl <<"\n"
-             <<"void\n"
+             <<THIS_LOCATION <<"void\n"
              <<c->name <<"::" <<mutatorName <<"(" <<constRefType <<" x) {\n"
              <<"    this->" <<propertyDataMemberName(p) <<" = x;\n"
              <<"    set_isModified(true);\n"
@@ -519,7 +522,7 @@ RosettaGenerator::genOtherContent(std::ostream &rosetta, const Ast::Class::Ptr &
 
     if (!content.empty()) {
         rosetta <<"\n"
-                <<"    DECLARE_OTHERS(" <<shortName(c) <<");\n"
+                <<THIS_LOCATION <<"    DECLARE_OTHERS(" <<shortName(c) <<");\n"
                 <<"#if defined(" <<c->name <<"_OTHERS) || defined(DOCUMENTATION)\n";
         BoostSerializer().generate(rosetta, rosetta, c, *this);
         rosetta <<content
@@ -535,7 +538,7 @@ RosettaGenerator::genNewNonterminalMacro(std::ostream &rosetta, const Ast::Class
     // We would normally use the NEW_NONTERMINAL_MACRO macro defined in ROSETTA_macros.h here, but that macro makes it difficult to
     // handle a list of subclass names where some of the subclasses are conditionally compiled. Especially when the first one is
     // conditionally compiled.
-    rosetta <<"AstNodeClass& " <<shortName(c) <<" = nonTerminalConstructor(\n"
+    rosetta <<THIS_LOCATION <<"AstNodeClass& " <<shortName(c) <<" = nonTerminalConstructor(\n"
             <<"    \"" <<shortName(c) <<"\",\n"
             <<"    *this,\n"
             <<"    \"" <<shortName(c) <<"\",\n"
@@ -555,14 +558,14 @@ RosettaGenerator::genNewNonterminalMacro(std::ostream &rosetta, const Ast::Class
     // the ROSETTA-generated Cxx_GrammarTreeTraversalSuccessorContainer.C file with errors like this:
     //   "Internal error(!): called tree traversal mechanism for illegal object:"
     rosetta <<"    , true);\n"
-            <<"assert(" <<shortName(c) <<".associatedGrammar != nullptr);\n";
+            <<THIS_LOCATION <<"assert(" <<shortName(c) <<".associatedGrammar != nullptr);\n";
 }
 
 void
 RosettaGenerator::genNonterminalMacros(std::ostream &rosetta, const Ast::Class::Ptr &c, const Hierarchy &h) {
     ASSERT_not_null(c);
 
-    rosetta <<"#ifndef DOCUMENTATION\n";
+    rosetta <<THIS_LOCATION <<"#ifndef DOCUMENTATION\n";
     genNewNonterminalMacro(rosetta, c, h);
     rosetta <<shortName(c) <<".setCppCondition(\"!defined(DOCUMENTATION)\");\n"
             <<shortName(c) <<".isBoostSerializable(true);\n"
@@ -575,7 +578,7 @@ void
 RosettaGenerator::genLeafMacros(std::ostream &rosetta, const Ast::Class::Ptr &c) {
     ASSERT_not_null(c);
 
-    rosetta <<"DECLARE_LEAF_CLASS(" <<shortName(c) <<");\n"
+    rosetta <<THIS_LOCATION <<"DECLARE_LEAF_CLASS(" <<shortName(c) <<");\n"
             <<"IS_SERIALIZABLE(" <<shortName(c) <<");\n";
 }
 
@@ -599,7 +602,7 @@ RosettaGenerator::genClassDefinition(std::ostream &rosetta, const Ast::Class::Pt
 
     // Title comment
     rosetta <<"\n\n"
-            <<makeTitleComment(c->name + "                  -- MACHINE GENERATED; DO NOT MODIFY --", "", '/', outputWidth)
+            <<THIS_LOCATION <<makeTitleComment(c->name + "           -- MACHINE GENERATED; DO NOT MODIFY --", "", '/', outputWidth)
             <<"\n";
 
     // Emit the conditional compilation for the class as a whole
@@ -616,9 +619,9 @@ RosettaGenerator::genClassDefinition(std::ostream &rosetta, const Ast::Class::Pt
     // needed before the ROSETTA-generated class definition.
     if (!c->priorText.empty()) {
         rosetta <<"\n"
-                <<"DECLARE_HEADERS(" <<shortName(c) <<");\n"
+                <<THIS_LOCATION <<"DECLARE_HEADERS(" <<shortName(c) <<");\n"
                 <<"#if defined(" <<c->name <<"_HEADERS) || defined(DOCUMENTATION)\n"
-                <<c->priorText <<"\n";
+                <<locationDirective(c, c->priorTextToken) <<c->priorText <<"\n";
         c->cppStack->emitClose(rosetta);
         rosetta <<"#endif // " <<c->name <<"_HEADERS\n";
     }
@@ -627,7 +630,7 @@ RosettaGenerator::genClassDefinition(std::ostream &rosetta, const Ast::Class::Pt
 
     for (const auto &p: *c->properties()) {
         // Stuff in the input that's prior to the property definition should go in the "other" section of output
-        header <<p->priorText;
+        header <<locationDirective(p(), p->priorTextToken) <<p->priorText;
 
         // Emit the property definition, and accumulate anything that should go in the "other" section of output.
         genProperty(rosetta, header, impl, p());
@@ -635,7 +638,7 @@ RosettaGenerator::genClassDefinition(std::ostream &rosetta, const Ast::Class::Pt
 
     // If anything else is in the input class definition after the last property definition, append it to the "other" section of
     // output
-    header <<c->endText;
+    header <<locationDirective(c, c->endTextToken) <<c->endText;
 
     // Class constructors and destructures emitted quite late in the class definition so we're sure that all the types needed by
     // their arguments are already emitted.
@@ -702,7 +705,7 @@ RosettaGenerator::genTupFile(const std::vector<std::string> &implFileNames) {
             return;
         }
 
-        out <<makeTitleComment("      MACHINE GENERATED FILE -- DO NOT MODIFY", "", '#', outputWidth)
+        out <<THIS_LOCATION <<makeTitleComment("      MACHINE GENERATED FILE -- DO NOT MODIFY", "", '#', outputWidth)
             <<"#\n"
             <<"# This file was generated by Rosebud\n"
             <<"#\n"
@@ -729,7 +732,7 @@ RosettaGenerator::genMakeFile(const std::vector<std::string> &implFileNames) {
             return;
         }
 
-        out <<makeTitleComment("      MACHINE GENERATED FILE -- DO NOT MODIFY", "", '#', outputWidth)
+        out <<THIS_LOCATION <<makeTitleComment("      MACHINE GENERATED FILE -- DO NOT MODIFY", "", '#', outputWidth)
             <<"#\n"
             <<"# This file was generated by Rosebud\n"
             <<"#\n"
@@ -756,7 +759,7 @@ RosettaGenerator::genCmakeFile(const std::vector<std::string> &implFileNames) {
             return;
         }
 
-        out <<makeTitleComment("      MACHINE GENERATED FILE -- DO NOT MODIFY", "", '#', outputWidth)
+        out <<THIS_LOCATION <<makeTitleComment("      MACHINE GENERATED FILE -- DO NOT MODIFY", "", '#', outputWidth)
             <<"#\n"
             <<"# This file was generated by Rosebud\n"
             <<"#\n"

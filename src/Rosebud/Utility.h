@@ -6,6 +6,8 @@
 #include <Sawyer/Message.h>
 #include <Sawyer/Optional.h>
 
+#define THIS_LOCATION locationDirective(__LINE__, __FILE__)
+
 namespace Rosebud {
 
 /** Kinds of built-in code generators. */
@@ -19,7 +21,7 @@ enum class Backend {
 struct Settings {
     Backend backend = Backend::YAML;                    /**< Kind of backend to use. */
     bool showingWarnings = true;                        /**< Show warnings about the input. */
-    bool showingCppLineDirectives = false;              /**< Generate C preprocessor source location directives. */
+    bool showingLocations = true;                       /**< Output should show source location from whence it came. */
     bool debugging = false;                             /**< Generate additional debugging output. */
     When usingColor = When::AUTO;                       /**< Use ANSI color escapes in the diagnostic output. */
 };
@@ -215,6 +217,19 @@ std::string constRef(const std::string &type);
 
 /** Rmove "volatile" and "mutable" from the beginning of a type string. */
 std::string removeVolatileMutable(const std::string &type);
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// C preprocessor utilities
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Input location information.
+ *
+ *  This returns a C preprocessor #line directive that resets source information as specified.
+ *
+ * @{ */
+std::string locationDirective(size_t line, const std::string &file);
+std::string locationDirective(const Ast::NodePtr&, const Token&);
+/** @} */
 
 } // namespace
 #endif
