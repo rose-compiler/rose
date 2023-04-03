@@ -57,8 +57,23 @@ ParentEdge::operator->() const {
 }
 
 bool
-ParentEdge::operator==(const std::shared_ptr<Node> &other) const {
-    return other.get() == parent_;
+ParentEdge::operator==(const NodePtr &ptr) const {
+    return ptr.get() == parent_;
+}
+
+bool
+ParentEdge::operator!=(const NodePtr &ptr) const {
+    return ptr.get() != parent_;
+}
+
+bool
+ParentEdge::operator==(const ParentEdge &other) const {
+    return parent_ == other.parent_;
+}
+
+bool
+ParentEdge::operator!=(const ParentEdge &other) const {
+    return parent_ != other.parent_;
 }
 
 void

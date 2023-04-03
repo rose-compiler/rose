@@ -8,19 +8,20 @@
 
 namespace Rosebud {
 
+/** Kinds of built-in code generators. */
 enum class Backend {
-    ROSETTA_BINARY,
-    YAML,
-    NONE
+    ROSETTA_BINARY,                                     /**< Generate code that's backward compatible with ROSETTA. */
+    YAML,                                               /**< Generate a machine-readable YAML representation of the IR. */
+    NONE                                                /**< Do not generate code; only check the input. */
 };
 
 /** Command-line settings for the rosebud tool. */
 struct Settings {
-    Backend backend = Backend::YAML;
-    bool showingWarnings = true;
-    bool showingCppLineDirectives = false;
-    bool debugging = false;
-    When usingColor = When::AUTO;
+    Backend backend = Backend::YAML;                    /**< Kind of backend to use. */
+    bool showingWarnings = true;                        /**< Show warnings about the input. */
+    bool showingCppLineDirectives = false;              /**< Generate C preprocessor source location directives. */
+    bool debugging = false;                             /**< Generate additional debugging output. */
+    When usingColor = When::AUTO;                       /**< Use ANSI color escapes in the diagnostic output. */
 };
 
 /** Command-line settings for the rosebud tool. */
@@ -35,11 +36,14 @@ extern Settings settings;
  *  E.g., if input is "{" then output is "}" and vice versa. */
 std::string matching(const std::string&);
 
-// Split a string into one string per line, removing the LF line termination. ROSE code does not have CR line termination so we
-// don't have to worry about that.
+/** Split a multi-line string into one string per line.
+ *
+ *  Splits the input string at its line termination characters and return a vector of the resulting lines without their line
+ *  termination characters. Since ROSE source code is prohibited from using carriage returns, we only have to worry about line
+ *  feeds. */
 std::vector<std::string> splitIntoLines(const std::string&);
 
-// Remove lines that are blank or contain only white space
+/** Remove lines that are empty or contain only white space. */
 void eraseBlankLines(std::vector<std::string>&);
 
 /** Trim leading, trailing, and internal blank lines and trailing white space.
@@ -57,13 +61,17 @@ std::string prefixLines(const std::string &s, const std::string &prefix);
 void prefixLines(std::vector<std::string> &lines, const std::string &prefix);
 /** @} */
 
-// Damerau-Levenshtein edit distance
+/** Compute the Damerau-Levenshtein edit distance between two strings. */
 size_t editDistance(const std::string &src, const std::string &tgt);
 
-// Relative difference between two strings. Returns a value between zero and one.
+/** Compute the relative difference between two strings.
+ *
+ *  Computes the @ref editDistance as a ratio of the string length, returning a value between zero and one. */
 double relativeDifference(const std::string &src, const std::string &tgt);
 
-// Return the best matching string from a set.
+/** Returns the best match.
+ *
+ *  Given a list of candidate strings and a sample, return the candidate that is most similar to the sample. */
 std::string bestMatch(const std::vector<std::string> &candidates, const std::string &sample);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -142,11 +150,18 @@ void message(Sawyer::Message::Importance, const Ast::FilePtr&, const std::string
 
 /** Key for ordering classes in the class hierarchy. */
 struct HierarchyKey {
+    /** Class name is the key. */
     std::string s;
+
+    /** Construct key from class. */
     HierarchyKey(const Ast::ClassPtr &c) /*implicit*/
         : s(c->name) {}
+
+    /** Construct key from name. */
     HierarchyKey(const std::string &s) /*implicit*/
         : s(s) {}
+
+    /** Compare keys. */
     bool operator<(const HierarchyKey &other) const {
         return s < other.s;
     }

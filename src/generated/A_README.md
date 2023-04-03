@@ -36,7 +36,7 @@ To regenerate generated source files:
    command appropriately.
 
 ```
-   ./rosebud --backend=rosebud \
+   ./rosebud --backend=rosetta \
        --rosetta=$ROSE_SOURCE/src/ROSETTA/src/binaryInstruction.C \
        --impl=$ROSE_SOURCE/src/generated \
        $ROSE_SOURCE/src/AstNodes/BinaryAnalysis/*.h
@@ -52,7 +52,7 @@ YAML library (`Rose::Yaml`) if you want to write your backend in C++,
 but nearly every language has a [YAML parser](https://yaml.org). If it
 doesn't, a translation from YAML to JSON (and other formats) is
 straightforward and JSON is even more
-[widly supported](https://www.json.org/json-en.html).  Backend code
+[widely supported](https://www.json.org/json-en.html).  Backend code
 generators can also be linked into the `rosebud` tool and use its IR
 directly.
 

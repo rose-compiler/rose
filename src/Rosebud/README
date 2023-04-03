@@ -9,3 +9,16 @@ nodes. But...
 The documentation for the DSL is located in the directory that
 contains the input for Rosebud, namely $ROSE/src/AstNodes. See the
 README in that directory.
+
+
+TODO
+====
+
+* Ast::ListNode needs const_iterator, reverse_iterator, and
+  const_reverse_iterator types, functions, and unit tests.
+
+* The RosettaGenerator needs to be able to generate CPP #line
+  directives.
+
+* The YamlGenerator needs to be able to output source location
+  information.
