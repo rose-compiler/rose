@@ -59,6 +59,29 @@ YamlGenerator::adjustParser(Sawyer::CommandLine::Parser &parser) {
 }
 
 void
+YamlGenerator::genLocation(Sawyer::Yaml::Node &root, const Ast::Node::Ptr &node, const Token &token) {
+    ASSERT_not_null(node);
+
+    if (token) {
+        if (auto file = node->findAncestor<Ast::File>()) {
+            auto lc = file->tokenStream().location(token);
+            root["file"] = file->name();
+            root["line"] = lc.first + 1;
+            root["column"] = lc.second + 1;
+            root["length"] = token.size();
+        }
+    }
+}
+
+void
+YamlGenerator::genLocation(Sawyer::Yaml::Node &root, const Ast::Node::Ptr &node, const std::vector<Token> &tokens) {
+    ASSERT_not_null(node);
+
+    if (!tokens.empty())
+        genLocation(root, node, tokens.front());
+}
+
+void
 YamlGenerator::genCppStack(Sawyer::Yaml::Node &root, const Ast::CppStack::Ptr &cppStack) {
     if (cppStack && !cppStack->stack.empty()) {
         for (const Ast::CppStack::Level &level: cppStack->stack) {
@@ -66,6 +89,8 @@ YamlGenerator::genCppStack(Sawyer::Yaml::Node &root, const Ast::CppStack::Ptr &c
             for (const Ast::CppStack::Directive &directive: level) {
                 auto &dirNode = levelNode.pushBack();
                 dirNode["directive"] = prefixLines(directive.lexeme, "|");
+                if (showingLocations)
+                    genLocation(dirNode["directive_location"], cppStack, directive.token);
             }
         }
     }
@@ -84,15 +109,27 @@ YamlGenerator::genDefinition(Sawyer::Yaml::Node &root, const Ast::Definition::Pt
 
     if (!defn->priorText.empty())
         root["prior_text"] = prefixLines(defn->priorText, "|");
+
+    if (showingLocations) {
+        genLocation(root["starting_location"], defn, defn->startToken);
+        genLocation(root["name_location"], defn, defn->nameToken);
+        genLocation(root["doc_location"], defn, defn->docToken);
+    }
 }
 
 void
 YamlGenerator::genAttribute(Sawyer::Yaml::Node &root, const Ast::Attribute::Ptr &attribute) {
     ASSERT_not_null(attribute);
     root["name"] = attribute->fqName;
+    if (showingLocations)
+        genLocation(root["name_location"], attribute, attribute->nameTokens);
     if (attribute->arguments && !attribute->arguments->empty()) {
-        for (const auto &arg: *attribute->arguments())
-            root["arguments"].pushBack() = arg->string();
+        for (const auto &arg: *attribute->arguments()) {
+            auto &argNode = root["arguments"].pushBack();
+            argNode["argument"] = arg->string();
+            if (showingLocations)
+                genLocation(argNode["argument_location"], arg(), arg->tokens);
+        }
     }
 }
 
@@ -102,9 +139,13 @@ YamlGenerator::genProperty(Sawyer::Yaml::Node &root, const Ast::Property::Ptr &p
     genDefinition(root, property);
     if (property->cType) {
         root["type"]["c_code"] = prefixLines(property->cType->string(), "|");
+        if (showingLocations)
+            genLocation(root["type"]["location"], property, property->cType->tokens);
     }
     if (property->cInit) {
         root["init"]["c_code"] = prefixLines(property->cInit->string(), "|");
+        if (showingLocations)
+            genLocation(root["init"]["location"], property, property->cInit->tokens);
     }
 
     for (const auto &attribute: *property->attributes())
