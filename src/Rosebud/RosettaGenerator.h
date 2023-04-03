@@ -9,6 +9,7 @@ class RosettaGenerator: public Generator {
     size_t outputWidth = 130;                           // nominal width of the generated code
     boost::filesystem::path rosettaFileName;            // optional name of file into which ROSETTA source code is written
     boost::filesystem::path implDirectoryName;          // optional name of directory where node implementation files are created
+    boost::filesystem::path nodeListFileName;           // optional name of file that contains list of all node types
 public:
     virtual void adjustParser(Sawyer::CommandLine::Parser&) override;
     virtual void generate(const Ast::ProjectPtr&) override;
@@ -39,6 +40,7 @@ private:
     void genInitProperties(std::ostream &header, std::ostream &impl, const Ast::ClassPtr&);
     void genOtherContent(std::ostream &rosetta, const Ast::ClassPtr&, const std::string &content);
     std::vector<std::string> implementationFileNames(const Classes&);
+    void adjustNodeList(const std::shared_ptr<Ast::Project>&);
     void genTupFile(const std::vector<std::string> &implFileNames);
     void genMakeFile(const std::vector<std::string> &implFileNames);
     void genCmakeFile(const std::vector<std::string> &implFileNames);
