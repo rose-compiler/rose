@@ -5,6 +5,7 @@
 #include <Sawyer/StaticBuffer.h>
 
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/trim.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
 
@@ -50,6 +51,11 @@ RosettaGenerator::adjustParser(Sawyer::CommandLine::Parser &parser) {
               .argument("directory", anyParser(implDirectoryName))
               .doc("Name of an existing directory into which the C++ implementation files are written. If this switch is not "
                    "specified, then the implementation files are not produced."));
+
+    sg.insert(Switch("node-list")
+              .argument("file_name", anyParser(nodeListFileName))
+              .doc("Name of the ROSETTA input file that contains the names of all the node types, one per line. This file will "
+                   "be modified in place by appending the name of any node type that doesn't already exist in that file."));
 
     parser.with(sg);
 }
@@ -586,8 +592,8 @@ RosettaGenerator::genClassDefinition(std::ostream &rosetta, const Ast::Class::Pt
     ASSERT_forbid(implFileName.empty());
     std::ofstream impl(implFileName, std::ios_base::trunc);
     if (!impl) {
-        message(FATAL, "unable to open implementation output file \"" + std::string(implFileName) + "\"");
-        exit(1);
+        message(ERROR, "unable to open implementation output file \"" + std::string(implFileName) + "\"");
+        return;
     }
     genImplFileBegin(impl, c);
 
@@ -692,8 +698,8 @@ RosettaGenerator::genTupFile(const std::vector<std::string> &implFileNames) {
         const boost::filesystem::path tupFileName = implDirectoryName / "Tupfile";
         std::ofstream out(tupFileName.c_str());
         if (!out) {
-            message(FATAL, "cannot create file: \"" + tupFileName.string() + "\"");
-            exit(1);
+            message(ERROR, "cannot create file: \"" + tupFileName.string() + "\"");
+            return;
         }
 
         out <<makeTitleComment("      MACHINE GENERATED FILE -- DO NOT MODIFY", "", '#', outputWidth)
@@ -719,8 +725,8 @@ RosettaGenerator::genMakeFile(const std::vector<std::string> &implFileNames) {
         const boost::filesystem::path tupFileName = implDirectoryName / "Makefile.am";
         std::ofstream out(tupFileName.c_str());
         if (!out) {
-            message(FATAL, "cannot create file: \"" + tupFileName.string() + "\"");
-            exit(1);
+            message(ERROR, "cannot create file: \"" + tupFileName.string() + "\"");
+            return;
         }
 
         out <<makeTitleComment("      MACHINE GENERATED FILE -- DO NOT MODIFY", "", '#', outputWidth)
@@ -746,8 +752,8 @@ RosettaGenerator::genCmakeFile(const std::vector<std::string> &implFileNames) {
         const boost::filesystem::path cmakeFileName = implDirectoryName / "CMakeLists.txt";
         std::ofstream out(cmakeFileName.c_str());
         if (!out) {
-            message(FATAL, "cannot create file: \"" + cmakeFileName.string() + "\"");
-            exit(1);
+            message(ERROR, "cannot create file: \"" + cmakeFileName.string() + "\"");
+            return;
         }
 
         out <<makeTitleComment("      MACHINE GENERATED FILE -- DO NOT MODIFY", "", '#', outputWidth)
@@ -761,6 +767,50 @@ RosettaGenerator::genCmakeFile(const std::vector<std::string> &implFileNames) {
         out <<")\n"
             <<"\n"
             <<"add_dependencies(roseGenerated rosetta_generated)\n";
+    }
+}
+
+void
+RosettaGenerator::adjustNodeList(const std::shared_ptr<Ast::Project> &project) {
+    ASSERT_not_null(project);
+
+    if (!nodeListFileName.empty()) {
+        // Read the file. Each line is a class name.
+        std::vector<std::string> names;
+        {
+            std::ifstream in(nodeListFileName.c_str());
+            if (!in) {
+                message(ERROR, "cannot read AST node type list from file \"" + nodeListFileName.string() + "\"");
+                return;
+            }
+
+            std::string line;
+            while (std::getline(in, line)) {
+                boost::trim(line);
+                names.push_back(line);
+            }
+        }
+
+        // Append our own classes to the end if they don't exist yet
+        bool changed = false;
+        const Classes classes = project->allClassesFileOrder();
+        for (const auto &c: classes) {
+            if (std::find(names.begin(), names.end(), c->name) == names.end()) {
+                names.push_back(c->name);
+                changed = true;
+            }
+        }
+
+        // Write the new stuff back to the file
+        if (changed) {
+            std::ofstream out(nodeListFileName.c_str());
+            if (!out) {
+                message(ERROR, "cannot write AST node type list to file \"" + nodeListFileName.string() + "\"");
+                return;
+            }
+            for (const std::string &name: names)
+                out <<name <<"\n";
+        }
     }
 }
 
@@ -793,11 +843,10 @@ RosettaGenerator::generate(const Ast::Project::Ptr &project) {
     } genRosettaFileEnd(rosetta);
 
     const std::vector<std::string> implFileNames = implementationFileNames(classes);
+    adjustNodeList(project);
     genTupFile(implFileNames);
     genMakeFile(implFileNames);
     genCmakeFile(implFileNames);
 }
-
-
 
 } // namespace

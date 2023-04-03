@@ -39,8 +39,14 @@ To regenerate generated source files:
    ./rosebud --backend=rosetta \
        --rosetta=$ROSE_SOURCE/src/ROSETTA/src/binaryInstruction.C \
        --impl=$ROSE_SOURCE/src/generated \
+       --node-list=$ROSE_SOURCE/src/ROSETTA/astNodeList \
        $ROSE_SOURCE/src/AstNodes/BinaryAnalysis/*.h
 ```
+
+   Note that the `--node-list` switch can add new node types to the
+   specified file, but cannot delete node types that are no longer
+   generated. If you remove a node definition, you'll need to remove
+   it from the astNodeList file manually.
 
 Writing your own generators
 ---------------------------
