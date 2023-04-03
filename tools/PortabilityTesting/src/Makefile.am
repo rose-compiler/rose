@@ -61,3 +61,6 @@ rose_matrix_phases_SOURCES = matrix-phases.C
 rose_matrix_phases_CPPFLAGS = $(ROSE_INCLUDES) -DDEFAULT_DATABASE='"$(DEFAULT_DATABASE)"'
 rose_matrix_phases_LDFLAGS = $(ROSE_RPATHS)
 rose_matrix_phases_LDADD = libmatrixTools.a $(ROSE_LIBS)
+
+# These headers are not installed
+not_installed_headers = matrixTools.h
