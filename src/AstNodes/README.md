@@ -60,8 +60,8 @@ for the Rosebud code generator. The differences from C++ are:
   [[Rosebud::ctor_arg]]` is the same thing.
   
 * Properties can be surrounded by C preprocessor conditional
-  compilation directives. These can surround individual attributes or
-  multiple attributes, but must be closed before the end of the class
+  compilation directives. These can surround individual properties or
+  multiple properties, but must be closed before the end of the class
   definition. However, it is not currently possible to use
   conditional compilation to define alternate declarations for a
   single property (the property is either all or nothing).
@@ -75,13 +75,14 @@ for the Rosebud code generator. The differences from C++ are:
   directives. Any conditional compilation that was opened prior to the
   class will be closed with `#endif` automatically, although it is
   probably wise to also close them explicitly for the sake of IDEs
-  that are presenting/editing the Rosebud input.
+  that are presenting/editing the Rosebud input. (FIXME: this should
+  cause a Rosebud error to be emitted.)
   
 Property attributes
 -------------------
 
 * The `Rosebud::property` attribute marks what would otherwise appear
-  to be a data member declaration as a property declration. Since the
+  to be a data member declaration as a property declaration. Since the
   presence of any Rosebud attribute is sufficient, the "property"
   attribute only necessary when no other Rosebud attribute is
   specified.
@@ -150,7 +151,7 @@ of midend analysis could be supported:
 Backends
 --------
 
-A backend is reponsible for producing code, primarily the C++ class
+A backend is responsible for producing code, primarily the C++ class
 definitions corresponding to the Rosebud inputs. Backends, like
 midends, come in two forms:
 
@@ -184,7 +185,7 @@ to improve upon these ROSETTA problems:
   * the ROSE IR node type declarations are not written in C++
   * the ROSETTA DSL is partly C++ function calls in a *.C file
   * additional class member declarations are in text files
-  * additional member funtion implementations are in another text file
+  * additional member function implementations are in another text file
   * documentation is stored far away in yet another text file
   * the IR node type names are listed in yet another text file
   * the text files are not understood by IDEs as being C++ code

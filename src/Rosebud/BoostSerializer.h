@@ -4,6 +4,9 @@
 
 namespace Rosebud {
 
+/** Class serializer using Boost Serialization.
+ *
+ *  This serializer generates code for boost::serialization. */
 class BoostSerializer: public Serializer {
 public:
     virtual void generate(std::ostream &header, std::ostream &impl, const Ast::ClassPtr&, const Generator&) const override;

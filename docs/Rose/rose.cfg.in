@@ -706,6 +706,7 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
 			 @top_srcdir@/src/Rose/AST \
 			 @top_srcdir@/src/Rose/Traits \
 			 @top_srcdir@/src/Rose/CodeGen \
+			 @top_srcdir@/src/Rosebud \
                          @top_srcdir@/src/ROSETTA/src/binaryInstruction.C \
                          @top_srcdir@/src/frontend/Disassemblers \
                          @top_srcdir@/src/frontend/BinaryFormats/Rva.C \

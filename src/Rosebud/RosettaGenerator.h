@@ -6,9 +6,9 @@ namespace Rosebud {
 
 /** Generator that produces ROSETTA output. */
 class RosettaGenerator: public Generator {
-    size_t outputWidth = 130;
-    boost::filesystem::path rosettaFileName;
-    boost::filesystem::path implDirectoryName;
+    size_t outputWidth = 130;                           // nominal width of the generated code
+    boost::filesystem::path rosettaFileName;            // optional name of file into which ROSETTA source code is written
+    boost::filesystem::path implDirectoryName;          // optional name of directory where node implementation files are created
 public:
     virtual void adjustParser(Sawyer::CommandLine::Parser&) override;
     virtual void generate(const Ast::ProjectPtr&) override;
