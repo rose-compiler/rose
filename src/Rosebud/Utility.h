@@ -6,6 +6,11 @@
 #include <Sawyer/Message.h>
 #include <Sawyer/Optional.h>
 
+#include <boost/filesystem.hpp>
+
+#include <string>
+#include <vector>
+
 #define THIS_LOCATION locationDirective(__LINE__, __FILE__)
 
 namespace Rosebud {
@@ -75,6 +80,23 @@ double relativeDifference(const std::string &src, const std::string &tgt);
  *
  *  Given a list of candidate strings and a sample, return the candidate that is most similar to the sample. */
 std::string bestMatch(const std::vector<std::string> &candidates, const std::string &sample);
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Filesystem utilities
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Find the root of the ROSE source tree.
+ *
+ *  Given the name of a file inside the ROSE source tree, return the absolute name of the root directory of the ROSE source
+ *  tree. If the root directory cannot be found (e.g., the specified file is not inside the ROSE source tree), then return an
+ *  empty path. The file need not exist. */
+boost::filesystem::path findRoseRootDir(const boost::filesystem::path&);
+
+/** Convert a file path to a ROSE-relative path.
+ *
+ *  If the specified file name is inside the ROSE source tree, then return the name of the file relative to the root of the
+ *  ROSE source tree. Returns the empty path if the file is not inside the ROSE source tree. The file need not exist. */
+boost::filesystem::path relativeToRoseSource(const boost::filesystem::path&);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Comment utilities

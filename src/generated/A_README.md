@@ -37,9 +37,10 @@ To regenerate generated source files:
 
 ```
    ./rosebud --backend=rosetta \
-       --rosetta=$ROSE_SOURCE/src/ROSETTA/src/binaryInstruction.C \
-       --impl=$ROSE_SOURCE/src/generated \
-       --node-list=$ROSE_SOURCE/src/ROSETTA/astNodeList \
+       --rosetta-output=$ROSE_SOURCE/src/ROSETTA/src/binaryInstruction.C \
+       --rosetta-function=Grammar::setUpBinaryInstructions" \
+       --rosetta-impl=$ROSE_SOURCE/src/generated \
+       --rosetta-node-list=$ROSE_SOURCE/src/ROSETTA/astNodeList \
        $ROSE_SOURCE/src/AstNodes/BinaryAnalysis/*.h
 ```
 

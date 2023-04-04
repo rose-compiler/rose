@@ -185,6 +185,33 @@ bestMatch(const std::vector<std::string> &candidates, const std::string &sample)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Filesystem utilities
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+boost::filesystem::path
+findRoseRootDir(const boost::filesystem::path &start) {
+    boost::filesystem::path root = boost::filesystem::absolute(start);
+    while (!root.empty()) {
+        if (boost::filesystem::is_directory(root) && boost::filesystem::is_regular_file(root / "src/Rosebud/Ast.h")) {
+            break;
+        } else {
+            root = root.parent_path();
+        }
+    }
+    return root;
+}
+
+boost::filesystem::path
+relativeToRoseSource(const boost::filesystem::path &fileName) {
+    boost::filesystem::path root = findRoseRootDir(fileName);
+    if (root.empty()) {
+        return {};
+    } else {
+        return boost::filesystem::absolute(fileName).string().substr(root.string().size() + 1);
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Comment utilities
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

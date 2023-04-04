@@ -44,7 +44,7 @@ RosettaGenerator::adjustParser(Sawyer::CommandLine::Parser &parser) {
 
            "The following command-line switches are understood by this backend:");
 
-    sg.insert(Switch("rosetta")
+    sg.insert(Switch("output")
               .argument("file_name", anyParser(rosettaFileName))
               .doc("Name of the C++ file that is part of the source code for ROSETTA's CxxGrammarMetaProgram tool. If this switch "
                    "is not specified, then the ROSETTA output is not produced."));
@@ -58,6 +58,10 @@ RosettaGenerator::adjustParser(Sawyer::CommandLine::Parser &parser) {
               .argument("file_name", anyParser(nodeListFileName))
               .doc("Name of the ROSETTA input file that contains the names of all the node types, one per line. This file will "
                    "be modified in place by appending the name of any node type that doesn't already exist in that file."));
+
+    sg.insert(Switch("function")
+              .argument("name", anyParser(grammarFunctionName))
+              .doc("Name of the ROSETTA function being generated. The default is \"" + grammarFunctionName + "\"."));
 
     parser.with(sg);
 }
@@ -79,12 +83,28 @@ RosettaGenerator::shortName(const Ast::Class::Ptr &c) {
     }
 }
 
+// Given the name of a file, return a name that's relative to the top of the ROSE source tree. If not possible, then emit an error
+// and return an error file name.
+boost::filesystem::path
+RosettaGenerator::fileWrtRose(const boost::filesystem::path &fileName) {
+    boost::filesystem::path retval = relativeToRoseSource(fileName);
+    if (retval.empty()) {
+        static size_t nCalls;
+        if (1 == ++nCalls)
+            message(ERROR, "cannot find root of ROSE source tree from \"" + fileName.string() + "\"");
+        return "ERROR_NOT_IN_ROSE_" + fileName.string();
+    } else {
+        return retval;
+    }
+}
+
 // Output the beginning of the binaryInstruction.C file.
 void
 RosettaGenerator::genRosettaFileBegin(std::ostream &rosetta) {
+    const std::string codeFile = fileWrtRose(rosettaFileName).string();
     rosetta <<THIS_LOCATION <<makeTitleComment("THIS FILE IS MACHINE GENERATED", "", '/', outputWidth)
             << "//\n"
-            <<THIS_LOCATION <<"// This file was generated with ROSE's \"rosebud\" tool by reading node definitions written in a\n"
+            <<"// This file was generated with ROSE's \"rosebud\" tool by reading node definitions written in a\n"
             <<"// C++-like language and emitting this ROSETTA input.\n"
             <<"//\n"
             <<makeTitleComment("DO NOT MODIFY THIS FILE MANUALLY!", "", '/', outputWidth)
@@ -116,7 +136,7 @@ RosettaGenerator::genRosettaFileBegin(std::ostream &rosetta) {
             <<"#else\n"
             <<"#define DECLARE_HEADERS(CLASS_WITHOUT_Sg) \\\n"
             <<"    CLASS_WITHOUT_Sg.setPredeclarationString(\"Sg\" #CLASS_WITHOUT_Sg \"_HEADERS\", \\\n"
-            <<"                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + \"/src/ROSETTA/src/binaryInstruction.C\")\n"
+            <<"                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + \"/" + codeFile + "\")\n"
             <<"#endif\n"
             <<"\n"
             <<"#ifdef DOCUMENTATION\n"
@@ -124,7 +144,7 @@ RosettaGenerator::genRosettaFileBegin(std::ostream &rosetta) {
             <<"#else\n"
             <<"#define DECLARE_OTHERS(CLASS_WITHOUT_Sg) \\\n"
             <<"    CLASS_WITHOUT_Sg.setFunctionPrototype(\"Sg\" #CLASS_WITHOUT_Sg \"_OTHERS\", \\\n"
-            <<"                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + \"/src/ROSETTA/src/binaryInstruction.C\")\n"
+            <<"                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + \"/" + codeFile + "\")\n"
             <<"#endif\n"
             <<"\n"
             <<"#ifdef DOCUMENTATION\n"
@@ -145,7 +165,7 @@ void
 RosettaGenerator::genRosettaFunctionBegin(std::ostream &rosetta) {
     rosetta <<"\n"
             <<THIS_LOCATION <<"#ifndef DOCUMENTATION\n"
-            <<"void Grammar::setUpBinaryInstructions() {\n"
+            <<"void " <<grammarFunctionName <<"() {\n"
             <<"#endif // !DOCUMENTATION\n";
 }
 
