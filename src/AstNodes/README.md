@@ -78,6 +78,16 @@ for the Rosebud code generator. The differences from C++ are:
   that are presenting/editing the Rosebud input. (FIXME: this should
   cause a Rosebud error to be emitted.)
   
+Class attributes
+----------------
+
+A class can be preceded by one or more of the following Rosebud
+attributes.
+
+* The `Rosebud::abstract` attribute indicates that the class cannot
+  be instantiated. This is useful for base classes where we only want
+  to be able to instantiate its derived classes.
+
 Property attributes
 -------------------
 

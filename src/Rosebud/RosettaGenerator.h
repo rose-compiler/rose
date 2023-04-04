@@ -14,9 +14,9 @@ class RosettaGenerator: public Generator {
 public:
     virtual void adjustParser(Sawyer::CommandLine::Parser&) override;
     virtual void generate(const Ast::ProjectPtr&) override;
-    std::string propertyDataMemberName(const Ast::PropertyPtr&p) const override;
-    std::vector<std::string> propertyAccessorNames(const Ast::PropertyPtr&) const override;
-    std::vector<std::string> propertyMutatorNames(const Ast::PropertyPtr&) const override;
+    virtual std::string propertyDataMemberName(const Ast::PropertyPtr&p) const override;
+    virtual std::vector<std::string> propertyAccessorNames(const Ast::PropertyPtr&) const override;
+    virtual std::vector<std::string> propertyMutatorNames(const Ast::PropertyPtr&) const override;
 
 private:
     std::string shortName(const Ast::ClassPtr&);

@@ -23,7 +23,7 @@ using namespace Sawyer::Language::Clexer;
 
 static Sawyer::Message::Facility mlog;
 
-static const std::vector<std::string> validAttrNames {
+static const std::vector<std::string> validPropertyAttrNames {
     "Rosebud::accessors",                               // accessor name(s) or empty
     "Rosebud::ctor_arg",                                // attribute is constructor argument
     "Rosebud::data",                                    // data member name
@@ -33,6 +33,10 @@ static const std::vector<std::string> validAttrNames {
     "Rosebud::mutators",                                // mutator names or empty
     "Rosebud::rosetta",                                 // make attribute known to ROSETTA
     "Rosebud::traverse"                                 // make attribute part of the traversed AST
+};
+
+static const std::vector<std::string> validClassAttrNames {
+    "Rosebud::abstract"                                 // class cannot be instantiated
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -230,24 +234,26 @@ parsePriorRegion(const Ast::File::Ptr &file, const Ast::Definition::Ptr &defn, A
 }
 
 static bool
-isAtClassDefinition(const Ast::File::Ptr &file) {
+isAtClassDefinition(const Ast::File::Ptr &file, size_t at) {
     ASSERT_not_null(file);
-    return file->matches(0, "class") &&
-        file->token(1).type() == TOK_WORD &&
-        (file->matches(2, ":") || file->matches(2, "{"));
+    return file->matches(at, "class") &&
+        file->token(at + 1).type() == TOK_WORD &&
+        (file->matches(at + 2, ":") || file->matches(at + 2, "{"));
 }
 
-// Parse the file to the beginning of the next class definition or unmatched right token.  Does not consume an unmatched right or
-// the class definition.
+// Parse the file to the beginning of the next class definition, unmatched right token, or attribute list.  Does not consume an
+// unmatched right or the class definition.
 static void
-parseToClassDefinition(const Ast::File::Ptr &file) {
+parseToClassDefinitionOrAttributeList(const Ast::File::Ptr &file) {
     std::vector<Token> parenStack;
     while (file->token()) {
-        if (adjustParens(file, 0, parenStack)) {
+        if (parenStack.empty() && file->matches(0, "[") && file->matches(1, "[")) {
+            break;
+        } else if (adjustParens(file, 0, parenStack)) {
             file->consume();
         } else if (file->token().type() == TOK_RIGHT) {
             break;
-        } else if (isAtClassDefinition(file)) {
+        } else if (isAtClassDefinition(file, 0)) {
             break;
         } else {
             file->consume();
@@ -392,9 +398,8 @@ parseAttribute(const Ast::File::Ptr &file, size_t at, const std::string &nameSpa
     return std::make_pair(at - begin, attribute);
 }
 
-// Parse attributes. If we find an attribute list that contains at least one attribute in the "Rosebud" namespace, then add
-// all the attributes to the `attributes` list argument and return the number of tokens parsed. Otherwise only return zero.
-// Do not consume any tokens.
+// Parse attributes. Add all the attributes to the `attributes` list argument and return the number of tokens parsed. Otherwise only
+// return zero.  Do not consume any tokens.
 static size_t
 parseOptionalAttributes(const Ast::File::Ptr &file, const Ast::AttributeList::Ptr &attributes) {
     ASSERT_not_null(file);
@@ -423,7 +428,7 @@ parseOptionalAttributes(const Ast::File::Ptr &file, const Ast::AttributeList::Pt
                 at += attrPair.first;
             } else {
                 message(ERROR, file, file->token(at), "attribute expected");
-                break;
+                return 0;
             }
 
             if (file->matches(at, ",")) {
@@ -438,25 +443,19 @@ parseOptionalAttributes(const Ast::File::Ptr &file, const Ast::AttributeList::Pt
             at += 2;
         } else {
             message(ERROR, file, file->token(at), "expected \"]]\" at end of attribute list");
+            return 0;
         }
     }
-
-    // Parsing was a success only if we found at least one Rosebud attribute
-    for (const auto &attribute: *attributes) {
-        if (boost::starts_with(attribute->fqName, "Rosebud::"))
-            return at;
-    }
-
-    return 0;
+    return at;
 }
 
 // False if name starts with "Rosebud::" but is not one of the valid Rosebud attribute names.
 static bool
-checkRecognizedAttribute(const std::string &name) {
+checkRecognizedAttribute(const std::string &name, const std::vector<std::string> &validAttributeNames) {
     if (!boost::starts_with(name, "Rosebud::")) {
         return true;
     } else {
-        for (const std::string &validName: validAttrNames) {
+        for (const std::string &validName: validAttributeNames) {
             if (name == validName)
                 return true;
         }
@@ -489,19 +488,47 @@ checkNumberOfArguments(const Ast::File::Ptr &file, const Ast::Attribute::Ptr &at
     return true;
 }
 
+// Check class attributes
+static void
+checkAndApplyClassAttributes(const Ast::File::Ptr &file, const Ast::Class::Ptr &c) {
+    ASSERT_not_null(file);
+    ASSERT_not_null(c);
+    std::map<std::string, Ast::Attribute::Ptr> seen;
+
+    for (const auto &attr: *c->attributes()) {
+        if (!checkRecognizedAttribute(attr->fqName, validClassAttrNames)) {
+            // Unknown name
+            message(ERROR, file, attr->nameTokens,
+                    "\"" + attr->fqName + "\" is not a recognized Rosebud class attribute; did you mean \"" +
+                    bestMatch(validClassAttrNames, attr->fqName) +"\"?");
+
+        } else if (!seen.insert(std::make_pair(attr->fqName, attr())).second) {
+            // Used multiple times
+            message(ERROR, file, attr->nameTokens, "attribute \"" + attr->fqName + "\" is specified multiple times");
+            message(INFO, file, seen[attr->fqName]->nameTokens, "previously specified here");
+
+        } else if ("Rosebud::abstract" == attr->fqName) {
+            checkNumberOfArguments(file, attr(), 0);
+
+        } else {
+            ASSERT_not_implemented("attribute = " + attr->fqName);
+        }
+    }
+}
+
 // Apply certain attributes to the property definition. Some of this checking could be delayed until the backend.
 static void
-checkAndApplyAttributes(const Ast::File::Ptr &file, const Ast::Property::Ptr &property) {
+checkAndApplyPropertyAttributes(const Ast::File::Ptr &file, const Ast::Property::Ptr &property) {
     ASSERT_not_null(file);
     ASSERT_not_null(property);
     std::map<std::string, Ast::Attribute::Ptr> seen;
 
     for (const auto &attr: *property->attributes()) {
-        if (!checkRecognizedAttribute(attr->fqName)) {
+        if (!checkRecognizedAttribute(attr->fqName, validPropertyAttrNames)) {
             // Unknown name
             message(ERROR, file, attr->nameTokens,
-                    "\"" + attr->fqName + "\" is not a recognized Rosebud attribute; did you mean \"" +
-                    bestMatch(validAttrNames, attr->fqName) +"\"?");
+                    "\"" + attr->fqName + "\" is not a recognized Rosebud property attribute; did you mean \"" +
+                    bestMatch(validPropertyAttrNames, attr->fqName) +"\"?");
 
         } else if (!seen.insert(std::make_pair(attr->fqName, attr())).second) {
             // Used multiple times
@@ -513,7 +540,6 @@ checkAndApplyAttributes(const Ast::File::Ptr &file, const Ast::Property::Ptr &pr
                    "Rosebud::no_serialize" == attr->fqName ||
                    "Rosebud::property" == attr->fqName ||
                    "Rosebud::traverse" == attr->fqName) {
-            // Wrong number of arguments
             checkNumberOfArguments(file, attr(), 0);
 
         } else if ("Rosebud::rosetta" == attr->fqName) {
@@ -596,6 +622,17 @@ parseOptionalProperty(const Ast::File::Ptr &file, Ast::CppStack::Stack &runningC
     if (0 == at)
         return {};
 
+    // Parsing was a success only if we found at least one Rosebud attribute
+    bool isProperty = false;
+    for (const auto &attribute: *property->attributes()) {
+        if (boost::starts_with(attribute->fqName, "Rosebud::")) {
+            isProperty = true;
+            break;
+        }
+    }
+    if (!isProperty)
+        return {};
+
     //-----------------------------------------------------------------------------------------
     // Everything beyond here is an error since we know by now that we have Rosebud attributes.
     // However, don't consume any tokens if there's an error because they might be things we
@@ -635,7 +672,7 @@ parseOptionalProperty(const Ast::File::Ptr &file, Ast::CppStack::Stack &runningC
     }
 
     // Some of the Rosebud attributes cause changes to the AST
-    checkAndApplyAttributes(file, property);
+    checkAndApplyPropertyAttributes(file, property);
 
     file->consume(at);
     return property;
@@ -741,6 +778,12 @@ parseClassDefinition(const Ast::File::Ptr &file, Ast::CppStack::Stack &runningCp
     ASSERT_not_null(file);
     auto c = Ast::Class::instance();
 
+    // A class definition can start with attributes.
+    const size_t at = parseOptionalAttributes(file, c->attributes());
+    if (!isAtClassDefinition(file, at))
+        return {};                                      // we're not at a class definition, but no error yet
+    file->consume(at);
+
     // The "class" keyword.
     if (file->matches(0, "class")) {
         c->startToken = file->consume();
@@ -788,6 +831,7 @@ parseClassDefinition(const Ast::File::Ptr &file, Ast::CppStack::Stack &runningCp
         return {};
     }
 
+    checkAndApplyClassAttributes(file, c);
     return c;
 }
 
@@ -796,26 +840,25 @@ parseFile(const Ast::File::Ptr &file) {
     ASSERT_not_null(file);
     size_t filePos = 0;
     Ast::CppStack::Stack runningCppStack;
+    std::vector<Token> nestingStack;
 
     while (file->token()) {
-        parseToClassDefinition(file);
-        if (isAtClassDefinition(file)) {
-            size_t startOfClass = file->token().begin();
-            if (auto c = parseClassDefinition(file, runningCppStack)) {
-                // Parse area before the class
-                parsePriorRegion(file, c, runningCppStack, filePos, startOfClass);
-                c->priorText = file->trimmedContent(filePos, startOfClass, c->docToken, c->priorTextToken);
-                file->classes->push_back(c);
-                filePos = file->token().prior();
+        parseToClassDefinitionOrAttributeList(file);
+        size_t startOfClass = file->token().begin();
+        if (auto c = parseClassDefinition(file, runningCppStack)) {
+            // Parse area before the class
+            parsePriorRegion(file, c, runningCppStack, filePos, startOfClass);
+            c->priorText = file->trimmedContent(filePos, startOfClass, c->docToken, c->priorTextToken);
+            file->classes->push_back(c);
+            filePos = file->token().prior();
 
-                // Show warnings for questionable things about a class
-                if (settings.showingWarnings) {
-                    if (c->doc.empty())
-                        message(WARN, file, c->nameToken, "no Doxygen documentation for class \"" + c->name + "\"");
-                    ASSERT_forbid(c->name.empty());
-                    if (!std::isupper(c->name[0]) || c->name.find('_') != std::string::npos)
-                        message(WARN, file, c->nameToken, "class name \"" + c->name + "\" should be PascalCase");
-                }
+            // Show warnings for questionable things about a class
+            if (settings.showingWarnings) {
+                if (c->doc.empty())
+                    message(WARN, file, c->nameToken, "no Doxygen documentation for class \"" + c->name + "\"");
+                ASSERT_forbid(c->name.empty());
+                if (!std::isupper(c->name[0]) || c->name.find('_') != std::string::npos)
+                    message(WARN, file, c->nameToken, "class name \"" + c->name + "\" should be PascalCase");
             }
         } else {
             file->consume();
@@ -853,6 +896,18 @@ int main(int argc, char *argv[]) {
     auto project = Ast::Project::instance();
     for (const std::string &arg: args)
         parseFile(project->files->push_back(Ast::File::instance(arg))());
+
+    // Additional warnings that we can't check until all the files are parsed
+    if (settings.showingWarnings) {
+        const Classes classes = project->allClassesFileOrder();
+        const Hierarchy h = classHierarchy(classes);
+        for (const auto &c: classes) {
+            if (c->findAttribute("Rosebud::abstract") && !isBaseClass(c, h)) {
+                message(WARN, c->findAncestor<Ast::File>(), c->nameToken,
+                        "class \"" + c->name + "\" is marked abstract but has no derived classes");
+            }
+        }
+    }
 
     switch (settings.backend) {
         case Backend::YAML:

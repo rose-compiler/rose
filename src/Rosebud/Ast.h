@@ -763,9 +763,18 @@ public:
      *  This is a generated token of type TOK_OTHER that encloses the @ref priorText value. */
     Token priorTextToken;
 
+    /** Non-null pointer to the list of attributes controlling this property. */
+    ChildEdge<AttributeList> attributes;
+
 protected:
     /** Default constructor used only by derived classes. */
     Definition();
+
+public:
+    /** Finds an attribute with the specified fully qualified name.
+     *
+     *  Returns a non-null pointer to the attribute if found, null otherwise. */
+    AttributePtr findAttribute(const std::string &fqName);
 };
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -784,9 +793,6 @@ public:
 
     /** Optional pointer to tokens that define the property's initial value. */
     ChildEdge<TokenList> cInit;
-
-    /** Non-null pointer to the list of attributes controlling this property. */
-    ChildEdge<AttributeList> attributes;
 
     /** Optional data member name override.
      *
@@ -813,11 +819,6 @@ protected:
 public:
     /** Allocating constructor. */
     static Ptr instance();
-
-    /** Finds an attribute with the specified fully qualified name.
-     *
-     *  Returns a non-null pointer to the attribute if found, null otherwise. */
-    AttributePtr findAttribute(const std::string &fqName);
 };
 
 //------------------------------------------------------------------------------------------------------------------------------

@@ -275,7 +275,7 @@ RosettaGenerator::genClassConstructors(std::ostream &header, std::ostream &impl,
     for (const auto &p: *c->properties()) {
         if (p->cInit && !p->cInit->empty()) {
             auto pfile = p->findAncestor<Ast::File>();
-            impl <<(0 == nInits++ ? "\n    : " : "\n    , ")
+            impl <<"\n" <<THIS_LOCATION <<"    " <<(0 == nInits++ ? ": " : ", ")
                  <<propertyDataMemberName(p()) <<"(" <<p->cInit->string(pfile) <<")";
         }
     }
@@ -553,12 +553,13 @@ RosettaGenerator::genNewNonterminalMacro(std::ostream &rosetta, const Ast::Class
         rosetta <<"        | " <<shortName(subclass) <<"\n";
         subclass->cppStack->emitClose(rosetta);
     }
-    // We always pass "true" which means that the node can be constructed. Just because it *can* be constructed doesn't mean
-    // we actually construct it. But if we had said "false" and then constructed it, the traversals will fail loudly inside
-    // the ROSETTA-generated Cxx_GrammarTreeTraversalSuccessorContainer.C file with errors like this:
-    //   "Internal error(!): called tree traversal mechanism for illegal object:"
-    rosetta <<"    , true);\n"
-            <<THIS_LOCATION <<"assert(" <<shortName(c) <<".associatedGrammar != nullptr);\n";
+    if (c->findAttribute("Rosebud::abstract")) {
+        rosetta <<"    , false);\n";
+    } else {
+        rosetta <<"    , true);\n";
+    }
+
+    rosetta <<THIS_LOCATION <<"assert(" <<shortName(c) <<".associatedGrammar != nullptr);\n";
 }
 
 void
@@ -567,7 +568,7 @@ RosettaGenerator::genNonterminalMacros(std::ostream &rosetta, const Ast::Class::
 
     rosetta <<THIS_LOCATION <<"#ifndef DOCUMENTATION\n";
     genNewNonterminalMacro(rosetta, c, h);
-    rosetta <<shortName(c) <<".setCppCondition(\"!defined(DOCUMENTATION)\");\n"
+    rosetta <<THIS_LOCATION <<shortName(c) <<".setCppCondition(\"!defined(DOCUMENTATION)\");\n"
             <<shortName(c) <<".isBoostSerializable(true);\n"
             <<shortName(c) <<".setAutomaticGenerationOfConstructor(false);\n"
             <<shortName(c) <<".setAutomaticGenerationOfDestructor(false);\n"
