@@ -88,6 +88,12 @@ attributes.
   be instantiated. This is useful for base classes where we only want
   to be able to instantiate its derived classes.
 
+  Note: The ROSETTA backend only partially honors this. The last
+  argument of NEW_NONTERMINAL_MACRO is set to false, but the generated
+  class can still be instantiated. In fact, adding a pure virtual
+  function to the class to force it to never be instantiated causes
+  problems in ROSETTA-generated code.
+
 Property attributes
 -------------------
 
