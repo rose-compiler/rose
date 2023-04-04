@@ -470,6 +470,8 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/Partitioner2/DataBlock.h					\
 	Rose/BinaryAnalysis/Partitioner2/DataFlow.h					\
 	Rose/BinaryAnalysis/Partitioner2/Engine.h					\
+	Rose/BinaryAnalysis/Partitioner2/EngineBinary.h					\
+	Rose/BinaryAnalysis/Partitioner2/EngineJvm.h					\
 	Rose/BinaryAnalysis/Partitioner2/Exception.h					\
 	Rose/BinaryAnalysis/Partitioner2/Function.h					\
 	Rose/BinaryAnalysis/Partitioner2/FunctionCallGraph.h				\
