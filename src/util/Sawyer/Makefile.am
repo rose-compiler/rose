@@ -115,7 +115,8 @@ sawyerinclude_HEADERS =				\
 	Tree.h					\
 	Type.h					\
 	WarningsOff.h				\
-	WarningsRestore.h
+	WarningsRestore.h			\
+	Yaml.h
 
 EXTRA_DIST += CMakeLists.txt
 
