@@ -1,4 +1,5 @@
 /** Base class for binary types. */
+[[Rosebud::abstract]]
 class SgAsmType: public SgAsmNode {
 private:
     static Sawyer::Container::Map<std::string, SgAsmType*> p_typeRegistry;

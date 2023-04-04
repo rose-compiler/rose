@@ -1,4 +1,5 @@
 /** Base class for binary expressions. */
+[[Rosebud::abstract]]
 class SgAsmBinaryExpression: public SgAsmExpression {
     /** Property: Left-hand side operand. */
     [[using Rosebud: rosetta, ctor_arg, traverse]]

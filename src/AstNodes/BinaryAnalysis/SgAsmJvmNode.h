@@ -1,4 +1,5 @@
 /** Base class for JVM branch of binary analysis IR nodes. */
+[[Rosebud::abstract]]
 class SgAsmJvmNode: public SgAsmNode {
 public:
     /** Print some debugging information. */

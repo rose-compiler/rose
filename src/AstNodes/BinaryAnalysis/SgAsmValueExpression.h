@@ -5,6 +5,7 @@
  *  floating-point values of various sizes) are represented by subclasses of @ref SgAsmValueExpression.  Values that are
  *  addresses or references to data will have symbols in a function symbol table.  All other values are assumed to be
  *  literals and will not have associated symbols. */
+[[Rosebud::abstract]]
 class SgAsmValueExpression: public SgAsmExpression {
     /** Property: Alternate expression without constant folding.
      *
