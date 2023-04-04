@@ -1,4 +1,5 @@
 /** Base class for all binary analysis IR nodes. */
+[[Rosebud::abstract]]
 class SgAsmNode: public SgNode {
 protected:
     // Rosebud generates call to destructorHelper in every destructor implementation. This gives the user a chance to do something

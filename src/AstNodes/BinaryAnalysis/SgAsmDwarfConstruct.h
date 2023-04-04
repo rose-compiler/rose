@@ -1,3 +1,4 @@
+[[Rosebud::abstract]]
 class SgAsmDwarfConstruct: public SgAsmDwarfInformation {
     // AsmDwarfConstruct.setFunctionPrototype("HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
     // AsmDwarfConstruct.setFunctionSource("SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");

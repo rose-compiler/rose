@@ -1,4 +1,5 @@
 /** Base class for a JVM attribute. */
+[[Rosebud::abstract]]
 class SgAsmJvmAttribute: public SgAsmJvmNode {
     /** Property: attribute_name_index
      *

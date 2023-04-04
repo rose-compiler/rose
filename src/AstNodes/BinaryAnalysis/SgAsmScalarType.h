@@ -1,4 +1,5 @@
 /** Base class for scalar types. */
+[[Rosebud::abstract]]
 class SgAsmScalarType: public SgAsmType {
     [[using Rosebud: rosetta, accessors(), mutators()]]
     ByteOrder::Endianness minorOrder = ByteOrder::ORDER_UNSPECIFIED;

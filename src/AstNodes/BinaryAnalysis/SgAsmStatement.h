@@ -2,6 +2,7 @@
  *
  *  This is a base class for those binary analysis entities, such as instructions and basic blocks, that have a starting
  *  address in the virtual address space. */
+[[Rosebud::abstract]]
 class SgAsmStatement: public SgAsmNode {
     /** Property: Starting virtual address.
      *

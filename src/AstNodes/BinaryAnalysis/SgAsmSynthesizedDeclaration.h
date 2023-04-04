@@ -4,4 +4,5 @@
  *  considered adding "synthesized" to all such intities, but later decided against it since most declarations are missing
  *  from binary specimens are are synthesized by ROSE, and would therefore lead to a lot of extra letters in many class
  *  names. */
+[[Rosebud::abstract]]
 class SgAsmSynthesizedDeclaration: public SgAsmStatement {};

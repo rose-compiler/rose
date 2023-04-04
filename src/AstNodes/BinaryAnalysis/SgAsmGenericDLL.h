@@ -4,7 +4,7 @@ class SgAsmGenericDLL: public SgAsmExecutableFileFormat {
      *
      * @{ */
     [[using Rosebud: rosetta, traverse, mutators()]]
-    SgAsmGenericString* name = createAndParent<SgAsmGenericString>(this);
+    SgAsmGenericString* name = createAndParent<SgAsmBasicString>(this);
     void set_name(SgAsmGenericString *s);
     /** @} */
 

@@ -4,6 +4,7 @@
  *
  *  Represents integer values, floating-point values, etc. This class holds the actual bits for the constant value.
  *  Subclasses provide the intepretation of those bits. */
+[[Rosebud::abstract]]
 class SgAsmConstantExpression: public SgAsmValueExpression {
     /** Property: Bits for constant.
      *

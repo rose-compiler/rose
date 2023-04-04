@@ -1,4 +1,5 @@
 /** Base class for expressions. */
+[[Rosebud::abstract]]
 class SgAsmExpression: public SgAsmNode {
     /** Property: Type of expression.
      *

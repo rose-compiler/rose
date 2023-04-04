@@ -1,4 +1,5 @@
 /** Base class for strings related to binary specimens. */
+[[Rosebud::abstract]]
 class SgAsmGenericString: public SgAsmExecutableFileFormat {
 public:
     /** Constant for addresses of unallocated strings. */

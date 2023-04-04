@@ -1,4 +1,5 @@
 /** Base class for references to a machine register. */
+[[Rosebud::abstract]]
 class SgAsmRegisterReferenceExpression: public SgAsmExpression {
     /** Property: Descriptor for accessed register. */
     [[using Rosebud: rosetta, ctor_arg]]
