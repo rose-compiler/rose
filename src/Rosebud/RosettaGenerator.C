@@ -287,9 +287,9 @@ RosettaGenerator::rosettaBaseClass(const Ast::Class::Ptr &c) {
     return "";
 }
 
-// Emit the constructors for the class.
+// Emit the default constructor
 void
-RosettaGenerator::genClassConstructors(std::ostream &header, std::ostream &impl, const Ast::Class::Ptr &c, const Hierarchy &h) {
+RosettaGenerator::genDefaultConstructor(std::ostream &header, std::ostream &impl, const Ast::Class::Ptr &c) {
     ASSERT_not_null(c);
 
     // Default constructor declaration
@@ -310,90 +310,119 @@ RosettaGenerator::genClassConstructors(std::ostream &header, std::ostream &impl,
         }
     }
     impl <<" {}\n";
+}
 
-    // If this class or any base class has data members with the `Rosebud::ctor_arg` attribute, then generate a constructor
-    // whose arguments are all those data members.
+// Emit the ctor_args constructor
+void
+RosettaGenerator::genArgsConstructor(std::ostream &header, std::ostream &impl, const Ast::Class::Ptr &c, const Hierarchy &h) {
+    ASSERT_not_null(c);
+
+    // Get the properties that are constructor arguments. If there are none, then we don't need this constructor.
     std::vector<Ast::Property::Ptr> args = allConstructorArguments(c, h);
-    if (!args.empty()) {
-        // Declaration
-        header <<"\n"
-               <<THIS_LOCATION <<"public:\n"
-               <<"    /** Constructor. */\n"
-               <<"    " <<(args.size() == 1 ? "explicit " : "") <<c->name <<"(";
-        for (const auto &p: args) {
-            auto pfile = p->findAncestor<Ast::File>();
-            auto argClass = p->findAncestor<Ast::Class>();
-            ASSERT_not_null(argClass);
-            header <<(p == args.front() ? "" : ",\n    " + std::string(c->name.size() + 1, ' '))
-                   <<constRef(removeVolatileMutable(p->cType->string(pfile))) <<" " <<p->name;
-        }
-        header <<");\n";
+    if (args.empty())
+        return;
 
-#if 1 // DEBUGGING [Robb Matzke 2023-03-19]
-        // Show information about how the constructor args map to classes
-        impl <<"\n"
-             <<THIS_LOCATION <<"// The association between constructor arguments and their classes:\n";
-        for (const auto &p: args) {
-            auto argClass = p->findAncestor<Ast::Class>();
-            ASSERT_not_null(argClass);
-            impl <<(boost::format("//    property=%-16s class=%s\n") % p->name % argClass->name);
-        }
-#endif
-        // Implementation declaration
-        impl <<THIS_LOCATION <<c->name <<"::" <<c->name <<"(";
-        for (const auto &p: args) {
-            auto pfile = p->findAncestor<Ast::File>();
-            auto argClass = p->findAncestor<Ast::Class>();
-            impl <<(p == args.front() ? "" : ",\n" + std::string(2*c->name.size()+3, ' '))
-                 <<constRef(removeVolatileMutable(p->cType->string(pfile))) <<" " <<p->name;
-        }
-        impl <<")";
+    //--------------------------------------------------------------------------------------------------------------------------
+    // Constructor declaration
+    //--------------------------------------------------------------------------------------------------------------------------
 
-        // Emit the initializer for the base class if there is a base class
-        size_t nInits = 0;
-        std::string baseClassName = rosettaBaseClass(c);
-        if (!baseClassName.empty()) {
-            const auto baseClassVertex = h.findVertexKey(baseClassName);
-            if (baseClassVertex == h.vertices().end()) {
-                // FIXME[Robb Matzke 2023-03-20]: points to the class name, but should point to the base class name. Unfortunately
-                // we didn't save that information when parsing.
-                auto cfile = c->findAncestor<Ast::File>();
-                message(ERROR, cfile, c->nameToken, "class \"" + c->name + "\" derives from class \"" + baseClassName + "\""
-                        " whose definition is not known to Rosebud (did you intend to supply the base class's header file on the "
-                        " rosebud command-line?)");
-                impl <<"\n    : unknown_ctor_for_" <<baseClassName <<"() // following initialization are probably wrong";
-                ++nInits;
-            } else {
-                Ast::Class::Ptr baseClass = baseClassVertex->value();
-                const size_t nBaseArgs = allConstructorArguments(baseClass, h).size();
-                ASSERT_require(nBaseArgs <= args.size());
-                if (nBaseArgs > 0) {
-                    impl <<"\n    : " <<baseClassName <<"(";
-                    for (size_t i = 0; i < nBaseArgs; ++i) {
-                        auto p = args.front();
-                        auto argClass = p->findAncestor<Ast::Class>();
-                        ASSERT_not_null(argClass);
-                        impl <<(i ? ", " : "") <<p->name;
-                        args.erase(args.begin());
-                    }
-                    impl <<")";
-                    ++nInits;
+    // Constructor declaration having the names of all the Rosebud::ctor_arg properties as argument names.
+    header <<"\n"
+           <<THIS_LOCATION <<"public:\n"
+           <<"    /** Constructor. */\n"
+           <<"    " <<(args.size() == 1 ? "explicit " : "") <<c->name <<"(";
+    for (const auto &p: args) {
+        auto pfile = p->findAncestor<Ast::File>();
+        auto argClass = p->findAncestor<Ast::Class>();
+        ASSERT_not_null(argClass);
+        header <<(p == args.front() ? "" : ",\n    " + std::string(c->name.size() + 1, ' '))
+               <<constRef(removeVolatileMutable(p->cType->string(pfile))) <<" " <<p->name;
+    }
+    header <<");\n";
+
+    //--------------------------------------------------------------------------------------------------------------------------
+    // Constructor definition
+    //--------------------------------------------------------------------------------------------------------------------------
+
+    // Show information about how the constructor args map to classes. This comment is to help when debugging ROSE.
+    impl <<"\n"
+         <<THIS_LOCATION <<"// The association between constructor arguments and their classes:\n";
+    for (const auto &p: args) {
+        auto argClass = p->findAncestor<Ast::Class>();
+        ASSERT_not_null(argClass);
+        impl <<(boost::format("//    property=%-16s class=%s\n") % p->name % argClass->name);
+    }
+
+    // Implementation declaration, almost the same as above.
+    impl <<THIS_LOCATION <<c->name <<"::" <<c->name <<"(";
+    for (const auto &p: args) {
+        auto pfile = p->findAncestor<Ast::File>();
+        auto argClass = p->findAncestor<Ast::Class>();
+        impl <<(p == args.front() ? "" : ",\n" + std::string(2*c->name.size()+3, ' '))
+             <<constRef(removeVolatileMutable(p->cType->string(pfile))) <<" " <<p->name;
+    }
+    impl <<")";
+
+    // Emit the initializer for the base class if there is a base class, and remove those properties from the `args` list.
+    size_t nInits = 0;
+    std::string baseClassName = rosettaBaseClass(c);
+    if (!baseClassName.empty()) {
+        const auto baseClassVertex = h.findVertexKey(baseClassName);
+        if (baseClassVertex == h.vertices().end()) {
+            // FIXME[Robb Matzke 2023-03-20]: points to the class name, but should point to the base class name. Unfortunately
+            // we didn't save that information when parsing.
+            auto cfile = c->findAncestor<Ast::File>();
+            message(ERROR, cfile, c->nameToken, "class \"" + c->name + "\" derives from class \"" + baseClassName + "\""
+                    " whose definition is not known to Rosebud (did you intend to supply the base class's header file on the "
+                    " rosebud command-line?)");
+            impl <<"\n    : unknown_ctor_for_" <<baseClassName <<"() // following initialization are probably wrong";
+            ++nInits;
+        } else {
+            Ast::Class::Ptr baseClass = baseClassVertex->value();
+            const size_t nBaseArgs = allConstructorArguments(baseClass, h).size();
+            ASSERT_require(nBaseArgs <= args.size());
+            if (nBaseArgs > 0) {
+                impl <<"\n    : " <<baseClassName <<"(";
+                for (size_t i = 0; i < nBaseArgs; ++i) {
+                    auto p = args.front();
+                    auto argClass = p->findAncestor<Ast::Class>();
+                    ASSERT_not_null(argClass);
+                    impl <<(i ? ", " : "") <<p->name;
+                    args.erase(args.begin());
                 }
+                impl <<")";
+                ++nInits;
             }
         }
-
-        // Emit the initializes for this class's own initialized data members
-        while (!args.empty()) {
-            auto p = args.front();
-            auto argClass = p->findAncestor<Ast::Class>();
-            ASSERT_not_null(argClass);
-            impl <<(nInits++ ? "\n    , " : "\n    : ")
-                 <<propertyDataMemberName(p) <<"(" <<p->name <<")";
-            args.erase(args.begin());
-        }
-
-        impl <<" {}\n";
     }
+
+    // Emit the property initializations, some of which come from arguments
+    for (const auto &p: *c->properties()) {
+        auto arg = std::find(args.begin(), args.end(), p());
+        auto argClass = p->findAncestor<Ast::Class>();
+        if (arg != args.end()) {
+            // Property is initialized from an argument
+            impl <<(nInits++ ? "\n    , " : "\n    : ")
+                 <<propertyDataMemberName(p()) <<"(" <<p->name <<")";
+        } else if (p->cInit && !p->cInit->empty()) {
+            // Property is initialized from the property's initial value expression
+            auto pfile = p->findAncestor<Ast::File>();
+            impl <<(nInits++ ? "\n    , " : "\n    : ")
+                 <<propertyDataMemberName(p()) <<"(" <<p->cInit->string(pfile) <<")";
+        } else {
+            // Property either has a default initializer or is not initialized
+        }
+    }
+
+    impl <<" {}\n";
+}
+
+// Emit the constructors for the class.
+void
+RosettaGenerator::genClassConstructors(std::ostream &header, std::ostream &impl, const Ast::Class::Ptr &c, const Hierarchy &h) {
+    ASSERT_not_null(c);
+    genDefaultConstructor(header, impl, c);
+    genArgsConstructor(header, impl, c, h);
 }
 
 // Emit the function that initializes properties. This is not used by generated code since the initializations happen

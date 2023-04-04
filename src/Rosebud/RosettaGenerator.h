@@ -41,6 +41,8 @@ private:
     void genCppConditions(std::ostream &out, const Ast::FilePtr&, const std::string &text);
     void genClassDestructor(std::ostream &header, std::ostream &impl, const Ast::ClassPtr&);
     void genClassConstructors(std::ostream &header, std::ostream &impl, const Ast::ClassPtr&, const Hierarchy&);
+    void genDefaultConstructor(std::ostream &header, std::ostream &impl, const Ast::ClassPtr&);
+    void genArgsConstructor(std::ostream &header, std::ostream &impl, const Ast::ClassPtr&, const Hierarchy&);
     void genInitProperties(std::ostream &header, std::ostream &impl, const Ast::ClassPtr&);
     void genOtherContent(std::ostream &rosetta, const Ast::ClassPtr&, const std::string &content);
     std::vector<std::string> implementationFileNames(const Classes&);
