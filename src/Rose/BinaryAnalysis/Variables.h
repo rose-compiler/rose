@@ -16,6 +16,13 @@
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/split_member.hpp>
 
+#include <chrono>
+#include <map>
+#include <ostream>
+#include <set>
+#include <string>
+#include <vector>
+
 namespace Rose {
 namespace BinaryAnalysis {
 
@@ -454,7 +461,13 @@ public:
 class VariableFinder: public Sawyer::SharedObject {
 public:
     /** Settings that control this analysis. */
-    struct Settings {};
+    struct Settings {
+        /** Max time to spend in Method 1 global variable analysis per function. */
+        std::chrono::seconds gvarMethod1MaxTimePerFunction;
+
+        Settings()
+            : gvarMethod1MaxTimePerFunction(30) {}
+    };
 
     /** Shared ownership pointer for @ref VariableFinder. */
     using Ptr = VariableFinderPtr;
@@ -638,6 +651,15 @@ public:
     void removeOutliers(const StackFrame&, const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&,
                         StackVariable::Boundaries &sortedBoundaries /*in,out*/);
 
+    /** True if memory region contains any decoded instructions. */
+    static bool regionContainsInstructions(const Partitioner2::PartitionerConstPtr&, const AddressInterval&);
+
+    /** True if memory region is fully mapped. */
+    static bool regionIsFullyMapped(const Partitioner2::PartitionerConstPtr&, const AddressInterval&);
+
+    /** True if memory region is fully mapped with read and write access. */
+    static bool regionIsFullyReadWrite(const Partitioner2::PartitionerConstPtr&, const AddressInterval&);
+
 private:
     // Searches for global variables using a per-function data-flow analysis and distinguishing between global variable
     // addresses based on which instructions wrote to those addresses. The data-flow is inter-procedural only for calls to
@@ -660,11 +682,6 @@ private:
 
     // Merge one set of addresses and their defining instructions into another.
     static void merge(AddressToAddresses&, const AddressToAddresses&);
-
-    // Memory properties
-    static bool regionContainsInstructions(const Partitioner2::PartitionerConstPtr&, const AddressInterval&);
-    static bool regionIsFullyMapped(const Partitioner2::PartitionerConstPtr&, const AddressInterval&);
-    static bool regionIsFullyReadWrite(const Partitioner2::PartitionerConstPtr&, const AddressInterval&);
 };
 
 } // namespace
