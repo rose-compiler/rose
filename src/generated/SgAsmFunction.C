@@ -1,195 +1,163 @@
-#line 164 "src/Rosebud/RosettaGenerator.C"
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Implementation for SgAsmFunction            -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#line 167 "src/Rosebud/RosettaGenerator.C"
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#line 175 "src/Rosebud/RosettaGenerator.C"
 #include <sage3basic.h>
 
-#line 487 "src/Rosebud/RosettaGenerator.C"
 std::string const&
 SgAsmFunction::get_name() const {
     return p_name;
 }
 
-#line 507 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmFunction::set_name(std::string const& x) {
     this->p_name = x;
     set_isModified(true);
 }
 
-#line 487 "src/Rosebud/RosettaGenerator.C"
 unsigned const&
 SgAsmFunction::get_reason() const {
     return p_reason;
 }
 
-#line 507 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmFunction::set_reason(unsigned const& x) {
     this->p_reason = x;
     set_isModified(true);
 }
 
-#line 487 "src/Rosebud/RosettaGenerator.C"
 std::string const&
 SgAsmFunction::get_reasonComment() const {
     return p_reasonComment;
 }
 
-#line 507 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmFunction::set_reasonComment(std::string const& x) {
     this->p_reasonComment = x;
     set_isModified(true);
 }
 
-#line 487 "src/Rosebud/RosettaGenerator.C"
 SgAsmFunction::function_kind_enum const&
 SgAsmFunction::get_function_kind() const {
     return p_function_kind;
 }
 
-#line 507 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmFunction::set_function_kind(SgAsmFunction::function_kind_enum const& x) {
     this->p_function_kind = x;
     set_isModified(true);
 }
 
-#line 487 "src/Rosebud/RosettaGenerator.C"
 SgAsmFunction::MayReturn const&
 SgAsmFunction::get_may_return() const {
     return p_may_return;
 }
 
-#line 507 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmFunction::set_may_return(SgAsmFunction::MayReturn const& x) {
     this->p_may_return = x;
     set_isModified(true);
 }
 
-#line 487 "src/Rosebud/RosettaGenerator.C"
 std::string const&
 SgAsmFunction::get_name_md5() const {
     return p_name_md5;
 }
 
-#line 507 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmFunction::set_name_md5(std::string const& x) {
     this->p_name_md5 = x;
     set_isModified(true);
 }
 
-#line 487 "src/Rosebud/RosettaGenerator.C"
 SgAsmStatementPtrList const&
 SgAsmFunction::get_statementList() const {
     return p_statementList;
 }
 
-#line 493 "src/Rosebud/RosettaGenerator.C"
 SgAsmStatementPtrList&
 SgAsmFunction::get_statementList() {
     return p_statementList;
 }
 
-#line 507 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmFunction::set_statementList(SgAsmStatementPtrList const& x) {
     this->p_statementList = x;
     set_isModified(true);
 }
 
-#line 487 "src/Rosebud/RosettaGenerator.C"
 SgAsmStatementPtrList const&
 SgAsmFunction::get_dest() const {
     return p_dest;
 }
 
-#line 507 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmFunction::set_dest(SgAsmStatementPtrList const& x) {
     this->p_dest = x;
     set_isModified(true);
 }
 
-#line 487 "src/Rosebud/RosettaGenerator.C"
 rose_addr_t const&
 SgAsmFunction::get_entry_va() const {
     return p_entry_va;
 }
 
-#line 507 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmFunction::set_entry_va(rose_addr_t const& x) {
     this->p_entry_va = x;
     set_isModified(true);
 }
 
-#line 487 "src/Rosebud/RosettaGenerator.C"
 SgSymbolTable* const&
 SgAsmFunction::get_symbol_table() const {
     return p_symbol_table;
 }
 
-#line 507 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmFunction::set_symbol_table(SgSymbolTable* const& x) {
     this->p_symbol_table = x;
     set_isModified(true);
 }
 
-#line 487 "src/Rosebud/RosettaGenerator.C"
 size_t const&
 SgAsmFunction::get_cached_vertex() const {
     return p_cached_vertex;
 }
 
-#line 507 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmFunction::set_cached_vertex(size_t const& x) {
     this->p_cached_vertex = x;
     set_isModified(true);
 }
 
-#line 487 "src/Rosebud/RosettaGenerator.C"
 int64_t const&
 SgAsmFunction::get_stackDelta() const {
     return p_stackDelta;
 }
 
-#line 507 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmFunction::set_stackDelta(int64_t const& x) {
     this->p_stackDelta = x;
     set_isModified(true);
 }
 
-#line 487 "src/Rosebud/RosettaGenerator.C"
 std::string const&
 SgAsmFunction::get_callingConvention() const {
     return p_callingConvention;
 }
 
-#line 507 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmFunction::set_callingConvention(std::string const& x) {
     this->p_callingConvention = x;
     set_isModified(true);
 }
 
-#line 244 "src/Rosebud/RosettaGenerator.C"
 SgAsmFunction::~SgAsmFunction() {
     destructorHelper();
 }
 
-#line 273 "src/Rosebud/RosettaGenerator.C"
 SgAsmFunction::SgAsmFunction()
     : p_reason(SgAsmFunction::FUNC_NONE)
     , p_function_kind(SgAsmFunction::e_unknown)
@@ -199,13 +167,11 @@ SgAsmFunction::SgAsmFunction()
     , p_cached_vertex((size_t)(-1))
     , p_stackDelta(SgAsmInstruction::INVALID_STACK_DELTA) {}
 
-#line 305 "src/Rosebud/RosettaGenerator.C"
 // The association between constructor arguments and their classes:
 //    property=address          class=SgAsmStatement
 //    property=name             class=SgAsmFunction
 //    property=reason           class=SgAsmFunction
 //    property=function_kind    class=SgAsmFunction
-#line 313 "src/Rosebud/RosettaGenerator.C"
 SgAsmFunction::SgAsmFunction(rose_addr_t const& address,
                              std::string const& name,
                              unsigned const& reason,
@@ -215,7 +181,6 @@ SgAsmFunction::SgAsmFunction(rose_addr_t const& address,
     , p_reason(reason)
     , p_function_kind(function_kind) {}
 
-#line 389 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmFunction::initializeProperties() {
     p_reason = SgAsmFunction::FUNC_NONE;
@@ -227,5 +192,4 @@ SgAsmFunction::initializeProperties() {
     p_stackDelta = SgAsmInstruction::INVALID_STACK_DELTA;
 }
 
-#line 183 "src/Rosebud/RosettaGenerator.C"
 #endif // ROSE_ENABLE_BINARY_ANALYSIS
