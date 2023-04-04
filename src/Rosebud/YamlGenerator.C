@@ -1,5 +1,7 @@
 #include <Rosebud/YamlGenerator.h>
 
+#include <boost/lexical_cast.hpp>
+
 #include <iostream>
 
 namespace Rosebud {
@@ -45,6 +47,13 @@ YamlGenerator::adjustParser(Sawyer::CommandLine::Parser &parser) {
            "number, and a starting column number. Lines and columns are numbered starting at one.\n\n"
 
            "The following command-line switches are understood by this backend:");
+
+    // We need at least one switch here in order for the above documentation to appear in the man page.
+
+    sg.insert(Switch("indentation")
+              .argument("n", nonNegativeIntegerParser(indentationAmount))
+              .doc("Number of columns to indent each level of YAML output. The default is " +
+                   boost::lexical_cast<std::string>(indentationAmount) + "."));
 
     parser.with(sg);
 }
@@ -227,7 +236,8 @@ YamlGenerator::generate(const Ast::Project::Ptr &project) {
         }
     }
 
-    Sawyer::Yaml::Serialize(root, std::cout, Sawyer::Yaml::SerializeConfig{2, 10*1024*1024, false, false});
+    const size_t indent = std::max(1, indentationAmount);
+    Sawyer::Yaml::Serialize(root, std::cout, Sawyer::Yaml::SerializeConfig{indent, 10*1024*1024, false, false});
 }
 
 } // namespace

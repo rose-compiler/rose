@@ -8,6 +8,7 @@ namespace Rosebud {
 
 /** Generator that produces a YAML description of the input. */
 class YamlGenerator: public Generator {
+    int indentationAmount = 2;
 public:
     virtual void adjustParser(Sawyer::CommandLine::Parser&) override;
     virtual void generate(const Ast::ProjectPtr&) override;
