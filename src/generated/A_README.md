@@ -40,6 +40,7 @@ To regenerate generated source files:
        --rosetta-output=$ROSE_SOURCE/src/ROSETTA/src/binaryInstruction.C \
        --rosetta-function=Grammar::setUpBinaryInstructions" \
        --rosetta-impl=$ROSE_SOURCE/src/generated \
+	   --rosetta-cpp-protection='defined(ROSE_ENABLE_BINARY_ANALYSIS)' \
        --rosetta-node-list=$ROSE_SOURCE/src/ROSETTA/astNodeList \
        $ROSE_SOURCE/src/AstNodes/BinaryAnalysis/*.h
 ```

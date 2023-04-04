@@ -63,6 +63,12 @@ RosettaGenerator::adjustParser(Sawyer::CommandLine::Parser &parser) {
               .argument("name", anyParser(grammarFunctionName))
               .doc("Name of the ROSETTA function being generated. The default is \"" + grammarFunctionName + "\"."));
 
+    sg.insert(Switch("cpp-protection")
+              .argument("expression", anyParser(cppProtection))
+              .doc("C preprocessor conditional compilation expression that will appear in an \"#if\" directive that protects "
+                   "almost all generated code. The default is " +
+                   std::string(cppProtection.empty() ? "nothing" : ("\"" + cppProtection + "\"")) + "."));
+
     parser.with(sg);
 }
 
@@ -110,9 +116,10 @@ RosettaGenerator::genRosettaFileBegin(std::ostream &rosetta) {
             <<makeTitleComment("DO NOT MODIFY THIS FILE MANUALLY!", "", '/', outputWidth)
             <<"\n"
             <<"\n"
-            <<THIS_LOCATION <<"#include <featureTests.h>\n"
-            <<"#ifdef ROSE_ENABLE_BINARY_ANALYSIS\n"
-            <<"#include \"ROSETTA_macros.h\"\n"
+            <<THIS_LOCATION <<"#include <featureTests.h>\n";
+    if (!cppProtection.empty())
+        rosetta <<"#if " <<cppProtection <<"\n";
+    rosetta <<THIS_LOCATION <<"#include \"ROSETTA_macros.h\"\n"
             <<"#include \"grammar.h\"\n"
             <<"#include \"AstNodeClass.h\"\n"
             <<"\n"
@@ -158,7 +165,8 @@ RosettaGenerator::genRosettaFileBegin(std::ostream &rosetta) {
 
 void
 RosettaGenerator::genRosettaFileEnd(std::ostream &rosetta) {
-    rosetta <<THIS_LOCATION <<"#endif // ROSE_ENABLE_BINARY_ANALYSIS\n";
+    if (!cppProtection.empty())
+        rosetta <<THIS_LOCATION <<"#endif // " <<cppProtection <<"\n";
 }
 
 void
@@ -184,8 +192,9 @@ RosettaGenerator::genImplFileBegin(std::ostream &impl, const Ast::Class::Ptr &c)
     impl <<THIS_LOCATION <<makeTitleComment("Implementation for " + c->name + "            -- MACHINE GENERATED; DO NOT MODIFY --",
                             "", '/', outputWidth)
          <<"\n"
-         <<THIS_LOCATION <<"#include <featureTests.h>\n"
-         <<"#ifdef ROSE_ENABLE_BINARY_ANALYSIS\n";
+         <<THIS_LOCATION <<"#include <featureTests.h>\n";
+    if (!cppProtection.empty())
+        impl <<"#if " <<cppProtection <<"\n";
 
     // The CPP conditional compilation directives that appeared before the class definition in the Rosebud input need to also be in
     // effect in this implementation file. However, we don't need to include any files or define any macros because those would have
@@ -200,7 +209,8 @@ RosettaGenerator::genImplFileEnd(std::ostream &impl, const Ast::Class::Ptr &c) {
     ASSERT_not_null(c);
     impl <<"\n";
     c->cppStack->emitClose(impl);
-    impl <<THIS_LOCATION <<"#endif // ROSE_ENABLE_BINARY_ANALYSIS\n";
+    if (!cppProtection.empty())
+        impl <<THIS_LOCATION <<"#endif // " <<cppProtection <<"\n";
 }
 
 // Output declarations for all classes used as base classes so Doxygen is sure to see them.
