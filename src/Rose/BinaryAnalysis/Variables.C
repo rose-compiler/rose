@@ -3,9 +3,11 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Variables.h>
 
+#include <Rose/CommandLine/Parser.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
+#include <Rose/BinaryAnalysis/Partitioner2/FunctionCallGraph.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
@@ -13,9 +15,12 @@
 #include <stringify.h>
 
 #include <Sawyer/Attribute.h>
+#include <Sawyer/GraphAlgorithm.h>
+#include <Sawyer/ThreadWorkers.h>
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/format.hpp>
 #include <boost/integer_traits.hpp>
 #include <regex>
 
@@ -1333,24 +1338,33 @@ VariableFinder::regionIsFullyReadWrite(const P2::Partitioner::ConstPtr &partitio
     }
 }
 
-AddressToAddresses
-VariableFinder::findGlobalVariableVasMethod1(const P2::Partitioner::ConstPtr &partitioner) {
-    ASSERT_not_null(partitioner);
-    AddressToAddresses retval;
-    Sawyer::Message::Stream debug(mlog[DEBUG]);
-    SAWYER_MESG(debug) <<"looking for global variable addresses (method 1: data-flow)\n";
+// For x86 ELF executables, global variables live in a particular section, such as .bss. The compiler typically generates code that
+// computes the global variable address as an offset from the function's own address. It does this by calling __x86.get_pc_thunk.ax
+// (or similar) which returns the address of the instruction following the call, and then adding a constant to the returned
+// value. This computes the starting address of the section (base address), to which additional offsets are added to get to the
+// various global variables.  Since the base address is computed in one basic block and used in subsequent basic blocks, we use a
+// data flow analysis to propagate the base address to the other blocks.
+struct FindGlobalVariableVasMethod1Worker {
+    P2::Partitioner::ConstPtr partitioner;
+    Sawyer::ProgressBar<size_t> &progress;
+    VariableFinder &self;
 
-    // For x86 ELF executables, global variables live in a particular section, such as .bss. The compiler typically generates
-    // code that computes the global variable address as an offset from the function's own address. It does this by calling
-    // __x86.get_pc_thunk.ax (or similar) which returns the address of the instruction following the call, and then adding a
-    // constant to the returned value. This computes the starting address of the section (base address), to which additional
-    // offsets are added to get to the various global variables.  Since the base address is computed in one basic block and
-    // used in subsequent basic blocks, we use a data flow analysis to propagate the base address to the other blocks.
-    using Df = P2::DataFlow::Engine;
-    using Cfg = Df::Cfg;
+    // The following data members are synchronized with this mutex
+    SAWYER_THREAD_TRAITS::Mutex mutex_;
+    AddressToAddresses result;
 
-    // FIXME[Robb Matzke 2023-02-14]: This could be parallel
-    for (const P2::Function::Ptr &function: partitioner->functions()) {
+    explicit FindGlobalVariableVasMethod1Worker(const P2::Partitioner::ConstPtr &partitioner, Sawyer::ProgressBar<size_t> &progress,
+                                                VariableFinder &self)
+        : partitioner(partitioner), progress(progress), self(self) {
+        ASSERT_not_null(partitioner);
+    }
+
+    void operator()(size_t /*workId*/, const P2::Function::Ptr &function) {
+        ++progress;
+        using Df = P2::DataFlow::Engine;
+        using Cfg = Df::Cfg;
+
+        Sawyer::Message::Stream debug(mlog[DEBUG]);
         SAWYER_MESG(debug) <<"  analyzing " <<function->printableName() <<"\n";
 
         // Create the data-flow CFG
@@ -1374,9 +1388,16 @@ VariableFinder::findGlobalVariableVasMethod1(const P2::Partitioner::ConstPtr &pa
         Df df(cfg, xfer, merger);
         df.insertStartingVertex(0, initialState);
 
-        for (size_t i = 0; i < cfg.nVertices() * 3 /*arbitrary*/; ++i) {
+        Sawyer::Stopwatch timer;
+        const size_t maxSteps = cfg.nVertices() * 3 + 1; // arbitrary, but positive
+        for (size_t i = 0; i < maxSteps; ++i) {
             if (!df.runOneIteration())
                 break;
+            if (timer.report() > self.settings().gvarMethod1MaxTimePerFunction.count()) {
+                mlog[WARN] <<"max time exceeded for gvar method 1 for " <<function->printableName()
+                           <<(boost::format(" (%d of %d steps; %1.0f%%)") % i % maxSteps % (100.0 * i / maxSteps)) <<"\n";
+                break;
+            }
         }
 
         // Find all constants that appear in memory address expressions and organize them according to what instruction(s) wrote to
@@ -1405,7 +1426,7 @@ VariableFinder::findGlobalVariableVasMethod1(const P2::Partitioner::ConstPtr &pa
             }
         };
 
-        Accumulator accumulator(*this, debug);
+        Accumulator accumulator(self, debug);
         for (size_t i = 0; i < cfg.nVertices(); ++i) {
             SAWYER_MESG(debug) <<"    final state for vertex " <<i <<": " <<cfg.findVertex(i)->value().toString() <<"\n";
             if (auto state = df.getFinalState(i)) {
@@ -1415,6 +1436,8 @@ VariableFinder::findGlobalVariableVasMethod1(const P2::Partitioner::ConstPtr &pa
             }
         }
 
+        // Compute the result for this single function
+        AddressToAddresses functionResult;
         SAWYER_MESG(debug) <<"  summary for " <<function->printableName() <<":\n";
         for (const auto &node: accumulator.map.nodes()) {
             if (debug) {
@@ -1424,114 +1447,219 @@ VariableFinder::findGlobalVariableVasMethod1(const P2::Partitioner::ConstPtr &pa
                 debug <<"\n";
             }
 
-            if (regionContainsInstructions(partitioner, node.key())) {
+            if (self.regionContainsInstructions(partitioner, node.key())) {
                 SAWYER_MESG(debug) <<"      skipped because region overlaps with instructions\n";
                 continue;
             }
-            if (!regionIsFullyMapped(partitioner, node.key())) {
+            if (!self.regionIsFullyMapped(partitioner, node.key())) {
                 SAWYER_MESG(debug) <<"      skipped because sub-region is not fully mapped\n";
                 continue;
             }
-            if (!regionIsFullyReadWrite(partitioner, node.key())) {
+            if (!self.regionIsFullyReadWrite(partitioner, node.key())) {
                 SAWYER_MESG(debug) <<"      skipped because sub-region is not fully read+write\n";
                 continue;
             }
 
-            retval[node.key().least()].insert(node.value());
+            functionResult[node.key().least()].insert(node.value());
         }
-    }
 
-    return retval;
+        // Merge this function's result into the global result
+        SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+        for (const auto &node: functionResult)
+            result[node.first] |= node.second;
+    }
+};
+
+AddressToAddresses
+VariableFinder::findGlobalVariableVasMethod1(const P2::Partitioner::ConstPtr &partitioner) {
+    ASSERT_not_null(partitioner);
+    AddressToAddresses retval;
+    SAWYER_MESG(mlog[DEBUG]) <<"looking for global variable addresses (method 1: data-flow)\n";
+
+    // It doesn't matter what order we process these functions because the worker is intraprocedural. Therefore, we don't need to
+    // add any edges to this graph. However, we'll sort the vertices from small to large, and since the workInParallel runs them
+    // in the opposite order, this results in the best overall parallel performance.
+    Sawyer::Container::Graph<P2::Function::Ptr> g;
+    std::vector<P2::Function::Ptr> functions = partitioner->functions();
+    std::sort(functions.begin(), functions.end(), [](const P2::Function::Ptr &a, const P2::Function::Ptr &b) {
+        return a->nBasicBlocks() < b->nBasicBlocks();
+    });
+    for (const P2::Function::Ptr &function: functions)
+        g.insertVertex(function);
+
+    // Process each function and accumulate the results in the worker.result data member
+    Sawyer::ProgressBar<size_t> progress(g.nVertices(), mlog[MARCH], "gvars method 1");
+    progress.suffix(" functions");
+    const size_t nThreads = Rose::CommandLine::genericSwitchArgs.threads;
+    FindGlobalVariableVasMethod1Worker worker(partitioner, progress, *this);
+    Sawyer::workInParallel(g, nThreads, std::ref(worker));
+    return worker.result;
 }
+
+struct FindGlobalVariableVasMethod2Worker {
+    P2::Partitioner::ConstPtr partitioner;
+    Sawyer::ProgressBar<size_t> &progress;
+    VariableFinder &self;
+
+    // The following data members are synchronized with this mutex
+    SAWYER_THREAD_TRAITS::Mutex mutex_;
+    AddressToAddresses result;
+
+    FindGlobalVariableVasMethod2Worker(const P2::Partitioner::ConstPtr &partitioner, Sawyer::ProgressBar<size_t> &progress,
+                                       VariableFinder &self)
+        : partitioner(partitioner), progress(progress), self(self) {}
+
+    void operator()(size_t /*workId*/, const P2::BasicBlock::Ptr &bb) {
+        Sawyer::Message::Stream debug(mlog[DEBUG]);
+        ++progress;
+        AddressToAddresses partialResult;
+
+        S2::SymbolicSemantics::RiscOperators::Ptr ops =
+            S2::SymbolicSemantics::RiscOperators::instanceFromRegisters(partitioner->instructionProvider().registerDictionary());
+        S2::BaseSemantics::Dispatcher::Ptr cpu = partitioner->newDispatcher(ops);
+        ASSERT_not_null(cpu);
+
+        for (SgAsmInstruction *insn: bb->instructions()) {
+            SAWYER_MESG(debug) <<"  " <<insn->toString() <<"\n";
+            ops->currentState()->clear();
+            try {
+                cpu->processInstruction(insn);
+            } catch (...) {
+                SAWYER_MESG(mlog[WARN]) <<"semantics failed for " <<insn->toString() <<"\n";
+            }
+
+            // Find all constants that appear in memory address expressions.
+            S2::BaseSemantics::MemoryCellState::Ptr mem =
+                S2::BaseSemantics::MemoryCellState::promote(cpu->currentState()->memoryState());
+            std::set<rose_addr_t> constants = self.findAddressConstants(mem);
+
+            // Compute the contiguous regions formed by those constants. E.g., an instruction that reads four bytes of memory
+            // might have four consecutive constants.
+            AddressIntervalSet regions;
+            for (rose_addr_t c: constants) {
+                if (self.regionContainsInstructions(partitioner, c))
+                    continue;                           // not a variable pointer if it points to an instruction
+                if (!self.regionIsFullyMapped(partitioner, c))
+                    continue;                           // global variables always have storage
+                if (!self.regionIsFullyReadWrite(partitioner, c))
+                    continue;
+                regions.insert(c);
+            }
+
+            // Save only the lowest constant in each contiguous region.
+            for (const AddressInterval &interval: regions.intervals()) {
+                SAWYER_MESG(debug) <<"      " <<StringUtility::addrToString(interval.least()) <<"\n";
+                partialResult[interval.least()].insert(insn->get_address());
+            }
+        }
+
+        // Save the partial results in the worker
+        SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+        for (const auto &node: partialResult)
+            result[node.first] |= node.second;
+    }
+};
 
 AddressToAddresses
 VariableFinder::findGlobalVariableVasMethod2(const P2::Partitioner::ConstPtr &partitioner) {
     ASSERT_not_null(partitioner);
     AddressToAddresses retval;
-    Sawyer::Message::Stream debug(mlog[DEBUG]);
-    SAWYER_MESG(debug) <<"looking for global variable addresses (method 2: insn memory address constants)\n";
+    SAWYER_MESG(mlog[DEBUG]) <<"looking for global variable addresses (method 2: insn memory address constants)\n";
 
-    S2::SymbolicSemantics::RiscOperators::Ptr ops =
-        S2::SymbolicSemantics::RiscOperators::instanceFromRegisters(partitioner->instructionProvider().registerDictionary());
-    S2::BaseSemantics::Dispatcher::Ptr cpu = partitioner->newDispatcher(ops);
-    ASSERT_not_null(cpu);
+    // Get all basic blocks and sort them by increasing number of instructions. This results in best parallelism since
+    // workInParallel will run them in the opposite order.
+    std::vector<P2::BasicBlock::Ptr> bblocks = partitioner->basicBlocks();
+    std::sort(bblocks.begin(), bblocks.end(), [](const P2::BasicBlock::Ptr &a, const P2::BasicBlock::Ptr &b) {
+        return a->nInstructions() < b->nInstructions();
+    });
 
-    // FIXME[Robb Matzke 2019-12-06]: This could be parallel
-    for (const P2::ControlFlowGraph::Vertex &vertex: partitioner->cfg().vertices()) {
-        if (vertex.value().type() == P2::V_BASIC_BLOCK) {
-            for (SgAsmInstruction *insn: vertex.value().bblock()->instructions()) {
-                SAWYER_MESG(debug) <<"  " <<insn->toString() <<"\n";
-                ops->currentState()->clear();
-                try {
-                    cpu->processInstruction(insn);
-                } catch (...) {
-                    SAWYER_MESG(mlog[WARN]) <<"semantics failed for " <<insn->toString() <<"\n";
-                }
+    // Basic blocks can be processed in any order, so create a work graph with no edges.
+    Sawyer::Container::Graph<P2::BasicBlock::Ptr> g;
+    for (const P2::BasicBlock::Ptr &b: bblocks)
+        g.insertVertex(b);
 
-                // Find all constants that appear in memory address expressions.
-                S2::BaseSemantics::MemoryCellState::Ptr mem =
-                    S2::BaseSemantics::MemoryCellState::promote(cpu->currentState()->memoryState());
-                std::set<rose_addr_t> constants = findAddressConstants(mem);
+    // Analyze basic blocks in parallel
+    Sawyer::ProgressBar<size_t> progress(partitioner->cfg().nVertices(), mlog[MARCH], "gvars method 3");
+    progress.suffix(" bblocks");
+    FindGlobalVariableVasMethod2Worker worker(partitioner, progress, *this);
+    const size_t nThreads = Rose::CommandLine::genericSwitchArgs.threads;
+    Sawyer::workInParallel(g, nThreads, std::ref(worker));
+    return worker.result;
+}
 
-                // Compute the contiguous regions formed by those constants. E.g., an instruction that reads four bytes of memory
-                // might have four consecutive constants.
-                AddressIntervalSet regions;
-                for (rose_addr_t c: constants) {
-                    if (regionContainsInstructions(partitioner, c))
-                        continue;                       // not a variable pointer if it points to an instruction
-                    if (!regionIsFullyMapped(partitioner, c))
-                        continue;                       // global variables always have storage
-                    if (!regionIsFullyReadWrite(partitioner, c))
-                        continue;
+struct FindGlobalVariableVasMethod3Worker {
+    P2::Partitioner::ConstPtr partitioner;
+    Sawyer::ProgressBar<size_t> &progress;
+    VariableFinder &self;
 
-                    regions.insert(c);
-                }
+    // The following data members are synchronized with this mutex
+    SAWYER_THREAD_TRAITS::Mutex mutex_;
+    AddressToAddresses result;
 
-                // Save only the lowest constant in each contiguous region.
-                for (const AddressInterval &interval: regions.intervals()) {
-                    SAWYER_MESG(debug) <<"      " <<StringUtility::addrToString(interval.least()) <<"\n";
-                    retval[interval.least()].insert(insn->get_address());
-                }
+    FindGlobalVariableVasMethod3Worker(const P2::Partitioner::ConstPtr &partitioner, Sawyer::ProgressBar<size_t> &progress,
+                                       VariableFinder &self)
+        : partitioner(partitioner), progress(progress), self(self) {}
+
+    void operator()(size_t /*workId*/, const P2::BasicBlock::Ptr &bb) {
+        Sawyer::Message::Stream debug(mlog[DEBUG]);
+        ++progress;
+        AddressToAddresses partialResult;
+
+        for (SgAsmInstruction *insn: bb->instructions()) {
+            SAWYER_MESG(debug) <<"  " <<insn->toString() <<"\n";
+
+            // Find constants in the instruction AST
+            std::set<rose_addr_t> constants = self.findConstants(insn);
+            AddressIntervalSet regions;
+            for (rose_addr_t c: constants) {
+                if (self.regionContainsInstructions(partitioner, c))
+                    continue;                           // not a variable pointer if it points to an instruction
+                if (!self.regionIsFullyMapped(partitioner, c))
+                    continue;                           // global variables always have storage
+                if (!self.regionIsFullyReadWrite(partitioner, c))
+                    continue;
+                regions.insert(c);
+            }
+
+            // Save only the lowest constant in each contiguous region.
+            for (const AddressInterval &interval: regions.intervals()) {
+                SAWYER_MESG(debug) <<"      " <<StringUtility::addrToString(interval.least()) <<"\n";
+                partialResult[interval.least()].insert(insn->get_address());
             }
         }
+
+        // Save the partial results in the worker
+        SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+        for (const auto &node: partialResult)
+            result[node.first] |= node.second;
     }
-    return retval;
-}
+};
 
 AddressToAddresses
 VariableFinder::findGlobalVariableVasMethod3(const P2::Partitioner::ConstPtr &partitioner) {
     ASSERT_not_null(partitioner);
     AddressToAddresses retval;
-    Sawyer::Message::Stream debug(mlog[DEBUG]);
-    SAWYER_MESG(debug) <<"looking for global variable addresses (method 2: insn immediate values)\n";
+    SAWYER_MESG(mlog[DEBUG]) <<"looking for global variable addresses (method 2: insn immediate values)\n";
 
-    for (const P2::ControlFlowGraph::Vertex &vertex: partitioner->cfg().vertices()) {
-        if (vertex.value().type() == P2::V_BASIC_BLOCK) {
-            for (SgAsmInstruction *insn: vertex.value().bblock()->instructions()) {
-                SAWYER_MESG(debug) <<"  " <<insn->toString() <<"\n";
+    // Get all basic blocks and sort them by increasing number of instructions. This results in best parallelism since the
+    // workInParallel will run them in the opposite order.
+    std::vector<P2::BasicBlock::Ptr> bblocks = partitioner->basicBlocks();
+    std::sort(bblocks.begin(), bblocks.end(), [](const P2::BasicBlock::Ptr &a, const P2::BasicBlock::Ptr &b) {
+        return a->nInstructions() < b->nInstructions();
+    });
 
-                // Find constants in the instruction AST
-                std::set<rose_addr_t> constants = findConstants(insn);
-                AddressIntervalSet regions;
-                for (rose_addr_t c: constants) {
-                    if (regionContainsInstructions(partitioner, c))
-                        continue;                       // not a variable pointer if it points to an instruction
-                    if (!regionIsFullyMapped(partitioner, c))
-                        continue;                       // global variables always have storage
-                    if (!regionIsFullyReadWrite(partitioner, c))
-                        continue;
-                    regions.insert(c);
-                }
+    // Basic blocks can be processed in any order, so create a work graph with no edges.
+    Sawyer::Container::Graph<P2::BasicBlock::Ptr> g;
+    for (const P2::BasicBlock::Ptr &b: bblocks)
+        g.insertVertex(b);
 
-                // Save only the lowest constant in each contiguous region.
-                for (const AddressInterval &interval: regions.intervals()) {
-                    SAWYER_MESG(debug) <<"      " <<StringUtility::addrToString(interval.least()) <<"\n";
-                    retval[interval.least()].insert(insn->get_address());
-                }
-            }
-        }
-    }
-    return retval;
+    // Analyze basic blocks in parallel
+    Sawyer::ProgressBar<size_t> progress(partitioner->cfg().nVertices(), mlog[MARCH], "gvars method 3");
+    progress.suffix(" bblocks");
+    FindGlobalVariableVasMethod3Worker worker(partitioner, progress, *this);
+    const size_t nThreads = Rose::CommandLine::genericSwitchArgs.threads;
+    Sawyer::workInParallel(g, nThreads, std::ref(worker));
+    return worker.result;
 }
 
 void
