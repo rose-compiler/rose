@@ -1,26 +1,35 @@
+#line 192 "src/Rosebud/RosettaGenerator.C"
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Implementation for SgAsmBinaryConcat            -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#line 195 "src/Rosebud/RosettaGenerator.C"
 #include <featureTests.h>
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#if defined(ROSE_ENABLE_BINARY_ANALYSIS)
+#line 204 "src/Rosebud/RosettaGenerator.C"
 #include <sage3basic.h>
 
+#line 274 "src/Rosebud/RosettaGenerator.C"
 SgAsmBinaryConcat::~SgAsmBinaryConcat() {
     destructorHelper();
 }
 
+#line 303 "src/Rosebud/RosettaGenerator.C"
 SgAsmBinaryConcat::SgAsmBinaryConcat() {}
 
+#line 349 "src/Rosebud/RosettaGenerator.C"
 // The association between constructor arguments and their classes:
 //    property=lhs              class=SgAsmBinaryExpression
 //    property=rhs              class=SgAsmBinaryExpression
+#line 357 "src/Rosebud/RosettaGenerator.C"
 SgAsmBinaryConcat::SgAsmBinaryConcat(SgAsmExpression* const& lhs,
                                      SgAsmExpression* const& rhs)
     : SgAsmBinaryExpression(lhs, rhs) {}
 
+#line 448 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmBinaryConcat::initializeProperties() {
 }
 
-#endif // ROSE_ENABLE_BINARY_ANALYSIS
+#line 213 "src/Rosebud/RosettaGenerator.C"
+#endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

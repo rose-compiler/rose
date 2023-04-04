@@ -1,63 +1,78 @@
+#line 192 "src/Rosebud/RosettaGenerator.C"
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Implementation for SgAsmCilConstant            -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#line 195 "src/Rosebud/RosettaGenerator.C"
 #include <featureTests.h>
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#if defined(ROSE_ENABLE_BINARY_ANALYSIS)
+#line 204 "src/Rosebud/RosettaGenerator.C"
 #include <sage3basic.h>
 
+#line 546 "src/Rosebud/RosettaGenerator.C"
 uint8_t const&
 SgAsmCilConstant::get_Type() const {
     return p_Type;
 }
 
+#line 566 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmCilConstant::set_Type(uint8_t const& x) {
     this->p_Type = x;
     set_isModified(true);
 }
 
+#line 546 "src/Rosebud/RosettaGenerator.C"
 uint8_t const&
 SgAsmCilConstant::get_Padding() const {
     return p_Padding;
 }
 
+#line 566 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmCilConstant::set_Padding(uint8_t const& x) {
     this->p_Padding = x;
     set_isModified(true);
 }
 
+#line 546 "src/Rosebud/RosettaGenerator.C"
 uint32_t const&
 SgAsmCilConstant::get_Parent() const {
     return p_Parent;
 }
 
+#line 566 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmCilConstant::set_Parent(uint32_t const& x) {
     this->p_Parent = x;
     set_isModified(true);
 }
 
+#line 546 "src/Rosebud/RosettaGenerator.C"
 uint32_t const&
 SgAsmCilConstant::get_Value() const {
     return p_Value;
 }
 
+#line 566 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmCilConstant::set_Value(uint32_t const& x) {
     this->p_Value = x;
     set_isModified(true);
 }
 
+#line 274 "src/Rosebud/RosettaGenerator.C"
 SgAsmCilConstant::~SgAsmCilConstant() {
     destructorHelper();
 }
 
+#line 303 "src/Rosebud/RosettaGenerator.C"
 SgAsmCilConstant::SgAsmCilConstant() {}
 
+#line 448 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmCilConstant::initializeProperties() {
 }
 
-#endif // ROSE_ENABLE_BINARY_ANALYSIS
+#line 213 "src/Rosebud/RosettaGenerator.C"
+#endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)
