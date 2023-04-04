@@ -10,7 +10,8 @@ class RosettaGenerator: public Generator {
     boost::filesystem::path rosettaFileName;            // optional name of file into which ROSETTA source code is written
     boost::filesystem::path implDirectoryName;          // optional name of directory where node implementation files are created
     boost::filesystem::path nodeListFileName;           // optional name of file that contains list of all node types
-    std::string grammarFunctionName = "Grammar::setUpBinaryInstructions"; // name of ROSETTA function being generated
+    std::string grammarFunctionName = "Grammar::no_name"; // name of ROSETTA function being generated
+    std::string cppProtection;                          // conditional compilation expression protecting all generated code
 
 public:
     virtual void adjustParser(Sawyer::CommandLine::Parser&) override;
