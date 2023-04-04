@@ -88,28 +88,6 @@ YamlGenerator::genCppStack(Sawyer::Yaml::Node &root, const Ast::CppStack::Ptr &c
 }
 
 void
-YamlGenerator::genDefinition(Sawyer::Yaml::Node &root, const Ast::Definition::Ptr &defn) {
-    ASSERT_not_null(defn);
-
-    root["name"] = defn->name;
-
-    if (!defn->doc.empty())
-        root["doc"] = prefixLines(defn->doc, "|");
-
-    genCppStack(root, defn->cppStack());
-
-    if (!defn->priorText.empty())
-        root["prior_text"] = prefixLines(defn->priorText, "|");
-
-    if (settings.showingLocations) {
-        genLocation(root["starting_location"], defn, defn->startToken);
-        genLocation(root["name_location"], defn, defn->nameToken);
-        genLocation(root["doc_location"], defn, defn->docToken);
-        genLocation(root["prior_text_location"], defn, defn->priorTextToken);
-    }
-}
-
-void
 YamlGenerator::genAttribute(Sawyer::Yaml::Node &root, const Ast::Attribute::Ptr &attribute) {
     ASSERT_not_null(attribute);
     root["name"] = attribute->fqName;
@@ -126,6 +104,35 @@ YamlGenerator::genAttribute(Sawyer::Yaml::Node &root, const Ast::Attribute::Ptr 
 }
 
 void
+YamlGenerator::genDefinition(Sawyer::Yaml::Node &root, const Ast::Definition::Ptr &defn) {
+    ASSERT_not_null(defn);
+
+    if (settings.showingLocations)
+        genLocation(root["starting_location"], defn, defn->startToken);
+
+    root["name"] = defn->name;
+    if (settings.showingLocations)
+        genLocation(root["name_location"], defn, defn->nameToken);
+
+    if (!defn->doc.empty()) {
+        root["doc"] = prefixLines(defn->doc, "|");
+        if (settings.showingLocations)
+            genLocation(root["doc_location"], defn, defn->docToken);
+    }
+
+    genCppStack(root, defn->cppStack());
+
+    if (!defn->priorText.empty()) {
+        root["prior_text"] = prefixLines(defn->priorText, "|");
+        if (settings.showingLocations)
+            genLocation(root["prior_text_location"], defn, defn->priorTextToken);
+    }
+
+    for (const auto &attribute: *defn->attributes())
+        genAttribute(root["attributes"].pushBack(), attribute());
+}
+
+void
 YamlGenerator::genProperty(Sawyer::Yaml::Node &root, const Ast::Property::Ptr &property) {
     ASSERT_not_null(property);
     genDefinition(root, property);
@@ -139,9 +146,6 @@ YamlGenerator::genProperty(Sawyer::Yaml::Node &root, const Ast::Property::Ptr &p
         if (settings.showingLocations)
             genLocation(root["init"]["location"], property, property->cInit->tokens);
     }
-
-    for (const auto &attribute: *property->attributes())
-        genAttribute(root["attributes"].pushBack(), attribute());
 
     if (property->dataMemberName)
         root["data_member"] = property->dataMemberName;
