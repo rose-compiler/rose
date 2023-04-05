@@ -322,7 +322,11 @@ bool usingColor() {
         case When::ALWAYS:
             return true;
         case When::AUTO:
+#ifdef _MSC_VER
+            return false;
+#else
             return isatty(2);
+#endif
 
     }
     ASSERT_not_reachable("invalid when");
