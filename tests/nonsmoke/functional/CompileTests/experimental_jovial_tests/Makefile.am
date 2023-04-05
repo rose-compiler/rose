@@ -366,6 +366,7 @@ COMPOOL_TESTCODES = \
  gitlab-issue-14.cpl                    \
  gitlab-issue-17.cpl                    \
  gitlab-issue-74.cpl                    \
+ gitlab-issue-206.cpl                   \
  beta.cpl                               \
  parttype.cpl                           \
  comments_start_term.cpl
