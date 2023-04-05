@@ -3,6 +3,8 @@
 
 namespace Jovial {
 
+constexpr bool TRACE_CONSTRUCTION = false;
+
 // Return true if character c is whitespace
 bool whitespace_char(int c)
 {
@@ -57,17 +59,19 @@ int preprocess(std::istream &in_stream, std::ostream &out_stream, std::ostream &
    int comment_type{static_cast<int>(Rose::builder::JovialEnum::comment)};
    int define_type{static_cast<int>(Rose::builder::JovialEnum::define)};
 
+   int previous{'\n'}; // pretend the file starts with a newline
+
    while ((c = in_stream.get()) != EOF) {
      col += 1;
 
-#if DEBUG_PREPROCESS_OUTPUT
-     std::cerr << "\n";
-     std::cerr << "(" << line << "," << col << ")";
-     std::cerr <<": " << std::to_string(c) << ": ";
-     if (c != '\n') std::cerr.put(c);
-     else std::cerr.put(' ');
-     std::cerr << ": state is " << to_string(state) << ": ";
-#endif
+     if (TRACE_CONSTRUCTION) {
+       std::cerr << "\n";
+       std::cerr << "(" << line << "," << col << ")";
+       std::cerr <<": " << std::to_string(c) << ": ";
+       if (c != '\n') std::cerr.put(c);
+       else std::cerr.put(' ');
+       std::cerr << ": state is " << to_string(state) << ": ";
+     }
 
      if (c == '\n') {
        line += 1;
@@ -75,10 +79,13 @@ int preprocess(std::istream &in_stream, std::ostream &out_stream, std::ostream &
      }
 
      switch (state) {
-        case State::start_token: // start of token (currently only DEFINE or comment)
+        case State::start_token: // start of a token (currently only DEFINE or comment)
           bLine = line; bCol = col;
           if (c == 'd' || c == 'D') {
-            state = State::E1; // beginning of DEFINE
+            // assume DEFINE preceded by whitespace (e.g., no "ITEM SOMETHING'DEFINE")
+            if (whitespace_char(previous)) {
+              state = State::E1;
+            }
           }
           else if (c == '"') {
             lexeme.push_back('"');
@@ -193,6 +200,8 @@ int preprocess(std::istream &in_stream, std::ostream &out_stream, std::ostream &
           out_stream.put(c); // program probably illegal
           return -1;
      }
+
+     previous = c;
      out_stream.put(c);
    }
    return 0;
