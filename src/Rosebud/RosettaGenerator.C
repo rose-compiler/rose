@@ -22,7 +22,7 @@ void
 RosettaGenerator::adjustParser(Sawyer::CommandLine::Parser &parser) {
     using namespace Sawyer::CommandLine;
 
-    SwitchGroup sg("ROSETTA backend for binary analysis IR/AST nodes (--backend=rosetta)");
+    SwitchGroup sg("ROSETTA backend for IR/AST nodes (--backend=rosetta)");
     sg.name("rosetta");
     sg.doc("The ultimate goal is to remove the legacy ROSETTA system from ROSE and replace its monolithic features with "
            "small, simple, specialized code generators each serving a very specific and well defined purpose, and each having "
@@ -886,8 +886,18 @@ RosettaGenerator::generate(const Ast::Project::Ptr &project) {
     const Classes classes = bottomUp(h);
 
     std::ofstream rosettaFile;
-    if ("-" != rosettaFileName)
+    if ("-" != rosettaFileName) {
+#ifdef _MSC_VER
+        if (rosettaFileName.empty()) {
+            message(FATAL, "ROSETTA output file must be specified on Windows");
+            exit(1);
+        } else {
+            rosettaFile.open(rosettaFileName.c_str());
+        }
+#else
         rosettaFile.open(rosettaFileName.empty() ? "/dev/null" : rosettaFileName.c_str());
+#endif
+    }
     std::ostream &rosetta = "-" == rosettaFileName ? std::cout : rosettaFile;
     if (!rosetta) {
         message(ERROR, "cannot open output file \"" + rosettaFileName.string() + "\"");
