@@ -1,0 +1,71 @@
+#!/bin/bash
+set -e
+arg0="${0##*/}"
+dir0="${0%/*}"
+
+usage() {
+    #     --------------------------------------------------------------------------------
+    echo "usage: $arg0 [--source=SOURCE] ROSEBUD [ARGS...]"
+    echo "  SOURCE is the name of the root of the ROSE source tree. If not specified on"
+    echo "      the command-line, then it is either taken from the RG_SRC or ROSE_SOURCE"
+    echo "      environment variable or derived from the location of this script."
+    echo "  ROSEBUD is the name of the Rosebud executable from the build directory."
+    echo "  ARGS are extra arguments to pass to the ROSEBUD executable."
+    #     --------------------------------------------------------------------------------
+}
+
+die() {
+    echo "$arg0: error:" "$@" >&2
+    exit 1
+}
+
+# Parse command-line
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+	-h|--help)
+	    usage
+	    exit 0
+	    ;;
+	--source)
+	    RG_SRC="$2"
+	    shift 2
+	    ;;
+	--source=*)
+	    RG_SRC="${1#--source=}"
+	    shift
+	    ;;
+	-*)
+	    die "incorrect usage; see --help"
+	    ;;
+	*)
+	    break
+	    ;;
+    esac
+done
+[ "$#" -eq 0 ] && die "incorrect usage; see --help"
+ROSEBUD_EXE="$1"
+shift
+
+# Find the top of the ROSE source tree from:
+#   * the --source command-line argument (which has been saved in RG_SRC)
+#   * the $RG_SRC environment variable
+#   * the $ROSE_SOURCE environment variable
+#   * relative to the location of this script
+if [ -n "$RG_SRC" ]; then
+    : already set
+elif [ -n "$ROSE_SOURCE" ]; then
+    RG_SRC="$ROSE_SOURCE"
+else
+    RG_SRC="$(cd $arg0 && pwd)"
+fi
+[ -f "$RG_SRC/src/Rosebud/rosebud.C" ] ||
+    die "cannot find top of ROSE source tree at \"$RG_SRC\""
+
+exec "$ROSEBUD_EXE" --backend=rosetta --no-warnings --no-locations \
+     --rosetta-output="$RG_SRC/src/ROSETTA/src/binaryInstruction.C" \
+     --rosetta-function="Grammar::setUpBinaryInstructions" \
+     --rosetta-impl="$RG_SRC/src/generated" \
+     --rosetta-cpp-protection='defined(ROSE_ENABLE_BINARY_ANALYSIS)' \
+     --rosetta-node-list="$RG_SRC/src/ROSETTA/astNodeList" \
+     "$@" \
+     "$RG_SRC"/src/AstNodes/BinaryAnalysis/*.h

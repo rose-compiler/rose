@@ -1,12 +1,11 @@
 #ifndef Rosebud_RosettaGenerator_H
 #define Rosebud_RosettaGenerator_H
-#include <Rosebud/Generator.h>
+#include <Rosebud/CxxGenerator.h>
 
 namespace Rosebud {
 
 /** Generator that produces ROSETTA output. */
-class RosettaGenerator: public Generator {
-    size_t outputWidth = 130;                           // nominal width of the generated code
+class RosettaGenerator: public CxxGenerator {
     boost::filesystem::path rosettaFileName;            // optional name of file into which ROSETTA source code is written
     boost::filesystem::path implDirectoryName;          // optional name of directory where node implementation files are created
     boost::filesystem::path nodeListFileName;           // optional name of file that contains list of all node types
@@ -41,9 +40,6 @@ private:
     void genCppConditions(std::ostream &out, const Ast::FilePtr&, const std::string &text);
     void genClassDestructor(std::ostream &header, std::ostream &impl, const Ast::ClassPtr&);
     void genClassConstructors(std::ostream &header, std::ostream &impl, const Ast::ClassPtr&, const Hierarchy&);
-    void genDefaultConstructor(std::ostream &header, std::ostream &impl, const Ast::ClassPtr&);
-    void genArgsConstructor(std::ostream &header, std::ostream &impl, const Ast::ClassPtr&, const Hierarchy&);
-    void genInitProperties(std::ostream &header, std::ostream &impl, const Ast::ClassPtr&);
     void genOtherContent(std::ostream &rosetta, const Ast::ClassPtr&, const std::string &content);
     std::vector<std::string> implementationFileNames(const Classes&);
     void adjustNodeList(const std::shared_ptr<Ast::Project>&);

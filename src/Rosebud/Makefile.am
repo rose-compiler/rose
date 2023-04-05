@@ -12,7 +12,9 @@ rosebud_SOURCES =				\
 	rosebud.C				\
 	Ast.C					\
 	BoostSerializer.C			\
+	CxxGenerator.C				\
 	Generator.C				\
+	RoseGenerator.C				\
 	RosettaGenerator.C			\
 	Utility.C				\
 	YamlGenerator.C
@@ -23,7 +25,9 @@ unitTest01_SOURCES =				\
 	rosebud.C				\
 	Ast.C					\
 	BoostSerializer.C			\
+	CxxGenerator.C				\
 	Generator.C				\
+	RoseGenerator.C				\
 	RosettaGenerator.C			\
 	Utility.C				\
 	YamlGenerator.C
@@ -35,7 +39,9 @@ headers =					\
 	Ast.h					\
 	BasicTypes.h				\
 	BoostSerializer.h			\
+	CxxGenerator.h				\
 	Generator.h				\
+	RoseGenerator.h				\
 	RosettaGenerator.h			\
 	Serializer.h				\
 	Utility.h				\

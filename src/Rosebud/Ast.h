@@ -3,6 +3,8 @@
 
 #include <Rosebud/BasicTypes.h>
 
+#include <Sawyer/Cached.h>
+
 #include <list>
 #include <memory>
 #include <string>
@@ -189,8 +191,16 @@ private:
  * @endcode */
 template<class T>
 class ChildEdge: protected ParentEdgeAccess {
+public:
+    /** Type of child being pointed to. */
+    using Child = T;
+
+    /** Type of pointer to the child. */
+    using ChildPtr = std::shared_ptr<T>;
+
+private:
     Node &parent_;                                      // required parent owning this child edge
-    std::shared_ptr<T> child_;                          // optional child to which this edge points
+    ChildPtr child_;                                    // optional child to which this edge points
 
 public:
     // No default constructor and not copyable.
@@ -211,14 +221,14 @@ public:
      *
      * @{ */
     explicit ChildEdge(Node &parent);
-    ChildEdge(Node &parent, const std::shared_ptr<T> &child);
+    ChildEdge(Node &parent, const ChildPtr &child);
     /** @} */
 
     /** Return the child if there is one, else null.
      *
      * @{ */
-    const std::shared_ptr<T>& operator->() const;
-    const std::shared_ptr<T>& operator()() const;
+    const ChildPtr& operator->() const;
+    const ChildPtr& operator()() const;
     /** @} */
 
     /** Compare the child pointer to another pointer.
@@ -248,7 +258,7 @@ public:
      *  the null pointer directly.
      *
      * @{ */
-    ChildEdge& operator=(const std::shared_ptr<T> &child);
+    ChildEdge& operator=(const ChildPtr &child);
     ChildEdge& operator=(const ParentEdge&);
     /** @} */
 
@@ -562,6 +572,9 @@ public:
     /** Shared-ownership pointer. */
     using Ptr = TokenListPtr;
 
+private:
+    Sawyer::Cached<std::string> string_;                // cached string representation
+
 public:
     /** The ordered tokens. */
     std::vector<Token> tokens;
@@ -585,11 +598,13 @@ public:
 
     /** Return the text for all tokens in this list.
      *
-     *  The no-argument version will search for the file as an ancestor node in the tree.
+     *  The string representation is cached so the same value is always returned. This node must have a @ref File ancestor unless
+     *  a file is provided or the string is already cached. If a string is provided as an argument, it overrides the cached value.
      *
      * @{ */
-    std::string string();                               // node must have a File ancestor
+    std::string string();
     std::string string(const FilePtr&);
+    void string(const std::string&);
     /** @} */
 
     /** Iterators.

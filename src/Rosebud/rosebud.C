@@ -4,6 +4,7 @@ static const char* gDescription =
 
 #include <Rosebud/Ast.h>
 #include <Rosebud/Utility.h>
+#include <Rosebud/RoseGenerator.h>
 #include <Rosebud/RosettaGenerator.h>
 #include <Rosebud/YamlGenerator.h>
 
@@ -75,12 +76,14 @@ makeCommandLineParser() {
 
     parser.with(Switch("backend")
                 .argument("generator", enumParser<Backend>(settings.backend)
-                          ->with("rosetta", Backend::ROSETTA_BINARY)
                           ->with("yaml", Backend::YAML)
+                          ->with("rosetta", Backend::ROSETTA)
+                          ->with("rose", Backend::ROSE)
                           ->with("none", Backend::NONE))
                 .doc("How to generate code. The choices are:"
-                     "@named{rosetta}{Generate code according to Robb's single-file ROSETTA kludge.}"
                      "@named{yaml}{Generate YAML output that can be parsed by standalone backends.}"
+                     "@named{rosetta}{Generate code according to Robb's single-file ROSETTA kludge.}"
+                     "@named{rose}{Experimental backend to generate ROSE code directly.}"
                      "@named{none}{Do not generate code, but only check the input.}"));
 
     parser.with(Switch("locations")
@@ -886,10 +889,12 @@ int main(int argc, char *argv[]) {
 
     // Parse the command-line
     Sawyer::CommandLine::Parser cmdlineParser = makeCommandLineParser();
-    RosettaGenerator rosettaGenerator;
-    rosettaGenerator.adjustParser(cmdlineParser);
     YamlGenerator yamlGenerator;
     yamlGenerator.adjustParser(cmdlineParser);
+    RosettaGenerator rosettaGenerator;
+    rosettaGenerator.adjustParser(cmdlineParser);
+    RoseGenerator roseGenerator;
+    roseGenerator.adjustParser(cmdlineParser);
     const std::vector<std::string> args = parseCommandLine(cmdlineParser, argc, argv);
 
     // Parse the input files to produce the AST
@@ -913,10 +918,13 @@ int main(int argc, char *argv[]) {
         case Backend::YAML:
             yamlGenerator.generate(project);
             break;
-        case Backend::NONE:
-            break;
-        case Backend::ROSETTA_BINARY:
+        case Backend::ROSETTA:
             rosettaGenerator.generate(project);
+            break;
+        case Backend::ROSE:
+            roseGenerator.generate(project);
+            break;
+        case Backend::NONE:
             break;
     }
 }

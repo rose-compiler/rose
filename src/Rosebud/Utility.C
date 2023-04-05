@@ -184,6 +184,19 @@ bestMatch(const std::vector<std::string> &candidates, const std::string &sample)
     return candidates[bestIdx];
 }
 
+std::string
+toString(Access access) {
+    switch (access) {
+        case Access::PRIVATE:
+            return "private";
+        case Access::PROTECTED:
+            return "protected";
+        case Access::PUBLIC:
+            return "public";
+    }
+    ASSERT_not_reachable("invalid access");
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Filesystem utilities
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -209,6 +222,11 @@ relativeToRoseSource(const boost::filesystem::path &fileName) {
     } else {
         return boost::filesystem::absolute(fileName).string().substr(root.string().size() + 1);
     }
+}
+
+boost::filesystem::path
+toPath(const std::string &s, const std::string &extension) {
+    return std::regex_replace(s, std::regex("::"), "/") + extension;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -248,7 +266,7 @@ makeBlockComment(const std::vector<std::string> &textLines, const std::string &o
 
 std::string
 makeTitleComment(const std::string &multiLine, const std::string &prefix, char bar, size_t width) {
-    return boost::join(makeTitleComment(splitIntoLines(boost::trim_copy(multiLine)), prefix, bar, width), "\n") + "\n";
+    return boost::join(makeTitleComment(splitIntoLines(boost::trim_right_copy(multiLine)), prefix, bar, width), "\n") + "\n";
 }
 
 std::vector<std::string>
@@ -554,7 +572,8 @@ isBaseClass(const Ast::Class::Ptr &c, const Hierarchy &h) {
     return vertex->nOutEdges() > 0;
 }
 
-std::vector<Ast::Property::Ptr> allConstructorArguments(const Ast::Class::Ptr &c, const Hierarchy &h_) {
+std::vector<Ast::Property::Ptr>
+allConstructorArguments(const Ast::Class::Ptr &c, const Hierarchy &h_) {
     ASSERT_not_null(c);
     using namespace Sawyer::Container::Algorithm;
     std::vector<Ast::Property::Ptr> retval;
@@ -573,6 +592,16 @@ std::vector<Ast::Property::Ptr> allConstructorArguments(const Ast::Class::Ptr &c
     return retval;
 }
 
+std::string
+firstPublicBaseClass(const Ast::Class::Ptr &c) {
+    ASSERT_not_null(c);
+
+    for (const auto &base: c->inheritance) {
+        if ("public" == base.first)
+            return base.second;
+    }
+    return "";
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Type utilities
@@ -624,5 +653,12 @@ locationDirective(const Ast::Node::Ptr &node, const Token &token) {
     }
     return "";
 }
+
+std::string
+toCppSymbol(const std::string &s) {
+    return std::regex_replace(s, std::regex("::|[^_a-zA-Z0-9]"), "_");
+}
+
+
 
 } // namespace
