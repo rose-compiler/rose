@@ -17,9 +17,17 @@ namespace Rosebud {
 
 /** Kinds of built-in code generators. */
 enum class Backend {
-    ROSETTA_BINARY,                                     /**< Generate code that's backward compatible with ROSETTA. */
     YAML,                                               /**< Generate a machine-readable YAML representation of the IR. */
+    ROSETTA,                                            /**< Generate code that's backward compatible with ROSETTA. */
+    ROSE,                                               /**< Generate pure C++. */
     NONE                                                /**< Do not generate code; only check the input. */
+};
+
+/** Kinds of access. */
+enum class Access {
+    PRIVATE,                                            /**< Like C++ @c private access. */
+    PROTECTED,                                          /**< Like C++ @c protected access. */
+    PUBLIC                                              /**< Like C++ @c public access. */
 };
 
 /** Command-line settings for the rosebud tool. */
@@ -81,6 +89,9 @@ double relativeDifference(const std::string &src, const std::string &tgt);
  *  Given a list of candidate strings and a sample, return the candidate that is most similar to the sample. */
 std::string bestMatch(const std::vector<std::string> &candidates, const std::string &sample);
 
+/** Convert an access enum to a C++ string. */
+std::string toString(Access);
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Filesystem utilities
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -97,6 +108,13 @@ boost::filesystem::path findRoseRootDir(const boost::filesystem::path&);
  *  If the specified file name is inside the ROSE source tree, then return the name of the file relative to the root of the
  *  ROSE source tree. Returns the empty path if the file is not inside the ROSE source tree. The file need not exist. */
 boost::filesystem::path relativeToRoseSource(const boost::filesystem::path&);
+
+/** Convert a qualified C++ name to a relative path.
+ *
+ *  The return value is a relative path of components separated by the system's path component separator ("/" on POSIX systems).
+ *  The components of the path are the components of the C++ qualified name that are separated by "::". The file name extension
+ *  is appended to the result before returning. */
+boost::filesystem::path toPath(const std::string &symbol, const std::string &extension);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Comment utilities
@@ -222,6 +240,9 @@ bool isBaseClass(const Ast::ClassPtr&, const Hierarchy&);
 /** Properties that form constructor arguments. */
 std::vector<Ast::PropertyPtr> allConstructorArguments(const Ast::ClassPtr&, const Hierarchy&);
 
+/** Name of first public base class. */
+std::string firstPublicBaseClass(const Ast::ClassPtr&);
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Type utilities
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -246,12 +267,18 @@ std::string removeVolatileMutable(const std::string &type);
 
 /** Input location information.
  *
- *  This returns a C preprocessor #line directive that resets source information as specified.
+ *  This returns a C preprocessor #line directive with line termintion that resets source information as specified. If location
+ *  information is disabled, then the empty string is returned.
  *
  * @{ */
 std::string locationDirective(size_t line, const std::string &file);
 std::string locationDirective(const Ast::NodePtr&, const Token&);
 /** @} */
+
+/** Convert a C++ qualified name to a CPP symbol.
+ *
+ *  This is done by replacing all the "::" with "_". */
+std::string toCppSymbol(const std::string&);
 
 } // namespace
 #endif

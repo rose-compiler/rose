@@ -3,7 +3,9 @@ include_rules
 run $(support_compile_linklib) -I.. -o libRosebud \
     Ast.C \
     BoostSerializer.C \
+    CxxGenerator.C \
     Generator.C \
+    RoseGenerator.C \
     RosettaGenerator.C \
     Utility.C \
     YamlGenerator.C \

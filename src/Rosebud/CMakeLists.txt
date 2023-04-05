@@ -4,7 +4,9 @@ add_executable(rosebud
   rosebud.C
   Ast.C
   BoostSerializer.C
+  CxxGenerator.C
   Generator.C
+  RoseGenerator.C
   RosettaGenerator.C
   Utility.C
   YamlGenerator.C)
@@ -13,7 +15,9 @@ add_executable(unitTest01
   rosebud.C
   Ast.C
   BoostSerializer.C
+  CxxGenerator.C
   Generator.C
+  RoseGenerator.C
   RosettaGenerator.C
   Utility.C
   YamlGenerator.C)

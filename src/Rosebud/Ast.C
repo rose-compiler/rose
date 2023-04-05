@@ -125,7 +125,7 @@ TokenList::instance() {
 
 bool
 TokenList::empty() const {
-    return tokens.empty();
+    return tokens.empty() && (!string_.isCached() || string_.get().empty());
 }
 
 size_t
@@ -139,14 +139,26 @@ TokenList::push_back(const Token &token) {
 }
 
 std::string
-TokenList::string() {
-    return string(findAncestor<File>());
+TokenList::string(const FilePtr &file) {
+    ASSERT_not_null(file);
+    if (!string_.isCached())
+        string_ = file->content(tokens, Expand::INTER);
+    return string_.get();
 }
 
 std::string
-TokenList::string(const FilePtr &file) {
-    ASSERT_not_null(file);
-    return file->content(tokens, Expand::INTER);
+TokenList::string() {
+    if (!string_.isCached()) {
+        auto file = findAncestor<File>();
+        ASSERT_not_null(file);
+        string_ = file->content(tokens, Expand::INTER);
+    }
+    return string_.get();
+}
+
+void
+TokenList::string(const std::string &s) {
+    string_ = s;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

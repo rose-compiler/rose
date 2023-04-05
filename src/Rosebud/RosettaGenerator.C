@@ -8,7 +8,6 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/filesystem.hpp>
-#include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include <iostream>
@@ -108,7 +107,7 @@ RosettaGenerator::fileWrtRose(const boost::filesystem::path &fileName) {
 void
 RosettaGenerator::genRosettaFileBegin(std::ostream &rosetta) {
     const std::string codeFile = fileWrtRose(rosettaFileName).string();
-    rosetta <<THIS_LOCATION <<makeTitleComment("THIS FILE IS MACHINE GENERATED", "", '/', outputWidth)
+    rosetta <<THIS_LOCATION <<machineGenerated()
             << "//\n"
             <<"// This file was generated with ROSE's \"rosebud\" tool by reading node definitions written in a\n"
             <<"// C++-like language and emitting this ROSETTA input.\n"
@@ -260,22 +259,6 @@ RosettaGenerator::genClassEnd(std::ostream &rosetta, const Ast::Class::Ptr&) {
             <<"#endif // DOCUMENTATION\n";
 }
 
-// Emit the destructor for the class.
-void
-RosettaGenerator::genClassDestructor(std::ostream &header, std::ostream &impl, const Ast::Class::Ptr &c) {
-    ASSERT_not_null(c);
-
-    header <<"\n"
-           <<THIS_LOCATION <<"public:\n"
-           <<"    /** Destructor. */\n"
-           <<"    virtual ~" <<c->name <<"();\n";
-
-    impl <<"\n"
-         <<THIS_LOCATION <<c->name <<"::~" <<c->name <<"() {\n"
-         <<"    destructorHelper();\n"
-         <<"}\n";
-}
-
 // Return the first super class whose name starts with "Sg" and contains at least three characters.
 std::string
 RosettaGenerator::rosettaBaseClass(const Ast::Class::Ptr &c) {
@@ -287,173 +270,12 @@ RosettaGenerator::rosettaBaseClass(const Ast::Class::Ptr &c) {
     return "";
 }
 
-// Emit the default constructor
-void
-RosettaGenerator::genDefaultConstructor(std::ostream &header, std::ostream &impl, const Ast::Class::Ptr &c) {
-    ASSERT_not_null(c);
-
-    // Default constructor declaration
-    header <<"\n"
-           <<THIS_LOCATION <<"public:\n"
-           <<"    /** Default constructor. */\n"
-           <<"    " <<c->name <<"();\n";
-
-    // Default constructor implementation
-    impl <<"\n"
-         <<THIS_LOCATION <<c->name <<"::" <<c->name <<"()";
-    size_t nInits = 0;
-    for (const auto &p: *c->properties()) {
-        if (p->cInit && !p->cInit->empty()) {
-            auto pfile = p->findAncestor<Ast::File>();
-            impl <<"\n" <<THIS_LOCATION <<"    " <<(0 == nInits++ ? ": " : ", ")
-                 <<propertyDataMemberName(p()) <<"(" <<p->cInit->string(pfile) <<")";
-        }
-    }
-    impl <<" {}\n";
-}
-
-// Emit the ctor_args constructor
-void
-RosettaGenerator::genArgsConstructor(std::ostream &header, std::ostream &impl, const Ast::Class::Ptr &c, const Hierarchy &h) {
-    ASSERT_not_null(c);
-
-    // Get the properties that are constructor arguments. If there are none, then we don't need this constructor.
-    std::vector<Ast::Property::Ptr> args = allConstructorArguments(c, h);
-    if (args.empty())
-        return;
-
-    //--------------------------------------------------------------------------------------------------------------------------
-    // Constructor declaration
-    //--------------------------------------------------------------------------------------------------------------------------
-
-    // Constructor declaration having the names of all the Rosebud::ctor_arg properties as argument names.
-    header <<"\n"
-           <<THIS_LOCATION <<"public:\n"
-           <<"    /** Constructor. */\n"
-           <<"    " <<(args.size() == 1 ? "explicit " : "") <<c->name <<"(";
-    for (const auto &p: args) {
-        auto pfile = p->findAncestor<Ast::File>();
-        auto argClass = p->findAncestor<Ast::Class>();
-        ASSERT_not_null(argClass);
-        header <<(p == args.front() ? "" : ",\n    " + std::string(c->name.size() + 1, ' '))
-               <<constRef(removeVolatileMutable(p->cType->string(pfile))) <<" " <<p->name;
-    }
-    header <<");\n";
-
-    //--------------------------------------------------------------------------------------------------------------------------
-    // Constructor definition
-    //--------------------------------------------------------------------------------------------------------------------------
-
-    // Show information about how the constructor args map to classes. This comment is to help when debugging ROSE.
-    impl <<"\n"
-         <<THIS_LOCATION <<"// The association between constructor arguments and their classes:\n";
-    for (const auto &p: args) {
-        auto argClass = p->findAncestor<Ast::Class>();
-        ASSERT_not_null(argClass);
-        impl <<(boost::format("//    property=%-16s class=%s\n") % p->name % argClass->name);
-    }
-
-    // Implementation declaration, almost the same as above.
-    impl <<THIS_LOCATION <<c->name <<"::" <<c->name <<"(";
-    for (const auto &p: args) {
-        auto pfile = p->findAncestor<Ast::File>();
-        auto argClass = p->findAncestor<Ast::Class>();
-        impl <<(p == args.front() ? "" : ",\n" + std::string(2*c->name.size()+3, ' '))
-             <<constRef(removeVolatileMutable(p->cType->string(pfile))) <<" " <<p->name;
-    }
-    impl <<")";
-
-    // Emit the initializer for the base class if there is a base class, and remove those properties from the `args` list.
-    size_t nInits = 0;
-    std::string baseClassName = rosettaBaseClass(c);
-    if (!baseClassName.empty()) {
-        const auto baseClassVertex = h.findVertexKey(baseClassName);
-        if (baseClassVertex == h.vertices().end()) {
-            // FIXME[Robb Matzke 2023-03-20]: points to the class name, but should point to the base class name. Unfortunately
-            // we didn't save that information when parsing.
-            auto cfile = c->findAncestor<Ast::File>();
-            message(ERROR, cfile, c->nameToken, "class \"" + c->name + "\" derives from class \"" + baseClassName + "\""
-                    " whose definition is not known to Rosebud (did you intend to supply the base class's header file on the "
-                    " rosebud command-line?)");
-            impl <<"\n    : unknown_ctor_for_" <<baseClassName <<"() // following initialization are probably wrong";
-            ++nInits;
-        } else {
-            Ast::Class::Ptr baseClass = baseClassVertex->value();
-            const size_t nBaseArgs = allConstructorArguments(baseClass, h).size();
-            ASSERT_require(nBaseArgs <= args.size());
-            if (nBaseArgs > 0) {
-                impl <<"\n    : " <<baseClassName <<"(";
-                for (size_t i = 0; i < nBaseArgs; ++i) {
-                    auto p = args.front();
-                    auto argClass = p->findAncestor<Ast::Class>();
-                    ASSERT_not_null(argClass);
-                    impl <<(i ? ", " : "") <<p->name;
-                    args.erase(args.begin());
-                }
-                impl <<")";
-                ++nInits;
-            }
-        }
-    }
-
-    // Emit the property initializations, some of which come from arguments
-    for (const auto &p: *c->properties()) {
-        auto arg = std::find(args.begin(), args.end(), p());
-        auto argClass = p->findAncestor<Ast::Class>();
-        if (arg != args.end()) {
-            // Property is initialized from an argument
-            impl <<(nInits++ ? "\n    , " : "\n    : ")
-                 <<propertyDataMemberName(p()) <<"(" <<p->name <<")";
-        } else if (p->cInit && !p->cInit->empty()) {
-            // Property is initialized from the property's initial value expression
-            auto pfile = p->findAncestor<Ast::File>();
-            impl <<(nInits++ ? "\n    , " : "\n    : ")
-                 <<propertyDataMemberName(p()) <<"(" <<p->cInit->string(pfile) <<")";
-        } else {
-            // Property either has a default initializer or is not initialized
-        }
-    }
-
-    impl <<" {}\n";
-}
-
 // Emit the constructors for the class.
 void
 RosettaGenerator::genClassConstructors(std::ostream &header, std::ostream &impl, const Ast::Class::Ptr &c, const Hierarchy &h) {
     ASSERT_not_null(c);
-    genDefaultConstructor(header, impl, c);
-    genArgsConstructor(header, impl, c, h);
-}
-
-// Emit the function that initializes properties. This is not used by generated code since the initializations happen
-// in the constructors, but it can be useful in user-defined constructors where the user is not necessarily expected to
-// know the names of all the property data members.
-void
-RosettaGenerator::genInitProperties(std::ostream &header, std::ostream &impl, const Ast::Class::Ptr &c) {
-    ASSERT_not_null(c);
-    auto file = c->findAncestor<Ast::File>();
-    ASSERT_not_null(file);
-
-    header <<"\n"
-           <<THIS_LOCATION <<"protected:\n"
-           <<"    /** Initialize all properties that have explicit initial values.\n"
-           <<"     *\n"
-           <<"     *  This function is mostly for use in user-defined constructors where the user desires to initialize\n"
-           <<"     *  all the properties but does not know the names of the data members that store the property values.\n"
-           <<"     *  This function initializes the properties that have explicit initializations within this class, but\n"
-           <<"     *  does not recursively initialize base classes. */\n"
-           <<"    void initializeProperties();\n";
-
-    impl <<"\n"
-         <<THIS_LOCATION <<"void\n"
-         <<c->name <<"::initializeProperties() {\n";
-
-    // Initialize the properties of this class
-    for (const auto &p: *c->properties()) {
-        if (p->cInit && !p->cInit->empty())
-            impl <<"    " <<propertyDataMemberName(p()) <<" = " <<p->cInit->string(file) <<";\n";
-    }
-    impl <<"}\n";
+    genDefaultConstructor(header, impl, c, Access::PUBLIC);
+    genArgsConstructor(header, impl, c, h, Access::PUBLIC);
 }
 
 // Generate code for a property. The output streams are:
@@ -463,8 +285,6 @@ RosettaGenerator::genInitProperties(std::ostream &header, std::ostream &impl, co
 void
 RosettaGenerator::genProperty(std::ostream &rosetta, std::ostream &header, std::ostream &impl, const Ast::Property::Ptr &p) {
     ASSERT_not_null(p);
-    auto file = p->findAncestor<Ast::File>();
-    ASSERT_not_null(file);
     auto c = p->findAncestor<Ast::Class>();
     ASSERT_not_null(c);
 
@@ -511,9 +331,10 @@ RosettaGenerator::genProperty(std::ostream &rosetta, std::ostream &header, std::
         rosetta <<"\n"
                 <<THIS_LOCATION <<"#ifndef DOCUMENTATION\n";
         rosetta <<locationDirective(p, p->startToken) <<"    " <<shortName(c) <<".setDataPrototype(\n"
-                <<"        \"" <<p->cType->string(file) <<"\", \"" <<p->name <<"\", \"";
-        if (p->cInit && !p->cInit->empty())
-            rosetta <<"= " <<p->cInit->string(file);
+                <<"        \"" <<dataMemberType(p) <<"\", \"" <<p->name <<"\", \"";
+        const std::string initExpr = ctorInitializerExpression(p, initialValue(p));
+        if (!initExpr.empty())
+            rosetta <<"= " <<initExpr;          // rosetta wants contructor initializer expressions even though we have an "=" here
         rosetta <<"\",\n"
                 <<"        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, "
                 <<(p->findAttribute("Rosebud::traverse") ? "DEF_TRAVERSAL" : "NO_TRAVERSAL") <<", "
@@ -522,7 +343,7 @@ RosettaGenerator::genProperty(std::ostream &rosetta, std::ostream &header, std::
     } else {
         header <<"\n"
                <<THIS_LOCATION <<"private:\n"
-               <<"    " <<p->cType->string(file) <<" " <<propertyDataMemberName(p) <<";\n";
+               <<"    " <<dataMemberType(p) <<" " <<propertyDataMemberName(p) <<";\n";
     }
 
     // Documentation
@@ -531,25 +352,22 @@ RosettaGenerator::genProperty(std::ostream &rosetta, std::ostream &header, std::
            <<locationDirective(p, p->docToken) <<doc.first;
 
     // Accessor functions declarations
-    const std::string origType = p->cType->string(file);
-    const std::string constRefType = constRef(removeVolatileMutable(origType));
-    const std::string refType = removeVolatileMutable(origType) + "&";
     for (const std::string &accessorName: propertyAccessorNames(p)) {
-        header <<THIS_LOCATION <<"    " <<constRefType <<" " <<accessorName <<"() const;\n";
+        header <<THIS_LOCATION <<"    " <<constRef(removeVolatileMutable(dataMemberType(p))) <<" " <<accessorName <<"() const;\n";
         if (p->findAttribute("Rosebud::large"))
-            header <<THIS_LOCATION <<"    " <<refType      <<" " <<accessorName <<"();\n";
+            header <<THIS_LOCATION <<"    " <<removeVolatileMutable(dataMemberType(p)) <<"& " <<accessorName <<"();\n";
     }
 
     // Accessor function implementations
     for (const std::string &accessorName: propertyAccessorNames(p)) {
         impl <<"\n"
-             <<THIS_LOCATION <<constRefType <<"\n"
+             <<THIS_LOCATION <<constRef(removeVolatileMutable(dataMemberType(p))) <<"\n"
              <<c->name <<"::" <<accessorName <<"() const {\n"
              <<"    return " <<propertyDataMemberName(p) <<";\n"
              <<"}\n";
         if (p->findAttribute("Rosebud::large")) {
             impl <<"\n"
-                 <<THIS_LOCATION <<refType <<"\n"
+                 <<THIS_LOCATION <<removeVolatileMutable(dataMemberType(p)) <<"&\n"
                  <<c->name <<"::" <<accessorName <<"() {\n"
                  <<"    return " <<propertyDataMemberName(p) <<";\n"
                  <<"}\n";
@@ -558,13 +376,13 @@ RosettaGenerator::genProperty(std::ostream &rosetta, std::ostream &header, std::
 
     // Mutator function declarations
     for (const std::string &mutatorName: propertyMutatorNames(p))
-        header <<THIS_LOCATION <<"    void " <<mutatorName <<"(" <<constRefType <<");\n";
+        header <<THIS_LOCATION <<"    void " <<mutatorName <<"(" <<constRef(valueType(p)) <<");\n";
 
     // Mutator function implementations
     for (const std::string &mutatorName: propertyMutatorNames(p)) {
         impl <<"\n"
              <<THIS_LOCATION <<"void\n"
-             <<c->name <<"::" <<mutatorName <<"(" <<constRefType <<" x) {\n"
+             <<c->name <<"::" <<mutatorName <<"(" <<constRef(valueType(p)) <<" x) {\n"
              <<"    this->" <<propertyDataMemberName(p) <<" = x;\n"
              <<"    set_isModified(true);\n"
              <<"}\n";
@@ -702,7 +520,7 @@ RosettaGenerator::genClassDefinition(std::ostream &rosetta, const Ast::Class::Pt
 
     // Class constructors and destructures emitted quite late in the class definition so we're sure that all the types needed by
     // their arguments are already emitted.
-    genClassDestructor(header, impl, c);
+    genDestructor(header, impl, c);
     genClassConstructors(header, impl, c, h);
     genInitProperties(header, impl, c);
 
@@ -765,7 +583,7 @@ RosettaGenerator::genTupFile(const std::vector<std::string> &implFileNames) {
             return;
         }
 
-        out <<THIS_LOCATION <<makeTitleComment("      MACHINE GENERATED FILE -- DO NOT MODIFY", "", '#', outputWidth)
+        out <<THIS_LOCATION <<machineGenerated('#')
             <<"#\n"
             <<"# This file was generated by Rosebud\n"
             <<"#\n"
@@ -792,7 +610,7 @@ RosettaGenerator::genMakeFile(const std::vector<std::string> &implFileNames) {
             return;
         }
 
-        out <<THIS_LOCATION <<makeTitleComment("      MACHINE GENERATED FILE -- DO NOT MODIFY", "", '#', outputWidth)
+        out <<THIS_LOCATION <<machineGenerated('#')
             <<"#\n"
             <<"# This file was generated by Rosebud\n"
             <<"#\n"
@@ -819,7 +637,7 @@ RosettaGenerator::genCmakeFile(const std::vector<std::string> &implFileNames) {
             return;
         }
 
-        out <<THIS_LOCATION <<makeTitleComment("      MACHINE GENERATED FILE -- DO NOT MODIFY", "", '#', outputWidth)
+        out <<THIS_LOCATION <<machineGenerated('#')
             <<"#\n"
             <<"# This file was generated by Rosebud\n"
             <<"#\n"
@@ -885,6 +703,35 @@ RosettaGenerator::generate(const Ast::Project::Ptr &project) {
     checkClassHierarchy(h);
     const Classes classes = bottomUp(h);
 
+    // Check that we have all the classes we need
+    for (const Ast::Class::Ptr &c: classes) {
+        std::string sageBase;
+        for (const auto &base: c->inheritance) {
+            if (base.second.size() > 2 && boost::starts_with(base.second, "Sg")) {
+                if (!sageBase.empty()) {
+                    message(ERROR, c->findAncestor<Ast::File>(), c->nameToken,
+                            "class \"" + c->name + "\" has more than one Sage node as a base class: "
+                            "\"" + sageBase + "\" and \"" + base.second + "\"");
+                } else {
+                    sageBase = base.second;
+                }
+
+                const auto baseVertex = h.findVertexKey(base.second);
+                if (baseVertex == h.vertices().end()) {
+                    // FIXME[Robb Matzke 2023-03-20]: points to the class name, but should point to the base class
+                    // name. Unfortunately we didn't save that information when parsing.
+                    if (settings.showingWarnings) {
+                        message(WARN, c->findAncestor<Ast::File>(), c->nameToken,
+                                "class \"" + c->name + "\" derives from class \"" + base.second + "\""
+                                " whose definition is not known to Rosebud (did you intend to supply the base class's header file "
+                                "on the rosebud command-line?)");
+                    }
+                }
+            }
+        }
+    }
+
+    // Open the stream to which we write ROSETTA input
     std::ofstream rosettaFile;
     if ("-" != rosettaFileName) {
 #ifdef _MSC_VER
@@ -904,6 +751,7 @@ RosettaGenerator::generate(const Ast::Project::Ptr &project) {
         return;
     }
 
+    // Generate code
     genRosettaFileBegin(rosetta); {
         // ROSETTA files define classes from the bottom up because the base class definitions depend on the subclasses instead
         // of the other way around.
@@ -915,6 +763,7 @@ RosettaGenerator::generate(const Ast::Project::Ptr &project) {
         } genRosettaFunctionEnd(rosetta);
     } genRosettaFileEnd(rosetta);
 
+    // Generate build system files
     const std::vector<std::string> implFileNames = implementationFileNames(classes);
     adjustNodeList(project);
     genTupFile(implFileNames);
