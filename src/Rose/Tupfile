@@ -29,4 +29,5 @@ run $(public_header) -o include/rose/Rose	\
     SourceLocation.h				\
     StringUtility.h				\
     Traits.h					\
+    Tree.h					\
     Yaml.h
