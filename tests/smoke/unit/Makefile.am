@@ -10,3 +10,20 @@ if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 SUBDIRS += BinaryAnalysis
 endif
 
+noinst_PROGRAMS=
+TEST_TARGETS=
+AM_CPPFLAGS = $(ROSE_INCLUDES)
+AM_LDFLAGS = $(ROSE_RPATHS)
+LDADD = $(ROSE_LIBS)
+
+
+noinst_PROGRAMS += testTree
+testTree_SOURCES = testTree.C
+TEST_TARGETS += testTree.passed
+testTree.passed: $(top_srcdir)/scripts/test_exit_status testTree
+	@$(RTH_RUN) \
+		TITLE="tree [$@]" \
+		CMD="./testTree" \
+		$< $@
+
+check-local: $(TEST_TARGETS)
