@@ -361,83 +361,55 @@ static bool isValidCilInstruction()
     return true;
 }
 
-
 bool
 SgAsmCilInstruction::terminatesBasicBlock() {
   switch (get_kind()) {
-    case Cil_break:         // name="break",input="Pop0",output="Push0",args="InlineNone",o1="0xFF",o2="0x01",flow="break",type="Primitive"
-    case Cil_jmp:           // name="jmp",input="Pop0",output="Push0",args="InlineMethod",o1="0xFF",o2="0x27",flow="call",type="Primitive"
-    case Cil_call:          // name="call",input="VarPop",output="VarPush",args="InlineMethod",o1="0xFF",o2="0x28",flow="call",type="Primitive"
-    case Cil_calli:         // name="calli",input="VarPop",output="VarPush",args="InlineSig",o1="0xFF",o2="0x29",flow="call",type="Primitive"
-    case Cil_ret:           // name="ret",input="VarPop",output="Push0",args="InlineNone",o1="0xFF",o2="0x2A",flow="return",type="Primitive"
-    case Cil_br_s:          // name="br.s",input="Pop0",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x2B",flow="branch",type="Macro"
-    case Cil_brfalse_s:     // name="brfalse.s",input="PopI",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x2C",flow="cond-branch",type="Macro"
-    case Cil_brtrue_s:      // name="brtrue.s",input="PopI",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x2D",flow="cond-branch",type="Macro"
-    case Cil_beq_s:         // name="beq.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x2E",flow="cond-branch",type="Macro"
-    case Cil_bge_s:         // name="bge.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x2F",flow="cond-branch",type="Macro"
-    case Cil_bgt_s:         // name="bgt.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x30",flow="cond-branch",type="Macro"
-    case Cil_ble_s:         // name="ble.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x31",flow="cond-branch",type="Macro"
-    case Cil_blt_s:         // name="blt.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x32",flow="cond-branch",type="Macro"
-    case Cil_bne_un_s:      // name="bne.un.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x33",flow="cond-branch",type="Macro"
-    case Cil_bge_un_s:      // name="bge.un.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x34",flow="cond-branch",type="Macro"
-    case Cil_bgt_un_s:      // name="bgt.un.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x35",flow="cond-branch",type="Macro"
-    case Cil_ble_un_s:      // name="ble.un.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x36",flow="cond-branch",type="Macro"
-    case Cil_blt_un_s:      // name="blt.un.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x37",flow="cond-branch",type="Macro"
-    case Cil_br:            // name="br",input="Pop0",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x38",flow="branch",type="Primitive"
-    case Cil_brfalse:       // name="brfalse",input="PopI",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x39",flow="cond-branch",type="Primitive"
-    case Cil_brtrue:        // name="brtrue",input="PopI",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x3A",flow="cond-branch",type="Primitive"
-    case Cil_beq:           // name="beq",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x3B",flow="cond-branch",type="Macro"
-    case Cil_bge:           // name="bge",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x3C",flow="cond-branch",type="Macro"
-    case Cil_bgt:           // name="bgt",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x3D",flow="cond-branch",type="Macro"
-    case Cil_ble:           // name="ble",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x3E",flow="cond-branch",type="Macro"
-    case Cil_blt:           // name="blt",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x3F",flow="cond-branch",type="Macro"
-    case Cil_bne_un:        // name="bne.un",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x40",flow="cond-branch",type="Macro"
-    case Cil_bge_un:        // name="bge.un",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x41",flow="cond-branch",type="Macro"
-    case Cil_bgt_un:        // name="bgt.un",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x42",flow="cond-branch",type="Macro"
-    case Cil_ble_un:        // name="ble.un",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x43",flow="cond-branch",type="Macro"
-    case Cil_blt_un:        // name="blt.un",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x44",flow="cond-branch",type="Macro"
-    case Cil_switch:        // name="switch",input="PopI",output="Push0",args="InlineSwitch",o1="0xFF",o2="0x45",flow="cond-branch",type="Primitive"
-    case Cil_callvirt:      // name="callvirt",input="VarPop",output="VarPush",args="InlineMethod",o1="0xFF",o2="0x6F",flow="call",type="Objmodel"
-    case Cil_newobj:        // name="newobj",input="VarPop",output="PushRef",args="InlineMethod",o1="0xFF",o2="0x73",flow="call",type="Objmodel"
-    case Cil_throw:         // name="throw",input="PopRef",output="Push0",args="InlineNone",o1="0xFF",o2="0x7A",flow="throw",type="Objmodel"
-    case Cil_endfinally:    // name="endfinally",input="Pop0",output="Push0",args="InlineNone",o1="0xFF",o2="0xDC",flow="return",type="Primitive"
-    case Cil_leave:         // name="leave",input="Pop0",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0xDD",flow="branch",type="Primitive"
-    case Cil_leave_s:       // name="leave.s",input="Pop0",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0xDE",flow="branch",type="Primitive"
-    case Cil_prefix7:       // name="prefix7",input="Pop0",output="Push0",args="InlineNone",o1="0xFF",o2="0xF8",flow="meta",type="Nternal"
-    case Cil_prefix6:       // name="prefix6",input="Pop0",output="Push0",args="InlineNone",o1="0xFF",o2="0xF9",flow="meta",type="Nternal"
-    case Cil_prefix5:       // name="prefix5",input="Pop0",output="Push0",args="InlineNone",o1="0xFF",o2="0xFA",flow="meta",type="Nternal"
-    case Cil_prefix4:       // name="prefix4",input="Pop0",output="Push0",args="InlineNone",o1="0xFF",o2="0xFB",flow="meta",type="Nternal"
-    case Cil_prefix3:       // name="prefix3",input="Pop0",output="Push0",args="InlineNone",o1="0xFF",o2="0xFC",flow="meta",type="Nternal"
-    case Cil_prefix2:       // name="prefix2",input="Pop0",output="Push0",args="InlineNone",o1="0xFF",o2="0xFD",flow="meta",type="Nternal"
-    case Cil_prefix1:       // name="prefix1",input="Pop0",output="Push0",args="InlineNone",o1="0xFF",o2="0xFE",flow="meta",type="Nternal"
-    case Cil_prefixref:     // name="prefixref",input="Pop0",output="Push0",args="InlineNone",o1="0xFF",o2="0xFF",flow="meta",type="Nternal"
-    case Cil_endfilter:     // name="endfilter",input="PopI",output="Push0",args="InlineNone",o1="0xFE",o2="0x11",flow="return",type="Primitive"
-    case Cil_unaligned_:    // name="unaligned.",input="Pop0",output="Push0",args="ShortInlineI",o1="0xFE",o2="0x12",flow="meta",type="Prefix"
-    case Cil_volatile_:     // name="volatile.",input="Pop0",output="Push0",args="InlineNone",o1="0xFE",o2="0x13",flow="meta",type="Prefix"
-    case Cil_tail_:         // name="tail.",input="Pop0",output="Push0",args="InlineNone",o1="0xFE",o2="0x14",flow="meta",type="Prefix"
-    case Cil_constrained_:  // name="constrained.",input="Pop0",output="Push0",args="InlineType",o1="0xFE",o2="0x16",flow="meta",type="Prefix"
-    case Cil_rethrow:       // name="rethrow",input="Pop0",output="Push0",args="InlineNone",o1="0xFE",o2="0x1A",flow="throw",type="Objmodel"
-    case Cil_readonly_:     // name="readonly.",input="Pop0",output="Push0",args="InlineNone",o1="0xFE",o2="0x1E",flow="meta"
-    case Cil_illegal:       // name="illegal",input="Pop0",output="Push0",args="InlineNone",o1="0x00",o2="0x00",flow="meta"
-    case Cil_endmac:        // name="endmac",input="Pop0",output="Push0",args="InlineNone",o1="0x00",o2="0x00",flow="meta"
+    case Cil_break:         // name="break",input="Pop0",output="Push0",args="InlineNone",o1="0xFF",o2="0x01",flow="break"
+    case Cil_jmp:           // name="jmp",input="Pop0",output="Push0",args="InlineMethod",o1="0xFF",o2="0x27",flow="call"
+    case Cil_call:          // name="call",input="VarPop",output="VarPush",args="InlineMethod",o1="0xFF",o2="0x28",flow="call"
+    case Cil_calli:         // name="calli",input="VarPop",output="VarPush",args="InlineSig",o1="0xFF",o2="0x29",flow="call"
+    case Cil_ret:           // name="ret",input="VarPop",output="Push0",args="InlineNone",o1="0xFF",o2="0x2A",flow="return"
+    case Cil_br_s:          // name="br.s",input="Pop0",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x2B",flow="branch"
+    case Cil_brfalse_s:     // name="brfalse.s",input="PopI",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x2C",flow="cond-branch"
+    case Cil_brtrue_s:      // name="brtrue.s",input="PopI",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x2D",flow="cond-branch"
+    case Cil_beq_s:         // name="beq.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x2E",flow="cond-branch"
+    case Cil_bge_s:         // name="bge.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x2F",flow="cond-branch"
+    case Cil_bgt_s:         // name="bgt.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x30",flow="cond-branch"
+    case Cil_ble_s:         // name="ble.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x31",flow="cond-branch"
+    case Cil_blt_s:         // name="blt.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x32",flow="cond-branch"
+    case Cil_bne_un_s:      // name="bne.un.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x33",flow="cond-branch"
+    case Cil_bge_un_s:      // name="bge.un.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x34",flow="cond-branch"
+    case Cil_bgt_un_s:      // name="bgt.un.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x35",flow="cond-branch"
+    case Cil_ble_un_s:      // name="ble.un.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x36",flow="cond-branch"
+    case Cil_blt_un_s:      // name="blt.un.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x37",flow="cond-branch"
+    case Cil_br:            // name="br",input="Pop0",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x38",flow="branch"
+    case Cil_brfalse:       // name="brfalse",input="PopI",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x39",flow="cond-branch"
+    case Cil_brtrue:        // name="brtrue",input="PopI",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x3A",flow="cond-branch"
+    case Cil_beq:           // name="beq",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x3B",flow="cond-branch"
+    case Cil_bge:           // name="bge",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x3C",flow="cond-branch"
+    case Cil_bgt:           // name="bgt",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x3D",flow="cond-branch"
+    case Cil_ble:           // name="ble",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x3E",flow="cond-branch"
+    case Cil_blt:           // name="blt",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x3F",flow="cond-branch"
+    case Cil_bne_un:        // name="bne.un",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x40",flow="cond-branch"
+    case Cil_bge_un:        // name="bge.un",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x41",flow="cond-branch"
+    case Cil_bgt_un:        // name="bgt.un",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x42",flow="cond-branch"
+    case Cil_ble_un:        // name="ble.un",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x43",flow="cond-branch"
+    case Cil_blt_un:        // name="blt.un",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x44",flow="cond-branch"
+    case Cil_switch:        // name="switch",input="PopI",output="Push0",args="InlineSwitch",o1="0xFF",o2="0x45",flow="cond-branch"
+    case Cil_callvirt:      // name="callvirt",input="VarPop",output="VarPush",args="InlineMethod",o1="0xFF",o2="0x6F",flow="call"
+    case Cil_newobj:        // name="newobj",input="VarPop",output="PushRef",args="InlineMethod",o1="0xFF",o2="0x73",flow="call"
+    case Cil_throw:         // name="throw",input="PopRef",output="Push0",args="InlineNone",o1="0xFF",o2="0x7A",flow="throw"
+    case Cil_endfinally:    // name="endfinally",input="Pop0",output="Push0",args="InlineNone",o1="0xFF",o2="0xDC",flow="return"
+    case Cil_leave:         // name="leave",input="Pop0",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0xDD",flow="branch"
+    case Cil_leave_s:       // name="leave.s",input="Pop0",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0xDE",flow="branch"
+    case Cil_endfilter:     // name="endfilter",input="PopI",output="Push0",args="InlineNone",o1="0xFE",o2="0x11",flow="return"
+    case Cil_rethrow:       // name="rethrow",input="Pop0",output="Push0",args="InlineNone",o1="0xFE",o2="0x1A",flow="throw"
     case Cil_mono_retobj:   // name="mono_retobj",input="PopI",output="Push0",args="InlineType",o1="0xF0",o2="0x05",flow="return"
     case Cil_mono_ldnativeobj:// name="mono_ldnativeobj",input="PopI",output="Push1",args="InlineType",o1="0xF0",o2="0x06",flow="return"
     case Cil_mono_calli_extra_arg:// name="mono_calli_extra_arg",input="VarPop",output="VarPush",args="InlineSig",o1="0xF0",o2="0x18",flow="call"
     case Cil_mono_rethrow:  // name="mono_rethrow",input="PopRef",output="Push0",args="InlineNone",o1="0xF0",o2="0x1F",flow="throw",type="Objmodel"
       return true;
 
-  // DQ (11/72021): Added prefixes for instructions (need to check if this is the best way to support these):
-    case Cil_constrained:
-    case Cil_no:
-    case Cil_readonly:
-    case Cil_tail:
-    case Cil_unaligned:
-    case Cil_volatile:
-      return false;
-
-  // This must be last
-    case Cil_last_instruction:
-      return false;
     default:
       return false;
   }
@@ -445,36 +417,167 @@ SgAsmCilInstruction::terminatesBasicBlock() {
 }
 
 bool
-SgAsmCilInstruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t* /*target,inout*/,
-                                         rose_addr_t*/*ret,inout*/) {
-    return false;
+SgAsmCilInstruction::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va)
+{
+  SgAsmCilInstruction* last{nullptr};
+
+  if (!insns.empty() && (last=isSgAsmCilInstruction(insns.back()))) {
+    // Quick method based only on the kind of instruction
+    switch (last->get_kind()) {
+      case Cil_jmp:       // name="jmp",input="Pop0",output="Push0",args="InlineMethod",o1="0xFF",o2="0x27",flow="call"
+      case Cil_call:      // name="call",input="VarPop",output="VarPush",args="InlineMethod",o1="0xFF",o2="0x28",flow="call"
+      case Cil_calli:     // name="calli",input="VarPop",output="VarPush",args="InlineSig",o1="0xFF",o2="0x29",flow="call"
+      case Cil_callvirt:  // name="callvirt",input="VarPop",output="VarPush",args="InlineMethod",o1="0xFF",o2="0x6F",flow="call"
+      case Cil_newobj:    // name="newobj",input="VarPop",output="PushRef",args="InlineMethod",o1="0xFF",o2="0x73",flow="call"
+      case Cil_mono_calli_extra_arg: // name="mono_calli_extra_arg",input="VarPop",output="VarPush",args="InlineSig",o1="0xF0",o2="0x18",flow="call"
+
+        if (target) {
+          last->branchTarget().assignTo(*target);
+        }
+        if (return_va) {
+          *return_va = last->get_address() + last->get_size();
+        }
+        return true;
+
+      default:
+        return false;
+    }
+  }
+
+  return false;
 }
 
 bool
-SgAsmCilInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t* /*target,inout*/,
-                                         rose_addr_t*/*ret,inout*/) {
-    return false;
+SgAsmCilInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &insns, rose_addr_t* target, rose_addr_t* return_va) {
+    return isFunctionCallFast(insns, target, return_va);
 }
 
 bool
-SgAsmCilInstruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) {
-    return false;
+SgAsmCilInstruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) {
+  auto iCil = isSgAsmCilInstruction(insns.back());
+  if (iCil) {
+    switch (iCil->get_kind()) {
+      case Cil_ret:             // name="ret",input="VarPop",output="Push0",args="InlineNone",o1="0xFF",o2="0x2A",flow="return"
+      case Cil_endfinally:      // name="endfinally",input="Pop0",output="Push0",args="InlineNone",o1="0xFF",o2="0xDC",flow="return"
+      case Cil_endfilter:       // name="endfilter",input="PopI",output="Push0",args="InlineNone",o1="0xFE",o2="0x11",flow="return"
+      case Cil_mono_retobj:     // name="mono_retobj",input="PopI",output="Push0",args="InlineType",o1="0xF0",o2="0x05",flow="return"
+      case Cil_mono_ldnativeobj:// name="mono_ldnativeobj",input="PopI",output="Push1",args="InlineType",o1="0xF0",o2="0x06",flow="return"
+          return true;
+      default:
+        return false;
+    }
+  }
+  return false;
 }
 
 bool
-SgAsmCilInstruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) {
+SgAsmCilInstruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*>& insns) {
+    return isFunctionReturnFast(insns);
     return false;
 }
 
 Sawyer::Optional<rose_addr_t>
 SgAsmCilInstruction::branchTarget() {
-    return Sawyer::Nothing();
+  CilInstructionKind kind = get_kind();
+
+  switch (kind) {
+    case Cil_br_s:      // name="br.s",input="Pop0",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x2B",flow="branch"
+    case Cil_brfalse_s: // name="brfalse.s",input="PopI",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x2C",flow="cond-branch"
+    case Cil_brtrue_s:  // name="brtrue.s",input="PopI",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x2D",flow="cond-branch"
+    case Cil_beq_s:     // name="beq.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x2E",flow="cond-branch"
+    case Cil_bge_s:     // name="bge.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x2F",flow="cond-branch"
+    case Cil_bgt_s:     // name="bgt.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x30",flow="cond-branch"
+    case Cil_ble_s:     // name="ble.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x31",flow="cond-branch"
+    case Cil_blt_s:     // name="blt.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x32",flow="cond-branch"
+    case Cil_bne_un_s:  // name="bne.un.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x33",flow="cond-branch"
+    case Cil_bge_un_s:  // name="bge.un.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x34",flow="cond-branch"
+    case Cil_bgt_un_s:  // name="bgt.un.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x35",flow="cond-branch"
+    case Cil_ble_un_s:  // name="ble.un.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x36",flow="cond-branch"
+    case Cil_blt_un_s:  // name="blt.un.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x37",flow="cond-branch"
+    case Cil_br:        // name="br",input="Pop0",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x38",flow="branch"
+    case Cil_brfalse:   // name="brfalse",input="PopI",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x39",flow="cond-branch"
+    case Cil_brtrue:    // name="brtrue",input="PopI",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x3A",flow="cond-branch"
+    case Cil_beq:       // name="beq",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x3B",flow="cond-branch"
+    case Cil_bge:       // name="bge",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x3C",flow="cond-branch"
+    case Cil_bgt:       // name="bgt",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x3D",flow="cond-branch"
+    case Cil_ble:       // name="ble",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x3E",flow="cond-branch"
+    case Cil_blt:       // name="blt",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x3F",flow="cond-branch"
+    case Cil_bne_un:    // name="bne.un",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x40",flow="cond-branch"
+    case Cil_bge_un:    // name="bge.un",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x41",flow="cond-branch"
+    case Cil_bgt_un:    // name="bgt.un",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x42",flow="cond-branch"
+    case Cil_ble_un:    // name="ble.un",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x43",flow="cond-branch"
+    case Cil_blt_un:    // name="blt.un",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x44",flow="cond-branch"
+    case Cil_leave:     // name="leave",input="Pop0",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0xDD",flow="branch"
+    case Cil_leave_s:   // name="leave.s",input="Pop0",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0xDE",flow="branch"
+      break;
+
+ // A branch instruction but branch target is not immediately available
+    case Cil_jmp:       // name="jmp",input="Pop0",output="Push0",args="InlineMethod",o1="0xFF",o2="0x27",flow="call"
+    case Cil_call:      // name="call",input="VarPop",output="VarPush",args="InlineMethod",o1="0xFF",o2="0x28",flow="call"
+    case Cil_calli:     // name="calli",input="VarPop",output="VarPush",args="InlineSig",o1="0xFF",o2="0x29",flow="call"
+    case Cil_callvirt:  // name="callvirt",input="VarPop",output="VarPush",args="InlineMethod",o1="0xFF",o2="0x6F",flow="call"
+    case Cil_newobj:    // name="newobj",input="VarPop",output="PushRef",args="InlineMethod",o1="0xFF",o2="0x73",flow="call"
+    case Cil_throw:     // name="throw",input="PopRef",output="Push0",args="InlineNone",o1="0xFF",o2="0x7A",flow="throw"
+    case Cil_mono_calli_extra_arg: // name="mono_calli_extra_arg",input="VarPop",output="VarPush",args="InlineSig",o1="0xF0",o2="0x18",flow="call"
+    case Cil_mono_rethrow: // name="mono_rethrow",input="PopRef",output="Push0",args="InlineNone",o1="0xF0",o2="0x1F",flow="throw"
+      return Sawyer::Nothing();
+
+ // A branch instruction but branch target(s) (offsets) need to be calculated
+    case Cil_switch:    // name="switch",input="PopI",output="Push0",args="InlineSwitch",o1="0xFF",o2="0x45",flow="cond-branch"
+      return Sawyer::Nothing();
+
+ // Not a branching instruction
+    default:
+      return Sawyer::Nothing();
+  }
+
+  if (nOperands() == 1) {
+    if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(operand(0))) {
+      // The target of a CIL branch instruction is "from the beginning of the instruction following the current instruction"
+      return get_address() + get_size() + ival->get_signedValue();
+    }
+  }
+  
+  return Sawyer::Nothing();
 }
 
 Rose::BinaryAnalysis::AddressSet
 SgAsmCilInstruction::getSuccessors(bool &complete) {
-    complete = false;
-    return AddressSet();
+  complete = false;
+  CilInstructionKind kind = get_kind();
+
+  switch (kind) {
+    case Cil_switch:
+      // TODO:
+      // return switchSuccessors(this, complete);
+      return AddressSet{};
+
+ // A branch instruction but branch target is not immediately available
+    case Cil_jmp:       // name="jmp",input="Pop0",output="Push0",args="InlineMethod",o1="0xFF",o2="0x27",flow="call"
+    case Cil_call:      // name="call",input="VarPop",output="VarPush",args="InlineMethod",o1="0xFF",o2="0x28",flow="call"
+    case Cil_calli:     // name="calli",input="VarPop",output="VarPush",args="InlineSig",o1="0xFF",o2="0x29",flow="call"
+    case Cil_callvirt:  // name="callvirt",input="VarPop",output="VarPush",args="InlineMethod",o1="0xFF",o2="0x6F",flow="call"
+    case Cil_newobj:    // name="newobj",input="VarPop",output="PushRef",args="InlineMethod",o1="0xFF",o2="0x73",flow="call"
+    case Cil_throw:     // name="throw",input="PopRef",output="Push0",args="InlineNone",o1="0xFF",o2="0x7A",flow="throw"
+    case Cil_mono_calli_extra_arg: // name="mono_calli_extra_arg",input="VarPop",output="VarPush",args="InlineSig",o1="0xF0",o2="0x18",flow="call"
+    case Cil_mono_rethrow: // name="mono_rethrow",input="PopRef",output="Push0",args="InlineNone",o1="0xF0",o2="0x1F",flow="throw"
+      return AddressSet{};
+
+    default:
+      break;
+  }
+
+  if (auto target{branchTarget()}) {
+    AddressSet retval{*target};
+    // Add fall through target if not a branch always instruction
+    if ((kind != Cil_br) && (kind != Cil_br_s)) {
+      retval.insert(get_address() + get_size());
+    }
+    complete = true;
+    return retval;
+  }
+
+  return AddressSet{};
 }
 
 Rose::BinaryAnalysis::AddressSet
@@ -500,9 +603,9 @@ SgAsmCilInstruction::description() const
 {
   switch (get_kind()) {
     case Cil_unknown_instruction: return "unknown instruction";
-    case Cil_nop:       return "no operation";
-    case Cil_break:     return "break";
-    case Cil_ldarg_0:   return "load argument 0";
+    case Cil_nop:       return "do nothing";
+    case Cil_break:     return "inform a debugger that a breakpoint has been reached";
+    case Cil_ldarg_0:   return "load argument 0 onto the stack";
     case Cil_ldarg_1:
     case Cil_ldarg_2:
     case Cil_ldarg_3:
