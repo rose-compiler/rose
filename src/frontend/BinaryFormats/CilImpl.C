@@ -2158,19 +2158,19 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
 
   SgAsmPEFileHeader* fhdr = SageInterface::getEnclosingNode<SgAsmPEFileHeader>(root);
   ASSERT_not_null(fhdr);
-  
+
   SgAsmCilMethodDefTable* mtbl = mdh->get_MethodDefTable();
   ASSERT_not_null(mtbl);
-  
+
   // decode methods
   for (SgAsmCilMethodDef* m : mtbl->get_elements())
   {
     ASSERT_not_null(m);
 
     rose_addr_t rva = static_cast<std::uint32_t>(m->get_RVA());
-    
+
     if (rva == 0) continue;
-      
+
     // parse header
     std::uint8_t   mh0;
     std::size_t    nread = fhdr->get_loader_map()->readQuick(&mh0, base_va + rva, 1);
@@ -2199,11 +2199,11 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
       namespace rb = Rose::BinaryAnalysis;
 
       case CIL_CODE:
-        blk = disassemble(base_va, m, mh, code, rb::Disassembler::Cil::instance());
+        blk = disassemble(base_va + codeRVA, m, mh, code, rb::Disassembler::Cil::instance());
         break;
 
       case NATIVE_CODE:
-        blk = disassemble(base_va, m, mh, code, rb::Disassembler::X86::instance(4 /* word size */));
+        blk = disassemble(base_va + codeRVA, m, mh, code, rb::Disassembler::X86::instance(4 /* word size */));
         break;
 
       case RUNTIME_CODE:
