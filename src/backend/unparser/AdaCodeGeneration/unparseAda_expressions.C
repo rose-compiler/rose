@@ -570,7 +570,9 @@ namespace
 
     SgExpression* lhs        = n.get_lhs_operand();
     SgExpression* rhs        = n.get_rhs_operand();
-    const bool    opref      = (lhs == nullptr) && (rhs == nullptr);
+    const bool    opref      = (  isSgNullExpression(lhs)
+                               && isSgNullExpression(rhs)
+                               );
     const bool    callsyntax = (  argRequiresCallSyntax(lhs)
                                || argRequiresCallSyntax(rhs)
                                );

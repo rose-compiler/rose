@@ -802,7 +802,7 @@ namespace
     {
       SgName                  name    = n.get_name();
       SgExprListExp*          args    = n.get_actual_parameters();
-      SgDeclarationStatement* basedcl = n.get_declaration();
+      SgDeclarationStatement* basedcl = n.get_genericDeclaration();
       const std::string&      pkgqual = getQualification(n, n.get_scope());
 
       if (SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(basedcl))
@@ -2157,7 +2157,7 @@ namespace
 
       void handle(const SgAdaGenericInstanceDecl& n)
       {
-        res = compute(n.get_declaration(), true /* force non generic */);
+        res = compute(n.get_genericDeclaration(), true /* force non generic */);
       }
 
       //

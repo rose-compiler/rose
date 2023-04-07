@@ -200,7 +200,7 @@ namespace
 
     std::string const& name()        const { return std::get<0>(*this); }
     bool               qualBarrier() const { return std::get<1>(*this); }
-    // \todo rename scopeBarrier to compilerGenerated and set for all nodes
+    // \todo rename qualBarrier to compilerGenerated and set for all nodes
   };
 
   bool
@@ -217,6 +217,9 @@ namespace
            || nodeProperty(n.get_endOfConstruct(),   property)
            );
   }
+
+  ScopeDetails
+  scopeName(const SgStatement* n);
 
   struct ScopeName : sg::DispatchHandler<ScopeDetails>
   {
@@ -239,6 +242,8 @@ namespace
       void handle(const SgAdaPackageBody& n)       { checkParent(n); }
       void handle(const SgAdaPackageSpec& n)       { checkParent(n); }
       void handle(const SgFunctionDefinition& n)   { checkParent(n); }
+      //~ void handle(const SgAdaGenericDefn& n)       { checkParent(n); }
+
       // FunctionDefinition, ..
 
       void handle(const SgBasicBlock& n)
@@ -259,6 +264,8 @@ namespace
       //~ void handle(const SgAdaPackageBodyDecl& n)   { withName(n.get_name()); }
       void handle(const SgAdaRenamingDecl& n)      { withName(n.get_name()); }
       void handle(const SgFunctionDeclaration& n)  { withName(n.get_name()); }
+      //~ void handle(const SgAdaGenericDecl& n)       { res = scopeName(n.get_declaration()); }
+
       // FunctionDeclaration, ..
   };
 
@@ -1137,6 +1144,11 @@ namespace
       ///    Suitable for name qualifying types and back-references (e.g., declarations).
       void computeNameQualForShared(const SgNode& ref, const SgNode* n);
 
+      /// if n is an AdaGenericDecl, actualDecl returns the "generified" declaration,
+      ///   otherwise returns n;
+      const SgDeclarationStatement*
+      actualDecl(const SgDeclarationStatement* n);
+
       /// computes the name qualification for a non-shared node \ref n.
       /// \details
       ///    suitable for declarations, expressions, and other non-shared nodes.
@@ -1146,6 +1158,17 @@ namespace
       ///          e.g., SgDeclType::get_base_expression
       void computeNameQualForNonshared(const SgNode* n, bool inTypeSubtree = true);
 
+      /// computes the name qualification for declaration \ref n in scope \ref scope referenced from anchor node \ref ref
+      /// \param ref   the visited node that refers to \ref b
+      /// \param n     the referenced declaration
+      /// \param scope the scope used for name qualification (usually n.get_scope()) but special nodes
+      ///              such as SgAdaGenericInstanceDecl compute may receive an externally supplied scope.
+      /// \todo
+      ///    not sure if the special handling is really needed, or if the unparsing of SgAdaGenericInstanceDecl
+      ///    could just use the name from the instantiated declaration...
+      void computeNameQualForDeclLink(const SgNode& ref, const SgDeclarationStatement& n, const SgScopeStatement* scope);
+
+      /// computes the name qualification for declaration \ref n referenced from anchor node \ref ref
       void computeNameQualForDeclLink(const SgNode& ref, const SgDeclarationStatement& n);
 
       /// records a use declaration of \ref scope.
@@ -1353,15 +1376,18 @@ namespace
 
         recordNameQualIfNeeded(n, n.get_scope());
 
-        SgDeclarationStatement* basedecl = n.get_declaration();
+        const SgDeclarationStatement& basedecl    = SG_DEREF(actualDecl(n.get_genericDeclaration()));
+        const SgScopeStatement*       parentscope = SG_DEREF(n.get_instantiatedScope()).get_scope();
 
-        if (SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(basedecl))
-          basedecl = gendcl->get_declaration();
+        /// if this is a logically nested instantiation, namequal requires the parent instantiation.
+        ///   (this is necessary to capture the actual parameters of the parent instantiation)
+        /// otherwise, just reset parentscope and unparse the name of the generic declaration.
+        // \todo consider introducing a flag in SgAdaGenericInstanceDecl indicating whether
+        //       this is a nested instantiation or not (e.g., instantiation level).
+        if (sg::ancestor<SgAdaGenericInstanceDecl>(parentscope) == nullptr)
+          parentscope = basedecl.get_scope();
 
-        computeNameQualForDeclLink(n, SG_DEREF(basedecl));
-
-        // since the arguments are not traversed, they are name-qualified explicitly
-        computeNameQualForNonshared(n.get_actual_parameters(), false /* not a type subtree */);
+        computeNameQualForDeclLink(n, basedecl, parentscope);
       }
 
       void handle(const SgAdaFormalPackageDecl& n)
@@ -1369,10 +1395,7 @@ namespace
         handle(sg::asBaseType(n));
 
         // PP not needed: recordNameQualIfNeeded(n, n.get_scope());
-        SgDeclarationStatement* basedecl = n.get_declaration();
-
-        if (SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(basedecl))
-          basedecl = gendcl->get_declaration();
+        const SgDeclarationStatement* basedecl = actualDecl(n.get_declaration());
 
         computeNameQualForDeclLink(n, SG_DEREF(basedecl));
       }
@@ -1809,7 +1832,7 @@ namespace
 
     if (const SgAdaGenericInstanceDecl* genins = isSgAdaGenericInstanceDecl(n))
     {
-      addUsedScopeIfNeeded(genins->get_declaration());
+      addUsedScopeIfNeeded(genins->get_genericDeclaration());
       return;
     }
 
@@ -1887,14 +1910,33 @@ namespace
   }
 
   void
-  AdaPreNameQualifier::computeNameQualForDeclLink(const SgNode& ref, const SgDeclarationStatement& n)
+  AdaPreNameQualifier::computeNameQualForDeclLink( const SgNode& ref,
+                                                   const SgDeclarationStatement& n,
+                                                   const SgScopeStatement* scope
+                                                 )
   {
     using NameQualMap = std::map<SgNode*, std::string>;
 
     NameQualMap& localQualMapForTypes = traversal.createQualMapForTypeSubtreeIfNeeded(ref);
 
-    recordNameQualIfNeeded(localQualMapForTypes, n, n.get_scope());
+    recordNameQualIfNeeded(localQualMapForTypes, n, scope);
   }
+
+  void
+  AdaPreNameQualifier::computeNameQualForDeclLink(const SgNode& ref, const SgDeclarationStatement& n)
+  {
+    computeNameQualForDeclLink(ref, n, n.get_scope());
+  }
+
+  const SgDeclarationStatement*
+  AdaPreNameQualifier::actualDecl(const SgDeclarationStatement* n)
+  {
+    if (const SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(n))
+      return gendcl->get_declaration();
+
+    return n;
+  }
+
 
   void
   AdaPreNameQualifier::computeNameQualForShared(const SgNode& ref, const SgNode* n)
