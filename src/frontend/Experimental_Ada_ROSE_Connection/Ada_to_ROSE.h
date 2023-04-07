@@ -206,6 +206,9 @@ std::map<InheritedSymbolKey, SgAdaInheritedFunctionSymbol*>& inheritedSymbols();
 ///     a type may have multiple operators with the same name (e.g., "&"(string, char), "&"(string, string))
 map_t<OperatorKey, std::vector<OperatorDesc> >& operatorSupport();
 
+/// stores all expressions that were generated were operator declarations were expected
+std::vector<SgExpression*>& operatorExprs();
+
 
 //
 // auxiliary functions and types

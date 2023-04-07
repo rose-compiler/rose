@@ -87,13 +87,43 @@ namespace
     // declarations
     void handle(SgAdaPackageSpecDecl& n)     { def(n); }
     void handle(SgAdaPackageBodyDecl& n)     { def(n); }
-    void handle(SgAdaGenericDecl& n)         { def(n); }
-    void handle(SgAdaGenericInstanceDecl& n) { res = n.get_instantiatedScope(); }
+
+    void handle(SgAdaGenericDecl& n)
+    {
+      SgDeclarationStatement* dcl = n.get_declaration();
+
+      if (isSgFunctionDeclaration(dcl))
+        return def(n);
+
+      res = find(dcl);
+    }
+
+    void handle(SgAdaGenericInstanceDecl& n)
+    {
+      SgBasicBlock&       scope   = SG_DEREF(isSgBasicBlock(n.get_instantiatedScope()));
+      SgStatementPtrList& stmts   = scope.get_statements();
+      SgStatement*        dclstmt = stmts.at(0);
+
+      res = isSgFunctionDeclaration(dclstmt) ? &scope : find(dclstmt);
+    }
+
+    // \todo add handlers as needed
+
+    // \todo
+    // why not add handle(SgFunctionDeclaration&)?
 
     // others
     void handle(SgBasicBlock& n)             { res = &n; }
-    // \todo add handlers as needed
+
+    static
+    ReturnType find(SgNode*);
   };
+
+  ScopeQuery::ReturnType
+  ScopeQuery::find(SgNode* n)
+  {
+    return sg::dispatch(ScopeQuery{}, n);
+  }
 
 
   SgScopeStatement&
@@ -127,9 +157,7 @@ namespace
       ADA_ASSERT(false);
     }
 
-    SgScopeStatement* res = sg::dispatch(ScopeQuery{}, dcl);
-
-    return SG_DEREF(res);
+    return SG_DEREF(ScopeQuery::find(dcl));
   }
 
   SgScopeStatement&

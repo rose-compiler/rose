@@ -792,7 +792,7 @@ namespace Ada
 
   SgAdaGenericDecl& getGenericDecl(const SgAdaGenericInstanceDecl& n)
   {
-    return getRenamedGenericDecl(n.get_declaration());
+    return getRenamedGenericDecl(n.get_genericDeclaration());
   }
 
   SgAdaGenericDecl* getGenericDecl(const SgAdaGenericInstanceDecl* n)

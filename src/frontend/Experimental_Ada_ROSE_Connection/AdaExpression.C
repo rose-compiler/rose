@@ -396,7 +396,11 @@ namespace
     if (pos != makerMap.end())
     {
       logKind(pos->second.first);
-      return SG_DEREF(pos->second.second());
+
+      SgExpression* res = pos->second.second();
+
+      operatorExprs().push_back(res);
+      return SG_DEREF(res);
     }
 
     ADA_ASSERT(expr.Operator_Kind != Not_An_Operator);

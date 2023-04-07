@@ -83,6 +83,8 @@ namespace
 
   /// maps generated operators
   map_t<OperatorKey, std::vector<OperatorDesc> > operatorSupportMap;
+
+  std::vector<SgExpression*> operatorExprsVector;
 } // anonymous namespace
 
 //~ map_t<int, SgDeclarationStatement*>&        asisUnits() { return asisUnitsMap; }
@@ -98,6 +100,7 @@ map_t<AdaIdentifier, SgInitializedName*>&                 adaVars()          { r
 //~ map_t<AdaIdentifier, FunctionVector>&                     adaFuncs()         { return adaFuncsMap;        }
 std::map<InheritedSymbolKey, SgAdaInheritedFunctionSymbol*>& inheritedSymbols() { return inheritedSymbolMap; }
 map_t<OperatorKey, std::vector<OperatorDesc> >&           operatorSupport()  { return operatorSupportMap; }
+std::vector<SgExpression*>&                               operatorExprs()    { return operatorExprsVector; }
 
 //
 // auxiliary classes and functions
@@ -321,6 +324,7 @@ namespace
 
     inheritedSymbols().clear();
     operatorSupport().clear();
+    operatorExprs().clear();
   }
 
   //
@@ -1623,6 +1627,38 @@ namespace
     return SG_DEREF(fndcl.get_type()).get_arguments();
   }
 
+  template <class SageParent>
+  void setChildIfNull(SageParent& parent, SgExpression* (SageParent::*getter)() const, void (SageParent::*setter)(SgExpression*))
+  {
+    if ((parent.*getter)()) return;
+
+    (parent.*setter)(&mkNullExpression());
+  }
+
+  void replaceNullptrWithNullExpr()
+  {
+    auto nullrepl = [](SgExpression* e)->void
+                    {
+                      if (SgBinaryOp* binop = isSgBinaryOp(e))
+                      {
+                        setChildIfNull(*binop, &SgBinaryOp::get_lhs_operand, &SgBinaryOp::set_lhs_operand);
+                        setChildIfNull(*binop, &SgBinaryOp::get_rhs_operand, &SgBinaryOp::set_rhs_operand);
+                        return;
+                      }
+
+                      if (SgUnaryOp* unop = isSgUnaryOp(e))
+                      {
+                        setChildIfNull(*unop, &SgUnaryOp::get_operand, &SgUnaryOp::set_operand);
+                        return;
+                      }
+                    };
+
+
+    std::for_each( operatorExprs().begin(), operatorExprs().end(),
+                   nullrepl
+                 );
+  }
+
   void resolveInheritedFunctionOverloads(SgGlobal& scope)
   {
     OverloadMap allrefs = collectAllFunctionRefExp(scope);
@@ -1774,6 +1810,8 @@ void convertAsisToROSE(Nodes_Struct& headNodes, SgSourceFile* file)
 
   initializePkgStandard(astScope);
   std::for_each(units.begin(), units.end(), UnitCreator{AstContext{}.scope(astScope)});
+
+  replaceNullptrWithNullExpr();
 
   resolveInheritedFunctionOverloads(astScope);
   clearMappings();

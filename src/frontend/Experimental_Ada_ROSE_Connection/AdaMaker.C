@@ -510,7 +510,11 @@ mkWithClause(SgExpressionPtrList imported)
 {
   SgImportStatement& sgnode = mkBareNode<SgImportStatement>(&mkFileInfo());
 
+  std::for_each( imported.begin(), imported.end(),
+                 [parent = &sgnode](SgExpression* exp) { exp->set_parent(parent); }
+               );
   sgnode.get_import_list().swap(imported);
+
   markCompilerGenerated(sgnode);
   return sgnode;
 }
@@ -794,7 +798,7 @@ mkAdaGenericInstanceDecl(const std::string& name, SgDeclarationStatement& gendec
   //               I think not, since we only extract the spec (possibly the impl for procedures...)
   sgnode.set_firstNondefiningDeclaration(&sgnode);
 
-  // \todo not sure if needs an explicit scope
+  // \todo not sure if AdaGenericInstanceDecl needs an explicit scope
   //       if not: fix also in nameQualifcationSupport.C, Statement.code, unparseAdaStatement.C
   sgnode.set_scope(&scope);
 
