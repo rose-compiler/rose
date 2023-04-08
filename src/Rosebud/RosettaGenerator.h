@@ -36,6 +36,9 @@ private:
     void genClassBegin(std::ostream &rosetta, const Ast::ClassPtr&);
     void genClassEnd(std::ostream &rosetta, const Ast::ClassPtr&);
     void genClassDeclarations(std::ostream &rosetta, const Classes&);
+    void genPropertyDataMember(std::ostream &rosetta, std::ostream &header, const Ast::PropertyPtr&);
+    void genPropertyAccessors(std::ostream &header, std::ostream &impl, const Ast::PropertyPtr&);
+    void genPropertyMutators(std::ostream &header, std::ostream &impl, const Ast::PropertyPtr&);
     void genProperty(std::ostream &rosetta, std::ostream &header, std::ostream &impl, const Ast::PropertyPtr&);
     void genCppConditions(std::ostream &out, const Ast::FilePtr&, const std::string &text);
     void genClassDestructor(std::ostream &header, std::ostream &impl, const Ast::ClassPtr&);

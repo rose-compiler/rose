@@ -278,33 +278,12 @@ RosettaGenerator::genClassConstructors(std::ostream &header, std::ostream &impl,
     genArgsConstructor(header, impl, c, h, Access::PUBLIC);
 }
 
-// Generate code for a property. The output streams are:
-//   * rosetta: the stuff that will be compiled into ROSETTA's CxxGrammarMetaProgram.
-//   * header:  the stuff to pass through ROSETTA directly into the class definition header file.
-//   * impl:    the C++ implementation file for one or more nodes.
+// Generate property data member
 void
-RosettaGenerator::genProperty(std::ostream &rosetta, std::ostream &header, std::ostream &impl, const Ast::Property::Ptr &p) {
+RosettaGenerator::genPropertyDataMember(std::ostream &rosetta, std::ostream &header, const Ast::Property::Ptr &p) {
     ASSERT_not_null(p);
     auto c = p->findAncestor<Ast::Class>();
     ASSERT_not_null(c);
-
-    p->cppStack->emitOpen(rosetta);
-
-    // Fix up the doxygen comment so it can apply to more than one class member. If the doxygen comment doesn't end with "@{" then
-    // we need to add that.
-    static auto doc = [&p]() -> std::pair<std::string, std::string> {
-        std::string begin = p->doc;
-        std::string end;
-        if (!begin.empty()) {
-            if (begin.find("@{") == std::string::npos) {
-                begin = appendToDoxygen(begin, "\n@{");
-                end = "    /** @} */\n";
-            }
-            if (!boost::ends_with(begin, "\n"))
-                begin += "\n";
-        }
-        return {begin, end};
-    }();
 
     // Data memeber.
     //   NO_CONSTRUCTOR_PARAMETER.
@@ -345,11 +324,13 @@ RosettaGenerator::genProperty(std::ostream &rosetta, std::ostream &header, std::
                <<THIS_LOCATION <<"private:\n"
                <<"    " <<dataMemberType(p) <<" " <<propertyDataMemberName(p) <<";\n";
     }
+}
 
-    // Documentation
-    header <<"\n"
-           <<THIS_LOCATION <<"public:\n"
-           <<locationDirective(p, p->docToken) <<doc.first;
+void
+RosettaGenerator::genPropertyAccessors(std::ostream &header, std::ostream &impl, const Ast::Property::Ptr &p) {
+    ASSERT_not_null(p);
+    auto c = p->findAncestor<Ast::Class>();
+    ASSERT_not_null(c);
 
     // Accessor functions declarations
     for (const std::string &accessorName: propertyAccessorNames(p)) {
@@ -373,6 +354,13 @@ RosettaGenerator::genProperty(std::ostream &rosetta, std::ostream &header, std::
                  <<"}\n";
         }
     }
+}
+
+void
+RosettaGenerator::genPropertyMutators(std::ostream &header, std::ostream &impl, const Ast::Property::Ptr &p) {
+    ASSERT_not_null(p);
+    auto c = p->findAncestor<Ast::Class>();
+    ASSERT_not_null(c);
 
     // Mutator function declarations
     for (const std::string &mutatorName: propertyMutatorNames(p))
@@ -387,10 +375,48 @@ RosettaGenerator::genProperty(std::ostream &rosetta, std::ostream &header, std::
              <<"    set_isModified(true);\n"
              <<"}\n";
     }
+}
+
+// Generate code for a property. The output streams are:
+//   * rosetta: the stuff that will be compiled into ROSETTA's CxxGrammarMetaProgram.
+//   * header:  the stuff to pass through ROSETTA directly into the class definition header file.
+//   * impl:    the C++ implementation file for one or more nodes.
+void
+RosettaGenerator::genProperty(std::ostream &rosetta, std::ostream &header, std::ostream &impl, const Ast::Property::Ptr &p) {
+    ASSERT_not_null(p);
+    auto c = p->findAncestor<Ast::Class>();
+    ASSERT_not_null(c);
+
+    p->cppStack->emitOpen(rosetta);
+
+    // Fix up the doxygen comment so it can apply to more than one class member. If the doxygen comment doesn't end with "@{" then
+    // we need to add that.
+    static auto doc = [&p]() -> std::pair<std::string, std::string> {
+        std::string begin = p->doc;
+        std::string end;
+        if (!begin.empty()) {
+            if (begin.find("@{") == std::string::npos) {
+                begin = appendToDoxygen(begin, "\n@{");
+                end = "    /** @} */\n";
+            }
+            if (!boost::ends_with(begin, "\n"))
+                begin += "\n";
+        }
+        return {begin, end};
+    }();
+
+    genPropertyDataMember(rosetta, header, p);
+
+    // Accessors and mutators
+    header <<"\n"
+           <<THIS_LOCATION <<"public:\n"
+           <<locationDirective(p, p->docToken) <<doc.first;
+    genPropertyAccessors(header, impl, p);
+    genPropertyMutators(header, impl, p);
+    header <<doc.second;
 
     p->cppStack->emitClose(rosetta);
 
-    header <<doc.second;
 }
 
 void
