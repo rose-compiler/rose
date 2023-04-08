@@ -10,6 +10,7 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/range/adaptors.hpp>
 
+#include <fstream>
 #include <regex>
 
 using namespace Sawyer::Message::Common;
@@ -327,7 +328,13 @@ File::File(const std::string &name)
 
 File::Ptr
 File::instance(const std::string &name) {
-    return Ptr(new File(name));
+    std::ifstream test(name.c_str());
+    if (!test) {
+        message(FATAL, "unable to open file for reading: \"" + name + "\"");
+        exit(1);
+    } else {
+        return Ptr(new File(name));
+    }
 }
 
 std::string
