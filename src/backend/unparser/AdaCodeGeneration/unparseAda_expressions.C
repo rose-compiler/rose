@@ -601,7 +601,7 @@ namespace
   void AdaExprUnparser::handle(SgUnaryOp& n)
   {
     SgExpression* oper       = n.get_operand();
-    const bool    opref      = (oper == nullptr);
+    const bool    opref      = isSgNullExpression(oper);
     const bool    callsyntax = argRequiresCallSyntax(oper);
 
     if (opref || callsyntax) prn("\"");
