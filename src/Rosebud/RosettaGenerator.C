@@ -68,6 +68,17 @@ RosettaGenerator::adjustParser(Sawyer::CommandLine::Parser &parser) {
                    "almost all generated code. The default is " +
                    std::string(cppProtection.empty() ? "nothing" : ("\"" + cppProtection + "\"")) + "."));
 
+    sg.insert(Switch("strict-parents")
+              .intrinsicValue(true, strictParents)
+              .doc("When inserting a child into the tree, check that the child's parent is not already set to some other node "
+                   "and then set the child's parent pointer to point to the new parent. The @s{no-strict-parents} switch turns "
+                   "this off. The default is to " + std::string(strictParents ? "" : "not ") + "perform these checks and "
+                   "adjustments."));
+    sg.insert(Switch("no-strict-parents")
+              .intrinsicValue(false, strictParents)
+              .key("strict-parents")
+              .hidden(true));
+
     parser.with(sg);
 }
 
@@ -370,9 +381,15 @@ RosettaGenerator::genPropertyMutators(std::ostream &header, std::ostream &impl, 
     for (const std::string &mutatorName: propertyMutatorNames(p)) {
         impl <<"\n"
              <<THIS_LOCATION <<"void\n"
-             <<c->name <<"::" <<mutatorName <<"(" <<constRef(valueType(p)) <<" x) {\n"
-             <<"    this->" <<propertyDataMemberName(p) <<" = x;\n"
-             <<"    set_isModified(true);\n"
+             <<c->name <<"::" <<mutatorName <<"(" <<constRef(valueType(p)) <<" x) {\n";
+
+        if (strictParents && p->findAttribute("Rosebud::traverse")) {
+            impl <<"    changeChildPointer(this->" <<propertyDataMemberName(p) <<", const_cast<" <<valueType(p) <<"&>(x));\n";
+        } else {
+            impl <<"    this->" <<propertyDataMemberName(p) <<" = x;\n";
+        }
+
+        impl <<"    set_isModified(true);\n"
              <<"}\n";
     }
 }

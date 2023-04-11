@@ -1,3 +1,5 @@
+#include <boost/format.hpp>
+
 /** Base class for all binary analysis IR nodes. */
 [[Rosebud::abstract]]
 class SgAsmNode: public SgNode {
@@ -28,4 +30,83 @@ public:
         node->set_parent(parent);
         return node;
     }
+
+    /** Set a child edge in a tree to point to a specific child.
+     *
+     *  Normally one has to remember to set the parent pointer when adding a child to a tree, and also be careful that the result is
+     *  still a tree. This helper function tries to make that easier by checking some things and setting the parent pointer
+     *  automatically.
+     *
+     *  For instance, this should work:
+     *
+     * @code
+     *  SgAsmBinaryExpression *parent = ...;
+     *  SgAsmBinaryExpression *child1 = ...;
+     *  SgAsmBinaryExpression *child2 = ...;
+     *
+     *  parent->set_lhs(child1);
+     *  ASSERT_require(child1->get_parent() == parent);
+     *
+     *  parent->set_lhs(child2);
+     *  ASSERT_require(child1->get_parent() == nullptr);
+     *  ASSERT_require(child2->get_parent() == parent);
+     *
+     *  parent->set_lhs(nullptr);
+     *  ASSERT_require(child2->get_parent() == nullptr);
+     * @endcode
+     *
+     *  The following should not work when assertions are enabled:
+     *
+     * @code
+     *  SgAsmBinaryExpression *parent = ...;
+     *  SgAsmBinaryExpression *child1 = ...;
+     *  SgAsmBinaryExpression *child2 = ...;
+     *
+     *  parent->set_lhs(child1);
+     *  parent->set_rhs(child1); // no longer a tree, but still acyclic
+     * @endcode
+     *
+     * @{ */
+    template<class T>
+    typename std::enable_if<
+        std::is_pointer<T>::value,
+        void>::type
+    changeChildPointer(T& edge, T const& child) {
+        if (child != edge) {
+            // If there is an old child, check that it has the correct parent and then remove it.
+            if (edge) {
+                ASSERT_require2(edge->get_parent() == this,
+                                (boost::format("node %p is a child of %p but has wrong parent %p")
+                                 % edge % this % edge->get_parent()).str());
+                edge->set_parent(nullptr);
+                edge = nullptr;
+            }
+
+            // If there is a new child, check its parent pointer and then insert it.
+            if (child) {
+                ASSERT_require2(child->get_parent() == nullptr,
+                                (boost::format("node %p is to be a child of %p but is already a child of %p")
+                                 % child % this % child->get_parent()).str());
+                child->set_parent(this);
+                edge = child;
+            }
+        }
+    }
+
+    // This gets called for non-pointers, which is the situation for nodes that are only lists of other nodes. We're currently
+    // not checking them because the ROSETTA-generated API has too many ways to get around this check, most of which make it
+    // impossible to enforce constraints regarding the parent/child consistency. For example:
+    //
+    //    node->children().clear(); // removes a whole bunch of children but doesn't clear their parent pointers
+    //    node->children()[i] = child; // changes the ith child, but doesn't clear the previous ith child's parent pointer
+    //    for (auto &tmp: node->children()) tmp = nullptr; // changes each child but doesn't clear parent pointers
+    //    ad nausiam...
+    template<class T>
+    typename std::enable_if<
+        !std::is_pointer<T>::value,
+        void>::type
+    changeChildPointer(T& edge, T const& child) {
+        edge = child;
+    }
+    /** @} */
 };

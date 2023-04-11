@@ -11,6 +11,7 @@ class RosettaGenerator: public CxxGenerator {
     boost::filesystem::path nodeListFileName;           // optional name of file that contains list of all node types
     std::string grammarFunctionName = "Grammar::no_name"; // name of ROSETTA function being generated
     std::string cppProtection;                          // conditional compilation expression protecting all generated code
+    bool strictParents = false;                         // generate extra parent pointer checks and adjustments
 
 public:
     virtual void adjustParser(Sawyer::CommandLine::Parser&) override;
