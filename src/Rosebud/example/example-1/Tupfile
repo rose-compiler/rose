@@ -1,25 +1,30 @@
 include_rules
 
 inputs = \
-       SgAsmBinaryExpression.h \
-       SgAsmExpression.h \
-       SgAsmInstruction.h \
-       SgAsmType.h
+       TestAddExpr.h \
+       TestBinExpr.h \
+       TestExpr.h \
+       TestInsn.h \
+       TestInt.h \
+       TestType.h
 
 outputs = \
 	generated/BasicTypes.h \
-	generated/SgAsmBinaryExpression.h \
-	generated/SgAsmBinaryExpression.C \
-	generated/SgAsmExpression.h \
-	generated/SgAsmExpression.C \
-	generated/SgAsmInstruction.h \
-	generated/SgAsmInstruction.C \
-	generated/SgAsmType.h \
-	generated/SgAsmType.C \
-	generated/TreeNode.h
+	generated/TestAddExpr.h \
+	generated/TestAddExpr.C \
+	generated/TestBinExpr.h \
+	generated/TestBinExpr.C \
+	generated/TestExpr.h \
+	generated/TestExpr.C \
+	generated/TestInsn.h \
+	generated/TestInsn.C \
+	generated/TestInt.h \
+	generated/TestInt.C \
+	generated/TestType.h \
+	generated/TestType.C
 
 : ../../rosebud \
-  |> LD_LIBRARY_PATH=$(ROSE)/src/Rosebud:$(ROSE)/src/util/Sawyer ../../rosebud --backend=rose --no-locations --rose-generated=generated $(inputs); cp ../Tree.h generated/TreeNode.h \
+  |> LD_LIBRARY_PATH=$(ROSE)/src/Rosebud:$(ROSE)/src/util/Sawyer ../../rosebud --backend=rose --no-locations --rose-generated=generated $(inputs) \
   |> $(outputs) <rosbud_example_1>
 
 run $(tool_compile_linkexe) -I. test-1.C $(outputs)

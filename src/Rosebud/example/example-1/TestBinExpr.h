@@ -1,11 +1,11 @@
 /** Base class for expressions with two operands. */
 [[Rosebud::abstract]]
-class SgAsmBinaryExpression: public SgAsmExpression {
+class TestBinExpr: public TestExpr {
     /** First operand. */
     [[Rosebud::ctor_arg]]
-    TreeEdge<SgAsmExpression> lhs;
+    Rose::Tree::Edge<TestExpr> lhs;
 
     /** Second operand. */
     [[Rosebud::ctor_arg]]
-    TreeEdge<SgAsmExpression> rhs;
+    Rose::Tree::Edge<TestExpr> rhs;
 };
