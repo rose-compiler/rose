@@ -38,9 +38,10 @@ void attachInstructionSemantics(SgNode *ast, const BaseSemantics::Dispatcher::Pt
             } catch (const BaseSemantics::Exception&) {
                 // FIXME[Robb P. Matzke 2015-06-06]: semantics subtree should be deleted, but delete mechanism seems to be
                 // broken.
-                if (insn->get_semantics())
-                    insn->get_semantics()->set_parent(NULL);
-                insn->set_semantics(NULL);
+                if (SgAsmNode *tmp = insn->get_semantics()) {
+                    insn->set_semantics(nullptr);
+                    tmp->set_parent(nullptr);
+                }
             }
         }
     }
@@ -174,8 +175,8 @@ RiscOperators::saveSemanticEffect(const BaseSemantics::SValue::Ptr &a_) {
         SgAsmExprListExp *semantics = insn->get_semantics();
         if (NULL == semantics) {
             semantics = new SgAsmExprListExp;
-            semantics->set_parent(insn);
             insn->set_semantics(semantics);
+            semantics->set_parent(insn);
         }
 
         // We're about to make a copy of the a->ast(), so we need to ensure all the parent pointers are correct.
@@ -242,9 +243,12 @@ void
 RiscOperators::startInstruction(SgAsmInstruction *insn) {
     // Make sure any previous semantics are erased before we start.
     if (SgAsmExprListExp *semantics = insn->get_semantics()) {
-        for (SgAsmExpression *expr: semantics->get_expressions()) {
-            // FIXME[Robb P. Matzke 2015-06-06]: delete subtree mechanism is broken; this is a memory leak
-            expr->set_parent(NULL);
+        for (size_t i = 0; i < semantics->get_expressions().size(); ++i) {
+            if (SgNode *tmp = semantics->get_expressions()[i]) {
+                // FIXME[Robb P. Matzke 2015-06-06]: delete subtree mechanism is broken; this is a memory leak
+                semantics->get_expressions()[i] = nullptr;
+                tmp->set_parent(nullptr);
+            }
         }
         semantics->get_expressions().clear();
     }

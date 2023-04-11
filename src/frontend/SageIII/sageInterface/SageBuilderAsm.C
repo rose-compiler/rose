@@ -726,8 +726,8 @@ SgAsmRiscOperation*
 buildRiscOperation(SgAsmRiscOperation::RiscOperator op) {
     SgAsmRiscOperation *retval = new SgAsmRiscOperation(op);
     SgAsmExprListExp *operands = new SgAsmExprListExp;
-    operands->set_parent(retval);
     retval->set_operands(operands);
+    operands->set_parent(retval);
     return retval;
 }
 
@@ -775,8 +775,8 @@ void
 appendExpression(SgAsmExprListExp *exprList, SgAsmExpression *expr) {
     ASSERT_not_null(exprList);
     ASSERT_not_null(expr);
-    expr->set_parent(exprList);
     exprList->get_expressions().push_back(expr);
+    expr->set_parent(exprList);
 }
 
 SgAsmBlock*

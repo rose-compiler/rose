@@ -203,7 +203,9 @@ testSgAsmRegisterNames() {
     std::cerr <<"SgAsmRegisterNames\n";
     SgAsmRegisterNames *out = new SgAsmRegisterNames;
     out->get_registers().push_back(new SgAsmDirectRegisterExpression(RegisterDescriptor(1, 2, 3, 4)));
+    out->get_registers().back()->set_parent(out);
     out->get_registers().push_back(new SgAsmDirectRegisterExpression(RegisterDescriptor(5, 6, 7, 8)));
+    out->get_registers().back()->set_parent(out);
     SgAsmRegisterNames *in = NULL;
     serunser(out, in);
     equal(in, out, get_registers().size());
@@ -254,7 +256,9 @@ testSgAsmExprListExp() {
     std::cerr <<"SgAsmExprListExp\n";
     SgAsmExprListExp *out = new SgAsmExprListExp;
     out->get_expressions().push_back(Builder::buildValueU32(1234));
+    out->get_expressions().back()->set_parent(out);
     out->get_expressions().push_back(Builder::buildValueU32(5678));
+    out->get_expressions().back()->set_parent(out);
     SgAsmExprListExp *in = NULL;
     serunser(out, in);
     equal(in, out, get_expressions().size());

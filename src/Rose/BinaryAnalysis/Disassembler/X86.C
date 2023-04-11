@@ -225,6 +225,9 @@ X86::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet 
                                     ASSERT_require(REG_SP);
                                     if (fp->get_descriptor() == REG_FP || fp->get_descriptor() == REG_SP) {
                                         // Pattern found. Swap some arguments
+                                        add2->set_rhs(nullptr);
+                                        add1->set_rhs(nullptr);
+
                                         add1->set_rhs(mul);
                                         mul->set_parent(add1);
 

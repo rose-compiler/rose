@@ -176,10 +176,19 @@ Aarch64::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet *s
     if (BitOps::bits(opcode(insn), 24, 31) == 0b10011000) {
         // LDRSW (literal) is decoded incorrectly. The second operand should be a 32-bit memory read, not an immediate value.
         if (auto ival = isSgAsmIntegerValueExpression(insn->get_operandList()->get_operands()[1])) {
+            // Remove ival from the AST
+            insn->get_operandList()->get_operands()[1] = nullptr;
+            ival->set_parent(nullptr);
+
+            // Create a memory reference with ival as the address
             auto memref = new SgAsmMemoryReferenceExpression;
-            memref->set_address(ival);
             memref->set_type(SageBuilderAsm::buildTypeU32());
+            memref->set_address(ival);
+            ival->set_parent(memref);
+
+            // Insert the memref into the AST
             insn->get_operandList()->get_operands()[1] = memref;
+            memref->set_parent(insn->get_operandList());
         }
     } else if (insn->get_kind() == Aarch64InstructionKind::ARM64_INS_XTN) {
         // The XTN instruction is disassembled incorrectly: the type of the destination argument is wrong.  XTN reads the

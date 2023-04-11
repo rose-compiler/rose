@@ -289,6 +289,12 @@ SgAsmInstruction::normalizeOperands() {
                                     if (auto offset = isSgAsmIntegerValueExpression(add1->get_rhs())) {
                                         // Swap the offset and multiplication to result in
                                         //   (+ (+ reg1 offset) (* reg2 sz))
+
+                                        // Remove offset and mul from the tree
+                                        add2->set_rhs(nullptr);
+                                        add1->set_rhs(nullptr);
+
+                                        // Insert them back in the correct order
                                         add2->set_rhs(offset);
                                         offset->set_parent(add2);
                                         add1->set_rhs(mul);
