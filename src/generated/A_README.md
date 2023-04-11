@@ -39,6 +39,11 @@ To regenerate generated source files:
    $ROSE_SOURCE/src/Rosebud/generate ./rosebud
 ```
 
+4. Commit src/ROSETTA/src/binaryInstruction.C and all the
+   src/generated files in their own commit so that merge conflicts can
+   be handled by simply regenerating these files. Eventually these
+   generated files will not be part of the repository.
+   
 Writing your own generators
 ---------------------------
 
