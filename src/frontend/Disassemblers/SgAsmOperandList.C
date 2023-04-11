@@ -3,10 +3,10 @@
 #include <sage3basic.h>
 
 void
-SgAsmOperandList::append_operand( SgAsmExpression* operand )
-   {
-  /* implemented directly until we can fix how the statementList is built */
-     p_operands.push_back(operand);
-   }
+SgAsmOperandList::append_operand(SgAsmExpression* operand) {
+    ASSERT_not_null(operand);
+    p_operands.push_back(operand);
+    operand->set_parent(this);
+}
 
 #endif
