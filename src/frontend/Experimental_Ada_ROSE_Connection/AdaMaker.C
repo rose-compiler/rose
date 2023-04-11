@@ -924,6 +924,17 @@ mkAdaPackageBodyDecl(SgAdaPackageSpecDecl& specdcl, SgAdaPackageBodyDecl* nondef
 
 namespace
 {
+  // not all concurrent decls have explicit scope (i.e., SgAdaTaskSpecDecl, SgAdaProtectedSpecDecl)
+  // \todo if all concurrent decls would have explicit scope, we would not need to specialize scope setting...
+  // \{
+  template <class SageAdaConcurrentDecl>
+  void setScopeOfConcurrentDeclInternal(SageAdaConcurrentDecl&,    SgScopeStatement&)   { /* default: do nothing */ }
+
+  void setScopeOfConcurrentDeclInternal(SgAdaTaskTypeDecl& n,      SgScopeStatement& s) { n.set_scope(&s); }
+  void setScopeOfConcurrentDeclInternal(SgAdaProtectedTypeDecl& n, SgScopeStatement& s) { n.set_scope(&s); }
+  // \}
+
+
   template <class SageAdaConcurrentSymbol, class SageAdaConcurrentDecl, class SageAdaConcurrentSpec>
   SageAdaConcurrentDecl&
   mkAdaConcurrentDeclInternal(const std::string& name, SageAdaConcurrentSpec* spec_opt, SgScopeStatement& scope)
@@ -942,6 +953,7 @@ namespace
       sgnode.set_firstNondefiningDeclaration(&sgnode);
     }
 
+    setScopeOfConcurrentDeclInternal(sgnode, scope);
     return sgnode;
   }
 
@@ -950,14 +962,15 @@ namespace
   mkAdaConcurrentDeclInternal(SageAdaConcurrentDecl& nondef, SageAdaConcurrentSpec& spec, SgScopeStatement& scope)
   {
     std::string              name   = nondef.get_name();
-    SageAdaConcurrentDecl& sgnode = mkLocatedNode<SageAdaConcurrentDecl>(name, &spec);
-    SgSymbol*                baseSy = nondef.search_for_symbol_from_symbol_table();
-    SageAdaConcurrentSymbol& sym    = dynamic_cast<SageAdaConcurrentSymbol&>(*baseSy);
+    SageAdaConcurrentDecl&   sgnode = mkLocatedNode<SageAdaConcurrentDecl>(name, &spec);
+    SgSymbol&                baseSy = SG_DEREF(nondef.search_for_symbol_from_symbol_table());
+    SageAdaConcurrentSymbol& sym    = dynamic_cast<SageAdaConcurrentSymbol&>(baseSy);
 
     //~ scope.insert_symbol(name, &mkBareNode<SageAdaConcurrentSymbol>(&sgnode));
     sgnode.set_definingDeclaration(&sgnode);
     linkDeclDef(sym, sgnode);
     spec.set_parent(&sgnode);
+    setScopeOfConcurrentDeclInternal(sgnode, scope);
     return sgnode;
   }
 }

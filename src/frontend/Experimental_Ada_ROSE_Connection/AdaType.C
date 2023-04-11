@@ -965,6 +965,7 @@ namespace
     SgAdaFormalTypeDecl&           sgnode = mkAdaFormalTypeDecl(name, ctx.scope());
     SgAdaFormalType&               formal = SG_DEREF(sgnode.get_type());
     SgType*                        formalBaseType = nullptr;
+    bool                           inheritsDeclarationsAndSubprograms = false;
     TypeData                       res{nullptr, nullptr, false, false, false};
 
     switch (typenode.Formal_Type_Kind)
@@ -1002,10 +1003,11 @@ namespace
 
           formal.set_is_private(typenode.Has_Private);
           formalBaseType = &mkAdaDerivedType(undertype);
+
+          inheritsDeclarationsAndSubprograms = true;
+
           /* unused fields:
                bool                 Has_Synchronized
-               Declaration_List     Implicit_Inherited_Declarations
-               Declaration_List     Implicit_Inherited_Subprograms
                Expression_List      Definition_Interface_List
            */
           break;
@@ -1125,6 +1127,16 @@ namespace
 
     formal.set_formal_type(formalBaseType);
     res.sageNode(sgnode);
+
+    if (inheritsDeclarationsAndSubprograms)
+    {
+      processInheritedSubroutines( formal,
+                                   idRange(typenode.Implicit_Inherited_Subprograms),
+                                   idRange(typenode.Implicit_Inherited_Declarations),
+                                   ctx
+                                 );
+    }
+
     return res;
   }
 } // anonymous
