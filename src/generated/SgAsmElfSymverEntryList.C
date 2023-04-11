@@ -1,45 +1,35 @@
-#line 192 "src/Rosebud/RosettaGenerator.C"
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Implementation for SgAsmElfSymverEntryList            -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#line 195 "src/Rosebud/RosettaGenerator.C"
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
-#line 204 "src/Rosebud/RosettaGenerator.C"
 #include <sage3basic.h>
 
-#line 546 "src/Rosebud/RosettaGenerator.C"
 SgAsmElfSymverEntryPtrList const&
 SgAsmElfSymverEntryList::get_entries() const {
     return p_entries;
 }
 
-#line 552 "src/Rosebud/RosettaGenerator.C"
 SgAsmElfSymverEntryPtrList&
 SgAsmElfSymverEntryList::get_entries() {
     return p_entries;
 }
 
-#line 566 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmElfSymverEntryList::set_entries(SgAsmElfSymverEntryPtrList const& x) {
-    this->p_entries = x;
+    changeChildPointer(this->p_entries, const_cast<SgAsmElfSymverEntryPtrList&>(x));
     set_isModified(true);
 }
 
-#line 274 "src/Rosebud/RosettaGenerator.C"
 SgAsmElfSymverEntryList::~SgAsmElfSymverEntryList() {
     destructorHelper();
 }
 
-#line 303 "src/Rosebud/RosettaGenerator.C"
 SgAsmElfSymverEntryList::SgAsmElfSymverEntryList() {}
 
-#line 448 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmElfSymverEntryList::initializeProperties() {
 }
 
-#line 213 "src/Rosebud/RosettaGenerator.C"
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

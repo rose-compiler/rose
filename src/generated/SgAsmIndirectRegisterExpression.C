@@ -1,86 +1,69 @@
-#line 192 "src/Rosebud/RosettaGenerator.C"
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Implementation for SgAsmIndirectRegisterExpression            -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#line 195 "src/Rosebud/RosettaGenerator.C"
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
-#line 204 "src/Rosebud/RosettaGenerator.C"
 #include <sage3basic.h>
 
-#line 546 "src/Rosebud/RosettaGenerator.C"
 Rose::BinaryAnalysis::RegisterDescriptor const&
 SgAsmIndirectRegisterExpression::get_stride() const {
     return p_stride;
 }
 
-#line 566 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmIndirectRegisterExpression::set_stride(Rose::BinaryAnalysis::RegisterDescriptor const& x) {
     this->p_stride = x;
     set_isModified(true);
 }
 
-#line 546 "src/Rosebud/RosettaGenerator.C"
 Rose::BinaryAnalysis::RegisterDescriptor const&
 SgAsmIndirectRegisterExpression::get_offset() const {
     return p_offset;
 }
 
-#line 566 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmIndirectRegisterExpression::set_offset(Rose::BinaryAnalysis::RegisterDescriptor const& x) {
     this->p_offset = x;
     set_isModified(true);
 }
 
-#line 546 "src/Rosebud/RosettaGenerator.C"
 size_t const&
 SgAsmIndirectRegisterExpression::get_index() const {
     return p_index;
 }
 
-#line 566 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmIndirectRegisterExpression::set_index(size_t const& x) {
     this->p_index = x;
     set_isModified(true);
 }
 
-#line 546 "src/Rosebud/RosettaGenerator.C"
 size_t const&
 SgAsmIndirectRegisterExpression::get_modulus() const {
     return p_modulus;
 }
 
-#line 566 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmIndirectRegisterExpression::set_modulus(size_t const& x) {
     this->p_modulus = x;
     set_isModified(true);
 }
 
-#line 274 "src/Rosebud/RosettaGenerator.C"
 SgAsmIndirectRegisterExpression::~SgAsmIndirectRegisterExpression() {
     destructorHelper();
 }
 
-#line 303 "src/Rosebud/RosettaGenerator.C"
 SgAsmIndirectRegisterExpression::SgAsmIndirectRegisterExpression()
-#line 308 "src/Rosebud/RosettaGenerator.C"
     : p_index(0)
-#line 308 "src/Rosebud/RosettaGenerator.C"
     , p_modulus(0) {}
 
-#line 349 "src/Rosebud/RosettaGenerator.C"
 // The association between constructor arguments and their classes:
 //    property=descriptor       class=SgAsmRegisterReferenceExpression
 //    property=stride           class=SgAsmIndirectRegisterExpression
 //    property=offset           class=SgAsmIndirectRegisterExpression
 //    property=index            class=SgAsmIndirectRegisterExpression
 //    property=modulus          class=SgAsmIndirectRegisterExpression
-#line 357 "src/Rosebud/RosettaGenerator.C"
 SgAsmIndirectRegisterExpression::SgAsmIndirectRegisterExpression(Rose::BinaryAnalysis::RegisterDescriptor const& descriptor,
                                                                  Rose::BinaryAnalysis::RegisterDescriptor const& stride,
                                                                  Rose::BinaryAnalysis::RegisterDescriptor const& offset,
@@ -92,12 +75,10 @@ SgAsmIndirectRegisterExpression::SgAsmIndirectRegisterExpression(Rose::BinaryAna
     , p_index(index)
     , p_modulus(modulus) {}
 
-#line 448 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmIndirectRegisterExpression::initializeProperties() {
     p_index = 0;
     p_modulus = 0;
 }
 
-#line 213 "src/Rosebud/RosettaGenerator.C"
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

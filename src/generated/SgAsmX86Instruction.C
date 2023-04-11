@@ -1,143 +1,113 @@
-#line 192 "src/Rosebud/RosettaGenerator.C"
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Implementation for SgAsmX86Instruction            -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#line 195 "src/Rosebud/RosettaGenerator.C"
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
-#line 204 "src/Rosebud/RosettaGenerator.C"
 #include <sage3basic.h>
 
-#line 546 "src/Rosebud/RosettaGenerator.C"
 Rose::BinaryAnalysis::X86InstructionKind const&
 SgAsmX86Instruction::get_kind() const {
     return p_kind;
 }
 
-#line 566 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmX86Instruction::set_kind(Rose::BinaryAnalysis::X86InstructionKind const& x) {
     this->p_kind = x;
     set_isModified(true);
 }
 
-#line 546 "src/Rosebud/RosettaGenerator.C"
 Rose::BinaryAnalysis::X86InstructionSize const&
 SgAsmX86Instruction::get_baseSize() const {
     return p_baseSize;
 }
 
-#line 566 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmX86Instruction::set_baseSize(Rose::BinaryAnalysis::X86InstructionSize const& x) {
     this->p_baseSize = x;
     set_isModified(true);
 }
 
-#line 546 "src/Rosebud/RosettaGenerator.C"
 Rose::BinaryAnalysis::X86InstructionSize const&
 SgAsmX86Instruction::get_operandSize() const {
     return p_operandSize;
 }
 
-#line 566 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmX86Instruction::set_operandSize(Rose::BinaryAnalysis::X86InstructionSize const& x) {
     this->p_operandSize = x;
     set_isModified(true);
 }
 
-#line 546 "src/Rosebud/RosettaGenerator.C"
 Rose::BinaryAnalysis::X86InstructionSize const&
 SgAsmX86Instruction::get_addressSize() const {
     return p_addressSize;
 }
 
-#line 566 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmX86Instruction::set_addressSize(Rose::BinaryAnalysis::X86InstructionSize const& x) {
     this->p_addressSize = x;
     set_isModified(true);
 }
 
-#line 546 "src/Rosebud/RosettaGenerator.C"
 bool const&
 SgAsmX86Instruction::get_lockPrefix() const {
     return p_lockPrefix;
 }
 
-#line 566 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmX86Instruction::set_lockPrefix(bool const& x) {
     this->p_lockPrefix = x;
     set_isModified(true);
 }
 
-#line 546 "src/Rosebud/RosettaGenerator.C"
 Rose::BinaryAnalysis::X86RepeatPrefix const&
 SgAsmX86Instruction::get_repeatPrefix() const {
     return p_repeatPrefix;
 }
 
-#line 566 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmX86Instruction::set_repeatPrefix(Rose::BinaryAnalysis::X86RepeatPrefix const& x) {
     this->p_repeatPrefix = x;
     set_isModified(true);
 }
 
-#line 546 "src/Rosebud/RosettaGenerator.C"
 Rose::BinaryAnalysis::X86BranchPrediction const&
 SgAsmX86Instruction::get_branchPrediction() const {
     return p_branchPrediction;
 }
 
-#line 566 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmX86Instruction::set_branchPrediction(Rose::BinaryAnalysis::X86BranchPrediction const& x) {
     this->p_branchPrediction = x;
     set_isModified(true);
 }
 
-#line 546 "src/Rosebud/RosettaGenerator.C"
 Rose::BinaryAnalysis::X86SegmentRegister const&
 SgAsmX86Instruction::get_segmentOverride() const {
     return p_segmentOverride;
 }
 
-#line 566 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmX86Instruction::set_segmentOverride(Rose::BinaryAnalysis::X86SegmentRegister const& x) {
     this->p_segmentOverride = x;
     set_isModified(true);
 }
 
-#line 274 "src/Rosebud/RosettaGenerator.C"
 SgAsmX86Instruction::~SgAsmX86Instruction() {
     destructorHelper();
 }
 
-#line 303 "src/Rosebud/RosettaGenerator.C"
 SgAsmX86Instruction::SgAsmX86Instruction()
-#line 308 "src/Rosebud/RosettaGenerator.C"
     : p_kind(Rose::BinaryAnalysis::x86_unknown_instruction)
-#line 308 "src/Rosebud/RosettaGenerator.C"
     , p_baseSize(Rose::BinaryAnalysis::x86_insnsize_none)
-#line 308 "src/Rosebud/RosettaGenerator.C"
     , p_operandSize(Rose::BinaryAnalysis::x86_insnsize_none)
-#line 308 "src/Rosebud/RosettaGenerator.C"
     , p_addressSize(Rose::BinaryAnalysis::x86_insnsize_none)
-#line 308 "src/Rosebud/RosettaGenerator.C"
     , p_lockPrefix(false)
-#line 308 "src/Rosebud/RosettaGenerator.C"
     , p_repeatPrefix(Rose::BinaryAnalysis::x86_repeat_none)
-#line 308 "src/Rosebud/RosettaGenerator.C"
     , p_branchPrediction(Rose::BinaryAnalysis::x86_branch_prediction_none)
-#line 308 "src/Rosebud/RosettaGenerator.C"
     , p_segmentOverride(Rose::BinaryAnalysis::x86_segreg_none) {}
 
-#line 349 "src/Rosebud/RosettaGenerator.C"
 // The association between constructor arguments and their classes:
 //    property=address          class=SgAsmStatement
 //    property=mnemonic         class=SgAsmInstruction
@@ -145,7 +115,6 @@ SgAsmX86Instruction::SgAsmX86Instruction()
 //    property=baseSize         class=SgAsmX86Instruction
 //    property=operandSize      class=SgAsmX86Instruction
 //    property=addressSize      class=SgAsmX86Instruction
-#line 357 "src/Rosebud/RosettaGenerator.C"
 SgAsmX86Instruction::SgAsmX86Instruction(rose_addr_t const& address,
                                          std::string const& mnemonic,
                                          Rose::BinaryAnalysis::X86InstructionKind const& kind,
@@ -162,7 +131,6 @@ SgAsmX86Instruction::SgAsmX86Instruction(rose_addr_t const& address,
     , p_branchPrediction(Rose::BinaryAnalysis::x86_branch_prediction_none)
     , p_segmentOverride(Rose::BinaryAnalysis::x86_segreg_none) {}
 
-#line 448 "src/Rosebud/RosettaGenerator.C"
 void
 SgAsmX86Instruction::initializeProperties() {
     p_kind = Rose::BinaryAnalysis::x86_unknown_instruction;
@@ -175,5 +143,4 @@ SgAsmX86Instruction::initializeProperties() {
     p_segmentOverride = Rose::BinaryAnalysis::x86_segreg_none;
 }
 
-#line 213 "src/Rosebud/RosettaGenerator.C"
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)
