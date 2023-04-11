@@ -67,5 +67,6 @@ exec "$ROSEBUD_EXE" --backend=rosetta --no-warnings --no-locations \
      --rosetta-impl="$RG_SRC/src/generated" \
      --rosetta-cpp-protection='defined(ROSE_ENABLE_BINARY_ANALYSIS)' \
      --rosetta-node-list="$RG_SRC/src/ROSETTA/astNodeList" \
+     --rosetta-strict-parents \
      "$@" \
      "$RG_SRC"/src/AstNodes/BinaryAnalysis/*.h
