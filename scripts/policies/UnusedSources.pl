@@ -8,7 +8,8 @@
 #my $limit = 1454; # 2013-03-12 Robb Matzke
 #my $limit = 1435; # 2015-02-05 Robb Matzke
 #my $limit = 1540; # 2015-03-07 Dan Quinlan
-my $limit = 383; # 2023-03-31 Robb Matzke
+#my $limit = 383; # 2023-03-31 Robb Matzke
+my $limit = 378; # 2023-04-11 Robb Matzke
 
 my $desc = <<EOF;
 All source files should be mentioned in the build system (makefiles).
