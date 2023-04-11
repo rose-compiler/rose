@@ -2642,10 +2642,6 @@ namespace
         SgAdaInheritedFunctionSymbol& sgnode = mkAdaInheritedFunctionSymbol(*fnsym, dervivedType, ctx.scope());
         const auto inserted = inheritedSymbols().insert(std::make_pair(InheritedSymbolKey{fn, &dervivedType}, &sgnode));
 
-        //~ logError() << "create inh subroutine " << elem.ID
-                   //~ << " " << fn << "/" << &dervivedType
-                   //~ << std::endl;
-
         ROSE_ASSERT(inserted.second);
     }
 
@@ -2703,39 +2699,13 @@ namespace
       AstContext                                     ctx;
   };
 
-  void
-  processInheritedSubroutines( SgNamedType& derivedType,
-                               ElemIdRange subprograms,
-                               ElemIdRange declarations,
-                               AstContext ctx
-                             )
-  {
-    SgType*              baseType     = si::Ada::baseType(derivedType);
-    SgType*              baseRootRaw  = si::Ada::typeRoot(baseType).typerep();
-    SgNamedType*         baseRootType = isSgNamedType(baseRootRaw);
-
-    if (baseRootType == nullptr)
-    {
-      // if baseRootRaw != nullptr
-      //   it will correspond to a universal type in package standard.
-      //   -> not an error
-
-      if (baseRootRaw == nullptr)
-        logFlaw() << "unable to find base-root for " << derivedType.get_name()
-                  << " / base = " << baseType
-                  << std::endl;
-      return;
-    }
-
-    //~ logWarn() << "drv: " << derivedType.get_name() << " / " << baseRootType->get_name()
-              //~ << std::endl;
-    traverseIDs(subprograms, elemMap(), InheritedSymbolCreator{*baseRootType, derivedType, ctx});
-
-    if (!declarations.empty())
-      logWarn() << "A derived/extension record type's implicit declaration is not empty: "
-                 << derivedType.get_name()
-                 << std::endl;
-  }
+  // following proc was made public and relocated to bottom of file
+  //~ void
+  //~ processInheritedSubroutines( SgNamedType& derivedType,
+                               //~ ElemIdRange subprograms,
+                               //~ ElemIdRange declarations,
+                               //~ AstContext ctx
+                             //~ )
 
   void
   processInheritedSubroutines( SgNamedType* derivedTy,
@@ -2968,9 +2938,13 @@ namespace
                                 )
   {
     sg::linkParentChild(sgnode, sgdecl, &SgAdaDiscriminatedTypeDecl::set_discriminatedDecl);
+    // sgdecl.set_scope(sgnode.get_discriminantScope());
+
     privatize(sgnode, isPrivate);
     recordNode(asisTypes(), id, sgdecl, true /* replace */);
     attachSourceLocation(sgnode, elem, ctx);
+
+    // \todo link nondef and def SgAdaDiscriminatedTypeDecl
 
     ADA_ASSERT (sgnode.get_parent() == &ctx.scope());
   }
@@ -3059,6 +3033,10 @@ namespace
     else
     {
       completeDiscriminatedDecl(id, elem, *discr, sgdecl, isPrivate, ctx);
+
+      //~ throw AdaDbgTraversalExit{};
+
+      // sgdecl.search_for_symbol_from_symbol_table(); // \todo remove test
     }
 
     if (decl.Declaration_Kind == A_Private_Extension_Declaration)
@@ -3520,8 +3498,55 @@ namespace
 
     return firstDeclaration(decl).Parameter_Profile;
   }
-}
 
+#if NOT_YET
+  SgExpression*
+  getDefaultFunctionExpr(Declaration_Struct& decl, SgAdaSubroutineType& ty, AstContext ctx)
+  {
+    SgExpression* res = nullptr;
+
+    switch (decl.Default_Kind)
+    {
+      case A_Box_Default:
+        res = &mkAdaBoxExp();
+        break;
+
+      case A_Name_Default:
+        {
+          SgTypePtrList        typlist;
+          auto typeExtractor = [](SgExpression* exp)->SgType*
+                               {
+                                 // exclude literals as they are convertible to derived types
+                                 //~ return isSgValueExp(exp) ? nullptr : si::Ada::typeOfExpr(exp).typerep();
+                                 return si::Ada::typeOfExpr(exp).typerep();
+                               };
+
+
+  typlist.reserve(arglist.size());
+  std::transform(arglist.begin(), arglist.end(), std::back_inserter(typlist), typeExtractor);
+
+          OperatorCallSupplement     suppl{typeList, ty.get_return_type()};
+
+          return getExprID(decl.Formal_Subprogram_Default, ctx, );
+          break;
+        }
+
+      case A_Null_Default:
+        res = &mkNullExpression(); //  \todo reconsider use of null expression elsewhere
+        break;
+
+      case A_Nil_Default:
+        res = nullptr;
+        break;
+
+      default:
+        ADA_ASSERT(false);
+    }
+
+    return res;
+  }
+#endif
+}
 
 void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 {
@@ -4060,25 +4085,38 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
                , elem.ID
                );
 
-        NameData          adaname          = singleName(decl, ctx);
-        ElemIdRange       range            = idRange(decl.Parameter_Profile);
-        SgType&           rettype          = isFormalFuncDecl ? getDeclTypeID(decl.Result_Profile, ctx)
-                                                              : mkTypeVoid();
+        NameData               adaname = singleName(decl, ctx);
+        ElemIdRange            params  = idRange(decl.Parameter_Profile);
+        SgType&                rettype = isFormalFuncDecl ? getDeclTypeID(decl.Result_Profile, ctx)
+                                                          : mkTypeVoid();
 
         ADA_ASSERT (adaname.fullName == adaname.ident);
-        SgScopeStatement&     logicalScope = adaname.parent_scope();
+        SgScopeStatement&      logicalScope = adaname.parent_scope();
 
+#if 1 || OLD_CODE
         // create a function declaration for formal function/procedure declaration.
         SgFunctionDeclaration& sgnode = mkProcedureDecl_nondef( adaname.ident,
                                                                 logicalScope,
                                                                 rettype,
-                                                                ParameterCompletion{range, ctx}
+                                                                ParameterCompletion{params, ctx}
                                                               );
         sgnode.set_ada_formal_subprogram_decl(true);
         sgnode.set_ada_formal_decl_with_box(decl.Default_Kind == A_Box_Default);
 
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
+#else /* !OLD_CODE */
+        SgAdaSubroutineType&   funty   = mkAdaSubroutineType(rettype, ParameterCompletion{params, ctx}, ctx.scope(), false  /*isProtected*/ );
+
+        SgExpression*          defaultInit = getDefaultFunctionExpr(decl, funty);
+
+        SgInitalizedName&      sgvar   = mkInitializedName(adaname.ident, funty, defaultInit);
+        SgVariableDeclaration& sgnode  = mkVarDecl( { &sgvar }, logicalScope );
+
+        recordNode(asisVars(), elem.ID,      sgvar);
+        recordNode(asisVars(), adaname.id(), sgvar);
+
+#endif /* OLD_CODE */
 
         attachSourceLocation(sgnode, elem, ctx);
         ctx.appendStatement(sgnode);
@@ -5204,6 +5242,39 @@ NameData
 getNameID(Element_ID el, AstContext ctx)
 {
   return getName(retrieveAs(elemMap(), el), ctx);
+}
+
+void
+processInheritedSubroutines( SgNamedType& derivedType,
+                             ElemIdRange subprograms,
+                             ElemIdRange declarations,
+                             AstContext ctx
+                           )
+{
+  SgType*              baseType     = si::Ada::baseType(derivedType);
+  SgType*              baseRootRaw  = si::Ada::typeRoot(baseType).typerep();
+  SgNamedType*         baseRootType = isSgNamedType(baseRootRaw);
+
+  if (baseRootType == nullptr)
+  {
+    // if baseRootRaw != nullptr
+    //   it will correspond to a universal type in package standard.
+    //   -> not an error
+    if (baseRootRaw == nullptr)
+      logFlaw() << "unable to find any base-root for " << derivedType.get_name()
+                << " / base = " << baseType
+                << std::endl;
+    return;
+  }
+
+  //~ logWarn() << "drv: " << derivedType.get_name() << " / " << baseRootType->get_name()
+            //~ << std::endl;
+  traverseIDs(subprograms, elemMap(), InheritedSymbolCreator{*baseRootType, derivedType, ctx});
+
+  if (!declarations.empty())
+    logWarn() << "A derived/extension record type's implicit declaration is not empty: "
+               << derivedType.get_name()
+               << std::endl;
 }
 
 }

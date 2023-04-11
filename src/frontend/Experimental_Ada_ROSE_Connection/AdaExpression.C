@@ -817,7 +817,6 @@ namespace
     {
       SgExpression* res = sg::dispatch(ExprRefMaker{ctx}, dcl);
 
-      //logWarn() << "ok1" << std::endl;
       return SG_DEREF(res);
     }
 

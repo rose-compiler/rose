@@ -2622,6 +2622,11 @@ namespace
       res = tydcl->get_base_type();
     }
 
+    void handle(const SgAdaFormalType& n)
+    {
+      res = n.get_formal_type();
+    }
+
     void handle(const SgAdaDiscriminatedType& n)
     {
       const SgAdaDiscriminatedTypeDecl& dcl = SG_DEREF(isSgAdaDiscriminatedTypeDecl(n.get_declaration()));

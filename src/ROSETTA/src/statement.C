@@ -2878,6 +2878,9 @@ Grammar::setUpStatements ()
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AdaTaskTypeDecl.setDataPrototype ( "SgAdaTaskType*", "type", "= nullptr",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaTaskTypeDecl.setDataPrototype ( "SgScopeStatement*", "scope", "= NULL",
+                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
 
      AdaTaskBodyDecl.setFunctionPrototype  ( "HEADER_ADA_TASK_BODY_DECL_STATEMENT", "../Grammar/Statement.code" );
@@ -2904,7 +2907,8 @@ Grammar::setUpStatements ()
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AdaProtectedTypeDecl.setDataPrototype ( "SgAdaProtectedType*", "type", "= nullptr",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
+     AdaProtectedTypeDecl.setDataPrototype ( "SgScopeStatement*", "scope", "= NULL",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AdaProtectedBodyDecl.setFunctionPrototype  ( "HEADER_ADA_PROTECTED_BODY_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaProtectedBodyDecl.setDataPrototype ( "SgName", "name", "= \"\"",
