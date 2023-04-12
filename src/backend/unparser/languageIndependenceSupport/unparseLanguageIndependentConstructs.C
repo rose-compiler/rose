@@ -4705,57 +4705,8 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
         }
        else
         {
-       // DQ (5/21/2004): revised need_paren handling in EDG/SAGE III and within SAGE III IR)
-       // QY (7/9/2004): revised to use the new unp->u_sage->PrintStartParen test
           bool printParen = requiresParentheses(expr,info);
-#if 0
-          printf ("In unparseExpression(): expr = %p = %s printParen = %s \n",expr,expr->class_name().c_str(),printParen ? "true" : "false");
-          curprint (string("\n/* In unparseExpression(): printParen = ") + (printParen ? "true" : "false") + " */ \n ");
-#endif
 
-#if 0
-       // DQ (8/21/2005): Suppress comments when unparsing to build type names
-          if ( !info.SkipComments() || !info.SkipCPPDirectives() )
-             {
-               string name = SageInterface::get_name(expr);
-               SgFunctionCallExp* functionCall = isSgFunctionCallExp(expr);
-               if (functionCall != NULL)
-                  {
-                    SgExpression* expression = functionCall->get_function();
-                    SgDotExp* dotExp = isSgDotExp(expression);
-                    if (dotExp != NULL)
-                       {
-                         SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(dotExp->get_lhs_operand());
-                      // ASSERT_not_null(memberFunctionRefExp);
-                         if (memberFunctionRefExp != NULL)
-                            {
-                              SgMemberFunctionSymbol* memberFunctionSymbol = memberFunctionRefExp->get_symbol();
-                              ASSERT_not_null(memberFunctionSymbol);
-                              name = memberFunctionSymbol->get_declaration()->get_name().str();
-                            }
-                           else
-                            {
-                              printf ("*** dotExp->get_lhs_operand() not processed: dotExp->get_lhs_operand() = %s \n",dotExp->get_lhs_operand()->class_name().c_str());
-                            }
-                       }
-                      else
-                       {
-                         printf ("*** functionCall->get_function() not processed: functionCall->get_function() = %s \n",functionCall->get_function()->class_name().c_str());
-                       }
-                  }
-                 else
-                  {
-                    printf ("*** expr not processed: expr = %s \n",expr->class_name().c_str());
-                  }
-
-            // curprint("\n /* In unparseExpression paren " + expr->class_name() + " paren printParen = " + (printParen ? "true" : "false") + " */ \n");
-               curprint("\n /* In unparseExpression paren " + expr->class_name() + " name = " + name + " paren printParen = " + (printParen ? "true" : "false") + " */ \n");
-             }
-#endif
-
-       // if (printParen)
-       // ASSERT_not_null(currentFile);
-       // if ( (printParen == true) && (currentFile->get_Fortran_only() == false) )
           if (printParen == true)
              {
                if(isSgMatrixExp(expr))
@@ -4765,33 +4716,14 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
                else
                  {
                    // Make sure this is not an expresion list
-                   ROSE_ASSERT (isSgExprListExp(expr) == NULL);
-#if 0
-                   curprint ("/* In unparseExpression(): output ( */ \n ");
-#endif
+                   ASSERT_require(isSgExprListExp(expr) == nullptr);
                    // Output the left paren
                    curprint ("(");
                  }
              }
 
-       // DQ (10/7/2004): Definitions should never be unparsed within code generation for expressions
-          if (info.SkipClassDefinition() == false)
-             {
-            // printf ("Skip output of class definition in unparseExpression \n");
-            // DQ (10/8/2004): Skip all definitions when outputing expressions!
-            // info.set_SkipClassDefinition();
-            // info.set_SkipDefinition();
-             }
-
-       // DQ (10/13/2006): Remove output of qualified names from this level of generality!
-       // DQ (12/22/2005): Output any name qualification that is required
-       // (we only explicitly store the global scope qualification since
-       // this is all that it seems that EDG stores).
-       // unparseQualifiedNameList(expr->get_qualifiedNameList());
-
           switch (expr->variant())
              {
-            // DQ (4/18/2013): I don't think this is ever called this way, IR node resolve to the derived classes not the base classes.
                case UNARY_EXPRESSION:
                   {
                     printf ("This should never be called: case UNARY_EXPRESSION\n");
@@ -4801,7 +4733,6 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
                     break;
                   }
 
-            // DQ (4/18/2013): I don't think this is ever called this way, IR node resolve to the derived classes not the base classes.
                case BINARY_EXPRESSION:
                   {
                     printf ("This should never be called: case BINARY_EXPRESSION\n");
@@ -4817,10 +4748,8 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
                  break;
                }
 
-            // DQ (8/15/2007): This has been moved to the base class
                case EXPR_LIST: { unparseExprList(expr, info); break; }
 
-            // DQ (7/31/2014): Adding support for C++11 nullptr const value expressions.
                case NULLPTR_VAL:
 
             // DQ: These cases are separated out so that we can handle the
@@ -4852,23 +4781,16 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
                   {
                  // Call the derived class implementation for C, C++, or Fortran specific language unparsing.
                     unparseLanguageSpecificExpression(expr,info);
-
                     break;
                   }
-
              }
 
           if (printParen)
              {
-#if 0
-               curprint ("/* In unparseExpression(): output ) */ \n ");
-#endif
             // Output the right paren
                curprint (")");
              }
 
-       // calls the logical_unparse function in the sage files
-       // expr->logical_unparse(info, curprint);
         } // unparse source replacement END
 
 #if OUTPUT_EMBEDDED_COLOR_CODES_FOR_EXPRESSIONS
@@ -4893,37 +4815,14 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
      if ( !info.SkipComments() || !info.SkipCPPDirectives() )
         {
           printf ("Leaving unparse expression (%p): sage_class_name() = %s \n",expr,expr->sage_class_name());
-       // unp->u->sage->curprint ( "\n/* Bottom of unparseExpression " << string(expr->sage_class_name()) << " */ \n");
           curprint ( "\n/* Bottom of unparseExpression " + expr->class_name() + " */ \n");
         }
-#endif
-
-#if 0
-     printf ("Leaving unparse language independent expression(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
-     printf ("Leaving unparse language independent expression(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
 #endif
 
   // DQ (9/9/2016): These should have been setup to be the same.
      ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
    }
 
-
-#if 0
-void
-UnparseLanguageIndependentConstructs::unparseLanguageSpecificStatement  (SgStatement* stmt,  SgUnparse_Info& info)
-   {
-     printf ("Error: base class implementation of unparseLanguageSpecificStatement called \n");
-     ROSE_ABORT();
-   }
-#endif
-#if 0
-void
-UnparseLanguageIndependentConstructs::unparseLanguageSpecificExpression (SgExpression* expr, SgUnparse_Info& info)
-   {
-     printf ("Error: base class implementation of unparseLanguageSpecificExpression called \n");
-     ROSE_ABORT();
-   }
-#endif
 
 void
 UnparseLanguageIndependentConstructs::unparseNullStatement (SgStatement* stmt, SgUnparse_Info& info)
@@ -4932,21 +4831,10 @@ UnparseLanguageIndependentConstructs::unparseNullStatement (SgStatement* stmt, S
      SgNullStatement* nullStatement = isSgNullStatement(stmt);
      ASSERT_not_null(nullStatement);
 
-#if 0
-     printf ("In unparseNullStatement() stmt = %p \n",stmt);
-#endif
-
   // Not much to do here except output a ";", not really required however.
-  // if (!info.inConditional() && !info.SkipSemiColon())
      if (info.SkipSemiColon() == false)
         {
           curprint(";");
-        }
-       else
-        {
-#if 0
-          printf ("In unparseNullStatement() stmt = %p (skipped output of semi-colon) info.inConditional() = %s info.SkipSemiColon() = %s \n",stmt,info.inConditional() ? "true" : "false",info.SkipSemiColon() ? "true" : "false");
-#endif
         }
    }
 
@@ -4954,9 +4842,6 @@ void
 UnparseLanguageIndependentConstructs::unparseNullExpression (SgExpression* expr, SgUnparse_Info& info)
    {
   // Nothing to do here! (unless we need a ";" or something)
-#if 0
-     printf ("In unparseNullExpression() expr = %p \n",expr);
-#endif
    }
 
 
@@ -5545,7 +5430,6 @@ UnparseLanguageIndependentConstructs::unparseLineReplacement( SgLocatedNode* stm
 
 void
 UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
-// SgStatement* stmt,
    SgLocatedNode* stmt,
    SgUnparse_Info& info,
    PreprocessingInfo::RelativePositionType whereToUnparse)
@@ -5553,43 +5437,9 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
   // Get atached preprocessing info
      AttachedPreprocessingInfoType *prepInfoPtr = stmt->getAttachedPreprocessingInfo();
 
-#if 0
-  // Debugging added by DQ (only output debug information if comments/directives exist for this statement).
-     if ( (prepInfoPtr != NULL) && (prepInfoPtr->empty() == false) )
-        {
-          printf ("\n\n");
-          printf ("****************************************************************************** \n");
-          printf ("In Unparse_ExprStmt::unparseAttachedPreprocessingInfo(%p = %s): whereToUnparse = %s = %s \n",
-               stmt,stmt->sage_class_name(),
-               (whereToUnparse == PreprocessingInfo::before) ? "before" : "after",
-               PreprocessingInfo::relativePositionName(whereToUnparse).c_str());
-          printf ("stmt->get_startOfConstruct() = %p stmt->get_endOfConstruct() = %p \n",stmt->get_startOfConstruct(),stmt->get_endOfConstruct());
-          stmt->get_startOfConstruct()->display("startOfConstruct");
-          if (stmt->get_endOfConstruct() != NULL)
-             {
-               stmt->get_endOfConstruct()->display("endOfConstruct");
-             }
-            else
-             {
-               printf ("Error in unparseAttachedPreprocessingInfo, stmt->get_endOfConstruct() == NULL: stmt = %p = %s = %s \n",
-                    stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str());
-             }
-          printOutComments(stmt);
-        }
-#endif
-#if 0
-     curprint ("/* In Unparse_ExprStmt::unparseAttachedPreprocessingInfo() */ \n");
-#endif
-#if 0
-     printOutComments(stmt);
-#endif
-
      if (prepInfoPtr == NULL)
         {
        // There's no preprocessing info attached to the current statement
-#if 0
-          printf ("In Unparse_ExprStmt::unparseAttachedPreprocessingInfo(): prepInfoPtr == NULL: No comments or CPP directives associated with this statement ... \n");
-#endif
           return;
         }
 
@@ -5597,15 +5447,8 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
      if ( info.SkipComments() && info.SkipCPPDirectives() )
         {
        // There's no preprocessing info attached to the current statement
-#if 0
-          printf ("Skipping output or comments and CPP directives \n");
-#endif
           return;
         }
-
-#if 0
-     info.display("In Unparse_ExprStmt::unparseAttachedPreprocessingInfo()");
-#endif
 
   // Traverse the container of PreprocessingInfo objects
      AttachedPreprocessingInfoType::iterator i;
@@ -5620,18 +5463,6 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                        (*i)->getRelativePosition() == PreprocessingInfo::after  ||
                        (*i)->getRelativePosition() == PreprocessingInfo::inside);
 
-#if 0
-       // DQ (1/28/2013): Fixed to use output of PreprocessingInfo::relativePositionName() and thus provide more accurate debug information.
-          printf ("Stored comment: (*i)->getRelativePosition() = %s (*i)->getString() = %s \n",
-            // ((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
-               PreprocessingInfo::relativePositionName((*i)->getRelativePosition()).c_str(),
-               (*i)->getString().c_str());
-
-       // DQ (2/27/2019): Adding support for multi-file handling.
-          printf (" --- SgUnparse_Info: filename = %s \n",info.get_current_source_file()->getFileName().c_str());
-          printf (" --- file_id = %d line = %d filename = %s \n",(*i)->getFileId(),(*i)->getLineNumber(),(*i)->getFilename().c_str());
-#endif
-
        // Check and see if the info object would indicate that the statement would
        // be printed, if not then don't print the comments associated with it.
        // These might have to be handled on a case by case basis.
@@ -5639,17 +5470,6 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
           bool infoSaysGoAhead = !info.SkipEnumDefinition()  &&
                                  !info.SkipClassDefinition() &&
                                  !info.SkipFunctionDefinition();
-#if 0
-          printf ("info.SkipEnumDefinition()     = %s \n",info.SkipEnumDefinition() ? "true" : "false");
-          printf ("info.SkipClassDefinition()    = %s \n",info.SkipClassDefinition() ? "true" : "false");
-          printf ("info.SkipFunctionDefinition() = %s \n",info.SkipFunctionDefinition() ? "true" : "false");
-          printf ("Test 1: infoSaysGoAhead       = %s \n",infoSaysGoAhead ? "true" : "false");
-#endif
-
-#if 0
-          printf ("Reset infoSaysGoAhead == true \n");
-          infoSaysGoAhead = true;
-#endif
 
        // DQ (7/19/2008): Allow expressions to have there associated comments unparsed.
        // Liao 11/9/2010: allow SgInitializedName also
@@ -5665,16 +5485,7 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
 
           bool isSharedLocatedNode = (stmt->get_file_info()->isShared() == true);
 
-#if 0
-          printf ("In Unparse_ExprStmt::unparseAttachedPreprocessingInfo(): \n");
-          printf (" --- isSharedLocatedNode            = %s \n",isSharedLocatedNode ? "true" : "false");
-          printf (" --- infoSaysGoAhead                = %s \n",infoSaysGoAhead     ? "true" : "false");
-          printf (" --- info.get_current_source_file() = %s \n",info.get_current_source_file() ? "true" : "false");
-#endif
-
        // DQ (3/12/2019): Only review the decission to reset infoSaysGoAhead if it is true.
-       // if (info.get_current_source_file() != NULL)
-       // if (infoSaysGoAhead == true && info.get_current_source_file() != NULL)
           if (isSharedLocatedNode == true && infoSaysGoAhead == true && info.get_current_source_file() != NULL)
              {
                ASSERT_not_null(info.get_current_source_file()->get_file_info());
@@ -5684,12 +5495,6 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
 
                if (isCommentFromCurrentFile == false)
                   {
-#if 0
-                    printf ("Error: we can't unparse the current comment or CPP directive because it is from a different file: infoSaysGoAhead = %s \n",infoSaysGoAhead ? "true" : "false");
-#endif
-                 // DQ (3/2/2019): so when this fails for generated comments, what does the file info look like?
-                 // (*i)->get_file_info()->display("so when this fails for generated comments, what does the file info look like");
-
                  // DQ (3/2/2019): I will alow this for now, but it is an inappropriate use of the Sg_File_Info object to define a file that does not exist.
                     if ( ((*i)->get_file_info()->get_filenameString() == "Compiler-Generated in PRE") ||
                          ((*i)->get_file_info()->get_filenameString() =="Compiler-Generated in Finite Differencing") ||
@@ -5700,39 +5505,10 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                       else
                        {
                          infoSaysGoAhead = false;
-#if 0
-                         printf (" --- stmt = %p = %s \n",stmt,stmt->class_name().c_str());
-                         printf (" --- stmt->get_file_info()->isShared() = %s \n",stmt->get_file_info()->isShared() ? "true" : "false");
-                         printf (" --- Test 1.5: infoSaysGoAhead = %s \n",infoSaysGoAhead ? "true" : "false");
-#endif
-#if 0
-                      // DQ (1/28/2013): Fixed to use output of PreprocessingInfo::relativePositionName() and thus provide more accurate debug information.
-                         printf (" --- Stored comment: (*i)->getRelativePosition() = %s (*i)->getString() = %s \n",
-                              PreprocessingInfo::relativePositionName((*i)->getRelativePosition()).c_str(),
-                              (*i)->getString().c_str());
-
-                      // DQ (2/27/2019): Adding support for multi-file handling.
-                         printf (" --- --- SgUnparse_Info: filename = %s \n",info.get_current_source_file()->getFileName().c_str());
-                         printf (" --- --- file_id = %d line = %d filename = %s \n",(*i)->getFileId(),(*i)->getLineNumber(),(*i)->getFilename().c_str());
-#endif
                        }
                   }
              }
 
-#if 0
-          printf ("stmt = %p = %s \n",stmt,stmt->class_name().c_str());
-          printf ("Test 2: infoSaysGoAhead = %s \n",infoSaysGoAhead ? "true" : "false");
-#endif
-
-#if 0
-          static int counter = 0;
-          counter++;
-          if (counter > 3)
-             {
-               printf ("Exiting in Unparse_ExprStmt::unparseAttachedPreprocessingInfo() \n");
-               ROSE_ABORT();
-             }
-#endif
        // DQ (2/5/2003):
        // The old directive handling allows all the test codes to parse properly, but
        // is not sufficent for handling the A++ transformations which are more complex.
@@ -5745,19 +5521,9 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
        // DQ (2/18/2003): Work to allow all CPP directives to be unparsed correctly on a statement
        //                 by statement basis has been completed, tested, and checked in.
 
-#if 0
-          printf ("(*i)->getRelativePosition() == whereToUnparse (matches == %s) \n",(*i)->getRelativePosition() == whereToUnparse ? "true" : "false");
-          printf ("unp->opt.get_unparse_includes_opt() == %s \n",(unp->opt.get_unparse_includes_opt() == true) ? "true" : "false");
-#endif
           if (infoSaysGoAhead && (*i)->getRelativePosition() == whereToUnparse)
              {
-#if 0
-               printf ("Calling unp->cur.format(FORMAT_BEFORE_DIRECTIVE): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
-#endif
                unp->cur.format(stmt, info, FORMAT_BEFORE_DIRECTIVE);
-#if 0
-               printf ("DONE: Calling unp->cur.format(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
-#endif
             // DQ (7/19/2008): If we can assert this, then we can simpleify the code below!
             // It is turned on in the tests/nonsmoke/functional/roseTests/programTransformationTests/implicitCodeGenerationTest.C
             // But I still don't know what it does.
@@ -5773,7 +5539,6 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                  // Comments can also be unparsed as comments (I think!).
                  // curprint (  "// " + (*i)->getString());
 
-                 // DQ (9/16/2013): New version of code.
                     switch ( (*i)->getTypeOfDirective() )
                        {
                       // Comments don't have to be further commented
@@ -6035,12 +5800,8 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                        }
                   }
 
-            // DQ (7/19/2008): Moved from outer nested scope level (below)
                unp->cur.format(stmt, info, FORMAT_AFTER_DIRECTIVE);
              }
-
-       // DQ (7/19/2008): Moved to previous nested scope level
-       // unp->cur.format(stmt, info, FORMAT_AFTER_DIRECTIVE);
         }
 
 #if 0
@@ -6055,22 +5816,8 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
 void
 UnparseLanguageIndependentConstructs::unparseUnaryExpr(SgExpression* expr, SgUnparse_Info& info)
    {
-#if 0
-     printf ("In unparseUnaryExpr(): expr = %p = %s \n",expr,expr->class_name().c_str());
-     curprint ("\n /* Inside of unparseUnaryExpr */ \n");
-     curprint (string("/* Inside of unparseUnaryExpr() expr = ") + expr->class_name() + " */ \n");
-     unp->u_debug->printDebugInfo("entering unparseUnaryExpr", true);
-#endif
-
-#if 0
-     printf ("Exiting as a test! \n");
-     ROSE_ABORT();
-#endif
-
      SgUnaryOp* unary_op = isSgUnaryOp(expr);
      ASSERT_not_null(unary_op);
-
-  // int toplevel_expression = !info.get_nested_expression();
 
      info.set_nested_expression();
 
@@ -6079,12 +5826,6 @@ UnparseLanguageIndependentConstructs::unparseUnaryExpr(SgExpression* expr, SgUnp
   //
      bool arrow_op = false;
      arrow_op = unp->u_sage->NoDereference(expr);
-
-#if 0
-     printf ("In Unparse_ExprStmt::unparseUnaryExpr: unary_op->get_parent() = %s pointer \n",
-          (unary_op->get_parent() != NULL) ? "VALID" : "NULL");
-  // printf ("In Unparse_ExprStmt::unparseUnaryExpr: toplevel_expression = %d arrow_op = %d \n",toplevel_expression,arrow_op);
-#endif
 
   // We have to test to see if the operand associated with this unary expression is a function pointer
   // then we can use either function pointer calling syntax
@@ -6095,27 +5836,12 @@ UnparseLanguageIndependentConstructs::unparseUnaryExpr(SgExpression* expr, SgUnp
   // It seems that EDG and SAGE represent the two similarly, so we have to choose which format we
   // want to have in the unparsing. Likely this should be an option to the unparser.
 
-  // bool isFunctionType = (isSgFunctionType(unary_op->get_type()) != NULL) ? true : false;
-
-#if 0
-     printf ("unary_op->get_mode() == SgUnaryOp::prefix is  %s \n",(unary_op->get_mode() == SgUnaryOp::prefix)  ? "true" : "false");
-     printf ("unary_op->get_mode() == SgUnaryOp::postfix is %s \n",(unary_op->get_mode() == SgUnaryOp::postfix) ? "true" : "false");
-     printf ("In Unparse_ExprStmt::unparseUnaryExpr: arrow_op = %s \n",arrow_op ? "true" : "false");
-  // printf ("isFunctionType = %s \n",(isFunctionType == true) ? "true" : "false");
-
-     printf ("unary_op->get_operand()->class_name() = %s \n",unary_op->get_operand()->class_name().c_str());
-     printf ("unary_op->get_type()->class_name()    = %s \n",unary_op->get_type()->class_name().c_str());
-     printf ("info.get_operator_name()              = %s \n",info.get_operator_name().c_str());
-#endif
 
   // DQ (2/22/2005): Ignoring if this is a SgFunctionType (test ...)
   // Bugfix (2/26/2001) If this is for a function pointer then skip printing out
   // the operator name (for dereferencing operator)
      if (unary_op->get_mode() != SgUnaryOp::postfix)
         {
-#if 0
-          curprint ( "\n /* Unparsing a prefix unary operator */ \n");
-#endif
        // DQ (2/25/2005): Trap case of SgPointerDerefExp so that "*" can't be
        // turned into "/*" if preceeded by a SgDivideOp or overloaded "operator/()"
        // Put in an extra space so that if this happens we only generate "/ *"
@@ -6127,10 +5853,6 @@ UnparseLanguageIndependentConstructs::unparseUnaryExpr(SgExpression* expr, SgUnp
           curprint(info.get_operator_name());
         }
 
-#if 0
-     printf ("In unparseUnaryExpr(): info.isPrefixOperator() = %s \n",info.isPrefixOperator() ? "true" : "false");
-#endif
-
   // DQ (1/25/2014): Added support to avoid unparsing "- -5" as "--5".
      SgValueExp* valueExp = isSgValueExp(unary_op->get_operand());
      SgMinusOp* minus_op = isSgMinusOp(unary_op);
@@ -6138,33 +5860,17 @@ UnparseLanguageIndependentConstructs::unparseUnaryExpr(SgExpression* expr, SgUnp
         {
        // We need to make sure we don't unparse: "- -5" as "--5".
        // I think we need an isNegative() query function so that we could refine this test to only apply to negative literals.
-#if 0
-          printf ("We need to make sure we don't unparse: \"- -5\" as \"--5\" \n");
-#endif
           curprint(" ");
         }
 
-#if 0
-     curprint ("\n /* Calling unparseExpression from unparseUnaryExpr */ \n");
-#endif
      unparseExpression(unary_op->get_operand(), info);
-#if 0
-     curprint ("\n /* DONE: Calling unparseExpression from unparseUnaryExpr */ \n");
-#endif
 
      if (unary_op->get_mode() == SgUnaryOp::postfix && !arrow_op)
         {
-#if 0
-          curprint ( "\n /* Unparsing a postfix unary operator */ \n");
-#endif
           curprint(info.get_operator_name());
         }
 
      info.unset_nested_expression();
-
-#if 0
-     curprint ("\n /* Leaving of unparseUnaryExpr */ \n");
-#endif
    }
 
 
@@ -6192,9 +5898,6 @@ UnparseLanguageIndependentConstructs::isDotExprWithAnonymousUnion(SgExpression* 
                if (varRefExp != NULL)
                   {
                     bool isAnonymousName = (string(varRefExp->get_symbol()->get_name()).substr(0,14) == "__anonymous_0x");
-#if 0
-                    printf ("In isDotExprWithAnonymousUnion(): (hidden in SgBinaryOp): dotExp = %p isAnonymousName = %s \n",dotExp,isAnonymousName ? "true" : "false");
-#endif
                    returnValue = isAnonymousName;
                   }
              }
@@ -6205,9 +5908,6 @@ UnparseLanguageIndependentConstructs::isDotExprWithAnonymousUnion(SgExpression* 
                if (varRefExp != NULL)
                   {
                     bool isAnonymousName = (string(varRefExp->get_symbol()->get_name()).substr(0,14) == "__anonymous_0x");
-#if 0
-                    printf ("In isDotExprWithAnonymousUnion(): (hidden directly in the lhs operand): dotExp = %p isAnonymousName = %s \n",dotExp,isAnonymousName ? "true" : "false");
-#endif
                     returnValue = isAnonymousName;
                   }
              }
@@ -7298,27 +6998,12 @@ UnparseLanguageIndependentConstructs::isRequiredOperator( SgBinaryOp* binary_op,
 void
 UnparseLanguageIndependentConstructs::unparseValue(SgExpression* expr, SgUnparse_Info& info)
    {
-  // DQ (11/9/2005): refactored handling of expression trees stemming from the folding of constants.
      SgValueExp* valueExp = isSgValueExp(expr);
-
-  // DQ (9/11/2011): Added error checking pointed out from static analysis.
      ASSERT_not_null(valueExp);
-
-#if 0
-     printf ("Inside of unparseValue = %p \n",valueExp);
-     valueExp->get_file_info()->display("unparseValue");
-#endif
 
      SgExpression* expressionTree = valueExp->get_originalExpressionTree();
      if (expressionTree != NULL && info.SkipConstantFoldedExpressions() == false)
         {
-#if 0
-          printf ("Found and expression tree representing a constant generated via constant folding \n");
-#endif
-#if 0
-          curprint ( "\n/* Found and expression tree representing a constant generated via constant folding */\n ");
-#endif
-       // unparseExpression(expressionTree,info);
           switch (valueExp->variantT())
              {
             // Handle enums so that they will be unparsed as "enum name" instead of as integers
@@ -7340,11 +7025,8 @@ UnparseLanguageIndependentConstructs::unparseValue(SgExpression* expr, SgUnparse
                case V_SgShortVal:               { unparseShortVal(expr, info);        break; }
                case V_SgUnsignedCharVal:        { unparseUCharVal(expr, info);        break; }
                case V_SgWcharVal:               { unparseWCharVal(expr, info);        break; }
-
-            // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
                case V_SgChar16Val:              { unparseChar16Val(expr, info);       break; }
                case V_SgChar32Val:              { unparseChar32Val(expr, info);       break; }
-
                case V_SgStringVal:              { unparseStringVal(expr, info);       break; }
                case V_SgUnsignedShortVal:       { unparseUShortVal(expr, info);       break; }
                case V_SgEnumVal:                { unparseEnumVal(expr, info);         break; }
@@ -7358,8 +7040,6 @@ UnparseLanguageIndependentConstructs::unparseValue(SgExpression* expr, SgUnparse
                case V_SgDoubleVal:              { unparseDoubleVal(expr, info);       break; }
                case V_SgLongDoubleVal:          { unparseLongDoubleVal(expr, info);   break; }
                case V_SgComplexVal:             { unparseComplexVal(expr, info);      break; }
-
-            // DQ (7/31/2014): Adding support for C++11 nullptr const value expressions.
                case V_SgNullptrValExp:          { unparseNullptrVal(expr, info);      break; }
 
                default:
@@ -7373,21 +7053,11 @@ UnparseLanguageIndependentConstructs::unparseValue(SgExpression* expr, SgUnparse
    }
 
 
-// DQ (7/31/2014): Adding support for C++11 nullptr const value expressions.
 void
 UnparseLanguageIndependentConstructs::unparseNullptrVal (SgExpression* expr, SgUnparse_Info& info)
    {
      ASSERT_not_null(expr);
-#if 0
-     printf ("In UnparseLanguageIndependentConstructs::unparseNullptrVal(): expr = %p = %s \n",expr,expr->class_name().c_str());
-#endif
-
      curprint("nullptr");
-
-#if 0
-     printf ("Exiting as a test! \n");
-     ROSE_ABORT();
-#endif
    }
 
 
@@ -7402,44 +7072,18 @@ UnparseLanguageIndependentConstructs::unparseBoolVal(SgExpression* expr, SgUnpar
      bool C_language_support = false;
      SgFile* file = TransformationSupport::getFile(expr);
 
-#if 0
-     printf ("In unparseBoolVal(): resolving file to be %p \n",file);
-#endif
-
      if (file == NULL)
         {
        // DQ (9/15/2012): We have added a mechanism for the language to be specified directly.
        // C_language_support = true;
           if (info.get_language() != SgFile::e_default_language)
              {
-#if 0
-               printf ("In unparseBoolVal(): The output language has been specified directly info.get_language() = %d \n");
-#endif
                C_language_support = (info.get_language() == SgFile::e_C_language);
              }
             else
              {
                C_language_support = true;
              }
-#if 0
-          printf ("Warning: getting the SgFile from SgBoolValExp() expr = %p (trace back to SgFile failed, assuming C language support) \n",expr);
-          ASSERT_not_null(expr->get_file_info());
-          expr->get_file_info()->display("location of problem bool expression");
-          ASSERT_not_null(expr->get_parent());
-          printf ("expr->get_parent() = %p = %s \n",expr->get_parent(),expr->get_parent()->class_name().c_str());
-          SgTemplateArgument* templateArgument = isSgTemplateArgument(expr->get_parent());
-          if (templateArgument != NULL)
-             {
-               printf ("templateArgument->get_type()                  = %p \n",templateArgument->get_type());
-               printf ("templateArgument->get_expression()            = %p \n",templateArgument->get_expression());
-            // printf ("templateArgument->get_templateInstantiation() = %p \n",templateArgument->get_templateInstantiation());
-             }
-            else
-             {
-               ASSERT_not_null(expr->get_parent()->get_file_info());
-               expr->get_parent()->get_file_info()->display("location of problem bool expression (parent)");
-             }
-#endif
         }
        else
         {
@@ -7468,7 +7112,6 @@ UnparseLanguageIndependentConstructs::unparseBoolVal(SgExpression* expr, SgUnpar
 
        // print them as "true" or "false"
        // DQ (11/29/2009): get_value() returns an "int" and MSVC issues a warning for mixed type predicates.
-       // if (bool_val->get_value() == true)
           if (bool_val->get_value() != 0)
              {
                curprint("true");
@@ -7486,8 +7129,6 @@ UnparseLanguageIndependentConstructs::unparseShortVal(SgExpression* expr, SgUnpa
      SgShortVal* short_val = isSgShortVal(expr);
      ASSERT_not_null(short_val);
 
-  // DQ (8/30/2006): Make change suggested by Rama (patch)
-  // curprint ( short_val->get_value();
      if (short_val->get_valueString() == "")
         {
           curprint ( tostring(short_val->get_value()));
@@ -7924,18 +7565,6 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
                curprint(tostring(enum_val->get_value()));
              }
         }
-
-#if DEBUG_UNPARSE_ENUM_VAL
-     printf ("Leaving Unparse_ExprStmt::unparseEnumVal: info.inEnumDecl() = %s \n",info.inEnumDecl() ? "true" : "false");
-#endif
-#if 0
-     curprint("\n/* Leaving Unparse_ExprStmt::unparseEnumVal() */\n");
-#endif
-
-#if 0
-     printf ("Exiting as a test! \n");
-     ROSE_ABORT();
-#endif
    }
 
 
@@ -7945,11 +7574,6 @@ UnparseLanguageIndependentConstructs::unparseIntVal(SgExpression* expr, SgUnpars
      SgIntVal* int_val = isSgIntVal(expr);
      ASSERT_not_null(int_val);
 
-  // printf ("In Unparse_ExprStmt::unparseIntVal(): int_val->get_value() = %d \n",int_val->get_value());
-  // curprint ( int_val->get_value();
-  // curprint ( int_val->get_valueString();
-
-  // DQ (8/30/2006): Make change suggested by Rama (patch)
      if (int_val->get_valueString() == "")
         {
           curprint(tostring(int_val->get_value()));
@@ -7967,11 +7591,6 @@ UnparseLanguageIndependentConstructs::unparseUIntVal(SgExpression* expr, SgUnpar
      SgUnsignedIntVal* uint_val = isSgUnsignedIntVal(expr);
      ASSERT_not_null(uint_val);
 
-  // curprint ( uint_val->get_value();
-  // DQ (7/20/2006): Bug reported by Yarden, see test2006_94.C for where this is important (e.g. evaluation of "if (INT_MAX + 1U > 0)").
-  // curprint ( "U";
-
-  // DQ (8/30/2006): Make change suggested by Rama (patch)
      if (uint_val->get_valueString() == "")
         {
           curprint(tostring(uint_val->get_value()));
@@ -7988,11 +7607,6 @@ UnparseLanguageIndependentConstructs::unparseLongIntVal(SgExpression* expr, SgUn
      SgLongIntVal* longint_val = isSgLongIntVal(expr);
      ASSERT_not_null(longint_val);
 
-  // curprint ( longint_val->get_value();
-  // DQ (7/20/2006): Bug reported by Yarden, see test2006_94.C for where this is important (e.g. evaluation of "if (INT_MAX + 1U > 0)").
-  // curprint ( "L";
-
-  // DQ (8/30/2006): Make change suggested by Rama (patch)
      if (longint_val->get_valueString() == "")
         {
           curprint(tostring(longint_val->get_value()));
@@ -8009,11 +7623,6 @@ UnparseLanguageIndependentConstructs::unparseLongLongIntVal(SgExpression* expr, 
      SgLongLongIntVal* longlongint_val = isSgLongLongIntVal(expr);
      ASSERT_not_null(longlongint_val);
 
-  // curprint ( longlongint_val->get_value();
-  // DQ (7/20/2006): Bug reported by Yarden, see test2006_94.C for where this is important (e.g. evaluation of "if (INT_MAX + 1U > 0)").
-  // curprint ( "LL";
-
-  // DQ (8/30/2006): Make change suggested by Rama (patch)
      if (longlongint_val->get_valueString() == "")
         {
           curprint(tostring(longlongint_val->get_value()));
@@ -8030,11 +7639,6 @@ UnparseLanguageIndependentConstructs::unparseULongLongIntVal(SgExpression* expr,
      SgUnsignedLongLongIntVal* ulonglongint_val = isSgUnsignedLongLongIntVal(expr);
      ASSERT_not_null(ulonglongint_val);
 
-  // curprint ( ulonglongint_val->get_value();
-  // DQ (7/20/2006): Bug reported by Yarden, see test2006_94.C for where this is important (e.g. evaluation of "if (INT_MAX + 1U > 0)").
-  // curprint ( "ULL";
-
-  // DQ (8/30/2006): Make change suggested by Rama (patch)
      if (ulonglongint_val->get_valueString() == "")
         {
           curprint(tostring(ulonglongint_val->get_value()));
@@ -8051,11 +7655,6 @@ UnparseLanguageIndependentConstructs::unparseULongIntVal(SgExpression* expr, SgU
      SgUnsignedLongVal* ulongint_val = isSgUnsignedLongVal(expr);
      ASSERT_not_null(ulongint_val);
 
-  // curprint ( ulongint_val->get_value();
-  // DQ (7/20/2006): Bug reported by Yarden, see test2006_94.C for where this is important (e.g. evaluation of "if (INT_MAX + 1U > 0)").
-  // curprint ( "UL";
-
-  // DQ (8/30/2006): Make change suggested by Rama (patch)
      if (ulongint_val->get_valueString() == "")
         {
           curprint(tostring(ulongint_val->get_value()));
@@ -8072,32 +7671,12 @@ UnparseLanguageIndependentConstructs::unparseFloatVal(SgExpression* expr, SgUnpa
      SgFloatVal* float_val = isSgFloatVal(expr);
      ASSERT_not_null(float_val);
 
-#if 0
-     printf ("Inside of unparseFloatVal = %p \n",float_val);
-     float_val->get_file_info()->display("unparseFloatVal");
-#endif
 
   // DQ (10/18/2005): Need to handle C code which cannot use C++ mechanism to specify
   // infinity, quiet NaN, and signaling NaN values.  Note that we can't use the C++
   // interface since the input program, and thus the generated code, might not have
   // included the "limits" header file.
      float float_value = float_val->get_value();
-#if 0
-     if (SageInterface::is_C_language() == true)
-        {
-          if (float_val->get_valueString() == "")
-             {
-               curprint(tostring(float_val->get_value()));
-             }
-            else
-             {
-               curprint(float_val->get_valueString());
-             }
-        }
-       else
-        {
-        }
-#endif
 
      if (float_value == std::numeric_limits<float>::infinity())
         {
@@ -10600,7 +10179,6 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
           return false;
         }
 
-#if 1
     // Liao, 8/27/2008, bug 229
     // A nasty workaround since set_need_paren() has no definite effect
     // SgExprListExp-> SgAssignInitializer -> SgFunctionCallExp:
@@ -10618,7 +10196,6 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
                return false;
              }
         }
-#endif
 
   // TV (04/24/11): As compiler generated cast are not unparsed they don't need additional parenthesis.
      if (isSgCastExp(expr) && expr->get_startOfConstruct()->isCompilerGenerated())

@@ -1482,46 +1482,22 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 void
 SgFile::runFrontend(int & nextErrorCode)
 {
-  // DQ (6/13/2013):  This function supports the seperation of the construction of the SgFile IR nodes from the
+  // DQ (6/13/2013):  This function supports the separation of the construction of the SgFile IR nodes from the
   // invocation of the frontend on each SgFile IR node.
 
-#if 0
-     printf ("************************ \n");
-     printf ("In SgFile::runFrontend() \n");
-     printf ("************************ \n");
-#endif
-
-#if 0
-  // Output state of the SgFile.
-     display("In runFrontend()");
-#endif
-
-  // DQ (11/4/2015): Added assertion.
      ASSERT_not_null(this);
-
-  // DQ (6/13/2013): Added to support error checking (seperation of construction of SgFile IR nodes from calling the fronend on each one).
-     ROSE_ASSERT(get_parent() != NULL);
-
-  // DQ (6/13/2013): This is wrong, the parent of the SgFile is the SgFileList IR node.
-  // ROSE_ASSERT(isSgProject(get_parent()) != NULL);
-
-  // DQ (6/12/2013): This is the functionality that we need to separate out and run after all
-  // of the SgSourceFile IR nodes are constructed.
+     ASSERT_not_null(get_parent());
 
   // The frontend is called explicitly outside the constructor since that allows for a cleaner
   // control flow. The callFrontEnd() relies on all the "set_" flags to be already called therefore
   // it was placed here.
-  // if ( isSgUnknownFile(file) == NULL && file != NULL  )
+     if ( isSgUnknownFile(this) == nullptr )
+     {
+         nextErrorCode = this->callFrontEnd();
+         this->set_frontendErrorCode(nextErrorCode);
+     }
 
-  // DQ (3/25/2017): The NULL check is done above and Clang reports it as a warning that we want to remove.
-  // if ( this != NULL && isSgUnknownFile(this) == NULL )
-    if ( isSgUnknownFile(this) == nullptr )
-    {
-        nextErrorCode = this->callFrontEnd();
-        this->set_frontendErrorCode(nextErrorCode);
-    }
-
-    ROSE_ASSERT(nextErrorCode <= 3);
+     ASSERT_require(nextErrorCode <= 3);
 }
 
 
@@ -2645,32 +2621,19 @@ extern int x10_main(int argc, char** argv);
 int
 SgFile::callFrontEnd()
    {
+  // This function processes the command line and calls the EDG frontend.
+     int frontendErrorLevel = 0;
+     int fileNameIndex = 0;
+
      if (SgProject::get_verbose() > 0)
         {
           std::cout << "[INFO] [SgFile::callFrontEnd]" << std::endl;
         }
 
-  // DQ (1/17/2006): test this
-  // ROSE_ASSERT(get_fileInfo() != NULL);
-
-     int fileNameIndex = 0;
-
-  // DQ (4/21/2006): I think we can now assert this!
-     ROSE_ASSERT(fileNameIndex == 0);
-
-  // DQ (7/6/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST Front End Processing (SgFile):");
-
-  // This function processes the command line and calls the EDG frontend.
-     int frontendErrorLevel = 0;
 
   // Build an argc,argv based C style commandline (we might not really need this)
      vector<string> argv = get_originalCommandLineArgumentList();
-
-#if 0
-     printf ("get_C_only()   = %s \n",get_C_only() ? "true" : "false");
-     printf ("get_Cxx_only() = %s \n",get_Cxx_only() ? "true" : "false");
-#endif
 
 #if ROSE_INTERNAL_DEBUG
      if (ROSE_DEBUG > 9)
@@ -2682,57 +2645,26 @@ SgFile::callFrontEnd()
         }
 #endif
 
-  // printf ("Inside of SgFile::callFrontEnd(): fileNameIndex = %d \n",fileNameIndex);
-
   // Save this so that it can be used in the template instantiation phase later.
   // This file is later written into the *.ti file so that the compilation can
   // be repeated as required to instantiate all function templates.
      std::string translatorCommandLineString = CommandlineProcessing::generateStringFromArgList(argv,false,true);
-#if 0
-     printf ("translatorCommandLineString = %s \n",translatorCommandLineString.c_str());
-#endif
      set_savedFrontendCommandLine(translatorCommandLineString);
-
-  // display("At TOP of SgFile::callFrontEnd()");
 
   // local copies of argc and argv variables
   // The purpose of building local copies is to avoid
   // the modification of the command line by SLA
      vector<string> localCopy_argv = argv;
-  // printf ("DONE with copy of command line! \n");
-#if 0
-     std::string tmp2_translatorCommandLineString = CommandlineProcessing::generateStringFromArgList(localCopy_argv,false,true);
-     printf ("tmp2_translatorCommandLineString = %s \n",tmp2_translatorCommandLineString.c_str());
-#endif
+
   // Process command line options specific to ROSE
   // This leaves all filenames and non-rose specific option in the argv list
      processRoseCommandLineOptions (localCopy_argv);
-#if 0
-     printf ("After processRoseCommandLineOptions(): get_C_only()   = %s \n",get_C_only() ? "true" : "false");
-     printf ("After processRoseCommandLineOptions(): get_Cxx_only() = %s \n",get_Cxx_only() ? "true" : "false");
-#endif
+
   // DQ (6/21/2005): Process template specific options so that we can generated
   // code for the backend compiler (this processing is backend specific).
      processBackendSpecificCommandLineOptions (localCopy_argv);
-#if 0
-     printf ("After processBackendSpecificCommandLineOptions(): get_C_only()   = %s \n",get_C_only() ? "true" : "false");
-     printf ("After processBackendSpecificCommandLineOptions(): get_Cxx_only() = %s \n",get_Cxx_only() ? "true" : "false");
-#endif
-#if 0
-     std::string tmp4_translatorCommandLineString = CommandlineProcessing::generateStringFromArgList(localCopy_argv,false,true);
-     printf ("tmp4_translatorCommandLineString = %s \n",tmp4_translatorCommandLineString.c_str());
-#endif
-  // display("AFTER processRoseCommandLineOptions in SgFile::callFrontEnd()");
 
-  // Use ROSE buildCommandLine() function
-  // int numberOfCommandLineArguments = 24;
-  // char** inputCommandLine = new char* [numberOfCommandLineArguments];
-  // ROSE_ASSERT (inputCommandLine != NULL);
      vector<string> inputCommandLine;
-
-#if 0
-     printf ("Inside of SgFile::callFrontEnd(): Calling build_EDG_CommandLine (fileNameIndex = %d) \n",fileNameIndex);
-#endif
 
   // Build the commandline for EDG
      if (get_C_only() || get_Cxx_only() || get_Cuda_only() || get_OpenCL_only() )
@@ -2748,26 +2680,14 @@ SgFile::callFrontEnd()
 #endif
 
 #ifndef ROSE_USE_CLANG_FRONTEND
-       // printf ("Calling build_EDG_CommandLine() \n");
           build_EDG_CommandLine (inputCommandLine,localCopy_argv,fileNameIndex );
 #else
           build_CLANG_CommandLine (inputCommandLine,localCopy_argv,fileNameIndex );
 #endif
         }
-       else
-        {
-#if 0
-          printf ("Failed to call build_EDG_CommandLine() (not a C, C++, Cuda, or OpenCL program) \n");
-#endif
-        }
 
-#if 0
-     printf ("DONE: Inside of SgFile::callFrontEnd(): Calling build_EDG_CommandLine (fileNameIndex = %d) \n",fileNameIndex);
-#endif
      std::string tmp_translatorCommandLineString = CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,true);
-#if 0
-     printf ("tmp_translatorCommandLineString = %s \n",tmp_translatorCommandLineString.c_str());
-#endif
+
 
   // DQ (10/15/2005): This is now a single C++ string (and not a list)
   // Make sure the list of file names is allocated, even if there are no file names in the list.
@@ -2775,14 +2695,9 @@ SgFile::callFrontEnd()
   // ROSE_ASSERT (get_sourceFileNamesWithoutPath() != NULL);
   // ROSE_ASSERT (get_sourceFileNameWithoutPath().empty() == false);
 
-  // display("AFTER build_EDG_CommandLine in SgFile::callFrontEnd()");
-
   // Exit if we are to ONLY call the vendor's backend compiler
      if (p_useBackendOnly == true)
         {
-#if 0
-          printf ("############## Exit because we are to ONLY call the vendor's backend compiler \n");
-#endif
           return 0;
         }
 

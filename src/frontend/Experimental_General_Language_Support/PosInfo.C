@@ -5,9 +5,9 @@ namespace Rose {
 namespace builder {
 
 PosInfo::PosInfo(SgLocatedNode* fromNode) {
-  ROSE_ASSERT(fromNode != NULL);
-  ROSE_ASSERT(fromNode->get_startOfConstruct() != NULL);
-  ROSE_ASSERT(fromNode->get_endOfConstruct()   != NULL);
+  ASSERT_not_null(fromNode);
+  ASSERT_not_null(fromNode->get_startOfConstruct());
+  ASSERT_not_null(fromNode->get_endOfConstruct());
 
   startLine_ = fromNode->get_startOfConstruct()->get_line();
   startCol_  = fromNode->get_startOfConstruct()->get_col();
