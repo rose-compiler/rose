@@ -6,7 +6,6 @@
 #include <iostream>
 
 #define PRINT_ATERM_TRAVERSAL 0
-#define PRINT_SOURCE_POSITION 0
 #define PRINT_WARNINGS 1
 
 using namespace ATermSupport;
@@ -22,9 +21,6 @@ namespace RB = Rose::builder;
 void
 ATermToSageJovialTraversal::setSourcePosition(SgLocatedNode* node, ATerm term, bool attach_comments)
 {
-#if PRINT_SOURCE_POSITION
-  std::cout << "Setting source position for " << node->class_name() << ": " << getLocation(term) << " :" << node << "\n";
-#endif
   // Set source position as normal
   ATermTraversal::setSourcePosition(node, term);
   // and attach comments if they exist
@@ -1508,12 +1504,12 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
 // from the table body. See description in comment #3 above as to why this is required.
    if (table_needs_body) {
      // There should not be a preset because it is read with the table body
-     ROSE_ASSERT(preset == nullptr);
+     ASSERT_require(preset == nullptr);
      ASSERT_not_null(table_decl);
      ASSERT_not_null(var_decl);
 
      // Insert the table members and get the preset
-     ROSE_ASSERT( traverse_TableDescriptionBody(t_table_desc, table_decl, preset, table_spec) );
+     ASSERT_require( traverse_TableDescriptionBody(t_table_desc, table_decl, preset, table_spec) );
 
      // If there is a preset, an initializer must be set now because it wasn't possible when
      // the variable was declared.
@@ -2858,11 +2854,9 @@ ATbool ATermToSageJovialTraversal::traverse_TablePreset(ATerm term, SgExpression
       // MATCHED no-table-preset
    }
    else if (ATmatch(term, "TablePreset(<term>)", &t_preset_list)) {
-
       SgExprListExp* preset_list = SageBuilder::buildExprListExp_nfi();
       SgJovialTablePresetExp* table_preset = new SgJovialTablePresetExp(preset_list);
       ASSERT_not_null(table_preset);
-      setSourcePosition(table_preset, term);
 
       preset = table_preset;
 
@@ -2903,6 +2897,9 @@ ATbool ATermToSageJovialTraversal::traverse_TablePresetList(ATerm term, SgJovial
       }
    }
    else return ATfalse;
+
+   // Wait to set the source position until the entire preset list has been processed
+   setSourcePosition(table_preset, term, /*attach_comments*/true);
 
    return ATtrue;
 }

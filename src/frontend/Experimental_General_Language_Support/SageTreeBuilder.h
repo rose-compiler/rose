@@ -285,6 +285,7 @@ public:
    void attachComments(SgLocatedNode* node, const PosInfo &pos, bool at_end=false);
    void attachComments(SgLocatedNode* node, const std::vector<Token> &tokens, bool at_end=false);
    void attachComments(SgLocatedNode* node, std::vector<Token> &tokens, const PosInfo &pos);
+   void attachComments(SgExpressionPtrList const &list);
    void attachRemainingComments(SgLocatedNode* node);
    void consumePrecedingComments(std::vector<Token> &tokens, const PosInfo &pos);
    void setSourcePosition(SgLocatedNode* node, const SourcePosition &start, const SourcePosition &end);

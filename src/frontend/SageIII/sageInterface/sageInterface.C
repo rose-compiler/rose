@@ -15829,7 +15829,7 @@ PreprocessingInfo* SageInterface::attachComment(
            PreprocessingInfo::RelativePositionType  position /*=PreprocessingInfo::before*/,
            PreprocessingInfo::DirectiveType dtype /* PreprocessingInfo::CpreprocessorUnknownDeclaration */)
    {
-     ROSE_ASSERT(target); //dangling comment is not allowed
+     ASSERT_not_null(target); //dangling comment is not allowed
 
      PreprocessingInfo* result = NULL;
      PreprocessingInfo::DirectiveType mytype=dtype;
@@ -15918,7 +15918,7 @@ PreprocessingInfo* SageInterface::attachComment(
           result->get_file_info()->setTransformation();
         }
 
-     ROSE_ASSERT(result);
+     ASSERT_not_null(result);
      target->addToAttachedPreprocessingInfo(result);
      return result;
    }

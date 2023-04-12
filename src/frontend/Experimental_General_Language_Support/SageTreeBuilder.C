@@ -8,8 +8,7 @@
 #include <boost/optional/optional_io.hpp>
 #include <iostream>
 
-#define PRINT_WARNINGS 0
-#define PRINT_ATTACH_COMMENT 0
+constexpr bool TRACE_ATTACH_COMMENT = false;
 
 namespace Rose {
 namespace builder {
@@ -28,14 +27,14 @@ SgGlobal* initialize_global_scope(SgSourceFile* file)
     SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionFrontendConstruction);
 
     SgGlobal* globalScope = file->get_globalScope();
-    ROSE_ASSERT(globalScope);
-    ROSE_ASSERT(globalScope->get_parent());
+    ASSERT_not_null(globalScope);
+    ASSERT_not_null(globalScope->get_parent());
 
  // Fortran and Jovial are case insensitive
     globalScope->setCaseInsensitive(true);
 
-    ROSE_ASSERT(globalScope->get_endOfConstruct());
-    ROSE_ASSERT(globalScope->get_startOfConstruct());
+    ASSERT_not_null(globalScope->get_endOfConstruct());
+    ASSERT_not_null(globalScope->get_startOfConstruct());
 
  // Not sure why this isn't set at construction
     globalScope->get_startOfConstruct()->set_line(1);
@@ -49,12 +48,28 @@ SgGlobal* initialize_global_scope(SgSourceFile* file)
 void
 SageTreeBuilder::attachComments(SgLocatedNode* node, bool at_end)
 {
-  auto start = node->get_startOfConstruct();
-  auto end = node->get_endOfConstruct();
+  PosInfo pos{node};
+  attachComments(node, pos, at_end);
+}
 
-  if (start && end) {
-    PosInfo pos{node};
-    attachComments(node, pos, at_end);
+void
+SageTreeBuilder::attachComments(SgExpressionPtrList const &list)
+{
+  auto jovialStyle{PreprocessingInfo::JovialStyleComment};
+
+  for (auto expr : list) {
+    PosInfo exprPos{expr};
+    auto commentToken = tokens_->getNextToken();
+
+    // May have problems with multi-line expressions, currently biased to comments following the expression
+    if (commentToken && exprPos.getEndLine() == commentToken->getStartLine()) {
+      auto commentPosition = PreprocessingInfo::after;
+      if (exprPos.getStartCol() >= commentToken->getEndCol()) {
+        commentPosition = PreprocessingInfo::before;
+      }
+      SI::attachComment(expr, commentToken->getLexeme(), commentPosition, jovialStyle);
+      tokens_->consumeNextToken();
+    }
   }
 }
 
@@ -75,15 +90,15 @@ SageTreeBuilder::attachComments(SgLocatedNode* node, const PosInfo &pos, bool at
 
     while ((token = tokens_->getNextToken()) && token->getStartLine() <= pos.getEndLine()) {
       if (last && token->getEndLine() < pos.getEndLine()) {
-#if PRINT_ATTACH_COMMENT
-std::cout << "---> attach end comment to last stmt: " << last->class_name() << ": " << token << "\n";
-#endif
+        if (TRACE_ATTACH_COMMENT) {
+          std::cout << "---> attach end comment to last stmt: " << last->class_name() << ": " << token << "\n";
+        }
         SI::attachComment(last, token->getLexeme(), PreprocessingInfo::after, jovialStyle);
       }
       else {
-#if PRINT_ATTACH_COMMENT
-std::cout << "---> attach end_of comment to: " << node->class_name() << ": " << token << "\n";
-#endif
+        if (TRACE_ATTACH_COMMENT) {
+          std::cout << "---> attach end_of comment to: " << node->class_name() << ": " << token << "\n";
+        }
         SI::attachComment(node, token->getLexeme(), PreprocessingInfo::end_of, jovialStyle);
       }
       tokens_->consumeNextToken();
@@ -95,9 +110,9 @@ std::cout << "---> attach end_of comment to: " << node->class_name() << ": " << 
     boost::optional<const Token&> token{};
     // Comments before scoping unit
     while ((token = tokens_->getNextToken()) && token->getStartLine() < pos.getStartLine()) {
-#if PRINT_ATTACH_COMMENT
-      std::cout << "---> attach comment before scoping unit: " << token << std::endl;
-#endif
+      if (TRACE_ATTACH_COMMENT) {
+        std::cout << "---> attach comment before scoping unit: " << token << std::endl;
+      }
       SI::attachComment(node, token->getLexeme(), PreprocessingInfo::before, jovialStyle);
       tokens_->consumeNextToken();
     }
@@ -126,10 +141,10 @@ std::cout << "---> attach end_of comment to: " << node->class_name() << ": " << 
             }
           }
         }
-#if PRINT_ATTACH_COMMENT
-        std::cout << "---> attach comment for: " << commentNode->class_name() << ": "
-                  << token << ": " << commentPosition << "\n";
-#endif
+        if (TRACE_ATTACH_COMMENT) {
+          std::cout << "---> attach comment for: " << commentNode->class_name() << ": "
+                    << token << ": " << commentPosition << "\n";
+        }
         SI::attachComment(commentNode, token->getLexeme(), commentPosition, jovialStyle);
       }
       tokens_->consumeNextToken();
@@ -144,19 +159,25 @@ std::cout << "---> attach end_of comment to: " << node->class_name() << ": " << 
         if (token->getEndCol() == pos.getStartCol()) {
           commentPosition = PreprocessingInfo::after;
         }
-#if PRINT_ATTACH_COMMENT
-        std::cout << "---> attach comment for: " << expr->class_name() << ": " << token << "\n";
-#endif
+        if (TRACE_ATTACH_COMMENT) {
+          std::cout << "---> attach comment for: " << expr->class_name() << ": " << token << "\n";
+        }
         SI::attachComment(expr, token->getLexeme(), commentPosition, jovialStyle);
       }
       tokens_->consumeNextToken();
     }
   }
+
+  else if (isSgJovialTablePresetExp(node)) {
+    auto exprList = isSgJovialTablePresetExp(node)->get_preset_list()->get_expressions();
+    attachComments(exprList);
+  }
+
   else {
     // Additional expressions?
-#if 0
-    std::cout << "SageTreeBuilder::attachComment: WARNING, not adding node " << node->class_name() << std::endl;
-#endif
+    if (TRACE_ATTACH_COMMENT) {
+      std::cout << "SageTreeBuilder::attachComment: WARNING, not adding node " << node->class_name() << std::endl;
+    }
   }
 }
 
@@ -169,9 +190,9 @@ SageTreeBuilder::attachComments(SgLocatedNode* node, const std::vector<Token> &t
   }
 
   for (auto token : tokens) {
-#if PRINT_ATTACH_COMMENT
-    std::cout << "---> attach comment to: " << node->class_name() << ": " << token << ": pos: " << commentPosition << "\n";
-#endif
+    if (TRACE_ATTACH_COMMENT) {
+      std::cout << "---> attach comment to: " << node->class_name() << ": " << token << ": pos: " << commentPosition << "\n";
+    }
     SI::attachComment(node, token.getLexeme(), commentPosition, PreprocessingInfo::JovialStyleComment);
   }
 }
@@ -182,9 +203,9 @@ SageTreeBuilder::attachComments(SgLocatedNode* node, std::vector<Token> &tokens,
   int count{0};
   for (auto token : tokens) {
     if (token.getStartLine() <= pos.getStartLine()) {
-#if PRINT_ATTACH_COMMENT
-      std::cout << "---> attach comment for: " << node->class_name() << ": " << token << "\n";
-#endif
+      if (TRACE_ATTACH_COMMENT) {
+        std::cout << "---> attach comment for: " << node->class_name() << ": " << token << "\n";
+      }
       SI::attachComment(node, token.getLexeme(), PreprocessingInfo::before, PreprocessingInfo::JovialStyleComment);
       count += 1;
     }
@@ -197,9 +218,9 @@ void
 SageTreeBuilder::attachRemainingComments(SgLocatedNode* node) {
   boost::optional<const Token&> token{};
   while ((token = tokens_->getNextToken())) {
-#if PRINT_ATTACH_COMMENT
-    std::cout << "---> attach comment for: " << node->class_name() << ": " << token << "\n";
-#endif
+    if (TRACE_ATTACH_COMMENT) {
+      std::cout << "---> attach comment for: " << node->class_name() << ": " << token << "\n";
+    }
     SI::attachComment(node, token->getLexeme(), PreprocessingInfo::after, PreprocessingInfo::JovialStyleComment);
     tokens_->consumeNextToken();
   }
