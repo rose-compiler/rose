@@ -25,6 +25,11 @@ namespace Ada_ROSE_Translation
 static constexpr bool LOG_FLAW_AS_ERROR = true;
 
 //
+// debugging
+
+struct AdaDbgTraversalExit {};
+
+//
 // logging
 
 extern Sawyer::Message::Facility mlog;
@@ -205,6 +210,9 @@ std::map<InheritedSymbolKey, SgAdaInheritedFunctionSymbol*>& inheritedSymbols();
 ///   maps stores information about explicitly or implicitly defined operators on a principal type.
 ///     a type may have multiple operators with the same name (e.g., "&"(string, char), "&"(string, string))
 map_t<OperatorKey, std::vector<OperatorDesc> >& operatorSupport();
+
+/// stores all expressions that were generated were operator declarations were expected
+std::vector<SgExpression*>& operatorExprs();
 
 
 //
@@ -676,21 +684,25 @@ namespace
   FnT
   traverseIDs(PtrT first, PtrT limit, AsisMapT& map, FnT func)
   {
-    while (first != limit)
+    try
     {
-      if (ElemT* el = retrieveAsOpt(map, *first))
+      while (first != limit)
       {
-        func(*el);
-      }
-      else
-      {
-        logWarn() << "asis-element of type " << typeid(ElemT).name()
-                  << " not available -- asismap[" << *first << "]=nullptr"
-                  << std::endl;
-      }
+        if (ElemT* el = retrieveAsOpt(map, *first))
+        {
+          func(*el);
+        }
+        else
+        {
+          logWarn() << "asis-element of type " << typeid(ElemT).name()
+                    << " not available -- asismap[" << *first << "]=nullptr"
+                    << std::endl;
+        }
 
-      ++first;
+        ++first;
+      }
     }
+    catch (const AdaDbgTraversalExit&) {}
 
     return func;
   }
