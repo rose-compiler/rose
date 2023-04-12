@@ -792,7 +792,7 @@ namespace Ada
 
   SgAdaGenericDecl& getGenericDecl(const SgAdaGenericInstanceDecl& n)
   {
-    return getRenamedGenericDecl(n.get_declaration());
+    return getRenamedGenericDecl(n.get_genericDeclaration());
   }
 
   SgAdaGenericDecl* getGenericDecl(const SgAdaGenericInstanceDecl* n)
@@ -2620,6 +2620,11 @@ namespace
       ASSERT_not_null(tydcl);
 
       res = tydcl->get_base_type();
+    }
+
+    void handle(const SgAdaFormalType& n)
+    {
+      res = n.get_formal_type();
     }
 
     void handle(const SgAdaDiscriminatedType& n)

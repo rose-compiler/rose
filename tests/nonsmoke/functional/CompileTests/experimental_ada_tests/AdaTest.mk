@@ -198,6 +198,8 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   fixed_point_definition.ads           \
   generic_package_renaming_declaration.adb          \
   genex.adb                            \
+  genops1.adb                          \
+  genops2.adb                          \
   gentask.ads                          \
   gentask.adb                          \
   gentask-share.adb                    \

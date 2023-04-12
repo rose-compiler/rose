@@ -2848,21 +2848,18 @@ Grammar::setUpStatements ()
      AdaGenericInstanceDecl.setFunctionPrototype ( "HEADER_ADA_GENERIC_INSTANCE_DECL", "../Grammar/Statement.code" );
      AdaGenericInstanceDecl.setDataPrototype ( "SgName", "name", "=\"\"",
                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     // PP (2/2/22) weakend type to SgDeclarationStatement to account for renamed generics
-     // was: AdaGenericInstanceDecl.setDataPrototype ( "SgAdaGenericDecl*", "declaration", "= NULL",
-     AdaGenericInstanceDecl.setDataPrototype ( "SgDeclarationStatement*", "declaration", "= nullptr",
+     // PP (4/7/23) type is SgDeclarationStatement (and not SgAdaGenericDecl) to allow for renamed generics
+     AdaGenericInstanceDecl.setDataPrototype ( "SgDeclarationStatement*", "genericDeclaration", "= nullptr",
                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      // PP (4/1/22): adding scope to store actual instantiation
      //              \todo specify which scope it will be..
      AdaGenericInstanceDecl.setDataPrototype ( "SgScopeStatement*", "instantiatedScope", "= nullptr",
-                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     // PP (4/1/22): return_type is not used currently
-     //~ AdaGenericInstanceDecl.setDataPrototype ( "SgType*", "return_type", "= NULL",
-                                               //~ CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AdaGenericInstanceDecl.setDataPrototype ( "SgExprListExp*", "actual_parameters", "= NULL",
-                                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AdaGenericInstanceDecl.setDataPrototype ( "SgScopeStatement*", "scope", "= nullptr",
-                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     // PP (4/7/23): \todo consider storing the instantiated declaration as convenience link
 
 
      // tasks
@@ -2881,6 +2878,9 @@ Grammar::setUpStatements ()
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AdaTaskTypeDecl.setDataPrototype ( "SgAdaTaskType*", "type", "= nullptr",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaTaskTypeDecl.setDataPrototype ( "SgScopeStatement*", "scope", "= NULL",
+                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
 
      AdaTaskBodyDecl.setFunctionPrototype  ( "HEADER_ADA_TASK_BODY_DECL_STATEMENT", "../Grammar/Statement.code" );
@@ -2907,7 +2907,8 @@ Grammar::setUpStatements ()
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AdaProtectedTypeDecl.setDataPrototype ( "SgAdaProtectedType*", "type", "= nullptr",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
+     AdaProtectedTypeDecl.setDataPrototype ( "SgScopeStatement*", "scope", "= NULL",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AdaProtectedBodyDecl.setFunctionPrototype  ( "HEADER_ADA_PROTECTED_BODY_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaProtectedBodyDecl.setDataPrototype ( "SgName", "name", "= \"\"",

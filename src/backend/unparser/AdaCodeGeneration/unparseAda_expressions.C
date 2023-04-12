@@ -570,7 +570,9 @@ namespace
 
     SgExpression* lhs        = n.get_lhs_operand();
     SgExpression* rhs        = n.get_rhs_operand();
-    const bool    opref      = (lhs == nullptr) && (rhs == nullptr);
+    const bool    opref      = (  isSgNullExpression(lhs)
+                               && isSgNullExpression(rhs)
+                               );
     const bool    callsyntax = (  argRequiresCallSyntax(lhs)
                                || argRequiresCallSyntax(rhs)
                                );
@@ -599,7 +601,7 @@ namespace
   void AdaExprUnparser::handle(SgUnaryOp& n)
   {
     SgExpression* oper       = n.get_operand();
-    const bool    opref      = (oper == nullptr);
+    const bool    opref      = isSgNullExpression(oper);
     const bool    callsyntax = argRequiresCallSyntax(oper);
 
     if (opref || callsyntax) prn("\"");

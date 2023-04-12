@@ -112,6 +112,17 @@ namespace Ada_ROSE_Translation
   /// \pre elem is An_Expression
   NameData
   getName(Element_Struct& elem, AstContext ctx);
+
+  /// processes inherited subprograms and (TODO) declarations
+  /// \param derivedType  the derived or extended type
+  /// \param subprograms  an Asis subrogram list
+  /// \param declarations an Asis declarations list
+  /// \param ctx          the translation context
+  void processInheritedSubroutines( SgNamedType& derivedType,
+                                    ElemIdRange subprograms,
+                                    ElemIdRange declarations,
+                                    AstContext ctx
+                                  );
 }
 
 #endif /* _ADA_STATEMENT */
