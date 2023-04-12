@@ -3674,45 +3674,14 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                   }
              }
 
-       // string outputFilename = "rose_" + file->get_sourceFileNameWithoutPath();
-#if 0
-          printf ("In unparseFile(SgFile* file): outputFilename not set using default: outputFilename = %s \n",outputFilename.c_str());
-#endif
-
        // Set the output filename in the SgFile IR node.
           file->set_unparse_output_filename(outputFilename);
 
           ROSE_ASSERT (file->get_unparse_output_filename().empty() == false);
-       // assert(file->get_unparse_output_filename().empty() == false);
         }
 #endif
 
-  // DQ (2/23/2021): Added assertion.
      ROSE_ASSERT (file->get_unparse_output_filename().empty() == false);
-
-#if 0
-     printf ("Inside of unparseFile ( SgFile* file ) file->get_unparse_output_filename() = %s \n",file->get_unparse_output_filename().c_str());
-#endif
-#if 0
-     printf ("Inside of unparseFile ( SgFile* file ) file->get_skip_unparse() = %s \n",file->get_skip_unparse() ? "true" : "false");
-#endif
-
-#if 0
-  // DQ (2/25/2021): Debugging code.
-     if (file->get_unparse_output_filename() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/test_133/BAtest_133.h")
-        {
-          printf ("Found /home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/test_133/BAtest_133.h header file, debugging token-based unparsing \n");
-
-          printf ("file->get_unparse_tokens() = %s \n",file->get_unparse_tokens() ? "true" : "false");
-
-          printf ("Force the header file to unparse via the token stream \n");
-
-          file->set_unparse_tokens(true);
-
-          printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
-        }
-#endif
 
      if (file->get_skip_unparse() == true)
         {
@@ -3935,8 +3904,6 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                  // Traversing the global scope does not permit these inner nested scopes to be traversed using the unparser.
 
                  // DQ (8/16/2018): the more conventional usage is to us a single SgSourceFile and SgGlobal for each header file.
-                 // roseUnparser.unparseFile(sourceFile,inheritedAttributeInfo, unparseScope);
-                 // roseUnparser.unparseFile(sourceFile,inheritedAttributeInfo, NULL);
                     roseUnparser.unparseFile(sourceFile,inheritedAttributeInfo, unparseScope);
                     break;
                   }
@@ -3945,13 +3912,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                case V_SgBinaryComposite:
                   {
                     SgBinaryComposite* binary = isSgBinaryComposite(file);
-#if 0
-                    printf ("In unparseFile(SgFile*): Output binary file as generated assembly \n");
-#endif
                     roseUnparser.unparseFile(binary,inheritedAttributeInfo);
-#if 0
-                    printf ("DOEN: In unparseFile(SgFile*): Output binary file as generated assembly \n");
-#endif
                     break;
                   }
 #endif
@@ -4479,22 +4440,10 @@ buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
      ASSERT_not_null(globalScope);
 #else
 
-  // DQ (4/11/2021): Since we are not building a new SgGlobal, we need this branch of the CPP directive instead.
-#if 0
-     printf ("Skip building a new SgGlobalScope for the header \n");
-#endif
   // #error "DEAD CODE!"
 
   // DQ (11/20/2019): Make sure that we have some declarations.
      ROSE_ASSERT(include_sourceFile->get_globalScope()->get_declarations().empty() == false);
-#endif
-
-#if 0
-     printf ("Number of statements in include file's global scope = %zu \n",headerFileGlobal->get_declarations().size());
-#endif
-#if 0
-     printf ("Exiting as a test! \n");
-     ROSE_ABORT();
 #endif
 
      ASSERT_not_null(include_sourceFile);
@@ -6494,66 +6443,19 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
 
      int status_of_function = 0;
 
-  // #if 0
   // DQ (4/9/2020): Added header file unparsing feature specific debug level.
      if (SgProject::get_unparseHeaderFilesDebug() >= 3)
         {
           printf ("In unparseFileList(): fileList->get_listOfFiles().size() = %zu \n",fileList->get_listOfFiles().size());
         }
-  // #endif
-#if 0
-     printf ("In unparseFileList(): Exiting as a test: before loop over files \n");
-     ROSE_ABORT();
-#endif
 
   // DQ (9/17/2020): Testing using address sanitizer.
      ROSE_ASSERT(fileList != NULL);
-     //~ ROSE_ASSERT(fileList->get_listOfFiles().size() >= 0);
 
-#if 0
-  // DQ (9/17/2020): Testing  for error reported by address sanitizer.
-     printf ("fileList          = %p \n",fileList);
-     printf ("unparseFormatHelp = %p \n",unparseFormatHelp);
-     printf ("unparseDelegate   = %p \n",unparseDelegate);
-
-     void* status_of_function_stack_offset = &status_of_function;
-     printf ("status_of_function_stack_offset = %p \n",status_of_function_stack_offset);
-
-     void* fileList_stack_offset = &fileList;
-     printf ("fileList_stack_offset = %p \n",fileList_stack_offset);
-
-     void* unparseFormatHelp_stack_offset = &unparseFormatHelp;
-     printf ("unparseFormatHelp_stack_offset = %p \n",unparseFormatHelp_stack_offset);
-
-     void* unparseDelegate_stack_offset = &unparseDelegate;
-     printf ("unparseDelegate_stack_offset = %p \n",unparseDelegate_stack_offset);
-#endif
-
-  // for (size_t i=0; i < fileList->get_listOfFiles().size(); ++i)
-  // size_t i;
-  // for (i=0; i < fileList->get_listOfFiles().size(); ++i)
-  // for (i=0; i < fileList->get_listOfFiles().size(); i++)
      auto & listOfFiles = fileList->get_listOfFiles();
      for (size_t i=0; i < listOfFiles.size(); ++i)
         {
           SgFile* file = listOfFiles[i];
-#if 0
-       // DQ (9/17/2020): Testing  for error reported by address sanitizer.
-          printf ("file = %p \n",file);
-#endif
-#if 0
-       // DQ (9/17/2020): This appears to be required to avoid address sanitizer reporting an error.
-       // void* file_stack_offset = &file;
-       // printf ("file_stack_offset = %p \n",file_stack_offset);
-#endif
-#if 0
-          printf ("file (address) = %p \n",&file);
-       // printf ("file (address) = %p \n",file);
-#endif
-#if 0
-          void* i_stack_offset = &i;
-          printf ("i_stack_offset = %p \n",i_stack_offset);
-#endif
 #if 1
        // DQ (4/9/2020): Added header file unparsing feature specific debug level.
           if (SgProject::get_unparseHeaderFilesDebug() >= 4)
@@ -6566,7 +6468,6 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
              }
 #endif
 
-       // {
           ASSERT_not_null(file);
 
           if (SgProject::get_verbose() > 1)

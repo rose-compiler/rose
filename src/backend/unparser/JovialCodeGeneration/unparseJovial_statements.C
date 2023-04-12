@@ -22,11 +22,9 @@ UnparseJovial::UnparseJovial(Unparser* unp, std::string fname)
    {
    }
 
-
 UnparseJovial::~UnparseJovial()
    {
    }
-
 
 void 
 UnparseJovial::unparseJovialFile(SgSourceFile *sourcefile, SgUnparse_Info& info)
@@ -74,7 +72,7 @@ UnparseJovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Inf
 
      ASSERT_not_null(stmt);
 
-     // unparse comments preceding the expression
+     // unparse comments preceding the statement
      unparseCommentsBefore(stmt, info);
 
      switch (stmt->variantT())

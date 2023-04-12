@@ -18,6 +18,9 @@ void UnparseJovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpa
   {
     ASSERT_not_null(expr);
 
+     // unparse comments preceding the expression
+     unparseCommentsBefore(expr, info);
+
     switch (expr->variantT())
        {
        // function, intrinsic calls
@@ -522,7 +525,10 @@ UnparseJovial::unparseTablePreset(SgExpression* expr, SgUnparse_Info& info)
          if (first) first = false;
          else curprint(",");
          if (preset->variantT() != V_SgNullExpression) // otherwise "()" is printed
+           // Unparsing comments will probably be moved to C++ eventually
+           unparseCommentsBefore(preset, info);
            unparseExpression(preset, info);
+           unparseCommentsAfter(preset, info);
        }
 
      if (table_preset->get_need_paren()) curprint(")");
@@ -597,6 +603,22 @@ UnparseJovial::unparseDimInfo(SgExprListExp* dim_info, SgUnparse_Info& info)
 
       curprint(") ");
    }
+
+void
+UnparseJovial::unparseCommentsBefore(SgExpression* expr, SgUnparse_Info& info)
+{
+  // unparse comments before the expression
+  const AttachedPreprocessingInfoType* preprocInfo = expr->get_attachedPreprocessingInfoPtr();
+  if (preprocInfo) {
+    for (PreprocessingInfo* info : *preprocInfo) {
+      auto pos = info->getRelativePosition();
+      if (info->getRelativePosition() == PreprocessingInfo::before) {
+        curprint(" ");
+        curprint(info->getString());
+      }
+    }
+  }
+}
 
 void
 UnparseJovial::unparseCommentsAfter(SgExpression* expr, SgUnparse_Info& info)
