@@ -27,6 +27,7 @@
 #include <Sawyer/SharedPointer.h>
 
 #include <boost/filesystem.hpp>
+#include <boost/format.hpp>
 #include <boost/move/utility_core.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/split_member.hpp>
@@ -412,8 +413,6 @@ private:
         // s & config_;                         -- FIXME[Robb P Matzke 2016-11-08]
         s & BOOST_SERIALIZATION_NVP(instructionProvider_);
         s & BOOST_SERIALIZATION_NVP(memoryMap_);
-        if (version >= 3)
-            s & BOOST_SERIALIZATION_NVP(interpretation_);
         s & BOOST_SERIALIZATION_NVP(cfg_);
         // s & vertexIndex_;                    -- initialized by rebuildVertexIndices
         s & BOOST_SERIALIZATION_NVP(aum_);
@@ -443,11 +442,18 @@ private:
     template<class S>
     void save(S &s, const unsigned version) const {
         const_cast<Partitioner*>(this)->serializeCommon(s, version);
+        if (version >= 3)
+            saveAst(s, interpretation_);
     }
 
     template<class S>
     void load(S &s, const unsigned version) {
         serializeCommon(s, version);
+        if (version >= 3) {
+            SgNode *node = restoreAst(s);
+            interpretation_ = isSgAsmInterpretation(node);
+            ASSERT_require(!node || interpretation_);
+        }
         rebuildVertexIndices();
     }
 
