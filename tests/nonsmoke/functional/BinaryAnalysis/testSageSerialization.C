@@ -220,7 +220,7 @@ testSgAsmMemoryReferenceExpression() {
     std::cerr <<"SgAsmMemoryReferenceExpression\n";
     SgAsmMemoryReferenceExpression *out =
         Builder::buildMemoryReferenceExpression(Builder::buildValueU32(1234),
-                                                new SgAsmRegisterReferenceExpression(RegisterDescriptor(1, 2, 3, 4)),
+                                                new SgAsmDirectRegisterExpression(RegisterDescriptor(1, 2, 3, 4)),
                                                 Builder::buildTypeU32());
     SgAsmMemoryReferenceExpression *in = NULL;
     serunser(out, in);
