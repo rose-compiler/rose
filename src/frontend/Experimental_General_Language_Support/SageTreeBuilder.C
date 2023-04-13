@@ -895,8 +895,9 @@ Enter(SgExprStatement* &assign_stmt, SgExpression* &rhs, const std::vector<SgExp
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgExprStatement* &, ...) \n";
 
-   SgAssignOp* assign_op = nullptr;
-   SgEnumVal* old_val = isSgEnumVal(rhs);
+   SgExpression* lhs{nullptr};
+   SgAssignOp* assign_op{nullptr};
+   SgEnumVal* old_val{isSgEnumVal(rhs)};
 
    // For Jovial, the symbol table may have multiple enumerators with the same name. Check and
    // replace a Jovial status constant with the correct value based on the type of the variable.
@@ -918,11 +919,15 @@ Enter(SgExprStatement* &assign_stmt, SgExpression* &rhs, const std::vector<SgExp
    }
 
 // Jovial may have more than one variable in an assignment statement
-   for (int i = vars.size()-1; i >= 0; i--) {
-      assign_op = SageBuilder::buildBinaryExpression_nfi<SgAssignOp>(vars[i], rhs);
+   if (vars.size() == 1) {
+      lhs = vars[0];
    }
-   ROSE_ASSERT(assign_op);
+   else if (vars.size() > 1) {
+      lhs = SageBuilder::buildExprListExp(vars);
+   }
+   ASSERT_not_null(lhs);
 
+   assign_op = SageBuilder::buildBinaryExpression_nfi<SgAssignOp>(lhs, rhs);
    assign_stmt = SageBuilder::buildExprStatement_nfi(assign_op);
 }
 

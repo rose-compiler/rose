@@ -309,6 +309,7 @@ ATbool traverse_PointerFormula   (ATerm term, SgExpression* &expr);
 
 // 6.1 VARIABLE AND BLOCK REFERENCES
 ATbool traverse_Variable         (ATerm term, SgExpression* &var);
+ATbool traverse_VariableLVal     (ATerm term, SgExpression* &var);
 ATbool traverse_VariableList     (ATerm term, std::vector<SgExpression*> &vars);
 ATbool traverse_TableItem        (ATerm term, SgExpression* &var);
 ATbool traverse_Subscript        (ATerm term, std::vector<SgExpression*> & indexes);
