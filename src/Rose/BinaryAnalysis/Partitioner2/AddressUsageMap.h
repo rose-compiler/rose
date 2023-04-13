@@ -4,6 +4,8 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 
+#include <AstSerialization.h>                           // rose
+
 #include <Sawyer/IntervalMap.h>
 #include <Sawyer/IntervalSet.h>
 #include <Sawyer/Optional.h>
@@ -39,7 +41,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & BOOST_SERIALIZATION_NVP(insn_);
+        transferAst(s, insn_);
         s & BOOST_SERIALIZATION_NVP(bblocks_);
         if (version < 1) {
             ASSERT_not_reachable("Rose::BinaryAnalysis::Partitioner2::AddressUser version 0 no longer supported");
@@ -47,6 +49,7 @@ private:
             s & BOOST_SERIALIZATION_NVP(dblock_);
         }
     }
+
 #endif
 
 public:

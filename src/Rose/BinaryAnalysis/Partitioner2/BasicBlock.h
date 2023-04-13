@@ -6,6 +6,7 @@
 
 #include <Rose/BinaryAnalysis/Partitioner2/Semantics.h>
 #include <Rose/SourceLocation.h>
+#include <AstSerialization.h>                           // rose
 
 #include <Sawyer/Attribute.h>
 #include <Sawyer/Cached.h>
@@ -226,6 +227,13 @@ private:
         s & BOOST_SERIALIZATION_NVP(isFrozen_);
         s & BOOST_SERIALIZATION_NVP(startVa_);
         s & BOOST_SERIALIZATION_NVP(comment_);
+
+        size_t nInsns = insns_.size();                  // zero when loading
+        s & BOOST_SERIALIZATION_NVP(nInsns);
+        insns_.resize(nInsns);                          // no-op when saving
+        for (size_t i = 0; i < nInsns; ++i)
+            transferAst(s, insns_[i]);
+
         s & BOOST_SERIALIZATION_NVP(insns_);
         s & boost::serialization::make_nvp("dispatcher_", semantics_.dispatcher);
         s & boost::serialization::make_nvp("operators_", semantics_.operators);
