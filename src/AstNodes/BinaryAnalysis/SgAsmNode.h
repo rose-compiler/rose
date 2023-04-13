@@ -109,4 +109,54 @@ public:
         edge = child;
     }
     /** @} */
+
+
+private:
+    // This is called by the debugSerializationBegin and debugSerializationEnd that are in turn called at the beginning and end of
+    // each AST node's serialization function. The implementation below uses two counters: classSerializationDepth shared by all
+    // instances of this class, and objectSerializationDepth_ which is a per-instance counter. The relationship of these two
+    // counters can tell us how deeply nested these recursive calls are, and which of those recursion levels are due to traversing
+    // through the base classes versus traversing through data members. In the output, we use one character of indentation per
+    // recursion level, with spaces (' ') representing recursion due to data members and dots ('.') representing recursion due to
+    // base classes.
+#if 0
+    // Debugging version
+    size_t objectSerializationDepth_ = 0;               // incremented as we traverse through base classes
+    void debugSerializationHelper(const char *className, bool isBegin) {
+        static size_t classSerializationDepth = 0;      // incremented by both base classes and data members
+        if (isBegin) {
+            ASSERT_require(classSerializationDepth >= objectSerializationDepth_);
+            const size_t memberTraversalDepth = classSerializationDepth - objectSerializationDepth_;
+            std::cerr <<"serializing: " <<std::string(memberTraversalDepth, ' ') <<std::string(objectSerializationDepth_, '.')
+                      <<className <<" " <<this <<"\n";
+            ++classSerializationDepth;
+            ++objectSerializationDepth_;
+        } else {
+            ASSERT_require2(classSerializationDepth > 0, className);
+            ASSERT_require2(objectSerializationDepth_ > 0, className);
+            --classSerializationDepth;
+            --objectSerializationDepth_;
+        }
+    }
+#else
+    // Production version
+    void debugSerializationHelper(const char*, bool) {}
+#endif
+
+protected:
+    /** Called by generated serializers.
+     *
+     *  All generated serialization functions call this function as the first or last thing they do. This is a convenient place to
+     *  put temporary debugging code or breakpoints if you're trying to figure out what went wrong. You can also override it in
+     *  particular derived classes if you need to debug just one class.
+     *
+     * @{ */
+    virtual void debugSerializationBegin(const char *className) {
+        debugSerializationHelper(className, true);
+    }
+    virtual void debugSerializationEnd(const char *className) {
+        debugSerializationHelper(className, false);
+    }
+    /** @} */
+
 };
