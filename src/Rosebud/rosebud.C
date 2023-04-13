@@ -131,6 +131,7 @@ parseCommandLine(Sawyer::CommandLine::Parser &parser, int argc, char *argv[]) {
 // All other situations return false.
 static bool
 adjustParens(const Ast::File::Ptr &file, size_t at, std::vector<Token> &nestingStack) {
+    ASSERT_not_null(file);
     if (file->token(at).type() == TOK_LEFT) {
         nestingStack.push_back(file->token(at));
         return true;
@@ -265,7 +266,7 @@ parseToClassDefinitionOrAttributeList(const Ast::File::Ptr &file) {
 }
 
 static std::string
-parseVisibility(const Ast::File::Ptr &file, const std::string &dflt) {
+parseAccess(const Ast::File::Ptr &file, const std::string &dflt) {
     ASSERT_not_null(file);
     if (file->matches(0, "private") ||
         file->matches(0, "protected") ||
@@ -306,18 +307,65 @@ parseQualifiedName(const Ast::File::Ptr &file) {
     return file->content(tokens, Expand::NONE);
 }
 
+// If at "<", consume and return this token and all tokens up to and including the balanced ">".
+static std::string
+parseTemplateArguments(const Ast::File::Ptr &file) {
+    ASSERT_not_null(file);
+    std::string retval;
+
+    if (file->matches("<")) {
+        const std::string leftParens = "({[<";
+        const std::string rightParens = ">]})";
+        std::vector<char> stack;                        // expected closing characters
+        while (Token token = file->consume()) {
+            const std::string s = file->content(token.prior(), token.end());
+            retval += s;
+            for (size_t i = 0; i < s.size(); ++i) {
+                const char ch = s[i];
+                if (leftParens.find(ch) != std::string::npos) {
+                    stack.push_back(matching(ch));
+                } else if (rightParens.find(ch) != std::string::npos) {
+                    if (stack.empty()) {
+                        message(ERROR, file, token, "no matching opening paren/brace");
+                        return retval;
+                    } else if (stack.back() != ch) {
+                        message(ERROR, file, token, "mismatched closing paren/brace");
+                        return retval;
+                    } else {
+                        stack.pop_back();
+                    }
+                }
+
+                if (ch == '>' && stack.empty()) {
+                    if (i + 1 < s.size())               // probably a ">>" token, but too many closing brackets
+                        message(ERROR, file, token, "mismatched closing paren/brace");
+                    return retval;
+                }
+            }
+        }
+    }
+    return retval;
+}
+
 static Ast::Class::Inheritance
 parseClassInheritance(const Ast::File::Ptr &file) {
     ASSERT_not_null(file);
     Ast::Class::Inheritance retval;
     while (true) {
-        const std::string visibility = parseVisibility(file, "private");
-        const std::string name = parseQualifiedName(file);
+        // Access and name
+        const std::string access = parseAccess(file, "private");
+        std::string name = parseQualifiedName(file);
         if (name.empty()) {
             message(ERROR, file, file->token(), "class name expected for inheritance");
-        } else {
-            retval.push_back(std::make_pair(visibility, name));
+            return retval;
         }
+
+        // Type name might be followed by template arguments
+        if (file->matches("<")) {
+            const std::string templateArgs = parseTemplateArguments(file);
+            name += templateArgs;
+        }
+        retval.push_back(std::make_pair(access, name));
 
         if (file->matches(0, ",")) {
             file->consume();

@@ -991,6 +991,11 @@ public:
      *  of the last token, or the same plus the non-token text before the first token. */
     std::string content(const std::vector<Token>&, Expand);
 
+    /** Part of file.
+     *
+     *  Returns some text from the file from the starting byte offset (inclusive) to the ending byte offset (exclusive). */
+    std::string content(size_t begin, size_t end);
+
     /** Input string for file region.
      *
      *  Returns the content of the file from character position @p begin (inclusive) to @p end (exclusvie). If the @p end is less

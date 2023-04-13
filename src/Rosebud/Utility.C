@@ -9,6 +9,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/range/adaptors.hpp>
 
+#include <cstring>
 #include <iostream>
 #include <regex>
 
@@ -22,21 +23,24 @@ Settings settings;
 // String utilities
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+char
+matching(char ch) {
+    static const char *key   = "({[<>]})";
+    static const char *value = ")}]><[{(";
+    if (auto k = std::strchr(key, ch)) {
+        return value[k-key];
+    } else {
+        ASSERT_not_reachable("not a nesting character '" + std::string(1, ch) + "'");
+    }
+}
+
 std::string
 matching(const std::string &s) {
-    if (s == "(")
-        return ")";
-    if (s == ")")
-        return "(";
-    if (s == "{")
-        return "}";
-    if (s == "}")
-        return "{";
-    if (s == "[")
-        return "]";
-    if (s == "]")
-        return "[";
-    ASSERT_not_reachable(s);
+    if (s.size() == 1) {
+        return std::string(1, matching(s[0]));
+    } else {
+        ASSERT_not_reachable("not a nexting character \"" + s + "\"");
+    }
 }
 
 std::vector<std::string>
