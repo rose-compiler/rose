@@ -6,6 +6,7 @@
 namespace Rose {
 namespace BinaryAnalysis {
 
+/** Demangle mangled names. */
 class Demangler {
 public:
     typedef Sawyer::Container::Map<std::string /*mangled*/, std::string /*non-mangled*/> NameMap;
