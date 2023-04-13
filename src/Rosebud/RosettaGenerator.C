@@ -285,8 +285,9 @@ RosettaGenerator::rosettaBaseClass(const Ast::Class::Ptr &c) {
 void
 RosettaGenerator::genClassConstructors(std::ostream &header, std::ostream &impl, const Ast::Class::Ptr &c, const Hierarchy &h) {
     ASSERT_not_null(c);
-    genDefaultConstructor(header, impl, c, Access::PUBLIC);
-    genArgsConstructor(header, impl, c, h, Access::PUBLIC);
+    Access access = c->findAttribute("Rosebud::abstract") ? Access::PROTECTED : Access::PUBLIC;
+    genDefaultConstructor(header, impl, c, access);
+    genArgsConstructor(header, impl, c, h, access);
 }
 
 // Generate property data member

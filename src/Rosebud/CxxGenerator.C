@@ -148,7 +148,13 @@ CxxGenerator::genArgsConstructor(std::ostream &header, std::ostream &impl, const
         if (arg != args.end()) {
             // Property is initialized from an argument
             impl <<(nInits++ ? "\n    , " : "\n    : ")
-                 <<propertyDataMemberName(p()) <<"(" <<ctorInitializerExpression(p(), p->name) <<")";
+                 <<propertyDataMemberName(p()) <<"(";
+            if (p->findAttribute("Rosebud::traverse")) {
+                impl <<"initParentPointer(" <<ctorInitializerExpression(p(), p->name) <<", this)";
+            } else {
+                impl <<ctorInitializerExpression(p(), p->name);
+            }
+            impl <<")";
         } else {
             // Property is initialized from the property's initial value expression
             const std::string initExpr = ctorInitializerExpression(p(), initialValue(p()));
