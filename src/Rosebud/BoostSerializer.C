@@ -14,13 +14,14 @@ BoostSerializer::generate(std::ostream &header, std::ostream &impl, const Ast::C
     ASSERT_not_null(c);
 
     header <<"\n"
-           <<THIS_LOCATION <<"    //----------------------- Boost serialization -----------------------\n"
+           <<THIS_LOCATION <<"    //----------------------- Boost serialization for " <<c->name <<" -----------------------\n"
            <<"#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB\n"
            <<"private:\n"
            <<"    friend class boost::serialization::access;\n"
            <<"\n"
            <<"    template<class S>\n"
-           <<"    void serialize(S &s, const unsigned /*version*/) {\n";
+           <<"    void serialize(S &s, const unsigned /*version*/) {\n"
+           <<"        debugSerializationBegin(\"" <<c->name <<"\");\n";
 
     // Serialize the base classes
     for (const auto &super: c->inheritance)
@@ -35,8 +36,9 @@ BoostSerializer::generate(std::ostream &header, std::ostream &impl, const Ast::C
         }
     }
 
-    header <<THIS_LOCATION <<"    }\n"
-           <<"#endif // ROSE_HAVE_BOOST_SERIALIZATION\n";
+    header <<THIS_LOCATION <<"        debugSerializationEnd(\"" <<c->name <<"\");\n"
+           <<"    }\n"
+           <<"#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB\n";
 }
 
 } // namespace

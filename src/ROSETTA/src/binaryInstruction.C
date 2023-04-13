@@ -170,6 +170,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmX86Instruction");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmInstruction);
         s & BOOST_SERIALIZATION_NVP(p_kind);
         s & BOOST_SERIALIZATION_NVP(p_baseSize);
@@ -179,6 +180,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_repeatPrefix);
         s & BOOST_SERIALIZATION_NVP(p_branchPrediction);
         s & BOOST_SERIALIZATION_NVP(p_segmentOverride);
+        debugSerializationEnd("SgAsmX86Instruction");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 public:
@@ -360,7 +362,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfVolatileType");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfVolatileType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -426,9 +430,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmVectorType");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmType);
         s & BOOST_SERIALIZATION_NVP(p_nElmts);
         s & BOOST_SERIALIZATION_NVP(p_elmtType);
+        debugSerializationEnd("SgAsmVectorType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -511,7 +517,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmUnaryUnsignedExtend");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
+        debugSerializationEnd("SgAsmUnaryUnsignedExtend");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -567,7 +575,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmUnaryTruncate");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
+        debugSerializationEnd("SgAsmUnaryTruncate");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -623,7 +633,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmUnarySignedExtend");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
+        debugSerializationEnd("SgAsmUnarySignedExtend");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -679,7 +691,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmUnaryRrx");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
+        debugSerializationEnd("SgAsmUnaryRrx");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -731,7 +745,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmUnaryPlus");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
+        debugSerializationEnd("SgAsmUnaryPlus");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -783,7 +799,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmUnaryMinus");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmUnaryExpression);
+        debugSerializationEnd("SgAsmUnaryMinus");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -859,8 +877,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmUnaryExpression");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
         s & BOOST_SERIALIZATION_NVP(p_operand);
+        debugSerializationEnd("SgAsmUnaryExpression");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -939,9 +959,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmSynthesizedFieldDeclaration");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmSynthesizedDeclaration);
         s & BOOST_SERIALIZATION_NVP(p_name);
         s & BOOST_SERIALIZATION_NVP(p_offset);
+        debugSerializationEnd("SgAsmSynthesizedFieldDeclaration");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -1025,7 +1047,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmSynthesizedDataStructureDeclaration");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmSynthesizedDeclaration);
+        debugSerializationEnd("SgAsmSynthesizedDataStructureDeclaration");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 protected:
@@ -1102,10 +1126,12 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmStringStorage");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_strtab);
         s & BOOST_SERIALIZATION_NVP(p_string);
         s & BOOST_SERIALIZATION_NVP(p_offset);
+        debugSerializationEnd("SgAsmStringStorage");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -1204,8 +1230,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmStoredString");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericString);
         s & BOOST_SERIALIZATION_NVP(p_storage);
+        debugSerializationEnd("SgAsmStoredString");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -1310,8 +1338,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmStaticData");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmStatement);
         s & BOOST_SERIALIZATION_NVP(p_raw_bytes);
+        debugSerializationEnd("SgAsmStaticData");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -1384,8 +1414,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmStackExpression");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
         s & BOOST_SERIALIZATION_NVP(p_stack_position);
+        debugSerializationEnd("SgAsmStackExpression");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -1467,9 +1499,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmRiscOperation");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
         s & BOOST_SERIALIZATION_NVP(p_riscOperator);
         s & BOOST_SERIALIZATION_NVP(p_operands);
+        debugSerializationEnd("SgAsmRiscOperation");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1626,9 +1660,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmRegisterNames");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
         s & BOOST_SERIALIZATION_NVP(p_registers);
         s & BOOST_SERIALIZATION_NVP(p_mask);
+        debugSerializationEnd("SgAsmRegisterNames");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -1710,8 +1746,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmPowerpcInstruction");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmInstruction);
         s & BOOST_SERIALIZATION_NVP(p_kind);
+        debugSerializationEnd("SgAsmPowerpcInstruction");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 public:
@@ -1807,8 +1845,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmPEStringSection");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmPESection);
         s & BOOST_SERIALIZATION_NVP(p_strtab);
+        debugSerializationEnd("SgAsmPEStringSection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -1873,7 +1913,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmPESectionTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+        debugSerializationEnd("SgAsmPESectionTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 public:
@@ -1986,6 +2028,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmPESectionTableEntry");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_name);
         s & BOOST_SERIALIZATION_NVP(p_virtual_size);
@@ -1996,6 +2039,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_n_relocs);
         s & BOOST_SERIALIZATION_NVP(p_n_coff_line_nums);
         s & BOOST_SERIALIZATION_NVP(p_flags);
+        debugSerializationEnd("SgAsmPESectionTableEntry");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2226,8 +2270,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmPERVASizePairList");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_pairs);
+        debugSerializationEnd("SgAsmPERVASizePairList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -2306,10 +2352,12 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmPERVASizePair");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_e_rva);
         s & BOOST_SERIALIZATION_NVP(p_e_size);
         s & BOOST_SERIALIZATION_NVP(p_section);
+        debugSerializationEnd("SgAsmPERVASizePair");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2578,8 +2626,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmPEImportSection");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmPESection);
         s & BOOST_SERIALIZATION_NVP(p_import_directories);
+        debugSerializationEnd("SgAsmPEImportSection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -2672,8 +2722,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmPEImportItemList");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_vector);
+        debugSerializationEnd("SgAsmPEImportItemList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -2787,6 +2839,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmPEImportItem");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_by_ordinal);
         s & BOOST_SERIALIZATION_NVP(p_ordinal);
@@ -2796,6 +2849,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_hintname_nalloc);
         s & BOOST_SERIALIZATION_NVP(p_bound_rva);
         s & BOOST_SERIALIZATION_NVP(p_iat_written);
+        debugSerializationEnd("SgAsmPEImportItem");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -2964,8 +3018,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmPEImportDirectoryList");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_vector);
+        debugSerializationEnd("SgAsmPEImportDirectoryList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -3088,6 +3144,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmPEImportDirectory");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_dll_name);
         s & BOOST_SERIALIZATION_NVP(p_dll_name_rva);
@@ -3099,6 +3156,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_iat_rva);
         s & BOOST_SERIALIZATION_NVP(p_iat_nalloc);
         s & BOOST_SERIALIZATION_NVP(p_imports);
+        debugSerializationEnd("SgAsmPEImportDirectory");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3568,6 +3626,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmPEFileHeader");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericHeader);
         s & BOOST_SERIALIZATION_NVP(p_e_cpu_type);
         s & BOOST_SERIALIZATION_NVP(p_e_nsections);
@@ -3607,6 +3666,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_rvasize_pairs);
         s & BOOST_SERIALIZATION_NVP(p_section_table);
         s & BOOST_SERIALIZATION_NVP(p_coff_symtab);
+        debugSerializationEnd("SgAsmPEFileHeader");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -4279,9 +4339,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmPEExportSection");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmPESection);
         s & BOOST_SERIALIZATION_NVP(p_export_dir);
         s & BOOST_SERIALIZATION_NVP(p_exports);
+        debugSerializationEnd("SgAsmPEExportSection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -4393,8 +4455,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmPESection");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
         s & BOOST_SERIALIZATION_NVP(p_section_entry);
+        debugSerializationEnd("SgAsmPESection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -4472,8 +4536,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmPEExportEntryList");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_exports);
+        debugSerializationEnd("SgAsmPEExportEntryList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -4557,11 +4623,13 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmPEExportEntry");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_name);
         s & BOOST_SERIALIZATION_NVP(p_ordinal);
         s & BOOST_SERIALIZATION_NVP(p_export_rva);
         s & BOOST_SERIALIZATION_NVP(p_forwarder);
+        debugSerializationEnd("SgAsmPEExportEntry");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -4738,6 +4806,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmPEExportDirectory");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_res1);
         s & BOOST_SERIALIZATION_NVP(p_timestamp);
@@ -4751,6 +4820,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_nameptr_rva);
         s & BOOST_SERIALIZATION_NVP(p_ordinals_rva);
         s & BOOST_SERIALIZATION_NVP(p_name);
+        debugSerializationEnd("SgAsmPEExportDirectory");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -4976,8 +5046,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmOperandList");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
         s & BOOST_SERIALIZATION_NVP(p_operands);
+        debugSerializationEnd("SgAsmOperandList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -5038,7 +5110,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmNullInstruction");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmInstruction);
+        debugSerializationEnd("SgAsmNullInstruction");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 public:
@@ -5109,7 +5183,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmNEStringTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+        debugSerializationEnd("SgAsmNEStringTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 public:
@@ -5183,11 +5259,13 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmNESectionTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
         s & BOOST_SERIALIZATION_NVP(p_flags);
         s & BOOST_SERIALIZATION_NVP(p_sector);
         s & BOOST_SERIALIZATION_NVP(p_physical_size);
         s & BOOST_SERIALIZATION_NVP(p_virtual_size);
+        debugSerializationEnd("SgAsmNESectionTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -5305,11 +5383,13 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmNESectionTableEntry");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_flags);
         s & BOOST_SERIALIZATION_NVP(p_sector);
         s & BOOST_SERIALIZATION_NVP(p_physical_size);
         s & BOOST_SERIALIZATION_NVP(p_virtual_size);
+        debugSerializationEnd("SgAsmNESectionTableEntry");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -5464,9 +5544,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmNESection");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
         s & BOOST_SERIALIZATION_NVP(p_st_entry);
         s & BOOST_SERIALIZATION_NVP(p_reloc_table);
+        debugSerializationEnd("SgAsmNESection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -5544,8 +5626,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmNERelocTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
         s & BOOST_SERIALIZATION_NVP(p_entries);
+        debugSerializationEnd("SgAsmNERelocTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -5661,6 +5745,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmNERelocEntry");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_src_type);
         s & BOOST_SERIALIZATION_NVP(p_modifier);
@@ -5671,6 +5756,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_iord);
         s & BOOST_SERIALIZATION_NVP(p_iname);
         s & BOOST_SERIALIZATION_NVP(p_osfixup);
+        debugSerializationEnd("SgAsmNERelocEntry");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -5956,9 +6042,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmNENameTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
         s & BOOST_SERIALIZATION_NVP(p_names);
         s & BOOST_SERIALIZATION_NVP(p_ordinals);
+        debugSerializationEnd("SgAsmNENameTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -6049,10 +6137,12 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmNEModuleTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
         s & BOOST_SERIALIZATION_NVP(p_strtab);
         s & BOOST_SERIALIZATION_NVP(p_name_offsets);
         s & BOOST_SERIALIZATION_NVP(p_names);
+        debugSerializationEnd("SgAsmNEModuleTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -6345,6 +6435,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmNEFileHeader");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericHeader);
         s & BOOST_SERIALIZATION_NVP(p_e_linker_major);
         s & BOOST_SERIALIZATION_NVP(p_e_linker_minor);
@@ -6381,6 +6472,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_nonresname_table);
         s & BOOST_SERIALIZATION_NVP(p_module_table);
         s & BOOST_SERIALIZATION_NVP(p_entry_table);
+        debugSerializationEnd("SgAsmNEFileHeader");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -6919,9 +7011,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmNEEntryTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
         s & BOOST_SERIALIZATION_NVP(p_bundle_sizes);
         s & BOOST_SERIALIZATION_NVP(p_entries);
+        debugSerializationEnd("SgAsmNEEntryTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -7019,11 +7113,13 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmNEEntryPoint");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_flags);
         s & BOOST_SERIALIZATION_NVP(p_int3f);
         s & BOOST_SERIALIZATION_NVP(p_section_idx);
         s & BOOST_SERIALIZATION_NVP(p_section_offset);
+        debugSerializationEnd("SgAsmNEEntryPoint");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -7144,8 +7240,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmMipsInstruction");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmInstruction);
         s & BOOST_SERIALIZATION_NVP(p_kind);
+        debugSerializationEnd("SgAsmMipsInstruction");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -7235,9 +7333,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmMemoryReferenceExpression");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
         s & BOOST_SERIALIZATION_NVP(p_address);
         s & BOOST_SERIALIZATION_NVP(p_segment);
+        debugSerializationEnd("SgAsmMemoryReferenceExpression");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -7322,8 +7422,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmM68kInstruction");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmInstruction);
         s & BOOST_SERIALIZATION_NVP(p_kind);
+        debugSerializationEnd("SgAsmM68kInstruction");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 public:
@@ -7404,7 +7506,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmLESectionTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+        debugSerializationEnd("SgAsmLESectionTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 public:
@@ -7490,6 +7594,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmLESectionTableEntry");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_flags);
         s & BOOST_SERIALIZATION_NVP(p_pagemap_index);
@@ -7497,6 +7602,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_res1);
         s & BOOST_SERIALIZATION_NVP(p_mapped_size);
         s & BOOST_SERIALIZATION_NVP(p_base_addr);
+        debugSerializationEnd("SgAsmLESectionTableEntry");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -7681,8 +7787,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmLESection");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
         s & BOOST_SERIALIZATION_NVP(p_st_entry);
+        debugSerializationEnd("SgAsmLESection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -7748,8 +7856,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmLERelocTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
         s & BOOST_SERIALIZATION_NVP(p_entries);
+        debugSerializationEnd("SgAsmLERelocTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -7816,8 +7926,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmLEPageTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
         s & BOOST_SERIALIZATION_NVP(p_entries);
+        debugSerializationEnd("SgAsmLEPageTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -7892,9 +8004,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmLEPageTableEntry");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_pageno);
         s & BOOST_SERIALIZATION_NVP(p_flags);
+        debugSerializationEnd("SgAsmLEPageTableEntry");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -8013,9 +8127,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmLENameTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
         s & BOOST_SERIALIZATION_NVP(p_names);
         s & BOOST_SERIALIZATION_NVP(p_ordinals);
+        debugSerializationEnd("SgAsmLENameTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -8409,6 +8525,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmLEFileHeader");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericHeader);
         s & BOOST_SERIALIZATION_NVP(p_e_byte_order);
         s & BOOST_SERIALIZATION_NVP(p_e_word_order);
@@ -8463,6 +8580,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_nonresname_table);
         s & BOOST_SERIALIZATION_NVP(p_entry_table);
         s & BOOST_SERIALIZATION_NVP(p_reloc_table);
+        debugSerializationEnd("SgAsmLEFileHeader");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -9207,9 +9325,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmLEEntryTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
         s & BOOST_SERIALIZATION_NVP(p_bundle_sizes);
         s & BOOST_SERIALIZATION_NVP(p_entries);
+        debugSerializationEnd("SgAsmLEEntryTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -9318,6 +9438,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmLEEntryPoint");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_entries);
         s & BOOST_SERIALIZATION_NVP(p_flags);
@@ -9325,6 +9446,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_entry_type);
         s & BOOST_SERIALIZATION_NVP(p_res1);
         s & BOOST_SERIALIZATION_NVP(p_entry_offset);
+        debugSerializationEnd("SgAsmLEEntryPoint");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -9483,8 +9605,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmSourceFile");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmAttribute);
         s & BOOST_SERIALIZATION_NVP(p_sourcefile_index);
+        debugSerializationEnd("SgAsmJvmSourceFile");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -9557,8 +9681,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmSignature");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmAttribute);
         s & BOOST_SERIALIZATION_NVP(p_signature_index);
+        debugSerializationEnd("SgAsmJvmSignature");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -9631,8 +9757,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmModuleMainClass");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmAttribute);
         s & BOOST_SERIALIZATION_NVP(p_main_class_index);
+        debugSerializationEnd("SgAsmJvmModuleMainClass");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -9706,8 +9834,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmMethodTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
         s & BOOST_SERIALIZATION_NVP(p_methods);
+        debugSerializationEnd("SgAsmJvmMethodTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -9813,12 +9943,14 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmMethod");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmNode);
         s & BOOST_SERIALIZATION_NVP(p_access_flags);
         s & BOOST_SERIALIZATION_NVP(p_name_index);
         s & BOOST_SERIALIZATION_NVP(p_descriptor_index);
         s & BOOST_SERIALIZATION_NVP(p_attribute_table);
         s & BOOST_SERIALIZATION_NVP(p_instruction_list);
+        debugSerializationEnd("SgAsmJvmMethod");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -9941,8 +10073,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmLineNumberTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmAttribute);
         s & BOOST_SERIALIZATION_NVP(p_line_number_table);
+        debugSerializationEnd("SgAsmJvmLineNumberTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -10026,9 +10160,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmLineNumberEntry");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmNode);
         s & BOOST_SERIALIZATION_NVP(p_start_pc);
         s & BOOST_SERIALIZATION_NVP(p_line_number);
+        debugSerializationEnd("SgAsmJvmLineNumberEntry");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -10119,8 +10255,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmInstruction");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmInstruction);
         s & BOOST_SERIALIZATION_NVP(p_kind);
+        debugSerializationEnd("SgAsmJvmInstruction");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -10211,8 +10349,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmInnerClasses");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmAttribute);
         s & BOOST_SERIALIZATION_NVP(p_classes);
+        debugSerializationEnd("SgAsmJvmInnerClasses");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -10309,11 +10449,13 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmInnerClassesEntry");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmNode);
         s & BOOST_SERIALIZATION_NVP(p_inner_class_info_index);
         s & BOOST_SERIALIZATION_NVP(p_outer_class_info_index);
         s & BOOST_SERIALIZATION_NVP(p_inner_name_index);
         s & BOOST_SERIALIZATION_NVP(p_inner_class_access_flags);
+        debugSerializationEnd("SgAsmJvmInnerClassesEntry");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -10480,6 +10622,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmFileHeader");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericHeader);
         s & BOOST_SERIALIZATION_NVP(p_minor_version);
         s & BOOST_SERIALIZATION_NVP(p_major_version);
@@ -10491,6 +10634,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_field_table);
         s & BOOST_SERIALIZATION_NVP(p_method_table);
         s & BOOST_SERIALIZATION_NVP(p_attribute_table);
+        debugSerializationEnd("SgAsmJvmFileHeader");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -10671,8 +10815,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmFieldTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
         s & BOOST_SERIALIZATION_NVP(p_fields);
+        debugSerializationEnd("SgAsmJvmFieldTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -10770,11 +10916,13 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmField");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmNode);
         s & BOOST_SERIALIZATION_NVP(p_access_flags);
         s & BOOST_SERIALIZATION_NVP(p_name_index);
         s & BOOST_SERIALIZATION_NVP(p_descriptor_index);
         s & BOOST_SERIALIZATION_NVP(p_attribute_table);
+        debugSerializationEnd("SgAsmJvmField");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -10884,8 +11032,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmExceptionTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmNode);
         s & BOOST_SERIALIZATION_NVP(p_exceptions);
+        debugSerializationEnd("SgAsmJvmExceptionTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -10981,11 +11131,13 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmException");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmNode);
         s & BOOST_SERIALIZATION_NVP(p_start_pc);
         s & BOOST_SERIALIZATION_NVP(p_end_pc);
         s & BOOST_SERIALIZATION_NVP(p_handler_pc);
         s & BOOST_SERIALIZATION_NVP(p_catch_type);
+        debugSerializationEnd("SgAsmJvmException");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -11102,9 +11254,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmEnclosingMethod");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmAttribute);
         s & BOOST_SERIALIZATION_NVP(p_class_index);
         s & BOOST_SERIALIZATION_NVP(p_method_index);
+        debugSerializationEnd("SgAsmJvmEnclosingMethod");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -11188,8 +11342,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmConstantValue");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmAttribute);
         s & BOOST_SERIALIZATION_NVP(p_constantvalue_index);
+        debugSerializationEnd("SgAsmJvmConstantValue");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -11263,8 +11419,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmConstantPool");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
         s & BOOST_SERIALIZATION_NVP(p_entries);
+        debugSerializationEnd("SgAsmJvmConstantPool");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -11437,6 +11595,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmConstantPoolEntry");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmNode);
         s & BOOST_SERIALIZATION_NVP(p_tag);
         s & BOOST_SERIALIZATION_NVP(p_bytes);
@@ -11451,6 +11610,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_reference_kind);
         s & BOOST_SERIALIZATION_NVP(p_string_index);
         s & BOOST_SERIALIZATION_NVP(p_length);
+        debugSerializationEnd("SgAsmJvmConstantPoolEntry");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -11856,6 +12016,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmCodeAttribute");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmAttribute);
         s & BOOST_SERIALIZATION_NVP(p_max_stack);
         s & BOOST_SERIALIZATION_NVP(p_max_locals);
@@ -11863,6 +12024,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_exception_table);
         s & BOOST_SERIALIZATION_NVP(p_attribute_table);
         s & BOOST_SERIALIZATION_NVP(p_code_offset);
+        debugSerializationEnd("SgAsmJvmCodeAttribute");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -11994,7 +12156,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmClass");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmNode);
+        debugSerializationEnd("SgAsmJvmClass");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -12052,8 +12216,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmAttributeTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
         s & BOOST_SERIALIZATION_NVP(p_attributes);
+        debugSerializationEnd("SgAsmJvmAttributeTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -12158,9 +12324,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmAttribute");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmNode);
         s & BOOST_SERIALIZATION_NVP(p_attribute_name_index);
         s & BOOST_SERIALIZATION_NVP(p_attribute_length);
+        debugSerializationEnd("SgAsmJvmAttribute");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -12265,7 +12433,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmNode");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
+        debugSerializationEnd("SgAsmJvmNode");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 public:
@@ -12320,8 +12490,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmInterpretationList");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
         s & BOOST_SERIALIZATION_NVP(p_interpretations);
+        debugSerializationEnd("SgAsmInterpretationList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -12416,6 +12588,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmInterpretation");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
         s & BOOST_SERIALIZATION_NVP(p_headers);
         s & BOOST_SERIALIZATION_NVP(p_global_block);
@@ -12423,6 +12596,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(instruction_map);
         s & BOOST_SERIALIZATION_NVP(p_coverageComputed);
         s & BOOST_SERIALIZATION_NVP(p_percentageCoverage);
+        debugSerializationEnd("SgAsmInterpretation");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -12583,8 +12757,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmIntegerValueExpression");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmConstantExpression);
         s & BOOST_SERIALIZATION_NVP(p_baseNode);
+        debugSerializationEnd("SgAsmIntegerValueExpression");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -12729,8 +12905,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmIntegerType");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmScalarType);
         s & BOOST_SERIALIZATION_NVP(p_isSigned);
+        debugSerializationEnd("SgAsmIntegerType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -12804,8 +12982,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmInstructionList");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
         s & BOOST_SERIALIZATION_NVP(p_instructions);
+        debugSerializationEnd("SgAsmInstructionList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -12904,11 +13084,13 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmIndirectRegisterExpression");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmRegisterReferenceExpression);
         s & BOOST_SERIALIZATION_NVP(p_stride);
         s & BOOST_SERIALIZATION_NVP(p_offset);
         s & BOOST_SERIALIZATION_NVP(p_index);
         s & BOOST_SERIALIZATION_NVP(p_modulus);
+        debugSerializationEnd("SgAsmIndirectRegisterExpression");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -13017,8 +13199,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmGenericSymbolList");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_symbols);
+        debugSerializationEnd("SgAsmGenericSymbolList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -13087,8 +13271,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmGenericSectionList");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_sections);
+        debugSerializationEnd("SgAsmGenericSectionList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -13157,8 +13343,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmGenericHeaderList");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_headers);
+        debugSerializationEnd("SgAsmGenericHeaderList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -13266,6 +13454,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmGenericFormat");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_family);
         s & BOOST_SERIALIZATION_NVP(p_purpose);
@@ -13275,6 +13464,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_abi);
         s & BOOST_SERIALIZATION_NVP(p_abi_version);
         s & BOOST_SERIALIZATION_NVP(p_word_size);
+        debugSerializationEnd("SgAsmGenericFormat");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -13421,8 +13611,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmGenericFileList");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
         s & BOOST_SERIALIZATION_NVP(p_files);
+        debugSerializationEnd("SgAsmGenericFileList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -13555,6 +13747,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmGenericFile");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_dwarf_info);
         s & BOOST_SERIALIZATION_NVP(p_name);
@@ -13566,6 +13759,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_tracking_references);
         s & BOOST_SERIALIZATION_NVP(p_referenced_extents);
         s & BOOST_SERIALIZATION_NVP(p_neuter);
+        debugSerializationEnd("SgAsmGenericFile");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -14043,8 +14237,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmGenericDLLList");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_dlls);
+        debugSerializationEnd("SgAsmGenericDLLList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -14116,9 +14312,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmGenericDLL");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_name);
         s & BOOST_SERIALIZATION_NVP(p_symbols);
+        debugSerializationEnd("SgAsmGenericDLL");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -14290,6 +14488,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmFunction");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmSynthesizedDeclaration);
         s & BOOST_SERIALIZATION_NVP(p_name);
         s & BOOST_SERIALIZATION_NVP(p_reason);
@@ -14303,6 +14502,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_cached_vertex);
         s & BOOST_SERIALIZATION_NVP(p_stackDelta);
         s & BOOST_SERIALIZATION_NVP(p_callingConvention);
+        debugSerializationEnd("SgAsmFunction");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -14719,7 +14919,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmSynthesizedDeclaration");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmStatement);
+        debugSerializationEnd("SgAsmSynthesizedDeclaration");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -14774,9 +14976,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmFloatValueExpression");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmConstantExpression);
         s & BOOST_SERIALIZATION_NVP(p_nativeValue);
         s & BOOST_SERIALIZATION_NVP(p_nativeValueIsValid);
+        debugSerializationEnd("SgAsmFloatValueExpression");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 private:
@@ -14937,6 +15141,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmFloatType");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmScalarType);
         s & BOOST_SERIALIZATION_NVP(p_significandOffset);
         s & BOOST_SERIALIZATION_NVP(p_significandNBits);
@@ -14945,6 +15150,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_exponentNBits);
         s & BOOST_SERIALIZATION_NVP(p_exponentBias);
         s & BOOST_SERIALIZATION_NVP(p_flags);
+        debugSerializationEnd("SgAsmFloatType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 public:
@@ -15147,11 +15353,13 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmScalarType");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmType);
         s & BOOST_SERIALIZATION_NVP(p_minorOrder);
         s & BOOST_SERIALIZATION_NVP(p_majorOrder);
         s & BOOST_SERIALIZATION_NVP(p_majorNBytes);
         s & BOOST_SERIALIZATION_NVP(p_nBits);
+        debugSerializationEnd("SgAsmScalarType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -15271,7 +15479,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmType");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
+        debugSerializationEnd("SgAsmType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 private:
@@ -15371,8 +15581,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmExprListExp");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
         s & BOOST_SERIALIZATION_NVP(p_expressions);
+        debugSerializationEnd("SgAsmExprListExp");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -15441,8 +15653,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfSymverSection");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmElfSection);
         s & BOOST_SERIALIZATION_NVP(p_entries);
+        debugSerializationEnd("SgAsmElfSymverSection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -15528,8 +15742,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfSymverNeededSection");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmElfSection);
         s & BOOST_SERIALIZATION_NVP(p_entries);
+        debugSerializationEnd("SgAsmElfSymverNeededSection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -15626,8 +15842,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfSymverNeededEntryList");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_entries);
+        debugSerializationEnd("SgAsmElfSymverNeededEntryList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -15705,10 +15923,12 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfSymverNeededEntry");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_version);
         s & BOOST_SERIALIZATION_NVP(p_file_name);
         s & BOOST_SERIALIZATION_NVP(p_entries);
+        debugSerializationEnd("SgAsmElfSymverNeededEntry");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -15839,8 +16059,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfSymverNeededAuxList");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_entries);
+        debugSerializationEnd("SgAsmElfSymverNeededAuxList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -15924,11 +16146,13 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfSymverNeededAux");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_hash);
         s & BOOST_SERIALIZATION_NVP(p_flags);
         s & BOOST_SERIALIZATION_NVP(p_other);
         s & BOOST_SERIALIZATION_NVP(p_name);
+        debugSerializationEnd("SgAsmElfSymverNeededAux");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -16077,8 +16301,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfSymverEntryList");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_entries);
+        debugSerializationEnd("SgAsmElfSymverEntryList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -16144,8 +16370,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfSymverEntry");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_value);
+        debugSerializationEnd("SgAsmElfSymverEntry");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -16219,8 +16447,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfSymverDefinedSection");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmElfSection);
         s & BOOST_SERIALIZATION_NVP(p_entries);
+        debugSerializationEnd("SgAsmElfSymverDefinedSection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -16372,8 +16602,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfSymverDefinedEntryList");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_entries);
+        debugSerializationEnd("SgAsmElfSymverDefinedEntryList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -16463,12 +16695,14 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfSymverDefinedEntry");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_version);
         s & BOOST_SERIALIZATION_NVP(p_flags);
         s & BOOST_SERIALIZATION_NVP(p_index);
         s & BOOST_SERIALIZATION_NVP(p_hash);
         s & BOOST_SERIALIZATION_NVP(p_entries);
+        debugSerializationEnd("SgAsmElfSymverDefinedEntry");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -16622,8 +16856,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfSymverDefinedAuxList");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_entries);
+        debugSerializationEnd("SgAsmElfSymverDefinedAuxList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -16688,8 +16924,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfSymverDefinedAux");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_name);
+        debugSerializationEnd("SgAsmElfSymverDefinedAux");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -16804,9 +17042,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfSymbolSection");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmElfSection);
         s & BOOST_SERIALIZATION_NVP(p_is_dynamic);
         s & BOOST_SERIALIZATION_NVP(p_symbols);
+        debugSerializationEnd("SgAsmElfSymbolSection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -16920,8 +17160,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfSymbolList");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_symbols);
+        debugSerializationEnd("SgAsmElfSymbolList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -17014,12 +17256,14 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfSymbol");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSymbol);
         s & BOOST_SERIALIZATION_NVP(p_st_info);
         s & BOOST_SERIALIZATION_NVP(p_st_res1);
         s & BOOST_SERIALIZATION_NVP(p_st_shndx);
         s & BOOST_SERIALIZATION_NVP(p_st_size);
         s & BOOST_SERIALIZATION_NVP(p_extra);
+        debugSerializationEnd("SgAsmElfSymbol");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -17227,7 +17471,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfStrtab");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericStrtab);
+        debugSerializationEnd("SgAsmElfStrtab");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 public:
@@ -17331,8 +17577,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfStringSection");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmElfSection);
         s & BOOST_SERIALIZATION_NVP(p_strtab);
+        debugSerializationEnd("SgAsmElfStringSection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -17421,7 +17669,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfSegmentTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+        debugSerializationEnd("SgAsmElfSegmentTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 public:
@@ -17511,8 +17761,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfSegmentTableEntryList");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_entries);
+        debugSerializationEnd("SgAsmElfSegmentTableEntryList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -17632,6 +17884,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfSegmentTableEntry");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_index);
         s & BOOST_SERIALIZATION_NVP(p_type);
@@ -17643,6 +17896,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_memsz);
         s & BOOST_SERIALIZATION_NVP(p_align);
         s & BOOST_SERIALIZATION_NVP(p_extra);
+        debugSerializationEnd("SgAsmElfSegmentTableEntry");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -17922,7 +18176,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfSectionTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+        debugSerializationEnd("SgAsmElfSectionTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 public:
@@ -18071,6 +18327,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfSectionTableEntry");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_sh_name);
         s & BOOST_SERIALIZATION_NVP(p_sh_type);
@@ -18083,6 +18340,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_sh_addralign);
         s & BOOST_SERIALIZATION_NVP(p_sh_entsize);
         s & BOOST_SERIALIZATION_NVP(p_extra);
+        debugSerializationEnd("SgAsmElfSectionTableEntry");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -18395,10 +18653,12 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfRelocSection");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmElfSection);
         s & BOOST_SERIALIZATION_NVP(p_uses_addend);
         s & BOOST_SERIALIZATION_NVP(p_target_section);
         s & BOOST_SERIALIZATION_NVP(p_entries);
+        debugSerializationEnd("SgAsmElfRelocSection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -18505,8 +18765,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfRelocEntryList");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_entries);
+        debugSerializationEnd("SgAsmElfRelocEntryList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -18596,12 +18858,14 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfRelocEntry");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_r_offset);
         s & BOOST_SERIALIZATION_NVP(p_r_addend);
         s & BOOST_SERIALIZATION_NVP(p_sym);
         s & BOOST_SERIALIZATION_NVP(p_type);
         s & BOOST_SERIALIZATION_NVP(p_extra);
+        debugSerializationEnd("SgAsmElfRelocEntry");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -18864,8 +19128,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfNoteSection");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmElfSection);
         s & BOOST_SERIALIZATION_NVP(p_entries);
+        debugSerializationEnd("SgAsmElfNoteSection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -18946,8 +19212,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfNoteEntryList");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_entries);
+        debugSerializationEnd("SgAsmElfNoteEntryList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -19025,10 +19293,12 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfNoteEntry");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_type);
         s & BOOST_SERIALIZATION_NVP(p_name);
         s & BOOST_SERIALIZATION_NVP(p_payload);
+        debugSerializationEnd("SgAsmElfNoteEntry");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -19238,6 +19508,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfFileHeader");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericHeader);
         s & BOOST_SERIALIZATION_NVP(p_e_ident_file_class);
         s & BOOST_SERIALIZATION_NVP(p_e_ident_data_encoding);
@@ -19254,6 +19525,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_e_shstrndx);
         s & BOOST_SERIALIZATION_NVP(p_section_table);
         s & BOOST_SERIALIZATION_NVP(p_segment_table);
+        debugSerializationEnd("SgAsmElfFileHeader");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -19615,8 +19887,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfEHFrameSection");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmElfSection);
         s & BOOST_SERIALIZATION_NVP(p_ci_entries);
+        debugSerializationEnd("SgAsmElfEHFrameSection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -19707,8 +19981,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfEHFrameEntryFDList");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_entries);
+        debugSerializationEnd("SgAsmElfEHFrameEntryFDList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -19792,11 +20068,13 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfEHFrameEntryFD");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_begin_rva);
         s & BOOST_SERIALIZATION_NVP(p_size);
         s & BOOST_SERIALIZATION_NVP(p_augmentation_data);
         s & BOOST_SERIALIZATION_NVP(p_instructions);
+        debugSerializationEnd("SgAsmElfEHFrameEntryFD");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -19911,8 +20189,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfEHFrameEntryCIList");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_entries);
+        debugSerializationEnd("SgAsmElfEHFrameEntryCIList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -20058,6 +20338,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfEHFrameEntryCI");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_version);
         s & BOOST_SERIALIZATION_NVP(p_augmentation_string);
@@ -20073,6 +20354,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_sig_frame);
         s & BOOST_SERIALIZATION_NVP(p_instructions);
         s & BOOST_SERIALIZATION_NVP(p_fd_entries);
+        debugSerializationEnd("SgAsmElfEHFrameEntryCI");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -20292,8 +20574,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfDynamicSection");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmElfSection);
         s & BOOST_SERIALIZATION_NVP(p_entries);
+        debugSerializationEnd("SgAsmElfDynamicSection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -20412,10 +20696,12 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfSection");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
         s & BOOST_SERIALIZATION_NVP(p_linked_section);
         s & BOOST_SERIALIZATION_NVP(p_section_entry);
         s & BOOST_SERIALIZATION_NVP(p_segment_entry);
+        debugSerializationEnd("SgAsmElfSection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -20580,8 +20866,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfDynamicEntryList");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_entries);
+        debugSerializationEnd("SgAsmElfDynamicEntryList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -20670,11 +20958,13 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfDynamicEntry");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_d_tag);
         s & BOOST_SERIALIZATION_NVP(p_d_val);
         s & BOOST_SERIALIZATION_NVP(p_name);
         s & BOOST_SERIALIZATION_NVP(p_extra);
+        debugSerializationEnd("SgAsmElfDynamicEntry");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -20898,7 +21188,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfWithStmt");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfWithStmt");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -20951,7 +21243,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfVariantPart");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfVariantPart");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -21004,7 +21298,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfVariant");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfVariant");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -21057,7 +21353,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfVariable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfVariable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -21110,7 +21408,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfUpcStrictType");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfUpcStrictType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -21163,7 +21463,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfUpcSharedType");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfUpcSharedType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -21216,7 +21518,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfUpcRelaxedType");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfUpcRelaxedType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -21269,7 +21573,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfUnspecifiedType");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfUnspecifiedType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -21322,7 +21628,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfUnspecifiedParameters");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfUnspecifiedParameters");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -21375,7 +21683,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfUnknownConstruct");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfUnknownConstruct");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -21434,8 +21744,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfUnionType");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         s & BOOST_SERIALIZATION_NVP(p_body);
+        debugSerializationEnd("SgAsmDwarfUnionType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -21500,7 +21812,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfTypedef");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfTypedef");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -21553,7 +21867,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfTryBlock");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfTryBlock");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -21606,7 +21922,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfThrownType");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfThrownType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -21659,7 +21977,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfTemplateValueParameter");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfTemplateValueParameter");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -21712,7 +22032,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfTemplateTypeParameter");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfTemplateTypeParameter");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -21771,8 +22093,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfSubroutineType");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         s & BOOST_SERIALIZATION_NVP(p_body);
+        debugSerializationEnd("SgAsmDwarfSubroutineType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -21837,7 +22161,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfSubrangeType");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfSubrangeType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -21896,8 +22222,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfSubprogram");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         s & BOOST_SERIALIZATION_NVP(p_body);
+        debugSerializationEnd("SgAsmDwarfSubprogram");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -21968,8 +22296,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfStructureType");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         s & BOOST_SERIALIZATION_NVP(p_body);
+        debugSerializationEnd("SgAsmDwarfStructureType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -22034,7 +22364,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfStringType");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfStringType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -22087,7 +22419,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfSharedType");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfSharedType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -22140,7 +22474,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfSetType");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfSetType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -22193,7 +22529,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfRestrictType");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfRestrictType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -22246,7 +22584,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfReferenceType");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfReferenceType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -22299,7 +22639,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfPtrToMemberType");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfPtrToMemberType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -22352,7 +22694,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfPointerType");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfPointerType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -22405,7 +22749,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfPartialUnit");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfPartialUnit");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -22458,7 +22804,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfPackedType");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfPackedType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -22517,8 +22865,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfNamespace");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         s & BOOST_SERIALIZATION_NVP(p_body);
+        debugSerializationEnd("SgAsmDwarfNamespace");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -22583,7 +22933,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfNamelistItem");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfNamelistItem");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -22636,7 +22988,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfNamelist");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfNamelist");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -22689,7 +23043,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfMutableType");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfMutableType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -22742,7 +23098,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfModule");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfModule");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -22795,7 +23153,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfMember");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfMember");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -22854,8 +23214,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfMacroList");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfInformation);
         s & BOOST_SERIALIZATION_NVP(p_macro_list);
+        debugSerializationEnd("SgAsmDwarfMacroList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -22919,8 +23281,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfMacro");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfInformation);
         s & BOOST_SERIALIZATION_NVP(p_macro_string);
+        debugSerializationEnd("SgAsmDwarfMacro");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -22984,8 +23348,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfLineList");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfInformation);
         s & BOOST_SERIALIZATION_NVP(p_line_list);
+        debugSerializationEnd("SgAsmDwarfLineList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -23089,11 +23455,13 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfLine");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfInformation);
         s & BOOST_SERIALIZATION_NVP(p_address);
         s & BOOST_SERIALIZATION_NVP(p_file_id);
         s & BOOST_SERIALIZATION_NVP(p_line);
         s & BOOST_SERIALIZATION_NVP(p_column);
+        debugSerializationEnd("SgAsmDwarfLine");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -23197,8 +23565,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfLexicalBlock");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         s & BOOST_SERIALIZATION_NVP(p_body);
+        debugSerializationEnd("SgAsmDwarfLexicalBlock");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -23263,7 +23633,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfLabel");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfLabel");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -23316,7 +23688,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfInterfaceType");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfInterfaceType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -23375,8 +23749,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfInlinedSubroutine");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         s & BOOST_SERIALIZATION_NVP(p_body);
+        debugSerializationEnd("SgAsmDwarfInlinedSubroutine");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -23441,7 +23817,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfInheritance");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfInheritance");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -23494,7 +23872,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfImportedUnit");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfImportedUnit");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -23547,7 +23927,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfImportedModule");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfImportedModule");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -23600,7 +23982,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfImportedDeclaration");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfImportedDeclaration");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -23653,7 +24037,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfFunctionTemplate");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfFunctionTemplate");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -23706,7 +24092,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfFriend");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfFriend");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -23759,7 +24147,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfFormatLabel");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfFormatLabel");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -23812,7 +24202,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfFormalParameter");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfFormalParameter");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -23865,7 +24257,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfFileType");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfFileType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -23918,7 +24312,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfEnumerator");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfEnumerator");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -23977,8 +24373,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfEnumerationType");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         s & BOOST_SERIALIZATION_NVP(p_body);
+        debugSerializationEnd("SgAsmDwarfEnumerationType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -24043,7 +24441,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfEntryPoint");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfEntryPoint");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -24096,7 +24496,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfDwarfProcedure");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfDwarfProcedure");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -24149,7 +24551,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfConstType");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfConstType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -24208,8 +24612,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfConstructList");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfInformation);
         s & BOOST_SERIALIZATION_NVP(p_list);
+        debugSerializationEnd("SgAsmDwarfConstructList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -24268,7 +24674,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfConstant");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfConstant");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -24321,7 +24729,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfCondition");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfCondition");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -24380,8 +24790,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfCompilationUnitList");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfInformation);
         s & BOOST_SERIALIZATION_NVP(p_cu_list);
+        debugSerializationEnd("SgAsmDwarfCompilationUnitList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -24506,6 +24918,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfCompilationUnit");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         s & BOOST_SERIALIZATION_NVP(p_producer);
         s & BOOST_SERIALIZATION_NVP(p_language);
@@ -24518,6 +24931,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_line_info);
         s & BOOST_SERIALIZATION_NVP(p_language_constructs);
         s & BOOST_SERIALIZATION_NVP(p_macro_info);
+        debugSerializationEnd("SgAsmDwarfCompilationUnit");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -24692,7 +25106,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfCommonInclusion");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfCommonInclusion");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -24751,8 +25167,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfCommonBlock");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         s & BOOST_SERIALIZATION_NVP(p_body);
+        debugSerializationEnd("SgAsmDwarfCommonBlock");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -24823,8 +25241,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfClassType");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         s & BOOST_SERIALIZATION_NVP(p_body);
+        debugSerializationEnd("SgAsmDwarfClassType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -24889,7 +25309,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfClassTemplate");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfClassTemplate");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -24942,7 +25364,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfCatchBlock");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfCatchBlock");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -24995,7 +25419,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfBaseType");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfBaseType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -25054,8 +25480,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfArrayType");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
         s & BOOST_SERIALIZATION_NVP(p_body);
+        debugSerializationEnd("SgAsmDwarfArrayType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -25120,7 +25548,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfAccessDeclaration");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfAccessDeclaration");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -25280,12 +25710,14 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfConstruct");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfInformation);
         s & BOOST_SERIALIZATION_NVP(p_nesting_level);
         s & BOOST_SERIALIZATION_NVP(p_offset);
         s & BOOST_SERIALIZATION_NVP(p_overall_offset);
         s & BOOST_SERIALIZATION_NVP(p_name);
         s & BOOST_SERIALIZATION_NVP(p_source_position);
+        debugSerializationEnd("SgAsmDwarfConstruct");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     // AsmDwarfConstruct.setFunctionPrototype("HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
@@ -25424,7 +25856,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfInformation");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
+        debugSerializationEnd("SgAsmDwarfInformation");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -25571,6 +26005,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDOSFileHeader");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericHeader);
         s & BOOST_SERIALIZATION_NVP(p_e_last_page_size);
         s & BOOST_SERIALIZATION_NVP(p_e_total_pages);
@@ -25588,6 +26023,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_e_res1);
         s & BOOST_SERIALIZATION_NVP(p_relocs);
         s & BOOST_SERIALIZATION_NVP(p_rm_section);
+        debugSerializationEnd("SgAsmDOSFileHeader");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -25948,6 +26384,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmGenericHeader");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
         s & BOOST_SERIALIZATION_NVP(p_exec_format);
         s & BOOST_SERIALIZATION_NVP(p_magic);
@@ -25956,6 +26393,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_entry_rvas);
         s & BOOST_SERIALIZATION_NVP(p_dlls);
         s & BOOST_SERIALIZATION_NVP(p_sections);
+        debugSerializationEnd("SgAsmGenericHeader");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -26243,6 +26681,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDOSExtendedHeader");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
         s & BOOST_SERIALIZATION_NVP(p_e_res1);
         s & BOOST_SERIALIZATION_NVP(p_e_oemid);
@@ -26253,6 +26692,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_e_res5);
         s & BOOST_SERIALIZATION_NVP(p_e_res6);
         s & BOOST_SERIALIZATION_NVP(p_e_lfanew);
+        debugSerializationEnd("SgAsmDOSExtendedHeader");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -26435,7 +26875,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDirectRegisterExpression");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmRegisterReferenceExpression);
+        debugSerializationEnd("SgAsmDirectRegisterExpression");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -26513,9 +26955,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmRegisterReferenceExpression");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
         s & BOOST_SERIALIZATION_NVP(p_descriptor);
         s & BOOST_SERIALIZATION_NVP(p_adjustment);
+        debugSerializationEnd("SgAsmRegisterReferenceExpression");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -26599,8 +27043,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmControlFlagsExpression");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
         s & BOOST_SERIALIZATION_NVP(p_bit_flags);
+        debugSerializationEnd("SgAsmControlFlagsExpression");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -26687,8 +27133,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmConstantExpression");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmValueExpression);
         s & BOOST_SERIALIZATION_NVP(p_bitVector);
+        debugSerializationEnd("SgAsmConstantExpression");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -26791,10 +27239,12 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmValueExpression");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
         s & BOOST_SERIALIZATION_NVP(p_unfolded_expression_tree);
         s & BOOST_SERIALIZATION_NVP(p_bit_offset);
         s & BOOST_SERIALIZATION_NVP(p_bit_size);
+        debugSerializationEnd("SgAsmValueExpression");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -26896,8 +27346,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCommonSubExpression");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
         s & BOOST_SERIALIZATION_NVP(p_subexpression);
+        debugSerializationEnd("SgAsmCommonSubExpression");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -26970,9 +27422,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCoffSymbolTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
         s & BOOST_SERIALIZATION_NVP(p_strtab);
         s & BOOST_SERIALIZATION_NVP(p_symbols);
+        debugSerializationEnd("SgAsmCoffSymbolTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -27053,8 +27507,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCoffSymbolList");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_symbols);
+        debugSerializationEnd("SgAsmCoffSymbolList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -27156,6 +27612,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCoffSymbol");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSymbol);
         s & BOOST_SERIALIZATION_NVP(p_st_name);
         s & BOOST_SERIALIZATION_NVP(p_st_name_offset);
@@ -27164,6 +27621,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_st_storage_class);
         s & BOOST_SERIALIZATION_NVP(p_st_num_aux_entries);
         s & BOOST_SERIALIZATION_NVP(p_aux_data);
+        debugSerializationEnd("SgAsmCoffSymbol");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -27390,6 +27848,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmGenericSymbol");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_def_state);
         s & BOOST_SERIALIZATION_NVP(p_binding);
@@ -27398,6 +27857,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_size);
         s & BOOST_SERIALIZATION_NVP(p_bound);
         s & BOOST_SERIALIZATION_NVP(p_name);
+        debugSerializationEnd("SgAsmGenericSymbol");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -27564,7 +28024,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCoffStrtab");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericStrtab);
+        debugSerializationEnd("SgAsmCoffStrtab");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 public:
@@ -27661,12 +28123,14 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmGenericStrtab");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_container);
         s & BOOST_SERIALIZATION_NVP(p_storage_list);
         s & BOOST_SERIALIZATION_NVP(p_freelist);
         s & BOOST_SERIALIZATION_NVP(p_dont_free);
         s & BOOST_SERIALIZATION_NVP(p_num_freed);
+        debugSerializationEnd("SgAsmGenericStrtab");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -27902,6 +28366,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCliHeader");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
         s & BOOST_SERIALIZATION_NVP(p_cb);
         s & BOOST_SERIALIZATION_NVP(p_majorRuntimeVersion);
@@ -27915,6 +28380,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_vTableFixups);
         s & BOOST_SERIALIZATION_NVP(p_exportAddressTableJumps);
         s & BOOST_SERIALIZATION_NVP(p_managedNativeHeader);
+        debugSerializationEnd("SgAsmCliHeader");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -28270,6 +28736,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmGenericSection");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_file);
         s & BOOST_SERIALIZATION_NVP(p_header);
@@ -28290,6 +28757,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_mapped_xperm);
         s & BOOST_SERIALIZATION_NVP(p_contains_code);
         s & BOOST_SERIALIZATION_NVP(p_mapped_actual_va);
+        debugSerializationEnd("SgAsmGenericSection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -28840,8 +29308,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilUint8Heap");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilDataStream);
         s & BOOST_SERIALIZATION_NVP(p_Stream);
+        debugSerializationEnd("SgAsmCilUint8Heap");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -28914,8 +29384,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilUint32Heap");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilDataStream);
         s & BOOST_SERIALIZATION_NVP(p_Stream);
+        debugSerializationEnd("SgAsmCilUint32Heap");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -28988,8 +29460,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilTypeSpecTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilTypeSpecTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -29055,8 +29529,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilTypeSpec");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_Signature);
+        debugSerializationEnd("SgAsmCilTypeSpec");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -29124,8 +29600,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilTypeRefTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilTypeRefTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -29203,10 +29681,12 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilTypeRef");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_ResolutionScope);
         s & BOOST_SERIALIZATION_NVP(p_TypeName);
         s & BOOST_SERIALIZATION_NVP(p_TypeNamespace);
+        debugSerializationEnd("SgAsmCilTypeRef");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -29298,8 +29778,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilTypeDefTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilTypeDefTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -29395,6 +29877,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilTypeDef");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_Flags);
         s & BOOST_SERIALIZATION_NVP(p_TypeName);
@@ -29402,6 +29885,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_Extends);
         s & BOOST_SERIALIZATION_NVP(p_FieldList);
         s & BOOST_SERIALIZATION_NVP(p_MethodList);
+        debugSerializationEnd("SgAsmCilTypeDef");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -29528,8 +30012,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilStandAloneSigTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilStandAloneSigTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -29595,8 +30081,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilStandAloneSig");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_Signature);
+        debugSerializationEnd("SgAsmCilStandAloneSig");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -29664,8 +30152,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilPropertyTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilPropertyTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -29731,8 +30221,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilPropertyMapTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilPropertyMapTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -29804,9 +30296,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilPropertyMap");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_Parent);
         s & BOOST_SERIALIZATION_NVP(p_PropertyList);
+        debugSerializationEnd("SgAsmCilPropertyMap");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -29898,10 +30392,12 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilProperty");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_Flags);
         s & BOOST_SERIALIZATION_NVP(p_Name);
         s & BOOST_SERIALIZATION_NVP(p_Type);
+        debugSerializationEnd("SgAsmCilProperty");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -29992,8 +30488,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilParamTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilParamTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -30071,10 +30569,12 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilParam");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_Flags);
         s & BOOST_SERIALIZATION_NVP(p_Sequence);
         s & BOOST_SERIALIZATION_NVP(p_Name);
+        debugSerializationEnd("SgAsmCilParam");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -30164,8 +30664,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilNestedClassTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilNestedClassTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -30237,9 +30739,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilNestedClass");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_NestedClass);
         s & BOOST_SERIALIZATION_NVP(p_EnclosingClass);
+        debugSerializationEnd("SgAsmCilNestedClass");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -30319,8 +30823,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilModuleTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilModuleTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -30386,8 +30892,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilModuleRefTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilModuleRefTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -30453,8 +30961,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilModuleRef");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_Name);
+        debugSerializationEnd("SgAsmCilModuleRef");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -30546,12 +31056,14 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilModule");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_Generation);
         s & BOOST_SERIALIZATION_NVP(p_Name);
         s & BOOST_SERIALIZATION_NVP(p_Mvid);
         s & BOOST_SERIALIZATION_NVP(p_Encld);
         s & BOOST_SERIALIZATION_NVP(p_EncBaseId);
+        debugSerializationEnd("SgAsmCilModule");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -30666,8 +31178,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilMethodSpecTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilMethodSpecTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -30739,9 +31253,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilMethodSpec");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_Method);
         s & BOOST_SERIALIZATION_NVP(p_Instantiation);
+        debugSerializationEnd("SgAsmCilMethodSpec");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -30821,8 +31337,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilMethodSemanticsTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilMethodSemanticsTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -30900,10 +31418,12 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilMethodSemantics");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_Semantics);
         s & BOOST_SERIALIZATION_NVP(p_Method);
         s & BOOST_SERIALIZATION_NVP(p_Association);
+        debugSerializationEnd("SgAsmCilMethodSemantics");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -30994,8 +31514,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilMethodImplTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilMethodImplTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -31073,10 +31595,12 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilMethodImpl");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_Class);
         s & BOOST_SERIALIZATION_NVP(p_MethodBody);
         s & BOOST_SERIALIZATION_NVP(p_MethodDeclaration);
+        debugSerializationEnd("SgAsmCilMethodImpl");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -31168,8 +31692,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilMethodDefTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilMethodDefTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -31289,6 +31815,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilMethodDef");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_RVA);
         s & BOOST_SERIALIZATION_NVP(p_ImplFlags);
@@ -31300,6 +31827,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_initLocals);
         s & BOOST_SERIALIZATION_NVP(p_stackSize);
         s & BOOST_SERIALIZATION_NVP(p_hasMoreSections);
+        debugSerializationEnd("SgAsmCilMethodDef");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -31522,6 +32050,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilMetadataRoot");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
         s & BOOST_SERIALIZATION_NVP(p_Signature);
         s & BOOST_SERIALIZATION_NVP(p_MajorVersion);
@@ -31533,6 +32062,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_Flags);
         s & BOOST_SERIALIZATION_NVP(p_NumberOfStreams);
         s & BOOST_SERIALIZATION_NVP(p_Streams);
+        debugSerializationEnd("SgAsmCilMetadataRoot");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -32007,6 +32537,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilMetadataHeap");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilDataStream);
         s & BOOST_SERIALIZATION_NVP(p_ReservedAlwaysZero);
         s & BOOST_SERIALIZATION_NVP(p_MajorVersion);
@@ -32055,6 +32586,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_TypeDefTable);
         s & BOOST_SERIALIZATION_NVP(p_TypeRefTable);
         s & BOOST_SERIALIZATION_NVP(p_TypeSpecTable);
+        debugSerializationEnd("SgAsmCilMetadataHeap");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -32727,8 +33259,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilMemberRefTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilMemberRefTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -32806,10 +33340,12 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilMemberRef");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_Class);
         s & BOOST_SERIALIZATION_NVP(p_Name);
         s & BOOST_SERIALIZATION_NVP(p_Signature);
+        debugSerializationEnd("SgAsmCilMemberRef");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -32901,8 +33437,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilManifestResourceTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilManifestResourceTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -32986,11 +33524,13 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilManifestResource");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_Offset);
         s & BOOST_SERIALIZATION_NVP(p_Flags);
         s & BOOST_SERIALIZATION_NVP(p_Name);
         s & BOOST_SERIALIZATION_NVP(p_Implementation);
+        debugSerializationEnd("SgAsmCilManifestResource");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -33092,8 +33632,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilInterfaceImplTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilInterfaceImplTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -33165,9 +33707,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilInterfaceImpl");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_Class);
         s & BOOST_SERIALIZATION_NVP(p_Interface);
+        debugSerializationEnd("SgAsmCilInterfaceImpl");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -33251,8 +33795,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilInstruction");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmInstruction);
         s & BOOST_SERIALIZATION_NVP(p_kind);
+        debugSerializationEnd("SgAsmCilInstruction");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -33340,8 +33886,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilImplMapTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilImplMapTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -33425,11 +33973,13 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilImplMap");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_MappingFlags);
         s & BOOST_SERIALIZATION_NVP(p_MemberForwarded);
         s & BOOST_SERIALIZATION_NVP(p_ImportName);
         s & BOOST_SERIALIZATION_NVP(p_ImportScope);
+        debugSerializationEnd("SgAsmCilImplMap");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -33532,8 +34082,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilGenericParamTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilGenericParamTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -33617,11 +34169,13 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilGenericParam");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_Number);
         s & BOOST_SERIALIZATION_NVP(p_Flags);
         s & BOOST_SERIALIZATION_NVP(p_Owner);
         s & BOOST_SERIALIZATION_NVP(p_Name);
+        debugSerializationEnd("SgAsmCilGenericParam");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -33723,8 +34277,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilGenericParamConstraintTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilGenericParamConstraintTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -33796,9 +34352,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilGenericParamConstraint");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_Owner);
         s & BOOST_SERIALIZATION_NVP(p_Constraint);
+        debugSerializationEnd("SgAsmCilGenericParamConstraint");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -33878,8 +34436,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilFileTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilFileTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -33957,10 +34517,12 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilFile");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_Flags);
         s & BOOST_SERIALIZATION_NVP(p_Name);
         s & BOOST_SERIALIZATION_NVP(p_HashValue);
+        debugSerializationEnd("SgAsmCilFile");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -34051,8 +34613,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilFieldTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilFieldTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -34118,8 +34682,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilFieldRVATable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilFieldRVATable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -34191,9 +34757,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilFieldRVA");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_RVA);
         s & BOOST_SERIALIZATION_NVP(p_Field);
+        debugSerializationEnd("SgAsmCilFieldRVA");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -34272,8 +34840,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilFieldMarshalTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilFieldMarshalTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -34345,9 +34915,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilFieldMarshal");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_Parent);
         s & BOOST_SERIALIZATION_NVP(p_NativeType);
+        debugSerializationEnd("SgAsmCilFieldMarshal");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -34427,8 +34999,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilFieldLayoutTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilFieldLayoutTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -34500,9 +35074,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilFieldLayout");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_Offset);
         s & BOOST_SERIALIZATION_NVP(p_Field);
+        debugSerializationEnd("SgAsmCilFieldLayout");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -34593,10 +35169,12 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilField");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_Flags);
         s & BOOST_SERIALIZATION_NVP(p_Name);
         s & BOOST_SERIALIZATION_NVP(p_Signature);
+        debugSerializationEnd("SgAsmCilField");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -34687,8 +35265,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilExportedTypeTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilExportedTypeTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -34778,12 +35358,14 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilExportedType");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_EventFlags);
         s & BOOST_SERIALIZATION_NVP(p_TypeDefIdName);
         s & BOOST_SERIALIZATION_NVP(p_TypeName);
         s & BOOST_SERIALIZATION_NVP(p_TypeNamespace);
         s & BOOST_SERIALIZATION_NVP(p_Implementation);
+        debugSerializationEnd("SgAsmCilExportedType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -34897,8 +35479,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilEventTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilEventTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -34964,8 +35548,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilEventMapTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilEventMapTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -35037,9 +35623,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilEventMap");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_Parent);
         s & BOOST_SERIALIZATION_NVP(p_EventList);
+        debugSerializationEnd("SgAsmCilEventMap");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -35131,10 +35719,12 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilEvent");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_EventFlags);
         s & BOOST_SERIALIZATION_NVP(p_Name);
         s & BOOST_SERIALIZATION_NVP(p_EventType);
+        debugSerializationEnd("SgAsmCilEvent");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 public:
@@ -35225,8 +35815,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilDeclSecurityTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilDeclSecurityTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -35304,10 +35896,12 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilDeclSecurity");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_Action);
         s & BOOST_SERIALIZATION_NVP(p_Parent);
         s & BOOST_SERIALIZATION_NVP(p_PermissionSet);
+        debugSerializationEnd("SgAsmCilDeclSecurity");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -35431,11 +36025,13 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilDataStream");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
         s & BOOST_SERIALIZATION_NVP(p_Offset);
         s & BOOST_SERIALIZATION_NVP(p_Size);
         s & BOOST_SERIALIZATION_NVP(p_Name);
         s & BOOST_SERIALIZATION_NVP(p_NamePadding);
+        debugSerializationEnd("SgAsmCilDataStream");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -35560,8 +36156,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilCustomAttributeTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilCustomAttributeTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -35639,10 +36237,12 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilCustomAttribute");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_Parent);
         s & BOOST_SERIALIZATION_NVP(p_Type);
         s & BOOST_SERIALIZATION_NVP(p_Value);
+        debugSerializationEnd("SgAsmCilCustomAttribute");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -35734,8 +36334,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilConstantTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilConstantTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -35819,11 +36421,13 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilConstant");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_Type);
         s & BOOST_SERIALIZATION_NVP(p_Padding);
         s & BOOST_SERIALIZATION_NVP(p_Parent);
         s & BOOST_SERIALIZATION_NVP(p_Value);
+        debugSerializationEnd("SgAsmCilConstant");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -35925,8 +36529,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilClassLayoutTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilClassLayoutTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -36004,10 +36610,12 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilClassLayout");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_PackingSize);
         s & BOOST_SERIALIZATION_NVP(p_ClassSize);
         s & BOOST_SERIALIZATION_NVP(p_Parent);
+        debugSerializationEnd("SgAsmCilClassLayout");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -36097,8 +36705,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilAssemblyTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilAssemblyTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -36164,8 +36774,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilAssemblyRefTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilAssemblyRefTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -36231,8 +36843,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilAssemblyRefProcessorTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilAssemblyRefProcessorTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -36304,9 +36918,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilAssemblyRefProcessor");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_Processor);
         s & BOOST_SERIALIZATION_NVP(p_AssemblyRef);
+        debugSerializationEnd("SgAsmCilAssemblyRefProcessor");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -36385,8 +37001,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilAssemblyRefOSTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilAssemblyRefOSTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -36470,11 +37088,13 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilAssemblyRefOS");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_OSPlatformID);
         s & BOOST_SERIALIZATION_NVP(p_OSMajorVersion);
         s & BOOST_SERIALIZATION_NVP(p_OSMinorVersion);
         s & BOOST_SERIALIZATION_NVP(p_AssemblyRefOS);
+        debugSerializationEnd("SgAsmCilAssemblyRefOS");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -36623,6 +37243,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilAssemblyRef");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_MajorVersion);
         s & BOOST_SERIALIZATION_NVP(p_MinorVersion);
@@ -36633,6 +37254,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_Name);
         s & BOOST_SERIALIZATION_NVP(p_Culture);
         s & BOOST_SERIALIZATION_NVP(p_HashValue);
+        debugSerializationEnd("SgAsmCilAssemblyRef");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -36791,8 +37413,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilAssemblyProcessorTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilAssemblyProcessorTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -36858,8 +37482,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilAssemblyProcessor");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_Processor);
+        debugSerializationEnd("SgAsmCilAssemblyProcessor");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -36925,8 +37551,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilAssemblyOSTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilAssemblyOSTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -37004,10 +37632,12 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilAssemblyOS");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_OSPlatformID);
         s & BOOST_SERIALIZATION_NVP(p_OSMajorVersion);
         s & BOOST_SERIALIZATION_NVP(p_OSMinorVersion);
+        debugSerializationEnd("SgAsmCilAssemblyOS");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -37143,6 +37773,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilAssembly");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
         s & BOOST_SERIALIZATION_NVP(p_HashAlgId);
         s & BOOST_SERIALIZATION_NVP(p_MajorVersion);
@@ -37153,6 +37784,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_PublicKey);
         s & BOOST_SERIALIZATION_NVP(p_Name);
         s & BOOST_SERIALIZATION_NVP(p_Culture);
+        debugSerializationEnd("SgAsmCilAssembly");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -37392,7 +38024,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilMetadata");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+        debugSerializationEnd("SgAsmCilMetadata");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -37455,7 +38089,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilNode");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
+        debugSerializationEnd("SgAsmCilNode");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -37503,8 +38139,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmByteOrder");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
         s & BOOST_SERIALIZATION_NVP(byteOrder_);
+        debugSerializationEnd("SgAsmByteOrder");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -37643,6 +38281,7 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmBlock");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmStatement);
         s & BOOST_SERIALIZATION_NVP(p_reason);
         s & BOOST_SERIALIZATION_NVP(p_statementList);
@@ -37652,6 +38291,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_cached_vertex);
         s & BOOST_SERIALIZATION_NVP(p_code_likelihood);
         s & BOOST_SERIALIZATION_NVP(p_stackDeltaOut);
+        debugSerializationEnd("SgAsmBlock");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -37920,7 +38560,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmBinarySubtract");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
+        debugSerializationEnd("SgAsmBinarySubtract");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -37973,7 +38615,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmBinaryRor");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
+        debugSerializationEnd("SgAsmBinaryRor");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -38029,7 +38673,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmBinaryPreupdate");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
+        debugSerializationEnd("SgAsmBinaryPreupdate");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -38085,7 +38731,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmBinaryPostupdate");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
+        debugSerializationEnd("SgAsmBinaryPostupdate");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -38138,7 +38786,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmBinaryMultiply");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
+        debugSerializationEnd("SgAsmBinaryMultiply");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -38193,7 +38843,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmBinaryMsl");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
+        debugSerializationEnd("SgAsmBinaryMsl");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -38246,7 +38898,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmBinaryMod");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
+        debugSerializationEnd("SgAsmBinaryMod");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -38299,7 +38953,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmBinaryLsr");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
+        debugSerializationEnd("SgAsmBinaryLsr");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -38352,7 +39008,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmBinaryLsl");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
+        debugSerializationEnd("SgAsmBinaryLsl");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -38405,7 +39063,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmBinaryDivide");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
+        debugSerializationEnd("SgAsmBinaryDivide");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -38458,7 +39118,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmBinaryConcat");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
+        debugSerializationEnd("SgAsmBinaryConcat");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -38511,7 +39173,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmBinaryAsr");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
+        debugSerializationEnd("SgAsmBinaryAsr");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -38564,7 +39228,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmBinaryAdd");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmBinaryExpression);
+        debugSerializationEnd("SgAsmBinaryAdd");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -38654,9 +39320,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmBinaryExpression");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
         s & BOOST_SERIALIZATION_NVP(p_lhs);
         s & BOOST_SERIALIZATION_NVP(p_rhs);
+        debugSerializationEnd("SgAsmBinaryExpression");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -38740,8 +39408,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmBasicString");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericString);
         s & BOOST_SERIALIZATION_NVP(p_string);
+        debugSerializationEnd("SgAsmBasicString");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -38825,7 +39495,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmGenericString");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
+        debugSerializationEnd("SgAsmGenericString");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 public:
@@ -38958,7 +39630,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmExecutableFileFormat");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
+        debugSerializationEnd("SgAsmExecutableFileFormat");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -39362,8 +40036,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmAarch64SysMoveOperand");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
         s & BOOST_SERIALIZATION_NVP(access_);
+        debugSerializationEnd("SgAsmAarch64SysMoveOperand");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -39439,8 +40115,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmAarch64PrefetchOperand");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
         s & BOOST_SERIALIZATION_NVP(operation_);
+        debugSerializationEnd("SgAsmAarch64PrefetchOperand");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -39533,9 +40211,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmAarch64Instruction");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmInstruction);
         s & BOOST_SERIALIZATION_NVP(p_kind);
         s & BOOST_SERIALIZATION_NVP(p_condition);
+        debugSerializationEnd("SgAsmAarch64Instruction");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -39644,8 +40324,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmAarch64CImmediateOperand");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
         s & BOOST_SERIALIZATION_NVP(immediate_);
+        debugSerializationEnd("SgAsmAarch64CImmediateOperand");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -39721,8 +40403,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmAarch64BarrierOperand");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
         s & BOOST_SERIALIZATION_NVP(operation_);
+        debugSerializationEnd("SgAsmAarch64BarrierOperand");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -39798,8 +40482,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmAarch64AtOperand");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
         s & BOOST_SERIALIZATION_NVP(operation_);
+        debugSerializationEnd("SgAsmAarch64AtOperand");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -39904,12 +40590,14 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmAarch32Instruction");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmInstruction);
         s & BOOST_SERIALIZATION_NVP(p_kind);
         s & BOOST_SERIALIZATION_NVP(p_condition);
         s & BOOST_SERIALIZATION_NVP(p_updatesFlags);
         s & BOOST_SERIALIZATION_NVP(p_writesBack);
         s & BOOST_SERIALIZATION_NVP(p_writesToIp);
+        debugSerializationEnd("SgAsmAarch32Instruction");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 public:
@@ -40125,12 +40813,14 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmInstruction");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmStatement);
         s & BOOST_SERIALIZATION_NVP(p_mnemonic);
         s & BOOST_SERIALIZATION_NVP(p_raw_bytes);
         s & BOOST_SERIALIZATION_NVP(p_operandList);
         s & BOOST_SERIALIZATION_NVP(p_cacheLockCount);
         s & BOOST_SERIALIZATION_NVP(p_sources);
+        debugSerializationEnd("SgAsmInstruction");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -40668,9 +41358,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmStatement");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
         s & BOOST_SERIALIZATION_NVP(p_address);
         s & BOOST_SERIALIZATION_NVP(p_comment);
+        debugSerializationEnd("SgAsmStatement");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -40744,8 +41436,10 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmAarch32Coprocessor");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
         s & BOOST_SERIALIZATION_NVP(coprocessor_);
+        debugSerializationEnd("SgAsmAarch32Coprocessor");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -40863,9 +41557,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmExpression");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
         s & BOOST_SERIALIZATION_NVP(p_type);
         s & BOOST_SERIALIZATION_NVP(p_comment);
+        debugSerializationEnd("SgAsmExpression");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 
@@ -40979,7 +41675,9 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmNode");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgNode);
+        debugSerializationEnd("SgAsmNode");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION
 protected:
@@ -41086,6 +41784,41 @@ public:
         void>::type
     changeChildPointer(T& edge, T const& child) {
         edge = child;
+    }
+    /** @} */
+
+private:
+    size_t objectSerializationDepth_ = 0;               // incremented as we traverse through base classes
+    void debugSerializationHelper(const char *className, bool isBegin) {
+        static size_t classSerializationDepth = 0;      // incremented by both base classes and data members
+        if (isBegin) {
+            ASSERT_require(classSerializationDepth >= objectSerializationDepth_);
+            const size_t memberTraversalDepth = classSerializationDepth - objectSerializationDepth_;
+            std::cerr <<"serializing: " <<std::string(memberTraversalDepth, ' ') <<std::string(objectSerializationDepth_, '.')
+                      <<className <<" " <<this <<"\n";
+            ++classSerializationDepth;
+            ++objectSerializationDepth_;
+        } else {
+            ASSERT_require2(classSerializationDepth > 0, className);
+            ASSERT_require2(objectSerializationDepth_ > 0, className);
+            --classSerializationDepth;
+            --objectSerializationDepth_;
+        }
+    }
+
+protected:
+    /** Called by generated serializers.
+     *
+     *  All generated serialization functions call this function as the first or last thing they do. This is a convenient place to
+     *  put temporary debugging code or breakpoints if you're trying to figure out what went wrong. You can also override it in
+     *  particular derived classes if you need to debug just one class.
+     *
+     * @{ */
+    virtual void debugSerializationBegin(const char *className) {
+        debugSerializationHelper(className, true);
+    }
+    virtual void debugSerializationEnd(const char *className) {
+        debugSerializationHelper(className, false);
     }
     /** @} */
 public:
