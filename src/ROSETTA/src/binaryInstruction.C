@@ -196,43 +196,33 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: An enum constant describing the base size of an x86 instruction. 
+     * 
+     * @{ */
     Rose::BinaryAnalysis::X86InstructionSize const& get_baseSize() const;
     void set_baseSize(Rose::BinaryAnalysis::X86InstructionSize const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: An enum describing the x86 instruction operand size. 
+     * 
+     * @{ */
     Rose::BinaryAnalysis::X86InstructionSize const& get_operandSize() const;
     void set_operandSize(Rose::BinaryAnalysis::X86InstructionSize const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: An enum describing the x86 address size. 
+     * 
+     * @{ */
     Rose::BinaryAnalysis::X86InstructionSize const& get_addressSize() const;
     void set_addressSize(Rose::BinaryAnalysis::X86InstructionSize const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Whether the x86 lock prefix was present.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Returns true if this instruction had the x86 lock prefix byte; false otherwise. 
      *  
      *  @{ */
     bool const& get_lockPrefix() const;
@@ -240,32 +230,26 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: An enum constant describing whether the instruction is repeated. 
+     * 
+     * @{ */
     Rose::BinaryAnalysis::X86RepeatPrefix const& get_repeatPrefix() const;
     void set_repeatPrefix(Rose::BinaryAnalysis::X86RepeatPrefix const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: An enum constant describing branch prediction. 
+     * 
+     * @{ */
     Rose::BinaryAnalysis::X86BranchPrediction const& get_branchPrediction() const;
     void set_branchPrediction(Rose::BinaryAnalysis::X86BranchPrediction const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: The segment override register.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Returns an enum describing the segment register override. Note that this is not a register descriptor, but an enum
+     *  constant. 
      *  
      *  @{ */
     Rose::BinaryAnalysis::X86SegmentRegister const& get_segmentOverride() const;
@@ -439,21 +423,15 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Number of elements in vector. 
+     * 
+     * @{ */
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Type of each vector element. 
+     * 
+     * @{ */
     /** @} */
 public:
     /** Construct a new vector type. */
@@ -885,12 +863,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Operand for a unary expression. 
+     * 
+     * @{ */
     SgAsmExpression* const& get_operand() const;
     void set_operand(SgAsmExpression* const&);
     /** @} */
@@ -968,24 +943,18 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Name. 
+     * 
+     * @{ */
     std::string const& get_name() const;
     void set_name(std::string const&);
     /** @} */
     // FIXME[Robb P Matzke 2017-02-13]: Is this bytes, bits, or what?
     // Not clear if we want to store the offset explicitly
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Offset. 
+     * 
+     * @{ */
     uint64_t const& get_offset() const;
     void set_offset(uint64_t const&);
     /** @} */
@@ -1136,34 +1105,25 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: String table holding the string. 
+     * 
+     * @{ */
     SgAsmGenericStrtab* const& get_strtab() const;
     void set_strtab(SgAsmGenericStrtab* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: String value. 
+     * 
+     * @{ */
     std::string const& get_string() const;
     void set_string(std::string const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Location of string in storage table. 
+     * 
+     * @{ */
     rose_addr_t const& get_offset() const;
     void set_offset(rose_addr_t const&);
     /** @} */
@@ -1238,12 +1198,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Storage area for this string. 
+     * 
+     * @{ */
     SgAsmStringStorage* const& get_storage() const;
     void set_storage(SgAsmStringStorage* const&);
     /** @} */
@@ -1346,10 +1303,10 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Raw bytes.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  These are the raw memory bytes of static data that appear in the binary specimen. Type information is painted onto
+     *  these bytes. 
      *  
      *  @{ */
     SgUnsignedCharList const& get_raw_bytes() const;
@@ -1422,10 +1379,10 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Position of element referenced on the stack.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This is a value that references the values on the stack (zero is top of stack, positive numbers are the depth into the
+     *  stack). 
      *  
      *  @{ */
     int const& get_stack_position() const;
@@ -1579,10 +1536,10 @@ public:
 
     // Note that the qualification for the type is necessary only for ROSETTA. Remove it when ROSETTA finally goes away.
 public:
-    /** Property: Instruction kind.
+    /** Property: Low-level semantic operation.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This property is an enum constant that represents an operation in @ref
+     *  Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::RiscOperators "RiscOperators". 
      *  
      *  @{ */
     SgAsmRiscOperation::RiscOperator const& get_riscOperator() const;
@@ -1590,10 +1547,10 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Operands for the low-level operation.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  These are the operands used by the low-level operation. The actual list is stored in a separate @ref
+     *  SgAsmExprListExpr AST node instead of directly in this node due to limitations of ROSETTA. 
      *  
      *  @{ */
     SgAsmExprListExp* const& get_operands() const;
@@ -1669,10 +1626,10 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: List of registers.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  These are the actual registers contained in this node.  Registers are stored in this node instead of directly in a
+     *  @ref SgAsmRegisterNames node because of limitations of ROSETTA. 
      *  
      *  @{ */
     SgAsmRegisterReferenceExpressionPtrList const& get_registers() const;
@@ -1681,10 +1638,10 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Bit mask.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This is an optional bit mask representing the registers. It's used by the m68k disassembler and represents the mask
+     *  that appeared in the encoded instruction. 
      *  
      *  @{ */
     unsigned const& get_mask() const;
@@ -1756,7 +1713,7 @@ public:
 public:
     /** Property: Instruction kind.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
+     *  Returns an enum constant describing the PowerPC instruction. These enum constants correspond roughly 1:1 with
      *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
      *  
      *  @{ */
@@ -1853,10 +1810,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: String table.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     SgAsmCoffStrtab* const& get_strtab() const;
@@ -2110,10 +2066,9 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Instruction kind.
+    /** Property: Name.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     std::string const& get_name() const;
@@ -2121,10 +2076,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Virtual size.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     rose_addr_t const& get_virtual_size() const;
@@ -2132,10 +2086,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: RVA.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     rose_addr_t const& get_rva() const;
@@ -2143,10 +2096,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Physical size.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     rose_addr_t const& get_physical_size() const;
@@ -2154,10 +2106,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Physical offset.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     rose_addr_t const& get_physical_offset() const;
@@ -2165,10 +2116,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: COFF line numbers.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_coff_line_nums() const;
@@ -2176,10 +2126,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Number of relocations.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_n_relocs() const;
@@ -2187,10 +2136,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Number of COFF line numbers.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_n_coff_line_nums() const;
@@ -2198,10 +2146,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Flags.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_flags() const;
@@ -2278,12 +2225,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: List of pointers to other nodes. 
+     * 
+     * @{ */
     SgAsmPERVASizePairPtrList const& get_pairs() const;
     SgAsmPERVASizePairPtrList& get_pairs();
     void set_pairs(SgAsmPERVASizePairPtrList const&);
@@ -2386,10 +2330,9 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Instruction kind.
+    /** Property: RVA.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     rose_rva_t const& get_e_rva() const;
@@ -2398,10 +2341,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Size.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     rose_addr_t const& get_e_size() const;
@@ -2409,10 +2351,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Section.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     /** @} */
@@ -2634,10 +2575,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: List of import directories.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     SgAsmPEImportDirectoryList* const& get_import_directories() const;
@@ -2730,12 +2670,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: List of pointers to other nodes. 
+     * 
+     * @{ */
     SgAsmPEImportItemPtrList const& get_vector() const;
     SgAsmPEImportItemPtrList& get_vector();
     void set_vector(SgAsmPEImportItemPtrList const&);
@@ -2854,10 +2791,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Whether ordinal number is stored.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     bool const& get_by_ordinal() const;
@@ -2865,10 +2801,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Ordinal number
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_ordinal() const;
@@ -2876,10 +2811,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Export name table hint if not ordinal.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_hint() const;
@@ -2887,10 +2821,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Name if not by ordinal.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     SgAsmGenericString* const& get_name() const;
@@ -2898,10 +2831,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: RVA of hint/name pair.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     rose_rva_t const& get_hintname_rva() const;
@@ -2910,10 +2842,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: File bytes allocated for hint/name pair.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     size_t const& get_hintname_nalloc() const;
@@ -2921,10 +2852,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Bound RVA from IAT if not a copy of ILT.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     rose_rva_t const& get_bound_rva() const;
@@ -2933,10 +2863,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Whether the resolved address has been written to the memory map.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     bool const& get_iat_written() const;
@@ -3026,10 +2955,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: List of nodes.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     SgAsmPEImportDirectoryPtrList const& get_vector() const;
@@ -3185,10 +3113,9 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Instruction kind.
+    /** Property: Name of library from which to import.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     SgAsmGenericString* const& get_dll_name() const;
@@ -3196,10 +3123,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Address of the import library name.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     rose_rva_t const& get_dll_name_rva() const;
@@ -3208,10 +3134,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Bytes allocated in the file for the name.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     size_t const& get_dll_name_nalloc() const;
@@ -3219,10 +3144,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Time.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     time_t const& get_time() const;
@@ -3230,10 +3154,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Forwarder chain.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_forwarder_chain() const;
@@ -3241,10 +3164,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Starting address of the ILT.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     rose_rva_t const& get_ilt_rva() const;
@@ -3253,10 +3175,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Bytes allocated in the file for the ILT.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     size_t const& get_ilt_nalloc() const;
@@ -3264,10 +3185,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: IAT RVA.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     rose_rva_t const& get_iat_rva() const;
@@ -3276,10 +3196,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Bytes allocated in the file for the IAT.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     size_t const& get_iat_nalloc() const;
@@ -3287,10 +3206,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: List of imports.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     SgAsmPEImportItemList* const& get_imports() const;
@@ -3821,10 +3739,9 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Instruction kind.
+    /** Property: CPU type.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_cpu_type() const;
@@ -3832,10 +3749,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Number of sections.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_nsections() const;
@@ -3843,10 +3759,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Time.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_time() const;
@@ -3854,10 +3769,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: COFF symbol table.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     rose_addr_t const& get_e_coff_symtab() const;
@@ -3865,10 +3779,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Size of NT header.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     rose_addr_t const& get_e_nt_hdr_size() const;
@@ -3876,10 +3789,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Number of COFF symbols.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_coff_nsyms() const;
@@ -3887,10 +3799,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Flags
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_flags() const;
@@ -3898,10 +3809,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Magic.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_opt_magic() const;
@@ -3909,10 +3819,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: lmajor.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_lmajor() const;
@@ -3920,10 +3829,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: lminor.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_lminor() const;
@@ -3931,10 +3839,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Code size.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_code_size() const;
@@ -3942,10 +3849,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Data size.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_data_size() const;
@@ -3953,10 +3859,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: BSS size.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_bss_size() const;
@@ -3964,10 +3869,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Code RVA.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     rose_rva_t const& get_e_code_rva() const;
@@ -3976,10 +3880,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Data RVA.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     rose_rva_t const& get_e_data_rva() const;
@@ -3988,10 +3891,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Section alignment.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_section_align() const;
@@ -3999,10 +3901,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: File alignment.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_file_align() const;
@@ -4010,10 +3911,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: OS major number.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_os_major() const;
@@ -4021,10 +3921,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: OS minor number.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_os_minor() const;
@@ -4032,10 +3931,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: User major number.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_user_major() const;
@@ -4043,10 +3941,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: User minor number.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_user_minor() const;
@@ -4054,10 +3951,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Subsystem major number.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_subsys_major() const;
@@ -4065,10 +3961,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Subsystem minor number.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_subsys_minor() const;
@@ -4076,10 +3971,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Reserved area #9.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_reserved9() const;
@@ -4087,10 +3981,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Image size.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_image_size() const;
@@ -4098,10 +3991,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Header size.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_header_size() const;
@@ -4109,10 +4001,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: File checksum.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_file_checksum() const;
@@ -4120,10 +4011,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Subsystem.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_subsystem() const;
@@ -4131,10 +4021,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: DLL flags.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_dll_flags() const;
@@ -4142,10 +4031,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Stack reserve size.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_stack_reserve_size() const;
@@ -4153,10 +4041,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Stack commit size.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_stack_commit_size() const;
@@ -4164,10 +4051,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Heap reserve size.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_heap_reserve_size() const;
@@ -4175,10 +4061,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Heap commit size.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_heap_commit_size() const;
@@ -4186,10 +4071,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Loader flags.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_loader_flags() const;
@@ -4197,10 +4081,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Number of RVA/size pairs.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_num_rvasize_pairs() const;
@@ -4208,10 +4091,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: RVA/size pairs.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     SgAsmPERVASizePairList* const& get_rvasize_pairs() const;
@@ -4219,10 +4101,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Section table.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     SgAsmPESectionTable* const& get_section_table() const;
@@ -4230,10 +4111,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: COFF symbol table.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     SgAsmCoffSymbolTable* const& get_coff_symtab() const;
@@ -4348,10 +4228,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Export directory.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     SgAsmPEExportDirectory* const& get_export_dir() const;
@@ -4359,10 +4238,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: List of export entries.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     SgAsmPEExportEntryList* const& get_exports() const;
@@ -4463,10 +4341,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Section table entry.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     SgAsmPESectionTableEntry* const& get_section_entry() const;
@@ -4544,12 +4421,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: List of pointers to nodes. 
+     * 
+     * @{ */
     SgAsmPEExportEntryPtrList const& get_exports() const;
     SgAsmPEExportEntryPtrList& get_exports();
     void set_exports(SgAsmPEExportEntryPtrList const&);
@@ -4634,21 +4508,18 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Name.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+     *  See PE specification.
+     *
+     * @{ */
     SgAsmGenericString* const& get_name() const;
-    /** @} */
     void set_name(SgAsmGenericString*);
     /** @} */
 public:
-    /** Property: Instruction kind.
+   /** Property: Ordinal.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Unbiased ordinal. This is the index into the Export Address Table. See PE specification. 
      *  
      *  @{ */
     unsigned const& get_ordinal() const;
@@ -4656,10 +4527,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Export RVA.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     rose_rva_t const& get_export_rva() const;
@@ -4668,14 +4538,12 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Forwarder.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
+     *  See PE specification.
+     *
      *  @{ */
     SgAsmGenericString* const& get_forwarder() const;
-    /** @} */
     void set_forwarder(SgAsmGenericString*);
     /** @} */
 
@@ -4856,10 +4724,9 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Instruction kind.
+    /** Property: Reserved aread #1.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_res1() const;
@@ -4867,10 +4734,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Time stamp.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     time_t const& get_timestamp() const;
@@ -4878,10 +4744,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: VMajor.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_vmajor() const;
@@ -4889,10 +4754,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: VMinor.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_vminor() const;
@@ -4900,10 +4764,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: RVA for name.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     rose_rva_t const& get_name_rva() const;
@@ -4912,10 +4775,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Ordinal base.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_ord_base() const;
@@ -4923,10 +4785,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Expaddr_n.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     size_t const& get_expaddr_n() const;
@@ -4934,10 +4795,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Nameptr_n.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     size_t const& get_nameptr_n() const;
@@ -4945,10 +4805,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Expaddr RVA.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     rose_rva_t const& get_expaddr_rva() const;
@@ -4957,10 +4816,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Name pointer RVA.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     rose_rva_t const& get_nameptr_rva() const;
@@ -4969,10 +4827,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Ordinals RVA.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     rose_rva_t const& get_ordinals_rva() const;
@@ -4981,10 +4838,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Name.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     SgAsmGenericString* const& get_name() const;
@@ -5054,10 +4910,10 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Ordered list of instruction operands.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The operand list is its own Sage node type (rather than operands being stored directly in the instruction node)
+     *  because of limitations of ROSETTA. 
      *  
      *  @{ */
     SgAsmExpressionPtrList const& get_operands() const;
@@ -5270,48 +5126,20 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_flags() const;
     void set_flags(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_sector() const;
     void set_sector(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_physical_size() const;
     void set_physical_size(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_virtual_size() const;
     void set_virtual_size(rose_addr_t const&);
-    /** @} */
 public:
     explicit SgAsmNESectionTable(SgAsmNEFileHeader*);
     virtual void unparse(std::ostream&) const override;
@@ -5439,48 +5267,20 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_flags() const;
     void set_flags(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_sector() const;
     void set_sector(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_physical_size() const;
     void set_physical_size(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_virtual_size() const;
     void set_virtual_size(rose_addr_t const&);
-    /** @} */
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -5553,26 +5353,12 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmNESectionTableEntry* const& get_st_entry() const;
     void set_st_entry(SgAsmNESectionTableEntry* const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmNERelocTable* const& get_reloc_table() const;
     void set_reloc_table(SgAsmNERelocTable* const&);
-    /** @} */
 public:
     explicit SgAsmNESection(SgAsmNEFileHeader *fhdr);
     virtual void unparse(std::ostream&) const override;
@@ -5634,16 +5420,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmNERelocEntryPtrList const& get_entries() const;
     SgAsmNERelocEntryPtrList& get_entries();
     void set_entries(SgAsmNERelocEntryPtrList const&);
-    /** @} */
 public:
     explicit SgAsmNERelocTable(SgAsmNEFileHeader *fhdr, SgAsmNESection *section);
     virtual void unparse(std::ostream&) const override;
@@ -5883,103 +5662,40 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmNERelocEntry::NERelocSrcType const& get_src_type() const;
     void set_src_type(SgAsmNERelocEntry::NERelocSrcType const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmNERelocEntry::NERelocModifiers const& get_modifier() const;
     void set_modifier(SgAsmNERelocEntry::NERelocModifiers const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmNERelocEntry::NERelocTgtType const& get_tgt_type() const;
     void set_tgt_type(SgAsmNERelocEntry::NERelocTgtType const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmNERelocEntry::NERelocFlags const& get_flags() const;
     void set_flags(SgAsmNERelocEntry::NERelocFlags const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_src_offset() const;
     void set_src_offset(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmNERelocEntry::iref_type const& get_iref() const;
     void set_iref(SgAsmNERelocEntry::iref_type const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmNERelocEntry::iord_type const& get_iord() const;
     void set_iord(SgAsmNERelocEntry::iord_type const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmNERelocEntry::iname_type const& get_iname() const;
     void set_iname(SgAsmNERelocEntry::iname_type const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmNERelocEntry::osfixup_type const& get_osfixup() const;
     void set_osfixup(SgAsmNERelocEntry::osfixup_type const&);
-    /** @} */
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -6051,26 +5767,12 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgStringList const& get_names() const;
     void set_names(SgStringList const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgUnsignedList const& get_ordinals() const;
     void set_ordinals(SgUnsignedList const&);
-    /** @} */
 public:
     SgAsmNENameTable(SgAsmNEFileHeader *fhdr, rose_addr_t offset);
     virtual void unparse(std::ostream&) const override;
@@ -6147,37 +5849,16 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmNEStringTable* const& get_strtab() const;
     void set_strtab(SgAsmNEStringTable* const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAddressList const& get_name_offsets() const;
     void set_name_offsets(SgAddressList const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgStringList const& get_names() const;
     void set_names(SgStringList const&);
-    /** @} */
 public:
     SgAsmNEModuleTable(SgAsmNEFileHeader *fhdr, SgAsmNEStringTable *strtab, rose_addr_t offset, rose_addr_t size);
     virtual void unparse(std::ostream&) const override;
@@ -6559,389 +6240,144 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_linker_major() const;
     void set_e_linker_major(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_linker_minor() const;
     void set_e_linker_minor(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_checksum() const;
     void set_e_checksum(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_flags1() const;
     void set_e_flags1(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_autodata_sn() const;
     void set_e_autodata_sn(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_bss_size() const;
     void set_e_bss_size(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_stack_size() const;
     void set_e_stack_size(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_csip() const;
     void set_e_csip(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_sssp() const;
     void set_e_sssp(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_nsections() const;
     void set_e_nsections(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_nmodrefs() const;
     void set_e_nmodrefs(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_nnonresnames() const;
     void set_e_nnonresnames(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_nmovable_entries() const;
     void set_e_nmovable_entries(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_sector_align() const;
     void set_e_sector_align(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_nresources() const;
     void set_e_nresources(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_exetype() const;
     void set_e_exetype(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_flags2() const;
     void set_e_flags2(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_res1() const;
     void set_e_res1(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_winvers() const;
     void set_e_winvers(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_e_entrytab_rfo() const;
     void set_e_entrytab_rfo(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_e_entrytab_size() const;
     void set_e_entrytab_size(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_e_sectab_rfo() const;
     void set_e_sectab_rfo(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_e_rsrctab_rfo() const;
     void set_e_rsrctab_rfo(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_e_resnametab_rfo() const;
     void set_e_resnametab_rfo(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_e_modreftab_rfo() const;
     void set_e_modreftab_rfo(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_e_importnametab_rfo() const;
     void set_e_importnametab_rfo(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_e_nonresnametab_offset() const;
     void set_e_nonresnametab_offset(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_e_fastload_sector() const;
     void set_e_fastload_sector(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_e_fastload_nsectors() const;
     void set_e_fastload_nsectors(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmDOSExtendedHeader* const& get_dos2_header() const;
     void set_dos2_header(SgAsmDOSExtendedHeader* const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmNESectionTable* const& get_section_table() const;
     void set_section_table(SgAsmNESectionTable* const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmNENameTable* const& get_resname_table() const;
     void set_resname_table(SgAsmNENameTable* const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmNENameTable* const& get_nonresname_table() const;
     void set_nonresname_table(SgAsmNENameTable* const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmNEModuleTable* const& get_module_table() const;
     void set_module_table(SgAsmNEModuleTable* const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmNEEntryTable* const& get_entry_table() const;
     void set_entry_table(SgAsmNEEntryTable* const&);
-    /** @} */
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -7020,27 +6456,13 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgSizeTList const& get_bundle_sizes() const;
     void set_bundle_sizes(SgSizeTList const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmNEEntryPointPtrList const& get_entries() const;
     SgAsmNEEntryPointPtrList& get_entries();
     void set_entries(SgAsmNEEntryPointPtrList const&);
-    /** @} */
 public:
     SgAsmNEEntryTable(SgAsmNEFileHeader *fhdr, rose_addr_t offset, rose_addr_t size);
     void populate_entries();
@@ -7137,48 +6559,20 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmNEEntryPoint::NEEntryFlags const& get_flags() const;
     void set_flags(SgAsmNEEntryPoint::NEEntryFlags const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_int3f() const;
     void set_int3f(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_section_idx() const;
     void set_section_idx(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_section_offset() const;
     void set_section_offset(unsigned const&);
-    /** @} */
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -7250,7 +6644,7 @@ private:
 public:
     /** Property: Instruction kind.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
+     *  Returns an enum constant describing the MIPS instruction. These enum constants correspond roughly 1:1 with
      *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
      *  
      *  @{ */
@@ -7342,10 +6736,11 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Memory address expression.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This property stores the address of the memory reference.  If the reference is for multiple bytes of memory, then
+     *  only one address is stored and the instruction semantics determine which address it is. Usually multi-byte
+     *  references store the lowest address. 
      *  
      *  @{ */
     SgAsmExpression* const& get_address() const;
@@ -7353,10 +6748,11 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Optional memory segment register.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  If a segment register is specified then the actual memory address is formed by adding the stored memory address to
+     *  the current value of the segment register.  The x86 architecture is the only ROSE architecture that uses segment
+     *  registers, and most of the time they are initialized to zero by the instruction semantics. 
      *  
      *  @{ */
     SgAsmExpression* const& get_segment() const;
@@ -7432,7 +6828,7 @@ public:
 public:
     /** Property: Instruction kind.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
+     *  Returns an enum constant describing the Motorola m68k instruction. These enum constants correspond roughly 1:1 with
      *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
      *  
      *  @{ */
@@ -7667,70 +7063,28 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_flags() const;
     void set_flags(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_pagemap_index() const;
     void set_pagemap_index(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_pagemap_nentries() const;
     void set_pagemap_nentries(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_res1() const;
     void set_res1(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_mapped_size() const;
     void set_mapped_size(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_base_addr() const;
     void set_base_addr(rose_addr_t const&);
-    /** @} */
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -7795,15 +7149,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmLESectionTableEntry* const& get_st_entry() const;
     void set_st_entry(SgAsmLESectionTableEntry* const&);
-    /** @} */
 public:
     explicit SgAsmLESection(SgAsmLEFileHeader*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
@@ -7864,16 +7211,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmLERelocEntryPtrList const& get_entries() const;
     SgAsmLERelocEntryPtrList& get_entries();
     void set_entries(SgAsmLERelocEntryPtrList const&);
-    /** @} */
 public:
     SgAsmLERelocTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset);
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
@@ -7934,16 +7274,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmLEPageTableEntryPtrList const& get_entries() const;
     SgAsmLEPageTableEntryPtrList& get_entries();
     void set_entries(SgAsmLEPageTableEntryPtrList const&);
-    /** @} */
 public:
     SgAsmLEPageTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset, rose_addr_t size);
     virtual void unparse(std::ostream&) const override;
@@ -8045,26 +7378,12 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_pageno() const;
     void set_pageno(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_flags() const;
     void set_flags(unsigned const&);
-    /** @} */
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -8136,26 +7455,12 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgStringList const& get_names() const;
     void set_names(SgStringList const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgUnsignedList const& get_ordinals() const;
     void set_ordinals(SgUnsignedList const&);
-    /** @} */
 public:
     /* This table contains a module name followed by the list of exported function names. Each name is associated with an "ordinal"
      * which serves as an index into the Entry Table. The ordinal for the first string (module name) is meaningless and should be
@@ -8673,587 +7978,216 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_byte_order() const;
     void set_e_byte_order(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_word_order() const;
     void set_e_word_order(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_format_level() const;
     void set_e_format_level(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_cpu_type() const;
     void set_e_cpu_type(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_os_type() const;
     void set_e_os_type(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_module_version() const;
     void set_e_module_version(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_flags() const;
     void set_e_flags(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_eip_section() const;
     void set_e_eip_section(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_esp_section() const;
     void set_e_esp_section(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_last_page_size() const;
     void set_e_last_page_size(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_page_offset_shift() const;
     void set_e_page_offset_shift(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_fixup_sect_cksum() const;
     void set_e_fixup_sect_cksum(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_loader_sect_cksum() const;
     void set_e_loader_sect_cksum(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_secttab_nentries() const;
     void set_e_secttab_nentries(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_rsrctab_nentries() const;
     void set_e_rsrctab_nentries(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_fmtdirtab_nentries() const;
     void set_e_fmtdirtab_nentries(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_import_modtab_nentries() const;
     void set_e_import_modtab_nentries(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_preload_npages() const;
     void set_e_preload_npages(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_nonresnametab_size() const;
     void set_e_nonresnametab_size(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_nonresnametab_cksum() const;
     void set_e_nonresnametab_cksum(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_auto_ds_section() const;
     void set_e_auto_ds_section(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_debug_info_size() const;
     void set_e_debug_info_size(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_num_instance_preload() const;
     void set_e_num_instance_preload(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_num_instance_demand() const;
     void set_e_num_instance_demand(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_e_heap_size() const;
     void set_e_heap_size(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_e_npages() const;
     void set_e_npages(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_e_eip() const;
     void set_e_eip(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_e_esp() const;
     void set_e_esp(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_e_page_size() const;
     void set_e_page_size(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_e_fixup_sect_size() const;
     void set_e_fixup_sect_size(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_e_loader_sect_size() const;
     void set_e_loader_sect_size(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_e_secttab_rfo() const;
     void set_e_secttab_rfo(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_e_pagetab_rfo() const;
     void set_e_pagetab_rfo(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_e_iterpages_offset() const;
     void set_e_iterpages_offset(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_e_rsrctab_rfo() const;
     void set_e_rsrctab_rfo(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_e_resnametab_rfo() const;
     void set_e_resnametab_rfo(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_e_entrytab_rfo() const;
     void set_e_entrytab_rfo(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_e_fmtdirtab_rfo() const;
     void set_e_fmtdirtab_rfo(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_e_fixup_pagetab_rfo() const;
     void set_e_fixup_pagetab_rfo(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_e_fixup_rectab_rfo() const;
     void set_e_fixup_rectab_rfo(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_e_import_modtab_rfo() const;
     void set_e_import_modtab_rfo(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_e_import_proctab_rfo() const;
     void set_e_import_proctab_rfo(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_e_ppcksumtab_rfo() const;
     void set_e_ppcksumtab_rfo(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_e_data_pages_offset() const;
     void set_e_data_pages_offset(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_e_nonresnametab_offset() const;
     void set_e_nonresnametab_offset(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_e_debug_info_rfo() const;
     void set_e_debug_info_rfo(rose_addr_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmDOSExtendedHeader* const& get_dos2_header() const;
     void set_dos2_header(SgAsmDOSExtendedHeader* const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmLESectionTable* const& get_section_table() const;
     void set_section_table(SgAsmLESectionTable* const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmLEPageTable* const& get_page_table() const;
     void set_page_table(SgAsmLEPageTable* const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmLENameTable* const& get_resname_table() const;
     void set_resname_table(SgAsmLENameTable* const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmLENameTable* const& get_nonresname_table() const;
     void set_nonresname_table(SgAsmLENameTable* const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmLEEntryTable* const& get_entry_table() const;
     void set_entry_table(SgAsmLEEntryTable* const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmLERelocTable* const& get_reloc_table() const;
     void set_reloc_table(SgAsmLERelocTable* const&);
-    /** @} */
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -9334,27 +8268,13 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgSizeTList const& get_bundle_sizes() const;
     void set_bundle_sizes(SgSizeTList const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmLEEntryPointPtrList const& get_entries() const;
     SgAsmLEEntryPointPtrList& get_entries();
     void set_entries(SgAsmLEEntryPointPtrList const&);
-    /** @} */
 public:
     SgAsmLEEntryTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset);
     virtual void unparse(std::ostream&) const override;
@@ -9480,71 +8400,29 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmLEEntryPointPtrList const& get_entries() const;
     SgAsmLEEntryPointPtrList& get_entries();
     void set_entries(SgAsmLEEntryPointPtrList const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_flags() const;
     void set_flags(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_objnum() const;
     void set_objnum(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_entry_type() const;
     void set_entry_type(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned const& get_res1() const;
     void set_res1(unsigned const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     rose_addr_t const& get_entry_offset() const;
     void set_entry_offset(rose_addr_t const&);
-    /** @} */
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -9613,10 +8491,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: sourcefile_index
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the sourcefile_index item must be a valid index into the constant_pool table (see JVM specification). 
      *  
      *  @{ */
     uint16_t const& get_sourcefile_index() const;
@@ -9689,10 +8566,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: signature_index
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the signature_index item must be a valid index into the constant_pool table (see JVM specification). 
      *  
      *  @{ */
     uint16_t const& get_signature_index() const;
@@ -9765,10 +8641,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: main_class_index
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the main_class_index item must be a valid index into the constant_pool table (see JVM specification). 
      *  
      *  @{ */
     uint16_t const& get_main_class_index() const;
@@ -9842,12 +8717,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: List of pointers to methods. 
+     * 
+     * @{ */
     SgAsmJvmMethodPtrList const& get_methods() const;
     SgAsmJvmMethodPtrList& get_methods();
     void set_methods(SgAsmJvmMethodPtrList const&);
@@ -9955,10 +8827,10 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: access_flags
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the access_flags item is a mask of flags used to denote access permission to and properties of this method (see
+     *  JVM specification). 
      *  
      *  @{ */
     uint16_t const& get_access_flags() const;
@@ -9966,10 +8838,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: name_index
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the name_index item must be a valid index into the constant_pool table (see JVM specification). 
      *  
      *  @{ */
     uint16_t const& get_name_index() const;
@@ -9977,10 +8848,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: descriptor_index
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the descriptor_index item must be a valid index into the constant_pool table (see JVM specification). 
      *  
      *  @{ */
     uint16_t const& get_descriptor_index() const;
@@ -9988,21 +8858,17 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Table of attributes. 
+     * 
+     * @{ */
     SgAsmJvmAttributeTable* const& get_attribute_table() const;
     void set_attribute_table(SgAsmJvmAttributeTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Instruction list.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Pointer to list of instructions (@ref SgAsmInstruction) belonging to this method. 
      *  
      *  @{ */
     SgAsmInstructionList* const& get_instruction_list() const;
@@ -10081,10 +8947,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: line_number_table
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  List of pointers to line_number_table entries (see the JVM specification 4.7.12). 
      *  
      *  @{ */
     SgAsmJvmLineNumberEntryPtrList const& get_line_number_table() const;
@@ -10169,10 +9034,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: start_pc
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the start_pc item must be a valid index into the constant_pool table (see JVM specification). 
      *  
      *  @{ */
     uint16_t const& get_start_pc() const;
@@ -10180,10 +9044,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: line_number
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the line_number entry must be a valid index into the constant_pool table (see JVM specification). 
      *  
      *  @{ */
     uint16_t const& get_line_number() const;
@@ -10265,7 +9128,7 @@ private:
 public:
     /** Property: Instruction kind.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
+     *  Returns an enum constant describing the JVM instruction. These enum constants correspond roughly 1:1 with
      *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
      *  
      *  @{ */
@@ -10357,12 +9220,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: List of pointers to InnerClasses attribute entry. 
+     * 
+     * @{ */
     SgAsmJvmInnerClassesEntryPtrList const& get_classes() const;
     SgAsmJvmInnerClassesEntryPtrList& get_classes();
     void set_classes(SgAsmJvmInnerClassesEntryPtrList const&);
@@ -10460,10 +9320,10 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: inner_class_info_index.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the inner_class_info_index must be a valid index into the constant_pool table (see the JVM specification
+     *  section 4.7.6). 
      *  
      *  @{ */
     uint16_t const& get_inner_class_info_index() const;
@@ -10471,10 +9331,10 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: outer_class_info_index
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the outer_class_info_index must be a valid index into the constant_pool table (see the JVM specification
+     *  section 4.7.6). 
      *  
      *  @{ */
     uint16_t const& get_outer_class_info_index() const;
@@ -10482,10 +9342,10 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: inner_name_index
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the inner_name_index must be a valid index into the constant_pool table (see the JVM specification section
+     *  4.7.6). 
      *  
      *  @{ */
     uint16_t const& get_inner_name_index() const;
@@ -10493,10 +9353,11 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: inner_class_access_flags
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the inner_class_access_flags item is a mask of flags used to denote access permissions to and properties of
+     *  class or interface C as declared in the source code from which this class file was compiled (see the JVM specification
+     *  section 4.7.6). 
      *  
      *  @{ */
     uint16_t const& get_inner_class_access_flags() const;
@@ -10639,10 +9500,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Minor version.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Minor version number of this class file. 
      *  
      *  @{ */
     uint16_t const& get_minor_version() const;
@@ -10650,10 +9510,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Major version.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Major version number of this class file. 
      *  
      *  @{ */
     uint16_t const& get_major_version() const;
@@ -10661,10 +9520,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Access flags.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Mask of flags used to denote access permissions and properties of this class or interface. 
      *  
      *  @{ */
     uint16_t const& get_access_flags() const;
@@ -10672,10 +9530,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: This class index.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Index into constant pool table for this class or interface. 
      *  
      *  @{ */
     uint16_t const& get_this_class() const;
@@ -10683,10 +9540,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Super class.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Index into constant pool table for direct super class of this class or interface. 
      *  
      *  @{ */
     uint16_t const& get_super_class() const;
@@ -10694,10 +9550,12 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Constant pool.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Points to the AST node that represents the JVM constant pool. The constant pool is a table of structures
+     *  (see 4.4) representing various string constants, class and interface names, field names, and other constants
+     *  that are referred to within the ClassFile structure and its substructures. The format of each constant-pool
+     *  table entry is indicated by its first "tag" byte. 
      *  
      *  @{ */
     SgAsmJvmConstantPool* const& get_constant_pool() const;
@@ -10705,10 +9563,11 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Interfaces.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Each value in the interfaces array must be a valid index into the constant_pool table. The constant_pool entry
+     *  at each value is a CONSTANT_Class_info structure representing an interface that is a direct superinterface
+     *  of this class or interface type. 
      *  
      *  @{ */
     std::list<uint16_t> const& get_interfaces() const;
@@ -10717,10 +9576,12 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Field table.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Points to the AST node that represents the JVM field table. The constant pool is a table of structures
+     *  (see 4.4) representing various string constants, class and interface names, field names, and other constants
+     *  that are referred to within the ClassFile structure and its substructures. The format of each constant-pool
+     *  table entry is indicated by its first "tag" byte. 
      *  
      *  @{ */
     SgAsmJvmFieldTable* const& get_field_table() const;
@@ -10728,10 +9589,12 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Method table.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Points to the AST node that represents the JVM method table. The constant pool is a table of structures
+     *  (see 4.4) representing various string constants, class and interface names, field names, and other constants
+     *  that are referred to within the ClassFile structure and its substructures. The format of each constant-pool
+     *  table entry is indicated by its first "tag" byte. 
      *  
      *  @{ */
     SgAsmJvmMethodTable* const& get_method_table() const;
@@ -10739,10 +9602,12 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Attribute table.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Points to the AST node that represents the JVM attribute table. The constant pool is a table of structures
+     *  (see 4.4) representing various string constants, class and interface names, field names, and other constants
+     *  that are referred to within the ClassFile structure and its substructures. The format of each constant-pool
+     *  table entry is indicated by its first "tag" byte. 
      *  
      *  @{ */
     SgAsmJvmAttributeTable* const& get_attribute_table() const;
@@ -10823,12 +9688,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: List of pointers to fields. 
+     * 
+     * @{ */
     SgAsmJvmFieldPtrList const& get_fields() const;
     SgAsmJvmFieldPtrList& get_fields();
     void set_fields(SgAsmJvmFieldPtrList const&);
@@ -10927,10 +9789,10 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: access_flags
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the access_flags item is a mask of flags used to denote access permission to and properties of this method (see
+     *  JVM specification). 
      *  
      *  @{ */
     uint16_t const& get_access_flags() const;
@@ -10938,10 +9800,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: name_index
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the name_index item must be a valid index into the constant_pool table (see JVM specification). 
      *  
      *  @{ */
     uint16_t const& get_name_index() const;
@@ -10949,10 +9810,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: descriptor_index
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the descriptor_index item must be a valid index into the constant_pool table (see JVM specification). 
      *  
      *  @{ */
     uint16_t const& get_descriptor_index() const;
@@ -10960,12 +9820,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Table of attributes. 
+     * 
+     * @{ */
     SgAsmJvmAttributeTable* const& get_attribute_table() const;
     void set_attribute_table(SgAsmJvmAttributeTable* const&);
     /** @} */
@@ -11040,12 +9897,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: List of pointers to exceptions. 
+     * 
+     * @{ */
     SgAsmJvmExceptionPtrList const& get_exceptions() const;
     SgAsmJvmExceptionPtrList& get_exceptions();
     void set_exceptions(SgAsmJvmExceptionPtrList const&);
@@ -11142,10 +9996,10 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: start_pc
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the start_pc item must be a valid index into the constant_pool table (see JVM specification).  Present in an
+     *  exception table of a Code_attribute (see section 4.7.3 of the JVM specification). 
      *  
      *  @{ */
     uint16_t const& get_start_pc() const;
@@ -11153,10 +10007,10 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: end_pc
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the end_pc item must be a valid index into the constant_pool table (see JVM specification).  Present in an
+     *  exception table of a Code_attribute (see section 4.7.3 of the JVM specification). 
      *  
      *  @{ */
     uint16_t const& get_end_pc() const;
@@ -11164,10 +10018,10 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: handler_pc
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the handler_pc item must be a valid index into the constant_pool table (see JVM specification).  Present in an
+     *  exception table of a Code_attribute (see section 4.7.3 of the JVM specification). 
      *  
      *  @{ */
     uint16_t const& get_handler_pc() const;
@@ -11175,10 +10029,10 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: catch_type
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the catch_type item must be a valid index into the constant_pool table (see JVM specification).  Present in an
+     *  exception table of a Code_attribute (see section 4.7.3 of the JVM specification). 
      *  
      *  @{ */
     uint16_t const& get_catch_type() const;
@@ -11263,10 +10117,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: class_index
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the class_index item must be a valid index into the constant_pool table (see JVM specification). 
      *  
      *  @{ */
     uint16_t const& get_class_index() const;
@@ -11274,10 +10127,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: method_index
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the method_index item must be a valid index into the constant_pool table (see JVM specification). 
      *  
      *  @{ */
     uint16_t const& get_method_index() const;
@@ -11350,10 +10202,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: constantvalue_index
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the constantvalue_index item must be a valid index into the constant_pool table (see JVM specification). 
      *  
      *  @{ */
     uint16_t const& get_constantvalue_index() const;
@@ -11427,12 +10278,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: List of constant pool entries. 
+     * 
+     * @{ */
     SgAsmJvmConstantPoolEntryPtrList const& get_entries() const;
     SgAsmJvmConstantPoolEntryPtrList& get_entries();
     void set_entries(SgAsmJvmConstantPoolEntryPtrList const&);
@@ -11752,10 +10600,9 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Instruction kind.
+    /** Property: tag
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Enum constant describing the kind of this entry in the pool. 
      *  
      *  @{ */
     SgAsmJvmConstantPoolEntry::Kind const& get_tag() const;
@@ -11763,10 +10610,10 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: bytes
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The bytes item of the CONSTANT_Integer_info structure represents the value of the int constant.  The bytes item of the
+     *  CONSTANT_Float_info structure represents the value of the float constant in IEEE 754 binary32 floating-point format. 
      *  
      *  @{ */
     uint32_t const& get_bytes() const;
@@ -11774,10 +10621,11 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Properties: hi_bytes
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The unsigned high_bytes and low_bytes items of the CONSTANT_Long_info structure together represent the value of the long
+     *  constant.  The unsigned high_bytes and low_bytes items of the CONSTANT_Double_info structure together represent the the
+     *  double value in IEEE 754 binary64 floating-point format. 
      *  
      *  @{ */
     uint32_t const& get_hi_bytes() const;
@@ -11785,10 +10633,11 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Properties: low_bytes
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The unsigned high_bytes and low_bytes items of the CONSTANT_Long_info structure together represent the value of the long
+     *  constant.  The unsigned high_bytes and low_bytes items of the CONSTANT_Double_info structure together represent the the
+     *  double value in IEEE 754 binary64 floating-point format. 
      *  
      *  @{ */
     uint32_t const& get_low_bytes() const;
@@ -11796,10 +10645,10 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: bootstrap_method_attr_index
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The bootstrap_method_attr_index item is an index into the bootstrap_methods array of the bootstrap method table of this
+     *  class file.  Present in CONSTANT_Dynamic_info and CONSTANT_Dynamic_info structs. 
      *  
      *  @{ */
     uint16_t const& get_bootstrap_method_attr_index() const;
@@ -11807,10 +10656,10 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: class_index
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the class_index item must be a valid index into the constant_pool table (see JVM specification).  Present in
+     *  CONSTANT_Fieldref_info, CONSTANT_Methodref_info, and CONSTANT_InterfaceMethodref_info table entries. 
      *  
      *  @{ */
     uint16_t const& get_class_index() const;
@@ -11818,10 +10667,10 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: descriptor_index
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the descriptor_index item must be a valid index into the constant_pool table (see JVM specification).  Present
+     *  in CONSTANT_NameAndType_info and CONSTANT_MethodHandle_info table entries. 
      *  
      *  @{ */
     uint16_t const& get_descriptor_index() const;
@@ -11829,10 +10678,10 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: name_index
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the name_index item must be a valid index into the constant_pool table (see JVM specification).  Present in
+     *  CONSTANT_Class_info, CONSTANT_NameAndType_info, CONSTANT_Module_info, and CONSTANT_Package_info table entries. 
      *  
      *  @{ */
     uint16_t const& get_name_index() const;
@@ -11840,10 +10689,11 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: name_and_type_index
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the name_and_type_index item must be a valid index into the constant_pool table (see JVM specification).
+     *  Present in CONSTANT_Fieldref_info, CONSTANT_Methodref_info, CONSTANT_InterfaceMethodref_info, CONSTANT_Dynamic_info, and
+     *  CONSTANT_InvokeDynamic_info table entries. 
      *  
      *  @{ */
     uint16_t const& get_name_and_type_index() const;
@@ -11851,10 +10701,10 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: reference_index
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the reference_index item must be a valid index into the constant_pool table (see JVM specification).  Present
+     *  in CONSTANT_MethodHandle_info table entries. 
      *  
      *  @{ */
     uint16_t const& get_reference_index() const;
@@ -11862,10 +10712,10 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: reference_kind
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the reference_kind item must be in the range 1 to 9. The value denotes the kind of a CONSTANT_MethodHandle_info
+     *  table entry. 
      *  
      *  @{ */
     uint8_t const& get_reference_kind() const;
@@ -11873,10 +10723,10 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: string_index
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the string_index item must be a valid index into the constant_pool table (see JVM specification).  Present in
+     *  CONSTANT_String_info table entries. 
      *  
      *  @{ */
     uint16_t const& get_string_index() const;
@@ -11884,10 +10734,10 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: length
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the length item gives the number of bytes in the bytes array (not the length of the resulting string).  Present
+     *  in CONSTANT_Utf8_info table entries. 
      *  
      *  @{ */
     uint16_t const& get_length() const;
@@ -11899,10 +10749,9 @@ public:
     // because that prevents it from being initialized by some de-serialization mechanisms (e.g., boost::serialize creates a default
     // constructed object and then fills it in).
 public:
-    /** Property: Instruction kind.
+    /** Property: utf8_bytes (bytes in CONSTANT_Utf8_info structure).
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The bytes array contains the bytes of the string. Present in CONSTANT_Utf8_info table entries. 
      *  
      *  @{ */
     char* const& get_utf8_bytes() const;
@@ -12029,10 +10878,10 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: max_stack
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the max_stack item gives the maximum depth of the operand stack of this method at any point during execution of
+     *  the method. 
      *  
      *  @{ */
     uint16_t const& get_max_stack() const;
@@ -12040,10 +10889,10 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: max_locals
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the max_locals item gives the number of local variables in the local variable array allocated upon invocation
+     *  of this method. 
      *  
      *  @{ */
     uint16_t const& get_max_locals() const;
@@ -12051,10 +10900,10 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: code_length
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the code_length item gives the number of local variables in the local variable array allocated upon invocation
+     *  of this method. 
      *  
      *  @{ */
     uint32_t const& get_code_length() const;
@@ -12062,10 +10911,9 @@ public:
     /** @} */
     // FIXME[Robb Matzke 2023-03-20]: is the no_serialize a bug?
 public:
-    /** Property: Instruction kind.
+    /** Property: code
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The code array gives the actual bytes of Java Virtual Machine code that implement the method. 
      *  
      *  @{ */
     const char* const& get_code() const;
@@ -12073,10 +10921,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Exception table.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Points to the AST node that represents the exception table for this code attribute. 
      *  
      *  @{ */
     SgAsmJvmExceptionTable* const& get_exception_table() const;
@@ -12084,10 +10931,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Attribute table.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Points to the AST node that represents the attribute table for this code attribute. 
      *  
      *  @{ */
     SgAsmJvmAttributeTable* const& get_attribute_table() const;
@@ -12095,10 +10941,10 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Code offset.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Offset in bytes from the start of the file for the byte-code array of the method.  A convenience property @a not in the JVM
+     *  specification. 
      *  
      *  @{ */
     rose_addr_t const& get_code_offset() const;
@@ -12224,12 +11070,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: List of pointers to attributes. 
+     * 
+     * @{ */
     SgAsmJvmAttributePtrList const& get_attributes() const;
     SgAsmJvmAttributePtrList& get_attributes();
     void set_attributes(SgAsmJvmAttributePtrList const&);
@@ -12333,10 +11176,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: attribute_name_index
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the attribute_name_index item must be a valid index into the constant_pool table (see JVM specification). 
      *  
      *  @{ */
     uint16_t const& get_attribute_name_index() const;
@@ -12344,10 +11186,10 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: attribute_length
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The value of the attribute_length item indicates the length of the attribute, not including the attribute_name_index nor
+     *  attribute_length. 
      *  
      *  @{ */
     uint32_t const& get_attribute_length() const;
@@ -12498,10 +11340,10 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Interpretation list.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The actual list of pointers to interpretations. The only reason this list is in its own node instead of being
+     *  contained directly in the node that needs it is because of limitations of ROSETTA. 
      *  
      *  @{ */
     SgAsmInterpretationPtrList const& get_interpretations() const;
@@ -12601,10 +11443,12 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: File headers.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  List of pointers to the file headers that compose this interpretation.
+     *
+     *  These headers are not considered to be children of this interpretation in the AST--they are reached from other
+     *  traversal paths. 
      *  
      *  @{ */
     SgAsmGenericHeaderList* const& get_headers() const;
@@ -12612,10 +11456,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Global block.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The global block is the top of the AST for this interpretation's functions, basic blocks, and instructions. 
      *  
      *  @{ */
     SgAsmBlock* const& get_global_block() const;
@@ -12627,10 +11470,9 @@ private:
     Rose::BinaryAnalysis::MemoryMap::Ptr p_map;
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Memory map.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This is the memory map representing the entire interpretation. 
      *  
      *  @{ */
     Rose::BinaryAnalysis::MemoryMap::Ptr const& get_map() const;
@@ -12642,23 +11484,24 @@ private:
     mutable InstructionMap instruction_map;
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Cached map of instructions by address.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
+     *  Returns the @ref InstructionMap associated with an interpretation. The instruction map is recomputed if the
+     *  currently cached map is empty or if the @p recompute argument is true. Otherwise this just returns the existing
+     *  map. No attempt is made to make sure that the map is up-to-date with respect to the current state of the AST.
+     *
      *  @{ */
-    /** @} */
          // cached instruction map
 
     InstructionMap& get_instruction_map(bool recompute = false);
     void set_instruction_map(const InstructionMap&);
     /** @} */
 public:
-    /** Property: Instruction kind.
+    /** Property: code coverage percent.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  True iff percentageCoverage has been computed.
+     *
+     *  Results of a code coverage analysis. 
      *  
      *  @{ */
     bool const& get_coverageComputed() const;
@@ -12666,10 +11509,10 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: code coverage percent.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The percentage of an interpretation where each section is marked as executable and identified for
+     *  disassembly into instructions. 
      *  
      *  @{ */
     double const& get_percentageCoverage() const;
@@ -12765,12 +11608,16 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Base node associated with an integer.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+     * When setting this property, the base node is changed without updating this object's relative value, thus this
+     * object's absolute value changes.  The value returned by get_absoluteValue() will probably differ from what it would
+     * have returned before calling set_baseNode().  If this is not the behavior that's needed, see the makeRelativeTo()
+     * method.
+     *
+     * The base node is not considered to be a child of this node in the AST. 
+     * 
+     * @{ */
     SgNode* const& get_baseNode() const;
     void set_baseNode(SgNode* const&);
     /** @} */
@@ -12913,13 +11760,11 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: whether the integral type is signed or unsigned.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
-    /** @} */
+     *  Returns true if this is a signed type, otherwise false.
+     *
+     * @{ */
     bool get_isSigned() const;
     /** @} */
 
@@ -12990,10 +11835,11 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: List of @ref SgAsmInstruction entries.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The @ref SgAsmInstruction nodes in this list have not been broken
+     *  into separate instruction blocks.  Therefore, the list may contain
+     *  branching instructions that do not terminate the list. 
      *  
      *  @{ */
     SgAsmInstructionPtrList const& get_instructions() const;
@@ -13095,10 +11941,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Register descriptor stride.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This is the "stride" referred to in the documentation for this class.  This is not an actual register. 
      *  
      *  @{ */
     Rose::BinaryAnalysis::RegisterDescriptor const& get_stride() const;
@@ -13106,10 +11951,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Register descriptor offset.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This is the "offset" referred to in the documentation for this class. 
      *  
      *  @{ */
     Rose::BinaryAnalysis::RegisterDescriptor const& get_offset() const;
@@ -13117,10 +11961,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Register descriptor index.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This is the "index" referred to in the documentation for this class. 
      *  
      *  @{ */
     size_t const& get_index() const;
@@ -13128,10 +11971,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Register descriptor modulus.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This is the "modulus" referred to in the documentation for this class. 
      *  
      *  @{ */
     size_t const& get_modulus() const;
@@ -13207,12 +12049,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: List of symbol nodes. 
+     * 
+     * @{ */
     SgAsmGenericSymbolPtrList const& get_symbols() const;
     SgAsmGenericSymbolPtrList& get_symbols();
     void set_symbols(SgAsmGenericSymbolPtrList const&);
@@ -13279,12 +12118,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: List of section pointers. 
+     * 
+     * @{ */
     SgAsmGenericSectionPtrList const& get_sections() const;
     SgAsmGenericSectionPtrList& get_sections();
     void set_sections(SgAsmGenericSectionPtrList const&);
@@ -13351,12 +12187,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: List of file header nodes. 
+     * 
+     * @{ */
     SgAsmGenericHeaderPtrList const& get_headers() const;
     SgAsmGenericHeaderPtrList& get_headers();
     void set_headers(SgAsmGenericHeaderPtrList const&);
@@ -13469,54 +12302,42 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Family. 
+     * 
+     * @{ */
     SgAsmGenericFormat::ExecFamily const& get_family() const;
     void set_family(SgAsmGenericFormat::ExecFamily const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Purpose. 
+     * 
+     * @{ */
     SgAsmGenericFormat::ExecPurpose const& get_purpose() const;
     void set_purpose(SgAsmGenericFormat::ExecPurpose const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Byte order. 
+     * 
+     * @{ */
     ByteOrder::Endianness const& get_sex() const;
     void set_sex(ByteOrder::Endianness const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: File format version number. 
+     * 
+     * @{ */
     unsigned const& get_version() const;
     void set_version(unsigned const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Whether version is considered current.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  True if the @ref get_version "version" property is considered to be the current, supported version for this file
+     *  format. 
      *  
      *  @{ */
     bool const& get_is_current_version() const;
@@ -13524,34 +12345,25 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Application binary interface. 
+     * 
+     * @{ */
     SgAsmGenericFormat::ExecABI const& get_abi() const;
     void set_abi(SgAsmGenericFormat::ExecABI const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Application binary interface version. 
+     * 
+     * @{ */
     unsigned const& get_abi_version() const;
     void set_abi_version(unsigned const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Natural word size in bytes. 
+     * 
+     * @{ */
     size_t const& get_word_size() const;
     void set_word_size(size_t const&);
     /** @} */
@@ -13619,12 +12431,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: List of AST node pointers. 
+     * 
+     * @{ */
     SgAsmGenericFilePtrList const& get_files() const;
     SgAsmGenericFilePtrList& get_files();
     void set_files(SgAsmGenericFilePtrList const&);
@@ -13784,32 +12593,25 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: DWARF debugging hiearchy. 
+     * 
+     * @{ */
     SgAsmDwarfCompilationUnitList* const& get_dwarf_info() const;
     void set_dwarf_info(SgAsmDwarfCompilationUnitList* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Name of file. 
+     * 
+     * @{ */
     std::string const& get_name() const;
     void set_name(std::string const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Read-only file descriptor.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Negative represents lack of valid file descriptor. 
      *  
      *  @{ */
     int const& get_fd() const;
@@ -13817,31 +12619,20 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     struct stat const& get_sb() const;
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Contents of the file. 
+     * 
+     * @{ */
     SgFileContentList const& get_data() const;
     void set_data(SgFileContentList const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: List of all headers in file.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This is stored as a pointer to another node that contains the list due to limitations of ROSETTA. 
      *  
      *  @{ */
     SgAsmGenericHeaderList* const& get_headers() const;
@@ -13849,10 +12640,10 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Addresses unreferenced during parsing.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This is a pointer to a node that contains a list of pointers to the holes. It is done this way rather than storing
+     *  the list directly, because of limitations of ROSETTA. 
      *  
      *  @{ */
     SgAsmGenericSectionList* const& get_holes() const;
@@ -13860,45 +12651,33 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Whether to truncate zeros on writes. 
+     * 
+     * @{ */
     bool const& get_truncate_zeros() const;
     void set_truncate_zeros(bool const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Whether to track referenced areas during parsing. 
+     * 
+     * @{ */
     bool const& get_tracking_references() const;
     void set_tracking_references(bool const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Addresses referenced during parsing. 
+     * 
+     * @{ */
     AddressIntervalSet const& get_referenced_extents() const;
     void set_referenced_extents(AddressIntervalSet const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: If set, refuse to unparse file. 
+     * 
+     * @{ */
     bool const& get_neuter() const;
     void set_neuter(bool const&);
     /** @} */
@@ -14245,12 +13024,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: List of AST node pointers. 
+     * 
+     * @{ */
     SgAsmGenericDLLPtrList const& get_dlls() const;
     SgAsmGenericDLLPtrList& get_dlls();
     void set_dlls(SgAsmGenericDLLPtrList const&);
@@ -14321,23 +13097,16 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Name.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+     * @{ */
     SgAsmGenericString* const& get_name() const;
-    /** @} */
     void set_name(SgAsmGenericString *s);
     /** @} */
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Symbols. 
+     * 
+     * @{ */
     SgStringList const& get_symbols() const;
     void set_symbols(SgStringList const&);
     /** @} */
@@ -14620,10 +13389,9 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Instruction kind.
+    /** Property: Name.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The optional string name of a function. 
      *  
      *  @{ */
     std::string const& get_name() const;
@@ -14631,10 +13399,10 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Reason that function exists.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This is a bit vector of enum constants that describe why this function was created. See @ref
+     *  SgAsmFunction::FunctionReason for details. 
      *  
      *  @{ */
     unsigned const& get_reason() const;
@@ -14642,10 +13410,11 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Additional function existance reason comment.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This reason comment gets filled in automatically by certain function analyses. It's a free-form string that
+     *  contains additional information about why this function exists and is used in conjunction with the @ref get_reason
+     *  property. 
      *  
      *  @{ */
     std::string const& get_reasonComment() const;
@@ -14653,10 +13422,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Kind of function.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This enum constant describes the kind of function. See @ref SgAsmFunction::function_kind_enum for details. 
      *  
      *  @{ */
     SgAsmFunction::function_kind_enum const& get_function_kind() const;
@@ -14664,21 +13432,17 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Whether a function could return to its caller. 
+     * 
+     * @{ */
     SgAsmFunction::MayReturn const& get_may_return() const;
     void set_may_return(SgAsmFunction::MayReturn const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Hash of the function.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This is unused by ROSE, but can be set by users to identify a function by hash string. 
      *  
      *  @{ */
     std::string const& get_name_md5() const;
@@ -14686,10 +13450,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Statements that make up a function.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The "statements" of a function are things like instructions, static data blocks, etc. 
      *  
      *  @{ */
     SgAsmStatementPtrList const& get_statementList() const;
@@ -14698,21 +13461,14 @@ public:
     /** @} */
     // FIXME[Robb P Matzke 2017-02-13]: unused?
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmStatementPtrList const& get_dest() const;
     void set_dest(SgAsmStatementPtrList const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Primary entry address.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Every function has one primary entry address that uniquely identifies the function in the AST. This is the starting
+     *  address of the function's entry instruction.  The abbreviation "va" means "virtual address". 
      *  
      *  @{ */
     rose_addr_t const& get_entry_va() const;
@@ -14720,10 +13476,10 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Symbol table.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A ROSE symbol table associated with this function. This is not the same as the symbol table that appears in the
+     *  binary specimen, such as ELF or PE symbol tables. 
      *  
      *  @{ */
     SgSymbolTable* const& get_symbol_table() const;
@@ -14731,21 +13487,17 @@ public:
     /** @} */
     // FIXME[Robb P Matzke 2017-02-13]: what is this?
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     size_t const& get_cached_vertex() const;
     void set_cached_vertex(size_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Net effect of function on the stack pointer.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Net effect that this function has on the machine's stack pointer register.  For most x86 Linux ELF specimens the
+     *  net effect is to pop the return address from the stack, thus +4 for 32-bit specimens and +8 for 64-bit specimens.
+     *
+     *  If the stack delta analysis has not run or could not determine a constant stack delta, then the special value @c
+     *  SgAsmInstruction::INVALID_STACK_DELTA is used. 
      *  
      *  @{ */
     int64_t const& get_stackDelta() const;
@@ -14753,10 +13505,12 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Primary calling convention.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This is the name of the primary calling convention for this function. When the semantics of the function match
+     *  multiple calling convention definitions, this property holds the "best" one for some definition of "best". It is
+     *  also possible for the semantics to not match any calling convention definition in which case this property is
+     *  empty. It is also empty if the calling convention analysis was not performed. 
      *  
      *  @{ */
     std::string const& get_callingConvention() const;
@@ -14995,25 +13749,11 @@ private:
     mutable double p_nativeValue;
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
-    /** @} */
 
 private:
     mutable bool p_nativeValueIsValid;
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
-    /** @} */
 public:
     /** Construct specified floating-point value.
      *
@@ -15166,67 +13906,18 @@ public:
     /** Range of bits used for various purposes within the values of this type. */
     typedef Sawyer::Container::BitVector::BitRange BitRange;
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
-    /** @} */
 public:
     /** Construct a new floating-point type. */
     SgAsmFloatType(ByteOrder::Endianness, size_t nBits,
@@ -15364,39 +14055,23 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+
+public:
+    /** Property: Major byte order for mixed-order types. 
+     * 
+     * @{ */
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Stride of major byte order for mixed order types. 
+     * 
+     * @{ */
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
-    /** @} */
-
-public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Number of bits. 
+     * 
+     * @{ */
     /** @} */
 protected:
     /** Construct a new scalar type.
@@ -15589,10 +14264,10 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Pointers to expressions.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  List of expression nodes are stored in their own @ref SgAsmExprListExp node instead of in parent AST nodes due to
+     *  limitations of ROSETTA. 
      *  
      *  @{ */
     SgAsmExpressionPtrList const& get_expressions() const;
@@ -15661,10 +14336,10 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: List of table entries.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The list of entries in this section. The only reason the list is stored in a separate AST node instead of being
+     *  stored here directly is due to ROSETTA limitations. 
      *  
      *  @{ */
     SgAsmElfSymverEntryList* const& get_entries() const;
@@ -15750,10 +14425,10 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: List of entries.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This property points to an AST node whose only purpose is to hold the list of entries. The only reason the entries
+     *  are not contained directly in this node where they're needed is due to ROSETTA limitations. 
      *  
      *  @{ */
     SgAsmElfSymverNeededEntryList* const& get_entries() const;
@@ -15850,12 +14525,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: List of entries. 
+     * 
+     * @{ */
     SgAsmElfSymverNeededEntryPtrList const& get_entries() const;
     SgAsmElfSymverNeededEntryPtrList& get_entries();
     void set_entries(SgAsmElfSymverNeededEntryPtrList const&);
@@ -15960,10 +14632,9 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Instruction kind.
+    /** Property: Version.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See ELF specification for details. 
      *  
      *  @{ */
     size_t const& get_version() const;
@@ -15971,21 +14642,18 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: File name. 
+     * 
+     * @{ */
     SgAsmGenericString* const& get_file_name() const;
     void set_file_name(SgAsmGenericString* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: List of entries.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This is a pointer to an AST node whose only purpose is to hold the list. The reason the list cannot be contained
+     *  directly in this node where it's needed is due to ROSETTA limitations. 
      *  
      *  @{ */
     SgAsmElfSymverNeededAuxList* const& get_entries() const;
@@ -16067,12 +14735,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: List of entries. 
+     * 
+     * @{ */
     SgAsmElfSymverNeededAuxPtrList const& get_entries() const;
     SgAsmElfSymverNeededAuxPtrList& get_entries();
     void set_entries(SgAsmElfSymverNeededAuxPtrList const&);
@@ -16184,10 +14849,9 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Instruction kind.
+    /** Property: Hash.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See ELF specification for details. 
      *  
      *  @{ */
     uint32_t const& get_hash() const;
@@ -16195,10 +14859,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Flags.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See ELF specification for details. 
      *  
      *  @{ */
     int const& get_flags() const;
@@ -16206,10 +14869,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Other.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See ELF specification for details. 
      *  
      *  @{ */
     size_t const& get_other() const;
@@ -16217,12 +14879,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Name. 
+     * 
+     * @{ */
     SgAsmGenericString* const& get_name() const;
     void set_name(SgAsmGenericString* const&);
     /** @} */
@@ -16309,12 +14968,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: List of symbol version table entries. 
+     * 
+     * @{ */
     SgAsmElfSymverEntryPtrList const& get_entries() const;
     SgAsmElfSymverEntryPtrList& get_entries();
     void set_entries(SgAsmElfSymverEntryPtrList const&);
@@ -16378,10 +15034,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Value.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Numeric value of this symbol. 
      *  
      *  @{ */
     size_t const& get_value() const;
@@ -16455,10 +15110,10 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: List of entries.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This is a pointer to an AST node which contains the list. The reason the list isn't stored here directly is due to
+     *  limitations of ROSETTA. 
      *  
      *  @{ */
     SgAsmElfSymverDefinedEntryList* const& get_entries() const;
@@ -16610,12 +15265,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: List of table entries. 
+     * 
+     * @{ */
     SgAsmElfSymverDefinedEntryPtrList const& get_entries() const;
     SgAsmElfSymverDefinedEntryPtrList& get_entries();
     void set_entries(SgAsmElfSymverDefinedEntryPtrList const&);
@@ -16735,10 +15387,9 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Instruction kind.
+    /** Property: Version.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See ELF specification for details. 
      *  
      *  @{ */
     size_t const& get_version() const;
@@ -16746,10 +15397,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Flags.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See ELF specification for details. 
      *  
      *  @{ */
     int const& get_flags() const;
@@ -16757,10 +15407,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Index.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See ELF specification for details. 
      *  
      *  @{ */
     size_t const& get_index() const;
@@ -16768,10 +15417,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Hash.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See ELF specification for details. 
      *  
      *  @{ */
     uint32_t const& get_hash() const;
@@ -16779,10 +15427,10 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Entries.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  List of auxilliary entries for this version definition.  Rather than storing the list here directly, we point to a
+     *  node whose only purpose is to hold the list. This is due to limitations of ROSETTA. 
      *  
      *  @{ */
     SgAsmElfSymverDefinedAuxList* const& get_entries() const;
@@ -16864,12 +15512,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: List of entries. 
+     * 
+     * @{ */
     SgAsmElfSymverDefinedAuxPtrList const& get_entries() const;
     SgAsmElfSymverDefinedAuxPtrList& get_entries();
     void set_entries(SgAsmElfSymverDefinedAuxPtrList const&);
@@ -16956,12 +15601,9 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Name. 
+     * 
+     * @{ */
     SgAsmGenericString* const& get_name() const;
     void set_name(SgAsmGenericString* const&);
     /** @} */
@@ -17051,21 +15693,18 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Whether this section represents dynamic linking symbols. 
+     * 
+     * @{ */
     bool const& get_is_dynamic() const;
     void set_is_dynamic(bool const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Symbols.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  List of symbols contained in this symbol table.  The actual list is stored in a separate AST instead of being stored
+     *  directly in this node due to limitations of ROSETTA. 
      *  
      *  @{ */
     SgAsmElfSymbolList* const& get_symbols() const;
@@ -17168,10 +15807,10 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Symbol list.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This points to an AST node that contains the actual symbol list. The reason that the list is not held directly in
+     *  the nodes that need it is due to ROSETTA limitations. 
      *  
      *  @{ */
     SgAsmElfSymbolPtrList const& get_symbols() const;
@@ -17326,10 +15965,9 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Instruction kind.
+    /** Property: Info.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See ELF specification for details. 
      *  
      *  @{ */
     unsigned char const& get_st_info() const;
@@ -17337,10 +15975,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Reserved byte.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See ELF specification for details. 
      *  
      *  @{ */
     unsigned char const& get_st_res1() const;
@@ -17348,10 +15985,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: shndx.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See ELF specification for details. 
      *  
      *  @{ */
     unsigned const& get_st_shndx() const;
@@ -17359,10 +15995,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: size.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See ELF specification for details. 
      *  
      *  @{ */
     rose_addr_t const& get_st_size() const;
@@ -17370,10 +16005,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Extra data.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Bytes that are not part of the symbol but which appear in the table as reserved or padding. 
      *  
      *  @{ */
     SgUnsignedCharList const& get_extra() const;
@@ -17585,10 +16219,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: String table.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Pointer to the actual string table for this section. 
      *  
      *  @{ */
     SgAsmElfStrtab* const& get_strtab() const;
@@ -17769,10 +16402,10 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Segment table entries.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  List of entries in this segment table.  The reason we have a whole AST node dedicated to holding this list rather
+     *  than just storing the list directly in the nodes that need it is due to limitations with ROSETTA. 
      *  
      *  @{ */
     SgAsmElfSegmentTableEntryPtrList const& get_entries() const;
@@ -17989,10 +16622,9 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Instruction kind.
+    /** Property: Index into table.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This is the index of this entry within the ELF segment table. 
      *  
      *  @{ */
     size_t const& get_index() const;
@@ -18000,32 +16632,25 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Segment type. 
+     * 
+     * @{ */
     SgAsmElfSegmentTableEntry::SegmentType const& get_type() const;
     void set_type(SgAsmElfSegmentTableEntry::SegmentType const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Segment flags. 
+     * 
+     * @{ */
     SgAsmElfSegmentTableEntry::SegmentFlags const& get_flags() const;
     void set_flags(SgAsmElfSegmentTableEntry::SegmentFlags const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Offset of segment in the file.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This is the starting byte offset of the segment within the file. 
      *  
      *  @{ */
     rose_addr_t const& get_offset() const;
@@ -18033,10 +16658,10 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Virtual address.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This is the virtual address for the start of the segment as stored in the segment table. This is only a hint to the
+     *  loader, which may map the segment to some other virtual address. 
      *  
      *  @{ */
     rose_addr_t const& get_vaddr() const;
@@ -18044,10 +16669,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: ELF paddr field.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See official ELF specification. 
      *  
      *  @{ */
     rose_addr_t const& get_paddr() const;
@@ -18055,10 +16679,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Size of segment in file.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Size of the segment in bytes as it is stored in the file. 
      *  
      *  @{ */
     rose_addr_t const& get_filesz() const;
@@ -18066,10 +16689,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property:  Size of segment in memory.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Size of the segment in bytes after it is loaded into virtual memory. 
      *  
      *  @{ */
     rose_addr_t const& get_memsz() const;
@@ -18077,10 +16699,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Alignment.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Alignment in memory in bytes. Zero means the same thing as one, namely no alignment. 
      *  
      *  @{ */
     rose_addr_t const& get_align() const;
@@ -18088,10 +16709,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Extra bytes.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  These are bytes from the table entry that are not assigned any specific purpose by the ELF specification. 
      *  
      *  @{ */
     SgUnsignedCharList const& get_extra() const;
@@ -18441,10 +17061,9 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Instruction kind.
+    /** Property: sh_name.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The sh_name property of an ELF section table. See official ELF specification. 
      *  
      *  @{ */
     unsigned const& get_sh_name() const;
@@ -18452,10 +17071,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: sh_type.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The sh_type property of an ELF section table. See official ELF specification. 
      *  
      *  @{ */
     SgAsmElfSectionTableEntry::SectionType const& get_sh_type() const;
@@ -18463,10 +17081,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: sh_link.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The sh_link property of an ELF section table. See official ELF specification. 
      *  
      *  @{ */
     unsigned long const& get_sh_link() const;
@@ -18474,10 +17091,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: sh_info.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The sh_info property of an ELF section table. See official ELF specification. 
      *  
      *  @{ */
     unsigned long const& get_sh_info() const;
@@ -18485,10 +17101,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: sh_flags.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The sh_flags property of an ELF section table.  See official ELF specification. 
      *  
      *  @{ */
     uint64_t const& get_sh_flags() const;
@@ -18496,10 +17111,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: sh_addr.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The sh_addr property of an ELF section table. See official ELF specification. 
      *  
      *  @{ */
     rose_addr_t const& get_sh_addr() const;
@@ -18507,10 +17121,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: sh_offset.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The sh_offset property of an ELF section table. See official ELF specification. 
      *  
      *  @{ */
     rose_addr_t const& get_sh_offset() const;
@@ -18518,10 +17131,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: sh_size.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The sh_size property of an ELF section table. See official ELF specification. 
      *  
      *  @{ */
     rose_addr_t const& get_sh_size() const;
@@ -18529,10 +17141,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: sh_addralign.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The sh_addralign property of an ELF section table. See official ELF specification. 
      *  
      *  @{ */
     rose_addr_t const& get_sh_addralign() const;
@@ -18540,10 +17151,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: sh_entsize.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The sh_entsize property of an ELF section table. See official ELF specification. 
      *  
      *  @{ */
     rose_addr_t const& get_sh_entsize() const;
@@ -18551,10 +17161,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Extra bytes not officially part of the table entry.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  These are the extra bytes that aren't assigned any meaning by the specification. 
      *  
      *  @{ */
     SgUnsignedCharList const& get_extra() const;
@@ -18663,32 +17272,25 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Whether entries in this section use the addend format. 
+     * 
+     * @{ */
     bool const& get_uses_addend() const;
     void set_uses_addend(bool const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Section targeted by these relocations. 
+     * 
+     * @{ */
     SgAsmElfSection* const& get_target_section() const;
     void set_target_section(SgAsmElfSection* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: List of entries.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This is an AST node whose only purpose is to hold the list. It's done this way due to limitations of ROSETTA. 
      *  
      *  @{ */
     SgAsmElfRelocEntryList* const& get_entries() const;
@@ -18773,12 +17375,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: List of relocation entries. 
+     * 
+     * @{ */
     SgAsmElfRelocEntryPtrList const& get_entries() const;
     SgAsmElfRelocEntryPtrList& get_entries();
     void set_entries(SgAsmElfRelocEntryPtrList const&);
@@ -18989,10 +17588,9 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Instruction kind.
+    /** Property: Offset.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See ELF specification for details. 
      *  
      *  @{ */
     rose_addr_t const& get_r_offset() const;
@@ -19000,10 +17598,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Addend.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See ELF specification for details. 
      *  
      *  @{ */
     rose_addr_t const& get_r_addend() const;
@@ -19011,10 +17608,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Sym.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See ELF specification for details. 
      *  
      *  @{ */
     unsigned long const& get_sym() const;
@@ -19022,10 +17618,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Type.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See ELF specification for details. 
      *  
      *  @{ */
     SgAsmElfRelocEntry::RelocType const& get_type() const;
@@ -19033,12 +17628,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Value of padding bytes. 
+     * 
+     * @{ */
     SgUnsignedCharList const& get_extra() const;
     SgUnsignedCharList& get_extra();
     void set_extra(SgUnsignedCharList const&);
@@ -19136,10 +17728,10 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: List of note entries.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This property points to an AST node that contains the list rather than being a list directly because of limitations
+     *  of ROSETTA. 
      *  
      *  @{ */
     SgAsmElfNoteEntryList* const& get_entries() const;
@@ -19220,12 +17812,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: List of ELF not entries. 
+     * 
+     * @{ */
     SgAsmElfNoteEntryPtrList const& get_entries() const;
     SgAsmElfNoteEntryPtrList& get_entries();
     void set_entries(SgAsmElfNoteEntryPtrList const&);
@@ -19303,10 +17892,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Type of note.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See official ELF specification. 
      *  
      *  @{ */
     unsigned const& get_type() const;
@@ -19314,19 +17902,18 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Note name.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A string note name stored in an ELF string table in the binary specimen. Changing the name of a note also changes
+     *  the contents of the string table. 
      *  
      *  @{ */
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Note payload.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This is the data associated with the note. 
      *  
      *  @{ */
     SgUnsignedCharList const& get_payload() const;
@@ -19618,10 +18205,9 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Instruction kind.
+    /** Property: File class.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See ELF specification for details. 
      *  
      *  @{ */
     unsigned char const& get_e_ident_file_class() const;
@@ -19629,10 +18215,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Data encoding.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See ELF specification for details. 
      *  
      *  @{ */
     unsigned char const& get_e_ident_data_encoding() const;
@@ -19640,10 +18225,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: File version.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See ELF specification for details. 
      *  
      *  @{ */
     unsigned char const& get_e_ident_file_version() const;
@@ -19651,10 +18235,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Padding.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See ELF specification for details. 
      *  
      *  @{ */
     SgUnsignedCharList const& get_e_ident_padding() const;
@@ -19662,10 +18245,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Type.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See ELF specification for details. 
      *  
      *  @{ */
     unsigned long const& get_e_type() const;
@@ -19673,10 +18255,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Machine.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See ELF specification for details. 
      *  
      *  @{ */
     unsigned long const& get_e_machine() const;
@@ -19684,10 +18265,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Flags.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See ELF specification for details. 
      *  
      *  @{ */
     unsigned long const& get_e_flags() const;
@@ -19695,10 +18275,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: ehsize.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See ELF specification for details. 
      *  
      *  @{ */
     unsigned long const& get_e_ehsize() const;
@@ -19706,10 +18285,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: phextrasz.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See ELF specification for details. 
      *  
      *  @{ */
     unsigned long const& get_phextrasz() const;
@@ -19717,10 +18295,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: phnum.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See ELF specification for details. 
      *  
      *  @{ */
     unsigned long const& get_e_phnum() const;
@@ -19728,10 +18305,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: shextrasz.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See ELF specification for details. 
      *  
      *  @{ */
     unsigned long const& get_shextrasz() const;
@@ -19739,10 +18315,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: shnum.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See ELF specification for details. 
      *  
      *  @{ */
     unsigned long const& get_e_shnum() const;
@@ -19750,10 +18325,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: shstrndx.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See ELF specification for details. 
      *  
      *  @{ */
     unsigned long const& get_e_shstrndx() const;
@@ -19761,10 +18335,11 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Section table.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Points to the AST node that represents the ELF section table that describes each section of the file. ELF sections
+     *  are generally those parts of the file that are of interest to linkers, debuggers, etc. but not needed by the
+     *  program loader. 
      *  
      *  @{ */
     SgAsmElfSectionTable* const& get_section_table() const;
@@ -19772,10 +18347,10 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Segment table.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Points to the AST node that represents the ELF segment table that describes each segment of the file. Segments
+     *  describe how parts of the file are mapped into virtual memory by the loader. 
      *  
      *  @{ */
     SgAsmElfSegmentTable* const& get_segment_table() const;
@@ -19895,10 +18470,10 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: CI entries.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See official ELF specification.  This property points to an AST node containing the list rather than the direct
+     *  list due to limitations of ROSETTA. 
      *  
      *  @{ */
     SgAsmElfEHFrameEntryCIList* const& get_ci_entries() const;
@@ -19989,12 +18564,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: List of pointers to error handling frame descriptor entries. 
+     * 
+     * @{ */
     SgAsmElfEHFrameEntryFDPtrList const& get_entries() const;
     SgAsmElfEHFrameEntryFDPtrList& get_entries();
     void set_entries(SgAsmElfEHFrameEntryFDPtrList const&);
@@ -20079,10 +18651,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Beginning relative virtual address.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See official ELF specification. 
      *  
      *  @{ */
     rose_rva_t const& get_begin_rva() const;
@@ -20091,10 +18662,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Size in bytes.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See official ELF specification. 
      *  
      *  @{ */
     rose_addr_t const& get_size() const;
@@ -20102,10 +18672,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Augmentation data.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See official ELF specification. 
      *  
      *  @{ */
     SgUnsignedCharList const& get_augmentation_data() const;
@@ -20114,10 +18683,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Instructions.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See official ELF specification. 
      *  
      *  @{ */
     SgUnsignedCharList const& get_instructions() const;
@@ -20197,12 +18765,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: List of pointers to ELF EH frame CI entries. 
+     * 
+     * @{ */
     SgAsmElfEHFrameEntryCIPtrList const& get_entries() const;
     SgAsmElfEHFrameEntryCIPtrList& get_entries();
     void set_entries(SgAsmElfEHFrameEntryCIPtrList const&);
@@ -20359,10 +18924,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Version number.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See official ELF specification. 
      *  
      *  @{ */
     int const& get_version() const;
@@ -20370,10 +18934,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Augmentation string.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See official ELF specification. 
      *  
      *  @{ */
     std::string const& get_augmentation_string() const;
@@ -20381,10 +18944,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Data value.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See official ELF specification. 
      *  
      *  @{ */
     uint64_t const& get_eh_data() const;
@@ -20392,10 +18954,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Code alignment factor.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See official ELF specification. 
      *  
      *  @{ */
     uint64_t const& get_code_alignment_factor() const;
@@ -20403,10 +18964,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Data alignment factor.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See official ELF specification. 
      *  
      *  @{ */
     int64_t const& get_data_alignment_factor() const;
@@ -20414,10 +18974,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Augmentation data length.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See official ELF specification. 
      *  
      *  @{ */
     uint64_t const& get_augmentation_data_length() const;
@@ -20425,10 +18984,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: LSDA encoding.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See official ELF specification. 
      *  
      *  @{ */
     int const& get_lsda_encoding() const;
@@ -20436,10 +18994,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: PRH encoding.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See official ELF specification. 
      *  
      *  @{ */
     int const& get_prh_encoding() const;
@@ -20447,10 +19004,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: PRH argument.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See official ELF specification. 
      *  
      *  @{ */
     unsigned const& get_prh_arg() const;
@@ -20458,10 +19014,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: PRH address.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See official ELF specification. 
      *  
      *  @{ */
     rose_addr_t const& get_prh_addr() const;
@@ -20469,10 +19024,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Address encoding.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See official ELF specification. 
      *  
      *  @{ */
     int const& get_addr_encoding() const;
@@ -20480,10 +19034,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Signal frame.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See official ELF specification. 
      *  
      *  @{ */
     bool const& get_sig_frame() const;
@@ -20491,10 +19044,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Instructions.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See official ELF specification. 
      *  
      *  @{ */
     SgUnsignedCharList const& get_instructions() const;
@@ -20503,10 +19055,10 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: FD entries.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See official ELF specification. This points to an AST node that holds the list of pointers to the actual entry
+     *  nodes due to limitations of ROSETTA. 
      *  
      *  @{ */
     SgAsmElfEHFrameEntryFDList* const& get_fd_entries() const;
@@ -20582,10 +19134,10 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: List of entries.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This points to a node whose only purpose is to hold the list. The list cannot be contained directly here where it's
+     *  needed due to limitations of ROSETTA. 
      *  
      *  @{ */
     SgAsmElfDynamicEntryList* const& get_entries() const;
@@ -20706,34 +19258,26 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Linked section.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
-    /** @} */
+     *  Points to an optional related section. See official ELF specification.
+     *
+     * @{ */
     SgAsmElfSection* get_linked_section() const;
     virtual void set_linked_section(SgAsmElfSection*);
     /** @} */
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: The section table entry corresponding to this section. 
+     * 
+     * @{ */
     SgAsmElfSectionTableEntry* const& get_section_entry() const;
     void set_section_entry(SgAsmElfSectionTableEntry* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: The segment table entry corresponding to this section. 
+     * 
+     * @{ */
     SgAsmElfSegmentTableEntry* const& get_segment_entry() const;
     void set_segment_entry(SgAsmElfSegmentTableEntry* const&);
     /** @} */
@@ -20874,12 +19418,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: List of entries. 
+     * 
+     * @{ */
     SgAsmElfDynamicEntryPtrList const& get_entries() const;
     SgAsmElfDynamicEntryPtrList& get_entries();
     void set_entries(SgAsmElfDynamicEntryPtrList const&);
@@ -21075,10 +19616,9 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Instruction kind.
+    /** Property: Tag.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See ELF specification for details. 
      *  
      *  @{ */
     SgAsmElfDynamicEntry::EntryType const& get_d_tag() const;
@@ -21086,10 +19626,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Value.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See ELF specification for details. 
      *  
      *  @{ */
     rose_rva_t const& get_d_val() const;
@@ -21098,23 +19637,16 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Name.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+     * @{ */
     SgAsmGenericString* const& get_name() const;
-    /** @} */
     void set_name(SgAsmGenericString*);
     /** @} */
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Padding byte values. 
+     * 
+     * @{ */
     SgUnsignedCharList const& get_extra() const;
     SgUnsignedCharList& get_extra();
     void set_extra(SgUnsignedCharList const&);
@@ -21752,15 +20284,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmDwarfConstructList* const& get_body() const;
     void set_body(SgAsmDwarfConstructList* const&);
-    /** @} */
 public:
     SgAsmDwarfConstructList* get_children() override;
 public:
@@ -22101,15 +20626,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmDwarfConstructList* const& get_body() const;
     void set_body(SgAsmDwarfConstructList* const&);
-    /** @} */
 public:
     SgAsmDwarfConstructList* get_children() override;
 public:
@@ -22230,15 +20748,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmDwarfConstructList* const& get_body() const;
     void set_body(SgAsmDwarfConstructList* const&);
-    /** @} */
 public:
     SgAsmDwarfConstructList* get_children() override;
 public:
@@ -22304,15 +20815,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmDwarfConstructList* const& get_body() const;
     void set_body(SgAsmDwarfConstructList* const&);
-    /** @} */
 public:
     SgAsmDwarfConstructList* get_children() override;
 public:
@@ -22873,15 +21377,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmDwarfConstructList* const& get_body() const;
     void set_body(SgAsmDwarfConstructList* const&);
-    /** @} */
 public:
     SgAsmDwarfConstructList* get_children() override;
 public:
@@ -23222,15 +21719,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmDwarfMacroPtrList const& get_macro_list() const;
     void set_macro_list(SgAsmDwarfMacroPtrList const&);
-    /** @} */
 
 public:
     /** Destructor. */
@@ -23289,15 +21779,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::string const& get_macro_string() const;
     void set_macro_string(std::string const&);
-    /** @} */
 
 public:
     /** Destructor. */
@@ -23356,16 +21839,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmDwarfLinePtrList const& get_line_list() const;
     SgAsmDwarfLinePtrList& get_line_list();
     void set_line_list(SgAsmDwarfLinePtrList const&);
-    /** @} */
 #if 0
     // I [DQ] am having trouble making these proper data members so just use function to return them, so that they are
     // computed dynamically.
@@ -23466,48 +21942,20 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     uint64_t const& get_address() const;
     void set_address(uint64_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     int const& get_file_id() const;
     void set_file_id(int const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     int const& get_line() const;
     void set_line(int const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     int const& get_column() const;
     void set_column(int const&);
-    /** @} */
 
 public:
     /** Destructor. */
@@ -23573,15 +22021,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmDwarfConstructList* const& get_body() const;
     void set_body(SgAsmDwarfConstructList* const&);
-    /** @} */
 public:
     SgAsmDwarfConstructList* get_children() override;
 public:
@@ -23757,15 +22198,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmDwarfConstructList* const& get_body() const;
     void set_body(SgAsmDwarfConstructList* const&);
-    /** @} */
 public:
     SgAsmDwarfConstructList* get_children() override;
 public:
@@ -24381,15 +22815,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmDwarfConstructList* const& get_body() const;
     void set_body(SgAsmDwarfConstructList* const&);
-    /** @} */
 public:
     SgAsmDwarfConstructList* get_children() override;
 public:
@@ -24620,16 +23047,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmDwarfConstructPtrList const& get_list() const;
     SgAsmDwarfConstructPtrList& get_list();
     void set_list(SgAsmDwarfConstructPtrList const&);
-    /** @} */
 
 public:
     /** Destructor. */
@@ -24798,16 +23218,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmDwarfCompilationUnitPtrList const& get_cu_list() const;
     SgAsmDwarfCompilationUnitPtrList& get_cu_list();
     void set_cu_list(SgAsmDwarfCompilationUnitPtrList const&);
-    /** @} */
 
 public:
     /** Destructor. */
@@ -24936,125 +23349,48 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::string const& get_producer() const;
     void set_producer(std::string const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::string const& get_language() const;
     void set_language(std::string const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     uint64_t const& get_low_pc() const;
     void set_low_pc(uint64_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     uint64_t const& get_hi_pc() const;
     void set_hi_pc(uint64_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     int const& get_version_stamp() const;
     void set_version_stamp(int const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     uint64_t const& get_abbrev_offset() const;
     void set_abbrev_offset(uint64_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     uint64_t const& get_address_size() const;
     void set_address_size(uint64_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     uint64_t const& get_offset_length() const;
     void set_offset_length(uint64_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmDwarfLineList* const& get_line_info() const;
     void set_line_info(SgAsmDwarfLineList* const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmDwarfConstructList* const& get_language_constructs() const;
     void set_language_constructs(SgAsmDwarfConstructList* const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmDwarfMacroList* const& get_macro_info() const;
     void set_macro_info(SgAsmDwarfMacroList* const&);
-    /** @} */
 public:
     SgAsmDwarfConstructList* get_children() override;
 public:
@@ -25175,15 +23511,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmDwarfConstructList* const& get_body() const;
     void set_body(SgAsmDwarfConstructList* const&);
-    /** @} */
 public:
     SgAsmDwarfConstructList* get_children() override;
 public:
@@ -25249,15 +23578,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmDwarfConstructList* const& get_body() const;
     void set_body(SgAsmDwarfConstructList* const&);
-    /** @} */
 public:
     SgAsmDwarfConstructList* get_children() override;
 public:
@@ -25488,15 +23810,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmDwarfConstructList* const& get_body() const;
     void set_body(SgAsmDwarfConstructList* const&);
-    /** @} */
 public:
     SgAsmDwarfConstructList* get_children() override;
 public:
@@ -25725,60 +24040,25 @@ private:
 
     // For now we will store the nesting level (just to support debugging), then it will be removed.
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     int const& get_nesting_level() const;
     void set_nesting_level(int const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     uint64_t const& get_offset() const;
     void set_offset(uint64_t const&);
-    /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     uint64_t const& get_overall_offset() const;
     void set_overall_offset(uint64_t const&);
-    /** @} */
     // A lot of constructs have a name so put the name into the base class
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::string const& get_name() const;
     void set_name(std::string const&);
-    /** @} */
     // This is a data member that can be filled in via a separate analysis (we would have to read the line information before
     // hand).
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmDwarfLine* const& get_source_position() const;
     void set_source_position(SgAsmDwarfLine* const&);
-    /** @} */
     // [Robb Matzke 2023-03-22]: SgNode already has an attributeMechanism
     // [[using Rosebud: rosetta]]
     // AstAttributeMechanism* attributeMechanism = nullptr;
@@ -26075,10 +24355,9 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Instruction kind.
+    /** Property: Last page size.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See DOS specification. 
      *  
      *  @{ */
     uint16_t const& get_e_last_page_size() const;
@@ -26086,10 +24365,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Total number of pages.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See DOS specification. 
      *  
      *  @{ */
     uint16_t const& get_e_total_pages() const;
@@ -26097,10 +24375,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Number of relocations.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See DOS specification. 
      *  
      *  @{ */
     uint16_t const& get_e_nrelocs() const;
@@ -26108,10 +24385,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Number of header paragraphs.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See DOS specification. 
      *  
      *  @{ */
     uint16_t const& get_e_header_paragraphs() const;
@@ -26119,10 +24395,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Min alloc.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See DOS specification. 
      *  
      *  @{ */
     uint16_t const& get_e_minalloc() const;
@@ -26130,10 +24405,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Max alloc.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See DOS specification. 
      *  
      *  @{ */
     uint16_t const& get_e_maxalloc() const;
@@ -26141,10 +24415,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: SS.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See DOS specification. 
      *  
      *  @{ */
     uint16_t const& get_e_ss() const;
@@ -26152,10 +24425,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: SP.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See DOS specification. 
      *  
      *  @{ */
     uint16_t const& get_e_sp() const;
@@ -26163,10 +24435,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Checksum.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See DOS specification. 
      *  
      *  @{ */
     uint16_t const& get_e_cksum() const;
@@ -26174,10 +24445,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: IP.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See DOS specification. 
      *  
      *  @{ */
     uint16_t const& get_e_ip() const;
@@ -26185,10 +24455,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: CS.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See DOS specification. 
      *  
      *  @{ */
     uint16_t const& get_e_cs() const;
@@ -26196,10 +24465,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Overlay.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See DOS specification. 
      *  
      *  @{ */
     uint16_t const& get_e_overlay() const;
@@ -26207,10 +24475,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Relocs offset.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See DOS specification. 
      *  
      *  @{ */
     rose_addr_t const& get_e_relocs_offset() const;
@@ -26218,10 +24485,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Reserved field 1.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See DOS specification. 
      *  
      *  @{ */
     unsigned const& get_e_res1() const;
@@ -26229,23 +24495,17 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Section containing relocation information. 
+     * 
+     * @{ */
     SgAsmGenericSection* const& get_relocs() const;
     void set_relocs(SgAsmGenericSection* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Real mode section. 
+     * 
+     * @{ */
     SgAsmGenericSection* const& get_rm_section() const;
     void set_rm_section(SgAsmGenericSection* const&);
     /** @} */
@@ -26398,80 +24658,59 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: General info about the executable format. 
+     * 
+     * @{ */
     SgAsmGenericFormat* const& get_exec_format() const;
     void set_exec_format(SgAsmGenericFormat* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Optional magic number in file byte order. 
+     * 
+     * @{ */
     SgCharList const& get_magic() const;
     SgCharList& get_magic();
     void set_magic(SgCharList const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Machine for which this header and its sections, etc. was compiled. 
+     * 
+     * @{ */
     SgAsmGenericFormat::InsSetArchitecture const& get_isa() const;
     void set_isa(SgAsmGenericFormat::InsSetArchitecture const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Base virtual address used by all relative virtual addresses. 
+     * 
+     * @{ */
     rose_addr_t const& get_base_va() const;
     void set_base_va(rose_addr_t const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Code entry point wrt base virtual address. 
+     * 
+     * @{ */
     SgRVAList const& get_entry_rvas() const;
     SgRVAList& get_entry_rvas();
     void set_entry_rvas(SgRVAList const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: List of dynamically linked libraries. 
+     * 
+     * @{ */
     SgAsmGenericDLLList* const& get_dlls() const;
     void set_dlls(SgAsmGenericDLLList* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: List of file sections. 
+     * 
+     * @{ */
     SgAsmGenericSectionList* const& get_sections() const;
     void set_sections(SgAsmGenericSectionList* const&);
     /** @} */
@@ -26725,10 +24964,9 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Instruction kind.
+    /** Property: Rerserved area 1.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_res1() const;
@@ -26736,10 +24974,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: OEM ID.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_oemid() const;
@@ -26747,10 +24984,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: OEM info.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_oeminfo() const;
@@ -26758,10 +24994,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Rerserved area 2.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_res2() const;
@@ -26769,10 +25004,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Rerserved area 3.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_res3() const;
@@ -26780,10 +25014,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Rerserved area 4.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_res4() const;
@@ -26791,10 +25024,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Rerserved area 5.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_res5() const;
@@ -26802,10 +25034,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Rerserved area 6.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     unsigned const& get_e_res6() const;
@@ -26813,10 +25044,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: lfanew.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  See PE specification. 
      *  
      *  @{ */
     rose_addr_t const& get_e_lfanew() const;
@@ -26964,21 +25194,17 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Descriptor for accessed register. 
+     * 
+     * @{ */
     Rose::BinaryAnalysis::RegisterDescriptor const& get_descriptor() const;
     void set_descriptor(Rose::BinaryAnalysis::RegisterDescriptor const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Post-increment or pre-decrement amount.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This is a value that's added or subtracted from a register each time the containing instruction is executed. 
      *  
      *  @{ */
     int const& get_adjustment() const;
@@ -27051,15 +25277,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     unsigned long const& get_bit_flags() const;
     void set_bit_flags(unsigned long const&);
-    /** @} */
 
 public:
     /** Destructor. */
@@ -27141,10 +25360,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Bits for constant.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This is the canonical value of an AST node; subclasses may cache native representations of this value. 
      *  
      *  @{ */
     Sawyer::Container::BitVector const& get_bitVector() const;
@@ -27249,10 +25467,11 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Alternate expression without constant folding.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This is an optional expression that's equivalent to this expression but without constant folding.
+     *
+     *  Note: All of the ROSE disassemblers always set this to null regardless of whether they do any constant folding. 
      *  
      *  @{ */
     SgAsmValueExpression* const& get_unfolded_expression_tree() const;
@@ -27260,10 +25479,12 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Where this expression is encoded within the instruction.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This is the bit offset into the instruction's raw bytes where this expression is encoded. If it is not supported by
+     *  the architectures, it will be set to zero and the "bit_size" property will also be zero.  Bits are numbered so that
+     *  bits zero through seven are in the first byte, bits eight through 15 are in the second byte, etc. Within a byte,
+     *  bits are numbered so that lower indexes are less significant bits. 
      *  
      *  @{ */
     unsigned short const& get_bit_offset() const;
@@ -27271,10 +25492,10 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Where this expression is encoded within the instruction.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This is the size in bits of the encoding for this expression within the instruction.  If it is not supported by
+     *  the architecture, it will be set to zero. 
      *  
      *  @{ */
     unsigned short const& get_bit_size() const;
@@ -27282,10 +25503,10 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Symbol corresponding to this expression.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  If a symbol refers to this expression then it is linked by this property, otherwise null.  The symbol is not
+     *  considered to be a child of this node in the AST. 
      *  
      *  @{ */
     SgSymbol* const& get_symbol() const;
@@ -27354,15 +25575,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     SgAsmExpression* const& get_subexpression() const;
     void set_subexpression(SgAsmExpression* const&);
-    /** @} */
 
 public:
     /** Destructor. */
@@ -27431,10 +25645,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: String table.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Table that holds the strings for the symbol names. 
      *  
      *  @{ */
     SgAsmGenericSection* const& get_strtab() const;
@@ -27442,12 +25655,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: List of symbols. 
+     * 
+     * @{ */
     SgAsmCoffSymbolList* const& get_symbols() const;
     void set_symbols(SgAsmCoffSymbolList* const&);
     /** @} */
@@ -27515,12 +25725,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: List of symbol pointers. 
+     * 
+     * @{ */
     SgAsmCoffSymbolPtrList const& get_symbols() const;
     SgAsmCoffSymbolPtrList& get_symbols();
     void set_symbols(SgAsmCoffSymbolPtrList const&);
@@ -27658,78 +25865,57 @@ public:
     // Properties and data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Symbol name. 
+     * 
+     * @{ */
     std::string const& get_st_name() const;
     void set_st_name(std::string const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Symbol name offset. 
+     * 
+     * @{ */
     rose_addr_t const& get_st_name_offset() const;
     void set_st_name_offset(rose_addr_t const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Section number. 
+     * 
+     * @{ */
     int const& get_st_section_num() const;
     void set_st_section_num(int const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Symbol type constant. 
+     * 
+     * @{ */
     unsigned const& get_st_type() const;
     void set_st_type(unsigned const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Symbol storage class. 
+     * 
+     * @{ */
     unsigned const& get_st_storage_class() const;
     void set_st_storage_class(unsigned const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Number of auxilliary entries. 
+     * 
+     * @{ */
     unsigned const& get_st_num_aux_entries() const;
     void set_st_num_aux_entries(unsigned const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Auxilliary data. 
+     * 
+     * @{ */
     SgUnsignedCharList const& get_aux_data() const;
     SgUnsignedCharList& get_aux_data();
     void set_aux_data(SgUnsignedCharList const&);
@@ -27897,79 +26083,57 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Definition state. 
+     * 
+     * @{ */
     SgAsmGenericSymbol::SymbolDefState const& get_def_state() const;
     void set_def_state(SgAsmGenericSymbol::SymbolDefState const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Symbol binding. 
+     * 
+     * @{ */
     SgAsmGenericSymbol::SymbolBinding const& get_binding() const;
     void set_binding(SgAsmGenericSymbol::SymbolBinding const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Symbol type. 
+     * 
+     * @{ */
     SgAsmGenericSymbol::SymbolType const& get_type() const;
     void set_type(SgAsmGenericSymbol::SymbolType const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Symbol value. 
+     * 
+     * @{ */
     rose_addr_t const& get_value() const;
     void set_value(rose_addr_t const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Symbol size in bytes. 
+     * 
+     * @{ */
     rose_addr_t const& get_size() const;
     void set_size(rose_addr_t const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Associated file section. 
+     * 
+     * @{ */
     SgAsmGenericSection* const& get_bound() const;
     void set_bound(SgAsmGenericSection* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Name.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
-    /** @} */
+     * @{ */
     SgAsmGenericString* get_name() const;
     void set_name(SgAsmGenericString*);
     /** @} */
@@ -28143,56 +26307,42 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Section storing this string table. 
+     * 
+     * @{ */
     SgAsmGenericSection* const& get_container() const;
     void set_container(SgAsmGenericSection* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: String storage list. 
+     * 
+     * @{ */
     SgAsmGenericStrtab::referenced_t const& get_storage_list() const;
     void set_storage_list(SgAsmGenericStrtab::referenced_t const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Free space list.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
+     *  This list stores space which is available for new strings.
+     *
      *  @{ */
-    /** @} */
     const AddressIntervalSet& get_freelist() const;
     AddressIntervalSet& get_freelist();
     /** @} */
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Space that should never be freed. 
+     * 
+     * @{ */
     SgAsmStringStorage* const& get_dont_free() const;
     void set_dont_free(SgAsmStringStorage* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Number of strings freed thus far. 
+     * 
+     * @{ */
     size_t const& get_num_freed() const;
     void set_num_freed(size_t const&);
     /** @} */
@@ -28385,10 +26535,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Cb
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Size of the header in bytes 
      *  
      *  @{ */
     uint32_t const& get_cb() const;
@@ -28396,10 +26545,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: MajorRuntimeVersion
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The minimum version of the runtime required to run this program, currently 2. 
      *  
      *  @{ */
     uint16_t const& get_majorRuntimeVersion() const;
@@ -28407,10 +26555,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: MinorRuntimeVersion
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The minor portion of the version, currently 0. 
      *  
      *  @{ */
     uint16_t const& get_minorRuntimeVersion() const;
@@ -28418,10 +26565,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: MetaData
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  RVA and size of implementation-specific resources (II.24). 
      *  
      *  @{ */
     uint64_t const& get_metaData() const;
@@ -28429,10 +26575,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Flags
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Flags describing this runtime image (II.25.3.3.1). 
      *  
      *  @{ */
     uint32_t const& get_flags() const;
@@ -28440,10 +26585,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: EntryPointToken
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Token for the MethodDef or File of the entry point for the image. 
      *  
      *  @{ */
     uint32_t const& get_entryPointToken() const;
@@ -28451,10 +26595,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Resources
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  RVA and size of implementation-specific resources. 
      *  
      *  @{ */
     uint64_t const& get_resources() const;
@@ -28462,10 +26605,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: StrongNameSignature
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  RVA of the hash data for this PE file used by the CLI loader for binding and versioning. 
      *  
      *  @{ */
     uint64_t const& get_strongNameSignature() const;
@@ -28473,10 +26615,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: CodeManagerTable
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Always 0 (II.24.1) 
      *  
      *  @{ */
     uint64_t const& get_codeManagerTable() const;
@@ -28484,10 +26625,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: VTableFixups
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  RVA of an array of locations in the file that contain an array of function pointers (e.g., vtable slots). 
      *  
      *  @{ */
     uint64_t const& get_vTableFixups() const;
@@ -28495,10 +26635,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: ExportAddressTableJumps
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Always 0 (II.24.1) 
      *  
      *  @{ */
     uint64_t const& get_exportAddressTableJumps() const;
@@ -28506,10 +26645,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: ManagedNativeHeader
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Always 0 (II.24.1) 
      *  
      *  @{ */
     uint64_t const& get_managedNativeHeader() const;
@@ -28517,12 +26655,9 @@ public:
     /** @} */
     // FIXME[Robb Matzke 2023-03-20]: is no_serialize a bug?
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: pointer to the root of the CIL Metadata. 
+     * 
+     * @{ */
     SgAsmCilMetadataRoot* const& get_metadataRoot() const;
     void set_metadataRoot(SgAsmCilMetadataRoot* const&);
     /** @} */
@@ -28780,56 +26915,52 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: File to which this section belongs. 
+     * 
+     * @{ */
     SgAsmGenericFile* const& get_file() const;
     void set_file(SgAsmGenericFile* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: File header that owns this section. 
+     * 
+     * @{ */
     SgAsmGenericHeader* const& get_header() const;
     void set_header(SgAsmGenericHeader* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Size of section in file in bytes.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
+     *  This is the current file size of the section in bytes as it exists in the file.. The original size of the
+     *  section (available when @ref parse is called for the function, but possibly updated while parsing) is available
+     *  through the size of the original @ref p_data "data" property.
+     *
+     *  When ths size is set, some types of sections may do additional work. That additional work must not adjust the size
+     *  of other sections or the mapping of any section (use @ref SgAsmGenericFile::resize to do that).
+     *
      *  @{ */
-    /** @} */
     rose_addr_t get_size() const;
     virtual void set_size(rose_addr_t);
     /** @} */
 public:
-    /** Property: Instruction kind.
+    /** Property: Offset to start of section in file.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
+     *  This property holds the current file offset in bytes of this section. When setting the property, some types of
+     *  sections may need to do perform additional work. That additional work must not adjust the offset of other sections,
+     *  or the mapping of any section.
+     *
      *  @{ */
-    /** @} */
  // Starting file offset of the section
 
     rose_addr_t get_offset() const;
     virtual void set_offset(rose_addr_t);
     /** @} */
 public:
-    /** Property: Instruction kind.
+    /** Property: Required file alignment.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Zero and one both imply byte alignment. 
      *  
      *  @{ */
     rose_addr_t const& get_file_alignment() const;
@@ -28837,10 +26968,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Original content of just this section.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Points into file's content. 
      *  
      *  @{ */
     SgFileContentList const& get_data() const;
@@ -28848,21 +26978,17 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: General contents of the section. 
+     * 
+     * @{ */
     SgAsmGenericSection::SectionPurpose const& get_purpose() const;
     void set_purpose(SgAsmGenericSection::SectionPurpose const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Whether section really exists.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  If true, then this section was created by the format reader and not actually present in the file. 
      *  
      *  @{ */
     bool const& get_synthesized() const;
@@ -28870,10 +26996,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Non-unique section ID or negative.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  ELF files have unique id numbers. 
      *  
      *  @{ */
     int const& get_id() const;
@@ -28881,98 +27006,89 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Non-unique name of section.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
+     *  The name may be the empty string. If you just want to change the name of a section use the existing name node and
+     *  change its string value.  Assigning a new @ref SgAsmGenericString to the section also changes the parent of the
+     *  specified string node.
+     *
      *  @{ */
-    /** @} */
     SgAsmGenericString *get_name() const;
     void set_name(SgAsmGenericString *s);
     /** @} */
 public:
-    /** Property: Instruction kind.
+    /** Property: Abbreviated name.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
+     *  Some sections have long names like "Import Address Table" that are cumbersome when they appear in assembly
+     *  listings.  Therefore, each section may also have a short name.  Reading this property returns the short name
+     *  if it's non-empty, otherwise the full name.
+     *
      *  @{ */
-    /** @} */
     std::string get_short_name() const;
     void set_short_name(const std::string&);
     /** @} */
 public:
-    /** Property: Instruction kind.
+    /** Property: Relative virtual address where section prefers to be mapped.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
+     *  This is the relative virtual address where the section @em prefers to be mapped. The RVA where the section will
+     *  ultimately be mapped by the loader might be different due to file and/or memory alignment constraints and conflicts
+     *  with other sections.
+     *
+     *  The virtual address is relative to the base address stored in the file header.
+     *
      *  @{ */
-    /** @} */
     rose_addr_t get_mapped_preferred_rva() const;
     virtual void set_mapped_preferred_rva(rose_addr_t);
     /** @} */
 public:
-    /** Property: Instruction kind.
+    /** Property: Mapped size.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
+     *  Size of section in bytes when it's mapped into virtual memory.
+     *
      *  @{ */
-    /** @} */
     rose_addr_t get_mapped_size() const;
     virtual void set_mapped_size(rose_addr_t);
     /** @} */
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Alignment in virtual memory. 
+     * 
+     * @{ */
     rose_addr_t const& get_mapped_alignment() const;
     void set_mapped_alignment(rose_addr_t const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Whether mapped with read permission. 
+     * 
+     * @{ */
     bool const& get_mapped_rperm() const;
     void set_mapped_rperm(bool const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Whether mapped with write permission. 
+     * 
+     * @{ */
     bool const& get_mapped_wperm() const;
     void set_mapped_wperm(bool const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Whether mapped with execute permission. 
+     * 
+     * @{ */
     bool const& get_mapped_xperm() const;
     void set_mapped_xperm(bool const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Whether a section is known to contain code.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  If a section is known to contain code then this data member is set.  Part of the process of parsing a binary file
+     *  is to look at the symbol tables and if any function symbol points into a section then the entire section is marked
+     *  as containing code.  This is necessary because ELF Object Files (*.o files) contain one ELF Section per function,
+     *  none of which have a memory mapping specification.  By marking those sections as containing code, the LoaderELFObj
+     *  class, knows that the section should be mapped to virtual memory for disassembly. 
      *  
      *  @{ */
     bool const& get_contains_code() const;
@@ -28980,10 +27096,17 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Virtual address where ROSE maps this section.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The actual mapping is sometimes different than the preferred mapping indicated in the section table due to file
+     *  and/or memory alignment constraints or conflicts with other sections.  The only place values are assigned to this
+     *  data member is in the @ref BinaryLoader class and subclasses thereof.
+     *
+     *  The address corresponds to the latest call into the @ref BinaryLoader classes.  Depending on the loader employed,
+     *  it's possible for a section to be mapped, this @c mapped_actual_va value to be set, and then some other section to
+     *  be mapped over the top of all or part of the first section. In that case, the @c mapped_actual_va of the first
+     *  section is not reset to zero.  The return value is not conditional upon @ref is_mapped since that predicate applies
+     *  only to preferred mapping attributes. 
      *  
      *  @{ */
     rose_addr_t const& get_mapped_actual_va() const;
@@ -29316,15 +27439,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<uint8_t> const& get_Stream() const;
     std::vector<uint8_t>& get_Stream();
-    /** @} */
 public:
     void parse(std::vector<uint8_t>& buf, size_t startOfMetaData) override;
 public:
@@ -29392,15 +27508,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<uint32_t> const& get_Stream() const;
     std::vector<uint32_t>& get_Stream();
-    /** @} */
 public:
     void parse(std::vector<uint8_t>& buf, size_t startOfMetaData) override;
 public:
@@ -29468,15 +27577,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilTypeSpec*> const& get_elements() const;
     std::vector<SgAsmCilTypeSpec*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilTypeSpec;
 public:
@@ -29537,10 +27639,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Signature.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the Blob heap. 
      *  
      *  @{ */
     uint32_t const& get_Signature() const;
@@ -29608,15 +27709,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilTypeRef*> const& get_elements() const;
     std::vector<SgAsmCilTypeRef*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilTypeRef;
 public:
@@ -29691,10 +27785,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: ResolutionScope.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into a Module, ModuleRef, AssemblyRef or TypeRef table, or null. 
      *  
      *  @{ */
     uint16_t const& get_ResolutionScope() const;
@@ -29702,10 +27795,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: TypeName.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the String heap. 
      *  
      *  @{ */
     uint32_t const& get_TypeName() const;
@@ -29713,10 +27805,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: TypeNamespace.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the String heap. 
      *  
      *  @{ */
     uint32_t const& get_TypeNamespace() const;
@@ -29786,15 +27877,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilTypeDef*> const& get_elements() const;
     std::vector<SgAsmCilTypeDef*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilTypeDef;
 public:
@@ -29890,10 +27974,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Flags.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 4-byte bitmask of type TypeAttributes. 
      *  
      *  @{ */
     uint32_t const& get_Flags() const;
@@ -29901,10 +27984,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: TypeName.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the String heap. 
      *  
      *  @{ */
     uint32_t const& get_TypeName() const;
@@ -29912,10 +27994,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: TypeNamespace.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the String heap. 
      *  
      *  @{ */
     uint32_t const& get_TypeNamespace() const;
@@ -29923,10 +28004,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Extends.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the TypeDef, TypeRef, or TypeSpec table. 
      *  
      *  @{ */
     uint32_t const& get_Extends() const;
@@ -29934,10 +28014,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: FieldList.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the Field table. 
      *  
      *  @{ */
     uint32_t const& get_FieldList() const;
@@ -29945,10 +28024,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: MethodList.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the MethodDef table. 
      *  
      *  @{ */
     uint32_t const& get_MethodList() const;
@@ -30020,15 +28098,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilStandAloneSig*> const& get_elements() const;
     std::vector<SgAsmCilStandAloneSig*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilStandAloneSig;
 public:
@@ -30089,10 +28160,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Signature.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the Blob heap. 
      *  
      *  @{ */
     uint32_t const& get_Signature() const;
@@ -30160,15 +28230,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilProperty*> const& get_elements() const;
     std::vector<SgAsmCilProperty*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilProperty;
 public:
@@ -30229,15 +28292,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilPropertyMap*> const& get_elements() const;
     std::vector<SgAsmCilPropertyMap*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilPropertyMap;
 public:
@@ -30305,10 +28361,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Parent.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the TypeDef table. 
      *  
      *  @{ */
     uint32_t const& get_Parent() const;
@@ -30316,10 +28371,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: PropertyList.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the Property table. 
      *  
      *  @{ */
     uint32_t const& get_PropertyList() const;
@@ -30402,10 +28456,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Flags.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 2-byte bitmask of type PropertyAttributes. 
      *  
      *  @{ */
     uint16_t const& get_Flags() const;
@@ -30413,10 +28466,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Name.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the String heap. 
      *  
      *  @{ */
     uint32_t const& get_Name() const;
@@ -30424,10 +28476,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Type.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the Blob heap. 
      *  
      *  @{ */
     uint32_t const& get_Type() const;
@@ -30496,15 +28547,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilParam*> const& get_elements() const;
     std::vector<SgAsmCilParam*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilParam;
 public:
@@ -30579,10 +28623,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Flags.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 2-byte bitmask of type ParamAttributes. 
      *  
      *  @{ */
     uint16_t const& get_Flags() const;
@@ -30590,10 +28633,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Sequence.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 2-byte constant. 
      *  
      *  @{ */
     uint16_t const& get_Sequence() const;
@@ -30601,10 +28643,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Name.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the Blob heap. 
      *  
      *  @{ */
     uint32_t const& get_Name() const;
@@ -30672,15 +28713,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilNestedClass*> const& get_elements() const;
     std::vector<SgAsmCilNestedClass*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilNestedClass;
 public:
@@ -30748,10 +28782,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: NestedClass.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the TypeDef table. 
      *  
      *  @{ */
     uint32_t const& get_NestedClass() const;
@@ -30759,10 +28792,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: EnclosingClass.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the TypeDef table. 
      *  
      *  @{ */
     uint32_t const& get_EnclosingClass() const;
@@ -30831,15 +28863,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilModule*> const& get_elements() const;
     std::vector<SgAsmCilModule*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilModule;
 public:
@@ -30900,15 +28925,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilModuleRef*> const& get_elements() const;
     std::vector<SgAsmCilModuleRef*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilModuleRef;
 public:
@@ -30969,10 +28987,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Name.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the String heap. 
      *  
      *  @{ */
     uint32_t const& get_Name() const;
@@ -31068,10 +29085,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Generation.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 2-byte value, reserved, shall be zero. 
      *  
      *  @{ */
     uint16_t const& get_Generation() const;
@@ -31079,10 +29095,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Name.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the String heap. 
      *  
      *  @{ */
     uint32_t const& get_Name() const;
@@ -31090,10 +29105,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Mvid.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the Guid heap. 
      *  
      *  @{ */
     uint32_t const& get_Mvid() const;
@@ -31101,10 +29115,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Encld.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the Guid heap. 
      *  
      *  @{ */
     uint32_t const& get_Encld() const;
@@ -31112,10 +29125,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: EncBaseId.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the Guid heap. 
      *  
      *  @{ */
     uint32_t const& get_EncBaseId() const;
@@ -31186,15 +29198,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilMethodSpec*> const& get_elements() const;
     std::vector<SgAsmCilMethodSpec*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilMethodSpec;
 public:
@@ -31262,10 +29267,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Method.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the MethodDef or MemberRef table. 
      *  
      *  @{ */
     uint32_t const& get_Method() const;
@@ -31273,10 +29277,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Instantiation.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the Blob heap. 
      *  
      *  @{ */
     uint32_t const& get_Instantiation() const;
@@ -31345,15 +29348,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilMethodSemantics*> const& get_elements() const;
     std::vector<SgAsmCilMethodSemantics*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilMethodSemantics;
 public:
@@ -31428,10 +29424,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Semantics.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 2-byte bitmask of type MethodSemanticsAttributes. 
      *  
      *  @{ */
     uint16_t const& get_Semantics() const;
@@ -31439,10 +29434,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Method.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the MethodDef table. 
      *  
      *  @{ */
     uint32_t const& get_Method() const;
@@ -31450,10 +29444,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Association.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the Event or Property table. 
      *  
      *  @{ */
     uint32_t const& get_Association() const;
@@ -31522,15 +29515,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilMethodImpl*> const& get_elements() const;
     std::vector<SgAsmCilMethodImpl*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilMethodImpl;
 public:
@@ -31605,10 +29591,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Class.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the TypeDef table. 
      *  
      *  @{ */
     uint32_t const& get_Class() const;
@@ -31616,10 +29601,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: MethodBody.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the MethodDef or MemberRef table. 
      *  
      *  @{ */
     uint32_t const& get_MethodBody() const;
@@ -31627,10 +29611,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: MethodDeclaration.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the MethodDef or MemberRef table. 
      *  
      *  @{ */
     uint32_t const& get_MethodDeclaration() const;
@@ -31700,15 +29683,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilMethodDef*> const& get_elements() const;
     std::vector<SgAsmCilMethodDef*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilMethodDef;
 public:
@@ -31832,10 +29808,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: RVA.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 4-byte constant. 
      *  
      *  @{ */
     uint32_t const& get_RVA() const;
@@ -31843,10 +29818,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: ImplFlags.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 2-byte bitmask of type MethodImplAttributes. 
      *  
      *  @{ */
     uint32_t const& get_ImplFlags() const;
@@ -31854,10 +29828,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Flags.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 2-byte bitmask of type MethodAttributes. 
      *  
      *  @{ */
     uint16_t const& get_Flags() const;
@@ -31865,10 +29838,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Name.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the String heap. 
      *  
      *  @{ */
     uint32_t const& get_Name() const;
@@ -31876,10 +29848,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Signature.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the Blob heap. 
      *  
      *  @{ */
     uint32_t const& get_Signature() const;
@@ -31887,10 +29858,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: ParamList.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the Param table. 
      *  
      *  @{ */
     uint32_t const& get_ParamList() const;
@@ -31898,10 +29868,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: body.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A block containing an instruction sequence (either x86 or CIL). 
      *  
      *  @{ */
     SgAsmBlock* const& get_body() const;
@@ -31909,10 +29878,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: initLocals.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Returns true if locals are initialized. 
      *  
      *  @{ */
     bool const& get_initLocals() const;
@@ -31920,10 +29888,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: stackSize.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Returns the max stack size required for this method. 
      *  
      *  @{ */
     uint32_t const& get_stackSize() const;
@@ -31931,10 +29898,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: hasMoreSections.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Returns true if this method has more sections in addition to the body. 
      *  
      *  @{ */
     bool const& get_hasMoreSections() const;
@@ -32067,112 +30033,78 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Magic signature for physical metadata (always 0x424A5342). 
+     * 
+     * @{ */
     uint32_t const& get_Signature() const;
     void set_Signature(uint32_t const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Major version number. 
+     * 
+     * @{ */
     uint16_t const& get_MajorVersion() const;
     void set_MajorVersion(uint16_t const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Minor version number. 
+     * 
+     * @{ */
     uint16_t const& get_MinorVersion() const;
     void set_MinorVersion(uint16_t const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Reserved space. 
+     * 
+     * @{ */
     uint32_t const& get_Reserved0() const;
     void set_Reserved0(uint32_t const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Number of bytes allocated to hold version string (including null terminator). 
+     * 
+     * @{ */
     uint32_t const& get_Length() const;
     void set_Length(uint32_t const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Version string. 
+     * 
+     * @{ */
     std::string const& get_Version() const;
     void set_Version(std::string const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Padding to next 4-byte boundary. 
+     * 
+     * @{ */
     uint32_t const& get_VersionPadding() const;
     void set_VersionPadding(uint32_t const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Reserved space. 
+     * 
+     * @{ */
     uint16_t const& get_Flags() const;
     void set_Flags(uint16_t const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Reserved space. 
+     * 
+     * @{ */
     uint16_t const& get_NumberOfStreams() const;
     void set_NumberOfStreams(uint16_t const&);
     /** @} */
     // FIXME[Robb Matzke 2023-03-22]: these were implemented elsewhere, but could be auto generated
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
-    /** @} */
     const std::vector<SgAsmCilDataStream*>& get_Streams() const;
     std::vector<SgAsmCilDataStream*>& get_Streams();
 
@@ -32591,518 +30523,377 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: 4 reserved bytes. 
+     * 
+     * @{ */
     uint32_t const& get_ReservedAlwaysZero() const;
     void set_ReservedAlwaysZero(uint32_t const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: a 1-byte constant. 
+     * 
+     * @{ */
     uint8_t const& get_MajorVersion() const;
     void set_MajorVersion(uint8_t const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: a 1-byte constant. 
+     * 
+     * @{ */
     uint8_t const& get_MinorVersion() const;
     void set_MinorVersion(uint8_t const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: a 1-byte constant indicating the index sizes of streams. 
+     * 
+     * @{ */
     uint8_t const& get_HeapSizes() const;
     void set_HeapSizes(uint8_t const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: a 1-byte constant. 
+     * 
+     * @{ */
     uint8_t const& get_ReservedAlwaysOne() const;
     void set_ReservedAlwaysOne(uint8_t const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: a 4-byte value indicating which metadata tables are present. 
+     * 
+     * @{ */
     uint64_t const& get_Valid() const;
     void set_Valid(uint64_t const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: a 4-byte value. 
+     * 
+     * @{ */
     uint64_t const& get_Sorted() const;
     void set_Sorted(uint64_t const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: a vector indicating how many rows the present tables contain. 
+     * 
+     * @{ */
     std::vector<uint32_t> const& get_NumberOfRows() const;
     void set_NumberOfRows(std::vector<uint32_t> const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: precomputed flags that determine whether a metadata reference is stored as 2 or 4 byte value in the file. 
+     * 
+     * @{ */
     uint64_t const& get_DataSizeFlags() const;
     void set_DataSizeFlags(uint64_t const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: AssemblyTable. 
+     * 
+     * @{ */
     SgAsmCilAssemblyTable* const& get_AssemblyTable() const;
     void set_AssemblyTable(SgAsmCilAssemblyTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: AssemblyOSTable. 
+     * 
+     * @{ */
     SgAsmCilAssemblyOSTable* const& get_AssemblyOSTable() const;
     void set_AssemblyOSTable(SgAsmCilAssemblyOSTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: AssemblyProcessorTable. 
+     * 
+     * @{ */
     SgAsmCilAssemblyProcessorTable* const& get_AssemblyProcessorTable() const;
     void set_AssemblyProcessorTable(SgAsmCilAssemblyProcessorTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: AssemblyRefTable. 
+     * 
+     * @{ */
     SgAsmCilAssemblyRefTable* const& get_AssemblyRefTable() const;
     void set_AssemblyRefTable(SgAsmCilAssemblyRefTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: AssemblyRefOSTable. 
+     * 
+     * @{ */
     SgAsmCilAssemblyRefOSTable* const& get_AssemblyRefOSTable() const;
     void set_AssemblyRefOSTable(SgAsmCilAssemblyRefOSTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: AssemblyRefProcessorTable. 
+     * 
+     * @{ */
     SgAsmCilAssemblyRefProcessorTable* const& get_AssemblyRefProcessorTable() const;
     void set_AssemblyRefProcessorTable(SgAsmCilAssemblyRefProcessorTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: ClassLayoutTable. 
+     * 
+     * @{ */
     SgAsmCilClassLayoutTable* const& get_ClassLayoutTable() const;
     void set_ClassLayoutTable(SgAsmCilClassLayoutTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: ConstantTable. 
+     * 
+     * @{ */
     SgAsmCilConstantTable* const& get_ConstantTable() const;
     void set_ConstantTable(SgAsmCilConstantTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: CustomAttributeTable. 
+     * 
+     * @{ */
     SgAsmCilCustomAttributeTable* const& get_CustomAttributeTable() const;
     void set_CustomAttributeTable(SgAsmCilCustomAttributeTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: DeclSecurityTable. 
+     * 
+     * @{ */
     SgAsmCilDeclSecurityTable* const& get_DeclSecurityTable() const;
     void set_DeclSecurityTable(SgAsmCilDeclSecurityTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: EventTable. 
+     * 
+     * @{ */
     SgAsmCilEventTable* const& get_EventTable() const;
     void set_EventTable(SgAsmCilEventTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: EventMapTable. 
+     * 
+     * @{ */
     SgAsmCilEventMapTable* const& get_EventMapTable() const;
     void set_EventMapTable(SgAsmCilEventMapTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: ExportedTypeTable. 
+     * 
+     * @{ */
     SgAsmCilExportedTypeTable* const& get_ExportedTypeTable() const;
     void set_ExportedTypeTable(SgAsmCilExportedTypeTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: FieldTable. 
+     * 
+     * @{ */
     SgAsmCilFieldTable* const& get_FieldTable() const;
     void set_FieldTable(SgAsmCilFieldTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: FieldLayoutTable. 
+     * 
+     * @{ */
     SgAsmCilFieldLayoutTable* const& get_FieldLayoutTable() const;
     void set_FieldLayoutTable(SgAsmCilFieldLayoutTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: FieldMarshalTable 
+     * 
+     * @{ */
     SgAsmCilFieldMarshalTable* const& get_FieldMarshalTable() const;
     void set_FieldMarshalTable(SgAsmCilFieldMarshalTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: FieldRVATable 
+     * 
+     * @{ */
     SgAsmCilFieldRVATable* const& get_FieldRVATable() const;
     void set_FieldRVATable(SgAsmCilFieldRVATable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: FileTable. 
+     * 
+     * @{ */
     SgAsmCilFileTable* const& get_FileTable() const;
     void set_FileTable(SgAsmCilFileTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: GenericParamTable. 
+     * 
+     * @{ */
     SgAsmCilGenericParamTable* const& get_GenericParamTable() const;
     void set_GenericParamTable(SgAsmCilGenericParamTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: GenericParamConstraintTable 
+     * 
+     * @{ */
     SgAsmCilGenericParamConstraintTable* const& get_GenericParamConstraintTable() const;
     void set_GenericParamConstraintTable(SgAsmCilGenericParamConstraintTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: ImplMapTable. 
+     * 
+     * @{ */
     SgAsmCilImplMapTable* const& get_ImplMapTable() const;
     void set_ImplMapTable(SgAsmCilImplMapTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: InterfaceImplTable. 
+     * 
+     * @{ */
     SgAsmCilInterfaceImplTable* const& get_InterfaceImplTable() const;
     void set_InterfaceImplTable(SgAsmCilInterfaceImplTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: ManifestResourceTable. 
+     * 
+     * @{ */
     SgAsmCilManifestResourceTable* const& get_ManifestResourceTable() const;
     void set_ManifestResourceTable(SgAsmCilManifestResourceTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: MemberRefTable. 
+     * 
+     * @{ */
     SgAsmCilMemberRefTable* const& get_MemberRefTable() const;
     void set_MemberRefTable(SgAsmCilMemberRefTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: MethodDefTable. 
+     * 
+     * @{ */
     SgAsmCilMethodDefTable* const& get_MethodDefTable() const;
     void set_MethodDefTable(SgAsmCilMethodDefTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: MethodImplTable. 
+     * 
+     * @{ */
     SgAsmCilMethodImplTable* const& get_MethodImplTable() const;
     void set_MethodImplTable(SgAsmCilMethodImplTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: MethodSemanticsTable. 
+     * 
+     * @{ */
     SgAsmCilMethodSemanticsTable* const& get_MethodSemanticsTable() const;
     void set_MethodSemanticsTable(SgAsmCilMethodSemanticsTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: MethodSpecTable. 
+     * 
+     * @{ */
     SgAsmCilMethodSpecTable* const& get_MethodSpecTable() const;
     void set_MethodSpecTable(SgAsmCilMethodSpecTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: ModuleTable. 
+     * 
+     * @{ */
     SgAsmCilModuleTable* const& get_ModuleTable() const;
     void set_ModuleTable(SgAsmCilModuleTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: ModuleRefTable. 
+     * 
+     * @{ */
     SgAsmCilModuleRefTable* const& get_ModuleRefTable() const;
     void set_ModuleRefTable(SgAsmCilModuleRefTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: NestedClassTable. 
+     * 
+     * @{ */
     SgAsmCilNestedClassTable* const& get_NestedClassTable() const;
     void set_NestedClassTable(SgAsmCilNestedClassTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: ParamTable. 
+     * 
+     * @{ */
     SgAsmCilParamTable* const& get_ParamTable() const;
     void set_ParamTable(SgAsmCilParamTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: PropertyTable. 
+     * 
+     * @{ */
     SgAsmCilPropertyTable* const& get_PropertyTable() const;
     void set_PropertyTable(SgAsmCilPropertyTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: PropertyMapTable. 
+     * 
+     * @{ */
     SgAsmCilPropertyMapTable* const& get_PropertyMapTable() const;
     void set_PropertyMapTable(SgAsmCilPropertyMapTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: StandAloneSigTable. 
+     * 
+     * @{ */
     SgAsmCilStandAloneSigTable* const& get_StandAloneSigTable() const;
     void set_StandAloneSigTable(SgAsmCilStandAloneSigTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: TypeDefTable. 
+     * 
+     * @{ */
     SgAsmCilTypeDefTable* const& get_TypeDefTable() const;
     void set_TypeDefTable(SgAsmCilTypeDefTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: TypeRefTable. 
+     * 
+     * @{ */
     SgAsmCilTypeRefTable* const& get_TypeRefTable() const;
     void set_TypeRefTable(SgAsmCilTypeRefTable* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: TypeSpecTable. 
+     * 
+     * @{ */
     SgAsmCilTypeSpecTable* const& get_TypeSpecTable() const;
     void set_TypeSpecTable(SgAsmCilTypeSpecTable* const&);
     /** @} */
@@ -33267,15 +31058,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilMemberRef*> const& get_elements() const;
     std::vector<SgAsmCilMemberRef*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilMemberRef;
 public:
@@ -33350,10 +31134,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Class.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the MethodDef, ModuleRef, TypeDef, TypeRef, or TypeSpec tables. 
      *  
      *  @{ */
     uint32_t const& get_Class() const;
@@ -33361,10 +31144,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Name.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the String heap. 
      *  
      *  @{ */
     uint32_t const& get_Name() const;
@@ -33372,10 +31154,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Signature.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the Blob heap. 
      *  
      *  @{ */
     uint32_t const& get_Signature() const;
@@ -33445,15 +31226,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilManifestResource*> const& get_elements() const;
     std::vector<SgAsmCilManifestResource*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilManifestResource;
 public:
@@ -33535,10 +31309,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Offset.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 4-byte constant. 
      *  
      *  @{ */
     uint32_t const& get_Offset() const;
@@ -33546,10 +31319,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Flags.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 4-byte constant of type ManifestResourceAttributes. 
      *  
      *  @{ */
     uint32_t const& get_Flags() const;
@@ -33557,10 +31329,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Name.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the String heap. 
      *  
      *  @{ */
     uint32_t const& get_Name() const;
@@ -33568,10 +31339,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Implementation.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into a File table, a AssemblyRef table, or null. 
      *  
      *  @{ */
     uint32_t const& get_Implementation() const;
@@ -33640,15 +31410,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilInterfaceImpl*> const& get_elements() const;
     std::vector<SgAsmCilInterfaceImpl*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilInterfaceImpl;
 public:
@@ -33716,10 +31479,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Class.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the TypeDef table. 
      *  
      *  @{ */
     uint32_t const& get_Class() const;
@@ -33727,10 +31489,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Interface.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the TypeDef, TypeRef, or TypeSpec table. 
      *  
      *  @{ */
     uint32_t const& get_Interface() const;
@@ -33805,7 +31566,7 @@ private:
 public:
     /** Property: Instruction kind.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
+     *  Returns an enum constant describing the CIL instruction. These enum constants correspond roughly 1:1 with
      *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
      *  
      *  @{ */
@@ -33894,15 +31655,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilImplMap*> const& get_elements() const;
     std::vector<SgAsmCilImplMap*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilImplMap;
 public:
@@ -33984,10 +31738,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: MappingFlags.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 2-byte bitmask of type PInvokeAttributes. 
      *  
      *  @{ */
     uint16_t const& get_MappingFlags() const;
@@ -33995,10 +31748,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: MemberForwarded.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the Field or MethodDef table. 
      *  
      *  @{ */
     uint32_t const& get_MemberForwarded() const;
@@ -34006,10 +31758,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: ImportName.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the String heap. 
      *  
      *  @{ */
     uint32_t const& get_ImportName() const;
@@ -34017,10 +31768,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: ImportScope.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  an index into the ModuleRef table. 
      *  
      *  @{ */
     uint32_t const& get_ImportScope() const;
@@ -34090,15 +31840,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilGenericParam*> const& get_elements() const;
     std::vector<SgAsmCilGenericParam*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilGenericParam;
 public:
@@ -34180,10 +31923,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Number.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The 2-byte index of the generic parameter. 
      *  
      *  @{ */
     uint16_t const& get_Number() const;
@@ -34191,10 +31933,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Flags.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 2-byte bitmask of type GenericParamAttributes. 
      *  
      *  @{ */
     uint16_t const& get_Flags() const;
@@ -34202,10 +31943,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Owner.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the TypeDef or MethodDef table. 
      *  
      *  @{ */
     uint32_t const& get_Owner() const;
@@ -34213,10 +31953,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Name.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the String heap. 
      *  
      *  @{ */
     uint32_t const& get_Name() const;
@@ -34285,15 +32024,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilGenericParamConstraint*> const& get_elements() const;
     std::vector<SgAsmCilGenericParamConstraint*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilGenericParamConstraint;
 public:
@@ -34361,10 +32093,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Owner.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the GenericParam table. 
      *  
      *  @{ */
     uint32_t const& get_Owner() const;
@@ -34372,10 +32103,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Constraint.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the TypeDef, TypeRef, or TypeSpec table. 
      *  
      *  @{ */
     uint32_t const& get_Constraint() const;
@@ -34444,15 +32174,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilFile*> const& get_elements() const;
     std::vector<SgAsmCilFile*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilFile;
 public:
@@ -34527,10 +32250,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Flags.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 4-byte bitmask of type FileAttributes. 
      *  
      *  @{ */
     uint32_t const& get_Flags() const;
@@ -34538,10 +32260,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Name.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the String heap. 
      *  
      *  @{ */
     uint32_t const& get_Name() const;
@@ -34549,10 +32270,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: HashValue.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the Blob heap. 
      *  
      *  @{ */
     uint32_t const& get_HashValue() const;
@@ -34621,15 +32341,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilField*> const& get_elements() const;
     std::vector<SgAsmCilField*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilField;
 public:
@@ -34690,15 +32403,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilFieldRVA*> const& get_elements() const;
     std::vector<SgAsmCilFieldRVA*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilFieldRVA;
 public:
@@ -34766,10 +32472,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: RVA.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 4-byte constant. 
      *  
      *  @{ */
     uint32_t const& get_RVA() const;
@@ -34777,10 +32482,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Field.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into Field table. 
      *  
      *  @{ */
     uint32_t const& get_Field() const;
@@ -34848,15 +32552,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilFieldMarshal*> const& get_elements() const;
     std::vector<SgAsmCilFieldMarshal*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilFieldMarshal;
 public:
@@ -34924,10 +32621,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Parent.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into Field or Param table. 
      *  
      *  @{ */
     uint32_t const& get_Parent() const;
@@ -34935,10 +32631,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: NativeType.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the Blob heap. 
      *  
      *  @{ */
     uint32_t const& get_NativeType() const;
@@ -35007,15 +32702,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilFieldLayout*> const& get_elements() const;
     std::vector<SgAsmCilFieldLayout*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilFieldLayout;
 public:
@@ -35083,10 +32771,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Offset.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 4-byte constant. 
      *  
      *  @{ */
     uint32_t const& get_Offset() const;
@@ -35094,10 +32781,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Field.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the Field table. 
      *  
      *  @{ */
     uint32_t const& get_Field() const;
@@ -35179,10 +32865,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Flags.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 2-byte bitmask of type FieldAttributes. 
      *  
      *  @{ */
     uint16_t const& get_Flags() const;
@@ -35190,10 +32875,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Name.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the String heap. 
      *  
      *  @{ */
     uint32_t const& get_Name() const;
@@ -35201,10 +32885,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Signature.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the Blob heap. 
      *  
      *  @{ */
     uint32_t const& get_Signature() const;
@@ -35273,15 +32956,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilExportedType*> const& get_elements() const;
     std::vector<SgAsmCilExportedType*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilExportedType;
 public:
@@ -35370,10 +33046,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: EventFlags.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 4-byte bitmask of type TypeAttribute. 
      *  
      *  @{ */
     uint32_t const& get_EventFlags() const;
@@ -35381,10 +33056,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: TypeDefIdName.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 4-byte index into a TypeDef table of another module in this Assembly. 
      *  
      *  @{ */
     uint32_t const& get_TypeDefIdName() const;
@@ -35392,10 +33066,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: TypeName.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the String heap. 
      *  
      *  @{ */
     uint32_t const& get_TypeName() const;
@@ -35403,10 +33076,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: TypeNamespace.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the String heap. 
      *  
      *  @{ */
     uint32_t const& get_TypeNamespace() const;
@@ -35414,10 +33086,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Implementation.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the File table, ExportedType table, or the AssemblyRef table. 
      *  
      *  @{ */
     uint32_t const& get_Implementation() const;
@@ -35487,15 +33158,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilEvent*> const& get_elements() const;
     std::vector<SgAsmCilEvent*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilEvent;
 public:
@@ -35556,15 +33220,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilEventMap*> const& get_elements() const;
     std::vector<SgAsmCilEventMap*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilEventMap;
 public:
@@ -35632,10 +33289,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Parent.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the TypeDef table. 
      *  
      *  @{ */
     uint32_t const& get_Parent() const;
@@ -35643,10 +33299,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: EventList.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the Event table. 
      *  
      *  @{ */
     uint32_t const& get_EventList() const;
@@ -35729,10 +33384,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 public:
 public:
-    /** Property: Instruction kind.
+    /** Property: EventFlags.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 2-byte bitmask of type EventAttribute. 
      *  
      *  @{ */
     uint16_t const& get_EventFlags() const;
@@ -35740,10 +33394,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Name.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the String heap. 
      *  
      *  @{ */
     uint32_t const& get_Name() const;
@@ -35751,10 +33404,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: EventType.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into a TypeDef, a TypeRef, or TypeSpec table. 
      *  
      *  @{ */
     uint32_t const& get_EventType() const;
@@ -35823,15 +33475,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilDeclSecurity*> const& get_elements() const;
     std::vector<SgAsmCilDeclSecurity*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilDeclSecurity;
 public:
@@ -35906,10 +33551,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Action.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 2-byte value. 
      *  
      *  @{ */
     uint16_t const& get_Action() const;
@@ -35917,10 +33561,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Parent.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the TypeDef, MethodDef, or Assembly table. 
      *  
      *  @{ */
     uint32_t const& get_Parent() const;
@@ -35928,10 +33571,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: PermissionSet.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the Blob heap. 
      *  
      *  @{ */
     uint32_t const& get_PermissionSet() const;
@@ -36036,45 +33678,33 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Start offset of the byte stream. 
+     * 
+     * @{ */
     uint32_t const& get_Offset() const;
     void set_Offset(uint32_t const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Length of the byte stream. 
+     * 
+     * @{ */
     uint32_t const& get_Size() const;
     void set_Size(uint32_t const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Name of the byte stream. 
+     * 
+     * @{ */
     std::string const& get_Name() const;
     void set_Name(std::string const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Name of the byte stream. 
+     * 
+     * @{ */
     uint32_t const& get_NamePadding() const;
     void set_NamePadding(uint32_t const&);
     /** @} */
@@ -36164,15 +33794,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilCustomAttribute*> const& get_elements() const;
     std::vector<SgAsmCilCustomAttribute*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilCustomAttribute;
 public:
@@ -36247,10 +33870,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Parent.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into a metadata table that has an associated HasCustomAttribute index. 
      *  
      *  @{ */
     uint32_t const& get_Parent() const;
@@ -36258,10 +33880,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Type.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the MethodDef or MemberRef table (more precisely, a CustomAttributeType coded index). 
      *  
      *  @{ */
     uint32_t const& get_Type() const;
@@ -36269,10 +33890,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Value.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the Blob heap. 
      *  
      *  @{ */
     uint32_t const& get_Value() const;
@@ -36342,15 +33962,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilConstant*> const& get_elements() const;
     std::vector<SgAsmCilConstant*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilConstant;
 public:
@@ -36432,10 +34045,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Type.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 1-byte constant. 
      *  
      *  @{ */
     uint8_t const& get_Type() const;
@@ -36443,10 +34055,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Padding.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 1-byte zero padding. 
      *  
      *  @{ */
     uint8_t const& get_Padding() const;
@@ -36454,10 +34065,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Parent.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the Param, Field, or Property table. 
      *  
      *  @{ */
     uint32_t const& get_Parent() const;
@@ -36465,10 +34075,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Value.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the Blob heap. 
      *  
      *  @{ */
     uint32_t const& get_Value() const;
@@ -36537,15 +34146,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilClassLayout*> const& get_elements() const;
     std::vector<SgAsmCilClassLayout*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilClassLayout;
 public:
@@ -36620,10 +34222,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: PackingSize.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 2-byte constant. 
      *  
      *  @{ */
     uint16_t const& get_PackingSize() const;
@@ -36631,10 +34232,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: ClassSize.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 4-byte constant. 
      *  
      *  @{ */
     uint32_t const& get_ClassSize() const;
@@ -36642,10 +34242,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Parent.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the TypeDef table. 
      *  
      *  @{ */
     uint32_t const& get_Parent() const;
@@ -36713,15 +34312,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilAssembly*> const& get_elements() const;
     std::vector<SgAsmCilAssembly*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilAssembly;
 public:
@@ -36782,15 +34374,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilAssemblyRef*> const& get_elements() const;
     std::vector<SgAsmCilAssemblyRef*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilAssemblyRef;
 public:
@@ -36851,15 +34436,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilAssemblyRefProcessor*> const& get_elements() const;
     std::vector<SgAsmCilAssemblyRefProcessor*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilAssemblyRefProcessor;
 public:
@@ -36927,10 +34505,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Processor.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 4-byte constant. 
      *  
      *  @{ */
     uint32_t const& get_Processor() const;
@@ -36938,10 +34515,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: AssemblyRef.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the AssemblyRef table. 
      *  
      *  @{ */
     uint32_t const& get_AssemblyRef() const;
@@ -37009,15 +34585,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilAssemblyRefOS*> const& get_elements() const;
     std::vector<SgAsmCilAssemblyRefOS*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilAssemblyRefOS;
 public:
@@ -37099,10 +34668,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: OSPlatformID.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 4-byte constant. 
      *  
      *  @{ */
     uint32_t const& get_OSPlatformID() const;
@@ -37110,10 +34678,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: OSMajorVersion.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 4-byte constant. 
      *  
      *  @{ */
     uint32_t const& get_OSMajorVersion() const;
@@ -37121,10 +34688,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: OSMinorVersion.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 4-byte constant. 
      *  
      *  @{ */
     uint32_t const& get_OSMinorVersion() const;
@@ -37132,10 +34698,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: AssemblyRefOS.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the AssemblyRef table. 
      *  
      *  @{ */
     uint32_t const& get_AssemblyRefOS() const;
@@ -37259,10 +34824,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: MajorVersion.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Version number. 
      *  
      *  @{ */
     uint16_t const& get_MajorVersion() const;
@@ -37270,10 +34834,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: MinorVersion.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Version number. 
      *  
      *  @{ */
     uint16_t const& get_MinorVersion() const;
@@ -37281,10 +34844,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: BuildNumber.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Version number. 
      *  
      *  @{ */
     uint16_t const& get_BuildNumber() const;
@@ -37292,10 +34854,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: RevisionNumber.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Revision number. 
      *  
      *  @{ */
     uint16_t const& get_RevisionNumber() const;
@@ -37303,10 +34864,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Flags.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Shall have only one bit set, the PublicKey bit. 
      *  
      *  @{ */
     uint32_t const& get_Flags() const;
@@ -37314,10 +34874,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: PublicKeyOrToken.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the Blob heap, can be null, or non-null. 
      *  
      *  @{ */
     uint32_t const& get_PublicKeyOrToken() const;
@@ -37325,10 +34884,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Name.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the String heap. 
      *  
      *  @{ */
     uint32_t const& get_Name() const;
@@ -37336,10 +34894,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Culture.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the String heap, null or non-null. 
      *  
      *  @{ */
     uint32_t const& get_Culture() const;
@@ -37347,10 +34904,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: HashValue.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the Blob heap. 
      *  
      *  @{ */
     uint32_t const& get_HashValue() const;
@@ -37421,15 +34977,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilAssemblyProcessor*> const& get_elements() const;
     std::vector<SgAsmCilAssemblyProcessor*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilAssemblyProcessor;
 public:
@@ -37490,10 +35039,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Processor.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 4-byte constant 
      *  
      *  @{ */
     uint32_t const& get_Processor() const;
@@ -37559,15 +35107,8 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
     std::vector<SgAsmCilAssemblyOS*> const& get_elements() const;
     std::vector<SgAsmCilAssemblyOS*>& get_elements();
-    /** @} */
 public:
     using CilMetadataType = SgAsmCilAssemblyOS;
 public:
@@ -37642,10 +35183,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: OSPlatformID.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 4-byte constant 
      *  
      *  @{ */
     uint32_t const& get_OSPlatformID() const;
@@ -37653,10 +35193,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: OSMajorVersion.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 4-byte constant 
      *  
      *  @{ */
     uint32_t const& get_OSMajorVersion() const;
@@ -37664,10 +35203,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: OSMinorVersion.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 4-byte constant 
      *  
      *  @{ */
     uint32_t const& get_OSMinorVersion() const;
@@ -37789,10 +35327,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: HashAlgId.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 4-byte constant of type AssemblyHashAlgorithm 
      *  
      *  @{ */
     uint32_t const& get_HashAlgId() const;
@@ -37800,10 +35337,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: MajorVersion.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 2-byte constant. 
      *  
      *  @{ */
     uint16_t const& get_MajorVersion() const;
@@ -37811,10 +35347,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: MinorVersion.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 2-byte constant. 
      *  
      *  @{ */
     uint16_t const& get_MinorVersion() const;
@@ -37822,10 +35357,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: BuildNumber.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 2-byte constant. 
      *  
      *  @{ */
     uint16_t const& get_BuildNumber() const;
@@ -37833,10 +35367,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: RevisionNumber.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 2-byte constant. 
      *  
      *  @{ */
     uint16_t const& get_RevisionNumber() const;
@@ -37844,10 +35377,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Flags.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  A 4-byte bitmask of type AssemblyFlags. 
      *  
      *  @{ */
     uint32_t const& get_Flags() const;
@@ -37855,10 +35387,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: PublicKey.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the Blob heap. 
      *  
      *  @{ */
     uint32_t const& get_PublicKey() const;
@@ -37866,10 +35397,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Name.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the String heap. 
      *  
      *  @{ */
     uint32_t const& get_Name() const;
@@ -37877,10 +35407,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Culture.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An index into the String heap. 
      *  
      *  @{ */
     uint32_t const& get_Culture() const;
@@ -38150,12 +35679,9 @@ private:
     ByteOrder::Endianness byteOrder_;
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Byte order. 
+     * 
+     * @{ */
     ByteOrder::Endianness const& byteOrder() const;
     void byteOrder(ByteOrder::Endianness const&);
     /** @} */
@@ -38334,10 +35860,9 @@ public:
 
     // FIXME[Robb Matzke 2023-03-18]: is the no_serialize a bug?
 public:
-    /** Property: Instruction kind.
+    /** Property: Identification.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Block unique identification number. Not used by ROSE. 
      *  
      *  @{ */
     rose_addr_t const& get_id() const;
@@ -38345,10 +35870,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Reasons this block was created.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This property holds a bit mask of @ref SgAsmBlock::Reason bits that indicate why this block was created. 
      *  
      *  @{ */
     unsigned const& get_reason() const;
@@ -38359,10 +35883,10 @@ public:
     // the other, but not both.  It's too late to change how this part of the AST is structured because so much user code
     // already depends on it, therefore we can only traverse statementList and not successors. [Robb Matzke 2016-02-25]
 public:
-    /** Property: Instruction kind.
+    /** Property: Statements of which this block is composed.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This is the list of "statements" that belong to this block. Statements are usually instructions, but historical
+     *  code may have used basic blocks with other children. 
      *  
      *  @{ */
     SgAsmStatementPtrList const& get_statementList() const;
@@ -38374,10 +35898,11 @@ public:
     // the other, but not both.  It's too late to change how this part of the AST is structured because so much user code
     // already depends on it, therefore we can only traverse statementList and not successors. [Robb Matzke 2016-02-25]
 public:
-    /** Property: Instruction kind.
+    /** Property: Control flow successors.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This property holds the list of addresses which are control flow successors of this block.  The @ref
+     *  Rose::BinaryAnalysis::Partitioner2 "Partitioner2" name space has a more useful definition of control flow graph
+     *  that can reference indeterminate addresses and store data in the edges, and which is copiable. 
      *  
      *  @{ */
     SgAsmIntegerValuePtrList const& get_successors() const;
@@ -38386,10 +35911,14 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Whether the successors list is complete.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This property is true if the "successors" property holds an incomplete list of successors. Since this
+     *  representation of a control flow graph is unable to represent edges that point to indeterminate addresses (e.g.,
+     *  computed branches), the "successors_complete" property can be used.
+     *
+     *  The @ref Rose::BinaryAnalysis::Partitioner2 "Partitioner2" name space has a more useful definition of control flow
+     *  graph that can reference indeterminate addresses and store data in the edges, and which is copiable. 
      *  
      *  @{ */
     bool const& get_successors_complete() const;
@@ -38397,10 +35926,13 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Holds the immediate dominator block in the control flow graph.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The immediate dominator is the closest block to this one (by following reverse control flow edges) through which
+     *  all control paths pass in order to get from the function entry block to this block.
+     *
+     *  The @ref Rose::BinaryAnalysis::Partitioner2 "Partitioner2" name space has a more useful definition of control flow
+     *  graph that can reference indeterminate addresses and store data in the edges, and which is copiable. 
      *  
      *  @{ */
     SgAsmBlock* const& get_immediate_dominator() const;
@@ -38408,10 +35940,12 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Cached vertex for control flow graphs.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This property is used by the virtual control flow graph mechanism.
+     *
+     *  The @ref Rose::BinaryAnalysis::Partitioner2 "Partitioner2" name space has a more useful definition of control flow
+     *  graph that can reference indeterminate addresses and store data in the edges, and which is copiable. 
      *  
      *  @{ */
     size_t const& get_cached_vertex() const;
@@ -38419,10 +35953,10 @@ public:
     /** @} */
  // see BinaryAnalysis::ControlFlow
 public:
-    /** Property: Instruction kind.
+    /** Property: Likelihood that this block represents real instructions.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This property holds the results of an analysis that determines how likely it is that the memory from which this
+     *  basic block was disassembled represents actual instructions that would be executed when the specimen runs. 
      *  
      *  @{ */
     double const& get_code_likelihood() const;
@@ -38430,10 +35964,12 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Stack pointer at block exit w.r.t. stack pointer at function entry.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This is the difference between the stack pointer after the last instruction of this block executes and the stack
+     *  pointer when this block's function was entered.  It stores the result of a stack delta analysis. If stack delta
+     *  analysis hasn't run, or was unable to determine a constant delta, then the special value @ref
+     *  SgAsmInstruction::INVALID_STACK_DELTA is stored. 
      *  
      *  @{ */
     int64_t const& get_stackDeltaOut() const;
@@ -39329,23 +36865,17 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Left-hand side operand. 
+     * 
+     * @{ */
     SgAsmExpression* const& get_lhs() const;
     void set_lhs(SgAsmExpression* const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Right-hand side operand. 
+     * 
+     * @{ */
     SgAsmExpression* const& get_rhs() const;
     void set_rhs(SgAsmExpression* const&);
     /** @} */
@@ -39416,13 +36946,6 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
-    /** @} */
     virtual std::string get_string(bool escape=false) const override;
     virtual void set_string(const std::string&) override;
     virtual void set_string(rose_addr_t) override;
@@ -40047,10 +37570,9 @@ private:
     unsigned access_;
 
 public:
-    /** Property: Instruction kind.
+    /** Property: system register access bits.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The bits describing how to access a system register. These come directly from the encoded instruction. 
      *  
      *  @{ */
     unsigned const& access() const;
@@ -40126,10 +37648,9 @@ private:
     Rose::BinaryAnalysis::Aarch64PrefetchOperation operation_;
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Prefetch operation.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An enum representing the operation to be performed. 
      *  
      *  @{ */
     Rose::BinaryAnalysis::Aarch64PrefetchOperation const& operation() const;
@@ -40222,7 +37743,7 @@ private:
 public:
     /** Property: Instruction kind.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
+     *  Returns an enum constant describing the AArch64 A64 instruction. These enum constants correspond roughly 1:1 with
      *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
      *  
      *  @{ */
@@ -40231,23 +37752,17 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: ARM A64 instruction condition. 
+     * 
+     * @{ */
     Rose::BinaryAnalysis::Aarch64InstructionCondition const& get_condition() const;
     void set_condition(Rose::BinaryAnalysis::Aarch64InstructionCondition const&);
     /** @} */
     // FIXME[Robb Matzke 2023-03-18]: is the no_serialize a bug?
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Whether this instruction updates N, Z, C, and/or V status flags. 
+     * 
+     * @{ */
     bool const& get_updatesFlags() const;
     void set_updatesFlags(bool const&);
     /** @} */
@@ -40335,10 +37850,9 @@ private:
     unsigned immediate_;
 
 public:
-    /** Property: Instruction kind.
+    /** Property: C-immediate value.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The C-immediate value for the instruction. 
      *  
      *  @{ */
     unsigned const& immediate() const;
@@ -40414,12 +37928,9 @@ private:
     Rose::BinaryAnalysis::Aarch64BarrierOperation operation_;
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Barrier operation. 
+     * 
+     * @{ */
     Rose::BinaryAnalysis::Aarch64BarrierOperation const& operation() const;
     void operation(Rose::BinaryAnalysis::Aarch64BarrierOperation const&);
     /** @} */
@@ -40493,10 +38004,9 @@ private:
     Rose::BinaryAnalysis::Aarch64AtOperation operation_;
 
 public:
-    /** Property: Instruction kind.
+    /** Property: AT Operation.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  An enum representing the operation to be performed. 
      *  
      *  @{ */
     Rose::BinaryAnalysis::Aarch64AtOperation const& operation() const;
@@ -40604,7 +38114,7 @@ public:
 public:
     /** Property: Instruction kind.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
+     *  Returns an enum constant describing the AArch32 A32 or T32 instruction. These enum constants correspond roughly 1:1 with
      *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
      *  
      *  @{ */
@@ -40613,10 +38123,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: ARM AArch32 instruction condition.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This property indicates when the instruction is executed. 
      *  
      *  @{ */
     Rose::BinaryAnalysis::Aarch32InstructionCondition const& get_condition() const;
@@ -40624,32 +38133,26 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Whether this instruction updates N, Z, C, and/or V status flags. 
+     * 
+     * @{ */
     bool const& get_updatesFlags() const;
     void set_updatesFlags(bool const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Whether this instruction writes back to an operand at the end. 
+     * 
+     * @{ */
     bool const& get_writesBack() const;
     void set_writesBack(bool const&);
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Whether this instruction writes to the instruction pointer register.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  On ARM architectures, the instruction pointer register is named "PC", for "program counter". ROSE always calls this
+     *  register the instruction pointer register. 
      *  
      *  @{ */
     bool const& get_writesToIp() const;
@@ -40845,10 +38348,12 @@ private:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: Instruction kind.
+    /** Property: Instruction mnemonic string.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The short string that describes the instruction. When comparing instructions, it's faster to use the @ref get_kind
+     *  or @ref get_anyKind methods instead of comparing mnemonic strings. But be aware that some architectures have
+     *  mnemonics that include information about the instruction operands and this information is typically not represented
+     *  by the instruction kind enum constants. 
      *  
      *  @{ */
     std::string const& get_mnemonic() const;
@@ -40856,10 +38361,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Raw bytes of an instruction.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  These are the bytes that were actually decoded to obtain the instruction AST. 
      *  
      *  @{ */
     SgUnsignedCharList const& get_raw_bytes() const;
@@ -40867,10 +38371,10 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: AST node that holds all operands.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  This is the @ref SgAsmOperandList AST node that holds all the operands of this instruction. A separate node is
+     *  necessary (rather than storing the operand list directly in the instruction node) due to limitations of ROSETTA. 
      *  
      *  @{ */
     SgAsmOperandList* const& get_operandList() const;
@@ -40878,33 +38382,29 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Cache lock count.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
-    /** @} */
+     *  Number of locks held on this object, preventing the AST rooted at this node from being evicted from a cache.
+     *
+     *  Thread safety: This method is thread safe.
+     *
+     * @{ */
     size_t cacheLockCount() const;
     void adjustCacheLockCount(int increment);
 
     // FIXME[Robb P Matzke 2017-02-13]: unused?
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+/** 
+ * @{ */
     /** @} */
     void appendSources( SgAsmInstruction* instruction );
 
     // FIXME[Robb Matzke 2023-03-18]: is the no_serialize a bug?
 public:
-    /** Property: Instruction kind.
+    /** Property: Stack pointer at start of instruction relative to start of instruction's function.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  If the stack delta was not computed, or could not be computed, or is a non-numeric value then the special value
+     *  @ref INVALID_STACK_DELTA is used. 
      *  
      *  @{ */
     int64_t const& get_stackDeltaIn() const;
@@ -40912,10 +38412,11 @@ public:
     /** @} */
     // FIXME[Robb Matzke 2023-03-18]: is the no_serialize a bug?
 public:
-    /** Property: Instruction kind.
+    /** Property: Ordered list of instruction semantics.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  If instruction semantics are available and attached to the instruction, then this subtree will contain a list of
+     *  semantic side effects of the instruction. The semantics are attached by using the @ref
+     *  Rose::BinaryAnalysis::InstructionSemantics::StaticSemantics semantic domain. 
      *  
      *  @{ */
     SgAsmExprListExp* const& get_semantics() const;
@@ -41367,10 +38868,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Starting virtual address.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  Virtual address of first byte of instruction, block, or whatever, depending on subclass. 
      *  
      *  @{ */
     rose_addr_t const& get_address() const;
@@ -41378,12 +38878,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Commentary. 
+     * 
+     * @{ */
     std::string const& get_comment() const;
     void set_comment(std::string const&);
     /** @} */
@@ -41447,12 +38944,9 @@ private:
     int coprocessor_;
 
 public:
-    /** Property: Instruction kind.
-     *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
-     *  
-     *  @{ */
+    /** Property: Coprocessor number. 
+     * 
+     * @{ */
     int const& coprocessor() const;
     void coprocessor(int const&);
     /** @} */
@@ -41566,10 +39060,9 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Type of expression.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  The type node is not considered a child of this node in the AST. 
      *  
      *  @{ */
     SgAsmType* const& get_type() const;
@@ -41577,10 +39070,9 @@ public:
     /** @} */
 
 public:
-    /** Property: Instruction kind.
+    /** Property: Comment.
      *
-     *  Returns an enum constant describing the x86 instruction. These enum constants correspond roughly 1:1 with
-     *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind. 
+     *  User-defined comment for an expression. 
      *  
      *  @{ */
     std::string const& get_comment() const;
@@ -41657,6 +39149,7 @@ AsmNode.setAutomaticGenerationOfDestructor(false);
 
 DECLARE_HEADERS(AsmNode);
 #if defined(SgAsmNode_HEADERS) || defined(DOCUMENTATION)
+#include <Sawyer/Attribute.h>
 #include <boost/format.hpp>
 #endif // SgAsmNode_HEADERS
 
@@ -41680,6 +39173,24 @@ private:
         debugSerializationEnd("SgAsmNode");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+
+private:
+    Sawyer::Attribute::Storage<> attributes_;
+
+public:
+    /** Attribute storage.
+     *
+     *  An attribute is extra user-defined data stored in an AST node.
+     *
+     *  Once ROSETTA is out of the picture, this interface will become cleaner because the typical way to add attribute storage to a
+     *  type is to have the type be derived from @c Sawyer::Attribute::Storage. But as things stand now, ROSETTA doesn't support
+     *  multiple inheritance and we must therefore use an awkward interface that reads like @c node->attributes().setAttribute(....)
+     *  instead of the more streamlined @c node->setAttribute(....). 
+     *  
+     *  @{ */
+    Sawyer::Attribute::Storage<> const& attributes() const;
+    Sawyer::Attribute::Storage<>& attributes();
+    /** @} */
 protected:
     // Rosebud generates call to destructorHelper in every destructor implementation. This gives the user a chance to do something
     // special. Any implementations should be prepared to handle multiple invocations on the same object, and should not access any
