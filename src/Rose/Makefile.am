@@ -29,12 +29,13 @@ librose_partial_la_SOURCES =								\
 	AST/checker/integrity_symbols.C							\
 	AST/checker/integrity_types.C							\
 	AST/graphviz.C									\
-	AST/NodeId.C									\
 	AST/io/delete.C									\
 	AST/io/link.C									\
 	AST/io/load.C									\
 	AST/io/merge.C									\
 	AST/io/share.C									\
+	AST/NodeId.C									\
+	AST/Utils.C									\
 	AST/utils/edge_ptr_repl.C							\
 	BinaryAnalysis/AbstractLocation.C						\
 	BinaryAnalysis/AsmFunctionIndex.C						\
