@@ -41,8 +41,8 @@ SgAsmBinaryExpression::SgAsmBinaryExpression()
 //    property=rhs              class=SgAsmBinaryExpression
 SgAsmBinaryExpression::SgAsmBinaryExpression(SgAsmExpression* const& lhs,
                                              SgAsmExpression* const& rhs)
-    : p_lhs(lhs)
-    , p_rhs(rhs) {}
+    : p_lhs(initParentPointer(lhs, this))
+    , p_rhs(initParentPointer(rhs, this)) {}
 
 void
 SgAsmBinaryExpression::initializeProperties() {

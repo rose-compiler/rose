@@ -27,7 +27,7 @@ SgAsmUnaryExpression::SgAsmUnaryExpression()
 // The association between constructor arguments and their classes:
 //    property=operand          class=SgAsmUnaryExpression
 SgAsmUnaryExpression::SgAsmUnaryExpression(SgAsmExpression* const& operand)
-    : p_operand(operand) {}
+    : p_operand(initParentPointer(operand, this)) {}
 
 void
 SgAsmUnaryExpression::initializeProperties() {

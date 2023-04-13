@@ -41,8 +41,8 @@ SgAsmMemoryReferenceExpression::SgAsmMemoryReferenceExpression()
 //    property=segment          class=SgAsmMemoryReferenceExpression
 SgAsmMemoryReferenceExpression::SgAsmMemoryReferenceExpression(SgAsmExpression* const& address,
                                                                SgAsmExpression* const& segment)
-    : p_address(address)
-    , p_segment(segment) {}
+    : p_address(initParentPointer(address, this))
+    , p_segment(initParentPointer(segment, this)) {}
 
 void
 SgAsmMemoryReferenceExpression::initializeProperties() {
