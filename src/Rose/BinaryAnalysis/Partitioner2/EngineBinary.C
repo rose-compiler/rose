@@ -1660,6 +1660,8 @@ EngineBinary::partition(const std::vector<std::string> &fileNames) {
             obtainDisassembler();
             Partitioner::Ptr partitioner = createPartitioner();
             runPartitioner(partitioner);
+            if (!partitioner->interpretation())
+                partitioner->interpretation(interpretation());
             return partitioner;
         }
     } catch (const std::runtime_error &e) {
