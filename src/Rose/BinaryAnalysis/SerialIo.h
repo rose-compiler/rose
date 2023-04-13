@@ -4,7 +4,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 // Define this if you need to debug SerialIo -- it causes everything to run in the calling thread and avoid catching exceptions.
-#define ROSE_DEBUG_SERIAL_IO
+//#define ROSE_DEBUG_SERIAL_IO
 
 #if defined(BOOST_WINDOWS)
     // Lacks POSIX file system, so we can't monitor the I/O progress
