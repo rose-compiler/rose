@@ -1,9 +1,26 @@
 include_rules
 
-run $(librose_compile) graphviz.C NodeId.C \
-                       io/merge.C io/link.C io/delete.C io/share.C io/load.C \
-                       checker/cmdline.C checker/checker.C \
-                       checker/integrity_edges.C checker/integrity_declarations.C checker/integrity_symbols.C checker/integrity_types.C \
-                       utils/edge_ptr_repl.C
+run $(librose_compile)				\
+    checker/checker.C				\
+    checker/cmdline.C				\
+    checker/integrity_declarations.C		\
+    checker/integrity_edges.C			\
+    checker/integrity_symbols.C			\
+    checker/integrity_types.C			\
+    graphviz.C					\
+    io/delete.C					\
+    io/link.C					\
+    io/load.C					\
+    io/merge.C					\
+    io/share.C					\
+    NodeId.C					\
+    Utils.C					\
+    utils/edge_ptr_repl.C
 
-run $(public_header) -o include/rose/Rose/AST cmdline.h IO.h NodeId.h Checker.h Defect.h Utils.h
+run $(public_header) -o include/rose/Rose/AST	\
+    Checker.h					\
+    cmdline.h					\
+    Defect.h					\
+    IO.h					\
+    NodeId.h					\
+    Utils.h
