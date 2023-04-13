@@ -4,6 +4,7 @@
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 #include <Cxx_GrammarSerialization.h>                   // the compile-time generated support
+#include <Rose/AST/Utils.h>
 
 namespace Rose {
 
@@ -47,19 +48,21 @@ namespace Rose {
  *  instantiated. This was seen only with Boost version 1.61, so it may have been a boost bug. */
 template<class Archive>
 void saveAst(Archive &archive, SgNode *ast) {
-    struct T1 {                                         // for exception safe clearing and restoring the root's parent
+    struct SaveRestoreRootParent {                      // for exception safe clearing and restoring the root's parent
         SgNode *node, *parent;
-        T1(SgNode *node): node(node), parent(node ? node->get_parent() : NULL) {
+        SaveRestoreRootParent(SgNode *node): node(node), parent(node ? node->get_parent() : NULL) {
             if (node)
                 node->set_parent(NULL);
         }
-        ~T1() {
+        ~SaveRestoreRootParent() {
             if (node)
                 node->set_parent(parent);
         }
-    };
+    } saveRestoreRootParent(ast);
 
-    T1 saveRestoreRootParent(ast);
+    ASSERT_always_require(AST::Utils::checkParentPointers(ast));
+
+    // Serialize the AST
     roseAstSerializationRegistration(archive);
     archive <<BOOST_SERIALIZATION_NVP(ast);
 }
@@ -74,8 +77,24 @@ SgNode* restoreAst(Archive &archive) {
     roseAstSerializationRegistration(archive);
     SgNode *ast = NULL;
     archive >>BOOST_SERIALIZATION_NVP(ast);
+    AST::Utils::repairParentPointers(ast);
     return ast;
 }
+
+/** Save or load an AST.
+ *
+ * @{ */
+template<class Archive, class Node>
+typename std::enable_if<std::is_same<typename Archive::is_saving, boost::mpl::bool_<true>>::value, void>::type
+transferAst(Archive &archive, Node *ast) {
+    saveAst(archive, ast);
+}
+template<class Archive, class Node>
+typename std::enable_if<std::is_same<typename Archive::is_saving, boost::mpl::bool_<false>>::value, void>::type
+transferAst(Archive &archive, Node* &ast) {
+    ast = dynamic_cast<Node*>(restoreAst(archive));
+}
+/** @} */
 
 } // namespace
 
@@ -88,22 +107,18 @@ namespace serialization {
 
 template<class Archive>
 inline void save(Archive &archive, const SgNode &node, const unsigned /*version*/) {
-    SgNode *parent = node.get_parent();
+    // Parent pointers don't need to be stored because they can be reconstructed from the child pointers.
     bool isModified = node.get_isModified();
     bool containsTransformation = node.get_containsTransformation();
-    archive <<BOOST_SERIALIZATION_NVP(parent);
     archive <<BOOST_SERIALIZATION_NVP(isModified);
     archive <<BOOST_SERIALIZATION_NVP(containsTransformation);
 }
 
 template<class Archive>
 inline void load(Archive &archive, SgNode &node, const unsigned /*version*/) {
-    SgNode *parent = NULL;
     bool isModified=false, containsTransformation=false;
-    archive >>BOOST_SERIALIZATION_NVP(parent);
     archive >>BOOST_SERIALIZATION_NVP(isModified);
     archive >>BOOST_SERIALIZATION_NVP(containsTransformation);
-    node.set_parent(parent);
     node.set_isModified(isModified);
     node.set_containsTransformation(containsTransformation);
 }

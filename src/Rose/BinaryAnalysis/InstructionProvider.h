@@ -54,7 +54,12 @@ private:
         s <<BOOST_SERIALIZATION_NVP(hasDisassembler);
         s <<BOOST_SERIALIZATION_NVP(useDisassembler_);
         s <<BOOST_SERIALIZATION_NVP(memMap_);
-        s <<BOOST_SERIALIZATION_NVP(insnMap_);
+
+        const size_t mapSize = insnMap_.size();
+        s <<BOOST_SERIALIZATION_NVP(mapSize);
+        for (const auto &insn: insnMap_.values())
+            saveAst(s, insn);
+
         if (hasDisassembler) {
             std::string disName = Disassembler::name(disassembler_);
             s <<BOOST_SERIALIZATION_NVP(disName);
@@ -68,7 +73,16 @@ private:
         s >>BOOST_SERIALIZATION_NVP(hasDisassembler);
         s >>BOOST_SERIALIZATION_NVP(useDisassembler_);
         s >>BOOST_SERIALIZATION_NVP(memMap_);
-        s >>BOOST_SERIALIZATION_NVP(insnMap_);
+
+        size_t mapSize;
+        s >>BOOST_SERIALIZATION_NVP(mapSize);
+        for (size_t i = 0; i < mapSize; ++i) {
+            SgNode *node = restoreAst(s);
+            auto insn = isSgAsmInstruction(node);
+            ASSERT_require(!node || insn);
+            insnMap_.insert(insn->get_address(), insn);
+        }
+
         if (hasDisassembler) {
             std::string disName;
             s >>BOOST_SERIALIZATION_NVP(disName);
