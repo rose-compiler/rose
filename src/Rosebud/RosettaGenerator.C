@@ -409,7 +409,7 @@ RosettaGenerator::genProperty(std::ostream &rosetta, std::ostream &header, std::
 
     // Fix up the doxygen comment so it can apply to more than one class member. If the doxygen comment doesn't end with "@{" then
     // we need to add that.
-    static auto doc = [&p]() -> std::pair<std::string, std::string> {
+    const auto doc = [&p]() -> std::pair<std::string, std::string> {
         std::string begin = p->doc;
         std::string end;
         if (!begin.empty()) {

@@ -440,6 +440,11 @@ File::content(const std::vector<Token> &tokens, Expand expand) {
 }
 
 std::string
+File::content(size_t begin, size_t end) {
+    return stream_.content().contentAsString(begin, end);
+}
+
+std::string
 File::trimmedContent(size_t begin, size_t end, Token &outputToken) {
     return trimmedContent(begin, end, Token(), outputToken);
 }

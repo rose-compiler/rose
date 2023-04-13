@@ -48,8 +48,12 @@ extern Settings settings;
 
 /** Return the matching opening or closing construct.
  *
- *  E.g., if input is "{" then output is "}" and vice versa. */
+ *  E.g., if input is "{" then output is "}" and vice versa.
+ *
+ * @{ */
 std::string matching(const std::string&);
+char matching(char);
+/** @} */
 
 /** Split a multi-line string into one string per line.
  *
