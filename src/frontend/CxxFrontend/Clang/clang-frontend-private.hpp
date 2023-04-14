@@ -172,6 +172,7 @@ class ClangToSageTranslator : public clang::ASTConsumer {
         std::map<clang::Decl *, SgNode *> p_decl_translation_map;
         std::map<clang::Stmt *, SgNode *> p_stmt_translation_map;
         std::map<const clang::Type *, SgNode *> p_type_translation_map;
+        std::map<clang::DeclContext *, SgScopeStatement *> p_decl_context_map;
         SgGlobal * p_global_scope;
 
         std::map<SgClassType *, bool> p_class_type_decl_first_see_in_type;
