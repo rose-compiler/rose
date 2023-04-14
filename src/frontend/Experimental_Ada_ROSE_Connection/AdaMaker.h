@@ -185,10 +185,8 @@ namespace Ada_ROSE_Translation
   mkEnumDefn(const std::string& name, SgScopeStatement& scope);
 
   /// creates an ada access type with \ref base_type as the type being referenced.
-  // PP (01/28/22) changed base_type to reference, b/c null is not allowed in the
-  //               ROSE type checker.
   SgAdaAccessType&
-  mkAdaAccessType(SgType& base_type);
+  mkAdaAccessType(SgType& base_type, bool isAnonymous = false);
 
   /// creates a new subroutine type with return type \ref retty
   ///   and callback \ref complete, which fills in the argument names.
@@ -440,7 +438,7 @@ namespace Ada_ROSE_Translation
   ///   renamed is an expression to accomodate references to to array subsections
   ///   in addition to variables, variables, packages, exceptions, etc.
   SgAdaRenamingDecl&
-  mkAdaRenamingDecl(const std::string& name, SgExpression& renamed, SgType* ty_opt, SgScopeStatement& scope);
+  mkAdaRenamingDecl(const std::string& name, SgExpression& renamed, SgType& ty_opt, SgScopeStatement& scope);
 
   /// creates a nondefining Ada package body declaration.
   /// \param specdcl    the package specification

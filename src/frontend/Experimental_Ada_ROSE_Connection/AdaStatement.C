@@ -3499,8 +3499,7 @@ namespace
     return firstDeclaration(decl).Parameter_Profile;
   }
 
-#if NOT_YET
-  SgExpression*
+  SgExpression&
   getDefaultFunctionExpr(Declaration_Struct& decl, SgAdaSubroutineType& ty, AstContext ctx)
   {
     SgExpression* res = nullptr;
@@ -3513,39 +3512,34 @@ namespace
 
       case A_Name_Default:
         {
-          SgTypePtrList        typlist;
-          auto typeExtractor = [](SgExpression* exp)->SgType*
+          SgFunctionParameterList&  fnparams = SG_DEREF(ty.get_parameterList());
+          SgInitializedNamePtrList& parmlst  = fnparams.get_args();
+          SgTypePtrList             typeList;
+          auto typeExtractor = [](SgInitializedName* ini)->SgType*
                                {
-                                 // exclude literals as they are convertible to derived types
-                                 //~ return isSgValueExp(exp) ? nullptr : si::Ada::typeOfExpr(exp).typerep();
-                                 return si::Ada::typeOfExpr(exp).typerep();
+                                 return ini->get_type();
                                };
 
+          typeList.reserve(parmlst.size());
+          std::transform(parmlst.begin(), parmlst.end(), std::back_inserter(typeList), typeExtractor);
 
-  typlist.reserve(arglist.size());
-  std::transform(arglist.begin(), arglist.end(), std::back_inserter(typlist), typeExtractor);
-
-          OperatorCallSupplement     suppl{typeList, ty.get_return_type()};
-
-          return getExprID(decl.Formal_Subprogram_Default, ctx, );
+          res = &getExprID(decl.Formal_Subprogram_Default, ctx, OperatorCallSupplement{&typeList, ty.get_return_type()});
           break;
         }
 
       case A_Null_Default:
-        res = &mkNullExpression(); //  \todo reconsider use of null expression elsewhere
+        res = sb::buildNullptrValExp();
         break;
 
       case A_Nil_Default:
-        res = nullptr;
+        res = &mkNullExpression();
         break;
 
-      default:
-        ADA_ASSERT(false);
+      default: ;
     }
 
-    return res;
+    return SG_DEREF(res);
   }
-#endif
 }
 
 void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
@@ -4093,7 +4087,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         ADA_ASSERT (adaname.fullName == adaname.ident);
         SgScopeStatement&      logicalScope = adaname.parent_scope();
 
-#if 1 || OLD_CODE
+#if OLD_CODE
         // create a function declaration for formal function/procedure declaration.
         SgFunctionDeclaration& sgnode = mkProcedureDecl_nondef( adaname.ident,
                                                                 logicalScope,
@@ -4103,20 +4097,14 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         sgnode.set_ada_formal_subprogram_decl(true);
         sgnode.set_ada_formal_decl_with_box(decl.Default_Kind == A_Box_Default);
 
-        recordNode(asisDecls(), elem.ID, sgnode);
-        recordNode(asisDecls(), adaname.id(), sgnode);
 #else /* !OLD_CODE */
         SgAdaSubroutineType&   funty   = mkAdaSubroutineType(rettype, ParameterCompletion{params, ctx}, ctx.scope(), false  /*isProtected*/ );
 
-        SgExpression*          defaultInit = getDefaultFunctionExpr(decl, funty);
-
-        SgInitalizedName&      sgvar   = mkInitializedName(adaname.ident, funty, defaultInit);
-        SgVariableDeclaration& sgnode  = mkVarDecl( { &sgvar }, logicalScope );
-
-        recordNode(asisVars(), elem.ID,      sgvar);
-        recordNode(asisVars(), adaname.id(), sgvar);
-
+        SgExpression&          defaultInit = getDefaultFunctionExpr(decl, funty, ctx);
+        SgAdaRenamingDecl&     sgnode  = mkAdaRenamingDecl(adaname.ident, defaultInit, funty, logicalScope);
 #endif /* OLD_CODE */
+        recordNode(asisDecls(), elem.ID, sgnode);
+        recordNode(asisDecls(), adaname.id(), sgnode);
 
         attachSourceLocation(sgnode, elem, ctx);
         ctx.appendStatement(sgnode);
@@ -4782,7 +4770,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 */
         SgExpression&           renamed = getExprID(decl.Renamed_Entity, ctx);
         SgScopeStatement&       scope   = ctx.scope();
-        SgType*                 pkgtype = &mkTypeVoid(); // or nullptr?
+        SgType&                 pkgtype = mkTypeVoid();
         SgAdaRenamingDecl&      sgnode  = mkAdaRenamingDecl(adaname.ident, renamed, pkgtype, scope);
 
         recordNode(asisDecls(), elem.ID, sgnode);
@@ -4856,7 +4844,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         Declaration_Struct& asisDcl = elem.The_Union.Declaration;
         SgType&             ty      = getDeclTypeID(asisDcl.Object_Declaration_View, ctx);
         SgExpression&       renamed = getExprID(decl.Renamed_Entity, ctx);
-        SgAdaRenamingDecl&  sgnode  = mkAdaRenamingDecl(adaname.ident, renamed, &ty, scope);
+        SgAdaRenamingDecl&  sgnode  = mkAdaRenamingDecl(adaname.ident, renamed, ty, scope);
 
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
@@ -4879,7 +4867,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         SgType&            excty   = lookupNode(adaTypes(), AdaIdentifier{"Exception"});
 
         // ADA_ASSERT(renamed.get_type() == &excty); \todo not sure why this does not hold...
-        SgAdaRenamingDecl& sgnode  = mkAdaRenamingDecl(adaname.ident, renamed, &excty, scope);
+        SgAdaRenamingDecl& sgnode  = mkAdaRenamingDecl(adaname.ident, renamed, excty, scope);
 
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
@@ -4904,7 +4892,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         NameData                adaname = singleName(decl, ctx);
         SgExpression&           renamed = getExprID(decl.Renamed_Entity, ctx);
         SgScopeStatement&       scope   = ctx.scope();
-        SgType*                 pkgtype = &mkTypeVoid(); // or nullptr or function type?
+        SgType&                 pkgtype = mkTypeVoid();
         SgAdaRenamingDecl&      sgnode  = mkAdaRenamingDecl(adaname.ident, renamed, pkgtype, scope);
 
         recordNode(asisDecls(), elem.ID, sgnode);
