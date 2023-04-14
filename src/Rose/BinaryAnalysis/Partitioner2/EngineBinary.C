@@ -1651,17 +1651,22 @@ EngineBinary::runPartitionerFinal(const Partitioner::Ptr &partitioner) {
 void
 EngineBinary::partitionCilSections(const Partitioner::Ptr &partitioner) {
     SgAsmCilMetadataRoot* mdr{nullptr};
+    SgAsmInterpretation* interp{interpretation()};
 
-    // TODO: What about multiple sections
-    for (SgAsmGenericHeader* header : interpretation()->get_headers()->get_headers()) {
-        auto sections = header->get_sections_by_name("CLR Runtime Header");
-        for (SgAsmGenericSection* section : sections) {
-            if (auto cliHeader = isSgAsmCliHeader(section)) {
-                mdr = cliHeader->get_metadataRoot();
+    // A file directly mapped from memory may not have an interpretation
+    if (interp && interp->get_headers()) {
+        // TODO: What about multiple sections
+        for (SgAsmGenericHeader* header : interp->get_headers()->get_headers()) {
+            auto sections = header->get_sections_by_name("CLR Runtime Header");
+            for (SgAsmGenericSection* section : sections) {
+                if (auto cliHeader = isSgAsmCliHeader(section)) {
+                    mdr = cliHeader->get_metadataRoot();
+                }
             }
         }
     }
 
+    // If there is a "CLR Runtime Header" section, partition it's CIL byte code
     if (mdr) {
       auto cilContainer = new ByteCode::CilContainer(mdr);
       cilContainer->partition(partitioner);
