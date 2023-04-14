@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 
 #include <Rose/BinaryAnalysis/BinaryLoader.h>
+#include <Rose/BinaryAnalysis/ByteCode/Cil.h>
 #include <Rose/BinaryAnalysis/Debugger/Linux.h>
 #include <Rose/BinaryAnalysis/Disassembler/M68k.h>
 #include <Rose/BinaryAnalysis/Disassembler/Mips.h>
@@ -1559,6 +1560,10 @@ void
 EngineBinary::runPartitionerRecursive(const Partitioner::Ptr &partitioner) {
     Sawyer::Message::Stream where(mlog[WHERE]);
 
+    // Decode and partition any CIL byte code (sections with name "CLR Runtime Header")
+    SAWYER_MESG(where) <<"decoding and partitioning CIL byte code\n";
+    partitionCilSections(partitioner);
+
     // Start discovering instructions and forming them into basic blocks and functions
     SAWYER_MESG(where) <<"discovering and populating functions\n";
     discoverFunctions(partitioner);
@@ -1641,6 +1646,26 @@ EngineBinary::runPartitionerFinal(const Partitioner::Ptr &partitioner) {
     }
     if (libcStartMain_)
         libcStartMain_->nameMainFunction(partitioner);
+}
+
+void
+EngineBinary::partitionCilSections(const Partitioner::Ptr &partitioner) {
+    SgAsmCilMetadataRoot* mdr{nullptr};
+
+    // TODO: What about multiple sections
+    for (SgAsmGenericHeader* header : interpretation()->get_headers()->get_headers()) {
+        auto sections = header->get_sections_by_name("CLR Runtime Header");
+        for (SgAsmGenericSection* section : sections) {
+            if (auto cliHeader = isSgAsmCliHeader(section)) {
+                mdr = cliHeader->get_metadataRoot();
+            }
+        }
+    }
+
+    if (mdr) {
+      auto cilContainer = new ByteCode::CilContainer(mdr);
+      cilContainer->partition(partitioner);
+    }
 }
 
 Partitioner::Ptr
