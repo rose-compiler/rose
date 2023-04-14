@@ -1,5 +1,6 @@
 add_library(roseBinaryAnalysisByteCode OBJECT
   Analysis.C
+  Cil.C
   Jvm.C
   )
 
