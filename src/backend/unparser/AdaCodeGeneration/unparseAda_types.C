@@ -56,43 +56,43 @@ namespace
       //~ os << s;
     }
 
-    void handle(SgNode& n)    { SG_UNEXPECTED_NODE(n); }
+    void handle(const SgNode& n)    { SG_UNEXPECTED_NODE(n); }
 
     //
     // Ada constraints
 
-    void handle(SgAdaRangeConstraint& n)
+    void handle(const SgAdaRangeConstraint& n)
     {
       prn(" range ");
       expr(n.get_range());
     }
 
-    void handle(SgAdaDigitsConstraint& n)
+    void handle(const SgAdaDigitsConstraint& n)
     {
       prn(" digits ");
       expr(n.get_digits());
       support_opt(n.get_subConstraint());
     }
 
-    void handle(SgAdaDeltaConstraint& n)
+    void handle(const SgAdaDeltaConstraint& n)
     {
       prn(" delta ");
       expr(n.get_delta());
       support_opt(n.get_subConstraint());
     }
 
-    void handle(SgAdaNullConstraint&)
+    void handle(const SgAdaNullConstraint&)
     { /* nothing */
     }
 
-    void handle(SgAdaIndexConstraint& n)
+    void handle(const SgAdaIndexConstraint& n)
     {
       prn(" (");
       exprSequence(n.get_indexRanges());
       prn(")");
     }
 
-    void handle(SgAdaDiscriminantConstraint& n)
+    void handle(const SgAdaDiscriminantConstraint& n)
     {
       prn(" (");
       exprSequence(n.get_discriminants(), "<>");
@@ -102,24 +102,24 @@ namespace
     //
     // Fundamental types
 
-    void handle(SgTypeBool&)       { prn(" Boolean"); }
-    void handle(SgTypeChar&)       { prn(" Character"); }
-    void handle(SgTypeChar16&)     { prn(" Wide_Character"); }
-    void handle(SgTypeChar32&)     { prn(" Wide_Wide_Character"); }
-    void handle(SgTypeInt&)        { prn(" Integer"); }
-    void handle(SgTypeFloat&)      { prn(" Float"); }
-    void handle(SgTypeDouble&)     { prn(" Long_Float"); }
-    void handle(SgTypeLongDouble&) { prn(" Long_Long_Float"); }
-    void handle(SgTypeString&)     { prn(" String"); }
-    void handle(SgTypeLong&)       { prn(" Long_Integer"); }
-    void handle(SgTypeShort&)      { prn(" Short_Integer"); }
-    void handle(SgTypeLongLong&)   { prn(" Long_Long_Integer"); }
-    void handle(SgTypeFixed&)      { }
-    void handle(SgTypeVoid&)       { /* do nothing */ }
+    void handle(const SgTypeBool&)       { prn(" Boolean"); }
+    void handle(const SgTypeChar&)       { prn(" Character"); }
+    void handle(const SgTypeChar16&)     { prn(" Wide_Character"); }
+    void handle(const SgTypeChar32&)     { prn(" Wide_Wide_Character"); }
+    void handle(const SgTypeInt&)        { prn(" Integer"); }
+    void handle(const SgTypeFloat&)      { prn(" Float"); }
+    void handle(const SgTypeDouble&)     { prn(" Long_Float"); }
+    void handle(const SgTypeLongDouble&) { prn(" Long_Long_Float"); }
+    void handle(const SgTypeString&)     { prn(" String"); }
+    void handle(const SgTypeLong&)       { prn(" Long_Integer"); }
+    void handle(const SgTypeShort&)      { prn(" Short_Integer"); }
+    void handle(const SgTypeLongLong&)   { prn(" Long_Long_Integer"); }
+    void handle(const SgTypeFixed&)      { }
+    void handle(const SgTypeVoid&)       { /* do nothing */ }
 
     //
     // error type
-    void handle(SgTypeUnknown& n)
+    void handle(const SgTypeUnknown& n)
     {
       if (n.get_has_type_name())
         prn(n.get_type_name());
@@ -130,7 +130,7 @@ namespace
     //
     // Ada types
 
-    void handle(SgAdaSubtype& n)
+    void handle(const SgAdaSubtype& n)
     {
       ROSE_ASSERT(!n.get_fromRootType() || n.get_constraint());
 
@@ -140,25 +140,25 @@ namespace
       support_opt(n.get_constraint());
     }
 
-    void handle(SgAdaDerivedType& n)
+    void handle(const SgAdaDerivedType& n)
     {
       prn("new ");
       type(n.get_base_type());
     }
 
-    void handle(SgAdaModularType& n)
+    void handle(const SgAdaModularType& n)
     {
       prn("mod ");
       expr(n.get_modexpr());
     }
 /*
-    void handle(SgAdaFormalType& n)
+    void handle(const SgAdaFormalType& n)
     {
       prn(" ");
       prn(n.get_type_name());
     }
 */
-    void handle(SgModifierType& n)
+    void handle(const SgModifierType& n)
     {
       const SgTypeModifier& tm = n.get_typeModifier();
 
@@ -171,33 +171,33 @@ namespace
       type(n.get_base_type());
     }
 
-    void handle(SgTypeDefault& n)
+    void handle(const SgTypeDefault& n)
     {
       /* print nothing - used for forward declarations of unknown type */
     }
 
-    void handle(SgAutoType& n)
+    void handle(const SgAutoType& n)
     {
       /* print nothing - used for Integer and Real Number constants */
     }
 
 
-    void handle(SgNamedType& n)
+    void handle(const SgNamedType& n)
     {
       prn(" ");
       prnNameQual(SG_DEREF(n.get_declaration()));
       prn(n.get_name());
     }
 
-    void handle(SgDeclType& n)
+    void handle(const SgDeclType& n)
     {
       prn(" ");
       expr(n.get_base_expression());
     }
 
-    void handle(SgTypeTuple& n)
+    void handle(const SgTypeTuple& n)
     {
-      SgTypePtrList& lst = n.get_types();
+      const SgTypePtrList& lst = n.get_types();
 
       for (size_t i = 0; i < lst.size()-1; ++i)
       {
@@ -208,7 +208,7 @@ namespace
       type(lst.back());
     }
 
-    void handle(SgArrayType& n)
+    void handle(const SgArrayType& n)
     {
       prn(" array");
       prn("(");
@@ -219,7 +219,7 @@ namespace
     }
 
 
-    void handle(SgAdaTaskType& n)
+    void handle(const SgAdaTaskType& n)
     {
       // \todo fix in AST and override get_name and get_declaration in AdaTaskType
       SgAdaTaskTypeDecl&      tyDcl  = SG_DEREF( isSgAdaTaskTypeDecl(n.get_declaration()) );
@@ -229,7 +229,7 @@ namespace
       prn(tyDcl.get_name());
     }
 
-    void handle(SgAdaProtectedType& n)
+    void handle(const SgAdaProtectedType& n)
     {
       // \todo fix in AST and override get_name and get_declaration in AdaTaskType
       SgAdaProtectedTypeDecl& tyDcl  = SG_DEREF( isSgAdaProtectedTypeDecl(n.get_declaration()) );
@@ -240,14 +240,14 @@ namespace
       prn(tyDcl.get_name());
     }
 
-    void handle(SgAdaDiscreteType&)
+    void handle(const SgAdaDiscreteType&)
     {
       // should not be reached
       ROSE_ABORT();
     }
 
 /*
-    void handle(SgAdaFloatType& n)
+    void handle(const SgAdaFloatType& n)
     {
       prn("digits ");
       expr(n.get_digits());
@@ -256,15 +256,13 @@ namespace
     }
 */
 
-    void handle(SgFunctionType& n)
+    void handle(const SgFunctionType& n)
     {
+      // this function should not be invoked, as function types
+      //   in Ada should be represented as SgAdaSubroutineType node...
       const bool func = si::Ada::isFunction(n);
 
       prn(func ? " function" : " procedure");
-
-      // TODO: print parameter profile here if it is specified.
-      //       parameter profiles are not currently implemented for
-      //       AdaAccessType nodes.
 
       if (!func) return;
 
@@ -272,36 +270,42 @@ namespace
       type(n.get_return_type());
     }
 
-    void handle(SgAdaAccessType& n)
+    void handle(const SgAdaAccessType& n)
     {
       prn("access ");
 
       if (n.get_is_general_access()) prn("all"); // can this become a modifier?
 
-      type(n.get_base_type());
+      SgType* under = n.get_base_type();
+
+      // print type prefix
+      if (SgAdaSubroutineType* rout = isSgAdaSubroutineType(under))
+        prn_subroutine_prefix(*rout);
+
+      type(under);
     }
 
-    void handle(SgAdaSubroutineType& n)
+    void prn_subroutine_prefix(const SgAdaSubroutineType& n)
     {
-      const bool isFunction = isSgTypeVoid(n.get_return_type()) == nullptr;
-
       if (n.get_is_protected()) prn(" protected ");
 
-      prn(isFunction ? " function " : " procedure ");
+      prn(si::Ada::isFunction(n) ? " function " : " procedure ");
+    }
+
+    void handle(const SgAdaSubroutineType& n)
+    {
       SgFunctionParameterList&  lst = SG_DEREF(n.get_parameterList());
 
       unparser.unparseParameterList(lst.get_args(), info);
-      if (isFunction)
+
+      if (si::Ada::isFunction(n))
       {
         prn(" return ");
         type(n.get_return_type());
       }
     }
 
-    void type(SgType* ty)
-    {
-      sg::dispatch(*this, ty);
-    }
+    void type(const SgType* ty);
 
     void support_opt(SgNode* n)
     {
@@ -335,6 +339,11 @@ namespace
     SgUnparse_Info&   info;
     std::ostream&     os;
   };
+
+  void AdaTypeUnparser::type(const SgType* ty)
+  {
+    sg::dispatch(*this, ty);
+  }
 
   void AdaTypeUnparser::exprSequence(const SgExpressionPtrList& lst, std::string alt)
   {

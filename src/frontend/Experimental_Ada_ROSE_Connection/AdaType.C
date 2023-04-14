@@ -308,8 +308,8 @@ namespace
 
     logKind("An_Access_Definition");
 
-    SgAdaAccessType*          res = nullptr;
-    Access_Definition_Struct& access = def.The_Union.The_Access_Definition;
+    SgType*                   underty = nullptr;
+    Access_Definition_Struct& access  = def.The_Union.The_Access_Definition;
     Access_Definition_Kinds   access_type_kind = access.Access_Definition_Kind;
 
     switch (access_type_kind)
@@ -320,11 +320,10 @@ namespace
         const bool isConstant = access_type_kind == An_Anonymous_Access_To_Constant;
         logKind(isConstant ? "An_Anonymous_Access_To_Constant" : "An_Anonymous_Access_To_Variable");
 
-        SgType* underty = &getDeclTypeID(access.Anonymous_Access_To_Object_Subtype_Mark, ctx);
+        underty = &getDeclTypeID(access.Anonymous_Access_To_Object_Subtype_Mark, ctx);
 
         if (isConstant) underty = &mkConstType(*underty);
 
-        res = &mkAdaAccessType(SG_DEREF(underty));
         /** unused fields:
                bool                         Has_Null_Exclusion;
          */
@@ -356,22 +355,18 @@ namespace
         ElemIdRange          params  = idRange(access.Access_To_Subprogram_Parameter_Profile);
         SgType&              rettype = isFuncAccess ? getDeclTypeID(access.Access_To_Function_Result_Profile, ctx)
                                                     : mkTypeVoid();
-        SgAdaSubroutineType& funty   = mkAdaSubroutineType(rettype, ParameterCompletion{params, ctx}, ctx.scope(), isProtected);
-
-        res = &mkAdaAccessType(funty);
+        underty = &mkAdaSubroutineType(rettype, ParameterCompletion{params, ctx}, ctx.scope(), isProtected);
         break;
       }
 
       case Not_An_Access_Definition: // An unexpected element
       default:
         logError() << "Unhandled anonymous access type kind: " << access_type_kind << std::endl;
-        res = &mkAdaAccessType(mkTypeUnknown());
+        underty = &mkTypeUnknown();
         ADA_ASSERT(!FAIL_ON_ERROR(ctx));
     }
 
-    ROSE_ASSERT(res);
-    res->set_is_anonymous(true);
-    return *res;
+    return mkAdaAccessType(SG_DEREF(underty), true /* anonymous */);
   }
 
   SgAdaAccessType&
@@ -443,8 +438,7 @@ namespace
       ADA_ASSERT(!FAIL_ON_ERROR(ctx));
     }
 
-    ROSE_ASSERT(access_t);
-    return *access_t;
+    return SG_DEREF(access_t);
   }
 
 
