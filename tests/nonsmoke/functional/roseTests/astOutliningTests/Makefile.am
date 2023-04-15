@@ -113,7 +113,8 @@ CXX2_TESTS_REQUIRED_TO_PASS = \
 	test_119_2021.cpp \
 	test_120_2020.cpp \
 	test_121_2020.cpp \
-	test_52.cpp
+	test_52.cpp \
+	test_2022_11_21.cpp
 
 #This set of CPP files must contain main() to run
 # DQ (4/6/2021): Failing test (get_nextStatement() returns error).
@@ -376,7 +377,8 @@ $(dlopen3_test_targets): dlopen3_%.passed: % outline
 		USE_SUBDIR=yes \
 		CMD="$$(pwd)/outline$(EXEEXT) $(TEST_INCLUDES) $(dlopen3_test_flags) -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
-
+# use simple dlopen() call convention to find and call the outlined functions saved in
+# new files.It will turn on new_file and parameter_wrapper flags internally
 dlopensimple_test_targets = $(addprefix dlopensimple_,  $(addsuffix .passed, $(CXX2_TESTS_REQUIRED_TO_PASS)))
 C_CXX_RESULTS += $(dlopensimple_test_targets)  
 dlopensimple_test_flags =				\
