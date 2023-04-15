@@ -1886,6 +1886,7 @@ public:
     T* initParentPointer(T *child, SgNode *parent) {
         ASSERT_not_null(parent);
         if (child) {
+#ifndef NDEBUG
             auto toString = [](SgNode *node) {
                 if (node) {
                     return (boost::format("(%s*)%p") % node->class_name() % node).str();
@@ -1898,6 +1899,7 @@ public:
                             "child " + toString(child) +
                             " cannot be inserted into " + toString(parent) +
                             " because it is already a child of " + toString(child->get_parent()));
+#endif
             child->set_parent(this);
         }
         return child;
@@ -1944,6 +1946,7 @@ public:
         std::is_pointer<T>::value,
         void>::type
     changeChildPointer(T& edge, T const& child) {
+#ifndef NDEBUG
         auto toString = [](SgNode *node) {
             if (node) {
                 return (boost::format("(%s*)%p") % node->class_name() % node).str();
@@ -1951,6 +1954,7 @@ public:
                 return std::string("nullptr");
             }
         };
+#endif
 
         if (child != edge) {
             // If there is an old child, check that it has the correct parent and then remove it.
