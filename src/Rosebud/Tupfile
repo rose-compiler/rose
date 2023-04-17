@@ -12,7 +12,3 @@ run $(support_compile_linklib) -I.. -o libRosebud \
     $(ROSE)/src/util/Sawyer/libsawyer
 
 run $(support_compile_linkexe) -I.. rosebud.C libRosebud $(ROSE)/src/util/Sawyer/libsawyer
-
-run $(support_compile_linkexe) -I.. unitTest01.C libRosebud $(ROSE)/src/util/Sawyer/libsawyer
-
-run $(test) unitTest01
