@@ -2,6 +2,7 @@ include_rules
 
 run $(librose_compile)				\
     Analysis.C					\
+    Cil.C					\
     Jvm.C					\
 
 run $(public_header) -o include/rose/Rose/BinaryAnalysis/ByteCode	\

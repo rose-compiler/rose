@@ -20,7 +20,6 @@
 #include <Rose/BinaryAnalysis/Debugger.h>
 #include <Rose/BinaryAnalysis/Demangler.h>
 #include <Rose/BinaryAnalysis/Disassembler.h>
-#include <Rose/BinaryAnalysis/DisassemblerCil.h>
 #include <Rose/BinaryAnalysis/Dwarf.h>
 #include <Rose/BinaryAnalysis/FeasiblePath.h>
 #include <Rose/BinaryAnalysis/FunctionCall.h>

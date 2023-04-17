@@ -46,6 +46,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/BinaryLoaderElfObj.C						\
 	BinaryAnalysis/BinaryLoaderPe.C							\
 	BinaryAnalysis/ByteCode/Analysis.C						\
+	BinaryAnalysis/ByteCode/Cil.C							\
 	BinaryAnalysis/ByteCode/Jvm.C							\
 	BinaryAnalysis/CallingConvention.C						\
 	BinaryAnalysis/CodeInserter.C							\
