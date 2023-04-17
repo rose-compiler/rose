@@ -1,30 +1,39 @@
-#ifndef ROSE_Tree_List_H
-#define ROSE_Tree_List_H
-#include <Rose/Tree/Base.h>
+// WARNING: Changes to this file must be contributed back to Sawyer or else they will
+//          be clobbered by the next update from Sawyer.  The Sawyer repository is at
+//          https://github.com/matzke1/sawyer.
 
-namespace Rose {
+
+
+
+#ifndef Sawyer_TreeList_H
+#define Sawyer_TreeList_H
+
+#include <Sawyer/TreeVertex.h>
+
+namespace Sawyer {
 namespace Tree {
 
 /** Tree vertex that points to an ordered sequence of indexable children.
  *
  *  This vertex acts like an @c std::vector except that inserting and erasing children also adjusts the child's parent pointer. */
-template<class T>
-class List: public Base {
-private:
-    using EdgeVector = std::vector<std::unique_ptr<Edge<T>>>;
-
+template<class B, class T>
+class List: public B {
 public:
-    /** Shared-ownership pointer to nodes of this type. */
+    /** Shared-ownership pointer to vertices of this type. */
     using Ptr = std::shared_ptr<List>;
 
     /** Type of child. */
     using Child = T;
 
     /** Type of child pointer. */
-    using ChildPtr = std::shared_ptr<T>;
+    using ChildPtr = std::shared_ptr<Child>;
 
+private:
+    using EdgeVector = std::vector<std::unique_ptr<typename List::Edge<Child>>>;
+
+private:
     // These are for compatibility with std::vector
-    using value_type = Edge<T>;                                   /**< Type of values stored in this class. */
+    using value_type = typename List::Edge<Child>;                /**< Type of values stored in this class. */
     using size_type = typename EdgeVector::size_type;             /**< Size type. */
     using difference_type = typename EdgeVector::difference_type; /**< Distance between elements. */
     using reference = value_type&;                                /**< Reference to value. */
@@ -111,19 +120,19 @@ public:
         /** Return an edge relative to the current one.
          *
          *  Returns the edge that's @p n edges after (or before if negative) the current edge. */
-        Edge<T>& operator[](difference_type n) const {
+        typename List::Edge<Child>& operator[](difference_type n) const {
             ASSERT_not_null(base_[n]);
             return *base_[n];
         }
 
         /** Return a reference to the current edge. */
-        Edge<T>& operator*() {
+        typename List::Edge<Child>& operator*() {
             ASSERT_not_null(*base_);
             return **base_;
         }
 
         /** Return a pointer to the current edge. */
-        Edge<T>* operator->() {
+        typename List::Edge<Child>* operator->() {
             ASSERT_not_null(*base_);
             return &**base_;
         }
@@ -164,14 +173,14 @@ protected:
 public:
     /** Allocating constructor.
      *
-     *  Constructs a new node that has no children. */
+     *  Constructs a new vertex that has no children. */
     static std::shared_ptr<List> instance() {
         return std::shared_ptr<List>(new List);
     }
 
     /** Test whether vector is empty.
      *
-     *  Returns true if this node contains no child edges, null or otherwise. */
+     *  Returns true if this vertex contains no child edges, null or otherwise. */
     bool empty() const {
         return elmts_.empty();
     }
@@ -193,21 +202,21 @@ public:
         return elmts_.capacity();
     }
 
-    /** Insert a child pointer at the end of this node.
+    /** Insert a child pointer at the end of this vertex.
      *
-     *  If the new element is non-null, then it must satisfy all the requirements for inserting a node as a child of another
-     *  node, and its parent pointer will be adjusted automatically. */
-    Edge<T>& push_back(const std::shared_ptr<T>& elmt) {
-        elmts_.push_back(std::make_unique<Edge<T>>(*this, elmt));
+     *  If the new element is non-null, then it must satisfy all the requirements for inserting a vertex as a child of another
+     *  vertex, and its parent pointer will be adjusted automatically. */
+    typename List::Edge<Child>& push_back(const ChildPtr& elmt) {
+        elmts_.push_back(std::make_unique<typename List::Edge<Child>>(*this, elmt));
         return *elmts_.back();
     }
 
-    /** Erase a child edge from the end of this node.
+    /** Erase a child edge from the end of this vertex.
      *
      *  If the edge being erased points to a child, then that child's parent pointer is reset. */
-    BasePtr pop_back() {
+    typename List::UserBasePtr pop_back() {
         ASSERT_forbid(elmts_.empty());
-        BasePtr retval = (*elmts_.back())();
+        typename List::UserBasePtr retval = (*elmts_.back())();
         elmts_.pop_back();
         return retval;
     }
@@ -215,16 +224,16 @@ public:
     /** Return a reference to the Ith edge.
      *
      * @{ */
-    const Edge<T>& operator[](size_t i) const {
+    const typename List::Edge<Child>& operator[](size_t i) const {
         return *elmts_.at(i);
     }
-    Edge<T>& operator[](size_t i) {
+    typename List::Edge<Child>& operator[](size_t i) {
         return *elmts_.at(i);
     }
-    const Edge<T>& at(size_t i) const {
+    const typename List::Edge<Child>& at(size_t i) const {
         return *elmts_.at(i);
     }
-    Edge<T>& at(size_t i) {
+    typename List::Edge<Child>& at(size_t i) {
         return *elmts_.at(i);
     }
     /** @} */
@@ -240,23 +249,23 @@ public:
     }
 
     /** Return a reference to the first edge. */
-    Edge<T>& front() {
+    typename List::Edge<Child>& front() {
         ASSERT_forbid(elmts_.empty());
         return *elmts_.front();
     }
 
     /** Return a reference to the last edge. */
-    Edge<T>& back() {
+    typename List::Edge<Child>& back() {
         ASSERT_forbid(elmts_.empty());
         return *elmts_.back();
     }
 
 protected:
-    virtual ChildDescriptor findChild(size_t i) const override {
+    virtual typename List::ChildDescriptor findChild(size_t i) const override {
         if (i < elmts_.size()) {
-            return ChildDescriptor{i, boost::lexical_cast<std::string>(i), (*elmts_[i])()};
+            return typename List::ChildDescriptor{i, boost::lexical_cast<std::string>(i), (*elmts_[i])()};
         } else {
-            return ChildDescriptor{elmts_.size(), "", nullptr};
+            return typename List::ChildDescriptor{elmts_.size(), "", nullptr};
         }
     }
 };
