@@ -582,11 +582,6 @@ nobase_pkginclude_HEADERS=								\
 	Rose/Traits/grammar/predicates.h						\
 	Rose/Traits/grammar/traversal.h							\
 	Rose/Traits/Traversal.h								\
-	Rose/Tree.h									\
-	Rose/Tree/Base.h								\
-	Rose/Tree/BasicTypes.h								\
-	Rose/Tree/Exception.h								\
-	Rose/Tree/List.h
 	Rose/Yaml.h
 
 
