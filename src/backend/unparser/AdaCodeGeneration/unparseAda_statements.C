@@ -896,14 +896,18 @@ namespace
     {
       UseClauseSyntaxResult useSyntax = useClauseSyntax(n.get_declaration());
       SgScopeStatement*     origScope = useSyntax.decl().get_scope();
+      std::string           typeAttr  = n.get_adaTypeAttribute();
 
       prn("use ");
       prn(useSyntax.keyword());
       prnNameQual(n, origScope);
       prn(useSyntax.name());
 
-      if (n.get_is_ada_class_wide())
-        prn("'class");
+      if (typeAttr.size())
+      {
+        prn("'");
+        prn(typeAttr);
+      }
 
       prn(STMT_SEP);
     }

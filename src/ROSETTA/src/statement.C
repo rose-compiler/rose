@@ -2746,8 +2746,12 @@ Grammar::setUpStatements ()
 
   // PP (3/20/2023): Ada uses UsingDeclarationStatement for modeling use/use type directives
   //                 Attributes can be used to specify class wide application: use some.type'class
-     UsingDeclarationStatement.setDataPrototype("bool","is_ada_class_wide","= false",
+     //~ UsingDeclarationStatement.setDataPrototype("bool","is_ada_class_wide","= false",
+                                //~ NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // PP (4/18/23): replaced flag (above) with proper attribute name
+     UsingDeclarationStatement.setDataPrototype("SgName", "adaTypeAttribute","= \"\"",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
 
      UsingDirectiveStatement.setFunctionPrototype ( "HEADER_USING_DIRECTIVE_STATEMENT",
