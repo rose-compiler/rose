@@ -53,7 +53,7 @@ CxxGenerator::genDefaultConstructor(std::ostream &header, std::ostream &impl, co
         impl <<"\n"
              <<THIS_LOCATION <<c->name <<"::" <<c->name <<"()";
         size_t nInits = 0;
-        for (const auto &p: *c->properties()) {
+        for (const auto &p: c->properties) {
             const std::string expr = ctorInitializerExpression(p(), initialValue(p()));
             if (!expr.empty()) {
                 impl <<"\n" <<THIS_LOCATION <<locationDirective(p(), p->startToken)
@@ -142,7 +142,7 @@ CxxGenerator::genArgsConstructor(std::ostream &header, std::ostream &impl, const
     }
 
     // Emit the property initializations, some of which come from arguments
-    for (const auto &p: *c->properties()) {
+    for (const auto &p: c->properties) {
         auto arg = std::find(args.begin(), args.end(), p());
         auto argClass = p->findAncestor<Ast::Class>();
         if (arg != args.end()) {
@@ -233,7 +233,7 @@ CxxGenerator::genInitProperties(std::ostream &header, std::ostream &impl, const 
              <<c->name <<"::initializeProperties() {\n";
 
         // Initialize the properties of this class
-        for (const auto &p: *c->properties()) {
+        for (const auto &p: c->properties) {
             const std::string stmt = resetStatement(p());
             if (!stmt.empty())
                 impl <<"    " <<stmt <<"\n";

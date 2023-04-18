@@ -550,7 +550,7 @@ RosettaGenerator::genClassDefinition(std::ostream &rosetta, const Ast::Class::Pt
 
     genClassBegin(rosetta, c);
 
-    for (const auto &p: *c->properties()) {
+    for (const auto &p: c->properties) {
         // Stuff in the input that's prior to the property definition should go in the "other" section of output
         header <<locationDirective(p(), p->priorTextToken) <<p->priorText;
 

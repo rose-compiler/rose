@@ -191,10 +191,22 @@ public:
 };
 
 //------------------------------------------------------------------------------------------------------------------------------
-/** Ordered list of arguments.
- *
- *  An argument list is a sequence of token sequences. */
-using ArgumentList = Sawyer::Tree::List<Node, TokenList>;
+/** A node that holds a list of arguments. */
+class ArgumentList: public Node {
+public:
+    /** Shared-ownership pointer. */
+    using Ptr = ArgumentListPtr;
+
+public:
+    EdgeVector<TokenList> elmts;
+
+protected:
+    ArgumentList();
+
+public:
+    /** Allocating constructor. */
+    static Ptr instance();
+};
 
 //------------------------------------------------------------------------------------------------------------------------------
 /** An attribute adjusting the details for a definition.
@@ -203,7 +215,7 @@ using ArgumentList = Sawyer::Tree::List<Node, TokenList>;
  *  definition. */
 class Attribute: public Node {
 public:
-    /** Allocating constructor. */
+    /** Shared-ownership pointer. */
     using Ptr = AttributePtr;
 
 public:
@@ -234,10 +246,6 @@ public:
     static Ptr instance(const std::string &fqName, const std::vector<Token> &nameTokens);
     /** @} */
 };
-
-//------------------------------------------------------------------------------------------------------------------------------
-/** An ordered sequence of attributes with their arguments. */
-using AttributeList = Sawyer::Tree::List<Node, Attribute>;
 
 //------------------------------------------------------------------------------------------------------------------------------
 /** Base class for class and property definitions. */
@@ -285,7 +293,7 @@ public:
     Token priorTextToken;
 
     /** Non-null pointer to the list of attributes controlling this property. */
-    Edge<AttributeList> attributes;
+    EdgeVector<Attribute> attributes;
 
 protected:
     /** Default constructor used only by derived classes. */
@@ -343,10 +351,6 @@ public:
 };
 
 //------------------------------------------------------------------------------------------------------------------------------
-/** An ordered sequence of properties. */
-using PropertyList = Sawyer::Tree::List<Node, Property>;
-
-//------------------------------------------------------------------------------------------------------------------------------
 /** Represents a class definition. */
 class Class: public Definition {
 public:
@@ -358,7 +362,7 @@ public:
 
 public:
     /** Non-null list of zero or more properties. */
-    Edge<PropertyList> properties;
+    EdgeVector<Property> properties;
 
     /** Information about base classes. */
     Inheritance inheritance;
@@ -388,10 +392,6 @@ public:
 };
 
 //------------------------------------------------------------------------------------------------------------------------------
-/** An ordered sequence of class definitions. */
-using ClassList = Sawyer::Tree::List<Node, Class>;
-
-//------------------------------------------------------------------------------------------------------------------------------
 /** An input file. */
 class File: public Node {
 public:
@@ -403,7 +403,7 @@ private:
 
 public:
     /** Non-null list of zero or more class definitions. */
-    Edge<ClassList> classes;
+    EdgeVector<Class> classes;
 
     /** Text after the last class definition until the end of the file.
      *
@@ -522,10 +522,6 @@ public:
 };
 
 //------------------------------------------------------------------------------------------------------------------------------
-/** An ordered list of files. */
-using FileList = Sawyer::Tree::List<Node, File>;
-
-//------------------------------------------------------------------------------------------------------------------------------
 /** Root of an AST for one or more input files.
  *
  *  The project represents all the input files that were parsed. */
@@ -536,7 +532,7 @@ public:
 
 public:
     /** Non-null list of input files. */
-    Edge<FileList> files;
+    EdgeVector<File> files;
 
 protected:
     /** Default constructor used only by derived classes. */

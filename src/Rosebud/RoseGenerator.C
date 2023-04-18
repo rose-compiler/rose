@@ -297,7 +297,7 @@ RoseGenerator::genTraversals(std::ostream &header, std::ostream &impl, const Ast
 
     const std::string base = firstPublicBaseClass(c);
     std::vector<Ast::Property::Ptr> children;
-    for (const auto &p: *c->properties()) {
+    for (const auto &p: c->properties) {
         if (isTreeEdge(p()))
             children.push_back(p());
     }
@@ -382,7 +382,7 @@ RoseGenerator::genClass(const Ast::Class::Ptr &c, const Hierarchy &h) {
            <<"    using Ptr = " <<c->name <<"Ptr;\n";
 
     // Class definition body between the "{" and "};"
-    for (const auto &p: *c->properties())
+    for (const auto &p: c->properties)
         genProperty(header, impl, p());
 
     // User-defined stuff at the end of the class before the closing "}"

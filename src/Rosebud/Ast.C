@@ -162,6 +162,17 @@ CppStack::emitClose(std::ostream &out) {
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ArgumentList
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+ArgumentList::ArgumentList()
+    : elmts(*this) {}
+
+ArgumentList::Ptr
+ArgumentList::instance() {
+    return Ptr(new ArgumentList);
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Attribute
@@ -188,11 +199,11 @@ Attribute::instance(const std::string &fqName, const std::vector<Token> &nameTok
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Definition::Definition()
-    : cppStack(*this, CppStack::instance()), attributes(*this, AttributeList::instance()) {}
+    : cppStack(*this, CppStack::instance()), attributes(*this) {}
 
 Attribute::Ptr
 Definition::findAttribute(const std::string &fqName) {
-    for (const auto &attr: *attributes()) {
+    for (const auto &attr: attributes) {
         if (attr->fqName == fqName)
             return attr();
     }
@@ -216,7 +227,7 @@ Property::instance() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Class::Class()
-    : properties(*this, PropertyList::instance()) {}
+    : properties(*this) {}
 
 
 Class::Ptr
@@ -229,7 +240,7 @@ Class::instance() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 File::File(const std::string &name)
-    : stream_(name), classes(*this, ClassList::instance()) {}
+    : stream_(name), classes(*this) {}
 
 File::Ptr
 File::instance(const std::string &name) {
@@ -392,7 +403,7 @@ File::emitContext(std::ostream &out, const Token &first, const Token &locus, con
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Project::Project()
-    : files(*this, FileList::instance()) {}
+    : files(*this) {}
 
 Project::Ptr
 Project::instance() {
@@ -402,8 +413,8 @@ Project::instance() {
 std::vector<Class::Ptr>
 Project::allClassesFileOrder() {
     std::vector<Class::Ptr> retval;
-    for (const auto &file: *files()) {
-        for (const auto &c: *file->classes())
+    for (const auto &file: files) {
+        for (const auto &c: file->classes)
             retval.push_back(c());
     }
     return retval;
