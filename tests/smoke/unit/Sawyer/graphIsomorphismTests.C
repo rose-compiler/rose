@@ -11,6 +11,8 @@
 #include <Sawyer/Synchronization.h>
 #include <boost/assign/list_of.hpp>
 
+#include <ostream>
+
 using namespace Sawyer::Message::Common;
 using namespace Sawyer::Container::Algorithm;
 using Sawyer::Message::mlog;
@@ -66,7 +68,17 @@ public:
         }
         return *this;
     }
+
+    void print(std::ostream &out) const {
+        out <<"unit test failed\n" + ss_.str();
+    }
 };
+
+static std::ostream&
+operator<<(std::ostream &out, const details &d) {
+    d.print(out);
+    return out;
+}
 
 // Sort x and at the same time y since changing the order of the vertices makes no difference to the solution.
 static void

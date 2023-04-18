@@ -177,6 +177,7 @@ private:
         IteratorBase(const IteratorBase &other): base_(other.base_) {}
         IteratorBase(const BaseIterator &base): base_(base) {}
     public:
+        IteratorBase& operator=(const IteratorBase &other) { base_ = other.base_; return *this; }
         bool isAtEnd() const { return base_->isHead(); }
         Derived& operator++() { base_ = base_->next; return *derived(); }
         Derived operator++(int) { Derived old(this->base_); base_ = base_->next; return old; }
@@ -211,6 +212,7 @@ public:
     public:
         NodeIterator() {}
         NodeIterator(const NodeIterator &other): Super(other) {}
+        NodeIterator& operator=(const NodeIterator &other) { this->Super::operator=(other); return *this; }
         Node& operator*() const { return this->base_->dereference(); }
         Node* operator->() const { return &this->base_->dereference(); }
     private:
@@ -239,6 +241,7 @@ public:
         ConstNodeIterator() {}
         ConstNodeIterator(const ConstNodeIterator &other): Super(other) {}
         ConstNodeIterator(const NodeIterator &other): Super(other.base()) {}
+        ConstNodeIterator& operator=(const ConstNodeIterator &other) { this->Super::operator=(other); return *this; }
         const Node& operator*() const { return this->base_->dereference(); }
         const Node* operator->() const { return &this->base_->dereference(); }
     private:
@@ -263,6 +266,7 @@ public:
         ValueIterator() {}
         ValueIterator(const ValueIterator &other): Super(other) {}
         ValueIterator(const NodeIterator &other): Super(other.base()) {}
+        ValueIterator& operator=(const ValueIterator &other) { this->Super::operator=(other); return *this; }
         Value& operator*() const { return this->base()->dereference().value(); }
         Value* operator->() const { return &this->base()->dereference().value(); }
     private:
@@ -289,6 +293,7 @@ public:
         ConstValueIterator(const NodeIterator &other): Super(other.base()) {}
         ConstValueIterator(const ConstNodeIterator &other): Super(other.base()) {}
         ConstValueIterator(const ValueIterator &other): Super(other.base()) {}
+        ConstValueIterator& operator=(const ConstValueIterator &other) { this->Super::operator=(other); return *this; }
         const Value& operator*() const { return this->base()->dereference().value(); }
         const Value* operator->() const { return &this->base()->dereference().value(); }
     private:

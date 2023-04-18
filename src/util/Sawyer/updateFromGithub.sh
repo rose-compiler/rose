@@ -40,8 +40,8 @@ for f in Access AddressMap AddressSegment AllocatingBuffer Assert Attribute BiMa
          FileSystem Graph GraphAlgorithm GraphBoost GraphIteratorBiMap GraphIteratorMap GraphIteratorSet GraphTraversal         \
          IndexedList Interval IntervalMap IntervalSet IntervalSetMap HashMap Lexer LineVector Map MappedBuffer Message          \
          NullBuffer Optional Parse PoolAllocator ProgressBar Result Sawyer Set SharedObject SharedPointer SmallObject Stack     \
-         StackAllocator StaticBuffer Stopwatch Synchronization ThreadWorkers Time Trace Tracker Tree TreeList TreeVertex Type   \
-         WarningsOff WarningsRestore WorkList Yaml
+         StackAllocator StaticBuffer Stopwatch Synchronization ThreadWorkers Time Trace Tracker Tree Type WarningsOff           \
+         WarningsRestore WorkList Yaml
 do
     srcbase="$SAWYER_ROOT/Sawyer/$f";
     ( emit_cpp_warning; cat "$srcbase.h" ) > ./$f.h

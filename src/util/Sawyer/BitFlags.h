@@ -91,6 +91,10 @@ public:
     BitFlags(E e) /*implicit*/
         : vector_(Vector(e)) {}
 
+    /** Copy constructor. */
+    BitFlags(const BitFlags &other)
+        : vector_(other.vector_) {}
+
     /** Current value of the bit vector. */
     Vector vector() const {
         return vector_;
