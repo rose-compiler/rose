@@ -2304,13 +2304,13 @@ namespace
         }
 
         SgUsingDeclarationStatement& sgnode = mkUseClause(SG_DEREF(used));
+        std::size_t                  attrPos = fullName.find("'");
 
-        if (fullName.find("'") != std::string::npos)
+        if (attrPos != std::string::npos)
         {
-          ADA_ASSERT(boost::algorithm::ends_with(fullName, "CLASS"));
-
+          ADA_ASSERT(fullName.size() > attrPos);
           // \todo introduce proper flag
-          sgnode.set_is_ada_class_wide(true);
+          sgnode.set_adaTypeAttribute(fullName.substr(attrPos+1));
         }
 
 
