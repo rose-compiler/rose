@@ -817,6 +817,36 @@ namespace Ada
     return isGenericDecl(*n);
   }
 
+  namespace
+  {
+    bool isLogicalChildScopeOfDecl(const SgScopeStatement* scope, const SgDeclarationStatement* decl)
+    {
+      if (scope == nullptr) return false;
+      if (scope->get_parent() == decl) return true;
+
+      return isLogicalChildScopeOfDecl(logicalParentScope(*scope), decl);
+    }
+
+    bool isLogicalChildOfDecl(const SgNode* n, const SgDeclarationStatement* decl)
+    {
+      if (n == nullptr) return false;
+
+      return isLogicalChildScopeOfDecl(sg::ancestor<SgScopeStatement>(n), decl);
+    }
+  }
+
+  bool unitRefDenotesGenericInstance(const SgAdaUnitRefExp& n)
+  {
+    SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(n.get_decl());
+
+    return gendcl && isLogicalChildOfDecl(&n, gendcl);
+  }
+
+  bool unitRefDenotesGenericInstance(const SgAdaUnitRefExp* n)
+  {
+    return n && unitRefDenotesGenericInstance(*n);
+  }
+
   bool hasUnknownDiscriminants(const SgAdaDiscriminatedTypeDecl& n)
   {
     return SG_DEREF(n.get_discriminants()).get_parameters().size() == 0;

@@ -2176,8 +2176,8 @@ namespace
 
       void handle(const SgAdaUnitRefExp& n)
       {
-        // get the prefix from the declaration, then set the proper name.
-        res = compute(n.get_decl(), forceNonGeneric);
+        // a reference to a generic unit inside the generic unit refers to an instance and not the generic
+        res = compute(n.get_decl(), forceNonGeneric || si::Ada::unitRefDenotesGenericInstance(n));
       }
 
       void handle(const SgVarRefExp&)

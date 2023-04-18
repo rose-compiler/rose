@@ -3682,7 +3682,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         SgAdaGenericDefn&       gen_defn   = SG_DEREF(sgnode.get_definition());
 
         // create package in the scope of the generic
-        SgAdaPackageSpecDecl&   pkgnode    = mkAdaPackageSpecDecl(adaname.ident, logicalScope);
+        //~ SgAdaPackageSpecDecl&   pkgnode    = mkAdaPackageSpecDecl(adaname.ident, logicalScope);
+        SgAdaPackageSpecDecl&   pkgnode    = mkAdaPackageSpecDecl(adaname.ident, gen_defn);
         SgAdaPackageSpec&       pkgspec    = SG_DEREF(pkgnode.get_definition());
 
         // set declaration component of generic decl to package decl
@@ -3779,7 +3780,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         //                the generic proc/func is declared in the logical parent scope
         // was: SgFunctionDeclaration&  fundec     = mkProcedureDecl_nondef(adaname.fullName, gen_defn, rettype, ParameterCompletion{params, ctx});
         SgFunctionDeclaration&  fundec     = mkProcedureDecl_nondef( adaname.ident,
-                                                                     logicalScope,
+                                                                     gen_defn, //~ logicalScope,
                                                                      rettype,
                                                                      ParameterCompletion{params, ctx}
                                                                    );
