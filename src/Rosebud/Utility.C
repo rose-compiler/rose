@@ -588,7 +588,7 @@ allConstructorArguments(const Ast::Class::Ptr &c, const Hierarchy &h_) {
     using Traversal = DepthFirstReverseGraphTraversal<Hierarchy>;
     for (Traversal t(h, root, LEAVE_VERTEX); t; ++t) {
         Ast::Class::Ptr baseClass = t.vertex()->value();
-        for (const auto &p: *baseClass->properties()) {
+        for (const auto &p: baseClass->properties) {
             if (p->findAttribute("Rosebud::ctor_arg"))
                 retval.push_back(p());
         }

@@ -35,6 +35,8 @@ class Node;
 using NodePtr = std::shared_ptr<Node>;                  /**< Shared-ownership pointer to a @ref Node. */
 class TokenList;
 using TokenListPtr = std::shared_ptr<TokenList>;        /**< Shared-ownership pointer to a @ref TokenList. */
+class ArgumentList;
+using ArgumentListPtr = std::shared_ptr<ArgumentList>;  /**< Shared-ownership pointer to a @ref ArgumentList. */
 class CppStack;
 using CppStackPtr = std::shared_ptr<CppStack>;          /**< Shared-ownership pointer to a @ref CppStack. */
 class Attribute;

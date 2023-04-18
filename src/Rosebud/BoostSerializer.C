@@ -28,7 +28,7 @@ BoostSerializer::generate(std::ostream &header, std::ostream &impl, const Ast::C
         header <<THIS_LOCATION <<"        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(" <<super.second <<");\n";
 
     // Serialize all properties that request serialization
-    for (const auto &p: *c->properties()) {
+    for (const auto &p:c->properties) {
         if (!p->findAttribute("Rosebud::no_serialize")) {
             const std::string memberName = generator.propertyDataMemberName(p());
             header <<locationDirective(p->findAncestor<Ast::File>(), p->startToken)
