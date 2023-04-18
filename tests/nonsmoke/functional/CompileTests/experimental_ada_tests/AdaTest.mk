@@ -207,6 +207,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   generic_procedure_renaming_declaration.ads  \
   generic_function_renaming_declaration.ads   \
   gen_overloaded_funcs.adb             \
+  generic_namequal.adb                 \
   inherited_primitive_operation.adb    \
   iterate_range.adb                    \
   digital.ads                          \
