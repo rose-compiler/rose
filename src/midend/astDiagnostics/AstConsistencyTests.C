@@ -3015,7 +3015,6 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                          if(func != NULL)
                          {
                            printf ("Error: found a defining function declaration with its first nondefining declaration set to itself/(or a defining declaration).\n");
-                           //ROSE_ASSERT (false);
                          }
 
                        }

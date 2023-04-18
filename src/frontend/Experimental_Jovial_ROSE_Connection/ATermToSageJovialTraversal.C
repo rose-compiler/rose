@@ -1059,7 +1059,7 @@ ATbool ATermToSageJovialTraversal::traverse_CharacterItemDescription(ATerm term,
 //========================================================================================
 // 2.1.1.6 STATUS TYPE DESCRIPTIONS
 //----------------------------------------------------------------------------------------
-ATbool ATermToSageJovialTraversal::traverse_StatusConstant(ATerm term, SgEnumDeclaration* enum_decl, int value)
+ATbool ATermToSageJovialTraversal::traverse_StatusConstant(ATerm term, SgEnumDeclaration* enum_decl, int value, SgCastExp* cast)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_StatusConstant: %s\n", ATwriteToString(term));
@@ -1076,7 +1076,7 @@ ATbool ATermToSageJovialTraversal::traverse_StatusConstant(ATerm term, SgEnumDec
 
    // Begin SageTreeBuilder
       SgEnumVal* enum_val = nullptr;
-      sage_tree_builder.Enter(enum_val, enum_name, enum_decl, value);
+      sage_tree_builder.Enter(enum_val, enum_name, enum_decl, value, cast);
       setSourcePosition(enum_val, term);
 
    // End SageTreeBuilder
@@ -1259,8 +1259,8 @@ ATbool ATermToSageJovialTraversal::traverse_SpecifiedSublist(ATerm term, SgEnumD
 #endif
 
    ATerm t_formula, t_constant;
-
-   SgExpression* init_expr = nullptr;
+   SgCastExp* cast{nullptr};
+   SgExpression* init_expr{nullptr};
 
    if (ATmatch(term, "SpecifiedSublist(<term>,<term>)", &t_formula, &t_constant)) {
 
@@ -1278,17 +1278,20 @@ ATbool ATermToSageJovialTraversal::traverse_SpecifiedSublist(ATerm term, SgEnumD
          tail = ATgetNext(tail);
 
          if (pass == 1) {
-            SgIntVal* intval = isSgIntVal(init_expr);
-            ASSERT_not_null(intval);
-            value = intval->get_value();
-            // The initialization expression for the enum is no longer needed
-            delete init_expr;
+            if (auto intval = isSgIntVal(init_expr)) {
+               value = intval->get_value();
+               // The initialization expression for the enum is no longer needed
+               delete init_expr;
+            }
+            else {
+               cast = isSgCastExp(init_expr);
+            }
          }
          if (pass > 1) {
             ++value;
          }
 
-         if (traverse_StatusConstant(head, enum_decl, value)) {
+         if (traverse_StatusConstant(head, enum_decl, value, cast)) {
             ++pass;
          }
          else return ATfalse;
