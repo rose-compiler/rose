@@ -253,9 +253,6 @@ public:
     static Sawyer::CommandLine::SwitchGroup astConstructionSwitches(AstConstructionSettings&);
 
 
-
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Container parsing
     //
@@ -368,6 +365,11 @@ public:
      *  This does anything necessary after the main part of partitioning is finished. For instance, it might give names to some
      *  functions that don't have names yet. */
     virtual void runPartitionerFinal(const PartitionerPtr&) override;
+
+    /** Partition any sections containing CIL code.
+     *
+     *  Decodes and partitions any sections of type SgAsmCliHeader. These sections contain CIL byte code. */
+    virtual void partitionCilSections(const PartitionerPtr&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner mid-level functions

@@ -554,6 +554,8 @@ namespace
   /// @{
   bool isFunction(const SgFunctionType& ty);
   bool isFunction(const SgFunctionType* ty);
+  bool isFunction(const SgAdaSubroutineType& ty);
+  bool isFunction(const SgAdaSubroutineType* ty);
   /// @}
 
   /// returns true iff \ref ty refers to an object renaming

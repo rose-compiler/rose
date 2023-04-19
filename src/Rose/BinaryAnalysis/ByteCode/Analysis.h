@@ -34,7 +34,7 @@ class Method {
 public:
   virtual const std::string name() const = 0;
   virtual const Code & code() const = 0;
-  virtual const void decode(const Disassembler::BasePtr&) const = 0; // blame rasmussen17
+  virtual const void decode(const Disassembler::BasePtr&) const = 0;
   virtual const SgAsmInstructionList* instructions() const = 0;
 
   /* Set of instruction branch targets */
@@ -79,6 +79,26 @@ public:
   virtual void digraph();
 protected:
   Class() {}
+};
+
+class Namespace {
+public:
+  virtual const std::string name() const = 0;
+  virtual const std::vector<const Class*> &classes() const = 0;
+  virtual void partition(const PartitionerPtr &partitioner) const;
+
+protected:
+  Namespace() {}
+};
+
+class Container {
+public:
+  virtual const std::string name() const = 0;
+  virtual const std::vector<const Namespace*> &namespaces() const = 0;
+  virtual void partition(const PartitionerPtr &partitioner) const;
+
+protected:
+  Container() {}
 };
 
 } // namespace

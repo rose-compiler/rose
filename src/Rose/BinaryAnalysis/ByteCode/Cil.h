@@ -12,10 +12,13 @@ namespace ByteCode {
 class CilCode : public Code {
 public:
   virtual const uint8_t* bytes() const {
-    return nullptr; // UNIMPLEMENTED
+    return bytes_; // UNIMPLEMENTED
   }
   virtual const size_t size() const {
-    return 0; // UNIMPLEMENTED
+    return size_; // UNIMPLEMENTED
+  }
+  virtual const rose_addr_t offset() const {
+    return offset_; // UNIMPLEMENTED
   }
 
   explicit CilCode(uint8_t* bytes, size_t size, rose_addr_t offset)
@@ -41,25 +44,18 @@ private:
 
 class CilMethod : public Method {
 public:
-  virtual const std::string name() const {
-    return "CilMethod::name():UNIMPLEMENTED";
-  }
-  virtual const Code & code() const {
-    return code_;
-  }
-  virtual const void decode(Disassembler* disassembler) const {
-    // UNIMPLEMENTED
-  }
-  virtual const SgAsmInstructionList* instructions() const {
-    return nullptr; // UNIMPLEMENTED
-  }
+    virtual const std::string name() const;
+    virtual const Code & code() const;
+    virtual const void decode(const Disassembler::BasePtr &disassembler) const;
+    virtual const SgAsmInstructionList* instructions() const;
 
-  CilMethod() = delete;
-  explicit CilMethod(SgAsmCilMethodDef*);
+    CilMethod() = delete;
+    explicit CilMethod(SgAsmCilMethodDef*);
 
 private:
-  SgAsmCilMethodDef* sgMethod_;
-  CilCode code_;
+    SgAsmCilMethodDef* sgMethod_;
+    SgAsmInstructionList* insns_;
+    CilCode code_;
 };
 
 class CilInterface : public Interface {
@@ -87,13 +83,13 @@ private:
 class CilClass : public Class {
 public:
   virtual const std::string name() const {
-    return "CilClass::super_name():UNIMPLEMENTED";
+    return "CilClass::name():UNIMPLEMENTED";
   }
   virtual const std::string super_name() const {
     return "CilClass::super_name():UNIMPLEMENTED";
   }
-  virtual const std::vector<std::string> &strings() const {
-    return strings_
+  virtual const std::vector<std::string> &strings() {
+    return strings_;
   }
   virtual const std::vector<const Interface*> &interfaces() const {
     return interfaces_;
@@ -108,17 +104,53 @@ public:
     return attributes_;
   }
 
-  CilClass() = delete;
-  explicit CilClass(SgAsmCilTypeDef*);
+    CilClass() = delete;
+    explicit CilClass(SgAsmCilMetadataRoot*, const std::uint8_t*, size_t, size_t);
 
 private:
-  std::vector<const Field*> fields_;
-  std::vector<const Method*> methods_;
-  std::vector<const Attribute*> attributes_;
-  std::vector<const Interface*> interfaces_;
-  std::vector<std::string> strings_;
+    std::vector<const Field*> fields_;
+    std::vector<const Method*> methods_;
+    std::vector<const Attribute*> attributes_;
+    std::vector<const Interface*> interfaces_;
+    std::vector<std::string> strings_;
+    const std::uint8_t* name_;
+    SgAsmCilMetadataRoot* mdr_;
+    SgAsmCilTypeDef* sgCilTypeDef_;
 };
 
+class CilNamespace : public Namespace {
+public:
+    virtual const std::string name() const;
+    virtual const std::vector<const Class*> &classes() const;
+
+    void append(Class*);
+
+    CilNamespace() = delete;
+    explicit CilNamespace(SgAsmCilMetadataRoot*, const std::uint8_t*);
+
+private:
+    std::vector<const Class*> classes_;
+    SgAsmCilMetadataRoot* mdr_;
+    const std::uint8_t* name_;
+};
+
+class CilContainer : public Container {
+public:
+  virtual const std::string name() const;
+  virtual const std::vector<const Namespace*> &namespaces() const;
+
+  void printAssemblies(std::ostream& os) const;
+  void printMethods(std::ostream& os, size_t beg, size_t lim) const;
+  void printModules(std::ostream& os) const;
+  void printTypeDefs(std::ostream& os) const;
+
+  CilContainer() = delete;
+  explicit CilContainer(SgAsmCilMetadataRoot*);
+
+private:
+  std::vector<const Namespace*> namespaces_;
+  SgAsmCilMetadataRoot* mdr_;
+};
 
 } // namespace
 } // namespace
