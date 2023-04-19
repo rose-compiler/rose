@@ -145,7 +145,7 @@ static void test01() {
     ASSERT_always_require(e == nullptr);
 }
 
-// instantion can use `auto` and the type is mentioned on the rhs
+// instantiation can use `auto` since the type is documented on the rhs
 static void test02() {
     auto e = BinaryExpression::instance();
     ASSERT_always_require(e != nullptr);
@@ -305,6 +305,7 @@ static void test14() {
 #endif
 }
 
+// These tests were for features that have since been removed
 static void test15() {
 }
 
@@ -724,7 +725,7 @@ static void test45() {
     ASSERT_always_require2(result.x == 911, result.x);
 }
 
-// Sawyer::Optional can be used to easily return a value to short circuit.
+// Sawyer::Optional can be used to easily return a value and to short circuit.
 static void test46() {
     auto parent = Multi::instance();
     auto a = Multi::instance();
@@ -738,16 +739,18 @@ static void test46() {
 
     const int x = parent->traverse<Multi>([&b2](const MultiPtr &vertex, Expression::TraversalEvent) {
         if (vertex == b2) {
-            return Sawyer::Optional<int>(911);
+            return Sawyer::Optional<int>(911);          // immediately return this from the traversal
         } else {
-            return Sawyer::Optional<int>();
+            return Sawyer::Optional<int>();             // continue traversing
         }
     }).orElse(42);
 
     ASSERT_always_require2(x == 911, x);
 }
 
-// A return value can be thrown, although this is not as clean and can be slower, especially if you want the result to be const
+// A return value can be thrown, although this is not as clean and can be slower, especially if you want the result to be const.
+// The slowness is because C++ `throw` is intended for exceptional situations and the non-throw flow is what is optimized for speed.
+// The outer lambda is a C++ idiom for computing a const result, namely `const auto x = [&vars...](){ calculation; }();`.
 static void test47() {
     auto parent = Multi::instance();
     auto a = Multi::instance();
@@ -789,6 +792,7 @@ static void test48() {
     parent->b.push_back(b2);
     parent->c = c;
 
+    //----------------------------------------------------------------------------------------------------------------------------
     // Partial implementation of ROSE's ::AstSimpleTraversal class. Think "SgNode" when you see "Expression" since the root of
     // our class hierarchy in this unit test file is "Expression" instead of "SgNode". Also, we're using reference counting pointers
     // instead of raw pointers, so you'll see "Ptr" (aliases for std::shared_ptr<T>) instead of "*".
@@ -826,6 +830,17 @@ static void test48() {
     nodeCounter.traverse(parent, preorder);
     ASSERT_always_require(nodeCounter.n == 5);
 
+    //----------------------------------------------------------------------------------------------------------------------------
+    // Equivalent more modern code
+    size_t n = 0;
+    parent->traverse<Expression>([&n](const ExpressionPtr&, Expression::TraversalEvent event) {
+        if (Expression::TraversalEvent::ENTER == event)
+            ++n;
+        return false;
+    });
+    ASSERT_always_require(n == 5);
+
+    //----------------------------------------------------------------------------------------------------------------------------
     // Here's a partial implementation of AstPrePostProcessing.
     class AstPrePostProcessing {
     public:
@@ -860,11 +875,27 @@ static void test48() {
         }
 
         void postOrderVisit(const ExpressionPtr&) {
-            ASSERT_forbid(stack.empty());
+            ASSERT_always_forbid(stack.empty());
             stack.pop_back();
         }
     } check;
     check.traverse(parent);
+    ASSERT_always_require(check.stack.empty());
+
+    //----------------------------------------------------------------------------------------------------------------------------
+    // Same thing without using AstPrePostProcessing
+    std::vector<ExpressionPtr> stack;
+    parent->traverse<Expression>([&stack](const ExpressionPtr &node, Expression::TraversalEvent event) {
+        if (Expression::TraversalEvent::ENTER == event) {
+            ASSERT_always_require(stack.empty() || node->parent == stack.back());
+            stack.push_back(node);
+        } else {
+            ASSERT_always_forbid(stack.empty());
+            stack.pop_back();
+        }
+        return false;
+    });
+    ASSERT_always_require(stack.empty());
 }
 
 int main() {

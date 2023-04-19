@@ -696,6 +696,12 @@ public:
     /** Returns a shared pointer to this vertex. */
     UserBasePtr pointer();
 
+    /** Tests whether this object is a certain type.
+     *
+     *  Returns a shared pointer to the object if the object is of dynamic type T, otherwise returns a null pointer. */
+    template<class T>
+    std::shared_ptr<T> isa();
+
     /** Traverse in reverse direction from children to parents.
      *
      *  The visitor is called for each vertex from the current vertex whose type is @p T until the root of the tree is reached
@@ -1034,6 +1040,13 @@ Vertex<B>::pointer() {
     auto retval = std::dynamic_pointer_cast<UserBase>(this->shared_from_this());
     ASSERT_not_null(retval);
     return retval;
+}
+
+template<class B>
+template<class T>
+std::shared_ptr<T>
+Vertex<B>::isa() {
+    return std::dynamic_pointer_cast<T>(this->shared_from_this());
 }
 
 template<class B>

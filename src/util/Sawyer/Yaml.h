@@ -429,6 +429,12 @@ public:
     Node& operator[](const std::string& key) const;
     /** @} */
 
+    /** Test whether a map item exists without inserting it. */
+    bool exists(const std::string &key) const {
+        // Because of const this, the operator[] does not add the node, it only returns an empty node
+        return (*this)[key] ? true : false;
+    }
+
     /** Erase item.
      *
      * No action if node is not a sequence or map.
