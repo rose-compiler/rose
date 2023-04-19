@@ -83,11 +83,11 @@ void Class::partition(const PartitionerPtr &partitioner) const
 
       for (auto astInsn : instructions) {
         // A copy of the instruction must be made if it is linked to ROSE's AST
-        SgAsmInstruction* insn{astInsn};
-        if (auto jvmInsn = dynamic_cast<SgAsmJvmInstruction*>(astInsn)) {
-          insn = jvmInsn->copy();
-        }
+        SgTreeCopy deep;
+        SgAsmInstruction* insn = isSgAsmInstruction(astInsn->copy(deep));
         ASSERT_not_null(insn);
+        ASSERT_require(insn != astInsn);
+        ASSERT_require(insn->get_address() == astInsn->get_address());
 
         // A new block is needed if this instruction is a target of a branch and nonterminal
         va = insn->get_address();
