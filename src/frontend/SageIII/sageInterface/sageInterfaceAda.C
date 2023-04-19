@@ -896,6 +896,16 @@ namespace Ada
     return ty ? isFunction(*ty) : false;
   }
 
+  bool isFunction(const SgAdaSubroutineType& ty)
+  {
+    return isSgTypeVoid(ty.get_return_type()) == nullptr;
+  }
+
+  bool isFunction(const SgAdaSubroutineType* ty)
+  {
+    return ty ? isFunction(*ty) : false;
+  }
+
   namespace
   {
     bool definedInStandard(const SgDeclarationStatement& n)
