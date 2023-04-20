@@ -196,6 +196,18 @@ package body Asis_Adapter.Element.Statements is
          Result.Corresponding_Loop_Exited := ID;
       end;
 
+      -- In Asis.Elements.Corresponding_Pragmas, for A_Statement argument  
+      -- Nil_Element_List is always returned.
+      -- This function would have no impact.
+      procedure Add_Corresponding_Pragmas is begin
+         Add_Element_List
+           (This           => State,
+            Elements_In    => Asis.Elements.Corresponding_Pragmas (Element),
+            Dot_Label_Name => "Corresponding_Pragmas",
+            List_Out       => Result.Corresponding_Pragmas,
+            Add_Edges      => True);
+      end;
+
       procedure Add_Delay_Expression is
          ID : constant a_nodes_h.Element_ID :=
            Get_Element_ID (Asis.Statements.Delay_Expression (Element));
@@ -348,6 +360,7 @@ package body Asis_Adapter.Element.Statements is
       begin
          State.Add_To_Dot_Label ("Statement_Kind", Statement_Kind'Image);
          Result.Statement_Kind := To_Statement_Kinds (Statement_Kind);
+         Add_Corresponding_Pragmas;
          Add_Label_Names;
       end Add_Common_Items;
 
