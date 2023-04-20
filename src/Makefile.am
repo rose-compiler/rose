@@ -190,7 +190,7 @@ libroseLibraries = \
    $(top_builddir)/src/3rdPartyLibraries/MSTL/libmstl.la \
    $(top_builddir)/src/backend/libbackend.la \
    $(top_builddir)/src/frontend/SageIII/libsage3.la \
-   $(top_builddir)/src/generated/libroseGenerated.la \
+   $(top_builddir)/src/generated/libroseGeneratedBinaryAnalysis.la \
    $(libroseCxxlibraries) \
    $(libroseOpenFortranParserlibraries) \
    $(libroseExperimentalFlangParserlibraries) \

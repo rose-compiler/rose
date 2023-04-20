@@ -1,0 +1,19 @@
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Implementation for SgAsmJvmNode            -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#include <featureTests.h>
+#if defined(ROSE_ENABLE_BINARY_ANALYSIS)
+#include <sage3basic.h>
+
+SgAsmJvmNode::~SgAsmJvmNode() {
+    destructorHelper();
+}
+
+SgAsmJvmNode::SgAsmJvmNode() {}
+
+void
+SgAsmJvmNode::initializeProperties() {
+}
+
+#endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)
