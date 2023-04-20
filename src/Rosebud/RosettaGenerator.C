@@ -6,6 +6,7 @@
 #include <Sawyer/StaticBuffer.h>
 
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
@@ -505,6 +506,36 @@ RosettaGenerator::genLeafMacros(std::ostream &rosetta, const Ast::Class::Ptr &c)
 }
 
 void
+RosettaGenerator::genRosettaPragmas(std::ostream &rosetta, const std::vector<std::string> &pragmas, const Ast::Class::Ptr &c) {
+for (const std::string &pragma: pragmas) {
+    std::string s = boost::replace_all_copy(pragma, "\\\n", "\n");
+    boost::trim(s);
+    if (!boost::ends_with(s, ";"))
+        s += ";";
+    rosetta <<"\n"
+            <<THIS_LOCATION <<"#ifndef DOCUMENTATION\n"
+            <<"    " <<shortName(c) <<"." <<s <<"\n"
+            <<"#endif // !DOCUMENTATION\n";
+    }
+}
+
+size_t
+RosettaGenerator::genRosettaPragmas(std::ostream &rosetta, const Ast::Class::Ptr &c, const Ast::Property::Ptr &p) {
+    static const std::regex re("^[ \\t]*#[ \\t]*pragma[ \\t]+rosetta[ \\t]+([\\S\\s]*)");
+    std::vector<std::string> pragmas = extractCpp(p->priorText /*in,out*/, re, 1);
+    genRosettaPragmas(rosetta, pragmas, c);
+    return pragmas.size();
+}
+
+size_t
+RosettaGenerator::genRosettaPragmas(std::ostream &rosetta, const Ast::Class::Ptr &c) {
+    static const std::regex re("^[ \\t]*#[ \\t]*pragma[ \\t]+rosetta[ \\t]+([\\S\\s]*)");
+    std::vector<std::string> pragmas = extractCpp(c->endText /*in,out*/, re, 1);
+    genRosettaPragmas(rosetta, pragmas, c);
+    return pragmas.size();
+}
+
+void
 RosettaGenerator::genClassDefinition(std::ostream &rosetta, const Ast::Class::Ptr &c, const Hierarchy &h) {
     ASSERT_not_null(c);
 
@@ -550,7 +581,10 @@ RosettaGenerator::genClassDefinition(std::ostream &rosetta, const Ast::Class::Pt
 
     genClassBegin(rosetta, c);
 
+    size_t nPragmas = 0;
     for (const auto &p: c->properties) {
+        nPragmas += genRosettaPragmas(rosetta, c, p());
+
         // Stuff in the input that's prior to the property definition should go in the "other" section of output
         header <<locationDirective(p(), p->priorTextToken) <<p->priorText;
 
@@ -560,6 +594,7 @@ RosettaGenerator::genClassDefinition(std::ostream &rosetta, const Ast::Class::Pt
 
     // If anything else is in the input class definition after the last property definition, append it to the "other" section of
     // output
+    nPragmas += genRosettaPragmas(rosetta, c);
     header <<locationDirective(c, c->endTextToken) <<c->endText;
 
     // Class constructors and destructures emitted quite late in the class definition so we're sure that all the types needed by
@@ -574,6 +609,16 @@ RosettaGenerator::genClassDefinition(std::ostream &rosetta, const Ast::Class::Pt
 
     c->cppStack->emitClose(rosetta);
     genImplFileEnd(impl, c);
+
+    // Delayed warnings
+    if (nPragmas > 0) {
+        message(WARN, c->findAncestor<Ast::File>(), c->nameToken,
+                "class " + c->name + " contains " + boost::lexical_cast<std::string>(nPragmas) + " pragma " +
+                std::string(1 == nPragmas ? "directive" : "directives") + " which should only be used only as a last resort to "
+                "achieve ROSETTA compatibility. Most of the things done with these pragmas can be done more effectively and "
+                "with less generated code by using C++ features like dynamic dispatch, template metaprogramming and "
+                "introspection.");
+    }
 }
 
 std::string

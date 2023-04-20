@@ -8,6 +8,7 @@
 
 #include <boost/filesystem.hpp>
 
+#include <regex>
 #include <string>
 #include <vector>
 
@@ -283,6 +284,12 @@ std::string locationDirective(const Ast::NodePtr&, const Token&);
  *
  *  This is done by replacing all the "::" with "_". */
 std::string toCppSymbol(const std::string&);
+
+/** Extract all matching C preprocessor directives from the text.
+ *
+ *  Modifies the string in place and returns one preprocessor directive per vector element. If capture is non-zero, then it
+ *  refers to a parenthetical capture group in the regular expression, and just that group is saved in the return vector. */
+std::vector<std::string> extractCpp(std::string&, const std::regex&, size_t capture);
 
 } // namespace
 #endif

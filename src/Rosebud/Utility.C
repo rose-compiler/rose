@@ -1,6 +1,8 @@
 #include <Rosebud/Utility.h>
 
 #include <Sawyer/GraphTraversal.h>
+#include <Sawyer/Clexer.h>
+#include <Sawyer/StaticBuffer.h>
 
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/join.hpp>
@@ -663,6 +665,37 @@ toCppSymbol(const std::string &s) {
     return std::regex_replace(s, std::regex("::|[^_a-zA-Z0-9]"), "_");
 }
 
+std::vector<std::string>
+extractCpp(std::string &s, const std::regex &re, size_t capture) {
+    std::vector<std::string> retval;
 
+    if (!s.empty()) {
+        auto buffer = Sawyer::Container::StaticBuffer<size_t, char>::instance(s.c_str(), s.size());
+        Sawyer::Language::Clexer::TokenStream tokens("-", buffer);
+        tokens.skipPreprocessorTokens(false);
+
+        std::string filtered;
+        while (true) {
+            auto token = tokens[0];
+            const std::string prior = tokens.content().contentAsString(token.prior(), token.begin());
+            if (token) {
+                const std::string lexeme = tokens.lexeme(token);
+                std::smatch found;
+                if (token.type() == Sawyer::Language::Clexer::TOK_CPP && std::regex_match(lexeme, found, re)) {
+                    filtered += prior;
+                    retval.push_back(found.str(capture));
+                } else {
+                    filtered += prior + lexeme;
+                }
+                tokens.consume();
+            } else {
+                filtered += prior;                      // non-token stuff before EOF
+                break;
+            }
+        }
+        s = filtered;
+    }
+    return retval;
+}
 
 } // namespace

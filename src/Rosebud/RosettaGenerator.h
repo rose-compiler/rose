@@ -30,6 +30,9 @@ private:
     void genRosettaFunctionEnd(std::ostream &rosetta);
     void genImplFileBegin(std::ostream &impl, const Ast::ClassPtr&);
     void genImplFileEnd(std::ostream &impl, const Ast::ClassPtr&);
+    void genRosettaPragmas(std::ostream &rosetta, const std::vector<std::string>& pragmas, const Ast::ClassPtr&);
+    size_t genRosettaPragmas(std::ostream &rosetta, const Ast::ClassPtr&, const Ast::PropertyPtr&);
+    size_t genRosettaPragmas(std::ostream &rosetta, const Ast::ClassPtr&);
     void genClassDefinition(std::ostream&, const Ast::ClassPtr&, const Hierarchy&);
     void genNonterminalMacros(std::ostream &rosetta, const Ast::ClassPtr&, const Hierarchy&);
     void genNewNonterminalMacro(std::ostream &rosetta, const Ast::ClassPtr&, const Hierarchy&);
