@@ -163,7 +163,7 @@ set(rose_LIB_OBJS
   roseStringUtility
   RoseAST
   RoseCodeGen
-  roseGenerated
+  roseGeneratedBinaryAnalysis
   mstl)
 
 set(rose_LIB_SRCS

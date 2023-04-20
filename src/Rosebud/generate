@@ -64,7 +64,7 @@ fi
 exec "$ROSEBUD_EXE" --backend=rosetta --no-warnings --no-locations \
      --rosetta-output="$RG_SRC/src/ROSETTA/src/binaryInstruction.C" \
      --rosetta-function="Grammar::setUpBinaryInstructions" \
-     --rosetta-impl="$RG_SRC/src/generated" \
+     --rosetta-impl="$RG_SRC/src/generated/BinaryAnalysis" \
      --rosetta-cpp-protection='defined(ROSE_ENABLE_BINARY_ANALYSIS)' \
      --rosetta-node-list="$RG_SRC/src/ROSETTA/astNodeList" \
      --rosetta-strict-parents \
