@@ -541,6 +541,37 @@ SgAsmCilInstruction::branchTarget() {
   return Sawyer::Nothing();
 }
 
+static AddressSet
+switchSuccessors(const SgAsmCilInstruction* insn, bool &complete) {
+  SgAsmIntegerValueExpression* ival{nullptr};
+  AddressSet retval{};
+  uint32_t nTargets{0};
+  rose_addr_t va{insn->get_address()};
+  rose_addr_t fallThrough{va + insn->get_size()};
+
+  complete = false;
+
+  CilInstructionKind kind{insn->get_kind()};
+  ASSERT_require(kind == Cil_switch);
+
+  if ((ival = isSgAsmIntegerValueExpression(insn->operand(0)))) {
+    nTargets = ival->get_value();
+  }
+  ASSERT_require(nTargets+1 == insn->nOperands());
+
+  retval.insert(fallThrough);
+
+  for (int n{1}; n < insn->nOperands(); n++) {
+    if ((ival = isSgAsmIntegerValueExpression(insn->operand(n)))) {
+      retval.insert(fallThrough + ival->get_signedValue());
+    }
+    else return AddressSet{};
+  }
+
+  complete = true;
+  return retval;
+}
+
 Rose::BinaryAnalysis::AddressSet
 SgAsmCilInstruction::getSuccessors(bool &complete) {
   complete = false;
@@ -548,9 +579,7 @@ SgAsmCilInstruction::getSuccessors(bool &complete) {
 
   switch (kind) {
     case Cil_switch:
-      // TODO:
-      // return switchSuccessors(this, complete);
-      return AddressSet{};
+      return switchSuccessors(this, complete);
 
  // A branch instruction but branch target is not immediately available
     case Cil_jmp:       // name="jmp",input="Pop0",output="Push0",args="InlineMethod",o1="0xFF",o2="0x27",flow="call"

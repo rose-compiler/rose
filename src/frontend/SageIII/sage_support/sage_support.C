@@ -1846,19 +1846,12 @@ SgProject::parse(const vector<string>& argv)
      ROSE_ASSERT(SgNode::get_globalFunctionTypeTable() != NULL);
      ROSE_ASSERT(SgNode::get_globalFunctionTypeTable()->get_parent() != NULL);
 
-#if 1
   // DQ (7/25/2010): We test the parent of SgTypeTable in the AST post processing,
   // so we need to make sure that it is set.
      SgTypeTable* typeTable = SgNode::get_globalTypeTable();
      ASSERT_not_null(typeTable);
      if (typeTable->get_parent() == nullptr)
         {
-#if 0
-          printf ("This (globalTypeTable) should have been set to point to the SgProject not the SgFile \n");
-          ROSE_ABORT();
-#endif
-       // ROSE_ASSERT(numberOfFiles() > 0);
-       // printf ("Inside of SgProject::parse(const vector<string>& argv): set the parent of SgTypeTable \n");
           if (numberOfFiles() > 0)
                typeTable->set_parent(&(get_file(0)));
             else
@@ -1866,24 +1859,15 @@ SgProject::parse(const vector<string>& argv)
         }
      ASSERT_not_null(typeTable->get_parent());
 
-  // DQ (7/30/2010): This test fails in tests/nonsmoke/functional/CompilerOptionsTests/testCpreprocessorOption
-  // DQ (7/25/2010): Added new test.
-  // printf ("typeTable->get_parent()->class_name() = %s \n",typeTable->get_parent()->class_name().c_str());
-  // ROSE_ASSERT(isSgProject(typeTable->get_parent()) != NULL);
-
-     ROSE_ASSERT(SgNode::get_globalTypeTable() != NULL);
-     ROSE_ASSERT(SgNode::get_globalTypeTable()->get_parent() != NULL);
-#endif
+     ASSERT_not_null(SgNode::get_globalTypeTable());
+     ASSERT_not_null(SgNode::get_globalTypeTable()->get_parent());
 
      return errorCode;
    }
 
 
 SgSourceFile::SgSourceFile ( vector<string> & argv , SgProject* project )
-// : SgFile (argv,errorCode,fileNameIndex,project)
    {
-  // printf ("In the SgSourceFile constructor \n");
-
      this->p_package = nullptr;
      this->p_import_list = nullptr;
      this->p_class_list = nullptr;
@@ -1898,7 +1882,6 @@ SgSourceFile::SgSourceFile ( vector<string> & argv , SgProject* project )
      set_temp_holding_scope(nullptr);
 
   // This constructor actually makes the call to EDG/OFP/ECJ to build the AST (via callFrontEnd()).
-  // printf ("In SgSourceFile::SgSourceFile(): Calling doSetupForConstructor() \n");
      doSetupForConstructor(argv,  project);
     }
 
@@ -1906,15 +1889,13 @@ int
 SgSourceFile::callFrontEnd()
    {
      int frontendErrorLevel = SgFile::callFrontEnd();
-  // DQ (1/21/2008): This must be set for all languages
+
      ASSERT_not_null(get_globalScope());
      ASSERT_not_null(get_globalScope()->get_file_info());
-     ROSE_ASSERT(get_globalScope()->get_file_info()->get_filenameString().empty() == false);
-  // printf ("p_root->get_file_info()->get_filenameString() = %s \n",p_root->get_file_info()->get_filenameString().c_str());
-
-  // DQ (8/21/2008): Added assertion.
      ASSERT_not_null (get_globalScope()->get_startOfConstruct());
      ASSERT_not_null (get_globalScope()->get_endOfConstruct()  );
+
+     ASSERT_require(get_globalScope()->get_file_info()->get_filenameString().empty() == false);
 
      return frontendErrorLevel;
    }
@@ -2065,10 +2046,6 @@ SgProject::parse()
           ROSE_ASSERT(file == vectorOfFiles[i]);
         }
 
-#if 0
-     printf ("In SgProject::parse() before AstPostProcessing() \n");
-#endif
-
   // GB (8/19/2009): Moved the AstPostProcessing call from
   // SgFile::callFrontEnd to this point. Thus, it is only called once for
   // the whole project rather than once per file. Repeated calls to
@@ -2077,7 +2054,6 @@ SgProject::parse()
   // it on, and they are meant to be used in some way other than just
   // calling the backend on them. (If only the backend is used, this was
   // never called by SgFile::callFrontEnd either.)
-  // if ( !get_fileList().empty() && !get_useBackendOnly() )
 #ifndef ROSE_USE_CLANG_FRONTEND
      if ( (get_fileList().empty() == false) && (get_useBackendOnly() == false) )
         {
@@ -3026,19 +3002,7 @@ SgFile::secondaryPassOverSourceFile()
        // Build the empty list container so that we can just add lists for new files as they are encountered
        // p_preprocessorDirectivesAndCommentsList = new ROSEAttributesListContainer();
        // ROSE_ASSERT (p_preprocessorDirectivesAndCommentsList != NULL);
-#if 1
-       // DQ (4/24/2021): Trying to debug the header file optimization support.
-       // printf ("In SgFile::secondaryPassOverSourceFile(): header_file_unparsing_optimization_header_file = %s \n",header_file_unparsing_optimization_header_file ? "true" : "false");
-#endif
 
-#if 0
-       // DQ (4/24/2021): Trying to debug the header file optimization support.
-          if (header_file_unparsing_optimization_header_file == true)
-             {
-               ASSERT_not_null(p_preprocessorDirectivesAndCommentsList);
-             }
-            else
-#endif
              {
             // DQ (9/23/2019): We need to support calling this function multiple times.
             // ROSE_ASSERT (p_preprocessorDirectivesAndCommentsList == NULL);
@@ -3060,17 +3024,10 @@ SgFile::secondaryPassOverSourceFile()
                   }
                ASSERT_not_null(p_preprocessorDirectivesAndCommentsList);
              }
-#if 0
-       // This is empty so there is nothing to display!
-          p_preprocessorDirectivesAndCommentsList->display("Secondary Source File Processing at bottom of SgFile::callFrontEnd()");
-#endif
 
        // DQ (4/19/2006): since they can take a while and includes substantial
        // file I/O we make this optional (selected from the command line).
-       // bool collectAllCommentsAndDirectives = get_collectAllCommentsAndDirectives();
-#if 0
-          printf ("get_skip_commentsAndDirectives() = %s \n",get_skip_commentsAndDirectives() ? "true" : "false");
-#endif
+
        // DQ (12/17/2008): The merging of CPP directives and comments from either the
        // source file or including all the include files is not implemented as a single
        // traversal and has been rewritten.
@@ -3081,8 +3038,6 @@ SgFile::secondaryPassOverSourceFile()
                     printf ("In SgFile::secondaryPassOverSourceFile(): calling attachAllPreprocessingInfo() \n");
                   }
 
-            // printf ("Secondary pass over source file = %s to comment comments and CPP directives \n",this->get_file_info()->get_filenameString().c_str());
-            // SgSourceFile* sourceFile = const_cast<SgSourceFile*>(this);
                SgSourceFile* sourceFile = isSgSourceFile(this);
                ASSERT_not_null(sourceFile);
 
@@ -3139,10 +3094,6 @@ SgFile::secondaryPassOverSourceFile()
                   {
                     printf ("translateCommentsAndDirectivesIntoAST option not yet supported! \n");
                     ROSE_ABORT();
-#if 0 // [Robb Matzke 2021-03-24]: unreachable
-                 // DQ (3/29/2019): This still needs to be debugged.
-                    SageInterface::translateToUseCppDeclarations(sourceFile);
-#endif
                   }
 
 #if DEBUG_SECONDARY_PASS
