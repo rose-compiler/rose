@@ -6219,7 +6219,7 @@ ATbool ATermToSageJovialTraversal::traverse_Variable(ATerm term, SgExpression* &
        sage_tree_builder.Leave(func_call);
        var = func_call;
      }
-     else if (isSgClassSymbol(symbol)) {
+     else if (isSgClassSymbol(symbol) || isSgTypedefSymbol(symbol)) {
        var = SageBuilder::buildTypeExpression(symbol->get_type());
      }
      // This probably should be "else" rather than "else if" but want to know what symbols are used
