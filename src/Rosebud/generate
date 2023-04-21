@@ -61,12 +61,24 @@ fi
 [ -f "$RG_SRC/src/Rosebud/rosebud.C" ] ||
     die "cannot find top of ROSE source tree at \"$RG_SRC\""
 
-exec "$ROSEBUD_EXE" --backend=rosetta --no-warnings --no-locations \
-     --rosetta-output="$RG_SRC/src/ROSETTA/src/binaryInstruction.C" \
-     --rosetta-function="Grammar::setUpBinaryInstructions" \
-     --rosetta-impl="$RG_SRC/src/generated/BinaryAnalysis" \
-     --rosetta-cpp-protection='defined(ROSE_ENABLE_BINARY_ANALYSIS)' \
-     --rosetta-node-list="$RG_SRC/src/ROSETTA/astNodeList" \
-     --rosetta-strict-parents \
-     "$@" \
-     "$RG_SRC"/src/AstNodes/BinaryAnalysis/*.h
+"$ROSEBUD_EXE" --no-warnings --no-locations \
+	       --backend=rosetta --serializer=boost \
+	       --rosetta-output="$RG_SRC/src/ROSETTA/src/binaryInstruction.C" \
+	       --rosetta-function="Grammar::setUpBinaryInstructions" \
+	       --rosetta-impl="$RG_SRC/src/generated/BinaryAnalysis" \
+	       --rosetta-cpp-protection='defined(ROSE_ENABLE_BINARY_ANALYSIS)' \
+	       --rosetta-node-list="$RG_SRC/src/ROSETTA/astNodeList" \
+	       --rosetta-strict-parents \
+	       "$@" \
+	       "$RG_SRC"/src/AstNodes/BinaryAnalysis/*.h
+
+"$ROSEBUD_EXE" --warnings --no-locations \
+	       --backend=rosetta --serializer=none \
+	       --rosetta-output="$RG_SRC/src/ROSETTA/src/jovialNodes.C" \
+	       --rosetta-function="Grammar::setUpJovialNodes" \
+	       --rosetta-impl="$RG_SRC/src/generated/Jovial" \
+	       --rosetta-cpp-protection='' \
+	       --rosetta-node-list="$RG_SRC/src/ROSETTA/astNodeList" \
+	       --rosetta-strict-parents \
+	       "$@" \
+	       "$RG_SRC"/src/AstNodes/Jovial/*.h

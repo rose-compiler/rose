@@ -164,6 +164,7 @@ set(rose_LIB_OBJS
   RoseAST
   RoseCodeGen
   roseGeneratedBinaryAnalysis
+  roseGeneratedJovial
   mstl)
 
 set(rose_LIB_SRCS

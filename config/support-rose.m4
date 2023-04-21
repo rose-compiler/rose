@@ -1996,6 +1996,7 @@ src/Rose/Makefile
 src/Rosebud/Makefile
 src/generated/Makefile
 src/generated/BinaryAnalysis/Makefile
+src/generated/Jovial/Makefile
 src/ROSETTA/Makefile
 src/ROSETTA/src/Makefile
 src/backend/Makefile
