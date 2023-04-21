@@ -901,9 +901,12 @@ parseClassDefinition(const Ast::File::Ptr &file, Ast::CppStack::Stack &runningCp
     return c;
 }
 
-static void
-parseFile(const Ast::File::Ptr &file) {
-    ASSERT_not_null(file);
+static Ast::File::Ptr
+parseFile(const std::string &fileName) {
+    auto file = Ast::File::instance(fileName);
+    if (!file)
+        return {};
+
     size_t filePos = 0;
     Ast::CppStack::Stack runningCppStack;
     std::vector<Token> nestingStack;
@@ -937,6 +940,8 @@ parseFile(const Ast::File::Ptr &file) {
     // Warn about file problems
     if (file->classes.empty())
         message(WARN, file, "file contains to class definitions");
+
+    return file;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -958,9 +963,8 @@ int main(int argc, char *argv[]) {
     // Parse the input files to produce the AST
     auto project = Ast::Project::instance();
     for (const std::string &arg: args) {
-        auto file = Ast::File::instance(arg);
-        project->files.push_back(file);
-        parseFile(file);
+        if (auto file = parseFile(arg))
+            project->files.push_back(file);
     }
 
     // Additional warnings that we can't check until all the files are parsed

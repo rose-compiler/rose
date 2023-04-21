@@ -247,7 +247,7 @@ File::instance(const std::string &name) {
     std::ifstream test(name.c_str());
     if (!test) {
         message(FATAL, "unable to open file for reading: \"" + name + "\"");
-        exit(1);
+        return {};
     } else {
         return Ptr(new File(name));
     }
