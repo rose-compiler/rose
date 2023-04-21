@@ -10,4 +10,4 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 AM_CPPFLAGS = $(ROSE_INCLUDES)
 noinst_LTLIBRARIES = libroseGeneratedJovial.la
 libroseGeneratedJovial_la_SOURCES = \
-    stub.C
+        SgJovialBitVal.C
