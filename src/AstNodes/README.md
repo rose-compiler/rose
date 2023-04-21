@@ -9,7 +9,7 @@ inputs to the `rosebud` tool. The Rosebud system is described here.
 Generating code
 ---------------
 
-See $ROSE_SRC/src/generated/A_README.md for instructions.
+See $ROSE_SRC/src/generated/README.md for instructions.
 
 The input language
 ------------------
