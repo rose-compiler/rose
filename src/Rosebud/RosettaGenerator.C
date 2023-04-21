@@ -207,7 +207,7 @@ void
 RosettaGenerator::genRosettaFunctionEnd(std::ostream &rosetta) {
     rosetta <<"\n"
             <<THIS_LOCATION <<"#ifndef DOCUMENTATION\n"
-            <<"} // Grammar::setUpBinaryInstruction\n"
+            <<"} // " <<grammarFunctionName <<"\n"
             <<"#endif // !DOCUMENTATION\n";
 }
 
@@ -640,7 +640,8 @@ RosettaGenerator::genClassDefinition(std::ostream &rosetta, const Ast::Class::Pt
                 std::string(1 == nPragmas ? "directive" : "directives") + " which should only be used only as a last resort to "
                 "achieve ROSETTA compatibility. Most of the things done with these pragmas can be done more effectively and "
                 "with less generated code by using C++ features like dynamic dispatch, template metaprogramming and "
-                "introspection.");
+                "introspection. The presence of ROSETTA-specific pragmas will likely hinder our ability to write other code "
+                "generators using the Rosebud framework.");
     }
 }
 

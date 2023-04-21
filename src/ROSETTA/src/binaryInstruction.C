@@ -9136,9 +9136,6 @@ public:
     void set_kind(Rose::BinaryAnalysis::JvmInstructionKind const&);
     /** @} */
 public:
-    // Make a (moderately deep copy of this instruction.
-    SgAsmJvmInstruction* copy() const;
-
     // Overrides are documented in the base class
     virtual std::string description() const override;
     virtual bool terminatesBasicBlock() override;
@@ -39214,6 +39211,6 @@ protected:
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
-} // Grammar::setUpBinaryInstruction
+} // Grammar::setUpBinaryInstructions
 #endif // !DOCUMENTATION
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)
