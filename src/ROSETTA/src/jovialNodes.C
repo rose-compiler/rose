@@ -58,11 +58,84 @@ DOCUMENTATION_should_never_be_defined;
 // base down to the leaves, we need to make sure that doxygen sees the base classes before the derived classes. So
 // just list all the non-leaf classes here.
 #ifdef DOCUMENTATION
+class SgValueExp;
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
 void Grammar::setUpJovialNodes() {
 #endif // !DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgJovialBitVal           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(JovialBitVal);
+
+#ifdef DOCUMENTATION
+class SgJovialBitVal: public SgValueExp {
+#endif // DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    JovialBitVal.setDataPrototype(
+        "std::string", "valueString", "",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    JovialBitVal.setFunctionSource("SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code");
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    JovialBitVal.setFunctionPrototype("HEADER_JOVIAL_BIT_VALUE_EXPRESSION", "../Grammar/Expression.code");
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    JovialBitVal.setFunctionSource("SOURCE_JOVIAL_BIT_VALUE_EXPRESSION","../Grammar/Expression.code");
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    JovialBitVal.setFunctionSource("SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code");
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    JovialBitVal.editSubstitute("GENERIC_TYPE", "SgJovialBitType");
+#endif // !DOCUMENTATION
+
+    DECLARE_OTHERS(JovialBitVal);
+#if defined(SgJovialBitVal_OTHERS) || defined(DOCUMENTATION)
+
+public:
+    std::string const& get_valueString() const;
+    void set_valueString(std::string const&);
+    // FIXME[Robb Matzke 2023-04-21]: These pragmas are compatibility of last resort. Please remove when possible because in my
+    // experience most of this stuff doesn't need to be generated--it can be written directly in C++ using virtual functions,
+    // template meta programming, and introspection rather than text substitution.
+
+public:
+    /** Destructor. */
+    virtual ~SgJovialBitVal();
+
+public:
+    /** Default constructor. */
+    SgJovialBitVal();
+
+public:
+    /** Constructor. */
+    explicit SgJovialBitVal(std::string const& valueString);
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgJovialBitVal_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
 } // Grammar::setUpBinaryInstruction

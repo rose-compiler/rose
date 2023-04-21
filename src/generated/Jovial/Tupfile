@@ -7,4 +7,4 @@
 
 include_rules
 run $(librose_compile) \
-    stub.C
+    SgJovialBitVal.C
