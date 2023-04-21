@@ -140,6 +140,11 @@ class AstNodeClass
   std::vector<GrammarString *> & getEditSubstituteTargetList( int i, int j ) const;
   std::vector<GrammarString *> & getEditSubstituteSourceList( int i, int j ) const;
 
+  // Add additional derived class. The overload that takes a pointer had better not be a reference to a local variable! This is
+  // par for the ROSETTA code quality--there are other places that do similar things.
+  void insertDerivedClass(AstNodeClass*);
+  void insertDerivedClass(std::vector<AstNodeClass*> &terminalList, const std::string &name);
+
   // Setup functions and data within the implementation
   // of the grammar represented by this nonTerminal
   void setFunctionPrototype        ( const GrammarString & memberFunction );

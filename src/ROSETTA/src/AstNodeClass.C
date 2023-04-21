@@ -17,7 +17,6 @@ using namespace Rose;
 // ################################################################
 
 SubclassListBuilder& SubclassListBuilder::operator|(const AstNodeClass& t) {
-  ROSE_ASSERT (&t);
   children.push_back(const_cast<AstNodeClass*>(&t));
   return *this;
 }
@@ -40,7 +39,8 @@ AstNodeClass::~AstNodeClass()
    {
    }
 
-AstNodeClass::AstNodeClass ( const string& lexemeString , Grammar & X , const string& stringVar, const string& tagString, bool canHaveInstances, const SubclassListBuilder & builder )
+AstNodeClass::AstNodeClass(const string& lexemeString , Grammar & X , const string& stringVar, const string& tagString,
+                           bool canHaveInstances, const SubclassListBuilder & builder)
    : name((stringVar.empty() ? lexemeString : stringVar)),
      baseName((stringVar.empty() ? lexemeString : stringVar)),
      baseClass(NULL),
@@ -59,17 +59,30 @@ AstNodeClass::AstNodeClass ( const string& lexemeString , Grammar & X , const st
      p_isBoostSerializable(false),
      generateEssentialDataMembersConstructorImplementation(false),
      generateEnforcedDefaultConstructorImplementation(false)
-   {
-     for (size_t i = 0; i < subclasses.size(); ++i) {
-       // If the next assertion fails, it's probably because you have an IR type that appears in more than one
-       // NEW_NONTERMINAL_MACRO() [Robb P. Matzke 2014-05-07]
-       ROSE_ASSERT (subclasses[i]->getBaseClass() == NULL);
-       ROSE_ASSERT (subclasses[i]);
-       subclasses[i]->setBaseClass(this);
-     }
-     X.addGrammarElement(*this);
-     ROSE_ASSERT(associatedGrammar != NULL);
-   }
+{
+    for (AstNodeClass *subclass: this->subclasses) {
+        ROSE_ASSERT(subclass != nullptr);
+        ROSE_ASSERT(subclass->getBaseClass() == nullptr);
+        subclass->setBaseClass(this);
+    }
+    X.addGrammarElement(*this);
+    ROSE_ASSERT(associatedGrammar != NULL);
+}
+
+void
+AstNodeClass::insertDerivedClass(AstNodeClass *derivedClass) {
+    ROSE_ASSERT(derivedClass != nullptr);
+    ROSE_ASSERT(derivedClass->getBaseClass() == nullptr);
+    subclasses.push_back(derivedClass);
+    derivedClass->setBaseClass(this);
+}
+
+void
+AstNodeClass::insertDerivedClass(std::vector<AstNodeClass*> &terminalList, const std::string &name) {
+    AstNodeClass *derived = lookupTerminal(terminalList, name);
+    ROSE_ASSERT(derived != nullptr);
+    insertDerivedClass(derived);
+}
 
 const std::string&
 AstNodeClass::getCppCondition() const {
