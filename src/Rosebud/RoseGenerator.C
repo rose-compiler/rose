@@ -13,12 +13,27 @@ using namespace Sawyer::Message::Common;
 
 namespace Rosebud {
 
+RoseGenerator::Ptr
+RoseGenerator::instance() {
+    return Ptr(new RoseGenerator);
+}
+
+std::string
+RoseGenerator::name() const {
+    return "rose";
+}
+
+std::string
+RoseGenerator::purpose() const {
+    return "Experimental backend to generate ROSE code directly without using ROSETTA.";
+}
+
 void
 RoseGenerator::adjustParser(Sawyer::CommandLine::Parser &parser) {
     using namespace Sawyer::CommandLine;
 
-    SwitchGroup sg("ROSE backend (--backend=rose)");
-    sg.name("rose");
+    SwitchGroup sg("ROSE backend (--backend=" + name() + ")");
+    sg.name(name());
     sg.doc("This backend generates code directly without sending it through ROSETTA. It's goal is to generate a more modern style "
            "of tree data structures where node memory is managed and parent pointers are automatic.\n\n"
 

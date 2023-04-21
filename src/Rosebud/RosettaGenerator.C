@@ -18,12 +18,27 @@ using namespace Sawyer::Message::Common;
 
 namespace Rosebud {
 
+RosettaGenerator::Ptr
+RosettaGenerator::instance() {
+    return Ptr(new RosettaGenerator);
+}
+
+std::string
+RosettaGenerator::name() const {
+    return "rosetta";
+}
+
+std::string
+RosettaGenerator::purpose() const {
+    return "Generate code according to Robb's single-file ROSETTA kludge.";
+}
+
 void
 RosettaGenerator::adjustParser(Sawyer::CommandLine::Parser &parser) {
     using namespace Sawyer::CommandLine;
 
-    SwitchGroup sg("ROSETTA backend for IR/AST nodes (--backend=rosetta)");
-    sg.name("rosetta");
+    SwitchGroup sg("ROSETTA backend for IR/AST nodes (--backend=" + name() + ")");
+    sg.name(name());
     sg.doc("The ultimate goal is to remove the legacy ROSETTA system from ROSE and replace its monolithic features with "
            "small, simple, specialized code generators each serving a very specific and well defined purpose, and each having "
            "a dedicated ROSE team member as its responsible maintainer. However, since ROSETTA is large (more than 100k LOC), "
@@ -446,7 +461,11 @@ RosettaGenerator::genOtherContent(std::ostream &rosetta, const Ast::Class::Ptr &
         rosetta <<"\n"
                 <<THIS_LOCATION <<"    DECLARE_OTHERS(" <<shortName(c) <<");\n"
                 <<"#if defined(" <<c->name <<"_OTHERS) || defined(DOCUMENTATION)\n";
-        BoostSerializer().generate(rosetta, rosetta, c, *this);
+
+        auto serializer = Serializer::lookup(settings.serializer);
+        ASSERT_not_null(serializer);
+        serializer->generate(rosetta, rosetta, c, *this);
+
         rosetta <<content
                 <<"#endif // " <<c->name <<"_OTHERS\n";
     }
@@ -501,8 +520,12 @@ void
 RosettaGenerator::genLeafMacros(std::ostream &rosetta, const Ast::Class::Ptr &c) {
     ASSERT_not_null(c);
 
-    rosetta <<THIS_LOCATION <<"DECLARE_LEAF_CLASS(" <<shortName(c) <<");\n"
-            <<"IS_SERIALIZABLE(" <<shortName(c) <<");\n";
+    rosetta <<THIS_LOCATION <<"DECLARE_LEAF_CLASS(" <<shortName(c) <<");\n";
+
+    auto serializer = Serializer::lookup(settings.serializer);
+    ASSERT_not_null(serializer);
+    if (serializer->isSerializable(c))
+        rosetta <<THIS_LOCATION <<"IS_SERIALIZABLE(" <<shortName(c) <<");\n";
 }
 
 void

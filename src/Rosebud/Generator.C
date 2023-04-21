@@ -1,6 +1,57 @@
 #include <Rosebud/Generator.h>
 
+#include <Rosebud/NoneGenerator.h>
+#include <Rosebud/RoseGenerator.h>
+#include <Rosebud/RosettaGenerator.h>
+#include <Rosebud/YamlGenerator.h>
+
+#include <boost/range/adaptor/reversed.hpp>
+
 namespace Rosebud {
+
+std::vector<Generator::Ptr>
+Generator::registry_;
+
+void
+Generator::initRegistry() {
+    static bool initialized = false;
+    if (!initialized) {
+        registry_.push_back(YamlGenerator::instance());
+        registry_.push_back(RosettaGenerator::instance());
+        registry_.push_back(RoseGenerator::instance());
+        registry_.push_back(NoneGenerator::instance());
+        initialized = true;
+    }
+}
+
+void
+Generator::registerGenerator(const Ptr &generator) {
+    ASSERT_not_null(generator);
+    initRegistry();
+    registry_.push_back(generator);
+}
+
+const std::vector<Generator::Ptr>&
+Generator::registeredGenerators() {
+    initRegistry();
+    return registry_;
+}
+
+Generator::Ptr
+Generator::lookup(const std::string &name) {
+    initRegistry();
+    for (const Ptr &generator: boost::adaptors::reverse(registry_)) {
+        if (generator->name() == name)
+            return generator;
+    }
+    return {};
+}
+
+void
+Generator::addAllToParser(Sawyer::CommandLine::Parser &parser) {
+    for (const Ptr &generator: registry_)
+        generator->adjustParser(parser);
+}
 
 std::string
 Generator::propertyDataMemberName(const Ast::Property::Ptr &p) const {

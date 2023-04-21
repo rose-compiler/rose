@@ -6,6 +6,10 @@ namespace Rosebud {
 
 /** Generator that produces ROSETTA output. */
 class RosettaGenerator: public CxxGenerator {
+public:
+    using Ptr = std::shared_ptr<RosettaGenerator>;
+
+private:
     boost::filesystem::path rosettaFileName;            // optional name of file into which ROSETTA source code is written
     boost::filesystem::path implDirectoryName;          // optional name of directory where node implementation files are created
     boost::filesystem::path nodeListFileName;           // optional name of file that contains list of all node types
@@ -13,7 +17,13 @@ class RosettaGenerator: public CxxGenerator {
     std::string cppProtection;                          // conditional compilation expression protecting all generated code
     bool strictParents = false;                         // generate extra parent pointer checks and adjustments
 
+protected:
+    RosettaGenerator() {}
+
 public:
+    static Ptr instance();
+    virtual std::string name() const override;
+    virtual std::string purpose() const override;
     virtual void adjustParser(Sawyer::CommandLine::Parser&) override;
     virtual void generate(const Ast::ProjectPtr&) override;
     virtual std::string propertyDataMemberName(const Ast::PropertyPtr&p) const override;

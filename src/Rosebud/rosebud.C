@@ -3,10 +3,9 @@ static const char* gDescription =
     "Not written yet.";
 
 #include <Rosebud/Ast.h>
+#include <Rosebud/Generator.h>
+#include <Rosebud/Serializer.h>
 #include <Rosebud/Utility.h>
-#include <Rosebud/RoseGenerator.h>
-#include <Rosebud/RosettaGenerator.h>
-#include <Rosebud/YamlGenerator.h>
 
 #include <Sawyer/CommandLine.h>
 
@@ -75,16 +74,24 @@ makeCommandLineParser() {
                 .doc("Show debugging output."));
 
     parser.with(Switch("backend")
-                .argument("generator", enumParser<Backend>(settings.backend)
-                          ->with("yaml", Backend::YAML)
-                          ->with("rosetta", Backend::ROSETTA)
-                          ->with("rose", Backend::ROSE)
-                          ->with("none", Backend::NONE))
-                .doc("How to generate code. The choices are:"
-                     "@named{yaml}{Generate YAML output that can be parsed by standalone backends.}"
-                     "@named{rosetta}{Generate code according to Robb's single-file ROSETTA kludge.}"
-                     "@named{rose}{Experimental backend to generate ROSE code directly.}"
-                     "@named{none}{Do not generate code, but only check the input.}"));
+                .argument("name", anyParser(settings.backend))
+                .doc("Name of the backend used to generate code. The choices are:" +
+                     []() {
+                         std::string choices;
+                         for (const Generator::Ptr &generator: Generator::registeredGenerators())
+                             choices += "@named{" + generator->name() + "}{" + generator->purpose() + "}";
+                         return choices;
+                     }()));
+
+    parser.with(Switch("serializer")
+                .argument("name", anyParser(settings.serializer))
+                .doc("Name of the serialization code generator. The choices are:" +
+                     []() {
+                         std::string choices;
+                         for (const Serializer::Ptr &serializer: Serializer::registeredSerializers())
+                             choices += "@named{" + serializer->name() + "}{" + serializer->purpose() + "}";
+                         return choices;
+                     }()));
 
     parser.with(Switch("locations")
                 .intrinsicValue(true, settings.showingLocations)
@@ -106,6 +113,15 @@ makeCommandLineParser() {
                 .intrinsicValue(false, settings.showingWarnings)
                 .key("warnings")
                 .hidden(true));
+
+    if (!Generator::lookup(settings.backend)) {
+        message(FATAL, "invalid backend code generator \"" + settings.backend + "\"; see --help\n");
+        exit(1);
+    }
+    if (!Serializer::lookup(settings.serializer)) {
+        message(FATAL, "invalid serialization code generator \"" + settings.serializer + "\"; see --help\n");
+        exit(1);
+    }
 
     return parser;
 }
@@ -936,12 +952,7 @@ int main(int argc, char *argv[]) {
 
     // Parse the command-line
     Sawyer::CommandLine::Parser cmdlineParser = makeCommandLineParser();
-    YamlGenerator yamlGenerator;
-    yamlGenerator.adjustParser(cmdlineParser);
-    RosettaGenerator rosettaGenerator;
-    rosettaGenerator.adjustParser(cmdlineParser);
-    RoseGenerator roseGenerator;
-    roseGenerator.adjustParser(cmdlineParser);
+    Generator::addAllToParser(cmdlineParser);
     const std::vector<std::string> args = parseCommandLine(cmdlineParser, argc, argv);
 
     // Parse the input files to produce the AST
@@ -964,17 +975,9 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    switch (settings.backend) {
-        case Backend::YAML:
-            yamlGenerator.generate(project);
-            break;
-        case Backend::ROSETTA:
-            rosettaGenerator.generate(project);
-            break;
-        case Backend::ROSE:
-            roseGenerator.generate(project);
-            break;
-        case Backend::NONE:
-            break;
-    }
+    Generator::Ptr generator = Generator::lookup(settings.backend);
+    ASSERT_not_null(generator);
+    generator->generate(project);
+
+    return nErrors > 0 ? 1 : 0;
 }

@@ -27,7 +27,9 @@ enum class When {
 };
 
 class Generator;
+using GeneratorPtr = std::shared_ptr<Generator>;        /**< Shared-ownership pointer to a @ref Generator. */
 class Serializer;
+using SerializerPtr = std::shared_ptr<Serializer>;      /**< Shared-ownership pointer to a @ref Serializer. */
 
 // AST node types
 namespace Ast {
