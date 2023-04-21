@@ -703,8 +703,15 @@ RosettaGenerator::genTupFile(const std::vector<std::string> &implFileNames) {
             <<"include_rules\n"
             <<"run $(librose_compile)";
 
-        for (const std::string &fileName: implFileNames)
-            out <<" \\\n    " <<fileName;
+        if (implFileNames.empty()) {
+            // Create at least one stub file, otherwise some problems might arise building the intermediate library.
+            std::ofstream stub((implDirectoryName / "stub.C").c_str());
+            stub <<THIS_LOCATION <<"static void stub() {}\n";
+            out <<" \\\n    stub.C";
+        } else {
+            for (const std::string &fileName: implFileNames)
+                out <<" \\\n    " <<fileName;
+        }
 
         out <<"\n";
     }
@@ -733,8 +740,16 @@ RosettaGenerator::genMakeFile(const std::vector<std::string> &implFileNames) {
             <<"noinst_LTLIBRARIES = " <<libraryName <<".la\n"
             <<libraryName <<"_la_SOURCES =";
 
-        for (const std::string &fileName: implFileNames)
-            out <<" \\\n        " <<fileName;
+        if (implFileNames.empty()) {
+            // Create at least one stub file, otherwise some problems might arise building the intermediate library.
+            std::ofstream stub((implDirectoryName / "stub.C").c_str());
+            stub <<THIS_LOCATION <<"static void stub() {}\n";
+            out <<" \\\n    stub.C";
+        } else {
+            for (const std::string &fileName: implFileNames)
+                out <<" \\\n        " <<fileName;
+        }
+
         out <<"\n";
     }
 }
@@ -757,8 +772,17 @@ RosettaGenerator::genCmakeFile(const std::vector<std::string> &implFileNames) {
             <<"#\n"
             <<"\n"
             <<"add_library(roseGenerated OBJECT";
-        for (const std::string &fileName: implFileNames)
-            out <<"\n  " <<fileName;
+
+        if (implFileNames.empty()) {
+            // Create at least one stub file, otherwise some problems might arise building the intermediate library.
+            std::ofstream stub((implDirectoryName / "stub.C").c_str());
+            stub <<THIS_LOCATION <<"static void stub() {}\n";
+            out <<"\n  stub.C";
+        } else {
+            for (const std::string &fileName: implFileNames)
+                out <<"\n  " <<fileName;
+        }
+
         out <<")\n"
             <<"\n"
             <<"add_dependencies(" <<libraryName <<" rosetta_generated)\n";

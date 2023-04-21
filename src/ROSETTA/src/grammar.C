@@ -104,6 +104,7 @@ Grammar::Grammar ( const string& inputGrammarName,
      ROSE_ASSERT (this->astNodeToVariantMap.size() >= 10); // A reasonable count
 
   // Build up the terminals and nonTerminals defined within the default C++ grammar (using SAGE)
+     setUpJovialNodes();
      setUpSupport();
      setUpTypes();
      setUpStatements();
