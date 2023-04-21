@@ -14,8 +14,11 @@ rosebud_SOURCES =				\
 	BoostSerializer.C			\
 	CxxGenerator.C				\
 	Generator.C				\
+	NoneGenerator.C				\
+	NoneSerializer.C			\
 	RoseGenerator.C				\
 	RosettaGenerator.C			\
+	Serializer.C				\
 	Utility.C				\
 	YamlGenerator.C
 rosebud_LDADD = $(top_builddir)/src/util/Sawyer/libroseSawyer.la $(ROSE_BOOST_LIBS) $(RT_LIBS)
@@ -28,6 +31,8 @@ headers =					\
 	BoostSerializer.h			\
 	CxxGenerator.h				\
 	Generator.h				\
+	NoneGenerator.h				\
+	NoneSerializer.h			\
 	RoseGenerator.h				\
 	RosettaGenerator.h			\
 	Serializer.h				\

@@ -8,6 +8,26 @@
 
 namespace Rosebud {
 
+BoostSerializer::Ptr
+BoostSerializer::instance() {
+    return Ptr(new BoostSerializer);
+}
+
+std::string
+BoostSerializer::name() const {
+    return "boost";
+}
+
+std::string
+BoostSerializer::purpose() const {
+    return "Generates boost::serialization code.";
+}
+
+bool
+BoostSerializer::isSerializable(const Ast::Class::Ptr&) const {
+    return true;
+}
+
 void
 BoostSerializer::generate(std::ostream &header, std::ostream &impl, const Ast::Class::Ptr &c,
                           const Generator &generator) const {

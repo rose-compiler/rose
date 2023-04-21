@@ -16,14 +16,6 @@
 
 namespace Rosebud {
 
-/** Kinds of built-in code generators. */
-enum class Backend {
-    YAML,                                               /**< Generate a machine-readable YAML representation of the IR. */
-    ROSETTA,                                            /**< Generate code that's backward compatible with ROSETTA. */
-    ROSE,                                               /**< Generate pure C++. */
-    NONE                                                /**< Do not generate code; only check the input. */
-};
-
 /** Kinds of access. */
 enum class Access {
     PRIVATE,                                            /**< Like C++ @c private access. */
@@ -33,7 +25,8 @@ enum class Access {
 
 /** Command-line settings for the rosebud tool. */
 struct Settings {
-    Backend backend = Backend::YAML;                    /**< Kind of backend to use. */
+    std::string backend = "yaml";                       /**< Name of main backend code generator to use. */
+    std::string serializer = "boost";                   /**< Name of the serializer code generator to use. */
     bool showingWarnings = true;                        /**< Show warnings about the input. */
     bool showingLocations = true;                       /**< Output should show source location from whence it came. */
     bool debugging = false;                             /**< Generate additional debugging output. */

@@ -8,9 +8,19 @@ namespace Rosebud {
 class RoseGenerator: public CxxGenerator {
     using Base = CxxGenerator;
 
+public:
+    using Ptr = std::shared_ptr<RoseGenerator>;
+
+private:
     boost::filesystem::path generatedDir;               // directory where generated files are written
 
+protected:
+    RoseGenerator() {}
+
 public:
+    static Ptr instance();
+    virtual std::string name() const override;
+    virtual std::string purpose() const override;
     virtual void adjustParser(Sawyer::CommandLine::Parser&) override;
     virtual void generate(const Ast::ProjectPtr&) override;
 

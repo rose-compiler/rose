@@ -1,18 +1,18 @@
-#ifndef Rosebud_BoostSerializer_H
-#define Rosebud_BoostSerializer_H
+#ifndef Rosebud_NoneSerializer_H
+#define Rosebud_NoneSerializer_H
 #include <Rosebud/Serializer.h>
 
 namespace Rosebud {
 
-/** Class serializer using Boost Serialization.
+/** Class serializer using None Serialization.
  *
  *  This serializer generates code for boost::serialization. */
-class BoostSerializer: public Serializer {
+class NoneSerializer: public Serializer {
 public:
-    using Ptr = std::shared_ptr<BoostSerializer>;
+    using Ptr = std::shared_ptr<NoneSerializer>;
 
 protected:
-    BoostSerializer() {}
+    NoneSerializer() {}
 
 public:
     static Ptr instance();

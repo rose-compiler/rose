@@ -6,12 +6,27 @@
 
 namespace Rosebud {
 
+YamlGenerator::Ptr
+YamlGenerator::instance() {
+    return Ptr(new YamlGenerator);
+}
+
+std::string
+YamlGenerator::name() const {
+    return "yaml";
+}
+
+std::string
+YamlGenerator::purpose() const {
+    return "Generate YAML output that can be parsed by standalone backends.";
+}
+
 void
 YamlGenerator::adjustParser(Sawyer::CommandLine::Parser &parser) {
     using namespace Sawyer::CommandLine;
 
-    SwitchGroup sg("YAML backend (--backend=yaml)");
-    sg.name("yaml");
+    SwitchGroup sg("YAML backend (--backend=" + name() + ")");
+    sg.name(name());
     sg.doc("This backend produces a YAML file that describes the input. Its purpose is to make it easier to write tools that "
            "generate code since these tools do not need to be able to parse the Rosebud C++-like input language, but rather "
            "the easily parsed YAML representation of that input. Most mainstream source languages have good YAML parsing "
