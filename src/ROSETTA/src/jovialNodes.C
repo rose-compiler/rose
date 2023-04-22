@@ -84,21 +84,9 @@ class SgJovialBitVal: public SgValueExp {
 
 #ifndef DOCUMENTATION
     JovialBitVal.setFunctionSource("SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code");
-#endif // !DOCUMENTATION
-
-#ifndef DOCUMENTATION
     JovialBitVal.setFunctionPrototype("HEADER_JOVIAL_BIT_VALUE_EXPRESSION", "../Grammar/Expression.code");
-#endif // !DOCUMENTATION
-
-#ifndef DOCUMENTATION
     JovialBitVal.setFunctionSource("SOURCE_JOVIAL_BIT_VALUE_EXPRESSION","../Grammar/Expression.code");
-#endif // !DOCUMENTATION
-
-#ifndef DOCUMENTATION
     JovialBitVal.setFunctionSource("SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code");
-#endif // !DOCUMENTATION
-
-#ifndef DOCUMENTATION
     JovialBitVal.editSubstitute("GENERIC_TYPE", "SgJovialBitType");
 #endif // !DOCUMENTATION
 
@@ -138,5 +126,5 @@ protected:
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
-} // Grammar::setUpBinaryInstruction
+} // Grammar::setUpJovialNodes
 #endif // !DOCUMENTATION

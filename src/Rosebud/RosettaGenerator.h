@@ -34,6 +34,7 @@ private:
     boost::filesystem::path fileWrtRose(const boost::filesystem::path&);
     std::string shortName(const Ast::ClassPtr&);
     std::string rosettaBaseClass(const Ast::ClassPtr&);
+    bool isBaseClass(const Ast::ClassPtr&, const Hierarchy&);
     void genRosettaFileBegin(std::ostream &rosetta);
     void genRosettaFileEnd(std::ostream &rosetta);
     void genRosettaFunctionBegin(std::ostream &rosetta);
