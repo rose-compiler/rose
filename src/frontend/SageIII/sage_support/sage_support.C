@@ -1689,7 +1689,7 @@ SgProject::parseCommandLine(std::vector<std::string> argv)
   // [Robb P Matzke 2016-09-27]
      p.with(SgProject::frontendAllSwitches()); // or similar
 
- // DQ (4/10/2017): Added seperate function for backend command line switches.
+ // DQ (4/10/2017): Added separate function for backend command line switches.
      p.with(SgProject::backendAllSwitches()); // or similar
 
   // Finally, a tool sometimes has its own specific settings, so we demo that here with a couple made-up switches.
@@ -1930,49 +1930,25 @@ SgProject::parse()
      printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
 #endif
 
-#if 0
-     printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
-#endif
-
      Rose_STL_Container<string>::iterator nameIterator = p_sourceFileNameList.begin();
      unsigned int i = 0;
 
-  // The goal in this version of the code is to seperate the construction of the SgFile objects
+  // The goal in this version of the code is to separate the construction of the SgFile objects
   // from the invocation of the frontend on each of the SgFile objects.  In general this allows
   // the compilation to reference the other SgFile objects on an as needed basis as part of running
   // the frontend.  This is important for the optimization of Java.
      std::vector<SgFile*> vectorOfFiles;
      while (nameIterator != p_sourceFileNameList.end())
         {
-#if 0
-          printf ("Build a SgFile object for file #%d \n",i);
-#endif
           int nextErrorCode = 0;
 
-       // DQ (4/20/2006): Exclude other files from list in argc and argv
+       // Exclude other files from list in argc and argv
           vector<string> argv = get_originalCommandLineArgumentList();
           string currentFileName = *nameIterator;
-#if 0
-          printf ("In SgProject::parse(): before removeAllFileNamesExcept() file = %s argv = %s \n",
-               currentFileName.c_str(),CommandlineProcessing::generateStringFromArgList(argv,false,false).c_str());
-#endif
           CommandlineProcessing::removeAllFileNamesExcept(argv,p_sourceFileNameList,currentFileName);
-#if 0
-          printf ("In SgProject::parse(): after removeAllFileNamesExcept() from command line for file = %s argv = %s \n",
-               currentFileName.c_str(),CommandlineProcessing::generateStringFromArgList(argv,false,false).c_str());
-          printf ("currentFileName = %s \n",currentFileName.c_str());
-#endif
-       // DQ (11/13/2008): Removed overly complex logic here!
-#if 0
-          printf ("In SgProject::parse(): Calling determineFileType() currentFileName = %s \n",currentFileName.c_str());
-#endif
+
           SgFile* newFile = determineFileType(argv, nextErrorCode, this);
           ASSERT_not_null(newFile);
-#if 0
-          printf ("+++++++++++++++ DONE: Calling determineFileType() currentFileName = %s \n",currentFileName.c_str());
-          printf ("In SgProject::parse(): newFile = %p = %s \n",newFile,newFile->class_name().c_str());
-#endif
           ASSERT_not_null(newFile->get_startOfConstruct());
           ASSERT_not_null(newFile->get_parent());
 
@@ -1982,22 +1958,14 @@ SgProject::parse()
 
        // This just adds the new file to the list of files stored internally (note: this sets the parent of the newFile).
           set_file ( *newFile );
-
-       // DQ (6/13/2013): Added to support error checking (seperation of construction of SgFile IR nodes from calling the fronend on each one).
           ASSERT_not_null(newFile->get_parent());
 
        // This list of files will be iterated over to call the frontend in the next loop.
           vectorOfFiles.push_back(newFile);
 
-       // newFile->display("Called from SgProject::parse()");
-
           nameIterator++;
           i++;
         } // end while
-
-#if 0
-     printf ("In Project::parse(): (calling the frontend on all previously setup SgFile objects) vectorOfFiles.size() = %" PRIuPTR " \n",vectorOfFiles.size());
-#endif
 
      errorCode = this->RunFrontend();
      if (errorCode > 3)
@@ -2162,7 +2130,7 @@ SgProject::parse()
                     printf ("Calling secondaryPassOverSourceFile(): file = %s \n",file->getFileName().c_str());
 #endif
                  // DQ (8/19/2019): Divide this into two parts, for optimization of header file unparsing, optionally
-                 // support the main file collection of comments and CPP directives, and seperately the header file
+                 // support the main file collection of comments and CPP directives, and separately the header file
                  // collection of comments and CPP directives.
 #if 0
                     printf ("######### In calling secondaryPassOverSourceFile() support an optimization improve performance of header file unparsing \n");
@@ -2841,7 +2809,7 @@ SgFile::callFrontEnd()
 void
 SgFile::secondaryPassOverSourceFile()
    {
-  // DQ (8/19/2019): We want to optionally seperate this function out over two phases to optimize the support for header file unparsing.
+  // DQ (8/19/2019): We want to optionally separate this function out over two phases to optimize the support for header file unparsing.
   // When not optimized, we process all of the header file with the source file.
   // When we are supporting optimization, we handle the collection of comments and
   // CPP directives and their insertion into the AST in two phases:

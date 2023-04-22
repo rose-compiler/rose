@@ -3,7 +3,6 @@
 // sage3basic.h must be the first file included for the ROSE build system to work properly
 //
 #include "sage3basic.h"
-
 #include "rose_config.h"
 
 #include "jovial_support.h"
@@ -15,9 +14,6 @@
 #include <sstream>
 #include <string>
 
-#define ATERM_TRAVERSAL_ONLY 0
-#define DEBUG_EXPERIMENTAL_JOVIAL 0
-#define DEBUG_PREPROCESS_OUTPUT 0
 #define OUTPUT_WHOLE_GRAPH_AST 0
 #define OUTPUT_DOT_FILE_AST 0
 
@@ -77,11 +73,6 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
 
      std::string aterm_filename = filenameWithoutPath + ".aterm";
 
-#if DEBUG_EXPERIMENTAL_JOVIAL
-     std::cout << "PARSER command: " << commandString << "\n";
-     std::cout << "OPENING ATerm parse-tree file " << aterm_filename << "\n";
-#endif
-
   // Read the ATerm file that was created by the parser
      FILE * file = fopen(aterm_filename.c_str(), "r");
      if (file == nullptr) {
@@ -92,10 +83,6 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
 
      ATerm module_term = ATreadFromTextFile(file);
      fclose(file);
-
-#if DEBUG_EXPERIMENTAL_JOVIAL
-     std::cout << "SUCCESSFULLY read ATerm parse-tree file " << "\n";
-#endif
 
   // Get the token stream for access to comments
      std::ifstream in_stream{filenameWithPath};
@@ -122,13 +109,6 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
        return 1;
      }
 
-#if DEBUG_EXPERIMENTAL_JOVIAL
-     std::cout << "SUCCESSFULLY traversed Jovial parse-tree" << "\n\n";
-#endif
-#if ATERM_TRAVERSAL_ONLY
-     return 0;
-#endif
-
 #if OUTPUT_DOT_FILE_AST
   // Generate dot file for Sage nodes.
      generateDOT(SageBuilder::getGlobalScopeFromScopeStack(), filenameWithoutPath);
@@ -142,10 +122,6 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
 #endif
 
      if (aterm_traversal)  delete aterm_traversal;
-
-#if DEBUG_EXPERIMENTAL_JOVIAL
-     std::cout << "\nSUCCESSFULLY completed untyped node conversions (returning to caller)" << "\n\n";
-#endif
 
      return 0;
    }

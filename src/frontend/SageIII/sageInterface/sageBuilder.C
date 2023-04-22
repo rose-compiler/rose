@@ -359,28 +359,28 @@ template SgFunctionSymbol* SgScopeStatement::find_symbol_by_type_of_function<SgF
 void
 SageBuilder::pushScopeStack (SgScopeStatement* stmt)
    {
-     ROSE_ASSERT(stmt != NULL);
+     ASSERT_not_null(stmt);
      ScopeStack.push_back(stmt);
    }
 
 void SageBuilder::popScopeStack()
    {
-     ROSE_ASSERT(ScopeStack.empty() == false);
+     ASSERT_require(ScopeStack.empty() == false);
      ScopeStack.pop_back();
    }
 
 SgScopeStatement* SageBuilder::topScopeStack()
    {
-  // DQ (9/28/2009): Test if this is an empty stack, and if so return NULL (ScopeStack.back() should be undefined for this case).
-     if (ScopeStack.empty() == true)
-         return NULL;
+  // If this is an empty stack, return nullptr (ScopeStack.back() should be undefined for this case).
+     if (ScopeStack.empty()) {
+         return nullptr;
+     }
 
   // DQ (9/28/2009): This is part of testing for GNU 4.0.x (other versions of g++ work fine).
      SgScopeStatement* tempScope = ScopeStack.back();
-     if (tempScope != NULL)
-        {
-          tempScope->class_name();
-        }
+     if (tempScope) {
+         tempScope->class_name();
+     }
 
      return tempScope;
    }

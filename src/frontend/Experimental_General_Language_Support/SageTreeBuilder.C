@@ -91,14 +91,12 @@ SageTreeBuilder::attachComments(SgLocatedNode* node, const PosInfo &pos, bool at
     while ((token = tokens_->getNextToken()) && token->getStartLine() <= pos.getEndLine()) {
       if (last && token->getEndLine() < pos.getEndLine()) {
         if (TRACE_ATTACH_COMMENT) {
-          std::cout << "---> attach end comment to last stmt: " << last->class_name() << ": " << token << "\n";
+          mlog[TRACE] << "attach end comment to last stmt: " << last->class_name() << ": " << token;
         }
         SI::attachComment(last, token->getLexeme(), PreprocessingInfo::after, jovialStyle);
       }
       else {
-        if (TRACE_ATTACH_COMMENT) {
-          std::cout << "---> attach end_of comment to: " << node->class_name() << ": " << token << "\n";
-        }
+        if (TRACE_ATTACH_COMMENT) mlog[TRACE] << "---> attach end_of comment to: " << node->class_name() << ": " << token;
         SI::attachComment(node, token->getLexeme(), PreprocessingInfo::end_of, jovialStyle);
       }
       tokens_->consumeNextToken();
@@ -111,7 +109,7 @@ SageTreeBuilder::attachComments(SgLocatedNode* node, const PosInfo &pos, bool at
     // Comments before scoping unit
     while ((token = tokens_->getNextToken()) && token->getStartLine() < pos.getStartLine()) {
       if (TRACE_ATTACH_COMMENT) {
-        std::cout << "---> attach comment before scoping unit: " << token << std::endl;
+        mlog[TRACE] << "attach comment before scoping unit: " << token;
       }
       SI::attachComment(node, token->getLexeme(), PreprocessingInfo::before, jovialStyle);
       tokens_->consumeNextToken();
@@ -142,8 +140,7 @@ SageTreeBuilder::attachComments(SgLocatedNode* node, const PosInfo &pos, bool at
           }
         }
         if (TRACE_ATTACH_COMMENT) {
-          std::cout << "---> attach comment for: " << commentNode->class_name() << ": "
-                    << token << ": " << commentPosition << "\n";
+          mlog[TRACE] << "attach comment for: " << commentNode->class_name() << ": " << token << ": " << commentPosition;
         }
         SI::attachComment(commentNode, token->getLexeme(), commentPosition, jovialStyle);
       }
@@ -160,7 +157,7 @@ SageTreeBuilder::attachComments(SgLocatedNode* node, const PosInfo &pos, bool at
           commentPosition = PreprocessingInfo::after;
         }
         if (TRACE_ATTACH_COMMENT) {
-          std::cout << "---> attach comment for: " << expr->class_name() << ": " << token << "\n";
+          mlog[TRACE] << "attach comment for: " << expr->class_name() << ": " << token;
         }
         SI::attachComment(expr, token->getLexeme(), commentPosition, jovialStyle);
       }
@@ -176,7 +173,7 @@ SageTreeBuilder::attachComments(SgLocatedNode* node, const PosInfo &pos, bool at
   else {
     // Additional expressions?
     if (TRACE_ATTACH_COMMENT) {
-      std::cout << "SageTreeBuilder::attachComment: WARNING, not adding node " << node->class_name() << std::endl;
+      mlog[WARN] << "SageTreeBuilder::attachComment: not adding node " << node->class_name();
     }
   }
 }
@@ -191,7 +188,7 @@ SageTreeBuilder::attachComments(SgLocatedNode* node, const std::vector<Token> &t
 
   for (auto token : tokens) {
     if (TRACE_ATTACH_COMMENT) {
-      std::cout << "---> attach comment to: " << node->class_name() << ": " << token << ": pos: " << commentPosition << "\n";
+      mlog[TRACE] << "attach comment to: " << node->class_name() << ": " << token << ": pos: " << commentPosition;
     }
     SI::attachComment(node, token.getLexeme(), commentPosition, PreprocessingInfo::JovialStyleComment);
   }
@@ -204,7 +201,7 @@ SageTreeBuilder::attachComments(SgLocatedNode* node, std::vector<Token> &tokens,
   for (auto token : tokens) {
     if (token.getStartLine() <= pos.getStartLine()) {
       if (TRACE_ATTACH_COMMENT) {
-        std::cout << "---> attach comment for: " << node->class_name() << ": " << token << "\n";
+        mlog[TRACE] << "attach comment for: " << node->class_name() << ": " << token;
       }
       SI::attachComment(node, token.getLexeme(), PreprocessingInfo::before, PreprocessingInfo::JovialStyleComment);
       count += 1;
@@ -219,7 +216,7 @@ SageTreeBuilder::attachRemainingComments(SgLocatedNode* node) {
   boost::optional<const Token&> token{};
   while ((token = tokens_->getNextToken())) {
     if (TRACE_ATTACH_COMMENT) {
-      std::cout << "---> attach comment for: " << node->class_name() << ": " << token << "\n";
+      mlog[TRACE] << "attach comment for: " << node->class_name() << ": " << token;
     }
     SI::attachComment(node, token->getLexeme(), PreprocessingInfo::after, PreprocessingInfo::JovialStyleComment);
     tokens_->consumeNextToken();
@@ -342,12 +339,12 @@ void SageTreeBuilder::Leave(SgScopeStatement* scope)
          }
        else {
          // Unexpected previous parent node
-         std::cout << "{" << it->first << ": " << it->second << " parent is " << prev_parent << "}\n";
+         mlog[WARN] << "{" << it->first << ": " << it->second << " parent is " << prev_parent << "}";
          it++;
        }
        }
        else {
-         std::cout << "{" << it->first << ": " << it->second << "}\n";
+         mlog[WARN] << "{" << it->first << ": " << it->second << "}";
          it++;
        }
      }
@@ -355,13 +352,11 @@ void SageTreeBuilder::Leave(SgScopeStatement* scope)
 
   // Some forward references can't be resolved until the global scope is reached
    if (!forward_var_refs_.empty() && isSgGlobal(scope)) {
-     std::cerr << "WARNING: map for forward variable references is not empty, size is "
-               << forward_var_refs_.size() << std::endl;
+     mlog[WARN] << "map for forward variable references is not empty, size is " << forward_var_refs_.size();
      forward_var_refs_.clear();
    }
    if (!forward_type_refs_.empty() && isSgGlobal(scope)) {
-     std::cerr << "WARNING: map for forward type references is not empty, size is "
-               << forward_type_refs_.size() << std::endl;
+     mlog[WARN] << "map for forward type references is not empty, size is " << forward_type_refs_.size();
      forward_type_refs_.clear();
    }
 
@@ -451,7 +446,7 @@ Enter(SgProgramHeaderStatement* &program_decl,
 
 // If there is no program name then there is no ProgramStmt (this probably needs to be marked somehow?)
    if (!name) {
-     std::cerr << "WARNING: no ProgramStmt in the Fortran MainProgram \n";
+     mlog[WARN] << "no ProgramStmt in the Fortran MainProgram";
    }
 
    ASSERT_require(program_body == SageBuilder::topScopeStack());
@@ -577,8 +572,7 @@ Leave(SgFunctionParameterList* param_list, SgScopeStatement* param_scope, const 
        SgVariableSymbol* symbol = SageInterface::lookupVariableSymbolInParentScopes(param.name, param_scope);
 
        if (symbol == nullptr) {
-         std::cerr << "SageTreeBuilder::Leave(SgFunctionParameterList*) - symbol lookup failed for name "
-                   << param.name << "\n";
+         mlog[ERROR] << "SageTreeBuilder::Leave(SgFunctionParameterList*) - symbol lookup failed for name " << param.name;
          ASSERT_not_null(symbol);
        }
 
@@ -998,8 +992,7 @@ Enter(SgCastExp* &cast_expr, const std::string &name, SgExpression* cast_operand
    // Jovial specific comment:
    //   If the symbol is an Enum it is a StatusConversion
    if (isSgTypedefSymbol(symbol) == nullptr  && isSgEnumSymbol(symbol) == nullptr) {
-      std::cerr << "WARNING UNIMPLEMENTED: SageTreeBuilder::Enter(SgCastExp* ...) for name "
-                << name << std::endl;
+      mlog[ERROR] << "UNIMPLEMENTED: SageTreeBuilder::Enter(SgCastExp* ...) for name " << name;
       ROSE_ABORT();
    }
 
@@ -1315,7 +1308,7 @@ Enter(SgImplicitStatement* &implicit_stmt, std::list<std::tuple<SgType*, std::li
       std::list<std::tuple<char, boost::optional<char>>> letter_spec_list;
       std::tie(type, letter_spec_list) = implicit_spec;
 
-      std::cout << "The type is " << type->class_name() << " and the letters are ";
+      mlog[DEBUG] << "The type is " << type->class_name() << " and the letters are ";
 
       // Traverse the list of letter specs
       for (std::tuple<char, boost::optional<char>> letter_spec : letter_spec_list) {
@@ -1323,12 +1316,12 @@ Enter(SgImplicitStatement* &implicit_stmt, std::list<std::tuple<SgType*, std::li
          boost::optional<char> second;
          std::tie(first, second) = letter_spec;
 
-         std::cout << first;
+         mlog[DEBUG] << first;
 
          if (second) {
-            std::cout << " - " << second;
+            mlog[DEBUG] << " - " << second;
          }
-         std::cout << "\n";
+         mlog[DEBUG] << "\n";
       }
    }
 }
@@ -1422,6 +1415,7 @@ getEnumVal(SgEnumType* enum_type, SgEnumVal* old_val)
 {
    SgEnumDeclaration* enum_decl = isSgEnumDeclaration(enum_type->get_declaration());
    ASSERT_not_null(enum_decl);
+   ASSERT_not_null(old_val);
 
    SgInitializedNamePtrList &enum_list = enum_decl->get_enumerators();
    SgInitializedName* init_name = nullptr;
@@ -1435,7 +1429,6 @@ getEnumVal(SgEnumType* enum_type, SgEnumVal* old_val)
    }
 
    if (!init_name) {
-     std::cout << "--> getEnumVal: did not find " << name << " returning old value\n";
      return old_val;
    }
 
@@ -2406,7 +2399,8 @@ SgFunctionRefExp* buildIntrinsicFunctionRefExp_nfi(const std::string &name, SgSc
    else {
      // Look for intrinsic name
      if (name == "num_images") {
-       std::cout << "--> need to build a function reference to num_images \n";
+       // TODO
+       mlog[WARN] << "need to build a function reference to num_images";
 #if 0
        // Doesn't work
        // func_ref = SageBuilder::buildFunctionRefExp(SgName(name), scope);
