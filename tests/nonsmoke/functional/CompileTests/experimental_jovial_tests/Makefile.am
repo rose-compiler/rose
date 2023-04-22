@@ -241,6 +241,7 @@ JOVIAL_TESTCODES = \
  gitlab-issue-208.jov                   \
  gitlab-issue-212.jov                   \
  gitlab-issue-217.jov                   \
+ gitlab-issue-219.jov                   \
  gitlab-issue-220.jov                   \
  charlie.jov                            \
  shadow.jov                             \
@@ -371,6 +372,7 @@ COMPOOL_TESTCODES = \
  gitlab-issue-17.cpl                    \
  gitlab-issue-74.cpl                    \
  gitlab-issue-206.cpl                   \
+ gitlab-issue-219.cpl                   \
  beta.cpl                               \
  parttype.cpl                           \
  comments_start_term.cpl
