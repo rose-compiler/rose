@@ -530,15 +530,17 @@ RosettaGenerator::genLeafMacros(std::ostream &rosetta, const Ast::Class::Ptr &c)
 
 void
 RosettaGenerator::genRosettaPragmas(std::ostream &rosetta, const std::vector<std::string> &pragmas, const Ast::Class::Ptr &c) {
-for (const std::string &pragma: pragmas) {
-    std::string s = boost::replace_all_copy(pragma, "\\\n", "\n");
-    boost::trim(s);
-    if (!boost::ends_with(s, ";"))
-        s += ";";
-    rosetta <<"\n"
-            <<THIS_LOCATION <<"#ifndef DOCUMENTATION\n"
-            <<"    " <<shortName(c) <<"." <<s <<"\n"
-            <<"#endif // !DOCUMENTATION\n";
+    if (!pragmas.empty()) {
+        rosetta <<"\n"
+                <<THIS_LOCATION <<"#ifndef DOCUMENTATION\n";
+        for (const std::string &pragma: pragmas) {
+            std::string s = boost::replace_all_copy(pragma, "\\\n", "\n");
+            boost::trim(s);
+            if (!boost::ends_with(s, ";"))
+                s += ";";
+            rosetta <<"    " <<shortName(c) <<"." <<s <<"\n";
+        }
+        rosetta <<"#endif // !DOCUMENTATION\n";
     }
 }
 
@@ -556,6 +558,24 @@ RosettaGenerator::genRosettaPragmas(std::ostream &rosetta, const Ast::Class::Ptr
     std::vector<std::string> pragmas = extractCpp(c->endText /*in,out*/, re, 1);
     genRosettaPragmas(rosetta, pragmas, c);
     return pragmas.size();
+}
+
+bool
+RosettaGenerator::isBaseClass(const Ast::Class::Ptr &c, const Hierarchy &h) {
+    // In ROSETTA, a class is a base class if it has Rosebud derived classes or it has a '#pragma rosetta insertDerivedClass'.
+    if (Rosebud::isBaseClass(c, h))
+        return true;
+
+    static const std::regex pragmaRe("[^|\\n]\\s*#\\s*pragma\\s+rosetta\\s+insertDerivedClass");
+    for (const auto &property: c->properties) {
+        if (std::regex_search(property->priorText, pragmaRe))
+            return true;
+    }
+
+    if (std::regex_search(c->endText, pragmaRe))
+        return true;
+
+    return false;                                       // no known derived classes
 }
 
 void
