@@ -162,7 +162,7 @@ public:
    void Enter(SgEnumDeclaration* &, const std::string &);
    void Leave(SgEnumDeclaration*);
 
-   void Enter(SgEnumVal* &, const std::string &, SgEnumDeclaration*, int);
+   void Enter(SgEnumVal* &, const std::string &, SgEnumDeclaration*, int, SgCastExp* cast=nullptr);
 
    void Enter(SgTypedefDeclaration* &, const std::string &, SgType*);
    void Leave(SgTypedefDeclaration*);

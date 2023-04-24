@@ -8,20 +8,13 @@
 
 #include <boost/filesystem.hpp>
 
+#include <regex>
 #include <string>
 #include <vector>
 
 #define THIS_LOCATION locationDirective(__LINE__, __FILE__)
 
 namespace Rosebud {
-
-/** Kinds of built-in code generators. */
-enum class Backend {
-    YAML,                                               /**< Generate a machine-readable YAML representation of the IR. */
-    ROSETTA,                                            /**< Generate code that's backward compatible with ROSETTA. */
-    ROSE,                                               /**< Generate pure C++. */
-    NONE                                                /**< Do not generate code; only check the input. */
-};
 
 /** Kinds of access. */
 enum class Access {
@@ -32,7 +25,8 @@ enum class Access {
 
 /** Command-line settings for the rosebud tool. */
 struct Settings {
-    Backend backend = Backend::YAML;                    /**< Kind of backend to use. */
+    std::string backend = "yaml";                       /**< Name of main backend code generator to use. */
+    std::string serializer = "boost";                   /**< Name of the serializer code generator to use. */
     bool showingWarnings = true;                        /**< Show warnings about the input. */
     bool showingLocations = true;                       /**< Output should show source location from whence it came. */
     bool debugging = false;                             /**< Generate additional debugging output. */
@@ -283,6 +277,12 @@ std::string locationDirective(const Ast::NodePtr&, const Token&);
  *
  *  This is done by replacing all the "::" with "_". */
 std::string toCppSymbol(const std::string&);
+
+/** Extract all matching C preprocessor directives from the text.
+ *
+ *  Modifies the string in place and returns one preprocessor directive per vector element. If capture is non-zero, then it
+ *  refers to a parenthetical capture group in the regular expression, and just that group is saved in the return vector. */
+std::vector<std::string> extractCpp(std::string&, const std::regex&, size_t capture);
 
 } // namespace
 #endif

@@ -385,9 +385,13 @@ namespace
     void handle(SgAdaRenamingRefExp& n)
     {
       SgAdaRenamingDecl& dcl = SG_DEREF(n.get_decl());
+      std::string        name = dcl.get_name();
+
+      if (isSgAdaSubroutineType(dcl.get_type()))
+        name = si::Ada::convertRoseOperatorNameToAdaName(name);
 
       prnNameQual(n);
-      prn(dcl.get_name());
+      prn(name);
     }
 
     void handle(SgAggregateInitializer& n)
@@ -431,31 +435,6 @@ namespace
       // such as "raise;" should unparse using expr_opt.
       prn("<null>");
     }
-
-#if OBSOLETE_CODE
-    // Ada's derived types "inherit" the primitive functions of their base type.
-    // Asis does not create new declaration for these functions, but instead links
-    // to the original operation functions. However, the scope qualification needs to
-    // be generated as if the functions were located in the scope of the derived type.
-    // \returns the assumed scope of a function declaration if scope qualification is needed
-    //          nullptr if no scope qualification is required
-    SgScopeStatement*
-    assumedDeclarativeScope(const SgFunctionRefExp& n)
-    {
-      if (!ctxRequiresScopeQualification)
-        return nullptr;
-
-      const SgExprListExp*   args = callArguments(n);
-      if (!args)
-        return nullptr;
-
-      SgFunctionDeclaration& fundcl = SG_DEREF(n.getAssociatedFunctionDeclaration());
-      auto                   primitiveArgs = si::Ada::primitiveParameterPositions(fundcl);
-      SgScopeStatement*      overridingScope = si::Ada::overridingScope(args, primitiveArgs);
-
-      return overridingScope ? overridingScope : fundcl.get_scope();
-    }
-#endif /* OBSOLETE_CODE */
 
     void handle(SgFunctionRefExp& n)
     {

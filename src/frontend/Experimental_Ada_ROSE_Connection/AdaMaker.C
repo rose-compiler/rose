@@ -345,10 +345,12 @@ mkEnumDefn(const std::string& name, SgScopeStatement& scope)
 }
 
 SgAdaAccessType&
-mkAdaAccessType(SgType& base_type)
+mkAdaAccessType(SgType& base_type, bool isAnonymous)
 {
   // \todo PP (28/1/22) this may need to be a shared type node
   SgAdaAccessType& sgnode = mkNonSharedTypeNode<SgAdaAccessType>(&base_type);
+
+  sgnode.set_is_anonymous(isAnonymous);
   return sgnode;
 }
 
@@ -851,11 +853,9 @@ mkAdaFormalTypeDecl(const std::string& name, SgScopeStatement& scope)
 
 
 SgAdaRenamingDecl&
-mkAdaRenamingDecl(const std::string& name, SgExpression& renamed, SgType* ty, SgScopeStatement& scope)
+mkAdaRenamingDecl(const std::string& name, SgExpression& renamed, SgType& ty, SgScopeStatement& scope)
 {
-  if (ty == nullptr) ty = &mkTypeVoid();
-
-  SgAdaRenamingDecl& sgnode = mkLocatedNode<SgAdaRenamingDecl>(name, &renamed, ty);
+  SgAdaRenamingDecl& sgnode = mkLocatedNode<SgAdaRenamingDecl>(name, &renamed, &ty);
 
   renamed.set_parent(&sgnode);
   sgnode.set_parent(&scope);

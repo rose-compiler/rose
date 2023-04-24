@@ -461,6 +461,7 @@ class Grammar
           AstNodeClass    & terminalConstructor ( const std::string& lexeme, Grammar & X, const std::string& stringVar = "", const std::string& tagString = "" );
 
        // These functions build the C++ grammar
+          void setUpJovialNodes();
           void setUpTypes ();
           void setUpSymbols ();
           void setUpExpressions ();

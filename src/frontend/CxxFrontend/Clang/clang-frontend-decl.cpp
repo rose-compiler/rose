@@ -599,10 +599,86 @@ bool ClangToSageTranslator::VisitFileScopeAsmDecl(clang::FileScopeAsmDecl * file
 bool ClangToSageTranslator::VisitFriendDecl(clang::FriendDecl * friend_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
     std::cerr << "ClangToSageTranslator::VisitFriendDecl" << std::endl;
+    std::cerr << "FriendDecl::isUnsupportedFriend () " << friend_decl->isUnsupportedFriend() << std::endl;
 #endif
     bool res = true;
 
-    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+    clang::TypeSourceInfo * type_source_info = friend_decl->getFriendType();
+    
+    clang::NamedDecl* friend_inner_decl = friend_decl->getFriendDecl();
+    if(friend_inner_decl)
+    {
+       *node = Traverse(friend_inner_decl);
+
+       SgDeclarationStatement* declStmt = isSgDeclarationStatement(*node);
+       if(declStmt != NULL)
+       {
+         declStmt->get_declarationModifier().setFriend(); 
+       } 
+    }
+    // Pei-Hung: When FriendDecl names type, we need to construct the SgDeclarationStatement.
+    // In current support, SgClassDeclaration is created to represent a class type. Other supports are TBD.
+    if(type_source_info)
+    {
+       clang::QualType friendQualType = type_source_info->getType(); 
+       const clang::Type* friendType = friendQualType.getTypePtr();
+       // Pei-Hung: currently looking for ElaboratedType and RecordType
+       if(llvm::isa<clang::ElaboratedType>(friendType))
+       {
+          friendQualType = ((clang::ElaboratedType *)friendType)->getNamedType();
+          friendType =  friendQualType.getTypePtr();
+          if(llvm::isa<clang::RecordType>(friendType))
+          {
+             clang::RecordType* friendBasedType = (clang::RecordType *)friendType; 
+             clang::RecordDecl* recordDecl = friendBasedType->getDecl();
+             clang::DeclContext* declContext = recordDecl->getDeclContext();
+             SgName recordName(recordDecl->getNameAsString());
+
+             SgScopeStatement * scope = SageBuilder::topScopeStack();
+             SgScopeStatement * declContextScope = scope; 
+             std::map<clang::DeclContext *, SgScopeStatement *>::iterator it = p_decl_context_map.find(declContext);
+             if (it != p_decl_context_map.end()) {
+               declContextScope = it->second;
+             }
+
+             // get type of class
+             SgClassDeclaration::class_types type_of_class;
+             switch (recordDecl->getTagKind()) {
+                 case clang::TTK_Struct:
+                     type_of_class = SgClassDeclaration::e_struct;
+                     break;
+                 case clang::TTK_Class:
+                     type_of_class = SgClassDeclaration::e_class;
+                     break;
+                 case clang::TTK_Union:
+                     type_of_class = SgClassDeclaration::e_union;
+                     break;
+                 default:
+                     std::cerr << "Runtime error: RecordDecl can only be a struct/class/union." << std::endl;
+                     res = false;
+             }
+
+             SgSymbol * sym = GetSymbolFromSymbolTable(recordDecl);
+             SgClassSymbol * class_sym = isSgClassSymbol(sym);
+             if(class_sym != NULL)
+             {
+               SgClassDeclaration* sg_def_class_decl = class_sym->get_declaration(); 
+               SgClassDeclaration* sg_friend_class_decl = new SgClassDeclaration(recordName, type_of_class, sg_def_class_decl->get_type(), NULL);
+               sg_friend_class_decl->set_definingDeclaration(sg_def_class_decl);
+               sg_friend_class_decl->set_firstNondefiningDeclaration(sg_def_class_decl->get_firstNondefiningDeclaration());
+               sg_friend_class_decl->set_scope(declContextScope);
+               sg_friend_class_decl->set_parent(scope);
+               sg_friend_class_decl->get_declarationModifier().setFriend(); 
+               *node = sg_friend_class_decl;
+             }
+          }
+       }
+       else
+       {
+          // This part returns a SgType* but has no impact to the result because there is no SgDeclarationStatement returned for the FriendDecl
+          *node = Traverse(friendType);
+       }
+    }
 
     return VisitDecl(friend_decl, node) && res;
 }
@@ -816,7 +892,87 @@ bool ClangToSageTranslator::VisitTagDecl(clang::TagDecl * tag_decl, SgNode ** no
 
     bool res = true;
 
-    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
+    //ROSE_ASSERT(FAIL_FIXME == 0); // FIXME
+    clang::DeclContext* decl_context = static_cast<clang::DeclContext*>(tag_decl);
+
+    SgClassDeclaration* sg_class_decl = NULL; 
+    SgClassDefinition* sg_class_def = NULL;
+    if(sg_class_decl = isSgClassDeclaration(*node))
+    {
+       sg_class_def = isSgClassDefinition(sg_class_decl->get_definition());
+       if(sg_class_def)
+       { 
+         p_decl_context_map.insert(std::pair<clang::DeclContext *, SgScopeStatement *>(decl_context, sg_class_def));
+         SageBuilder::pushScopeStack(sg_class_def);
+       }
+    }
+
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitTagDecl: casting to DeclContext" << std::endl;
+#endif
+    for (clang::Decl* tmpDecl : decl_context->decls()) {
+       // CXXMethodDecl is processed under VisitCXXRecordDecl. Need to check how to merge to here.
+       if(llvm::isa<clang::CXXMethodDecl>(tmpDecl))
+       {
+#if DEBUG_VISIT_DECL
+         std::cerr << "ClangToSageTranslator::VisitTagDecl: skipping CXXMethodDecl in DeclContext\n";
+#endif
+         continue;
+       }
+       // skip for now.
+       if(tmpDecl->isImplicit())
+       {
+#if DEBUG_VISIT_DECL
+         std::cerr << "ClangToSageTranslator::VisitTagDecl: skipping implicit in DeclContext\n";
+#endif
+         continue;
+       }
+       // ROSE doesn't seem to need to support AccessSpecDecl
+       if(llvm::isa<clang::AccessSpecDecl>(tmpDecl))
+       {
+#if DEBUG_VISIT_DECL
+         std::cerr << "ClangToSageTranslator::VisitTagDecl: skipping AccessSpecDecl in DeclContext\n";
+#endif
+         continue;
+       }
+#if DEBUG_VISIT_DECL
+       std::cerr << "ClangToSageTranslator::VisitTagDecl: checking decls in DeclContext\n";
+#endif
+       SgNode * tmp_content = Traverse(tmpDecl);
+       SgDeclarationStatement * decl_content = isSgDeclarationStatement(tmp_content);
+       ROSE_ASSERT(decl_content != NULL);
+
+       if(sg_class_def)
+       {
+         if(llvm::isa<clang::FieldDecl>(tmpDecl))
+         {
+#if DEBUG_VISIT_DECL
+            std::cerr << "ClangToSageTranslator::VisitTagDecl: processing decl as a field\n";
+#endif   
+            sg_class_def->append_member(decl_content);
+            decl_content->set_parent(sg_class_def);
+         }
+         if(llvm::isa<clang::RecordDecl>(tmpDecl))
+         {
+#if DEBUG_VISIT_DECL
+            std::cerr << "ClangToSageTranslator::VisitTagDecl: processing decl as a record\n";
+#endif   
+//            sg_class_def->append_member(decl_content);
+//            decl_content->set_parent(sg_class_def);
+         }
+         if(llvm::isa<clang::FriendDecl>(tmpDecl))
+         {
+#if DEBUG_VISIT_DECL
+            std::cerr << "ClangToSageTranslator::VisitTagDecl: processing decl as a friend decl\n";
+#endif   
+            sg_class_def->append_member(decl_content);
+            decl_content->set_parent(sg_class_def);
+         }
+       }
+
+    }
+    if(sg_class_def)
+      SageBuilder::popScopeStack();
 
     return VisitTypeDecl(tag_decl, node) && res;
 }
@@ -860,6 +1016,20 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
     bool isDefined = record_decl->isThisDeclarationADefinition();
     bool isAnonymousStructOrUnion = record_decl->isAnonymousStructOrUnion();
     bool hasNameForLinkage = record_decl->hasNameForLinkage();
+
+    bool definedInSameDeclContext = (record_decl->getDeclContext() == record_Definition->getDeclContext());
+    //std::cerr << "defining recordDecl and nondefining are in same declContext " << definedInSameDeclContext << "\n"; 
+    //std::cerr << record_decl << ":" << record_decl->getDeclContext() << " " << record_Definition << ":" << record_Definition->getDeclContext() <<  "\n";
+
+    // Finding the scope of enclosing DeclContext
+    clang::DeclContext* declContext = record_decl->getDeclContext();
+
+    SgScopeStatement * scope = SageBuilder::topScopeStack();
+    SgScopeStatement * declContextScope = scope; 
+    std::map<clang::DeclContext *, SgScopeStatement *>::iterator it = p_decl_context_map.find(declContext);
+    if (it != p_decl_context_map.end()) {
+      declContextScope = it->second;
+    }
 
     SgClassSymbol * sg_prev_class_sym = isSgClassSymbol(GetSymbolFromSymbolTable(prev_record_decl));
     SgClassDeclaration * sg_prev_class_decl = sg_prev_class_sym == NULL ? NULL : isSgClassDeclaration(sg_prev_class_sym->get_declaration());
@@ -923,8 +1093,16 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
 
     sg_class_decl = new SgClassDeclaration(name, type_of_class, NULL, NULL);
 
-    sg_class_decl->set_scope(SageBuilder::topScopeStack());
-    sg_class_decl->set_parent(SageBuilder::topScopeStack());
+// Pei-Hung: the scope seems to be represented as declContext in Clang.  Need to confirm
+    // This needs more checking.  What if there are two nondefiningDeclaration, can they
+    // be placed in the same scope?
+    sg_class_decl->set_scope(declContextScope);
+    if(record_decl->isCanonicalDecl())
+      sg_class_decl->set_parent(declContextScope);
+    else
+      sg_class_decl->set_parent(scope);
+    //sg_class_decl->set_scope(SageBuilder::topScopeStack());
+    //sg_class_decl->set_parent(SageBuilder::topScopeStack());
 
  // DQ (11/28/2020): Adding asertion.
     ROSE_ASSERT(sg_class_decl->get_parent() != NULL);
@@ -947,13 +1125,18 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
         sg_first_class_decl->set_definingDeclaration(NULL);
         sg_first_class_decl->set_definition(NULL);
         sg_first_class_decl->setForward();
-        SgScopeStatement * scope = SageBuilder::topScopeStack();
         SgClassSymbol * class_symbol = new SgClassSymbol(sg_first_class_decl);
-        scope->insert_symbol(name, class_symbol);
+        declContextScope->insert_symbol(name, class_symbol);
     }
-    else if (!isDefined) 
-        return false; // FIXME ROSE need only one non-defining declaration (SageBuilder don't let me build another one....)
+    else if (!isDefined)
+    { 
+    //    return false; // FIXME ROSE need only one non-defining declaration (SageBuilder don't let me build another one....)
+        sg_class_decl->set_firstNondefiningDeclaration(sg_prev_class_decl->get_firstNondefiningDeclaration());
+        sg_class_decl->set_definingDeclaration(NULL);
+        sg_class_decl->setForward();
+    }
 
+    SgClassDefinition * sg_class_def = NULL; 
     if (isDefined) {
         sg_def_class_decl = new SgClassDeclaration(name, type_of_class, type, NULL);
         sg_def_class_decl->set_scope(SageBuilder::topScopeStack());
@@ -971,9 +1154,18 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
         if(had_prev_decl) {
           sg_first_class_decl->set_definingDeclaration(sg_def_class_decl);
         }
+        clang::RecordDecl* currentRecordDecl = record_decl;
+        while(currentRecordDecl = currentRecordDecl->getPreviousDecl())
+        {
+          std::cerr << "PrevDecl: " << currentRecordDecl << "\n";
+          //currentRecordDecl = record_decl->getPreviousDecl();
+          SgClassDeclaration* sg_prev_decl = isSgClassDeclaration(Traverse(currentRecordDecl));
+          sg_prev_decl->set_definingDeclaration(sg_def_class_decl);
+        }
+     
 
   // Build ClassDefinition
-        SgClassDefinition * sg_class_def = isSgClassDefinition(sg_def_class_decl->get_definition());
+        sg_class_def = isSgClassDefinition(sg_def_class_decl->get_definition());
         if (sg_class_def == NULL) {
             sg_class_def = SageBuilder::buildClassDefinition_nfi(sg_def_class_decl);
         }
@@ -982,7 +1174,7 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
         ROSE_ASSERT(sg_class_def->get_symbol_table() != NULL);
 
         applySourceRange(sg_class_def, record_decl->getSourceRange());
-
+/*
         SageBuilder::pushScopeStack(sg_class_def);
 
         clang::RecordDecl::field_iterator it;
@@ -995,8 +1187,9 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
         }
 
         SageBuilder::popScopeStack();
+*/
     }
- 
+
     // By default set class decl to be autonomous   
     sg_class_decl->set_isAutonomousDeclaration(true);
     sg_first_class_decl->set_isAutonomousDeclaration(true);
@@ -1007,8 +1200,32 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
     ROSE_ASSERT(sg_def_class_decl == NULL || sg_def_class_decl->get_definition() != NULL);
 
     *node = sg_class_decl;
+    res = VisitTagDecl(record_decl, node);
+    if (isDefined) {
+        SageBuilder::pushScopeStack(sg_class_def);
 
-    return VisitTagDecl(record_decl, node) && res;
+        // check if all fields are properly inserted into the definition
+        clang::RecordDecl::field_iterator it;
+        for (it = record_decl->field_begin(); it != record_decl->field_end(); it++) {
+            SgNode * tmp_field = Traverse(*it);
+            SgDeclarationStatement * field_decl = isSgDeclarationStatement(tmp_field);
+            ROSE_ASSERT(field_decl != NULL);
+            SgDeclarationStatementPtrList& memberList = sg_class_def->get_members();
+            if(std::find(memberList.begin(), memberList.end(), field_decl) != memberList.end() && field_decl->get_parent() == sg_class_def)
+            {
+              //std::cerr << "Field is inserted\n";
+              continue;
+            }
+            //std::cerr << "Field to be inserted\n";
+            sg_class_def->append_member(field_decl);
+            field_decl->set_parent(sg_class_def);
+        }
+
+        SageBuilder::popScopeStack();
+    } 
+
+
+    return res;
 }
 
 bool ClangToSageTranslator::VisitCXXRecordDecl(clang::CXXRecordDecl * cxx_record_decl, SgNode ** node) {
@@ -1039,6 +1256,8 @@ bool ClangToSageTranslator::VisitCXXRecordDecl(clang::CXXRecordDecl * cxx_record
     SgClassDeclaration* CxxRecordDeclaration = isSgClassDeclaration(*node);
     ROSE_ASSERT(CxxRecordDeclaration); 
 
+    if(!cxx_record_decl->isThisDeclarationADefinition())
+      return res;
     SageBuilder::pushScopeStack(CxxRecordDeclaration->get_definition());
     clang::CXXRecordDecl::base_class_iterator it_base;
     for (it_base = cxx_record_decl->bases_begin(); it_base !=  cxx_record_decl->bases_end(); it_base++) {
@@ -1674,6 +1893,18 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
 
     bool diffInProtoType = false;
 
+    // Finding the scope of enclosing DeclContext
+    clang::DeclContext* declContext = function_decl->getDeclContext();
+    SgScopeStatement * scope = SageBuilder::topScopeStack();
+    SgScopeStatement * declContextScope = scope; 
+    std::map<clang::DeclContext *, SgScopeStatement *>::iterator it = p_decl_context_map.find(declContext);
+    if (it != p_decl_context_map.end()) {
+      declContextScope = it->second;
+    }
+
+
+
+
 #if DEBUG_VISIT_DECL
     std::cerr << "ClangToSageTranslator::VisitFunctionDecl name:" << name.getString() << std::endl;
 #endif
@@ -1687,7 +1918,8 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
         diffInProtoType = true;
 
     SgDeclarationScope* declScope = SageBuilder::buildDeclarationScope();
-    declScope->set_parent(SageBuilder::topScopeStack());
+    declScope->set_parent(declContextScope);
+    //declScope->set_parent(SageBuilder::topScopeStack());
     SageBuilder::pushScopeStack(declScope);
     
 #if DEBUG_VISIT_DECL
@@ -2619,6 +2851,7 @@ bool ClangToSageTranslator::VisitTranslationUnitDecl(clang::TranslationUnitDecl 
     SageBuilder::pushScopeStack(global_scope);
 
     clang::DeclContext * decl_context = (clang::DeclContext *)translation_unit_decl; // useless but more clear
+    p_decl_context_map.insert(std::pair<clang::DeclContext *, SgScopeStatement *>(decl_context, global_scope));
     bool res = true;
     clang::DeclContext::decl_iterator it;
     for (it = decl_context->decls_begin(); it != decl_context->decls_end(); it++) {

@@ -5,1188 +5,1075 @@
 
 
 
-#ifndef Sawyer_Tree_H
-#define Sawyer_Tree_H
+#ifndef Sawyer_TreeVertex_H
+#define Sawyer_TreeVertex_H
 
 #include <Sawyer/Assert.h>
-#include <Sawyer/Optional.h>
+#include <Sawyer/Exception.h>
 
+#include <boost/lexical_cast.hpp>
+#include <boost/range/adaptor/reversed.hpp>
 #include <memory>
-#include <stdexcept>
+#include <string>
 #include <vector>
 
-#if 1 // DEBUGGING [Robb Matzke 2019-02-18]
-#include <iostream>
-#endif
-
 namespace Sawyer {
-
-/** Tree data structure.
- *
- *  This name space contains the building blocks for relating heap-allocated objects (called nodes, base type @ref Node) in a
- *  tree-like way. The children of a node are referenced either by name or iteratively. Each node of the tree has a single
- *  parent pointer which is adjusted automatically to ensure consistency. A node can also point to another node without
- *  creating a managed parent-child edge; such node pointers are not followed during traversals.
- *
- *  The primary purpose of these classes is to ensure consistency in the tree data structure:
- *
- *  @li Pointers from children to parents are maintained automatically.
- *
- *  @li Exceptions are thrown if the user attempts to link nodes together in a way that doesn't form a tree.
- *
- *  @li The infrastructure is exception safe.
- *
- *  @li Nodes are reference counted via std::shared_ptr.
- *
- *  Although this implementation is intended to be efficient in time and space, the primary goal is safety. When the two goals
- *  are in conflict, safety takes precedence.
- *
- *  The basic usage is that the user defines some node types that inherit from @ref Tree::Node. If any of those types have
- *  parent-child tree edges (parent-to-child pointers that are followed during traversals), then those edges are declared
- *  as data members and initialized during construction:
- *
- * @code
- *  class MyNode: public Tree::Node {
- *  public:
- *      // Define a tree edge called "first" that points to a user-defined type
- *      // "First" (defined elsewhere) that derives from Tree::Node.
- *      Tree::ChildEdge<First> first;
- *
- *      // Define a tree edge called "second" that points to another "MyNode" node.
- *      Tree::ChildEdge<MyNode> second;
- *
- *      // Define a final edge called "third" that points to any kind of tree node.
- *      Tree::ChildEdge<Tree::Node> third;
- *
- *      // Initialize the nodes during construction. The first will point to a
- *      // specified node, and the other two will be initialized to null.
- *      explicit MyNode(const std::shared_ptr<First> &first)
- *          : first(this, first), second(this), third(this) {}
- *  }
- * @endcode
- *
- *  The data members can be the left hand side of assignment operators, in which case the parent pointers of the affected nodes
- *  are updated automatically.
- *
- * @code
- *  void test() {
- *      auto a = std::make_shared<First>();
- *      auto b = std::make_shared<First>();
- *
- *      auto root = std::make_shared<MyNode>(a);
- *      assert(root->first == a);
- *      assert(a->parent == root);     // set automatically by c'tor defined above
- *
- *      root->first = b;
- *      assert(root->first == b);
- *      assert(b->parent == root);     // set automatically
- *      assert(a->parent == nullptr);  // cleared automatically
- *  }
- * @endcode
- *
- *  See also, @ref Sawyer::Container::Graph "Graph", which can store non-class values such as 'int', is optimized for performance,
- *  and can easily handle cycles, self-edges, and parallel edges.
- *
- *  NOTICE: The @ref Tree API is experimental and still under development. Currently, each child pointer occupies twice the
- *  space as a raw pointer. Dereferencing a child pointer takes constant time but includes one dynamic cast.  Besides the child
- *  data member edges just described, each @ref Node object also has a @c parent data member that occupies as much space as a
- *  raw pointer and can be dereferenced in constant time, and a @c children vector of pointers with one element per @ref
- *  ChildEdge data member and one additional element. */
 namespace Tree {
 
-class Node;
-class Children;
-
-/** Short name for node pointers.
+/** Traversal event.
  *
- *  A shared-ownership pointer for nodes.
- *
- * @{ */
-using NodePtr = std::shared_ptr<Node>;
-using ConstNodePtr = std::shared_ptr<const Node>;
-/** @} */
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                   ____            _                 _   _
-//                  |  _ \  ___  ___| | __ _ _ __ __ _| |_(_) ___  _ __  ___
-//                  | | | |/ _ \/ __| |/ _` | '__/ _` | __| |/ _ \| '_ \/ __|
-//                  | |_| |  __/ (__| | (_| | | | (_| | |_| | (_) | | | \__ |
-//                  |____/ \___|\___|_|\__,_|_|  \__,_|\__|_|\___/|_| |_|___/
-//
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/** Traversal event bit flags. */
-enum TraversalEvent {
-    ENTER = 0x1,                                        /**< Traversal has just entered the node under consideration. */
-    LEAVE = 0x2                                         /**< Traversal has just left the node under consideration. */
+ *  The traversal event is used to indicate whether a vertex visitor is being invoked in pre-order or post-order during a
+ *  depth-first traversal. */
+enum class TraversalEvent {
+    ENTER,                                          /**< Pre-order visitation. */
+    LEAVE                                           /**< Post-order visitation. */
 };
 
-/** Traversal actions. */
-enum TraversalAction {
-    CONTINUE,                                           /**< Continue with the traversal. */
-    SKIP_CHILDREN,                                      /**< For enter events, do not traverse into the node's children. */
-    ABORT                                               /**< Abort the traversal immediately. */
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Exception declarations
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/** Exceptions for tree-related operations. */
-class Exception: public std::runtime_error {
-public:
-    Exception(const std::string &mesg)
-        : std::runtime_error(mesg) {}
-};
-
-/** Exception if tree consistency would be violated.
+/** Base class for tree vertices.
  *
- *  If the user attempts to modify the connectivity of a tree in a way that would cause it to become inconsistent, then this
- *  exception is thrown. Examples of inconsistency are:
+ *  A tree vertex is a type with zero or more edges that point to child vertices. The set of all vertices recursively reachable from
+ *  any particular vertex along these edges forms a tree data structure.
  *
- *  @li Attempting to insert a node in such a way that it would have two different parents.
+ *  The user might want to have multiple independent tree types whose vertices aren't derived from any common base class. This is
+ *  accomplished by the user's base class inheriting from this class template, whose argument is the user's base class.
  *
- *  @li Attempting to insert a node at a position that would cause it to be a sibling of itself.
+ *  All vertex instantiations are reference counted and ponted to by @c std::shared_ptr. Some good practices are:
  *
- *  @li Attempting to insert a node in such a way that it would become its own parent.
+ *  @li In a separate header file intended to be lightweight, often named "BasicTypes.h", create a forward declaration for the
+ *  class.
  *
- *  @li Attempting to insert a node in such a way as to cause a cycle in the connectivity. */
-class ConsistencyException: public Exception {
-public:
-    NodePtr child;                        /**< Child node that was being modified. */
-
-    ConsistencyException(const NodePtr &child,
-                         const std::string &mesg = "attempt to attach child that already has a different parent")
-        : Exception(mesg), child(child) {}
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// ChildEdge declaration
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/** An edge from a parent to a child.
+ *  @li Declare the C++ constructors with protected access and replace them with public, static member functions named @c instance
+ *  that allocate a new object on the stack and return a pointer to it. This prevents users from accidentally instantiating objects
+ *  on the stack or in the data segment.
  *
- *  An edge is the inter-node link between a parent node and a child node. The @ref ChildEdge type is only allowed for
- *  data members of a @ref Node and is how the node defines which data members participate as edges in the tree.
+ *  @li Create a nested type named @c Ptr inside the class. This should be an alias for the @c std::shared_ptr type. If you do this
+ *  consistently, then you can always use "Ptr" instead of the much longer "std::shared_ptr<MyClassName>". Since one often needs
+ *  this type outside this header file, adding an alias to the aforementioned "BasicTypes.h" is prudent, in which case the one in
+ *  BasicTypes.h should be like "MyClassNamePtr" (i.e., ending with "Ptr") and the alias inside the class would be "using Ptr =
+ *  MyClassNamePtr".
  *
- *  To create a node and define that it points to two child nodes, one must declare the two child pointers using the @ref
- *  ChildEdge type, and then initialize the parent end of the edges during construction, as follows:
+ *  As mentioned, a vertex may have zero or more edges that point to children of the same tree. These are data members whose type is
+ *  @c Edge<T> or @c EdgeList<T> (or anything else that inherits from @c EdgeBase). These types do not have default constructors, so
+ *  the constructor in the containing class is expected to construct them by passing @c *this as the first argument to their
+ *  constructors.
+ *
+ *  In addition to edges that are part of the tree, it is permissible for a vertex to point directly to other vertices inside or
+ *  outside the tree from which they're pointed. These are called "cross tree" pointers and do not use the @p EdgeBase types. By the
+ *  way, the difference between an "edge" and a "pointer" in this context is that an edge is bidirectional.
+ *
+ *  Every vertex also has a @c parent public data member that points to the parent vertex in the tree. The @p parent data member is
+ *  updated automatically whenever a child is attached to or detached from a parent vertex. A vertex may have exactly zero or one
+ *  parent. If vertex <em>v</em> has no parent, then there does not exist any vertex that has an edge pointing to <em>v</em>.  Vice
+ *  versa, if there exists a vertex pointing to <em>v</em> then <em>v</em>->parent points to that vertex.
+ *
+ *  Two types of traversals are defined: forward and reverse. The traversals visit only vertices of the specified type (or
+ *  derivatives thereof), they support both pre- and post-order depth-first traversals, and they can return user-defined types, and
+ *  they can short-circuit by returning a certain class of values. For more information, see @ref traverse and @ref
+ *  traverseReverse. All other traversals can be defined in terms of these two.
+ *
+ *  Example of a class that has two scalar children one of which is always allocated, one vector child, and one cross-tree pointer.
  *
  * @code
- *  class Parent: public Tree::Node {
+ *  class Test: public Base {  // Base ultimately inherits from Tree::Vertex<T>
  *  public:
- *      Tree::ChildEdge<ChildType1> first;  // ChildType1 is userdefined, derived from Tree::Node
- *      Tree::ChildEdge<ChildType2> second; // ditto for ChildType2
+ *      using Ptr = TestPtr;   // defined in BasicTypes.h as "using TestPtr = std::shared_ptr<Test>"
  *
- *      Parent()
- *          : first(this), second(this) {}
+ *  public:
+ *      Edge<Test> left;       // tree edge to the "left" child
+ *      Edge<Other> right;     // tree edge to the "right" child, always allocated. Other must also inherit from Base.
+ *      EdgeList<Test> list;   // tree edges to a bunch of children
+ *      TestPtr cross;         // non-tree pointer to some other vertex
+ *
+ *  protected:
+ *      Test()                 // C++ constructor hidden from casual users
+ *          : left(*this),
+ *            right(*this, Other::instance()),
+ *            list(*this) {}
+ *
+ *  public:
+ *      static Ptr instance(const Ptr &a, const Ptr &b) {
+ *          auto self = Ptr(new Test);
+ *          self->left = a;
+ *          self->list.push_back(b);
+ *
+ *          // Adjustments the parents happens automatically
+ *          assert(self->left == a && a->parent == self);
+ *          assert(self->list.front() == b && b->parent == self);
+ *
+ *          return self;
+ *      }
  *  };
- * @endcode
- *
- *  It is also possible to give non-null values to the child ends of the edges during construction:
- *
- * @code
- *  Parent::Parent(const std::shared_ptr<ChildType1> &c1)
- *      : first(this, c1), second(this, std::make_shared<ChildType2>()) {}
- * @endcode
- *
- *  The @ref ChildEdge members are used as if they were pointers:
- *
- * @code
- *  auto parent = std::make_shared<Parent>();
- *  assert(parent->first == nullptr);
- *
- *  auto child = std::make_shared<ChildType1>();
- *  parent->first = child;
- *  assert(parent->first == child);
- *  assert(child->parent == parent);
  * @endcode */
-template<class T>
-class ChildEdge final {
-private:
-    Node *container_;                                   // non-null ptr to node that's the source of this edge
-    const size_t idx_;                                  // index of the child edge from the parent's perspective
+template<class B>
+class Vertex: public std::enable_shared_from_this<Vertex<B>> {
+public:
+
+    /** User's base class. */
+    using UserBase = B;
+
+    /** Pointer to user's base class. */
+    using UserBasePtr = std::shared_ptr<UserBase>;
+
+    /** Alias for traversal events. */
+    using TraversalEvent = Sawyer::Tree::TraversalEvent;
 
 public:
-    /** Points to no child. */
-    explicit ChildEdge(Node *container);
+    template<class T> class Edge;
+    template<class T> class EdgeVector;
 
-    /** Constructor that points to a child. */
-    ChildEdge(Node *container, const std::shared_ptr<T> &child);
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Errors and exceptions
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    ChildEdge(const ChildEdge&) = delete;               // just for now
+    /** Base class for errors and exceptions for this vertex type. */
+    class Exception: public Sawyer::Exception::RuntimeError {
+    public:
+        /** Vertex that caused the error. */
+        UserBasePtr vertex;
 
-    /** Point to a child node. */
-    ChildEdge& operator=(const std::shared_ptr<T> &child) {
-        assign(child);
-        return *this;
-    }
+        /** Construct a new error with the specified message and the causing vertex. */
+        Exception(const std::string &mesg, const UserBasePtr &vertex)
+            : Sawyer::Exception::RuntimeError(mesg), vertex(vertex) {}
 
-    /** Cause this edge to point to no child. */
-    void reset() {
-        assign(nullptr);
-    }
+        ~Exception() {}
+    };
 
-    /** Obtain shared pointer. */
-    std::shared_ptr<T> operator->() const {
-        return shared();
-    }
-
-    /** Obtain pointed-to node. */
-    T& operator*() const {
-        ASSERT_not_null(shared());
-        return *shared();
-    }
-    
-    /** Conversion to bool. */
-    explicit operator bool() const {
-        return shared() != nullptr;
-    }
-
-    /** Pointer to the child. */
-    std::shared_ptr<T> shared() const;
-
-    /** Implicit conversion to shared pointer. */
-    operator std::shared_ptr<T>() const {
-        return shared();
-    }
-
-private:
-    // Assign a new child to this edge.
-    void assign(const NodePtr &child);
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// ParentEdge
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/** Edge pointing from child to parent.
- *
- *  This is a special pointer type that allows a child node to point to a parent node. Each tree @ref Node has a @p parent
- *  pointer of this type. The value of the pointer is updated automatically when the node is inserted into or removed from a
- *  tree. */
-class ParentEdge final {
-private:
-    Node* parent_;
-
-public:
-    ParentEdge()
-        : parent_(nullptr) {}
-
-    /** Obtain shared pointer. */
-    NodePtr operator->() const {
-        return shared();
-    }
-
-    /** Obtain pointed-to node. */
-    Node& operator*() const {
-        ASSERT_not_null(parent_);
-        return *shared();
-    }
-
-    /** Return the parent as a shared-ownership pointer. */
-    NodePtr shared() const;
-
-    /** Conversion to bool. */
-    explicit operator bool() const {
-        return parent_ != nullptr;
-    }
-
-#if 0 // [Robb Matzke 2019-02-18]: Node is not declared yet?
-    /** Implicit conversion to shared pointer. */
-    operator std::shared_ptr<Node> const {
-        return shared();
-    }
-#endif
-    
-    /** Relation.
+    /** Error when attaching a vertex to a tree and the vertex is already attached somewhere else.
      *
-     * @{ */
-    bool operator==(const ParentEdge &other) const { return parent_ == other.parent_; }
-    bool operator!=(const ParentEdge &other) const { return parent_ != other.parent_; }
-    bool operator< (const ParentEdge &other) const { return parent_ <  other.parent_; }
-    bool operator<=(const ParentEdge &other) const { return parent_ <= other.parent_; }
-    bool operator> (const ParentEdge &other) const { return parent_ >  other.parent_; }
-    bool operator>=(const ParentEdge &other) const { return parent_ >= other.parent_; }
-    /** @} */
+     *  If the operation were allowed to continue without throwing an exception, the data structure would no longer be a tree. */
+    class InsertionError: public Exception {
+    public:
+        /** Construct a new error with the vertex that caused the error. */
+        explicit InsertionError(const UserBasePtr &vertex)
+            : Exception("vertex is already attached to a tree", vertex) {}
+    };
 
-private:
-    friend class Children;
-
-    // Set the parent
-    void set(Node *parent) {
-        parent_ = parent;
-    }
-
-    // Clear the parent
-    void reset() {
-        parent_ = nullptr;
-    }
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Children declaration
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/** Vector of parent-to-child pointers.
- *
- *  Each @ref Node has a @c children data member that similar to a <tt>const std::vector<NodePtr></tt> and which points to all
- *  the child nodes. This list has one element per @ref ChildEdge data member regardless of whether that @ref ChildEdge has a
- *  null or non-null value.  Assigning a new node to a @ref ChildEdge pointer will automatically update the corresponding
- *  element of this list. */
-class Children final {
-private:
-    Node *container_;
-    std::vector<NodePtr > children_;
-
-public:
-    Children(Node *container);
-    Children(const Children&) = delete;
-    Children& operator=(const Children&) = delete;
-
-    //----------------------------------------
-    //           Read-only API
-    //----------------------------------------
-public:
-    /** Number of nodes in vector. */
-    size_t size() const {
-        return children_.size();
-    }
-
-    /** Maximum potential size. */
-    size_t max_size() const {
-        return children_.max_size();
-    }
-
-    /** Size of allocated storage. */
-    size_t capacity() const {
-        return children_.capacity();
-    }
-
-    /** Empty predicate. */
-    bool empty() const {
-        return children_.empty();
-    }
-
-    /** Request change in capacity. */
-    void reserve(size_t n) {
-        children_.reserve(n);
-    }
-
-    /** Request container to reduce capacity. */
-    void shrink_to_fit() {
-        children_.shrink_to_fit();
-    }
-
-    /** Child pointer at index, checked. */
-    const NodePtr at(size_t idx) const {
-        ASSERT_require(idx < children_.size());
-        return children_.at(idx);
-    }
-
-    /** Child pointer at index, unchecked. */
-    const NodePtr operator[](size_t idx) const {
-        ASSERT_require(idx < children_.size());
-        return children_[idx];
-    }
-
-    /** First child pointer. */
-    const NodePtr front() const {
-        ASSERT_forbid(empty());
-        return children_.front();
-    }
-
-    /** Last child pointer. */
-    const NodePtr back() const {
-        ASSERT_forbid(empty());
-        return children_.back();
-    }
-
-    /** The actual underlying vector of child pointers. */
-    const std::vector<NodePtr >& elmts() const {
-        return children_;
-    }
-
-    /** Relations.
+    /** Error when attaching a vertex to a tree would cause a cycle.
      *
-     * @{ */
-    bool operator==(const Children &other) const { return children_ == other.children_; }
-    bool operator!=(const Children &other) const { return children_ != other.children_; }
-    bool operator< (const Children &other) const { return children_ <  other.children_; }
-    bool operator<=(const Children &other) const { return children_ <= other.children_; }
-    bool operator> (const Children &other) const { return children_ >  other.children_; }
-    bool operator>=(const Children &other) const { return children_ >= other.children_; }
-    /** @} */
+     *  If the operation were allowed to continue without throwing an exception, the data structure would no longer be a tree. */
+    class CycleError: public Exception {
+    public:
+        /** Construct a new error with the vertex that caused the error. */
+        explicit CycleError(const UserBasePtr &vertex)
+            : Exception("insertion of vertex would cause a cycle in the tree", vertex) {}
+    };
 
-    //----------------------------------------
-    //              Internal stuff
-    //----------------------------------------
-private:
-    template<class T> friend class ListNode;
-    template<class T> friend class ChildEdge;
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Child-to-parent edges
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    // Cause the indicated parent-child edge to point to a new child. The old value, if any will be removed from the tree and
-    // its parent pointer reset. The new child will be added to the tree at the specified parent-to-child edge and its parent
-    // pointer adjusted to point to the node that now owns it. As with direct assignment of pointers to the parent-to-child
-    // edge data members, it is illegal to attach a node to a tree in such a way that the structure would no longer be a tree,
-    // and in such cases no changes are made an an exception is thrown.
-    void setAt(size_t idx, const NodePtr &newChild);
-    void setAt(size_t idx, std::nullptr_t) {
-        setAt(idx, NodePtr());
-    }
-
-    // Check that the newChild is able to be inserted replacing the oldChild. If not, throw exception. Either or both of the
-    // children may be null pointers, but 'parent' must be non-null.
-    void checkInsertionConsistency(const NodePtr &newChild, const NodePtr &oldChild, Node *parent);
-
-    // Insert a new child edge at the specified position in the list. Consistency checks are performed and the child's parent
-    // pointer is adjusted.
-    void insertAt(size_t idx, const NodePtr &child);
-
-    // Remove one of the child edges. If the edge pointed to a non-null child node, then that child's parent pointer is reset.
-    void eraseAt(size_t idx);
-
-    // Remove all children.
-    void clear();
-
-    // Add a new parent-child-edge and return its index
-    size_t appendEdge(const NodePtr &child);
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Node declaration
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/** Base class for @ref Tree nodes.
- *
- *  All nodes of a tree inherit from this type. The main features that this class provides are:
- *
- *  @li When declaring a tree node, the parent-child edges are declared using the @ref ChildEdge type as described in that
- *  type's documentation.
- *
- *  @li Every node has a @c children data member that enumerates the nodes pointed to by the @ref ChildEdge data members.
- *  This list of all children is updated automatically as assignments are made to the @ref ChildEdge data members.
- *
- *  @li Every node has a @c parent data member that points to the parent node in the tree, or null if this node is the
- *  root of a tree.  The parent pointers are updated automatically as nodes are inserted into and removed from the tree.
- *
- *  @li Node memory is managed using @c std::shared_ptr, and node memory is reclaimed automatically when there are no more
- *  references to the node, either as parent-child edges or other shared pointers outside the tree's control. The pointers
- *  from child to parent within the tree data structure itself are weak and do not count as references to the parent node.
- *
- *  @li a number of traversals are defined, the two most general being @ref traverse and @ref traverseParents. The other
- *  traversals are more specialized and are built upon the first two. */
-class Node: public std::enable_shared_from_this<Node> {
-private:
-    enum TraversalDirection { TRAVERSE_UPWARD, TRAVERSE_DOWNWARD };
-
-public:
-    ParentEdge parent;                                  /**< Pointer to the parent node, if any. */
-    Children children;                                  /**< Vector of pointers to children. */
-
-public:
-    /** Construct an empty node. */
-    Node(): children(this) {}
-
-    /** Nodes are polymorphic. */
-    virtual ~Node() {}
-
-    // Nodes are not copyable since doing so would cause the children (which are not copied) to have two parents. Instead, we
-    // will provide mechanisms for copying nodes without their children (shallow copy) or recursively copying an entire tree
-    // (deep copy).
-    Node(const Node&) = delete;
-    Node& operator=(const Node&) = delete;
-
-    /** Traverse the tree starting at this node and following child pointers.
+    /** Points from a child to a parent in the tree.
      *
-     *  The @p functor takes two arguments: the tree node under consideration, and a TraversalEvent that indicates whether the
-     *  traversal is entering or leaving the node.  The functor must return a @ref TraversalAction to describe what should
-     *  happen next.
+     *  This is the pointer type that points from a child vertex to its parent vertex if the child has a parent. Its value is
+     *  adjusted automatically when the child vertex is inserted or erased as a child of some other vertex. The term "edge" is used
+     *  instead of "pointer" because the relationship between child and parent is bidirectional.
      *
-     *  If the functor called by the node enter event returns @ref SKIP_CHILDREN, then none of the children are traversed and
-     *  the next call to the functor is for leaving that same node.
-     *
-     *  If any call to the functor returns ABORT, then the traversal is immediately aborted.
-     *
-     *  If any functor returns ABORT, then the @ref traverse function also returns ABORT. Otherwise the @ref traverse function
-     *  returns CONTINUE.
-     *
-     * @{ */
-    template<class Functor>
-    TraversalAction traverse(Functor functor) {
-        return traverseImpl<Functor>(TRAVERSE_DOWNWARD, functor);
-    }
-    template<class Functor>
-    TraversalAction traverse(Functor functor) const {
-        return traverseImpl<Functor>(TRAVERSE_DOWNWARD, functor);
-    }
-    /** @} */
+     *  A reverse edge is always a data member of a vertex and never instantiated in other circumstances. Thus users don't normally
+     *  instantiate these directly, but they do interact with them through the @c parent data member that exists for all vertex
+     *  types. */
+    class ReverseEdge {
+    private:
+        Vertex &child_;                                 // required child vertex owning this edge
 
-    /** Traverse the tree restricted by type.
-     *
-     *  Traverses the entire tree, but calls the functor only for nodes of the specified type (or subtype).
-     *
-     * @{ */
-    template<class T, class Functor>
-    TraversalAction traverseType(Functor functor);
-    template<class T, class Functor>
-    TraversalAction traverseType(Functor functor) const;
-    /** @} */
+        // The parent pointer is a raw pointer because it is safe to do so, and because we need to know the pointer before the
+        // parent is fully constructed.
+        //
+        // It is safe (never dangling) because the pointer can only be changed by a forward edge, which is always a member of a
+        // vertex, and the parent pointer is only set to point to that vertex. When the parent is deleted the edge is deleted and
+        // its destructor changes the parent pointer back to null.
+        //
+        // The parent pointer is needed during construction of the parent when the parent has some edge data members that are being
+        // initialized to point to non-null children. This happens during the parent's construction, before the parent has any
+        // shared or weak pointers.
+        UserBase *parent_ = nullptr;                    // optional parent to which this edge points
 
-    /** Traverse the tree by following parent pointers.
-     *
-     *  Other than following pointers from children to parents, this traversal is identical to the downward @ref traverse
-     *  method.
-     *
-     * @{ */
-    template<class Functor>
-    TraversalAction traverseParents(Functor functor) {
-        return traverseImpl<Functor>(TRAVERSE_UPWARD, functor);
-    }
-    template<class Functor>
-    TraversalAction traverseParents(Functor functor) const {
-        return traverseImpl<Functor>(TRAVERSE_UPWARD, functor);
-    }
-    /** @} */
+    public:
+        // No default constructor and not copyable.
+        ReverseEdge() = delete;
+        explicit ReverseEdge(const ReverseEdge&) = delete;
+        ReverseEdge& operator=(const ReverseEdge&) = delete;
 
-    /** Traverse an tree to find the first node satisfying the predicate.
-     *
-     * @{ */
-    template<class Predicate>
-    NodePtr find(Predicate predicate) {
-        return findImpl<Node, Predicate>(TRAVERSE_DOWNWARD, predicate);
-    }
-    template<class Predicate>
-    NodePtr find(Predicate predicate) const {
-        return findImpl<Node, Predicate>(TRAVERSE_DOWNWARD, predicate);
-    }
-    /** @} */
+    public:
+        ~ReverseEdge();                                 // internal use only
+        explicit ReverseEdge(Vertex &child);            // internal use only
 
-    /** Find first child that's the specified type.
-     *
-     * @{ */
-    template<class T>
-    std::shared_ptr<T> findType() {
-        return findImpl<T>(TRAVERSE_DOWNWARD, [](const std::shared_ptr<T>&) { return true; });
-    }
-    template<class T>
-    std::shared_ptr<T> findType() const {
-        return findImpl<T>(TRAVERSE_DOWNWARD, [](const std::shared_ptr<T>&) { return true; });
-    }
-    /** @} */
+    public:
+        /** Return the parent if there is one, else null.
+         *
+         * @{ */
+        UserBasePtr operator()() const;
+        UserBasePtr operator->() const;
+        /** @} */
 
-    /** Find first child of specified type satisfying the predicate.
-     *
-     * @{ */
-    template<class T, class Predicate>
-    std::shared_ptr<T> findType(Predicate predicate) {
-        return findImpl<T, Predicate>(TRAVERSE_DOWNWARD, predicate);
-    }
-    template<class T, class Predicate>
-    std::shared_ptr<T> findType(Predicate predicate) const {
-        return findImpl<T, Predicate>(TRAVERSE_DOWNWARD, predicate);
-    }
-    /** @} */
+        /** Compare the parent pointer to another pointer.
+         *
+         * @{ */
+        bool operator==(const UserBasePtr&) const;
+        bool operator!=(const UserBasePtr&) const;
+        bool operator==(const ReverseEdge&) const;
+        bool operator!=(const ReverseEdge&) const;
+        template<class T> bool operator==(const Edge<T>&) const;
+        template<class T> bool operator!=(const Edge<T>&) const;
+        /** @} */
 
-    /** Find closest ancestor that satifies the predicate.
-     *
-     * @{ */
-    template<class Predicate>
-    NodePtr findParent(Predicate predicate) {
-        return findImpl<Node, Predicate>(TRAVERSE_UPWARD, predicate);
-    }
-    template<class Predicate>
-    NodePtr findParent(Predicate predicate) const {
-        return findImpl<Node, Predicate>(TRAVERSE_UPWARD, predicate);
-    }
-    /** @} */
-
-    /** Find closest ancestor of specified type.
-     *
-     * @{ */
-    template<class T>
-    std::shared_ptr<T> findParentType() {
-        return findImpl<T>(TRAVERSE_UPWARD, [](const std::shared_ptr<T>&) { return true; });
-    }
-    template<class T>
-    std::shared_ptr<T> findParentType() const {
-        return findImpl<T>(TRAVERSE_UPWARD, [](const std::shared_ptr<T>&) { return true; });
-    }
-    /** @} */
-
-    /** Find closest ancestor of specified type that satisfies the predicate.
-     *
-     * @{ */
-    template<class T, class Predicate>
-    std::shared_ptr<T> findParentType(Predicate predicate) {
-        return findImpl<T, Predicate>(TRAVERSE_UPWARD, predicate);
-    }
-    template<class T, class Predicate>
-    std::shared_ptr<T> findParentType(Predicate predicate) const {
-        return findImpl<T, Predicate>(TRAVERSE_UPWARD, predicate);
-    }
-    /** @} */
-
-private:
-    // implementation for all the traversals
-    template<class Functor>
-    TraversalAction traverseImpl(TraversalDirection, Functor);
-    template<class Functor>
-    TraversalAction traverseImpl(TraversalDirection, Functor) const;
-
-    // implementation for traversals whose purpose is to find something
-    template<class T, class Predicate>
-    std::shared_ptr<T> findImpl(TraversalDirection, Predicate);
-    template<class T, class Predicate>
-    std::shared_ptr<T> findImpl(TraversalDirection, Predicate) const;
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// ListNode declaration
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/** A node containing only a list of children.
- *
- *  This class is used for nodes whose sole purpose is to hold a list of child nodes. Rather than having any dedicated data
- *  members, it accesses the @c children member directly in order to store the ordered list of child pointers. New classes
- *  cannot be derived from this class since doing so would enable the derived class to have additional ChildPtr data members
- *  that would interfere with the @c children list.
- *
- *  Although the @c children data member provides a read-only API for accessing the children, we also need to provde an API
- *  that can modify that list.  The entire @c children API is available also from this node directly so that the reading and
- *  writing APIs can be invoked consistently on this object.
- *
- *  A parent node that points to a node containing a list as well as nodes that are not lists is declared as follows:
- *
- * @code
- *  class ChildType1;    // some user-defined type derived from Tree::Node
- *  class ChildType2;    // ditto
- *  class ChildType3;    // ditto
- *
- *  class Parent: public Tree::Node {
- *  public:
- *      Tree::ChildEdge<ChildType1> first;                // a.k.a., children[0]
- *      Tree::ChildEdge<Tree::ListNode<ChildType2>> list; // a.k.a., children[1]
- *      Tree::ChildEdge<ChildType3> last;                 // a.k.a., children[2] regardless of list's size
- *
- *      Parent()
- *          : first(this), list(this), last(this) {}
- *  }
- * @endcode
- *
- *  A common practice when creating a @ref ListNode is to allocate the node when the parent is constructed:
- *
- * @code
- *  Parent::Parent()
- *      : first(this), list(this, std::make_shared<Tree::ListNode<ChildType2>>()), last(this) {}
- * @endcode
- *
- *  If you follow the recommendation of always allocating @ref ListNode data members, then the 10th child (index 9) of the
- *  parent node's list can be accessed without worrying about whether <tt>parent->list</tt> is a null pointer:
- *
- * @code
- *  std::shared_ptr<Parent> parent = ...;
- *  std::shared_ptr<ChildType2> item = parent->list->at(9);
- * @endcode
- *
- *  Since a @ref ListNode is a type of @ref Node, it has a @c children data member of type @ref Children. All the functions
- *  defined for @ref Children are also defined in @ref ListNode itself, plus @ref ListNode has a number of additional member
- *  functions for inserting and removing children--something that's not possible with other @ref Node types.
- *
- *  The @ref ListNode type is final because if users could derive subclasses from it, then those subclasses could add
- *  @ref ChildEdge data members that would interfere with the child node counting. */
-template<class T>
-class ListNode final: public Node {
-public:
-    //----------------------------------------
-    // Read-only API delegated to 'children'
-    //----------------------------------------
-
-    /** Number of children. */
-    size_t size() const {
-        return children.size();
-    }
-
-    /** Maximum size. */
-    size_t max_size() const {
-        return children.max_size();
-    }
-
-    /** Capacity. */
-    size_t capacity() const {
-        return children.capacity();
-    }
-
-    /** Empty predicate. */
-    bool empty() const {
-        return children.empty();
-    }
-
-    /** Reserve space for more children. */
-    void reserve(size_t n) {
-        children.reserve(n);
-    }
-
-    /** Shrink reservation. */
-    void shrink_to_fit() {
-        children.shrink_to_fit();
-    }
-
-    /** Child at specified index. */
-    const std::shared_ptr<T> at(size_t i) const {
-        return std::dynamic_pointer_cast<T>(children.at(i));
-    }
-
-    /** Child at specified index. */
-    const std::shared_ptr<T> operator[](size_t i) const {
-        return std::dynamic_pointer_cast<T>(children[i]);
-    }
-
-    /** First child, if any. */
-    const std::shared_ptr<T> front() const {
-        return std::dynamic_pointer_cast<T>(children.front());
-    }
-
-    /** Last child, if any. */
-    const std::shared_ptr<T> back() const {
-        return std::dynamic_pointer_cast<T>(children.back());
-    }
-
-    /** Vector of all children. */
-    std::vector<std::shared_ptr<T> > elmts() const;
-
-    /** Find the index for the specified node.
-     *
-     *  Finds the index for the first child at or after @p startAt and returns its index. Returns nothing if the specified
-     *  node is not found. */
-    Optional<size_t> index(const std::shared_ptr<T> &node, size_t startAt = 0) const;
-
-    //----------------------------------------
-    //              Modifying API
-    //----------------------------------------
-
-    /** Remove all children. */
-    void clear() {
-        children.clear();
-    }
-    
-    /** Append a child pointer. */
-    void push_back(const std::shared_ptr<T> &newChild) {
-        children.insertAt(children.size(), newChild);
-    }
-
-    /** Make child edge point to a different child.
-     *
-     * @{ */
-    void setAt(size_t i, const std::shared_ptr<T> &child) {
-        children.setAt(i, child);
-    }
-    void setAt(size_t i, std::nullptr_t) {
-        children.setAt(i, nullptr);
-    }
-    /** @} */
-
-
-    /** Insert the node at the specified index.
-     *
-     *  The node must not already have a parent. The index must be greater than or equal to zero and less than or equal to the
-     *  current number of nodes. Upon return, the node that was inserted will be found at index @p i. */
-    void insertAt(size_t i, const std::shared_ptr<T> &newChild) {
-        children.insertAt(i, newChild);
-    }
-
-    /** Erase node at specified index.
-     *
-     *  If the index is out of range then nothing happens. */
-    void eraseAt(size_t i) {
-        children.eraseAt(i);
-    }
-
-    /** Erase the first occurrence of the specified child.
-     *
-     *  Erases the first occurrence of the specified child at or after the starting index.
-     *
-     *  If a child was erased, then return the index of the erased child. */
-    Optional<size_t> erase(const std::shared_ptr<T> &toErase, size_t startAt = 0);
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                        ____      _       _   _
-//                       |  _ \ ___| | __ _| |_(_) ___  _ __  ___
-//                       | |_) / _ \ |/ _` | __| |/ _ \| '_ \/ __|
-//                       |  _ <  __/ | (_| | |_| | (_) | | | \__ |
-//                       |_| \_\___|_|\__,_|\__|_|\___/|_| |_|___/
-//
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// ChildEdge<T> and ChildEdge<U>
-template<class T, class U> bool operator==(const ChildEdge<T> &lhs, const ChildEdge<U> &rhs) noexcept { return lhs.shared() == rhs.shared(); }
-template<class T, class U> bool operator!=(const ChildEdge<T> &lhs, const ChildEdge<U> &rhs) noexcept { return lhs.shared() != rhs.shared(); }
-template<class T, class U> bool operator< (const ChildEdge<T> &lhs, const ChildEdge<U> &rhs) noexcept { return lhs.shared() <  rhs.shared(); }
-template<class T, class U> bool operator<=(const ChildEdge<T> &lhs, const ChildEdge<U> &rhs) noexcept { return lhs.shared() <= rhs.shared(); }
-template<class T, class U> bool operator> (const ChildEdge<T> &lhs, const ChildEdge<U> &rhs) noexcept { return lhs.shared() >  rhs.shared(); }
-template<class T, class U> bool operator>=(const ChildEdge<T> &lhs, const ChildEdge<U> &rhs) noexcept { return lhs.shared() >= rhs.shared(); }
-
-// ChildEdge<T> and nullptr
-template<class T> bool operator==(const ChildEdge<T> &lhs, std::nullptr_t) noexcept { return lhs.shared() == nullptr; }
-template<class T> bool operator!=(const ChildEdge<T> &lhs, std::nullptr_t) noexcept { return lhs.shared() != nullptr; }
-template<class T> bool operator< (const ChildEdge<T> &lhs, std::nullptr_t) noexcept { return lhs.shared() <  nullptr; }
-template<class T> bool operator<=(const ChildEdge<T> &lhs, std::nullptr_t) noexcept { return lhs.shared() <= nullptr; }
-template<class T> bool operator> (const ChildEdge<T> &lhs, std::nullptr_t) noexcept { return lhs.shared() >  nullptr; }
-template<class T> bool operator>=(const ChildEdge<T> &lhs, std::nullptr_t) noexcept { return lhs.shared() >= nullptr; }
-
-// nullptr and ChildEdge<T>
-template<class T> bool operator==(std::nullptr_t, const ChildEdge<T> &rhs) noexcept { return nullptr == rhs.shared(); }
-template<class T> bool operator!=(std::nullptr_t, const ChildEdge<T> &rhs) noexcept { return nullptr != rhs.shared(); }
-template<class T> bool operator< (std::nullptr_t, const ChildEdge<T> &rhs) noexcept { return nullptr <  rhs.shared(); }
-template<class T> bool operator<=(std::nullptr_t, const ChildEdge<T> &rhs) noexcept { return nullptr <= rhs.shared(); }
-template<class T> bool operator> (std::nullptr_t, const ChildEdge<T> &rhs) noexcept { return nullptr >  rhs.shared(); }
-template<class T> bool operator>=(std::nullptr_t, const ChildEdge<T> &rhs) noexcept { return nullptr >= rhs.shared(); }
-
-// ChildEdge<T> and std::shared_ptr<U>
-template<class T, class U> bool operator==(const ChildEdge<T> &lhs, const std::shared_ptr<U> &rhs) noexcept { return lhs.shared() == rhs; }
-template<class T, class U> bool operator!=(const ChildEdge<T> &lhs, const std::shared_ptr<U> &rhs) noexcept { return lhs.shared() != rhs; }
-template<class T, class U> bool operator< (const ChildEdge<T> &lhs, const std::shared_ptr<U> &rhs) noexcept { return lhs.shared() <  rhs; }
-template<class T, class U> bool operator<=(const ChildEdge<T> &lhs, const std::shared_ptr<U> &rhs) noexcept { return lhs.shared() <= rhs; }
-template<class T, class U> bool operator> (const ChildEdge<T> &lhs, const std::shared_ptr<U> &rhs) noexcept { return lhs.shared() >  rhs; }
-template<class T, class U> bool operator>=(const ChildEdge<T> &lhs, const std::shared_ptr<U> &rhs) noexcept { return lhs.shared() >= rhs; }
-
-// std::shared_ptr<T> and ChildEdge<U>
-template<class T, class U> bool operator==(const std::shared_ptr<T> &lhs, const ChildEdge<U> &rhs) noexcept { return lhs == rhs.shared(); }
-template<class T, class U> bool operator!=(const std::shared_ptr<T> &lhs, const ChildEdge<U> &rhs) noexcept { return lhs != rhs.shared(); }
-template<class T, class U> bool operator< (const std::shared_ptr<T> &lhs, const ChildEdge<U> &rhs) noexcept { return lhs <  rhs.shared(); }
-template<class T, class U> bool operator<=(const std::shared_ptr<T> &lhs, const ChildEdge<U> &rhs) noexcept { return lhs <= rhs.shared(); }
-template<class T, class U> bool operator> (const std::shared_ptr<T> &lhs, const ChildEdge<U> &rhs) noexcept { return lhs >  rhs.shared(); }
-template<class T, class U> bool operator>=(const std::shared_ptr<T> &lhs, const ChildEdge<U> &rhs) noexcept { return lhs >= rhs.shared(); }
-
-// ParentEdge and nullptr
-inline bool operator==(const ParentEdge &lhs, std::nullptr_t) noexcept { return lhs.shared() == nullptr; }
-inline bool operator!=(const ParentEdge &lhs, std::nullptr_t) noexcept { return lhs.shared() != nullptr; }
-inline bool operator< (const ParentEdge &lhs, std::nullptr_t) noexcept { return lhs.shared() <  nullptr; }
-inline bool operator<=(const ParentEdge &lhs, std::nullptr_t) noexcept { return lhs.shared() <= nullptr; }
-inline bool operator> (const ParentEdge &lhs, std::nullptr_t) noexcept { return lhs.shared() >  nullptr; }
-inline bool operator>=(const ParentEdge &lhs, std::nullptr_t) noexcept { return lhs.shared() >= nullptr; }
-
-// nullptr and ParentEdge
-inline bool operator==(std::nullptr_t, const ParentEdge &rhs) noexcept { return nullptr == rhs.shared(); }
-inline bool operator!=(std::nullptr_t, const ParentEdge &rhs) noexcept { return nullptr != rhs.shared(); }
-inline bool operator< (std::nullptr_t, const ParentEdge &rhs) noexcept { return nullptr <  rhs.shared(); }
-inline bool operator<=(std::nullptr_t, const ParentEdge &rhs) noexcept { return nullptr <= rhs.shared(); }
-inline bool operator> (std::nullptr_t, const ParentEdge &rhs) noexcept { return nullptr >  rhs.shared(); }
-inline bool operator>=(std::nullptr_t, const ParentEdge &rhs) noexcept { return nullptr >= rhs.shared(); }
-
-// ParentEdge and std::shared_ptr<T>
-template<class T> bool operator==(const ParentEdge &lhs, const std::shared_ptr<T> &rhs) noexcept { return lhs.shared() == rhs; }
-template<class T> bool operator!=(const ParentEdge &lhs, const std::shared_ptr<T> &rhs) noexcept { return lhs.shared() != rhs; }
-template<class T> bool operator< (const ParentEdge &lhs, const std::shared_ptr<T> &rhs) noexcept { return lhs.shared() <  rhs; }
-template<class T> bool operator<=(const ParentEdge &lhs, const std::shared_ptr<T> &rhs) noexcept { return lhs.shared() <= rhs; }
-template<class T> bool operator> (const ParentEdge &lhs, const std::shared_ptr<T> &rhs) noexcept { return lhs.shared() >  rhs; }
-template<class T> bool operator>=(const ParentEdge &lhs, const std::shared_ptr<T> &rhs) noexcept { return lhs.shared() >= rhs; }
-
-// std::shared_ptr<T> and ParentEdge
-template<class T> bool operator==(const std::shared_ptr<T> &lhs, const ParentEdge &rhs) noexcept { return lhs == rhs.shared(); }
-template<class T> bool operator!=(const std::shared_ptr<T> &lhs, const ParentEdge &rhs) noexcept { return lhs != rhs.shared(); }
-template<class T> bool operator< (const std::shared_ptr<T> &lhs, const ParentEdge &rhs) noexcept { return lhs <  rhs.shared(); }
-template<class T> bool operator<=(const std::shared_ptr<T> &lhs, const ParentEdge &rhs) noexcept { return lhs <= rhs.shared(); }
-template<class T> bool operator> (const std::shared_ptr<T> &lhs, const ParentEdge &rhs) noexcept { return lhs >  rhs.shared(); }
-template<class T> bool operator>=(const std::shared_ptr<T> &lhs, const ParentEdge &rhs) noexcept { return lhs >= rhs.shared(); }
-
-// ParentEdge and ChildEdge<T>
-template<class T> bool operator==(const ParentEdge &lhs, const ChildEdge<T> &rhs) noexcept { return lhs.shared() == rhs.shared(); }
-template<class T> bool operator!=(const ParentEdge &lhs, const ChildEdge<T> &rhs) noexcept { return lhs.shared() != rhs.shared(); }
-template<class T> bool operator< (const ParentEdge &lhs, const ChildEdge<T> &rhs) noexcept { return lhs.shared() <  rhs.shared(); }
-template<class T> bool operator<=(const ParentEdge &lhs, const ChildEdge<T> &rhs) noexcept { return lhs.shared() <= rhs.shared(); }
-template<class T> bool operator> (const ParentEdge &lhs, const ChildEdge<T> &rhs) noexcept { return lhs.shared() >  rhs.shared(); }
-template<class T> bool operator>=(const ParentEdge &lhs, const ChildEdge<T> &rhs) noexcept { return lhs.shared() >= rhs.shared(); }
-
-// ChildEdge<T> and ParentEdge
-template<class T> bool operator==(const ChildEdge<T> &lhs, const ParentEdge &rhs) noexcept { return lhs.shared() == rhs.shared(); }
-template<class T> bool operator!=(const ChildEdge<T> &lhs, const ParentEdge &rhs) noexcept { return lhs.shared() != rhs.shared(); }
-template<class T> bool operator< (const ChildEdge<T> &lhs, const ParentEdge &rhs) noexcept { return lhs.shared() <  rhs.shared(); }
-template<class T> bool operator<=(const ChildEdge<T> &lhs, const ParentEdge &rhs) noexcept { return lhs.shared() <= rhs.shared(); }
-template<class T> bool operator> (const ChildEdge<T> &lhs, const ParentEdge &rhs) noexcept { return lhs.shared() >  rhs.shared(); }
-template<class T> bool operator>=(const ChildEdge<T> &lhs, const ParentEdge &rhs) noexcept { return lhs.shared() >= rhs.shared(); }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                        ___                 _                           _        _   _
-//                       |_ _|_ __ ___  _ __ | | ___ _ __ ___   ___ _ __ | |_ __ _| |_(_) ___  _ __  ___
-//                        | || '_ ` _ \| '_ \| |/ _ \ '_ ` _ \ / _ \ '_ \| __/ _` | __| |/ _ \| '_ \/ __|
-//                        | || | | | | | |_) | |  __/ | | | | |  __/ | | | || (_| | |_| | (_) | | | \__ |
-//                       |___|_| |_| |_| .__/|_|\___|_| |_| |_|\___|_| |_|\__\__,_|\__|_|\___/|_| |_|___/
-//                                     |_|
-//
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// ChildEdge implementation
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-template<class T>
-ChildEdge<T>::ChildEdge(Node *container)
-    : container_(container), idx_(container->children.appendEdge(nullptr)) {
-    ASSERT_not_null(container_);
-}
-
-template<class T>
-ChildEdge<T>::ChildEdge(Node *container, const std::shared_ptr<T> &child)
-    : container_(container), idx_(container->children.appendEdge(child)) {
-    ASSERT_not_null(container_);
-}
-
-template<class T>
-std::shared_ptr<T>
-ChildEdge<T>::shared() const {
-    return std::dynamic_pointer_cast<T>(container_->children[this->idx_]);
-}
-
-template<class T>
-void
-ChildEdge<T>::assign(const NodePtr &newChild) {
-    container_->children.setAt(idx_, newChild);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// ParentEdge implementation
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-NodePtr
-ParentEdge::shared() const {
-    return parent_ ? parent_->shared_from_this() : NodePtr();
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Children implementation
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-Children::Children(Node *container)
-    : container_(container) {
-    ASSERT_not_null(container);
-}
-
-size_t
-Children::appendEdge(const NodePtr &child) {
-    size_t idx = children_.size();
-    children_.push_back(nullptr);
-    setAt(idx, child);
-    return idx;
-}
-
-void
-Children::checkInsertionConsistency(const NodePtr &newChild, const NodePtr &oldChild, Node *parent) {
-    ASSERT_not_null(parent);
-
-    if (newChild && newChild != oldChild) {
-        if (newChild->parent != nullptr) {
-            if (newChild->parent.shared().get() == parent) {
-                throw ConsistencyException(newChild, "node is already a child of the parent");
-            } else {
-                throw ConsistencyException(newChild, "node is already attached to a tree");
-            }
+        /** True if parent is not null. */
+        explicit operator bool() const {
+            return parent_ != nullptr;
         }
 
-        for (Node *ancestor = parent; ancestor; ancestor = ancestor->parent.parent_) {
-            if (newChild.get() == ancestor)
-                throw ConsistencyException(newChild, "node insertion would introduce a cycle");
+    private:
+        // Used internally through ReverseEdgeAccess when a Edge<T> adjusts the ReverseEdge
+        template<class T> friend class Edge;
+        void reset();
+        void set(UserBase &parent);
+    };
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Base class for parent-to-child edges
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+private:
+    enum class Link { NO, YES };
+
+    // Used internally as the non-template abstract base class for all parent-to-child edge types.
+    class EdgeBase {
+    public:
+        // Previous edge in this object, including edges defined in base classes. Edges in this linked list are ordered so that
+        // if edge A was initialized before edge B, then edge A will appear earlier in the list. The "prev" pointers in the list
+        // point backward through the list.
+        EdgeBase *prev;
+
+        virtual ~EdgeBase() {}
+        EdgeBase() = delete;
+        EdgeBase(const EdgeBase&) = delete;
+        EdgeBase& operator=(const EdgeBase&) = delete;
+        explicit EdgeBase(EdgeBase *prev)
+            : prev(prev) {}
+
+        // Number of child pointers in this edge. Edges are either 1:1 or 1:N. Some of the child pointers could be null.
+        virtual size_t size() const = 0;
+
+        // Return the i'th pointer. The argument is expected to be in the domain.
+        virtual Vertex* pointer(size_t i) const = 0;
+
+        // Traverse through all the non-null children of appropriate type pointed to by all edges in the order that the edges were
+        // initialized. The visitor is invoked with two arguments: a non-null shared pointer to the child, and an indication of
+        // whether this is a pre- or post-order visit. The first visitor call that returns a value that is true in a Boolean context
+        // short circuits the traversal and that value becomes the return value of the traversal.
+        template<class T, class Visitor>
+        auto traverse(Visitor visitor) -> decltype(visitor(std::shared_ptr<T>(), TraversalEvent::ENTER)) {
+            if (prev) {
+                if (auto retval = prev->traverse<T>(visitor))
+                    return retval;
+            }
+            for (size_t i = 0; i < size(); ++i) {
+                if (auto child = pointer(i)) {
+                    if (auto retval = child->template traverse<T>(visitor))
+                        return retval;
+                }
+            }
+            return decltype(visitor(std::shared_ptr<T>(), TraversalEvent::ENTER))();
         }
-    }
-}
+    };
 
-void
-Children::setAt(size_t idx, const NodePtr &newChild) {
-    ASSERT_require(idx < children_.size());
-    NodePtr oldChild = children_[idx];
-    checkInsertionConsistency(newChild, oldChild, container_);
-    if (oldChild)
-        oldChild->parent.reset();
-    children_[idx] = newChild;
-    if (newChild)
-        newChild->parent.set(container_);
-}
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // 1:1 parent-to-child edge
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** A parent-to-child edge in a tree.
+     *
+     *  A parent-to-child edge is a pointer-like object that points from an parent vertex to a child vertex or nullptr. It is also
+     *  responsible for adjusting the child's parent pointer. The term "edge" is used instead of "pointer" because the relationship
+     *  between the parent and child is bidirectional. The full term is "forward edge", but since this is the only kind of edge that
+     *  users will work with, we've shortened the name to just "edge". A "reverse edge" is the pointer from child to parent.
+     *
+     *  An forward edge is always a data member of a vertex and never instantiated in other circumstances. Thus users don't normally
+     *  instanticate these directly, but they do interact with them to obtain pointers to children from a parent.
+     *
+     *  This type is used to define a data member in the parent that points to a child. For instance, the following binary
+     *  expression vertex has left-hand-side and right-hand-side children that are part of the tree. If @c lhs and @c rhs were not
+     *  intended to be part of the tree data structure, then their types would be pointers (@c ExpressionPtr) instead of edges.
+     *
+     * @code
+     *  class BinaryExpression: public Expression {
+     *  public:
+     *      using Ptr = std::shared_ptr<BinaryExpression>;
+     *
+     *  public:
+     *      Edge<Expression> lhs;
+     *      Edge<Expression> rhs;
+     *
+     *  protected:
+     *      BinaryExpression()
+     *          : lhs(*this), rhs(*this) {}
+     *
+     *      static Ptr instance() {
+     *          return Ptr(new BinaryExpression);
+     *      }
+     *  };
+     * @endcode */
+    template<class T>
+    class Edge: public EdgeBase {
+    public:
+        /** Type of child being pointed to. */
+        using Child = T;
 
-void
-Children::insertAt(size_t idx, const NodePtr &child) {
-    ASSERT_require(idx <= children_.size());
-    checkInsertionConsistency(child, nullptr, container_);
-    children_.insert(children_.begin() + idx, child);
-    if (child)
-        child->parent.set(container_);
-}
+        /** Type of pointer to the child. */
+        using ChildPtr = std::shared_ptr<Child>;
 
-void
-Children::eraseAt(size_t idx) {
-    ASSERT_require(idx < children_.size());
-    if (children_[idx])
-        children_[idx]->parent.reset();
-    children_.erase(children_.begin() + idx);
-}
+    private:
+        UserBase &parent_;                              // required parent owning this child edge
+        ChildPtr child_;                                // optional child to which this edge points
 
-void
-Children::clear() {
-    while (!children_.empty()) {
-        if (children_.back())
-            children_.back()->parent.reset();
-        children_.pop_back();
-    }
-}
+    public:
+        /** Destructor clears child's parent. */
+        ~Edge();
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Node implementation
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /** Construct a child edge that belongs to the specified parent.
+         *
+         *  When constructing a class containing a data member of this type (i.e., a tree edge that points to a child of this
+         *  vertex), the data member must be initialized by passing @c *this as the argument.  See the example in this class
+         *  documentation.
+         *
+         *  An optional second argument initializes the child pointer for the edge. The initialization is the same as if the child
+         *  had been assigned with @c operator= later. I.e., the child must not already have a parent.
+         *
+         * @{ */
+        explicit Edge(UserBase &parent);
+        Edge(UserBase &parent, const ChildPtr &child);
+        /** @} */
 
-//----------------------------------------
-// traverseImpl
-//----------------------------------------
-template<class Functor>
-TraversalAction
-Node::traverseImpl(TraversalDirection direction, Functor functor) {
-    switch (TraversalAction action = functor(this->shared_from_this(), ENTER)) {
-        case CONTINUE:
-            if (TRAVERSE_DOWNWARD == direction) {
-                for (size_t i=0; i<children.size() && CONTINUE==action; ++i) {
-                    if (children[i])
-                        action = children[i]->traverseImpl<Functor>(direction, functor);
+    private:
+        template<class U> friend class EdgeVector;
+        // Used internally to initialize an edge without linking it to prior edges
+        Edge(Link, UserBase &parent, const ChildPtr &child);
+
+    public:
+        /** Return the child if there is one, else null.
+         *
+         * @{ */
+        const ChildPtr& operator->() const;
+        const ChildPtr& operator()() const;
+        /** @} */
+
+        /** Compare the child pointer to another pointer.
+         *
+         * @{ */
+        bool operator==(const UserBasePtr&) const;
+        bool operator!=(const UserBasePtr&) const;
+        bool operator==(const ReverseEdge&) const;
+        bool operator!=(const ReverseEdge&) const;
+        template<class U> bool operator==(const Edge<U>&) const;
+        template<class U> bool operator!=(const Edge<U>&) const;
+        /** @} */
+
+        /** Assign a pointer to a child.
+         *
+         *  If this edge points to an old child then that child is removed and its parent is reset. If the specified new child is
+         *  non-null, then it is inserted and its parent pointer set to the parent of this edge.
+         *
+         *  However, if the new child already has a non-null parent, then no changes are made and an @ref InsertionError is thrown
+         *  with the error's vertex pointing to the intended child. Otherwise, if the new child is non-null and is the parent or any
+         *  more distant ancestor of this edge's vertex, then a @ref CycleError is thrown. Cycle errors are only thrown if debugging
+         *  is enabled (i.e., the CPP macro @c NDEBUG is undefined).
+         *
+         *  Attempting to assign one child edge object to another is a compile-time error (its operator= is not declared) because
+         *  every non-null child edge points to a child whose parent is non-null, which would trigger an @ref
+         *  InsertionError. Therefore only null child edges could be assigned. But since only null child edges can be assigned, its
+         *  more concise and clear to assign the null pointer directly.
+         *
+         * @{ */
+        Edge& operator=(const ChildPtr &child) {
+            if (child != child_) {
+                checkChildInsertion(child);
+
+                // Unlink the child from the tree
+                if (child_) {
+                    child_->parent.reset();                     // child-to-parent edge
+                    child_.reset();                             // parent-to-child edge
                 }
-            } else if (parent) {
-                action = parent->traverseImpl<Functor>(direction, functor);
-            }
-            // fall through
-        case SKIP_CHILDREN:
-            if (ABORT != action && (action = functor(this->shared_from_this(), LEAVE)) == SKIP_CHILDREN)
-                action = CONTINUE;
-            // fall through
-        default:
-            return action;
-    }
-}
 
-template<class Functor>
-TraversalAction
-Node::traverseImpl(TraversalDirection direction, Functor functor) const {
-    switch (TraversalAction action = functor(this->shared_from_this(), ENTER)) {
-        case CONTINUE:
-            if (TRAVERSE_DOWNWARD == direction) {
-                for (size_t i=0; i<children.size() && CONTINUE==action; ++i) {
-                    if (children[i])
-                        action = children[i]->traverseImpl<Functor>(direction, functor);
+                // Link new child into the tree
+                if (child) {
+                    child->parent.set(parent_);
+                    child_ = child;
                 }
-            } else if (parent) {
-                action = parent->traverseImpl<Functor>(direction, functor);
             }
-            // fall through
-        case SKIP_CHILDREN:
-            if (ABORT != action && (action = functor(this->shared_from_this(), LEAVE)) == SKIP_CHILDREN)
-                action = CONTINUE;
-            // fall through
-        default:
-            return action;
-    }
-}
+            return *this;
+        }
 
-//----------------------------------------
-// traverseType
-//----------------------------------------
+        Edge& operator=(const ReverseEdge &parent) {
+            return (*this) = parent();
+        }
+        /** @} */
 
-template<class T, class Functor>
-struct TraverseTypeHelper {
-    Functor functor;
+        /** True if child is not null. */
+        explicit operator bool() const {
+            return child_ != nullptr;
+        }
 
-    TraverseTypeHelper(Functor functor)
-        : functor(functor) {}
+    private:
+        void checkChildInsertion(const ChildPtr &child) const;
 
-    TraversalAction operator()(const NodePtr &node, TraversalEvent event) {
-        if (std::shared_ptr<T> typed = std::dynamic_pointer_cast<T>(node)) {
-            return functor(typed, event);
+        size_t size() const override {
+            return 1;
+        }
+
+        Vertex* pointer(size_t i) const override {
+            ASSERT_always_require(0 == i);
+            return child_.get();
+        }
+    };
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // 1:N parent-to-child edge
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** A 1:N tree edge from parent to children.
+     *
+     *  This edge type points to a variable number of children and acts like an @c std::vector. */
+    template<class T>
+    class EdgeVector: public EdgeBase {
+    public:
+        /** Type of children being pointed to. */
+        using Child = T;
+
+        /** Type of pointers to children. */
+        using ChildPtr = std::shared_ptr<Child>;
+
+    private:
+        using Vector = std::vector<std::unique_ptr<Edge<Child>>>;
+
+    public:
+        using value_type = Edge<Child>;
+        using size_type = typename Vector::size_type;
+        using difference_type = typename Vector::difference_type;
+        using reference = value_type&;
+        using const_reference = const value_type&;
+
+    public:
+        template<class BaseIterator>
+        class Iterator {
+            BaseIterator baseIterator_;
+
+        public:
+            Iterator() = delete;
+            Iterator(const BaseIterator &baseIterator)
+                : baseIterator_(baseIterator) {}
+
+            Iterator(const Iterator &other)
+                : baseIterator_(other.baseIterator_) {}
+
+            Iterator& operator=(const Iterator &other) {
+                baseIterator_ = other.baseIterator_;
+                return *this;
+            }
+
+            Iterator& operator++() {
+                ++baseIterator_;
+                return *this;
+            }
+
+            Iterator operator++(int) {
+                Iterator temp = *this;
+                ++baseIterator_;
+                return temp;
+            }
+
+            Iterator& operator--() {
+                --baseIterator_;
+                return *this;
+            }
+
+            Iterator operator--(int) {
+                Iterator temp = *this;
+                --baseIterator_;
+                return temp;
+            }
+
+            Iterator& operator+=(difference_type n) {
+                baseIterator_ += n;
+                return *this;
+            }
+
+            Iterator operator+(difference_type n) const {
+                Iterator retval = *this;
+                retval += n;
+                return retval;
+            }
+
+            Iterator& operator-=(difference_type n) {
+                baseIterator_ -= n;
+                return *this;
+            }
+
+            Iterator operator-(difference_type n) const {
+                Iterator retval = *this;
+                retval -= n;
+                return retval;
+            }
+
+            difference_type operator-(const Iterator &other) const {
+                return other.baseIterator_ - baseIterator_;
+            }
+
+            auto& operator*() const {
+                ASSERT_not_null(*baseIterator_);
+                return **baseIterator_;
+            }
+
+            auto& operator->() const {
+                ASSERT_not_null(*baseIterator_);
+                return &**baseIterator_;
+            }
+
+            auto& operator[](difference_type i) const {
+                ASSERT_not_null(baseIterator_[i]);
+                return *baseIterator_[i];
+            }
+
+            bool operator==(const Iterator &other) const {
+                return baseIterator_ == other.baseIterator_;
+            }
+
+            bool operator!=(const Iterator &other) const {
+                return baseIterator_ != other.baseIterator_;
+            }
+
+            bool operator<(const Iterator &other) const {
+                return baseIterator_ < other.baseIterator_;
+            }
+
+            bool operator<=(const Iterator &other) const {
+                return baseIterator_ <= other.baseIterator_;
+            }
+
+            bool operator>(const Iterator &other) const {
+                return baseIterator_ > other.baseIterator_;
+            }
+
+            bool operator>=(const Iterator &other) const {
+                return baseIterator_ >= other.baseIterator_;
+            }
+        };
+
+    public:
+        using iterator = Iterator<typename Vector::iterator>;
+
+    private:
+        UserBase &parent_;                              // required parent owning this child edge
+        Vector edges_;
+
+    public:
+        /** Destructor clears children's parents. */
+        ~EdgeVector() {}
+
+        /** Construct a child edge that belongs to the specified parent.
+         *
+         *  When constructing a class containing a data member of this type (i.e., a tree edge that points to a child of this
+         *  vertex), the data member must be initialized by passing @c *this as the argument.  See the example in this class
+         *  documentation. */
+        explicit EdgeVector(UserBase &parent);
+
+    public:
+        /** Test whether vector is empty.
+         *
+         *  Returns true if this vertex contains no child edges, null or otherwise. */
+        bool empty() const {
+            return edges_.empty();
+        }
+
+        /** Number of child edges.
+         *
+         *  Returns the number of children edges, null or otherwise. */
+        size_t size() const override {
+            return edges_.size();
+        }
+
+        /** Reserve space so the child edge vector can grow without being reallocated. */
+        void reserve(size_t n) {
+            edges_.reserve(n);
+        }
+
+        /** Reserved capacity. */
+        size_t capacity() const {
+            return edges_.capacity();
+        }
+
+        /** Insert a child pointer at the end of this vertex.
+         *
+         *  If the new element is non-null, then it must satisfy all the requirements for inserting a vertex as a child of another
+         *  vertex, and its parent pointer will be adjusted automatically. */
+        void push_back(const ChildPtr& elmt) {
+            auto edge = std::unique_ptr<Edge<Child>>(new Edge<Child>(Link::NO, parent_, elmt));
+            edges_.push_back(std::move(edge));
+        }
+
+        /** Erase a child edge from the end of this vertex.
+         *
+         *  If the edge being erased points to a child, then that child's parent pointer is reset. */
+        void pop_back() {
+            ASSERT_forbid(edges_.empty());
+            edges_.pop_back();
+        }
+
+        /** Return the i'th edge.
+         *
+         * @{ */
+        const Edge<Child>& at(size_t i) const {
+            ASSERT_require(i < edges_.size());
+            return *edges_.at(i);
+        }
+        Edge<Child>& at(size_t i) {
+            ASSERT_require(i < edges_.size());
+            return *edges_.at(i);
+        }
+        const Edge<Child>& operator[](size_t i) const {
+            return at(i);
+        }
+        Edge<Child>& operator[](size_t i) {
+            return at(i);
+        }
+        /** @} */
+
+        /** Return the first edge.
+         *
+         * @{ */
+        const Edge<Child>& front() const {
+            ASSERT_forbid(empty());
+            return at(0);
+        }
+        Edge<Child>& front() {
+            ASSERT_forbid(empty());
+            return at(0);
+        }
+        /** @} */
+
+        /** Return the last edge.
+         *
+         * @{ */
+        const Edge<Child>& back() const {
+            ASSERT_forbid(empty());
+            return at(size() - 1);
+        }
+        Edge<Child>& back() {
+            ASSERT_forbid(empty());
+            return at(size() - 1);
+        }
+        /** @} */
+
+        /** Return an iterator to the first edge. */
+        iterator begin() {
+            return iterator(edges_.begin());
+        }
+
+        /** Return an iterator to one past the last edge. */
+        iterator end() {
+            return iterator(edges_.end());
+        }
+
+    protected:
+        Vertex* pointer(size_t i) const override {
+            return at(i)().get();
+        }
+    };
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Vertex
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Pointer to the parent in the tree.
+     *
+     *  A vertex's parent pointer is adjusted automatically when the vertex is inserted or removed as a child of another vertex. An
+     *  invariant of this design is that whenever vertex A is a child of vertex B, then vertex B is a parent of vertex A. */
+    ReverseEdge parent;
+    EdgeBase *treeEdges_ = nullptr;
+
+protected:
+    virtual void destructorHelper() {}
+    Vertex();
+
+public:
+    /** Returns a shared pointer to this vertex. */
+    UserBasePtr pointer();
+
+    /** Tests whether this object is a certain type.
+     *
+     *  Returns a shared pointer to the object if the object is of dynamic type T, otherwise returns a null pointer. */
+    template<class T>
+    std::shared_ptr<T> isa();
+
+    /** Traverse in reverse direction from children to parents.
+     *
+     *  The visitor is called for each vertex from the current vertex whose type is @p T until the root of the tree is reached
+     *  unless the visitor indicates that the traversal should end. It does so by returning a value that is true in a Boolean
+     *  context, and this value becomes the return value for the entire traversal.
+     *
+     *  Example: Find the closest ancestor whose type is Foo or is derived from Foo.
+     *
+     * @code
+     *  auto foundFirst = tree->traverseReverse<Foo>([](const Foo::Ptr &foo, TraversalEvent event) {
+     *      return TraversalEvent::ENTER == event ? foo : nullptr;
+     *  });
+     * @endcode
+     *
+     *  Example: Find the most distant ancestor whose type is Foo or is derived from Foo. The only change from the previous
+     *  example is that we test as we leave the vertices. I.e., as the depth-first traversal is returning.
+     *
+     * @code
+     *  auto foundLast = tree->traverseReverse<Foo>([](const Foo::Ptr &foo, TraversalEvent event) {
+     *      return TraversalEvent::LEAVE == event ? foo : nullptr;
+     *  });
+     * @endcode
+     *
+     *  If you want to exclude the current vertex from the traversal, start searching at the parent instead, but be careful that
+     *  the parent is not null or else its arrow operator will fail.
+     *
+     * @code
+     *  auto foundFirstNotMe = tree->parent->traverseReverse<Foo>([](const Foo::Ptr &foo, TraversalEvent event) {
+     *      return TraversalEvent::ENTER == event ? foo : nullptr;
+     *  });
+     * @endcode */
+    template<class T, class Visitor>
+    auto traverseReverse(const Visitor &visitor) {
+        auto vertex = std::dynamic_pointer_cast<T>(this->pointer());
+        if (vertex) {
+            if (auto result = visitor(vertex, TraversalEvent::ENTER))
+                return result;
+        }
+
+        if (parent) {
+            if (auto result = parent()->template traverseReverse<T>(visitor))
+                return result;
+        }
+
+        if (vertex) {
+            return visitor(vertex, TraversalEvent::LEAVE);
         } else {
-            return CONTINUE;
+            return decltype(visitor(vertex, TraversalEvent::ENTER))();
         }
     }
+
+    /** Traverse in forward direction from parents to children.
+     *
+     *  Perform a depth-first traversal of the tree starting with this vertex. The visitor functor is called twice for each vertex,
+     *  first in the forward direction from the parent, then in the reverse direction from the children. The functor takes two
+     *  arguments: the vertex being visited and an enum indicating whether the visit is the first (@ref Traverse::ENTER) or the
+     *  second (@ref Traverse::LEAVE) visitation. The traversal has the same return type as the functor. If the functor returns a
+     *  value which evaluates to true in Boolean context, then the traversal immediately returns that value, otherwise it continues
+     *  until the entire subtree is visited and returns a default-constructed value. */
+    template<class T, class Visitor>
+    auto traverse(const Visitor &visitor) {
+        auto vertex = std::dynamic_pointer_cast<T>(this->pointer());
+        if (vertex) {
+            if (auto retval = visitor(vertex, TraversalEvent::ENTER))
+                return retval;
+        }
+        if (treeEdges_) {
+            if (auto retval = treeEdges_->template traverse<T>(visitor))
+                return retval;
+        }
+        if (vertex) {
+            return visitor(vertex, TraversalEvent::LEAVE);
+        } else {
+            return decltype(visitor(vertex, TraversalEvent::ENTER))();
+        }
+    }
+
+    /** Traversal that finds the closest ancestor of type T or derived from T. */
+    template<class T>
+    std::shared_ptr<T> findFirstAncestor() {
+        return traverseReverse<T>([](const std::shared_ptr<T> &vertex, TraversalEvent event) {
+            return TraversalEvent::ENTER == event ? vertex : nullptr;
+        });
+    };
+
+    /** Traversal that finds the farthest ancestor of type T or derived from T. */
+    template<class T>
+    std::shared_ptr<T> findLastAncestor() {
+        return traverseReverse<T>([](const std::shared_ptr<T> &vertex, TraversalEvent event) {
+            return TraversalEvent::LEAVE == event ? vertex : nullptr;
+        });
+    };
+
+    /** Traversal that finds all the descendants of a particular type.
+     *
+     *  Note that this is probably not the way you want to do this because it's expensive to create the list of all matching
+     *  pointers. Instead, you probably want to call @ref traverse and handle each matching vertex inside the functor. */
+    template<class T>
+    std::vector<std::shared_ptr<T>> findDescendants() {
+        std::vector<std::shared_ptr<T>> retval;
+        traverse<T>([&retval](const std::shared_ptr<T> &vertex, TraversalEvent event) {
+            if (TraversalEvent::ENTER == event)
+                retval.push_back(vertex);
+        });
+        return retval;
+    }
+
+    /** Returns the pointer for a child.
+     *
+     *  Returns the pointer for the child at index @p i. If @p i is out of range, then a null pointer is returned, which is
+     *  indistinguishable from the case when a valid index is specified but that child is a null pointer. */
+    UserBasePtr child(size_t i) const;
+
+    /** Returns the number of children.
+     *
+     *  This is the number of children for this class and the base class, recursively. Some children may be null pointers. */
+    size_t nChildren() const;
 };
 
-template<class T, class Functor>
-TraversalAction
-Node::traverseType(Functor functor) {
-    return traverseImpl(TRAVERSE_DOWNWARD, TraverseTypeHelper<T, Functor>(functor));
-}
-
-template<class T, class Functor>
-TraversalAction
-Node::traverseType(Functor functor) const {
-    return traverseImpl(TRAVERSE_DOWNWARD, TraverseTypeHelper<T, Functor>(functor));
-}
-
-//----------------------------------------
-// findImpl
-//----------------------------------------
-template<class T, class Predicate>
-std::shared_ptr<T>
-Node::findImpl(TraversalDirection direction, Predicate predicate) {
-    std::shared_ptr<T> found;
-    traverseImpl(direction,
-                 [&predicate, &found](const NodePtr &node, TraversalEvent event) {
-                     if (ENTER == event) {
-                         std::shared_ptr<T> typedNode = std::dynamic_pointer_cast<T>(node);
-                         if (typedNode && predicate(typedNode)) {
-                             found = typedNode;
-                             return ABORT;
-                         }
-                     }
-                     return CONTINUE;
-                 });
-    return found;
-}
-
-template<class T, class Predicate>
-std::shared_ptr<T>
-Node::findImpl(TraversalDirection direction, Predicate predicate) const {
-    std::shared_ptr<T> found;
-    traverseImpl(direction,
-                 [&predicate, &found](const ConstNodePtr &node, TraversalEvent event) {
-                     if (ENTER == event) {
-                         std::shared_ptr<const T> typedNode = std::dynamic_pointer_cast<const T>(node);
-                         if (typedNode && predicate(typedNode)) {
-                             found = typedNode;
-                             return ABORT;
-                         }
-                     }
-                     return CONTINUE;
-                 });
-    return found;
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// ListNode implementation
+// Implementations for ReverseEdge
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+template<class B>
+Vertex<B>::ReverseEdge::~ReverseEdge() {
+    ASSERT_require(this->parent_ == nullptr);
+}
+
+template<class B>
+Vertex<B>::ReverseEdge::ReverseEdge(Vertex &child)
+    : child_(child) {}
+
+template<class B>
+typename Vertex<B>::UserBasePtr
+Vertex<B>::ReverseEdge::operator()() const {
+    if (parent_) {
+        return parent_->pointer();
+    } else {
+        return {};
+    }
+}
+
+template<class B>
+typename Vertex<B>::UserBasePtr
+Vertex<B>::ReverseEdge::operator->() const {
+    ASSERT_not_null(parent_);
+    return parent_->pointer();
+}
+
+template<class B>
+bool
+Vertex<B>::ReverseEdge::operator==(const UserBasePtr &ptr) const {
+    return ptr.get() == parent_;
+}
+
+template<class B>
+bool
+Vertex<B>::ReverseEdge::operator!=(const UserBasePtr &ptr) const {
+    return ptr.get() != parent_;
+}
+
+template<class B>
+bool
+Vertex<B>::ReverseEdge::operator==(const ReverseEdge &other) const {
+    return parent_ == other.parent_;
+}
+
+template<class B>
+bool
+Vertex<B>::ReverseEdge::operator!=(const ReverseEdge &other) const {
+    return parent_ != other.parent_;
+}
+
+template<class B>
 template<class T>
-std::vector<std::shared_ptr<T> >
-ListNode<T>::elmts() const {
-    std::vector<std::shared_ptr<T> > retval;
-    retval.reserve(children.size());
-    for (size_t i = 0; i < children.size(); ++i)
-        retval.push_back(std::dynamic_pointer_cast<T>(children[i]));
+bool
+Vertex<B>::ReverseEdge::operator==(const Edge<T> &other) const {
+    return parent_ == other();
+}
+
+template<class B>
+template<class T>
+bool
+Vertex<B>::ReverseEdge::operator!=(const Edge<T> &other) const {
+    return parent_ != other();
+}
+
+template<class B>
+void
+Vertex<B>::ReverseEdge::reset() {
+    parent_ = nullptr;
+}
+
+template<class B>
+void
+Vertex<B>::ReverseEdge::set(UserBase &parent) {
+    parent_ = &parent;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Implementations for Edge<T>
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+template<class B>
+template<class T>
+Vertex<B>::Edge<T>::~Edge() {
+    if (child_)
+        child_->parent.reset();
+}
+
+template<class B>
+template<class T>
+Vertex<B>::Edge<T>::Edge(UserBase &parent)
+    : EdgeBase(parent.treeEdges_), parent_(parent) {
+    parent_.treeEdges_ = this;
+}
+
+template<class B>
+template<class T>
+Vertex<B>::Edge<T>::Edge(UserBase &parent, const std::shared_ptr<T> &child)
+    : EdgeBase(parent.treeEdges_), parent_(parent), child_(child) {
+    checkChildInsertion(child);
+    parent_.treeEdges_ = this;                          // must be after checkChildInsertin for exception safety
+    if (child)
+        child->parent.set(parent);
+}
+
+template<class B>
+template<class T>
+Vertex<B>::Edge<T>::Edge(Link link, UserBase &parent, const std::shared_ptr<T> &child)
+    : EdgeBase(Link::YES == link ? parent.treeEdges_ : nullptr), parent_(parent), child_(child) {
+    checkChildInsertion(child);
+    if (Link::YES == link)
+        parent_.treeEdges_ = this;                      // must be after checkChildInsertin for exception safety
+    if (child)
+        child->parent.set(parent);
+}
+
+template<class B>
+template<class T>
+void
+Vertex<B>::Edge<T>::checkChildInsertion(const std::shared_ptr<T> &child) const {
+    if (child) {
+        if (child->parent)
+            throw InsertionError(child);
+#ifndef NDEBUG
+        for (const UserBase *p = &parent_; p; p = p->parent().get()) {
+            if (p == child.get())
+                throw CycleError(child);
+        }
+#endif
+    }
+}
+
+template<class B>
+template<class T>
+const std::shared_ptr<T>&
+Vertex<B>::Edge<T>::operator->() const {
+    ASSERT_not_null(child_);
+    return child_;
+}
+
+template<class B>
+template<class T>
+const std::shared_ptr<T>&
+Vertex<B>::Edge<T>::operator()() const {
+    return child_;
+}
+
+template<class B>
+template<class T>
+bool
+Vertex<B>::Edge<T>::operator==(const UserBasePtr &ptr) const {
+    return child_ == ptr;
+}
+
+template<class B>
+template<class T>
+bool
+Vertex<B>::Edge<T>::operator!=(const UserBasePtr &ptr) const {
+    return child_ != ptr;
+}
+
+template<class B>
+template<class T>
+bool
+Vertex<B>::Edge<T>::operator==(const ReverseEdge &other) const {
+    return child_ == other();
+}
+
+template<class B>
+template<class T>
+bool
+Vertex<B>::Edge<T>::operator!=(const ReverseEdge &other) const {
+    return child_.get() != other();
+}
+
+template<class B>
+template<class T>
+template<class U>
+bool
+Vertex<B>::Edge<T>::operator==(const Edge<U> &other) const {
+    return child_.get() == other.get();
+}
+
+template<class B>
+template<class T>
+template<class U>
+bool
+Vertex<B>::Edge<T>::operator!=(const Edge<U> &other) const {
+    return child_.get() != other.get();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Implementations for EdgeVector<T>
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+template<class B>
+template<class T>
+Vertex<B>::EdgeVector<T>::EdgeVector(UserBase &parent)
+    : EdgeBase(parent.treeEdges_), parent_(parent) {
+    parent_.treeEdges_ = this;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Implementations for Vertex<B>
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+template<class B>
+Vertex<B>::Vertex()
+    : parent(*this) {}
+
+template<class B>
+typename Vertex<B>::UserBasePtr
+Vertex<B>::pointer() {
+    auto retval = std::dynamic_pointer_cast<UserBase>(this->shared_from_this());
+    ASSERT_not_null(retval);
     return retval;
 }
 
+template<class B>
 template<class T>
-Optional<size_t>
-ListNode<T>::index(const std::shared_ptr<T> &node, size_t startAt) const {
-    for (size_t i = startAt; i < children.size(); ++i) {
-        if (children[i] == node)
-            return i;
+std::shared_ptr<T>
+Vertex<B>::isa() {
+    return std::dynamic_pointer_cast<T>(this->shared_from_this());
+}
+
+template<class B>
+typename Vertex<B>::UserBasePtr
+Vertex<B>::child(size_t i) const {
+    std::vector<EdgeBase*> edges;
+    for (const EdgeBase *edge = treeEdges_; edge; edge = edge->prev)
+        edges.push_back(edge);
+    for (const EdgeBase *edge: boost::adaptors::reverse(edges)) {
+        if (i < edge->size()) {
+            return edge->pointer(i);
+        } else {
+            i -= edge->size();
+        }
     }
-    return Nothing();
+    return {};
 }
 
-template<class T>
-Optional<size_t>
-ListNode<T>::erase(const std::shared_ptr<T> &toErase, size_t startAt) {
-    Optional<size_t> where = index(toErase, startAt);
-    if (where)
-        children.eraseAt(*where);
-    return where;
+template<class B>
+size_t
+Vertex<B>::nChildren() const {
+    size_t n = 0;
+    for (const EdgeBase *edge = treeEdges_; edge; edge = edge->prev)
+        n += edge->size();
+    return n;
 }
 
 } // namespace
 } // namespace
-
 #endif

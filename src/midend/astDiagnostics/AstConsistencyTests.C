@@ -1161,7 +1161,9 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                        }
 
                     case V_SgAdaUnitRefExp:
-                    case V_SgAdaAttributeExp: // PP (01/22/21) as used by Ada Attributes
+                    case V_SgAdaAttributeExp:   // PP (01/22/21) as used by Ada Attributes
+                    case V_SgAdaRenamingRefExp: // PP (04/14/23) added to support the use of
+                                                //               SgAdaRenamingDecl for function renaming.
                        {
                          break;
                        }
@@ -1249,7 +1251,9 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                     // PP (01/22/21) used in Ada
                     case V_SgTypeBool:
                     case V_SgTypeLongLong:
+                    case V_SgTypeDefault:  // PP (4/14/23): added SgTypeDefault
                        {
+                         // \todo check for examples in regression tests
                          ROSE_ASSERT(SageInterface::is_Ada_language());
                          break;
                        }
@@ -3011,7 +3015,6 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                          if(func != NULL)
                          {
                            printf ("Error: found a defining function declaration with its first nondefining declaration set to itself/(or a defining declaration).\n");
-                           //ROSE_ASSERT (false);
                          }
 
                        }
