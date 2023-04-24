@@ -654,7 +654,7 @@ RosettaGenerator::genClassDefinition(std::ostream &rosetta, const Ast::Class::Pt
     genImplFileEnd(impl, c);
 
     // Delayed warnings
-    if (nPragmas > 0) {
+    if (nPragmas > 0 && settings.showingWarnings) {
         message(WARN, c->findAncestor<Ast::File>(), c->nameToken,
                 "class " + c->name + " contains " + boost::lexical_cast<std::string>(nPragmas) + " pragma " +
                 std::string(1 == nPragmas ? "directive" : "directives") + " which should only be used only as a last resort to "
