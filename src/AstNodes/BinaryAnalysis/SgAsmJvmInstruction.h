@@ -10,9 +10,6 @@ class SgAsmJvmInstruction: public SgAsmInstruction {
     Rose::BinaryAnalysis::JvmInstructionKind kind = Rose::BinaryAnalysis::JvmInstructionKind::unknown;
 
 public:
-    // Make a (moderately deep copy of this instruction.
-    SgAsmJvmInstruction* copy() const;
-
     // Overrides are documented in the base class
     virtual std::string description() const override;
     virtual bool terminatesBasicBlock() override;

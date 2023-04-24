@@ -6,6 +6,11 @@ names of the files match the names of the classes. Although these
 files are named *.h and appear to be C++ code, they are actually
 inputs to the `rosebud` tool. The Rosebud system is described here.
 
+Generating code
+---------------
+
+See $ROSE_SRC/src/generated/README.md for instructions.
+
 The input language
 ------------------
 

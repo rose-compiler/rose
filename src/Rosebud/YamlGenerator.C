@@ -6,12 +6,27 @@
 
 namespace Rosebud {
 
+YamlGenerator::Ptr
+YamlGenerator::instance() {
+    return Ptr(new YamlGenerator);
+}
+
+std::string
+YamlGenerator::name() const {
+    return "yaml";
+}
+
+std::string
+YamlGenerator::purpose() const {
+    return "Generate YAML output that can be parsed by standalone backends.";
+}
+
 void
 YamlGenerator::adjustParser(Sawyer::CommandLine::Parser &parser) {
     using namespace Sawyer::CommandLine;
 
-    SwitchGroup sg("YAML backend (--backend=yaml)");
-    sg.name("yaml");
+    SwitchGroup sg("YAML backend (--backend=" + name() + ")");
+    sg.name(name());
     sg.doc("This backend produces a YAML file that describes the input. Its purpose is to make it easier to write tools that "
            "generate code since these tools do not need to be able to parse the Rosebud C++-like input language, but rather "
            "the easily parsed YAML representation of that input. Most mainstream source languages have good YAML parsing "
@@ -102,8 +117,8 @@ YamlGenerator::genAttribute(Sawyer::Yaml::Node &root, const Ast::Attribute::Ptr 
     root["name"] = attribute->fqName;
     if (settings.showingLocations)
         genLocation(root["name_location"], attribute, attribute->nameTokens);
-    if (attribute->arguments && !attribute->arguments->empty()) {
-        for (const auto &arg: *attribute->arguments()) {
+    if (attribute->arguments) {
+        for (const auto &arg: attribute->arguments->elmts) {
             auto &argNode = root["arguments"].pushBack();
             argNode["argument"] = arg->string();
             if (settings.showingLocations)
@@ -137,7 +152,7 @@ YamlGenerator::genDefinition(Sawyer::Yaml::Node &root, const Ast::Definition::Pt
             genLocation(root["prior_text_location"], defn, defn->priorTextToken);
     }
 
-    for (const auto &attribute: *defn->attributes())
+    for (const auto &attribute: defn->attributes)
         genAttribute(root["attributes"].pushBack(), attribute());
 }
 
@@ -189,7 +204,7 @@ YamlGenerator::genClass(Sawyer::Yaml::Node &root, const Ast::Class::Ptr &c, cons
         node["super_class"] = pair.second;
     }
 
-    for (const auto &property: *c->properties()) {
+    for (const auto &property: c->properties) {
         auto &node = root["properties"].pushBack();
         genProperty(node, property());
     }
@@ -216,7 +231,7 @@ YamlGenerator::generate(const Ast::Project::Ptr &project) {
     checkClassHierarchy(h);
 
     // Information about files
-    for (const auto &file: *project->files()) {
+    for (const auto &file: project->files) {
         auto &fileNode = root["files"].pushBack();
         fileNode["name"] = file->tokenStream().fileName();
         fileNode["lines"] = file->tokenStream().content().nLines();
@@ -229,8 +244,8 @@ YamlGenerator::generate(const Ast::Project::Ptr &project) {
     }
 
     // Information about classes
-    for (const auto &file: *project->files()) {
-        for (const auto &c: *file->classes()) {
+    for (const auto &file: project->files) {
+        for (const auto &c: file->classes) {
             auto &classNode = root["classes"].pushBack();
             genClass(classNode, c(), h);
         }

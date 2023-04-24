@@ -19,101 +19,6 @@ namespace Rosebud {
 namespace Ast {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Errors
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-Error::Error(const std::string &mesg, const NodePtr &node)
-    : std::runtime_error(mesg), node(node) {}
-
-AttachmentError::AttachmentError(const NodePtr &node)
-    : Error("node is already attached to the AST", node) {}
-
-CycleError::CycleError(const NodePtr &node)
-    : Error("insertion of node would cause a cycle in the AST", node) {}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// ParentEdge
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-ParentEdge::~ParentEdge() {
-    ASSERT_require(parent_ == nullptr);
-}
-
-ParentEdge::ParentEdge(Node &child)
-    : child_(child) {}
-
-NodePtr
-ParentEdge::operator()() const {
-    if (parent_) {
-        return parent_->pointer();
-    } else {
-        return {};
-    }
-}
-
-NodePtr
-ParentEdge::operator->() const {
-    ASSERT_not_null(parent_);
-    return parent_->pointer();
-}
-
-bool
-ParentEdge::operator==(const NodePtr &ptr) const {
-    return ptr.get() == parent_;
-}
-
-bool
-ParentEdge::operator!=(const NodePtr &ptr) const {
-    return ptr.get() != parent_;
-}
-
-bool
-ParentEdge::operator==(const ParentEdge &other) const {
-    return parent_ == other.parent_;
-}
-
-bool
-ParentEdge::operator!=(const ParentEdge &other) const {
-    return parent_ != other.parent_;
-}
-
-void
-ParentEdge::reset() {
-    parent_ = nullptr;
-}
-
-void
-ParentEdge::set(Node &parent) {
-    parent_ = &parent;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// ParentEdgeAccess
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void
-ParentEdgeAccess::resetParent(ParentEdge &e) {
-    e.reset();
-}
-
-void
-ParentEdgeAccess::setParent(ParentEdge &e, Node &parent) {
-    e.set(parent);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Node
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-Node::Node()
-    : parent(*this) {}
-
-NodePtr
-Node::pointer() {
-    return shared_from_this();
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TokenList
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -257,6 +162,17 @@ CppStack::emitClose(std::ostream &out) {
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ArgumentList
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+ArgumentList::ArgumentList()
+    : elmts(*this) {}
+
+ArgumentList::Ptr
+ArgumentList::instance() {
+    return Ptr(new ArgumentList);
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Attribute
@@ -283,11 +199,11 @@ Attribute::instance(const std::string &fqName, const std::vector<Token> &nameTok
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Definition::Definition()
-    : cppStack(*this, CppStack::instance()), attributes(*this, AttributeList::instance()) {}
+    : cppStack(*this, CppStack::instance()), attributes(*this) {}
 
 Attribute::Ptr
 Definition::findAttribute(const std::string &fqName) {
-    for (const auto &attr: *attributes()) {
+    for (const auto &attr: attributes) {
         if (attr->fqName == fqName)
             return attr();
     }
@@ -311,7 +227,7 @@ Property::instance() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Class::Class()
-    : properties(*this, PropertyList::instance()) {}
+    : properties(*this) {}
 
 
 Class::Ptr
@@ -324,14 +240,14 @@ Class::instance() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 File::File(const std::string &name)
-    : stream_(name), classes(*this, ClassList::instance()) {}
+    : stream_(name), classes(*this) {}
 
 File::Ptr
 File::instance(const std::string &name) {
     std::ifstream test(name.c_str());
     if (!test) {
         message(FATAL, "unable to open file for reading: \"" + name + "\"");
-        exit(1);
+        return {};
     } else {
         return Ptr(new File(name));
     }
@@ -487,7 +403,7 @@ File::emitContext(std::ostream &out, const Token &first, const Token &locus, con
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Project::Project()
-    : files(*this, FileList::instance()) {}
+    : files(*this) {}
 
 Project::Ptr
 Project::instance() {
@@ -497,8 +413,8 @@ Project::instance() {
 std::vector<Class::Ptr>
 Project::allClassesFileOrder() {
     std::vector<Class::Ptr> retval;
-    for (const auto &file: *files()) {
-        for (const auto &c: *file->classes())
+    for (const auto &file: files) {
+        for (const auto &c: file->classes)
             retval.push_back(c());
     }
     return retval;

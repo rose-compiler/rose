@@ -10,6 +10,6 @@ install(FILES
   DocumentTextMarkup.h Exception.h FileSystem.h Graph.h GraphAlgorithm.h GraphBoost.h GraphIteratorBiMap.h GraphIteratorMap.h
   GraphIteratorSet.h GraphTraversal.h IndexedList.h Interval.h IntervalMap.h IntervalSet.h IntervalSetMap.h HashMap.h Lexer.h
   LineVector.h Map.h MappedBuffer.h Message.h NullBuffer.h Optional.h Parse.h PoolAllocator.h ProgressBar.h Sawyer.h Set.h SharedObject.h
-  Result.h SharedPointer.h SmallObject.h Stack.h StackAllocator.h StaticBuffer.h Stopwatch.h Synchronization.h ThreadWorkers.h Time.h Trace.h
-  Tracker.h Tree.h Type.h WarningsOff.h WarningsRestore.h WorkList.h Yaml.h
+  Result.h SharedPointer.h SmallObject.h Stack.h StackAllocator.h StaticBuffer.h Stopwatch.h Synchronization.h ThreadWorkers.h Time.h
+  Trace.h Tracker.h Tree.h Type.h WarningsOff.h WarningsRestore.h WorkList.h Yaml.h
   DESTINATION include/Sawyer) # installed in $PREFIX/Sawyer, not $PREFIX/rose/Sawyer.

@@ -91,7 +91,7 @@ ATbool traverse_CharacterLiteral         (ATerm term, std::string &str_literal);
 // 2.1.1.6 STATUS TYPE DESCRIPTIONS
 ATbool    match_StatusItemDescription (ATerm term);
 ATbool traverse_StatusItemDescription (ATerm term, SgEnumDeclaration* enum_decl, Sawyer::Optional<SgExpression*> &status_size);
-ATbool traverse_StatusConstant        (ATerm term, SgEnumDeclaration* enum_decl, int value);
+ATbool traverse_StatusConstant        (ATerm term, SgEnumDeclaration* enum_decl, int value, SgCastExp* cast=nullptr);
 ATbool traverse_StatusConstant        (ATerm term, SgExpression* &expr);
 ATbool traverse_DefaultSublist        (ATerm term, SgEnumDeclaration* enum_decl);
 ATbool traverse_OptDefaultSublist     (ATerm term, SgEnumDeclaration* enum_decl);
@@ -309,6 +309,7 @@ ATbool traverse_PointerFormula   (ATerm term, SgExpression* &expr);
 
 // 6.1 VARIABLE AND BLOCK REFERENCES
 ATbool traverse_Variable         (ATerm term, SgExpression* &var);
+ATbool traverse_VariableLVal     (ATerm term, SgExpression* &var);
 ATbool traverse_VariableList     (ATerm term, std::vector<SgExpression*> &vars);
 ATbool traverse_TableItem        (ATerm term, SgExpression* &var);
 ATbool traverse_Subscript        (ATerm term, std::vector<SgExpression*> & indexes);

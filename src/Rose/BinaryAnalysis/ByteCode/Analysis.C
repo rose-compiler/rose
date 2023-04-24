@@ -8,8 +8,6 @@
 
 #include <iostream>
 
-#define DEBUG_PRINT 0
-
 using namespace Rose::BinaryAnalysis::Partitioner2;
 using PoolEntry = SgAsmJvmConstantPoolEntry;
 using AddressSegment = Sawyer::Container::AddressSegment<rose_addr_t,uint8_t>;
@@ -20,20 +18,7 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace ByteCode {
 
-std::set<rose_addr_t> Method::targets() const {
-  std::set<rose_addr_t> retval{};
-  for (auto insn : instructions()->get_instructions()) {
-    bool complete;
-    auto successors = insn->getSuccessors(complete);
-    for (auto successor : successors.values()) {
-#if DEBUG_PRINT
-      cout << "... Method::targets():adding successor target va:" << successor << endl;
-#endif
-      retval.insert(successor);
-    }
-  }
-  return retval;
-}
+constexpr bool TRACE_PARTITION = false;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Method
@@ -53,6 +38,22 @@ Method::append(BasicBlock::Ptr bb) {
     blocks_.push_back(bb);
 }
 
+std::set<rose_addr_t>
+Method::targets() const {
+  std::set<rose_addr_t> retval{};
+  for (auto insn : instructions()->get_instructions()) {
+    bool complete;
+    auto successors = insn->getSuccessors(complete);
+    for (auto successor : successors.values()) {
+      if (TRACE_PARTITION) {
+        cout << "... Method::targets():adding successor target va: 0x00" << std::hex << successor << std::dec << endl;
+      }
+      retval.insert(successor);
+    }
+  }
+  return retval;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Class
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -68,42 +69,45 @@ void Class::partition(const PartitionerPtr &partitioner) const
 
     // Allow const_cast only here: TODO: consider fixing this (adding basic blocks)?
     Method* method = const_cast<Method*>(constMethod);
+
+    // Determine if this method has been seen before (e.g., ".ctor" of parent class)
+    auto instructions = method->instructions()->get_instructions();
+    if (instructions.size() < 1) continue;
+    if (partitioner->placeholderExists(instructions[0]->get_address())) continue;
+
     std::set<rose_addr_t> targets = method->targets();
 
-    auto instructions = method->instructions()->get_instructions();
     if (instructions.size() > 0) {
       auto va = instructions[0]->get_address();
       function = Partitioner2::Function::instance(va, method->name());
 
       for (auto astInsn : instructions) {
-        // A copy of the instruction must be made so it is decoupled from ROSE's AST
-        SgAsmInstruction* insn{nullptr};
-        auto jvmInsn = dynamic_cast<SgAsmJvmInstruction*>(astInsn);
-        if (jvmInsn) {
-          insn = jvmInsn->copy();
-        }
-        //TODO: Make this work for CIL instructions
+        // A copy of the instruction must be made if it is linked to ROSE's AST
+        SgTreeCopy deep;
+        SgAsmInstruction* insn = isSgAsmInstruction(astInsn->copy(deep));
         ASSERT_not_null(insn);
+        ASSERT_require(insn != astInsn);
+        ASSERT_require(insn->get_address() == astInsn->get_address());
 
         // A new block is needed if this instruction is a target of a branch and nonterminal
         va = insn->get_address();
         if (targets.find(va) != targets.end() && !insn->terminatesBasicBlock()) {
           // But a new block is not needed if this is the first instruction in the block
           if (!block->isEmpty() && va != block->address()) {
-#if DEBUG_PRINT
-            cout << "... splitting block after:" << block->instructions().back()->get_address()
-                 << " va:" << va
-                 << " fallthrough:" << block->fallthroughVa()
-                 << " kind:" << insn->get_anyKind()
-                 << " :" << insn->description()
-                 << endl;
-#endif
+            if (TRACE_PARTITION) {
+              cout << "... splitting block after: 0x00" << std::hex << block->instructions().back()->get_address()
+                   << " va: 0x00" << va
+                   << " fallthrough: 0x00" << block->fallthroughVa() << std::dec
+                   << " kind:" << insn->get_anyKind()
+                   << " :" << insn->get_mnemonic()
+                   << endl;
+            }
             // If the instruction doesn't have a branch target, add fall through successor
             if (!block->instructions().back()->branchTarget()) {
-#if DEBUG_PRINT
-              cout << "... adding successor fall-through edge from va:"
-                   << block->instructions().back()->get_address() << " to:" << block->fallthroughVa() << endl;
-#endif
+              if (TRACE_PARTITION) {
+                cout << "... adding successor fall-through edge from va: 0x00" << std::hex
+                     << block->instructions().back()->get_address() << " to: 0x00" << block->fallthroughVa() << std::dec << endl;
+              }
               block->insertSuccessor(block->fallthroughVa(), nBits, EdgeType::E_NORMAL, Confidence::PROVED);
             }
             needNewBlock = true;
@@ -111,15 +115,13 @@ void Class::partition(const PartitionerPtr &partitioner) const
         }
 
         if (needNewBlock) {
+          needNewBlock = false;
           if (block && !block->isEmpty() && va != block->address()) {
-            //TODO: find out why first block (va == block address) doesn't need to be added
-            // perhaps because functions address gets added?
+            // Attach the block only if if the old block's address differs from the instruction's
             partitioner->attachBasicBlock(block);
           }
           block = Partitioner2::BasicBlock::instance(va, partitioner);
-          needNewBlock = false;
           function->insertBasicBlock(va);
-          // Also update ByteCode::Analysis data allowing different way of testing
           method->append(block);
         }
 
@@ -132,9 +134,10 @@ void Class::partition(const PartitionerPtr &partitioner) const
           bool complete;
           auto successors = insn->getSuccessors(complete/*out*/);
           for (auto successor : successors.values()) {
-#if DEBUG_PRINT
-            cout << "... adding successor edge from va:" << va << " to:" << successor << endl;
-#endif
+            if (TRACE_PARTITION) {
+              cout << "... adding successor edge from va: 0x00" << std::hex << va << " to: 0x00" << successor
+                   << std::dec << endl;
+            }
             block->insertSuccessor(successor, nBits, EdgeType::E_NORMAL, Confidence::PROVED);
           }
           // Set properties of the block
@@ -233,6 +236,26 @@ void Class::digraph()
   }
   dotFile << "}\n";
   dotFile.close();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Namespace
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void
+Namespace::partition(const PartitionerPtr &partitioner) const {
+    for (auto cls: classes()) {
+        cls->partition(partitioner);
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Container
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void
+Container::partition(const PartitionerPtr &partitioner) const {
+    for (auto nmSpace: namespaces()) {
+        nmSpace->partition(partitioner);
+    }
 }
 
 } // namespace

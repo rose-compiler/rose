@@ -1,4 +1,0 @@
-include_rules
-
-run $(tool_compile_linkexe) testTree.C
-run $(test) testTree

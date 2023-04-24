@@ -14,24 +14,14 @@ rosebud_SOURCES =				\
 	BoostSerializer.C			\
 	CxxGenerator.C				\
 	Generator.C				\
+	NoneGenerator.C				\
+	NoneSerializer.C			\
 	RoseGenerator.C				\
 	RosettaGenerator.C			\
+	Serializer.C				\
 	Utility.C				\
 	YamlGenerator.C
 rosebud_LDADD = $(top_builddir)/src/util/Sawyer/libroseSawyer.la $(ROSE_BOOST_LIBS) $(RT_LIBS)
-
-noinst_PROGRAMS = unitTest01
-unitTest01_SOURCES =				\
-	rosebud.C				\
-	Ast.C					\
-	BoostSerializer.C			\
-	CxxGenerator.C				\
-	Generator.C				\
-	RoseGenerator.C				\
-	RosettaGenerator.C			\
-	Utility.C				\
-	YamlGenerator.C
-unitTest01_LDADD = $(top_builddir)/src/util/Sawyer/libroseSawyer.la $(ROSE_BOOST_LIBS) $(RT_LIBS)
 
 # Headers are mentioned here so the policy checkers think they're used. There's no reason
 # to install them.
@@ -41,6 +31,8 @@ headers =					\
 	BoostSerializer.h			\
 	CxxGenerator.h				\
 	Generator.h				\
+	NoneGenerator.h				\
+	NoneSerializer.h			\
 	RoseGenerator.h				\
 	RosettaGenerator.h			\
 	Serializer.h				\

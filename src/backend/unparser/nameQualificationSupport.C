@@ -164,24 +164,6 @@ namespace
       using base::end;
       using base::begin;
 
-#if OBSOLETE_CODE
-      //~ size_t size() const
-      //~ {
-        //~ std::cerr << "sz = " << base::size() << std::endl;
-        //~ return base::size();
-      //~ }
-
-      /// returns a string version of the scopes in range [rbegin(), rend())
-
-      std::string path() const
-      {
-        return path(rbegin());
-      }
-
-      /// returns a string version of the scopes in range [\ref pos, rend())
-      std::string path(const_reverse_iterator pos) const;
-#endif /* OBSOLETE_CODE */
-
       /// overload vector's push_back to check element validity
       void push_back(base::value_type ptr)
       {
@@ -256,6 +238,7 @@ namespace
 
       // parent handlers
       void handle(const SgDeclarationStatement& n) { withoutName(); }
+
       void handle(const SgAdaTaskSpecDecl& n)      { withName(n.get_name()); }
       void handle(const SgAdaTaskBodyDecl& n)      { withName(n.get_name()); }
       void handle(const SgAdaProtectedSpecDecl& n) { withName(n.get_name()); }
@@ -514,42 +497,6 @@ namespace
     recordNameQual(qualifiedNameMapForNames, n, std::move(qual));
   }
 
-/*
-  const SgStatement&
-  NameQualificationTraversalAda::scopeForNameQualification(const SgScopeStatement& n) const
-  {
-    // If the scope is a package body or a task body, we use the spec as canonical
-    // scope representation instead. This unifies the path between body and spec
-    // and allows to efficiently eliminate joint scope prefixes.
-    if (const SgAdaPackageBody* pkgbody = isSgAdaPackageBody(&n))
-      return scopeForNameQualification(SG_DEREF(pkgbody->get_spec()));
-
-    if (const SgAdaTaskBody* tskbody = isSgAdaTaskBody(&n))
-      return scopeForNameQualification(SG_DEREF(tskbody->get_spec()));
-
-    if (const SgAdaProtectedBody* pobody = isSgAdaProtectedBody(&n))
-      return scopeForNameQualification(SG_DEREF(pobody->get_spec()));
-
-    // if the scope is visible, produce a fully qualified scope
-    if (isVisibleScope(&n))
-    {
-      //~ std::cerr << scopeName(&n) << " is visible " << &n << std::endl;
-      return n;
-    }
-
-    // if not visible, use an alternative renamed scope
-    if (const SgDeclarationStatement* alt = renamedScope(&n))
-    {
-      //~ std::cerr << scopeName(alt) << " is renamed " << &n << std::endl;
-      return *alt;
-    }
-
-    // if any other attempt fails, use full path as fallback
-    //~ std::cerr << scopeName(&n) << " defaults " << &n << std::endl;
-    return n;
-  };
-*/
-
   /// returns true iff \ref n requires scope qualification
   bool requiresNameQual(const SgScopeStatement* n)
   {
@@ -726,6 +673,8 @@ namespace
 
     auto scopeFn = [self](std::string qual, const SgScopeStatement* scope)->std::string
                    {
+                     //~ std::cerr << "nqs: " << qual << " + " << typeid(*scope).name() << std::flush;
+
                      const SgStatement* ref = nullptr;
 
                      // if the scope is visible, produce a fully qualified scope
@@ -736,6 +685,7 @@ namespace
                      else if (const SgDeclarationStatement* alt = self->renamedScope(scope))
                      {
                        // use a renamed alternative for scope, and reset the path
+                       //~ std::cerr << " *use renamed* ";
                        ref = alt;
                        qual.clear();
                      }
@@ -763,6 +713,7 @@ namespace
                        qual += '.';
                      }
 
+                     //~ std::cerr << " -> " << qual << std::endl;
                      return qual;
                    };
 
@@ -857,6 +808,7 @@ namespace
     return remMin;
   }
 
+#define DBG_SCOPE_PATH 0
 #if DBG_SCOPE_PATH
   struct DebugSeqPrinter
   {
@@ -885,7 +837,7 @@ namespace
 
 #if DBG_SCOPE_PATH
     std::cerr << "rp = " << DebugSeqPrinter{remotePath}
-              << " scope = " << typeid(remote).name() << " " << &remote
+              << "   remote-scope = " << typeid(remote).name() << " " << &remote
               << std::endl;
 #endif /* DBG_SCOPE_PATH */
 
@@ -1220,7 +1172,6 @@ namespace
         handle(sg::asBaseType(n));
 
         computeNameQualForShared(n, n.get_type());
-        computeNameQualForShared(n, n.get_renamed());
         addRenamedScopeIfNeeded(n.get_renamed(), n);
       }
 
@@ -1534,7 +1485,7 @@ namespace
 
       // \returns the scope of a function symbol
       const SgScopeStatement&
-      assumedDeclarativeScope(const SgFunctionRefExp& n)
+      declarativeScope(const SgFunctionRefExp& n)
       {
         const SgFunctionSymbol& sym = SG_DEREF(n.get_symbol());
         const SgScopeStatement* res = sym.get_scope();
@@ -1545,7 +1496,7 @@ namespace
       void handle(const SgFunctionRefExp& n)
       {
         if (!elideNameQualification(n))
-          recordNameQualIfNeeded(n, &assumedDeclarativeScope(n));
+          recordNameQualIfNeeded(n, &declarativeScope(n));
       }
 
       void handle(const SgAdaTaskRefExp& n)
@@ -1756,11 +1707,14 @@ namespace
       return;
     }
 
-    if (const SgFunctionRefExp* funref = isSgFunctionRefExp(e))
+    if (/*const SgFunctionRefExp* funref =*/ isSgFunctionRefExp(e))
     {
+/*
       SgFunctionSymbol& funsym = SG_DEREF(funref->get_symbol());
 
-      traversal.addRenamedScope(funsym.get_scope(), &n);
+      if (isSgAdaFunctionRenamingDecl(funsym.get_declaration())
+        traversal.addRenamedScope(funsym.get_scope(), &n);
+*/
       // \todo what needs to be done here?
       return;
     }
@@ -1794,6 +1748,12 @@ namespace
       return;
 
     if (/*const SgEnumVal* castexp =*/ isSgEnumVal(e))
+      return;
+
+    if (/*const SgEnumVal* castexp =*/ isSgVoidVal(e))
+      return;
+
+    if (/*const SgEnumVal* castexp =*/ isSgAdaAttributeExp(e))
       return;
 
     if (e == nullptr)

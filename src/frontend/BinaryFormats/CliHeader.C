@@ -77,45 +77,37 @@ SgAsmCliHeader* SgAsmCliHeader::parse()
   ROSE_ASSERT(0 == p_managedNativeHeader && "Always 0");
   data += 8;
   
-#if PRINT_DEBUG
-  std::cout << "------------------------SgAsmCliHeader::parse-----------------------------\n";
-  std::cout << "... SgAsmCliHeader: name: " << get_name()->get_string()
-            << ": offset: " << get_offset() << ": p_data: "
-            << &(p_data[0])
-            << std::endl;
-  std::cout << "... SgAsmCliHeader: cb: " << p_cb << std::endl;
-  std::cout << "... SgAsmCliHeader: majorRuntimeVersion: " << p_majorRuntimeVersion << std::endl;
-  std::cout << "... SgAsmCliHeader: minorRuntimeVersion: " << p_minorRuntimeVersion << std::endl;
-  std::cout << "... SgAsmCliHeader: metaData: " << p_metaData << std::endl;
-  std::cout << "... SgAsmCliHeader: flags: " << p_flags << std::endl;
-  std::cout << "... SgAsmCliHeader: entryPointToken: " << p_entryPointToken << std::endl;
-  std::cout << "... SgAsmCliHeader: resources: " << p_resources << std::endl;
-  std::cout << "... SgAsmCliHeader: strongNameSignature: " << p_strongNameSignature << std::endl;
-  std::cout << "... SgAsmCliHeader: codeManagerTable: " << p_codeManagerTable << std::endl;
-  std::cout << "... SgAsmCliHeader: vTableFixups: " << p_vTableFixups << std::endl;
-  std::cout << "... SgAsmCliHeader: exportAddressTableJumps: " << p_exportAddressTableJumps << std::endl;
-  std::cout << "... SgAsmCliHeader: managedNativeHeader: " << p_managedNativeHeader << std::endl;
-  std::cout << "\n";
-#endif
-
   /* Construct and parse the CIL metatdata root */
   SgAsmCilMetadataRoot* metadata_root = new SgAsmCilMetadataRoot;
   ASSERT_not_null(metadata_root);
   
-  metadata_root->set_parent(this);
-  metadata_root->parse();
+  /* metadataRoot must be set before parsing */
   this->set_metadataRoot(metadata_root);
+  metadata_root->set_parent(this);
+
+  metadata_root->parse();
   
   return this;
 }
 
 void SgAsmCliHeader::dump(FILE*f, const char* prefix, ssize_t idx) const
 {
-#if PRINT_DEBUG
-  std::cout << "SgAsmCliHeader::dump\n";
-#endif
-  //TODO
-  //fprintf(f, "%s:%d:%d:%d\n", prefix, p_access_flags, p_name_index, p_descriptor_index);
+  fprintf(f, "%s:\n", prefix);
+  fprintf(f, "   name: %s\n", get_name()->get_string().c_str());
+  fprintf(f, "   offset: %llu\n", get_offset());
+  fprintf(f, "   data: %s\n", &(p_data[0]));
+  fprintf(f, "   cb: %u\n", p_cb);
+  fprintf(f, "   majorRuntimeVersion: %u\n", p_majorRuntimeVersion);
+  fprintf(f, "   minorRuntimeVersion: %u\n", p_minorRuntimeVersion);
+  fprintf(f, "   metaData: %llu\n", p_metaData);
+  fprintf(f, "   flags: %u\n", p_flags);
+  fprintf(f, "   entryPointToken: %u\n", p_entryPointToken);
+  fprintf(f, "   resources: %llu\n", p_resources);
+  fprintf(f, "   strongNameSignature: %llu\n", p_strongNameSignature);
+  fprintf(f, "   codeManagerTable: %llu\n", p_codeManagerTable);
+  fprintf(f, "   vTableFixups: %llu\n", p_vTableFixups);
+  fprintf(f, "   exportAddressTableJumps: %llu\n", p_exportAddressTableJumps);
+  fprintf(f, "   managedNativeHeader: %llu\n", p_managedNativeHeader);
 }
 
 #endif // ROSE_ENABLE_BINARY_ANALYSIS

@@ -732,48 +732,28 @@ SgSourceFile::initializeGlobalScope()
 
   // DQ (8/31/2006): Generate a NULL_FILE (instead of SgFile::SgFile) so that we can
   // enforce that the filename is always an absolute path (starting with "/").
-  // Sg_File_Info* globalScopeFileInfo = new Sg_File_Info("SgGlobal::SgGlobal",0,0);
      Sg_File_Info* globalScopeFileInfo = new Sg_File_Info(sourceFilename,0,0);
      ASSERT_not_null(globalScopeFileInfo);
-
-  // printf ("&&&&&&&&&& In SgSourceFile::initializeGlobalScope(): Building SgGlobal (with empty filename) &&&&&&&&&& \n");
 
      set_globalScope( new SgGlobal( globalScopeFileInfo ) );
      ASSERT_not_null(get_globalScope());
 
-  // Rasmussen (3/22/2020): Fixed setting case insensitivity
-  // if (SageBuilder::symbol_table_case_insensitive_semantics == true)
      if (SageInterface::is_language_case_insensitive())
         {
-  // Rasmussen (3/27/2020): Experimenting with returning to original (using symbol_table_case_insensitive_semantics variable)
-           ROSE_ASSERT(SageBuilder::symbol_table_case_insensitive_semantics == true);
+           ASSERT_require(SageBuilder::symbol_table_case_insensitive_semantics == true);
            get_globalScope()->setCaseInsensitive(true);
         }
 
-  // DQ (2/15/2006): Set the parent of the SgGlobal IR node
      get_globalScope()->set_parent(this);
 
   // DQ (8/21/2008): Set the end of the global scope (even if it is updated later)
-  // printf ("In SgFile::initialization(): p_root->get_endOfConstruct() = %p \n",p_root->get_endOfConstruct());
      ROSE_ASSERT(get_globalScope()->get_endOfConstruct() == nullptr);
      get_globalScope()->set_endOfConstruct(new Sg_File_Info(sourceFilename,0,0));
      ASSERT_not_null(get_globalScope()->get_endOfConstruct());
 
-  // DQ (1/21/2008): Set the filename in the SgGlobal IR node so that the traversal to add CPP directives and comments will succeed.
-     ROSE_ASSERT (get_globalScope() != NULL);
-     ROSE_ASSERT(get_globalScope()->get_startOfConstruct() != NULL);
-
-  // DQ (8/21/2008): Modified to make endOfConstruct consistant (avoids warning in AST consistancy check).
-  // ROSE_ASSERT(p_root->get_endOfConstruct()   == NULL);
-     ROSE_ASSERT(get_globalScope()->get_endOfConstruct()   != NULL);
-
-  // p_root->get_file_info()->set_filenameString(p_sourceFileNameWithPath);
-  // ROSE_ASSERT(p_root->get_file_info()->get_filenameString().empty() == false);
-
-#if 0
-     Sg_File_Info::display_static_data("Resetting the SgGlobal startOfConstruct and endOfConstruct");
-     printf ("Resetting the SgGlobal startOfConstruct and endOfConstruct filename (p_sourceFileNameWithPath = %s) \n",p_sourceFileNameWithPath.c_str());
-#endif
+     ASSERT_not_null(get_globalScope());
+     ASSERT_not_null(get_globalScope()->get_startOfConstruct());
+     ASSERT_not_null(get_globalScope()->get_endOfConstruct());
 
   // DQ (12/22/2008): Added to support CPP preprocessing of Fortran files.
      string filename = p_sourceFileNameWithPath;
@@ -788,11 +768,6 @@ SgSourceFile::initializeGlobalScope()
 
      get_globalScope()->get_endOfConstruct()->set_filenameString(filename);
      ROSE_ASSERT(get_globalScope()->get_endOfConstruct()->get_filenameString().empty() == false);
-
-#if 0
-     printf ("DONE: Resetting the SgGlobal startOfConstruct and endOfConstruct filename (filename = %s) \n",filename.c_str());
-     Sg_File_Info::display_static_data("DONE: Resetting the SgGlobal startOfConstruct and endOfConstruct");
-#endif
 
   // DQ (12/23/2008): These should be in the Sg_File_Info map already.
      ROSE_ASSERT(Sg_File_Info::getIDFromFilename(get_file_info()->get_filename()) >= 0);
@@ -1279,7 +1254,7 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                    ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
                                    sourceFile->initializeGlobalScope();
                                 }
-                            // DQ (28/8/2017): Adding language support.
+
                                else if (CommandlineProcessing::isJovialFileNameSuffix(filenameExtension) == true)
                                 {
                                    SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
@@ -1289,18 +1264,18 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                    file->set_outputLanguage(SgFile::e_Jovial_language);
                                    file->set_inputLanguage (SgFile::e_Jovial_language);
 
-                                   file->set_Jovial_only(true);
+                                // Don't do C++ stuff
+                                   file->set_requires_C_preprocessor(false);
+                                   file->set_disable_edg_backend(true);
+                                   file->set_skip_commentsAndDirectives(true);
 
-                                // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+                                   file->set_Jovial_only(true);
                                    Rose::is_Jovial_language = true;
 
                                    SageBuilder::symbol_table_case_insensitive_semantics = true;
-
-                                // DQ (12/23/2008): This is the earliest point where the global scope can be set.
-                                // Note that file->get_requires_C_preprocessor() should be false.
-                                   ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
                                    sourceFile->initializeGlobalScope();
                                 }
+
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
                                else if (CommandlineProcessing::isJavaJvmFile(sourceFilename))
                                 {
@@ -1846,19 +1821,12 @@ SgProject::parse(const vector<string>& argv)
      ROSE_ASSERT(SgNode::get_globalFunctionTypeTable() != NULL);
      ROSE_ASSERT(SgNode::get_globalFunctionTypeTable()->get_parent() != NULL);
 
-#if 1
   // DQ (7/25/2010): We test the parent of SgTypeTable in the AST post processing,
   // so we need to make sure that it is set.
      SgTypeTable* typeTable = SgNode::get_globalTypeTable();
      ASSERT_not_null(typeTable);
      if (typeTable->get_parent() == nullptr)
         {
-#if 0
-          printf ("This (globalTypeTable) should have been set to point to the SgProject not the SgFile \n");
-          ROSE_ABORT();
-#endif
-       // ROSE_ASSERT(numberOfFiles() > 0);
-       // printf ("Inside of SgProject::parse(const vector<string>& argv): set the parent of SgTypeTable \n");
           if (numberOfFiles() > 0)
                typeTable->set_parent(&(get_file(0)));
             else
@@ -1866,24 +1834,15 @@ SgProject::parse(const vector<string>& argv)
         }
      ASSERT_not_null(typeTable->get_parent());
 
-  // DQ (7/30/2010): This test fails in tests/nonsmoke/functional/CompilerOptionsTests/testCpreprocessorOption
-  // DQ (7/25/2010): Added new test.
-  // printf ("typeTable->get_parent()->class_name() = %s \n",typeTable->get_parent()->class_name().c_str());
-  // ROSE_ASSERT(isSgProject(typeTable->get_parent()) != NULL);
-
-     ROSE_ASSERT(SgNode::get_globalTypeTable() != NULL);
-     ROSE_ASSERT(SgNode::get_globalTypeTable()->get_parent() != NULL);
-#endif
+     ASSERT_not_null(SgNode::get_globalTypeTable());
+     ASSERT_not_null(SgNode::get_globalTypeTable()->get_parent());
 
      return errorCode;
    }
 
 
 SgSourceFile::SgSourceFile ( vector<string> & argv , SgProject* project )
-// : SgFile (argv,errorCode,fileNameIndex,project)
    {
-  // printf ("In the SgSourceFile constructor \n");
-
      this->p_package = nullptr;
      this->p_import_list = nullptr;
      this->p_class_list = nullptr;
@@ -1898,7 +1857,6 @@ SgSourceFile::SgSourceFile ( vector<string> & argv , SgProject* project )
      set_temp_holding_scope(nullptr);
 
   // This constructor actually makes the call to EDG/OFP/ECJ to build the AST (via callFrontEnd()).
-  // printf ("In SgSourceFile::SgSourceFile(): Calling doSetupForConstructor() \n");
      doSetupForConstructor(argv,  project);
     }
 
@@ -1906,15 +1864,13 @@ int
 SgSourceFile::callFrontEnd()
    {
      int frontendErrorLevel = SgFile::callFrontEnd();
-  // DQ (1/21/2008): This must be set for all languages
+
      ASSERT_not_null(get_globalScope());
      ASSERT_not_null(get_globalScope()->get_file_info());
-     ROSE_ASSERT(get_globalScope()->get_file_info()->get_filenameString().empty() == false);
-  // printf ("p_root->get_file_info()->get_filenameString() = %s \n",p_root->get_file_info()->get_filenameString().c_str());
-
-  // DQ (8/21/2008): Added assertion.
      ASSERT_not_null (get_globalScope()->get_startOfConstruct());
      ASSERT_not_null (get_globalScope()->get_endOfConstruct()  );
+
+     ASSERT_require(get_globalScope()->get_file_info()->get_filenameString().empty() == false);
 
      return frontendErrorLevel;
    }
@@ -2065,10 +2021,6 @@ SgProject::parse()
           ROSE_ASSERT(file == vectorOfFiles[i]);
         }
 
-#if 0
-     printf ("In SgProject::parse() before AstPostProcessing() \n");
-#endif
-
   // GB (8/19/2009): Moved the AstPostProcessing call from
   // SgFile::callFrontEnd to this point. Thus, it is only called once for
   // the whole project rather than once per file. Repeated calls to
@@ -2077,7 +2029,6 @@ SgProject::parse()
   // it on, and they are meant to be used in some way other than just
   // calling the backend on them. (If only the backend is used, this was
   // never called by SgFile::callFrontEnd either.)
-  // if ( !get_fileList().empty() && !get_useBackendOnly() )
 #ifndef ROSE_USE_CLANG_FRONTEND
      if ( (get_fileList().empty() == false) && (get_useBackendOnly() == false) )
         {
@@ -2856,7 +2807,6 @@ SgFile::callFrontEnd()
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
   // FMZ: 05/30/2008.  Do not generate .rmod file for the PU imported by "use" stmt
   // DXN (01/18/2011): Fixed to build rmod file only when there is no error passed back from the frontend.
-  // if (get_Fortran_only() == true && FortranModuleInfo::isRmodFile() == false)
      if (get_Fortran_only() == true && FortranModuleInfo::isRmodFile() == false && frontendErrorLevel == 0)
         {
           if (get_verbose() > 1)
@@ -3026,19 +2976,7 @@ SgFile::secondaryPassOverSourceFile()
        // Build the empty list container so that we can just add lists for new files as they are encountered
        // p_preprocessorDirectivesAndCommentsList = new ROSEAttributesListContainer();
        // ROSE_ASSERT (p_preprocessorDirectivesAndCommentsList != NULL);
-#if 1
-       // DQ (4/24/2021): Trying to debug the header file optimization support.
-       // printf ("In SgFile::secondaryPassOverSourceFile(): header_file_unparsing_optimization_header_file = %s \n",header_file_unparsing_optimization_header_file ? "true" : "false");
-#endif
 
-#if 0
-       // DQ (4/24/2021): Trying to debug the header file optimization support.
-          if (header_file_unparsing_optimization_header_file == true)
-             {
-               ASSERT_not_null(p_preprocessorDirectivesAndCommentsList);
-             }
-            else
-#endif
              {
             // DQ (9/23/2019): We need to support calling this function multiple times.
             // ROSE_ASSERT (p_preprocessorDirectivesAndCommentsList == NULL);
@@ -3060,17 +2998,10 @@ SgFile::secondaryPassOverSourceFile()
                   }
                ASSERT_not_null(p_preprocessorDirectivesAndCommentsList);
              }
-#if 0
-       // This is empty so there is nothing to display!
-          p_preprocessorDirectivesAndCommentsList->display("Secondary Source File Processing at bottom of SgFile::callFrontEnd()");
-#endif
 
        // DQ (4/19/2006): since they can take a while and includes substantial
        // file I/O we make this optional (selected from the command line).
-       // bool collectAllCommentsAndDirectives = get_collectAllCommentsAndDirectives();
-#if 0
-          printf ("get_skip_commentsAndDirectives() = %s \n",get_skip_commentsAndDirectives() ? "true" : "false");
-#endif
+
        // DQ (12/17/2008): The merging of CPP directives and comments from either the
        // source file or including all the include files is not implemented as a single
        // traversal and has been rewritten.
@@ -3081,8 +3012,6 @@ SgFile::secondaryPassOverSourceFile()
                     printf ("In SgFile::secondaryPassOverSourceFile(): calling attachAllPreprocessingInfo() \n");
                   }
 
-            // printf ("Secondary pass over source file = %s to comment comments and CPP directives \n",this->get_file_info()->get_filenameString().c_str());
-            // SgSourceFile* sourceFile = const_cast<SgSourceFile*>(this);
                SgSourceFile* sourceFile = isSgSourceFile(this);
                ASSERT_not_null(sourceFile);
 
@@ -3093,9 +3022,6 @@ SgFile::secondaryPassOverSourceFile()
                     requiresCPP = get_requires_C_preprocessor();
                     if (requiresCPP == true)
                        {
-#if DEBUG_SECONDARY_PASS
-                         printf ("@@@@@@@@@@@@@@ Set requires_C_preprocessor to false (test 4) \n");
-#endif
                          set_requires_C_preprocessor(false);
                        }
                   }
@@ -3139,10 +3065,6 @@ SgFile::secondaryPassOverSourceFile()
                   {
                     printf ("translateCommentsAndDirectivesIntoAST option not yet supported! \n");
                     ROSE_ABORT();
-#if 0 // [Robb Matzke 2021-03-24]: unreachable
-                 // DQ (3/29/2019): This still needs to be debugged.
-                    SageInterface::translateToUseCppDeclarations(sourceFile);
-#endif
                   }
 
 #if DEBUG_SECONDARY_PASS
@@ -4144,7 +4066,6 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
 // Added ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION [Rasmussen 2019.08.30].
 #if defined(ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION)
-       // Rasmussen (3/12/2018): Modified call to include the source file.
           SgSourceFile* fortranSourceFile = const_cast<SgSourceFile*>(this);
           frontendErrorLevel = experimental_fortran_main (experimental_FortranParser_argc,
                                                           experimental_FortranParser_argv,
@@ -5246,12 +5167,9 @@ SgSourceFile::build_Csharp_AST( vector<string> argv, vector<string> inputCommand
      string sourceFileNameWithPath = this->get_sourceFileNameWithPath();
      printf ("In SgSourceFile::build_Csharp_AST(): sourceFileNameWithPath = %s \n",sourceFileNameWithPath.c_str());
 
+#ifdef ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION
   // Prototype declaration.
      int csharp_main(int argc, char** argv, string sourceFileNameWithPath);
-
-  // Rasmussen (10/9/2017) Added compile time check to build if not configured for C#
-#ifdef ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION
-  // int frontendErrorLevel = csharp_main (c_cxx_argc, c_cxx_argv, *this);
      frontendErrorLevel = csharp_main (csharp_argc, csharp_argv, sourceFileNameWithPath);
 #else
      printf ("ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION is not defined \n");
@@ -5313,47 +5231,31 @@ SgSourceFile::build_Ada_AST( vector<string> argv, vector<string> /*inputCommandL
 
 int
 SgSourceFile::build_Jovial_AST( vector<string> argv, vector<string> inputCommandLine )
-   {
-  // DQ (28/8/2017) In case of a mixed language project, force case sensitivity here.
-     SageBuilder::symbol_table_case_insensitive_semantics = true;
+{
+   int frontendErrorLevel = 0;
+   int jovial_argc = 0;
+   char **jovial_argv = nullptr;
 
-     std::string frontEndCommandLineString;
-     frontEndCommandLineString = std::string(argv[0]) + std::string(" ") + CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);
+   SageBuilder::symbol_table_case_insensitive_semantics = true;
 
-     if ( get_verbose() > 1 )
-        {
-          printf ("In build_Jovial_AST(): Before calling jovial_main(): frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
-        }
+   std::string frontEndCommandLineString;
+   frontEndCommandLineString = std::string(argv[0]) + std::string(" ") + CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);
 
-  // DQ (8/22/2018): This was previously uninitialized where the jovial_main() was not called.
-     int frontendErrorLevel = 0;
+   CommandlineProcessing::generateArgcArgvFromList(inputCommandLine, jovial_argc, jovial_argv);
 
-     int jovial_argc = 0;
-     char **jovial_argv = nullptr;
-     CommandlineProcessing::generateArgcArgvFromList(inputCommandLine, jovial_argc, jovial_argv);
+   SgSourceFile* nonconst_file = const_cast<SgSourceFile*>(this);
+   ASSERT_not_null(nonconst_file);
 
-  // Prototype declaration.
-  // Rasmussen (10/16/2017): Added SgSourceFile parameter
-     int jovial_main(int argc, char** argv, SgSourceFile* file);
-
-     SgSourceFile* nonconst_file = const_cast<SgSourceFile*>(this);
-     ASSERT_not_null(nonconst_file);
-
-  // Rasmussen (10/21/2017) Added compile time check to build if not configured for Jovial
 #ifdef ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
-     frontendErrorLevel = jovial_main (jovial_argc, jovial_argv, nonconst_file);
+// Call the Jovial parser
+   int jovial_main(int argc, char** argv, SgSourceFile* file);
+   frontendErrorLevel = jovial_main(jovial_argc, jovial_argv, nonconst_file);
 #else
-     printf ("ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION is not defined \n");
-     return frontendErrorLevel;
+   std::cerr << "ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION is not defined but attempted to call Jovial parser.\n";
 #endif
 
-     if ( get_verbose() > 1 )
-        {
-          printf ("In build_Jovial_AST(): After calling jovial_main(): frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
-        }
-
-     return frontendErrorLevel;
-   }
+   return frontendErrorLevel;
+}
 
 
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS_MOVED
