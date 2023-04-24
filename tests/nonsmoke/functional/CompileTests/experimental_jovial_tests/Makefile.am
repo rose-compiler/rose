@@ -239,6 +239,7 @@ JOVIAL_TESTCODES = \
  gitlab-issue-193.jov                   \
  gitlab-issue-207.jov                   \
  gitlab-issue-208.jov                   \
+ gitlab-issue-212.jov                   \
  gitlab-issue-217.jov                   \
  gitlab-issue-220.jov                   \
  charlie.jov                            \
