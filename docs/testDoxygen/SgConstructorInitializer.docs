@@ -4,12 +4,11 @@
 
 /*!
 \class SgConstructorInitializer
-\brief This class represents the notion of an initializer for a variable declaration or
-expression in a function call argument list.
+\brief This class represents the call of a class constructor to initialize a variable. 
+For example "Foo foo;" or "Bar bar(1,2,3);" to initialize foo and bar respecitively.  
 
-There are no direct uses of this IR node anywhere.  All initializers
-are derived from this IR node to build derived classes such as SgConstructorInitializer,
-SgAssignInitializer, and SgAggregateInitializer.
+In both cases it holds the function declaration of the call constructor.  It also holds an SgExprListExp that represents the arguments to
+the constructor.  The list is empty if there are no arguments. 
 
 \internal This is a base class for all initializers.
 
