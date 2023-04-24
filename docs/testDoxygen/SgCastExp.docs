@@ -1,0 +1,42 @@
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgCastExp
+//////////////////////////////////////////////////////////////////////////
+
+/*!
+\class SgCastExp
+\brief This class represents a cast of one type to another.  
+
+SgCastExp is used across multiple languages. For C++ it represents all casts, including C-style casts: (newtype) and C++ style: reinterpret_cast<>(), static_cast<>(), etc.
+
+This class represents the concept of a tuple object in the input language. Currently, this IR node only works with Python input files.
+*/
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgCastExp data members
+/////////////////////////////////////////////////////////////////////////
+
+
+//////////////////////////////////////////////////////////////////////////
+// Documentation for class SgCastExp member functions (methods)
+/////////////////////////////////////////////////////////////////////////
+
+
+/*!
+\fn SgCastExp::isSgCastExp (SgNode *s)
+\brief Cast function (from derived class to SgCastExp pointer).
+
+This functions returns a SgCastExp pointer for any input of a
+pointer to an object derived from a SgCastExp.
+
+\return Returns valid pointer to SgCastExp if input is derived from a SgCastExp.
+*/
+
+/*!
+\fn SgCastExp::get_operand ()
+\brief Returns the target of the cast.
+
+This functions returns an SgExpression pointer representing the expression being casted.  
+
+\return Returns valid pointer to SgExpression.
+*/
