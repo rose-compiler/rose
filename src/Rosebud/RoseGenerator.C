@@ -1,5 +1,7 @@
 #include <Rosebud/RoseGenerator.h>
 
+#include <Rosebud/Serializer.h>
+
 #include <Sawyer/GraphTraversal.h>
 
 #include <boost/algorithm/string/predicate.hpp>
@@ -307,42 +309,12 @@ RoseGenerator::genArgsConstructor(std::ostream &header, std::ostream &impl, cons
 }
 
 void
-RoseGenerator::genTraversals(std::ostream &header, std::ostream &impl, const Ast::Class::Ptr &c, const Hierarchy &h) {
+RoseGenerator::genSerialization(std::ostream &header, std::ostream &impl, const Ast::Class::Ptr &c) {
     ASSERT_not_null(c);
 
-    const std::string base = firstPublicBaseClass(c);
-    std::vector<Ast::Property::Ptr> children;
-    for (const auto &p: c->properties) {
-        if (isTreeEdge(p()))
-            children.push_back(p());
-    }
-
-    header <<"\n"
-           <<THIS_LOCATION <<locationDirective(c, c->startToken)
-           <<"protected:\n"
-           <<"    virtual ChildDescriptor findChild(size_t) const override;\n";
-
-    impl <<"\n"
-         <<THIS_LOCATION <<locationDirective(c, c->startToken)
-         <<c->name <<"::ChildDescriptor\n"
-         <<c->name <<"::findChild(size_t i) const {\n";
-    std::string baseBias = "0";
-    if (!base.empty()) {
-        impl <<"    const ChildDescriptor child = " <<base <<"::findChild(i);\n"
-             <<"    if (child.i == i && !child.name.empty())\n"
-             <<"        return child;\n";
-        baseBias = "child.i";
-    }
-    impl <<"    switch (i - " <<baseBias <<") {\n";
-    for (size_t i = 0; i < children.size(); ++i) {
-        const std::string dataMember = propertyDataMemberName(children[i]);
-        impl <<"        case " <<i <<":\n"
-             <<"            return ChildDescriptor{i, \"" <<children[i]->name <<"\", " <<dataMember <<"()};\n";
-    }
-    impl <<"        default:\n"
-         <<"            return ChildDescriptor{" <<children.size() <<" + " <<baseBias <<", \"\", nullptr};\n"
-         <<"    }\n"
-         <<"}\n";
+    auto serializer = Serializer::lookup(settings.serializer);
+    ASSERT_not_null(serializer);
+    serializer->generate(header, impl, c, *this);
 }
 
 void
@@ -406,13 +378,13 @@ RoseGenerator::genClass(const Ast::Class::Ptr &c, const Hierarchy &h) {
                <<THIS_LOCATION <<locationDirective(c, c->endTextToken)
                <<c->endText;
 
-    // Constructors and destructors. We place these at the end of the class because they might depend on types declared earlier in
-    // the class.
+    // Additional generated members go at the end of the class (including constructors and the destructor) because they might
+    // depend on things from earlier in the class.
     genDestructor(header, impl, c);
     genDefaultConstructor(header, impl, c);
     genArgsConstructor(header, impl, c, h);
     genInitProperties(header, impl, c);
-    genTraversals(header, impl, c, h);
+    genSerialization(header, impl, c);
 
     // Emit stuff after the class.
     header <<"};\n";

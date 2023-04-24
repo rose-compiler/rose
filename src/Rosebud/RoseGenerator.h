@@ -42,7 +42,7 @@ private:
     void genProperty(std::ostream &header, std::ostream &impl, const Ast::PropertyPtr&);
     void genDefaultConstructor(std::ostream &header, std::ostream &impl, const Ast::ClassPtr&);
     void genArgsConstructor(std::ostream &header, std::ostream &impl, const Ast::ClassPtr&, const Hierarchy&);
-    void genTraversals(std::ostream &header, std::ostream &impl, const Ast::ClassPtr&, const Hierarchy&);
+    void genSerialization(std::ostream &header, std::ostream &impl, const Ast::ClassPtr&);
     void genClass(const Ast::ClassPtr&, const Hierarchy&);
     void genBasicTypes(const Ast::ProjectPtr&);
 };
