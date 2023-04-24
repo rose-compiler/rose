@@ -6465,77 +6465,22 @@ SgFunctionSymbol *SageInterface::lookupFunctionSymbolInParentScopes (const SgNam
     return functionSymbol;
 }
 
-// Liao, 1/22/2008
-// SgScopeStatement* SgStatement::get_scope
-// SgScopeStatement* SgStatement::get_scope() assumes all parent pointers are set, which is
-// not always true during translation.
-// SgSymbol *SageInterface:: lookupSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope)
 SgSymbol*
 SageInterface::lookupSymbolInParentScopes (const SgName &  name, SgScopeStatement *cscope, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList)
    {
-     SgSymbol* symbol = NULL;
-     if (cscope == NULL)
+     SgSymbol* symbol = nullptr;
+     if (cscope == nullptr) {
           cscope = SageBuilder::topScopeStack();
+     }
+     ASSERT_not_null(cscope);
 
-     ROSE_ASSERT(cscope != NULL);
-
-#define DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES 0
-
-#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES
-     printf ("In SageInterface:: lookupSymbolInParentScopes(): cscope = %p = %s (templateParameterList = %p templateArgumentList = %p) \n",cscope,cscope->class_name().c_str(),templateParameterList,templateArgumentList);
-#endif
-
-     while ((cscope != NULL) && (symbol == NULL))
+     while ((cscope != nullptr) && (symbol == nullptr))
         {
-#if 0
-       // DQ (5/21/2013): Restricting direct access to the symbol table to support namespace symbol table support.
-          if (cscope->get_symbol_table() == NULL)
-             {
-               printf ("Error: cscope->get_symbol_table() == NULL for cscope = %p = %s \n",cscope,cscope->class_name().c_str());
-               cscope->get_startOfConstruct()->display("cscope->p_symbol_table == NULL: debug");
-#if 0
-               ROSE_ASSERT(cscope->get_parent() != NULL);
-               SgNode* parent = cscope->get_parent();
-               while (parent != NULL)
-                  {
-                    printf ("Error: cscope->get_symbol_table() == NULL for parent = %p = %s \n",parent,parent->class_name().c_str());
-                    parent->get_startOfConstruct()->display("parent == NULL: debug");
-                    parent = parent->get_parent();
-                  }
-#endif
-             }
-          ROSE_ASSERT(cscope->get_symbol_table() != NULL);
-#endif
-
-#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES
-          printf("   --- In SageInterface:: lookupSymbolInParentScopes(): name = %s cscope = %p = %s \n",name.str(),cscope,cscope->class_name().c_str());
-#endif
-
-       // DQ (8/16/2013): Changed API to support template parameters and template arguments.
-       // symbol = cscope->lookup_symbol(name);
           symbol = cscope->lookup_symbol(name,templateParameterList,templateArgumentList);
-
-#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES && 1
-       // debug
-          printf("   --- In SageInterface:: lookupSymbolInParentScopes(): symbol = %p \n",symbol);
-          cscope->print_symboltable("In SageInterface:: lookupSymbolInParentScopes(): debug");
-#endif
-          if (cscope->get_parent() != NULL) // avoid calling get_scope when parent is not set
-               cscope = isSgGlobal(cscope) ? NULL : cscope->get_scope();
+          if (cscope->get_parent() != nullptr) // avoid calling get_scope when parent is not set
+               cscope = isSgGlobal(cscope) ? nullptr : cscope->get_scope();
             else
-               cscope = NULL;
-
-#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES
-          printf ("   --- In SageInterface:: (base of loop) lookupSymbolInParentScopes(): cscope = %p symbol = %p \n\n",cscope,symbol);
-#endif
-        }
-
-     if (symbol == NULL)
-        {
-#if DEBUG_SYMBOL_LOOKUP_IN_PARENT_SCOPES
-          printf ("Warning: In SageInterface:: lookupSymbolInParentScopes(): could not locate the specified name %s in any outer symbol table (templateParameterList = %p templateArgumentList = %p) \n",name.str(),templateParameterList,templateArgumentList);
-#endif
-       // ROSE_ASSERT(false);
+               cscope = nullptr;
         }
 
      return symbol;
@@ -21435,6 +21380,7 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
       case V_SgImplicitStatement: // Rasmussen 5/13/2021: TODO: implicit statement with letter-list
       case V_SgJovialDefineDeclaration:
       case V_SgJovialDirectiveStatement:
+      case V_SgJovialOverlayDeclaration:
       case V_SgPragmaDeclaration:
       case V_SgAdaAttributeClause:
         break;
