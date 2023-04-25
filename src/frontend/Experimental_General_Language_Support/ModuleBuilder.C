@@ -1,8 +1,6 @@
 #include "sage3basic.h"
 #include "ModuleBuilder.h"
 
-#define PRINT_SYMBOLS 0
-
 namespace Rose {
 
 using namespace Rose::Diagnostics;
@@ -56,7 +54,7 @@ void ModuleBuilder::setInputDirs(SgProject* project)
       }
       else {
         if (Rose::ir_node_mlog[Rose::Diagnostics::DEBUG]) {
-          std::cout << "WARNING: the input directory does not exist (rose): " << rmodDir << std::endl;
+          mlog[WARN] << "the input directory does not exist (rose): " << rmodDir;
         }
       }
     }
@@ -71,14 +69,14 @@ void ModuleBuilder::loadModule(const std::string &module_name, std::vector<std::
   SgSymbolTable* namespace_symbols = nullptr;
 
   SgSourceFile* source = getModule(module_name);
-  ROSE_ASSERT(source);
+  ASSERT_not_null(source);
 
   // A loaded module doesn't need to be unparsed or compiled in the back-end
   source->set_skip_unparse(true);
   source->set_skipfinalCompileStep(true);
 
   SgGlobal* module_scope = source->get_globalScope();
-  ROSE_ASSERT(module_scope);
+  ASSERT_not_null(module_scope);
 
   namespace_symbol = module_scope->lookup_namespace_symbol(module_name);
   if (namespace_symbol) namespace_decl = namespace_symbol->get_declaration();
@@ -87,14 +85,14 @@ void ModuleBuilder::loadModule(const std::string &module_name, std::vector<std::
 
   // inject namespace symbols into the file_scope of the caller
   if (namespace_symbols) {
-    ROSE_ASSERT(file_scope);
+    ASSERT_not_null(file_scope);
     for (SgNode* node : namespace_symbols->get_symbols()) {
       SgSymbol* symbol = isSgSymbol(node);
 
       if (SgAliasSymbol* alias = isSgAliasSymbol(symbol)) {
         symbol = alias->get_base();
       }
-      ROSE_ASSERT(symbol);
+      ASSERT_not_null(symbol);
 
       SgName symbol_name = symbol->get_name();
       // Don't import symbols that already exist
@@ -104,23 +102,21 @@ void ModuleBuilder::loadModule(const std::string &module_name, std::vector<std::
           loadSymbol(symbol, namespace_symbols, file_scope);
         }
         else {
-          // Only import names from the list
-          std::vector<std::string>::iterator it = find (import_names.begin(), import_names.end(), std::string(symbol_name));
+          // Only import names from the list, use lower case for comparison as Jovial and Fortran are case insensitive
+          std::string lc_name{symbol_name};
+          std::transform(lc_name.begin(), lc_name.end(), lc_name.begin(), ::tolower);
+
+          std::vector<std::string>::iterator it = find (import_names.begin(), import_names.end(), lc_name);
           if (it != import_names.end()) {
-#if PRINT_SYMBOLS
-            std::cout << "    : inserting symbol " << symbol->get_name()
-                      << " from namespace " << namespace_symbol->get_name() << std::endl;
-#endif
+            mlog[DEBUG] <<"inserting symbol " <<symbol->get_name() <<" from namespace " <<namespace_symbol->get_name();
+
             // Symbol is in the import name list so load it
             loadSymbol(symbol, namespace_symbols, file_scope);
           }
         }
       }
       else {
-#if PRINT_SYMBOLS
-        std::cout << "    : exists -> symbol " << symbol->get_name()
-                  << " from namespace " << namespace_symbol->get_name() << std::endl;
-#endif
+        mlog[TRACE] << "exists -> symbol " << symbol->get_name() << " from namespace " << namespace_symbol->get_name();
       }
     }
   }
@@ -128,23 +124,21 @@ void ModuleBuilder::loadModule(const std::string &module_name, std::vector<std::
 
 void ModuleBuilder::insertSymbol(SgSymbol* symbol, SgGlobal* file_scope)
 {
-  ROSE_ASSERT(symbol);
+  ASSERT_not_null(symbol);
 
   SgName symbol_name = symbol->get_name();
   if (file_scope->symbol_exists(symbol_name) == false) {
     // The symbol doesn't exist in the file's scope so insert an alias for it
     SgAliasSymbol* alias_symbol = new SgAliasSymbol(symbol);
-    ROSE_ASSERT(alias_symbol);
+    ASSERT_not_null(alias_symbol);
     file_scope->insert_symbol(alias_symbol->get_name(), alias_symbol);
-#if PRINT_SYMBOLS
-    std::cout << "    :  inserted symbol " << symbol->get_name() << std::endl;
-#endif
+    mlog[TRACE] << "inserted symbol " << symbol->get_name();
   }
 }
 
 void ModuleBuilder::loadSymbol(SgSymbol* symbol, SgSymbolTable* symbol_table, SgGlobal* file_scope)
 {
-  ROSE_ASSERT(symbol);
+  ASSERT_not_null(symbol);
 
   if (file_scope->symbol_exists(symbol->get_name())) {
     return;
@@ -258,6 +252,7 @@ SgSourceFile* ModuleBuilder::getModule(const std::string &module_name)
   if (module_file) {
     // Since the module file wasn't parsed the file scope won't be on the stack, so push it
     SgGlobal* file_scope = module_file->get_globalScope();
+    ASSERT_require(file_scope->isCaseInsensitive());
     SageBuilder::pushScopeStack(file_scope);
 
     return module_file;
@@ -270,8 +265,7 @@ SgSourceFile* ModuleBuilder::getModule(const std::string &module_name)
   module_file = createSgSourceFile(file_path);
 
   if (module_file == nullptr) {
-    mlog[ERROR] << "ModuleBuilder::getModule: No file found for the module file: "
-                << lc_module_name << std::endl;
+    mlog[ERROR] << "ModuleBuilder::getModule: No file found for the module file: " << lc_module_name;
     ROSE_ABORT();
   }
   else {
@@ -291,7 +285,7 @@ SgSourceFile* ModuleBuilder::createSgSourceFile(const std::string &module_name)
   std::string module_filename = boost::algorithm::to_lower_copy(module_name) + getModuleFileSuffix();
 
   if (boost::filesystem::exists(module_filename) == false) {
-    mlog[ERROR] << "Module file filename = " << module_filename << " NOT FOUND (expected to be present) \n";
+    mlog[ERROR] << "Module file filename = " << module_filename << " NOT FOUND (expected to be present)";
     ROSE_ABORT();
   }
 
@@ -314,13 +308,13 @@ SgSourceFile* ModuleBuilder::createSgSourceFile(const std::string &module_name)
   newFile->runFrontend(errorCode);
 
   if (errorCode != 0) {
-    mlog[ERROR] << "In ModuleBuilder::createSgSourceFile(): frontend returned 0 \n";
-    ROSE_ASSERT(errorCode == 0);
+    mlog[ERROR] << "In ModuleBuilder::createSgSourceFile(): frontend returned 0";
+    ASSERT_require(errorCode == 0);
   }
 
   ASSERT_not_null (newFile);
   ASSERT_not_null (newFile->get_startOfConstruct());
-  ROSE_ASSERT (newFile->get_parent() == project);
+  ASSERT_require  (newFile->get_parent() == project);
   project->set_file(*newFile);
 
   nestedSgFile--;
@@ -332,9 +326,9 @@ void ModuleBuilder::dumpMap()
 {
   std::map<std::string,SgSourceFile*>::iterator iter;
 
-  std::cout << "Module file map::" << std::endl;
+  std::cout << "Module file map::" << "\n";
   for (iter = moduleNameMap.begin(); iter != moduleNameMap.end(); iter++) {
-    std::cout <<"FIRST : " << (*iter).first << " SECOND : " << (*iter).second << std::endl;
+    std::cout <<"FIRST : " << (*iter).first << " SECOND : " << (*iter).second << "\n";
   }
 }
 

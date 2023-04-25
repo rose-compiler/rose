@@ -165,41 +165,8 @@ void AstPostProcessing (SgNode* node)
      SgNode::clearGlobalMangledNameMap();
    }
 
-// DQ (3/4/2007): part of tempoary support for debugging where a defining and nondefining declaration are the same
-// SgDeclarationStatement* saved_declaration;
-
 void postProcessingSupport (SgNode* node)
    {
-  // DQ (5/24/2006): Added this test to figue out where Symbol parent pointers are being reset to NULL
-  // TestParentPointersOfSymbols::test();
-
-  // DQ (7/25/2005): It is presently an error to call this function with a SgProject 
-  // or SgDirectory, since there is no way to compute the SgFile from such IR nodes 
-  // (could be multiply defined).
-  // ROSE_ASSERT(isSgProject(node) == NULL && isSgDirectory(node) == NULL);
-  // GB (8/19/2009): Removed the assertion against calling this function on
-  // SgProject and SgDirectory nodes. Nothing below needs to compute a
-  // SgFile, as far as I can tell; also, calling the AstPostProcessing just
-  // once on an entire project is more efficient than calling it once per
-  // file.
-
-#if 0
-     printf ("Inside of postProcessingSupport(node = %p = %s) \n",node,node->class_name().c_str());
-#endif
-
-#if 0
-  // DQ (11/23/2015): Before we do any modifications, check for unique IR nodes in the AST (see test2015_121.C).
-#if 1
-     printf ("Checking for unique nodes in the AST before AST post-processing: issolating possible multiple references friend function \n");
-#endif
-
-     testAstForUniqueNodes(node);
-
-#if 1
-     printf ("DONE: Checking for unique nodes in the AST before AST post-processing: issolating possible multiple references friend function \n");
-#endif
-#endif
-
   // Only do AST post-processing for C/C++
   // Rasmussen (9/18/2020): Removed --experimental_cobol_frontend option and associated code
   // Rasmussen (4/8/2018): Added Ada and Jovial. The logic should probably
@@ -484,7 +451,7 @@ void postProcessingSupport (SgNode* node)
       else
         {
 
-          ROSE_ASSERT(node != NULL);
+          ASSERT_not_null(node);
 
        // DQ (3/11/2006): Fixup NULL pointers left by users when building the AST
        // (note that the AST translation fixes these directly).  This step is
@@ -515,23 +482,16 @@ void postProcessingSupport (SgNode* node)
           if ( SgProject::get_verbose() >= AST_POST_PROCESSING_VERBOSE_LEVEL )
                cout << "/* AST Postprocessing reset parent pointers (done) */" << endl;
 
-       // DQ (7/19/2005): Moved to after parent pointer fixup!        
-       // subTemporaryAstFixes(node);
           removeInitializedNamePtr(node);
-
-       // DQ (3/17/2007): This should be empty
-          ROSE_ASSERT(SgNode::get_globalMangledNameMap().size() == 0);
+          ASSERT_require(SgNode::get_globalMangledNameMap().size() == 0);
 
        // DQ (12/1/2004): This should be done before the reset of template names (since that operation requires valid scopes!)
-       // DQ (11/29/2004): Added to support new explicit scope information on IR nodes
-       // initializeExplicitScopeData(node);
           initializeExplicitScopes(node);
 
        // DQ (5/28/2006): Fixup names in declarations that are inconsistent (e.g. where more than one non-defining declaration exists)
           resetNamesInAST();
 
-       // DQ (3/17/2007): This should be empty
-          ROSE_ASSERT(SgNode::get_globalMangledNameMap().size() == 0);
+          ASSERT_require(SgNode::get_globalMangledNameMap().size() == 0);
 
        // Output progress comments for these relatively expensive operations on the AST
           if ( SgProject::get_verbose() >= AST_POST_PROCESSING_VERBOSE_LEVEL )
@@ -543,12 +503,7 @@ void postProcessingSupport (SgNode* node)
        // reset the names of template class declarations
           resetTemplateNames(node);
 
-       // DQ (2/12/2012): This is a problem for test2004_35.C (debugging this issue).
-       // printf ("Exiting after calling resetTemplateNames() \n");
-       // ROSE_ASSERT(false);
-
-       // DQ (3/17/2007): This should be empty
-          ROSE_ASSERT(SgNode::get_globalMangledNameMap().size() == 0);
+          ASSERT_require(SgNode::get_globalMangledNameMap().size() == 0);
 
        // Output progress comments for these relatively expensive operations on the AST
           if ( SgProject::get_verbose() >= AST_POST_PROCESSING_VERBOSE_LEVEL )
@@ -559,12 +514,15 @@ void postProcessingSupport (SgNode* node)
           fixupEnumValues();
 
        // DQ (4/7/2010): This was commented out to modify Fortran code, but I think it should NOT modify Fortran code.
-       // DQ (5/21/2008): This only make since for C and C++ (Error, this DOES apply to Fortran where the "parameter" attribute is used!)
-          if (SageInterface::is_Fortran_language() == false && SageInterface::is_Java_language() == false)
-             {
+       // DQ (5/21/2008): This only make sense for C and C++ (Error, this DOES apply to Fortran where the "parameter" attribute is used!)
+          if (SageInterface::is_Fortran_language() == false &&
+              SageInterface::is_Jovial_language() == false &&
+              SageInterface::is_Java_language() == false
+              )
+            {
             // DQ (3/20/2005): Fixup AST so that GNU g++ compile-able code will be generated
                fixupInClassDataInitialization(node);
-             }
+            }
 
        // DQ (3/24/2005): Fixup AST to generate code that works around GNU g++ bugs
           fixupforGnuBackendCompiler(node);
