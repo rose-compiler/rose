@@ -218,10 +218,6 @@ std::vector<SgExpression*>& operatorExprs();
 //
 // auxiliary functions and types
 
-/// a type encapsulating a lambda function that completes a body
-///   after it has been structurally connected to the AST.
-using DeferredBodyCompletion = std::function<void()>;
-
 /// \brief resolves all goto statements to labels
 ///        at the end of procedures or functions.
 struct LabelAndLoopManager
@@ -257,11 +253,24 @@ struct LabelAndLoopManager
 };
 
 
+struct ExtendedPragmaID : std::tuple<Element_ID, SgStatement*>
+{
+  using base = std::tuple<Element_ID, SgStatement*>;
+
+  ExtendedPragmaID(Element_ID id, SgStatement* s = nullptr)
+  : base(id, s)
+  {}
+
+  Element_ID   id()   const { return std::get<0>(*this); }
+  SgStatement* stmt() const { return std::get<1>(*this); }
+};
+
 /// The context class for translation from Asis to ROSE
 ///   containts context that is passed top-down
 struct AstContext
 {
     using StatementHandler = std::function<void(AstContext, SgStatement&)>;
+    using PragmaContainer  = std::vector<ExtendedPragmaID>;
 
     AstContext()                             = default;
     AstContext(AstContext&&)                 = default;
@@ -308,6 +317,15 @@ struct AstContext
     AstContext                instantiation(SgAdaGenericInstanceDecl& instance) const;
     /// \}
 
+    /// pragma container property
+    /// \details
+    ///   collects all pragmas during body processing in a user supplied container
+    /// \{
+    PragmaContainer& pragmas() { return SG_DEREF(all_pragmas); }
+    AstContext       pragmas(PragmaContainer& ids) const;
+    bool             collectsPragmas() const { return all_pragmas != nullptr; }
+    /// \}
+
     /// appends new statements to \ref blk instead of the current scope, \ref the_scope.
     AstContext unscopedBlock(SgAdaUnscopedBlock& blk) const;
 
@@ -332,6 +350,7 @@ struct AstContext
     LabelAndLoopManager*         all_labels_loops        = nullptr;
     const std::string*           unit_file_name          = nullptr;
     SgAdaGenericInstanceDecl*    enclosing_instantiation = nullptr;
+    PragmaContainer*             all_pragmas             = nullptr;
     StatementHandler             stmtHandler             = defaultStatementHandler;
     //~ Element_Struct*      elem;
 };

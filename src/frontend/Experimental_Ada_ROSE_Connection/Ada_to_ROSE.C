@@ -166,6 +166,14 @@ AstContext::unscopedBlock(SgAdaUnscopedBlock& blk) const
   return tmp;
 }
 
+AstContext AstContext::pragmas(PragmaContainer& allPragmas) const
+{
+  AstContext tmp{*this};
+
+  tmp.all_pragmas = &allPragmas;
+  return tmp;
+}
+
 AstContext
 AstContext::instantiation(SgAdaGenericInstanceDecl& instance) const
 {
