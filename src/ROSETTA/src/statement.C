@@ -2823,10 +2823,17 @@ Grammar::setUpStatements ()
      //              has not been processed.
      AdaGenericDecl.setDataPrototype     ( "SgName", "name", "= \"\"",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AdaGenericDecl.setDataPrototype     ( "SgAdaGenericDefn*", "definition", "= NULL",
+     AdaGenericDecl.setDataPrototype     ( "SgAdaGenericDefn*", "definition", "= nullptr",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     AdaGenericDecl.setDataPrototype     ( "SgDeclarationStatement*", "declaration", "= NULL",
+     AdaGenericDecl.setDataPrototype     ( "SgDeclarationStatement*", "declaration", "= nullptr",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     // PP(4/19/23) added explicit scope, so we can wire the child declaration's scope to the generic defn
+     //             (which is the proper nesting). Then the generic decl requires a scope, so we can define a generic
+     //             sub-unit independently.
+     AdaGenericDecl.setDataPrototype     ( "SgScopeStatement*", "scope", "= nullptr",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
      AdaFormalTypeDecl.setFunctionPrototype ( "HEADER_ADA_FORMAL_TYPE_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaFormalTypeDecl.setDataPrototype ( "SgName", "name", "=\"\"",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
