@@ -722,20 +722,13 @@ void
 SgSourceFile::initializeGlobalScope()
    {
      ASSERT_not_null(this);
-
-  // printf ("Inside of SgSourceFile::initializeGlobalScope() \n");
-
-  // Note that SgFile::initializeSourcePosition() should have already been called.
      ASSERT_not_null(get_startOfConstruct());
 
      string sourceFilename = get_startOfConstruct()->get_filename();
-
-  // DQ (8/31/2006): Generate a NULL_FILE (instead of SgFile::SgFile) so that we can
-  // enforce that the filename is always an absolute path (starting with "/").
      Sg_File_Info* globalScopeFileInfo = new Sg_File_Info(sourceFilename,0,0);
      ASSERT_not_null(globalScopeFileInfo);
 
-     set_globalScope( new SgGlobal( globalScopeFileInfo ) );
+     set_globalScope(new SgGlobal(globalScopeFileInfo));
      ASSERT_not_null(get_globalScope());
 
      if (SageInterface::is_language_case_insensitive())
@@ -747,11 +740,9 @@ SgSourceFile::initializeGlobalScope()
      get_globalScope()->set_parent(this);
 
   // DQ (8/21/2008): Set the end of the global scope (even if it is updated later)
-     ROSE_ASSERT(get_globalScope()->get_endOfConstruct() == nullptr);
+     ASSERT_require(get_globalScope()->get_endOfConstruct() == nullptr);
      get_globalScope()->set_endOfConstruct(new Sg_File_Info(sourceFilename,0,0));
-     ASSERT_not_null(get_globalScope()->get_endOfConstruct());
 
-     ASSERT_not_null(get_globalScope());
      ASSERT_not_null(get_globalScope()->get_startOfConstruct());
      ASSERT_not_null(get_globalScope()->get_endOfConstruct());
 
@@ -764,16 +755,16 @@ SgSourceFile::initializeGlobalScope()
         }
 
      get_globalScope()->get_startOfConstruct()->set_filenameString(filename);
-     ROSE_ASSERT(get_globalScope()->get_startOfConstruct()->get_filenameString().empty() == false);
+     ASSERT_require(get_globalScope()->get_startOfConstruct()->get_filenameString().empty() == false);
 
      get_globalScope()->get_endOfConstruct()->set_filenameString(filename);
-     ROSE_ASSERT(get_globalScope()->get_endOfConstruct()->get_filenameString().empty() == false);
+     ASSERT_require(get_globalScope()->get_endOfConstruct()->get_filenameString().empty() == false);
 
   // DQ (12/23/2008): These should be in the Sg_File_Info map already.
-     ROSE_ASSERT(Sg_File_Info::getIDFromFilename(get_file_info()->get_filename()) >= 0);
+     ASSERT_require(Sg_File_Info::getIDFromFilename(get_file_info()->get_filename()) >= 0);
      if (get_requires_C_preprocessor() == true)
         {
-          ROSE_ASSERT(Sg_File_Info::getIDFromFilename(generate_C_preprocessor_intermediate_filename(get_file_info()->get_filename())) >= 0);
+          ASSERT_require(Sg_File_Info::getIDFromFilename(generate_C_preprocessor_intermediate_filename(get_file_info()->get_filename())) >= 0);
         }
    }
 
