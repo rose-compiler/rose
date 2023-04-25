@@ -719,16 +719,12 @@ Leave(SgFunctionDeclaration* function_decl, SgScopeStatement* param_scope)
        SgBasicBlock* function_body = isSgBasicBlock(SageBuilder::topScopeStack());
        ASSERT_not_null(function_body);
 
-    // Move all of the statements temporarily stored in param_scope
-    // into the scope of the function body.
-    //
+    // Move all of the statements temporarily stored in param_scope into the scope of the function body
        if (isSgBasicBlock(param_scope)) {
          SageInterface::moveStatementsBetweenBlocks (isSgBasicBlock(param_scope), function_body);
        }
 
-    // Connect the result SgInitializedName initially created in param_scope
-    // into the scope of the function body.
-    //
+    // Connect the result SgInitializedName initially created in param_scope into the scope of the function body
        if (result_symbol) {
          SgProcedureHeaderStatement* proc_decl = isSgProcedureHeaderStatement(function_decl);
          SgInitializedName* result_name = isSgInitializedName(result_symbol->get_declaration());

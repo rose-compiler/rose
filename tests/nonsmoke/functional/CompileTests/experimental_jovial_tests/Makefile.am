@@ -243,6 +243,7 @@ JOVIAL_TESTCODES = \
  gitlab-issue-217.jov                   \
  gitlab-issue-219.jov                   \
  gitlab-issue-220.jov                   \
+ gitlab-issue-225.jov                   \
  charlie.jov                            \
  shadow.jov                             \
  comments.jov                           \
@@ -373,6 +374,7 @@ COMPOOL_TESTCODES = \
  gitlab-issue-74.cpl                    \
  gitlab-issue-206.cpl                   \
  gitlab-issue-219.cpl                   \
+ gitlab-issue-225.cpl                   \
  beta.cpl                               \
  parttype.cpl                           \
  comments_start_term.cpl
@@ -461,49 +463,29 @@ JOVIAL_TESTCODES_WORKING_ON = \
  5_1_1_integer-factor.jov               \
  5_1_1_integer-formula.jov
 
-## TODO: Don't seem to be able to run just parser tests
-#  - but don't really need to anymore as we've moved beyond just parsing
-#
-TEST_JOVIAL_PARSER_Objects  = ${JOVIAL_PARSER_TESTCODES:.jov=.aterm}
-TEST_JOVIAL_PARSER_Sources  = ${JOVIAL_PARSER_TESTCODES:.jov=.jov.passed}
-
-TEST_COMPOOL_PARSER_Objects = ${COMPOOL_PARSER_TESTCODES:.cpl=.aterm}
-TEST_COMPOOL_PARSER_Sources = ${COMPOOL_PARSER_TESTCODES:.cpl=.cpl.passed}
-
-TEST_JOVIAL_Objects  = ${JOVIAL_TESTCODES:.jov=.aterm}
+TEST_JOVIAL_Objects  = ${JOVIAL_TESTCODES:.jov=.jov.aterm}
 TEST_JOVIAL_Sources  = ${JOVIAL_TESTCODES:.jov=.jov.passed}
 
-TEST_COMPOOL_Objects = ${COMPOOL_TESTCODES:.cpl=.aterm}
+TEST_COMPOOL_Objects = ${COMPOOL_TESTCODES:.cpl=.cpl.aterm}
 TEST_COMPOOL_Sources = ${COMPOOL_TESTCODES:.cpl=.cpl.passed}
 
-TEST_DIRECTIVE_Objects = ${COMPOOL_DIRECTIVE_TESTCODES:.cpl=.aterm}
-TEST_COMPOOL_Sources = ${COMPOOL_DIRECTIVE_TESTCODES:.cpl=.cpl.passed}
+TEST_DIRECTIVE_Objects = ${COMPOOL_DIRECTIVE_TESTCODES:.cpl=.cpl.aterm}
+TEST_DIRECTIVE_Sources = ${COMPOOL_DIRECTIVE_TESTCODES:.cpl=.cpl.passed}
 
 PASSING_TEST_Objects = $(TEST_COMPOOL_Objects) $(TEST_JOVIAL_Objects) $(TEST_DIRECTIVE_Objects)
 PASSING_COMPOOL_TEST_Objects = $(TEST_COMPOOL_Objects)
 
-# Go back and build the translators we are using to test Jovial (in case make check
-# is run directly in this directory before make has been run from the root of the 
-# ROSE directory structure).
-#../../testParser:
-#	cd ../..; $(MAKE) testParser
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator
 
-$(TEST_JOVIAL_PARSER_Objects): ../../testParser
-	../../testParser $(ROSE_FLAGS) -rose:jovial $(srcdir)/$(@:.aterm=.jov)
-
-$(TEST_COMPOOL_PARSER_Objects): ../../testParser
-	../../testParser $(ROSE_FLAGS) -rose:jovial $(srcdir)/$(@:.aterm=.cpl)
-
 $(TEST_JOVIAL_Objects): ../../testTranslator
-	../../testTranslator -rose:jovial $(srcdir)/$(@:.aterm=.jov)
+	../../testTranslator -rose:jovial $(srcdir)/$(@:.jov.aterm=.jov)
 
 $(TEST_COMPOOL_Objects): ../../testTranslator
-	../../testTranslator -rose:jovial $(srcdir)/$(@:.aterm=.cpl)
+	../../testTranslator -rose:jovial $(srcdir)/$(@:.cpl.aterm=.cpl)
 
 $(TEST_DIRECTIVE_Objects): ../../testTranslator
-	../../testTranslator -rose:jovial $(srcdir)/$(@:.aterm=.cpl)
+	../../testTranslator -rose:jovial $(srcdir)/$(@:.cpl.aterm=.cpl)
 
 check-compool:
 	@echo $(TEST_COMPOOL_Objects)
