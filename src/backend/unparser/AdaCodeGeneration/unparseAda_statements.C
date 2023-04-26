@@ -896,14 +896,18 @@ namespace
     {
       UseClauseSyntaxResult useSyntax = useClauseSyntax(n.get_declaration());
       SgScopeStatement*     origScope = useSyntax.decl().get_scope();
+      std::string           typeAttr  = n.get_adaTypeAttribute();
 
       prn("use ");
       prn(useSyntax.keyword());
       prnNameQual(n, origScope);
       prn(useSyntax.name());
 
-      if (n.get_is_ada_class_wide())
-        prn("'class");
+      if (typeAttr.size())
+      {
+        prn("'");
+        prn(typeAttr);
+      }
 
       prn(STMT_SEP);
     }
@@ -2176,8 +2180,8 @@ namespace
 
       void handle(const SgAdaUnitRefExp& n)
       {
-        // get the prefix from the declaration, then set the proper name.
-        res = compute(n.get_decl(), forceNonGeneric);
+        // a reference to a generic unit inside the generic unit refers to an instance and not the generic
+        res = compute(n.get_decl(), forceNonGeneric || si::Ada::unitRefDenotesGenericInstance(n));
       }
 
       void handle(const SgVarRefExp&)

@@ -20786,7 +20786,10 @@ SgAdaGenericDecl::get_symbol_from_symbol_table() const
 SgName
 SgAdaGenericDecl::get_mangled_name() const
 {
-  return "ada$generic$decl";
+  std::string mangled = "ada$<>$decl";
+
+  mangled += get_name();
+  return mangled;
 }
 
 SgName
@@ -20814,7 +20817,10 @@ SgAdaGenericInstanceDecl::get_symbol_from_symbol_table() const
 SgName
 SgAdaGenericInstanceDecl::get_mangled_name() const
 {
-  return "ada$genericinstance$decl";
+  std::string mangled = "ada$<I>$decl";
+
+  mangled += get_name();
+  return mangled;
 }
 
 SgName

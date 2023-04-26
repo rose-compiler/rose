@@ -752,7 +752,7 @@ namespace Ada_ROSE_Translation
 
   /// creates an Ada pragma declaration
   SgPragmaDeclaration&
-  mkPragmaDeclaration(const std::string& name, SgExprListExp& args);
+  mkPragmaDeclaration(const std::string& name, SgExprListExp& args, SgStatement* assocStmt);
 
   //
   // Expression Makers
