@@ -817,6 +817,36 @@ namespace Ada
     return isGenericDecl(*n);
   }
 
+  namespace
+  {
+    bool isLogicalChildScopeOfDecl(const SgScopeStatement* scope, const SgDeclarationStatement* decl)
+    {
+      if (scope == nullptr) return false;
+      if (scope->get_parent() == decl) return true;
+
+      return isLogicalChildScopeOfDecl(logicalParentScope(*scope), decl);
+    }
+
+    bool isLogicalChildOfDecl(const SgNode* n, const SgDeclarationStatement* decl)
+    {
+      if (n == nullptr) return false;
+
+      return isLogicalChildScopeOfDecl(sg::ancestor<SgScopeStatement>(n), decl);
+    }
+  }
+
+  bool unitRefDenotesGenericInstance(const SgAdaUnitRefExp& n)
+  {
+    SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(n.get_decl());
+
+    return gendcl && isLogicalChildOfDecl(&n, gendcl);
+  }
+
+  bool unitRefDenotesGenericInstance(const SgAdaUnitRefExp* n)
+  {
+    return n && unitRefDenotesGenericInstance(*n);
+  }
+
   bool hasUnknownDiscriminants(const SgAdaDiscriminatedTypeDecl& n)
   {
     return SG_DEREF(n.get_discriminants()).get_parameters().size() == 0;
@@ -2759,6 +2789,7 @@ namespace
     void handle(const SgAdaProtectedSpecDecl& n) { res = n.get_scope(); }
     void handle(const SgAdaProtectedTypeDecl& n) { res = n.get_scope(); }
     void handle(const SgFunctionDeclaration& n)  { res = n.get_scope(); }
+    void handle(const SgAdaGenericDecl& n)       { res = n.get_scope(); }
 
     // do not look beyond global
     // (during AST construction the parents of global may not yet be properly linked).
@@ -2775,6 +2806,7 @@ namespace
     void handle(const SgAdaTaskSpec& n)          { res = fromParent(n); }
     void handle(const SgAdaProtectedSpec& n)     { res = fromParent(n); }
     void handle(const SgFunctionDefinition& n)   { res = fromParent(n); }
+    void handle(const SgAdaGenericDefn& n)       { res = fromParent(n); }
 
     void handle(const SgScopeStatement& n)
     {

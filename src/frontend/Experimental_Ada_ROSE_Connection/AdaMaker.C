@@ -835,6 +835,7 @@ mkAdaGenericDecl(const std::string& name, SgScopeStatement& scope)
    sg::linkParentChild(sgnode, defn, &SgAdaGenericDecl::set_definition);
 
    sgnode.set_firstNondefiningDeclaration(&sgnode);
+   sgnode.set_scope(&scope);
    scope.insert_symbol(name, &mkBareNode<SgAdaGenericSymbol>(&sgnode));
    return sgnode;
 }
@@ -1734,15 +1735,16 @@ mkAdaAttributeClause(SgAdaAttributeExp& attr, SgExpression& size)
 }
 
 SgPragmaDeclaration&
-mkPragmaDeclaration(const std::string& name, SgExprListExp& args)
+mkPragmaDeclaration(const std::string& name, SgExprListExp& args, SgStatement* assocStmt)
 {
   SgPragma&            details = mkBareNode<SgPragma>(std::ref(name));
   SgPragmaDeclaration& sgnode  = mkLocatedNode<SgPragmaDeclaration>(&details);
 
+  details.set_associatedStatement(assocStmt);
   details.set_parent(&sgnode);
   sg::linkParentChild(details, args, &SgPragma::set_args);
 
-  sgnode.set_definingDeclaration(&sgnode);
+  sgnode.set_definingDeclaration(&sgnode); // should this be null?
   sgnode.set_firstNondefiningDeclaration(&sgnode);
 
   return sgnode;

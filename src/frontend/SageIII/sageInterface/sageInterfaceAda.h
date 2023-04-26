@@ -403,6 +403,13 @@ namespace
   SgAdaGenericDecl* isGenericDecl(const SgDeclarationStatement* n);
   /// @}
 
+  /// returns true iff \ref n refers to a generic declaration from inside said declaration
+  ///         false otherwise (e.g., if n does not refer to a generic unit)
+  /// @{
+  bool unitRefDenotesGenericInstance(const SgAdaUnitRefExp& n);
+  bool unitRefDenotesGenericInstance(const SgAdaUnitRefExp* n);
+  /// @}
+
   /// Returns SgAdaGenericDecl for a given SgAdaGenericInstanceDecl.
   /// \details
   ///    skips over intermediate renaming declarations.
