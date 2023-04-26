@@ -123,7 +123,7 @@ typedef std::vector<std::list<token_type> > token_container_container;
 
 #endif
 
-//! For preprocessing information including source comments, #include , #if, #define, etc
+//! For preprocessing information including source comments, include , if, define, etc
 class PreprocessingInfo
    {
      public:
