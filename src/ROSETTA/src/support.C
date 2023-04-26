@@ -608,6 +608,9 @@ Grammar::setUpSupport ()
                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      // PP (01/25/21): Add arguments for Ada pragma
+     // \todo should this be DEF_TRAVERSAL, DEF_DELETE, CLONE_PTR also?
+     // \note args was set to NO_TRAVERSAL in order not to conflict with any existing
+     //       language support that uses SgPragma.
      Pragma.setDataPrototype ( "SgExprListExp*" , "args", "= nullptr",
                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 

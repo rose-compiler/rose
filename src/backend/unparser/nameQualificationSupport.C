@@ -1153,6 +1153,8 @@ namespace
 
       void handle(const SgStatement& n)
       {
+        handle(sg::asBaseType(n));
+
         res.set_currentStatement(const_cast<SgStatement*>(&n));
       }
 
@@ -1431,6 +1433,14 @@ namespace
         // the reason is that we cannot traverse any SgBaseClass objects.. ???
         //   see Cxx_GrammarTreeTraversalSuccessorContainer for details!
         computeNameQualForNonshared(n.get_base_class_exp(), false /* not a type subtree */);
+      }
+
+      void handle(const SgPragma& n)
+      {
+        handle(sg::asBaseType(n));
+
+        if (SgExprListExp* arglst = n.get_args())
+          computeNameQualForNonshared(arglst, false /* not a type subtree */);
       }
 
 
@@ -1754,6 +1764,9 @@ namespace
       return;
 
     if (/*const SgEnumVal* castexp =*/ isSgAdaAttributeExp(e))
+      return;
+
+    if (/*const SgEnumVal* castexp =*/ isSgNullExpression(e))
       return;
 
     if (e == nullptr)
