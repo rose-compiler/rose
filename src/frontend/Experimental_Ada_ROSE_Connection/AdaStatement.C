@@ -85,6 +85,7 @@ namespace
         SgExprListExp&       args = traverseIDs(argRange, elemMap(), ArgListCreator{ctx});
         SgPragmaDeclaration& sgnode = mkPragmaDeclaration(name, args, stmt);
 
+        // \todo do we need to privatize pragmas in the private section?
         ADA_ASSERT (args.get_parent());
         attachSourceLocation(sgnode, el, ctx);
         attachSourceLocation(SG_DEREF(sgnode.get_pragma()), el, ctx);
@@ -173,17 +174,12 @@ namespace
 
   struct PragmaPlacer
   {
-      explicit
-      PragmaPlacer(SgScopeStatement& one)
-      : all(), last(one)
+      // \pre scopes.size() > 0
+      PragmaPlacer(std::vector<SgScopeStatement*> scopes)
+      : all(), last(SG_DEREF(scopes.back()))
       {
-        copyToAll(one);
-      }
-
-      PragmaPlacer(SgScopeStatement& one, SgScopeStatement& two)
-      : all(), last(two)
-      {
-        copyToAll(one); copyToAll(two);
+        for (SgScopeStatement* pscope : scopes)
+          copyToAll(SG_DEREF(pscope));
       }
 
       template <class Iterator>
@@ -256,7 +252,7 @@ namespace
   // records all pragmas in the range \ref pragmas so that they can processed at the end of the block
   // \note this is necessary because it seems that Asis does not store pragmas on declare blocks
   //       (field Statement::Pragmas).
-  void recordPragmasID(AstContext ctx, std::vector<Element_ID> pragmas, SgStatement* stmt)
+  void recordPragmasID(std::vector<Element_ID> pragmas, SgStatement* stmt, AstContext ctx)
   {
     if (pragmas.empty()) return;
 
@@ -274,9 +270,10 @@ namespace
                   );
   }
 
-  template <class... Scopes>
-  void placePragmas(AstContext ctx, Scopes... scopes)
+  void placePragmas(std::vector<SgScopeStatement*> scopes, AstContext ctx)
   {
+    ADA_ASSERT(scopes.size() > 0);
+
     using PragmaNodes     = PragmaCreator::result_container;
     using PragmaContainer = AstContext::PragmaContainer;
 
@@ -310,20 +307,20 @@ namespace
     std::sort(pragmadcls.begin(), pragmadcls.end(), SourceLocationComparator{});
 
     // retroactively place pragmas according to their source position information
-    std::for_each(pragmadcls.begin(), pragmadcls.end(), PragmaPlacer{scopes...});
+    std::for_each(pragmadcls.begin(), pragmadcls.end(), PragmaPlacer{std::move(scopes)});
   }
 
   template <class... Scopes>
-  void placePragmas(Pragma_Element_ID_List pragmalst, AstContext ctx, Scopes... scopes)
+  void placePragmas(Pragma_Element_ID_List pragmalst, std::vector<SgScopeStatement*> scopes, AstContext ctx)
   {
     // append all pragmas in pragmalst to the unprocessed pragma list
     ElemIdRange             pragmaRange  = idRange(pragmalst);
     std::vector<Element_ID> pragmaVector;
 
     std::copy(pragmaRange.first, pragmaRange.second, std::back_inserter(pragmaVector));
-    recordPragmasID(ctx, std::move(pragmaVector), nullptr /* no available statement */);
+    recordPragmasID(std::move(pragmaVector), nullptr /* no available statement */, ctx);
 
-    placePragmas(ctx, scopes...);
+    placePragmas(std::move(scopes), ctx);
   }
 
 
@@ -1141,7 +1138,7 @@ namespace
                         traverseIDs(range, elemMap(), ElemCreator{ctx.scope(*nodePtr), true /* private items */});
                       }
 
-                      placePragmas(ctx.pragmas(pragmas), std::ref(*nodePtr));
+                      placePragmas({ nodePtr }, ctx.pragmas(pragmas));
                     };
 
     /* unused fields: (Task_Definition_Struct)
@@ -1220,7 +1217,7 @@ namespace
                         traverseIDs(range, elemMap(), ElemCreator{ctx.scope(*nodePtr), true /* private items */});
                       }
 
-                      placePragmas(ctx.pragmas(pragmas), std::ref(*nodePtr));
+                      placePragmas({ nodePtr }, ctx.pragmas(pragmas));
                     };
 
     /* unused fields: (Protected_Definition_Struct)
@@ -1660,24 +1657,24 @@ namespace
                              AstContext::PragmaContainer pendingPragmas = {} // moved in to capture pragmas seen earlier
                            )
   {
+    using ScopeSequence = std::vector<SgScopeStatement*>;
+
     ElemIdRange       hndlrs    = idRange(exceptionHandlers);
     TryBlockNodes     trydata   = createTryOrBlockIfNeeded( hndlrs.size() > 0, requiresStatementBlock, ctx.scope(dominantBlock));
     SgTryStmt*        trystmt   = trydata.first;
     SgScopeStatement& stmtblk   = trydata.second;
     AstContext        pragmaCtx = ctx.pragmas(pendingPragmas);
+    ScopeSequence     activeScopes = { &dominantBlock };
+
+    if (&dominantBlock != &stmtblk)
+      activeScopes.push_back(&stmtblk);
 
     blockHandler(bodyStatements, stmtblk, pragmaCtx);
 
     if (trystmt)
-    {
-      exhandlerHandler(hndlrs, dominantBlock, SG_DEREF(trystmt), pragmaCtx);
+      exhandlerHandler(hndlrs, dominantBlock, *trystmt, pragmaCtx);
 
-      placePragmas(pragmas, pragmaCtx, std::ref(dominantBlock), std::ref(stmtblk));
-    }
-    else
-    {
-      placePragmas(pragmas, pragmaCtx, std::ref(dominantBlock));
-    }
+    placePragmas(pragmas, std::move(activeScopes), pragmaCtx);
   }
 
 
@@ -1841,7 +1838,7 @@ namespace
           AstContext      pragmaCtx  = ctx.pragmas(pendingPragmas);
 
           traverseIDs(adaStmts, elemMap(), StmtCreator{pragmaCtx.scope(block)});
-          placePragmas(stmt.Pragmas, pragmaCtx, std::ref(block));
+          placePragmas(stmt.Pragmas, { &block }, pragmaCtx);
           /* unused fields:
                 Element_ID                Corresponding_End_Name;
           */
@@ -1865,7 +1862,7 @@ namespace
           AstContext      pragmaCtx  = ctx.pragmas(pendingPragmas);
 
           traverseIDs(adaStmts, elemMap(), StmtCreator{pragmaCtx.scope(block)});
-          placePragmas(stmt.Pragmas, pragmaCtx, std::ref(block));
+          placePragmas(stmt.Pragmas, { &block }, pragmaCtx);
 
           /* unused fields:
                 Element_ID                Corresponding_End_Name;
@@ -1914,7 +1911,7 @@ namespace
             traverseIDs(loopStmts, elemMap(), StmtCreator{pragmaCtx.scope(block)});
           }
 
-          placePragmas(stmt.Pragmas, pragmaCtx, std::ref(block));
+          placePragmas(stmt.Pragmas, { &block }, pragmaCtx);
 
           /* unused fields:
                Pragma_Element_ID_List Pragmas;
@@ -2217,7 +2214,7 @@ namespace
         ADA_ASSERT (!FAIL_ON_ERROR(ctx));
     }
 
-    recordPragmasID(ctx, std::move(pragmaVector), assocstmt);
+    recordPragmasID(std::move(pragmaVector), assocstmt, ctx);
   }
 
 
@@ -2277,7 +2274,7 @@ namespace
 
     traverseIDs(range, elemMap(), StmtCreator{pragmaCtx.scope(body)});
 
-    placePragmas(ex.Pragmas, pragmaCtx, std::ref(body));
+    placePragmas(ex.Pragmas, { &body }, pragmaCtx);
     /* unused fields:
     */
   }
@@ -3317,7 +3314,7 @@ void handleRepresentationClause(Element_Struct& elem, AstContext ctx)
 
         traverseIDs(range, elemMap(), ComponentClauseCreator{pragmaCtx.scope(components)});
 
-        placePragmas(repclause.Pragmas, pragmaCtx, std::ref(components));
+        placePragmas(repclause.Pragmas, { &components }, pragmaCtx);
         /* unhandled fields:
          */
         break;
@@ -3727,7 +3724,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         //   need to be identified when needed.
         // generateBuiltinFunctionsOnTypes(ctx.scope(pkgspec));
 
-        placePragmas(decl.Pragmas, pragmaCtx, std::ref(pkgspec));
+        placePragmas(decl.Pragmas, { &pkgspec }, pragmaCtx);
 
         /* unused nodes:
                Element_ID                     Corresponding_End_Name;
@@ -3871,7 +3868,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
           traverseIDs(range, elemMap(), ElemCreator{pragmaCtx.scope(pkgspec), true});
         }
 
-        placePragmas(decl.Pragmas, pragmaCtx, std::ref(pkgspec));
+        placePragmas(decl.Pragmas, { &pkgspec }, pragmaCtx);
 
         /* unused nodes:
                Element_ID                     Corresponding_End_Name;
@@ -4590,7 +4587,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
           traverseIDs(decls, elemMap(), StmtCreator{pragmaCtx.scope(pobody)});
         }
 
-        placePragmas(decl.Pragmas, pragmaCtx, std::ref(pobody));
+        placePragmas(decl.Pragmas, { &pobody }, pragmaCtx);
 
         /* unused fields:
                bool                           Has_Protected
@@ -5240,7 +5237,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       ADA_ASSERT (!FAIL_ON_ERROR(ctx));
   }
 
-  recordPragmasID(ctx, std::move(pragmaVector), assocdecl);
+  recordPragmasID(std::move(pragmaVector), assocdecl, ctx);
 }
 
 void ParameterCompletion::operator()(SgFunctionParameterList& lst, SgScopeStatement& parmscope)
