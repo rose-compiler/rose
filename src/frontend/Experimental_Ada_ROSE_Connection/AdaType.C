@@ -76,11 +76,14 @@ namespace
       // \}
 
       // others
+      void handle(SgInitializedName& n)      { set(&mkExprAsType(SG_DEREF(sb::buildVarRefExp(&n)))); }
+
       void handle(SgAdaAttributeExp& n)
       {
         attachSourceLocation(n, el, ctx); // \todo why is this not set where the node is made?
         set(&mkExprAsType(n));
       }
+
 
     private:
       Element_Struct& el;
@@ -248,6 +251,7 @@ namespace
           findFirstOf
           || (res = findFirst(asisTypes(), typeEx.Corresponding_Name_Definition))
           || (res = findFirst(asisExcps(), typeEx.Corresponding_Name_Definition))
+          || (res = findFirst(asisVars(),  typeEx.Corresponding_Name_Definition)) /*+ , typeEx.Corresponding_Name_Declaration*/
           || (res = findFirst(adaTypes(),  AdaIdentifier{typeEx.Name_Image}))
           || (res = queryArgumentTypeFromInstantiation(typeEx.Name_Image, ctx))
           || (res = errorType(typeEx, ctx))

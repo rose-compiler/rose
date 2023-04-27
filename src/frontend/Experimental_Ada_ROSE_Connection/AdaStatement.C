@@ -1123,11 +1123,13 @@ namespace
 
     auto deferred = [ctx,nodePtr,tasknode](AstContext::PragmaContainer pragmas) -> void
                     {
+                      AstContext pragmaCtx = ctx.pragmas(pragmas);
+
                       // visible items
                       {
                         ElemIdRange range = idRange(tasknode->Visible_Part_Items);
 
-                        traverseIDs(range, elemMap(), ElemCreator{ctx.scope(*nodePtr)});
+                        traverseIDs(range, elemMap(), ElemCreator{pragmaCtx.scope(*nodePtr)});
                       }
 
                       // private items
@@ -1135,10 +1137,10 @@ namespace
                         ElemIdRange range = idRange(tasknode->Private_Part_Items);
                         ADA_ASSERT ((!range.empty()) == tasknode->Is_Private_Present);
 
-                        traverseIDs(range, elemMap(), ElemCreator{ctx.scope(*nodePtr), true /* private items */});
+                        traverseIDs(range, elemMap(), ElemCreator{pragmaCtx.scope(*nodePtr), true /* private items */});
                       }
 
-                      placePragmas({ nodePtr }, ctx.pragmas(pragmas));
+                      placePragmas({ nodePtr }, pragmaCtx);
                     };
 
     /* unused fields: (Task_Definition_Struct)
@@ -1202,11 +1204,13 @@ namespace
 
     auto deferred = [ctx,nodePtr,protectedNode](AstContext::PragmaContainer pragmas) -> void
                     {
+                      AstContext pragmaCtx = ctx.pragmas(pragmas);
+
                       // visible items
                       {
                         ElemIdRange range = idRange(protectedNode->Visible_Part_Items);
 
-                        traverseIDs(range, elemMap(), ElemCreator{ctx.scope(*nodePtr)});
+                        traverseIDs(range, elemMap(), ElemCreator{pragmaCtx.scope(*nodePtr)});
                       }
 
                       // private items
@@ -1214,10 +1218,10 @@ namespace
                         ElemIdRange range = idRange(protectedNode->Private_Part_Items);
                         ADA_ASSERT ((!range.empty()) == protectedNode->Is_Private_Present);
 
-                        traverseIDs(range, elemMap(), ElemCreator{ctx.scope(*nodePtr), true /* private items */});
+                        traverseIDs(range, elemMap(), ElemCreator{pragmaCtx.scope(*nodePtr), true /* private items */});
                       }
 
-                      placePragmas({ nodePtr }, ctx.pragmas(pragmas));
+                      placePragmas({ nodePtr }, pragmaCtx);
                     };
 
     /* unused fields: (Protected_Definition_Struct)
@@ -3326,13 +3330,15 @@ void handleRepresentationClause(Element_Struct& elem, AstContext ctx)
 
         logKind("An_At_Clause", elem.ID);
 
+        // \todo Representation_Clause_Name may not refer to a type but to a variable
+        //       (e.g.,rep_sys_address.adb)
+        //       consider using expressions as base for AdaRepresentationClause...
         SgType&           ty     = getDeclTypeID(repclause.Representation_Clause_Name, ctx);
-        SgExpression&     modexp = getExprID_opt(repclause.Mod_Clause_Expression, ctx);
+        SgExpression&     modexp = getExprID_opt(repclause.Representation_Clause_Expression, ctx);
         SageRecordClause& sgnode = mkAdaRepresentationClause(ty, modexp, true /* at-clause */);
 
         attachSourceLocation(sgnode, elem, ctx);
         ctx.appendStatement(sgnode);
-
         /* unhandled fields:
          */
         break;
@@ -3656,7 +3662,9 @@ namespace
                                                  };
 
   std::vector<Pragma_Kinds> const protectedDeclPragmas{ A_Priority_Pragma,
-                                                        An_Interrupt_Priority_Pragma
+                                                        An_Interrupt_Priority_Pragma,
+                                                        An_Attach_Handler_Pragma,
+                                                        An_Interrupt_Handler_Pragma
                                                       };
 }
 
