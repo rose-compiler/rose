@@ -255,6 +255,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   rep_sym.ads                          \
   rep_sym.adb                          \
   rep_sym-set.adb                      \
+  rep_sys_address.adb                  \
   scopequal3.adb                       \
   scopequal4.adb                       \
   scopequal5.adb                       \
