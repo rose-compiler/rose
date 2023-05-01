@@ -3726,6 +3726,7 @@ ATbool ATermToSageJovialTraversal::traverse_OverlayExpression(ATerm term, SgExpr
       ASSERT_not_null(overlay_string);
 
       overlay_expr->get_expressions().push_back(overlay_string);
+      overlay_string->set_parent(overlay_expr);
    }
 
    return ATtrue;
@@ -3755,6 +3756,7 @@ ATbool ATermToSageJovialTraversal::traverse_OverlayString(ATerm term, SgExprList
       ASSERT_not_null(overlay_element);
 
       overlay_string->get_expressions().push_back(overlay_element);
+      overlay_element->set_parent(overlay_string);
    }
 
    return ATtrue;
