@@ -1864,8 +1864,10 @@ ATbool ATermToSageJovialTraversal::traverse_OptStructureSpecifier(ATerm term, St
       else if (traverse_Formula(t_bits_per_entry, bits_per_entry)) {
          SgIntVal* int_val = isSgIntVal(bits_per_entry);
          ASSERT_not_null(int_val);
-         ROSE_ASSERT(int_val->get_value() > 0);
+         ASSERT_require(int_val->get_value() > 0);
          struct_spec.bits_per_entry = int_val->get_value();
+         // the expression/formula for the bits_per_entry is no longer needed as the value is stored
+         delete bits_per_entry;  bits_per_entry = nullptr;
       }
       else return ATfalse;
    }
