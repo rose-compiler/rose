@@ -1871,10 +1871,15 @@ Enter(SgEnumVal* &enum_val, const std::string &name, SgEnumDeclaration* enum_dec
    SgEnumDeclaration* nondef_decl = isSgEnumDeclaration(enum_decl->get_firstNondefiningDeclaration());
    ASSERT_not_null(nondef_decl);
 
-   enum_val = SageBuilder::buildEnumVal_nfi(value, nondef_decl, name);
-
-   SgExpression* init_expr = enum_val;
-   if (cast) init_expr = cast;
+   // There doesn't have to be an SgEnumVal, there shall be an SgInitializedName
+   SgExpression* init_expr = nullptr;
+   if (cast) {
+      init_expr = cast;
+   }
+   else {
+      enum_val = SageBuilder::buildEnumVal_nfi(value, nondef_decl, name);
+      init_expr = enum_val;
+   }
 
    SgAssignInitializer* initializer = SageBuilder::buildAssignInitializer_nfi(init_expr, enum_type);
    SgInitializedName* init_name = SageBuilder::buildInitializedName_nfi(name, enum_type, initializer);
@@ -1882,11 +1887,16 @@ Enter(SgEnumVal* &enum_val, const std::string &name, SgEnumDeclaration* enum_dec
    def_decl->get_enumerators().push_back(init_name);
    init_name->set_scope(scope);
    init_name->set_declptr(def_decl);
+   init_name->set_parent(def_decl);
 
    // Add an associated field symbol to the symbol table
    SgEnumFieldSymbol* enum_field_symbol = new SgEnumFieldSymbol(init_name);
    ASSERT_not_null(enum_field_symbol);
    scope->insert_symbol(name,enum_field_symbol);
+
+   if (enum_type->get_parent() == nullptr) {
+      enum_type->set_parent(enum_field_symbol);
+   }
 
    // Add enum to containing scope for Jovial
    if (isSgClassDefinition(scope)) {
