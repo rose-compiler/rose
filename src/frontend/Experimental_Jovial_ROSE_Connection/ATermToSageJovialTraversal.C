@@ -8241,8 +8241,6 @@ ATbool ATermToSageJovialTraversal::traverse_LinkageDirective(ATerm term)
    if (ATmatch(term, "LinkageDirective(<term>)", &t_symbol)) {
       // MATCHED LinkageDirective
 
-#if 1
-      // TODO: if needed, deal with symbol in more complex cases (.e.g., symbol list)
       ATermList tail = (ATermList) ATmake("<term>", t_symbol);
       while (! ATisEmpty(tail)) {
          ATerm head = ATgetFirst(tail);
@@ -8252,18 +8250,11 @@ ATbool ATermToSageJovialTraversal::traverse_LinkageDirective(ATerm term)
             SgIntVal* int_val = isSgIntVal(expr);
             if (int_val) {
                str = int_val->get_valueString();
+               // the expression for int_val is no longer needed as the value is stored
+               delete int_val;  int_val = nullptr;
             }
          } else return ATfalse;
       }
-#else
-      if (traverse_Literal(t_symbol, expr)) {
-         // MATCHED Literal
-         SgIntVal* int_val = isSgIntVal(expr);
-         if (int_val) {
-            str = int_val->get_valueString();
-         }
-      } else return ATfalse;
-#endif
    }
    else return ATfalse;
 
