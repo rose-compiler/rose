@@ -149,8 +149,9 @@ namespace
     void handle(SgNode& n)            { SG_UNEXPECTED_NODE(n); }
 
     // expressions
-    void handle(SgExpression& n)      { /* do nothing */ }
+    void handle(SgExpression& n)      { /*logInfo() << typeid(n).name() << std::endl;*/ }
     void handle(SgTypeExpression& n)  { res = extract(n.get_type()); }
+    void handle(SgAdaAttributeExp& n) { res = &n; }
 
     // types
     void handle(SgType& n)            { res = &n; }
@@ -185,8 +186,8 @@ namespace
 
     SgAdaGenericInstanceDecl* insdcl = ctx.instantiation();
 
-    if (insdcl == nullptr) return nullptr;
-
+    if (insdcl == nullptr)
+      return nullptr;
 
     // first try to find an argument matching the name
     SgExprListExp&       args  = SG_DEREF(insdcl->get_actual_parameters());
@@ -266,6 +267,7 @@ namespace
           res = &getExprTypeID(typeEx.Selector, ctx);
 
           /// temporary code to handle incomplete AST for generic instantiations
+          /// \todo
           if (SgType* ty = isSgType(res))
           {
             if (SgAdaGenericInstanceDecl* gendecl = instantiationDeclID(typeEx.Prefix, ctx))
