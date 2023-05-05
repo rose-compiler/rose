@@ -1158,6 +1158,13 @@ namespace
         res.set_currentStatement(const_cast<SgStatement*>(&n));
       }
 
+      void handle(const SgGotoStatement& n)
+      {
+        handle(sg::asBaseType(n));
+
+        computeNameQualForShared(n, n.get_label());
+      }
+
       void handle(const SgScopeStatement& n)
       {
         handle(sg::asBaseType(n));

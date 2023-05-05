@@ -730,8 +730,14 @@ namespace
     ADA_ASSERT (labelref.Element_Kind == An_Expression);
 
     Expression_Struct& labelexp = labelref.The_Union.Expression;
-    ADA_ASSERT (labelexp.Expression_Kind == An_Identifier);
 
+    if (labelexp.Expression_Kind == A_Selected_Component)
+    {
+      logKind("A_Selected_Component", id);
+      return getLabelRef(labelexp.Selector, ctx);
+    }
+
+    ADA_ASSERT (labelexp.Expression_Kind == An_Identifier);
     logKind("An_Identifier", labelref.ID);
     return labelexp.Corresponding_Name_Definition;
   }

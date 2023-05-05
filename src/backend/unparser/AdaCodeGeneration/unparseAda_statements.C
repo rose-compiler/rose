@@ -1145,8 +1145,11 @@ namespace
 
     void handle(SgGotoStatement& n)
     {
+      SgLabelStatement& lblstmt = SG_DEREF(n.get_label());
+
       prn("goto ");
-      prn(SG_DEREF(n.get_label()).get_name());
+      prnNameQual(n, &lblstmt, lblstmt.get_scope());
+      prn(lblstmt.get_name());
       prn(STMT_SEP);
     }
 
