@@ -644,12 +644,13 @@ namespace
     return (s.rfind(sub, 0) == 0);
   }
 
-  bool isSystemPackage(Unit_Struct* unit)
+
+  bool isSpecialCompilerPackage(Unit_Struct* unit, const char* unitRootInCAPS)
   {
     ADA_ASSERT(unit);
     AdaIdentifier name(unit->Unit_Full_Name);
 
-    return startsWith(name, "SYSTEM");
+    return startsWith(name, unitRootInCAPS);
   }
 
 
@@ -871,7 +872,8 @@ namespace
         // parentID == 1.. 1 refers to the package standard (currently not extracted from Asis)
         UniqueUnitId uid = uniqueUnitName(unit->Unit);
 
-        logWarn() << "unknown unit dependency: "
+        (parentID == 1 ? logInfo() : logWarn())
+                  << "unknown unit dependency: "
                   << uid << " #" << unit->Unit.ID
                   << " -> #" << parentID
                   << std::endl;
@@ -896,13 +898,61 @@ namespace
     // topo sort
 
     // sort system packages first
+    // \note the '.' after "ADA" is necessary to avoid user package such as
+    //       System_Simple_Test to interfere.
     for (DependencyMap::value_type& el : deps)
-      if (isSystemPackage(el.second.unit))
+      if (isSpecialCompilerPackage(el.second.unit, "SYSTEM."))
         dfs(deps, el, res);
+
+/*
+    // then sort standard Ada packages
+    //   this is necessary b/c some special GNAT packages lack dependence information
+    //   e.g., Ada.TEXT_IO.Modular_IO
+    for (DependencyMap::value_type& el : deps)
+      if (isSpecialCompilerPackage(el.second.unit, "ADA."))
+        dfs(deps, el, res);
+*/
 
     // sort language and user defined packages
     for (DependencyMap::value_type& el : boost::adaptors::reverse(deps))
       dfs(deps, el, res);
+
+    // Ada.Text_IO.* packages require special handling in GNAT
+    std::vector<Unit_Struct*> specialAdaTextIOPkgs;
+    auto isSpecialAdaTextIOChildUnit =
+                  [](Unit_Struct* unit)->bool
+                  {
+                    return (  isSpecialCompilerPackage(unit, "ADA.TEXT_IO.INTEGER_AUX")
+                           || isSpecialCompilerPackage(unit, "ADA.TEXT_IO.INTEGER_IO")
+                           || isSpecialCompilerPackage(unit, "ADA.TEXT_IO.FLOAT_IO")
+                           || isSpecialCompilerPackage(unit, "ADA.TEXT_IO.FIXED_IO")
+                           || isSpecialCompilerPackage(unit, "ADA.TEXT_IO.MODULAR_IO")
+                           || isSpecialCompilerPackage(unit, "ADA.TEXT_IO.DECIMAL_IO")
+                           || isSpecialCompilerPackage(unit, "ADA.TEXT_IO.ENUMERATION_IO")
+                           );
+                  };
+
+    auto resbeg = res.begin();
+    auto reslim = res.end();
+    std::copy_if( resbeg, reslim,
+                  std::back_inserter(specialAdaTextIOPkgs),
+                  isSpecialAdaTextIOChildUnit
+                );
+
+    if (specialAdaTextIOPkgs.size())
+    {
+      auto respos = std::remove_if(resbeg, reslim, isSpecialAdaTextIOChildUnit);
+
+      reslim = res.erase(respos, reslim);
+      respos = std::find_if( resbeg, reslim,
+                             [](Unit_Struct* unit)->bool
+                             {
+                               return isSpecialCompilerPackage(unit, "ADA.TEXT_IO");
+                             }
+                          );
+      ADA_ASSERT(respos != reslim);
+      res.insert(std::next(respos), specialAdaTextIOPkgs.begin(), specialAdaTextIOPkgs.end());
+    }
 
     if (PRINT_UNIT_DEPENDENCIES)
     {

@@ -5151,7 +5151,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         Expression_Struct&        baseexpr = baseelem.The_Union.Expression;
         SgDeclarationStatement*   basedecl = findFirst(asisDecls(), baseexpr.Corresponding_Name_Declaration, baseexpr.Corresponding_Name_Definition);
 
-        if (false && basedecl == nullptr)
+        if (basedecl == nullptr)
         {
           // Integer_IO: 24138136 and 24551081 not found
           logFlaw() << basename.ident << ": "
