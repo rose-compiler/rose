@@ -2511,16 +2511,26 @@ namespace
     Element_ID typeKind() const { return std::get<2>(*this); }
   };
 
+  struct DbgRecursionError : std::logic_error
+  {
+    using base = std::logic_error;
+    using base::base;
+  };
 
   DefinitionDetails
   queryDefinitionDetails(Element_Struct& complElem, AstContext ctx);
 
   Type_Kinds
-  queryBaseDefinitionData(Definition_Struct& typeDefn, Type_Kinds tyKind, AstContext ctx)
+  queryBaseDefinitionData(Definition_Struct& typeDefn, Type_Kinds tyKind, Element_ID currID, AstContext ctx)
   {
     ADA_ASSERT (tyKind == A_Derived_Type_Definition);
 
-    Element_Struct* baseElem = retrieveAsOpt(elemMap(), typeDefn.The_Union.The_Type_Definition.Corresponding_Type_Structure);
+    Element_ID baseElemID = typeDefn.The_Union.The_Type_Definition.Corresponding_Type_Structure;
+
+    if (currID == baseElemID)
+      throw DbgRecursionError{"recursive type in ASIS?"};
+
+    Element_Struct* baseElem = retrieveAsOpt(elemMap(), baseElemID);
 
     // derived enumeration types are handled differently ...
     //   so, if the representation is a derived enum, we change the tyKind;
@@ -2589,7 +2599,24 @@ namespace
 
         // look at the base of a derived type
         if (resKind == A_Derived_Type_Definition)
-          resKind = queryBaseDefinitionData(typeDefn, resKind, ctx);
+        {
+          try
+          {
+            resKind = queryBaseDefinitionData(typeDefn, resKind, complElem.ID, ctx);
+          }
+          catch (const DbgRecursionError& ex)
+          {
+            std::string instname;
+
+            if (SgAdaGenericInstanceDecl* inst = ctx.instantiation())
+              instname = "\n    in generic instance: " + std::string(inst->get_name());
+
+            logFlaw() << ex.what() << " #fix# " << declname.fullName
+                      << instname
+                      << std::endl;
+            //~ ADA_ASSERT(false);
+          }
+        }
 
         break;
       }
