@@ -850,43 +850,7 @@ CustomMemoryPoolDOTGeneration::binaryExecutableFormatFilter(SgNode* node)
    {
   // This function skips the representation of specific kinds of IR nodes 
 #if 0
-     if (isSgAsmElfSectionTableEntry(node) != nullptr)
-        {
-          skipNode(node);
-        }
-#endif
-#if 0
      if (isSgAsmPESectionTableEntry(node) != nullptr)
-        {
-          skipNode(node);
-        }
-#endif
-#if 0
-     if (isSgAsmPERVASizePair(node) != nullptr)
-        {
-          skipNode(node);
-        }
-#endif
-#if 0
-     if (isSgAsmPEImportHintName(node) != nullptr)
-        {
-          skipNode(node);
-        }
-#endif
-#if 0
-     if (isSgAsmElfSymbolList(node) != nullptr)
-        {
-          skipNode(node);
-        }
-#endif
-#if 0
-     if (isSgAsmGenericFile(node) != nullptr)
-        {
-          skipNode(node);
-        }
-#endif
-#if 0
-     if (isSgAsmCoffSymbol(node) != nullptr)
         {
           skipNode(node);
         }
@@ -895,15 +859,7 @@ CustomMemoryPoolDOTGeneration::binaryExecutableFormatFilter(SgNode* node)
   // Use this as a way to reduce the number of IR nodes in the generated AST to simplify debugging.
      SgAsmElfSection* elfSection = isSgAsmElfSection(node);
      SgAsmElfDynamicSection* elfDynamicSection = isSgAsmElfDynamicSection(node);
-     if (elfSection != nullptr && elfSection->get_name()->get_string() != ".text" && elfSection->get_name()->get_string() != ".data" && elfDynamicSection == nullptr )
-        {
-          skipNode(node);
-        }
-#endif
-#if 0
-     SgAsmGenericSymbol* symbol = isSgAsmGenericSymbol(node);
-  // if (symbol != NULL && symbol->get_name() != ".text" && symbol->get_name() != ".data" && symbol->get_name().find("start") == std::string::npos)
-     if (symbol != nullptr && symbol->get_name()->get_string() != ".text" && symbol->get_name()->get_string() != ".data" && symbol->get_name()->get_string().find("__s") == std::string::npos)
+     if (elfSection != nullptr && elfSection->get_name()->get_string() != ".text" && elfSection->get_name()->get_string() != ".data" && elfDynamicSection == nullptr)
         {
           skipNode(node);
         }
@@ -921,26 +877,12 @@ CustomMemoryPoolDOTGeneration::commentAndDirectiveFilter(SgNode* node)
           AttachedPreprocessingInfoType* comments = locatedNode->getAttachedPreprocessingInfo();
           if (comments != nullptr)
              {
-            // printf ("Found attached comments (at %p of type: %s): \n",locatedNode,locatedNode->sage_class_name());
-               AttachedPreprocessingInfoType::iterator i;
-               for (i = comments->begin(); i != comments->end(); i++)
+               for (auto comment : *comments)
                   {
-                    ROSE_ASSERT ( (*i) != nullptr );
-#if 0
-                    printf ("          Attached Comment (relativePosition=%s): %s",
-                         ((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
-                         (*i)->getString().c_str());
-#endif
-                    ROSE_ASSERT((*i)->get_file_info() != NULL);
-                    skipNode((*i)->get_file_info());
-
+                    ASSERT_not_null(comment);
+                    ASSERT_not_null(comment->get_file_info());
+                    skipNode(comment->get_file_info());
                   }
-             }
-            else
-             {
-#if 0
-               printf ("No attached comments (at %p of type: %s): \n",locatedNode,locatedNode->sage_class_name());
-#endif
              }
         }
    }

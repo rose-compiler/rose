@@ -5389,6 +5389,7 @@ ATbool ATermToSageJovialTraversal::traverse_ActualParameterList(ATerm term, SgEx
 
          ASSERT_not_null(param);
          param_list->get_expressions().push_back(param);
+         param->set_parent(param_list);
       }
 
       if (traverse_ActualOutputParameters(t_output, param_list)) {
