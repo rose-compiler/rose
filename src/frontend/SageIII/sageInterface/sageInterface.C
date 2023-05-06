@@ -21178,7 +21178,7 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
   targetBlock->append_statement(stmt);
 
   // Make sure that the parents are set.
-  ROSE_ASSERT(stmt->get_parent() == targetBlock);
+  ASSERT_require(stmt->get_parent() == targetBlock);
   if (stmt->hasExplicitScope())
   {
     // DQ (3/4/2009): This fails the test in ROSE/tutorial/outliner/inputCode_OutlineNonLocalJumps.cc

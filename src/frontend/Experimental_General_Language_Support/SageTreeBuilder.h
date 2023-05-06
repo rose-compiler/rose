@@ -55,6 +55,8 @@ class SgUseStatement;
 class SgVarRefExp;
 class SgWhileStmt;
 
+using SgExpressionPtrList = std::vector<SgExpression*>;
+
 namespace Rose {
 namespace builder {
 
