@@ -186,6 +186,10 @@ The recognized compiler switches are: -I, -D, and -U with one argument each.
 
 The recognized linker switches are: -L, and -l with one argument each.
 
+=item --verbose
+
+Show the full command in the build output instead of just an abbreviation.
+
 =back
 
 =head1 MACROS AND VARIABLES
@@ -284,6 +288,7 @@ my $command_flags = "";     # content of the ^-flags in tup commands
 my $emit_compilation_db;    # emit rules to generate LLVM compilation database files; value is Tup group name
 my $translate_database;	    # if true, translate compilation database commands
 my $rpath;
+my $verbose = 0;	    # show full command in the output when building
 
 ########################################################################################################################
 sub parse_command_line {
@@ -465,6 +470,12 @@ sub parse_command_line {
 	}
 	if ($arg =~ /^--rpath=(.*)/) {
 	    $rpath = $1;
+	    next;
+	}
+
+	# Full command when building
+	if ($arg eq "--verbose") {
+	    $verbose = 1;
 	    next;
 	}
 
@@ -726,7 +737,7 @@ sub generate_compile_rules {
 	    $command_str = "!${compile_macro} ";
 	    $command_str .= " " . TupScripts::shell_escape($_) for @compiler_args;
 	} else {
-            $flags_str = "^${command_flags} ${phase}${uc_compiler} \%f^";
+            $flags_str = "^${command_flags} ${phase}${uc_compiler} \%f^" if !$verbose;
 	    $command_str .= "\$(${phase}${uc_compiler})";
             $command_str .= " \$(${phase}CPPFLAGS)" if $lang eq "c++" || $lang eq "c";
             $command_str .= " \$(${phase}${uc_lang}FLAGS)";
@@ -746,8 +757,13 @@ sub generate_compile_rules {
 
 	# Compilation database
 	if ($emit_compilation_db ne "") {
+	    if ($verbose) {
+		$flags_str = "";
+	    } else {
+		$flags_str = "^${command_flags} compilation database \%f^";
+	    }
 	    print(": ", $inputs_str,
-	          " |> ^${command_flags} compilation database \%f^",
+	          " |> $flags_str",
 		  " \$(compilation_database_record)",
 		  " command=", TupScripts::shell_escape($command_str),
 		  ($translate_database ? " top=\$(ROOT)" : ""),
@@ -855,11 +871,11 @@ sub generate_link_rules {
 	print " !${link_macro}";
 	print " ", join(" ", @linker_args) if @linker_args;
     } elsif ($link eq "lib" && $linkage eq "static") {
-	print " ^${command_flags} ${phase}LINK \%o^ ar rcs %o %f";
+	print " ^${command_flags} ${phase}LINK \%o^ ar rcs %o %f" if !$verbose;
     } else {
 	my $uc_lang = uc($lang);
 	my $uc_compiler = TupScripts::compiler_exe($lang);
-	print " ^${command_flags} ${phase}LINK \%o^";
+	print " ^${command_flags} ${phase}LINK \%o^" if !$verbose;
 	print " \$(${phase}${uc_compiler}) \$(${phase}${uc_lang}FLAGS)";
 	print " ", join(" ", @compiler_args) if @compiler_args;
 	print " ", join(" ", @linker_args) if @linker_args;
