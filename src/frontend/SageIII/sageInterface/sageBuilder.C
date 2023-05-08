@@ -2472,15 +2472,9 @@ SgType * SageBuilder::buildOpaqueType(std::string const name, SgScopeStatement *
 SgFunctionType*
 SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterList * argList)
    {
-
-  // DQ (8/19/2012): Can we assert this?
-     ROSE_ASSERT(argList != NULL);
+     ASSERT_not_null(argList);
 
      SgFunctionParameterTypeList* typeList  = buildFunctionParameterTypeList(argList);
-
-  // DQ (8/19/2012): Can we assert this?
-     ROSE_ASSERT(typeList != NULL);
-
      SgFunctionType* func_type = buildFunctionType(return_type, typeList);
 
      if (func_type->get_argument_list() != typeList)
@@ -2556,11 +2550,11 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (
   // DQ (11/27/2011) Note: it is not clear if we need the newly added input paramter: buildTemplateInstantiation; since this is represented in the template parameter.
 
   // argument verification
-     if (scope == NULL)
+     if (scope == nullptr)
         {
           scope = SageBuilder::topScopeStack();
         }
-     ROSE_ASSERT (scope !=NULL);
+     ASSERT_not_null(scope);
 
      if (XXX_name.is_null() == true)
         {
@@ -2580,7 +2574,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (
   // We want to use the template arguments in the symbol table lookup, but not in the name generation.
      if (buildTemplateInstantiation == true)
         {
-          ROSE_ASSERT(templateArgumentsList != NULL);
+          ASSERT_not_null(templateArgumentsList);
           nameWithTemplateArguments = appendTemplateArgumentsToName(nameWithoutTemplateArguments,*templateArgumentsList);
         }
 
@@ -2599,8 +2593,8 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (
           mprintf ("NOTE: In buildNondefiningFunctionDeclaration_T(): nameWithoutTemplateArguments.is_null() == true: This is a function with an empty name (allowed as compiler generated initializing constructors to un-named classes, structs, and unions in C++ \n");
         }
 
-     ROSE_ASSERT(return_type != NULL);
-     ROSE_ASSERT(paralist != NULL);
+     ASSERT_not_null(return_type);
+     ASSERT_not_null(paralist);
 
   // DQ (7/27/2012): Note that the input name should not have template argument syntax.
   // I think this could still fail for a function with a name such as "X<Y>"  strange converstion operators.
@@ -2616,41 +2610,21 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (
   // tentatively build a function type, since it is shared
   // by all prototypes and defining declarations of a same function!
 
-     SgFunctionType* func_type = NULL;
+     SgFunctionType* func_type = nullptr;
      if (isMemberFunction == true)
         {
           SgFunctionParameterTypeList * typeList = buildFunctionParameterTypeList(paralist);
-
           func_type = buildMemberFunctionType(return_type,typeList,scope, functionConstVolatileFlags);
-#if 0
-          printf ("Using zero as value for reference_modifiers for member function type = %p = %s \n",func_type,func_type->class_name().c_str());
-#endif
-#if 0
-       // DQ (1/11/2020): Debugging Cxx11_tests/test2020_27.C.
-          SgMemberFunctionType* memberFunctionType = isSgMemberFunctionType(func_type);
-          if (memberFunctionType != NULL)
-             {
-               printf (" --- memberFunctionType->isLvalueReferenceFunc() = %s \n",memberFunctionType->isLvalueReferenceFunc() ? "true" : "false");
-               printf (" --- memberFunctionType->isRvalueReferenceFunc() = %s \n",memberFunctionType->isRvalueReferenceFunc() ? "true" : "false");
-#if 0
-               printf ("Exiting as a test! \n");
-               ROSE_ABORT();
-#endif
-             }
-#endif
-
-       // printf ("Error: SgFunctionType built instead of SgMemberFunctionType \n");
-       // ROSE_ASSERT(false);
         }
        else
         {
           func_type = buildFunctionType(return_type,paralist);
         }
 
-     ROSE_ASSERT(func_type != NULL);
+     ASSERT_not_null(func_type);
 
   // function declaration
-     actualFunction* func = NULL;
+     actualFunction* func = nullptr;
 
   // search before using the function type to create the function declaration
   // TODO only search current scope or all ancestor scope?? (DQ: Only current scope!)
