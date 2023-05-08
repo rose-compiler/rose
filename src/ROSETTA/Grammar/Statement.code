@@ -6715,7 +6715,6 @@ SgScopeStatement::insertStatementInScope ( SgStatement* newTransformationStateme
             // DQ (6/26/2013): Added test for if this statement already exists in the current scope (declaration list).
                ROSE_ASSERT(find(statementList.begin(),statementList.end(),newTransformationStatement) == statementList.end());
 
-            // if (statementList.size() == 0)
                if (statementList.empty() == true)
                   {
 #ifndef REMOVE_SET_PARENT_FUNCTION
@@ -6730,7 +6729,7 @@ SgScopeStatement::insertStatementInScope ( SgStatement* newTransformationStateme
                   }
                  else
                   {
-                    ROSE_ASSERT ( *statement != NULL );
+                    ASSERT_not_null(*statement);
                     insert_statement (*statement,newTransformationStatement,inFront);
 
                  // DQ (6/24/2006): This should be set by the lower level insert_statement member function, verify this!
@@ -6801,7 +6800,6 @@ SgScopeStatement::insertStatementInScope ( SgStatement* newTransformationStateme
             // DQ (6/26/2013): Added test for if this statement already exists in the current scope (declaration list).
                ROSE_ASSERT(find(statementList.begin(),statementList.end(),newTransformationStatement) == statementList.end());
 
-            // if (statementList.size() == 0)
                if (statementList.empty() == true)
                   {
 #ifndef REMOVE_SET_PARENT_FUNCTION
@@ -6816,7 +6814,7 @@ SgScopeStatement::insertStatementInScope ( SgStatement* newTransformationStateme
                   }
                  else
                   {
-                    ROSE_ASSERT ( *statement != NULL );
+                    ASSERT_not_null(*statement);
 #if 0
                     printf ("In SgScopeStatement::insertStatementInScope(): calling insert_statement(): this = %p = %s \n",this,this->class_name().c_str());
                     SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(this);
@@ -6833,7 +6831,6 @@ SgScopeStatement::insertStatementInScope ( SgStatement* newTransformationStateme
                  // DQ (3/27/2021): The base class implementation of insert_statement is being called by mistake, use the this poitner explicitly.
                     insert_statement (*statement,newTransformationStatement,inFront);
 #else
-                 // this->insert_statement (*statement,newTransformationStatement,inFront);
                     if (functionDefinition != NULL)
                        {
 #if 1
@@ -6844,8 +6841,6 @@ SgScopeStatement::insertStatementInScope ( SgStatement* newTransformationStateme
 #if 1
                          printf ("Skipping call to body->insert_statement \n");
 #endif
-                      // body->insert_statement (*statement,newTransformationStatement,inFront);
-
                       // DQ (3/28/2021): Set the parent to pass the assertion below.
                          newTransformationStatement->set_parent(body);
                        }
@@ -13936,7 +13931,6 @@ SgVariableDeclaration::insert_variable( const SgInitializedNamePtrList::iterator
   // DQ (6/1/2004): Can we assert this
      ROSE_ASSERT (*new_item == what);
 
-  // this->setNameOnly();
      return new_item;
    }
 #endif
