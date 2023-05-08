@@ -145,6 +145,7 @@ void Build(const parser::MainProgram &x, T* scope)
    std::optional<SourcePosition> srcPosBody{std::nullopt};
    std::optional<SourcePosition> srcPosBegin{BuildSourcePosition(program_stmt, Order::begin)};
    SourcePosition srcPosEnd{BuildSourcePosition(end_program_stmt, Order::end)};
+   std::vector<Rose::builder::Token> comments{};
 
    std::optional<std::string> program_name{std::nullopt};
 
@@ -175,7 +176,7 @@ void Build(const parser::MainProgram &x, T* scope)
    SgProgramHeaderStatement* program_decl{nullptr};
    boost::optional<std::string> boost_name{*program_name};
 
-   builder.Enter(program_decl, boost_name, labels, SourcePositions{*srcPosBegin,*srcPosBody,srcPosEnd});
+   builder.Enter(program_decl, boost_name, labels, SourcePositions{*srcPosBegin,*srcPosBody,srcPosEnd}, comments);
 
    SgScopeStatement* function_scope{nullptr};
 
@@ -546,6 +547,7 @@ void Build(const parser::AssignmentStmt &x, T* scope)
 
    SgExpression* lhs{nullptr};
    SgExpression* rhs{nullptr};
+   std::vector<std::string> labels{};
 
    auto & variable = std::get<0>(x.t);
    Build(variable, lhs);
@@ -558,8 +560,15 @@ void Build(const parser::AssignmentStmt &x, T* scope)
    vars.push_back(lhs);
 
    // Begin SageTreeBuilder
-   builder.Enter(assign_stmt, rhs, vars, std::string()/* no label*/);
-   builder.Leave(assign_stmt);
+#if 0
+// Coming soon!
+   builder.Enter(assign_stmt, rhs, vars);
+   builder.Leave(assign_stmt, labels);
+#else
+// Old
+   builder.Enter(assign_stmt, rhs, vars, std::string{});
+   builder.Leave(assign_stmt /*,labels*/);
+#endif
 }
 
 void Build(const parser::FunctionStmt &x, std::list<std::string> &dummy_arg_name_list, std::string &name, std::string &result_name, LanguageTranslation::FunctionModifierList &function_modifiers, SgType* &type)
@@ -1938,6 +1947,7 @@ void Build(const parser::IfStmt&x, T* scope)
 
    SgIfStmt*         if_stmt{nullptr};
    SgExpression* conditional{nullptr};
+   std::vector<Rose::builder::Token> comments{};
 
    // Traverse conditional expr
    Build(std::get<0>(x.t), conditional);
@@ -1953,7 +1963,7 @@ void Build(const parser::IfStmt&x, T* scope)
    SageBuilderCpp17::popScopeStack();
 
    // Enter SageTreeBuilder
-   builder.Enter(if_stmt, conditional, true_body, nullptr /* false_body */);
+   builder.Enter(if_stmt, conditional, true_body, nullptr/*false_body*/, comments);
 
    // Leave SageTreeBuilder
    builder.Leave(if_stmt);
@@ -2111,7 +2121,7 @@ void Build(const parser::StopStmt&x, T* scope)
    SgProcessControlStatement* stop_stmt{nullptr};
    SgExpression* stop_code{nullptr};
    boost::optional<SgExpression*> boost_code{boost::none};
-   std::string kind = parser::StopStmt::EnumToString(std::get<0>(x.t));
+   std::string_view kind{parser::StopStmt::EnumToString(std::get<0>(x.t))};
 
    // edit strings to match builder function
    if (kind == "Stop") {
@@ -2125,7 +2135,7 @@ void Build(const parser::StopStmt&x, T* scope)
       boost_code = stop_code;
    }
 
-   builder.Enter(stop_stmt, kind, boost_code);
+   builder.Enter(stop_stmt, std::string{kind}, boost_code);
 }
 
 template<typename T>
@@ -2951,6 +2961,7 @@ void Build(const parser::IfConstruct&x, T* scope)
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(IfConstruct)\n";
 #endif
+   std::vector<Rose::builder::Token> comments{};
 
    // Traverse IfThenStmt
    SgExpression* ifthen_expr{nullptr};
@@ -2960,7 +2971,7 @@ void Build(const parser::IfConstruct&x, T* scope)
    SgBasicBlock* true_body = SageBuilderCpp17::buildBasicBlock_nfi();
    SageBuilderCpp17::pushScopeStack(true_body); // Push true body scope
    Build(std::get<1>(x.t), scope);              // Traverse Block
-   SageBuilderCpp17::popScopeStack();           // Pop  true body scope
+   SageBuilderCpp17::popScopeStack();           // Pop true body scope
 
    // Else ifs
    SgIfStmt* else_if_stmts{nullptr};
@@ -2995,7 +3006,7 @@ void Build(const parser::IfConstruct&x, T* scope)
 
    // Enter SageTreeBuilder
    SgIfStmt* if_stmt{nullptr};
-   builder.Enter(if_stmt, ifthen_expr, true_body, false_body, true /* is_ifthen */, true /* has_end_stmt */);
+   builder.Enter(if_stmt, ifthen_expr, true_body, false_body, comments, true/* is_ifthen */, true/* has_end_stmt */);
 
    // Leave SageTreeBuilder
    builder.Leave(if_stmt);
@@ -3036,7 +3047,8 @@ void Build(const std::list<parser::IfConstruct::ElseIfBlock> &x, SgBasicBlock* &
    std::cout << "Rose::builder::Build(std::list<ElseIfBlock>)\n";
 #endif
 
-   bool first_pass = true;
+   bool first_pass{true};
+   std::vector<Rose::builder::Token> comments{};
 
    for (auto & else_if_clause : x) {
       SgBasicBlock* new_block = SageBuilderCpp17::buildBasicBlock_nfi();
@@ -3056,7 +3068,8 @@ void Build(const std::list<parser::IfConstruct::ElseIfBlock> &x, SgBasicBlock* &
 
       // Enter SageTreeBuilder
       SgIfStmt* new_if_stmt{nullptr};
-      builder.Enter(new_if_stmt, conditional, true_body, nullptr /* false_body */, true /* is_ifthen */, false /* has_end_stmt */, true /* is_else_if */);
+      builder.Enter(new_if_stmt, conditional, true_body, nullptr/*false_body*/,
+                    comments, true/*is_ifthen*/, false/*has_end_stmt*/, true/*is_else_if*/);
       // Leave SageTreeBuilder
       builder.Leave(new_if_stmt);
 
