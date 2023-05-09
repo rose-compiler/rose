@@ -644,13 +644,16 @@ namespace
     return (s.rfind(sub, 0) == 0);
   }
 
+  bool isSpecialCompilerPackage(const AdaIdentifier& name, const char* unitRootInCAPS)
+  {
+    return startsWith(name, unitRootInCAPS);
+  }
 
   bool isSpecialCompilerPackage(Unit_Struct* unit, const char* unitRootInCAPS)
   {
     ADA_ASSERT(unit);
-    AdaIdentifier name(unit->Unit_Full_Name);
 
-    return startsWith(name, unitRootInCAPS);
+    return isSpecialCompilerPackage(AdaIdentifier(unit->Unit_Full_Name), unitRootInCAPS);
   }
 
 
@@ -922,13 +925,20 @@ namespace
     auto isSpecialAdaTextIOChildUnit =
                   [](Unit_Struct* unit)->bool
                   {
-                    return (  isSpecialCompilerPackage(unit, "ADA.TEXT_IO.INTEGER_AUX")
-                           || isSpecialCompilerPackage(unit, "ADA.TEXT_IO.INTEGER_IO")
-                           || isSpecialCompilerPackage(unit, "ADA.TEXT_IO.FLOAT_IO")
-                           || isSpecialCompilerPackage(unit, "ADA.TEXT_IO.FIXED_IO")
-                           || isSpecialCompilerPackage(unit, "ADA.TEXT_IO.MODULAR_IO")
-                           || isSpecialCompilerPackage(unit, "ADA.TEXT_IO.DECIMAL_IO")
-                           || isSpecialCompilerPackage(unit, "ADA.TEXT_IO.ENUMERATION_IO")
+                    AdaIdentifier unitname(unit->Unit_Full_Name);
+
+                    return (  isSpecialCompilerPackage(unitname, "ADA.TEXT_IO.INTEGER_AUX")
+                           || isSpecialCompilerPackage(unitname, "ADA.TEXT_IO.INTEGER_IO")
+                           || isSpecialCompilerPackage(unitname, "ADA.TEXT_IO.FLOAT_AUX")
+                           || isSpecialCompilerPackage(unitname, "ADA.TEXT_IO.FLOAT_IO")
+                           || isSpecialCompilerPackage(unitname, "ADA.TEXT_IO.GENERIC_AUX")
+                           || isSpecialCompilerPackage(unitname, "ADA.TEXT_IO.FIXED_IO")
+                           || isSpecialCompilerPackage(unitname, "ADA.TEXT_IO.MODULAR_AUX")
+                           || isSpecialCompilerPackage(unitname, "ADA.TEXT_IO.MODULAR_IO")
+                           || isSpecialCompilerPackage(unitname, "ADA.TEXT_IO.DECIMAL_AUX")
+                           || isSpecialCompilerPackage(unitname, "ADA.TEXT_IO.DECIMAL_IO")
+                           || isSpecialCompilerPackage(unitname, "ADA.TEXT_IO.ENUMERATION_AUX")
+                           || isSpecialCompilerPackage(unitname, "ADA.TEXT_IO.ENUMERATION_IO")
                            );
                   };
 

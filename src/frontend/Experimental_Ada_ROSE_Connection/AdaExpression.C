@@ -18,7 +18,6 @@
 #pragma GCC diagnostic warning "-Wall"
 #pragma GCC diagnostic warning "-Wextra"
 
-
 namespace sb = SageBuilder;
 namespace si = SageInterface;
 
@@ -858,7 +857,24 @@ namespace
     return getOperator_fallback(expr, ctx);
   }
 
+  SgExpression&
+  getBooleanEnumItem(AdaIdentifier boolid)
+  {
+    SgEnumType&               enty  = SG_DEREF( isSgEnumType(adaTypes()["BOOLEAN"]) );
+    SgEnumDeclaration&        endcl = SG_DEREF( isSgEnumDeclaration(enty.get_declaration()) );
+    SgInitializedNamePtrList& enlst = endcl.get_enumerators();
 
+    auto lim = enlst.end();
+    auto pos = std::find_if( enlst.begin(), lim,
+                             [id = std::move(boolid)](const SgInitializedName* itm)->bool
+                             {
+                               return id == AdaIdentifier{itm->get_name().getString()};
+                             }
+                           );
+
+    ADA_ASSERT(pos != lim);
+    return mkEnumeratorRef(endcl, **pos);
+  }
 
   /// converts enum values to SgExpressions
   /// \note currently True and False are handled separately, because
@@ -879,15 +895,11 @@ namespace
     }
     else
     {
-      std::string   enumstr{expr.Name_Image};
-
-      boost::to_upper(enumstr);
+      AdaIdentifier enumstr{expr.Name_Image};
 
       // \todo replace with actual enum values
-      if (enumstr == "TRUE")
-        res = sb::buildBoolValExp(1);
-      else if (enumstr == "FALSE")
-        res = sb::buildBoolValExp(0);
+      if ((enumstr == "TRUE") || (enumstr == "FALSE"))
+        res = &getBooleanEnumItem(enumstr);
       else
       {
         logFlaw() << "unable to find definition for enum val " << enumstr
