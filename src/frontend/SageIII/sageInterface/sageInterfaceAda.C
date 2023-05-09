@@ -1600,13 +1600,13 @@ namespace Ada
       void handle(SgModifierType& n)      { res = associatedDeclaration(n.get_base_type()); }
       void handle(SgAdaSubtype& n)        { res = associatedDeclaration(n.get_base_type()); }
       void handle(SgAdaDerivedType& n)    { res = associatedDeclaration(n.get_base_type()); }
-      void handle(SgArrayType& n)         { res = associatedDeclaration(n.get_base_type()); }
       void handle(SgPointerType& n)       { res = associatedDeclaration(n.get_base_type()); } // \todo should not be in Ada
       void handle(SgAdaAccessType& n)     { res = associatedDeclaration(n.get_base_type()); } // \todo or scope of underlying type?
+      //~ void handle(SgArrayType& n)         { res = associatedDeclaration(n.get_base_type()); }
       // void handle(SgDeclType& n)             { res = pkgStandardScope(); }
 
       // for records, enums, typedefs, discriminated types, and types with a real declarations
-      //   => return the scope where they were defined.
+      //   => return the associated declaration.
       void handle(SgNamedType& n)         { res = n.get_declaration(); }
     };
 

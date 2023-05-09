@@ -1650,6 +1650,9 @@ SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_t
           // In Ada, discriminated type may not have been fully built yet.
           //   this is because a the discriminated type obtains the name of the underlying
           //   declaration.
+          // PP (5/9/22)
+          // Unsure if declaration link should be set at all for Ada.
+          //    The AstConsistencyTest flags typedefdecls with declaration link set...
           if (declaration && !isSgAdaDiscriminatedTypeDecl(declaration))
              {
                mprintf ("Found a valid declaration = %p = %s \n",declaration,declaration->class_name().c_str());

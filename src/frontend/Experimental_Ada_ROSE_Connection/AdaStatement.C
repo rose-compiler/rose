@@ -2272,7 +2272,7 @@ namespace
     SgBasicBlock&            body    = mkBasicBlock();
 
     ADA_ASSERT (lst.size() == 1);
-    SgCatchOptionStmt&       sgnode  = mkExceptionHandler(SG_DEREF(lst[0]), body);
+    SgCatchOptionStmt&       sgnode  = mkExceptionHandler(SG_DEREF(lst[0]), body, tryStmt);
     ElemIdRange              range   = idRange(ex.Handler_Statements);
 
     sg::linkParentChild(tryStmt, as<SgStatement>(sgnode), &SgTryStmt::append_catch_statement);
@@ -2523,6 +2523,34 @@ namespace
     using base::base;
   };
 
+  bool queryIfDerivedFromEnum(Element_Struct* elem, AstContext ctx)
+  {
+    if ((elem == nullptr) || (elem->Element_Kind != A_Definition))
+      return false;
+
+    Definition_Struct& def             = elem->The_Union.Definition;
+    Subtype_Indication_Struct& subtype = def.The_Union.The_Subtype_Indication;
+    Element_Struct*            subelem = retrieveAsOpt(elemMap(), subtype.Subtype_Mark);
+
+    if ((subelem == nullptr) || (subelem->Element_Kind != An_Expression))
+      return false;
+
+    Expression_Struct&         subexpr = subelem->The_Union.Expression;
+
+    if (subexpr.Expression_Kind != An_Identifier)
+      return false; // \todo consider qualified type names
+
+    if (/* Element_Struct* decl = */ retrieveAsOpt(elemMap(), subexpr.Corresponding_Name_Declaration))
+      return false;
+
+    return AdaIdentifier{subexpr.Name_Image} == "BOOLEAN";
+  }
+
+  bool queryIfDerivedFromEnumID(Element_ID id, AstContext ctx)
+  {
+    return queryIfDerivedFromEnum(retrieveAsOpt(elemMap(), id), ctx);
+  }
+
   DefinitionDetails
   queryDefinitionDetails(Element_Struct& complElem, AstContext ctx);
 
@@ -2536,12 +2564,10 @@ namespace
     if (currID == baseElemID)
       throw DbgRecursionError{"recursive type in ASIS?"};
 
-    Element_Struct* baseElem = retrieveAsOpt(elemMap(), baseElemID);
-
     // derived enumeration types are handled differently ...
     //   so, if the representation is a derived enum, we change the tyKind;
     //   otherwise we keep the A_Derived_Type_Definition.
-    if (baseElem)
+    if (Element_Struct* baseElem = retrieveAsOpt(elemMap(), baseElemID))
     {
       DefinitionDetails detail = queryDefinitionDetails(*baseElem, ctx);
 
@@ -2549,6 +2575,10 @@ namespace
       {
         tyKind = An_Enumeration_Type_Definition;
       }
+    }
+    else if (queryIfDerivedFromEnumID(typeDefn.The_Union.The_Type_Definition.Parent_Subtype_Indication, ctx))
+    {
+      tyKind = An_Enumeration_Type_Definition;
     }
 
     return tyKind;
@@ -5151,7 +5181,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         Expression_Struct&        baseexpr = baseelem.The_Union.Expression;
         SgDeclarationStatement*   basedecl = findFirst(asisDecls(), baseexpr.Corresponding_Name_Declaration, baseexpr.Corresponding_Name_Definition);
 
-        if (basedecl == nullptr)
+        if (false && basedecl == nullptr)
         {
           // Integer_IO: 24138136 and 24551081 not found
           logFlaw() << basename.ident << ": "

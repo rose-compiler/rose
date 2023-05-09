@@ -1528,6 +1528,18 @@ namespace
   adaTypes()["LONG_LONG_FLOAT"]     = sb::buildLongDoubleType();
 #endif /* PREMAPPED_NUMERIC_TYPES */
 
+void declareEnumItem(SgEnumDeclaration& enumdcl, const std::string& name, int repval)
+{
+  SgEnumType&         enumty = SG_DEREF(enumdcl.get_type());
+  SgExpression&       sginit = SG_DEREF(sb::buildIntVal(repval));
+  sginit.unsetTransformation();
+
+  SgInitializedName&  sgnode = mkInitializedName(name, enumty, &sginit);
+
+  sgnode.set_scope(enumdcl.get_scope());
+  enumdcl.append_enumerator(&sgnode);
+  ADA_ASSERT(sgnode.get_parent() == &enumdcl);
+}
 
 void initializePkgStandard(SgGlobal& global)
 {
@@ -1546,18 +1558,25 @@ void initializePkgStandard(SgGlobal& global)
 
   adaTypes()["EXCEPTION"]           = &exceptionType;
 
-  // \todo reconsider modeling Boolean as an enumeration of True and False
-  SgType& adaBoolType               = SG_DEREF(sb::buildBoolType());
+  // boolean enum type
+  AdaIdentifier         boolname{"BOOLEAN"};
 
-  adaTypes()["BOOLEAN"]             = &adaBoolType;
+  //~ SgType& adaBoolType               = SG_DEREF(sb::buildBoolType());
+  SgEnumDeclaration&    boolDecl    = mkEnumDefn("BOOLEAN", stdspec);
+  SgType&               adaBoolType = SG_DEREF(boolDecl.get_type());
+  adaTypes()[boolname]              = &adaBoolType;
+
+  declareEnumItem(boolDecl, "False", 0);
+  declareEnumItem(boolDecl, "True",  1);
 
   // \todo reconsider adding a true Ada Duration type
-  SgType& adaDuration               = SG_DEREF(sb::buildOpaqueType(si::Ada::durationTypeName, &stdspec));
+  AdaIdentifier         durationName{si::Ada::durationTypeName};
+  SgType&               adaDuration = SG_DEREF(sb::buildOpaqueType(durationName, &stdspec));
 
-  adaTypes()["DURATION"]            = &adaDuration;
+  adaTypes()[durationName]          = &adaDuration;
 
   // integral types
-  SgType& adaIntType                = mkIntegralType(); // the root integer type in ROSE
+  SgType&               adaIntType  = mkIntegralType(); // the root integer type in ROSE
 
   adaTypes()["SHORT_SHORT_INTEGER"] = declareIntSubtype<std::int8_t> ("Short_Short_Integer", stdspec).get_type();
   adaTypes()["SHORT_INTEGER"]       = declareIntSubtype<std::int16_t>("Short_Integer",       stdspec).get_type();

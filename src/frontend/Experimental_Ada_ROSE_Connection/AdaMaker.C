@@ -678,6 +678,17 @@ mkTypeDecl(const std::string& name, SgType& ty, SgScopeStatement& scope)
 {
   SgTypedefDeclaration& sgnode = SG_DEREF( sb::buildTypedefDeclaration(name, &ty, &scope) );
 
+  ADA_ASSERT(!sgnode.get_typedefBaseTypeContainsDefiningDeclaration());
+
+  if (sgnode.get_declaration())
+  {
+    // The SageBuilder function sets the declaration link when an array type of an enum
+    //   is created. This configuration is flagged later in the AstConsistencyTests..
+    //   -> set it to null;
+    logWarn() << "corrected typedef with declaration!" << std::endl;
+    sgnode.set_declaration(nullptr);
+  }
+
   return sgnode;
 }
 
@@ -1506,7 +1517,7 @@ mkAdaAcceptStmt(SgExpression& ref, SgExpression& idx)
 
 
 SgCatchOptionStmt&
-mkExceptionHandler(SgInitializedName& parm, SgBasicBlock& body)
+mkExceptionHandler(SgInitializedName& parm, SgBasicBlock& body, SgTryStmt& tryStmt)
 {
   SgCatchOptionStmt&     sgnode = SG_DEREF( sb::buildCatchOptionStmt(nullptr, &body) );
 
@@ -1515,6 +1526,7 @@ mkExceptionHandler(SgInitializedName& parm, SgBasicBlock& body)
   SgVariableDeclaration& exparm = mkVarDecl(parm, sgnode);
 
   sg::linkParentChild(sgnode, exparm, &SgCatchOptionStmt::set_condition);
+  sgnode.set_trystmt(&tryStmt);
   return sgnode;
 }
 
