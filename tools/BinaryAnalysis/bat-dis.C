@@ -215,9 +215,12 @@ main(int argc, char *argv[]) {
 
     } else if (!settings.fileNamePrefix.empty()) {
         // Output all functions, each to its own file
+        Sawyer::ProgressBar<size_t> progress(partitioner->nFunctions(), mlog[MARCH], "unparsing");
+        progress.suffix(" functions");
         for (const P2::Function::Ptr &function: partitioner->functions()) {
             std::ofstream file(functionFileName(settings, function).c_str());
-            unparser->unparse(file, partitioner, Progress::instance());
+            unparser->unparse(file, partitioner, function);
+            ++progress;
         }
 
     } else {
