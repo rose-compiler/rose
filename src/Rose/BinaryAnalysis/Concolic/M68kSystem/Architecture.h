@@ -14,10 +14,7 @@ namespace BinaryAnalysis {
 namespace Concolic {
 namespace M68kSystem {
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Bare Motorola 68000 system using QEMU
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+/** Bare Motorola 68000 system using QEMU. */
 class Architecture: public Concolic::Architecture {
     using Super = Concolic::Architecture;
 
@@ -27,9 +24,10 @@ public:
 
 private:
     boost::process::child qemu_;
+    Yaml::Node config_;                                 // configuration info from the `instance` call
 
 protected:
-    Architecture(const std::string&);                   // for factories
+    explicit Architecture(const std::string&);          // for factories
     Architecture(const DatabasePtr&, TestCaseId);
 public:
     ~Architecture();

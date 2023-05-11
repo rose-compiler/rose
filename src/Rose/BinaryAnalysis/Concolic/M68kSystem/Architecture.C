@@ -48,6 +48,7 @@ Architecture::instance(const Database::Ptr &db, TestCaseId tcid, const Yaml::Nod
     ASSERT_not_null(db);
     ASSERT_require(tcid);
     auto retval = Ptr(new Architecture(db, tcid));
+    retval->config_ = config;
     retval->configureSystemCalls();
     retval->configureSharedMemory(config);
     return retval;
@@ -73,8 +74,86 @@ Architecture::matchFactory(const Yaml::Node &config) const {
 
 P2::Partitioner::Ptr
 Architecture::partition(const P2::Engine::Ptr &engine, const std::string &specimenName) {
-    SAWYER_MESG(mlog[DEBUG]) <<"partitioning " <<specimenName;
-    return engine->partition(specimenName);
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    debug <<"partitioning " <<specimenName;
+
+    // If the configuration has an "unpack" list, then run those commands sequentially
+    if (config_ && config_.exists("unpack")) {
+        if (!config_["unpack"].isSequence()) {
+            mlog[ERROR] <<"configuration \"unpack\" must be a sequence\n";
+            return {};
+        }
+        for (const auto &pair: config_["unpack"]) {
+            const Yaml::Node &unpack = pair.second;
+            if (unpack["command"]) {
+                const std::string cmd = (boost::format(unpack["command"].as<std::string>()) % specimenName).str();
+                debug <<"  executing shell command: " <<cmd <<"\n";
+                if (system(cmd.c_str()) != 0)
+                    SAWYER_MESG(mlog[ERROR]) <<"cannot execute: " <<cmd <<"\n";
+            } else {
+                mlog[ERROR] <<"configuration \"unpack\" element has no \"command\"\n";
+            }
+        }
+    }
+
+    // If the configuration has a "load" list then form the partitioner arguments from this list.
+    std::vector<std::string> args;
+    if (config_.exists("loaders")) {
+        if (!config_["loaders"].isSequence()) {
+            mlog[ERROR] <<"configuration \"loaders\" must be a sequence\n";
+            return {};
+        }
+        for (const auto &pair: config_["loaders"]) {
+            const Yaml::Node &loader = pair.second;
+            if (!loader.isMap()) {
+                mlog[ERROR] <<"configuration \"loaders\" element must be a map\n";
+                return {};
+            }
+            if (!loader.exists("driver")) {
+                mlog[ERROR] <<"configuration \"loaders\" element must have a \"driver\"\n";
+                return {};
+            }
+            const std::string driver = loader["driver"].as<std::string>();
+            if ("map" == driver) {
+                std::string memoryOffset, memorySize, fileOffset, fileSize, access, fileName;
+                for (const auto &kv: loader) {
+                    if (kv.first == "memory-offset") {
+                        memoryOffset = kv.second.as<std::string>();
+                    } else if (kv.first == "memory-size") {
+                        memorySize = "+" + kv.second.as<std::string>();
+                    } else if (kv.first == "access") {
+                        access = "=" + kv.second.as<std::string>();
+                    } else if (kv.first == "file-offset") {
+                        fileOffset = kv.second.as<std::string>();
+                    } else if (kv.first == "file-size") {
+                        fileSize = kv.second.as<std::string>();
+                    } else if (kv.first == "file-name") {
+                        fileName = kv.second.as<std::string>();
+                    } else {
+                        mlog[ERROR] <<"configuration \"loaders.driver=map\" has unknown key \"" <<kv.first <<"\"\n";
+                        return {};
+                    }
+                }
+                std::string s = "map:" +
+                                memoryOffset + memorySize + access + ":" +
+                                fileOffset + fileSize + ":" + fileName;
+                args.push_back(specimenName);
+
+            } else {
+                mlog[ERROR] <<"configuration \"loaders.driver=" <<driver <<"\" is unknown\"\n";
+                return {};
+            }
+        }
+    } else {
+        args.push_back(specimenName);
+    }
+
+    if (debug) {
+        for (const std::string &arg: args)
+            debug <<"  partitioner arg: " <<arg <<"\n";
+    }
+
+    return engine->partition(args);
 }
 
 void
