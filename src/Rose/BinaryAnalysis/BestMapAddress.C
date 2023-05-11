@@ -204,7 +204,7 @@ BestMapAddress::align(const MemoryMap::Ptr &map, const P2::Engine::Settings &set
         }
 
         // Partitioning engine used by the BestMapAddress analysis.
-        P2::Engine::Ptr engine = P2::EngineBinary::instance();
+        P2::Engine::Ptr engine = P2::EngineBinary::instance(settings);
         engine->memoryMap(tmpMap);
         engine->settings().partitioner.doingPostAnalysis = false;
         if (progress)
