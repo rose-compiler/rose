@@ -154,12 +154,12 @@ static SgExpression* isStaticConstIntOrEnumWithInitializer(SgVarRefExp *varRef)
             ROSE_ASSERT (var_decl);
             // static const int var = 1; 
             // const is a modifier to the type
-            SgType* base_type = varInit->get_type()->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_TYPEDEF_TYPE);
-            // Check for static, constant, integer or enumeration type, and initialized
-            // TODO isSgTypeEnum(varInit->get_type())
+            //|SgType::STRIP_REFERENCE_TYPE
+            SgType* base_type = varInit->get_type()->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_TYPEDEF_TYPE);
+            // Check for static, constant, integer or enumeration type, and initialized            
             if (isStatic(var_decl) &&
                 isConstType(varInit->get_type()) &&
-                (isStrictIntegerType(base_type)) &&
+                (isStrictIntegerType(base_type) || isSgEnumType(base_type)) &&
                 varInit->get_initptr())
             {
               dict[varSymbol] = varInit->get_initptr();
