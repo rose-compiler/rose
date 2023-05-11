@@ -533,21 +533,32 @@ struct SerializeConfig {
     /** Constructor.
      *
      * @param spaceIndentation       Number of spaces per indentation.
-     * @param scalarMaxLength        Maximum length of scalars. Serialized as folder scalars if exceeded.
+     * @param scalarMaxLength        Maximum length of scalars. Serialized as folding scalars if exceeded.
      *                               Ignored if equal to 0.
      * @param sequenceMapNewline     Put maps on a new line if parent node is a sequence.
      * @param mapScalarNewline       Put scalars on a new line if parent node is a map. */
-    SerializeConfig(const size_t spaceIndentation = 2,
-                    const size_t scalarMaxLength = 64,
-                    const bool sequenceMapNewline = false,
-                    const bool mapScalarNewline = false);
+    explicit SerializeConfig(const size_t spaceIndentation = 2,
+                             const size_t scalarMaxLength = std::numeric_limits<size_t>::max(),
+                             const bool sequenceMapNewline = false,
+                             const bool mapScalarNewline = false);
 
-    size_t SpaceIndentation;                            /**< Number of spaces per indentation. */
-    size_t ScalarMaxLength;                             /**< Maximum length of scalars. Serialized as folder scalars if exceeded. */
-    bool SequenceMapNewline;                            /**< Put maps on a new line if parent node is a sequence. */
-    bool MapScalarNewline;                              /**< Put scalars on a new line if parent node is a map. */
+    /** Number of spaces per indentation. */
+    size_t SpaceIndentation = 2;
+
+    /** Maximum length of scalars.
+     *
+     *  Serialized as folder scalars if exceeded. */
+    size_t ScalarMaxLength = std::numeric_limits<size_t>::max();
+
+    /** Put maps on a new line if parent node is a sequence. */
+    bool SequenceMapNewline = false;
+
+    /** Put scalars on a new line if parent node is a map. */
+    bool MapScalarNewline = false;
 };
 
+// Original names with incorrect capitalization
+void Serialize(const Node &root, std::ostream &stream, const SerializeConfig &config = SerializeConfig());
 
 /** Serialize YAML.
 *
@@ -562,9 +573,9 @@ struct SerializeConfig {
 *                           If config is invalid.
 *
 * @{ */
-void Serialize(const Node &root, const char *filename, const SerializeConfig &config = {2, 64, false, false});
-void Serialize(const Node &root, std::ostream &stream, const SerializeConfig &config = {2, 64, false, false});
-void Serialize(const Node &root, std::string &string, const SerializeConfig &config = {2, 64, false, false});
+void serialize(const Node &root, const char *filename, const SerializeConfig &config = SerializeConfig());
+void serialize(const Node &root, std::ostream &stream, const SerializeConfig &config = SerializeConfig());
+void serialize(const Node &root, std::string &string, const SerializeConfig &config = SerializeConfig());
 /** @} */
 
 } // namespace
