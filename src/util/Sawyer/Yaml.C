@@ -40,6 +40,7 @@
 
 #include <Sawyer/Assert.h>
 
+#include <boost/format.hpp>
 #include <memory>
 #include <fstream>
 #include <sstream>
@@ -87,7 +88,7 @@ static size_t FindNotCited(const std::string &input, char token, size_t &preQuot
 static size_t FindNotCited(const std::string &input, char token);
 static bool ValidateQuote(const std::string &input);
 static void CopyNode(const Node &from, Node &to);
-static bool ShouldBeCited(const std::string &key);
+static std::string escapeQuoted(const std::string &key);
 static void AddEscapeTokens(std::string &input, const std::string &tokens);
 static void RemoveAllEscapeTokens(std::string &input);
 
@@ -1950,19 +1951,6 @@ SerializeConfig::SerializeConfig(const size_t spaceIndentation, const size_t sca
 // Serialization functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void
-Serialize(const Node &root, const char *filename, const SerializeConfig &config) {
-    std::stringstream stream;
-    Serialize(root, stream, config);
-
-    std::ofstream f(filename);
-    if (f.is_open() == false)
-        throw OperationException(g_ErrorCannotOpenFile);
-
-    f.write(stream.str().c_str(), stream.str().size());
-    f.close();
-}
-
 size_t
 LineFolding(const std::string &input, std::vector<std::string> &folded, const size_t maxLength) {
     folded.clear();
@@ -2022,11 +2010,7 @@ SerializeLoop(const Node &node, std::ostream &stream, bool useLevel, const size_
 
                 std::string key = (*it).first;
                 AddEscapeTokens(key, "\\\"");
-                if (ShouldBeCited(key)) {
-                    stream << "\"" << key << "\"" << ": ";
-                } else {
-                    stream << key << ": ";
-                }
+                stream <<escapeQuoted(key) << ": ";
 
                 useLevel = false;
                 if (value.IsScalar() == false || (value.IsScalar() && config.MapScalarNewline)) {
@@ -2075,12 +2059,7 @@ SerializeLoop(const Node &node, std::ostream &stream, bool useLevel, const size_
                     LineFolding(frontLine, lines, config.ScalarMaxLength) == 1) {
                     if (useLevel)
                         stream << std::string(level, ' ');
-
-                    if (ShouldBeCited(value)) {
-                        stream << "\"" << value << "\"\n";
-                        break;
-                    }
-                    stream << value << "\n";
+                    stream << escapeQuoted(value) << "\n";
                     break;
                 } else {
                     stream << ">";
@@ -2110,10 +2089,23 @@ Serialize(const Node &root, std::ostream &stream, const SerializeConfig &config)
 }
 
 void
-Serialize(const Node &root, std::string &string, const SerializeConfig &config) {
-    std::stringstream stream;
+serialize(const Node &root, const char *filename, const SerializeConfig &config) {
+    std::ofstream out(filename);
+    serialize(root, out, config);
+    if (!out)
+        throw OperationException(g_ErrorCannotOpenFile);
+}
+
+void
+serialize(const Node &root, std::ostream &stream, const SerializeConfig &config) {
     Serialize(root, stream, config);
-    string = stream.str();
+}
+
+std::string
+serialize(const Node &root, const SerializeConfig &config) {
+    std::ostringstream ss;
+    serialize(root, ss, config);
+    return ss.str();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2296,9 +2288,92 @@ CopyNode(const Node &from, Node &to) {
     }
 }
 
-bool
-ShouldBeCited(const std::string &key) {
-    return key.find_first_of("\":{}[],&*#?|-<>=!%@") != std::string::npos;
+std::string
+escapeQuoted(const std::string &s) {
+    std::string retval;
+    bool needsQuote = false;
+    for (const char ch: s) {
+        switch (ch) {
+            case '\a':
+                retval += "\\a";
+                needsQuote = true;
+                break;
+            case '\b':
+                retval += "\\b";
+                needsQuote = true;
+                break;
+            case '\t':
+                retval += "\\t";
+                needsQuote = true;
+                break;
+            case '\n':
+                retval += "\\n";
+                needsQuote = true;
+                break;
+            case '\v':
+                retval += "\\v";
+                needsQuote = true;
+                break;
+            case '\f':
+                retval += "\\f";
+                needsQuote = true;
+                break;
+            case '\r':
+                retval += "\\r";
+                needsQuote = true;
+                break;
+            case '\"':
+                retval += "\\\"";
+                needsQuote = true;
+                break;
+            case '\\':
+                retval += "\\\\";
+                needsQuote = true;
+                break;
+            case '-':
+                // This special case is used to avoid quoting in very common kebab-case keys where it's not necessary.
+                if (retval.empty())
+                    needsQuote = true;
+                retval += ch;
+                break;
+
+            case ':':
+            case '{':
+            case '}':
+            case '[':
+            case ']':
+            case ',':
+            case '&':
+            case '*':
+            case '#':
+            case '?':
+            case '|':
+            case '<':
+            case '>':
+            case '=':
+            case '!':
+            case '%':
+            case '@':
+                retval += ch;
+                needsQuote = true;
+                break;
+
+            default:
+                if (isprint(ch)) {
+                    retval += ch;
+                } else {
+                    retval += (boost::format("\\%03o") % (unsigned)(unsigned char)ch).str();
+                    needsQuote = true;
+                }
+                break;
+        }
+    }
+
+    if (needsQuote) {
+        return "\"" + retval + "\"";
+    } else {
+        return retval;
+    }
 }
 
 void
