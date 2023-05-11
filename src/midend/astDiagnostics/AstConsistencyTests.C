@@ -546,33 +546,18 @@ AstTests::runAllTests(SgProject* sageProject)
      if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
           cout << "Test parents child pointers of IR nodes in memory pool finished." << endl;
 
-#if 0
-  // DQ (3/7/2007): At some point I think I decided that this was not a valid test!
-  // DQ (10/18/2006): Test the firstNondefiningDeclaration to make sure it is not used as a forward declaration (memory pool test).
-     if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
-          cout << "Test firstNondefiningDeclaration to make sure it is not used as a forward declaration started." << endl;
-     TestFirstNondefiningDeclarationsForForwardMarking::test();
-     if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
-          cout << "Test firstNondefiningDeclaration to make sure it is not used as a forward declaration finished." << endl;
-#endif
-
-  // DQ (6/26/2006): Test the parent pointers of IR nodes in memory pool.
      if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
           cout << "Test declarations for mapping to declaration associated with symbol(uses memory pool) started." << endl;
         {
           TimingPerformance timer ("Test for mapping to declaration associated with symbol test:");
-
           TestMappingOfDeclarationsInMemoryPoolToSymbols::test();
-
-       // printf ("Exiting after call to TestMappingOfDeclarationsInMemoryPoolToSymbols::test() \n");
-       // ROSE_ASSERT(false);
         }
 
      if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
           cout << "Test declarations for mapping to declaration associated with symbol(uses memory pool) finished." << endl;
 
 
-  // DQ (6/26/2006): Test expressions for l-value flags
+  // Test expressions for l-value flags
      if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
           cout << "Test expressions for properly set l-values started." << endl;
         {
@@ -580,12 +565,6 @@ AstTests::runAllTests(SgProject* sageProject)
 
           TestLValueExpressions lvalueTest;
           lvalueTest.traverse(sageProject,preorder);
-
-                        // King84 (7/29/2010): Uncomment this to enable checking of the corrected LValues
-#if 0
-                        TestLValues lvaluesTest;
-                        lvaluesTest.traverse(sageProject,preorder);
-#endif
         }
      if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
           cout << "Test expressions for properly set l-values finished." << endl;
@@ -667,17 +646,9 @@ AstTests::runAllTests(SgProject* sageProject)
                          if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
                             {
                               printf ("     Warning: Found a NULL declarationStatement->get_parent() value within SgClassType ... \n");
-#if 0
-                              declarationStatement->get_file_info()->display("Location of problem declaration in source code");
-#endif
                             }
                        }
 
-                 // DQ (10/17/2004): Acturally the defining declaration need not exist (for code to
-                 // compile and not link). So it is OK to have a NULL value for the definingDeclaration.
-                 // ROSE_ASSERT(declarationStatement->get_parent() != NULL);
-                 // if (declarationStatement->get_firstNondefiningDeclaration() == NULL ||
-                 //     declarationStatement->get_definingDeclaration() == NULL)
                     if (declarationStatement->get_firstNondefiningDeclaration() == NULL)
                        {
                          if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
@@ -685,11 +656,6 @@ AstTests::runAllTests(SgProject* sageProject)
                               printf ("     Warning: At %p = %s found unset definingDeclaration = %p or firstNondefiningDeclaration = %p \n",
                                       namedType,namedType->sage_class_name(), declarationStatement->get_definingDeclaration(),
                                       declarationStatement->get_firstNondefiningDeclaration());
-#if 0
-                              printf ("namedType = %p = %s \n",namedType,namedType->sage_class_name());
-                              declarationStatement->get_file_info()->
-                                   display("Problematic Class Declaration Location in Source Code");
-#endif
                             }
                        }
 
@@ -699,7 +665,6 @@ AstTests::runAllTests(SgProject* sageProject)
                          declarationStatement->get_file_info()->display("Error: declarationStatement->get_firstNondefiningDeclaration() == NULL");
                        }
                     ROSE_ASSERT(declarationStatement->get_firstNondefiningDeclaration() != NULL);
-                 // ROSE_ASSERT(declarationStatement->get_definingDeclaration() != NULL);
 
                  // Liao 10/30/2009, We enforce a unique SgClassType node for SgClassDeclaration and its derived classes
                  // SgClassType should be associated with the first nondefining class declaration
@@ -707,8 +672,6 @@ AstTests::runAllTests(SgProject* sageProject)
                     SgClassType* cls_type = isSgClassType (*i);
                     if (cls_type != NULL)
                        {
-                      // DQ (12/4/2011): Better to treat this as a test on the SgDeclarationStatement instead of on the SgClassDeclaration.
-                      // SgClassDeclaration * cls_decl = isSgClassDeclaration (cls_type->get_declaration());
                          ROSE_ASSERT (cls_type->get_declaration() != NULL);
                          SgDeclarationStatement* cls_decl = isSgDeclarationStatement(cls_type->get_declaration());
                          ROSE_ASSERT (cls_decl != NULL);
@@ -716,7 +679,6 @@ AstTests::runAllTests(SgProject* sageProject)
                             {
                               if (cls_decl->get_firstNondefiningDeclaration() != NULL)
                                  {
-                                // if (isSgClassDeclaration(cls_decl->get_firstNondefiningDeclaration()) != cls_decl )
                                    if (cls_decl->get_firstNondefiningDeclaration() != cls_decl )
                                       {
                                         printf ("   Warning: cls_decl = %p = %s \n",cls_decl,cls_decl->class_name().c_str());
@@ -767,23 +729,12 @@ AstTests::runAllTests(SgProject* sageProject)
                                 // Provide a less verbose level of output, templated types can be very long!
                                    if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
                                       {
-                                     // printf ("     Warning : At %p found unset templateName \n",templateInstantiationDeclaration);
                                         printf ("     Warning (verbose=%d): At %p = %s found unset templateName (hidden in type) \n",
                                              SgProject::get_verbose(),templateInstantiationDeclaration,
                                              templateInstantiationDeclaration->get_name().str());
                                       }
                                  }
-#if 0
-                              printf ("templateInstantiationDeclaration = %p = %s (hidden in type) \n",
-                                   templateInstantiationDeclaration,templateInstantiationDeclaration->get_name().str());
-                              templateInstantiationDeclaration->get_file_info()->
-                                   display("Problematic templateInstantiationDeclaration in Source Code");
-#endif
                             }
-
-                      // DQ (6/30/2005): Comment this out, but leave the warning, while we return to test KULL.
-                      // DQ (6/20/2005): Reassert this test!
-                      // ROSE_ASSERT(templateInstantiationDeclaration->get_nameResetFromMangledForm() == true);
 
 #if STRICT_ERROR_CHECKING
                       // DQ (10/21/2004): Relax checking to handle SWIG generated file from Kull (1st SWIG files)
@@ -801,11 +752,6 @@ AstTests::runAllTests(SgProject* sageProject)
              }
           i++;
         }
-
-
-       // DQ (3/7/2010): Identify the fragments of the AST that are disconnected.
-       // TestForDisconnectedAST::test(sageProject);
-
        // DQ (3/7/2007): This is the end of the timer scope
         }
 
@@ -813,7 +759,6 @@ AstTests::runAllTests(SgProject* sageProject)
           printf ("Type Test finished. \n");
 
 #else
-  // if (sageProject->get_useBackendOnly() == false)
      if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
           printf ("Skipping test of query on types \n");
 #endif
@@ -2756,51 +2701,7 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                          mprintf ("Warning: definingDeclaration_access_modifier         = %d \n",definingDeclaration_access_modifier);
                          mprintf ("Warning: firstNondefiningDeclaration_access_modifier = %d \n",firstNondefiningDeclaration_access_modifier);
                        }
-                      else
-                       {
-#if 0
-                      // DQ (1/12/2019): This is is output spew but only from Cxx_tests/rose-1541-0.C, as best I can tell.
-                         printf ("Error: definingDeclaration = %p firstNondefiningDeclaration = %p = %s  \n",definingDeclaration,firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
-
-                         firstNondefiningDeclaration->get_file_info()->display("firstNondefiningDeclaration");
-                         definingDeclaration->get_file_info()->display("definingDeclaration");
-
-                         printf ("Error: definingDeclaration_access_modifier         = %d \n",definingDeclaration_access_modifier);
-                         printf ("Error: firstNondefiningDeclaration_access_modifier = %d \n",firstNondefiningDeclaration_access_modifier);
-#endif
-                       }
                   }
-
-#if 0
-            // DQ (8/14/2020): After redesiging how access modifiers are set, we want to allow the defining and non-defigning declarations to have different access specifications.
-            // DQ (6/30/2014): I think this is not an error for SgTemplateInstantiationDecl.
-            // ROSE_ASSERT(definingDeclaration_access_modifier == firstNondefiningDeclaration_access_modifier);
-               if (isSgTemplateInstantiationDecl(definingDeclaration) == NULL && firstNondefiningDeclaration->get_parent() == definingDeclaration->get_parent())
-                  {
-                 // DQ (8/11/2020): Debugging new change to e_default = e_public was changed from e_default = 4.
-                    if (definingDeclaration_access_modifier != firstNondefiningDeclaration_access_modifier)
-                       {
-#if 0
-                         printf ("Error: in AST consistancy tests: definingDeclaration_access_modifier != firstNondefiningDeclaration_access_modifier \n");
-#endif
-#if 0
-                         printf (" --- definingDeclaration = %p = %s \n",definingDeclaration,definingDeclaration->class_name().c_str());
-                         printf (" --- definingDeclaration_access_modifier         = %d \n",definingDeclaration_access_modifier);
-                         definingDeclaration->get_declarationModifier().get_accessModifier().display("definingDeclaration: definingDeclaration_access_modifier != firstNondefiningDeclaration_access_modifier");
-                         definingDeclaration->get_file_info()->display("definingDeclaration");
-                         printf (" --- firstNondefiningDeclaration_access_modifier = %d \n",firstNondefiningDeclaration_access_modifier);
-                         printf (" --- firstNondefiningDeclaration = %p = %s \n",firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
-                         firstNondefiningDeclaration->get_declarationModifier().get_accessModifier().display("firstNondefiningDeclaration: definingDeclaration_access_modifier != firstNondefiningDeclaration_access_modifier");
-                         firstNondefiningDeclaration->get_file_info()->display("firstNondefiningDeclaration");
-                      // definingDeclaration_access_modifier.display("definingDeclaration: definingDeclaration_access_modifier != firstNondefiningDeclaration_access_modifier");
-                      // firstNondefiningDeclaration_access_modifier.display("firstNondefiningDeclaration: definingDeclaration_access_modifier != firstNondefiningDeclaration_access_modifier");
-#endif
-                       }
-
-                 // DQ (8/11/2020): Test by commenting this out.  It might not make since to enforce this.
-                 // ROSE_ASSERT(definingDeclaration_access_modifier == firstNondefiningDeclaration_access_modifier);
-                  }
-#endif
              }
         }
 
@@ -2993,7 +2894,6 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                        }
 #endif
                   }
-            // ROSE_ASSERT(firstNondefiningDeclaration != NULL);
                if (firstNondefiningDeclaration == definingDeclaration)
                   {
                  // DQ (12/12/2009): Suppress the warning about this for the case of a

@@ -1062,7 +1062,11 @@ ATbool ATermToSageJovialTraversal::traverse_StatusConstant(ATerm term, SgEnumDec
    // Begin SageTreeBuilder
       SgEnumVal* enum_val = nullptr;
       sage_tree_builder.Enter(enum_val, enum_name, enum_decl, value, cast);
-      setSourcePosition(enum_val, term);
+
+   // There is either an SgEnumVal or an SgCastExp
+      if (enum_val) {
+         setSourcePosition(enum_val, term);
+      }
 
    // End SageTreeBuilder
       sage_tree_builder.Leave(enum_val);
@@ -1252,8 +1256,8 @@ ATbool ATermToSageJovialTraversal::traverse_SpecifiedSublist(ATerm term, SgEnumD
       if (traverse_Formula(t_formula, init_expr)) {
          // MATCHED Formula
       } else return ATfalse;
-
       ASSERT_not_null(init_expr);
+
       int pass = 1;
       int value;
 
@@ -1266,7 +1270,7 @@ ATbool ATermToSageJovialTraversal::traverse_SpecifiedSublist(ATerm term, SgEnumD
             if (auto intval = isSgIntVal(init_expr)) {
                value = intval->get_value();
                // The initialization expression for the enum is no longer needed
-               delete init_expr;
+               delete init_expr;  init_expr = nullptr;
             }
             else {
                cast = isSgCastExp(init_expr);
@@ -5896,6 +5900,7 @@ ATbool ATermToSageJovialTraversal::traverse_NumericConversion(ATerm term, SgExpr
       SgCastExp* cast_expr = SageBuilder::buildCastExp_nfi(cast_formula, conv_type, SgCastExp::e_default);
       ASSERT_not_null(cast_expr);
       setSourcePosition(cast_expr, term);
+
       expr = cast_expr;
    }
    else return ATfalse;
