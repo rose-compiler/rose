@@ -241,6 +241,22 @@ namespace Outliner
      */
     void gatherNonLocalDecls (SgBasicBlock* b);
 
+    /*!
+     *  \brief Constant propagation for static member variables
+     *
+     *  This routine analyzes the basic block to-be-outlined, and
+     *  determines if any variables need to be replaced with their 
+     *  constant values.
+     * 
+     *  This is needed since the outlining step will use addressOf
+     *  Operator to pass variables around, which may require explicit
+     *  definition of static member variables of a class. 
+     * 
+     *  Original code do not need such definitions as long as they are integer
+     *  or enumerate types of static constant variables with intialized values.
+     */
+    void propagateStaticConstMembers (SgBasicBlock* b);
+
   } /* namespace Preprocess */
 } /* namespace Outliner */
 
