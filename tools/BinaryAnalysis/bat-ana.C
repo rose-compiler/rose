@@ -150,8 +150,8 @@ main(int argc, char *argv[]) {
     Settings settings;
     auto parser = buildSwitchParser(settings);
     P2::Engine::Ptr engine = P2::Engine::forge(argc, argv, parser/*in,out*/);
-    mlog[INFO] <<"using the " <<engine->name() <<" partitioning engine\n";
     std::vector<std::string> specimen = parser.parse(argc, argv).apply().unreachedArgs();
+    mlog[INFO] <<"using the " <<engine->name() <<" partitioning engine\n";
 
     // Check some informational switches before we die for lack of specimen.
     if (engine->settings().disassembler.isaName == "list") {
