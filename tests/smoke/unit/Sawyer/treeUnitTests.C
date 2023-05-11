@@ -780,8 +780,58 @@ static void test47() {
     ASSERT_always_require2(x == 911, x);
 }
 
-// Sawyer::Tree traversals support ROSE-style traversals.
+// A convenience "traversePre" function is like "travserse" for ENTER events.
 static void test48() {
+    auto parent = Multi::instance();
+    auto a = Multi::instance();
+    auto b1 = Multi::instance();
+    auto b2 = Multi::instance();
+    auto c = Multi::instance();
+    parent->a = a;
+    parent->b.push_back(b1);
+    parent->b.push_back(b2);
+    parent->c = c;
+
+    std::vector<MultiPtr> visited;
+    parent->traversePre<Multi>([&visited](const MultiPtr &node) {
+        visited.push_back(node);
+        return false;
+    });
+    ASSERT_always_require(visited.size() == 5);
+    ASSERT_always_require(visited[0] == parent);
+    ASSERT_always_require(visited[1] == a);
+    ASSERT_always_require(visited[2] == b1);
+    ASSERT_always_require(visited[3] == b2);
+    ASSERT_always_require(visited[4] == c);
+}
+
+// A convenience "traversePost" function is like "travserse" for LEAVE events.
+static void test49() {
+    auto parent = Multi::instance();
+    auto a = Multi::instance();
+    auto b1 = Multi::instance();
+    auto b2 = Multi::instance();
+    auto c = Multi::instance();
+    parent->a = a;
+    parent->b.push_back(b1);
+    parent->b.push_back(b2);
+    parent->c = c;
+
+    std::vector<MultiPtr> visited;
+    parent->traversePost<Multi>([&visited](const MultiPtr &node) {
+        visited.push_back(node);
+        return false;
+    });
+    ASSERT_always_require(visited.size() == 5);
+    ASSERT_always_require(visited[0] == a);
+    ASSERT_always_require(visited[1] == b1);
+    ASSERT_always_require(visited[2] == b2);
+    ASSERT_always_require(visited[3] == c);
+    ASSERT_always_require(visited[4] == parent);
+}
+
+// Sawyer::Tree traversals support ROSE-style traversals.
+static void test50() {
     auto parent = Multi::instance();
     auto a = Multi::instance();
     auto b1 = Multi::instance();
@@ -947,4 +997,6 @@ int main() {
     test46();
     test47();
     test48();
+    test49();
+    test50();
 }
