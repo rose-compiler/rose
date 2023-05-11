@@ -5059,30 +5059,28 @@ SgExpression* SageInterface::forallMaskExpression(SgForAllStatement* stmt) {
 //Find all SgPntrArrRefExp under astNode, add the referenced dim_info SgVarRefExp (if any) into NodeList_t
 void SageInterface::addVarRefExpFromArrayDimInfo(SgNode * astNode, Rose_STL_Container<SgNode *>& NodeList_t)
 {
-  ROSE_ASSERT (astNode != NULL);
+  ASSERT_not_null(astNode);
   Rose_STL_Container<SgNode*> arr_exp_list = NodeQuery::querySubTree(astNode,V_SgPntrArrRefExp);
-  for (Rose_STL_Container<SgNode*>::iterator iter_0 = arr_exp_list.begin(); iter_0 !=arr_exp_list.end(); iter_0 ++)
+  for (SgNode* expr : arr_exp_list)
   {
-    SgPntrArrRefExp * arr_exp = isSgPntrArrRefExp(*iter_0);
-    ROSE_ASSERT (arr_exp != NULL);
-    //printf("Debug: Found SgPntrArrRefExp :%p\n", arr_exp);
+    SgPntrArrRefExp* arr_exp = isSgPntrArrRefExp(expr);
+    ASSERT_not_null(arr_exp);
     Rose_STL_Container<SgNode*> refList = NodeQuery::querySubTree(arr_exp->get_lhs_operand(),V_SgVarRefExp);
-    for (Rose_STL_Container<SgNode*>::iterator iter = refList.begin(); iter !=refList.end(); iter ++)
+    for (SgNode* ref : refList)
     {
-      SgVarRefExp* cur_ref = isSgVarRefExp(*iter);
-      ROSE_ASSERT (cur_ref != NULL);
+      SgVarRefExp* cur_ref = isSgVarRefExp(ref);
+      ASSERT_not_null(cur_ref);
       SgVariableSymbol * sym = cur_ref->get_symbol();
-      ROSE_ASSERT (sym != NULL);
-      SgInitializedName * i_name = sym->get_declaration();
-      ROSE_ASSERT (i_name != NULL);
-      SgArrayType * a_type = isSgArrayType(i_name->get_typeptr());
+      ASSERT_not_null(sym);
+      SgInitializedName * iname = sym->get_declaration();
+      ASSERT_not_null(iname);
+      SgArrayType * a_type = isSgArrayType(iname->get_typeptr());
       if (a_type && a_type->get_dim_info())
       {
         Rose_STL_Container<SgNode*> dim_ref_list = NodeQuery::querySubTree(a_type->get_dim_info(),V_SgVarRefExp);
         for (Rose_STL_Container<SgNode*>::iterator iter2 = dim_ref_list.begin(); iter2 != dim_ref_list.end(); iter2++)
         {
           SgVarRefExp* dim_ref = isSgVarRefExp(*iter2);
-          //printf("Debug: Found indirect SgVarRefExp as part of array dimension declaration:%s\n", dim_ref->get_symbol()->get_name().str());
           NodeList_t.push_back(dim_ref);
         }
       }
@@ -5094,7 +5092,6 @@ void SageInterface::addVarRefExpFromArrayDimInfo(SgNode * astNode, Rose_STL_Cont
 // DQ (11/25/2020): This disables these non-inlined functions in favor of
 // inlined versions of the functions in the sageInterface.h (header file).
 #if (INLINE_OPTIMIZED_IS_LANGUAGE_KIND_FUNCTIONS == 0)
-// Rasmussen (4/8/2018): Added Ada
 bool
 SageInterface::is_Ada_language()
    {
@@ -5526,38 +5523,31 @@ bool SageInterface::is_mixed_Fortran_and_C_and_Cxx_language()
      return is_Fortran_language() && is_C_language() && is_Cxx_language();
    }
 
-// Rasmussen (3/22/2020): Added this function because ROSE supports multiple
-// languages that are case insensitive. Warning, this doesn't work for mixed languages.
 bool SageInterface::is_language_case_insensitive()
    {
-   // This won't work for mixed languages so try returning to original
-   // return is_Fortran_language() || is_Jovial_language();
       return symbol_table_case_insensitive_semantics == true;
    }
 
-// Rasmussen (3/28/2020): Collecting all languages that may have scopes that contain
-// statements that are not only declarations here. For Fortran (at least), function
-// definitions may be declared at the end of other procedures.
+// Languages that may have scopes that contain statements that are not only declarations.
+// For Fortran and Jovial (at least), function definitions may be declared at the end of procedures.
 bool SageInterface::language_may_contain_nondeclarations_in_scope()
    {
-      return is_Fortran_language() || is_Python_language();
+      return is_Fortran_language() || is_Jovial_language() || is_Python_language();
    }
-
-// #endif
 
 // DQ (10/5/2006): Added support for faster (non-quadratic) computation of unique
 // labels for scopes in a function (as required for name mangling).
 void
 SageInterface::clearScopeNumbers( SgFunctionDefinition* functionDefinition )
    {
-     ROSE_ASSERT(functionDefinition != NULL);
+     ASSERT_not_null(functionDefinition);
      std::map<SgNode*,int> & scopeMap = functionDefinition->get_scope_number_list();
 
   // Clear the cache of stored (scope,integer) pairs
      scopeMap.erase(scopeMap.begin(),scopeMap.end());
 
-     ROSE_ASSERT(scopeMap.empty() == true);
-     ROSE_ASSERT(functionDefinition->get_scope_number_list().empty() == true);
+     ASSERT_require(scopeMap.empty() == true);
+     ASSERT_require(functionDefinition->get_scope_number_list().empty() == true);
    }
 
 #ifndef USE_ROSE
@@ -21130,44 +21120,41 @@ static void moveSymbolTableBetweenBlocks(SgScopeStatement* sourceBlock, SgScopeS
 {
   // Move the symbol table
   SgSymbolTable* s_table = sourceBlock->get_symbol_table();
-  ROSE_ASSERT(sourceBlock->get_symbol_table() != NULL);
+  ASSERT_not_null(sourceBlock->get_symbol_table());
   // Liao, 11/26/2019 make sure the symbol table has symbols for init names before and after the move
-  for (std::vector<SgInitializedName* >::iterator iter = initname_vec.begin(); iter != initname_vec.end(); iter++)
+  for (SgInitializedName* iname : initname_vec)
   {
-    SgInitializedName* iname = *iter;
     SgSymbol* symbol = s_table->find(iname);
-    ROSE_ASSERT (symbol != NULL);
+    ASSERT_not_null(symbol);
   }
   // entirely move source block's symbol table to target block
   targetBlock->set_symbol_table(sourceBlock->get_symbol_table());
 
-  ROSE_ASSERT(sourceBlock != NULL);
-  ROSE_ASSERT(targetBlock != NULL);
-  ROSE_ASSERT(targetBlock->get_symbol_table() != NULL);
-  ROSE_ASSERT(sourceBlock->get_symbol_table() != NULL);
+  ASSERT_not_null(sourceBlock);
+  ASSERT_not_null(targetBlock);
+  ASSERT_not_null(targetBlock->get_symbol_table());
+  ASSERT_not_null(sourceBlock->get_symbol_table());
   targetBlock->get_symbol_table()->set_parent(targetBlock);
 
-  ROSE_ASSERT(sourceBlock->get_symbol_table() != NULL);
-  sourceBlock->set_symbol_table(NULL);
+  ASSERT_not_null(sourceBlock->get_symbol_table());
+  sourceBlock->set_symbol_table(nullptr);
 
-  // DQ (9/23/2011): Reset with a valid symbol table.
+  // Reset with a valid symbol table
   sourceBlock->set_symbol_table(new SgSymbolTable());
   sourceBlock->get_symbol_table()->set_parent(sourceBlock);
 
-  ROSE_ASSERT (targetBlock->get_symbol_table() == s_table);
-  for (std::vector<SgInitializedName* >::iterator iter = initname_vec.begin(); iter != initname_vec.end(); iter++)
+  ASSERT_require(targetBlock->get_symbol_table() == s_table);
+  for (SgInitializedName* iname : initname_vec)
   {
-    SgInitializedName* iname = *iter;
     SgSymbol* symbol = s_table->find(iname);
-    ROSE_ASSERT (symbol != NULL);
+    ASSERT_not_null(symbol);
   }
 
   // Liao, 11/26/2019 make sure init names have symbols after the move.
-  for (std::vector<SgInitializedName* >::iterator iter = initname_vec.begin(); iter != initname_vec.end(); iter++)
+  for (SgInitializedName* iname : initname_vec)
   {
-    SgInitializedName* iname = *iter;
     SgSymbol* symbol = iname->get_symbol_from_symbol_table();
-    ROSE_ASSERT (symbol != NULL);
+    ASSERT_not_null(symbol);
   }
 }
 
@@ -21181,13 +21168,10 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
   ASSERT_require(stmt->get_parent() == targetBlock);
   if (stmt->hasExplicitScope())
   {
-    // DQ (3/4/2009): This fails the test in ROSE/tutorial/outliner/inputCode_OutlineNonLocalJumps.cc
-    // I am unclear if this is a reasonable constraint, it passes all tests but this one!
     if (stmt->get_scope() != targetBlock)
     {
       if (SgFunctionDeclaration* func = isSgFunctionDeclaration(stmt))
       {
-
         // why only move if it is a first nondefining declaration?
         // We have a case to move both defining and nondefining function declarations of Ada package body to namespace definition.
          // comment out the if condition for now. 1/20/2021
@@ -21202,10 +21186,11 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
           SgFunctionDeclaration* nondef_decl= isSgFunctionDeclaration(func->get_firstNondefiningDeclaration());
           if (func != nondef_decl)
           {
-            assert(nondef_decl != NULL);
-            assert(nondef_decl->get_file_info() != NULL);
-            if (nondef_decl->get_file_info()->isCompilerGenerated())
+            ASSERT_not_null(nondef_decl);
+            ASSERT_not_null(nondef_decl->get_file_info());
+            if (nondef_decl->get_file_info()->isCompilerGenerated()) {
               nondef_decl->set_scope(targetBlock);
+            }
           }
       }
       else if (isSgJovialTableStatement(stmt) || isSgTypedefDeclaration(stmt) || isSgEnumDeclaration(stmt))
@@ -21223,7 +21208,7 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
   }
 
   SgDeclarationStatement* declaration = isSgDeclarationStatement(stmt);
-  if (declaration != NULL)
+  if (declaration != nullptr)
   {
     // Need to reset the scope from sourceBlock to targetBlock.
     switch(declaration->variantT())
@@ -21270,10 +21255,9 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
                 nondef_decl->set_parent(targetBlock);
 
                 // Move the scope of the enumerators to the new block as well
-                SgInitializedNamePtrList & enums = def_decl->get_enumerators();
-                for (SgInitializedNamePtrList::iterator e = enums.begin(); e != enums.end(); e++)
+                for (SgInitializedName* enumerator : def_decl->get_enumerators())
                 {
-                  (*e)->set_scope(targetBlock);
+                  enumerator->set_scope(targetBlock);
                 }
               }
             }
@@ -21294,7 +21278,7 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
 
             // Must also move the symbol into the source block, Liao 2019/8/14
             SgVariableSymbol* var_sym = isSgVariableSymbol(init_name -> search_for_symbol_from_symbol_table ()) ;
-            ROSE_ASSERT (var_sym);
+            ASSERT_not_null(var_sym);
             SgScopeStatement * old_scope = var_sym -> get_scope();
 #if 1 // we will later move entire source symbol table to target scope,  so we move symbol to the sourceBlock first here.
             if (old_scope != sourceBlock)
@@ -21310,8 +21294,8 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
         }
       case V_SgFunctionDeclaration: // Liao 1/15/2009, I don't think there is any extra things to do here
         {
-          SgFunctionDeclaration * funcDecl = isSgFunctionDeclaration(declaration);
-          ROSE_ASSERT (funcDecl);
+          SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(declaration);
+          ASSERT_not_null(funcDecl);
 #if 0 // we will later move entire source symbol table to target scope,  so we move symbol to the sourceBlock first here.
           // move function symbols also: search_for_symbol_from_symbol_table()
           SgSymbol* func_sym= funcDecl->get_firstNondefiningDeclaration()->search_for_symbol_from_symbol_table();
@@ -21325,10 +21309,11 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
             }
           }
 #endif
-
           break;
         }
       // needed to move Ada record into definition of C++ namespace
+      case V_SgProgramHeaderStatement:
+      case V_SgProcedureHeaderStatement:
       case V_SgClassDeclaration:
       case V_SgEnumDeclaration:
         {
@@ -21345,7 +21330,7 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
           if (enum_decl) // Rasmussen (12/23/2020)
             {
               // Set the scope of the enumerators
-              BOOST_FOREACH (SgInitializedName* name, enum_decl->get_enumerators())
+              for (SgInitializedName* name : enum_decl->get_enumerators())
                 {
                   name->set_scope(targetBlock);
                 }
@@ -21412,10 +21397,10 @@ void moveDeclarationsBetweenScopes( T1* sourceBlock, T2* targetBlock)
   SgDeclarationStatementPtrList& srcStmts = sourceBlock->get_declarations ();
   std::vector <SgInitializedName*> initname_vec;
 
-  for (SgDeclarationStatementPtrList::iterator i = srcStmts.begin(); i != srcStmts.end(); i++)
+  for (auto stmt : srcStmts)
   {
-    moveOneStatement(sourceBlock, targetBlock, *i, initname_vec);
-  } // end for
+    moveOneStatement(sourceBlock, targetBlock, stmt, initname_vec);
+  }
 
   // Remove the statements in the sourceBlock
   srcStmts.clear();
@@ -21440,7 +21425,6 @@ template <class T1, class T2>
 void moveStatementsBetweenScopes( T1* sourceBlock, T2* targetBlock)
 {
   // This function moves statements from one block to another (used by the outliner).
-  // printf ("***** Moving statements from sourceBlock %p to targetBlock %p ***** \n",sourceBlock,targetBlock);
   ROSE_ASSERT (sourceBlock && targetBlock);
   if ((void*)sourceBlock == (void*)targetBlock)
   {
@@ -21452,11 +21436,10 @@ void moveStatementsBetweenScopes( T1* sourceBlock, T2* targetBlock)
   SgStatementPtrList & srcStmts = sourceBlock->get_statements();
   std::vector <SgInitializedName*> initname_vec;
 
-
-  for (SgStatementPtrList::iterator i = srcStmts.begin(); i != srcStmts.end(); i++)
+  for (SgStatement* stmt : srcStmts)
   {
-    moveOneStatement(sourceBlock, targetBlock, *i, initname_vec);
-  } // end for
+    moveOneStatement(sourceBlock, targetBlock, stmt, initname_vec);
+  }
 
   // Remove the statements in the sourceBlock
   srcStmts.clear();
@@ -21478,18 +21461,16 @@ void moveStatementsBetweenScopes( T1* sourceBlock, T2* targetBlock)
 
 static void createAliasSymbols (SgNamespaceDeclarationStatement* decl)
 {
-  ROSE_ASSERT(decl);
+  ASSERT_not_null(decl);
   SgNamespaceDefinitionStatement* local_def = decl->get_definition();
   SgNamespaceDefinitionStatement* global_def = local_def->get_global_definition();
 
-  ROSE_ASSERT(local_def && global_def && (local_def!=global_def));
+  ASSERT_require(local_def && global_def && (local_def!=global_def));
 
-  std::set<SgNode*> syms = local_def->get_symbol_table()->get_symbols();
-//  cout<<"Found syms.size()=="<<syms.size()<<endl;
-  for (std::set<SgNode*>::iterator iter= syms.begin(); iter != syms.end(); iter++)
+  for (auto symbol : local_def->get_symbol_table()->get_symbols())
   {
-    SgSymbol *orig_sym = isSgSymbol(*iter);
-    ROSE_ASSERT (orig_sym);
+    SgSymbol *orig_sym = isSgSymbol(symbol);
+    ASSERT_not_null(orig_sym);
     SgAliasSymbol* asym = new SgAliasSymbol (orig_sym);
     global_def->get_symbol_table()->insert (asym->get_name(), asym);
   }
