@@ -141,17 +141,17 @@ void LabelAndLoopManager::gotojmp(Element_ID id, SgGotoStatement& gotostmt)
   gotos.emplace_back(&gotostmt, id);
 }
 
-AstContext
-AstContext::scope_npc(SgScopeStatement& s) const
-{
-  // make sure that the installed handler handles SgScopeStatement
-  // ADA_ASSERT(stmtHandler.target() == &defaultStatementHandler);
+//~ AstContext
+//~ AstContext::scope_npc(SgScopeStatement& s) const
+//~ {
+  //~ // make sure that the installed handler handles SgScopeStatement
+  //~ // ADA_ASSERT(stmtHandler.target() == &defaultStatementHandler);
 
-  AstContext tmp{*this};
+  //~ AstContext tmp{*this};
 
-  tmp.the_scope = &s;
-  return tmp;
-}
+  //~ tmp.the_scope = &s;
+  //~ return tmp;
+//~ }
 
 AstContext
 AstContext::unscopedBlock(SgAdaUnscopedBlock& blk) const
@@ -188,7 +188,10 @@ AstContext::scope(SgScopeStatement& s) const
 {
   ADA_ASSERT(s.get_parent());
 
-  return scope_npc(s);
+  AstContext tmp{*this};
+
+  tmp.the_scope = &s;
+  return tmp;
 }
 
 AstContext
@@ -1104,9 +1107,6 @@ namespace
     checker.traverse(file, preorder);
   }
 
-  // when set to true inference becomes more permissive, b/c it may stop early.
-  constexpr bool INFERENCE_SHORTCUT = false;
-
   const SgFunctionCallExp* callNode(const SgFunctionRefExp& fnref)
   {
     return isSgFunctionCallExp(fnref.get_parent());
@@ -1140,14 +1140,25 @@ namespace
 
   using OverloadSet = std::vector<SgFunctionSymbol*>;
 
-  struct OverloadInfo : std::tuple<SgFunctionSymbol*, OverloadSet>
+  struct OverloadInfo : std::tuple<SgFunctionSymbol*, OverloadSet, bool>
   {
-    using base = std::tuple<SgFunctionSymbol*, OverloadSet>;
+    using base = std::tuple<SgFunctionSymbol*, OverloadSet, bool>;
     using base::base;
 
+    /// the symbol which was originally in place
     SgFunctionSymbol*  orig_sym() const { return std::get<0>(*this); }
+
+    /// the overload set
+    /// \{
           OverloadSet& ovlset()         { return std::get<1>(*this); }
     const OverloadSet& ovlset() const   { return std::get<1>(*this); }
+    /// \}
+
+    /// true, iff all arguments are literals or calls to foldable functions
+    /// \{
+          bool&        foldable()       { return std::get<2>(*this); }
+    const bool&        foldable() const { return std::get<2>(*this); }
+    /// \}
   };
 
   using OverloadMap = std::map<SgFunctionRefExp*, OverloadInfo>;
@@ -1232,7 +1243,7 @@ namespace
                         }
                       );
 
-        m.emplace(fnref, OverloadInfo{fnsym, std::move(overloads)});
+        m.emplace(fnref, OverloadInfo{fnsym, std::move(overloads), false /* foldable */});
         //~ logTrace() << "adding " << fnref << std::endl;
       }
 
@@ -1741,7 +1752,7 @@ namespace
       const std::size_t        numcands  = overloads.size();
 
       // nothing to be done ... go to next work item
-      if (INFERENCE_SHORTCUT && (numcands < 2)) continue;
+      if (numcands < 2) continue;
 
       SgFunctionRefExp&         fnref  = SG_DEREF(item.first);
       const SgFunctionCallExp*  fncall = callNode(fnref);
@@ -1773,7 +1784,7 @@ namespace
                     );
 
         // put in place candidates
-        if (!INFERENCE_SHORTCUT || viables.size())
+        if (viables.size())
           overloads.swap(viables);
       }
 
@@ -1799,7 +1810,7 @@ namespace
                     );
 
         // put in place candidates
-        if (!INFERENCE_SHORTCUT || viables.size())
+        if (viables.size())
           overloads.swap(viables);
       }
 
@@ -1838,16 +1849,15 @@ namespace
     }
 
     // sanity check
-    if (!INFERENCE_SHORTCUT)
     {
       logTrace() << "checking fun calls.." << std::endl;
 
       for (const OverloadMap::value_type& item : allrefs)
       {
-        const SgExpression* exp = callNode(SG_DEREF(item.first));
-
         if (item.second.ovlset().size() != 1)
         {
+          const SgExpression* exp = callNode(SG_DEREF(item.first));
+
           logFlaw() << "disambig: " << (exp ? exp->unparseToString() : std::string{"<null>"})
                                     << " " << item.second.ovlset().size()
                                     << std::endl;

@@ -2650,7 +2650,7 @@ namespace
             logFlaw() << ex.what() << " #fix# " << declname.fullName
                       << instname
                       << std::endl;
-            //~ ADA_ASSERT(false);
+            //~ throw; // uncomment for immediate termination
           }
         }
 
@@ -3148,59 +3148,67 @@ namespace
                << "\n  private: " << decl.Has_Private
                << std::endl;
 
-    DefinitionDetails       defdata = queryDeclarationDetails(decl, ctx);
     NameData                adaname = singleName(decl, ctx);
     ADA_ASSERT (adaname.fullName == adaname.ident);
 
-    SgScopeStatement*       parentScope = &ctx.scope();
-    SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDeclID_opt(decl.Discriminant_Part, ctx);
-
-    if (discr)
+    try // for debug purposes
     {
-      parentScope = discr->get_discriminantScope();
-    }
+      DefinitionDetails       defdata = queryDeclarationDetails(decl, ctx);
+      SgScopeStatement*       parentScope = &ctx.scope();
+      SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDeclID_opt(decl.Discriminant_Part, ctx);
 
-    SgScopeStatement&       scope  = SG_DEREF(parentScope);
-    Element_ID              id     = adaname.id();
-    SgDeclarationStatement& sgdecl = createOpaqueDecl(adaname, decl, defdata, ctx.scope(scope));
-
-    attachSourceLocation(sgdecl, elem, ctx);
-    privatize(sgdecl, isPrivate);
-    recordNode(asisTypes(), id, sgdecl);
-    recordNode(asisTypes(), defdata.id(), sgdecl); // rec @ def
-
-    if (!discr)
-    {
-      ADA_ASSERT(&ctx.scope() == parentScope);
-      ctx.appendStatement(sgdecl);
-    }
-    else
-    {
-      completeDiscriminatedDecl(id, elem, *discr, sgdecl, isPrivate, ctx);
-
-      //~ throw AdaDbgTraversalExit{};
-
-      // sgdecl.search_for_symbol_from_symbol_table(); // \todo remove test
-    }
-
-    if (decl.Declaration_Kind == A_Private_Extension_Declaration)
-    {
-      if (Element_Struct* tyview = retrieveAsOpt(elemMap(), decl.Type_Declaration_View))
+      if (discr)
       {
-        ADA_ASSERT(tyview->Element_Kind == A_Definition);
-        Definition_Struct& tydef = tyview->The_Union.Definition;
+        parentScope = discr->get_discriminantScope();
+      }
 
-        if (tydef.Definition_Kind == A_Private_Extension_Definition)
+      SgScopeStatement&       scope  = SG_DEREF(parentScope);
+      Element_ID              id     = adaname.id();
+      SgDeclarationStatement& sgdecl = createOpaqueDecl(adaname, decl, defdata, ctx.scope(scope));
+
+      attachSourceLocation(sgdecl, elem, ctx);
+      privatize(sgdecl, isPrivate);
+      recordNode(asisTypes(), id, sgdecl);
+      recordNode(asisTypes(), defdata.id(), sgdecl); // rec @ def
+
+      if (!discr)
+      {
+        ADA_ASSERT(&ctx.scope() == parentScope);
+        ctx.appendStatement(sgdecl);
+      }
+      else
+      {
+        completeDiscriminatedDecl(id, elem, *discr, sgdecl, isPrivate, ctx);
+      }
+
+      if (decl.Declaration_Kind == A_Private_Extension_Declaration)
+      {
+        if (Element_Struct* tyview = retrieveAsOpt(elemMap(), decl.Type_Declaration_View))
         {
-          SgDeclarationStatement* tydcl = discr ? discr : &sgdecl;
+          ADA_ASSERT(tyview->Element_Kind == A_Definition);
+          Definition_Struct& tydef = tyview->The_Union.Definition;
 
-          processInheritedSubroutines( SG_DEREF(si::getDeclaredType(tydcl)),
-                                       idRange(tydef.The_Union.The_Private_Extension_Definition.Implicit_Inherited_Subprograms),
-                                       idRange(tydef.The_Union.The_Private_Extension_Definition.Implicit_Inherited_Declarations),
-                                       ctx
-                                     );
+          if (tydef.Definition_Kind == A_Private_Extension_Definition)
+          {
+            SgDeclarationStatement* tydcl = discr ? discr : &sgdecl;
+
+            processInheritedSubroutines( SG_DEREF(si::getDeclaredType(tydcl)),
+                                         idRange(tydef.The_Union.The_Private_Extension_Definition.Implicit_Inherited_Subprograms),
+                                         idRange(tydef.The_Union.The_Private_Extension_Definition.Implicit_Inherited_Declarations),
+                                         ctx
+                                       );
+          }
         }
       }
+    }
+    catch (const DbgRecursionError& n)
+    {
+      logFlaw() << "root of recursion error: " << adaname.fullName
+                << "\n   declared at: " << elem.Source_Location.Unit_Name
+                << ":" << elem.Source_Location.First_Line
+                << ":" << elem.Source_Location.First_Column
+                << std::endl;
+      throw;
     }
   }
 
