@@ -2639,8 +2639,44 @@ bool ClangToSageTranslator::VisitCXXNewExpr(clang::CXXNewExpr * cxx_new_expr, Sg
     std::cerr << "ClangToSageTranslator::VisitCXXNewExpr" << std::endl;
 #endif
     bool res = true;
+    clang::QualType allocatedType = cxx_new_expr->getAllocatedType();
+    SgType * sg_type = buildTypeFromQualifiedType(allocatedType);
 
-    // TODO
+    SgExprListExp* placementArgs = NULL;
+    if(cxx_new_expr->getNumPlacementArgs() > 0)
+    {
+      placementArgs = SageBuilder::buildExprListExp();
+      for (clang::Expr* placementArg : cxx_new_expr->placement_arguments()) {
+        SgNode * tmpArg = Traverse(placementArg);
+        SgExpression * expr = isSgExpression(tmpArg);
+        placementArgs->append_expression(expr);
+      }
+    }
+
+    
+    SgNode* constructorInitilizer = Traverse(const_cast<clang::CXXConstructExpr*>(cxx_new_expr->getConstructExpr()));
+    SgConstructorInitializer *constructor_args = isSgConstructorInitializer(constructorInitilizer);
+
+    SgNode* ClangFuncDecl = Traverse(cxx_new_expr->getOperatorNew());
+    if(constructor_args)
+    {
+      // (4/28/23 Pei-Hung) The type name is given through sg_type, SgConstructorInitializer doesn't seem to provide name for unparsing.
+      constructor_args->set_need_name(false);
+      ClangFuncDecl = Traverse(cxx_new_expr->getConstructExpr()->getConstructor());
+      
+    }
+    SgFunctionDeclaration* sgFuncDecl = isSgFunctionDeclaration(ClangFuncDecl);
+
+    if(cxx_new_expr->hasInitializer())
+    {
+      //TODO
+    }
+
+    SgExpression* builtin_args = NULL;
+    short int need_global_specifier = (short int)cxx_new_expr->isGlobalNew();
+
+    SgNewExp* newExp = SageBuilder::buildNewExp(sg_type, placementArgs, constructor_args, builtin_args, need_global_specifier , sgFuncDecl);
+    *node = newExp;
 
     return VisitExpr(cxx_new_expr, node) && res;
 }
