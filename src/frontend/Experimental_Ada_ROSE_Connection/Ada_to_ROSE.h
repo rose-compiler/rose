@@ -27,7 +27,7 @@ static constexpr bool LOG_FLAW_AS_ERROR = true;
 //
 // debugging
 
-struct AdaDbgTraversalExit {};
+//~ struct AdaDbgTraversalExit {};
 
 //
 // logging
@@ -278,11 +278,28 @@ struct AstContext
     AstContext(const AstContext&)            = default;
     AstContext& operator=(const AstContext&) = default;
 
+    /// sets scope without parent check (no-parent-check)
+    ///   e.g., when the parent node is built after the scope \ref s (e.g., if statements)
+    /// \note the passed object needs to survive the lifetime of the returned AstContext
+    //~ AstContext scope_npc(SgScopeStatement& s) const;
+
+    /// sets scope and checks that the parent of \ref s is set properly
+    /// \note the passed object needs to survive the lifetime of the returned AstContext
+    AstContext scope(SgScopeStatement& s) const;
+
     /// returns the current scope
     SgScopeStatement& scope()  const { return SG_DEREF(the_scope); }
 
+    /// sets a new label manager
+    /// \note the passed object needs to survive the lifetime of the returned AstContext
+    AstContext labelsAndLoops(LabelAndLoopManager& lm) const;
+
     /// returns the current label manager
     LabelAndLoopManager& labelsAndLoops() const { return SG_DEREF(all_labels_loops); }
+
+    /// unit file name
+    /// \note the passed object needs to survive the lifetime of the returned AstContext
+    AstContext sourceFileName(std::string& file) const;
 
     /// returns the source file name
     /// \note the Asis source names do not always match the true source file name
@@ -290,34 +307,19 @@ struct AstContext
     ///             nodes under Compute report Compute.adb as the source file.
     const std::string& sourceFileName() const { return SG_DEREF(unit_file_name); }
 
-    /// sets scope without parent check (no-parent-check)
-    ///   e.g., when the parent node is built after the scope \ref s (e.g., if statements)
-    /// \note the passed object needs to survive the lifetime of the return AstContext
-    AstContext scope_npc(SgScopeStatement& s) const;
-
-    /// sets scope and checks that the parent of \ref s is set properly
-    /// \note the passed object needs to survive the lifetime of the return AstContext
-    AstContext scope(SgScopeStatement& s) const;
-
-    /// sets a new label manager
-    /// \note the passed object needs to survive the lifetime of the return AstContext
-    AstContext labelsAndLoops(LabelAndLoopManager& lm) const;
-
-    /// unit file name
-    /// \note the passed object needs to survive the lifetime of the return AstContext
-    AstContext sourceFileName(std::string& file) const;
-
     /// instantiation property
     /// \details
     ///   Inside an instantiation, the Asis representation may be incomplete
     ///   Thus, the argument mapping needs to switch to lookup mode to find
     ///   generic arguments, if the Asis link is not present.
+    /// \note the passed object needs to survive the lifetime of the returned AstContext
     /// \{
     SgAdaGenericInstanceDecl* instantiation() const { return enclosing_instantiation; }
     AstContext                instantiation(SgAdaGenericInstanceDecl& instance) const;
     /// \}
 
     /// pragma container property
+    /// \note the passed object needs to survive the lifetime of the returned AstContext
     /// \details
     ///   collects all pragmas during body processing in a user supplied container
     /// \{
@@ -703,25 +705,21 @@ namespace
   FnT
   traverseIDs(PtrT first, PtrT limit, AsisMapT& map, FnT func)
   {
-    try
+    while (first != limit)
     {
-      while (first != limit)
+      if (ElemT* el = retrieveAsOpt(map, *first))
       {
-        if (ElemT* el = retrieveAsOpt(map, *first))
-        {
-          func(*el);
-        }
-        else
-        {
-          logWarn() << "asis-element of type " << typeid(ElemT).name()
-                    << " not available -- asismap[" << *first << "]=nullptr"
-                    << std::endl;
-        }
-
-        ++first;
+        func(*el);
       }
+      else
+      {
+        logWarn() << "asis-element of type " << typeid(ElemT).name()
+                  << " not available -- asismap[" << *first << "]=nullptr"
+                  << std::endl;
+      }
+
+      ++first;
     }
-    catch (const AdaDbgTraversalExit&) {}
 
     return func;
   }
