@@ -2709,7 +2709,13 @@ namespace
     {
       // \todo baseEnumDeclaration may skips some intermediate types...
       if (SgEnumDeclaration* enmdcl = baseEnumDeclaration(const_cast<SgEnumType&>(n)))
-        res = enmdcl->get_adaParentType();
+      {
+        SgEnumDeclaration* defdecl = isSgEnumDeclaration(enmdcl->get_definingDeclaration());
+
+        if (defdecl == nullptr) defdecl = enmdcl;
+
+        res = defdecl->get_adaParentType();
+      }
     }
   };
 }
