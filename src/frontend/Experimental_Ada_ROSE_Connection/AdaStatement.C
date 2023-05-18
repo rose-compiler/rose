@@ -2523,32 +2523,98 @@ namespace
     using base::base;
   };
 
-  bool queryIfDerivedFromEnum(Element_Struct* elem, AstContext ctx)
+  bool alwaysFalse(AstContext) { return false; } // \todo consider making this assertFalse
+
+  bool queryIfDerivedFromEnumID(Element_ID id, AstContext ctx, std::function<bool(AstContext)> fallback = alwaysFalse);
+
+  bool queryIfDerivedFromEnum(Element_Struct& elem, AstContext ctx)
   {
-    if ((elem == nullptr) || (elem->Element_Kind != A_Definition))
-      return false;
+    if (elem.Element_Kind == A_Definition)
+    {
+      logKind("qid: A_Definition", elem.ID);
 
-    Definition_Struct& def             = elem->The_Union.Definition;
-    Subtype_Indication_Struct& subtype = def.The_Union.The_Subtype_Indication;
-    Element_Struct*            subelem = retrieveAsOpt(elemMap(), subtype.Subtype_Mark);
+      Definition_Struct&         def             = elem.The_Union.Definition;
 
-    if ((subelem == nullptr) || (subelem->Element_Kind != An_Expression))
-      return false;
+      if (def.Definition_Kind == A_Subtype_Indication)
+      {
+        Subtype_Indication_Struct& subtype = def.The_Union.The_Subtype_Indication;
 
-    Expression_Struct&         subexpr = subelem->The_Union.Expression;
+        return queryIfDerivedFromEnumID(subtype.Subtype_Mark, ctx);
+      }
 
-    if (subexpr.Expression_Kind != An_Identifier)
-      return false; // \todo consider qualified type names
+      if (def.Definition_Kind != A_Type_Definition)
+      {
+        logWarn() << "qid: unexpected definition-kind: " << def.Definition_Kind
+                  << std::endl;
+        return false;
+      }
 
-    if (/* Element_Struct* decl = */ retrieveAsOpt(elemMap(), subexpr.Corresponding_Name_Declaration))
-      return false;
+      Type_Definition_Struct& tydef = def.The_Union.The_Type_Definition;
 
-    return AdaIdentifier{subexpr.Name_Image} == "BOOLEAN";
+      return (  (tydef.Type_Kind == An_Enumeration_Type_Definition)
+             || (  (tydef.Type_Kind == A_Derived_Type_Definition)
+                && queryIfDerivedFromEnumID(tydef.Parent_Subtype_Indication, ctx)
+                )
+             );
+    }
+
+    if (elem.Element_Kind == An_Expression)
+    {
+      logKind("qid: An_Expression", elem.ID);
+      Expression_Struct&         expr = elem.The_Union.Expression;
+
+      if (expr.Expression_Kind == A_Selected_Component)
+      {
+        // \todo consider checking for Standard prefix..
+        return queryIfDerivedFromEnumID(expr.Selector, ctx);
+      }
+
+      return (  (expr.Expression_Kind == An_Identifier)
+             && queryIfDerivedFromEnumID( expr.Corresponding_Name_Declaration,
+                                          ctx,
+                                          [&expr](AstContext) -> bool
+                                          {
+                                            // check for all enums in Standard
+                                            return AdaIdentifier{expr.Name_Image} == "BOOLEAN";
+                                          }
+                                        )
+             );
+    }
+
+    if (elem.Element_Kind == A_Declaration)
+    {
+      logKind("qid: A_Declaration", elem.ID);
+      Declaration_Struct&         decl = elem.The_Union.Declaration;
+
+      if (  (decl.Declaration_Kind == A_Task_Type_Declaration)
+         || (decl.Declaration_Kind == A_Protected_Type_Declaration)
+         || (decl.Declaration_Kind == A_Private_Extension_Declaration)
+         )
+        return false;
+
+      if (  (decl.Declaration_Kind == A_Private_Type_Declaration)
+         || (decl.Declaration_Kind == An_Incomplete_Type_Declaration)
+         )
+        return queryIfDerivedFromEnumID(decl.Corresponding_Type_Completion, ctx);
+
+      ADA_ASSERT(  (decl.Declaration_Kind == A_Subtype_Declaration)
+                || (decl.Declaration_Kind == An_Ordinary_Type_Declaration)
+                || (decl.Declaration_Kind == A_Formal_Type_Declaration)
+                );
+
+      return queryIfDerivedFromEnumID(decl.Type_Declaration_View, ctx);
+    }
+
+    logError() << "unhandled element kind [queryIfDerivedFromEnum]: " << elem.Element_Kind
+               << std::endl;
+    return false;
   }
 
-  bool queryIfDerivedFromEnumID(Element_ID id, AstContext ctx)
+  bool queryIfDerivedFromEnumID(Element_ID id, AstContext ctx, std::function<bool(AstContext)> fallback)
   {
-    return queryIfDerivedFromEnum(retrieveAsOpt(elemMap(), id), ctx);
+    Element_Struct* el = retrieveAsOpt(elemMap(), id);
+
+    return el ? queryIfDerivedFromEnum(*el, ctx) : fallback(ctx);
   }
 
   DefinitionDetails
@@ -2559,7 +2625,9 @@ namespace
   {
     ADA_ASSERT (tyKind == A_Derived_Type_Definition);
 
-    Element_ID baseElemID = typeDefn.The_Union.The_Type_Definition.Corresponding_Type_Structure;
+/*
+    //~ Element_ID baseElemID = typeDefn.The_Union.The_Type_Definition.Corresponding_Parent_Subtype;
+    Element_ID baseElemID = typeDefn.The_Union.The_Type_Definition.Corresponding_Root_Type;
 
     if (currID == baseElemID)
       throw DbgRecursionError{"recursive type in ASIS?"};
@@ -2576,7 +2644,9 @@ namespace
         tyKind = An_Enumeration_Type_Definition;
       }
     }
-    else if (queryIfDerivedFromEnumID(typeDefn.The_Union.The_Type_Definition.Parent_Subtype_Indication, ctx))
+    else
+*/
+    if (queryIfDerivedFromEnumID(typeDefn.The_Union.The_Type_Definition.Parent_Subtype_Indication, ctx))
     {
       tyKind = An_Enumeration_Type_Definition;
     }
@@ -2612,6 +2682,8 @@ namespace
       logKind("An_Ordinary_Type_Declaration", complElem.ID);
     else if (complDecl.Declaration_Kind == A_Formal_Type_Declaration)
       logKind("A_Formal_Type_Declaration", complElem.ID);
+    else if (complDecl.Declaration_Kind == A_Subtype_Declaration)
+      logKind("A_Subtype_Declaration", complElem.ID);
     else
     {
       logFlaw() << "unexpected decl kind [queryDefinitionData]: " << complDecl.Declaration_Kind
@@ -2636,22 +2708,10 @@ namespace
         // look at the base of a derived type
         if (resKind == A_Derived_Type_Definition)
         {
-          try
-          {
-            resKind = queryBaseDefinitionData(typeDefn, resKind, complElem.ID, ctx);
-          }
-          catch (const DbgRecursionError& ex)
-          {
-            std::string instname;
+          resKind  = queryBaseDefinitionData(typeDefn, resKind, complElem.ID, ctx);
 
-            if (SgAdaGenericInstanceDecl* inst = ctx.instantiation())
-              instname = "\n    in generic instance: " + std::string(inst->get_name());
-
-            logFlaw() << ex.what() << " #fix# " << declname.fullName
-                      << instname
-                      << std::endl;
-            //~ throw; // uncomment for immediate termination
-          }
+          logWarn() << declname.fullName << " " << (resKind == An_Enumeration_Type_Definition)
+                    << std::endl;
         }
 
         break;
@@ -2843,13 +2903,13 @@ namespace
       AstContext                                     ctx;
   };
 
-  // following proc was made public and relocated to bottom of file
-  //~ void
-  //~ processInheritedSubroutines( SgNamedType& derivedType,
-                               //~ ElemIdRange subprograms,
-                               //~ ElemIdRange declarations,
-                               //~ AstContext ctx
-                             //~ )
+  // following proc is public and located at the bottom of the file
+  //   void
+  //   processInheritedSubroutines( SgNamedType& derivedType,
+  //                                ElemIdRange subprograms,
+  //                                ElemIdRange declarations,
+  //                                AstContext ctx
+  //                              )
 
   void
   processInheritedSubroutines( SgNamedType* derivedTy,
