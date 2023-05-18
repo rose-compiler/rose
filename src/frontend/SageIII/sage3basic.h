@@ -401,36 +401,9 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
    #define ROSE_USING_SMALL_GENERATED_HEADER_FILES 1
 #endif
 
-// DQ (10/4/2014): Added to support USE_ROSE_ATERM_SUPPORT macro.
-// DQ (10/4/2014): Not clear if this is the best way to control use of ATerm.
-// I think we need a specific macro to be defined for when ATerms are being used.
-// Also I want to initially seperate this from Windows support.
-#ifndef _MSC_VER
-// Rasmussen (04/17/2019): Support for ATerms has been deprecated for to and from
-// Sage node support but is likely needed here for using ATerms to construct
-// Sage nodes from ATerms (e.g. Jovial)
-  #ifdef ROSE_USE_ROSE_ATERM_SUPPORT
- // DQ (9/27/2013): This is required to be defined for the 64bit ATerm support.
-    #if (__x86_64__ == 1)
-   // 64-bit machines are required to set this before including the ATerm header files.
-      #define SIZEOF_LONG 8
-      #define SIZEOF_VOID_P 8
-    #else
-   // 32-bit machines need not have the values defined (but it is required for this program).
-      #define SIZEOF_LONG 4
-      #define SIZEOF_VOID_P 4
-    #endif
-
-    #include "aterm1.h"
-    #include "aterm2.h"
-  #else
- // Define this away so that we can trivially compile without ATerm support.
-    typedef int ATerm;
-  #endif
-#else
-// Define this away so that we can trivially compile without ATerm support.
-   typedef int ATerm;
-#endif
+// Rasmussen (05/17/2023): Removed ATerm includes files here. ATerm usage has been deleted
+// for general use (except for Jovial parser), so including ATerm headers no longer
+// necessary nor a good idea.
 
 namespace Rose { namespace Traits { namespace generated { template <typename NodeT> struct describe_node_t; } } }
 namespace Rose { namespace Traits { namespace generated { template <typename NodeT, typename FieldT, FieldT NodeT::* fld_ptr> struct describe_field_t; } } }
