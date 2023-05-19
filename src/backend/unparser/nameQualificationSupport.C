@@ -594,6 +594,7 @@ namespace
 
     // scope statements
     void handle(const SgBasicBlock& n)           { res = n.get_string_label(); }
+    void handle(const SgGotoStatement&)          { /* empty string */ }
 
     // other
     void handle(const SgEnumVal& n)              { res = n.get_name(); }
@@ -1162,7 +1163,12 @@ namespace
       {
         handle(sg::asBaseType(n));
 
-        computeNameQualForShared(n, n.get_label());
+        SgLabelStatement& lbl = SG_DEREF(n.get_label());
+
+        recordNameQualIfNeeded(n, lbl.get_scope());
+        // avoid enless recursion for
+        // <<lbl>> goto lbl;
+        //   \todo consider switching over to fortran label representation
       }
 
       void handle(const SgScopeStatement& n)
@@ -1360,18 +1366,6 @@ namespace
         computeNameQualForDeclLink(n, SG_DEREF(basedecl));
       }
 
-#if OBSOLETE_CODE
-      void handle(const SgAdaFunctionRenamingDecl& n)
-      {
-        handle(sg::asBaseType(n));
-
-        // ROSE_ASSERT(n.get_renamed_function());
-        if (const SgFunctionDeclaration* renamed = n.get_renamed_function())
-          computeNameQualForDeclLink(n, *renamed);
-        //~ if (const SgExpression* renamed = n.get_renamed_function())
-          //~ computeNameQualForDeclLink(n, *renamed);
-      }
-#endif /* OBSOLETE_CODE */
 
       void handle(const SgUsingDeclarationStatement& n)
       {

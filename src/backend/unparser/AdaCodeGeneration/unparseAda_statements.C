@@ -386,21 +386,21 @@ namespace
     /// \todo use const std::string& as return type as soon as the old name qualification
     ///       has been phased out.
     std::string
-    getQualification(const std::map<SgNode*, std::string>& qualMap, const SgNode& n, SgScopeStatement* scope);
+    getQualification(const std::map<SgNode*, std::string>& qualMap, const SgNode& n);
 
     std::string
-    getQualification(const SgNode& n, SgScopeStatement* scope);
+    getQualification(const SgNode& n);
 
     /// prints name qualification
-    void prnNameQual(const SgNode& n, SgScopeStatement* scope);
+    void prnNameQual(const SgNode& n);
 
     /// prints name qualification with an anchor point \ref ref
-    void prnNameQual(const SgLocatedNode& ref, const SgNode& n, SgScopeStatement* scope);
+    void prnNameQual(const SgLocatedNode& ref, const SgNode& n);
 
     /// prints name qualification using separate syntax (i.e., separate(name.qualification)).
     /// \{
     void prnSeparateQual(const std::string& qual);
-    void prnSeparateQual(const SgDeclarationStatement& n, SgScopeStatement* scope);
+    void prnSeparateQual(const SgDeclarationStatement& n);
     /// \}
 
     //
@@ -618,7 +618,7 @@ namespace
     template <class SageAdaConcurrentBodyDecl>
     void handleConcurrentBodyDecl(SageAdaConcurrentBodyDecl& n, const std::string& prefix)
     {
-      prnSeparateQual(n, n.get_scope());
+      prnSeparateQual(n);
 
       prn(prefix);
       prn(n.get_name());
@@ -717,7 +717,7 @@ namespace
 
     void handle(SgAdaPackageSpecDecl& n)
     {
-      const std::string& pkgqual = getQualification(n, n.get_scope());
+      const std::string& pkgqual = getQualification(n);
 
       prn("package ");
       prn(pkgqual);
@@ -735,7 +735,7 @@ namespace
     void handle(SgAdaPackageBodyDecl& n)
     {
       const bool         separated = si::Ada::isSeparatedBody(n);
-      const std::string& pkgqual   = getQualification(n, n.get_scope());
+      const std::string& pkgqual   = getQualification(n);
 
       if (separated) prnSeparateQual(pkgqual);
       prn("package body ");
@@ -801,7 +801,7 @@ namespace
       SgName                  name    = n.get_name();
       SgExprListExp*          args    = n.get_actual_parameters();
       SgDeclarationStatement* basedcl = n.get_genericDeclaration();
-      const std::string&      pkgqual = getQualification(n, n.get_scope());
+      const std::string&      pkgqual = getQualification(n);
 
       if (SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(basedcl))
         basedcl = gendcl->get_declaration();
@@ -813,7 +813,7 @@ namespace
         prn(pkgqual);
         prn(name.getString());
         prn(" is new ");
-        prnNameQual(n, *pkg, pkg->get_scope());
+        prnNameQual(n, *pkg);
         prn(pkg->get_name().getString());
       } else if (SgAdaRenamingDecl* ren = isSgAdaRenamingDecl(basedcl)) {
         // renamed package or routine
@@ -824,7 +824,7 @@ namespace
         prn(pkgqual);
         prn(name.getString());
         prn(" is new ");
-        prnNameQual(n, *ren, ren->get_scope());
+        prnNameQual(n, *ren);
         prn(ren->get_name().getString());
       } else if (SgFunctionDeclaration* fn = isSgFunctionDeclaration(basedcl)) {
         // function/procedure
@@ -832,7 +832,7 @@ namespace
         prn(pkgqual);
         prn(si::Ada::convertRoseOperatorNameToAdaName(name));
         prn(" is new ");
-        prnNameQual(n, *fn, fn->get_scope());
+        prnNameQual(n, *fn);
         prn(fn->get_name().getString());
       }
       else
@@ -895,12 +895,12 @@ namespace
     void handle(SgUsingDeclarationStatement& n)
     {
       UseClauseSyntaxResult useSyntax = useClauseSyntax(n.get_declaration());
-      SgScopeStatement*     origScope = useSyntax.decl().get_scope();
+      // SgScopeStatement*     origScope = useSyntax.decl().get_scope();
       std::string           typeAttr  = n.get_adaTypeAttribute();
 
       prn("use ");
       prn(useSyntax.keyword());
-      prnNameQual(n, origScope);
+      prnNameQual(n);
       prn(useSyntax.name());
 
       if (typeAttr.size())
@@ -1077,11 +1077,11 @@ namespace
       // determine which kind of generic instance this is
       if (SgAdaPackageSpecDecl* pkg = isSgAdaPackageSpecDecl(basedcl)) {
         // package
-        prnNameQual(n, *pkg, pkg->get_scope());
+        prnNameQual(n, *pkg);
         prn(pkg->get_name().getString());
       } else if (SgAdaRenamingDecl* ren = isSgAdaRenamingDecl(basedcl)) {
         // renamed package
-        prnNameQual(n, *ren, ren->get_scope());
+        prnNameQual(n, *ren);
         prn(ren->get_name().getString());
       }
 
@@ -1148,7 +1148,7 @@ namespace
       SgLabelStatement& lblstmt = SG_DEREF(n.get_label());
 
       prn("goto ");
-      prnNameQual(n, lblstmt, lblstmt.get_scope());
+      prnNameQual(n);
       prn(lblstmt.get_name());
       prn(STMT_SEP);
     }
@@ -1277,10 +1277,10 @@ namespace
     {
       const SgExpression&         elem     = si::Ada::importedElement(n);
       si::Ada::ImportedUnitResult imported = si::Ada::importedUnit(n);
-      SgScopeStatement*           scope    = imported.decl().get_scope();
+      // SgScopeStatement*           scope    = imported.decl().get_scope();
 
       prn("with ");
-      prnNameQual(elem, scope);
+      prnNameQual(elem);
       prn(imported.name());
       prn(STMT_SEP);
     }
@@ -1473,7 +1473,7 @@ namespace
       SgClassDeclaration& decl = SG_DEREF(n.get_base_class());
 
       prn(" new ");
-      prnNameQual(n, decl.get_scope());
+      prnNameQual(n);
       prn(decl.get_name());
       prn(" with");
     }
@@ -1681,7 +1681,7 @@ namespace
       const bool      isFunc  = si::Ada::isFunction(n.get_type());
       std::string     keyword = isFunc ? "function" : "procedure";
 
-      if (separate) prnSeparateQual(n, n.get_scope());
+      if (separate) prnSeparateQual(n);
 
       if (n.get_ada_formal_subprogram_decl())
         prn("with ");
@@ -1755,7 +1755,7 @@ namespace
   };
 
   std::string
-  AdaStatementUnparser::getQualification(const std::map<SgNode*, std::string>& qualMap, const SgNode& n, SgScopeStatement* scope)
+  AdaStatementUnparser::getQualification(const std::map<SgNode*, std::string>& qualMap, const SgNode& n)
   {
     using Iterator = std::map<SgNode*, std::string>::const_iterator;
 
@@ -1767,15 +1767,15 @@ namespace
   }
 
   std::string
-  AdaStatementUnparser::getQualification(const SgNode& n, SgScopeStatement* scope)
+  AdaStatementUnparser::getQualification(const SgNode& n)
   {
-    return getQualification(unparser.nameQualificationMap(), n, scope);
+    return getQualification(unparser.nameQualificationMap(), n);
   }
 
 
-  void AdaStatementUnparser::prnNameQual(const SgNode& n, SgScopeStatement* scope)
+  void AdaStatementUnparser::prnNameQual(const SgNode& n)
   {
-    prn(getQualification(n, scope));
+    prn(getQualification(n));
   }
 
   void AdaStatementUnparser::prnSeparateQual(const std::string& qual)
@@ -1788,12 +1788,12 @@ namespace
     prn(")\n");
   }
 
-  void AdaStatementUnparser::prnSeparateQual(const SgDeclarationStatement& n, SgScopeStatement* scope)
+  void AdaStatementUnparser::prnSeparateQual(const SgDeclarationStatement& n)
   {
-    prnSeparateQual(getQualification(n, n.get_scope()));
+    prnSeparateQual(getQualification(n));
   }
 
-  void AdaStatementUnparser::prnNameQual(const SgLocatedNode& ref, const SgNode& n, SgScopeStatement* scope)
+  void AdaStatementUnparser::prnNameQual(const SgLocatedNode& ref, const SgNode& n)
   {
     using NameQualMap = Unparse_Ada::NameQualMap;
     using MapOfNameQualMap = std::map<SgNode*, NameQualMap>;
@@ -1802,7 +1802,7 @@ namespace
     const MapOfNameQualMap& typeQualMap = SgNode::get_globalQualifiedNameMapForMapsOfTypes();
     const NameQualMap&      nameQualMapForShared = getQualMapping(typeQualMap, key, SgNode::get_globalQualifiedNameMapForTypes());
 
-    prn(getQualification(nameQualMapForShared, n, scope));
+    prn(getQualification(nameQualMapForShared, n));
   }
 
 
@@ -1955,7 +1955,7 @@ namespace
     prn(keyword);
     prn(" ");
 
-    if (!separated) prnNameQual(n, n.get_scope());
+    if (!separated) prnNameQual(n);
     prn(name);
 
     SgAdaEntryDecl* adaEntry = isSgAdaEntryDecl(&n);
@@ -2008,7 +2008,7 @@ namespace
         prn(" renames ");
         expr(renamed);
 
-        //~ prnNameQual(n, *renamed, renamed->get_scope());
+        //~ prnNameQual(n, *renamed);
         //~ prn(si::Ada::convertRoseOperatorNameToAdaName(renamed->get_name()));
       }
       // else this is a procedure declaration defined using renaming-as-body
@@ -2052,7 +2052,7 @@ namespace
     stmt(def);
 
     prn(" ");
-    if (!separated) prnNameQual(n, n.get_scope());
+    if (!separated) prnNameQual(n);
     prn(name);
     prn(STMT_SEP);
   }

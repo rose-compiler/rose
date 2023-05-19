@@ -189,6 +189,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   discriminated_record.adb             \
   discriminant_specification.ads       \
   dynamic_array.adb                    \
+  endless.adb                          \
   entry_call.adb                       \
   entry_declaration.ads                \
   entry_body_declaration.adb           \
