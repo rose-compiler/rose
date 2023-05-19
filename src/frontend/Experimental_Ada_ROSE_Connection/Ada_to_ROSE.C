@@ -263,6 +263,17 @@ void setFileInfo( SageNode& n,
   (n.*setter)(&mkFileInfo(filename, line, col));
 }
 
+void cpyFileInfo( SgLocatedNode& n,
+                  void (SgLocatedNode::*setter)(Sg_File_Info*),
+                  Sg_File_Info* (SgLocatedNode::*getter)() const,
+                  const SgLocatedNode& src
+                )
+{
+  const Sg_File_Info& info  = SG_DEREF((src.*getter)());
+
+  setFileInfo(n, setter, getter, info.get_filenameString(), info.get_line(), info.get_col());
+}
+
 
 ///
 
@@ -285,6 +296,7 @@ namespace
                  unit, loc.Last_Line,  loc.Last_Column );
   }
 }
+
 
 /// attaches the source location information from \ref elem to
 ///   the AST node \ref n.
@@ -314,6 +326,61 @@ void attachSourceLocation(SgPragma& n, Element_Struct& elem, AstContext ctx)
   attachSourceLocation_internal(n, elem, ctx);
 }
 /// \}
+
+namespace
+{
+/*
+  struct SourceLocationFromChildren
+  {
+    void handle(SgNode& n) { SG_UNEXPECTED_NODE(n); }
+
+    void handle(SgLocatedNode& n)
+    {
+
+
+
+    }
+  };
+*/
+
+  bool _hasLocationInfo(SgLocatedNode* n)
+  {
+    if (!n) return false;
+
+    // this only asks for get_startOfConstruct assuming that
+    // get_endOfConstruct is consistent.
+    Sg_File_Info* info = n->get_startOfConstruct();
+
+    return info && !info->isCompilerGenerated();
+  }
+
+  bool hasLocationInfo(SgNode* n)
+  {
+    return _hasLocationInfo(isSgLocatedNode(n));
+  }
+}
+
+void computeSourceRangeFromChildren(SgLocatedNode& n)
+{
+  std::vector<SgNode*> successors = n.get_traversalSuccessorContainer();
+  auto beg    = successors.begin();
+  auto lim    = successors.end();
+  auto first  = std::find_if(beg, lim, hasLocationInfo);
+  auto rbeg   = successors.rbegin();
+  auto rlim   = std::make_reverse_iterator(first);
+  auto last   = std::find_if(rbeg, rlim, hasLocationInfo);
+
+  if ((first == lim) || (last == rlim))
+    return;
+
+  cpyFileInfo( n,
+               &SgLocatedNode::set_startOfConstruct, &SgLocatedNode::get_startOfConstruct,
+               SG_DEREF(isSgLocatedNode(*first)) );
+
+  cpyFileInfo( n,
+               &SgLocatedNode::set_endOfConstruct,   &SgLocatedNode::get_endOfConstruct,
+               SG_DEREF(isSgLocatedNode(*last)) );
+}
 
 namespace
 {
@@ -991,7 +1058,7 @@ namespace
     return res;
   }
 
-  struct InheritFileInfo : AstSimpleProcessing
+  struct GenFileInfo : AstSimpleProcessing
   {
     void visit(SgNode* sageNode) override
     {
@@ -999,6 +1066,7 @@ namespace
 
       if (n == nullptr || !n->isTransformation()) return;
 
+      // \todo consider using computeSourceRangeFromChildren which seems more accurate.
       SgLocatedNode* parentNode = isSgLocatedNode(n->get_parent());
       ADA_ASSERT(parentNode && !parentNode->isTransformation());
 
@@ -1010,13 +1078,10 @@ namespace
     }
   };
 
-  /// Implements a quick check that the AST is properly constructed.
-  ///   While some issues, such as parent pointers will be fixed at the
-  ///   post processing stage, it may be good to point inconsistencies
-  ///   out anyway.
-  void inheritFileInfo(SgSourceFile* file)
+  /// sets the file info to the parents file info if not set otherwise
+  void genFileInfo(SgSourceFile* file)
   {
-    InheritFileInfo fixer;
+    GenFileInfo fixer;
 
     fixer.traverse(file, preorder);
   }
@@ -1093,7 +1158,6 @@ namespace
       //~ logVarRefExp(isSgVarRefExp(n));
     }
   };
-
 
   /// Implements a quick check that the AST is properly constructed.
   ///   While some issues, such as parent pointers will be fixed at the
@@ -1899,7 +1963,7 @@ void convertAsisToROSE(Nodes_Struct& headNodes, SgSourceFile* file)
   //~ generateDOT(&astScope, astDotFile);
 
   logInfo() << "Checking AST post-production" << std::endl;
-  inheritFileInfo(file);
+  genFileInfo(file);
   //~ astSanityCheck(file);
 
   file->set_processedToIncludeCppDirectivesAndComments(false);

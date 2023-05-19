@@ -551,7 +551,7 @@ namespace
 
   /// gets the body of a function declaration \ref defdcl
   /// \pre defdcl is the defining declaration
-  SgBasicBlock& getFunctionBody(SgFunctionDeclaration& defdcl)
+  SgBasicBlock& functionBody(SgFunctionDeclaration& defdcl)
   {
     SgFunctionDefinition* def = isSgFunctionDefinition(defdcl.get_definition());
 
@@ -1654,7 +1654,6 @@ namespace
     simpleExceptionBlockHandler(handlers, blk, trystmt, ctx.labelsAndLoops(lblmgr));
   }
 
-
   // completes any block with exception handlers and pragmas attached
   void completeHandledBlock( Statement_List bodyStatements,
                              Exception_Handler_List exceptionHandlers,
@@ -1682,7 +1681,13 @@ namespace
     blockHandler(bodyStatements, stmtblk, pragmaCtx);
 
     if (trystmt)
+    {
       exhandlerHandler(hndlrs, dominantBlock, *trystmt, pragmaCtx);
+
+      computeSourceRangeFromChildren(SG_DEREF(trystmt->get_body()));
+      computeSourceRangeFromChildren(SG_DEREF(trystmt->get_catch_statement_seq_root()));
+      computeSourceRangeFromChildren(*trystmt);
+    }
 
     placePragmas(pragmas, std::move(activeScopes), pragmaCtx);
   }
@@ -2284,6 +2289,8 @@ namespace
 
     traverseIDs(range, elemMap(), StmtCreator{pragmaCtx.scope(body)});
 
+    computeSourceRangeFromChildren(body);
+    attachSourceLocation(sgnode, elem, pragmaCtx);
     placePragmas(ex.Pragmas, { &body }, pragmaCtx);
     /* unused fields:
     */
@@ -2707,12 +2714,7 @@ namespace
 
         // look at the base of a derived type
         if (resKind == A_Derived_Type_Definition)
-        {
           resKind  = queryBaseDefinitionData(typeDefn, resKind, complElem.ID, ctx);
-
-          logWarn() << declname.fullName << " " << (resKind == An_Enumeration_Type_Definition)
-                    << std::endl;
-        }
 
         break;
       }
@@ -4166,12 +4168,13 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         //   createFunDef chooses the scope as needed.
         SgScopeStatement&       logicalScope = adaname.parent_scope();
         SgFunctionDeclaration&  sgnode  = createFunDef(nondef, adaname.ident, logicalScope, rettype, ParameterCompletion{params, ctx});
-        SgBasicBlock&           declblk = getFunctionBody(sgnode);
+        SgBasicBlock&           declblk = functionBody(sgnode);
 
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
         privatize(sgnode, isPrivate);
         attachSourceLocation(sgnode, elem, ctx);
+        attachSourceLocation(declblk, elem, ctx); // experimental
         ctx.appendStatement(sgnode);
 
         // PP 2/6/22: Since a null procedure does not have any body,
