@@ -389,6 +389,12 @@ void attachSourceLocation(SgExpression& n, Element_Struct& elem, AstContext ctx)
 void attachSourceLocation(SgPragma& n, Element_Struct& elem, AstContext ctx);
 /// @}
 
+/// computes a nodes source location from its children
+///   e.g., a try stmt includes try block and handlers
+///         a try block ranges from first to last statement
+///         a handler list ranges from first handler to last handler
+void computeSourceRangeFromChildren(SgLocatedNode&);
+
 /// logs that an asis element kind \ref kind has been explored
 /// \param kind a C-string naming the Asis kind
 /// \param elemID the Asis ID associated with this element

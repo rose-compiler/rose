@@ -1165,7 +1165,15 @@ SgLocatedNode::addToAttachedPreprocessingInfo(
   // for Zsh: params.c).  Now tested using test2013_48.C, though comments not output precisely.
 
      ROSE_ASSERT (dynamic_cast<SgTypedefSeq*>(this) == NULL);
-     ROSE_ASSERT (dynamic_cast<SgCatchStatementSeq*>(this) == NULL);
+
+  // PP (5/19/23): In Ada the catch sequence is introduced with a keyword "exception".
+  //               The keyword can have preprocessor info attached.
+  //               Since Asis does not break out the location of the exception keyword
+  //               it is mostly a guess if the preprocessor directive applies to the
+  //               whole sequence or just the first handler.
+  //               Having a pass that matches endif with if (unimplemented) could
+  //               remedy this problem to some extent.
+     ROSE_ASSERT (SageInterface::is_Ada_language() || (isSgCatchStatementSeq(this) == nullptr));
 
   // These should not be used but are are least handled in the unparser (if not debugged)
      ROSE_ASSERT (dynamic_cast<SgCtorInitializerList*>(this) == NULL);
