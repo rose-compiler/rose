@@ -4742,17 +4742,15 @@ ATbool ATermToSageJovialTraversal::traverse_ForStatement(ATerm term)
          // MATCHED LabelList
       } else return ATfalse;
 
-      // First just look for ControlItem (variable name) and traverse fully once
-      // we have a for statement. This is needed in order for a possible ControlLetter
-      // variable reference to be created in the for statement scope.
-      std::string control_var_name;
-      if (traverse_ForClause(t_clause, control_var_name)) {
-         // MATCHED ForClause
-      } else return ATfalse;
-
    // Begin SageTreeBuilder
-      sage_tree_builder.Enter(for_stmt, control_var_name);
+      sage_tree_builder.Enter(for_stmt);
       setSourcePosition(for_stmt, term);
+
+      // Control variable goes in the for statement scope, not in its body
+      // The normal pattern of SageTreeBuilder is to push a statement scope
+      // and then its body. Break that pattern here because the control
+      // variable is seen after the for statement is constructed.
+      SB::popScopeStack();  // for_stmt loop body
 
       if (traverse_ForClause(t_clause, var_ref, init, phrase1, phrase2, phrase1_enum, phrase2_enum)) {
          // MATCHED ForClause
@@ -4802,11 +4800,18 @@ ATbool ATermToSageJovialTraversal::traverse_ForStatement(ATerm term)
       for_stmt->set_by_or_then_expression(by_or_then_expr);
       for_stmt->set_loop_statement_type(loop_type_enum);
 
+      if (initialization) initialization->set_parent(for_stmt);
+      if (while_expr) while_expr->set_parent(for_stmt);
+      if (by_or_then_expr) by_or_then_expr->set_parent(for_stmt);
+
       // Attach comments after ForClause and before body
       if (while_expr) {
         sage_tree_builder.attachComments(while_expr, getLocation(t_clause), /*at_end*/true);
       }
       sage_tree_builder.attachComments(for_stmt->get_loop_body(), getLocation(t_stmt));
+
+      // Now the scope of the for loop body should be used
+      SB::pushScopeStack(for_stmt->get_loop_body());
 
       // Match ControlledStatement (body of loop)
       if (traverse_Statement(t_stmt)) {
@@ -4817,26 +4822,6 @@ ATbool ATermToSageJovialTraversal::traverse_ForStatement(ATerm term)
 
 // End SageTreeBuilder
    sage_tree_builder.Leave(for_stmt);
-
-   return ATtrue;
-}
-
-ATbool ATermToSageJovialTraversal::traverse_ForClause(ATerm term, std::string &control_var_name)
-{
-#if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_ForClause: %s\n", ATwriteToString(term));
-#endif
-
-   ATerm t_item, t_clause;
-   char* var_name;
-
-   if (ATmatch(term, "ForClause(<term>,<term>)", &t_item, &t_clause)) {
-      if (ATmatch(t_item, "<str>" , &var_name)) {
-         control_var_name = var_name;
-      }
-      else return ATfalse;
-   }
-   else return ATfalse;
 
    return ATtrue;
 }
@@ -4864,11 +4849,11 @@ ATbool ATermToSageJovialTraversal::traverse_ForClause(ATerm term, SgExpression* 
 
       if (ATmatch(t_item, "<str>" , &var_name)) {
          // MATCHED ControlItem
-         SgVariableSymbol* var_sym;
-         var_sym = SageInterface::lookupVariableSymbolInParentScopes(var_name, SageBuilder::topScopeStack());
-         ASSERT_not_null(var_sym);
+         SgVarRefExp* typedVarRef{nullptr};
+         sage_tree_builder.Enter(typedVarRef, var_name, true);
+         sage_tree_builder.Leave(typedVarRef);
 
-         var_ref = SageBuilder::buildVarRefExp_nfi(var_sym);
+         var_ref = typedVarRef;
          setSourcePosition(var_ref, t_item);
       }
       else return ATfalse;
@@ -4879,12 +4864,13 @@ ATbool ATermToSageJovialTraversal::traverse_ForClause(ATerm term, SgExpression* 
    }
    else return ATfalse;
 
+   ASSERT_not_null(var_ref);
    return ATtrue;
 }
 
 ATbool ATermToSageJovialTraversal::traverse_ControlClause(ATerm term, SgExpression* &initial_value,
-                                                             SgExpression* &phrase1, SgExpression* &phrase2,
-                                                             int &phrase1_enum, int &phrase2_enum)
+                                                          SgExpression* &phrase1, SgExpression* &phrase2,
+                                                          int &phrase1_enum, int &phrase2_enum)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ControlClause: %s\n", ATwriteToString(term));
@@ -5955,6 +5941,7 @@ ATbool ATermToSageJovialTraversal::traverse_BitFormula(ATerm term, SgExpression*
    else return ATfalse;
 
    ASSERT_not_null(expr);
+   setSourcePosition(expr, term);
 
    return ATtrue;
 }
@@ -5971,6 +5958,7 @@ ATbool ATermToSageJovialTraversal::traverse_LogicalOperand(ATerm term, SgExpress
    else return ATfalse;
 
    ASSERT_not_null(expr);
+   setSourcePosition(expr, term);
 
    return ATtrue;
 }
@@ -6008,7 +5996,6 @@ ATbool ATermToSageJovialTraversal::traverse_BitPrimary(ATerm term, SgExpression*
       //                                      cast_enum? default? ctype? static? dynamic?
       SgCastExp* cast_expr = SageBuilder::buildCastExp(cast_formula, conv_type, SgCastExp::e_default);
       ASSERT_not_null(cast_expr);
-      setSourcePosition(cast_expr, term);
       expr = cast_expr;
    }
    else if (traverse_FunctionCall(term, expr)) {
@@ -6021,6 +6008,7 @@ ATbool ATermToSageJovialTraversal::traverse_BitPrimary(ATerm term, SgExpression*
    // NamedBitConstant       -> BitPrimary {cons("NamedBitConstant")} (rejected in grammar)
 
    ASSERT_not_null(expr);
+   setSourcePosition(expr, term);
 
    return ATtrue;
 }
@@ -6745,6 +6733,7 @@ ATbool ATermToSageJovialTraversal::traverse_FunctionCall(ATerm term, SgExpressio
    //   MachineSpecificFunctionCall -> FunctionCall
 
    ASSERT_not_null(expr);
+   setSourcePosition(expr, term);
 
    return ATtrue;
 }

@@ -1418,8 +1418,8 @@ ROSE_DLL_API SgTemplateClassDeclaration* buildNondefiningTemplateClassDeclaratio
 ROSE_DLL_API SgClassDeclaration* buildNondefiningClassDeclaration ( SgName name, SgScopeStatement* scope );
 ROSE_DLL_API SgClassDeclaration* buildDefiningClassDeclaration    ( SgName name, SgScopeStatement* scope );
 
-//! DQ (11/7/2009): Added function to build C++ class (builds both the non-defining and defining declarations; in that order).
-ROSE_DLL_API SgClassDeclaration* buildClassDeclaration    ( SgName name, SgScopeStatement* scope );
+//! Build C++ class (builds both the non-defining and defining declarations; in that order).
+ROSE_DLL_API SgClassDeclaration* buildClassDeclaration(SgName name, SgScopeStatement* scope);
 
 //! Build an enum first nondefining declaration, without file info
 ROSE_DLL_API SgEnumDeclaration* buildNondefiningEnumDeclaration_nfi(const SgName& name, SgScopeStatement* scope);
@@ -1447,10 +1447,6 @@ ROSE_DLL_API SgNaryBooleanOp* buildNaryBooleanOp_nfi(SgExpression* lhs);
 ROSE_DLL_API SgStringConversion* buildStringConversion(SgExpression* exp);
 ROSE_DLL_API SgStringConversion* buildStringConversion_nfi(SgExpression* exp);
 
-// DQ (6/6/2012): Addeding support to include template arguments in the generated type (template argument must be provided as early as possible).
-// DQ (1/24/2009): Added this "_nfi" function but refactored buildStructDeclaration to also use it (this needs to be done uniformally).
-// SgClassDeclaration * buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgClassDeclaration* nonDefiningDecl, bool buildTemplateInstantiation = false);
-// SgClassDeclaration * buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgClassDeclaration* nonDefiningDecl, bool buildTemplateInstantiation);
 ROSE_DLL_API SgClassDeclaration* buildClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgClassDeclaration* nonDefiningDecl, bool buildTemplateInstantiation, SgTemplateArgumentPtrList* templateArgumentsList);
 
 // DQ (8/11/2013): I think that the specification of both SgTemplateParameterPtrList and SgTemplateArgumentPtrList is redundant with the nonDefiningDecl (which is a required parameter).
@@ -1466,8 +1462,8 @@ ROSE_DLL_API SgJovialDefineDeclaration * buildJovialDefineDeclaration_nfi (const
                                                                            const std::string& def_string, SgScopeStatement* scope=NULL);
 
 //! Build a Jovial loop statement. Two variants are FOR and WHILE.
-ROSE_DLL_API SgJovialForThenStatement* buildJovialForThenStatement_nfi(SgExpression* init_expr, SgExpression* incr_expr,
-                                                                       SgExpression* test_expr);
+//! A loop body will be created and its parent set to the loop statement.
+ROSE_DLL_API SgJovialForThenStatement* buildJovialForThenStatement_nfi();
 
 //! Build an SgDerivedTypeStatement Fortran derived type declaration with a
 //! class declaration and definition (creating both the defining and nondefining declarations as required).

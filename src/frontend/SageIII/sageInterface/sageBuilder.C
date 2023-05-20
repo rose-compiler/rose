@@ -10072,39 +10072,26 @@ SageBuilder::buildJovialDefineDeclaration_nfi(const SgName& name, const std::str
   }
 
 // Build a Jovial loop statement. Two variants are FOR and WHILE.
+// A loop body will be created and its parent set to the loop statement.
 SgJovialForThenStatement*
-SageBuilder::buildJovialForThenStatement_nfi(SgExpression* init_expr,
-                                             SgExpression* while_expr, SgExpression* by_or_then_expr)
-  {
-     SgJovialForThenStatement* for_stmt;
-     ROSE_ASSERT(init_expr);
+SageBuilder::buildJovialForThenStatement_nfi()
+{
+   SgJovialForThenStatement* forStmt{nullptr};
 
-  // Both the increment and the test expression can be a nullptr, create a SgNullExpression if necessary.
-  //
-     if (while_expr == NULL) {
-        while_expr = buildNullExpression_nfi();
-     }
-     if (by_or_then_expr == NULL) {
-        by_or_then_expr = buildNullExpression_nfi();
-     }
+   SgBasicBlock* body = SageBuilder::buildBasicBlock_nfi();
 
-     SgBasicBlock* body = SageBuilder::buildBasicBlock_nfi();
+   forStmt = new SgJovialForThenStatement(nullptr, nullptr, nullptr, body);
+   ASSERT_not_null(forStmt);
+   setOneSourcePositionNull(forStmt);
 
-     for_stmt = new SgJovialForThenStatement(init_expr, while_expr, by_or_then_expr, body);
-     ROSE_ASSERT(for_stmt);
-     setOneSourcePositionNull(for_stmt);
+   body->set_parent(forStmt);
 
-     if (topScopeStack()) {
-        for_stmt->set_parent(topScopeStack());
-     }
-     body->set_parent(for_stmt);
+   if (SageInterface::is_language_case_insensitive()) {
+      forStmt->setCaseInsensitive(true);
+   }
 
-     if (SageInterface::is_language_case_insensitive()) {
-        for_stmt->setCaseInsensitive(true);
-     }
-
-     return for_stmt;
-  }
+   return forStmt;
+}
 
 // This should take a SgClassDeclaration::class_types kind parameter!
 SgClassDeclaration * SageBuilder::buildStructDeclaration(const SgName& name, SgScopeStatement* scope /*=NULL*/)
@@ -10139,15 +10126,6 @@ SgClassDeclaration * SageBuilder::buildStructDeclaration(const SgName& name, SgS
         {
           fixStructDeclaration(nondefdecl,scope);
           fixStructDeclaration(defdecl,scope);
-#if 0
-          SgClassSymbol* mysymbol = new SgClassSymbol(nondefdecl);
-          ROSE_ASSERT(mysymbol);
-          scope->insert_symbol(name, mysymbol);
-          defdecl->set_scope(scope);
-          nondefdecl->set_scope(scope);
-          defdecl->set_parent(scope);
-          nondefdecl->set_parent(scope);
-#endif
         }
 #else
   // DQ (1/24/2009): Refactored to use the buildStructDeclaration_nfi function.
