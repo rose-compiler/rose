@@ -238,9 +238,7 @@ public:
    void Enter(SgJovialDirectiveStatement* &, const std::string &compool_name, std::vector<std::string> &);
    void Leave(SgJovialDirectiveStatement*);
 
-   void Enter(SgJovialForThenStatement* &, const std::string &);
-   void Enter(SgJovialForThenStatement* &, SgExpression*, SgExpression*, SgExpression*,
-                                           SgJovialForThenStatement::loop_statement_type_enum);
+   void Enter(SgJovialForThenStatement* &);
    void Leave(SgJovialForThenStatement*);
 
    void Enter(SgJovialCompoolStatement* &, const std::string &, const SourcePositionPair &);

@@ -1540,76 +1540,35 @@ Leave(SgJovialDirectiveStatement* directive)
 }
 
 void SageTreeBuilder::
-Enter(SgJovialForThenStatement* &for_stmt, const std::string &init_var_name)
+Enter(SgJovialForThenStatement* &forStmt)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgJovialForThenStatement* &, ...) \n";
 
-   SgBasicBlock* body = SageBuilder::buildBasicBlock_nfi();
-   SgScopeStatement* scope = SageBuilder::topScopeStack();
+   forStmt = SB::buildJovialForThenStatement_nfi();
+   SI::appendStatement(forStmt, SB::topScopeStack());
 
-   for_stmt = new SgJovialForThenStatement(nullptr, nullptr, nullptr, body);
-   ASSERT_not_null(for_stmt);
-   SageInterface::setOneSourcePositionNull(for_stmt);
-
-   for_stmt->set_parent(scope);
-   body->set_parent(for_stmt);
-
-   if (SageInterface::is_language_case_insensitive()) {
-      for_stmt->setCaseInsensitive(true);
-   }
-
-// Push stack for loop initialization variable (possible) declaration
-   SageBuilder::pushScopeStack(for_stmt);
-
-   SgVarRefExp* init_var;
-   Enter(init_var, init_var_name, true);
-   Leave(init_var);
-
-   SgVariableSymbol* var_sym = SageInterface::lookupVariableSymbolInParentScopes(init_var_name, for_stmt);
-   ASSERT_not_null(var_sym);
-
-// Append before push (so that symbol lookup will work)
-   SageInterface::appendStatement(for_stmt, scope);
-   SageBuilder::pushScopeStack(body);
+   SB::pushScopeStack(forStmt);
+   SB::pushScopeStack(forStmt->get_loop_body());
 }
 
 void SageTreeBuilder::
-Enter(SgJovialForThenStatement* &for_stmt, SgExpression* init_expr, SgExpression* while_expr,
-      SgExpression* by_or_then_expr, SgJovialForThenStatement::loop_statement_type_enum loop_type)
-{
-   mlog[TRACE] << "SageTreeBuilder::Enter(SgJovialForThenStatement* &, ...) \n";
-
-// The increment and test expressions can be nullptr (at least from the grammar)
-   ASSERT_not_null(init_expr);
-
-   for_stmt = SageBuilder::buildJovialForThenStatement_nfi(init_expr, while_expr, by_or_then_expr);
-
-   SgBasicBlock* body = for_stmt->get_loop_body();
-   ASSERT_not_null(body);
-
-   for_stmt->set_loop_statement_type(loop_type);
-
-// Append before push (so that symbol lookup will work)
-   SageInterface::appendStatement(for_stmt, SageBuilder::topScopeStack());
-   SageBuilder::pushScopeStack(body);
-}
-
-void SageTreeBuilder::
-Leave(SgJovialForThenStatement* for_stmt)
+Leave(SgJovialForThenStatement* forStmt)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgJovialForThenStatement*, ...) \n";
 
-   ASSERT_not_null(for_stmt);
+   ASSERT_not_null(forStmt);
 
-   if (for_stmt->get_while_expression() == nullptr) {
-      for_stmt->set_while_expression(SageBuilder::buildNullExpression_nfi());
+   if (forStmt->get_while_expression() == nullptr) {
+      forStmt->set_while_expression(SB::buildNullExpression_nfi());
+      forStmt->get_while_expression()->set_parent(forStmt);
    }
-   if (for_stmt->get_by_or_then_expression() == nullptr) {
-      for_stmt->set_by_or_then_expression(SageBuilder::buildNullExpression_nfi());
+   if (forStmt->get_by_or_then_expression() == nullptr) {
+      forStmt->set_by_or_then_expression(SB::buildNullExpression_nfi());
+      forStmt->get_by_or_then_expression()->set_parent(forStmt);
    }
 
-   SageBuilder::popScopeStack();  // for body
-   SageBuilder::popScopeStack();  // for statement
+   SB::popScopeStack();  // for loop body
+   SB::popScopeStack();  // for statement
 }
 
 void SageTreeBuilder::
@@ -1725,8 +1684,7 @@ Enter(SgVariableDeclaration* &var_decl, const std::string &name, SgType* type, S
       }
    }
 
-   var_decl = SageBuilder::buildVariableDeclaration_nfi(var_name, type, var_init, SageBuilder::topScopeStack());
-   ASSERT_not_null(var_decl);
+   var_decl = SB::buildVariableDeclaration_nfi(var_name, type, var_init, SB::topScopeStack());
 
    if (var_decl->get_definingDeclaration() == nullptr) {
      var_decl->set_definingDeclaration(var_decl);
@@ -1746,11 +1704,11 @@ Enter(SgVariableDeclaration* &var_decl, const std::string &name, SgType* type, S
    ASSERT_not_null(var_defn);
    ASSERT_require(var_defn == init_name);
 
-   SageInterface::appendStatement(var_decl, SageBuilder::topScopeStack());
+   SI::appendStatement(var_decl, SB::topScopeStack());
 
 // Look for a symbol has been previously implicitly declared and fix the variable reference
    if (forward_var_refs_.find(name) != forward_var_refs_.end()) {
-     if (SgVariableSymbol* var_sym = SageInterface::lookupVariableSymbolInParentScopes(name)) {
+     if (SgVariableSymbol* var_sym = SI::lookupVariableSymbolInParentScopes(name)) {
         SgVarRefExp* prev_var_ref = forward_var_refs_[name];
         SgVariableSymbol* prev_var_sym = prev_var_ref->get_symbol();
         ASSERT_not_null(prev_var_sym);
