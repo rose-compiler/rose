@@ -3713,7 +3713,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
             // DQ (12/4/2007): Added to ROSE (was removed at some point).
                unparseLineDirectives(stmt);
 
-            // DQ (7/19/2007): This only applies to Fortran where every statement can have a statement number (numeric lable, different from SgLabelStatement)
+            // DQ (7/19/2007): This only applies to Fortran where every statement can have a statement number (numeric label, different from SgLabelStatement)
                unparseStatementNumbers(stmt,info);
 #if 0
                printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): Selecting an unparse function for stmt = %p = %s \n",stmt,stmt->class_name().c_str());
