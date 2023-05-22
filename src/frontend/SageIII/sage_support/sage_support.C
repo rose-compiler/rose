@@ -411,64 +411,11 @@ outputTypeOfFileAndExit( const string & name )
   // more specifically what kind of file most tools would think this
   // file is (using the system file(1) command as a standard way to identify
   // file types using their first few bytes.
-
-  // printf ("In outputTypeOfFileAndExit(%s): Evaluate the file type \n",name.c_str());
-
-#define DEAD_CODE_POTENTIALLY_USEFUL 0
-#if DEAD_CODE_POTENTIALLY_USEFUL
-#error "DEAD CODE!"
-
-  // DQ (2/3/2009): This works now, I think that Andreas fixed it.
-
-  // Use file(1) to try to figure out the file type to report in the exception
-     int child_stdout[2];
-     pipe(child_stdout);
-     pid_t pid = fork();
-
-     printf ("pid = %d \n",pid);
-
-     if (pid == -1)
-        { // Error
-          perror("fork: error in outputTypeOfFileAndExit ");
-          exit (1);
-        }
-     if (0 == pid)
-        {
-          close(0);
-          dup2(child_stdout[1], 1);
-          close(child_stdout[0]);
-          close(child_stdout[1]);
-          execlp("/usr/bin/file", "/usr/bin/file", "-b", name.c_str(), nullptr);
-          exit(1);
-        }
-       else
-        {
-          int status;
-          if (waitpid(pid, &status, 0) == -1)
-             {
-               perror("waitpid");
-               abort();
-             }
-
-          char buf[4096];
-          memset(buf, 0, sizeof buf);
-          read(child_stdout[0], buf, sizeof buf);
-          std::string buffer(buf);
-          buffer =  name+ " unrecognized file format: " + buffer;
-
-       // DQ (2/3/2009): It is helpful to report what type of file this is where possible.
-          whatTypeOfFileIsThis(name);
-
-          throw SgAsmGenericFile::FormatError(buffer.c_str());
-        }
-#error "DEAD CODE!"
-#else
      whatTypeOfFileIsThis(name);
 
      printf ("In outputTypeOfFileAndExit(): name = %s \n",name.c_str());
      printf ("\n\nExiting: Unknown file Error \n\n");
      ROSE_ABORT();
-#endif
    }
 
 
@@ -788,13 +735,6 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
      ASSERT_not_null(project);
      Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(argv,project->get_binary_only());
 
-#if 0
-     printf ("In determineFileType(): listToString(argv) = %s \n",StringUtility::listToString(argv).c_str());
-     printf ("In determineFileType(): listToString(fileList) = %s \n",StringUtility::listToString(fileList).c_str());
-#endif
-
-  // DQ (2/6/2009): This fails for the build function SageBuilder::buildFile(), so OK to comment it out.
-  // DQ (12/23/2008): I think that we may be able to assert this is true, if so then we can simplify the code below.
      ROSE_ASSERT(fileList.empty() == false);
 
      if (fileList.empty() == false)
@@ -810,25 +750,11 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
           ROSE_ASSERT(fileList.size() == 1);
 
        // DQ (8/31/2006): Convert the source file to have a path if it does not already
-       // p_sourceFileNameWithPath    = *(fileList.begin());
           string sourceFilename = *(fileList.begin());
-
-       // printf ("Before conversion to absolute path: sourceFilename = %s \n",sourceFilename.c_str());
-
-       // sourceFilename = StringUtility::getAbsolutePathFromRelativePath(sourceFilename);
           sourceFilename = StringUtility::getAbsolutePathFromRelativePath(sourceFilename, true);
-
-       // printf ("After conversion to absolute path: sourceFilename = %s \n",sourceFilename.c_str());
 
        // This should be an absolute path
           string targetSubstring = "/";
-       // if (sourceFilename.substr(0,targetSubstring.size()) != targetSubstring)
-       //      printf ("@@@@@@@@@@@@@@@@@@@@ In SgFile::setupSourceFilename(int,char**): sourceFilename = %s @@@@@@@@@@@@@@@@@@@@\n",sourceFilename.c_str());
-       // ROSE_ASSERT(sourceFilename.substr(0,targetSubstring.size()) == targetSubstring);
-
-       // Rama: 12/06/06: Fixup for problem with file names.
-            // Made changes to this file and string utilities function getAbsolutePathFromRelativePath by cloning it with name getAbsolutePathFromRelativePathWithErrors
-            // Also refer to script that tests -- reasonably exhaustively -- to various combinarions of input files.
 
        // Zack Galbreath 1/9/2014: Windows absolute paths do not begin with "/".
        // The following printf could cause problems for our testing systems because
@@ -851,9 +777,6 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                printf ("Warning: detected use of /dev/null as input filename: not yet supported (exiting with 0 exit code) \n");
                exit(0);
              }
-
-       // DQ (5/18/2008): Set this to true (redundant, since the default already specified as true)
-       // file->set_requires_C_preprocessor(true);
 
        // DQ (11/17/2007): Mark this as a file using a Fortran file extension (else this turns off options down stream).
           if (CommandlineProcessing::isFortranFileNameSuffix(filenameExtension) == true)
@@ -917,7 +840,6 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
                if (CommandlineProcessing::isFortran90FileNameSuffix(filenameExtension) == true)
                   {
-                 // printf ("Calling file->set_sourceFileUsesFortran90FileExtension(true) \n");
                     file->set_sourceFileUsesFortran90FileExtension(true);
 
                  // Use the filename suffix as a default means to set this value
@@ -940,7 +862,6 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
                if (CommandlineProcessing::isFortran2003FileNameSuffix(filenameExtension) == true)
                   {
-                 // printf ("Calling file->set_sourceFileUsesFortran2003FileExtension(true) \n");
                     file->set_sourceFileUsesFortran2003FileExtension(true);
 
                  // Use the filename suffix as a default means to set this value
@@ -952,7 +873,6 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
                if (CommandlineProcessing::isCoArrayFortranFileNameSuffix(filenameExtension) == true)
                   {
-                 // printf ("Calling file->set_sourceFileUsesFortran2003FileExtension(true) \n");
                     file->set_sourceFileUsesCoArrayFortranFileExtension(true);
 
                  // Use the filename suffix as a default means to set this value
@@ -985,7 +905,6 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
                if (CommandlineProcessing::isPHPFileNameSuffix(filenameExtension) == true)
                   {
-                 // file = new SgSourceFile ( argv,  project );
                     SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
                     file = sourceFile;
 

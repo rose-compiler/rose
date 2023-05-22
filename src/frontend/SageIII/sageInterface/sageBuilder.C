@@ -995,7 +995,6 @@ SageBuilder::setTemplateSpecializationArgumentsInDeclaration( SgDeclarationState
      testTemplateArgumentParents(decl);
    }
 
-
 void
 SageBuilder::setTemplateParametersInDeclaration( SgDeclarationStatement* decl, SgTemplateParameterPtrList* templateParameterList_input )
    {
@@ -1019,21 +1018,17 @@ SageBuilder::setTemplateParametersInDeclaration( SgDeclarationStatement* decl, S
      testTemplateParameterParents(decl);
    }
 
-
-
 // Only used to build parameter arguments for function ??
 // should be transparently generated for most variable declaration builder
 // deferred symbol insertion, scope setting , etc
 // do them when it is actually used with the  parameterList!!
 SgInitializedName *
-SageBuilder::buildInitializedName ( const SgName & name, SgType* type, SgInitializer* init /* = NULL */)
+SageBuilder::buildInitializedName (const SgName & name, SgType* type, SgInitializer* init /*= NULL*/)
 {
-     //foo(int);  empty name is possible here!!
-     //ROSE_ASSERT(name.is_null() == false);
-     ROSE_ASSERT(type != NULL);
+     ASSERT_not_null(type);
 
      SgInitializedName* initializedName = new SgInitializedName(name,type,init);
-     ROSE_ASSERT(initializedName);
+     ASSERT_not_null(initializedName);
 
     setSourcePositionAtRootAndAllChildren(initializedName);
     return initializedName;
@@ -1051,7 +1046,6 @@ SageBuilder::buildInitializedName ( const char* name, SgType* type)
    {
   // DQ (3/20/2017): Call the version of the function that takes a string as part of migration away from this function that takes a const char*.
   // This also provides a test of the string based version of this function (for code coverage).
-  // SgName var_name(name);
      string var_name(name);
      return buildInitializedName(var_name,type);
    }
@@ -1059,13 +1053,11 @@ SageBuilder::buildInitializedName ( const char* name, SgType* type)
 SgInitializedName *
 SageBuilder::buildInitializedName_nfi ( const SgName & name, SgType* type, SgInitializer* init)
    {
-     ROSE_ASSERT(type != NULL);
+     ASSERT_not_null(type);
 
      SgInitializedName* initializedName = new SgInitializedName(name,type,init);
-     ROSE_ASSERT(initializedName != NULL);
-
-  // DQ (9/4/2013): Added test.
-     ROSE_ASSERT(init == NULL || init->get_parent() == initializedName);
+     ASSERT_not_null(initializedName);
+     ASSERT_require(init == nullptr || init->get_parent() == initializedName);
 
      setOneSourcePositionNull(initializedName);
 

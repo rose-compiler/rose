@@ -1,0 +1,104 @@
+struct Expr {
+  template <typename A, typename = common::NoLvalue<A>> Expr(A &&x) : u(std::move(x)) {} using UnionTrait = std::true_type; Expr(Expr &&) = default; Expr &operator=(Expr &&) = default; Expr(const Expr &) = delete; Expr &operator=(const Expr &) = delete; Expr() = delete;
+
+  struct IntrinsicUnary { IntrinsicUnary(IntrinsicUnary &&) = default; IntrinsicUnary &operator=(IntrinsicUnary &&) = default; IntrinsicUnary(const IntrinsicUnary &) = delete; IntrinsicUnary &operator=(const IntrinsicUnary &) = delete; IntrinsicUnary() = delete; IntrinsicUnary(common::Indirection<Expr> &&x) : v(std::move(x)) {} using WrapperTrait = std::true_type; common::Indirection<Expr> v; };
+  struct Parentheses : public IntrinsicUnary {
+    using IntrinsicUnary::IntrinsicUnary;
+  };
+  struct UnaryPlus : public IntrinsicUnary {
+    using IntrinsicUnary::IntrinsicUnary;
+  };
+  struct Negate : public IntrinsicUnary {
+    using IntrinsicUnary::IntrinsicUnary;
+  };
+  struct NOT : public IntrinsicUnary {
+    using IntrinsicUnary::IntrinsicUnary;
+  };
+
+  struct PercentLoc { PercentLoc(PercentLoc &&) = default; PercentLoc &operator=(PercentLoc &&) = default; PercentLoc(const PercentLoc &) = delete; PercentLoc &operator=(const PercentLoc &) = delete; PercentLoc() = delete; PercentLoc(common::Indirection<Variable> &&x) : v(std::move(x)) {} using WrapperTrait = std::true_type; common::Indirection<Variable> v; };
+
+  struct DefinedUnary {
+    template <typename... Ts, typename = common::NoLvalue<Ts...>> DefinedUnary(Ts &&...args) : t(std::move(args)...) {} using TupleTrait = std::true_type; DefinedUnary(DefinedUnary &&) = default; DefinedUnary &operator=(DefinedUnary &&) = default; DefinedUnary(const DefinedUnary &) = delete; DefinedUnary &operator=(const DefinedUnary &) = delete; DefinedUnary() = delete;
+    std::tuple<DefinedOpName, common::Indirection<Expr>> t;
+  };
+
+  struct IntrinsicBinary {
+    template <typename... Ts, typename = common::NoLvalue<Ts...>> IntrinsicBinary(Ts &&...args) : t(std::move(args)...) {} using TupleTrait = std::true_type; IntrinsicBinary(IntrinsicBinary &&) = default; IntrinsicBinary &operator=(IntrinsicBinary &&) = default; IntrinsicBinary(const IntrinsicBinary &) = delete; IntrinsicBinary &operator=(const IntrinsicBinary &) = delete; IntrinsicBinary() = delete;
+    std::tuple<common::Indirection<Expr>, common::Indirection<Expr>> t;
+  };
+  struct Power : public IntrinsicBinary {
+    using IntrinsicBinary::IntrinsicBinary;
+  };
+  struct Multiply : public IntrinsicBinary {
+    using IntrinsicBinary::IntrinsicBinary;
+  };
+  struct Divide : public IntrinsicBinary {
+    using IntrinsicBinary::IntrinsicBinary;
+  };
+  struct Add : public IntrinsicBinary {
+    using IntrinsicBinary::IntrinsicBinary;
+  };
+  struct Subtract : public IntrinsicBinary {
+    using IntrinsicBinary::IntrinsicBinary;
+  };
+  struct Concat : public IntrinsicBinary {
+    using IntrinsicBinary::IntrinsicBinary;
+  };
+  struct LT : public IntrinsicBinary {
+    using IntrinsicBinary::IntrinsicBinary;
+  };
+  struct LE : public IntrinsicBinary {
+    using IntrinsicBinary::IntrinsicBinary;
+  };
+  struct EQ : public IntrinsicBinary {
+    using IntrinsicBinary::IntrinsicBinary;
+  };
+  struct NE : public IntrinsicBinary {
+    using IntrinsicBinary::IntrinsicBinary;
+  };
+  struct GE : public IntrinsicBinary {
+    using IntrinsicBinary::IntrinsicBinary;
+  };
+  struct GT : public IntrinsicBinary {
+    using IntrinsicBinary::IntrinsicBinary;
+  };
+  struct AND : public IntrinsicBinary {
+    using IntrinsicBinary::IntrinsicBinary;
+  };
+  struct OR : public IntrinsicBinary {
+    using IntrinsicBinary::IntrinsicBinary;
+  };
+  struct EQV : public IntrinsicBinary {
+    using IntrinsicBinary::IntrinsicBinary;
+  };
+  struct NEQV : public IntrinsicBinary {
+    using IntrinsicBinary::IntrinsicBinary;
+  };
+
+
+  struct ComplexConstructor : public IntrinsicBinary {
+    using IntrinsicBinary::IntrinsicBinary;
+  };
+
+  struct DefinedBinary {
+    template <typename... Ts, typename = common::NoLvalue<Ts...>> DefinedBinary(Ts &&...args) : t(std::move(args)...) {} using TupleTrait = std::true_type; DefinedBinary(DefinedBinary &&) = default; DefinedBinary &operator=(DefinedBinary &&) = default; DefinedBinary(const DefinedBinary &) = delete; DefinedBinary &operator=(const DefinedBinary &) = delete; DefinedBinary() = delete;
+    std::tuple<DefinedOpName, common::Indirection<Expr>,
+        common::Indirection<Expr>>
+        t;
+  };
+
+  explicit Expr(Designator &&);
+  explicit Expr(FunctionReference &&);
+
+  mutable TypedExpr typedExpr;
+
+  CharBlock source;
+
+  std::variant<common::Indirection<CharLiteralConstantSubstring>,
+      LiteralConstant, common::Indirection<Designator>, ArrayConstructor,
+      StructureConstructor, common::Indirection<FunctionReference>, Parentheses,
+      UnaryPlus, Negate, NOT, PercentLoc, DefinedUnary, Power, Multiply, Divide,
+      Add, Subtract, Concat, LT, LE, EQ, NE, GE, GT, AND, OR, EQV, NEQV,
+      DefinedBinary, ComplexConstructor, common::Indirection<SubstringInquiry>>
+      u;
+};

@@ -173,7 +173,7 @@ SageTreeBuilder::attachComments(SgLocatedNode* node, const PosInfo &pos, bool at
   else {
     // Additional expressions?
     if (TRACE_ATTACH_COMMENT) {
-      mlog[WARN] << "SageTreeBuilder::attachComment: not adding node " << node->class_name();
+      mlog[WARN] << "SageTreeBuilder::attachComment: not adding node " << node->class_name() << "\n";
     }
   }
 }
@@ -339,12 +339,12 @@ void SageTreeBuilder::Leave(SgScopeStatement* scope)
          }
        else {
          // Unexpected previous parent node
-         mlog[WARN] << "{" << it->first << ": " << it->second << " parent is " << prev_parent << "}";
+         mlog[WARN] << "{" << it->first << ": " << it->second << " parent is " << prev_parent << "}\n";
          it++;
        }
        }
        else {
-         mlog[WARN] << "{" << it->first << ": " << it->second << "}";
+         mlog[WARN] << "{" << it->first << ": " << it->second << "}\n";
          it++;
        }
      }
@@ -352,11 +352,11 @@ void SageTreeBuilder::Leave(SgScopeStatement* scope)
 
   // Some forward references can't be resolved until the global scope is reached
    if (!forward_var_refs_.empty() && isSgGlobal(scope)) {
-     mlog[WARN] << "map for forward variable references is not empty, size is " << forward_var_refs_.size();
+     mlog[WARN] << "map for forward variable references is not empty, size is " << forward_var_refs_.size() << "\n";
      forward_var_refs_.clear();
    }
    if (!forward_type_refs_.empty() && isSgGlobal(scope)) {
-     mlog[WARN] << "map for forward type references is not empty, size is " << forward_type_refs_.size();
+     mlog[WARN] << "map for forward type references is not empty, size is " << forward_type_refs_.size() << "\n";
      forward_type_refs_.clear();
    }
 
@@ -366,7 +366,7 @@ void SageTreeBuilder::Leave(SgScopeStatement* scope)
 
 void SageTreeBuilder::Enter(SgBasicBlock* &block)
 {
-   mlog[TRACE] << "SageTreeBuilder::Enter(SgBasicBlock* &) \n";
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgBasicBlock* &)\n";
 
    // Set the parent (at least temporarily) so that symbols can be traced.
    block = SageBuilder::buildBasicBlock_nfi(SageBuilder::topScopeStack());
@@ -446,7 +446,7 @@ Enter(SgProgramHeaderStatement* &program_decl,
 
 // If there is no program name then there is no ProgramStmt (this probably needs to be marked somehow?)
    if (!name) {
-     mlog[WARN] << "no ProgramStmt in the Fortran MainProgram";
+     mlog[WARN] << "no ProgramStmt in the Fortran MainProgram\n";
    }
 
    ASSERT_require(program_body == SageBuilder::topScopeStack());
@@ -545,7 +545,7 @@ Enter(SgFunctionParameterList* &param_list, SgScopeStatement* &param_scope,
 // The initialized name will need to be transferred to the function definition scope later.
 //
    if (function_type) {
-     SgInitializedName* result_name = SageBuilder::buildInitializedName(function_name, function_type, /*initializer*/nullptr);
+     SgInitializedName* result_name = SageBuilder::buildInitializedName_nfi(function_name, function_type, /*initializer*/nullptr);
      SageInterface::setSourcePosition(result_name);
      result_name->set_scope(param_scope);
      SgVariableSymbol* result_symbol = new SgVariableSymbol(result_name);
@@ -579,7 +579,7 @@ Leave(SgFunctionParameterList* param_list, SgScopeStatement* param_scope, const 
     // Create a new initialized name for the parameter list
        SgInitializedName* init_name = symbol->get_declaration();
        SgType* type = init_name->get_type();
-       SgInitializedName* new_init_name = SageBuilder::buildInitializedName (param.name, type, /*initializer*/nullptr);
+       SgInitializedName* new_init_name = SageBuilder::buildInitializedName_nfi(param.name, type, /*initializer*/nullptr);
        SageInterface::setSourcePosition(new_init_name);
 
        param_list->append_arg(new_init_name);
@@ -884,7 +884,7 @@ Enter(SgExprStatement* &proc_call_stmt, const std::string &proc_name,
 }
 
 void SageTreeBuilder::
-Enter(SgExprStatement* &assign_stmt, SgExpression* &rhs, const std::vector<SgExpression*> &vars, const std::string& label)
+Enter(SgExprStatement* &assign_stmt, SgExpression* &rhs, const std::vector<SgExpression*> &vars)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgExprStatement* &, ...) \n";
 
@@ -925,12 +925,19 @@ Enter(SgExprStatement* &assign_stmt, SgExpression* &rhs, const std::vector<SgExp
 }
 
 void SageTreeBuilder::
-Leave(SgExprStatement* expr_stmt)
+Leave(SgExprStatement* expr_stmt, std::vector<std::string> &labels)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgExprStatement*) \n";
-   ASSERT_not_null(expr_stmt);
 
-   SageInterface::appendStatement(expr_stmt, SageBuilder::topScopeStack());
+   SgStatement* stmt{expr_stmt};
+   ASSERT_not_null(stmt);
+
+   for (auto label : labels) {
+      mlog[WARN] << "Need symbol for label statement\n";
+      stmt = SB::buildLabelStatement_nfi(label, stmt, SB::topScopeStack());
+   }
+
+   SageInterface::appendStatement(stmt, SageBuilder::topScopeStack());
 }
 
 void SageTreeBuilder::
@@ -1067,15 +1074,68 @@ Leave(SgIfStmt* if_stmt)
 }
 
 void SageTreeBuilder::
-Enter(SgProcessControlStatement* &control_stmt, const std::string &stmt_kind,
-      const boost::optional<SgExpression*> &opt_code)
+Enter(SgGotoStatement* &gotoStmt, const std::string &label)
 {
-   return Enter(control_stmt, stmt_kind, opt_code, boost::none);
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgGotoStatement*, ...)\n";
+
+   SgLabelStatement* labelStmt{nullptr};
+   gotoStmt = nullptr;
+
+   // Ensure a label statement exists for the statement to goto
+   SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(label, SB::topScopeStack());
+   SgLabelSymbol* labelSymbol = isSgLabelSymbol(symbol);
+
+   if (labelSymbol == nullptr) {
+      // Build a placeholder and symbol to match when seen in later statement
+      labelStmt = SB::buildLabelStatement_nfi(label, /*SgStatement*/nullptr, SB::topScopeStack());
+      labelSymbol = new SgLabelSymbol(labelStmt);
+      SB::topScopeStack()->insert_symbol(label, labelSymbol);
+      labelStmt->set_scope(SB::topScopeStack());
+   }
+   else {
+      labelStmt = isSgLabelStatement(labelSymbol->get_declaration());
+   }
+   ASSERT_not_null(labelStmt);
+
+   gotoStmt = SB::buildGotoStatement_nfi(labelStmt);
+}
+
+void SageTreeBuilder::
+Leave(SgGotoStatement* gotoStmt, const std::vector<std::string> &labels)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgGotoStatement*, ...)\n";
+
+   SgStatement* stmt{gotoStmt};
+   ASSERT_not_null(stmt);
+
+   // All statements may have a label(s), thus, for here
+   // and for what follows, outline to a function for all statements to use
+   for (auto label : labels) {
+      // A label statement may already exist for this label, e.g., from a
+      // placeholder created previously for an SgGotoStatement label. If so, fix statement in placeholder
+      SgSymbol* symbol = SI::lookupSymbolInParentScopes(label, SB::topScopeStack());
+
+      if (auto labelSymbol = isSgLabelSymbol(symbol)) {
+         auto labelDecl = isSgLabelStatement(labelSymbol->get_declaration());
+         if (labelDecl != nullptr && labelDecl->get_statement() == nullptr) {
+            labelDecl->set_statement(stmt);
+            stmt = labelDecl;
+         }
+         else {
+            mlog[WARN] << "Need symbol for label statement\n";
+            stmt = SB::buildLabelStatement_nfi(label, stmt, SB::topScopeStack());
+          }
+      }
+   }
+
+   // Append final label statement (if there are labels, otherwise stmt==gotoStmt)
+   SageInterface::appendStatement(stmt, SB::topScopeStack());
 }
 
 void SageTreeBuilder::
 Enter(SgProcessControlStatement* &control_stmt, const std::string &stmt_kind,
-      const boost::optional<SgExpression*> &opt_code, const boost::optional<SgExpression*> &opt_quiet)
+      const boost::optional<SgExpression*> &opt_code, const boost::optional<SgExpression*> &opt_quiet,
+      const std::vector<std::string> &labels)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgProcessControlStatement* &, ...) \n";
 
@@ -1110,7 +1170,16 @@ Enter(SgProcessControlStatement* &control_stmt, const std::string &stmt_kind,
    code->set_parent(control_stmt);
    quiet->set_parent(control_stmt);
 
-   SageInterface::appendStatement(control_stmt, SageBuilder::topScopeStack());
+   SgStatement* actual_stmt = control_stmt;
+   std::vector<std::string> reversed = labels;
+   auto lbegin = reversed.begin();
+   auto lend = reversed.end();
+   std::reverse(lbegin,lend);
+   for (auto label : reversed) {
+     actual_stmt = SB::buildLabelStatement_nfi(label, actual_stmt, SageBuilder::topScopeStack());
+   }
+
+   SageInterface::appendStatement(actual_stmt, SageBuilder::topScopeStack());
 }
 
 void SageTreeBuilder::
@@ -2343,7 +2412,7 @@ void fixUndeclaredResultName(const std::string &result_name, SgScopeStatement* s
    ASSERT_require(symbol == nullptr);
    ASSERT_not_null(result_type);
 
-   SgInitializedName* init_name = SageBuilder::buildInitializedName(result_name, result_type);
+   SgInitializedName* init_name = SageBuilder::buildInitializedName_nfi(result_name, result_type, /*initializer*/nullptr);
    SageInterface::setSourcePosition(init_name);
    init_name->set_scope(scope);
    SgVariableSymbol* result_symbol = new SgVariableSymbol(init_name);
@@ -2364,7 +2433,7 @@ SgFunctionRefExp* buildIntrinsicFunctionRefExp_nfi(const std::string &name, SgSc
      // Look for intrinsic name
      if (name == "num_images") {
        // TODO
-       mlog[WARN] << "need to build a function reference to num_images";
+       mlog[WARN] << "need to build a function reference to num_images\n";
 #if 0
        // Doesn't work
        // func_ref = SageBuilder::buildFunctionRefExp(SgName(name), scope);

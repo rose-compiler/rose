@@ -3005,8 +3005,7 @@ TestAstSymbolTables::visit ( SgNode* node )
 
             // DQ (12/9/2007): Skip symbols that come from labels since they are often
             // numeric labels and need to be tested in a Fortran specific way.
-            // if (declarationStatement != NULL)
-               if (declarationStatement != NULL && isSgLabelSymbol(symbol) == NULL)
+               if (declarationStatement != nullptr && isSgLabelSymbol(symbol) == nullptr)
                   {
                  // DQ (8/21/2013): Test added by Tristan are a problem for Fortran code...
 #if 0
@@ -3028,8 +3027,6 @@ TestAstSymbolTables::visit ( SgNode* node )
                        }
 #endif
 
-                 // DQ (7/26/2007): Not all declarations have an associated symbol, but those declaration found in symbols should have symbols.
-                 // ROSE_ASSERT(local_symbol != NULL);
                     SgMemberFunctionDeclaration* memberFunctionDeclaration = isSgMemberFunctionDeclaration(declarationStatement);
                     if (memberFunctionDeclaration != NULL && memberFunctionDeclaration->get_associatedClassDeclaration() != NULL)
                        {
@@ -3037,12 +3034,11 @@ TestAstSymbolTables::visit ( SgNode* node )
 #if PRINT_DEVELOPER_WARNINGS
                          printf ("memberFunctionDeclaration scope has no associated symbol (case of pointer to member function): local_symbol = %p \n",local_symbol);
 #endif
-                      // ROSE_ASSERT(local_symbol == NULL);
-                         ROSE_ASSERT(memberFunctionDeclaration->get_scope() != NULL);
+                         ROSE_ASSERT(memberFunctionDeclaration->get_scope() != nullptr);
                        }
                       else
                        {
-                         if (local_symbol == NULL)
+                         if (local_symbol == nullptr)
                             {
 
                            // It appears this is an issue because the name is slightly different between:
@@ -3059,30 +3055,19 @@ TestAstSymbolTables::visit ( SgNode* node )
                                    symbol,symbol->class_name().c_str(),SageInterface::get_name(scope).c_str(),
                                    scope,scope->class_name().c_str(),SageInterface::get_name(scope).c_str());
 #if 0
-                              declarationStatement->get_startOfConstruct()->display("declarationStatement->get_symbol_from_symbol_table() == NULL: debug");
-#endif
-#if 0
                               printf ("******************** START **********************\n");
                               printf ("In AST Consistantcy tests: Output the symbol table for scope = %p = %s: \n",scope,scope->class_name().c_str());
                               SageInterface::outputLocalSymbolTables(scope);
                               printf ("******************** DONE ***********************\n");
 #endif
-#if 1
                            // DQ (2/28/2018): Added testing (Tristan indicates that this is a problem for Fortran, above).
-                              ROSE_ASSERT(declarationStatement->get_firstNondefiningDeclaration() != NULL);
-
-                           // DQ (2/14/2019): For C++11 this need no longer be true, because enum prototypes can exist.
-                           // ROSE_ASSERT(declarationStatement->get_firstNondefiningDeclaration() == declarationStatement);
-#endif
+                              ASSERT_not_null(declarationStatement->get_firstNondefiningDeclaration());
                             }
 
-                      // DQ (11/7/2007): Allow this, with a warning, I think!
                          SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(declarationStatement);
-                         if (local_symbol == NULL && functionDeclaration != NULL && functionDeclaration->get_name() == "__default_function_pointer_name")
+                         if (local_symbol == nullptr && functionDeclaration != nullptr && functionDeclaration->get_name() == "__default_function_pointer_name")
                             {
-// #if PRINT_DEVELOPER_WARNINGS
-                              printf ("Warning: functionDeclaration = %s without symbol is OK in this case. \n",functionDeclaration->get_name().str());
-// #endif
+                              // DEAD code deleted
                             }
                            else
                             {
@@ -3092,7 +3077,7 @@ TestAstSymbolTables::visit ( SgNode* node )
 #else
                            // DQ (2/28/2015): This fails for copyAST_tests/copytest2007_40.C and a few other files.
                            // I think this is related to the support for the EDN normalized template declarations.
-                              if (local_symbol == NULL)
+                              if (local_symbol == nullptr)
                                  {
                                    printf ("WARNING: local_symbol == NULL: this can happen in the copyAST_tests directory files. \n");
                                  }
@@ -3198,12 +3183,10 @@ TestAstSymbolTables::visit ( SgNode* node )
                        }
                   }
 
-            // DQ (12/16/2007): Added test
-               ROSE_ASSERT(symbol != NULL);
+               ASSERT_not_null(symbol);
 
             // We have to look at each type of symbol separately!  This is because there is no virtual function,
             // the reason for this is that each get_declaration() function returns a different type!
-            // ROSE_ASSERT ( symbol->get_declaration() != NULL );
                switch(symbol->variantT())
                   {
                     case V_SgClassSymbol:
@@ -3217,7 +3200,6 @@ TestAstSymbolTables::visit ( SgNode* node )
                          break;
                        }
 
-                 // DQ (12/27/2011): Added new symbol (and required support).
                     case V_SgTemplateClassSymbol:
                        {
                          SgTemplateClassSymbol* templateClassSymbol = isSgTemplateClassSymbol(symbol);
@@ -3225,7 +3207,7 @@ TestAstSymbolTables::visit ( SgNode* node )
                          ROSE_ASSERT(templateClassSymbol->get_declaration() != NULL);
 
                       // DQ (12/27/2011): Make sure this is correctly associated with a SgTemplateClassDeclaration.
-                         ROSE_ASSERT(isSgTemplateClassDeclaration(templateClassSymbol->get_declaration()) != NULL);
+                         ASSERT_not_null(isSgTemplateClassDeclaration(templateClassSymbol->get_declaration()));
                          break;
                        }
 
@@ -5012,11 +4994,7 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
             // DQ (1/23/2010): Added this case
                case V_SgFileList:
                case V_SgDirectoryList:
-
-            // DQ (10/4/2008): Added this case
                case V_SgRenamePair:
-
-            // DQ (12/23/2007): Added this case
                case V_SgFormatItem:
                case V_SgFormatItemList:
                   {
@@ -5030,7 +5008,6 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
                     break;
                   }
 
-            // DQ (7/23/2010): Added this case
                case V_SgTypeTable:
                   {
                  // The parent is not always set here except for when it is in the SgScopeStatement.
@@ -5047,7 +5024,6 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
                     break;
                   }
 
-               // driscoll6 (01/03/2011): Added this case.
                case V_SgGraphEdge:
                case V_SgDirectedGraphEdge:
                case V_SgUndirectedGraphEdge:
@@ -5060,11 +5036,10 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
                       break;
                   }
 
-            // DQ (11/20/2013): Added support for checking that these are non-null (also just added code to set them to be non-null).
                case V_SgJavaImportStatementList:
                case V_SgJavaClassDeclarationList:
                   {
-                    ROSE_ASSERT(support->get_parent() != NULL);
+                    ASSERT_not_null(support->get_parent());
                     break;
                   }
 
