@@ -2331,7 +2331,7 @@ FortranCodeGeneration_locatedNode::unparseProcessControlStmt(SgStatement* stmt, 
                 // F2018 syntax
                 if (quiet_expr && !isSgNullExpression(quiet_expr))
                    {
-                      curprint(", ");
+                      curprint(", quiet=");
                       unparseExpression(quiet_expr, info);
                    }
                 break;
@@ -2343,7 +2343,7 @@ FortranCodeGeneration_locatedNode::unparseProcessControlStmt(SgStatement* stmt, 
                 // F2018 syntax
                 if (quiet_expr && !isSgNullExpression(quiet_expr))
                    {
-                      curprint(", ");
+                      curprint(", quiet=");
                       unparseExpression(quiet_expr, info);
                    }
                 break;
