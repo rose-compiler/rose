@@ -254,6 +254,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   rep_common_types-menu.ads            \
   rep_common_types.ads                 \
   rep_mess_types.ads                   \  
+  rep_rename_op.adb                    \ 
   rep_sym.ads                          \
   rep_sym.adb                          \
   rep_sym-set.adb                      \

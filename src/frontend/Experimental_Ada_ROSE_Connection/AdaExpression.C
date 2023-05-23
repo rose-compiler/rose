@@ -502,8 +502,15 @@ namespace
   {
     SgType const* rootty = si::Ada::typeRoot(suppl.result()).typerep();
 
+    if (isSgTypeBool(rootty)) // \todo remove BOOL_IS_ENUM_IN_ADA
+      logFlaw() << "found SgTypeBool in AST"
+                << std::endl;
+
     //~ res = res->stripTypedefsAndModifiers();
-    return isSgTypeBool(rootty) != nullptr;
+    //~ return isSgTypeBool(rootty) != nullptr;
+    return (  (isSgTypeBool(rootty) != nullptr) // \todo remove BOOL_IS_ENUM_IN_ADA
+           || (si::Ada::isBooleanType(rootty))
+           );
   }
 
   bool nonLimitedArgumentType(OperatorCallSupplement suppl, const AstContext&)
@@ -618,7 +625,7 @@ namespace
                  && resultTypeIsBool(suppl, ctx)
                  );
 
-      if (false && !res)
+      if (true && !res)
         logWarn() << "(sca: " << isScalarType(suppl, ctx)
                   << " | dsc: " << isDiscreteArrayType(suppl, ctx)
                   << ") & equ: " << equalArgumentTypes(suppl, ctx)
@@ -670,7 +677,7 @@ namespace
 
     if (isRelationalOperator(name))
     {
-      suppl.result(sb::buildBoolType());
+      suppl.result(adaTypes()["BOOLEAN"]);
       return;
     }
 
