@@ -1700,8 +1700,8 @@ namespace
     // void handle(const SgFunctionCallExp& n)          {  }
 
     // logical operators
-    void handle(const SgOrOp&)                       { res = { sb::buildBoolType() }; }
-    void handle(const SgAndOp&)                      { res = { sb::buildBoolType() }; }
+    void handle(const SgOrOp&)                       { res = { adaTypes()["BOOLEAN"] }; }
+    void handle(const SgAndOp&)                      { res = { adaTypes()["BOOLEAN"] }; }
 
     // other expressions
     void handle(const SgCastExp&)                    { /* we cannot make any assumption */ }

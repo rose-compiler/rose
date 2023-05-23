@@ -940,10 +940,10 @@ namespace Ada
   {
     bool definedInStandard(const SgDeclarationStatement& n)
     {
-      SgAdaPackageSpec*      pkgspec = isSgAdaPackageSpec(n.get_scope());
+      const SgAdaPackageSpec*      pkgspec = isSgAdaPackageSpec(n.get_scope());
       if (pkgspec == nullptr) return false;
 
-      SgAdaPackageSpecDecl*  pkgdecl = isSgAdaPackageSpecDecl(pkgspec->get_parent());
+      const SgAdaPackageSpecDecl*  pkgdecl = isSgAdaPackageSpecDecl(pkgspec->get_parent());
       // test for properties of package standard, which is a top-level package
       //   and has the name "Standard".
       // \note The comparison is case sensitive, but as long as the creation
@@ -1045,6 +1045,27 @@ namespace Ada
   {
     return isSgTypeFixed(ty);
   }
+
+  bool isBooleanType(const SgType& ty)
+  {
+    return isBooleanType(&ty);
+
+  }
+
+  bool isBooleanType(const SgType* ty)
+  {
+    const SgEnumType* boolTy = isSgEnumType(ty);
+    if (!boolTy) return false;
+
+    const SgEnumDeclaration* boolDcl = isSgEnumDeclaration(boolTy->get_declaration());
+
+    return (  (boolDcl != nullptr)
+           && (boolDcl->get_name() == "BOOLEAN")
+           && definedInStandard(*boolDcl)
+           );
+  }
+
+
 
   namespace
   {
@@ -1345,7 +1366,7 @@ namespace Ada
 
       // the package standard uses an enumeration to define boolean, so include the
       //   ROSE bool type also.
-      // \todo reconsider
+      // \todo remove BOOL_IS_ENUM_IN_ADA
       void handle(SgTypeBool& n)          { res = desc(&n); }
 
       // plus: map all other fundamental types introduced by initializeStandardPackage in AdaType.C
@@ -1502,7 +1523,7 @@ namespace Ada
 
         // the package standard uses an enumeration to define boolean, so include the
         //   ROSE bool type also.
-        // \todo reconsider
+        // \todo remove BOOL_IS_ENUM_IN_ADA
         void handle(SgTypeBool& n)          { res = pkgStandardScope(); }
 
         // plus composite type of literals in the AST

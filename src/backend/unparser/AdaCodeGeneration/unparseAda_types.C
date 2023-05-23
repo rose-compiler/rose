@@ -102,7 +102,7 @@ namespace
     //
     // Fundamental types
 
-    void handle(const SgTypeBool&)       { prn(" Boolean"); }
+    void handle(const SgTypeBool&)       { prn(" Boolean"); } // \todo remove BOOL_IS_ENUM_IN_ADA
     void handle(const SgTypeChar&)       { prn(" Character"); }
     void handle(const SgTypeChar16&)     { prn(" Wide_Character"); }
     void handle(const SgTypeChar32&)     { prn(" Wide_Wide_Character"); }
