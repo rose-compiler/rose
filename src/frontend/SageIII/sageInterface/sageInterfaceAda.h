@@ -364,6 +364,8 @@ namespace
   bool isFloatingPointType(const SgType* ty);
   bool isDiscreteType(const SgType* ty);
   bool isDiscreteType(const SgType& ty);
+  bool isBooleanType(const SgType* ty);
+  bool isBooleanType(const SgType& ty);
   /// @}
 
   /// returns if the type @ref ty is a fixed point type

@@ -1194,7 +1194,7 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                        }
 
                     // PP (01/22/21) used in Ada
-                    case V_SgTypeBool:
+                    case V_SgTypeBool: // \todo remove BOOL_IS_ENUM_IN_ADA
                     case V_SgTypeLongLong:
                     case V_SgTypeDefault:  // PP (4/14/23): added SgTypeDefault
                        {

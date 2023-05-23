@@ -208,6 +208,28 @@ namespace
       void withName(const std::string& name, bool actsAsBarrier = false);
       void withoutName() {}
 
+      bool blockIsExplicitInCode(const SgBasicBlock& n)
+      {
+        if (nodeProperty(n, &Sg_File_Info::isCompilerGenerated))
+          return false;
+
+        SgNode* par = n.get_parent();
+
+        bool blockIsFrontendGenerated = (  isSgFunctionDefinition(par)
+                                        || isSgTryStmt(par)
+                                        || isSgIfStmt(par)
+                                        || isSgSwitchStatement(par)
+                                        || isSgForStatement(par)
+                                        || isSgWhileStmt(par)
+                                        || isSgAdaLoopStmt(par)
+                                        || isSgAdaAcceptStmt(par)
+                                        || isSgCatchOptionStmt(par)
+                                        // \todo AdaSelectStmt, AdaGenericInstance, ..
+                                        );
+
+        return !blockIsFrontendGenerated;
+      }
+
       void checkParent(const SgScopeStatement& n);
 
       void handle(const SgNode& n)                 { SG_UNEXPECTED_NODE(n); }
@@ -230,8 +252,8 @@ namespace
 
       void handle(const SgBasicBlock& n)
       {
-        const std::string blockName   = n.get_string_label();
-        const bool        qualBarrier = blockName.empty() && !nodeProperty(n, &Sg_File_Info::isCompilerGenerated);
+        const std::string blockName     = n.get_string_label();
+        const bool        qualBarrier   = blockName.empty() && blockIsExplicitInCode(n);
 
         withName(blockName, qualBarrier);
       }
@@ -605,6 +627,27 @@ namespace
 
   const std::string NodeName::AN_UNREAL_NAME = "@@This#Is$An%Unreal^Name@@";
 
+#define DBG_SCOPE_PATH 0
+
+#if DBG_SCOPE_PATH
+  static bool DBG_PRINT_SCOPES = false;
+
+  struct DebugSeqPrinter
+  {
+    const ScopePath& el;
+  };
+
+  std::ostream& operator<<(std::ostream& os, const DebugSeqPrinter& s)
+  {
+    for (const SgScopeStatement* scope : s.el)
+      os << ", " << typeid(*scope).name()
+         << " (" << scope << ")";
+
+    return os;
+  }
+#else
+  static constexpr bool DBG_PRINT_SCOPES = false;
+#endif /* DBG_SCOPE_PATH */
 
 
   /// gets the name of the node
@@ -660,8 +703,10 @@ namespace
 
     bool const res = std::any_of(beg, lim, pred);
 
-    //~ std::cerr << &n << " " << typeid(n).name() << " :" << dclname << ": " << res
-              //~ << std::endl;
+    if (DBG_PRINT_SCOPES)
+      std::cerr << &n << " " << typeid(n).name() << " :" << dclname << ": " << res
+                << std::endl;
+
     return res;
   }
 
@@ -772,7 +817,8 @@ namespace
   std::tuple<ScopePath::reverse_iterator, const SgNode*>
   namedAncestorScope(ScopePath::reverse_iterator beg, ScopePath::reverse_iterator pos, const SgNode* refNode)
   {
-    if (beg == pos) return std::make_tuple(pos, refNode);
+    if (beg == pos)
+      return std::make_tuple(pos, refNode);
 
     ScopePath::reverse_iterator     prvpos = std::prev(pos);
     std::tuple<bool, const SgNode*> usable = usableScope(**prvpos);
@@ -802,29 +848,10 @@ namespace
     // while the refnode is aliases along (locMin, locLim] and the scope is extensible |remBeg,remMin| > 0
     //   extend the scope by one.
     while ((std::distance(remBeg, remMin) > 0) && isShadowedAlongPath(*refNode, locMin, locLim))
-    {
       std::tie(remMin, refNode) = namedAncestorScope(remBeg, remMin, refNode);
-    }
 
     return remMin;
   }
-
-#define DBG_SCOPE_PATH 0
-#if DBG_SCOPE_PATH
-  struct DebugSeqPrinter
-  {
-    const ScopePath& el;
-  };
-
-  std::ostream& operator<<(std::ostream& os, const DebugSeqPrinter& s)
-  {
-    for (const SgScopeStatement* scope : s.el)
-      os << ", " << typeid(*scope).name()
-         << " (" << scope << ")";
-
-    return os;
-  }
-#endif /* DBG_SCOPE_PATH */
 
   std::string
   NameQualificationTraversalAda::computeNameQual( const SgNode& quasiDecl,
@@ -837,9 +864,10 @@ namespace
     ScopePath remotePath = pathToGlobal(remote);
 
 #if DBG_SCOPE_PATH
-    std::cerr << "rp = " << DebugSeqPrinter{remotePath}
-              << "   remote-scope = " << typeid(remote).name() << " " << &remote
-              << std::endl;
+    if (DBG_PRINT_SCOPES)
+      std::cerr << "rp = " << DebugSeqPrinter{remotePath}
+                << "   remote-scope = " << typeid(remote).name() << " " << &remote
+                << std::endl;
 #endif /* DBG_SCOPE_PATH */
 
     if (remotePath.size() == 0)
@@ -904,14 +932,14 @@ namespace
     std::string res = nameQualString(remotePos, remoteEnd);
 
 #if DBG_SCOPE_PATH
-    std::cerr << "--- len> " << std::distance(mismPos.first, localPath.rend())
-              << "/" << localPath.size() << DebugSeqPrinter{localPath}
-              << "/" << nameQualString(localPath.rbegin(), localPath.rend())
-              << " <> " << std::distance(mismPos.second, remotePath.rend())
-              << "/" << std::distance(remotePos, remoteEnd)
-              << " /" << nameQualString(remotePath.rbegin(), remotePath.rend())
-              << "  => " << res
-              << std::endl;
+      std::cerr << "--- len> " << std::distance(mismPos.first, localPath.rend())
+                << "/" << localPath.size() << DebugSeqPrinter{localPath}
+                << "/" << nameQualString(localPath.rbegin(), localPath.rend())
+                << " <> " << std::distance(mismPos.second, remotePath.rend())
+                << "/" << std::distance(remotePos, remoteEnd)
+                << " /" << nameQualString(remotePath.rbegin(), remotePath.rend())
+                << "  => " << res
+                << std::endl;
 #endif /* DBG_SCOPE_PATH */
 
     return res;
@@ -1163,9 +1191,8 @@ namespace
       {
         handle(sg::asBaseType(n));
 
-        SgLabelStatement& lbl = SG_DEREF(n.get_label());
-
-        recordNameQualIfNeeded(n, lbl.get_scope());
+        //~ recordNameQualIfNeeded(n, n.get_label()->get_scope());
+        recordNameQualIfNeeded(n, sg::ancestor<SgScopeStatement>(n.get_label()));
         // avoid enless recursion for
         // <<lbl>> goto lbl;
         //   \todo consider switching over to fortran label representation
@@ -1469,9 +1496,9 @@ namespace
       {
         // \todo can an enum be elided?
         //       gets the scope of the enumeration declaration, not the initialized name
-
         //~ if (!elideNameQualification(n))
-          recordNameQualIfNeeded(n, SG_DEREF(n.get_declaration()).get_scope());
+
+        recordNameQualIfNeeded(n, SG_DEREF(n.get_declaration()).get_scope());
       }
 
       void handle(const SgAdaUnitRefExp& n)
