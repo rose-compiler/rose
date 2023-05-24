@@ -128,7 +128,8 @@ CxxGrammarMetaProgram_SOURCES = \
    buildConstructorsWithoutSourcePositionInformation.C \
    outputClassesAndFields.C \
    java/terminals.cpp \
-   StringUtility.C
+   StringUtility.C \
+   jovialNodes.C
 
 # buildConstructorsWithoutSourcePositionInformation.o: buildConstructorsWithoutSourcePositionInformation.C
 

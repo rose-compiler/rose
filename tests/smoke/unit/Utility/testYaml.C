@@ -37,7 +37,7 @@ static void
 testConversion() {
     auto root = Rose::Yaml::parse(
                       "a: 123\n"
-                      "b: 0123\n"                       // 83
+                      "b: 0123\n"                       // 123 (octal is not supported)
                       "c: 0x123\n"                      // 291
                       "d: \" 123\"\n"                   // not an integral type
                       "e: \"123 \"\n"                   // not an integral type
@@ -49,7 +49,7 @@ testConversion() {
 
     // valid conversions
     ASSERT_always_require(root["a"].as<unsigned>() == 123);
-    ASSERT_always_require(root["b"].as<unsigned>() == 83);
+    ASSERT_always_require(root["b"].as<unsigned>() == 123);
     ASSERT_always_require(root["c"].as<unsigned>() == 291);
 
     // invalid conversions due to syntax

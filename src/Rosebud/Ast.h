@@ -4,6 +4,7 @@
 #include <Rosebud/BasicTypes.h>
 
 #include <Sawyer/Cached.h>
+#include <Sawyer/Tree.h>
 
 #include <list>
 #include <memory>
@@ -53,517 +54,22 @@ namespace Rosebud {
 namespace Ast {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Error types
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/** Base class for errors related to the AST. */
-class Error: public std::runtime_error {
-public:
-    /** Node that caused the error. */
-    NodePtr node;
-
-    /** Construct a new error with the specified message and causing node. */
-    Error(const std::string &mesg, const NodePtr&);
-};
-
-/** Error when attaching a node to a tree and the node is already attached somewhere else.
- *
- *  If the operation were allowed to continue without throwing an exception, the AST would no longer be a tree. */
-class AttachmentError: public Error {
-public:
-    /** Construct a new error with the node that caused the error. */
-    explicit AttachmentError(const NodePtr&);
-};
-
-/** Error when attaching a node to a tree would cause a cycle.
- *
- *  If the operation were allowed to continue without throwing an exception, the AST would no longer be a tree. */
-class CycleError: public Error {
-public:
-    /** Construct a new error with the node that caused the error. */
-    explicit CycleError(const NodePtr&);
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// General types used by many nodes
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class ParentEdge;
-template<class T> class ChildEdge;
-
-// Internal. The only purpose of this class is so that the ChildEdge has permission to change the parent pointer in an
-// ParentEdge.
-class ParentEdgeAccess {
-protected:
-    void resetParent(ParentEdge&);
-    void setParent(ParentEdge&, Node&);
-};
-
-/** Points from a child to a parent in the AST.
- *
- *  This is the pointer type that points from a node to its parent. Its value is adjusted automatically when the containing
- *  node is attached or detached as a child of some other node. The term "edge" is used instead of "pointer" because the
- *  relationship between child and parent is bidirectional.
- *
- *  A parent edge is always a data member of a node and never instantiated in other circumstances. Thus users don't normally
- *  instantiate these directly, but they do interact with them through the @c parent data member that exists for all node types. */
-class ParentEdge {
-    Node &child_;                                       // required child node owning this edge
-
-    // The parent pointer is a raw pointer because it is safe to do so, and because we need to know the pointer before the parent is
-    // fully constructed.
-    //
-    // It is safe (never dangling) because the pointer can only be changed by an ChildEdge, the ChildEdge is always a member of an
-    // Node, and the parent pointer is only set to point to that node. When the parent is deleted the ChildEdge is deleted and its
-    // destructor changes the parent pointer back to null.
-    //
-    // The parent pointer is needed during construction of the parent when the parent has some ChildEdge data members that are being
-    // initialized to point to non-null children. This happens during the parent's construction, before the parent has any shared or
-    // weak pointers.
-    Node *parent_ = nullptr;                            // optional parent to which this edge points
-
-public:
-    // No default constructor and not copyable.
-    ParentEdge() = delete;
-    explicit ParentEdge(const ParentEdge&) = delete;
-    ParentEdge& operator=(const ParentEdge&) = delete;
-
-public:
-    ~ParentEdge();                                      // internal use only
-    explicit ParentEdge(Node &child);                   // internal use only
-
-public:
-    /** Return the parent if there is one, else null.
-     *
-     * @{ */
-    NodePtr operator()() const;
-    NodePtr operator->() const;
-    /** @} */
-
-    /** Compare the parent pointer to another pointer.
-     *
-     * @{ */
-    bool operator==(const NodePtr&) const;
-    bool operator!=(const NodePtr&) const;
-    bool operator==(const ParentEdge&) const;
-    bool operator!=(const ParentEdge&) const;
-    template<class T> bool operator==(const ChildEdge<T>&) const;
-    template<class T> bool operator!=(const ChildEdge<T>&) const;
-    /** @} */
-
-    /** True if parent is not null. */
-    explicit operator bool() const {
-        return parent_ != nullptr;
-    }
-
-private:
-    // Used internally through ParentEdgeAccess when a ChildEdge<T> adjusts the ParentEdge
-    friend class ParentEdgeAccess;
-    void reset();
-    void set(Node&);
-};
-
-/** A parent-to-child edge in the abstract syntax tree.
- *
- *  A parent-to-child edge is a pointer-like object that points from an parent node to a child node or nullptr. It is also
- *  responsible for adjusting the child's parent pointer. The term "edge" is used instead of "pointer" because the relationship
- *  between the parent and child is bidirectional.
- *
- *  A child edge is always a data member of a node and never instantiated in other circumstances. Thus users don't normally
- *  instanticate these directly, but they do interact with them to obtain pointers to children from a parent.
- *
- *  A ChildEdge is used to define a data member in the parent that points to a child. For instance, the following binary expression
- *  node has left-hand-side and right-hand-side children that are part of the tree.
- *
- * @code
- *  class BinaryExpression: public Expression {
- *  public:
- *      Ast::ChildEdge<Expression> lhs;
- *      Ast::ChildEdge<Expression> rhs;
- *
- *  protected:
- *      BinaryExpression()
- *          : lhs(*this), rhs(*this) {}
- *
- *      static std::shared_ptr<BinaryExpression> instance() {
- *          return std::shared_ptr<BinaryExpression>(new BinaryExpression);
- *      }
- *  };
- * @endcode */
-template<class T>
-class ChildEdge: protected ParentEdgeAccess {
-public:
-    /** Type of child being pointed to. */
-    using Child = T;
-
-    /** Type of pointer to the child. */
-    using ChildPtr = std::shared_ptr<T>;
-
-private:
-    Node &parent_;                                      // required parent owning this child edge
-    ChildPtr child_;                                    // optional child to which this edge points
-
-public:
-    // No default constructor and not copyable.
-    ChildEdge() = delete;
-    ChildEdge(const ChildEdge&) = delete;
-    ChildEdge& operator=(const ChildEdge&) = delete;
-
-public:
-    ~ChildEdge();
-
-    /** Construct a child edge that belongs to the specified parent.
-     *
-     *  When constructing a class containing a data member of this type (i.e., a tree edge that points to a child of this node), the
-     *  data member must be initialized by passing @c *this as the argument.  See the example in this class documentation.
-     *
-     *  An optional second argument initializes the child pointer for the edge. The initialization is the same as if the child
-     *  had been assigned with @c operator= later. I.e., the child must not already have a parent.
-     *
-     * @{ */
-    explicit ChildEdge(Node &parent);
-    ChildEdge(Node &parent, const ChildPtr &child);
-    /** @} */
-
-    /** Return the child if there is one, else null.
-     *
-     * @{ */
-    const ChildPtr& operator->() const;
-    const ChildPtr& operator()() const;
-    /** @} */
-
-    /** Compare the child pointer to another pointer.
-     *
-     * @{ */
-    bool operator==(const std::shared_ptr<Node>&) const;
-    bool operator!=(const std::shared_ptr<Node>&) const;
-    bool operator==(const ParentEdge&) const;
-    bool operator!=(const ParentEdge&) const;
-    template<class U> bool operator==(const ChildEdge<U>&) const;
-    template<class U> bool operator!=(const ChildEdge<U>&) const;
-    /** @} */
-
-    /** Assign a pointer to a child.
-     *
-     *  If this edge points to an old child then that child is removed and its parent is reset. If the specified new child is
-     *  non-null, then it is inserted and its parent pointer set to the parent of this edge.
-     *
-     *  However, if the new child already has a non-null parent, then no changes are made and a @ref AttachmentError is thrown with
-     *  the error's node point to the new child. Otherwise, if the new child is non-null and is the parent or any more distant
-     *  ancestor of this edge's node, then a @ref CycleError is thrown. Cycle errors are only thrown if debugging is enabled (i.e.,
-     *  the CPP macro @c NDEBUG is undefined).
-     *
-     *  Attempting to assign one child edge object to another is a compile-time error (its operator= is not declared) because every
-     *  non-null child edge points to a child whose parent is non-null, which would trigger an @ref AttachmentError. Therefore only
-     *  null child edges could be assigned. But since only null child edges can be assigned, its more concise and clear to assign
-     *  the null pointer directly.
-     *
-     * @{ */
-    ChildEdge& operator=(const ChildPtr &child);
-    ChildEdge& operator=(const ParentEdge&);
-    /** @} */
-
-    /** True if child is not null. */
-    explicit operator bool() const {
-        return child_ != nullptr;
-    }
-};
-
-/** Base class for nodes in the abstract syntax tree. */
-class Node: public std::enable_shared_from_this<Node> {
-public:
-    /** Shared-ownership pointer to a @ref Node. */
-    using Ptr = NodePtr;
-
-public:
-    /** Pointer to the parent in the tree.
-     *
-     *  A node's parent pointer is adjusted automatically when the node is inserted or removed as a child of another node. An
-     *  invariant of this design is that whenever node A is a child of node B, then node B is a parent of node A. */
-    ParentEdge parent;
-
-public:
-    virtual ~Node() {}
-
-protected:
-    Node();
-
-public:
-    /** Returns a shared pointer to this node. */
-    Ptr pointer();
-
-    /** Traverse upward following parent pointers.
-     *
-     *  The visitor is called for each node from the current node until the root of the tree is reached unless the visitor indicates
-     *  that the traversal should end. It does so by returning a value that is true in a Boolean context, and this value becomes the
-     *  return value for the entire traversal. */
-    template<class Visitor>
-    auto traverseUpward(const Visitor &visitor) {
-        for (auto node = pointer(); node; node = node->parent()) {
-            if (auto result = visitor(node))
-                return result;
-        }
-        return decltype(visitor(NodePtr()))();
-    }
-
-    /** Traversal that finds an ancestor of a particular type. */
-    template<class T>
-    std::shared_ptr<T> findAncestor() {
-        return traverseUpward([](const NodePtr &node) -> std::shared_ptr<T> {
-                return std::dynamic_pointer_cast<T>(node);
-            });
-    };
-};
-
-/** Node that points to an ordered sequence of indexable children.
- *
- *  This node acts like an @c std::vector except that inserting and erasing children also adjusts the child's parent pointer. */
-template<class T>
-class ListNode: public Node {
-private:
-    using EdgeVector = std::vector<std::unique_ptr<ChildEdge<T>>>;
-
-public:
-    /** Shared-ownership pointer to nodes of this type. */
-    using Ptr = std::shared_ptr<ListNode>;
-
-    /** Type of values stored in this class. */
-    using value_type = ChildEdge<T>;
-
-    /** Size type. */
-    using size_type = typename EdgeVector::size_type;
-
-    /** Distance between elements. */
-    using difference_type = typename EdgeVector::difference_type;
-
-    /** Reference to value. */
-    using reference = value_type&;
-
-    /** Reference to cons value. */
-    using const_reference = const value_type&;
-
-    /** Pointer to value. */
-    using pointer = value_type*;
-
-    /** Pointer to const value. */
-    using const_pointer = const value_type*;
-
-private:
-    EdgeVector elmts_;
-
-public:
-    /** Random access iterator to non-const edges.
-     *
-     *  Iterators are invalidated in the same situations as for @c std::vector. */
-    class iterator {
-        friend class ListNode;
-        typename EdgeVector::iterator base_;
-        iterator() = delete;
-        iterator(typename EdgeVector::iterator base)
-            : base_(base) {}
-
-    public:
-        /** Cause iterator to point to the next edge.
-         *
-         * @{ */
-        iterator& operator++() {
-            ++base_;
-            return *this;
-        }
-        iterator operator++(int) {
-            auto temp = *this;
-            ++base_;
-            return temp;
-        }
-        /** @} */
-
-        /** Cause iterator to point to previous edge.
-         *
-         * @{ */
-        iterator& operator--() {
-            --base_;
-            return *this;
-        }
-        iterator operator--(int) {
-            auto temp = *this;
-            --base_;
-            return temp;
-        }
-        /** @} */
-
-        /** Advance iterator in forward (or backward if negative) direction by @p n edges.
-         *
-         * @{ */
-        iterator& operator+=(difference_type n) {
-            base_ += n;
-            return *this;
-        }
-        iterator operator+(difference_type n) const {
-            iterator retval = *this;
-            retval += n;
-            return retval;
-        }
-        /** @} */
-
-        /** Advance iterator in backward (or forward if negative) direction by @p n edges.
-         *
-         * @{ */
-        iterator& operator-=(difference_type n) {
-            base_ -= n;
-            return *this;
-        }
-        iterator operator-(difference_type n) const {
-            iterator retval = *this;
-            retval -= n;
-            return retval;
-        }
-        /** @} */
-
-        /** Distance between two iterators. */
-        difference_type operator-(const iterator &other) const {
-            return other.base_ - base_;
-        }
-
-        /** Return an edge relative to the current one.
-         *
-         *  Returns the edge that's @p n edges after (or before if negative) the current edge. */
-        ChildEdge<T>& operator[](difference_type n) {
-            ASSERT_not_null(base_[n]);
-            return *base_[n];
-        }
-
-        /** Return a reference to the current edge. */
-        ChildEdge<T>& operator*() {
-            ASSERT_not_null(*base_);
-            return **base_;
-        }
-
-        /** Return a pointer to the current edge. */
-        ChildEdge<T>* operator->() {
-            ASSERT_not_null(*base_);
-            return &**base_;
-        }
-
-        /** Make this iterator point to the same element as the @ other iterator. */
-        iterator& operator=(const iterator &other) {
-            base_ = other.base_;
-            return *this;
-        }
-
-        /** Compare two iterators.
-         *
-         * @{ */
-        bool operator==(const iterator &other) const {
-            return base_ == other.base_;
-        }
-        bool operator!=(const iterator &other) const {
-            return base_ != other.base_;
-        }
-        bool operator<(const iterator &other) const {
-            return base_ < other.base_;
-        }
-        bool operator<=(const iterator &other) const {
-            return base_ <= other.base_;
-        }
-        bool operator>(const iterator &other) const {
-            return base_ > other.base_;
-        }
-        bool operator>=(const iterator &other) const {
-            return base_ >= other.base_;
-        }
-        /** @} */
-    };
-
-protected:
-    ListNode() {}
-
-public:
-    /** Allocating constructor.
-     *
-     *  Constructs a new node that has no children. */
-    static std::shared_ptr<ListNode> instance() {
-        return std::shared_ptr<ListNode>(new ListNode);
-    }
-
-    /** Test whether vector is empty.
-     *
-     *  Returns true if this node contains no child edges, null or otherwise. */
-    bool empty() const {
-        return elmts_.empty();
-    }
-
-    /** Number of child edges.
-     *
-     *  Returns the number of children edges, null or otherwise. */
-    size_t size() const {
-        return elmts_.size();
-    }
-
-    /** Reserve space so the child edge vector can grow without being reallocated. */
-    void reserve(size_t n) {
-        elmts_.reserve(n);
-    }
-
-    /** Reserved capacity. */
-    size_t capacity() const {
-        return elmts_.capacity();
-    }
-
-    /** Insert a child pointer at the end of this node.
-     *
-     *  If the new element is non-null, then it must satisfy all the requirements for inserting a node as a child of another
-     *  node, and its parent pointer will be adjusted automatically. */
-    ChildEdge<T>& push_back(const std::shared_ptr<T>& elmt) {
-        elmts_.push_back(std::make_unique<ChildEdge<T>>(*this, elmt));
-        return *elmts_.back();
-    }
-
-    /** Erase a child edge from the end of this node.
-     *
-     *  If the edge being erased points to a child, then that child's parent pointer is reset. */
-    NodePtr pop_back() {
-        ASSERT_forbid(elmts_.empty());
-        NodePtr retval = (*elmts_.back())();
-        elmts_.pop_back();
-        return retval;
-    }
-
-    /** Return a reference to the nth edge.
-     *
-     * @{ */
-    ChildEdge<T>& operator[](size_t n) {
-        return *elmts_.at(n);
-    }
-    ChildEdge<T>& at(size_t i) {
-        return *elmts_.at(i);
-    }
-    /** @} */
-
-    /** Return an iterator pointing to the first edge. */
-    iterator begin() {
-        return iterator(elmts_.begin());
-    }
-
-    /** Return an iterator pointing to one past the last edge. */
-    iterator end() {
-        return iterator(elmts_.end());
-    }
-
-    /** Return a reference to the first edge. */
-    ChildEdge<T>& front() {
-        ASSERT_forbid(elmts_.empty());
-        return *elmts_.front();
-    }
-
-    /** Return a reference to the last edge. */
-    ChildEdge<T>& back() {
-        ASSERT_forbid(elmts_.empty());
-        return *elmts_.back();
-    }
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // AST nodes specific to Rosebud
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//------------------------------------------------------------------------------------------------------------------------------
+// Base class of all AST nodes for Rosebud
+class Node: public Sawyer::Tree::Vertex<Node> {
+public:
+    using Ptr = NodePtr;
+
+    template<class T>
+    std::shared_ptr<T> findAncestor() {
+        return traverseReverse<T>([](const std::shared_ptr<T> &node, TraversalEvent) {
+            return node;
+        });
+    }
+};
 
 //------------------------------------------------------------------------------------------------------------------------------
 /** Node that holds a sequence of consecutive tokens from an input file. */
@@ -685,10 +191,22 @@ public:
 };
 
 //------------------------------------------------------------------------------------------------------------------------------
-/** Ordered list of arguments.
- *
- *  An argument list is a sequence of token sequences. */
-using ArgumentList = ListNode<TokenList>;
+/** A node that holds a list of arguments. */
+class ArgumentList: public Node {
+public:
+    /** Shared-ownership pointer. */
+    using Ptr = ArgumentListPtr;
+
+public:
+    EdgeVector<TokenList> elmts;
+
+protected:
+    ArgumentList();
+
+public:
+    /** Allocating constructor. */
+    static Ptr instance();
+};
 
 //------------------------------------------------------------------------------------------------------------------------------
 /** An attribute adjusting the details for a definition.
@@ -697,7 +215,7 @@ using ArgumentList = ListNode<TokenList>;
  *  definition. */
 class Attribute: public Node {
 public:
-    /** Allocating constructor. */
+    /** Shared-ownership pointer. */
     using Ptr = AttributePtr;
 
 public:
@@ -710,7 +228,7 @@ public:
     /** Attribute arguments.
      *
      *  This tree edge is null unless the attribute has an argument list with zero or more arguments. */
-    ChildEdge<ArgumentList> arguments;
+    Edge<ArgumentList> arguments;
 
 protected:
     /** Default constructor used only by derived classes. */
@@ -728,10 +246,6 @@ public:
     static Ptr instance(const std::string &fqName, const std::vector<Token> &nameTokens);
     /** @} */
 };
-
-//------------------------------------------------------------------------------------------------------------------------------
-/** An ordered sequence of attributes with their arguments. */
-using AttributeList = ListNode<Attribute>;
 
 //------------------------------------------------------------------------------------------------------------------------------
 /** Base class for class and property definitions. */
@@ -764,7 +278,7 @@ public:
      *
      *  This is a non-null child that contains information about the CPP conditional compilation directives that have been started
      *  but not yet closed. */
-    ChildEdge<CppStack> cppStack;
+    Edge<CppStack> cppStack;
 
     /** Input text before the definition.
      *
@@ -779,7 +293,7 @@ public:
     Token priorTextToken;
 
     /** Non-null pointer to the list of attributes controlling this property. */
-    ChildEdge<AttributeList> attributes;
+    EdgeVector<Attribute> attributes;
 
 protected:
     /** Default constructor used only by derived classes. */
@@ -804,10 +318,10 @@ public:
 
 public:
     /** Optional pointer to tokens that define the property type. */
-    ChildEdge<TokenList> cType;
+    Edge<TokenList> cType;
 
     /** Optional pointer to tokens that define the property's initial value. */
-    ChildEdge<TokenList> cInit;
+    Edge<TokenList> cInit;
 
     /** Optional data member name override.
      *
@@ -837,10 +351,6 @@ public:
 };
 
 //------------------------------------------------------------------------------------------------------------------------------
-/** An ordered sequence of properties. */
-using PropertyList = ListNode<Property>;
-
-//------------------------------------------------------------------------------------------------------------------------------
 /** Represents a class definition. */
 class Class: public Definition {
 public:
@@ -852,7 +362,7 @@ public:
 
 public:
     /** Non-null list of zero or more properties. */
-    ChildEdge<PropertyList> properties;
+    EdgeVector<Property> properties;
 
     /** Information about base classes. */
     Inheritance inheritance;
@@ -882,10 +392,6 @@ public:
 };
 
 //------------------------------------------------------------------------------------------------------------------------------
-/** An ordered sequence of class definitions. */
-using ClassList = ListNode<Class>;
-
-//------------------------------------------------------------------------------------------------------------------------------
 /** An input file. */
 class File: public Node {
 public:
@@ -897,7 +403,7 @@ private:
 
 public:
     /** Non-null list of zero or more class definitions. */
-    ChildEdge<ClassList> classes;
+    EdgeVector<Class> classes;
 
     /** Text after the last class definition until the end of the file.
      *
@@ -1016,10 +522,6 @@ public:
 };
 
 //------------------------------------------------------------------------------------------------------------------------------
-/** An ordered list of files. */
-using FileList = ListNode<File>;
-
-//------------------------------------------------------------------------------------------------------------------------------
 /** Root of an AST for one or more input files.
  *
  *  The project represents all the input files that were parsed. */
@@ -1030,7 +532,7 @@ public:
 
 public:
     /** Non-null list of input files. */
-    ChildEdge<FileList> files;
+    EdgeVector<File> files;
 
 protected:
     /** Default constructor used only by derived classes. */
@@ -1046,133 +548,6 @@ public:
      *  encountered during parsing. */
     std::vector<ClassPtr> allClassesFileOrder();
 };
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Template implementations
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-template<class T>
-bool
-ParentEdge::operator==(const ChildEdge<T> &other) const {
-    return parent_ == other();
-}
-
-template<class T>
-bool
-ParentEdge::operator!=(const ChildEdge<T> &other) const {
-    return parent_ != other();
-}
-
-template<class T>
-ChildEdge<T>::~ChildEdge() {
-    if (child_)
-        resetParent(child_->parent);
-}
-
-template<class T>
-ChildEdge<T>::ChildEdge(Node &parent)
-    : parent_(parent) {}
-
-template<class T>
-ChildEdge<T>::ChildEdge(Node &parent, const std::shared_ptr<T> &child)
-    : parent_(parent), child_(child) {
-    if (child) {
-        if (child->parent)
-            throw AttachmentError(child);
-        setParent(child->parent, parent);
-    }
-}
-
-template<class T>
-const std::shared_ptr<T>&
-ChildEdge<T>::operator->() const {
-    ASSERT_not_null(child_);
-    return child_;
-}
-
-template<class T>
-const std::shared_ptr<T>&
-ChildEdge<T>::operator()() const {
-    return child_;
-}
-
-template<class T>
-bool
-ChildEdge<T>::operator==(const std::shared_ptr<Node> &ptr) const {
-    return child_ == ptr;
-}
-
-template<class T>
-bool
-ChildEdge<T>::operator!=(const std::shared_ptr<Node> &ptr) const {
-    return child_ != ptr;
-}
-
-template<class T>
-bool
-ChildEdge<T>::operator==(const ParentEdge &other) const {
-    return child_ == other();
-}
-
-template<class T>
-bool
-ChildEdge<T>::operator!=(const ParentEdge &other) const {
-    return child_.get() != other();
-}
-
-template<class T>
-template<class U>
-bool
-ChildEdge<T>::operator==(const ChildEdge<U> &other) const {
-    return child_.get() == other.get();
-}
-
-template<class T>
-template<class U>
-bool
-ChildEdge<T>::operator!=(const ChildEdge<U> &other) const {
-    return child_.get() != other.get();
-}
-
-template<class T>
-ChildEdge<T>&
-ChildEdge<T>::operator=(const std::shared_ptr<T> &child) {
-    if (child != child_) {
-        // Check for errors
-        if (child) {
-            if (child->parent)
-                throw AttachmentError(child);
-#ifndef NDEBUG
-            parent_.traverseUpward([&child](const NodePtr &node) {
-                if (child == node) {
-                    throw CycleError(child);
-                } else {
-                    return false;
-                }
-            });
-#endif
-        }
-
-        // Unlink the child from the tree
-        if (child_) {
-            resetParent(child_->parent);
-            child_.reset();                             // parent-to-child edge
-        }
-
-        // Link new child into the tree
-        if (child) {
-            setParent(child->parent, parent_);
-            child_ = child;
-        }
-    }
-    return *this;
-}
-
-template<class T>
-ChildEdge<T>&
-ChildEdge<T>::operator=(const ParentEdge &parent) {
-    return (*this) = parent();
-}
 
 } // namespace
 } // namespace

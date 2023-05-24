@@ -45,14 +45,17 @@ https://www.codeproject.com/Articles/28720/YAML-Parser-in-C
 #ifndef Sawyer_Yaml_H
 #define Sawyer_Yaml_H
 
-#include <algorithm>
+#include <Sawyer/Exception.h>
+#include <Sawyer/Parse.h>
+
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
+
+#include <algorithm>
 #include <exception>
 #include <iostream>
 #include <map>
 #include <memory>
-#include <rose_strtoull.h>
 #include <sstream>
 #include <string>
 #include <type_traits>
@@ -83,24 +86,12 @@ struct StringConverter {
     }
 };
 
-// Converter from string to integral types handles hexadecimal, octal, and decimal.
+// Converter from string to integral types handles hexadecimal (0x), binary (0b), and decimal.
 template<typename T>
 struct StringConverter<T, typename std::enable_if<std::is_integral<T>::value>::type> {
     static T Get(const std::string &data) {
-        const char *s = data.c_str();
-        char *rest = nullptr;
-        static_assert(sizeof(T) <= sizeof(uint64_t), "sizeof(T) is too big for implementation");
-        if (strlen(s) != data.size() || data.empty() || isspace(data[0]))
-            throw std::runtime_error("string is not a recognized integral literal");
-        errno = 0;
-        uint64_t big = rose_strtoull(s, &rest, 0);
-        if (*rest) {
-            throw std::runtime_error("string is not a recognized integral literal");
-        } else if (ULLONG_MAX == big && ERANGE == errno) {
-            throw std::runtime_error("integral literal out of range");
-        } else {
-            return boost::numeric_cast<T>(big);
-        }
+        auto big = parse<uint64_t>(data).orThrow<Exception::RuntimeError>();
+        return boost::numeric_cast<T>(big);
     }
 
     static T Get(const std::string &data, const T &defaultValue) {
@@ -437,6 +428,12 @@ public:
     Node& operator[](const std::string& key);
     Node& operator[](const std::string& key) const;
     /** @} */
+
+    /** Test whether a map item exists without inserting it. */
+    bool exists(const std::string &key) const {
+        // Because of const this, the operator[] does not add the node, it only returns an empty node
+        return (*this)[key] ? true : false;
+    }
 
     /** Erase item.
      *

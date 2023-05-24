@@ -3,10 +3,9 @@ static const char* gDescription =
     "Not written yet.";
 
 #include <Rosebud/Ast.h>
+#include <Rosebud/Generator.h>
+#include <Rosebud/Serializer.h>
 #include <Rosebud/Utility.h>
-#include <Rosebud/RoseGenerator.h>
-#include <Rosebud/RosettaGenerator.h>
-#include <Rosebud/YamlGenerator.h>
 
 #include <Sawyer/CommandLine.h>
 
@@ -75,16 +74,24 @@ makeCommandLineParser() {
                 .doc("Show debugging output."));
 
     parser.with(Switch("backend")
-                .argument("generator", enumParser<Backend>(settings.backend)
-                          ->with("yaml", Backend::YAML)
-                          ->with("rosetta", Backend::ROSETTA)
-                          ->with("rose", Backend::ROSE)
-                          ->with("none", Backend::NONE))
-                .doc("How to generate code. The choices are:"
-                     "@named{yaml}{Generate YAML output that can be parsed by standalone backends.}"
-                     "@named{rosetta}{Generate code according to Robb's single-file ROSETTA kludge.}"
-                     "@named{rose}{Experimental backend to generate ROSE code directly.}"
-                     "@named{none}{Do not generate code, but only check the input.}"));
+                .argument("name", anyParser(settings.backend))
+                .doc("Name of the backend used to generate code. The choices are:" +
+                     []() {
+                         std::string choices;
+                         for (const Generator::Ptr &generator: Generator::registeredGenerators())
+                             choices += "@named{" + generator->name() + "}{" + generator->purpose() + "}";
+                         return choices;
+                     }()));
+
+    parser.with(Switch("serializer")
+                .argument("name", anyParser(settings.serializer))
+                .doc("Name of the serialization code generator. The choices are:" +
+                     []() {
+                         std::string choices;
+                         for (const Serializer::Ptr &serializer: Serializer::registeredSerializers())
+                             choices += "@named{" + serializer->name() + "}{" + serializer->purpose() + "}";
+                         return choices;
+                     }()));
 
     parser.with(Switch("locations")
                 .intrinsicValue(true, settings.showingLocations)
@@ -106,6 +113,15 @@ makeCommandLineParser() {
                 .intrinsicValue(false, settings.showingWarnings)
                 .key("warnings")
                 .hidden(true));
+
+    if (!Generator::lookup(settings.backend)) {
+        message(FATAL, "invalid backend code generator \"" + settings.backend + "\"; see --help\n");
+        exit(1);
+    }
+    if (!Serializer::lookup(settings.serializer)) {
+        message(FATAL, "invalid serialization code generator \"" + settings.serializer + "\"; see --help\n");
+        exit(1);
+    }
 
     return parser;
 }
@@ -427,7 +443,7 @@ parseAttribute(const Ast::File::Ptr &file, size_t at, const std::string &nameSpa
         attribute->arguments = Ast::ArgumentList::instance();
         while (file->token(at) && !file->matches(at, ")")) {
             if (const auto argument = parseBalancedTokens(file, at, ",")) {
-                attribute->arguments->push_back(argument);
+                attribute->arguments->elmts.push_back(argument);
                 at += argument->size();
             }
 
@@ -452,9 +468,8 @@ parseAttribute(const Ast::File::Ptr &file, size_t at, const std::string &nameSpa
 // Parse attributes. Add all the attributes to the `attributes` list argument and return the number of tokens parsed. Otherwise only
 // return zero.  Do not consume any tokens.
 static size_t
-parseOptionalAttributes(const Ast::File::Ptr &file, const Ast::AttributeList::Ptr &attributes) {
+parseOptionalAttributes(const Ast::File::Ptr &file, Ast::Attribute::EdgeVector<Ast::Attribute> &attributes) {
     ASSERT_not_null(file);
-    ASSERT_not_null(attributes);
     size_t at = 0;
 
     while (file->matches(at, "[") && file->matches(at+1, "[")) {
@@ -466,7 +481,7 @@ parseOptionalAttributes(const Ast::File::Ptr &file, const Ast::AttributeList::Pt
             if (file->matches(at, "using") && file->token(at+1).type() == TOK_WORD && file->matches(at+2, ":")) {
                 if (!nameSpace.empty())
                     message(ERROR, file, file->token(at), "multiple \"using\" in attribute list");
-                if (!attributes->empty())
+                if (!attributes.empty())
                     message(ERROR, file, file->token(at), "\"using\" must appear before attributes");
                 nameSpace = file->lexeme(at+1);
                 at += 3;
@@ -475,7 +490,7 @@ parseOptionalAttributes(const Ast::File::Ptr &file, const Ast::AttributeList::Pt
             // Parse an attribute
             const std::pair<size_t, Ast::Attribute::Ptr> attrPair = parseAttribute(file, at, nameSpace);
             if (attrPair.second) {
-                attributes->push_back(attrPair.second);
+                attributes.push_back(attrPair.second);
                 at += attrPair.first;
             } else {
                 message(ERROR, file, file->token(at), "attribute expected");
@@ -523,7 +538,7 @@ checkNumberOfArguments(const Ast::File::Ptr &file, const Ast::Attribute::Ptr &at
         maxArgs = minArgs;
     ASSERT_require(minArgs <= maxArgs);
 
-    const size_t nArgs = attr->arguments ? attr->arguments->size() : 0;
+    const size_t nArgs = attr->arguments ? attr->arguments->elmts.size() : 0;
     if (minArgs == maxArgs && nArgs != minArgs) {
         message(ERROR, file, attr->nameTokens, "attribute \"" + attr->fqName + "\" has " +
                 boost::lexical_cast<std::string>(nArgs) + (1 == nArgs ? " argument" : " arguments") + " but needs " +
@@ -546,7 +561,7 @@ checkAndApplyClassAttributes(const Ast::File::Ptr &file, const Ast::Class::Ptr &
     ASSERT_not_null(c);
     std::map<std::string, Ast::Attribute::Ptr> seen;
 
-    for (const auto &attr: *c->attributes()) {
+    for (const auto &attr: c->attributes) {
         if (!checkRecognizedAttribute(attr->fqName, validClassAttrNames)) {
             // Unknown name
             message(ERROR, file, attr->nameTokens,
@@ -574,7 +589,7 @@ checkAndApplyPropertyAttributes(const Ast::File::Ptr &file, const Ast::Property:
     ASSERT_not_null(property);
     std::map<std::string, Ast::Attribute::Ptr> seen;
 
-    for (const auto &attr: *property->attributes()) {
+    for (const auto &attr: property->attributes) {
         if (!checkRecognizedAttribute(attr->fqName, validPropertyAttrNames)) {
             // Unknown name
             message(ERROR, file, attr->nameTokens,
@@ -605,7 +620,7 @@ checkAndApplyPropertyAttributes(const Ast::File::Ptr &file, const Ast::Property:
             if (!checkNumberOfArguments(file, attr(), 1)) {
                 // error already printed
             } else {
-                for (const auto &arg: *attr->arguments()) { // there's just one
+                for (const auto &arg: attr->arguments->elmts) { // there's just one
                     ASSERT_forbid(arg->empty());
                     if (arg->size() != 1) {
                         message(ERROR, file, arg->tokens,
@@ -620,7 +635,7 @@ checkAndApplyPropertyAttributes(const Ast::File::Ptr &file, const Ast::Property:
         } else if ("Rosebud::accessors" == attr->fqName) {
             if (attr->arguments) {
                 std::vector<std::string> names;
-                for (const auto &arg: *attr->arguments()) {
+                for (const auto &arg: attr->arguments->elmts) {
                     ASSERT_forbid(arg->empty());
                     if (arg->size() != 1) {
                         message(ERROR, file, arg->tokens, "attribute \"" + attr->fqName + "\" argument must be the symbol to use "
@@ -640,7 +655,7 @@ checkAndApplyPropertyAttributes(const Ast::File::Ptr &file, const Ast::Property:
             // Zero or more arguments which must the be symbols to use as data members for this property.
             if (attr->arguments) {
                 std::vector<std::string> names;
-                for (const auto &arg: *attr->arguments()) {
+                for (const auto &arg: attr->arguments->elmts) {
                     ASSERT_forbid(arg->empty());
                     if (arg->size() != 1) {
                         message(ERROR, file, arg->tokens, "attribute \"" + attr->fqName + "\" argument must be the symbol to use "
@@ -669,13 +684,13 @@ parseOptionalProperty(const Ast::File::Ptr &file, Ast::CppStack::Stack &runningC
     property->startToken = file->token();
 
     // Look for attributes. At least one of them must be in the 'Rosebud' namespace in order for this to be a property.
-    size_t at = parseOptionalAttributes(file, property->attributes());
+    size_t at = parseOptionalAttributes(file, property->attributes);
     if (0 == at)
         return {};
 
     // Parsing was a success only if we found at least one Rosebud attribute
     bool isProperty = false;
-    for (const auto &attribute: *property->attributes()) {
+    for (const auto &attribute: property->attributes) {
         if (boost::starts_with(attribute->fqName, "Rosebud::")) {
             isProperty = true;
             break;
@@ -764,7 +779,7 @@ parseClassDefinitionBody(const Ast::File::Ptr &file, const Ast::Class::Ptr &c, A
             parsePriorRegion(file, property, runningCppStack, filePos, startOfProperty);
             checkClassCppDirectives(file, c->cppStack->stack, property->cppStack->stack, c->startToken, property->startToken);
             property->priorText = file->trimmedContent(filePos, startOfProperty, property->docToken, property->priorTextToken);
-            c->properties->push_back(property);
+            c->properties.push_back(property);
             filePos = file->token().prior();          // end of property
 
             // Check for property problems
@@ -830,7 +845,7 @@ parseClassDefinition(const Ast::File::Ptr &file, Ast::CppStack::Stack &runningCp
     auto c = Ast::Class::instance();
 
     // A class definition can start with attributes.
-    const size_t at = parseOptionalAttributes(file, c->attributes());
+    const size_t at = parseOptionalAttributes(file, c->attributes);
     if (!isAtClassDefinition(file, at))
         return {};                                      // we're not at a class definition, but no error yet
     file->consume(at);
@@ -886,9 +901,12 @@ parseClassDefinition(const Ast::File::Ptr &file, Ast::CppStack::Stack &runningCp
     return c;
 }
 
-static void
-parseFile(const Ast::File::Ptr &file) {
-    ASSERT_not_null(file);
+static Ast::File::Ptr
+parseFile(const std::string &fileName) {
+    auto file = Ast::File::instance(fileName);
+    if (!file)
+        return {};
+
     size_t filePos = 0;
     Ast::CppStack::Stack runningCppStack;
     std::vector<Token> nestingStack;
@@ -900,7 +918,7 @@ parseFile(const Ast::File::Ptr &file) {
             // Parse area before the class
             parsePriorRegion(file, c, runningCppStack, filePos, startOfClass);
             c->priorText = file->trimmedContent(filePos, startOfClass, c->docToken, c->priorTextToken);
-            file->classes->push_back(c);
+            file->classes.push_back(c);
             filePos = file->token().prior();
 
             // Show warnings for questionable things about a class
@@ -920,8 +938,10 @@ parseFile(const Ast::File::Ptr &file) {
     file->endText = file->trimmedContent(filePos, file->token().end(), file->endTextToken);
 
     // Warn about file problems
-    if (file->classes->empty())
+    if (file->classes.empty())
         message(WARN, file, "file contains to class definitions");
+
+    return file;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -937,18 +957,15 @@ int main(int argc, char *argv[]) {
 
     // Parse the command-line
     Sawyer::CommandLine::Parser cmdlineParser = makeCommandLineParser();
-    YamlGenerator yamlGenerator;
-    yamlGenerator.adjustParser(cmdlineParser);
-    RosettaGenerator rosettaGenerator;
-    rosettaGenerator.adjustParser(cmdlineParser);
-    RoseGenerator roseGenerator;
-    roseGenerator.adjustParser(cmdlineParser);
+    Generator::addAllToParser(cmdlineParser);
     const std::vector<std::string> args = parseCommandLine(cmdlineParser, argc, argv);
 
     // Parse the input files to produce the AST
     auto project = Ast::Project::instance();
-    for (const std::string &arg: args)
-        parseFile(project->files->push_back(Ast::File::instance(arg))());
+    for (const std::string &arg: args) {
+        if (auto file = parseFile(arg))
+            project->files.push_back(file);
+    }
 
     // Additional warnings that we can't check until all the files are parsed
     if (settings.showingWarnings) {
@@ -962,17 +979,9 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    switch (settings.backend) {
-        case Backend::YAML:
-            yamlGenerator.generate(project);
-            break;
-        case Backend::ROSETTA:
-            rosettaGenerator.generate(project);
-            break;
-        case Backend::ROSE:
-            roseGenerator.generate(project);
-            break;
-        case Backend::NONE:
-            break;
-    }
+    Generator::Ptr generator = Generator::lookup(settings.backend);
+    ASSERT_not_null(generator);
+    generator->generate(project);
+
+    return nErrors > 0 ? 1 : 0;
 }

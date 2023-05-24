@@ -31,6 +31,7 @@ class SgFunctionDefinition;
 class SgFunctionParameterList;
 class SgFunctionParameterScope;
 class SgGlobal;
+class SgGotoStatement;
 class SgIfStmt;
 class SgImplicitStatement;
 class SgInitializedName;
@@ -54,6 +55,8 @@ class SgVariableDeclaration;
 class SgUseStatement;
 class SgVarRefExp;
 class SgWhileStmt;
+
+using SgExpressionPtrList = std::vector<SgExpression*>;
 
 namespace Rose {
 namespace builder {
@@ -162,7 +165,7 @@ public:
    void Enter(SgEnumDeclaration* &, const std::string &);
    void Leave(SgEnumDeclaration*);
 
-   void Enter(SgEnumVal* &, const std::string &, SgEnumDeclaration*, int);
+   void Enter(SgEnumVal* &, const std::string &, SgEnumDeclaration*, int, SgCastExp* cast=nullptr);
 
    void Enter(SgTypedefDeclaration* &, const std::string &, SgType*);
    void Leave(SgTypedefDeclaration*);
@@ -173,16 +176,19 @@ public:
    void Leave(SgNamespaceDeclarationStatement*);
 
    void Enter(SgExprStatement* &, const std::string &, SgExprListExp*, const std::string &);
-   void Enter(SgExprStatement* &, SgExpression* &, const std::vector<SgExpression*> &, const std::string &);
-   void Leave(SgExprStatement*);
+   void Enter(SgExprStatement* &, SgExpression* &, const std::vector<SgExpression*> &);
+   void Leave(SgExprStatement*, std::vector<std::string> &);
+
+   void Enter(SgGotoStatement* &, const std::string &);
+   void Leave(SgGotoStatement*, const std::vector<std::string> &);
 
    void Enter(SgIfStmt* &, SgExpression*, SgBasicBlock*, SgBasicBlock*, std::vector<Rose::builder::Token> &,
               bool is_ifthen = false, bool has_end_stmt = false, bool is_else_if = false);
    void Leave(SgIfStmt*);
 
-   void Enter(SgProcessControlStatement* &, const std::string &, const boost::optional<SgExpression*> &);
    void Enter(SgProcessControlStatement* &, const std::string &, const boost::optional<SgExpression*> &,
-                                                                 const boost::optional<SgExpression*> &);
+                                            const boost::optional<SgExpression*> &quiet=boost::none,
+                                            const std::vector<std::string> &labels=std::vector<std::string>{});
    void Leave(SgProcessControlStatement*);
 
    void Enter(SgSwitchStatement* &, SgExpression*, const SourcePositionPair &);
@@ -236,9 +242,7 @@ public:
    void Enter(SgJovialDirectiveStatement* &, const std::string &compool_name, std::vector<std::string> &);
    void Leave(SgJovialDirectiveStatement*);
 
-   void Enter(SgJovialForThenStatement* &, const std::string &);
-   void Enter(SgJovialForThenStatement* &, SgExpression*, SgExpression*, SgExpression*,
-                                           SgJovialForThenStatement::loop_statement_type_enum);
+   void Enter(SgJovialForThenStatement* &);
    void Leave(SgJovialForThenStatement*);
 
    void Enter(SgJovialCompoolStatement* &, const std::string &, const SourcePositionPair &);

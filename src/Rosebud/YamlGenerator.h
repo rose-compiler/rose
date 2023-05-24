@@ -8,8 +8,19 @@ namespace Rosebud {
 
 /** Generator that produces a YAML description of the input. */
 class YamlGenerator: public Generator {
-    int indentationAmount = 2;
 public:
+    using Ptr = std::shared_ptr<YamlGenerator>;
+
+private:
+    int indentationAmount = 2;
+
+protected:
+    YamlGenerator() {}
+
+public:
+    static Ptr instance();
+    virtual std::string name() const override;
+    virtual std::string purpose() const override;
     virtual void adjustParser(Sawyer::CommandLine::Parser&) override;
     virtual void generate(const Ast::ProjectPtr&) override;
 private:

@@ -5,14 +5,13 @@ run $(support_compile_linklib) -I.. -o libRosebud \
     BoostSerializer.C \
     CxxGenerator.C \
     Generator.C \
+    NoneGenerator.C \
+    NoneSerializer.C \
     RoseGenerator.C \
     RosettaGenerator.C \
+    Serializer.C \
     Utility.C \
     YamlGenerator.C \
     $(ROSE)/src/util/Sawyer/libsawyer
 
 run $(support_compile_linkexe) -I.. rosebud.C libRosebud $(ROSE)/src/util/Sawyer/libsawyer
-
-run $(support_compile_linkexe) -I.. unitTest01.C libRosebud $(ROSE)/src/util/Sawyer/libsawyer
-
-run $(test) unitTest01

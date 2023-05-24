@@ -40,7 +40,7 @@ sub badTitle {
 # Return an error message if the commit lacks at least one JIRA issue
 sub badBodyIssue {
     my($body) = @_;
-    return "body lacks JIRA issue line(s)" unless $body =~ /^[A-Z]+-\d+\s*$/m;
+    return "body lacks JIRA issue line(s)" unless $body =~ /^[A-Z]+(_[A-Z]+)*-\d+\s*$/m;
     return;
 }
 

@@ -141,17 +141,17 @@ void LabelAndLoopManager::gotojmp(Element_ID id, SgGotoStatement& gotostmt)
   gotos.emplace_back(&gotostmt, id);
 }
 
-AstContext
-AstContext::scope_npc(SgScopeStatement& s) const
-{
-  // make sure that the installed handler handles SgScopeStatement
-  // ADA_ASSERT(stmtHandler.target() == &defaultStatementHandler);
+//~ AstContext
+//~ AstContext::scope_npc(SgScopeStatement& s) const
+//~ {
+  //~ // make sure that the installed handler handles SgScopeStatement
+  //~ // ADA_ASSERT(stmtHandler.target() == &defaultStatementHandler);
 
-  AstContext tmp{*this};
+  //~ AstContext tmp{*this};
 
-  tmp.the_scope = &s;
-  return tmp;
-}
+  //~ tmp.the_scope = &s;
+  //~ return tmp;
+//~ }
 
 AstContext
 AstContext::unscopedBlock(SgAdaUnscopedBlock& blk) const
@@ -163,6 +163,14 @@ AstContext::unscopedBlock(SgAdaUnscopedBlock& blk) const
                       sg::linkParentChild(blk, stmt, &SgAdaUnscopedBlock::append_statement);
                     };
 
+  return tmp;
+}
+
+AstContext AstContext::pragmas(PragmaContainer& allPragmas) const
+{
+  AstContext tmp{*this};
+
+  tmp.all_pragmas = &allPragmas;
   return tmp;
 }
 
@@ -180,7 +188,10 @@ AstContext::scope(SgScopeStatement& s) const
 {
   ADA_ASSERT(s.get_parent());
 
-  return scope_npc(s);
+  AstContext tmp{*this};
+
+  tmp.the_scope = &s;
+  return tmp;
 }
 
 AstContext
@@ -252,6 +263,17 @@ void setFileInfo( SageNode& n,
   (n.*setter)(&mkFileInfo(filename, line, col));
 }
 
+void cpyFileInfo( SgLocatedNode& n,
+                  void (SgLocatedNode::*setter)(Sg_File_Info*),
+                  Sg_File_Info* (SgLocatedNode::*getter)() const,
+                  const SgLocatedNode& src
+                )
+{
+  const Sg_File_Info& info  = SG_DEREF((src.*getter)());
+
+  setFileInfo(n, setter, getter, info.get_filenameString(), info.get_line(), info.get_col());
+}
+
 
 ///
 
@@ -274,6 +296,7 @@ namespace
                  unit, loc.Last_Line,  loc.Last_Column );
   }
 }
+
 
 /// attaches the source location information from \ref elem to
 ///   the AST node \ref n.
@@ -303,6 +326,61 @@ void attachSourceLocation(SgPragma& n, Element_Struct& elem, AstContext ctx)
   attachSourceLocation_internal(n, elem, ctx);
 }
 /// \}
+
+namespace
+{
+/*
+  struct SourceLocationFromChildren
+  {
+    void handle(SgNode& n) { SG_UNEXPECTED_NODE(n); }
+
+    void handle(SgLocatedNode& n)
+    {
+
+
+
+    }
+  };
+*/
+
+  bool _hasLocationInfo(SgLocatedNode* n)
+  {
+    if (!n) return false;
+
+    // this only asks for get_startOfConstruct assuming that
+    // get_endOfConstruct is consistent.
+    Sg_File_Info* info = n->get_startOfConstruct();
+
+    return info && !info->isCompilerGenerated();
+  }
+
+  bool hasLocationInfo(SgNode* n)
+  {
+    return _hasLocationInfo(isSgLocatedNode(n));
+  }
+}
+
+void computeSourceRangeFromChildren(SgLocatedNode& n)
+{
+  std::vector<SgNode*> successors = n.get_traversalSuccessorContainer();
+  auto beg    = successors.begin();
+  auto lim    = successors.end();
+  auto first  = std::find_if(beg, lim, hasLocationInfo);
+  auto rbeg   = successors.rbegin();
+  auto rlim   = std::make_reverse_iterator(first);
+  auto last   = std::find_if(rbeg, rlim, hasLocationInfo);
+
+  if ((first == lim) || (last == rlim))
+    return;
+
+  cpyFileInfo( n,
+               &SgLocatedNode::set_startOfConstruct, &SgLocatedNode::get_startOfConstruct,
+               SG_DEREF(isSgLocatedNode(*first)) );
+
+  cpyFileInfo( n,
+               &SgLocatedNode::set_endOfConstruct,   &SgLocatedNode::get_endOfConstruct,
+               SG_DEREF(isSgLocatedNode(*last)) );
+}
 
 namespace
 {
@@ -636,12 +714,16 @@ namespace
     return (s.rfind(sub, 0) == 0);
   }
 
-  bool isSystemPackage(Unit_Struct* unit)
+  bool isSpecialCompilerPackage(const AdaIdentifier& name, const char* unitRootInCAPS)
+  {
+    return startsWith(name, unitRootInCAPS);
+  }
+
+  bool isSpecialCompilerPackage(Unit_Struct* unit, const char* unitRootInCAPS)
   {
     ADA_ASSERT(unit);
-    AdaIdentifier name(unit->Unit_Full_Name);
 
-    return startsWith(name, "SYSTEM");
+    return isSpecialCompilerPackage(AdaIdentifier(unit->Unit_Full_Name), unitRootInCAPS);
   }
 
 
@@ -863,7 +945,8 @@ namespace
         // parentID == 1.. 1 refers to the package standard (currently not extracted from Asis)
         UniqueUnitId uid = uniqueUnitName(unit->Unit);
 
-        logWarn() << "unknown unit dependency: "
+        (parentID == 1 ? logInfo() : logWarn())
+                  << "unknown unit dependency: "
                   << uid << " #" << unit->Unit.ID
                   << " -> #" << parentID
                   << std::endl;
@@ -888,13 +971,68 @@ namespace
     // topo sort
 
     // sort system packages first
+    // \note the '.' after "ADA" is necessary to avoid user package such as
+    //       System_Simple_Test to interfere.
     for (DependencyMap::value_type& el : deps)
-      if (isSystemPackage(el.second.unit))
+      if (isSpecialCompilerPackage(el.second.unit, "SYSTEM."))
         dfs(deps, el, res);
+
+/*
+    // then sort standard Ada packages
+    //   this is necessary b/c some special GNAT packages lack dependence information
+    //   e.g., Ada.TEXT_IO.Modular_IO
+    for (DependencyMap::value_type& el : deps)
+      if (isSpecialCompilerPackage(el.second.unit, "ADA."))
+        dfs(deps, el, res);
+*/
 
     // sort language and user defined packages
     for (DependencyMap::value_type& el : boost::adaptors::reverse(deps))
       dfs(deps, el, res);
+
+    // Ada.Text_IO.* packages require special handling in GNAT
+    std::vector<Unit_Struct*> specialAdaTextIOPkgs;
+    auto isSpecialAdaTextIOChildUnit =
+                  [](Unit_Struct* unit)->bool
+                  {
+                    AdaIdentifier unitname(unit->Unit_Full_Name);
+
+                    return (  isSpecialCompilerPackage(unitname, "ADA.TEXT_IO.INTEGER_AUX")
+                           || isSpecialCompilerPackage(unitname, "ADA.TEXT_IO.INTEGER_IO")
+                           || isSpecialCompilerPackage(unitname, "ADA.TEXT_IO.FLOAT_AUX")
+                           || isSpecialCompilerPackage(unitname, "ADA.TEXT_IO.FLOAT_IO")
+                           || isSpecialCompilerPackage(unitname, "ADA.TEXT_IO.GENERIC_AUX")
+                           || isSpecialCompilerPackage(unitname, "ADA.TEXT_IO.FIXED_IO")
+                           || isSpecialCompilerPackage(unitname, "ADA.TEXT_IO.MODULAR_AUX")
+                           || isSpecialCompilerPackage(unitname, "ADA.TEXT_IO.MODULAR_IO")
+                           || isSpecialCompilerPackage(unitname, "ADA.TEXT_IO.DECIMAL_AUX")
+                           || isSpecialCompilerPackage(unitname, "ADA.TEXT_IO.DECIMAL_IO")
+                           || isSpecialCompilerPackage(unitname, "ADA.TEXT_IO.ENUMERATION_AUX")
+                           || isSpecialCompilerPackage(unitname, "ADA.TEXT_IO.ENUMERATION_IO")
+                           );
+                  };
+
+    auto resbeg = res.begin();
+    auto reslim = res.end();
+    std::copy_if( resbeg, reslim,
+                  std::back_inserter(specialAdaTextIOPkgs),
+                  isSpecialAdaTextIOChildUnit
+                );
+
+    if (specialAdaTextIOPkgs.size())
+    {
+      auto respos = std::remove_if(resbeg, reslim, isSpecialAdaTextIOChildUnit);
+
+      reslim = res.erase(respos, reslim);
+      respos = std::find_if( resbeg, reslim,
+                             [](Unit_Struct* unit)->bool
+                             {
+                               return isSpecialCompilerPackage(unit, "ADA.TEXT_IO");
+                             }
+                          );
+      ADA_ASSERT(respos != reslim);
+      res.insert(std::next(respos), specialAdaTextIOPkgs.begin(), specialAdaTextIOPkgs.end());
+    }
 
     if (PRINT_UNIT_DEPENDENCIES)
     {
@@ -920,7 +1058,7 @@ namespace
     return res;
   }
 
-  struct InheritFileInfo : AstSimpleProcessing
+  struct GenFileInfo : AstSimpleProcessing
   {
     void visit(SgNode* sageNode) override
     {
@@ -928,6 +1066,7 @@ namespace
 
       if (n == nullptr || !n->isTransformation()) return;
 
+      // \todo consider using computeSourceRangeFromChildren which seems more accurate.
       SgLocatedNode* parentNode = isSgLocatedNode(n->get_parent());
       ADA_ASSERT(parentNode && !parentNode->isTransformation());
 
@@ -939,13 +1078,10 @@ namespace
     }
   };
 
-  /// Implements a quick check that the AST is properly constructed.
-  ///   While some issues, such as parent pointers will be fixed at the
-  ///   post processing stage, it may be good to point inconsistencies
-  ///   out anyway.
-  void inheritFileInfo(SgSourceFile* file)
+  /// sets the file info to the parents file info if not set otherwise
+  void genFileInfo(SgSourceFile* file)
   {
-    InheritFileInfo fixer;
+    GenFileInfo fixer;
 
     fixer.traverse(file, preorder);
   }
@@ -1023,7 +1159,6 @@ namespace
     }
   };
 
-
   /// Implements a quick check that the AST is properly constructed.
   ///   While some issues, such as parent pointers will be fixed at the
   ///   post processing stage, it may be good to point inconsistencies
@@ -1035,9 +1170,6 @@ namespace
 
     checker.traverse(file, preorder);
   }
-
-  // when set to true inference becomes more permissive, b/c it may stop early.
-  constexpr bool INFERENCE_SHORTCUT = false;
 
   const SgFunctionCallExp* callNode(const SgFunctionRefExp& fnref)
   {
@@ -1072,14 +1204,25 @@ namespace
 
   using OverloadSet = std::vector<SgFunctionSymbol*>;
 
-  struct OverloadInfo : std::tuple<SgFunctionSymbol*, OverloadSet>
+  struct OverloadInfo : std::tuple<SgFunctionSymbol*, OverloadSet, bool>
   {
-    using base = std::tuple<SgFunctionSymbol*, OverloadSet>;
+    using base = std::tuple<SgFunctionSymbol*, OverloadSet, bool>;
     using base::base;
 
+    /// the symbol which was originally in place
     SgFunctionSymbol*  orig_sym() const { return std::get<0>(*this); }
+
+    /// the overload set
+    /// \{
           OverloadSet& ovlset()         { return std::get<1>(*this); }
     const OverloadSet& ovlset() const   { return std::get<1>(*this); }
+    /// \}
+
+    /// true, iff all arguments are literals or calls to foldable functions
+    /// \{
+          bool&        foldable()       { return std::get<2>(*this); }
+    const bool&        foldable() const { return std::get<2>(*this); }
+    /// \}
   };
 
   using OverloadMap = std::map<SgFunctionRefExp*, OverloadInfo>;
@@ -1164,7 +1307,7 @@ namespace
                         }
                       );
 
-        m.emplace(fnref, OverloadInfo{fnsym, std::move(overloads)});
+        m.emplace(fnref, OverloadInfo{fnsym, std::move(overloads), false /* foldable */});
         //~ logTrace() << "adding " << fnref << std::endl;
       }
 
@@ -1557,8 +1700,8 @@ namespace
     // void handle(const SgFunctionCallExp& n)          {  }
 
     // logical operators
-    void handle(const SgOrOp&)                       { res = { sb::buildBoolType() }; }
-    void handle(const SgAndOp&)                      { res = { sb::buildBoolType() }; }
+    void handle(const SgOrOp&)                       { res = { adaTypes()["BOOLEAN"] }; }
+    void handle(const SgAndOp&)                      { res = { adaTypes()["BOOLEAN"] }; }
 
     // other expressions
     void handle(const SgCastExp&)                    { /* we cannot make any assumption */ }
@@ -1673,7 +1816,7 @@ namespace
       const std::size_t        numcands  = overloads.size();
 
       // nothing to be done ... go to next work item
-      if (INFERENCE_SHORTCUT && (numcands < 2)) continue;
+      if (numcands < 2) continue;
 
       SgFunctionRefExp&         fnref  = SG_DEREF(item.first);
       const SgFunctionCallExp*  fncall = callNode(fnref);
@@ -1705,7 +1848,7 @@ namespace
                     );
 
         // put in place candidates
-        if (!INFERENCE_SHORTCUT || viables.size())
+        if (viables.size())
           overloads.swap(viables);
       }
 
@@ -1731,7 +1874,7 @@ namespace
                     );
 
         // put in place candidates
-        if (!INFERENCE_SHORTCUT || viables.size())
+        if (viables.size())
           overloads.swap(viables);
       }
 
@@ -1770,16 +1913,15 @@ namespace
     }
 
     // sanity check
-    if (!INFERENCE_SHORTCUT)
     {
       logTrace() << "checking fun calls.." << std::endl;
 
       for (const OverloadMap::value_type& item : allrefs)
       {
-        const SgExpression* exp = callNode(SG_DEREF(item.first));
-
         if (item.second.ovlset().size() != 1)
         {
+          const SgExpression* exp = callNode(SG_DEREF(item.first));
+
           logFlaw() << "disambig: " << (exp ? exp->unparseToString() : std::string{"<null>"})
                                     << " " << item.second.ovlset().size()
                                     << std::endl;
@@ -1821,7 +1963,7 @@ void convertAsisToROSE(Nodes_Struct& headNodes, SgSourceFile* file)
   //~ generateDOT(&astScope, astDotFile);
 
   logInfo() << "Checking AST post-production" << std::endl;
-  inheritFileInfo(file);
+  genFileInfo(file);
   //~ astSanityCheck(file);
 
   file->set_processedToIncludeCppDirectivesAndComments(false);

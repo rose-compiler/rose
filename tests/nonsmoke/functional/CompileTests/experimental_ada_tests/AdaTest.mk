@@ -189,6 +189,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   discriminated_record.adb             \
   discriminant_specification.ads       \
   dynamic_array.adb                    \
+  endless.adb                          \
   entry_call.adb                       \
   entry_declaration.ads                \
   entry_body_declaration.adb           \
@@ -207,6 +208,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   generic_procedure_renaming_declaration.ads  \
   generic_function_renaming_declaration.ads   \
   gen_overloaded_funcs.adb             \
+  generic_namequal.adb                 \
   inherited_primitive_operation.adb    \
   iterate_range.adb                    \
   digital.ads                          \
@@ -251,9 +253,12 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   rep_common_types-data.ads            \
   rep_common_types-menu.ads            \
   rep_common_types.ads                 \
+  rep_mess_types.ads                   \  
+  rep_rename_op.adb                    \ 
   rep_sym.ads                          \
   rep_sym.adb                          \
   rep_sym-set.adb                      \
+  rep_sys_address.adb                  \
   scopequal3.adb                       \
   scopequal4.adb                       \
   scopequal5.adb                       \

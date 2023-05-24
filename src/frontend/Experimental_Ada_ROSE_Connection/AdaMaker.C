@@ -678,6 +678,17 @@ mkTypeDecl(const std::string& name, SgType& ty, SgScopeStatement& scope)
 {
   SgTypedefDeclaration& sgnode = SG_DEREF( sb::buildTypedefDeclaration(name, &ty, &scope) );
 
+  ADA_ASSERT(!sgnode.get_typedefBaseTypeContainsDefiningDeclaration());
+
+  if (sgnode.get_declaration())
+  {
+    // The SageBuilder function sets the declaration link when an array type of an enum
+    //   is created. This configuration is flagged later in the AstConsistencyTests..
+    //   -> set it to null;
+    logWarn() << "corrected typedef with declaration!" << std::endl;
+    sgnode.set_declaration(nullptr);
+  }
+
   return sgnode;
 }
 
@@ -835,6 +846,7 @@ mkAdaGenericDecl(const std::string& name, SgScopeStatement& scope)
    sg::linkParentChild(sgnode, defn, &SgAdaGenericDecl::set_definition);
 
    sgnode.set_firstNondefiningDeclaration(&sgnode);
+   sgnode.set_scope(&scope);
    scope.insert_symbol(name, &mkBareNode<SgAdaGenericSymbol>(&sgnode));
    return sgnode;
 }
@@ -1505,7 +1517,7 @@ mkAdaAcceptStmt(SgExpression& ref, SgExpression& idx)
 
 
 SgCatchOptionStmt&
-mkExceptionHandler(SgInitializedName& parm, SgBasicBlock& body)
+mkExceptionHandler(SgInitializedName& parm, SgBasicBlock& body, SgTryStmt& tryStmt)
 {
   SgCatchOptionStmt&     sgnode = SG_DEREF( sb::buildCatchOptionStmt(nullptr, &body) );
 
@@ -1514,6 +1526,7 @@ mkExceptionHandler(SgInitializedName& parm, SgBasicBlock& body)
   SgVariableDeclaration& exparm = mkVarDecl(parm, sgnode);
 
   sg::linkParentChild(sgnode, exparm, &SgCatchOptionStmt::set_condition);
+  sgnode.set_trystmt(&tryStmt);
   return sgnode;
 }
 
@@ -1734,15 +1747,16 @@ mkAdaAttributeClause(SgAdaAttributeExp& attr, SgExpression& size)
 }
 
 SgPragmaDeclaration&
-mkPragmaDeclaration(const std::string& name, SgExprListExp& args)
+mkPragmaDeclaration(const std::string& name, SgExprListExp& args, SgStatement* assocStmt)
 {
   SgPragma&            details = mkBareNode<SgPragma>(std::ref(name));
   SgPragmaDeclaration& sgnode  = mkLocatedNode<SgPragmaDeclaration>(&details);
 
+  details.set_associatedStatement(assocStmt);
   details.set_parent(&sgnode);
   sg::linkParentChild(details, args, &SgPragma::set_args);
 
-  sgnode.set_definingDeclaration(&sgnode);
+  sgnode.set_definingDeclaration(&sgnode); // should this be null?
   sgnode.set_firstNondefiningDeclaration(&sgnode);
 
   return sgnode;

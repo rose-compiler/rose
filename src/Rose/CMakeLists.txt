@@ -13,7 +13,6 @@ add_subdirectory(StringUtility)
 add_subdirectory(AST)
 add_subdirectory(CodeGen)
 add_subdirectory(Traits)
-add_subdirectory(Tree)
 
 # needed to properly define ROSE_UTIL_API
 add_definitions(-DROSE_UTIL_EXPORTS)
@@ -48,7 +47,6 @@ install(FILES
   RecursionCounter.h
   SourceLocation.h
   StringUtility.h
-  Tree.h
   Yaml.h
 
   DESTINATION ${INCLUDE_INSTALL_DIR}/Rose)

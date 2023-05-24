@@ -197,6 +197,7 @@ WhileClause
 ControlledStatement
 LoopType
 Variable
+VariableLVal
 Formula OptFormula
 VariableList
 AbortStatement
@@ -1318,8 +1319,10 @@ context-free syntax
   VariableList
     '=' Formula ';'          -> AssignmentStatement    {cons("AssignmentStatement")}
 
-  {Variable  ','}+           -> VariableList           {cons("VariableList")}
-  {TableItemNoDeref ','}+    -> VariableList           {cons("VariableList")}
+  {VariableLVal  ','}+       -> VariableList           {cons("VariableList")}
+
+  Variable                   -> VariableLVal           {cons("VariableLVal")}
+  TableItemNoDeref           -> VariableLVal           {cons("VariableLVal")}
 
 %% 4.2 LOOP STATEMENTS
 %%

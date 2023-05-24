@@ -79,4 +79,7 @@ ifeq (@(ENABLE_TESTS),yes)
 
     run $(tool_compile_linkexe) timeUnitTests.C
     run $(test) timeUnitTests
+
+    run $(tool_compile_linkexe) treeUnitTests.C
+    run $(test) treeUnitTests
 endif

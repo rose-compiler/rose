@@ -817,6 +817,36 @@ namespace Ada
     return isGenericDecl(*n);
   }
 
+  namespace
+  {
+    bool isLogicalChildScopeOfDecl(const SgScopeStatement* scope, const SgDeclarationStatement* decl)
+    {
+      if (scope == nullptr) return false;
+      if (scope->get_parent() == decl) return true;
+
+      return isLogicalChildScopeOfDecl(logicalParentScope(*scope), decl);
+    }
+
+    bool isLogicalChildOfDecl(const SgNode* n, const SgDeclarationStatement* decl)
+    {
+      if (n == nullptr) return false;
+
+      return isLogicalChildScopeOfDecl(sg::ancestor<SgScopeStatement>(n), decl);
+    }
+  }
+
+  bool unitRefDenotesGenericInstance(const SgAdaUnitRefExp& n)
+  {
+    SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(n.get_decl());
+
+    return gendcl && isLogicalChildOfDecl(&n, gendcl);
+  }
+
+  bool unitRefDenotesGenericInstance(const SgAdaUnitRefExp* n)
+  {
+    return n && unitRefDenotesGenericInstance(*n);
+  }
+
   bool hasUnknownDiscriminants(const SgAdaDiscriminatedTypeDecl& n)
   {
     return SG_DEREF(n.get_discriminants()).get_parameters().size() == 0;
@@ -910,10 +940,10 @@ namespace Ada
   {
     bool definedInStandard(const SgDeclarationStatement& n)
     {
-      SgAdaPackageSpec*      pkgspec = isSgAdaPackageSpec(n.get_scope());
+      const SgAdaPackageSpec*      pkgspec = isSgAdaPackageSpec(n.get_scope());
       if (pkgspec == nullptr) return false;
 
-      SgAdaPackageSpecDecl*  pkgdecl = isSgAdaPackageSpecDecl(pkgspec->get_parent());
+      const SgAdaPackageSpecDecl*  pkgdecl = isSgAdaPackageSpecDecl(pkgspec->get_parent());
       // test for properties of package standard, which is a top-level package
       //   and has the name "Standard".
       // \note The comparison is case sensitive, but as long as the creation
@@ -1015,6 +1045,27 @@ namespace Ada
   {
     return isSgTypeFixed(ty);
   }
+
+  bool isBooleanType(const SgType& ty)
+  {
+    return isBooleanType(&ty);
+
+  }
+
+  bool isBooleanType(const SgType* ty)
+  {
+    const SgEnumType* boolTy = isSgEnumType(ty);
+    if (!boolTy) return false;
+
+    const SgEnumDeclaration* boolDcl = isSgEnumDeclaration(boolTy->get_declaration());
+
+    return (  (boolDcl != nullptr)
+           && (boolDcl->get_name() == "BOOLEAN")
+           && definedInStandard(*boolDcl)
+           );
+  }
+
+
 
   namespace
   {
@@ -1315,7 +1366,7 @@ namespace Ada
 
       // the package standard uses an enumeration to define boolean, so include the
       //   ROSE bool type also.
-      // \todo reconsider
+      // \todo remove BOOL_IS_ENUM_IN_ADA
       void handle(SgTypeBool& n)          { res = desc(&n); }
 
       // plus: map all other fundamental types introduced by initializeStandardPackage in AdaType.C
@@ -1472,7 +1523,7 @@ namespace Ada
 
         // the package standard uses an enumeration to define boolean, so include the
         //   ROSE bool type also.
-        // \todo reconsider
+        // \todo remove BOOL_IS_ENUM_IN_ADA
         void handle(SgTypeBool& n)          { res = pkgStandardScope(); }
 
         // plus composite type of literals in the AST
@@ -1570,13 +1621,13 @@ namespace Ada
       void handle(SgModifierType& n)      { res = associatedDeclaration(n.get_base_type()); }
       void handle(SgAdaSubtype& n)        { res = associatedDeclaration(n.get_base_type()); }
       void handle(SgAdaDerivedType& n)    { res = associatedDeclaration(n.get_base_type()); }
-      void handle(SgArrayType& n)         { res = associatedDeclaration(n.get_base_type()); }
       void handle(SgPointerType& n)       { res = associatedDeclaration(n.get_base_type()); } // \todo should not be in Ada
       void handle(SgAdaAccessType& n)     { res = associatedDeclaration(n.get_base_type()); } // \todo or scope of underlying type?
+      //~ void handle(SgArrayType& n)         { res = associatedDeclaration(n.get_base_type()); }
       // void handle(SgDeclType& n)             { res = pkgStandardScope(); }
 
       // for records, enums, typedefs, discriminated types, and types with a real declarations
-      //   => return the scope where they were defined.
+      //   => return the associated declaration.
       void handle(SgNamedType& n)         { res = n.get_declaration(); }
     };
 
@@ -2679,7 +2730,13 @@ namespace
     {
       // \todo baseEnumDeclaration may skips some intermediate types...
       if (SgEnumDeclaration* enmdcl = baseEnumDeclaration(const_cast<SgEnumType&>(n)))
-        res = enmdcl->get_adaParentType();
+      {
+        SgEnumDeclaration* defdecl = isSgEnumDeclaration(enmdcl->get_definingDeclaration());
+
+        if (defdecl == nullptr) defdecl = enmdcl;
+
+        res = defdecl->get_adaParentType();
+      }
     }
   };
 }
@@ -2759,6 +2816,7 @@ namespace
     void handle(const SgAdaProtectedSpecDecl& n) { res = n.get_scope(); }
     void handle(const SgAdaProtectedTypeDecl& n) { res = n.get_scope(); }
     void handle(const SgFunctionDeclaration& n)  { res = n.get_scope(); }
+    void handle(const SgAdaGenericDecl& n)       { res = n.get_scope(); }
 
     // do not look beyond global
     // (during AST construction the parents of global may not yet be properly linked).
@@ -2775,6 +2833,7 @@ namespace
     void handle(const SgAdaTaskSpec& n)          { res = fromParent(n); }
     void handle(const SgAdaProtectedSpec& n)     { res = fromParent(n); }
     void handle(const SgFunctionDefinition& n)   { res = fromParent(n); }
+    void handle(const SgAdaGenericDefn& n)       { res = fromParent(n); }
 
     void handle(const SgScopeStatement& n)
     {

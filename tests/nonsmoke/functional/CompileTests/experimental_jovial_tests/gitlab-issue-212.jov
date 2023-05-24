@@ -1,0 +1,13 @@
+START
+DEF PROC main S;
+BEGIN
+   ITEM HEXVAL B 32 ;
+   ITEM INTVAL S 31 ;
+   OVERLAY HEXVAL:INTVAL ;
+   HEXVAL = 4B'456';
+   INTVAL = 0;
+   HEXVAL = 4B'4567';
+   IF(INTVAL = 17767); main = 0;
+   ELSE main = 1;
+END
+TERM

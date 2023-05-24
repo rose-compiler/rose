@@ -9,7 +9,7 @@ FLANG_INCLUDES = -I$(FLANG_INSTALL_PATH)/include
 #   2. external-build.C and external-build-with-symbols.C require std=c++17
 AM_CPPFLAGS = $(ROSE_INCLUDES) $(FLANG_INCLUDES) -I$(top_srcdir)/src/3rdPartyLibraries/flang-parser -I$(top_srcdir)/src/frontend/Experimental_General_Language_Support
 # Temporary: uncomment the language standard option in Makefile after fortran_flang_support.C is compiled
-AM_CXXFLAGS = $(CXXFLAGS) -std=c++14 # -std=c++17 (replaced by .cc.lo specialization below)
+AM_CXXFLAGS = $(CXXFLAGS) -std=c++14 -g # -std=c++17 (replaced by .cc.lo specialization below)
 CXXFLAGS =
 
 noinst_LTLIBRARIES = libexperimentalRoseFlang.la
@@ -27,4 +27,4 @@ noinst_HEADERS =   \
 
 # specialize for compilation of .cc files (in this case files following C++17 standard)
 .cc.lo:
-	$(AM_V_CXX)$(LTCXXCOMPILE) -std=c++17 -c -o $@ $<
+	$(AM_V_CXX)$(LTCXXCOMPILE) -std=c++17 -c -g -o $@ $<
