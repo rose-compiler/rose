@@ -669,7 +669,7 @@ namespace Ada_ROSE_Translation
 
   /// creates an Ada exception handler
   SgCatchOptionStmt&
-  mkExceptionHandler(SgInitializedName& parm, SgBasicBlock& body);
+  mkExceptionHandler(SgInitializedName& parm, SgBasicBlock& body, SgTryStmt& tryStmt);
 
   /// creates an initialized name
   /// \param name     the variable name
@@ -752,7 +752,7 @@ namespace Ada_ROSE_Translation
 
   /// creates an Ada pragma declaration
   SgPragmaDeclaration&
-  mkPragmaDeclaration(const std::string& name, SgExprListExp& args);
+  mkPragmaDeclaration(const std::string& name, SgExprListExp& args, SgStatement* assocStmt);
 
   //
   // Expression Makers

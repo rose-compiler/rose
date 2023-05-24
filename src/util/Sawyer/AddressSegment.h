@@ -83,6 +83,15 @@ public:
                             const std::string &name="")
         : buffer_(buffer), offset_(offset), accessibility_(accessBits), name_(name) {}
 
+    /** Assignment. */
+    AddressSegment& operator=(const AddressSegment &other) {
+        buffer_ = other.buffer_;
+        offset_ = other.offset_;
+        accessibility_ = other.accessibility_;
+        name_ = other.name_;
+        return *this;
+    }
+
     //-------------------------------------------------------------------------------------------------------------------
     // The following static methods are convenience wrappers around various buffer types.
     //-------------------------------------------------------------------------------------------------------------------

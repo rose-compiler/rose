@@ -7804,9 +7804,7 @@ void
 SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
    {
   // For simplicity, there is only a single insert member function to put a symbol into the symbol table.
-
-  // DQ (2/14/2007): Added assertion!
-     ROSE_ASSERT(this != NULL);
+     ASSERT_not_null(this);
 
   // DQ (2/19/2007): Added additional assertion!
      ROSE_ASSERT (p_table != NULL);
@@ -11856,25 +11854,24 @@ SgName::operator std::string () const
 // Definition of defaultName (use a default parameter)
 // const SgName SgdefaultName("defaultName");
 
-SgName::SgName()
-   : p_char("")
-   { }
+SgName::SgName() : p_char("")
+   {
+   }
 
 unsigned int
 SgName::get_length() const
    {
-     assert(this != NULL);
+     ASSERT_not_null(this);
      return p_char.size();
    }
 
 SgName::SgName(const char * str): p_char(str ? str : "")
    {
-  // Nothing to do here!
    }
 
-// DQ (9/9/2004): Added support for conversion of strings to SgName
-// I always wanted this and it was a pain that it didn't exist previously!
-SgName::SgName(const std::string & str): p_char(str) {}
+SgName::SgName(const std::string & str): p_char(str)
+   {
+   }
 
 SgName::SgName(const SgName& n): p_char(n.p_char)
    {
@@ -11883,15 +11880,14 @@ SgName::SgName(const SgName& n): p_char(n.p_char)
 int
 SgName::operator!=(const SgName& n1) const
    {
-     assert(this != NULL);
+     ASSERT_not_null(this);
      return p_char != n1.p_char;
    }
 
 int
 SgName::operator==(const SgName& n1) const
    {
-     assert(this != NULL);
-
+     ASSERT_not_null(this);
      return p_char == n1.p_char;
    }
 

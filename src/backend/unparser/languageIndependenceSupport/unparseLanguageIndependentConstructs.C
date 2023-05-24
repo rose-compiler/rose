@@ -3713,7 +3713,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
             // DQ (12/4/2007): Added to ROSE (was removed at some point).
                unparseLineDirectives(stmt);
 
-            // DQ (7/19/2007): This only applies to Fortran where every statement can have a statement number (numeric lable, different from SgLabelStatement)
+            // DQ (7/19/2007): This only applies to Fortran where every statement can have a statement number (numeric label, different from SgLabelStatement)
                unparseStatementNumbers(stmt,info);
 #if 0
                printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): Selecting an unparse function for stmt = %p = %s \n",stmt,stmt->class_name().c_str());
@@ -4509,163 +4509,31 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 void
 UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUnparse_Info & info)
    {
-  // directives(expr);
-
-  // DQ (3/21/2004): This assertion should have been in place before now!
      ASSERT_not_null(expr);
-
-#if 0
-     printf ("unparseExpression() (language independent = %s) expression (%p): %s compiler-generated = %s \n",
-          languageName().c_str(),expr,expr->class_name().c_str(),expr->get_file_info()->isCompilerGenerated() ? "true" : "false");
-     curprint(string("\n /*    unparseExpression(): class name  = ") + expr->class_name().c_str() + " */ \n");
-#endif
-
-#if 0
-     printf ("In unparse language independent expression(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
-     printf ("In unparse language independent expression(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition()  == true) ? "true" : "false");
-#endif
-
-  // DQ (9/9/2016): These should have been setup to be the same.
-     ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
-
-#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
-  // DQ (8/21/2005): Suppress comments when unparsing to build type names
-     if ( !info.SkipComments() || !info.SkipCPPDirectives() )
-        {
-          ASSERT_not_null(expr->get_startOfConstruct());
-          ASSERT_not_null(expr->get_file_info());
-          printf ("Unparse expression (%p): %s compiler-generated = %s \n",expr,expr->class_name().c_str(),expr->get_file_info()->isCompilerGenerated() ? "true" : "false");
-          char buffer[100];
-          snprintf (buffer,100,"%p",expr);
-          curprint ( "\n/* Top of unparseExpression " + expr->class_name()
-              + " at: " + buffer
-              + " compiler-generated (file_info) = " + (expr->get_file_info()->isCompilerGenerated() ? "true" : "false")
-              + " compiler-generated (startOfConstruct) = " + (expr->get_startOfConstruct()->isCompilerGenerated() ? "true" : "false") + " */ \n");
-        }
-#endif
-
-     ASSERT_not_null(expr);
+     ASSERT_require(info.SkipClassDefinition() == info.SkipEnumDefinition());
      ASSERT_not_null(expr->get_startOfConstruct());
      ASSERT_not_null(expr->get_file_info());
-#define DEBUG_ROSE_2423 0
-#if DEBUG_ROSE_2423
-     if (expr->get_file_info()->isCompilerGenerated() != expr->get_startOfConstruct()->isCompilerGenerated())
-        {
-          printf ("In unparseExpression(%p = %s): Detected error expr->get_file_info()->isCompilerGenerated() != expr->get_startOfConstruct()->isCompilerGenerated() \n",expr,expr->class_name().c_str());
-          printf ("  -- expr->get_file_info() = %p expr->get_operatorPosition() = %p expr->get_startOfConstruct() = %p \n",expr->get_file_info(),expr->get_operatorPosition(),expr->get_startOfConstruct());
 
-          printf ("  -- expr->get_file_info()->isCompilerGenerated()        = %s \n",expr->get_file_info()->isCompilerGenerated()        ? "true" : "false");
-          printf ("  -- expr->get_startOfConstruct()->isCompilerGenerated() = %s \n",expr->get_startOfConstruct()->isCompilerGenerated() ? "true" : "false");
-
-       // DQ (9/11/2011): Reorganize to make this better code that can be analyized using static analysis (static analysis tools don't understand access functions).
-       // ASSERT_not_null(expr->get_file_info()->get_parent());
-       // printf ("parent of file info = %p = %s \n",expr->get_file_info()->get_parent(),expr->get_file_info()->get_parent()->class_name().c_str());
-          ASSERT_not_null(expr);
-          Sg_File_Info* fileInfo = expr->get_file_info();
-          ASSERT_not_null(fileInfo);
-          SgNode* fileInfoParent = fileInfo->get_parent();
-          if (fileInfoParent == NULL) {
-            printf ("[unparseExpression] file info = %p = %s has null parent.\n",fileInfo,fileInfo->class_name().c_str());
-          } else {
-            printf("parent of file info = %p = %s \n",fileInfoParent,fileInfoParent->class_name().c_str());
-          }
-          ASSERT_not_null(fileInfoParent);
-
-       // DQ (9/11/2011): Reorganize to make this better code that can be analyized using static analysis (static analysis tools don't understand access functions).
-       // expr->get_file_info()->display("expr->get_file_info(): debug");
-       // expr->get_startOfConstruct()->display("expr->get_startOfConstruct(): debug");
-          fileInfo->display("expr->get_file_info(): debug");
-
-       // Sg_File_Info* startOfConstructFileInfo = expr->get_file_info();
-          Sg_File_Info* startOfConstructFileInfo = expr->get_startOfConstruct();
-          ASSERT_not_null(startOfConstructFileInfo);
-          startOfConstructFileInfo->display("expr->get_startOfConstruct(): debug");
-        }
-#endif
   // Fails when merging ASTs loaded from files
      bool ROSE_2423__bypass = ( expr->get_file_info() == expr->get_operatorPosition() );
      ROSE_ASSERT(expr->get_file_info()->isCompilerGenerated() == expr->get_startOfConstruct()->isCompilerGenerated() || ROSE_2423__bypass);
 
-#if 0
-     printf ("In unparseExpression(%p = %s) \n",expr,expr->class_name().c_str());
-     expr->get_file_info()->display("unparseExpression (debug)");
-#endif
-
-  // DQ (12/5/2006): Let's ignore the case of a transformation for now!
-     if (expr->get_endOfConstruct() == NULL && expr->get_file_info()->isTransformation() == false)
+  // Ignore the case of a transformation
+     if (expr->get_endOfConstruct() == nullptr && expr->get_file_info()->isTransformation() == false)
         {
           printf ("Error in unparseExpression(): expr = %p = %s expr->get_endOfConstruct() == NULL \n",expr,expr->class_name().c_str());
           expr->get_file_info()->display("unparseExpression (debug)");
         }
-  // ASSERT_not_null(expr->get_endOfConstruct());
-
-#if 0
-  // DQ (10/25/2006): Debugging support for file info data for each IR node
-     curprint ( "\n/* Top of unparseExpression " + string(expr->sage_class_name()) + " */\n ");
-     ASSERT_not_null(expr->get_startOfConstruct());
-     curprint ( "/* startOfConstruct: file = " << expr->get_startOfConstruct()->get_filenameString()
-         + " raw filename = " << expr->get_startOfConstruct()->get_raw_filename()
-         + " raw line = " << expr->get_startOfConstruct()->get_raw_line()
-         + " raw column = " << expr->get_startOfConstruct()->get_raw_col()
-         + " */\n ");
-     if (expr->get_endOfConstruct() != NULL)
-        {
-          curprint ( "/* endOfConstruct: file = " << expr->get_endOfConstruct()->get_filenameString()
-              + " raw filename = " << expr->get_endOfConstruct()->get_raw_filename()
-              + " raw line = " << expr->get_endOfConstruct()->get_raw_line()
-              + " raw column = " << expr->get_endOfConstruct()->get_raw_col()
-              + " */\n ");
-        }
-#endif
-
-  // DQ (10/25/2006): Debugging support for file info data for each IR node
-#define OUTPUT_EMBEDDED_COLOR_CODES_FOR_EXPRESSIONS 0
-#if OUTPUT_EMBEDDED_COLOR_CODES_FOR_EXPRESSIONS
-     vector< pair<bool,std::string> > stateVector;
-     if (get_embedColorCodesInGeneratedCode() > 0)
-        {
-          setupColorCodes ( stateVector );
-          printColorCodes ( expr, true, stateVector );
-        }
-#endif
-
-#if 0
-  // Liao 11/2/2010 Skip the case that an expression is located from another file (included in the current file)
-  // I moved the code to the unparser function for SgAggregatedInitializer to have bigger picture about what to parse or not
-     SgFile* cur_file = SageInterface::getEnclosingFileNode(expr);
-     if (cur_file != NULL)
-     {
-       // normal file info
-       if (expr->get_file_info()->isTransformation() == false &&  expr->get_file_info()->isCompilerGenerated() ==false)
-       {
-         if (cur_file->get_file_info()->get_filename() != expr->get_file_info()->get_filename())
-           return;
-       }
-     }
-#endif
 
      if ( unparseLineReplacement(expr,info) )
         {
           return;
         }
 
-  // DQ (7/19/2008): This is the new code to unparse directives before the current expression
+  // Unparse directives before the current expression
      unparseAttachedPreprocessingInfo(expr, info, PreprocessingInfo::before);
 
-  // MS 2003: experimental backend source replacement
-  // Either use the source string attached to the AST by a transformation
-  // (and do not traverse the subtree with 'epxr' as its root node)
-  // OR unparse the expression (the whole subtree)
-  // if (expr->attribute.exists("_UnparserSourceReplacement"))
-  // if (expr->get_attribute() != NULL && expr->attribute().exists("_UnparserSourceReplacement"))
-
-  // DQ (7/20/2008): This is now revised to handle more cases than just replacement of the
-  // AST subtree with a string.  Now we can add arbitrary text into different locations
-  // relative to the specific IR node.  For now we are supporting before, replace, and after.
-
-  // TV (04/22/11): More generic support of Original Expression Tree. Introduce to support function pointer cast
-  //     in function pointer initialization (test2006_160.C)
-     SgExpression* expressionTree = NULL; //expr->get_originalExpressionTree();
+     SgExpression* expressionTree = nullptr;
      switch (expr->variantT()) {
        case V_SgVarRefExp:
        {

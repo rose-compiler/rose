@@ -33,14 +33,15 @@ cp "$SAWYER_ROOT/LICENSE" LICENSE
         
 # Copy some of Sawyer's source files into the ROSE source tree. Don't worry about overwriting ROSE-local changes--they
 # should have been contributed back to the Sawyer project by now (besides, that's what Git is for)!
-for f in                                                                                                                                \
-    Access AddressMap AddressSegment AllocatingBuffer Assert Attribute BiMap BitFlags BitVector BitVectorSupport Buffer Cached          \
-    Callbacks Clexer CommandLine CommandLineBoost Database DatabasePostgresql DatabaseSqlite DefaultAllocator DenseIntegerSet           \
-    DistinctList DocumentBaseMarkup DocumentMarkup DocumentPodMarkup DocumentTextMarkup Exception FileSystem Graph GraphAlgorithm       \
-    GraphBoost GraphIteratorBiMap GraphIteratorMap GraphIteratorSet GraphTraversal IndexedList Interval IntervalMap IntervalSet         \
-    IntervalSetMap HashMap Lexer LineVector Map MappedBuffer Message NullBuffer Optional Parse PoolAllocator ProgressBar Result Sawyer  \
-    Set SharedObject SharedPointer SmallObject Stack StackAllocator StaticBuffer Stopwatch Synchronization ThreadWorkers Time Trace     \
-    Tracker Tree Type WarningsOff WarningsRestore WorkList Yaml;                                                                        \
+####################################################################################################################################
+for f in Access AddressMap AddressSegment AllocatingBuffer Assert Attribute BiMap BitFlags BitVector BitVectorSupport Buffer    \
+         Cached Callbacks Clexer CommandLine CommandLineBoost Database DatabasePostgresql DatabaseSqlite DefaultAllocator       \
+         DenseIntegerSet DistinctList DocumentBaseMarkup DocumentMarkup DocumentPodMarkup DocumentTextMarkup Exception          \
+         FileSystem Graph GraphAlgorithm GraphBoost GraphIteratorBiMap GraphIteratorMap GraphIteratorSet GraphTraversal         \
+         IndexedList Interval IntervalMap IntervalSet IntervalSetMap HashMap Lexer LineVector Map MappedBuffer Message          \
+         NullBuffer Optional Parse PoolAllocator ProgressBar Result Sawyer Set SharedObject SharedPointer SmallObject Stack     \
+         StackAllocator StaticBuffer Stopwatch Synchronization ThreadWorkers Time Trace Tracker Tree Type WarningsOff           \
+         WarningsRestore WorkList Yaml
 do
     srcbase="$SAWYER_ROOT/Sawyer/$f";
     ( emit_cpp_warning; cat "$srcbase.h" ) > ./$f.h
@@ -83,7 +84,8 @@ for f in                                        \
     Message/mesgUnitTests.C                     \
     Pointers/ptrUnitTests.C                     \
     Serialization/serializationUnitTests.C      \
-    Threads/workListTests.C
+    Threads/workListTests.C                     \
+    Tree/treeUnitTests.C
 do
     srcbase="$SAWYER_ROOT/tests/$f";
     ( emit_cpp_warning; cat "$srcbase" ) > ../../../tests/smoke/unit/Sawyer/$(basename "$f")

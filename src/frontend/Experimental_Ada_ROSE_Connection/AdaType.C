@@ -76,11 +76,14 @@ namespace
       // \}
 
       // others
+      void handle(SgInitializedName& n)      { set(&mkExprAsType(SG_DEREF(sb::buildVarRefExp(&n)))); }
+
       void handle(SgAdaAttributeExp& n)
       {
         attachSourceLocation(n, el, ctx); // \todo why is this not set where the node is made?
         set(&mkExprAsType(n));
       }
+
 
     private:
       Element_Struct& el;
@@ -146,8 +149,9 @@ namespace
     void handle(SgNode& n)            { SG_UNEXPECTED_NODE(n); }
 
     // expressions
-    void handle(SgExpression& n)      { /* do nothing */ }
+    void handle(SgExpression& n)      { /*logInfo() << typeid(n).name() << std::endl;*/ }
     void handle(SgTypeExpression& n)  { res = extract(n.get_type()); }
+    void handle(SgAdaAttributeExp& n) { res = &n; }
 
     // types
     void handle(SgType& n)            { res = &n; }
@@ -182,8 +186,8 @@ namespace
 
     SgAdaGenericInstanceDecl* insdcl = ctx.instantiation();
 
-    if (insdcl == nullptr) return nullptr;
-
+    if (insdcl == nullptr)
+      return nullptr;
 
     // first try to find an argument matching the name
     SgExprListExp&       args  = SG_DEREF(insdcl->get_actual_parameters());
@@ -248,6 +252,7 @@ namespace
           findFirstOf
           || (res = findFirst(asisTypes(), typeEx.Corresponding_Name_Definition))
           || (res = findFirst(asisExcps(), typeEx.Corresponding_Name_Definition))
+          || (res = findFirst(asisVars(),  typeEx.Corresponding_Name_Definition)) /*+ , typeEx.Corresponding_Name_Declaration*/
           || (res = findFirst(adaTypes(),  AdaIdentifier{typeEx.Name_Image}))
           || (res = queryArgumentTypeFromInstantiation(typeEx.Name_Image, ctx))
           || (res = errorType(typeEx, ctx))
@@ -262,6 +267,7 @@ namespace
           res = &getExprTypeID(typeEx.Selector, ctx);
 
           /// temporary code to handle incomplete AST for generic instantiations
+          /// \todo
           if (SgType* ty = isSgType(res))
           {
             if (SgAdaGenericInstanceDecl* gendecl = instantiationDeclID(typeEx.Prefix, ctx))
@@ -609,6 +615,7 @@ namespace
           */
           SgType& basetype = getDefinitionTypeID(typenode.Parent_Subtype_Indication, ctx);
 
+          //~ if (isSgEnumType(si::Ada::base)
           res.sageNode(mkAdaDerivedType(basetype));
           break;
         }
@@ -1489,6 +1496,106 @@ namespace
     scope.append_statement(&dcl);
     m[name] = &var;
   }
+
+  void declareCharConstants(SgType& adaCharType, SgScopeStatement& asciispec)
+  {
+    char cval = 0;
+    declareCharConstants(adaVars(), "nul",   cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "soh", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "stx", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "etx", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "eot", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "enq", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "ack", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "bel", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "bs",  ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "ht",  ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "lf",  ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "vt",  ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "ff",  ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "cr",  ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "so",  ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "si",  ++cval, adaCharType, asciispec);
+
+    declareCharConstants(adaVars(), "dle", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "dc1", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "dc2", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "dc3", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "dc4", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "nak", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "syn", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "etb", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "can", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "em",  ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "sub", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "esc", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "fs",  ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "gs",  ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "rs",  ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "us",  ++cval, adaCharType, asciispec);
+    ADA_ASSERT(cval == 31);
+
+    declareCharConstants(adaVars(), "del",         127, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "exclam",      '!', adaCharType, asciispec);
+    declareCharConstants(adaVars(), "quotation",   '"', adaCharType, asciispec);
+    declareCharConstants(adaVars(), "sharp",       '#', adaCharType, asciispec);
+    declareCharConstants(adaVars(), "dollar",      '$', adaCharType, asciispec);
+    declareCharConstants(adaVars(), "percent",     '%', adaCharType, asciispec);
+    declareCharConstants(adaVars(), "ampersand",   '&', adaCharType, asciispec);
+    declareCharConstants(adaVars(), "colon",       ',', adaCharType, asciispec);
+    declareCharConstants(adaVars(), "semicolon",   ';', adaCharType, asciispec);
+    declareCharConstants(adaVars(), "query",       '?', adaCharType, asciispec);
+    declareCharConstants(adaVars(), "at_sign",     '@', adaCharType, asciispec);
+    declareCharConstants(adaVars(), "l_bracket",   '[', adaCharType, asciispec);
+    declareCharConstants(adaVars(), "r_bracket",   ']', adaCharType, asciispec);
+    declareCharConstants(adaVars(), "back_slash", '\\', adaCharType, asciispec);
+    declareCharConstants(adaVars(), "circumflex",  '^', adaCharType, asciispec);
+    declareCharConstants(adaVars(), "underline",   '_', adaCharType, asciispec);
+    declareCharConstants(adaVars(), "grave",       '`', adaCharType, asciispec);
+    declareCharConstants(adaVars(), "l_brace",     '{', adaCharType, asciispec);
+    declareCharConstants(adaVars(), "r_brace",     '}', adaCharType, asciispec);
+    declareCharConstants(adaVars(), "bar",         '_', adaCharType, asciispec);
+    declareCharConstants(adaVars(), "tilde",       '~', adaCharType, asciispec);
+
+    cval = 'a'-1;
+    declareCharConstants(adaVars(), "lc_a", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "lc_b", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "lc_c", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "lc_d", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "lc_e", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "lc_f", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "lc_g", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "lc_h", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "lc_i", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "lc_j", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "lc_k", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "lc_l", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "lc_m", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "lc_n", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "lc_o", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "lc_p", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "lc_q", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "lc_r", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "lc_s", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "lc_t", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "lc_u", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "lc_v", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "lc_w", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "lc_x", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "lc_y", ++cval, adaCharType, asciispec);
+    declareCharConstants(adaVars(), "lc_z", ++cval, adaCharType, asciispec);
+    ADA_ASSERT(cval == 'z');
+  }
+
+  void buildAsciiPkg(SgType& adaCharType, SgAdaPackageSpec& stdspec)
+  {
+    SgAdaPackageSpecDecl& asciipkg    = declarePackage("Ascii", stdspec);
+    SgAdaPackageSpec&     asciispec   = SG_DEREF(asciipkg.get_definition());
+
+    adaPkgs()["STANDARD.ASCII"]       = &asciipkg;
+    adaPkgs()["ASCII"]                = &asciipkg;
+    declareCharConstants(adaCharType, asciispec);
+  }
 }
 
 
@@ -1522,6 +1629,18 @@ namespace
   adaTypes()["LONG_LONG_FLOAT"]     = sb::buildLongDoubleType();
 #endif /* PREMAPPED_NUMERIC_TYPES */
 
+void declareEnumItem(SgEnumDeclaration& enumdcl, const std::string& name, int repval)
+{
+  SgEnumType&         enumty = SG_DEREF(enumdcl.get_type());
+  SgExpression&       sginit = SG_DEREF(sb::buildIntVal(repval));
+  sginit.unsetTransformation();
+
+  SgInitializedName&  sgnode = mkInitializedName(name, enumty, &sginit);
+
+  sgnode.set_scope(enumdcl.get_scope());
+  enumdcl.append_enumerator(&sgnode);
+  ADA_ASSERT(sgnode.get_parent() == &enumdcl);
+}
 
 void initializePkgStandard(SgGlobal& global)
 {
@@ -1540,18 +1659,25 @@ void initializePkgStandard(SgGlobal& global)
 
   adaTypes()["EXCEPTION"]           = &exceptionType;
 
-  // \todo reconsider modeling Boolean as an enumeration of True and False
-  SgType& adaBoolType               = SG_DEREF(sb::buildBoolType());
+  // boolean enum type
+  AdaIdentifier         boolname{"BOOLEAN"};
 
-  adaTypes()["BOOLEAN"]             = &adaBoolType;
+  //~ SgType& adaBoolType               = SG_DEREF(sb::buildBoolType());
+  SgEnumDeclaration&    boolDecl    = mkEnumDefn("BOOLEAN", stdspec);
+  SgType&               adaBoolType = SG_DEREF(boolDecl.get_type());
+  adaTypes()[boolname]              = &adaBoolType;
+
+  declareEnumItem(boolDecl, "False", 0);
+  declareEnumItem(boolDecl, "True",  1);
 
   // \todo reconsider adding a true Ada Duration type
-  SgType& adaDuration               = SG_DEREF(sb::buildOpaqueType(si::Ada::durationTypeName, &stdspec));
+  AdaIdentifier         durationName{si::Ada::durationTypeName};
+  SgType&               adaDuration = SG_DEREF(sb::buildOpaqueType(durationName, &stdspec));
 
-  adaTypes()["DURATION"]            = &adaDuration;
+  adaTypes()[durationName]          = &adaDuration;
 
   // integral types
-  SgType& adaIntType                = mkIntegralType(); // the root integer type in ROSE
+  SgType&               adaIntType  = mkIntegralType(); // the root integer type in ROSE
 
   adaTypes()["SHORT_SHORT_INTEGER"] = declareIntSubtype<std::int8_t> ("Short_Short_Integer", stdspec).get_type();
   adaTypes()["SHORT_INTEGER"]       = declareIntSubtype<std::int16_t>("Short_Integer",       stdspec).get_type();
@@ -1615,98 +1741,8 @@ void initializePkgStandard(SgGlobal& global)
   // added packages
   adaPkgs()["STANDARD"]             = &stdpkg;
 
-  SgAdaPackageSpecDecl& asciipkg    = declarePackage("Ascii", stdspec);
-  SgAdaPackageSpec&     asciispec   = SG_DEREF(asciipkg.get_definition());
-  adaPkgs()["STANDARD.ASCII"]       = &asciipkg;
-  adaPkgs()["ASCII"]                = &asciipkg;
-
-  // build charaters
-  char cval = 0;
-  declareCharConstants(adaVars(), "nul",   cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "soh", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "stx", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "etx", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "eot", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "enq", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "ack", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "bel", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "bs",  ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "ht",  ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "lf",  ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "vt",  ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "ff",  ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "cr",  ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "so",  ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "si",  ++cval, adaCharType, asciispec);
-
-  declareCharConstants(adaVars(), "dle", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "dc1", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "dc2", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "dc3", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "dc4", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "nak", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "syn", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "etb", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "can", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "em",  ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "sub", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "esc", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "fs",  ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "gs",  ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "rs",  ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "us",  ++cval, adaCharType, asciispec);
-  ADA_ASSERT(cval == 31);
-
-  declareCharConstants(adaVars(), "del",         127, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "exclam",      '!', adaCharType, asciispec);
-  declareCharConstants(adaVars(), "quotation",   '"', adaCharType, asciispec);
-  declareCharConstants(adaVars(), "sharp",       '#', adaCharType, asciispec);
-  declareCharConstants(adaVars(), "dollar",      '$', adaCharType, asciispec);
-  declareCharConstants(adaVars(), "percent",     '%', adaCharType, asciispec);
-  declareCharConstants(adaVars(), "ampersand",   '&', adaCharType, asciispec);
-  declareCharConstants(adaVars(), "colon",       ',', adaCharType, asciispec);
-  declareCharConstants(adaVars(), "semicolon",   ';', adaCharType, asciispec);
-  declareCharConstants(adaVars(), "query",       '?', adaCharType, asciispec);
-  declareCharConstants(adaVars(), "at_sign",     '@', adaCharType, asciispec);
-  declareCharConstants(adaVars(), "l_bracket",   '[', adaCharType, asciispec);
-  declareCharConstants(adaVars(), "r_bracket",   ']', adaCharType, asciispec);
-  declareCharConstants(adaVars(), "back_slash", '\\', adaCharType, asciispec);
-  declareCharConstants(adaVars(), "circumflex",  '^', adaCharType, asciispec);
-  declareCharConstants(adaVars(), "underline",   '_', adaCharType, asciispec);
-  declareCharConstants(adaVars(), "grave",       '`', adaCharType, asciispec);
-  declareCharConstants(adaVars(), "l_brace",     '{', adaCharType, asciispec);
-  declareCharConstants(adaVars(), "r_brace",     '}', adaCharType, asciispec);
-  declareCharConstants(adaVars(), "bar",         '_', adaCharType, asciispec);
-  declareCharConstants(adaVars(), "tilde",       '~', adaCharType, asciispec);
-
-  cval = 'a'-1;
-  declareCharConstants(adaVars(), "lc_a", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "lc_b", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "lc_c", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "lc_d", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "lc_e", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "lc_f", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "lc_g", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "lc_h", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "lc_i", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "lc_j", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "lc_k", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "lc_l", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "lc_m", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "lc_n", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "lc_o", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "lc_p", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "lc_q", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "lc_r", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "lc_s", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "lc_t", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "lc_u", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "lc_v", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "lc_w", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "lc_x", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "lc_y", ++cval, adaCharType, asciispec);
-  declareCharConstants(adaVars(), "lc_z", ++cval, adaCharType, asciispec);
-  assert(cval == 'z');
+  // build ASCII package
+  buildAsciiPkg(adaCharType, stdspec);
 
   //
   // build standard functions

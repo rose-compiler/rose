@@ -1424,10 +1424,8 @@ SgExpression* getTopOfExpressionStack()
   // since that is linked to librose while the astScopeStack variable is declared in this 
   // file (so they at least have to stay together).
 
-     ROSE_ASSERT(astExpressionStack.empty() == false);
-  // SgExpression* topOfStack = *(astExpressionStack.begin());
+     ASSERT_require(astExpressionStack.empty() == false);
      SgExpression* topOfStack = astExpressionStack.front();
-  // printf ("In getTopOfExpressionStack() topOfStack = %p = %s \n",topOfStack,topOfStack->class_name().c_str());
 
      return topOfStack;
    }
@@ -1497,33 +1495,31 @@ getFunctionDefinitionFromScopeStack()
    }
 
 
-
-// SgLabelRefExp* buildNumericLabelSymbol(Token_t* label)
 SgLabelSymbol*
 buildNumericLabelSymbol(Token_t* label)
    {
   // This is the function we use to create the label that might refer to a 
   // previously seen statement or a statement we will see in the future.
 
-     ROSE_ASSERT(label != NULL);
-     ROSE_ASSERT(label->text != NULL);
+     ASSERT_not_null(label);
+     ASSERT_not_null(label->text);
 
   // DQ (11/22/2010): This is a bug in OFP, but I have to work around it for now.
      if (label->line == 0)
         {
           printf ("Error (OFP bug): label->line == 0 for label->text = %s \n",label->text);
         }
-  // ROSE_ASSERT(label->line > 0);
 
-     SgLabelSymbol* returnSymbol = NULL;
+     SgLabelSymbol* returnSymbol = nullptr;
 
 #if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of buildNumericLabelSymbol()");
 #endif
 
-     if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+     if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL ) {
           printf ("This code can be replaced with a call to getFunctionDefinitionFromScopeStack() \n");
+     }
 
      std::list<SgScopeStatement*>::iterator i = astScopeStack.begin();
   // printf ("Defining iterator i scope = %p = %s \n",*i,(*i)->class_name().c_str());
@@ -1540,24 +1536,22 @@ buildNumericLabelSymbol(Token_t* label)
      if (i != astScopeStack.end())
         {
        // printf ("Looking for SgLabelSymbol i scope = %p = %s \n",*i,(*i)->class_name().c_str());
-          ROSE_ASSERT(isSgFunctionDefinition(*i) != NULL);
+          ASSERT_not_null(isSgFunctionDefinition(*i));
 
-       // ROSE_ASSERT( i != astScopeStack.end() );
           SgName name = label->text;
-       // SgLabelSymbol* returnSymbol = (*i)->lookup_label_symbol(name);
           returnSymbol = (*i)->lookup_label_symbol(name);
 
        // printf ("In buildNumericLabelSymbol(): returnSymbol = %p \n",returnSymbol);
-          if (returnSymbol == NULL)
+          if (returnSymbol == nullptr)
              {
             // The symbol was not found, create a symbol so that statements can reference
             // it then we can fixup the statement in the symbol later (when we see it).
                int label_value = atoi(label->text);
             // printf ("Building a SgLabelSymbol for a numeric label that we have not see yet: label_value = %d = %s \n",label_value,label->text);
 
-               returnSymbol = new SgLabelSymbol((SgLabelStatement*) NULL);
-               ROSE_ASSERT(returnSymbol != NULL);
-               returnSymbol->set_fortran_statement(NULL);
+               returnSymbol = new SgLabelSymbol((SgLabelStatement*) nullptr);
+               ASSERT_not_null(returnSymbol);
+               returnSymbol->set_fortran_statement(nullptr);
                returnSymbol->set_numeric_label_value(label_value);
 
                SgStatement* label_statement = new SgNullStatement();
@@ -1568,14 +1562,14 @@ buildNumericLabelSymbol(Token_t* label)
             // DQ (1/20/2008): The parent of a statement can't be set to a SgSymbol, so make it point to the current scope for now!
             // label_statement->set_parent(returnSymbol);
                label_statement->set_parent(astScopeStack.front());
-               ROSE_ASSERT(label_statement->get_parent() != NULL);
+               ASSERT_not_null(label_statement->get_parent());
 
             // DQ (1/20/2008): If the label is not present, but is referenced then this has to be set.
             // Note that test2007_175.f demonstrates that if the lable is not present 
             // then this label_statement fails because the source position is not set.
                setSourcePosition(label_statement);
 
-               ROSE_ASSERT(isSgFunctionDefinition(*i) != NULL);
+               ASSERT_not_null(isSgFunctionDefinition(*i));
             // Insert the symbol into the function definition's symbol table so it will be found next time.
                (*i)->insert_symbol(name,returnSymbol);
              }

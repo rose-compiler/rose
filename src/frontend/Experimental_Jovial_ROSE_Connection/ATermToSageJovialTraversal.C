@@ -6,13 +6,10 @@
 #include <iostream>
 
 #define PRINT_ATERM_TRAVERSAL 0
-#define PRINT_WARNINGS 1
 
 using namespace ATermSupport;
 using namespace Jovial_ROSE_Translation;
-using std::cout;
-using std::cerr;
-using std::endl;
+using namespace Rose::Diagnostics;
 namespace SB = SageBuilder;
 namespace SI = SageInterface;
 namespace LT = LanguageTranslation;
@@ -302,9 +299,7 @@ ATbool ATermToSageJovialTraversal::traverse_ProgramBody(ATerm term)
       } else return ATfalse;
 
       if (labels.size() > 1) {
-#if PRINT_WARNINGS
-         cerr << "WARNING UNIMPLEMENTED: ProgramBody - labels.size > 1\n";
-#endif
+         mlog[WARN] << "UNIMPLEMENTED: ProgramBody - labels.size > 1\n";
          return ATtrue;
       }
    }
@@ -402,9 +397,7 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
    expr = nullptr;
 
    if (ATmatch(term, "BITSINBYTE")) {
-#if PRINT_WARNINGS
-      cerr << "WARNING UNIMPLEMENTED: IntegerMachineParameter - BITSINBYTE\n";
-#endif
+     mlog[WARN] << "UNIMPLEMENTED: IntegerMachineParameter - BITSINBYTE\n";
    }
    else if (ATmatch(term, "BITSINWORD")) {
      expr = SageBuilder::buildVarRefExp("BITSINWORD", SageBuilder::topScopeStack());
@@ -413,18 +406,15 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
      expr = SageBuilder::buildVarRefExp("BYTESINWORD", SageBuilder::topScopeStack());
    }
    else if (ATmatch(term, "LOCSINWORD")) {
-#if PRINT_WARNINGS
-      cerr << "WARNING UNIMPLEMENTED: IntegerMachineParameter - LOCSINWORD\n";
-#endif
+     mlog[WARN] << "UNIMPLEMENTED: IntegerMachineParameter - LOCSINWORD\n";
    }
    else if (ATmatch(term, "BYTEPOS(<term>)", &t_formula)) {
-#if PRINT_WARNINGS
-      cerr << "WARNING UNIMPLEMENTED: IntegerMachineParameter - BYTEPOS\n";
-#endif
-      // MATCHED BYTEPOS
-      if (traverse_Formula(t_formula, expr)) {
-         // MATCHED CompileTimeNumericFormula
-      } else return ATfalse;
+     mlog[WARN] << "UNIMPLEMENTED: IntegerMachineParameter - BYTEPOS\n";
+
+     // MATCHED BYTEPOS
+     if (traverse_Formula(t_formula, expr)) {
+        // MATCHED CompileTimeNumericFormula
+     } else return ATfalse;
    }
 
    //TODO: 'BITSINPOINTER'            -> IntegerMachineParameter {cons("BITSINPOINTER")}
@@ -435,18 +425,14 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
 
 
    else if (ATmatch(term, "IMPLFLOATPRECISION(<term>)", &t_precision)) {
-#if PRINT_WARNINGS
-      cerr << "WARNING UNIMPLEMENTED: IntegerMachineParameter - IMPLFLOATPRECISION\n";
-#endif
+      mlog[WARN] << "UNIMPLEMENTED: IntegerMachineParameter - IMPLFLOATPRECISION\n";
       // MATCHED IMPLFLOATPRECISION
       if (traverse_Formula(t_precision, expr)) {
          // MATCHED Precision
       } else return ATfalse;
    }
    else if (ATmatch(term, "IMPLFIXEDPRECISION(<term>,<term>)", &t_scale_spec, &t_frac_spec)) {
-#if PRINT_WARNINGS
-      cerr << "WARNING UNIMPLEMENTED: IntegerMachineParameter - IMPLFIXEDPRECISION\n";
-#endif
+      mlog[WARN] << "UNIMPLEMENTED: IntegerMachineParameter - IMPLFIXEDPRECISION\n";
       // MATCHED IMPLFIXEDPRECISION
       if (traverse_Formula(t_scale_spec, expr)) {
          // MATCHED ScaleSpecifier
@@ -475,7 +461,7 @@ ATbool ATermToSageJovialTraversal::traverse_NumericMachineParameter(ATerm term, 
    else return ATfalse;
 
    if (expr == nullptr) {
-      cerr << "WARNING UNIMPLEMENTED: NumericMachineParameter\n";
+      mlog[WARN] << "UNIMPLEMENTED: NumericMachineParameter";
       ASSERT_not_null(expr);
    }
 
@@ -636,7 +622,7 @@ ATbool ATermToSageJovialTraversal::traverse_ItemDeclaration(ATerm term, int def_
    else return ATfalse;
 
    if (declared_type == nullptr) {
-      cerr << "ERROR: ItemDeclaration - variable type is null \n";
+      mlog[WARN] << "ERROR: ItemDeclaration - variable type is null\n";
       ASSERT_not_null(declared_type);
    }
 
@@ -711,7 +697,7 @@ ATbool ATermToSageJovialTraversal::traverse_ItemTypeDescription(ATerm term, SgTy
       SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name, SageBuilder::topScopeStack());
 
       if (symbol == nullptr) {
-         cerr << "ERROR: ItemTypeDescription - symbol lookup failed for ItemTypeName " << name << "\n";
+         mlog[WARN] << "ERROR: ItemTypeDescription - symbol lookup failed for ItemTypeName " << name << "\n";
       }
       ASSERT_not_null(symbol);
       type = symbol->get_type();
@@ -1058,7 +1044,7 @@ ATbool ATermToSageJovialTraversal::traverse_CharacterItemDescription(ATerm term,
 //========================================================================================
 // 2.1.1.6 STATUS TYPE DESCRIPTIONS
 //----------------------------------------------------------------------------------------
-ATbool ATermToSageJovialTraversal::traverse_StatusConstant(ATerm term, SgEnumDeclaration* enum_decl, int value)
+ATbool ATermToSageJovialTraversal::traverse_StatusConstant(ATerm term, SgEnumDeclaration* enum_decl, int value, SgCastExp* cast)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_StatusConstant: %s\n", ATwriteToString(term));
@@ -1075,8 +1061,12 @@ ATbool ATermToSageJovialTraversal::traverse_StatusConstant(ATerm term, SgEnumDec
 
    // Begin SageTreeBuilder
       SgEnumVal* enum_val = nullptr;
-      sage_tree_builder.Enter(enum_val, enum_name, enum_decl, value);
-      setSourcePosition(enum_val, term);
+      sage_tree_builder.Enter(enum_val, enum_name, enum_decl, value, cast);
+
+   // There is either an SgEnumVal or an SgCastExp
+      if (enum_val) {
+         setSourcePosition(enum_val, term);
+      }
 
    // End SageTreeBuilder
       sage_tree_builder.Leave(enum_val);
@@ -1258,16 +1248,16 @@ ATbool ATermToSageJovialTraversal::traverse_SpecifiedSublist(ATerm term, SgEnumD
 #endif
 
    ATerm t_formula, t_constant;
-
-   SgExpression* init_expr = nullptr;
+   SgCastExp* cast{nullptr};
+   SgExpression* init_expr{nullptr};
 
    if (ATmatch(term, "SpecifiedSublist(<term>,<term>)", &t_formula, &t_constant)) {
 
       if (traverse_Formula(t_formula, init_expr)) {
          // MATCHED Formula
       } else return ATfalse;
-
       ASSERT_not_null(init_expr);
+
       int pass = 1;
       int value;
 
@@ -1277,17 +1267,20 @@ ATbool ATermToSageJovialTraversal::traverse_SpecifiedSublist(ATerm term, SgEnumD
          tail = ATgetNext(tail);
 
          if (pass == 1) {
-            SgIntVal* intval = isSgIntVal(init_expr);
-            ASSERT_not_null(intval);
-            value = intval->get_value();
-            // The initialization expression for the enum is no longer needed
-            delete init_expr;
+            if (auto intval = isSgIntVal(init_expr)) {
+               value = intval->get_value();
+               // The initialization expression for the enum is no longer needed
+               delete init_expr;  init_expr = nullptr;
+            }
+            else {
+               cast = isSgCastExp(init_expr);
+            }
          }
          if (pass > 1) {
             ++value;
          }
 
-         if (traverse_StatusConstant(head, enum_decl, value)) {
+         if (traverse_StatusConstant(head, enum_decl, value, cast)) {
             ++pass;
          }
          else return ATfalse;
@@ -1598,7 +1591,7 @@ traverse_TableDescriptionName(ATerm term, std::string &type_name, SgType* &type,
          type = symbol->get_type();
       }
       if (type == nullptr) {
-         cerr << "ERROR: TableDescriptionName - class symbol is null for type name " << type_name <<  "\n";
+         mlog[WARN] << "ERROR: TableDescriptionName - class symbol is null for type name " << type_name << "\n";
       }
 
       if (traverse_TablePreset(t_preset, preset)) {
@@ -1609,7 +1602,7 @@ traverse_TableDescriptionName(ATerm term, std::string &type_name, SgType* &type,
    else return ATfalse;
 
    if (type == nullptr) {
-      cerr << "ERROR: TableDescriptionName - type == nullptr\n";
+      mlog[WARN] << "ERROR: TableDescriptionName - type == nullptr\n";
       ASSERT_not_null(type);
    }
 
@@ -1875,8 +1868,10 @@ ATbool ATermToSageJovialTraversal::traverse_OptStructureSpecifier(ATerm term, St
       else if (traverse_Formula(t_bits_per_entry, bits_per_entry)) {
          SgIntVal* int_val = isSgIntVal(bits_per_entry);
          ASSERT_not_null(int_val);
-         ROSE_ASSERT(int_val->get_value() > 0);
+         ASSERT_require(int_val->get_value() > 0);
          struct_spec.bits_per_entry = int_val->get_value();
+         // the expression/formula for the bits_per_entry is no longer needed as the value is stored
+         delete bits_per_entry;  bits_per_entry = nullptr;
       }
       else return ATfalse;
    }
@@ -1919,7 +1914,7 @@ traverse_OrdinaryEntrySpecifierType(ATerm term, SgType* &type, SgExpression* &pr
          // MATCHED StatusItemDescription
 
          // status item declarations have to be handled differently than other ItemTypeDescription terms
-         cerr << "WARNING UNIMPLEMENTED: OrdinaryEntrySpecifierType with StatusItemDescription\n";
+         mlog[WARN] << "UNIMPLEMENTED: OrdinaryEntrySpecifierType with StatusItemDescription\n";
          ROSE_ABORT();
       }
       else return ATfalse;
@@ -2064,7 +2059,7 @@ ATbool ATermToSageJovialTraversal::traverse_OrdinaryTableItemDeclaration(ATerm t
    } else return ATfalse;
 
    if (declared_type == nullptr) {
-      cerr << "WARNING UNIMPLEMENTED: OrdinaryTableItemDeclaration - declared_type is null \n";
+      mlog[WARN] << "UNIMPLEMENTED: OrdinaryTableItemDeclaration - declared_type is null\n";
       ROSE_ABORT();
    }
 
@@ -2150,7 +2145,7 @@ traverse_SpecifiedEntrySpecifierType(ATerm term, SgType* &type, LocationSpecifie
   else return ATfalse;
 
   if (entry_size) {
-    cerr << "WARNING UNIMPLEMENTED: entry_size is " << *entry_size << ": " << (*entry_size)->class_name() << endl;
+    mlog[WARN] << "UNIMPLEMENTED: entry_size is " << *entry_size << ": " << (*entry_size)->class_name() << "\n";
   }
   ROSE_ABORT();
 }
@@ -2227,7 +2222,7 @@ ATbool ATermToSageJovialTraversal::traverse_SpecifiedItemDescription(ATerm term,
          // MATCHED StatusItemDescription
          // status item declarations have to be handled differently than other ItemTypeDescription terms
 
-         cerr << "WARNING UNIMPLEMENTED: SpecifiedItemDescription with StatusItemDescription\n";
+         mlog[WARN] << "UNIMPLEMENTED: SpecifiedItemDescription with StatusItemDescription\n";
          ROSE_ABORT();
       } else return ATfalse;
 
@@ -2331,7 +2326,7 @@ ATbool ATermToSageJovialTraversal::traverse_SpecifiedTableItemDeclaration(ATerm 
                item_type = enum_decl->get_type();
             }
             else {
-               std::cerr << "ERROR: matched an StatusItemDescription but failed in building an SgEnumDeclaration \n";
+               mlog[ERROR] << "matched an StatusItemDescription but failed in building an SgEnumDeclaration \n";
                ROSE_ABORT();
             }
          }
@@ -2372,9 +2367,7 @@ ATbool ATermToSageJovialTraversal::traverse_SpecifiedTableItemDeclaration(ATerm 
    ASSERT_not_null(attr_list);
 
    if (item_type == nullptr) {
-#if PRINT_WARNINGS
-      cerr << "WARNING UNIMPLEMENTED: SpecifiedTableItemDeclaration - declared type is null \n";
-#endif
+      mlog[WARN] << "UNIMPLEMENTED: SpecifiedTableItemDeclaration - declared type is null\n";
       return ATtrue;
    }
 
@@ -2476,7 +2469,7 @@ ATbool ATermToSageJovialTraversal::traverse_ConstantDeclaration(ATerm term, int 
       }
       else if (traverse_StatusItemDescription(t_type, enum_decl, status_size)) {
          // status item declarations have to be handled differently than other ItemTypeDescription terms
-         cerr << "WARNING UNIMPLEMENTED: ConstantItemDeclaration with StatusItemDescription \n";
+         mlog[ERROR] << "UNIMPLEMENTED: ConstantItemDeclaration with StatusItemDescription";
          ROSE_ABORT();
       } else return ATfalse;
 
@@ -2487,7 +2480,7 @@ ATbool ATermToSageJovialTraversal::traverse_ConstantDeclaration(ATerm term, int 
    else return ATfalse;
 
    if (declared_type == nullptr) {
-      cerr << "WARNING UNIMPLEMENTED: ConstantDeclaration - type is null \n";
+      mlog[ERROR] << "UNIMPLEMENTED: ConstantDeclaration - type is null";
       ROSE_ABORT();
    }
 
@@ -2726,7 +2719,7 @@ ATbool ATermToSageJovialTraversal::traverse_BlockPresetList(ATerm term, SgJovial
            else {
              // There is likely something like "(TablePresetList), (BlockPresetList)"
              // This may require modifying grammar or multiple lists.
-             cerr << "WARNING UNIMPLEMENTED: BlockPresetList with ( BlockPresetList ) \n";
+             mlog[WARN] << "UNIMPLEMENTED: BlockPresetList with ( BlockPresetList )\n";
              return ATfalse;
            }
          }
@@ -3078,7 +3071,7 @@ ATbool ATermToSageJovialTraversal::traverse_ItemTypeDeclaration(ATerm term)
             sage_tree_builder.Leave(enum_decl);
          }
          else {
-            std::cerr << "ERROR: matched an StatusItemDescription but failed in building an SgEnumDeclaration \n";
+            mlog[ERROR] << "matched an StatusItemDescription but failed in building an SgEnumDeclaration \n";
             ROSE_ABORT();
          }
       }
@@ -3234,7 +3227,7 @@ traverse_TableTypeSpecifier(ATerm term, SgJovialTableStatement* table_decl)
             has_table_type_name = true;
 
          // TODO: like-option (apparently not needed at the moment)
-            cerr << "WARNING UNIMPLEMENTED: LikeOption \n";
+            mlog[ERROR] << "UNIMPLEMENTED: LikeOption";
             ROSE_ABORT();
          } else return ATfalse;
       }
@@ -3256,11 +3249,11 @@ traverse_TableTypeSpecifier(ATerm term, SgJovialTableStatement* table_decl)
       else return ATfalse;
 
       if (preset) {
-         cerr << "WARNING UNIMPLEMENTED: TableTypeSpecifier - preset (This is likely fixed, please confirm)\n";
+         mlog[WARN] << "UNIMPLEMENTED: TableTypeSpecifier - preset (This is likely fixed, please confirm)\n";
          ROSE_ASSERT(preset == nullptr);
       }
       if (attr_list) {
-         cerr << "WARNING UNIMPLEMENTED: TableTypeSpecifier - attr_list \n";
+         mlog[WARN] << "UNIMPLEMENTED: TableTypeSpecifier - attr_list\n";
          ROSE_ASSERT(attr_list == nullptr);
       }
    }
@@ -3343,9 +3336,7 @@ ATbool ATermToSageJovialTraversal::traverse_StatementNameDeclaration(ATerm term,
    std::string name;
 
    if (ATmatch(term, "StatementNameDeclaration(<term>)", &t_name)) {
-#if PRINT_WARNINGS
-      cerr << "WARNING UNIMPLEMENTED: StatementNameDeclaration\n";
-#endif
+      mlog[WARN] << "UNIMPLEMENTED: StatementNameDeclaration\n";
 
       ATermList tail = (ATermList) ATmake("<term>", t_name);
       while (! ATisEmpty(tail)) {
@@ -3741,6 +3732,7 @@ ATbool ATermToSageJovialTraversal::traverse_OverlayExpression(ATerm term, SgExpr
       ASSERT_not_null(overlay_string);
 
       overlay_expr->get_expressions().push_back(overlay_string);
+      overlay_string->set_parent(overlay_expr);
    }
 
    return ATtrue;
@@ -3770,6 +3762,7 @@ ATbool ATermToSageJovialTraversal::traverse_OverlayString(ATerm term, SgExprList
       ASSERT_not_null(overlay_element);
 
       overlay_string->get_expressions().push_back(overlay_element);
+      overlay_element->set_parent(overlay_string);
    }
 
    return ATtrue;
@@ -4213,7 +4206,7 @@ traverse_FunctionHeading(ATerm term, std::string &name, SgType* &type, std::list
       else if (traverse_StatusItemDescription(t_type, enum_decl, status_size)) {
          // MATCHED StatusItemDescription: must be handled differently than other ItemTypeDescriptions
          // because they require different arguments
-         cerr << "WARNING UNIMPLEMENTED: FunctionHeading - StatusItemDescription\n";
+         mlog[ERROR] << "UNIMPLEMENTED: FunctionHeading - StatusItemDescription";
          ROSE_ABORT();
       }
       else return ATfalse;
@@ -4398,9 +4391,8 @@ ATbool ATermToSageJovialTraversal::traverse_InlineDeclaration(ATerm term)
    std::string subroutine_name;
 
    if (ATmatch(term, "InlineDeclaration(<term>)", &t_subroutine_name)) {
-#if PRINT_WARNINGS
-      cerr << "WARNING UNIMPLEMENTED: InlineDeclaration\n";
-#endif
+      mlog[WARN] << "UNIMPLEMENTED: InlineDeclaration\n";
+
       ATermList tail = (ATermList) ATmake("<term>", t_subroutine_name);
       while (! ATisEmpty(tail)) {
          ATerm head = ATgetFirst(tail);
@@ -4466,7 +4458,7 @@ ATbool ATermToSageJovialTraversal::traverse_SimpleStatement(ATerm term)
          // MATCHED LabelList
       } else return ATfalse;
 
-      if (traverse_AssignmentStatement(t_stmt)) {
+      if (traverse_AssignmentStatement(t_stmt, labels)) {
          // MATCHED AssignmentStatement
       }
       else if (traverse_NullStatement(t_stmt)) {
@@ -4515,9 +4507,7 @@ ATbool ATermToSageJovialTraversal::traverse_SimpleStatement(ATerm term)
    else return ATfalse;
 
    if (labels.size() > 0) {
-#if PRINT_WARNINGS
-      std::cerr << "WARNING UNIMPLEMENTED: SimpleStatement - labels.size() > 0 \n";
-#endif
+      mlog[WARN] << "UNIMPLEMENTED (potentially): SimpleStatement - labels.size() > 0\n";
    }
 
    return ATtrue;
@@ -4614,7 +4604,7 @@ ATbool ATermToSageJovialTraversal::traverse_LabelList(ATerm term, std::vector<st
 #endif
 
    ATerm t_labels;
-   char * label;
+   char* label;
 
    if (ATmatch(term, "LabelList(<term>)" , &t_labels)) {
       ATermList tail = (ATermList) ATmake("<term>", t_labels);
@@ -4629,9 +4619,7 @@ ATbool ATermToSageJovialTraversal::traverse_LabelList(ATerm term, std::vector<st
    } else return ATfalse;
 
    if (labels.size() > 1) {
-#if PRINT_WARNINGS
-      cerr << "WARNING UNIMPLEMENTED: LabelList - with multiple labels\n";
-#endif
+      mlog[WARN] << "UNIMPLEMENTED: LabelList - with multiple labels may not be universally implemented\n";
    }
 
    return ATtrue;
@@ -4640,7 +4628,7 @@ ATbool ATermToSageJovialTraversal::traverse_LabelList(ATerm term, std::vector<st
 //========================================================================================
 // 4.1 ASSIGNMENT STATEMENTS
 //----------------------------------------------------------------------------------------
-ATbool ATermToSageJovialTraversal::traverse_AssignmentStatement(ATerm term)
+ATbool ATermToSageJovialTraversal::traverse_AssignmentStatement(ATerm term, std::vector<std::string> &labels)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_AssignmentStatement: %s\n", ATwriteToString(term));
@@ -4663,22 +4651,20 @@ ATbool ATermToSageJovialTraversal::traverse_AssignmentStatement(ATerm term)
       } else return ATfalse;
 
       if (rhs == nullptr) {
-#if PRINT_WARNINGS
-         cerr << "WARNING UNIMPLEMENTED: AssignmentStatement "
-              << "- could be FunctionCall, or StatusConstant, or PointerLiteral, etc.\n";
-#endif
+         mlog[WARN] << "UNIMPLEMENTED: AssignmentStatement "
+                    << "- could be FunctionCall, or StatusConstant, or PointerLiteral, etc.\n";
          return ATtrue;
       }
 
    // Begin SageTreeBuilder
-      sage_tree_builder.Enter(assign_stmt, rhs, vars, std::string());
+      sage_tree_builder.Enter(assign_stmt, rhs, vars);
       setSourcePosition(assign_stmt, term);
 
    } else return ATfalse;
    ASSERT_not_null(assign_stmt);
 
 // End SageTreeBuilder
-   sage_tree_builder.Leave(assign_stmt);
+   sage_tree_builder.Leave(assign_stmt, labels);
 
    return ATtrue;
 }
@@ -4756,17 +4742,15 @@ ATbool ATermToSageJovialTraversal::traverse_ForStatement(ATerm term)
          // MATCHED LabelList
       } else return ATfalse;
 
-      // First just look for ControlItem (variable name) and traverse fully once
-      // we have a for statement. This is needed in order for a possible ControlLetter
-      // variable reference to be created in the for statement scope.
-      std::string control_var_name;
-      if (traverse_ForClause(t_clause, control_var_name)) {
-         // MATCHED ForClause
-      } else return ATfalse;
-
    // Begin SageTreeBuilder
-      sage_tree_builder.Enter(for_stmt, control_var_name);
+      sage_tree_builder.Enter(for_stmt);
       setSourcePosition(for_stmt, term);
+
+      // Control variable goes in the for statement scope, not in its body
+      // The normal pattern of SageTreeBuilder is to push a statement scope
+      // and then its body. Break that pattern here because the control
+      // variable is seen after the for statement is constructed.
+      SB::popScopeStack();  // for_stmt loop body
 
       if (traverse_ForClause(t_clause, var_ref, init, phrase1, phrase2, phrase1_enum, phrase2_enum)) {
          // MATCHED ForClause
@@ -4816,11 +4800,18 @@ ATbool ATermToSageJovialTraversal::traverse_ForStatement(ATerm term)
       for_stmt->set_by_or_then_expression(by_or_then_expr);
       for_stmt->set_loop_statement_type(loop_type_enum);
 
+      if (initialization) initialization->set_parent(for_stmt);
+      if (while_expr) while_expr->set_parent(for_stmt);
+      if (by_or_then_expr) by_or_then_expr->set_parent(for_stmt);
+
       // Attach comments after ForClause and before body
       if (while_expr) {
         sage_tree_builder.attachComments(while_expr, getLocation(t_clause), /*at_end*/true);
       }
       sage_tree_builder.attachComments(for_stmt->get_loop_body(), getLocation(t_stmt));
+
+      // Now the scope of the for loop body should be used
+      SB::pushScopeStack(for_stmt->get_loop_body());
 
       // Match ControlledStatement (body of loop)
       if (traverse_Statement(t_stmt)) {
@@ -4831,26 +4822,6 @@ ATbool ATermToSageJovialTraversal::traverse_ForStatement(ATerm term)
 
 // End SageTreeBuilder
    sage_tree_builder.Leave(for_stmt);
-
-   return ATtrue;
-}
-
-ATbool ATermToSageJovialTraversal::traverse_ForClause(ATerm term, std::string &control_var_name)
-{
-#if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_ForClause: %s\n", ATwriteToString(term));
-#endif
-
-   ATerm t_item, t_clause;
-   char* var_name;
-
-   if (ATmatch(term, "ForClause(<term>,<term>)", &t_item, &t_clause)) {
-      if (ATmatch(t_item, "<str>" , &var_name)) {
-         control_var_name = var_name;
-      }
-      else return ATfalse;
-   }
-   else return ATfalse;
 
    return ATtrue;
 }
@@ -4878,11 +4849,11 @@ ATbool ATermToSageJovialTraversal::traverse_ForClause(ATerm term, SgExpression* 
 
       if (ATmatch(t_item, "<str>" , &var_name)) {
          // MATCHED ControlItem
-         SgVariableSymbol* var_sym;
-         var_sym = SageInterface::lookupVariableSymbolInParentScopes(var_name, SageBuilder::topScopeStack());
-         ASSERT_not_null(var_sym);
+         SgVarRefExp* typedVarRef{nullptr};
+         sage_tree_builder.Enter(typedVarRef, var_name, true);
+         sage_tree_builder.Leave(typedVarRef);
 
-         var_ref = SageBuilder::buildVarRefExp_nfi(var_sym);
+         var_ref = typedVarRef;
          setSourcePosition(var_ref, t_item);
       }
       else return ATfalse;
@@ -4893,12 +4864,13 @@ ATbool ATermToSageJovialTraversal::traverse_ForClause(ATerm term, SgExpression* 
    }
    else return ATfalse;
 
+   ASSERT_not_null(var_ref);
    return ATtrue;
 }
 
 ATbool ATermToSageJovialTraversal::traverse_ControlClause(ATerm term, SgExpression* &initial_value,
-                                                             SgExpression* &phrase1, SgExpression* &phrase2,
-                                                             int &phrase1_enum, int &phrase2_enum)
+                                                          SgExpression* &phrase1, SgExpression* &phrase2,
+                                                          int &phrase1_enum, int &phrase2_enum)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_ControlClause: %s\n", ATwriteToString(term));
@@ -5196,7 +5168,7 @@ ATbool ATermToSageJovialTraversal::traverse_CaseAlternative(ATerm term)
    } else return ATfalse;
 
    if (!case_index_group) {
-      cerr << "WARNING UNIMPLEMENTED: CaseAlternative - probably StatusConstant\n";
+      mlog[WARN] << "UNIMPLEMENTED: CaseAlternative - probably StatusConstant\n";
       ASSERT_not_null(case_index_group);
    }
 
@@ -5274,6 +5246,7 @@ ATbool ATermToSageJovialTraversal::traverse_CaseIndexGroup(ATerm term, SgExprLis
             // MATCHED CaseIndex
             ASSERT_not_null(case_index);
             index_group->get_expressions().push_back(case_index);
+            case_index->set_parent(index_group);
          }
          else return ATfalse;
       }
@@ -5320,9 +5293,7 @@ ATbool ATermToSageJovialTraversal::traverse_CaseIndex(ATerm term, SgExpression* 
    else return ATfalse;
 
    if (case_index == nullptr) {
-#if PRINT_WARNINGS
-      cerr << "WARNING UNIMPLEMENTED: CaseIndex = nullptr, probably StatusConstant in lower_bound or upper_bound\n";
-#endif
+      mlog[WARN] << "UNIMPLEMENTED: CaseIndex = nullptr, probably StatusConstant in lower_bound or upper_bound\n";
    }
 
    ASSERT_not_null(case_index);
@@ -5369,7 +5340,7 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureCallStatement(ATerm term)
       } else if (ATmatch(t_abort_phrase, "AbortPhrase(<term>)", &t_abort_name)) {
          if (traverse_Name(t_abort_name, abort_stmt_name)) {
             // MATCHED AbortStatementName
-            cerr << "WARNING UNIMPLEMENTED: ProcedureCallStatement AbortPhrase not handled \n";
+            mlog[WARN] << "UNIMPLEMENTED: ProcedureCallStatement AbortPhrase not handled";
             ROSE_ABORT();
          } else return ATfalse;
       } else return ATfalse;
@@ -5409,6 +5380,7 @@ ATbool ATermToSageJovialTraversal::traverse_ActualParameterList(ATerm term, SgEx
 
          ASSERT_not_null(param);
          param_list->get_expressions().push_back(param);
+         param->set_parent(param_list);
       }
 
       if (traverse_ActualOutputParameters(t_output, param_list)) {
@@ -5449,6 +5421,7 @@ ATbool ATermToSageJovialTraversal::traverse_ActualOutputParameters(ATerm term, S
 
          ASSERT_not_null(param);
          param_list->get_expressions().push_back(param);
+         param->set_parent(param_list);
       }
    }
    else return ATfalse;
@@ -5502,6 +5475,8 @@ ATbool ATermToSageJovialTraversal::traverse_GotoStatement(ATerm term)
    std::vector<PosInfo> locations;
    std::string name;
 
+   SgGotoStatement* gotoStmt = nullptr;
+
    if (ATmatch(term, "GotoStatement(<term>,<term>)", &t_labels, &t_name)) {
        if (traverse_LabelList(t_labels, labels, locations)) {
           // MATCHED LabelList
@@ -5513,8 +5488,14 @@ ATbool ATermToSageJovialTraversal::traverse_GotoStatement(ATerm term)
    }
    else return ATfalse;
 
-   cerr << "WARNING UNIMPLEMENTED: GotoStatement\n";
-   ROSE_ABORT();
+   // Begin SageTreeBuilder
+   sage_tree_builder.Enter(gotoStmt, name);
+   setSourcePosition(gotoStmt, term);
+
+   // End SageTreeBuilder
+   sage_tree_builder.Leave(gotoStmt, labels);
+
+   return ATtrue;
 }
 
 //========================================================================================
@@ -5540,7 +5521,7 @@ ATbool ATermToSageJovialTraversal::traverse_ExitStatement(ATerm term)
    else return ATfalse;
 
    // Begin SageTreeBuilder
-   sage_tree_builder.Enter(exit_stmt, std::string("exit"), boost::none);
+   sage_tree_builder.Enter(exit_stmt, std::string("exit"), boost::none, boost::none, labels);
    setSourcePosition(exit_stmt, term);
 
    // End SageTreeBuilder
@@ -5562,9 +5543,9 @@ ATbool ATermToSageJovialTraversal::traverse_StopStatement(ATerm term)
    std::vector<std::string> labels;
    std::vector<PosInfo> locations;
 
-   SgProcessControlStatement* stop_stmt = nullptr;
-   SgExpression* stop_code = nullptr;
-   boost::optional<SgExpression*> opt_code = boost::none;
+   SgExpression* stop_code{nullptr};
+   SgProcessControlStatement* stop_stmt{nullptr};
+   boost::optional<SgExpression*> opt_code{boost::none};
 
    if (ATmatch(term, "StopStatement(<term>,<term>)", &t_labels, &t_stop_code)) {
       if (traverse_LabelList(t_labels, labels, locations)) {
@@ -5582,7 +5563,7 @@ ATbool ATermToSageJovialTraversal::traverse_StopStatement(ATerm term)
    else return ATfalse;
 
    // Begin SageTreeBuilder
-   sage_tree_builder.Enter(stop_stmt, std::string("stop"), opt_code);
+   sage_tree_builder.Enter(stop_stmt, std::string("stop"), opt_code, boost::none, labels);
    setSourcePosition(stop_stmt, term);
 
    // End SageTreeBuilder
@@ -5614,7 +5595,7 @@ ATbool ATermToSageJovialTraversal::traverse_AbortStatement(ATerm term)
    else return ATfalse;
 
    // Begin SageTreeBuilder
-   sage_tree_builder.Enter(abort_stmt, std::string("abort"), boost::none);
+   sage_tree_builder.Enter(abort_stmt, std::string("abort"), boost::none, boost::none, labels);
    setSourcePosition(abort_stmt, term);
 
    // End SageTreeBuilder
@@ -5756,9 +5737,8 @@ ATbool ATermToSageJovialTraversal::traverse_UnaryExpression(ATerm term, SgExpres
       expr = SageBuilder::buildNotOp(formula);
       break;
     default:
-      std::cerr << "ERROR: unknown unary operator in traverse_UnaryExpression() \n";
+      mlog[ERROR] << "unknown unary operator in traverse_UnaryExpression() \n";
       ROSE_ABORT();
-      //      break;
   }
 
   ASSERT_not_null(expr);
@@ -5869,7 +5849,7 @@ ATbool ATermToSageJovialTraversal::traverse_BinaryExpression(ATerm term, SgExpre
       break;
 
     default:
-      std::cerr << "ERROR: unknown binary operator in traverse_BinaryExpression() \n";
+      mlog[ERROR] << "unknown binary operator in traverse_BinaryExpression() \n";
       ROSE_ABORT();
   }
 
@@ -5970,6 +5950,7 @@ ATbool ATermToSageJovialTraversal::traverse_BitFormula(ATerm term, SgExpression*
    else return ATfalse;
 
    ASSERT_not_null(expr);
+   setSourcePosition(expr, term);
 
    return ATtrue;
 }
@@ -5986,6 +5967,7 @@ ATbool ATermToSageJovialTraversal::traverse_LogicalOperand(ATerm term, SgExpress
    else return ATfalse;
 
    ASSERT_not_null(expr);
+   setSourcePosition(expr, term);
 
    return ATtrue;
 }
@@ -6023,7 +6005,6 @@ ATbool ATermToSageJovialTraversal::traverse_BitPrimary(ATerm term, SgExpression*
       //                                      cast_enum? default? ctype? static? dynamic?
       SgCastExp* cast_expr = SageBuilder::buildCastExp(cast_formula, conv_type, SgCastExp::e_default);
       ASSERT_not_null(cast_expr);
-      setSourcePosition(cast_expr, term);
       expr = cast_expr;
    }
    else if (traverse_FunctionCall(term, expr)) {
@@ -6036,6 +6017,7 @@ ATbool ATermToSageJovialTraversal::traverse_BitPrimary(ATerm term, SgExpression*
    // NamedBitConstant       -> BitPrimary {cons("NamedBitConstant")} (rejected in grammar)
 
    ASSERT_not_null(expr);
+   setSourcePosition(expr, term);
 
    return ATtrue;
 }
@@ -6201,7 +6183,6 @@ ATbool ATermToSageJovialTraversal::traverse_Variable(ATerm term, SgExpression* &
    char* name;
 
    // Look for a variable (or could be a function call because of ambiguities)
-   //
    if (ATmatch(term, "<str>" , &name)) {
      SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(name);
 
@@ -6215,7 +6196,7 @@ ATbool ATermToSageJovialTraversal::traverse_Variable(ATerm term, SgExpression* &
        sage_tree_builder.Leave(func_call);
        var = func_call;
      }
-     else if (isSgClassSymbol(symbol)) {
+     else if (isSgClassSymbol(symbol) || isSgTypedefSymbol(symbol)) {
        var = SageBuilder::buildTypeExpression(symbol->get_type());
      }
      // This probably should be "else" rather than "else if" but want to know what symbols are used
@@ -6247,6 +6228,24 @@ ATbool ATermToSageJovialTraversal::traverse_Variable(ATerm term, SgExpression* &
    return ATtrue;
 }
 
+ATbool ATermToSageJovialTraversal::traverse_VariableLVal(ATerm term, SgExpression* &var)
+{
+#if PRINT_ATERM_TRAVERSAL
+   printf("... traverse_VariableLVal: %s\n", ATwriteToString(term));
+#endif
+
+   ATerm t_var;
+   var = nullptr;
+
+   if (ATmatch(term, "VariableLVal(<term>)" , &t_var)) {
+      if (traverse_Variable(t_var, var)) {
+         // MATCHED Variable
+      } else return ATfalse;
+   }
+
+   return ATtrue;
+}
+
 ATbool ATermToSageJovialTraversal::traverse_VariableList(ATerm term, std::vector<SgExpression*> &vars)
 {
 #if PRINT_ATERM_TRAVERSAL
@@ -6264,7 +6263,7 @@ ATbool ATermToSageJovialTraversal::traverse_VariableList(ATerm term, std::vector
          ATerm head = ATgetFirst(tail);
          tail = ATgetNext(tail);
 
-         if (traverse_Variable(head, var)) {
+         if (traverse_VariableLVal(head, var)) {
             vars.push_back(var);
          } else return ATfalse;
       }
@@ -6311,8 +6310,9 @@ ATbool ATermToSageJovialTraversal::traverse_TableItem(ATerm term, SgExpression* 
             array_subscripts = SageBuilder::buildExprListExp_nfi();
             setSourcePosition(array_subscripts, t_subscript);
 
-            for (int i=0; i< subscript.size(); i++) {
-               array_subscripts->get_expressions().push_back(subscript[i]);
+            for (SgExpression* expr : subscript) {
+               array_subscripts->get_expressions().push_back(expr);
+               expr->set_parent(array_subscripts);
             }
          }
       }
@@ -6407,8 +6407,9 @@ ATbool ATermToSageJovialTraversal::traverse_TableDereference(ATerm term, SgExpre
    if (traverse_Subscript(t_subscript, subscript)) {
       array_subscripts = SageBuilder::buildExprListExp_nfi();
       setSourcePosition(array_subscripts, t_subscript);
-      for (int i=0; i< subscript.size(); i++) {
-         array_subscripts->get_expressions().push_back(subscript[i]);
+      for (SgExpression* expr : subscript) {
+         array_subscripts->get_expressions().push_back(expr);
+         expr->set_parent(array_subscripts);
       }
    } else return ATfalse;
 
@@ -6660,8 +6661,9 @@ ATbool ATermToSageJovialTraversal::traverse_RepFunctionVariable(ATerm term, SgEx
      if (traverse_Subscript(t_subscript, subscript)) {
        SgExprListExp* array_subscripts = SageBuilder::buildExprListExp_nfi();
        setSourcePosition(array_subscripts, t_subscript);
-       for (int i=0; i< subscript.size(); i++) {
-         array_subscripts->get_expressions().push_back(subscript[i]);
+       for (SgExpression* expr : subscript) {
+          array_subscripts->get_expressions().push_back(expr);
+          expr->set_parent(array_subscripts);
        }
        var_ref = SageBuilder::buildPntrArrRefExp_nfi(var_ref, array_subscripts);
        setSourcePosition(var_ref, term); // source position too broad because of 'REP'
@@ -6743,6 +6745,7 @@ ATbool ATermToSageJovialTraversal::traverse_FunctionCall(ATerm term, SgExpressio
    //   MachineSpecificFunctionCall -> FunctionCall
 
    ASSERT_not_null(expr);
+   setSourcePosition(expr, term);
 
    return ATtrue;
 }
@@ -6883,8 +6886,8 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
             expr = SageBuilder::buildPntrArrRefExp_nfi(var_ref, expr_list);
          }
          else {
-            cerr << "ERROR: UserDefinedFunctionCall - variable reference ambiguous "
-                 << "with table reference (and rank is incorrect) for " << name << endl;
+            mlog[ERROR] << "UserDefinedFunctionCall - variable reference ambiguous "
+                        << "with table reference (and rank is incorrect) for " << name;
             ROSE_ABORT();
          }
       }
@@ -6893,10 +6896,8 @@ ATbool ATermToSageJovialTraversal::traverse_UserDefinedFunctionCall(ATerm term, 
         // a replication operator (yes?).
         if (expr_list->get_expressions().size() != 1) {
            // It is not clear that a replication operator can't have expression size other than 1.
-#if PRINT_WARNINGS
-           cerr << "WARNING: UserDefinedFunctionCall - variable reference ambiguous "
-                << "with replication operator and # expressions != 1 for variable " << name << endl;
-#endif
+           mlog[ERROR] << "UserDefinedFunctionCall - variable reference ambiguous "
+                       << "with replication operator and # expressions != 1 for variable " << name;
            ROSE_ABORT();
         }
 
@@ -7266,8 +7267,7 @@ ATbool ATermToSageJovialTraversal::traverse_SignFunction(ATerm term, SgFunctionC
    func_call = nullptr;
 
    if (ATmatch(term, "SignFunction(<term>)", &t_formula)) {
-      cerr << "WARNING UNIMPLEMENTED: SignFunction \n";
-      printf("... traverse_SignFunction: %s\n", ATwriteToString(term));
+      mlog[ERROR] << "UNIMPLEMENTED: SignFunction";
       ROSE_ABORT();
    }
    else return ATfalse;
@@ -7614,7 +7614,7 @@ ATbool ATermToSageJovialTraversal::traverse_BitConversion(ATerm term, SgType* &t
    } else if (traverse_Name(term, bit_type_name)) {
       // MATCHED BitTypeName
       // BitTypeName shouldn't be able to happen (parses as UserDefinedFunctionCall)
-      cerr << "ERROR: BitTypeConversion - BitTypeName \n";
+      mlog[WARN] << "ERROR: BitTypeConversion - BitTypeName\n";
       ROSE_ABORT();
    }
    else return ATfalse;
@@ -7754,9 +7754,7 @@ ATbool ATermToSageJovialTraversal::traverse_StatusConversion(ATerm term, SgType*
    type = nullptr;
 
    if (ATmatch(term, "StatusConversion(<term>)", &t_type)) {
-#if PRINT_WARNINGS
-      cerr << "WARNING UNIMPLEMENTED: StatusConversion \n";
-#endif
+      mlog[WARN] << "UNIMPLEMENTED: StatusConversion\n";
       if (traverse_StatusItemDescription(t_type, enum_decl, status_size)) {
          // MATCHED StatusItemDescription
       } else return ATfalse;
@@ -7853,7 +7851,7 @@ ATbool ATermToSageJovialTraversal::traverse_FixedOrFloatingLiteral(ATerm term, S
    else return ATfalse;
 
    if (literal == "." || literal.size() < 1) {
-      cerr << "ERROR in traverse_FixedOrFloatingLiteral, no float literal, contains only: " << literal << endl;
+      mlog[WARN] << "ERROR in traverse_FixedOrFloatingLiteral, no float literal, contains only: " << literal << "\n";;
       ROSE_ABORT();
    }
 
@@ -8121,7 +8119,11 @@ ATbool ATermToSageJovialTraversal::traverse_CompoolDirective(ATerm term)
             tail = ATgetNext(tail);
             if (traverse_Name(head, declared_name)) {
                // CompoolDeclaredName is a list of names to be used by the current module
-               declared_name_list.push_back(std::string(declared_name));
+               std::string lc_name{declared_name};
+               // Convert to lower case to enable case insensitivity
+               std::transform(declared_name.begin(), declared_name.end(), lc_name.begin(), ::tolower);
+               declared_name_list.push_back(std::string(lc_name));
+               mlog[DEBUG] << "appended declared compool name: " << lc_name << " compool " << compool_name <<"\n";
             } else return ATfalse;
          }
       } else return ATfalse;
@@ -8246,8 +8248,6 @@ ATbool ATermToSageJovialTraversal::traverse_LinkageDirective(ATerm term)
    if (ATmatch(term, "LinkageDirective(<term>)", &t_symbol)) {
       // MATCHED LinkageDirective
 
-#if 1
-      // TODO: if needed, deal with symbol in more complex cases (.e.g., symbol list)
       ATermList tail = (ATermList) ATmake("<term>", t_symbol);
       while (! ATisEmpty(tail)) {
          ATerm head = ATgetFirst(tail);
@@ -8257,18 +8257,11 @@ ATbool ATermToSageJovialTraversal::traverse_LinkageDirective(ATerm term)
             SgIntVal* int_val = isSgIntVal(expr);
             if (int_val) {
                str = int_val->get_valueString();
+               // the expression for int_val is no longer needed as the value is stored
+               delete int_val;  int_val = nullptr;
             }
          } else return ATfalse;
       }
-#else
-      if (traverse_Literal(t_symbol, expr)) {
-         // MATCHED Literal
-         SgIntVal* int_val = isSgIntVal(expr);
-         if (int_val) {
-            str = int_val->get_valueString();
-         }
-      } else return ATfalse;
-#endif
    }
    else return ATfalse;
 

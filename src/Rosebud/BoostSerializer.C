@@ -8,6 +8,26 @@
 
 namespace Rosebud {
 
+BoostSerializer::Ptr
+BoostSerializer::instance() {
+    return Ptr(new BoostSerializer);
+}
+
+std::string
+BoostSerializer::name() const {
+    return "boost";
+}
+
+std::string
+BoostSerializer::purpose() const {
+    return "Generates boost::serialization code.";
+}
+
+bool
+BoostSerializer::isSerializable(const Ast::Class::Ptr&) const {
+    return true;
+}
+
 void
 BoostSerializer::generate(std::ostream &header, std::ostream &impl, const Ast::Class::Ptr &c,
                           const Generator &generator) const {
@@ -28,7 +48,7 @@ BoostSerializer::generate(std::ostream &header, std::ostream &impl, const Ast::C
         header <<THIS_LOCATION <<"        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(" <<super.second <<");\n";
 
     // Serialize all properties that request serialization
-    for (const auto &p: *c->properties()) {
+    for (const auto &p:c->properties) {
         if (!p->findAttribute("Rosebud::no_serialize")) {
             const std::string memberName = generator.propertyDataMemberName(p());
             header <<locationDirective(p->findAncestor<Ast::File>(), p->startToken)

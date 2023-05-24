@@ -37,7 +37,8 @@ set(CxxGrammarMetaProgram_SRCS
   buildStorageClasses.C
   buildConstructorsWithoutSourcePositionInformation.C
   outputClassesAndFields.C
-  StringUtility.C)
+  StringUtility.C
+  jovialNodes.C)
 
 # input files to generate source files
 set(GRAMMAR_SOURCE_FILES

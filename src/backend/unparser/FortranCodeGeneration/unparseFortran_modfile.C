@@ -26,64 +26,19 @@ generateModFile(SgFile *sfile)
   // file name, with full path.
      string  originalModuleFilenameWithPath = sfile->get_file_info()->get_filenameString();
 
-#if 0
-     printf ("In generateModFile(): originalModuleFilenameWithPath = %s \n",originalModuleFilenameWithPath.c_str());
-#endif
-
-#if 0
-  // DQ (10/24/2010): This is overly restrictive...we still want to generate the rmod file.
-  // It does not matter is we compile or not compile any generated file.  This premature
-  // exit will cause F03 code to fail to be processed by ROSE since any mod file required 
-  // will not generated.
-  // FMZ (10/28/2009): don't generate the .rmod for the readin .rmod file
-     if (sfile->get_skipfinalCompileStep() == true)
-        {
-          if (SgProject::get_verbose() > 0)
-               printf ("Skipping generation of rmod file: %s \n",originalModuleFilenameWithPath.c_str());
-
-          return;
-        }
-#endif
-
-  // Cause the output of a message with verbose level is turned on.
      if (SgProject::get_verbose() > 0)
         {
           printf ("In generateModFile(): Generating a Fortran 90 specific module (*.rmod file) for file = %s \n",originalModuleFilenameWithPath.c_str());
         }
 
-#if 0
-     printf ("In generateModFile(): before NodeQuery::querySubTree() \n");
-#endif
-
   // Get the list of SgModuleStatement objects for the current AST.
      Rose_STL_Container<SgNode*> moduleDeclarationList = NodeQuery::querySubTree (sfile,V_SgModuleStatement);
-
-#if 0
-     printf ("In generateModFile(): after NodeQuery::querySubTree() \n");
-#endif
-
-#if 0
-  // DQ: I think this case is not required since the loop (below) would be empty.
-     if (moduleDeclarationList.empty())
-        {
-       // no module in the file
-          return;
-        }
-#endif
-
-#if 0
-     printf ("In generateModFile(): before loop over module declarations \n");
-#endif
 
      for (Rose_STL_Container<SgNode*>::iterator i = moduleDeclarationList.begin(); i != moduleDeclarationList.end(); i++)
         {
        // For a module named "xx" generate a file "xx.rose_mod" which contains 
        // all the variable definitions and function declarations 
           SgModuleStatement* module_stmt = isSgModuleStatement(*i);
-
-#if 0
-          printf ("In generateModFile(): top of loop over module list \n");
-#endif
 
           ASSERT_not_null(module_stmt);
           string outputDir = get_rmod_dir(sfile);
@@ -102,7 +57,6 @@ generateModFile(SgFile *sfile)
              }
 
        // Use a lower case generate filename for the generated ROSE mod (or rmod) file. 
-       // fstream Module_OutputFile(outputFilename.c_str(),ios::out);
           fstream Module_OutputFile(lowerCaseOutputFilename.c_str(),ios::out);
 
           if (!Module_OutputFile) {
@@ -129,11 +83,7 @@ generateModFile(SgFile *sfile)
           ostringstream outputString;
           Unparser_Opt options(false, false,false,false,true,false,false,false,false,false);
 
-       // This is a confusing use of originalModuleFilename vs. outputFilename (Oh, the first one has the full path!).
-       // The originalModuleFilename will be used to build a FortranCodeGeneration_locatedNode using
-       // the originalModuleFilename as a basis.
-       // printf ("originalModuleFilenameWithPath = %s outputFilename = %s \n",originalModuleFilenameWithPath.c_str(),outputFilename.c_str());
-          Unparser unp(&Module_OutputFile, originalModuleFilenameWithPath,options,NULL,NULL);
+          Unparser unp(&Module_OutputFile, originalModuleFilenameWithPath,options,nullptr,nullptr);
           unp.currentFile = sfile;
 
        // The outputFilename is the name that will be matched against in the selection of statements to unparse.
@@ -146,20 +96,5 @@ generateModFile(SgFile *sfile)
 
           Module_OutputFile.flush();
           Module_OutputFile.close();
-
-#if 0
-          printf ("In generateModFile(): bottom of loop over module list \n");
-#endif
         }
-
-#if 0
-     printf ("Leaving generateModFile(): originalModuleFilenameWithPath = %s \n",originalModuleFilenameWithPath.c_str());
-
-     printf ("exiting as a test! \n");
-     ROSE_ABORT();
-#endif
-
-#if 0
-     printf ("Leaving generateModFile(): originalModuleFilenameWithPath = %s \n",originalModuleFilenameWithPath.c_str());
-#endif
    }

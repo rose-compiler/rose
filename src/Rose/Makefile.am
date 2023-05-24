@@ -255,10 +255,6 @@ librose_partial_la_SOURCES =								\
 	StringUtility/NumberToString.C							\
 	StringUtility/Predicate.C							\
 	StringUtility/SplitJoin.C							\
-	StringUtility/StringToNumber.C							\
-	Tree/Base.C									\
-	Tree/BasicTypes.C								\
-	Tree/Exception.C								\
-	Tree/List.C
+	StringUtility/StringToNumber.C
 
 # Public header files are installed from parent makefiles.

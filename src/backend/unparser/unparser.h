@@ -103,7 +103,7 @@ void outputFirstAndLastIncludeFileInfo();
 // This is the base class for the support or alternative code generation mechanisms (by Qing Yi)
 // and is the basis of the copy based unparsing that unparses the code by copying parts of the
 // AST not transformed directly from the source file (character by character, to preserve
-// absolutely ALL formatting).  Patch files can then be gnerated from such files, where the
+// absolutely ALL formatting).  Patch files can then be generated from such files, where the
 // patches represent only the transformations introduced.
 class UnparseDelegate
    {

@@ -190,7 +190,8 @@ libroseLibraries = \
    $(top_builddir)/src/3rdPartyLibraries/MSTL/libmstl.la \
    $(top_builddir)/src/backend/libbackend.la \
    $(top_builddir)/src/frontend/SageIII/libsage3.la \
-   $(top_builddir)/src/generated/libroseGenerated.la \
+   $(top_builddir)/src/generated/BinaryAnalysis/libroseGeneratedBinaryAnalysis.la \
+   $(top_builddir)/src/generated/Jovial/libroseGeneratedJovial.la \
    $(libroseCxxlibraries) \
    $(libroseOpenFortranParserlibraries) \
    $(libroseExperimentalFlangParserlibraries) \
@@ -582,11 +583,6 @@ nobase_pkginclude_HEADERS=								\
 	Rose/Traits/grammar/predicates.h						\
 	Rose/Traits/grammar/traversal.h							\
 	Rose/Traits/Traversal.h								\
-	Rose/Tree.h									\
-	Rose/Tree/Base.h								\
-	Rose/Tree/BasicTypes.h								\
-	Rose/Tree/Exception.h								\
-	Rose/Tree/List.h
 	Rose/Yaml.h
 
 

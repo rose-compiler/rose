@@ -1886,6 +1886,7 @@ public:
     T* initParentPointer(T *child, SgNode *parent) {
         ASSERT_not_null(parent);
         if (child) {
+#ifndef NDEBUG
             auto toString = [](SgNode *node) {
                 if (node) {
                     return (boost::format("(%s*)%p") % node->class_name() % node).str();
@@ -1898,6 +1899,7 @@ public:
                             "child " + toString(child) +
                             " cannot be inserted into " + toString(parent) +
                             " because it is already a child of " + toString(child->get_parent()));
+#endif
             child->set_parent(this);
         }
         return child;
@@ -1944,6 +1946,7 @@ public:
         std::is_pointer<T>::value,
         void>::type
     changeChildPointer(T& edge, T const& child) {
+#ifndef NDEBUG
         auto toString = [](SgNode *node) {
             if (node) {
                 return (boost::format("(%s*)%p") % node->class_name() % node).str();
@@ -1951,6 +1954,7 @@ public:
                 return std::string("nullptr");
             }
         };
+#endif
 
         if (child != edge) {
             // If there is an old child, check that it has the correct parent and then remove it.
@@ -2024,6 +2028,38 @@ private:
     // Production version
     void debugSerializationHelper(const char*, bool) {}
 #endif
+
+protected:
+    /** This gets called by all Rosebud-generated destructors.
+     *
+     *  Rosebud generates a call to @p destructorHelper from every destructor implementation. This gives the user a chance to
+     *  do something special. There are some things to be aware of when reimplementing this function, and you should be well
+     *  versed in the C++ rules about calling virtual functions from destructors.
+     *
+     *  @li The implementation must not attempt to access any data members of derived classes. These data members have already
+     *  been destroyed by time this function is called.
+     *
+     *  @li Any calls you make to virtual functions declared in this class will dispatch only to implementations in this class
+     *  or its base classes, not any derived classes.
+     *
+     *  @li Your implementation must expect to be called multiple times for the same object. This occurs when this class implements
+     *  this function but its derived class does not. During destruction of a derived object, the derived class's Rosebud-generated
+     *  destructor will call @p destructorHelper, which will dispatch to the implementation in this class. Then, when the part of
+     *  the object corresponding to this class is being destroyed, the destructor will call @p destructorHelper again, which will
+     *  dispatch to this implementation again. This may happen recursively mutliple times.
+     *
+     *  @li Your implementation should not destroy anything that a subclass might need during its destruction. This follows from the
+     *  rule above, but is generally not a problem in practice. The reason it's not a problem is that the derived classes are
+     *  usually Rosebud-generated and thus their destructors only call @p destructorHelper. Therefore, in order for any derived
+     *  class to any work, it must be done in its @p destructorHelper, which would be called before the implementation of @p
+     *  destructorHelper in this class is called.
+     *
+     *  All attempts should be made to avoid having to implement a @p destructorHelper in any class but the most base class (and
+     *  that one does nothing). Instead, use data members whose own destructors do their cleanup. For instance, if this class needs
+     *  a pointer to data allocated on the stack, then instead of using a raw pointer which needs to be deleted in this class's
+     *  destructor, use a smart pointer whose own destructor deletes the data. If you follow this advice, then you don't need to
+     *  be well-versed in the details of C++ object destruction. */
+     virtual void destructorHelper() {}
 
 protected:
     /** Called by generated serializers.

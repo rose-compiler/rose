@@ -13,12 +13,27 @@ using namespace Sawyer::Message::Common;
 
 namespace Rosebud {
 
+RoseGenerator::Ptr
+RoseGenerator::instance() {
+    return Ptr(new RoseGenerator);
+}
+
+std::string
+RoseGenerator::name() const {
+    return "rose";
+}
+
+std::string
+RoseGenerator::purpose() const {
+    return "Experimental backend to generate ROSE code directly without using ROSETTA.";
+}
+
 void
 RoseGenerator::adjustParser(Sawyer::CommandLine::Parser &parser) {
     using namespace Sawyer::CommandLine;
 
-    SwitchGroup sg("ROSE backend (--backend=rose)");
-    sg.name("rose");
+    SwitchGroup sg("ROSE backend (--backend=" + name() + ")");
+    sg.name(name());
     sg.doc("This backend generates code directly without sending it through ROSETTA. It's goal is to generate a more modern style "
            "of tree data structures where node memory is managed and parent pointers are automatic.\n\n"
 
@@ -297,7 +312,7 @@ RoseGenerator::genTraversals(std::ostream &header, std::ostream &impl, const Ast
 
     const std::string base = firstPublicBaseClass(c);
     std::vector<Ast::Property::Ptr> children;
-    for (const auto &p: *c->properties()) {
+    for (const auto &p: c->properties) {
         if (isTreeEdge(p()))
             children.push_back(p());
     }
@@ -382,7 +397,7 @@ RoseGenerator::genClass(const Ast::Class::Ptr &c, const Hierarchy &h) {
            <<"    using Ptr = " <<c->name <<"Ptr;\n";
 
     // Class definition body between the "{" and "};"
-    for (const auto &p: *c->properties())
+    for (const auto &p: c->properties)
         genProperty(header, impl, p());
 
     // User-defined stuff at the end of the class before the closing "}"

@@ -11,6 +11,7 @@
 #include <Sawyer/Sawyer.h>
 
 #include <boost/config.hpp>
+#include <boost/lexical_cast.hpp>
 #include <string>
 #ifdef __clang_analyzer__
 #include <cassert>
@@ -124,10 +125,10 @@ SAWYER_EXPORT extern AssertFailureHandler assertFailureHandler;
 #define ASSERT_always_forbid(expr) ASSERT_always_forbid2(expr, "")
 #define ASSERT_always_not_null(expr) ASSERT_always_not_null2(expr, "")
 #define ASSERT_always_not_reachable(note)                                                                                      \
-    Sawyer::Assert::fail("reached impossible state", NULL, (note),                                                             \
+    Sawyer::Assert::fail("reached impossible state", NULL, boost::lexical_cast<std::string>(note),                             \
                          __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION)
 #define ASSERT_always_not_implemented(note)                                                                                    \
-    Sawyer::Assert::fail("not implemented yet", NULL, (note),                                                                  \
+    Sawyer::Assert::fail("not implemented yet", NULL, boost::lexical_cast<std::string>(note),                                  \
                          __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION)
 #define ASSERT_always_this() /*void*/
 
@@ -140,20 +141,21 @@ SAWYER_EXPORT extern AssertFailureHandler assertFailureHandler;
     #define ASSERT_always_require2(expr, note)                                                                                 \
         ((expr) ?                                                                                                              \
             static_cast<void>(0) :                                                                                             \
-            Sawyer::Assert::fail("assertion failed", "required: " #expr, (note),                                               \
+            Sawyer::Assert::fail("assertion failed", "required: " #expr, boost::lexical_cast<std::string>(note),               \
                                  __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION))
 
     #define ASSERT_always_forbid2(expr, note)                                                                                  \
         (!(expr) ?                                                                                                             \
             static_cast<void>(0) :                                                                                             \
             Sawyer::Assert::fail("assertion failed",                                                                           \
-                                 "forbidden: " #expr, (note), __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION))
+                                 "forbidden: " #expr, boost::lexical_cast<std::string>(note),                                  \
+                                 __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION))
 
     #define ASSERT_always_not_null2(expr, note)                                                                                \
         ((expr)!=NULL ?                                                                                                        \
             static_cast<void>(0) :                                                                                             \
             Sawyer::Assert::fail("null pointer",                                                                               \
-                                 #expr, (note), __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION))
+                                 #expr, boost::lexical_cast<std::string>(note), __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION))
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -191,11 +193,11 @@ SAWYER_EXPORT extern AssertFailureHandler assertFailureHandler;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define TODO(note)                                                                                                             \
-    Sawyer::Assert::fail("not implemented yet", NULL, (note),                                                                  \
+    Sawyer::Assert::fail("not implemented yet", NULL, boost::lexical_cast<std::string>(note),                                  \
                          __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION)
 
 #define FIXME(note)                                                                                                            \
-    Sawyer::Assert::fail("needs to be fixed", NULL, (note),                                                                    \
+    Sawyer::Assert::fail("needs to be fixed", NULL, boost::lexical_cast<std::string>(note),                                    \
                          __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION)
 
 #endif

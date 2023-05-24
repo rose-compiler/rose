@@ -410,9 +410,9 @@ Grammar::setUpSupport ()
      Unparse_Info.setDataPrototype("SgDeclarationStatement*", "declstatement_ptr", "= nullptr",
                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (11/21/2021): I think this may be useful to support using the correct declaration 
-  // (class declaration or enum declaration) when unparsing embedded types in typedef declarations 
-  // that are properly represented in multiple files, but for which we can't use the declaration 
+  // DQ (11/21/2021): I think this may be useful to support using the correct declaration
+  // (class declaration or enum declaration) when unparsing embedded types in typedef declarations
+  // that are properly represented in multiple files, but for which we can't use the declaration
   // referenced through the shared type since it will be from the incorrect file (and will not unparse).
      Unparse_Info.setDataPrototype("SgDeclarationStatement*", "declaration_of_context", "= nullptr",
                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -608,8 +608,15 @@ Grammar::setUpSupport ()
                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      // PP (01/25/21): Add arguments for Ada pragma
+     // \todo should this be DEF_TRAVERSAL, DEF_DELETE, CLONE_PTR also?
+     // \note args was set to NO_TRAVERSAL in order not to conflict with any existing
+     //       language support that uses SgPragma.
      Pragma.setDataPrototype ( "SgExprListExp*" , "args", "= nullptr",
-                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     // PP (04/19/23): Add statement link for Ada
+     Pragma.setDataPrototype ( "SgStatement*" , "associatedStatement", "= nullptr",
+                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
   // DQ (11/1/2015): Build the access functions, but don't let the set_* access function set the "p_isModified" flag.
@@ -787,7 +794,7 @@ Grammar::setUpSupport ()
                                    NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (3/11/2021): We need to to support the dynamic library feature (used by the code segregation tool, and likely future tools).
-  // This feature is also part of outliner which supports outlining to a seperate file. Also, this is used to avoid running the 
+  // This feature is also part of outliner which supports outlining to a seperate file. Also, this is used to avoid running the
   // computation of first and last statements of include file.
      SourceFile.setDataPrototype   ( "bool", "isDynamicLibrary", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -899,7 +906,7 @@ Grammar::setUpSupport ()
      IncludeFile.setDataPrototype   ( "bool", "isRootSourceFile", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (3/9/2021): Save the first and last statement associated with the file (required to support the 
+  // DQ (3/9/2021): Save the first and last statement associated with the file (required to support the
   // token-based unparsing (e.g. detecting the last statement so that we can output the trailing whitespace).
      IncludeFile.setDataPrototype ( "SgStatement*", "firstStatement", " = nullptr",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);

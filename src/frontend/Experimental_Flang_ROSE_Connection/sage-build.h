@@ -25,9 +25,15 @@ class SgStatement;
 class SgIfStmt;
 class SgType;
 
-#define PRINT_FLANG_TRAVERSAL 0
+// Controls debugging information output
+#define PRINT_FLANG_TRAVERSAL 1
+
+// New label handling (and perhaps scope as well)
+#define LABELS 1
 
 typedef std::tuple<std::string, SgType*, SgExpression*> EntityDeclTuple;
+
+using OptLabel = std::optional<unsigned long long>;
 
 // Needed until Rose compiles with C++17 (see setSgSourceFile below)
 class SgSourceFile;
@@ -57,8 +63,12 @@ void BuildFunctionReturnType   (const Fortran::parser::     SpecificationPart &x
 template<typename T> void Build(const Fortran::parser::         ExecutionPart &x, T* scope);
 template<typename T> void Build(const Fortran::parser::ExecutionPartConstruct &x, T* scope);
 template<typename T> void Build(const Fortran::parser::   ExecutableConstruct &x, T* scope);
-template<typename T> void Build(const Fortran::parser::            ActionStmt &x, T* scope);
+
+template<typename T> void Build(const Fortran::parser::            ActionStmt &x, const OptLabel &label, T* scope);
+template<typename T> void Build(const Fortran::parser::            ActionStmt &x, T* scope) { abort(); };
+
 template<typename T> void Build(const Fortran::parser::        AssignmentStmt &x, T* scope);
+//void Build(const Fortran::parser::        AssignmentStmt &x, SgScopeStatement* scope);
 
 void Build(const Fortran::parser::  FunctionStmt &x, std::list<std::string> &, std::string &, std::string &, LanguageTranslation::FunctionModifierList &, SgType* &);
 void Build(const Fortran::parser::SubroutineStmt &x, std::list<std::string> &, std::string &, LanguageTranslation::FunctionModifierList &);
@@ -229,7 +239,15 @@ void Build(const Fortran::parser::    CommonBlockObject &x, SgExpression*       
 // Expr
 template<typename T> void traverseBinaryExprs(const T &x, SgExpression* &lhs, SgExpression* &rhs);
 
+#if 0
 template<typename T> void Build(const Fortran::parser::CharLiteralConstantSubstring &x, T* &expr);
+#else
+void Build(const Fortran::parser::CharLiteralConstantSubstring &x, SgExpression* &expr);
+#endif
+
+// Why templates for some of these and not others?
+void Build(const Fortran::parser::SubstringInquiry &x, SgExpression* &expr);
+
 void Build(const Fortran::parser::            ArrayConstructor &x, SgExpression* &expr);
 void Build(const Fortran::parser::                      AcSpec &x, SgExpression* &expr);
 void Build(const Fortran::parser::                     AcValue &x, SgExpression* &expr);

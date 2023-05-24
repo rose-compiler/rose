@@ -6,6 +6,7 @@
 #include <Sawyer/StaticBuffer.h>
 
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
@@ -17,12 +18,27 @@ using namespace Sawyer::Message::Common;
 
 namespace Rosebud {
 
+RosettaGenerator::Ptr
+RosettaGenerator::instance() {
+    return Ptr(new RosettaGenerator);
+}
+
+std::string
+RosettaGenerator::name() const {
+    return "rosetta";
+}
+
+std::string
+RosettaGenerator::purpose() const {
+    return "Generate code according to Robb's single-file ROSETTA kludge.";
+}
+
 void
 RosettaGenerator::adjustParser(Sawyer::CommandLine::Parser &parser) {
     using namespace Sawyer::CommandLine;
 
-    SwitchGroup sg("ROSETTA backend for IR/AST nodes (--backend=rosetta)");
-    sg.name("rosetta");
+    SwitchGroup sg("ROSETTA backend for IR/AST nodes (--backend=" + name() + ")");
+    sg.name(name());
     sg.doc("The ultimate goal is to remove the legacy ROSETTA system from ROSE and replace its monolithic features with "
            "small, simple, specialized code generators each serving a very specific and well defined purpose, and each having "
            "a dedicated ROSE team member as its responsible maintainer. However, since ROSETTA is large (more than 100k LOC), "
@@ -445,7 +461,11 @@ RosettaGenerator::genOtherContent(std::ostream &rosetta, const Ast::Class::Ptr &
         rosetta <<"\n"
                 <<THIS_LOCATION <<"    DECLARE_OTHERS(" <<shortName(c) <<");\n"
                 <<"#if defined(" <<c->name <<"_OTHERS) || defined(DOCUMENTATION)\n";
-        BoostSerializer().generate(rosetta, rosetta, c, *this);
+
+        auto serializer = Serializer::lookup(settings.serializer);
+        ASSERT_not_null(serializer);
+        serializer->generate(rosetta, rosetta, c, *this);
+
         rosetta <<content
                 <<"#endif // " <<c->name <<"_OTHERS\n";
     }
@@ -500,8 +520,42 @@ void
 RosettaGenerator::genLeafMacros(std::ostream &rosetta, const Ast::Class::Ptr &c) {
     ASSERT_not_null(c);
 
-    rosetta <<THIS_LOCATION <<"DECLARE_LEAF_CLASS(" <<shortName(c) <<");\n"
-            <<"IS_SERIALIZABLE(" <<shortName(c) <<");\n";
+    rosetta <<THIS_LOCATION <<"DECLARE_LEAF_CLASS(" <<shortName(c) <<");\n";
+
+    auto serializer = Serializer::lookup(settings.serializer);
+    ASSERT_not_null(serializer);
+    if (serializer->isSerializable(c))
+        rosetta <<THIS_LOCATION <<"IS_SERIALIZABLE(" <<shortName(c) <<");\n";
+}
+
+void
+RosettaGenerator::genRosettaPragmas(std::ostream &rosetta, const std::vector<std::string> &pragmas, const Ast::Class::Ptr &c) {
+for (const std::string &pragma: pragmas) {
+    std::string s = boost::replace_all_copy(pragma, "\\\n", "\n");
+    boost::trim(s);
+    if (!boost::ends_with(s, ";"))
+        s += ";";
+    rosetta <<"\n"
+            <<THIS_LOCATION <<"#ifndef DOCUMENTATION\n"
+            <<"    " <<shortName(c) <<"." <<s <<"\n"
+            <<"#endif // !DOCUMENTATION\n";
+    }
+}
+
+size_t
+RosettaGenerator::genRosettaPragmas(std::ostream &rosetta, const Ast::Class::Ptr &c, const Ast::Property::Ptr &p) {
+    static const std::regex re("^[ \\t]*#[ \\t]*pragma[ \\t]+rosetta[ \\t]+([\\S\\s]*)");
+    std::vector<std::string> pragmas = extractCpp(p->priorText /*in,out*/, re, 1);
+    genRosettaPragmas(rosetta, pragmas, c);
+    return pragmas.size();
+}
+
+size_t
+RosettaGenerator::genRosettaPragmas(std::ostream &rosetta, const Ast::Class::Ptr &c) {
+    static const std::regex re("^[ \\t]*#[ \\t]*pragma[ \\t]+rosetta[ \\t]+([\\S\\s]*)");
+    std::vector<std::string> pragmas = extractCpp(c->endText /*in,out*/, re, 1);
+    genRosettaPragmas(rosetta, pragmas, c);
+    return pragmas.size();
 }
 
 void
@@ -550,7 +604,10 @@ RosettaGenerator::genClassDefinition(std::ostream &rosetta, const Ast::Class::Pt
 
     genClassBegin(rosetta, c);
 
-    for (const auto &p: *c->properties()) {
+    size_t nPragmas = 0;
+    for (const auto &p: c->properties) {
+        nPragmas += genRosettaPragmas(rosetta, c, p());
+
         // Stuff in the input that's prior to the property definition should go in the "other" section of output
         header <<locationDirective(p(), p->priorTextToken) <<p->priorText;
 
@@ -560,6 +617,7 @@ RosettaGenerator::genClassDefinition(std::ostream &rosetta, const Ast::Class::Pt
 
     // If anything else is in the input class definition after the last property definition, append it to the "other" section of
     // output
+    nPragmas += genRosettaPragmas(rosetta, c);
     header <<locationDirective(c, c->endTextToken) <<c->endText;
 
     // Class constructors and destructures emitted quite late in the class definition so we're sure that all the types needed by
@@ -574,6 +632,16 @@ RosettaGenerator::genClassDefinition(std::ostream &rosetta, const Ast::Class::Pt
 
     c->cppStack->emitClose(rosetta);
     genImplFileEnd(impl, c);
+
+    // Delayed warnings
+    if (nPragmas > 0) {
+        message(WARN, c->findAncestor<Ast::File>(), c->nameToken,
+                "class " + c->name + " contains " + boost::lexical_cast<std::string>(nPragmas) + " pragma " +
+                std::string(1 == nPragmas ? "directive" : "directives") + " which should only be used only as a last resort to "
+                "achieve ROSETTA compatibility. Most of the things done with these pragmas can be done more effectively and "
+                "with less generated code by using C++ features like dynamic dispatch, template metaprogramming and "
+                "introspection.");
+    }
 }
 
 std::string
@@ -633,14 +701,19 @@ RosettaGenerator::genTupFile(const std::vector<std::string> &implFileNames) {
             <<"#\n"
             <<"\n"
             <<"include_rules\n"
-            <<"ifeq (@(ENABLE_BINARY_ANALYSIS),yes)\n"
             <<"run $(librose_compile)";
 
-        for (const std::string &fileName: implFileNames)
-            out <<" \\\n    " <<fileName;
+        if (implFileNames.empty()) {
+            // Create at least one stub file, otherwise some problems might arise building the intermediate library.
+            std::ofstream stub((implDirectoryName / "stub.C").c_str());
+            stub <<THIS_LOCATION <<"static void stub() {}\n";
+            out <<" \\\n    stub.C";
+        } else {
+            for (const std::string &fileName: implFileNames)
+                out <<" \\\n    " <<fileName;
+        }
 
-        out <<"\n"
-            <<"endif\n";
+        out <<"\n";
     }
 }
 
@@ -654,6 +727,8 @@ RosettaGenerator::genMakeFile(const std::vector<std::string> &implFileNames) {
             return;
         }
 
+        const std::string libraryName = "libroseGenerated" + implDirectoryName.filename().string();
+
         out <<THIS_LOCATION <<machineGenerated('#')
             <<"#\n"
             <<"# This file was generated by Rosebud\n"
@@ -662,11 +737,19 @@ RosettaGenerator::genMakeFile(const std::vector<std::string> &implFileNames) {
             <<"include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs\n"
             <<"\n"
             <<"AM_CPPFLAGS = $(ROSE_INCLUDES)\n"
-            <<"noinst_LTLIBRARIES = libroseGenerated.la\n"
-            <<"libroseGenerated_la_SOURCES =";
+            <<"noinst_LTLIBRARIES = " <<libraryName <<".la\n"
+            <<libraryName <<"_la_SOURCES =";
 
-        for (const std::string &fileName: implFileNames)
-            out <<" \\\n        " <<fileName;
+        if (implFileNames.empty()) {
+            // Create at least one stub file, otherwise some problems might arise building the intermediate library.
+            std::ofstream stub((implDirectoryName / "stub.C").c_str());
+            stub <<THIS_LOCATION <<"static void stub() {}\n";
+            out <<" \\\n    stub.C";
+        } else {
+            for (const std::string &fileName: implFileNames)
+                out <<" \\\n        " <<fileName;
+        }
+
         out <<"\n";
     }
 }
@@ -681,17 +764,28 @@ RosettaGenerator::genCmakeFile(const std::vector<std::string> &implFileNames) {
             return;
         }
 
+        const std::string libraryName = "roseGenerated" + implDirectoryName.filename().string();
+
         out <<THIS_LOCATION <<machineGenerated('#')
             <<"#\n"
             <<"# This file was generated by Rosebud\n"
             <<"#\n"
             <<"\n"
-            <<"add_library(roseGenerated OBJECT";
-        for (const std::string &fileName: implFileNames)
-            out <<"\n  " <<fileName;
+            <<"add_library(" <<libraryName <<" OBJECT";
+
+        if (implFileNames.empty()) {
+            // Create at least one stub file, otherwise some problems might arise building the intermediate library.
+            std::ofstream stub((implDirectoryName / "stub.C").c_str());
+            stub <<THIS_LOCATION <<"static void stub() {}\n";
+            out <<"\n  stub.C";
+        } else {
+            for (const std::string &fileName: implFileNames)
+                out <<"\n  " <<fileName;
+        }
+
         out <<")\n"
             <<"\n"
-            <<"add_dependencies(roseGenerated rosetta_generated)\n";
+            <<"add_dependencies(" <<libraryName <<" rosetta_generated)\n";
     }
 }
 

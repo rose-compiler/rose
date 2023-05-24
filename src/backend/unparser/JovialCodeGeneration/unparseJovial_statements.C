@@ -878,11 +878,11 @@ UnparseJovial::unparseEnumBody(SgEnumDeclaration* enum_decl, SgUnparse_Info& inf
 
       SgAssignInitializer* assign_expr = isSgAssignInitializer(init_name->get_initializer());
       ASSERT_not_null(assign_expr);
-      SgEnumVal* enum_val = isSgEnumVal(assign_expr->get_operand());
-      ASSERT_not_null(enum_val);
+      SgExpression* assign_op = assign_expr->get_operand();
+      ASSERT_not_null(assign_op);
 
       // unparse comments preceding the expression
-      auto preprocInfo = enum_val->get_attachedPreprocessingInfoPtr();
+      auto preprocInfo = assign_op->get_attachedPreprocessingInfoPtr();
       if (preprocInfo) {
         for (PreprocessingInfo* info : *preprocInfo) {
           if (info->getRelativePosition() == PreprocessingInfo::before) {
@@ -891,8 +891,17 @@ UnparseJovial::unparseEnumBody(SgEnumDeclaration* enum_decl, SgUnparse_Info& inf
         }
       }
 
-      // unparse enum value name
-      curprint_indented(tostring(enum_val->get_value()), info);
+      // unparse enum value
+      if (auto enum_val = isSgEnumVal(assign_op)) {
+        curprint_indented(tostring(enum_val->get_value()), info);
+      }
+      else {
+        // there might be a better way to indent the expression
+        curprint_indented("", info);
+        unparseExpression(assign_op, info);
+      }
+
+      // unparse enum name
       curprint(name);
       if (--n > 0) curprint(",");
 

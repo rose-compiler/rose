@@ -364,6 +364,8 @@ namespace
   bool isFloatingPointType(const SgType* ty);
   bool isDiscreteType(const SgType* ty);
   bool isDiscreteType(const SgType& ty);
+  bool isBooleanType(const SgType* ty);
+  bool isBooleanType(const SgType& ty);
   /// @}
 
   /// returns if the type @ref ty is a fixed point type
@@ -401,6 +403,13 @@ namespace
   /// @{
   SgAdaGenericDecl* isGenericDecl(const SgDeclarationStatement& n);
   SgAdaGenericDecl* isGenericDecl(const SgDeclarationStatement* n);
+  /// @}
+
+  /// returns true iff \ref n refers to a generic declaration from inside said declaration
+  ///         false otherwise (e.g., if n does not refer to a generic unit)
+  /// @{
+  bool unitRefDenotesGenericInstance(const SgAdaUnitRefExp& n);
+  bool unitRefDenotesGenericInstance(const SgAdaUnitRefExp* n);
   /// @}
 
   /// Returns SgAdaGenericDecl for a given SgAdaGenericInstanceDecl.

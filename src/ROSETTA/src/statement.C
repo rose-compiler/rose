@@ -2746,8 +2746,12 @@ Grammar::setUpStatements ()
 
   // PP (3/20/2023): Ada uses UsingDeclarationStatement for modeling use/use type directives
   //                 Attributes can be used to specify class wide application: use some.type'class
-     UsingDeclarationStatement.setDataPrototype("bool","is_ada_class_wide","= false",
+     //~ UsingDeclarationStatement.setDataPrototype("bool","is_ada_class_wide","= false",
+                                //~ NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // PP (4/18/23): replaced flag (above) with proper attribute name
+     UsingDeclarationStatement.setDataPrototype("SgName", "adaTypeAttribute","= \"\"",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
 
      UsingDirectiveStatement.setFunctionPrototype ( "HEADER_USING_DIRECTIVE_STATEMENT",
@@ -2819,10 +2823,17 @@ Grammar::setUpStatements ()
      //              has not been processed.
      AdaGenericDecl.setDataPrototype     ( "SgName", "name", "= \"\"",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AdaGenericDecl.setDataPrototype     ( "SgAdaGenericDefn*", "definition", "= NULL",
+     AdaGenericDecl.setDataPrototype     ( "SgAdaGenericDefn*", "definition", "= nullptr",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     AdaGenericDecl.setDataPrototype     ( "SgDeclarationStatement*", "declaration", "= NULL",
+     AdaGenericDecl.setDataPrototype     ( "SgDeclarationStatement*", "declaration", "= nullptr",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     // PP(4/19/23) added explicit scope, so we can wire the child declaration's scope to the generic defn
+     //             (which is the proper nesting). Then the generic decl requires a scope, so we can define a generic
+     //             sub-unit independently.
+     AdaGenericDecl.setDataPrototype     ( "SgScopeStatement*", "scope", "= nullptr",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
      AdaFormalTypeDecl.setFunctionPrototype ( "HEADER_ADA_FORMAL_TYPE_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaFormalTypeDecl.setDataPrototype ( "SgName", "name", "=\"\"",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
