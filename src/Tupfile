@@ -4,8 +4,8 @@ include_rules
 # Show features
 ########################################################################################################################
 
-run $(support_compile_linkexe) featureTests.C
-run $(test) featureTests
+run $(support_compile_linkexe) --install -o rose-feature-tests featureTests.C
+run $(test) rose-feature-tests
 
 ########################################################################################################################
 # ROSE library
