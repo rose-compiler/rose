@@ -539,9 +539,9 @@ std::string version_message() {
 #endif
 
 #ifdef ROSE_HAVE_SQLITE3
-    ss <<"  ---   sqilte library:           " <<SQLITE_VERSION <<"\n";
+    ss <<"  ---   sqlite library:           " <<SQLITE_VERSION <<"\n";
 #else
-    ss <<"  ---   sqilte library:           unused\n";
+    ss <<"  ---   sqlite library:           unused\n";
 #endif
 
 #ifdef ROSE_HAVE_YAMLCPP
