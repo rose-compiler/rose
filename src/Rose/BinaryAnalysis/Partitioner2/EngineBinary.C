@@ -1562,7 +1562,15 @@ EngineBinary::runPartitionerRecursive(const Partitioner::Ptr &partitioner) {
 
     // Decode and partition any CIL byte code (sections with name "CLR Runtime Header")
     SAWYER_MESG(where) <<"decoding and partitioning CIL byte code\n";
-    partitionCilSections(partitioner);
+    bool hasCilSection = partitionCilSections(partitioner);
+
+    // For now we don't know how to partition a specimen with both CIL and X86 instructions. So if
+    // CIL code is encountered, return immediately.
+    // TODO: Find and test more code.
+    if (hasCilSection) {
+        // Bail for now, but really needs more investigation, for example, is attachBlockToFunctions() needed?
+        return;
+    }
 
     // Start discovering instructions and forming them into basic blocks and functions
     SAWYER_MESG(where) <<"discovering and populating functions\n";
@@ -1648,18 +1656,21 @@ EngineBinary::runPartitionerFinal(const Partitioner::Ptr &partitioner) {
         libcStartMain_->nameMainFunction(partitioner);
 }
 
-void
+bool
 EngineBinary::partitionCilSections(const Partitioner::Ptr &partitioner) {
     SgAsmCilMetadataRoot* mdr{nullptr};
     SgAsmInterpretation* interp{interpretation()};
 
     // A file directly mapped from memory may not have an interpretation
     if (interp && interp->get_headers()) {
-        // TODO: What about multiple sections
         for (SgAsmGenericHeader* header : interp->get_headers()->get_headers()) {
             auto sections = header->get_sections_by_name("CLR Runtime Header");
             for (SgAsmGenericSection* section : sections) {
                 if (auto cliHeader = isSgAsmCliHeader(section)) {
+                    if (mdr != nullptr) {
+                        // TODO: What todo if multiple sections
+                        mlog[WARN] << "multiple CIL code sections seen by partitionCilSections\n";
+                    }
                     mdr = cliHeader->get_metadataRoot();
                 }
             }
@@ -1670,7 +1681,10 @@ EngineBinary::partitionCilSections(const Partitioner::Ptr &partitioner) {
     if (mdr) {
       auto cilContainer = new ByteCode::CilContainer(mdr);
       cilContainer->partition(partitioner);
+      return true;
     }
+
+    return false; // No CIL sections encountered
 }
 
 Partitioner::Ptr
