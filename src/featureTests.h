@@ -58,7 +58,10 @@
 
 // Whether to enable the Linux ptrace-based dynamic debugger
 //   * Requires Linux since it uses Linux-specific ptrace features
-#if !defined(ROSE_ENABLE_DEBUGGER_LINUX) && defined(__linux__)
+//   * Requires Intel x86 or x86-64 CPU since it has hard-coded registers
+#if !defined(ROSE_ENABLE_DEBUGGER_LINUX) && \
+    defined(__linux__) &&                   \
+    (defined(__i386) || defined(__x86_64))
 #define ROSE_ENABLE_DEBUGGER_LINUX
 #endif
 
