@@ -502,6 +502,9 @@ public:
      *  value in a lattice. */
     static const unsigned BOTTOM         = 0x00000004;
 
+public:
+    virtual ~Node() {}
+
 protected:
     Node()
         : type_(Type::integer(0)), flags_(0), hashval_(0) {}

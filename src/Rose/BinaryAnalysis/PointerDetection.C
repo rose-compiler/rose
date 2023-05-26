@@ -482,7 +482,9 @@ Analysis::analyzeFunction(const P2::Partitioner::ConstPtr &partitioner, const P2
     // Build the dataflow engine.
     typedef DataFlow::Engine<DfCfg, BaseSemantics::State::Ptr, P2::DataFlow::TransferFunction, DataFlow::SemanticsMerge> DfEngine;
     BaseSemantics::RiscOperators::Ptr ops = makeRiscOperators(partitioner);
+    ASSERT_always_not_null(ops);
     BaseSemantics::Dispatcher::Ptr cpu = partitioner->newDispatcher(ops);
+    ASSERT_always_not_null(cpu);
     P2::DataFlow::MergeFunction merge(cpu);
     P2::DataFlow::TransferFunction xfer(cpu);
     DfEngine dfEngine(dfCfg, xfer, merge);

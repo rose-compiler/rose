@@ -37,6 +37,9 @@ public:
 
     ~MagicNumber();
 
+    MagicNumber(const MagicNumber&) = delete;
+    MagicNumber& operator=(const MagicNumber&) = delete;
+
     /** Property: The mechanism being used to find magic numbers.
      *
      *  Multiple machanisms are available:

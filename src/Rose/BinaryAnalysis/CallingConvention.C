@@ -1456,7 +1456,6 @@ readArgument(const RiscOperators::Ptr &ops, const Definition::Ptr &ccDef, size_t
     } else {
         // Argument is at an implied stack location
         argNumber = argNumber - ccDef->inputParameters().size();
-        ASSERT_require(argNumber >= 0);
         switch (ccDef->stackParameterOrder()) {
             case StackParameterOrder::RIGHT_TO_LEFT:
                 break;

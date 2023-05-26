@@ -42,8 +42,8 @@ std::set<rose_addr_t>
 Method::targets() const {
   std::set<rose_addr_t> retval{};
   for (auto insn : instructions()->get_instructions()) {
-    bool complete;
-    auto successors = insn->getSuccessors(complete);
+    bool complete = true;
+    auto successors = insn->getSuccessors(complete /*out*/);
     for (auto successor : successors.values()) {
       if (TRACE_PARTITION) {
         cout << "... Method::targets():adding successor target va: 0x00" << std::hex << successor << std::dec << endl;

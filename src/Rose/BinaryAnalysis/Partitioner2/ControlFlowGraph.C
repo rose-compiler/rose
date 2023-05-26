@@ -436,7 +436,7 @@ functionCfgByErasure(const ControlFlowGraph &gcfg, const Function::Ptr &function
     while (vi != fcfg.vertices().end()) {
         if (vi->value().type() == V_INDETERMINATE) {
             indet = vi++;
-        } if (!vi->value().isOwningFunction(function)) {
+        } else if (!vi->value().isOwningFunction(function)) {
             fcfg.eraseVertex(vi++);
         } else if (vi->value().type() == V_BASIC_BLOCK && vi->value().address() == function->address()) {
             entry = vi++;
