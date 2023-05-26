@@ -12,6 +12,7 @@
 #include "frontend/SageIII/sageInterface/SageBuilderAsm.h"
 
 namespace sb = Rose::SageBuilderAsm;
+using namespace Rose::Diagnostics; // mlog WARN, ...
 
 namespace // anonymous namespace for auxiliary functions
 {
@@ -185,12 +186,16 @@ namespace // anonymous namespace for auxiliary functions
 
     for (size_t i = 0; i < numberOfStreams; ++i)
     {
-      if (TRACE_CONSTRUCTION)
-        std::cerr << "START: stream header " << i << " of " << numberOfStreams << ": index = " << index
-                  << std::endl;
+      if (TRACE_CONSTRUCTION) {
+        std::cerr << "START: stream header " << i << " of " << numberOfStreams << ": index = " << index;
+      }
 
       StreamHeader        streamHeader = StreamHeader::parse(buf,index);
       SgAsmCilDataStream* dataStream = nullptr;
+
+      if (TRACE_CONSTRUCTION) {
+        std::cerr << ": name is " << streamHeader.name() << "\n";
+      }
 
       if (  (SgAsmCilDataStream::ID_STRING_HEAP == streamHeader.name())
          || (SgAsmCilDataStream::ID_BLOB_HEAP   == streamHeader.name())
@@ -2131,13 +2136,41 @@ disassemble(rose_addr_t base_va, SgAsmCilMethodDef* m, MethodHeader mh,
               MemoryMap::Segment::staticInstance(buf.data(), sz,
                                                  MemoryMap::READABLE|MemoryMap::EXECUTABLE, "CIL code segment"));
 
-  while (addr < sz)
-  {
+  while (addr < sz) {
     SgAsmInstruction* instr = disasm->disassembleOne(map, base_va + addr);
     ASSERT_not_null(instr);
 
     lst.push_back(instr);
     addr += instr->get_size();
+
+    if (instr->isUnknown()) {
+      // Pad block with noops because something went wrong
+      // TODO: don't pad with noops, pad by expanding current unknown instruction
+      SgUnsignedCharList rawBytes(1,'\0');
+      while (addr < sz) {
+        auto insn = new SgAsmCilInstruction(base_va+addr, "nop", Rose::BinaryAnalysis::CilInstructionKind::Cil_nop);
+        insn->set_raw_bytes(rawBytes);
+        ASSERT_require(insn->get_raw_bytes().size() == 1);
+        lst.push_back(insn);
+        addr += insn->get_size();
+      }
+    }
+
+    // Just checking for when last instruction is not return from function
+    ASSERT_require(addr <= sz);
+    if (addr == sz) {
+      if (instr->get_anyKind() != 0 &&
+          instr->get_anyKind() != Rose::BinaryAnalysis::CilInstructionKind::Cil_ret &&
+          instr->get_anyKind() != Rose::BinaryAnalysis::CilInstructionKind::Cil_throw &&
+          instr->get_anyKind() != Rose::BinaryAnalysis::CilInstructionKind::Cil_br) {
+        mlog[INFO] << "last instruction in block is not Cil_ret, is 0x" << std::hex << (int) instr->get_anyKind() << std::dec << "\n";
+      }
+    }
+  }
+
+  if (addr > sz) {
+    mlog[FATAL] << "instruction address exceeds size of instruction block\n";
+    ROSE_ABORT();
   }
 
   return sb::buildBasicBlock(lst);
@@ -2271,12 +2304,11 @@ void SgAsmCilMetadataRoot::parse()
   std::vector<uint8_t> buf(size, 0);
 
   size_t nread = fhdr->get_loader_map()->readQuick(buf.data(), base_va + rva, size);
-  ROSE_ASSERT(nread == size);
+  ASSERT_require(nread == size);
 
   this->parse(buf, 0);
   decodeMetadata(base_va, get_MetadataHeap(), this);
 }
-
 
 
 void SgAsmCilMetadataRoot::parse(std::vector<uint8_t>& buf, size_t index)
@@ -2285,7 +2317,6 @@ void SgAsmCilMetadataRoot::parse(std::vector<uint8_t>& buf, size_t index)
 
   if (TRACE_CONSTRUCTION)
     std::cerr << "Initialize the elements of the data structure" << std::endl;
-
   
   p_Signature = readExpected(read32bitValue, buf, index, MAGIC_SIGNATURE);
   if (TRACE_CONSTRUCTION)
@@ -2318,7 +2349,7 @@ void SgAsmCilMetadataRoot::parse(std::vector<uint8_t>& buf, size_t index)
   
   p_Streams = parseStreams(this, buf, index, start_of_MetadataRoot, get_NumberOfStreams());
   if (TRACE_CONSTRUCTION)
-    std::cerr << "Streams has " << p_Streams.size() << "elements." << std::endl;
+    std::cerr << "Streams has " << p_Streams.size() << " elements." << "\n";
 }
 
 

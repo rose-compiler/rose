@@ -7,14 +7,15 @@
 
 #include <SageBuilderAsm.h>
 
-using std::cout;
-using std::endl;
+using std::hex;
+using std::dec;
 
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Disassembler {
 
 using namespace ByteOrder;
+using namespace Rose::Diagnostics; // mlog WARN, ...
 
 Cil::Cil() {
     name("cil");
@@ -64,25 +65,22 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
 
     SgAsmCilInstruction *insn{nullptr};
     SgAsmIntegerValueExpression* operand{nullptr};
+
+    ASSERT_require(BUF_SIZE >= 10); // BUF_SIZE-1?
     SgUnsignedCharList rawBytes(buf+0, buf+9); //TODO use BUF_SIZE
 
     uint8_t valueU8{0};
     int32_t token{0}; // metadata token, encoded as a 4-byte integer.
 
- // Switch over opcode values
+ // Switch over opcode values (Warning: the switch is not over CilInstructionKind)
     switch (rawBytes[0]) {
         case 0x00: // Cil_nop: do nothing
             insn = makeInstruction(va, rawBytes, 1, Cil_nop, "nop");
             break;
 
-        case 0x01:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_break instruction (break) \n");
-
-             insn = makeInstruction(va, rawBytes, 1, Cil_break, "break");
-             break;
-           }
+        case 0x01: // Cil_break: inform a debugger that a breakpoint has been reached
+           insn = makeInstruction(va, rawBytes, 1, Cil_break, "break");
+           break;
 
         case 0x02: // Cil_ldarg_0: load argument 0 onto the stack
             insn = makeInstruction(va, rawBytes, 1, Cil_ldarg_0, "ldarg_0");
@@ -161,16 +159,11 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
             insn = makeInstruction(va, rawBytes, 2, Cil_ldloc_s, "ldloc_s", operand);
             break;
 
-        case 0x12:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_ldloca_s instruction (load local variable of index onto stack) \n");
-
-             valueU8 = ByteOrder::le_to_host(*((uint8_t*)(rawBytes.data()+1)));
-             operand = SageBuilderAsm::buildValueU8(valueU8);
-             insn = makeInstruction(va, rawBytes, 2, Cil_ldloca_s, "ldloca_s", operand);
-             break;
-           }
+        case 0x12: // Cil_ldloca_s: load address of local variable with index indx, short form
+            valueU8 = ByteOrder::le_to_host(*((uint8_t*)(rawBytes.data()+1)));
+            operand = SageBuilderAsm::buildValueU8(valueU8);
+            insn = makeInstruction(va, rawBytes, 2, Cil_ldloca_s, "ldloca_s", operand);
+            break;
 
         case 0x13: // Cil_stloc_s: pop a value from stack into local variable indx, short form
             valueU8 = ByteOrder::le_to_host(*((uint8_t*)(rawBytes.data()+1)));
@@ -178,120 +171,100 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
             insn = makeInstruction(va, rawBytes, 2, Cil_stloc_s, "stloc_s", operand);
             break;
 
-        case 0x14:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_ldnull instruction (push a null reference on the stack) \n");
-
-             insn = makeInstruction(va, rawBytes, 1, Cil_ldnull, "ldnull");
-             break;
-           }
+        case 0x14: // Cil_ldnull: push a null reference on the stack
+           insn = makeInstruction(va, rawBytes, 1, Cil_ldnull, "ldnull");
+           break;
 
         case 0x15: // Cil_ldc_i4_m1: push -1 onto the stack as int32
-            insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_m1, "ldc_i4_m1");
-            break;
+           insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_m1, "ldc_i4_m1");
+           break;
 
         case 0x16: // Cil_ldc_i4_0: push 0 onto the stack as int32
-            insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_0, "ldc_i4_0");
-            break;
+           insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_0, "ldc_i4_0");
+           break;
 
         case 0x17: // Cil_ldc_i4_1: push 1 onto the stack as int32
-            insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_1, "ldc_i4_1");
-            break;
+           insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_1, "ldc_i4_1");
+           break;
 
         case 0x18: // Cil_ldc_i4_2: push 2 onto the stack as int32
-            insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_2, "ldc_i4_2");
-            break;
+           insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_2, "ldc_i4_2");
+           break;
 
         case 0x19: // Cil_ldc_i4_3: push 3 onto the stack as int32
-            insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_3, "ldc_i4_3");
-            break;
+           insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_3, "ldc_i4_3");
+           break;
 
         case 0x1A: // Cil_ldc_i4_4: push 4 onto the stack as int32
-            insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_4, "ldc_i4_4");
-            break;
+           insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_4, "ldc_i4_4");
+           break;
 
         case 0x1B: // Cil_ldc_i4_5: push 5 onto the stack as int32
-            insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_5, "ldc_i4_5");
-            break;
+           insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_5, "ldc_i4_5");
+           break;
 
         case 0x1C: // Cil_ldc_i4_6: push 6 onto the stack as int32
-            insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_6, "ldc_i4_6");
-            break;
+           insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_6, "ldc_i4_6");
+           break;
 
         case 0x1D: // Cil_ldc_i4_7: push 7 onto the stack as int32
-            insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_7, "ldc_i4_7");
-            break;
+           insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_7, "ldc_i4_7");
+           break;
 
         case 0x1E: // Cil_ldc_i4_8: push 8 onto the stack as int32
-            insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_8, "ldc_i4_8");
-            break;
+           insn = makeInstruction(va, rawBytes, 1, Cil_ldc_i4_8, "ldc_i4_8");
+           break;
 
         case 0x1F: { // Cil_ldc_i4_s: push num onto the stack as int32, short form
-            int8_t value = ByteOrder::le_to_host(*((int8_t*)(rawBytes.data()+1)));
-            operand = SageBuilderAsm::buildValueI8(value);
-            insn = makeInstruction(va, rawBytes, 2, Cil_ldc_i4_s, "ldc_i4_s", operand);
-            break;
+           int8_t value = ByteOrder::le_to_host(*((int8_t*)(rawBytes.data()+1)));
+           operand = SageBuilderAsm::buildValueI8(value);
+           insn = makeInstruction(va, rawBytes, 2, Cil_ldc_i4_s, "ldc_i4_s", operand);
+           break;
         }
 
         case 0x20: { // Cil_ldc_i4: push num of type int32 onto the stack as int32
-            int32_t value = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
-            operand = SageBuilderAsm::buildValueI32(value);
-            insn = makeInstruction(va, rawBytes, 5, Cil_ldc_i4, "ldc_i4", operand);
-            break;
+           int32_t value = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
+           operand = SageBuilderAsm::buildValueI32(value);
+           insn = makeInstruction(va, rawBytes, 5, Cil_ldc_i4, "ldc_i4", operand);
+           break;
         }
 
         case 0x21: { // Cil_ldc_i8: push num of type int64 onto the stack as int64
-            int64_t value = ByteOrder::le_to_host(*((int64_t*)(rawBytes.data()+1)));
-            operand = SageBuilderAsm::buildValueI64(value);
-            insn = makeInstruction(va, rawBytes, 9, Cil_ldc_i8, "ldc_i8", operand);
-            break;
+           int64_t value = ByteOrder::le_to_host(*((int64_t*)(rawBytes.data()+1)));
+           operand = SageBuilderAsm::buildValueI64(value);
+           insn = makeInstruction(va, rawBytes, 9, Cil_ldc_i8, "ldc_i8", operand);
+           break;
         }
 
         case 0x22: { // Cil_ldc_r4: push num of type float32 onto the stack as F
-            uint32_t integer_value = ByteOrder::le_to_host(*((uint32_t*)(rawBytes.data()+1)));
-            float_t* fptr = (float_t*)(&integer_value);
-            SgAsmFloatValueExpression* operand = SageBuilderAsm::buildValueIeee754Binary32(*fptr);
-            insn = makeInstruction(va, rawBytes, 5, Cil_ldc_r4, "ldc_r4", operand);
-            break;
+           uint32_t integer_value = ByteOrder::le_to_host(*((uint32_t*)(rawBytes.data()+1)));
+           float_t* fptr = (float_t*)(&integer_value);
+           SgAsmFloatValueExpression* operand = SageBuilderAsm::buildValueIeee754Binary32(*fptr);
+           insn = makeInstruction(va, rawBytes, 5, Cil_ldc_r4, "ldc_r4", operand);
+           break;
         }
 
         case 0x23: { // Cil_ldc_r8: push num of type float64 onto the stack as F
-            uint64_t integer_value = ByteOrder::le_to_host(*((uint64_t*)(rawBytes.data()+1)));
-            double_t* dptr = (double_t*)(&integer_value);
-            SgAsmFloatValueExpression* operand = SageBuilderAsm::buildValueIeee754Binary64(*dptr);
-            insn = makeInstruction(va, rawBytes, 5, Cil_ldc_r8, "ldc_r8", operand);
-            break;
+           uint64_t integer_value = ByteOrder::le_to_host(*((uint64_t*)(rawBytes.data()+1)));
+           double_t* dptr = (double_t*)(&integer_value);
+           SgAsmFloatValueExpression* operand = SageBuilderAsm::buildValueIeee754Binary64(*dptr);
+           insn = makeInstruction(va, rawBytes, 9, Cil_ldc_r8, "ldc_r8", operand);
+           break;
         }
 
-        case 0x25:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_dup instruction (duplicate the value on the top of the stack) \n");
+        case 0x25: // Cil_dup: duplicate the value on the top of the stack
+           insn = makeInstruction(va, rawBytes, 1, Cil_dup, "dup");
+           break;
 
-             insn = makeInstruction(va, rawBytes, 5, Cil_dup, "dup");
-             break;
-           }
+        case 0x26: // Cil_pop: pop value from the stack
+           insn = makeInstruction(va, rawBytes, 1, Cil_pop, "pop");
+           break;
 
-        case 0x26:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_pop instruction (remove the top element from the stack) \n");
-
-             insn = makeInstruction(va, rawBytes, 1, Cil_pop, "pop");
-             break;
-           }
-
-        case 0x27:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_jmp instruction (exit current method and jump to the specified method) \n");
-
-             token = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
-             operand = SageBuilderAsm::buildValueI32(token);
-             insn = makeInstruction(va, rawBytes, 5, Cil_jmp, "jmp", operand);
-             break;
-           }
+        case 0x27: // Cil_jmp: exit current method and jump to the specified method
+           token = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
+           operand = SageBuilderAsm::buildValueI32(token);
+           insn = makeInstruction(va, rawBytes, 5, Cil_jmp, "jmp", operand);
+           break;
 
         case 0x28: // Cil_call: call method described by method
              token = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
@@ -299,328 +272,239 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              insn = makeInstruction(va, rawBytes, 5, Cil_call, "call", operand);
              break;
 
-        case 0x29:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_callsitedescr instruction (call method indicated on the stack with arguments described by callsitedescr) \n");
-
-             token = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
-             operand = SageBuilderAsm::buildValueI32(token);
-             insn = makeInstruction(va, rawBytes, 5, Cil_calli, "calli", operand);
-             break;
-           }
+        case 0x29: // Cil_calli: call method indicated on the stack with arguments described by callsitedescr
+           token = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
+           operand = SageBuilderAsm::buildValueI32(token);
+           insn = makeInstruction(va, rawBytes, 5, Cil_calli, "calli", operand);
+           break;
 
         case 0x2A: // Cil_ret: return from method, possibly with a value
-             insn = makeInstruction(va, rawBytes, 1, Cil_ret, "ret");
-             break;
+           insn = makeInstruction(va, rawBytes, 1, Cil_ret, "ret");
+           break;
 
         case 0x2B: { // Cil_br_s: branch to target
-            int8_t value = ByteOrder::le_to_host(*((int8_t*)(rawBytes.data()+1)));
-            operand = SageBuilderAsm::buildValueI8(value);
-            insn = makeInstruction(va, rawBytes, 2, Cil_br_s, "br_s", operand);
-            break;
+           int8_t value = ByteOrder::le_to_host(*((int8_t*)(rawBytes.data()+1)));
+           operand = SageBuilderAsm::buildValueI8(value);
+           insn = makeInstruction(va, rawBytes, 2, Cil_br_s, "br_s", operand);
+           break;
         }
 
         case 0x2C: { // Cil_brfalse_s: branch to target if value is zero (false), short form
-            int8_t value = ByteOrder::le_to_host(*((int8_t*)(rawBytes.data()+1)));
-            operand = SageBuilderAsm::buildValueI8(value);
-            insn = makeInstruction(va, rawBytes, 2, Cil_brfalse_s, "brfalse_s", operand);
-            break;
+           int8_t value = ByteOrder::le_to_host(*((int8_t*)(rawBytes.data()+1)));
+           operand = SageBuilderAsm::buildValueI8(value);
+           insn = makeInstruction(va, rawBytes, 2, Cil_brfalse_s, "brfalse_s", operand);
+           break;
         }
 
         case 0x2D: { // Cil_brtrue_s: branch to target if value is non-zero (true), short form
-            int8_t value = ByteOrder::le_to_host(*((int8_t*)(rawBytes.data()+1)));
-            operand = SageBuilderAsm::buildValueI8(value);
-            insn = makeInstruction(va, rawBytes, 2, Cil_brtrue_s, "brtrue_s", operand);
-            break;
+           int8_t value = ByteOrder::le_to_host(*((int8_t*)(rawBytes.data()+1)));
+           operand = SageBuilderAsm::buildValueI8(value);
+           insn = makeInstruction(va, rawBytes, 2, Cil_brtrue_s, "brtrue_s", operand);
+           break;
         }
 
-        case 0x2E:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_beq_s instruction (branch to target if equal to) \n");
+        case 0x2E: { // Cil_beq_s: branch to target if equal, short form
+           int8_t value = ByteOrder::le_to_host(*((int8_t*)(rawBytes.data()+1)));
+           operand = SageBuilderAsm::buildValueI8(value);
+           insn = makeInstruction(va, rawBytes, 2, Cil_beq_s, "beq_s", operand);
+           break;
+        }
 
-             int8_t value = ByteOrder::le_to_host(*((int8_t*)(rawBytes.data()+1)));
-             operand = SageBuilderAsm::buildValueI8(value);
-             insn = makeInstruction(va, rawBytes, 2, Cil_beq_s, "beq_s", operand);
-             break;
-           }
+        case 0x2F: { // Cil_bge_s: branch to target if greater than or equal to, short form
+           int8_t value = ByteOrder::le_to_host(*((int8_t*)(rawBytes.data()+1)));
+           operand = SageBuilderAsm::buildValueI8(value);
+           insn = makeInstruction(va, rawBytes, 2, Cil_bge_s, "bge_s", operand);
+           break;
+        }
 
-        case 0x2F:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_bge_s instruction (branch to target if equal) \n");
+        case 0x30: { // Cil_bgt_s: branch to target if greater than, short form
+           int8_t value = ByteOrder::le_to_host(*((int8_t*)(rawBytes.data()+1)));
+           operand = SageBuilderAsm::buildValueI8(value);
+           insn = makeInstruction(va, rawBytes, 2, Cil_bgt_s, "bgt_s", operand);
+           break;
+        }
 
-             int8_t value = ByteOrder::le_to_host(*((int8_t*)(rawBytes.data()+1)));
-             operand = SageBuilderAsm::buildValueI8(value);
-             insn = makeInstruction(va, rawBytes, 2, Cil_bge_s, "bge_s", operand);
-             break;
-           }
+        case 0x31: { // Cil_ble_s: branch to target if less than or equal to
+           int8_t value = ByteOrder::le_to_host(*((int8_t*)(rawBytes.data()+1)));
+           operand = SageBuilderAsm::buildValueI8(value);
+           insn = makeInstruction(va, rawBytes, 2, Cil_ble_s, "ble_s", operand);
+           break;
+        }
 
-        case 0x30:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_bgt_s instruction (branch to target if greater than) \n");
+        case 0x32: { // Cil_blt_s: branch to target if less than, short form
+           int8_t value = ByteOrder::le_to_host(*((int8_t*)(rawBytes.data()+1)));
+           operand = SageBuilderAsm::buildValueI8(value);
+           insn = makeInstruction(va, rawBytes, 2, Cil_blt_s, "blt_s", operand);
+           break;
+        }
 
-             int8_t value = ByteOrder::le_to_host(*((int8_t*)(rawBytes.data()+1)));
-             operand = SageBuilderAsm::buildValueI8(value);
-             insn = makeInstruction(va, rawBytes, 2, Cil_bgt_s, "bgt_s", operand);
-             break;
-           }
+        case 0x33: { // Cil_bne_un_s: branch to target if unequal or unordered, short form
+           int8_t value = ByteOrder::le_to_host(*((int8_t*)(rawBytes.data()+1)));
+           operand = SageBuilderAsm::buildValueI8(value);
+           insn = makeInstruction(va, rawBytes, 2, Cil_bne_un_s, "bne_un_s", operand);
+           break;
+        }
 
-        case 0x31:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_ble_s instruction (branch to target if less than or equal to) \n");
-               
-             insn = makeInstruction(va, rawBytes, 1, Cil_bgt_s, "bgt_s");
-             break;
-           }
+        case 0x34: { // Cil_bge_un_s: Branch to target if greater than or equal to (unsigned or unordered), short form
+           int8_t value = ByteOrder::le_to_host(*((int8_t*)(rawBytes.data()+1)));
+           operand = SageBuilderAsm::buildValueI8(value);
+           insn = makeInstruction(va, rawBytes, 2, Cil_bge_un_s, "bge_un_s", operand);
+           break;
+        }
 
-        case 0x32:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_blt_s instruction (branch to target if less than) \n");
+        case 0x35: { // Cil_bgt_un: branch to target if greater than (unsigned or unordered), short form
+           int8_t value = ByteOrder::le_to_host(*((int8_t*)(rawBytes.data()+1)));
+           operand = SageBuilderAsm::buildValueI8(value);
+           insn = makeInstruction(va, rawBytes, 2, Cil_bgt_un, "bgt_un", operand);
+           break;
+        }
 
-             int8_t value = ByteOrder::le_to_host(*((int8_t*)(rawBytes.data()+1)));
-             operand = SageBuilderAsm::buildValueI8(value);
-             insn = makeInstruction(va, rawBytes, 1, Cil_blt_s, "blt_s", operand);
-             break;
-           }
+        case 0x36: { // Cil_ble_un_s: branch to target if less than or equal to (unsigned or unordered), short form
+           int8_t value = ByteOrder::le_to_host(*((int8_t*)(rawBytes.data()+1)));
+           operand = SageBuilderAsm::buildValueI8(value);
+           insn = makeInstruction(va, rawBytes, 2, Cil_ble_un_s, "ble_un_s", operand);
+           break;
+        }
 
-        case 0x33:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_bne_un_s instruction (branch to target if not equal) \n");
+        case 0x37: { // Cil_blt_un_s: branch to target if less than (unsigned or unordered), short form
+           int8_t value = ByteOrder::le_to_host(*((int8_t*)(rawBytes.data()+1)));
+           operand = SageBuilderAsm::buildValueI8(value);
+           insn = makeInstruction(va, rawBytes, 2, Cil_blt_un_s, "blt_un_s", operand);
+           break;
+        }
 
-             int8_t value = ByteOrder::le_to_host(*((int8_t*)(rawBytes.data()+1)));
-             operand = SageBuilderAsm::buildValueI8(value);
-             insn = makeInstruction(va, rawBytes, 1, Cil_bne_un_s, "bne_un_s", operand);
-             break;
-           }
+        case 0x38: { // Cil_br: branch to target
+           int32_t value = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
+           operand = SageBuilderAsm::buildValueI32(value);
+           insn = makeInstruction(va, rawBytes, 5, Cil_br, "br", operand);
+           break;
+        }
 
-        case 0x34:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_bge_un_s instruction (branch to target if greater than or equal) \n");
+        case 0x39: { // Cil_brfalse: branch to target if value is zero (false)
+           int32_t value = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
+           operand = SageBuilderAsm::buildValueI32(value);
+           insn = makeInstruction(va, rawBytes, 5, Cil_brfalse, "brfalse", operand);
+           break;
+        }
 
-             int8_t value = ByteOrder::le_to_host(*((int8_t*)(rawBytes.data()+1)));
-             operand = SageBuilderAsm::buildValueI8(value);
-             insn = makeInstruction(va, rawBytes, 2, Cil_bge_un_s, "bge_un_s", operand);
-             break;
-           }
+        case 0x3A: { // Cil_brtrue: branch to target if value is non-zero (true)
+           int32_t value = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
+           operand = SageBuilderAsm::buildValueI32(value);
+           insn = makeInstruction(va, rawBytes, 5, Cil_brtrue, "brtrue", operand);
+           break;
+        }
 
-        case 0x35:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_bgt_un instruction (branch on less than, unsigned or unordered) \n");
+        case 0x3B: { // Cil_beq: branch to target if equal
+           int32_t value = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
+           operand = SageBuilderAsm::buildValueI32(value);
+           insn = makeInstruction(va, rawBytes, 5, Cil_beq, "beq", operand);
+           break;
+        }
 
-             int8_t value = ByteOrder::le_to_host(*((int8_t*)(rawBytes.data()+1)));
-             operand = SageBuilderAsm::buildValueI8(value);
-             insn = makeInstruction(va, rawBytes, 2, Cil_bgt_un, "bgt_un", operand);
-             break;
-           }
+        case 0x3C: { // Cil_bge: branch to target if greater than or equal to
+           int32_t value = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
+           operand = SageBuilderAsm::buildValueI32(value);
+           insn = makeInstruction(va, rawBytes, 5, Cil_bge, "bge", operand);
+           break;
+        }
 
-        case 0x36:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_ble_un_s instruction (branch to target if less than (unsigned or unordered)) \n");
-
-             int8_t value = ByteOrder::le_to_host(*((int8_t*)(rawBytes.data()+1)));
-             operand = SageBuilderAsm::buildValueI8(value);
-
-             insn = makeInstruction(va, rawBytes, 2, Cil_ble_un_s, "ble_un_s", operand);
-             break;
-           }
-
-        case 0x37:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_blt_un_s instruction (branch to target if less than (unsigned or unordered)) \n");
-
-             int8_t value = ByteOrder::le_to_host(*((int8_t*)(rawBytes.data()+1)));
-             operand = SageBuilderAsm::buildValueI8(value);
-             insn = makeInstruction(va, rawBytes, 2, Cil_blt_un_s, "blt_un_s", operand);
-             break;
-           }
-
-        case 0x38:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_br instruction (branch to target) \n");
-
+        case 0x3D: { // Cil_bgt: branch to target if greater than
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
              operand = SageBuilderAsm::buildValueI32(value);
-             insn = makeInstruction(va, rawBytes, 5, Cil_br, "br", operand);
+             insn = makeInstruction(va, rawBytes, 5, Cil_bgt, "bgt", operand);
              break;
            }
 
-        case 0x39:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_brfalse instruction (branch to target if value is zero (false)) \n");
+        case 0x3E: { // Cil_ble: branch to target if less than or equal
+           int32_t value = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
+           operand = SageBuilderAsm::buildValueI32(value);
+           insn = makeInstruction(va, rawBytes, 5, Cil_ble, "ble", operand);
+           break;
+        }
 
+        case 0x3F: { // Cil_blt: branch to target if less than
+           int32_t value = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
+           operand = SageBuilderAsm::buildValueI32(value);
+           insn = makeInstruction(va, rawBytes, 5, Cil_blt, "blt", operand);
+           break;
+        }
+
+        case 0x40: { // Cil_bne_un: branch to target if unequal or unordered
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
              operand = SageBuilderAsm::buildValueI32(value);
-             insn = makeInstruction(va, rawBytes, 5, Cil_brfalse, "brfalse", operand);
+             insn = makeInstruction(va, rawBytes, 5, Cil_bne_un, "bne_un", operand);
              break;
            }
 
-        case 0x3A:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_brtrue instruction (branch to target if value is nonzero (true)) \n");
+        case 0x41: { // Cil_bge_un: branch to target if greater than or equal to (unsigned or unordered)
+           int32_t value = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
+           operand = SageBuilderAsm::buildValueI32(value);
+           insn = makeInstruction(va, rawBytes, 5, Cil_bge_un, "bge_un", operand);
+           break;
+        }
 
-             int32_t value = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
-             operand = SageBuilderAsm::buildValueI32(value);
-             insn = makeInstruction(va, rawBytes, 5, Cil_brtrue, "brtrue", operand);
+        case 0x42: { // Cil_bgt_un: branch to target if greater than (unsigned or unordered)
+           int32_t value = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
+           operand = SageBuilderAsm::buildValueI32(value);
+           insn = makeInstruction(va, rawBytes, 5, Cil_bgt_un, "bgt_un", operand);
+           break;
+        }
+
+        case 0x43: { // Cil_ble_un: Branch to target if less than or equal to (unsigned or unordered)
+           int32_t value = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
+           operand = SageBuilderAsm::buildValueI32(value);
+           insn = makeInstruction(va, rawBytes, 5, Cil_ble_un, "ble_un", operand);
+           break;
+        }
+
+        case 0x44: { // Cil_blt_un: branch to target if less than (unsigned or unordered)
+           int32_t value = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
+           operand = SageBuilderAsm::buildValueI32(value);
+           insn = makeInstruction(va, rawBytes, 5, Cil_blt_un, "blt_un", operand);
+           break;
+        }
+
+        case 0x45: { // Cil_switch: jump to one of n values
+           const std::int32_t minSwitchSize = 1 + sizeof(uint32_t);
+           const uint32_t nTargets = ByteOrder::le_to_host(*((uint32_t*)(rawBytes.data()+1)));
+
+           ASSERT_require(std::numeric_limits<std::uint32_t>::max() / sizeof(std::int32_t) >= nTargets);
+
+           // This maximum number of targets is purely arbitrary. Something is needed for error recovery,
+           // for example, this was inserted because nTargets was wrong because of an error disassembling
+           // another instruction. Now it fails gracefully with an unknown instruction.
+           if (nTargets > 1024) {
+             std::cerr << "!!!!---------------------------!!!!\n";
+             std::cerr << "Cil_switch instruction has nTargets too large=" << nTargets << "\n";
+             insn = makeUnknownInstruction(va, rawBytes, minSwitchSize);
              break;
            }
 
-        case 0x3B:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_beq instruction (branch to target if equal) \n");
+           operand = SageBuilderAsm::buildValueU32(nTargets);
+           insn = makeInstruction(va, rawBytes, minSwitchSize, Cil_switch, "switch", operand);
 
-             int32_t value = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
-             operand = SageBuilderAsm::buildValueI32(value);
-             insn = makeInstruction(va, rawBytes, 5, Cil_beq, "beq", operand);
-             break;
+           const std::uint32_t branchTableSize = sizeof(std::int32_t)*nTargets;
+
+           rawBytes.resize(minSwitchSize+branchTableSize);
+           std::uint8_t* const loc = rawBytes.data() + minSwitchSize;
+           const rose_addr_t brtbl_va = va + minSwitchSize;
+           const std::uint32_t bytesRead = map->at(brtbl_va).limit(branchTableSize)
+                                               .require(MemoryMap::EXECUTABLE).read(loc).size();
+           ASSERT_require(bytesRead == branchTableSize);
+
+           SgAsmOperandList* oplst = insn->get_operandList();
+           ASSERT_not_null(oplst);
+
+           for (uint32_t i = 0; i < nTargets; ++i) {
+             const int32_t entryofs = minSwitchSize + i * sizeof(std::int32_t);
+             const int32_t jmpofs = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+entryofs)));
+             oplst->append_operand(SageBuilderAsm::buildValueI32(jmpofs));
            }
 
-        case 0x3C:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_bge instruction (branch to target if equal) \n");
-
-             int32_t value = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
-             operand = SageBuilderAsm::buildValueI32(value);
-             insn = makeInstruction(va, rawBytes, 5, Cil_bge, "bge", operand);
-             break;
-           }
-
-        case 0x3D:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_bgt instruction (branch to target if greater than) \n");
-
-             int32_t value = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
-             operand = SageBuilderAsm::buildValueI32(value);
-             insn = makeInstruction(va, rawBytes, 2, Cil_bgt, "bgt", operand);
-             break;
-           }
-
-        case 0x3E:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_ble instruction (branch to target if less than or equal) \n");
-
-             int32_t value = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
-             operand = SageBuilderAsm::buildValueI32(value);
-             insn = makeInstruction(va, rawBytes, 5, Cil_beq, "beq", operand);
-             break;
-           }
-
-        case 0x3F:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_blt instruction (branch to target if less than) \n");
-
-             int32_t value = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
-             operand = SageBuilderAsm::buildValueI32(value);
-             insn = makeInstruction(va, rawBytes, 5, Cil_blt, "blt", operand);
-             break;
-           }
-
-        case 0x40:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_bge_un instruction (branch to target if greater than or equal) \n");
-
-             int32_t value = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
-             operand = SageBuilderAsm::buildValueI32(value);
-             insn = makeInstruction(va, rawBytes, 5, Cil_bge_un, "bge_un", operand);
-             break;
-           }
-
-        case 0x41:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_bge_un instruction (branch to target if greater than or equal) \n");
-
-             int32_t value = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
-             operand = SageBuilderAsm::buildValueI32(value);
-             insn = makeInstruction(va, rawBytes, 5, Cil_bge_un_s, "bge_un_s", operand);
-             break;
-           }
-
-        case 0x42:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_bgt_un instruction (branch on greater than, unsigned or unordered) \n");
-
-             int32_t value = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
-             operand = SageBuilderAsm::buildValueI32(value);
-             insn = makeInstruction(va, rawBytes, 5, Cil_bgt_un, "bgt_un", operand);
-             break;
-           }
-
-        case 0x43:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_ble_un instruction (branch on less than, unsigned or unordered) \n");
-
-             int32_t value = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
-             operand = SageBuilderAsm::buildValueI32(value);
-             insn = makeInstruction(va, rawBytes, 5, Cil_ble_un, "ble_un", operand);
-             break;
-           }
-
-        case 0x44:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_blt_un instruction (branch to target if less than (unsigned or unordered)) \n");
-
-             int32_t value = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
-             operand = SageBuilderAsm::buildValueI32(value);
-             insn = makeInstruction(va, rawBytes, 5, Cil_blt_un, "blt_un", operand);
-             break;
-           }
-
-        case 0x45:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_switch instruction (jump to one of n values)) \n");
-
-             const std::int32_t MIN_SWITCH_SIZE = 5; 
-             
-             const uint32_t value_0 = ByteOrder::le_to_host(*((uint32_t*)(rawBytes.data()+1)));
-             operand = SageBuilderAsm::buildValueU32(value_0);
-             
-             insn = makeInstruction(va, Cil_switch, "switch", operand);
-             
-             ASSERT_require(std::numeric_limits<std::uint32_t>::max() / sizeof(std::int32_t) >= value_0);
-             const std::uint32_t branchTableSize = sizeof(std::int32_t)*value_0;
-
-             rawBytes.resize(MIN_SWITCH_SIZE+branchTableSize);
-             std::uint8_t* const loc = rawBytes.data() + MIN_SWITCH_SIZE;
-             const rose_addr_t   brtbl_va = va + MIN_SWITCH_SIZE;
-             const std::uint32_t bytesRead = map->at(brtbl_va).limit(branchTableSize)
-                                               .require(MemoryMap::EXECUTABLE).read(loc).size();                                               
-             ASSERT_require(bytesRead == branchTableSize);
-             
-             SgAsmOperandList* oplst = insn->get_operandList();
-             ASSERT_not_null(oplst);
-                        
-             for (uint32_t i = 0; i < value_0; ++i) {
-               const int32_t entryofs = MIN_SWITCH_SIZE + i * sizeof(std::int32_t);                
-               const int32_t jmpofs = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+entryofs)));
-               oplst->append_operand(SageBuilderAsm::buildValueI32(jmpofs));  
-             }
-             
-             insn->set_raw_bytes(rawBytes);
-             break;
-           }
+           insn->set_raw_bytes(rawBytes);
+           ASSERT_require(insn->get_size() == rawBytes.size());
+           break;
+        }
 
         case 0x46:
            {
@@ -667,59 +551,29 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              break;
            }
 
-        case 0x4B:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_ldind_i4 instruction (load value indirect onto stack) \n");
+        case 0x4B: // Cil_ldind_u4: ndirect load value of type unsigned int32 as int32 on the stack
+           insn = makeInstruction(va, rawBytes, 1, Cil_ldind_u4, "ldind_u4");
+           break;
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_ldind_i4, "ldind_i4");
-             break;
-           }
+        case 0x4C: // Cil_ldind_i8: indirect load value of type int64 as int64 on the stack
+           insn = makeInstruction(va, rawBytes, 1, Cil_ldind_i8, "ldind_i8");
+           break;
 
-        case 0x4C:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_ldind_u8 instruction (load value indirect onto stack) \n");
+        case 0x4D: // Cil_ldind_i: indirect load value of type native int as native int on the stack
+           insn = makeInstruction(va, rawBytes, 1, Cil_ldind_i, "ldind_i");
+           break;
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_ldind_u8, "ldind_u8");
-             break;
-           }
+        case 0x4E: // Cil_ldind_r4: indirect load value of type float32 as F on the stack
+           insn = makeInstruction(va, rawBytes, 1, Cil_ldind_r4, "ldind_r4");
+           break;
 
-        case 0x4D:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_ldind_i instruction (load value indirect onto stack) \n");
+        case 0x4F: // Cil_ldind_r8: indirect load value of type float64 as F on the stack
+           insn = makeInstruction(va, rawBytes, 1, Cil_ldind_r8, "ldind_r8");
+           break;
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_ldind_i, "ldind_i");
-             break;
-           }
-
-        case 0x4E:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_ldind_r4 instruction (load value indirect onto stack) \n");
-
-             insn = makeInstruction(va, rawBytes, 1, Cil_ldind_r4, "ldind_r4");
-             break;
-           }
-
-        case 0x4F:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_ldind_r8 instruction (load value indirect onto stack) \n");
-
-             insn = makeInstruction(va, rawBytes, 1, Cil_ldind_r8, "ldind_r8");
-             break;
-           }
-
-        case 0x50:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_ldind_ref instruction (load value indirect onto stack) \n");
-
-             insn = makeInstruction(va, rawBytes, 1, Cil_ldind_ref, "ldind_ref");
-             break;
-           }
+        case 0x50: // Cil_ldind_ref: indirect load value of type object ref as O on the stack
+           insn = makeInstruction(va, rawBytes, 1, Cil_ldind_ref, "ldind_ref");
+           break;
 
         case 0x51:
            {
@@ -909,77 +763,37 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              break;
            }
 
-        case 0x67:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_conv_i1 instruction (data conversion to int8, pushing int32 on stack) \n");
+        case 0x67: // Cil_conv_i1: convert to int8, pushing int32 on stack
+           insn = makeInstruction(va, rawBytes, 1, Cil_conv_i1, "conv_i1");
+           break;
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_conv_i1, "conv_i1");
-             break;
-           }
+        case 0x68: // Cil_conv_i2: convert to int16, pushing int32 on stack
+           insn = makeInstruction(va, rawBytes, 1, Cil_conv_i2, "conv_i2");
+           break;
 
-        case 0x68:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_conv_i2 instruction (data conversion to int16, pushing int32 on stack) \n");
+        case 0x69: // Cil_conv_i4: convert to int32, pushing int32 on stack
+           insn = makeInstruction(va, rawBytes, 1, Cil_conv_i4, "conv_i4");
+           break;
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_conv_i1, "conv_i1");
-             break;
-           }
+        case 0x6A: // Cil_conv_i8: convert to int64, pushing int64 on stack
+           insn = makeInstruction(va, rawBytes, 1, Cil_conv_i8, "conv_i8");
+           break;
 
-        case 0x69:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_conv_i4 instruction (data conversion to int32, pushing int32 on stack) \n");
+        case 0x6B: // Cil_conv_r4: convert to float32, pushing F on stack
+           insn = makeInstruction(va, rawBytes, 1, Cil_conv_r4, "conv_r4");
+           break;
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_conv_i1, "conv_i1");
-             break;
-           }
+        case 0x6C: // Cil_conv_r8: convert to float64, pushing F on stack
+           insn = makeInstruction(va, rawBytes, 1, Cil_conv_r8, "conv_r8");
+           break;
 
-        case 0x6A:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_conv_i8 instruction (data conversion to int64, pushing int64 on stack) \n");
+        case 0x6D: // Cil_conv_u4: convert to unsigned int32, pushing int32 on stack
+           insn = makeInstruction(va, rawBytes, 1, Cil_conv_u4, "conv_u4");
+           break;
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_conv_i1, "conv_i1");
-             break;
-           }
-
-        case 0x6B:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_conv_r4 instruction (data conversion to float32, pushing F on stack) \n");
-
-             insn = makeInstruction(va, rawBytes, 1, Cil_conv_i1, "conv_i1");
-             break;
-           }
-
-        case 0x6C:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_conv_r8 instruction (data conversion to float64, pushing F on stack) \n");
-
-             insn = makeInstruction(va, rawBytes, 1, Cil_conv_r8, "conv_r8");
-             break;
-           }
-
-        case 0x6D:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_conv_u4 instruction (data conversion to int32, pushing int32 on stack) \n");
-
-             insn = makeInstruction(va, rawBytes, 1, Cil_conv_u4, "conv_u4");
-             break;
-           }
-
-        case 0x6E:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_conv_u8 instruction (data conversion to unsigned int64, pushing int64 on stack) \n");
-
-             insn = makeInstruction(va, rawBytes, 1, Cil_conv_u8, "conv_u8");
-             break;
-           }
+        case 0x6E: // Cil_conv_u8: convert to unsigned int64, pushing int64 on stack
+           insn = makeInstruction(va, rawBytes, 1, Cil_conv_u8, "conv_u8");
+           break;
 
         case 0x6F: // Cil_callvirt: call a method associated with an object
             token = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
@@ -1635,23 +1449,13 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              break;
            }
 
-        case 0xD3:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_conv_i instruction (data conversion to native int, pushing native int on stack) \n");
+        case 0xD3: // Cil_conv_i: convert to native int, pushing native int on stack
+           insn = makeInstruction(va, rawBytes, 1, Cil_conv_i, "conv_i");
+           break;
 
-             insn = makeInstruction(va, rawBytes, 1, Cil_conv_u2, "conv_u2");
-             break;
-           }
-
-        case 0xD4:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_conv_ovf_i instruction (convert to a native int (on the stack as a native int) and throw exception on overflow) \n");
-
-             insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_i, "conv_ovf_i");
-             break;
-           }
+        case 0xD4: // Cil_conv_ovf_i: convert to a native int (on the stack as a native int) and throw exception on overflow
+           insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_i, "conv_ovf_i");
+           break;
 
         case 0xD5:
            {
@@ -1726,27 +1530,17 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              break;
            }
 
-        case 0xDD:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_leave instruction (Exit a protected region of code) \n");
-
+        case 0xDD: { // Cil_leave: exit a protected region of code
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
              operand = SageBuilderAsm::buildValueI32(value);
-
-             insn = makeInstruction(va, rawBytes, 1, Cil_leave, "leave", operand);
+             insn = makeInstruction(va, rawBytes, 5, Cil_leave, "leave", operand);
              break;
            }
 
-        case 0xDE:
-           {
-             if (TRACE_DECODING)
-               printf ("Found Cil_leave_s instruction (Exit a protected region of code) \n");
-
+        case 0xDE: { // Cil_leave_s: exit a protected region of code, short form
              int8_t value = ByteOrder::le_to_host(*((int8_t*)(rawBytes.data()+1)));
              operand = SageBuilderAsm::buildValueI8(value);
-
-             insn = makeInstruction(va, rawBytes, 1, Cil_leave_s, "leave_s", operand);
+             insn = makeInstruction(va, rawBytes, 2, Cil_leave_s, "leave_s", operand);
              break;
            }
 
@@ -1768,277 +1562,158 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
              break;
            }
 
+// Start of two-byte instructions
+
         case 0xFE:
            {
-             if (TRACE_DECODING)
-               printf ("opcode prefix 0xFE: buf[0] = %04x \n",buf[0]);
-
              switch (rawBytes[1])
                 {
                   case 0x00: // Cil_arglist: return argument list handle for the current method
-                      insn = makeInstruction(va, rawBytes, 2, Cil_arglist, "arglist");
-                      break;
+                     insn = makeInstruction(va, rawBytes, 2, Cil_arglist, "arglist");
+                     break;
 
-                  case 0x01:
-                     {
-                       if (TRACE_DECODING)
-                         printf ("Found Cil_ceq instruction (push 1 (of type int32) if value 1 equals value2, else push 0) \n");
-
-                       insn = makeInstruction(va, rawBytes, 2, Cil_ceq, "ceq");
-                       break;
-                     }
+                  case 0x01: // Cil_ceq: push 1 (of type int32) if value 1 equals value2, else push 0
+                     insn = makeInstruction(va, rawBytes, 2, Cil_ceq, "ceq");
+                     break;
 
                   case 0x02: // Cil_cgt: push 1 (of type int32) if value1 > value2, else push 0
                       insn = makeInstruction(va, rawBytes, 2, Cil_cgt, "cgt");
                       break;
 
-                  case 0x03:
-                     {
-                       if (TRACE_DECODING)
-                         printf ("Found Cil_cgt_un instruction (push 1 (of type uint32) if value1 > value2, else push 0) \n");
-
-                       insn = makeInstruction(va, rawBytes, 2, Cil_cgt_un, "cgt_un");
-                       break;
-                     }
+                  case 0x03: // Cil_cgt_un: push 1 (of type int32) if value1 > value2, unsigned or unordered, else push 0
+                     insn = makeInstruction(va, rawBytes, 2, Cil_cgt_un, "cgt_un");
+                     break;
 
                   case 0x04: // Cil_clt: push 1 (of type int32) if value1 < value2, else push 0
                       insn = makeInstruction(va, rawBytes, 2, Cil_clt, "clt");
                       break;
 
-                  case 0x05:
-                     {
-                       if (TRACE_DECODING)
-                         printf ("Found Cil_clt_un instruction (push 1 (of type uint32) if value1 < value2, else push 0) \n");
+                  case 0x05: // Cil_clt_un: push 1 (of type int32) if value1 < value2, unsigned or unordered, else push 0
+                     insn = makeInstruction(va, rawBytes, 2, Cil_clt_un, "clt_un");
+                     break;
 
-                       insn = makeInstruction(va, rawBytes, 2, Cil_clt_un, "clt_un");
-                       break;
-                     }
+                  case 0x06: // Cil_ldftn: push a pointer to a method referenced by method, on the stack
+                     token = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+2)));
+                     operand = SageBuilderAsm::buildValueI32(token);
+                     insn = makeInstruction(va, rawBytes, 6, Cil_ldftn, "ldftn", operand);
+                     break;
 
-                  case 0x06:
-                     {
-                       if (TRACE_DECODING)
-                         printf ("Found Cil_ldftn instruction (push a pointer to a method referenced by method, on the stack) \n");
+                  case 0x07: // Cil_ldvirtftn: push address of virtual method method on the stack
+                     token = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+2)));
+                     operand = SageBuilderAsm::buildValueI32(token);
+                     insn = makeInstruction(va, rawBytes, 6, Cil_ldvirtftn, "ldvirtftn", operand);
+                     break;
 
-                       token = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
-                       operand = SageBuilderAsm::buildValueI32(token);
-                       insn = makeInstruction(va, rawBytes, 6, Cil_ldftn, "ldftn", operand);
-                       break;
-                     }
+               // Note: instruction 0xFE08 is an unused instruction
 
-                  case 0x07:
-                     {
-                       if (TRACE_DECODING)
-                         printf ("Found Cil_ldvirtftn instruction (push a pointer to a method referenced by method, on the stack) \n");
-
-                       token = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
-                       operand = SageBuilderAsm::buildValueI32(token);
-                       insn = makeInstruction(va, rawBytes, 6, Cil_ldvirtftn, "ldvirtftn", operand);
-                       break;
-                     }
-
-               // Note: instruction 0x08 is not a legal instruction.
-
-                  case 0x09:
-                     {
-                       if (TRACE_DECODING)
-                         printf ("Found Cil_ldarg instruction (load argument numbered num onto the stack) \n");
-
-                       uint16_t value = ByteOrder::le_to_host(*((uint16_t*)(rawBytes.data()+1)));
-                       operand = SageBuilderAsm::buildValueU16(value);
-
-                       insn = makeInstruction(va, rawBytes, 4, Cil_ldarg_s, "ldarg", operand);
-                       break;
-                     }
-
-                  case 0x0A:
-                     {
-                       if (TRACE_DECODING)
-                         printf ("Found Cil_ldarga instruction (fetch the address of the argument argNum) \n");
-
-                       uint16_t value = ByteOrder::le_to_host(*((uint16_t*)(rawBytes.data()+1)));
-                       operand = SageBuilderAsm::buildValueU16(value);
-                       insn = makeInstruction(va, rawBytes, 4, Cil_ldarga, "ldarga", operand);
-                       break;
-                     }
-
-                  case 0x0B: { // Cil_starg: store value to the argument numbered num
-                      uint16_t value = ByteOrder::le_to_host(*((uint16_t*)(rawBytes.data()+1)));
-                      operand = SageBuilderAsm::buildValueU16(value);
-                      insn = makeInstruction(va, rawBytes, 4, Cil_starg, "starg", operand);
-                      break;
+                  case 0x09: { // Cil_ldarg: load argument numbered num onto the stack
+                     uint16_t value = ByteOrder::le_to_host(*((uint16_t*)(rawBytes.data()+2)));
+                     operand = SageBuilderAsm::buildValueU16(value);
+                     insn = makeInstruction(va, rawBytes, 4, Cil_ldarg, "ldarg", operand);
+                     break;
                   }
 
-                  case 0x0C:
-                     {
-                       if (TRACE_DECODING)
-                         printf ("Found Cil_ldloc instruction (load local variable of index onto stack) \n");
+                  case 0x0A: { // Cil_ldarga: fetch the address of the argument argNum
+                     uint16_t value = ByteOrder::le_to_host(*((uint16_t*)(rawBytes.data()+2)));
+                     operand = SageBuilderAsm::buildValueU16(value);
+                     insn = makeInstruction(va, rawBytes, 4, Cil_ldarga, "ldarga", operand);
+                     break;
+                  }
 
-                       uint16_t value = ByteOrder::le_to_host(*((uint16_t*)(rawBytes.data()+1)));
-                       operand = SageBuilderAsm::buildValueU16(value);
-                       insn = makeInstruction(va, rawBytes, 4, Cil_ldloc, "ldloc", operand);
-                       break;
-                     }
+                  case 0x0B: { // Cil_starg: store value to the argument numbered num
+                     uint16_t value = ByteOrder::le_to_host(*((uint16_t*)(rawBytes.data()+2)));
+                     operand = SageBuilderAsm::buildValueU16(value);
+                     insn = makeInstruction(va, rawBytes, 4, Cil_starg, "starg", operand);
+                     break;
+                  }
 
-                  case 0x0D:
-                     {
-                       if (TRACE_DECODING)
-                         printf ("Found Cil_ldloca_s instruction (load local variable of index onto stack) \n");
+                  case 0x0C: { // Cil_ldloc: load local variable of index onto stack
+                     uint16_t value = ByteOrder::le_to_host(*((uint16_t*)(rawBytes.data()+2)));
+                     operand = SageBuilderAsm::buildValueU16(value);
+                     insn = makeInstruction(va, rawBytes, 4, Cil_ldloc, "ldloc", operand);
+                     break;
+                  }
 
-                       valueU8 = ByteOrder::le_to_host(*((uint8_t*)(rawBytes.data()+1)));
-                       operand = SageBuilderAsm::buildValueU8(valueU8);
-                       insn = makeInstruction(va, rawBytes, 3, Cil_ldloca_s, "ldloca_s", operand);
-                       break;
-                     }
+                  case 0x0D: // Cil_ldloca: load address of local variable with index indx
+                     valueU8 = ByteOrder::le_to_host(*((uint8_t*)(rawBytes.data()+2)));
+                     operand = SageBuilderAsm::buildValueU8(valueU8);
+                     insn = makeInstruction(va, rawBytes, 3, Cil_ldloca, "ldloca", operand);
+                     break;
 
-                  case 0x0E:
-                     {
-                       if (TRACE_DECODING)
-                         printf ("Found Cil_stloc instruction (pop value from stack to local variable) \n");
+                  case 0x0E: { // Cil_stloc: pop a value from stack into local variable indx
+                     uint16_t value = ByteOrder::le_to_host(*((uint16_t*)(rawBytes.data()+2)));
+                     operand = SageBuilderAsm::buildValueU16(value);
+                     insn = makeInstruction(va, rawBytes, 4, Cil_stloc, "stloc", operand);
+                     break;
+                  }
 
-                       uint16_t value = ByteOrder::le_to_host(*((uint16_t*)(rawBytes.data()+1)));
-                       operand = SageBuilderAsm::buildValueU16(value);
+                  case 0x0F: // Cil_localloc: allocate space from the local memory pool
+                     insn = makeInstruction(va, rawBytes, 2, Cil_localloc, "localloc");
+                     break;
 
-                       insn = makeInstruction(va, rawBytes, 4, Cil_stloc, "stloc", operand);
-                       break;
-                     }
+               // Note: instruction 0xFE10 is not a legal instruction
 
-                  case 0x0F:
-                     {
-                       if (TRACE_DECODING)
-                         printf ("Found Cil_localloc instruction (allocate space from the local memory pool) \n");
+                  case 0x11: // Cil_endfilter: end an exception handling filter clause
+                     insn = makeInstruction(va, rawBytes, 2, Cil_endfilter, "endfilter");
+                     break;
 
-                       insn = makeInstruction(va, rawBytes, 2, Cil_localloc, "localloc");
-                       break;
-                     }
+                  case 0x12: // Cil_unaligned_: subsequence pointer instruction might be unaligned
+                     valueU8 = ByteOrder::le_to_host(*((uint8_t*)(rawBytes.data()+2)));
+                     operand = SageBuilderAsm::buildValueU8(valueU8);
+                     insn = makeInstruction(va, rawBytes, 3, Cil_unaligned_, "unaligned", operand);
+                     break;
 
-               // Note: instruction 0x10 is not a legal instruction.
+                  case 0x13: // Cil_volatile_: subsequent pointer reference is volatile
+                     insn = makeInstruction(va, rawBytes, 2, Cil_volatile_, "volatile");
+                     break;
 
-                  case 0x11:
-                     {
-                       if (TRACE_DECODING)
-                         printf ("Found Cil_endfilter instruction (end an exception handling filter clause) \n");
+                  case 0x14: // Cil_tail_: subsequent call terminates current method
+                     insn = makeInstruction(va, rawBytes, 2, Cil_tail_, "tail");
+                     break;
 
-                       insn = makeInstruction(va, rawBytes, 2, Cil_endfilter, "endfilter");
-                       break;
-                     }
+                  case 0x15: // Cil_initobj: initialize the value at address dest
+                     token = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+2)));
+                     operand = SageBuilderAsm::buildValueI32(token);
+                     insn = makeInstruction(va, rawBytes, 6, Cil_initobj, "initobj", operand);
+                     break;
 
-                  case 0x12:
-                     {
-                       if (TRACE_DECODING)
-                         printf ("Found Cil_unaligned instruction (subsequence pointer instruction might be unaligned) \n");
+                  case 0x16: // Cil_constrained_ call a virtual method on a type constrained to be type T
+                     token = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+2)));
+                     operand = SageBuilderAsm::buildValueI32(token);
+                     insn = makeInstruction(va, rawBytes, 6, Cil_constrained_, "constrained", operand);
+                     break;
 
-                       valueU8 = ByteOrder::le_to_host(*((uint8_t*)(rawBytes.data()+1)));
-                       operand = SageBuilderAsm::buildValueU8(valueU8);
-                       insn = makeInstruction(va, rawBytes, 3, Cil_unaligned, "unaligned", operand);
-                       break;
-                     }
+                  case 0x17: // Cil_cpblk: copy data from memory to memory
+                     insn = makeInstruction(va, rawBytes, 2, Cil_cpblk, "cpblk");
+                     break;
 
-                  case 0x13:
-                     {
-                       if (TRACE_DECODING)
-                         printf ("Found Cil_volatile instruction (subsequent pointer reference is volatile) \n");
+                  case 0x18: // Cil_initblk: set all bytes in a block of memory to a given byte value
+                     insn = makeInstruction(va, rawBytes, 2, Cil_initblk, "initblk");
+                     break;
 
-                       insn = makeInstruction(va, rawBytes, 2, Cil_volatile, "volatile");
-                       break;
-                     }
+                  case 0x19: // Cil_no_: the specified fault check(s) normally performed as part of the execution of the subsequent instruction can/shall be skipped
+                     valueU8 = ByteOrder::le_to_host(*((uint8_t*)(rawBytes.data()+2)));
+                     operand = SageBuilderAsm::buildValueU8(valueU8);
+                     insn = makeInstruction(va, rawBytes, 3, Cil_no_, "no", operand);
+                     break;
 
-                  case 0x14:
-                     {
-                       if (TRACE_DECODING)
-                         printf ("Found Cil_tail instruction (subsequent call terminates current method) \n");
+                  case 0x1A: // Cil_rethrow: rethrow the current exception
+                     insn = makeInstruction(va, rawBytes, 2, Cil_rethrow, "rethrow");
+                     break;
 
-                       insn = makeInstruction(va, rawBytes, 2, Cil_tail, "tail");
-                       break;
-                     }
+                  case 0x1C: // Cil_sizeof: push the size, in bytes, of a type as an unsigned int32
+                     token = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+2)));
+                     operand = SageBuilderAsm::buildValueI32(token);
+                     insn = makeInstruction(va, rawBytes, 6, Cil_sizeof, "sizeof", operand);
+                     break;
 
-                  case 0x15:
-                     {
-                       if (TRACE_DECODING)
-                         printf ("Found Cil_initobj instruction (initialize the value at address dest) \n");
+                  case 0x1D: // Cil_refanytype: push the type token stored in a typed reference
+                    insn = makeInstruction(va, rawBytes, 2, Cil_refanytype, "refanytype");
+                    break;
 
-                       token = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
-                       operand = SageBuilderAsm::buildValueI32(token);
-                       insn = makeInstruction(va, rawBytes, 6, Cil_initobj, "initobj", operand);
-                       break;
-                     }
-
-                  case 0x16:
-                     {
-                       if (TRACE_DECODING)
-                         printf ("Found Cil_constrained instruction (call a virtual method on a type constrained to be type T) \n");
-
-                       token = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
-                       operand = SageBuilderAsm::buildValueI32(token);
-                       insn = makeInstruction(va, rawBytes, 6, Cil_constrained, "constrained", operand);
-                       break;
-                     }
-
-                  case 0x17:
-                     {
-                       if (TRACE_DECODING)
-                         printf ("Found Cil_cpblk instruction (copy data from memory to memory) \n");
-
-                       insn = makeInstruction(va, rawBytes, 2, Cil_cpblk, "cpblk");
-                       break;
-                     }
-
-                  case 0x18:
-                     {
-                       if (TRACE_DECODING)
-                         printf ("Found Cil_initblk instruction (set all bytes in a block of memory to a given byte value) \n");
-
-                       insn = makeInstruction(va, rawBytes, 2, Cil_initblk, "initblk");
-                       break;
-                     }
-
-                  case 0x19:
-                     {
-                       if (TRACE_DECODING)
-                         printf ("Found Cil_no instruction (the specified fault check(s) normally performed as part of the execution of the subsequent instruction can/shall be skipped) \n");
-
-                       valueU8 = ByteOrder::le_to_host(*((uint8_t*)(rawBytes.data()+1)));
-                       operand = SageBuilderAsm::buildValueU8(valueU8);
-                       insn = makeInstruction(va, rawBytes, 3, Cil_no, "no", operand);
-                       break;
-                     }
-
-                  case 0x1A:
-                     {
-                       if (TRACE_DECODING)
-                         printf ("Found Cil_rethrow instruction (rethrow the current exception) \n");
-
-                       insn = makeInstruction(va, rawBytes, 2, Cil_rethrow, "rethrow");
-                       break;
-                     }
-
-                  case 0x1C:
-                     {
-                       if (TRACE_DECODING)
-                         printf ("Found Cil_sizeof instruction (push the size, in bytes, of a type as an unsigned int32) \n");
-
-                       token = ByteOrder::le_to_host(*((int32_t*)(rawBytes.data()+1)));
-                       operand = SageBuilderAsm::buildValueI32(token);
-                       insn = makeInstruction(va, rawBytes, 6, Cil_sizeof, "sizeof", operand);
-                       break;
-                     }
-
-                  case 0x1D:
-                     {
-                       if (TRACE_DECODING)
-                         printf ("Found Cil_refanytype instruction (push the type token stored in a typed reference) \n");
-
-                       insn = makeInstruction(va, rawBytes, 2, Cil_refanytype, "refanytype");
-                       break;
-                     }
-
-                  case 0x1E:
-                     {
-                       if (TRACE_DECODING)
-                         printf ("Found Cil_readonly instruction (specify that the subsequent array address operation performs no type check at runtime, and that it returns a controlled-mutability managed pointer) \n");
-
-                       insn = makeInstruction(va, rawBytes, 2, Cil_readonly, "readonly");
-                       break;
-                     }
+                  case 0x1E: // Cil_readonly_ specify that the subsequent array address operation performs no type check at runtime, and that it returns a controlled-mutability managed pointer
+                     insn = makeInstruction(va, rawBytes, 2, Cil_readonly_, "readonly");
+                     break;
 
                   case 0x08: // Cil_unused56
                   case 0x10: // Cil_unused57
@@ -2047,24 +1722,30 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
                   case 0x20: // Cil_unused54
                   case 0x21: // Cil_unused55
                   case 0x22: // Cil_unused70
+
                   case 0x23 ... 0xFF:
-                       mprintf ("Error: Illegal or unused opcode: buf[1] = %04x \n", buf[1]);
-                       insn = makeUnknownInstruction(va);
-                       rawBytes.resize(2);
-                       insn->set_raw_bytes(rawBytes);
-                       break;
+                     mlog[WARN] << "Illegal or unused opcode: 0x" << hex << rawBytes[0] << rawBytes[1] << dec << "\n";
+                     insn = makeUnknownInstruction(va, rawBytes, 2);
+                     break;
 
                   default:
-                       mprintf ("Fatal: Opcode using prefix 0xFE not handled: buf[1] = %04x \n",buf[1]);
-                       ROSE_ABORT();
-                       break;
+                     mlog[FATAL] << "Opcode using prefix 0xFE not handled: 0x" << hex << rawBytes[0] << rawBytes[1] << dec << "\n";
+                     ROSE_ABORT();
+                     break;
                 }
               break;  
            }
 
-        case 0x24: // Cil_unused99
-        case 0x77: // Cil_unused58
-        case 0x78: // Cil_unused1
+// Start of mono two-byte opcodes, 0xF000...0xF022
+        case 0xF0: // Cil_unused41: could be two-byte mono opcode!
+           mlog[WARN] << "Mono two-byte encoding: 0x" << hex << rawBytes[0] << rawBytes[1] << dec << "\n";
+           insn = makeUnknownInstruction(va, rawBytes, 2);
+           break;
+
+// Back to one-byte opcodes
+        case 0x24:          // Cil_unused99
+        case 0x77:          // Cil_unused58
+        case 0x78:          // Cil_unused1
         case 0xA6 ... 0xAF: // Cil_unused{5...14}
         case 0xB0 ... 0xB2: // Cil_unused{15...17}
         case 0xBB ... 0xBF: // Cil_unused{50,18...21}
@@ -2072,15 +1753,21 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
         case 0xC4 ... 0xC5: // Cil_unused{24...25}
         case 0xC7 ... 0xCF: // Cil_unused{59...67}
         case 0xE1 ... 0xEF: // Cil_unused{26...40}
-        case 0xF0 ... 0xF7: // Cil_unused{41...48}
+        case 0xF1 ... 0xF7: // Cil_unused{42...48}
         case 0xF8 ... 0xFD: // Cil_prefix{7...2}
-        case 0xFF:          // Cil_prefixref
+           mlog[WARN] << "illegal or unused one-byte instruction: 0x" << hex << (int)rawBytes[0] << dec << "\n";
+           insn = makeUnknownInstruction(va, rawBytes, 1);
+           break;
+
+        case 0xFF: // Cil_prefixref
+           mlog[WARN] << "found internal instruction Cil_prefixref: " << hex << (int)rawBytes[0] << dec << "\n";
+           insn = makeInstruction(va, rawBytes, 1, Cil_prefixref, "prefixref");
+           break;
+
         default:
-            mprintf ("Error: Illegal or unused opcode: buf[0] = %04x \n", buf[0]);
-            insn = makeUnknownInstruction(va);
-            rawBytes.resize(1);
-            insn->set_raw_bytes(rawBytes);
-            break;
+           mlog[WARN] << "illegal or unused one or two-byte instruction: 0x" << hex << (int)rawBytes[0] << (int)rawBytes[1] << dec << "\n";
+           insn = makeUnknownInstruction(va, rawBytes, 1);
+           break;
     }
 
     ASSERT_not_null(insn);
@@ -2091,13 +1778,13 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
 
 SgAsmInstruction*
 Cil::makeUnknownInstruction(const Disassembler::Exception &e) {
-    SgAsmCilInstruction *insn = new SgAsmCilInstruction(e.ip, "unknown", Cil_unknown_instruction);
-    SgAsmOperandList *operands = new SgAsmOperandList;
+    auto insn = new SgAsmCilInstruction(e.ip, "unknown", Cil_unknown_instruction);
+    auto operands = new SgAsmOperandList;
     insn->set_operandList(operands);
     operands->set_parent(insn);
 
     if (e.bytes.empty()) {
-        SgUnsignedCharList rawBytes(1, '\0'); // we don't know what, but an instruction is never zero bytes wide
+        SgUnsignedCharList rawBytes(1,'\0'); // we don't know what, but an instruction is never zero bytes wide
         insn->set_raw_bytes(rawBytes);
     } else {
         insn->set_raw_bytes(e.bytes);
@@ -2105,45 +1792,47 @@ Cil::makeUnknownInstruction(const Disassembler::Exception &e) {
     return insn;
 }
 
-#if 1
 SgAsmCilInstruction*
-Cil::makeUnknownInstruction(rose_addr_t address) {
-    SgAsmCilInstruction *insn = new SgAsmCilInstruction(address, "unknown", Cil_unknown_instruction);
-    SgAsmOperandList *operands = new SgAsmOperandList;
+Cil::makeUnknownInstruction(rose_addr_t va, SgUnsignedCharList &bytes, size_t size)
+{
+    auto insn = new SgAsmCilInstruction(va, "unknown", Cil_unknown_instruction);
+    auto operands = new SgAsmOperandList;
     insn->set_operandList(operands);
     operands->set_parent(insn);
 
- // SgUnsignedCharList rawBytes(1, opt_code);          // we don't know what, but an instruction is never zero bytes wide
- // insn->set_raw_bytes(rawBytes);
+    bytes.resize(size);
+    insn->set_raw_bytes(bytes);
 
     return insn;
 }
-#endif
 
 SgAsmCilInstruction*
-Cil::makeInstruction(rose_addr_t va, CilInstructionKind kind,
-                     const std::string &mnemonic, SgAsmExpression* operand) const {
+Cil::makeInstruction(rose_addr_t va, SgUnsignedCharList &bytes, size_t size,
+                     CilInstructionKind kind, const std::string &mnemonic, SgAsmExpression* operand) const
+{
     ASSERT_forbid2(Cil_unknown_instruction==kind, "should have called make_unknown_instruction instead");
 
-    SgAsmCilInstruction *insn = new SgAsmCilInstruction(va, mnemonic, kind);
-
-    SgAsmOperandList *operands = new SgAsmOperandList;
+    auto insn = new SgAsmCilInstruction(va, mnemonic, kind);
+    auto operands = new SgAsmOperandList;
     insn->set_operandList(operands);
     operands->set_parent(insn);
 
     if (operand) {
-        SageBuilderAsm::appendOperand(insn, operand);
+      SageBuilderAsm::appendOperand(insn, operand);
     }
 
-    return insn;
-}
-
-SgAsmCilInstruction*
-Cil::makeInstruction(rose_addr_t va, SgUnsignedCharList &bytes, size_t insnSize,
-                     CilInstructionKind kind, const std::string &mnemonic, SgAsmExpression* operand) const {
-    auto insn = makeInstruction(va, kind, mnemonic, operand);
-    bytes.resize(insnSize);
+    bytes.resize(size);
     insn->set_raw_bytes(bytes);
+
+    // Sanity checks while implementing
+    ASSERT_require(insn->get_size() > 0);
+    ASSERT_require(insn->get_size() == bytes.size());
+    if (insn->get_size() == 1) {
+      ASSERT_require((insn->get_anyKind() ^0xFF00) == bytes[0]);
+    }
+    if (0xFE == bytes[0]) {
+      ASSERT_require((insn->get_anyKind() ^0xFE00) == bytes[1]);
+    }
 
     return insn;
 }

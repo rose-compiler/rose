@@ -35,7 +35,7 @@ std::string utf8ToString(const uint8_t* bytes) {
 
 std::string readUtf16String(const std::vector<uint8_t>& buf, size_t ofs, size_t maxLen)
 {
-  std::string         res;
+  std::string res;
   std::uint8_t const* chseq = buf.data() + ofs; 
   std::uint8_t const* chlim = chseq + maxLen;
   
@@ -235,7 +235,7 @@ CilClass::CilClass(SgAsmCilMetadataRoot* root, const std::uint8_t* name, size_t 
 
         if (methodDef->get_RVA() == 0) {
             // TODO: double check test file to see if this is an interface (a nop!)
-            std::cerr << "methodDef rva == 0 // abstract\n";
+            // std::cerr << "methodDef rva == 0 // abstract\n";
             continue;
         }      
 

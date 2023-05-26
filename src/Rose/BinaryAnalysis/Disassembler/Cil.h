@@ -48,9 +48,7 @@ public:
     virtual SgAsmInstruction* makeUnknownInstruction(const Disassembler::Exception&) override;
 
 private:
-    SgAsmCilInstruction* makeUnknownInstruction(rose_addr_t address);
-    SgAsmCilInstruction* makeInstruction(rose_addr_t, CilInstructionKind,
-                                         const std::string&, SgAsmExpression* operand=nullptr) const;
+    SgAsmCilInstruction* makeUnknownInstruction(rose_addr_t va, SgUnsignedCharList &bytes, size_t size);
     SgAsmCilInstruction* makeInstruction(rose_addr_t, SgUnsignedCharList& bytes/*in,out*/, size_t, CilInstructionKind,
                                          const std::string&, SgAsmExpression* operand=nullptr) const;
 
