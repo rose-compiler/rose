@@ -368,8 +368,10 @@ public:
 
     /** Partition any sections containing CIL code.
      *
-     *  Decodes and partitions any sections of type SgAsmCliHeader. These sections contain CIL byte code. */
-    virtual void partitionCilSections(const PartitionerPtr&);
+     *  Decodes and partitions any sections of type SgAsmCliHeader. These sections contain CIL byte code.
+     *
+     *  Returns true if a section containing CIL code was found, false otherwise. */
+    virtual bool partitionCilSections(const PartitionerPtr&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner mid-level functions

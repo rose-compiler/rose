@@ -88,10 +88,7 @@ static bool isValidCilInstruction()
     case Cil_ldind_i4:      // name="ldind.i4",input="PopI",output="PushI",args="InlineNone",o1="0xFF",o2="0x4A",flow="next",type="Primitive"
     case Cil_ldind_u4:      // name="ldind.u4",input="PopI",output="PushI",args="InlineNone",o1="0xFF",o2="0x4B",flow="next",type="Primitive"
     case Cil_ldind_i8:      // name="ldind.i8",input="PopI",output="PushI8",args="InlineNone",o1="0xFF",o2="0x4C",flow="next",type="Primitive"
-    // DQ (11/6/2021): Added this enoum missed in the automated mechanism done by Craig.
-    // Indirect load value of type unsigned int64 as int64 on the stack (alias for ldind.i8). 
-    case Cil_ldind_u8:      // name="ldind.u8",input="PopI",output="PushI8",args="InlineNone",o1="0xFF",o2="0x4C",flow="next",type="Primitive"
-    case Cil_ldind_i:       // name="ldind.i",input="PopI",output="PushI",args="InlineNone",o1="0xFF",o2="0x4D",flow="next",type="Primitive"
+    case Cil_ldind_i:       // name="ldind.i",input="PopI",output="PushI",args="InlineNone",  o1="0xFF",o2="0x4D",flow="next",type="Primitive"
     case Cil_ldind_r4:      // name="ldind.r4",input="PopI",output="PushR4",args="InlineNone",o1="0xFF",o2="0x4E",flow="next",type="Primitive"
     case Cil_ldind_r8:      // name="ldind.r8",input="PopI",output="PushR8",args="InlineNone",o1="0xFF",o2="0x4F",flow="next",type="Primitive"
     case Cil_ldind_ref:     // name="ldind.ref",input="PopI",output="PushRef",args="InlineNone",o1="0xFF",o2="0x50",flow="next",type="Primitive"
@@ -305,8 +302,8 @@ static bool isValidCilInstruction()
     case Cil_unused54:      // name="unused54",input="Pop0",output="Push0",args="InlineNone",o1="0xFE",o2="0x20",flow="next"
     case Cil_unused55:      // name="unused55",input="Pop0",output="Push0",args="InlineNone",o1="0xFE",o2="0x21",flow="next"
     case Cil_unused70:      // name="unused70",input="Pop0",output="Push0",args="InlineNone",o1="0xFE",o2="0x22",flow="next"
-    case Cil_illegal:       // name="illegal",input="Pop0",output="Push0",args="InlineNone",o1="0x00",o2="0x00",flow="meta"
-    case Cil_endmac:        // name="endmac",input="Pop0",output="Push0",args="InlineNone",o1="0x00",o2="0x00",flow="meta"
+//  case Cil_illegal:       // name="illegal",input="Pop0",output="Push0",args="InlineNone",o1="0x00",o2="0x00",flow="meta"
+//  case Cil_endmac:        // name="endmac",input="Pop0",output="Push0",args="InlineNone",o1="0x00",o2="0x00",flow="meta"
     case Cil_mono_icall:    // name="mono_icall",input="VarPop",output="VarPush",args="InlineI",o1="0xF0",o2="0x00",flow="next"
     case Cil_mono_objaddr:  // name="mono_objaddr",input="Pop1",output="PushI",args="InlineNone",o1="0xF0",o2="0x01",flow="next"
     case Cil_mono_ldptr:    // name="mono_ldptr",input="Pop0",output="PushI",args="InlineI",o1="0xF0",o2="0x02",flow="next"
@@ -336,20 +333,12 @@ static bool isValidCilInstruction()
     case Cil_mono_atomic_store_i4:// name="mono_atomic_store_i4",input="PopI+PopI",output="Push0",args="InlineI",o1="0xF0",o2="0x1A",flow="next"
     case Cil_mono_save_last_error:// name="mono_save_last_error",input="Pop0",output="Push0",args="InlineNone",o1="0xF0",o2="0x1B",flow="next"
     case Cil_mono_get_rgctx_arg:// name="mono_get_rgctx_arg",input="Pop0",output="PushI",args="InlineNone",o1="0xF0",o2="0x1C",flow="next"
-    case Cil_mono_ldptr_profiler_allocation_count:// name="mono_ldptr_profiler_allocation_count",input="Pop0",output="PushI",args="InlineNone",o1="0xF0",o2="0x1D",flow="next"
+    case Cil_mono_ldptr_prof_alloc_count:// name="mono_ldptr_profiler_allocation_count",input="Pop0",output="PushI",args="InlineNone",o1="0xF0",o2="0x1D",flow="next"
     case Cil_mono_ld_delegate_method_ptr:// name="mono_ld_delegate_method_ptr",input="Pop1",output="PushI",args="InlineNone",o1="0xF0",o2="0x1E",flow="next"
     case Cil_mono_rethrow:  // name="mono_rethrow",input="PopRef",output="Push0",args="InlineNone",o1="0xF0",o2="0x1F",flow="throw",type="Objmodel"
     case Cil_mono_get_sp:   // name="mono_get_sp",input="Pop0",output="PushI",args="InlineNone",o1="0xF0",o2="0x20",flow="next"
     case Cil_mono_methodconst:// name="mono_methodconst",input="Pop0",output="PushI",args="InlineI",o1="0xF0",o2="0x21",flow="next"
     case Cil_mono_pinvoke_addr_cache:// name="mono_pinvoke_addr_cache",input="Pop0",output="PushI",args="InlineI",o1="0xF0",o2="0x22",flow="next"
-
-  // DQ (11/72021): Added prefixes for instructions (need to check if this is the best way to support these):
-    case Cil_constrained:
-    case Cil_no:
-    case Cil_readonly:
-    case Cil_tail:
-    case Cil_unaligned:
-    case Cil_volatile:
       break;
 
   // This must be last
@@ -635,7 +624,7 @@ SgAsmCilInstruction::description() const
     case Cil_nop:       return "do nothing";
     case Cil_break:     return "inform a debugger that a breakpoint has been reached";
     case Cil_ldarg_0:   return "load argument 0 onto the stack";
-    case Cil_ldarg_1:
+    case Cil_ldarg_1:   return "load argument 1 onto the stack";
     case Cil_ldarg_2:
     case Cil_ldarg_3:
     case Cil_ldloc_0:
@@ -682,7 +671,7 @@ SgAsmCilInstruction::description() const
     case Cil_bge_s:
     case Cil_bgt_s:
     case Cil_ble_s:
-    case Cil_blt_s:
+    case Cil_blt_s:      return "branch to target if greater than, short form";
     case Cil_bne_un_s:
     case Cil_bge_un_s:
     case Cil_bgt_un_s:
@@ -693,7 +682,7 @@ SgAsmCilInstruction::description() const
     case Cil_brtrue:
     case Cil_beq:
     case Cil_bge:
-    case Cil_bgt:
+    case Cil_bgt:        return "branch to target if greater than";
     case Cil_ble:
     case Cil_blt:
     case Cil_bne_un:
@@ -709,7 +698,6 @@ SgAsmCilInstruction::description() const
     case Cil_ldind_i4:
     case Cil_ldind_u4:
     case Cil_ldind_i8:
-    case Cil_ldind_u8:
     case Cil_ldind_i:
     case Cil_ldind_r4:
     case Cil_ldind_r8:
@@ -889,8 +877,8 @@ SgAsmCilInstruction::description() const
     case Cil_prefix2:
     case Cil_prefix1:
     case Cil_prefixref:
-    case Cil_arglist:
-    case Cil_ceq:
+    case Cil_arglist:     return "argument list handle for the current method";
+    case Cil_ceq:         return "push 1 (of type int32) if value 1 equals value2, else push 0";
     case Cil_cgt:
     case Cil_cgt_un:
     case Cil_clt:
@@ -924,8 +912,8 @@ SgAsmCilInstruction::description() const
     case Cil_unused54:
     case Cil_unused55:
     case Cil_unused70:
-    case Cil_illegal:
-    case Cil_endmac:
+//  case Cil_illegal:
+//  case Cil_endmac:
     case Cil_mono_icall:
     case Cil_mono_objaddr:
     case Cil_mono_ldptr:
@@ -955,21 +943,12 @@ SgAsmCilInstruction::description() const
     case Cil_mono_atomic_store_i4:
     case Cil_mono_save_last_error:
     case Cil_mono_get_rgctx_arg:
-    case Cil_mono_ldptr_profiler_allocation_count:
+    case Cil_mono_ldptr_prof_alloc_count:
     case Cil_mono_ld_delegate_method_ptr:
     case Cil_mono_rethrow:
     case Cil_mono_get_sp:
     case Cil_mono_methodconst:
     case Cil_mono_pinvoke_addr_cache:
-      return "rose_unimplemented";
-
-  // DQ (11/72021): Added prefixes for instructions (need to check if this is the best way to support these):
-    case Cil_constrained:
-    case Cil_no:
-    case Cil_readonly:
-    case Cil_tail:
-    case Cil_unaligned:
-    case Cil_volatile:
       return "rose_unimplemented";
 
   // This must be last

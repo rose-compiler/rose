@@ -14,6 +14,15 @@
 
 #define M68K 0
 
+#if M68K==0
+#define Cil_regclass_mac m68k_regclass_mac
+#define Cil_mac_acc0 m68k_mac_acc0
+#define Cil_mac_acc1 m68k_mac_acc1
+#define Cil_mac_acc2 m68k_mac_acc2
+#define Cil_mac_acc3 m68k_mac_acc3
+#define Cil_regclass_spr mips_regclass_spr
+#endif
+
 using namespace Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
 using namespace Rose::Diagnostics;
 
@@ -3968,12 +3977,14 @@ DispatcherCil::read(SgAsmExpression *e, size_t value_nbits, size_t addr_nbits/*=
     ASSERT_not_null(e);
     SValuePtr retval;
     if (SgAsmDirectRegisterExpression *re = isSgAsmDirectRegisterExpression(e)) {
+#if M68K
         static const RegisterDescriptor REG_PC(Cil_regclass_spr, Cil_spr_pc, 0, 32);
         if (re->get_descriptor() == REG_PC) {
             SgAsmInstruction *insn = currentInstruction();
             ASSERT_not_null(insn);
             return operators()->number_(32, insn->get_address() + 2);
         }
+#endif
     }
     return Dispatcher::read(e, value_nbits, addr_nbits);
 }
