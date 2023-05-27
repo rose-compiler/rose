@@ -4463,9 +4463,11 @@ ATbool ATermToSageJovialTraversal::traverse_SimpleStatement(ATerm term)
       }
       else if (traverse_NullStatement(t_stmt)) {
          // MATCHED NullStatement
+         if (labels.size() > 0) mlog[WARN] << "UNIMPLEMENTED labels: NullStatement: labels.size() > 0\n";
       }
       else if (traverse_NullBlockStatement(t_stmt)) {
          // MATCHED NullStatement
+         if (labels.size() > 0) mlog[WARN] << "UNIMPLEMENTED labels: NullBlockStatement: labels.size() > 0\n";
       }
       else return ATfalse;
    }
@@ -4505,10 +4507,6 @@ ATbool ATermToSageJovialTraversal::traverse_SimpleStatement(ATerm term)
       else return ATfalse;
    }
    else return ATfalse;
-
-   if (labels.size() > 0) {
-      mlog[WARN] << "UNIMPLEMENTED (potentially): SimpleStatement - labels.size() > 0\n";
-   }
 
    return ATtrue;
 }
@@ -5352,7 +5350,7 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureCallStatement(ATerm term)
    setSourcePosition(call_stmt, term);
 
    // End SageTreeBuilder
-   sage_tree_builder.Leave(call_stmt);
+   sage_tree_builder.Leave(call_stmt, labels);
 
    return ATtrue;
 }
