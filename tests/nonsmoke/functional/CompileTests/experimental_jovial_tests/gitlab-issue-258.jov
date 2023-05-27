@@ -1,0 +1,14 @@
+START
+DEF PROC PROC1(:A1) ;
+BEGIN
+  ITEM A1 S 31;
+  A1 = 5;
+END
+DEF PROC main() S;
+BEGIN
+  ITEM L1 S;
+  L1 = 10;
+  PROC1(:L1);
+  main = L1 - 5;
+END
+TERM
