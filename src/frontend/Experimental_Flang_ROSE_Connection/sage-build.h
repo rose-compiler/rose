@@ -30,10 +30,10 @@ class SgType;
 
 // New label handling (and perhaps scope as well)
 #define LABELS 1
-
-typedef std::tuple<std::string, SgType*, SgExpression*> EntityDeclTuple;
+#define NEW_LABELS 0
 
 using OptLabel = std::optional<unsigned long long>;
+using EntityDeclTuple = std::tuple<std::string, SgType*, SgExpression*>;
 
 // Needed until Rose compiles with C++17 (see setSgSourceFile below)
 class SgSourceFile;
@@ -112,8 +112,15 @@ void Build(const Fortran::parser::UseStmt &x);
 
 template<typename T> void Build(const Fortran::parser::InternalSubprogramPart &x, T* scope);
 template<typename T> void Build(const Fortran::parser::          ImplicitPart &x, T* scope);
+
+#if NEW_LABELS==0
 template<typename T> void Build(const Fortran::parser::      ImplicitPartStmt &x, T* scope);
 template<typename T> void Build(const Fortran::parser::          ImplicitStmt &x, T* scope);
+#else
+void Build(const Fortran::parser::      ImplicitPartStmt &x, const OptLabel &);
+void Build(const Fortran::parser::          ImplicitStmt &x, const OptLabel &);
+#endif
+
 void Build(const std::list<Fortran::parser::ImplicitSpec> &x, std::list<std::tuple<SgType*, std::list<std::tuple<char, boost::optional<char>>>>> &implicit_spec_list);
 void Build(const Fortran::parser::ImplicitSpec &x, SgType* &type, std::list<std::tuple<char, boost::optional<char>>> &letter_spec_list);
 void Build(const std::list<Fortran::parser::LetterSpec> &x, std::list<std::tuple<char, boost::optional<char>>> &letter_spec_list);
@@ -180,8 +187,10 @@ void Build(const Fortran::parser::   DataStmtValue &x, SgExpression* &expr);
 void Build(const Fortran::parser::DataStmtConstant &x, SgExpression* &expr);
 
 // ActionStmt
-template<typename T> void Build(const Fortran::parser::         ContinueStmt &x, T* scope);
-template<typename T> void Build(const Fortran::parser::        FailImageStmt &x, T* scope);
+void Build(const Fortran::parser::         ContinueStmt &x, const OptLabel &);
+void Build(const Fortran::parser::        FailImageStmt &x, const OptLabel &);
+
+#if NEW_LABELS==0
 template<typename T> void Build(const Fortran::parser::         AllocateStmt &x, T* scope);
 template<typename T> void Build(const Fortran::parser::        BackspaceStmt &x, T* scope);
 template<typename T> void Build(const Fortran::parser::             CallStmt &x, T* scope);
@@ -202,6 +211,31 @@ template<typename T> void Build(const Fortran::parser::          NullifyStmt &x,
 template<typename T> void Build(const Fortran::parser::             OpenStmt &x, T* scope);
 template<typename T> void Build(const Fortran::parser::PointerAssignmentStmt &x, T* scope);
 template<typename T> void Build(const Fortran::parser::            PrintStmt &x, T* scope);
+#else
+template<typename T> void Build(const Fortran::parser::         ContinueStmt &x, T* scope);
+template<typename T> void Build(const Fortran::parser::        FailImageStmt &x, T* scope);
+
+void Build(const Fortran::parser::         AllocateStmt &x, T* scope);
+void Build(const Fortran::parser::        BackspaceStmt &x, T* scope);
+void Build(const Fortran::parser::             CallStmt &x, T* scope);
+void Build(const Fortran::parser::            CloseStmt &x, T* scope);
+void Build(const Fortran::parser::            CycleStmt &x, T* scope);
+void Build(const Fortran::parser::       DeallocateStmt &x, T* scope);
+void Build(const Fortran::parser::          EndfileStmt &x, T* scope);
+void Build(const Fortran::parser::        EventPostStmt &x, T* scope);
+void Build(const Fortran::parser::        EventWaitStmt &x, T* scope);
+void Build(const Fortran::parser::             ExitStmt &x, T* scope);
+void Build(const Fortran::parser::            FlushStmt &x, T* scope);
+void Build(const Fortran::parser::         FormTeamStmt &x, T* scope);
+void Build(const Fortran::parser::             GotoStmt &x, T* scope);
+void Build(const Fortran::parser::               IfStmt &x, T* scope);
+void Build(const Fortran::parser::          InquireStmt &x, T* scope);
+void Build(const Fortran::parser::             LockStmt &x, T* scope);
+void Build(const Fortran::parser::          NullifyStmt &x, T* scope);
+void Build(const Fortran::parser::             OpenStmt &x, T* scope);
+void Build(const Fortran::parser::PointerAssignmentStmt &x, T* scope);
+void Build(const Fortran::parser::            PrintStmt &x, T* scope);
+#endif
 
 void Build(const Fortran::parser::               Format &x, SgExpression* &expr);
 void Build(const Fortran::parser::      DefaultCharExpr &x, SgExpression* &expr);
@@ -210,6 +244,7 @@ void Build(const Fortran::parser::                 Star &x, SgExpression* &expr)
 void Build(const Fortran::parser::           OutputItem &x, SgExpression* &expr);
 template<typename T> void Build(const Fortran::parser::      OutputImpliedDo &x, T* scope);
 
+#if 1
 template<typename T> void Build(const Fortran::parser::             ReadStmt &x, T* scope);
 template<typename T> void Build(const Fortran::parser::           ReturnStmt &x, T* scope);
 template<typename T> void Build(const Fortran::parser::           RewindStmt &x, T* scope);
@@ -231,6 +266,7 @@ template<typename T> void Build(const Fortran::parser::            PauseStmt &x,
 template<typename T> void Build(const Fortran::parser::         NamelistStmt &x, T* scope);
 template<typename T> void Build(const Fortran::parser::        ParameterStmt &x, T* scope);
 template<typename T> void Build(const Fortran::parser::     OldParameterStmt &x, T* scope);
+#endif
 
 template<typename T> void Build(const Fortran::parser::           CommonStmt &x, T* scope);
 void Build(const Fortran::parser::    CommonStmt::Block &x, SgCommonBlockObject* &);
@@ -335,8 +371,13 @@ template<typename T> void Build(const Fortran::parser::             DerivedTypeD
 template<typename T> void Build(const Fortran::parser::                    EnumDef&x, T* scope);
 template<typename T> void Build(const Fortran::parser::             InterfaceBlock&x, T* scope);
 template<typename T> void Build(const Fortran::parser::               StructureDef&x, T* scope);
+#if 1
 template<typename T> void Build(const Fortran::parser::     OtherSpecificationStmt&x, T* scope);
 template<typename T> void Build(const Fortran::parser::                GenericStmt&x, T* scope);
+#else
+void Build(const Fortran::parser::     OtherSpecificationStmt&x, const OptLabel &);
+void Build(const Fortran::parser::                GenericStmt&x, const OptLabel &);
+#endif
 template<typename T> void Build(const Fortran::parser::   ProcedureDeclarationStmt&x, T* scope);
 template<typename T> void Build(const Fortran::parser:: OpenMPDeclarativeConstruct&x, T* scope);
 template<typename T> void Build(const Fortran::parser::OpenACCDeclarativeConstruct&x, T* scope);

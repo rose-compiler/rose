@@ -480,12 +480,18 @@ void Build(const parser::ExecutionPartConstruct &x, T* scope)
    std::cout << "Rose::builder::Build(ExecutionPartConstruct)\n";
 #endif
 
+   const OptLabel label{};
+
    std::visit(
       common::visitors{
          [&] (const parser::ExecutableConstruct &y) { Build(y, scope); },
          [&] (const parser::ErrorRecovery &y)       { Build(y, scope); },
          //  Statement<common::Indirection> - FormatStmt, EntryStmt, DataStmt, or NamelistStmt
+#if NEW_LABELS==0
          [&] (const auto &y) { Build(y.statement.value(), scope); },
+#else
+         [&] (const auto &y) { Build(y.statement.value(), label, scope); },
+#endif
       },
       x.u);
 }
@@ -528,8 +534,8 @@ void Build(const parser::ActionStmt &x, const OptLabel &label, T* scope)
 
    std::visit(
       common::visitors{
-         [&](const parser::ContinueStmt  &y) { Build(y, scope); },
-         [&](const parser::FailImageStmt &y) { Build(y, scope); },
+         [&](const parser::ContinueStmt  &y) { Build(y, label); },
+         [&](const parser::FailImageStmt &y) { Build(y, label); },
          // common::Indirection - AllocateStmt, AssignmentStmt, BackspaceStmt, CallStmt, CloseStmt,
          // CycleStmt, DeallocateStmt, EndfileStmt, EventPostStmt, EventWaitStmt, ExitStmt, FailImageStmt,
          // FlushStmt, FormTeamStmt, GotoStmt, IfStmt, InquireStmt, LockStmt, NullifyStmt, OpenStmt,
@@ -1055,7 +1061,11 @@ void Build(const parser::ImplicitPartStmt &x, T* scope)
       common::visitors{
          [&](const common::Indirection<parser::CompilerDirective> &y) { Build(y.value(), scope); },
          // Statement<common::Indirection<> - ImplicitStmt, ParameterStmt, OldParameterStmt, FormatStmt, EntryStmt
+#if NEW_LABELS==0
          [&](const auto &y) { Build(y.statement.value(), scope); },
+#else
+         [&](const auto &y) { Build(y.statement.value(), std::nullopt); },
+#endif
       },
       x.u);
 }
@@ -1218,10 +1228,18 @@ void Build(const parser::SpecificationConstruct &x, T* scope)
          [&](const common::Indirection<parser::CompilerDirective> &y)           { Build(y.value(), scope); },
          [&](const common::Indirection<parser::OpenMPDeclarativeConstruct>  &y) { Build(y.value(), scope); },
          [&](const common::Indirection<parser::OpenACCDeclarativeConstruct> &y) { Build(y.value(), scope); },
+#if NEW_LABELS==0
          [&](const parser::Statement<parser::OtherSpecificationStmt> &y)     { Build(y.statement, scope); },
+#else
+         [&](const parser::Statement<parser::OtherSpecificationStmt> &y)     { Build(y.statement, std::nullopt); },
+#endif
          // Statement<common::Indirection<>> - GenericStmt, ParameterStmt,
          // OldParameterStmt, ProcedureDeclarationStmt, TypeDeclarationStmt
+#if NEW_LABELS==0
          [&](const auto &y ) { Build(y.statement.value(), scope); }
+#else
+         [&](const auto &y ) { Build(y.statement.value(), std::nullopt/*label*/); }
+#endif
       },
       x.u);
 }
@@ -1770,7 +1788,7 @@ void Build(const parser::ErrorRecovery &x, T* scope)
 #endif
 }
 
-   // DataStmt
+// DataStmt
 void Build(const parser::DataStmtValue &x, SgExpression* &expr)
 {
 #if PRINT_FLANG_TRAVERSAL
@@ -1800,16 +1818,27 @@ void Build(const parser::DataStmtConstant &x, SgExpression* &expr)
 }
 
 // ActionStmt
-template<typename T>
-void Build(const parser::ContinueStmt&x, T* scope)
+
+void Build(const parser::ContinueStmt&x, const OptLabel &label)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ContinueStmt)\n";
 #endif
+
+   std::vector<std::string> labels{};
+   if (label) {
+      labels.push_back(std::to_string(label.value()));
+   }
+
+   // Begin SageTreeBuilder
+   SgContinueStmt* continue_stmt{nullptr};
+   builder.Enter(continue_stmt);
+
+   // Finish SageTreeBuilder
+   builder.Leave(continue_stmt, labels);
 }
 
-template<typename T>
-void Build(const parser::FailImageStmt&x, T* scope)
+void Build(const parser::FailImageStmt&x, const OptLabel &label)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(FailImageStmt)\n";
@@ -2113,8 +2142,13 @@ void Build(const parser::RewindStmt&x, T* scope)
 #endif
 }
 
+#if NEW_LABELS==0
 template<typename T>
 void Build(const parser::StopStmt&x, T* scope)
+#else
+//void Build(const parser::StopStmt&x, std::optional<unsigned long long> label)
+  void Build(const parser::StopStmt&x, const OptLabel &label)
+#endif
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(StopStmt)\n";
@@ -2126,6 +2160,11 @@ void Build(const parser::StopStmt&x, T* scope)
    std::string_view kind{parser::StopStmt::EnumToString(std::get<0>(x.t))};
 
    std::vector<std::string> labels;
+#if NEW_LABELS==1
+   if (label) {
+     labels.push_back(std::to_string(*label));
+   }
+#endif
 
    // change strings to match builder function
    if (kind == "Stop") {
@@ -3230,7 +3269,7 @@ void Build(const parser::LoopControl&x, SgExpression* &expr)
       x.u);
 }
 
-   // SpecificationConstruct
+// SpecificationConstruct
 template<typename T>
 void Build(const parser::DerivedTypeDef&x, T* scope)
 {
