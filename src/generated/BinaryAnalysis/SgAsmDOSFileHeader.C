@@ -167,7 +167,7 @@ SgAsmDOSFileHeader::get_relocs() const {
 
 void
 SgAsmDOSFileHeader::set_relocs(SgAsmGenericSection* const& x) {
-    changeChildPointer(this->p_relocs, const_cast<SgAsmGenericSection*&>(x));
+    this->p_relocs = x;
     set_isModified(true);
 }
 

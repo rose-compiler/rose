@@ -137,7 +137,7 @@ public:
     unsigned e_res1 = 0;
 
     /** Property: Section containing relocation information. */
-    [[using Rosebud: rosetta, traverse]]
+    [[using Rosebud: rosetta]]
     SgAsmGenericSection* relocs = nullptr;
 
     /** Property: Real mode section. */

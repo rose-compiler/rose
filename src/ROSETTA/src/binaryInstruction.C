@@ -24263,7 +24263,7 @@ class SgAsmDOSFileHeader: public SgAsmGenericHeader {
 #ifndef DOCUMENTATION
     AsmDOSFileHeader.setDataPrototype(
         "SgAsmGenericSection*", "relocs", "= nullptr",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
