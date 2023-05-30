@@ -1074,6 +1074,45 @@ Leave(SgIfStmt* if_stmt)
 }
 
 void SageTreeBuilder::
+Enter(SgContinueStmt* &continueStmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgContinueStmt*, ...)\n";
+
+   continueStmt = SB::buildContinueStmt_nfi();
+}
+
+void SageTreeBuilder::
+Leave(SgContinueStmt* continueStmt, const std::vector<std::string> &labels)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgContinueStmt*, ...)\n";
+
+   SgStatement* stmt{continueStmt};
+   ASSERT_not_null(stmt);
+
+   // All statements may have a label(s), thus, for here
+   // and for what follows, outline to a function for all statements to use
+   for (auto label : labels) {
+      // A label statement may already exist for this label, e.g., from a
+      // placeholder created previously for an SgContinueStmt label. If so, fix statement in placeholder
+      SgSymbol* symbol = SI::lookupSymbolInParentScopes(label, SB::topScopeStack());
+      SgLabelSymbol* labelSymbol = isSgLabelSymbol(symbol);
+      SgLabelStatement* labelStmt = labelSymbol ? labelSymbol->get_declaration() : nullptr;
+
+      if (labelStmt && labelStmt->get_statement()) {
+        labelStmt->set_statement(stmt);
+        stmt = labelStmt;
+      }
+      else {
+        mlog[WARN] << "Need (and building) symbol for label statement\n";
+        stmt = SB::buildLabelStatement_nfi(label, stmt, SB::topScopeStack());
+      }
+   }
+
+   // Append final label statement (if there are labels, otherwise stmt==continueStmt)
+   SageInterface::appendStatement(stmt, SB::topScopeStack());
+}
+
+void SageTreeBuilder::
 Enter(SgGotoStatement* &gotoStmt, const std::string &label)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgGotoStatement*, ...)\n";
@@ -1165,7 +1204,10 @@ Enter(SgProcessControlStatement* &control_stmt, const std::string &stmt_kind,
    else if (stmt_kind == "stop") {
       control_stmt->set_control_kind(SgProcessControlStatement::e_stop);
    }
-   ASSERT_require(control_stmt->get_control_kind() != SgProcessControlStatement::e_unknown);
+   else {
+      mlog[FATAL] << "SageTreeBuilder::Enter(SgProcessControlStatement* &, ...): incorrect statement kind\n";
+      exit(1);
+   }
 
    code->set_parent(control_stmt);
    quiet->set_parent(control_stmt);

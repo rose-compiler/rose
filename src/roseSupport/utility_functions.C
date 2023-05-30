@@ -74,30 +74,7 @@ using namespace Rose::Diagnostics;
 // Consider using Rose::Diagnostics instead [Robb Matzke 2021-08-18]
 int ROSE_DEBUG = 0;
 
-#if 1
-// ArrayAssignmentUsingTransformationGrammar* globalArrayAssignmentUsingTransformationGrammar = NULL;
-
-// CW: here we should definitly find a better way
-// to specify the cache parameters
-// Removed unused variables (next two declarations) [Rasmussen 2019.01.29]
-// const int roseTargetCacheSize     = 8192;
-// const int roseTargetCacheLineSize = 32;
-// cacheInfo roseTargetCacheInfo(roseTargetCacheSize,roseTargetCacheLineSize);
-
-// What is this and who put it here?
-// unsigned int *uint_global_dbug_ptr;
-
-#endif
-
-// DQ (8/10/2004): This was moved to the SgFile a long time ago and should not be used any more)
-// bool Rose::verbose                 = false;
-// DQ (8/11/2004): build a global state here
-// int Rose::roseVerbose = 0;
-
-// DQ (3/6/2017): Adding ROSE options data structure to support frontend and backend options (see header file for details).
 Rose::Options Rose::global_options;
-
-// DQ (3/6/2017): Adding ROSE options data structure to support frontend and backend options (see header file for details).
 Rose::Options::Options()
    {
   // DQ (3/6/2017): Default option value to minimize the chattyness of ROSE based tools.
@@ -712,8 +689,6 @@ outputPredefinedMacros()
 SgProject*
 frontend (int argc, char** argv, bool frontendConstantFolding )
    {
-  // printf ("In frontend(int argc,char** argv): frontendConstantFolding = %s \n",frontendConstantFolding == true ? "true" : "false");
-
      return frontend(std::vector<std::string>(argv, argv + argc),frontendConstantFolding);
    }
 
@@ -726,7 +701,6 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
   // But most are older examples of tools built using ROSE.
      ROSE_INITIALIZE;
 
-  // DQ (6/14/2007): Added support for timing of high level frontend function.
      TimingPerformance timer ("ROSE frontend():");
 
   // Syncs C++ and C I/O subsystems!
@@ -735,11 +709,8 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
   // make sure that there is some sort of commandline (at least a file specified)
      if (argv.size() == 1)
         {
-       // Rose::usage(1);      // Print usage and exit with exit status == 1
           SgFile::usage(1);      // Print usage and exit with exit status == 1
         }
-
-  // printf ("In frontend(const std::vector<std::string>& argv): frontendConstantFolding = %s \n",frontendConstantFolding == true ? "true" : "false");
 
   // We parse plugin related command line options before calling project();
      std::vector<std::string> argv2= argv;  // workaround const argv
@@ -751,9 +722,8 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
 #endif
 
   // Error code checks and reporting are done in SgProject constructor
-  // return new SgProject (argc,argv);
      SgProject* project = new SgProject (argv2,frontendConstantFolding);
-     ROSE_ASSERT (project != NULL);
+     ASSERT_not_null(project);
 
   // DQ (1/27/2017): Comment this out so that we can generate the dot graph to debug symbol with null basis.
      unsetNodesMarkedAsModified(project);
@@ -993,7 +963,6 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
           finalCombinedExitStatus = project->compileOutput();
         }
        else
-  // if (project->get_compileOnly() == false)
         {
           if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
                printf ("   project->get_compileOnly() = %s \n",project->get_compileOnly() ? "true" : "false");

@@ -1,4 +1,3 @@
 program main
-    continue    ! no  label
-  5 continue    ! yes label
+  5 continue
 end program

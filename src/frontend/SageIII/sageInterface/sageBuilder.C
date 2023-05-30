@@ -7091,7 +7091,7 @@ SgContinueStmt * SageBuilder::buildContinueStmt()
 SgContinueStmt * SageBuilder::buildContinueStmt_nfi()
 {
   SgContinueStmt* result = new SgContinueStmt();
-  ROSE_ASSERT(result);
+  ASSERT_not_null(result);
   setOneSourcePositionNull(result);
   return result;
 }

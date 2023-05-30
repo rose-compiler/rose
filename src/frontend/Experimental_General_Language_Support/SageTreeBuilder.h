@@ -17,6 +17,7 @@ class SgCastExp;
 class SgCommonBlock;
 class SgCommonBlockObject;
 class SgContainsStatement;
+class SgContinueStmt;
 class SgDefaultOptionStmt;
 class SgDerivedTypeStatement;
 class SgEnumDeclaration;
@@ -179,6 +180,12 @@ public:
    void Enter(SgExprStatement* &, SgExpression* &, const std::vector<SgExpression*> &);
    void Leave(SgExprStatement*, std::vector<std::string> &);
 
+   void Enter(SgContainsStatement* &);
+   void Leave(SgContainsStatement*);
+
+   void Enter(SgContinueStmt* &);
+   void Leave(SgContinueStmt*, const std::vector<std::string> &);
+
    void Enter(SgGotoStatement* &, const std::string &);
    void Leave(SgGotoStatement*, const std::vector<std::string> &);
 
@@ -218,9 +225,6 @@ public:
 
    void Enter(SgUseStatement* &, const std::string &, const std::string &);
    void Leave(SgUseStatement*);
-
-   void Enter(SgContainsStatement* &);
-   void Leave(SgContainsStatement*);
 
    SgEnumVal* getEnumVal(SgEnumType*, SgEnumVal* old_val);
 

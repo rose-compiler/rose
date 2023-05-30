@@ -1797,17 +1797,13 @@ int
 SgProject::RunFrontend()
 {
   TimingPerformance timer ("AST (SgProject::RunFrontend()):");
+  ASSERT_not_null(this);
 
-     ASSERT_not_null(this);
-
-  int status_of_function = 0;
-  {
-      status_of_function = Rose::Frontend::Run(this);
-      this->set_frontendErrorCode(status_of_function);
-  }
+  int status_of_function = Rose::Frontend::Run(this);
+  this->set_frontendErrorCode(status_of_function);
 
   return status_of_function;
-}//SgProject::RunFrontend
+}
 
 int
 SgProject::parse()
@@ -3921,7 +3917,6 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
   // compiled together on the same command line.
      ROSE_ASSERT(astIncludeStack.size() == 0);
 
-  // DQ (6/7/2013): Added support for the call to the experimental Fortran frontend (if the associated option is specified on the command line).
      int frontendErrorLevel = 0;
      if (get_experimental_flang_frontend() == true)
         {
@@ -3938,11 +3933,10 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
           if ( SgProject::get_verbose() > 1 )
              {
-                printf ("Calling the experimental fortran frontend (this work is incomplete) \n");
+                mlog[INFO] << "Calling the experimental fortran frontend (this work is incomplete)\n";
                 printf ("   --- Fortran numberOfCommandLineArguments = %" PRIuPTR " frontEndCommandLine = %s \n",experimentalFrontEndCommandLine.size(),CommandlineProcessing::generateStringFromArgList(experimentalFrontEndCommandLine,false,false).c_str());
              }
 
-// Added ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION [Rasmussen 2019.08.30].
 #if defined(ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION)
           SgSourceFile* fortranSourceFile = const_cast<SgSourceFile*>(this);
           frontendErrorLevel = experimental_fortran_main (experimental_FortranParser_argc,
@@ -3954,12 +3948,13 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
           if (frontendErrorLevel == 0)
              {
-                if ( SgProject::get_verbose() > 1 ) printf ("SUCCESS with call to experimental_FortranParser_main() \n");
+               if ( SgProject::get_verbose() > 1 ) mlog[INFO] << "SUCCESS with call to experimental_FortranParser_main()\n";
              }
             else
              {
-               printf ("Error returned from call to experimental_FortranParser_main(): FAILED! (frontendErrorLevel = %d) \n",frontendErrorLevel);
-               exit(1);
+               mlog[FATAL] << "Error returned from call to experimental_FortranParser_main(): frontendErrorLevel = "
+                           << frontendErrorLevel << "\n";
+               ROSE_ABORT();
              }
         }
        else
