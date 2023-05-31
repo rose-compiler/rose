@@ -30,7 +30,7 @@ gnat_home=`dirname ${gnat_bin}`
 # The base dir is at [repo base]/src/frontend/Experimental_Ada_ROSE_Connection/parser/ada_main:
 repo_base_dir=`(cd ${base_dir}/../../../../..; pwd)`
 test_base_dir="${repo_base_dir}/tests/nonsmoke/functional/CompileTests/experimental_ada_tests"
-test_dir="${test_base_dir}/dot_asis_tests/test_units"
+test_dir="${test_base_dir}/tests"
 
 target_dir="${test_dir}"
 target_project="default.gpr"
