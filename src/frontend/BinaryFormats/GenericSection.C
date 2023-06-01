@@ -92,7 +92,7 @@ void
 SgAsmGenericSection::grab_content()
 {
     SgAsmGenericFile *ef = get_file();
-    ROSE_ASSERT(ef);
+    ASSERT_not_null(ef);
 
     if (get_offset()<=ef->get_orig_size()) {
         if (get_offset()+get_size()<=ef->get_orig_size()) {
@@ -210,14 +210,14 @@ SgAsmGenericSection::clear_mapped()
 rose_addr_t
 SgAsmGenericSection::get_mapped_size() const
 {
-    ROSE_ASSERT(this != NULL);
+    ASSERT_not_null(this);
     return p_mapped_size;
 }
 
 void
 SgAsmGenericSection::set_mapped_size(rose_addr_t size)
 {
-    ROSE_ASSERT(this != NULL);
+    ASSERT_not_null(this);
     if (p_mapped_size!=size)
         set_isModified(true);
     p_mapped_size = size;
@@ -226,14 +226,14 @@ SgAsmGenericSection::set_mapped_size(rose_addr_t size)
 rose_addr_t
 SgAsmGenericSection::get_mapped_preferred_rva() const
 {
-    ROSE_ASSERT(this != NULL);
+    ASSERT_not_null(this);
     return p_mapped_preferred_rva;
 }
 
 void
 SgAsmGenericSection::set_mapped_preferred_rva(rose_addr_t a)
 {
-    ROSE_ASSERT(this != NULL);
+    ASSERT_not_null(this);
     if (p_mapped_preferred_rva!=a)
         set_isModified(true);
     p_mapped_preferred_rva = a;
@@ -242,7 +242,7 @@ SgAsmGenericSection::set_mapped_preferred_rva(rose_addr_t a)
 rose_addr_t
 SgAsmGenericSection::get_mapped_preferred_va() const
 {
-    ROSE_ASSERT(this != NULL);
+    ASSERT_not_null(this);
     if (is_mapped())
         return get_base_va() + get_mapped_preferred_rva();
     return 0;
@@ -251,7 +251,7 @@ SgAsmGenericSection::get_mapped_preferred_va() const
 rose_addr_t
 SgAsmGenericSection::get_base_va() const
 {
-    ROSE_ASSERT(this != NULL);
+    ASSERT_not_null(this);
 
     if (isSgAsmGenericHeader(this))
         return isSgAsmGenericHeader(this)->get_base_va();
@@ -263,7 +263,7 @@ SgAsmGenericSection::get_base_va() const
 Extent
 SgAsmGenericSection::get_mapped_preferred_extent() const
 {
-    ROSE_ASSERT(this != NULL);
+    ASSERT_not_null(this);
     return Extent(get_mapped_preferred_rva(), get_mapped_size());
 }
 
@@ -271,7 +271,7 @@ size_t
 SgAsmGenericSection::read_content(rose_addr_t start_offset, void *dst_buf, rose_addr_t size, bool strict)
 {
     SgAsmGenericFile *file = get_file();
-    ROSE_ASSERT(file!=NULL);
+    ASSERT_not_null(file);
     return file->read_content(start_offset, dst_buf, size, strict);
 }
 
@@ -279,7 +279,7 @@ size_t
 SgAsmGenericSection::read_content(const MemoryMap::Ptr &map, rose_addr_t start_va, void *dst_buf, rose_addr_t size, bool strict)
 {
     SgAsmGenericFile *file = get_file();
-    ROSE_ASSERT(file!=NULL);
+    ASSERT_not_null(file);
     return file->read_content(map, start_va, dst_buf, size, strict);
 }
 
@@ -294,7 +294,7 @@ SgAsmGenericSection::read_content_local(rose_addr_t start_offset, void *dst_buf,
 {
     size_t retval;
     SgAsmGenericFile *file = get_file();
-    ROSE_ASSERT(file!=NULL);
+    ASSERT_not_null(file);
     if (start_offset > get_size()) {
         if (strict)
             throw ShortRead(this, start_offset, size);
@@ -328,7 +328,7 @@ std::string
 SgAsmGenericSection::read_content_str(const MemoryMap::Ptr &map, rose_addr_t start_va, bool strict)
 {
     SgAsmGenericFile *file = get_file();
-    ROSE_ASSERT(file!=NULL);
+    ASSERT_not_null(file);
     return file->read_content_str(map, start_va, strict);
 }
 
@@ -336,7 +336,7 @@ std::string
 SgAsmGenericSection::read_content_str(rose_addr_t abs_offset, bool strict)
 {
     SgAsmGenericFile *file = get_file();
-    ROSE_ASSERT(file!=NULL);
+    ASSERT_not_null(file);
     return file->read_content_str(abs_offset, strict);
 }
 
@@ -365,7 +365,7 @@ SgAsmGenericSection::read_content_local_uleb128(rose_addr_t *rel_offset, bool st
         unsigned char byte;
         read_content_local(*rel_offset, &byte, 1, strict);
         *rel_offset += 1;
-        ROSE_ASSERT(shift<64);
+        ASSERT_require(shift<64);
         retval |= (byte & 0x7f) << shift;
         shift += 7;
         if (0==(byte & 0x80))
@@ -383,7 +383,7 @@ SgAsmGenericSection::read_content_local_sleb128(rose_addr_t *rel_offset, bool st
         unsigned char byte;
         read_content_local(*rel_offset, &byte, 1, strict);
         *rel_offset += 1;
-        ROSE_ASSERT(shift<64);
+        ASSERT_require(shift<64);
         retval |= (byte & 0x7f) << shift;
         shift += 7;
         if (0==(byte & 0x80))
@@ -398,7 +398,7 @@ SgAsmGenericSection::write(std::ostream &f, rose_addr_t offset, size_t bufsize, 
 {
     size_t nwrite;
 
-    ROSE_ASSERT(this != NULL);
+    ASSERT_not_null(this);
 
     /* Don't write past end of section */
     if (offset>=get_size()) {
@@ -418,18 +418,15 @@ SgAsmGenericSection::write(std::ostream &f, rose_addr_t offset, size_t bufsize, 
     /* Write bytes to file. This is a good place to set a break point if you're trying to figure out what section is writing
      * to a particular file address. For instance, if byte 0x7c is incorrect in the unparsed file you would set a conditional
      * breakpoint for o<=0x7c && o+nwrite>0x7c */
-    ROSE_ASSERT(f);
     off_t o = get_offset() + offset;
     f.seekp(o);
-    ROSE_ASSERT(f);
     f.write((const char*)buf, nwrite);
-    ROSE_ASSERT(f);
 
     /* Check that truncated data is all zero and fail if it isn't */
     for (size_t i=nwrite; i<bufsize; i++) {
         if (((const char*)buf)[i]) {
             char mesg[1024];
-            sprintf(mesg, "non-zero value truncated: buf[0x%zx]=0x%02x", i, ((const unsigned char*)buf)[i]);
+            snprintf(mesg, 1024, "non-zero value truncated: buf[0x%zx]=0x%02x", i, ((const unsigned char*)buf)[i]);
             mlog[ERROR] <<"SgAsmGenericSection::write: error: " <<mesg
                         <<" in [" <<get_id() <<"] \"" <<get_name()->get_string(true) <<"\"\n"
                         <<"    section is at file offset " <<StringUtility::addrToString(get_offset())
@@ -450,16 +447,18 @@ SgAsmGenericSection::write(std::ostream &f, rose_addr_t offset, size_t bufsize, 
 rose_addr_t
 SgAsmGenericSection::write(std::ostream &f, rose_addr_t offset, const SgFileContentList &buf) const
 {
-    if (0==buf.size())
+    if (0==buf.size()) {
         return 0;
+    }
     return write(f, offset, buf.size(), &(buf[0]));
 }
 
 rose_addr_t
 SgAsmGenericSection::write(std::ostream &f, rose_addr_t offset, const SgUnsignedCharList &buf) const
 {
-    if (0==buf.size())
+    if (0==buf.size()) {
         return 0;
+    }
     return write(f, offset, buf.size(), (void*)&(buf[0]));
 }
 
@@ -520,7 +519,7 @@ SgAsmGenericSection::get_referenced_extents() const
     AddressIntervalSet retval;
     AddressInterval segment = AddressInterval::baseSize(get_offset(), get_size());
     const AddressIntervalSet &fileExtents = get_file()->get_referenced_extents();
-    BOOST_FOREACH (const AddressInterval &interval, fileExtents.intervals()) {
+    for (const AddressInterval &interval : fileExtents.intervals()) {
         if (segment.contains(interval)) {
             retval.insert(AddressInterval::baseSize(interval.least()-get_offset(), interval.size()));
         } else if (interval.isLeftOf(segment) || interval.isRightOf(segment)) {
@@ -550,7 +549,7 @@ SgAsmGenericSection::get_unreferenced_extents() const
 void
 SgAsmGenericSection::extend(rose_addr_t size)
 {
-    ROSE_ASSERT(get_file() != NULL);
+    ASSERT_not_null(get_file());
     ROSE_ASSERT(get_file()->get_tracking_references()); /*can only be called during the parsing phase*/
     rose_addr_t new_size = get_size() + size;
 
@@ -581,12 +580,7 @@ SgAsmGenericSection::is_file_header()
 void
 SgAsmGenericSection::unparse(std::ostream &f) const
 {
-#if 0
-    /* FIXME: for now we print the names of all sections we dump using this method. Eventually most of these sections will
-     *        have subclasses that override this method. */
-    fprintf(stderr, "SgAsmGenericSection::unparse(FILE*) for section [%d] \"%s\"\n", id, name.c_str());
-#endif
-
+    /* Most subclasses should override this method */
     write(f, 0, p_data);
 }
 
@@ -655,9 +649,9 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sSection[%zd].", prefix, idx);
+        snprintf(p, 4096, "%sSection[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sSection.", prefix);
+        snprintf(p, 4096, "%sSection.", prefix);
     }
     
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));

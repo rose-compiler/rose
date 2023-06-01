@@ -132,6 +132,45 @@ SgAsmJvmFileHeader::parse()
   return this;
 }
 
+/** Write the section back to a binary file */
+void
+SgAsmJvmFileHeader::unparse(std::ostream &f) const
+{
+  SgAsmGenericFile* gf = get_file();
+  auto data = gf->get_data();
+  auto count = f.tellp();
+
+  // As a test, dump magic #, ...,  then raw bytes
+  auto bytes = reinterpret_cast<const char*>(&(get_magic()[0]));
+  f.write(bytes, 4);
+
+  auto minor = p_minor_version;
+  auto major = p_major_version;
+  ByteOrder::host_to_be(minor, &minor);
+  ByteOrder::host_to_be(major, &major);
+
+  f.write(reinterpret_cast<const char*>(&minor), sizeof minor);
+  f.write(reinterpret_cast<const char*>(&major), sizeof major);
+
+  // TODO...
+  // get_constant_pool()->unparse(f);
+  // f.write(reinterpret_cast<const char*>(&p_access_flags), sizeof p_access_flags);
+  // f.write(reinterpret_cast<const char*>(&p_this_class),   sizeof p_this_class);
+  // f.write(reinterpret_cast<const char*>(&p_super_class),  sizeof p_super_class);
+  // interfaces
+  // fields
+  // attributes
+
+  count = f.tellp();
+  bytes = reinterpret_cast<const char*>(&(data.pool()[count]));
+  f.write(bytes, data.size()-count);
+
+  // The end-of-file marker is read during parsing, don't rewrite or write '\0' bytes padding at end
+  // However, it seems logic is wrong in GenericFile.C used to call extend_to_eof(), thus following required for JVM
+  gf->set_truncate_zeros(true);
+}
+
+// This should be added to ROSETTA
 #if 0
 bool
 SgAsmJvmFileHeader::reallocate()
@@ -141,13 +180,8 @@ SgAsmJvmFileHeader::reallocate()
 }
 #endif
 
+// This should be added to ROSETTA
 #if 0
-void
-SgAsmJvmFileHeader::unparse(std::ostream &f) const
-{
-  /* Do not unparse to this file. */
-}
-
 bool
 SgAsmJvmFileHeader::is_JVM(SgAsmGenericFile* file)
 {

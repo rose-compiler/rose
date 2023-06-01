@@ -39,12 +39,10 @@
 // DQ (9/26/2018): Added so that we can call the display function for TokenStreamSequenceToNodeMapping (for debugging).
 #include "tokenStreamMapping.h"
 
-namespace si = SageInterface;
-
-
-// DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 using namespace Rose;
+using namespace Rose::Diagnostics; // for mlog, INFO, WARN, ERROR, FATAL, etc.
+namespace SI = SageInterface;
 
 // extern ROSEAttributesList *getPreprocessorDirectives( char *fileName); // [DT] 3/16/2000
 
@@ -152,7 +150,6 @@ Unparser::~Unparser()
      delete u_fortran_locatedNode;
    }
 
-
 Unparser::Unparser(const Unparser & X)
    {
   // DQ (9/11/2011): Added explicit copy constructor to avoid possible double free of formatHelpInfo (reported by static analysis).
@@ -162,7 +159,7 @@ Unparser::Unparser(const Unparser & X)
   // Call the operator=() member function.
      *this = X;
 
-     printf ("Error: I think we likely don't want to be using this constructor (UnparseFormat(const UnparseFormat & X)). \n");
+     mlog[FATAL] << "Error: I think we likely don't want to be using this constructor (UnparseFormat(const UnparseFormat & X))\n";
      ROSE_ABORT();
    }
 
@@ -300,27 +297,6 @@ Unparser::isASecondaryFile ( SgStatement* stmt )
   // for now just assume there are no secondary files
      return false;
    }
-
-#if 0
-// DQ (10/11/2007): This does not appear to be used any more (member functions in the SgProject
-// call the member functions in the SgFile which call the  unparseFile function
-// directly).
-void
-Unparser::unparseProject ( SgProject* project, SgUnparse_Info& info )
-   {
-     ASSERT_not_null(project);
-     SgFile* file = &(project->get_file(0));
-     ASSERT_not_null(file);
-
-     unparseFile(file, info);
-   }
-#endif
-
-
-
-
-
-
 
 void
 Unparser::computeNameQualification(SgSourceFile* file)
@@ -505,7 +481,6 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 
 #if 0
      printf ("In Unparser::unparseFile(): file->getFileName()         = %s \n",file->getFileName().c_str());
-  // printf ("In Unparser::unparseFile(): file->getPhysicalFileName() = %s \n",file->getPhysicalFileName().c_str());
 #endif
 
 #if 1
@@ -918,7 +893,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
             // ROSE_ASSERT(unparseScope == NULL);
 
             // negara1 (06/29/2011): If unparseScope is provided, unparse it. Otherwise, unparse the global scope (the default behavior).
-               if (unparseScope != NULL)
+               if (unparseScope != nullptr)
                   {
 #if 0
                     printf ("In Unparser::unparseFile(): unparseScope = %p = %s \n",unparseScope,unparseScope->class_name().c_str());
@@ -1732,15 +1707,11 @@ Unparser::unparseFile(SgBinaryComposite *binary, SgUnparse_Info &info)
         }
 
     ASSERT_not_null(binary);
-    ROSE_ASSERT(binary->get_binary_only()) ;
+    ASSERT_require(binary->get_binary_only()) ;
 
     /* Unparse each file and create an ASCII dump as well */
     const SgAsmGenericFilePtrList &files = binary->get_genericFileList()->get_files();
     ROSE_ASSERT(!files.empty());
-
-#if 0
-    printf ("In Unparser::unparseFile(SgBinaryComposite,SgUnparse_Info): files.size() = %zu \n",files.size());
-#endif
 
     for (size_t i=0; i<files.size(); i++) {
         unparseAsmFile(files[i], info);
@@ -1787,15 +1758,20 @@ Unparser::unparseFile(SgBinaryComposite *binary, SgUnparse_Info &info)
                     fputs(s.c_str(), asm_file);
 #endif
                   }
-#if 0
-               printf ("In Unparser::unparseFile(SgBinaryComposite,SgUnparse_Info): call fclose() \n");
-#endif
 
                fclose(asm_file);
              }
         }
 }
-#endif
+
+void
+Unparser::unparseFile(SgJvmComposite* jvm, SgUnparse_Info &info)
+{
+  // no implementation for the moment
+    unparseFile(isSgBinaryComposite(jvm), info);
+}
+
+#endif // ROSE_ENABLE_BINARY_ANALYSIS
 
 string
 unparseStatementWithoutBasicBlockToString ( SgStatement* statement )
@@ -3452,27 +3428,15 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
             // DQ (9/7/2017): Newly added enum value to support binaries (added to general language handling).
                case SgFile::e_Binary_language:
                   {
-                 // printf ("Error: SgFile::e_Binary_language detected in unparser (unparser not implemented, unparsing ignored) \n");
-
-                    ROSE_ASSERT(file->get_binary_only() == true);
-
-                 // DQ (11/15/2017): We need this to avoid output of a ".s" file.
+                    ASSERT_require(file->get_binary_only() == true);
                     outputFilename = "rose_" + file->get_sourceFileNameWithoutPath();
-
-                 // outputFilename = file->get_sourceFileNameWithoutPath();
                     outputFilename += ".s";
                     break;
                   }
 
-
                case SgFile::e_Fortran_language:
                   {
-                 // printf ("Error: SgFile::e_Fortran_language detected in unparser (unparser not implemented, unparsing ignored) \n");
-
                     outputFilename = "rose_" + file->get_sourceFileNameWithoutPath();
-#if 0
-                    printf ("In unparseFile(SgFile* file): outputFilename not set using default: outputFilename = %s \n",outputFilename.c_str());
-#endif
                     break;
                   }
 
@@ -3509,23 +3473,24 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 
                  // Create package folder structure
                     boost::filesystem::create_directories(outFolder);
-                    ROSE_ASSERT(boost::filesystem::exists(outFolder));
+                    ASSERT_require(boost::filesystem::exists(outFolder));
                     outputFilename = outFolder + file -> get_sourceFileNameWithoutPath();
 
                  // Convert Windows-style paths to POSIX-style.
 #ifdef _MSC_VER
                     boost::replace_all(outputFilename, "\\", "/");
 #endif
-#if 0
-                    printf ("In unparseFile(): generated Java outputFilename = %s \n",outputFilename.c_str());
-#endif
+                    break;
+                  }
+
+               case SgFile::e_Jvm_language:
+                  {
+                    outputFilename = "rose_" + file->get_sourceFileNameWithoutPath();
                     break;
                   }
 
                case SgFile::e_X10_language:
                   {
-                 // printf ("Error: SgFile::e_X10_language detected in unparser (unparser not implemented, unparsing ignored) \n");
-
                     ROSE_ASSERT(file->get_X10_only() == true);
 
                  // X10 is Java source code; see Java file/class naming conventions.
@@ -3670,7 +3635,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                  //
 
                     outputFilename = source_file->get_sourceFileNameWithPath();
-                    std::cout << "[WARN] [Unparser] Clobbering the original input file: " << outputFilename << std::endl;
+                    mlog[WARN] << "[Unparser] Clobbering the original input file: " << outputFilename << "\n";
                   }
              }
 
@@ -3727,7 +3692,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
              {
                if ( SgProject::get_verbose() > 0 )
                   {
-                    printf ("In unparseFile(SgFile*): (outputFilename) output file exists = %s \n",output_file.string().c_str());
+                    mlog[INFO] << "In unparseFile(SgFile*): (outputFilename) output file exists = " << output_file.string() << "\n";
                   }
 
                SgProject* project = TransformationSupport::getProject(file);
@@ -3740,7 +3705,6 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                     printf ("Error: the output file already exists, cannot overwrite (-rose:noclobber_output_file option specified) \n");
                     printf ("   --- outputFilename = %s \n",outputFilename.c_str());
                     printf ("****************************************************************************************************** \n\n\n");
-                 // ROSE_ASSERT(false);
                     ROSE_ABORT();
                   }
                  else
@@ -3791,8 +3755,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
        // DQ (12/8/2007): Added error checking for opening out output file.
           if (!ROSE_OutputFile)
              {
-            // throw std::exception("(fstream) error while opening file.");
-               printf ("Error detected in opening file %s for output \n",outputFilename.c_str());
+               mlog[FATAL] << "Error detected in opening file " << outputFilename << " for output\n";
                ROSE_ABORT();
              }
 
@@ -3845,16 +3808,6 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                                     _class,
                                     _forced_transformation_format,
                                     _unparse_includes );
-
-       // printf ("Rose::getFileName(file) = %s \n",Rose::getFileName(file));
-       // printf ("file->get_file_info()->get_filenameString = %s \n",file->get_file_info()->get_filenameString().c_str());
-
-       // DQ (7/19/2007): Remove lineNumber from constructor parameter list.
-       // int lineNumber = 0;  // Zero indicates that ALL lines should be unparsed
-       // Unparser roseUnparser ( &file, &ROSE_OutputFile, Rose::getFileName(&file), roseOptions, lineNumber );
-       // Unparser roseUnparser ( &ROSE_OutputFile, Rose::getFileName(&file), roseOptions, lineNumber, NULL, repl );
-       // Unparser roseUnparser ( &ROSE_OutputFile, Rose::getFileName(file), roseOptions, lineNumber, unparseHelp, unparseDelegate );
-       // Unparser roseUnparser ( &ROSE_OutputFile, file->get_file_info()->get_filenameString(), roseOptions, lineNumber, unparseHelp, unparseDelegate );
 
           Unparser roseUnparser ( &ROSE_OutputFile, file->get_file_info()->get_filenameString(), roseOptions, unparseHelp, unparseDelegate );
 
@@ -3911,8 +3864,12 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
                case V_SgBinaryComposite:
                   {
-                    SgBinaryComposite* binary = isSgBinaryComposite(file);
-                    roseUnparser.unparseFile(binary,inheritedAttributeInfo);
+                    roseUnparser.unparseFile(isSgBinaryComposite(file), inheritedAttributeInfo);
+                    break;
+                  }
+               case V_SgJvmComposite:
+                  {
+                    roseUnparser.unparseFile(isSgJvmComposite(file), inheritedAttributeInfo);
                     break;
                   }
 #endif
@@ -3920,16 +3877,15 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                case V_SgUnknownFile:
                   {
                     SgUnknownFile* unknownFile = isSgUnknownFile(file);
-
                     unknownFile->set_skipfinalCompileStep(true);
 
-                    printf ("Warning: Unclear what to unparse from a SgUnknownFile (set skipfinalCompileStep) \n");
+                    mlog[WARN] << "Unclear what to unparse from a SgUnknownFile (set skipfinalCompileStep)\n";
                     break;
                   }
 
                default:
                   {
-                    printf ("Error: default reached in unparser: file = %s \n",file->class_name().c_str());
+                    mlog[FATAL] << "Error: default reached in unparser: file = " << file->class_name() << "\n";
                     ROSE_ABORT();
                   }
              }
@@ -3948,7 +3904,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
        // Invoke post-output user-defined callbacks if any.  We must pass the absolute output name because the build system may
        // have changed directories by now and the callback might need to know how this name compares to the top of the build
        // tree.
-          if (unparseHelp != NULL) {
+          if (unparseHelp != nullptr) {
               Rose::FileSystem::Path fullOutputName = Rose::FileSystem::makeAbsolute(outputFilename);
               UnparseFormatHelp::PostOutputCallback::Args args(file, fullOutputName);
               unparseHelp->postOutputCallbacks.apply(true, args);

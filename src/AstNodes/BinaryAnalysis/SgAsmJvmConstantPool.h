@@ -33,6 +33,9 @@ public:
      */
     std::string get_utf8_string(size_t index) const;
 
+    /** Write section back to a binary file */
+    virtual void unparse(std::ostream&) const override;
+
     /** Print some debugging information */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 };

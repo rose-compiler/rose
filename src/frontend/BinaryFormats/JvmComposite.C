@@ -75,6 +75,9 @@ SgJvmComposite::SgJvmComposite(vector<string> & argv, SgProject* project)
   set_skipfinalCompileStep(true);
   set_disable_edg_backend(true);
   set_skip_translation_from_edg_ast_to_rose_ast(true);
+
+  // Try setting binary_only, not sure if we should for a JVM file, but we shall try
+  set_binary_only(true);
 }
 
 int
@@ -84,9 +87,6 @@ SgJvmComposite::callFrontEnd()
   // all filenames and non-rose specific options in the argv list.
   vector<string> argv{get_originalCommandLineArgumentList()};
   processRoseCommandLineOptions(argv);
-
-  // TODO: unparsing
-  set_skip_unparse(true);
 
   return buildAST(argv, vector<string>{});
 }
@@ -99,7 +99,7 @@ SgJvmComposite::buildAST(vector<string> argv, vector<string> /*inputCommandLine*
   vector<string> classes{};
 
   // argv is expected to contain executable and file name (for now, TODO: multiple files)
-  ROSE_ASSERT(argv.size() == 2);
+  ASSERT_require(argv.size() == 2);
   string fileName{argv[1]};
 
   // Obtain/extract class file(s)

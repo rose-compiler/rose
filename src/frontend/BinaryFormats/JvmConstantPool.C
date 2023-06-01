@@ -8,6 +8,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 using PoolEntry = SgAsmJvmConstantPoolEntry;
+using namespace Rose::Diagnostics; // for mlog, INFO, WARN, ERROR, FATAL, etc.
 
 SgAsmJvmConstantPool::SgAsmJvmConstantPool(SgAsmJvmFileHeader* jfh)
     : SgAsmGenericSection(isSgAsmGenericFile(jfh->get_parent()), jfh) {
@@ -77,59 +78,58 @@ std::string PoolEntry::to_string(PoolEntry::Kind kind)
 
 std::string cp_tag(PoolEntry* entry)
 {
-  return "TODO:const_qualifier";
-  //  return PoolEntry::to_string(entry->get_tag());
+  return PoolEntry::to_string(entry->get_tag());
 }
 
 void PoolEntry::dump(FILE* f, const char* prefix, ssize_t idx) const
 {
   if (get_tag() != PoolEntry::EMPTY) {
-    fprintf(f, "%s%ld:%s_info", prefix, idx, PoolEntry::to_string(this->get_tag()).c_str());
+    fprintf(f, "%sPoolEntry [%ld]: \t\t\t = %s_info", prefix, idx, PoolEntry::to_string(this->get_tag()).c_str());
   }
 
   switch (get_tag()) {
     case PoolEntry::CONSTANT_Utf8:
-      fprintf(f, ":%d:%s", get_length(), std::string{get_utf8_bytes(), get_length()}.c_str());
+      fprintf(f, ": %d: %s", get_length(), std::string{get_utf8_bytes(), get_length()}.c_str());
       break;
     case PoolEntry::CONSTANT_Integer:
     case PoolEntry::CONSTANT_Float:
-      fprintf(f, ":%d", get_bytes());
+      fprintf(f, ": %d", get_bytes());
       break;
-    case PoolEntry::CONSTANT_Long:
+    case PoolEntry:: CONSTANT_Long:
     case PoolEntry::CONSTANT_Double:
-      fprintf(f, ":%d:%d", get_hi_bytes(), get_low_bytes());
+      fprintf(f, ": %d: %d", get_hi_bytes(), get_low_bytes());
       break;
     case PoolEntry::CONSTANT_Class:
     case PoolEntry::CONSTANT_Module:
     case PoolEntry::CONSTANT_Package:
-      fprintf(f, ":%d", get_name_index());
+      fprintf(f, ": %d", get_name_index());
       break;
     case PoolEntry::CONSTANT_String:
-      fprintf(f, ":%d", get_string_index());
+      fprintf(f, ": %d", get_string_index());
       break;
     case PoolEntry::CONSTANT_Fieldref:
     case PoolEntry::CONSTANT_Methodref:
     case PoolEntry::CONSTANT_InterfaceMethodref:
-      fprintf(f, ":%d:%d", get_class_index(), get_name_and_type_index());
+      fprintf(f, ": %d: %d", get_class_index(), get_name_and_type_index());
       break;
     case PoolEntry::CONSTANT_NameAndType:
-      fprintf(f, ":%d:%d", get_name_index(), get_descriptor_index());
+      fprintf(f, ": %d: %d", get_name_index(), get_descriptor_index());
       break;
     case PoolEntry::CONSTANT_MethodHandle:
-      fprintf(f, ":%d:%d", get_reference_kind(), get_reference_index());
+      fprintf(f, ": %d: %d", get_reference_kind(), get_reference_index());
       break;
     case PoolEntry::CONSTANT_MethodType:
-      fprintf(f, ":%d", get_descriptor_index());
+      fprintf(f, ": %d", get_descriptor_index());
       break;
     case PoolEntry::CONSTANT_Dynamic:
     case PoolEntry::CONSTANT_InvokeDynamic:
-      fprintf(f, ":%d:%d", get_bootstrap_method_attr_index(), get_name_and_type_index());
+      fprintf(f, ": %d: %d", get_bootstrap_method_attr_index(), get_name_and_type_index());
       break;
     case PoolEntry::EMPTY:
-      fprintf(f, "%s%ld:Empty", prefix, idx);
+      fprintf(f, "%s%ld: Empty", prefix, idx);
       break;
     default:
-      fprintf(f, "%s%ld:Unknown tag", prefix, idx);
+      fprintf(f, "%s%ld: Unknown tag", prefix, idx);
       break;
   }
   fprintf(f, "\n");
@@ -211,14 +211,6 @@ SgAsmJvmConstantPool* SgAsmJvmConstantPool::parse()
   auto header = get_header();
   ASSERT_not_null(header);
 
-#ifdef DEBUG_ON
-  rose_addr_t offset = header->get_offset();
-  std::cout << "SgAsmJvmConstantPool::parse() ...\n";
-  std::cout << "SgAsmJvmConstantPool::parse() header class name is " << header->class_name() << std::endl;
-  std::cout << "SgAsmJvmConstantPool::parse() this offset is " << get_offset() << std::endl;
-  std::cout << "SgAsmJvmConstantPool::parse() header offset is " << offset << std::endl;
-#endif
-
   /* Constant pool count */
   uint16_t constant_pool_count;
   Jvm::read_value(this, constant_pool_count);
@@ -251,11 +243,20 @@ SgAsmJvmConstantPool* SgAsmJvmConstantPool::parse()
   return this;
 }
 
-void SgAsmJvmConstantPool::dump(FILE* f, const char *prefix, ssize_t idx) const
+// Write section back to a binary file
+void SgAsmJvmConstantPool::unparse(std::ostream& os) const
 {
-  fprintf(f, "%s", prefix);
+  mlog[WARN] << "Unparsing of SgAsmJvmConstantPool is not implemented yet\n";
+}
+
+void SgAsmJvmConstantPool::dump(FILE* f, const char* prefix, ssize_t idx) const
+{
+  SgAsmGenericSection::dump(f, prefix, idx);
+
+  // set idx for entry index
+  idx = 0;
   for (auto entry : get_entries()) {
-    entry->dump(stdout, "   ", idx++);
+    entry->dump(f, prefix, idx++);
   }
 }
 
