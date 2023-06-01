@@ -250,11 +250,10 @@ class Unparser
 
       //! friend string globalUnparseToString ( SgNode* astNode );
 
-       // void unparseProject ( SgProject* project, SgUnparse_Info& info );
-       // void unparseFile       ( SgFile* file, SgUnparse_Info& info );
           void unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStatement* unparseScope = NULL );
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
           void unparseFile ( SgBinaryComposite*, SgUnparse_Info& info );
+          void unparseFile ( SgJvmComposite*, SgUnparse_Info& info );
 
        // Unparses a single physical file
           void unparseAsmFile ( SgAsmGenericFile* asmFile, SgUnparse_Info & info );
@@ -262,10 +261,6 @@ class Unparser
 
       //! remove unneccessary white space to build a condensed string
           static std::string removeUnwantedWhiteSpace ( const std::string & X );
-
-      //! friend string globalUnparseToString ( SgNode* astNode );
-      //  void unparseProject ( SgProject* project, SgUnparse_Info& info );
-      //  void unparseFile    ( SgFile* file, SgUnparse_Info& info );
 
        // DQ (12/5/2006): Output separate file containing source position information for highlighting (useful for debugging).
           int get_embedColorCodesInGeneratedCode();
@@ -285,8 +280,6 @@ class Unparser
           void unparseFileUsingTokenStream ( SgSourceFile* file );
 
        // DQ (9/30/2013): Supporting function for evaluating token source position information.
-       // int getNumberOfLines( std::string s ) const;
-       // int getColumnNumberOfEndOfString( std::string s ) const;
           static int getNumberOfLines( std::string s );
           static int getColumnNumberOfEndOfString( std::string s );
 

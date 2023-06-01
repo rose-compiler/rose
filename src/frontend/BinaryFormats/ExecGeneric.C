@@ -15,17 +15,15 @@
 
 using namespace Rose;
 
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // functions
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
 void
 SgAsmExecutableFileFormat::unparseBinaryFormat(const std::string &name, SgAsmGenericFile *ef)
 {
-    std::ofstream f(name.c_str(), std::ios_base::out|std::ios_base::binary|std::ios_base::trunc);
-    ROSE_ASSERT(f.is_open());
+    std::ofstream f(name, std::ios_base::out|std::ios_base::binary|std::ios_base::trunc);
+    ASSERT_require(f.is_open());
     f.exceptions(std::ios::badbit | std::ios::failbit);
     unparseBinaryFormat(f, ef);
     f.close();
@@ -34,10 +32,11 @@ SgAsmExecutableFileFormat::unparseBinaryFormat(const std::string &name, SgAsmGen
 void
 SgAsmExecutableFileFormat::unparseBinaryFormat(std::ostream &f, SgAsmGenericFile *ef)
 {
-    ROSE_ASSERT(ef);
+    ASSERT_not_null(ef);
 
-    if (checkIsModifiedFlag(ef))
+    if (checkIsModifiedFlag(ef)) {
         ef->reallocate();
+    }
 
     ef->unparse(f);
 }

@@ -90,6 +90,9 @@ public:
      *  stored in the file, the size of the ELF File Header will be adjusted upward if necessary. */
     virtual SgAsmJvmFileHeader* parse() override;
 
+    /** Write the section back to a binary file */
+    virtual void unparse(std::ostream&) const override;
+
     /** Returns true if a cursory look at the file indicates that it could be a JVM class file. */
     static bool is_JVM(SgAsmGenericFile*);
 };

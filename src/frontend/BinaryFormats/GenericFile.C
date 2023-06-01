@@ -18,6 +18,7 @@
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
+using namespace Rose::Diagnostics; // for mlog, INFO, WARN, ERROR, FATAL, etc.
 
 SgAsmGenericFile *
 SgAsmGenericFile::parse(std::string fileName)
@@ -135,8 +136,6 @@ SgAsmGenericFile::read_content(rose_addr_t offset, void *dst_buf, rose_addr_t si
 size_t
 SgAsmGenericFile::read_content(const MemoryMap::Ptr &map, rose_addr_t start_va, void *dst_buf, rose_addr_t size, bool strict)
 {
-    ASSERT_not_null(map);
-
     /* Note: This is the same algorithm as used by MemoryMap::read() except we do it here so that we have an opportunity
      *       to track the file byte references. */
     size_t ncopied = 0;
@@ -233,7 +232,7 @@ SgAsmGenericFile::add_header(SgAsmGenericHeader *header)
 #ifndef NDEBUG
     /* New header must not already be present. */
     for (size_t i=0; i< p_headers->get_headers().size(); i++) {
-        ROSE_ASSERT(p_headers->get_headers()[i] != header);
+        ASSERT_require(p_headers->get_headers()[i] != header);
     }
 #endif
     header->set_parent(p_headers);
@@ -262,7 +261,7 @@ SgAsmGenericFile::add_hole(SgAsmGenericSection *hole)
 #ifndef NDEBUG
     /* New hole must not already be present. */
     for (size_t i=0; i< p_holes->get_sections().size(); i++) {
-        ROSE_ASSERT(p_holes->get_sections()[i] != hole);
+        ASSERT_require(p_holes->get_sections()[i] != hole);
     }
 #endif
     hole->set_parent(p_holes);
@@ -557,7 +556,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
         } else if (space & ADDRSP_MEMORY) {
             space_s = "memory";
         }
-        sprintf(p, "SgAsmGenericFile::shift_extend[%" PRIuPTR "]: ", ncalls++);
+        snprintf(p, 256, "SgAsmGenericFile::shift_extend[%" PRIuPTR "]: ", ncalls++);
         fprintf(stderr, "%s    -- START --\n", p);
         fprintf(stderr, "%s    S = [%d] \"%s\"\n", p, s->get_id(), s->get_name()->get_string(true).c_str());
         fprintf(stderr, "%s    %s Sa=0x%08" PRIx64 " (%" PRIu64 "), Sn=0x%08" PRIx64 " (%" PRIu64 ")\n",
@@ -602,7 +601,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
             if (filespace) {
                 ep = all[i]->get_file_extent();
             } else {
-                ROSE_ASSERT(all[i]->is_mapped());
+                ASSERT_require(all[i]->is_mapped());
                 ep = all[i]->get_mapped_preferred_extent();
             }
             fprintf(stderr, "%s        0x%08" PRIx64 " 0x%08" PRIx64 " 0x%08" PRIx64 " [%d] \"%s\"\n",
@@ -631,7 +630,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
             if (filespace) {
                 amap.insert(all[i]->get_file_extent());
             } else {
-                ROSE_ASSERT(all[i]->is_mapped());
+                ASSERT_require(all[i]->is_mapped());
                 amap.insert(all[i]->get_mapped_preferred_extent());
             }
         }
@@ -776,8 +775,8 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
                 hp = ap;
             }
         }
-        ROSE_ASSERT(after_hole);
-        ROSE_ASSERT(hp.relaxed_first() > nhs.relaxed_first()+nhs.size());
+        ASSERT_not_null(after_hole);
+        ASSERT_require(hp.relaxed_first() > nhs.relaxed_first()+nhs.size());
         rose_addr_t hole_size = hp.relaxed_first() - (nhs.relaxed_first()+nhs.size());
         if (debug) {
             fprintf(stderr, "%s    hole size = 0x%08" PRIx64 " (%" PRIu64 "); need 0x%08" PRIx64 " (%" PRIu64 "); %s\n",
@@ -789,7 +788,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
 
         /* Hole is not large enough. We need to recursively move things that are right of our neighborhood, then recompute the
          * all-sections address map and neighborhood(S). */
-        ROSE_ASSERT(0==pass); /*logic problem since the recursive call should have enlarged the hole enough*/
+        ASSERT_require(0==pass); /*logic problem since the recursive call should have enlarged the hole enough*/
         if (debug) {
             fprintf(stderr, "%s    Calling recursively to increase hole size by 0x%08" PRIx64 " (%" PRIu64 ") bytes\n",
                     p, need_more, need_more);
@@ -868,8 +867,8 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
             }
             break;
           default:
-            ROSE_ASSERT(!"invalid extent category");
-            break;
+            mlog[FATAL] << "invalid extent category";
+            exit(1);
         }
         if (debug) {
             const char *space_name = filespace ? "file" : "mem";
@@ -906,7 +905,6 @@ void
 SgAsmGenericFile::dump_all(const std::string &dump_name)
 {
     FILE *dumpFile = fopen(dump_name.c_str(), "wb");
-    ASSERT_not_null(dumpFile);
     try {
         // The file type should be the first; test harness depends on it
         fprintf(dumpFile, "%s\n", format_name());
@@ -1045,10 +1043,12 @@ SgAsmGenericFile::dump(FILE *f) const
         overlap[2] = 'h';
     }
     fprintf(f, "  %3s 0x%08" PRIx64 "%*s EOF", overlap, get_current_size(), 76, "");
-    if (get_current_size()!=p_data.size())
+    if (get_current_size() != p_data.size()) {
         fprintf(f, " (original EOF was 0x%08zx)", p_data.size());
-    if (get_truncate_zeros())
+    }
+    if (get_truncate_zeros()) {
         fputs(" [ztrunc]", f);
+    }
     fputc('\n', f);
     fprintf(f, "  --- ---------- ---------- ----------  ---------- ---------- ---------- ---------- ---- --- -----------------\n");
 
@@ -1056,7 +1056,7 @@ SgAsmGenericFile::dump(FILE *f) const
     AddressIntervalSet holes = get_unreferenced_extents();
     if (holes.size()>0) {
         fprintf(f, "These parts of the file have not been referenced during parsing:\n");
-        BOOST_FOREACH (const AddressInterval &interval, holes.intervals()) {
+        for (const AddressInterval &interval : holes.intervals()) {
             std::ostringstream ss;
             using namespace StringUtility;
             ss <<"    " <<toHex(interval.least()) <<" + " <<toHex(interval.size()) <<" = " <<toHex(interval.greatest()+1) <<"\n";
@@ -1104,7 +1104,7 @@ SgAsmGenericFile::unfill_holes()
     }
 
     /* Destructor for holes should have removed links to those holes. */
-    ROSE_ASSERT(get_holes()->get_sections().size()==0);
+    ASSERT_require(get_holes()->get_sections().size()==0);
 }
 
 void
@@ -1146,33 +1146,34 @@ SgAsmGenericFile::unparse(std::ostream &f) const
     memset(buf, 0xaa, sizeof buf);
     while (remaining>=sizeof buf) {
         f.write((const char*)buf, sizeof buf);
-        ROSE_ASSERT(f);
         remaining -= sizeof buf;
     }
     f.write((const char*)buf, remaining);
-    ROSE_ASSERT(f);
 #endif
 
     /* Write unreferenced sections (i.e., "holes") back to disk */
-    for (auto section: p_holes->get_sections())
+    for (auto section: p_holes->get_sections()) {
         section->unparse(f);
+    }
 
     /* Write file headers (and indirectly, all that they reference) */
-    for (auto header: p_headers->get_headers())
+    for (auto header: p_headers->get_headers()) {
         header->unparse(f);
+    }
 
     /* Extend the file to the full size. The unparser will not write zero bytes at the end of a file because some files
      * actually use the fact that sections that extend past the EOF will be zero padded.  For the time being we'll extend the
      * file to its full size. */
-    if (!get_truncate_zeros())
+    if (!get_truncate_zeros()) {
         extend_to_eof(f);
+    }
 }
 
 void
 SgAsmGenericFile::extend_to_eof(std::ostream &f) const
 {
     f.seekp(0, std::ios::end);
-    if (f.tellp()<(off_t)get_current_size()) {
+    if (f.tellp() < (off_t)get_current_size()) {
         f.seekp(get_current_size()-1);
         const char zero = '\0';
         f.write(&zero, 1);
@@ -1180,7 +1181,7 @@ SgAsmGenericFile::extend_to_eof(std::ostream &f) const
 }
 
 
-const char *
+const char*
 SgAsmGenericFile::format_name() const
 {
     return p_headers->get_headers().back()->format_name();

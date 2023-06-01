@@ -72,8 +72,9 @@ SgAsmGenericHeader::unparse(std::ostream &f) const
     SgAsmGenericSection::unparse(f);
 
     /* Unparse each section */
-    for (auto section: p_sections->get_sections())
+    for (auto section: p_sections->get_sections()) {
         section->unparse(f);
+    }
 }
 
 rose_addr_t
