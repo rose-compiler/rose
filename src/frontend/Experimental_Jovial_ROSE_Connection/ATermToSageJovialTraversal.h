@@ -292,7 +292,7 @@ ATbool traverse_NumericConversion(ATerm term, SgExpression* &expr);
 ATbool traverse_OptSign        (ATerm term, LanguageTranslation::ExpressionKind & op_enum);
 
 // 5.2 BIT FORMULAS
-ATbool traverse_BitFormula             (ATerm term, SgExpression* &expr);
+ATbool traverse_BitOrByteFormula       (ATerm term, SgExpression* &expr);
 ATbool traverse_LogicalComponent       (ATerm term, SgExpression* &expr);
 ATbool traverse_LogicalOperand         (ATerm term, SgExpression* &expr);
 ATbool traverse_BitPrimary             (ATerm term, SgExpression* &expr);
