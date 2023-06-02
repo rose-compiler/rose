@@ -1266,13 +1266,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
      vector<string> argv = get_originalCommandLineArgumentList();
      ROSE_ASSERT(argv.size() > 0);
 
-  // DQ (12/22/2008): This should only be called once (outside of the loop over all command line arguments!
-  // DQ (12/8/2007): This leverages existing support in commandline processing
-  // printf ("In SgProject::processCommandLine(): Calling CommandlineProcessing::generateSourceFilenames(argv) \n");
-
   // Note that we need to process this option before the interpretation of the filenames (below).
-  // DQ (2/4/2009): Data member was moved to SgProject from SgFile.
-  // DQ (12/27/2007): Allow defaults to be set based on filename extension.
      if ( CommandlineProcessing::isOption(argv,"-rose:","(binary|binary_only)",true) == true )
         {
           if ( SgProject::get_verbose() >= 1 )
@@ -1280,13 +1274,11 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           set_binary_only(true);
         }
 
-  // DQ (2/4/2009): The specification of "-rose:binary" causes filenames to be interpreted
+  // The specification of "-rose:binary" causes filenames to be interpreted
   // differently if they are object files or libary archive files.
-  // p_sourceFileNameList = CommandlineProcessing::generateSourceFilenames(argv);
      p_sourceFileNameList = CommandlineProcessing::generateSourceFilenames(argv,get_binary_only());
 
   // Build a list of source, object, and library files on the command line
-  // int sourceFileNameCounter = 0;
      for (unsigned int i = 1; i < argv.size(); i++)
         {
        // find the source code filenames and modify them to be the output filenames
@@ -1294,8 +1286,6 @@ SgProject::processCommandLine(const vector<string>& input_argv)
 
        // DQ (2/4/2009): Only put *.o files into the objectFileNameList is they are not being
        // processed as binary source files (targets for analysis, as opposed to linking).
-       // DQ (1/16/2008): This is a better (simpler) implementation
-       // if (CommandlineProcessing::isObjectFilename(argv[i]) == true)
           if ( (get_binary_only() == false) && (CommandlineProcessing::isObjectFilename(argv[i]) == true) )
              {
                p_objectFileNameList.push_back(argv[i]);
@@ -1613,24 +1603,12 @@ SgProject::processCommandLine(const vector<string>& input_argv)
        }
      }
 
-  // Verbose ?
-
      if ( get_verbose() > 1 )
         {
        // Find out what file we are doing transformations upon
           printf ("In SgProject::processCommandLine() (verbose mode ON): \n");
           display ("In SgProject::processCommandLine()");
         }
-
-#if 0
-     printf ("Leaving SgProject::processCommandLine() \n");
-     display("At base of SgProject::processCommandLine()");
-#endif
-
-#if 0
-     printf ("Exiting as a test at base of SgProject::processCommandLine() \n");
-     ROSE_ABORT();
-#endif
    }
 
 //------------------------------------------------------------------------------

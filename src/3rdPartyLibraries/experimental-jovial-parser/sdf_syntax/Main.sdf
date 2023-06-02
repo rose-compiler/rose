@@ -1745,11 +1745,9 @@ context-free syntax
   'BIT' '(' Formula ','
             Fbit ',' Nbit ')' -> BitFunctionVariable   {cons("BitFunctionVariable")}
 
-%%'BYTE'
-%%  '(' CharacterVariable ','
-%%        Fbyte ',' Nbyte ')' -> ByteFunctionVariable  {cons("ByteFunctionVariable")}
-
   'BYTE' '(' Variable ','
+          Fbyte ',' Nbyte ')' -> ByteFunctionVariable  {cons("ByteFunctionVariable"), prefer}
+  'BYTE' '(' Formula ','
           Fbyte ',' Nbyte ')' -> ByteFunctionVariable  {cons("ByteFunctionVariable")}
 
   RepConversion
@@ -1850,6 +1848,8 @@ context-free syntax
 %%
   'BYTE' '(' Formula
     ',' Fbyte ',' Nbyte ')'   -> ByteFunction         {cons("ByteFunction")}
+  'BYTE' '(' RepFunctionVariable
+    ',' Fbyte ',' Nbyte ')'   -> ByteFunction         {cons("ByteFunction"), prefer}
 
   Formula                     -> Fbyte
   Formula                     -> Nbyte

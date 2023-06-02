@@ -6,6 +6,12 @@
 #include <iostream>
 
 #define PRINT_ATERM_TRAVERSAL 0
+#if 0
+inline int set_bit(int const v, permissions const p)
+{
+   return v | p;
+}
+#endif
 
 using namespace ATermSupport;
 using namespace Jovial_ROSE_Translation;
@@ -5629,7 +5635,7 @@ ATbool ATermToSageJovialTraversal::traverse_Formula(ATerm term, SgExpression* &e
    else if (traverse_NumericConversion(term, expr)) {
       // MATCHED NumericConversion
    }
-   else if (traverse_BitFormula(term, expr)) {
+   else if (traverse_BitOrByteFormula(term, expr)) {
       // BooleanFormula generalized to Formula
       // BitConversion still part of BitFormula
    }
@@ -5927,15 +5933,19 @@ ATbool ATermToSageJovialTraversal::traverse_OptSign(ATerm term, LanguageTranslat
 //========================================================================================
 // 5.2 BIT FORMULAS
 //----------------------------------------------------------------------------------------
-ATbool ATermToSageJovialTraversal::traverse_BitFormula(ATerm term, SgExpression* &expr)
+
+// BitFormula has been removed from grammar as part of Formula generalization. But
+// BitVariableFormula and ByteVariableFormula use it to get to FunctionCall (for different reasons).
+ATbool ATermToSageJovialTraversal::traverse_BitOrByteFormula(ATerm term, SgExpression* &expr)
 {
 #if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_BitFormula: %s\n", ATwriteToString(term));
+   printf("... traverse_BitOrByteFormula: %s\n", ATwriteToString(term));
 #endif
    ATerm t_operand;
 
    expr = nullptr;
 
+   // ByteVariableForumula uses LogicalOperand to get to FunctionCall (convoluted generalized Formula)
    if (traverse_LogicalOperand(term, expr)) {
       // MATCHED LogicalOperand
    }
@@ -6485,16 +6495,19 @@ ATbool ATermToSageJovialTraversal::traverse_BitFunctionVariable(ATerm term, SgEx
    func_call = nullptr;
 
    // Grammar (this is an lvalue call expression, I don't think it can be an rvalue (BitFunction)
-   //  'BIT' '(' BitVariable ',' Fbit ',' Nbit ')' -> BitFunctionVariable {cons("BitFunctionVariable"), prefer}
-   //  'BIT' '(' BitFormula ','  Fbit ',' Nbit ')' -> BitFunctionVariable {cons("BitFunctionVariable")}
+   //  'BIT' '(' Variable ',' Fbit ',' Nbit ')' -> BitFunctionVariable {cons("BitFunctionVariable"), prefer}
+   //  'BIT' '(' Formula ','  Fbit ',' Nbit ')' -> BitFunctionVariable {cons("BitFunctionVariable")}
    //
    if (ATmatch(term, "BitFunctionVariable(<term>,<term>,<term>)", &t_bitvar, &t_fbit, &t_nbit)) {
-      if (ATmatch(t_bitvar, "BitVariable(<term>)", &t_var)) {
-         if (traverse_Variable(t_var, variable)) {
-            // MATCHED BitVariable -> Variable
-         } else return ATfalse;
+     // Is it possible generate a Variable now or is Formula enough (try running all tests to see)
+     // Formula may cover all (but only looking at rvalue at moment)
+      if (ATmatch(t_bitvar, "Variable(<term>)", &t_var)) {
+        if (traverse_Variable(t_var, variable)) {
+         // MATCHED Variable
+         // MATCHED BitVariable? -> Variable
+        } else return ATfalse;
       } else if (traverse_Formula(t_bitvar, variable)) {
-         // BooleanFormula generalized to Formula
+         // BooleanFormula generalized to Formula // checkout language spec if generalized (probably)
       } else return ATfalse;
 
       if (ATmatch(t_fbit, "Fbit(<term>)", &t_first_bit)) {
@@ -6550,7 +6563,7 @@ ATbool ATermToSageJovialTraversal::traverse_ByteFunctionVariable(ATerm term, SgE
    printf("... traverse_ByteFunctionVariable: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_variable, t_fbyte, t_nbyte;
+   ATerm t_variable, t_var, t_fbyte, t_nbyte;
 
    SgExpression* variable = nullptr;
    SgExpression* first_byte = nullptr;
@@ -6560,11 +6573,23 @@ ATbool ATermToSageJovialTraversal::traverse_ByteFunctionVariable(ATerm term, SgE
    func_call = nullptr;
 
    // Grammar (this may be an lvalue call expression! or an rvalue depending on ambiguous context)
+   //  'BYTE' '(' Variable ','
+   //          Fbyte ',' Nbyte ')' -> ByteFunctionVariable  {cons("ByteFunctionVariable"), prefer}
+   //  'BYTE' '(' Formula ','
+   //          Fbyte ',' Nbyte ')' -> ByteFunctionVariable  {cons("ByteFunctionVariable")}
+
+
+   // Grammar (this may be an lvalue call expression! or an rvalue depending on ambiguous context)
    //  'BYTE' '(' CharacterFormula/Variable ',' FirstByte ',' Length ')' -> ByteFunctionVariable
    //
    if (ATmatch(term, "ByteFunctionVariable(<term>,<term>,<term>)", &t_variable, &t_fbyte, &t_nbyte)) {
-      if (traverse_Variable(t_variable, variable)) {
-         // MATCHED Variable
+      if (ATmatch(t_variable, "Variable(<term>)", &t_var)) {
+         if (traverse_Variable(t_var, variable)) {
+            // MATCHED Variable
+         } else return ATfalse;
+      } else if (traverse_Formula(t_variable, variable)) {
+         // BooleanFormula generalized to Formula (grammar changed from what)
+         // MATCHED Formula
       } else return ATfalse;
 
       if (traverse_Formula(t_fbyte, first_byte)) {
@@ -7074,7 +7099,7 @@ ATbool ATermToSageJovialTraversal::traverse_BitFunction(ATerm term, SgFunctionCa
 
       if (traverse_Formula(t_formula, bit_formula)) {
          // BooleanFormula generalized to Formula
-         // The return type is the same as the type of the BitFormula argument
+         // The return type is the same as the type of the Formula argument
          return_type = bit_formula->get_type();
       } else return ATfalse;
 
@@ -7120,6 +7145,15 @@ ATbool ATermToSageJovialTraversal::traverse_ByteFunction(ATerm term, SgFunctionC
    SgExpression * character_formula, * first_byte, * length;
 
    func_call = nullptr;
+
+   // Grammar
+   //
+   //  'BYTE' '(' Formula
+   //    ',' Fbyte ',' Nbyte ')'   -> ByteFunction         {cons("ByteFunction")}
+#if 0
+   //  'BYTE' '(' RepFunctionVariable
+   //    ',' Fbyte ',' Nbyte ')'   -> ByteFunction         {cons("ByteFunction"), prefer}
+#endif
 
    if (ATmatch(term, "ByteFunction(<term>, <term>,<term>)", &t_formula, &t_fbyte, &t_nbyte)) {
       if (traverse_Formula(t_formula, character_formula)) {
@@ -7192,7 +7226,7 @@ ATbool ATermToSageJovialTraversal::traverse_ShiftFunction(ATerm term, SgFunction
 
       if (traverse_Formula(t_formula, formula)) {
          // BooleanFormula generalized to Formula
-         // The return type is the same as the type of the BitFormula argument
+         // The return type is the same as the type of the Formula argument
          return_type = formula->get_type();
          ASSERT_not_null(return_type);
       } else return ATfalse;
