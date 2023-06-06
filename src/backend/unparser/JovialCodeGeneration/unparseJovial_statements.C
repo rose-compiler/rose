@@ -105,7 +105,7 @@ UnparseJovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Inf
           case V_SgForStatement:               unparseForStatement   (stmt, info);  break;
           case V_SgJovialForThenStatement:     unparseJovialForThenStmt(stmt, info);  break;
           case V_SgWhileStmt:                  unparseWhileStmt      (stmt, info);  break;
-          case V_SgGotoStatement:              unparseGotoStmt       (stmt, info);  break;
+          case V_SgGotoStatement:              unparseGotoStmt(isSgGotoStatement(stmt), info);  break;
           case V_SgIfStmt:                     unparseIfStmt         (stmt, info);  break;
           case V_SgSwitchStatement:            unparseSwitchStmt     (stmt, info);  break;
           case V_SgCaseOptionStmt:             unparseCaseStmt       (stmt, info);  break;
@@ -681,16 +681,15 @@ UnparseJovial::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
-UnparseJovial::unparseGotoStmt(SgStatement* stmt, SgUnparse_Info& info)
-   {
-     SgGotoStatement* goto_stmt = isSgGotoStatement(stmt);
-     ASSERT_not_null(goto_stmt);
-     ASSERT_not_null(goto_stmt->get_label());
+UnparseJovial::unparseGotoStmt(SgGotoStatement* stmt, SgUnparse_Info& info)
+{
+  ASSERT_not_null(stmt);
+  ASSERT_not_null(stmt->get_label());
 
-     curprint (string("GOTO " ) + goto_stmt->get_label()->get_label().str());
-     curprint (string(";"));
-     unp->cur.insert_newline(1);
-   }
+  curprint_indented(string("GOTO " ) + stmt->get_label()->get_label().str(), info);
+  curprint(string(";"));
+  unp->cur.insert_newline(1);
+}
 
 void
 UnparseJovial::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)

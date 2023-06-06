@@ -41,7 +41,7 @@ public:
           virtual void unparseForStatement           (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseJovialForThenStmt      (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseWhileStmt              (SgStatement* stmt, SgUnparse_Info& info);
-          virtual void unparseGotoStmt               (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseGotoStmt               (SgGotoStatement*, SgUnparse_Info &);
           virtual void unparseIfStmt                 (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseSwitchStmt             (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseCaseStmt               (SgStatement* stmt, SgUnparse_Info& info);

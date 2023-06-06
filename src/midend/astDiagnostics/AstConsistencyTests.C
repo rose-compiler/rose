@@ -3134,24 +3134,20 @@ TestAstSymbolTables::visit ( SgNode* node )
                               printf ("In TestAstSymbolTables::visit(): output the symbol tables for the scope = %p = %s \n",scope,scope->class_name().c_str());
                               scope->get_symbol_table()->print();
                             }
-#if 0
-                         printf ("In TestAstSymbolTables::visit(): local_symbol = %p = %s \n",local_symbol,local_symbol != NULL ? local_symbol->class_name().c_str() : "null");
-#endif
-                         ROSE_ASSERT(local_symbol != NULL);
+                         ASSERT_not_null(local_symbol);
                        }
                       else
                        {
-                         if (isSgLabelStatement(declarationNode))
+                         if (auto labelStmt = isSgLabelStatement(declarationNode))
                             {
-                              SgLabelStatement* labelStatement = (SgLabelStatement *) declarationNode;
-                              SgSymbol* local_symbol = labelStatement->get_symbol_from_symbol_table();
-                              if (local_symbol == NULL)
+                              SgSymbol* localSymbol = labelStmt->get_symbol_from_symbol_table();
+                              if (localSymbol == nullptr)
                                  {
-                                   printf ("Error: labelStatement->get_symbol_from_symbol_table() == NULL labelStatement = %p = %s \n",labelStatement,labelStatement->get_label().str());
-                                   ROSE_ASSERT(labelStatement->get_scope() != NULL);
-                                   labelStatement->get_scope()->get_symbol_table()->print("debug labelStatement scope");
+                                   printf ("Error: labelStmt->get_symbol_from_symbol_table() == NULL labelStmt = %p = %s \n",labelStmt,labelStmt->get_label().str());
+                                   ASSERT_not_null(labelStmt->get_scope());
+                                   labelStmt->get_scope()->get_symbol_table()->print("debug labelStmt scope");
                                  }
-                              ROSE_ASSERT(local_symbol != NULL);
+                              ASSERT_not_null(localSymbol);
                             }
                          else if (isSgJavaLabelStatement(declarationNode)) // charles4: 09/12/2011 added for Java
                             {
@@ -3164,15 +3160,15 @@ TestAstSymbolTables::visit ( SgNode* node )
                                    ROSE_ASSERT(javaLabelStatement->get_scope()->get_symbol_table() != NULL);
                                    javaLabelStatement->get_scope()->get_symbol_table()->print("debug javaLabelStatement scope");
                                  }
-                              ROSE_ASSERT(local_symbol != NULL);
+                              ASSERT_not_null(local_symbol);
                             }
                            else
                             {
-                           // DQ (12/9/2007): Added support for fortran in SgLabelSymbol.
+                           // For Fortran
                               SgLabelSymbol* labelSymbol = isSgLabelSymbol(symbol);
-                              if (labelSymbol != NULL)
+                              if (labelSymbol != nullptr)
                                  {
-                                   ROSE_ASSERT(labelSymbol->get_fortran_statement() != NULL);
+                                   ASSERT_not_null(labelSymbol->get_fortran_statement());
                                  }
                                 else
                                  {

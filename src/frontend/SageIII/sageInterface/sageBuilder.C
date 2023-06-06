@@ -6444,19 +6444,22 @@ SgLabelStatement * SageBuilder::buildLabelStatement(const SgName& name,  SgState
   return labelstmt;
 }
 
-SgLabelStatement * SageBuilder::buildLabelStatement_nfi(const SgName& name,  SgStatement * stmt/*=NULL*/, SgScopeStatement* scope /*=NULL*/)
+SgLabelStatement* SageBuilder::buildLabelStatement_nfi(const SgName& name, SgStatement* stmt/*=NULL*/, SgScopeStatement* scope /*=NULL*/)
 {
-  SgLabelStatement * labelstmt = new SgLabelStatement(name,stmt);
-  ROSE_ASSERT(labelstmt);
-  setOneSourcePositionForTransformation(labelstmt);
+  SgLabelStatement* labelStmt = new SgLabelStatement(name,stmt);
+  ASSERT_not_null(labelStmt);
+  setOneSourcePositionForTransformation(labelStmt);
 
- if(stmt!=NULL)
-   stmt->set_parent(labelstmt);
-  if (scope)
-    fixLabelStatement(labelstmt,scope);
+  if (stmt != nullptr) {
+    stmt->set_parent(labelStmt);
+  }
+  if (scope) {
+    fixLabelStatement(labelStmt,scope);
+  }
+
   // we don't want to set parent here yet
   // delay it until append_statement() or alike
-  return labelstmt;
+  return labelStmt;
 }
 
 SgIfStmt * SageBuilder::buildIfStmt(SgStatement* conditional, SgStatement * true_body, SgStatement * false_body)
