@@ -3895,8 +3895,6 @@ HEADER_USE_STATEMENT_END
 
 HEADER_PROCESS_CONTROL_STATEMENT_START
      public:
-       // Rasmussen (4/26/2018): Added e_exit for Jovial (exit similar to Fortran stop)
-       // Rasmussen (5/21/2018): Added e_abort for Jovial
        // Rasmussen (7/11/2020): Renamed SgStopOrPauseStatement to SgProcessControlStatement
        // PP (2/11/22): added requeue and requeue_with_abort to support Ada
           enum control_enum
@@ -3906,6 +3904,7 @@ HEADER_PROCESS_CONTROL_STATEMENT_START
                e_stop,
                e_error_stop,
                e_exit,
+               e_fail_image,
                e_pause,
                e_requeue,
                e_requeue_with_abort,
@@ -16255,34 +16254,24 @@ SgLabelStatement::get_name() const
      return get_label();
    }
 
-// DQ (2/6/2007): Get the associated symbol from the symbol table in the stored scope
 SgSymbol*
 SgLabelStatement::get_symbol_from_symbol_table() const
    {
-#if 0
-     ROSE_ASSERT(get_scope() != NULL);
-     ROSE_ASSERT(get_scope()->get_symbol_table() != NULL);
-     return get_scope()->get_symbol_table()->find(this);
-#else
-  // DQ (12/9/2007): The label's symbol is stored in the function definition, so we need to look for it there.
-  // printf ("What is the scope of a label:%s scope = %s \n",get_name().str(),get_scope()->class_name().c_str());
-  // SgFunctionDeclaration* functionDeclaration = TransformationSupport::getFunctionDeclaration(this);
+  // The label's symbol is stored in the function definition, so we need to look for it there.
      SgScopeStatement* tempScope = get_scope();
-     ROSE_ASSERT(tempScope != NULL);
-     while (tempScope != NULL && isSgFunctionDefinition(tempScope) == NULL)
+     ASSERT_not_null(tempScope);
+     while (tempScope != nullptr && isSgFunctionDefinition(tempScope) == nullptr)
         {
           tempScope = tempScope->get_scope();
         }
 
      SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(tempScope);
-     if (functionDefinition == NULL)
+     if (functionDefinition == nullptr)
         {
-          printf ("Labels are stored in the SgFunctionDefinition (function scope), could not locate associated function scope \n");
+          std::cerr << "[WARN]: Labels are stored in the SgFunctionDefinition (function scope), could not locate associated function scope\n";
         }
-     ROSE_ASSERT(functionDefinition != NULL);
-  // return functionDefinition->get_symbol_table()->find(this);
+     ASSERT_not_null(functionDefinition);
      return functionDefinition->find_symbol_from_declaration(this);
-#endif
    }
 
 SgType*

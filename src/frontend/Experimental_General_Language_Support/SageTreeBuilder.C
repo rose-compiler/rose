@@ -1198,6 +1198,9 @@ Enter(SgProcessControlStatement* &control_stmt, const std::string &stmt_kind,
    else if (stmt_kind == "exit") {
       control_stmt->set_control_kind(SgProcessControlStatement::e_exit);
    }
+   else if (stmt_kind == "fail_image") {
+      control_stmt->set_control_kind(SgProcessControlStatement::e_fail_image);
+   }
    else if (stmt_kind == "pause") {
       control_stmt->set_control_kind(SgProcessControlStatement::e_pause);
    }
