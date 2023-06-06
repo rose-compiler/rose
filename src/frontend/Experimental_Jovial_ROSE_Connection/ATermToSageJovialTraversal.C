@@ -4622,10 +4622,6 @@ ATbool ATermToSageJovialTraversal::traverse_LabelList(ATerm term, std::vector<st
       }
    } else return ATfalse;
 
-   if (labels.size() > 1) {
-      mlog[WARN] << "UNIMPLEMENTED: LabelList - with multiple labels may not be universally implemented\n";
-   }
-
    return ATtrue;
 }
 
@@ -5525,11 +5521,11 @@ ATbool ATermToSageJovialTraversal::traverse_ExitStatement(ATerm term)
    else return ATfalse;
 
    // Begin SageTreeBuilder
-   sage_tree_builder.Enter(exit_stmt, std::string("exit"), boost::none, boost::none, labels);
+   sage_tree_builder.Enter(exit_stmt, std::string("exit"), boost::none, boost::none);
    setSourcePosition(exit_stmt, term);
 
    // End SageTreeBuilder
-   sage_tree_builder.Leave(exit_stmt);
+   sage_tree_builder.Leave(exit_stmt, labels);
 
    return ATtrue;
 }
@@ -5567,11 +5563,11 @@ ATbool ATermToSageJovialTraversal::traverse_StopStatement(ATerm term)
    else return ATfalse;
 
    // Begin SageTreeBuilder
-   sage_tree_builder.Enter(stop_stmt, std::string("stop"), opt_code, boost::none, labels);
+   sage_tree_builder.Enter(stop_stmt, std::string("stop"), opt_code, boost::none);
    setSourcePosition(stop_stmt, term);
 
    // End SageTreeBuilder
-   sage_tree_builder.Leave(stop_stmt);
+   sage_tree_builder.Leave(stop_stmt, labels);
 
    return ATtrue;
 }
@@ -5599,11 +5595,11 @@ ATbool ATermToSageJovialTraversal::traverse_AbortStatement(ATerm term)
    else return ATfalse;
 
    // Begin SageTreeBuilder
-   sage_tree_builder.Enter(abort_stmt, std::string("abort"), boost::none, boost::none, labels);
+   sage_tree_builder.Enter(abort_stmt, std::string("abort"), boost::none, boost::none);
    setSourcePosition(abort_stmt, term);
 
    // End SageTreeBuilder
-   sage_tree_builder.Leave(abort_stmt);
+   sage_tree_builder.Leave(abort_stmt, labels);
 
    return ATtrue;
 }
@@ -5969,6 +5965,7 @@ ATbool ATermToSageJovialTraversal::traverse_LogicalOperand(ATerm term, SgExpress
    printf("... traverse_LogicalOperand: %s\n", ATwriteToString(term));
 #endif
 
+   // Path used by ByteFunctionVariable to get to function call? -> TableItem (I think essentially)
    if (traverse_BitPrimary(term, expr)) {
       // MATCHED BitPrimary
    }
@@ -6015,6 +6012,7 @@ ATbool ATermToSageJovialTraversal::traverse_BitPrimary(ATerm term, SgExpression*
       ASSERT_not_null(cast_expr);
       expr = cast_expr;
    }
+   // Path used by ByteFunctionVariable to get to function call -> TableItem (I think essentially)
    else if (traverse_FunctionCall(term, expr)) {
       // FunctionCall      -> BitFunctionCall
       // BitFunctionCall   -> BitPrimary (no cons)

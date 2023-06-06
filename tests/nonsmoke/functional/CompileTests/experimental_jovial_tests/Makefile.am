@@ -241,6 +241,7 @@ JOVIAL_TESTCODES = \
  gitlab-issue-208.jov                   \
  gitlab-issue-209.jov                   \
  gitlab-issue-212.jov                   \
+ gitlab-issue-216.jov                   \
  gitlab-issue-217.jov                   \
  gitlab-issue-219.jov                   \
  gitlab-issue-220.jov                   \

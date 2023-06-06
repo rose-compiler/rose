@@ -1,0 +1,21 @@
+START
+DEF PROC main S;
+BEGIN
+   ITEM RESULT S;
+   ITEM FAILED S;
+   RESULT = 0;
+   FAILED = 0;
+
+   GOTO SKIP1;
+   FAILED = 10;
+SKIP1:
+SKIP2:
+   GOTO INIF;
+   IF(FALSE);
+   BEGIN
+INIF:
+      RESULT = RESULT + 1;
+   END
+   main = FAILED + RESULT - 1;
+END
+TERM

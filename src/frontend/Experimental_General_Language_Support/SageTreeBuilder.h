@@ -36,6 +36,7 @@ class SgGotoStatement;
 class SgIfStmt;
 class SgImplicitStatement;
 class SgInitializedName;
+class SgLabelStatement;
 class SgLocatedNode;
 class SgModuleStatement;
 class SgNamedType;
@@ -194,9 +195,8 @@ public:
    void Leave(SgIfStmt*);
 
    void Enter(SgProcessControlStatement* &, const std::string &, const boost::optional<SgExpression*> &,
-                                            const boost::optional<SgExpression*> &quiet=boost::none,
-                                            const std::vector<std::string> &labels=std::vector<std::string>{});
-   void Leave(SgProcessControlStatement*);
+                                            const boost::optional<SgExpression*> &quiet=boost::none);
+   void Leave(SgProcessControlStatement*, const std::vector<std::string> &);
 
    void Enter(SgSwitchStatement* &, SgExpression*, const SourcePositionPair &);
    void Leave(SgSwitchStatement*);
@@ -265,16 +265,16 @@ public:
    void Leave(SgCommonBlock* common_block);
 
 private:
-
    LanguageEnum language_;
    SgSourceFile* source_;
    TokenStream* tokens_;
    TraversalContext context_;
    std::istringstream iss_empty_{};
    std::map<const std::string, SgVarRefExp*> forward_var_refs_;
+   std::map<const std::string, SgLabelStatement*> labels_;
    std::multimap<const std::string, SgPointerType*> forward_type_refs_;
 
-   void importModule(const std::string &module_name);
+   SgStatement* wrapStmtWithLabels(SgStatement* stmt, const std::vector<std::string> &labels);
 
    void reset_forward_type_refs(const std::string &type_name, SgNamedType* type);
 

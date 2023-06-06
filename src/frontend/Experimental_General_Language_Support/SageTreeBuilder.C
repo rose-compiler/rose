@@ -600,7 +600,7 @@ Leave(SgFunctionParameterList* param_list, SgScopeStatement* param_scope, const 
 
    ASSERT_not_null(param_scope);
 
-   BOOST_FOREACH(std::string name, dummy_arg_name_list) {
+   for (std::string name : dummy_arg_name_list) {
       // TODO: deal with fortran functions when the dummy argument is not declared and implicitly typed.
       SgVariableSymbol* symbol = SageInterface::lookupVariableSymbolInParentScopes(name, param_scope);
       ASSERT_not_null(symbol);
@@ -768,6 +768,9 @@ Leave(SgFunctionDeclaration* function_decl, SgScopeStatement* param_scope)
       attachComments(scope, /*at_end*/true);
    }
 
+   // Finished using the map for labels
+   labels_.clear();
+
    SageInterface::appendStatement(function_decl, SageBuilder::topScopeStack());
 }
 
@@ -925,19 +928,12 @@ Enter(SgExprStatement* &assign_stmt, SgExpression* &rhs, const std::vector<SgExp
 }
 
 void SageTreeBuilder::
-Leave(SgExprStatement* expr_stmt, std::vector<std::string> &labels)
+Leave(SgExprStatement* exprStmt, std::vector<std::string> &labels)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgExprStatement*) \n";
 
-   SgStatement* stmt{expr_stmt};
-   ASSERT_not_null(stmt);
-
-   for (auto label : labels) {
-      mlog[WARN] << "Need symbol for label statement\n";
-      stmt = SB::buildLabelStatement_nfi(label, stmt, SB::topScopeStack());
-   }
-
-   SageInterface::appendStatement(stmt, SageBuilder::topScopeStack());
+   SgStatement* stmt = wrapStmtWithLabels(exprStmt, labels);
+   SageInterface::appendStatement(stmt, SB::topScopeStack());
 }
 
 void SageTreeBuilder::
@@ -1086,29 +1082,8 @@ Leave(SgContinueStmt* continueStmt, const std::vector<std::string> &labels)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgContinueStmt*, ...)\n";
 
-   SgStatement* stmt{continueStmt};
-   ASSERT_not_null(stmt);
-
-   // All statements may have a label(s), thus, for here
-   // and for what follows, outline to a function for all statements to use
-   for (auto label : labels) {
-      // A label statement may already exist for this label, e.g., from a
-      // placeholder created previously for an SgContinueStmt label. If so, fix statement in placeholder
-      SgSymbol* symbol = SI::lookupSymbolInParentScopes(label, SB::topScopeStack());
-      SgLabelSymbol* labelSymbol = isSgLabelSymbol(symbol);
-      SgLabelStatement* labelStmt = labelSymbol ? labelSymbol->get_declaration() : nullptr;
-
-      if (labelStmt && labelStmt->get_statement()) {
-        labelStmt->set_statement(stmt);
-        stmt = labelStmt;
-      }
-      else {
-        mlog[WARN] << "Need (and building) symbol for label statement\n";
-        stmt = SB::buildLabelStatement_nfi(label, stmt, SB::topScopeStack());
-      }
-   }
-
-   // Append final label statement (if there are labels, otherwise stmt==continueStmt)
+   // Append final label statement, if there are labels, otherwise stmt==continueStmt
+   SgStatement* stmt = wrapStmtWithLabels(continueStmt, labels);
    SageInterface::appendStatement(stmt, SB::topScopeStack());
 }
 
@@ -1121,21 +1096,16 @@ Enter(SgGotoStatement* &gotoStmt, const std::string &label)
    gotoStmt = nullptr;
 
    // Ensure a label statement exists for the statement to goto
-   SgSymbol* symbol = SageInterface::lookupSymbolInParentScopes(label, SB::topScopeStack());
-   SgLabelSymbol* labelSymbol = isSgLabelSymbol(symbol);
-
-   if (labelSymbol == nullptr) {
-      // Build a placeholder and symbol to match when seen in later statement
-      labelStmt = SB::buildLabelStatement_nfi(label, /*SgStatement*/nullptr, SB::topScopeStack());
-      labelSymbol = new SgLabelSymbol(labelStmt);
-      SB::topScopeStack()->insert_symbol(label, labelSymbol);
-      labelStmt->set_scope(SB::topScopeStack());
+   if (labels_.find(label) != labels_.end()) {
+     labelStmt = labels_[label];
    }
    else {
-      labelStmt = isSgLabelStatement(labelSymbol->get_declaration());
+     // Build a temporary placeholder
+     labelStmt = SB::buildLabelStatement_nfi(label, nullptr, SB::topScopeStack());
+     labels_[label] = labelStmt;
    }
-   ASSERT_not_null(labelStmt);
 
+   ASSERT_not_null(labelStmt);
    gotoStmt = SB::buildGotoStatement_nfi(labelStmt);
 }
 
@@ -1144,37 +1114,14 @@ Leave(SgGotoStatement* gotoStmt, const std::vector<std::string> &labels)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgGotoStatement*, ...)\n";
 
-   SgStatement* stmt{gotoStmt};
-   ASSERT_not_null(stmt);
-
-   // All statements may have a label(s), thus, for here
-   // and for what follows, outline to a function for all statements to use
-   for (auto label : labels) {
-      // A label statement may already exist for this label, e.g., from a
-      // placeholder created previously for an SgGotoStatement label. If so, fix statement in placeholder
-      SgSymbol* symbol = SI::lookupSymbolInParentScopes(label, SB::topScopeStack());
-
-      if (auto labelSymbol = isSgLabelSymbol(symbol)) {
-         auto labelDecl = isSgLabelStatement(labelSymbol->get_declaration());
-         if (labelDecl != nullptr && labelDecl->get_statement() == nullptr) {
-            labelDecl->set_statement(stmt);
-            stmt = labelDecl;
-         }
-         else {
-            mlog[WARN] << "Need symbol for label statement\n";
-            stmt = SB::buildLabelStatement_nfi(label, stmt, SB::topScopeStack());
-          }
-      }
-   }
-
    // Append final label statement (if there are labels, otherwise stmt==gotoStmt)
+   SgStatement* stmt = wrapStmtWithLabels(gotoStmt, labels);
    SageInterface::appendStatement(stmt, SB::topScopeStack());
 }
 
 void SageTreeBuilder::
 Enter(SgProcessControlStatement* &control_stmt, const std::string &stmt_kind,
-      const boost::optional<SgExpression*> &opt_code, const boost::optional<SgExpression*> &opt_quiet,
-      const std::vector<std::string> &labels)
+      const boost::optional<SgExpression*> &opt_code, const boost::optional<SgExpression*> &opt_quiet)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgProcessControlStatement* &, ...) \n";
 
@@ -1209,30 +1156,22 @@ Enter(SgProcessControlStatement* &control_stmt, const std::string &stmt_kind,
    }
    else {
       mlog[FATAL] << "SageTreeBuilder::Enter(SgProcessControlStatement* &, ...): incorrect statement kind\n";
-      exit(1);
+      ROSE_ABORT();
    }
 
    code->set_parent(control_stmt);
    quiet->set_parent(control_stmt);
-
-   SgStatement* actual_stmt = control_stmt;
-   std::vector<std::string> reversed = labels;
-   auto lbegin = reversed.begin();
-   auto lend = reversed.end();
-   std::reverse(lbegin,lend);
-   for (auto label : reversed) {
-     actual_stmt = SB::buildLabelStatement_nfi(label, actual_stmt, SageBuilder::topScopeStack());
-   }
-
-   SageInterface::appendStatement(actual_stmt, SageBuilder::topScopeStack());
 }
 
 void SageTreeBuilder::
-Leave(SgProcessControlStatement* control_stmt)
+Leave(SgProcessControlStatement* controlStmt, const std::vector<std::string> &labels)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgProcessControlStatement*, ...) \n";
+   ASSERT_not_null(controlStmt);
 
-   ASSERT_not_null(control_stmt);
+   // Append final label statement (if there are labels, otherwise stmt==controlStmt)
+   SgStatement* stmt = wrapStmtWithLabels(controlStmt, labels);
+   SageInterface::appendStatement(stmt, SB::topScopeStack());
 }
 
 void SageTreeBuilder::
@@ -1820,7 +1759,7 @@ Enter(SgVariableDeclaration* &var_decl, const std::string &name, SgType* type, S
 
    SI::appendStatement(var_decl, SB::topScopeStack());
 
-// Look for a symbol has been previously implicitly declared and fix the variable reference
+// Look for a symbol previously implicitly declared and fix the variable reference
    if (forward_var_refs_.find(name) != forward_var_refs_.end()) {
      if (SgVariableSymbol* var_sym = SI::lookupVariableSymbolInParentScopes(name)) {
         SgVarRefExp* prev_var_ref = forward_var_refs_[name];
@@ -2173,6 +2112,43 @@ injectAliasSymbol(const std::string &name)
         scope->insert_symbol(SgName(name), alias_sym);
       }
    }
+}
+
+SgStatement* SageTreeBuilder::
+wrapStmtWithLabels(SgStatement* stmt, const std::vector<std::string> &labels)
+{
+   ASSERT_not_null(stmt);
+
+   // Order of the labels need to be reversed to come out right
+   std::vector<std::string> reversed = labels;
+   auto lbegin = reversed.begin();
+   auto lend = reversed.end();
+   std::reverse(lbegin,lend);
+
+   // Statements may have a label(s), wrap the statement with its label(s)
+   for (auto label : reversed) {
+      // A label statement may already exist for this label, e.g., from a
+      // placeholder created previously for an SgGotoStatement, for example, check.
+      SgLabelStatement* labelStmt{nullptr};
+      if (labels_.find(label) != labels_.end()) {
+         labelStmt = labels_[label];
+      }
+      else {
+         labelStmt = SB::buildLabelStatement_nfi(label, stmt, SB::topScopeStack());
+         labels_[label] = labelStmt;
+      }
+
+      if (labelStmt && labelStmt->get_statement() == nullptr) {
+        // Found a placeholder label statement
+        labelStmt->set_statement(stmt);
+        stmt->set_parent(labelStmt);
+      }
+
+      stmt = labelStmt;
+   }
+   ASSERT_not_null(stmt);
+
+   return stmt;
 }
 
 

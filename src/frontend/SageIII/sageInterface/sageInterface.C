@@ -141,6 +141,7 @@ namespace SageInterface
 using namespace std;
 using namespace Rose;
 using namespace SageBuilder;
+//using namespace Rose::Diagnostics; // for mlog, INFO, WARN, ERROR, FATAL, etc.
 
 // Used by serialize() to collect all types visited
 //std::set<SgType*> type_set;
@@ -15133,9 +15134,9 @@ void SageInterface::fixLabelStatement(SgLabelStatement* stmt, SgScopeStatement* 
      SgScopeStatement* label_scope = getEnclosingFunctionDefinition(scope,true);
 
   // DQ (11/16/2014): Added error checking for when the input scope is the SgFunctionDefinition instead of a nested scope.
-     if (isSgFunctionDefinition(scope) != NULL)
+     if (isSgFunctionDefinition(scope) != nullptr)
         {
-          ROSE_ASSERT(label_scope == scope);
+          ASSERT_not_null(label_scope);
         }
 
      if (label_scope) //Should we assert this instead? No for bottom up AST building
@@ -15143,22 +15144,12 @@ void SageInterface::fixLabelStatement(SgLabelStatement* stmt, SgScopeStatement* 
           label_stmt->set_scope(label_scope);
           SgLabelSymbol* lsymbol = label_scope->lookup_label_symbol(name);
 
-       // DQ (11/15/2014): I think this is a bug, the precicate should be (lsymbol == NULL), instead of (lsymbol != NULL)
-          if (lsymbol == NULL)
+          if (lsymbol == nullptr)
              {
-#if 0
-               printf ("WARNING: In SageInterface::fixLabelStatement(): We already found a SgLabelSymbol, so why are we adding another one (this bug is now fixed) \n");
-#endif
-            // DQ (12/4/2011): This is the correct handling for SgLabelStatement (always in the function scope).
+            // SgLabelStatement should always be in the function scope
                lsymbol= new SgLabelSymbol(label_stmt);
-               ROSE_ASSERT(lsymbol);
+               ASSERT_not_null(lsymbol);
                label_scope->insert_symbol(lsymbol->get_name(), lsymbol);
-             }
-            else
-             {
-#if 0
-               printf ("In SageInterface::fixLabelStatement(): We already found a SgLabelSymbol (bug causing additional symbol to be built is now fixed) \n");
-#endif
              }
         }
    }
@@ -21193,6 +21184,14 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
             }
           }
       }
+      else if (auto labelStmt = isSgLabelStatement(stmt))
+      {
+        if (labelStmt->get_scope() == sourceBlock) {
+          labelStmt->set_scope(targetBlock);
+          // Make sure the labelStmt is in the enclosing function scope of targetBlock
+          SageInterface::fixLabelStatement(labelStmt, targetBlock);
+        }
+      }
       else if (isSgJovialTableStatement(stmt) || isSgTypedefDeclaration(stmt) || isSgEnumDeclaration(stmt))
       {
         // Rasmussen 9/21/2020,10/27/2020,11/4/2020: Uncovered by issues RC-135 and RC-227.
@@ -21201,8 +21200,8 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
       }
       else
       {
-        printf ("Warning: test failing (*i)->get_scope() == targetBlock in SageInterface::moveStatementsBetweenBlocks() \n");
-        cerr<<"  "<<stmt->class_name()<<endl;
+        mlog[Rose::Diagnostics::WARN] << "test failing stmt->get_scope() == targetBlock in SageInterface::moveStatementsBetweenBlocks(): class: "
+                                      << stmt->class_name() << "\n";
       }
     }
   }
