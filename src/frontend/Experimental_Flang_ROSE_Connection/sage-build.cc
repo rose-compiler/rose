@@ -1819,7 +1819,7 @@ void Build(const parser::DataStmtConstant &x, SgExpression* &expr)
 
 // ActionStmt
 
-void Build(const parser::ContinueStmt&x, const OptLabel &label)
+void Build(const parser::ContinueStmt &x, const OptLabel &label)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ContinueStmt)\n";
@@ -1838,11 +1838,23 @@ void Build(const parser::ContinueStmt&x, const OptLabel &label)
    builder.Leave(continue_stmt, labels);
 }
 
-void Build(const parser::FailImageStmt&x, const OptLabel &label)
+void Build(const parser::FailImageStmt &x, const OptLabel &label)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(FailImageStmt)\n";
 #endif
+
+   std::vector<std::string> labels{};
+   if (label) {
+      labels.push_back(std::to_string(label.value()));
+   }
+
+   // Begin SageTreeBuilder
+   SgProcessControlStatement* failStmt{nullptr};
+   builder.Enter(failStmt, "fail_image", boost::none, boost::none, labels);
+
+   // Finish SageTreeBuilder
+   builder.Leave(failStmt);
 }
 
 template<typename T>

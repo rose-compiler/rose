@@ -20,6 +20,29 @@
 using namespace std;
 using namespace Rose;
 
+#ifdef ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION
+  constexpr bool flangParser{true};
+  constexpr bool keywordsAreUpperCase{false}; // should be a command-line option
+#else
+  constexpr bool flangParser{false};
+  constexpr bool keywordsAreUpperCase{true};
+#endif
+
+// Unparse language keywords
+void FortranCodeGeneration_locatedNode::
+curprint_keyword(const std::string &keyword, SgUnparse_Info& info)
+{
+  if (keywordsAreUpperCase) {
+    // The default construction used below
+    curprint(keyword);
+  }
+  else {
+    std::string lowered{keyword};
+    transform(lowered.begin(), lowered.end(), lowered.begin(), ::tolower);
+    curprint(lowered);
+  }
+}
+
 inline bool
 namesMatch ( const string &x, const string &y )
    {
@@ -232,7 +255,7 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement*
           case V_SgAssignedGotoStatement:      unparseAssignedGotoStmt(stmt, info);      break;
 
        // DQ (11/16/2007): This is unparsed as a CONTINUE statement
-          case V_SgLabelStatement:             unparseLabelStmt(stmt, info); break;
+          case V_SgLabelStatement:             unparseLabelStmt(isSgLabelStatement(stmt), info); break;
 
        // DQ (11/16/2007): This is a "DO WHILE" statement
           case V_SgWhileStmt:                  unparseWhileStmt(stmt, info); break;
@@ -241,14 +264,14 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement*
           case V_SgBreakStmt:                  unparseBreakStmt(stmt, info); break;
 
        // DQ (11/17/2007): This is unparsed as a Fortran CYCLE statement
-          case V_SgContinueStmt:               unparseContinueStmt(stmt, info); break;
+          case V_SgContinueStmt:               unparseContinueStmt(isSgContinueStmt(stmt), info); break;
 
           case V_SgAttributeSpecificationStatement: unparseAttributeSpecificationStatement(stmt, info); break;
           case V_SgNamelistStatement:          unparseNamelistStatement(stmt, info); break;
           case V_SgReturnStmt:                 unparseReturnStmt(stmt, info); break;
           case V_SgImportStatement:            unparseImportStatement(stmt, info); break;
           case V_SgFormatStatement:            unparseFormatStatement(stmt, info);      break;
-          case V_SgGotoStatement:              unparseGotoStmt(stmt, info); break;
+          case V_SgGotoStatement:              unparseGotoStmt(isSgGotoStatement(stmt), info); break;
 
        // Rasmussen (10/02/2018): This is temporary fix (actual ForAllStatements aren't created)
           case V_SgForAllStatement:            unparseForAllStatement(stmt, info); break;
@@ -266,8 +289,6 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement*
        // case V_SgGlobal:                     unparseGlobalStmt(stmt, info); break;
        // case V_SgScopeStatement:             unparseScopeStmt(stmt, info); break;
        // case V_SgWhileStmt:                  unparseWhileStmt(stmt, info); break;
-       // case V_SgLabelStatement:             unparseLabelStmt(stmt, info); break;
-       // case V_SgGotoStatement:              unparseGotoStmt(stmt, info); break;
        // executable statements, other
        // case V_SgExprStatement:              unparseExprStmt(stmt, info); break;
        //  Liao 10/18/2010, I turn on the pragma unparsing here to help debugging OpenMP programs
@@ -982,7 +1003,10 @@ FortranCodeGeneration_locatedNode::unparseImplicitStmt(SgStatement* stmt, SgUnpa
 
      if (implicitStatement->get_implicit_none() == true)
         {
-          curprint("IMPLICIT NONE");
+          curprint_keyword("IMPLICIT", info);
+          curprint(" ");
+          curprint_keyword("NONE", info);
+          curprint(" ");
 
           switch(implicitStatement->get_implicit_spec())
             {
@@ -1007,7 +1031,8 @@ FortranCodeGeneration_locatedNode::unparseImplicitStmt(SgStatement* stmt, SgUnpa
              {
                ROSE_ASSERT(nameList.empty() == false);
 
-               curprint("IMPLICIT ");
+               curprint_keyword("IMPLICIT", info);
+               curprint(" ");
 
                SgInitializedNamePtrList::iterator i = nameList.begin();
             // DQ (12/2/2010): New code to handle implicit statements.
@@ -1202,7 +1227,7 @@ FortranCodeGeneration_locatedNode::unparseLabel ( SgLabelRefExp* exp )
      SgLabelSymbol* symbol = exp->get_symbol();
      ASSERT_not_null(symbol);
 
-  // DQ (12/24/2007): Every numeric lable should have been associated with a statement!
+  // DQ (12/24/2007): Every numeric label should have been associated with a statement!
      ASSERT_not_null(symbol->get_fortran_statement());
      int numericLabel = symbol->get_numeric_label_value();
 
@@ -1261,7 +1286,7 @@ FortranCodeGeneration_locatedNode::unparseComputedGotoStmt(SgStatement* stmt, Sg
 
           SgLabelSymbol* labelSymbol = labelRefExp->get_symbol();
 
-       // DQ (12/24/2007): Every numeric lable should have been associated with a statement!
+       // DQ (12/24/2007): Every numeric label should have been associated with a statement!
           ASSERT_not_null(labelSymbol->get_fortran_statement());
           int numericLabel = labelSymbol->get_numeric_label_value();
 
@@ -1311,7 +1336,7 @@ FortranCodeGeneration_locatedNode::unparseModuleStmt(SgStatement* stmt, SgUnpars
 
      curprint("END MODULE");
      ASSERT_not_null(unp);
-     unp->cur.insert_newline(1); 
+     unp->cur.insert_newline(1);
    }
 
 void 
@@ -1320,7 +1345,7 @@ FortranCodeGeneration_locatedNode::unparseProgHdrStmt(SgStatement* stmt, SgUnpar
   // Sage node corresponds to Fortran program
 
      SgProgramHeaderStatement* proghdr = isSgProgramHeaderStatement(stmt);
-     ROSE_ASSERT(proghdr);
+     ASSERT_not_null(proghdr);
 
      if (!proghdr->isForward() && proghdr->get_definition() != NULL && !info.SkipFunctionDefinition())
         {
@@ -1423,7 +1448,7 @@ FortranCodeGeneration_locatedNode::unparseInterfaceStmt(SgStatement* stmt, SgUnp
              }
         }
 
-     unp->cur.insert_newline(1); 
+     unp->cur.insert_newline(1);
 
      for (size_t i = 0; i < interfaceStatement->get_interface_body_list().size(); i++)
         {
@@ -1448,7 +1473,7 @@ FortranCodeGeneration_locatedNode::unparseInterfaceStmt(SgStatement* stmt, SgUnp
      curprint("END INTERFACE ");
 
      ASSERT_not_null(unp);
-     unp->cur.insert_newline(1); 
+     unp->cur.insert_newline(1);
    }
 
 void
@@ -1884,7 +1909,7 @@ FortranCodeGeneration_locatedNode::unparseIfStmt(SgStatement* stmt, SgUnparse_In
         }
 
      ASSERT_not_null(unp);
-     unp->cur.insert_newline(1); 
+     unp->cur.insert_newline(1);
    }
 
 
@@ -2093,7 +2118,7 @@ FortranCodeGeneration_locatedNode::unparseDoStmt(SgStatement* stmt, SgUnparse_In
         }
 
      ASSERT_not_null(unp);
-     unp->cur.insert_newline(1); 
+     unp->cur.insert_newline(1);
    }
 
 void 
@@ -2156,7 +2181,7 @@ FortranCodeGeneration_locatedNode::unparseWhileStmt(SgStatement* stmt, SgUnparse
         }
 
      ASSERT_not_null(unp);
-     unp->cur.insert_newline(1); 
+     unp->cur.insert_newline(1);
    }
 
 void
@@ -2195,7 +2220,7 @@ FortranCodeGeneration_locatedNode::unparseSwitchStmt(SgStatement* stmt, SgUnpars
         }
 
      ASSERT_not_null(unp);
-     unp->cur.insert_newline(1); 
+     unp->cur.insert_newline(1);
    }
 
 void
@@ -2256,62 +2281,80 @@ FortranCodeGeneration_locatedNode::unparseBreakStmt(SgStatement* stmt, SgUnparse
        // Output the string label
           curprint(" " + break_stmt->get_do_string_label());
         }
-     unp->cur.insert_newline(1); 
+     unp->cur.insert_newline(1);
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseContinueStmt(SgStatement* stmt, SgUnparse_Info& info)
-   {
-     SgContinueStmt* continue_stmt = isSgContinueStmt(stmt);
-     ASSERT_not_null(continue_stmt);
+FortranCodeGeneration_locatedNode::unparseContinueStmt(SgContinueStmt* continueStmt, SgUnparse_Info& info)
+{
+  if (flangParser) {
+    curprint_keyword("CONTINUE", info);
+  }
+  else {
+    // This IR node corresponds to a Fortran 'CYCLE' statement in the old parser
+    // TODO: create an SgCycleStmt node
+    curprint_keyword("CYCLE", info);
 
-     curprint ("CYCLE");
+    // If this is for a named do loop, this is the optional name.
+    if (continueStmt->get_do_string_label().empty() == false) {
+      curprint(" " + continueStmt->get_do_string_label());
+    }
+  }
 
-  // If this is for a named do loop, this is the optional name.
-     if (continue_stmt->get_do_string_label().empty() == false)
-        {
-       // Output the string label
-          curprint(" " + continue_stmt->get_do_string_label());
-        }
-     unp->cur.insert_newline(1); 
-   }
+  unp->cur.insert_newline(1);
+}
 
 void 
-FortranCodeGeneration_locatedNode::unparseLabelStmt(SgStatement* stmt, SgUnparse_Info& info) 
-   {
-  // This IR node corresponds to Fortran 'label continue'
-     SgLabelStatement* label_stmt = isSgLabelStatement(stmt);
-     ASSERT_not_null(label_stmt);
-
-     curprint("CONTINUE");
-     unp->cur.insert_newline(1); 
-   }
+FortranCodeGeneration_locatedNode::unparseLabelStmt(SgLabelStatement* labelStmt, SgUnparse_Info& info)
+{
+  if (flangParser) {
+    // The SgLabelStatement is used for the label
+    if (labelStmt->get_label().getString().size() > 0) {
+      // Print label without formatting for now, think about fixed form later
+      curprint(labelStmt->get_label().getString() + " ");
+    }
+    unparseLanguageSpecificStatement(labelStmt->get_statement(), info);
+  }
+  else {
+    // This IR node corresponds to Fortran 'label CONTINUE' statement
+    // TODO: rethink label handling in old parser
+    curprint_keyword("CONTINUE", info);
+    unp->cur.insert_newline(1);
+  }
+}
 
 void
-FortranCodeGeneration_locatedNode::unparseGotoStmt(SgStatement* stmt, SgUnparse_Info& info) 
-   {
-  // This IR node is the same for C and Fortran
-     SgGotoStatement* goto_stmt = isSgGotoStatement(stmt);
-     ASSERT_not_null(goto_stmt);
-     curprint("GOTO ");
+FortranCodeGeneration_locatedNode::unparseGotoStmt(SgGotoStatement* gotoStmt, SgUnparse_Info& info)
+{
+   ASSERT_not_null(gotoStmt);
+   curprint_keyword("GOTO", info);
+   curprint(" ");
 
-  // At present the goto statement holds a pointer to the SgLabelStatement, later it will use
-  // hold a SgLabelSymbol.  this is both a better design and more consistant with the rest of ROSE.
-     ASSERT_not_null(goto_stmt->get_label_expression());
-     SgLabelSymbol* labelSymbol = goto_stmt->get_label_expression()->get_symbol();
+   // The Flang parser uses an SgLabelStatement for a statement label, at this point it has
+   // already been printed.  Printing the goto label is simple, just print it and return.
+   if (gotoStmt->get_label()) {
+       // Flang unparser
+       curprint(gotoStmt->get_label()->get_label());
+       unp->cur.insert_newline(1);
+       return;
+     }
 
-     ASSERT_not_null(labelSymbol);
+   // Old OFP parser uses numeric label handling which is different than C/C++.
+   ASSERT_not_null(gotoStmt->get_label_expression());
+   SgLabelSymbol* labelSymbol = gotoStmt->get_label_expression()->get_symbol();
 
-  // Every numeric label should be associated with a statement
-     ASSERT_not_null(labelSymbol->get_fortran_statement());
-     int numeric_label = labelSymbol->get_numeric_label_value();
+   ASSERT_not_null(labelSymbol);
 
-     ASSERT_require(numeric_label >= 0);
-     string numeric_label_string = StringUtility::numberToString(numeric_label);
-     curprint(numeric_label_string);
+   // Every numeric label should be associated with a statement
+   ASSERT_not_null(labelSymbol->get_fortran_statement());
+   int numeric_label = labelSymbol->get_numeric_label_value();
 
-     unp->cur.insert_newline(1); 
-   }
+   ASSERT_require(numeric_label >= 0);
+   string numeric_label_string = StringUtility::numberToString(numeric_label);
+   curprint(numeric_label_string);
+
+   unp->cur.insert_newline(1);
+}
 
 void
 FortranCodeGeneration_locatedNode::unparseProcessControlStmt(SgStatement* stmt, SgUnparse_Info& info)
@@ -2326,26 +2369,42 @@ FortranCodeGeneration_locatedNode::unparseProcessControlStmt(SgStatement* stmt, 
         {
           case SgProcessControlStatement::e_stop:
              {
-                curprint("STOP ");
+                curprint_keyword("STOP", info);
+                curprint(" ");
                 unparseExpression(ctrl_stmt->get_code(), info);
                 // F2018 syntax
                 if (quiet_expr && !isSgNullExpression(quiet_expr))
                    {
-                      curprint(", quiet=");
+                      curprint(", ");
+                      curprint_keyword("QUIET", info);
+                      curprint("=");
                       unparseExpression(quiet_expr, info);
                    }
                 break;
              }
           case SgProcessControlStatement::e_error_stop:
              {
-                curprint("ERROR STOP ");
+                curprint_keyword("ERROR", info);
+                curprint(" ");
+                curprint_keyword("STOP", info);
+                curprint(" ");
                 unparseExpression(ctrl_stmt->get_code(), info);
                 // F2018 syntax
                 if (quiet_expr && !isSgNullExpression(quiet_expr))
                    {
-                      curprint(", quiet=");
+                      curprint(", ");
+                      curprint_keyword("QUIET", info);
+                      curprint("=");
                       unparseExpression(quiet_expr, info);
                    }
+                break;
+             }
+          case SgProcessControlStatement::e_fail_image:
+             {
+                curprint_keyword("FAIL", info);
+                curprint(" ");
+                curprint_keyword("IMAGE", info);
+                unparseExpression(ctrl_stmt->get_code(), info);
                 break;
              }
           case SgProcessControlStatement::e_pause:
@@ -2362,7 +2421,7 @@ FortranCodeGeneration_locatedNode::unparseProcessControlStmt(SgStatement* stmt, 
              }
         }
 
-     unp->cur.insert_newline(1); 
+     unp->cur.insert_newline(1);
    }
 
 void
@@ -2385,7 +2444,7 @@ FortranCodeGeneration_locatedNode::unparseReturnStmt(SgStatement* stmt, SgUnpars
           unparseExpression(altret, info);
         }
 
-     unp->cur.insert_newline(1); 
+     unp->cur.insert_newline(1);
    }
 
 //----------------------------------------------------------------------------
@@ -2417,7 +2476,7 @@ FortranCodeGeneration_locatedNode::unparsePrintStatement(SgStatement* stmt, SgUn
 
      unparseExprList(iolist, info);
 
-     unp->cur.insert_newline(1); 
+     unp->cur.insert_newline(1);
    }
 
 bool
@@ -2528,7 +2587,7 @@ FortranCodeGeneration_locatedNode::unparseReadStatement(SgStatement* stmt, SgUnp
 
      unparseExprList(iolist, info);
 
-     unp->cur.insert_newline(1); 
+     unp->cur.insert_newline(1);
    }
 
 void 
@@ -2565,7 +2624,7 @@ FortranCodeGeneration_locatedNode::unparseWriteStatement(SgStatement* stmt, SgUn
 
      unparseExprList(iolist, info);
 
-     unp->cur.insert_newline(1); 
+     unp->cur.insert_newline(1);
    }
 
 void 
@@ -2597,7 +2656,7 @@ FortranCodeGeneration_locatedNode::unparseOpenStatement(SgStatement* stmt, SgUnp
 
      curprint(") ");
 
-     unp->cur.insert_newline(1); 
+     unp->cur.insert_newline(1);
    }
 
 void 
@@ -2615,7 +2674,7 @@ FortranCodeGeneration_locatedNode::unparseCloseStatement(SgStatement* stmt, SgUn
 
      curprint(") ");
 
-     unp->cur.insert_newline(1); 
+     unp->cur.insert_newline(1);
    }
 
 void 
@@ -2691,7 +2750,7 @@ FortranCodeGeneration_locatedNode::unparseInquireStatement(SgStatement* stmt, Sg
           unparseExprList(iolist, info);
         }
 
-     unp->cur.insert_newline(1); 
+     unp->cur.insert_newline(1);
    }
 
 void 
@@ -2712,7 +2771,7 @@ FortranCodeGeneration_locatedNode::unparseFlushStatement(SgStatement* stmt, SgUn
         {
           unparseExprList(iolist, info);
         }
-     unp->cur.insert_newline(1); 
+     unp->cur.insert_newline(1);
    }
 
 void 
@@ -2736,7 +2795,7 @@ FortranCodeGeneration_locatedNode::unparseRewindStatement(SgStatement* stmt, SgU
           unparseExprList(iolist, info);
         }
 
-     unp->cur.insert_newline(1); 
+     unp->cur.insert_newline(1);
    }
 
 void 
@@ -2759,7 +2818,7 @@ FortranCodeGeneration_locatedNode::unparseBackspaceStatement(SgStatement* stmt, 
        // unparseExprList(iolist, info, false /*paren*/);
           unparseExprList(iolist, info);
         }
-     unp->cur.insert_newline(1); 
+     unp->cur.insert_newline(1);
    }
 
 void
@@ -2783,7 +2842,7 @@ FortranCodeGeneration_locatedNode::unparseEndfileStatement(SgStatement* stmt, Sg
           unparseExprList(iolist, info);
         }
 
-     unp->cur.insert_newline(1); 
+     unp->cur.insert_newline(1);
    }
 
 void
@@ -2807,7 +2866,7 @@ FortranCodeGeneration_locatedNode::unparseWaitStatement(SgStatement* stmt, SgUnp
           unparseExprList(iolist, info);
         }
 
-     unp->cur.insert_newline(1); 
+     unp->cur.insert_newline(1);
    }
 
 void
@@ -3025,7 +3084,7 @@ FortranCodeGeneration_locatedNode::unparseAssociateStatement(SgStatement* stmt, 
 
      curprint("END ASSOCIATE");
 
-     unp->cur.insert_newline(1); 
+     unp->cur.insert_newline(1);
    }
 
 //----------------------------------------------------------------------------
@@ -3772,7 +3831,7 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
           curprint(classdecl_stmt->get_name().str());
 
           ASSERT_not_null(unp);
-          unp->cur.insert_newline(1); 
+          unp->cur.insert_newline(1);
         }
        else
         {
@@ -3889,7 +3948,7 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_module(SgStatement* stmt
           curprint(classdecl_stmt->get_name().str());
 
           ASSERT_not_null(unp);
-          unp->cur.insert_newline(1); 
+          unp->cur.insert_newline(1);
           unp->cur.insert_newline(2);  //FMZ
         }
        else
@@ -4037,7 +4096,7 @@ FortranCodeGeneration_locatedNode::unparseAllocateStatement(SgStatement* stmt, S
         }
 
      curprint(" )");
-     unp->cur.insert_newline(1); 
+     unp->cur.insert_newline(1);
    }
  
 void
@@ -4066,7 +4125,7 @@ FortranCodeGeneration_locatedNode::unparseDeallocateStatement(SgStatement* stmt,
         }
 
      curprint(" )");
-     unp->cur.insert_newline(1); 
+     unp->cur.insert_newline(1);
    }
 
 
@@ -4085,7 +4144,7 @@ FortranCodeGeneration_locatedNode::unparseWithTeamStatement(SgStatement* stmt, S
 
      curprint(teamDecl->get_name().str());
 
-     unp->cur.insert_newline(1); 
+     unp->cur.insert_newline(1);
 
      // unparse the body
      SgBasicBlock * body = isSgBasicBlock(withTeamStmt->get_body());
@@ -4096,7 +4155,7 @@ FortranCodeGeneration_locatedNode::unparseWithTeamStatement(SgStatement* stmt, S
      curprint("END WITHTEAM ");
 
      curprint(teamDecl->get_name().str());
-     unp->cur.insert_newline(1); 
+     unp->cur.insert_newline(1);
  
    }
 

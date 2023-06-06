@@ -1,4 +1,3 @@
-
 /* unparser.h
  * This header file contains the class declaration for the newest unparser. Six
  * C files include this header file: unparser.C, modified_sage.C, unparse_stmt.C, 
@@ -177,15 +176,15 @@ class FortranCodeGeneration_locatedNode : public UnparseLanguageIndependentConst
           virtual void unparseClassDeclStmt_derivedType (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseClassDefnStmt    (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseExprStmt         (SgStatement* stmt, SgUnparse_Info& info);
-          virtual void unparseLabelStmt        (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseLabelStmt        (SgLabelStatement* stmt, SgUnparse_Info& info);
           virtual void unparseWhileStmt        (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseSwitchStmt       (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseCaseStmt         (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseDefaultStmt      (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseBreakStmt        (SgStatement* stmt, SgUnparse_Info& info);
-          virtual void unparseContinueStmt     (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseContinueStmt     (SgContinueStmt* stmt, SgUnparse_Info& info);
           virtual void unparseReturnStmt       (SgStatement* stmt, SgUnparse_Info& info);
-          virtual void unparseGotoStmt         (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseGotoStmt         (SgGotoStatement* stmt, SgUnparse_Info& info);
 
           virtual void unparseAttributeSpecificationStatement (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseNamelistStatement(SgStatement* stmt, SgUnparse_Info& info);
@@ -261,6 +260,13 @@ class FortranCodeGeneration_locatedNode : public UnparseLanguageIndependentConst
           * If oneVarOnly is false , unparses relevant attributes of the given type.
           */
           void unparseEntityTypeAttr(SgType* type, SgUnparse_Info& info, bool oneVarOnly);
+
+          /**
+          * For unparsing language keywords (allows option for upper or lower case)
+          * @param keyword - the keyword to unparse
+          * @param info - object containing unparsing options
+          */
+          void curprint_keyword(const std::string &keyword, SgUnparse_Info& info);
 };
 
 #endif

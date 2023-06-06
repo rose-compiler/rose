@@ -189,7 +189,7 @@ FortranCodeGeneration_locatedNode::unparseLabelRefExp(SgExpression* expr, SgUnpa
                   {
                      SgType* argumentType = args[i]->get_type();
                      SgTypeLabel* labelType = isSgTypeLabel(argumentType);
-                     if (labelType != NULL)
+                     if (labelType != nullptr)
                         {
                        // Search the argument list for a matching symbol.
                           SgSymbol* tmp_symbol = args[i]->get_symbol_from_symbol_table();
@@ -211,7 +211,7 @@ FortranCodeGeneration_locatedNode::unparseLabelRefExp(SgExpression* expr, SgUnpa
             else
              {
             // This is the most common case.
-                curprint(numericLabelString);
+               curprint(numericLabelString);
              }
         }
    }
@@ -827,6 +827,7 @@ FortranCodeGeneration_locatedNode::unparseAggrInit(SgExpression* expr, SgUnparse
 void
 FortranCodeGeneration_locatedNode::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
    {
+  // initialization of user-defined types
      SgConstructorInitializer* constructorInitializer = isSgConstructorInitializer(expr);
      ASSERT_not_null(constructorInitializer);
 
@@ -849,6 +850,7 @@ FortranCodeGeneration_locatedNode::unparseConInit(SgExpression* expr, SgUnparse_
 void
 FortranCodeGeneration_locatedNode::unparseAssnInit(SgExpression* expr, SgUnparse_Info& info)
    {
+  // DQ (4/28/2008): This is used for simple initializers and we use the SgAggregateInitializer for structures!
      SgAssignInitializer* assn_init = isSgAssignInitializer(expr);
      ASSERT_not_null(assn_init);
 
@@ -959,16 +961,12 @@ FortranCodeGeneration_locatedNode::unparseVarRef(SgExpression* expr, SgUnparse_I
           SgClassDefinition* cdef = isSgClassDefinition(vd->get_parent());
           if (cdef != NULL)
              {
-            // TV (09/27/2018): it does not work because "cdecl" is a keyword in VC++. Replaced it by xdecl and commented out the guard
-//#ifndef _MSC_VER
-            // tps (02/02/2010): Does not work for some reason under Windows: SgClassDeclaration unknown.
                SgClassDeclaration* xdecl = isSgClassDeclaration(cdef->get_declaration());
                if (xdecl != NULL && vd->get_declarationModifier().get_storageModifier().isStatic()) 
                   {
                     curprint(xdecl->get_qualified_name().str());
                     curprint("::");
                   }
-//#endif
              }
         }
   
@@ -1003,7 +1001,7 @@ FortranCodeGeneration_locatedNode::unparseClassRef(SgExpression* expr, SgUnparse
 void
 FortranCodeGeneration_locatedNode::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
    {
-  // DQ (9/16/2007): Note that string unparsing is language dependent so this is not handled by the language independent base class.
+  // Note that string unparsing is language dependent so this is not handled by the language independent base class.
 
   // Sage node corresponds to a Fortran string constant
      SgStringVal* str_val = isSgStringVal(expr);
