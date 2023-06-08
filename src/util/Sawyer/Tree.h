@@ -18,8 +18,6 @@
 #include <vector>
 
 namespace Sawyer {
-
-/** Tree data structures. */
 namespace Tree {
 
 /** Traversal event.
