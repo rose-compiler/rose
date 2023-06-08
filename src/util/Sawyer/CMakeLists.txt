@@ -3,6 +3,10 @@ add_library(util_sawyer OBJECT
   DocumentPodMarkup.C DocumentTextMarkup.C GraphTraversal.C LineVector.C
   Message.C ProgressBar.C Sawyer.C SmallObject.C Stopwatch.C Synchronization.C Time.C Yaml.C)
 
+if(SQLITE3_FOUND_LIB)
+  target_link_libraries(util_sawyer INTERFACE ${SQLITE3_LIBRARY})
+endif()
+
 install(FILES
   Access.h AddressMap.h AddressSegment.h AllocatingBuffer.h Assert.h Attribute.h BiMap.h BitFlags.h BitVector.h BitVectorSupport.h Buffer.h
   Cached.h Callbacks.h Clexer.h CommandLine.h CommandLineBoost.h Database.h DatabasePostgresql.h DatabaseSqlite.h
