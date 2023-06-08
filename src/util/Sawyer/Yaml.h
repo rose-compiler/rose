@@ -512,7 +512,7 @@ private:
 
 // Original oddly capitalized functions
 void Parse(Node &root, const boost::filesystem::path&);
-void Parse(Node &root, std::iostream&);
+void Parse(Node &root, std::istream&);
 void Parse(Node &root, const std::string &data);
 void Parse(Node &root, const char *data, const size_t size);
 

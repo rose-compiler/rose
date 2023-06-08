@@ -50,16 +50,16 @@ public:
 
 private:
 #include <Sawyer/WarningsOff.h>
-    mutable TimePoint begin_;                           // time that this stopwatch (re)started
-    mutable Duration elapsed_;                          // sum of elapsed run time in seconds
-    bool running_;                                      // state of the stopwatch: running or not
+    mutable TimePoint begin_ = 0.0;                     // time that this stopwatch (re)started
+    mutable Duration elapsed_ = 0.0;                    // sum of elapsed run time in seconds
+    bool running_ = false;                              // state of the stopwatch: running or not
 #include <Sawyer/WarningsRestore.h>
 
 public:
     /** Construct and optionally start a timer.
      *
      *  The timer is started immediately unless the constructor is invoked with a false argument. */
-    explicit Stopwatch(bool start=true): elapsed_(0), running_(false) {
+    explicit Stopwatch(bool start=true) {
         start && this->start();
     }
 
