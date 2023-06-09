@@ -405,6 +405,75 @@ inline size_t nSet(Unsigned src) {
     return retval;
 }
 
+/** Reverse the bytes. */
+template<class T>
+typename std::enable_if<std::is_integral<T>::value, T>::type
+inline reverseBytes(const T &x) {
+    // In C++23 and later, use std::byteswap
+    using Unsigned = typename std::make_unsigned<T>::type;
+    Unsigned u = x;
+    const size_t n = sizeof(Unsigned);
+    for (size_t i = 0; i < n/2; ++i) {
+        const size_t loOffset = i*8;
+        const size_t hiOffset = nBits<Unsigned>() - i*8 - 8;
+        const auto loMask = mask<Unsigned>(loOffset, loOffset+7);
+        const auto hiMask = mask<Unsigned>(hiOffset, hiOffset+7);
+        const Unsigned lo = (u >> loOffset) & 0xff;
+        const Unsigned hi = (u >> hiOffset) & 0xff;
+
+        u &= ~(loMask | hiMask);
+        u |= lo << hiOffset;
+        u |= hi << loOffset;
+    }
+    return u;
+}
+
+/** True if host is big endian. */
+inline bool
+isBigEndian() {
+    static const unsigned i = 1;
+    return *(unsigned char*)&i == 0;
+}
+
+/** True if host is little endian. */
+inline bool
+isLittleEndian() {
+    static const unsigned i = 1;
+    return *(unsigned char*)&i == 1;
+}
+
+/** Convert integral value from host order to big endian. */
+template<class T>
+inline typename std::enable_if<std::is_integral<T>::value, T>::type
+toBigEndian(const T x) {
+    using U = typename std::make_unsigned<T>::type;
+    return isBigEndian() ? x : reverseBytes((U)x);
+}
+
+/** Convert integral value from host order to little endian. */
+template<class T>
+inline typename std::enable_if<std::is_integral<T>::value, T>::type
+toLittleEndian(const T x) {
+    using U = typename std::make_unsigned<T>::type;
+    return isLittleEndian() ? x : reverseBytes((U)x);
+}
+
+/** Convert integral value from big endian to host order. */
+template<class T>
+inline typename std::enable_if<std::is_integral<T>::value, T>::type
+fromBigEndian(const T x) {
+    using U = typename std::make_unsigned<T>::type;
+    return isBigEndian() ? x : reverseBytes((U)x);
+}
+
+/** Convert integral value from little endian to host order. */
+template<class T>
+inline typename std::enable_if<std::is_integral<T>::value, T>::type
+fromLittleEndian(const T x) {
+    using U = typename std::make_unsigned<T>::type;
+    return isLittleEndian() ? x : reverseBytes((U)x);
+}
+
 } // namespace
 } // namespace
 #endif
