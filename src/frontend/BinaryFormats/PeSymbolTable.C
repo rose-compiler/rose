@@ -36,7 +36,7 @@ SgAsmCoffSymbol::SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *s
         throw FormatError("zero symbol record");
 
     if (disk.st_zero == 0) {
-        p_st_name_offset = ByteOrder::le_to_host(disk.st_offset);
+        p_st_name_offset = Rose::BinaryAnalysis::ByteOrder::leToHost(disk.st_offset);
         if (p_st_name_offset < 4)
             throw FormatError("name collides with size field");
         std::string s = strtab->read_content_local_str(p_st_name_offset);
@@ -50,10 +50,10 @@ SgAsmCoffSymbol::SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *s
     }
 
     p_st_name            = get_name()->get_string();
-    p_st_section_num     = ByteOrder::le_to_host(disk.st_section_num);
-    p_st_type            = ByteOrder::le_to_host(disk.st_type);
-    p_st_storage_class   = ByteOrder::le_to_host(disk.st_storage_class);
-    p_st_num_aux_entries = ByteOrder::le_to_host(disk.st_num_aux_entries);
+    p_st_section_num     = Rose::BinaryAnalysis::ByteOrder::leToHost(disk.st_section_num);
+    p_st_type            = Rose::BinaryAnalysis::ByteOrder::leToHost(disk.st_type);
+    p_st_storage_class   = Rose::BinaryAnalysis::ByteOrder::leToHost(disk.st_storage_class);
+    p_st_num_aux_entries = Rose::BinaryAnalysis::ByteOrder::leToHost(disk.st_num_aux_entries);
 
     /* Bind to section number. We can do this now because we've already parsed the PE Section Table */
     ASSERT_not_null(fhdr->get_section_table());
@@ -66,7 +66,7 @@ SgAsmCoffSymbol::SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *s
     }
     
     /* Make initial guesses for storage class, type, and definition state. We'll adjust them after reading aux entries. */
-    p_value = ByteOrder::le_to_host(disk.st_value);
+    p_value = Rose::BinaryAnalysis::ByteOrder::leToHost(disk.st_value);
     p_def_state = SYM_DEFINED;
     switch (p_st_storage_class) {
       case 0:    p_binding = SYM_NO_BINDING; break; /*none*/
@@ -124,11 +124,11 @@ SgAsmCoffSymbol::SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *s
 
         if (2 /*external*/ == p_st_storage_class && get_type() == SYM_FUNC && p_st_section_num > 0) {
             // Auxiliary record format 1: Function definitions
-            unsigned bf_idx      = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[0]));
-            unsigned size        = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[4]));
-            unsigned lnum_ptr    = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[8]));
-            unsigned next_fn_idx = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[12]));
-            unsigned res1        = ByteOrder::le_to_host(*(uint16_t*)&(p_aux_data[16]));
+            unsigned bf_idx      = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_aux_data[0]));
+            unsigned size        = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_aux_data[4]));
+            unsigned lnum_ptr    = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_aux_data[8]));
+            unsigned next_fn_idx = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_aux_data[12]));
+            unsigned res1        = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint16_t*)&(p_aux_data[16]));
             set_size(size);
             SAWYER_MESG(debug) <<"COFF aux func " <<escapeString(p_st_name) <<": bf_idx=" <<bf_idx
                                <<", size=" <<size <<", lnum_ptr=" <<StringUtility::addrToString(lnum_ptr)
@@ -136,22 +136,22 @@ SgAsmCoffSymbol::SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *s
             
         } else if (p_st_storage_class == 101 /*function*/ && (p_st_name == ".bf" || p_st_name == ".ef")) {
             // Auxiliary record format 2: .bf and .ef symbols
-            unsigned res1        = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[0]));
-            unsigned lnum        = ByteOrder::le_to_host(*(uint16_t*)&(p_aux_data[4])); /*line num within source file*/
-            unsigned res2        = ByteOrder::le_to_host(*(uint16_t*)&(p_aux_data[6]));
-            unsigned res3        = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[8]));
-            unsigned next_bf     = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[12])); /*only for .bf; reserved in .ef*/
-            unsigned res4        = ByteOrder::le_to_host(*(uint16_t*)&(p_aux_data[16]));
+            unsigned res1        = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_aux_data[0]));
+            unsigned lnum        = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint16_t*)&(p_aux_data[4])); /*line num within source file*/
+            unsigned res2        = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint16_t*)&(p_aux_data[6]));
+            unsigned res3        = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_aux_data[8]));
+            unsigned next_bf     = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_aux_data[12])); /*only for .bf; reserved in .ef*/
+            unsigned res4        = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint16_t*)&(p_aux_data[16]));
             SAWYER_MESG(debug) <<"COFF aux " <<escapeString(p_st_name) <<": res1=" <<res1 <<", lnum=" <<lnum
                                <<", res2=" <<res2 <<", res3=" <<res3 <<", next_bf=" <<next_bf <<", res4=" <<res4 <<"\n";
             
         } else if (p_st_storage_class == 2/*external*/ && p_st_section_num == 0/*undef*/ && get_value()==0) {
             // Auxiliary record format 3: weak externals
-            unsigned sym2_idx    = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[0]));
-            unsigned flags       = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[4]));
-            unsigned res1        = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[8]));
-            unsigned res2        = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[12]));
-            unsigned res3        = ByteOrder::le_to_host(*(uint16_t*)&(p_aux_data[16]));
+            unsigned sym2_idx    = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_aux_data[0]));
+            unsigned flags       = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_aux_data[4]));
+            unsigned res1        = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_aux_data[8]));
+            unsigned res2        = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_aux_data[12]));
+            unsigned res3        = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint16_t*)&(p_aux_data[16]));
             SAWYER_MESG(debug) <<"COFF aux weak " <<escapeString(p_st_name) <<": sym2_idx=" <<sym2_idx
                                <<", flags=" <<flags <<", res1=" <<res1 <<", res2=" <<res2 <<", res3=" <<res3 <<"\n";
             
@@ -160,7 +160,7 @@ SgAsmCoffSymbol::SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *s
             // into the string table. Replace the fake ".file" with the real file name.
             const COFFSymbol_disk *d = (const COFFSymbol_disk*) &(p_aux_data[0]);
             if (0 == d->st_zero) {
-                rose_addr_t fname_offset = ByteOrder::le_to_host(d->st_offset);
+                rose_addr_t fname_offset = Rose::BinaryAnalysis::ByteOrder::leToHost(d->st_offset);
                 if (fname_offset < 4)
                     throw FormatError("name collides with size field");
                 set_name(new SgAsmBasicString(strtab->read_content_local_str(fname_offset)));
@@ -180,14 +180,14 @@ SgAsmCoffSymbol::SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *s
 
         } else if (p_st_storage_class == 3/*static*/ && NULL != fhdr->get_file()->get_section_by_name(p_st_name, '$')) {
             // Auxiliary record format 5: Section definition.
-            unsigned size         = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[0])); /*same as section header SizeOfRawData */
-            unsigned nrel         = ByteOrder::le_to_host(*(uint16_t*)&(p_aux_data[4])); /*number of relocations*/
-            unsigned nln_ents     = ByteOrder::le_to_host(*(uint16_t*)&(p_aux_data[6])); /*number of line number entries */
-            unsigned cksum        = ByteOrder::le_to_host(*(uint32_t*)&(p_aux_data[8]));
-            unsigned sect_id      = ByteOrder::le_to_host(*(uint16_t*)&(p_aux_data[12])); /*1-base index into section table*/
+            unsigned size         = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_aux_data[0])); /*same as section header SizeOfRawData */
+            unsigned nrel         = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint16_t*)&(p_aux_data[4])); /*number of relocations*/
+            unsigned nln_ents     = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint16_t*)&(p_aux_data[6])); /*number of line number entries */
+            unsigned cksum        = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_aux_data[8]));
+            unsigned sect_id      = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint16_t*)&(p_aux_data[12])); /*1-base index into section table*/
             unsigned comdat       = p_aux_data[14]; /*comdat selection number if section is a COMDAT section*/
             unsigned res1         = p_aux_data[15];
-            unsigned res2         = ByteOrder::le_to_host(*(uint16_t*)&(p_aux_data[16]));
+            unsigned res2         = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint16_t*)&(p_aux_data[16]));
             set_size(size);
             set_type(SYM_SECTION);
             SAWYER_MESG(debug) <<"COFF aux section: size=" <<size <<", nrel=" <<nrel <<", nln_ents=" <<nln_ents
@@ -226,15 +226,15 @@ SgAsmCoffSymbol::encode(COFFSymbol_disk *disk) const
     } else {
         /* Name is an offset into the string table */
         disk->st_zero = 0;
-        ByteOrder::host_to_le(p_st_name_offset, &(disk->st_offset));
+        Rose::BinaryAnalysis::ByteOrder::hostToLe(p_st_name_offset, &(disk->st_offset));
     }
     
- // ByteOrder::host_to_le(get_value(),          &(disk->st_value));
-    ByteOrder::host_to_le(p_value,              &(disk->st_value));
-    ByteOrder::host_to_le(p_st_section_num,     &(disk->st_section_num));
-    ByteOrder::host_to_le(p_st_type,            &(disk->st_type));
-    ByteOrder::host_to_le(p_st_storage_class,   &(disk->st_storage_class));
-    ByteOrder::host_to_le(p_st_num_aux_entries, &(disk->st_num_aux_entries));
+ // Rose::BinaryAnalysis::ByteOrder::hostToLe(get_value(),          &(disk->st_value));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_value,              &(disk->st_value));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_st_section_num,     &(disk->st_section_num));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_st_type,            &(disk->st_type));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_st_storage_class,   &(disk->st_storage_class));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_st_num_aux_entries, &(disk->st_num_aux_entries));
     return disk;
 }
 
@@ -373,7 +373,7 @@ SgAsmCoffSymbolTable::parse()
 
     uint32_t word;
     p_strtab->read_content(0, &word, sizeof word);
-    rose_addr_t strtab_size = ByteOrder::le_to_host(word);
+    rose_addr_t strtab_size = Rose::BinaryAnalysis::ByteOrder::leToHost(word);
     if (strtab_size < sizeof(uint32_t))
         throw FormatError("COFF symbol table string table size is less than four bytes");
     p_strtab->extend(strtab_size - sizeof(uint32_t));

@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/ByteOrder.h>
+
 class SgAsmLEFileHeader: public SgAsmGenericHeader {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
@@ -263,5 +265,5 @@ public:
     static SgAsmLEFileHeader *parse(SgAsmDOSFileHeader*);
 
 private:
-    void *encode(ByteOrder::Endianness sex, SgAsmLEFileHeader::LEFileHeader_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex, SgAsmLEFileHeader::LEFileHeader_disk*) const;
 };

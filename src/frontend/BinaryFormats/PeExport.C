@@ -36,17 +36,17 @@ SgAsmPEExportDirectory::SgAsmPEExportDirectory(SgAsmPEExportSection *section) {
     }
 
     /* Convert disk-format data members to native format */
-    p_res1         = ByteOrder::le_to_host(disk.res1);
-    p_timestamp    = ByteOrder::le_to_host(disk.timestamp);
-    p_vmajor       = ByteOrder::le_to_host(disk.vmajor);
-    p_vminor       = ByteOrder::le_to_host(disk.vminor);
-    p_name_rva     = ByteOrder::le_to_host(disk.name_rva);       p_name_rva.set_section(section);
-    p_ord_base     = ByteOrder::le_to_host(disk.ord_base);
-    p_expaddr_n    = ByteOrder::le_to_host(disk.expaddr_n);
-    p_nameptr_n    = ByteOrder::le_to_host(disk.nameptr_n);
-    p_expaddr_rva  = ByteOrder::le_to_host(disk.expaddr_rva);    p_expaddr_rva.set_section(section);
-    p_nameptr_rva  = ByteOrder::le_to_host(disk.nameptr_rva);    p_nameptr_rva.set_section(section);
-    p_ordinals_rva = ByteOrder::le_to_host(disk.ordinals_rva);   p_ordinals_rva.set_section(section);
+    p_res1         = ByteOrder::leToHost(disk.res1);
+    p_timestamp    = ByteOrder::leToHost(disk.timestamp);
+    p_vmajor       = ByteOrder::leToHost(disk.vmajor);
+    p_vminor       = ByteOrder::leToHost(disk.vminor);
+    p_name_rva     = ByteOrder::leToHost(disk.name_rva);       p_name_rva.set_section(section);
+    p_ord_base     = ByteOrder::leToHost(disk.ord_base);
+    p_expaddr_n    = ByteOrder::leToHost(disk.expaddr_n);
+    p_nameptr_n    = ByteOrder::leToHost(disk.nameptr_n);
+    p_expaddr_rva  = ByteOrder::leToHost(disk.expaddr_rva);    p_expaddr_rva.set_section(section);
+    p_nameptr_rva  = ByteOrder::leToHost(disk.nameptr_rva);    p_nameptr_rva.set_section(section);
+    p_ordinals_rva = ByteOrder::leToHost(disk.ordinals_rva);   p_ordinals_rva.set_section(section);
 
     /* Read the name */
     std::string name;
@@ -204,7 +204,7 @@ SgAsmPEExportSection::parse()
             }
             nameptr_disk = 0;
         }
-        rose_addr_t fname_rva = ByteOrder::le_to_host(nameptr_disk);
+        rose_addr_t fname_rva = ByteOrder::leToHost(nameptr_disk);
         rose_addr_t fname_va = fname_rva + fhdr->get_base_va();
 
         /* Function name (fname) */
@@ -243,7 +243,7 @@ SgAsmPEExportSection::parse()
             }
             ordinal_disk = 0;
         }
-        const unsigned ordinal = ByteOrder::le_to_host(ordinal_disk);
+        const unsigned ordinal = ByteOrder::leToHost(ordinal_disk);
 
         /* If the function name pointer and ordinal pointer are both in unmapped memory then give up. */
         if (badFunctionNameVa && badOrdinalVa) {
@@ -258,7 +258,7 @@ SgAsmPEExportSection::parse()
         try {
             ExportAddress_disk expaddr_disk;
             read_content(fhdr->get_loader_map(), expaddr_va, &expaddr_disk, sizeof expaddr_disk);
-            expaddr = ByteOrder::le_to_host(expaddr_disk);
+            expaddr = ByteOrder::leToHost(expaddr_disk);
             expaddr.bind(fhdr);
         } catch (const MemoryMap::NotMapped &e) {
             if (mlog[ERROR]) {

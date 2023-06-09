@@ -23,76 +23,76 @@ SgAsmElfRelocEntry::SgAsmElfRelocEntry(SgAsmElfRelocSection *section) {
 }
 
 void
-SgAsmElfRelocEntry::parse(ByteOrder::Endianness sex, const Elf32RelaEntry_disk *disk)
+SgAsmElfRelocEntry::parse(Rose::BinaryAnalysis::ByteOrder::Endianness sex, const Elf32RelaEntry_disk *disk)
 {
-    p_r_offset    = disk_to_host(sex, disk->r_offset);
-    p_r_addend    = disk_to_host(sex, disk->r_addend);
-    uint64_t info = disk_to_host(sex, disk->r_info);
+    p_r_offset    = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->r_offset);
+    p_r_addend    = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->r_addend);
+    uint32_t info = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->r_info);
     p_sym = info >> 8;
     p_type = (RelocType)(info & 0xff);
 }
 void
-SgAsmElfRelocEntry::parse(ByteOrder::Endianness sex, const Elf64RelaEntry_disk *disk)
+SgAsmElfRelocEntry::parse(Rose::BinaryAnalysis::ByteOrder::Endianness sex, const Elf64RelaEntry_disk *disk)
 {
-    p_r_offset    = disk_to_host(sex, disk->r_offset);
-    p_r_addend    = disk_to_host(sex, disk->r_addend);
-    uint64_t info = disk_to_host(sex, disk->r_info);
+    p_r_offset    = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->r_offset);
+    p_r_addend    = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->r_addend);
+    uint64_t info = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->r_info);
     p_sym = info >> 32;
     p_type = (RelocType)(info & 0xffffffff);
 }
 void
-SgAsmElfRelocEntry::parse(ByteOrder::Endianness sex, const Elf32RelEntry_disk *disk)
+SgAsmElfRelocEntry::parse(Rose::BinaryAnalysis::ByteOrder::Endianness sex, const Elf32RelEntry_disk *disk)
 {
-    p_r_offset    = disk_to_host(sex, disk->r_offset);
+    p_r_offset    = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->r_offset);
     p_r_addend    = 0;
-    uint64_t info = disk_to_host(sex, disk->r_info);
+    uint32_t info = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->r_info);
     p_sym = info >> 8;
     p_type = (RelocType)(info & 0xff);
 }
 void
-SgAsmElfRelocEntry::parse(ByteOrder::Endianness sex, const Elf64RelEntry_disk *disk)
+SgAsmElfRelocEntry::parse(Rose::BinaryAnalysis::ByteOrder::Endianness sex, const Elf64RelEntry_disk *disk)
 {
-    p_r_offset    = disk_to_host(sex, disk->r_offset);
+    p_r_offset    = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->r_offset);
     p_r_addend    = 0;
-    uint64_t info = disk_to_host(sex, disk->r_info);
+    uint64_t info = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->r_info);
     p_sym = info >> 32;
     p_type = (RelocType)(info & 0xffffffff);
 }
 
 void *
-SgAsmElfRelocEntry::encode(ByteOrder::Endianness sex, Elf32RelaEntry_disk *disk) const
+SgAsmElfRelocEntry::encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex, Elf32RelaEntry_disk *disk) const
 {
-    host_to_disk(sex, p_r_offset, &(disk->r_offset));
-    host_to_disk(sex, p_r_addend, &(disk->r_addend));
-    uint64_t info = (p_sym<<8) | (p_type & 0xff);
-    host_to_disk(sex, info, &(disk->r_info));
+    hostToDisk(sex, p_r_offset, &(disk->r_offset));
+    hostToDisk(sex, p_r_addend, &(disk->r_addend));
+    uint32_t info = (p_sym<<8) | (p_type & 0xff);
+    hostToDisk(sex, info, &(disk->r_info));
     return disk;
 }
 void *
-SgAsmElfRelocEntry::encode(ByteOrder::Endianness sex, Elf64RelaEntry_disk *disk) const
+SgAsmElfRelocEntry::encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex, Elf64RelaEntry_disk *disk) const
 {
-    host_to_disk(sex, p_r_offset, &(disk->r_offset));
-    host_to_disk(sex, p_r_addend, &(disk->r_addend));
+    hostToDisk(sex, p_r_offset, &(disk->r_offset));
+    hostToDisk(sex, p_r_addend, &(disk->r_addend));
     uint64_t info = ((uint64_t)p_sym<<32) | (p_type & 0xffffffff);
-    host_to_disk(sex, info, &(disk->r_info));
+    hostToDisk(sex, info, &(disk->r_info));
     return disk;
 }
 void *
-SgAsmElfRelocEntry::encode(ByteOrder::Endianness sex, Elf32RelEntry_disk *disk) const
+SgAsmElfRelocEntry::encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex, Elf32RelEntry_disk *disk) const
 {
-    host_to_disk(sex, p_r_offset, &(disk->r_offset));
+    hostToDisk(sex, p_r_offset, &(disk->r_offset));
     ROSE_ASSERT(0==p_r_addend);
     uint64_t info = (p_sym<<8) | (p_type & 0xff);
-    host_to_disk(sex, info, &(disk->r_info));
+    hostToDisk(sex, info, &(disk->r_info));
     return disk;
 }
 void *
-SgAsmElfRelocEntry::encode(ByteOrder::Endianness sex, Elf64RelEntry_disk *disk) const
+SgAsmElfRelocEntry::encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex, Elf64RelEntry_disk *disk) const
 {
-    host_to_disk(sex, p_r_offset, &(disk->r_offset));
+    hostToDisk(sex, p_r_offset, &(disk->r_offset));
     ROSE_ASSERT(0==p_r_addend);
     uint64_t info = ((uint64_t)p_sym<<32) | (p_type & 0xffffffff);
-    host_to_disk(sex, info, &(disk->r_info));
+    hostToDisk(sex, info, &(disk->r_info));
     return disk;
 }
 
@@ -261,7 +261,7 @@ SgAsmElfRelocSection::unparse(std::ostream &f) const
 {
     SgAsmElfFileHeader *fhdr = get_elf_header();
     ROSE_ASSERT(fhdr);
-    ByteOrder::Endianness sex = fhdr->get_sex();
+    Rose::BinaryAnalysis::ByteOrder::Endianness sex = fhdr->get_sex();
 
     size_t entry_size, struct_size, extra_size, nentries;
     calculate_sizes(&entry_size, &struct_size, &extra_size, &nentries);

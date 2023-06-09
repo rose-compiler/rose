@@ -1,4 +1,4 @@
-#include <ByteOrder.h>
+#include <Rose/BinaryAnalysis/ByteOrder.h>
 
 /** One entry from the dynamic linking table. */
 class SgAsmElfDynamicEntry: public SgAsmExecutableFileFormat {
@@ -145,15 +145,15 @@ public:
     /** Initialize object by parsing the file.
      *
      * @{ */
-    void parse(ByteOrder::Endianness, const SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*);
-    void parse(ByteOrder::Endianness, const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*);
+    void parse(Rose::BinaryAnalysis::ByteOrder::Endianness, const SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*);
+    void parse(Rose::BinaryAnalysis::ByteOrder::Endianness, const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*);
     /** @} */
 
     /** Convert object to disk representation.
      *
      * @{ */
-    void *encode(ByteOrder::Endianness, SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*) const;
-    void *encode(ByteOrder::Endianness, SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*) const;
     /** @} */
 
     /** Print some debugging info */

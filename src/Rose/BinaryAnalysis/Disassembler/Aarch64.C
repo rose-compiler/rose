@@ -586,7 +586,7 @@ Aarch64::wrapPrePostIncrement(SgAsmOperandList *operands, const cs_arm64 &cs_det
 uint32_t
 Aarch64::opcode(const cs_insn &insn) {
     uint32_t code = insn.bytes[0] | (insn.bytes[1] << 8) | (insn.bytes[2] << 16) | (insn.bytes[3] << 24);
-    return ByteOrder::disk_to_host(byteOrder(), code);
+    return ByteOrder::diskToHost(byteOrder(), code);
 }
 
 uint32_t
@@ -595,7 +595,7 @@ Aarch64::opcode(SgAsmInstruction *insn) {
     const std::vector<uint8_t> &bytes = insn->get_raw_bytes();
     ASSERT_require(bytes.size() == 4);
     uint32_t code = bytes[0] | (bytes[1] << 8) | (bytes[2] << 16) | (bytes[3] << 24);
-    return ByteOrder::disk_to_host(byteOrder(), code);
+    return ByteOrder::diskToHost(byteOrder(), code);
 }
 
 SgAsmType*

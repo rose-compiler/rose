@@ -96,11 +96,11 @@ SgAsmPEImportDirectory::parse(rose_addr_t idir_va, bool /*isLastEntry*/)
     }
 #endif
 
-    p_ilt_rva         = ByteOrder::le_to_host(disk.ilt_rva);
-    p_time            = ByteOrder::le_to_host(disk.time);
-    p_forwarder_chain = ByteOrder::le_to_host(disk.forwarder_chain);
-    p_dll_name_rva    = ByteOrder::le_to_host(disk.dll_name_rva);
-    p_iat_rva         = ByteOrder::le_to_host(disk.iat_rva);
+    p_ilt_rva         = ByteOrder::leToHost(disk.ilt_rva);
+    p_time            = ByteOrder::leToHost(disk.time);
+    p_forwarder_chain = ByteOrder::leToHost(disk.forwarder_chain);
+    p_dll_name_rva    = ByteOrder::leToHost(disk.dll_name_rva);
+    p_iat_rva         = ByteOrder::leToHost(disk.iat_rva);
 
     /* Bind RVAs to best sections */
     p_ilt_rva.bind(fhdr);
@@ -186,7 +186,7 @@ SgAsmPEImportDirectory::parse_ilt_iat(const rose_rva_t &table_start, bool assume
                 }
             }
         }
-        entry_word = ByteOrder::le_to_host(entry_word);
+        entry_word = ByteOrder::leToHost(entry_word);
 
         /* ILT/IAT are to be terminated by a zero word.  However, the length of the IAT is required to be the same as the
          * length of the ILT. Handle three cases here:
@@ -308,7 +308,7 @@ SgAsmPEImportDirectory::parse_ilt_iat(const rose_rva_t &table_start, bool assume
                     }
                     continue; // to next ILT/IAT entry
                 }
-                hint = ByteOrder::le_to_host(hint);
+                hint = ByteOrder::leToHost(hint);
                 import_item->set_hint(hint);
 
                 std::string s;
@@ -463,7 +463,7 @@ SgAsmPEImportDirectory::unparse_ilt_iat(std::ostream &f, const rose_rva_t &table
                                    <<": hint is out of bounds: " <<hint <<" (truncated to 16 bits)\n";
                     }
                 }
-                ByteOrder::host_to_le(hint, &hint); // nudge, nudge. Know what I mean?
+                ByteOrder::hostToLe(hint, &hint); // nudge, nudge. Know what I mean?
                 memcpy(&buf[0], &hint, 2);
                 memcpy(&buf[2], name.c_str(), std::min(name.size()+1, bufsz-2));
                 if (bufsz>2)
@@ -490,7 +490,7 @@ SgAsmPEImportDirectory::unparse_ilt_iat(std::ostream &f, const rose_rva_t &table
             }
         }
         uint64_t disk = 0; // we might write only the first few bytes
-        ByteOrder::host_to_le(entry_word, &disk);
+        ByteOrder::hostToLe(entry_word, &disk);
         entry_rva.get_section()->write(f, entry_rva.get_rel(), entry_size, &disk);
     }
 }
@@ -498,11 +498,11 @@ SgAsmPEImportDirectory::unparse_ilt_iat(std::ostream &f, const rose_rva_t &table
 void *
 SgAsmPEImportDirectory::encode(PEImportDirectory_disk *disk) const
 {
-    ByteOrder::host_to_le(p_ilt_rva.get_rva(),      &(disk->ilt_rva));
-    ByteOrder::host_to_le(p_time,                   &(disk->time));
-    ByteOrder::host_to_le(p_forwarder_chain,        &(disk->forwarder_chain));
-    ByteOrder::host_to_le(p_dll_name_rva.get_rva(), &(disk->dll_name_rva));
-    ByteOrder::host_to_le(p_iat_rva.get_rva(),      &(disk->iat_rva));
+    ByteOrder::hostToLe(p_ilt_rva.get_rva(),      &(disk->ilt_rva));
+    ByteOrder::hostToLe(p_time,                   &(disk->time));
+    ByteOrder::hostToLe(p_forwarder_chain,        &(disk->forwarder_chain));
+    ByteOrder::hostToLe(p_dll_name_rva.get_rva(), &(disk->dll_name_rva));
+    ByteOrder::hostToLe(p_iat_rva.get_rva(),      &(disk->iat_rva));
     return disk;
 }
 

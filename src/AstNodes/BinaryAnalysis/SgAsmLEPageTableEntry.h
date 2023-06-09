@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/ByteOrder.h>
+
 class SgAsmLEPageTableEntry: public SgAsmExecutableFileFormat {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
@@ -43,7 +45,8 @@ public:
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    SgAsmLEPageTableEntry(ByteOrder::Endianness sex, const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk);
+    SgAsmLEPageTableEntry(Rose::BinaryAnalysis::ByteOrder::Endianness sex,
+                          const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk);
     void dump(FILE*, const char *prefix, ssize_t idx) const;
-    void *encode(ByteOrder::Endianness, SgAsmLEPageTableEntry::LEPageTableEntry_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmLEPageTableEntry::LEPageTableEntry_disk*) const;
 };

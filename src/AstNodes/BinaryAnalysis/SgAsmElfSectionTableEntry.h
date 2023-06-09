@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/ByteOrder.h>
+
 /** Represents one entry in an ELF section table. */
 class SgAsmElfSectionTableEntry: public SgAsmExecutableFileFormat {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -169,19 +171,19 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Converts 32-bit disk representation to host representation. */
-    SgAsmElfSectionTableEntry(ByteOrder::Endianness sex,
+    SgAsmElfSectionTableEntry(Rose::BinaryAnalysis::ByteOrder::Endianness sex,
                               const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk);
 
     /** Converts 64-bit disk representation to host representation. */
-    SgAsmElfSectionTableEntry(ByteOrder::Endianness sex,
+    SgAsmElfSectionTableEntry(Rose::BinaryAnalysis::ByteOrder::Endianness sex,
                               const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk);
 
     /** Encode a section table entry into the disk structure.
      *
      * @{ */
-    void *encode(ByteOrder::Endianness sex,
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex,
                  SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk) const;
-    void *encode(ByteOrder::Endianness sex,
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex,
                  SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk) const;
     /** @} */
 

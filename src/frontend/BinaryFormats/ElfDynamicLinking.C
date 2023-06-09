@@ -27,30 +27,30 @@ SgAsmElfDynamicEntry::SgAsmElfDynamicEntry(SgAsmElfDynamicSection *dynsec) {
 }
 
 void
-SgAsmElfDynamicEntry::parse(ByteOrder::Endianness sex, const Elf32DynamicEntry_disk *disk)
+SgAsmElfDynamicEntry::parse(Rose::BinaryAnalysis::ByteOrder::Endianness sex, const Elf32DynamicEntry_disk *disk)
 {
-    p_d_tag = (EntryType)ByteOrder::disk_to_host(sex, disk->d_tag);
-    p_d_val = ByteOrder::disk_to_host(sex, disk->d_val);
+    p_d_tag = (EntryType)Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->d_tag);
+    p_d_val = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->d_val);
 }
 void
-SgAsmElfDynamicEntry::parse(ByteOrder::Endianness sex, const Elf64DynamicEntry_disk *disk)
+SgAsmElfDynamicEntry::parse(Rose::BinaryAnalysis::ByteOrder::Endianness sex, const Elf64DynamicEntry_disk *disk)
 {
-    p_d_tag = (EntryType)ByteOrder::disk_to_host(sex, disk->d_tag);
-    p_d_val = ByteOrder::disk_to_host(sex, disk->d_val);
+    p_d_tag = (EntryType)Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->d_tag);
+    p_d_val = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->d_val);
 }
 
 void *
-SgAsmElfDynamicEntry::encode(ByteOrder::Endianness sex, Elf32DynamicEntry_disk *disk) const
+SgAsmElfDynamicEntry::encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex, Elf32DynamicEntry_disk *disk) const
 {
-    ByteOrder::host_to_disk(sex, p_d_tag, &(disk->d_tag));
-    ByteOrder::host_to_disk(sex, p_d_val.get_rva(), &(disk->d_val));
+    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, (uint32_t)p_d_tag, &(disk->d_tag));
+    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_d_val.get_rva(), &(disk->d_val));
     return disk;
 }
 void *
-SgAsmElfDynamicEntry::encode(ByteOrder::Endianness sex, Elf64DynamicEntry_disk *disk) const
+SgAsmElfDynamicEntry::encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex, Elf64DynamicEntry_disk *disk) const
 {
-    ByteOrder::host_to_disk(sex, p_d_tag, &(disk->d_tag));
-    ByteOrder::host_to_disk(sex, p_d_val.get_rva(), &(disk->d_val));
+    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, (uint32_t)p_d_tag, &(disk->d_tag));
+    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_d_val.get_rva(), &(disk->d_val));
     return disk;
 }
 
@@ -280,7 +280,7 @@ SgAsmElfDynamicSection::unparse(std::ostream &f) const
 {
     SgAsmElfFileHeader *fhdr = get_elf_header();
     ROSE_ASSERT(fhdr);
-    ByteOrder::Endianness sex = fhdr->get_sex();
+    Rose::BinaryAnalysis::ByteOrder::Endianness sex = fhdr->get_sex();
 
     size_t entry_size, struct_size, extra_size, nentries;
     calculate_sizes(&entry_size, &struct_size, &extra_size, &nentries);

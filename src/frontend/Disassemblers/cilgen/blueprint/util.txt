@@ -10,7 +10,7 @@ namespace // anonymous namespace for auxiliary functions
      static constexpr int NUM_BYTES = sizeof(T);
 
      ROSE_ASSERT(index+NUM_BYTES <= buf.size());
-     T value = ByteOrder::le_to_host(*reinterpret_cast<T*>(buf.data()+index));
+     T value = ByteOrder::leToHost(*reinterpret_cast<T*>(buf.data()+index));
 
      index += NUM_BYTES;
      return value;

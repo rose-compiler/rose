@@ -44,7 +44,7 @@ Jvm::appendOperand(const MemoryMap::Ptr &map, rose_addr_t va,
     ROSE_ASSERT(false && "short read");
   }
 
-  T val = be_to_host(*reinterpret_cast<T*>(buf));
+  T val = beToHost(*reinterpret_cast<T*>(buf));
   operands->append_operand(SageBuilderAsm::buildValue(val));
 
   // TODO: Perhaps there is a more efficient way to do this
@@ -80,9 +80,9 @@ Jvm::appendTableswitch(const MemoryMap::Ptr &map, rose_addr_t start,
   }
 
   uint8_t* ptr{buf + nPad};
-  int32_t def  = be_to_host(*(int32_t*) ptr);  ptr += sizeof(int32_t);
-  int32_t low  = be_to_host(*(int32_t*) ptr);  ptr += sizeof(int32_t);
-  int32_t high = be_to_host(*(int32_t*) ptr);  ptr += sizeof(int32_t);
+  int32_t def  = beToHost(*(int32_t*) ptr);  ptr += sizeof(int32_t);
+  int32_t low  = beToHost(*(int32_t*) ptr);  ptr += sizeof(int32_t);
+  int32_t high = beToHost(*(int32_t*) ptr);  ptr += sizeof(int32_t);
 
 #if DEBUG_ON
   std::cout << "... appendTableswitch: "

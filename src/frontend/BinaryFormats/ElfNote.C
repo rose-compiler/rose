@@ -56,17 +56,17 @@ SgAsmElfNoteEntry::parse(rose_addr_t at)
     /* Length of note entry name, including NUL termination */
     uint32_t u32;
     notes->read_content_local(at, &u32, 4);
-    size_t name_size = disk_to_host(fhdr->get_sex(), u32);
+    size_t name_size = diskToHost(fhdr->get_sex(), u32);
     at += 4;
 
     /* Length of note entry description (i.e., the payload) */
     notes->read_content_local(at, &u32, 4);
-    size_t payload_size = disk_to_host(fhdr->get_sex(), u32);
+    size_t payload_size = diskToHost(fhdr->get_sex(), u32);
     at += 4;
 
     /* Type of note */
     notes->read_content_local(at, &u32, 4);
-    unsigned type = disk_to_host(fhdr->get_sex(), u32);
+    unsigned type = diskToHost(fhdr->get_sex(), u32);
     at += 4;
 
     /* NUL-terminated name */
@@ -96,17 +96,17 @@ SgAsmElfNoteEntry::unparse(std::ostream &f, rose_addr_t at)
 
     /* Name size, including NUL termination */
     uint32_t u32;
-    host_to_disk(fhdr->get_sex(), p_name->get_string().size()+1, &u32);
+    hostToDisk(fhdr->get_sex(), p_name->get_string().size()+1, &u32);
     notes->write(f, at, 4, &u32);
     at += 4;
 
     /* Payload size */
-    host_to_disk(fhdr->get_sex(), p_payload.size(), &u32);
+    hostToDisk(fhdr->get_sex(), p_payload.size(), &u32);
     notes->write(f, at, 4, &u32);
     at += 4;
     
     /* Type */
-    host_to_disk(fhdr->get_sex(), p_type, &u32);
+    hostToDisk(fhdr->get_sex(), p_type, &u32);
     notes->write(f, at, 4, &u32);
     at += 4;
     

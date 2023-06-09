@@ -115,7 +115,7 @@ Mips::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t insn_va, AddressSet 
     uint32_t insn_disk; // instruction in file byte order
     if (4!=map->at(insn_va).limit(4).require(MemoryMap::EXECUTABLE).read((uint8_t*)&insn_disk).size())
         throw Exception("short read", insn_va);
-    unsigned insn_bits = ByteOrder::disk_to_host(byteOrder(), insn_disk);
+    unsigned insn_bits = ByteOrder::diskToHost(byteOrder(), insn_disk);
     SgAsmMipsInstruction *insn = disassemble_insn(insn_va, insn_bits);
     if (!insn)
         throw Exception("cannot disassemble MIPS instruction: " + StringUtility::addrToString(insn_bits), insn_va);

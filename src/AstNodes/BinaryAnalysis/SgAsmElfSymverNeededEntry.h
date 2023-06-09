@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/ByteOrder.h>
+
 /** One entry of the ELF symbol version needed table. */
 class SgAsmElfSymverNeededEntry: public SgAsmExecutableFileFormat {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -54,10 +56,10 @@ public:
     explicit SgAsmElfSymverNeededEntry(SgAsmElfSymverNeededSection*);
 
     /** Initialize object by parsing file. */
-    void parse(ByteOrder::Endianness, const SgAsmElfSymverNeededEntry::ElfSymverNeededEntry_disk*);
+    void parse(Rose::BinaryAnalysis::ByteOrder::Endianness, const SgAsmElfSymverNeededEntry::ElfSymverNeededEntry_disk*);
 
     /** Encode object to disk representation. */
-    void *encode(ByteOrder::Endianness, SgAsmElfSymverNeededEntry::ElfSymverNeededEntry_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfSymverNeededEntry::ElfSymverNeededEntry_disk*) const;
 
     /** Print debugging information. */
     virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;

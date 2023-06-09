@@ -6888,6 +6888,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmLESectionTableEntry);
 IS_SERIALIZABLE(AsmLESectionTableEntry);
 
+DECLARE_HEADERS(AsmLESectionTableEntry);
+#if defined(SgAsmLESectionTableEntry_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/ByteOrder.h>
+#endif // SgAsmLESectionTableEntry_HEADERS
+
 #ifdef DOCUMENTATION
 class SgAsmLESectionTableEntry: public SgAsmExecutableFileFormat {
 #endif // DOCUMENTATION
@@ -7037,8 +7042,9 @@ public:
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    SgAsmLESectionTableEntry(ByteOrder::Endianness sex, const SgAsmLESectionTableEntry::LESectionTableEntry_disk *disk);
-    void *encode(ByteOrder::Endianness, SgAsmLESectionTableEntry::LESectionTableEntry_disk*) const;
+    SgAsmLESectionTableEntry(Rose::BinaryAnalysis::ByteOrder::Endianness sex,
+                             const SgAsmLESectionTableEntry::LESectionTableEntry_disk *disk);
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmLESectionTableEntry::LESectionTableEntry_disk*) const;
     virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
 public:
     /** Destructor. */
@@ -7246,6 +7252,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmLEPageTableEntry);
 IS_SERIALIZABLE(AsmLEPageTableEntry);
 
+DECLARE_HEADERS(AsmLEPageTableEntry);
+#if defined(SgAsmLEPageTableEntry_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/ByteOrder.h>
+#endif // SgAsmLEPageTableEntry_HEADERS
+
 #ifdef DOCUMENTATION
 class SgAsmLEPageTableEntry: public SgAsmExecutableFileFormat {
 #endif // DOCUMENTATION
@@ -7323,9 +7334,10 @@ public:
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    SgAsmLEPageTableEntry(ByteOrder::Endianness sex, const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk);
+    SgAsmLEPageTableEntry(Rose::BinaryAnalysis::ByteOrder::Endianness sex,
+                          const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk);
     void dump(FILE*, const char *prefix, ssize_t idx) const;
-    void *encode(ByteOrder::Endianness, SgAsmLEPageTableEntry::LEPageTableEntry_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmLEPageTableEntry::LEPageTableEntry_disk*) const;
 public:
     /** Destructor. */
     virtual ~SgAsmLEPageTableEntry();
@@ -7497,6 +7509,11 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmLEFileHeader);
 IS_SERIALIZABLE(AsmLEFileHeader);
+
+DECLARE_HEADERS(AsmLEFileHeader);
+#if defined(SgAsmLEFileHeader_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/ByteOrder.h>
+#endif // SgAsmLEFileHeader_HEADERS
 
 #ifdef DOCUMENTATION
 class SgAsmLEFileHeader: public SgAsmGenericHeader {
@@ -8203,7 +8220,7 @@ public:
     static SgAsmLEFileHeader *parse(SgAsmDOSFileHeader*);
 
 private:
-    void *encode(ByteOrder::Endianness sex, SgAsmLEFileHeader::LEFileHeader_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex, SgAsmLEFileHeader::LEFileHeader_disk*) const;
 public:
     /** Destructor. */
     virtual ~SgAsmLEFileHeader();
@@ -8307,6 +8324,11 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmLEEntryPoint);
 IS_SERIALIZABLE(AsmLEEntryPoint);
+
+DECLARE_HEADERS(AsmLEEntryPoint);
+#if defined(SgAsmLEEntryPoint_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/ByteOrder.h>
+#endif // SgAsmLEEntryPoint_HEADERS
 
 #ifdef DOCUMENTATION
 class SgAsmLEEntryPoint: public SgAsmExecutableFileFormat {
@@ -8427,9 +8449,10 @@ public:
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    SgAsmLEEntryPoint(ByteOrder::Endianness sex, const SgAsmLEEntryPoint::LEEntryPoint_disk *disk);
-    SgAsmLEEntryPoint(ByteOrder::Endianness sex, unsigned flags);
-    rose_addr_t unparse(std::ostream&, ByteOrder::Endianness, const SgAsmGenericSection*, rose_addr_t spos) const;
+    SgAsmLEEntryPoint(Rose::BinaryAnalysis::ByteOrder::Endianness sex, const SgAsmLEEntryPoint::LEEntryPoint_disk *disk);
+    SgAsmLEEntryPoint(Rose::BinaryAnalysis::ByteOrder::Endianness sex, unsigned flags);
+    rose_addr_t unparse(std::ostream&, Rose::BinaryAnalysis::ByteOrder::Endianness, const SgAsmGenericSection*,
+                        rose_addr_t spos) const;
     void dump(FILE*, const char *prefix, ssize_t idx) const;
 public:
     /** Destructor. */
@@ -11734,6 +11757,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmIntegerType);
 IS_SERIALIZABLE(AsmIntegerType);
 
+DECLARE_HEADERS(AsmIntegerType);
+#if defined(SgAsmIntegerType_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/ByteOrder.h>
+#endif // SgAsmIntegerType_HEADERS
+
 #ifdef DOCUMENTATION
 /** Integer types. */
 class SgAsmIntegerType: public SgAsmScalarType {
@@ -11775,7 +11803,7 @@ public:
     /** Constructor with specified member values.
      *
      *  Constructs a new integer type and initializes its properties according to the arguments. */
-    SgAsmIntegerType(ByteOrder::Endianness, size_t nBits, bool isSigned);
+    SgAsmIntegerType(Rose::BinaryAnalysis::ByteOrder::Endianness, size_t nBits, bool isSigned);
 
     // Overrides documented in base class
     virtual void check() const override;
@@ -12227,6 +12255,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmGenericFormat);
 IS_SERIALIZABLE(AsmGenericFormat);
 
+DECLARE_HEADERS(AsmGenericFormat);
+#if defined(SgAsmGenericFormat_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/ByteOrder.h>
+#endif // SgAsmGenericFormat_HEADERS
+
 #ifdef DOCUMENTATION
 /** Basic information about an executable container. */
 class SgAsmGenericFormat: public SgAsmExecutableFileFormat {
@@ -12246,7 +12279,7 @@ class SgAsmGenericFormat: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmGenericFormat.setDataPrototype(
-        "ByteOrder::Endianness", "sex", "= ByteOrder::ORDER_UNSPECIFIED",
+        "Rose::BinaryAnalysis::ByteOrder::Endianness", "sex", "= Rose::BinaryAnalysis::ByteOrder::ORDER_UNSPECIFIED",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -12324,8 +12357,8 @@ public:
     /** Property: Byte order. 
      * 
      * @{ */
-    ByteOrder::Endianness const& get_sex() const;
-    void set_sex(ByteOrder::Endianness const&);
+    Rose::BinaryAnalysis::ByteOrder::Endianness const& get_sex() const;
+    void set_sex(Rose::BinaryAnalysis::ByteOrder::Endianness const&);
     /** @} */
 
 public:
@@ -13825,6 +13858,7 @@ DECLARE_HEADERS(AsmFloatType);
 #if defined(SgAsmFloatType_HEADERS) || defined(DOCUMENTATION)
 #include <Sawyer/BitVector.h>
 #include <Rose/BitFlags.h>
+#include <Rose/BinaryAnalysis/ByteOrder.h>
 #endif // SgAsmFloatType_HEADERS
 
 #ifdef DOCUMENTATION
@@ -13923,7 +13957,7 @@ public:
 public:
 public:
     /** Construct a new floating-point type. */
-    SgAsmFloatType(ByteOrder::Endianness, size_t nBits,
+    SgAsmFloatType(Rose::BinaryAnalysis::ByteOrder::Endianness, size_t nBits,
                    const BitRange &significandBits, const BitRange exponentBits, size_t signBit,
                    uint64_t exponentBias, Flags flags);
 
@@ -14008,6 +14042,11 @@ AsmScalarType.setAutomaticGenerationOfConstructor(false);
 AsmScalarType.setAutomaticGenerationOfDestructor(false);
 #endif // !DOCUMENTATION
 
+DECLARE_HEADERS(AsmScalarType);
+#if defined(SgAsmScalarType_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/ByteOrder.h>
+#endif // SgAsmScalarType_HEADERS
+
 #ifdef DOCUMENTATION
 /** Base class for scalar types. */
 class SgAsmScalarType: public SgAsmType {
@@ -14015,13 +14054,13 @@ class SgAsmScalarType: public SgAsmType {
 
 #ifndef DOCUMENTATION
     AsmScalarType.setDataPrototype(
-        "ByteOrder::Endianness", "minorOrder", "= ByteOrder::ORDER_UNSPECIFIED",
+        "Rose::BinaryAnalysis::ByteOrder::Endianness", "minorOrder", "= Rose::BinaryAnalysis::ByteOrder::ORDER_UNSPECIFIED",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmScalarType.setDataPrototype(
-        "ByteOrder::Endianness", "majorOrder", "= ByteOrder::ORDER_UNSPECIFIED",
+        "Rose::BinaryAnalysis::ByteOrder::Endianness", "majorOrder", "= Rose::BinaryAnalysis::ByteOrder::ORDER_UNSPECIFIED",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -14081,17 +14120,17 @@ protected:
      *
      *  Since scalar types are base classes, one normally does not construct just a scalar type but rather one of the base
      *  classes. */
-    SgAsmScalarType(ByteOrder::Endianness, size_t nBits);
+    SgAsmScalarType(Rose::BinaryAnalysis::ByteOrder::Endianness, size_t nBits);
 
 public:
     /** Property: Number of bits. */
     virtual size_t get_nBits() const override;
 
     /** Property: Minor byte order. This is the usual notion of byte order. */
-    ByteOrder::Endianness get_minorOrder() const;
+    Rose::BinaryAnalysis::ByteOrder::Endianness get_minorOrder() const;
 
     /** Property: Major byte order for mixed-order types. */
-    ByteOrder::Endianness get_majorOrder() const;
+    Rose::BinaryAnalysis::ByteOrder::Endianness get_majorOrder() const;
 
     /** Property: Stride of major byte order for mixed order types. */
     size_t get_majorNBytes() const;
@@ -14565,6 +14604,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfSymverNeededEntry);
 IS_SERIALIZABLE(AsmElfSymverNeededEntry);
 
+DECLARE_HEADERS(AsmElfSymverNeededEntry);
+#if defined(SgAsmElfSymverNeededEntry_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/ByteOrder.h>
+#endif // SgAsmElfSymverNeededEntry_HEADERS
+
 #ifdef DOCUMENTATION
 /** One entry of the ELF symbol version needed table. */
 class SgAsmElfSymverNeededEntry: public SgAsmExecutableFileFormat {
@@ -14670,10 +14714,10 @@ public:
     explicit SgAsmElfSymverNeededEntry(SgAsmElfSymverNeededSection*);
 
     /** Initialize object by parsing file. */
-    void parse(ByteOrder::Endianness, const SgAsmElfSymverNeededEntry::ElfSymverNeededEntry_disk*);
+    void parse(Rose::BinaryAnalysis::ByteOrder::Endianness, const SgAsmElfSymverNeededEntry::ElfSymverNeededEntry_disk*);
 
     /** Encode object to disk representation. */
-    void *encode(ByteOrder::Endianness, SgAsmElfSymverNeededEntry::ElfSymverNeededEntry_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfSymverNeededEntry::ElfSymverNeededEntry_disk*) const;
 
     /** Print debugging information. */
     virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
@@ -14774,6 +14818,11 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmElfSymverNeededAux);
 IS_SERIALIZABLE(AsmElfSymverNeededAux);
+
+DECLARE_HEADERS(AsmElfSymverNeededAux);
+#if defined(SgAsmElfSymverNeededAux_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/ByteOrder.h>
+#endif // SgAsmElfSymverNeededAux_HEADERS
 
 #ifdef DOCUMENTATION
 /** Auxiliary info for needed symbol version. */
@@ -14899,10 +14948,10 @@ public:
     SgAsmElfSymverNeededAux(SgAsmElfSymverNeededEntry *entry, SgAsmElfSymverNeededSection *symver);
 
     /** Initialize this auxiliary record by parsing data from the file. */
-    void parse(ByteOrder::Endianness, const SgAsmElfSymverNeededAux::ElfSymverNeededAux_disk*);
+    void parse(Rose::BinaryAnalysis::ByteOrder::Endianness, const SgAsmElfSymverNeededAux::ElfSymverNeededAux_disk*);
 
     /** Encode this auxiliary record into a format that can be written to a file. */
-    void *encode(ByteOrder::Endianness, SgAsmElfSymverNeededAux::ElfSymverNeededAux_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfSymverNeededAux::ElfSymverNeededAux_disk*) const;
 
     /** Print debugging information.
      *
@@ -15305,6 +15354,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfSymverDefinedEntry);
 IS_SERIALIZABLE(AsmElfSymverDefinedEntry);
 
+DECLARE_HEADERS(AsmElfSymverDefinedEntry);
+#if defined(SgAsmElfSymverDefinedEntry_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/ByteOrder.h>
+#endif // SgAsmElfSymverDefinedEntry_HEADERS
+
 #ifdef DOCUMENTATION
 /** One entry from an ELF symbol version definition table. */
 class SgAsmElfSymverDefinedEntry: public SgAsmExecutableFileFormat {
@@ -15447,10 +15501,10 @@ public:
     explicit SgAsmElfSymverDefinedEntry(SgAsmElfSymverDefinedSection *symver_defined);
 
     /** Initialize by parsing information from the file. */
-    void parse(ByteOrder::Endianness, const SgAsmElfSymverDefinedEntry::ElfSymverDefinedEntry_disk*);
+    void parse(Rose::BinaryAnalysis::ByteOrder::Endianness, const SgAsmElfSymverDefinedEntry::ElfSymverDefinedEntry_disk*);
 
     /** Convert to the disk format. */
-    void *encode(ByteOrder::Endianness, SgAsmElfSymverDefinedEntry::ElfSymverDefinedEntry_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfSymverDefinedEntry::ElfSymverDefinedEntry_disk*) const;
 
     /** Print some debugging info. */
     virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
@@ -15552,6 +15606,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfSymverDefinedAux);
 IS_SERIALIZABLE(AsmElfSymverDefinedAux);
 
+DECLARE_HEADERS(AsmElfSymverDefinedAux);
+#if defined(SgAsmElfSymverDefinedAux_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/ByteOrder.h>
+#endif // SgAsmElfSymverDefinedAux_HEADERS
+
 #ifdef DOCUMENTATION
 class SgAsmElfSymverDefinedAux: public SgAsmExecutableFileFormat {
 #endif // DOCUMENTATION
@@ -15620,10 +15679,10 @@ public:
     explicit SgAsmElfSymverDefinedAux(SgAsmElfSymverDefinedEntry *symver_def_entry, SgAsmElfSymverDefinedSection *symver_def_sec);
 
     /** Initialize this object with data parsed from a file. */
-    void parse(ByteOrder::Endianness, const SgAsmElfSymverDefinedAux::ElfSymverDefinedAux_disk*);
+    void parse(Rose::BinaryAnalysis::ByteOrder::Endianness, const SgAsmElfSymverDefinedAux::ElfSymverDefinedAux_disk*);
 
     /** Convert this object into the disk format record to be written back to the Symbol Version Definition Table. */
-    void *encode(ByteOrder::Endianness, SgAsmElfSymverDefinedAux::ElfSymverDefinedAux_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfSymverDefinedAux::ElfSymverDefinedAux_disk*) const;
 
     /** Print debugging information.
      *
@@ -15850,6 +15909,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfSymbol);
 IS_SERIALIZABLE(AsmElfSymbol);
 
+DECLARE_HEADERS(AsmElfSymbol);
+#if defined(SgAsmElfSymbol_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/ByteOrder.h>
+#endif // SgAsmElfSymbol_HEADERS
+
 #ifdef DOCUMENTATION
 /** Represents a single ELF symbol.
  *
@@ -16027,18 +16091,18 @@ public:
     /** Initialize symbol by parsing a symbol table entry.
      *
      *  An ELF String Section must be supplied in order to get the symbol name. */
-    void parse(ByteOrder::Endianness, const SgAsmElfSymbol::Elf32SymbolEntry_disk*);
+    void parse(Rose::BinaryAnalysis::ByteOrder::Endianness, const SgAsmElfSymbol::Elf32SymbolEntry_disk*);
 
     /** Initialize symbol by parsing a symbol table entry.
      *
      *  An ELF String Section must be supplied in order to get the symbol name. */
-    void parse(ByteOrder::Endianness, const SgAsmElfSymbol::Elf64SymbolEntry_disk*);
+    void parse(Rose::BinaryAnalysis::ByteOrder::Endianness, const SgAsmElfSymbol::Elf64SymbolEntry_disk*);
 
     /** Encode a symbol into disk format.
      *
      * @{ */
-    void *encode(ByteOrder::Endianness, SgAsmElfSymbol::Elf32SymbolEntry_disk*) const;
-    void *encode(ByteOrder::Endianness, SgAsmElfSymbol::Elf64SymbolEntry_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfSymbol::Elf32SymbolEntry_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfSymbol::Elf64SymbolEntry_disk*) const;
     /** @} */
 
     /** Print some debugging info.
@@ -16353,6 +16417,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfSegmentTableEntry);
 IS_SERIALIZABLE(AsmElfSegmentTableEntry);
 
+DECLARE_HEADERS(AsmElfSegmentTableEntry);
+#if defined(SgAsmElfSegmentTableEntry_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/ByteOrder.h>
+#endif // SgAsmElfSegmentTableEntry_HEADERS
+
 #ifdef DOCUMENTATION
 /** Represents one entry of a segment table. */
 class SgAsmElfSegmentTableEntry: public SgAsmExecutableFileFormat {
@@ -16634,18 +16703,18 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Construct node from 32-bit file data. */
-    SgAsmElfSegmentTableEntry(ByteOrder::Endianness sex,
+    SgAsmElfSegmentTableEntry(Rose::BinaryAnalysis::ByteOrder::Endianness sex,
                               const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk *disk);
 
     /** Construct node from 64-bit file data. */
-    SgAsmElfSegmentTableEntry(ByteOrder::Endianness sex,
+    SgAsmElfSegmentTableEntry(Rose::BinaryAnalysis::ByteOrder::Endianness sex,
                               const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk *disk);
 
     /** Converts segment table entry back into disk structure.
      *
      * @{ */
-    void *encode(ByteOrder::Endianness, SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk*) const;
-    void *encode(ByteOrder::Endianness, SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk*) const;
     /** @} */
 
     /** Update this segment table entry with newer information from the section */
@@ -16779,6 +16848,11 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmElfSectionTableEntry);
 IS_SERIALIZABLE(AsmElfSectionTableEntry);
+
+DECLARE_HEADERS(AsmElfSectionTableEntry);
+#if defined(SgAsmElfSectionTableEntry_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/ByteOrder.h>
+#endif // SgAsmElfSectionTableEntry_HEADERS
 
 #ifdef DOCUMENTATION
 /** Represents one entry in an ELF section table. */
@@ -17089,19 +17163,19 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Converts 32-bit disk representation to host representation. */
-    SgAsmElfSectionTableEntry(ByteOrder::Endianness sex,
+    SgAsmElfSectionTableEntry(Rose::BinaryAnalysis::ByteOrder::Endianness sex,
                               const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk);
 
     /** Converts 64-bit disk representation to host representation. */
-    SgAsmElfSectionTableEntry(ByteOrder::Endianness sex,
+    SgAsmElfSectionTableEntry(Rose::BinaryAnalysis::ByteOrder::Endianness sex,
                               const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk);
 
     /** Encode a section table entry into the disk structure.
      *
      * @{ */
-    void *encode(ByteOrder::Endianness sex,
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex,
                  SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk) const;
-    void *encode(ByteOrder::Endianness sex,
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex,
                  SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk) const;
     /** @} */
 
@@ -17415,6 +17489,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmElfRelocEntry);
 IS_SERIALIZABLE(AsmElfRelocEntry);
 
+DECLARE_HEADERS(AsmElfRelocEntry);
+#if defined(SgAsmElfRelocEntry_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/ByteOrder.h>
+#endif // SgAsmElfRelocEntry_HEADERS
+
 #ifdef DOCUMENTATION
 /** One entry of an ELF relocation table. */
 class SgAsmElfRelocEntry: public SgAsmExecutableFileFormat {
@@ -17648,19 +17727,19 @@ public:
     /** Initialize object by parsing from file.
      *
      * @{ */
-    void parse(ByteOrder::Endianness sex, const SgAsmElfRelocEntry::Elf32RelaEntry_disk *disk);
-    void parse(ByteOrder::Endianness sex, const SgAsmElfRelocEntry::Elf64RelaEntry_disk *disk);
-    void parse(ByteOrder::Endianness sex, const SgAsmElfRelocEntry::Elf32RelEntry_disk *disk);
-    void parse(ByteOrder::Endianness sex, const SgAsmElfRelocEntry::Elf64RelEntry_disk *disk);
+    void parse(Rose::BinaryAnalysis::ByteOrder::Endianness sex, const SgAsmElfRelocEntry::Elf32RelaEntry_disk *disk);
+    void parse(Rose::BinaryAnalysis::ByteOrder::Endianness sex, const SgAsmElfRelocEntry::Elf64RelaEntry_disk *disk);
+    void parse(Rose::BinaryAnalysis::ByteOrder::Endianness sex, const SgAsmElfRelocEntry::Elf32RelEntry_disk *disk);
+    void parse(Rose::BinaryAnalysis::ByteOrder::Endianness sex, const SgAsmElfRelocEntry::Elf64RelEntry_disk *disk);
     /** @} */
 
     /** Convert object to on-disk format.
      *
      * @{ */
-    void *encode(ByteOrder::Endianness, SgAsmElfRelocEntry::Elf32RelaEntry_disk*) const;
-    void *encode(ByteOrder::Endianness, SgAsmElfRelocEntry::Elf64RelaEntry_disk*) const;
-    void *encode(ByteOrder::Endianness, SgAsmElfRelocEntry::Elf32RelEntry_disk*) const;
-    void *encode(ByteOrder::Endianness, SgAsmElfRelocEntry::Elf64RelEntry_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfRelocEntry::Elf32RelaEntry_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfRelocEntry::Elf64RelaEntry_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfRelocEntry::Elf32RelEntry_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfRelocEntry::Elf64RelEntry_disk*) const;
     /** @} */
 
     /** Print debugging information.
@@ -17985,6 +18064,11 @@ protected:
 
 DECLARE_LEAF_CLASS(AsmElfFileHeader);
 IS_SERIALIZABLE(AsmElfFileHeader);
+
+DECLARE_HEADERS(AsmElfFileHeader);
+#if defined(SgAsmElfFileHeader_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/ByteOrder.h>
+#endif // SgAsmElfFileHeader_HEADERS
 
 #ifdef DOCUMENTATION
 /** Represents the file header of an ELF binary container.
@@ -18413,8 +18497,8 @@ public:
     virtual const char *format_name() const override;
 
 private:
-    void *encode(ByteOrder::Endianness, SgAsmElfFileHeader::Elf32FileHeader_disk*) const;
-    void *encode(ByteOrder::Endianness, SgAsmElfFileHeader::Elf64FileHeader_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfFileHeader::Elf32FileHeader_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfFileHeader::Elf64FileHeader_disk*) const;
 public:
     /** Destructor. */
     virtual ~SgAsmElfFileHeader();
@@ -19460,7 +19544,7 @@ IS_SERIALIZABLE(AsmElfDynamicEntry);
 
 DECLARE_HEADERS(AsmElfDynamicEntry);
 #if defined(SgAsmElfDynamicEntry_HEADERS) || defined(DOCUMENTATION)
-#include <ByteOrder.h>
+#include <Rose/BinaryAnalysis/ByteOrder.h>
 #endif // SgAsmElfDynamicEntry_HEADERS
 
 #ifdef DOCUMENTATION
@@ -19664,15 +19748,15 @@ public:
     /** Initialize object by parsing the file.
      *
      * @{ */
-    void parse(ByteOrder::Endianness, const SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*);
-    void parse(ByteOrder::Endianness, const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*);
+    void parse(Rose::BinaryAnalysis::ByteOrder::Endianness, const SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*);
+    void parse(Rose::BinaryAnalysis::ByteOrder::Endianness, const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*);
     /** @} */
 
     /** Convert object to disk representation.
      *
      * @{ */
-    void *encode(ByteOrder::Endianness, SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*) const;
-    void *encode(ByteOrder::Endianness, SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*) const;
     /** @} */
 
     /** Print some debugging info */
@@ -24744,6 +24828,11 @@ AsmGenericHeader.setAutomaticGenerationOfConstructor(false);
 AsmGenericHeader.setAutomaticGenerationOfDestructor(false);
 #endif // !DOCUMENTATION
 
+DECLARE_HEADERS(AsmGenericHeader);
+#if defined(SgAsmGenericHeader_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/ByteOrder.h>
+#endif // SgAsmGenericHeader_HEADERS
+
 #ifdef DOCUMENTATION
 /** Base class for container file headers. */
 class SgAsmGenericHeader: public SgAsmGenericSection {
@@ -24914,7 +25003,7 @@ public:
     }
 
     /* Convenience functions */
-    ByteOrder::Endianness get_sex() const;
+    Rose::BinaryAnalysis::ByteOrder::Endianness get_sex() const;
     size_t get_word_size() const;
 
     /** Adds a new section to the header.
@@ -35656,6 +35745,11 @@ protected:
 DECLARE_LEAF_CLASS(AsmByteOrder);
 IS_SERIALIZABLE(AsmByteOrder);
 
+DECLARE_HEADERS(AsmByteOrder);
+#if defined(SgAsmByteOrder_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/ByteOrder.h>
+#endif // SgAsmByteOrder_HEADERS
+
 #ifdef DOCUMENTATION
 /** Byte order specification. */
 class SgAsmByteOrder: public SgAsmExpression {
@@ -35679,14 +35773,14 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 private:
-    ByteOrder::Endianness byteOrder_;
+    Rose::BinaryAnalysis::ByteOrder::Endianness byteOrder_;
 
 public:
     /** Property: Byte order. 
      * 
      * @{ */
-    ByteOrder::Endianness const& byteOrder() const;
-    void byteOrder(ByteOrder::Endianness const&);
+    Rose::BinaryAnalysis::ByteOrder::Endianness const& byteOrder() const;
+    void byteOrder(Rose::BinaryAnalysis::ByteOrder::Endianness const&);
     /** @} */
 
 public:
@@ -35699,7 +35793,7 @@ public:
 
 public:
     /** Constructor. */
-    explicit SgAsmByteOrder(ByteOrder::Endianness const& byteOrder);
+    explicit SgAsmByteOrder(Rose::BinaryAnalysis::ByteOrder::Endianness const& byteOrder);
 
 protected:
     /** Initialize all properties that have explicit initial values.

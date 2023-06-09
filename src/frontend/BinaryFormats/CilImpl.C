@@ -26,7 +26,7 @@ namespace // anonymous namespace for auxiliary functions
      static constexpr int NUM_BYTES = sizeof(T);
 
      ROSE_ASSERT(index+NUM_BYTES <= buf.size());
-     T value = ByteOrder::le_to_host(*reinterpret_cast<T*>(buf.data()+index));
+     T value = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<T*>(buf.data()+index));
 
      index += NUM_BYTES;
      return value;
@@ -2104,10 +2104,10 @@ parseFatHeader(rose_addr_t base_va, std::uint32_t rva, SgAsmPEFileHeader* fhdr)
   const std::size_t    nread = fhdr->get_loader_map()->readQuick(&buf, base_va + rva, sizeof(buf));
   ROSE_ASSERT(nread == 12);
 
-  const std::uint16_t  flags    = ByteOrder::le_to_host(*reinterpret_cast<uint16_t*>(buf+0));
-  const std::uint16_t  maxStack = ByteOrder::le_to_host(*reinterpret_cast<uint16_t*>(buf+2));
-  const std::uint16_t  codeSize = ByteOrder::le_to_host(*reinterpret_cast<uint32_t*>(buf+4));
-  const std::uint16_t  localIni = ByteOrder::le_to_host(*reinterpret_cast<uint32_t*>(buf+8));
+  const std::uint16_t  flags    = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint16_t*>(buf+0));
+  const std::uint16_t  maxStack = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint16_t*>(buf+2));
+  const std::uint16_t  codeSize = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(buf+4));
+  const std::uint16_t  localIni = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(buf+8));
   const MethodHeader   res{ flags, maxStack, codeSize, localIni };
 
   ROSE_ASSERT(!res.tiny());
@@ -2287,8 +2287,8 @@ void SgAsmCilMetadataRoot::parse()
 
   uint64_t    metaData = clih->get_metaData();
   uint8_t*    data = reinterpret_cast<uint8_t*>(&metaData);
-  rose_addr_t rva = ByteOrder::le_to_host(*reinterpret_cast<uint32_t*>(data));
-  size_t      size = ByteOrder::le_to_host(*reinterpret_cast<uint32_t*>(data+4));
+  rose_addr_t rva = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(data));
+  size_t      size = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(data+4));
   rose_addr_t base_va = clih->get_base_va();
   rose_addr_t rva_offset = clih->get_rva_offset(rva);
 

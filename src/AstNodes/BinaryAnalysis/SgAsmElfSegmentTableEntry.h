@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/ByteOrder.h>
+
 /** Represents one entry of a segment table. */
 class SgAsmElfSegmentTableEntry: public SgAsmExecutableFileFormat {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -152,18 +154,18 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Construct node from 32-bit file data. */
-    SgAsmElfSegmentTableEntry(ByteOrder::Endianness sex,
+    SgAsmElfSegmentTableEntry(Rose::BinaryAnalysis::ByteOrder::Endianness sex,
                               const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk *disk);
 
     /** Construct node from 64-bit file data. */
-    SgAsmElfSegmentTableEntry(ByteOrder::Endianness sex,
+    SgAsmElfSegmentTableEntry(Rose::BinaryAnalysis::ByteOrder::Endianness sex,
                               const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk *disk);
 
     /** Converts segment table entry back into disk structure.
      *
      * @{ */
-    void *encode(ByteOrder::Endianness, SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk*) const;
-    void *encode(ByteOrder::Endianness, SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk*) const;
     /** @} */
 
     /** Update this segment table entry with newer information from the section */

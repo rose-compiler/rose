@@ -1,5 +1,6 @@
 #include <Sawyer/BitVector.h>
 #include <Rose/BitFlags.h>
+#include <Rose/BinaryAnalysis/ByteOrder.h>
 
 /** Floating point types. */
 class SgAsmFloatType: public SgAsmScalarType {
@@ -40,7 +41,7 @@ public:
 
 public:
     /** Construct a new floating-point type. */
-    SgAsmFloatType(ByteOrder::Endianness, size_t nBits,
+    SgAsmFloatType(Rose::BinaryAnalysis::ByteOrder::Endianness, size_t nBits,
                    const BitRange &significandBits, const BitRange exponentBits, size_t signBit,
                    uint64_t exponentBias, Flags flags);
 

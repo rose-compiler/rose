@@ -25,12 +25,12 @@ MyTraversal::visit(SgNode* astNode)
 {
     SgAsmElfFileHeader *fhdr = isSgAsmElfFileHeader(astNode);
     if (fhdr) {
-        ByteOrder::Endianness oldsex = fhdr->get_sex();
-        ByteOrder::Endianness newsex = oldsex==ByteOrder::ORDER_LSB ? ByteOrder::ORDER_MSB : ByteOrder::ORDER_LSB;
+        Rose::BinaryAnalysis::ByteOrder::Endianness oldsex = fhdr->get_sex();
+        Rose::BinaryAnalysis::ByteOrder::Endianness newsex = oldsex==Rose::BinaryAnalysis::ByteOrder::ORDER_LSB ? Rose::BinaryAnalysis::ByteOrder::ORDER_MSB : Rose::BinaryAnalysis::ByteOrder::ORDER_LSB;
 
         printf("*** Changing ELF header byte order from %s to %s\n",
-               oldsex==ByteOrder::ORDER_LSB?"little endian":"big endian", 
-               newsex==ByteOrder::ORDER_LSB?"little endian":"big endian");
+               oldsex==Rose::BinaryAnalysis::ByteOrder::ORDER_LSB?"little endian":"big endian",
+               newsex==Rose::BinaryAnalysis::ByteOrder::ORDER_LSB?"little endian":"big endian");
         
         fhdr->get_exec_format()->set_sex(newsex);
     }

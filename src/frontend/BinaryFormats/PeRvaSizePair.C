@@ -17,8 +17,8 @@ SgAsmPERVASizePair::SgAsmPERVASizePair(SgAsmPERVASizePairList *parent, const RVA
     initializeProperties();
 
     ASSERT_not_null(disk);
-    p_e_rva  = ByteOrder::le_to_host(disk->e_rva);
-    p_e_size = ByteOrder::le_to_host(disk->e_size);
+    p_e_rva  = Rose::BinaryAnalysis::ByteOrder::leToHost(disk->e_rva);
+    p_e_size = Rose::BinaryAnalysis::ByteOrder::leToHost(disk->e_size);
     set_parent(parent);
 }
 
@@ -32,8 +32,8 @@ SgAsmPERVASizePair::SgAsmPERVASizePair(SgAsmPERVASizePairList *parent, rose_addr
 
 void*
 SgAsmPERVASizePair::encode(RVASizePair_disk *disk) const {
-    ByteOrder::host_to_le(p_e_rva,  &(disk->e_rva));
-    ByteOrder::host_to_le(p_e_size, &(disk->e_size));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_rva,  &(disk->e_rva));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_size, &(disk->e_size));
     return disk;
 }
 

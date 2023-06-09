@@ -4,9 +4,8 @@
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <Rose/BinaryAnalysis/Concolic/SharedMemory.h>
 
+#include <Rose/BinaryAnalysis/ByteOrder.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
-
-#include <ByteOrder.h>                                  // rose
 
 #include <Sawyer/IntervalMap.h>
 

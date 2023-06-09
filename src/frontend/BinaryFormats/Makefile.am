@@ -21,18 +21,18 @@ libroseBinaryFormats_la_DEPENDENCIES =
 
 libroseBinaryFormats_la_SOURCES =											\
       $(INTEL_PIN_SUPPORT)												\
-      BinaryComposite.C ByteOrder.C DataConversion.C ExtentMap.C Hexdump.C Rva.C					\
+      BinaryComposite.C DataConversion.C ExtentMap.C Hexdump.C Rva.C							\
       GenericDynamicLinking.C GenericFile.C GenericFormat.C GenericHeader.C GenericSection.C GenericString.C		\
       PeExport.C PeFileHeader.C PeImportDirectory.C PeImportItem.C							\
       PeImportSection.C PeRvaSizePair.C PeSection.C PeStringTable.C PeSymbolTable.C					\
       ElfDynamicLinking.C ElfErrorFrame.C ElfFileHeader.C ElfNote.C ElfRelocation.C ElfSection.C ElfSectionTable.C	\
       ElfSegmentTable.C ElfStringTable.C ElfSymbolTable.C ElfSymbolVersion.C						\
       JvmNode.C JvmAttribute.C JvmComposite.C JvmConstantPool.C JvmField.C JvmFileHeader.C JvmMethod.C			\
-      ExecDOS.C ExecNE.C ExecLE.C ExecGeneric.C PeSectionTable.C BinaryVxcoreParser.C \
+      ExecDOS.C ExecNE.C ExecLE.C ExecGeneric.C PeSectionTable.C BinaryVxcoreParser.C					\
       CilImpl.C CliHeader.C Dwarf.C
 
-pkginclude_HEADERS =												\
-	ByteOrder.h DataConversion.h IntelPinSupport.h WorkLists.h SgSharedVector.h	\
+pkginclude_HEADERS =							\
+	DataConversion.h IntelPinSupport.h WorkLists.h SgSharedVector.h	\
 	StatSerializer.h BinaryVxcoreParser.h
 
 

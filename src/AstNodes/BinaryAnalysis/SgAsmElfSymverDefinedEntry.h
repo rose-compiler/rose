@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/ByteOrder.h>
+
 /** One entry from an ELF symbol version definition table. */
 class SgAsmElfSymverDefinedEntry: public SgAsmExecutableFileFormat {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -69,10 +71,10 @@ public:
     explicit SgAsmElfSymverDefinedEntry(SgAsmElfSymverDefinedSection *symver_defined);
 
     /** Initialize by parsing information from the file. */
-    void parse(ByteOrder::Endianness, const SgAsmElfSymverDefinedEntry::ElfSymverDefinedEntry_disk*);
+    void parse(Rose::BinaryAnalysis::ByteOrder::Endianness, const SgAsmElfSymverDefinedEntry::ElfSymverDefinedEntry_disk*);
 
     /** Convert to the disk format. */
-    void *encode(ByteOrder::Endianness, SgAsmElfSymverDefinedEntry::ElfSymverDefinedEntry_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfSymverDefinedEntry::ElfSymverDefinedEntry_disk*) const;
 
     /** Print some debugging info. */
     virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;

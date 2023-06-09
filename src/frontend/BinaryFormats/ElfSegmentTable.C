@@ -3,6 +3,8 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
+#include <Rose/BinaryAnalysis/ByteOrder.h>
+
 #include "stringify.h"
 
 // In order to efficiently (in terms of amount of code) parse a file format that's defined for a different architecture, we
@@ -14,59 +16,59 @@
 using namespace Rose;
 
 /* Converts 32-bit disk representation to host representation */
-SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(ByteOrder::Endianness sex,
+SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(Rose::BinaryAnalysis::ByteOrder::Endianness sex,
                                                      const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk *disk) {
     initializeProperties();
     ASSERT_not_null(disk);
     set_index (0);
-    set_type  ((SegmentType)ByteOrder::disk_to_host(sex, disk->p_type));
-    set_offset(ByteOrder::disk_to_host(sex, disk->p_offset));
-    set_vaddr (ByteOrder::disk_to_host(sex, disk->p_vaddr));
-    set_paddr (ByteOrder::disk_to_host(sex, disk->p_paddr));
-    set_filesz(ByteOrder::disk_to_host(sex, disk->p_filesz));
-    set_memsz (ByteOrder::disk_to_host(sex, disk->p_memsz));
-    set_flags ((SegmentFlags)ByteOrder::disk_to_host(sex, disk->p_flags));
-    set_align (ByteOrder::disk_to_host(sex, disk->p_align));
+    set_type  ((SegmentType)Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->p_type));
+    set_offset(Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->p_offset));
+    set_vaddr (Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->p_vaddr));
+    set_paddr (Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->p_paddr));
+    set_filesz(Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->p_filesz));
+    set_memsz (Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->p_memsz));
+    set_flags ((SegmentFlags)Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->p_flags));
+    set_align (Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->p_align));
 }
 
-SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(ByteOrder::Endianness sex,
+SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(Rose::BinaryAnalysis::ByteOrder::Endianness sex,
                                                      const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk *disk) {
     initializeProperties();
     ASSERT_not_null(disk);
-    set_type  ((SegmentType)ByteOrder::disk_to_host(sex, disk->p_type));
-    set_offset(ByteOrder::disk_to_host(sex, disk->p_offset));
-    set_vaddr (ByteOrder::disk_to_host(sex, disk->p_vaddr));
-    set_paddr (ByteOrder::disk_to_host(sex, disk->p_paddr));
-    set_filesz(ByteOrder::disk_to_host(sex, disk->p_filesz));
-    set_memsz (ByteOrder::disk_to_host(sex, disk->p_memsz));
-    set_flags ((SegmentFlags)ByteOrder::disk_to_host(sex, disk->p_flags));
-    set_align (ByteOrder::disk_to_host(sex, disk->p_align));
+    set_type  ((SegmentType)Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->p_type));
+    set_offset(Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->p_offset));
+    set_vaddr (Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->p_vaddr));
+    set_paddr (Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->p_paddr));
+    set_filesz(Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->p_filesz));
+    set_memsz (Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->p_memsz));
+    set_flags ((SegmentFlags)Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->p_flags));
+    set_align (Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->p_align));
 }
 
 void *
-SgAsmElfSegmentTableEntry::encode(ByteOrder::Endianness sex, Elf32SegmentTableEntry_disk *disk) const
+SgAsmElfSegmentTableEntry::encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex, Elf32SegmentTableEntry_disk *disk) const
 {
-    ByteOrder::host_to_disk(sex, p_type, &(disk->p_type));
-    ByteOrder::host_to_disk(sex, p_offset, &(disk->p_offset));
-    ByteOrder::host_to_disk(sex, p_vaddr, &(disk->p_vaddr));
-    ByteOrder::host_to_disk(sex, p_paddr, &(disk->p_paddr));
-    ByteOrder::host_to_disk(sex, p_filesz, &(disk->p_filesz));
-    ByteOrder::host_to_disk(sex, p_memsz, &(disk->p_memsz));
-    ByteOrder::host_to_disk(sex, p_flags, &(disk->p_flags));
-    ByteOrder::host_to_disk(sex, p_align, &(disk->p_align));
+    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, (uint32_t)p_type, &(disk->p_type));
+    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_offset, &(disk->p_offset));
+    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_vaddr, &(disk->p_vaddr));
+    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_paddr, &(disk->p_paddr));
+    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_filesz, &(disk->p_filesz));
+    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_memsz, &(disk->p_memsz));
+    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, (uint32_t)p_flags, &(disk->p_flags));
+    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_align, &(disk->p_align));
     return disk;
 }
 void *
-SgAsmElfSegmentTableEntry::encode(ByteOrder::Endianness sex, Elf64SegmentTableEntry_disk *disk) const
+SgAsmElfSegmentTableEntry::encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex, Elf64SegmentTableEntry_disk *disk) const
 {
-    ByteOrder::host_to_disk(sex, p_type, &(disk->p_type));
-    ByteOrder::host_to_disk(sex, p_offset, &(disk->p_offset));
-    ByteOrder::host_to_disk(sex, p_vaddr, &(disk->p_vaddr));
-    ByteOrder::host_to_disk(sex, p_paddr, &(disk->p_paddr));
-    ByteOrder::host_to_disk(sex, p_filesz, &(disk->p_filesz));
-    ByteOrder::host_to_disk(sex, p_memsz, &(disk->p_memsz));
-    ByteOrder::host_to_disk(sex, p_flags, &(disk->p_flags));
-    ByteOrder::host_to_disk(sex, p_align, &(disk->p_align));
+    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, (uint32_t)p_type, &(disk->p_type));
+    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_offset, &(disk->p_offset));
+    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_vaddr, &(disk->p_vaddr));
+    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_paddr, &(disk->p_paddr));
+    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_filesz, &(disk->p_filesz));
+    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_memsz, &(disk->p_memsz));
+    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, (uint32_t)p_flags, &(disk->p_flags));
+    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_align, &(disk->p_align));
     return disk;
 }
 
@@ -207,7 +209,7 @@ SgAsmElfSegmentTable::parse()
 
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
-    ByteOrder::Endianness sex = fhdr->get_sex();
+    Rose::BinaryAnalysis::ByteOrder::Endianness sex = fhdr->get_sex();
 
     size_t ent_size, struct_size, opt_size, nentries;
     calculate_sizes(&ent_size, &struct_size, &opt_size, &nentries);
@@ -392,7 +394,7 @@ SgAsmElfSegmentTable::unparse(std::ostream &f) const
 {
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
-    ByteOrder::Endianness sex = fhdr->get_sex();
+    Rose::BinaryAnalysis::ByteOrder::Endianness sex = fhdr->get_sex();
     SgAsmGenericSectionPtrList sections = fhdr->get_segtab_sections();
 
     /* Write the segments first */

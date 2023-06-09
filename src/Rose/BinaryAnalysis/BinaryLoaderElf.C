@@ -956,7 +956,7 @@ BinaryLoaderElf::fixupInfoAddend(SgAsmElfRelocEntry *reloc, rose_addr_t target_v
                 trace <<"    short read of relocation addend at " <<StringUtility::addrToString(target_va) <<"\n";
                 throw Exception("short read of relocation addend at " + StringUtility::addrToString(target_va));
             }
-            retval = ByteOrder::disk_to_host(sex, guest);
+            retval = ByteOrder::diskToHost(sex, guest);
             break;
         }
         case 8: {
@@ -966,7 +966,7 @@ BinaryLoaderElf::fixupInfoAddend(SgAsmElfRelocEntry *reloc, rose_addr_t target_v
                 trace <<"    short read of relocation addend at " <<StringUtility::addrToString(target_va) <<"\n";
                 throw Exception("short read of relocation addend at " + StringUtility::addrToString(target_va));
             }
-            retval = ByteOrder::disk_to_host(sex, guest);
+            retval = ByteOrder::diskToHost(sex, guest);
             break;
         }
         default:
@@ -1056,7 +1056,7 @@ BinaryLoaderElf::fixupApply(rose_addr_t value, SgAsmElfRelocEntry *reloc, const 
     switch (nbytes) {
         case 4: {
             uint32_t guest;
-            ByteOrder::host_to_disk(sex, value, &guest);
+            ByteOrder::hostToDisk(sex, value, &guest);
             size_t nwrite = memmap->writeQuick(&guest, target_va, sizeof guest);
             if (nwrite<sizeof guest) {
                 trace <<"    short write (only " <<StringUtility::plural(nwrite, "bytes") <<")\n";
@@ -1066,7 +1066,7 @@ BinaryLoaderElf::fixupApply(rose_addr_t value, SgAsmElfRelocEntry *reloc, const 
         }
         case 8: {
             uint64_t guest;
-            ByteOrder::host_to_disk(sex, value, &guest);
+            ByteOrder::hostToDisk(sex, value, &guest);
             size_t nwrite = memmap->writeQuick(&guest, target_va, sizeof guest);
             if (nwrite<sizeof guest) {
                 trace <<"    short write (only " <<StringUtility::plural(nwrite, "bytes") <<")\n";
