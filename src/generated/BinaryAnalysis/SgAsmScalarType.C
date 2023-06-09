@@ -11,15 +11,15 @@ SgAsmScalarType::~SgAsmScalarType() {
 }
 
 SgAsmScalarType::SgAsmScalarType()
-    : p_minorOrder(ByteOrder::ORDER_UNSPECIFIED)
-    , p_majorOrder(ByteOrder::ORDER_UNSPECIFIED)
+    : p_minorOrder(Rose::BinaryAnalysis::ByteOrder::ORDER_UNSPECIFIED)
+    , p_majorOrder(Rose::BinaryAnalysis::ByteOrder::ORDER_UNSPECIFIED)
     , p_majorNBytes(0)
     , p_nBits(0) {}
 
 void
 SgAsmScalarType::initializeProperties() {
-    p_minorOrder = ByteOrder::ORDER_UNSPECIFIED;
-    p_majorOrder = ByteOrder::ORDER_UNSPECIFIED;
+    p_minorOrder = Rose::BinaryAnalysis::ByteOrder::ORDER_UNSPECIFIED;
+    p_majorOrder = Rose::BinaryAnalysis::ByteOrder::ORDER_UNSPECIFIED;
     p_majorNBytes = 0;
     p_nBits = 0;
 }

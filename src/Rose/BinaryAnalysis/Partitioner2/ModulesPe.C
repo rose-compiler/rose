@@ -372,7 +372,7 @@ PeDescrambler::findCalleeAddress(const Partitioner::ConstPtr &partitioner, rose_
             size_t nReadBytes = partitioner->memoryMap()->at(batchVa).limit(sizeof buf).read((uint8_t*)buf).size();
             reachedEndOfTable_ = nReadBytes < bytesPerEntry;
             for (size_t i=0; 4*(i+1)<nReadBytes; i+=2)
-                dispatchTable_.push_back(DispatchEntry(ByteOrder::le_to_host(buf[i+0]), ByteOrder::le_to_host(buf[i+1])));
+                dispatchTable_.push_back(DispatchEntry(ByteOrder::leToHost(buf[i+0]), ByteOrder::leToHost(buf[i+1])));
             SAWYER_MESG(mlog[DEBUG]) <<"read " <<StringUtility::plural(nReadBytes, "bytes") <<" from PEScrambler dispatch "
                                      <<"table at " <<StringUtility::addrToString(batchVa) <<"\n";
         }
@@ -384,7 +384,7 @@ PeDescrambler::findCalleeAddress(const Partitioner::ConstPtr &partitioner, rose_
                 uint32_t va2;
                 if (4 != partitioner->memoryMap()->at(va).limit(4).read((uint8_t*)&va2).size())
                     return Sawyer::Nothing();       // couldn't dereference table entry
-                va = ByteOrder::le_to_host(va2);
+                va = ByteOrder::leToHost(va2);
             }
             return va;
         }

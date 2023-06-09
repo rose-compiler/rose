@@ -27,53 +27,53 @@ SgAsmCliHeader* SgAsmCliHeader::parse()
   auto data = p_data.pool();
   ASSERT_not_null(data);
 
-  p_cb = ByteOrder::le_to_host(*reinterpret_cast<uint32_t*>(data));
+  p_cb = ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(data));
   data += 4;
 
   /* The major portion of the minimum version of the runtime required to run this program */
-  p_majorRuntimeVersion = ByteOrder::le_to_host(*reinterpret_cast<uint16_t*>(data));
+  p_majorRuntimeVersion = ByteOrder::leToHost(*reinterpret_cast<uint16_t*>(data));
   data += 2;
 
   /* The minor portion of the version */
-  p_minorRuntimeVersion = ByteOrder::le_to_host(*reinterpret_cast<uint16_t*>(data));
+  p_minorRuntimeVersion = ByteOrder::leToHost(*reinterpret_cast<uint16_t*>(data));
   data += 2;
 
   /* RVA and size of implementation-specific resources */
-  p_metaData = ByteOrder::le_to_host(*reinterpret_cast<uint64_t*>(data));
+  p_metaData = ByteOrder::leToHost(*reinterpret_cast<uint64_t*>(data));
   data += 8;
 
   /* Flags describing this runtime image */
-  p_flags = ByteOrder::le_to_host(*reinterpret_cast<uint32_t*>(data));
+  p_flags = ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(data));
   data += 4;
 
   /* Token for the MethodDef or File of the entry point for the image */
-  p_entryPointToken = ByteOrder::le_to_host(*reinterpret_cast<uint32_t*>(data));
+  p_entryPointToken = ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(data));
   data += 4;
   
   /* RVA and size of implementation-specific resources */
-  p_resources = ByteOrder::le_to_host(*reinterpret_cast<uint64_t*>(data));
+  p_resources = ByteOrder::leToHost(*reinterpret_cast<uint64_t*>(data));
   data += 8;
 
   /* RVA of the hash data for this PE file used by the CLI loader for binding and versioning */
-  p_strongNameSignature = ByteOrder::le_to_host(*reinterpret_cast<uint64_t*>(data));
+  p_strongNameSignature = ByteOrder::leToHost(*reinterpret_cast<uint64_t*>(data));
   data += 8;
 
   /* Always 0 */
-  p_codeManagerTable = ByteOrder::le_to_host(*reinterpret_cast<uint64_t*>(data));
+  p_codeManagerTable = ByteOrder::leToHost(*reinterpret_cast<uint64_t*>(data));
   ROSE_ASSERT(0 == p_codeManagerTable && "Always 0");
   data += 8;
 
   /* RVA of an array of locations in the file that contain an array of function pointers (e.g., vtable slots) */
-  p_vTableFixups = ByteOrder::le_to_host(*reinterpret_cast<uint64_t*>(data));
+  p_vTableFixups = ByteOrder::leToHost(*reinterpret_cast<uint64_t*>(data));
   data += 8;
 
   /* Always 0 */
-  p_exportAddressTableJumps = ByteOrder::le_to_host(*reinterpret_cast<uint64_t*>(data));
+  p_exportAddressTableJumps = ByteOrder::leToHost(*reinterpret_cast<uint64_t*>(data));
   ROSE_ASSERT(0 == p_exportAddressTableJumps && "Always 0");
   data += 8;
 
   /* Always 0 */
-  p_managedNativeHeader = ByteOrder::le_to_host(*reinterpret_cast<uint64_t*>(data));
+  p_managedNativeHeader = ByteOrder::leToHost(*reinterpret_cast<uint64_t*>(data));
   ROSE_ASSERT(0 == p_managedNativeHeader && "Always 0");
   data += 8;
   

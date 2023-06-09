@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/ByteOrder.h>
+
 /** Represents a single ELF symbol.
  *
  *  Most of the properties of this node correspond directly with properties defined by the ELF specification. Their
@@ -103,18 +105,18 @@ public:
     /** Initialize symbol by parsing a symbol table entry.
      *
      *  An ELF String Section must be supplied in order to get the symbol name. */
-    void parse(ByteOrder::Endianness, const SgAsmElfSymbol::Elf32SymbolEntry_disk*);
+    void parse(Rose::BinaryAnalysis::ByteOrder::Endianness, const SgAsmElfSymbol::Elf32SymbolEntry_disk*);
 
     /** Initialize symbol by parsing a symbol table entry.
      *
      *  An ELF String Section must be supplied in order to get the symbol name. */
-    void parse(ByteOrder::Endianness, const SgAsmElfSymbol::Elf64SymbolEntry_disk*);
+    void parse(Rose::BinaryAnalysis::ByteOrder::Endianness, const SgAsmElfSymbol::Elf64SymbolEntry_disk*);
 
     /** Encode a symbol into disk format.
      *
      * @{ */
-    void *encode(ByteOrder::Endianness, SgAsmElfSymbol::Elf32SymbolEntry_disk*) const;
-    void *encode(ByteOrder::Endianness, SgAsmElfSymbol::Elf64SymbolEntry_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfSymbol::Elf32SymbolEntry_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfSymbol::Elf64SymbolEntry_disk*) const;
     /** @} */
 
     /** Print some debugging info.

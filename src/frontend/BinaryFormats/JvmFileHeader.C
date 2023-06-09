@@ -37,7 +37,7 @@ SgAsmJvmFileHeader::SgAsmJvmFileHeader(SgAsmGenericFile* f)
   ASSERT_not_null(p_exec_format);
   p_exec_format->set_family(FAMILY_JVM);
   p_exec_format->set_purpose(PURPOSE_EXECUTABLE);
-  p_exec_format->set_sex(ByteOrder::ORDER_MSB);
+  p_exec_format->set_sex(Rose::BinaryAnalysis::ByteOrder::ORDER_MSB);
   p_exec_format->set_word_size(4);
   p_exec_format->set_version(0);
   p_exec_format->set_is_current_version(false);
@@ -146,8 +146,8 @@ SgAsmJvmFileHeader::unparse(std::ostream &f) const
 
   auto minor = p_minor_version;
   auto major = p_major_version;
-  ByteOrder::host_to_be(minor, &minor);
-  ByteOrder::host_to_be(major, &major);
+  Rose::BinaryAnalysis::ByteOrder::hostToBe(minor, &minor);
+  Rose::BinaryAnalysis::ByteOrder::hostToBe(major, &major);
 
   f.write(reinterpret_cast<const char*>(&minor), sizeof minor);
   f.write(reinterpret_cast<const char*>(&major), sizeof major);

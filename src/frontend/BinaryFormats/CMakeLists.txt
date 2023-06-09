@@ -1,6 +1,5 @@
 add_library(roseBinaryFormats OBJECT
   ### Utilities ###
-  ByteOrder.C
   DataConversion.C
   ExecGeneric.C
   ExtentMap.C
@@ -66,6 +65,6 @@ add_library(roseBinaryFormats OBJECT
 add_dependencies(roseBinaryFormats rosetta_generated)
 
 install(
-  FILES  DataConversion.h IntelPinSupport.h ByteOrder.h
+  FILES  DataConversion.h IntelPinSupport.h
          WorkLists.h SgSharedVector.h StatSerializer.h BinaryVxcoreParser.h
   DESTINATION ${INCLUDE_INSTALL_DIR})

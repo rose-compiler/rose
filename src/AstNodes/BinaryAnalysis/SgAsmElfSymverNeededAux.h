@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/ByteOrder.h>
+
 /** Auxiliary info for needed symbol version. */
 class SgAsmElfSymverNeededAux: public SgAsmExecutableFileFormat {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -62,10 +64,10 @@ public:
     SgAsmElfSymverNeededAux(SgAsmElfSymverNeededEntry *entry, SgAsmElfSymverNeededSection *symver);
 
     /** Initialize this auxiliary record by parsing data from the file. */
-    void parse(ByteOrder::Endianness, const SgAsmElfSymverNeededAux::ElfSymverNeededAux_disk*);
+    void parse(Rose::BinaryAnalysis::ByteOrder::Endianness, const SgAsmElfSymverNeededAux::ElfSymverNeededAux_disk*);
 
     /** Encode this auxiliary record into a format that can be written to a file. */
-    void *encode(ByteOrder::Endianness, SgAsmElfSymverNeededAux::ElfSymverNeededAux_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfSymverNeededAux::ElfSymverNeededAux_disk*) const;
 
     /** Print debugging information.
      *

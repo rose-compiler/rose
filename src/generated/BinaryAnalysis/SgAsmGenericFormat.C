@@ -28,13 +28,13 @@ SgAsmGenericFormat::set_purpose(SgAsmGenericFormat::ExecPurpose const& x) {
     set_isModified(true);
 }
 
-ByteOrder::Endianness const&
+Rose::BinaryAnalysis::ByteOrder::Endianness const&
 SgAsmGenericFormat::get_sex() const {
     return p_sex;
 }
 
 void
-SgAsmGenericFormat::set_sex(ByteOrder::Endianness const& x) {
+SgAsmGenericFormat::set_sex(Rose::BinaryAnalysis::ByteOrder::Endianness const& x) {
     this->p_sex = x;
     set_isModified(true);
 }
@@ -101,7 +101,7 @@ SgAsmGenericFormat::~SgAsmGenericFormat() {
 SgAsmGenericFormat::SgAsmGenericFormat()
     : p_family(SgAsmGenericFormat::FAMILY_UNSPECIFIED)
     , p_purpose(SgAsmGenericFormat::PURPOSE_EXECUTABLE)
-    , p_sex(ByteOrder::ORDER_UNSPECIFIED)
+    , p_sex(Rose::BinaryAnalysis::ByteOrder::ORDER_UNSPECIFIED)
     , p_version(0)
     , p_is_current_version(false)
     , p_abi(SgAsmGenericFormat::ABI_UNSPECIFIED)
@@ -112,7 +112,7 @@ void
 SgAsmGenericFormat::initializeProperties() {
     p_family = SgAsmGenericFormat::FAMILY_UNSPECIFIED;
     p_purpose = SgAsmGenericFormat::PURPOSE_EXECUTABLE;
-    p_sex = ByteOrder::ORDER_UNSPECIFIED;
+    p_sex = Rose::BinaryAnalysis::ByteOrder::ORDER_UNSPECIFIED;
     p_version = 0;
     p_is_current_version = false;
     p_abi = SgAsmGenericFormat::ABI_UNSPECIFIED;

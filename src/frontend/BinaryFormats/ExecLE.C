@@ -43,61 +43,61 @@ SgAsmLEFileHeader::SgAsmLEFileHeader(SgAsmGenericFile *f, rose_addr_t offset)
     set_name(new SgAsmBasicString(section_name));
     set_synthesized(true);
     set_purpose(SP_HEADER);
-    p_e_byte_order = ByteOrder::le_to_host(fh.e_byte_order);
-    p_e_word_order = ByteOrder::le_to_host(fh.e_word_order);
+    p_e_byte_order = Rose::BinaryAnalysis::ByteOrder::leToHost(fh.e_byte_order);
+    p_e_word_order = Rose::BinaryAnalysis::ByteOrder::leToHost(fh.e_word_order);
     ROSE_ASSERT(p_e_byte_order == p_e_word_order);
-    ByteOrder::Endianness sex = 0 == p_e_byte_order ? ByteOrder::ORDER_LSB : ByteOrder::ORDER_MSB;
+    Rose::BinaryAnalysis::ByteOrder::Endianness sex = 0 == p_e_byte_order ? Rose::BinaryAnalysis::ByteOrder::ORDER_LSB : Rose::BinaryAnalysis::ByteOrder::ORDER_MSB;
 
-    p_e_format_level           = ByteOrder::disk_to_host(sex, fh.e_format_level);
-    p_e_cpu_type               = ByteOrder::disk_to_host(sex, fh.e_cpu_type);
-    p_e_os_type                = ByteOrder::disk_to_host(sex, fh.e_os_type);
-    p_e_module_version         = ByteOrder::disk_to_host(sex, fh.e_module_version);
-    p_e_flags                  = ByteOrder::disk_to_host(sex, fh.e_flags);
-    p_e_npages                 = ByteOrder::disk_to_host(sex, fh.e_npages);
-    p_e_eip_section            = ByteOrder::disk_to_host(sex, fh.e_eip_section);
-    p_e_eip                    = ByteOrder::disk_to_host(sex, fh.e_eip);
-    p_e_esp_section            = ByteOrder::disk_to_host(sex, fh.e_esp_section);
-    p_e_esp                    = ByteOrder::disk_to_host(sex, fh.e_esp);
-    p_e_page_size              = ByteOrder::disk_to_host(sex, fh.e_page_size);
+    p_e_format_level           = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_format_level);
+    p_e_cpu_type               = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_cpu_type);
+    p_e_os_type                = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_os_type);
+    p_e_module_version         = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_module_version);
+    p_e_flags                  = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_flags);
+    p_e_npages                 = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_npages);
+    p_e_eip_section            = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_eip_section);
+    p_e_eip                    = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_eip);
+    p_e_esp_section            = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_esp_section);
+    p_e_esp                    = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_esp);
+    p_e_page_size              = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_page_size);
     if (FAMILY_LE == p_exec_format->get_family()) {
-        p_e_last_page_size     = ByteOrder::disk_to_host(sex, fh.e_lps_or_shift);
+        p_e_last_page_size     = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_lps_or_shift);
         p_e_page_offset_shift  = 0;
     } else {
         ROSE_ASSERT(FAMILY_LX == p_exec_format->get_family());
         p_e_last_page_size     = 0;
-        p_e_page_offset_shift  = ByteOrder::disk_to_host(sex, fh.e_lps_or_shift);
+        p_e_page_offset_shift  = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_lps_or_shift);
     }
-    p_e_fixup_sect_size        = ByteOrder::disk_to_host(sex, fh.e_fixup_sect_size);
-    p_e_fixup_sect_cksum       = ByteOrder::disk_to_host(sex, fh.e_fixup_sect_cksum);
-    p_e_loader_sect_size       = ByteOrder::disk_to_host(sex, fh.e_loader_sect_size);
-    p_e_loader_sect_cksum      = ByteOrder::disk_to_host(sex, fh.e_loader_sect_cksum);
-    p_e_secttab_rfo            = ByteOrder::disk_to_host(sex, fh.e_secttab_rfo);
-    p_e_secttab_nentries       = ByteOrder::disk_to_host(sex, fh.e_secttab_nentries);
-    p_e_pagetab_rfo            = ByteOrder::disk_to_host(sex, fh.e_pagetab_rfo);
-    p_e_iterpages_offset       = ByteOrder::disk_to_host(sex, fh.e_iterpages_offset);
-    p_e_rsrctab_rfo            = ByteOrder::disk_to_host(sex, fh.e_rsrctab_rfo);
-    p_e_rsrctab_nentries       = ByteOrder::disk_to_host(sex, fh.e_rsrctab_nentries);
-    p_e_resnametab_rfo         = ByteOrder::disk_to_host(sex, fh.e_resnametab_rfo);
-    p_e_entrytab_rfo           = ByteOrder::disk_to_host(sex, fh.e_entrytab_rfo);
-    p_e_fmtdirtab_rfo          = ByteOrder::disk_to_host(sex, fh.e_fmtdirtab_rfo);
-    p_e_fmtdirtab_nentries     = ByteOrder::disk_to_host(sex, fh.e_fmtdirtab_nentries);
-    p_e_fixup_pagetab_rfo      = ByteOrder::disk_to_host(sex, fh.e_fixup_pagetab_rfo);
-    p_e_fixup_rectab_rfo       = ByteOrder::disk_to_host(sex, fh.e_fixup_rectab_rfo);
-    p_e_import_modtab_rfo      = ByteOrder::disk_to_host(sex, fh.e_import_modtab_rfo);
-    p_e_import_modtab_nentries = ByteOrder::disk_to_host(sex, fh.e_import_modtab_nentries);
-    p_e_import_proctab_rfo     = ByteOrder::disk_to_host(sex, fh.e_import_proctab_rfo);
-    p_e_ppcksumtab_rfo         = ByteOrder::disk_to_host(sex, fh.e_ppcksumtab_rfo);
-    p_e_data_pages_offset      = ByteOrder::disk_to_host(sex, fh.e_data_pages_offset);
-    p_e_preload_npages         = ByteOrder::disk_to_host(sex, fh.e_preload_npages);
-    p_e_nonresnametab_offset   = ByteOrder::disk_to_host(sex, fh.e_nonresnametab_offset);
-    p_e_nonresnametab_size     = ByteOrder::disk_to_host(sex, fh.e_nonresnametab_size);
-    p_e_nonresnametab_cksum    = ByteOrder::disk_to_host(sex, fh.e_nonresnametab_cksum);
-    p_e_auto_ds_section        = ByteOrder::disk_to_host(sex, fh.e_auto_ds_section);
-    p_e_debug_info_rfo         = ByteOrder::disk_to_host(sex, fh.e_debug_info_rfo);
-    p_e_debug_info_size        = ByteOrder::disk_to_host(sex, fh.e_debug_info_size);
-    p_e_num_instance_preload   = ByteOrder::disk_to_host(sex, fh.e_num_instance_preload);
-    p_e_num_instance_demand    = ByteOrder::disk_to_host(sex, fh.e_num_instance_demand);
-    p_e_heap_size              = ByteOrder::disk_to_host(sex, fh.e_heap_size);
+    p_e_fixup_sect_size        = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_fixup_sect_size);
+    p_e_fixup_sect_cksum       = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_fixup_sect_cksum);
+    p_e_loader_sect_size       = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_loader_sect_size);
+    p_e_loader_sect_cksum      = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_loader_sect_cksum);
+    p_e_secttab_rfo            = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_secttab_rfo);
+    p_e_secttab_nentries       = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_secttab_nentries);
+    p_e_pagetab_rfo            = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_pagetab_rfo);
+    p_e_iterpages_offset       = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_iterpages_offset);
+    p_e_rsrctab_rfo            = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_rsrctab_rfo);
+    p_e_rsrctab_nentries       = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_rsrctab_nentries);
+    p_e_resnametab_rfo         = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_resnametab_rfo);
+    p_e_entrytab_rfo           = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_entrytab_rfo);
+    p_e_fmtdirtab_rfo          = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_fmtdirtab_rfo);
+    p_e_fmtdirtab_nentries     = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_fmtdirtab_nentries);
+    p_e_fixup_pagetab_rfo      = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_fixup_pagetab_rfo);
+    p_e_fixup_rectab_rfo       = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_fixup_rectab_rfo);
+    p_e_import_modtab_rfo      = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_import_modtab_rfo);
+    p_e_import_modtab_nentries = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_import_modtab_nentries);
+    p_e_import_proctab_rfo     = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_import_proctab_rfo);
+    p_e_ppcksumtab_rfo         = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_ppcksumtab_rfo);
+    p_e_data_pages_offset      = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_data_pages_offset);
+    p_e_preload_npages         = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_preload_npages);
+    p_e_nonresnametab_offset   = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_nonresnametab_offset);
+    p_e_nonresnametab_size     = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_nonresnametab_size);
+    p_e_nonresnametab_cksum    = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_nonresnametab_cksum);
+    p_e_auto_ds_section        = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_auto_ds_section);
+    p_e_debug_info_rfo         = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_debug_info_rfo);
+    p_e_debug_info_size        = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_debug_info_size);
+    p_e_num_instance_preload   = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_num_instance_preload);
+    p_e_num_instance_demand    = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_num_instance_demand);
+    p_e_heap_size              = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_heap_size);
 
     /* Magic number */
     for (size_t i = 0; i < sizeof(fh.e_magic); ++i)
@@ -159,7 +159,7 @@ SgAsmLEFileHeader::is_LE(SgAsmGenericFile *file)
         /* Read four-byte offset of potential LE/LX File Header at offset 0x3c */
         uint32_t lfanew_disk;
         file->read_content(0x3c, &lfanew_disk, sizeof lfanew_disk);
-        rose_addr_t le_offset = ByteOrder::le_to_host(lfanew_disk);
+        rose_addr_t le_offset = Rose::BinaryAnalysis::ByteOrder::leToHost(lfanew_disk);
         
         /* Look for the LE/LX File Header magic number */
         unsigned char le_magic[4];
@@ -177,60 +177,60 @@ SgAsmLEFileHeader::is_LE(SgAsmGenericFile *file)
 
 /* Encode the LE header into disk format */
 void *
-SgAsmLEFileHeader::encode(ByteOrder::Endianness sex, LEFileHeader_disk *disk) const
+SgAsmLEFileHeader::encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex, LEFileHeader_disk *disk) const
 {
     for (size_t i=0; i<NELMTS(disk->e_magic); i++)
         disk->e_magic[i] = get_magic()[i];
-    host_to_disk(sex, p_e_byte_order,             &(disk->e_byte_order));
-    host_to_disk(sex, p_e_word_order,             &(disk->e_word_order));
-    host_to_disk(sex, p_e_format_level,           &(disk->e_format_level));
-    host_to_disk(sex, p_e_cpu_type,               &(disk->e_cpu_type));
-    host_to_disk(sex, p_e_os_type,                &(disk->e_os_type));
-    host_to_disk(sex, p_e_module_version,         &(disk->e_module_version));
-    host_to_disk(sex, p_e_flags,                  &(disk->e_flags));
-    host_to_disk(sex, p_e_npages,                 &(disk->e_npages));
-    host_to_disk(sex, p_e_eip_section,            &(disk->e_eip_section));
-    host_to_disk(sex, p_e_eip,                    &(disk->e_eip));
-    host_to_disk(sex, p_e_esp_section,            &(disk->e_esp_section));
-    host_to_disk(sex, p_e_esp,                    &(disk->e_esp));
-    host_to_disk(sex, p_e_page_size,              &(disk->e_page_size));
+    hostToDisk(sex, p_e_byte_order,             &(disk->e_byte_order));
+    hostToDisk(sex, p_e_word_order,             &(disk->e_word_order));
+    hostToDisk(sex, p_e_format_level,           &(disk->e_format_level));
+    hostToDisk(sex, p_e_cpu_type,               &(disk->e_cpu_type));
+    hostToDisk(sex, p_e_os_type,                &(disk->e_os_type));
+    hostToDisk(sex, p_e_module_version,         &(disk->e_module_version));
+    hostToDisk(sex, p_e_flags,                  &(disk->e_flags));
+    hostToDisk(sex, p_e_npages,                 &(disk->e_npages));
+    hostToDisk(sex, p_e_eip_section,            &(disk->e_eip_section));
+    hostToDisk(sex, p_e_eip,                    &(disk->e_eip));
+    hostToDisk(sex, p_e_esp_section,            &(disk->e_esp_section));
+    hostToDisk(sex, p_e_esp,                    &(disk->e_esp));
+    hostToDisk(sex, p_e_page_size,              &(disk->e_page_size));
     if (FAMILY_LE == p_exec_format->get_family()) {
-        host_to_disk(sex, p_e_last_page_size,     &(disk->e_lps_or_shift));
+        hostToDisk(sex, p_e_last_page_size,     &(disk->e_lps_or_shift));
     } else {
         ROSE_ASSERT(FAMILY_LX == p_exec_format->get_family());
-        host_to_disk(sex, p_e_page_offset_shift,  &(disk->e_lps_or_shift));
+        hostToDisk(sex, p_e_page_offset_shift,  &(disk->e_lps_or_shift));
     }
-    host_to_disk(sex, p_e_fixup_sect_size,        &(disk->e_fixup_sect_size));
-    host_to_disk(sex, p_e_fixup_sect_cksum,       &(disk->e_fixup_sect_cksum));
-    host_to_disk(sex, p_e_loader_sect_size,       &(disk->e_loader_sect_size));
-    host_to_disk(sex, p_e_loader_sect_cksum,      &(disk->e_loader_sect_cksum));
-    host_to_disk(sex, p_e_secttab_rfo,            &(disk->e_secttab_rfo));
-    host_to_disk(sex, p_e_secttab_nentries,       &(disk->e_secttab_nentries));
-    host_to_disk(sex, p_e_pagetab_rfo,            &(disk->e_pagetab_rfo));
-    host_to_disk(sex, p_e_iterpages_offset,       &(disk->e_iterpages_offset));
-    host_to_disk(sex, p_e_rsrctab_rfo,            &(disk->e_rsrctab_rfo));
-    host_to_disk(sex, p_e_rsrctab_nentries,       &(disk->e_rsrctab_nentries));
-    host_to_disk(sex, p_e_resnametab_rfo,         &(disk->e_resnametab_rfo));
-    host_to_disk(sex, p_e_entrytab_rfo,           &(disk->e_entrytab_rfo));
-    host_to_disk(sex, p_e_fmtdirtab_rfo,          &(disk->e_fmtdirtab_rfo));
-    host_to_disk(sex, p_e_fmtdirtab_nentries,     &(disk->e_fmtdirtab_nentries));
-    host_to_disk(sex, p_e_fixup_pagetab_rfo,      &(disk->e_fixup_pagetab_rfo));
-    host_to_disk(sex, p_e_fixup_rectab_rfo,       &(disk->e_fixup_rectab_rfo));
-    host_to_disk(sex, p_e_import_modtab_rfo,      &(disk->e_import_modtab_rfo));
-    host_to_disk(sex, p_e_import_modtab_nentries, &(disk->e_import_modtab_nentries));
-    host_to_disk(sex, p_e_import_proctab_rfo,     &(disk->e_import_proctab_rfo));
-    host_to_disk(sex, p_e_ppcksumtab_rfo,         &(disk->e_ppcksumtab_rfo));
-    host_to_disk(sex, p_e_data_pages_offset,      &(disk->e_data_pages_offset));
-    host_to_disk(sex, p_e_preload_npages,         &(disk->e_preload_npages));
-    host_to_disk(sex, p_e_nonresnametab_offset,   &(disk->e_nonresnametab_offset));
-    host_to_disk(sex, p_e_nonresnametab_size,     &(disk->e_nonresnametab_size));
-    host_to_disk(sex, p_e_nonresnametab_cksum,    &(disk->e_nonresnametab_cksum));
-    host_to_disk(sex, p_e_auto_ds_section,        &(disk->e_auto_ds_section));
-    host_to_disk(sex, p_e_debug_info_rfo,         &(disk->e_debug_info_rfo));
-    host_to_disk(sex, p_e_debug_info_size,        &(disk->e_debug_info_size));
-    host_to_disk(sex, p_e_num_instance_preload,   &(disk->e_num_instance_preload));
-    host_to_disk(sex, p_e_num_instance_demand,    &(disk->e_num_instance_demand));
-    host_to_disk(sex, p_e_heap_size,              &(disk->e_heap_size));
+    hostToDisk(sex, p_e_fixup_sect_size,        &(disk->e_fixup_sect_size));
+    hostToDisk(sex, p_e_fixup_sect_cksum,       &(disk->e_fixup_sect_cksum));
+    hostToDisk(sex, p_e_loader_sect_size,       &(disk->e_loader_sect_size));
+    hostToDisk(sex, p_e_loader_sect_cksum,      &(disk->e_loader_sect_cksum));
+    hostToDisk(sex, p_e_secttab_rfo,            &(disk->e_secttab_rfo));
+    hostToDisk(sex, p_e_secttab_nentries,       &(disk->e_secttab_nentries));
+    hostToDisk(sex, p_e_pagetab_rfo,            &(disk->e_pagetab_rfo));
+    hostToDisk(sex, p_e_iterpages_offset,       &(disk->e_iterpages_offset));
+    hostToDisk(sex, p_e_rsrctab_rfo,            &(disk->e_rsrctab_rfo));
+    hostToDisk(sex, p_e_rsrctab_nentries,       &(disk->e_rsrctab_nentries));
+    hostToDisk(sex, p_e_resnametab_rfo,         &(disk->e_resnametab_rfo));
+    hostToDisk(sex, p_e_entrytab_rfo,           &(disk->e_entrytab_rfo));
+    hostToDisk(sex, p_e_fmtdirtab_rfo,          &(disk->e_fmtdirtab_rfo));
+    hostToDisk(sex, p_e_fmtdirtab_nentries,     &(disk->e_fmtdirtab_nentries));
+    hostToDisk(sex, p_e_fixup_pagetab_rfo,      &(disk->e_fixup_pagetab_rfo));
+    hostToDisk(sex, p_e_fixup_rectab_rfo,       &(disk->e_fixup_rectab_rfo));
+    hostToDisk(sex, p_e_import_modtab_rfo,      &(disk->e_import_modtab_rfo));
+    hostToDisk(sex, p_e_import_modtab_nentries, &(disk->e_import_modtab_nentries));
+    hostToDisk(sex, p_e_import_proctab_rfo,     &(disk->e_import_proctab_rfo));
+    hostToDisk(sex, p_e_ppcksumtab_rfo,         &(disk->e_ppcksumtab_rfo));
+    hostToDisk(sex, p_e_data_pages_offset,      &(disk->e_data_pages_offset));
+    hostToDisk(sex, p_e_preload_npages,         &(disk->e_preload_npages));
+    hostToDisk(sex, p_e_nonresnametab_offset,   &(disk->e_nonresnametab_offset));
+    hostToDisk(sex, p_e_nonresnametab_size,     &(disk->e_nonresnametab_size));
+    hostToDisk(sex, p_e_nonresnametab_cksum,    &(disk->e_nonresnametab_cksum));
+    hostToDisk(sex, p_e_auto_ds_section,        &(disk->e_auto_ds_section));
+    hostToDisk(sex, p_e_debug_info_rfo,         &(disk->e_debug_info_rfo));
+    hostToDisk(sex, p_e_debug_info_size,        &(disk->e_debug_info_size));
+    hostToDisk(sex, p_e_num_instance_preload,   &(disk->e_num_instance_preload));
+    hostToDisk(sex, p_e_num_instance_demand,    &(disk->e_num_instance_demand));
+    hostToDisk(sex, p_e_heap_size,              &(disk->e_heap_size));
     return disk;
 }
 
@@ -401,22 +401,22 @@ SgAsmLEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Constructor */
-SgAsmLEPageTableEntry::SgAsmLEPageTableEntry(ByteOrder::Endianness sex, const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk) {
+SgAsmLEPageTableEntry::SgAsmLEPageTableEntry(Rose::BinaryAnalysis::ByteOrder::Endianness sex, const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk) {
     initializeProperties();
 
-    unsigned pageno_lo = ByteOrder::disk_to_host(sex, disk->pageno_lo);
-    unsigned pageno_hi = ByteOrder::disk_to_host(sex, disk->pageno_hi);
+    unsigned pageno_lo = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->pageno_lo);
+    unsigned pageno_hi = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->pageno_hi);
     p_pageno      = (pageno_hi << 8) | pageno_lo;
-    p_flags       = ByteOrder::disk_to_host(sex, disk->flags);
+    p_flags       = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->flags);
 }
 
 /* Encode page table entry to disk format */
 void *
-SgAsmLEPageTableEntry::encode(ByteOrder::Endianness sex, SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk) const
+SgAsmLEPageTableEntry::encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex, SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk) const
 {
-    host_to_disk(sex, (p_pageno & 0xff),    &(disk->pageno_lo));
-    host_to_disk(sex, (p_pageno>>8)&0xffff, &(disk->pageno_hi));
-    host_to_disk(sex, p_flags,              &(disk->flags));
+    hostToDisk(sex, (p_pageno & 0xff),    &(disk->pageno_lo));
+    hostToDisk(sex, (p_pageno>>8)&0xffff, &(disk->pageno_hi));
+    hostToDisk(sex, p_flags,              &(disk->flags));
     return disk;
 }
 
@@ -503,27 +503,27 @@ SgAsmLEPageTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Constructor */
-SgAsmLESectionTableEntry::SgAsmLESectionTableEntry(ByteOrder::Endianness sex, const LESectionTableEntry_disk *disk) {
+SgAsmLESectionTableEntry::SgAsmLESectionTableEntry(Rose::BinaryAnalysis::ByteOrder::Endianness sex, const LESectionTableEntry_disk *disk) {
     initializeProperties();
 
-    p_mapped_size      = ByteOrder::disk_to_host(sex, disk->mapped_size);
-    p_base_addr        = ByteOrder::disk_to_host(sex, disk->base_addr);
-    p_flags            = ByteOrder::disk_to_host(sex, disk->flags);
-    p_pagemap_index    = ByteOrder::disk_to_host(sex, disk->pagemap_index);
-    p_pagemap_nentries = ByteOrder::disk_to_host(sex, disk->pagemap_nentries);
-    p_res1             = ByteOrder::disk_to_host(sex, disk->res1);
+    p_mapped_size      = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->mapped_size);
+    p_base_addr        = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->base_addr);
+    p_flags            = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->flags);
+    p_pagemap_index    = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->pagemap_index);
+    p_pagemap_nentries = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->pagemap_nentries);
+    p_res1             = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->res1);
 }
 
 /* Encodes a section table entry back into disk format. */
 void *
-SgAsmLESectionTableEntry::encode(ByteOrder::Endianness sex, LESectionTableEntry_disk *disk) const
+SgAsmLESectionTableEntry::encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex, LESectionTableEntry_disk *disk) const
 {
-    ByteOrder::host_to_disk(sex, p_mapped_size,      &(disk->mapped_size));
-    ByteOrder::host_to_disk(sex, p_base_addr,        &(disk->base_addr));
-    ByteOrder::host_to_disk(sex, p_flags,            &(disk->flags));
-    ByteOrder::host_to_disk(sex, p_pagemap_index,    &(disk->pagemap_index));
-    ByteOrder::host_to_disk(sex, p_pagemap_nentries, &(disk->pagemap_nentries));
-    ByteOrder::host_to_disk(sex, p_res1,             &(disk->res1));
+    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_mapped_size,      &(disk->mapped_size));
+    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_base_addr,        &(disk->base_addr));
+    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_flags,            &(disk->flags));
+    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_pagemap_index,    &(disk->pagemap_index));
+    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_pagemap_nentries, &(disk->pagemap_nentries));
+    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_res1,             &(disk->res1));
     return disk;
 }
 
@@ -752,7 +752,7 @@ SgAsmLENameTable::SgAsmLENameTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset)
         extend(2);
         uint16_t u16_disk;
         read_content_local(at, &u16_disk, 2);
-        p_ordinals.push_back(ByteOrder::le_to_host(u16_disk));
+        p_ordinals.push_back(Rose::BinaryAnalysis::ByteOrder::leToHost(u16_disk));
         at += 2;
     }
 }
@@ -775,7 +775,7 @@ SgAsmLENameTable::unparse(std::ostream &f) const
         /* Ordinal */
         ROSE_ASSERT(p_ordinals[i] <= 0xffff);
         uint16_t ordinal_le;
-        ByteOrder::host_to_le(p_ordinals[i], &ordinal_le);
+        Rose::BinaryAnalysis::ByteOrder::hostToLe(p_ordinals[i], &ordinal_le);
         spos = write(f, spos, sizeof ordinal_le, &ordinal_le);
     }
     
@@ -809,38 +809,38 @@ SgAsmLENameTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Constructor */
-SgAsmLEEntryPoint::SgAsmLEEntryPoint(ByteOrder::Endianness sex, const SgAsmLEEntryPoint::LEEntryPoint_disk *disk) {
+SgAsmLEEntryPoint::SgAsmLEEntryPoint(Rose::BinaryAnalysis::ByteOrder::Endianness sex, const SgAsmLEEntryPoint::LEEntryPoint_disk *disk) {
     initializeProperties();
     ASSERT_not_null(disk);
-    p_flags        = ByteOrder::disk_to_host(sex, disk->flags);
-    p_objnum       = ByteOrder::disk_to_host(sex, disk->objnum);
-    p_entry_type   = ByteOrder::disk_to_host(sex, disk->entry_type);
-    p_entry_offset = ByteOrder::disk_to_host(sex, disk->entry_offset);
-    p_res1         = ByteOrder::disk_to_host(sex, disk->res1);
+    p_flags        = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->flags);
+    p_objnum       = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->objnum);
+    p_entry_type   = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->entry_type);
+    p_entry_offset = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->entry_offset);
+    p_res1         = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->res1);
 }
 
-SgAsmLEEntryPoint::SgAsmLEEntryPoint(ByteOrder::Endianness sex, unsigned flags) {
+SgAsmLEEntryPoint::SgAsmLEEntryPoint(Rose::BinaryAnalysis::ByteOrder::Endianness sex, unsigned flags) {
     initializeProperties();
 }
 
 /* Write the entry information back to the disk at the specified section and section offset, returning the new section offset. */
 rose_addr_t
-SgAsmLEEntryPoint::unparse(std::ostream &f, ByteOrder::Endianness sex, const SgAsmGenericSection *section,
+SgAsmLEEntryPoint::unparse(std::ostream &f, Rose::BinaryAnalysis::ByteOrder::Endianness sex, const SgAsmGenericSection *section,
                            rose_addr_t spos) const
 {
     if (0==(p_flags & 0x01)) {
         /* Empty entry; write only the flag byte */
         uint8_t byte;
-        ByteOrder::host_to_disk(sex, p_flags, &byte);
+        Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_flags, &byte);
         spos = section->write(f, spos, byte);
     } else {
         /* Non-empty entry */
         LEEntryPoint_disk disk;
-        ByteOrder::host_to_disk(sex, p_flags,        &(disk.flags));
-        ByteOrder::host_to_disk(sex, p_objnum,       &(disk.objnum));
-        ByteOrder::host_to_disk(sex, p_entry_type,   &(disk.entry_type));
-        ByteOrder::host_to_disk(sex, p_entry_offset, &(disk.entry_offset));
-        ByteOrder::host_to_disk(sex, p_res1,         &(disk.res1));
+        Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_flags,        &(disk.flags));
+        Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_objnum,       &(disk.objnum));
+        Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_entry_type,   &(disk.entry_type));
+        Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_entry_offset, &(disk.entry_offset));
+        Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_res1,         &(disk.res1));
         spos = section->write(f, spos, sizeof disk, &disk);
     }
     return spos;
@@ -931,7 +931,7 @@ SgAsmLEEntryTable::unparse(std::ostream &f) const
     uint8_t byte = p_entries.size();
     spos = write(f, spos, byte);
     
-    ByteOrder::Endianness sex = get_header()->get_sex();
+    Rose::BinaryAnalysis::ByteOrder::Endianness sex = get_header()->get_sex();
     for (size_t i = 0; i < p_entries.size(); i++) {
         spos = p_entries[i]->unparse(f, sex, this, spos);
     }

@@ -3641,7 +3641,7 @@ makeFloatingPointConstant(float f, const std::string &comment, unsigned flags) {
     } u;
     u.f = f;
     BitVector bv(4);
-    switch (ByteOrder::host_order()) {
+    switch (ByteOrder::hostOrder()) {
         case ByteOrder::ORDER_LSB:
             bv.fromInteger(BitVector::BitRange::baseSize(0, 8),  u.b[0]);
             bv.fromInteger(BitVector::BitRange::baseSize(8, 8),  u.b[1]);
@@ -3670,7 +3670,7 @@ makeFloatingPointConstant(double d, const std::string &comment, unsigned flags) 
     } u;
     u.d = d;
     BitVector bv(8);
-    switch (ByteOrder::host_order()) {
+    switch (ByteOrder::hostOrder()) {
         case ByteOrder::ORDER_LSB:
             bv.fromInteger(BitVector::BitRange::baseSize(0, 8),  u.b[0]);
             bv.fromInteger(BitVector::BitRange::baseSize(8, 8),  u.b[1]);

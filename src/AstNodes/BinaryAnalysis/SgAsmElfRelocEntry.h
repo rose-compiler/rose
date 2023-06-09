@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/ByteOrder.h>
+
 /** One entry of an ELF relocation table. */
 class SgAsmElfRelocEntry: public SgAsmExecutableFileFormat {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -159,19 +161,19 @@ public:
     /** Initialize object by parsing from file.
      *
      * @{ */
-    void parse(ByteOrder::Endianness sex, const SgAsmElfRelocEntry::Elf32RelaEntry_disk *disk);
-    void parse(ByteOrder::Endianness sex, const SgAsmElfRelocEntry::Elf64RelaEntry_disk *disk);
-    void parse(ByteOrder::Endianness sex, const SgAsmElfRelocEntry::Elf32RelEntry_disk *disk);
-    void parse(ByteOrder::Endianness sex, const SgAsmElfRelocEntry::Elf64RelEntry_disk *disk);
+    void parse(Rose::BinaryAnalysis::ByteOrder::Endianness sex, const SgAsmElfRelocEntry::Elf32RelaEntry_disk *disk);
+    void parse(Rose::BinaryAnalysis::ByteOrder::Endianness sex, const SgAsmElfRelocEntry::Elf64RelaEntry_disk *disk);
+    void parse(Rose::BinaryAnalysis::ByteOrder::Endianness sex, const SgAsmElfRelocEntry::Elf32RelEntry_disk *disk);
+    void parse(Rose::BinaryAnalysis::ByteOrder::Endianness sex, const SgAsmElfRelocEntry::Elf64RelEntry_disk *disk);
     /** @} */
 
     /** Convert object to on-disk format.
      *
      * @{ */
-    void *encode(ByteOrder::Endianness, SgAsmElfRelocEntry::Elf32RelaEntry_disk*) const;
-    void *encode(ByteOrder::Endianness, SgAsmElfRelocEntry::Elf64RelaEntry_disk*) const;
-    void *encode(ByteOrder::Endianness, SgAsmElfRelocEntry::Elf32RelEntry_disk*) const;
-    void *encode(ByteOrder::Endianness, SgAsmElfRelocEntry::Elf64RelEntry_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfRelocEntry::Elf32RelaEntry_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfRelocEntry::Elf64RelaEntry_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfRelocEntry::Elf32RelEntry_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfRelocEntry::Elf64RelEntry_disk*) const;
     /** @} */
 
     /** Print debugging information.

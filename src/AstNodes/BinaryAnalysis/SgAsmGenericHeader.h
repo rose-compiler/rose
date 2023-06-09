@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/ByteOrder.h>
+
 /** Base class for container file headers. */
 class SgAsmGenericHeader: public SgAsmGenericSection {
     /** Property: General info about the executable format. */
@@ -71,7 +73,7 @@ public:
     }
 
     /* Convenience functions */
-    ByteOrder::Endianness get_sex() const;
+    Rose::BinaryAnalysis::ByteOrder::Endianness get_sex() const;
     size_t get_word_size() const;
 
     /** Adds a new section to the header.

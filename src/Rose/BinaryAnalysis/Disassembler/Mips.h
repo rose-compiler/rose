@@ -5,9 +5,9 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 
+#include <Rose/BinaryAnalysis/ByteOrder.h>
 #include <Rose/BinaryAnalysis/InstructionEnumsMips.h>
 
-#include <ByteOrder.h>
 #include <SageBuilderAsm.h>
 
 namespace Rose {

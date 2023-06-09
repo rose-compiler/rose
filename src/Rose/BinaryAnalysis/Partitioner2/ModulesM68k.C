@@ -196,7 +196,7 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
         }
 
         // M68k offsets are 16-bit big-endian that are sign extended to 32 bits
-        rose_addr_t offset = ByteOrder::be_to_host(offsetBE);
+        rose_addr_t offset = ByteOrder::beToHost(offsetBE);
         offset = IntegerOps::signExtend2(offset, 16, 32);
 
         // Case code address is computed from the JMP instruction. The case code must be after the (current) end of the offset
@@ -237,7 +237,7 @@ findInterruptFunctions(const Partitioner::ConstPtr &partitioner, rose_addr_t vec
         rose_addr_t elmtVa = vectorVa + 4*i;
         uint32_t functionVa;
         if (4 == partitioner->memoryMap()->at(elmtVa).limit(4).read((uint8_t*)&functionVa).size()) {
-            functionVa = ByteOrder::be_to_host(functionVa);
+            functionVa = ByteOrder::beToHost(functionVa);
             std::string name;
             unsigned reasons = SgAsmFunction::FUNC_EXCEPTION_HANDLER;
             switch (i) {

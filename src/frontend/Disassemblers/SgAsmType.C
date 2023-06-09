@@ -29,16 +29,16 @@ SgAsmType::get_nBytes() const {
 //                                      SgAsmScalarType
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-SgAsmScalarType::SgAsmScalarType(ByteOrder::Endianness sex, size_t nBits) {
+SgAsmScalarType::SgAsmScalarType(Rose::BinaryAnalysis::ByteOrder::Endianness sex, size_t nBits) {
     initializeProperties();
     p_minorOrder = sex;
     p_nBits = nBits;
 
     check();
     if (p_nBits<=8)
-        p_minorOrder = ByteOrder::ORDER_UNSPECIFIED;
+        p_minorOrder = Rose::BinaryAnalysis::ByteOrder::ORDER_UNSPECIFIED;
     if (p_majorNBytes==0 || p_majorNBytes<=get_nBytes())
-        p_majorOrder = ByteOrder::ORDER_UNSPECIFIED;
+        p_majorOrder = Rose::BinaryAnalysis::ByteOrder::ORDER_UNSPECIFIED;
 }
 
 // see super class
@@ -46,8 +46,8 @@ void
 SgAsmScalarType::check() const {
     SgAsmType::check();
     ASSERT_always_require(p_nBits>0);
-    ASSERT_always_require(p_nBits<=8 || p_minorOrder!=ByteOrder::ORDER_UNSPECIFIED);
-    ASSERT_always_require(0==p_majorNBytes || p_majorOrder!=ByteOrder::ORDER_UNSPECIFIED);
+    ASSERT_always_require(p_nBits<=8 || p_minorOrder!=Rose::BinaryAnalysis::ByteOrder::ORDER_UNSPECIFIED);
+    ASSERT_always_require(0==p_majorNBytes || p_majorOrder!=Rose::BinaryAnalysis::ByteOrder::ORDER_UNSPECIFIED);
     ASSERT_always_require(0==p_majorNBytes || p_majorNBytes>1);
 }
 
@@ -72,12 +72,12 @@ SgAsmScalarType::toString() const {
     return retval.str();
 }
 
-ByteOrder::Endianness
+Rose::BinaryAnalysis::ByteOrder::Endianness
 SgAsmScalarType::get_minorOrder() const {
     return p_minorOrder;
 }
 
-ByteOrder::Endianness
+Rose::BinaryAnalysis::ByteOrder::Endianness
 SgAsmScalarType::get_majorOrder() const {
     return p_majorOrder;
 }
@@ -93,7 +93,7 @@ SgAsmScalarType::get_majorNBytes() const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Construct a new integer type. */
-SgAsmIntegerType::SgAsmIntegerType(ByteOrder::Endianness sex, size_t nBits, bool isSigned)
+SgAsmIntegerType::SgAsmIntegerType(Rose::BinaryAnalysis::ByteOrder::Endianness sex, size_t nBits, bool isSigned)
     : SgAsmScalarType(sex, nBits) {
     initializeProperties();
     p_isSigned = isSigned;
@@ -126,7 +126,7 @@ SgAsmIntegerType::get_isSigned() const {
 //                                      SgAsmFloatType
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-SgAsmFloatType::SgAsmFloatType(ByteOrder::Endianness sex, size_t nBits,
+SgAsmFloatType::SgAsmFloatType(Rose::BinaryAnalysis::ByteOrder::Endianness sex, size_t nBits,
                                const BitRange &significandBits, const BitRange exponentBits, size_t signBit,
                                uint64_t exponentBias, Flags flags)
     : SgAsmScalarType(sex, nBits) {

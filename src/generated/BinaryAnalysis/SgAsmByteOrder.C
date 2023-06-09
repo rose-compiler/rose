@@ -6,13 +6,13 @@
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #include <sage3basic.h>
 
-ByteOrder::Endianness const&
+Rose::BinaryAnalysis::ByteOrder::Endianness const&
 SgAsmByteOrder::byteOrder() const {
     return byteOrder_;
 }
 
 void
-SgAsmByteOrder::byteOrder(ByteOrder::Endianness const& x) {
+SgAsmByteOrder::byteOrder(Rose::BinaryAnalysis::ByteOrder::Endianness const& x) {
     this->byteOrder_ = x;
     set_isModified(true);
 }
@@ -25,7 +25,7 @@ SgAsmByteOrder::SgAsmByteOrder() {}
 
 // The association between constructor arguments and their classes:
 //    property=byteOrder        class=SgAsmByteOrder
-SgAsmByteOrder::SgAsmByteOrder(ByteOrder::Endianness const& byteOrder)
+SgAsmByteOrder::SgAsmByteOrder(Rose::BinaryAnalysis::ByteOrder::Endianness const& byteOrder)
     : byteOrder_(byteOrder) {}
 
 void

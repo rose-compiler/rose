@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/ByteOrder.h>
+
 /** Represents the file header of an ELF binary container.
  *
  *  The file header contains information that the operating system uses to find the various parts within the
@@ -244,6 +246,6 @@ public:
     virtual const char *format_name() const override;
 
 private:
-    void *encode(ByteOrder::Endianness, SgAsmElfFileHeader::Elf32FileHeader_disk*) const;
-    void *encode(ByteOrder::Endianness, SgAsmElfFileHeader::Elf64FileHeader_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfFileHeader::Elf32FileHeader_disk*) const;
+    void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfFileHeader::Elf64FileHeader_disk*) const;
 };

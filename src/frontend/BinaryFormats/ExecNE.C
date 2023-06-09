@@ -91,35 +91,35 @@ SgAsmNEFileHeader::SgAsmNEFileHeader(SgAsmGenericFile *f, rose_addr_t offset)
         throw FormatError("Bad NE magic number");
 
     /* Decode file header */
-    p_e_linker_major         = ByteOrder::le_to_host(fh.e_linker_major);
-    p_e_linker_minor         = ByteOrder::le_to_host(fh.e_linker_minor);
-    p_e_entrytab_rfo         = ByteOrder::le_to_host(fh.e_entrytab_rfo);
-    p_e_entrytab_size        = ByteOrder::le_to_host(fh.e_entrytab_size);
-    p_e_checksum             = ByteOrder::le_to_host(fh.e_checksum);
-    p_e_flags1               = ByteOrder::le_to_host(fh.e_flags1);
-    p_e_autodata_sn          = ByteOrder::le_to_host(fh.e_autodata_sn);
-    p_e_bss_size             = ByteOrder::le_to_host(fh.e_bss_size);
-    p_e_stack_size           = ByteOrder::le_to_host(fh.e_stack_size);
-    p_e_csip                 = ByteOrder::le_to_host(fh.e_csip);
-    p_e_sssp                 = ByteOrder::le_to_host(fh.e_sssp);
-    p_e_nsections            = ByteOrder::le_to_host(fh.e_nsections);
-    p_e_nmodrefs             = ByteOrder::le_to_host(fh.e_nmodrefs);
-    p_e_nnonresnames         = ByteOrder::le_to_host(fh.e_nnonresnames);
-    p_e_sectab_rfo           = ByteOrder::le_to_host(fh.e_sectab_rfo);
-    p_e_rsrctab_rfo          = ByteOrder::le_to_host(fh.e_rsrctab_rfo);
-    p_e_resnametab_rfo       = ByteOrder::le_to_host(fh.e_resnametab_rfo);
-    p_e_modreftab_rfo        = ByteOrder::le_to_host(fh.e_modreftab_rfo);
-    p_e_importnametab_rfo    = ByteOrder::le_to_host(fh.e_importnametab_rfo);
-    p_e_nonresnametab_offset = ByteOrder::le_to_host(fh.e_nonresnametab_offset);
-    p_e_nmovable_entries     = ByteOrder::le_to_host(fh.e_nmovable_entries);
-    p_e_sector_align         = ByteOrder::le_to_host(fh.e_sector_align);
-    p_e_nresources           = ByteOrder::le_to_host(fh.e_nresources);
-    p_e_exetype              = ByteOrder::le_to_host(fh.e_exetype);
-    p_e_flags2               = ByteOrder::le_to_host(fh.e_flags2); 
-    p_e_fastload_sector      = ByteOrder::le_to_host(fh.e_fastload_sector);
-    p_e_fastload_nsectors    = ByteOrder::le_to_host(fh.e_fastload_nsectors);
-    p_e_res1                 = ByteOrder::le_to_host(fh.e_res1);
-    p_e_winvers              = ByteOrder::le_to_host(fh.e_winvers);
+    p_e_linker_major         = Rose::BinaryAnalysis::ByteOrder::leToHost(fh.e_linker_major);
+    p_e_linker_minor         = Rose::BinaryAnalysis::ByteOrder::leToHost(fh.e_linker_minor);
+    p_e_entrytab_rfo         = Rose::BinaryAnalysis::ByteOrder::leToHost(fh.e_entrytab_rfo);
+    p_e_entrytab_size        = Rose::BinaryAnalysis::ByteOrder::leToHost(fh.e_entrytab_size);
+    p_e_checksum             = Rose::BinaryAnalysis::ByteOrder::leToHost(fh.e_checksum);
+    p_e_flags1               = Rose::BinaryAnalysis::ByteOrder::leToHost(fh.e_flags1);
+    p_e_autodata_sn          = Rose::BinaryAnalysis::ByteOrder::leToHost(fh.e_autodata_sn);
+    p_e_bss_size             = Rose::BinaryAnalysis::ByteOrder::leToHost(fh.e_bss_size);
+    p_e_stack_size           = Rose::BinaryAnalysis::ByteOrder::leToHost(fh.e_stack_size);
+    p_e_csip                 = Rose::BinaryAnalysis::ByteOrder::leToHost(fh.e_csip);
+    p_e_sssp                 = Rose::BinaryAnalysis::ByteOrder::leToHost(fh.e_sssp);
+    p_e_nsections            = Rose::BinaryAnalysis::ByteOrder::leToHost(fh.e_nsections);
+    p_e_nmodrefs             = Rose::BinaryAnalysis::ByteOrder::leToHost(fh.e_nmodrefs);
+    p_e_nnonresnames         = Rose::BinaryAnalysis::ByteOrder::leToHost(fh.e_nnonresnames);
+    p_e_sectab_rfo           = Rose::BinaryAnalysis::ByteOrder::leToHost(fh.e_sectab_rfo);
+    p_e_rsrctab_rfo          = Rose::BinaryAnalysis::ByteOrder::leToHost(fh.e_rsrctab_rfo);
+    p_e_resnametab_rfo       = Rose::BinaryAnalysis::ByteOrder::leToHost(fh.e_resnametab_rfo);
+    p_e_modreftab_rfo        = Rose::BinaryAnalysis::ByteOrder::leToHost(fh.e_modreftab_rfo);
+    p_e_importnametab_rfo    = Rose::BinaryAnalysis::ByteOrder::leToHost(fh.e_importnametab_rfo);
+    p_e_nonresnametab_offset = Rose::BinaryAnalysis::ByteOrder::leToHost(fh.e_nonresnametab_offset);
+    p_e_nmovable_entries     = Rose::BinaryAnalysis::ByteOrder::leToHost(fh.e_nmovable_entries);
+    p_e_sector_align         = Rose::BinaryAnalysis::ByteOrder::leToHost(fh.e_sector_align);
+    p_e_nresources           = Rose::BinaryAnalysis::ByteOrder::leToHost(fh.e_nresources);
+    p_e_exetype              = Rose::BinaryAnalysis::ByteOrder::leToHost(fh.e_exetype);
+    p_e_flags2               = Rose::BinaryAnalysis::ByteOrder::leToHost(fh.e_flags2);
+    p_e_fastload_sector      = Rose::BinaryAnalysis::ByteOrder::leToHost(fh.e_fastload_sector);
+    p_e_fastload_nsectors    = Rose::BinaryAnalysis::ByteOrder::leToHost(fh.e_fastload_nsectors);
+    p_e_res1                 = Rose::BinaryAnalysis::ByteOrder::leToHost(fh.e_res1);
+    p_e_winvers              = Rose::BinaryAnalysis::ByteOrder::leToHost(fh.e_winvers);
 
     /* Magic number */
     for (size_t i = 0; i < sizeof(fh.e_magic); ++i)
@@ -128,7 +128,7 @@ SgAsmNEFileHeader::SgAsmNEFileHeader(SgAsmGenericFile *f, rose_addr_t offset)
     /* File format */
     p_exec_format->set_family(FAMILY_NE);
     p_exec_format->set_purpose(p_e_flags1 & HF1_LIBRARY ? PURPOSE_LIBRARY : PURPOSE_EXECUTABLE);
-    p_exec_format->set_sex(ByteOrder::ORDER_LSB);
+    p_exec_format->set_sex(Rose::BinaryAnalysis::ByteOrder::ORDER_LSB);
     p_exec_format->set_abi(ABI_NT);
     p_exec_format->set_abi_version(0);
     p_exec_format->set_word_size(2);
@@ -179,7 +179,7 @@ SgAsmNEFileHeader::is_NE(SgAsmGenericFile *file)
         /* Read four-byte offset of potential PE File Header at offset 0x3c */
         uint32_t lfanew_disk;
         file->read_content(0x3c, &lfanew_disk, sizeof lfanew_disk);
-        rose_addr_t ne_offset = ByteOrder::le_to_host(lfanew_disk);
+        rose_addr_t ne_offset = Rose::BinaryAnalysis::ByteOrder::leToHost(lfanew_disk);
         
         /* Look for the NE File Header magic number */
         unsigned char ne_magic[2];
@@ -201,35 +201,35 @@ SgAsmNEFileHeader::encode(SgAsmNEFileHeader::NEFileHeader_disk *disk) const
 {
     for (size_t i = 0; i < NELMTS(disk->e_magic); i++)
         disk->e_magic[i] = get_magic()[i];
-    ByteOrder::host_to_le(p_e_linker_major,         &(disk->e_linker_major));
-    ByteOrder::host_to_le(p_e_linker_minor,         &(disk->e_linker_minor));
-    ByteOrder::host_to_le(p_e_entrytab_rfo,         &(disk->e_entrytab_rfo));
-    ByteOrder::host_to_le(p_e_entrytab_size,        &(disk->e_entrytab_size));
-    ByteOrder::host_to_le(p_e_checksum,             &(disk->e_checksum));
-    ByteOrder::host_to_le(p_e_flags1,               &(disk->e_flags1));
-    ByteOrder::host_to_le(p_e_autodata_sn,          &(disk->e_autodata_sn));
-    ByteOrder::host_to_le(p_e_bss_size,             &(disk->e_bss_size));
-    ByteOrder::host_to_le(p_e_stack_size,           &(disk->e_stack_size));
-    ByteOrder::host_to_le(p_e_csip,                 &(disk->e_csip));
-    ByteOrder::host_to_le(p_e_sssp,                 &(disk->e_sssp));
-    ByteOrder::host_to_le(p_e_nsections,            &(disk->e_nsections));
-    ByteOrder::host_to_le(p_e_nmodrefs,             &(disk->e_nmodrefs));
-    ByteOrder::host_to_le(p_e_nnonresnames,         &(disk->e_nnonresnames));
-    ByteOrder::host_to_le(p_e_sectab_rfo,           &(disk->e_sectab_rfo));
-    ByteOrder::host_to_le(p_e_rsrctab_rfo,          &(disk->e_rsrctab_rfo));
-    ByteOrder::host_to_le(p_e_resnametab_rfo,       &(disk->e_resnametab_rfo));
-    ByteOrder::host_to_le(p_e_modreftab_rfo,        &(disk->e_modreftab_rfo));
-    ByteOrder::host_to_le(p_e_importnametab_rfo,    &(disk->e_importnametab_rfo));
-    ByteOrder::host_to_le(p_e_nonresnametab_offset, &(disk->e_nonresnametab_offset));
-    ByteOrder::host_to_le(p_e_nmovable_entries,     &(disk->e_nmovable_entries));
-    ByteOrder::host_to_le(p_e_sector_align,         &(disk->e_sector_align));
-    ByteOrder::host_to_le(p_e_nresources,           &(disk->e_nresources));
-    ByteOrder::host_to_le(p_e_exetype,              &(disk->e_exetype));
-    ByteOrder::host_to_le(p_e_flags2,               &(disk->e_flags2));
-    ByteOrder::host_to_le(p_e_fastload_sector,      &(disk->e_fastload_sector));
-    ByteOrder::host_to_le(p_e_fastload_nsectors,    &(disk->e_fastload_nsectors));
-    ByteOrder::host_to_le(p_e_res1,                 &(disk->e_res1));
-    ByteOrder::host_to_le(p_e_winvers,              &(disk->e_winvers));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_linker_major,         &(disk->e_linker_major));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_linker_minor,         &(disk->e_linker_minor));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_entrytab_rfo,         &(disk->e_entrytab_rfo));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_entrytab_size,        &(disk->e_entrytab_size));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_checksum,             &(disk->e_checksum));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_flags1,               &(disk->e_flags1));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_autodata_sn,          &(disk->e_autodata_sn));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_bss_size,             &(disk->e_bss_size));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_stack_size,           &(disk->e_stack_size));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_csip,                 &(disk->e_csip));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_sssp,                 &(disk->e_sssp));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_nsections,            &(disk->e_nsections));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_nmodrefs,             &(disk->e_nmodrefs));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_nnonresnames,         &(disk->e_nnonresnames));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_sectab_rfo,           &(disk->e_sectab_rfo));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_rsrctab_rfo,          &(disk->e_rsrctab_rfo));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_resnametab_rfo,       &(disk->e_resnametab_rfo));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_modreftab_rfo,        &(disk->e_modreftab_rfo));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_importnametab_rfo,    &(disk->e_importnametab_rfo));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_nonresnametab_offset, &(disk->e_nonresnametab_offset));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_nmovable_entries,     &(disk->e_nmovable_entries));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_sector_align,         &(disk->e_sector_align));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_nresources,           &(disk->e_nresources));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_exetype,              &(disk->e_exetype));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_flags2,               &(disk->e_flags2));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_fastload_sector,      &(disk->e_fastload_sector));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_fastload_nsectors,    &(disk->e_fastload_nsectors));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_res1,                 &(disk->e_res1));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_e_winvers,              &(disk->e_winvers));
 
     return disk;
 }
@@ -356,11 +356,11 @@ SgAsmNEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 SgAsmNESectionTableEntry::SgAsmNESectionTableEntry(const SgAsmNESectionTableEntry::NESectionTableEntry_disk *disk) {
     initializeProperties();
     ASSERT_not_null(disk);
-    p_sector          = ByteOrder::le_to_host(disk->sector);
-    p_physical_size   = ByteOrder::le_to_host(disk->physical_size);
+    p_sector          = Rose::BinaryAnalysis::ByteOrder::leToHost(disk->sector);
+    p_physical_size   = Rose::BinaryAnalysis::ByteOrder::leToHost(disk->physical_size);
     if (0==p_physical_size && p_sector!=0) p_physical_size = 64*1024;
-    p_flags           = ByteOrder::le_to_host(disk->flags);
-    p_virtual_size    = ByteOrder::le_to_host(disk->virtual_size);
+    p_flags           = Rose::BinaryAnalysis::ByteOrder::leToHost(disk->flags);
+    p_virtual_size    = Rose::BinaryAnalysis::ByteOrder::leToHost(disk->virtual_size);
     if (0==p_virtual_size) p_virtual_size = 64*1024;
 }
 
@@ -368,12 +368,12 @@ SgAsmNESectionTableEntry::SgAsmNESectionTableEntry(const SgAsmNESectionTableEntr
 void *
 SgAsmNESectionTableEntry::encode(NESectionTableEntry_disk *disk) const
 {
-    ByteOrder::host_to_le(p_sector,          &(disk->sector));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_sector,          &(disk->sector));
     unsigned x_physical_size = p_physical_size==64*1024 ? 0 : p_physical_size;
-    ByteOrder::host_to_le(x_physical_size, &(disk->physical_size));
-    ByteOrder::host_to_le(p_flags,           &(disk->flags));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(x_physical_size, &(disk->physical_size));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_flags,           &(disk->flags));
     unsigned x_virtual_size = p_virtual_size==64*1024 ? 0 : p_virtual_size;
-    ByteOrder::host_to_le(x_virtual_size,  &(disk->virtual_size));
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(x_virtual_size,  &(disk->virtual_size));
     return disk;
 }
 
@@ -599,7 +599,7 @@ SgAsmNENameTable::SgAsmNENameTable(SgAsmNEFileHeader *fhdr, rose_addr_t offset)
         extend(2);
         uint16_t u16_disk;
         read_content_local(at, &u16_disk, 2);
-        p_ordinals.push_back(ByteOrder::le_to_host(u16_disk));
+        p_ordinals.push_back(Rose::BinaryAnalysis::ByteOrder::leToHost(u16_disk));
         at += 2;
     }
 }
@@ -623,7 +623,7 @@ SgAsmNENameTable::unparse(std::ostream &f) const
         /* Ordinal */
         ROSE_ASSERT(p_ordinals[i]<=0xffff);
         uint16_t ordinal_le;
-        ByteOrder::host_to_le(p_ordinals[i], &ordinal_le);
+        Rose::BinaryAnalysis::ByteOrder::hostToLe(p_ordinals[i], &ordinal_le);
         spos = write(f, spos, sizeof ordinal_le, &ordinal_le);
     }
     
@@ -688,7 +688,7 @@ SgAsmNEModuleTable::SgAsmNEModuleTable(SgAsmNEFileHeader *fhdr, SgAsmNEStringTab
     for (rose_addr_t at = 0; at < get_size(); at += 2) {
         uint16_t u16_disk;
         read_content_local(at, &u16_disk, 2);
-        rose_addr_t name_offset = ByteOrder::le_to_host(u16_disk);
+        rose_addr_t name_offset = Rose::BinaryAnalysis::ByteOrder::leToHost(u16_disk);
         p_name_offsets.push_back(name_offset);
         p_names.push_back(p_strtab->get_string(name_offset));
     }
@@ -708,7 +708,7 @@ SgAsmNEModuleTable::unparse(std::ostream &f) const
 
     for (size_t i = 0; i < p_name_offsets.size(); i++) {
         uint16_t name_offset_le;
-        ByteOrder::host_to_le(p_name_offsets[i], &name_offset_le);
+        Rose::BinaryAnalysis::ByteOrder::hostToLe(p_name_offsets[i], &name_offset_le);
         spos = write(f, spos, sizeof name_offset_le, &name_offset_le);
     }
 }
@@ -886,12 +886,12 @@ SgAsmNEEntryTable::SgAsmNEEntryTable(SgAsmNEFileHeader *fhdr, rose_addr_t offset
                 read_content_local(at, &byte, 1);
                 SgAsmNEEntryPoint::NEEntryFlags flags = (SgAsmNEEntryPoint::NEEntryFlags)byte;
                 read_content_local(at+1, &u16_disk, 2);
-                unsigned int3f = ByteOrder::le_to_host(u16_disk);
+                unsigned int3f = Rose::BinaryAnalysis::ByteOrder::leToHost(u16_disk);
                 ROSE_ASSERT(int3f!=0); /*because we use zero to indicate a fixed entry in unparse()*/
                 read_content_local(at+3, &byte, 1);
                 unsigned segno = byte;
                 read_content_local(at+4, &u16_disk, 2);
-                unsigned segoffset = ByteOrder::le_to_host(u16_disk);
+                unsigned segoffset = Rose::BinaryAnalysis::ByteOrder::leToHost(u16_disk);
                 p_entries.push_back(new SgAsmNEEntryPoint(flags, int3f, segno, segoffset));
             }
         } else {
@@ -900,7 +900,7 @@ SgAsmNEEntryTable::SgAsmNEEntryTable(SgAsmNEFileHeader *fhdr, rose_addr_t offset
                 read_content_local(at, &byte, 1);
                 SgAsmNEEntryPoint::NEEntryFlags flags = (SgAsmNEEntryPoint::NEEntryFlags)byte;
                 read_content_local(at+1, &u16_disk, 2);
-                unsigned segoffset = ByteOrder::le_to_host(u16_disk);
+                unsigned segoffset = Rose::BinaryAnalysis::ByteOrder::leToHost(u16_disk);
                 p_entries.push_back(new SgAsmNEEntryPoint(flags, 0, segment_indicator, segoffset));
             }
         }
@@ -969,7 +969,7 @@ SgAsmNEEntryTable::unparse(std::ostream &f) const
                 n = p_entries[ei+i]->get_flags();
                 spos = write(f, spos, n);
                 uint16_t eoff_le;
-                ByteOrder::host_to_le(p_entries[ei+i]->get_section_offset(), &eoff_le);
+                Rose::BinaryAnalysis::ByteOrder::hostToLe(p_entries[ei+i]->get_section_offset(), &eoff_le);
                 spos = write(f, spos, sizeof eoff_le, &eoff_le);
             }
         } else {
@@ -982,12 +982,12 @@ SgAsmNEEntryTable::unparse(std::ostream &f) const
                 n = p_entries[ei+i]->get_flags();
                 spos = write(f, spos, n);
                 uint16_t word;
-                ByteOrder::host_to_le(p_entries[ei+i]->get_int3f(), &word);
+                Rose::BinaryAnalysis::ByteOrder::hostToLe(p_entries[ei+i]->get_int3f(), &word);
                 spos = write(f, spos, sizeof word, &word);
                 ROSE_ASSERT(p_entries[ei+i]->get_section_idx() <= 0xff);
                 n = p_entries[ei+i]->get_section_idx();
                 spos = write(f, spos, n);
-                ByteOrder::host_to_le(p_entries[ei+i]->get_section_offset(), &word);
+                Rose::BinaryAnalysis::ByteOrder::hostToLe(p_entries[ei+i]->get_section_offset(), &word);
                 spos = write(f, spos, sizeof word, &word);
             }
         }
@@ -1052,7 +1052,7 @@ SgAsmNERelocEntry::SgAsmNERelocEntry(SgAsmGenericSection *relocs, rose_addr_t at
      * written to the source and the old contents of the source contains the next source offset, until we get 0xffff. */
     relocs->extend(2);
     relocs->read_content_local(at, &u16_disk, 2);
-    p_src_offset = ByteOrder::le_to_host(u16_disk);
+    p_src_offset = Rose::BinaryAnalysis::ByteOrder::leToHost(u16_disk);
     at += 2;
 
     switch (p_tgt_type) {
@@ -1064,27 +1064,27 @@ SgAsmNERelocEntry::SgAsmNERelocEntry(SgAsmGenericSection *relocs, rose_addr_t at
         relocs->read_content_local(at++, &byte, 1);
         p_iref.res1  = byte;
         relocs->read_content_local(at, &u16_disk, 2);
-        p_iref.tgt_offset = ByteOrder::le_to_host(u16_disk);
+        p_iref.tgt_offset = Rose::BinaryAnalysis::ByteOrder::leToHost(u16_disk);
         at += 2;
         break;
       case RF_TGTTYPE_IORD:
         /* Imported ordinal */
         relocs->extend(4);
         relocs->read_content_local(at, &u16_disk, 2);
-        p_iord.modref  = ByteOrder::le_to_host(u16_disk);
+        p_iord.modref  = Rose::BinaryAnalysis::ByteOrder::leToHost(u16_disk);
         relocs->read_content_local(at+2, &u16_disk, 2);
-        p_iord.ordinal = ByteOrder::le_to_host(u16_disk);
+        p_iord.ordinal = Rose::BinaryAnalysis::ByteOrder::leToHost(u16_disk);
         at += 4;
         if (p_flags & RF_2EXTRA) {
             if (p_flags & RF_32ADD) {
                 relocs->extend(4);
                 relocs->read_content_local(at+8, &u32_disk, 4);
-                p_iord.addend = ByteOrder::le_to_host(u32_disk);
+                p_iord.addend = Rose::BinaryAnalysis::ByteOrder::leToHost(u32_disk);
                 at += 4;
             } else {
                 relocs->extend(2);
                 relocs->read_content_local(at+8, &u16_disk, 2);
-                p_iord.addend = ByteOrder::le_to_host(u16_disk);
+                p_iord.addend = Rose::BinaryAnalysis::ByteOrder::leToHost(u16_disk);
                 at += 2;
             }
         } else {
@@ -1095,20 +1095,20 @@ SgAsmNERelocEntry::SgAsmNERelocEntry(SgAsmGenericSection *relocs, rose_addr_t at
         /* Imported name */
         relocs->extend(4);
         relocs->read_content_local(at, &u16_disk, 2);
-        p_iname.modref = ByteOrder::le_to_host(u16_disk);
+        p_iname.modref = Rose::BinaryAnalysis::ByteOrder::leToHost(u16_disk);
         relocs->read_content_local(at+2, &u16_disk, 2);
-        p_iname.nm_off = ByteOrder::le_to_host(u16_disk);
+        p_iname.nm_off = Rose::BinaryAnalysis::ByteOrder::leToHost(u16_disk);
         at += 4;
         if (p_flags & RF_2EXTRA) {
             if (p_flags & RF_32ADD) {
                 relocs->extend(4);
                 relocs->read_content_local(at+8, &u32_disk, 4);
-                p_iname.addend = ByteOrder::le_to_host(u32_disk);
+                p_iname.addend = Rose::BinaryAnalysis::ByteOrder::leToHost(u32_disk);
                 at += 4;
             } else {
                 relocs->extend(2);
                 relocs->read_content_local(at+8, &u16_disk, 2);
-                p_iname.addend = ByteOrder::le_to_host(u16_disk);
+                p_iname.addend = Rose::BinaryAnalysis::ByteOrder::leToHost(u16_disk);
                 at += 2;
             }
         } else {
@@ -1119,9 +1119,9 @@ SgAsmNERelocEntry::SgAsmNERelocEntry(SgAsmGenericSection *relocs, rose_addr_t at
         /* Operating system fixup */
         relocs->extend(4);
         relocs->read_content_local(at, &u16_disk, 2);
-        p_osfixup.type = ByteOrder::le_to_host(u16_disk);
+        p_osfixup.type = Rose::BinaryAnalysis::ByteOrder::leToHost(u16_disk);
         relocs->read_content_local(at+2, &u16_disk, 2);
-        p_osfixup.res3 = ByteOrder::le_to_host(u16_disk);
+        p_osfixup.res3 = Rose::BinaryAnalysis::ByteOrder::leToHost(u16_disk);
         at += 4;
         break;
     }
@@ -1142,29 +1142,29 @@ SgAsmNERelocEntry::unparse(std::ostream &f, const SgAsmGenericSection *section, 
     
     uint16_t word;
     uint32_t dword;
-    ByteOrder::host_to_le(p_src_offset, &word);
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_src_offset, &word);
     spos = section->write(f, spos, sizeof word, &word);
     
     switch (p_tgt_type) {
       case RF_TGTTYPE_IREF:
-        ByteOrder::host_to_le(p_iref.sect_idx, &byte);
+        Rose::BinaryAnalysis::ByteOrder::hostToLe(p_iref.sect_idx, &byte);
         spos = section->write(f, spos, byte);
-        ByteOrder::host_to_le(p_iref.res1, &byte);
+        Rose::BinaryAnalysis::ByteOrder::hostToLe(p_iref.res1, &byte);
         spos = section->write(f, spos, byte);
-        ByteOrder::host_to_le(p_iref.tgt_offset, &word);
+        Rose::BinaryAnalysis::ByteOrder::hostToLe(p_iref.tgt_offset, &word);
         spos = section->write(f, spos, sizeof word, &word);
         break;
       case RF_TGTTYPE_IORD:
-        ByteOrder::host_to_le(p_iord.modref, &word);
+        Rose::BinaryAnalysis::ByteOrder::hostToLe(p_iord.modref, &word);
         spos = section->write(f, spos, sizeof word, &word);
-        ByteOrder::host_to_le(p_iord.ordinal, &word);
+        Rose::BinaryAnalysis::ByteOrder::hostToLe(p_iord.ordinal, &word);
         spos = section->write(f, spos, sizeof word, &word);
         if (p_flags & RF_2EXTRA) {
             if (p_flags & RF_32ADD) {
-                ByteOrder::host_to_le(p_iord.addend, &dword);
+                Rose::BinaryAnalysis::ByteOrder::hostToLe(p_iord.addend, &dword);
                 spos = section->write(f, spos, sizeof dword, &dword);
             } else {
-                ByteOrder::host_to_le(p_iord.addend, &word);
+                Rose::BinaryAnalysis::ByteOrder::hostToLe(p_iord.addend, &word);
                 spos = section->write(f, spos, sizeof word, &word);
             }
         } else {
@@ -1172,16 +1172,16 @@ SgAsmNERelocEntry::unparse(std::ostream &f, const SgAsmGenericSection *section, 
         }
         break;
       case RF_TGTTYPE_INAME:
-        ByteOrder::host_to_le(p_iname.modref, &word);
+        Rose::BinaryAnalysis::ByteOrder::hostToLe(p_iname.modref, &word);
         spos = section->write(f, spos, sizeof word, &word);
-        ByteOrder::host_to_le(p_iname.nm_off, &word);
+        Rose::BinaryAnalysis::ByteOrder::hostToLe(p_iname.nm_off, &word);
         spos = section->write(f, spos, sizeof word, &word);
         if (p_flags & RF_2EXTRA) {
             if (p_flags & RF_32ADD) {
-                ByteOrder::host_to_le(p_iname.addend, &dword);
+                Rose::BinaryAnalysis::ByteOrder::hostToLe(p_iname.addend, &dword);
                 spos = section->write(f, spos, sizeof dword, &dword);
             } else {
-                ByteOrder::host_to_le(p_iname.addend, &word);
+                Rose::BinaryAnalysis::ByteOrder::hostToLe(p_iname.addend, &word);
                 spos = section->write(f, spos, sizeof word, &word);
             }
         } else {
@@ -1189,9 +1189,9 @@ SgAsmNERelocEntry::unparse(std::ostream &f, const SgAsmGenericSection *section, 
         }
         break;
       case RF_TGTTYPE_OSFIXUP:
-        ByteOrder::host_to_le(p_osfixup.type, &word);
+        Rose::BinaryAnalysis::ByteOrder::hostToLe(p_osfixup.type, &word);
         spos = section->write(f, spos, sizeof word, &word);
-        ByteOrder::host_to_le(p_osfixup.res3, &word);
+        Rose::BinaryAnalysis::ByteOrder::hostToLe(p_osfixup.res3, &word);
         spos = section->write(f, spos, sizeof word, &word);
         break;
       default:
@@ -1304,7 +1304,7 @@ SgAsmNERelocTable::SgAsmNERelocTable(SgAsmNEFileHeader *fhdr, SgAsmNESection *se
     extend(2);
     uint16_t u16_disk;
     read_content_local(at, &u16_disk, 2);
-    size_t nrelocs = ByteOrder::le_to_host(u16_disk);
+    size_t nrelocs = Rose::BinaryAnalysis::ByteOrder::leToHost(u16_disk);
     at += 2;
     
     for (size_t i = 0; i < nrelocs; i++, at += reloc_size) {
@@ -1318,7 +1318,7 @@ SgAsmNERelocTable::unparse(std::ostream &f) const
 {
     rose_addr_t spos=0; /*section offset*/
     uint16_t size_le;
-    ByteOrder::host_to_le(p_entries.size(), &size_le);
+    Rose::BinaryAnalysis::ByteOrder::hostToLe(p_entries.size(), &size_le);
     spos = write(f, spos, sizeof size_le, &size_le);
     
     for (size_t i = 0; i < p_entries.size(); i++) {

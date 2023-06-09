@@ -277,6 +277,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/BinaryLoaderPe.h						\
 	Rose/BinaryAnalysis/ByteCode.h							\
 	Rose/BinaryAnalysis/ByteCode/Analysis.h						\
+	Rose/BinaryAnalysis/ByteOrder.h							\
 	Rose/BinaryAnalysis/CallingConvention.h						\
 	Rose/BinaryAnalysis/CodeInserter.h						\
 	Rose/BinaryAnalysis/Concolic.h							\

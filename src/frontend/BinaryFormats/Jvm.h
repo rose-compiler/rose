@@ -1,7 +1,8 @@
 #ifndef Jvm_H
 #define Jvm_H
-
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
+
+#include <Rose/BinaryAnalysis/ByteOrder.h>
 
 namespace Jvm {
 
@@ -21,7 +22,7 @@ size_t read_bytes(const SgAsmJvmConstantPool* pool, char* &bytes, T &length)
     //throw FormatError("Error reading JVM bytes array length");
     ROSE_ASSERT(false && "Error reading JVM bytes array length");
   }
-  length = ByteOrder::be_to_host(length);
+  length = Rose::BinaryAnalysis::ByteOrder::beToHost(length);
   offset += count;
   header->set_offset(offset);
 
@@ -51,7 +52,7 @@ size_t read_value(const SgAsmJvmConstantPool* pool, T &value, bool advance_offse
     //throw FormatError("Error reading JVM value");
     ROSE_ASSERT(false && "Error reading JVM value");
   }
-  value = ByteOrder::be_to_host(value);
+  value = Rose::BinaryAnalysis::ByteOrder::beToHost(value);
   if (advance_offset) header->set_offset(offset + count);
   return count;
 }

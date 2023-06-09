@@ -9,6 +9,7 @@ run $(librose_compile)				\
     BinaryLoaderElf.C				\
     BinaryLoaderElfObj.C			\
     BinaryLoaderPe.C				\
+    ByteOrder.C					\
     CallingConvention.C				\
     CodeInserter.C				\
     ConcreteLocation.C				\
@@ -59,6 +60,7 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis	\
     BinaryLoaderElfObj.h					\
     BinaryLoaderPe.h						\
     ByteCode.h							\
+    ByteOrder.h							\
     CallingConvention.h						\
     CodeInserter.h						\
     Concolic.h							\

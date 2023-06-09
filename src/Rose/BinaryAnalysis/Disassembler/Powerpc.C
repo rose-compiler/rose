@@ -135,7 +135,7 @@ Powerpc::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, Address
         throw Exception("short read", start_va);
     uint32_t c = (temp[0]<<24) | (temp[1]<<16) | (temp[2]<<8) | temp[3];
     if (ByteOrder::ORDER_LSB == sex_)
-        c = ByteOrder::swap_bytes(c);
+        c = ByteOrder::swapBytes(c);
 
     // Disassemble the instruction
     State state;

@@ -27,14 +27,14 @@ SgAsmPESectionTableEntry::SgAsmPESectionTableEntry(const SgAsmPESectionTableEntr
 
     /* Decode file format */
     ASSERT_not_null(disk);
-    p_virtual_size     = ByteOrder::le_to_host(disk->virtual_size);
-    p_rva              = ByteOrder::le_to_host(disk->rva);
-    p_physical_size    = ByteOrder::le_to_host(disk->physical_size);
-    p_physical_offset  = ByteOrder::le_to_host(disk->physical_offset);
-    p_coff_line_nums   = ByteOrder::le_to_host(disk->coff_line_nums);
-    p_n_relocs         = ByteOrder::le_to_host(disk->n_relocs);
-    p_n_coff_line_nums = ByteOrder::le_to_host(disk->n_coff_line_nums);
-    p_flags            = ByteOrder::le_to_host(disk->flags);
+    p_virtual_size     = ByteOrder::leToHost(disk->virtual_size);
+    p_rva              = ByteOrder::leToHost(disk->rva);
+    p_physical_size    = ByteOrder::leToHost(disk->physical_size);
+    p_physical_offset  = ByteOrder::leToHost(disk->physical_offset);
+    p_coff_line_nums   = ByteOrder::leToHost(disk->coff_line_nums);
+    p_n_relocs         = ByteOrder::leToHost(disk->n_relocs);
+    p_n_coff_line_nums = ByteOrder::leToHost(disk->n_coff_line_nums);
+    p_flags            = ByteOrder::leToHost(disk->flags);
 }
 
 void
@@ -156,14 +156,14 @@ SgAsmPESectionTableEntry::encode(PESectionTableEntry_disk *disk) const
     memcpy(disk->name, p_name.c_str(), std::min(sizeof(disk->name), p_name.size()));
 #endif
 
-    ByteOrder::host_to_le(p_virtual_size,     &(disk->virtual_size));
-    ByteOrder::host_to_le(p_rva,              &(disk->rva));
-    ByteOrder::host_to_le(p_physical_size,    &(disk->physical_size));
-    ByteOrder::host_to_le(p_physical_offset,  &(disk->physical_offset));
-    ByteOrder::host_to_le(p_coff_line_nums,   &(disk->coff_line_nums));
-    ByteOrder::host_to_le(p_n_relocs,         &(disk->n_relocs));
-    ByteOrder::host_to_le(p_n_coff_line_nums, &(disk->n_coff_line_nums));
-    ByteOrder::host_to_le(p_flags,            &(disk->flags));
+    ByteOrder::hostToLe(p_virtual_size,     &(disk->virtual_size));
+    ByteOrder::hostToLe(p_rva,              &(disk->rva));
+    ByteOrder::hostToLe(p_physical_size,    &(disk->physical_size));
+    ByteOrder::hostToLe(p_physical_offset,  &(disk->physical_offset));
+    ByteOrder::hostToLe(p_coff_line_nums,   &(disk->coff_line_nums));
+    ByteOrder::hostToLe(p_n_relocs,         &(disk->n_relocs));
+    ByteOrder::hostToLe(p_n_coff_line_nums, &(disk->n_coff_line_nums));
+    ByteOrder::hostToLe(p_flags,            &(disk->flags));
 
     return disk;
 }

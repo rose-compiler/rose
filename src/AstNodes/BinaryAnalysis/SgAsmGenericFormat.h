@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/ByteOrder.h>
+
 /** Basic information about an executable container. */
 class SgAsmGenericFormat: public SgAsmExecutableFileFormat {
     /** Property: Family. */
@@ -10,7 +12,7 @@ class SgAsmGenericFormat: public SgAsmExecutableFileFormat {
 
     /** Property: Byte order. */
     [[using Rosebud: rosetta]]
-    ByteOrder::Endianness sex = ByteOrder::ORDER_UNSPECIFIED;
+    Rose::BinaryAnalysis::ByteOrder::Endianness sex = Rose::BinaryAnalysis::ByteOrder::ORDER_UNSPECIFIED;
 
     /** Property: File format version number. */
     [[using Rosebud: rosetta]]

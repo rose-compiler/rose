@@ -5,7 +5,7 @@ ifneq (@(WITH_INTEL_PIN),no)
 endif
 
 SOURCES +=														\
-    BinaryComposite.C ByteOrder.C CilImpl.C CliHeader.C DataConversion.C ExtentMap.C Hexdump.C Rva.C			\
+    BinaryComposite.C CilImpl.C CliHeader.C DataConversion.C ExtentMap.C Hexdump.C Rva.C				\
     GenericDynamicLinking.C GenericFile.C GenericFormat.C GenericHeader.C GenericSection.C GenericString.C		\
     PeExport.C PeFileHeader.C PeImportDirectory.C PeImportItem.C							\
     PeImportSection.C PeRvaSizePair.C PeSection.C PeStringTable.C PeSymbolTable.C					\
@@ -16,5 +16,5 @@ SOURCES +=														\
 
 run $(librose_compile) $(SOURCES)
 
-run $(public_header) ByteOrder.h DataConversion.h IntelPinSupport.h WorkLists.h SgSharedVector.h \
+run $(public_header) DataConversion.h IntelPinSupport.h WorkLists.h SgSharedVector.h	\
         StatSerializer.h BinaryVxcoreParser.h

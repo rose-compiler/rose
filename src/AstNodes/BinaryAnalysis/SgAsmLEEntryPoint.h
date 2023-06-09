@@ -1,3 +1,5 @@
+#include <Rose/BinaryAnalysis/ByteOrder.h>
+
 class SgAsmLEEntryPoint: public SgAsmExecutableFileFormat {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Local types
@@ -52,8 +54,9 @@ public:
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    SgAsmLEEntryPoint(ByteOrder::Endianness sex, const SgAsmLEEntryPoint::LEEntryPoint_disk *disk);
-    SgAsmLEEntryPoint(ByteOrder::Endianness sex, unsigned flags);
-    rose_addr_t unparse(std::ostream&, ByteOrder::Endianness, const SgAsmGenericSection*, rose_addr_t spos) const;
+    SgAsmLEEntryPoint(Rose::BinaryAnalysis::ByteOrder::Endianness sex, const SgAsmLEEntryPoint::LEEntryPoint_disk *disk);
+    SgAsmLEEntryPoint(Rose::BinaryAnalysis::ByteOrder::Endianness sex, unsigned flags);
+    rose_addr_t unparse(std::ostream&, Rose::BinaryAnalysis::ByteOrder::Endianness, const SgAsmGenericSection*,
+                        rose_addr_t spos) const;
     void dump(FILE*, const char *prefix, ssize_t idx) const;
 };

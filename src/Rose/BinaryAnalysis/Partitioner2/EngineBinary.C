@@ -1864,7 +1864,7 @@ EngineBinary::makeInterruptVectorFunctions(const Partitioner::Ptr &partitioner, 
             rose_addr_t elmtVa = interruptVector.least() + i*bytesPerPointer;
             uint32_t functionVa;
             if (4 == partitioner->memoryMap()->at(elmtVa).limit(4).read((uint8_t*)&functionVa).size()) {
-                functionVa = ByteOrder::disk_to_host(byteOrder, functionVa);
+                functionVa = ByteOrder::diskToHost(byteOrder, functionVa);
                 std::string name = "interrupt_" + StringUtility::numberToString(i) + "_handler";
                 Function::Ptr function = Function::instance(functionVa, name, SgAsmFunction::FUNC_EXCEPTION_HANDLER);
                 if (Sawyer::Optional<Function::Ptr> found = getUnique(functions, function, sortFunctionsByAddress)) {

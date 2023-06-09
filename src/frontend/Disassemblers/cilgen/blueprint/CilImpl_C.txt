@@ -198,8 +198,8 @@ void SgAsmCilMetadataRoot::parse()
 
   uint64_t    metaData = clih->get_metaData();
   uint8_t*    data = reinterpret_cast<uint8_t*>(&metaData);
-  rose_addr_t rva = ByteOrder::le_to_host(*reinterpret_cast<uint32_t*>(data));
-  size_t      size = ByteOrder::le_to_host(*reinterpret_cast<uint32_t*>(data+4));
+  rose_addr_t rva = ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(data));
+  size_t      size = ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(data+4));
   rose_addr_t base_va = clih->get_base_va();
   rose_addr_t rva_offset = clih->get_rva_offset(rva);
 

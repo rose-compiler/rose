@@ -15,7 +15,7 @@ SgAsmGenericHeader::format_name() const
      return "ASM_GENERIC_HEADER";
    }
 
-ByteOrder::Endianness
+Rose::BinaryAnalysis::ByteOrder::Endianness
 SgAsmGenericHeader::get_sex() const
    {
      ROSE_ASSERT(p_exec_format != NULL);

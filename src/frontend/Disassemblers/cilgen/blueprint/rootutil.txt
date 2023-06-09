@@ -32,10 +32,10 @@ parseFatHeader(rose_addr_t base_va, std::uint32_t rva, SgAsmPEFileHeader* fhdr)
   const std::size_t    nread = fhdr->get_loader_map()->readQuick(&buf, base_va + rva, sizeof(buf));
   ROSE_ASSERT(nread == 12);
 
-  const std::uint16_t  flags    = ByteOrder::le_to_host(*reinterpret_cast<uint16_t*>(buf+0));
-  const std::uint16_t  maxStack = ByteOrder::le_to_host(*reinterpret_cast<uint16_t*>(buf+2));
-  const std::uint16_t  codeSize = ByteOrder::le_to_host(*reinterpret_cast<uint32_t*>(buf+4));
-  const std::uint16_t  localIni = ByteOrder::le_to_host(*reinterpret_cast<uint32_t*>(buf+8));
+  const std::uint16_t  flags    = ByteOrder::leToHost(*reinterpret_cast<uint16_t*>(buf+0));
+  const std::uint16_t  maxStack = ByteOrder::leToHost(*reinterpret_cast<uint16_t*>(buf+2));
+  const std::uint16_t  codeSize = ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(buf+4));
+  const std::uint16_t  localIni = ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(buf+8));
   const MethodHeader   res{ flags, maxStack, codeSize, localIni };
 
   ROSE_ASSERT(!res.tiny());

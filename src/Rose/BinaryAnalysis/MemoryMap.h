@@ -4,8 +4,8 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/BasicTypes.h>
+#include <Rose/BinaryAnalysis/ByteOrder.h>
 
-#include <ByteOrder.h>
 #include <Combinatorics.h>
 #include <Rose/Exception.h>
 
@@ -519,7 +519,7 @@ public:
         U val = 0;
         if (at(startVa).limit(sizeof val).read((uint8_t*)&val).size() != sizeof val)
             return Sawyer::Nothing();
-        ByteOrder::convert((void*)&val, sizeof val, endianness_, ByteOrder::host_order());
+        ByteOrder::convert((void*)&val, sizeof val, endianness_, ByteOrder::hostOrder());
         return val;
     }
 
@@ -532,7 +532,7 @@ public:
         uint64_t val = 0;
         if (at(startVa).limit(sizeof val).read((uint8_t*)&val).size() != sizeof val)
             return Sawyer::Nothing();
-        ByteOrder::convert((void*)&val, sizeof val, endianness_, ByteOrder::host_order());
+        ByteOrder::convert((void*)&val, sizeof val, endianness_, ByteOrder::hostOrder());
         return val;
     }
     

@@ -11,6 +11,7 @@
 #include <Rose/BinaryAnalysis/BinaryLoader.h>
 #include <Rose/BinaryAnalysis/BinaryLoaderPe.h>
 #include <Rose/BinaryAnalysis/ByteCode.h>
+#include <Rose/BinaryAnalysis/ByteOrder.h>
 #include <Rose/BinaryAnalysis/CallingConvention.h>
 #include <Rose/BinaryAnalysis/CodeInserter.h>
 #include <Rose/BinaryAnalysis/Concolic.h>
