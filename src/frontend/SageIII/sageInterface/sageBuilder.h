@@ -1256,9 +1256,10 @@ inline SgIfStmt * buildIfStmt(SgExpression* conditional, SgStatement * true_body
 
 ROSE_DLL_API SgIfStmt* buildIfStmt_nfi(SgStatement* conditional, SgStatement * true_body, SgStatement * false_body);
 
-// CR (9/3/2018)
+// Rasmussen (9/3/2018)
 //! Build a Fortran do construct
-ROSE_DLL_API SgFortranDo * buildFortranDo(SgExpression* initialization, SgExpression* bound, SgExpression* increment, SgBasicBlock* loop_body);
+ROSE_DLL_API SgFortranDo* buildFortranDo(SgExpression* initialization, SgExpression* bound, SgExpression* increment, SgBasicBlock*);
+ROSE_DLL_API SgFortranDo* buildFortranDo_nfi(SgExpression* initialization, SgExpression* bound, SgExpression* increment, SgBasicBlock*);
 
 //! Build a for init statement
 ROSE_DLL_API SgForInitStatement* buildForInitStatement();
@@ -1356,6 +1357,10 @@ SgBreakStmt* buildBreakStmt_nfi();
 //! Build a continue statement
 ROSE_DLL_API SgContinueStmt* buildContinueStmt();
 SgContinueStmt* buildContinueStmt_nfi();
+
+//! Build a Fortran continue statement
+ROSE_DLL_API SgFortranContinueStmt* buildFortranContinueStmt();
+SgFortranContinueStmt* buildFortranContinueStmt_nfi();
 
 //! Build a pass statement
 ROSE_DLL_API SgPassStatement* buildPassStatement();

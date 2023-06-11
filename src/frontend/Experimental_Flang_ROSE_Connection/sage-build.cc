@@ -536,6 +536,8 @@ void Build(const parser::ActionStmt &x, const OptLabel &label, T* scope)
       common::visitors{
          [&](const parser::ContinueStmt  &y) { Build(y, label); },
          [&](const parser::FailImageStmt &y) { Build(y, label); },
+         [&] (const Fortran::common::Indirection<parser::CycleStmt,false> &y)
+                { Build(y.value(), label); },
          // common::Indirection - AllocateStmt, AssignmentStmt, BackspaceStmt, CallStmt, CloseStmt,
          // CycleStmt, DeallocateStmt, EndfileStmt, EventPostStmt, EventWaitStmt, ExitStmt, FailImageStmt,
          // FlushStmt, FormTeamStmt, GotoStmt, IfStmt, InquireStmt, LockStmt, NullifyStmt, OpenStmt,
@@ -1272,8 +1274,12 @@ void Build(const parser::DeclarationTypeSpec &x, SgType* &type)
 #endif
 
    // IntrinsicTypeSpec, Type, TypeStar, Class, ClassStar, Record
+//erasmus
+   std::cerr << "Build(const parser::DeclarationTypeSpec &x, SgType* &type)\n";
+#if 0
    auto DeclTypeSpecVisitor = [&] (const auto &y) { Build(y, type); };
    std::visit(DeclTypeSpecVisitor, x.u);
+#endif
 }
 
 void Build(const parser::DeclarationTypeSpec::Type&x, SgType* &type)
@@ -1831,11 +1837,11 @@ void Build(const parser::ContinueStmt &x, const OptLabel &label)
    }
 
    // Begin SageTreeBuilder
-   SgContinueStmt* continue_stmt{nullptr};
-   builder.Enter(continue_stmt);
+   SgFortranContinueStmt* continueStmt{nullptr};
+   builder.Enter(continueStmt);
 
    // Finish SageTreeBuilder
-   builder.Leave(continue_stmt, labels);
+   builder.Leave(continueStmt, labels);
 }
 
 void Build(const parser::FailImageStmt &x, const OptLabel &label)
@@ -1851,10 +1857,10 @@ void Build(const parser::FailImageStmt &x, const OptLabel &label)
 
    // Begin SageTreeBuilder
    SgProcessControlStatement* failStmt{nullptr};
-   builder.Enter(failStmt, "fail_image", boost::none, boost::none, labels);
+   builder.Enter(failStmt, "fail_image", boost::none, boost::none);
 
    // Finish SageTreeBuilder
-   builder.Leave(failStmt);
+   builder.Leave(failStmt, labels);
 }
 
 template<typename T>
@@ -1903,12 +1909,25 @@ void Build(const parser::CloseStmt&x, T* scope)
 #endif
 }
 
-template<typename T>
-void Build(const parser::CycleStmt&x, T* scope)
+void Build(const parser::CycleStmt &x, const OptLabel &label)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(CycleStmt)\n";
 #endif
+
+   // A Fortran CycleStmt is semantically similar to a C/C++ continue statement
+
+   std::vector<std::string> labels{};
+   if (label) {
+      labels.push_back(std::to_string(label.value()));
+   }
+
+   // Begin SageTreeBuilder
+   SgContinueStmt* continueStmt{nullptr};
+   builder.Enter(continueStmt);
+
+   // Finish SageTreeBuilder
+   builder.Leave(continueStmt, labels);
 }
 
 template<typename T>
@@ -2199,7 +2218,8 @@ void Build(const parser::StopStmt&x, T* scope)
       quiet = expr;
    }
 
-   builder.Enter(stop_stmt, std::string{kind}, code, quiet, labels);
+   builder.Enter(stop_stmt, std::string{kind}, code, quiet);
+   builder.Leave(stop_stmt, labels);
 }
 
 template<typename T>
@@ -3004,31 +3024,38 @@ template<typename T>
 void Build(const parser::DoConstruct&x, T* scope)
 {
 #if PRINT_FLANG_TRAVERSAL
-   std::cout << "Rose::builder::Build(DoConstruct)\n";
+  std::cout << "Rose::builder::Build(DoConstruct)\n";
 #endif
 
-   //  std::tuple<Statement<NonLabelDoStmt>, Block, Statement<EndDoStmt>> t;
-   //  bool IsDoNormal() const;  bool IsDoWhile() const; bool IsDoConcurrent() const;
+  //  std::tuple<Statement<NonLabelDoStmt>, Block, Statement<EndDoStmt>> t;
+  //  bool IsDoNormal() const;  bool IsDoWhile() const; bool IsDoConcurrent() const;
 
-   SgStatement* block_stmt{nullptr};
-   SgWhileStmt* while_stmt{nullptr};
-   SgExpression* condition{nullptr};
+  SgStatement* blockStmt{nullptr};
+  SgWhileStmt* whileStmt{nullptr};
+  SgFortranDo* doStmt{nullptr};
+  SgExpression* condition{nullptr}; // loop-control
+  SgExpression* name{nullptr}; // do-construct-name
 
-   // Traverse NonLabelDoStmt to get the loop condition
-   Build(std::get<0>(x.t).statement, condition);
+  // Traverse NonLabelDoStmt to get the loop condition
+  Build(std::get<0>(x.t).statement, name, condition);
 
-   // Enter SageTreeBuilder if is DoWhile
-   if (x.IsDoWhile()) {
-      builder.Enter(while_stmt, condition);
-   }
+  // Enter SageTreeBuilder
+  if (x.IsDoWhile()) {
+    builder.Enter(whileStmt, condition);
+  } else {
+    // Simple form for now
+    builder.Enter(doStmt);
+  }
 
-   // Traverse the body
-   Build(std::get<1>(x.t), block_stmt);
+  // Traverse the body
+  Build(std::get<1>(x.t), blockStmt);
 
-   // Leave SageTreeBuilder
-   if (x.IsDoWhile()) {
-      builder.Leave(while_stmt, true /* has_end_do_stmt */);
-   }
+  // Leave SageTreeBuilder
+  if (x.IsDoWhile()) {
+    builder.Leave(whileStmt, true /* has_end_do_stmt */);
+  } else {
+    builder.Leave(doStmt);
+  }
 }
 
 template<typename T>
@@ -3232,22 +3259,21 @@ void Build(const parser::OmpEndLoopDirective&x, T* scope)
 #endif
 }
 
-// DoConstruct
-void Build(const parser::NonLabelDoStmt&x, SgExpression* &expr)
+// DoConstructf3037
+
+void Build(const parser::NonLabelDoStmt&x, SgExpression* &name, SgExpression* &control)
 {
 #if PRINT_FLANG_TRAVERSAL
-   std::cout << "Rose::builder::Build(NonLabelDoStmt)\n";
+  std::cout << "Rose::builder::Build(NonLabelDoStmt)\n";
 #endif
 
-#if 0
-   if (auto & opt = std::get<0>(x.t)) {   // std::optional<Name>
-      Build(opt.value(), expr);
-   }
-#endif
+  if (auto & opt = std::get<0>(x.t)) {   // std::optional<Name>
+    Build(opt.value(), name);
+  }
 
-   if (auto & opt = std::get<1>(x.t)) {   // std::optional<LoopControl>
-      Build(opt.value(), expr);
-   }
+  if (auto & opt = std::get<1>(x.t)) {   // std::optional<LoopControlf3048
+    Build(opt.value(), control);
+  }
 }
 
 void Build(const parser::LoopControl&x, SgExpression* &expr)
@@ -3275,10 +3301,20 @@ void Build(const parser::LoopControl&x, SgExpression* &expr)
                Build(y.upper.thing.value(), upper_bound);
 #endif
             },
-         [&] (const parser::LoopControl::Concurrent &y) { ; },
          [&] (const auto &y) { Build(y, expr); }, // ScalarLogicalExpr
       },
       x.u);
+}
+
+void Build(const parser::LoopControl::Concurrent &x, SgExpression* &expr)
+{
+#if PRINT_FLANG_TRAVERSAL
+  std::cout << "Rose::builder::Build(LoopControl::Concurrent)\n";
+#endif
+
+  // x.t (tuple)
+  // [0] parser::ConcurrentHeader
+  // [1] [LocalitySpec (a list)]
 }
 
 // SpecificationConstruct

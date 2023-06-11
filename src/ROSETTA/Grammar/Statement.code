@@ -2695,6 +2695,10 @@ HEADER_CONTINUE_STATEMENT_START
 HEADER_CONTINUE_STATEMENT_END
 
 
+HEADER_FORTRAN_CONTINUE_STATEMENT_START
+HEADER_FORTRAN_CONTINUE_STATEMENT_END
+
+
 HEADER_RETURN_STATEMENT_START
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -16257,7 +16261,6 @@ SgLabelStatement::get_name() const
 SgSymbol*
 SgLabelStatement::get_symbol_from_symbol_table() const
    {
-  // The label's symbol is stored in the function definition, so we need to look for it there.
      SgScopeStatement* tempScope = get_scope();
      ASSERT_not_null(tempScope);
      while (tempScope != nullptr && isSgFunctionDefinition(tempScope) == nullptr)
@@ -16881,6 +16884,14 @@ SgContinueStmt::post_construction_initialization()
 
 SOURCE_CONTINUE_STATEMENT_END
 
+SOURCE_FORTRAN_CONTINUE_STATEMENT_START
+
+void
+SgFortranContinueStmt::post_construction_initialization()
+   {
+   }
+
+SOURCE_FORTRAN_CONTINUE_STATEMENT_END
 
 SOURCE_RETURN_STATEMENT_START
 

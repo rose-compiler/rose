@@ -1088,6 +1088,24 @@ Leave(SgContinueStmt* continueStmt, const std::vector<std::string> &labels)
 }
 
 void SageTreeBuilder::
+Enter(SgFortranContinueStmt* &continueStmt)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgFortranContinueStmt*, ...)\n";
+
+   continueStmt = SB::buildFortranContinueStmt_nfi();
+}
+
+void SageTreeBuilder::
+Leave(SgFortranContinueStmt* continueStmt, const std::vector<std::string> &labels)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgFortranContinueStmt*, ...)\n";
+
+   // Append final label statement, if there are labels, otherwise stmt==continueStmt
+   SgStatement* stmt = wrapStmtWithLabels(continueStmt, labels);
+   SageInterface::appendStatement(stmt, SB::topScopeStack());
+}
+
+void SageTreeBuilder::
 Enter(SgGotoStatement* &gotoStmt, const std::string &label)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgGotoStatement*, ...)\n";
@@ -1262,6 +1280,31 @@ Leave(SgDefaultOptionStmt* default_option_stmt)
    ASSERT_not_null(default_option_stmt);
 
    SageBuilder::popScopeStack();  // default_option_stmt body
+}
+
+void SageTreeBuilder::
+Enter(SgFortranDo* &doStmt, SgExpression* initialization, SgExpression* bound, SgExpression* increment)
+{
+  mlog[TRACE] << "SageTreeBuilder::Enter(SgDoWhileStmt* &, ...) \n";
+
+  auto body = SageBuilder::buildBasicBlock_nfi();
+  doStmt = SB::buildFortranDo_nfi(initialization, bound, increment, body);
+
+  // output "END DO"
+  doStmt->set_has_end_statement(true);
+
+// Append before push (so that symbol lookup will work)
+  SageInterface::appendStatement(doStmt, SageBuilder::topScopeStack());
+  SageBuilder::pushScopeStack(body);
+}
+
+void SageTreeBuilder::
+Leave(SgFortranDo* doStmt)
+{
+  mlog[TRACE] << "SageTreeBuilder::Leave(SgFortranDo*, ...) \n";
+  ASSERT_not_null(doStmt);
+
+  SageBuilder::popScopeStack();  // do statement body
 }
 
 void SageTreeBuilder::
