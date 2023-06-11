@@ -1036,3 +1036,4 @@ SgAsmCilTypeDefTable
 SgAsmCilTypeRefTable
 SgAsmCilTypeSpecTable
 SgJvmComposite
+SgFortranContinueStmt

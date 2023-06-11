@@ -182,9 +182,10 @@ class FortranCodeGeneration_locatedNode : public UnparseLanguageIndependentConst
           virtual void unparseCaseStmt         (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseDefaultStmt      (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseBreakStmt        (SgStatement* stmt, SgUnparse_Info& info);
-          virtual void unparseContinueStmt     (SgContinueStmt* stmt, SgUnparse_Info& info);
+          virtual void unparseContinueStmt     (SgContinueStmt*,   SgUnparse_Info& info);
+          virtual void unparseFortranContinueStmt (SgFortranContinueStmt*, SgUnparse_Info& info);
           virtual void unparseReturnStmt       (SgStatement* stmt, SgUnparse_Info& info);
-          virtual void unparseGotoStmt         (SgGotoStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseGotoStmt         (SgGotoStatement*,  SgUnparse_Info& info);
 
           virtual void unparseAttributeSpecificationStatement (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseNamelistStatement(SgStatement* stmt, SgUnparse_Info& info);

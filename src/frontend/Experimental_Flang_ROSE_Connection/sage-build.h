@@ -19,6 +19,8 @@ class SgBasicBlock;
 class SgCommonBlockObject;
 class SgExpression;
 class SgExprListExp;
+class SgFortranDo;
+class SgFortranContinueStmt;
 class SgFunctionParameterList;
 class SgScopeStatement;
 class SgStatement;
@@ -188,6 +190,7 @@ void Build(const Fortran::parser::DataStmtConstant &x, SgExpression* &expr);
 
 // ActionStmt
 void Build(const Fortran::parser::         ContinueStmt &x, const OptLabel &);
+void Build(const Fortran::parser::            CycleStmt &x, const OptLabel &);
 void Build(const Fortran::parser::        FailImageStmt &x, const OptLabel &);
 
 #if NEW_LABELS==0
@@ -358,8 +361,9 @@ void Build(const Fortran::parser::ComponentDecl&x, std::string &name, SgExpressi
 void Build(const Fortran::parser::ComponentArraySpec&x, SgType* &type, SgType* base_type);
 
 // DoConstruct
-void Build(const Fortran::parser::NonLabelDoStmt&x, SgExpression* &expr);
-void Build(const Fortran::parser::   LoopControl&x, SgExpression* &expr);
+void Build(const Fortran::parser::NonLabelDoStmt&, SgExpression* &name, SgExpression* &control);
+void Build(const Fortran::parser::LoopControl&, SgExpression* &expr);
+void Build(const Fortran::parser::LoopControl::Concurrent&, SgExpression* &expr);
 
 // IfConstruct
 void Build(const Fortran::parser::              IfThenStmt&x, SgExpression* &expr);

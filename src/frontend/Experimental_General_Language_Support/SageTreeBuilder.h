@@ -187,6 +187,9 @@ public:
    void Enter(SgContinueStmt* &);
    void Leave(SgContinueStmt*, const std::vector<std::string> &);
 
+   void Enter(SgFortranContinueStmt* &);
+   void Leave(SgFortranContinueStmt*, const std::vector<std::string> &);
+
    void Enter(SgGotoStatement* &, const std::string &);
    void Leave(SgGotoStatement*, const std::vector<std::string> &);
 
@@ -210,13 +213,16 @@ public:
    void Enter(SgDefaultOptionStmt* &);
    void Leave(SgDefaultOptionStmt*);
 
+   void Enter(SgFortranDo* &, SgExpression* init=nullptr, SgExpression* bound=nullptr, SgExpression* increment=nullptr);
+   void Leave(SgFortranDo*);
+
    void Enter(SgPrintStatement* &, SgExpression*, std::list<SgExpression*> &);
    void Leave(SgPrintStatement*);
 
    void Enter(SgWhileStmt* &, SgExpression*);
    void Leave(SgWhileStmt*, bool has_end_do_stmt=false);
 
-   void Enter(SgImplicitStatement* &implicit_stmt, bool none_external = false, bool none_type = false);
+   void Enter(SgImplicitStatement* &implicit_stmt, bool none_external=false, bool none_type=false);
    void Enter(SgImplicitStatement* &, std::list<std::tuple<SgType*, std::list<std::tuple<char, boost::optional<char>>>>> &);
    void Leave(SgImplicitStatement*);
 

@@ -263,8 +263,9 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificStatement(SgStatement*
        // DQ (11/17/2007): This is unparsed as a Fortran EXIT statement
           case V_SgBreakStmt:                  unparseBreakStmt(stmt, info); break;
 
-       // DQ (11/17/2007): This is unparsed as a Fortran CYCLE statement
-          case V_SgContinueStmt:               unparseContinueStmt(isSgContinueStmt(stmt), info); break;
+       // This is unparsed as a Fortran CYCLE statement
+          case V_SgContinueStmt:        unparseContinueStmt(isSgContinueStmt(stmt), info); break;
+          case V_SgFortranContinueStmt: unparseFortranContinueStmt(isSgFortranContinueStmt(stmt), info); break;
 
           case V_SgAttributeSpecificationStatement: unparseAttributeSpecificationStatement(stmt, info); break;
           case V_SgNamelistStatement:          unparseNamelistStatement(stmt, info); break;
@@ -1694,34 +1695,32 @@ FortranCodeGeneration_locatedNode::unparseUseStmt(SgStatement* stmt, SgUnparse_I
 //----------------------------------------------------------------------------
 
 void
-FortranCodeGeneration_locatedNode::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
-   {
-     SgBasicBlock* basic_stmt = isSgBasicBlock(stmt);
-     ASSERT_not_null(basic_stmt);
+FortranCodeGeneration_locatedNode::unparseBasicBlockStmt(SgStatement* bb, SgUnparse_Info& info)
+{
+  SgBasicBlock* block = isSgBasicBlock(bb);
+  ASSERT_not_null(block);
 
   // space here is required to get "else if" blocks formatted correctly (at least).
-     unp->cur.format(basic_stmt, info, FORMAT_BEFORE_BASIC_BLOCK1);
+  unp->cur.format(block, info, FORMAT_BEFORE_BASIC_BLOCK1);
 
-     SgStatementPtrList::iterator p = basic_stmt->get_statements().begin();
-     for ( ; p != basic_stmt->get_statements().end(); ++p)
-     {
-          ASSERT_not_null((*p));
-         // FMZ: for module file, only output the variable declarations (not definitions)
-         // Pei-Hung (05/23/2019) Need to add SgUseStatement, SgimplicitStatement and SgDerivedTypeStatement into rmod file
-         if ( !info.outputFortranModFile() || (*p)->variantT()==V_SgVariableDeclaration
-                 || (*p)->variantT()==V_SgAttributeSpecificationStatement // DXN (02/07/2012): unparse attribute statements also
-                 || (*p)->variantT()==V_SgUseStatement
-                 || (*p)->variantT()==V_SgImplicitStatement
-                 || (*p)->variantT()==V_SgDerivedTypeStatement)
-             unparseStatement((*p), info);
-     }
+  for (auto stmt : block->get_statements()) {
+    ASSERT_not_null(stmt);
+    // FMZ: for module file, only output the variable declarations (not definitions)
+    // Pei-Hung (05/23/2019) Need to add SgUseStatement, SgimplicitStatement and SgDerivedTypeStatement into rmod file
+    if ( !info.outputFortranModFile() || stmt->variantT()==V_SgVariableDeclaration
+                 || stmt->variantT()==V_SgAttributeSpecificationStatement // DXN (02/07/2012): unparse attribute statements also
+                 || stmt->variantT()==V_SgUseStatement
+                 || stmt->variantT()==V_SgImplicitStatement
+                 || stmt->variantT()==V_SgDerivedTypeStatement) {
+      unparseStatement(stmt, info);
+    }
+  }
 
   // Liao (10/14/2010): This helps handle cases such as 
   //    c$OMP END PARALLEL
   //          END
-     unparseAttachedPreprocessingInfo(basic_stmt, info, PreprocessingInfo::inside);
-   }
-
+  unparseAttachedPreprocessingInfo(block, info, PreprocessingInfo::inside);
+}
 
 bool
 hasCStyleElseIfConstruction(SgIfStmt* parentIfStatement)
@@ -2124,7 +2123,7 @@ FortranCodeGeneration_locatedNode::unparseDoStmt(SgStatement* stmt, SgUnparse_In
 void 
 FortranCodeGeneration_locatedNode::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info) 
    {
-  // Sage node corresponds to Fortran 'do while' (pre-test)
+  // Sage node corresponds to Fortran 'DO WHILE' (pre-test)
 
      SgWhileStmt* while_stmt = isSgWhileStmt(stmt);
      ASSERT_not_null(while_stmt);
@@ -2135,7 +2134,8 @@ FortranCodeGeneration_locatedNode::unparseWhileStmt(SgStatement* stmt, SgUnparse
           curprint(while_stmt->get_string_label() + ": ");
         }
 
-     curprint("DO ");
+     curprint_keyword("DO", info);
+     curprint(" ");
 
      if (while_stmt->get_end_numeric_label() != nullptr)
         {
@@ -2147,8 +2147,8 @@ FortranCodeGeneration_locatedNode::unparseWhileStmt(SgStatement* stmt, SgUnparse
           curprint(numeric_label_string + " ");
         }
 
-     curprint("WHILE ");
-     curprint("(");
+     curprint_keyword("WHILE", info);
+     curprint(" (");
      info.set_inConditional(); // prevent printing line and file info
 
      SgExprStatement* conditionStatement = isSgExprStatement(while_stmt->get_condition());
@@ -2168,17 +2168,16 @@ FortranCodeGeneration_locatedNode::unparseWhileStmt(SgStatement* stmt, SgUnparse
   //     B = 0
   //  END DO"
 
-     bool output_endwhile = while_stmt->get_has_end_statement();
+     if (while_stmt->get_has_end_statement()) {
+       curprint_keyword("END", info);
+       curprint(" ");
+       curprint_keyword("DO", info);
 
-     if (output_endwhile == true)
-        {
-          curprint("END DO");
-          if (while_stmt->get_string_label().empty() == false)
-             {
-            // Output the string label
-               curprint(" " + while_stmt->get_string_label());
-             }
-        }
+       if (while_stmt->get_string_label().empty() == false) {
+         // Output the string label
+         curprint(" " + while_stmt->get_string_label());
+       }
+     }
 
      ASSERT_not_null(unp);
      unp->cur.insert_newline(1);
@@ -2278,7 +2277,6 @@ FortranCodeGeneration_locatedNode::unparseBreakStmt(SgStatement* stmt, SgUnparse
   // If this is for a named do loop, this is the optional name.
      if (break_stmt->get_do_string_label().empty() == false)
         {
-       // Output the string label
           curprint(" " + break_stmt->get_do_string_label());
         }
      unp->cur.insert_newline(1);
@@ -2287,20 +2285,22 @@ FortranCodeGeneration_locatedNode::unparseBreakStmt(SgStatement* stmt, SgUnparse
 void
 FortranCodeGeneration_locatedNode::unparseContinueStmt(SgContinueStmt* continueStmt, SgUnparse_Info& info)
 {
-  if (flangParser) {
-    curprint_keyword("CONTINUE", info);
-  }
-  else {
-    // This IR node corresponds to a Fortran 'CYCLE' statement in the old parser
-    // TODO: create an SgCycleStmt node
-    curprint_keyword("CYCLE", info);
+  // This IR node corresponds to a Fortran 'CYCLE' statement,
+  // because semantically the same as a C/C++ continue statement.
+  curprint_keyword("CYCLE", info);
 
-    // If this is for a named do loop, this is the optional name.
-    if (continueStmt->get_do_string_label().empty() == false) {
-      curprint(" " + continueStmt->get_do_string_label());
-    }
+  // If this is for a named do loop, this is the optional name.
+  if (continueStmt->get_do_string_label().empty() == false) {
+    curprint(" " + continueStmt->get_do_string_label());
   }
 
+  unp->cur.insert_newline(1);
+}
+
+void
+FortranCodeGeneration_locatedNode::unparseFortranContinueStmt(SgFortranContinueStmt* continueStmt, SgUnparse_Info& info)
+{
+  curprint_keyword("CONTINUE", info);
   unp->cur.insert_newline(1);
 }
 

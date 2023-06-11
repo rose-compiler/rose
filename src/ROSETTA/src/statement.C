@@ -1,8 +1,6 @@
-
 #include "grammar.h"
 #include "ROSETTA_macros.h"
 #include "AstNodeClass.h"
-
 
 /*
   DQ (3/2/2004): After March 1st meeting with Bjarne, it seems clear we should
@@ -126,6 +124,9 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (AdaVariantWhenStmt,        "AdaVariantWhenStmt",        "ADA_VARIANT_WHEN_STMT" );
      NEW_TERMINAL_MACRO (SpawnStmt,                 "SpawnStmt",                 "SPAWN_STMT" );
 
+  // Fortran continue statement has different semantics from C/C++ continue statement [Rasmussen 6/10/2023]
+     NEW_TERMINAL_MACRO (FortranContinueStmt,       "FortranContinueStmt",       "FORTRAN_CONTINUE_STMT");
+
   // DQ (10/14/2014): Added template typedef as part of C++11 support.
   // NEW_TERMINAL_MACRO (TypedefDeclaration,        "TypedefDeclaration",        "TYPEDEF_STMT" );
      NEW_TERMINAL_MACRO (TemplateTypedefDeclaration, "TemplateTypedefDeclaration",    "TEMPLATE_TYPEDEF_DECL_STMT" );
@@ -164,14 +165,9 @@ Grammar::setUpStatements ()
   // representation of the template declaration.  In this case a template function declaration is more like a function declaration than a template declaration.
      NEW_TERMINAL_MACRO (TemplateDeclaration, "TemplateDeclaration", "TEMPLATE_DECL_STMT");
 
-
   // DQ (12/21/2011): Newer version of code.
      NEW_NONTERMINAL_MACRO (VariableDeclaration, TemplateVariableDeclaration,
            "VariableDeclaration",       "VAR_DECL_STMT", true );
-
-  // DQ (9/12/2004): Adding new IR node to support instantiation directives (C++ template language construct)
-  // NEW_TERMINAL_MACRO (TemplateInstantiationDirective,    "TemplateInstantiationDirective",    "TEMPLATE_INST_DIRECTIVE_STMT" );
-  // NEW_TERMINAL_MACRO (TemplateSpecializationDeclaration, "TemplateSpecializationDeclaration", "TEMPLATE_SPECIALIZATION_DECL_STMT" );
 
      NEW_TERMINAL_MACRO (TemplateInstantiationDecl, "TemplateInstantiationDecl", "TEMPLATE_INST_DECL_STMT" );
      NEW_TERMINAL_MACRO (TemplateInstantiationDefn, "TemplateInstantiationDefn", "TEMPLATE_INST_DEFN_STMT" );
@@ -206,8 +202,6 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (ProgramHeaderStatement,    "ProgramHeaderStatement",    "PROGRAM_HEADER_STMT" );
      NEW_TERMINAL_MACRO (ProcedureHeaderStatement,  "ProcedureHeaderStatement",  "PROCEDURE_HEADER_STMT" );
      NEW_TERMINAL_MACRO (EntryStatement,            "EntryStatement",            "ENTRY_STMT" );
-  // DQ (3/22/2007): Added Fortran non-blocked do statement
-  // NEW_TERMINAL_MACRO (FortranDo,                 "FortranDo",                 "FORTRAN_DO" );
      NEW_TERMINAL_MACRO (FortranNonblockedDo,       "FortranNonblockedDo",       "FORTRAN_NONBLOCKED_DO" );
      NEW_TERMINAL_MACRO (InterfaceStatement,        "InterfaceStatement",        "INTERFACE_STATEMENT" );
      NEW_TERMINAL_MACRO (ParameterStatement,        "ParameterStatement",        "PARAMETER_STATEMENT" );
@@ -239,15 +233,6 @@ Grammar::setUpStatements ()
 
   // DQ (12/18/2007): Added support for Fortran Format statement
      NEW_TERMINAL_MACRO (FormatStatement,           "FormatStatement",           "FORMAT_STATEMENT" );
-
-
-  // DQ (11/24/2007): Not sure how this maps to Fortran.
-  // NEW_TERMINAL_MACRO (IOFileControlStmt,         "IOFileControlStmt",         "IO_FILE_CONTROL_STMT" );
-
-  // These each have only unit, iostat and err (so they are just a flag in the SgIOControlStatement IR node
-  // NEW_TERMINAL_MACRO (EndFileStatement,          "EndFileStatement",          "END_FILE_STATEMENT" );
-  // NEW_TERMINAL_MACRO (BackspaceStatement,        "BackspaceStatement",        "BACKSPACE_STATEMENT" );
-  // NEW_TERMINAL_MACRO (RewindStatement,           "RewindStatement",           "REWIND_STATEMENT" );
 
   // DQ (3/22/2007): Added Fortran non-blocked do statement (derived from FortranDo)
      NEW_NONTERMINAL_MACRO (FortranDo, FortranNonblockedDo, "FortranDo", "FORTRAN_DO", true);
@@ -593,10 +578,10 @@ Grammar::setUpStatements ()
              LabelStatement            | CaseOptionStmt         | TryStmt                         | DefaultOptionStmt     |
              BreakStmt                 | ContinueStmt           | ReturnStmt                      | GotoStatement         |
              SpawnStmt                 | NullStatement          | VariantStatement                | ForInitStatement      |
-             CatchStatementSeq         | ProcessControlStatement| IOStatement                     |
+             CatchStatementSeq         | ProcessControlStatement| IOStatement                     | FortranContinueStmt   |
              WhereStatement            | ElseWhereStatement     | NullifyStatement                | ArithmeticIfStatement |
              AssignStatement           | ComputedGotoStatement  | AssignedGotoStatement           |
-          /* FortranDo                 | */ AllocateStatement   | DeallocateStatement             | UpcNotifyStatement    |
+             AllocateStatement         | DeallocateStatement    | UpcNotifyStatement              |
              UpcWaitStatement          | UpcBarrierStatement    | UpcFenceStatement               |
              OmpBarrierStatement       | OmpTaskwaitStatement   |  OmpFlushStatement              | OmpBodyStatement      |
              SequenceStatement         | WithStatement          | PythonPrintStmt                 | PassStatement         |
@@ -2272,10 +2257,11 @@ Grammar::setUpStatements ()
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      ContinueStmt.setFunctionPrototype ( "HEADER_CONTINUE_STATEMENT", "../Grammar/Statement.code" );
+     FortranContinueStmt.setFunctionPrototype ( "HEADER_FORTRAN_CONTINUE_STATEMENT", "../Grammar/Statement.code" );
 
-  // DQ (11/17/2007): Fortran support requires string label target ("continue" in C == "cycle" in Fortran)
-     ContinueStmt.setDataPrototype     ( "std::string", "do_string_label", "= \"\"",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // Fortran requires string label target ("continue" in C == "cycle" in Fortran)
+     ContinueStmt.setDataPrototype ( "std::string", "do_string_label", "= \"\"",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      ReturnStmt.setFunctionPrototype ( "HEADER_RETURN_STATEMENT", "../Grammar/Statement.code" );
 
@@ -4063,6 +4049,7 @@ Grammar::setUpStatements ()
      DefaultOptionStmt.setFunctionSource    ( "SOURCE_DEFAULT_OPTION_STATEMENT", "../Grammar/Statement.code" );
      BreakStmt.setFunctionSource            ( "SOURCE_BREAK_STATEMENT", "../Grammar/Statement.code" );
      ContinueStmt.setFunctionSource         ( "SOURCE_CONTINUE_STATEMENT", "../Grammar/Statement.code" );
+     FortranContinueStmt.setFunctionSource  ( "SOURCE_FORTRAN_CONTINUE_STATEMENT", "../Grammar/Statement.code" );
 
      ReturnStmt.setFunctionSource           ( "SOURCE_RETURN_STATEMENT", "../Grammar/Statement.code" );
      GotoStatement.setFunctionSource        ( "SOURCE_GOTO_STATEMENT", "../Grammar/Statement.code" );

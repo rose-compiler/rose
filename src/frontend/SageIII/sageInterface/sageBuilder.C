@@ -6444,7 +6444,7 @@ SgLabelStatement * SageBuilder::buildLabelStatement(const SgName& name,  SgState
   return labelstmt;
 }
 
-SgLabelStatement* SageBuilder::buildLabelStatement_nfi(const SgName& name, SgStatement* stmt/*=NULL*/, SgScopeStatement* scope /*=NULL*/)
+SgLabelStatement * SageBuilder::buildLabelStatement_nfi(const SgName& name,  SgStatement * stmt/*=NULL*/, SgScopeStatement* scope /*=NULL*/)
 {
   SgLabelStatement* labelStmt = new SgLabelStatement(name,stmt);
   ASSERT_not_null(labelStmt);
@@ -6506,41 +6506,54 @@ SgIfStmt * SageBuilder::buildIfStmt_nfi(SgStatement* conditional, SgStatement * 
      return ifstmt;
    }
 
-// CR (9/3/2018): Added build function for a Fortran do construct
-SgFortranDo * SageBuilder::buildFortranDo(SgExpression* initialization, SgExpression* bound, SgExpression* increment, SgBasicBlock* loop_body)
-  {
-     ROSE_ASSERT(initialization);
-     ROSE_ASSERT(bound);
+// Rasmussen (9/3/2018): Added build function for a Fortran do construct
+SgFortranDo* SageBuilder::buildFortranDo(SgExpression* initialization, SgExpression* bound, SgExpression* increment, SgBasicBlock* loopBody)
+{
+  if (initialization == nullptr) initialization = buildNullExpression();
+  if (bound == nullptr) bound = buildNullExpression();
+  if (increment == nullptr) increment = buildNullExpression();
+  if (loopBody == nullptr) loopBody = buildBasicBlock();
 
-     if (increment == NULL)
-       {
-          increment = buildNullExpression();
-       }
-     ROSE_ASSERT(increment);
+  SgFortranDo* result = new SgFortranDo(initialization, bound, increment, loopBody);
+  ASSERT_not_null(result);
 
-     if (loop_body == NULL)
-       {
-          loop_body = buildBasicBlock();
-       }
-     ROSE_ASSERT(loop_body);
+  if (SageInterface::is_language_case_insensitive()) {
+    result->setCaseInsensitive(true);
+  }
 
-     SgFortranDo * result = new SgFortranDo(initialization, bound, increment, loop_body);
-     ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
 
-  // CR (3/22/2020): Fixed setting case insensitivity
-  // if (symbol_table_case_insensitive_semantics == true)
-     if (SageInterface::is_language_case_insensitive())
-        result->setCaseInsensitive(true);
+  initialization->set_parent(result);
+  bound->set_parent(result);
+  increment->set_parent(result);
+  loopBody->set_parent(result);
 
-     setOneSourcePositionForTransformation(result);
+  return result;
+}
 
-     initialization->set_parent(result);
-     bound->set_parent(result);
-     increment->set_parent(result);
-     loop_body->set_parent(result);
+SgFortranDo* SageBuilder::buildFortranDo_nfi(SgExpression* initialization, SgExpression* bound, SgExpression* increment, SgBasicBlock* loopBody)
+{
+  if (initialization == nullptr) initialization = buildNullExpression_nfi();
+  if (bound == nullptr) bound = buildNullExpression_nfi();
+  if (increment == nullptr) increment = buildNullExpression_nfi();
+  if (loopBody == nullptr) loopBody = buildBasicBlock_nfi();
 
-     return result;
-   }
+  SgFortranDo* result = new SgFortranDo(initialization, bound, increment, loopBody);
+  ASSERT_not_null(result);
+
+  if (SageInterface::is_language_case_insensitive()) {
+    result->setCaseInsensitive(true);
+  }
+
+  setOneSourcePositionNull(result);
+
+  initialization->set_parent(result);
+  bound->set_parent(result);
+  increment->set_parent(result);
+  loopBody->set_parent(result);
+
+  return result;
+}
 
 // charles4 10/14/2011:  Vanilla allocation. Use prepend_init_stmt and append_init_stmt to populate afterward.
 SgForInitStatement * SageBuilder::buildForInitStatement()
@@ -7083,17 +7096,33 @@ SgBreakStmt * SageBuilder::buildBreakStmt_nfi()
   return result;
 }
 
-SgContinueStmt * SageBuilder::buildContinueStmt()
+SgContinueStmt* SageBuilder::buildContinueStmt()
 {
   SgContinueStmt* result = new SgContinueStmt();
-  ROSE_ASSERT(result);
+  ASSERT_not_null(result);
   setOneSourcePositionForTransformation(result);
   return result;
 }
 
-SgContinueStmt * SageBuilder::buildContinueStmt_nfi()
+SgContinueStmt* SageBuilder::buildContinueStmt_nfi()
 {
   SgContinueStmt* result = new SgContinueStmt();
+  ASSERT_not_null(result);
+  setOneSourcePositionNull(result);
+  return result;
+}
+
+SgFortranContinueStmt* SageBuilder::buildFortranContinueStmt()
+{
+  SgFortranContinueStmt* result = new SgFortranContinueStmt();
+  ASSERT_not_null(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+SgFortranContinueStmt* SageBuilder::buildFortranContinueStmt_nfi()
+{
+  SgFortranContinueStmt* result = new SgFortranContinueStmt();
   ASSERT_not_null(result);
   setOneSourcePositionNull(result);
   return result;
