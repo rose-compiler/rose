@@ -34,6 +34,9 @@ class SgAsmJvmField: public SgAsmJvmNode {
     /** Initialize the object by parsing content from the class file. */
     SgAsmJvmField* parse(SgAsmJvmConstantPool* pool);
 
-    /** Print some debugging information */
+    /** Write field to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
     void dump(FILE*, const char *prefix, ssize_t idx) const override;
 };

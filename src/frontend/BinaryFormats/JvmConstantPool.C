@@ -8,6 +8,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 using PoolEntry = SgAsmJvmConstantPoolEntry;
+using Rose::BinaryAnalysis::ByteOrder::hostToBe;
 using namespace Rose::Diagnostics; // for mlog, INFO, WARN, ERROR, FATAL, etc.
 
 SgAsmJvmConstantPool::SgAsmJvmConstantPool(SgAsmJvmFileHeader* jfh)
@@ -179,7 +180,7 @@ PoolEntry* PoolEntry::parse(SgAsmJvmConstantPool* pool)
 
       Jvm::read_bytes(pool, bytes, p_length);
       set_utf8_bytes(bytes);
-      ROSE_ASSERT(bytes && "CONSTANT_Utf8 bytes array is null");
+      ASSERT_not_null(bytes);
       break;
     }
 
@@ -203,6 +204,99 @@ PoolEntry* PoolEntry::parse(SgAsmJvmConstantPool* pool)
   }
 
   return this;
+}
+
+// Write entry back to a binary file
+void PoolEntry::unparse(std::ostream& os) const
+{
+  switch (get_tag()) {
+    case PoolEntry::CONSTANT_Class: // 4.4.1  CONSTANT_Class_info table entry
+    case PoolEntry::CONSTANT_Module: // 4.4.11 CONSTANT_Module_info table entry
+    case PoolEntry::CONSTANT_Package: { // 4.4.12 CONSTANT_Package_info table entry
+      auto name_index = p_name_index;
+      hostToBe(p_name_index, &name_index);
+      os.write(reinterpret_cast<const char*>(&name_index), sizeof name_index);
+      break;
+    }
+    case PoolEntry::CONSTANT_String: { // 4.4.2 CONSTANT_String_info table entry
+      auto string_index = p_string_index;
+      hostToBe(p_string_index, &string_index);
+      os.write(reinterpret_cast<const char*>(&string_index), sizeof string_index);
+      break;
+    }
+    case PoolEntry::CONSTANT_Fieldref: // 4.4.3 CONSTANT_Fieldref_info table entry
+    case PoolEntry::CONSTANT_Methodref: // 4.4.3 CONSTANT_Methodref_info table entry
+    case PoolEntry::CONSTANT_InterfaceMethodref: { // 4.4.3 CONSTANT_InterfeceMethodref_info table entry
+      auto class_index = p_class_index;
+      auto name_and_type_index = p_name_and_type_index;
+      hostToBe(p_class_index, &class_index);
+      hostToBe(p_name_and_type_index, &name_and_type_index);
+      os.write(reinterpret_cast<const char*>(&class_index), sizeof class_index);
+      os.write(reinterpret_cast<const char*>(&name_and_type_index), sizeof name_and_type_index);
+      break;
+    }
+    case PoolEntry::CONSTANT_Integer: // 4.4.4 CONSTANT_Integer_info table entry
+    case PoolEntry::CONSTANT_Float: { // 4.4.4 CONSTANT_Float_info table entry
+      auto bytes = p_bytes;
+      hostToBe(p_bytes, &bytes);
+      os.write(reinterpret_cast<const char*>(&bytes), sizeof bytes);
+      break;
+    }
+    case PoolEntry::CONSTANT_Long: // 4.4.5 CONSTANT_Long_info table entry
+    case PoolEntry::CONSTANT_Double: { // 4.4.5 CONSTANT_Double_info table entry
+      auto hi_bytes = p_hi_bytes;
+      auto low_bytes = p_low_bytes;
+      hostToBe(p_hi_bytes, &hi_bytes);
+      hostToBe(p_low_bytes, &low_bytes);
+      os.write(reinterpret_cast<const char*>(&hi_bytes), sizeof hi_bytes);
+      os.write(reinterpret_cast<const char*>(&low_bytes), sizeof low_bytes);
+      break;
+    }
+    case PoolEntry::CONSTANT_NameAndType: { // 4.4.6 CONSTANT_NameAndType_info table entry
+      auto name_index = p_name_index;
+      auto descriptor_index = p_descriptor_index;
+      hostToBe(p_name_index, &name_index);
+      hostToBe(p_descriptor_index, &descriptor_index);
+      os.write(reinterpret_cast<const char*>(&name_index), sizeof name_index);
+      os.write(reinterpret_cast<const char*>(&descriptor_index), sizeof descriptor_index);
+      break;
+    }
+    case PoolEntry::CONSTANT_Utf8: // 4.4.7 CONSTANT_Utf8_info table entry
+    {
+      auto length = p_length;
+      hostToBe(p_length, &length);
+      os.write(reinterpret_cast<const char*>(&length), sizeof length);
+      os.write(p_utf8_bytes, p_length);
+      break;
+    }
+    case PoolEntry::CONSTANT_MethodHandle: { // 4.4.8 CONSTANT_MethodHandle_info table entry
+      auto reference_kind = p_reference_kind;
+      auto reference_index = p_reference_index;
+      hostToBe(p_reference_kind, &reference_kind);
+      hostToBe(p_reference_index, &reference_index);
+      os.write(reinterpret_cast<const char*>(&reference_kind), sizeof reference_kind);
+      os.write(reinterpret_cast<const char*>(&reference_index), sizeof reference_index);
+      break;
+    }
+    case PoolEntry::CONSTANT_MethodType: { // 4.4.9 CONSTANT_MethodType_info table entry
+      auto descriptor_index = p_descriptor_index;
+      hostToBe(p_descriptor_index, &descriptor_index);
+      os.write(reinterpret_cast<const char*>(&descriptor_index), sizeof descriptor_index);
+      break;
+    }
+    case PoolEntry::CONSTANT_Dynamic: // 4.4.10 CONSTANT_Dynamic_info table entry
+    case PoolEntry::CONSTANT_InvokeDynamic: { // 4.4.10 CONSTANT_InvokeDynamic_info table entry
+      auto bootstrap_method_attr_index = p_bootstrap_method_attr_index;
+      auto name_and_type_index = p_name_and_type_index;
+      hostToBe(p_bootstrap_method_attr_index, &bootstrap_method_attr_index);
+      hostToBe(p_name_and_type_index, &name_and_type_index);
+      os.write(reinterpret_cast<const char*>(&bootstrap_method_attr_index), sizeof bootstrap_method_attr_index);
+      os.write(reinterpret_cast<const char*>(&name_and_type_index), sizeof name_and_type_index);
+      break;
+    }
+    default:
+      break;
+  }
 }
 
 SgAsmJvmConstantPool* SgAsmJvmConstantPool::parse()
@@ -247,6 +341,34 @@ SgAsmJvmConstantPool* SgAsmJvmConstantPool::parse()
 void SgAsmJvmConstantPool::unparse(std::ostream& os) const
 {
   mlog[WARN] << "Unparsing of SgAsmJvmConstantPool is not implemented yet\n";
+
+  uint16_t count = get_entries().size() + 1; // constant_pool_count = #entries + 1
+  hostToBe(count, &count);
+  os.write(reinterpret_cast<const char*>(&count), sizeof count);
+
+  for (auto entry : get_entries()) {
+    uint8_t tag = entry->get_tag();
+    auto kind = static_cast<PoolEntry::Kind>(tag);
+
+    hostToBe(tag, &tag);
+    os.write(reinterpret_cast<const char*>(&tag), sizeof tag);
+
+    entry->unparse(os);
+
+    // If this is CONSTANT_Long or CONSTANT_Double, store index location with empty entry
+    // 4.4.5 "In retrospect, making 8-byte constants take two constant pool entries was a poor choice."
+    //
+    if (kind == PoolEntry::CONSTANT_Long || kind == PoolEntry::CONSTANT_Double) {
+      // Create and store an empty entry
+      ROSE_ABORT();
+      //erasmus: write 0?
+#if 0
+      entry = new PoolEntry(PoolEntry::EMPTY);
+      get_entries().push_back(entry);
+      ii += 1;
+#endif
+    }
+  }
 }
 
 void SgAsmJvmConstantPool::dump(FILE* f, const char* prefix, ssize_t idx) const

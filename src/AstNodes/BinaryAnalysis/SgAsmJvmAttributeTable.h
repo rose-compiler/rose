@@ -20,6 +20,9 @@ public:
                                       // ("hidden virtual overloaded function")
     SgAsmJvmAttributeTable* parse(SgAsmJvmConstantPool*);
 
-    /** Print some debugging information */
+    /** Write attribute table to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 };

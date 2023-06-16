@@ -14,19 +14,16 @@ class SgAsmJvmAttribute: public SgAsmJvmNode {
     [[using Rosebud: rosetta]]
     uint32_t attribute_length = 0;
 
-protected:
-#if 0 // [Robb Matzke 2023-03-23]: not defined anywhere?
-    /** Protected constructor for derived classes. */
-    explicit SgAsmJvmAttribute(const SgAsmJvmConstantPool*);
-#endif
-
 public:
     /** Factory method returning a derived class instance. */
-    static SgAsmJvmAttribute* create_attribute(SgAsmJvmConstantPool*);
+    static SgAsmJvmAttribute* instance(SgAsmJvmConstantPool*);
 
     /** Initialize an attribute by parsing the file. */
     virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool*);
 
-    /** Print some debugging information */
+    /** Write attribute to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 };

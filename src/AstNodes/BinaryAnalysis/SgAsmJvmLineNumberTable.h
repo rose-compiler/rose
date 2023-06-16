@@ -19,6 +19,9 @@ public:
     /** Initialize the attribute by parsing the file. */
     virtual SgAsmJvmLineNumberTable* parse(SgAsmJvmConstantPool* pool) override;
 
-    /** Print some debugging information */
+    /** Write line number table to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 };

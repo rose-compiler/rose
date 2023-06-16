@@ -218,7 +218,6 @@ public:
      *  be extended, however, by calling @ref extend, which is typically done during parsing. */
     void grab_content();
 
-    // DQ (10/20/2010): Moved this function's definition to the source file.
     virtual SgAsmGenericSection* parse();
 
     /** Print some debugging info. */

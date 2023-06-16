@@ -41,6 +41,9 @@ public:
     /** Initialize the object by parsing content from the class file. */
     SgAsmJvmMethod* parse(SgAsmJvmConstantPool*);
 
-    /** Print some debugging information */
+    /** Write method to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
     void dump(FILE*, const char *prefix, ssize_t idx) const override;
 };

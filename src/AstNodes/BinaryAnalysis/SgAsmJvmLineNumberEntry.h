@@ -23,6 +23,9 @@ class SgAsmJvmLineNumberEntry: public SgAsmJvmNode {
     /** Initialize the object by parsing content from the class file. */
     SgAsmJvmLineNumberEntry* parse(SgAsmJvmConstantPool*);
 
-    /** Print some debugging information */
+    /** Write line number entry to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
     void dump(FILE*, const char *prefix, ssize_t idx) const override;
 };

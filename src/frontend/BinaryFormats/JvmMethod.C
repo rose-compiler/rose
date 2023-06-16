@@ -8,6 +8,9 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+using Rose::BinaryAnalysis::ByteOrder::hostToBe;
+using namespace Rose::Diagnostics; // for mlog, INFO, WARN, ERROR, FATAL, etc.
+
 SgAsmJvmMethod::SgAsmJvmMethod(SgAsmJvmMethodTable* table)
 {
   initializeProperties();
@@ -30,6 +33,23 @@ SgAsmJvmMethod* SgAsmJvmMethod::parse(SgAsmJvmConstantPool* pool)
   return this;
 }
 
+void SgAsmJvmMethod::unparse(std::ostream& os) const
+{
+  auto access_flags = p_access_flags;
+  auto name_index = p_name_index;
+  auto descriptor_index = p_descriptor_index;
+
+  hostToBe(access_flags, &access_flags);
+  hostToBe(name_index, &name_index);
+  hostToBe(descriptor_index, &descriptor_index);
+
+  os.write(reinterpret_cast<const char*>(&access_flags), sizeof access_flags);
+  os.write(reinterpret_cast<const char*>(&name_index), sizeof name_index);
+  os.write(reinterpret_cast<const char*>(&descriptor_index), sizeof descriptor_index);
+
+  p_attribute_table->unparse(os);
+}
+
 void SgAsmJvmMethod::dump(FILE*f, const char* prefix, ssize_t idx) const
 {
   fprintf(f, "%s:%d:%d:%d\n", prefix, p_access_flags, p_name_index, p_descriptor_index);
@@ -48,9 +68,9 @@ SgAsmJvmMethodTable* SgAsmJvmMethodTable::parse()
   uint16_t methods_count;
 
   auto jcf = dynamic_cast<SgAsmJvmFileHeader*>(get_parent());
-  ROSE_ASSERT(jcf && "JVM class_file is a nullptr");
+  ASSERT_not_null(jcf);
   auto pool = jcf->get_constant_pool();
-  ROSE_ASSERT(pool && "JVM constant_pool is a nullptr");
+  ASSERT_not_null(pool);
 
   Jvm::read_value(pool, methods_count);
   for (int ii = 0; ii < methods_count; ii++) {
@@ -60,6 +80,17 @@ SgAsmJvmMethodTable* SgAsmJvmMethodTable::parse()
   }
 
   return this;
+}
+
+void SgAsmJvmMethodTable::unparse(std::ostream& os) const
+{
+  uint16_t methods_count = get_methods().size();
+  hostToBe(methods_count, &methods_count);
+  os.write(reinterpret_cast<const char*>(&methods_count), sizeof methods_count);
+
+  for (auto method : get_methods()) {
+    method->unparse(os);
+  }
 }
 
 void SgAsmJvmMethodTable::dump(FILE* f, const char *prefix, ssize_t idx) const
@@ -72,13 +103,19 @@ void SgAsmJvmMethodTable::dump(FILE* f, const char *prefix, ssize_t idx) const
 
 SgAsmJvmAttribute* SgAsmJvmEnclosingMethod::parse(SgAsmJvmConstantPool* pool)
 {
-  ROSE_ASSERT(false && "SgAsmJvmEnclosingMethod::parse()");
+  mlog[FATAL] << "SgAsmJvmEnclosingMethod::parse() is not implemented yet\n";
+  ROSE_ABORT();
   return nullptr;
+}
+
+void SgAsmJvmEnclosingMethod::unparse(std::ostream& os) const
+{
+  mlog[WARN] << "Unparsing of SgAsmJvmEnclosingMethod is not implemented yet\n";
 }
 
 void SgAsmJvmEnclosingMethod::dump(FILE* f, const char *prefix, ssize_t idx) const
 {
-  ROSE_ASSERT(false && "SgAsmJvmEnclosingMethod::dump()");
+  mlog[WARN] << "SgAsmJvmEnclosingMethod::dump() is not implemented yet\n";
 }
 
 #endif // ROSE_ENABLE_BINARY_ANALYSIS

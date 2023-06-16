@@ -17,4 +17,10 @@ public:
      *  Parses a JVM exception table and constructs and parses all exceptions reachable from the table.  Returns a pointer to this
      *  object. */
     SgAsmJvmExceptionTable* parse(SgAsmJvmConstantPool*);
+
+    /** Write exception table to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
+    void dump(FILE*, const char *prefix, ssize_t idx) const override;
 };
