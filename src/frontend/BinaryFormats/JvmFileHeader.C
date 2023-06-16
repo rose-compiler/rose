@@ -5,11 +5,10 @@
 
 #include "Jvm.h"
 
-using std::cout;
-using std::endl;
-using namespace Rose::Diagnostics; // for mlog, INFO, WARN, ERROR, FATAL, etc.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-constexpr bool TRACE_CONSTRUCTION = false;
+using Rose::BinaryAnalysis::ByteOrder::hostToBe;
+using namespace Rose::Diagnostics; // for mlog, INFO, WARN, ERROR, FATAL, etc.
 
 SgAsmJvmFileHeader::SgAsmJvmFileHeader(SgAsmGenericFile* f)
   : SgAsmGenericHeader{f} {
@@ -97,12 +96,6 @@ SgAsmJvmFileHeader::parse()
     uint16_t index;
     Jvm::read_value(pool, index);
     interfaces.push_back(index);
-
-    if (TRACE_CONSTRUCTION) {
-      cout << "SgAsmJvmFileHeader::parse(): &p_interfaces: " << &p_interfaces << ": size:" << p_interfaces.size() << endl;;
-      cout << "SgAsmJvmFileHeader::parse(): get_interfaces().size(): " << get_interfaces().size() << endl;;
-      cout << "SgAsmJvmFileHeader::parse(): interfaces.size(): " << interfaces.size() << endl;;
-    }
   }
 
   /* Fields */
@@ -121,12 +114,9 @@ SgAsmJvmFileHeader::parse()
   ASSERT_not_null(attributes->get_parent());
   attributes->parse(pool);
 
-  if (TRACE_CONSTRUCTION) {
-    cout << "SgAsmJvmFileHeader::parse() offset, get_offset: " << offset << ", " << get_offset() << endl;
-  }
-
   if (1 != (get_end_offset() - get_offset())) {
-    ROSE_ASSERT(false && "Error reading file, end of file not reached");
+    mlog[FATAL] << "Error reading file, end of file not reached\n";
+    ROSE_ABORT();
   }
 
   return this;
@@ -137,10 +127,8 @@ void
 SgAsmJvmFileHeader::unparse(std::ostream &f) const
 {
   SgAsmGenericFile* gf = get_file();
-  auto data = gf->get_data();
   auto count = f.tellp();
 
-  // As a test, dump magic #, ...,  then raw bytes
   auto bytes = reinterpret_cast<const char*>(&(get_magic()[0]));
   f.write(bytes, 4);
 
@@ -152,16 +140,50 @@ SgAsmJvmFileHeader::unparse(std::ostream &f) const
   f.write(reinterpret_cast<const char*>(&minor), sizeof minor);
   f.write(reinterpret_cast<const char*>(&major), sizeof major);
 
-  // TODO...
-  // get_constant_pool()->unparse(f);
-  // f.write(reinterpret_cast<const char*>(&p_access_flags), sizeof p_access_flags);
-  // f.write(reinterpret_cast<const char*>(&p_this_class),   sizeof p_this_class);
-  // f.write(reinterpret_cast<const char*>(&p_super_class),  sizeof p_super_class);
-  // interfaces
-  // fields
-  // attributes
+  // Unparse the constant pool
+  auto pool = get_constant_pool();
+  pool->unparse(f);
+
+  auto access_flags = p_access_flags;
+  auto this_class = p_this_class;
+  auto super_class = p_super_class;
+
+  hostToBe(access_flags, &access_flags);
+  hostToBe(this_class, &this_class);
+  hostToBe(super_class, &super_class);
+
+  f.write(reinterpret_cast<const char*>(&access_flags), sizeof access_flags);
+  f.write(reinterpret_cast<const char*>(&this_class),   sizeof this_class);
+  f.write(reinterpret_cast<const char*>(&super_class),  sizeof super_class);
+
+  /* Interfaces */
+  uint16_t interfaces_count = get_interfaces().size();
+  hostToBe(interfaces_count, &interfaces_count);
+  f.write(reinterpret_cast<const char*>(&interfaces_count), sizeof interfaces_count);
+
+  for (auto interface : get_interfaces()) {
+    uint16_t index = interface;
+    hostToBe(index, &index);
+    f.write(reinterpret_cast<const char*>(&index), sizeof index);
+  }
+
+  /* Fields */
+  SgAsmJvmFieldTable* fields = get_field_table();
+  fields->unparse(f);
+
+  /* Methods */
+  SgAsmJvmMethodTable* methods = get_method_table();
+  methods->unparse(f);
+
+  /* Methods */
+  SgAsmJvmAttributeTable* attributes = get_attribute_table();
+  attributes->unparse(f);
 
   count = f.tellp();
+  auto data = gf->get_data();
+  if (count != data.size()) {
+    mlog[WARN] << "unparse didn't complete: count==" << count << " data_size==" << data.size() << "\n";
+  }
   bytes = reinterpret_cast<const char*>(&(data.pool()[count]));
   f.write(bytes, data.size()-count);
 

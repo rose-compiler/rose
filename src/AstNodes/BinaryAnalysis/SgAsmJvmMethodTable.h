@@ -20,6 +20,9 @@ public:
      *  to this object. */
     virtual SgAsmJvmMethodTable* parse() override;
 
-    /** Print some debugging information */
+    /** Write method table to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 };

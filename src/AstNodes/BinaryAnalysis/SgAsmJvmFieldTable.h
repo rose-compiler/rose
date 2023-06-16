@@ -19,6 +19,9 @@ public:
      *  Parses a JVM field table and constructs and parses all fields reachable from the table. Returns a pointer to this object. */
     virtual SgAsmJvmFieldTable* parse() override;
 
-    /** Print some debugging information */
+    /** Write field table to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 };

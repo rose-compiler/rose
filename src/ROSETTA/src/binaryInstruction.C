@@ -8526,7 +8526,10 @@ public:
     /** Initialize the attribute by parsing the file. */
     virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool* pool) override;
 
-    /** Print some debugging information */
+    /** Write source file to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 public:
     /** Destructor. */
@@ -8601,7 +8604,10 @@ public:
     /** Initialize the attribute by parsing the file. */
     virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool* pool) override;
 
-    /** Print some debugging information */
+    /** Write signature to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 public:
     /** Destructor. */
@@ -8676,7 +8682,10 @@ public:
     /** Initialize the attribute by parsing the file. */
     virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool* pool) override;
 
-    /** Print some debugging information */
+    /** Write module main class to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 public:
     /** Destructor. */
@@ -8759,7 +8768,10 @@ public:
      *  to this object. */
     virtual SgAsmJvmMethodTable* parse() override;
 
-    /** Print some debugging information */
+    /** Write method table to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 public:
     /** Destructor. */
@@ -8906,7 +8918,10 @@ public:
     /** Initialize the object by parsing content from the class file. */
     SgAsmJvmMethod* parse(SgAsmJvmConstantPool*);
 
-    /** Print some debugging information */
+    /** Write method to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
     void dump(FILE*, const char *prefix, ssize_t idx) const override;
 public:
     /** Destructor. */
@@ -8988,7 +9003,10 @@ public:
     /** Initialize the attribute by parsing the file. */
     virtual SgAsmJvmLineNumberTable* parse(SgAsmJvmConstantPool* pool) override;
 
-    /** Print some debugging information */
+    /** Write line number table to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 public:
     /** Destructor. */
@@ -9084,7 +9102,10 @@ public:
     /** Initialize the object by parsing content from the class file. */
     SgAsmJvmLineNumberEntry* parse(SgAsmJvmConstantPool*);
 
-    /** Print some debugging information */
+    /** Write line number entry to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
     void dump(FILE*, const char *prefix, ssize_t idx) const override;
 public:
     /** Destructor. */
@@ -9312,7 +9333,10 @@ public:
     /** Initialize the object by parsing content from the class file. */
     SgAsmJvmInnerClassesEntry* parse(SgAsmJvmConstantPool*);
 
-    /** Print some debugging information */
+    /** Write inner classes entry to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
     void dump(FILE*, const char *prefix, ssize_t idx) const override;
 public:
     /** Destructor. */
@@ -9394,6 +9418,12 @@ public:
      *  Parses a JVM innerclasses attribute and constructs and parses all innerclasses entries reachable from the table. Returns a
      *  pointer to this object. */
     SgAsmJvmInnerClasses* parse(SgAsmJvmConstantPool*) override;
+
+    /** Write inner classes to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
+    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 public:
     /** Destructor. */
     virtual ~SgAsmJvmInnerClasses();
@@ -9644,7 +9674,7 @@ public:
      *  stored in the file, the size of the ELF File Header will be adjusted upward if necessary. */
     virtual SgAsmJvmFileHeader* parse() override;
 
-    /** Write the section back to a binary file */
+    /** Write the section to a binary file */
     virtual void unparse(std::ostream&) const override;
 
     /** Returns true if a cursory look at the file indicates that it could be a JVM class file. */
@@ -9729,7 +9759,10 @@ public:
      *  Parses a JVM field table and constructs and parses all fields reachable from the table. Returns a pointer to this object. */
     virtual SgAsmJvmFieldTable* parse() override;
 
-    /** Print some debugging information */
+    /** Write field table to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 public:
     /** Destructor. */
@@ -9858,7 +9891,10 @@ public:
     /** Initialize the object by parsing content from the class file. */
     SgAsmJvmField* parse(SgAsmJvmConstantPool* pool);
 
-    /** Print some debugging information */
+    /** Write field to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
     void dump(FILE*, const char *prefix, ssize_t idx) const override;
 public:
     /** Destructor. */
@@ -9938,6 +9974,12 @@ public:
      *  Parses a JVM exception table and constructs and parses all exceptions reachable from the table.  Returns a pointer to this
      *  object. */
     SgAsmJvmExceptionTable* parse(SgAsmJvmConstantPool*);
+
+    /** Write exception table to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
+    void dump(FILE*, const char *prefix, ssize_t idx) const override;
 public:
     /** Destructor. */
     virtual ~SgAsmJvmExceptionTable();
@@ -10070,7 +10112,10 @@ public:
     /** Initialize the object by parsing content from the class file. */
     SgAsmJvmException* parse(SgAsmJvmConstantPool*);
 
-    /** Print some debugging information */
+    /** Write exception to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
     void dump(FILE*, const char *prefix, ssize_t idx) const override;
 public:
     /** Destructor. */
@@ -10162,7 +10207,10 @@ public:
     /** Initialize the attribute by parsing the file. */
     virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool* pool) override;
 
-    /** Print some debugging information */
+    /** Write enclosing method to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 public:
     /** Destructor. */
@@ -10237,7 +10285,10 @@ public:
     /** Initialize the attribute by parsing the file. */
     virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool* pool) override;
 
-    /** Print some debugging information */
+    /** Write constant value to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 public:
     /** Destructor. */
@@ -10697,7 +10748,10 @@ public:
     SgAsmJvmConstantPoolEntry* parse(SgAsmJvmConstantPool* pool);
     /** @} */
 
-    /** Print some debugging information */
+    /** Write constant pool entry to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
     void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
     /** Convert constant pool entry kind to a string */
@@ -10796,10 +10850,10 @@ public:
      */
     std::string get_utf8_string(size_t index) const;
 
-    /** Write section back to a binary file */
+    /** Write constant pool to a binary file. */
     virtual void unparse(std::ostream&) const override;
 
-    /** Print some debugging information */
+    /** Print some debugging information. */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 public:
     /** Destructor. */
@@ -10980,7 +11034,10 @@ public:
     /** Initialize the attribute by parsing the file. */
     virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool* pool) override;
 
-    /** Print some debugging information */
+    /** Write code attribute to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 public:
     /** Destructor. */
@@ -11115,7 +11172,10 @@ public:
                                       // ("hidden virtual overloaded function")
     SgAsmJvmAttributeTable* parse(SgAsmJvmConstantPool*);
 
-    /** Print some debugging information */
+    /** Write attribute table to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 public:
     /** Destructor. */
@@ -11221,20 +11281,17 @@ public:
     uint32_t const& get_attribute_length() const;
     void set_attribute_length(uint32_t const&);
     /** @} */
-protected:
-#if 0 // [Robb Matzke 2023-03-23]: not defined anywhere?
-    /** Protected constructor for derived classes. */
-    explicit SgAsmJvmAttribute(const SgAsmJvmConstantPool*);
-#endif
-
 public:
     /** Factory method returning a derived class instance. */
-    static SgAsmJvmAttribute* create_attribute(SgAsmJvmConstantPool*);
+    static SgAsmJvmAttribute* instance(SgAsmJvmConstantPool*);
 
     /** Initialize an attribute by parsing the file. */
     virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool*);
 
-    /** Print some debugging information */
+    /** Write attribute to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 public:
     /** Destructor. */
@@ -11307,6 +11364,9 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 public:
+    /** Write node to a binary file. */
+    virtual void unparse(std::ostream&) const;
+
     /** Print some debugging information. */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 public:
@@ -27236,7 +27296,6 @@ public:
      *  be extended, however, by calling @ref extend, which is typically done during parsing. */
     void grab_content();
 
-    // DQ (10/20/2010): Moved this function's definition to the source file.
     virtual SgAsmGenericSection* parse();
 
     /** Print some debugging info. */

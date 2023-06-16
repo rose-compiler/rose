@@ -259,7 +259,10 @@ public:
     SgAsmJvmConstantPoolEntry* parse(SgAsmJvmConstantPool* pool);
     /** @} */
 
-    /** Print some debugging information */
+    /** Write constant pool entry to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
     void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
     /** Convert constant pool entry kind to a string */

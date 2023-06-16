@@ -19,4 +19,10 @@ public:
      *  Parses a JVM innerclasses attribute and constructs and parses all innerclasses entries reachable from the table. Returns a
      *  pointer to this object. */
     SgAsmJvmInnerClasses* parse(SgAsmJvmConstantPool*) override;
+
+    /** Write inner classes to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
+    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 };

@@ -39,6 +39,9 @@ class SgAsmJvmException: public SgAsmJvmNode {
     /** Initialize the object by parsing content from the class file. */
     SgAsmJvmException* parse(SgAsmJvmConstantPool*);
 
-    /** Print some debugging information */
+    /** Write exception to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
     void dump(FILE*, const char *prefix, ssize_t idx) const override;
 };

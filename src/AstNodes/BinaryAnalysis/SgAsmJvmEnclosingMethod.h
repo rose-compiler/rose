@@ -19,6 +19,9 @@ public:
     /** Initialize the attribute by parsing the file. */
     virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool* pool) override;
 
-    /** Print some debugging information */
+    /** Write enclosing method to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 };
