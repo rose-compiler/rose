@@ -487,11 +487,8 @@ void Build(const parser::ExecutionPartConstruct &x, T* scope)
          [&] (const parser::ExecutableConstruct &y) { Build(y, scope); },
          [&] (const parser::ErrorRecovery &y)       { Build(y, scope); },
          //  Statement<common::Indirection> - FormatStmt, EntryStmt, DataStmt, or NamelistStmt
-#if NEW_LABELS==0
+//       [&] (const auto &y) { Build(y.statement.value(), label, scope); },
          [&] (const auto &y) { Build(y.statement.value(), scope); },
-#else
-         [&] (const auto &y) { Build(y.statement.value(), label, scope); },
-#endif
       },
       x.u);
 }
@@ -519,6 +516,37 @@ void Build(const parser::ExecutableConstruct &x, T* scope)
          // WhereConstruct, ForallConstruct, CompilerDirective, OpenMPConstruct, OpenACCConstruct, OmpEndLoopDirective
          // AccEndCombinedDirective
          [&] (const auto &y) { Build(y.value(), scope); },
+      },
+      x.u);
+}
+
+//erasmus: Would like to get rid of this (required by the (unlabeled) ActionStmt for an IfStmt)
+//         It should work with a label but apparently NOT.
+//         NOTE: scope==nullptr
+template<typename T>
+void Build(const parser::ActionStmt &x, T* scope)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(ActionStmt): NO LABEL\n";
+#endif
+
+   const OptLabel label{};
+   //   if (label) std::cerr << "... label is " << *label << "\n";
+
+   std::visit(
+      common::visitors{
+         // The only two ActionStmt(s) without common::Indirection<Stmt...>
+         [&](const parser::ContinueStmt  &y) { Build(y, label); },
+         [&](const parser::FailImageStmt &y) { Build(y, label); },
+         [&] (const Fortran::common::Indirection<parser::CycleStmt,false> &y)
+                { Build(y.value(), label); },
+         // common::Indirection - AllocateStmt, AssignmentStmt, BackspaceStmt, CallStmt, CloseStmt,
+         // CycleStmt, DeallocateStmt, EndfileStmt, EventPostStmt, EventWaitStmt, ExitStmt,
+         // FlushStmt, FormTeamStmt, GotoStmt, IfStmt, InquireStmt, LockStmt, NullifyStmt, OpenStmt,
+         // PointerAssignmentStmt, PrintStmt, ReadStmt, ReturnStmt, RewindStmt, StopStmt, SyncAllStmt,
+         // SyncImagesStmt, SyncMemoryStmt, SyncTeamStmt, UnlockStmt, WaitStmt, WhereStmt, WriteStmt,
+         // ComputedGotoStmt, ForallStmt, ArithmeticIfStmt, AssignStmt, AssignedGotoStmt, PauseStmt
+         [&](const auto &y) { Build(y.value(), scope); },
       },
       x.u);
 }
@@ -571,15 +599,8 @@ void Build(const parser::AssignmentStmt &x, T* scope)
    vars.push_back(lhs);
 
    // Begin SageTreeBuilder
-#if LABELS==1
-// Coming soon!
    builder.Enter(assign_stmt, rhs, vars);
    builder.Leave(assign_stmt, labels);
-#else
-// Old
-   builder.Enter(assign_stmt, rhs, vars, std::string{});
-   builder.Leave(assign_stmt /*,labels*/);
-#endif
 }
 
 void Build(const parser::FunctionStmt &x, std::list<std::string> &dummy_arg_name_list, std::string &name, std::string &result_name, LanguageTranslation::FunctionModifierList &function_modifiers, SgType* &type)
@@ -1253,11 +1274,11 @@ void Build(const parser::TypeDeclarationStmt &x, T* scope)
    std::cout << "Rose::builder::Build(TypeDeclarationStmt)\n";
 #endif
 
-   SgVariableDeclaration* var_decl = nullptr;
-   SgType * type = nullptr, * base_type = nullptr;
-   SgExpression* init = nullptr;
-   std::list<LanguageTranslation::ExpressionKind> modifier_enum_list;
-   std::list<EntityDeclTuple> init_info;
+   SgVariableDeclaration* var_decl{nullptr};
+   SgType* type{nullptr}, * base_type{nullptr};
+   SgExpression* init{nullptr};
+   std::list<LanguageTranslation::ExpressionKind> modifier_enum_list{};
+   std::list<EntityDeclTuple> init_info{};
 
    Build(std::get<0>(x.t), base_type);                    // DeclarationTypeSpec
    Build(std::get<1>(x.t), modifier_enum_list);           // std::list<AttrSpec>
@@ -1273,13 +1294,10 @@ void Build(const parser::DeclarationTypeSpec &x, SgType* &type)
    std::cout << "Rose::builder::Build(DeclarationTypeSpec)\n";
 #endif
 
-   // IntrinsicTypeSpec, Type, TypeStar, Class, ClassStar, Record
-//erasmus
-   std::cerr << "Build(const parser::DeclarationTypeSpec &x, SgType* &type)\n";
-#if 0
+   // IntrinsicTypeSpec, VectorTypeSpec, Class, ClassStar, Type, TypeStar, Record
+
    auto DeclTypeSpecVisitor = [&] (const auto &y) { Build(y, type); };
    std::visit(DeclTypeSpecVisitor, x.u);
-#endif
 }
 
 void Build(const parser::DeclarationTypeSpec::Type&x, SgType* &type)
@@ -1523,6 +1541,14 @@ void Build(const parser::CharSelector &x, SgExpression* &expr)
    std::visit(CharSelectorVisitor, x.u);
 }
 
+void Build(const parser::VectorTypeSpec &x, SgType* &type)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(VectorTypeSpec)\n";
+#endif
+}
+
+
 void Build(const parser::LengthSelector &x, SgExpression* &expr)
 {
 #if PRINT_FLANG_TRAVERSAL
@@ -1560,19 +1586,19 @@ void Build(const parser::TypeParamValue &x, SgExpression* &expr)
 void Build(const std::list<Fortran::parser::EntityDecl> &x, std::list<EntityDeclTuple> &entity_decls, SgType* base_type)
 {
 #if PRINT_FLANG_TRAVERSAL
-   std::cout << "Rose::builder::Build(std::list) for EntityDecl\n";
+  std::cout << "Rose::builder::Build(std::list) for EntityDecl\n";
 #endif
 
-   for (const auto &elem : x) {
-      EntityDeclTuple entity_decl;
-      std::string name;
-      SgType* type = nullptr;
-      SgExpression* init = nullptr;
+  for (const auto &elem : x) {
+    EntityDeclTuple entity_decl{};
+    std::string name{};
+    SgType* type{nullptr};
+    SgExpression* init{nullptr};
 
-      Build(elem, name, init, type, base_type);
-      entity_decl = std::make_tuple(name, type, init);
-      entity_decls.push_back(entity_decl);
-   }
+    Build(elem, name, init, type, base_type);
+    entity_decl = std::make_tuple(name, type, init);
+    entity_decls.push_back(entity_decl);
+  }
 }
 
 void Build(const parser::EntityDecl &x, std::string &name, SgExpression* &init, SgType* &type, SgType* base_type)
@@ -1583,7 +1609,7 @@ void Build(const parser::EntityDecl &x, std::string &name, SgExpression* &init, 
 
    name = std::get<0>(x.t).ToString();
 
-   SgScopeStatement *scope = nullptr;
+   SgScopeStatement* scope{nullptr};
    if (auto & opt = std::get<1>(x.t)) {    // ArraySpec
       Build(opt.value(), type, base_type);
    }
@@ -1601,15 +1627,15 @@ void Build(const parser::EntityDecl &x, std::string &name, SgExpression* &init, 
    }
 }
 
-   // EntityDecl
+// EntityDecl
 void Build(const parser::ArraySpec &x, SgType* &type, SgType* base_type)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ArraySpec)\n";
 #endif
 
-   SgExpression* expr = nullptr;
-   std::list<SgExpression*> expr_list;
+   SgExpression* expr{nullptr};
+   std::list<SgExpression*> expr_list{};
 
    std::visit(
       common::visitors{
@@ -2008,9 +2034,10 @@ void Build(const parser::IfStmt&x, T* scope)
 #endif
    //  std::tuple<ScalarLogicalExpr, UnlabeledStatement<ActionStmt>> t;
 
-   SgIfStmt*         if_stmt{nullptr};
+   SgIfStmt* if_stmt{nullptr};
    SgExpression* conditional{nullptr};
    std::vector<Rose::builder::Token> comments{};
+   const OptLabel label{};
 
    // Traverse conditional expr
    Build(std::get<0>(x.t), conditional);
@@ -2387,7 +2414,6 @@ void Build(const parser::CommonStmt::Block&x, SgCommonBlockObject* &common_block
    std::string name;
    if (auto & opt = std::get<0>(x.t)) {   // std::optional<Name>
       Build(opt.value(), name);
-      std::cout << "The name of the CommonStmt::Block is " << name << "\n";
    }
 
    // Build std::list of variable references built from names in Flang::Parser::CommonBlockObject
@@ -2410,7 +2436,6 @@ void Build(const parser::CommonBlockObject&x, SgExpression* &var_ref)
    // Flang::parser::CommonBlockObject -> an SgExpression in the SgExprListExp member of SgCommonBlockObject in ROSE
 
    parser::Name name = std::get<parser::Name>(x.t);
-   std::cout << "The name of the CommonBlockObject is " << name.ToString() << "\n";
 
    Build(name, var_ref);
 
@@ -2834,7 +2859,8 @@ void Build(const parser::SubscriptTriplet&x, SgExpression* &expr)
 #endif
 }
 
-   // ExecutableConstruct
+// ExecutableConstruct
+//
 template<typename T>
 void Build(const parser::AssociateConstruct&x, T* scope)
 {

@@ -28,10 +28,9 @@ class SgIfStmt;
 class SgType;
 
 // Controls debugging information output
-#define PRINT_FLANG_TRAVERSAL 1
+#define PRINT_FLANG_TRAVERSAL 0
 
 // New label handling (and perhaps scope as well)
-#define LABELS 1
 #define NEW_LABELS 0
 
 using OptLabel = std::optional<unsigned long long>;
@@ -67,10 +66,10 @@ template<typename T> void Build(const Fortran::parser::ExecutionPartConstruct &x
 template<typename T> void Build(const Fortran::parser::   ExecutableConstruct &x, T* scope);
 
 template<typename T> void Build(const Fortran::parser::            ActionStmt &x, const OptLabel &label, T* scope);
-template<typename T> void Build(const Fortran::parser::            ActionStmt &x, T* scope) { abort(); };
+//                   void Build(const Fortran::parser::            ActionStmt &x);
+template<typename T> void Build(const Fortran::parser::            ActionStmt &x, T* scope);
 
 template<typename T> void Build(const Fortran::parser::        AssignmentStmt &x, T* scope);
-//void Build(const Fortran::parser::        AssignmentStmt &x, SgScopeStatement* scope);
 
 void Build(const Fortran::parser::  FunctionStmt &x, std::list<std::string> &, std::string &, std::string &, LanguageTranslation::FunctionModifierList &, SgType* &);
 void Build(const Fortran::parser::SubroutineStmt &x, std::list<std::string> &, std::string &, LanguageTranslation::FunctionModifierList &);
@@ -141,7 +140,9 @@ void Build(const Fortran::parser::DeclarationTypeSpec::    Class&x, SgType* &);
 void Build(const Fortran::parser::DeclarationTypeSpec::ClassStar&x, SgType* &);
 void Build(const Fortran::parser::DeclarationTypeSpec::   Record&x, SgType* &);
 
-void Build(const Fortran::parser::       DerivedTypeSpec &x,                      SgType* &);
+void Build(const Fortran::parser::        VectorTypeSpec &x, SgType* &);
+void Build(const Fortran::parser::       DerivedTypeSpec &x, SgType* &);
+
 void Build(const Fortran::parser::            EntityDecl &x, std::string &, SgExpression* &, SgType* &, SgType *);
 void Build(const std::list<Fortran::parser::EntityDecl>  &x, std::list<EntityDeclTuple> &entity_decls, SgType* base_type);
 void Build(const Fortran::parser::              AttrSpec &x, LanguageTranslation::ExpressionKind &modifier_enum);
@@ -247,7 +248,6 @@ void Build(const Fortran::parser::                 Star &x, SgExpression* &expr)
 void Build(const Fortran::parser::           OutputItem &x, SgExpression* &expr);
 template<typename T> void Build(const Fortran::parser::      OutputImpliedDo &x, T* scope);
 
-#if 1
 template<typename T> void Build(const Fortran::parser::             ReadStmt &x, T* scope);
 template<typename T> void Build(const Fortran::parser::           ReturnStmt &x, T* scope);
 template<typename T> void Build(const Fortran::parser::           RewindStmt &x, T* scope);
@@ -269,7 +269,6 @@ template<typename T> void Build(const Fortran::parser::            PauseStmt &x,
 template<typename T> void Build(const Fortran::parser::         NamelistStmt &x, T* scope);
 template<typename T> void Build(const Fortran::parser::        ParameterStmt &x, T* scope);
 template<typename T> void Build(const Fortran::parser::     OldParameterStmt &x, T* scope);
-#endif
 
 template<typename T> void Build(const Fortran::parser::           CommonStmt &x, T* scope);
 void Build(const Fortran::parser::    CommonStmt::Block &x, SgCommonBlockObject* &);
