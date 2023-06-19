@@ -32,6 +32,7 @@ FORTRAN_TESTCODES =               \
 
 
 FORTRAN_20xx_TESTCODES =          \
+  stop.f90                        \
   tiny.f90
 
 FORTRAN_TESTCODES_TODO =          \

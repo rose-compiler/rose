@@ -540,6 +540,8 @@ void Build(const parser::ActionStmt &x, T* scope)
          [&](const parser::FailImageStmt &y) { Build(y, label); },
          [&] (const Fortran::common::Indirection<parser::CycleStmt,false> &y)
                 { Build(y.value(), label); },
+         [&] (const Fortran::common::Indirection<parser::StopStmt,false> &y)
+                { Build(y.value(), label); },
          // common::Indirection - AllocateStmt, AssignmentStmt, BackspaceStmt, CallStmt, CloseStmt,
          // CycleStmt, DeallocateStmt, EndfileStmt, EventPostStmt, EventWaitStmt, ExitStmt,
          // FlushStmt, FormTeamStmt, GotoStmt, IfStmt, InquireStmt, LockStmt, NullifyStmt, OpenStmt,
@@ -565,6 +567,8 @@ void Build(const parser::ActionStmt &x, const OptLabel &label, T* scope)
          [&](const parser::ContinueStmt  &y) { Build(y, label); },
          [&](const parser::FailImageStmt &y) { Build(y, label); },
          [&] (const Fortran::common::Indirection<parser::CycleStmt,false> &y)
+                { Build(y.value(), label); },
+         [&] (const Fortran::common::Indirection<parser::StopStmt,false> &y)
                 { Build(y.value(), label); },
          // common::Indirection - AllocateStmt, AssignmentStmt, BackspaceStmt, CallStmt, CloseStmt,
          // CycleStmt, DeallocateStmt, EndfileStmt, EventPostStmt, EventWaitStmt, ExitStmt, FailImageStmt,
@@ -2200,13 +2204,7 @@ void Build(const parser::RewindStmt&x, T* scope)
 #endif
 }
 
-#if NEW_LABELS==0
-template<typename T>
-void Build(const parser::StopStmt&x, T* scope)
-#else
-//void Build(const parser::StopStmt&x, std::optional<unsigned long long> label)
-  void Build(const parser::StopStmt&x, const OptLabel &label)
-#endif
+void Build(const parser::StopStmt&x, const OptLabel &label)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(StopStmt)\n";
@@ -2218,11 +2216,9 @@ void Build(const parser::StopStmt&x, T* scope)
    std::string_view kind{parser::StopStmt::EnumToString(std::get<0>(x.t))};
 
    std::vector<std::string> labels;
-#if NEW_LABELS==1
    if (label) {
      labels.push_back(std::to_string(*label));
    }
-#endif
 
    // change strings to match builder function
    if (kind == "Stop") {
