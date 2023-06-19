@@ -193,6 +193,7 @@ void Build(const Fortran::parser::DataStmtConstant &x, SgExpression* &expr);
 void Build(const Fortran::parser::         ContinueStmt &x, const OptLabel &);
 void Build(const Fortran::parser::            CycleStmt &x, const OptLabel &);
 void Build(const Fortran::parser::        FailImageStmt &x, const OptLabel &);
+void Build(const Fortran::parser::             StopStmt &x, const OptLabel &);
 
 #if NEW_LABELS==0
 template<typename T> void Build(const Fortran::parser::         AllocateStmt &x, T* scope);
@@ -251,7 +252,7 @@ template<typename T> void Build(const Fortran::parser::      OutputImpliedDo &x,
 template<typename T> void Build(const Fortran::parser::             ReadStmt &x, T* scope);
 template<typename T> void Build(const Fortran::parser::           ReturnStmt &x, T* scope);
 template<typename T> void Build(const Fortran::parser::           RewindStmt &x, T* scope);
-template<typename T> void Build(const Fortran::parser::             StopStmt &x, T* scope);
+//template<typename T> void Build(const Fortran::parser::             StopStmt &x, T* scope);
 template<typename T> void Build(const Fortran::parser::          SyncAllStmt &x, T* scope);
 template<typename T> void Build(const Fortran::parser::       SyncImagesStmt &x, T* scope);
 template<typename T> void Build(const Fortran::parser::       SyncMemoryStmt &x, T* scope);
