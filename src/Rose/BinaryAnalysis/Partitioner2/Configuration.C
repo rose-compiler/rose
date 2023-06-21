@@ -233,8 +233,8 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
         }
 #else
         SAWYER_MESG(mlog[TRACE]) <<"loading configuration from " <<fileName <<"\n";
-        Yaml::Node configFile;
-        Yaml::Parse(configFile, fileName.string());
+        Yaml::Node configFile = Yaml::parse(fileName);
+
         if (configFile["config"] && configFile["config"]["exports"]) {
             // This is a CMU/SEI configuration file.
             Yaml::Node &exports = configFile["config"]["exports"];
@@ -366,7 +366,7 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
             }
 
         } else {
-            SAWYER_MESG(mlog[ERROR]) <<"not a valid configuration file: \"" <<StringUtility::cEscape(fileName.string()) <<"\"\n";
+            SAWYER_MESG(mlog[ERROR]) <<"not a valid configuration file: " <<fileName <<"\n";
         }
 #endif
     }
