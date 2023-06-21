@@ -92,6 +92,28 @@ Architecture::makeDispatcher(const BS::RiscOperators::Ptr &ops) {
                                         Emulation::Dispatcher::unwrapEmulationOperators(ops)->registerDictionary());
 }
 
+Sawyer::Optional<rose_addr_t>
+Architecture::entryAddress() {
+    ASSERT_not_null(partitioner());
+
+    // First, try to get the entry address from the file header.
+    if (SgAsmInterpretation *interp = partitioner()->interpretation()) {
+        for (SgAsmGenericHeader *header: interp->get_headers()->get_headers()) {
+            ASSERT_not_null(header);
+            for (const rose_rva_t &rva: header->get_entry_rvas())
+                return header->get_base_va() + rva.get_rva();
+        }
+    }
+
+    // Since file headers are not always present (e.g., firmware is often raw memory dumps without an ELF or PE container), we then
+    // try to look at the interrupt vector for the m68k.
+    if (const auto va = partitioner()->memoryMap()->readUnsigned<uint32_t>(4))
+        return ByteOrder::leToHost(*va);
+
+    mlog[WARN] <<"M68kSystem::Architecture::entryAddress: unable to find a starting address\n";
+    return Sawyer::Nothing();
+}
+
 void
 Architecture::load(const boost::filesystem::path &tempDirectory) {
     ASSERT_forbid(isFactory());
@@ -130,6 +152,11 @@ Architecture::load(const boost::filesystem::path &tempDirectory) {
     args.push_back("-no-reboot");
     args.push_back("-kernel");
     args.push_back(exeName.string());
+    if (const auto entryVa = entryAddress()) {
+        args.push_back("-device");
+        args.push_back("loader,cpu-num=0,addr=" + StringUtility::addrToString(*entryVa));
+    }
+
     if (debug) {
         debug <<"executing QEMU emulator for m68k firmware\n"
               <<"  command:";
