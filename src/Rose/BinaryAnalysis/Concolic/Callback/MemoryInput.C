@@ -81,7 +81,9 @@ MemoryInput::handlePreSharedMemory(SharedMemoryContext &ctx) {
         returns(ctx, ctx.sharedMemoryEvent->expression());
 
     } else {
-        ASSERT_not_implemented("[Robb Matzke 2022-12-16] writes to MemoryInput are not yet implemented");
+        mlog[WARN] <<"shared memory write is ignored\n"
+                   <<"  address = " <<StringUtility::addrToString(ctx.accessedVas) <<"\n"
+                   <<"  value   = " <<*ctx.valueWritten <<"\n";
     }
 }
 
