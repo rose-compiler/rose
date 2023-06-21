@@ -28,10 +28,9 @@ namespace Partitioner2 {
 std::string
 Configuration::fileFormatDoc() {
     return "The configuration file is either YAML or JSON format. This documentation uses YAML syntax since it is more user "
-        "oriented than JSON.  Configuration files can only be parsed if ROSE was configured with YAML support."
-        "The top-level object in the file is named \"rose\", within which all other objects will appear. This allows a "
-        "configuration file to contain other data that won't be interpreted by the ROSE library. The following objects "
-        "may appear within the \"rose\" object:"
+        "oriented than JSON. The top-level object in the file is named \"rose\", within which all other objects will appear. "
+        "This allows a configuration file to contain other data that won't be interpreted by the ROSE library. The following "
+        "objects may appear within the \"rose\" object:"
 
         "@named{functions}{The \"functions\" object holds a list of settings, one per function. For each function, the "
         "following settings are recognized (others are ignored):"
