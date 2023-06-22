@@ -134,6 +134,9 @@ public:
         };
     };
 
+    /** Overwrite (parts of) existing segments? */
+    enum class Clobber {NO, YES};
+
 private:
     ByteOrder::Endianness endianness_;
 
@@ -464,8 +467,20 @@ public:
 
     /** Insert part of another map by reference.
      *
-     *  The specified addresses of the other map are copied into this map. */
-    void linkTo(const MemoryMap::Ptr &other, const AddressIntervalSet &parts);
+     *  The segments of the @p source map that overlap with the addresses specified by @p where are copied and inserted into @p this
+     *  map. The new copied segments point to the same data buffers as @p source, therefore the segments in the new map will share
+     *  the same data as the old map and changing the data in either map will change the data in the other map as well.
+     *
+     *  If the @p Clobber flag is set, then any segment that previously existed in the @p this map will be overwritten by segments
+     *  copied from the @p source map. Otherwise, when @p Clobber is clear, only those parts of the @p source map that are not
+     *  already mapped in @p this map are copied.
+     *
+     *  The return value is the set of addresses that were actually copied from the @p source to @p this map.
+     *
+     * @{ */
+    AddressIntervalSet linkTo(const MemoryMap::Ptr &source, const AddressIntervalSet &where, Clobber = Clobber::YES);
+    AddressIntervalSet linkTo(const MemoryMap::Ptr &source, const AddressInterval &where, Clobber = Clobber::YES);
+    /** @} */
 
     /** Copy part of a file into a buffer.
      *
