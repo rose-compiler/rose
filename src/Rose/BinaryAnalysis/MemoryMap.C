@@ -980,10 +980,22 @@ MemoryMap::insertProcess(pid_t pid, Attach::Boolean doAttach) {
 #endif
 }
 
-void
-MemoryMap::linkTo(const MemoryMap::Ptr &other, const AddressIntervalSet &parts) {
+AddressIntervalSet
+MemoryMap::linkTo(const MemoryMap::Ptr &other, const AddressIntervalSet &where, Clobber clobber) {
     ASSERT_not_null(other);
-    for (const AddressInterval &part: parts.intervals()) {
+    AddressIntervalSet retval;
+
+    // Decide what to copy. If not clobbering, then don't copy parts that already exist in the destination map.
+    const AddressIntervalSet modifiable = [this, clobber](AddressIntervalSet parts /*intentionally copied*/) {
+        if (Clobber::NO == clobber && !parts.isEmpty()) {
+            for (auto node: findAll(AddressInterval::hull(parts.least(), parts.greatest())))
+                parts -= node.key();
+        }
+        return parts;
+    }(where);
+
+    // Copy parts that we decide can be modified in the destination.
+    for (const AddressInterval &part: modifiable.intervals()) {
         for (auto node: other->findAll(part)) {
             const AddressInterval srcAddrs = node.key();
             const Segment &srcSegment = node.value();
@@ -1000,8 +1012,18 @@ MemoryMap::linkTo(const MemoryMap::Ptr &other, const AddressIntervalSet &parts) 
             // Create a new segment for the destination map, which points into the same buffer as the source map.
             Segment dstSegment(srcSegment.buffer(), bufferOffset, srcSegment.accessibility(), srcSegment.name());
             insert(dstAddrs, dstSegment);
+            retval |= dstAddrs;
         }
     }
+
+    return retval;
+}
+
+AddressIntervalSet
+MemoryMap::linkTo(const MemoryMap::Ptr &other, const AddressInterval &where, Clobber clobber) {
+    AddressIntervalSet set;
+    set |= where;
+    return linkTo(other, set, clobber);
 }
 
 Sawyer::Optional<uint8_t>
