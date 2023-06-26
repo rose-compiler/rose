@@ -8477,6 +8477,501 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmJvmStackMapVerificationType           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmJvmStackMapVerificationType);
+IS_SERIALIZABLE(AsmJvmStackMapVerificationType);
+
+#ifdef DOCUMENTATION
+/** Represents an entry in a stack map table.
+ *
+ */
+class SgAsmJvmStackMapVerificationType: public SgAsmJvmNode {
+#endif // DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmStackMapVerificationType.setDataPrototype(
+        "uint8_t", "tag", "= 9",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmStackMapVerificationType.setDataPrototype(
+        "uint16_t", "cpool_index", "= 0",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmStackMapVerificationType.setDataPrototype(
+        "uint16_t", "offset", "= 0",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+    DECLARE_OTHERS(AsmJvmStackMapVerificationType);
+#if defined(SgAsmJvmStackMapVerificationType_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmJvmStackMapVerificationType -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmStackMapVerificationType");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmNode);
+        s & BOOST_SERIALIZATION_NVP(p_tag);
+        s & BOOST_SERIALIZATION_NVP(p_cpool_index);
+        s & BOOST_SERIALIZATION_NVP(p_offset);
+        debugSerializationEnd("SgAsmJvmStackMapVerificationType");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    /** StackMapVerificationType tags.
+     *
+     * These tags indicate which item of the verification_type_info union is in use.
+     */
+    enum verification_type_tag {
+        ITEM_Top = 0,
+        ITEM_Integer = 1,
+        ITEM_Float = 2,
+        ITEM_Double = 3,
+        ITEM_Long = 4,
+        ITEM_Null = 5,
+        ITEM_UninitializedThis = 6,
+        ITEM_Object = 7,
+        ITEM_Uninitialized = 8
+    };
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Local types (for documentation purposes only)
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#ifdef DOCUMENTATION
+    /** The following discriminated union is documented below and provides information about
+     *    the SgAsmJvmStackMapVerificationType entry (see 4.7.4 in JVM specification).
+     */
+    union verification_type_info {
+        Top_variable_info;
+        Integer_variable_info;
+        Float_variable_info;
+        Long_variable_info;
+        Double_variable_info;
+        Null_variable_info;
+        UninitializedThis_variable_info;
+        Object_variable_info;
+        Uninitialized_variable_info;
+    };
+
+    /** 4.7.4 */
+    struct Top_variable_info {
+        uint8_t tag;
+    };
+    struct Integer_variable_info {
+        uint8_t tag;
+    };
+    struct Float_variable_info {
+        uint8_t tag;
+    };
+    struct Long_variable_info {
+        uint8_t tag;
+    };
+    struct Double_variable_info {
+        uint8_t tag;
+    };
+    struct Null_variable_info {
+        uint8_t tag;
+    };
+    struct UnitializedThis_variable_info {
+        uint8_t tag;
+    };
+    struct Object_variable_info {
+        uint8_t tag;
+        uint16_t cpool_index;
+    };
+    struct Unitialized_variable_info {
+        uint8_t tag;
+        uint16_t offset;
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Properties
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+private:
+public:
+    /** Property: tag
+     *
+     *  Enum constant describing variable type. 
+     *  
+     *  @{ */
+    uint8_t const& get_tag() const;
+    void set_tag(uint8_t const&);
+    /** @} */
+ /* Not a legal entry */
+public:
+    /** Property: cpool_index
+     *
+     *  See the JVM specification. 
+     *  
+     *  @{ */
+    uint16_t const& get_cpool_index() const;
+    void set_cpool_index(uint16_t const&);
+    /** @} */
+
+public:
+    /** Property: offset
+     *
+     *  See the JVM specification. 
+     *  
+     *  @{ */
+    uint16_t const& get_offset() const;
+    void set_offset(uint16_t const&);
+    /** @} */
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Functions
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Initialize a stack map table by parsing the file.
+     *
+     * @{ */
+    SgAsmJvmStackMapVerificationType* parse();
+    /** @} */
+
+    /** Write stack map table to a binary file */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
+    void dump(FILE*, const char *prefix, ssize_t idx) const override;
+public:
+    /** Destructor. */
+    virtual ~SgAsmJvmStackMapVerificationType();
+
+public:
+    /** Default constructor. */
+    SgAsmJvmStackMapVerificationType();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmJvmStackMapVerificationType_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmJvmStackMapTable           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmJvmStackMapTable);
+IS_SERIALIZABLE(AsmJvmStackMapTable);
+
+#ifdef DOCUMENTATION
+/** The StackMapTable attribute is a variable-length attribute in the attributes table
+ *  of a Code attribute (see section 4.7.3). A StackMapTable attribute is used during the
+ *  process of verification by type checking (4.10.1).
+ */
+class SgAsmJvmStackMapTable: public SgAsmJvmAttribute {
+#endif // DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmStackMapTable.setDataPrototype(
+        "SgAsmJvmStackMapFramePtrList", "entries", "",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+    DECLARE_OTHERS(AsmJvmStackMapTable);
+#if defined(SgAsmJvmStackMapTable_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmJvmStackMapTable -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmStackMapTable");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmAttribute);
+        s & BOOST_SERIALIZATION_NVP(p_entries);
+        debugSerializationEnd("SgAsmJvmStackMapTable");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Properties
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Property: List of stack map table entries/frames. 
+     * 
+     * @{ */
+    SgAsmJvmStackMapFramePtrList const& get_entries() const;
+    SgAsmJvmStackMapFramePtrList& get_entries();
+    void set_entries(SgAsmJvmStackMapFramePtrList const&);
+    /** @} */
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Functions
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Initialize a stack map table by parsing the file.
+     *
+     * @{ */
+    SgAsmJvmStackMapTable* parse();
+    /** @} */
+
+    /** Write stack map table to a binary file */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
+    void dump(FILE*, const char *prefix, ssize_t idx) const override;
+public:
+    /** Destructor. */
+    virtual ~SgAsmJvmStackMapTable();
+
+public:
+    /** Default constructor. */
+    SgAsmJvmStackMapTable();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmJvmStackMapTable_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmJvmStackMapFrame           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmJvmStackMapFrame);
+IS_SERIALIZABLE(AsmJvmStackMapFrame);
+
+#ifdef DOCUMENTATION
+/** Represents a frame in a stack map table.
+ *
+ */
+class SgAsmJvmStackMapFrame: public SgAsmJvmNode {
+#endif // DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmStackMapFrame.setDataPrototype(
+        "SgAsmJvmStackMapVerificationTypePtrList", "stack", "",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmStackMapFrame.setDataPrototype(
+        "SgAsmJvmStackMapVerificationTypePtrList", "locals", "",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmStackMapFrame.setDataPrototype(
+        "uint8_t", "frame_type", "= 0",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmStackMapFrame.setDataPrototype(
+        "uint16_t", "offset_delta", "= 0",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmStackMapFrame.setDataPrototype(
+        "uint16_t", "number_of_locals", "= 0",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmStackMapFrame.setDataPrototype(
+        "uint16_t", "number_of_stack_items", "= 0",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+    DECLARE_OTHERS(AsmJvmStackMapFrame);
+#if defined(SgAsmJvmStackMapFrame_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmJvmStackMapFrame -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmStackMapFrame");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmNode);
+        s & BOOST_SERIALIZATION_NVP(p_stack);
+        s & BOOST_SERIALIZATION_NVP(p_locals);
+        s & BOOST_SERIALIZATION_NVP(p_frame_type);
+        s & BOOST_SERIALIZATION_NVP(p_offset_delta);
+        s & BOOST_SERIALIZATION_NVP(p_number_of_locals);
+        s & BOOST_SERIALIZATION_NVP(p_number_of_stack_items);
+        debugSerializationEnd("SgAsmJvmStackMapFrame");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+public:
+    /** Property: List of verification_type_info stack variables. 
+     * 
+     * @{ */
+    SgAsmJvmStackMapVerificationTypePtrList const& get_stack() const;
+    SgAsmJvmStackMapVerificationTypePtrList& get_stack();
+    void set_stack(SgAsmJvmStackMapVerificationTypePtrList const&);
+    /** @} */
+
+public:
+    /** Property: List of verification_type_info local variables. 
+     * 
+     * @{ */
+    SgAsmJvmStackMapVerificationTypePtrList const& get_locals() const;
+    SgAsmJvmStackMapVerificationTypePtrList& get_locals();
+    void set_locals(SgAsmJvmStackMapVerificationTypePtrList const&);
+    /** @} */
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Local types (for documentation purposes only)
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#ifdef DOCUMENTATION
+    /** The following discriminated union is documented below and indicates which
+     *    item of the union is in use.
+     */
+    union stack_map_frame {
+        same_frame;
+        same_locals_1_stack_item_frame;
+        same_locals_1_stack_item_frame_extended;
+        chop_frame;
+        same_frame_extended;
+        append_frame;
+        full_frame;
+    };
+
+    struct same_frame {
+        uint8_t frame_type; /* 0-63 */
+    };
+    struct same_locals_1_stack_item_frame {
+        uint8_t frame_type; /* 64-127 */
+        verification_type_info stack;
+    };
+    struct same_locals_1_stack_item_extended {
+        uint8_t frame_type; /* 247 */
+        uint16_t offset_delta;
+        verification_type_info stack;
+    };
+    struct chop_frame {
+        uint8_t frame_type; /* 248-250 */
+        uint16_t offset_delta;
+    };
+    struct same_frame_extended {
+        uint8_t frame_type; /* 251 */
+        uint16_t offset_delta;
+    };
+    struct append_frame {
+        uint8_t frame_type; /* 252-254 */
+        uint16_t offset_delta;
+        verification_type_info stack;
+    };
+    struct full_frame {
+        uint8_t frame_type; /* 252-254 */
+        uint16_t offset_delta;
+        uint16_t number_of_locals;
+        verification_type_info stack[number_of_locals];
+        uint16_t number_of_stack_items;
+        verification_type_info stack[number_of_stack_items];
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Properties
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+private:
+public:
+    /** Property: frame_type
+     *
+     *  See the JVM specification. 
+     *  
+     *  @{ */
+    uint8_t const& get_frame_type() const;
+    void set_frame_type(uint8_t const&);
+    /** @} */
+
+public:
+    /** Property: offset_delta
+     *
+     *  See the JVM specification. 
+     *  
+     *  @{ */
+    uint16_t const& get_offset_delta() const;
+    void set_offset_delta(uint16_t const&);
+    /** @} */
+
+public:
+    /** Property: number_of_locals
+     *
+     *  See the JVM specification. 
+     *  
+     *  @{ */
+    uint16_t const& get_number_of_locals() const;
+    void set_number_of_locals(uint16_t const&);
+    /** @} */
+
+public:
+    /** Property: number_of_stack_items
+     *
+     *  See the JVM specification. 
+     *  
+     *  @{ */
+    uint16_t const& get_number_of_stack_items() const;
+    void set_number_of_stack_items(uint16_t const&);
+    /** @} */
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Functions
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Initialize a stack map table frame by parsing the file.
+     *
+     * @{ */
+    SgAsmJvmStackMapFrame* parse();
+    /** @} */
+
+    /** Write the stack map table frame to a binary file */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
+    void dump(FILE*, const char *prefix, ssize_t idx) const override;
+public:
+    /** Destructor. */
+    virtual ~SgAsmJvmStackMapFrame();
+
+public:
+    /** Default constructor. */
+    SgAsmJvmStackMapFrame();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmJvmStackMapFrame_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmJvmSourceFile           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -11218,6 +11713,7 @@ AstNodeClass& AsmJvmAttribute = nonTerminalConstructor(
         | AsmJvmModuleMainClass
         | AsmJvmSignature
         | AsmJvmSourceFile
+        | AsmJvmStackMapTable
     , false);
 assert(AsmJvmAttribute.associatedGrammar != nullptr);
 AsmJvmAttribute.setCppCondition("!defined(DOCUMENTATION)");
@@ -11335,6 +11831,8 @@ AstNodeClass& AsmJvmNode = nonTerminalConstructor(
         | AsmJvmInnerClassesEntry
         | AsmJvmLineNumberEntry
         | AsmJvmMethod
+        | AsmJvmStackMapFrame
+        | AsmJvmStackMapVerificationType
     , false);
 assert(AsmJvmNode.associatedGrammar != nullptr);
 AsmJvmNode.setCppCondition("!defined(DOCUMENTATION)");
