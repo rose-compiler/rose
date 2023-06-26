@@ -292,6 +292,9 @@ libroseGeneratedBinaryAnalysis_la_SOURCES = \
         SgAsmJvmNode.C \
         SgAsmJvmSignature.C \
         SgAsmJvmSourceFile.C \
+        SgAsmJvmStackMapFrame.C \
+        SgAsmJvmStackMapTable.C \
+        SgAsmJvmStackMapVerificationType.C \
         SgAsmLEEntryPoint.C \
         SgAsmLEEntryTable.C \
         SgAsmLEFileHeader.C \

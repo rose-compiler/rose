@@ -165,6 +165,56 @@ void SgAsmJvmCodeAttribute::unparse(std::ostream& os) const
   p_attribute_table->unparse(os);
 }
 
+void SgAsmJvmCodeAttribute::dump(FILE* f, const char* prefix, ssize_t idx) const
+{
+  SgAsmJvmAttribute::dump(f, prefix, idx);
+  fprintf(f, "-->SgAsmJvmCodeAttribute:%d:%d:%d\n", p_max_stack, p_max_locals, p_code_length);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// SgAsmJvmStackMapTable attribute node (StackMapTable_attribute from the Jvm specification (4.7.4)
+//
+
+void SgAsmJvmStackMapTable::unparse(std::ostream& os) const
+{
+  //TODO
+  SgAsmJvmAttribute::unparse(os);
+  ROSE_ABORT();
+}
+
+void SgAsmJvmStackMapTable::dump(FILE* f, const char* prefix, ssize_t idx) const
+{
+  SgAsmJvmAttribute::dump(f, prefix, idx);
+  // fprintf(f, "-->SgAsmJvmStackMapTable:%d:%d:%d\n", p_max_stack, p_max_locals, p_code_length);
+  ROSE_ABORT();
+}
+
+void SgAsmJvmStackMapFrame::unparse(std::ostream& os) const
+{
+  //TODO
+  ROSE_ABORT();
+}
+
+void SgAsmJvmStackMapFrame::dump(FILE* f, const char* prefix, ssize_t idx) const
+{
+  // fprintf(f, "-->SgAsmJvmStackMapFrame:%d:%d:%d\n", p_max_stack, p_max_locals, p_code_length);
+  ROSE_ABORT();
+}
+
+void SgAsmJvmStackMapVerificationType::unparse(std::ostream& os) const
+{
+  //TODO
+  ROSE_ABORT();
+}
+
+void SgAsmJvmStackMapVerificationType::dump(FILE* f, const char* prefix, ssize_t idx) const
+{
+  // fprintf(f, "-->SgAsmJvmStackMapVerificationType:%d:%d:%d\n", p_max_stack, p_max_locals, p_code_length);
+  ROSE_ABORT();
+}
+
+
 SgAsmJvmAttribute* SgAsmJvmConstantValue::parse(SgAsmJvmConstantPool* pool)
 {
   SgAsmJvmAttribute::parse(pool);
@@ -216,12 +266,6 @@ void SgAsmJvmSourceFile::unparse(std::ostream& os) const
 void SgAsmJvmAttribute::dump(FILE* f, const char* prefix, ssize_t idx) const
 {
   fprintf(f, "%s:%ld:%d:%d\n", prefix, idx, p_attribute_name_index, p_attribute_length);
-}
-
-void SgAsmJvmCodeAttribute::dump(FILE* f, const char* prefix, ssize_t idx) const
-{
-  SgAsmJvmAttribute::dump(f, prefix, idx);
-  fprintf(f, "-->SgAsmJvmCodeAttribute:%d:%d:%d\n", p_max_stack, p_max_locals, p_code_length);
 }
 
 void SgAsmJvmConstantValue::dump(FILE*f, const char* prefix, ssize_t idx) const

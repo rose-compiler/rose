@@ -288,6 +288,9 @@ add_library(roseGeneratedBinaryAnalysis OBJECT
   SgAsmJvmNode.C
   SgAsmJvmSignature.C
   SgAsmJvmSourceFile.C
+  SgAsmJvmStackMapFrame.C
+  SgAsmJvmStackMapTable.C
+  SgAsmJvmStackMapVerificationType.C
   SgAsmLEEntryPoint.C
   SgAsmLEEntryTable.C
   SgAsmLEFileHeader.C

@@ -1037,3 +1037,6 @@ SgAsmCilTypeRefTable
 SgAsmCilTypeSpecTable
 SgJvmComposite
 SgFortranContinueStmt
+SgAsmJvmStackMapTable
+SgAsmJvmStackMapFrame
+SgAsmJvmStackMapVerificationType
