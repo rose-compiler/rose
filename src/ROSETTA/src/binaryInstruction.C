@@ -8631,11 +8631,13 @@ public:
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Initialize a stack map table by parsing the file.
-     *
-     * @{ */
-    SgAsmJvmStackMapVerificationType* parse();
-    /** @} */
+    /**
+     * Initialize the object before parsing. This is the preferred constructor
+     * as it sets the parent. */
+    explicit SgAsmJvmStackMapVerificationType(SgAsmJvmStackMapFrame* frame);
+
+    /** Initialize the object by parsing content from the class file. */
+    SgAsmJvmStackMapVerificationType* parse(SgAsmJvmConstantPool* pool);
 
     /** Write stack map table to a binary file */
     virtual void unparse(std::ostream&) const override;
@@ -8717,11 +8719,13 @@ public:
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Initialize a stack map table by parsing the file.
-     *
-     * @{ */
-    SgAsmJvmStackMapTable* parse();
-    /** @} */
+    /**
+     * Initialize the object before parsing. This is the preferred constructor
+     * as it sets the parent. */
+    explicit SgAsmJvmStackMapTable(SgAsmJvmAttributeTable* table);
+
+    /** Initialize the object by parsing content from the class file. */
+    virtual SgAsmJvmStackMapTable* parse(SgAsmJvmConstantPool* pool) override;
 
     /** Write stack map table to a binary file */
     virtual void unparse(std::ostream&) const override;
@@ -8788,18 +8792,6 @@ class SgAsmJvmStackMapFrame: public SgAsmJvmNode {
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
-#ifndef DOCUMENTATION
-    AsmJvmStackMapFrame.setDataPrototype(
-        "uint16_t", "number_of_locals", "= 0",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmJvmStackMapFrame.setDataPrototype(
-        "uint16_t", "number_of_stack_items", "= 0",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
     DECLARE_OTHERS(AsmJvmStackMapFrame);
 #if defined(SgAsmJvmStackMapFrame_OTHERS) || defined(DOCUMENTATION)
 
@@ -8816,8 +8808,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_locals);
         s & BOOST_SERIALIZATION_NVP(p_frame_type);
         s & BOOST_SERIALIZATION_NVP(p_offset_delta);
-        s & BOOST_SERIALIZATION_NVP(p_number_of_locals);
-        s & BOOST_SERIALIZATION_NVP(p_number_of_stack_items);
         debugSerializationEnd("SgAsmJvmStackMapFrame");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -8914,35 +8904,17 @@ public:
     uint16_t const& get_offset_delta() const;
     void set_offset_delta(uint16_t const&);
     /** @} */
-
-public:
-    /** Property: number_of_locals
-     *
-     *  See the JVM specification. 
-     *  
-     *  @{ */
-    uint16_t const& get_number_of_locals() const;
-    void set_number_of_locals(uint16_t const&);
-    /** @} */
-
-public:
-    /** Property: number_of_stack_items
-     *
-     *  See the JVM specification. 
-     *  
-     *  @{ */
-    uint16_t const& get_number_of_stack_items() const;
-    void set_number_of_stack_items(uint16_t const&);
-    /** @} */
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Initialize a stack map table frame by parsing the file.
-     *
-     * @{ */
-    SgAsmJvmStackMapFrame* parse();
-    /** @} */
+    /**
+     * Initialize the object before parsing. This is the preferred constructor
+     * as it sets the parent. */
+    explicit SgAsmJvmStackMapFrame(SgAsmJvmStackMapTable* table);
+
+    /** Initialize the object by parsing content from the class file. */
+    SgAsmJvmStackMapFrame* parse(SgAsmJvmConstantPool* pool);
 
     /** Write the stack map table frame to a binary file */
     virtual void unparse(std::ostream&) const override;
@@ -9018,6 +8990,11 @@ public:
     void set_sourcefile_index(uint16_t const&);
     /** @} */
 public:
+    /**
+     * Initialize the object before parsing. This is the preferred constructor
+     * as it sets the parent. */
+    explicit SgAsmJvmSourceFile(SgAsmJvmAttributeTable* table);
+
     /** Initialize the attribute by parsing the file. */
     virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool* pool) override;
 
@@ -9096,6 +9073,11 @@ public:
     void set_signature_index(uint16_t const&);
     /** @} */
 public:
+    /** Initialize the attribute before parsing.
+     *
+     *  This is the preferred constructor to use before parsing.  It shall set its parent. */
+    explicit SgAsmJvmSignature(SgAsmJvmAttributeTable* table);
+
     /** Initialize the attribute by parsing the file. */
     virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool* pool) override;
 
@@ -9174,6 +9156,11 @@ public:
     void set_main_class_index(uint16_t const&);
     /** @} */
 public:
+    /** Initialize the object before parsing.
+     *
+     *  This is the preferred constructor to use before parsing.  It shall set its parent. */
+    explicit SgAsmJvmModuleMainClass(SgAsmJvmExceptionTable* table);
+
     /** Initialize the attribute by parsing the file. */
     virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool* pool) override;
 
@@ -9493,7 +9480,7 @@ public:
     /** Initialize the LineNumberTable attribute before parsing.
      *
      *  This is the preferred constructor to use before parsing.  It shall set its parent. */
-    explicit SgAsmJvmLineNumberTable(SgAsmJvmAttribute*);
+    explicit SgAsmJvmLineNumberTable(SgAsmJvmAttributeTable* table);
 
     /** Initialize the attribute by parsing the file. */
     virtual SgAsmJvmLineNumberTable* parse(SgAsmJvmConstantPool* pool) override;
@@ -9906,15 +9893,15 @@ public:
     /** Initialize the InnerClasses attribute before parsing.
      *
      *  This is the preferred constructor to use before parsing.  It shall set its parent. */
-    explicit SgAsmJvmInnerClasses(SgAsmJvmAttribute*);
+    explicit SgAsmJvmInnerClasses(SgAsmJvmAttributeTable* table);
 
     /** Parses a JVM innerclasses attribute.
      *
-     *  Parses a JVM innerclasses attribute and constructs and parses all innerclasses entries reachable from the table. Returns a
-     *  pointer to this object. */
+     *  Parses a JVM innerclasses attribute and constructs and parses all innerclasses
+     * entries reachable from the table. Returns a pointer to this object. */
     SgAsmJvmInnerClasses* parse(SgAsmJvmConstantPool*) override;
 
-    /** Write inner classes to a binary file. */
+    /** Write the InnerClasses attribute to a binary file. */
     virtual void unparse(std::ostream&) const override;
 
     /** Print some debugging information. */
@@ -10602,7 +10589,7 @@ public:
     /** Initialize the object before parsing.
      *
      *  This is the preferred constructor to use before parsing.  It shall set its parent. */
-    explicit SgAsmJvmException(SgAsmJvmExceptionTable*);
+    explicit SgAsmJvmException(SgAsmJvmExceptionTable* table);
 
     /** Initialize the object by parsing content from the class file. */
     SgAsmJvmException* parse(SgAsmJvmConstantPool*);
@@ -10699,6 +10686,11 @@ public:
     void set_method_index(uint16_t const&);
     /** @} */
 public:
+    /** Initialize the object before parsing.
+     *
+     *  This is the preferred constructor to use before parsing.  It shall set its parent. */
+    explicit SgAsmJvmEnclosingMethod(SgAsmJvmExceptionTable* table);
+
     /** Initialize the attribute by parsing the file. */
     virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool* pool) override;
 
@@ -10777,6 +10769,11 @@ public:
     void set_constantvalue_index(uint16_t const&);
     /** @} */
 public:
+    /** Initialize the object before parsing.
+     *
+     *  This is the preferred constructor to use before parsing.  It shall set its parent. */
+    explicit SgAsmJvmConstantValue(SgAsmJvmAttributeTable* table);
+
     /** Initialize the attribute by parsing the file. */
     virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool* pool) override;
 
@@ -11526,6 +11523,11 @@ public:
     void set_code_offset(rose_addr_t const&);
     /** @} */
 public:
+    /** Initialize the object before parsing.
+     *
+     *  This is the preferred constructor to use before parsing.  It shall set its parent. */
+    explicit SgAsmJvmCodeAttribute(SgAsmJvmAttributeTable* table);
+
     /** Initialize the attribute by parsing the file. */
     virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool* pool) override;
 
@@ -11656,7 +11658,9 @@ public:
     void set_attributes(SgAsmJvmAttributePtrList const&);
     /** @} */
 public:
-    /** Initialize the attribute table before parsing. */
+    /** Initialize the attribute table before parsing.
+     *
+     *  This is the preferred constructor to use before parsing.  It shall set its parent. */
     explicit SgAsmJvmAttributeTable(SgAsmJvmFileHeader*, SgAsmNode*);
 
     /** Parses a JVM attribute table.
@@ -11779,10 +11783,10 @@ public:
     /** @} */
 public:
     /** Factory method returning a derived class instance. */
-    static SgAsmJvmAttribute* instance(SgAsmJvmConstantPool*);
+    static SgAsmJvmAttribute* instance(SgAsmJvmConstantPool* pool, SgAsmJvmAttributeTable* parent);
 
     /** Initialize an attribute by parsing the file. */
-    virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool*);
+    virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool* pool);
 
     /** Write attribute to a binary file. */
     virtual void unparse(std::ostream&) const override;

@@ -16,6 +16,11 @@ class SgAsmJvmEnclosingMethod: public SgAsmJvmAttribute {
     uint16_t method_index = 0;
 
 public:
+    /** Initialize the object before parsing.
+     *
+     *  This is the preferred constructor to use before parsing.  It shall set its parent. */
+    explicit SgAsmJvmEnclosingMethod(SgAsmJvmExceptionTable* table);
+
     /** Initialize the attribute by parsing the file. */
     virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool* pool) override;
 

@@ -10,7 +10,11 @@
 using Rose::BinaryAnalysis::ByteOrder::hostToBe;
 using namespace Rose::Diagnostics; // for mlog, INFO, WARN, ERROR, FATAL, etc.
 
-SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool)
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// 4.7 Attributes. SgAsmJvmAttribute is the base class for all of the attributes.
+//
+SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsmJvmAttributeTable* parent)
 {
   uint16_t attribute_name_index;
   uint32_t attribute_length;
@@ -19,25 +23,28 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool)
   std::string name = pool->get_utf8_string(attribute_name_index);
 
   if (name == "Code") {
-    return new SgAsmJvmCodeAttribute;
+    return new SgAsmJvmCodeAttribute(parent);
   }
   else if (name == "ConstantValue") { // 4.7.2
-    return new SgAsmJvmConstantValue;
+    return new SgAsmJvmConstantValue(parent);
+  }
+  else if (name == "StackMapTable") { // 4.7.3
+    return new SgAsmJvmStackMapTable(parent);
   }
   else if (name == "SourceFile") { // 4.7.10
-    return new SgAsmJvmSourceFile;
+    return new SgAsmJvmSourceFile(parent);
   }
   else if (name == "LineNumberTable") { // 4.7.12
-    return new SgAsmJvmLineNumberTable;
+    return new SgAsmJvmLineNumberTable(parent);
   }
 
   // skip attribute
   Jvm::read_value(pool, attribute_name_index);
   Jvm::read_value(pool, attribute_length);
 
-#ifdef DEBUG_ON
   mlog[FATAL] << "--- " << name << " attribute ---\n"
               << "SgAsmJvmAttribute::instance(): skipping attribute of length " << attribute_length << "\n";
+#ifdef DEBUG_ON
   ROSE_ABORT();
 #endif
 
@@ -48,6 +55,30 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool)
   header->set_offset(offset + attribute_length);
 
   return nullptr;
+}
+
+SgAsmJvmAttribute* SgAsmJvmAttribute::parse(SgAsmJvmConstantPool* pool)
+{
+  Jvm::read_value(pool, p_attribute_name_index);
+  Jvm::read_value(pool, p_attribute_length);
+  return this;
+}
+
+void SgAsmJvmAttribute::unparse(std::ostream& os) const
+{
+  auto attribute_name_index = p_attribute_name_index;
+  auto attribute_length = p_attribute_length;
+
+  hostToBe(attribute_name_index, &attribute_name_index);
+  hostToBe(attribute_length, &attribute_length);
+
+  os.write(reinterpret_cast<const char*>(&attribute_name_index), sizeof attribute_name_index);
+  os.write(reinterpret_cast<const char*>(&attribute_length), sizeof attribute_length);
+}
+
+void SgAsmJvmAttribute::dump(FILE* f, const char* prefix, ssize_t idx) const
+{
+  fprintf(f, "%s:%ld:%d:%d\n", prefix, idx, p_attribute_name_index, p_attribute_length);
 }
 
 SgAsmJvmAttributeTable::SgAsmJvmAttributeTable(SgAsmJvmFileHeader* jfh, SgAsmNode* parent)
@@ -64,10 +95,9 @@ SgAsmJvmAttributeTable* SgAsmJvmAttributeTable::parse(SgAsmJvmConstantPool* pool
   Jvm::read_value(pool, attributes_count);
 
   for (int ii = 0; ii < attributes_count; ii++) {
-    auto attribute = SgAsmJvmAttribute::instance(pool);
+    auto attribute = SgAsmJvmAttribute::instance(pool, /*parent*/this);
     // attribute may not be implemented yet
     if (attribute) {
-      attribute->set_parent(this);
       attribute->parse(pool);
       get_attributes().push_back(attribute);
     }
@@ -94,23 +124,46 @@ void SgAsmJvmAttributeTable::dump(FILE*f, const char* prefix, ssize_t idx) const
   }
 }
 
-SgAsmJvmAttribute* SgAsmJvmAttribute::parse(SgAsmJvmConstantPool* pool)
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// 4.7.2 The ConstantValue Attribute. ConstantValue_attribute is represented by the SgAsmJvmConstantValue class.
+//
+SgAsmJvmConstantValue::SgAsmJvmConstantValue(SgAsmJvmAttributeTable* parent)
 {
-  Jvm::read_value(pool, p_attribute_name_index);
-  Jvm::read_value(pool, p_attribute_length);
+  initializeProperties();
+  set_parent(parent);
+}
+
+SgAsmJvmAttribute* SgAsmJvmConstantValue::parse(SgAsmJvmConstantPool* pool)
+{
+  SgAsmJvmAttribute::parse(pool);
+
+  // The value of the attribute_length item must be two (section 4.7.2)
+  ASSERT_require(p_attribute_length == 2);
+  Jvm::read_value(pool, p_constantvalue_index);
+
   return this;
 }
 
-void SgAsmJvmAttribute::unparse(std::ostream& os) const
+void SgAsmJvmConstantValue::unparse(std::ostream& os) const
 {
-  auto attribute_name_index = p_attribute_name_index;
-  auto attribute_length = p_attribute_length;
+  mlog[WARN] << "Unparsing of SgAsmJvmConstantValue is not implemented yet\n";
+}
 
-  hostToBe(attribute_name_index, &attribute_name_index);
-  hostToBe(attribute_length, &attribute_length);
+void SgAsmJvmConstantValue::dump(FILE*f, const char* prefix, ssize_t idx) const
+{
+  SgAsmJvmAttribute::dump(f, prefix, idx);
+  fprintf(f, "SgAsmJvmConstantValue:%d\n", p_constantvalue_index);
+}
 
-  os.write(reinterpret_cast<const char*>(&attribute_name_index), sizeof attribute_name_index);
-  os.write(reinterpret_cast<const char*>(&attribute_length), sizeof attribute_length);
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// 4.7.3 The Code Attribute (Code_attribute represented by the SgAsmJvmCodeAttribute class)
+//
+SgAsmJvmCodeAttribute::SgAsmJvmCodeAttribute(SgAsmJvmAttributeTable* parent)
+{
+  initializeProperties();
+  set_parent(parent);
 }
 
 SgAsmJvmAttribute* SgAsmJvmCodeAttribute::parse(SgAsmJvmConstantPool* pool)
@@ -173,127 +226,222 @@ void SgAsmJvmCodeAttribute::dump(FILE* f, const char* prefix, ssize_t idx) const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-// SgAsmJvmStackMapTable attribute node (StackMapTable_attribute from the Jvm specification (4.7.4)
+// 4.7.4 The StackMapTable Attribute. StackMapTable_attribute represented by the SgAsmJvmStackMapTable class.
 //
+SgAsmJvmStackMapTable::SgAsmJvmStackMapTable(SgAsmJvmAttributeTable* parent)
+{
+  initializeProperties();
+  set_parent(parent);
+}
+
+SgAsmJvmStackMapTable* SgAsmJvmStackMapTable::parse(SgAsmJvmConstantPool* pool)
+{
+  SgAsmJvmAttribute::parse(pool);
+
+  uint16_t numEntries;
+  Jvm::read_value(pool, numEntries);
+
+  for (int ii = 0; ii < numEntries; ii++) {
+    auto frame = new SgAsmJvmStackMapFrame(this);
+    frame->parse(pool);
+    get_entries().push_back(frame);
+  }
+  return this;
+}
 
 void SgAsmJvmStackMapTable::unparse(std::ostream& os) const
 {
-  //TODO
   SgAsmJvmAttribute::unparse(os);
-  ROSE_ABORT();
+
+  uint16_t numEntries = get_entries().size();
+  hostToBe(numEntries, &numEntries);
+  os.write(reinterpret_cast<const char*>(&numEntries), sizeof numEntries);
+
+  for (auto frame : get_entries()) {
+    frame->unparse(os);
+  }
 }
 
 void SgAsmJvmStackMapTable::dump(FILE* f, const char* prefix, ssize_t idx) const
 {
   SgAsmJvmAttribute::dump(f, prefix, idx);
+  mlog[WARN] << "dump of SgAsmJvmStackMapTable not fully implemented\n";
   // fprintf(f, "-->SgAsmJvmStackMapTable:%d:%d:%d\n", p_max_stack, p_max_locals, p_code_length);
-  ROSE_ABORT();
+}
+
+SgAsmJvmStackMapFrame::SgAsmJvmStackMapFrame(SgAsmJvmStackMapTable* parent)
+{
+  initializeProperties();
+  set_parent(parent);
+}
+
+SgAsmJvmStackMapFrame* SgAsmJvmStackMapFrame::parse(SgAsmJvmConstantPool* pool)
+{
+  uint16_t numStack{0}, numLocals{0};
+
+  Jvm::read_value(pool, p_frame_type);
+
+  switch (p_frame_type) {
+    case 0 ... 63: // frame_type = SAME
+      break;
+    case 64 ... 127: // frame_type = SAME_LOCALS_1_STACK_ITEM
+      numStack = 1;
+      break;
+    case 247: // frame_type = SAME_LOCALS_1_STACK_ITEM_EXTENDED
+      numStack = 1;
+      Jvm::read_value(pool, p_offset_delta);
+      break;
+    case 248 ... 250: // frame_type = CHOP
+      Jvm::read_value(pool, p_offset_delta);
+      break;
+    case 251: // frame_type = SAME_FRAME_EXTENDED
+      Jvm::read_value(pool, p_offset_delta);
+      break;
+    case 252 ... 254: // frame_type = SAME_FRAME_EXTENDED
+      Jvm::read_value(pool, p_offset_delta);
+      numLocals = p_frame_type - 251;
+      break;
+    case 255: { // frame_type = FULL_FRAME
+      Jvm::read_value(pool, p_offset_delta);
+      Jvm::read_value(pool, numLocals);
+
+      // Unfortunately, locals are read before number_of_stack_items
+      for (int ii = 0; ii < numLocals; ii++) {
+        auto type = new SgAsmJvmStackMapVerificationType(this);
+        type->parse(pool);
+        get_locals().push_back(type);
+      }
+      numLocals = 0;
+
+      Jvm::read_value(pool, numStack);
+      break;
+    }
+    default:
+      mlog[ERROR] << "SgAsmJvmStackMapFrame::parse: illegal frame type\n";
+      ROSE_ABORT();
+      break;
+  }
+
+  for (int ii = 0; ii < numLocals; ii++) {
+    auto type = new SgAsmJvmStackMapVerificationType(this);
+    type->parse(pool);
+    get_locals().push_back(type);
+  }
+
+  for (int ii = 0; ii < numStack; ii++) {
+    auto type = new SgAsmJvmStackMapVerificationType(this);
+    type->parse(pool);
+    get_stack().push_back(type);
+  }
+
+  return this;
 }
 
 void SgAsmJvmStackMapFrame::unparse(std::ostream& os) const
 {
-  //TODO
-  ROSE_ABORT();
+  auto type = p_frame_type;
+  hostToBe(type, &type);
+  os.write(reinterpret_cast<const char*>(&type), sizeof type);
+
+  // Warning: order is important (see FULL_FRAME above)
+
+  if (auto offset = p_offset_delta) {
+    hostToBe(offset, &offset);
+    os.write(reinterpret_cast<const char*>(&offset), sizeof offset);
+  }
+
+  // uint16_t number_of_locals;
+  // verification_type_info locals[number_of_locals];
+  //
+  uint16_t numLocals = get_locals().size();
+  if (numLocals || p_frame_type==0xff) { // numLocals must be written for frame_type==FULL_FRAME
+    hostToBe(numLocals, &numLocals);
+    os.write(reinterpret_cast<const char*>(&numLocals), sizeof numLocals);
+  }
+  for (auto local : get_locals()) {
+    local->unparse(os);
+  }
+
+  // uint16_t number_of_stack_items;
+  // verification_type_info stack[number_of_stack_items];
+  //
+  uint16_t numStack = get_stack().size();
+  if (numStack || p_frame_type==0xff) { // numStack must be written for frame_type==FULL_FRAME
+    hostToBe(numStack, &numStack);
+    os.write(reinterpret_cast<const char*>(&numStack), sizeof numStack);
+  }
+  for (auto stackEntry : get_stack()) {
+    stackEntry->unparse(os);
+  }
 }
 
 void SgAsmJvmStackMapFrame::dump(FILE* f, const char* prefix, ssize_t idx) const
 {
+  mlog[WARN] << "dump of SgAsmJvmStackMapFrame is not implemented yet\n";
   // fprintf(f, "-->SgAsmJvmStackMapFrame:%d:%d:%d\n", p_max_stack, p_max_locals, p_code_length);
-  ROSE_ABORT();
+}
+
+SgAsmJvmStackMapVerificationType::SgAsmJvmStackMapVerificationType(SgAsmJvmStackMapFrame* parent)
+{
+  initializeProperties();
+  set_parent(parent);
+}
+
+SgAsmJvmStackMapVerificationType* SgAsmJvmStackMapVerificationType::parse(SgAsmJvmConstantPool* pool)
+{
+  Jvm::read_value(pool, p_tag);
+
+  switch (p_tag) {
+    case 0: // ITEM_Top
+    case 1: // ITEM_Integer
+    case 2: // ITEM_Float
+    case 3: // ITEM_Double
+    case 4: // ITEM_Long
+    case 5: // ITEM_Null
+    case 6: // ITEM_UninitializedThis
+      break;
+    case 7: // ITEM_Object
+      Jvm::read_value(pool, p_cpool_index);
+      break;
+    case 8: // ITEM_Uninitialized
+      Jvm::read_value(pool, p_offset);
+      break;
+    default:
+      mlog[ERROR] << "SgAsmJvmStackMapVerificationType::parse: illegal type\n";
+      ROSE_ABORT();
+      break;
+  }
+  return this;
 }
 
 void SgAsmJvmStackMapVerificationType::unparse(std::ostream& os) const
 {
-  //TODO
-  ROSE_ABORT();
+  auto tag = p_tag;
+  hostToBe(tag, &tag);
+  os.write(reinterpret_cast<const char*>(&tag), sizeof tag);
+
+  if (auto index = p_cpool_index) {
+    hostToBe(index, &index);
+    os.write(reinterpret_cast<const char*>(&index), sizeof index);
+  }
+  if (auto offset = p_offset) {
+    hostToBe(offset, &offset);
+    os.write(reinterpret_cast<const char*>(&offset), sizeof offset);
+  }
 }
 
 void SgAsmJvmStackMapVerificationType::dump(FILE* f, const char* prefix, ssize_t idx) const
 {
+  mlog[WARN] << "dump of SgAsmJvmStackMapVerificationType is not implemented yet\n";
   // fprintf(f, "-->SgAsmJvmStackMapVerificationType:%d:%d:%d\n", p_max_stack, p_max_locals, p_code_length);
-  ROSE_ABORT();
 }
-
-
-SgAsmJvmAttribute* SgAsmJvmConstantValue::parse(SgAsmJvmConstantPool* pool)
-{
-  SgAsmJvmAttribute::parse(pool);
-
-  // The value of the attribute_length item must be two (section 4.7.2)
-  ASSERT_require(p_attribute_length == 2);
-  Jvm::read_value(pool, p_constantvalue_index);
-
-  return this;
-}
-
-void SgAsmJvmConstantValue::unparse(std::ostream& os) const
-{
-  mlog[WARN] << "Unparsing of SgAsmJvmConstantValue is not implemented yet\n";
-}
-
-SgAsmJvmAttribute* SgAsmJvmSignature::parse(SgAsmJvmConstantPool* pool)
-{
-  SgAsmJvmAttribute::parse(pool);
-  mlog[WARN] << "Parsing of SgAsmJvmSignature attribute is not implemented yet\n";
-
-  ROSE_ASSERT(false && "TODO");
-  return this;
-}
-
-void SgAsmJvmSignature::unparse(std::ostream& os) const
-{
-  mlog[WARN] << "Unparsing of SgAsmJvmSignature attribute is not implemented yet\n";
-}
-
-SgAsmJvmAttribute* SgAsmJvmSourceFile::parse(SgAsmJvmConstantPool* pool)
-{
-  SgAsmJvmAttribute::parse(pool);
-  Jvm::read_value(pool, p_sourcefile_index);
-  return this;
-}
-
-void SgAsmJvmSourceFile::unparse(std::ostream& os) const
-{
-  mlog[WARN] << "Unparsing of SgAsmJvmSourceFile is not implemented yet\n";
-
-  SgAsmJvmAttribute::unparse(os);
-
-  auto sourcefile_index = p_sourcefile_index;
-  hostToBe(sourcefile_index, &sourcefile_index);
-  os.write(reinterpret_cast<const char*>(&sourcefile_index), sizeof sourcefile_index);
-}
-
-void SgAsmJvmAttribute::dump(FILE* f, const char* prefix, ssize_t idx) const
-{
-  fprintf(f, "%s:%ld:%d:%d\n", prefix, idx, p_attribute_name_index, p_attribute_length);
-}
-
-void SgAsmJvmConstantValue::dump(FILE*f, const char* prefix, ssize_t idx) const
-{
-  SgAsmJvmAttribute::dump(f, prefix, idx);
-  fprintf(f, "SgAsmJvmConstantValue:%d\n", p_constantvalue_index);
-}
-
-void SgAsmJvmSignature::dump(FILE*f, const char* prefix, ssize_t idx) const
-{
-  SgAsmJvmAttribute::dump(f, prefix, idx);
-  fprintf(f, "SgAsmJvmSignature::dump\n");
-}
-
-void SgAsmJvmSourceFile::dump(FILE*f, const char* prefix, ssize_t idx) const
-{
-  SgAsmJvmAttribute::dump(f, prefix, idx);
-  fprintf(f, "SgAsmJvmSourceFile::dump():%d\n", p_sourcefile_index);
-}
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-// Exception nodes used by SgAsmJvmCodeAttribute
+// 4.7.5 The Exceptions Attribute. Exceptions_attribute represented by the SgAsmJvmException class.
 //
 SgAsmJvmException::SgAsmJvmException(SgAsmJvmExceptionTable* table)
 {
-  mlog[INFO] << "\nSgAsmJvmException::ctor() ...\n";
   initializeProperties();
   set_parent(table);
 }
@@ -319,8 +467,8 @@ void SgAsmJvmException::dump(FILE*f, const char* prefix, ssize_t idx) const
 
 SgAsmJvmExceptionTable::SgAsmJvmExceptionTable(SgAsmJvmCodeAttribute* parent)
 {
-    initializeProperties();
-    set_parent(parent);
+  initializeProperties();
+  set_parent(parent);
 }
 
 SgAsmJvmExceptionTable* SgAsmJvmExceptionTable::parse(SgAsmJvmConstantPool* pool)
@@ -328,12 +476,11 @@ SgAsmJvmExceptionTable* SgAsmJvmExceptionTable::parse(SgAsmJvmConstantPool* pool
   uint16_t exception_table_length;
   Jvm::read_value(pool, exception_table_length);
 
-  auto exceptions = get_exceptions();
   for (int ii = 0; ii < exception_table_length; ii++) {
     mlog[INFO] << "\n --- exception ---\n";
     auto exception = new SgAsmJvmException(this);
     exception->parse(pool);
-    exceptions.push_back(exception);
+    get_exceptions().push_back(exception);
   }
 
   return this;
@@ -357,17 +504,39 @@ void SgAsmJvmExceptionTable::dump(FILE*f, const char* prefix, ssize_t idx) const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-// InnerClassTable used by SgAsmJvmInnerClass (InnerClassTable_attribute from the Jvm specification (4.7.6))
+// 4.7.6 The InnerClasses Attribute. InnerClasses_attribute is represented by the SgAsmJvmInnerClasses class.
 //
+SgAsmJvmInnerClasses::SgAsmJvmInnerClasses(SgAsmJvmAttributeTable* parent)
+{
+  initializeProperties();
+  set_parent(parent);
+}
+
+SgAsmJvmInnerClasses* SgAsmJvmInnerClasses::parse(SgAsmJvmConstantPool* pool)
+{
+  mlog[WARN] << "Parsing of SgAsmJvmInnerClasses is not implemented yet\n";
+  return this;
+}
+
+void SgAsmJvmInnerClasses::unparse(std::ostream& os) const
+{
+  mlog[WARN] << "Unparsing of SgAsmJvmInnerClasses is not implemented yet\n";
+}
+
+void SgAsmJvmInnerClasses::dump(FILE*f, const char* prefix, ssize_t idx) const
+{
+  mlog[WARN] << "SgAsmJvmInnerClasses::dump() ...\n";
+}
+
 SgAsmJvmInnerClassesEntry::SgAsmJvmInnerClassesEntry(SgAsmJvmInnerClasses* table)
 {
-  mlog[INFO] << "\nSgAsmJvmInnerClassesEntry::ctor() ...\n";
   initializeProperties();
+  set_parent(table);
 }
 
 SgAsmJvmInnerClassesEntry* SgAsmJvmInnerClassesEntry::parse(SgAsmJvmConstantPool* pool)
 {
-  mlog[INFO] << "SgAsmJvmInnerClassesEntry::parse() ...\n";
+  mlog[WARN] << "Parsing of SgAsmJvmInnerClassesEntry is not implemented yet\n";
   return this;
 }
 
@@ -381,56 +550,105 @@ void SgAsmJvmInnerClassesEntry::dump(FILE*f, const char* prefix, ssize_t idx) co
   mlog[INFO] << "SgAsmJvmInnerClassesEntry::dump() is not implemented yet\n";
 }
 
-SgAsmJvmInnerClasses::SgAsmJvmInnerClasses(SgAsmJvmAttribute* parent)
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// 4.7.7 The EnclosingMethod Attribute. EnclosingMethod_attribute represented by the TODO.
+//
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// 4.7.8 The Synthetic Attribute. Synthetic_attribute represented by the TODO.
+//
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// 4.7.9 The Signature Attribute. Signature_attribute represented by the SgAsmJvmSignature class.
+//
+SgAsmJvmSignature::SgAsmJvmSignature(SgAsmJvmAttributeTable* parent)
 {
-  mlog[INFO] << "SgAsmJvmInnerClasses::ctor() ...\n";
   initializeProperties();
+  set_parent(parent);
 }
 
-SgAsmJvmInnerClasses* SgAsmJvmInnerClasses::parse(SgAsmJvmConstantPool* pool)
+SgAsmJvmAttribute* SgAsmJvmSignature::parse(SgAsmJvmConstantPool* pool)
 {
-  mlog[INFO] << "SgAsmJvmInnerClasses::parse() ...\n";
-  mlog[INFO] << "SgAsmJvmInnerClasses::parse() exit ... \n";
-
+  SgAsmJvmAttribute::parse(pool);
+  mlog[WARN] << "Parsing of SgAsmJvmSignature attribute is not implemented yet\n";
   return this;
 }
 
-void SgAsmJvmInnerClasses::unparse(std::ostream& os) const
+void SgAsmJvmSignature::unparse(std::ostream& os) const
 {
-  mlog[WARN] << "Unparsing of SgAsmJvmInnerClasses is not implemented yet\n";
+  mlog[WARN] << "Unparsing of SgAsmJvmSignature attribute is not implemented yet\n";
 }
 
-void SgAsmJvmInnerClasses::dump(FILE*f, const char* prefix, ssize_t idx) const
+void SgAsmJvmSignature::dump(FILE*f, const char* prefix, ssize_t idx) const
 {
-  mlog[INFO] << "SgAsmJvmInnerClasses::dump() ...\n";
+  SgAsmJvmAttribute::dump(f, prefix, idx);
+  mlog[WARN] << "dump of SgAsmJvmSignature is not implemented yet\n";
+  //fprintf(f, "SgAsmJvmSignature::dump\n");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-// SgAsmJvmLineNumberTable attribute node (LineNumberTable_attribute from the Jvm specification (4.7.12)
+// 4.7.10 The SourceFile Attribute. SourceFile_attribute represented by the SgAsmJvmSourceFile class.
 //
-SgAsmJvmLineNumberTable::SgAsmJvmLineNumberTable(SgAsmJvmAttribute* parent)
+SgAsmJvmSourceFile::SgAsmJvmSourceFile(SgAsmJvmAttributeTable* parent)
 {
-  mlog[INFO] << "\nSgAsmJvmLineNumberTable::ctor() ...\n";
+  initializeProperties();
+  set_parent(parent);
+}
+
+SgAsmJvmAttribute* SgAsmJvmSourceFile::parse(SgAsmJvmConstantPool* pool)
+{
+  SgAsmJvmAttribute::parse(pool);
+  Jvm::read_value(pool, p_sourcefile_index);
+  return this;
+}
+
+void SgAsmJvmSourceFile::unparse(std::ostream& os) const
+{
+  SgAsmJvmAttribute::unparse(os);
+
+  auto index = p_sourcefile_index;
+  hostToBe(index, &index);
+  os.write(reinterpret_cast<const char*>(&index), sizeof index);
+}
+
+void SgAsmJvmSourceFile::dump(FILE*f, const char* prefix, ssize_t idx) const
+{
+  SgAsmJvmAttribute::dump(f, prefix, idx);
+  fprintf(f, "SgAsmJvmSourceFile::dump():%d\n", p_sourcefile_index);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// 4.7.11 The SourceDebugExtension Attribute. SourceDebugExtension_attribute represented by the TODO.
+//
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// 4.7.12 The LineNumberTable Attribute.  LineNumberTable_attribute represented by the SgAsmJvmLineNumberTable class.
+//
+SgAsmJvmLineNumberTable::SgAsmJvmLineNumberTable(SgAsmJvmAttributeTable* parent)
+{
   initializeProperties();
   set_parent(parent);
 }
 
 SgAsmJvmLineNumberTable* SgAsmJvmLineNumberTable::parse(SgAsmJvmConstantPool* pool)
 {
-  uint16_t line_number_table_length;
+  uint16_t length;
   ASSERT_not_null(get_parent());
 
   SgAsmJvmAttribute::parse(pool);
-  Jvm::read_value(pool, line_number_table_length);
+  Jvm::read_value(pool, length);
 
-  auto line_number_table = get_line_number_table();
-  for (int ii = 0; ii < line_number_table_length; ii++) {
+  for (int ii = 0; ii < length; ii++) {
     auto entry = new SgAsmJvmLineNumberEntry(this);
     entry->parse(pool);
-    line_number_table.push_back(entry);
+    get_line_number_table().push_back(entry);
   }
-
   return this;
 }
 
@@ -480,9 +698,83 @@ void SgAsmJvmLineNumberEntry::dump(FILE*f, const char* prefix, ssize_t idx) cons
   fprintf(f, "%s:%ld: start_pc:%d line_number:%d\n", prefix, idx, p_start_pc, p_line_number);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// 4.7.13 The LocalVariableTable Attribute. LocalVariableTable_attribute represented by the TODO class.
+//
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// 4.7.14 The LocalVariableTypeTable Attribute. LocalVariableTypeTable_attribute represented by the TODO class.
+//
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// 4.7.15 The Deprecated Attribute. Deprecated_attribute represented by the TODO class.
+//
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// 4.7.16 The RuntimeVisibleAnnotations Attribute. RuntimeVisibleAnnotations_attribute represented by the TODO class.
+//
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// 4.7.17 The RuntimeInvisibleAnnotations Attribute. RuntimeInvisibleAnnotations_attribute represented by the TODO class.
+//
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// 4.7.18 The RuntimeVisibleParameterAnnotations Attribute. RuntimeVisibleParameterAnnotations_attribute represented by the TODO class.
+//
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// 4.7.19 The RuntimeInvisibleParameterAnnotations Attribute. RuntimeInvisibleParameterAnnotations_attribute represented by the TODO class.
+//
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// 4.7.20 The RuntimeVisibleTypeAnnotations Attribute. RuntimeVisibleTypeAnnotations_attribute represented by the TODO class.
+//
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// 4.7.21 The RuntimeInvisibleTypeAnnotations Attribute. RuntimeInvisibleTypeAnnotations_attribute represented by the TODO class.
+//
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// 4.7.22 The AnnotationDefault Attribute. AnnotationDefault_attribute represented by the TODO class.
+//
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// 4.7.23 The BootstrapMethods Attribute. BootstrapMethods_attribute represented by the TODO class.
+//
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// 4.7.24 The MethodParameters Attribute. MethodParameters_attribute represented by the TODO class.
+//
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// 4.7.25 The Module Attribute. Module_attribute represented by the TODO class.
+//
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// 4.7.26 The ModulePackages Attribute. ModulePackages_attribute represented by the TODO class.
+//
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// 4.7.27 The ModuleMainClass Attribute. ModuleMainClass_attribute represented by the SgAsmJvmModuleMainClass class.
+//
 SgAsmJvmAttribute* SgAsmJvmModuleMainClass::parse(SgAsmJvmConstantPool* pool)
 {
-  ROSE_ASSERT(false && "SgAsmJvmModuleMainClass::parse()");
+  mlog[WARN] << "Parsing of SgAsmJvmModuleMainClass is not implemented yet\n";
   return nullptr;
 }
 
@@ -493,7 +785,27 @@ void SgAsmJvmModuleMainClass::unparse(std::ostream& os) const
 
 void SgAsmJvmModuleMainClass::dump(FILE* f, const char *prefix, ssize_t idx) const
 {
-  ROSE_ASSERT(false && "SgAsmJvmModuleMainClass::dump()");
+  mlog[WARN] << "dump (of SgAsmJvmModuleMainClass) is not implemented yet\n";
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// 4.7.28 The NestHost Attribute. NestHost_attribute represented by the TODO class.
+//
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// 4.7.29 The NestMembers Attribute. NestMembers_attribute represented by the TODO class.
+//
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// 4.7.30 The Record Attribute. Record_attribute represented by the TODO class.
+//
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// 4.7.31 The PermittedSubclasses Attribute. PermittedSubclasses_attribute represented by the TODO class.
+//
 
 #endif // ROSE_ENABLE_BINARY_ANALYSIS

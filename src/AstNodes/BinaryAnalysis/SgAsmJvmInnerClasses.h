@@ -12,15 +12,15 @@ public:
     /** Initialize the InnerClasses attribute before parsing.
      *
      *  This is the preferred constructor to use before parsing.  It shall set its parent. */
-    explicit SgAsmJvmInnerClasses(SgAsmJvmAttribute*);
+    explicit SgAsmJvmInnerClasses(SgAsmJvmAttributeTable* table);
 
     /** Parses a JVM innerclasses attribute.
      *
-     *  Parses a JVM innerclasses attribute and constructs and parses all innerclasses entries reachable from the table. Returns a
-     *  pointer to this object. */
+     *  Parses a JVM innerclasses attribute and constructs and parses all innerclasses
+     * entries reachable from the table. Returns a pointer to this object. */
     SgAsmJvmInnerClasses* parse(SgAsmJvmConstantPool*) override;
 
-    /** Write inner classes to a binary file. */
+    /** Write the InnerClasses attribute to a binary file. */
     virtual void unparse(std::ostream&) const override;
 
     /** Print some debugging information. */

@@ -60,44 +60,18 @@ SgAsmJvmStackMapFrame::set_offset_delta(uint16_t const& x) {
     set_isModified(true);
 }
 
-uint16_t const&
-SgAsmJvmStackMapFrame::get_number_of_locals() const {
-    return p_number_of_locals;
-}
-
-void
-SgAsmJvmStackMapFrame::set_number_of_locals(uint16_t const& x) {
-    this->p_number_of_locals = x;
-    set_isModified(true);
-}
-
-uint16_t const&
-SgAsmJvmStackMapFrame::get_number_of_stack_items() const {
-    return p_number_of_stack_items;
-}
-
-void
-SgAsmJvmStackMapFrame::set_number_of_stack_items(uint16_t const& x) {
-    this->p_number_of_stack_items = x;
-    set_isModified(true);
-}
-
 SgAsmJvmStackMapFrame::~SgAsmJvmStackMapFrame() {
     destructorHelper();
 }
 
 SgAsmJvmStackMapFrame::SgAsmJvmStackMapFrame()
     : p_frame_type(0)
-    , p_offset_delta(0)
-    , p_number_of_locals(0)
-    , p_number_of_stack_items(0) {}
+    , p_offset_delta(0) {}
 
 void
 SgAsmJvmStackMapFrame::initializeProperties() {
     p_frame_type = 0;
     p_offset_delta = 0;
-    p_number_of_locals = 0;
-    p_number_of_stack_items = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

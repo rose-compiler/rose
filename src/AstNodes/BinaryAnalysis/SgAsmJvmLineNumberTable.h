@@ -14,7 +14,7 @@ public:
     /** Initialize the LineNumberTable attribute before parsing.
      *
      *  This is the preferred constructor to use before parsing.  It shall set its parent. */
-    explicit SgAsmJvmLineNumberTable(SgAsmJvmAttribute*);
+    explicit SgAsmJvmLineNumberTable(SgAsmJvmAttributeTable* table);
 
     /** Initialize the attribute by parsing the file. */
     virtual SgAsmJvmLineNumberTable* parse(SgAsmJvmConstantPool* pool) override;

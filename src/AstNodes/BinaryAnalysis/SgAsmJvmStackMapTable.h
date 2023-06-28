@@ -16,11 +16,13 @@ private:
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Initialize a stack map table by parsing the file.
-     *
-     * @{ */
-    SgAsmJvmStackMapTable* parse();
-    /** @} */
+    /**
+     * Initialize the object before parsing. This is the preferred constructor
+     * as it sets the parent. */
+    explicit SgAsmJvmStackMapTable(SgAsmJvmAttributeTable* table);
+
+    /** Initialize the object by parsing content from the class file. */
+    virtual SgAsmJvmStackMapTable* parse(SgAsmJvmConstantPool* pool) override;
 
     /** Write stack map table to a binary file */
     virtual void unparse(std::ostream&) const override;
