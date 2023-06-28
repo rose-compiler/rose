@@ -16,10 +16,10 @@ class SgAsmJvmAttribute: public SgAsmJvmNode {
 
 public:
     /** Factory method returning a derived class instance. */
-    static SgAsmJvmAttribute* instance(SgAsmJvmConstantPool*);
+    static SgAsmJvmAttribute* instance(SgAsmJvmConstantPool* pool, SgAsmJvmAttributeTable* parent);
 
     /** Initialize an attribute by parsing the file. */
-    virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool*);
+    virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool* pool);
 
     /** Write attribute to a binary file. */
     virtual void unparse(std::ostream&) const override;

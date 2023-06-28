@@ -9,6 +9,11 @@ class SgAsmJvmSourceFile: public SgAsmJvmAttribute {
     uint16_t sourcefile_index = 0;
 
 public:
+    /**
+     * Initialize the object before parsing. This is the preferred constructor
+     * as it sets the parent. */
+    explicit SgAsmJvmSourceFile(SgAsmJvmAttributeTable* table);
+
     /** Initialize the attribute by parsing the file. */
     virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool* pool) override;
 

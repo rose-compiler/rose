@@ -9,7 +9,9 @@ class SgAsmJvmAttributeTable: public SgAsmGenericSection {
     SgAsmJvmAttributePtrList attributes;
 
 public:
-    /** Initialize the attribute table before parsing. */
+    /** Initialize the attribute table before parsing.
+     *
+     *  This is the preferred constructor to use before parsing.  It shall set its parent. */
     explicit SgAsmJvmAttributeTable(SgAsmJvmFileHeader*, SgAsmNode*);
 
     /** Parses a JVM attribute table.

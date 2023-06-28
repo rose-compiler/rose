@@ -10,6 +10,11 @@ class SgAsmJvmModuleMainClass: public SgAsmJvmAttribute {
     uint16_t main_class_index = 0;
 
 public:
+    /** Initialize the object before parsing.
+     *
+     *  This is the preferred constructor to use before parsing.  It shall set its parent. */
+    explicit SgAsmJvmModuleMainClass(SgAsmJvmExceptionTable* table);
+
     /** Initialize the attribute by parsing the file. */
     virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool* pool) override;
 

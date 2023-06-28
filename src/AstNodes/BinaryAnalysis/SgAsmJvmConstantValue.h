@@ -10,6 +10,11 @@ class SgAsmJvmConstantValue: public SgAsmJvmAttribute {
     uint16_t constantvalue_index = 0;
 
 public:
+    /** Initialize the object before parsing.
+     *
+     *  This is the preferred constructor to use before parsing.  It shall set its parent. */
+    explicit SgAsmJvmConstantValue(SgAsmJvmAttributeTable* table);
+
     /** Initialize the attribute by parsing the file. */
     virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool* pool) override;
 

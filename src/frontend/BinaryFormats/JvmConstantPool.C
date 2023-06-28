@@ -340,8 +340,6 @@ SgAsmJvmConstantPool* SgAsmJvmConstantPool::parse()
 // Write section back to a binary file
 void SgAsmJvmConstantPool::unparse(std::ostream& os) const
 {
-  mlog[WARN] << "Unparsing of SgAsmJvmConstantPool is not implemented yet\n";
-
   uint16_t count = get_entries().size() + 1; // constant_pool_count = #entries + 1
   hostToBe(count, &count);
   os.write(reinterpret_cast<const char*>(&count), sizeof count);

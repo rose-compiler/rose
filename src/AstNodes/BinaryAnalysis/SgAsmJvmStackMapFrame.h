@@ -79,27 +79,17 @@ private:
     [[using Rosebud: rosetta]]
     uint16_t offset_delta = 0;
 
-    /** Property: number_of_locals
-     *
-     *  See the JVM specification. */
-    [[using Rosebud: rosetta]]
-    uint16_t number_of_locals = 0;
-
-    /** Property: number_of_stack_items
-     *
-     *  See the JVM specification. */
-    [[using Rosebud: rosetta]]
-    uint16_t number_of_stack_items = 0;
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Initialize a stack map table frame by parsing the file.
-     *
-     * @{ */
-    SgAsmJvmStackMapFrame* parse();
-    /** @} */
+    /**
+     * Initialize the object before parsing. This is the preferred constructor
+     * as it sets the parent. */
+    explicit SgAsmJvmStackMapFrame(SgAsmJvmStackMapTable* table);
+
+    /** Initialize the object by parsing content from the class file. */
+    SgAsmJvmStackMapFrame* parse(SgAsmJvmConstantPool* pool);
 
     /** Write the stack map table frame to a binary file */
     virtual void unparse(std::ostream&) const override;

@@ -34,7 +34,7 @@ class SgAsmJvmException: public SgAsmJvmNode {
     /** Initialize the object before parsing.
      *
      *  This is the preferred constructor to use before parsing.  It shall set its parent. */
-    explicit SgAsmJvmException(SgAsmJvmExceptionTable*);
+    explicit SgAsmJvmException(SgAsmJvmExceptionTable* table);
 
     /** Initialize the object by parsing content from the class file. */
     SgAsmJvmException* parse(SgAsmJvmConstantPool*);
