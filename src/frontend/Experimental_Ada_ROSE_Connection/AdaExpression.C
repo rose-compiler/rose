@@ -1800,10 +1800,8 @@ getExpr(Element_Struct& elem, AstContext ctx, OperatorCallSupplement suppl)
     case An_Extension_Aggregate:                    // 4.3
       {
         SgExprListExp* explst = isSgExprListExp(res);
-        ADA_ASSERT(explst);
 
-        res = sb::buildAggregateInitializer(explst);
-        ADA_ASSERT(explst->get_parent());
+        res = &mkAggregateInitializer(SG_DEREF(explst));
         attachSourceLocation(SG_DEREF(res), elem, ctx);
         break;
       }

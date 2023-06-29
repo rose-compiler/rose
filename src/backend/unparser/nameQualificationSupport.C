@@ -1488,16 +1488,13 @@ namespace
 
       void handle(const SgVarRefExp& n)
       {
+        //~ if (!isSgDotExp(n.get_parent()) && !SageInterface::Ada::isFieldReference(n))
         if (!elideNameQualification(n))
           recordNameQualIfNeeded(n, declOf(n).get_scope());
       }
 
       void handle(const SgEnumVal& n)
       {
-        // \todo can an enum be elided?
-        //       gets the scope of the enumeration declaration, not the initialized name
-        //~ if (!elideNameQualification(n))
-
         recordNameQualIfNeeded(n, SG_DEREF(n.get_declaration()).get_scope());
       }
 
@@ -1556,8 +1553,15 @@ namespace
 
       void handle(const SgDesignatedInitializer& n)
       {
-        // suppress on fields but not enumval
-        suppressNameQualification(n.get_designatorList());
+        // SgDesignatedInitializer -> SgExprListExp -> SgAggregateInitializer
+        const SgAggregateInitializer* parentinit = sg::ancestor_path<SgExprListExp, SgAggregateInitializer>(n);
+        const bool                    suppressNameQual = (  !parentinit
+                                                         || si::Ada::getArrayTypeInfo(parentinit->get_type()).type() == nullptr
+                                                         );
+
+        // suppress on fields but not enumval or variables
+        if (suppressNameQual)
+          suppressNameQualification(n.get_designatorList());
       }
 
       void handle(const SgNewExp& n)
