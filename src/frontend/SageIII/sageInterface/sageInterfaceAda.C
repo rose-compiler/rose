@@ -2181,7 +2181,6 @@ namespace Ada
     return std::distance(beg, pos);
   }
 
-
   void conversionTraversal(std::function<void(SgNode*)>&& fn, SgNode* root)
   {
     ROSE_ASSERT(root);

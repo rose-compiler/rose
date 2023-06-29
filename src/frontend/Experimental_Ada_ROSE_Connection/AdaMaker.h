@@ -767,6 +767,14 @@ namespace Ada_ROSE_Translation
   SgAdaAncestorInitializer&
   mkAdaAncestorInitializer(SgExpression& par);
 
+  /// creates an aggregate initializer for arrays and records
+  SgAggregateInitializer&
+  mkAggregateInitializer(SgExprListExp& components, SgType& resultType = mkTypeUnknown());
+
+  /// creates an assign initializer
+  SgAssignInitializer&
+  mkAssignInitializer(SgExpression& val, SgType& resultType);
+
   /// creates an expression for an unresolved name (e.g., imported names)
   /// \note unresolved names are an indication for an incomplete AST
   /// \todo remove this function, once translation is complete

@@ -1542,9 +1542,17 @@ namespace
       {}
 
       void handle(SgNode& n)        { SG_UNEXPECTED_NODE(n); }
-      void handle(SgExpression& n)  { res = &mkLocatedNode<SgAssignInitializer>(&n, vartype); }
-      void handle(SgInitializer& n) { res = &n; /* can this happen? */ }
-      void handle(SgExprListExp& n) { res = sb::buildAggregateInitializer(&n); }
+      void handle(SgExpression& n)  { res = &mkAssignInitializer(n, *vartype); }
+      void handle(SgExprListExp& n) { res = &mkAggregateInitializer(n, *vartype); }
+      void handle(SgInitializer& n) { res = &n; }
+
+      void handle(SgAggregateInitializer& n)
+      {
+        // \todo recursively set aggregate initializer types in subtrees
+        //       according to straucture of vartype.
+        n.set_expression_type(vartype);
+        res = &n;
+      }
 
     private:
       SgType* vartype;
@@ -1807,6 +1815,26 @@ mkAdaAncestorInitializer(SgExpression& par)
   SgAdaAncestorInitializer& sgnode = mkLocatedNode<SgAdaAncestorInitializer>(&par);
 
   par.set_parent(&sgnode);
+  return sgnode;
+}
+
+SgAggregateInitializer&
+mkAggregateInitializer(SgExprListExp& components, SgType& resultType)
+{
+  // return mkLocatedNode<SgAssignInitializer>(&components, &resultType);
+  SgAggregateInitializer& sgnode = SG_DEREF( sb::buildAggregateInitializer_nfi(&components, &resultType) );
+
+  ADA_ASSERT(components.get_parent() == &sgnode);
+  return sgnode;
+}
+
+SgAssignInitializer&
+mkAssignInitializer(SgExpression& val, SgType& resultType)
+{
+  // return mkLocatedNode<SgAssignInitializer>(&val, &resultType);
+  SgAssignInitializer& sgnode = SG_DEREF( sb::buildAssignInitializer_nfi(&val, &resultType) );
+
+  ADA_ASSERT(val.get_parent() == &sgnode);
   return sgnode;
 }
 

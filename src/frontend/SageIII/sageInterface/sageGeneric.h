@@ -1370,33 +1370,36 @@ namespace sg
     return *res;
   }
 
-/// \private
-  template <class SageNode>
-  struct TypeRecoveryHandler
+  namespace
   {
-      typedef typename ConstLike<SageNode, SgNode>::type SgBaseNode;
+/// \private
+    template <class SageNode>
+    struct TypeRecoveryHandler
+    {
+        typedef typename ConstLike<SageNode, SgNode>::type SgBaseNode;
 
-      TypeRecoveryHandler(const char* f = 0, size_t ln = 0)
-      : res(NULL), loc(f), loc_ln(ln)
-      {}
+        TypeRecoveryHandler(const char* f = 0, size_t ln = 0)
+        : res(NULL), loc(f), loc_ln(ln)
+        {}
 
-      TypeRecoveryHandler(TypeRecoveryHandler&&)            = default;
-      TypeRecoveryHandler& operator=(TypeRecoveryHandler&&) = default;
+        TypeRecoveryHandler(TypeRecoveryHandler&&)            = default;
+        TypeRecoveryHandler& operator=(TypeRecoveryHandler&&) = default;
 
-      operator SageNode* ()&& { return res; }
+        operator SageNode* ()&& { return res; }
 
-      void handle(SgBaseNode& n) { unexpected_node(n, loc, loc_ln); }
-      void handle(SageNode& n)   { res = &n; }
+        void handle(SgBaseNode& n) { unexpected_node(n, loc, loc_ln); }
+        void handle(SageNode& n)   { res = &n; }
 
-    private:
-      SageNode*   res;
-      const char* loc;
-      size_t      loc_ln;
+      private:
+        SageNode*   res;
+        const char* loc;
+        size_t      loc_ln;
 
-      TypeRecoveryHandler()                                      = delete;
-      TypeRecoveryHandler(const TypeRecoveryHandler&)            = delete;
-      TypeRecoveryHandler& operator=(const TypeRecoveryHandler&) = delete;
-  };
+        TypeRecoveryHandler()                                      = delete;
+        TypeRecoveryHandler(const TypeRecoveryHandler&)            = delete;
+        TypeRecoveryHandler& operator=(const TypeRecoveryHandler&) = delete;
+    };
+  }
 
 
 /// \brief   asserts that n has type SageNode
@@ -1431,6 +1434,28 @@ namespace sg
     return *sg::dispatch(TypeRecoveryHandler<const SageNode>(f, ln), &n);
   }
 /// @}
+
+  template <class SageNode>
+  struct TypeRecovery : DispatchHandler<SageNode*>
+  {
+    void handle(SgNode&)     { /* res = nullptr; */ }
+    void handle(SageNode& n) { this->res = &n; }
+  };
+
+  template <class SageNode>
+  auto ancestor_path(const SgNode& n) -> SageNode*
+  {
+    return sg::dispatch(TypeRecovery<SageNode>{}, n.get_parent());
+  }
+
+  template <class SageNode, class... SageNodes>
+  auto ancestor_path(const SgNode& n) -> decltype(ancestor_path<SageNodes...>(n))
+  {
+    if (SageNode* parent = ancestor_path<SageNode>(n))
+      return ancestor_path<SageNodes...>(*parent);
+
+    return nullptr;
+  }
 
 /// \brief swaps the parent pointer of two nodes
 /// \note  internal use
