@@ -31,6 +31,9 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
   else if (name == "StackMapTable") { // 4.7.3
     return new SgAsmJvmStackMapTable(parent);
   }
+  else if (name == "Signature") { // 4.7.9
+    return new SgAsmJvmSignature(parent);
+  }
   else if (name == "SourceFile") { // 4.7.10
     return new SgAsmJvmSourceFile(parent);
   }
@@ -573,20 +576,23 @@ SgAsmJvmSignature::SgAsmJvmSignature(SgAsmJvmAttributeTable* parent)
 SgAsmJvmAttribute* SgAsmJvmSignature::parse(SgAsmJvmConstantPool* pool)
 {
   SgAsmJvmAttribute::parse(pool);
-  mlog[WARN] << "Parsing of SgAsmJvmSignature attribute is not implemented yet\n";
+  Jvm::read_value(pool, p_signature_index);
   return this;
 }
 
 void SgAsmJvmSignature::unparse(std::ostream& os) const
 {
-  mlog[WARN] << "Unparsing of SgAsmJvmSignature attribute is not implemented yet\n";
+  SgAsmJvmAttribute::unparse(os);
+
+  auto index = p_signature_index;
+  hostToBe(index, &index);
+  os.write(reinterpret_cast<const char*>(&index), sizeof index);
 }
 
 void SgAsmJvmSignature::dump(FILE*f, const char* prefix, ssize_t idx) const
 {
   SgAsmJvmAttribute::dump(f, prefix, idx);
-  mlog[WARN] << "dump of SgAsmJvmSignature is not implemented yet\n";
-  //fprintf(f, "SgAsmJvmSignature::dump\n");
+  fprintf(f, "%s    signature_index:%d\n", prefix, p_signature_index);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

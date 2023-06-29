@@ -226,7 +226,7 @@ void PoolEntry::unparse(std::ostream& os) const
     }
     case PoolEntry::CONSTANT_Fieldref: // 4.4.3 CONSTANT_Fieldref_info table entry
     case PoolEntry::CONSTANT_Methodref: // 4.4.3 CONSTANT_Methodref_info table entry
-    case PoolEntry::CONSTANT_InterfaceMethodref: { // 4.4.3 CONSTANT_InterfeceMethodref_info table entry
+    case PoolEntry::CONSTANT_InterfaceMethodref: { // 4.4.3 CONSTANT_InterfaceMethodref_info table entry
       auto class_index = p_class_index;
       auto name_and_type_index = p_name_and_type_index;
       hostToBe(p_class_index, &class_index);
@@ -333,7 +333,6 @@ SgAsmJvmConstantPool* SgAsmJvmConstantPool::parse()
       ii += 1;
     }
   }
-
   return this;
 }
 
