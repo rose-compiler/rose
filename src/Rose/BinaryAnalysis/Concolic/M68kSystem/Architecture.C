@@ -142,14 +142,25 @@ Architecture::load(const boost::filesystem::path &tempDirectory) {
     if (qemuExe.empty())
         mlog[ERROR] <<"cannot find qemu-system-m68k in your executable search path ($PATH)\n";
 
-#if 1
     std::vector<std::string> args;
     args.push_back(qemuExe.string());
+
+    // QEMU args specific to the CPU
+    args.push_back("-cpu");
+    args.push_back("cfv4e");
+    args.push_back("-machine");
+    args.push_back("an5206");
+    args.push_back("-m");
+    args.push_back("4096");
+
+    // General QEMU args
     args.push_back("-display");
     args.push_back("none");
     args.push_back("-s");
     args.push_back("-S");
     args.push_back("-no-reboot");
+
+    // Args to load the specimen
     args.push_back("-kernel");
     args.push_back(exeName.string());
     if (const auto entryVa = entryAddress()) {
@@ -165,14 +176,8 @@ Architecture::load(const boost::filesystem::path &tempDirectory) {
         debug <<"\n";
     }
     qemu_ = boost::process::child(args);
-#else
-    qemu_ = boost::process::child(qemuExe,
-                                  "-display", "none",
-                                  "-s", "-S",
-                                  "-no-reboot",
-                                  "-kernel", exeName.string());
-#endif
 
+    // Start the debugger and attach it to the GDB server in QEMU
     debugger(Debugger::Gdb::instance(Debugger::Gdb::Specimen(exeName, "localhost", 1234)));
     ASSERT_forbid(debugger()->isTerminated());
 }
