@@ -262,6 +262,9 @@ public:
 
     /** The concrete half of processInstruction. */
     void processConcreteInstruction(SgAsmInstruction*);
+
+    /** Register dictionary from the inner dispatcher. */
+    RegisterDictionaryPtr registerDictionary() const;
 };
 
 } // namespace
