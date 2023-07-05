@@ -21,7 +21,7 @@ sRecordsToMemory(const std::string &input) {
 
     // Create a memory map
     MemoryMap::Ptr map = MemoryMap::instance();
-    SRecord::load(srecs, map);
+    SRecord::load(srecs, map, 1, MemoryMap::READ_WRITE_EXECUTE, "S-Records", MemoryMap::Clobber::YES);
     return map;
 }
 
