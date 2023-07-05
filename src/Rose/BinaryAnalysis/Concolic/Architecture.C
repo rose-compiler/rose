@@ -624,7 +624,10 @@ Architecture::readMemoryUnsigned(rose_addr_t va, size_t nBytes) {
     ASSERT_forbid(isFactory());
     ASSERT_require(nBytes >= 1 && nBytes <= 8);
     std::vector<uint8_t> bytes = readMemory(va, nBytes);
-    ASSERT_require(bytes.size() == nBytes);
+    ASSERT_require2(bytes.size() == nBytes,
+                    "va=" + StringUtility::addrToString(va) +
+                    ", requested=" + boost::lexical_cast<std::string>(nBytes) +
+                    ", read_size=" + boost::lexical_cast<std::string>(bytes.size()));
     uint64_t retval = 0;
     switch (memoryByteOrder()) {
         case ByteOrder::ORDER_LSB:
