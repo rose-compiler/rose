@@ -1209,6 +1209,55 @@ MemoryMap::shrinkUnshare() {
     return success;
 }
 
+static AddressInterval
+alignInterval(const AddressInterval &src, rose_addr_t loAlignment, rose_addr_t hiAlignment) {
+    if (src.greatest() >= AddressInterval::whole().greatest()) {
+        return AddressInterval::hull(Rose::BinaryAnalysis::alignDown(src.least(), loAlignment), src.greatest());
+    } else {
+        return AddressInterval::hull(Rose::BinaryAnalysis::alignDown(src.least(), loAlignment),
+                                     Rose::BinaryAnalysis::alignUp(src.greatest()+1, hiAlignment) - 1);
+    }
+}
+
+MemoryMap::Ptr
+MemoryMap::align(rose_addr_t loAlignment, rose_addr_t hiAlignment) const {
+    loAlignment = std::max(loAlignment, (rose_addr_t)1);
+    hiAlignment = std::max(hiAlignment, (rose_addr_t)1);
+    auto retval = MemoryMap::instance();
+    retval->byteOrder(byteOrder());
+
+    auto srcNode = nodes().begin();
+    while (srcNode != nodes().end()) {
+
+        // Take the current source segment. Also take all subsequent source segments that when aligned overlap with what we have so
+        // far.
+        AddressInterval dstAligned = alignInterval(srcNode->key(), loAlignment, hiAlignment);
+        const std::string name = srcNode->value().name();
+        unsigned perms = srcNode->value().accessibility();
+        for (++srcNode; srcNode != nodes().end(); ++srcNode) {
+            const AddressInterval srcAligned = alignInterval(srcNode->key(), loAlignment, hiAlignment);
+            if (dstAligned.intersection(srcAligned)) {
+                perms |= srcNode->value().accessibility();
+            } else {
+                break;
+            }
+        }
+
+        retval->insert(dstAligned, Segment::anonymousInstance(dstAligned.size(), perms, name));
+    }
+
+    // Now that the destination map has been created, copy data from source to destination.
+    for (const auto &interval: intervals()) {
+        std::vector<uint8_t> buf(interval.size(), 0);
+        const AddressInterval readAt = at(interval).read(buf);
+        ASSERT_always_require(readAt == interval);
+        const AddressInterval writeAt = retval->at(interval).write(buf);
+        ASSERT_always_require(writeAt == interval);
+    }
+
+    return retval;
+}
+
 Combinatorics::Hasher&
 MemoryMap::hash(Combinatorics::Hasher &hasher) const {
     uint8_t buffer[4096];                               // arbitrary size
