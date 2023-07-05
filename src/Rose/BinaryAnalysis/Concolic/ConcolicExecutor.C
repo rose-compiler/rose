@@ -549,7 +549,7 @@ ConcolicExecutor::run() {
                 error <<e.what() <<", occurred at:\n";
                 printCallStack(error);
                 error <<"  insn " <<partitioner()->unparse(insn) <<"\n";
-                error <<"machine state at time of error:\n" <<(*ops->currentState()+"  ");
+                error <<"register state at time of error:\n" <<(*ops->currentState()->registerState()+"  ");
             }
 // TEMPORARILY COMMENTED OUT FOR DEBUGGING [Robb Matzke 2020-07-13]. This exception is thrown when we get an address wrong,
 // like for "mov eax, gs:[16]", and the debugger is reporting that the memory cannot be read.  We should probably be using
