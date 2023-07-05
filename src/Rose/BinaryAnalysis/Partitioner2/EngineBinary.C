@@ -1347,7 +1347,7 @@ EngineBinary::loadNonContainers(const std::vector<std::string> &fileNames) {
                 if (!srecs[i].error().empty())
                     mlog[ERROR] <<resource <<":" <<(i+1) <<": S-Record: " <<srecs[i].error() <<"\n";
             }
-            SRecord::load(srecs, map, true /*create*/, perms);
+            SRecord::load(srecs, map, 1, perms, resource, MemoryMap::Clobber::NO);
         } else if (boost::starts_with(fileName, "vxcore:")) {
             // format is "vxcore:[MEMORY_ATTRS]:[FILE_ATTRS]:FILE_NAME
             loadVxCore(fileName.substr(7));             // the part after "vxcore:"
