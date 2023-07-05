@@ -482,6 +482,18 @@ public:
     AddressIntervalSet linkTo(const MemoryMap::Ptr &source, const AddressInterval &where, Clobber = Clobber::YES);
     /** @} */
 
+    /** Create a new map by padding and aligning segments.
+     *
+     *  A new map is created by padding the segments of this map so they're aligned in the returned map. Data is copied (not linked)
+     *  from this map to the new map. After alignment and padding, it's possible that more than one segment from the source maps to
+     *  a single segment in the destination. When this happens, the destination segment's name comes from the first corresponding
+     *  source segment, and the destination access permissions are the union of all the corresponding source segment access
+     *  permissions.
+     *
+     *  A low or high aligment of zero is treated as an alignment of one; that is, the endpoint is not aligned. Higher values will
+     *  cause segment beginning address to be aligned downward, and segment one-past-end addresses to be aligned upward. */
+    MemoryMap::Ptr align(rose_addr_t lowAlignment, rose_addr_t highAlignment) const;
+
     /** Copy part of a file into a buffer.
      *
      *  This copies (rather than directly references) part of a file and returns a pointer to a new buffer containing the data.
