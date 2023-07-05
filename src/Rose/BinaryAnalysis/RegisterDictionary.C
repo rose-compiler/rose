@@ -1353,6 +1353,7 @@ RegisterDictionary::instanceM68000() {
         regs->insert("fpcr_bsun",  m68k_regclass_spr, m68k_spr_fpcr, 15,  1);   // branch/set on unordered
 
         // Floating point status registers
+        regs->insert("fpstatus",   m68k_regclass_spr, m68k_spr_fpsr,  0, 32);   // GDB's name for "fpsr"
         regs->insert("fpsr",       m68k_regclass_spr, m68k_spr_fpsr,  0, 32);   // floating-point status register
         regs->insert("fpsr_aexc",  m68k_regclass_spr, m68k_spr_fpsr,  0,  8);   // accrued exception status
         regs->insert("aexc_inex",  m68k_regclass_spr, m68k_spr_fpsr,  3,  1);   // inexact
@@ -1377,7 +1378,8 @@ RegisterDictionary::instanceM68000() {
         regs->insert("fpcc_n",     m68k_regclass_spr, m68k_spr_fpsr, 26,  1);   // negative
 
         // Other floating point registers
-        regs->insert("fpiar", m68k_regclass_spr,   m68k_spr_fpiar,   0, 32);    // floating-point instruction address reg
+        regs->insert("fpaddr",     m68k_regclass_spr, m68k_spr_fpiar, 0, 32);   // GDB's name for "fpiar"
+        regs->insert("fpiar",      m68k_regclass_spr, m68k_spr_fpiar, 0, 32);   // floating-point instruction address reg
 
         // Supervisor registers (SR register is listed above since its CCR bits are available in user mode)
         regs->insert("ssp",      m68k_regclass_sup, m68k_sup_ssp,       0, 32); // supervisor A7 stack pointer
