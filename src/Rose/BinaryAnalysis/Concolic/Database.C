@@ -34,6 +34,7 @@
 
 #include <Sawyer/FileSystem.h>
 
+#include <array>
 #include <ctime>
 #include <fstream>
 
@@ -100,6 +101,15 @@ sqliteFileName(const std::string &url) {
 // Initialize the database schema
 static void
 initSchema(Sawyer::Database::Connection db) {
+
+    // SQLite has a relatively small limit for storing large `bytea` objects. This table holds a larger binary blob as a
+    // broken up sequence of parts numbered consecutively starting at zero.
+    db.run("drop table if exists blob_parts");
+    db.run("create table blob_parts ("
+           " id integer not null,"
+           " part_number integer not null,"
+           " part bytea not null)");
+
     db.run("drop table if exists test_suites");
     db.run("create table test_suites ("
            " created_ts varchar(32) not null,"
@@ -112,7 +122,7 @@ initSchema(Sawyer::Database::Connection db) {
            " created_ts varchar(32) not null,"
            " name text not null,"
            " content bytea,"                            // maybe null
-           " rba bytea,"                                // maybe null
+           " rba integer,"                              // null, or the id for a blob in the blob_parts table
            " test_suite integer not null,"
 
            " constraint fk_test_suite foreign key (test_suite) references test_suites (id))");
@@ -868,36 +878,72 @@ Database::rbaExists(SpecimenId id) {
 }
 
 void
-Database::saveRbaFile(const boost::filesystem::path &fileName, SpecimenId id) {
+Database::saveRbaFile(const boost::filesystem::path &fileName, SpecimenId specimenId) {
+    // Open the file
     std::ifstream in(fileName.string().c_str(), std::ios_base::binary);
     if (!in)
         throw Exception("cannot read file \"" + StringUtility::cEscape(fileName.string()) + "\"");
-    using Iter = std::istreambuf_iterator<char>;
-    std::vector<uint8_t> rba;
-    rba.reserve(boost::filesystem::file_size(fileName));
-    rba.assign(Iter(in), Iter());
-    connection().stmt("update specimens set rba = ?rba where id = ?id")
-        .bind("id", *id)
-        .bind("rba", rba)
+
+    // Read the file in chunks and write it to the database
+    const size_t rbaId = connection().stmt("select max(id) from blob_parts").get<size_t>().orElse(0) + 1;
+    const size_t maxPartSize = (size_t)500 * 1024 * 1024;
+    std::vector<uint8_t> part;
+    part.resize(maxPartSize);
+    for (size_t partNumber = 0; /*void*/; ++partNumber) {
+        in.read((char*)part.data(), maxPartSize);
+        const size_t nBytes = in.gcount();
+        if (0 == nBytes) {
+            break;
+        } else if (nBytes < maxPartSize) {
+            part.resize(nBytes);
+        }
+
+        connection().stmt("insert into blob_parts (id, part_number, part) values (?id, ?part_number, ?part)")
+            .bind("id", rbaId)
+            .bind("part_number", partNumber)
+            .bind("part", part)
+            .run();
+
+        if (nBytes < maxPartSize)
+            break;
+    }
+
+    // Save the RBA ID number
+    connection().stmt("update specimens set rba = ?rbaId where id = ?specimenId")
+        .bind("rbaId", rbaId)
+        .bind("specimenId", *specimenId)
         .run();
 }
 
 void
-Database::extractRbaFile(const boost::filesystem::path &fileName, SpecimenId id) {
+Database::extractRbaFile(const boost::filesystem::path &fileName, SpecimenId specimenId) {
+    // Open/create the output file
     std::ofstream out(fileName.string().c_str(), std::ios_base::binary);
     if (!out)
         throw Exception("cannot create or truncate file \"" + StringUtility::cEscape(fileName.string()) + "\"");
-    auto rba = connection().stmt("select rba from specimens where id = ?id").bind("id", *id).get<std::vector<uint8_t>>();
-    if (!rba)
-        throw Exception("no RBA data associated with specimen " + boost::lexical_cast<std::string>(*id));
-    using Iter = std::ostream_iterator<uint8_t>;
-    std::copy(rba.get().begin(), rba.get().end(), Iter(out));
+
+    // Get the RBA ID number
+    const auto rbaId = connection().stmt("select rba from specimens where id = ?id").bind("id", *specimenId).get<size_t>();
+    if (!rbaId)
+        throw Exception("no RBA data associated with specimen " + boost::lexical_cast<std::string>(*specimenId));
+
+    // Get the RBA parts from the parts table and write each one to the output.
+    auto stmt = connection().stmt("select part from blob_parts where id = ?id order by part_number").bind("id", *rbaId);
+    for (auto row: stmt) {
+        using Iter = std::ostream_iterator<uint8_t>;
+        const auto part = row.get<std::vector<uint8_t>>(0);
+        std::copy(part.get().begin(), part.get().end(), Iter(out));
+    }
 }
 
 void
 Database::eraseRba(SpecimenId id) {
     ASSERT_require(id);
-    connection().stmt("update specimens set rba = null where id = ?id").bind("id", *id).run();
+
+    if (const auto rbaId = connection().stmt("select rba from specimens where id = ?id").bind("id", *id).get<size_t>()) {
+        connection().stmt("update specimens set rba = null where id = ?id").bind("id", *id).run();
+        connection().stmt("delete from blob_parts where id = ?id").bind("id", *rbaId).run();
+    }
 }
 
 bool
