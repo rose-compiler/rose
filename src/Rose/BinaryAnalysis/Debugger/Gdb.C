@@ -519,8 +519,18 @@ Gdb::readRegister(ThreadId, RegisterDescriptor reg) {
 
     // Find the GDB register of which `reg` is a part.
     Sawyer::Optional<size_t> idx = findRegisterIndex(reg);
-    if (!idx)
-        throw Exception("register " + boost::lexical_cast<std::string>(reg) + " not found in debugger");
+    if (!idx) {
+        std::string s = "register ";
+        if (const auto name = registerDictionary()->name(reg))
+            s += *name + " ";
+        s += reg.toString() + " not found in debugger";
+        if (!registers_.empty()) {
+            s += "\n  available registers are:";
+            for (const std::pair<std::string, RegisterDescriptor> &r: registers_)
+                s += (boost::format("\n    %-10s %s") % r.first % r.second.toString()).str();
+        }
+        throw Exception(s);
+    }
     const RegisterDescriptor gdbReg = registers_[*idx].second;
 
     // Send the data-list-register-values command and wait for its response. Then process the reponse to find
