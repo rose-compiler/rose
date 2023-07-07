@@ -413,16 +413,17 @@ namespace
     return SG_DEREF(sb::buildOpaqueVarRefExp(expr.Name_Image, &ctx.scope()));
   }
 
+#if CURRENTLY_NOT_USED
   SgFunctionDeclaration*
   disambiguateOperators( const AdaIdentifier& dbgname,
                          std::vector<SgFunctionDeclaration*>& cands,
-                         OperatorCallSupplement suppl
+                         const OperatorCallSupplement& suppl
                        )
   {
-    if ((suppl.args() == nullptr) || (suppl.args()->size() == 0))
+    if (!suppl.valid())
     {
       logWarn() << "unable to disambiguate operator " << dbgname << " w/o arguments "
-                << (suppl.args() ? int(suppl.args()->size()) : -1)
+                << suppl.args().size()
                 << std::endl;
       return nullptr;
     }
@@ -436,7 +437,7 @@ namespace
                     ADA_ASSERT(fn);
                     const std::size_t numParams = fn->get_args().size();
 
-                    if (numParams != suppl.args()->size()) return false;
+                    if (numParams != suppl.args().size()) return false;
 
                     bool        res = true;
                     std::size_t i   = 0;
@@ -444,7 +445,7 @@ namespace
                     while (res && (i < numParams))
                     {
                       SgInitializedName& parm = SG_DEREF(fn->get_args().at(i));
-                      SgType*            argRootTy = si::Ada::typeRoot(suppl.args()->at(i)).typerep();
+                      SgType*            argRootTy = si::Ada::typeRoot(suppl.args().at(i).type()).typerep();
 
                       // \todo consider to replace the simple type check with a proper overload resolution
                       res = si::Ada::typeRoot(parm.get_type()).typerep() == argRootTy;
@@ -471,18 +472,18 @@ namespace
 
     return res.size() != 1 ? nullptr : res.front();
   }
+#endif /* CURRENTLY_NOT_USED */
 
-  bool anonAccessType(OperatorCallSupplement suppl, const AstContext&)
+  bool anonAccessType(const OperatorCallSupplement& suppl, const AstContext&)
   {
-    SgTypePtrList*   argtypes = suppl.args();
-    ADA_ASSERT(argtypes);
-
-    SgAdaAccessType* argty = isSgAdaAccessType(argtypes->front());
+    const OperatorCallSupplement::ArgDescList& argtypes = suppl.args();
+    SgAdaAccessType*                           argty    = isSgAdaAccessType(argtypes.front().type());
 
     return argty && argty->get_is_anonymous();
   }
 
-  bool equalArgumentTypes(OperatorCallSupplement suppl, const AstContext&)
+#if CURRENTLY_NOT_USED
+  bool equalArgumentTypes(const OperatorCallSupplement&, const AstContext&)
   {
     return true;
     /*
@@ -497,8 +498,7 @@ namespace
            );
     */
   }
-
-  bool resultTypeIsBool(OperatorCallSupplement suppl, const AstContext&)
+  bool resultTypeIsBool(const OperatorCallSupplement& suppl, const AstContext&)
   {
     SgType const* rootty = si::Ada::typeRoot(suppl.result()).typerep();
 
@@ -513,12 +513,10 @@ namespace
            );
   }
 
-  bool nonLimitedArgumentType(OperatorCallSupplement suppl, const AstContext&)
+  bool nonLimitedArgumentType(const OperatorCallSupplement& suppl, const AstContext&)
   {
-    SgTypePtrList* argtypes = suppl.args();
-    ADA_ASSERT(argtypes);
-
-    SgType*        argty = argtypes->front();
+    const SgTypePtrList& argtypes = suppl.args();
+    SgType*              argty = argtypes.front();
     ADA_ASSERT(argty);
 
     SgDeclarationStatement* dcl = si::Ada::associatedDeclaration(argty);
@@ -526,139 +524,131 @@ namespace
     return !(dcl && dcl->get_declarationModifier().isAdaLimited());
   }
 
-  bool hasEqualityOperator(OperatorCallSupplement, const AstContext&)
+  bool hasEqualityOperator(const OperatorCallSupplement&, const AstContext&)
   {
     return false;
   }
+#endif /* CURRENTLY_NOT_USED */
 
-  bool isScalarType(SgType* ty, const AstContext& ctx)
+  SgType& boolType(AstContext)
   {
-    ty = si::Ada::typeRoot(ty).typerep();
-
-    if (!ty) return false;
-
-    if (SgTypedefType* tydef = isSgTypedefType(ty))
-      return isScalarType(tydef->get_base_type(), ctx);
-
-    return (  si::Ada::isModularType(*ty)
-           || si::Ada::isIntegerType(*ty)
-           || si::Ada::isFloatingPointType(*ty)
-           || si::Ada::isDiscreteType(*ty)
-           || si::Ada::isFixedType(*ty)
-           || si::Ada::isDecimalFixedType(*ty)
-           || isSgEnumType(ty)
-           );
+    return SG_DEREF(adaTypes().at("BOOLEAN"));
   }
 
-  bool isScalarType(OperatorCallSupplement suppl, const AstContext& ctx)
+  OperatorCallSupplement
+  createSupplement(SgTypePtrList types, SgType* result)
   {
-    SgTypePtrList* argtypes = suppl.args();
-    ADA_ASSERT(argtypes);
+    static constexpr int MAX_PARAMS = 2;
+    static const std::string parmNames[MAX_PARAMS] = { "Left", "Right" };
 
-    return isScalarType(argtypes->front(), ctx);
+    OperatorCallSupplement::ArgDescList args;
+    std::size_t                         parmNameIdx = MAX_PARAMS - types.size() - 1;
+
+    for (SgType* ty : types)
+    {
+      args.emplace_back(parmNames[++parmNameIdx], ty);
+    }
+
+    return { std::move(args), result };
   }
 
-  bool isDiscreteArrayType(OperatorCallSupplement suppl, const AstContext&)
+
+  /// Takes available operator information that was computed from argument types and computes the signature of
+  /// a generatable operator.
+  /// \param  name operator name (w/o si::Ada::roseOperatorPrefix)
+  /// \param  suppl the available argument type information
+  /// \param  domArgPos the dominant argument position
+  /// \param  ctx the translator context
+  /// \return an adjusted operator call supplement
+  OperatorCallSupplement
+  operatorSignature(AdaIdentifier name, const OperatorCallSupplement& suppl, std::size_t domArgPos, AstContext ctx)
   {
-    SgTypePtrList const&   argtypes = SG_DEREF(suppl.args());
-    si::Ada::FlatArrayType arrinfo  = si::Ada::getArrayTypeInfo(argtypes.at(0));
-    SgArrayType const*     arrty    = arrinfo.type();
-
-    if ((arrty == nullptr) || (arrinfo.dims().size() > 1))
-      return false;
-
-    SgType const*          elmty = si::Ada::typeRoot(arrty->get_base_type()).typerep();
-
-    if (elmty == nullptr) return false;
-
-    return (  si::Ada::isModularType(*elmty)
-           || si::Ada::isIntegerType(*elmty)
-           //~ || si::Ada::isFloatingPointType(*elmty)
-           || si::Ada::isDiscreteType(*elmty)
-           //~ || si::Ada::isFixedType(*elmty)
-           //~ || si::Ada::isDecimalFixedType(*elmty)
-           || isSgEnumType(elmty)
-           );
-  }
-
-  bool isGeneratableOperator(AdaIdentifier name, OperatorCallSupplement suppl, AstContext ctx)
-  {
-    // this function returns true if an operator can be generated.
-    // \todo it is unclear whether the ROSE frontend needs to validate based on argument and return types
-    //       as defined by the Ada Standard, since the frontend should have already done it.
-    //       Currently, the validation checking is implemented for a few relational operators but
-    //       left as todo item for others (12/16/22).
-
-    // imprecise .. see below
-    if ((name == "=" || name == "/="))
-      return true;
+    static const std::string left_arg  = "left";
+    static const std::string right_arg = "right";
 
     // see https://www.adaic.com/resources/add_content/standards/05rm/html/RM-4-5-2.html
     // see https://www.adaic.com/resources/add_content/standards/05rm/html/RM-4-4.html
-    if (name == "=" && !anonAccessType(suppl, ctx))
+
+    // \todo reorder suppl.args() if arguments are named..
+
+    if (name == "&")
     {
-      return (  nonLimitedArgumentType(suppl, ctx)
-             && equalArgumentTypes(suppl, ctx)
-             && resultTypeIsBool(suppl, ctx)
-             );
+      logFlaw() << "gen arg types .. [incomplete]" << std::endl;
+      return { suppl.args(), suppl.args().front().type() };
+    }
+
+    SgType* domTy = suppl.args().at(domArgPos).type();
+
+    if (name == "=")
+    {
+      ADA_ASSERT(!anonAccessType(suppl, ctx) && "test case sought"); // catch test case
+
+
+      // requires (  nonLimitedArgumentType(domTy, ctx)
+      //          && equalArgumentTypes(suppl, ctx)     // will be adjusted
+      //          && resultTypeIsBool(suppl, ctx)       // will be adjusted
+      //          )
+      return createSupplement( {domTy, domTy}, &boolType(ctx) );
     }
 
     if (name == "/=" && !anonAccessType(suppl, ctx))
     {
-      return (  ( nonLimitedArgumentType(suppl, ctx) || hasEqualityOperator(suppl, ctx) )
-             && equalArgumentTypes(suppl, ctx)
-             && resultTypeIsBool(suppl, ctx)
-             );
+      ADA_ASSERT(!anonAccessType(suppl, ctx) && "test case sought"); // catch test case
+
+      // requires (  ( nonLimitedArgumentType(suppl, ctx) || hasEqualityOperator(suppl, ctx) )
+      //          && equalArgumentTypes(suppl, ctx) // will be adjusted
+      //          && resultTypeIsBool(suppl, ctx)   // will be adjusted
+      //          );
+      return createSupplement( {domTy, domTy}, &boolType(ctx) );
     }
 
-    if ((name == "=" || name == "/=") && anonAccessType(suppl, ctx))
-    {
-      // catch these cases in testing...
-      ADA_ASSERT(false);
-      return true;
-    }
 
     if ((name == "<") || (name == "<=") || (name == ">") || (name == ">="))
     {
-      bool res = (  (isScalarType(suppl, ctx) || isDiscreteArrayType(suppl, ctx))
-                 && equalArgumentTypes(suppl, ctx)
-                 && resultTypeIsBool(suppl, ctx)
+      bool req = (  (si::Ada::isScalarType(domTy) || si::Ada::isDiscreteArrayType(domTy))
+                 //~ && equalArgumentTypes(suppl, ctx) // will be adjusted
+                 //~ && resultTypeIsBool(suppl, ctx)   // will be adjusted
                  );
 
-      if (true && !res)
-        logWarn() << "(sca: " << isScalarType(suppl, ctx)
-                  << " | dsc: " << isDiscreteArrayType(suppl, ctx)
-                  << ") & equ: " << equalArgumentTypes(suppl, ctx)
-                  << "& t/f: " << resultTypeIsBool(suppl, ctx)
-                  << " -> : " << res
-                  << std::endl;
+      if (!req)
+      {
+        if (true)
+          logWarn() << "(sca: " << si::Ada::isScalarType(domTy)
+                    << " | dsc: " << si::Ada::isDiscreteArrayType(domTy)
+                    << " -> : " << req
+                    << std::endl;
 
-      return res;
+        return OperatorCallSupplement{};
+      }
+
+      return createSupplement( {domTy, domTy}, &boolType(ctx) );
     }
 
     if (name == "AND" || name == "OR" || name == "XOR")
     {
-      return equalArgumentTypes(suppl, ctx);
-      //~ (  (argIsBoolean() || argIsModularType() || (argIsBoolArray()))
-             //~ && equalArgumentTypes(suppl, ctx)
-             //~ );
+      // requires (  equalArgumentTypes(suppl, ctx) // will be adjusted
+      //          && (si::Ada::isBooleanType(domTy) || si::Ada::isModularType(domTy) || (isBoolArray(domTy)))
+      //          )
+      return createSupplement( {domTy, domTy}, domTy );
     }
 
     if ( (  name == "+"   || name == "-"   || name == "*"
          || name == "/"   || name == "MOD" || name == "REM"
-         || name == "ABS" || name == "NOT"
-         || name == "&"
-         || name == "**"
+         || name == "ABS" || name == "NOT" || name == "**"
          )
        )
     {
-      // \todo in case of binary operators, check whether the types match
-      return true;
+      if (suppl.args().size() == 1)
+         return createSupplement( { domTy }, domTy );
+
+      return createSupplement( {domTy,domTy}, domTy );
     }
 
-    return false;
+    return OperatorCallSupplement{};
   }
 
+
+#if OBSOLETE_CODE
   bool isRelationalOperator(AdaIdentifier name)
   {
     return (  name == "="
@@ -698,7 +688,7 @@ namespace
        || name == "**"
        )
     {
-      suppl.result(suppl.args()->front());
+      suppl.result(suppl.args().front());
       return;
     }
 
@@ -707,59 +697,119 @@ namespace
       // \todo return an open array type based on the array as the first or second argument.
       //       just picking the first type is wrong, because it may be bounded; or not be an array at all.
       logFlaw() << "gen arg types .. [incomplete]" << std::endl;
-      suppl.result(suppl.args()->front());
+      suppl.result(suppl.args().front());
       return;
     }
   }
 
-  // cmp to declareOp in SgType.C
+#endif /* OBSOLETE_CODE */
+
+  bool equalParameterTypes(const SgTypePtrList& lhs, const OperatorCallSupplement::ArgDescList& rhs)
+  {
+    auto typeEquality = [](const SgType* lty, const ArgDesc& rty) -> bool
+                        {
+                          return lty == rty.type();
+                        };
+
+    return (  (lhs.size() == rhs.size())
+           && std::equal(lhs.begin(), lhs.end(), rhs.begin(), typeEquality)
+           );
+  }
+
+  SgFunctionDeclaration*
+  findExistingOperator(AdaIdentifier name, SgScopeStatement& scope, const OperatorCallSupplement& suppl)
+  {
+    using OpMap = map_t<OperatorKey, std::vector<OperatorDesc> >;
+
+    OpMap const&          opMap = operatorSupport();
+    OpMap::const_iterator pos = opMap.find({&scope, name});
+
+    if (pos == opMap.end()) return nullptr;
+
+    auto sameSignature =
+            [&suppl](const OperatorDesc& desc) -> bool
+            {
+              const SgFunctionDeclaration& cand   = SG_DEREF( desc.function() );
+              const SgFunctionType&        candTy = SG_DEREF( cand.get_type() );
+
+              return (  (candTy.get_return_type() == suppl.result())
+                     && equalParameterTypes(candTy.get_arguments(), suppl.args())
+                     );
+            };
+
+    const std::vector<OperatorDesc>& opers = pos->second;
+    auto  veclim = opers.end();
+    auto  vecpos = std::find_if(pos->second.begin(), veclim, sameSignature);
+
+    if (vecpos == veclim) return nullptr;
+
+    return vecpos->function();
+  }
+
+  void sortByArgumentName(OperatorCallSupplement::ArgDescList& lst)
+  {
+    if (lst.size() < 2) return;
+    ADA_ASSERT(lst.size() == 2);
+
+    if (lst.at(1).name() < lst.at(0).name())
+      std::swap(lst.at(0), lst.at(1));
+  }
+
+  SgTypePtrList extractTypes(const OperatorCallSupplement::ArgDescList& lst)
+  {
+    SgTypePtrList res;
+    auto          typeExtractor = [](const ArgDesc& desc) { return desc.type(); };
+
+    std::transform(lst.begin(), lst.end(), std::back_inserter(res), typeExtractor);
+    return res;
+  }
+
   SgExpression*
   generateOperator(AdaIdentifier name, Expression_Struct& expr, OperatorCallSupplement suppl, AstContext ctx)
   {
     ADA_ASSERT(expr.Expression_Kind == An_Operator_Symbol);
 
-    setDefaultReturnType(name, suppl);
+    // setDefaultReturnType(name, suppl);
 
-    if ((suppl.args() == nullptr) || (suppl.result() == nullptr))
+    if (!suppl.args_valid())
     {
-      logWarn() << "suppl is null" << std::endl;
+      logWarn() << "suppl.args() is null" << std::endl;
       return nullptr;
     }
 
-    SgScopeStatement*      scope  = si::Ada::operatorScope(name, SG_DEREF(suppl.args()));
+    sortByArgumentName(suppl.args());
 
-    if (scope == nullptr)
-    {
-      logWarn() << "unable to get scope of type declaration: " << name
-                << std::endl;
-      return nullptr;
-    }
+    si::Ada::OperatorScopeInfo scopeinfo = si::Ada::operatorScope(name, extractTypes(suppl.args()));
+    SgScopeStatement&          scope = SG_DEREF(scopeinfo.scope());
+
+    suppl = operatorSignature(name, std::move(suppl), scopeinfo.argpos(), ctx);
 
     // \todo add support for other operators
-    if (!isGeneratableOperator(name, suppl, ctx))
+    if (!suppl.valid())
     {
       logWarn() << "oper " << name << " not generatable" << std::endl;
       return nullptr;
     }
+
+    if (SgFunctionDeclaration* fndcl = findExistingOperator(name, scope, suppl))
+      return sb::buildFunctionRefExp(fndcl);
+
 
     std::string            opname = si::Ada::roseOperatorPrefix + name;
 
     auto                   complete =
        [&suppl](SgFunctionParameterList& fnParmList, SgScopeStatement& scope)->void
        {
-         static constexpr int MAX_PARAMS = 2;
-         static const std::string parmNames[MAX_PARAMS] = { "Left", "Right" };
-
-         int            parmNameIdx = MAX_PARAMS - suppl.args()->size() - 1;
          SgTypeModifier defaultInMode;
 
          defaultInMode.setDefault();
 
-         ADA_ASSERT(suppl.args()->size() <= MAX_PARAMS);
-         for (SgType* parmType : *suppl.args())
+         for (const ArgDesc& parmDesc : suppl.args())
          {
-           const std::string&       parmName = parmNames[++parmNameIdx];
-           SgInitializedName&       parmDecl = mkInitializedName(parmName, SG_DEREF(parmType), nullptr);
+           // \todo use parmDesc.name() instead of parmNames
+           SgType&                  parmType = SG_DEREF(parmDesc.type());
+           const std::string&       parmName = parmDesc.name();
+           SgInitializedName&       parmDecl = mkInitializedName(parmName, parmType, nullptr);
            SgInitializedNamePtrList parmList = {&parmDecl};
            /* SgVariableDeclaration&   pvDecl   =*/ mkParameter(parmList, defaultInMode, scope);
 
@@ -768,12 +818,13 @@ namespace
          }
        };
 
-    SgFunctionDeclaration& opdcl = mkProcedureDecl_nondef(opname, *scope, *suppl.result(), complete);
+    SgFunctionDeclaration& opdcl = mkProcedureDecl_nondef(opname, scope, *suppl.result(), complete);
 
-    operatorSupport()[{scope, name}].emplace_back(&opdcl, OperatorDesc::COMPILER_GENERATED);
+    operatorSupport()[{&scope, name}].emplace_back(&opdcl, OperatorDesc::COMPILER_GENERATED);
     return sb::buildFunctionRefExp(&opdcl);
   }
 
+#if CURRENTLY_NOT_USED
   void
   addToOverloadSet( map_t<OperatorKey, std::vector<OperatorDesc> >::const_iterator pos,
                     map_t<OperatorKey, std::vector<OperatorDesc> >::const_iterator lim,
@@ -792,25 +843,36 @@ namespace
   }
 
   std::vector<SgFunctionDeclaration*>
-  genOverloadSet(AdaIdentifier fnname, OperatorCallSupplement suppl, AstContext ctx)
+  genOverloadSet(AdaIdentifier fnname, AstContext ctx)
   {
+    return {};
     std::vector<SgFunctionDeclaration*>                   res;
     map_t<OperatorKey, std::vector<OperatorDesc> > const& opMap = operatorSupport();
 
     addToOverloadSet(opMap.find({si::Ada::pkgStandardScope(), fnname}), opMap.end(), res);
 
+    /// \todo PP (7/3/23) with the new generateOperator impl, this function may no longer be required.
+    ///       (1) not sure if traversing the scope to global is required. If a declared operator in these scopes
+    ///           exists, ASIS would have linked to it.
+    ///           If it does not exist, the previous declaration should be caught when the operator signature
+    ///           has been computed, just before a new declaration is created.. (generateOperator).
+    ///           => try without
+    ///       (2) not sure if the same reasoning cannot be applied to operators defined in package standard.
+    ///           => try without genOverloadSet entirely!
+
+    /// \todo instead of traversing si::getEnclosingScope, maybe si::Ada::logicalParentScope is called for
     for (SgScopeStatement* scope = &ctx.scope(); scope && (!isSgGlobal(scope)); scope = si::getEnclosingScope(scope))
       addToOverloadSet(opMap.find({scope, fnname}), opMap.end(), res);
 
     // \todo add all "use" and "use type"
     return res;
   }
+#endif /* CURRENTLY_NOT_USED */
 
   SgExpression&
   getOperator(Expression_Struct& expr, OperatorCallSupplement suppl, AstContext ctx)
   {
     // FYI https://en.wikibooks.org/wiki/Ada_Programming/All_Operators
-
     ADA_ASSERT(expr.Expression_Kind == An_Operator_Symbol);
 
     // PP 11/18/22
@@ -826,33 +888,22 @@ namespace
       return SG_DEREF(res);
     }
 
-    int len = strlen(expr.Name_Image);
+    const std::size_t                   len = strlen(expr.Name_Image);
     ADA_ASSERT((len > 2) && (expr.Name_Image[0] == '"') && (expr.Name_Image[len-1] == '"'));
 
     // do not use leading and trailing '"'
-    AdaIdentifier fnname{expr.Name_Image+1, len-2};
+    AdaIdentifier                       fnname{expr.Name_Image+1, int(len)-2};
+#if 0
+    std::vector<SgFunctionDeclaration*> overloadSet = genOverloadSet(fnname, ctx);
+    ADA_ASSERT(!overloadSet.empty());
 
-    std::vector<SgFunctionDeclaration*> overloadSet = genOverloadSet(fnname, suppl, ctx);
-
-    if (!overloadSet.empty())
-    {
-      if (SgFunctionDeclaration* fundcl = disambiguateOperators(fnname, overloadSet, suppl))
-      {
-        //~ logWarn() << "ok2" << std::endl;
-        return SG_DEREF(sb::buildFunctionRefExp(fundcl));
-      }
-    }
-    else
-    {
-      logFlaw() << "Operator name not registered: '" << expr.Name_Image << "'"
-                << std::endl;
-    }
+    if (SgFunctionDeclaration* fundcl = disambiguateOperators(fnname, overloadSet, suppl))
+      return SG_DEREF(sb::buildFunctionRefExp(fundcl));
+#endif
 
     // try to generate the operator
-    if (SgExpression* res = generateOperator(fnname, expr, suppl, ctx))
-    {
+    if (SgExpression* res = generateOperator(fnname, expr, std::move(suppl), ctx))
       return *res;
-    }
 
     logWarn() << "Using first version generator as fallback to model operator " << expr.Name_Image
               << std::endl;
@@ -1404,6 +1455,13 @@ namespace
             {
               // \todo check why the name remained unresolved
               res = &mkUnresolvedName(expr.Name_Image, ctx.scope());
+
+              if (!ctx.pragmaProcessing())
+              {
+                // inside pragmas (e.g., pragma Import) unresolved names are normal
+                logWarn() << "ADDING unresolved name: " << expr.Name_Image
+                          << std::endl;
+              }
             }
           }
 
@@ -1491,6 +1549,7 @@ namespace
       case An_Operator_Symbol:                        // 4.1
         {
           logKind("An_Operator_Symbol", elem.ID);
+
           res = &getOperator(expr, suppl, ctx);
           /* unused fields:
              Defining_Name_ID      Corresponding_Name_Definition;
@@ -1564,7 +1623,7 @@ namespace
       case A_Selected_Component:                      // 4.1.3
         {
           logKind("A_Selected_Component", elem.ID);
-          SgExpression& selector = getExprID(expr.Selector, ctx, suppl);
+          SgExpression& selector = getExprID(expr.Selector, ctx, std::move(suppl));
           const bool    enumval = isSgEnumVal(&selector) != nullptr;
 
           // Check if the kind requires a prefix in ROSE,
@@ -1782,14 +1841,14 @@ namespace
   SgExpression&
   getExprID_undecorated(Element_ID el, AstContext ctx, OperatorCallSupplement suppl)
   {
-    return getExpr_undecorated(retrieveAs(elemMap(), el), ctx, suppl);
+    return getExpr_undecorated(retrieveAs(elemMap(), el), ctx, std::move(suppl));
   }
 }
 
 SgExpression&
 getExpr(Element_Struct& elem, AstContext ctx, OperatorCallSupplement suppl)
 {
-  SgExpression*      res  = &getExpr_undecorated(elem, ctx, suppl);
+  SgExpression*      res  = &getExpr_undecorated(elem, ctx, std::move(suppl));
   Expression_Struct& expr = elem.The_Union.Expression;
 
   switch (expr.Expression_Kind)
@@ -1816,7 +1875,7 @@ getExpr(Element_Struct& elem, AstContext ctx, OperatorCallSupplement suppl)
 SgExpression&
 getExprID(Element_ID el, AstContext ctx, OperatorCallSupplement suppl)
 {
-  return getExpr(retrieveAs(elemMap(), el), ctx, suppl);
+  return getExpr(retrieveAs(elemMap(), el), ctx, std::move(suppl));
 }
 
 SgExpression&
@@ -1829,7 +1888,7 @@ getExprID_opt(Element_ID el, AstContext ctx, OperatorCallSupplement suppl)
   }
 
   return el == 0 ? mkNullExpression()
-                 : getExprID(el, ctx, suppl)
+                 : getExprID(el, ctx, std::move(suppl))
                  ;
 }
 
@@ -2011,25 +2070,33 @@ getDefinitionExprID(Element_ID id, AstContext ctx)
   return getDefinitionExpr(retrieveAs(elemMap(), id), ctx);
 }
 
+OperatorCallSupplement::ArgDescList
+createArgDescList(const SgExpressionPtrList& args)
+{
+  OperatorCallSupplement::ArgDescList res;
+  auto argDescExtractor = [](SgExpression* exp) -> ArgDesc
+                          {
+                            std::string optArgName;
+
+                            if (SgActualArgumentExpression* act = isSgActualArgumentExpression(exp))
+                              optArgName = act->get_argument_name();
+
+                            return { optArgName, si::Ada::typeOfExpr(exp).typerep() };
+                          };
+
+  res.reserve(args.size());
+  std::transform(args.begin(), args.end(), std::back_inserter(res), argDescExtractor);
+
+  return res;
+}
+
 SgExpression& createCall(Element_ID tgtid, ElemIdRange args, bool callSyntax, AstContext ctx)
 {
-  logInfo() << "use prefix call syntax: " << callSyntax << std::endl;
-
   // Create the arguments first. They may be needed to disambiguate operator calls
   std::vector<SgExpression*> arglist = traverseIDs(args, elemMap(), ArgListCreator{ctx});
-  SgTypePtrList              typlist;
-  auto typeExtractor = [](SgExpression* exp)->SgType*
-                       {
-                         // exclude literals as they are convertible to derived types
-                         //~ return isSgValueExp(exp) ? nullptr : si::Ada::typeOfExpr(exp).typerep();
-                         return si::Ada::typeOfExpr(exp).typerep();
-                       };
 
 
-  typlist.reserve(arglist.size());
-  std::transform(arglist.begin(), arglist.end(), std::back_inserter(typlist), typeExtractor);
-
-  SgExpression& tgt = getExprID(tgtid, ctx, OperatorCallSupplement{&typlist, nullptr /* unknown return type */});
+  SgExpression& tgt = getExprID(tgtid, ctx, OperatorCallSupplement(createArgDescList(arglist), nullptr /* unknown return type */));
   SgExpression* res = sg::dispatch(AdaCallBuilder{tgtid, std::move(arglist), callSyntax, ctx}, &tgt);
 
   return SG_DEREF(res);

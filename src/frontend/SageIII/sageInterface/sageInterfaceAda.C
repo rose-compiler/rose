@@ -10,6 +10,7 @@
 #include <exception>
 
 #include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include "Rose/Diagnostics.h"
@@ -384,27 +385,22 @@ namespace
     ROSE_ASSERT(symap.size() == mapsize);
   }
 
-  struct BaseScope : sg::DispatchHandler<const SgScopeStatement*>
+  struct CanonicalScope : sg::DispatchHandler<const SgScopeStatement*>
   {
     static
     ReturnType find(const SgScopeStatement* n);
 
-    void handle(const SgNode& n)           { SG_UNEXPECTED_NODE(n); }
-    void handle(const SgScopeStatement& n) { res = &n; }
-    void handle(const SgAdaPackageBody& n) { res = n.get_spec(); }
+    void handle(const SgNode& n)             { SG_UNEXPECTED_NODE(n); }
+    void handle(const SgScopeStatement& n)   { res = &n; }
+    void handle(const SgAdaPackageBody& n)   { res = n.get_spec(); }
+    void handle(const SgAdaProtectedBody& n) { res = n.get_spec(); }
+    void handle(const SgAdaTaskBody& n)      { res = n.get_spec(); }
   };
 
-  BaseScope::ReturnType
-  BaseScope::find(const SgScopeStatement* n)
+  CanonicalScope::ReturnType
+  CanonicalScope::find(const SgScopeStatement* n)
   {
-    return sg::dispatch(BaseScope{}, n);
-  }
-
-  bool isSameScope(const SgScopeStatement* lhs, const SgScopeStatement* rhs)
-  {
-    ROSE_ASSERT(lhs && rhs);
-
-    return (lhs == rhs) || (BaseScope::find(lhs) == BaseScope::find(rhs));
+    return sg::dispatch(CanonicalScope{}, n);
   }
 
   bool isPrivate(const SgDeclarationStatement& dcl)
@@ -421,6 +417,25 @@ namespace Ada
   const std::string packageStandardName = "Standard";
   const std::string durationTypeName    = "Duration";
   const std::string exceptionName       = "Exception";
+
+  const SgScopeStatement* canonicalScope(const SgScopeStatement* scope)
+  {
+    return CanonicalScope::find(scope);
+  }
+
+  const SgScopeStatement& canonicalScope(const SgScopeStatement& scope)
+  {
+    return SG_DEREF(canonicalScope(&scope));
+  }
+
+  bool sameCanonicalScope(const SgScopeStatement* lhs, const SgScopeStatement* rhs)
+  {
+    ROSE_ASSERT(lhs && rhs);
+
+    return (  (lhs == rhs) // short-cut
+           || (canonicalScope(lhs) == canonicalScope(rhs))
+           );
+  }
 
   long long int
   staticIntegralValue(SgExpression* n)
@@ -936,6 +951,21 @@ namespace Ada
     return ty ? isFunction(*ty) : false;
   }
 
+  const SgFunctionType* functionType(const SgFunctionSymbol* funsy)
+  {
+    return funsy ? &functionType(*funsy) : nullptr;
+  }
+
+  const SgFunctionType& functionType(const SgFunctionSymbol& funsy)
+  {
+    const SgAdaInheritedFunctionSymbol* inhsy = isSgAdaInheritedFunctionSymbol(&funsy);
+    const SgFunctionType*               res   = inhsy ? inhsy->get_derivedFunctionType()
+                                                      : isSgFunctionType(funsy.get_type());
+
+    return SG_DEREF(res);
+  }
+
+
   namespace
   {
     bool definedInStandard(const SgDeclarationStatement& n)
@@ -1049,7 +1079,6 @@ namespace Ada
   bool isBooleanType(const SgType& ty)
   {
     return isBooleanType(&ty);
-
   }
 
   bool isBooleanType(const SgType* ty)
@@ -1065,6 +1094,59 @@ namespace Ada
            );
   }
 
+  bool isScalarType(const SgType* ty)
+  {
+    ty = si::Ada::typeRoot(const_cast<SgType*>(ty)).typerep();
+
+    if (!ty) return false;
+
+    if (const SgTypedefType* tydef = isSgTypedefType(ty))
+      return isScalarType(tydef->get_base_type());
+
+    return (  isModularType(*ty)
+           || isIntegerType(*ty)
+           || isFloatingPointType(*ty)
+           || isDiscreteType(*ty)
+           || isFixedType(*ty)
+           || isDecimalFixedType(*ty)
+           || isSgEnumType(ty)
+           );
+  }
+
+  bool isScalarType(const SgType& ty)
+  {
+    return isScalarType(&ty);
+  }
+
+  bool isDiscreteArrayType(const SgType* ty)
+  {
+    si::Ada::FlatArrayType arrinfo  = si::Ada::getArrayTypeInfo(const_cast<SgType*>(ty));
+    SgArrayType const*     arrty    = arrinfo.type();
+
+    if ((arrty == nullptr) || (arrinfo.dims().size() > 1))
+      return false;
+
+    SgType const*          elmty = si::Ada::typeRoot(arrty->get_base_type()).typerep();
+
+    if (elmty == nullptr) return false;
+
+    return (  si::Ada::isModularType(*elmty)
+           || si::Ada::isIntegerType(*elmty)
+           //~ || si::Ada::isFloatingPointType(*elmty)
+           || si::Ada::isDiscreteType(*elmty)
+           //~ || si::Ada::isFixedType(*elmty)
+           //~ || si::Ada::isDecimalFixedType(*elmty)
+           || isSgEnumType(elmty)
+           );
+  }
+
+  bool isDiscreteArrayType(const SgType& ty)
+  {
+    return isDiscreteArrayType(&ty);
+  }
+
+
+
 
 
   namespace
@@ -1072,9 +1154,6 @@ namespace Ada
     struct TypeResolver : sg::DispatchHandler<bool>
     {
         using base = sg::DispatchHandler<bool>;
-
-        static
-        SgScopeStatement* find(SgNode*, bool fixedSpecial = false);
 
         explicit
         TypeResolver(std::function<bool (const SgType&)> typetest)
@@ -1319,6 +1398,13 @@ namespace Ada
 
         res = TypeDescription{ n.get_type(), polymorph };
       }
+
+      // an actual argument expression could have one of the special cases
+      //   underneath. => use typeOfExpr..
+      void handle(SgActualArgumentExpression& n)
+      {
+        res = typeOfExpr(n.get_expression());
+      }
     };
 
     bool fromRootType(SgAdaSubtype* ty)
@@ -1477,17 +1563,17 @@ namespace Ada
         using base = sg::DispatchHandler<SgScopeStatement*>;
 
         static
-        SgScopeStatement* find(SgNode*);
+        SgScopeStatement* find(const SgNode*);
 
-        void handle(SgNode& n)              { SG_UNEXPECTED_NODE(n); }
+        void handle(const SgNode& n)              { SG_UNEXPECTED_NODE(n); }
 
         //
         // expression based types
 
         // base case, do nothing
-        void handle(SgExpression&)          {}
+        void handle(const SgExpression&)          {}
 
-        void handle(SgAdaAttributeExp& n)
+        void handle(const SgAdaAttributeExp& n)
         {
           res = pkgStandardScope();
 
@@ -1496,82 +1582,82 @@ namespace Ada
               res = find(tyex->get_type());
         }
 
-        void handle(SgVarRefExp& n)         { res = declOf(n).get_scope(); }
+        void handle(const SgVarRefExp& n)         { res = declOf(n).get_scope(); }
 
         //
         // types
 
-        void handle(SgType&)                { /* \todo do nothing for now; should disappear and raise error */ }
+        void handle(const SgType&)                { /* \todo do nothing for now; should disappear and raise error */ }
 
         // all root types (according to the three builder function in AdaMaker.C)
-        void handle(SgTypeLongLong& n)      { res = pkgStandardScope(); }
-        void handle(SgTypeLongDouble& n)    { res = pkgStandardScope(); }
-        void handle(SgTypeFixed& n)         { res = pkgStandardScope(); }
+        void handle(const SgTypeLongLong& n)      { res = pkgStandardScope(); }
+        void handle(const SgTypeLongDouble& n)    { res = pkgStandardScope(); }
+        void handle(const SgTypeFixed& n)         { res = pkgStandardScope(); }
 
         // modular type: handle like int?
-        void handle(SgAdaModularType& n)    { res = pkgStandardScope(); }
+        void handle(const SgAdaModularType& n)    { res = pkgStandardScope(); }
 
         // are subroutines their own root type?
-        void handle(SgAdaSubroutineType& n) { res = pkgStandardScope(); }
+        void handle(const SgAdaSubroutineType& n) { res = pkgStandardScope(); }
 
         // plus types used by AdaMaker but that do not have a direct correspondence
         //   in the Ada Standard.
-        void handle(SgTypeVoid& n)          { res = pkgStandardScope(); }
-        void handle(SgTypeUnknown& n)       { res = pkgStandardScope(); }
-        void handle(SgAutoType& n)          { res = pkgStandardScope(); }
-        void handle(SgTypeDefault& n)       { res = pkgStandardScope(); }
+        void handle(const SgTypeVoid& n)          { res = pkgStandardScope(); }
+        void handle(const SgTypeUnknown& n)       { res = pkgStandardScope(); }
+        void handle(const SgAutoType& n)          { res = pkgStandardScope(); }
+        void handle(const SgTypeDefault& n)       { res = pkgStandardScope(); }
 
         // the package standard uses an enumeration to define boolean, so include the
         //   ROSE bool type also.
         // \todo remove BOOL_IS_ENUM_IN_ADA
-        void handle(SgTypeBool& n)          { res = pkgStandardScope(); }
+        void handle(const SgTypeBool& n)          { res = pkgStandardScope(); }
 
         // plus composite type of literals in the AST
-        void handle(SgTypeString& n)        { res = pkgStandardScope(); }
+        void handle(const SgTypeString& n)        { res = pkgStandardScope(); }
 
 
         // \todo implement generics based on test cases
-        // void handle(SgAdaFormalType& n)     { res = &n; }
-        // void handle(SgAdaDiscreteType& n)   { res = pkgStandardScope(); } // \todo
+        // void handle(const SgAdaFormalType& n)     { res = &n; }
+        // void handle(const SgAdaDiscreteType& n)   { res = pkgStandardScope(); } // \todo
 
         // plus: map all other fundamental types introduced by AdaType.C:initializePkgStandard
         //       onto the root types defined by AdaMaker.C
         // \todo eventually all types in initializePkgStandard should be rooted in
         //       the root types as defined by AdaMaker.C.
-        void handle(SgTypeInt&)             { res = pkgStandardScope(); }
-        void handle(SgTypeLong&)            { res = pkgStandardScope(); }
-        void handle(SgTypeShort&)           { res = pkgStandardScope(); }
+        void handle(const SgTypeInt&)             { res = pkgStandardScope(); }
+        void handle(const SgTypeLong&)            { res = pkgStandardScope(); }
+        void handle(const SgTypeShort&)           { res = pkgStandardScope(); }
 
-        void handle(SgTypeFloat&)           { res = pkgStandardScope(); }
-        void handle(SgTypeDouble&)          { res = pkgStandardScope(); }
+        void handle(const SgTypeFloat&)           { res = pkgStandardScope(); }
+        void handle(const SgTypeDouble&)          { res = pkgStandardScope(); }
 
-        void handle(SgTypeChar& n)          { res = pkgStandardScope(); }
-        void handle(SgTypeChar16& n)        { res = pkgStandardScope(); }
-        void handle(SgTypeChar32& n)        { res = pkgStandardScope(); }
+        void handle(const SgTypeChar& n)          { res = pkgStandardScope(); }
+        void handle(const SgTypeChar16& n)        { res = pkgStandardScope(); }
+        void handle(const SgTypeChar32& n)        { res = pkgStandardScope(); }
 
 
         // Ada kind of fundamental types
-        void handle(SgArrayType& n)         { res = pkgStandardScope(); }
-        void handle(SgTypeNullptr& n)       { res = pkgStandardScope(); }
+        void handle(const SgArrayType& n)         { res = pkgStandardScope(); }
+        void handle(const SgTypeNullptr& n)       { res = pkgStandardScope(); }
 
-        void handle(SgPointerType& n)       { res = find(n.get_base_type()); } // \todo should not be in Ada
-        void handle(SgAdaAccessType& n)     { res = find(n.get_base_type()); } // \todo or scope of underlying type?
+        void handle(const SgPointerType& n)       { res = find(n.get_base_type()); } // \todo should not be in Ada
+        void handle(const SgAdaAccessType& n)     { res = find(n.get_base_type()); } // \todo or scope of underlying type?
 
         // \todo add string types as introduced by AdaType.C:initializePkgStandard
         // \todo add other fundamental types as introduced by AdaType.C:initializePkgStandard
 
         // all type indirections that do not have a separate declaration associated
         // \todo may need to be reconsidered
-        void handle(SgModifierType& n)      { res = find(n.get_base_type()); }
-        void handle(SgAdaSubtype& n)        { res = find(n.get_base_type()); }
-        void handle(SgAdaDerivedType& n)    { res = find(n.get_base_type()); }
-        // void handle(SgDeclType& n)             { res = pkgStandardScope(); }
+        void handle(const SgModifierType& n)      { res = find(n.get_base_type()); }
+        void handle(const SgAdaSubtype& n)        { res = find(n.get_base_type()); }
+        void handle(const SgAdaDerivedType& n)    { res = find(n.get_base_type()); }
+        // void handle(const SgDeclType& n)             { res = pkgStandardScope(); }
 
         // for records, enums, typedefs, discriminated types, and types with a real declarations
         //   => return the scope where they were defined.
-        void handle(SgNamedType& n)         { res = SG_DEREF(n.get_declaration()).get_scope(); }
+        void handle(const SgNamedType& n)         { res = SG_DEREF(n.get_declaration()).get_scope(); }
 
-        void handle(SgTypedefType& n)
+        void handle(const SgTypedefType& n)
         {
           SgTypedefDeclaration* dcl    = isSgTypedefDeclaration(n.get_declaration());
           ASSERT_not_null(dcl);
@@ -1602,10 +1688,10 @@ namespace Ada
         }
 
         //
-        void handle(SgDeclType& n)          { res = find(n.get_base_expression()); }
+        void handle(const SgDeclType& n)          { res = find(n.get_base_expression()); }
     };
 
-    SgScopeStatement* DeclScopeFinder::find(SgNode* n)
+    SgScopeStatement* DeclScopeFinder::find(const SgNode* n)
     {
       return sg::dispatch(DeclScopeFinder{}, n);
     }
@@ -1716,35 +1802,51 @@ namespace Ada
       if (opname != "*" && opname != "/")
         return false;
 
-      ROSE_ASSERT(argtypes.size() == 2);
+      ROSE_ASSERT(argtypes.size() == 2); // must hold for * and /
       return resolvesToFixedType(argtypes.front()) && resolvesToFixedType(argtypes.back());
     }
 
-    const SgType*
+    std::tuple<const SgType*, std::size_t>
     chooseTypeWithNamedRootIfAvail(const SgTypePtrList& argtypes)
     {
       SgType* lhsty = argtypes.front();
 
       if (argtypes.size() == 1 || isSgNamedType(typeRoot(lhsty).typerep()))
-        return lhsty;
+        return { lhsty, 0 };
 
       SgType* rhsty = argtypes.back();
 
       if (isSgNamedType(typeRoot(rhsty).typerep()))
-        return rhsty;
+        return { rhsty, argtypes.size()-1 };
 
-      return lhsty;
+      return { lhsty, 0 };
     }
   }
 
-  SgScopeStatement* operatorScope(std::string opname, SgTypePtrList argtypes)
+  OperatorScopeInfo
+  operatorScope(std::string opname, const SgTypePtrList& argtypes)
   {
     ROSE_ASSERT(argtypes.size());
 
     if (isFixedSpecial(opname, argtypes))
-      return pkgStandardScope();
+    {
+      // fixedSpecial requires both arguments to be of fixed type
+      return { pkgStandardScope(), 0 };
+    }
 
-    return DeclScopeFinder::find(const_cast<SgType*>(chooseTypeWithNamedRootIfAvail(argtypes)));
+    std::tuple<const SgType*, std::size_t> dominantType = chooseTypeWithNamedRootIfAvail(argtypes);
+
+    return { declarationScope(std::get<0>(dominantType)), std::get<1>(dominantType) };
+  }
+
+  SgScopeStatement* declarationScope(const SgType* ty)
+  {
+    return DeclScopeFinder::find(ty);
+  }
+
+  SgScopeStatement* declarationScope(const SgType& ty)
+  {
+    return declarationScope(&ty);
   }
 
   SgDeclarationStatement* associatedDeclaration(const SgType& ty)
@@ -2118,8 +2220,9 @@ namespace Ada
       SgFunctionCallExp& orig  = SG_DEREF(std::get<0>(r));
       const int          numargs = arity(orig);
       ROSE_ASSERT(numargs == 1 || numargs == 2);
-      SgExpression&      repl  = numargs == 1 ? tfFn1.at(std::get<1>(r))(operandExtractor(orig))
-                                              : tfFn2.at(std::get<1>(r))(operandExtractor(orig));
+      std::string const  key   = boost::to_lower_copy(std::get<1>(r));
+      SgExpression&      repl  = numargs == 1 ? tfFn1.at(key)(operandExtractor(orig))
+                                              : tfFn2.at(key)(operandExtractor(orig));
 
       //~ if (orig.get_parent() == nullptr)
         //~ std::cerr << "parent is null: " << orig->unparseToString() << std::endl;
@@ -2143,7 +2246,8 @@ namespace Ada
     std::copy(aaa, pos, std::back_inserter(res));
 
     SgFunctionDeclaration*        pfn = n.getAssociatedFunctionDeclaration();
-    if (pfn == nullptr) throw std::logic_error("unable to retrieve associated function");
+    if (pfn == nullptr)
+      throw std::logic_error("unable to retrieve associated function");
 
     SgFunctionDeclaration&        fndecl   = SG_DEREF(n.getAssociatedFunctionDeclaration());
     SgFunctionParameterList&      fnparms  = SG_DEREF(fndecl.get_parameterList());
@@ -2546,7 +2650,7 @@ primitiveParameterPositions(const SgFunctionDeclaration& dcl)
     // PP: note for self: BaseTypeDecl::find does NOT skip the initial typedef decl
     const SgDeclarationStatement* tydcl = associatedDeclaration(parm->get_type());
 
-    if (tydcl && isSameScope(tydcl->get_scope(), scope))
+    if (tydcl && sameCanonicalScope(tydcl->get_scope(), scope))
       res.emplace_back(parmpos, parm);
 
     ++parmpos;
@@ -2752,20 +2856,6 @@ baseType(const SgType* ty)
   //~ std::cerr << (ty ? typeid(*ty).name() : std::string{"<0>"}) << std::endl;
   return sg::dispatch(BaseTypeFinder{}, ty);
 }
-
-/*
-SgDeclarationStatement*
-baseDeclaration(const SgType& ty)
-{
-  return baseDeclaration(&ty);
-}
-
-SgDeclarationStatement*
-baseDeclaration(const SgType* ty)
-{
-  return associatedDeclaration(baseType(ty));
-}
-*/
 
 SgEnumDeclaration*
 baseEnumDeclaration(SgType& ty)

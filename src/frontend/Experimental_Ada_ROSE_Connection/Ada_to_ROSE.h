@@ -328,6 +328,13 @@ struct AstContext
     bool             collectsPragmas() const { return all_pragmas != nullptr; }
     /// \}
 
+    /// pragma processing mode property
+    ///   elides warnings related to unresolved names
+    /// \{
+    AstContext pragmaProcessing(bool mode) const;
+    bool pragmaProcessing() const { return pragma_processing; }
+    /// \}
+
     /// appends new statements to \ref blk instead of the current scope, \ref the_scope.
     AstContext unscopedBlock(SgAdaUnscopedBlock& blk) const;
 
@@ -348,6 +355,7 @@ struct AstContext
     void defaultStatementHandler(AstContext, SgStatement&);
 
   private:
+    bool                         pragma_processing       = false;
     SgScopeStatement*            the_scope               = nullptr;
     LabelAndLoopManager*         all_labels_loops        = nullptr;
     const std::string*           unit_file_name          = nullptr;
