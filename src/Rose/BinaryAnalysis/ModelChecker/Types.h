@@ -19,6 +19,9 @@ using AlwaysTruePtr = std::shared_ptr<AlwaysTrue>;
 class BasicBlockUnit;
 using BasicBlockUnitPtr = std::shared_ptr<BasicBlockUnit>;
 
+class BestCoverageFirst;
+using BestCoverageFirstPtr = std::shared_ptr<BestCoverageFirst>;
+
 class Engine;
 using EnginePtr = std::shared_ptr<Engine>;
 
