@@ -263,9 +263,9 @@ bool
 Engine::step() {
     // Show when this user thread starts and ends work
     WorkerState state = WorkerState::STARTING;
-    changeState(UNMANAGED_WORKER, state, WorkerState::STARTING);
+    changeState(UNMANAGED_WORKER, state, WorkerState::STARTING, 0);
     BOOST_SCOPE_EXIT(this_, &state) {
-        this_->changeState(UNMANAGED_WORKER, state, WorkerState::FINISHED);
+        this_->changeState(UNMANAGED_WORKER, state, WorkerState::FINISHED, 0);
     } BOOST_SCOPE_EXIT_END;
 
     // Create a thread-local RISC operators that will be used to update semantic states
@@ -296,7 +296,7 @@ Engine::worker(size_t workerId, const Progress::Ptr &progress) {
     // Show when this managed worker starts and ends work
     WorkerState state = WorkerState::STARTING;          // the caller has already changed our state for us.
     BOOST_SCOPE_EXIT(this_, &state, workerId) {
-        this_->changeState(workerId, state, WorkerState::FINISHED);
+        this_->changeState(workerId, state, WorkerState::FINISHED, 0);
     } BOOST_SCOPE_EXIT_END;
 
     // Create a thread-local RISC operators that will be used to update semantic states
@@ -309,13 +309,13 @@ Engine::worker(size_t workerId, const Progress::Ptr &progress) {
     ASSERT_not_null(solver);
     solver->progress(progress);
 
-    changeState(workerId, state, WorkerState::WAITING);
+    changeState(workerId, state, WorkerState::WAITING, 0);
     while (Path::Ptr path = takeNextWorkItem(workerId, state)) {
         BOOST_SCOPE_EXIT(this_, &ops) {
             this_->finishPath(ops);
         } BOOST_SCOPE_EXIT_END;
         doOneStep(path, ops, solver);
-        changeState(workerId, state, WorkerState::WAITING);
+        changeState(workerId, state, WorkerState::WAITING, 0);
     }
 }
 
@@ -410,7 +410,7 @@ Engine::takeNextWorkItemNow(WorkerState &state) {
         return Path::Ptr();
     Path::Ptr retval = frontier_.takeNext();
     if (retval) {
-        changeStateNS(UNMANAGED_WORKER, state, WorkerState::WORKING);
+        changeStateNS(UNMANAGED_WORKER, state, WorkerState::WORKING, retval->hash());
         inProgress_.insert(boost::this_thread::get_id(), InProgress(retval));
     }
     return retval;
@@ -423,7 +423,7 @@ Engine::takeNextWorkItem(size_t workerId, WorkerState &state) {
         if (stopping_)
             return Path::Ptr();
         if (Path::Ptr retval = frontier_.takeNext()) {
-            changeStateNS(workerId, state, WorkerState::WORKING);
+            changeStateNS(workerId, state, WorkerState::WORKING, retval->hash());
             inProgress_.insert(boost::this_thread::get_id(), InProgress(retval));
             return retval;
         }
@@ -462,9 +462,9 @@ Engine::takeNextInteresting() {
 }
 
 void
-Engine::changeState(size_t workerId, WorkerState &cur, WorkerState next) {
+Engine::changeState(size_t workerId, WorkerState &cur, WorkerState next, uint64_t pathHash) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    changeStateNS(workerId, cur, next);
+    changeStateNS(workerId, cur, next, pathHash);
 }
 
 void
@@ -482,7 +482,7 @@ Engine::finishWorkingNS() {
 }
 
 void
-Engine::changeStateNS(size_t workerId, WorkerState &cur, WorkerState next) {
+Engine::changeStateNS(size_t workerId, WorkerState &cur, WorkerState next, uint64_t pathHash) {
     switch (cur) {
         case WorkerState::STARTING:
             switch (next) {
@@ -545,7 +545,7 @@ Engine::changeStateNS(size_t workerId, WorkerState &cur, WorkerState next) {
     cur = next;
 
     if (workerStatus_)
-        workerStatus_->setState(workerId, cur);
+        workerStatus_->setState(workerId, cur, pathHash);
 }
 
 // An entry in a variable index that says where a variable is constrained along a path.

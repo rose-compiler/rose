@@ -443,11 +443,12 @@ private:
 
     // Change state. The thread should hold its current state in a local variable. The state transition edges affect how
     // various counters are updated. All threads must start by initializing their current state to STARTING and then calling
-    // changeState to also specify the new state is STARTING. Only certain transitions are allowed--read the source.
-    void changeState(size_t workerId, WorkerState &currentState, WorkerState newState);
+    // changeState to also specify the new state is STARTING. Only certain transitions are allowed--read the source. The
+    // pathHash is optional and should be the hash for the path on which the worker is actively working.
+    void changeState(size_t workerId, WorkerState &currentState, WorkerState newState, uint64_t pathHash);
 
     // Non-synchronized version of changeState
-    void changeStateNS(size_t workerId, WorkerState &currentState, WorkerState newState);
+    void changeStateNS(size_t workerId, WorkerState &currentState, WorkerState newState, uint64_t pathHash);
 
     // Do things that should be done when work is started.
     void startWorkingNS();
