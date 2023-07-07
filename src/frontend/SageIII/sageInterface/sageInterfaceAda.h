@@ -376,6 +376,18 @@ namespace
   bool isFixedType(const SgType& ty);
   /// @}
 
+  /// returns true if @ref ty refers to a scalar type
+  /// @{
+  bool isScalarType(const SgType* ty);
+  bool isScalarType(const SgType& ty);
+  /// @}
+
+  /// returns true if @ref ty refers to a discrete array type
+  /// @{
+  bool isDiscreteArrayType(const SgType& ty);
+  bool isDiscreteArrayType(const SgType* ty);
+  /// @}
+
   /// returns if the type @ref ty resolves to a fixed point type
   /// \details
   ///    also return true for decimal fixed points
@@ -471,12 +483,32 @@ namespace
   TypeDescription typeOfExpr(SgExpression*);
   /// @}
 
+  struct OperatorScopeInfo : std::tuple<SgScopeStatement*, std::size_t>
+  {
+    using base = std::tuple<SgScopeStatement*, std::size_t>;
+    using base::base;
+
+    // the scope associated with the dominant parameter
+    SgScopeStatement* scope()  const { return std::get<0>(*this); }
+
+    // the position of the dominant parameter in the parameter list
+    std::size_t       argpos() const { return std::get<1>(*this); }
+  };
+
   /// returns the scope where an operator with name \ref opname and argument types
   ///    in \ref argtypes should be defined.
-  /// \param opname   the operarator name
-  /// \param argtypes a list of argument types
+  /// \param  opname   the operarator name
+  /// \param  argtypes a list of argument types
+  /// \return a scope where the described operator shall be declared, and the argument position
+  ///         associated with the scope.
+  OperatorScopeInfo operatorScope(std::string opname, const SgTypePtrList& argtypes);
+
+  /// returns the scope where type \ref ty has been declared
+  /// \param  ty some type
+  /// \return the scope where ty was declared
   /// \{
-  SgScopeStatement* operatorScope(std::string opname, SgTypePtrList argtypes);
+  SgScopeStatement* declarationScope(const SgType* ty);
+  SgScopeStatement* declarationScope(const SgType& ty);
   /// \}
 
   /// describes properties of imported units
@@ -567,6 +599,15 @@ namespace
   bool isFunction(const SgAdaSubroutineType* ty);
   /// @}
 
+  /// returns the static type of the function symbol \ref fnsy
+  /// \note
+  ///   The pointer based version returns nullptr if fnsy is nullptr.
+  /// @{
+  const SgFunctionType* functionType(const SgFunctionSymbol* fnsy);
+  const SgFunctionType& functionType(const SgFunctionSymbol& fnsy);
+  /// @}
+
+
   /// returns true iff \ref ty refers to an object renaming
   /// @{
   bool isObjectRenaming(const SgAdaRenamingDecl* dcl);
@@ -588,12 +629,12 @@ namespace
     size_t
     pos()  const { return std::get<0>(*this); }
 
-    /// the parameters name in form of an SgInitializedName
+    /// the parameter's name in form of an SgInitializedName
     const SgInitializedName*
     name() const { return std::get<1>(*this); }
   };
 
-  /// returns the descriptions for parameters that make an operations primitive
+  /// returns the descriptions for parameters that make an operation primitive
   /// @{
   std::vector<PrimitiveParameterDesc>
   primitiveParameterPositions(const SgFunctionDeclaration&);
@@ -621,7 +662,6 @@ namespace
   ///    then normalizedArgumentPosition(call, "3") -> 1
   std::size_t
   normalizedArgumentPosition(const SgFunctionCallExp& call, const SgExpression& arg);
-
 
 
   /// finds the symbol with @ref name in the context of @ref scope or its logical parents in the range
@@ -657,6 +697,15 @@ namespace
   overridingScope(const SgExprListExp* args, const std::vector<PrimitiveParameterDesc>& primitiveArgs);
   /// @}
 
+  /// returns the canonical scope of some Ada scope \ref scope.
+  /// \details
+  ///   The canonical scope of an entity is its declarative scope
+  ///   e.g., The canonical scope of an SgAdaPackageBody is its spec, a SgAdaPackageSpec
+  const SgScopeStatement* canonicalScope(const SgScopeStatement* scope);
+  const SgScopeStatement& canonicalScope(const SgScopeStatement& scope);
+
+  /// tests if \ref lhs and \ref have the same canonical scope.
+  bool sameCanonicalScope(const SgScopeStatement* lhs, const SgScopeStatement* rhs);
 
   /// returns the logical parent scope of a scope @ref s.
   /// \details
@@ -706,28 +755,15 @@ namespace
   SgType*
   baseType(const SgType* ty);
   /// \}
-/*
-  /// finds the declaration associated with ty's base type.
-  /// \returns returns the first named base declaration of ty
-  ///          nullptr if no declaration can be found.
-  /// \details
-  ///    finds the declaration assocated with \ref ty, and returns
-  ///    the declaration of ty's base type.
-  ///    i.e., associatedDecl(baseType(associatedDecl(ty)))
-  /// \{
-  SgDeclarationStatement*
-  baseDeclaration(const SgType& ty);
 
-  SgDeclarationStatement*
-  baseDeclaration(const SgType* ty);
-  /// \}
-*/
+
   /// finds the underlying enum declaration of a type \ref ty
   /// \returns an enum declaration associated with ty
   ///          nullptr if no declaration can be found
   /// \details
-  ///    in contrast to baseDeclaration, baseEnumDeclaration skips
-  ///    over intermediate SgTypedefDeclarations that introduce a new type or a subtype.
+  ///    baseEnumDeclaration skips over intermediate SgTypedefDeclarations
+  ///    that introduce a new type (\todo can new enum types be introduced with SgTypedefDeclaration?)
+  ///    or a subtype.
   /// \{
   SgEnumDeclaration*
   baseEnumDeclaration(SgType* ty);

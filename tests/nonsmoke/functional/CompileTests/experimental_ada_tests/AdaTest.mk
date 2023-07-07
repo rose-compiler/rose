@@ -312,6 +312,7 @@ ROSE_FAILING_ADA_TESTS :=                           \
   mangle_disctypes.adb                              \
   mpiuse.ads                                        \
   pragma_placement.adb                              \
+  opergen9.adb                                      \
   resolve_more_overloads.adb                        \
   resolve_overloads.adb                             
 

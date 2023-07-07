@@ -532,7 +532,7 @@ namespace
       //~ std::cerr << dcl.get_name() << " <name.dcl.scope> "
                 //~ << dcl.get_scope() << " " << (!isSgGlobal(dcl.get_scope()))
                 //~ << std::endl;
-      return (dcl.get_name() != "Standard") || !isSgGlobal(dcl.get_scope());
+      return (dcl.get_name() != si::Ada::packageStandardName) || !isSgGlobal(dcl.get_scope());
     }
 
     return n;
@@ -809,22 +809,22 @@ namespace
     std::string   scopeName = namedNode ? nodeName(SG_DEREF(namedNode)) : std::string{};
 
     if ((scopeName == "") || (scopeName == NodeName::AN_UNREAL_NAME))
-      return std::make_tuple(false, nullptr);
+      return { false, nullptr };
 
-    return std::make_tuple(true, namedNode);
+    return { true, namedNode };
   }
 
   std::tuple<ScopePath::reverse_iterator, const SgNode*>
   namedAncestorScope(ScopePath::reverse_iterator beg, ScopePath::reverse_iterator pos, const SgNode* refNode)
   {
     if (beg == pos)
-      return std::make_tuple(pos, refNode);
+      return { pos, refNode };
 
     ScopePath::reverse_iterator     prvpos = std::prev(pos);
     std::tuple<bool, const SgNode*> usable = usableScope(**prvpos);
 
     if (std::get<0>(usable))
-      return std::make_tuple(prvpos, std::get<1>(usable));
+      return { prvpos, std::get<1>(usable) };
 
     return namedAncestorScope(beg, prvpos, refNode);
   }

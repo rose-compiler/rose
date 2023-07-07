@@ -82,7 +82,7 @@ namespace
         Pragma_Struct&       pragma = el.The_Union.The_Pragma;
         std::string          name{pragma.Pragma_Name_Image};
         ElemIdRange          argRange = idRange(pragma.Pragma_Argument_Associations);
-        SgExprListExp&       args = traverseIDs(argRange, elemMap(), ArgListCreator{ctx});
+        SgExprListExp&       args = traverseIDs(argRange, elemMap(), ArgListCreator{ctx.pragmaProcessing(true)});
         SgPragmaDeclaration& sgnode = mkPragmaDeclaration(name, args, stmt);
 
         // \todo do we need to privatize pragmas in the private section?
@@ -2967,7 +2967,7 @@ namespace
     if (SgEnumDeclaration* realdecl = isSgEnumDeclaration(basedecl->get_definingDeclaration()))
       basedecl = realdecl;
 
-    return std::make_tuple(basedecl, constraint);
+    return { basedecl, constraint };
   }
 
   void
@@ -3104,7 +3104,6 @@ namespace
   }
 
   /// chooses whether an additional non-defining declaration is required
-
   SgFunctionDeclaration&
   createFunDef( SgFunctionDeclaration* nondef,
                 const std::string& name,
@@ -3387,35 +3386,6 @@ queryDecl(Expression_Struct& expr, AstContext ctx)
 
   return res;
 }
-
-
-SgFunctionDeclaration*
-queryFunctionDecl(Expression_Struct& expr, SgFunctionParameterList&, AstContext ctx)
-{
-  SgFunctionDeclaration* res = isSgFunctionDeclaration(queryDecl(expr, ctx));
-
-  if ((res == nullptr) && (expr.Expression_Kind == An_Operator_Symbol))
-  {
-    // \todo merge with same code in AdaExpression.C
-    int len = strlen(expr.Name_Image);
-    ADA_ASSERT((len > 2) && (expr.Name_Image[0] == '"') && (expr.Name_Image[len-1] == '"'));
-
-    const map_t<OperatorKey, std::vector<OperatorDesc> >& opMap = operatorSupport();
-    auto pos = opMap.find({ si::Ada::pkgStandardScope(),  AdaIdentifier{expr.Name_Image+1, len-2}});
-
-    if (pos != opMap.end())
-    {
-      ADA_ASSERT(pos->second.size());
-      // \todo this is too simple => use the parameter list to
-      //       disambiguate the operator.
-      res = pos->second.front().function();
-    }
-  }
-
-  return res;
-}
-
-
 
 void handleRepresentationClause(Element_Struct& elem, AstContext ctx)
 {
@@ -3736,16 +3706,16 @@ namespace
         {
           SgFunctionParameterList&  fnparams = SG_DEREF(ty.get_parameterList());
           SgInitializedNamePtrList& parmlst  = fnparams.get_args();
-          SgTypePtrList             typeList;
-          auto typeExtractor = [](SgInitializedName* ini)->SgType*
-                               {
-                                 return ini->get_type();
-                               };
+          OperatorCallSupplement::ArgDescList arglist;
+          auto argDescExtractor = [](SgInitializedName* ini) -> ArgDesc
+                                  {
+                                    return { "", ini->get_type() };
+                                  };
 
-          typeList.reserve(parmlst.size());
-          std::transform(parmlst.begin(), parmlst.end(), std::back_inserter(typeList), typeExtractor);
+          arglist.reserve(parmlst.size());
+          std::transform(parmlst.begin(), parmlst.end(), std::back_inserter(arglist), argDescExtractor);
 
-          res = &getExprID(decl.Formal_Subprogram_Default, ctx, OperatorCallSupplement{&typeList, ty.get_return_type()});
+          res = &getExprID(decl.Formal_Subprogram_Default, ctx, OperatorCallSupplement(std::move(arglist), ty.get_return_type()));
           break;
         }
 
@@ -3799,6 +3769,16 @@ namespace
                                                         An_Attach_Handler_Pragma,
                                                         An_Interrupt_Handler_Pragma
                                                       };
+
+  OperatorCallSupplement::ArgDescList
+  toArgDescList(const SgTypePtrList& typlist)
+  {
+    OperatorCallSupplement::ArgDescList res;
+    auto toArgDesc = [](SgType* ty) -> ArgDesc { return {"", ty}; };
+
+    std::transform(typlist.begin(), typlist.end(), std::back_inserter(res), toArgDesc);
+    return res;
+  }
 }
 
 void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
@@ -5131,10 +5111,9 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         // find declaration for the thing being renamed
         SgFunctionType&            fntype = SG_DEREF(isSgFunctionType(sgnode.get_type()));
-        SgTypePtrList&             typlist = SG_DEREF(fntype.get_argument_list()).get_arguments();
-
-        OperatorCallSupplement     suppl{&typlist, &rettype};
-        SgExpression&              renamedFun = getExprID(decl.Renamed_Entity, ctx, suppl);
+        const SgTypePtrList&       typlist = SG_DEREF(fntype.get_argument_list()).get_arguments();
+        OperatorCallSupplement     suppl(toArgDescList(typlist), &rettype);
+        SgExpression&              renamedFun = getExprID(decl.Renamed_Entity, ctx, std::move(suppl));
 
         sgnode.set_renamed_function(&renamedFun);
         privatize(sgnode, isPrivate);

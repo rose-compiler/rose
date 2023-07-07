@@ -84,12 +84,6 @@ namespace Ada_ROSE_Translation
   SgDeclarationStatement*
   queryDecl(Expression_Struct& expr, AstContext ctx);
 
-  /// returns a function declaration identified by \ref expr.
-  /// \note in addition to result found by queryDecl, this function also
-  ///         queries implied declaration in the Standard package.
-  SgFunctionDeclaration*
-  queryFunctionDecl(Expression_Struct& expr, SgFunctionParameterList&, AstContext ctx);
-
   /// returns the NameData object for a name that is represented
   /// as expression in Asis (e.g., identifier or selected)
   NameData

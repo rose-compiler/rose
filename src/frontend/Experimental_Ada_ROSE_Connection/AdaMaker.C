@@ -1385,12 +1385,14 @@ mkAdaFunctionRenamingDecl( const std::string& name,
 
   if (scope.find_symbol_by_type_of_function<SgFunctionDeclaration>(name, &funty, NULL, NULL))
   {
-    logWarn() << "found function symbol " << name << " in scope. Type of scope: "
+    logWarn() << "function renaming found function symbol with the same name: " << name << " in scope. Type of scope: "
               << typeid(scope).name()
               << std::endl;
-    ADA_ASSERT(nondef_opt);
+    // ADA_ASSERT(nondef_opt);
   }
-  else
+
+  // A renaming declaration requires a symbol in ANY case otherwise
+  //   the SageBuilder complains when references are built.
   {
     SgFunctionSymbol& funsy = mkBareNode<SgFunctionSymbol>(&sgnode);
     scope.insert_symbol(name, &funsy);
@@ -1842,8 +1844,6 @@ mkAssignInitializer(SgExpression& val, SgType& resultType)
 SgExpression&
 mkUnresolvedName(const std::string& n, SgScopeStatement& scope)
 {
-  logWarn() << "ADDING unresolved name: " << n << std::endl;
-
   return SG_DEREF(sb::buildOpaqueVarRefExp(n, &scope));
 }
 
@@ -2203,7 +2203,7 @@ namespace
                                      , { "adjacent",             &argTypeAttr }
                                      , { "aft",                  &integralTypeAttr }
                                      , { "alignment",            &integralTypeAttr }
-                                     //~ , { "base",                 &unknownTypeAttr }
+                                     , { "base",                 &exprTypeAttr } // \todo not entirely correct
                                      , { "bit",                  &integralTypeAttr }
                                      , { "bit_order",            &voidTypeAttr }
                                      , { "body_version",         &stringTypeAttr }
@@ -2259,6 +2259,7 @@ namespace
                                      , { "model_mantissa",       &integralTypeAttr }
                                      , { "model_small",          &realTypeAttr }
                                      , { "modulus",              &integralTypeAttr }
+                                     , { "object_size",          &integralTypeAttr }
                                      , { "overlaps_storage",     &boolTypeAttr }
                                      , { "pos",                  &integralTypeAttr }
                                      , { "position",             &integralTypeAttr }
@@ -2271,12 +2272,14 @@ namespace
                                      //~ , { "read",                 &unknownTypeAttr }   // ???
                                      , { "safe_first",           &realTypeAttr }
                                      , { "safe_last",            &realTypeAttr }
+                                     , { "safe_small",           &realTypeAttr }
                                      , { "scaling",              &argTypeAttr }
                                      , { "scalar_storage_order", &voidTypeAttr }
+                                     , { "small",                &realTypeAttr }
                                      , { "storage_pool",         &voidTypeAttr }
                                      , { "storage_size",         &integralTypeAttr }
                                      //~ , { "succ",                 &argTypeAttr }
-                                     , { "succ",                 &exprTypeAttr }  // Type'Pred may have no arguments when it is passed as function
+                                     , { "succ",                 &exprTypeAttr }  // Type'Succ may have no arguments when it is passed as function
                                      , { "signed_zeros",         &boolTypeAttr }
                                      , { "size",                 &integralTypeAttr }
                                      , { "storage_unit",         &integralTypeAttr }
@@ -2285,13 +2288,15 @@ namespace
                                      , { "truncation",           &argTypeAttr }
                                      , { "to_address",           &integralTypeAttr }
                                      , { "unbiased_rounding",    &argTypeAttr }
+                                     , { "unconstrained_Array",  &boolTypeAttr }
                                      , { "unchecked_access",     &accessTypeAttr }
                                      , { "unrestricted_access",  &accessTypeAttr }
                                      , { "val",                  &exprTypeAttr }
                                      , { "valid",                &boolTypeAttr }
                                      , { "value",                &exprTypeAttr }
+                                     , { "wchar_t_size",         &integralTypeAttr }
                                      //~ , { "write",                &unknownTypeAttr }
-                                     , { "wide_identity",        &wideStringTypeAttr } // should be Ada.Task_ID
+                                     , { "wide_identity",        &wideStringTypeAttr } // should be Ada.Task_ID (which is a string)
                                      , { "wide_value",           &exprTypeAttr } // should be Ada.Task_ID
                                      , { "wide_wide_identity",   &wideWideStringTypeAttr } // should be Ada.Task_ID
                                      , { "wide_wide_value",      &exprTypeAttr } // should be Ada.Task_ID

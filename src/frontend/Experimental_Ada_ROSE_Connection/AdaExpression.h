@@ -13,14 +13,29 @@
 
 namespace Ada_ROSE_Translation
 {
-  struct OperatorCallSupplement : std::tuple<SgTypePtrList*, SgType*>
+
+  struct ArgDesc : std::tuple<std::string, SgType*>
   {
-    using base = std::tuple<SgTypePtrList*, SgType*>;
+    using base = std::tuple<std::string, SgType*>;
     using base::base;
 
-    SgTypePtrList* args()   const     { return std::get<0>(*this); }
-    SgType*        result() const     { return std::get<1>(*this); }
-    void           result(SgType* ty) { std::get<1>(*this) = ty; }
+    const std::string& name() const { return std::get<0>(*this); }
+    SgType*            type() const { return std::get<1>(*this); }
+  };
+
+  struct OperatorCallSupplement : std::tuple< std::vector<ArgDesc>, SgType*>
+  {
+    using ArgDescList = std::vector<ArgDesc>;
+
+    using base = std::tuple<ArgDescList, SgType*>;
+    using base::base;
+
+    ArgDescList&       args()             { return std::get<0>(*this); }
+    const ArgDescList& args()   const     { return std::get<0>(*this); }
+    SgType*            result() const     { return std::get<1>(*this); }
+
+    bool args_valid() const { return args().size() > 0; }
+    bool valid()      const { return args_valid() && result() != nullptr; }
   };
 
   /// returns the ROSE representation of the Asis expression \ref elem
