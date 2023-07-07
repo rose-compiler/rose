@@ -26,6 +26,7 @@ private:
         WorkerState state = WorkerState::STARTING;      // current state
         time_t stateChange = 0;                         // time of last state change
         Progress::Ptr progress;                         // progress reports
+        uint64_t pathHash = 0;                          // if working, the current path
     };
 
     std::vector<Status> workers_;
@@ -50,8 +51,10 @@ public:
      *  The @p workerIdx should be a small integer. Workers are numbered consecutively starting at zero. */
     void insert(size_t workerIdx, const Progress::Ptr&);
 
-    /** Change the state of a worker. */
-    void setState(size_t workerIdx, WorkerState);
+    /** Change the state of a worker.
+     *
+     *  The path hash must be non-zero when the WorkerState is WORKING, and zero otherwise. */
+    void setState(size_t workerIdx, WorkerState, uint64_t pathHash);
 
     /** Name of file to which status is written. */
     const boost::filesystem::path& fileName() const;
