@@ -1792,19 +1792,34 @@ namespace Ada
 
   namespace
   {
-    // function checks if special handling under the assumption that its arguments
-    //   have fixed type.
+    // function checks if opname requires special handling for fixed types
+    // \note PP
+    //     operator scope for fixed types is weirdly bizarre.
+    //     behavior re-engineered from ACATS tests.
+    //     see types_operators.adb for some test cases.
+    bool isFixedSpecialOperator(const std::string& opname)
+    {
+      return opname == "*" || opname == "/";
+    }
+
+    // function checks if operator opname(argtypes.front(), argtypes.back())
+    //   needs to be placed in package standard.
     bool isFixedSpecial(const std::string& opname, const SgTypePtrList& argtypes)
     {
-      // PP: operator scope for fixed types is weirdly bizarre.
-      //     behavior re-engineered from ACATS tests.
-      //     see types_operators.adb for some test cases.
-      if (opname != "*" && opname != "/")
+      if (!isFixedSpecialOperator(opname))
         return false;
 
-      ROSE_ASSERT(argtypes.size() == 2); // must hold for * and /
+      ROSE_ASSERT(argtypes.size() >= 1);
       return resolvesToFixedType(argtypes.front()) && resolvesToFixedType(argtypes.back());
     }
+
+    // function checks if operator opname(argtypes.front(), argtypes.back())
+    //   needs to be placed in package standard.
+    bool isFixedSpecial(const std::string& opname, const SgType& ty)
+    {
+      return isFixedSpecial(opname, { const_cast<SgType*>(&ty) });
+    }
+
 
     std::tuple<const SgType*, std::size_t>
     chooseTypeWithNamedRootIfAvail(const SgTypePtrList& argtypes)
@@ -1824,7 +1839,7 @@ namespace Ada
   }
 
   OperatorScopeInfo
-  operatorScope(std::string opname, const SgTypePtrList& argtypes)
+  operatorScope(const std::string& opname, const SgTypePtrList& argtypes)
   {
     ROSE_ASSERT(argtypes.size());
 
@@ -1838,6 +1853,24 @@ namespace Ada
 
     return { declarationScope(std::get<0>(dominantType)), std::get<1>(dominantType) };
   }
+
+  SgScopeStatement&
+  operatorScope(const std::string& opname, const SgType& ty)
+  {
+    if (isFixedSpecial(opname, ty))
+      return SG_DEREF(pkgStandardScope());
+
+    return SG_DEREF(declarationScope(ty));
+  }
+
+  SgScopeStatement*
+  operatorScope(const std::string& opname, const SgType* ty)
+  {
+    if (ty == nullptr) return nullptr;
+
+    return &operatorScope(opname, *ty);
+  }
+
 
   SgScopeStatement* declarationScope(const SgType* ty)
   {
