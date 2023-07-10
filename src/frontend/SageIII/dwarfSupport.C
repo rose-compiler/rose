@@ -1,4 +1,4 @@
-// This file represents initial support in the ROSE AST for Dwarf debug information.
+// This file represents support in the ROSE AST for Dwarf debug information.
 // Dwarf is generated when source code is compiled using a compiler's debug mode.
 // the Dwarf information is represented a special sections in the file format of
 // the binary executable.  These sections are read using libdwarf (open source
@@ -94,21 +94,18 @@ makename(char *s)
 string
 get_TAG_name (Dwarf_Debug dbg, Dwarf_Half val)
 {
-  // MS 7/22 : move to stringified enum instead of having the strings all here
   return string(stringify::Rose::BinaryAnalysis::Dwarf::DWARF_TAG(val));
 }
 
 string
 get_AT_name (Dwarf_Debug dbg, Dwarf_Half val)
 {
-  // MS 7/22 : move to stringified enum instead of having the strings all here
   return string(stringify::Rose::BinaryAnalysis::Dwarf::DWARF_AT(val));
 }
 
 string
 get_LANG_name (Dwarf_Debug dbg, Dwarf_Half val)
 {
-  // MS 7/22 : move to stringified enum instead of having the strings all here
   return string(stringify::Rose::BinaryAnalysis::Dwarf::DWARF_LANG(val));
 }
 
@@ -264,7 +261,6 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
         bres = dwarf_formaddr(attrib, &addr, &rose_dwarf_error);
         if (bres == DW_DLV_OK) {
             snprintf(small_buf, sizeof(small_buf), "%#llx",(unsigned long long) addr);
-         // esb_append(esbp, small_buf);
             *esbp += small_buf;
         } else {
             throwError(dbg, "addr formwith no addr?!", bres, rose_dwarf_error);
@@ -277,7 +273,6 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
         bres = dwarf_global_formref(attrib, &off, &rose_dwarf_error);
         if (bres == DW_DLV_OK) {
             snprintf(small_buf, sizeof(small_buf),"<global die offset %llu>",(unsigned long long) off);
-         // esb_append(esbp, small_buf);
             *esbp += small_buf;
         } else {
             throwError(dbg,"DW_FORM_ref_addr form with no reference?!",bres, rose_dwarf_error);
@@ -297,7 +292,6 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
            constants. In dense form this results in <<>>. Ugly for
            dense form, but better than ambiguous. davea 9/94 */
         snprintf(small_buf, sizeof(small_buf), "<%llu>", off);
-     // esb_append(esbp, small_buf);
         *esbp += small_buf;
 
      // DQ: Added bool directly
@@ -364,10 +358,8 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
     case DW_FORM_block4:
         fres = dwarf_formblock(attrib, &tempb, &rose_dwarf_error);
         if (fres == DW_DLV_OK) {
-         // for (i = 0; i < tempb->bl_len; i++) {
             for (i = 0; i < (int) tempb->bl_len; i++) {
                 snprintf(small_buf, sizeof(small_buf), "%02x",*(i + (unsigned char *) tempb->bl_data));
-             // esb_append(esbp, small_buf);
                 *esbp += small_buf;
             }
             dwarf_dealloc(dbg, tempb, DW_DLA_BLOCK);
@@ -428,11 +420,9 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
 
                 if (wres == DW_DLV_OK) {
                     snprintf(small_buf, sizeof(small_buf), "%llu",tempud);
-                 // esb_append(esbp, small_buf);
                     *esbp += small_buf;
 
                     if (attr == DW_AT_decl_file || attr == DW_AT_call_file) {
-                     // if (srcfiles && tempud > 0 && tempud <= cnt)
                         if (srcfiles && (int)tempud > 0 && (int)tempud <= cnt) {
                             /* added by user request */
                             /* srcfiles is indexed starting at 0, but
@@ -441,9 +431,6 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
                                srcfiles, thus tempud-1 is the correct
                                index into srcfiles.  */
                             char *fname = srcfiles[tempud - 1];
-
-                         // esb_append(esbp, " ");
-                         // esb_append(esbp, fname);
                             *esbp += " ";
                             *esbp += fname;
                        }
@@ -454,7 +441,6 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
                            decl_file_result.checks++;
                            /* Zero is always a legal index, it means
                               no source name provided. */
-                        // if(tempud > cnt)
                            if( (int)tempud > cnt) {
                                decl_file_result.errors++;
                                reportParseError(get_AT_name(dbg,attr).c_str(), "does not point to valid file info");
@@ -510,7 +496,6 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
         wres = dwarf_formsdata(attrib, &tempsd, &rose_dwarf_error);
         if (wres == DW_DLV_OK) {
             snprintf(small_buf, sizeof(small_buf), "%lld", tempsd);
-         // esb_append(esbp, small_buf);
             *esbp += small_buf;
         } else if (wres == DW_DLV_NO_ENTRY) {
             /* nothing? */
@@ -522,7 +507,6 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
         wres = dwarf_formudata(attrib, &tempud, &rose_dwarf_error);
         if (wres == DW_DLV_OK) {
             snprintf(small_buf, sizeof(small_buf), "%llu", tempud);
-         // esb_append(esbp, small_buf);
             *esbp += small_buf;
         } else if (wres == DW_DLV_NO_ENTRY) {
             /* nothing? */
@@ -534,7 +518,6 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
     case DW_FORM_strp:
         wres = dwarf_formstring(attrib, &temps, &rose_dwarf_error);
         if (wres == DW_DLV_OK) {
-         // esb_append(esbp, temps);
             *esbp += temps;
         } else if (wres == DW_DLV_NO_ENTRY) {
             /* nothing? */
@@ -548,11 +531,9 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
         if (wres == DW_DLV_OK) {
             if (tempbool) {
                 snprintf(small_buf, sizeof(small_buf), "yes(%d)",tempbool);
-             // esb_append(esbp, small_buf);
                 *esbp += small_buf;
             } else {
                 snprintf(small_buf, sizeof(small_buf), "no");
-             // esb_append(esbp, small_buf);
                 *esbp += small_buf;
             }
         } else if (wres == DW_DLV_NO_ENTRY) {
@@ -575,16 +556,12 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
       break;
     default:
         // Failure to parse a DWARF construct must not be a non-recoverable error. [Robb P Matzke 2017-05-16]
-        //throwError(dbg, "dwarf_whatform unexpected value", DW_DLV_OK,rose_dwarf_error);
         mlog[ERROR] <<"dwarf_whatform_unexpected value\n";
         break;
     }
     if (verbose && direct_form && direct_form == DW_FORM_indirect)
     {
-     // char *form_indir = " (used DW_FORM_indirect) ";
         char *form_indir = strdup(" (used DW_FORM_indirect) ");
-
-     // esb_append(esbp, form_indir);
         *esbp += form_indir;
     }
 }
@@ -603,8 +580,6 @@ print_attribute(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half attr, Dwarf_Attribute
      string esb_base;
 
      atname = get_AT_name(dbg, attr);
-
-  // printf ("In print_attribute(): attribute type (atname) = %s asmDwarfConstruct = %s \n",atname.c_str(),asmDwarfConstruct->class_name().c_str());
 
   // Set the name in the SgAsmDwarfConstruct (base class)
   // asmDwarfConstruct->set_name(atname);
@@ -866,7 +841,6 @@ build_dwarf_IR_node_from_print_one_die(Dwarf_Debug dbg, Dwarf_Die die, bool prin
           throwError(dbg, "dwarf_die_CU_offset", ores, rose_dwarf_error);
         }
 
-  // if (!dst_format && print_information)
      if (print_information)
         {
           if (indent_level == 0)
@@ -925,10 +899,6 @@ build_dwarf_IR_node_from_print_one_die(Dwarf_Debug dbg, Dwarf_Die die, bool prin
                   {
                     print_attribute(dbg, die, attr, atlist[i], print_information, srcfiles, cnt, asmDwarfConstruct);
                   }
-                 else
-                  {
-                 // printf ("Skipping print_attribute since asmDwarfConstruct == NULL \n");
-                  }
 
                if (indent_level == 0)
                   {
@@ -976,26 +946,17 @@ build_dwarf_IR_node_from_die_and_children(Dwarf_Debug dbg, Dwarf_Die in_die_in, 
 
      for (;;)
         {
-       // printf ("Top of loop in build_dwarf_IR_node_from_die_and_children() \n");
-
           PUSH_DIE_STACK(in_die);
 
        // Suppress output!
 
        // DQ (11/4/2008): This is the location were we will have to generate IR nodes using each debug info entry (die)
-       // printf ("Calling print_one_die to output the information about each specific debug info entry (die) \n");
 
        /* here to pre-descent processing of the die */
-       // SgAsmDwarfConstruct* astDwarfConstruct = build_dwarf_IR_node_from_print_one_die(dbg, in_die, /* info_flag */ true, srcfiles, cnt /* , asmDwarfCompilationUnit */ );
           astDwarfConstruct = build_dwarf_IR_node_from_print_one_die(dbg, in_die, /* info_flag */ true, srcfiles, cnt /* , asmDwarfCompilationUnit */ );
 
-       // parentDwarfConstruct->set_child(astDwarfConstruct);
           if (parentDwarfConstruct != NULL && astDwarfConstruct != NULL)
              {
-            // printf ("Push children onto parent IR node! \n");
-
-            // if (parentDwarfConstruct->get_children() == NULL)
-            //      parentDwarfConstruct->set_children(new SgAsmDwarfConstructList());
             // When this work we know that we have the child support for Dwarf IR nodes in place (in all the right places).
                  // According to Kewen Meng at uoregon.edu, this assertion fails when the input specimen is compiled with "gcc
                  // -O1" (input and gcc version were unspecified by user), but works if -O1 is removed, or if C++ compiler
@@ -1003,8 +964,6 @@ build_dwarf_IR_node_from_die_and_children(Dwarf_Debug dbg, Dwarf_Die in_die_in, 
                  // Matzke 2016-09-29]
                ASSERT_not_null(parentDwarfConstruct->get_children());
                parentDwarfConstruct->get_children()->get_list().push_back(astDwarfConstruct);
-               // The new dwarf construct's parent should be the SgAsmDwarfConstructList, not the parent of the list.
-               // [Robb P. Matzke 2013-04-15]
                astDwarfConstruct->set_parent(parentDwarfConstruct->get_children());
              }
 
@@ -1017,10 +976,6 @@ build_dwarf_IR_node_from_die_and_children(Dwarf_Debug dbg, Dwarf_Die in_die_in, 
                   {
                     throwError(dbg,"compiled in DIE_STACK_SIZE limit exceeded",DW_DLV_OK,err);
                   }
-
-            // printf ("Processing child dwarf nodes: calling build_dwarf_IR_node_from_die_and_children() \n");
-
-            // Old function: print_die_and_children(dbg, child, srcfiles, cnt);
 
             // Ignore the return result (children are added to the parent).
                if (astDwarfConstruct != NULL)
@@ -1040,7 +995,6 @@ build_dwarf_IR_node_from_die_and_children(Dwarf_Debug dbg, Dwarf_Die in_die_in, 
                   }
              }
 
-       // printf ("Process siblings \n");
           cdres = dwarf_siblingof(dbg, in_die, &sibling, &err);
           if (cdres == DW_DLV_OK)
              {
@@ -1058,8 +1012,6 @@ build_dwarf_IR_node_from_die_and_children(Dwarf_Debug dbg, Dwarf_Die in_die_in, 
              }
 
        /* Here do any post-descent (ie post-dwarf_child) processing of the in_die. */
-
-       // printf ("Process post-dwarf_child \n");
 
           POP_DIE_STACK;
           if (in_die != in_die_in)
@@ -1080,11 +1032,7 @@ build_dwarf_IR_node_from_die_and_children(Dwarf_Debug dbg, Dwarf_Die in_die_in, 
             /* We are done, no more siblings at this level. */
                break;
              }
-
-       // printf ("Bottom of loop in build_dwarf_IR_node_from_die_and_children() \n");
         }  /* end for loop on siblings */
-
-  // ROSE_ASSERT(astDwarfConstruct != NULL);
 
      return astDwarfConstruct;
    }
@@ -1110,13 +1058,6 @@ build_dwarf_line_numbers_this_cu(Dwarf_Debug dbg, Dwarf_Die cu_die, SgAsmDwarfCo
      int ares = 0;
      int lires = 0;
      int cores = 0;
-
-  // printf ("Inside of build_dwarf_line_numbers_this_cu() (using .debug_line section) \n");
-
-  // printf("\n.debug_line: line number info for a single cu\n");
-
-  // printf ("Setting verbose > 1 (verbose==2) \n");
-  // verbose = 2;
 
      ASSERT_require(asmDwarfCompilationUnit->get_line_info() == nullptr);
      SgAsmDwarfLineList* asmDwarfLineList = new SgAsmDwarfLineList();
@@ -1163,8 +1104,6 @@ build_dwarf_line_numbers_this_cu(Dwarf_Debug dbg, Dwarf_Die cu_die, SgAsmDwarfCo
                   }
 #endif
             // Output a header for the data
-            // printf("<source>\t[row,column]\t<pc>\t//<new statement or basic block\n");
-
                for (i = 0; i < linecount; i++)
                   {
                     Dwarf_Line line = linebuf[i];
@@ -1213,8 +1152,6 @@ build_dwarf_line_numbers_this_cu(Dwarf_Debug dbg, Dwarf_Die cu_die, SgAsmDwarfCo
                        {
                          column = -1LL;
                        }
-
-                 // printf("%s:\t[%3llu,%2lld]\t%#llx", filename, lineno,column, pc);
 
                  // Build an IR node to represent the instruction address for each line.
                  // This uses the static maps in the Sg_File_Info to support a table similar
@@ -1302,7 +1239,6 @@ build_dwarf_line_numbers_this_cu(Dwarf_Debug dbg, Dwarf_Die cu_die, SgAsmDwarfCo
 
   // printf ("Now generate the static maps to use to lookup the instruction address to source position mappings \n");
      asmDwarfLineList->buildInstructionAddressSourcePositionMaps(asmDwarfCompilationUnit);
-  // printf ("DONE: Now generate the maps to use to lookup the instruction address to source position mappings \n");
 
 #if 0
   // Run a second time to test that the maps are not regenerated (this is just a test)
@@ -1313,7 +1249,6 @@ build_dwarf_line_numbers_this_cu(Dwarf_Debug dbg, Dwarf_Die cu_die, SgAsmDwarfCo
 
 #if 1
   // Output the line information from the generated maps (debugging information).
-  // printf ("SgProject::get_verbose() = %d \n",SgProject::get_verbose());
      if (SgProject::get_verbose() > 0)
         {
           asmDwarfLineList->display("Inside of build_dwarf_line_numbers_this_cu()");
@@ -1345,11 +1280,6 @@ build_dwarf_IR_nodes(Dwarf_Debug dbg, SgAsmGenericFile* file)
 
        // error status variable
           int sres = 0;
-
-       // printf ("Setting cu_name_flag == true \n");
-       // cu_name_flag = true;
-       // cu_name_flag = false;
-
           ASSERT_require(cu_name_flag == false);
 
        /* process a single compilation unit in .debug_info. */
@@ -1379,7 +1309,6 @@ build_dwarf_IR_nodes(Dwarf_Debug dbg, SgAsmGenericFile* file)
               ASSERT_not_null(asmDwarfConstruct);
 
               // Handle the case of many Dwarf Compile Units
-              // asmInterpretation->get_dwarf_info()->get_cu_list().push_back(asmDwarfCompilationUnit);
               SgAsmDwarfCompilationUnit* asmDwarfCompilationUnit = isSgAsmDwarfCompilationUnit(asmDwarfConstruct);
               ASSERT_not_null(asmDwarfCompilationUnit);
 
@@ -1483,10 +1412,7 @@ void commentOutSymbolsFromDotGraph (SgNode* node)
      traversal.traverse(node,preorder);
    }
 
-// DQ (11/10/2008):
-/*! \brief This traversal permits non-dwarf IR nodes to be commented out from the DOT graphs.
-
- */
+/* This traversal permits non-dwarf IR nodes to be commented out from the DOT graphs. */
 void commentOutEvertythingButDwarf (SgNode* node)
    {
   // Remove the symbols and related symbol lists so that the generated DOT file will be simpler.
@@ -1595,8 +1521,6 @@ readDwarf ( SgAsmGenericFile* asmFile )
      ASSERT_not_null(genericFile);
 
      int fileDescriptor = genericFile->get_fd();
-
-  // DQ (3/13/2009): Added as a test.
      Dwarf_Debug rose_dwarf_dbg;
      Dwarf_Error rose_dwarf_error;
 
@@ -1607,18 +1531,12 @@ readDwarf ( SgAsmGenericFile* asmFile )
      int dwarf_init_status = dwarf_init (fileDescriptor, DW_DLC_READ, NULL, NULL, &rose_dwarf_dbg, &rose_dwarf_error);
 
   // Test if the call to dwarf_init worked!
-  // ROSE_ASSERT(dwarf_init_status == DW_DLV_OK);
      if (dwarf_init_status == DW_DLV_OK)
         {
-       // I am unclear about the functionality of these two functions!
-       // dwarf_set_frame_rule_inital_value(rose_dwarf_dbg,global_config_file_data.cf_initial_rule_value);
-       // dwarf_set_frame_rule_table_size(rose_dwarf_dbg,global_config_file_data.cf_table_entry_count);
-
        // Dwarf information in a specimen is attached to the specimen's file as a whole.  It is not attached to an
        // interpretation since the relationship between SgAsmGenericFile and SgAsmInterpretation is many-to-many.
           build_dwarf_IR_nodes(rose_dwarf_dbg, asmFile);
 
-       // printf ("\n\nFinishing Dwarf handling... \n\n");
           int dwarf_finish_status = dwarf_finish( rose_dwarf_dbg, &rose_dwarf_error);
           ASSERT_require(dwarf_finish_status == DW_DLV_OK);
         }
@@ -1731,16 +1649,12 @@ SgAsmDwarfConstruct::createDwarfConstruct( int tag, int nesting_level, uint64_t 
           default:
              {
             // Use AsmDwarfVariant as a default dwarf construct (we might want a SgAsmDwarfUnknownConstruct also).
-            // returnConstruct = new SgAsmDwarfVariant(nesting_level,offset,overall_offset);
                returnConstruct = new SgAsmDwarfUnknownConstruct(nesting_level,offset,overall_offset);
              }
         }
 
      return returnConstruct;
    }
-
-
-// endif for "ifdef ROSE_HAVE_LIBDWARF" at top of file.
 #else
 
 // DQ (11/12/2008): Function defined so that java-port will not complain.
@@ -1835,10 +1749,6 @@ SgAsmDwarfLineList::sourceCodeToAddress ( FileIdLineColumnFilePosition sourcePos
      SgSourcePositionInstructionAddressMapPtrList & source_code_instruction_map = *(maps.second);
 
      SgSourcePositionInstructionAddressMapPtrList::iterator lowerBound = source_code_instruction_map.lower_bound(sourcePosition);
-#if 0
-  // I think this is redundant code
-     SgSourcePositionInstructionAddressMapPtrList::iterator upperBound = source_code_instruction_map.upper_bound(sourcePosition);
-#endif
 
      returnAddress = lowerBound->second;
 
@@ -1934,7 +1844,6 @@ SgAsmDwarfLineList::display( const string & label )
      printf ("addressRange = (0x%" PRIx64 ", 0x%" PRIx64 ") \n",addressRange.first,addressRange.second);
 
   // Iterate over all the files in the static Sg_File_Info::get_fileidtoname_map
-  // int numberOfSourceFiles = Sg_File_Info::get_fileidtoname_map().size();
      int numberOfSourceFiles = Sg_File_Info::numberOfSourceFiles();
      printf ("numberOfSourceFiles = %d \n",numberOfSourceFiles);
 
