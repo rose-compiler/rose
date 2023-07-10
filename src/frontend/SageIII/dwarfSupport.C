@@ -13,6 +13,7 @@
 #include <Rose/BinaryAnalysis/Dwarf.h>
 #include <stringify.h>
 #include <Rose/Diagnostics.h>
+#include <Rose/StringUtility/Diagnostics.h>
 
 using namespace Rose::Diagnostics;
 
@@ -31,8 +32,8 @@ using namespace std;
 #define DIE_STACK_SIZE 300
 static Dwarf_Die die_stack[DIE_STACK_SIZE];
 
-#define PUSH_DIE_STACK(x) { ROSE_ASSERT(indent_level < DIE_STACK_SIZE); die_stack[indent_level] = x; }
-#define POP_DIE_STACK { ROSE_ASSERT(indent_level < DIE_STACK_SIZE); die_stack[indent_level] = 0; }
+#define PUSH_DIE_STACK(x) { ASSERT_require(indent_level < DIE_STACK_SIZE); die_stack[indent_level] = x; }
+#define POP_DIE_STACK { ASSERT_require(indent_level < DIE_STACK_SIZE); die_stack[indent_level] = 0; }
 
 int indent_level = 0;
 bool local_symbols_already_began = false;
@@ -75,30 +76,22 @@ char cu_name[BUFSIZ];
 bool cu_name_flag = false;
 Dwarf_Unsigned cu_offset = 0;
 
-void
-print_error(Dwarf_Debug dbg, string msg, int dwarf_code, Dwarf_Error err)
-   {
-  // Simple error message function
-     mlog[FATAL] << "ERROR: " << msg << std::endl;
-     ROSE_ABORT();
-   }
+// This is mostly copied from the original `print_error` global function (now removed) which ignored all its arguments except the
+// `mesg` string.  However, unlike `print_error` which unconditionally aborted, this one throws an exception so that user code can
+// (hopefully) recover. It may or may not leave the AST in a consistent state since most of SageIII/dwarfSupport was not written
+// with this possibility in mind.
+static void
+throwError(Dwarf_Debug, const std::string &mesg, int /*dwarf_code*/, Dwarf_Error) [[noreturn]] {
+    throw Rose::BinaryAnalysis::Dwarf::Exception(mesg);
+}
 
 char *
 makename(char *s)
 {
-    char *newstr;
-
-    if (!s) {
-        return strdup("");
-    }
-
-    newstr = strdup(s);
-    if (newstr == 0) {
-        fprintf(stderr, "Out of memory mallocing %d bytes\n",
-                (int) strlen(s));
-        exit(1);
-    }
-    return newstr;
+    if (char *newstr = s ? strdup(s) : strdup(""))
+        return newstr;
+    throw Rose::BinaryAnalysis::Dwarf::Exception("out of memory in makename for " +
+                                                 Rose::StringUtility::plural(strlen(s)+1, "bytes"));
 }
 
 string
@@ -261,7 +254,7 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
     fres = dwarf_whatform(attrib, &theform, &rose_dwarf_error);
     /* depending on the form and the attribute, process the form */
     if (fres == DW_DLV_ERROR) {
-        print_error(dbg, "dwarf_whatform cannot find attr form", fres,rose_dwarf_error);
+        throwError(dbg, "dwarf_whatform cannot find attr form", fres,rose_dwarf_error);
     } else if (fres == DW_DLV_NO_ENTRY) {
         return;
     }
@@ -277,7 +270,7 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
          // esb_append(esbp, small_buf);
             *esbp += small_buf;
         } else {
-            print_error(dbg, "addr formwith no addr?!", bres, rose_dwarf_error);
+            throwError(dbg, "addr formwith no addr?!", bres, rose_dwarf_error);
         }
         break;
     case DW_FORM_ref_addr:
@@ -290,7 +283,7 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
          // esb_append(esbp, small_buf);
             *esbp += small_buf;
         } else {
-            print_error(dbg,"DW_FORM_ref_addr form with no reference?!",bres, rose_dwarf_error);
+            throwError(dbg,"DW_FORM_ref_addr form with no reference?!",bres, rose_dwarf_error);
         }
         break;
     case DW_FORM_ref1:
@@ -301,7 +294,7 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
        {
         bres = dwarf_formref(attrib, &off, &rose_dwarf_error);
         if (bres != DW_DLV_OK) {
-            print_error(dbg, "ref formwith no ref?!", bres, rose_dwarf_error);
+            throwError(dbg, "ref formwith no ref?!", bres, rose_dwarf_error);
         }
         /* do references inside <> to distinguish them ** from
            constants. In dense form this results in <<>>. Ugly for
@@ -383,7 +376,7 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
             }
             dwarf_dealloc(dbg, tempb, DW_DLA_BLOCK);
         } else {
-            print_error(dbg, "DW_FORM_blockn cannot get block\n", fres,rose_dwarf_error);
+            throwError(dbg, "DW_FORM_blockn cannot get block\n", fres,rose_dwarf_error);
         }
         break;
     case DW_FORM_data1:
@@ -392,9 +385,9 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
     case DW_FORM_data8:
         fres = dwarf_whatattr(attrib, &attr, &rose_dwarf_error);
         if (fres == DW_DLV_ERROR) {
-            print_error(dbg, "FORM_datan cannot get attr", fres, rose_dwarf_error);
+            throwError(dbg, "FORM_datan cannot get attr", fres, rose_dwarf_error);
         } else if (fres == DW_DLV_NO_ENTRY) {
-            print_error(dbg, "FORM_datan cannot get attr", fres, rose_dwarf_error);
+            throwError(dbg, "FORM_datan cannot get attr", fres, rose_dwarf_error);
         } else {
             switch (attr) {
             case DW_AT_ordering:
@@ -473,7 +466,7 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
                        }
                     }
                 } else {
-                    print_error(dbg, "Cannot get encoding attribute ..",wres, rose_dwarf_error);
+                    throwError(dbg, "Cannot get encoding attribute ..",wres, rose_dwarf_error);
                 }
                 break;
                }
@@ -485,7 +478,7 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
                 } else if (wres == DW_DLV_NO_ENTRY) {
                     /* nothing? */
                 } else {
-                   print_error(dbg,"Cannot get DW_AT_const_value ",wres,rose_dwarf_error);
+                   throwError(dbg,"Cannot get DW_AT_const_value ",wres,rose_dwarf_error);
                 }
 
 
@@ -499,7 +492,7 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
                 } else if (wres == DW_DLV_NO_ENTRY) {
                     /* nothing? */
                 } else {
-                    print_error(dbg, "Cannot get formsdata..", wres,rose_dwarf_error);
+                    throwError(dbg, "Cannot get formsdata..", wres,rose_dwarf_error);
                 }
                 break;
             }
@@ -526,7 +519,7 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
         } else if (wres == DW_DLV_NO_ENTRY) {
             /* nothing? */
         } else {
-            print_error(dbg, "Cannot get formsdata..", wres, rose_dwarf_error);
+            throwError(dbg, "Cannot get formsdata..", wres, rose_dwarf_error);
         }
         break;
     case DW_FORM_udata:
@@ -538,7 +531,7 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
         } else if (wres == DW_DLV_NO_ENTRY) {
             /* nothing? */
         } else {
-            print_error(dbg, "Cannot get formudata....", wres, rose_dwarf_error);
+            throwError(dbg, "Cannot get formudata....", wres, rose_dwarf_error);
         }
         break;
     case DW_FORM_string:
@@ -550,7 +543,7 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
         } else if (wres == DW_DLV_NO_ENTRY) {
             /* nothing? */
         } else {
-            print_error(dbg, "Cannot get a formstr (or a formstrp)....",wres, rose_dwarf_error);
+            throwError(dbg, "Cannot get a formstr (or a formstrp)....",wres, rose_dwarf_error);
         }
 
         break;
@@ -569,20 +562,14 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
         } else if (wres == DW_DLV_NO_ENTRY) {
             /* nothing? */
         } else {
-            print_error(dbg, "Cannot get formflag/p....", wres, rose_dwarf_error);
+            throwError(dbg, "Cannot get formflag/p....", wres, rose_dwarf_error);
         }
         break;
     case DW_FORM_indirect:
         /* We should not ever get here, since the true form was
            determined and direct_form has the DW_FORM_indirect if it is
            used here in this attr. */
-     // esb_append(esbp, get_FORM_name(dbg, theform));
-
-       printf ("Error: If we should never get here then make this an error! \n");
-       ROSE_ABORT();
-
-     // *esbp += get_FORM_name(dbg, theform);
-        break;
+        ASSERT_not_reachable("dquinlan 2008-11-10");
 
     case DW_FORM_sec_offset:
     case DW_FORM_exprloc:
@@ -592,7 +579,7 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
       break;
     default:
         // Failure to parse a DWARF construct must not be a non-recoverable error. [Robb P Matzke 2017-05-16]
-        //print_error(dbg, "dwarf_whatform unexpected value", DW_DLV_OK,rose_dwarf_error);
+        //throwError(dbg, "dwarf_whatform unexpected value", DW_DLV_OK,rose_dwarf_error);
         fputs("Error: dwarf_whatform_unexpected value\n", stderr);
         break;
     }
@@ -660,7 +647,7 @@ print_attribute(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half attr, Dwarf_Attribute
 
             // The language is only set in the SgAsmDwarfCompilationUnit IR node.
                SgAsmDwarfCompilationUnit* asmDwarfCompilationUnit = isSgAsmDwarfCompilationUnit(asmDwarfConstruct);
-               ROSE_ASSERT(asmDwarfCompilationUnit != NULL);
+               ASSERT_not_null(asmDwarfCompilationUnit);
                asmDwarfCompilationUnit->set_language(valname);
                break;
              }
@@ -741,7 +728,7 @@ print_attribute(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half attr, Dwarf_Attribute
                } else if (wres == DW_DLV_NO_ENTRY) {
                    valname = "?";
                } else {
-                   print_error(dbg,"Cannot get formudata....",wres,err);
+                   throwError(dbg,"Cannot get formudata....",wres,err);
                    valname = "??";
                }
 
@@ -755,7 +742,7 @@ print_attribute(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half attr, Dwarf_Attribute
                rv = dwarf_whatform(attrib,&theform,&rose_dwarf_error);
             /* depending on the form and the attribute, process the form */
                if(rv == DW_DLV_ERROR) {
-                    print_error(dbg, "dwarf_whatform cannot find attr form",rv, rose_dwarf_error);
+                    throwError(dbg, "dwarf_whatform cannot find attr form",rv, rose_dwarf_error);
                } else if (rv == DW_DLV_NO_ENTRY) {
                    break;
                }
@@ -798,7 +785,7 @@ print_attribute(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half attr, Dwarf_Attribute
             /* depending on the form and the attribute, process the form */
                if(rv == DW_DLV_ERROR)
                   {
-                    print_error(dbg, "dwarf_whatform cannot find attr form",rv, rose_dwarf_error);
+                    throwError(dbg, "dwarf_whatform cannot find attr form",rv, rose_dwarf_error);
                   }
                  else
                   {
@@ -866,7 +853,7 @@ build_dwarf_IR_node_from_print_one_die(Dwarf_Debug dbg, Dwarf_Die die, bool prin
      tres = dwarf_tag(die, &tag, &rose_dwarf_error);
      if (tres != DW_DLV_OK)
         {
-          print_error(dbg, "accessing tag of die!", tres, rose_dwarf_error);
+          throwError(dbg, "accessing tag of die!", tres, rose_dwarf_error);
         }
 
      tagname = get_TAG_name(dbg, tag);
@@ -874,13 +861,13 @@ build_dwarf_IR_node_from_print_one_die(Dwarf_Debug dbg, Dwarf_Die die, bool prin
      ores = dwarf_dieoffset(die, &overall_offset, &rose_dwarf_error);
      if (ores != DW_DLV_OK)
         {
-          print_error(dbg, "dwarf_dieoffset", ores, rose_dwarf_error);
+          throwError(dbg, "dwarf_dieoffset", ores, rose_dwarf_error);
         }
 
      ores = dwarf_die_CU_offset(die, &offset, &rose_dwarf_error);
      if (ores != DW_DLV_OK)
         {
-          print_error(dbg, "dwarf_die_CU_offset", ores, rose_dwarf_error);
+          throwError(dbg, "dwarf_die_CU_offset", ores, rose_dwarf_error);
         }
 
   // if (!dst_format && print_information)
@@ -904,7 +891,7 @@ build_dwarf_IR_node_from_print_one_die(Dwarf_Debug dbg, Dwarf_Die die, bool prin
      atres = dwarf_attrlist(die, &atlist, &atcnt, &rose_dwarf_error);
      if (atres == DW_DLV_ERROR)
         {
-          print_error(dbg, "dwarf_attrlist", atres, rose_dwarf_error);
+          throwError(dbg, "dwarf_attrlist", atres, rose_dwarf_error);
         }
        else
         {
@@ -958,7 +945,7 @@ build_dwarf_IR_node_from_print_one_die(Dwarf_Debug dbg, Dwarf_Die die, bool prin
              }
             else
              {
-               print_error(dbg, "dwarf_whatattr entry missing", ares, rose_dwarf_error);
+               throwError(dbg, "dwarf_whatattr entry missing", ares, rose_dwarf_error);
              }
         }
 
@@ -1018,7 +1005,7 @@ build_dwarf_IR_node_from_die_and_children(Dwarf_Debug dbg, Dwarf_Die in_die_in, 
                  // -O1" (input and gcc version were unspecified by user), but works if -O1 is removed, or if C++ compiler
                  // (vendor and version unspecified by user) is used with optimization flag (flag unspecified by user). [Robb
                  // Matzke 2016-09-29]
-               ROSE_ASSERT(parentDwarfConstruct->get_children() != NULL);
+               ASSERT_not_null(parentDwarfConstruct->get_children());
                parentDwarfConstruct->get_children()->get_list().push_back(astDwarfConstruct);
                // The new dwarf construct's parent should be the SgAsmDwarfConstructList, not the parent of the list.
                // [Robb P. Matzke 2013-04-15]
@@ -1032,7 +1019,7 @@ build_dwarf_IR_node_from_die_and_children(Dwarf_Debug dbg, Dwarf_Die in_die_in, 
                indent_level++;
                if(indent_level >= DIE_STACK_SIZE )
                   {
-                    print_error(dbg,"compiled in DIE_STACK_SIZE limit exceeded",DW_DLV_OK,err);
+                    throwError(dbg,"compiled in DIE_STACK_SIZE limit exceeded",DW_DLV_OK,err);
                   }
 
             // printf ("Processing child dwarf nodes: calling build_dwarf_IR_node_from_die_and_children() \n");
@@ -1053,7 +1040,7 @@ build_dwarf_IR_node_from_die_and_children(Dwarf_Debug dbg, Dwarf_Die in_die_in, 
              {
                if (cdres == DW_DLV_ERROR)
                   {
-                    print_error(dbg, "dwarf_child", cdres, err);
+                    throwError(dbg, "dwarf_child", cdres, err);
                   }
              }
 
@@ -1070,7 +1057,7 @@ build_dwarf_IR_node_from_die_and_children(Dwarf_Debug dbg, Dwarf_Die in_die_in, 
              {
                if (cdres == DW_DLV_ERROR)
                   {
-                    print_error(dbg, "dwarf_siblingof", cdres, err);
+                    throwError(dbg, "dwarf_siblingof", cdres, err);
                   }
              }
 
@@ -1135,14 +1122,11 @@ build_dwarf_line_numbers_this_cu(Dwarf_Debug dbg, Dwarf_Die cu_die, SgAsmDwarfCo
   // printf ("Setting verbose > 1 (verbose==2) \n");
   // verbose = 2;
 
-     ROSE_ASSERT(asmDwarfCompilationUnit->get_line_info() == NULL);
-
+     ASSERT_require(asmDwarfCompilationUnit->get_line_info() == nullptr);
      SgAsmDwarfLineList* asmDwarfLineList = new SgAsmDwarfLineList();
-
      asmDwarfCompilationUnit->set_line_info(asmDwarfLineList);
      asmDwarfLineList->set_parent(asmDwarfCompilationUnit);
-
-     ROSE_ASSERT(asmDwarfCompilationUnit->get_line_info() != NULL);
+     ASSERT_not_null(asmDwarfCompilationUnit->get_line_info());
 
 #if 0
      if (verbose > 1)
@@ -1153,7 +1137,7 @@ build_dwarf_line_numbers_this_cu(Dwarf_Debug dbg, Dwarf_Die cu_die, SgAsmDwarfCo
           lres = dwarf_print_lines(cu_die, &rose_dwarf_error);
           if (lres == DW_DLV_ERROR)
              {
-               print_error(dbg, "dwarf_srclines details", lres, rose_dwarf_error);
+               throwError(dbg, "dwarf_srclines details", lres, rose_dwarf_error);
              }
 
           printf ("Exiting print_line_numbers_this_cu prematurely! \n");
@@ -1164,7 +1148,7 @@ build_dwarf_line_numbers_this_cu(Dwarf_Debug dbg, Dwarf_Die cu_die, SgAsmDwarfCo
      lres = dwarf_srclines(cu_die, &linebuf, &linecount, &rose_dwarf_error);
      if (lres == DW_DLV_ERROR)
         {
-          print_error(dbg, "dwarf_srclines", lres, rose_dwarf_error);
+          throwError(dbg, "dwarf_srclines", lres, rose_dwarf_error);
         }
        else
         {
@@ -1194,7 +1178,7 @@ build_dwarf_line_numbers_this_cu(Dwarf_Debug dbg, Dwarf_Die cu_die, SgAsmDwarfCo
 
                     if (sres == DW_DLV_ERROR)
                        {
-                         print_error(dbg, "dwarf_linesrc", sres, rose_dwarf_error);
+                         throwError(dbg, "dwarf_linesrc", sres, rose_dwarf_error);
                        }
 
                     if (sres == DW_DLV_NO_ENTRY)
@@ -1204,7 +1188,7 @@ build_dwarf_line_numbers_this_cu(Dwarf_Debug dbg, Dwarf_Die cu_die, SgAsmDwarfCo
 
                     if (ares == DW_DLV_ERROR)
                        {
-                         print_error(dbg, "dwarf_lineaddr", ares, rose_dwarf_error);
+                         throwError(dbg, "dwarf_lineaddr", ares, rose_dwarf_error);
                        }
 
                     if (ares == DW_DLV_NO_ENTRY)
@@ -1215,7 +1199,7 @@ build_dwarf_line_numbers_this_cu(Dwarf_Debug dbg, Dwarf_Die cu_die, SgAsmDwarfCo
                     lires = dwarf_lineno(line, &lineno, &rose_dwarf_error);
                     if (lires == DW_DLV_ERROR)
                        {
-                         print_error(dbg, "dwarf_lineno", lires, rose_dwarf_error);
+                         throwError(dbg, "dwarf_lineno", lires, rose_dwarf_error);
                        }
 
                     if (lires == DW_DLV_NO_ENTRY)
@@ -1226,7 +1210,7 @@ build_dwarf_line_numbers_this_cu(Dwarf_Debug dbg, Dwarf_Die cu_die, SgAsmDwarfCo
                     cores = dwarf_lineoff(line, &column, &rose_dwarf_error);
                     if (cores == DW_DLV_ERROR)
                        {
-                         print_error(dbg, "dwarf_lineoff", cores, rose_dwarf_error);
+                         throwError(dbg, "dwarf_lineoff", cores, rose_dwarf_error);
                        }
 
                     if (cores == DW_DLV_NO_ENTRY)
@@ -1272,7 +1256,7 @@ build_dwarf_line_numbers_this_cu(Dwarf_Debug dbg, Dwarf_Die cu_die, SgAsmDwarfCo
                       else
                          if (nsres == DW_DLV_ERROR)
                             {
-                              print_error(dbg, "linebeginstatment failed", nsres,rose_dwarf_error);
+                              throwError(dbg, "linebeginstatment failed", nsres,rose_dwarf_error);
                             }
 
                     nsres = dwarf_lineblock(line, &new_basic_block, &rose_dwarf_error);
@@ -1289,7 +1273,7 @@ build_dwarf_line_numbers_this_cu(Dwarf_Debug dbg, Dwarf_Die cu_die, SgAsmDwarfCo
                       else
                          if (nsres == DW_DLV_ERROR)
                             {
-                              print_error(dbg, "lineblock failed", nsres, rose_dwarf_error);
+                              throwError(dbg, "lineblock failed", nsres, rose_dwarf_error);
                             }
 
                     nsres = dwarf_lineendsequence(line, &lineendsequence, &rose_dwarf_error);
@@ -1306,7 +1290,7 @@ build_dwarf_line_numbers_this_cu(Dwarf_Debug dbg, Dwarf_Die cu_die, SgAsmDwarfCo
                       else
                          if (nsres == DW_DLV_ERROR)
                             {
-                              print_error(dbg, "lineblock failed", nsres, rose_dwarf_error);
+                              throwError(dbg, "lineblock failed", nsres, rose_dwarf_error);
                             }
 #endif
 
@@ -1354,8 +1338,7 @@ build_dwarf_IR_nodes(Dwarf_Debug dbg, SgAsmGenericFile* file)
      Dwarf_Unsigned next_cu_offset = 0;
      int nres = DW_DLV_OK;
 
-     ROSE_ASSERT(file->get_dwarf_info() == NULL);
-
+     ASSERT_require(file->get_dwarf_info() == nullptr);
      SgAsmDwarfCompilationUnitList* asmDwarfCompilationUnitList = new SgAsmDwarfCompilationUnitList();
      file->set_dwarf_info(asmDwarfCompilationUnitList);
      asmDwarfCompilationUnitList->set_parent(file);
@@ -1371,7 +1354,7 @@ build_dwarf_IR_nodes(Dwarf_Debug dbg, SgAsmGenericFile* file)
        // cu_name_flag = true;
        // cu_name_flag = false;
 
-          ROSE_ASSERT(cu_name_flag == false);
+          ASSERT_require(cu_name_flag == false);
 
        /* process a single compilation unit in .debug_info. */
           sres = dwarf_siblingof(dbg, NULL, &cu_die, &rose_dwarf_error);
@@ -1397,12 +1380,12 @@ build_dwarf_IR_nodes(Dwarf_Debug dbg, SgAsmGenericFile* file)
               // should define an course view of the AST which can be used to relate the binary
               // to the source code.
               SgAsmDwarfConstruct* asmDwarfConstruct = build_dwarf_IR_node_from_die_and_children(dbg, cu_die, srcfiles, cnt, NULL);
-              ROSE_ASSERT(asmDwarfConstruct != NULL);
+              ASSERT_not_null(asmDwarfConstruct);
 
               // Handle the case of many Dwarf Compile Units
               // asmInterpretation->get_dwarf_info()->get_cu_list().push_back(asmDwarfCompilationUnit);
               SgAsmDwarfCompilationUnit* asmDwarfCompilationUnit = isSgAsmDwarfCompilationUnit(asmDwarfConstruct);
-              ROSE_ASSERT(asmDwarfCompilationUnit != NULL);
+              ASSERT_not_null(asmDwarfCompilationUnit);
 
               asmDwarfCompilationUnitList->get_cu_list().push_back(asmDwarfCompilationUnit);
               asmDwarfCompilationUnit->set_parent(asmDwarfCompilationUnitList);
@@ -1434,7 +1417,7 @@ build_dwarf_IR_nodes(Dwarf_Debug dbg, SgAsmGenericFile* file)
             break;
 
           default:
-            print_error(dbg, "Regetting cu_die", sres, rose_dwarf_error);
+            throwError(dbg, "Regetting cu_die", sres, rose_dwarf_error);
           }
 
           cu_offset = next_cu_offset;
@@ -1610,10 +1593,10 @@ void commentOutEvertythingButDwarf (SgNode* node)
 void
 readDwarf ( SgAsmGenericFile* asmFile )
    {
-     ROSE_ASSERT(asmFile != NULL);
+     ASSERT_not_null(asmFile);
 
      SgAsmGenericFile* genericFile = asmFile;
-     ROSE_ASSERT(genericFile != NULL);
+     ASSERT_not_null(genericFile);
 
      int fileDescriptor = genericFile->get_fd();
 
@@ -1641,7 +1624,7 @@ readDwarf ( SgAsmGenericFile* asmFile )
 
        // printf ("\n\nFinishing Dwarf handling... \n\n");
           int dwarf_finish_status = dwarf_finish( rose_dwarf_dbg, &rose_dwarf_error);
-          ROSE_ASSERT(dwarf_finish_status == DW_DLV_OK);
+          ASSERT_require(dwarf_finish_status == DW_DLV_OK);
         }
        else
         {
@@ -1830,7 +1813,7 @@ SgAsmDwarfLineList::sourceCodeRange( int file_id )
   // Check if this was a case of there not being any entries for this file
      if (lowerBound == source_code_instruction_map.end())
         {
-          ROSE_ASSERT(upperBound == source_code_instruction_map.rend());
+          ASSERT_require(upperBound == source_code_instruction_map.rend());
        // printf ("lowerBound == source_code_instruction_map.end() --- no entries for file %d \n",file_id);
 
        // Reset the line and column information to indicate that there were no entries.
