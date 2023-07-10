@@ -833,9 +833,9 @@ print_attribute(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half attr, Dwarf_Attribute
 
             /* add the attribute as an AST attribute on the asmDwarfConstruct that we're
                working on */
-            Rose::BinaryAnalysis::Dwarf::DwarfAttribute *att
-              = new Rose::BinaryAnalysis::Dwarf::DwarfAttribute(esb_base);
-            asmDwarfConstruct->addNewAttribute(stringify::Rose::BinaryAnalysis::Dwarf::DWARF_AT(attr), att);
+            const std::string attrName = stringify::Rose::BinaryAnalysis::Dwarf::DWARF_AT(attr);
+            Sawyer::Attribute::Id attrId = Sawyer::Attribute::declareMaybe(attrName);
+            asmDwarfConstruct->attributes().setAttribute(attrId, esb_base);
 
             valname = esb_base;
             break;
