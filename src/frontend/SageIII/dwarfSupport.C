@@ -576,7 +576,7 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
     default:
         // Failure to parse a DWARF construct must not be a non-recoverable error. [Robb P Matzke 2017-05-16]
         //throwError(dbg, "dwarf_whatform unexpected value", DW_DLV_OK,rose_dwarf_error);
-        fputs("Error: dwarf_whatform_unexpected value\n", stderr);
+        mlog[ERROR] <<"dwarf_whatform_unexpected value\n";
         break;
     }
     if (verbose && direct_form && direct_form == DW_FORM_indirect)
@@ -1638,14 +1638,14 @@ readDwarf ( SgAsmGenericFile* asmFile )
       // This is used to reduce the size of the DOT file to simplify debugging Dwarf stuff.
          if (binary->get_visualize_executable_file_format_skip_symbols() == true)
             {
-              printf ("Calling commentOutSymbolsFromDotGraph() (for visualization of binary file format withouth symbols) \n");
+              mlog[DEBUG] <<"calling commentOutSymbolsFromDotGraph() for visualization of binary file format withouth symbols\n";
               commentOutSymbolsFromDotGraph(asmFile);
             }
 
       // Nothing but dwarf!
          if (binary->get_visualize_dwarf_only() == true)
             {
-              printf ("Calling commentOutEvertythingButDwarf() (for visualization of Dwarf) \n");
+              mlog[DEBUG] <<"calling commentOutEvertythingButDwarf() for visualization of Dwarf)\n";
               commentOutEvertythingButDwarf(asmFile);
             }
      }
