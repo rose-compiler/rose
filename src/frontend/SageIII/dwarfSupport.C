@@ -1382,18 +1382,15 @@ build_dwarf_IR_nodes(Dwarf_Debug dbg, SgAsmGenericFile* file)
               Dwarf_Signed cnt = 0;
               char **srcfiles = 0;
 
-              // We need to call this function so that we can generate filenames to support the line number mapping below.
-              int srcf = dwarf_srcfiles(cu_die, &srcfiles, &cnt, &rose_dwarf_error);
-
-              if (srcf != DW_DLV_OK)
-                {
-                  // I think we can make this an error.
-                  mlog[FATAL] << "Error: No source file information found: (dwarf_srcfiles() != DW_DLV_OK)\n";
-                  ROSE_ABORT();
-
-                  srcfiles = NULL;
+              // We need to call this function so that we can generate filenames to support the line number mapping below.  The call
+              // to dwarf_srcfiles fails if the compilation unit `cu_die` does not have associated source file information, or if an
+              // out-of-memory condition was encountered.
+              const int srcf = dwarf_srcfiles(cu_die, &srcfiles, &cnt, &rose_dwarf_error);
+              if (srcf != DW_DLV_OK) {
+                  mlog[WARN] <<"dwarf_srcfiles call failed\n";
+                  srcfiles = nullptr;
                   cnt = 0;
-                }
+              }
 
               // This function call will traverse the list of child debug info entries and
               // within this function we will generate the IR nodes specific to Dwarf. This
