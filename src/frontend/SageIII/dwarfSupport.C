@@ -42,19 +42,16 @@ bool check_tag_tree = false;
 
 int check_error;
 
-#define DWARF_CHECK_ERROR(str) {\
-        printf("*** DWARF CHECK: %s ***\n", str);\
-        check_error ++; \
+static void
+reportParseError(const std::string &str) {
+    mlog[ERROR] <<"DWARF: " <<str <<" ***\n";
+    ++check_error;
 }
 
-#define DWARF_CHECK_ERROR2(str1, str2) {\
-        printf("*** DWARF CHECK: %s: %s ***\n", str1, str2);\
-        check_error ++; \
-}
-
-#define DWARF_CHECK_ERROR3(str1, str2,strexpl) {\
-        printf("*** DWARF CHECK: %s -> %s: %s ***\n", str1, str2,strexpl);\
-        check_error ++; \
+static void
+reportParseError(const std::string &str1, const std::string &str2) {
+    mlog[ERROR] <<"DWARF: " <<str1 <<": " <<str2 <<" ***\n";
+    ++check_error;
 }
 
 typedef struct {
@@ -317,8 +314,7 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
                 type_offset_result.checks++;
                 if (dres != DW_DLV_OK) {
                     type_offset_result.errors++;
-                    DWARF_CHECK_ERROR
-                        ("DW_AT_type offset does not point to type info")
+                    reportParseError("DW_AT_type offset does not point to type info");
                 } else {
                     int tres2;
 
@@ -349,13 +345,13 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
                             break;
                         default:
                             type_offset_result.errors++;
-                            DWARF_CHECK_ERROR("DW_AT_type offset does not point to type info")
-                                break;
+                            reportParseError("DW_AT_type offset does not point to type info");
+                            break;
                         }
                         dwarf_dealloc(dbg, die_for_check, DW_DLA_DIE);
                     } else {
                         type_offset_result.errors++;
-                        DWARF_CHECK_ERROR("DW_AT_type offset does not exist")
+                        reportParseError("DW_AT_type offset does not exist");
                     }
                 }
             }
@@ -461,7 +457,7 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
                         // if(tempud > cnt)
                            if( (int)tempud > cnt) {
                                decl_file_result.errors++;
-                               DWARF_CHECK_ERROR2(get_AT_name(dbg,attr).c_str(),"does not point to valid file info");
+                               reportParseError(get_AT_name(dbg,attr).c_str(), "does not point to valid file info");
                            }
                        }
                     }
