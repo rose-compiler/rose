@@ -2,6 +2,5 @@
 #define ROSE_BinaryAnalysis_Dwarf_H
 
 #include <Rose/BinaryAnalysis/Dwarf/Constants.h>
-#include <Rose/BinaryAnalysis/Dwarf/Attributes.h>
 
 #endif
