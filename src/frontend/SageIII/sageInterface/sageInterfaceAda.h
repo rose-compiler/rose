@@ -496,12 +496,30 @@ namespace
   };
 
   /// returns the scope where an operator with name \ref opname and argument types
-  ///    in \ref argtypes should be defined.
-  /// \param  opname   the operarator name
+  ///    in \ref argtypes shall be declared.
+  /// \param  opname   the operator name
   /// \param  argtypes a list of argument types
   /// \return a scope where the described operator shall be declared, and the argument position
   ///         associated with the scope.
-  OperatorScopeInfo operatorScope(std::string opname, const SgTypePtrList& argtypes);
+  OperatorScopeInfo
+  operatorScope(const std::string& opname, const SgTypePtrList& argtypes);
+
+
+  /// returns the scope where an operator associated with type \ref ty
+  ///    shall be declared.
+  /// \param  opname   the operator name
+  /// \param  ty       the type name
+  /// \return a scope where the described operator shall be declared.
+  /// \note the main difference to declarationScope is that fixed types
+  ///       require certain operators to exist in package standard.
+  /// \{
+  SgScopeStatement&
+  operatorScope(const std::string& opname, const SgType& ty);
+
+  SgScopeStatement*
+  operatorScope(const std::string& opname, const SgType* ty);
+  /// \}
+
 
   /// returns the scope where type \ref ty has been declared
   /// \param  ty some type

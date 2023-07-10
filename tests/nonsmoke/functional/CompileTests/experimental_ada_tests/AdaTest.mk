@@ -175,11 +175,12 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   ascii_user.adb                       \
   asm_machine_code.adb                 \
   based_numbers.ads                    \
+  blockreference.adb                   \
   box.adb                              \
   choice_parameter_specification.adb   \
   complex.ads                          \
   complex.adb                          \
-  concat.adb                           \  
+  concat.adb                           \
   dbase.ads                            \
   dbase.adb                            \
   dbase_test.adb                       \
@@ -213,6 +214,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   iterate_range.adb                    \
   digital.ads                          \
   imageloader.adb                      \
+  mangle_disctypes.adb                 \
   m_types.ads                          \
   m_types_test.ads                     \
   m_types_use.ads                      \
@@ -229,6 +231,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   opergen6.adb                         \
   opergen7.adb                         \
   opergen8.adb                         \
+  opergen9.adb                         \
   package_renaming_declaration.ads     \
   parent-child.adb                     \
   pkgrename.ads                        \
@@ -247,24 +250,26 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   rep_e_queue.adb                      \
   rep_e_queue.ads                      \
   rep_e_queue-queue1.adb               \
-  rep_e_queue-lograte.adb              \  
+  rep_e_queue-lograte.adb              \
   rep_database.ads                     \
   rep_database-mgr.ads                 \
   rep_common_types-data.ads            \
   rep_common_types-menu.ads            \
   rep_common_types.ads                 \
   rep_fieldinitqual.adb                \
-  rep_mess_types.ads                   \  
-  rep_rename_op.adb                    \ 
+  rep_mess_types.ads                   \
+  rep_rename_op.adb                    \
   rep_sym.ads                          \
   rep_sym.adb                          \
   rep_sym-set.adb                      \
   rep_sys_address.adb                  \
+  resolve_overloads.adb                \
   scopequal3.adb                       \
   scopequal4.adb                       \
   scopequal5.adb                       \
   scopequal6.adb                       \
   select_accept.adb                    \
+  sq_pkg_fun_overload.adb              \
   simple_select_accept.adb             \
   simple_select_accept_guarded.adb     \
   simple_use_type.ads                  \
@@ -302,19 +307,13 @@ ROSE_PASSING_ADA_TESTS :=                           \
 
 
 # ROSE_PASSING_IMCOMPLETE_ADA_TESTS :=
-
 ROSE_FAILING_ADA_TESTS :=                           \
   ancestors.adb                                     \
   aspect_spec.ads                                   \
-  blockreference.adb                                \
-  sq_pkg_fun_overload.adb                           \
   delay_until.adb                                   \
-  mangle_disctypes.adb                              \
   mpiuse.ads                                        \
   pragma_placement.adb                              \
-  opergen9.adb                                      \
-  resolve_more_overloads.adb                        \
-  resolve_overloads.adb                             
+  resolve_more_overloads.adb
 
 # defines tests that are supported by ASIS
 ASIS_PASSING_TESTS :=                               \
