@@ -2514,7 +2514,8 @@ bool ClangToSageTranslator::VisitCXXBoolLiteralExpr(clang::CXXBoolLiteralExpr * 
 #endif
     bool res = true;
 
-    // TODO
+    *node = SageBuilder::buildBoolValExp(cxx_bool_literal_expr->getValue());
+    applySourceRange(*node, cxx_bool_literal_expr->getSourceRange());
 
     return VisitExpr(cxx_bool_literal_expr, node) && res;
 }
