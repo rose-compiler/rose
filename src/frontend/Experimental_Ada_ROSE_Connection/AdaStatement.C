@@ -3779,6 +3779,21 @@ namespace
     std::transform(typlist.begin(), typlist.end(), std::back_inserter(res), toArgDesc);
     return res;
   }
+
+  Element_ID queryAsisIDOfDeclaration(Declaration_Struct& decl, Declaration_Kinds expected_stub, const AstContext& /* not used */)
+  {
+    if (decl.Corresponding_Declaration)
+      return decl.Corresponding_Declaration;
+
+    ADA_ASSERT(decl.Corresponding_Body_Stub);
+    Element_Struct&     stubelem = retrieveAs(elemMap(), decl.Corresponding_Body_Stub);
+    ADA_ASSERT(stubelem.Element_Kind == A_Declaration);
+
+    Declaration_Struct& stubdecl = stubelem.The_Union.Declaration;
+    ADA_ASSERT(stubdecl.Declaration_Kind == expected_stub);
+
+    return stubdecl.Corresponding_Declaration;
+  }
 }
 
 void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
@@ -3861,21 +3876,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         logKind("A_Package_Body_Declaration", elem.ID);
 
-        Element_ID            specID   = decl.Corresponding_Declaration;
-
-        if (specID == 0)
-        {
-          ADA_ASSERT(decl.Corresponding_Body_Stub);
-
-          Element_Struct&     stubelem = retrieveAs(elemMap(), decl.Corresponding_Body_Stub);
-          ADA_ASSERT(stubelem.Element_Kind == A_Declaration);
-
-          Declaration_Struct& stubdecl = stubelem.The_Union.Declaration;
-          ADA_ASSERT(stubdecl.Declaration_Kind == A_Package_Body_Stub);
-
-          specID = stubdecl.Corresponding_Declaration;
-        }
-
+        Element_ID              specID   = queryAsisIDOfDeclaration(decl, A_Package_Body_Stub, ctx);
         // we need to check if the SgAdaPackageSpecDecl is directly available
         // or if it is wrapped by an SgAdaGenericDecl node.
         SgDeclarationStatement& declnode = lookupNode(asisDecls(), specID);
@@ -4690,7 +4691,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         SgAdaProtectedBodyDecl* nondef  = isSgAdaProtectedBodyDecl(ndef);
         ADA_ASSERT(!ndef || nondef); // ndef => nondef
 
-        SgDeclarationStatement& podecl  = lookupNode(asisDecls(), decl.Corresponding_Declaration);
+        Element_ID              specID  = queryAsisIDOfDeclaration(decl, A_Protected_Body_Stub, ctx);
+        SgDeclarationStatement& podecl  = lookupNode(asisDecls(), specID);
         SgScopeStatement&       logicalScope = adaname.parent_scope();
         SgAdaProtectedBodyDecl& sgnode  = mkAdaProtectedBodyDecl(podecl, nondef, pobody, logicalScope);
 
@@ -4731,21 +4733,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         SgAdaTaskBodyDecl*      nondef  = isSgAdaTaskBodyDecl(ndef);
         ADA_ASSERT(!ndef || nondef); // ndef => nondef
 
-        Declaration_ID          declID  = decl.Corresponding_Declaration;
-        if (declID == 0)
-        {
-          ADA_ASSERT(decl.Corresponding_Body_Stub);
-          Element_Struct& stubelem = retrieveAs(elemMap(), decl.Corresponding_Body_Stub);
-
-          ADA_ASSERT (stubelem.Element_Kind == A_Declaration);
-          Declaration_Struct& stubdecl = stubelem.The_Union.Declaration;
-
-          ADA_ASSERT(stubdecl.Declaration_Kind == A_Task_Body_Stub);
-          declID = stubdecl.Corresponding_Declaration;
-        }
-
-        logTrace() << "declID: " << declID << std::endl;
-        SgDeclarationStatement& tskdecl = lookupNode(asisDecls(), declID);
+        Element_ID              specID  = queryAsisIDOfDeclaration(decl, A_Task_Body_Stub, ctx);
+        SgDeclarationStatement& tskdecl = lookupNode(asisDecls(), specID);
 
         // ADA_ASSERT (adaname.fullName == adaname.ident);
         SgScopeStatement&       logicalScope = adaname.parent_scope();
@@ -5319,10 +5308,9 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
           handleDeclaration(*dclElem, ctx.scope(SG_DEREF(sgnode.get_prototypeScope())));
 
           // look up declarations
-          SgDeclarationStatement* protoDecl = findFirst(asisDecls(), decl.Corresponding_Declaration);
+          SgDeclarationStatement& protoDecl = lookupNode(asisDecls(), decl.Corresponding_Declaration);
 
-          ASSERT_not_null(protoDecl);
-          sgnode.set_prototype(protoDecl);
+          sgnode.set_prototype(&protoDecl);
         }
 
 

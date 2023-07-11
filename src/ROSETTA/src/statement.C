@@ -2910,6 +2910,9 @@ Grammar::setUpStatements ()
      AdaProtectedBodyDecl.setFunctionPrototype  ( "HEADER_ADA_PROTECTED_BODY_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaProtectedBodyDecl.setDataPrototype ( "SgName", "name", "= \"\"",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaProtectedBodyDecl.setDataPrototype ( "SgDeclarationStatement*", "specificationDeclaration", "= nullptr",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      AdaProtectedBodyDecl.setDataPrototype ( "SgAdaProtectedBody*", "definition", "= NULL",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
