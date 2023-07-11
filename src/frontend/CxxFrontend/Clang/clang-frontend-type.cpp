@@ -732,10 +732,30 @@ bool ClangToSageTranslator::VisitMacroQualifiedType(clang::MacroQualifiedType * 
 bool ClangToSageTranslator::VisitMemberPointerType(clang::MemberPointerType * member_pointer_type, SgNode ** node) {
 #if DEBUG_VISIT_TYPE
     std::cerr << "ClangToSageTranslator::MemberPointerType" << std::endl;
+    std::cerr << "isMemberFunctionPointer  " << member_pointer_type->isMemberFunctionPointer() << std::endl;
+    std::cerr << "isMemberDataPointer  " << member_pointer_type->isMemberDataPointer() << std::endl;
+    std::cerr << "isSugared  " << member_pointer_type->isSugared() << std::endl;
 #endif
     bool res = true;
 
-    ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+    SgType* classType = isSgClassType(Traverse(member_pointer_type->getClass()));
+    ROSE_ASSERT(classType);   
+
+    SgType* baseType = buildTypeFromQualifiedType(member_pointer_type->getPointeeType());
+    ROSE_ASSERT(baseType);   
+    if(member_pointer_type->isMemberFunctionPointer())
+    {
+      SgFunctionType* functionType = isSgFunctionType(baseType);
+      ROSE_ASSERT(functionType);
+      SgMemberFunctionType* memFuncType = SageBuilder::buildMemberFunctionType(functionType->get_return_type(), functionType->get_argument_list(), classType, 0);
+      baseType = memFuncType;
+      ROSE_ASSERT(baseType);   
+    }
+
+    SgPointerMemberType* pointerToMemberType = SageBuilder::buildPointerMemberType(baseType, classType);
+
+    *node = pointerToMemberType;
+    //ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
     return VisitType(member_pointer_type, node) && res;
 }
@@ -754,9 +774,13 @@ bool ClangToSageTranslator::VisitPackExpansionType(clang::PackExpansionType * pa
 bool ClangToSageTranslator::VisitParenType(clang::ParenType * paren_type, SgNode ** node) {
 #if DEBUG_VISIT_TYPE
     std::cerr << "ClangToSageTranslator::VisitParenType" << std::endl;
+    std::cerr << "isSugared " << paren_type->isSugared() << std::endl;
 #endif
 
-    *node = buildTypeFromQualifiedType(paren_type->getInnerType());
+    if(paren_type->isSugared())
+      *node = buildTypeFromQualifiedType(paren_type->desugar());
+    else
+      *node = buildTypeFromQualifiedType(paren_type->getInnerType());
 
     return VisitType(paren_type, node);
 }

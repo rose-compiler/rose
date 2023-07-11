@@ -330,6 +330,10 @@ SgNode * ClangToSageTranslator::Traverse(clang::Decl * decl) {
             ret_status = VisitCXXDeductionGuideDecl((clang::CXXDeductionGuideDecl *)decl, &result);
             ROSE_ASSERT(ret_status == false || result != NULL);
             break;
+        case clang::Decl::CXXMethod:
+            ret_status = VisitCXXMethodDecl((clang::CXXMethodDecl *)decl, &result);
+            ROSE_ASSERT(ret_status == false || result != NULL);
+            break;
         case clang::Decl::CXXConstructor:
             ret_status = VisitCXXConstructorDecl((clang::CXXConstructorDecl *)decl, &result);
             ROSE_ASSERT(ret_status == false || result != NULL);
