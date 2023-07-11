@@ -22,7 +22,7 @@ run $(librose_compile) $(GENERATED_HEADERS) $(SOURCES) $(GENERATED_SOURCES)
 
 run $(public_header) sage3.h sage3basic.h rose_attributes_list.h attachPreprocessingInfo.h \
     attachPreprocessingInfoTraversal.h attach_all_info.h manglingSupport.h C++_include_files.h fixupCopy.h \
-    general_token_defs.h rtiHelpers.h OmpAttribute.h omp.h dwarfSupport.h omp_lib_kinds.h omp_lib.h \
+    general_token_defs.h rtiHelpers.h OmpAttribute.h omp.h omp_lib_kinds.h omp_lib.h \
     rosedefs.h fileoffsetbits.h rosedll.h
 
 # What's up with the name *.hhh?!?
