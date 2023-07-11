@@ -601,8 +601,6 @@ namespace Ada
     return SG_DEREF(specDecl);
   }
 
-  /// returns the declaration node for the task specification
-  /// @{
   SgDeclarationStatement& getSpecificationDeclaration(const SgAdaTaskBodyDecl& bodyDecl)
   {
     return SG_DEREF(bodyDecl.get_specificationDeclaration());
@@ -612,38 +610,16 @@ namespace Ada
   {
     return bodyDecl ? &getSpecificationDeclaration(*bodyDecl) : nullptr;
   }
-  /// @}
 
-  /// returns the declaration node for the protected object specification
-  /// @{
   SgDeclarationStatement& getSpecificationDeclaration(const SgAdaProtectedBodyDecl& bodyDecl)
   {
-    const SgAdaProtectedBodyDecl* defDecl = &bodyDecl; // isSgAdaPackageBodyDecl(bodyDecl.get_definingDeclaration());
-    //~ if (!defDecl) defDecl = &bodyDecl;
-
-    SgAdaProtectedBody&     body = SG_DEREF(defDecl->get_definition());
-    SgAdaProtectedSpec&     spec = SG_DEREF(body.get_spec());
-    SgDeclarationStatement* specDecl = isSgDeclarationStatement(spec.get_parent());
-
-    return SG_DEREF(specDecl);
+    return SG_DEREF(bodyDecl.get_specificationDeclaration());
   }
 
   SgDeclarationStatement* getSpecificationDeclaration(const SgAdaProtectedBodyDecl* bodyDecl)
   {
-    if (!bodyDecl) return nullptr;
-
-    const SgAdaProtectedBodyDecl* defDecl = bodyDecl; // isSgAdaPackageBodyDecl(bodyDecl->get_definingDeclaration());
-    if (!defDecl) defDecl = bodyDecl;
-
-    SgAdaProtectedBody*     body = defDecl->get_definition();
-    if (!body) return nullptr;
-
-    SgAdaProtectedSpec*     spec = body->get_spec();
-    if (!spec) return nullptr;
-
-    return isSgDeclarationStatement(spec->get_parent());
+    return bodyDecl ? &getSpecificationDeclaration(*bodyDecl) : nullptr;
   }
-
 
   SgAdaPackageBodyDecl*
   getPackageBodyDeclaration(const SgAdaPackageSpecDecl* specDecl)
