@@ -314,6 +314,9 @@ ROSE_DLL_API SgMemberFunctionType* buildMemberFunctionType(SgType* return_type, 
 //! DQ (8/19/2012): Refactored some of the code supporting construction of the SgMemberFunctionType.
 ROSE_DLL_API SgMemberFunctionType* buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList* typeList, SgType *classType, unsigned int mfunc_specifier);
 
+//! Pei-Hung (06/30/2023): support for SgPointerMemberType 
+ROSE_DLL_API SgPointerMemberType* buildPointerMemberType(SgType* base_type, SgType* classType);
+
 // PP (07/14/2016):
 //! Some support for building class template instantiation declarations.
 //! Note, the template is not actually instantiated, but a `forward declaration'
