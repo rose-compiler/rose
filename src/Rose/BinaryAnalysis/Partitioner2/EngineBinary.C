@@ -1082,7 +1082,7 @@ EngineBinary::roseFrontendReplacement(const std::vector<boost::filesystem::path>
         ASSERT_not_null(file);
 #ifdef ROSE_HAVE_LIBDWARF
         try {
-            readDwarf(file);
+            Dwarf::parse(file);
         } catch (const Dwarf::Exception &e) {
             mlog[ERROR] <<"DWARF parsing failed: " <<e.what() <<"\n";
         }

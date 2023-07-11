@@ -4,6 +4,7 @@
 #include "sage3basic.h"
 
 #include <Rose/BinaryAnalysis/BinaryLoader.h>
+#include <Rose/BinaryAnalysis/Dwarf/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 
 using std::string;
@@ -63,12 +64,10 @@ SgBinaryComposite::buildAsmAST(string executableFileName)
     interp->get_headers()->get_headers().push_back(headers[i]);
   }
 
-#ifdef ROSE_HAVE_LIBDWARF
   // DQ (3/14/2009): Dwarf support now works within ROSE when used with Intel Pin
   // (was a huge problem until everything (e.g. libdwarf) was dynamically linked).
   // DQ (11/7/2008): New Dwarf support in ROSE (Dwarf IR nodes are generated in the AST).
-     readDwarf(file);
-#endif
+  BinaryAnalysis::Dwarf::parse(file);
 
   // Make sure this node is correctly parented
   ROSE_ASSERT(SageInterface::getEnclosingNode<SgProject>(this));
