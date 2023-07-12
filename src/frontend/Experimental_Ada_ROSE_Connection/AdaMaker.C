@@ -1113,7 +1113,7 @@ mkAdaProtectedBodyDecl_nondef(SgDeclarationStatement& podecl, SgScopeStatement& 
 {
   // \todo combine with mkAdaTaskBodyDecl
   ProtectedDeclInfoResult specinfo = sg::dispatch(ProtectedDeclInfo{}, &podecl);
-  SgAdaProtectedBodyDecl& sgnode   = mkLocatedNode<SgAdaProtectedBodyDecl>(specinfo.name, nullptr);
+  SgAdaProtectedBodyDecl& sgnode   = mkLocatedNode<SgAdaProtectedBodyDecl>(specinfo.name, &podecl, nullptr);
 
   sgnode.set_parent(&scope); // needed?
 
@@ -1131,7 +1131,7 @@ mkAdaProtectedBodyDecl( SgDeclarationStatement& podecl,
 {
   // \todo combine with mkAdaTaskBodyDecl
   ProtectedDeclInfoResult specinfo = sg::dispatch(ProtectedDeclInfo{}, &podecl);
-  SgAdaProtectedBodyDecl& sgnode   = mkLocatedNode<SgAdaProtectedBodyDecl>(specinfo.name, &pobody);
+  SgAdaProtectedBodyDecl& sgnode   = mkLocatedNode<SgAdaProtectedBodyDecl>(specinfo.name, &podecl, &pobody);
   SgAdaProtectedSpec&     pospec = SG_DEREF( specinfo.spec );
 
   sgnode.set_parent(&scope); // needed?

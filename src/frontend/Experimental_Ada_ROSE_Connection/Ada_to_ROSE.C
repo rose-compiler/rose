@@ -1267,6 +1267,9 @@ namespace
 
   bool isAdaLiteralExp(const SgExpression* e)
   {
+    if (const SgActualArgumentExpression* act = isSgActualArgumentExpression(e))
+      return isAdaLiteralExp(act->get_expression());
+
     return isSgValueExp(e) || isAdaLiteralList(e);
   }
 
@@ -1779,7 +1782,16 @@ namespace
     void handle(const SgAndOp&)                      { res = { adaTypes()["BOOLEAN"] }; }
 
     // other expressions
-    void handle(const SgCastExp&)                    { /* we cannot make any assumption */ }
+    void handle(const SgCastExp& n)
+    {
+      const bool    qualexpr = n.get_cast_type() == SgCastExp::e_ada_type_qualification;
+
+      // for true casts, we cannot make any assumption.
+      if (!qualexpr) return;
+
+      res = { n.get_type() };
+    }
+
     void handle(const SgActualArgumentExpression& n) { res = sg::dispatch(*this, n.get_parent()); }
     void handle(const SgMembershipOp& n)             { res = typesFromExpression(n.get_rhs_operand()); }
     void handle(const SgNonMembershipOp& n)          { res = typesFromExpression(n.get_rhs_operand()); }
@@ -1845,27 +1857,34 @@ namespace
 
 
   template <class SageParent>
-  void setChildIfNull(SageParent& parent, SgExpression* (SageParent::*getter)() const, void (SageParent::*setter)(SgExpression*))
+  void setChildIfNull( std::size_t& ctr,
+                       SageParent& parent,
+                       SgExpression* (SageParent::*getter)() const,
+                       void (SageParent::*setter)(SgExpression*)
+                     )
   {
     if ((parent.*getter)()) return;
 
     (parent.*setter)(&mkNullExpression());
+    ++ctr;
   }
 
   void replaceNullptrWithNullExpr()
   {
-    auto nullrepl = [](SgExpression* e)->void
+    std::size_t ctr = 0;
+
+    auto nullrepl = [&ctr](SgExpression* e)->void
                     {
                       if (SgBinaryOp* binop = isSgBinaryOp(e))
                       {
-                        setChildIfNull(*binop, &SgBinaryOp::get_lhs_operand, &SgBinaryOp::set_lhs_operand);
-                        setChildIfNull(*binop, &SgBinaryOp::get_rhs_operand, &SgBinaryOp::set_rhs_operand);
+                        setChildIfNull(ctr, *binop, &SgBinaryOp::get_lhs_operand, &SgBinaryOp::set_lhs_operand);
+                        setChildIfNull(ctr, *binop, &SgBinaryOp::get_rhs_operand, &SgBinaryOp::set_rhs_operand);
                         return;
                       }
 
                       if (SgUnaryOp* unop = isSgUnaryOp(e))
                       {
-                        setChildIfNull(*unop, &SgUnaryOp::get_operand, &SgUnaryOp::set_operand);
+                        setChildIfNull(ctr, *unop, &SgUnaryOp::get_operand, &SgUnaryOp::set_operand);
                         return;
                       }
                     };
@@ -1874,33 +1893,46 @@ namespace
     std::for_each( operatorExprs().begin(), operatorExprs().end(),
                    nullrepl
                  );
+
+    logInfo() << "Replaced " << ctr << " nullptr with SgNullExpression." << std::endl;
   }
 
+#define EXPERIMENTAL_CODE_1 1
+
+#if EXPERIMENTAL_CODE_1
   /// checks if the scope of the type returned by \ref is the same
   ///   as the scope where \ref ty was declared.
   /// \todo implement full type check and rename to typeCheckCallContext ..
-  bool scopeCheckCallContext(const SgFunctionCallExp& exp, const SgType& ty)
+  bool scopeCheckCallContext(SgFunctionCallExp& exp, const SgType& ty)
   {
-    SgScopeStatement* expScope = si::Ada::declarationScope(ty);
-    SgScopeStatement* typScope = si::Ada::declarationScope(exp.get_type());
-    bool              res      = si::Ada::sameCanonicalScope(expScope, typScope);
+    SgFunctionRefExp* fnref    = isSgFunctionRefExp(exp.get_function());
+    std::string       rosename = SG_DEREF(fnref).get_symbol()->get_name();
+    std::string       opname   = si::Ada::convertRoseOperatorNameToAdaOperator(rosename);
+    SgScopeStatement* expScope = si::Ada::operatorScope(opname, &ty);
+    SgScopeStatement* typScope = si::Ada::operatorScope(opname, si::Ada::typeOfExpr(exp).typerep());
+    const bool        res      = si::Ada::sameCanonicalScope(expScope, typScope);
 
-    logWarn() << "liteq: scope " << res
-              << "(" << expScope << " | " << typScope << ") " << exp.unparseToString()
-              << std::endl;
+    logTrace() << "liteq: scope " << res
+               << "(" << expScope << " | " << typScope << ") " << exp.unparseToString()
+               << std::endl;
     return res;
   }
 
-#if EXPERIMENTAL_CODE_1
   void decorateWithTypecast(SgFunctionCallExp& exp, const SgType& ty)
   {
+    // Another alternative would be to place the operator into a different
+    //   scope. This seems to be more appropriate because it would
+    //   avoid casts to some composite types, and the code would be unparsed
+    //   with the operator being properly scope qualified.
+
     if (exp.get_uses_operator_syntax()) return;
 
     SgNullExpression& dummy = mkNullExpression();
 
     si::replaceExpression(&exp, &dummy, true /* keep exp */);
 
-    SgCastExp&        castex = mkCastExp(exp, const_cast<SgType&>(ty));
+    SgType&    castty = SG_DEREF( ty.stripType(SgType::STRIP_MODIFIER_TYPE) );
+    SgCastExp& castex = mkCastExp(exp, castty);
 
     si::replaceExpression(&dummy, &castex, false /* delete dummy */);
   }
@@ -1918,27 +1950,27 @@ namespace
 
                      if (!el.second.literalEquivalent())
                      {
-                       logWarn() << "liteq: " << el.first->unparseToString()
-                                 << " - " << el.second.literalEquivalent()
-                                 << std::endl;
+                       logTrace() << "liteq: " << el.first->unparseToString()
+                                  << " - " << el.second.literalEquivalent()
+                                  << std::endl;
                        return;
                      }
 
                      SgFunctionCallExp* callexp = isSgFunctionCallExp(el.first->get_parent());
                      if (callexp == nullptr)
                      {
-                       logWarn() << "liteq: " << typeid(*el.first->get_parent()).name() << std::endl;
+                       logTrace() << "liteq: " << typeid(*el.first->get_parent()).name() << std::endl;
                        return;
                      }
 
                      std::set<const SgType*> typeCandidates = expectedTypes(callexp);
 
                      if (typeCandidates.size() > 1)
-                       logWarn() << "liteq: multiple type candidates" << std::endl;
+                       logTrace() << "liteq: multiple type candidates" << std::endl;
                      else if (typeCandidates.size() == 0)
-                       logWarn() << "liteq: 0 candidates" << std::endl;
+                       logTrace() << "liteq: 0 candidates" << std::endl;
                      else if (*typeCandidates.begin() == nullptr)
-                       logWarn() << "liteq: null type" << std::endl;
+                       logTrace() << "liteq: null type" << std::endl;
                      else if (!scopeCheckCallContext(*callexp, **typeCandidates.begin()))
                        decorateWithTypecast(*callexp, **typeCandidates.begin());
                    }
@@ -2104,8 +2136,9 @@ void convertAsisToROSE(Nodes_Struct& headNodes, SgSourceFile* file)
   std::for_each(units.begin(), units.end(), UnitCreator{AstContext{}.scope(astScope)});
 
   replaceNullptrWithNullExpr();
-
   resolveInheritedFunctionOverloads(astScope);
+
+  // free space that was allocated to store all translation mappings
   clearMappings();
 
   //~ std::string astDotFile = astDotFileName(*file);
