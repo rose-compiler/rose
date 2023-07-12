@@ -1,7 +1,6 @@
 #include <sage3basic.h>
 
 SgType*
-  // $CLASSNAME::get_type() const
 SgDotExp::get_type() const
    {
   // DQ (1/14/2006): p_expression_type has been removed, we have to compute the appropriate type (IR specific code)

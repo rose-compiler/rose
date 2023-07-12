@@ -67,7 +67,7 @@ SgBinaryOp::get_type() const
      if (p_expression_type != NULL)
         {
           expression_type_name = p_expression_type->class_name();
-          printf ("Found an case where $CLASSNAME::p_expression_type != NULL on %s expression_type_name = %s \n",
+          printf ("Found an case where SgBinaryOp::p_expression_type != NULL on %s expression_type_name = %s \n",
                this->class_name().c_str(),expression_type_name.c_str());
         }
 

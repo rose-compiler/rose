@@ -104,7 +104,7 @@ SgExpression::post_construction_initialization()
 int
 SgExpression::replace_expression(SgExpression *,SgExpression *)
    {
-     std::cerr << "Call to undefined $CLASSNAME::replace_expression(): aborting\n";
+     std::cerr << "Call to undefined SgExpression::replace_expression(): aborting\n";
      std::cerr << "dynamic type: " << this->class_name() << "\n";
      ROSE_ASSERT(false);
      return 0;
@@ -116,7 +116,7 @@ SgExpression::get_type() const
   // DQ: With this function defined we can be sure that we don't call it by accident.
   // This catches any IR nodes where the fucntion should have been overwritten and was not.
 
-     std::cerr << "Call to undefined $CLASSNAME::get_type(): aborting\n";
+     std::cerr << "Call to undefined SgExpression::get_type(): aborting\n";
      std::cerr << "dynamic type: " << this->class_name() << "\n";
      ROSE_ASSERT(false);
 

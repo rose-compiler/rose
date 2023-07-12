@@ -8,7 +8,6 @@ class SgJovialBitVal: public SgValueExp {
     // template meta programming, and introspection rather than text substitution.
 #pragma rosetta setFunctionSource("SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code")
 #pragma rosetta setFunctionPrototype("HEADER_JOVIAL_BIT_VALUE_EXPRESSION", "../Grammar/Expression.code")
-#pragma rosetta setFunctionSource("SOURCE_JOVIAL_BIT_VALUE_EXPRESSION","../Grammar/Expression.code")
 #pragma rosetta setFunctionSource("SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code");
 #pragma rosetta editSubstitute("GENERIC_TYPE", "SgJovialBitType");
 };

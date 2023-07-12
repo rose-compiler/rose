@@ -6,7 +6,7 @@ SgCastExp::post_construction_initialization()
    }
 
 // DQ (6/14/2005): Modified to make enum name consistant with elsewhere in ROSE (Sage III)
-// $CLASSNAME::Sg_e_cast_type
+// SgCastExp::Sg_e_cast_type
 SgCastExp::cast_type_enum
 SgCastExp::cast_type() const
    {

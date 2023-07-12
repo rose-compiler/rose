@@ -5,6 +5,7 @@ noinst_LTLIBRARIES = libroseAstNodesExpression.la
 libroseAstNodesExpression_la_SOURCES =		\
 	SgActualArgumentExpression.C		\
 	SgAdaAttributeExp.C			\
+	SgAdaAncestorInitializer.C		\
 	SgAdaProtectedRefExp.C			\
 	SgAdaRenamingRefExp.C			\
 	SgAdaTaskRefExp.C			\
@@ -12,8 +13,11 @@ libroseAstNodesExpression_la_SOURCES =		\
 	SgAddressOfOp.C				\
 	SgAggregateInitializer.C		\
 	SgAlignOfOp.C				\
+	SgAndOp.C				\
 	SgArrowExp.C				\
 	SgArrowStarOp.C				\
+	SgAsmOp.C				\
+	SgAssignInitializer.C			\
 	SgAsteriskShapeExp.C			\
 	SgAtExp.C				\
 	SgBinaryOp.C				\
@@ -22,24 +26,35 @@ libroseAstNodesExpression_la_SOURCES =		\
 	SgCAFCoExpression.C			\
 	SgCallExpression.C			\
 	SgCastExp.C				\
+	SgChar16Val.C				\
+	SgChar32Val.C				\
+	SgClassExp.C				\
 	SgColonShapeExp.C			\
+	SgCommaOpExp.C				\
+	SgComplexVal.C				\
 	SgCompoundInitializer.C			\
+	SgConditionalExp.C			\
 	SgConstructorInitializer.C		\
 	SgCudaKernelCallExp.C			\
 	SgDeleteExp.C				\
 	SgDesignatedInitializer.C		\
 	SgDictionaryExp.C			\
 	SgDotExp.C				\
+	SgDotDotExp.C				\
 	SgDotStarOp.C				\
 	SgEnumVal.C				\
+	SgExponentiationOp.C			\
 	SgExpression.C				\
 	SgExprListExp.C				\
 	SgFinishExp.C				\
 	SgFunctionCallExp.C			\
 	SgFunctionParameterRefExp.C		\
 	SgFunctionRefExp.C			\
+	SgHereExp.C				\
 	SgImpliedDo.C				\
 	SgIOItemExpression.C			\
+	SgJavaAnnotation.C			\
+	SgJavaInstanceOfOp.C			\
 	SgJavaNormalAnnotation.C		\
 	SgJovialPresetPositionExp.C		\
 	SgJovialTablePresetExp.C		\
@@ -48,22 +63,29 @@ libroseAstNodesExpression_la_SOURCES =		\
 	SgLambdaRefExp.C			\
 	SgMatrixExp.C				\
 	SgMemberFunctionRefExp.C		\
+	SgMinusMinusOp.C			\
 	SgNaryBooleanOp.C			\
 	SgNaryComparisonOp.C			\
 	SgNaryOp.C				\
 	SgNewExp.C				\
 	SgNoexceptOp.C				\
 	SgNonrealRefExp.C			\
+	SgOrOp.C				\
+	SgPlusPlusOp.C				\
 	SgPntrArrRefExp.C			\
 	SgPointerDerefExp.C			\
 	SgPseudoDestructorRefExp.C		\
 	SgRangeExp.C				\
 	SgSizeOfOp.C				\
+	SgStatementExpression.C			\
 	SgStringVal.C				\
 	SgSubscriptExpression.C			\
+	SgSuperExp.C				\
 	SgTemplateFunctionRefExp.C		\
 	SgTemplateMemberFunctionRefExp.C	\
 	SgTemplateParameterVal.C		\
+	SgThisExp.C				\
+	SgThrowOp.C				\
 	SgTypeIdOp.C				\
 	SgTypeTraitBuiltinOperator.C		\
 	SgUnaryOp.C				\
@@ -75,4 +97,5 @@ libroseAstNodesExpression_la_SOURCES =		\
 	SgUserDefinedUnaryOp.C			\
 	SgVarArgEndOp.C				\
 	SgVarArgOp.C				\
-	SgVarRefExp.C
+	SgVarRefExp.C				\
+	SgWcharVal.C
