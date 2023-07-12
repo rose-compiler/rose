@@ -1,2099 +1,433 @@
-// This file represents initial support in the ROSE AST for Dwarf debug information.
+// This file represents support in the ROSE AST for Dwarf debug information.
 // Dwarf is generated when source code is compiled using a compiler's debug mode.
 // the Dwarf information is represented a special sections in the file format of
 // the binary executable.  These sections are read using libdwarf (open source
 // library used for reading and writing dwarf sections).  In ROSE we read the
 // Dwarf information and build special IR nodes into the AST.  This work effects
 // only AST for binary executable files (the ROSE Binary AST).
-#include "sage3basic.h"
-
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <sage3basic.h>                                 // must be first
+
 #include <Rose/BinaryAnalysis/Dwarf.h>
-#include <stringify.h>
 #include <Rose/Diagnostics.h>
+#include <Rose/StringUtility/Diagnostics.h>
+
+#include <stringify.h>
+
+#ifdef ROSE_HAVE_LIBDWARF
+#include <dwarf.h>
+#include <libdwarf.h>
+#endif
 
 using namespace Rose::Diagnostics;
 
-// DONE: Dwarf support handles sections: .debug_info, .debug_line
-// TODO: Add support for sections: .debug_pubnames, .debug_pubtypes, and .debug_macinfo
-
-// Allow "string" and "pair" to be used (whether or not ROSE_HAVE_LIBDWARF id defined to be true).
-using namespace std;
-
-// This is controled by using the --with-dwarf configure command line option.
+// This function implements the factory pattern.
+SgAsmDwarfConstruct*
+SgAsmDwarfConstruct::createDwarfConstruct(int tag, int nesting_level, uint64_t offset, uint64_t overall_offset) {
 #ifdef ROSE_HAVE_LIBDWARF
-
-#include "dwarf.h"
-#include "libdwarf.h"
-
-#define DIE_STACK_SIZE 300
-static Dwarf_Die die_stack[DIE_STACK_SIZE];
-
-#define PUSH_DIE_STACK(x) { ROSE_ASSERT(indent_level < DIE_STACK_SIZE); die_stack[indent_level] = x; }
-#define POP_DIE_STACK { ROSE_ASSERT(indent_level < DIE_STACK_SIZE); die_stack[indent_level] = 0; }
-
-int indent_level = 0;
-bool local_symbols_already_began = false;
-
-bool check_tag_tree = false;
-
-int check_error;
-
-#define DWARF_CHECK_ERROR(str) {\
-        printf("*** DWARF CHECK: %s ***\n", str);\
-        check_error ++; \
-}
-
-#define DWARF_CHECK_ERROR2(str1, str2) {\
-        printf("*** DWARF CHECK: %s: %s ***\n", str1, str2);\
-        check_error ++; \
-}
-
-#define DWARF_CHECK_ERROR3(str1, str2,strexpl) {\
-        printf("*** DWARF CHECK: %s -> %s: %s ***\n", str1, str2,strexpl);\
-        check_error ++; \
-}
-
-typedef struct {
-    int checks;
-    int errors;
-} Dwarf_Check_Result;
-
-Dwarf_Check_Result tag_tree_result;
-Dwarf_Check_Result type_offset_result;
-Dwarf_Check_Result decl_file_result;
-
-// Dwarf variables
-Dwarf_Debug rose_dwarf_dbg;
-Dwarf_Error rose_dwarf_error;
-
-int verbose = 1;
-
-char cu_name[BUFSIZ];
-bool cu_name_flag = false;
-Dwarf_Unsigned cu_offset = 0;
-
-void
-print_error(Dwarf_Debug dbg, string msg, int dwarf_code, Dwarf_Error err)
-   {
-  // Simple error message function
-     mlog[FATAL] << "ERROR: " << msg << std::endl;
-     ROSE_ABORT();
-   }
-
-char *
-makename(char *s)
-{
-    char *newstr;
-
-    if (!s) {
-        return strdup("");
-    }
-
-    newstr = strdup(s);
-    if (newstr == 0) {
-        fprintf(stderr, "Out of memory mallocing %d bytes\n",
-                (int) strlen(s));
-        exit(1);
-    }
-    return newstr;
-}
-
-string
-get_TAG_name (Dwarf_Debug dbg, Dwarf_Half val)
-{
-  // MS 7/22 : move to stringified enum instead of having the strings all here
-  return string(stringify::Rose::BinaryAnalysis::Dwarf::DWARF_TAG(val));
-}
-
-string
-get_AT_name (Dwarf_Debug dbg, Dwarf_Half val)
-{
-  // MS 7/22 : move to stringified enum instead of having the strings all here
-  return string(stringify::Rose::BinaryAnalysis::Dwarf::DWARF_AT(val));
-}
-
-string
-get_LANG_name (Dwarf_Debug dbg, Dwarf_Half val)
-{
-  // MS 7/22 : move to stringified enum instead of having the strings all here
-  return string(stringify::Rose::BinaryAnalysis::Dwarf::DWARF_LANG(val));
-}
-
-
-// Typedef for function pointer type used in get_small_encoding_integer_and_name() function paramter.
-typedef string(*encoding_type_func) (Dwarf_Debug dbg, Dwarf_Half val);
-
-int
-get_small_encoding_integer_and_name( Dwarf_Debug dbg, Dwarf_Attribute attrib, Dwarf_Unsigned * uval_out, char *attr_name, string * string_out, encoding_type_func val_as_string, Dwarf_Error * err)
-   {
-     Dwarf_Unsigned uval = 0;
-     char buf[100];              /* The strings are small. */
-     int vres = dwarf_formudata(attrib, &uval, err);
-
-     if (vres != DW_DLV_OK)
-        {
-          Dwarf_Signed sval = 0;
-
-          vres = dwarf_formsdata(attrib, &sval, err);
-          if (vres != DW_DLV_OK)
-             {
-               if (string_out != 0)
-                  {
-                    snprintf(buf, sizeof(buf),"%s has a bad form.", attr_name);
-                    *string_out = makename(buf);
-                  }
-               return vres;
-             }
-          *uval_out = (Dwarf_Unsigned) sval;
-        }
-       else
-        {
-          *uval_out = uval;
-        }
-
-     if (string_out)
-          *string_out = val_as_string(dbg, (Dwarf_Half) uval);
-
-     return DW_DLV_OK;
-   }
-
-static void formx_unsigned(Dwarf_Unsigned u, string *esbp)
-   {
-     *esbp += std::to_string((unsigned long long)u);
-   }
-
-void formx_signed(Dwarf_Signed u, string *esbp)
-   {
-     *esbp += std::to_string((long long)u);
-   }
-
-/* We think this is an integer. Figure out how to print it.
-   In case the signedness is ambiguous (such as on
-   DW_FORM_data1 (ie, unknown signedness) print two ways.
-*/
-int formxdata_print_value(Dwarf_Attribute attrib, string *esbp, Dwarf_Error * err)
-{
-    Dwarf_Signed tempsd = 0;
-    Dwarf_Unsigned tempud = 0;
-    int sres = 0;
-    int ures = 0;
-    Dwarf_Error serr = 0;
-    ures = dwarf_formudata(attrib, &tempud, err);
-    sres = dwarf_formsdata(attrib, &tempsd, &serr);
-
-    if(ures == DW_DLV_OK) {
-      if(sres == DW_DLV_OK) {
-
-        if((Dwarf_Signed)tempud == tempsd)
-        {
-           /* Data is the same value, so makes no difference which
-                we print. */
-           formx_unsigned(tempud,esbp);
-        } else {
-           formx_unsigned(tempud,esbp);
-           *esbp += "(as signed = ";
-           formx_signed(tempsd,esbp);
-           *esbp += ")";
-        }
-      } else if (sres == DW_DLV_NO_ENTRY) {
-        formx_unsigned(tempud,esbp);
-      } else /* DW_DLV_ERROR */{
-        formx_unsigned(tempud,esbp);
-      }
-      return DW_DLV_OK;
-    } else  if (ures == DW_DLV_NO_ENTRY) {
-      if(sres == DW_DLV_OK) {
-        formx_signed(tempsd,esbp);
-        return sres;
-      } else if (sres == DW_DLV_NO_ENTRY) {
-        return sres;
-      } else /* DW_DLV_ERROR */{
-        *err = serr;
-        return sres;
-      }
-    }
-    /* else ures ==  DW_DLV_ERROR */
-    if(sres == DW_DLV_OK) {
-        formx_signed(tempsd,esbp);
-    } else if (sres == DW_DLV_NO_ENTRY) {
-        return ures;
-    }
-    /* DW_DLV_ERROR */
-    return ures;
-}
-
-/* Fill buffer with attribute value.
-   We pass in tag so we can try to do the right thing with
-   broken compiler DW_TAG_enumerator
-
-   We append to esbp's buffer.
-
-*/
-// static void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char **srcfiles, Dwarf_Signed cnt, struct esb_s *esbp)
-void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char **srcfiles, Dwarf_Signed cnt, string *esbp)
-{
-    Dwarf_Half theform;
-    char* temps;
-    Dwarf_Block *tempb;
-    Dwarf_Signed tempsd = 0;
-    Dwarf_Unsigned tempud = 0;
-    int i;
-    Dwarf_Half attr;
-    Dwarf_Off off;
-    Dwarf_Die die_for_check;
-    Dwarf_Half tag_for_check;
-    Dwarf_Bool tempbool;
-    Dwarf_Addr addr = 0;
-    int fres;
-    int bres;
-    int wres;
-    int dres;
-    Dwarf_Half direct_form = 0;
-    char small_buf[100];
-
-  // DQ: Added these here instead of in global scope
-    Dwarf_Off fde_offset_for_cu_low = DW_DLV_BADOFFSET;
-    Dwarf_Off fde_offset_for_cu_high = DW_DLV_BADOFFSET;
-
-    fres = dwarf_whatform(attrib, &theform, &rose_dwarf_error);
-    /* depending on the form and the attribute, process the form */
-    if (fres == DW_DLV_ERROR) {
-        print_error(dbg, "dwarf_whatform cannot find attr form", fres,rose_dwarf_error);
-    } else if (fres == DW_DLV_NO_ENTRY) {
-        return;
-    }
-
-    dwarf_whatform_direct(attrib, &direct_form, &rose_dwarf_error);
-    /* ignore errors in dwarf_whatform_direct() */
-
-    switch (theform) {
-    case DW_FORM_addr:
-        bres = dwarf_formaddr(attrib, &addr, &rose_dwarf_error);
-        if (bres == DW_DLV_OK) {
-            snprintf(small_buf, sizeof(small_buf), "%#llx",(unsigned long long) addr);
-         // esb_append(esbp, small_buf);
-            *esbp += small_buf;
-        } else {
-            print_error(dbg, "addr formwith no addr?!", bres, rose_dwarf_error);
-        }
-        break;
-    case DW_FORM_ref_addr:
-        /* DW_FORM_ref_addr is not accessed thru formref: ** it is an
-           address (global section offset) in ** the .debug_info
-           section. */
-        bres = dwarf_global_formref(attrib, &off, &rose_dwarf_error);
-        if (bres == DW_DLV_OK) {
-            snprintf(small_buf, sizeof(small_buf),"<global die offset %llu>",(unsigned long long) off);
-         // esb_append(esbp, small_buf);
-            *esbp += small_buf;
-        } else {
-            print_error(dbg,"DW_FORM_ref_addr form with no reference?!",bres, rose_dwarf_error);
-        }
-        break;
-    case DW_FORM_ref1:
-    case DW_FORM_ref2:
-    case DW_FORM_ref4:
-    case DW_FORM_ref8:
-    case DW_FORM_ref_udata:
-       {
-        bres = dwarf_formref(attrib, &off, &rose_dwarf_error);
-        if (bres != DW_DLV_OK) {
-            print_error(dbg, "ref formwith no ref?!", bres, rose_dwarf_error);
-        }
-        /* do references inside <> to distinguish them ** from
-           constants. In dense form this results in <<>>. Ugly for
-           dense form, but better than ambiguous. davea 9/94 */
-        snprintf(small_buf, sizeof(small_buf), "<%llu>", off);
-     // esb_append(esbp, small_buf);
-        *esbp += small_buf;
-
-     // DQ: Added bool directly
-        bool check_type_offset = false;
-
-        if (check_type_offset) {
-            wres = dwarf_whatattr(attrib, &attr, &rose_dwarf_error);
-            if (wres == DW_DLV_ERROR) {
-
-            } else if (wres == DW_DLV_NO_ENTRY) {
-            }
-            if (attr == DW_AT_type) {
-                dres = dwarf_offdie(dbg, cu_offset + off,&die_for_check, &rose_dwarf_error);
-                type_offset_result.checks++;
-                if (dres != DW_DLV_OK) {
-                    type_offset_result.errors++;
-                    DWARF_CHECK_ERROR
-                        ("DW_AT_type offset does not point to type info")
-                } else {
-                    int tres2;
-
-                    tres2 =
-                        dwarf_tag(die_for_check, &tag_for_check, &rose_dwarf_error);
-                    if (tres2 == DW_DLV_OK) {
-                        switch (tag_for_check) {
-                        case DW_TAG_array_type:
-                        case DW_TAG_class_type:
-                        case DW_TAG_enumeration_type:
-                        case DW_TAG_pointer_type:
-                        case DW_TAG_reference_type:
-                        case DW_TAG_string_type:
-                        case DW_TAG_structure_type:
-                        case DW_TAG_subroutine_type:
-                        case DW_TAG_typedef:
-                        case DW_TAG_union_type:
-                        case DW_TAG_ptr_to_member_type:
-                        case DW_TAG_set_type:
-                        case DW_TAG_subrange_type:
-                        case DW_TAG_base_type:
-                        case DW_TAG_const_type:
-                        case DW_TAG_file_type:
-                        case DW_TAG_packed_type:
-                        case DW_TAG_thrown_type:
-                        case DW_TAG_volatile_type:
-                            /* OK */
-                            break;
-                        default:
-                            type_offset_result.errors++;
-                            DWARF_CHECK_ERROR("DW_AT_type offset does not point to type info")
-                                break;
-                        }
-                        dwarf_dealloc(dbg, die_for_check, DW_DLA_DIE);
-                    } else {
-                        type_offset_result.errors++;
-                        DWARF_CHECK_ERROR("DW_AT_type offset does not exist")
-                    }
-                }
-            }
-        }
-        break;
-       }
-    case DW_FORM_block:
-    case DW_FORM_block1:
-    case DW_FORM_block2:
-    case DW_FORM_block4:
-        fres = dwarf_formblock(attrib, &tempb, &rose_dwarf_error);
-        if (fres == DW_DLV_OK) {
-         // for (i = 0; i < tempb->bl_len; i++) {
-            for (i = 0; i < (int) tempb->bl_len; i++) {
-                snprintf(small_buf, sizeof(small_buf), "%02x",*(i + (unsigned char *) tempb->bl_data));
-             // esb_append(esbp, small_buf);
-                *esbp += small_buf;
-            }
-            dwarf_dealloc(dbg, tempb, DW_DLA_BLOCK);
-        } else {
-            print_error(dbg, "DW_FORM_blockn cannot get block\n", fres,rose_dwarf_error);
-        }
-        break;
-    case DW_FORM_data1:
-    case DW_FORM_data2:
-    case DW_FORM_data4:
-    case DW_FORM_data8:
-        fres = dwarf_whatattr(attrib, &attr, &rose_dwarf_error);
-        if (fres == DW_DLV_ERROR) {
-            print_error(dbg, "FORM_datan cannot get attr", fres, rose_dwarf_error);
-        } else if (fres == DW_DLV_NO_ENTRY) {
-            print_error(dbg, "FORM_datan cannot get attr", fres, rose_dwarf_error);
-        } else {
-            switch (attr) {
-            case DW_AT_ordering:
-            case DW_AT_byte_size:
-            case DW_AT_bit_offset:
-            case DW_AT_bit_size:
-            case DW_AT_inline:
-            case DW_AT_language:
-            case DW_AT_visibility:
-            case DW_AT_virtuality:
-            case DW_AT_accessibility:
-            case DW_AT_address_class:
-            case DW_AT_calling_convention:
-            case DW_AT_discr_list:      /* DWARF3 */
-            case DW_AT_encoding:
-            case DW_AT_identifier_case:
-            case DW_AT_MIPS_loop_unroll_factor:
-            case DW_AT_MIPS_software_pipeline_depth:
-            case DW_AT_decl_column:
-            case DW_AT_decl_file:
-            case DW_AT_decl_line:
-            case DW_AT_call_column:
-            case DW_AT_call_file:
-            case DW_AT_call_line:
-            case DW_AT_start_scope:
-            case DW_AT_byte_stride:
-            case DW_AT_bit_stride:
-            case DW_AT_count:
-            case DW_AT_stmt_list:
-            case DW_AT_MIPS_fde:
-               {
-                wres = get_small_encoding_integer_and_name(dbg,
-                                                           attrib,
-                                                           &tempud,
-                                                           /* attrname */
-                                                           (char *) NULL,
-                                                           /* err_string
-                                                            */
-                                                           (string*)NULL,
-                                                           (encoding_type_func) 0,
-                                                           &rose_dwarf_error);
-
-                if (wres == DW_DLV_OK) {
-                    snprintf(small_buf, sizeof(small_buf), "%llu",tempud);
-                 // esb_append(esbp, small_buf);
-                    *esbp += small_buf;
-
-                    if (attr == DW_AT_decl_file || attr == DW_AT_call_file) {
-                     // if (srcfiles && tempud > 0 && tempud <= cnt)
-                        if (srcfiles && (int)tempud > 0 && (int)tempud <= cnt) {
-                            /* added by user request */
-                            /* srcfiles is indexed starting at 0, but
-                               DW_AT_decl_file defines that 0 means no
-                               file, so tempud 1 means the 0th entry in
-                               srcfiles, thus tempud-1 is the correct
-                               index into srcfiles.  */
-                            char *fname = srcfiles[tempud - 1];
-
-                         // esb_append(esbp, " ");
-                         // esb_append(esbp, fname);
-                            *esbp += " ";
-                            *esbp += fname;
-                       }
-
-                       bool check_decl_file = false;
-
-                       if(check_decl_file) {
-                           decl_file_result.checks++;
-                           /* Zero is always a legal index, it means
-                              no source name provided. */
-                        // if(tempud > cnt)
-                           if( (int)tempud > cnt) {
-                               decl_file_result.errors++;
-                               DWARF_CHECK_ERROR2(get_AT_name(dbg,attr).c_str(),"does not point to valid file info");
-                           }
-                       }
-                    }
-                } else {
-                    print_error(dbg, "Cannot get encoding attribute ..",wres, rose_dwarf_error);
-                }
-                break;
-               }
-
-            case DW_AT_const_value:
-                wres = formxdata_print_value(attrib,esbp, &rose_dwarf_error);
-                if(wres == DW_DLV_OK){
-                    /* String appended already. */
-                } else if (wres == DW_DLV_NO_ENTRY) {
-                    /* nothing? */
-                } else {
-                   print_error(dbg,"Cannot get DW_AT_const_value ",wres,rose_dwarf_error);
-                }
-
-
-                break;
-            case DW_AT_upper_bound:
-            case DW_AT_lower_bound:
-            default:
-                wres = formxdata_print_value(attrib,esbp, &rose_dwarf_error);
-                if (wres == DW_DLV_OK) {
-                    /* String appended already. */
-                } else if (wres == DW_DLV_NO_ENTRY) {
-                    /* nothing? */
-                } else {
-                    print_error(dbg, "Cannot get formsdata..", wres,rose_dwarf_error);
-                }
-                break;
-            }
-        }
-        if (cu_name_flag) {
-            if (attr == DW_AT_MIPS_fde) {
-                if (fde_offset_for_cu_low == DW_DLV_BADOFFSET) {
-                    fde_offset_for_cu_low
-                        = fde_offset_for_cu_high = tempud;
-                } else if (tempud < fde_offset_for_cu_low) {
-                    fde_offset_for_cu_low = tempud;
-                } else if (tempud > fde_offset_for_cu_high) {
-                    fde_offset_for_cu_high = tempud;
-                }
-            }
-        }
-        break;
-    case DW_FORM_sdata:
-        wres = dwarf_formsdata(attrib, &tempsd, &rose_dwarf_error);
-        if (wres == DW_DLV_OK) {
-            snprintf(small_buf, sizeof(small_buf), "%lld", tempsd);
-         // esb_append(esbp, small_buf);
-            *esbp += small_buf;
-        } else if (wres == DW_DLV_NO_ENTRY) {
-            /* nothing? */
-        } else {
-            print_error(dbg, "Cannot get formsdata..", wres, rose_dwarf_error);
-        }
-        break;
-    case DW_FORM_udata:
-        wres = dwarf_formudata(attrib, &tempud, &rose_dwarf_error);
-        if (wres == DW_DLV_OK) {
-            snprintf(small_buf, sizeof(small_buf), "%llu", tempud);
-         // esb_append(esbp, small_buf);
-            *esbp += small_buf;
-        } else if (wres == DW_DLV_NO_ENTRY) {
-            /* nothing? */
-        } else {
-            print_error(dbg, "Cannot get formudata....", wres, rose_dwarf_error);
-        }
-        break;
-    case DW_FORM_string:
-    case DW_FORM_strp:
-        wres = dwarf_formstring(attrib, &temps, &rose_dwarf_error);
-        if (wres == DW_DLV_OK) {
-         // esb_append(esbp, temps);
-            *esbp += temps;
-        } else if (wres == DW_DLV_NO_ENTRY) {
-            /* nothing? */
-        } else {
-            print_error(dbg, "Cannot get a formstr (or a formstrp)....",wres, rose_dwarf_error);
-        }
-
-        break;
-    case DW_FORM_flag:
-        wres = dwarf_formflag(attrib, &tempbool, &rose_dwarf_error);
-        if (wres == DW_DLV_OK) {
-            if (tempbool) {
-                snprintf(small_buf, sizeof(small_buf), "yes(%d)",tempbool);
-             // esb_append(esbp, small_buf);
-                *esbp += small_buf;
-            } else {
-                snprintf(small_buf, sizeof(small_buf), "no");
-             // esb_append(esbp, small_buf);
-                *esbp += small_buf;
-            }
-        } else if (wres == DW_DLV_NO_ENTRY) {
-            /* nothing? */
-        } else {
-            print_error(dbg, "Cannot get formflag/p....", wres, rose_dwarf_error);
-        }
-        break;
-    case DW_FORM_indirect:
-        /* We should not ever get here, since the true form was
-           determined and direct_form has the DW_FORM_indirect if it is
-           used here in this attr. */
-     // esb_append(esbp, get_FORM_name(dbg, theform));
-
-       printf ("Error: If we should never get here then make this an error! \n");
-       ROSE_ABORT();
-
-     // *esbp += get_FORM_name(dbg, theform);
-        break;
-
-    case DW_FORM_sec_offset:
-    case DW_FORM_exprloc:
-    case DW_FORM_flag_present:
-    case DW_FORM_ref_sig8:
-      /* all of these are DWARF4 related and currently unsupported. */
-      break;
-    default:
-        // Failure to parse a DWARF construct must not be a non-recoverable error. [Robb P Matzke 2017-05-16]
-        //print_error(dbg, "dwarf_whatform unexpected value", DW_DLV_OK,rose_dwarf_error);
-        fputs("Error: dwarf_whatform_unexpected value\n", stderr);
-        break;
-    }
-    if (verbose && direct_form && direct_form == DW_FORM_indirect)
-    {
-     // char *form_indir = " (used DW_FORM_indirect) ";
-        char *form_indir = strdup(" (used DW_FORM_indirect) ");
-
-     // esb_append(esbp, form_indir);
-        *esbp += form_indir;
-    }
-}
-
-void
-print_attribute(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half attr, Dwarf_Attribute attr_in,bool print_information,char **srcfiles, Dwarf_Signed cnt, SgAsmDwarfConstruct* asmDwarfConstruct)
-   {
-     Dwarf_Attribute attrib = 0;
-     Dwarf_Unsigned  uval = 0;
-     string          atname;
-     string          valname;
-     int             tres = 0;
-     Dwarf_Half      tag = 0;
-
-  // Added C++ string support to replace C style string support
-     string esb_base;
-
-     atname = get_AT_name(dbg, attr);
-
-  // printf ("In print_attribute(): attribute type (atname) = %s asmDwarfConstruct = %s \n",atname.c_str(),asmDwarfConstruct->class_name().c_str());
-
-  // Set the name in the SgAsmDwarfConstruct (base class)
-  // asmDwarfConstruct->set_name(atname);
-
-  /* the following gets the real attribute, even in the face of an
-     incorrect doubling, or worse, of attributes */
-     attrib = attr_in;
-
-  /* do not get attr via dwarf_attr: if there are (erroneously)
-     multiple of an attr in a DIE, dwarf_attr will not get the
-     second, erroneous one and dwarfdump will print the first one
-     multiple times. Oops. */
-
-     tres = dwarf_tag(die, &tag, &rose_dwarf_error);
-     if (tres == DW_DLV_ERROR)
-        {
-          tag = 0;
-        }
-       else
-        {
-          if (tres == DW_DLV_NO_ENTRY)
-             {
-               tag = 0;
-             }
-            else
-             {
-            /* ok */
-             }
-        }
-
-     switch (attr)
-        {
-          case DW_AT_language:
-             {
-               get_small_encoding_integer_and_name(dbg, attrib, &uval,strdup("DW_AT_language"), &valname,get_LANG_name, &rose_dwarf_error);
-
-            // The language is only set in the SgAsmDwarfCompilationUnit IR node.
-               SgAsmDwarfCompilationUnit* asmDwarfCompilationUnit = isSgAsmDwarfCompilationUnit(asmDwarfConstruct);
-               ROSE_ASSERT(asmDwarfCompilationUnit != NULL);
-               asmDwarfCompilationUnit->set_language(valname);
-               break;
-             }
-
-#if 0
-       // DQ: Initially, let's limit the number of dependent functions required to make some progress and generating IR nodes from Dwarf.
-
-          case DW_AT_accessibility:
-               get_small_encoding_integer_and_name(dbg, attrib, &uval,"DW_AT_accessibility",&valname, get_ACCESS_name,&rose_dwarf_error);
-               break;
-          case DW_AT_visibility:
-               get_small_encoding_integer_and_name(dbg, attrib, &uval,"DW_AT_visibility",&valname, get_VIS_name,&rose_dwarf_error);
-               break;
-          case DW_AT_virtuality:
-               get_small_encoding_integer_and_name(dbg, attrib, &uval,"DW_AT_virtuality",&valname,get_VIRTUALITY_name, &rose_dwarf_error);
-               break;
-          case DW_AT_identifier_case:
-               get_small_encoding_integer_and_name(dbg, attrib, &uval,"DW_AT_identifier",&valname, get_ID_name,&rose_dwarf_error);
-               break;
-          case DW_AT_inline:
-               get_small_encoding_integer_and_name(dbg, attrib, &uval,"DW_AT_inline", &valname,get_INL_name, &rose_dwarf_error);
-               break;
-          case DW_AT_encoding:
-               get_small_encoding_integer_and_name(dbg, attrib, &uval,"DW_AT_encoding", &valname,get_ATE_name, &rose_dwarf_error);
-               break;
-          case DW_AT_ordering:
-               get_small_encoding_integer_and_name(dbg, attrib, &uval,"DW_AT_ordering", &valname,get_ORD_name, &rose_dwarf_error);
-               break;
-          case DW_AT_calling_convention:
-               get_small_encoding_integer_and_name(dbg, attrib, &uval,"DW_AT_calling_convention",&valname, get_CC_name,&rose_dwarf_error);
-               break;
-          case DW_AT_discr_list:      /* DWARF3 */
-               get_small_encoding_integer_and_name(dbg, attrib, &uval,"DW_AT_discr_list",&valname, get_DSC_name,&rose_dwarf_error);
-               break;
-
-          case DW_AT_location:
-          case DW_AT_data_member_location:
-          case DW_AT_vtable_elem_location:
-          case DW_AT_string_length:
-          case DW_AT_return_addr:
-          case DW_AT_use_location:
-          case DW_AT_static_link:
-          case DW_AT_frame_base:
-        /* value is a location description or location list */
-
-            // valname = "Need to use C++ class!!!";
-            // printf ("DW_AT_frame_base: This should be replaced by the C++ string object! \n");
-            // ROSE_ASSERT(false);
-
-            // esb_empty_string(&esb_base);
-            // get_location_list(dbg, die, attrib, &esb_base);
-            // valname = esb_get_string(&esb_base);
-
-               get_location_list(dbg, die, attrib, &esb_base);
-               valname = esb_base;
-               break;
-
-          case DW_AT_SUN_func_offsets:
-
-            // printf ("DW_AT_SUN_func_offsets: This should be replaced by the C++ string object! \n");
-            // get_FLAG_BLOCK_string(dbg, attrib);
-            // valname = esb_get_string(&esb_base);
-
-               get_FLAG_BLOCK_string(dbg, attrib, esb_base);
-               valname = esb_base;
-               break;
-
-          case DW_AT_SUN_cf_kind:
-             {
-               Dwarf_Half kind;
-               Dwarf_Unsigned tempud;
-               Dwarf_Error err;
-               int wres;
-               wres = dwarf_formudata (attrib,&tempud, &err);
-               if(wres == DW_DLV_OK) {
-                   kind = tempud;
-                   valname = get_ATCF_name(dbg, kind);
-               } else if (wres == DW_DLV_NO_ENTRY) {
-                   valname = "?";
-               } else {
-                   print_error(dbg,"Cannot get formudata....",wres,err);
-                   valname = "??";
-               }
-
-               break;
-             }
-
-          case DW_AT_upper_bound:
-             {
-               Dwarf_Half theform;
-               int rv;
-               rv = dwarf_whatform(attrib,&theform,&rose_dwarf_error);
-            /* depending on the form and the attribute, process the form */
-               if(rv == DW_DLV_ERROR) {
-                    print_error(dbg, "dwarf_whatform cannot find attr form",rv, rose_dwarf_error);
-               } else if (rv == DW_DLV_NO_ENTRY) {
-                   break;
-               }
-
-               switch (theform)
-                  {
-                    case DW_FORM_block1:
-                      // valname = "Need to use C++ class!!!";
-                      // printf ("This should be replaced by the C++ string object! \n");
-                      // ROSE_ASSERT(false);
-
-                      // get_location_list(dbg, die, attrib, &esb_base);
-                      // valname = esb_get_string(&esb_base);
-
-                         get_location_list(dbg, die, attrib, &esb_base);
-                         valname = esb_base;
-                         break;
-
-                     default:
-                      // valname = "Need to use C++ class!!!";
-                      // printf ("This should be replaced by the C++ string object! \n");
-                      // ROSE_ASSERT(false);
-
-                      // esb_empty_string(&esb_base);
-                      // get_attr_value(dbg, tag, attrib, srcfiles, cnt, &esb_base);
-                      // valname = esb_get_string(&esb_base);
-
-                         get_attr_value(dbg, tag, attrib, srcfiles, cnt, &esb_base);
-                         valname = esb_base;
-                         break;
-                  }
-               break;
-             }
-
-          case DW_AT_high_pc:
-             {
-               Dwarf_Half theform;
-               int rv;
-               rv = dwarf_whatform(attrib,&theform,&rose_dwarf_error);
-            /* depending on the form and the attribute, process the form */
-               if(rv == DW_DLV_ERROR)
-                  {
-                    print_error(dbg, "dwarf_whatform cannot find attr form",rv, rose_dwarf_error);
-                  }
-                 else
-                  {
-                    if (rv == DW_DLV_NO_ENTRY)
-                       {
-                         break;
-                       }
-                  }
-
-            // esb_empty_string(&esb_base);
-               get_attr_value(dbg, tag, attrib, srcfiles, cnt, &esb_base);
-               if( theform != DW_FORM_addr)
-                  {
-                 /* New in DWARF4: other forms are not an address
-                    but are instead offset from pc.
-                    One could test for DWARF4 here before adding
-                    this string, but that seems unnecessary as this
-                    could not happen with DWARF3 or earlier.
-                    A normal consumer would have to add this value to
-                    DW_AT_low_pc to get a true pc. */
-                 // esb_append(&esb_base,"<offset-from-lowpc>");
-                    esb_base += "<offset-from-lowpc>";
-                  }
-
-            // valname = esb_get_string(&esb_base);
-               valname = esb_base;
-             }
-#endif
-          default:
-            esb_base = "";
-            get_attr_value(dbg, tag, attrib, srcfiles, cnt, &esb_base);
-
-            /* add the attribute as an AST attribute on the asmDwarfConstruct that we're
-               working on */
-            Rose::BinaryAnalysis::Dwarf::DwarfAttribute *att
-              = new Rose::BinaryAnalysis::Dwarf::DwarfAttribute(esb_base);
-            asmDwarfConstruct->addNewAttribute(stringify::Rose::BinaryAnalysis::Dwarf::DWARF_AT(attr), att);
-
-            valname = esb_base;
-            break;
-        }
-
-  // Set the name in the base clas only when the input attribute is DW_AT_name.
-     if (attr == DW_AT_name)
-        {
-          asmDwarfConstruct->set_name(valname);
-        }
-
-   }
-
-/* print info about die */
-SgAsmDwarfConstruct*
-build_dwarf_IR_node_from_print_one_die(Dwarf_Debug dbg, Dwarf_Die die, bool print_information, char **srcfiles, Dwarf_Signed cnt /* , SgAsmDwarfCompilationUnit* asmDwarfCompilationUnit */)
-   {
-     Dwarf_Signed i;
-     Dwarf_Off offset, overall_offset;
-     string tagname;
-     Dwarf_Half tag;
-     Dwarf_Signed atcnt;
-     Dwarf_Attribute *atlist;
-     int tres;
-     int ores;
-     int atres;
-
-     tres = dwarf_tag(die, &tag, &rose_dwarf_error);
-     if (tres != DW_DLV_OK)
-        {
-          print_error(dbg, "accessing tag of die!", tres, rose_dwarf_error);
-        }
-
-     tagname = get_TAG_name(dbg, tag);
-
-     ores = dwarf_dieoffset(die, &overall_offset, &rose_dwarf_error);
-     if (ores != DW_DLV_OK)
-        {
-          print_error(dbg, "dwarf_dieoffset", ores, rose_dwarf_error);
-        }
-
-     ores = dwarf_die_CU_offset(die, &offset, &rose_dwarf_error);
-     if (ores != DW_DLV_OK)
-        {
-          print_error(dbg, "dwarf_die_CU_offset", ores, rose_dwarf_error);
-        }
-
-  // if (!dst_format && print_information)
-     if (print_information)
-        {
-          if (indent_level == 0)
-            {
-           // Initialize the information in the SgAsmDwarfCompilationUnit IR node
-
-            }
-           else
-            {
-              if (local_symbols_already_began == false && indent_level == 1)
-                 {
-                   local_symbols_already_began = true;
-                 }
-            }
-
-       }
-
-     atres = dwarf_attrlist(die, &atlist, &atcnt, &rose_dwarf_error);
-     if (atres == DW_DLV_ERROR)
-        {
-          print_error(dbg, "dwarf_attrlist", atres, rose_dwarf_error);
-        }
-       else
-        {
-          if (atres == DW_DLV_NO_ENTRY)
-             {
-            /* indicates there are no attrs.  It is not an error. */
-               atcnt = 0;
-             }
-        }
-
-     if (indent_level == 0)
-        {
-       // This is the CU header
-        }
-       else
-        {
-       // These are local symbols
-        }
-
-  // Build the ROSE dwarf construct IR node (use a factory design to build the appropriate IR nodes
-
-  // This will cause all Dwarf IR nodes to be properly represented in the AST.
-     SgAsmDwarfConstruct* asmDwarfConstruct = SgAsmDwarfConstruct::createDwarfConstruct( tag, indent_level, offset, overall_offset );
-
-  // Setup attribute specific fields in the different kinds of Dwarf nodes
-     for (i = 0; i < atcnt; i++)
-        {
-          Dwarf_Half attr;
-          int ares;
-
-          ares = dwarf_whatattr(atlist[i], &attr, &rose_dwarf_error);
-          if (ares == DW_DLV_OK)
-             {
-               if (asmDwarfConstruct != NULL)
-                  {
-                    print_attribute(dbg, die, attr, atlist[i], print_information, srcfiles, cnt, asmDwarfConstruct);
-                  }
-                 else
-                  {
-                 // printf ("Skipping print_attribute since asmDwarfConstruct == NULL \n");
-                  }
-
-               if (indent_level == 0)
-                  {
-                 // This is the CU header
-                  }
-                 else
-                  {
-                 // These are local symbols
-                  }
-             }
-            else
-             {
-               print_error(dbg, "dwarf_whatattr entry missing", ares, rose_dwarf_error);
-             }
-        }
-
-     for (i = 0; i < atcnt; i++)
-        {
-          dwarf_dealloc(dbg, atlist[i], DW_DLA_ATTR);
-        }
-
-     if (atres == DW_DLV_OK)
-        {
-          dwarf_dealloc(dbg, atlist, DW_DLA_LIST);
-        }
-
-     return asmDwarfConstruct;
-   }
-
-
-
-/* recursively follow the die tree */
-SgAsmDwarfConstruct*
-build_dwarf_IR_node_from_die_and_children(Dwarf_Debug dbg, Dwarf_Die in_die_in, char **srcfiles, Dwarf_Signed cnt, SgAsmDwarfConstruct* parentDwarfConstruct )
-   {
-     // NOTE: The first time this function is called the parentDwarfConstruct is NULL.
-
-     Dwarf_Die child;
-     Dwarf_Die sibling;
-     Dwarf_Error err;
-     int cdres;
-     Dwarf_Die in_die = in_die_in;
-
-     SgAsmDwarfConstruct* astDwarfConstruct = NULL;
-
-     for (;;)
-        {
-       // printf ("Top of loop in build_dwarf_IR_node_from_die_and_children() \n");
-
-          PUSH_DIE_STACK(in_die);
-
-       // Suppress output!
-
-       // DQ (11/4/2008): This is the location were we will have to generate IR nodes using each debug info entry (die)
-       // printf ("Calling print_one_die to output the information about each specific debug info entry (die) \n");
-
-       /* here to pre-descent processing of the die */
-       // SgAsmDwarfConstruct* astDwarfConstruct = build_dwarf_IR_node_from_print_one_die(dbg, in_die, /* info_flag */ true, srcfiles, cnt /* , asmDwarfCompilationUnit */ );
-          astDwarfConstruct = build_dwarf_IR_node_from_print_one_die(dbg, in_die, /* info_flag */ true, srcfiles, cnt /* , asmDwarfCompilationUnit */ );
-
-       // parentDwarfConstruct->set_child(astDwarfConstruct);
-          if (parentDwarfConstruct != NULL && astDwarfConstruct != NULL)
-             {
-            // printf ("Push children onto parent IR node! \n");
-
-            // if (parentDwarfConstruct->get_children() == NULL)
-            //      parentDwarfConstruct->set_children(new SgAsmDwarfConstructList());
-            // When this work we know that we have the child support for Dwarf IR nodes in place (in all the right places).
-                 // According to Kewen Meng at uoregon.edu, this assertion fails when the input specimen is compiled with "gcc
-                 // -O1" (input and gcc version were unspecified by user), but works if -O1 is removed, or if C++ compiler
-                 // (vendor and version unspecified by user) is used with optimization flag (flag unspecified by user). [Robb
-                 // Matzke 2016-09-29]
-               ROSE_ASSERT(parentDwarfConstruct->get_children() != NULL);
-               parentDwarfConstruct->get_children()->get_list().push_back(astDwarfConstruct);
-               // The new dwarf construct's parent should be the SgAsmDwarfConstructList, not the parent of the list.
-               // [Robb P. Matzke 2013-04-15]
-               astDwarfConstruct->set_parent(parentDwarfConstruct->get_children());
-             }
-
-          cdres = dwarf_child(in_die, &child, &err);
-       /* child first: we are doing depth-first walk */
-          if (cdres == DW_DLV_OK)
-             {
-               indent_level++;
-               if(indent_level >= DIE_STACK_SIZE )
-                  {
-                    print_error(dbg,"compiled in DIE_STACK_SIZE limit exceeded",DW_DLV_OK,err);
-                  }
-
-            // printf ("Processing child dwarf nodes: calling build_dwarf_IR_node_from_die_and_children() \n");
-
-            // Old function: print_die_and_children(dbg, child, srcfiles, cnt);
-
-            // Ignore the return result (children are added to the parent).
-               if (astDwarfConstruct != NULL)
-                    build_dwarf_IR_node_from_die_and_children(dbg, child, srcfiles, cnt, astDwarfConstruct);
-               indent_level--;
-
-               if (indent_level == 0)
-                    local_symbols_already_began = false;
-
-               dwarf_dealloc(dbg, child, DW_DLA_DIE);
-             }
-            else
-             {
-               if (cdres == DW_DLV_ERROR)
-                  {
-                    print_error(dbg, "dwarf_child", cdres, err);
-                  }
-             }
-
-       // printf ("Process siblings \n");
-          cdres = dwarf_siblingof(dbg, in_die, &sibling, &err);
-          if (cdres == DW_DLV_OK)
-             {
-            /* print_die_and_children(dbg, sibling, srcfiles, cnt); We
-               loop around to actually print this, rather than
-               recursing. Recursing is horribly wasteful of stack
-               space. */
-             }
-            else
-             {
-               if (cdres == DW_DLV_ERROR)
-                  {
-                    print_error(dbg, "dwarf_siblingof", cdres, err);
-                  }
-             }
-
-       /* Here do any post-descent (ie post-dwarf_child) processing of the in_die. */
-
-       // printf ("Process post-dwarf_child \n");
-
-          POP_DIE_STACK;
-          if (in_die != in_die_in)
-             {
-            /* Dealloc our in_die, but not the argument die, it belongs
-               to our caller. Whether the siblingof call worked or not.
-             */
-               dwarf_dealloc(dbg, in_die, DW_DLA_DIE);
-             }
-
-          if (cdres == DW_DLV_OK)
-             {
-            /* Set to process the sibling, loop again. */
-               in_die = sibling;
-             }
-            else
-             {
-            /* We are done, no more siblings at this level. */
-               break;
-             }
-
-       // printf ("Bottom of loop in build_dwarf_IR_node_from_die_and_children() \n");
-        }  /* end for loop on siblings */
-
-  // ROSE_ASSERT(astDwarfConstruct != NULL);
-
-     return astDwarfConstruct;
-   }
-
-
-void
-build_dwarf_line_numbers_this_cu(Dwarf_Debug dbg, Dwarf_Die cu_die, SgAsmDwarfCompilationUnit* asmDwarfCompilationUnit)
-   {
-  // This function build the IR nodes in the AST that hold the mappings of instruction addresses
-  // to source line and column numbers.  From this we generate STL maps and higher level interfaces
-  // that make the information easier to use.
-
-     Dwarf_Signed linecount = 0;
-     Dwarf_Line *linebuf = NULL;
-     Dwarf_Signed i = 0;
-     Dwarf_Addr pc = 0;
-     Dwarf_Unsigned lineno = 0;
-     Dwarf_Signed column = 0;
-     char* filename;
-
-     int lres = 0;
-     int sres = 0;
-     int ares = 0;
-     int lires = 0;
-     int cores = 0;
-
-  // printf ("Inside of build_dwarf_line_numbers_this_cu() (using .debug_line section) \n");
-
-  // printf("\n.debug_line: line number info for a single cu\n");
-
-  // printf ("Setting verbose > 1 (verbose==2) \n");
-  // verbose = 2;
-
-     ROSE_ASSERT(asmDwarfCompilationUnit->get_line_info() == NULL);
-
-     SgAsmDwarfLineList* asmDwarfLineList = new SgAsmDwarfLineList();
-
-     asmDwarfCompilationUnit->set_line_info(asmDwarfLineList);
-     asmDwarfLineList->set_parent(asmDwarfCompilationUnit);
-
-     ROSE_ASSERT(asmDwarfCompilationUnit->get_line_info() != NULL);
-
-#if 0
-     if (verbose > 1)
-        {
-          print_source_intro(cu_die);
-          build_dwarf_IR_node_from_print_one_die(dbg, cu_die, /* print_information= */ 1,/* srcfiles= */ 0, /* cnt= */ 0 /* , asmDwarfCompilationUnit */ );
-
-          lres = dwarf_print_lines(cu_die, &rose_dwarf_error);
-          if (lres == DW_DLV_ERROR)
-             {
-               print_error(dbg, "dwarf_srclines details", lres, rose_dwarf_error);
-             }
-
-          printf ("Exiting print_line_numbers_this_cu prematurely! \n");
-          return;
-       }
-#endif
-
-     lres = dwarf_srclines(cu_die, &linebuf, &linecount, &rose_dwarf_error);
-     if (lres == DW_DLV_ERROR)
-        {
-          print_error(dbg, "dwarf_srclines", lres, rose_dwarf_error);
-        }
-       else
-        {
-          if (lres == DW_DLV_NO_ENTRY)
-             {
-            /* no line information is included */
-             }
-            else
-             {
-#if 0
-            // Suppress output!
-               print_source_intro(cu_die);
-               if (verbose)
-                  {
-                    build_dwarf_IR_node_from_print_one_die(dbg, cu_die, /* print_information= */ 1,/* srcfiles= */ 0, /* cnt= */ 0 /* , asmDwarfCompilationUnit */ );
-                  }
-#endif
-            // Output a header for the data
-            // printf("<source>\t[row,column]\t<pc>\t//<new statement or basic block\n");
-
-               for (i = 0; i < linecount; i++)
-                  {
-                    Dwarf_Line line = linebuf[i];
-
-                    sres = dwarf_linesrc(line, &filename, &rose_dwarf_error);
-                    ares = dwarf_lineaddr(line, &pc, &rose_dwarf_error);
-
-                    if (sres == DW_DLV_ERROR)
-                       {
-                         print_error(dbg, "dwarf_linesrc", sres, rose_dwarf_error);
-                       }
-
-                    if (sres == DW_DLV_NO_ENTRY)
-                       {
-                         filename = strdup("<unknown>");
-                       }
-
-                    if (ares == DW_DLV_ERROR)
-                       {
-                         print_error(dbg, "dwarf_lineaddr", ares, rose_dwarf_error);
-                       }
-
-                    if (ares == DW_DLV_NO_ENTRY)
-                       {
-                         pc = 0;
-                       }
-
-                    lires = dwarf_lineno(line, &lineno, &rose_dwarf_error);
-                    if (lires == DW_DLV_ERROR)
-                       {
-                         print_error(dbg, "dwarf_lineno", lires, rose_dwarf_error);
-                       }
-
-                    if (lires == DW_DLV_NO_ENTRY)
-                       {
-                         lineno = -1LL;
-                       }
-
-                    cores = dwarf_lineoff(line, &column, &rose_dwarf_error);
-                    if (cores == DW_DLV_ERROR)
-                       {
-                         print_error(dbg, "dwarf_lineoff", cores, rose_dwarf_error);
-                       }
-
-                    if (cores == DW_DLV_NO_ENTRY)
-                       {
-                         column = -1LL;
-                       }
-
-                 // printf("%s:\t[%3llu,%2lld]\t%#llx", filename, lineno,column, pc);
-
-                 // Build an IR node to represent the instruction address for each line.
-                 // This uses the static maps in the Sg_File_Info to support a table similar
-                 // to Dwarf's and which maps filenames to integers and back.  This avoids
-                 // building and deleting a Sg_File_Info object.
-                    int filename_id = Sg_File_Info::addFilenameToMap(filename);
-
-                 // Now build the IR node to store the raw information from dwarf.
-                    SgAsmDwarfLine* lineInfo = new SgAsmDwarfLine(pc, filename_id, lineno, column);
-
-                    asmDwarfLineList->get_line_list().push_back(lineInfo);
-
-                    if (sres == DW_DLV_OK)
-                         dwarf_dealloc(dbg, filename, DW_DLA_STRING);
-
-#if 0
-                 // DQ: The remainer of this code block is the output of information that sumarizes the previous entry.
-
-                    Dwarf_Bool newstatement = 0;
-                    Dwarf_Bool lineendsequence = 0;
-                    Dwarf_Bool new_basic_block = 0;
-                    int nsres;
-
-                    nsres = dwarf_linebeginstatement(line, &newstatement, &rose_dwarf_error);
-                    if (nsres == DW_DLV_OK)
-                       {
-#if 0
-                      // Suppress output!
-                         if (newstatement)
-                            {
-                              printf("\t// new statement");
-                            }
-#endif
-                       }
-                      else
-                         if (nsres == DW_DLV_ERROR)
-                            {
-                              print_error(dbg, "linebeginstatment failed", nsres,rose_dwarf_error);
-                            }
-
-                    nsres = dwarf_lineblock(line, &new_basic_block, &rose_dwarf_error);
-                    if (nsres == DW_DLV_OK)
-                       {
-#if 0
-                      // Suppress output!
-                         if (new_basic_block)
-                            {
-                              printf("\t// new basic block");
-                            }
-#endif
-                       }
-                      else
-                         if (nsres == DW_DLV_ERROR)
-                            {
-                              print_error(dbg, "lineblock failed", nsres, rose_dwarf_error);
-                            }
-
-                    nsres = dwarf_lineendsequence(line, &lineendsequence, &rose_dwarf_error);
-                    if (nsres == DW_DLV_OK)
-                       {
-#if 0
-                      // Suppress output!
-                         if (lineendsequence)
-                            {
-                              printf("\t// end of text sequence");
-                            }
-#endif
-                       }
-                      else
-                         if (nsres == DW_DLV_ERROR)
-                            {
-                              print_error(dbg, "lineblock failed", nsres, rose_dwarf_error);
-                            }
-#endif
-
-#if 0
-                 // Suppress output!
-                    printf("\n");
-#endif
-                  }
-
-               dwarf_srclines_dealloc(dbg, linebuf, linecount);
-             }
-        }
-
-  // printf ("Now generate the static maps to use to lookup the instruction address to source position mappings \n");
-     asmDwarfLineList->buildInstructionAddressSourcePositionMaps(asmDwarfCompilationUnit);
-  // printf ("DONE: Now generate the maps to use to lookup the instruction address to source position mappings \n");
-
-#if 0
-  // Run a second time to test that the maps are not regenerated (this is just a test)
-     printf ("Run a second time to test that the maps are not regenerated ... \n");
-     DwarfInstructionSourceMapReturnType returnValue = asmDwarfLineList->buildInstructionAddressSourcePositionMaps();
-     printf ("DONE: Run a second time to test that the maps are not regenerated ... \n");
-#endif
-
-#if 1
-  // Output the line information from the generated maps (debugging information).
-  // printf ("SgProject::get_verbose() = %d \n",SgProject::get_verbose());
-     if (SgProject::get_verbose() > 0)
-        {
-          asmDwarfLineList->display("Inside of build_dwarf_line_numbers_this_cu()");
-        }
-#endif
-   }
-
-
-/* process each compilation unit in .debug_info */
-void
-build_dwarf_IR_nodes(Dwarf_Debug dbg, SgAsmGenericFile* file)
-   {
-     Dwarf_Unsigned cu_header_length = 0;
-     Dwarf_Unsigned abbrev_offset = 0;
-     Dwarf_Half version_stamp = 0;
-     Dwarf_Half address_size = 0;
-     Dwarf_Die cu_die = NULL;
-     Dwarf_Unsigned next_cu_offset = 0;
-     int nres = DW_DLV_OK;
-
-     ROSE_ASSERT(file->get_dwarf_info() == NULL);
-
-     SgAsmDwarfCompilationUnitList* asmDwarfCompilationUnitList = new SgAsmDwarfCompilationUnitList();
-     file->set_dwarf_info(asmDwarfCompilationUnitList);
-     asmDwarfCompilationUnitList->set_parent(file);
-
-  /* Loop until it fails.  */
-     while ((nres = dwarf_next_cu_header(dbg, &cu_header_length, &version_stamp, &abbrev_offset, &address_size, &next_cu_offset, &rose_dwarf_error)) == DW_DLV_OK)
-        {
-
-       // error status variable
-          int sres = 0;
-
-       // printf ("Setting cu_name_flag == true \n");
-       // cu_name_flag = true;
-       // cu_name_flag = false;
-
-          ROSE_ASSERT(cu_name_flag == false);
-
-       /* process a single compilation unit in .debug_info. */
-          sres = dwarf_siblingof(dbg, NULL, &cu_die, &rose_dwarf_error);
-
-          switch (sres) {
-          case DW_DLV_OK:
-            {
-              Dwarf_Signed cnt = 0;
-              char **srcfiles = 0;
-
-              // We need to call this function so that we can generate filenames to support the line number mapping below.
-              int srcf = dwarf_srcfiles(cu_die, &srcfiles, &cnt, &rose_dwarf_error);
-
-              if (srcf != DW_DLV_OK)
-                {
-                  // I think we can make this an error.
-                  mlog[FATAL] << "Error: No source file information found: (dwarf_srcfiles() != DW_DLV_OK)\n";
-                  ROSE_ABORT();
-
-                  srcfiles = NULL;
-                  cnt = 0;
-                }
-
-              // This function call will traverse the list of child debug info entries and
-              // within this function we will generate the IR nodes specific to Dwarf. This
-              // should define an course view of the AST which can be used to relate the binary
-              // to the source code.
-              SgAsmDwarfConstruct* asmDwarfConstruct = build_dwarf_IR_node_from_die_and_children(dbg, cu_die, srcfiles, cnt, NULL);
-              ROSE_ASSERT(asmDwarfConstruct != NULL);
-
-              // Handle the case of many Dwarf Compile Units
-              // asmInterpretation->get_dwarf_info()->get_cu_list().push_back(asmDwarfCompilationUnit);
-              SgAsmDwarfCompilationUnit* asmDwarfCompilationUnit = isSgAsmDwarfCompilationUnit(asmDwarfConstruct);
-              ROSE_ASSERT(asmDwarfCompilationUnit != NULL);
-
-              asmDwarfCompilationUnitList->get_cu_list().push_back(asmDwarfCompilationUnit);
-              asmDwarfCompilationUnit->set_parent(asmDwarfCompilationUnitList);
-
-              if (srcf == DW_DLV_OK)
-                {
-                  for (int si = 0; si < cnt; ++si)
-                    {
-                      dwarf_dealloc(dbg, srcfiles[si], DW_DLA_STRING);
-                    }
-                  dwarf_dealloc(dbg, srcfiles, DW_DLA_LIST);
-                }
-
-              bool line_flag = true;
-
-              if (line_flag)
-                {
-                  build_dwarf_line_numbers_this_cu(dbg, cu_die, asmDwarfCompilationUnit);
-                }
-              else
-                {
-                  mlog[INFO] << "Skipping line number <--> instruction address mapping information\n";
-                }
-
-              dwarf_dealloc(dbg, cu_die, DW_DLA_DIE);
-              break;
-            }
-          case DW_DLV_NO_ENTRY:
-            break;
-
-          default:
-            print_error(dbg, "Regetting cu_die", sres, rose_dwarf_error);
-          }
-
-          cu_offset = next_cu_offset;
-        }
-
-     if (nres == DW_DLV_ERROR)
-        {
-          string errmsg = dwarf_errmsg(rose_dwarf_error);
-          Dwarf_Unsigned myerr = dwarf_errno(rose_dwarf_error);
-          mlog[FATAL] << "DWARF error : " << errmsg << " (" << (unsigned long)myerr << ")\n";
-        }
-   }
-
-
-// DQ (11/10/2008):
-/*! \brief This traversal permits symbols to be commented out from the DOT graphs.
-
- */
-void commentOutSymbolsFromDotGraph (SgNode* node)
-   {
-  // Remove the symbols and related symbol lists so that the generated DOT file will be simpler.
-  // To do this we add an attribute that implements the virtual commentOutNodeInGraph() member
-  // function and return "true".
-
-  // Define the attribute class containing the virtual function "commentOutNodeInGraph()"
-     class SymbolPruningAttribute : public AstAttribute
-        {
-       // This is a persistant attribute used to mark locations in the AST where we don't want IR nodes to be generated for the DOT graph.
-
-          public:
-               bool commentOutNodeInGraph() { return true; }
-               virtual AstAttribute* copy() const { return new SymbolPruningAttribute(*this); }
-               virtual ~SymbolPruningAttribute() {}
-        };
-
-  // Define the traversal class over the AST
-     class CommentOutSymbolsFromDotGraph : public SgSimpleProcessing
-        {
-          public:
-               void visit ( SgNode* node )
-                  {
-
-                     SgAsmGenericSymbolList* genericSymbolList = isSgAsmGenericSymbolList(node);
-                     if (genericSymbolList != NULL)
-                        {
-                          SymbolPruningAttribute* att = new SymbolPruningAttribute();
-                          genericSymbolList->addNewAttribute("SymbolPruningAttribute",att);
-                        }
-
-                     SgAsmElfSymbolList* elfSymbolList = isSgAsmElfSymbolList(node);
-                     if (elfSymbolList != NULL)
-                        {
-                          SymbolPruningAttribute* att = new SymbolPruningAttribute();
-                          elfSymbolList->addNewAttribute("SymbolPruningAttribute",att);
-                        }
-
-                     SgAsmGenericSymbol* genericSymbol = isSgAsmGenericSymbol(node);
-                     if (genericSymbol != NULL)
-                        {
-                          SymbolPruningAttribute* att = new SymbolPruningAttribute();
-                          genericSymbol->addNewAttribute("SymbolPruningAttribute",att);
-                        }
-                  }
-        };
-
-     CommentOutSymbolsFromDotGraph traversal;
-     traversal.traverse(node,preorder);
-   }
-
-// DQ (11/10/2008):
-/*! \brief This traversal permits non-dwarf IR nodes to be commented out from the DOT graphs.
-
- */
-void commentOutEvertythingButDwarf (SgNode* node)
-   {
-  // Remove the symbols and related symbol lists so that the generated DOT file will be simpler.
-  // To do this we add an attribute that implements the virtual commentOutNodeInGraph() member
-  // function and return "true".
-
-  // Define the attribute class containing the virtual function "commentOutNodeInGraph()"
-     class SymbolPruningAttribute : public AstAttribute
-        {
-       // This is a persistant attribute used to mark locations in the AST where we don't want IR nodes to be generated for the DOT graph.
-
-          public:
-               bool commentOutNodeInGraph() { return true; }
-               virtual AstAttribute* copy() const { return new SymbolPruningAttribute(*this); }
-               virtual ~SymbolPruningAttribute() {}
-        };
-
-  // Define the traversal class over the AST
-     class CommentOutSymbolsFromDotGraph : public SgSimpleProcessing
-        {
-          public:
-               void visit ( SgNode* node )
-                  {
-                  // Remove sections to make the Dwarf graph dominate (assume symbols were alread removed)!
-
-                     SgAsmGenericSectionList* genericSectionList = isSgAsmGenericSectionList(node);
-                     if (genericSectionList != NULL)
-                        {
-                          SymbolPruningAttribute* att = new SymbolPruningAttribute();
-                          genericSectionList->addNewAttribute("SymbolPruningAttribute",att);
-                        }
-
-                     SgAsmGenericSection* genericSection = isSgAsmGenericSection(node);
-                     if (genericSection != NULL)
-                        {
-                          SymbolPruningAttribute* att = new SymbolPruningAttribute();
-                          genericSection->addNewAttribute("SymbolPruningAttribute",att);
-                        }
-
-                     SgAsmElfSectionTableEntry* elfSectionTableEntry = isSgAsmElfSectionTableEntry(node);
-                     if (elfSectionTableEntry != NULL)
-                        {
-                          SymbolPruningAttribute* att = new SymbolPruningAttribute();
-                          elfSectionTableEntry->addNewAttribute("SymbolPruningAttribute",att);
-                        }
-
-                     SgAsmElfSegmentTableEntry* elfSegmentTableEntry = isSgAsmElfSegmentTableEntry(node);
-                     if (elfSegmentTableEntry != NULL)
-                        {
-                          SymbolPruningAttribute* att = new SymbolPruningAttribute();
-                          elfSegmentTableEntry->addNewAttribute("SymbolPruningAttribute",att);
-                        }
-
-                     SgAsmElfRelocEntry* elfRelocEntry = isSgAsmElfRelocEntry(node);
-                     if (elfRelocEntry != NULL)
-                        {
-                          SymbolPruningAttribute* att = new SymbolPruningAttribute();
-                          elfRelocEntry->addNewAttribute("SymbolPruningAttribute",att);
-                        }
-
-                     SgAsmElfRelocEntryList* elfRelocEntryList = isSgAsmElfRelocEntryList(node);
-                     if (elfRelocEntryList != NULL)
-                        {
-                          SymbolPruningAttribute* att = new SymbolPruningAttribute();
-                          elfRelocEntryList->addNewAttribute("SymbolPruningAttribute",att);
-                        }
-
-                     SgAsmElfDynamicEntryList* elfDynamicEntryList = isSgAsmElfDynamicEntryList(node);
-                     if (elfDynamicEntryList != NULL)
-                        {
-                          SymbolPruningAttribute* att = new SymbolPruningAttribute();
-                          elfDynamicEntryList->addNewAttribute("SymbolPruningAttribute",att);
-                        }
-
-                     SgAsmGenericFormat* genericFormat = isSgAsmGenericFormat(node);
-                     if (genericFormat != NULL)
-                        {
-                          SymbolPruningAttribute* att = new SymbolPruningAttribute();
-                          genericFormat->addNewAttribute("SymbolPruningAttribute",att);
-                        }
-
-                     SgAsmGenericDLLList* genericDLLList = isSgAsmGenericDLLList(node);
-                     if (genericDLLList != NULL)
-                        {
-                          SymbolPruningAttribute* att = new SymbolPruningAttribute();
-                          genericDLLList->addNewAttribute("SymbolPruningAttribute",att);
-                        }
-                  }
-        };
-
-  // Comment out the symbols (factored out)
-     commentOutSymbolsFromDotGraph(node);
-
-  // Now comment out the rest of the non-dwarf IR nodes.
-     CommentOutSymbolsFromDotGraph traversal;
-     traversal.traverse(node,preorder);
-   }
-
-
-void
-readDwarf ( SgAsmGenericFile* asmFile )
-   {
-     ROSE_ASSERT(asmFile != NULL);
-
-     SgAsmGenericFile* genericFile = asmFile;
-     ROSE_ASSERT(genericFile != NULL);
-
-     int fileDescriptor = genericFile->get_fd();
-
-  // DQ (3/13/2009): Added as a test.
-     Dwarf_Debug rose_dwarf_dbg;
-     Dwarf_Error rose_dwarf_error;
-
-  // DQ (3/13/2009): This function gets a lot of surrounding debugging information because it is
-  // the first dwarf function call and is a special problem in the compatability between Intel Pin
-  // and ROSE over the use of Dwarf.
-  // int dwarf_init_status = dwarf_init (fileDescriptor, DW_DLC_READ, NULL, NULL, &rose_dwarf_dbg, &rose_dwarf_error);
-     int dwarf_init_status = dwarf_init (fileDescriptor, DW_DLC_READ, NULL, NULL, &rose_dwarf_dbg, &rose_dwarf_error);
-
-  // Test if the call to dwarf_init worked!
-  // ROSE_ASSERT(dwarf_init_status == DW_DLV_OK);
-     if (dwarf_init_status == DW_DLV_OK)
-        {
-       // I am unclear about the functionality of these two functions!
-       // dwarf_set_frame_rule_inital_value(rose_dwarf_dbg,global_config_file_data.cf_initial_rule_value);
-       // dwarf_set_frame_rule_table_size(rose_dwarf_dbg,global_config_file_data.cf_table_entry_count);
-
-       // Dwarf information in a specimen is attached to the specimen's file as a whole.  It is not attached to an
-       // interpretation since the relationship between SgAsmGenericFile and SgAsmInterpretation is many-to-many.
-          build_dwarf_IR_nodes(rose_dwarf_dbg, asmFile);
-
-       // printf ("\n\nFinishing Dwarf handling... \n\n");
-          int dwarf_finish_status = dwarf_finish( rose_dwarf_dbg, &rose_dwarf_error);
-          ROSE_ASSERT(dwarf_finish_status == DW_DLV_OK);
-        }
-       else
-        {
-       // This might be a PE file (or just non-ELF)
-          if (SgProject::get_verbose() > 0)
-             {
-               mlog[INFO] << "No dwarf debug sections found\n";
-             }
-        }
-
-  // DQ (11/10/2008): Added support to permit symbols to be removed from the DOT graph generation.
-  // This make the DOT files easier to manage since there can be thousands of symbols.  This also
-  // makes it easer to debug the ROSE dwarf AST.
-     if (SgBinaryComposite* binary = SageInterface::getEnclosingNode<SgBinaryComposite>(asmFile)) {
-      // This is used to reduce the size of the DOT file to simplify debugging Dwarf stuff.
-         if (binary->get_visualize_executable_file_format_skip_symbols() == true)
-            {
-              printf ("Calling commentOutSymbolsFromDotGraph() (for visualization of binary file format withouth symbols) \n");
-              commentOutSymbolsFromDotGraph(asmFile);
-            }
-
-      // Nothing but dwarf!
-         if (binary->get_visualize_dwarf_only() == true)
-            {
-              printf ("Calling commentOutEvertythingButDwarf() (for visualization of Dwarf) \n");
-              commentOutEvertythingButDwarf(asmFile);
-            }
-     }
-   }
-
-
-
-
-SgAsmDwarfConstruct*
-SgAsmDwarfConstruct::createDwarfConstruct( int tag, int nesting_level, uint64_t offset, uint64_t overall_offset )
-   {
-  // This function implements the factory pattern.
-
-     SgAsmDwarfConstruct* returnConstruct = NULL;
-
-  // This uses the libdwarf tag id values
-     switch(tag)
-        {
-          case DW_TAG_array_type: { returnConstruct = new SgAsmDwarfArrayType(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_class_type: { returnConstruct = new SgAsmDwarfClassType(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_entry_point: { returnConstruct = new SgAsmDwarfEntryPoint(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_enumeration_type: { returnConstruct = new SgAsmDwarfEnumerationType(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_formal_parameter: { returnConstruct = new SgAsmDwarfFormalParameter(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_imported_declaration: { returnConstruct = new SgAsmDwarfImportedDeclaration(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_label: { returnConstruct = new SgAsmDwarfLabel(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_lexical_block: { returnConstruct = new SgAsmDwarfLexicalBlock(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_member: { returnConstruct = new SgAsmDwarfMember(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_pointer_type: { returnConstruct = new SgAsmDwarfPointerType(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_reference_type: { returnConstruct = new SgAsmDwarfReferenceType(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_compile_unit: { returnConstruct = new SgAsmDwarfCompilationUnit(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_string_type: { returnConstruct = new SgAsmDwarfStringType(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_structure_type: { returnConstruct = new SgAsmDwarfStructureType(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_subroutine_type: { returnConstruct = new SgAsmDwarfSubroutineType(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_typedef: { returnConstruct = new SgAsmDwarfTypedef(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_union_type: { returnConstruct = new SgAsmDwarfUnionType(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_unspecified_parameters: { returnConstruct = new SgAsmDwarfUnspecifiedParameters(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_variant: { returnConstruct = new SgAsmDwarfVariant(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_common_block: { returnConstruct = new SgAsmDwarfCommonBlock(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_common_inclusion: { returnConstruct = new SgAsmDwarfCommonInclusion(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_inheritance: { returnConstruct = new SgAsmDwarfInheritance(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_inlined_subroutine: { returnConstruct = new SgAsmDwarfInlinedSubroutine(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_module: { returnConstruct = new SgAsmDwarfModule(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_ptr_to_member_type: { returnConstruct = new SgAsmDwarfPtrToMemberType(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_set_type: { returnConstruct = new SgAsmDwarfSetType(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_subrange_type: { returnConstruct = new SgAsmDwarfSubrangeType(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_with_stmt: { returnConstruct = new SgAsmDwarfWithStmt(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_access_declaration: { returnConstruct = new SgAsmDwarfAccessDeclaration(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_base_type: { returnConstruct = new SgAsmDwarfBaseType(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_catch_block: { returnConstruct = new SgAsmDwarfCatchBlock(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_const_type: { returnConstruct = new SgAsmDwarfConstType(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_constant: { returnConstruct = new SgAsmDwarfConstant(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_enumerator: { returnConstruct = new SgAsmDwarfEnumerator(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_file_type: { returnConstruct = new SgAsmDwarfFileType(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_friend: { returnConstruct = new SgAsmDwarfFriend(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_namelist: { returnConstruct = new SgAsmDwarfNamelist(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_namelist_item: { returnConstruct = new SgAsmDwarfNamelistItem(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_packed_type: { returnConstruct = new SgAsmDwarfPackedType(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_subprogram: { returnConstruct = new SgAsmDwarfSubprogram(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_template_type_parameter: { returnConstruct = new SgAsmDwarfTemplateTypeParameter(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_template_value_parameter: { returnConstruct = new SgAsmDwarfTemplateValueParameter(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_thrown_type: { returnConstruct = new SgAsmDwarfThrownType(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_try_block: { returnConstruct = new SgAsmDwarfTryBlock(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_variant_part: { returnConstruct = new SgAsmDwarfVariantPart(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_variable: { returnConstruct = new SgAsmDwarfVariable(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_volatile_type: { returnConstruct = new SgAsmDwarfVolatileType(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_dwarf_procedure: { returnConstruct = new SgAsmDwarfDwarfProcedure(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_restrict_type: { returnConstruct = new SgAsmDwarfRestrictType(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_interface_type: { returnConstruct = new SgAsmDwarfInterfaceType(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_namespace: { returnConstruct = new SgAsmDwarfNamespace(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_imported_module: { returnConstruct = new SgAsmDwarfImportedModule(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_unspecified_type: { returnConstruct = new SgAsmDwarfUnspecifiedType(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_partial_unit: { returnConstruct = new SgAsmDwarfPartialUnit(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_imported_unit: { returnConstruct = new SgAsmDwarfImportedUnit(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_mutable_type: { returnConstruct = new SgAsmDwarfMutableType(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_condition: { returnConstruct = new SgAsmDwarfCondition(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_shared_type: { returnConstruct = new SgAsmDwarfSharedType(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_format_label: { returnConstruct = new SgAsmDwarfFormatLabel(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_function_template: { returnConstruct = new SgAsmDwarfFunctionTemplate(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_upc_shared_type: { returnConstruct = new SgAsmDwarfUpcSharedType(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_upc_strict_type: { returnConstruct = new SgAsmDwarfUpcStrictType(nesting_level,offset,overall_offset); break; }
-          case DW_TAG_upc_relaxed_type: { returnConstruct = new SgAsmDwarfUpcRelaxedType(nesting_level,offset,overall_offset); break; }
-
-          default:
-             {
+    switch (tag) {
+        case DW_TAG_array_type:
+            return new SgAsmDwarfArrayType(nesting_level,offset, overall_offset);
+        case DW_TAG_class_type:
+            return new SgAsmDwarfClassType(nesting_level,offset, overall_offset);
+        case DW_TAG_entry_point:
+            return new SgAsmDwarfEntryPoint(nesting_level,offset, overall_offset);
+        case DW_TAG_enumeration_type:
+            return new SgAsmDwarfEnumerationType(nesting_level,offset, overall_offset);
+        case DW_TAG_formal_parameter:
+            return new SgAsmDwarfFormalParameter(nesting_level,offset, overall_offset);
+        case DW_TAG_imported_declaration:
+            return new SgAsmDwarfImportedDeclaration(nesting_level,offset, overall_offset);
+        case DW_TAG_label:
+            return new SgAsmDwarfLabel(nesting_level,offset, overall_offset);
+        case DW_TAG_lexical_block:
+            return new SgAsmDwarfLexicalBlock(nesting_level,offset, overall_offset);
+        case DW_TAG_member:
+            return new SgAsmDwarfMember(nesting_level,offset, overall_offset);
+        case DW_TAG_pointer_type:
+            return new SgAsmDwarfPointerType(nesting_level,offset, overall_offset);
+        case DW_TAG_reference_type:
+            return new SgAsmDwarfReferenceType(nesting_level,offset, overall_offset);
+        case DW_TAG_compile_unit:
+            return new SgAsmDwarfCompilationUnit(nesting_level,offset, overall_offset);
+        case DW_TAG_string_type:
+            return new SgAsmDwarfStringType(nesting_level,offset, overall_offset);
+        case DW_TAG_structure_type:
+            return new SgAsmDwarfStructureType(nesting_level,offset, overall_offset);
+        case DW_TAG_subroutine_type:
+            return new SgAsmDwarfSubroutineType(nesting_level,offset, overall_offset);
+        case DW_TAG_typedef:
+            return new SgAsmDwarfTypedef(nesting_level,offset, overall_offset);
+        case DW_TAG_union_type:
+            return new SgAsmDwarfUnionType(nesting_level,offset, overall_offset);
+        case DW_TAG_unspecified_parameters:
+            return new SgAsmDwarfUnspecifiedParameters(nesting_level,offset, overall_offset);
+        case DW_TAG_variant:
+            return new SgAsmDwarfVariant(nesting_level,offset, overall_offset);
+        case DW_TAG_common_block:
+            return new SgAsmDwarfCommonBlock(nesting_level,offset, overall_offset);
+        case DW_TAG_common_inclusion:
+            return new SgAsmDwarfCommonInclusion(nesting_level,offset, overall_offset);
+        case DW_TAG_inheritance:
+            return new SgAsmDwarfInheritance(nesting_level,offset, overall_offset);
+        case DW_TAG_inlined_subroutine:
+            return new SgAsmDwarfInlinedSubroutine(nesting_level,offset, overall_offset);
+        case DW_TAG_module:
+            return new SgAsmDwarfModule(nesting_level,offset, overall_offset);
+        case DW_TAG_ptr_to_member_type:
+            return new SgAsmDwarfPtrToMemberType(nesting_level,offset, overall_offset);
+        case DW_TAG_set_type:
+            return new SgAsmDwarfSetType(nesting_level,offset, overall_offset);
+        case DW_TAG_subrange_type:
+            return new SgAsmDwarfSubrangeType(nesting_level,offset, overall_offset);
+        case DW_TAG_with_stmt:
+            return new SgAsmDwarfWithStmt(nesting_level,offset, overall_offset);
+        case DW_TAG_access_declaration:
+            return new SgAsmDwarfAccessDeclaration(nesting_level,offset, overall_offset);
+        case DW_TAG_base_type:
+            return new SgAsmDwarfBaseType(nesting_level,offset, overall_offset);
+        case DW_TAG_catch_block:
+            return new SgAsmDwarfCatchBlock(nesting_level,offset, overall_offset);
+        case DW_TAG_const_type:
+            return new SgAsmDwarfConstType(nesting_level,offset, overall_offset);
+        case DW_TAG_constant:
+            return new SgAsmDwarfConstant(nesting_level,offset, overall_offset);
+        case DW_TAG_enumerator:
+            return new SgAsmDwarfEnumerator(nesting_level,offset, overall_offset);
+        case DW_TAG_file_type:
+            return new SgAsmDwarfFileType(nesting_level,offset, overall_offset);
+        case DW_TAG_friend:
+            return new SgAsmDwarfFriend(nesting_level,offset, overall_offset);
+        case DW_TAG_namelist:
+            return new SgAsmDwarfNamelist(nesting_level,offset, overall_offset);
+        case DW_TAG_namelist_item:
+            return new SgAsmDwarfNamelistItem(nesting_level,offset, overall_offset);
+        case DW_TAG_packed_type:
+            return new SgAsmDwarfPackedType(nesting_level,offset, overall_offset);
+        case DW_TAG_subprogram:
+            return new SgAsmDwarfSubprogram(nesting_level,offset, overall_offset);
+        case DW_TAG_template_type_parameter:
+            return new SgAsmDwarfTemplateTypeParameter(nesting_level,offset, overall_offset);
+        case DW_TAG_template_value_parameter:
+            return new SgAsmDwarfTemplateValueParameter(nesting_level,offset, overall_offset);
+        case DW_TAG_thrown_type:
+            return new SgAsmDwarfThrownType(nesting_level,offset, overall_offset);
+        case DW_TAG_try_block:
+            return new SgAsmDwarfTryBlock(nesting_level,offset, overall_offset);
+        case DW_TAG_variant_part:
+            return new SgAsmDwarfVariantPart(nesting_level,offset, overall_offset);
+        case DW_TAG_variable:
+            return new SgAsmDwarfVariable(nesting_level,offset, overall_offset);
+        case DW_TAG_volatile_type:
+            return new SgAsmDwarfVolatileType(nesting_level,offset, overall_offset);
+        case DW_TAG_dwarf_procedure:
+            return new SgAsmDwarfDwarfProcedure(nesting_level,offset, overall_offset);
+        case DW_TAG_restrict_type:
+            return new SgAsmDwarfRestrictType(nesting_level,offset, overall_offset);
+        case DW_TAG_interface_type:
+            return new SgAsmDwarfInterfaceType(nesting_level,offset, overall_offset);
+        case DW_TAG_namespace:
+            return new SgAsmDwarfNamespace(nesting_level,offset, overall_offset);
+        case DW_TAG_imported_module:
+            return new SgAsmDwarfImportedModule(nesting_level,offset, overall_offset);
+        case DW_TAG_unspecified_type:
+            return new SgAsmDwarfUnspecifiedType(nesting_level,offset, overall_offset);
+        case DW_TAG_partial_unit:
+            return new SgAsmDwarfPartialUnit(nesting_level,offset, overall_offset);
+        case DW_TAG_imported_unit:
+            return new SgAsmDwarfImportedUnit(nesting_level,offset, overall_offset);
+        case DW_TAG_mutable_type:
+            return new SgAsmDwarfMutableType(nesting_level,offset, overall_offset);
+        case DW_TAG_condition:
+            return new SgAsmDwarfCondition(nesting_level,offset, overall_offset);
+        case DW_TAG_shared_type:
+            return new SgAsmDwarfSharedType(nesting_level,offset, overall_offset);
+        case DW_TAG_format_label:
+            return new SgAsmDwarfFormatLabel(nesting_level,offset, overall_offset);
+        case DW_TAG_function_template:
+            return new SgAsmDwarfFunctionTemplate(nesting_level,offset, overall_offset);
+        case DW_TAG_upc_shared_type:
+            return new SgAsmDwarfUpcSharedType(nesting_level,offset, overall_offset);
+        case DW_TAG_upc_strict_type:
+            return new SgAsmDwarfUpcStrictType(nesting_level,offset, overall_offset);
+        case DW_TAG_upc_relaxed_type:
+            return new  SgAsmDwarfUpcRelaxedType(nesting_level,offset, overall_offset);
+        default: {
             // Use AsmDwarfVariant as a default dwarf construct (we might want a SgAsmDwarfUnknownConstruct also).
-            // returnConstruct = new SgAsmDwarfVariant(nesting_level,offset,overall_offset);
-               returnConstruct = new SgAsmDwarfUnknownConstruct(nesting_level,offset,overall_offset);
-             }
+            return new SgAsmDwarfUnknownConstruct(nesting_level,offset, overall_offset);
         }
-
-     return returnConstruct;
-   }
-
-
-// endif for "ifdef ROSE_HAVE_LIBDWARF" at top of file.
+    }
 #else
-
-// DQ (11/12/2008): Function defined so that java-port will not complain.
-SgAsmDwarfConstruct*
-SgAsmDwarfConstruct::createDwarfConstruct( int tag, int nesting_level, uint64_t offset, uint64_t overall_offset )
-   {
-  // This function implements the factory pattern.
-
-     SgAsmDwarfConstruct* returnConstruct = NULL;
-
-     mlog[INFO] << "Dwarf support not enabled (configure command-line option: --with-dwarf) \n";
-
-     return returnConstruct;
-   }
-
+    return nullptr;
 #endif
-
-
-
-
-
-
-// ***********************************************************************************
-// ***********************************************************************************
-// This code is independent of the "ifdef ROSE_HAVE_LIBDWARF" at the top of this file
-// ***********************************************************************************
-// ***********************************************************************************
+}
 
 std::pair<uint64_t,uint64_t>
-SgAsmDwarfLineList::instructionRange()
-   {
-     DwarfInstructionSourceMapReturnType maps = buildInstructionAddressSourcePositionMaps();
+SgAsmDwarfLineList::instructionRange() {
+    DwarfInstructionSourceMapReturnType maps = buildInstructionAddressSourcePositionMaps();
 
-     SgInstructionAddressSourcePositionMapPtrList & instruction_source_code_map = *(maps.first);
+    SgInstructionAddressSourcePositionMapPtrList & instruction_source_code_map = *(maps.first);
 
-     SgInstructionAddressSourcePositionMapPtrList::iterator lowerBound = instruction_source_code_map.begin();
-     SgInstructionAddressSourcePositionMapPtrList::reverse_iterator upperBound = instruction_source_code_map.rbegin();
+    SgInstructionAddressSourcePositionMapPtrList::iterator lowerBound = instruction_source_code_map.begin();
+    SgInstructionAddressSourcePositionMapPtrList::reverse_iterator upperBound = instruction_source_code_map.rbegin();
 
-     return std::pair<uint64_t,uint64_t>(lowerBound->first,upperBound->first);
-   }
+    return std::pair<uint64_t,uint64_t>(lowerBound->first,upperBound->first);
+}
 
 std::pair<LineColumnFilePosition,LineColumnFilePosition>
-SgAsmDwarfLineList::sourceCodeRange( int file_id )
-   {
-     DwarfInstructionSourceMapReturnType maps = buildInstructionAddressSourcePositionMaps();
+SgAsmDwarfLineList::sourceCodeRange( int file_id ) {
+    DwarfInstructionSourceMapReturnType maps = buildInstructionAddressSourcePositionMaps();
 
-     SgSourcePositionInstructionAddressMapPtrList & source_code_instruction_map = *(maps.second);
+    SgSourcePositionInstructionAddressMapPtrList & source_code_instruction_map = *(maps.second);
 
-     SgSourcePositionInstructionAddressMapPtrList::iterator lowerBound = source_code_instruction_map.begin();
-     SgSourcePositionInstructionAddressMapPtrList::reverse_iterator upperBound = source_code_instruction_map.rbegin();
+    SgSourcePositionInstructionAddressMapPtrList::iterator lowerBound = source_code_instruction_map.begin();
+    SgSourcePositionInstructionAddressMapPtrList::reverse_iterator upperBound = source_code_instruction_map.rbegin();
 
-  // Find the first source position in the file specified by the input file_id
-     while ( (lowerBound != source_code_instruction_map.end()) && (lowerBound->first.first != file_id) )
-        {
-          lowerBound++;
-        }
+    // Find the first source position in the file specified by the input file_id
+    while ( (lowerBound != source_code_instruction_map.end()) && (lowerBound->first.first != file_id) ) {
+        lowerBound++;
+    }
 
-     while ( (upperBound != source_code_instruction_map.rend()) && (upperBound->first.first != file_id) )
-        {
-          upperBound++;
-        }
+    while ( (upperBound != source_code_instruction_map.rend()) && (upperBound->first.first != file_id) ) {
+        upperBound++;
+    }
 
-     LineColumnFilePosition start(lowerBound->first.second);
-     LineColumnFilePosition end(upperBound->first.second);
+    LineColumnFilePosition start(lowerBound->first.second);
+    LineColumnFilePosition end(upperBound->first.second);
 
-  // Check if this was a case of there not being any entries for this file
-     if (lowerBound == source_code_instruction_map.end())
-        {
-          ROSE_ASSERT(upperBound == source_code_instruction_map.rend());
-       // printf ("lowerBound == source_code_instruction_map.end() --- no entries for file %d \n",file_id);
+    // Check if this was a case of there not being any entries for this file
+    if (lowerBound == source_code_instruction_map.end()) {
+        ASSERT_require(upperBound == source_code_instruction_map.rend());
+        // printf ("lowerBound == source_code_instruction_map.end() --- no entries for file %d \n",file_id);
 
-       // Reset the line and column information to indicate that there were no entries.
-          start = LineColumnFilePosition(std::pair<int,int>(-1,-1));
-          end = LineColumnFilePosition(std::pair<int,int>(-1,-1));
-        }
+        // Reset the line and column information to indicate that there were no entries.
+        start = LineColumnFilePosition(std::pair<int,int>(-1,-1));
+        end = LineColumnFilePosition(std::pair<int,int>(-1,-1));
+    }
 
-     return std::pair<LineColumnFilePosition,LineColumnFilePosition>(start,end);
-   }
+    return std::pair<LineColumnFilePosition,LineColumnFilePosition>(start,end);
+}
 
 
 uint64_t
-SgAsmDwarfLineList::sourceCodeToAddress ( FileIdLineColumnFilePosition sourcePosition )
-   {
-  // Return the nearest address for the source code position
-     int file_id = sourcePosition.first;
-  // int line    = sourcePosition.second.first;
-  // int column  = sourcePosition.second.second;
+SgAsmDwarfLineList::sourceCodeToAddress ( FileIdLineColumnFilePosition sourcePosition ) {
+    // Return the nearest address for the source code position
+    int file_id = sourcePosition.first;
+    // int line    = sourcePosition.second.first;
+    // int column  = sourcePosition.second.second;
 
-     uint64_t returnAddress = 0;
+    uint64_t returnAddress = 0;
 
-     DwarfInstructionSourceMapReturnType maps = buildInstructionAddressSourcePositionMaps();
-     SgSourcePositionInstructionAddressMapPtrList & source_code_instruction_map = *(maps.second);
+    DwarfInstructionSourceMapReturnType maps = buildInstructionAddressSourcePositionMaps();
+    SgSourcePositionInstructionAddressMapPtrList & source_code_instruction_map = *(maps.second);
 
-     SgSourcePositionInstructionAddressMapPtrList::iterator lowerBound = source_code_instruction_map.lower_bound(sourcePosition);
-#if 0
-  // I think this is redundant code
-     SgSourcePositionInstructionAddressMapPtrList::iterator upperBound = source_code_instruction_map.upper_bound(sourcePosition);
-#endif
+    SgSourcePositionInstructionAddressMapPtrList::iterator lowerBound = source_code_instruction_map.lower_bound(sourcePosition);
 
-     returnAddress = lowerBound->second;
+    returnAddress = lowerBound->second;
 
-     if (lowerBound == source_code_instruction_map.begin())
-        {
-       // printf ("lowerBound == source_code_instruction_map.begin() \n");
-          if (lowerBound->first.first != file_id)
-             {
+    if (lowerBound == source_code_instruction_map.begin()) {
+        // printf ("lowerBound == source_code_instruction_map.begin() \n");
+        if (lowerBound->first.first != file_id) {
             // printf ("This source position is not from a valide file in the map: file_id = %d lowerBound->first = %d \n",file_id,lowerBound->first.first);
-               returnAddress = 0;
-             }
+            returnAddress = 0;
         }
+    }
 
-     if (lowerBound == source_code_instruction_map.end())
-        {
-       // printf ("lowerBound == source_code_instruction_map.end() \n");
+    if (lowerBound == source_code_instruction_map.end()) {
+        // printf ("lowerBound == source_code_instruction_map.end() \n");
 #if 0
-          if (lowerBound->first.first != file_id)
-             {
-               printf ("This source position is not from a valide file in the map: file_id = %d lowerBound->first = %d \n",file_id,lowerBound->first.first);
-               returnAddress = NULL;
-             }
-            else
-             {
-               returnAddress = NULL;
-             }
+        if (lowerBound->first.first != file_id)
+            {
+                printf ("This source position is not from a valide file in the map: file_id = %d lowerBound->first = %d \n",file_id,lowerBound->first.first);
+                returnAddress = NULL;
+            }
+        else
+            {
+                returnAddress = NULL;
+            }
 #else
-          returnAddress = 0;
+        returnAddress = 0;
 #endif
-        }
+    }
 #if 0
-  // I think this is redundant code
-     if (upperBound == source_code_instruction_map.end())
+    // I think this is redundant code
+    if (upperBound == source_code_instruction_map.end())
         {
-       // printf ("upperBound == source_code_instruction_map.end() \n");
-          returnAddress = NULL;
+            // printf ("upperBound == source_code_instruction_map.end() \n");
+            returnAddress = NULL;
         }
 #endif
 
-     return returnAddress;
-   }
+    return returnAddress;
+}
 
 FileIdLineColumnFilePosition
-SgAsmDwarfLineList::addressToSourceCode ( uint64_t address )
-   {
-  // Set to default value
-     FileIdLineColumnFilePosition sourcePosition(0,std::pair<int,int>(0,0));
+SgAsmDwarfLineList::addressToSourceCode ( uint64_t address ) {
+    // Set to default value
+    FileIdLineColumnFilePosition sourcePosition(0,std::pair<int,int>(0,0));
 
-     std::pair<uint64_t,uint64_t> validInstructionRange = instructionRange();
-     if ( (address < validInstructionRange.first) || (address > validInstructionRange.second) )
-        {
-       // printf ("Address out of range: address = 0x%lx  range (0x%lx, 0x%lx) \n",address,validInstructionRange.first,validInstructionRange.second);
+    std::pair<uint64_t,uint64_t> validInstructionRange = instructionRange();
+    if ( (address < validInstructionRange.first) || (address > validInstructionRange.second) ) {
+        // printf ("Address out of range: address = 0x%lx  range (0x%lx, 0x%lx) \n",address,validInstructionRange.first,validInstructionRange.second);
 
-       // Set to error value
-          sourcePosition = FileIdLineColumnFilePosition(-1,std::pair<int,int>(-1,-1));
-        }
-       else
-        {
-          DwarfInstructionSourceMapReturnType maps = buildInstructionAddressSourcePositionMaps();
-          SgInstructionAddressSourcePositionMapPtrList & instruction_source_code_map = *(maps.first);
+        // Set to error value
+        sourcePosition = FileIdLineColumnFilePosition(-1,std::pair<int,int>(-1,-1));
+    } else {
+        DwarfInstructionSourceMapReturnType maps = buildInstructionAddressSourcePositionMaps();
+        SgInstructionAddressSourcePositionMapPtrList & instruction_source_code_map = *(maps.first);
 
-          SgInstructionAddressSourcePositionMapPtrList::iterator lowerBound = instruction_source_code_map.lower_bound(address);
+        SgInstructionAddressSourcePositionMapPtrList::iterator lowerBound = instruction_source_code_map.lower_bound(address);
 
-       // Set the the lower bound found in the map
-          sourcePosition = lowerBound->second;
+        // Set the the lower bound found in the map
+        sourcePosition = lowerBound->second;
 
 #if 0
-          int file_id = sourcePosition.first;
-          int line    = sourcePosition.second.first;
-          int column  = sourcePosition.second.second;
-          string filename = Sg_File_Info::getFilenameFromID(file_id);
+        int file_id = sourcePosition.first;
+        int line    = sourcePosition.second.first;
+        int column  = sourcePosition.second.second;
+        string filename = Sg_File_Info::getFilenameFromID(file_id);
 
-       // printf ("address = 0x%lx maps to source position (file = %d = %s, line = %d, column = %d) \n",address,file_id,filename.c_str(),line,column);
+        // printf ("address = 0x%lx maps to source position (file = %d = %s, line = %d, column = %d) \n",address,file_id,filename.c_str(),line,column);
 #endif
-        }
+    }
 
-  // return FileIdLineColumnFilePosition(-1,std::pair<int,int>(-1,-1));
-     return sourcePosition;
-   }
+    // return FileIdLineColumnFilePosition(-1,std::pair<int,int>(-1,-1));
+    return sourcePosition;
+}
 
 
 void
-SgAsmDwarfLineList::display( const string & label )
-   {
-  // Note that once the maps are setup NULL is an acceptable value (perhaps it should be the default parameter!)
-     DwarfInstructionSourceMapReturnType maps = buildInstructionAddressSourcePositionMaps();
+SgAsmDwarfLineList::display( const std::string & label ) {
+    // Note that once the maps are setup NULL is an acceptable value (perhaps it should be the default parameter!)
+    DwarfInstructionSourceMapReturnType maps = buildInstructionAddressSourcePositionMaps();
 
-  // Output the SgInstructionAddressSourcePositionMapPtrList map so the we can test the linear ordering of the addresses.
-     SgInstructionAddressSourcePositionMapPtrList & instruction_source_code_map = *(maps.first);
-     SgSourcePositionInstructionAddressMapPtrList & source_code_instruction_map = *(maps.second);
+    // Output the SgInstructionAddressSourcePositionMapPtrList map so the we can test the linear ordering of the addresses.
+    SgInstructionAddressSourcePositionMapPtrList & instruction_source_code_map = *(maps.first);
+    SgSourcePositionInstructionAddressMapPtrList & source_code_instruction_map = *(maps.second);
 
-     std::pair<uint64_t,uint64_t> addressRange = instructionRange();
-     printf ("addressRange = (0x%" PRIx64 ", 0x%" PRIx64 ") \n",addressRange.first,addressRange.second);
+    std::pair<uint64_t,uint64_t> addressRange = instructionRange();
+    printf ("addressRange = (0x%" PRIx64 ", 0x%" PRIx64 ") \n",addressRange.first,addressRange.second);
 
-  // Iterate over all the files in the static Sg_File_Info::get_fileidtoname_map
-  // int numberOfSourceFiles = Sg_File_Info::get_fileidtoname_map().size();
-     int numberOfSourceFiles = Sg_File_Info::numberOfSourceFiles();
-     printf ("numberOfSourceFiles = %d \n",numberOfSourceFiles);
+    // Iterate over all the files in the static Sg_File_Info::get_fileidtoname_map
+    int numberOfSourceFiles = Sg_File_Info::numberOfSourceFiles();
+    printf ("numberOfSourceFiles = %d \n",numberOfSourceFiles);
 
-  // DQ: I think that the initial value is 1 not 0!
-     for (int i=1; i < numberOfSourceFiles; i++)
-        {
-          std::pair<LineColumnFilePosition,LineColumnFilePosition> sourceFileRange = sourceCodeRange( i );
+    // DQ: I think that the initial value is 1 not 0!
+    for (int i=1; i < numberOfSourceFiles; i++) {
+        std::pair<LineColumnFilePosition,LineColumnFilePosition> sourceFileRange = sourceCodeRange( i );
 
-          std::string filename = Sg_File_Info::getFilenameFromID(i);
+        std::string filename = Sg_File_Info::getFilenameFromID(i);
 
-          if ( (sourceFileRange.first.first < 0) && (sourceFileRange.second.first < 0) )
-             {
-               printf ("This file_id = %d is not a valid source file: filename = %s \n",i,filename.c_str());
-             }
-            else
-             {
-               printf ("Source range for file = %s (id = %d) [(line=%d, col=%d), (line=%d, col=%d)] \n",
+        if ( (sourceFileRange.first.first < 0) && (sourceFileRange.second.first < 0) ) {
+            printf ("This file_id = %d is not a valid source file: filename = %s \n",i,filename.c_str());
+        } else {
+            printf ("Source range for file = %s (id = %d) [(line=%d, col=%d), (line=%d, col=%d)] \n",
                     filename.c_str(),i,
                     sourceFileRange.first.first, sourceFileRange.first.second,
                     sourceFileRange.second.first, sourceFileRange.second.second);
-             }
+        }
+    }
+
+
+    printf ("\n\nTest sourceCodeToAddress: \n");
+    FileIdLineColumnFilePosition s1(2,std::pair<int,int>(10,-1));
+    uint64_t instructionAddress1 = sourceCodeToAddress(s1);
+    printf ("sourceCodeToAddress(%d,%d,%d) = 0x%" PRIx64 "\n", s1.first,s1.second.first,s1.second.second,instructionAddress1);
+
+    FileIdLineColumnFilePosition s2(2,std::pair<int,int>(11,-1));
+    uint64_t instructionAddress2 = sourceCodeToAddress(s2);
+    printf ("sourceCodeToAddress(%d,%d,%d) = 0x%" PRIx64 "\n",s2.first,s2.second.first,s2.second.second,instructionAddress2);
+
+    FileIdLineColumnFilePosition s3(1,std::pair<int,int>(11,-1));
+    uint64_t instructionAddress3 = sourceCodeToAddress(s3);
+    printf ("sourceCodeToAddress(%d,%d,%d) = 0x%" PRIx64 "\n",s3.first,s3.second.first,s3.second.second,instructionAddress3);
+
+    for (int fileNumber = 1; fileNumber < 4; fileNumber++) {
+        for (int lineNumber = -2; lineNumber < 35; lineNumber++) {
+            for (int columnNumber = -2; columnNumber < 1; columnNumber++) {
+                FileIdLineColumnFilePosition s(fileNumber,std::pair<int,int>(lineNumber,columnNumber));
+                uint64_t instructionAddress = sourceCodeToAddress(s);
+                printf ("sourceCodeToAddress(%d,%d,%d) = 0x%" PRIx64 "\n",
+                        s.first,s.second.first,s.second.second,instructionAddress);
+            }
+        }
+    }
+
+    printf ("\n\nTest addressToSourceCode: (not tested yet) \n");
+
+    FileIdLineColumnFilePosition s1map = addressToSourceCode(instructionAddress1);
+    printf ("addressToSourceCode: address 0x%" PRIx64 " = (%d,%d,%d)\n",
+            instructionAddress1,s1map.first,s1map.second.first,s1map.second.second);
+
+    for (uint64_t address = instructionAddress1-15; address < instructionAddress1+ 85; address++) {
+        FileIdLineColumnFilePosition s_map = addressToSourceCode(address);
+        printf ("addressToSourceCode: address 0x%" PRIx64 " = (%d,%d,%d)\n",
+                address,s_map.first,s_map.second.first,s_map.second.second);
+    }
+
+    printf ("\nOutput entries in instruction_source_code_map \n");
+    SgInstructionAddressSourcePositionMapPtrList::iterator it1 = instruction_source_code_map.begin();
+    while ( it1 != instruction_source_code_map.end() ) {
+        uint64_t address = it1->first;
+
+        // This is a std::map<uint64_t,std::pair<int,std::pair<int,int> > >, so we get
+        //    "it->second.first, it->second.second.first, it->second.second.second"
+        // for the last three terms.
+        int file_id = it1->second.first;
+        int line    = it1->second.second.first;
+        int column  = it1->second.second.second;
+
+        printf ("instruction_source_code_map[0x%" PRIx64 "] = (file=%d, line=%d, col=%d)\n", address, file_id, line, column);
+
+        // A test of the evaluation of ranges of lines for each instruction
+        SgInstructionAddressSourcePositionMapPtrList::iterator it1_lb = instruction_source_code_map.lower_bound(address);
+        SgInstructionAddressSourcePositionMapPtrList::iterator it1_ub = instruction_source_code_map.upper_bound(address);
+
+        if (it1_lb != it1_ub) {
+            if (it1_ub != instruction_source_code_map.end()) {
+                printf ("   ----- range = [(file=%d, line=%d, col=%d), (file=%d, line=%d, col=%d)) \n",
+                        it1_lb->second.first, it1_lb->second.second.first, it1_lb->second.second.second,
+                        it1_ub->second.first, it1_ub->second.second.first, it1_ub->second.second.second);
+            } else {
+                printf ("   ----- range = [(file=%d, line=%d, col=%d), last_source_position) \n",
+                        it1_lb->second.first, it1_lb->second.second.first, it1_lb->second.second.second);
+            }
         }
 
+        it1++;
+    }
 
-     printf ("\n\nTest sourceCodeToAddress: \n");
-     FileIdLineColumnFilePosition s1(2,std::pair<int,int>(10,-1));
-     uint64_t instructionAddress1 = sourceCodeToAddress(s1);
-     printf ("sourceCodeToAddress(%d,%d,%d) = 0x%" PRIx64 "\n", s1.first,s1.second.first,s1.second.second,instructionAddress1);
+    printf ("\nOutput entries in source_code_instruction_map \n");
+    SgSourcePositionInstructionAddressMapPtrList::iterator it2 = source_code_instruction_map.begin();
+    while ( it2 != source_code_instruction_map.end() ) {
+        uint64_t address = it2->second;
 
-     FileIdLineColumnFilePosition s2(2,std::pair<int,int>(11,-1));
-     uint64_t instructionAddress2 = sourceCodeToAddress(s2);
-     printf ("sourceCodeToAddress(%d,%d,%d) = 0x%" PRIx64 "\n",s2.first,s2.second.first,s2.second.second,instructionAddress2);
+        // This is a std::map<uint64_t,std::pair<int,std::pair<int,int> > >, so we get
+        //    "it->second.first, it->second.second.first, it->second.second.second"
+        // for the last three terms.
+        int file_id = it2->first.first;
+        int line    = it2->first.second.first;
+        int column  = it2->first.second.second;
 
-     FileIdLineColumnFilePosition s3(1,std::pair<int,int>(11,-1));
-     uint64_t instructionAddress3 = sourceCodeToAddress(s3);
-     printf ("sourceCodeToAddress(%d,%d,%d) = 0x%" PRIx64 "\n",s3.first,s3.second.first,s3.second.second,instructionAddress3);
+        printf ("source_code_instruction_map[file=%d, line=%d, col=%d] = 0x%" PRIx64 "\n", file_id, line, column, address);
 
-     for (int fileNumber = 1; fileNumber < 4; fileNumber++)
-        {
-          for (int lineNumber = -2; lineNumber < 35; lineNumber++)
-             {
-               for (int columnNumber = -2; columnNumber < 1; columnNumber++)
-                  {
-                    FileIdLineColumnFilePosition s(fileNumber,std::pair<int,int>(lineNumber,columnNumber));
-                    uint64_t instructionAddress = sourceCodeToAddress(s);
-                    printf ("sourceCodeToAddress(%d,%d,%d) = 0x%" PRIx64 "\n",
-                            s.first,s.second.first,s.second.second,instructionAddress);
-                  }
-             }
+        // A test of the evaluation of ranges of instructions for each line of source code.
+        FileIdLineColumnFilePosition file_info(file_id,std::pair<int,int>(line,column));
+        SgSourcePositionInstructionAddressMapPtrList::iterator it2_lb = source_code_instruction_map.lower_bound(file_info);
+        SgSourcePositionInstructionAddressMapPtrList::iterator it2_ub = source_code_instruction_map.upper_bound(file_info);
+
+        if (it2_lb != it2_ub) {
+            if (it2_ub != source_code_instruction_map.end()) {
+                printf ("   ----- range = [0x%" PRIx64 ", 0x%" PRIx64 ")\n", it2_lb->second,it2_ub->second);
+            } else {
+                printf ("   ----- range = [0x%" PRIx64 ", last_instruction)\n", it2_lb->second);
+            }
         }
 
-     printf ("\n\nTest addressToSourceCode: (not tested yet) \n");
-
-     FileIdLineColumnFilePosition s1map = addressToSourceCode(instructionAddress1);
-     printf ("addressToSourceCode: address 0x%" PRIx64 " = (%d,%d,%d)\n",
-             instructionAddress1,s1map.first,s1map.second.first,s1map.second.second);
-
-     for (uint64_t address = instructionAddress1-15; address < instructionAddress1+ 85; address++)
-        {
-          FileIdLineColumnFilePosition s_map = addressToSourceCode(address);
-          printf ("addressToSourceCode: address 0x%" PRIx64 " = (%d,%d,%d)\n",
-                  address,s_map.first,s_map.second.first,s_map.second.second);
-        }
-
-     printf ("\nOutput entries in instruction_source_code_map \n");
-     SgInstructionAddressSourcePositionMapPtrList::iterator it1 = instruction_source_code_map.begin();
-     while ( it1 != instruction_source_code_map.end() )
-        {
-          uint64_t address = it1->first;
-
-       // This is a std::map<uint64_t,std::pair<int,std::pair<int,int> > >, so we get
-       //    "it->second.first, it->second.second.first, it->second.second.second"
-       // for the last three terms.
-          int file_id = it1->second.first;
-          int line    = it1->second.second.first;
-          int column  = it1->second.second.second;
-
-          printf ("instruction_source_code_map[0x%" PRIx64 "] = (file=%d, line=%d, col=%d)\n", address, file_id, line, column);
-
-       // A test of the evaluation of ranges of lines for each instruction
-          SgInstructionAddressSourcePositionMapPtrList::iterator it1_lb = instruction_source_code_map.lower_bound(address);
-          SgInstructionAddressSourcePositionMapPtrList::iterator it1_ub = instruction_source_code_map.upper_bound(address);
-
-          if (it1_lb != it1_ub)
-             {
-               if (it1_ub != instruction_source_code_map.end())
-                  {
-                    printf ("   ----- range = [(file=%d, line=%d, col=%d), (file=%d, line=%d, col=%d)) \n",
-                         it1_lb->second.first, it1_lb->second.second.first, it1_lb->second.second.second,
-                         it1_ub->second.first, it1_ub->second.second.first, it1_ub->second.second.second);
-                  }
-                 else
-                  {
-                    printf ("   ----- range = [(file=%d, line=%d, col=%d), last_source_position) \n",
-                         it1_lb->second.first, it1_lb->second.second.first, it1_lb->second.second.second);
-                  }
-             }
-
-          it1++;
-        }
-
-     printf ("\nOutput entries in source_code_instruction_map \n");
-     SgSourcePositionInstructionAddressMapPtrList::iterator it2 = source_code_instruction_map.begin();
-     while ( it2 != source_code_instruction_map.end() )
-        {
-          uint64_t address = it2->second;
-
-       // This is a std::map<uint64_t,std::pair<int,std::pair<int,int> > >, so we get
-       //    "it->second.first, it->second.second.first, it->second.second.second"
-       // for the last three terms.
-          int file_id = it2->first.first;
-          int line    = it2->first.second.first;
-          int column  = it2->first.second.second;
-
-          printf ("source_code_instruction_map[file=%d, line=%d, col=%d] = 0x%" PRIx64 "\n", file_id, line, column, address);
-
-       // A test of the evaluation of ranges of instructions for each line of source code.
-          FileIdLineColumnFilePosition file_info(file_id,std::pair<int,int>(line,column));
-          SgSourcePositionInstructionAddressMapPtrList::iterator it2_lb = source_code_instruction_map.lower_bound(file_info);
-          SgSourcePositionInstructionAddressMapPtrList::iterator it2_ub = source_code_instruction_map.upper_bound(file_info);
-
-          if (it2_lb != it2_ub)
-             {
-               if (it2_ub != source_code_instruction_map.end())
-                  {
-                    printf ("   ----- range = [0x%" PRIx64 ", 0x%" PRIx64 ")\n", it2_lb->second,it2_ub->second);
-                  }
-                 else
-                  {
-                    printf ("   ----- range = [0x%" PRIx64 ", last_instruction)\n", it2_lb->second);
-                  }
-             }
-
-          it2++;
-        }
-   }
+        it2++;
+    }
+}
 
 #endif

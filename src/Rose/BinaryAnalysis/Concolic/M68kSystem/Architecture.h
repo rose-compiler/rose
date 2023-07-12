@@ -45,8 +45,13 @@ public:
     /** Allocating constructor to create a factory. */
     static Ptr factory();
 
-public:
+    // Supporting functions
+private:
+    // Return the address of the first instruction to be executed, if known.
+    Sawyer::Optional<rose_addr_t> entryAddress();
+
     // These are documented in the base class.
+public:
     virtual bool matchFactory(const Yaml::Node&) const override;
     virtual Super::Ptr instanceFromFactory(const DatabasePtr&, TestCaseId, const Yaml::Node &config) const override;
     virtual Partitioner2::PartitionerPtr partition(const Partitioner2::EnginePtr&, const std::string &specimen) override;

@@ -32,6 +32,16 @@ declare(const std::string &name) {
 }
 
 SAWYER_EXPORT Id
+declareMaybe(const std::string &name) {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+    if (const auto id = definedAttributes.reverse().getOptional(name))
+        return *id;
+    Id retval = nextId++;
+    definedAttributes.insert(retval, name);
+    return retval;
+}
+
+SAWYER_EXPORT Id
 id(const std::string &name) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
     return definedAttributes.reverse().getOptional(name).orElse(INVALID_ID);

@@ -980,10 +980,22 @@ MemoryMap::insertProcess(pid_t pid, Attach::Boolean doAttach) {
 #endif
 }
 
-void
-MemoryMap::linkTo(const MemoryMap::Ptr &other, const AddressIntervalSet &parts) {
+AddressIntervalSet
+MemoryMap::linkTo(const MemoryMap::Ptr &other, const AddressIntervalSet &where, Clobber clobber) {
     ASSERT_not_null(other);
-    for (const AddressInterval &part: parts.intervals()) {
+    AddressIntervalSet retval;
+
+    // Decide what to copy. If not clobbering, then don't copy parts that already exist in the destination map.
+    const AddressIntervalSet modifiable = [this, clobber](AddressIntervalSet parts /*intentionally copied*/) {
+        if (Clobber::NO == clobber && !parts.isEmpty()) {
+            for (auto node: findAll(AddressInterval::hull(parts.least(), parts.greatest())))
+                parts -= node.key();
+        }
+        return parts;
+    }(where);
+
+    // Copy parts that we decide can be modified in the destination.
+    for (const AddressInterval &part: modifiable.intervals()) {
         for (auto node: other->findAll(part)) {
             const AddressInterval srcAddrs = node.key();
             const Segment &srcSegment = node.value();
@@ -1000,8 +1012,18 @@ MemoryMap::linkTo(const MemoryMap::Ptr &other, const AddressIntervalSet &parts) 
             // Create a new segment for the destination map, which points into the same buffer as the source map.
             Segment dstSegment(srcSegment.buffer(), bufferOffset, srcSegment.accessibility(), srcSegment.name());
             insert(dstAddrs, dstSegment);
+            retval |= dstAddrs;
         }
     }
+
+    return retval;
+}
+
+AddressIntervalSet
+MemoryMap::linkTo(const MemoryMap::Ptr &other, const AddressInterval &where, Clobber clobber) {
+    AddressIntervalSet set;
+    set |= where;
+    return linkTo(other, set, clobber);
 }
 
 Sawyer::Optional<uint8_t>
@@ -1185,6 +1207,55 @@ MemoryMap::shrinkUnshare() {
         }
     }
     return success;
+}
+
+static AddressInterval
+alignInterval(const AddressInterval &src, rose_addr_t loAlignment, rose_addr_t hiAlignment) {
+    if (src.greatest() >= AddressInterval::whole().greatest()) {
+        return AddressInterval::hull(Rose::BinaryAnalysis::alignDown(src.least(), loAlignment), src.greatest());
+    } else {
+        return AddressInterval::hull(Rose::BinaryAnalysis::alignDown(src.least(), loAlignment),
+                                     Rose::BinaryAnalysis::alignUp(src.greatest()+1, hiAlignment) - 1);
+    }
+}
+
+MemoryMap::Ptr
+MemoryMap::align(rose_addr_t loAlignment, rose_addr_t hiAlignment) const {
+    loAlignment = std::max(loAlignment, (rose_addr_t)1);
+    hiAlignment = std::max(hiAlignment, (rose_addr_t)1);
+    auto retval = MemoryMap::instance();
+    retval->byteOrder(byteOrder());
+
+    auto srcNode = nodes().begin();
+    while (srcNode != nodes().end()) {
+
+        // Take the current source segment. Also take all subsequent source segments that when aligned overlap with what we have so
+        // far.
+        AddressInterval dstAligned = alignInterval(srcNode->key(), loAlignment, hiAlignment);
+        const std::string name = srcNode->value().name();
+        unsigned perms = srcNode->value().accessibility();
+        for (++srcNode; srcNode != nodes().end(); ++srcNode) {
+            const AddressInterval srcAligned = alignInterval(srcNode->key(), loAlignment, hiAlignment);
+            if (dstAligned.intersection(srcAligned)) {
+                perms |= srcNode->value().accessibility();
+            } else {
+                break;
+            }
+        }
+
+        retval->insert(dstAligned, Segment::anonymousInstance(dstAligned.size(), perms, name));
+    }
+
+    // Now that the destination map has been created, copy data from source to destination.
+    for (const auto &interval: intervals()) {
+        std::vector<uint8_t> buf(interval.size(), 0);
+        const AddressInterval readAt = at(interval).read(buf);
+        ASSERT_always_require(readAt == interval);
+        const AddressInterval writeAt = retval->at(interval).write(buf);
+        ASSERT_always_require(writeAt == interval);
+    }
+
+    return retval;
 }
 
 Combinatorics::Hasher&

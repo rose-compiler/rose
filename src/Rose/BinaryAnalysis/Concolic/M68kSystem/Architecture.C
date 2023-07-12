@@ -76,84 +76,7 @@ P2::Partitioner::Ptr
 Architecture::partition(const P2::Engine::Ptr &engine, const std::string &specimenName) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     debug <<"partitioning " <<specimenName;
-
-    // If the configuration has an "unpack" list, then run those commands sequentially
-    if (config_ && config_.exists("unpack")) {
-        if (!config_["unpack"].isSequence()) {
-            mlog[ERROR] <<"configuration \"unpack\" must be a sequence\n";
-            return {};
-        }
-        for (const auto &pair: config_["unpack"]) {
-            const Yaml::Node &unpack = pair.second;
-            if (unpack["command"]) {
-                const std::string cmd = (boost::format(unpack["command"].as<std::string>()) % specimenName).str();
-                debug <<"  executing shell command: " <<cmd <<"\n";
-                if (system(cmd.c_str()) != 0)
-                    SAWYER_MESG(mlog[ERROR]) <<"cannot execute: " <<cmd <<"\n";
-            } else {
-                mlog[ERROR] <<"configuration \"unpack\" element has no \"command\"\n";
-            }
-        }
-    }
-
-    // If the configuration has a "load" list then form the partitioner arguments from this list.
-    std::vector<std::string> args;
-    if (config_.exists("loaders")) {
-        if (!config_["loaders"].isSequence()) {
-            mlog[ERROR] <<"configuration \"loaders\" must be a sequence\n";
-            return {};
-        }
-        for (const auto &pair: config_["loaders"]) {
-            const Yaml::Node &loader = pair.second;
-            if (!loader.isMap()) {
-                mlog[ERROR] <<"configuration \"loaders\" element must be a map\n";
-                return {};
-            }
-            if (!loader.exists("driver")) {
-                mlog[ERROR] <<"configuration \"loaders\" element must have a \"driver\"\n";
-                return {};
-            }
-            const std::string driver = loader["driver"].as<std::string>();
-            if ("map" == driver) {
-                std::string memoryOffset, memorySize, fileOffset, fileSize, access, fileName;
-                for (const auto &kv: loader) {
-                    if (kv.first == "memory-offset") {
-                        memoryOffset = kv.second.as<std::string>();
-                    } else if (kv.first == "memory-size") {
-                        memorySize = "+" + kv.second.as<std::string>();
-                    } else if (kv.first == "access") {
-                        access = "=" + kv.second.as<std::string>();
-                    } else if (kv.first == "file-offset") {
-                        fileOffset = kv.second.as<std::string>();
-                    } else if (kv.first == "file-size") {
-                        fileSize = kv.second.as<std::string>();
-                    } else if (kv.first == "file-name") {
-                        fileName = kv.second.as<std::string>();
-                    } else {
-                        mlog[ERROR] <<"configuration \"loaders.driver=map\" has unknown key \"" <<kv.first <<"\"\n";
-                        return {};
-                    }
-                }
-                std::string s = "map:" +
-                                memoryOffset + memorySize + access + ":" +
-                                fileOffset + fileSize + ":" + fileName;
-                args.push_back(specimenName);
-
-            } else {
-                mlog[ERROR] <<"configuration \"loaders.driver=" <<driver <<"\" is unknown\"\n";
-                return {};
-            }
-        }
-    } else {
-        args.push_back(specimenName);
-    }
-
-    if (debug) {
-        for (const std::string &arg: args)
-            debug <<"  partitioner arg: " <<arg <<"\n";
-    }
-
-    return engine->partition(args);
+    return engine->partition(specimenName);
 }
 
 void
@@ -167,6 +90,28 @@ Architecture::makeDispatcher(const BS::RiscOperators::Ptr &ops) {
     return IS::DispatcherM68k::instance(ops,
                                         Emulation::Dispatcher::unwrapEmulationOperators(ops)->wordSizeBits(),
                                         Emulation::Dispatcher::unwrapEmulationOperators(ops)->registerDictionary());
+}
+
+Sawyer::Optional<rose_addr_t>
+Architecture::entryAddress() {
+    ASSERT_not_null(partitioner());
+
+    // First, try to get the entry address from the file header.
+    if (SgAsmInterpretation *interp = partitioner()->interpretation()) {
+        for (SgAsmGenericHeader *header: interp->get_headers()->get_headers()) {
+            ASSERT_not_null(header);
+            for (const rose_rva_t &rva: header->get_entry_rvas())
+                return header->get_base_va() + rva.get_rva();
+        }
+    }
+
+    // Since file headers are not always present (e.g., firmware is often raw memory dumps without an ELF or PE container), we then
+    // try to look at the interrupt vector for the m68k.
+    if (const auto va = partitioner()->memoryMap()->readUnsigned<uint32_t>(4))
+        return ByteOrder::leToHost(*va);
+
+    mlog[WARN] <<"M68kSystem::Architecture::entryAddress: unable to find a starting address\n";
+    return Sawyer::Nothing();
 }
 
 void
@@ -197,16 +142,32 @@ Architecture::load(const boost::filesystem::path &tempDirectory) {
     if (qemuExe.empty())
         mlog[ERROR] <<"cannot find qemu-system-m68k in your executable search path ($PATH)\n";
 
-#if 1
     std::vector<std::string> args;
     args.push_back(qemuExe.string());
+
+    // QEMU args specific to the CPU
+    args.push_back("-cpu");
+    args.push_back("cfv4e");
+    args.push_back("-machine");
+    args.push_back("an5206");
+    args.push_back("-m");
+    args.push_back("4096");
+
+    // General QEMU args
     args.push_back("-display");
     args.push_back("none");
     args.push_back("-s");
     args.push_back("-S");
     args.push_back("-no-reboot");
+
+    // Args to load the specimen
     args.push_back("-kernel");
     args.push_back(exeName.string());
+    if (const auto entryVa = entryAddress()) {
+        args.push_back("-device");
+        args.push_back("loader,cpu-num=0,addr=" + StringUtility::addrToString(*entryVa));
+    }
+
     if (debug) {
         debug <<"executing QEMU emulator for m68k firmware\n"
               <<"  command:";
@@ -215,14 +176,8 @@ Architecture::load(const boost::filesystem::path &tempDirectory) {
         debug <<"\n";
     }
     qemu_ = boost::process::child(args);
-#else
-    qemu_ = boost::process::child(qemuExe,
-                                  "-display", "none",
-                                  "-s", "-S",
-                                  "-no-reboot",
-                                  "-kernel", exeName.string());
-#endif
 
+    // Start the debugger and attach it to the GDB server in QEMU
     debugger(Debugger::Gdb::instance(Debugger::Gdb::Specimen(exeName, "localhost", 1234)));
     ASSERT_forbid(debugger()->isTerminated());
 }

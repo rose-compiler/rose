@@ -132,10 +132,16 @@ WorkerStatus::updateFileNow() {
                 }
             }
 
-            const std::string s = (boost::format("%4d \033[%2dm%s %-7s\033[0m%c")
+            const std::string pathHash = workers_[workerIdx].pathHash ?
+                                         (boost::format("%08x") % workers_[workerIdx].pathHash).str().substr(0, 4) :
+                                         std::string(4, ' ');
+
+            //                                    worker   fg  bar h name       sep
+            const std::string s = (boost::format("%4d \033[%2dm%s %s %-7s\033[0m%c")
                                    % workerIdx
                                    % fgColorCode
                                    % bar
+                                   % pathHash
                                    % reportName
                                    % ((workerIdx + 1) % workersPerLine_ ? ' ' : '\n')
                                    ).str();
@@ -154,10 +160,12 @@ WorkerStatus::updateFileNow() {
 }
 
 void
-WorkerStatus::setState(size_t workerIdx, WorkerState state) {
+WorkerStatus::setState(size_t workerIdx, WorkerState state, uint64_t pathHash) {
     if (workerIdx < workers_.size()) {
         workers_[workerIdx].state = state;
         workers_[workerIdx].stateChange = time(nullptr);
+        ASSERT_require((WorkerState::WORKING == state && pathHash != 0) || (WorkerState::WORKING != state && pathHash == 0));
+        workers_[workerIdx].pathHash = pathHash;
         updateFile();
     }
 }

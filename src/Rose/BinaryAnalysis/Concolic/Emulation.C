@@ -420,6 +420,12 @@ Dispatcher::isTerminated() const {
     return emulationOperators()->process()->isTerminated();
 }
 
+RegisterDictionary::Ptr
+Dispatcher::registerDictionary() const {
+    ASSERT_not_null(inner_);
+    return inner_->registerDictionary();
+}
+
 } // namespace
 } // namespace
 } // namespace

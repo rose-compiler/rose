@@ -519,8 +519,18 @@ Gdb::readRegister(ThreadId, RegisterDescriptor reg) {
 
     // Find the GDB register of which `reg` is a part.
     Sawyer::Optional<size_t> idx = findRegisterIndex(reg);
-    if (!idx)
-        throw Exception("register " + boost::lexical_cast<std::string>(reg) + " not found in debugger");
+    if (!idx) {
+        std::string s = "register ";
+        if (const auto name = registerDictionary()->name(reg))
+            s += *name + " ";
+        s += reg.toString() + " not found in debugger";
+        if (!registers_.empty()) {
+            s += "\n  available registers are:";
+            for (const std::pair<std::string, RegisterDescriptor> &r: registers_)
+                s += (boost::format("\n    %-10s %s") % r.first % r.second.toString()).str();
+        }
+        throw Exception(s);
+    }
     const RegisterDescriptor gdbReg = registers_[*idx].second;
 
     // Send the data-list-register-values command and wait for its response. Then process the reponse to find
@@ -628,12 +638,22 @@ Gdb::readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) {
                 ASSERT_require(memoryList.isSequence());
                 for (const auto &elmt: memoryList) {
                     ASSERT_require(elmt.second.isMap());
+
+                    // When reading address 0xffffffff, GDB's "end" marker will overflow to zero.  It would have been better if they
+                    // had used a "least" and "greatest" address (akin to C++ library "front" and "back" iterators or Sawyer's
+                    // "Interval" type), but they didn't. Therefore we need to handle this situation as a special case.
                     const rose_addr_t begin = elmt.second["begin"].as<rose_addr_t>() + elmt.second["offset"].as<rose_addr_t>();
                     const rose_addr_t end = elmt.second["end"].as<rose_addr_t>();
-                    ASSERT_require(end > begin);
-                    const size_t nBytes = end - begin;
+                    ASSERT_require2(end > begin || (begin > 0 && end == 0),
+                                    "va=" + StringUtility::addrToString(va) +
+                                    ", nBytes=" + StringUtility::addrToString(nBytes) +
+                                    ", begin=" + StringUtility::addrToString(begin) +
+                                    ", end=" + StringUtility::addrToString(end));
+                    const size_t nBytes = end > 0 ? end - begin : 0xffffffff - begin + 1;
+
+                    // Convert the hexadecimal string to bytes
                     const std::string content = elmt.second["contents"].as<std::string>();
-                    ASSERT_require(content.size() == 2 * (end - begin));
+                    ASSERT_require(content.size() == 2 * nBytes);
                     for (size_t i = 0; i < nBytes; ++i) {
                         buffer[i] = 16 * StringUtility::hexadecimalToInt(content[2*i]) +
                                     StringUtility::hexadecimalToInt(content[2*i+1]);

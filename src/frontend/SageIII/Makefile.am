@@ -88,7 +88,7 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 # are called preproc.o (from here and from EDG).
 # Rasmussen (04/17/2019): Support for ATerms has been deprecated (atermSupport.h removed)
 EXTRA_DIST = CMakeLists.txt docs rtiHelpers.h attributeListMap.h \
-             advanced_preprocessing_hooks.h rose_attributes_list.h dwarfSupport.h \
+             advanced_preprocessing_hooks.h rose_attributes_list.h \
              sage3basic.hhh fileoffsetbits.h rosedll.h \
 	     PolicyControl.txt Utf8.h
 if ROSE_BUILD_CPP_LANGUAGE_SUPPORT
@@ -321,7 +321,7 @@ pkginclude_HEADERS = \
    attach_all_info.h manglingSupport.h C++_include_files.h \
    fixupCopy.h \
    general_token_defs.h rtiHelpers.h \
-   OmpAttribute.h omp.h dwarfSupport.h \
+   OmpAttribute.h omp.h \
    omp_lib_kinds.h omp_lib.h sage3basic.hhh rosedefs.h  fileoffsetbits.h rosedll.h \
    Cxx_GrammarSerialization.h \
    $(fSageSupport_includeHeaders)

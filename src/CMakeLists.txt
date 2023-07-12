@@ -151,6 +151,7 @@ set(rose_LIB_OBJS
   roseBinaryAnalysisConcolicM68kSystem
   roseBinaryAnalysisDebugger
   roseBinaryAnalysisDisassembler
+  roseBinaryAnalysisDwarf
   roseBinaryAnalysisInstructionSemantics
   roseBinaryAnalysisInstructionSemanticsBaseSemantics
   roseBinaryAnalysisModelChecker

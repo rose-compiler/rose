@@ -7,9 +7,9 @@
 #include <Rose/BinaryAnalysis/BinaryLoaderElfObj.h>
 #include <Rose/BinaryAnalysis/BinaryLoaderPe.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/Dwarf/BasicTypes.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/Diagnostics.h>
-#include "dwarfSupport.h"
 
 using namespace Rose::Diagnostics;
 
@@ -296,12 +296,10 @@ BinaryLoader::createAsmAST(SgBinaryComposite* binaryFile, std::string filePath) 
         interp->get_headers()->get_headers().push_back(header);
     }
 
-#ifdef  ROSE_HAVE_LIBDWARF
     /* Parse Dwarf info and add it to the SgAsmGenericFile. */
-    readDwarf(file);
-#endif
+    Dwarf::parse(file);
 
-  return file;
+    return file;
 }
 
 /* Used to be called layoutInterpLibraries */

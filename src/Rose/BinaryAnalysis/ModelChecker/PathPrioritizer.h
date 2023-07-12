@@ -85,6 +85,20 @@ public:
     bool operator()(const PathPtr &worse, const PathPtr &better) const override;
 };
 
+/** Prioritize paths that have the best coverage ratio.
+ *
+ *  Coverage is the size of the set of unique instruction addresses that are present in a path. The code coverage ratio is the
+ *  coverage divided by the path length. Prioritizing paths with the highest coverage ratio attempts to explore new parts of the
+ *  program before revisiting previously visited instructions along different paths. */
+class BestCoverageFirst: public PathPrioritizer {
+public:
+    using Ptr = BestCoverageFirstPtr;
+    static Ptr instance();
+    bool operator()(const PathPtr &worse, const PathPtr &better) const override;
+private:
+    static double coverageRatio(const PathPtr&);
+};
+
 } // namespace
 } // namespace
 } // namespace
