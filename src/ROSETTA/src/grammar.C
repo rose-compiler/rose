@@ -301,12 +301,12 @@ Grammar::writeFile ( const StringUtility::FileWithLineNumbers & outputString,
      ofstream ROSE_ShowFile(outputFilename.c_str());
      if (ROSE_ShowFile.good() == false)
         {
-          printf ("outputFilename = %s could not be opened, likely the directory is missing...\n",outputFilename.c_str());
+          fprintf(stderr, "outputFilename = %s could not be opened, likely the directory is missing...\n",outputFilename.c_str());
           string command = "mkdir -p " + target_directory + sourceCodeDirectoryName();
 
        // DQ (12/28/2009): As I recall there is a more secure way to do this...see sage_support.C for an example.
           if (verbose)
-              printf ("Calling system(%s): making a new directory in the build tree...\n",command.c_str());
+              printf("Calling system(%s): making a new directory in the build tree...\n",command.c_str());
           if (system(command.c_str())) {
               std::cerr <<"command failed: \"" <<StringUtility::cEscape(command) <<"\"\n";
               exit(1);
@@ -1809,7 +1809,7 @@ Grammar::buildCopyMemberFunctions ( AstNodeClass & node, StringUtility::FileWith
 void
 Grammar::buildGrammarClassSourceCode ( StringUtility::FileWithLineNumbers & outputFile )
    {
-     printf ("This should not be called! \n");
+     fprintf(stderr, "This should not be called! \n");
      ROSE_ABORT();
 
      string fileName  = "../Grammar/grammarMainClassSourceCodeMacros.macro";
@@ -2537,7 +2537,7 @@ Grammar::extractStringFromFile ( const string& startMarker, const string& endMar
   // If this is false then the MARKER_*_END strings were not located in the file
      if (found == false)
         {
-          printf ("Error: could not locate endMarker = %s in file = %s \n",endMarker.c_str(),filename.c_str());
+          fprintf(stderr, "Error: could not locate endMarker = %s in file = %s \n",endMarker.c_str(),filename.c_str());
         }
      ROSE_ASSERT (found);
 
