@@ -630,7 +630,7 @@ namespace
 #define DBG_SCOPE_PATH 0
 
 #if DBG_SCOPE_PATH
-  static bool DBG_PRINT_SCOPES = false;
+  static bool DBG_PRINT_SCOPES = true;
 
   struct DebugSeqPrinter
   {
@@ -704,7 +704,9 @@ namespace
     bool const res = std::any_of(beg, lim, pred);
 
     if (DBG_PRINT_SCOPES)
-      std::cerr << &n << " " << typeid(n).name() << " :" << dclname << ": " << res
+      std::cerr << &n << " " << typeid(n).name() << " :" << dclname
+                << ": " << std::distance(beg, lim)
+                << ": " << res
                 << std::endl;
 
     return res;
@@ -848,7 +850,9 @@ namespace
     // while the refnode is aliases along (locMin, locLim] and the scope is extensible |remBeg,remMin| > 0
     //   extend the scope by one.
     while ((std::distance(remBeg, remMin) > 0) && isShadowedAlongPath(*refNode, locMin, locLim))
+    {
       std::tie(remMin, refNode) = namedAncestorScope(remBeg, remMin, refNode);
+    }
 
     return remMin;
   }
@@ -875,14 +879,9 @@ namespace
 
     ScopePath localPath  = pathToGlobal(local);
 
-    //~ std::cerr << "lp = " << localPath.path()
-              //~ << " scope = " << typeid(local).name() << " " << &local
-              //~ << std::endl;
-
     // compute the required scope qualification
     //   assume a decl declared in scope a.b.c
     //   and referenced in scope a.d.e:
-
 
     // 1a determine the first mismatch (mismPos) of the (reversed) scope paths "a.b.c" and "a.d.e"
     std::size_t     pathlen      = std::min(localPath.size(), remotePath.size());
@@ -891,7 +890,7 @@ namespace
     auto            mismPos      = std::mismatch( localstart, localstart + pathlen,
                                                   remotePath.rbegin()
                                                 );
-    // 2a unless an overload for front(b.c) exists somewhere in d.e
+    // 2a extend the path if an overload for front(b.c) exists somewhere in d.e
     //    \todo instead of querying whether the prefix is empty, use the leading element as decl
     PathIterator    remotePos    = extendNameQualUntilUnambiguous( remotePath.rbegin(),
                                                                    mismPos.second,
@@ -900,14 +899,6 @@ namespace
                                                                    localPath.rend(),
                                                                    quasiDecl
                                                                  );
-/*
-    const bool      hasOverload  = (  (std::distance(mismPos.second, remotePath.rend()) == 0)
-                                   && isShadowedAlongPath(decl, mismPos.first, localPath.rend())
-                                   );
-
-    // 2b if an overload exists, fall back to full qualification
-    PathIterator    remotePos    = hasOverload ? remotePath.rbegin() : mismPos.second;
-*/
 
     // 3 Since a body has its spec as the logical ancestor scope, adjacent spec/body combination
     //   are filtered from the path.
