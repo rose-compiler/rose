@@ -31,6 +31,7 @@
 namespace Rose {
 namespace BinaryAnalysis {
     namespace CallingConvention { void initDiagnostics(); }
+    namespace Dwarf { void initDiagnostics(); }
     namespace Partitioner2 { void initDiagnostics(); }
     namespace PointerDetection { void initDiagnostics(); }
     namespace ReturnValueUsed { void initDiagnostics(); }
@@ -138,6 +139,7 @@ void initialize() {
 #endif
         BinaryAnalysis::DataFlow::initDiagnostics();
         BinaryAnalysis::Disassembler::initDiagnostics();
+        BinaryAnalysis::Dwarf::initDiagnostics();
         BinaryAnalysis::FeasiblePath::initDiagnostics();
         BinaryAnalysis::FunctionSimilarity::initDiagnostics();
         BinaryAnalysis::HotPatch::initDiagnostics();

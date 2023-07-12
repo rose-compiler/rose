@@ -102,20 +102,35 @@ public:
      *  set is returned. */
     static AddressIntervalSet dataAddresses(const std::vector<SRecord>&);
 
+    /** Create segments for S-Records.
+     *
+     *  The specified memory map is modified to create mapped regions for the specified S-Records using the minimum possible
+     *  number of segments.  First, the S-Records are scanned to obtain a list of addresses. These addresses are expanded by
+     *  aligning their beginning and ending locations. Then a temporary memory map is created that contains the minimum number
+     *  of aligned segments necessary to represent all the S-Record data. The created segments have the specified access permissions
+     *  and names. Finally, the segments are copied into the original @p map by calling @ref MemoryMap::linkTo and passing the
+     *  specified @p clobber flag. The temporary map is deleted, but since buffers are reference counted, they will continue to
+     *  exist if referenced by the specified @p map.
+     *
+     *  The return value is the set of addresses that were added to the @p map. */
+    static AddressIntervalSet createSegments(const std::vector<SRecord>&, const MemoryMap::Ptr &map, rose_addr_t alignment,
+                                             unsigned accessPermissions, const std::string &segmentName,
+                                             MemoryMap::Clobber clobber);
+
     /** Load S-Records into a memory map.
      *
-     *  The specified S-Records are loaded into the memory map.  If @p createSegments is true then a minimal number of segments
-     *  are created to hold the S-Record data, otherwise the destinations must already be mapped or a MemoryMap::NotMapped
-     *  exception is thrown.  When new segments are created they are given access permissions specified by @p accessPerms and
-     *  the name specified by @p newSegmentNames (or "S-Records"). Access permissions are not consulted and do not cause errors
-     *  when writing S-Record data into the map.
+     *  The data from the specified S-Records are loaded into the specified memory map. The map must contains segments at all
+     *  S-Record addresses or else a @ref MemoryMap::NotMapped exception is thrown. The return value is the execution starting
+     *  address contained in the S-Records, if any. */
+    static Sawyer::Optional<rose_addr_t> load(const std::vector<SRecord>&, const MemoryMap::Ptr&);
+
+    /** Load S-Records into a memory map, creating segments if necessary.
      *
-     *  Returns the starting execution address if one is specified. If multiple starting execution addresses are specified, then
-     *  only the last one is returned. */
-    static Sawyer::Optional<rose_addr_t>
-    load(const std::vector<SRecord>&, const MemoryMap::Ptr&, bool createSegments=true,
-         unsigned accessPerms=MemoryMap::READABLE|MemoryMap::WRITABLE|MemoryMap::EXECUTABLE,
-         const std::string &newSegmentNames = "S-Records");
+     *  This is a convenience function that calls @ref createSegments in order to create any necessary segments in the memory
+     *  map, and then calls the two-argument version of @ref load in order to load the S-Record data into those segments. Therefore,
+     *  the arguments are the union of the arguments for those two functions. */
+    static Sawyer::Optional<rose_addr_t> load(const std::vector<SRecord>&, const MemoryMap::Ptr&, rose_addr_t alignment,
+                                               unsigned accessPerms, const std::string &name, MemoryMap::Clobber);
 
     /** Create S-Records from a memory map. */
     static std::vector<SRecord> create(const MemoryMap::Ptr&, Syntax, size_t bytesPerRecord=28, size_t preferredAddrSize=4);

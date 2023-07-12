@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ModelChecker/PathPrioritizer.h>
 
+#include <Rose/BinaryAnalysis/ModelChecker/ExecutionUnit.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Path.h>
 #include <Rose/BinaryAnalysis/ModelChecker/PathNode.h>
 
@@ -89,6 +90,39 @@ RandomPathFirst::operator()(const Path::Ptr &worse, const Path::Ptr &better) con
     ASSERT_forbid(worse->isEmpty());
     ASSERT_forbid(better->isEmpty());
     return better->lastNode()->id() < worse->lastNode()->id();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// BestCoverageFirst
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+BestCoverageFirst::Ptr
+BestCoverageFirst::instance() {
+    return std::make_shared<BestCoverageFirst>();
+}
+
+double
+BestCoverageFirst::coverageRatio(const Path::Ptr &path) {
+    ASSERT_not_null(path);
+    std::set<rose_addr_t> nodes;
+    size_t nNodes;
+    for (const PathNode::Ptr &pnode: path->nodes()) {
+        if (const auto va = pnode->executionUnit()->address()) {
+            nodes.insert(*va);
+            ++nNodes;
+        }
+    }
+    return nNodes > 0 ? (double)nodes.size() / nNodes : 0.0;
+}
+
+bool
+BestCoverageFirst::operator()(const Path::Ptr &worse, const Path::Ptr &better) const {
+    ASSERT_not_null(worse);
+    ASSERT_not_null(better);
+    ASSERT_forbid(worse->isEmpty());
+    ASSERT_forbid(better->isEmpty());
+
+    return coverageRatio(worse) < coverageRatio(better);
 }
 
 } // namespace

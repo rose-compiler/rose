@@ -9,6 +9,7 @@
 #include <Rose/BinaryAnalysis/Disassembler/Mips.h>
 #include <Rose/BinaryAnalysis/Disassembler/Powerpc.h>
 #include <Rose/BinaryAnalysis/Disassembler/X86.h>
+#include <Rose/BinaryAnalysis/Dwarf/Exception.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
@@ -1080,7 +1081,11 @@ EngineBinary::roseFrontendReplacement(const std::vector<boost::filesystem::path>
         SgAsmGenericFile *file = SgAsmExecutableFileFormat::parseBinaryFormat(fileName.string().c_str());
         ASSERT_not_null(file);
 #ifdef ROSE_HAVE_LIBDWARF
-        readDwarf(file);
+        try {
+            Dwarf::parse(file);
+        } catch (const Dwarf::Exception &e) {
+            mlog[ERROR] <<"DWARF parsing failed: " <<e.what() <<"\n";
+        }
 #endif
         fileList->get_files().push_back(file);
         file->set_parent(fileList);
@@ -1347,7 +1352,7 @@ EngineBinary::loadNonContainers(const std::vector<std::string> &fileNames) {
                 if (!srecs[i].error().empty())
                     mlog[ERROR] <<resource <<":" <<(i+1) <<": S-Record: " <<srecs[i].error() <<"\n";
             }
-            SRecord::load(srecs, map, true /*create*/, perms);
+            SRecord::load(srecs, map, 1, perms, resource, MemoryMap::Clobber::NO);
         } else if (boost::starts_with(fileName, "vxcore:")) {
             // format is "vxcore:[MEMORY_ATTRS]:[FILE_ATTRS]:FILE_NAME
             loadVxCore(fileName.substr(7));             // the part after "vxcore:"

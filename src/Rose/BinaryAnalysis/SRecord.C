@@ -424,21 +424,34 @@ SRecord::dataAddresses(const std::vector<SRecord> &srecs) {
 }
 
 // class method
-Sawyer::Optional<rose_addr_t>
-SRecord::load(const std::vector<SRecord> &srecs, const MemoryMap::Ptr &map, bool createSegments, unsigned accessPerms,
-              const std::string &newSegmentNames)
-{
-    if (createSegments) {
-        // We want to minimize the number of buffers in the map, so the first step is to discover what addresses are covered by
-        // the data S-records
-        AddressIntervalSet addresses = dataAddresses(srecs);
-        for (const AddressInterval &interval: addresses.intervals()) {
-            ASSERT_forbid(interval.isWhole());          // not practically possible since S-Record file would be >2^65 bytes
-            map->insert(interval, MemoryMap::Segment::anonymousInstance(interval.size(), accessPerms, newSegmentNames));
-        }
+AddressIntervalSet
+SRecord::createSegments(const std::vector<SRecord> &srecs, const MemoryMap::Ptr &map, rose_addr_t alignment_, unsigned accessPerms,
+                        const std::string &name, MemoryMap::Clobber clobber) {
+    ASSERT_not_null(map);
+    const rose_addr_t alignment = std::max(alignment_, (rose_addr_t)1);
+
+    // Given all srecord addresses, extend them so they're aligned, and merge all overlapping extensions together.
+    const AddressIntervalSet srecAddrs = dataAddresses(srecs);
+    AddressIntervalSet alignedAddresses;
+    for (const AddressInterval &interval: srecAddrs.intervals()) {
+        const rose_addr_t begin = alignDown(interval.least(), alignment);
+        const rose_addr_t end = alignUp(interval.greatest() + 1, alignment);
+        ASSERT_require(begin < end);
+        alignedAddresses |= AddressInterval::hull(begin, end-1);
     }
 
-    // Populate the map by writing the S-Record data into it.
+    // Then create a temporary map that contains the minimum number of segments
+    auto tmp = MemoryMap::instance();
+    for (const AddressInterval &interval: alignedAddresses.intervals())
+        tmp->insert(interval, MemoryMap::Segment::anonymousInstance(interval.size(), accessPerms, name));
+
+    // Finally, link all the new segments into the specified map
+    return map->linkTo(tmp, AddressInterval::whole(), clobber);
+}
+
+// class method
+Sawyer::Optional<rose_addr_t>
+SRecord::load(const std::vector<SRecord> &srecs, const MemoryMap::Ptr &map) {
     RunLengthEncoding rle;
     for (const SRecord &srec: srecs) {
         rose_addr_t va = 0;
@@ -452,8 +465,15 @@ SRecord::load(const std::vector<SRecord> &srecs, const MemoryMap::Ptr &map, bool
         }
         rle.insert(srec);
     }
-
     return rle.executionAddress();
+}
+
+// class method
+Sawyer::Optional<rose_addr_t>
+SRecord::load(const std::vector<SRecord> &srecs, const MemoryMap::Ptr &map, rose_addr_t alignment, unsigned accessPerms,
+               const std::string &name, MemoryMap::Clobber clobber) {
+    createSegments(srecs, map, alignment, accessPerms, name, clobber);
+    return load(srecs, map);
 }
 
 // class method

@@ -1,5 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_Dwarf_Constants_H
 #define ROSE_BinaryAnalysis_Dwarf_Constants_H
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -391,8 +393,9 @@ namespace Dwarf {
     DW_LANG_hi_user          = 0xffff
   };
 
-}
-}
-}
+} // namespace
+} // namespace
+} // namespace
 
+#endif
 #endif

@@ -101,6 +101,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/Disassembler/Null.C						\
 	BinaryAnalysis/Disassembler/Powerpc.C						\
 	BinaryAnalysis/Disassembler/X86.C						\
+	BinaryAnalysis/Dwarf/Dwarf.C							\
 	BinaryAnalysis/FeasiblePath.C							\
 	BinaryAnalysis/FunctionCall.C							\
 	BinaryAnalysis/FunctionSimilarity.C						\

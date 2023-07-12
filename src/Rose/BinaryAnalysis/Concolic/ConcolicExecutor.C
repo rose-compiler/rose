@@ -485,6 +485,16 @@ ConcolicExecutor::run() {
         partitioner_->memoryMap()->dump(mlog[DEBUG], "  ");
     }
 
+    // Set up periodic state reporting
+    Sawyer::ProgressBar<size_t> nInstructions(mlog[MARCH], "concolic execution");
+    nInstructions.suffix(" instructions");
+    Sawyer::Stopwatch timeSinceLastReport;
+    IS::SymbolicSemantics::Formatter formatter;
+    formatter.registerDictionary(cpu()->registerDictionary());
+    formatter.set_line_prefix("    ");
+    formatter.expr_formatter.max_depth = 5;             // arbitrary
+    size_t reportInsns = 0;                             // number of instructions remaining to be reported
+
     // Process instructions in execution order
     rose_addr_t executionVa = cpu()->concreteInstructionPointer();
     while (!cpu()->isTerminated()) {
@@ -515,13 +525,31 @@ ConcolicExecutor::run() {
 
         // Process the instruction concretely and symbolically
         try {
+            if (where) {
+                if (timeSinceLastReport.report() > 60 /*seconds, arbitrary*/) {
+                    where <<"periodic concolic execution state:\n"
+                          <<"  before instruction #" <<ops->process()->currentLocation().primary()
+                          <<" " <<partitioner()->unparse(insn) <<"\n";
+                    ops->currentState()->registerState()->print(where, formatter);
+                    timeSinceLastReport.restart();
+                    reportInsns = 10;                   // arbitrary number of subsequent instructions to report
+                }
+                if (reportInsns > 0) {
+                    if (!trace && !debug) {             // Emulation::Dispatcher::processInstruction also prints things
+                        where <<"executing insn #" <<ops->process()->currentLocation().primary()
+                              <<" " <<partitioner()->unparse(insn) <<"\n";
+                    }
+                    --reportInsns;
+                }
+            }
+            ++nInstructions;
             cpu()->processInstruction(insn);
         } catch (const BS::Exception &e) {
             if (error) {
                 error <<e.what() <<", occurred at:\n";
                 printCallStack(error);
                 error <<"  insn " <<partitioner()->unparse(insn) <<"\n";
-                error <<"machine state at time of error:\n" <<(*ops->currentState()+"  ");
+                error <<"register state at time of error:\n" <<(*ops->currentState()->registerState()+"  ");
             }
 // TEMPORARILY COMMENTED OUT FOR DEBUGGING [Robb Matzke 2020-07-13]. This exception is thrown when we get an address wrong,
 // like for "mov eax, gs:[16]", and the debugger is reporting that the memory cannot be read.  We should probably be using
@@ -574,6 +602,7 @@ ConcolicExecutor::generateTestCase(const BS::RiscOperators::Ptr &ops_, const Sym
     ASSERT_not_null(solver());                          // assertions must have been checked and satisfiable
 
     Sawyer::Message::Stream debug(mlog[DEBUG]);
+    Sawyer::Message::Stream info(mlog[INFO]);
     Sawyer::Message::Stream error(mlog[ERROR]);
     SAWYER_MESG(debug) <<"generating new test case...\n";
 
@@ -800,7 +829,7 @@ ConcolicExecutor::generateTestCase(const BS::RiscOperators::Ptr &ops_, const Sym
         database()->save(currentIpEvent);
 
         if (debug) {
-            debug <<"created new " <<newTestCase->printableName(database()) <<"\n";
+            SAWYER_MESG_OR(info, debug) <<"created new " <<newTestCase->printableName(database()) <<"\n";
             debug <<"  command-line:\n";
             for (const std::string &arg: argv)
                 debug <<"    - " <<StringUtility::yamlEscape(arg) <<"\n";

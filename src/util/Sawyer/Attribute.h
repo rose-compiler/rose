@@ -153,6 +153,13 @@ SAWYER_EXPORT extern const Id INVALID_ID;
  *  Thread safety: This method is thread safe. */
 SAWYER_EXPORT Id declare(const std::string &name);
 
+/** Register a new attribute key if not already registered.
+ *
+ *  If the name is already registered, then return its ID. Otherwise register the name and return a new ID.
+ *
+ *  Thread safety: This method is thread safe. */
+SAWYER_EXPORT Id declareMaybe(const std::string &name);
+
 /** Returns the ID for an attribute name.
  *
  *  Looks up the specified name in the global attribute symbol table and returns its identification number.  Returns @ref
