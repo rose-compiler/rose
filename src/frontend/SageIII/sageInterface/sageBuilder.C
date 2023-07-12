@@ -2395,6 +2395,17 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
    }
 
 
+SgPointerMemberType* 
+SageBuilder::buildPointerMemberType(SgType* base_type, SgType* classType)
+   {
+     ROSE_ASSERT(base_type != NULL);   
+
+     ROSE_ASSERT(classType != NULL);
+     SgPointerMemberType* pointerToMemberType = new SgPointerMemberType(base_type,classType);
+     return pointerToMemberType;
+ 
+   }
+
 //----------------------------------------------------
 //! Build an opaque type with a name, useful when a type's details are unknown during transformation, especially for a runtime library's internal type.
 SgType * SageBuilder::buildOpaqueType(std::string const name, SgScopeStatement * scope)
