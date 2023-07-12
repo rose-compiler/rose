@@ -10,7 +10,7 @@ namespace // anonymous namespace for auxiliary functions
      static constexpr int NUM_BYTES = sizeof(T);
 
      ROSE_ASSERT(index+NUM_BYTES <= buf.size());
-     T value = ByteOrder::leToHost(*reinterpret_cast<T*>(buf.data()+index));
+     T value = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<T*>(buf.data()+index));
 
      index += NUM_BYTES;
      return value;
@@ -92,10 +92,15 @@ namespace // anonymous namespace for auxiliary functions
       ++index; ++strLen;
     }
 
-    // printf ("padding bytes value = %" PRIu32 "\n", res);
     return res;
   }
 
+  // convert chars to ints
+  std::int32_t asValue(std::uint8_t val) { return val; }
+  
+  // do not convert other types
+  template <class I>
+  I asValue(I val) { return val; }
 
   template <class Reader>
   auto
@@ -104,7 +109,14 @@ namespace // anonymous namespace for auxiliary functions
     using elem_type = decltype(rd(buf, index));
 
     elem_type res = rd(buf, index);
-    ROSE_ASSERT(res == expected);
+
+    if (res != expected)
+    {
+      mlog[INFO] << "unexpected read: expected " << asValue(expected) 
+                 << ", got " << asValue(res) << "."
+                 << std::endl;      
+    }
+
     return res;
   }
 
@@ -171,12 +183,17 @@ namespace // anonymous namespace for auxiliary functions
 
     for (size_t i = 0; i < numberOfStreams; ++i)
     {
-      if (TRACE_CONSTRUCTION)
+      if (TRACE_CONSTRUCTION) {
         std::cerr << "START: stream header " << i << " of " << numberOfStreams << ": index = " << index
                   << std::endl;
-
+      }
+      
       StreamHeader        streamHeader = StreamHeader::parse(buf,index);
       SgAsmCilDataStream* dataStream = nullptr;
+      
+      if (TRACE_CONSTRUCTION) {
+        std::cerr << ": name is " << streamHeader.name() << "\n";
+      }      
 
       if (  (SgAsmCilDataStream::ID_STRING_HEAP == streamHeader.name())
          || (SgAsmCilDataStream::ID_BLOB_HEAP   == streamHeader.name())
