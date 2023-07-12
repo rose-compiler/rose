@@ -12,7 +12,7 @@ SUBDIRS = util Rosebud ROSETTA roseSupport Rose frontend midend backend \
           3rdPartyLibraries roseIndependentSupport roseExtensions
 endif
 
-SUBDIRS += generated
+SUBDIRS += generated AstNodes
 
 # This lists a large number of directories.  If "make install"
 # is run then we only need a single directory
@@ -216,6 +216,7 @@ libroseLibraries = \
    $(top_builddir)/src/util/Sawyer/libroseSawyer.la \
    $(top_builddir)/src/roseExtensions/failSafe/libfailsafe.la \
    $(top_builddir)/src/Rose/librose_partial.la \
+   $(top_builddir)/src/AstNodes/Expression/libroseAstNodesExpression.la \
    $(libroseSqlite3xConnection) \
    $(libroseQtExtension)
 

@@ -103,6 +103,7 @@ add_subdirectory(frontend)
 add_subdirectory(midend)
 add_subdirectory(backend)
 add_subdirectory(Rose)
+add_subdirectory(AstNodes)
 
 ########################################################################################################################
 # The ROSE library
@@ -142,6 +143,7 @@ set(rose_LIB_OBJS
   failsafe
   trans_tracking
   astRewriteMechanism
+  roseAstNodesExpression
   roseNamespace
   roseBinaryAnalysis
   roseBinaryAnalysisByteCode
