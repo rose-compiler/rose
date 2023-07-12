@@ -18,3 +18,36 @@ SgStringVal::get_type(void) const
      ROSE_ASSERT(lengthExpression != NULL);
      return SgTypeString::createType(lengthExpression);
    }
+
+void
+SgStringVal::post_construction_initialization()
+   {
+  // We can't initialize this to NULL since it might have just been set!
+  // p_value = (char*)0L;
+   }
+
+void SgStringVal::set_usesSingleQuotes(bool usesSingleQuotes)
+{
+  if (usesSingleQuotes)
+  {
+    set_stringDelimiter('\'');
+  }
+  else if (get_usesSingleQuotes())
+  {
+    // unset only if the current delimiter uses single quotes
+    set_stringDelimiter(0);
+  }
+}
+
+void SgStringVal::set_usesDoubleQuotes(bool usesDoubleQuotes)
+{
+  if (usesDoubleQuotes)
+  {
+    set_stringDelimiter('"');
+  }
+  else if (get_usesDoubleQuotes())
+  {
+    // unset only if the current delimiter uses double quotes
+    set_stringDelimiter(0);
+  }
+}

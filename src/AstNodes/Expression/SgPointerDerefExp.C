@@ -15,7 +15,7 @@ SgPointerDerefExp::get_type() const
 
      if (p_expression_type != NULL)
         {
-          printf ("In $CLASSNAME::get_type(): p_expression_type = %s \n",p_expression_type->class_name().c_str());
+          printf ("In SgPointerDerefExp::get_type(): p_expression_type = %s \n",p_expression_type->class_name().c_str());
         }
 
   // This code should be shared between the SgPntrArrRefExp and the SgPointerDerefExp IR nodes

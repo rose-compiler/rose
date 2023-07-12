@@ -20,7 +20,7 @@ SgVarArgOp::get_type() const
      SgType* returnType = p_expression_type;
 
 #if 0
-     printf ("In $CLASSNAME::get_type() \n");
+     printf ("In SgVarArgOp::get_type() \n");
 #endif
 
      ROSE_ASSERT(returnType != NULL);

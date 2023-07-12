@@ -4,7 +4,7 @@ SgType*
 SgTypeIdOp::get_type() const
    {
 #if 0
-     printf ("In $CLASSNAME::get_type() \n");
+     printf ("In SgTypeIdOp::get_type() \n");
 #endif
 
     // get_type on SgTypeIdOp must always retuen a const referene to "std::type_info"

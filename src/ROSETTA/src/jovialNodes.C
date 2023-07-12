@@ -85,7 +85,6 @@ class SgJovialBitVal: public SgValueExp {
 #ifndef DOCUMENTATION
     JovialBitVal.setFunctionSource("SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code");
     JovialBitVal.setFunctionPrototype("HEADER_JOVIAL_BIT_VALUE_EXPRESSION", "../Grammar/Expression.code");
-    JovialBitVal.setFunctionSource("SOURCE_JOVIAL_BIT_VALUE_EXPRESSION","../Grammar/Expression.code");
     JovialBitVal.setFunctionSource("SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code");
     JovialBitVal.editSubstitute("GENERIC_TYPE", "SgJovialBitType");
 #endif // !DOCUMENTATION

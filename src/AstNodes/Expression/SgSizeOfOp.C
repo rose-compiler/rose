@@ -9,7 +9,7 @@ SgSizeOfOp::get_type() const
      ROSE_ASSERT(p_operand_expr != NULL || p_operand_type != NULL);
 
 #if 0
-     printf ("In $CLASSNAME::get_type() \n");
+     printf ("In SgSizeOfOp::get_type() \n");
 #endif
 
      SgType* returnType = SgTypeUnsignedInt::createType();

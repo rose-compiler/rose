@@ -1,6 +1,7 @@
 add_library(roseAstNodesExpression OBJECT
   SgActualArgumentExpression.C
   SgAdaAttributeExp.C
+  SgAdaAncestorInitializer.C
   SgAdaProtectedRefExp.C
   SgAdaRenamingRefExp.C
   SgAdaTaskRefExp.C
@@ -8,8 +9,11 @@ add_library(roseAstNodesExpression OBJECT
   SgAddressOfOp.C
   SgAggregateInitializer.C
   SgAlignOfOp.C
+  SgAndOp.C
   SgArrowExp.C
   SgArrowStarOp.C
+  SgAsmOp.C
+  SgAssignInitializer.C
   SgAsteriskShapeExp.C
   SgAtExp.C
   SgBinaryOp.C
@@ -18,24 +22,35 @@ add_library(roseAstNodesExpression OBJECT
   SgCAFCoExpression.C
   SgCallExpression.C
   SgCastExp.C
+  SgChar16Val.C
+  SgChar32Val.C
+  SgClassExp.C
   SgColonShapeExp.C
+  SgCommaOpExp.C
+  SgComplexVal.C
   SgCompoundInitializer.C
+  SgConditionalExp.C
   SgConstructorInitializer.C
   SgCudaKernelCallExp.C
   SgDeleteExp.C
   SgDesignatedInitializer.C
   SgDictionaryExp.C
   SgDotExp.C
+  SgDotDotExp.C
   SgDotStarOp.C
   SgEnumVal.C
+  SgExponentiationOp.C
   SgExpression.C
   SgExprListExp.C
   SgFinishExp.C
   SgFunctionCallExp.C
   SgFunctionParameterRefExp.C
   SgFunctionRefExp.C
+  SgHereExp.C
   SgImpliedDo.C
   SgIOItemExpression.C
+  SgJavaAnnotation.C
+  SgJavaInstanceOfOp.C
   SgJavaNormalAnnotation.C
   SgJovialPresetPositionExp.C
   SgJovialTablePresetExp.C
@@ -44,22 +59,29 @@ add_library(roseAstNodesExpression OBJECT
   SgLambdaRefExp.C
   SgMatrixExp.C
   SgMemberFunctionRefExp.C
+  SgMinusMinusOp.C
   SgNaryBooleanOp.C
   SgNaryComparisonOp.C
   SgNaryOp.C
   SgNewExp.C
   SgNoexceptOp.C
   SgNonrealRefExp.C
+  SgOrOp.C
+  SgPlusPlusOp.C
   SgPntrArrRefExp.C
   SgPointerDerefExp.C
   SgPseudoDestructorRefExp.C
   SgRangeExp.C
   SgSizeOfOp.C
+  SgStatementExpression.C
   SgStringVal.C
   SgSubscriptExpression.C
+  SgSuperExp.C
   SgTemplateFunctionRefExp.C
   SgTemplateMemberFunctionRefExp.C
   SgTemplateParameterVal.C
+  SgThisExp.C
+  SgThrowOp.C
   SgTypeIdOp.C
   SgTypeTraitBuiltinOperator.C
   SgUnaryOp.C
@@ -72,6 +94,7 @@ add_library(roseAstNodesExpression OBJECT
   SgVarArgEndOp.C
   SgVarArgOp.C
   SgVarRefExp.C
+  SgWcharVal.C
 )
 
 add_dependencies(roseAstNodesExpression rosetta_generated)

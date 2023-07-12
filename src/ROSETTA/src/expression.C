@@ -2996,13 +2996,11 @@ Grammar::setUpExpressions ()
                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      YieldExpression.setFunctionPrototype        ( "HEADER_YIELD_EXPRESSION", "../Grammar/Expression.code" );
-     YieldExpression.setFunctionSource           ( "SOURCE_YIELD_EXPRESSION", "../Grammar/Expression.code" );
      YieldExpression.setDataPrototype            ( "SgExpression*", "value", "= NULL",
              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (7/25/2020): Adding C++17 language features (required for C++20 support).
      FoldExpression.setFunctionPrototype        ( "HEADER_FOLD_EXPRESSION", "../Grammar/Expression.code" );
-     FoldExpression.setFunctionSource           ( "SOURCE_FOLD_EXPRESSION", "../Grammar/Expression.code" );
      FoldExpression.setDataPrototype            ( "SgExpression*", "operands", "= NULL",
              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      FoldExpression.setDataPrototype            ( "std::string", "operator_token", "= \"\"",
@@ -3012,13 +3010,11 @@ Grammar::setUpExpressions ()
 
   // DQ (7/25/2020): Adding C++17 language features (required for C++20 support).
      AwaitExpression.setFunctionPrototype        ( "HEADER_AWAIT_EXPRESSION", "../Grammar/Expression.code" );
-     AwaitExpression.setFunctionSource           ( "SOURCE_AWAIT_EXPRESSION", "../Grammar/Expression.code" );
      AwaitExpression.setDataPrototype            ( "SgExpression*", "value", "= NULL",
              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (7/25/2020): Adding C++17 language features (required for C++20 support).
      ChooseExpression.setFunctionPrototype        ( "HEADER_CHOOSE_EXPRESSION", "../Grammar/Expression.code" );
-     ChooseExpression.setFunctionSource           ( "SOURCE_CHOOSE_EXPRESSION", "../Grammar/Expression.code" );
      ChooseExpression.setDataPrototype            ( "SgExpression*", "value", "= NULL",
              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
@@ -3032,99 +3028,9 @@ Grammar::setUpExpressions ()
      // Functions assigned by object
      // ############################
 
-     Expression.setFunctionSource ( "SOURCE_BASECLASS_EXPRESSION", "../Grammar/Expression.code" );
-
-     UnaryOp.setFunctionSource  ( "SOURCE_UNARY_EXPRESSION", "../Grammar/Expression.code" );
-     BinaryOp.setFunctionSource ( "SOURCE_BINARY_EXPRESSION", "../Grammar/Expression.code" );
-     NaryOp.setFunctionSource   ( "SOURCE_NARY_OP", "../Grammar/Expression.code" );
-
-     ExpressionRoot.setFunctionSource         ( "SOURCE_EXPRESSION_ROOT","../Grammar/Expression.code" );
-
-#ifdef HL_GRAMMARS
-     X_ExpressionUnknown.setFunctionSource   ( "SOURCE_X_EXPRESSION_UNKNOWN", "../Grammar/Expression.code" );
-     X_Expression.setFunctionSource          ( "SOURCE_X_EXPRESSION",         "../Grammar/Expression.code" );
-     non_X_Expression.setFunctionSource      ( "SOURCE_NON_X_EXPRESSION",     "../Grammar/Expression.code" );
-#endif
-
-     ExprListExp.setFunctionSource ( "SOURCE_EXPRESSION_LIST_EXPRESSION","../Grammar/Expression.code" );
-
-     VarRefExp.setFunctionSource ( "SOURCE_VARIABLE_REFERENCE_EXPRESSION","../Grammar/Expression.code" );
-     NonrealRefExp.setFunctionSource ( "SOURCE_NONREAL_REF_EXPRESSION","../Grammar/Expression.code" );
-     CompoundLiteralExp.setFunctionSource ( "SOURCE_COMPOUND_LITERAL_EXPRESSION","../Grammar/Expression.code" );
-
-     LabelRefExp.setFunctionSource ( "SOURCE_LABEL_REFERENCE_EXPRESSION","../Grammar/Expression.code" );
-     ClassNameRefExp.setFunctionSource ( "SOURCE_CLASS_NAME_REFERENCE_EXPRESSION","../Grammar/Expression.code" );
-
-     FunctionRefExp.setFunctionSource ( "SOURCE_FUNCTION_REFERENCE_EXPRESSION","../Grammar/Expression.code" );
-     MemberFunctionRefExp.setFunctionSource ( "SOURCE_MEMBER_FUNCTION_REFERENCE_EXPRESSION","../Grammar/Expression.code" );
-
-     TemplateFunctionRefExp.setFunctionSource ( "SOURCE_TEMPLATE_FUNCTION_REFERENCE_EXPRESSION","../Grammar/Expression.code" );
-     TemplateMemberFunctionRefExp.setFunctionSource ( "SOURCE_TEMPLATE_MEMBER_FUNCTION_REFERENCE_EXPRESSION","../Grammar/Expression.code" );
-
-     ValueExp.setFunctionSource ( "SOURCE_VALUE_EXPRESSION","../Grammar/Expression.code" );
-     BoolValExp.setFunctionSource ( "SOURCE_BOOLEAN_VALUE_EXPRESSION","../Grammar/Expression.code" );
-     NullptrValExp.setFunctionSource ( "SOURCE_NULLPTR_VALUE_EXPRESSION","../Grammar/Expression.code" );
-     StringVal.setFunctionSource ( "SOURCE_STRING_VALUE_EXPRESSION","../Grammar/Expression.code" );
-     ShortVal.setFunctionSource ( "SOURCE_SHORT_VALUE_EXPRESSION","../Grammar/Expression.code" );
-     CharVal.setFunctionSource ( "SOURCE_CHAR_VALUE_EXPRESSION","../Grammar/Expression.code" );
-     UnsignedCharVal.setFunctionSource ( "SOURCE_UNSIGNED_CHAR_VALUE_EXPRESSION","../Grammar/Expression.code" );
-     WcharVal.setFunctionSource ( "SOURCE_WCHAR_VALUE_EXPRESSION","../Grammar/Expression.code" );
-
-  // DQ (2/16/2018): Adding support for char16_t and char32_t (C99 and C++11 specific types).
-     Char16Val.setFunctionSource ( "SOURCE_CHAR16_VALUE_EXPRESSION","../Grammar/Expression.code" );
-     Char32Val.setFunctionSource ( "SOURCE_CHAR32_VALUE_EXPRESSION","../Grammar/Expression.code" );
-
-     UnsignedShortVal.setFunctionSource ( "SOURCE_UNSIGNED_SHORT_VALUE_EXPRESSION","../Grammar/Expression.code" );
-     IntVal.setFunctionSource ( "SOURCE_INTEGER_VALUE_EXPRESSION","../Grammar/Expression.code" );
-     EnumVal.setFunctionSource ( "SOURCE_ENUM_VALUE_EXPRESSION","../Grammar/Expression.code" );
-     UnsignedIntVal.setFunctionSource ( "SOURCE_UNSIGNED_INTEGER_VALUE_EXPRESSION","../Grammar/Expression.code" );
-     LongIntVal.setFunctionSource ( "SOURCE_LONG_INTEGER_VALUE_EXPRESSION","../Grammar/Expression.code" );
-     LongLongIntVal.setFunctionSource ( "SOURCE_LONG_LONG_INTEGER_VALUE_EXPRESSION","../Grammar/Expression.code" );
-     UnsignedLongLongIntVal.setFunctionSource ( "SOURCE_UNSIGNED_LONG_LONG_INTEGER_VALUE_EXPRESSION","../Grammar/Expression.code" );
-     UnsignedLongVal.setFunctionSource ( "SOURCE_UNSIGNED_LONG_VALUE_EXPRESSION","../Grammar/Expression.code" );
-     FloatVal.setFunctionSource ( "SOURCE_FLOAT_VALUE_EXPRESSION","../Grammar/Expression.code" );
-     DoubleVal.setFunctionSource ( "SOURCE_DOUBLE_VALUE_EXPRESSION","../Grammar/Expression.code" );
-     LongDoubleVal.setFunctionSource ( "SOURCE_LONG_DOUBLE_VALUE_EXPRESSION","../Grammar/Expression.code" );
-     Float80Val.setFunctionSource ( "SOURCE_FLOAT_80_VALUE_EXPRESSION","../Grammar/Expression.code" );
-     Float128Val.setFunctionSource ( "SOURCE_FLOAT_128_VALUE_EXPRESSION","../Grammar/Expression.code" );
-     AdaFloatVal.setFunctionSource ( "SOURCE_ADA_FLOAT_VALUE_EXPRESSION","../Grammar/Expression.code" );
-     AdaUnitRefExp.setFunctionSource ( "SOURCE_ADA_UNIT_REF_EXPRESSION","../Grammar/Expression.code" );
-     AdaTaskRefExp.setFunctionSource ( "SOURCE_ADA_TASK_REF_EXPRESSION","../Grammar/Expression.code" );
-     AdaProtectedRefExp.setFunctionSource ( "SOURCE_ADA_PROTECTED_REF_EXPRESSION","../Grammar/Expression.code" );
-     AdaRenamingRefExp.setFunctionSource ( "SOURCE_ADA_RENAMING_REF_EXPRESSION","../Grammar/Expression.code" );
-     AdaAttributeExp.setFunctionSource ( "SOURCE_ADA_ATTRIBUTE_EXPRESSION","../Grammar/Expression.code" );
-
-     VoidVal.setFunctionSource ( "SOURCE_VOID_VALUE_EXPRESSION","../Grammar/Expression.code" );
-
-  // DQ (11/28/2011): Adding support for template declarations in the AST.
-     TemplateParameterVal.setFunctionSource ( "SOURCE_TEMPLATE_PARAMETER_VALUE_EXPRESSION","../Grammar/Expression.code" );
-
-  // DQ (8/8/2014): Added support for function parameter reference used in C++11 decltype type declarations.
-     FunctionParameterRefExp.setFunctionSource ( "SOURCE_FUNCTION_PARAMETER_REFERENCE_EXPRESSION", "../Grammar/Expression.code" );
-
-  // DQ (9/2/2014): Adding support for C++11 lambda expresions.
-     LambdaExp.setFunctionSource ( "SOURCE_LAMBDA_EXPRESSION", "../Grammar/Expression.code" );
-
-     ComplexVal.setFunctionSource ( "SOURCE_COMPLEX_VALUE_EXPRESSION","../Grammar/Expression.code" );
-
   // DQ (11/21/2017): This was removed in favor of using the SgLabelRefExp.
   // DQ (11/21/2017): Added support for label address value (see test2017_73.C).
   // LabelAddressVal.setFunctionSource ( "SOURCE_LABEL_ADDRESS_VALUE_EXPRESSION","../Grammar/Expression.code" );
-
-     CallExpression.setFunctionSource ( "SOURCE_CALL_EXPRESSION","../Grammar/Expression.code" );
-
-     FunctionCallExp.setFunctionSource ( "SOURCE_FUNCTION_CALL_EXPRESSION","../Grammar/Expression.code" );
-
-  // DQ (7/12/2013): Added type-trait builtin function support.
-     TypeTraitBuiltinOperator.setFunctionSource( "SOURCE_TYPE_TRAIT_BUILTIN_OPERATOR", "../Grammar/Expression.code" );
-
-     ArrowExp.setFunctionSource ( "SOURCE_ARROW_EXPRESSION","../Grammar/Expression.code" );
-     DotExp.setFunctionSource ( "SOURCE_DOT_EXPRESSION","../Grammar/Expression.code" );
-     DotStarOp.setFunctionSource ( "SOURCE_DOT_STAR_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     ArrowStarOp.setFunctionSource ( "SOURCE_ARROW_STAR_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-
-     UpcThreads.setFunctionSource ( "SOURCE_UPC_THREADS_EXPRESSION","../Grammar/Expression.code" );
-     UpcMythread.setFunctionSource ( "SOURCE_UPC_MYTHREAD_EXPRESSION","../Grammar/Expression.code" );
 
      EqualityOp.setFunctionSource       ( "SOURCE_EQUALITY_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      LessThanOp.setFunctionSource       ( "SOURCE_LESS_THAN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
@@ -3147,179 +3053,30 @@ Grammar::setUpExpressions ()
      GreaterOrEqualOp.editSubstitute ( "SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION", "SOURCE_BOOLEAN_GET_TYPE", "../Grammar/Expression.code" );
      NotOp.editSubstitute            ( "SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION", "SOURCE_BOOLEAN_GET_TYPE", "../Grammar/Expression.code" );
 
-     AddOp.setFunctionSource ( "SOURCE_ADD_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     SubtractOp.setFunctionSource ( "SOURCE_SUBTRACT_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     MultiplyOp.setFunctionSource ( "SOURCE_MULTIPLY_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     DivideOp.setFunctionSource ( "SOURCE_DIVIDE_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     IntegerDivideOp.setFunctionSource ( "SOURCE_INTEGER_DIVIDE_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     ModOp.setFunctionSource ( "SOURCE_MOD_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     AndOp.setFunctionSource ( "SOURCE_AND_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     OrOp.setFunctionSource ( "SOURCE_OR_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     BitXorOp.setFunctionSource ( "SOURCE_BIT_XOR_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     BitAndOp.setFunctionSource ( "SOURCE_BIT_AND_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     BitOrOp.setFunctionSource  ( "SOURCE_BIT_OR_OPERATOR_EXPRESSION", "../Grammar/Expression.code" );
-     BitEqvOp.setFunctionSource ( "SOURCE_BIT_EQV_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     CommaOpExp.setFunctionSource ( "SOURCE_COMMA_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     LshiftOp.setFunctionSource ( "SOURCE_LEFT_SHIFT_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     RshiftOp.setFunctionSource ( "SOURCE_RIGHT_SHIFT_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     JavaUnsignedRshiftOp.setFunctionSource ( "SOURCE_JAVA_UNSIGNED_RIGHT_SHIFT_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-
-     NaryComparisonOp.setFunctionSource ( "SOURCE_NARY_COMPARISON_OP","../Grammar/Expression.code" );
-     NaryBooleanOp.setFunctionSource ( "SOURCE_NARY_BOOLEAN_OP","../Grammar/Expression.code" );
-
-     MinusOp.setFunctionSource ( "SOURCE_MINUS_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-
-     UnaryAddOp.setFunctionSource ( "SOURCE_UNARY_ADD_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      MembershipOp.editSubstitute  ( "SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION", "SOURCE_BOOLEAN_GET_TYPE", "../Grammar/Expression.code" );
      NonMembershipOp.editSubstitute  ( "SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION", "SOURCE_BOOLEAN_GET_TYPE", "../Grammar/Expression.code" );
      IsOp.editSubstitute          ( "SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION", "SOURCE_BOOLEAN_GET_TYPE", "../Grammar/Expression.code" );
      IsNotOp.editSubstitute       ( "SOURCE_BOOLEAN_GET_TYPE_MEMBER_FUNCTION", "SOURCE_BOOLEAN_GET_TYPE", "../Grammar/Expression.code" );
 
-     SizeOfOp.setFunctionSource ( "SOURCE_SIZE_OF_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     AlignOfOp.setFunctionSource ( "SOURCE_ALIGN_OF_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     NoexceptOp.setFunctionSource ( "SOURCE_NOEXCEPT_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-
-     JavaInstanceOfOp.setFunctionSource ( "SOURCE_JAVA_INSTANCEOF_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-
-  // DQ (1/13/2014): Added Java support for Java annotations.
-     JavaAnnotation.setFunctionSource             ( "SOURCE_JAVA_ANNOTATION","../Grammar/Expression.code" );
-     JavaMarkerAnnotation.setFunctionSource       ( "SOURCE_JAVA_MARKER_ANNOTATION","../Grammar/Expression.code" );
-     JavaSingleMemberAnnotation.setFunctionSource ( "SOURCE_JAVA_SINGLE_MEMBER_ANNOTATION","../Grammar/Expression.code" );
-     JavaNormalAnnotation.setFunctionSource       ( "SOURCE_JAVA_NORMAL_ANNOTATION","../Grammar/Expression.code" );
-
-     JavaTypeExpression.setFunctionSource         ( "SOURCE_JAVA_TYPE_EXPRESSION","../Grammar/Expression.code" );
-
-  // DQ (7/24/2014): Added more general support for type expressions (required for C11 generic macro support.
-     TypeExpression.setFunctionSource             ( "SOURCE_TYPE_EXPRESSION","../Grammar/Expression.code" );
-
-  // DQ (2/12/2011): Added support for UPC specific sizeof operators.
-     UpcLocalsizeofExpression.setFunctionSource ( "SOURCE_UPC_LOCAL_SIZEOF_EXPRESSION","../Grammar/Expression.code" );
-     UpcBlocksizeofExpression.setFunctionSource ( "SOURCE_UPC_BLOCK_SIZEOF_EXPRESSION","../Grammar/Expression.code" );
-     UpcElemsizeofExpression.setFunctionSource ( "SOURCE_UPC_ELEM_SIZEOF_EXPRESSION","../Grammar/Expression.code" );
-
-     TypeIdOp.setFunctionSource ( "SOURCE_TYPE_ID_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     PointerDerefExp.setFunctionSource ( "SOURCE_POINTER_DEREFERENCE_EXPRESSION","../Grammar/Expression.code" );
-     AddressOfOp.setFunctionSource     ( "SOURCE_ADDRESS_OF_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     MinusMinusOp.setFunctionSource ( "SOURCE_MINUS_MINUS_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     PlusPlusOp.setFunctionSource ( "SOURCE_PLUS_PLUS_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     BitComplementOp.setFunctionSource ( "SOURCE_BIT_COMPLEMENT_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     RealPartOp.setFunctionSource ( "SOURCE_REAL_PART_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     ImagPartOp.setFunctionSource ( "SOURCE_IMAG_PART_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     ConjugateOp.setFunctionSource ( "SOURCE_CONJUGATE_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     ConditionalExp.setFunctionSource ( "SOURCE_CONDITIONAL_EXPRESSION","../Grammar/Expression.code" );
-     CastExp.setFunctionSource ( "SOURCE_CAST_EXPRESSION","../Grammar/Expression.code" );
-     PntrArrRefExp.setFunctionSource ( "SOURCE_POINTER_ARRAY_REFERENCE_EXPRESSION","../Grammar/Expression.code" );
-     NewExp.setFunctionSource ( "SOURCE_NEW_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     DeleteExp.setFunctionSource ( "SOURCE_DELETE_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     ThisExp.setFunctionSource ( "SOURCE_THIS_EXPRESSION","../Grammar/Expression.code" );
-     SuperExp.setFunctionSource ( "SOURCE_SUPER_EXPRESSION","../Grammar/Expression.code" );
-     ClassExp.setFunctionSource ( "SOURCE_CLASS_EXPRESSION","../Grammar/Expression.code" );
-     ScopeOp.setFunctionSource ( "SOURCE_SCOPE_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     AssignOp.setFunctionSource  ( "SOURCE_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     PointerAssignOp.setFunctionSource  ( "SOURCE_POINTER_ASSIGN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     IntegerDivideAssignOp.setFunctionSource ( "SOURCE_INTEGER_DIVIDE_ASSIGN_OP", "../Grammar/Expression.code" );
-     ExponentiationAssignOp.setFunctionSource ( "SOURCE_EXPONENTIATION_ASSIGN_OP", "../Grammar/Expression.code" );
-
-     RefExp.setFunctionSource ( "SOURCE_REFERENCE_EXPRESSION","../Grammar/Expression.code" );
-     ThrowOp.setFunctionSource ( "SOURCE_THROW_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     Initializer.setFunctionSource ( "SOURCE_INITIALIZER_EXPRESSION","../Grammar/Expression.code" );
-     AggregateInitializer.setFunctionSource ( "SOURCE_AGGREGATE_INITIALIZER_EXPRESSION","../Grammar/Expression.code" );
-     CompoundInitializer.setFunctionSource ( "SOURCE_COMPOUND_INITIALIZER_EXPRESSION","../Grammar/Expression.code" );
-     ConstructorInitializer.setFunctionSource ( "SOURCE_CONSTRUCTOR_INITIALIZER_EXPRESSION","../Grammar/Expression.code" );
-     AssignInitializer.setFunctionSource ( "SOURCE_ASSIGNMENT_INITIALIZER_EXPRESSION","../Grammar/Expression.code" );
-     AdaAncestorInitializer.setFunctionSource ( "SOURCE_ADA_ANCESTOR_INITIALIZER_EXPRESSION","../Grammar/Expression.code" );
-
-  // DQ (11/15/2016): Adding support for new SgBracedInitializer, required to template support (see Cxx11_tests/test2016_82.C).
-     BracedInitializer.setFunctionSource ( "SOURCE_BRACED_INITIALIZER_EXPRESSION","../Grammar/Expression.code" );
-
-     ConcatenationOp.setFunctionSource  ( "SOURCE_CONCATENATION_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     ReplicationOp.setFunctionSource    ( "SOURCE_REPLICATION_OPERATOR_EXPRESSION",  "../Grammar/Expression.code" );
-
-     RemOp.setFunctionSource            ( "SOURCE_REM_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     AbsOp.setFunctionSource            ( "SOURCE_ABS_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     AtOp.setFunctionSource             ( "SOURCE_AT_OPERATOR_EXPRESSION", "../Grammar/Expression.code" );
-
-  // DQ (7/25/2020): Adding C++20 support (need to lookup the correct operator precedence, made it the same as AddOp for now).
-     SpaceshipOp.setFunctionSource ( "SOURCE_SPACESHIP_OPERATOR","../Grammar/Expression.code" );
-
      // ###################################
      // Functions assigned by function name
      // ###################################
 
-     ArrowStarOp.setFunctionSource       ( "SOURCE_ARROW_STAR_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-
-     AddOp.setFunctionSource           ( "SOURCE_ARITHMETIC_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     SubtractOp.setFunctionSource      ( "SOURCE_ARITHMETIC_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     MultiplyOp.setFunctionSource      ( "SOURCE_ARITHMETIC_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     DivideOp.setFunctionSource        ( "SOURCE_ARITHMETIC_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     IntegerDivideOp.setFunctionSource ( "SOURCE_ARITHMETIC_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     ModOp.setFunctionSource           ( "SOURCE_ARITHMETIC_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-
-     AndOp.setFunctionSource ( "SOURCE_INTEGER_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     OrOp.setFunctionSource  ( "SOURCE_INTEGER_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     NotOp.setFunctionSource ( "SOURCE_INTEGER_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-
-     BitXorOp.setFunctionSource ( "SOURCE_BIT_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     BitAndOp.setFunctionSource ( "SOURCE_BIT_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     BitOrOp.setFunctionSource  ( "SOURCE_BIT_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-     BitEqvOp.setFunctionSource ( "SOURCE_BIT_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-
-     CommaOpExp.setFunctionSource ( "SOURCE_COMMA_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
-
-     ExponentiationOp.setFunctionSource    ( "SOURCE_EXPONENTIATION_EXPRESSION", "../Grammar/Expression.code" );
-
-  // IntrinsicFn.setFunctionSource ( "SOURCE_INTRINSICFN_EXPRESSION", "../Grammar/Expression.code" );
   // IntrinsicFn.setFunctionSource ( "SOURCE_EMPTY_SET_TYPE_FUNCTION", "../Grammar/Expression.code" );
 
-     SubscriptExpression.setFunctionSource ( "SOURCE_SUBSCRIPT_EXPR_EXPRESSION", "../Grammar/Expression.code" );
   // SubscriptExpression.setFunctionSource ( "SOURCE_EMPTY_SET_TYPE_FUNCTION", "../Grammar/Expression.code" );
 
-  // SubscriptColon.setFunctionSource ( "SOURCE_SUBSCRIPT_COLON_EXPRESSION", "../Grammar/Expression.code" );
   // SubscriptColon.setFunctionSource ( "SOURCE_EMPTY_SET_TYPE_FUNCTION", "../Grammar/Expression.code" );
 
   // Colon.setFunctionSource ( "SOURCE_COLON_EXPRESSION", "../Grammar/Expression.code" );
-     ColonShapeExp.setFunctionSource ( "SOURCE_COLON_SHAPE_EXPRESSION", "../Grammar/Expression.code" );
   // Colon.setFunctionSource ( "SOURCE_EMPTY_SET_TYPE_FUNCTION", "../Grammar/Expression.code" );
 
   // SubscriptAsterisk.setFunctionSource ( "SOURCE_SUBSCRIPT_ASTERISK_EXPRESSION", "../Grammar/Expression.code" );
-     AsteriskShapeExp.setFunctionSource ( "SOURCE_ASTERISK_SHAPE_EXPRESSION", "../Grammar/Expression.code" );
   // SubscriptAsterisk.setFunctionSource ( "SOURCE_EMPTY_SET_TYPE_FUNCTION", "../Grammar/Expression.code" );
 
-#if 0
-  // DQ (10/4/2008): I no longer agree that these are expressions, they are just parts of the SgUseStatment.
-     UseOnlyExpression.setFunctionSource ( "SOURCE_USE_ONLY_EXPR", "../Grammar/Expression.code" );
-  // UseOnlyExpression.setFunctionSource ( "SOURCE_EMPTY_SET_TYPE_FUNCTION", "../Grammar/Expression.code" );
-
-     UseRenameExpression.setFunctionSource ( "SOURCE_USE_RENAME_EXPR", "../Grammar/Expression.code" );
-  // UseRenameExpression.setFunctionSource ( "SOURCE_EMPTY_SET_TYPE_FUNCTION", "../Grammar/Expression.code" );
-#endif
-
-     IOItemExpression.setFunctionSource ( "SOURCE_IO_ITEM_EXPR", "../Grammar/Expression.code" );
   // IOItemExpression.setFunctionSource ( "SOURCE_EMPTY_SET_TYPE_FUNCTION", "../Grammar/Expression.code" );
 
-     ImpliedDo.setFunctionSource ( "SOURCE_IMPLIED_DO", "../Grammar/Expression.code" );
   // IOImpliedDo.setFunctionSource ( "SOURCE_EMPTY_SET_TYPE_FUNCTION", "../Grammar/Expression.code" );
-
-     UnknownArrayOrFunctionReference.setFunctionSource ( "SOURCE_UNKNOWN_ARRAY_OR_FUNCTION_REFERENCE", "../Grammar/Expression.code" );
-
-     ActualArgumentExpression.setFunctionSource ( "SOURCE_ACTUAL_ARGUMENT_EXPRESSION", "../Grammar/Expression.code" );
-     DesignatedInitializer.setFunctionSource ( "SOURCE_DESIGNATED_INITIALIZER", "../Grammar/Expression.code" );
-
-     JovialTablePresetExp.setFunctionSource ( "SOURCE_JOVIAL_TABLE_PRESET_EXP", "../Grammar/Expression.code" );
-     JovialPresetPositionExp.setFunctionSource ( "SOURCE_JOVIAL_PRESET_POSITION_EXP", "../Grammar/Expression.code" );
-
-     //FMZ (2/6/2009): Added for CoArray Reference
-     CAFCoExpression.setFunctionSource ( "SOURCE_CO_EXPRESSION", "../Grammar/Expression.code" );
-
-#if USE_UPC_IR_NODES
-  // DQ and Liao (6/10/2008): Added new IR nodes specific to UPC.
-     UpcLocalsizeofExpression.setFunctionSource ( "SOURCE_UPC_LOCAL_SIZEOF_EXPRESSION", "../Grammar/Expression.code" );
-     UpcBlocksizeofExpression.setFunctionSource ( "SOURCE_UPC_BLOCK_SIZEOF_EXPRESSION", "../Grammar/Expression.code" );
-     UpcElemsizeofExpression.setFunctionSource  ( "SOURCE_UPC_ELEM_SIZEOF_EXPRESSION",  "../Grammar/Expression.code" );
-#endif
-
-     UserDefinedUnaryOp.setFunctionSource  ( "SOURCE_USER_DEFINED_UNARY_EXPRESSION",  "../Grammar/Expression.code" );
-     UserDefinedBinaryOp.setFunctionSource ( "SOURCE_USER_DEFINED_BINARY_EXPRESSION", "../Grammar/Expression.code" );
 
   // ***************************************
   //      get_type() member function
@@ -3353,7 +3110,6 @@ Grammar::setUpExpressions ()
   // DQ (8/17/2010): types for strings need to be handled using a lenght parameter to the SgTypeString::createType function.
   // For fortran the lenght can be specified as an expression, but for a literal it has to be a known value of an integer.
   // StringVal.setFunctionSource              ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
-     StringVal.setFunctionSource              ( "SOURCE_GET_TYPE_STRING","../Grammar/Expression.code" );
 
      CharVal.setFunctionSource                ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      UnsignedCharVal.setFunctionSource        ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
@@ -3380,7 +3136,6 @@ Grammar::setUpExpressions ()
      LongDoubleVal.setFunctionSource          ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      Float80Val.setFunctionSource             ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      Float128Val.setFunctionSource            ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
-     ComplexVal.setFunctionSource             ( "SOURCE_GET_TYPE_COMPLEX","../Grammar/Expression.code" );
      AdaFloatVal.setFunctionSource            ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
 
      VoidVal.setFunctionSource                ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
@@ -3457,105 +3212,57 @@ Grammar::setUpExpressions ()
      UpcThreads.editSubstitute             ( "GENERIC_TYPE", "SgTypeInt" );
      UpcMythread.editSubstitute            ( "GENERIC_TYPE", "SgTypeInt" );
 
-  // DQ (1/16/2006): This is not IR node specific code since we don't store the type explicitly
-  // FunctionCallExp.setFunctionSource     ( "SOURCE_GET_TYPE_CALLING_GET_EXPRESSION_TYPE_EXPRESSION",
-  //                                              "../Grammar/Expression.code" );
-
-  // SizeOfOp.setFunctionSource            ( "SOURCE_GET_TYPE_CALLING_GET_EXPRESSION_TYPE_EXPRESSION",
-     VarArgStartOp.setFunctionSource            ( "SOURCE_VARARG_START_OPERATOR","../Grammar/Expression.code" );
-     VarArgEndOp.setFunctionSource            ( "SOURCE_VARARG_END_OPERATOR","../Grammar/Expression.code" );
-  //                                              "../Grammar/Expression.code" );
-  // TypeIdOp.setFunctionSource            ( "SOURCE_GET_TYPE_CALLING_GET_EXPRESSION_TYPE_EXPRESSION",
-  //                                              "../Grammar/Expression.code" );
-
   // DQ (2/5/2004): Adding vararg support to SAGE
      VarArgStartOp.setFunctionSource       ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
      VarArgStartOneOperandOp.setFunctionSource ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
-  // VarArgOp.setFunctionSource            ( "SOURCE_DEFAULT_GET_TYPE",
-  //                                              "../Grammar/Expression.code" );
-     VarArgOp.setFunctionSource            ( "SOURCE_VARARG_OPERATOR","../Grammar/Expression.code" );
-     VarArgStartOp.setFunctionSource            ( "SOURCE_VARARG_START_OPERATOR","../Grammar/Expression.code" );
-     VarArgEndOp.setFunctionSource            ( "SOURCE_VARARG_END_OPERATOR","../Grammar/Expression.code" );
      VarArgEndOp.setFunctionSource         ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
      VarArgCopyOp.setFunctionSource        ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
-
-  // ConditionalExp.setFunctionSource      ( "SOURCE_GET_TYPE_CALLING_GET_EXPRESSION_TYPE_EXPRESSION",
-  //                                              "../Grammar/Expression.code" );
-  // NewExp.setFunctionSource              ( "SOURCE_GET_TYPE_CALLING_GET_EXPRESSION_TYPE_EXPRESSION",
-  //                                              "../Grammar/Expression.code" );
 
   // DQ (1/16/2006): I think this should be void instead of generic
   // DeleteExp.setFunctionSource           ( "SOURCE_GET_TYPE_GENERIC",
   //                                              "../Grammar/Expression.code" );
   // DeleteExp.editSubstitute              ( "GENERIC_TYPE", "SgTypeVoid" );
 
-     ThisExp.setFunctionSource             ( "SOURCE_GET_TYPE_THIS_EXPRESSION","../Grammar/Expression.code" );
-     SuperExp.setFunctionSource            ( "SOURCE_GET_TYPE_SUPER_EXPRESSION","../Grammar/Expression.code" );
-     ClassExp.setFunctionSource            ( "SOURCE_GET_TYPE_CLASS_EXPRESSION","../Grammar/Expression.code" );
-
-  // AssignInitializer.setFunctionSource   ( "SOURCE_GET_TYPE_CALLING_GET_EXPRESSION_TYPE_EXPRESSION",
-  //                                              "../Grammar/Expression.code" );
-
   // DQ (7/19/2006): Suggested change by Jeremiah Willcock
   // ConstructorInitializer.setFunctionSource ( "SOURCE_GET_TYPE_GENERIC", "../Grammar/Expression.code" );
   // ConstructorInitializer.editSubstitute    ( "GENERIC_TYPE", "SgTypeDefault" );
      ConstructorInitializer.setFunctionSource ( "SOURCE_GET_TYPE_CLASS_DECL", "../Grammar/Expression.code" );
 
-     NullExpression.setFunctionSource    ( "SOURCE_NULL_EXPRESSION", "../Grammar/Expression.code" );
   // NullExpression.setFunctionSource    ( "SOURCE_DEFAULT_GET_TYPE", "../Grammar/Expression.code" );
   // NullExpression.setFunctionSource    ( "SOURCE_EMPTY_SET_TYPE_FUNCTION", "../Grammar/Expression.code" );
      NullExpression.setFunctionSource    ( "SOURCE_GET_TYPE_GENERIC", "../Grammar/Expression.code" );
      NullExpression.editSubstitute       ( "GENERIC_TYPE", "SgTypeDefault" );
 
-     AdaOthersExp.setFunctionSource      ( "SOURCE_ADA_OTHERS_EXPRESSION", "../Grammar/Expression.code" );
      AdaOthersExp.setFunctionSource      ( "SOURCE_GET_TYPE_GENERIC", "../Grammar/Expression.code" );
      AdaOthersExp.editSubstitute         ( "GENERIC_TYPE", "SgTypeDefault" );
 
-     VariantExpression.setFunctionSource ( "SOURCE_VARIANT_EXPRESSION", "../Grammar/Expression.code" );
   // VariantExpression.setFunctionSource ( "SOURCE_DEFAULT_GET_TYPE", "../Grammar/Expression.code" );
   // VariantExpression.setFunctionSource ( "SOURCE_EMPTY_SET_TYPE_FUNCTION", "../Grammar/Expression.code" );
   // VariantExpression.editSubstitute    ( "GENERIC_TYPE", "SgTypeDefault" );
      VariantExpression.setFunctionSource ( "SOURCE_GET_TYPE_GENERIC", "../Grammar/Expression.code" );
      VariantExpression.editSubstitute    ( "GENERIC_TYPE", "SgTypeDefault" );
 
-     StatementExpression.setFunctionSource ( "SOURCE_STATEMENT_EXPRESSION", "../Grammar/Expression.code" );
-
-     AsmOp.setFunctionSource             ( "SOURCE_ASM_OP", "../Grammar/Expression.code" );
-
   // DQ (10/8/2008): Unclear if this is how we should hancle this!
   // UserDefinedUnaryOp.setFunctionSource  ( "SOURCE_GET_TYPE_FROM_SYMBOL","../Grammar/Expression.code" );
   // UserDefinedBinaryOp.setFunctionSource ( "SOURCE_GET_TYPE_FROM_SYMBOL","../Grammar/Expression.code" );
 
      PseudoDestructorRefExp.setFunctionSource ( "SOURCE_GET_TYPE_CLASS_DECL", "../Grammar/Expression.code" );
-     PseudoDestructorRefExp.setFunctionSource ( "SOURCE_PSEUDO_DESTRUCTOR_REF", "../Grammar/Expression.code" );
 
   // TV (04/22/2010): CUDA support
 
-     CudaKernelExecConfig.setFunctionSource ( "SOURCE_CUDA_KERNEL_EXEC_CONFIG","../Grammar/Expression.code" );
      CudaKernelExecConfig.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      CudaKernelExecConfig.setFunctionSource ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
-     CudaKernelCallExp.setFunctionSource ( "SOURCE_CUDA_KERNEL_CALL_EXPRESSION","../Grammar/Expression.code" );
 
   // driscoll6 (6/27/11): Python support
-     LambdaRefExp.setFunctionSource ( "SOURCE_LAMBDA_REF_EXP","../Grammar/Expression.code" );
      TupleExp.setFunctionSource     ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
-     TupleExp.setFunctionSource     ( "SOURCE_TUPLE_EXP","../Grammar/Expression.code" );
      ListExp.setFunctionSource      ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
-     ListExp.setFunctionSource      ( "SOURCE_LIST_EXP","../Grammar/Expression.code" );
      DictionaryExp.setFunctionSource    ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
-     DictionaryExp.setFunctionSource    ( "SOURCE_DICTIONARY_EXP","../Grammar/Expression.code" );
      KeyDatumPair.setFunctionSource     ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
-     KeyDatumPair.setFunctionSource     ( "SOURCE_KEY_DATUM_PAIR","../Grammar/Expression.code" );
      Comprehension.setFunctionSource     ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
-     Comprehension.setFunctionSource     ( "SOURCE_COMPREHENSION","../Grammar/Expression.code" );
      ListComprehension.setFunctionSource     ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
-     ListComprehension.setFunctionSource     ( "SOURCE_LIST_COMPREHENSION","../Grammar/Expression.code" );
      SetComprehension.setFunctionSource     ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
-     SetComprehension.setFunctionSource     ( "SOURCE_SET_COMPREHENSION","../Grammar/Expression.code" );
      DictionaryComprehension.setFunctionSource     ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
-     DictionaryComprehension.setFunctionSource     ( "SOURCE_DICTIONARY_COMPREHENSION","../Grammar/Expression.code" );
      StringConversion.setFunctionSource     ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
-     StringConversion.setFunctionSource     ( "SOURCE_STRING_CONVERSION","../Grammar/Expression.code" );
      YieldExpression.setFunctionSource      ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
 
   // DQ (7/25/2020): Adding support for C++20.
@@ -3563,9 +3270,6 @@ Grammar::setUpExpressions ()
      AwaitExpression.setFunctionSource     ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
      ChooseExpression.setFunctionSource    ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
 
-     MatrixExp.setFunctionSource    ( "SOURCE_MATRIX_EXP", "../Grammar/Expression.code" );
      MagicColonExp.setFunctionSource ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
      RangeExp.setFunctionSource     ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
-     RangeExp.setFunctionSource    ( "SOURCE_RANGE_EXP", "../Grammar/Expression.code" );
-
    }
