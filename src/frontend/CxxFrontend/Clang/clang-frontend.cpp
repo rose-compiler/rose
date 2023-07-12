@@ -253,6 +253,7 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
             break;
         case ClangToSageTranslator::CPLUSPLUS:
             lang_opts.CPlusPlus = 1;
+            lang_opts.Bool = 1;
 //          compiler_instance->getInvocation().setLangDefaults(lang_opts, clang::IK_CXX, );
             break;
         case ClangToSageTranslator::CUDA:
