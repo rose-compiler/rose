@@ -42,7 +42,7 @@ size_t read_bytes(const SgAsmJvmConstantPool* pool, char* &bytes, T &length)
 }
 
 template <typename T>
-size_t read_value(const SgAsmJvmConstantPool* pool, T &value, bool advance_offset=true)
+size_t read_value(const SgAsmJvmConstantPool* pool, T &value, bool advanceOffset=true)
 {
   SgAsmGenericHeader* header{pool->get_header()};
   rose_addr_t offset{header->get_offset()};
@@ -53,8 +53,15 @@ size_t read_value(const SgAsmJvmConstantPool* pool, T &value, bool advance_offse
     ROSE_ASSERT(false && "Error reading JVM value");
   }
   value = Rose::BinaryAnalysis::ByteOrder::beToHost(value);
-  if (advance_offset) header->set_offset(offset + count);
+  if (advanceOffset) header->set_offset(offset + count);
   return count;
+}
+
+template <typename T>
+void writeValue(std::ostream& os, T value)
+{
+  Rose::BinaryAnalysis::ByteOrder::hostToBe(value, &value);
+  os.write(reinterpret_cast<const char*>(&value), sizeof value);
 }
 
 } // namespace Jvm

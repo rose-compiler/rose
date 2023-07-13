@@ -48,7 +48,7 @@ void SgAsmJvmField::unparse(std::ostream& os) const
   os.write(reinterpret_cast<const char*>(&name_index), sizeof name_index);
   os.write(reinterpret_cast<const char*>(&descriptor_index), sizeof descriptor_index);
 
-  //  p_attribute_table->unparse(os);
+  p_attribute_table->unparse(os);
 }
 
 void SgAsmJvmField::dump(FILE*f, const char* prefix, ssize_t idx) const

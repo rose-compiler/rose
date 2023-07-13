@@ -1,7 +1,7 @@
-/** JVM Exception.
+/** JVM ExceptionHandler.
  *
- *  Each exception is described by an anonymous structure defined in Code_attribute, section 4.7.3 of the JVM specification. */
-class SgAsmJvmException: public SgAsmJvmNode {
+ *  Each exception handler is described by an anonymous structure defined in Code_attribute, section 4.7.3 of the JVM specification. */
+class SgAsmJvmExceptionHandler: public SgAsmJvmNode {
     /** Property: start_pc
      *
      *  The value of the start_pc item must be a valid index into the constant_pool table (see JVM specification).  Present in an
@@ -33,13 +33,13 @@ class SgAsmJvmException: public SgAsmJvmNode {
  public:
     /** Initialize the object before parsing.
      *
-     *  This is the preferred constructor to use before parsing.  It shall set its parent. */
-    explicit SgAsmJvmException(SgAsmJvmExceptionTable* table);
+     *  This is the preferred constructor to use before parsing as it sets its parent. */
+    explicit SgAsmJvmExceptionHandler(SgAsmJvmExceptionTable* table);
 
     /** Initialize the object by parsing content from the class file. */
-    SgAsmJvmException* parse(SgAsmJvmConstantPool*);
+    SgAsmJvmExceptionHandler* parse(SgAsmJvmConstantPool*);
 
-    /** Write exception to a binary file. */
+    /** Write the object to a binary file. */
     virtual void unparse(std::ostream&) const override;
 
     /** Print some debugging information. */

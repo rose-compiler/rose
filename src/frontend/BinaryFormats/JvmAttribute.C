@@ -31,6 +31,12 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
   else if (name == "StackMapTable") { // 4.7.3
     return new SgAsmJvmStackMapTable(parent);
   }
+  else if (name == "Exceptions") { // 4.7.5
+    return new SgAsmJvmExceptions(parent);
+  }
+  else if (name == "InnerClasses") { // 4.7.6
+    return new SgAsmJvmInnerClasses(parent);
+  }
   else if (name == "Signature") { // 4.7.9
     return new SgAsmJvmSignature(parent);
   }
@@ -39,6 +45,9 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
   }
   else if (name == "LineNumberTable") { // 4.7.12
     return new SgAsmJvmLineNumberTable(parent);
+  }
+  else if (name == "BootstrapMethods") { // 4.7.23
+    return new SgAsmJvmBootstrapMethods(parent);
   }
 
   // skip attribute
@@ -69,14 +78,8 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::parse(SgAsmJvmConstantPool* pool)
 
 void SgAsmJvmAttribute::unparse(std::ostream& os) const
 {
-  auto attribute_name_index = p_attribute_name_index;
-  auto attribute_length = p_attribute_length;
-
-  hostToBe(attribute_name_index, &attribute_name_index);
-  hostToBe(attribute_length, &attribute_length);
-
-  os.write(reinterpret_cast<const char*>(&attribute_name_index), sizeof attribute_name_index);
-  os.write(reinterpret_cast<const char*>(&attribute_length), sizeof attribute_length);
+  Jvm::writeValue(os, p_attribute_name_index);
+  Jvm::writeValue(os, p_attribute_length);
 }
 
 void SgAsmJvmAttribute::dump(FILE* f, const char* prefix, ssize_t idx) const
@@ -110,16 +113,15 @@ SgAsmJvmAttributeTable* SgAsmJvmAttributeTable::parse(SgAsmJvmConstantPool* pool
 
 void SgAsmJvmAttributeTable::unparse(std::ostream& os) const
 {
-  uint16_t attributes_count = get_attributes().size();
-  hostToBe(attributes_count, &attributes_count);
-  os.write(reinterpret_cast<const char*>(&attributes_count), sizeof attributes_count);
+  uint16_t attributesCount = get_attributes().size();
+  Jvm::writeValue(os, attributesCount);
 
   for (auto attribute : get_attributes()) {
     attribute->unparse(os);
   }
 }
 
-void SgAsmJvmAttributeTable::dump(FILE*f, const char* prefix, ssize_t idx) const
+void SgAsmJvmAttributeTable::dump(FILE* f, const char* prefix, ssize_t idx) const
 {
   fprintf(f, "%s", prefix);
   for (auto attribute : get_attributes()) {
@@ -153,7 +155,7 @@ void SgAsmJvmConstantValue::unparse(std::ostream& os) const
   mlog[WARN] << "Unparsing of SgAsmJvmConstantValue is not implemented yet\n";
 }
 
-void SgAsmJvmConstantValue::dump(FILE*f, const char* prefix, ssize_t idx) const
+void SgAsmJvmConstantValue::dump(FILE* f, const char* prefix, ssize_t idx) const
 {
   SgAsmJvmAttribute::dump(f, prefix, idx);
   fprintf(f, "SgAsmJvmConstantValue:%d\n", p_constantvalue_index);
@@ -202,17 +204,9 @@ void SgAsmJvmCodeAttribute::unparse(std::ostream& os) const
 {
   SgAsmJvmAttribute::unparse(os);
 
-  auto max_stack = p_max_stack;
-  auto max_locals = p_max_locals;
-  auto code_length = p_code_length;
-
-  hostToBe(max_stack, &max_stack);
-  hostToBe(max_locals, &max_locals);
-  hostToBe(code_length, &code_length);
-
-  os.write(reinterpret_cast<const char*>(&max_stack), sizeof max_stack);
-  os.write(reinterpret_cast<const char*>(&max_locals), sizeof max_stack);
-  os.write(reinterpret_cast<const char*>(&code_length), sizeof code_length);
+  Jvm::writeValue(os, p_max_stack);
+  Jvm::writeValue(os, p_max_locals);
+  Jvm::writeValue(os, p_code_length);
 
   // Write code
   os.write(p_code, p_code_length);
@@ -225,6 +219,68 @@ void SgAsmJvmCodeAttribute::dump(FILE* f, const char* prefix, ssize_t idx) const
 {
   SgAsmJvmAttribute::dump(f, prefix, idx);
   fprintf(f, "-->SgAsmJvmCodeAttribute:%d:%d:%d\n", p_max_stack, p_max_locals, p_code_length);
+}
+
+SgAsmJvmExceptionTable::SgAsmJvmExceptionTable(SgAsmJvmCodeAttribute* parent)
+{
+  initializeProperties();
+  set_parent(parent);
+}
+
+SgAsmJvmExceptionTable* SgAsmJvmExceptionTable::parse(SgAsmJvmConstantPool* pool)
+{
+  uint16_t tableLength;
+  Jvm::read_value(pool, tableLength);
+
+  for (int ii = 0; ii < tableLength; ii++) {
+    auto handler = new SgAsmJvmExceptionHandler(this);
+    handler->parse(pool);
+    get_handlers().push_back(handler);
+  }
+  return this;
+}
+
+void SgAsmJvmExceptionTable::unparse(std::ostream &os) const
+{
+  uint16_t tableLength = get_handlers().size();
+  Jvm::writeValue(os, tableLength);
+
+  for (auto handler : get_handlers()) {
+    handler->unparse(os);
+  }
+}
+
+void SgAsmJvmExceptionTable::dump(FILE* f, const char* prefix, ssize_t idx) const
+{
+  mlog[WARN] << "SgAsmJvmExceptionTable::dump() not implemented yet\n";
+}
+
+SgAsmJvmExceptionHandler::SgAsmJvmExceptionHandler(SgAsmJvmExceptionTable* table)
+{
+  initializeProperties();
+  set_parent(table);
+}
+
+SgAsmJvmExceptionHandler* SgAsmJvmExceptionHandler::parse(SgAsmJvmConstantPool* pool)
+{
+  Jvm::read_value(pool, p_start_pc);
+  Jvm::read_value(pool, p_end_pc);
+  Jvm::read_value(pool, p_handler_pc);
+  Jvm::read_value(pool, p_catch_type);
+  return this;
+}
+
+void SgAsmJvmExceptionHandler::unparse(std::ostream &os) const
+{
+  Jvm::writeValue(os, p_start_pc);
+  Jvm::writeValue(os, p_end_pc);
+  Jvm::writeValue(os, p_handler_pc);
+  Jvm::writeValue(os, p_catch_type);
+}
+
+void SgAsmJvmExceptionHandler::dump(FILE* f, const char* prefix, ssize_t idx) const
+{
+  mlog[WARN] << "SgAsmJvmExceptionHandler::dump() not implemented yet\n";
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -257,8 +313,7 @@ void SgAsmJvmStackMapTable::unparse(std::ostream& os) const
   SgAsmJvmAttribute::unparse(os);
 
   uint16_t numEntries = get_entries().size();
-  hostToBe(numEntries, &numEntries);
-  os.write(reinterpret_cast<const char*>(&numEntries), sizeof numEntries);
+  Jvm::writeValue(os, numEntries);
 
   for (auto frame : get_entries()) {
     frame->unparse(os);
@@ -336,21 +391,17 @@ SgAsmJvmStackMapFrame* SgAsmJvmStackMapFrame::parse(SgAsmJvmConstantPool* pool)
     type->parse(pool);
     get_stack().push_back(type);
   }
-
   return this;
 }
 
 void SgAsmJvmStackMapFrame::unparse(std::ostream& os) const
 {
-  auto type = p_frame_type;
-  hostToBe(type, &type);
-  os.write(reinterpret_cast<const char*>(&type), sizeof type);
+  Jvm::writeValue(os, p_frame_type);
 
   // Warning: order is important (see FULL_FRAME above)
 
-  if (auto offset = p_offset_delta) {
-    hostToBe(offset, &offset);
-    os.write(reinterpret_cast<const char*>(&offset), sizeof offset);
+  if (p_offset_delta) {
+    Jvm::writeValue(os, p_offset_delta);
   }
 
   // uint16_t number_of_locals;
@@ -358,8 +409,7 @@ void SgAsmJvmStackMapFrame::unparse(std::ostream& os) const
   //
   uint16_t numLocals = get_locals().size();
   if (numLocals || p_frame_type==0xff) { // numLocals must be written for frame_type==FULL_FRAME
-    hostToBe(numLocals, &numLocals);
-    os.write(reinterpret_cast<const char*>(&numLocals), sizeof numLocals);
+    Jvm::writeValue(os, numLocals);
   }
   for (auto local : get_locals()) {
     local->unparse(os);
@@ -370,8 +420,7 @@ void SgAsmJvmStackMapFrame::unparse(std::ostream& os) const
   //
   uint16_t numStack = get_stack().size();
   if (numStack || p_frame_type==0xff) { // numStack must be written for frame_type==FULL_FRAME
-    hostToBe(numStack, &numStack);
-    os.write(reinterpret_cast<const char*>(&numStack), sizeof numStack);
+    Jvm::writeValue(os, numStack);
   }
   for (auto stackEntry : get_stack()) {
     stackEntry->unparse(os);
@@ -419,17 +468,13 @@ SgAsmJvmStackMapVerificationType* SgAsmJvmStackMapVerificationType::parse(SgAsmJ
 
 void SgAsmJvmStackMapVerificationType::unparse(std::ostream& os) const
 {
-  auto tag = p_tag;
-  hostToBe(tag, &tag);
-  os.write(reinterpret_cast<const char*>(&tag), sizeof tag);
+  Jvm::writeValue(os, p_tag);
 
-  if (auto index = p_cpool_index) {
-    hostToBe(index, &index);
-    os.write(reinterpret_cast<const char*>(&index), sizeof index);
+  if (p_cpool_index) {
+    Jvm::writeValue(os, p_cpool_index);
   }
-  if (auto offset = p_offset) {
-    hostToBe(offset, &offset);
-    os.write(reinterpret_cast<const char*>(&offset), sizeof offset);
+  if (p_offset) {
+    Jvm::writeValue(os, p_offset);
   }
 }
 
@@ -441,68 +486,44 @@ void SgAsmJvmStackMapVerificationType::dump(FILE* f, const char* prefix, ssize_t
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-// 4.7.5 The Exceptions Attribute. Exceptions_attribute represented by the SgAsmJvmException class.
+// 4.7.5 The Exceptions Attribute. Exceptions_attribute represented by the SgAsmJvmExceptions class.
 //
-SgAsmJvmException::SgAsmJvmException(SgAsmJvmExceptionTable* table)
+SgAsmJvmExceptions::SgAsmJvmExceptions(SgAsmJvmAttributeTable* table)
 {
   initializeProperties();
   set_parent(table);
 }
 
-SgAsmJvmException* SgAsmJvmException::parse(SgAsmJvmConstantPool* pool)
+SgAsmJvmExceptions* SgAsmJvmExceptions::parse(SgAsmJvmConstantPool* pool)
 {
-  Jvm::read_value(pool, p_start_pc);
-  Jvm::read_value(pool, p_end_pc);
-  Jvm::read_value(pool, p_handler_pc);
-  Jvm::read_value(pool, p_catch_type);
+  uint16_t numExceptions;
+  Jvm::read_value(pool, numExceptions);
+
+  SgUnsigned16List u16List;
+
+  uint16_t index;
+  for (int ii = 0; ii < numExceptions; ii++) {
+    Jvm::read_value(pool, index);
+    //    get_exception_index_table().push_back(index);
+    u16List.push_back(index);
+  }
   return this;
 }
 
-void SgAsmJvmException::unparse(std::ostream &os) const
+void SgAsmJvmExceptions::unparse(std::ostream &os) const
 {
-  mlog[WARN] << "Unparsing of SgAsmJvmException is not implemented yet\n";
-}
+  uint16_t numExceptions = get_exception_index_table().size();
+  Jvm::writeValue(os, numExceptions);
 
-void SgAsmJvmException::dump(FILE*f, const char* prefix, ssize_t idx) const
-{
-  mlog[WARN] << "SgAsmJvmException::dump() not implemented yet\n";
-}
-
-SgAsmJvmExceptionTable::SgAsmJvmExceptionTable(SgAsmJvmCodeAttribute* parent)
-{
-  initializeProperties();
-  set_parent(parent);
-}
-
-SgAsmJvmExceptionTable* SgAsmJvmExceptionTable::parse(SgAsmJvmConstantPool* pool)
-{
-  uint16_t exception_table_length;
-  Jvm::read_value(pool, exception_table_length);
-
-  for (int ii = 0; ii < exception_table_length; ii++) {
-    mlog[INFO] << "\n --- exception ---\n";
-    auto exception = new SgAsmJvmException(this);
-    exception->parse(pool);
-    get_exceptions().push_back(exception);
-  }
-
-  return this;
-}
-
-void SgAsmJvmExceptionTable::unparse(std::ostream &os) const
-{
-  uint16_t exception_table_length = get_exceptions().size();
-  hostToBe(exception_table_length, &exception_table_length);
-  os.write(reinterpret_cast<const char*>(&exception_table_length), sizeof exception_table_length);
-
-  for (auto exception : get_exceptions()) {
-    exception->unparse(os);
+  for (uint16_t index : get_exception_index_table()) {
+    //    uint16_t index = std::static_cast<uint16_t>(index32);
+    Jvm::writeValue(os, index);
   }
 }
 
-void SgAsmJvmExceptionTable::dump(FILE*f, const char* prefix, ssize_t idx) const
+void SgAsmJvmExceptions::dump(FILE* f, const char* prefix, ssize_t idx) const
 {
-  mlog[WARN] << "SgAsmJvmExceptionTable::dump() not implemented yet\n";
+  mlog[WARN] << "SgAsmJvmExceptions::dump() not implemented yet\n";
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -517,16 +538,28 @@ SgAsmJvmInnerClasses::SgAsmJvmInnerClasses(SgAsmJvmAttributeTable* parent)
 
 SgAsmJvmInnerClasses* SgAsmJvmInnerClasses::parse(SgAsmJvmConstantPool* pool)
 {
-  mlog[WARN] << "Parsing of SgAsmJvmInnerClasses is not implemented yet\n";
+  uint16_t numClasses{0};
+  Jvm::read_value(pool, numClasses);
+
+  for (int ii = 0; ii < numClasses; ii++) {
+    auto entry = new SgAsmJvmInnerClassesEntry(this);
+    entry->parse(pool);
+    get_classes().push_back(entry);
+  }
   return this;
 }
 
 void SgAsmJvmInnerClasses::unparse(std::ostream& os) const
 {
-  mlog[WARN] << "Unparsing of SgAsmJvmInnerClasses is not implemented yet\n";
+  uint16_t numClasses = get_classes().size();
+  Jvm::writeValue(os, numClasses);
+
+  for (auto entry : get_classes()) {
+    entry->unparse(os);
+  }
 }
 
-void SgAsmJvmInnerClasses::dump(FILE*f, const char* prefix, ssize_t idx) const
+void SgAsmJvmInnerClasses::dump(FILE* f, const char* prefix, ssize_t idx) const
 {
   mlog[WARN] << "SgAsmJvmInnerClasses::dump() ...\n";
 }
@@ -539,16 +572,22 @@ SgAsmJvmInnerClassesEntry::SgAsmJvmInnerClassesEntry(SgAsmJvmInnerClasses* table
 
 SgAsmJvmInnerClassesEntry* SgAsmJvmInnerClassesEntry::parse(SgAsmJvmConstantPool* pool)
 {
-  mlog[WARN] << "Parsing of SgAsmJvmInnerClassesEntry is not implemented yet\n";
+  Jvm::read_value(pool, p_inner_class_info_index);
+  Jvm::read_value(pool, p_outer_class_info_index);
+  Jvm::read_value(pool, p_inner_name_index);
+  Jvm::read_value(pool, p_inner_class_access_flags);
   return this;
 }
 
 void SgAsmJvmInnerClassesEntry::unparse(std::ostream& os) const
 {
-  mlog[WARN] << "Unparsing of SgAsmJvmInnerClassesEntry is not implemented yet\n";
+  Jvm::writeValue(os, p_inner_class_info_index);
+  Jvm::writeValue(os, p_outer_class_info_index);
+  Jvm::writeValue(os, p_inner_name_index);
+  Jvm::writeValue(os, p_inner_class_access_flags);
 }
 
-void SgAsmJvmInnerClassesEntry::dump(FILE*f, const char* prefix, ssize_t idx) const
+void SgAsmJvmInnerClassesEntry::dump(FILE* f, const char* prefix, ssize_t idx) const
 {
   mlog[INFO] << "SgAsmJvmInnerClassesEntry::dump() is not implemented yet\n";
 }
@@ -583,13 +622,10 @@ SgAsmJvmAttribute* SgAsmJvmSignature::parse(SgAsmJvmConstantPool* pool)
 void SgAsmJvmSignature::unparse(std::ostream& os) const
 {
   SgAsmJvmAttribute::unparse(os);
-
-  auto index = p_signature_index;
-  hostToBe(index, &index);
-  os.write(reinterpret_cast<const char*>(&index), sizeof index);
+  Jvm::writeValue(os, p_signature_index);
 }
 
-void SgAsmJvmSignature::dump(FILE*f, const char* prefix, ssize_t idx) const
+void SgAsmJvmSignature::dump(FILE* f, const char* prefix, ssize_t idx) const
 {
   SgAsmJvmAttribute::dump(f, prefix, idx);
   fprintf(f, "%s    signature_index:%d\n", prefix, p_signature_index);
@@ -615,13 +651,10 @@ SgAsmJvmAttribute* SgAsmJvmSourceFile::parse(SgAsmJvmConstantPool* pool)
 void SgAsmJvmSourceFile::unparse(std::ostream& os) const
 {
   SgAsmJvmAttribute::unparse(os);
-
-  auto index = p_sourcefile_index;
-  hostToBe(index, &index);
-  os.write(reinterpret_cast<const char*>(&index), sizeof index);
+  Jvm::writeValue(os, p_sourcefile_index);
 }
 
-void SgAsmJvmSourceFile::dump(FILE*f, const char* prefix, ssize_t idx) const
+void SgAsmJvmSourceFile::dump(FILE* f, const char* prefix, ssize_t idx) const
 {
   SgAsmJvmAttribute::dump(f, prefix, idx);
   fprintf(f, "SgAsmJvmSourceFile::dump():%d\n", p_sourcefile_index);
@@ -662,9 +695,8 @@ void SgAsmJvmLineNumberTable::unparse(std::ostream& os) const
 {
   SgAsmJvmAttribute::unparse(os);
 
-  uint16_t line_number_table_length = get_line_number_table().size();
-  hostToBe(line_number_table_length, &line_number_table_length);
-  os.write(reinterpret_cast<const char*>(&line_number_table_length), sizeof line_number_table_length);
+  uint16_t tableLength = get_line_number_table().size();
+  Jvm::writeValue(os, tableLength);
 
   for (auto line_number : get_line_number_table()) {
     line_number->unparse(os);
@@ -691,15 +723,11 @@ SgAsmJvmLineNumberEntry* SgAsmJvmLineNumberEntry::parse(SgAsmJvmConstantPool* po
 
 void SgAsmJvmLineNumberEntry::unparse(std::ostream& os) const
 {
-  auto start_pc = p_start_pc;
-  auto line_number = p_line_number;
-  hostToBe(start_pc, &start_pc);
-  hostToBe(line_number, &line_number);
-  os.write(reinterpret_cast<const char*>(&start_pc), sizeof start_pc);
-  os.write(reinterpret_cast<const char*>(&line_number), sizeof line_number);
+  Jvm::writeValue(os, p_start_pc);
+  Jvm::writeValue(os, p_line_number);
 }
 
-void SgAsmJvmLineNumberEntry::dump(FILE*f, const char* prefix, ssize_t idx) const
+void SgAsmJvmLineNumberEntry::dump(FILE* f, const char* prefix, ssize_t idx) const
 {
   fprintf(f, "%s:%ld: start_pc:%d line_number:%d\n", prefix, idx, p_start_pc, p_line_number);
 }
@@ -751,13 +779,87 @@ void SgAsmJvmLineNumberEntry::dump(FILE*f, const char* prefix, ssize_t idx) cons
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-// 4.7.22 The AnnotationDefault Attribute. AnnotationDefault_attribute represented by the TODO class.
+// 4.7.22 The AnnotationDefault Attribute. AnnotationDefault_attribute represented by the SgAsmJvmAnnotationDefault class.
 //
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-// 4.7.23 The BootstrapMethods Attribute. BootstrapMethods_attribute represented by the TODO class.
+// 4.7.23 The BootstrapMethods Attribute. BootstrapMethods_attribute represented by the SgAsmJvmBootstrapMethods class.
 //
+SgAsmJvmBootstrapMethods::SgAsmJvmBootstrapMethods(SgAsmJvmAttributeTable* table)
+{
+  initializeProperties();
+  set_parent(table);
+}
+
+SgAsmJvmBootstrapMethods* SgAsmJvmBootstrapMethods::parse(SgAsmJvmConstantPool* pool)
+{
+  uint16_t numMethods;
+  Jvm::read_value(pool, numMethods);
+
+  for (int ii = 0; ii < numMethods; ii++) {
+    auto method = new SgAsmJvmBootstrapMethod(this);
+    method->parse(pool);
+    get_bootstrap_methods().push_back(method);
+  }
+  return this;
+}
+
+void SgAsmJvmBootstrapMethods::unparse(std::ostream &os) const
+{
+  uint16_t numMethods = get_bootstrap_methods().size();
+  Jvm::writeValue(os, numMethods);
+
+  for (auto method : get_bootstrap_methods()) {
+    method->unparse(os);
+  }
+}
+
+void SgAsmJvmBootstrapMethods::dump(FILE* f, const char* prefix, ssize_t idx) const
+{
+  mlog[WARN] << "SgAsmJvmBootstrapMethods::dump() not implemented yet\n";
+}
+
+// Note: the previous class name is plural, the following singular
+
+SgAsmJvmBootstrapMethod::SgAsmJvmBootstrapMethod(SgAsmJvmBootstrapMethods* table)
+{
+  initializeProperties();
+  set_parent(table);
+}
+
+SgAsmJvmBootstrapMethod* SgAsmJvmBootstrapMethod::parse(SgAsmJvmConstantPool* pool)
+{
+  Jvm::read_value(pool, p_bootstrap_method_ref);
+
+  uint16_t numArgs;
+  Jvm::read_value(pool, numArgs);
+
+  SgUnsigned16List u16List;
+
+  uint16_t index;
+  for (int ii = 0; ii < numArgs; ii++) {
+    Jvm::read_value(pool, index);
+    //    get_bootstrap_arguments().push_back(index);
+    u16List.push_back(index);
+  }
+  return this;
+}
+
+void SgAsmJvmBootstrapMethod::unparse(std::ostream &os) const
+{
+  uint16_t numArgs = get_bootstrap_arguments().size();
+  Jvm::writeValue(os, numArgs);
+
+  for (uint16_t index : get_bootstrap_arguments()) {
+    Jvm::writeValue(os, index);
+  }
+}
+
+void SgAsmJvmBootstrapMethod::dump(FILE* f, const char* prefix, ssize_t idx) const
+{
+  mlog[WARN] << "SgAsmJvmBootstrapMethod::dump() not implemented yet\n";
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //

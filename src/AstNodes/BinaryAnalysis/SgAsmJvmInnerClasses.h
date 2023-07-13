@@ -11,12 +11,12 @@ class SgAsmJvmInnerClasses: public SgAsmJvmAttribute {
 public:
     /** Initialize the InnerClasses attribute before parsing.
      *
-     *  This is the preferred constructor to use before parsing.  It shall set its parent. */
+     *  This is the preferred constructor to use before parsing as it sets its parent. */
     explicit SgAsmJvmInnerClasses(SgAsmJvmAttributeTable* table);
 
-    /** Parses a JVM innerclasses attribute.
+    /** Parses a JVM InnerClasses attribute.
      *
-     *  Parses a JVM innerclasses attribute and constructs and parses all innerclasses
+     * Parses a JVM InnerClasses attribute and constructs and parses all classes
      * entries reachable from the table. Returns a pointer to this object. */
     SgAsmJvmInnerClasses* parse(SgAsmJvmConstantPool*) override;
 

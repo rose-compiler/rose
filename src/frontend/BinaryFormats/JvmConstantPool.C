@@ -294,6 +294,7 @@ void PoolEntry::unparse(std::ostream& os) const
       os.write(reinterpret_cast<const char*>(&name_and_type_index), sizeof name_and_type_index);
       break;
     }
+    case PoolEntry::EMPTY: // An extra entry following CONSTANT_Long or CONSTANT_Double (a noop)
     default:
       break;
   }
@@ -347,23 +348,10 @@ void SgAsmJvmConstantPool::unparse(std::ostream& os) const
     uint8_t tag = entry->get_tag();
     auto kind = static_cast<PoolEntry::Kind>(tag);
 
-    hostToBe(tag, &tag);
-    os.write(reinterpret_cast<const char*>(&tag), sizeof tag);
-
-    entry->unparse(os);
-
-    // If this is CONSTANT_Long or CONSTANT_Double, store index location with empty entry
-    // 4.4.5 "In retrospect, making 8-byte constants take two constant pool entries was a poor choice."
-    //
-    if (kind == PoolEntry::CONSTANT_Long || kind == PoolEntry::CONSTANT_Double) {
-      // Create and store an empty entry
-      ROSE_ABORT();
-      //erasmus: write 0?
-#if 0
-      entry = new PoolEntry(PoolEntry::EMPTY);
-      get_entries().push_back(entry);
-      ii += 1;
-#endif
+    if (kind != PoolEntry::EMPTY) {
+      hostToBe(tag, &tag);
+      os.write(reinterpret_cast<const char*>(&tag), sizeof tag);
+      entry->unparse(os);
     }
   }
 }

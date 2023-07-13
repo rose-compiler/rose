@@ -266,14 +266,17 @@ add_library(roseGeneratedBinaryAnalysis OBJECT
   SgAsmInterpretationList.C
   SgAsmJvmAttribute.C
   SgAsmJvmAttributeTable.C
+  SgAsmJvmBootstrapMethod.C
+  SgAsmJvmBootstrapMethods.C
   SgAsmJvmClass.C
   SgAsmJvmCodeAttribute.C
   SgAsmJvmConstantPool.C
   SgAsmJvmConstantPoolEntry.C
   SgAsmJvmConstantValue.C
   SgAsmJvmEnclosingMethod.C
-  SgAsmJvmException.C
+  SgAsmJvmExceptionHandler.C
   SgAsmJvmExceptionTable.C
+  SgAsmJvmExceptions.C
   SgAsmJvmField.C
   SgAsmJvmFieldTable.C
   SgAsmJvmFileHeader.C

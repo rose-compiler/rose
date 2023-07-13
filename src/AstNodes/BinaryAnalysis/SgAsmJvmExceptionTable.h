@@ -1,15 +1,16 @@
 /** Represents a JVM exception_info table/array.
  *
- *  The JVM exceptions table is an SgAsmJvmNode containing SgAsmJvmException entries. */
+ *  The JVM exceptions table is an SgAsmJvmNode containing SgAsmJvmExceptionHandler entries.
+ *  Each entry in the table describes one exception handler in the code array. */
 class SgAsmJvmExceptionTable: public SgAsmJvmNode {
     /** Property: List of pointers to exceptions. */
     [[using Rosebud: rosetta, large]]
-    SgAsmJvmExceptionPtrList exceptions;
+    SgAsmJvmExceptionHandlerPtrList handlers;
 
 public:
     /** Initialize the exception table before parsing.
      *
-     *  This is the preferred constructor to use before parsing.  It shall set its parent. */
+     *  This is the preferred constructor to use before parsing as it sets its parent. */
     explicit SgAsmJvmExceptionTable(SgAsmJvmCodeAttribute*);
 
     /** Parses a JVM exception table.

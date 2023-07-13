@@ -6,19 +6,19 @@
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #include <sage3basic.h>
 
-SgAsmJvmExceptionPtrList const&
-SgAsmJvmExceptionTable::get_exceptions() const {
-    return p_exceptions;
+SgAsmJvmExceptionHandlerPtrList const&
+SgAsmJvmExceptionTable::get_handlers() const {
+    return p_handlers;
 }
 
-SgAsmJvmExceptionPtrList&
-SgAsmJvmExceptionTable::get_exceptions() {
-    return p_exceptions;
+SgAsmJvmExceptionHandlerPtrList&
+SgAsmJvmExceptionTable::get_handlers() {
+    return p_handlers;
 }
 
 void
-SgAsmJvmExceptionTable::set_exceptions(SgAsmJvmExceptionPtrList const& x) {
-    this->p_exceptions = x;
+SgAsmJvmExceptionTable::set_handlers(SgAsmJvmExceptionHandlerPtrList const& x) {
+    this->p_handlers = x;
     set_isModified(true);
 }
 
