@@ -32,10 +32,10 @@ parseFatHeader(rose_addr_t base_va, std::uint32_t rva, SgAsmPEFileHeader* fhdr)
   const std::size_t    nread = fhdr->get_loader_map()->readQuick(&buf, base_va + rva, sizeof(buf));
   ROSE_ASSERT(nread == 12);
 
-  const std::uint16_t  flags    = ByteOrder::leToHost(*reinterpret_cast<uint16_t*>(buf+0));
-  const std::uint16_t  maxStack = ByteOrder::leToHost(*reinterpret_cast<uint16_t*>(buf+2));
-  const std::uint16_t  codeSize = ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(buf+4));
-  const std::uint16_t  localIni = ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(buf+8));
+  const std::uint16_t  flags    = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint16_t*>(buf+0));
+  const std::uint16_t  maxStack = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint16_t*>(buf+2));
+  const std::uint16_t  codeSize = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(buf+4));
+  const std::uint16_t  localIni = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(buf+8));
   const MethodHeader   res{ flags, maxStack, codeSize, localIni };
 
   ROSE_ASSERT(!res.tiny());
@@ -50,20 +50,55 @@ parseTinyHeader(std::uint8_t header)
 }
 
 SgAsmBlock*
-disassemble(SgAsmCilMethodDef* m, MethodHeader mh, std::vector<std::uint8_t>& buf, const Rose::BinaryAnalysis::Disassembler::Base::Ptr& disasm)
+disassemble(rose_addr_t base_va, SgAsmCilMethodDef* m, MethodHeader mh,
+            std::vector<std::uint8_t>& buf, const Rose::BinaryAnalysis::Disassembler::Base::Ptr& disasm)
 {
-  const std::size_t              sz = buf.size();
-  rose_addr_t                    addr = 0;
-  std::uint8_t*                  b = buf.data();
+  rose_addr_t        addr = 0;
+  const std::size_t  sz = buf.size();
   std::vector<SgAsmInstruction*> lst;
 
-  while (addr < sz)
-  {
-    SgAsmInstruction* instr = disasm->disassembleOne(b, 0, sz, addr);
+  using Rose::BinaryAnalysis::MemoryMap;
+
+  MemoryMap::Ptr map = MemoryMap::instance();
+  map->insert(AddressInterval::baseSize(base_va, sz),
+              MemoryMap::Segment::staticInstance(buf.data(), sz,
+                                                 MemoryMap::READABLE|MemoryMap::EXECUTABLE, "CIL code segment"));
+
+  while (addr < sz) {
+    SgAsmInstruction* instr = disasm->disassembleOne(map, base_va + addr);
     ASSERT_not_null(instr);
 
     lst.push_back(instr);
     addr += instr->get_size();
+
+    if (instr->isUnknown()) {
+      // Pad block with noops because something went wrong
+      // TODO: don't pad with noops, pad by expanding current unknown instruction
+      SgUnsignedCharList rawBytes(1,'\0');
+      while (addr < sz) {
+        auto insn = new SgAsmCilInstruction(base_va+addr, "nop", Rose::BinaryAnalysis::CilInstructionKind::Cil_nop);
+        insn->set_raw_bytes(rawBytes);
+        ASSERT_require(insn->get_raw_bytes().size() == 1);
+        lst.push_back(insn);
+        addr += insn->get_size();
+      }
+    }
+
+    // Just checking for when last instruction is not return from function
+    ASSERT_require(addr <= sz);
+    if (addr == sz) {
+      if (instr->get_anyKind() != 0 &&
+          instr->get_anyKind() != Rose::BinaryAnalysis::CilInstructionKind::Cil_ret &&
+          instr->get_anyKind() != Rose::BinaryAnalysis::CilInstructionKind::Cil_throw &&
+          instr->get_anyKind() != Rose::BinaryAnalysis::CilInstructionKind::Cil_br) {
+        mlog[INFO] << "last instruction in block is not Cil_ret, is 0x" << std::hex << (int) instr->get_anyKind() << std::dec << "\n";
+      }
+    }
+  }
+
+  if (addr > sz) {
+    mlog[FATAL] << "instruction address exceeds size of instruction block\n";
+    ROSE_ABORT();
   }
 
   return sb::buildBasicBlock(lst);
@@ -93,7 +128,7 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
   {
     ASSERT_not_null(m);
 
-    std::uint32_t  rva = m->get_RVA();
+    rose_addr_t rva = static_cast<std::uint32_t>(m->get_RVA());
     
     if (rva == 0) continue;
       
@@ -111,11 +146,11 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
     m->set_initLocals(mh.initLocals());
     
     // parse code
-    std::uint32_t  codeRVA = rva + mh.headerSize();
+    rose_addr_t    codeRVA = rva + mh.headerSize();
     std::uint32_t  codeLen = mh.codeSize();
 
     std::vector<std::uint8_t> code(codeLen, 0);
-    std::size_t    nreadCode = fhdr->get_loader_map()->readQuick(code.data(), base_va + codeRVA, codeLen);
+    std::size_t nreadCode = fhdr->get_loader_map()->readQuick(code.data(), base_va + codeRVA, codeLen);
     ROSE_ASSERT(nreadCode == codeLen);
 
     SgAsmBlock* blk = nullptr;
@@ -125,11 +160,11 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
       namespace rb = Rose::BinaryAnalysis;
 
       case CIL_CODE:
-        blk = disassemble(m, mh, code, rb::DisassemblerCil::instance());
+        blk = disassemble(base_va + codeRVA, m, mh, code, rb::Disassembler::Cil::instance());
         break;
 
       case NATIVE_CODE:
-        blk = disassemble(m, mh, code, rb::Disassembler::X86::instance(4 /* word size */));
+        blk = disassemble(base_va + codeRVA, m, mh, code, rb::Disassembler::X86::instance(4 /* word size */));
         break;
 
       case RUNTIME_CODE:

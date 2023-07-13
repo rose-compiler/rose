@@ -7,11 +7,13 @@
 #include "sage3basic.h"
 
 #include <unordered_map>
+#include "Rose/Diagnostics.h"
+#include "Rose/BinaryAnalysis/Disassembler/Cil.h"
 #include "Rose/BinaryAnalysis/Disassembler/X86.h"
-#include "Rose/BinaryAnalysis/DisassemblerCil.h"
 #include "frontend/SageIII/sageInterface/SageBuilderAsm.h"
 
 namespace sb = Rose::SageBuilderAsm;
+using namespace Rose::Diagnostics; // mlog WARN, ...
 
 `insert "blueprint/util.txt"`
 `for_each cl = .metadata`
@@ -198,8 +200,8 @@ void SgAsmCilMetadataRoot::parse()
 
   uint64_t    metaData = clih->get_metaData();
   uint8_t*    data = reinterpret_cast<uint8_t*>(&metaData);
-  rose_addr_t rva = ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(data));
-  size_t      size = ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(data+4));
+  rose_addr_t rva = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(data));
+  size_t      size = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(data+4));
   rose_addr_t base_va = clih->get_base_va();
   rose_addr_t rva_offset = clih->get_rva_offset(rva);
 
@@ -215,7 +217,7 @@ void SgAsmCilMetadataRoot::parse()
   std::vector<uint8_t> buf(size, 0);
 
   size_t nread = fhdr->get_loader_map()->readQuick(buf.data(), base_va + rva, size);
-  ROSE_ASSERT(nread == size);
+  ASSERT_require(nread == size);
 
   this->parse(buf, 0);
   decodeMetadata(base_va, get_MetadataHeap(), this);
@@ -239,7 +241,7 @@ void SgAsmCilMetadataRoot::parse(std::vector<uint8_t>& buf, size_t index)
   `for_each str = .metadataroot.Streams`
   p_`str.Name` = `str.Init`;
   if (TRACE_CONSTRUCTION)
-    std::cerr << "`str.Name` has " << p_`str.Name`.size() << "elements." << std::endl;
+    std::cerr << "`str.Name` has " << p_`str.Name`.size() << " elements." << std::endl;
   `end_for`
 }
 
@@ -286,10 +288,5 @@ SgAsmCilMetadataRoot::get_MetadataHeap() const
 {
   return getHeapInternal<SgAsmCilMetadataHeap>(get_Streams(), idxMetadataHeap, SgAsmCilDataStream::ID_METADATA_HEAP);
 }
-
-`for_each cl = .metadata`
-std::vector<SgAsmCil`cl.Name`*>&       SgAsmCil`cl.Name`Table::get_elements()       { return p_elements; }
-std::vector<SgAsmCil`cl.Name`*> const& SgAsmCil`cl.Name`Table::get_elements() const { return p_elements; }
-`end_for`
 
 #endif /* ROSE_ENABLE_BINARY_ANALYSIS */
