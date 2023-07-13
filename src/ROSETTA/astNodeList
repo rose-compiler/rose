@@ -935,7 +935,7 @@ SgAsmJvmAttributeTable
 SgAsmJvmMethodTable
 SgAsmJvmField
 SgAsmJvmFieldTable
-SgAsmJvmException
+SgAsmJvmExceptionHandler
 SgAsmJvmExceptionTable
 SgAsmJvmClass
 SgAsmJvmLineNumberEntry
@@ -1040,3 +1040,6 @@ SgFortranContinueStmt
 SgAsmJvmStackMapTable
 SgAsmJvmStackMapFrame
 SgAsmJvmStackMapVerificationType
+SgAsmJvmBootstrapMethod
+SgAsmJvmBootstrapMethods
+SgAsmJvmExceptions

@@ -12,7 +12,7 @@ class SgAsmJvmModuleMainClass: public SgAsmJvmAttribute {
 public:
     /** Initialize the object before parsing.
      *
-     *  This is the preferred constructor to use before parsing.  It shall set its parent. */
+     *  This is the preferred constructor to use before parsing as it sets its parent. */
     explicit SgAsmJvmModuleMainClass(SgAsmJvmExceptionTable* table);
 
     /** Initialize the attribute by parsing the file. */
