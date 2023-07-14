@@ -231,7 +231,31 @@ namespace
   /// \pre     \ref atype is not null.
   /// @{
   FlatArrayType getArrayTypeInfo(SgType* atype);
+  FlatArrayType getArrayTypeInfo(SgType& atype);
   /// @}
+
+#if 0
+  struct RecordField : std::tuple<const SgSymbol*>
+  {
+    const SgSymbol*          symbol()         const { return std::get<0>(*this); }
+    const SgSymbol*          originalSymbol() const;
+    const SgClassDefinition* record()         const;
+    bool                     isInherited()    const { return symbol() == originalSymbol() }
+    bool                     isDiscriminant() const;
+  };
+
+
+  /// returns all fields (defined and inherited) of a record
+  /// \param rec the class definition for which the fields are sought
+  /// \{
+  std::vector<RecordField>
+  getAllFields(const SgClassDefinition& rec);
+
+  std::vector<RecordField>
+  getAllFields(const SgClassDefinition* rec);
+  /// \}
+#endif /* 0 */
+
 
   /// represents a branch in an if elsif else context (either statement or expression).
   template <class SageLocatedNode>

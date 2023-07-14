@@ -3128,9 +3128,9 @@ namespace
                 std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
               )
   {
-    // \todo PP (20/1/23) should we also use the first nondefining scope?
-    //                    see SCOPE_COMMENT_1 ..
-    return nondef ? mkProcedureDecl_nondef(*nondef, scope, rettype, std::move(complete))
+    // we use the nondefining function's scope if available
+    // see SCOPE_COMMENT_1
+    return nondef ? mkProcedureDecl_nondef(*nondef, SG_DEREF(nondef->get_scope()), rettype, std::move(complete))
                   : mkProcedureDecl_nondef(name,    scope, rettype, std::move(complete));
   }
 
@@ -4819,9 +4819,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         //                     in the body the scope of a spec, will make symbols
         //                     in the body invisible, unless the physical scope is used
         //                     for lookup.
-        // SgScopeStatement&       outer   = ctx.scope();
         SgAdaEntryDecl&         sgnode  = mkAdaEntryDefn( entrydcl,
-                                                          SG_DEREF(entrydcl.get_scope()), // was: outer,
+                                                          SG_DEREF(entrydcl.get_scope()), // was: ctx.scope(),
                                                           ParameterCompletion{params, ctx},
                                                           EntryIndexCompletion{decl.Entry_Index_Specification, ctx}
                                                         );
