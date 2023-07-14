@@ -663,7 +663,9 @@ namespace
 
       ElemIdRange range = idRange(adaUnit.Context_Clause_Elements);
       bool        privateDecl = (  (adaUnit.Unit_Class == A_Private_Declaration)
-                                || (adaUnit.Unit_Class == A_Private_Body)
+                                // PP (07/12/23): private is not unparsed
+                                //                ==> do not set it on the body
+                                // || (adaUnit.Unit_Class == A_Private_Body)
                                 );
 
       traverseIDs(range, elemMap(), ElemCreator{ctx});
