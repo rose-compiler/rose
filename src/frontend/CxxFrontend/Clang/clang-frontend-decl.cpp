@@ -2493,16 +2493,23 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
         init = isSgInitializer(tmp_init);
     }
     else if (expr_list_expr != NULL)
+    {
         init = SageBuilder::buildAggregateInitializer(expr_list_expr, type);
+    }
     else if (expr != NULL)
+    {
         init = SageBuilder::buildAssignInitializer_nfi(expr, expr->get_type());
+    }
     if (init != NULL)
     {
         init->set_parent(sg_var_decl);
-        //Pei-Hung (07/12/2023): comment out applySourceRange here as it is redundant.
+        //Pei-Hung (07/12/2023): 
         //applySourceRange should be set whenever the SgInitializer was just created.
         //Otherwise, it could cause overwrite the setting done in setCompilerGeneratedFileInfo.
-        //applySourceRange(init, init_expr->getSourceRange());
+        if(!llvm::isa<clang::CXXConstructExpr>(init_expr))
+        {
+            applySourceRange(init, init_expr->getSourceRange());
+        }
     }
     // Pei-Hung (09/01/2022) setup initializer once the RHS is processed.
     sg_var_decl->reset_initializer(init);
