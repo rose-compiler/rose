@@ -2002,16 +2002,15 @@ namespace
         {
           logKind(stmt.Statement_Kind == An_Entry_Call_Statement ? "An_Entry_Call_Statement" : "A_Procedure_Call_Statement", elem.ID);
 
-          if (stmt.Statement_Kind == A_Procedure_Call_Statement)
-            logTrace() << "A_Procedure_Call_Statement: "
-                       << stmt.Is_Prefix_Notation << " (Is_Prefix_Notation)"
-                       << std::endl;
-
+          //~ if (stmt.Statement_Kind == A_Procedure_Call_Statement)
+            //~ logTrace() << "A_Procedure_Call_Statement: "
+                       //~ << stmt.Is_Prefix_Notation << " (Is_Prefix_Notation)"
+                       //~ << std::endl;
 
           ElemIdRange      args   = idRange(stmt.Call_Statement_Parameters);
-          //~ const bool       callSyntax = (stmt.Statement_Kind == An_Entry_Call_Statement) || stmt.Is_Prefix_Notation;
-          const bool       callSyntax = true;
-          SgExpression&    call   = createCall(stmt.Called_Name, args, callSyntax /* prefix call */, ctx);
+          // oocall indicates if code uses object-oriented syntax: x.init instead of init(x)
+          const bool       oocall = (stmt.Statement_Kind == A_Procedure_Call_Statement) && stmt.Is_Prefix_Notation;
+          SgExpression&    call   = createCall(stmt.Called_Name, args, true /* prefix call */, oocall, ctx);
           SgExprStatement& sgnode = SG_DEREF(sb::buildExprStatement(&call));
 
           attachSourceLocation(call, elem, ctx);
@@ -2021,7 +2020,6 @@ namespace
               Declaration Corresponding_Called_Entity_Unwound
 
               + for A_Procedure_Call_Statement
-              bool        Is_Prefix_Notation
               bool        Is_Dispatching_Call
               bool        Is_Call_On_Dispatching_Operation
               break;

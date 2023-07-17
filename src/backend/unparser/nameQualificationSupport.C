@@ -1542,6 +1542,12 @@ namespace
         suppressNameQualification(n.get_rhs_operand());
       }
 
+      void handle(const SgFunctionCallExp& n)
+      {
+        if (n.get_uses_operator_syntax() || n.get_usesObjectCallSyntax())
+          suppressNameQualification(n.get_function());
+      }
+
       void handle(const SgDesignatedInitializer& n)
       {
         // SgDesignatedInitializer -> SgExprListExp -> SgAggregateInitializer

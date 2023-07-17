@@ -1890,6 +1890,13 @@ Grammar::setUpExpressions ()
      FunctionCallExp.setDataPrototype ( "bool", "uses_operator_syntax", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // PP (7/17/23): To distinguish equivalent Ada calls in the form of
+  //               x.init(1,2,3) and init(x, 1, 2, 4)
+  //               the flag indicates if the call was parsed/ should be unparsed using the
+  //               first argument as prefix notation.
+     FunctionCallExp.setDataPrototype ( "bool", "usesObjectCallSyntax", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      CallExpression.setFunctionPrototype ( "HEADER_CALL_EXPRESSION", "../Grammar/Expression.code" );
      CallExpression.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_FUNCTIONS", "../Grammar/Expression.code" );
      CallExpression.editSubstitute       ( "LIST_NAME", "arg" );
