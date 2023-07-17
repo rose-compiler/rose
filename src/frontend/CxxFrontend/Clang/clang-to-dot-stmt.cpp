@@ -300,6 +300,9 @@ std::string ClangToDotTranslator::Traverse(clang::Stmt * stmt)
         case clang::Stmt::CXXBoolLiteralExprClass:
             ret_status = VisitCXXBoolLiteralExpr((clang::CXXBoolLiteralExpr *)stmt, node_desc);
             break;
+        case clang::Stmt::CXXConstructExprClass:
+            ret_status = VisitCXXConstructExpr((clang::CXXConstructExpr *)stmt, node_desc);
+            break;
         case clang::Stmt::CXXTemporaryObjectExprClass:
             ret_status = VisitCXXTemporaryObjectExpr((clang::CXXTemporaryObjectExpr *)stmt, node_desc);
             break;
