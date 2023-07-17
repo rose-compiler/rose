@@ -1067,9 +1067,12 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
  * recordDecl with hasNameForLinkage set to false is more close to the definition of anonymous defined by EDG
 */
     std::string recordDeclName = record_decl->getNameAsString();
-    if(!hasNameForLinkage)
+    bool isUnNamed = false;
+    // Pei-Hung (06/30/2023) recordDeclName caould be empty if linkaged name being defined in a typedef of this type
+    if(!hasNameForLinkage || recordDeclName == "")
     {
       recordDeclName = "__anonymous_" +  generate_source_position_string(record_decl->getBeginLoc());
+      isUnNamed = true;
     }
 
     SgName name(recordDeclName);
@@ -1121,7 +1124,7 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
     ROSE_ASSERT(type != NULL);
     sg_class_decl->set_type(type);
 
-    if (!hasNameForLinkage) sg_class_decl->set_isUnNamed(true);
+    if (isUnNamed) sg_class_decl->set_isUnNamed(true);
 
     if (!had_prev_decl) {
         sg_first_class_decl = sg_class_decl;
@@ -1144,7 +1147,7 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
     if (isDefined) {
         sg_def_class_decl = new SgClassDeclaration(name, type_of_class, type, NULL);
         sg_def_class_decl->set_scope(SageBuilder::topScopeStack());
-        if (!hasNameForLinkage) sg_def_class_decl->set_isUnNamed(true);
+        if (isUnNamed) sg_def_class_decl->set_isUnNamed(true);
         sg_def_class_decl->set_parent(SageBuilder::topScopeStack());
 
         sg_class_decl = sg_def_class_decl; // we return thew defining decl
@@ -1282,12 +1285,13 @@ bool ClangToSageTranslator::VisitCXXRecordDecl(clang::CXXRecordDecl * cxx_record
         ROSE_ASSERT(methodDeclStmt);
         methodDeclStmt->set_scope(CxxRecordDeclaration->get_definition());
         CxxRecordDeclaration->get_definition()->append_member(methodDeclStmt);
-/* Tentatively turn on everything 
         if((*it_method)->isImplicit())
         {
+#if DEBUG_IMPLICIT_NODE
+           std::cerr << "VisitCXXRecordDecl: implicit method marked as compiler generated: " << (*it_method)->getNameAsString() << std::endl;
+#endif
            methodDeclStmt->setCompilerGenerated();
         }
-*/
     }
 
     clang::CXXRecordDecl::ctor_iterator it_ctor;
@@ -1881,6 +1885,7 @@ bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode
 bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
     std::cerr << "ClangToSageTranslator::VisitFunctionDecl" << std::endl;
+    std::cerr << "ClangToSageTranslator::VisitFunctionDecl " << function_decl->getNameInfo().getName().getAsString() << std::endl;
     std:: cerr << "ClangToSageTranslator::VisitFunctionDecl isThisDeclarationADefinition " << function_decl->isThisDeclarationADefinition() << "\n";
 #endif
     bool res = true;
@@ -1998,6 +2003,12 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
         {
           SgClassDeclaration* cxxRecordDecl = NULL;
           SgScopeStatement* methodScope = NULL;
+          if(llvm::isa<clang::CXXConstructorDecl>(function_decl))
+          {
+            clang::CXXRecordDecl* parentClassDecl = static_cast<clang::CXXConstructorDecl*>(function_decl)->getParent();
+            SgClassDeclaration* CxxRecordDeclaration  = isSgClassDeclaration(Traverse(parentClassDecl));
+            name = CxxRecordDeclaration->get_name(); 
+          }
           if(p_decl_translation_map.find(((clang::CXXMethodDecl *)function_decl)->getParent()) != p_decl_translation_map.end())
           {
              cxxRecordDecl = isSgClassDeclaration(Traverse(((clang::CXXMethodDecl *)function_decl)->getParent()));
@@ -2488,7 +2499,10 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
     if (init != NULL)
     {
         init->set_parent(sg_var_decl);
-        applySourceRange(init, init_expr->getSourceRange());
+        //Pei-Hung (07/12/2023): comment out applySourceRange here as it is redundant.
+        //applySourceRange should be set whenever the SgInitializer was just created.
+        //Otherwise, it could cause overwrite the setting done in setCompilerGeneratedFileInfo.
+        //applySourceRange(init, init_expr->getSourceRange());
     }
     // Pei-Hung (09/01/2022) setup initializer once the RHS is processed.
     sg_var_decl->reset_initializer(init);
