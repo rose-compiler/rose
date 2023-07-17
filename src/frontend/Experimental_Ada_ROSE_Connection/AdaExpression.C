@@ -1255,9 +1255,9 @@ namespace
         {
           logKind("A_Function_Call", elem.ID);
 
-          logTrace() << "function call "
-                     << expr.Is_Prefix_Notation << " "
-                     << expr.Is_Prefix_Call
+          logTrace() << "A_Function_Call: "
+                     << expr.Is_Prefix_Notation << " (Is_Prefix_Notation) "
+                     << expr.Is_Prefix_Call << " (Is_Prefix_Call)"
                      << std::endl;
 
           ElemIdRange             range  = idRange(expr.Function_Call_Parameters);

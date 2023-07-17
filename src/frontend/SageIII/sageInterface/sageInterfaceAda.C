@@ -490,6 +490,115 @@ namespace Ada
     return { restype, ArrayBounds::find(atype, restype) };
   }
 
+  FlatArrayType
+  getArrayTypeInfo(SgType& atype)
+  {
+    return getArrayTypeInfo(&atype);
+  }
+
+  namespace
+  {
+    SgSymbol& originalSymbol(const SgAliasSymbol& sym)
+    {
+      SgSymbol* orig = sym.get_alias();
+
+      if (const SgAliasSymbol* alisy = isSgAliasSymbol(orig))
+        return originalSymbol(*alisy);
+
+      return SG_DEREF(orig);
+    }
+
+    const SgSymbol& originalSymbol(const SgSymbol& sym)
+    {
+      if (const SgAliasSymbol* alisy = isSgAliasSymbol(&sym))
+        return originalSymbol(*alisy);
+
+      return sym;
+    }
+
+    void appendAllVariableSymbols(const SgScopeStatement& scope, std::vector<RecordField>& res)
+    {
+      SgSymbolTable&            symtbl = SG_DEREF(scope.get_symbol_table());
+      const rose_hash_multimap& allsyms = SG_DEREF(symtbl.get_table());
+
+      for (const auto& entry : allsyms)
+      {
+        const SgSymbol& sym  = SG_DEREF(entry.second);
+        const SgSymbol& orig = originalSymbol(sym);
+
+        if (/*SgVariableSymbol* varsy =*/ isSgVariableSymbol(&orig))
+          res.emplace_back(&sym);
+      }
+    }
+
+    void appendAllDiscriminantsFromParents(const SgClassDefinition&, std::vector<RecordField>&)
+    {
+      using namespace Rose::Diagnostics;
+
+      // FIXME \todo
+      mlog[TRACE] << "collecting discriminants from parents not implemented.."
+                  << std::endl;
+    }
+  }
+
+  const SgClassDefinition&
+  RecordField::record() const
+  {
+    const SgVariableSymbol&  sym = SG_DEREF( isSgVariableSymbol(&originalSymbol()) );
+    const SgInitializedName& var = SG_DEREF( sym.get_declaration() );
+
+    return SG_DEREF( isSgClassDefinition(var.get_scope()) );
+  }
+
+  const SgSymbol&
+  RecordField::originalSymbol() const
+  {
+    return SageInterface::Ada::originalSymbol(symbol());
+  }
+
+  const SgSymbol&
+  RecordField::symbol() const
+  {
+    // symbols are never null - checked where RecordField are created
+    return *std::get<0>(*this);
+  }
+
+  bool
+  RecordField::discriminant() const
+  {
+    // not yet implemented
+    ROSE_ABORT();
+  }
+
+  std::vector<RecordField>
+  getAllRecordFields(const SgClassDefinition& rec)
+  {
+    // look through the symbol table and collect all fields
+    //   (variants or otherwise).
+
+    std::vector<RecordField> res;
+
+    appendAllVariableSymbols(rec, res);
+
+    if (const SgAdaDiscriminatedTypeDecl* disc = sg::ancestor_path<SgClassDeclaration, SgAdaDiscriminatedTypeDecl>(rec))
+    {
+      appendAllVariableSymbols(SG_DEREF(disc->get_discriminantScope()), res);
+      appendAllDiscriminantsFromParents(rec, res);
+    }
+
+    return res;
+  }
+
+  std::vector<RecordField>
+  getAllRecordFields(const SgClassDefinition* rec)
+  {
+    if (rec == nullptr) return {};
+
+    return getAllRecordFields(*rec);
+  }
+
+
+
   std::vector<IfExpressionInfo>
   flattenIfExpressions(SgConditionalExp& n)
   {
@@ -2770,8 +2879,8 @@ namespace
   {
     void handle(const SgNode& n)            { SG_UNEXPECTED_NODE(n); }
 
-    // not sure if this should  be reachable..
-    //~ void handle(const SgType& n)            { /* do nothing - n will be added by baseTypes() */ }
+    // \todo not sure if this should  be reachable..
+    // void handle(const SgType& n)            { }
 
     // base cases
 /*
@@ -2810,6 +2919,9 @@ namespace
 
     void handle(const SgClassType& n)
     {
+      // \todo this requires revision
+      //       do we want to get the base type constraint from get_adaParentType
+      //       or the precise base class from the definition?
       SgClassDeclaration& cldcl  = SG_DEREF(isSgClassDeclaration(n.get_declaration()));
       SgBaseClass*        basecl = cldcl.get_adaParentType();
 
@@ -2850,6 +2962,8 @@ namespace
         res = defdecl->get_adaParentType();
       }
     }
+
+    // \todo should this handle SgAdaSubtype also? void handle(const SgAdaSubtype& n) ..
   };
 }
 

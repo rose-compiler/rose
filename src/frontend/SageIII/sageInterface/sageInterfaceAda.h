@@ -234,27 +234,30 @@ namespace
   FlatArrayType getArrayTypeInfo(SgType& atype);
   /// @}
 
-#if 0
   struct RecordField : std::tuple<const SgSymbol*>
   {
-    const SgSymbol*          symbol()         const { return std::get<0>(*this); }
-    const SgSymbol*          originalSymbol() const;
-    const SgClassDefinition* record()         const;
-    bool                     isInherited()    const { return symbol() == originalSymbol() }
-    bool                     isDiscriminant() const;
+    using base = std::tuple<const SgSymbol*>;
+    using base::base;
+
+    const SgSymbol&          symbol()         const;
+    const SgSymbol&          originalSymbol() const;
+    const SgClassDefinition& record()         const;
+    bool                     inherited()      const { return isSgAliasSymbol(&symbol()); }
+    bool                     discriminant()   const;
   };
 
 
-  /// returns all fields (defined and inherited) of a record
+  /// returns all fields (defined and inherited) of a record.
   /// \param rec the class definition for which the fields are sought
+  /// \note
+  ///    currently the entries in the returned vector are unordered.
   /// \{
   std::vector<RecordField>
-  getAllFields(const SgClassDefinition& rec);
+  getAllRecordFields(const SgClassDefinition& rec);
 
   std::vector<RecordField>
-  getAllFields(const SgClassDefinition* rec);
+  getAllRecordFields(const SgClassDefinition* rec);
   /// \}
-#endif /* 0 */
 
 
   /// represents a branch in an if elsif else context (either statement or expression).
