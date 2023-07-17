@@ -78,6 +78,7 @@
 #define DEBUG_ARGS                0
 #define DEBUG_TRAVERSE_DECL       0
 #define DEBUG_VISIT_STMT          0
+#define DEBUG_IMPLICIT_NODE       0
 
 // Print visitor name when visiting a node inheritance hierarchy
 #ifdef DEBUG_VISITOR

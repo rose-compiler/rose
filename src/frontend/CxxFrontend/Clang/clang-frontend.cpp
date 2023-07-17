@@ -284,6 +284,7 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
     clang::CompilerInvocation::CreateFromArgs(*invocation, argsArrayRef, compiler_instance->getDiagnostics());
     compiler_instance->setInvocation(invocation_shptr);
 
+
     clang::TargetOptions target_options;
     target_options.Triple = llvm::sys::getDefaultTargetTriple();
     std::shared_ptr<clang::TargetOptions> targetOption_shptr = std::make_shared<clang::TargetOptions>(target_options);
@@ -604,6 +605,15 @@ void ClangToSageTranslator::setCompilerGeneratedFileInfo(SgNode * node, bool to_
         if (fi != NULL) delete fi;
 
         located_node->set_startOfConstruct(start_fi);
+        // Pei-Hung (07/12/2023) This is added for the same reason shown above in applySourceRange 
+        // SgExpression::get_file_info() checks and returns get_operatorPosition()
+        // therefore, call set_operatorPosition() to make sure the Sg_File_Info is properly set.
+        if(isSgExpression(located_node))
+        {
+           fi = located_node->get_file_info();
+           if (fi != NULL) delete fi;
+           isSgExpression(located_node)->set_file_info(start_fi);
+        }
         located_node->set_endOfConstruct(end_fi);
     }
     else if (init_name != NULL) {
