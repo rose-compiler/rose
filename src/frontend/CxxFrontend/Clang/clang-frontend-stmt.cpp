@@ -2526,6 +2526,7 @@ bool ClangToSageTranslator::VisitCXXBoolLiteralExpr(clang::CXXBoolLiteralExpr * 
 bool ClangToSageTranslator::VisitCXXConstructExpr(clang::CXXConstructExpr * cxx_construct_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
     std::cerr << "ClangToSageTranslator::VisitCXXConstructExpr" << std::endl;
+    // isElidable seems to be related to copy elision: https://en.cppreference.com/w/cpp/language/copy_elision
     std::cerr << "isElidable " << cxx_construct_expr->isElidable() << std::endl;
     std::cerr << "hadMultipleCandidates " << cxx_construct_expr->hadMultipleCandidates() << std::endl;
     std::cerr << "isListInitialization " << cxx_construct_expr->isListInitialization() << std::endl;
@@ -2554,7 +2555,31 @@ bool ClangToSageTranslator::VisitCXXConstructExpr(clang::CXXConstructExpr * cxx_
     }
     SgConstructorInitializer* constructorInitilizer = SageBuilder::buildConstructorInitializer(cxxConstructorDecl, param_list, cxxConstructorDecl->get_orig_return_type(), true, false, false, false );
     
-    applySourceRange(constructorInitilizer, cxx_construct_expr->getSourceRange());
+    bool isCompilerGenerated = false;
+    // isCompilerGenerated = !cxx_construct_expr->isElidable();
+    // Pei-Hung (07/14/23) isElidable is not a proper approach to check and doesn't work for the following example
+    // struct C2 { C2() : x(-1){};C2(int v) : x(v){};int x;};
+    // C2 c2_3(2);
+    //
+    SgClassDefinition* enclosingClassDef = isSgClassDefinition(cxxConstructorDecl->get_parent());
+    ROSE_ASSERT(enclosingClassDef);
+    SgClassDeclaration* enclosingClassDecl = isSgClassDeclaration(enclosingClassDef->get_declaration());
+    ROSE_ASSERT(enclosingClassDecl);
+#if DEBUG_VISIT_STMT
+    std::cerr << "clang::CXXConstructExpr: is default constructor: " << cxx_constructor_decl->isDefaultConstructor() << std::endl;
+    std::cerr << "clang::CXXConstructExpr: is from UnNamed class: " << enclosingClassDecl->get_isUnNamed() << std::endl;
+#endif
+    if(cxx_constructor_decl->isDefaultConstructor() && enclosingClassDecl->get_isUnNamed())
+      isCompilerGenerated = true; 
+
+    if(isCompilerGenerated)
+    {
+      setCompilerGeneratedFileInfo(constructorInitilizer, false);
+    }
+    else
+    {
+      applySourceRange(constructorInitilizer, cxx_construct_expr->getSourceRange());
+    }
 
     *node = constructorInitilizer;
 
