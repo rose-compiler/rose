@@ -62,6 +62,40 @@ namespace
        << std::endl;
   }
 
+  template <class V>
+  struct Vector
+  {
+    std::vector<V>& vec;
+  };
+
+  std::ostream& operator<<(std::ostream& os, const si::Ada::RecordField& rec)
+  {
+    return os << rec.originalSymbol().get_name()
+              << (rec.inherited() ? " [inh]" : "")
+              //~ << (rec.discriminant() ? " [dsc]" : "")
+              ;
+  }
+
+  template <class V>
+  std::ostream& operator<<(std::ostream& os, const Vector<V>& vecwrap)
+  {
+    for (const V& v : vecwrap.vec) os << v << ", ";
+
+    return os;
+  }
+
+  void checkGetAllRecordFields(std::ostream& os, const SgClassDefinition* n)
+  {
+    if (!n) return;
+
+    const SgClassDeclaration&         dcl = SG_DEREF( isSgClassDeclaration(n->get_parent()) );
+    std::vector<si::Ada::RecordField> fields = si::Ada::getAllRecordFields(*n);
+
+    os << "* record " << dcl.get_name() << "\n"
+       << Vector<si::Ada::RecordField>{fields} << "\n"
+       << std::endl;
+  }
+
   struct SageInterfaceAdaCheck : AstSimpleProcessing
   {
     void resetStream()
@@ -99,6 +133,8 @@ namespace
       checkType(output, isSgExpression(n));
       checkType(output, isSgInitializedName(n));
       checkExpr(output, isSgAdaAttributeExp(n));
+      //~ checkGetAllRecordFields(output, isSgClassDefinition(n));
+      checkGetAllRecordFields(std::cerr, isSgClassDefinition(n));
 
       resetStream();
     }
