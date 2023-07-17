@@ -850,8 +850,11 @@ namespace Ada_ROSE_Translation
   /// \param arglist the arguments
   /// \param usesOperatorSyntax true if call should be unparsed
   ///        using operator syntax instead of function call syntax
+  /// \param usesObjectCallSyntax true if call should be unparsed
+  ///        using object call syntax.
+  ///        i.e., x.init instead of init(x)
   SgFunctionCallExp&
-  mkFunctionCallExp(SgExpression& target, SgExprListExp& arglst, bool usesOperatorSyntax = false);
+  mkFunctionCallExp(SgExpression& target, SgExprListExp& arglst, bool usesOperatorSyntax = false, bool usesObjectCallSyntax = false);
 
   /// creates a qualified expression for \ref expr and type qualification \ref ty.
   /// \todo consider whether the explicit representation in code is necessary

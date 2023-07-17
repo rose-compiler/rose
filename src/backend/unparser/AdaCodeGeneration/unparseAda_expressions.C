@@ -239,13 +239,16 @@ namespace
 
     void handle(SgFunctionCallExp& n)
     {
-      SgExprListExp&         args = SG_DEREF(n.get_args());
-      SgFunctionDeclaration* fndcl = n.getAssociatedFunctionDeclaration();
+      SgExprListExp&         args     = SG_DEREF(n.get_args());
+      SgFunctionDeclaration* fndcl    = n.getAssociatedFunctionDeclaration();
 
       if ((fndcl == nullptr) || (n.get_uses_operator_syntax() == false))
       {
+        const bool oopStyle = n.get_usesObjectCallSyntax();
+
+        object_opt(args, oopStyle);
         expr(n.get_function());
-        arglst_opt(args);
+        arglst_opt(args, oopStyle);
         return;
       }
 
@@ -492,7 +495,8 @@ namespace
     void expr_opt(SgExpression* exp);
     void exprlst(SgExprListExp& exp, std::string sep = ", ");
     void aggregate(SgExprListExp& exp);
-    void arglst_opt(SgExprListExp& args);
+    void object_opt(SgExprListExp& args, bool unparseObjectCall = false);
+    void arglst_opt(SgExprListExp& args, bool unparseObjectCall = false);
 
     void operator()(SgExpression* exp)
     {
@@ -631,13 +635,34 @@ namespace
     exprlst(info.begin(), info.end());
   }
 
-
-  void AdaExprUnparser::arglst_opt(SgExprListExp& args)
+  void AdaExprUnparser::object_opt(SgExprListExp& args, bool unparseObjectCall)
   {
-    if (args.get_expressions().empty()) return;
+    if (!unparseObjectCall) return;
+
+    SgExpressionPtrList& lst = args.get_expressions();
+
+    // unparsing as object call implies a non-empty arglist
+    expr(lst.at(0));
+    prn(".");
+  }
+
+  void AdaExprUnparser::arglst_opt(SgExprListExp& args, bool unparseObjectCall)
+  {
+    SgExpressionPtrList& lst = args.get_expressions();
+
+    // unparsing as object call implies a non-empty arglist
+    ASSERT_require(!unparseObjectCall || !lst.empty());
+
+    auto                 beg = lst.begin();
+    auto const           lim = lst.end();
+
+    if (unparseObjectCall)
+      beg = std::next(beg);
+
+    if (beg == lim) return;
 
     prn("(");
-    exprlst(args);
+    exprlst(beg, lim);
     prn(")");
   }
 

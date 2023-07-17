@@ -189,6 +189,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   discriminant_constraint.ads          \
   discriminated_record.adb             \
   discriminant_specification.ads       \
+  dispatching.adb                      \
   dynamic_array.adb                    \
   endless.adb                          \
   entry_call.adb                       \
