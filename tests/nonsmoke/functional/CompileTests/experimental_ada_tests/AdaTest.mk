@@ -215,6 +215,8 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   iterate_range.adb                    \
   digital.ads                          \
   imageloader.adb                      \
+  label1.adb                           \
+  label2.adb                           \
   mangle_disctypes.adb                 \
   m_types.ads                          \
   m_types_test.ads                     \

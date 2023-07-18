@@ -589,34 +589,6 @@ namespace
     return *m.at(key);
   }
 
-  /// retrieves a node from map \ref m with key \ref key, under the
-  ///   assumption that it is of dynamic type TgtT.
-  template <class TgtT, class MapT>
-  inline
-  TgtT&
-  lookupNodeAs(const MapT& m, typename MapT::key_type key)
-  {
-    typename MapT::mapped_type& node = lookupNode(m, key);
-
-    return dynamic_cast<TgtT&>(node);
-  }
-
-  /// retrieves a node from map \ref m with key \ref key if key exists.
-  /// returns nullptr otherwise.
-/*
-  template <class MapT>
-  inline
-  typename MapT::mapped_type
-  findNode(const MapT& m, typename MapT::key_type key)
-  {
-    typename MapT::const_iterator pos = m.find(key);
-
-    if (pos == m.end())
-      return nullptr;
-
-    return pos->second;
-  }
-*/
 
   /// \private
   /// base case when a declaration is not in the map

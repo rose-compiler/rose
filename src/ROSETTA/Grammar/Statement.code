@@ -16265,6 +16265,11 @@ SgLabelStatement::get_symbol_from_symbol_table() const
    {
      SgScopeStatement* tempScope = get_scope();
      ASSERT_not_null(tempScope);
+
+  // PP (07/18/23): Ada inserts labels at the innermost scope
+     if (SageInterface::is_Ada_language())
+       return tempScope->find_symbol_from_declaration(this);
+
      while (tempScope != nullptr && isSgFunctionDefinition(tempScope) == nullptr)
         {
           tempScope = tempScope->get_scope();
