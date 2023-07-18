@@ -378,6 +378,12 @@ namespace
       prn(si::Ada::nameOf(n));
     }
 
+    void handle(SgLabelRefExp& n)
+    {
+      prnNameQual(n);
+      prn(si::Ada::nameOf(n));
+    }
+
     void handle(SgEnumVal& n)
     {
       prnNameQual(n);

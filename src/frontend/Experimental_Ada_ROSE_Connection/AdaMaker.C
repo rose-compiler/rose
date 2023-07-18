@@ -1914,6 +1914,16 @@ mkAdaOthersExp()
   return mkLocatedNode<SgAdaOthersExp>();
 }
 
+SgLabelRefExp&
+mkLabelRefExp(const SgLabelStatement& tgt)
+{
+  SgLabelSymbol& lblsym = SG_DEREF( isSgLabelSymbol(tgt.get_symbol_from_symbol_table()) );
+  SgLabelRefExp& sgnode = SG_DEREF( sb::buildLabelRefExp(&lblsym) );
+
+  return sgnode;
+}
+
+
 SgExpression&
 mkExceptionRef(SgInitializedName& exception, SgScopeStatement& scope)
 {

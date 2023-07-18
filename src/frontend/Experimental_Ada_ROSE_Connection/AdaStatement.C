@@ -2401,7 +2401,7 @@ namespace
           }
         }
 
-        SgUsingDeclarationStatement& sgnode = mkUseClause(SG_DEREF(used));
+        SgUsingDeclarationStatement& sgnode  = mkUseClause(SG_DEREF(used));
         std::size_t                  attrPos = fullName.find("'");
 
         if (attrPos != std::string::npos)

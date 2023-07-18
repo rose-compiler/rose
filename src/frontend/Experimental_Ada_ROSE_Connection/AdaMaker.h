@@ -810,6 +810,10 @@ namespace Ada_ROSE_Translation
   SgExpression&
   mkAdaBoxExp();
 
+  /// Creates a node that references labels
+  SgLabelRefExp&
+  mkLabelRefExp(const SgLabelStatement& tgt);
+
   /// Creates a reference to the exception object \ref exception
   SgExpression&
   mkExceptionRef(SgInitializedName& exception, SgScopeStatement& scope);

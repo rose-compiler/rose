@@ -15131,7 +15131,10 @@ void SageInterface::fixLabelStatement(SgLabelStatement* stmt, SgScopeStatement* 
      ROSE_ASSERT(label_stmt);
      SgName name = label_stmt->get_label();
 
-     SgScopeStatement* label_scope = getEnclosingFunctionDefinition(scope,true);
+   // PP (07/18/23): In Ada, label symbols should be inserted in the current scope's symbol table
+     const bool        symbolAtFunctionLevel = !is_Ada_language();
+     SgScopeStatement* label_scope = symbolAtFunctionLevel ? getEnclosingFunctionDefinition(scope,true)
+                                                           : scope;
 
   // DQ (11/16/2014): Added error checking for when the input scope is the SgFunctionDefinition instead of a nested scope.
      if (isSgFunctionDefinition(scope) != nullptr)
@@ -15147,6 +15150,7 @@ void SageInterface::fixLabelStatement(SgLabelStatement* stmt, SgScopeStatement* 
           if (lsymbol == nullptr)
              {
             // SgLabelStatement should always be in the function scope
+            //  PP (07/18/23): in Ada symbols should be at the innermost scope
                lsymbol= new SgLabelSymbol(label_stmt);
                ASSERT_not_null(lsymbol);
                label_scope->insert_symbol(lsymbol->get_name(), lsymbol);

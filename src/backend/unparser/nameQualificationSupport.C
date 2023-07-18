@@ -53,66 +53,6 @@ namespace
   }
 #endif /* FOR_DEBUG_ONLY */
 
-  // convenience functions
-  inline
-  SgVariableSymbol& symOf(const SgVarRefExp& n)
-  {
-    return SG_DEREF(n.get_symbol());
-  }
-
-  inline
-  SgFunctionSymbol& symOf(const SgFunctionRefExp& n)
-  {
-    return SG_DEREF(n.get_symbol());
-  }
-
-  inline
-  SgFunctionDeclaration& declOf(const SgFunctionSymbol& n)
-  {
-    return SG_DEREF(n.get_declaration());
-  }
-
-  inline
-  SgFunctionDeclaration& declOf(const SgFunctionRefExp& n)
-  {
-    return declOf(symOf(n));
-  }
-
-  inline
-  SgInitializedName& declOf(const SgVariableSymbol& n)
-  {
-    return SG_DEREF(n.get_declaration());
-  }
-
-  inline
-  SgInitializedName& declOf(const SgVarRefExp& n)
-  {
-    return declOf(symOf(n));
-  }
-
-  inline
-  SgAdaRenamingDecl& declOf(const SgAdaRenamingRefExp& n)
-  {
-    return SG_DEREF(n.get_decl());
-  }
-
-  inline
-  SgDeclarationStatement& declOf(const SgAdaUnitRefExp& n)
-  {
-    return SG_DEREF(n.get_decl());
-  }
-
-  inline
-  SgAdaTaskSpecDecl& declOf(const SgAdaTaskRefExp& n)
-  {
-    return SG_DEREF(n.get_decl());
-  }
-
-  inline
-  SgAdaProtectedSpecDecl& declOf(const SgAdaProtectedRefExp& n)
-  {
-    return SG_DEREF(n.get_decl());
-  }
 
   inline
   const SgExprListExp* callArguments(const SgFunctionRefExp& n)
@@ -430,8 +370,6 @@ namespace
       /// \}
 
       /// scope stack, used-scope, and renamed decl tracking
-      /// \todo the scope stack is likely not needed, since it is tracked
-      ///       by the inherited attribute
       /// \{
       void openScope(const SgScopeStatement& scope);
       void closeScope();
@@ -453,7 +391,7 @@ namespace
       /// \note
       ///    active use clauses are handled (by design, but currently disabled)
       ///    by \ref requiresNameQual.
-      const SgStatement& scopeForNameQualification(const SgScopeStatement& n) const;
+      //  const SgStatement& scopeForNameQualification(const SgScopeStatement& n) const;
 
       /// Constructs a path from a scope statement to the top-level (global)
       /// scope.
@@ -607,19 +545,20 @@ namespace
     //~ void handle(const SgInitializedName& n)      { res = si::get_name(&n); }
 
     // ref expressions
-    void handle(const SgVarRefExp& n)            { res = SG_DEREF(n.get_symbol()).get_name(); }
-    void handle(const SgFunctionRefExp& n)       { res = SG_DEREF(n.get_symbol()).get_name(); }
-    void handle(const SgAdaUnitRefExp& n)        { res = si::get_name(n.get_decl()); }
-    void handle(const SgAdaProtectedRefExp& n)   { res = si::get_name(n.get_decl()); }
-    void handle(const SgAdaTaskRefExp& n)        { res = si::get_name(n.get_decl()); }
-    void handle(const SgAdaRenamingRefExp& n)    { res = si::get_name(n.get_decl()); }
+    void handle(const SgVarRefExp& n)            { res = si::Ada::nameOf(n); }
+    void handle(const SgFunctionRefExp& n)       { res = si::Ada::nameOf(n); }
+    void handle(const SgAdaUnitRefExp& n)        { res = si::Ada::nameOf(n); }
+    void handle(const SgAdaProtectedRefExp& n)   { res = si::Ada::nameOf(n); }
+    void handle(const SgAdaTaskRefExp& n)        { res = si::Ada::nameOf(n); }
+    void handle(const SgAdaRenamingRefExp& n)    { res = si::Ada::nameOf(n); }
+    void handle(const SgLabelRefExp& n)          { res = si::Ada::nameOf(n); }
 
     // scope statements
     void handle(const SgBasicBlock& n)           { res = n.get_string_label(); }
-    void handle(const SgGotoStatement&)          { /* empty string */ }
+    void handle(const SgGotoStatement&)          { /* empty string -- can this still be reached? */ }
 
     // other
-    void handle(const SgEnumVal& n)              { res = n.get_name(); }
+    void handle(const SgEnumVal& n)              { res = si::Ada::nameOf(n); }
     void handle(const SgBaseClass& n)            { res = SG_DEREF(n.get_base_class()).get_name(); }
 
     static const std::string AN_UNREAL_NAME;
@@ -1182,11 +1121,15 @@ namespace
       {
         handle(sg::asBaseType(n));
 
+        // \todo LABEL_NAMEQUAL_1
         //~ recordNameQualIfNeeded(n, n.get_label()->get_scope());
-        recordNameQualIfNeeded(n, sg::ancestor<SgScopeStatement>(n.get_label()));
+        //~ recordNameQualIfNeeded(n, sg::ancestor<SgScopeStatement>(n.get_label()));
+
+        //~ recordNameQualIfNeeded(n, sg::ancestor<SgScopeStatement>(n.get_label()));
         // avoid enless recursion for
         // <<lbl>> goto lbl;
         //   \todo consider switching over to fortran label representation
+        handle(SG_DEREF(n.get_label_expression()));
       }
 
       void handle(const SgScopeStatement& n)
@@ -1481,7 +1424,12 @@ namespace
       {
         //~ if (!isSgDotExp(n.get_parent()) && !SageInterface::Ada::isFieldReference(n))
         if (!elideNameQualification(n))
-          recordNameQualIfNeeded(n, declOf(n).get_scope());
+          recordNameQualIfNeeded(n, si::Ada::declOf(n).get_scope());
+      }
+
+      void handle(const SgLabelRefExp& n)
+      {
+        recordNameQualIfNeeded(n, si::Ada::declOf(n).get_scope());
       }
 
       void handle(const SgEnumVal& n)
@@ -1493,12 +1441,12 @@ namespace
       {
         if (!elideNameQualification(n))
         {
-          const SgDeclarationStatement* dcl = &declOf(n);
+          const SgDeclarationStatement* dcl = &si::Ada::declOf(n);
 
           if (const SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(dcl))
             dcl = gendcl->get_declaration();
 
-          //~ std::cerr << "uref " << &declOf(n) << std::endl;
+          //~ std::cerr << "uref " << &si::Ada::declOf(n) << std::endl;
           recordNameQualIfNeeded(n, SG_DEREF(dcl).get_scope());
         }
       }
@@ -1506,7 +1454,7 @@ namespace
       void handle(const SgAdaRenamingRefExp& n)
       {
         //~ if (!elideNameQualification(n))
-        recordNameQualIfNeeded(n, declOf(n).get_scope());
+        recordNameQualIfNeeded(n, si::Ada::declOf(n).get_scope());
       }
 
       // \returns the scope of a function symbol
@@ -1528,13 +1476,13 @@ namespace
       void handle(const SgAdaTaskRefExp& n)
       {
         if (!elideNameQualification(n))
-          recordNameQualIfNeeded(n, declOf(n).get_scope());
+          recordNameQualIfNeeded(n, si::Ada::declOf(n).get_scope());
       }
 
       void handle(const SgAdaProtectedRefExp& n)
       {
         if (!elideNameQualification(n))
-          recordNameQualIfNeeded(n, declOf(n).get_scope());
+          recordNameQualIfNeeded(n, si::Ada::declOf(n).get_scope());
       }
 
       void handle(const SgDotExp& n)
