@@ -61,10 +61,13 @@ public:
     // Data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
+    // Unsynchronized data members
     PathQueue frontier_;                                // paths with work remaining
     PathQueue interesting_;                             // paths that are interesting, placed here by workers
     SemanticCallbacksPtr semantics_;                    // various configurable semantic operations
 
+private:
+    // Synchronized data members
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_;         // protects all following data members
     Sawyer::Container::Map<boost::thread::id, InProgress> inProgress_;// work that is in progress
     SAWYER_THREAD_TRAITS::ConditionVariable newWork_;   // signaled when work arrives or thread finishes
