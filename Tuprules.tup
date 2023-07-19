@@ -268,18 +268,6 @@ ifneq (@(WITH_INTEL_PIN),no)
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)pin
 endif
 
-# JPEG image encoding
-ifneq (@(WITH_JPEG),no)
-    JPEG_ROOT = @(WITH_JPEG)
-    ifneq (@(WITH_JPEG),system)
-        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(JPEG_ROOT)/include
-	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(JPEG_ROOT)/lib
-	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(JPEG_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(JPEG_ROOT)/lib
-    endif
-    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)jpeg
-    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)jpeg
-endif
-
 # LCMS color managment system
 ifneq (@(WITH_LCMS),no)
     LCMS_ROOT = @(WITH_LCMS)
