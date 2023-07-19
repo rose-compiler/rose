@@ -517,18 +517,6 @@ ifneq (@(WITH_PYTHON),no)
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)python@(PYTHON_VERSION)m
 endif
 
-# Bzip2 compression library
-ifneq (@(WITH_BZIP2),no)
-    BZIP2_ROOT = @(WITH_BZIP2)
-    ifneq (@(WITH_BZIP2),system)
-	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(BZIP2_ROOT)/include
-	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(BZIP2_ROOT)/lib
-	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(BZIP2_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(BZIP2_ROOT)/lib
-    endif
-    LDFLAGS_STATIC  += @(CXX_LIB_SWITCH)bz2
-    LDFLAGS_SHARED  += @(CXX_LIB_SWITCH)bz2
-endif
-
 # Zlib compression library
 ifeq (@(WITH_ZLIB),no)
     error Zlib is required. See CONFIG_WITH_ZLIB in the tup.config file.

@@ -304,7 +304,6 @@ dry_run $RG_SRC/scripts/tup/merge-configs \
 	INSTALLATION_PREFIX="$(value_of -DCMAKE_INSTALL_PREFIX "$@")" \
 	$(language_vars "$@") \
 	WITH_BOOST="$(value_or_no "$(config_switch -DBOOST_ROOT "$@")")" \
-        WITH_BZIP2=FIXME_NO_BZIP2 \
 	WITH_CAPSTONE="$(value_or_no "$(config_switch -DCAPSTONE_ROOT "$@")")" \
 	WITH_DLIB="$(value_or_no "$(config_switch -DDLIB_ROOT "$@")")" \
 	WITH_DOXYGEN=FIXME_NO_DOXYGEN \
