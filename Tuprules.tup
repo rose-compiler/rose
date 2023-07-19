@@ -268,18 +268,6 @@ ifneq (@(WITH_INTEL_PIN),no)
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)pin
 endif
 
-# LZMA compression
-ifneq (@(WITH_LZMA),no)
-    LZMA_ROOT = @(WITH_LZMA)
-    ifneq (@(WITH_LZMA),system)
-        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(LZMA_ROOT)/include
-	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(LZMA_ROOT)/lib
-	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(LZMA_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(LZMA_ROOT)/lib
-    endif
-    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)lzma
-    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)lzma
-endif
-
 # Magic file type identification (magic numbers)
 ifneq (@(WITH_MAGIC),no)
     MAGIC_ROOT = @(WITH_MAGIC)
