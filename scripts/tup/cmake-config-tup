@@ -313,8 +313,6 @@ dry_run $RG_SRC/scripts/tup/merge-configs \
 	WITH_JQ=FIXME_NO_JQ \
 	WITH_MAGIC="$(value_or_no "$(config_switch -DMAGIC_ROOT "$@")")" \
 	WITH_PQXX="$(value_or_no "$(config_switch -DPQXX_ROOT "$@")")" \
-	WITH_PYTHON=FIXME_NO_PYTHON \
-	PYTHON_VERSION=FIXME_NO_PYTHON_VERSION \
 	WITH_QT="$(value_or_no "$(config_switch -DQT_ROOT "$@")")" \
 	WITH_READLINE="$(value_or_no "$(config_switch -DREADLINE_ROOT "$@")")" \
 	WITH_SQLITE="$(value_or_no "$(config_switch -DSQLITE3_ROOT "$@")")" \
