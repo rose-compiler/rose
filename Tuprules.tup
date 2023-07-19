@@ -178,11 +178,6 @@ endif
 # depend on boost, and boost depends on zlib and bzip2.
 ########################################################################################################################
 
-# Binwalk binary search and extraction tool
-ifneq (@(WITH_BINWALK),no)
-    BINWALK_ROOT = @(WITH_BINWALK)
-endif
-
 # Capstone disassembler
 ifneq (@(WITH_CAPSTONE),no)
     CAPSTONE_ROOT = @(WITH_CAPSTONE)

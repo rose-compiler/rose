@@ -243,13 +243,6 @@ remove_outer_quotes() {
     echo "$value" |sed 's/\(["'"'"']\)\(.*\)\1/\2/'
 }
 
-# Given the name of an executable, such as "binwalk", return the installation directory. If the executable is not
-# found, then return nothing.
-exe_prefix() {
-    local exename="$1"
-    prefix "$(type -p "$exename")"
-}
-
 # # Grab the EDG major and minor version number from the top-level Makefile
 # edg_version() {
 #     edg_major="$(makefile_value ROSE_EDG_MAJOR_VERSION_NUMBER Makefile)"
@@ -310,7 +303,6 @@ dry_run $RG_SRC/scripts/tup/merge-configs \
 	LD_MISC="-fuse-ld=gold -pthread" \
 	INSTALLATION_PREFIX="$(value_of -DCMAKE_INSTALL_PREFIX "$@")" \
 	$(language_vars "$@") \
-	WITH_BINWALK=FIXME_NO_BINWALK \
 	WITH_BOOST="$(value_or_no "$(config_switch -DBOOST_ROOT "$@")")" \
         WITH_BZIP2=FIXME_NO_BZIP2 \
 	WITH_CAPSTONE="$(value_or_no "$(config_switch -DCAPSTONE_ROOT "$@")")" \
