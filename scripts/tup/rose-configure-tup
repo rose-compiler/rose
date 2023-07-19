@@ -296,8 +296,6 @@ dry_run $RG_SRC/scripts/tup/merge-configs \
     WITH_JQ="$(value_or_no "$(remove_outer_quotes "$(cpp_defined ROSE_JQ_EXE rose_config.h)")")" \
     WITH_MAGIC="$(value_or_no "$(config_switch --with-magic "$@")")" \
     WITH_PQXX="$(value_or_no "$(config_switch --with-pqxx "$@")")" \
-    WITH_PYTHON="$(value_ite "$(makefile_value PYTHON Makefile)" "$(makefile_value PYTHON_ROOT Makefile)" no)" \
-    PYTHON_VERSION="$(makefile_value PYTHON_VERSION_MM Makefile)" \
     WITH_QT="$(value_or_no "$(exe_prefix "$(makefile_value MOC Makefile)")" "$(config_switch --with-qt "$@")")" \
     WITH_READLINE="$(value_or_no "$(makefile_value LIBREADLINE_INSTALL_PATH Makefile)")" \
     WITH_SQLITE="$(value_or_no "$(prefix_from_include "$(makefile_value SQLITE3_CFLAGS Makefile)")")" \
