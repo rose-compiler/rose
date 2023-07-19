@@ -9075,7 +9075,7 @@ public:
 public:
     /** Initialize the attribute before parsing.
      *
-     *  This is the preferred constructor to use before parsing.  It shall set its parent. */
+     *  This is the preferred constructor to use before parsing as it sets its parent. */
     explicit SgAsmJvmSignature(SgAsmJvmAttributeTable* table);
 
     /** Initialize the attribute by parsing the file. */
@@ -9158,7 +9158,7 @@ public:
 public:
     /** Initialize the object before parsing.
      *
-     *  This is the preferred constructor to use before parsing.  It shall set its parent. */
+     *  This is the preferred constructor to use before parsing as it sets its parent. */
     explicit SgAsmJvmModuleMainClass(SgAsmJvmExceptionTable* table);
 
     /** Initialize the attribute by parsing the file. */
@@ -10418,7 +10418,7 @@ class SgAsmJvmExceptions: public SgAsmJvmAttribute {
 
 #ifndef DOCUMENTATION
     AsmJvmExceptions.setDataPrototype(
-        "SgUnsignedList", "exception_index_table", "",
+        "SgUnsigned16List", "exception_index_table", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -10447,8 +10447,8 @@ public:
      *  representing the string "Exceptions" (see section 4.4.7 of the JVM specification). 
      *  
      *  @{ */
-    SgUnsignedList const& get_exception_index_table() const;
-    void set_exception_index_table(SgUnsignedList const&);
+    SgUnsigned16List const& get_exception_index_table() const;
+    void set_exception_index_table(SgUnsigned16List const&);
     /** @} */
  public:
     /** Initialize the object before parsing.

@@ -10,7 +10,7 @@ class SgAsmJvmExceptions: public SgAsmJvmAttribute {
      *  table. The constant_pool entry at that index must be the CONSTANT_Utf8_info struction
      *  representing the string "Exceptions" (see section 4.4.7 of the JVM specification). */
     [[using Rosebud: rosetta]]
-    SgUnsignedList exception_index_table;
+    SgUnsigned16List exception_index_table;
 
  public:
     /** Initialize the object before parsing.

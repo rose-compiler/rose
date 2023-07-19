@@ -12,7 +12,7 @@ class SgAsmJvmSignature: public SgAsmJvmAttribute {
 public:
     /** Initialize the attribute before parsing.
      *
-     *  This is the preferred constructor to use before parsing.  It shall set its parent. */
+     *  This is the preferred constructor to use before parsing as it sets its parent. */
     explicit SgAsmJvmSignature(SgAsmJvmAttributeTable* table);
 
     /** Initialize the attribute by parsing the file. */
