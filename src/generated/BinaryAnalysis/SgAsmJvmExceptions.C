@@ -6,13 +6,13 @@
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #include <sage3basic.h>
 
-SgUnsignedList const&
+SgUnsigned16List const&
 SgAsmJvmExceptions::get_exception_index_table() const {
     return p_exception_index_table;
 }
 
 void
-SgAsmJvmExceptions::set_exception_index_table(SgUnsignedList const& x) {
+SgAsmJvmExceptions::set_exception_index_table(SgUnsigned16List const& x) {
     this->p_exception_index_table = x;
     set_isModified(true);
 }

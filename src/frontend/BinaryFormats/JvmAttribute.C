@@ -152,7 +152,8 @@ SgAsmJvmAttribute* SgAsmJvmConstantValue::parse(SgAsmJvmConstantPool* pool)
 
 void SgAsmJvmConstantValue::unparse(std::ostream& os) const
 {
-  mlog[WARN] << "Unparsing of SgAsmJvmConstantValue is not implemented yet\n";
+  SgAsmJvmAttribute::unparse(os);
+  Jvm::writeValue(os, p_constantvalue_index);
 }
 
 void SgAsmJvmConstantValue::dump(FILE* f, const char* prefix, ssize_t idx) const
@@ -396,34 +397,42 @@ SgAsmJvmStackMapFrame* SgAsmJvmStackMapFrame::parse(SgAsmJvmConstantPool* pool)
 
 void SgAsmJvmStackMapFrame::unparse(std::ostream& os) const
 {
+  uint16_t numLocals = get_locals().size();
+  uint16_t numStack = get_stack().size();
+
   Jvm::writeValue(os, p_frame_type);
 
-  // Warning: order is important (see FULL_FRAME above)
+  switch (p_frame_type) {
+    case 0 ... 63:   // frame_type = SAME
+    case 64 ... 127: // frame_type = SAME_LOCALS_1_STACK_ITEM
+      break;
+    case 247:         // frame_type = SAME_LOCALS_1_STACK_ITEM_EXTENDED
+    case 248 ... 250: // frame_type = CHOP
+    case 251:         // frame_type = SAME_FRAME_EXTENDED
+    case 252 ... 254: // frame_type = SAME_FRAME_EXTENDED
+      Jvm::writeValue(os, p_offset_delta);
+      break;
+    case 255: { // frame_type = FULL_FRAME
+      Jvm::writeValue(os, p_offset_delta);
+      Jvm::writeValue(os, numLocals);
 
-  if (p_offset_delta) {
-    Jvm::writeValue(os, p_offset_delta);
+      for (auto type : get_locals()) {
+        type->unparse(os);
+      }
+      numLocals = 0;
+
+      Jvm::writeValue(os, numStack);
+      break;
+    }
   }
 
-  // uint16_t number_of_locals;
-  // verification_type_info locals[number_of_locals];
-  //
-  uint16_t numLocals = get_locals().size();
-  if (numLocals || p_frame_type==0xff) { // numLocals must be written for frame_type==FULL_FRAME
-    Jvm::writeValue(os, numLocals);
+  if (numLocals > 0) {
+    for (auto type : get_locals()) {
+      type->unparse(os);
+    }
   }
-  for (auto local : get_locals()) {
-    local->unparse(os);
-  }
-
-  // uint16_t number_of_stack_items;
-  // verification_type_info stack[number_of_stack_items];
-  //
-  uint16_t numStack = get_stack().size();
-  if (numStack || p_frame_type==0xff) { // numStack must be written for frame_type==FULL_FRAME
-    Jvm::writeValue(os, numStack);
-  }
-  for (auto stackEntry : get_stack()) {
-    stackEntry->unparse(os);
+  for (auto type : get_stack()) {
+    type->unparse(os);
   }
 }
 
@@ -470,10 +479,10 @@ void SgAsmJvmStackMapVerificationType::unparse(std::ostream& os) const
 {
   Jvm::writeValue(os, p_tag);
 
-  if (p_cpool_index) {
+  if (p_tag == 7) {
     Jvm::writeValue(os, p_cpool_index);
   }
-  if (p_offset) {
+  else if (p_tag == 8) {
     Jvm::writeValue(os, p_offset);
   }
 }
@@ -496,27 +505,30 @@ SgAsmJvmExceptions::SgAsmJvmExceptions(SgAsmJvmAttributeTable* table)
 
 SgAsmJvmExceptions* SgAsmJvmExceptions::parse(SgAsmJvmConstantPool* pool)
 {
+  SgAsmJvmAttribute::parse(pool);
+
   uint16_t numExceptions;
   Jvm::read_value(pool, numExceptions);
 
   SgUnsigned16List u16List;
-
-  uint16_t index;
   for (int ii = 0; ii < numExceptions; ii++) {
+    uint16_t index;
     Jvm::read_value(pool, index);
-    //    get_exception_index_table().push_back(index);
     u16List.push_back(index);
   }
+  set_exception_index_table(u16List);
+
   return this;
 }
 
 void SgAsmJvmExceptions::unparse(std::ostream &os) const
 {
+  SgAsmJvmAttribute::unparse(os);
+
   uint16_t numExceptions = get_exception_index_table().size();
   Jvm::writeValue(os, numExceptions);
 
   for (uint16_t index : get_exception_index_table()) {
-    //    uint16_t index = std::static_cast<uint16_t>(index32);
     Jvm::writeValue(os, index);
   }
 }
@@ -677,13 +689,13 @@ SgAsmJvmLineNumberTable::SgAsmJvmLineNumberTable(SgAsmJvmAttributeTable* parent)
 
 SgAsmJvmLineNumberTable* SgAsmJvmLineNumberTable::parse(SgAsmJvmConstantPool* pool)
 {
-  uint16_t length;
+  uint16_t tableLength;
   ASSERT_not_null(get_parent());
 
   SgAsmJvmAttribute::parse(pool);
-  Jvm::read_value(pool, length);
+  Jvm::read_value(pool, tableLength);
 
-  for (int ii = 0; ii < length; ii++) {
+  for (int ii = 0; ii < tableLength; ii++) {
     auto entry = new SgAsmJvmLineNumberEntry(this);
     entry->parse(pool);
     get_line_number_table().push_back(entry);
@@ -840,7 +852,6 @@ SgAsmJvmBootstrapMethod* SgAsmJvmBootstrapMethod::parse(SgAsmJvmConstantPool* po
   uint16_t index;
   for (int ii = 0; ii < numArgs; ii++) {
     Jvm::read_value(pool, index);
-    //    get_bootstrap_arguments().push_back(index);
     u16List.push_back(index);
   }
   return this;
@@ -848,6 +859,8 @@ SgAsmJvmBootstrapMethod* SgAsmJvmBootstrapMethod::parse(SgAsmJvmConstantPool* po
 
 void SgAsmJvmBootstrapMethod::unparse(std::ostream &os) const
 {
+  Jvm::writeValue(os, p_bootstrap_method_ref);
+
   uint16_t numArgs = get_bootstrap_arguments().size();
   Jvm::writeValue(os, numArgs);
 
