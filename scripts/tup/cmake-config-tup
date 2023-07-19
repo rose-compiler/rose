@@ -312,7 +312,6 @@ dry_run $RG_SRC/scripts/tup/merge-configs \
 	WITH_GPG_ERROR="$(value_or_no "$(config_switch -DGPGERROR_ROOT "$@")")" \
 	WITH_JQ=FIXME_NO_JQ \
 	WITH_MAGIC="$(value_or_no "$(config_switch -DMAGIC_ROOT "$@")")" \
-	WITH_PNG=FIXME_NO_PNG \
 	WITH_PQXX="$(value_or_no "$(config_switch -DPQXX_ROOT "$@")")" \
 	WITH_PYTHON=FIXME_NO_PYTHON \
 	PYTHON_VERSION=FIXME_NO_PYTHON_VERSION \
