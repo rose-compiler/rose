@@ -280,18 +280,6 @@ ifneq (@(WITH_MAGIC),no)
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)magic
 endif
 
-# PNG image encoding
-ifneq (@(WITH_PNG),no)
-    PNG_ROOT = @(WITH_PNG)
-    ifneq (@(WITH_PNG),system)
-        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(PNG_ROOT)/include
-	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(PNG_ROOT)/lib
-	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(PNG_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(PNG_ROOT)/lib
-    endif
-    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)png
-    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)png
-endif
-
 # Postgresql C++ API
 ifneq (@(WITH_PQXX),no)
     PQXX_ROOT = @(WITH_PQXX)
