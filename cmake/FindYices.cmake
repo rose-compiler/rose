@@ -9,7 +9,7 @@
 #                     * Else require Yices to exist at specified location and use it
 #
 #  OUTPUTS:
-#    YICES_FOOUND     -- Boolean: whether the yices executable or the Yices library was found.
+#    YICES_FOUND      -- Boolean: whether the yices executable or the Yices library was found.
 #    YICES_FOUND_EXE  -- Boolean: whether the yices executable was found
 #    YICES_FOUND_LIB  -- Boolean: whether the Yices library was found
 #    YICES_EXECUTABLE -- String:  the Yices executable name

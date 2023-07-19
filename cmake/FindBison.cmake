@@ -6,7 +6,7 @@
 #                     * If empty use Bison if found, no error if not found
 #                     * Else require Bison to exist at specified location and use it
 #  OUTPUTS:
-#    BISON_FOOUND     -- Boolean: whether the z3 executable or the Bison library was found.
+#    BISON_FOUND      -- Boolean: whether the z3 executable or the Bison library was found.
 #    BISON_EXECUTABLE -- String:  the z3 executable name
 #    BISON_VERSION    -- String:  Bison version string, such as "4.8.1"
 macro(find_bison)

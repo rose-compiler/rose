@@ -7,7 +7,7 @@
 #                       * Else require QT to exist at specified location and use it
 #
 #  OUTPUTS:
-#    QT_FOOUND     -- Boolean: whether the QT library was found.
+#    QT_FOUND      -- Boolean: whether the QT library was found.
 
 macro(find_qt)
   if("${QT_ROOT}" STREQUAL "no")
