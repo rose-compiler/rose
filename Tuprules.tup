@@ -342,18 +342,6 @@ ifneq (@(WITH_SQLITE),no)
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)sqlite3
 endif
 
-# TIFF image encoding
-ifneq (@(WITH_TIFF),no)
-    TIFF_ROOT = @(WITH_TIFF)
-    ifneq (@(WITH_TIFF),system)
-        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(TIFF_ROOT)/include
-	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(TIFF_ROOT)/lib
-	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(TIFF_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(TIFF_ROOT)/lib
-    endif
-    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)tiff
-    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)tiff
-endif
-
 # Wt web toolkit
 ifneq (@(WITH_WT),no)
     WT_ROOT = @(WITH_WT)
