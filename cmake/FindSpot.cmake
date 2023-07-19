@@ -7,7 +7,7 @@
 #                       * Else require SPOT to exist at specified location and use it
 #
 #  OUTPUTS:
-#    SPOT_FOOUND     -- Boolean: whether the SPOT library was found.
+#    SPOT_FOUND      -- Boolean: whether the SPOT library was found.
 
 macro(find_spot)
   if("${SPOT_ROOT}" STREQUAL "no")

@@ -698,6 +698,7 @@ find_z3()
 include(FindDoxygen)
 find_doxygen()
 
+# FIXME: Deprecated. Remove this and the FindYamlcpp file once YAML-CPP has been eliminated from the ROSE source code.
 # To use YAML-CPP, set YAMLCPP_ROOT to the YAML-CPP installation prefix. To avoid YAML-CPP set YAMLCPP_ROOT=no
 include(FindYamlcpp)
 find_yamlcpp()

@@ -7,7 +7,7 @@
 #                       * Else require DLIB to exist at specified location and use it
 #
 #  OUTPUTS:
-#    DLIB_FOOUND     -- Boolean: whether the DLIB library was found.
+#    DLIB_FOUND      -- Boolean: whether the DLIB library was found.
 #    DLIB_LIBRARY    -- String: full name of DLIB library of a string that ends with NOTFOUND
 #    DLIB_LIBRARIES  -- String: names of libraries necessary to use DLIB
 
