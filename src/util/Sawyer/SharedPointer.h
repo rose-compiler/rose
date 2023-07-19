@@ -96,8 +96,16 @@ private:
     BOOST_SERIALIZATION_SPLIT_MEMBER();
     
 public:
-    /** Constructs an empty shared pointer. */
-    SharedPointer(): pointee_(nullptr) {}
+    /** Constructs an empty shared pointer.
+     *
+     * @{ */
+    SharedPointer()
+        : pointee_(nullptr) {}
+    explicit SharedPointer(const Sawyer::Nothing&)
+        : pointee_(nullptr) {}
+    explicit SharedPointer(std::nullptr_t)
+        : pointee_(nullptr) {}
+    /** @} */
 
     /** Constructs a new pointer that shares ownership of the pointed-to object with the @p other pointer. The pointed-to
      *  object will only be deleted after both pointers are deleted.
@@ -146,13 +154,22 @@ public:
     }
     /** @} */
 
-    /** Assignment.  This pointer is caused to point to nothing. */
+    /** Assignment.  This pointer is caused to point to nothing.
+     *
+     * @{ */
     SharedPointer& operator=(const Sawyer::Nothing&) {
         if (pointee_ != nullptr && 0 == releaseOwnership(pointee_))
             delete pointee_;
         pointee_ = nullptr;
         return *this;
     }
+    SharedPointer& operator=(std::nullptr_t) {
+        if (pointee_ != nullptr && 0 == releaseOwnership(pointee_))
+            delete pointee_;
+        pointee_ = nullptr;
+        return *this;
+    }
+    /** @} */
 
     /** Reference to the pointed-to object.  An assertion will fail if assertions are enabled and this method is invoked on an
      *  empty pointer. */
