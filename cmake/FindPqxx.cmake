@@ -7,7 +7,7 @@
 #                       * Else require PQXX to exist at specified location and use it
 #
 #  OUTPUTS:
-#    PQXX_FOOUND     -- Boolean: whether the PQXX library was found.
+#    PQXX_FOUND      -- Boolean: whether the PQXX library was found.
 #    PQXX_LIBRARY    -- String: full name of PQXX library of a string that ends with NOTFOUND
 #    PQXX_LIBRARIES  -- String: names of libraries necessary to use PQXX
 

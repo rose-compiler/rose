@@ -7,7 +7,7 @@
 #                       * Else require MAGIC to exist at specified location and use it
 #
 #  OUTPUTS:
-#    MAGIC_FOOUND     -- Boolean: whether the MAGIC library was found.
+#    MAGIC_FOUND      -- Boolean: whether the MAGIC library was found.
 #    MAGIC_LIBRARY    -- String: full name of MAGIC library of a string that ends with NOTFOUND
 #    MAGIC_LIBRARIES  -- String: names of libraries necessary to use MAGIC
 

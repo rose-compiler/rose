@@ -10,7 +10,7 @@
 #                     * Else require Z3 to exist at specified location and use it
 #
 #  OUTPUTS:
-#    Z3_FOOUND     -- Boolean: whether the z3 executable or the Z3 library was found.
+#    Z3_FOUND      -- Boolean: whether the z3 executable or the Z3 library was found.
 #    Z3_FOUND_EXE  -- Boolean: whether the z3 executable was found
 #    Z3_FOUND_LIB  -- Boolean: whether the Z3 library was found
 #    Z3_EXECUTABLE -- String:  the z3 executable name

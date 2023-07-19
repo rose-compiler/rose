@@ -7,7 +7,7 @@
 #                       * Else require DWARF to exist at specified location and use it
 #
 #  OUTPUTS:
-#    DWARF_FOOUND     -- Boolean: whether the DWARF library was found.
+#    DWARF_FOUND      -- Boolean: whether the DWARF library was found.
 #    DWARF_LIBRARY    -- String: full name of DWARF library of a string that ends with NOTFOUND
 #    DWARF_LIBRARIES  -- String: names of libraries necessary to use DWARF
 
@@ -19,7 +19,22 @@ macro(find_dwarf)
     set(DWARF_LIBRARY "")
     set(DWARF_LIBRARIES "")
 
+    set(ELF_ROOT no)
+    include(FindElf)
+    find_elf()
+
   else()
+    if("${ELF_ROOT}" STREQUAL "no")
+      message(FATAL_ERROR "Dwarf requested but Elf prohibited")
+    else()
+      include(FindElf)
+      find_elf()
+      if(ELF_FOUND)
+      else()
+	message(FATAL_ERROR "Dwarf requested but Elf not found")
+      endif()
+    endif()
+    
     # Header files.
     if("${DWARF_ROOT}" STREQUAL "")
       # no extra include directories necessary
@@ -51,6 +66,12 @@ macro(find_dwarf)
     if(DWARF_FOUND)
       message(STATUS "DWARF_LIBRARY    = '${DWARF_LIBRARY}'")
       message(STATUS "DWARF_LIBRARIES  = '${DWARF_LIBRARIES}'")
+    endif()
+  else()
+    if(DWARF_FOUND)
+      message(STATUS "Found Dwarf: ${DWARF_LIBRARY}")
+    else()
+      message(STATUS "Dwarf NOT found.")
     endif()
   endif()
 
