@@ -295,7 +295,6 @@ dry_run $RG_SRC/scripts/tup/merge-configs \
     WITH_GPG_ERROR="$(value_or_else "$LIBGPG_ERROR_ROOT" "$(value_ite "$(config_switch --with-gcrypt "$@")" system)")" \
     WITH_JQ="$(value_or_no "$(remove_outer_quotes "$(cpp_defined ROSE_JQ_EXE rose_config.h)")")" \
     WITH_MAGIC="$(value_or_no "$(config_switch --with-magic "$@")")" \
-    WITH_PNG="$(value_or_no "$LIBPNG_ROOT")" \
     WITH_PQXX="$(value_or_no "$(config_switch --with-pqxx "$@")")" \
     WITH_PYTHON="$(value_ite "$(makefile_value PYTHON Makefile)" "$(makefile_value PYTHON_ROOT Makefile)" no)" \
     PYTHON_VERSION="$(makefile_value PYTHON_VERSION_MM Makefile)" \
