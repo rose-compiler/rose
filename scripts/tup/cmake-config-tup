@@ -323,7 +323,7 @@ dry_run $RG_SRC/scripts/tup/merge-configs \
 	$(host_compiler_vars) \
 	$(target_compiler_vars) \
 	ROSE_SOURCE="$RG_SRC" \
-	ROSE_VERSION=FIXME_NO_ROSE_VERSION \
+	ROSE_VERSION="$(cat "$RG_SRC/ROSE_VERSION")" \
 	TUP_ACKNOWLEDGMENT="$(value_or_no "$TUP_ACKNOWLEDGMENT")" \
 	< "${RG_SRC}/tup.config" > ./tup.config
 
