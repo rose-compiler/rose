@@ -289,7 +289,6 @@ dry_run $RG_SRC/scripts/tup/merge-configs \
     WITH_BOOST="$(value_or_no "$(config_switch --with-boost "$@")")" \
     WITH_CAPSTONE="$(value_or_no "$(config_switch --with-capstone "$@")")" \
     WITH_DLIB="$(value_or_no "$(config_switch --with-dlib "$@")")" \
-    WITH_DOXYGEN="$(value_or_no "$(makefile_value DOXYGEN Makefile)")" \
     WITH_DWARF="$(value_or_no "$(config_switch --with-dwarf "$@")")" \
     WITH_ELF="$(value_or_no "$(config_switch --with-elf "$@")")" \
     WITH_GCRYPT="$(value_or_no "$(config_switch --with-gcrypt "$@")")" \
