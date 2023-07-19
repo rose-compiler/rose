@@ -217,6 +217,25 @@ target_compiler_vars() {
     fi
 }
 
+# The default handler for failed logic assertions.
+assertion_behavior() {
+    local behavior="$(value_or_else "$(config_switch -DASSERTION_BEHAVIOR "@$")" abort)"
+    case "$behavior" in
+	abort)
+	    echo "ROSE_ASSERTION_ABORT"
+	    ;;
+	exit)
+	    echo "ROSE_ASSERTION_EXIT"
+	    ;;
+	throw)
+	    echo "ROSE_ASSERTION_THROW"
+	    ;;
+	*)
+	    die "invalid assertion behavior \"$behavior\""
+	    ;;
+    esac
+}
+
 # Given the name of a "lib", "include", or "bin" directory, return the part before.
 # The given path can have one additional component after the "lib", "include", or "bin"
 prefix() {
@@ -324,6 +343,7 @@ dry_run $RG_SRC/scripts/tup/merge-configs \
 	$(target_compiler_vars) \
 	ROSE_SOURCE="$RG_SRC" \
 	ROSE_VERSION="$(cat "$RG_SRC/ROSE_VERSION")" \
+	ASSERTION_BEHAVIOR="$(assertion_behavior "$@")" \
 	TUP_ACKNOWLEDGMENT="$(value_or_no "$TUP_ACKNOWLEDGMENT")" \
 	< "${RG_SRC}/tup.config" > ./tup.config
 
