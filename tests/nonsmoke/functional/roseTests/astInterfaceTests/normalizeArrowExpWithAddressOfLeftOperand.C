@@ -13,7 +13,8 @@ int main(int argc, char * argv[])
 {
   SgProject *project = frontend (argc, argv);
 
-  SageInterface::normalizeArrowExpWithAddressOfLeftOperand (project);
+  // transformationGeneratedOnly set to false for this test
+  SageInterface::normalizeArrowExpWithAddressOfLeftOperand (project,false);
 
   // Generate source code from AST and call the vendor's compiler
   return backend(project);
