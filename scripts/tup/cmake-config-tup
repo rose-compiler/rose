@@ -311,7 +311,6 @@ dry_run $RG_SRC/scripts/tup/merge-configs \
 	WITH_GCRYPT="$(value_or_no "$(config_switch -DGCRYPT_ROOT "$@")")" \
 	WITH_GPG_ERROR="$(value_or_no "$(config_switch -DGPGERROR_ROOT "$@")")" \
 	WITH_JQ=FIXME_NO_JQ \
-	WITH_LCMS=FIXME_NO_LCMS \
 	WITH_LZMA=FIXME_NO_LZMA \
 	WITH_MAGIC="$(value_or_no "$(config_switch -DMAGIC_ROOT "$@")")" \
 	WITH_PNG=FIXME_NO_PNG \
