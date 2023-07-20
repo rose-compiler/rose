@@ -366,7 +366,6 @@ if [ ! -r tup.debug ]; then
     dry_run mkdir .stash
     # Generated makefiles aren't needed by tup and just pollute, so trash them
     dry_run find . -name Makefile -print0 |xargs -0 --no-run-if-empty --verbose rm
-    dry_run mv libtool .libtool # referenced by tup files
     dry_run mv * .stash
     dry_run mv .stash/tup.config .
     dry_run tup tup.debug
