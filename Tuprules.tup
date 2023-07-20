@@ -513,6 +513,7 @@ support_CXX = $(CXX)
 support_CPPFLAGS += $(CPPFLAGS)
 support_CPPFLAGS += @(SUPPORT_CPPFLAGS)
 support_CPPFLAGS += $(support_INCDIRS)
+support_CPPFLAGS += -DROSE_ASSERTION_BEHAVIOR=@(ASSERTION_BEHAVIOR)
 
 # C compiler flags
 support_CFLAGS += $(CFLAGS)
