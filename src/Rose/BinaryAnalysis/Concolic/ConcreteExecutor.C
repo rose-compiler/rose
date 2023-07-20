@@ -10,6 +10,8 @@
 #include <Rose/BinaryAnalysis/Concolic/I386Linux/TracingExecutor.h>
 #include <Rose/BinaryAnalysis/Concolic/M68kSystem/TracingExecutor.h>
 
+#include <boost/thread/once.hpp>
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Concolic {
