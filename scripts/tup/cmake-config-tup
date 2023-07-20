@@ -41,7 +41,7 @@ value_of() {
 # Given a word and a list of words, return 0 if the word is present in the list and 1 otherwise.
 is_present() {
     local name="$1"; shift
-    local ar
+    local arg
     for arg in "$@"; do
 	[ "$name" = "$arg" ] && return 0
     done
@@ -217,6 +217,77 @@ target_compiler_vars() {
     fi
 }
 
+# Given a compiler command-line switch, returns the class of the switch.
+compiler_switch_class() {
+    case "$1" in
+	-g|-DNDEBUG|-D_FORTIFY_SOURCE*|-Wp,-D_GLIBCX_ASSERTIONS|-Wl,-z,*)
+	    echo debug
+	    ;;
+	-W*|-fdiagnostics-color*|-ftemplate-backtrace-limit*)
+	    echo warn
+	    ;;
+	-O*)
+	    echo optim
+	    ;;
+	*)
+	    echo misc
+	    ;;
+    esac
+}
+
+# Given a class name and a list of compiler command-line switches, return those switches that belong to the class.
+compiler_switches() {
+    local class="$1"; shift
+    local arg
+    local result=()
+    for arg in "$@"; do
+	if [ "$(compiler_switch_class "$arg")" = "$class" ]; then
+	    result=("${result[@]}" "$arg")
+	fi
+    done
+
+    echo "${result[@]}"
+}
+
+# Given the names of the variables that hold C and C++ switches, move the switches that are common to both to the variable specified
+# as the third argument.
+divy_compiler_switches() {
+    local c_var="$1" cxx_var="$2" combined_var="$3"
+    local c_out=() cxx_out=() combined_out=()
+    
+    for c_switch in ${!c_var}; do
+	local found=
+	for cxx_switch in ${!cxx_var}; do
+	    if [ "$c_switch" = "$cxx_switch" ]; then
+		found=yes
+		break
+	    fi
+	done
+	if [ -n "$found" ]; then
+	    combined_out=("${combined_out[@]}" "$c_switch")
+	else
+	    c_out=("${c_out[@]}" "$c_switch")
+	fi
+    done
+
+    for cxx_switch in ${!cxx_var}; do
+	local found=
+	for combined_switch in "${combined_out[@]}"; do
+	    if [ "$cxx_switch" = "$combined_switch" ]; then
+		found=yes
+		break
+	    fi
+	done
+	if [ "$found" = "" ]; then
+	    cxx_out=("${cxx_out[@]}" "$cxx_switch")
+	fi
+    done
+
+    eval "$c_var='${c_out[*]}'"
+    eval "$cxx_var='${cxx_out[*]}'"
+    eval "$combined_var='${combined_out[@]}'"
+}
+
 # The default handler for failed logic assertions.
 assertion_behavior() {
     local behavior="$(value_or_else "$(config_switch -DASSERTION_BEHAVIOR "@$")" abort)"
@@ -275,11 +346,23 @@ dry_run() {
     if [ -n "$dry_run" ]; then
 	echo "+" "$@"
     else
-	if [ -n "$VERBOSE" ]; then
-	    echo "+" "$@"
-	fi
 	"$@"
     fi
+}
+
+# Remove files in the build tree that we don't need and which jus pollute
+clean_generated_files() {
+    # GNU Autotools
+    dry_run find . -name Makefile -print0 |xargs -0 --no-run-if-empty rm ${VERBOSE:+--verbose}
+
+    # CMake
+    dry_run find . -name '*.cmake' -print0 |xargs -0 --no-run-if-empty rm ${VERBOSE:+--verbose}
+    dry_run find . -type d -name CMakeFiles -print0 |xargs -0 --no-run-if-empty rm -rf ${VERBOSE:+--verbose}
+    dry_run rm -rf ${VERBOSE:+--verbose} ./CMakeCache.txt CMakeDoxyfile.in DartConfiguration.tcl
+    dry_run rm -rf ${VERBOSE:+--verbose} compile_commands.json
+
+    # Recursively remove empty directories
+    find . -depth -type d -empty -execdir rmdir ${VERBOSE:+--verbose} '{}' ';'
 }
 
 ########################################################################################################################
@@ -287,9 +370,6 @@ dry_run() {
 
 if is_present --dry-run "$@" || is_present -n "$@"; then
     dry_run=yes
-fi
-if is_present --verbose "$@"; then
-    VERBOSE=yes
 fi
 
 RG_SRC="$(cd .. && pwd)"
@@ -305,6 +385,26 @@ fi
 dry_run touch "$config_timestamp"
 dry_run sleep 1 # in case of low-resolution file mtimes
 dry_run cmake "$@" ..
+echo "$arg0: generating tup configuration..."
+
+# Figure out C and C++ compiler switches. Put them in categories and simplify them so the Tup config file is easy for humans to
+# modify later.
+c_switches="$(value_or_else "$(value_of -DCMAKE_C_FLAGS "$@")" "-g -O3 -DNDEBUG $CFLAGS") -pthread"
+c_debug="$(compiler_switches debug $c_switches)"
+c_optim="$(compiler_switches optim $c_switches)"
+c_warn="$(compiler_switches warn $c_switches)"
+c_misc="$(compiler_switches misc $c_switches)"
+
+cxx_switches="$(value_or_else "$(value_of -DCMAKE_CXX_FLAGS "$@")" "-g -O3 -DNDEBUG $CFLAGS") -pthread"
+cxx_debug="$(compiler_switches debug $cxx_switches)"
+cxx_optim="$(compiler_switches optim $cxx_switches)"
+cxx_warn="$(compiler_switches warn $cxx_switches)"
+cxx_misc="$(compiler_switches misc $cxx_switches)"
+
+divy_compiler_switches c_debug cxx_debug c_cxx_debug
+divy_compiler_switches c_optim cxx_optim c_cxx_optim
+divy_compiler_switches c_warn cxx_warn c_cxx_warn
+divy_compiler_switches c_misc cxx_misc c_cxx_misc
 
 # Generate the tup.config file in the CWD by merging the source tup.config with information that was passed to the configure script
 # and the results of the configure script. If the information isn't available as a configure argument or a configure result, then
@@ -312,13 +412,18 @@ dry_run cmake "$@" ..
 dry_run $RG_SRC/scripts/tup/merge-configs \
 	CC="$(value_or_else "$(value_or_else "$(value_of -DCMAKE_C_COMPILER "$@")" "$C_COMPILER")" cc)" \
 	CXX="$(value_or_else "$(value_or_else "$(value_of -DCMAKE_CXX_COMPILER "$@")" "$CXX_COMPILER")" c++)" \
-	C_DEBUG="" \
-	CXX_DEBUG="" \
-	C_OPTIM="" \
-	CXX_OPTIM="" \
-	C_WARN="" \
-	C_MISC="$(value_or_else "$(value_of -DCMAKE_C_FLAGS "$@")" "-g -O3 -DNDEBUG $CFLAGS")" \
-	CXX_MISC="$(value_or_else "$(value_of -DCMAKE_CXX_FLAGS "$@")" "-g -O3 -DNDEBUG -pthread $CXXFLAGS")" \
+	C_DEBUG="$c_debug" \
+	C_OPTIM="$c_optim" \
+	C_WARN="$c_warn" \
+	C_MISC="$c_misc" \
+	CXX_DEBUG="$cxx_debug" \
+	CXX_OPTIM="$cxx_optim" \
+	CXX_WARN="$cxx_warn" \
+	CXX_MISC="$cxx_misc" \
+	C_CXX_DEBUG="$c_cxx_debug" \
+	C_CXX_OPTIM="$c_cxx_optim" \
+	C_CXX_WARN="$c_cxx_warn" \
+	C_CXX_MISC="$c_cxx_misc" \
 	LD_MISC="-fuse-ld=gold -pthread" \
 	INSTALLATION_PREFIX="$(value_of -DCMAKE_INSTALL_PREFIX "$@")" \
 	$(language_vars "$@") \
@@ -347,6 +452,8 @@ dry_run $RG_SRC/scripts/tup/merge-configs \
 	TUP_ACKNOWLEDGMENT="$(value_or_no "$TUP_ACKNOWLEDGMENT")" \
 	< "${RG_SRC}/tup.config" > ./tup.config
 
+clean_generated_files
+
 # The ROSE_CONFIGURE_DATE is usually the time at which "configure" was run. However, that causes the contents of the
 # src/util/rose_paths.C file to change every time configure runs, which means that rose_paths.C needs to be recompiled, which means
 # that CxxGrammarMetaProgram needs to be recompiled, which means all the huge ROSETTA generated source files might need to be
@@ -364,20 +471,12 @@ if [ ! -r tup.debug ]; then
     # stash so that Tupfiles can have rules to reach into the stash to update the working copy.
     dry_run rm -rf .stash
     dry_run mkdir .stash
-    # Generated makefiles aren't needed by tup and just pollute, so trash them
-    dry_run find . -name Makefile -print0 |xargs -0 --no-run-if-empty --verbose rm
     dry_run mv * .stash
     dry_run mv .stash/tup.config .
     dry_run tup tup.debug
     dry_run rsync -a .stash/ .
+    dry_run tup tup.debug
 else
-    # Generated makefiles aren't needed by tup and just pollute, so trash them
-    if [ -n "$VERBOSE" ]; then
-	dry_run find . -name Makefile -print0 |xargs -0 --no-run-if-empty --verbose rm
-    else
-	dry_run find . -name Makefile -print0 |xargs -0 --no-run-if-empty rm
-    fi
-	
     # Any files that were just created or modified by ROSE's cmake command should be copied into the stash so that Tupfile rules
     # that copy them back out into the build tree will get the latest version rather than overwriting the working copy with an old
     # version. However, if the only change is the file's mtime, reset the mtime to be the same as in the stash.
@@ -408,7 +507,7 @@ else
 fi
 
 # Speed up the first build by parsing Tup files now
-dry_run tup parse
+#dry_run tup parse
 
 # Generate a stub makefile at the top level for users that can't remember how to spell "tup"
 (
