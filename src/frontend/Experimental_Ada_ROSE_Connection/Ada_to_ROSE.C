@@ -125,7 +125,11 @@ void logKind(const char* kind, int elemID)
 LabelAndLoopManager::~LabelAndLoopManager()
 {
   for (GotoContainer::value_type el : gotos)
-    el.first->set_label(&lookupNode(labels, el.second));
+  {
+    //~ el.first->set_label(&lookupNode(labels, el.second));
+    ADA_ASSERT(el.first->get_label_expression() == nullptr);
+    el.first->set_label_expression(&mkLabelRefExp(lookupNode(labels, el.second)));
+  }
 }
 
 void LabelAndLoopManager::label(Element_ID id, SgLabelStatement& lblstmt)

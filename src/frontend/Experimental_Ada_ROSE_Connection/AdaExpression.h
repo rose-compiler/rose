@@ -88,7 +88,13 @@ namespace Ada_ROSE_Translation
 
 
   /// creates a call to subroutine expression \ref target, and passes params as arguments.
-  SgExpression& createCall(Element_ID tgtid, ElemIdRange params, bool callSyntax, AstContext ctx);
+  /// \param tgtid the ASIS Id of the called target (function)
+  /// \param params a list of ASIS Ids representing the arguments
+  /// \param prefixCallSyntax true if an operator uses call syntax (i.e., "+"(1,2) instead of 1 + 2)
+  /// \param objectCallSyntax true if a call uses OOP style syntax (i.e., x.init instead of init(x))
+  /// \param ctx the translation context
+  /// \return an expression representing the call
+  SgExpression& createCall(Element_ID tgtid, ElemIdRange params, bool prefixCallSyntax, bool objectCallSyntax, AstContext ctx);
 
   /// queries the corresponding ROSE AST node for a built-in identifer
   SgNode*

@@ -17,59 +17,78 @@ namespace Ada
 
 namespace
 {
-  inline
-  SgVariableSymbol&
-  symOf(const SgVarRefExp& n)
+  template <class SageRefExp>
+  auto symOf(const SageRefExp& n) -> decltype( *n.get_symbol() )
   {
-    ASSERT_not_null(n.get_symbol());
+    auto* symp = n.get_symbol();
+    ASSERT_not_null(symp);
 
-    return *n.get_symbol();
+    return *symp;
+  }
+
+  template <class SageSymbol>
+  auto declOf(const SageSymbol& n) -> decltype( *n.get_declaration() )
+  {
+    auto* dclp = n.get_declaration();
+    ASSERT_not_null(dclp);
+
+    return *dclp;
   }
 
   inline
-  SgFunctionSymbol&
-  symOf(const SgFunctionRefExp& n)
-  {
-    ASSERT_not_null(n.get_symbol());
-
-    return *n.get_symbol();
-  }
-
-  inline
-  SgFunctionDeclaration&
-  declOf(const SgFunctionSymbol& n)
-  {
-    ASSERT_not_null(n.get_declaration());
-
-    return *n.get_declaration();
-  }
-
-  inline
-  SgFunctionDeclaration&
-  declOf(const SgFunctionRefExp& n)
+  SgFunctionDeclaration& declOf(const SgFunctionRefExp& n)
   {
     return declOf(symOf(n));
   }
 
   inline
-  SgInitializedName&
-  declOf(const SgVarRefExp& n)
+  SgInitializedName& declOf(const SgVarRefExp& n)
   {
-    SgVariableSymbol& sy = symOf(n);
+    return declOf(symOf(n));
+  }
 
-    ASSERT_not_null(sy.get_declaration());
-    return *sy.get_declaration();
+
+  // \todo normalize Sage nodes that use this function
+  //       and make them go through symbols, like any other
+  //       ref exp.
+  template <class SageAdaRefExp>
+  auto declOfRef(const SageAdaRefExp& n) -> decltype( *n.get_decl() )
+  {
+    auto* dclp = n.get_decl();
+    ASSERT_not_null(dclp);
+
+    return *dclp;
   }
 
   inline
-  SgDeclarationStatement&
-  declOf(const SgAdaUnitRefExp& n)
+  SgAdaRenamingDecl& declOf(const SgAdaRenamingRefExp& n)
   {
-    ASSERT_not_null(n.get_decl());
-
-    return *n.get_decl();
+    return declOfRef(n);
   }
 
+  inline
+  SgDeclarationStatement& declOf(const SgAdaUnitRefExp& n)
+  {
+    return declOfRef(n);
+  }
+
+  inline
+  SgAdaTaskSpecDecl& declOf(const SgAdaTaskRefExp& n)
+  {
+    return declOfRef(n);
+  }
+
+  inline
+  SgAdaProtectedSpecDecl& declOf(const SgAdaProtectedRefExp& n)
+  {
+    return declOfRef(n);
+  }
+
+  inline
+  SgLabelStatement& declOf(const SgLabelRefExp& n)
+  {
+    return declOf(symOf(n));
+  }
 
 
 /*
@@ -89,63 +108,48 @@ namespace
 */
 
   inline
-  SgAdaRenamingDecl&
-  declOf(const SgAdaRenamingRefExp& n)
-  {
-    ASSERT_not_null(n.get_decl());
-
-    return *n.get_decl();
-  }
-
-
-  inline
-  SgName
-  nameOf(const SgSymbol& sy)
+  SgName nameOf(const SgSymbol& sy)
   {
     return sy.get_name();
   }
 
+
+  template <class SageRefExp>
   inline
-  SgName
-  nameOf(const SgVarRefExp& n)
+  auto nameOf(const SageRefExp& n) -> decltype( nameOf(symOf(n)) )
   {
     return nameOf(symOf(n));
   }
 
+  template <class SageRefExp>
   inline
-  SgName
-  nameOf(const SgFunctionRefExp& n)
+  auto nameOf(const SageRefExp& n) -> decltype( n.get_decl()->get_name() )
   {
-    return nameOf(symOf(n));
+    return declOf(n).get_name();
   }
 
+
   inline
-  SgName
-  nameOf(const SgEnumVal& n)
+  SgName nameOf(const SgEnumVal& n)
   {
     return n.get_name();
   }
 
+  inline
+  SgName nameOf(const SgAdaUnitRefExp& n)
+  {
+    return SageInterface::get_name(n.get_decl());
+  }
+
+
+/*
   inline
   SgName
   nameOf(const SgAdaRenamingDecl& n)
   {
     return n.get_name();
   }
-
-  inline
-  SgName
-  nameOf(const SgAdaRenamingRefExp& n)
-  {
-    return nameOf(declOf(n));
-  }
-
-  inline
-  SgName
-  nameOf(const SgAdaUnitRefExp& n)
-  {
-    return SageInterface::get_name(n.get_decl());
-  }
+*/
 
 
 /*
