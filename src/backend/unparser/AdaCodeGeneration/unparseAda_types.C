@@ -142,13 +142,13 @@ namespace
 
     void handle(const SgAdaDerivedType& n)
     {
-      prn("new ");
+      prn(" new ");
       type(n.get_base_type());
     }
 
     void handle(const SgAdaModularType& n)
     {
-      prn("mod ");
+      prn(" mod ");
       expr(n.get_modexpr());
     }
 /*
@@ -163,10 +163,10 @@ namespace
       const SgTypeModifier& tm = n.get_typeModifier();
 
       if (tm.isAliased())
-        prn("aliased ");
+        prn(" aliased ");
 
       if (tm.get_constVolatileModifier().isConst())
-        prn("constant ");
+        prn(" constant ");
 
       type(n.get_base_type());
     }
@@ -272,9 +272,9 @@ namespace
 
     void handle(const SgAdaAccessType& n)
     {
-      prn("access ");
+      prn(" access");
 
-      if (n.get_is_general_access()) prn("all"); // can this become a modifier?
+      if (n.get_is_general_access()) prn(" all"); // can this become a modifier?
 
       SgType* under = n.get_base_type();
 
@@ -300,7 +300,7 @@ namespace
 
       if (si::Ada::isFunction(n))
       {
-        prn(" return ");
+        prn(" return");
         type(n.get_return_type());
       }
     }
