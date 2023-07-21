@@ -133,8 +133,8 @@ namespace
       checkType(output, isSgExpression(n));
       checkType(output, isSgInitializedName(n));
       checkExpr(output, isSgAdaAttributeExp(n));
-      //~ checkGetAllRecordFields(output, isSgClassDefinition(n));
-      checkGetAllRecordFields(std::cerr, isSgClassDefinition(n));
+      checkGetAllRecordFields(output, isSgClassDefinition(n));
+      //~ checkGetAllRecordFields(std::cerr, isSgClassDefinition(n));
 
       resetStream();
     }

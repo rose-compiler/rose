@@ -1914,6 +1914,16 @@ mkAdaOthersExp()
   return mkLocatedNode<SgAdaOthersExp>();
 }
 
+SgLabelRefExp&
+mkLabelRefExp(const SgLabelStatement& tgt)
+{
+  SgLabelSymbol& lblsym = SG_DEREF( isSgLabelSymbol(tgt.get_symbol_from_symbol_table()) );
+  SgLabelRefExp& sgnode = SG_DEREF( sb::buildLabelRefExp(&lblsym) );
+
+  return sgnode;
+}
+
+
 SgExpression&
 mkExceptionRef(SgInitializedName& exception, SgScopeStatement& scope)
 {
@@ -1960,11 +1970,12 @@ mkCastExp(SgExpression& expr, SgType& ty)
 
 
 SgFunctionCallExp&
-mkFunctionCallExp(SgExpression& target, SgExprListExp& arglst, bool usesOperatorSyntax)
+mkFunctionCallExp(SgExpression& target, SgExprListExp& arglst, bool usesOperatorSyntax, bool usesObjectCallSyntax)
 {
   SgFunctionCallExp& sgnode = SG_DEREF(sb::buildFunctionCallExp_nfi(&target, &arglst));
 
   sgnode.set_uses_operator_syntax(usesOperatorSyntax);
+  sgnode.set_usesObjectCallSyntax(usesObjectCallSyntax);
   return sgnode;
 }
 

@@ -87,15 +87,25 @@ namespace
   {
       using base = sg::DispatchHandler<SgExpression*>;
 
-      AdaCallBuilder(Element_ID targetid, std::vector<SgExpression*> arglist, bool useCallSyntax, AstContext astctx)
-      : base(nullptr), tgtid(targetid), args(std::move(arglist)), callSyntax(useCallSyntax), ctx(astctx)
+      AdaCallBuilder( Element_ID targetid,
+                      std::vector<SgExpression*> arglist,
+                      bool usePrefixCallSyntax,
+                      bool useObjectCallSyntax,
+                      AstContext astctx
+                    )
+      : base(nullptr),
+        tgtid(targetid),
+        args(std::move(arglist)),
+        prefixCallSyntax(usePrefixCallSyntax),
+        objectCallSyntax(useObjectCallSyntax),
+        ctx(astctx)
       {}
 
       void mkCall(SgExpression& n)
       {
         SgExprListExp& arglst = mkExprListExp(args);
 
-        res = &mkFunctionCallExp(n, arglst, !callSyntax);
+        res = &mkFunctionCallExp(n, arglst, !prefixCallSyntax, objectCallSyntax);
       }
 
       void handle(SgNode& n)       { SG_UNEXPECTED_NODE(n); }
@@ -103,12 +113,12 @@ namespace
       // default
       void handle(SgExpression& n) { mkCall(n); }
 
-      void handle(SgFunctionRefExp& n)
-      {
-        SgExprListExp& arglst = mkExprListExp(args);
-
-        res = &mkFunctionCallExp(n, arglst, !callSyntax);
-      }
+      // same as mkCall
+      // void handle(SgFunctionRefExp& n)
+      // {
+      //   SgExprListExp& arglst = mkExprListExp(args);
+      //   res = &mkFunctionCallExp(n, arglst, !prefixCallSyntax, objectCallSyntax);
+      // }
 
       void handle(SgUnaryOp& n)
       {
@@ -145,8 +155,9 @@ namespace
     private:
       Element_ID                 tgtid;
       std::vector<SgExpression*> args;
-      bool        callSyntax;
-      AstContext  ctx;
+      bool                       prefixCallSyntax;
+      bool                       objectCallSyntax;
+      AstContext                 ctx;
   };
 
   struct ArrayAggregateCreator
@@ -1255,10 +1266,10 @@ namespace
         {
           logKind("A_Function_Call", elem.ID);
 
-          logTrace() << "A_Function_Call: "
-                     << expr.Is_Prefix_Notation << " (Is_Prefix_Notation) "
-                     << expr.Is_Prefix_Call << " (Is_Prefix_Call)"
-                     << std::endl;
+          //~ logTrace() << "A_Function_Call: "
+                     //~ << expr.Is_Prefix_Notation << " (Is_Prefix_Notation) "
+                     //~ << expr.Is_Prefix_Call << " (Is_Prefix_Call)"
+                     //~ << std::endl;
 
           ElemIdRange             range  = idRange(expr.Function_Call_Parameters);
 
@@ -1270,11 +1281,10 @@ namespace
           if (queryExprKindID(expr.Prefix) == An_Attribute_Reference)
             res = &getAttributeExprID(expr.Prefix, ctx, range);
           else
-            res = &createCall(expr.Prefix, range, expr.Is_Prefix_Call, ctx);
+            res = &createCall(expr.Prefix, range, expr.Is_Prefix_Call, expr.Is_Prefix_Notation, ctx);
 
           /* unused fields:
              Expression_Struct
-               bool                  Is_Prefix_Notation;
                bool                  Is_Generalized_Reference;
                bool                  Is_Dispatching_Call;
                bool                  Is_Call_On_Dispatching_Operation;
@@ -1869,14 +1879,14 @@ createArgDescList(const SgExpressionPtrList& args)
   return res;
 }
 
-SgExpression& createCall(Element_ID tgtid, ElemIdRange args, bool callSyntax, AstContext ctx)
+SgExpression& createCall(Element_ID tgtid, ElemIdRange args, bool operatorCallSyntax, bool objectCallSyntax, AstContext ctx)
 {
   // Create the arguments first. They may be needed to disambiguate operator calls
   std::vector<SgExpression*> arglist = traverseIDs(args, elemMap(), ArgListCreator{ctx});
 
 
   SgExpression& tgt = getExprID(tgtid, ctx, OperatorCallSupplement(createArgDescList(arglist), nullptr /* unknown return type */));
-  SgExpression* res = sg::dispatch(AdaCallBuilder{tgtid, std::move(arglist), callSyntax, ctx}, &tgt);
+  SgExpression* res = sg::dispatch(AdaCallBuilder{tgtid, std::move(arglist), operatorCallSyntax, objectCallSyntax, ctx}, &tgt);
 
   return SG_DEREF(res);
 }
