@@ -9109,6 +9109,93 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmJvmNestMembers           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmJvmNestMembers);
+IS_SERIALIZABLE(AsmJvmNestMembers);
+
+#ifdef DOCUMENTATION
+/** JVM NestMembers attribute.
+ *
+ *  The NestMembers attribute records the classes and interfaces that are authorized to claim
+ *  membership in the nest hosted by the current class or interface, see section 4.7.29 of the
+ *  JVM specification. */
+class SgAsmJvmNestMembers: public SgAsmJvmAttribute {
+#endif // DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmNestMembers.setDataPrototype(
+        "SgUnsigned16List", "classes", "",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+    DECLARE_OTHERS(AsmJvmNestMembers);
+#if defined(SgAsmJvmNestMembers_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmJvmNestMembers -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmNestMembers");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmAttribute);
+        s & BOOST_SERIALIZATION_NVP(p_classes);
+        debugSerializationEnd("SgAsmJvmNestMembers");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+
+public:
+    /** Property: classes
+     *
+     *  Each value in the classes array must be a valid index into the constant_pool table.
+     *  The constant_pool entry at that index must be a CONSTANT_Class_info structure
+     *  representing a class or interface which is a member of the nest hosted by the current
+     *  class or interface (see section 4.4.1 of the JVM specification). 
+     *  
+     *  @{ */
+    SgUnsigned16List const& get_classes() const;
+    void set_classes(SgUnsigned16List const&);
+    /** @} */
+public:
+    /** Initialize the attribute before parsing.
+     *
+     *  This is the preferred constructor to use before parsing as it sets its parent. */
+    explicit SgAsmJvmNestMembers(SgAsmJvmAttributeTable* table);
+
+    /** Initialize the attribute by parsing the file. */
+    virtual SgAsmJvmNestMembers* parse(SgAsmJvmConstantPool* pool) override;
+
+    /** Write object to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
+    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+public:
+    /** Destructor. */
+    virtual ~SgAsmJvmNestMembers();
+
+public:
+    /** Default constructor. */
+    SgAsmJvmNestMembers();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmJvmNestMembers_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmJvmModuleMainClass           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -10443,7 +10530,7 @@ public:
     /** Property: exception_index_table
      *
      *  Each value in the exception_index_table array must be a valid index into the constant_pool
-     *  table. The constant_pool entry at that index must be the CONSTANT_Utf8_info struction
+     *  table. The constant_pool entry at that index must be the CONSTANT_Utf8_info structure
      *  representing the string "Exceptions" (see section 4.4.7 of the JVM specification). 
      *  
      *  @{ */
@@ -11995,6 +12082,7 @@ AstNodeClass& AsmJvmAttribute = nonTerminalConstructor(
         | AsmJvmInnerClasses
         | AsmJvmLineNumberTable
         | AsmJvmModuleMainClass
+        | AsmJvmNestMembers
         | AsmJvmSignature
         | AsmJvmSourceFile
         | AsmJvmStackMapTable
