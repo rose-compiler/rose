@@ -49,6 +49,9 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
   else if (name == "BootstrapMethods") { // 4.7.23
     return new SgAsmJvmBootstrapMethods(parent);
   }
+  else if (name == "NestMembers") { // 4.7.29
+    return new SgAsmJvmNestMembers(parent);
+  }
 
   // skip attribute
   Jvm::read_value(pool, attribute_name_index);
@@ -96,11 +99,11 @@ SgAsmJvmAttributeTable::SgAsmJvmAttributeTable(SgAsmJvmFileHeader* jfh, SgAsmNod
 
 SgAsmJvmAttributeTable* SgAsmJvmAttributeTable::parse(SgAsmJvmConstantPool* pool)
 {
-  uint16_t attributes_count;
+  uint16_t numAttributes;
 
-  Jvm::read_value(pool, attributes_count);
+  Jvm::read_value(pool, numAttributes);
 
-  for (int ii = 0; ii < attributes_count; ii++) {
+  for (int ii = 0; ii < numAttributes; ii++) {
     auto attribute = SgAsmJvmAttribute::instance(pool, /*parent*/this);
     // attribute may not be implemented yet
     if (attribute) {
@@ -113,8 +116,8 @@ SgAsmJvmAttributeTable* SgAsmJvmAttributeTable::parse(SgAsmJvmConstantPool* pool
 
 void SgAsmJvmAttributeTable::unparse(std::ostream& os) const
 {
-  uint16_t attributesCount = get_attributes().size();
-  Jvm::writeValue(os, attributesCount);
+  uint16_t numAttributes = get_attributes().size();
+  Jvm::writeValue(os, numAttributes);
 
   for (auto attribute : get_attributes()) {
     attribute->unparse(os);
@@ -550,6 +553,8 @@ SgAsmJvmInnerClasses::SgAsmJvmInnerClasses(SgAsmJvmAttributeTable* parent)
 
 SgAsmJvmInnerClasses* SgAsmJvmInnerClasses::parse(SgAsmJvmConstantPool* pool)
 {
+  SgAsmJvmAttribute::parse(pool);
+
   uint16_t numClasses{0};
   Jvm::read_value(pool, numClasses);
 
@@ -563,6 +568,8 @@ SgAsmJvmInnerClasses* SgAsmJvmInnerClasses::parse(SgAsmJvmConstantPool* pool)
 
 void SgAsmJvmInnerClasses::unparse(std::ostream& os) const
 {
+  SgAsmJvmAttribute::unparse(os);
+
   uint16_t numClasses = get_classes().size();
   Jvm::writeValue(os, numClasses);
 
@@ -806,6 +813,8 @@ SgAsmJvmBootstrapMethods::SgAsmJvmBootstrapMethods(SgAsmJvmAttributeTable* table
 
 SgAsmJvmBootstrapMethods* SgAsmJvmBootstrapMethods::parse(SgAsmJvmConstantPool* pool)
 {
+  SgAsmJvmAttribute::parse(pool);
+
   uint16_t numMethods;
   Jvm::read_value(pool, numMethods);
 
@@ -819,6 +828,8 @@ SgAsmJvmBootstrapMethods* SgAsmJvmBootstrapMethods::parse(SgAsmJvmConstantPool* 
 
 void SgAsmJvmBootstrapMethods::unparse(std::ostream &os) const
 {
+  SgAsmJvmAttribute::unparse(os);
+
   uint16_t numMethods = get_bootstrap_methods().size();
   Jvm::writeValue(os, numMethods);
 
@@ -848,12 +859,13 @@ SgAsmJvmBootstrapMethod* SgAsmJvmBootstrapMethod::parse(SgAsmJvmConstantPool* po
   Jvm::read_value(pool, numArgs);
 
   SgUnsigned16List u16List;
-
-  uint16_t index;
   for (int ii = 0; ii < numArgs; ii++) {
+    uint16_t index;
     Jvm::read_value(pool, index);
     u16List.push_back(index);
   }
+  set_bootstrap_arguments(u16List);
+
   return this;
 }
 
@@ -916,8 +928,48 @@ void SgAsmJvmModuleMainClass::dump(FILE* f, const char *prefix, ssize_t idx) con
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-// 4.7.29 The NestMembers Attribute. NestMembers_attribute represented by the TODO class.
+// 4.7.29 The NestMembers Attribute. NestMembers_attribute represented by the SgAsmJvmNestMembers class.
 //
+SgAsmJvmNestMembers::SgAsmJvmNestMembers(SgAsmJvmAttributeTable* table)
+{
+  initializeProperties();
+  set_parent(table);
+}
+
+SgAsmJvmNestMembers* SgAsmJvmNestMembers::parse(SgAsmJvmConstantPool* pool)
+{
+  SgAsmJvmAttribute::parse(pool);
+
+  uint16_t numClasses;
+  Jvm::read_value(pool, numClasses);
+
+  SgUnsigned16List u16List;
+  for (int ii = 0; ii < numClasses; ii++) {
+    uint16_t index;
+    Jvm::read_value(pool, index);
+    u16List.push_back(index);
+  }
+  set_classes(u16List);
+
+  return this;
+}
+
+void SgAsmJvmNestMembers::unparse(std::ostream &os) const
+{
+  SgAsmJvmAttribute::unparse(os);
+
+  uint16_t numClasses = get_classes().size();
+  Jvm::writeValue(os, numClasses);
+
+  for (uint16_t index : get_classes()) {
+    Jvm::writeValue(os, index);
+  }
+}
+
+void SgAsmJvmNestMembers::dump(FILE* f, const char* prefix, ssize_t idx) const
+{
+  mlog[WARN] << "SgAsmJvmNestMembers::dump() not implemented yet\n";
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
