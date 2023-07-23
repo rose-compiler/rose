@@ -22,8 +22,6 @@ using namespace std;
 // DQ (8/20/2005): Make this local so that it can't be called externally!
 void postProcessingSupport (SgNode* node);
 
-// DQ (5/22/2005): Added function with better name, since none of the fixes are really
-// temporary any more.
 void AstPostProcessing (SgNode* node)
    {
   // DQ (7/7/2005): Introduce tracking of performance of ROSE.
@@ -37,11 +35,6 @@ void AstPostProcessing (SgNode* node)
      printf ("+++++++++++++++++++++++++++++++++++++++++++++++ \n");
 #endif
 
-#if 0
-     printf ("Exiting as a test! \n");
-     ROSE_ABORT();
-#endif
-
   // DQ (1/31/2014): We want to enforce this, but for now issue a warning if it is not followed.
   // Later I want to change the function's API to onoy take a SgProject.  Note that this is 
   // related to a performance bug that was fixed by Gergo a few years ago.  The fix could be
@@ -51,13 +44,8 @@ void AstPostProcessing (SgNode* node)
        // DQ (5/17/17): Note that this function is called, and this message is output, from the outliner, which is OK but not ideal.
           if ( SgProject::get_verbose() >= 1 )
             printf ("Warning: AstPostProcessing should ideally be called on SgProject (due to repeated memory pool traversals and quadratic \n");
-//          printf ("         behavior (over files) when multiple files are specified on the command line): node = %s \n",node->class_name().c_str());
         }
-  // DQ (1/31/2014): This is a problem to enforce this for at least (this test program): 
-  //      tests/nonsmoke/functional/roseTests/astRewriteTests/testIncludeDirectiveInsertion.C
-  // ROSE_ASSERT(isSgProject(node) != NULL);
 
-  // DQ (3/17/2007): This should be empty
      if (SgNode::get_globalMangledNameMap().size() != 0)
         {
           if (SgProject::get_verbose() > 0)
@@ -75,32 +63,18 @@ void AstPostProcessing (SgNode* node)
           case V_SgProject:
              {
                SgProject* project = isSgProject(node);
-               ROSE_ASSERT(project != NULL);
+               ASSERT_not_null(project);
 
             // GB (8/19/2009): Added this call to perform post-processing on
             // the entire project at once. Conversely, commented out the
             // loop iterating over all files because repeated calls to
             // AstPostProcessing are slow due to repeated memory pool
             // traversals of the same nodes over and over again.
-            // Only postprocess the AST if it was generated, and not were we just did the parsing.
-            // postProcessingSupport(node);
-
-            // printf ("In AstPostProcessing(): project->get_exit_after_parser() = %s \n",project->get_exit_after_parser() ? "true" : "false");
+            // Only postprocess the AST if it was generated, and not where we just did the parsing.
                if (project->get_exit_after_parser() == false)
                   {
                     postProcessingSupport (node);
                   }
-#if 0
-               SgFilePtrList::iterator fileListIterator;
-               for (fileListIterator = project->get_fileList().begin(); fileListIterator != project->get_fileList().end(); fileListIterator++)
-                  {
-                 // iterate through the list of current files
-                    AstPostProcessing(*fileListIterator);
-                  }
-#endif
-
-            // printf ("SgProject support not implemented in AstPostProcessing \n");
-            // ROSE_ASSERT(false);
                break;
              }
 
@@ -116,14 +90,13 @@ void AstPostProcessing (SgNode* node)
           case V_SgSourceFile:
              {
                SgFile* file = isSgFile(node);
-               ROSE_ASSERT(file != NULL);
+               ASSERT_not_null(file);
 
-            // Only postprocess the AST if it was generated, and not were we just did the parsing.
+            // Only postprocess the AST if it was generated, and not where we just did the parsing.
                if (file->get_exit_after_parser() == false)
                   {
                     postProcessingSupport (node);
                   }
-               
                break;
              }
 
@@ -174,6 +147,7 @@ void postProcessingSupport (SgNode* node)
      bool noPostprocessing = (SageInterface::is_Ada_language()     == true) ||
                              (SageInterface::is_Fortran_language() == true) ||
                              (SageInterface::is_Jovial_language()  == true) ||
+                             (SageInterface::is_Jvm_language()     == true) ||
                              (SageInterface::is_PHP_language()     == true) ||
                              (SageInterface::is_Python_language()  == true);
 
@@ -376,7 +350,7 @@ void postProcessingSupport (SgNode* node)
                printf ("Calling fixupFileInfoInconsistanties() \n");
              }
 
-       // DQ (11/14/2015): Fixup inconsistancies across the multiple Sg_File_Info obejcts in SgLocatedNode and SgExpression IR nodes.
+       // DQ (11/14/2015): Fixup inconsistancies across the multiple Sg_File_Info objects in SgLocatedNode and SgExpression IR nodes.
           fixupFileInfoInconsistanties(node);
 
           if (SgProject::get_verbose() > 1)
@@ -516,8 +490,9 @@ void postProcessingSupport (SgNode* node)
        // DQ (4/7/2010): This was commented out to modify Fortran code, but I think it should NOT modify Fortran code.
        // DQ (5/21/2008): This only make sense for C and C++ (Error, this DOES apply to Fortran where the "parameter" attribute is used!)
           if (SageInterface::is_Fortran_language() == false &&
+              SageInterface::is_Java_language() == false &&
               SageInterface::is_Jovial_language() == false &&
-              SageInterface::is_Java_language() == false
+              SageInterface::is_Jvm_language() == false
               )
             {
             // DQ (3/20/2005): Fixup AST so that GNU g++ compile-able code will be generated
@@ -526,9 +501,6 @@ void postProcessingSupport (SgNode* node)
 
        // DQ (3/24/2005): Fixup AST to generate code that works around GNU g++ bugs
           fixupforGnuBackendCompiler(node);
-
-       // DQ (4/19/2005): fixup all definingDeclaration and NondefiningDeclaration pointers in SgDeclarationStatement IR nodes
-       // fixupDeclarations(node);
 
        // DQ (5/20/2005): make the non-defining (forward) declarations added by EDG for static template 
        // specializations added under the "--instantiation local" option match the defining declarations.
@@ -567,7 +539,6 @@ void postProcessingSupport (SgNode* node)
               fixupDeclarations(node);
           }
 
-       // DQ (3/17/2007): This should be empty
           ROSE_ASSERT(SgNode::get_globalMangledNameMap().size() == 0);
 
        // DQ (2/12/2006): Moved to trail marking templates (as a test)
@@ -590,16 +561,9 @@ void postProcessingSupport (SgNode* node)
        // symbol table pointer).
           fixupAstSymbolTables(node);
 
-       // DQ (3/17/2007): At this point the globalMangledNameMap has been used in the symbol table construction. OK.
-       // ROSE_ASSERT(SgNode::get_globalMangledNameMap().size() == 0);
-
        // DQ (8/20/2005): Handle backend vendor specific template handling options 
        // (e.g. g++ options: -fno-implicit-templates and -fno-implicit-inline-templates)
           processTemplateHandlingOptions(node);
-
-       // DQ (5/22/2005): relocate compiler generated forward template instantiation declarations to appear 
-       // after the template declarations and before first use.
-       // relocateCompilerGeneratedTemplateInstantiationDeclarationsInAST(node);
 
        // DQ (8/27/2005): This disables output of some template instantiations that would result in 
        // "ambiguous template specialization" in g++ (version 3.3.x, 3.4.x, and 4.x).  See test2005_150.C 
@@ -612,21 +576,11 @@ void postProcessingSupport (SgNode* node)
        // DQ (3/5/2006): Mark functions that are provided for backend compatability as compiler generated by ROSE
           markBackendSpecificFunctionsAsCompilerGenerated(node);
 
-       // DQ (5/24/2006): Added this test to figure out where Symbol parent pointers are being reset to NULL
-       // TestParentPointersOfSymbols::test();
-
        // DQ (5/24/2006): reset the remaining parents in IR nodes missed by the AST based traversals
-       // resetParentPointersInMemoryPool();
           resetParentPointersInMemoryPool(node);
-
-       // DQ (3/17/2007): This should be empty
-       // ROSE_ASSERT(SgNode::get_globalMangledNameMap().size() == 0);
 
        // DQ (5/29/2006): Fixup types in declarations that are not shared (e.g. where more than one non-defining declaration exists)
           resetTypesInAST();
-
-       // DQ (3/17/2007): This should be empty
-       // ROSE_ASSERT(SgNode::get_globalMangledNameMap().size() == 0);
 
        // DQ (3/10/2007): fixup name of any template classes that have been copied incorrectly into SgInitializedName 
        // list in base class constructor preinitialization lists (see test2004_156.C for an example).

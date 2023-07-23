@@ -671,6 +671,7 @@ void markNodeToBeUnparsed(SgNode* node, int physical_file_id);
   ROSE_DLL_API inline bool is_Cxx_language ()       { return Rose::is_Cxx_language; }
   ROSE_DLL_API inline bool is_Java_language ()      { return Rose::is_Java_language; }
   ROSE_DLL_API inline bool is_Jovial_language ()    { return Rose::is_Jovial_language; }
+  ROSE_DLL_API inline bool is_Jvm_language ()       { return Rose::is_Jvm_language; }
   ROSE_DLL_API inline bool is_Fortran_language ()   { return Rose::is_Fortran_language; }
   ROSE_DLL_API inline bool is_CAF_language ()       { return Rose::is_CAF_language; }
   ROSE_DLL_API inline bool is_PHP_language()        { return Rose::is_PHP_language; }
@@ -690,6 +691,7 @@ void markNodeToBeUnparsed(SgNode* node, int physical_file_id);
   ROSE_DLL_API bool is_Cxx_language ();
   ROSE_DLL_API bool is_Java_language ();
   ROSE_DLL_API bool is_Jovial_language ();
+  ROSE_DLL_API bool is_Jvm_language ();
   ROSE_DLL_API bool is_Fortran_language ();
   ROSE_DLL_API bool is_CAF_language ();
   ROSE_DLL_API bool is_PHP_language();

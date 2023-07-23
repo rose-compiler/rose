@@ -1189,6 +1189,16 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                else if (CommandlineProcessing::isJavaJvmFile(sourceFilename))
                                 {
                                    file = new SgJvmComposite(argv, project);
+                                   file->set_inputLanguage(SgFile::e_Jvm_language);
+                                   file->set_outputLanguage(SgFile::e_Jvm_language);
+
+                                   file->set_Jvm_only(true);
+                                   Rose::is_Jvm_language = true;
+
+                                // Don't do C++ stuff
+                                   file->set_requires_C_preprocessor(false);
+                                   file->set_disable_edg_backend(true);
+                                   file->set_skip_commentsAndDirectives(true);
                                 }
                                else if (true)
                                 {
@@ -1284,10 +1294,8 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                    file->set_requires_C_preprocessor(false);
 
                                    ASSERT_not_null(file->get_file_info());
-
-                                // DQ (2/3/2009): Uncommented this to report the file type when we don't process it...
-                                // outputTypeOfFileAndExit(sourceFilename);
-                                   printf ("Warning: This is an unknown file type, not being processed by ROSE: sourceFilename = %s \n",sourceFilename.c_str());
+                                   printf("Warning: This is an unknown file type, not being processed by ROSE: sourceFilename = %s \n",
+                                          sourceFilename.c_str());
                                    outputTypeOfFileAndExit(sourceFilename);
                                  }
                             }
