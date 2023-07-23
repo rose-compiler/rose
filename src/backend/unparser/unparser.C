@@ -1767,8 +1767,13 @@ Unparser::unparseFile(SgBinaryComposite *binary, SgUnparse_Info &info)
 void
 Unparser::unparseFile(SgJvmComposite* jvm, SgUnparse_Info &info)
 {
-  // no implementation for the moment
-    unparseFile(isSgBinaryComposite(jvm), info);
+  ASSERT_not_null(jvm);
+
+  // TODO: jar files
+  SgAsmGenericFile* file = jvm->get_binaryFile();
+
+  /* Unparse the JVM file */
+  SgAsmExecutableFileFormat::unparseBinaryFormat(jvm->get_unparse_output_filename(), file);
 }
 
 #endif // ROSE_ENABLE_BINARY_ANALYSIS
@@ -3112,11 +3117,6 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
      printf ("In unparseFile(SgFile* file): file->get_outputLanguage() = %s \n",SgFile::get_outputLanguageOptionName(file->get_outputLanguage()).c_str());
 #endif
 
-  // debugging assertions
-  // ROSE_ASSERT ( file.get_verbose() == true );
-  // ROSE_ASSERT ( file.get_skip_unparse() == false );
-  // file.set_verbose(true);
-
      ASSERT_not_null(file);
 
   // FMZ (12/21/2009) the imported files by "use" statements should not be unparsed
@@ -3641,8 +3641,6 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 
        // Set the output filename in the SgFile IR node.
           file->set_unparse_output_filename(outputFilename);
-
-          ROSE_ASSERT (file->get_unparse_output_filename().empty() == false);
         }
 #endif
 
