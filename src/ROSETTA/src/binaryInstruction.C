@@ -9196,6 +9196,92 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmJvmNestHost           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmJvmNestHost);
+IS_SERIALIZABLE(AsmJvmNestHost);
+
+#ifdef DOCUMENTATION
+/** JVM NestHost attribute.
+ *
+ *  The NestHost attribute records the nest host of the nest to which the current class or
+ *  interface claims to belong, see section 4.7.28 of the JVM specification. */
+class SgAsmJvmNestHost: public SgAsmJvmAttribute {
+#endif // DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmNestHost.setDataPrototype(
+        "uint16_t", "host_class_index", "= 0",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+    DECLARE_OTHERS(AsmJvmNestHost);
+#if defined(SgAsmJvmNestHost_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmJvmNestHost -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmNestHost");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmAttribute);
+        s & BOOST_SERIALIZATION_NVP(p_host_class_index);
+        debugSerializationEnd("SgAsmJvmNestHost");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+
+public:
+    /** Property: classes
+     *
+     *  The value in the host_class_index item must be a valid index into the constant_pool table.
+     *  The constant_pool entry at that index must be a CONSTANT_Class_info structure
+     *  representing a class or interface which is the nest host for the current class or
+     *  interface (see section 4.4.1 of the JVM specification). 
+     *  
+     *  @{ */
+    uint16_t const& get_host_class_index() const;
+    void set_host_class_index(uint16_t const&);
+    /** @} */
+public:
+    /** Initialize the attribute before parsing.
+     *
+     *  This is the preferred constructor to use before parsing as it sets its parent. */
+    explicit SgAsmJvmNestHost(SgAsmJvmAttributeTable* table);
+
+    /** Initialize the attribute by parsing the file. */
+    virtual SgAsmJvmNestHost* parse(SgAsmJvmConstantPool* pool) override;
+
+    /** Write object to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
+    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+public:
+    /** Destructor. */
+    virtual ~SgAsmJvmNestHost();
+
+public:
+    /** Default constructor. */
+    SgAsmJvmNestHost();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmJvmNestHost_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmJvmModuleMainClass           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -12082,6 +12168,7 @@ AstNodeClass& AsmJvmAttribute = nonTerminalConstructor(
         | AsmJvmInnerClasses
         | AsmJvmLineNumberTable
         | AsmJvmModuleMainClass
+        | AsmJvmNestHost
         | AsmJvmNestMembers
         | AsmJvmSignature
         | AsmJvmSourceFile

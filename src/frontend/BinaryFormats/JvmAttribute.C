@@ -49,6 +49,9 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
   else if (name == "BootstrapMethods") { // 4.7.23
     return new SgAsmJvmBootstrapMethods(parent);
   }
+  else if (name == "NestHost") { // 4.7.28
+    return new SgAsmJvmNestHost(parent);
+  }
   else if (name == "NestMembers") { // 4.7.29
     return new SgAsmJvmNestMembers(parent);
   }
@@ -923,8 +926,32 @@ void SgAsmJvmModuleMainClass::dump(FILE* f, const char *prefix, ssize_t idx) con
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-// 4.7.28 The NestHost Attribute. NestHost_attribute represented by the TODO class.
+// 4.7.28 The NestHost Attribute. NestHost_attribute represented by the SgAsmJvmNestHost class.
 //
+SgAsmJvmNestHost::SgAsmJvmNestHost(SgAsmJvmAttributeTable* table)
+{
+  initializeProperties();
+  set_parent(table);
+}
+
+SgAsmJvmNestHost* SgAsmJvmNestHost::parse(SgAsmJvmConstantPool* pool)
+{
+  SgAsmJvmAttribute::parse(pool);
+  Jvm::read_value(pool, p_host_class_index);
+  return this;
+}
+
+void SgAsmJvmNestHost::unparse(std::ostream &os) const
+{
+  SgAsmJvmAttribute::unparse(os);
+  Jvm::writeValue(os, p_host_class_index);
+}
+
+void SgAsmJvmNestHost::dump(FILE* f, const char* prefix, ssize_t idx) const
+{
+  mlog[WARN] << "SgAsmJvmNestHost::dump() not implemented yet\n";
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
