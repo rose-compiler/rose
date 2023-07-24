@@ -5,13 +5,28 @@
 
 namespace Rose {
 
-/** YAML parser.
- *
- *  The YAML parser implementation has been moved to the Sawyer support library since it's useful to tools that do not otherwise
- *  depend on librose. When used in those tools, use Sawyer::Yaml; when used in tools that depend on librose, you may use either
- *  Sawyer::Yaml or Rose::Yaml interchangeably. */
-namespace Yaml = Sawyer::Yaml;
+/** Entities for operating on YAML. */
+namespace Yaml {
 
+using Sawyer::Yaml::Exception;
+using Sawyer::Yaml::InternalException;
+using Sawyer::Yaml::ParsingException;
+using Sawyer::Yaml::OperationException;
+using Sawyer::Yaml::Iterator;
+using Sawyer::Yaml::ConstIterator;
+using Sawyer::Yaml::Node;
+using Sawyer::Yaml::parse;
+using Sawyer::Yaml::SerializeConfig;
+using Sawyer::Yaml::serialize;
+
+/** Parse JSON to YAML.
+ *
+ * @{ */
+Node parseJson(const boost::filesystem::path&);
+Node parseJson(const std::string&);
+/** @} */
+
+} // namespace
 } // namespace
 
 #endif

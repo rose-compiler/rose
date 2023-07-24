@@ -503,7 +503,8 @@ support_INCDIRS = \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/roseSupport \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/util \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/util/commandlineProcessing \
- @(CPP_INCDIR_SWITCH)$(ROSE)/src/util/stringSupport
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/util/stringSupport \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/3rdPartyLibraries/json
 
 # Compilers
 support_CC = $(CC)
