@@ -161,7 +161,7 @@ GdbResponse::parse(const std::string &line) {
 std::string
 GdbResponse::nodeToString(const Yaml::Node &node, const std::string &prefix = "") {
     std::stringstream ss;
-    Yaml::Serialize(node, ss);
+    Yaml::serialize(node, ss);
     return StringUtility::prefixLines(ss.str(), prefix);
 }
 
