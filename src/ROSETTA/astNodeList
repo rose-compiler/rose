@@ -1044,3 +1044,4 @@ SgAsmJvmBootstrapMethod
 SgAsmJvmBootstrapMethods
 SgAsmJvmExceptions
 SgAsmJvmNestMembers
+SgAsmJvmNestHost

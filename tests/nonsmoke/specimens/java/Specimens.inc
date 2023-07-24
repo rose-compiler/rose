@@ -8,5 +8,6 @@ nonsmoke_specimens_java_directory = $(top_srcdir)/tests/nonsmoke/specimens/java
 #------------------------------------------------------------------------------------------------------------------------
 # java class file specimens
 
-nonsmoke_specimens_java_classes =	\
-    NestMembersAttribute.class
+nonsmoke_specimens_java_classes =		\
+    NestMembersAttribute.class			\
+    NestMembersAttribute__InputReader.class

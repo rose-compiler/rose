@@ -288,6 +288,7 @@ add_library(roseGeneratedBinaryAnalysis OBJECT
   SgAsmJvmMethod.C
   SgAsmJvmMethodTable.C
   SgAsmJvmModuleMainClass.C
+  SgAsmJvmNestHost.C
   SgAsmJvmNestMembers.C
   SgAsmJvmNode.C
   SgAsmJvmSignature.C
