@@ -796,7 +796,7 @@ namespace
       if (const SgNode* namedNode = namedAstNode(*remMin))
         refNode = namedNode;
 
-    // while the refnode is aliases along (locMin, locLim] and the scope is extensible |remBeg,remMin| > 0
+    // while the refnode is aliased along (locMin, locLim] and the scope is extensible |remBeg,remMin| > 0
     //   extend the scope by one.
     while ((std::distance(remBeg, remMin) > 0) && isShadowedAlongPath(*refNode, locMin, locLim))
     {
@@ -835,12 +835,12 @@ namespace
     // 1a determine the first mismatch (mismPos) of the (reversed) scope paths "a.b.c" and "a.d.e"
     std::size_t     pathlen      = std::min(localPath.size(), remotePath.size());
     PathIterator    localstart   = localPath.rbegin();
+
     // 1b mismPos is  "a|b.c and a|d.e", thus the required scope qualification is b.c
     auto            mismPos      = std::mismatch( localstart, localstart + pathlen,
                                                   remotePath.rbegin()
                                                 );
-    // 2a extend the path if an overload for front(b.c) exists somewhere in d.e
-    //    \todo instead of querying whether the prefix is empty, use the leading element as decl
+    // 2 extend the path if an overload for front(b.c) exists somewhere in d.e
     PathIterator    remotePos    = extendNameQualUntilUnambiguous( remotePath.rbegin(),
                                                                    mismPos.second,
                                                                    remotePath.rend(),
@@ -1715,16 +1715,19 @@ namespace
       {
         traversal.loadNameQualificationContext(*parent_dcl);
       }
+
+      traversal.addVisibleScope(parent_scope);
     }
 
+/*
     n = si::Ada::logicalParentScope(*n);
-
     while (requiresNameQual(n))
     {
       traversal.addVisibleScope(n);
       n = n->get_scope(); // use logicalParentScope?
       ASSERT_not_null(n);
     }
+*/
   }
 
 
@@ -1984,8 +1987,6 @@ namespace
                || (&traversal.get_qualifiedNameMapForNames() != &SgNode::get_globalQualifiedNameMapForNames())
                );
 
-    /// not sure if we need a separate traversal here,
-    //    or if we could just reuse traversal.
     NameQualificationTraversalAda sub{traversal, traversal.get_qualifiedNameMapForNames()};
     InheritedAttribute            attr{res};
 
@@ -2040,9 +2041,6 @@ namespace
                                                              InheritedAttribute inh
                                                            )
   {
-    //~ if (SgLocatedNode* ln = isSgLocatedNode(n))
-      //~ std::cerr << ">> " << typeid(*n).name() << " " << SrcLoc(*ln) << std::endl;
-
     return sg::dispatch(AdaPreNameQualifier{*this, std::move(inh)}, n);
   }
 
@@ -2053,9 +2051,6 @@ namespace
                                                                SynthesizedAttributesList synlst
                                                              )
   {
-    //~ if (SgLocatedNode* ln = isSgLocatedNode(n))
-      //~ std::cerr << "<< " << typeid(*n).name() << " " << SrcLoc(*ln) << std::endl;
-
     return sg::dispatch(AdaPostNameQualifier{*this, std::move(inh), std::move(synlst)}, n);
   }
 

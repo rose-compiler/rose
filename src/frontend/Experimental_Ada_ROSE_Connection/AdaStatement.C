@@ -119,57 +119,51 @@ namespace
   };
 
 
-  struct SourceLocationComparator
+  struct SourceLocationLessThan
   {
-    bool operator()(Sg_File_Info* lhs, Sg_File_Info* rhs) const
+    static constexpr bool DEBUG_LOCATION = true;
+
+    bool operator()(const Sg_File_Info* lhs, const Sg_File_Info* rhs) const
     {
       ADA_ASSERT (lhs && rhs);
 
       if (lhs->get_line() < rhs->get_line())
       {
-        //~ logError() << "ll< " << lhs->get_line() << "/" << rhs->get_line() << std::endl;
+        if (DEBUG_LOCATION) logTrace() << "ll< " << lhs->get_line() << "/" << rhs->get_line() << std::endl;
         return true;
       }
 
       if (rhs->get_line() < lhs->get_line())
       {
-        //~ logError() << "rl< " << lhs->get_line() << "/" << rhs->get_line() << std::endl;
+        if (DEBUG_LOCATION) logTrace() << "rl< " << lhs->get_line() << "/" << rhs->get_line() << std::endl;
         return false;
       }
 
       if (lhs->get_col() < rhs->get_col())
       {
-        //~ logError() << "lc< " << lhs->get_col() << "/" << rhs->get_col() << std::endl;
+        if (DEBUG_LOCATION) logTrace() << "lc< " << lhs->get_col() << "/" << rhs->get_col() << std::endl;
         return true;
       }
 
-      //~ logError() << "ff< " << lhs->get_col() << "/" << rhs->get_col() << std::endl;
+      if (DEBUG_LOCATION) logTrace() << "ff< " << lhs->get_col() << "/" << rhs->get_col() << std::endl;
       return false;
     }
 
-    bool operator()(SgLocatedNode* n, Sg_File_Info* rhs) const
+    bool operator()(const SgLocatedNode* n, const Sg_File_Info* rhs) const
     {
       ADA_ASSERT (n);
 
-      //~ logError() << typeid(*n).name()
-                 //~ << " " << n->unparseToString()
-                 //~ << " " << n->isCompilerGenerated()
-                 //~ << std::endl;
       return (*this)(n->get_startOfConstruct(), rhs);
     }
 
-    bool operator()(SgLocatedNode* lhs, SgLocatedNode* rhs) const
+    bool operator()(const SgLocatedNode* lhs, const SgLocatedNode* rhs) const
     {
       ADA_ASSERT ((lhs != nullptr) && (rhs != nullptr));
 
-      //~ logError() << typeid(*n).name()
-                 //~ << " " << n->unparseToString()
-                 //~ << " " << n->isCompilerGenerated()
-                 //~ << std::endl;
+      //~ logError() << typeid(*lhs).name() << " " << typeid(*rhs).name() << std::endl;
       return (*this)(lhs->get_startOfConstruct(), rhs->get_startOfConstruct());
     }
   };
-
 
 
   struct PragmaPlacer
@@ -203,21 +197,16 @@ namespace
 
       void copyToAll(SgScopeStatement& lst)
       {
-        //~ logError() << typeid(lst).name()
-                   //~ << " " << n->unparseToString()
-                   //~ << " " << lst.isCompilerGenerated()
-                   //~ << " " << lst.get_startOfConstruct()->get_line()
-                   //~ << std::endl;
-
         if (lst.containsOnlyDeclarations())
           copyToAll(lst.getDeclarationList());
         else
           copyToAll(lst.getStatementList());
       }
 
-      void operator()(SgPragmaDeclaration* pragma) const
+      void operator()(SgPragmaDeclaration* pragma)
       {
-        typedef std::vector<SgStatement*>::const_iterator const_iterator;
+        using iterator = std::vector<SgStatement*>::iterator;
+
         ADA_ASSERT (pragma);
 
         // \todo to resolve the confusion where to insert the pragma
@@ -225,11 +214,11 @@ namespace
         //       we could use the scope of SgPragma::get_associatedStmt
         // SgPragma* details = pragma->get_pragma();
 
-        const_iterator beg = all.begin();
-        const_iterator lim = all.end();
-        const_iterator pos = std::lower_bound( beg, lim,
+        iterator       beg = all.begin();
+        iterator       lim = all.end();
+        iterator const pos = std::lower_bound( beg, lim,
                                                pragma->get_startOfConstruct(),
-                                               SourceLocationComparator{}
+                                               SourceLocationLessThan{}
                                              );
 
         // The following if-else structure gives preference
@@ -240,11 +229,33 @@ namespace
         else if (pos == beg)
           SageInterface::insertStatementBefore(*pos, pragma);
         else
-          SageInterface::insertStatementAfter(*--pos, pragma); // gives preference to end of first scope
+          SageInterface::insertStatementAfter(*std::prev(pos), pragma); // gives preference to end of first scope
+
+        // insert into combined list
+        all.insert(pos, pragma);
+
+        if (false) // debug all.insert \todo remove
+        {
+          bool sorted = all.end() == std::adjacent_find( all.begin(), all.end(),
+                                                         [](const SgLocatedNode* lhs, const SgLocatedNode* rhs)
+                                                         {
+                                                           return SourceLocationLessThan{}(rhs, lhs);
+                                                         }
+                                                       );
+
+          if (!sorted)
+          {
+            if (pos == lim)      logTrace() << "lim" << std::endl;
+            else if (pos == beg) logTrace() << "beg" << std::endl;
+            else                 logTrace() << "mid" << std::endl;
+          }
+
+          ADA_ASSERT(sorted);
+        }
       }
 
     private:
-      std::vector<SgStatement*> all;
+      std::vector<SgStatement*> all;  ///< combined list of pragmas
       SgScopeStatement&         last;
   };
 
@@ -304,7 +315,7 @@ namespace
     // generate declarations for pragmas and place them in file-lexicographical order
     PragmaNodes pragmadcls = std::for_each(allpragmas.begin(), lim, PragmaCreator{elemMap(), ctx});
 
-    std::sort(pragmadcls.begin(), pragmadcls.end(), SourceLocationComparator{});
+    std::sort(pragmadcls.begin(), pragmadcls.end(), SourceLocationLessThan{});
 
     // retroactively place pragmas according to their source position information
     std::for_each(pragmadcls.begin(), pragmadcls.end(), PragmaPlacer{std::move(scopes)});

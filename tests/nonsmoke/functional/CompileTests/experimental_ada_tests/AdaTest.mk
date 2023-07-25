@@ -266,6 +266,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   rep_renamings.ads                    \
   rep_renamings.adb                    \
   rep_renamings-zero.adb               \
+  rep_sup_util.ads                     \
   rep_sym.ads                          \
   rep_sym.adb                          \
   rep_sym-set.adb                      \
