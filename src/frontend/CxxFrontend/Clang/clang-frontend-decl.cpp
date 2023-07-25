@@ -1262,6 +1262,9 @@ bool ClangToSageTranslator::VisitCXXRecordDecl(clang::CXXRecordDecl * cxx_record
 
     if(!cxx_record_decl->isThisDeclarationADefinition())
       return res;
+
+    p_decl_translation_map.insert(std::pair<clang::Decl *, SgNode *>(cxx_record_decl, *node));
+
     SageBuilder::pushScopeStack(CxxRecordDeclaration->get_definition());
     clang::CXXRecordDecl::base_class_iterator it_base;
     for (it_base = cxx_record_decl->bases_begin(); it_base !=  cxx_record_decl->bases_end(); it_base++) {
