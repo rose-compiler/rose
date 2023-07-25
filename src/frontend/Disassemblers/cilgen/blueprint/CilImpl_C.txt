@@ -245,20 +245,6 @@ void SgAsmCilMetadataRoot::parse(std::vector<uint8_t>& buf, size_t index)
   `end_for`
 }
 
-`for_each str = .metadataroot.Streams`
-const std::vector<`str.Type`*>&
-SgAsmCilMetadataRoot::get_`str.Name`() const
-{
-  return p_`str.Name`;
-}
-
-std::vector<`str.Type`*>&
-SgAsmCilMetadataRoot::get_`str.Name`()
-{
-  return p_`str.Name`;
-}
-`end_for`
-
 SgAsmCilUint8Heap*
 SgAsmCilMetadataRoot::get_StringHeap() const
 {
