@@ -19264,11 +19264,10 @@ SageInterface::checkSymbolTables ( SgNode* astNode )
      traversal.traverse(astNode, preorder);
    }
 
-
-
-
+//Jim Leek TODO (07/25/2023):  After Dan merges his branch, please clean up all the #1f 0 stuff 
 void SageInterface::markNodeToBeUnparsed(SgNode* node, int physical_file_id)
    {
+#if 0
      Sg_File_Info* fileInfo=node->get_file_info();
      if (fileInfo != NULL)
         {
@@ -19282,11 +19281,18 @@ void SageInterface::markNodeToBeUnparsed(SgNode* node, int physical_file_id)
                locatedNode->setTransformation();
                locatedNode->setOutputInCodeGeneration();
 
+            // DQ (7/8/2021): Added assertion.
+               ROSE_ASSERT(locatedNode->get_file_info() != NULL);
+#if 0
+               printf ("In markNodeToBeUnparsed(): physical_file_id = %d \n",physical_file_id);
+#endif
             // DQ (10/26/2020): Set the physical_file_id, required for ueader file unparsing (is it?).
                locatedNode->get_file_info()->set_physical_file_id(physical_file_id);
-#if 0
+#if 1
                printf ("Note: calling node markTransformationsForOutput(): node = %p = %s \n",node,node->class_name().c_str());
 #endif
+            // DQ (7/14/2021): This is just a redundant traversal over the subtree that only appears
+            // to call setTransformation() and setOutputInCodeGeneration().
                markTransformationsForOutput(node);
              }
             else
@@ -19302,7 +19308,37 @@ void SageInterface::markNodeToBeUnparsed(SgNode* node, int physical_file_id)
           printf ("Note: no Sg_File_Info was found: node = %p = %s \n",node,node->class_name().c_str());
 #endif
         }
+#else
+     SgLocatedNode* locatedNode = isSgLocatedNode(node);
+     if (locatedNode != NULL)
+        {
+          locatedNode->setTransformation();
+          locatedNode->setOutputInCodeGeneration();
+
+       // DQ (10/26/2020): Set the physical_file_id, required for header file unparsing (is it?).
+          if (locatedNode->get_file_info() != NULL)
+             {
+#if 0
+               printf ("In SageInterface::markNodeToBeUnparsed(): locatedNode = %p = %s calling set_physical_file_id(%d) \n",locatedNode,locatedNode->class_name().c_str(),physical_file_id);
+#endif
+               locatedNode->get_file_info()->set_physical_file_id(physical_file_id);
+             }
+            else
+             {
+#if 1
+               printf ("Note: no Sg_File_Info was found: node = %p = %s \n",node,node->class_name().c_str());
+#endif
+             }
+
+       // DQ (7/14/2021): This is just a redundant traversal over the subtree that only appears
+       // to call setTransformation() and setOutputInCodeGeneration().
+       // Jim Leek (07/25/2023) This doesn't seem to be redundant, it definately marks a bunch of the subtree as transformed
+       // That otherwise isn't, but Reverse Type Dependence often  fails to compile because too much gets unparsed.
+       // markTransformationsForOutput(node);
+        }
+#endif
    }
+
 
 
 void SageInterface::markSubtreeToBeUnparsed(SgNode* root, int physical_file_id)
@@ -19317,7 +19353,7 @@ void SageInterface::markSubtreeToBeUnparsed(SgNode* root, int physical_file_id)
                printf ("In global scope: *i = %p = %s \n",*i,(*i)->class_name().c_str());
              }
 #endif
-#if 0
+#if 1
           printf ("Calling markNodeToBeUnparsed(): *i = %p = %s physical_file_id = %d \n",*i,(*i)->class_name().c_str(),physical_file_id);
 #endif
           markNodeToBeUnparsed(*i,physical_file_id);
