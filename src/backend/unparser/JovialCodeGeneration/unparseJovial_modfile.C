@@ -47,12 +47,19 @@ generateJovialCompoolFile(SgFile *sfile)
   // Get the list of SgJovialCompoolStatement objects for the current AST.
      Rose_STL_Container<SgNode*> moduleDeclarationList = NodeQuery::querySubTree (sfile,V_SgJovialCompoolStatement);
 
-     for (Rose_STL_Container<SgNode*>::iterator i = moduleDeclarationList.begin(); i != moduleDeclarationList.end(); i++)
+     for (auto decl : moduleDeclarationList)
         {
-          SgJovialCompoolStatement* compool_stmt = isSgJovialCompoolStatement(*i);
+          SgJovialCompoolStatement* compool_stmt = isSgJovialCompoolStatement(decl);
           ASSERT_not_null(compool_stmt);
 
-          std::string compool_name = Rose::StringUtility::convertToLowerCase(compool_stmt->get_name());
+          // Remove single quote characters and convert to lower case for rcmp filename
+          std::string compool_name{};
+          for (auto c : std::string{compool_stmt->get_name()}) {
+            if (c == '\'') continue;
+            compool_name.push_back(c);
+          }
+          compool_name = Rose::StringUtility::convertToLowerCase(compool_name);
+
           std::string output_directory = get_rcompool_dir(sfile);
           std::string output_filename = output_directory + compool_name + CMP_FILE_SUFFIX;
 
