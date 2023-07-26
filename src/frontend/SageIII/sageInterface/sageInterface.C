@@ -19353,7 +19353,7 @@ void SageInterface::markSubtreeToBeUnparsed(SgNode* root, int physical_file_id)
                printf ("In global scope: *i = %p = %s \n",*i,(*i)->class_name().c_str());
              }
 #endif
-#if 1
+#if 0
           printf ("Calling markNodeToBeUnparsed(): *i = %p = %s physical_file_id = %d \n",*i,(*i)->class_name().c_str(),physical_file_id);
 #endif
           markNodeToBeUnparsed(*i,physical_file_id);
