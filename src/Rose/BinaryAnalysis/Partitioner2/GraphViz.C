@@ -249,7 +249,7 @@ CfgEmitter::selectWholeGraph() {
     if (useFunctionSubgraphs())
         assignFunctionSubgraphs();
 
-    // We can't deselect these if the graph isn't a patritioner.cfg() because they might not be present.
+    // We can't deselect these if the graph isn't a partitioner.cfg() because they might not be present.
     deselectUnusedVertexType(V_UNDISCOVERED);
     deselectUnusedVertexType(V_INDETERMINATE);
     deselectUnusedVertexType(V_NONEXISTING);
