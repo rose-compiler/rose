@@ -7175,7 +7175,7 @@ ATbool ATermToSageJovialTraversal::traverse_ByteFunction(ATerm term, SgFunctionC
    params->append_expression(length);
 
    // Create the return type. The length expression for the return_type can't be shared
-   // so we need to either make a new one (if isSgIntVal) or a copy (if isSgVarRefExp).
+   // so we need to either make a new one (if isSgIntVal) or a copy otherwise.
    //
    SgExpression* new_length = nullptr;
    if (isSgIntVal(length)) {
@@ -7183,7 +7183,7 @@ ATbool ATermToSageJovialTraversal::traverse_ByteFunction(ATerm term, SgFunctionC
      new_length = SageBuilder::buildIntVal(length_val->get_value());
    }
    else {
-     new_length = isSgVarRefExp(SageInterface::deepCopyNode(length));
+     new_length = isSgExpression(SageInterface::deepCopyNode(length));
    }
    ASSERT_not_null(new_length);
 
