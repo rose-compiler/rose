@@ -8748,7 +8748,31 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #if DEBUG_COMPILER_COMMAND_LINE
                      printf ("In SgFile::buildCompilerCommandLineOptions: Found object file as specified = %s \n",(*j).c_str());
 #endif
-                     set_objectFileNameWithPath(*j);
+
+#if DEBUG_COMPILER_COMMAND_LINE
+                  // DQ (12/10/2022): If the user reset the objectFileNameWithPath, then we are mistakenly overriding it with the original specification.
+                     printf (" --- get_objectFileNameWithPath() = %s \n",get_objectFileNameWithPath().c_str());
+                     printf (" --- resetting using *j = %s \n",(*j).c_str());
+#endif
+                  // DQ (12/10/2022): If the user reset the objectFileNameWithPath, then we are mistakenly overriding it with the original specification.
+                  // set_objectFileNameWithPath(*j);
+                     if (get_objectFileNameWithPath() == "")
+                        {
+#if DEBUG_COMPILER_COMMAND_LINE
+                          printf ("Calling set_objectFileNameWithPath(*j): *j = %s \n",(*j).c_str());
+#endif
+                          set_objectFileNameWithPath(*j);
+                        }
+                       else
+                        {
+                          if (*j != get_objectFileNameWithPath())
+                             {
+#if DEBUG_COMPILER_COMMAND_LINE
+                               printf ("resetting the string with the object file: using get_objectFileNameWithPath(*j): *j = %s \n",get_objectFileNameWithPath().c_str());
+#endif
+                               *j = get_objectFileNameWithPath();
+                             }
+                        }
                   }
 
                ROSE_ASSERT(objectNameSpecified == false);
