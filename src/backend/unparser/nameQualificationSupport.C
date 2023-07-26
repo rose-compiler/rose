@@ -419,18 +419,36 @@ namespace
       /// called after a unit change in global scope is detected.
       void resetNameQualificationContext();
 
+      /// saves the namequalfication context at the end of \ref n's processing.
+      void saveNameQualificationContext(const SgDeclarationStatement& n);
+
+      /// loads the namequalfication context saved for \ref n's processing.
+      /// \details
+      ///    called, at the beginning of a "child" decl
+      ///    (for example called for the spec decl at the beginning of a body decl).
+      void loadNameQualificationContext(const SgDeclarationStatement& n);
+
     private:
+      using NameQualContext        = std::tuple<VisibleScopeContainer, UsePkgContainer, ScopeRenamingContainer>;
+
+      //
       // data members
-      std::set<SgNode*> & referencedNameSet;
-      std::map<SgNode*,std::string> & qualifiedNameMapForNames;
-      std::map<SgNode*,std::string> & qualifiedNameMapForTypes;
+
+      // references to ROSE wide maps
+      // \{
+      std::set<SgNode*>&                                referencedNameSet;
+      std::map<SgNode*,std::string>&                    qualifiedNameMapForNames;
+      std::map<SgNode*,std::string>&                    qualifiedNameMapForTypes;
       //~ std::map<SgNode*,std::string> & qualifiedNameMapForTemplateHeaders;
-      std::map<SgNode*,std::string> & typeNameMap;
-      std::map<SgNode*,std::map<SgNode*,std::string> > & qualifiedNameMapForMapsOfTypes;
+      std::map<SgNode*,std::string>&                    typeNameMap;
+      std::map<SgNode*,std::map<SgNode*,std::string> >& qualifiedNameMapForMapsOfTypes;
+      // \}
 
-      NameQualificationTraversalState& state; ///< traversal state (should disappear eventually)
+      NameQualificationTraversalState& state; ///< traversal state
 
-      // deleted constructors & operators
+      std::map<const SgDeclarationStatement*, NameQualContext> nameQualContextMap = {}; ///< stores contexts of specs and bodies
+
+      // deleted constructors and operators
       NameQualificationTraversalAda() = delete;
       NameQualificationTraversalAda(const NameQualificationTraversalAda&) = delete;
       NameQualificationTraversalAda(NameQualificationTraversalAda&&) = delete;
@@ -460,20 +478,12 @@ namespace
   /// returns true iff \ref n requires scope qualification
   bool requiresNameQual(const SgScopeStatement* n)
   {
-    if (isSgGlobal(n))
-      return false;
-
-    if (const SgAdaPackageSpec* pkgspc = isSgAdaPackageSpec(n))
-    {
-      const SgAdaPackageSpecDecl& dcl = SG_DEREF(isSgAdaPackageSpecDecl(pkgspc->get_parent()));
-
-      //~ std::cerr << dcl.get_name() << " <name.dcl.scope> "
-                //~ << dcl.get_scope() << " " << (!isSgGlobal(dcl.get_scope()))
-                //~ << std::endl;
-      return (dcl.get_name() != si::Ada::packageStandardName) || !isSgGlobal(dcl.get_scope());
-    }
-
-    return n;
+    // all scopes require name-qual except
+    //   * the global scope,
+    //   * the standard scope [\todo correct?].
+    return (  !isSgGlobal(n)
+           && (n != si::Ada::pkgStandardScope())
+           );
   }
 
 
@@ -786,7 +796,7 @@ namespace
       if (const SgNode* namedNode = namedAstNode(*remMin))
         refNode = namedNode;
 
-    // while the refnode is aliases along (locMin, locLim] and the scope is extensible |remBeg,remMin| > 0
+    // while the refnode is aliased along (locMin, locLim] and the scope is extensible |remBeg,remMin| > 0
     //   extend the scope by one.
     while ((std::distance(remBeg, remMin) > 0) && isShadowedAlongPath(*refNode, locMin, locLim))
     {
@@ -825,12 +835,12 @@ namespace
     // 1a determine the first mismatch (mismPos) of the (reversed) scope paths "a.b.c" and "a.d.e"
     std::size_t     pathlen      = std::min(localPath.size(), remotePath.size());
     PathIterator    localstart   = localPath.rbegin();
+
     // 1b mismPos is  "a|b.c and a|d.e", thus the required scope qualification is b.c
     auto            mismPos      = std::mismatch( localstart, localstart + pathlen,
                                                   remotePath.rbegin()
                                                 );
-    // 2a extend the path if an overload for front(b.c) exists somewhere in d.e
-    //    \todo instead of querying whether the prefix is empty, use the leading element as decl
+    // 2 extend the path if an overload for front(b.c) exists somewhere in d.e
     PathIterator    remotePos    = extendNameQualUntilUnambiguous( remotePath.rbegin(),
                                                                    mismPos.second,
                                                                    remotePath.rend(),
@@ -924,8 +934,12 @@ namespace
     ASSERT_not_null(orig); ASSERT_not_null(renamed);
     ROSE_ASSERT(state.scopeState.size());
 
-    state.renamedScopes.emplace(orig, renamed);
-    state.scopeState.back().addedRenamings.emplace_back(orig);
+    const bool added = state.renamedScopes.emplace(orig, renamed).second;
+
+    if (added)
+    {
+      state.scopeState.back().addedRenamings.emplace_back(orig);
+    }
   }
 
   NameQualificationTraversalAda::ScopeRenamingContainer::mapped_type
@@ -969,12 +983,44 @@ namespace
   NameQualificationTraversalAda::resetNameQualificationContext()
   {
     //~ std::cerr << "** reset context" << std::endl;
-    ROSE_ASSERT(state.scopeState.size() == 1); // just the global scope
+    ASSERT_require(state.scopeState.size() == 1); // just the global scope
 
-    state.renamedScopes.clear();
-    state.useScopes.clear();
     state.visibleScopes.clear();
+    state.useScopes.clear();
+    state.renamedScopes.clear();
   }
+
+  void
+  NameQualificationTraversalAda::saveNameQualificationContext(const SgDeclarationStatement& n)
+  {
+    //~ std::cerr << "saving renamings: " << &n << ": " << state.renamedScopes.size()
+              //~ << std::endl;
+
+    bool added = nameQualContextMap.emplace( &n,
+                                             std::make_tuple(state.visibleScopes, state.useScopes, state.renamedScopes)
+                                           ).second;
+
+    ASSERT_require(added);
+  }
+
+  void
+  NameQualificationTraversalAda::loadNameQualificationContext(const SgDeclarationStatement& n)
+  {
+    auto pos = nameQualContextMap.find(&n);
+
+    if (pos == nameQualContextMap.end())
+      return;
+
+    //~ std::cerr << "loading renamings: " << &n << ": " << std::get<2>(pos->second).size()
+              //~ << std::endl;
+
+    for (const SgScopeStatement* sc : std::get<0>(pos->second)) addVisibleScope(sc);
+    for (const SgScopeStatement* sc : std::get<1>(pos->second)) addUsedScope(sc);
+
+    for (const ScopeRenamingContainer::value_type& ren : std::get<2>(pos->second))
+      addRenamedScope(ren.first, ren.second);
+  }
+
 
   const SgScopeStatement*
   unitDefinition(const SgDeclarationStatement& n)
@@ -1178,23 +1224,21 @@ namespace
       }
 
 
-      /// records all parent scopes as visisble
+      /// loads scope and renaming visibility from parent
       /// \details
       ///    should be used only from nodes, if a node (child) is not declared
       ///    within its logical parent.
       ///    e.g., package Ada.Text_IO: Text_IO is logically declared within Ada
       ///            but since it is a separate package/file its parent
       ///            is the global scope.
-      void recordParentScopeVisibility(const SgScopeStatement* n);
+      void inheritScopeVisibility(const SgScopeStatement* n);
 
       void handle(const SgAdaPackageSpecDecl& n)
       {
-        //~ std::cerr << "entering " << n.get_name() << " " << &n
-                  //~ << std::endl;
         handle(sg::asBaseType(n));
 
         recordNameQualIfNeeded(n, n.get_scope());
-        recordParentScopeVisibility(n.get_scope());
+        inheritScopeVisibility(n.get_definition());
       }
 
       void handle(const SgAdaPackageBodyDecl& n)
@@ -1202,12 +1246,7 @@ namespace
         handle(sg::asBaseType(n));
 
         recordNameQualIfNeeded(n, n.get_scope());
-
-        // \todo consider moving this into a handler for SgAdaPackageBody
-        //~ if (SgAdaPackageBody* bdy = n.get_definition())
-          //~ recordParentScopeVisibility(bdy->get_spec());
-
-        recordParentScopeVisibility(n.get_scope());
+        inheritScopeVisibility(n.get_definition());
       }
 
       void handle(const SgImportStatement& n)
@@ -1252,14 +1291,17 @@ namespace
                   //~ << std::endl;
         handle(sg::asBaseType(n));
 
+        SgScopeStatement* fnscope = n.get_definition();
+
         recordNameQualIfNeeded(n, n.get_scope());
 
         // set the scope to the logical parent before type qualification of
         //   parameter and return types are computed.
         //~ res.set_currentScope(n.get_scope());
-        SgScopeStatement* fnscope = n.get_definition();
 
         if (fnscope == nullptr) fnscope = n.get_functionParameterScope();
+
+        inheritScopeVisibility(fnscope);
 
         res.set_currentScope(fnscope);
 
@@ -1613,19 +1655,25 @@ namespace
       ///    the global scope so each file is not insulated from declarations
       ///    of directly or indirectly imported files.
       ///  (*) should be handled by \ref closeScope, but added for consistency.
-      void resetAdaContextIfNeeded(const SgDeclarationStatement& n);
+      void resetNameQualificationContextIfGlobal(const SgDeclarationStatement& n);
+
+      /// called when a scope \ref n ends
+      /// \details
+      ///   - saves away name qualification context (if applicable)
+      ///   - resets name qualification context
+      void endOfScope(const SgScopeStatement& n);
 
       void handle(const SgNode&)                  { /* do nothing by default */ }
 
-      void handle(const SgScopeStatement&)        { traversal.closeScope(); }
-      void handle(const SgAdaPackageSpecDecl& n)  { resetAdaContextIfNeeded(n); }
-      void handle(const SgAdaPackageBodyDecl& n)  { resetAdaContextIfNeeded(n); }
-      void handle(const SgFunctionDeclaration& n) { resetAdaContextIfNeeded(n); }
+      void handle(const SgScopeStatement& n)      { endOfScope(n); }
+      void handle(const SgAdaPackageSpecDecl& n)  { resetNameQualificationContextIfGlobal(n); }
+      void handle(const SgAdaPackageBodyDecl& n)  { resetNameQualificationContextIfGlobal(n); }
+      void handle(const SgFunctionDeclaration& n) { resetNameQualificationContextIfGlobal(n); }
 
       void handle(const SgAdaRenamingDecl& n)
       {
         if (SageInterface::Ada::renamedPackage(n))
-          resetAdaContextIfNeeded(n);
+          resetNameQualificationContextIfGlobal(n);
       }
 
     private:
@@ -1634,8 +1682,22 @@ namespace
       SynthesizedAttributesList      synthesizedAttributes;
   };
 
+  void AdaPostNameQualifier::endOfScope(const SgScopeStatement& n)
+  {
+    const SgDeclarationStatement* parent = isSgDeclarationStatement(n.get_parent());
 
-  void AdaPostNameQualifier::resetAdaContextIfNeeded(const SgDeclarationStatement& n)
+    if (  isSgAdaPackageSpecDecl(parent)
+       || isSgAdaPackageBodyDecl(parent)
+       || isSgFunctionDeclaration(parent)
+       )
+    {
+      traversal.saveNameQualificationContext(*parent);
+    }
+
+    traversal.closeScope();
+  }
+
+  void AdaPostNameQualifier::resetNameQualificationContextIfGlobal(const SgDeclarationStatement& n)
   {
     // \note we may need to also check whether the next statement
     //       is in the same or a different file.
@@ -1643,16 +1705,29 @@ namespace
       traversal.resetNameQualificationContext();
   }
 
-  void AdaPreNameQualifier::recordParentScopeVisibility(const SgScopeStatement* n)
+  void AdaPreNameQualifier::inheritScopeVisibility(const SgScopeStatement* n)
   {
-    ASSERT_not_null(n);
+    if (n == nullptr) return;
 
+    if (const SgScopeStatement* parent_scope = si::Ada::logicalParentScope(*n))
+    {
+      if (const SgDeclarationStatement* parent_dcl = isSgDeclarationStatement(parent_scope->get_parent()))
+      {
+        traversal.loadNameQualificationContext(*parent_dcl);
+      }
+
+      traversal.addVisibleScope(parent_scope);
+    }
+
+/*
+    n = si::Ada::logicalParentScope(*n);
     while (requiresNameQual(n))
     {
       traversal.addVisibleScope(n);
-      n = n->get_scope();
+      n = n->get_scope(); // use logicalParentScope?
       ASSERT_not_null(n);
     }
+*/
   }
 
 
@@ -1912,8 +1987,6 @@ namespace
                || (&traversal.get_qualifiedNameMapForNames() != &SgNode::get_globalQualifiedNameMapForNames())
                );
 
-    /// not sure if we need a separate traversal here,
-    //    or if we could just reuse traversal.
     NameQualificationTraversalAda sub{traversal, traversal.get_qualifiedNameMapForNames()};
     InheritedAttribute            attr{res};
 
@@ -1968,9 +2041,6 @@ namespace
                                                              InheritedAttribute inh
                                                            )
   {
-    //~ if (SgLocatedNode* ln = isSgLocatedNode(n))
-      //~ std::cerr << ">> " << typeid(*n).name() << " " << SrcLoc(*ln) << std::endl;
-
     return sg::dispatch(AdaPreNameQualifier{*this, std::move(inh)}, n);
   }
 
@@ -1981,9 +2051,6 @@ namespace
                                                                SynthesizedAttributesList synlst
                                                              )
   {
-    //~ if (SgLocatedNode* ln = isSgLocatedNode(n))
-      //~ std::cerr << "<< " << typeid(*n).name() << " " << SrcLoc(*ln) << std::endl;
-
     return sg::dispatch(AdaPostNameQualifier{*this, std::move(inh), std::move(synlst)}, n);
   }
 

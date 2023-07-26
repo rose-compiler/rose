@@ -988,7 +988,7 @@ namespace
           // private-ness.
           formal.set_is_private(typenode.Has_Private);
 
-          // PP (2/16/22): to avoid null pointers types
+          // PP (2/16/22): to avoid null pointers in types
           formalBaseType = &mkOpaqueType();
           break;
         }
