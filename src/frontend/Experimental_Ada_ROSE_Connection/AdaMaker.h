@@ -248,13 +248,11 @@ namespace Ada_ROSE_Translation
   SgExprStatement&
   mkExprStatement(SgExpression& expr);
 
-  /// builds a node representing raising exception \ref raised
+  /// builds a node representing raising exception \ref raised with optional message \ref what
+  /// \param raised   an expression describing the exception, or a SgNullExpression in case of a re-raise
+  /// \param what_opt an expression describing the optional message (i.e., string-expression)
   SgStatement&
-  mkRaiseStmt(SgExpression& raised);
-
-  /// builds a node representing raising exception \ref raised with message \ref what
-  SgStatement&
-  mkRaiseStmt(SgExpression& raised, SgExpression& what);
+  mkRaiseStmt(SgExpression& raised, SgExpression* what_opt = nullptr);
 
   /// creates a basic block
   SgBasicBlock&
