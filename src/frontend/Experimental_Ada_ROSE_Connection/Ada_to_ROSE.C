@@ -1918,9 +1918,9 @@ namespace
     SgScopeStatement* typScope = si::Ada::operatorScope(opname, si::Ada::typeOfExpr(exp).typerep());
     const bool        res      = si::Ada::sameCanonicalScope(expScope, typScope);
 
-    logTrace() << "liteq: scope " << res
-               << "(" << expScope << " | " << typScope << ") " << exp.unparseToString()
-               << std::endl;
+    //~ logTrace() << "liteq: scope " << res
+               //~ << "(" << expScope << " | " << typScope << ") " << exp.unparseToString()
+               //~ << std::endl;
     return res;
   }
 
@@ -1950,33 +1950,33 @@ namespace
                    {
                      if (el.first == nullptr)
                      {
-                       logWarn() << "liteq: null" << std::endl;
+                       //~ logWarn() << "liteq: null" << std::endl;
                        return;
                      }
 
                      if (!el.second.literalEquivalent())
                      {
-                       logTrace() << "liteq: " << el.first->unparseToString()
-                                  << " - " << el.second.literalEquivalent()
-                                  << std::endl;
+                       //~ logTrace() << "liteq: " << el.first->unparseToString()
+                                  //~ << " - " << el.second.literalEquivalent()
+                                  //~ << std::endl;
                        return;
                      }
 
                      SgFunctionCallExp* callexp = isSgFunctionCallExp(el.first->get_parent());
                      if (callexp == nullptr)
                      {
-                       logTrace() << "liteq: " << typeid(*el.first->get_parent()).name() << std::endl;
+                       //~ logTrace() << "liteq: " << typeid(*el.first->get_parent()).name() << std::endl;
                        return;
                      }
 
                      std::set<const SgType*> typeCandidates = expectedTypes(callexp);
 
                      if (typeCandidates.size() > 1)
-                       logTrace() << "liteq: multiple type candidates" << std::endl;
+                       ; // logTrace() << "liteq: multiple type candidates" << std::endl;
                      else if (typeCandidates.size() == 0)
-                       logTrace() << "liteq: 0 candidates" << std::endl;
+                       ; // logTrace() << "liteq: 0 candidates" << std::endl;
                      else if (*typeCandidates.begin() == nullptr)
-                       logTrace() << "liteq: null type" << std::endl;
+                       ; // logTrace() << "liteq: null type" << std::endl;
                      else if (!scopeCheckCallContext(*callexp, **typeCandidates.begin()))
                        decorateWithTypecast(*callexp, **typeCandidates.begin());
                    }

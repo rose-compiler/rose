@@ -354,7 +354,7 @@ namespace
       prn(buf.str());
     }
 
-    void handle(const SgVoidVal&)
+    void handle(SgVoidVal&)
     {
       prn("<>");
     }
@@ -362,7 +362,14 @@ namespace
     void handle(SgThrowOp& n)
     {
       prn("raise ");
-      expr_opt(n.get_operand());
+
+      SgExpression*  ex      = n.get_operand();
+      SgExprListExp* withMsg = isSgExprListExp(ex);
+
+      if (withMsg)
+        exprlst(*withMsg, " with ");
+      else
+        expr_opt(ex);
     }
 
     void handle(SgActualArgumentExpression& n)

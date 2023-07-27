@@ -198,6 +198,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   entry_index_specification.adb        \
   enum_routine.adb                     \
   exception_rename.ads                 \
+  exception_overload.adb               \
   fixed_point_definition.ads           \
   generic_package_renaming_declaration.adb          \
   genex.adb                            \

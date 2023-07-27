@@ -432,22 +432,20 @@ mkExprStatement(SgExpression& expr)
 }
 
 SgStatement&
-mkRaiseStmt(SgExpression& raised)
+mkRaiseStmt(SgExpression& raised, SgExpression* what_opt)
 {
-  SgExpression&    raiseop = SG_DEREF( sb::buildThrowOp(&raised, SgThrowOp::throw_expression ) );
+  const bool       rethrow = isSgNullExpression(&raised);
+  ADA_ASSERT(!rethrow || what_opt == nullptr);
+
+  auto             thrwKnd = rethrow  ? SgThrowOp::rethrow
+                                      : SgThrowOp::throw_expression;
+  SgExpression*    args    = what_opt ? sb::buildExprListExp(&raised, what_opt)
+                                      : &raised;
+  SgExpression&    raiseop = SG_DEREF( sb::buildThrowOp(args, thrwKnd) );
   SgExprStatement& sgnode  = mkExprStatement(raiseop);
 
   markCompilerGenerated(raiseop);
   return sgnode;
-}
-
-SgStatement&
-mkRaiseStmt(SgExpression& raised, SgExpression& what)
-{
-  SgExprListExp& duo = SG_DEREF( sb::buildExprListExp(&raised, &what) );
-
-  markCompilerGenerated(duo);
-  return mkRaiseStmt(duo);
 }
 
 
