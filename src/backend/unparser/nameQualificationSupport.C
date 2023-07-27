@@ -228,6 +228,8 @@ namespace
   ScopeDetails
   scopeName(const SgStatement* n)
   {
+    if (n == nullptr) return {};
+
     return sg::dispatch(ScopeName{}, n);
   }
 
@@ -475,18 +477,6 @@ namespace
     recordNameQual(qualifiedNameMapForNames, n, std::move(qual));
   }
 
-  /// returns true iff \ref n requires scope qualification
-  bool requiresNameQual(const SgScopeStatement* n)
-  {
-    // all scopes require name-qual except
-    //   * the global scope,
-    //   * the standard scope [\todo correct?].
-    return (  !isSgGlobal(n)
-           && (n != si::Ada::pkgStandardScope())
-           );
-  }
-
-
   /// Constructs a path from a scope statement to the top-level (global)
   /// scope.
   /// \param n innermost scope
@@ -499,7 +489,7 @@ namespace
     const SgScopeStatement* curr = &n;
 
     /// add all scopes on the path to the global scope
-    while (requiresNameQual(curr))
+    while (!isSgGlobal(curr))
     {
       ROSE_ASSERT(std::find(res.rbegin(), res.rend(), curr) == res.rend());
 
@@ -507,6 +497,19 @@ namespace
       curr = si::Ada::logicalParentScope(*curr);
     }
 
+    // Add the fictitious (?) root of all scopes ;)
+    //   A procedure referring to itself needs to add the standard prefix "Standard."
+    //   iff its name is overloaded within the function.
+    //   If Standard is not required, the namequal will cut it out as part
+    //   of the common path elimination (NameQualificationTraversalAda::computeNameQual 1b).
+    // \code
+    //   proc X (y:integer) is
+    //     x : integer := y;
+    //   begin
+    //     Standard.X(x);
+    //   end X;
+    // \endcode
+    res.push_back(si::Ada::pkgStandardScope());
     return res;
   }
 
@@ -806,6 +809,29 @@ namespace
     return remMin;
   }
 
+
+  ScopePath::reverse_iterator
+  shortenPathForUseDirectives( ScopePath::reverse_iterator    remBeg,
+                               ScopePath::reverse_iterator    remMin,
+                               ScopePath::reverse_iterator    remLim,
+                               const NameQualificationTraversalAda& /*trav*/
+                             )
+  {
+    // right now only handle package Standard ..
+    // \todo check if any scope in (remMin, remLim)
+    //         is in trav.isUsedScope
+
+    // scopepath cannot be shortened?
+    if (remMin == remLim)
+      return remMin;
+
+    // shorten path if package Standard
+    if (*remMin == si::Ada::pkgStandardScope())
+      return std::next(remMin);
+
+    return remMin;
+  }
+
   std::string
   NameQualificationTraversalAda::computeNameQual( const SgNode& quasiDecl,
                                                   const SgScopeStatement& local,
@@ -840,6 +866,9 @@ namespace
     auto            mismPos      = std::mismatch( localstart, localstart + pathlen,
                                                   remotePath.rbegin()
                                                 );
+    // 1c shorten b.c if any scope has a use-directive
+    mismPos.second = shortenPathForUseDirectives(remotePath.rbegin(), mismPos.second, remotePath.rend(), *this);
+
     // 2 extend the path if an overload for front(b.c) exists somewhere in d.e
     PathIterator    remotePos    = extendNameQualUntilUnambiguous( remotePath.rbegin(),
                                                                    mismPos.second,
@@ -1712,8 +1741,11 @@ namespace
     if (const SgScopeStatement* parent_scope = si::Ada::logicalParentScope(*n))
     {
       if (const SgDeclarationStatement* parent_dcl = isSgDeclarationStatement(parent_scope->get_parent()))
-      {
         traversal.loadNameQualificationContext(*parent_dcl);
+      else if (isSgGlobal(parent_scope))
+      {
+        traversal.addVisibleScope(si::Ada::pkgStandardScope());
+        traversal.addUsedScope(si::Ada::pkgStandardScope());
       }
 
       traversal.addVisibleScope(parent_scope);
