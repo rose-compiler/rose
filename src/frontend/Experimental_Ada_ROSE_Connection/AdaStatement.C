@@ -2142,7 +2142,9 @@ namespace
         {
           logKind("A_Raise_Statement", elem.ID);
           SgExpression&   raised = getExprID_opt(stmt.Raised_Exception, ctx);
-          SgStatement&    sgnode = mkRaiseStmt(raised);
+          SgExpression*   msg    = stmt.Associated_Message ? &getExprID(stmt.Associated_Message, ctx)
+                                                           : nullptr;
+          SgStatement&    sgnode = mkRaiseStmt(raised, msg);
 
           completeStmt(sgnode, elem, ctx);
           /* unused fields:
