@@ -51,7 +51,7 @@ while [ "$#" -gt 0 ]; do
 done
 
 if [ "$#" -lt 1 ]; then
-    echo "usage: $arg0 [--triplet|--yaml] COMPILER" >&2
+    echo "usage: $arg0 [SWITCHES] COMPILER" >&2
     exit 1
 fi
 
