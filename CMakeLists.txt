@@ -1147,7 +1147,8 @@ set(ROSE_INCLUDES
   ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Framework
   ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Widgets
   ${ROSE_TOP_SRC_DIR}/src/util/graphs
-  ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/astInterface)
+  ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/astInterface
+  ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/json)
 
 if(SQLITE3_FOUND_LIB)
   list(APPEND ROSE_INCLUDES ${ROSE_TOP_SRC_DIR}/src/roseExtensions/sqlite3x)
