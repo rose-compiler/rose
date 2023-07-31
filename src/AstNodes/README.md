@@ -264,7 +264,7 @@ How Rosebud fixes these
    must include <sage3basic.h>" policy and the size of that header,
    compilation times have drastically increased. However, we already
    know that if headers include only definitions they actually need,
-   then compile times can be greatly increased. For example, it
+   then compile times can be greatly decreased. For example, it
    currently takes about 30 seconds to compile each AST node
    implementation file, but tests have shown that these times can be
    reduced by an order of magnitude by more frugal use of #include.
@@ -282,3 +282,21 @@ How Rosebud fixes these
    of documentation. This is currently built into the `rosebud` tool,
    but we intend to move these linters to small programs (or scripts)
    that operate on the YAML output.
+
+9. Rosebud could eventually be self-hosted since it uses an AST to
+   represent the parsed DSL.
+
+FAQ
+---
+
+Q1. Can the name of an AST node class be changed?
+
+A1. Yes. In order to change SgFoo to SgBar you should do a number of
+things:
+	1. Change the class name in the SgFoo.h Rosebud input file.
+	2. Rename the Rosebud input file from SgFoo.h to SgBar.h.
+	3. Rename Git repository file from SgFoo.h to SgBar.h.
+	4. Remove SgFoo from the src/ROSETTA/astNodeList file if present.
+	5. Run Rosebud to regenerate files.
+	6. Rename Git repository generated file SgFoo.C to SgBar.C
+	7. Check the modified generated files into Git

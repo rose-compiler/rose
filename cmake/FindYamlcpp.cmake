@@ -7,7 +7,7 @@
 #                     * Else require YAMLCPP to exist at specified location and use it
 #
 #  OUTPUTS:
-#    YAMLCPP_FOOUND     -- Boolean: whether the YAMLCPP library was found.
+#    YAMLCPP_FOUND      -- Boolean: whether the YAMLCPP library was found.
 #    YAMLCPP_LIBRARY    -- String: full name of YAMLCPP library of a string that ends with NOTFOUND
 #    YAMLCPP_LIBRARIES  -- String: names of libraries necessary to use YAMLCPP
 

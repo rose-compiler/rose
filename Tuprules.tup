@@ -178,11 +178,6 @@ endif
 # depend on boost, and boost depends on zlib and bzip2.
 ########################################################################################################################
 
-# Binwalk binary search and extraction tool
-ifneq (@(WITH_BINWALK),no)
-    BINWALK_ROOT = @(WITH_BINWALK)
-endif
-
 # Capstone disassembler
 ifneq (@(WITH_CAPSTONE),no)
     CAPSTONE_ROOT = @(WITH_CAPSTONE)
@@ -199,7 +194,6 @@ endif
 ifneq (@(WITH_DLIB),no)
     DLIB_ROOT = @(WITH_DLIB)
     ifneq (@(WITH_DLIB),system)
-	CPPFLAGS += @(CPP_DEFINE_SWITCH)ROSE_HAVE_DLIB
 	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(DLIB_ROOT)/include
 	LDFLAGS_STATIC += @(CXX_LIBDIR_SWITCH)$(DLIB_ROOT)/lib
 	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(DLIB_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(DLIB_ROOT)/lib
@@ -261,18 +255,6 @@ ifneq (@(WITH_GPG_ERROR),no)
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)gpg-error
 endif
 
-# GraphicsMagick image manipulation
-ifneq (@(WITH_GRAPHICSMAGICK),no)
-    GRAPHICSMAGICK_ROOT = @(WITH_GRAPHICSMAGICK)
-    ifneq (@(WITH_GRAPHFICSMAGICK),system)
-        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(GRAPHICSMAGICK_ROOT)/include
-	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(GRAPHICSMAGICK_ROOT)/lib
-	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(GRAPHICSMAGICK_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(GRAPHICSMAGICK_ROOT)/lib
-    endif
-    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)GraphicsMagick
-    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)GraphicsMagick
-endif
-
 # Intel Pin tracing
 ifneq (@(WITH_INTEL_PIN),no)
     INTEL_PIN_ROOT = @(WITH_INTEL_PIN)
@@ -285,42 +267,6 @@ ifneq (@(WITH_INTEL_PIN),no)
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)pin
 endif
 
-# JPEG image encoding
-ifneq (@(WITH_JPEG),no)
-    JPEG_ROOT = @(WITH_JPEG)
-    ifneq (@(WITH_JPEG),system)
-        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(JPEG_ROOT)/include
-	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(JPEG_ROOT)/lib
-	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(JPEG_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(JPEG_ROOT)/lib
-    endif
-    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)jpeg
-    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)jpeg
-endif
-
-# LCMS color managment system
-ifneq (@(WITH_LCMS),no)
-    LCMS_ROOT = @(WITH_LCMS)
-    ifneq (@(WITH_LCMS),system)
-        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(LCMS_ROOT)/include
-	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(LCMS_ROOT)/lib
-	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(LCMS_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(LCMS_ROOT)/lib
-    endif
-    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)lcms2
-    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)lcms2
-endif
-
-# LZMA compression
-ifneq (@(WITH_LZMA),no)
-    LZMA_ROOT = @(WITH_LZMA)
-    ifneq (@(WITH_LZMA),system)
-        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(LZMA_ROOT)/include
-	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(LZMA_ROOT)/lib
-	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(LZMA_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(LZMA_ROOT)/lib
-    endif
-    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)lzma
-    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)lzma
-endif
-
 # Magic file type identification (magic numbers)
 ifneq (@(WITH_MAGIC),no)
     MAGIC_ROOT = @(WITH_MAGIC)
@@ -331,18 +277,6 @@ ifneq (@(WITH_MAGIC),no)
     endif
     LDFLAGS_STATIC += @(CXX_LIB_SWITCH)magic
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)magic
-endif
-
-# PNG image encoding
-ifneq (@(WITH_PNG),no)
-    PNG_ROOT = @(WITH_PNG)
-    ifneq (@(WITH_PNG),system)
-        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(PNG_ROOT)/include
-	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(PNG_ROOT)/lib
-	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(PNG_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(PNG_ROOT)/lib
-    endif
-    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)png
-    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)png
 endif
 
 # Postgresql C++ API
@@ -405,18 +339,6 @@ ifneq (@(WITH_SQLITE),no)
     endif
     LDFLAGS_STATIC += @(CXX_LIB_SWITCH)sqlite3
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)sqlite3
-endif
-
-# TIFF image encoding
-ifneq (@(WITH_TIFF),no)
-    TIFF_ROOT = @(WITH_TIFF)
-    ifneq (@(WITH_TIFF),system)
-        CPPFLAGS += @(CPP_INCDIR_SWITCH)$(TIFF_ROOT)/include
-	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(TIFF_ROOT)/lib
-	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(TIFF_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(TIFF_ROOT)/lib
-    endif
-    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)tiff
-    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)tiff
 endif
 
 # Wt web toolkit
@@ -522,18 +444,6 @@ ifneq (@(WITH_PYTHON),no)
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)python@(PYTHON_VERSION)m
 endif
 
-# Bzip2 compression library
-ifneq (@(WITH_BZIP2),no)
-    BZIP2_ROOT = @(WITH_BZIP2)
-    ifneq (@(WITH_BZIP2),system)
-	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(BZIP2_ROOT)/include
-	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(BZIP2_ROOT)/lib
-	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(BZIP2_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(BZIP2_ROOT)/lib
-    endif
-    LDFLAGS_STATIC  += @(CXX_LIB_SWITCH)bz2
-    LDFLAGS_SHARED  += @(CXX_LIB_SWITCH)bz2
-endif
-
 # Zlib compression library
 ifeq (@(WITH_ZLIB),no)
     error Zlib is required. See CONFIG_WITH_ZLIB in the tup.config file.
@@ -593,7 +503,8 @@ support_INCDIRS = \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/roseSupport \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/util \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/util/commandlineProcessing \
- @(CPP_INCDIR_SWITCH)$(ROSE)/src/util/stringSupport
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/util/stringSupport \
+ @(CPP_INCDIR_SWITCH)$(ROSE)/src/3rdPartyLibraries/json
 
 # Compilers
 support_CC = $(CC)
@@ -603,6 +514,7 @@ support_CXX = $(CXX)
 support_CPPFLAGS += $(CPPFLAGS)
 support_CPPFLAGS += @(SUPPORT_CPPFLAGS)
 support_CPPFLAGS += $(support_INCDIRS)
+support_CPPFLAGS += -DROSE_ASSERTION_BEHAVIOR=@(ASSERTION_BEHAVIOR)
 
 # C compiler flags
 support_CFLAGS += $(CFLAGS)

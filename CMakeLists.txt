@@ -698,6 +698,7 @@ find_z3()
 include(FindDoxygen)
 find_doxygen()
 
+# FIXME: Deprecated. Remove this and the FindYamlcpp file once YAML-CPP has been eliminated from the ROSE source code.
 # To use YAML-CPP, set YAMLCPP_ROOT to the YAML-CPP installation prefix. To avoid YAML-CPP set YAMLCPP_ROOT=no
 include(FindYamlcpp)
 find_yamlcpp()
@@ -1146,7 +1147,8 @@ set(ROSE_INCLUDES
   ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Framework
   ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/qrose/Widgets
   ${ROSE_TOP_SRC_DIR}/src/util/graphs
-  ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/astInterface)
+  ${ROSE_TOP_SRC_DIR}/src/midend/astUtil/astInterface
+  ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/json)
 
 if(SQLITE3_FOUND_LIB)
   list(APPEND ROSE_INCLUDES ${ROSE_TOP_SRC_DIR}/src/roseExtensions/sqlite3x)

@@ -1444,7 +1444,7 @@ readDwarf ( SgAsmGenericFile* asmFile ) {
         build_dwarf_IR_nodes(rose_dwarf_dbg, asmFile);
 
         int dwarf_finish_status = dwarf_finish( rose_dwarf_dbg, &rose_dwarf_error);
-        ASSERT_require(dwarf_finish_status == DW_DLV_OK);
+        ASSERT_always_require(dwarf_finish_status == DW_DLV_OK);
     } else {
         // This might be a PE file (or just non-ELF)
         if (SgProject::get_verbose() > 0) {
