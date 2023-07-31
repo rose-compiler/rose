@@ -13,49 +13,72 @@
 
 macro(find_dwarf)
   if("${DWARF_ROOT}" STREQUAL "no")
-    # Do not use DWARF, and therefore do not even search for it. Make sure all outputs are cleared to avoid problems with
-    # users maybe setting them.
+    # Do not use DWARF, and therefore do not even search for it. Make sure all outputs are cleared to avoid problems with users
+    # maybe setting them.
     set(DWARF_FOUND FALSE)
     set(DWARF_LIBRARY "")
     set(DWARF_LIBRARIES "")
 
+    if(ELF_ROOT)
+      message(WARNING "Elf requested but not needed since Dwarf is not requested")
+    endif()
     set(ELF_ROOT no)
     include(FindElf)
     find_elf()
 
   else()
+
+    # Look for libelf since libdwarf depends on it
     if("${ELF_ROOT}" STREQUAL "no")
       message(FATAL_ERROR "Dwarf requested but Elf prohibited")
     else()
       include(FindElf)
       find_elf()
-      if(ELF_FOUND)
+    endif()
+    
+    if(NOT ELF_FOUND)
+      if(NOT DWARF_ROOT)
+	message(STATUS "Elf not found, so Dwarf will not be used")
+	set(DWARF_FOUND FALSE)
+	set(DWARF_LIBRARY "")
+	set(DWARF_LIBRARIES "")
       else()
 	message(FATAL_ERROR "Dwarf requested but Elf not found")
       endif()
-    endif()
+      
+    else()
+      message(STATUS "Elf found and Dwarf not disabled, so checking for dwarf")
     
-    # Header files.
-    if("${DWARF_ROOT}" STREQUAL "")
-      # no extra include directories necessary
-    else()
-      include_directories("${DWARF_ROOT}/include")
-    endif()
+      # Header files.
+      if("${DWARF_ROOT}" STREQUAL "")
+	# no extra include directories necessary
+      else()
+	include_directories("${DWARF_ROOT}/include")
+      endif()
 
-    # DWARF library.
-    if("${DWARF_ROOT}" STREQUAL "")
-      find_library(DWARF_LIBRARY NAMES dwarf)
-    else()
-      find_library(DWARF_LIBRARY NAMES dwarf PATHS "${DWARF_ROOT}/lib" NO_DEFAULT_PATH)
-    endif()
-    if(DWARF_LIBRARY)
-      set(DWARF_FOUND TRUE)
-      set(DWARF_LIBRARIES dwarf)
-    endif()
+      # DWARF library.
+      if("${DWARF_ROOT}" STREQUAL "")
+	find_library(DWARF_LIBRARY NAMES dwarf)
+      else()
+	find_library(DWARF_LIBRARY NAMES dwarf PATHS "${DWARF_ROOT}/lib" NO_DEFAULT_PATH)
+      endif()
+      if(DWARF_LIBRARY)
+	set(DWARF_FOUND TRUE)
+	set(DWARF_LIBRARIES dwarf)
+      endif()
 
-    # Error if not found?
-    if((NOT ("${DWARF_ROOT}" STREQUAL "")) AND NOT DWARF_FOUND)
-      message(FATAL_ERROR "Dwarf requested by user at '${DWARF_ROOT}' but not found")
+      # Error if not found?
+      if((NOT ("${DWARF_ROOT}" STREQUAL "")) AND NOT DWARF_FOUND)
+	message(FATAL_ERROR "Dwarf requested by user at '${DWARF_ROOT}' but not found")
+      endif()
+
+      # If Elf was found but Dwarf was not found, then there's no reason to use Elf.
+      if(NOT DWARF_FOUND)
+	message(STATUS "Elf found but Dwarf not found, so disabling Elf")
+	set(ELF_FOUND FALSE)
+	set(ELF_LIBRARY "")
+	set(ELF_LIBRARIES "")
+      endif()
     endif()
   endif()
   
