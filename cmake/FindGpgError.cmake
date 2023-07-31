@@ -7,7 +7,7 @@
 #                       * Else require Gpg-error to exist at specified location and use it
 #
 #  OUTPUTS:
-#    GPGERROR_FOOUND     -- Boolean: whether the Gpg-error library was found.
+#    GPGERROR_FOUND      -- Boolean: whether the Gpg-error library was found.
 #    GPGERROR_LIBRARY    -- String: full name of Gpg-error library of a string that ends with NOTFOUND
 #    GPGERROR_LIBRARIES  -- String: names of libraries necessary to use Gpg-error
 

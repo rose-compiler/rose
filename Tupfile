@@ -40,12 +40,6 @@ run $(public_header) rosePublicConfig.h
 	echo "tool_LDFLAGS     = $(tool_LDFLAGS)"; \
     ) >%o |> tup.debug
 
-# macOS needs to use libtool, so install whatever libtool ROSE is using. However, since libtool is created
-# in the build directory by "configure" before Tup is initialized, and since the build directory needs to be
-# empty (except for dot files) when tup is configured, we've renamed libtool to be .libtool, and now we need
-# to install it.
-: .libtool |> ^ PRE-INSTALL %b^ cp -p %f %o |> libtool.preinstall $(ROOT)/install-staging/bin/<staging>
-
 # Generate a compilation database from all the parts
 ifeq (@(COMPILATION_DATABASE),yes)
     : <compdb> |> cat %<compdb> |jq -nc '[inputs]' >%o |> compile_commands.json

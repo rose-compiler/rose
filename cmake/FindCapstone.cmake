@@ -7,7 +7,7 @@
 #                       * Else require Capstone to exist at specified location and use it
 #
 #  OUTPUTS:
-#    CAPSTONE_FOOUND     -- Boolean: whether the Capstone library was found.
+#    CAPSTONE_FOUND      -- Boolean: whether the Capstone library was found.
 #    CAPSTONE_LIBRARY    -- String: full name of Capstone library of a string that ends with NOTFOUND
 #    CAPSTONE_LIBRARIES  -- String: names of libraries necessary to use Capstone
 

@@ -7,7 +7,7 @@
 #                       * Else require Zlib to exist at specified location and use it
 #
 #  OUTPUTS:
-#    ZLIB_FOOUND     -- Boolean: whether the Zlib library was found.
+#    ZLIB_FOUND      -- Boolean: whether the Zlib library was found.
 #    ZLIB_LIBRARY    -- String: full name of Zlib library of a string that ends with NOTFOUND
 #    ZLIB_LIBRARIES  -- String: names of libraries necessary to use Zlib
 

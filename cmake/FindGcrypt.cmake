@@ -7,7 +7,7 @@
 #                       * Else require GCrypt to exist at specified location and use it
 #
 #  OUTPUTS:
-#    GCRYPT_FOOUND     -- Boolean: whether the GCrypt library was found.
+#    GCRYPT_FOUND      -- Boolean: whether the GCrypt library was found.
 #    GCRYPT_LIBRARY    -- String: full name of GCrypt library of a string that ends with NOTFOUND
 #    GCRYPT_LIBRARIES  -- String: names of libraries necessary to use GCrypt
 
