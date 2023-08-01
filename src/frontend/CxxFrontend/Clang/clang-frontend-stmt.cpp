@@ -2356,11 +2356,14 @@ bool ClangToSageTranslator::VisitCXXStaticCastExpr(clang::CXXStaticCastExpr * cx
 #if DEBUG_VISIT_STMT
     std::cerr << "ClangToSageTranslator::VisitCXXStaticCastExpr" << std::endl;
 #endif
-    bool res = true;
+    SgNode * tmp_expr = Traverse(cxx_static_cast_expr->getSubExpr());
+    SgExpression * expr = isSgExpression(tmp_expr);
+    SgType * type = buildTypeFromQualifiedType(cxx_static_cast_expr->getType());
+    SgCastExp * res = SageBuilder::buildCastExp(expr, type, SgCastExp::e_dynamic_cast);
 
-    // TODO
+    *node = res;
 
-    return VisitCXXNamedCastExpr(cxx_static_cast_expr, node) && res;
+    return VisitCXXNamedCastExpr(cxx_static_cast_expr, node);
 }
 
 

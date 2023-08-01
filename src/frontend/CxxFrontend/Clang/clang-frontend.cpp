@@ -185,7 +185,7 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
  // FIXME should be handle by Clang ?
     define_list.push_back("__I__=_Complex_I");
 
-    unsigned cnt = define_list.size() + inc_dirs_list.size() + sys_dirs_list.size() + inc_list.size();
+    unsigned cnt = 1 + define_list.size() + inc_dirs_list.size() + sys_dirs_list.size() + inc_list.size();
     char ** args = new char*[cnt];
     std::vector<std::string>::iterator it_str;
     unsigned i = 0;
@@ -241,36 +241,48 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
 
     clang::CompilerInvocation * invocation = new clang::CompilerInvocation();
     std::shared_ptr<clang::CompilerInvocation> invocation_shptr(std::move(invocation));
-    llvm::ArrayRef<const char *> argsArrayRef(args, &(args[cnt]));
-    clang::CompilerInvocation::CreateFromArgs(*invocation, argsArrayRef, compiler_instance->getDiagnostics());
-    compiler_instance->setInvocation(invocation_shptr);
 
-    clang::LangOptions & lang_opts = compiler_instance->getLangOpts();
+//    clang::LangOptions & lang_opts = compiler_instance->getLangOpts();
 
+    // Pei-Hung (07/18/2023): Language args are handled by CompilerInvocation::ParseLangArgs,
+    // triggered by CompilerInvocation::CreateFromArgs.
+    // Providing language switch , -x, will properly setup the lang_opts for a given language.
+ 
+    std::string languageArg = "";
     switch (language) {
         case ClangToSageTranslator::C:
 //          compiler_instance->getInvocation().setLangDefaults(lang_opts, clang::IK_C, );
+            languageArg = "-xc";
             break;
         case ClangToSageTranslator::CPLUSPLUS:
-            lang_opts.CPlusPlus = 1;
-            lang_opts.Bool = 1;
+//            lang_opts.CPlusPlus = 1;
+//            lang_opts.Bool = 1;
+            languageArg = "-xc++";
 //          compiler_instance->getInvocation().setLangDefaults(lang_opts, clang::IK_CXX, );
             break;
         case ClangToSageTranslator::CUDA:
-            lang_opts.CUDA = 1;
+//            lang_opts.CUDA = 1;
+            languageArg = "-xcuda";
 //          lang_opts.CPlusPlus = 1;
 //          compiler_instance->getInvocation().setLangDefaults(lang_opts, clang::IK_CUDA,   clang::LangStandard::lang_cuda);
             break;
         case ClangToSageTranslator::OPENCL:
-            lang_opts.OpenCL = 1;
+//            lang_opts.OpenCL = 1;
+            languageArg = "-xcl";
 //          compiler_instance->getInvocation().setLangDefaults(lang_opts, clang::IK_OpenCL, clang::LangStandard::lang_opencl);
             break;
         case ClangToSageTranslator::OBJC:
             ROSE_ASSERT(!"Objective-C is not supported by ROSE Compiler.");
+            languageArg = "-xobjective-c";
 //          compiler_instance->getInvocation().setLangDefaults(lang_opts, clang::IK_, );
         default:
             ROSE_ABORT();
     }
+    args[i] = new char[languageArg.size()];
+    strcpy(&(args[cnt-1][0]), languageArg.c_str());
+    llvm::ArrayRef<const char *> argsArrayRef(args, &(args[cnt]));
+    clang::CompilerInvocation::CreateFromArgs(*invocation, argsArrayRef, compiler_instance->getDiagnostics());
+    compiler_instance->setInvocation(invocation_shptr);
 
     clang::TargetOptions target_options;
     target_options.Triple = llvm::sys::getDefaultTargetTriple();
