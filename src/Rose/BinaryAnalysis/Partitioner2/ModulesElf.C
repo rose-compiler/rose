@@ -582,9 +582,10 @@ findPlt(const Partitioner::ConstPtr &partitioner, SgAsmGenericSection *got, SgAs
             SgAsmGenericSection *section = NULL;
             switch (i) {
                 case 0:
-                    // A .plt.sec is either a subregion of .plt (it excludes the leading bogus entries) or it's a completely separate table. When it's a
-                    // separate table, we want to parse it instead of .plt because the .plt.sec is what has the offsets into the .got, which in turn is what
-                    // the relocation symbols refer to.  This is used, for instance, when compiling with -fPIC on i386.
+                    // A .plt.sec is either a subregion of .plt (it excludes the leading bogus entries) or it's a completely
+                    // separate table. When it's a separate table, we want to parse it instead of .plt because the .plt.sec is what
+                    // has the offsets into the .got, which in turn is what the relocation symbols refer to.  This is used, for
+                    // instance, when compiling with -fPIC on i386.
                     section = elfHeader->get_section_by_name(".plt.sec");
                     break;
                 case 1:
@@ -635,7 +636,7 @@ findPlt(const Partitioner::ConstPtr &partitioner, SgAsmGenericSection *got, SgAs
             }
         }
         if (foundSection)
-            mlog[ERROR] <<"found PLT section(s) but could not parse table\n";
+            mlog[WARN] <<"found PLT section(s) but could not parse table or table is empty\n";
     }
 
     return PltInfo();
