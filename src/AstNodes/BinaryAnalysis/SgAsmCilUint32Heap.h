@@ -6,3 +6,4 @@ class SgAsmCilUint32Heap : public SgAsmCilDataStream {
 public:
     void parse(std::vector<uint8_t>& buf, size_t startOfMetaData) override;
 };
+

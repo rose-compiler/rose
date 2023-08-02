@@ -54,10 +54,18 @@ SgAsmCilGenericParam::~SgAsmCilGenericParam() {
     destructorHelper();
 }
 
-SgAsmCilGenericParam::SgAsmCilGenericParam() {}
+SgAsmCilGenericParam::SgAsmCilGenericParam()
+    : p_Number({})
+    , p_Flags({})
+    , p_Owner({})
+    , p_Name({}) {}
 
 void
 SgAsmCilGenericParam::initializeProperties() {
+    p_Number = {};
+    p_Flags = {};
+    p_Owner = {};
+    p_Name = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

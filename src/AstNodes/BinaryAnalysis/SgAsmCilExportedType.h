@@ -1,34 +1,35 @@
-/** CIL ExportedType node. */
+/** CIL ExportedType node (II.22.14). */
 class SgAsmCilExportedType: public SgAsmCilMetadata {
+
     /** Property: EventFlags.
      *
      *  A 4-byte bitmask of type TypeAttribute. */
     [[using Rosebud: rosetta]]
-    uint32_t EventFlags;
+    uint32_t EventFlags = {};
 
     /** Property: TypeDefIdName.
      *
      *  A 4-byte index into a TypeDef table of another module in this Assembly. */
     [[using Rosebud: rosetta]]
-    uint32_t TypeDefIdName;
+    uint32_t TypeDefIdName = {};
 
     /** Property: TypeName.
      *
      *  An index into the String heap. */
     [[using Rosebud: rosetta]]
-    uint32_t TypeName;
+    uint32_t TypeName = {};
 
     /** Property: TypeNamespace.
      *
      *  An index into the String heap. */
     [[using Rosebud: rosetta]]
-    uint32_t TypeNamespace;
+    uint32_t TypeNamespace = {};
 
     /** Property: Implementation.
      *
      *  An index into the File table, ExportedType table, or the AssemblyRef table. */
     [[using Rosebud: rosetta]]
-    uint32_t Implementation;
+    uint32_t Implementation = {};
 
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);

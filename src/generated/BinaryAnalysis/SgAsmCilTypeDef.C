@@ -76,10 +76,22 @@ SgAsmCilTypeDef::~SgAsmCilTypeDef() {
     destructorHelper();
 }
 
-SgAsmCilTypeDef::SgAsmCilTypeDef() {}
+SgAsmCilTypeDef::SgAsmCilTypeDef()
+    : p_Flags({})
+    , p_TypeName({})
+    , p_TypeNamespace({})
+    , p_Extends({})
+    , p_FieldList({})
+    , p_MethodList({}) {}
 
 void
 SgAsmCilTypeDef::initializeProperties() {
+    p_Flags = {};
+    p_TypeName = {};
+    p_TypeNamespace = {};
+    p_Extends = {};
+    p_FieldList = {};
+    p_MethodList = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

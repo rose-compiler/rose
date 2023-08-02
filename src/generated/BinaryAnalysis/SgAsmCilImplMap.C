@@ -54,10 +54,18 @@ SgAsmCilImplMap::~SgAsmCilImplMap() {
     destructorHelper();
 }
 
-SgAsmCilImplMap::SgAsmCilImplMap() {}
+SgAsmCilImplMap::SgAsmCilImplMap()
+    : p_MappingFlags({})
+    , p_MemberForwarded({})
+    , p_ImportName({})
+    , p_ImportScope({}) {}
 
 void
 SgAsmCilImplMap::initializeProperties() {
+    p_MappingFlags = {};
+    p_MemberForwarded = {};
+    p_ImportName = {};
+    p_ImportScope = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

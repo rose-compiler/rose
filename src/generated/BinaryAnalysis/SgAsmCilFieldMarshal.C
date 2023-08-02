@@ -32,10 +32,14 @@ SgAsmCilFieldMarshal::~SgAsmCilFieldMarshal() {
     destructorHelper();
 }
 
-SgAsmCilFieldMarshal::SgAsmCilFieldMarshal() {}
+SgAsmCilFieldMarshal::SgAsmCilFieldMarshal()
+    : p_Parent({})
+    , p_NativeType({}) {}
 
 void
 SgAsmCilFieldMarshal::initializeProperties() {
+    p_Parent = {};
+    p_NativeType = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

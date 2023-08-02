@@ -43,10 +43,16 @@ SgAsmCilDeclSecurity::~SgAsmCilDeclSecurity() {
     destructorHelper();
 }
 
-SgAsmCilDeclSecurity::SgAsmCilDeclSecurity() {}
+SgAsmCilDeclSecurity::SgAsmCilDeclSecurity()
+    : p_Action({})
+    , p_Parent({})
+    , p_PermissionSet({}) {}
 
 void
 SgAsmCilDeclSecurity::initializeProperties() {
+    p_Action = {};
+    p_Parent = {};
+    p_PermissionSet = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

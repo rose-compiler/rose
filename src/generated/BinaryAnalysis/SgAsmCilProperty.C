@@ -43,10 +43,16 @@ SgAsmCilProperty::~SgAsmCilProperty() {
     destructorHelper();
 }
 
-SgAsmCilProperty::SgAsmCilProperty() {}
+SgAsmCilProperty::SgAsmCilProperty()
+    : p_Flags({})
+    , p_Name({})
+    , p_Type({}) {}
 
 void
 SgAsmCilProperty::initializeProperties() {
+    p_Flags = {};
+    p_Name = {};
+    p_Type = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

@@ -43,10 +43,16 @@ SgAsmCilMemberRef::~SgAsmCilMemberRef() {
     destructorHelper();
 }
 
-SgAsmCilMemberRef::SgAsmCilMemberRef() {}
+SgAsmCilMemberRef::SgAsmCilMemberRef()
+    : p_Class({})
+    , p_Name({})
+    , p_Signature({}) {}
 
 void
 SgAsmCilMemberRef::initializeProperties() {
+    p_Class = {};
+    p_Name = {};
+    p_Signature = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)
