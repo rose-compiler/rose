@@ -65,10 +65,20 @@ SgAsmCilExportedType::~SgAsmCilExportedType() {
     destructorHelper();
 }
 
-SgAsmCilExportedType::SgAsmCilExportedType() {}
+SgAsmCilExportedType::SgAsmCilExportedType()
+    : p_EventFlags({})
+    , p_TypeDefIdName({})
+    , p_TypeName({})
+    , p_TypeNamespace({})
+    , p_Implementation({}) {}
 
 void
 SgAsmCilExportedType::initializeProperties() {
+    p_EventFlags = {};
+    p_TypeDefIdName = {};
+    p_TypeName = {};
+    p_TypeNamespace = {};
+    p_Implementation = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

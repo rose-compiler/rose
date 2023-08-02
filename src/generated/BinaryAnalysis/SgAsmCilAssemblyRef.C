@@ -109,10 +109,28 @@ SgAsmCilAssemblyRef::~SgAsmCilAssemblyRef() {
     destructorHelper();
 }
 
-SgAsmCilAssemblyRef::SgAsmCilAssemblyRef() {}
+SgAsmCilAssemblyRef::SgAsmCilAssemblyRef()
+    : p_MajorVersion({})
+    , p_MinorVersion({})
+    , p_BuildNumber({})
+    , p_RevisionNumber({})
+    , p_Flags({})
+    , p_PublicKeyOrToken({})
+    , p_Name({})
+    , p_Culture({})
+    , p_HashValue({}) {}
 
 void
 SgAsmCilAssemblyRef::initializeProperties() {
+    p_MajorVersion = {};
+    p_MinorVersion = {};
+    p_BuildNumber = {};
+    p_RevisionNumber = {};
+    p_Flags = {};
+    p_PublicKeyOrToken = {};
+    p_Name = {};
+    p_Culture = {};
+    p_HashValue = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

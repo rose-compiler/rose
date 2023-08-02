@@ -43,10 +43,16 @@ SgAsmCilMethodSemantics::~SgAsmCilMethodSemantics() {
     destructorHelper();
 }
 
-SgAsmCilMethodSemantics::SgAsmCilMethodSemantics() {}
+SgAsmCilMethodSemantics::SgAsmCilMethodSemantics()
+    : p_Semantics({})
+    , p_Method({})
+    , p_Association({}) {}
 
 void
 SgAsmCilMethodSemantics::initializeProperties() {
+    p_Semantics = {};
+    p_Method = {};
+    p_Association = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

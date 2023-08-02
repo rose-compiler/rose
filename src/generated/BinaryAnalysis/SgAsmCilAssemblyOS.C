@@ -43,10 +43,16 @@ SgAsmCilAssemblyOS::~SgAsmCilAssemblyOS() {
     destructorHelper();
 }
 
-SgAsmCilAssemblyOS::SgAsmCilAssemblyOS() {}
+SgAsmCilAssemblyOS::SgAsmCilAssemblyOS()
+    : p_OSPlatformID({})
+    , p_OSMajorVersion({})
+    , p_OSMinorVersion({}) {}
 
 void
 SgAsmCilAssemblyOS::initializeProperties() {
+    p_OSPlatformID = {};
+    p_OSMajorVersion = {};
+    p_OSMinorVersion = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

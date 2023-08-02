@@ -43,10 +43,16 @@ SgAsmCilClassLayout::~SgAsmCilClassLayout() {
     destructorHelper();
 }
 
-SgAsmCilClassLayout::SgAsmCilClassLayout() {}
+SgAsmCilClassLayout::SgAsmCilClassLayout()
+    : p_PackingSize({})
+    , p_ClassSize({})
+    , p_Parent({}) {}
 
 void
 SgAsmCilClassLayout::initializeProperties() {
+    p_PackingSize = {};
+    p_ClassSize = {};
+    p_Parent = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

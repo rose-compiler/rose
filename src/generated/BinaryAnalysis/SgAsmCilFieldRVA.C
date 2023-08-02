@@ -32,10 +32,14 @@ SgAsmCilFieldRVA::~SgAsmCilFieldRVA() {
     destructorHelper();
 }
 
-SgAsmCilFieldRVA::SgAsmCilFieldRVA() {}
+SgAsmCilFieldRVA::SgAsmCilFieldRVA()
+    : p_RVA({})
+    , p_Field({}) {}
 
 void
 SgAsmCilFieldRVA::initializeProperties() {
+    p_RVA = {};
+    p_Field = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

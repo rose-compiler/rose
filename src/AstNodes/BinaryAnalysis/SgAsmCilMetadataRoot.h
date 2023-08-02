@@ -1,47 +1,50 @@
 /** CIL SgAsmCilMetadataRoot. */
 class SgAsmCilMetadataRoot: public SgAsmCilNode {
-    /** Property: Magic signature for physical metadata (always 0x424A5342). */
+
+
+    /** Property: Magic signature for physical metadata (always 0x424A5342) */
     [[using Rosebud: rosetta]]
-    uint32_t Signature;
+    uint32_t Signature = {};
 
     /** Property: Major version number. */
     [[using Rosebud: rosetta]]
-    uint16_t MajorVersion;
+    uint16_t MajorVersion = {};
 
     /** Property: Minor version number. */
     [[using Rosebud: rosetta]]
-    uint16_t MinorVersion;
+    uint16_t MinorVersion = {};
 
     /** Property: Reserved space. */
     [[using Rosebud: rosetta]]
-    uint32_t Reserved0;
+    uint32_t Reserved0 = {};
 
     /** Property: Number of bytes allocated to hold version string (including null terminator). */
     [[using Rosebud: rosetta]]
-    uint32_t Length;
+    uint32_t Length = {};
 
     /** Property: Version string. */
     [[using Rosebud: rosetta]]
-    std::string Version;
+    std::string Version = {};
 
     /** Property: Padding to next 4-byte boundary. */
     [[using Rosebud: rosetta]]
-    uint32_t VersionPadding;
+    uint32_t VersionPadding = {};
 
     /** Property: Reserved space. */
     [[using Rosebud: rosetta]]
-    uint16_t Flags;
+    uint16_t Flags = {};
 
     /** Property: Reserved space. */
     [[using Rosebud: rosetta]]
-    uint16_t NumberOfStreams;
+    uint16_t NumberOfStreams = {};
 
+
+    /** Property: Metadata streams. */
     // FIXME[Robb Matzke 2023-03-22]: these were implemented elsewhere, but could be auto generated
-    [[using Rosebud: rosetta, traverse, accessors(), mutators(), large]]
+    [[using Rosebud: rosetta, traverse, accessors(get_Streams), mutators(), large]]
     std::vector<SgAsmCilDataStream*> Streams;
-    const std::vector<SgAsmCilDataStream*>& get_Streams() const;
-    std::vector<SgAsmCilDataStream*>& get_Streams();
-
+    //const std::vector<SgAsmCilDataStream*>& get_Streams() const;
+    //std::vector<SgAsmCilDataStream*>& get_Streams();
 private:
     /** indices to efficienty access the different heaps
      * @{ */
@@ -57,13 +60,13 @@ public:
      */
     static constexpr uint32_t MAGIC_SIGNATURE = 0x424A5342;
 
-    /** Declares the parse function as called from the Cil section header object
+    /** Declares the parse function as called from the Cli section header object.
      *  @pre isSgAsmCliHeader(this->get_parent()) != nullptr
      */
     void parse();
 
     /** Declares the parse function.
-     *  @param buf the binary buffer
+     *  @param buf the binary buffer.
      *  @param index the start location of the metadata root object.
      *         buf[index] is the location of the magic number.
      */

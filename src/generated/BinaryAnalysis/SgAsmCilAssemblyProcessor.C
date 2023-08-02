@@ -21,10 +21,12 @@ SgAsmCilAssemblyProcessor::~SgAsmCilAssemblyProcessor() {
     destructorHelper();
 }
 
-SgAsmCilAssemblyProcessor::SgAsmCilAssemblyProcessor() {}
+SgAsmCilAssemblyProcessor::SgAsmCilAssemblyProcessor()
+    : p_Processor({}) {}
 
 void
 SgAsmCilAssemblyProcessor::initializeProperties() {
+    p_Processor = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

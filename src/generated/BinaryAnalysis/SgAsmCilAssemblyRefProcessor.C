@@ -32,10 +32,14 @@ SgAsmCilAssemblyRefProcessor::~SgAsmCilAssemblyRefProcessor() {
     destructorHelper();
 }
 
-SgAsmCilAssemblyRefProcessor::SgAsmCilAssemblyRefProcessor() {}
+SgAsmCilAssemblyRefProcessor::SgAsmCilAssemblyRefProcessor()
+    : p_Processor({})
+    , p_AssemblyRef({}) {}
 
 void
 SgAsmCilAssemblyRefProcessor::initializeProperties() {
+    p_Processor = {};
+    p_AssemblyRef = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)
