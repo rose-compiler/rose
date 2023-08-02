@@ -44,18 +44,23 @@ private:
 
 class CilMethod : public Method {
 public:
-    virtual const std::string name() const;
-    virtual const Code & code() const;
-    virtual const void decode(const Disassembler::BasePtr &disassembler) const;
-    virtual const SgAsmInstructionList* instructions() const;
+  virtual const std::string name() const override;
+  virtual const Code & code() const override;
+  virtual const void decode(const Disassembler::BasePtr &disassembler) const override;
+  virtual const SgAsmInstructionList* instructions() const override;
 
-    CilMethod() = delete;
-    explicit CilMethod(SgAsmCilMethodDef*);
+  virtual void annotate() override;
+
+  static std::string name(const SgAsmCilMetadata*, SgAsmCilMetadataRoot*);
+
+  CilMethod() = delete;
+  explicit CilMethod(SgAsmCilMetadataRoot*, SgAsmCilMethodDef*);
 
 private:
-    SgAsmCilMethodDef* sgMethod_;
-    SgAsmInstructionList* insns_;
-    CilCode code_;
+  SgAsmCilMetadataRoot* mdr_;
+  SgAsmCilMethodDef* sgMethod_;
+  SgAsmInstructionList* insns_;
+  CilCode code_;
 };
 
 class CilInterface : public Interface {
@@ -143,6 +148,8 @@ public:
   void printMethods(std::ostream& os, size_t beg, size_t lim) const;
   void printModules(std::ostream& os) const;
   void printTypeDefs(std::ostream& os) const;
+
+  static SgAsmCilMetadata* resolveToken(SgAsmIntegerValueExpression*, SgAsmCilMetadataRoot*);
 
   CilContainer() = delete;
   explicit CilContainer(SgAsmCilMetadataRoot*);

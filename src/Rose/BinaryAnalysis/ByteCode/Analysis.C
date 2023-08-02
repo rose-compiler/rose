@@ -70,6 +70,9 @@ void Class::partition(const PartitionerPtr &partitioner) const
     // Allow const_cast only here: TODO: consider fixing this (adding basic blocks)?
     Method* method = const_cast<Method*>(constMethod);
 
+    // Annotate the instructions
+    method->annotate();
+
     // Determine if this method has been seen before (e.g., ".ctor" of parent class)
     auto instructions = method->instructions()->get_instructions();
     if (instructions.size() < 1) continue;

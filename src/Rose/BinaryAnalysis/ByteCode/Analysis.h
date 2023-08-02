@@ -37,6 +37,9 @@ public:
   virtual const void decode(const Disassembler::BasePtr&) const = 0;
   virtual const SgAsmInstructionList* instructions() const = 0;
 
+  /* Annotate the AST (.e.g., add comments to instructions) */
+  virtual void annotate() = 0;
+
   /* Set of instruction branch targets */
   std::set<rose_addr_t> targets() const;
 
