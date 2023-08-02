@@ -43,10 +43,16 @@ SgAsmCilTypeRef::~SgAsmCilTypeRef() {
     destructorHelper();
 }
 
-SgAsmCilTypeRef::SgAsmCilTypeRef() {}
+SgAsmCilTypeRef::SgAsmCilTypeRef()
+    : p_ResolutionScope({})
+    , p_TypeName({})
+    , p_TypeNamespace({}) {}
 
 void
 SgAsmCilTypeRef::initializeProperties() {
+    p_ResolutionScope = {};
+    p_TypeName = {};
+    p_TypeNamespace = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

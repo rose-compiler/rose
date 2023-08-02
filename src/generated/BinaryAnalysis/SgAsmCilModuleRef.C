@@ -21,10 +21,12 @@ SgAsmCilModuleRef::~SgAsmCilModuleRef() {
     destructorHelper();
 }
 
-SgAsmCilModuleRef::SgAsmCilModuleRef() {}
+SgAsmCilModuleRef::SgAsmCilModuleRef()
+    : p_Name({}) {}
 
 void
 SgAsmCilModuleRef::initializeProperties() {
+    p_Name = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

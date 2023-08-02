@@ -43,10 +43,16 @@ SgAsmCilField::~SgAsmCilField() {
     destructorHelper();
 }
 
-SgAsmCilField::SgAsmCilField() {}
+SgAsmCilField::SgAsmCilField()
+    : p_Flags({})
+    , p_Name({})
+    , p_Signature({}) {}
 
 void
 SgAsmCilField::initializeProperties() {
+    p_Flags = {};
+    p_Name = {};
+    p_Signature = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

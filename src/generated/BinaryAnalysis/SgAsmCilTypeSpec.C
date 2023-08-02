@@ -21,10 +21,12 @@ SgAsmCilTypeSpec::~SgAsmCilTypeSpec() {
     destructorHelper();
 }
 
-SgAsmCilTypeSpec::SgAsmCilTypeSpec() {}
+SgAsmCilTypeSpec::SgAsmCilTypeSpec()
+    : p_Signature({}) {}
 
 void
 SgAsmCilTypeSpec::initializeProperties() {
+    p_Signature = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

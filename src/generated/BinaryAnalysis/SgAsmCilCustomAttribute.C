@@ -43,10 +43,16 @@ SgAsmCilCustomAttribute::~SgAsmCilCustomAttribute() {
     destructorHelper();
 }
 
-SgAsmCilCustomAttribute::SgAsmCilCustomAttribute() {}
+SgAsmCilCustomAttribute::SgAsmCilCustomAttribute()
+    : p_Parent({})
+    , p_Type({})
+    , p_Value({}) {}
 
 void
 SgAsmCilCustomAttribute::initializeProperties() {
+    p_Parent = {};
+    p_Type = {};
+    p_Value = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

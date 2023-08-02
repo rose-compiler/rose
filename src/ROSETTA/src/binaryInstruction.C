@@ -36,7 +36,7 @@ DOCUMENTATION_should_never_be_defined;
 #else
 #define DECLARE_HEADERS(CLASS_WITHOUT_Sg) \
     CLASS_WITHOUT_Sg.setPredeclarationString("Sg" #CLASS_WITHOUT_Sg "_HEADERS", \
-                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "/src/ROSETTA/src/binaryInstruction.C")
+                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "//src/ROSETTA/src/binaryInstruction.C")
 #endif
 
 #ifdef DOCUMENTATION
@@ -44,7 +44,7 @@ DOCUMENTATION_should_never_be_defined;
 #else
 #define DECLARE_OTHERS(CLASS_WITHOUT_Sg) \
     CLASS_WITHOUT_Sg.setFunctionPrototype("Sg" #CLASS_WITHOUT_Sg "_OTHERS", \
-                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "/src/ROSETTA/src/binaryInstruction.C")
+                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "//src/ROSETTA/src/binaryInstruction.C")
 #endif
 
 #ifdef DOCUMENTATION
@@ -1848,6 +1848,67 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmPESectionTable           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmPESectionTable);
+IS_SERIALIZABLE(AsmPESectionTable);
+
+#ifdef DOCUMENTATION
+/** Section table. */
+class SgAsmPESectionTable: public SgAsmGenericSection {
+#endif // DOCUMENTATION
+
+    DECLARE_OTHERS(AsmPESectionTable);
+#if defined(SgAsmPESectionTable_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmPESectionTable -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmPESectionTable");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+        debugSerializationEnd("SgAsmPESectionTable");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+public:
+    explicit SgAsmPESectionTable(SgAsmPEFileHeader*);
+    virtual SgAsmPESectionTable* parse() override;
+
+    /** Attaches a previously unattached PE Section to the PE Section Table.
+     *
+     *  This method complements SgAsmPESection::init_from_section_table. This method initializes the section table from the
+     *  section while init_from_section_table() initializes the section from the section table. */
+    void add_section(SgAsmPESection *section);
+    virtual bool reallocate() override;
+    virtual void unparse(std::ostream&) const override;
+    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+public:
+    /** Destructor. */
+    virtual ~SgAsmPESectionTable();
+
+public:
+    /** Default constructor. */
+    SgAsmPESectionTable();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmPESectionTable_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmPESectionTableEntry           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -2120,67 +2181,6 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmPESectionTableEntry_OTHERS
-#ifdef DOCUMENTATION
-};
-#endif // DOCUMENTATION
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmPESectionTable           -- MACHINE GENERATED; DO NOT MODIFY --
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-DECLARE_LEAF_CLASS(AsmPESectionTable);
-IS_SERIALIZABLE(AsmPESectionTable);
-
-#ifdef DOCUMENTATION
-/** Section table. */
-class SgAsmPESectionTable: public SgAsmGenericSection {
-#endif // DOCUMENTATION
-
-    DECLARE_OTHERS(AsmPESectionTable);
-#if defined(SgAsmPESectionTable_OTHERS) || defined(DOCUMENTATION)
-
-    //----------------------- Boost serialization for SgAsmPESectionTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmPESectionTable");
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
-        debugSerializationEnd("SgAsmPESectionTable");
-    }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
-    explicit SgAsmPESectionTable(SgAsmPEFileHeader*);
-    virtual SgAsmPESectionTable* parse() override;
-
-    /** Attaches a previously unattached PE Section to the PE Section Table.
-     *
-     *  This method complements SgAsmPESection::init_from_section_table. This method initializes the section table from the
-     *  section while init_from_section_table() initializes the section from the section table. */
-    void add_section(SgAsmPESection *section);
-    virtual bool reallocate() override;
-    virtual void unparse(std::ostream&) const override;
-    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-public:
-    /** Destructor. */
-    virtual ~SgAsmPESectionTable();
-
-public:
-    /** Default constructor. */
-    SgAsmPESectionTable();
-
-protected:
-    /** Initialize all properties that have explicit initial values.
-     *
-     *  This function is mostly for use in user-defined constructors where the user desires to initialize
-     *  all the properties but does not know the names of the data members that store the property values.
-     *  This function initializes the properties that have explicit initializations within this class, but
-     *  does not recursively initialize base classes. */
-    void initializeProperties();
-#endif // SgAsmPESectionTable_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -5071,6 +5071,102 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmNESectionTable           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmNESectionTable);
+IS_SERIALIZABLE(AsmNESectionTable);
+
+#ifdef DOCUMENTATION
+class SgAsmNESectionTable: public SgAsmGenericSection {
+#endif // DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmNESectionTable.setDataPrototype(
+        "unsigned", "flags", "= 0",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmNESectionTable.setDataPrototype(
+        "unsigned", "sector", "= 0",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmNESectionTable.setDataPrototype(
+        "rose_addr_t", "physical_size", "= 0",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmNESectionTable.setDataPrototype(
+        "rose_addr_t", "virtual_size", "= 0",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+    DECLARE_OTHERS(AsmNESectionTable);
+#if defined(SgAsmNESectionTable_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmNESectionTable -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmNESectionTable");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+        s & BOOST_SERIALIZATION_NVP(p_flags);
+        s & BOOST_SERIALIZATION_NVP(p_sector);
+        s & BOOST_SERIALIZATION_NVP(p_physical_size);
+        s & BOOST_SERIALIZATION_NVP(p_virtual_size);
+        debugSerializationEnd("SgAsmNESectionTable");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+
+public:
+    unsigned const& get_flags() const;
+    void set_flags(unsigned const&);
+
+public:
+    unsigned const& get_sector() const;
+    void set_sector(unsigned const&);
+
+public:
+    rose_addr_t const& get_physical_size() const;
+    void set_physical_size(rose_addr_t const&);
+
+public:
+    rose_addr_t const& get_virtual_size() const;
+    void set_virtual_size(rose_addr_t const&);
+public:
+    explicit SgAsmNESectionTable(SgAsmNEFileHeader*);
+    virtual void unparse(std::ostream&) const override;
+    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+public:
+    /** Destructor. */
+    virtual ~SgAsmNESectionTable();
+
+public:
+    /** Default constructor. */
+    SgAsmNESectionTable();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmNESectionTable_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmNESectionTableEntry           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -5210,102 +5306,6 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmNESectionTableEntry_OTHERS
-#ifdef DOCUMENTATION
-};
-#endif // DOCUMENTATION
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmNESectionTable           -- MACHINE GENERATED; DO NOT MODIFY --
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-DECLARE_LEAF_CLASS(AsmNESectionTable);
-IS_SERIALIZABLE(AsmNESectionTable);
-
-#ifdef DOCUMENTATION
-class SgAsmNESectionTable: public SgAsmGenericSection {
-#endif // DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmNESectionTable.setDataPrototype(
-        "unsigned", "flags", "= 0",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmNESectionTable.setDataPrototype(
-        "unsigned", "sector", "= 0",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmNESectionTable.setDataPrototype(
-        "rose_addr_t", "physical_size", "= 0",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmNESectionTable.setDataPrototype(
-        "rose_addr_t", "virtual_size", "= 0",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-    DECLARE_OTHERS(AsmNESectionTable);
-#if defined(SgAsmNESectionTable_OTHERS) || defined(DOCUMENTATION)
-
-    //----------------------- Boost serialization for SgAsmNESectionTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmNESectionTable");
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
-        s & BOOST_SERIALIZATION_NVP(p_flags);
-        s & BOOST_SERIALIZATION_NVP(p_sector);
-        s & BOOST_SERIALIZATION_NVP(p_physical_size);
-        s & BOOST_SERIALIZATION_NVP(p_virtual_size);
-        debugSerializationEnd("SgAsmNESectionTable");
-    }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
-public:
-    unsigned const& get_flags() const;
-    void set_flags(unsigned const&);
-
-public:
-    unsigned const& get_sector() const;
-    void set_sector(unsigned const&);
-
-public:
-    rose_addr_t const& get_physical_size() const;
-    void set_physical_size(rose_addr_t const&);
-
-public:
-    rose_addr_t const& get_virtual_size() const;
-    void set_virtual_size(rose_addr_t const&);
-public:
-    explicit SgAsmNESectionTable(SgAsmNEFileHeader*);
-    virtual void unparse(std::ostream&) const override;
-    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-public:
-    /** Destructor. */
-    virtual ~SgAsmNESectionTable();
-
-public:
-    /** Default constructor. */
-    SgAsmNESectionTable();
-
-protected:
-    /** Initialize all properties that have explicit initial values.
-     *
-     *  This function is mostly for use in user-defined constructors where the user desires to initialize
-     *  all the properties but does not know the names of the data members that store the property values.
-     *  This function initializes the properties that have explicit initializations within this class, but
-     *  does not recursively initialize base classes. */
-    void initializeProperties();
-#endif // SgAsmNESectionTable_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -6882,6 +6882,58 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmLESectionTable           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmLESectionTable);
+IS_SERIALIZABLE(AsmLESectionTable);
+
+#ifdef DOCUMENTATION
+class SgAsmLESectionTable: public SgAsmGenericSection {
+#endif // DOCUMENTATION
+
+    DECLARE_OTHERS(AsmLESectionTable);
+#if defined(SgAsmLESectionTable_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmLESectionTable -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmLESectionTable");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+        debugSerializationEnd("SgAsmLESectionTable");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+public:
+    SgAsmLESectionTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset, rose_addr_t size);
+    virtual void unparse(std::ostream&) const override;
+    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+public:
+    /** Destructor. */
+    virtual ~SgAsmLESectionTable();
+
+public:
+    /** Default constructor. */
+    SgAsmLESectionTable();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmLESectionTable_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmLESectionTableEntry           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -7069,58 +7121,6 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmLESectionTable           -- MACHINE GENERATED; DO NOT MODIFY --
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-DECLARE_LEAF_CLASS(AsmLESectionTable);
-IS_SERIALIZABLE(AsmLESectionTable);
-
-#ifdef DOCUMENTATION
-class SgAsmLESectionTable: public SgAsmGenericSection {
-#endif // DOCUMENTATION
-
-    DECLARE_OTHERS(AsmLESectionTable);
-#if defined(SgAsmLESectionTable_OTHERS) || defined(DOCUMENTATION)
-
-    //----------------------- Boost serialization for SgAsmLESectionTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmLESectionTable");
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
-        debugSerializationEnd("SgAsmLESectionTable");
-    }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
-    SgAsmLESectionTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset, rose_addr_t size);
-    virtual void unparse(std::ostream&) const override;
-    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-public:
-    /** Destructor. */
-    virtual ~SgAsmLESectionTable();
-
-public:
-    /** Default constructor. */
-    SgAsmLESectionTable();
-
-protected:
-    /** Initialize all properties that have explicit initial values.
-     *
-     *  This function is mostly for use in user-defined constructors where the user desires to initialize
-     *  all the properties but does not know the names of the data members that store the property values.
-     *  This function initializes the properties that have explicit initializations within this class, but
-     *  does not recursively initialize base classes. */
-    void initializeProperties();
-#endif // SgAsmLESectionTable_OTHERS
-#ifdef DOCUMENTATION
-};
-#endif // DOCUMENTATION
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmLESection           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -7246,6 +7246,71 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmLEPageTable           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmLEPageTable);
+IS_SERIALIZABLE(AsmLEPageTable);
+
+#ifdef DOCUMENTATION
+class SgAsmLEPageTable: public SgAsmGenericSection {
+#endif // DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmLEPageTable.setDataPrototype(
+        "SgAsmLEPageTableEntryPtrList", "entries", "",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+    DECLARE_OTHERS(AsmLEPageTable);
+#if defined(SgAsmLEPageTable_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmLEPageTable -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmLEPageTable");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+        s & BOOST_SERIALIZATION_NVP(p_entries);
+        debugSerializationEnd("SgAsmLEPageTable");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+
+public:
+    SgAsmLEPageTableEntryPtrList const& get_entries() const;
+    SgAsmLEPageTableEntryPtrList& get_entries();
+    void set_entries(SgAsmLEPageTableEntryPtrList const&);
+public:
+    SgAsmLEPageTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset, rose_addr_t size);
+    virtual void unparse(std::ostream&) const override;
+    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+    SgAsmLEPageTableEntry *get_page(size_t idx);
+public:
+    /** Destructor. */
+    virtual ~SgAsmLEPageTable();
+
+public:
+    /** Default constructor. */
+    SgAsmLEPageTable();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmLEPageTable_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmLEPageTableEntry           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -7355,71 +7420,6 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmLEPageTableEntry_OTHERS
-#ifdef DOCUMENTATION
-};
-#endif // DOCUMENTATION
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmLEPageTable           -- MACHINE GENERATED; DO NOT MODIFY --
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-DECLARE_LEAF_CLASS(AsmLEPageTable);
-IS_SERIALIZABLE(AsmLEPageTable);
-
-#ifdef DOCUMENTATION
-class SgAsmLEPageTable: public SgAsmGenericSection {
-#endif // DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmLEPageTable.setDataPrototype(
-        "SgAsmLEPageTableEntryPtrList", "entries", "",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-    DECLARE_OTHERS(AsmLEPageTable);
-#if defined(SgAsmLEPageTable_OTHERS) || defined(DOCUMENTATION)
-
-    //----------------------- Boost serialization for SgAsmLEPageTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmLEPageTable");
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
-        s & BOOST_SERIALIZATION_NVP(p_entries);
-        debugSerializationEnd("SgAsmLEPageTable");
-    }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
-public:
-    SgAsmLEPageTableEntryPtrList const& get_entries() const;
-    SgAsmLEPageTableEntryPtrList& get_entries();
-    void set_entries(SgAsmLEPageTableEntryPtrList const&);
-public:
-    SgAsmLEPageTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset, rose_addr_t size);
-    virtual void unparse(std::ostream&) const override;
-    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-    SgAsmLEPageTableEntry *get_page(size_t idx);
-public:
-    /** Destructor. */
-    virtual ~SgAsmLEPageTable();
-
-public:
-    /** Default constructor. */
-    SgAsmLEPageTable();
-
-protected:
-    /** Initialize all properties that have explicit initial values.
-     *
-     *  This function is mostly for use in user-defined constructors where the user desires to initialize
-     *  all the properties but does not know the names of the data members that store the property values.
-     *  This function initializes the properties that have explicit initializations within this class, but
-     *  does not recursively initialize base classes. */
-    void initializeProperties();
-#endif // SgAsmLEPageTable_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -9877,6 +9877,92 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmJvmInnerClasses           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmJvmInnerClasses);
+IS_SERIALIZABLE(AsmJvmInnerClasses);
+
+#ifdef DOCUMENTATION
+/** Represents a JVM InnerClasses attribute.
+ *
+ *  The InnerClasses attribute is a variable-length attribute in the attributes table of a ClassFile structure. See section 4.7.6 of
+ *  the JVM specification.
+ */
+class SgAsmJvmInnerClasses: public SgAsmJvmAttribute {
+#endif // DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmInnerClasses.setDataPrototype(
+        "SgAsmJvmInnerClassesEntryPtrList", "classes", "",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+    DECLARE_OTHERS(AsmJvmInnerClasses);
+#if defined(SgAsmJvmInnerClasses_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmJvmInnerClasses -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmInnerClasses");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmAttribute);
+        s & BOOST_SERIALIZATION_NVP(p_classes);
+        debugSerializationEnd("SgAsmJvmInnerClasses");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+
+public:
+    /** Property: List of pointers to InnerClasses attribute entry. 
+     * 
+     * @{ */
+    SgAsmJvmInnerClassesEntryPtrList const& get_classes() const;
+    SgAsmJvmInnerClassesEntryPtrList& get_classes();
+    void set_classes(SgAsmJvmInnerClassesEntryPtrList const&);
+    /** @} */
+public:
+    /** Initialize the InnerClasses attribute before parsing.
+     *
+     *  This is the preferred constructor to use before parsing as it sets its parent. */
+    explicit SgAsmJvmInnerClasses(SgAsmJvmAttributeTable* table);
+
+    /** Parses a JVM InnerClasses attribute.
+     *
+     * Parses a JVM InnerClasses attribute and constructs and parses all classes
+     * entries reachable from the table. Returns a pointer to this object. */
+    SgAsmJvmInnerClasses* parse(SgAsmJvmConstantPool*) override;
+
+    /** Write the InnerClasses attribute to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
+    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+public:
+    /** Destructor. */
+    virtual ~SgAsmJvmInnerClasses();
+
+public:
+    /** Default constructor. */
+    SgAsmJvmInnerClasses();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmJvmInnerClasses_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmJvmInnerClassesEntry           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -10010,92 +10096,6 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmJvmInnerClassesEntry_OTHERS
-#ifdef DOCUMENTATION
-};
-#endif // DOCUMENTATION
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmJvmInnerClasses           -- MACHINE GENERATED; DO NOT MODIFY --
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-DECLARE_LEAF_CLASS(AsmJvmInnerClasses);
-IS_SERIALIZABLE(AsmJvmInnerClasses);
-
-#ifdef DOCUMENTATION
-/** Represents a JVM InnerClasses attribute.
- *
- *  The InnerClasses attribute is a variable-length attribute in the attributes table of a ClassFile structure. See section 4.7.6 of
- *  the JVM specification.
- */
-class SgAsmJvmInnerClasses: public SgAsmJvmAttribute {
-#endif // DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmJvmInnerClasses.setDataPrototype(
-        "SgAsmJvmInnerClassesEntryPtrList", "classes", "",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-    DECLARE_OTHERS(AsmJvmInnerClasses);
-#if defined(SgAsmJvmInnerClasses_OTHERS) || defined(DOCUMENTATION)
-
-    //----------------------- Boost serialization for SgAsmJvmInnerClasses -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmJvmInnerClasses");
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmAttribute);
-        s & BOOST_SERIALIZATION_NVP(p_classes);
-        debugSerializationEnd("SgAsmJvmInnerClasses");
-    }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
-public:
-    /** Property: List of pointers to InnerClasses attribute entry. 
-     * 
-     * @{ */
-    SgAsmJvmInnerClassesEntryPtrList const& get_classes() const;
-    SgAsmJvmInnerClassesEntryPtrList& get_classes();
-    void set_classes(SgAsmJvmInnerClassesEntryPtrList const&);
-    /** @} */
-public:
-    /** Initialize the InnerClasses attribute before parsing.
-     *
-     *  This is the preferred constructor to use before parsing as it sets its parent. */
-    explicit SgAsmJvmInnerClasses(SgAsmJvmAttributeTable* table);
-
-    /** Parses a JVM InnerClasses attribute.
-     *
-     * Parses a JVM InnerClasses attribute and constructs and parses all classes
-     * entries reachable from the table. Returns a pointer to this object. */
-    SgAsmJvmInnerClasses* parse(SgAsmJvmConstantPool*) override;
-
-    /** Write the InnerClasses attribute to a binary file. */
-    virtual void unparse(std::ostream&) const override;
-
-    /** Print some debugging information. */
-    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-public:
-    /** Destructor. */
-    virtual ~SgAsmJvmInnerClasses();
-
-public:
-    /** Default constructor. */
-    SgAsmJvmInnerClasses();
-
-protected:
-    /** Initialize all properties that have explicit initial values.
-     *
-     *  This function is mostly for use in user-defined constructors where the user desires to initialize
-     *  all the properties but does not know the names of the data members that store the property values.
-     *  This function initializes the properties that have explicit initializations within this class, but
-     *  does not recursively initialize base classes. */
-    void initializeProperties();
-#endif // SgAsmJvmInnerClasses_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -10574,6 +10574,91 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmJvmExceptionTable           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmJvmExceptionTable);
+IS_SERIALIZABLE(AsmJvmExceptionTable);
+
+#ifdef DOCUMENTATION
+/** Represents a JVM exception_info table/array.
+ *
+ *  The JVM exceptions table is an SgAsmJvmNode containing SgAsmJvmExceptionHandler entries.
+ *  Each entry in the table describes one exception handler in the code array. */
+class SgAsmJvmExceptionTable: public SgAsmJvmNode {
+#endif // DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmExceptionTable.setDataPrototype(
+        "SgAsmJvmExceptionHandlerPtrList", "handlers", "",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+    DECLARE_OTHERS(AsmJvmExceptionTable);
+#if defined(SgAsmJvmExceptionTable_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmJvmExceptionTable -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmExceptionTable");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmNode);
+        s & BOOST_SERIALIZATION_NVP(p_handlers);
+        debugSerializationEnd("SgAsmJvmExceptionTable");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+
+public:
+    /** Property: List of pointers to exceptions. 
+     * 
+     * @{ */
+    SgAsmJvmExceptionHandlerPtrList const& get_handlers() const;
+    SgAsmJvmExceptionHandlerPtrList& get_handlers();
+    void set_handlers(SgAsmJvmExceptionHandlerPtrList const&);
+    /** @} */
+public:
+    /** Initialize the exception table before parsing.
+     *
+     *  This is the preferred constructor to use before parsing as it sets its parent. */
+    explicit SgAsmJvmExceptionTable(SgAsmJvmCodeAttribute*);
+
+    /** Parses a JVM exception table.
+     *
+     *  Parses a JVM exception table and constructs and parses all exceptions reachable from the table.  Returns a pointer to this
+     *  object. */
+    SgAsmJvmExceptionTable* parse(SgAsmJvmConstantPool*);
+
+    /** Write exception table to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
+    void dump(FILE*, const char *prefix, ssize_t idx) const override;
+public:
+    /** Destructor. */
+    virtual ~SgAsmJvmExceptionTable();
+
+public:
+    /** Default constructor. */
+    SgAsmJvmExceptionTable();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmJvmExceptionTable_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmJvmExceptions           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -10654,91 +10739,6 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmJvmExceptions_OTHERS
-#ifdef DOCUMENTATION
-};
-#endif // DOCUMENTATION
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmJvmExceptionTable           -- MACHINE GENERATED; DO NOT MODIFY --
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-DECLARE_LEAF_CLASS(AsmJvmExceptionTable);
-IS_SERIALIZABLE(AsmJvmExceptionTable);
-
-#ifdef DOCUMENTATION
-/** Represents a JVM exception_info table/array.
- *
- *  The JVM exceptions table is an SgAsmJvmNode containing SgAsmJvmExceptionHandler entries.
- *  Each entry in the table describes one exception handler in the code array. */
-class SgAsmJvmExceptionTable: public SgAsmJvmNode {
-#endif // DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmJvmExceptionTable.setDataPrototype(
-        "SgAsmJvmExceptionHandlerPtrList", "handlers", "",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-    DECLARE_OTHERS(AsmJvmExceptionTable);
-#if defined(SgAsmJvmExceptionTable_OTHERS) || defined(DOCUMENTATION)
-
-    //----------------------- Boost serialization for SgAsmJvmExceptionTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmJvmExceptionTable");
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmNode);
-        s & BOOST_SERIALIZATION_NVP(p_handlers);
-        debugSerializationEnd("SgAsmJvmExceptionTable");
-    }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
-public:
-    /** Property: List of pointers to exceptions. 
-     * 
-     * @{ */
-    SgAsmJvmExceptionHandlerPtrList const& get_handlers() const;
-    SgAsmJvmExceptionHandlerPtrList& get_handlers();
-    void set_handlers(SgAsmJvmExceptionHandlerPtrList const&);
-    /** @} */
-public:
-    /** Initialize the exception table before parsing.
-     *
-     *  This is the preferred constructor to use before parsing as it sets its parent. */
-    explicit SgAsmJvmExceptionTable(SgAsmJvmCodeAttribute*);
-
-    /** Parses a JVM exception table.
-     *
-     *  Parses a JVM exception table and constructs and parses all exceptions reachable from the table.  Returns a pointer to this
-     *  object. */
-    SgAsmJvmExceptionTable* parse(SgAsmJvmConstantPool*);
-
-    /** Write exception table to a binary file. */
-    virtual void unparse(std::ostream&) const override;
-
-    /** Print some debugging information. */
-    void dump(FILE*, const char *prefix, ssize_t idx) const override;
-public:
-    /** Destructor. */
-    virtual ~SgAsmJvmExceptionTable();
-
-public:
-    /** Default constructor. */
-    SgAsmJvmExceptionTable();
-
-protected:
-    /** Initialize all properties that have explicit initial values.
-     *
-     *  This function is mostly for use in user-defined constructors where the user desires to initialize
-     *  all the properties but does not know the names of the data members that store the property values.
-     *  This function initializes the properties that have explicit initializations within this class, but
-     *  does not recursively initialize base classes. */
-    void initializeProperties();
-#endif // SgAsmJvmExceptionTable_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -11059,6 +11059,105 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmJvmConstantValue_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmJvmConstantPool           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmJvmConstantPool);
+IS_SERIALIZABLE(AsmJvmConstantPool);
+
+#ifdef DOCUMENTATION
+/** Represents an JVM constant pool.
+ *
+ *  The JVM Constant Pool is itself a section.  The entries of the table are stored with the section they describe rather
+ *  than storing them all in the SgAsmSectionTable node.  We can reconstruct the JVM Section Table since sections have
+ *  unique ID numbers that are their original indices in the JVM Section Table. */
+class SgAsmJvmConstantPool: public SgAsmGenericSection {
+#endif // DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmConstantPool.setDataPrototype(
+        "SgAsmJvmConstantPoolEntryPtrList", "entries", "",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+    DECLARE_OTHERS(AsmJvmConstantPool);
+#if defined(SgAsmJvmConstantPool_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmJvmConstantPool -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmConstantPool");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+        s & BOOST_SERIALIZATION_NVP(p_entries);
+        debugSerializationEnd("SgAsmJvmConstantPool");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+
+public:
+    /** Property: List of constant pool entries. 
+     * 
+     * @{ */
+    SgAsmJvmConstantPoolEntryPtrList const& get_entries() const;
+    SgAsmJvmConstantPoolEntryPtrList& get_entries();
+    void set_entries(SgAsmJvmConstantPoolEntryPtrList const&);
+    /** @} */
+public:
+    /** Non-parsing constructor. */
+    explicit SgAsmJvmConstantPool(SgAsmJvmFileHeader*);
+
+    /** Parses a JVM Constant Pool.
+     *
+     *  Parses a JVM constant pool and constructs and parses all sections reachable from the table. The section is
+     *  extended as necessary based on the number of entries and the size of each entry. Returns a pointer to this
+     *  object. */
+    virtual SgAsmJvmConstantPool* parse() override;
+
+    /** Returns constant pool entry at given index.
+     *
+     *  Index starts at one.
+     * @{ */
+    SgAsmJvmConstantPoolEntry* get_entry(size_t index) const;
+    /** @} */
+
+    /** Return a string at the given index.
+     *
+     *  Throws an error if the index is invalid or if the constant pool entry
+     *  at the index is not a CONSTANT_Utf8_info.
+     */
+    std::string get_utf8_string(size_t index) const;
+
+    /** Write constant pool to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
+    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+public:
+    /** Destructor. */
+    virtual ~SgAsmJvmConstantPool();
+
+public:
+    /** Default constructor. */
+    SgAsmJvmConstantPool();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmJvmConstantPool_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -11525,105 +11624,6 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmJvmConstantPoolEntry_OTHERS
-#ifdef DOCUMENTATION
-};
-#endif // DOCUMENTATION
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmJvmConstantPool           -- MACHINE GENERATED; DO NOT MODIFY --
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-DECLARE_LEAF_CLASS(AsmJvmConstantPool);
-IS_SERIALIZABLE(AsmJvmConstantPool);
-
-#ifdef DOCUMENTATION
-/** Represents an JVM constant pool.
- *
- *  The JVM Constant Pool is itself a section.  The entries of the table are stored with the section they describe rather
- *  than storing them all in the SgAsmSectionTable node.  We can reconstruct the JVM Section Table since sections have
- *  unique ID numbers that are their original indices in the JVM Section Table. */
-class SgAsmJvmConstantPool: public SgAsmGenericSection {
-#endif // DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmJvmConstantPool.setDataPrototype(
-        "SgAsmJvmConstantPoolEntryPtrList", "entries", "",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-    DECLARE_OTHERS(AsmJvmConstantPool);
-#if defined(SgAsmJvmConstantPool_OTHERS) || defined(DOCUMENTATION)
-
-    //----------------------- Boost serialization for SgAsmJvmConstantPool -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmJvmConstantPool");
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
-        s & BOOST_SERIALIZATION_NVP(p_entries);
-        debugSerializationEnd("SgAsmJvmConstantPool");
-    }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
-public:
-    /** Property: List of constant pool entries. 
-     * 
-     * @{ */
-    SgAsmJvmConstantPoolEntryPtrList const& get_entries() const;
-    SgAsmJvmConstantPoolEntryPtrList& get_entries();
-    void set_entries(SgAsmJvmConstantPoolEntryPtrList const&);
-    /** @} */
-public:
-    /** Non-parsing constructor. */
-    explicit SgAsmJvmConstantPool(SgAsmJvmFileHeader*);
-
-    /** Parses a JVM Constant Pool.
-     *
-     *  Parses a JVM constant pool and constructs and parses all sections reachable from the table. The section is
-     *  extended as necessary based on the number of entries and the size of each entry. Returns a pointer to this
-     *  object. */
-    virtual SgAsmJvmConstantPool* parse() override;
-
-    /** Returns constant pool entry at given index.
-     *
-     *  Index starts at one.
-     * @{ */
-    SgAsmJvmConstantPoolEntry* get_entry(size_t index) const;
-    /** @} */
-
-    /** Return a string at the given index.
-     *
-     *  Throws an error if the index is invalid or if the constant pool entry
-     *  at the index is not a CONSTANT_Utf8_info.
-     */
-    std::string get_utf8_string(size_t index) const;
-
-    /** Write constant pool to a binary file. */
-    virtual void unparse(std::ostream&) const override;
-
-    /** Print some debugging information. */
-    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-public:
-    /** Destructor. */
-    virtual ~SgAsmJvmConstantPool();
-
-public:
-    /** Default constructor. */
-    SgAsmJvmConstantPool();
-
-protected:
-    /** Initialize all properties that have explicit initial values.
-     *
-     *  This function is mostly for use in user-defined constructors where the user desires to initialize
-     *  all the properties but does not know the names of the data members that store the property values.
-     *  This function initializes the properties that have explicit initializations within this class, but
-     *  does not recursively initialize base classes. */
-    void initializeProperties();
-#endif // SgAsmJvmConstantPool_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -17361,6 +17361,98 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmElfSegmentTable           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmElfSegmentTable);
+IS_SERIALIZABLE(AsmElfSegmentTable);
+
+#ifdef DOCUMENTATION
+/** Represents an ELF segment table.
+ *
+ * The ELF Segment Table is an ELF Section that has entries describing the various segments of the ELF file.  Each segment
+ * is also an SgAsmElfSection and the entries of the ELF Segment Table are associated with the SgAsmElfSection they
+ * describe.  The ELF Segment Table can be reconstructed by traversing the AST and finding the SgAsmElfSegmentTableEntry
+ * nodes. */
+class SgAsmElfSegmentTable: public SgAsmGenericSection {
+#endif // DOCUMENTATION
+
+    DECLARE_OTHERS(AsmElfSegmentTable);
+#if defined(SgAsmElfSegmentTable_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmElfSegmentTable -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfSegmentTable");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+        debugSerializationEnd("SgAsmElfSegmentTable");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+public:
+    /** Constuct segment table linked into the AST. */
+    explicit SgAsmElfSegmentTable(SgAsmElfFileHeader*);
+
+    /** Parses an ELF Segment (Program Header) Table.
+     *
+     *  Parses an ELF segment table and constructs and parses all segments reachable from the table. The section is
+     *  extended as necessary based on the number of entries and teh size of each entry. */
+    virtual SgAsmElfSegmentTable *parse() override;
+
+    /** Attaches new segments to the segment table.
+     *
+     *  Attaches a previously unattached ELF Segment (@ref SgAsmElfSection) to the ELF Segment Table (@ref
+     *  SgAsmElfSegmentTable). This method complements @ref SgAsmElfSection::init_from_segment_table. This method
+     *  initializes the segment table from the segment while init_from_segment_table initializes the segment from the
+     *  segment table.
+     *
+     *  ELF Segments are represented by @ref SgAsmElfSection objects since ELF Segments and ELF Sections overlap very much
+     *  in their features and thus should share an interface. An @ref SgAsmElfSection can appear in the ELF Section Table
+     *  and/or the ELF Segment Table and you can determine where it was located by calling @ref get_section_entry and
+     *  @ref get_segment_entry.
+     *
+     *  Returns the new segment table entry linked into the AST. */
+    SgAsmElfSegmentTableEntry *add_section(SgAsmElfSection*);
+
+    /** Returns info about the size of the entries based on information already available.
+     *
+     *  Any or all arguments may be null pointers if the caller is not interested in the value. */
+    rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
+
+    /** Pre-unparsing updates */
+    virtual bool reallocate() override;
+
+    /** Write the segment table to disk. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging info */
+    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+public:
+    /** Destructor. */
+    virtual ~SgAsmElfSegmentTable();
+
+public:
+    /** Default constructor. */
+    SgAsmElfSegmentTable();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmElfSegmentTable_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmElfSegmentTableEntryList           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -17769,82 +17861,79 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmElfSegmentTable           -- MACHINE GENERATED; DO NOT MODIFY --
+// SgAsmElfSectionTable           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-DECLARE_LEAF_CLASS(AsmElfSegmentTable);
-IS_SERIALIZABLE(AsmElfSegmentTable);
+DECLARE_LEAF_CLASS(AsmElfSectionTable);
+IS_SERIALIZABLE(AsmElfSectionTable);
 
 #ifdef DOCUMENTATION
-/** Represents an ELF segment table.
+/** Represents an ELF section table.
  *
- * The ELF Segment Table is an ELF Section that has entries describing the various segments of the ELF file.  Each segment
- * is also an SgAsmElfSection and the entries of the ELF Segment Table are associated with the SgAsmElfSection they
- * describe.  The ELF Segment Table can be reconstructed by traversing the AST and finding the SgAsmElfSegmentTableEntry
- * nodes. */
-class SgAsmElfSegmentTable: public SgAsmGenericSection {
+ *  The ELF Section Table is itself a section.  The entries of the table are stored with the section they describe rather
+ *  than storing them all in the SgAsmSectionTable node.  We can reconstruct the ELF Section Table since sections have
+ *  unique ID numbers that are their original indices in the ELF Section Table. */
+class SgAsmElfSectionTable: public SgAsmGenericSection {
 #endif // DOCUMENTATION
 
-    DECLARE_OTHERS(AsmElfSegmentTable);
-#if defined(SgAsmElfSegmentTable_OTHERS) || defined(DOCUMENTATION)
+    DECLARE_OTHERS(AsmElfSectionTable);
+#if defined(SgAsmElfSectionTable_OTHERS) || defined(DOCUMENTATION)
 
-    //----------------------- Boost serialization for SgAsmElfSegmentTable -----------------------
+    //----------------------- Boost serialization for SgAsmElfSectionTable -----------------------
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmElfSegmentTable");
+        debugSerializationBegin("SgAsmElfSectionTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
-        debugSerializationEnd("SgAsmElfSegmentTable");
+        debugSerializationEnd("SgAsmElfSectionTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 public:
-    /** Constuct segment table linked into the AST. */
-    explicit SgAsmElfSegmentTable(SgAsmElfFileHeader*);
+    /** Constructor creates section table within the AST. */
+    explicit SgAsmElfSectionTable(SgAsmElfFileHeader*);
 
-    /** Parses an ELF Segment (Program Header) Table.
+    /** Parses an ELF Section Table.
      *
-     *  Parses an ELF segment table and constructs and parses all segments reachable from the table. The section is
-     *  extended as necessary based on the number of entries and teh size of each entry. */
-    virtual SgAsmElfSegmentTable *parse() override;
+     *  Parses an ELF section table and constructs and parses all sections reachable from the table. The section is
+     *  extended as necessary based on the number of entries and the size of each entry. Returns a pointer to this
+     *  object. */
+    virtual SgAsmElfSectionTable *parse() override;
 
-    /** Attaches new segments to the segment table.
+    /** Attaches a previously unattached ELF Section to the section table.
      *
-     *  Attaches a previously unattached ELF Segment (@ref SgAsmElfSection) to the ELF Segment Table (@ref
-     *  SgAsmElfSegmentTable). This method complements @ref SgAsmElfSection::init_from_segment_table. This method
-     *  initializes the segment table from the segment while init_from_segment_table initializes the segment from the
-     *  segment table.
+     *  If @p section is an ELF String Section (SgAsmElfStringSection) that contains an ELF String Table
+     *  (SgAsmElfStringTable) and the ELF Section Table has no associated string table then the @p section will be used as
+     *  the string table to hold the section names.
      *
-     *  ELF Segments are represented by @ref SgAsmElfSection objects since ELF Segments and ELF Sections overlap very much
-     *  in their features and thus should share an interface. An @ref SgAsmElfSection can appear in the ELF Section Table
-     *  and/or the ELF Segment Table and you can determine where it was located by calling @ref get_section_entry and
-     *  @ref get_segment_entry.
+     *  This method complements SgAsmElfSection::init_from_section_table. This method initializes the section table from
+     *  the section while init_from_section_table() initializes the section from the section table.
      *
-     *  Returns the new segment table entry linked into the AST. */
-    SgAsmElfSegmentTableEntry *add_section(SgAsmElfSection*);
+     *  Returns the new section table entry linked into the AST. */
+    SgAsmElfSectionTableEntry *add_section(SgAsmElfSection*);
 
     /** Returns info about the size of the entries based on information already available.
      *
      *  Any or all arguments may be null pointers if the caller is not interested in the value. */
     rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 
-    /** Pre-unparsing updates */
+    /** Update prior to unparsing. */
     virtual bool reallocate() override;
 
-    /** Write the segment table to disk. */
+    /** Write the section table section back to disk */
     virtual void unparse(std::ostream&) const override;
 
     /** Print some debugging info */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 public:
     /** Destructor. */
-    virtual ~SgAsmElfSegmentTable();
+    virtual ~SgAsmElfSectionTable();
 
 public:
     /** Default constructor. */
-    SgAsmElfSegmentTable();
+    SgAsmElfSectionTable();
 
 protected:
     /** Initialize all properties that have explicit initial values.
@@ -17854,7 +17943,7 @@ protected:
      *  This function initializes the properties that have explicit initializations within this class, but
      *  does not recursively initialize base classes. */
     void initializeProperties();
-#endif // SgAsmElfSegmentTable_OTHERS
+#endif // SgAsmElfSectionTable_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -18223,95 +18312,6 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmElfSectionTableEntry_OTHERS
-#ifdef DOCUMENTATION
-};
-#endif // DOCUMENTATION
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmElfSectionTable           -- MACHINE GENERATED; DO NOT MODIFY --
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-DECLARE_LEAF_CLASS(AsmElfSectionTable);
-IS_SERIALIZABLE(AsmElfSectionTable);
-
-#ifdef DOCUMENTATION
-/** Represents an ELF section table.
- *
- *  The ELF Section Table is itself a section.  The entries of the table are stored with the section they describe rather
- *  than storing them all in the SgAsmSectionTable node.  We can reconstruct the ELF Section Table since sections have
- *  unique ID numbers that are their original indices in the ELF Section Table. */
-class SgAsmElfSectionTable: public SgAsmGenericSection {
-#endif // DOCUMENTATION
-
-    DECLARE_OTHERS(AsmElfSectionTable);
-#if defined(SgAsmElfSectionTable_OTHERS) || defined(DOCUMENTATION)
-
-    //----------------------- Boost serialization for SgAsmElfSectionTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmElfSectionTable");
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
-        debugSerializationEnd("SgAsmElfSectionTable");
-    }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
-    /** Constructor creates section table within the AST. */
-    explicit SgAsmElfSectionTable(SgAsmElfFileHeader*);
-
-    /** Parses an ELF Section Table.
-     *
-     *  Parses an ELF section table and constructs and parses all sections reachable from the table. The section is
-     *  extended as necessary based on the number of entries and the size of each entry. Returns a pointer to this
-     *  object. */
-    virtual SgAsmElfSectionTable *parse() override;
-
-    /** Attaches a previously unattached ELF Section to the section table.
-     *
-     *  If @p section is an ELF String Section (SgAsmElfStringSection) that contains an ELF String Table
-     *  (SgAsmElfStringTable) and the ELF Section Table has no associated string table then the @p section will be used as
-     *  the string table to hold the section names.
-     *
-     *  This method complements SgAsmElfSection::init_from_section_table. This method initializes the section table from
-     *  the section while init_from_section_table() initializes the section from the section table.
-     *
-     *  Returns the new section table entry linked into the AST. */
-    SgAsmElfSectionTableEntry *add_section(SgAsmElfSection*);
-
-    /** Returns info about the size of the entries based on information already available.
-     *
-     *  Any or all arguments may be null pointers if the caller is not interested in the value. */
-    rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
-
-    /** Update prior to unparsing. */
-    virtual bool reallocate() override;
-
-    /** Write the section table section back to disk */
-    virtual void unparse(std::ostream&) const override;
-
-    /** Print some debugging info */
-    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-public:
-    /** Destructor. */
-    virtual ~SgAsmElfSectionTable();
-
-public:
-    /** Default constructor. */
-    SgAsmElfSectionTable();
-
-protected:
-    /** Initialize all properties that have explicit initial values.
-     *
-     *  This function is mostly for use in user-defined constructors where the user desires to initialize
-     *  all the properties but does not know the names of the data members that store the property values.
-     *  This function initializes the properties that have explicit initializations within this class, but
-     *  does not recursively initialize base classes. */
-    void initializeProperties();
-#endif // SgAsmElfSectionTable_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -24063,6 +24063,61 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmDwarfConstType           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmDwarfConstType);
+IS_SERIALIZABLE(AsmDwarfConstType);
+
+#ifdef DOCUMENTATION
+class SgAsmDwarfConstType: public SgAsmDwarfConstruct {
+#endif // DOCUMENTATION
+
+    DECLARE_OTHERS(AsmDwarfConstType);
+#if defined(SgAsmDwarfConstType_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmDwarfConstType -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfConstType");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfConstType");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+
+public:
+    /** Destructor. */
+    virtual ~SgAsmDwarfConstType();
+
+public:
+    /** Default constructor. */
+    SgAsmDwarfConstType();
+
+public:
+    /** Constructor. */
+    SgAsmDwarfConstType(int const& nesting_level,
+                        uint64_t const& offset,
+                        uint64_t const& overall_offset);
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmDwarfConstType_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfConstructList           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -24173,61 +24228,6 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmDwarfConstant_OTHERS
-#ifdef DOCUMENTATION
-};
-#endif // DOCUMENTATION
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmDwarfConstType           -- MACHINE GENERATED; DO NOT MODIFY --
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-DECLARE_LEAF_CLASS(AsmDwarfConstType);
-IS_SERIALIZABLE(AsmDwarfConstType);
-
-#ifdef DOCUMENTATION
-class SgAsmDwarfConstType: public SgAsmDwarfConstruct {
-#endif // DOCUMENTATION
-
-    DECLARE_OTHERS(AsmDwarfConstType);
-#if defined(SgAsmDwarfConstType_OTHERS) || defined(DOCUMENTATION)
-
-    //----------------------- Boost serialization for SgAsmDwarfConstType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmDwarfConstType");
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
-        debugSerializationEnd("SgAsmDwarfConstType");
-    }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
-public:
-    /** Destructor. */
-    virtual ~SgAsmDwarfConstType();
-
-public:
-    /** Default constructor. */
-    SgAsmDwarfConstType();
-
-public:
-    /** Constructor. */
-    SgAsmDwarfConstType(int const& nesting_level,
-                        uint64_t const& offset,
-                        uint64_t const& overall_offset);
-
-protected:
-    /** Initialize all properties that have explicit initial values.
-     *
-     *  This function is mostly for use in user-defined constructors where the user desires to initialize
-     *  all the properties but does not know the names of the data members that store the property values.
-     *  This function initializes the properties that have explicit initializations within this class, but
-     *  does not recursively initialize base classes. */
-    void initializeProperties();
-#endif // SgAsmDwarfConstType_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -25023,8 +25023,8 @@ AstNodeClass& AsmDwarfConstruct = nonTerminalConstructor(
         | AsmDwarfCommonInclusion
         | AsmDwarfCompilationUnit
         | AsmDwarfCondition
-        | AsmDwarfConstType
         | AsmDwarfConstant
+        | AsmDwarfConstType
         | AsmDwarfDwarfProcedure
         | AsmDwarfEntryPoint
         | AsmDwarfEnumerationType
@@ -25264,160 +25264,6 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmDwarfInformation_OTHERS
-#ifdef DOCUMENTATION
-};
-#endif // DOCUMENTATION
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmDirectRegisterExpression           -- MACHINE GENERATED; DO NOT MODIFY --
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-DECLARE_LEAF_CLASS(AsmDirectRegisterExpression);
-IS_SERIALIZABLE(AsmDirectRegisterExpression);
-
-#ifdef DOCUMENTATION
-/** Expression representing a machine register. */
-class SgAsmDirectRegisterExpression: public SgAsmRegisterReferenceExpression {
-#endif // DOCUMENTATION
-
-    DECLARE_OTHERS(AsmDirectRegisterExpression);
-#if defined(SgAsmDirectRegisterExpression_OTHERS) || defined(DOCUMENTATION)
-
-    //----------------------- Boost serialization for SgAsmDirectRegisterExpression -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmDirectRegisterExpression");
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmRegisterReferenceExpression);
-        debugSerializationEnd("SgAsmDirectRegisterExpression");
-    }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
-public:
-    /** Destructor. */
-    virtual ~SgAsmDirectRegisterExpression();
-
-public:
-    /** Default constructor. */
-    SgAsmDirectRegisterExpression();
-
-public:
-    /** Constructor. */
-    explicit SgAsmDirectRegisterExpression(Rose::BinaryAnalysis::RegisterDescriptor const& descriptor);
-
-protected:
-    /** Initialize all properties that have explicit initial values.
-     *
-     *  This function is mostly for use in user-defined constructors where the user desires to initialize
-     *  all the properties but does not know the names of the data members that store the property values.
-     *  This function initializes the properties that have explicit initializations within this class, but
-     *  does not recursively initialize base classes. */
-    void initializeProperties();
-#endif // SgAsmDirectRegisterExpression_OTHERS
-#ifdef DOCUMENTATION
-};
-#endif // DOCUMENTATION
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmRegisterReferenceExpression           -- MACHINE GENERATED; DO NOT MODIFY --
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-#ifndef DOCUMENTATION
-AstNodeClass& AsmRegisterReferenceExpression = nonTerminalConstructor(
-    "AsmRegisterReferenceExpression",
-    *this,
-    "AsmRegisterReferenceExpression",
-    "AsmRegisterReferenceExpressionTag",
-    SubclassListBuilder()
-        | AsmDirectRegisterExpression
-        | AsmIndirectRegisterExpression
-    , false);
-assert(AsmRegisterReferenceExpression.associatedGrammar != nullptr);
-AsmRegisterReferenceExpression.setCppCondition("!defined(DOCUMENTATION)");
-AsmRegisterReferenceExpression.isBoostSerializable(true);
-AsmRegisterReferenceExpression.setAutomaticGenerationOfConstructor(false);
-AsmRegisterReferenceExpression.setAutomaticGenerationOfDestructor(false);
-#endif // !DOCUMENTATION
-
-#ifdef DOCUMENTATION
-/** Base class for references to a machine register. */
-class SgAsmRegisterReferenceExpression: public SgAsmExpression {
-#endif // DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmRegisterReferenceExpression.setDataPrototype(
-        "Rose::BinaryAnalysis::RegisterDescriptor", "descriptor", "",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmRegisterReferenceExpression.setDataPrototype(
-        "int", "adjustment", "= 0",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-    DECLARE_OTHERS(AsmRegisterReferenceExpression);
-#if defined(SgAsmRegisterReferenceExpression_OTHERS) || defined(DOCUMENTATION)
-
-    //----------------------- Boost serialization for SgAsmRegisterReferenceExpression -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmRegisterReferenceExpression");
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
-        s & BOOST_SERIALIZATION_NVP(p_descriptor);
-        s & BOOST_SERIALIZATION_NVP(p_adjustment);
-        debugSerializationEnd("SgAsmRegisterReferenceExpression");
-    }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
-public:
-    /** Property: Descriptor for accessed register. 
-     * 
-     * @{ */
-    Rose::BinaryAnalysis::RegisterDescriptor const& get_descriptor() const;
-    void set_descriptor(Rose::BinaryAnalysis::RegisterDescriptor const&);
-    /** @} */
-
-public:
-    /** Property: Post-increment or pre-decrement amount.
-     *
-     *  This is a value that's added or subtracted from a register each time the containing instruction is executed. 
-     *  
-     *  @{ */
-    int const& get_adjustment() const;
-    void set_adjustment(int const&);
-    /** @} */
-
-public:
-    /** Destructor. */
-    virtual ~SgAsmRegisterReferenceExpression();
-
-protected:
-    /** Default constructor. */
-    SgAsmRegisterReferenceExpression();
-
-protected:
-    /** Constructor. */
-    explicit SgAsmRegisterReferenceExpression(Rose::BinaryAnalysis::RegisterDescriptor const& descriptor);
-
-protected:
-    /** Initialize all properties that have explicit initial values.
-     *
-     *  This function is mostly for use in user-defined constructors where the user desires to initialize
-     *  all the properties but does not know the names of the data members that store the property values.
-     *  This function initializes the properties that have explicit initializations within this class, but
-     *  does not recursively initialize base classes. */
-    void initializeProperties();
-#endif // SgAsmRegisterReferenceExpression_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -26342,6 +26188,160 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmDOSExtendedHeader_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmDirectRegisterExpression           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmDirectRegisterExpression);
+IS_SERIALIZABLE(AsmDirectRegisterExpression);
+
+#ifdef DOCUMENTATION
+/** Expression representing a machine register. */
+class SgAsmDirectRegisterExpression: public SgAsmRegisterReferenceExpression {
+#endif // DOCUMENTATION
+
+    DECLARE_OTHERS(AsmDirectRegisterExpression);
+#if defined(SgAsmDirectRegisterExpression_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmDirectRegisterExpression -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDirectRegisterExpression");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmRegisterReferenceExpression);
+        debugSerializationEnd("SgAsmDirectRegisterExpression");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+
+public:
+    /** Destructor. */
+    virtual ~SgAsmDirectRegisterExpression();
+
+public:
+    /** Default constructor. */
+    SgAsmDirectRegisterExpression();
+
+public:
+    /** Constructor. */
+    explicit SgAsmDirectRegisterExpression(Rose::BinaryAnalysis::RegisterDescriptor const& descriptor);
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmDirectRegisterExpression_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmRegisterReferenceExpression           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#ifndef DOCUMENTATION
+AstNodeClass& AsmRegisterReferenceExpression = nonTerminalConstructor(
+    "AsmRegisterReferenceExpression",
+    *this,
+    "AsmRegisterReferenceExpression",
+    "AsmRegisterReferenceExpressionTag",
+    SubclassListBuilder()
+        | AsmDirectRegisterExpression
+        | AsmIndirectRegisterExpression
+    , false);
+assert(AsmRegisterReferenceExpression.associatedGrammar != nullptr);
+AsmRegisterReferenceExpression.setCppCondition("!defined(DOCUMENTATION)");
+AsmRegisterReferenceExpression.isBoostSerializable(true);
+AsmRegisterReferenceExpression.setAutomaticGenerationOfConstructor(false);
+AsmRegisterReferenceExpression.setAutomaticGenerationOfDestructor(false);
+#endif // !DOCUMENTATION
+
+#ifdef DOCUMENTATION
+/** Base class for references to a machine register. */
+class SgAsmRegisterReferenceExpression: public SgAsmExpression {
+#endif // DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmRegisterReferenceExpression.setDataPrototype(
+        "Rose::BinaryAnalysis::RegisterDescriptor", "descriptor", "",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmRegisterReferenceExpression.setDataPrototype(
+        "int", "adjustment", "= 0",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+    DECLARE_OTHERS(AsmRegisterReferenceExpression);
+#if defined(SgAsmRegisterReferenceExpression_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmRegisterReferenceExpression -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmRegisterReferenceExpression");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
+        s & BOOST_SERIALIZATION_NVP(p_descriptor);
+        s & BOOST_SERIALIZATION_NVP(p_adjustment);
+        debugSerializationEnd("SgAsmRegisterReferenceExpression");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+
+public:
+    /** Property: Descriptor for accessed register. 
+     * 
+     * @{ */
+    Rose::BinaryAnalysis::RegisterDescriptor const& get_descriptor() const;
+    void set_descriptor(Rose::BinaryAnalysis::RegisterDescriptor const&);
+    /** @} */
+
+public:
+    /** Property: Post-increment or pre-decrement amount.
+     *
+     *  This is a value that's added or subtracted from a register each time the containing instruction is executed. 
+     *  
+     *  @{ */
+    int const& get_adjustment() const;
+    void set_adjustment(int const&);
+    /** @} */
+
+public:
+    /** Destructor. */
+    virtual ~SgAsmRegisterReferenceExpression();
+
+protected:
+    /** Default constructor. */
+    SgAsmRegisterReferenceExpression();
+
+protected:
+    /** Constructor. */
+    explicit SgAsmRegisterReferenceExpression(Rose::BinaryAnalysis::RegisterDescriptor const& descriptor);
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmRegisterReferenceExpression_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -28651,165 +28651,6 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmCilTypeDef           -- MACHINE GENERATED; DO NOT MODIFY --
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-DECLARE_LEAF_CLASS(AsmCilTypeDef);
-IS_SERIALIZABLE(AsmCilTypeDef);
-
-#ifdef DOCUMENTATION
-/** CIL TypeDef node. */
-class SgAsmCilTypeDef: public SgAsmCilMetadata {
-#endif // DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmCilTypeDef.setDataPrototype(
-        "uint32_t", "Flags", "",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmCilTypeDef.setDataPrototype(
-        "uint32_t", "TypeName", "",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmCilTypeDef.setDataPrototype(
-        "uint32_t", "TypeNamespace", "",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmCilTypeDef.setDataPrototype(
-        "uint32_t", "Extends", "",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmCilTypeDef.setDataPrototype(
-        "uint32_t", "FieldList", "",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmCilTypeDef.setDataPrototype(
-        "uint32_t", "MethodList", "",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-    DECLARE_OTHERS(AsmCilTypeDef);
-#if defined(SgAsmCilTypeDef_OTHERS) || defined(DOCUMENTATION)
-
-    //----------------------- Boost serialization for SgAsmCilTypeDef -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmCilTypeDef");
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
-        s & BOOST_SERIALIZATION_NVP(p_Flags);
-        s & BOOST_SERIALIZATION_NVP(p_TypeName);
-        s & BOOST_SERIALIZATION_NVP(p_TypeNamespace);
-        s & BOOST_SERIALIZATION_NVP(p_Extends);
-        s & BOOST_SERIALIZATION_NVP(p_FieldList);
-        s & BOOST_SERIALIZATION_NVP(p_MethodList);
-        debugSerializationEnd("SgAsmCilTypeDef");
-    }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
-public:
-    /** Property: Flags.
-     *
-     *  A 4-byte bitmask of type TypeAttributes. 
-     *  
-     *  @{ */
-    uint32_t const& get_Flags() const;
-    void set_Flags(uint32_t const&);
-    /** @} */
-
-public:
-    /** Property: TypeName.
-     *
-     *  An index into the String heap. 
-     *  
-     *  @{ */
-    uint32_t const& get_TypeName() const;
-    void set_TypeName(uint32_t const&);
-    /** @} */
-
-public:
-    /** Property: TypeNamespace.
-     *
-     *  An index into the String heap. 
-     *  
-     *  @{ */
-    uint32_t const& get_TypeNamespace() const;
-    void set_TypeNamespace(uint32_t const&);
-    /** @} */
-
-public:
-    /** Property: Extends.
-     *
-     *  An index into the TypeDef, TypeRef, or TypeSpec table. 
-     *  
-     *  @{ */
-    uint32_t const& get_Extends() const;
-    void set_Extends(uint32_t const&);
-    /** @} */
-
-public:
-    /** Property: FieldList.
-     *
-     *  An index into the Field table. 
-     *  
-     *  @{ */
-    uint32_t const& get_FieldList() const;
-    void set_FieldList(uint32_t const&);
-    /** @} */
-
-public:
-    /** Property: MethodList.
-     *
-     *  An index into the MethodDef table. 
-     *  
-     *  @{ */
-    uint32_t const& get_MethodList() const;
-    void set_MethodList(uint32_t const&);
-    /** @} */
-public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
-
-    const std::uint8_t* get_TypeName_string() const;
-    const std::uint8_t* get_TypeNamespace_string() const;
-    const SgAsmCilMetadata* get_Extends_object() const;
-    const SgAsmCilMetadata* get_FieldList_object() const;
-    const SgAsmCilMetadata* get_MethodList_object() const;
-public:
-    /** Destructor. */
-    virtual ~SgAsmCilTypeDef();
-
-public:
-    /** Default constructor. */
-    SgAsmCilTypeDef();
-
-protected:
-    /** Initialize all properties that have explicit initial values.
-     *
-     *  This function is mostly for use in user-defined constructors where the user desires to initialize
-     *  all the properties but does not know the names of the data members that store the property values.
-     *  This function initializes the properties that have explicit initializations within this class, but
-     *  does not recursively initialize base classes. */
-    void initializeProperties();
-#endif // SgAsmCilTypeDef_OTHERS
-#ifdef DOCUMENTATION
-};
-#endif // DOCUMENTATION
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmCilTypeSpecTable           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -28879,13 +28720,13 @@ DECLARE_LEAF_CLASS(AsmCilTypeSpec);
 IS_SERIALIZABLE(AsmCilTypeSpec);
 
 #ifdef DOCUMENTATION
-/** CIL TypeSpec node. */
+/** CIL TypeSpec node (II.22.39). */
 class SgAsmCilTypeSpec: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilTypeSpec.setDataPrototype(
-        "uint32_t", "Signature", "",
+        "uint32_t", "Signature", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -29011,25 +28852,25 @@ DECLARE_LEAF_CLASS(AsmCilTypeRef);
 IS_SERIALIZABLE(AsmCilTypeRef);
 
 #ifdef DOCUMENTATION
-/** CIL TypeRef node. */
+/** CIL TypeRef node (II.22.38). */
 class SgAsmCilTypeRef: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilTypeRef.setDataPrototype(
-        "uint16_t", "ResolutionScope", "",
+        "uint16_t", "ResolutionScope", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilTypeRef.setDataPrototype(
-        "uint32_t", "TypeName", "",
+        "uint32_t", "TypeName", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilTypeRef.setDataPrototype(
-        "uint32_t", "TypeNamespace", "",
+        "uint32_t", "TypeNamespace", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -29172,6 +29013,165 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmCilTypeDef           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmCilTypeDef);
+IS_SERIALIZABLE(AsmCilTypeDef);
+
+#ifdef DOCUMENTATION
+/** CIL TypeDef node (II.22.37). */
+class SgAsmCilTypeDef: public SgAsmCilMetadata {
+#endif // DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmCilTypeDef.setDataPrototype(
+        "uint32_t", "Flags", "= {}",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmCilTypeDef.setDataPrototype(
+        "uint32_t", "TypeName", "= {}",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmCilTypeDef.setDataPrototype(
+        "uint32_t", "TypeNamespace", "= {}",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmCilTypeDef.setDataPrototype(
+        "uint32_t", "Extends", "= {}",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmCilTypeDef.setDataPrototype(
+        "uint32_t", "FieldList", "= {}",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmCilTypeDef.setDataPrototype(
+        "uint32_t", "MethodList", "= {}",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+    DECLARE_OTHERS(AsmCilTypeDef);
+#if defined(SgAsmCilTypeDef_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmCilTypeDef -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilTypeDef");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
+        s & BOOST_SERIALIZATION_NVP(p_Flags);
+        s & BOOST_SERIALIZATION_NVP(p_TypeName);
+        s & BOOST_SERIALIZATION_NVP(p_TypeNamespace);
+        s & BOOST_SERIALIZATION_NVP(p_Extends);
+        s & BOOST_SERIALIZATION_NVP(p_FieldList);
+        s & BOOST_SERIALIZATION_NVP(p_MethodList);
+        debugSerializationEnd("SgAsmCilTypeDef");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+
+public:
+    /** Property: Flags.
+     *
+     *  A 4-byte bitmask of type TypeAttributes. 
+     *  
+     *  @{ */
+    uint32_t const& get_Flags() const;
+    void set_Flags(uint32_t const&);
+    /** @} */
+
+public:
+    /** Property: TypeName.
+     *
+     *  An index into the String heap. 
+     *  
+     *  @{ */
+    uint32_t const& get_TypeName() const;
+    void set_TypeName(uint32_t const&);
+    /** @} */
+
+public:
+    /** Property: TypeNamespace.
+     *
+     *  An index into the String heap. 
+     *  
+     *  @{ */
+    uint32_t const& get_TypeNamespace() const;
+    void set_TypeNamespace(uint32_t const&);
+    /** @} */
+
+public:
+    /** Property: Extends.
+     *
+     *  An index into the TypeDef, TypeRef, or TypeSpec table. 
+     *  
+     *  @{ */
+    uint32_t const& get_Extends() const;
+    void set_Extends(uint32_t const&);
+    /** @} */
+
+public:
+    /** Property: FieldList.
+     *
+     *  An index into the Field table. 
+     *  
+     *  @{ */
+    uint32_t const& get_FieldList() const;
+    void set_FieldList(uint32_t const&);
+    /** @} */
+
+public:
+    /** Property: MethodList.
+     *
+     *  An index into the MethodDef table. 
+     *  
+     *  @{ */
+    uint32_t const& get_MethodList() const;
+    void set_MethodList(uint32_t const&);
+    /** @} */
+public:
+    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+
+    const std::uint8_t* get_TypeName_string() const;
+    const std::uint8_t* get_TypeNamespace_string() const;
+    const SgAsmCilMetadata* get_Extends_object() const;
+    const SgAsmCilMetadata* get_FieldList_object() const;
+    const SgAsmCilMetadata* get_MethodList_object() const;
+public:
+    /** Destructor. */
+    virtual ~SgAsmCilTypeDef();
+
+public:
+    /** Default constructor. */
+    SgAsmCilTypeDef();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmCilTypeDef_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmCilStandAloneSigTable           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -29241,13 +29241,13 @@ DECLARE_LEAF_CLASS(AsmCilStandAloneSig);
 IS_SERIALIZABLE(AsmCilStandAloneSig);
 
 #ifdef DOCUMENTATION
-/** CIL StandAloneSig node. */
+/** CIL StandAloneSig node (II.22.36). */
 class SgAsmCilStandAloneSig: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilStandAloneSig.setDataPrototype(
-        "uint32_t", "Signature", "",
+        "uint32_t", "Signature", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -29435,19 +29435,19 @@ DECLARE_LEAF_CLASS(AsmCilPropertyMap);
 IS_SERIALIZABLE(AsmCilPropertyMap);
 
 #ifdef DOCUMENTATION
-/** CIL PropertyMap node. */
+/** CIL PropertyMap node (II.22.35). */
 class SgAsmCilPropertyMap: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilPropertyMap.setDataPrototype(
-        "uint32_t", "Parent", "",
+        "uint32_t", "Parent", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilPropertyMap.setDataPrototype(
-        "uint32_t", "PropertyList", "",
+        "uint32_t", "PropertyList", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -29523,25 +29523,25 @@ DECLARE_LEAF_CLASS(AsmCilProperty);
 IS_SERIALIZABLE(AsmCilProperty);
 
 #ifdef DOCUMENTATION
-/** CIL Property node. */
+/** CIL Property node (II.22.34). */
 class SgAsmCilProperty: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilProperty.setDataPrototype(
-        "uint16_t", "Flags", "",
+        "uint16_t", "Flags", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilProperty.setDataPrototype(
-        "uint32_t", "Name", "",
+        "uint32_t", "Name", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilProperty.setDataPrototype(
-        "uint32_t", "Type", "",
+        "uint32_t", "Type", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -29690,25 +29690,25 @@ DECLARE_LEAF_CLASS(AsmCilParam);
 IS_SERIALIZABLE(AsmCilParam);
 
 #ifdef DOCUMENTATION
-/** CIL Param node. */
+/** CIL Param node (II.22.33). */
 class SgAsmCilParam: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilParam.setDataPrototype(
-        "uint16_t", "Flags", "",
+        "uint16_t", "Flags", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilParam.setDataPrototype(
-        "uint16_t", "Sequence", "",
+        "uint16_t", "Sequence", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilParam.setDataPrototype(
-        "uint32_t", "Name", "",
+        "uint32_t", "Name", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -29856,19 +29856,19 @@ DECLARE_LEAF_CLASS(AsmCilNestedClass);
 IS_SERIALIZABLE(AsmCilNestedClass);
 
 #ifdef DOCUMENTATION
-/** CIL NestedClass node. */
+/** CIL NestedClass node (II.22.32). */
 class SgAsmCilNestedClass: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilNestedClass.setDataPrototype(
-        "uint32_t", "NestedClass", "",
+        "uint32_t", "NestedClass", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilNestedClass.setDataPrototype(
-        "uint32_t", "EnclosingClass", "",
+        "uint32_t", "EnclosingClass", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -30068,13 +30068,13 @@ DECLARE_LEAF_CLASS(AsmCilModuleRef);
 IS_SERIALIZABLE(AsmCilModuleRef);
 
 #ifdef DOCUMENTATION
-/** CIL ModuleRef node. */
+/** CIL ModuleRef node (II.22.31). */
 class SgAsmCilModuleRef: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilModuleRef.setDataPrototype(
-        "uint32_t", "Name", "",
+        "uint32_t", "Name", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -30138,37 +30138,37 @@ DECLARE_LEAF_CLASS(AsmCilModule);
 IS_SERIALIZABLE(AsmCilModule);
 
 #ifdef DOCUMENTATION
-/** CIL Module node. */
+/** CIL Module node (II.22.30). */
 class SgAsmCilModule: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilModule.setDataPrototype(
-        "uint16_t", "Generation", "",
+        "uint16_t", "Generation", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilModule.setDataPrototype(
-        "uint32_t", "Name", "",
+        "uint32_t", "Name", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilModule.setDataPrototype(
-        "uint32_t", "Mvid", "",
+        "uint32_t", "Mvid", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilModule.setDataPrototype(
-        "uint32_t", "Encld", "",
+        "uint32_t", "Encld", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilModule.setDataPrototype(
-        "uint32_t", "EncBaseId", "",
+        "uint32_t", "EncBaseId", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -30341,19 +30341,19 @@ DECLARE_LEAF_CLASS(AsmCilMethodSpec);
 IS_SERIALIZABLE(AsmCilMethodSpec);
 
 #ifdef DOCUMENTATION
-/** CIL MethodSpec node. */
+/** CIL MethodSpec node (II.22.29). */
 class SgAsmCilMethodSpec: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMethodSpec.setDataPrototype(
-        "uint32_t", "Method", "",
+        "uint32_t", "Method", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMethodSpec.setDataPrototype(
-        "uint32_t", "Instantiation", "",
+        "uint32_t", "Instantiation", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -30491,25 +30491,25 @@ DECLARE_LEAF_CLASS(AsmCilMethodSemantics);
 IS_SERIALIZABLE(AsmCilMethodSemantics);
 
 #ifdef DOCUMENTATION
-/** CIL MethodSemantics node. */
+/** CIL MethodSemantics node (II.22.28). */
 class SgAsmCilMethodSemantics: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMethodSemantics.setDataPrototype(
-        "uint16_t", "Semantics", "",
+        "uint16_t", "Semantics", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMethodSemantics.setDataPrototype(
-        "uint32_t", "Method", "",
+        "uint32_t", "Method", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMethodSemantics.setDataPrototype(
-        "uint32_t", "Association", "",
+        "uint32_t", "Association", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -30658,25 +30658,25 @@ DECLARE_LEAF_CLASS(AsmCilMethodImpl);
 IS_SERIALIZABLE(AsmCilMethodImpl);
 
 #ifdef DOCUMENTATION
-/** CIL MethodImpl node. */
+/** CIL MethodImpl node (II.22.27). */
 class SgAsmCilMethodImpl: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMethodImpl.setDataPrototype(
-        "uint32_t", "Class", "",
+        "uint32_t", "Class", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMethodImpl.setDataPrototype(
-        "uint32_t", "MethodBody", "",
+        "uint32_t", "MethodBody", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMethodImpl.setDataPrototype(
-        "uint32_t", "MethodDeclaration", "",
+        "uint32_t", "MethodDeclaration", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -30826,67 +30826,67 @@ DECLARE_LEAF_CLASS(AsmCilMethodDef);
 IS_SERIALIZABLE(AsmCilMethodDef);
 
 #ifdef DOCUMENTATION
-/** CIL MethodDef node. */
+/** CIL MethodDef node (II.22.26). */
 class SgAsmCilMethodDef: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMethodDef.setDataPrototype(
-        "uint32_t", "RVA", "",
+        "uint32_t", "RVA", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMethodDef.setDataPrototype(
-        "uint32_t", "ImplFlags", "",
+        "uint32_t", "ImplFlags", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMethodDef.setDataPrototype(
-        "uint16_t", "Flags", "",
+        "uint16_t", "Flags", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMethodDef.setDataPrototype(
-        "uint32_t", "Name", "",
+        "uint32_t", "Name", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMethodDef.setDataPrototype(
-        "uint32_t", "Signature", "",
+        "uint32_t", "Signature", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMethodDef.setDataPrototype(
-        "uint32_t", "ParamList", "",
+        "uint32_t", "ParamList", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMethodDef.setDataPrototype(
-        "SgAsmBlock*", "body", "",
+        "SgAsmBlock*", "body", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMethodDef.setDataPrototype(
-        "bool", "initLocals", "",
+        "bool", "initLocals", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMethodDef.setDataPrototype(
-        "uint32_t", "stackSize", "",
+        "uint32_t", "stackSize", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMethodDef.setDataPrototype(
-        "bool", "hasMoreSections", "",
+        "bool", "hasMoreSections", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -31057,55 +31057,55 @@ class SgAsmCilMetadataRoot: public SgAsmCilNode {
 
 #ifndef DOCUMENTATION
     AsmCilMetadataRoot.setDataPrototype(
-        "uint32_t", "Signature", "",
+        "uint32_t", "Signature", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMetadataRoot.setDataPrototype(
-        "uint16_t", "MajorVersion", "",
+        "uint16_t", "MajorVersion", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMetadataRoot.setDataPrototype(
-        "uint16_t", "MinorVersion", "",
+        "uint16_t", "MinorVersion", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMetadataRoot.setDataPrototype(
-        "uint32_t", "Reserved0", "",
+        "uint32_t", "Reserved0", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMetadataRoot.setDataPrototype(
-        "uint32_t", "Length", "",
+        "uint32_t", "Length", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMetadataRoot.setDataPrototype(
-        "std::string", "Version", "",
+        "std::string", "Version", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMetadataRoot.setDataPrototype(
-        "uint32_t", "VersionPadding", "",
+        "uint32_t", "VersionPadding", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMetadataRoot.setDataPrototype(
-        "uint16_t", "Flags", "",
+        "uint16_t", "Flags", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMetadataRoot.setDataPrototype(
-        "uint16_t", "NumberOfStreams", "",
+        "uint16_t", "NumberOfStreams", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -31142,7 +31142,7 @@ private:
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    /** Property: Magic signature for physical metadata (always 0x424A5342). 
+    /** Property: Magic signature for physical metadata (always 0x424A5342) 
      * 
      * @{ */
     uint32_t const& get_Signature() const;
@@ -31214,9 +31214,14 @@ public:
     /** @} */
     // FIXME[Robb Matzke 2023-03-22]: these were implemented elsewhere, but could be auto generated
 public:
-    const std::vector<SgAsmCilDataStream*>& get_Streams() const;
+    /** Property: Metadata streams. 
+     * 
+     * @{ */
+    std::vector<SgAsmCilDataStream*> const& get_Streams() const;
     std::vector<SgAsmCilDataStream*>& get_Streams();
-
+    /** @} */
+    //const std::vector<SgAsmCilDataStream*>& get_Streams() const;
+    //std::vector<SgAsmCilDataStream*>& get_Streams();
 private:
     /** indices to efficienty access the different heaps
      * @{ */
@@ -31232,13 +31237,13 @@ public:
      */
     static constexpr uint32_t MAGIC_SIGNATURE = 0x424A5342;
 
-    /** Declares the parse function as called from the Cil section header object
+    /** Declares the parse function as called from the Cli section header object.
      *  @pre isSgAsmCliHeader(this->get_parent()) != nullptr
      */
     void parse();
 
     /** Declares the parse function.
-     *  @param buf the binary buffer
+     *  @param buf the binary buffer.
      *  @param index the start location of the metadata root object.
      *         buf[index] is the location of the magic number.
      */
@@ -31282,61 +31287,61 @@ DECLARE_LEAF_CLASS(AsmCilMetadataHeap);
 IS_SERIALIZABLE(AsmCilMetadataHeap);
 
 #ifdef DOCUMENTATION
-/** CIL AsmCilMetadataHeap. */
+/** CIL SgAsmCilMetadataHeap node. */
 class SgAsmCilMetadataHeap: public SgAsmCilDataStream {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMetadataHeap.setDataPrototype(
-        "uint32_t", "ReservedAlwaysZero", "",
+        "uint32_t", "ReservedAlwaysZero", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMetadataHeap.setDataPrototype(
-        "uint8_t", "MajorVersion", "",
+        "uint8_t", "MajorVersion", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMetadataHeap.setDataPrototype(
-        "uint8_t", "MinorVersion", "",
+        "uint8_t", "MinorVersion", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMetadataHeap.setDataPrototype(
-        "uint8_t", "HeapSizes", "",
+        "uint8_t", "HeapSizes", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMetadataHeap.setDataPrototype(
-        "uint8_t", "ReservedAlwaysOne", "",
+        "uint8_t", "ReservedAlwaysOne", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMetadataHeap.setDataPrototype(
-        "uint64_t", "Valid", "",
+        "uint64_t", "Valid", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMetadataHeap.setDataPrototype(
-        "uint64_t", "Sorted", "",
+        "uint64_t", "Sorted", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMetadataHeap.setDataPrototype(
-        "std::vector<uint32_t>", "NumberOfRows", "",
+        "std::vector<uint32_t>", "NumberOfRows", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMetadataHeap.setDataPrototype(
-        "uint64_t", "DataSizeFlags", "",
+        "uint64_t", "DataSizeFlags", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -31640,7 +31645,7 @@ public:
     /** @} */
 
 public:
-    /** Property: a 1-byte constant. 
+    /** Property: A 1-byte constant. 
      * 
      * @{ */
     uint8_t const& get_MajorVersion() const;
@@ -31648,7 +31653,7 @@ public:
     /** @} */
 
 public:
-    /** Property: a 1-byte constant. 
+    /** Property: A 1-byte constant. 
      * 
      * @{ */
     uint8_t const& get_MinorVersion() const;
@@ -31656,7 +31661,7 @@ public:
     /** @} */
 
 public:
-    /** Property: a 1-byte constant indicating the index sizes of streams. 
+    /** Property: A 1-byte constant indicating the index sizes of streams. 
      * 
      * @{ */
     uint8_t const& get_HeapSizes() const;
@@ -31664,7 +31669,7 @@ public:
     /** @} */
 
 public:
-    /** Property: a 1-byte constant. 
+    /** Property: A 1-byte constant. 
      * 
      * @{ */
     uint8_t const& get_ReservedAlwaysOne() const;
@@ -31672,7 +31677,7 @@ public:
     /** @} */
 
 public:
-    /** Property: a 4-byte value indicating which metadata tables are present. 
+    /** Property: A 4-byte value indicating which metadata tables are present. 
      * 
      * @{ */
     uint64_t const& get_Valid() const;
@@ -31680,7 +31685,7 @@ public:
     /** @} */
 
 public:
-    /** Property: a 4-byte value. 
+    /** Property: A 4-byte value. 
      * 
      * @{ */
     uint64_t const& get_Sorted() const;
@@ -31688,7 +31693,7 @@ public:
     /** @} */
 
 public:
-    /** Property: a vector indicating how many rows the present tables contain. 
+    /** Property: A vector indicating how many rows the present tables contain. 
      * 
      * @{ */
     std::vector<uint32_t> const& get_NumberOfRows() const;
@@ -31824,7 +31829,7 @@ public:
     /** @} */
 
 public:
-    /** Property: FieldMarshalTable 
+    /** Property: FieldMarshalTable. 
      * 
      * @{ */
     SgAsmCilFieldMarshalTable* const& get_FieldMarshalTable() const;
@@ -31832,7 +31837,7 @@ public:
     /** @} */
 
 public:
-    /** Property: FieldRVATable 
+    /** Property: FieldRVATable. 
      * 
      * @{ */
     SgAsmCilFieldRVATable* const& get_FieldRVATable() const;
@@ -31856,7 +31861,7 @@ public:
     /** @} */
 
 public:
-    /** Property: GenericParamConstraintTable 
+    /** Property: GenericParamConstraintTable. 
      * 
      * @{ */
     SgAsmCilGenericParamConstraintTable* const& get_GenericParamConstraintTable() const;
@@ -32201,25 +32206,25 @@ DECLARE_LEAF_CLASS(AsmCilMemberRef);
 IS_SERIALIZABLE(AsmCilMemberRef);
 
 #ifdef DOCUMENTATION
-/** CIL MemberRef node. */
+/** CIL MemberRef node (II.22.25). */
 class SgAsmCilMemberRef: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMemberRef.setDataPrototype(
-        "uint32_t", "Class", "",
+        "uint32_t", "Class", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMemberRef.setDataPrototype(
-        "uint32_t", "Name", "",
+        "uint32_t", "Name", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMemberRef.setDataPrototype(
-        "uint32_t", "Signature", "",
+        "uint32_t", "Signature", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -32369,31 +32374,31 @@ DECLARE_LEAF_CLASS(AsmCilManifestResource);
 IS_SERIALIZABLE(AsmCilManifestResource);
 
 #ifdef DOCUMENTATION
-/** CIL ManifestResource node. */
+/** CIL ManifestResource node (II.22.24). */
 class SgAsmCilManifestResource: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilManifestResource.setDataPrototype(
-        "uint32_t", "Offset", "",
+        "uint32_t", "Offset", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilManifestResource.setDataPrototype(
-        "uint32_t", "Flags", "",
+        "uint32_t", "Flags", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilManifestResource.setDataPrototype(
-        "uint32_t", "Name", "",
+        "uint32_t", "Name", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilManifestResource.setDataPrototype(
-        "uint32_t", "Implementation", "",
+        "uint32_t", "Implementation", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -32553,19 +32558,19 @@ DECLARE_LEAF_CLASS(AsmCilInterfaceImpl);
 IS_SERIALIZABLE(AsmCilInterfaceImpl);
 
 #ifdef DOCUMENTATION
-/** CIL InterfaceImpl node. */
+/** CIL InterfaceImpl node (II.22.23). */
 class SgAsmCilInterfaceImpl: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilInterfaceImpl.setDataPrototype(
-        "uint32_t", "Class", "",
+        "uint32_t", "Class", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilInterfaceImpl.setDataPrototype(
-        "uint32_t", "Interface", "",
+        "uint32_t", "Interface", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -32798,31 +32803,31 @@ DECLARE_LEAF_CLASS(AsmCilImplMap);
 IS_SERIALIZABLE(AsmCilImplMap);
 
 #ifdef DOCUMENTATION
-/** CIL ImplMap node. */
+/** CIL ImplMap node (II.22.22). */
 class SgAsmCilImplMap: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilImplMap.setDataPrototype(
-        "uint16_t", "MappingFlags", "",
+        "uint16_t", "MappingFlags", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilImplMap.setDataPrototype(
-        "uint32_t", "MemberForwarded", "",
+        "uint32_t", "MemberForwarded", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilImplMap.setDataPrototype(
-        "uint32_t", "ImportName", "",
+        "uint32_t", "ImportName", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilImplMap.setDataPrototype(
-        "uint32_t", "ImportScope", "",
+        "uint32_t", "ImportScope", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -32879,7 +32884,7 @@ public:
 public:
     /** Property: ImportScope.
      *
-     *  an index into the ModuleRef table. 
+     *  An index into the ModuleRef table. 
      *  
      *  @{ */
     uint32_t const& get_ImportScope() const;
@@ -32976,156 +32981,6 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmCilGenericParamConstraintTable           -- MACHINE GENERATED; DO NOT MODIFY --
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-DECLARE_LEAF_CLASS(AsmCilGenericParamConstraintTable);
-IS_SERIALIZABLE(AsmCilGenericParamConstraintTable);
-
-#ifdef DOCUMENTATION
-/** CIL GenericParamConstraint tables. */
-class SgAsmCilGenericParamConstraintTable: public SgAsmCilMetadata {
-#endif // DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmCilGenericParamConstraintTable.setDataPrototype(
-        "std::vector<SgAsmCilGenericParamConstraint*>", "elements", "",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-    DECLARE_OTHERS(AsmCilGenericParamConstraintTable);
-#if defined(SgAsmCilGenericParamConstraintTable_OTHERS) || defined(DOCUMENTATION)
-
-    //----------------------- Boost serialization for SgAsmCilGenericParamConstraintTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmCilGenericParamConstraintTable");
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
-        s & BOOST_SERIALIZATION_NVP(p_elements);
-        debugSerializationEnd("SgAsmCilGenericParamConstraintTable");
-    }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
-public:
-    std::vector<SgAsmCilGenericParamConstraint*> const& get_elements() const;
-    std::vector<SgAsmCilGenericParamConstraint*>& get_elements();
-public:
-    using CilMetadataType = SgAsmCilGenericParamConstraint;
-public:
-    /** Destructor. */
-    virtual ~SgAsmCilGenericParamConstraintTable();
-
-public:
-    /** Default constructor. */
-    SgAsmCilGenericParamConstraintTable();
-
-protected:
-    /** Initialize all properties that have explicit initial values.
-     *
-     *  This function is mostly for use in user-defined constructors where the user desires to initialize
-     *  all the properties but does not know the names of the data members that store the property values.
-     *  This function initializes the properties that have explicit initializations within this class, but
-     *  does not recursively initialize base classes. */
-    void initializeProperties();
-#endif // SgAsmCilGenericParamConstraintTable_OTHERS
-#ifdef DOCUMENTATION
-};
-#endif // DOCUMENTATION
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmCilGenericParamConstraint           -- MACHINE GENERATED; DO NOT MODIFY --
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-DECLARE_LEAF_CLASS(AsmCilGenericParamConstraint);
-IS_SERIALIZABLE(AsmCilGenericParamConstraint);
-
-#ifdef DOCUMENTATION
-/** CIL GenericParamConstraint node. */
-class SgAsmCilGenericParamConstraint: public SgAsmCilMetadata {
-#endif // DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmCilGenericParamConstraint.setDataPrototype(
-        "uint32_t", "Owner", "",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmCilGenericParamConstraint.setDataPrototype(
-        "uint32_t", "Constraint", "",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-    DECLARE_OTHERS(AsmCilGenericParamConstraint);
-#if defined(SgAsmCilGenericParamConstraint_OTHERS) || defined(DOCUMENTATION)
-
-    //----------------------- Boost serialization for SgAsmCilGenericParamConstraint -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmCilGenericParamConstraint");
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
-        s & BOOST_SERIALIZATION_NVP(p_Owner);
-        s & BOOST_SERIALIZATION_NVP(p_Constraint);
-        debugSerializationEnd("SgAsmCilGenericParamConstraint");
-    }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
-public:
-    /** Property: Owner.
-     *
-     *  An index into the GenericParam table. 
-     *  
-     *  @{ */
-    uint32_t const& get_Owner() const;
-    void set_Owner(uint32_t const&);
-    /** @} */
-
-public:
-    /** Property: Constraint.
-     *
-     *  An index into the TypeDef, TypeRef, or TypeSpec table. 
-     *  
-     *  @{ */
-    uint32_t const& get_Constraint() const;
-    void set_Constraint(uint32_t const&);
-    /** @} */
-public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
-
-    const SgAsmCilMetadata* get_Owner_object() const;
-    const SgAsmCilMetadata* get_Constraint_object() const;
-public:
-    /** Destructor. */
-    virtual ~SgAsmCilGenericParamConstraint();
-
-public:
-    /** Default constructor. */
-    SgAsmCilGenericParamConstraint();
-
-protected:
-    /** Initialize all properties that have explicit initial values.
-     *
-     *  This function is mostly for use in user-defined constructors where the user desires to initialize
-     *  all the properties but does not know the names of the data members that store the property values.
-     *  This function initializes the properties that have explicit initializations within this class, but
-     *  does not recursively initialize base classes. */
-    void initializeProperties();
-#endif // SgAsmCilGenericParamConstraint_OTHERS
-#ifdef DOCUMENTATION
-};
-#endif // DOCUMENTATION
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmCilGenericParam           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -33133,31 +32988,31 @@ DECLARE_LEAF_CLASS(AsmCilGenericParam);
 IS_SERIALIZABLE(AsmCilGenericParam);
 
 #ifdef DOCUMENTATION
-/** CIL GenericParam node. */
+/** CIL GenericParam node (II.22.20). */
 class SgAsmCilGenericParam: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilGenericParam.setDataPrototype(
-        "uint16_t", "Number", "",
+        "uint16_t", "Number", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilGenericParam.setDataPrototype(
-        "uint16_t", "Flags", "",
+        "uint16_t", "Flags", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilGenericParam.setDataPrototype(
-        "uint32_t", "Owner", "",
+        "uint32_t", "Owner", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilGenericParam.setDataPrototype(
-        "uint32_t", "Name", "",
+        "uint32_t", "Name", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -33248,6 +33103,156 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmCilGenericParamConstraintTable           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmCilGenericParamConstraintTable);
+IS_SERIALIZABLE(AsmCilGenericParamConstraintTable);
+
+#ifdef DOCUMENTATION
+/** CIL GenericParamConstraint tables. */
+class SgAsmCilGenericParamConstraintTable: public SgAsmCilMetadata {
+#endif // DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmCilGenericParamConstraintTable.setDataPrototype(
+        "std::vector<SgAsmCilGenericParamConstraint*>", "elements", "",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+    DECLARE_OTHERS(AsmCilGenericParamConstraintTable);
+#if defined(SgAsmCilGenericParamConstraintTable_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmCilGenericParamConstraintTable -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilGenericParamConstraintTable");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
+        s & BOOST_SERIALIZATION_NVP(p_elements);
+        debugSerializationEnd("SgAsmCilGenericParamConstraintTable");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+
+public:
+    std::vector<SgAsmCilGenericParamConstraint*> const& get_elements() const;
+    std::vector<SgAsmCilGenericParamConstraint*>& get_elements();
+public:
+    using CilMetadataType = SgAsmCilGenericParamConstraint;
+public:
+    /** Destructor. */
+    virtual ~SgAsmCilGenericParamConstraintTable();
+
+public:
+    /** Default constructor. */
+    SgAsmCilGenericParamConstraintTable();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmCilGenericParamConstraintTable_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmCilGenericParamConstraint           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmCilGenericParamConstraint);
+IS_SERIALIZABLE(AsmCilGenericParamConstraint);
+
+#ifdef DOCUMENTATION
+/** CIL GenericParamConstraint node (II.22.21). */
+class SgAsmCilGenericParamConstraint: public SgAsmCilMetadata {
+#endif // DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmCilGenericParamConstraint.setDataPrototype(
+        "uint32_t", "Owner", "= {}",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmCilGenericParamConstraint.setDataPrototype(
+        "uint32_t", "Constraint", "= {}",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+    DECLARE_OTHERS(AsmCilGenericParamConstraint);
+#if defined(SgAsmCilGenericParamConstraint_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmCilGenericParamConstraint -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilGenericParamConstraint");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
+        s & BOOST_SERIALIZATION_NVP(p_Owner);
+        s & BOOST_SERIALIZATION_NVP(p_Constraint);
+        debugSerializationEnd("SgAsmCilGenericParamConstraint");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+
+public:
+    /** Property: Owner.
+     *
+     *  An index into the GenericParam table. 
+     *  
+     *  @{ */
+    uint32_t const& get_Owner() const;
+    void set_Owner(uint32_t const&);
+    /** @} */
+
+public:
+    /** Property: Constraint.
+     *
+     *  An index into the TypeDef, TypeRef, or TypeSpec table. 
+     *  
+     *  @{ */
+    uint32_t const& get_Constraint() const;
+    void set_Constraint(uint32_t const&);
+    /** @} */
+public:
+    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+
+    const SgAsmCilMetadata* get_Owner_object() const;
+    const SgAsmCilMetadata* get_Constraint_object() const;
+public:
+    /** Destructor. */
+    virtual ~SgAsmCilGenericParamConstraint();
+
+public:
+    /** Default constructor. */
+    SgAsmCilGenericParamConstraint();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmCilGenericParamConstraint_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmCilFileTable           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -33317,25 +33322,25 @@ DECLARE_LEAF_CLASS(AsmCilFile);
 IS_SERIALIZABLE(AsmCilFile);
 
 #ifdef DOCUMENTATION
-/** CIL File node. */
+/** CIL File node (II.22.19). */
 class SgAsmCilFile: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilFile.setDataPrototype(
-        "uint32_t", "Flags", "",
+        "uint32_t", "Flags", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilFile.setDataPrototype(
-        "uint32_t", "Name", "",
+        "uint32_t", "Name", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilFile.setDataPrototype(
-        "uint32_t", "HashValue", "",
+        "uint32_t", "HashValue", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -33546,19 +33551,19 @@ DECLARE_LEAF_CLASS(AsmCilFieldRVA);
 IS_SERIALIZABLE(AsmCilFieldRVA);
 
 #ifdef DOCUMENTATION
-/** CIL FieldRVA node. */
+/** CIL FieldRVA node (II.22.18). */
 class SgAsmCilFieldRVA: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilFieldRVA.setDataPrototype(
-        "uint32_t", "RVA", "",
+        "uint32_t", "RVA", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilFieldRVA.setDataPrototype(
-        "uint32_t", "Field", "",
+        "uint32_t", "Field", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -33695,19 +33700,19 @@ DECLARE_LEAF_CLASS(AsmCilFieldMarshal);
 IS_SERIALIZABLE(AsmCilFieldMarshal);
 
 #ifdef DOCUMENTATION
-/** CIL FieldMarshal node. */
+/** CIL FieldMarshal node (II.22.17). */
 class SgAsmCilFieldMarshal: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilFieldMarshal.setDataPrototype(
-        "uint32_t", "Parent", "",
+        "uint32_t", "Parent", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilFieldMarshal.setDataPrototype(
-        "uint32_t", "NativeType", "",
+        "uint32_t", "NativeType", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -33845,19 +33850,19 @@ DECLARE_LEAF_CLASS(AsmCilFieldLayout);
 IS_SERIALIZABLE(AsmCilFieldLayout);
 
 #ifdef DOCUMENTATION
-/** CIL FieldLayout node. */
+/** CIL FieldLayout node (II.22.16). */
 class SgAsmCilFieldLayout: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilFieldLayout.setDataPrototype(
-        "uint32_t", "Offset", "",
+        "uint32_t", "Offset", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilFieldLayout.setDataPrototype(
-        "uint32_t", "Field", "",
+        "uint32_t", "Field", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -33932,25 +33937,25 @@ DECLARE_LEAF_CLASS(AsmCilField);
 IS_SERIALIZABLE(AsmCilField);
 
 #ifdef DOCUMENTATION
-/** CIL Field node. */
+/** CIL Field node (II.22.15). */
 class SgAsmCilField: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilField.setDataPrototype(
-        "uint16_t", "Flags", "",
+        "uint16_t", "Flags", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilField.setDataPrototype(
-        "uint32_t", "Name", "",
+        "uint32_t", "Name", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilField.setDataPrototype(
-        "uint32_t", "Signature", "",
+        "uint32_t", "Signature", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -34099,37 +34104,37 @@ DECLARE_LEAF_CLASS(AsmCilExportedType);
 IS_SERIALIZABLE(AsmCilExportedType);
 
 #ifdef DOCUMENTATION
-/** CIL ExportedType node. */
+/** CIL ExportedType node (II.22.14). */
 class SgAsmCilExportedType: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilExportedType.setDataPrototype(
-        "uint32_t", "EventFlags", "",
+        "uint32_t", "EventFlags", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilExportedType.setDataPrototype(
-        "uint32_t", "TypeDefIdName", "",
+        "uint32_t", "TypeDefIdName", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilExportedType.setDataPrototype(
-        "uint32_t", "TypeName", "",
+        "uint32_t", "TypeName", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilExportedType.setDataPrototype(
-        "uint32_t", "TypeNamespace", "",
+        "uint32_t", "TypeNamespace", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilExportedType.setDataPrototype(
-        "uint32_t", "Implementation", "",
+        "uint32_t", "Implementation", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -34363,19 +34368,19 @@ DECLARE_LEAF_CLASS(AsmCilEventMap);
 IS_SERIALIZABLE(AsmCilEventMap);
 
 #ifdef DOCUMENTATION
-/** CIL EventMap node. */
+/** CIL EventMap node (II.22.12). */
 class SgAsmCilEventMap: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilEventMap.setDataPrototype(
-        "uint32_t", "Parent", "",
+        "uint32_t", "Parent", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilEventMap.setDataPrototype(
-        "uint32_t", "EventList", "",
+        "uint32_t", "EventList", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -34451,25 +34456,25 @@ DECLARE_LEAF_CLASS(AsmCilEvent);
 IS_SERIALIZABLE(AsmCilEvent);
 
 #ifdef DOCUMENTATION
-/** CIL Event node. */
+/** CIL Event node (II.22.13). */
 class SgAsmCilEvent: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilEvent.setDataPrototype(
-        "uint16_t", "EventFlags", "",
+        "uint16_t", "EventFlags", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilEvent.setDataPrototype(
-        "uint32_t", "Name", "",
+        "uint32_t", "Name", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilEvent.setDataPrototype(
-        "uint32_t", "EventType", "",
+        "uint32_t", "EventType", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -34491,7 +34496,7 @@ private:
         debugSerializationEnd("SgAsmCilEvent");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
+
 public:
     /** Property: EventFlags.
      *
@@ -34618,25 +34623,25 @@ DECLARE_LEAF_CLASS(AsmCilDeclSecurity);
 IS_SERIALIZABLE(AsmCilDeclSecurity);
 
 #ifdef DOCUMENTATION
-/** CIL DeclSecurity node. */
+/** CIL DeclSecurity node (II.22.11). */
 class SgAsmCilDeclSecurity: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilDeclSecurity.setDataPrototype(
-        "uint16_t", "Action", "",
+        "uint16_t", "Action", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilDeclSecurity.setDataPrototype(
-        "uint32_t", "Parent", "",
+        "uint32_t", "Parent", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilDeclSecurity.setDataPrototype(
-        "uint32_t", "PermissionSet", "",
+        "uint32_t", "PermissionSet", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -34876,6 +34881,7 @@ DECLARE_LEAF_CLASS(AsmCilCustomAttributeTable);
 IS_SERIALIZABLE(AsmCilCustomAttributeTable);
 
 #ifdef DOCUMENTATION
+/** CIL CustomAttribute tables. */
 class SgAsmCilCustomAttributeTable: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
@@ -34937,25 +34943,25 @@ DECLARE_LEAF_CLASS(AsmCilCustomAttribute);
 IS_SERIALIZABLE(AsmCilCustomAttribute);
 
 #ifdef DOCUMENTATION
-/** CIL CustomAttribute node. */
+/** CIL CustomAttribute node (II.22.10). */
 class SgAsmCilCustomAttribute: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilCustomAttribute.setDataPrototype(
-        "uint32_t", "Parent", "",
+        "uint32_t", "Parent", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilCustomAttribute.setDataPrototype(
-        "uint32_t", "Type", "",
+        "uint32_t", "Type", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilCustomAttribute.setDataPrototype(
-        "uint32_t", "Value", "",
+        "uint32_t", "Value", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -35105,31 +35111,31 @@ DECLARE_LEAF_CLASS(AsmCilConstant);
 IS_SERIALIZABLE(AsmCilConstant);
 
 #ifdef DOCUMENTATION
-/** CIL Constant node. */
+/** CIL Constant node (II.22.9). */
 class SgAsmCilConstant: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilConstant.setDataPrototype(
-        "uint8_t", "Type", "",
+        "uint8_t", "Type", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilConstant.setDataPrototype(
-        "uint8_t", "Padding", "",
+        "uint8_t", "Padding", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilConstant.setDataPrototype(
-        "uint32_t", "Parent", "",
+        "uint32_t", "Parent", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilConstant.setDataPrototype(
-        "uint32_t", "Value", "",
+        "uint32_t", "Value", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -35289,25 +35295,25 @@ DECLARE_LEAF_CLASS(AsmCilClassLayout);
 IS_SERIALIZABLE(AsmCilClassLayout);
 
 #ifdef DOCUMENTATION
-/** CIL ClassLayout node. */
+/** CIL ClassLayout node (II.22.8). */
 class SgAsmCilClassLayout: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilClassLayout.setDataPrototype(
-        "uint16_t", "PackingSize", "",
+        "uint16_t", "PackingSize", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilClassLayout.setDataPrototype(
-        "uint32_t", "ClassSize", "",
+        "uint32_t", "ClassSize", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilClassLayout.setDataPrototype(
-        "uint32_t", "Parent", "",
+        "uint32_t", "Parent", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -35579,19 +35585,19 @@ DECLARE_LEAF_CLASS(AsmCilAssemblyRefProcessor);
 IS_SERIALIZABLE(AsmCilAssemblyRefProcessor);
 
 #ifdef DOCUMENTATION
-/** CIL AssemblyRefProcessor node. */
+/** CIL AssemblyRefProcessor node (II.22.7). */
 class SgAsmCilAssemblyRefProcessor: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyRefProcessor.setDataPrototype(
-        "uint32_t", "Processor", "",
+        "uint32_t", "Processor", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyRefProcessor.setDataPrototype(
-        "uint32_t", "AssemblyRef", "",
+        "uint32_t", "AssemblyRef", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -35728,31 +35734,31 @@ DECLARE_LEAF_CLASS(AsmCilAssemblyRefOS);
 IS_SERIALIZABLE(AsmCilAssemblyRefOS);
 
 #ifdef DOCUMENTATION
-/** CIL AssemblyRefOS node. */
+/** CIL AssemblyRefOS node (II.22.6). */
 class SgAsmCilAssemblyRefOS: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyRefOS.setDataPrototype(
-        "uint32_t", "OSPlatformID", "",
+        "uint32_t", "OSPlatformID", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyRefOS.setDataPrototype(
-        "uint32_t", "OSMajorVersion", "",
+        "uint32_t", "OSMajorVersion", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyRefOS.setDataPrototype(
-        "uint32_t", "OSMinorVersion", "",
+        "uint32_t", "OSMinorVersion", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyRefOS.setDataPrototype(
-        "uint32_t", "AssemblyRefOS", "",
+        "uint32_t", "AssemblyRefOS", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -35849,61 +35855,61 @@ DECLARE_LEAF_CLASS(AsmCilAssemblyRef);
 IS_SERIALIZABLE(AsmCilAssemblyRef);
 
 #ifdef DOCUMENTATION
-/** CIL AssemblyRef node. */
+/** CIL AssemblyRef node (II.22.5). */
 class SgAsmCilAssemblyRef: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyRef.setDataPrototype(
-        "uint16_t", "MajorVersion", "",
+        "uint16_t", "MajorVersion", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyRef.setDataPrototype(
-        "uint16_t", "MinorVersion", "",
+        "uint16_t", "MinorVersion", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyRef.setDataPrototype(
-        "uint16_t", "BuildNumber", "",
+        "uint16_t", "BuildNumber", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyRef.setDataPrototype(
-        "uint16_t", "RevisionNumber", "",
+        "uint16_t", "RevisionNumber", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyRef.setDataPrototype(
-        "uint32_t", "Flags", "",
+        "uint32_t", "Flags", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyRef.setDataPrototype(
-        "uint32_t", "PublicKeyOrToken", "",
+        "uint32_t", "PublicKeyOrToken", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyRef.setDataPrototype(
-        "uint32_t", "Name", "",
+        "uint32_t", "Name", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyRef.setDataPrototype(
-        "uint32_t", "Culture", "",
+        "uint32_t", "Culture", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyRef.setDataPrototype(
-        "uint32_t", "HashValue", "",
+        "uint32_t", "HashValue", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -35935,7 +35941,7 @@ private:
 public:
     /** Property: MajorVersion.
      *
-     *  Version number. 
+     *  Major version number. 
      *  
      *  @{ */
     uint16_t const& get_MajorVersion() const;
@@ -35945,7 +35951,7 @@ public:
 public:
     /** Property: MinorVersion.
      *
-     *  Version number. 
+     *  Minor version number. 
      *  
      *  @{ */
     uint16_t const& get_MinorVersion() const;
@@ -35955,7 +35961,7 @@ public:
 public:
     /** Property: BuildNumber.
      *
-     *  Version number. 
+     *  Build number. 
      *  
      *  @{ */
     uint16_t const& get_BuildNumber() const;
@@ -36120,13 +36126,13 @@ DECLARE_LEAF_CLASS(AsmCilAssemblyProcessor);
 IS_SERIALIZABLE(AsmCilAssemblyProcessor);
 
 #ifdef DOCUMENTATION
-/** CIL AssemblyProcessor node. */
+/** CIL AssemblyProcessor node (II.22.4). */
 class SgAsmCilAssemblyProcessor: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyProcessor.setDataPrototype(
-        "uint32_t", "Processor", "",
+        "uint32_t", "Processor", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -36150,7 +36156,7 @@ private:
 public:
     /** Property: Processor.
      *
-     *  A 4-byte constant 
+     *  A 4-byte constant. 
      *  
      *  @{ */
     uint32_t const& get_Processor() const;
@@ -36250,25 +36256,25 @@ DECLARE_LEAF_CLASS(AsmCilAssemblyOS);
 IS_SERIALIZABLE(AsmCilAssemblyOS);
 
 #ifdef DOCUMENTATION
-/** CIL AssemblyOS node. */
+/** CIL AssemblyOS node (II.22.3). */
 class SgAsmCilAssemblyOS: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyOS.setDataPrototype(
-        "uint32_t", "OSPlatformID", "",
+        "uint32_t", "OSPlatformID", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyOS.setDataPrototype(
-        "uint32_t", "OSMajorVersion", "",
+        "uint32_t", "OSMajorVersion", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyOS.setDataPrototype(
-        "uint32_t", "OSMinorVersion", "",
+        "uint32_t", "OSMinorVersion", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -36294,7 +36300,7 @@ private:
 public:
     /** Property: OSPlatformID.
      *
-     *  A 4-byte constant 
+     *  A 4-byte constant. 
      *  
      *  @{ */
     uint32_t const& get_OSPlatformID() const;
@@ -36304,7 +36310,7 @@ public:
 public:
     /** Property: OSMajorVersion.
      *
-     *  A 4-byte constant 
+     *  A 4-byte constant. 
      *  
      *  @{ */
     uint32_t const& get_OSMajorVersion() const;
@@ -36314,7 +36320,7 @@ public:
 public:
     /** Property: OSMinorVersion.
      *
-     *  A 4-byte constant 
+     *  A 4-byte constant. 
      *  
      *  @{ */
     uint32_t const& get_OSMinorVersion() const;
@@ -36352,61 +36358,61 @@ DECLARE_LEAF_CLASS(AsmCilAssembly);
 IS_SERIALIZABLE(AsmCilAssembly);
 
 #ifdef DOCUMENTATION
-/** CIL Assembly node. */
+/** CIL Assembly node (II.22.2). */
 class SgAsmCilAssembly: public SgAsmCilMetadata {
 #endif // DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssembly.setDataPrototype(
-        "uint32_t", "HashAlgId", "",
+        "uint32_t", "HashAlgId", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssembly.setDataPrototype(
-        "uint16_t", "MajorVersion", "",
+        "uint16_t", "MajorVersion", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssembly.setDataPrototype(
-        "uint16_t", "MinorVersion", "",
+        "uint16_t", "MinorVersion", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssembly.setDataPrototype(
-        "uint16_t", "BuildNumber", "",
+        "uint16_t", "BuildNumber", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssembly.setDataPrototype(
-        "uint16_t", "RevisionNumber", "",
+        "uint16_t", "RevisionNumber", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssembly.setDataPrototype(
-        "uint32_t", "Flags", "",
+        "uint32_t", "Flags", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssembly.setDataPrototype(
-        "uint32_t", "PublicKey", "",
+        "uint32_t", "PublicKey", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssembly.setDataPrototype(
-        "uint32_t", "Name", "",
+        "uint32_t", "Name", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssembly.setDataPrototype(
-        "uint32_t", "Culture", "",
+        "uint32_t", "Culture", "= {}",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -36438,7 +36444,7 @@ private:
 public:
     /** Property: HashAlgId.
      *
-     *  A 4-byte constant of type AssemblyHashAlgorithm 
+     *  A 4-byte constant of type AssemblyHashAlgorithm. 
      *  
      *  @{ */
     uint32_t const& get_HashAlgId() const;
@@ -36599,9 +36605,9 @@ AstNodeClass& AsmCilMetadata = nonTerminalConstructor(
         | AsmCilFieldTable
         | AsmCilFile
         | AsmCilFileTable
-        | AsmCilGenericParam
         | AsmCilGenericParamConstraint
         | AsmCilGenericParamConstraintTable
+        | AsmCilGenericParam
         | AsmCilGenericParamTable
         | AsmCilImplMap
         | AsmCilImplMapTable
@@ -36633,12 +36639,12 @@ AstNodeClass& AsmCilMetadata = nonTerminalConstructor(
         | AsmCilPropertyTable
         | AsmCilStandAloneSig
         | AsmCilStandAloneSigTable
+        | AsmCilTypeDef
         | AsmCilTypeDefTable
         | AsmCilTypeRef
         | AsmCilTypeRefTable
         | AsmCilTypeSpec
         | AsmCilTypeSpecTable
-        | AsmCilTypeDef
     , false);
 assert(AsmCilMetadata.associatedGrammar != nullptr);
 AsmCilMetadata.setCppCondition("!defined(DOCUMENTATION)");
