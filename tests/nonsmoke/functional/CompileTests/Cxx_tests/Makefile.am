@@ -2009,6 +2009,7 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2021_11.C \
    test2021_12.C \
    test2021_13.C \
+   test2022_18.C \
    unparse-typedef-ctor.C \
    test_CplusplusMacro_Cpp.C \
    test_int_lexemes.C \
@@ -3009,8 +3010,9 @@ hpctoolkit:
 #	hpcviewer /home/dquinlan/ROSE/ROSE_CompileTree/git-LINUX-64bit-4.2.4-dq-edg4x-rc-debug_mode_off/tests/nonsmoke/functional/CompileTests/Cxx_tests/hpctoolkit-lt-testTranslator-database-11205 &
 
 check-local:
-#	@$(MAKE) $(PASSING_TEST_Source_passed)
-	@$(MAKE) test_json_generation $(PASSING_TEST_Source_passed) \
+	@$(MAKE) $(PASSING_TEST_Source_passed)
+#	@$(MAKE) test_pdf_generation $(PASSING_TEST_Source_passed) 
+	@$(MAKE) test_pdf_generation $(PASSING_TEST_Source_passed) \
           test_unparse_includes_option.passed test_unparse_includes_option_with_link.passed \
           test_common_configure_test_with_link_part_1.passed test_common_configure_test_with_link_part_2.passed testTemplateExample
 #	@$(MAKE) test_json_generation

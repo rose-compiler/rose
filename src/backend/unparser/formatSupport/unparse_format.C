@@ -89,7 +89,7 @@ UnparseFormat & UnparseFormat::operator=(const UnparseFormat & X)
   // DQ (9/11/2011): This function is provided to make this code better so that can be analyized using static analysis
   // (static analysis tools don't understand access functions).
 
-  // DQ (9/12/2011): This avoids the memory leak that could happend with self assignment.
+  // DQ (9/12/2011): This avoids the memory leak that could happen with self assignment.
      if (&X == this)
         {
           return *this;

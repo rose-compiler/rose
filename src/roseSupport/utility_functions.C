@@ -161,6 +161,10 @@ std::map<int,std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* > Rose::tokenS
 // DQ (1/19/2021): This is part of moving to a new map that uses the SgSourceFile pointer instead of the file_id.
 std::map<SgSourceFile*,std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* > Rose::tokenSubsequenceMapOfMapsBySourceFile;
 
+// DQ (5/27/2021): This is required for the token-based unparsing, specifically for knowing when to 
+// unparse the trailing whitespace at the end of the last statement in a scope to the end of the scope.
+std::map<SgSourceFile*,std::map<SgScopeStatement*,std::pair<SgStatement*,SgStatement*> > > Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile;
+
 // DQ (11/27/2013): Adding vector of nodes in the AST that defines the token unparsing AST frontier.
 // std::vector<FrontierNode*> Rose::frontierNodes;
 // std::map<SgStatement*,FrontierNode*> Rose::frontierNodes;
@@ -186,6 +190,10 @@ std::map<int,std::map<SgStatement*,MacroExpansion*>*> Rose::macroExpansionMapOfM
 
 // DQ (10/29/2018): Build a map for the unparser to use to locate SgIncludeFile IR nodes.
 std::map<std::string, SgIncludeFile*> Rose::includeFileMapForUnparsing;
+
+// DQ (5/8/2021): Added support for source file (header file) specific scope-based reporting on containsTransformation information.
+// This may or may not be required to be a multi-map.
+// std::map<SgIncludeFile*,std::map<SgScopeStatement*,bool>*> Rose::containsTransformationMap;
 
 
 // DQ (11/25/2020): These are the boolean variables that are computed in the function compute_language_kind()
@@ -930,13 +938,13 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
                printf ("Calling project->unparse() \n");
 
 #if 0
-          printf ("Calling project->unparse() \n");
+          printf ("In backend(): Calling project->unparse() \n");
 #endif
 
           project->unparse(unparseFormatHelp,unparseDelegate);
 
 #if 0
-          printf ("DONE: Calling project->unparse() \n");
+          printf ("DONE: In backend(): Calling project->unparse() \n");
 #endif
 
           if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
@@ -944,9 +952,9 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
         }
 
 #if 0
-     printf ("Inside of backend(SgProject*): SgProject::get_verbose()       = %d \n",SgProject::get_verbose());
-     printf ("Inside of backend(SgProject*): project->numberOfFiles()       = %d \n",project->numberOfFiles());
-     printf ("Inside of backend(SgProject*): project->numberOfDirectories() = %d \n",project->numberOfDirectories());
+     printf ("In backend(SgProject*): SgProject::get_verbose()       = %d \n",SgProject::get_verbose());
+     printf ("In backend(SgProject*): project->numberOfFiles()       = %d \n",project->numberOfFiles());
+     printf ("In backend(SgProject*): project->numberOfDirectories() = %d \n",project->numberOfDirectories());
 #endif
 
   // DQ (1/25/2010): We have to now test for both numberOfFiles() and numberOfDirectories(),
@@ -959,8 +967,13 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
        // if templates exist).
           if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
                printf ("Calling project->compileOutput() \n");
-
+#if 0
+          printf ("In backend(SgProject*): calling project->compileOutput() \n");
+#endif
           finalCombinedExitStatus = project->compileOutput();
+#if 0
+          printf ("DONE: In backend(SgProject*): calling project->compileOutput() \n");
+#endif
         }
        else
         {

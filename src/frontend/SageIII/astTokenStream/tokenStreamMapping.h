@@ -137,6 +137,9 @@ class Graph_TokenMappingTraversal : public AstSimpleProcessing
 
 #include "frontierDetection.h"
 
+// DQ (5/31/2021): Added to better support the testing mode for the token-based unparsing regression tests.
+#include "artificialFrontier.h"
+
 // DQ (12/4/2014): Added alternative form of detection where to switch 
 // between unparsing from the AST and unparsing from the token stream.
 #include "simpleFrontierDetection.h"

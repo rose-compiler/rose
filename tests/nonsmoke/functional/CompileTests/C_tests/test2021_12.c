@@ -1,7 +1,9 @@
-typedef enum { one, two } enum_type;
+int abc;
+int x;
+int y;
 
-void foobar()
-   {
-     enum_type number;
-     number = two;
-   }
+#if 1
+void foobar();
+     // comment 1
+#endif
+

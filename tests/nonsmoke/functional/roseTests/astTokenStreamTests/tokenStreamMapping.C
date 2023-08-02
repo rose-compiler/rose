@@ -66,6 +66,15 @@ main ( int argc, char* argv[] )
   // AST consistency tests (optional for users, but this enforces more of our tests)
      AstTests::runAllTests(project);
 
+#if 0
+  // Output an optional graph of the AST (just the tree, when active)
+     printf ("Generating a dot file... (ROSE Release Note: turn off output of dot files before committing code) \n");
+  // DQ (12/22/2019): Call multi-file version (instead of generateDOT() function).
+  // generateAstGraph(project, 2000);
+  // generateDOT ( *project );
+     generateDOTforMultipleFile(*project);
+#endif
+
   // DQ (10/27/2013): We have to call the unparser since token stream unparsing is not an option in ROSE.
      return backend(project);
    }
