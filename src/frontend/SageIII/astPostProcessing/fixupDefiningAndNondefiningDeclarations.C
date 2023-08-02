@@ -397,13 +397,17 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                       // Make sure that the statement is in the list...
                          if (std::find(statementList.begin(),statementList.end(),firstNondefiningDeclaration) == statementList.end())
                             {
+#if 0
                               mfprintf(mlog[WARN]) ("##### WARNING: in FixupAstDefiningAndNondefiningDeclarations::visit() statement = %p = %s not in child list of scope = %p = %s \n",
                                    firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str(),
                                    firstNondefiningDeclarationScope,firstNondefiningDeclarationScope->class_name().c_str());
+#endif
                               SgClassDeclaration* classDeclaration = isSgClassDeclaration(firstNondefiningDeclaration);
                               if (classDeclaration != NULL)
                                  {
+#if 0
                                    mfprintf(mlog[WARN]) (" --- classDeclaration = %p name = %s \n",classDeclaration,classDeclaration->get_name().str());
+#endif
                                  }
 #if 0
                               firstNondefiningDeclaration->get_startOfConstruct()->display("declaration: firstNondefiningDeclaration: debug");

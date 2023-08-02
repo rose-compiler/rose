@@ -2086,8 +2086,7 @@ SgProject::parse()
                  // DQ (4/25/2021): Test without this assertion.
                  // DQ (9/18/2019): I think this is true, though it might depend on the command-line options.
 
-                    ROSE_ASSERT(file->get_header_file_unparsing_optimization_source_file() == false);
-                    ROSE_ASSERT(file->get_header_file_unparsing_optimization_header_file() == false);
+                    ROSE_ASSERT(file->get_header_file_unparsing_optimization() == false);
 #if 0
                     printf ("In SgProject::parse(): DONE: Calling secondaryPassOverSourceFile() \n");
 #endif

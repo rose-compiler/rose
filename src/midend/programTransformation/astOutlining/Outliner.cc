@@ -49,6 +49,10 @@ namespace Outliner {
 
 // DQ (3/19/2019): Suppress the output of the #include "autotuning_lib.h" since some tools will want to define there own supporting libraries and header files.
   bool suppress_autotuning_header = false; // when generating the new file to store outlined function, suppress output of #include "autotuning_lib.h".
+
+  std::string MASTER_SHARED_LIB_NAME; 
+// DQ (7/13/2021): Save the SgSourceFile used when handling dynamic libraries.
+  SgSourceFile* saved_source_file_for_dynamic_library = NULL;
 };
 
 // =====================================================================
@@ -75,8 +79,13 @@ Outliner::generateFuncName (const SgStatement* stmt)
 {
   // Generate a prefix.
   stringstream s;
-  if (use_dlopen)  
-    s<< g_outlined_func_names2.next();
+  if (use_dlopen) 
+  {
+    // We may outline basic blocks from header files. A .cpp file may include multiple header files.
+    // In order to have consistent function name, we now use per file name (.cpp or .h) counters.
+    string file_name= stmt->get_startOfConstruct()->get_raw_filename(); 
+    s<< g_outlined_func_names2.next(file_name);
+  }
   else
     s << g_outlined_func_names.next ();
 
@@ -88,12 +97,14 @@ Outliner::generateFuncName (const SgStatement* stmt)
   {
     const string file_name = info->get_raw_filename ();
     const string file_name2 = StringUtility::stripPathFromFileName(file_name);
-    string base_name = StringUtility::stripFileSuffixFromFileName(file_name2);
+    // We now keep suffix to differentiate header and source files
+    //string base_name = StringUtility::stripFileSuffixFromFileName(file_name2);
+    string base_name = file_name2;
     // base name may contain '-', replace it with '_' to get legal identifier
     for (size_t i=0; i<base_name.size(); i++) 
     {
       //cout<<"file base name:"<<base_name[i]<<endl;
-      if (base_name[i]=='-')
+      if (base_name[i]=='-' || base_name[i]=='.')
         base_name[i]='_';
     }
 
@@ -109,13 +120,17 @@ Outliner::generateFuncArgName (const SgStatement* stmt)
 {
   // Generate a prefix.
   stringstream s;
-  s << g_outlined_arg_names.next ();
+
 
   // Use the statement's raw filename to come up with a file-specific
   // tag.
   const Sg_File_Info* info = stmt->get_startOfConstruct ();
   ROSE_ASSERT (info);
-  s << hashStringToULong (info->get_raw_filename ()) << "__";
+
+  string filename= info->get_raw_filename ();
+  s << g_outlined_arg_names.next (filename);
+
+  s << hashStringToULong (filename) << "__";
 
   return s.str ();
 }

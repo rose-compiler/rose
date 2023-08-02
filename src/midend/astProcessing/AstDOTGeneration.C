@@ -384,13 +384,37 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
           return DOTSynthesizedAttribute(NULL);
         }
 
+     string nodelabel=string("\\n")+node->class_name();
+
      string nodeoption;
+
      if(AstTests::isProblematic(node))
         {
        // cout << "problematic node found." << endl;
           nodeoption="color=\"orange\" ";
         }
-     string nodelabel=string("\\n")+node->class_name();
+
+  // DQ (7/20/2021): Added support for handle the SgSourceFile IR nodes (I want to output the physical file id).
+     if (isSgSourceFile(node) != NULL)
+        {
+          SgFile* file = dynamic_cast<SgFile*>(node);
+          ROSE_ASSERT(file != NULL);
+
+          string original_filename = file->getFileName();
+
+       // DQ (7/4/2008): Fix filenamePostfix to go before the "."
+       // string filename = string("./") + Rose::utility_stripPathFromFileName(original_filename) + "."+filenamePostfix+"dot";
+          string filename = string("./") + Rose::utility_stripPathFromFileName(original_filename) + filenamePostfix + ".dot";
+
+          int physical_file_id = Sg_File_Info::getIDFromFilename(original_filename);
+          nodelabel += string("\\n") + filename + string("\\n") + "physical_file_id = " + StringUtility::numberToString(physical_file_id);
+
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
 
   // DQ (1/24/2009): Added support for output of isForward flag in the dot graph.
      SgDeclarationStatement* genericDeclaration = isSgDeclarationStatement(node);
@@ -603,6 +627,10 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
         {
           string name = SgCastExp::cast_type_to_string(castExpression->cast_type()).c_str();;
           nodelabel += string("\\n cast kind = ") + name;
+
+       // DQ (7/7/2021): Adding information about implict casts.
+          string cast_classification = castExpression->get_file_info()->isImplicitCast() ? "implicit cast" : "explicit cast";
+          nodelabel += string("\\n cast_classification = ") + cast_classification;
         }
 
 #if 0
@@ -1146,6 +1174,19 @@ sourcePositionInformation (SgNode* node)
                          ss += generateFileLineColumnString(fileInfo);
                        }
                   }
+
+            // string physical_file = fileInfo->get_physical_filename();
+            // physical_file = Rose::utility_stripPathFromFileName(physical_file);
+
+            // ss += physical_file;
+            // ss += "\\n";
+
+               int physical_file_id = fileInfo->get_physical_file_id();
+               string physical_file_from_id = Sg_File_Info::getFilenameFromID(physical_file_id);
+               physical_file_from_id = Rose::utility_stripPathFromFileName(physical_file_from_id);
+
+               ss += "physical_file_from_id: " + physical_file_from_id;
+               ss += "\\n";
              }
             else
              {

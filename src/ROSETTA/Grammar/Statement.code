@@ -11914,7 +11914,9 @@ SgFunctionDeclaration::get_mangled_name() const
 
      ROSE_ASSERT(this != NULL);
 
-#if 0
+#define DEBUG_FUNCDECL_MANGLED_NAMES 0
+
+#if DEBUG_FUNCDECL_MANGLED_NAMES
      printf ("In SgFunctionDeclaration::get_mangled_name() for this = %p = %s \n",this,this->class_name().c_str());
 #endif
 
@@ -11924,14 +11926,14 @@ SgFunctionDeclaration::get_mangled_name() const
   // if (i != p_globalMangledNameMap.end())
      std::string mangledNameString = SageInterface::getMangledNameFromCache(const_cast<SgFunctionDeclaration*>(this));
 
-#if 0
+#if DEBUG_FUNCDECL_MANGLED_NAMES
      printf ("Inside of SgFunctionDeclaration::get_mangled_name(): mangledNameString.empty() = %s \n",mangledNameString.empty() ? "true" : "false");
 #endif
 
      if (mangledNameString.empty() == false)
         {
        // return i->second.c_str();
-#if 0
+#if DEBUG_FUNCDECL_MANGLED_NAMES
           printf ("RETURN FROM CACHE: Inside of SgFunctionDeclaration::get_mangled_name(): mangledNameString = %s \n",mangledNameString.c_str());
 #endif
           return mangledNameString;
@@ -11966,16 +11968,27 @@ SgFunctionDeclaration::get_mangled_name() const
                type_name = "defaultFunctionTypeName";
              }
 
+#if DEBUG_FUNCDECL_MANGLED_NAMES
+          printf ("Inside of SgFunctionDeclaration::get_mangled_name(): type_name     = %s \n",type_name.str());
+          printf ("Inside of SgFunctionDeclaration::get_mangled_name(): ret_type_name = %s \n",ret_type_name.str());
+#endif
        // This function's name, transformed.
           SgName func_name = mangleFunctionName (get_name(), ret_type_name);
-
+#if DEBUG_FUNCDECL_MANGLED_NAMES
+          printf ("Inside of SgFunctionDeclaration::get_mangled_name(): func_name = %s \n",func_name.str());
+#endif
        // Compute the name qualification, if any.
           const SgScopeStatement* par_scope = get_scope();
           SgName scope_name = mangleQualifiers(par_scope);
+#if DEBUG_FUNCDECL_MANGLED_NAMES
+          printf ("Inside of SgFunctionDeclaration::get_mangled_name(): scope_name = %s \n",scope_name.str());
+#endif
 
        // Compute the translation unit qualification, if any.
           string xlation_unit_qual = mangleTranslationUnitQualifiers(this);
-
+#if DEBUG_FUNCDECL_MANGLED_NAMES
+          printf ("Inside of SgFunctionDeclaration::get_mangled_name(): xlation_unit_qual = %s \n",xlation_unit_qual.c_str());
+#endif
        // Compute the final mangled name.
           mangledName = joinMangledQualifiers (scope_name, xlation_unit_qual + func_name + "__" + type_name);
 
@@ -11984,18 +11997,17 @@ SgFunctionDeclaration::get_mangled_name() const
        //    typedef struct Domain_s { } Domain_t;
        //    int foo ( Domain_s *domain);
        //    int foo ( Domain_t *domain);
-#if 0
+#if DEBUG_FUNCDECL_MANGLED_NAMES
           printf ("Inside of SgFunctionDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
 #endif
 
-// DQ (6/22/2022): Leave this call to SageInterface::addMangledNameToCache(), but remove
-// the addition of the parameter list's mangled name as a suffix since it is redundant,
-// and the resetting of the updated mangled name in the globalMangledNameMap.
 // #if 1
        // printf ("TEMP: Inside of SgFunctionDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
           mangledName = SageInterface::addMangledNameToCache(const_cast<SgFunctionDeclaration*>(this),mangledName);
        // printf ("TEMP RETURN: Inside of SgFunctionDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
 #if 0
+       // DQ (6/21/2022): This redundantly appends the mangled name for the parameter to the end and 
+       // results in a compressed version of the string that is not translation unit independent.
        // This results in infinite recursion in the evaluation.
           SgFunctionParameterList* parameterList = this->get_parameterList();
           ROSE_ASSERT(parameterList != NULL);
@@ -12004,10 +12016,18 @@ SgFunctionDeclaration::get_mangled_name() const
        // printf ("Inside of SgFunctionDeclaration::get_mangled_name(): after adding parameter list mangledName = %s \n",mangledName.str());
 // #endif
 
+#if 0
+          printf ("Inside of SgFunctionDeclaration::get_mangled_name(): mangledParameterList = %s \n",mangledParameterList.str());
+#endif
        // Reset the mangled name in the map.
        // p_globalMangledNameMap[function] = mangledName;
           SgNode::get_globalMangledNameMap()[const_cast<SgFunctionDeclaration*>(this)] = mangledName;
 #endif
+
+#if DEBUG_FUNCDECL_MANGLED_NAMES
+          printf ("Inside of SgFunctionDeclaration::get_mangled_name(): after resetting mangledName = %s \n",mangledName.str());
+#endif
+
        // DQ (7/24/2012): Added test for template brackets that are caught later in AstConsistencyTests.
        // Make sure that there is no template specific syntax included in the mangled name
           string mangled_name = mangledName;
@@ -12017,7 +12037,7 @@ SgFunctionDeclaration::get_mangled_name() const
              }
           ROSE_ASSERT(mangled_name.find('<') == string::npos);
 
-#if 0
+#if DEBUG_FUNCDECL_MANGLED_NAMES
        // DQ (7/24/2012): Output the mangled name being generated for debugging.
           printf (">>>>>>>>>> SgFunctionDeclaration::get_mangled_name(): returning mangledName = %s \n",mangledName.str());
 #endif
