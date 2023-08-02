@@ -2369,19 +2369,6 @@ void SgAsmCilMetadataRoot::parse(std::vector<uint8_t>& buf, size_t index)
     std::cerr << "Streams has " << p_Streams.size() << " elements." << std::endl;
 }
 
-
-const std::vector<SgAsmCilDataStream*>&
-SgAsmCilMetadataRoot::get_Streams() const
-{
-  return p_Streams;
-}
-
-std::vector<SgAsmCilDataStream*>&
-SgAsmCilMetadataRoot::get_Streams()
-{
-  return p_Streams;
-}
-
 SgAsmCilUint8Heap*
 SgAsmCilMetadataRoot::get_StringHeap() const
 {

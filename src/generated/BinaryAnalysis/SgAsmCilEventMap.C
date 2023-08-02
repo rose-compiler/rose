@@ -32,10 +32,14 @@ SgAsmCilEventMap::~SgAsmCilEventMap() {
     destructorHelper();
 }
 
-SgAsmCilEventMap::SgAsmCilEventMap() {}
+SgAsmCilEventMap::SgAsmCilEventMap()
+    : p_Parent({})
+    , p_EventList({}) {}
 
 void
 SgAsmCilEventMap::initializeProperties() {
+    p_Parent = {};
+    p_EventList = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

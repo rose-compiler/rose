@@ -32,10 +32,14 @@ SgAsmCilNestedClass::~SgAsmCilNestedClass() {
     destructorHelper();
 }
 
-SgAsmCilNestedClass::SgAsmCilNestedClass() {}
+SgAsmCilNestedClass::SgAsmCilNestedClass()
+    : p_NestedClass({})
+    , p_EnclosingClass({}) {}
 
 void
 SgAsmCilNestedClass::initializeProperties() {
+    p_NestedClass = {};
+    p_EnclosingClass = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

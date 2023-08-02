@@ -1,16 +1,17 @@
-/** CIL FieldRVA node. */
+/** CIL FieldRVA node (II.22.18). */
 class SgAsmCilFieldRVA: public SgAsmCilMetadata {
+
     /** Property: RVA.
      *
      *  A 4-byte constant. */
     [[using Rosebud: rosetta]]
-    uint32_t RVA;
+    uint32_t RVA = {};
 
     /** Property: Field.
      *
      *  An index into Field table. */
     [[using Rosebud: rosetta]]
-    uint32_t Field;
+    uint32_t Field = {};
 
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);

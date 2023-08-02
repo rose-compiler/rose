@@ -32,10 +32,14 @@ SgAsmCilFieldLayout::~SgAsmCilFieldLayout() {
     destructorHelper();
 }
 
-SgAsmCilFieldLayout::SgAsmCilFieldLayout() {}
+SgAsmCilFieldLayout::SgAsmCilFieldLayout()
+    : p_Offset({})
+    , p_Field({}) {}
 
 void
 SgAsmCilFieldLayout::initializeProperties() {
+    p_Offset = {};
+    p_Field = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

@@ -105,14 +105,42 @@ SgAsmCilMetadataRoot::set_NumberOfStreams(uint16_t const& x) {
     set_isModified(true);
 }
 
+std::vector<SgAsmCilDataStream*> const&
+SgAsmCilMetadataRoot::get_Streams() const {
+    return p_Streams;
+}
+
+std::vector<SgAsmCilDataStream*>&
+SgAsmCilMetadataRoot::get_Streams() {
+    return p_Streams;
+}
+
 SgAsmCilMetadataRoot::~SgAsmCilMetadataRoot() {
     destructorHelper();
 }
 
-SgAsmCilMetadataRoot::SgAsmCilMetadataRoot() {}
+SgAsmCilMetadataRoot::SgAsmCilMetadataRoot()
+    : p_Signature({})
+    , p_MajorVersion({})
+    , p_MinorVersion({})
+    , p_Reserved0({})
+    , p_Length({})
+    , p_Version({})
+    , p_VersionPadding({})
+    , p_Flags({})
+    , p_NumberOfStreams({}) {}
 
 void
 SgAsmCilMetadataRoot::initializeProperties() {
+    p_Signature = {};
+    p_MajorVersion = {};
+    p_MinorVersion = {};
+    p_Reserved0 = {};
+    p_Length = {};
+    p_Version = {};
+    p_VersionPadding = {};
+    p_Flags = {};
+    p_NumberOfStreams = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

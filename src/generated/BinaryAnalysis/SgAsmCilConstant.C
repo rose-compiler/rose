@@ -54,10 +54,18 @@ SgAsmCilConstant::~SgAsmCilConstant() {
     destructorHelper();
 }
 
-SgAsmCilConstant::SgAsmCilConstant() {}
+SgAsmCilConstant::SgAsmCilConstant()
+    : p_Type({})
+    , p_Padding({})
+    , p_Parent({})
+    , p_Value({}) {}
 
 void
 SgAsmCilConstant::initializeProperties() {
+    p_Type = {};
+    p_Padding = {};
+    p_Parent = {};
+    p_Value = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

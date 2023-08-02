@@ -1,40 +1,42 @@
-/** CIL AsmCilMetadataHeap. */
+/** CIL SgAsmCilMetadataHeap node. */
 class SgAsmCilMetadataHeap: public SgAsmCilDataStream {
+
     /** Property: 4 reserved bytes. */
     [[using Rosebud: rosetta]]
-    uint32_t ReservedAlwaysZero;
+    uint32_t ReservedAlwaysZero = {};
 
-    /** Property: a 1-byte constant. */
+    /** Property: A 1-byte constant. */
     [[using Rosebud: rosetta]]
-    uint8_t MajorVersion;
+    uint8_t MajorVersion = {};
 
-    /** Property: a 1-byte constant. */
+    /** Property: A 1-byte constant. */
     [[using Rosebud: rosetta]]
-    uint8_t MinorVersion;
+    uint8_t MinorVersion = {};
 
-    /** Property: a 1-byte constant indicating the index sizes of streams. */
+    /** Property: A 1-byte constant indicating the index sizes of streams. */
     [[using Rosebud: rosetta]]
-    uint8_t HeapSizes;
+    uint8_t HeapSizes = {};
 
-    /** Property: a 1-byte constant. */
+    /** Property: A 1-byte constant. */
     [[using Rosebud: rosetta]]
-    uint8_t ReservedAlwaysOne;
+    uint8_t ReservedAlwaysOne = {};
 
-    /** Property: a 4-byte value indicating which metadata tables are present. */
+    /** Property: A 4-byte value indicating which metadata tables are present. */
     [[using Rosebud: rosetta]]
-    uint64_t Valid;
+    uint64_t Valid = {};
 
-    /** Property: a 4-byte value. */
+    /** Property: A 4-byte value. */
     [[using Rosebud: rosetta]]
-    uint64_t Sorted;
+    uint64_t Sorted = {};
 
-    /** Property: a vector indicating how many rows the present tables contain. */
+    /** Property: A vector indicating how many rows the present tables contain. */
     [[using Rosebud: rosetta]]
-    std::vector<uint32_t> NumberOfRows;
+    std::vector<uint32_t> NumberOfRows = {};
 
     /** Property: precomputed flags that determine whether a metadata reference is stored as 2 or 4 byte value in the file. */
     [[using Rosebud: rosetta]]
-    uint64_t DataSizeFlags;
+    uint64_t DataSizeFlags = {};
+
 
     /** Property: AssemblyTable. */
     [[using Rosebud: rosetta, traverse]]
@@ -96,11 +98,11 @@ class SgAsmCilMetadataHeap: public SgAsmCilDataStream {
     [[using Rosebud: rosetta, traverse]]
     SgAsmCilFieldLayoutTable* FieldLayoutTable;
 
-    /** Property: FieldMarshalTable */
+    /** Property: FieldMarshalTable. */
     [[using Rosebud: rosetta, traverse]]
     SgAsmCilFieldMarshalTable* FieldMarshalTable;
 
-    /** Property: FieldRVATable */
+    /** Property: FieldRVATable. */
     [[using Rosebud: rosetta, traverse]]
     SgAsmCilFieldRVATable* FieldRVATable;
 
@@ -112,7 +114,7 @@ class SgAsmCilMetadataHeap: public SgAsmCilDataStream {
     [[using Rosebud: rosetta, traverse]]
     SgAsmCilGenericParamTable* GenericParamTable;
 
-    /** Property: GenericParamConstraintTable */
+    /** Property: GenericParamConstraintTable. */
     [[using Rosebud: rosetta, traverse]]
     SgAsmCilGenericParamConstraintTable* GenericParamConstraintTable;
 
@@ -280,9 +282,9 @@ public:
      */
     SgAsmCilMetadata* get_CodedMetadataNode(std::uint32_t refcode, ReferenceKind knd) const;
 
-
     /** looks up the node associated with the coded index @ref refcode in the metadata tables
      *  under the assumption that @refval is of kind @ref knd
      */
     SgAsmCilMetadata* get_MetadataNode(std::uint32_t refcode, ReferenceKind knd) const;
 };
+
