@@ -56,18 +56,22 @@ private:
 
 class JvmMethod : public Method {
 public:
-    virtual const std::string name() const;
-    virtual const Code & code() const;
-    virtual const void decode(const Disassembler::BasePtr &disassembler) const;
-    virtual const SgAsmInstructionList* instructions() const;
+  virtual const std::string name() const override;
+  virtual const Code & code() const override;
+  virtual const void decode(const Disassembler::BasePtr &disassembler) const override;
+  virtual const SgAsmInstructionList* instructions() const override;
 
-    JvmMethod() = delete;
-    explicit JvmMethod(SgAsmJvmFileHeader*, SgAsmJvmMethod*);
+  virtual void annotate() override;
+
+  static std::string name(uint16_t, const SgAsmJvmConstantPool*);
+
+  JvmMethod() = delete;
+  explicit JvmMethod(SgAsmJvmFileHeader*, SgAsmJvmMethod*);
 
 private:
-    SgAsmJvmFileHeader* jfh_;
-    SgAsmJvmMethod* sgMethod_;
-    JvmCode code_;
+  SgAsmJvmFileHeader* jfh_;
+  SgAsmJvmMethod* sgMethod_;
+  JvmCode code_;
 };
 
 class JvmInterface : public Interface {
