@@ -579,11 +579,6 @@ namespace
 
   const std::string NodeName::AN_UNREAL_NAME = "@@This#Is$An%Unreal^Name@@";
 
-#define DBG_SCOPE_PATH 0
-
-#if DBG_SCOPE_PATH
-  static bool DBG_PRINT_SCOPES = true;
-
   struct DebugSeqPrinter
   {
     const ScopePath& el;
@@ -597,10 +592,8 @@ namespace
 
     return os;
   }
-#else
-  static constexpr bool DBG_PRINT_SCOPES = false;
-#endif /* DBG_SCOPE_PATH */
 
+  static bool DBG_PRINT_SCOPES = false;
 
   /// gets the name of the node
   std::string nodeName(const SgNode& n)
@@ -768,13 +761,14 @@ namespace
     return { true, namedNode };
   }
 
-  std::tuple<ScopePath::reverse_iterator, const SgNode*>
-  namedAncestorScope(ScopePath::reverse_iterator beg, ScopePath::reverse_iterator pos, const SgNode* refNode)
+  template <class ScopePathIterator>
+  std::tuple<ScopePathIterator, const SgNode*>
+  namedAncestorScope(ScopePathIterator beg, ScopePathIterator pos, const SgNode* refNode)
   {
     if (beg == pos)
       return { pos, refNode };
 
-    ScopePath::reverse_iterator     prvpos = std::prev(pos);
+    ScopePathIterator               prvpos = std::prev(pos);
     std::tuple<bool, const SgNode*> usable = usableScope(**prvpos);
 
     if (std::get<0>(usable))
@@ -783,12 +777,13 @@ namespace
     return namedAncestorScope(beg, prvpos, refNode);
   }
 
-  ScopePath::reverse_iterator
-  extendNameQualUntilUnambiguous( ScopePath::reverse_iterator remBeg,
-                                  ScopePath::reverse_iterator remMin,
-                                  ScopePath::reverse_iterator remLim,
-                                  ScopePath::reverse_iterator locMin,
-                                  ScopePath::reverse_iterator locLim,
+  template <class ScopePathIterator>
+  ScopePathIterator
+  extendNameQualUntilUnambiguous( ScopePathIterator remBeg,
+                                  ScopePathIterator remMin,
+                                  ScopePathIterator remLim,
+                                  ScopePathIterator locMin,
+                                  ScopePathIterator locLim,
                                   const SgNode& declOrRef
                                 )
   {
@@ -810,10 +805,11 @@ namespace
   }
 
 
-  ScopePath::reverse_iterator
-  shortenPathForUseDirectives( ScopePath::reverse_iterator    remBeg,
-                               ScopePath::reverse_iterator    remMin,
-                               ScopePath::reverse_iterator    remLim,
+  template <class ScopePathIterator>
+  ScopePathIterator
+  shortenPathForUseDirectives( ScopePathIterator remBeg,
+                               ScopePathIterator remMin,
+                               ScopePathIterator remLim,
                                const NameQualificationTraversalAda& /*trav*/
                              )
   {
@@ -840,43 +836,38 @@ namespace
   {
     using PathIterator = ScopePath::reverse_iterator;
 
-    ScopePath remotePath = pathToGlobal(remote);
+    ScopePath          remotePath = pathToGlobal(remote);
+    ScopePath          localPath  = pathToGlobal(local);
+    ASSERT_require(remotePath.size() != 0);
 
-#if DBG_SCOPE_PATH
     if (DBG_PRINT_SCOPES)
       std::cerr << "rp = " << DebugSeqPrinter{remotePath}
                 << "   remote-scope = " << typeid(remote).name() << " " << &remote
                 << std::endl;
-#endif /* DBG_SCOPE_PATH */
-
-    if (remotePath.size() == 0)
-      return "";
-
-    ScopePath localPath  = pathToGlobal(local);
 
     // compute the required scope qualification
     //   assume a decl declared in scope a.b.c
     //   and referenced in scope a.d.e:
 
     // 1a determine the first mismatch (mismPos) of the (reversed) scope paths "a.b.c" and "a.d.e"
-    std::size_t     pathlen      = std::min(localPath.size(), remotePath.size());
-    PathIterator    localstart   = localPath.rbegin();
+    const int          pathlen = std::min(localPath.size(), remotePath.size());
+    const PathIterator locBeg  = localPath.rbegin();
+    const PathIterator locLim  = localPath.rend();
+    const PathIterator remBeg  = remotePath.rbegin();
+    PathIterator       remLim  = remotePath.rend();
 
     // 1b mismPos is  "a|b.c and a|d.e", thus the required scope qualification is b.c
-    auto            mismPos      = std::mismatch( localstart, localstart + pathlen,
-                                                  remotePath.rbegin()
-                                                );
+    auto               mismPos = std::mismatch( locBeg, locBeg + pathlen,
+                                                remBeg
+                                              );
     // 1c shorten b.c if any scope has a use-directive
-    mismPos.second = shortenPathForUseDirectives(remotePath.rbegin(), mismPos.second, remotePath.rend(), *this);
+    mismPos.second = shortenPathForUseDirectives(remBeg, mismPos.second, remLim, *this);
 
     // 2 extend the path if an overload for front(b.c) exists somewhere in d.e
-    PathIterator    remotePos    = extendNameQualUntilUnambiguous( remotePath.rbegin(),
-                                                                   mismPos.second,
-                                                                   remotePath.rend(),
-                                                                   mismPos.first,
-                                                                   localPath.rend(),
-                                                                   quasiDecl
-                                                                 );
+    const PathIterator remPos  = extendNameQualUntilUnambiguous( remBeg, mismPos.second, remLim,
+                                                                 mismPos.first, locLim,
+                                                                 quasiDecl
+                                                               );
 
     // 3 Since a body has its spec as the logical ancestor scope, adjacent spec/body combination
     //   are filtered from the path.
@@ -895,21 +886,23 @@ namespace
             return false;
           };
 
-    // PathIterator    remoteEnd = remotePath.rend();
-    PathIterator    remoteEnd    = std::unique(remotePos, remotePath.rend(), areSpecAndBody);
+    // remove adjacent bodies
+    remLim = std::unique(remPos, remLim, areSpecAndBody);
 
-    std::string res = nameQualString(remotePos, remoteEnd);
+    // turn the scope sequence into a name qualification string
+    const std::string res = nameQualString(remPos, remLim);
 
-#if DBG_SCOPE_PATH
-      std::cerr << "--- len> " << std::distance(mismPos.first, localPath.rend())
+    if (DBG_PRINT_SCOPES)
+    {
+      std::cerr << "--- len> " << std::distance(mismPos.first, locLim)
                 << "/" << localPath.size() << DebugSeqPrinter{localPath}
-                << "/" << nameQualString(localPath.rbegin(), localPath.rend())
-                << " <> " << std::distance(mismPos.second, remotePath.rend())
-                << "/" << std::distance(remotePos, remoteEnd)
-                << " /" << nameQualString(remotePath.rbegin(), remotePath.rend())
+                << "/" << nameQualString(locBeg, locLim) // unsquashed
+                << " <> " << std::distance(mismPos.second, remLim)
+                << "/" << std::distance(remPos, remLim)
+                << " /" << nameQualString(remBeg, remLim)
                 << "  => " << res
                 << std::endl;
-#endif /* DBG_SCOPE_PATH */
+    }
 
     return res;
   }
