@@ -23,7 +23,6 @@ struct InstrAddr
   rose_addr_t addr = 0;
 };
 
-//TODO: erasmus: ask about this
 std::string utf8ToString(const uint8_t* bytes) {
     std::string str{};
     while (*bytes) {
@@ -184,8 +183,8 @@ metadataToken(const SgAsmCilMetadataHeap* heap, const SgAsmExpression* expr)
   return metadataToken(heap, isSgAsmIntegerValueExpression(expr));
 }
 
-CilMethod::CilMethod(SgAsmCilMethodDef* sgMethod)
-  : sgMethod_{sgMethod}, insns_{nullptr}, code_{nullptr, 0, 0}
+CilMethod::CilMethod(SgAsmCilMetadataRoot* mdr, SgAsmCilMethodDef* sgMethod)
+  : mdr_{mdr}, sgMethod_{sgMethod}, insns_{nullptr}, code_{nullptr, 0, 0}
 {
     insns_ = new SgAsmInstructionList;
 
@@ -199,22 +198,95 @@ CilMethod::CilMethod(SgAsmCilMethodDef* sgMethod)
 
 const std::string
 CilMethod::name() const {
-    return utf8ToString(sgMethod_->get_Name_string());
+  return utf8ToString(sgMethod_->get_Name_string());
 }
 
 const SgAsmInstructionList*
 CilMethod::instructions() const {
-    return insns_;
+  return insns_;
 }
 
 const Code &
 CilMethod::code() const {
-    return code_;
+  return code_;
 }
 
 const void
 CilMethod::decode(const Disassembler::BasePtr &disassembler) const {
-    std::cerr << "CilMethod::decode():UNIMPLEMENTED\n";
+  std::cerr << "CilMethod::decode():UNIMPLEMENTED\n";
+}
+
+void
+CilMethod::annotate() {
+  for (auto insn : instructions()->get_instructions()) {
+    std::string comment{};
+    auto cilInsn{isSgAsmCilInstruction(insn)};
+    switch (cilInsn->get_kind()) {
+      case Cil_call: {
+        // metadata token for a methodref, methoddef, or methodspec
+        if (auto token = isSgAsmIntegerValueExpression(insn->get_operandList()->get_operands()[0])) {
+          SgAsmCilMetadata* obj = CilContainer::resolveToken(token, mdr_);
+          comment = CilMethod::name(obj, mdr_);
+          token->set_comment(comment);
+        }
+        break;
+      }
+      default: ;
+    }
+  }
+}
+
+std::string
+CilMethod::name(const SgAsmCilMetadata* obj, SgAsmCilMetadataRoot* mdr)
+{
+  std::string objName{};
+
+  switch (obj->variantT()) {
+    case V_SgAsmCilMemberRef: {
+      auto memberRef = isSgAsmCilMemberRef(obj);
+      if (const SgAsmCilMetadata* cls = memberRef->get_Class_object()) {
+        // MethodDef, ModuleRef, TypeDef, TypeRef, or TypeSpec
+        objName += CilMethod::name(cls, mdr) + ".";
+      }
+      objName += utf8ToString(memberRef->get_Name_string());
+      break;
+    }
+    case V_SgAsmCilMethodDef: {
+      auto methodDef = isSgAsmCilMethodDef(obj);
+      objName += utf8ToString(methodDef->get_Name_string());
+      break;
+    }
+    case V_SgAsmCilMethodSpec: {
+      auto methodSpec = isSgAsmCilMethodSpec(obj);
+      // MethodDef or MemberRef
+      uint32_t index = methodSpec->get_Method();
+      auto mdh = mdr->get_MetadataHeap();
+      SgAsmCilMetadata* specObj = mdh->get_CodedMetadataNode(index, SgAsmCilMetadataHeap::e_ref_method_def_or_ref);
+      objName += CilMethod::name(specObj, mdr);
+      break;
+    }
+    case V_SgAsmCilModuleRef: {
+      auto moduleRef = isSgAsmCilModuleRef(obj);
+      objName += utf8ToString(moduleRef->get_Name_string());
+      break;
+    }
+    case V_SgAsmCilTypeDef: {
+      auto typeDef = isSgAsmCilTypeDef(obj);
+      objName += utf8ToString(typeDef->get_TypeNamespace_string()) + "." + utf8ToString(typeDef->get_TypeName_string());
+      break;
+    }
+  case V_SgAsmCilTypeRef: {
+      auto typeRef = isSgAsmCilTypeRef(obj);
+      objName += utf8ToString(typeRef->get_TypeNamespace_string()) + "." + utf8ToString(typeRef->get_TypeName_string());
+      break;
+    }
+    case V_SgAsmCilTypeSpec:
+      // Only has a signature
+      break;
+    default:
+      break;
+  }
+  return objName;
 }
 
 CilClass::CilClass(SgAsmCilMetadataRoot* root, const std::uint8_t* name, size_t methodBegin, size_t methodLimit)
@@ -239,7 +311,7 @@ CilClass::CilClass(SgAsmCilMetadataRoot* root, const std::uint8_t* name, size_t 
             continue;
         }      
 
-        auto method = new CilMethod(methodDef);
+        auto method = new CilMethod(mdr_, methodDef);
         methods_.push_back(method);
 
         if (TRACE_CONSTRUCTION) {
@@ -322,12 +394,23 @@ CilContainer::CilContainer(SgAsmCilMetadataRoot* root) : mdr_{root} {
 
 const std::string
 CilContainer::name() const {
-    return "CilContainer::name():UNIMPLEMENTED";
+  return "CilContainer::name():UNIMPLEMENTED";
 }
 
 const std::vector<const Namespace*> &
 CilContainer::namespaces() const {
-    return namespaces_;
+  return namespaces_;
+}
+
+SgAsmCilMetadata*
+CilContainer::resolveToken(SgAsmIntegerValueExpression* token, SgAsmCilMetadataRoot* mdr)
+{
+  uint32_t value = static_cast<uint32_t>(token->get_value());
+  uint32_t kind =  (0xff000000 & value) >> 24;
+  uint32_t index = 0x00ffffff & value;
+  auto mdh = mdr->get_MetadataHeap();
+  SgAsmCilMetadata* obj = mdh->get_MetadataNode(index, static_cast<SgAsmCilMetadataHeap::TableKind>(kind));
+  return obj;
 }
 
 void
