@@ -89,13 +89,13 @@ struct DeleteAllNode : public ROSE_VisitTraversal {
   }
 };
 
-void clear() {
+ROSE_DLL_API void clear() {
   DeleteAllNode dan;
   dan.apply();
   AST_FILE_IO::clearAllMemoryPools();
 }
 
-void free() {
+ROSE_DLL_API void free() {
   DeleteAllNode dan;
   dan.apply();
   AST_FILE_IO::deleteMemoryPools();
@@ -145,7 +145,7 @@ struct DeleteDisconnectedNode : public ROSE_VisitTraversal {
   }
 };
 
-void prune(SgProject * project) {
+ROSE_DLL_API void prune(SgProject * project) {
   DeleteDisconnectedNode ddn;
   ddn.apply(project);
 }
