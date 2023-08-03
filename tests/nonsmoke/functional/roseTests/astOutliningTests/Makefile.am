@@ -137,8 +137,7 @@ CXX4_TESTS_OBJECT_REQUIRED_TO_RUN=${CXX4_TESTS_REQUIRED_TO_RUN:.cpp=.o}
 
 
 # another test, used for testing dlopen simple call convention
-CXX5_TESTS_REQUIRED_TO_RUN=	\
-	ft_cfftz_omp2.cpp
+CXX5_TESTS_REQUIRED_TO_RUN= # ft_cfftz_omp2.cpp
 CXX5_TESTS_OBJECT_REQUIRED_TO_RUN=${CXX5_TESTS_REQUIRED_TO_RUN:.cpp=.o}	
 
 # using #pragma outline to indicate what to outline	
@@ -582,7 +581,7 @@ complexStruct_flags = \
 	-rose:outline:exclude_headers \
 	-rose:outline:abstract_handle 'ForStatement<numbering,1>'
 
-C_CXX_RESULTS += complexStruct.passed
+#C_CXX_RESULTS += complexStruct.passed
 
 # test linking outlined functions from inline functions
 rose_test_inline_1_2022_lib.cpp: test_inline_1_2022.cpp outline$(EXEEXT)

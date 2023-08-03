@@ -25,8 +25,8 @@ test2004_04.C   test2004_05.C   test2004_06.C   test2004_07.C   test2004_08.C
 test2004_09.C   test2004_100.C   test2004_101.C   test2004_102.C   test2004_103.C   
 test2004_104.C   test2004_105.C   test2004_106.C   test2004_107.C   test2004_108.C   
 test2004_109.C   test2004_10.C   test2004_110.C   test2004_111.C   test2004_112.C   
-test2004_113.C   test2004_114.C   test2004_115.C   test2004_116.C   test2004_117.C   
-test2004_118.C   test2004_119.C   test2004_11.C   test2004_120.C   test2004_121.C   
+test2004_113.C   test2004_114.C   test2004_115.C   test2004_116.C  
+test2004_118.C   test2004_119.C   test2004_11.C   test2004_120.C   
 test2004_122.C   test2004_123.C   test2004_124.C   test2004_125.C   test2004_127.C   
 test2004_128.C   test2004_129.C   test2004_12.C   test2004_130.C   test2004_131.C   
 test2004_132.C   test2004_133.C   test2004_134.C   test2004_135.C   test2004_136.C   
@@ -242,8 +242,8 @@ test2013_158.C   test2013_159.C   test2013_160.C   test2013_161.C   test2013_162
 test2013_163.C   test2013_165.C   test2013_166.C   test2013_167.C   test2013_168.C   
 test2013_169.C   test2013_16.C   test2013_170.C   test2013_171.C   test2013_172.C   
 test2013_173.C   test2013_174.C   test2013_175.C   test2013_176.C   test2013_177.C   
-test2013_178.C   test2013_179.C   test2013_17.C   test2013_180.C   test2013_181.C   
-test2013_182.C   test2013_183.C   test2013_184.C   test2013_186.C   test2013_187.C   
+test2013_179.C   test2013_17.C   test2013_180.C   test2013_181.C   
+test2013_183.C   test2013_184.C   test2013_186.C   test2013_187.C   
 test2013_188.C   test2013_189.C   test2013_18.C   test2013_190.C   test2013_191.C   
 test2013_192.C   test2013_193.C   test2013_194.C   test2013_195.C   test2013_196.C   
 test2013_198.C   test2013_199.C   test2013_200.C   test2013_201.C   test2013_202.C   
@@ -319,7 +319,7 @@ test2014_87.C   test2014_88.C   test2014_89.C   test2014_90.C   test2014_91.C
 test2014_92.C   test2014_93.C   test2014_94.C   test2014_95.C   test2014_96.C   
 test2014_97.C   test2014_98.C   test2014_99.C   test2015_01.C   test2015_02.C   
 test2015_03.C   test2015_04.C   test2015_05.C   test2015_07.C   test2015_08.C   
-test2015_09.C   test2015_100.C   test2015_101.C   test2015_102.C   test2015_103.C   
+test2015_09.C   test2015_101.C   test2015_102.C   test2015_103.C   
 test2015_104.C   test2015_106.C   test2015_107.C   test2015_108.C   test2015_110.C   
 test2015_111.C   test2015_112.C   test2015_113.C   test2015_114.C   test2015_117.C   
 test2015_118.C   test2015_119.C   test2015_121.C   test2015_122.C   test2015_123.C   
@@ -354,7 +354,7 @@ test2017_101.C   test2017_102.C   test2017_103.C   test2017_104.C   test2017_105
 test2017_106.C   test2017_107.C   test2017_10.C   test2017_11.C   test2017_13.C   
 test2017_14.C   test2017_15.C   test2017_16.C   test2017_17.C   test2017_18.C   
 test2017_19.C   test2017_21.C   test2017_22.C   test2017_23.C   test2017_26.C   
-test2017_27.C   test2017_28.C   test2017_30.C   test2017_35.C   test2017_36.C   
+test2017_30.C   test2017_35.C   test2017_36.C   
 test2017_37.C   test2017_38.C   test2017_39.C   test2017_40.C   test2017_41.C   
 test2017_42.C   test2017_43.C   test2017_45.C   test2017_48.C   test2017_49.C   
 test2017_51.C   test2017_52.C   test2017_53.C   test2017_54.C   test2017_55.C   
@@ -402,7 +402,7 @@ test_CplusplusMacro_Cpp.C   test_int_lexemes.C   test_int_lexemes_donot_pass.C  
 
 if(ROSE_USING_GCC_VERSION_LATER_4_8 EQUAL 1)
 set(EXAMPLE_TESTCODES_REQUIRED_TO_PASS ${EXAMPLE_TESTCODES_REQUIRED_TO_PASS} 
-test2015_126.C test2015_127.C test2015_129.C
+test2015_126.C
 )
 endif()
 

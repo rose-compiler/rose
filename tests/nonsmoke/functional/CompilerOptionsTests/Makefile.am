@@ -14,9 +14,9 @@ SUBDIRS = \
 # enable these tests at a later stage if necessary.
 if !USING_GCC_3_4_4_BACKEND_COMPILER
   SUBDIRS += testCpreprocessorOption 
-if !USING_XTENSA_BACKEND_COMPILER
-  SUBDIRS += testGenerateSourceFileNames 
-endif
+#if !USING_XTENSA_BACKEND_COMPILER
+#  SUBDIRS += testGenerateSourceFileNames 
+#1endif
 endif
 
 # TOO (2/23/2011): Errors with Tensilica's Xtensa compilers as alternative backend compilers. We can

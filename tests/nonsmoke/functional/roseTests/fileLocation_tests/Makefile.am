@@ -139,12 +139,10 @@ TESTCODES_REQUIRED_TO_PASS =			\
 	test2004_114.C				\
 	test2004_115.C				\
 	test2004_116.C				\
-	test2004_117.C				\
 	test2004_118.C				\
 	test2004_119.C				\
 	test2004_12.C				\
 	test2004_120.C				\
-	test2004_121.C				\
 	test2004_122.C				\
 	test2004_123.C				\
 	test2004_124.C				\

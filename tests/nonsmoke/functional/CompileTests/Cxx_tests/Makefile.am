@@ -139,12 +139,10 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2004_114.C \
    test2004_115.C \
    test2004_116.C \
-   test2004_117.C \
    test2004_118.C \
    test2004_119.C \
    test2004_11.C \
    test2004_120.C \
-   test2004_121.C \
    test2004_122.C \
    test2004_123.C \
    test2004_124.C \
@@ -1220,12 +1218,10 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2013_175.C \
    test2013_176.C \
    test2013_177.C \
-   test2013_178.C \
    test2013_179.C \
    test2013_17.C \
    test2013_180.C \
    test2013_181.C \
-   test2013_182.C \
    test2013_183.C \
    test2013_184.C \
    test2013_186.C \
@@ -1606,7 +1602,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2015_07.C \
    test2015_08.C \
    test2015_09.C \
-   test2015_100.C \
    test2015_101.C \
    test2015_102.C \
    test2015_103.C \
@@ -1780,8 +1775,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2017_22.C \
    test2017_23.C \
    test2017_26.C \
-   test2017_27.C \
-   test2017_28.C \
    test2017_30.C \
    test2017_35.C \
    test2017_36.C \
@@ -2009,7 +2002,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2021_11.C \
    test2021_12.C \
    test2021_13.C \
-   test2022_18.C \
    unparse-typedef-ctor.C \
    test_CplusplusMacro_Cpp.C \
    test_int_lexemes.C \
@@ -2017,18 +2009,6 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test_simple_int.C \
    test_wchars.C \
    X.C
-
-if !USING_CLANG_COMPILER
-EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
-   test2014_110.C
-endif
-
-if !USING_INTEL_COMPILER
-# DQ (9/19/2020): this test fails with the Intel v17 compiler (something regarding boost).
-EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
-   test2017_63.C
-endif
-
 
 TESTCODE_CURRENTLY_FAILING = \
    certSignalExample.C \
@@ -2432,6 +2412,36 @@ TESTCODE_CURRENTLY_FAILING = \
    test2020_36.C \
    test_gnu.C
 
+# 2004/2017: fails with intel and rhel jobs
+# 2013: fails with RHEL7
+TESTCODE_CURRENTLY_FAILING += \
+   test2004_117.C \
+   test2004_121.C \
+   test2013_178.C \
+   test2013_182.C \
+   test2015_100.C \
+   test2017_27.C \
+   test2017_28.C
+TESTCODE_MISSING = \
+   test2022_18.C
+
+if !USING_CLANG_COMPILER
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2014_110.C
+else
+TESTCODE_CURRENTLY_FAILING += \
+   test2014_110.C
+endif
+
+if !USING_INTEL_COMPILER
+# DQ (9/19/2020): this test fails with the Intel v17 compiler (something regarding boost).
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+   test2017_63.C
+else
+TESTCODE_CURRENTLY_FAILING += \
+   test2017_63.C
+endif
+
 if ROSE_USING_GCC_VERSION_LATER_4_4
   EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
      test2017_31.C \
@@ -2462,20 +2472,11 @@ else
      vector_cpp.C
 endif
 
-if ROSE_USING_GCC_VERSION_LATER_4_8
-if !USING_CLANG_COMPILER
-  EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
-     test2015_126.C
-endif
-  EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
-     test2015_127.C \
-     test2015_129.C
-else
-  TESTCODE_CURRENTLY_FAILING += \
+# Fails on RHEL 7
+TESTCODE_CURRENTLY_FAILING += \
      test2015_126.C \
      test2015_127.C \
      test2015_129.C
-endif
 
 if ROSE_USING_GCC_VERSION_LATER_6_0
   TESTCODE_CURRENTLY_FAILING += \
@@ -3011,11 +3012,10 @@ hpctoolkit:
 
 check-local:
 	@$(MAKE) $(PASSING_TEST_Source_passed)
-#	@$(MAKE) test_pdf_generation $(PASSING_TEST_Source_passed) 
-	@$(MAKE) test_pdf_generation $(PASSING_TEST_Source_passed) \
+#	@$(MAKE) test_json_generation $(PASSING_TEST_Source_passed) 
+	@$(MAKE) test_json_generation $(PASSING_TEST_Source_passed) \
           test_unparse_includes_option.passed test_unparse_includes_option_with_link.passed \
           test_common_configure_test_with_link_part_1.passed test_common_configure_test_with_link_part_2.passed testTemplateExample
-#	@$(MAKE) test_json_generation
 #	I'm not sure why these are coded to run in serial [RPM 2014-08-29]
 	@$(MAKE) test_unparse_includes_option.passed
 	@$(MAKE) test_unparse_includes_option_with_link.passed

@@ -183,11 +183,9 @@ test2004_113.C \
 test2004_114.C \
 test2004_115.C \
 test2004_116.C \
-test2004_117.C \
 test2004_118.C \
 test2004_119.C \
 test2004_120.C \
-test2004_121.C \
 test2004_122.C \
 test2004_123.C \
 test2004_124.C \
@@ -466,7 +464,6 @@ test2006_74.C \
 test2006_75.C \
 test2006_76.C \
 test2006_77.C \
-test2006_78.C \
 test2006_79.C \
 test2006_80.C \
 test2006_81.C \

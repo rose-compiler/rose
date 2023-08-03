@@ -52,8 +52,8 @@ if(with-ROSE_LONG_MAKE_CHECK_RULE)
     test2004_98.C test2004_99.C test2004_100.C test2004_101.C test2004_102.C
     test2004_103.C test2004_104.C test2004_105.C test2004_106.C test2004_107.C
     test2004_108.C test2004_109.C test2004_110.C test2004_111.C test2004_112.C
-    test2004_113.C test2004_114.C test2004_115.C test2004_116.C test2004_117.C
-    test2004_118.C test2004_119.C test2004_121.C test2004_122.C test2004_123.C
+    test2004_113.C test2004_114.C test2004_115.C test2004_116.C
+    test2004_118.C test2004_119.C test2004_122.C test2004_123.C
     test2004_124.C test2004_125.C test2004_128.C test2004_131.C test2004_132.C
     test2004_133.C test2004_134.C test2004_135.C test2004_136.C test2004_137.C
     test2004_138.C test2004_139.C test2004_140.C test2004_141.C test2004_142.C

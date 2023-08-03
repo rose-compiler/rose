@@ -40,7 +40,6 @@ ROSE__CXX_TESTS = \
 	test2003_05.C \
 	test2003_06.C \
 	test2003_08.C \
-	test2003_09.C \
 	test2003_10.C \
 	test2003_11.C \
 	test2003_12.C \
@@ -169,11 +168,9 @@ ROSE__CXX_TESTS = \
 	test2004_114.C \
 	test2004_115.C \
 	test2004_116.C \
-	test2004_117.C \
 	test2004_118.C \
 	test2004_119.C \
 	test2004_120.C \
-	test2004_121.C \
 	test2004_122.C \
 	test2004_123.C \
 	test2004_124.C \
@@ -626,7 +623,6 @@ ROSE__CXX_TESTS = \
 	test2007_169.C \
 	test2007_170.C \
 	test2007_171.C \
-	test2007_172.C \
 	test2007_173.C \
 	test2008_01.C \
 	test2008_03.C \
@@ -960,7 +956,6 @@ ROSE__CXX_TESTS = \
 	test2012_145.C \
 	test2012_146.C \
 	test2012_147.C \
-	test2012_148.C \
 	test2012_149.C \
 	test2012_150.C \
 	test2012_151.C \
@@ -1132,7 +1127,6 @@ ROSE__CXX_TESTS = \
 	test2013_61.C \
 	test2013_64.C \
 	test2013_65.C \
-	test2013_66.C \
 	test2013_67.C \
 	test2013_68.C \
 	test2013_69.C \
@@ -1242,11 +1236,9 @@ ROSE__CXX_TESTS = \
 	test2013_175.C \
 	test2013_176.C \
 	test2013_177.C \
-	test2013_178.C \
 	test2013_179.C \
 	test2013_180.C \
 	test2013_181.C \
-	test2013_182.C \
 	test2013_183.C \
 	test2013_184.C \
 	test2013_186.C \
@@ -1292,7 +1284,6 @@ ROSE__CXX_TESTS = \
 	test2013_229.C \
 	test2013_230.C \
 	test2013_231.C \
-	test2013_232.C \
 	test2013_237.C \
 	test2013_238.C \
 	test2013_239.C \

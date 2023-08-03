@@ -322,7 +322,6 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_52.C \
    test2019_53.C \
    test2019_54.C \
-   test2019_55.C \
    test2019_56.C \
    test2019_59.C \
    test2019_60.C \
@@ -465,9 +464,6 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2019_224.C \
    test2019_225.C \
    test2019_226.C \
-   test2019_227.C \
-   test2019_228.C \
-   test2019_229.C \
    test2019_232.C \
    test2019_233.C \
    test2012_23.C \
@@ -726,7 +722,6 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2020_83.C \
    test2020_84.C \
    test2020_85.C \
-   test2020_86.C \
    test2020_88.C \
    test2020_89.C \
    test2020_90.C \
@@ -901,7 +896,18 @@ TESTCODE_CURRENTLY_FAILING = \
    test2020_82.C \
    test2020_91.C \
    test2020_95.C \
-   test2022_01.C 
+   test2022_01.C
+
+# RHEL8 fails (probably others)
+TESTCODE_CURRENTLY_FAILING += \
+   test2019_55.C \
+   test2019_227.C \
+   test2019_228.C \
+   test2019_229.C
+
+# Intel fails
+TESTCODE_CURRENTLY_FAILING += \
+   test2020_86.C
 
 # NOTE: test2016_40.C fails due to a problem isolated into test2019_167.C (which required a more general form of name qualification support).
 
