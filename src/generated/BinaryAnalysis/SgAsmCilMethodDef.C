@@ -120,10 +120,30 @@ SgAsmCilMethodDef::~SgAsmCilMethodDef() {
     destructorHelper();
 }
 
-SgAsmCilMethodDef::SgAsmCilMethodDef() {}
+SgAsmCilMethodDef::SgAsmCilMethodDef()
+    : p_RVA({})
+    , p_ImplFlags({})
+    , p_Flags({})
+    , p_Name({})
+    , p_Signature({})
+    , p_ParamList({})
+    , p_body({})
+    , p_initLocals({})
+    , p_stackSize({})
+    , p_hasMoreSections({}) {}
 
 void
 SgAsmCilMethodDef::initializeProperties() {
+    p_RVA = {};
+    p_ImplFlags = {};
+    p_Flags = {};
+    p_Name = {};
+    p_Signature = {};
+    p_ParamList = {};
+    p_body = {};
+    p_initLocals = {};
+    p_stackSize = {};
+    p_hasMoreSections = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

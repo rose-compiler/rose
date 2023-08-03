@@ -43,10 +43,16 @@ SgAsmCilEvent::~SgAsmCilEvent() {
     destructorHelper();
 }
 
-SgAsmCilEvent::SgAsmCilEvent() {}
+SgAsmCilEvent::SgAsmCilEvent()
+    : p_EventFlags({})
+    , p_Name({})
+    , p_EventType({}) {}
 
 void
 SgAsmCilEvent::initializeProperties() {
+    p_EventFlags = {};
+    p_Name = {};
+    p_EventType = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

@@ -54,10 +54,18 @@ SgAsmCilAssemblyRefOS::~SgAsmCilAssemblyRefOS() {
     destructorHelper();
 }
 
-SgAsmCilAssemblyRefOS::SgAsmCilAssemblyRefOS() {}
+SgAsmCilAssemblyRefOS::SgAsmCilAssemblyRefOS()
+    : p_OSPlatformID({})
+    , p_OSMajorVersion({})
+    , p_OSMinorVersion({})
+    , p_AssemblyRefOS({}) {}
 
 void
 SgAsmCilAssemblyRefOS::initializeProperties() {
+    p_OSPlatformID = {};
+    p_OSMajorVersion = {};
+    p_OSMinorVersion = {};
+    p_AssemblyRefOS = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

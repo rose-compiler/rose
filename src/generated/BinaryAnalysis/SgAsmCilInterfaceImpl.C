@@ -32,10 +32,14 @@ SgAsmCilInterfaceImpl::~SgAsmCilInterfaceImpl() {
     destructorHelper();
 }
 
-SgAsmCilInterfaceImpl::SgAsmCilInterfaceImpl() {}
+SgAsmCilInterfaceImpl::SgAsmCilInterfaceImpl()
+    : p_Class({})
+    , p_Interface({}) {}
 
 void
 SgAsmCilInterfaceImpl::initializeProperties() {
+    p_Class = {};
+    p_Interface = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

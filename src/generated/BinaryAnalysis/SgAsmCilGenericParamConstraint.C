@@ -32,10 +32,14 @@ SgAsmCilGenericParamConstraint::~SgAsmCilGenericParamConstraint() {
     destructorHelper();
 }
 
-SgAsmCilGenericParamConstraint::SgAsmCilGenericParamConstraint() {}
+SgAsmCilGenericParamConstraint::SgAsmCilGenericParamConstraint()
+    : p_Owner({})
+    , p_Constraint({}) {}
 
 void
 SgAsmCilGenericParamConstraint::initializeProperties() {
+    p_Owner = {};
+    p_Constraint = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

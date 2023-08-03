@@ -1,16 +1,17 @@
-/** CIL PropertyMap node. */
+/** CIL PropertyMap node (II.22.35). */
 class SgAsmCilPropertyMap: public SgAsmCilMetadata {
+
     /** Property: Parent.
      *
      *  An index into the TypeDef table. */
     [[using Rosebud: rosetta]]
-    uint32_t Parent;
+    uint32_t Parent = {};
 
     /** Property: PropertyList.
      *
      *  An index into the Property table. */
     [[using Rosebud: rosetta]]
-    uint32_t PropertyList;
+    uint32_t PropertyList = {};
 
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);

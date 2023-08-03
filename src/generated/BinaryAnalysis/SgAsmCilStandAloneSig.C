@@ -21,10 +21,12 @@ SgAsmCilStandAloneSig::~SgAsmCilStandAloneSig() {
     destructorHelper();
 }
 
-SgAsmCilStandAloneSig::SgAsmCilStandAloneSig() {}
+SgAsmCilStandAloneSig::SgAsmCilStandAloneSig()
+    : p_Signature({}) {}
 
 void
 SgAsmCilStandAloneSig::initializeProperties() {
+    p_Signature = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

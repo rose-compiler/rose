@@ -1,0 +1,247 @@
+-- cut:SgAsmCilNode.h
+/** Base class for CIL branch of binary analysis IR nodes. */
+[[Rosebud::abstract]]
+class SgAsmCilNode: public SgAsmNode {};
+
+-- cut:SgAsmCilMetadata.h
+/** Base class for CIL branch of binary analysis IR nodes. */
+[[Rosebud::abstract]]
+class SgAsmCilMetadata : public SgAsmCilNode {};
+
+`for_each cl = .metadata`
+-- cut:SgAsmCil`cl.Name`.h
+/** CIL `cl.Name` node (`cl.Section`). */
+class SgAsmCil`cl.Name`: public Sg`cl.Baseclass` {`for_each fl = cl.Fields`
+
+    /** Property: `fl.Name`.
+     *
+     *  `fl.Doc` */
+    [[using Rosebud: rosetta]]
+    `fl.Type` `fl.Name` = {};
+`end_for`   
+`for_each exists xtr = cl.Extras`
+
+    /** Property: `xtr.Name`.
+     *
+     *  `xtr.Doc` */
+    [[using Rosebud: rosetta]]
+    `xtr.Type` `xtr.Name` = {};
+`end_for`
+public:
+    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+`for_each fl = cl.Fields` `if exists fl.RefKind` `if fl.RefKind eq "blob_heap"`
+    const std::uint8_t* get_`fl.Name`_blob() const;
+  `else_if fl.RefKind eq "guid_heap"`
+    const std::uint32_t* get_`fl.Name`_guid() const;
+  `else_if fl.RefKind eq "string_heap"`
+    const std::uint8_t* get_`fl.Name`_string() const;
+  `else`
+    const SgAsmCilMetadata* get_`fl.Name`_object() const;
+`end_if` `end_if` `end_for`  
+};
+-- cut:SgAsmCil`cl.Name`Table.h
+/** CIL `cl.Name` tables. */
+class SgAsmCil`cl.Name`Table: public SgAsmCilMetadata {
+    [[using Rosebud: rosetta, traverse, mutators(), large]]
+    std::vector<SgAsmCil`cl.Name`*> elements;
+
+public:
+    using CilMetadataType = SgAsmCil`cl.Name`;
+};
+`end_for`  
+
+-- cut:SgAsmCilMetadataHeap.h
+/** CIL SgAsmCilMetadataHeap node. */
+class SgAsmCilMetadataHeap: public SgAsmCilDataStream { `for_each fl = .metadataheap.Fields`
+
+    /** Property: `fl.Doc` */
+    [[using Rosebud: rosetta]]
+    `fl.Type` `fl.Name` = {};
+`end_for`   
+`for_each cl = .metadata`
+
+    /** Property: `cl.Name`Table. */
+    [[using Rosebud: rosetta, traverse]]
+    SgAsmCil`cl.Name`Table* `cl.Name`Table;
+`end_for`
+
+public:
+    /// reference kinds in the metadata tables
+    enum ReferenceKind
+    {
+      // heaps
+      e_ref_string_heap           = 1 << 0,
+      e_ref_guid_heap             = 1 << 1,
+      e_ref_blob_heap             = 1 << 2,
+      // single-table references
+      e_ref_assembly_ref          = 1 << 3,
+      e_ref_type_def              = 1 << 4,
+      e_ref_event                 = 1 << 5,
+      e_ref_field                 = 1 << 6,
+      e_ref_generic_param         = 1 << 7,
+      e_ref_module_ref            = 1 << 8,
+      e_ref_method_def            = 1 << 9,
+      e_ref_param                 = 1 << 10,
+      e_ref_property              = 1 << 11,
+      // multi-table references
+      e_ref_has_constant          = 1 << 12,
+      e_ref_has_custom_attribute  = 1 << 13,
+      e_ref_has_decl_security     = 1 << 14,
+      e_ref_has_field_marshall    = 1 << 15,
+      e_ref_has_semantics         = 1 << 16,
+      e_ref_method_def_or_ref     = 1 << 17,
+      e_ref_type_def_or_ref       = 1 << 18,
+      e_ref_implementation        = 1 << 19,
+      e_ref_member_forwarded      = 1 << 20,
+      e_ref_member_ref_parent     = 1 << 21,
+      e_ref_type_or_method_def    = 1 << 22,
+      e_ref_custom_attribute_type = 1 << 23,
+      e_ref_resolution_scope      = 1 << 24,
+      e_ref_last                  = 1 << 25,
+    };
+
+    enum TableKind : std::uint8_t
+    {
+      `for_each cl = .metadata`
+      e_`cl.Name` = `cl.Code`,
+      `end_for`
+      e_Unknown_table_kind = 0xFF
+    };
+        
+    /** parses the metadata objects from the buffer. */
+    void parse(std::vector<uint8_t>& buf, size_t startOfMetaData) override;
+
+    /** looks up the node associated with the coded index @ref idx in the metadata table
+     *  associated with @ref tblcode.
+     */
+    SgAsmCilMetadata* get_MetadataNode(std::uint32_t idx, TableKind tblcode) const;        
+        
+    /** looks up the node associated with the coded index @ref refcode in the metadata tables
+     *  under the assumption that @refval is of kind @ref knd
+     */
+    SgAsmCilMetadata* get_CodedMetadataNode(std::uint32_t refcode, ReferenceKind knd) const;
+
+    /** looks up the node associated with the coded index @ref refcode in the metadata tables
+     *  under the assumption that @refval is of kind @ref knd
+     */
+    SgAsmCilMetadata* get_MetadataNode(std::uint32_t refcode, ReferenceKind knd) const;
+};
+
+-- cut:SgAsmCilDataStream.h
+/** Base class for CIL branch of binary analysis IR nodes. */
+[[Rosebud::abstract]]
+class SgAsmCilDataStream : public SgAsmCilNode {
+    /** Property: Start offset of the byte stream. */
+    [[using Rosebud: rosetta, ctor_arg]]
+    uint32_t Offset;
+
+    /** Property: Length of the byte stream. */
+    [[using Rosebud: rosetta, ctor_arg]]
+    uint32_t Size;
+
+    /** Property: Name of the byte stream. */
+    [[using Rosebud: rosetta, ctor_arg]]
+    std::string Name;
+
+    /** Property: Name of the byte stream. */
+    [[using Rosebud: rosetta, ctor_arg]]
+    uint32_t NamePadding;
+
+public:
+    /** Define constant strings for the known stream types
+     *  @{
+     */
+    static const std::string ID_STRING_HEAP;
+    static const std::string ID_BLOB_HEAP;
+    static const std::string ID_US_HEAP;
+    static const std::string ID_GUID_HEAP;
+    static const std::string ID_METADATA_HEAP;
+    /** }@ */
+
+    /**
+     * Defines the parse function.
+     * @param buf the binary buffer.
+     * @param startOfMetaData the location in buf where the metadata root (CIL ECMA II.24.2.1)
+     *        is located.
+     * @details
+     *   buf[startOfMetaData] is the location of the metadata root magic number.
+     *   parse will add get_Offset to startOfMetaData to find the first byte of a
+     *   stream.
+     */
+    virtual void parse(std::vector<uint8_t>& buf, size_t startOfMetaData) { /* FIXME: should be abstract */ }
+};
+
+-- cut:SgAsmCilUint8Heap.h
+/** Base class for CIL branch of binary analysis IR nodes. */
+class SgAsmCilUint8Heap : public SgAsmCilDataStream {
+    [[using Rosebud: rosetta, mutators(), large]]
+    std::vector<uint8_t> Stream;
+
+public:
+    void parse(std::vector<uint8_t>& buf, size_t startOfMetaData) override;
+};
+
+-- cut:SgAsmCilUint32Heap.h
+/** Base class for CIL branch of binary analysis IR nodes. */
+class SgAsmCilUint32Heap : public SgAsmCilDataStream {
+    [[using Rosebud: rosetta, mutators(), large]]
+    std::vector<uint32_t> Stream;
+
+public:
+    void parse(std::vector<uint8_t>& buf, size_t startOfMetaData) override;
+};
+
+-- cut:SgAsmCilMetadataRoot.h
+/** CIL SgAsmCilMetadataRoot. */
+class SgAsmCilMetadataRoot: public SgAsmCilNode {
+`for_each fl = .metadataroot.Fields`
+
+    /** Property: `fl.Doc` */
+    [[using Rosebud: rosetta]]
+    `fl.Type` `fl.Name` = {};
+`end_for`
+`for_each str = .metadataroot.Streams`
+
+    /** Property: `str.Doc` */
+    // FIXME[Robb Matzke 2023-03-22]: these were implemented elsewhere, but could be auto generated
+    [[using Rosebud: rosetta, traverse, accessors(get_Streams), mutators(), large]]
+    std::vector<`str.Type`> `str.Name`;
+    //const std::vector<`str.Type`>& get_Streams() const;
+    //std::vector<`str.Type`>& get_Streams();
+`end_for`
+private:
+    /** indices to efficienty access the different heaps
+     * @{ */
+    mutable int8_t idxStringHeap = -1;
+    mutable int8_t idxBlobHeap = -1;
+    mutable int8_t idxUsHeap = -1;
+    mutable int8_t idxGuidHeap = -1;
+    mutable int8_t idxMetadataHeap = -1;
+    /** }@ */
+
+public:
+    /** 4-byte indicating the start of the metadata root in the .text section.
+     */
+    static constexpr uint32_t MAGIC_SIGNATURE = 0x424A5342;
+
+    /** Declares the parse function as called from the Cli section header object.
+     *  @pre isSgAsmCliHeader(this->get_parent()) != nullptr
+     */
+    void parse();
+
+    /** Declares the parse function.
+     *  @param buf the binary buffer.
+     *  @param index the start location of the metadata root object.
+     *         buf[index] is the location of the magic number.
+     */
+    void parse(std::vector<uint8_t>& buf, size_t index);
+
+    /** accessor functions to return specific heaps
+     * @{ */
+    SgAsmCilUint8Heap*    get_StringHeap() const;
+    SgAsmCilUint8Heap*    get_BlobHeap() const;
+    SgAsmCilUint8Heap*    get_UsHeap() const;
+    SgAsmCilUint32Heap*   get_GuidHeap() const;
+    SgAsmCilMetadataHeap* get_MetadataHeap() const;
+    /** }@ */
+};

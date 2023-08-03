@@ -43,10 +43,16 @@ SgAsmCilParam::~SgAsmCilParam() {
     destructorHelper();
 }
 
-SgAsmCilParam::SgAsmCilParam() {}
+SgAsmCilParam::SgAsmCilParam()
+    : p_Flags({})
+    , p_Sequence({})
+    , p_Name({}) {}
 
 void
 SgAsmCilParam::initializeProperties() {
+    p_Flags = {};
+    p_Sequence = {};
+    p_Name = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

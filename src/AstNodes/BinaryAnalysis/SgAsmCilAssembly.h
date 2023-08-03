@@ -1,58 +1,59 @@
-/** CIL Assembly node. */
+/** CIL Assembly node (II.22.2). */
 class SgAsmCilAssembly: public SgAsmCilMetadata {
+
     /** Property: HashAlgId.
      *
-     *  A 4-byte constant of type AssemblyHashAlgorithm */
+     *  A 4-byte constant of type AssemblyHashAlgorithm. */
     [[using Rosebud: rosetta]]
-    uint32_t HashAlgId;
+    uint32_t HashAlgId = {};
 
     /** Property: MajorVersion.
      *
      *  A 2-byte constant. */
     [[using Rosebud: rosetta]]
-    uint16_t MajorVersion;
+    uint16_t MajorVersion = {};
 
     /** Property: MinorVersion.
      *
      *  A 2-byte constant. */
     [[using Rosebud: rosetta]]
-    uint16_t MinorVersion;
+    uint16_t MinorVersion = {};
 
     /** Property: BuildNumber.
      *
      *  A 2-byte constant. */
     [[using Rosebud: rosetta]]
-    uint16_t BuildNumber;
+    uint16_t BuildNumber = {};
 
     /** Property: RevisionNumber.
      *
      *  A 2-byte constant. */
     [[using Rosebud: rosetta]]
-    uint16_t RevisionNumber;
+    uint16_t RevisionNumber = {};
 
     /** Property: Flags.
      *
      *  A 4-byte bitmask of type AssemblyFlags. */
     [[using Rosebud: rosetta]]
-    uint32_t Flags;
+    uint32_t Flags = {};
 
     /** Property: PublicKey.
      *
      *  An index into the Blob heap. */
     [[using Rosebud: rosetta]]
-    uint32_t PublicKey;
+    uint32_t PublicKey = {};
 
     /** Property: Name.
      *
      *  An index into the String heap. */
     [[using Rosebud: rosetta]]
-    uint32_t Name;
+    uint32_t Name = {};
 
     /** Property: Culture.
      *
      *  An index into the String heap. */
     [[using Rosebud: rosetta]]
-    uint32_t Culture;
+    uint32_t Culture = {};
 
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);

@@ -54,10 +54,18 @@ SgAsmCilManifestResource::~SgAsmCilManifestResource() {
     destructorHelper();
 }
 
-SgAsmCilManifestResource::SgAsmCilManifestResource() {}
+SgAsmCilManifestResource::SgAsmCilManifestResource()
+    : p_Offset({})
+    , p_Flags({})
+    , p_Name({})
+    , p_Implementation({}) {}
 
 void
 SgAsmCilManifestResource::initializeProperties() {
+    p_Offset = {};
+    p_Flags = {};
+    p_Name = {};
+    p_Implementation = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)
