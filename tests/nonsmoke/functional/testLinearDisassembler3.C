@@ -1,6 +1,8 @@
 #include <rose.h>
 #include <rosePublicConfig.h>
 
+#include <codecvt>
+
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/CommandLine.h>
@@ -66,9 +68,9 @@ buildSwitchParser(Settings &settings) {
 
 std::string readUtf16String(const std::vector<uint8_t>& buf, size_t ofs, size_t maxLen)
 {
-  std::string         res;
-  std::uint8_t const* chseq = buf.data() + ofs; 
-  std::uint8_t const* chlim = chseq + maxLen;
+  std::uint8_t   const* chseq = buf.data() + ofs; 
+  std::uint8_t   const* chlim = chseq + maxLen;
+  std::u16string string16;
   
   while ((chseq+1) < chlim)
   {
@@ -76,13 +78,13 @@ std::string readUtf16String(const std::vector<uint8_t>& buf, size_t ofs, size_t 
     std::uint16_t hi = (*++chseq);
     std::uint16_t ch = (hi << 8) + lo;
     
-    ROSE_ASSERT(hi == 0); // \todo decode real UTF16 string
-    
-    res += char(ch);
+    string16.push_back(ch);    
     ++chseq;
   }
   
-  return res;
+  std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> conv;
+  
+  return conv.to_bytes(string16);
 }
 
 std::string decodeUsString(const std::vector<uint8_t>& buf, size_t ofs)

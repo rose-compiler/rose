@@ -32,10 +32,14 @@ SgAsmCilMethodSpec::~SgAsmCilMethodSpec() {
     destructorHelper();
 }
 
-SgAsmCilMethodSpec::SgAsmCilMethodSpec() {}
+SgAsmCilMethodSpec::SgAsmCilMethodSpec()
+    : p_Method({})
+    , p_Instantiation({}) {}
 
 void
 SgAsmCilMethodSpec::initializeProperties() {
+    p_Method = {};
+    p_Instantiation = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

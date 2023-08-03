@@ -40,3 +40,4 @@ public:
      */
     virtual void parse(std::vector<uint8_t>& buf, size_t startOfMetaData) { /* FIXME: should be abstract */ }
 };
+

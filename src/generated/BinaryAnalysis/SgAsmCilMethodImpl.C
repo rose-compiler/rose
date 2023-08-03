@@ -43,10 +43,16 @@ SgAsmCilMethodImpl::~SgAsmCilMethodImpl() {
     destructorHelper();
 }
 
-SgAsmCilMethodImpl::SgAsmCilMethodImpl() {}
+SgAsmCilMethodImpl::SgAsmCilMethodImpl()
+    : p_Class({})
+    , p_MethodBody({})
+    , p_MethodDeclaration({}) {}
 
 void
 SgAsmCilMethodImpl::initializeProperties() {
+    p_Class = {};
+    p_MethodBody = {};
+    p_MethodDeclaration = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

@@ -65,10 +65,20 @@ SgAsmCilModule::~SgAsmCilModule() {
     destructorHelper();
 }
 
-SgAsmCilModule::SgAsmCilModule() {}
+SgAsmCilModule::SgAsmCilModule()
+    : p_Generation({})
+    , p_Name({})
+    , p_Mvid({})
+    , p_Encld({})
+    , p_EncBaseId({}) {}
 
 void
 SgAsmCilModule::initializeProperties() {
+    p_Generation = {};
+    p_Name = {};
+    p_Mvid = {};
+    p_Encld = {};
+    p_EncBaseId = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

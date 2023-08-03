@@ -6,3 +6,4 @@ class SgAsmCilTypeSpecTable: public SgAsmCilMetadata {
 public:
     using CilMetadataType = SgAsmCilTypeSpec;
 };
+

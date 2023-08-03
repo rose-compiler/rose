@@ -527,7 +527,16 @@ SgAsmCilMetadataHeap::~SgAsmCilMetadataHeap() {
     destructorHelper();
 }
 
-SgAsmCilMetadataHeap::SgAsmCilMetadataHeap() {}
+SgAsmCilMetadataHeap::SgAsmCilMetadataHeap()
+    : p_ReservedAlwaysZero({})
+    , p_MajorVersion({})
+    , p_MinorVersion({})
+    , p_HeapSizes({})
+    , p_ReservedAlwaysOne({})
+    , p_Valid({})
+    , p_Sorted({})
+    , p_NumberOfRows({})
+    , p_DataSizeFlags({}) {}
 
 // The association between constructor arguments and their classes:
 //    property=Offset           class=SgAsmCilDataStream
@@ -538,10 +547,28 @@ SgAsmCilMetadataHeap::SgAsmCilMetadataHeap(uint32_t const& Offset,
                                            uint32_t const& Size,
                                            std::string const& Name,
                                            uint32_t const& NamePadding)
-    : SgAsmCilDataStream(Offset, Size, Name, NamePadding) {}
+    : SgAsmCilDataStream(Offset, Size, Name, NamePadding)
+    , p_ReservedAlwaysZero({})
+    , p_MajorVersion({})
+    , p_MinorVersion({})
+    , p_HeapSizes({})
+    , p_ReservedAlwaysOne({})
+    , p_Valid({})
+    , p_Sorted({})
+    , p_NumberOfRows({})
+    , p_DataSizeFlags({}) {}
 
 void
 SgAsmCilMetadataHeap::initializeProperties() {
+    p_ReservedAlwaysZero = {};
+    p_MajorVersion = {};
+    p_MinorVersion = {};
+    p_HeapSizes = {};
+    p_ReservedAlwaysOne = {};
+    p_Valid = {};
+    p_Sorted = {};
+    p_NumberOfRows = {};
+    p_DataSizeFlags = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

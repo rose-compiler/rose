@@ -32,10 +32,14 @@ SgAsmCilPropertyMap::~SgAsmCilPropertyMap() {
     destructorHelper();
 }
 
-SgAsmCilPropertyMap::SgAsmCilPropertyMap() {}
+SgAsmCilPropertyMap::SgAsmCilPropertyMap()
+    : p_Parent({})
+    , p_PropertyList({}) {}
 
 void
 SgAsmCilPropertyMap::initializeProperties() {
+    p_Parent = {};
+    p_PropertyList = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

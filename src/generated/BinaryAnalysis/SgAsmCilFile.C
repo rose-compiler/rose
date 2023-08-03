@@ -43,10 +43,16 @@ SgAsmCilFile::~SgAsmCilFile() {
     destructorHelper();
 }
 
-SgAsmCilFile::SgAsmCilFile() {}
+SgAsmCilFile::SgAsmCilFile()
+    : p_Flags({})
+    , p_Name({})
+    , p_HashValue({}) {}
 
 void
 SgAsmCilFile::initializeProperties() {
+    p_Flags = {};
+    p_Name = {};
+    p_HashValue = {};
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)
