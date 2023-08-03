@@ -674,6 +674,7 @@ namespace
     ADA_ASSERT(expr.Expression_Kind == An_Operator_Symbol);
 
     // PP 11/18/22
+    // UNCLEAR_LINK_1
     // under some unclear circumstances a provided = operator and a generated /= may have the
     //   same Corresponding_Name_Declaration, but different Corresponding_Name_Definition.
     //   => just use the Corresponding_Name_Definition
@@ -684,6 +685,27 @@ namespace
       SgExpression* res = sg::dispatch(ExprRefMaker{ctx}, dcl);
 
       return SG_DEREF(res);
+    }
+
+    // PP 08/03/23
+    // UNCLEAR_LINK_2
+    // under some unclear circumstances ASIS does not link a callee (i.e., A_PLUS_OPERATOR representing a unary call)
+    // to its available definition, but only to its declaration (A_UNARY_PLUS_OPERATOR).
+    // ACATS test: c87b04b
+    // => to resolve the issue, look up the declaration by expr.Corresponding_Name_Declaration;
+    //    to avoid the case described by UNCLEAR_LINK_1, test if the operator declaration has
+    //    the same name as used for the call.
+    if (SgDeclarationStatement* dcl = findFirst(asisDecls(), expr.Corresponding_Name_Declaration))
+    {
+      const std::string dclname = si::Ada::convertRoseOperatorNameToAdaName(si::get_name(dcl));
+      const bool        sameOperatorName = boost::iequals(dclname, expr.Name_Image);
+
+      if (sameOperatorName)
+      {
+        SgExpression* res = sg::dispatch(ExprRefMaker{ctx}, dcl);
+
+        return SG_DEREF(res);
+      }
     }
 
     const std::size_t                   len = strlen(expr.Name_Image);
