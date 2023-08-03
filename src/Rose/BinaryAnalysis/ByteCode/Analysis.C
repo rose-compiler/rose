@@ -96,7 +96,7 @@ void Class::partition(const PartitionerPtr &partitioner) const
         va = insn->get_address();
         if (targets.find(va) != targets.end() && !insn->terminatesBasicBlock()) {
           // But a new block is not needed if this is the first instruction in the block
-          if (!block->isEmpty() && va != block->address()) {
+          if (block && !block->isEmpty() && va != block->address()) {
             if (TRACE_PARTITION) {
               cout << "... splitting block after: 0x00" << std::hex << block->instructions().back()->get_address()
                    << " va: 0x00" << va
@@ -120,7 +120,7 @@ void Class::partition(const PartitionerPtr &partitioner) const
         if (needNewBlock) {
           needNewBlock = false;
           if (block && !block->isEmpty() && va != block->address()) {
-            // Attach the block only if if the old block's address differs from the instruction's
+            // Attach the block only if the old block's address differs from the instruction's
             partitioner->attachBasicBlock(block);
           }
           block = Partitioner2::BasicBlock::instance(va, partitioner);
