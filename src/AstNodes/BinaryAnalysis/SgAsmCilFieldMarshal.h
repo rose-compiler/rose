@@ -5,13 +5,13 @@ class SgAsmCilFieldMarshal: public SgAsmCilMetadata {
      *
      *  An index into Field or Param table. */
     [[using Rosebud: rosetta]]
-    uint32_t Parent = {};
+    uint32_t Parent = 0;
 
     /** Property: NativeType.
      *
      *  An index into the Blob heap. */
     [[using Rosebud: rosetta]]
-    uint32_t NativeType = {};
+    uint32_t NativeType = 0;
 
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);

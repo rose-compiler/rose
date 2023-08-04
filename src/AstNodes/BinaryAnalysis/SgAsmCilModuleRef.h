@@ -5,7 +5,7 @@ class SgAsmCilModuleRef: public SgAsmCilMetadata {
      *
      *  An index into the String heap. */
     [[using Rosebud: rosetta]]
-    uint32_t Name = {};
+    uint32_t Name = 0;
 
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);

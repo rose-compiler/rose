@@ -44,15 +44,15 @@ SgAsmCilField::~SgAsmCilField() {
 }
 
 SgAsmCilField::SgAsmCilField()
-    : p_Flags({})
-    , p_Name({})
-    , p_Signature({}) {}
+    : p_Flags(0)
+    , p_Name(0)
+    , p_Signature(0) {}
 
 void
 SgAsmCilField::initializeProperties() {
-    p_Flags = {};
-    p_Name = {};
-    p_Signature = {};
+    p_Flags = 0;
+    p_Name = 0;
+    p_Signature = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

@@ -33,13 +33,13 @@ SgAsmCilFieldRVA::~SgAsmCilFieldRVA() {
 }
 
 SgAsmCilFieldRVA::SgAsmCilFieldRVA()
-    : p_RVA({})
-    , p_Field({}) {}
+    : p_RVA(0)
+    , p_Field(0) {}
 
 void
 SgAsmCilFieldRVA::initializeProperties() {
-    p_RVA = {};
-    p_Field = {};
+    p_RVA = 0;
+    p_Field = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

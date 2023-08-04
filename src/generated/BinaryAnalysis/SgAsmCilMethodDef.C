@@ -121,29 +121,29 @@ SgAsmCilMethodDef::~SgAsmCilMethodDef() {
 }
 
 SgAsmCilMethodDef::SgAsmCilMethodDef()
-    : p_RVA({})
-    , p_ImplFlags({})
-    , p_Flags({})
-    , p_Name({})
-    , p_Signature({})
-    , p_ParamList({})
-    , p_body({})
-    , p_initLocals({})
-    , p_stackSize({})
-    , p_hasMoreSections({}) {}
+    : p_RVA(0)
+    , p_ImplFlags(0)
+    , p_Flags(0)
+    , p_Name(0)
+    , p_Signature(0)
+    , p_ParamList(0)
+    , p_body(0)
+    , p_initLocals(0)
+    , p_stackSize(0)
+    , p_hasMoreSections(0) {}
 
 void
 SgAsmCilMethodDef::initializeProperties() {
-    p_RVA = {};
-    p_ImplFlags = {};
-    p_Flags = {};
-    p_Name = {};
-    p_Signature = {};
-    p_ParamList = {};
-    p_body = {};
-    p_initLocals = {};
-    p_stackSize = {};
-    p_hasMoreSections = {};
+    p_RVA = 0;
+    p_ImplFlags = 0;
+    p_Flags = 0;
+    p_Name = 0;
+    p_Signature = 0;
+    p_ParamList = 0;
+    p_body = 0;
+    p_initLocals = 0;
+    p_stackSize = 0;
+    p_hasMoreSections = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

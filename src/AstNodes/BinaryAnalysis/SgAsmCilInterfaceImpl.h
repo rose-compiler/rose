@@ -5,13 +5,13 @@ class SgAsmCilInterfaceImpl: public SgAsmCilMetadata {
      *
      *  An index into the TypeDef table. */
     [[using Rosebud: rosetta]]
-    uint32_t Class = {};
+    uint32_t Class = 0;
 
     /** Property: Interface.
      *
      *  An index into the TypeDef, TypeRef, or TypeSpec table. */
     [[using Rosebud: rosetta]]
-    uint32_t Interface = {};
+    uint32_t Interface = 0;
 
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);

@@ -33,13 +33,13 @@ SgAsmCilNestedClass::~SgAsmCilNestedClass() {
 }
 
 SgAsmCilNestedClass::SgAsmCilNestedClass()
-    : p_NestedClass({})
-    , p_EnclosingClass({}) {}
+    : p_NestedClass(0)
+    , p_EnclosingClass(0) {}
 
 void
 SgAsmCilNestedClass::initializeProperties() {
-    p_NestedClass = {};
-    p_EnclosingClass = {};
+    p_NestedClass = 0;
+    p_EnclosingClass = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

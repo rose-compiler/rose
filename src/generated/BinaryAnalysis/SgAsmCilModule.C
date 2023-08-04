@@ -66,19 +66,19 @@ SgAsmCilModule::~SgAsmCilModule() {
 }
 
 SgAsmCilModule::SgAsmCilModule()
-    : p_Generation({})
-    , p_Name({})
-    , p_Mvid({})
-    , p_Encld({})
-    , p_EncBaseId({}) {}
+    : p_Generation(0)
+    , p_Name(0)
+    , p_Mvid(0)
+    , p_Encld(0)
+    , p_EncBaseId(0) {}
 
 void
 SgAsmCilModule::initializeProperties() {
-    p_Generation = {};
-    p_Name = {};
-    p_Mvid = {};
-    p_Encld = {};
-    p_EncBaseId = {};
+    p_Generation = 0;
+    p_Name = 0;
+    p_Mvid = 0;
+    p_Encld = 0;
+    p_EncBaseId = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

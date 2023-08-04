@@ -120,27 +120,25 @@ SgAsmCilMetadataRoot::~SgAsmCilMetadataRoot() {
 }
 
 SgAsmCilMetadataRoot::SgAsmCilMetadataRoot()
-    : p_Signature({})
-    , p_MajorVersion({})
-    , p_MinorVersion({})
-    , p_Reserved0({})
-    , p_Length({})
-    , p_Version({})
-    , p_VersionPadding({})
-    , p_Flags({})
-    , p_NumberOfStreams({}) {}
+    : p_Signature(0)
+    , p_MajorVersion(0)
+    , p_MinorVersion(0)
+    , p_Reserved0(0)
+    , p_Length(0)
+    , p_VersionPadding(0)
+    , p_Flags(0)
+    , p_NumberOfStreams(0) {}
 
 void
 SgAsmCilMetadataRoot::initializeProperties() {
-    p_Signature = {};
-    p_MajorVersion = {};
-    p_MinorVersion = {};
-    p_Reserved0 = {};
-    p_Length = {};
-    p_Version = {};
-    p_VersionPadding = {};
-    p_Flags = {};
-    p_NumberOfStreams = {};
+    p_Signature = 0;
+    p_MajorVersion = 0;
+    p_MinorVersion = 0;
+    p_Reserved0 = 0;
+    p_Length = 0;
+    p_VersionPadding = 0;
+    p_Flags = 0;
+    p_NumberOfStreams = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

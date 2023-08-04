@@ -44,15 +44,15 @@ SgAsmCilMemberRef::~SgAsmCilMemberRef() {
 }
 
 SgAsmCilMemberRef::SgAsmCilMemberRef()
-    : p_Class({})
-    , p_Name({})
-    , p_Signature({}) {}
+    : p_Class(0)
+    , p_Name(0)
+    , p_Signature(0) {}
 
 void
 SgAsmCilMemberRef::initializeProperties() {
-    p_Class = {};
-    p_Name = {};
-    p_Signature = {};
+    p_Class = 0;
+    p_Name = 0;
+    p_Signature = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

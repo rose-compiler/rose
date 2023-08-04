@@ -110,27 +110,27 @@ SgAsmCilAssembly::~SgAsmCilAssembly() {
 }
 
 SgAsmCilAssembly::SgAsmCilAssembly()
-    : p_HashAlgId({})
-    , p_MajorVersion({})
-    , p_MinorVersion({})
-    , p_BuildNumber({})
-    , p_RevisionNumber({})
-    , p_Flags({})
-    , p_PublicKey({})
-    , p_Name({})
-    , p_Culture({}) {}
+    : p_HashAlgId(0)
+    , p_MajorVersion(0)
+    , p_MinorVersion(0)
+    , p_BuildNumber(0)
+    , p_RevisionNumber(0)
+    , p_Flags(0)
+    , p_PublicKey(0)
+    , p_Name(0)
+    , p_Culture(0) {}
 
 void
 SgAsmCilAssembly::initializeProperties() {
-    p_HashAlgId = {};
-    p_MajorVersion = {};
-    p_MinorVersion = {};
-    p_BuildNumber = {};
-    p_RevisionNumber = {};
-    p_Flags = {};
-    p_PublicKey = {};
-    p_Name = {};
-    p_Culture = {};
+    p_HashAlgId = 0;
+    p_MajorVersion = 0;
+    p_MinorVersion = 0;
+    p_BuildNumber = 0;
+    p_RevisionNumber = 0;
+    p_Flags = 0;
+    p_PublicKey = 0;
+    p_Name = 0;
+    p_Culture = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

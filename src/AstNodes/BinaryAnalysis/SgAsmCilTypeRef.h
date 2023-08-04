@@ -5,19 +5,19 @@ class SgAsmCilTypeRef: public SgAsmCilMetadata {
      *
      *  An index into a Module, ModuleRef, AssemblyRef or TypeRef table, or null. */
     [[using Rosebud: rosetta]]
-    uint16_t ResolutionScope = {};
+    uint16_t ResolutionScope = 0;
 
     /** Property: TypeName.
      *
      *  An index into the String heap. */
     [[using Rosebud: rosetta]]
-    uint32_t TypeName = {};
+    uint32_t TypeName = 0;
 
     /** Property: TypeNamespace.
      *
      *  An index into the String heap. */
     [[using Rosebud: rosetta]]
-    uint32_t TypeNamespace = {};
+    uint32_t TypeNamespace = 0;
 
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);

@@ -4,39 +4,39 @@ class SgAsmCilMetadataRoot: public SgAsmCilNode {
 
     /** Property: Magic signature for physical metadata (always 0x424A5342) */
     [[using Rosebud: rosetta]]
-    uint32_t Signature = {};
+    uint32_t Signature = 0;
 
     /** Property: Major version number. */
     [[using Rosebud: rosetta]]
-    uint16_t MajorVersion = {};
+    uint16_t MajorVersion = 0;
 
     /** Property: Minor version number. */
     [[using Rosebud: rosetta]]
-    uint16_t MinorVersion = {};
+    uint16_t MinorVersion = 0;
 
     /** Property: Reserved space. */
     [[using Rosebud: rosetta]]
-    uint32_t Reserved0 = {};
+    uint32_t Reserved0 = 0;
 
     /** Property: Number of bytes allocated to hold version string (including null terminator). */
     [[using Rosebud: rosetta]]
-    uint32_t Length = {};
+    uint32_t Length = 0;
 
     /** Property: Version string. */
     [[using Rosebud: rosetta]]
-    std::string Version = {};
+    std::string Version;
 
     /** Property: Padding to next 4-byte boundary. */
     [[using Rosebud: rosetta]]
-    uint32_t VersionPadding = {};
+    uint32_t VersionPadding = 0;
 
     /** Property: Reserved space. */
     [[using Rosebud: rosetta]]
-    uint16_t Flags = {};
+    uint16_t Flags = 0;
 
     /** Property: Reserved space. */
     [[using Rosebud: rosetta]]
-    uint16_t NumberOfStreams = {};
+    uint16_t NumberOfStreams = 0;
 
 
     /** Property: Metadata streams. */

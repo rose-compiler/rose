@@ -28726,7 +28726,7 @@ class SgAsmCilTypeSpec: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilTypeSpec.setDataPrototype(
-        "uint32_t", "Signature", "= {}",
+        "uint32_t", "Signature", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -28858,19 +28858,19 @@ class SgAsmCilTypeRef: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilTypeRef.setDataPrototype(
-        "uint16_t", "ResolutionScope", "= {}",
+        "uint16_t", "ResolutionScope", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilTypeRef.setDataPrototype(
-        "uint32_t", "TypeName", "= {}",
+        "uint32_t", "TypeName", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilTypeRef.setDataPrototype(
-        "uint32_t", "TypeNamespace", "= {}",
+        "uint32_t", "TypeNamespace", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -29026,37 +29026,37 @@ class SgAsmCilTypeDef: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilTypeDef.setDataPrototype(
-        "uint32_t", "Flags", "= {}",
+        "uint32_t", "Flags", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilTypeDef.setDataPrototype(
-        "uint32_t", "TypeName", "= {}",
+        "uint32_t", "TypeName", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilTypeDef.setDataPrototype(
-        "uint32_t", "TypeNamespace", "= {}",
+        "uint32_t", "TypeNamespace", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilTypeDef.setDataPrototype(
-        "uint32_t", "Extends", "= {}",
+        "uint32_t", "Extends", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilTypeDef.setDataPrototype(
-        "uint32_t", "FieldList", "= {}",
+        "uint32_t", "FieldList", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilTypeDef.setDataPrototype(
-        "uint32_t", "MethodList", "= {}",
+        "uint32_t", "MethodList", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -29247,7 +29247,7 @@ class SgAsmCilStandAloneSig: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilStandAloneSig.setDataPrototype(
-        "uint32_t", "Signature", "= {}",
+        "uint32_t", "Signature", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -29441,13 +29441,13 @@ class SgAsmCilPropertyMap: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilPropertyMap.setDataPrototype(
-        "uint32_t", "Parent", "= {}",
+        "uint32_t", "Parent", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilPropertyMap.setDataPrototype(
-        "uint32_t", "PropertyList", "= {}",
+        "uint32_t", "PropertyList", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -29529,19 +29529,19 @@ class SgAsmCilProperty: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilProperty.setDataPrototype(
-        "uint16_t", "Flags", "= {}",
+        "uint16_t", "Flags", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilProperty.setDataPrototype(
-        "uint32_t", "Name", "= {}",
+        "uint32_t", "Name", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilProperty.setDataPrototype(
-        "uint32_t", "Type", "= {}",
+        "uint32_t", "Type", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -29696,19 +29696,19 @@ class SgAsmCilParam: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilParam.setDataPrototype(
-        "uint16_t", "Flags", "= {}",
+        "uint16_t", "Flags", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilParam.setDataPrototype(
-        "uint16_t", "Sequence", "= {}",
+        "uint16_t", "Sequence", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilParam.setDataPrototype(
-        "uint32_t", "Name", "= {}",
+        "uint32_t", "Name", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -29862,13 +29862,13 @@ class SgAsmCilNestedClass: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilNestedClass.setDataPrototype(
-        "uint32_t", "NestedClass", "= {}",
+        "uint32_t", "NestedClass", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilNestedClass.setDataPrototype(
-        "uint32_t", "EnclosingClass", "= {}",
+        "uint32_t", "EnclosingClass", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -30074,7 +30074,7 @@ class SgAsmCilModuleRef: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilModuleRef.setDataPrototype(
-        "uint32_t", "Name", "= {}",
+        "uint32_t", "Name", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -30144,31 +30144,31 @@ class SgAsmCilModule: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilModule.setDataPrototype(
-        "uint16_t", "Generation", "= {}",
+        "uint16_t", "Generation", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilModule.setDataPrototype(
-        "uint32_t", "Name", "= {}",
+        "uint32_t", "Name", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilModule.setDataPrototype(
-        "uint32_t", "Mvid", "= {}",
+        "uint32_t", "Mvid", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilModule.setDataPrototype(
-        "uint32_t", "Encld", "= {}",
+        "uint32_t", "Encld", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilModule.setDataPrototype(
-        "uint32_t", "EncBaseId", "= {}",
+        "uint32_t", "EncBaseId", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -30347,13 +30347,13 @@ class SgAsmCilMethodSpec: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilMethodSpec.setDataPrototype(
-        "uint32_t", "Method", "= {}",
+        "uint32_t", "Method", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMethodSpec.setDataPrototype(
-        "uint32_t", "Instantiation", "= {}",
+        "uint32_t", "Instantiation", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -30497,19 +30497,19 @@ class SgAsmCilMethodSemantics: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilMethodSemantics.setDataPrototype(
-        "uint16_t", "Semantics", "= {}",
+        "uint16_t", "Semantics", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMethodSemantics.setDataPrototype(
-        "uint32_t", "Method", "= {}",
+        "uint32_t", "Method", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMethodSemantics.setDataPrototype(
-        "uint32_t", "Association", "= {}",
+        "uint32_t", "Association", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -30664,19 +30664,19 @@ class SgAsmCilMethodImpl: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilMethodImpl.setDataPrototype(
-        "uint32_t", "Class", "= {}",
+        "uint32_t", "Class", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMethodImpl.setDataPrototype(
-        "uint32_t", "MethodBody", "= {}",
+        "uint32_t", "MethodBody", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMethodImpl.setDataPrototype(
-        "uint32_t", "MethodDeclaration", "= {}",
+        "uint32_t", "MethodDeclaration", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -30832,61 +30832,61 @@ class SgAsmCilMethodDef: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilMethodDef.setDataPrototype(
-        "uint32_t", "RVA", "= {}",
+        "uint32_t", "RVA", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMethodDef.setDataPrototype(
-        "uint32_t", "ImplFlags", "= {}",
+        "uint32_t", "ImplFlags", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMethodDef.setDataPrototype(
-        "uint16_t", "Flags", "= {}",
+        "uint16_t", "Flags", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMethodDef.setDataPrototype(
-        "uint32_t", "Name", "= {}",
+        "uint32_t", "Name", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMethodDef.setDataPrototype(
-        "uint32_t", "Signature", "= {}",
+        "uint32_t", "Signature", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMethodDef.setDataPrototype(
-        "uint32_t", "ParamList", "= {}",
+        "uint32_t", "ParamList", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMethodDef.setDataPrototype(
-        "SgAsmBlock*", "body", "= {}",
+        "SgAsmBlock*", "body", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMethodDef.setDataPrototype(
-        "bool", "initLocals", "= {}",
+        "bool", "initLocals", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMethodDef.setDataPrototype(
-        "uint32_t", "stackSize", "= {}",
+        "uint32_t", "stackSize", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMethodDef.setDataPrototype(
-        "bool", "hasMoreSections", "= {}",
+        "bool", "hasMoreSections", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -31057,55 +31057,55 @@ class SgAsmCilMetadataRoot: public SgAsmCilNode {
 
 #ifndef DOCUMENTATION
     AsmCilMetadataRoot.setDataPrototype(
-        "uint32_t", "Signature", "= {}",
+        "uint32_t", "Signature", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMetadataRoot.setDataPrototype(
-        "uint16_t", "MajorVersion", "= {}",
+        "uint16_t", "MajorVersion", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMetadataRoot.setDataPrototype(
-        "uint16_t", "MinorVersion", "= {}",
+        "uint16_t", "MinorVersion", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMetadataRoot.setDataPrototype(
-        "uint32_t", "Reserved0", "= {}",
+        "uint32_t", "Reserved0", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMetadataRoot.setDataPrototype(
-        "uint32_t", "Length", "= {}",
+        "uint32_t", "Length", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMetadataRoot.setDataPrototype(
-        "std::string", "Version", "= {}",
+        "std::string", "Version", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMetadataRoot.setDataPrototype(
-        "uint32_t", "VersionPadding", "= {}",
+        "uint32_t", "VersionPadding", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMetadataRoot.setDataPrototype(
-        "uint16_t", "Flags", "= {}",
+        "uint16_t", "Flags", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMetadataRoot.setDataPrototype(
-        "uint16_t", "NumberOfStreams", "= {}",
+        "uint16_t", "NumberOfStreams", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -31293,55 +31293,55 @@ class SgAsmCilMetadataHeap: public SgAsmCilDataStream {
 
 #ifndef DOCUMENTATION
     AsmCilMetadataHeap.setDataPrototype(
-        "uint32_t", "ReservedAlwaysZero", "= {}",
+        "uint32_t", "ReservedAlwaysZero", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMetadataHeap.setDataPrototype(
-        "uint8_t", "MajorVersion", "= {}",
+        "uint8_t", "MajorVersion", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMetadataHeap.setDataPrototype(
-        "uint8_t", "MinorVersion", "= {}",
+        "uint8_t", "MinorVersion", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMetadataHeap.setDataPrototype(
-        "uint8_t", "HeapSizes", "= {}",
+        "uint8_t", "HeapSizes", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMetadataHeap.setDataPrototype(
-        "uint8_t", "ReservedAlwaysOne", "= {}",
+        "uint8_t", "ReservedAlwaysOne", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMetadataHeap.setDataPrototype(
-        "uint64_t", "Valid", "= {}",
+        "uint64_t", "Valid", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMetadataHeap.setDataPrototype(
-        "uint64_t", "Sorted", "= {}",
+        "uint64_t", "Sorted", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMetadataHeap.setDataPrototype(
-        "std::vector<uint32_t>", "NumberOfRows", "= {}",
+        "std::vector<uint32_t>", "NumberOfRows", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMetadataHeap.setDataPrototype(
-        "uint64_t", "DataSizeFlags", "= {}",
+        "uint64_t", "DataSizeFlags", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -32212,19 +32212,19 @@ class SgAsmCilMemberRef: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilMemberRef.setDataPrototype(
-        "uint32_t", "Class", "= {}",
+        "uint32_t", "Class", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMemberRef.setDataPrototype(
-        "uint32_t", "Name", "= {}",
+        "uint32_t", "Name", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilMemberRef.setDataPrototype(
-        "uint32_t", "Signature", "= {}",
+        "uint32_t", "Signature", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -32380,25 +32380,25 @@ class SgAsmCilManifestResource: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilManifestResource.setDataPrototype(
-        "uint32_t", "Offset", "= {}",
+        "uint32_t", "Offset", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilManifestResource.setDataPrototype(
-        "uint32_t", "Flags", "= {}",
+        "uint32_t", "Flags", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilManifestResource.setDataPrototype(
-        "uint32_t", "Name", "= {}",
+        "uint32_t", "Name", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilManifestResource.setDataPrototype(
-        "uint32_t", "Implementation", "= {}",
+        "uint32_t", "Implementation", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -32564,13 +32564,13 @@ class SgAsmCilInterfaceImpl: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilInterfaceImpl.setDataPrototype(
-        "uint32_t", "Class", "= {}",
+        "uint32_t", "Class", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilInterfaceImpl.setDataPrototype(
-        "uint32_t", "Interface", "= {}",
+        "uint32_t", "Interface", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -32809,25 +32809,25 @@ class SgAsmCilImplMap: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilImplMap.setDataPrototype(
-        "uint16_t", "MappingFlags", "= {}",
+        "uint16_t", "MappingFlags", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilImplMap.setDataPrototype(
-        "uint32_t", "MemberForwarded", "= {}",
+        "uint32_t", "MemberForwarded", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilImplMap.setDataPrototype(
-        "uint32_t", "ImportName", "= {}",
+        "uint32_t", "ImportName", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilImplMap.setDataPrototype(
-        "uint32_t", "ImportScope", "= {}",
+        "uint32_t", "ImportScope", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -32994,25 +32994,25 @@ class SgAsmCilGenericParam: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilGenericParam.setDataPrototype(
-        "uint16_t", "Number", "= {}",
+        "uint16_t", "Number", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilGenericParam.setDataPrototype(
-        "uint16_t", "Flags", "= {}",
+        "uint16_t", "Flags", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilGenericParam.setDataPrototype(
-        "uint32_t", "Owner", "= {}",
+        "uint32_t", "Owner", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilGenericParam.setDataPrototype(
-        "uint32_t", "Name", "= {}",
+        "uint32_t", "Name", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -33178,13 +33178,13 @@ class SgAsmCilGenericParamConstraint: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilGenericParamConstraint.setDataPrototype(
-        "uint32_t", "Owner", "= {}",
+        "uint32_t", "Owner", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilGenericParamConstraint.setDataPrototype(
-        "uint32_t", "Constraint", "= {}",
+        "uint32_t", "Constraint", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -33328,19 +33328,19 @@ class SgAsmCilFile: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilFile.setDataPrototype(
-        "uint32_t", "Flags", "= {}",
+        "uint32_t", "Flags", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilFile.setDataPrototype(
-        "uint32_t", "Name", "= {}",
+        "uint32_t", "Name", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilFile.setDataPrototype(
-        "uint32_t", "HashValue", "= {}",
+        "uint32_t", "HashValue", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -33557,13 +33557,13 @@ class SgAsmCilFieldRVA: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilFieldRVA.setDataPrototype(
-        "uint32_t", "RVA", "= {}",
+        "uint32_t", "RVA", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilFieldRVA.setDataPrototype(
-        "uint32_t", "Field", "= {}",
+        "uint32_t", "Field", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -33706,13 +33706,13 @@ class SgAsmCilFieldMarshal: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilFieldMarshal.setDataPrototype(
-        "uint32_t", "Parent", "= {}",
+        "uint32_t", "Parent", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilFieldMarshal.setDataPrototype(
-        "uint32_t", "NativeType", "= {}",
+        "uint32_t", "NativeType", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -33856,13 +33856,13 @@ class SgAsmCilFieldLayout: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilFieldLayout.setDataPrototype(
-        "uint32_t", "Offset", "= {}",
+        "uint32_t", "Offset", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilFieldLayout.setDataPrototype(
-        "uint32_t", "Field", "= {}",
+        "uint32_t", "Field", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -33943,19 +33943,19 @@ class SgAsmCilField: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilField.setDataPrototype(
-        "uint16_t", "Flags", "= {}",
+        "uint16_t", "Flags", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilField.setDataPrototype(
-        "uint32_t", "Name", "= {}",
+        "uint32_t", "Name", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilField.setDataPrototype(
-        "uint32_t", "Signature", "= {}",
+        "uint32_t", "Signature", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -34110,31 +34110,31 @@ class SgAsmCilExportedType: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilExportedType.setDataPrototype(
-        "uint32_t", "EventFlags", "= {}",
+        "uint32_t", "EventFlags", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilExportedType.setDataPrototype(
-        "uint32_t", "TypeDefIdName", "= {}",
+        "uint32_t", "TypeDefIdName", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilExportedType.setDataPrototype(
-        "uint32_t", "TypeName", "= {}",
+        "uint32_t", "TypeName", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilExportedType.setDataPrototype(
-        "uint32_t", "TypeNamespace", "= {}",
+        "uint32_t", "TypeNamespace", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilExportedType.setDataPrototype(
-        "uint32_t", "Implementation", "= {}",
+        "uint32_t", "Implementation", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -34374,13 +34374,13 @@ class SgAsmCilEventMap: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilEventMap.setDataPrototype(
-        "uint32_t", "Parent", "= {}",
+        "uint32_t", "Parent", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilEventMap.setDataPrototype(
-        "uint32_t", "EventList", "= {}",
+        "uint32_t", "EventList", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -34462,19 +34462,19 @@ class SgAsmCilEvent: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilEvent.setDataPrototype(
-        "uint16_t", "EventFlags", "= {}",
+        "uint16_t", "EventFlags", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilEvent.setDataPrototype(
-        "uint32_t", "Name", "= {}",
+        "uint32_t", "Name", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilEvent.setDataPrototype(
-        "uint32_t", "EventType", "= {}",
+        "uint32_t", "EventType", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -34629,19 +34629,19 @@ class SgAsmCilDeclSecurity: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilDeclSecurity.setDataPrototype(
-        "uint16_t", "Action", "= {}",
+        "uint16_t", "Action", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilDeclSecurity.setDataPrototype(
-        "uint32_t", "Parent", "= {}",
+        "uint32_t", "Parent", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilDeclSecurity.setDataPrototype(
-        "uint32_t", "PermissionSet", "= {}",
+        "uint32_t", "PermissionSet", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -34949,19 +34949,19 @@ class SgAsmCilCustomAttribute: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilCustomAttribute.setDataPrototype(
-        "uint32_t", "Parent", "= {}",
+        "uint32_t", "Parent", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilCustomAttribute.setDataPrototype(
-        "uint32_t", "Type", "= {}",
+        "uint32_t", "Type", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilCustomAttribute.setDataPrototype(
-        "uint32_t", "Value", "= {}",
+        "uint32_t", "Value", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -35117,25 +35117,25 @@ class SgAsmCilConstant: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilConstant.setDataPrototype(
-        "uint8_t", "Type", "= {}",
+        "uint8_t", "Type", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilConstant.setDataPrototype(
-        "uint8_t", "Padding", "= {}",
+        "uint8_t", "Padding", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilConstant.setDataPrototype(
-        "uint32_t", "Parent", "= {}",
+        "uint32_t", "Parent", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilConstant.setDataPrototype(
-        "uint32_t", "Value", "= {}",
+        "uint32_t", "Value", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -35301,19 +35301,19 @@ class SgAsmCilClassLayout: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilClassLayout.setDataPrototype(
-        "uint16_t", "PackingSize", "= {}",
+        "uint16_t", "PackingSize", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilClassLayout.setDataPrototype(
-        "uint32_t", "ClassSize", "= {}",
+        "uint32_t", "ClassSize", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilClassLayout.setDataPrototype(
-        "uint32_t", "Parent", "= {}",
+        "uint32_t", "Parent", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -35591,13 +35591,13 @@ class SgAsmCilAssemblyRefProcessor: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyRefProcessor.setDataPrototype(
-        "uint32_t", "Processor", "= {}",
+        "uint32_t", "Processor", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyRefProcessor.setDataPrototype(
-        "uint32_t", "AssemblyRef", "= {}",
+        "uint32_t", "AssemblyRef", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -35740,25 +35740,25 @@ class SgAsmCilAssemblyRefOS: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyRefOS.setDataPrototype(
-        "uint32_t", "OSPlatformID", "= {}",
+        "uint32_t", "OSPlatformID", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyRefOS.setDataPrototype(
-        "uint32_t", "OSMajorVersion", "= {}",
+        "uint32_t", "OSMajorVersion", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyRefOS.setDataPrototype(
-        "uint32_t", "OSMinorVersion", "= {}",
+        "uint32_t", "OSMinorVersion", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyRefOS.setDataPrototype(
-        "uint32_t", "AssemblyRefOS", "= {}",
+        "uint32_t", "AssemblyRefOS", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -35861,55 +35861,55 @@ class SgAsmCilAssemblyRef: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyRef.setDataPrototype(
-        "uint16_t", "MajorVersion", "= {}",
+        "uint16_t", "MajorVersion", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyRef.setDataPrototype(
-        "uint16_t", "MinorVersion", "= {}",
+        "uint16_t", "MinorVersion", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyRef.setDataPrototype(
-        "uint16_t", "BuildNumber", "= {}",
+        "uint16_t", "BuildNumber", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyRef.setDataPrototype(
-        "uint16_t", "RevisionNumber", "= {}",
+        "uint16_t", "RevisionNumber", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyRef.setDataPrototype(
-        "uint32_t", "Flags", "= {}",
+        "uint32_t", "Flags", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyRef.setDataPrototype(
-        "uint32_t", "PublicKeyOrToken", "= {}",
+        "uint32_t", "PublicKeyOrToken", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyRef.setDataPrototype(
-        "uint32_t", "Name", "= {}",
+        "uint32_t", "Name", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyRef.setDataPrototype(
-        "uint32_t", "Culture", "= {}",
+        "uint32_t", "Culture", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyRef.setDataPrototype(
-        "uint32_t", "HashValue", "= {}",
+        "uint32_t", "HashValue", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -36132,7 +36132,7 @@ class SgAsmCilAssemblyProcessor: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyProcessor.setDataPrototype(
-        "uint32_t", "Processor", "= {}",
+        "uint32_t", "Processor", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -36262,19 +36262,19 @@ class SgAsmCilAssemblyOS: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyOS.setDataPrototype(
-        "uint32_t", "OSPlatformID", "= {}",
+        "uint32_t", "OSPlatformID", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyOS.setDataPrototype(
-        "uint32_t", "OSMajorVersion", "= {}",
+        "uint32_t", "OSMajorVersion", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssemblyOS.setDataPrototype(
-        "uint32_t", "OSMinorVersion", "= {}",
+        "uint32_t", "OSMinorVersion", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -36364,55 +36364,55 @@ class SgAsmCilAssembly: public SgAsmCilMetadata {
 
 #ifndef DOCUMENTATION
     AsmCilAssembly.setDataPrototype(
-        "uint32_t", "HashAlgId", "= {}",
+        "uint32_t", "HashAlgId", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssembly.setDataPrototype(
-        "uint16_t", "MajorVersion", "= {}",
+        "uint16_t", "MajorVersion", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssembly.setDataPrototype(
-        "uint16_t", "MinorVersion", "= {}",
+        "uint16_t", "MinorVersion", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssembly.setDataPrototype(
-        "uint16_t", "BuildNumber", "= {}",
+        "uint16_t", "BuildNumber", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssembly.setDataPrototype(
-        "uint16_t", "RevisionNumber", "= {}",
+        "uint16_t", "RevisionNumber", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssembly.setDataPrototype(
-        "uint32_t", "Flags", "= {}",
+        "uint32_t", "Flags", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssembly.setDataPrototype(
-        "uint32_t", "PublicKey", "= {}",
+        "uint32_t", "PublicKey", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssembly.setDataPrototype(
-        "uint32_t", "Name", "= {}",
+        "uint32_t", "Name", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmCilAssembly.setDataPrototype(
-        "uint32_t", "Culture", "= {}",
+        "uint32_t", "Culture", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 

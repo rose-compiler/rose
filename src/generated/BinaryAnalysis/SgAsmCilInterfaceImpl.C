@@ -33,13 +33,13 @@ SgAsmCilInterfaceImpl::~SgAsmCilInterfaceImpl() {
 }
 
 SgAsmCilInterfaceImpl::SgAsmCilInterfaceImpl()
-    : p_Class({})
-    , p_Interface({}) {}
+    : p_Class(0)
+    , p_Interface(0) {}
 
 void
 SgAsmCilInterfaceImpl::initializeProperties() {
-    p_Class = {};
-    p_Interface = {};
+    p_Class = 0;
+    p_Interface = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)
