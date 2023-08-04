@@ -44,15 +44,15 @@ SgAsmCilCustomAttribute::~SgAsmCilCustomAttribute() {
 }
 
 SgAsmCilCustomAttribute::SgAsmCilCustomAttribute()
-    : p_Parent({})
-    , p_Type({})
-    , p_Value({}) {}
+    : p_Parent(0)
+    , p_Type(0)
+    , p_Value(0) {}
 
 void
 SgAsmCilCustomAttribute::initializeProperties() {
-    p_Parent = {};
-    p_Type = {};
-    p_Value = {};
+    p_Parent = 0;
+    p_Type = 0;
+    p_Value = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

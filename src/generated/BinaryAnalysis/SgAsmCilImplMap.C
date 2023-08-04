@@ -55,17 +55,17 @@ SgAsmCilImplMap::~SgAsmCilImplMap() {
 }
 
 SgAsmCilImplMap::SgAsmCilImplMap()
-    : p_MappingFlags({})
-    , p_MemberForwarded({})
-    , p_ImportName({})
-    , p_ImportScope({}) {}
+    : p_MappingFlags(0)
+    , p_MemberForwarded(0)
+    , p_ImportName(0)
+    , p_ImportScope(0) {}
 
 void
 SgAsmCilImplMap::initializeProperties() {
-    p_MappingFlags = {};
-    p_MemberForwarded = {};
-    p_ImportName = {};
-    p_ImportScope = {};
+    p_MappingFlags = 0;
+    p_MemberForwarded = 0;
+    p_ImportName = 0;
+    p_ImportScope = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

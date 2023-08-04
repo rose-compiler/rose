@@ -33,13 +33,13 @@ SgAsmCilEventMap::~SgAsmCilEventMap() {
 }
 
 SgAsmCilEventMap::SgAsmCilEventMap()
-    : p_Parent({})
-    , p_EventList({}) {}
+    : p_Parent(0)
+    , p_EventList(0) {}
 
 void
 SgAsmCilEventMap::initializeProperties() {
-    p_Parent = {};
-    p_EventList = {};
+    p_Parent = 0;
+    p_EventList = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

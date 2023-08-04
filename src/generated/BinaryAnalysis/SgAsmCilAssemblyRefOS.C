@@ -55,17 +55,17 @@ SgAsmCilAssemblyRefOS::~SgAsmCilAssemblyRefOS() {
 }
 
 SgAsmCilAssemblyRefOS::SgAsmCilAssemblyRefOS()
-    : p_OSPlatformID({})
-    , p_OSMajorVersion({})
-    , p_OSMinorVersion({})
-    , p_AssemblyRefOS({}) {}
+    : p_OSPlatformID(0)
+    , p_OSMajorVersion(0)
+    , p_OSMinorVersion(0)
+    , p_AssemblyRefOS(0) {}
 
 void
 SgAsmCilAssemblyRefOS::initializeProperties() {
-    p_OSPlatformID = {};
-    p_OSMajorVersion = {};
-    p_OSMinorVersion = {};
-    p_AssemblyRefOS = {};
+    p_OSPlatformID = 0;
+    p_OSMajorVersion = 0;
+    p_OSMinorVersion = 0;
+    p_AssemblyRefOS = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

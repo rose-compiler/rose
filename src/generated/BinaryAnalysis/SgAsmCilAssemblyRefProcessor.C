@@ -33,13 +33,13 @@ SgAsmCilAssemblyRefProcessor::~SgAsmCilAssemblyRefProcessor() {
 }
 
 SgAsmCilAssemblyRefProcessor::SgAsmCilAssemblyRefProcessor()
-    : p_Processor({})
-    , p_AssemblyRef({}) {}
+    : p_Processor(0)
+    , p_AssemblyRef(0) {}
 
 void
 SgAsmCilAssemblyRefProcessor::initializeProperties() {
-    p_Processor = {};
-    p_AssemblyRef = {};
+    p_Processor = 0;
+    p_AssemblyRef = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

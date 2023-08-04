@@ -3,39 +3,39 @@ class SgAsmCilMetadataHeap: public SgAsmCilDataStream {
 
     /** Property: 4 reserved bytes. */
     [[using Rosebud: rosetta]]
-    uint32_t ReservedAlwaysZero = {};
+    uint32_t ReservedAlwaysZero  = 0;
 
     /** Property: A 1-byte constant. */
     [[using Rosebud: rosetta]]
-    uint8_t MajorVersion = {};
+    uint8_t MajorVersion  = 0;
 
     /** Property: A 1-byte constant. */
     [[using Rosebud: rosetta]]
-    uint8_t MinorVersion = {};
+    uint8_t MinorVersion  = 0;
 
     /** Property: A 1-byte constant indicating the index sizes of streams. */
     [[using Rosebud: rosetta]]
-    uint8_t HeapSizes = {};
+    uint8_t HeapSizes  = 0;
 
     /** Property: A 1-byte constant. */
     [[using Rosebud: rosetta]]
-    uint8_t ReservedAlwaysOne = {};
+    uint8_t ReservedAlwaysOne  = 0;
 
     /** Property: A 4-byte value indicating which metadata tables are present. */
     [[using Rosebud: rosetta]]
-    uint64_t Valid = {};
+    uint64_t Valid  = 0;
 
     /** Property: A 4-byte value. */
     [[using Rosebud: rosetta]]
-    uint64_t Sorted = {};
+    uint64_t Sorted  = 0;
 
     /** Property: A vector indicating how many rows the present tables contain. */
     [[using Rosebud: rosetta]]
-    std::vector<uint32_t> NumberOfRows = {};
+    std::vector<uint32_t> NumberOfRows ;
 
     /** Property: precomputed flags that determine whether a metadata reference is stored as 2 or 4 byte value in the file. */
     [[using Rosebud: rosetta]]
-    uint64_t DataSizeFlags = {};
+    uint64_t DataSizeFlags  = 0;
 
 
     /** Property: AssemblyTable. */

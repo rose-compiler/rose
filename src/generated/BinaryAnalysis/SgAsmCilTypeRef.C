@@ -44,15 +44,15 @@ SgAsmCilTypeRef::~SgAsmCilTypeRef() {
 }
 
 SgAsmCilTypeRef::SgAsmCilTypeRef()
-    : p_ResolutionScope({})
-    , p_TypeName({})
-    , p_TypeNamespace({}) {}
+    : p_ResolutionScope(0)
+    , p_TypeName(0)
+    , p_TypeNamespace(0) {}
 
 void
 SgAsmCilTypeRef::initializeProperties() {
-    p_ResolutionScope = {};
-    p_TypeName = {};
-    p_TypeNamespace = {};
+    p_ResolutionScope = 0;
+    p_TypeName = 0;
+    p_TypeNamespace = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

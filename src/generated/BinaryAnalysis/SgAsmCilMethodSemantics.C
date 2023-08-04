@@ -44,15 +44,15 @@ SgAsmCilMethodSemantics::~SgAsmCilMethodSemantics() {
 }
 
 SgAsmCilMethodSemantics::SgAsmCilMethodSemantics()
-    : p_Semantics({})
-    , p_Method({})
-    , p_Association({}) {}
+    : p_Semantics(0)
+    , p_Method(0)
+    , p_Association(0) {}
 
 void
 SgAsmCilMethodSemantics::initializeProperties() {
-    p_Semantics = {};
-    p_Method = {};
-    p_Association = {};
+    p_Semantics = 0;
+    p_Method = 0;
+    p_Association = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

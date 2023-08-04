@@ -22,11 +22,11 @@ SgAsmCilStandAloneSig::~SgAsmCilStandAloneSig() {
 }
 
 SgAsmCilStandAloneSig::SgAsmCilStandAloneSig()
-    : p_Signature({}) {}
+    : p_Signature(0) {}
 
 void
 SgAsmCilStandAloneSig::initializeProperties() {
-    p_Signature = {};
+    p_Signature = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

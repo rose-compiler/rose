@@ -55,17 +55,17 @@ SgAsmCilConstant::~SgAsmCilConstant() {
 }
 
 SgAsmCilConstant::SgAsmCilConstant()
-    : p_Type({})
-    , p_Padding({})
-    , p_Parent({})
-    , p_Value({}) {}
+    : p_Type(0)
+    , p_Padding(0)
+    , p_Parent(0)
+    , p_Value(0) {}
 
 void
 SgAsmCilConstant::initializeProperties() {
-    p_Type = {};
-    p_Padding = {};
-    p_Parent = {};
-    p_Value = {};
+    p_Type = 0;
+    p_Padding = 0;
+    p_Parent = 0;
+    p_Value = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

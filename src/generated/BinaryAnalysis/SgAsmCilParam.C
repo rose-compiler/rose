@@ -44,15 +44,15 @@ SgAsmCilParam::~SgAsmCilParam() {
 }
 
 SgAsmCilParam::SgAsmCilParam()
-    : p_Flags({})
-    , p_Sequence({})
-    , p_Name({}) {}
+    : p_Flags(0)
+    , p_Sequence(0)
+    , p_Name(0) {}
 
 void
 SgAsmCilParam::initializeProperties() {
-    p_Flags = {};
-    p_Sequence = {};
-    p_Name = {};
+    p_Flags = 0;
+    p_Sequence = 0;
+    p_Name = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

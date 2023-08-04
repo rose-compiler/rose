@@ -77,21 +77,21 @@ SgAsmCilTypeDef::~SgAsmCilTypeDef() {
 }
 
 SgAsmCilTypeDef::SgAsmCilTypeDef()
-    : p_Flags({})
-    , p_TypeName({})
-    , p_TypeNamespace({})
-    , p_Extends({})
-    , p_FieldList({})
-    , p_MethodList({}) {}
+    : p_Flags(0)
+    , p_TypeName(0)
+    , p_TypeNamespace(0)
+    , p_Extends(0)
+    , p_FieldList(0)
+    , p_MethodList(0) {}
 
 void
 SgAsmCilTypeDef::initializeProperties() {
-    p_Flags = {};
-    p_TypeName = {};
-    p_TypeNamespace = {};
-    p_Extends = {};
-    p_FieldList = {};
-    p_MethodList = {};
+    p_Flags = 0;
+    p_TypeName = 0;
+    p_TypeNamespace = 0;
+    p_Extends = 0;
+    p_FieldList = 0;
+    p_MethodList = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

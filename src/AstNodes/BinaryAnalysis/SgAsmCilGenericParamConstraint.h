@@ -5,13 +5,13 @@ class SgAsmCilGenericParamConstraint: public SgAsmCilMetadata {
      *
      *  An index into the GenericParam table. */
     [[using Rosebud: rosetta]]
-    uint32_t Owner = {};
+    uint32_t Owner = 0;
 
     /** Property: Constraint.
      *
      *  An index into the TypeDef, TypeRef, or TypeSpec table. */
     [[using Rosebud: rosetta]]
-    uint32_t Constraint = {};
+    uint32_t Constraint = 0;
 
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);

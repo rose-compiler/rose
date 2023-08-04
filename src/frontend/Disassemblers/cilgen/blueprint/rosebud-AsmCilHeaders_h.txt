@@ -17,7 +17,7 @@ class SgAsmCil`cl.Name`: public Sg`cl.Baseclass` {`for_each fl = cl.Fields`
      *
      *  `fl.Doc` */
     [[using Rosebud: rosetta]]
-    `fl.Type` `fl.Name` = {};
+    `fl.Type` `fl.Name` = 0;
 `end_for`   
 `for_each exists xtr = cl.Extras`
 
@@ -25,7 +25,7 @@ class SgAsmCil`cl.Name`: public Sg`cl.Baseclass` {`for_each fl = cl.Fields`
      *
      *  `xtr.Doc` */
     [[using Rosebud: rosetta]]
-    `xtr.Type` `xtr.Name` = {};
+    `xtr.Type` `xtr.Name` = 0;
 `end_for`
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
@@ -56,7 +56,7 @@ class SgAsmCilMetadataHeap: public SgAsmCilDataStream { `for_each fl = .metadata
 
     /** Property: `fl.Doc` */
     [[using Rosebud: rosetta]]
-    `fl.Type` `fl.Name` = {};
+    `fl.Type` `fl.Name` `if fl.Name eq "NumberOfRows"`;`else` = 0;`end_if`
 `end_for`   
 `for_each cl = .metadata`
 
@@ -198,7 +198,7 @@ class SgAsmCilMetadataRoot: public SgAsmCilNode {
 
     /** Property: `fl.Doc` */
     [[using Rosebud: rosetta]]
-    `fl.Type` `fl.Name` = {};
+    `fl.Type` `fl.Name``if fl.Name eq "Version"`;`else` = 0;`end_if`
 `end_for`
 `for_each str = .metadataroot.Streams`
 

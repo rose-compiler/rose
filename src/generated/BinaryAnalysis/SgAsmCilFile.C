@@ -44,15 +44,15 @@ SgAsmCilFile::~SgAsmCilFile() {
 }
 
 SgAsmCilFile::SgAsmCilFile()
-    : p_Flags({})
-    , p_Name({})
-    , p_HashValue({}) {}
+    : p_Flags(0)
+    , p_Name(0)
+    , p_HashValue(0) {}
 
 void
 SgAsmCilFile::initializeProperties() {
-    p_Flags = {};
-    p_Name = {};
-    p_HashValue = {};
+    p_Flags = 0;
+    p_Name = 0;
+    p_HashValue = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

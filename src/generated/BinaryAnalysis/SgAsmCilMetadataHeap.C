@@ -528,15 +528,14 @@ SgAsmCilMetadataHeap::~SgAsmCilMetadataHeap() {
 }
 
 SgAsmCilMetadataHeap::SgAsmCilMetadataHeap()
-    : p_ReservedAlwaysZero({})
-    , p_MajorVersion({})
-    , p_MinorVersion({})
-    , p_HeapSizes({})
-    , p_ReservedAlwaysOne({})
-    , p_Valid({})
-    , p_Sorted({})
-    , p_NumberOfRows({})
-    , p_DataSizeFlags({}) {}
+    : p_ReservedAlwaysZero(0)
+    , p_MajorVersion(0)
+    , p_MinorVersion(0)
+    , p_HeapSizes(0)
+    , p_ReservedAlwaysOne(0)
+    , p_Valid(0)
+    , p_Sorted(0)
+    , p_DataSizeFlags(0) {}
 
 // The association between constructor arguments and their classes:
 //    property=Offset           class=SgAsmCilDataStream
@@ -548,27 +547,25 @@ SgAsmCilMetadataHeap::SgAsmCilMetadataHeap(uint32_t const& Offset,
                                            std::string const& Name,
                                            uint32_t const& NamePadding)
     : SgAsmCilDataStream(Offset, Size, Name, NamePadding)
-    , p_ReservedAlwaysZero({})
-    , p_MajorVersion({})
-    , p_MinorVersion({})
-    , p_HeapSizes({})
-    , p_ReservedAlwaysOne({})
-    , p_Valid({})
-    , p_Sorted({})
-    , p_NumberOfRows({})
-    , p_DataSizeFlags({}) {}
+    , p_ReservedAlwaysZero(0)
+    , p_MajorVersion(0)
+    , p_MinorVersion(0)
+    , p_HeapSizes(0)
+    , p_ReservedAlwaysOne(0)
+    , p_Valid(0)
+    , p_Sorted(0)
+    , p_DataSizeFlags(0) {}
 
 void
 SgAsmCilMetadataHeap::initializeProperties() {
-    p_ReservedAlwaysZero = {};
-    p_MajorVersion = {};
-    p_MinorVersion = {};
-    p_HeapSizes = {};
-    p_ReservedAlwaysOne = {};
-    p_Valid = {};
-    p_Sorted = {};
-    p_NumberOfRows = {};
-    p_DataSizeFlags = {};
+    p_ReservedAlwaysZero = 0;
+    p_MajorVersion = 0;
+    p_MinorVersion = 0;
+    p_HeapSizes = 0;
+    p_ReservedAlwaysOne = 0;
+    p_Valid = 0;
+    p_Sorted = 0;
+    p_DataSizeFlags = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)
