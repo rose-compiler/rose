@@ -44,15 +44,15 @@ SgAsmCilClassLayout::~SgAsmCilClassLayout() {
 }
 
 SgAsmCilClassLayout::SgAsmCilClassLayout()
-    : p_PackingSize({})
-    , p_ClassSize({})
-    , p_Parent({}) {}
+    : p_PackingSize(0)
+    , p_ClassSize(0)
+    , p_Parent(0) {}
 
 void
 SgAsmCilClassLayout::initializeProperties() {
-    p_PackingSize = {};
-    p_ClassSize = {};
-    p_Parent = {};
+    p_PackingSize = 0;
+    p_ClassSize = 0;
+    p_Parent = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

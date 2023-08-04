@@ -5,13 +5,13 @@ class SgAsmCilPropertyMap: public SgAsmCilMetadata {
      *
      *  An index into the TypeDef table. */
     [[using Rosebud: rosetta]]
-    uint32_t Parent = {};
+    uint32_t Parent = 0;
 
     /** Property: PropertyList.
      *
      *  An index into the Property table. */
     [[using Rosebud: rosetta]]
-    uint32_t PropertyList = {};
+    uint32_t PropertyList = 0;
 
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);

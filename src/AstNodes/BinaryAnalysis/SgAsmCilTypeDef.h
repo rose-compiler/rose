@@ -5,37 +5,37 @@ class SgAsmCilTypeDef: public SgAsmCilMetadata {
      *
      *  A 4-byte bitmask of type TypeAttributes. */
     [[using Rosebud: rosetta]]
-    uint32_t Flags = {};
+    uint32_t Flags = 0;
 
     /** Property: TypeName.
      *
      *  An index into the String heap. */
     [[using Rosebud: rosetta]]
-    uint32_t TypeName = {};
+    uint32_t TypeName = 0;
 
     /** Property: TypeNamespace.
      *
      *  An index into the String heap. */
     [[using Rosebud: rosetta]]
-    uint32_t TypeNamespace = {};
+    uint32_t TypeNamespace = 0;
 
     /** Property: Extends.
      *
      *  An index into the TypeDef, TypeRef, or TypeSpec table. */
     [[using Rosebud: rosetta]]
-    uint32_t Extends = {};
+    uint32_t Extends = 0;
 
     /** Property: FieldList.
      *
      *  An index into the Field table. */
     [[using Rosebud: rosetta]]
-    uint32_t FieldList = {};
+    uint32_t FieldList = 0;
 
     /** Property: MethodList.
      *
      *  An index into the MethodDef table. */
     [[using Rosebud: rosetta]]
-    uint32_t MethodList = {};
+    uint32_t MethodList = 0;
 
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);

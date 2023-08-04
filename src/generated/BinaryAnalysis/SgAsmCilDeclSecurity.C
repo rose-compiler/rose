@@ -44,15 +44,15 @@ SgAsmCilDeclSecurity::~SgAsmCilDeclSecurity() {
 }
 
 SgAsmCilDeclSecurity::SgAsmCilDeclSecurity()
-    : p_Action({})
-    , p_Parent({})
-    , p_PermissionSet({}) {}
+    : p_Action(0)
+    , p_Parent(0)
+    , p_PermissionSet(0) {}
 
 void
 SgAsmCilDeclSecurity::initializeProperties() {
-    p_Action = {};
-    p_Parent = {};
-    p_PermissionSet = {};
+    p_Action = 0;
+    p_Parent = 0;
+    p_PermissionSet = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

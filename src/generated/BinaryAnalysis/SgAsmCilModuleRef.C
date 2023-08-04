@@ -22,11 +22,11 @@ SgAsmCilModuleRef::~SgAsmCilModuleRef() {
 }
 
 SgAsmCilModuleRef::SgAsmCilModuleRef()
-    : p_Name({}) {}
+    : p_Name(0) {}
 
 void
 SgAsmCilModuleRef::initializeProperties() {
-    p_Name = {};
+    p_Name = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

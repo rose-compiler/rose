@@ -5,55 +5,55 @@ class SgAsmCilAssembly: public SgAsmCilMetadata {
      *
      *  A 4-byte constant of type AssemblyHashAlgorithm. */
     [[using Rosebud: rosetta]]
-    uint32_t HashAlgId = {};
+    uint32_t HashAlgId = 0;
 
     /** Property: MajorVersion.
      *
      *  A 2-byte constant. */
     [[using Rosebud: rosetta]]
-    uint16_t MajorVersion = {};
+    uint16_t MajorVersion = 0;
 
     /** Property: MinorVersion.
      *
      *  A 2-byte constant. */
     [[using Rosebud: rosetta]]
-    uint16_t MinorVersion = {};
+    uint16_t MinorVersion = 0;
 
     /** Property: BuildNumber.
      *
      *  A 2-byte constant. */
     [[using Rosebud: rosetta]]
-    uint16_t BuildNumber = {};
+    uint16_t BuildNumber = 0;
 
     /** Property: RevisionNumber.
      *
      *  A 2-byte constant. */
     [[using Rosebud: rosetta]]
-    uint16_t RevisionNumber = {};
+    uint16_t RevisionNumber = 0;
 
     /** Property: Flags.
      *
      *  A 4-byte bitmask of type AssemblyFlags. */
     [[using Rosebud: rosetta]]
-    uint32_t Flags = {};
+    uint32_t Flags = 0;
 
     /** Property: PublicKey.
      *
      *  An index into the Blob heap. */
     [[using Rosebud: rosetta]]
-    uint32_t PublicKey = {};
+    uint32_t PublicKey = 0;
 
     /** Property: Name.
      *
      *  An index into the String heap. */
     [[using Rosebud: rosetta]]
-    uint32_t Name = {};
+    uint32_t Name = 0;
 
     /** Property: Culture.
      *
      *  An index into the String heap. */
     [[using Rosebud: rosetta]]
-    uint32_t Culture = {};
+    uint32_t Culture = 0;
 
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);

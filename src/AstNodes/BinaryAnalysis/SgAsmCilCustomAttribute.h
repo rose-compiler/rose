@@ -5,19 +5,19 @@ class SgAsmCilCustomAttribute: public SgAsmCilMetadata {
      *
      *  An index into a metadata table that has an associated HasCustomAttribute index. */
     [[using Rosebud: rosetta]]
-    uint32_t Parent = {};
+    uint32_t Parent = 0;
 
     /** Property: Type.
      *
      *  An index into the MethodDef or MemberRef table (more precisely, a CustomAttributeType coded index). */
     [[using Rosebud: rosetta]]
-    uint32_t Type = {};
+    uint32_t Type = 0;
 
     /** Property: Value.
      *
      *  An index into the Blob heap. */
     [[using Rosebud: rosetta]]
-    uint32_t Value = {};
+    uint32_t Value = 0;
 
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);

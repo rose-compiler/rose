@@ -5,13 +5,13 @@ class SgAsmCilFieldRVA: public SgAsmCilMetadata {
      *
      *  A 4-byte constant. */
     [[using Rosebud: rosetta]]
-    uint32_t RVA = {};
+    uint32_t RVA = 0;
 
     /** Property: Field.
      *
      *  An index into Field table. */
     [[using Rosebud: rosetta]]
-    uint32_t Field = {};
+    uint32_t Field = 0;
 
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);

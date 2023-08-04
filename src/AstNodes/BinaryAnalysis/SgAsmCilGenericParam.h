@@ -5,25 +5,25 @@ class SgAsmCilGenericParam: public SgAsmCilMetadata {
      *
      *  The 2-byte index of the generic parameter. */
     [[using Rosebud: rosetta]]
-    uint16_t Number = {};
+    uint16_t Number = 0;
 
     /** Property: Flags.
      *
      *  A 2-byte bitmask of type GenericParamAttributes. */
     [[using Rosebud: rosetta]]
-    uint16_t Flags = {};
+    uint16_t Flags = 0;
 
     /** Property: Owner.
      *
      *  An index into the TypeDef or MethodDef table. */
     [[using Rosebud: rosetta]]
-    uint32_t Owner = {};
+    uint32_t Owner = 0;
 
     /** Property: Name.
      *
      *  An index into the String heap. */
     [[using Rosebud: rosetta]]
-    uint32_t Name = {};
+    uint32_t Name = 0;
 
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);

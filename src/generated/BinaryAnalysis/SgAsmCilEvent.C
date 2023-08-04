@@ -44,15 +44,15 @@ SgAsmCilEvent::~SgAsmCilEvent() {
 }
 
 SgAsmCilEvent::SgAsmCilEvent()
-    : p_EventFlags({})
-    , p_Name({})
-    , p_EventType({}) {}
+    : p_EventFlags(0)
+    , p_Name(0)
+    , p_EventType(0) {}
 
 void
 SgAsmCilEvent::initializeProperties() {
-    p_EventFlags = {};
-    p_Name = {};
-    p_EventType = {};
+    p_EventFlags = 0;
+    p_Name = 0;
+    p_EventType = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

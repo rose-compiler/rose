@@ -44,15 +44,15 @@ SgAsmCilProperty::~SgAsmCilProperty() {
 }
 
 SgAsmCilProperty::SgAsmCilProperty()
-    : p_Flags({})
-    , p_Name({})
-    , p_Type({}) {}
+    : p_Flags(0)
+    , p_Name(0)
+    , p_Type(0) {}
 
 void
 SgAsmCilProperty::initializeProperties() {
-    p_Flags = {};
-    p_Name = {};
-    p_Type = {};
+    p_Flags = 0;
+    p_Name = 0;
+    p_Type = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

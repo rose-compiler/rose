@@ -66,19 +66,19 @@ SgAsmCilExportedType::~SgAsmCilExportedType() {
 }
 
 SgAsmCilExportedType::SgAsmCilExportedType()
-    : p_EventFlags({})
-    , p_TypeDefIdName({})
-    , p_TypeName({})
-    , p_TypeNamespace({})
-    , p_Implementation({}) {}
+    : p_EventFlags(0)
+    , p_TypeDefIdName(0)
+    , p_TypeName(0)
+    , p_TypeNamespace(0)
+    , p_Implementation(0) {}
 
 void
 SgAsmCilExportedType::initializeProperties() {
-    p_EventFlags = {};
-    p_TypeDefIdName = {};
-    p_TypeName = {};
-    p_TypeNamespace = {};
-    p_Implementation = {};
+    p_EventFlags = 0;
+    p_TypeDefIdName = 0;
+    p_TypeName = 0;
+    p_TypeNamespace = 0;
+    p_Implementation = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

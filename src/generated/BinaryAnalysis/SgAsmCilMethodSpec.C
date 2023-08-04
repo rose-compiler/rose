@@ -33,13 +33,13 @@ SgAsmCilMethodSpec::~SgAsmCilMethodSpec() {
 }
 
 SgAsmCilMethodSpec::SgAsmCilMethodSpec()
-    : p_Method({})
-    , p_Instantiation({}) {}
+    : p_Method(0)
+    , p_Instantiation(0) {}
 
 void
 SgAsmCilMethodSpec::initializeProperties() {
-    p_Method = {};
-    p_Instantiation = {};
+    p_Method = 0;
+    p_Instantiation = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

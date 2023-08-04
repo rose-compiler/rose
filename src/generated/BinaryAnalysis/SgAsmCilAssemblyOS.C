@@ -44,15 +44,15 @@ SgAsmCilAssemblyOS::~SgAsmCilAssemblyOS() {
 }
 
 SgAsmCilAssemblyOS::SgAsmCilAssemblyOS()
-    : p_OSPlatformID({})
-    , p_OSMajorVersion({})
-    , p_OSMinorVersion({}) {}
+    : p_OSPlatformID(0)
+    , p_OSMajorVersion(0)
+    , p_OSMinorVersion(0) {}
 
 void
 SgAsmCilAssemblyOS::initializeProperties() {
-    p_OSPlatformID = {};
-    p_OSMajorVersion = {};
-    p_OSMinorVersion = {};
+    p_OSPlatformID = 0;
+    p_OSMajorVersion = 0;
+    p_OSMinorVersion = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

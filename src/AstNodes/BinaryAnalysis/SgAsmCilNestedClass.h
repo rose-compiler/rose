@@ -5,13 +5,13 @@ class SgAsmCilNestedClass: public SgAsmCilMetadata {
      *
      *  An index into the TypeDef table. */
     [[using Rosebud: rosetta]]
-    uint32_t NestedClass = {};
+    uint32_t NestedClass = 0;
 
     /** Property: EnclosingClass.
      *
      *  An index into the TypeDef table. */
     [[using Rosebud: rosetta]]
-    uint32_t EnclosingClass = {};
+    uint32_t EnclosingClass = 0;
 
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
