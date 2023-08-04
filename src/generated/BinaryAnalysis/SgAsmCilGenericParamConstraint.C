@@ -33,13 +33,13 @@ SgAsmCilGenericParamConstraint::~SgAsmCilGenericParamConstraint() {
 }
 
 SgAsmCilGenericParamConstraint::SgAsmCilGenericParamConstraint()
-    : p_Owner({})
-    , p_Constraint({}) {}
+    : p_Owner(0)
+    , p_Constraint(0) {}
 
 void
 SgAsmCilGenericParamConstraint::initializeProperties() {
-    p_Owner = {};
-    p_Constraint = {};
+    p_Owner = 0;
+    p_Constraint = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

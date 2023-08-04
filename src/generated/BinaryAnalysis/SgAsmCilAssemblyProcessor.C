@@ -22,11 +22,11 @@ SgAsmCilAssemblyProcessor::~SgAsmCilAssemblyProcessor() {
 }
 
 SgAsmCilAssemblyProcessor::SgAsmCilAssemblyProcessor()
-    : p_Processor({}) {}
+    : p_Processor(0) {}
 
 void
 SgAsmCilAssemblyProcessor::initializeProperties() {
-    p_Processor = {};
+    p_Processor = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

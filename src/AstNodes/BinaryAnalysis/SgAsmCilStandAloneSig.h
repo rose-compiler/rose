@@ -5,7 +5,7 @@ class SgAsmCilStandAloneSig: public SgAsmCilMetadata {
      *
      *  An index into the Blob heap. */
     [[using Rosebud: rosetta]]
-    uint32_t Signature = {};
+    uint32_t Signature = 0;
 
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);

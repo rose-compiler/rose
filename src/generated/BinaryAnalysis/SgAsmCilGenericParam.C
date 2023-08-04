@@ -55,17 +55,17 @@ SgAsmCilGenericParam::~SgAsmCilGenericParam() {
 }
 
 SgAsmCilGenericParam::SgAsmCilGenericParam()
-    : p_Number({})
-    , p_Flags({})
-    , p_Owner({})
-    , p_Name({}) {}
+    : p_Number(0)
+    , p_Flags(0)
+    , p_Owner(0)
+    , p_Name(0) {}
 
 void
 SgAsmCilGenericParam::initializeProperties() {
-    p_Number = {};
-    p_Flags = {};
-    p_Owner = {};
-    p_Name = {};
+    p_Number = 0;
+    p_Flags = 0;
+    p_Owner = 0;
+    p_Name = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

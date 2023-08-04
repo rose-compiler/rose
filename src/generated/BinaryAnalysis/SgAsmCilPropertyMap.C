@@ -33,13 +33,13 @@ SgAsmCilPropertyMap::~SgAsmCilPropertyMap() {
 }
 
 SgAsmCilPropertyMap::SgAsmCilPropertyMap()
-    : p_Parent({})
-    , p_PropertyList({}) {}
+    : p_Parent(0)
+    , p_PropertyList(0) {}
 
 void
 SgAsmCilPropertyMap::initializeProperties() {
-    p_Parent = {};
-    p_PropertyList = {};
+    p_Parent = 0;
+    p_PropertyList = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

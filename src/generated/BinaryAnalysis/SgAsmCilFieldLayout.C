@@ -33,13 +33,13 @@ SgAsmCilFieldLayout::~SgAsmCilFieldLayout() {
 }
 
 SgAsmCilFieldLayout::SgAsmCilFieldLayout()
-    : p_Offset({})
-    , p_Field({}) {}
+    : p_Offset(0)
+    , p_Field(0) {}
 
 void
 SgAsmCilFieldLayout::initializeProperties() {
-    p_Offset = {};
-    p_Field = {};
+    p_Offset = 0;
+    p_Field = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

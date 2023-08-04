@@ -44,15 +44,15 @@ SgAsmCilMethodImpl::~SgAsmCilMethodImpl() {
 }
 
 SgAsmCilMethodImpl::SgAsmCilMethodImpl()
-    : p_Class({})
-    , p_MethodBody({})
-    , p_MethodDeclaration({}) {}
+    : p_Class(0)
+    , p_MethodBody(0)
+    , p_MethodDeclaration(0) {}
 
 void
 SgAsmCilMethodImpl::initializeProperties() {
-    p_Class = {};
-    p_MethodBody = {};
-    p_MethodDeclaration = {};
+    p_Class = 0;
+    p_MethodBody = 0;
+    p_MethodDeclaration = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

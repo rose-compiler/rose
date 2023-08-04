@@ -22,11 +22,11 @@ SgAsmCilTypeSpec::~SgAsmCilTypeSpec() {
 }
 
 SgAsmCilTypeSpec::SgAsmCilTypeSpec()
-    : p_Signature({}) {}
+    : p_Signature(0) {}
 
 void
 SgAsmCilTypeSpec::initializeProperties() {
-    p_Signature = {};
+    p_Signature = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

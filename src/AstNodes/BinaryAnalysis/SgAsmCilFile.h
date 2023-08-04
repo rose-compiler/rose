@@ -5,19 +5,19 @@ class SgAsmCilFile: public SgAsmCilMetadata {
      *
      *  A 4-byte bitmask of type FileAttributes. */
     [[using Rosebud: rosetta]]
-    uint32_t Flags = {};
+    uint32_t Flags = 0;
 
     /** Property: Name.
      *
      *  An index into the String heap. */
     [[using Rosebud: rosetta]]
-    uint32_t Name = {};
+    uint32_t Name = 0;
 
     /** Property: HashValue.
      *
      *  An index into the Blob heap. */
     [[using Rosebud: rosetta]]
-    uint32_t HashValue = {};
+    uint32_t HashValue = 0;
 
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);

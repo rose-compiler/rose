@@ -5,13 +5,13 @@ class SgAsmCilEventMap: public SgAsmCilMetadata {
      *
      *  An index into the TypeDef table. */
     [[using Rosebud: rosetta]]
-    uint32_t Parent = {};
+    uint32_t Parent = 0;
 
     /** Property: EventList.
      *
      *  An index into the Event table. */
     [[using Rosebud: rosetta]]
-    uint32_t EventList = {};
+    uint32_t EventList = 0;
 
 public:
     void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);

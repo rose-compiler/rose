@@ -55,17 +55,17 @@ SgAsmCilManifestResource::~SgAsmCilManifestResource() {
 }
 
 SgAsmCilManifestResource::SgAsmCilManifestResource()
-    : p_Offset({})
-    , p_Flags({})
-    , p_Name({})
-    , p_Implementation({}) {}
+    : p_Offset(0)
+    , p_Flags(0)
+    , p_Name(0)
+    , p_Implementation(0) {}
 
 void
 SgAsmCilManifestResource::initializeProperties() {
-    p_Offset = {};
-    p_Flags = {};
-    p_Name = {};
-    p_Implementation = {};
+    p_Offset = 0;
+    p_Flags = 0;
+    p_Name = 0;
+    p_Implementation = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)
