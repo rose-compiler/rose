@@ -1,0 +1,9 @@
+START 
+DEF ITEM item1 STATUS(
+   ((*S 15*)(4B'0000'))V(aa),
+   ((*S 15*)(4B'1111'))V(bb));
+DEF PROC main(); 
+BEGIN 
+   ITEM1=V(aa); 
+END 
+TERM
