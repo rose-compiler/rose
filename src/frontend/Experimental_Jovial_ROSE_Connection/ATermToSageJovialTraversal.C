@@ -408,6 +408,9 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
    else if (ATmatch(term, "BITSINWORD")) {
      expr = SageBuilder::buildVarRefExp("BITSINWORD", SageBuilder::topScopeStack());
    }
+   else if (ATmatch(term, "BITSINPOINTER")) {
+     expr = SageBuilder::buildVarRefExp("BITSINPOINTER", SageBuilder::topScopeStack());
+   }
    else if (ATmatch(term, "BYTESINWORD")) {
      expr = SageBuilder::buildVarRefExp("BYTESINWORD", SageBuilder::topScopeStack());
    }
@@ -1110,15 +1113,16 @@ ATbool ATermToSageJovialTraversal::traverse_StatusConstant(ATerm term, SgExpress
       SgInitializedName* init_name = enum_field_symbol->get_declaration();
       SgAssignInitializer* initializer = isSgAssignInitializer(init_name->get_initializer());
 
-      SgEnumVal* enum_val = isSgEnumVal(initializer->get_operand());
-      ASSERT_not_null(enum_val);
-      setSourcePosition(enum_val, term);
-
-      expr = enum_val;
+      expr = isSgEnumVal(initializer->get_operand());
+      if (expr == nullptr) {
+        // Could be a cast (see regression test gitlab-issue-261.jov)
+        expr = isSgCastExp(initializer->get_operand());
+      }
    }
    else return ATfalse;
 
    ASSERT_not_null(expr);
+   setSourcePosition(expr, term);
 
    return ATtrue;
 }
