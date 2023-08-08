@@ -704,8 +704,6 @@ CallTargetSet::solveFunctionPointerCallsFunctional(SgNode* node, SgFunctionType*
 std::vector<SgFunctionDeclaration*>
 CallTargetSet::solveFunctionPointerCall( SgPointerDerefExp *pointerDerefExp)
 {
-  SgFunctionDeclarationPtrList functionList;
-
   SgFunctionType *fctType = isSgFunctionType( pointerDerefExp->get_type()->findBaseType() );
   ROSE_ASSERT ( fctType );
 
@@ -731,9 +729,11 @@ CallTargetSet::solveFunctionPointerCall( SgPointerDerefExp *pointerDerefExp)
   vv.push_back(V_SgFunctionDeclaration);
   vv.push_back(V_SgTemplateInstantiationFunctionDecl);
 
-  functionList =  AstQueryNamespace::queryMemoryPool(std::bind2nd(std::ptr_fun(solveFunctionPointerCallsFunctional), fctType), &vv );
+  // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
+  std::function<Rose_STL_Container<SgFunctionDeclaration*>(SgNode*,SgFunctionType*)>
+    ptrFun = solveFunctionPointerCallsFunctional;
 
-  return functionList;
+  return AstQueryNamespace::queryMemoryPool(std::bind(ptrFun, std::placeholders::_1, fctType), &vv);
 }
 
 
@@ -1314,9 +1314,13 @@ getPropertiesForSgFunctionCallExp(SgFunctionCallExp* sgFunCallExp,
             assert(functionPointerType!=NULL);
             SgFunctionType *fctType = isSgFunctionType(functionPointerType->findBaseType());
             assert(fctType!=NULL);
-            SgFunctionDeclarationPtrList matches =
-                AstQueryNamespace::queryMemoryPool(std::bind2nd(std::ptr_fun(solveFunctionPointerCallsFunctional), fctType),
-                                                   &vv);
+
+            // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
+            std::function<Rose_STL_Container<SgFunctionDeclaration*>(SgNode*,SgFunctionType*)>
+              ptrFun = solveFunctionPointerCallsFunctional;
+            SgFunctionDeclarationPtrList
+              matches = AstQueryNamespace::queryMemoryPool(std::bind(ptrFun, std::placeholders::_1, fctType), &vv);
+
             functionList.insert(functionList.end(), matches.begin(), matches.end());
             break;
         }

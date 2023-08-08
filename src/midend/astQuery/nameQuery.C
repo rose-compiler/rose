@@ -1043,102 +1043,67 @@ NameQuery::queryNameTypeName (SgNode * astNode)
 //return Rose::stringDuplicate(typeName.c_str());
 }
 
-
-
-
-std::function<Rose_STL_Container<std::string>(SgNode*) > NameQuery::getFunction(NameQuery::TypeOfQueryTypeOneParameter oneParam){
-           NameQuery::roseFunctionPointerOneParameter __x; 
-     switch (oneParam)
-        {
-          case UnknownListElementType:
-             {
-               printf ("This is element number 0 in the list. It is not used to anything predefined.\n");
-               ROSE_ABORT ();
-             }
-    case VariableNames:
+std::function<Rose_STL_Container<std::string>(SgNode*) > NameQuery::getFunction(NameQuery::TypeOfQueryTypeOneParameter oneParam)
+{
+  NameQuery::roseFunctionPointerOneParameter __x;
+  switch (oneParam)
+    {
+    case UnknownListElementType:
       {
+        printf ("This is element number 0 in the list. It is not used to anything predefined.\n");
+        ROSE_ABORT();
+      }
+    case VariableNames:
         __x = queryNameVariableNames;
         break;
-      }
     case VariableTypeNames:
-      {
         __x = queryNameVariableTypeNames;
         break;
-      }
     case FunctionDeclarationNames:
-      {
-        __x =
-          queryNameFunctionDeclarationNames;
+        __x = queryNameFunctionDeclarationNames;
         break;
-      }
     case MemberFunctionDeclarationNames:
-      {
-        __x =
-          queryNameMemberFunctionDeclarationNames;
+        __x = queryNameMemberFunctionDeclarationNames;
         break;
-      }
     case ClassDeclarationNames:
-      {
         __x = queryNameClassDeclarationNames;
         break;
-      }
     case ArgumentNames:
-      {
         __x = queryNameArgumentNames;
         break;
-      }
     case StructNames:
-      {
         __x = queryNameStructNames;
         break;
-      }
     case UnionNames:
-      {
         __x = queryNameUnionNames;
         break;
-      }
     case ClassFieldNames:
-      {
         __x = queryNameClassFieldNames;
         break;
-      }
     case StructFieldNames:
-      {
         __x = queryNameStructFieldNames;
         break;
-      }
     case UnionFieldNames:
-      {
         __x = queryNameUnionFieldNames;
         break;
-      }
     case FunctionReferenceNames:
-      {
-        __x =
-          queryNameFunctionReferenceNames;
+        __x = queryNameFunctionReferenceNames;
         break;
-      }
     case TypedefDeclarationNames:
-      {
-        __x =
-          queryNameTypedefDeclarationNames;
+        __x = queryNameTypedefDeclarationNames;
         break;
-      }
     case TypeNames:
-      {
         __x = queryNameTypeName;
         break;
+    default:
+      {
+        printf ("This is an invalid member of the enum  TypeOfQueryTypeOneParameter.\n");
+        ROSE_ABORT ();
       }
+    } /* End switch-case */
 
-
-          default:
-             {
-               printf ("This is an invalid member of the enum  TypeOfQueryTypeOneParameter.\n");
-               ROSE_ABORT ();
-             }
-        } /* End switch-case */
-         return std::ptr_fun(__x);
-
+     // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
+     return __x;
   }
 
 std::function< Rose_STL_Container<std::string>(SgNode*, std::string) > NameQuery::getFunction(NameQuery::TypeOfQueryTypeTwoParameters twoParam){
@@ -1152,8 +1117,7 @@ std::function< Rose_STL_Container<std::string>(SgNode*, std::string) > NameQuery
              }
           case VariableNamesWithTypeName:
              {
-               __x =
-                 queryVariableNamesWithTypeName;
+               __x = queryVariableNamesWithTypeName;
                break;
              }
           default:
@@ -1162,7 +1126,9 @@ std::function< Rose_STL_Container<std::string>(SgNode*, std::string) > NameQuery
                ROSE_ABORT ();
              }
         }
-         return std::ptr_fun(__x);
+
+     // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
+     return __x;
   }
 
 
@@ -1180,8 +1146,9 @@ std::function< Rose_STL_Container<std::string>(SgNode*, std::string) > NameQuery
                     std::string traversal,
                     NameQuery::roseFunctionPointerTwoParameters querySolverFunction,
                     AstQueryNamespace::QueryDepth defineQueryType){
+                     // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
                      return AstQueryNamespace::querySubTree(subTree, 
-                                  std::bind(std::ptr_fun(querySolverFunction), std::placeholders::_1, traversal), defineQueryType);
+                                  std::bind(querySolverFunction, std::placeholders::_1, traversal), defineQueryType);
           };
           NameQuerySynthesizedAttributeType NameQuery::querySubTree
                   ( SgNode * subTree,
@@ -1192,14 +1159,13 @@ std::function< Rose_STL_Container<std::string>(SgNode*, std::string) > NameQuery
                                   std::bind(getFunction(elementReturnType), std::placeholders::_1 , traversal), defineQueryType);
           };
 
-
-
        // perform a query on a list<SgNode>
           NameQuerySynthesizedAttributeType NameQuery::queryNodeList 
-                 ( Rose_STL_Container< SgNode * >nodeList,
-                   NameQuery::roseFunctionPointerOneParameter querySolverFunction){
-                 return AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(),
-                                 std::ptr_fun(querySolverFunction));
+                 ( Rose_STL_Container<SgNode*>nodeList,
+                   NameQuery::roseFunctionPointerOneParameter querySolverFunction) {
+                 // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
+                 std::function<NameQuerySynthesizedAttributeType(SgNode*)> ptrFun = querySolverFunction;
+                 return AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(), ptrFun);
           };
           NameQuerySynthesizedAttributeType NameQuery::queryNodeList 
                  ( Rose_STL_Container<SgNode*> nodeList,
@@ -1215,21 +1181,17 @@ std::function< Rose_STL_Container<std::string>(SgNode*, std::string) > NameQuery
             AstQueryNamespace::QueryDepth defineQueryType 
            ){
 
-            return  AstQueryNamespace::querySubTree(subTree,
-                                  std::ptr_fun(elementReturnType),defineQueryType);
-
+            // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
+            return AstQueryNamespace::querySubTree(subTree, elementReturnType, defineQueryType);
           };
-
-
 
           NameQuerySynthesizedAttributeType NameQuery::queryNodeList 
                  ( Rose_STL_Container<SgNode*> nodeList,
                    std::string targetNode,
                    NameQuery::roseFunctionPointerTwoParameters querySolverFunction ){
+                // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
                 return AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(),
-                             std::bind(std::ptr_fun(querySolverFunction), std::placeholders::_1, targetNode));
-//                                  std::bind2nd(getFunction(elementReturnType),traversal), defineQueryType);
-
+                             std::bind(querySolverFunction, std::placeholders::_1, targetNode));
           };
           NameQuerySynthesizedAttributeType NameQuery::queryNodeList 
                  ( Rose_STL_Container<SgNode*> nodeList,
@@ -1258,9 +1220,9 @@ NameQuerySynthesizedAttributeType
      std::string traversal,
      NameQuery::roseFunctionPointerTwoParameters querySolverFunction, VariantVector* targetVariantVector)
    {
-         return AstQueryNamespace::queryMemoryPool(
-                                  std::bind(std::ptr_fun(querySolverFunction), std::placeholders::_1, traversal), targetVariantVector);
-
+     // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
+     return AstQueryNamespace::queryMemoryPool(std::bind(querySolverFunction,std::placeholders::_1,traversal),
+                                               targetVariantVector);
    };
 
 
@@ -1278,10 +1240,8 @@ NameQuerySynthesizedAttributeType
      std::string traversal,
      NameQuery::roseFunctionPointerOneParameter querySolverFunction, VariantVector* targetVariantVector)
    {
-   return  AstQueryNamespace::queryMemoryPool(
-                                  std::ptr_fun(querySolverFunction),targetVariantVector);
-
-
+     // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
+     return AstQueryNamespace::queryMemoryPool(querySolverFunction, targetVariantVector);
    };
 
 /********************************************************************************
