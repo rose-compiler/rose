@@ -327,9 +327,12 @@ ASTtools::collectRefdVarSyms (const SgStatement* s, VarSymSet_t& syms)
 void
 ASTtools::collectDefdVarSyms (const SgStatement* s, VarSymSet_t& syms)
 {
+  // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
+  std::function<void(SgNode*, ASTtools::VarSymSet_t*)> ptrFun = getVarSyms;
+
   typedef Rose_STL_Container<SgNode *> NodeList_t;
   NodeList_t vars_local = NodeQuery::querySubTree (const_cast<SgStatement *> (s), V_SgVariableDeclaration);
-  for_each (vars_local.begin (), vars_local.end (), bind2nd (ptr_fun (getVarSyms), &syms));
+  for_each (vars_local.begin (), vars_local.end (), std::bind(ptrFun, std::placeholders::_1, &syms));
 
   for (VarSymSet_t::iterator it = syms.begin(); it != syms.end(); it++ )
     ROSE_ASSERT (*it!=NULL);

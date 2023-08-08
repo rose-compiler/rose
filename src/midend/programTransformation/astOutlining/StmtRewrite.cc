@@ -73,12 +73,15 @@ ASTtools::appendCopy (const SgStatement* s, SgBasicBlock* b)
 void
 ASTtools::appendStmtsCopy (const SgBasicBlock* a, SgBasicBlock* b)
 {
+  // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
+  std::function<void(const SgStatement*,SgBasicBlock*)> ptrFun = appendCopy;
+
   if (a != NULL)
     {
       SgStatementPtrList src_stmts = a->get_statements ();
-      for_each (src_stmts.begin (),
-                src_stmts.end (),
-                bind2nd (ptr_fun (appendCopy), b));
+        for_each (src_stmts.begin (),
+                  src_stmts.end (),
+                  std::bind(ptrFun, std::placeholders::_1, b));
     }
 }
 
