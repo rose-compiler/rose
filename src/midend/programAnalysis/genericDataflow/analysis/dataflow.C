@@ -6,7 +6,7 @@
 #include <assert.h>
 
 #include <memory>
-using std::auto_ptr;
+using std::unique_ptr;
 
 #include <utility>
 using std::pair;
@@ -231,7 +231,7 @@ bool IntraUniDirectionalDataflow::runAnalysis(const Function& func, NodeState* f
 #if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
-        auto_ptr<VirtualCFG::dataflow> workList(getInitialWorklist(func, firstVisit, analyzeDueToCallers, calleesUpdated, fState));
+        unique_ptr<VirtualCFG::dataflow> workList(getInitialWorklist(func, firstVisit, analyzeDueToCallers, calleesUpdated, fState));
 
         VirtualCFG::dataflow &it = *workList;
         VirtualCFG::iterator itEnd = VirtualCFG::dataflow::end();
