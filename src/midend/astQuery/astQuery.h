@@ -42,9 +42,6 @@ ROSE_DLL_API VariantVector operator+ (const VariantVector & lhs, VariantT rhs);
 ROSE_DLL_API VariantVector operator+ (const VariantVector & lhs, const VariantVector & rhs);
 
 
-
-
-
 namespace AstQueryNamespace
 {
 
@@ -339,7 +336,8 @@ template<typename NodeFunctional>
      _Result querySubTree ( SgNode * subTree,
         _Result (*__x)(SgNode*,_Arg), _Arg x_arg,
         AstQueryNamespace::QueryDepth defineQueryType = AstQueryNamespace::AllNodes ){
-      return querySubTree(subTree,std::bind(std::ptr_fun(__x),std::placeholders::_1,x_arg),defineQueryType);
+      // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
+      return querySubTree(subTree,std::bind(__x,std::placeholders::_1,x_arg), defineQueryType);
     }
 
   /********************************************************************************
@@ -354,7 +352,8 @@ template<typename NodeFunctional>
      _Result querySubTree ( SgNode * subTree,
         _Result (*__x)(SgNode*),
         AstQueryNamespace::QueryDepth defineQueryType = AstQueryNamespace::AllNodes ){
-      return querySubTree(subTree,std::ptr_fun(__x),defineQueryType);
+      // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
+      return querySubTree(subTree, __x, defineQueryType);
     }
 
   /********************************************************************************
@@ -390,7 +389,8 @@ template<typename NodeFunctional>
   template <class _Arg, class _Result> 
     _Result queryRange ( typename _Result::iterator begin, const typename _Result::iterator end,
         _Result (*__x)(SgNode*,_Arg), _Arg x_arg){
-      return queryRange(begin,end,std::bind(std::ptr_fun(__x), std::placeholders::_1,x_arg));
+      // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
+      return queryRange(begin, end, std::bind(__x, std::placeholders::_1, x_arg));
     }
 
   /********************************************************************************
@@ -404,7 +404,8 @@ template<typename NodeFunctional>
   template <class _Result> 
     _Result queryRange (typename _Result::iterator begin, typename _Result::iterator end,
         _Result (*__x)(SgNode*)){
-      return queryRange(begin,end,std::ptr_fun(__x));
+      // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
+      return queryRange(begin,end,__x);
     }
 
   /****************************************************************************
@@ -427,7 +428,6 @@ template<typename NodeFunctional>
     typename NodeFunctional::result_type 
     queryMemoryPool(NodeFunctional nodeFunc , VariantVector* targetVariantVector = NULL)
     {
-
       AstQuery<ROSE_VisitTraversal,NodeFunctional> astQuery(&nodeFunc);
       if(targetVariantVector == NULL){
         //Query the whole memory pool
@@ -435,8 +435,6 @@ template<typename NodeFunctional>
       }else{
         queryMemoryPool<NodeFunctional>(astQuery, targetVariantVector);
       }; // end if-else
-
-
 
       return astQuery.get_listOfNodes();
     }
@@ -454,7 +452,8 @@ template <class _Arg, class _Result>
 _Result queryMemoryPool ( 
     _Result (*__x)(SgNode*,_Arg), _Arg x_arg,
     VariantVector* targetVariantVector = NULL){
-  return queryMemoryPool(std::bind(std::ptr_fun(__x),std::placeholders::_1,x_arg),targetVariantVector);
+  // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
+  return queryMemoryPool(std::bind(__x, std::placeholders::_1, x_arg), targetVariantVector);
 }
 
 /********************************************************************************
@@ -469,7 +468,8 @@ template <class _Result>
 _Result queryMemoryPool (
     _Result (*__x)(SgNode*),
     VariantVector* targetVariantVector = NULL ){
-  return queryMemoryPool(std::ptr_fun(__x),targetVariantVector);
+  // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
+  return queryMemoryPool(__x, targetVariantVector);
 }
 
 

@@ -26,7 +26,9 @@ using namespace AstQueryNamespace;
 std::function<Rose_STL_Container<SgNode*>(SgNode*) >
 NodeQuery::getFunction(TypeOfQueryTypeOneParameter oneParam)
 {
-  Rose_STL_Container<SgNode*> (*__x)(SgNode*); 
+  // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
+  std::function<Rose_STL_Container<SgNode*>(SgNode*)> ptrFun;
+
   switch (oneParam)
   {
     case UnknownListElementType:
@@ -36,77 +38,77 @@ NodeQuery::getFunction(TypeOfQueryTypeOneParameter oneParam)
       }
     case TypedefDeclarations:
       {
-        __x = &querySolverTypedefDeclarations;
+        ptrFun = querySolverTypedefDeclarations;
         break;
       }
     case AnonymousTypedefs:
       {
-        __x = &queryNodeAnonymousTypedef;
+        ptrFun = queryNodeAnonymousTypedef;
         break;
       }
     case AnonymousTypedefClassDeclarations:
       {
-        __x = &queryNodeAnonymousTypedefClassDeclaration;
+        ptrFun = queryNodeAnonymousTypedefClassDeclaration;
         break;
       }
     case VariableDeclarations:
       {
-        __x = &querySolverVariableDeclarations;
+        ptrFun = querySolverVariableDeclarations;
         break;
       }
     case VariableTypes:
       {
-        __x = &querySolverVariableTypes;
+        ptrFun = querySolverVariableTypes;
         break;
       }
     case FunctionDeclarations:
       {
-        __x = & querySolverFunctionDeclarations;
+        ptrFun =  querySolverFunctionDeclarations;
         break;
       }
     case MemberFunctionDeclarations:
       {
-        __x = &querySolverMemberFunctionDeclarations;
+        ptrFun = querySolverMemberFunctionDeclarations;
         break;
       }
     case ClassDeclarations:
       {
-        __x = &querySolverClassDeclarations;
+        ptrFun = querySolverClassDeclarations;
         break;
       }
     case StructDeclarations:
       {
-        __x = &querySolverStructDeclarations;
+        ptrFun = querySolverStructDeclarations;
         break;
       }
     case UnionDeclarations:
       {
-        __x = &querySolverUnionDeclarations;
+        ptrFun = querySolverUnionDeclarations;
         break;
       }
     case Arguments:
       {
-        __x = &querySolverArguments;
+        ptrFun = querySolverArguments;
         break;
       }
     case ClassFields:
       {
-        __x = &querySolverClassFields;
+        ptrFun = querySolverClassFields;
         break;
       }
     case StructFields:
       {
-        __x = &querySolverStructFields;
+        ptrFun = querySolverStructFields;
         break;
       }
     case UnionFields:
       {
-        __x = &querySolverUnionFields;
+        ptrFun = querySolverUnionFields;
         break;
       }
     case StructDefinitions:
       {
-        __x = &querySolverStructDefinitions;
+        ptrFun = querySolverStructDefinitions;
         break;
       }
 
@@ -116,14 +118,15 @@ NodeQuery::getFunction(TypeOfQueryTypeOneParameter oneParam)
         ROSE_ABORT ();
       }
   } /* End switch-case */
-  return std::ptr_fun(__x);
 
+  return ptrFun;
 }
 
 std::function< Rose_STL_Container<SgNode*>(SgNode*, SgNode*) >
 NodeQuery::getFunction(TypeOfQueryTypeTwoParameters twoParam)
 {
-  Rose_STL_Container<SgNode*> (*__x)(SgNode*,SgNode*); 
+  // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
+  std::function<Rose_STL_Container<SgNode*>(SgNode*,SgNode*)> ptrFun;
 
   switch (twoParam)
   {
@@ -134,27 +137,27 @@ NodeQuery::getFunction(TypeOfQueryTypeTwoParameters twoParam)
       }
     case FunctionDeclarationFromDefinition:
       {
-        __x = &querySolverFunctionDeclarationFromDefinition;
+        ptrFun = querySolverFunctionDeclarationFromDefinition;
         break;
       }
     case ClassDeclarationFromName:
       {
-        __x = &queryNodeClassDeclarationFromName;
+        ptrFun = queryNodeClassDeclarationFromName;
         break;
       }
     case ClassDeclarationsFromTypeName:
       {
-        __x = &queryNodeClassDeclarationsFromTypeName;
+        ptrFun = queryNodeClassDeclarationsFromTypeName;
         break;
       }
     case PragmaDeclarationFromName:
       {
-        __x = &queryNodePragmaDeclarationFromName;
+        ptrFun = queryNodePragmaDeclarationFromName;
         break;
       }
     case VariableDeclarationFromName:
       {
-        __x =  queryNodeVariableDeclarationFromName;
+        ptrFun = queryNodeVariableDeclarationFromName;
         break;
       }
     default:
@@ -163,7 +166,7 @@ NodeQuery::getFunction(TypeOfQueryTypeTwoParameters twoParam)
         ROSE_ABORT ();
       }
   }
-  return std::ptr_fun(__x);
+  return ptrFun;
 }
 
 
@@ -927,8 +930,7 @@ NodeQuery::querySolverFunctionDeclarationFromDefinition (SgNode * astNode,
 
   return returnNodeList;
 
-}                               /* End function querySolverUnionFields() */
-
+} /* End function querySolverUnionFields() */
 
 
 
@@ -942,12 +944,14 @@ NodeQuerySynthesizedAttributeType NodeQuery::querySubTree ( SgNode * subTree, Ty
 
 // get the SgNode's conforming to the test in querySolverFunction or
 // get the SgNode's conforming to the test in the TypeOfQueryTypeTwoParamters the user specify.
-NodeQuerySynthesizedAttributeType NodeQuery::querySubTree ( SgNode * subTree, SgNode * traversal, roseFunctionPointerTwoParameters querySolverFunction, AstQueryNamespace::QueryDepth defineQueryType)
+NodeQuerySynthesizedAttributeType NodeQuery::querySubTree (SgNode* subTree, SgNode* traversal, roseFunctionPointerTwoParameters querySolverFunction, AstQueryNamespace::QueryDepth defineQueryType)
    {
 #if 0
      printf ("Inside of NodeQuery::querySubTree #2 \n");
 #endif
-     return AstQueryNamespace::querySubTree(subTree, std::bind(std::ptr_fun(querySolverFunction),std::placeholders::_1,traversal), defineQueryType);
+  // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
+     return AstQueryNamespace::querySubTree(subTree,
+              std::bind(querySolverFunction, std::placeholders::_1,traversal), defineQueryType);
    }
 
 NodeQuerySynthesizedAttributeType NodeQuery::querySubTree ( SgNode * subTree, SgNode * traversal, TypeOfQueryTypeTwoParameters elementReturnType, AstQueryNamespace::QueryDepth defineQueryType )
@@ -971,13 +975,13 @@ Rose_STL_Container<SgNode*> NodeQuery::queryNodeList ( Rose_STL_Container<SgNode
    }
 
 NodeQuerySynthesizedAttributeType
-NodeQuery::querySubTree (SgNode * subTree, roseFunctionPointerOneParameter elementReturnType, AstQueryNamespace::QueryDepth defineQueryType )
+NodeQuery::querySubTree (SgNode* subTree, roseFunctionPointerOneParameter elementReturnType, AstQueryNamespace::QueryDepth defineQueryType)
    {
 #if 0
      printf ("Inside of NodeQuery::querySubTree #4 \n");
 #endif
-
-     return  AstQueryNamespace::querySubTree(subTree,std::ptr_fun(elementReturnType),defineQueryType);
+  // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
+     return  AstQueryNamespace::querySubTree(subTree, elementReturnType, defineQueryType);
    }
 
 
@@ -1191,9 +1195,10 @@ Rose_STL_Container<SgNode*> NodeQuery::generateListOfTypes ( SgNode* astNode )
  * perform the action specified by the second argument and return a NodeQuerySynthesizedAttributeType.
  ********************************************************************************/
   NodeQuerySynthesizedAttributeType
-NodeQuery::queryMemoryPool ( SgNode * traversal, NodeQuery::roseFunctionPointerTwoParameters querySolverFunction, VariantVector* targetVariantVector)
+NodeQuery::queryMemoryPool (SgNode* traversal, NodeQuery::roseFunctionPointerTwoParameters querySolverFunction, VariantVector* targetVariantVector)
 {
-  return AstQueryNamespace::queryMemoryPool(std::bind(std::ptr_fun(querySolverFunction),std::placeholders::_1,traversal), targetVariantVector);
+  // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
+  return AstQueryNamespace::queryMemoryPool(std::bind(querySolverFunction, std::placeholders::_1,traversal), targetVariantVector);
 }
 
 
@@ -1206,9 +1211,10 @@ NodeQuery::queryMemoryPool ( SgNode * traversal, NodeQuery::roseFunctionPointerT
  * performa the action specified by the second argument and return a NodeQuerySynthesizedAttributeType.
  ********************************************************************************/
   NodeQuerySynthesizedAttributeType
-NodeQuery::queryMemoryPool ( SgNode * traversal, NodeQuery::roseFunctionPointerOneParameter querySolverFunction, VariantVector* targetVariantVector)
+NodeQuery::queryMemoryPool (SgNode* traversal, NodeQuery::roseFunctionPointerOneParameter querySolverFunction, VariantVector* targetVariantVector)
 {
-  return  AstQueryNamespace::queryMemoryPool(std::ptr_fun(querySolverFunction),targetVariantVector);
+  // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
+  return AstQueryNamespace::queryMemoryPool(querySolverFunction, targetVariantVector);
 }
 
 /********************************************************************************

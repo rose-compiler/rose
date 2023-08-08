@@ -296,8 +296,9 @@ std::function<NumberQuerySynthesizedAttributeType(SgNode*)> NumberQuery::getFunc
         ROSE_ABORT ();
       }
   } /* End switch-case */
-  return std::ptr_fun(__x);
 
+  // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
+  return __x;
 }
 
 std::function<NumberQuerySynthesizedAttributeType(SgNode*, std::string) > NumberQuery::getFunction(NumberQuery::TypeOfQueryTypeTwoParameters twoParam){
@@ -311,8 +312,7 @@ std::function<NumberQuerySynthesizedAttributeType(SgNode*, std::string) > Number
       }
     case NumberOfArgsInParanthesisOperator:
       {
-        __x =
-          queryNumberOfArgsInParenthesisOperator;
+        __x = queryNumberOfArgsInParenthesisOperator;
         break;
       }
 
@@ -322,7 +322,8 @@ std::function<NumberQuerySynthesizedAttributeType(SgNode*, std::string) > Number
         ROSE_ABORT ();
       }
   }
-  return std::ptr_fun(__x);
+  // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
+  return __x;
 }
 
 
@@ -340,8 +341,9 @@ NumberQuerySynthesizedAttributeType NumberQuery::querySubTree
   std::string traversal,
   NumberQuery::roseFunctionPointerTwoParameters querySolverFunction,
   AstQueryNamespace::QueryDepth defineQueryType){
+  // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
   return AstQueryNamespace::querySubTree(subTree, 
-      std::bind(std::ptr_fun(querySolverFunction),std::placeholders::_1,traversal), defineQueryType);
+      std::bind(querySolverFunction,std::placeholders::_1,traversal), defineQueryType);
 
 
 };
@@ -359,16 +361,16 @@ NumberQuerySynthesizedAttributeType NumberQuery::querySubTree
 // perform a query on a list<SgNode>
 NumberQuerySynthesizedAttributeType NumberQuery::queryNodeList 
 ( Rose_STL_Container< SgNode * >nodeList,
-  NumberQuery::roseFunctionPointerOneParameter querySolverFunction){
-  return AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(),
-      std::ptr_fun(querySolverFunction));
-
+  NumberQuery::roseFunctionPointerOneParameter querySolverFunction) {
+  // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
+  std::function<NumberQuerySynthesizedAttributeType(SgNode*)> ptrFun = querySolverFunction;
+  return AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(), ptrFun);
 };
+
 NumberQuerySynthesizedAttributeType NumberQuery::queryNodeList 
 ( Rose_STL_Container<SgNode*> nodeList,
-  NumberQuery::TypeOfQueryTypeOneParameter elementReturnType ){
+  NumberQuery::TypeOfQueryTypeOneParameter elementReturnType ) {
   return AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(),getFunction(elementReturnType));
-
 };
 
 NumberQuerySynthesizedAttributeType
@@ -376,11 +378,9 @@ NumberQuery::querySubTree
 (SgNode * subTree,
  NumberQuery::roseFunctionPointerOneParameter elementReturnType,
  AstQueryNamespace::QueryDepth defineQueryType 
- ){
-
-  return  AstQueryNamespace::querySubTree(subTree,
-      std::ptr_fun(elementReturnType),defineQueryType);
-
+ ) {
+  // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
+  return AstQueryNamespace::querySubTree(subTree, elementReturnType, defineQueryType);
 };
 
 
@@ -390,20 +390,17 @@ NumberQuerySynthesizedAttributeType NumberQuery::queryNodeList
   std::string targetNode,
   NumberQuery::roseFunctionPointerTwoParameters querySolverFunction ){
   return AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(),
-      std::bind(std::ptr_fun(querySolverFunction), std::placeholders::_1, targetNode));
-  //                                  std::bind2nd(getFunction(elementReturnType),traversal), defineQueryType);
-
+      // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
+      std::bind(querySolverFunction, std::placeholders::_1, targetNode));
 };
+
 NumberQuerySynthesizedAttributeType NumberQuery::queryNodeList 
 ( Rose_STL_Container<SgNode*> nodeList,
   std::string targetNode,
   NumberQuery::TypeOfQueryTypeTwoParameters elementReturnType ){
   return AstQueryNamespace::queryRange(nodeList.begin(), nodeList.end(),
       std::bind(getFunction(elementReturnType), std::placeholders::_1, targetNode));
-
 };
-
-
 
 /********************************************************************************
  * The function
@@ -420,10 +417,9 @@ NumberQuery::queryMemoryPool
  NumberQuery::roseFunctionPointerTwoParameters querySolverFunction, VariantVector* targetVariantVector)
 {
   return AstQueryNamespace::queryMemoryPool(
-      std::bind(std::ptr_fun(querySolverFunction),std::placeholders::_1,traversal), targetVariantVector);
-
+      // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
+      std::bind(querySolverFunction,std::placeholders::_1,traversal), targetVariantVector);
 };
-
 
 /********************************************************************************
  * The function
@@ -439,10 +435,8 @@ NumberQuery::queryMemoryPool
  std::string traversal,
  NumberQuery::roseFunctionPointerOneParameter querySolverFunction, VariantVector* targetVariantVector)
 {
-  return  AstQueryNamespace::queryMemoryPool(
-      std::ptr_fun(querySolverFunction),targetVariantVector);
-
-
+  // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
+  return AstQueryNamespace::queryMemoryPool(querySolverFunction, targetVariantVector);
 };
 
 /********************************************************************************
