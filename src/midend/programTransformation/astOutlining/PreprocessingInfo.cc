@@ -252,19 +252,22 @@ ASTtools::cutPreprocInfo (SgBasicBlock* b,
                           PreprocessingInfo::RelativePositionType pos,
                           AttachedPreprocessingInfoType& save_buf)
 {
+  // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
+  std::function<bool(const PreprocessingInfo*, PreprocessingInfo::RelativePositionType)> ptrIsRelPos = isRelPos;
+  std::function<bool(const PreprocessingInfo*, PreprocessingInfo::RelativePositionType)> ptrIsNotRelPos = isNotRelPos;
+
   AttachedPreprocessingInfoType* info = createInfoList (b);
   ROSE_ASSERT (info);
   remove_copy_if (info->begin (), info->end (),
                   back_inserter (save_buf),
-                  bind2nd (ptr_fun (isNotRelPos), pos));
+                  std::bind(ptrIsNotRelPos, std::placeholders::_1, pos));
 
 // DQ (9/26/2007): Commented out as part of move from std::list to std::vector
 // info->remove_if (bind2nd (ptr_fun (isRelPos), pos));
 // Liao (10/3/2007), implement list::remove_if for vector, which lacks sth. like erase_if
   AttachedPreprocessingInfoType::iterator new_end =
-	   remove_if(info->begin(),info->end(),bind2nd(ptr_fun (isRelPos), pos));
+           remove_if(info->begin(),info->end(),std::bind(ptrIsRelPos, std::placeholders::_1, pos));
   info->erase(new_end, info->end());
-  
 }
 
 void
@@ -312,15 +315,16 @@ ASTtools::moveBeforePreprocInfo (SgStatement* src, SgStatement* dest)
     if (!isNotRelPos(*i,PreprocessingInfo::before))
         d_info->insert(d_info->begin(),*i);
 
+  // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
+  std::function<bool(const PreprocessingInfo*, PreprocessingInfo::RelativePositionType)> ptrIsRelPos = isRelPos;
 
 // DQ (9/26/2007): Commented out as part of move from std::list to std::vector
 //   printf ("Commented out s_info->remove_if() as part of move from std::list to std::vector \n");
 // s_info->remove_if (bind2nd (ptr_fun (isRelPos), PreprocessingInfo::before));
 // Liao (10/3/2007), vectors do not support remove_if
   AttachedPreprocessingInfoType::iterator new_end =
-       remove_if(s_info->begin(),s_info->end(),bind2nd(ptr_fun (isRelPos), PreprocessingInfo::before));
+      remove_if(s_info->begin(),s_info->end(),std::bind(ptrIsRelPos, std::placeholders::_1, PreprocessingInfo::before));
   s_info->erase(new_end, s_info->end());
-
 }
 
 void
@@ -333,23 +337,25 @@ ASTtools::moveInsidePreprocInfo (SgBasicBlock* src, SgBasicBlock* dest)
   AttachedPreprocessingInfoType* d_info = createInfoList (dest);
   ROSE_ASSERT (d_info);
 
+  // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
+  std::function<bool(const PreprocessingInfo*, PreprocessingInfo::RelativePositionType)> ptrIsRelPos = isRelPos;
+  std::function<bool(const PreprocessingInfo*, PreprocessingInfo::RelativePositionType)> ptrIsNotRelPos = isNotRelPos;
+
   // Determine an insertion point.
   AttachedPreprocessingInfoType::iterator i =
     find_if (d_info->begin (), d_info->end (),
-             bind2nd (ptr_fun (isRelPos), PreprocessingInfo::inside));
+             std::bind(ptrIsRelPos, std::placeholders::_1, PreprocessingInfo::inside));
 
   if (i == d_info->end ()) // Destination has no 'inside' preprocessing info.
     i = find_if (d_info->begin (), d_info->end (),
-                 bind2nd (ptr_fun (isRelPos), PreprocessingInfo::after));
+                 std::bind(ptrIsRelPos, std::placeholders::_1, PreprocessingInfo::after));
 
   if (i == d_info->end ()) // Destination has no 'after' preprocessing info.
     remove_copy_if (s_info->begin (), s_info->end (), back_inserter (*d_info),
-                    bind2nd (ptr_fun (isNotRelPos),
-                             PreprocessingInfo::inside));
+                    std::bind(ptrIsNotRelPos, placeholders::_1, PreprocessingInfo::inside));
   else // Insert before 'i'
     remove_copy_if (s_info->begin (), s_info->end (), inserter (*d_info, i),
-                    bind2nd (ptr_fun (isNotRelPos),
-                             PreprocessingInfo::inside));
+                    std::bind(ptrIsNotRelPos, placeholders::_1, PreprocessingInfo::inside));
 
   // Erase from source.
 
@@ -358,7 +364,7 @@ ASTtools::moveInsidePreprocInfo (SgBasicBlock* src, SgBasicBlock* dest)
 // s_info->remove_if (bind2nd (ptr_fun (isRelPos), PreprocessingInfo::inside));
 // Liao (10/3/2007), vectors do not support remove_if
   AttachedPreprocessingInfoType::iterator new_end =
-       remove_if(s_info->begin(),s_info->end(),bind2nd(ptr_fun (isRelPos), PreprocessingInfo::inside));
+      remove_if(s_info->begin(), s_info->end(), std::bind(ptrIsRelPos, std::placeholders::_1, PreprocessingInfo::inside));
   s_info->erase(new_end, s_info->end());
 
 }
@@ -367,6 +373,10 @@ void
 ASTtools::moveAfterPreprocInfo (SgStatement* src, SgStatement* dest)
 {
   ROSE_ASSERT (src && dest);
+
+  // Replaced deprecated functions std::bind2nd and std::ptr_fun [Rasmussen, 2023.08.07]
+  std::function<bool(const PreprocessingInfo*, PreprocessingInfo::RelativePositionType)> ptrIsRelPos = isRelPos;
+  std::function<bool(const PreprocessingInfo*, PreprocessingInfo::RelativePositionType)> ptrIsNotRelPos = isNotRelPos;
 
   AttachedPreprocessingInfoType* s_info =
     src->get_attachedPreprocessingInfoPtr ();
@@ -377,14 +387,14 @@ ASTtools::moveAfterPreprocInfo (SgStatement* src, SgStatement* dest)
 
   remove_copy_if (s_info->begin (), s_info->end (),
                   back_inserter (*d_info),
-                  bind2nd (ptr_fun (isNotRelPos), PreprocessingInfo::after));
+                  std::bind(ptrIsNotRelPos, std::placeholders::_1, PreprocessingInfo::after));
 
 // DQ (9/26/2007): Commented out as part of move from std::list to std::vector
 //   printf ("Commented out s_info->remove_if() as part of move from std::list to std::vector \n");
 // s_info->remove_if (bind2nd (ptr_fun (isRelPos), PreprocessingInfo::after));
 // Liao (10/3/2007), vectors do not support remove_if
   AttachedPreprocessingInfoType::iterator new_end =
-       remove_if(s_info->begin(),s_info->end(),bind2nd(ptr_fun (isRelPos), PreprocessingInfo::after));
+      remove_if(s_info->begin(), s_info->end(), std::bind(ptrIsRelPos, std::placeholders::_1, PreprocessingInfo::after));
   s_info->erase(new_end, s_info->end());
 
 }
