@@ -1428,7 +1428,7 @@ namespace
       const bool               res = (  (argRoot.typerep() != nullptr)
                                      && (argRoot.typerep() == prmRoot.typerep())
                                      );
-      if (false)
+      if (true)
       {
         logFlaw() << res << '\n'
                   << " * a " << (argRoot.typerep() ? typeid(*argRoot.typerep()).name() : std::string{})
