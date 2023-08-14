@@ -225,9 +225,10 @@ CilMethod::annotate() {
       case Cil_call: {
         // metadata token for a methodref, methoddef, or methodspec
         if (auto token = isSgAsmIntegerValueExpression(insn->get_operandList()->get_operands()[0])) {
-          SgAsmCilMetadata* obj = CilContainer::resolveToken(token, mdr_);
-          comment = CilMethod::name(obj, mdr_);
-          token->set_comment(comment);
+          if (SgAsmCilMetadata* obj = CilContainer::resolveToken(token, mdr_)) {
+            comment = CilMethod::name(obj, mdr_);
+            token->set_comment(comment);
+          }
         }
         break;
       }
@@ -260,9 +261,12 @@ CilMethod::name(const SgAsmCilMetadata* obj, SgAsmCilMetadataRoot* mdr)
       auto methodSpec = isSgAsmCilMethodSpec(obj);
       // MethodDef or MemberRef
       uint32_t index = methodSpec->get_Method();
-      auto mdh = mdr->get_MetadataHeap();
-      SgAsmCilMetadata* specObj = mdh->get_CodedMetadataNode(index, SgAsmCilMetadataHeap::e_ref_method_def_or_ref);
-      objName += CilMethod::name(specObj, mdr);
+      if (index > 0) {
+        // TODO: This fails sometime (index==0), resolve it
+        auto mdh = mdr->get_MetadataHeap();
+        SgAsmCilMetadata* specObj = mdh->get_CodedMetadataNode(index, SgAsmCilMetadataHeap::e_ref_method_def_or_ref);
+        objName += CilMethod::name(specObj, mdr);
+      }
       break;
     }
     case V_SgAsmCilModuleRef: {
@@ -405,11 +409,17 @@ CilContainer::namespaces() const {
 SgAsmCilMetadata*
 CilContainer::resolveToken(SgAsmIntegerValueExpression* token, SgAsmCilMetadataRoot* mdr)
 {
+  SgAsmCilMetadata* obj{nullptr};
+
   uint32_t value = static_cast<uint32_t>(token->get_value());
   uint32_t kind =  (0xff000000 & value) >> 24;
   uint32_t index = 0x00ffffff & value;
   auto mdh = mdr->get_MetadataHeap();
-  SgAsmCilMetadata* obj = mdh->get_MetadataNode(index, static_cast<SgAsmCilMetadataHeap::TableKind>(kind));
+
+  if (index > 0) {
+    obj = mdh->get_MetadataNode(index, static_cast<SgAsmCilMetadataHeap::TableKind>(kind));
+  }
+
   return obj;
 }
 

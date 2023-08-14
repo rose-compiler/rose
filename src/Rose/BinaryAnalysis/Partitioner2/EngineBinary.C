@@ -1542,6 +1542,21 @@ EngineBinary::createPartitioner() {
 void EngineBinary::runPartitionerInit(const Partitioner::Ptr &partitioner) {
     Sawyer::Message::Stream where(mlog[WHERE]);
 
+    if (hasCilCodeSection()) {
+        settings().partitioner.findingImportFunctions = false; // Don't find "_Cor_CorExeMain"
+        settings().partitioner.findingEntryFunctions = true; // Do find "_start"
+        settings().partitioner.findingInterFunctionCalls = false; // chases memory willy nilly looking for instructions
+        settings().partitioner.demangleNames = false; // throwing exception
+
+        // what about the following:
+        //   create: settings().partitioner.makingPrologueFunctions = false;
+        //   findingFunctionPadding, findingDeadCode, findingIntraFunctionCode, findingIntraFunctionData, 
+        //   findingFunctionCallFunctions, findingErrorFunctions, findingExportFunctions, findingSymbolFunctions,
+        //   doingPostAnalysis, doingPost...
+        //   functionReturnAnalysis, findingDataFunctionPointers, findingCodeFunctionPointers, findingThunks, splittingThunks,
+        //   namingSyscalls, demangleNames
+    }
+
     SAWYER_MESG(where) <<"labeling addresses\n";
     labelAddresses(partitioner, partitioner->configuration());
 
@@ -1567,15 +1582,7 @@ EngineBinary::runPartitionerRecursive(const Partitioner::Ptr &partitioner) {
 
     // Decode and partition any CIL byte code (sections with name "CLR Runtime Header")
     SAWYER_MESG(where) <<"decoding and partitioning CIL byte code\n";
-    bool hasCilSection = partitionCilSections(partitioner);
-
-    // For now we don't know how to partition a specimen with both CIL and X86 instructions. So if
-    // CIL code is encountered, return immediately.
-    // TODO: Find and test more code.
-    if (hasCilSection) {
-        // Bail for now, but really needs more investigation, for example, is attachBlockToFunctions() needed?
-        return;
-    }
+    partitionCilSections(partitioner);
 
     // Start discovering instructions and forming them into basic blocks and functions
     SAWYER_MESG(where) <<"discovering and populating functions\n";
@@ -1632,9 +1639,11 @@ EngineBinary::runPartitionerFinal(const Partitioner::Ptr &partitioner) {
     attachBlocksToFunctions(partitioner);
 
     if (interpretation()) {
-        SAWYER_MESG(where) <<"naming imports\n";
-        ModulesPe::nameImportThunks(partitioner, interpretation());
-        ModulesPowerpc::nameImportThunks(partitioner, interpretation());
+        if (settings().partitioner.findingImportFunctions) { // TODO: consider settings().partitioner.namingImports
+            SAWYER_MESG(where) <<"naming imports\n";
+            ModulesPe::nameImportThunks(partitioner, interpretation());
+            ModulesPowerpc::nameImportThunks(partitioner, interpretation());
+        }
     }
     if (settings().partitioner.namingConstants) {
         SAWYER_MESG(where) <<"naming constants\n";
@@ -1662,18 +1671,25 @@ EngineBinary::runPartitionerFinal(const Partitioner::Ptr &partitioner) {
 }
 
 bool
+EngineBinary::hasCilCodeSection() {
+    if (auto interp{interpretation()}) {
+        for (SgAsmGenericHeader* header : interp->get_headers()->get_headers()) {
+            auto sections = header->get_sections_by_name("CLR Runtime Header");
+            return sections.size() > 0;
+        }
+    }
+    return false;
+}
+
+bool
 EngineBinary::partitionCilSections(const Partitioner::Ptr &partitioner) {
     SgAsmCilMetadataRoot* mdr{nullptr};
-    SgAsmInterpretation* interp{interpretation()};
-
-    // A file directly mapped from memory may not have an interpretation
-    if (interp && interp->get_headers()) {
+    if (auto interp{interpretation()}) {
         for (SgAsmGenericHeader* header : interp->get_headers()->get_headers()) {
             auto sections = header->get_sections_by_name("CLR Runtime Header");
             for (SgAsmGenericSection* section : sections) {
                 if (auto cliHeader = isSgAsmCliHeader(section)) {
                     if (mdr != nullptr) {
-                        // TODO: What todo if multiple sections
                         mlog[WARN] << "multiple CIL code sections seen by partitionCilSections\n";
                     }
                     mdr = cliHeader->get_metadataRoot();
@@ -2182,15 +2198,17 @@ EngineBinary::discoverFunctions(const Partitioner::Ptr &partitioner) {
         // Find as many basic blocks as possible by recursively following the CFG as we build it.
         discoverBasicBlocks(partitioner);
 
-        // No pending basic blocks, so look for a function prologue. This creates a pending basic block for the function's
-        // entry block, so go back and look for more basic blocks again.
-        if (nextPrologueVa < partitioner->memoryMap()->hull().greatest()) {
-            std::vector<Function::Ptr> newFunctions =
-                makeNextPrologueFunction(partitioner, nextPrologueVa, nextPrologueVa /*out*/);
-            if (nextPrologueVa < partitioner->memoryMap()->hull().greatest())
-                ++nextPrologueVa;
-            if (!newFunctions.empty())
-                continue;
+        if (!hasCilCodeSection()) {
+            // No pending basic blocks, so look for a function prologue. This creates a pending basic block for the function's
+            // entry block, so go back and look for more basic blocks again.
+            if (nextPrologueVa < partitioner->memoryMap()->hull().greatest()) {
+                std::vector<Function::Ptr> newFunctions =
+                    makeNextPrologueFunction(partitioner, nextPrologueVa, nextPrologueVa /*out*/);
+                if (nextPrologueVa < partitioner->memoryMap()->hull().greatest())
+                    ++nextPrologueVa;
+                if (!newFunctions.empty())
+                    continue;
+            }
         }
 
         // Scan inter-function code areas to find basic blocks that look reasonable and process them with instruction semantics
@@ -2534,7 +2552,7 @@ EngineBinary::makeNextBasicBlock(const Partitioner::Ptr &partitioner) {
             continue;
         }
 
-        // We've added call-return edges everwhere possible, but may have delayed adding them to blocks where the analysis was
+        // We've added call-return edges everywhere possible, but may have delayed adding them to blocks where the analysis was
         // indeterminate. If so, sort all those blocks approximately by their height in the global CFG and run may-return
         // analysis on each one
         if (!basicBlockWorkList()->processedCallReturn().isEmpty() || !basicBlockWorkList()->finalCallReturn().isEmpty()) {

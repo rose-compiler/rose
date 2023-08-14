@@ -373,6 +373,12 @@ public:
      *  Returns true if a section containing CIL code was found, false otherwise. */
     virtual bool partitionCilSections(const PartitionerPtr&);
 
+    /** Determine whether the interpretation header contains a CIL code section
+     *
+     *  When the interpretation has a header with a section named "CLR Runtime Header", it
+     *  contains CIL code.  This predicate returns true for such interpretations. */
+    bool hasCilCodeSection();
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner mid-level functions
     //
