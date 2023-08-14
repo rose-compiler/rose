@@ -34,7 +34,7 @@ systemFunctionName(const std::string &name) {
 size_t
 getImportIndex(const Partitioner::ConstPtr&, SgAsmPEFileHeader *peHeader, ImportIndex &index /*in,out*/) {
     size_t nInserted = 0;
-    if (peHeader!=NULL) {
+    if (peHeader != nullptr) {
         for (SgAsmGenericSection *section: peHeader->get_sections()->get_sections()) {
             if (SgAsmPEImportSection *importSection = isSgAsmPEImportSection(section)) {
                 for (SgAsmPEImportDirectory *importDir: importSection->get_import_directories()->get_vector()) {
@@ -63,7 +63,7 @@ getImportIndex(const Partitioner::ConstPtr &partitioner, SgAsmPEFileHeader *peHe
 ImportIndex
 getImportIndex(const Partitioner::ConstPtr &partitioner, SgAsmInterpretation *interp) {
     ImportIndex index;
-    if (interp!=NULL) {
+    if (interp != nullptr) {
         for (SgAsmGenericHeader *fileHeader: interp->get_headers()->get_headers())
             getImportIndex(partitioner, isSgAsmPEFileHeader(fileHeader), index);
     }
@@ -74,7 +74,7 @@ size_t
 findExportFunctions(const Partitioner::ConstPtr &partitioner, SgAsmPEFileHeader *peHeader, std::vector<Function::Ptr> &functions) {
     ASSERT_not_null(partitioner);
     size_t nInserted = 0;
-    if (peHeader!=NULL) {
+    if (peHeader != nullptr) {
         for (SgAsmGenericSection *section: peHeader->get_sections()->get_sections()) {
             if (SgAsmPEExportSection *exportSection = isSgAsmPEExportSection(section)) {
                 for (SgAsmPEExportEntry *exportEntry: exportSection->get_exports()->get_exports()) {
@@ -102,7 +102,7 @@ findExportFunctions(const Partitioner::ConstPtr &partitioner, SgAsmPEFileHeader 
 std::vector<Function::Ptr>
 findExportFunctions(const Partitioner::ConstPtr &partitioner, SgAsmInterpretation *interp) {
     std::vector<Function::Ptr> functions;
-    if (interp!=NULL) {
+    if (interp != nullptr) {
         for (SgAsmGenericHeader *fileHeader: interp->get_headers()->get_headers())
             findExportFunctions(partitioner, isSgAsmPEFileHeader(fileHeader), functions);
     }
@@ -138,7 +138,7 @@ findImportFunctions(const Partitioner::ConstPtr &partitioner, SgAsmPEFileHeader 
 std::vector<Function::Ptr>
 findImportFunctions(const Partitioner::ConstPtr &partitioner, SgAsmInterpretation *interp) {
     std::vector<Function::Ptr> functions;
-    if (interp!=NULL) {
+    if (interp != nullptr) {
         ImportIndex imports = getImportIndex(partitioner, interp);
         for (SgAsmGenericHeader *fileHeader: interp->get_headers()->get_headers())
             findImportFunctions(partitioner, isSgAsmPEFileHeader(fileHeader), imports, functions);
@@ -231,7 +231,7 @@ rebaseImportAddressTables(const Partitioner::Ptr &partitioner, const ImportIndex
 void
 nameImportThunks(const Partitioner::ConstPtr &partitioner, SgAsmInterpretation *interp) {
     ASSERT_not_null(partitioner);
-    if (interp==NULL)
+    if (interp == nullptr)
         return;
     std::vector<Function::Ptr> functions = partitioner->functions();
 
@@ -273,7 +273,7 @@ nameImportThunks(const Partitioner::ConstPtr &partitioner, SgAsmInterpretation *
         if (insn->get_kind()!=x86_jmp || insn->nOperands() != 1)
             continue;                                   // ...that is a JMP...
         SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(insn->operand(0));
-        SgAsmIntegerValueExpression *addr = mre ? isSgAsmIntegerValueExpression(mre->get_address()) : NULL;
+        SgAsmIntegerValueExpression *addr = mre ? isSgAsmIntegerValueExpression(mre->get_address()) : nullptr;
         if (!addr)
             continue;                                   // ...with addressing mode [C] where C is a constant...
         AddressInterval indirectionAddress = AddressInterval::baseSize(addr->get_absoluteValue(), 4);
@@ -283,7 +283,7 @@ nameImportThunks(const Partitioner::ConstPtr &partitioner, SgAsmInterpretation *
         std::vector<rose_addr_t> successors = partitioner->basicBlockConcreteSuccessors(bblock, &isComplete);
         if (!isComplete || successors.size()!=1)
             continue;                                   // ...and the JMP has a single successor that is concrete...
-        SgAsmPEImportItem *importItem = NULL;
+        SgAsmPEImportItem *importItem = nullptr;
         if (!importIndex.getOptional(successors.front()).assignTo(importItem))
             continue;                                   // ...and is a known address for an imported function.
         

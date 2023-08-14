@@ -369,7 +369,7 @@ public:
  *  This defines the interface only. All data that's used during unparsing is provided to each function so that this interface
  *  is thread-safe. Only the configuration settings are stored in the unparser itself.
  *
- *  End users generally inovke the high-level output methods, which are provided by non-virtual function operators that are
+ *  End users generally invoke the high-level output methods, which are provided by non-virtual function operators that are
  *  overloaded on the type of object being unparsed.
  *
  *  The high-level function operators each call a corresponding overloaded virtual @ref unparse function that kicks things off
