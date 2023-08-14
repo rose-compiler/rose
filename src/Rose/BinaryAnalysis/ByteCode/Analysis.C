@@ -11,14 +11,12 @@
 using namespace Rose::BinaryAnalysis::Partitioner2;
 using PoolEntry = SgAsmJvmConstantPoolEntry;
 using AddressSegment = Sawyer::Container::AddressSegment<rose_addr_t,uint8_t>;
-using std::cout;
-using std::endl;
+using Rose::Diagnostics::DEBUG;
+using Rose::StringUtility::addrToString;
 
 namespace Rose {
 namespace BinaryAnalysis {
 namespace ByteCode {
-
-constexpr bool TRACE_PARTITION = false;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Method
@@ -45,9 +43,7 @@ Method::targets() const {
     bool complete = true;
     auto successors = insn->getSuccessors(complete /*out*/);
     for (auto successor : successors.values()) {
-      if (TRACE_PARTITION) {
-        cout << "... Method::targets():adding successor target va: 0x00" << std::hex << successor << std::dec << endl;
-      }
+      mlog[DEBUG] << "... Method::targets():adding successor target va: " << addrToString(successor)<< "\n";
       retval.insert(successor);
     }
   }
@@ -97,20 +93,16 @@ void Class::partition(const PartitionerPtr &partitioner) const
         if (targets.find(va) != targets.end() && !insn->terminatesBasicBlock()) {
           // But a new block is not needed if this is the first instruction in the block
           if (block && !block->isEmpty() && va != block->address()) {
-            if (TRACE_PARTITION) {
-              cout << "... splitting block after: 0x00" << std::hex << block->instructions().back()->get_address()
-                   << " va: 0x00" << va
-                   << " fallthrough: 0x00" << block->fallthroughVa() << std::dec
-                   << " kind:" << insn->get_anyKind()
-                   << " :" << insn->get_mnemonic()
-                   << endl;
-            }
+            mlog[DEBUG] << "... splitting block after: " << addrToString(block->instructions().back()->get_address())
+                        << " va: " << addrToString(va)
+                        << " fallthrough: " << addrToString(block->fallthroughVa())
+                        << " kind:" << insn->get_anyKind() << " :" << insn->get_mnemonic() << "\n";
+
             // If the instruction doesn't have a branch target, add fall through successor
             if (!block->instructions().back()->branchTarget()) {
-              if (TRACE_PARTITION) {
-                cout << "... adding successor fall-through edge from va: 0x00" << std::hex
-                     << block->instructions().back()->get_address() << " to: 0x00" << block->fallthroughVa() << std::dec << endl;
-              }
+              mlog[DEBUG] << "... adding successor fall-through edge from va: "
+                          << addrToString(block->instructions().back()->get_address())
+                          << " to: " << addrToString(block->fallthroughVa()) << "\n";
               block->insertSuccessor(block->fallthroughVa(), nBits, EdgeType::E_NORMAL, Confidence::PROVED);
             }
             needNewBlock = true;
@@ -132,15 +124,11 @@ void Class::partition(const PartitionerPtr &partitioner) const
         block->append(partitioner, insn);
 
         // Add successors if this instruction terminates the block
-        //TODO: This probably mostly works if last instruction (look for ways to simplify)
         if (insn->terminatesBasicBlock() && insn != instructions.back()) {
           bool complete;
           auto successors = insn->getSuccessors(complete/*out*/);
           for (auto successor : successors.values()) {
-            if (TRACE_PARTITION) {
-              cout << "... adding successor edge from va: 0x00" << std::hex << va << " to: 0x00" << successor
-                   << std::dec << endl;
-            }
+            mlog[DEBUG] << "... adding successor edge from va: " << addrToString(va) << " to: " << addrToString(successor) << "\n";
             block->insertSuccessor(successor, nBits, EdgeType::E_NORMAL, Confidence::PROVED);
           }
           // Set properties of the block
@@ -174,7 +162,7 @@ void Class::digraph()
 {
   std::ofstream dotFile;
   dotFile.open(name() + ".dot");
-  dotFile << "digraph g {" << endl;
+  dotFile << "digraph g {" << "\n";
 
   dotFile << "\n";
   dotFile << "  fontname=\"Helvetica,Arial,sans-serif\"\n";
@@ -187,7 +175,7 @@ void Class::digraph()
   for (auto method : methods()) {
     dotFile << "  " << name() << " -> \"" << method->name() << "\";\n";
   }
-  dotFile << endl;
+  dotFile << "\n";
 
   // Blocks for each method
   for (size_t midx = 0; midx < methods().size(); midx++) {
@@ -199,10 +187,10 @@ void Class::digraph()
         dotFile << "<" << insn->get_address() << ">" << insn->get_mnemonic() << ":" << insn->get_address();
         if (insn != block->instructions().back()) dotFile << "|";
       }
-      dotFile << "\"\n    shape = \"record\"\n  ];" << endl;
+      dotFile << "\"\n    shape = \"record\"\n  ];" << "\n";
     }
   }
-  dotFile << endl;
+  dotFile << "\n";
 
   for (size_t midx = 0; midx < methods().size(); midx++) {
     auto method = methods()[midx];
@@ -219,7 +207,7 @@ void Class::digraph()
     if (method->blocks().size() > 0) {
       auto blockHead = method->blocks()[0];
       dotFile << "  \"" << method->name() << "\" -> "
-              << "block_" << midx << "_0:" << blockHead->instructions()[0]->get_address() << endl;
+              << "block_" << midx << "_0:" << blockHead->instructions()[0]->get_address() << "\n";
     }
 
     for (size_t bidx = 0; bidx < method->blocks().size(); bidx++) {
@@ -231,7 +219,7 @@ void Class::digraph()
           if (auto targetVa = successor.expr()->toUnsigned()) {
             rose_addr_t va = targetVa.get();
             dotFile << "  block_" << midx << "_" << bidx << ":" << tail->get_address()
-                    << " -> block_" << midx << "_" << vaToBlock[va] << ":" << va << endl;
+                    << " -> block_" << midx << "_" << vaToBlock[va] << ":" << va << "\n";
           }
         }
       }

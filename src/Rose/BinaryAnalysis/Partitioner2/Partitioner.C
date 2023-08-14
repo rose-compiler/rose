@@ -566,7 +566,7 @@ Partitioner::aum() const {
 class ProgressBarSuffix {
     const Partitioner *partitioner_;
 public:
-    ProgressBarSuffix(): partitioner_(NULL) {}
+    ProgressBarSuffix(): partitioner_(nullptr) {}
     explicit ProgressBarSuffix(const Partitioner *p): partitioner_(p) {}
     void print(std::ostream &out) const {
         ASSERT_not_null(partitioner_);
@@ -627,7 +627,7 @@ Partitioner::updateCfgProgress() {
     updateProgress("partition", completion);
 
     // All partitioners share a single progress bar for the CFG completion amount
-    static Sawyer::ProgressBar<size_t, ProgressBarSuffix> *bar = NULL;
+    static Sawyer::ProgressBar<size_t, ProgressBarSuffix> *bar = nullptr;
     if (!bar)
         bar = new Sawyer::ProgressBar<size_t, ProgressBarSuffix>(cfgProgressTotal_, mlog[MARCH], "cfg");
 
@@ -802,7 +802,7 @@ Partitioner::basicBlockExists(rose_addr_t startVa) const {
 
 BasicBlock::Ptr
 Partitioner::basicBlockExists(const BasicBlock::Ptr &bblock) const {
-    return bblock==NULL ? BasicBlock::Ptr() : basicBlockExists(bblock->address());
+    return bblock==nullptr ? BasicBlock::Ptr() : basicBlockExists(bblock->address());
 }
 
 SemanticMemoryParadigm
@@ -845,7 +845,7 @@ Partitioner::newOperators(SemanticMemoryParadigm memType) const {
 BaseSemantics::Dispatcher::Ptr
 Partitioner::newDispatcher(const BaseSemantics::RiscOperators::Ptr &ops) const {
     ASSERT_not_null(ops);
-    if (instructionProvider_->dispatcher() == NULL)
+    if (instructionProvider_->dispatcher() == nullptr)
         return BaseSemantics::Dispatcher::Ptr();          // instruction semantics are not implemented for this architecture
     return instructionProvider_->dispatcher()->create(ops, 0, RegisterDictionary::Ptr());
 }
@@ -881,7 +881,7 @@ Partitioner::detachBasicBlock(const ControlFlowGraph::ConstVertexIterator &const
 
 BasicBlock::Ptr
 Partitioner::detachBasicBlock(const BasicBlock::Ptr &bblock) {
-    if (bblock!=NULL) {
+    if (bblock!=nullptr) {
         ControlFlowGraph::VertexIterator placeholder = findPlaceholder(bblock->address());
         if (placeholder!=cfg_.vertices().end() && placeholder->value().bblock()==bblock)
             return detachBasicBlock(placeholder);
@@ -897,7 +897,7 @@ Partitioner::detachBasicBlock(rose_addr_t startVa) {
 ControlFlowGraph::EdgeIterator
 Partitioner::adjustPlaceholderEdges(const ControlFlowGraph::VertexIterator &placeholder) {
     ASSERT_require(placeholder!=cfg_.vertices().end());
-    ASSERT_require2(NULL==placeholder->value().bblock(), "vertex must be strictly a placeholder");
+    ASSERT_require2(nullptr==placeholder->value().bblock(), "vertex must be strictly a placeholder");
     cfg_.clearOutEdges(placeholder);
     return cfg_.insertEdge(placeholder, undiscoveredVertex_);
 }
@@ -915,7 +915,7 @@ BasicBlock::Ptr
 Partitioner::discoverBasicBlock(const ControlFlowGraph::ConstVertexIterator &placeholder) const {
     ASSERT_require2(placeholder != cfg_.vertices().end(), "invalid basic block placeholder");
     BasicBlock::Ptr bb = placeholder->value().bblock();
-    return bb!=NULL ? bb : discoverBasicBlockInternal(placeholder->value().address());
+    return bb!=nullptr ? bb : discoverBasicBlockInternal(placeholder->value().address());
 }
 
 BasicBlock::Ptr
@@ -939,7 +939,7 @@ Partitioner::discoverBasicBlockInternal(rose_addr_t startVa) const {
     rose_addr_t va = startVa;
     while (1) {
         SgAsmInstruction *insn = discoverInstruction(va);
-        if (insn==NULL)                                                 // case: no instruction available
+        if (insn==nullptr)                                              // case: no instruction available
             goto done;
         retval->append(sharedFromThis(), insn);
         if (insn->isUnknown() && !settings_.ignoringUnknownInsns)       // case: "unknown" instruction
@@ -1018,7 +1018,7 @@ Partitioner::truncateBasicBlock(const ControlFlowGraph::ConstVertexIterator &pla
     ASSERT_require(placeholder != cfg_.vertices().end());
     ASSERT_not_null(insn);
     BasicBlock::Ptr bblock = placeholder->value().bblock();
-    if (bblock==NULL) {
+    if (bblock==nullptr) {
         throw PlaceholderError(placeholder->value().address(),
                                "placeholder " + StringUtility::addrToString(placeholder->value().address()) +
                                " has no basic block for truncation");
@@ -1085,7 +1085,7 @@ Partitioner::attachBasicBlock(const ControlFlowGraph::ConstVertexIterator &const
     }
     if (placeholder->value().bblock() == bblock)
         return;                                         // nothing to do since basic block is already in the CFG
-    if (placeholder->value().bblock() != NULL) {
+    if (placeholder->value().bblock() != nullptr) {
         throw PlaceholderError(placeholder->value().address(),
                                "placeholder " + StringUtility::addrToString(placeholder->value().address()) +
                                " already holds a different basic block");
@@ -1193,7 +1193,7 @@ Partitioner::attachBasicBlock(const ControlFlowGraph::ConstVertexIterator &const
 AddressIntervalSet
 Partitioner::basicBlockInstructionExtent(const BasicBlock::Ptr &bblock) const {
     AddressIntervalSet retval;
-    if (bblock!=NULL) {
+    if (bblock!=nullptr) {
         for (SgAsmInstruction *insn: bblock->instructions())
             retval.insert(AddressInterval::baseSize(insn->get_address(), insn->get_size()));
     }
@@ -1203,7 +1203,7 @@ Partitioner::basicBlockInstructionExtent(const BasicBlock::Ptr &bblock) const {
 AddressIntervalSet
 Partitioner::basicBlockDataExtent(const BasicBlock::Ptr &bblock) const {
     AddressIntervalSet retval;
-    if (bblock!=NULL) {
+    if (bblock!=nullptr) {
         for (const DataBlock::Ptr &dblock: bblock->dataBlocks())
             retval.insert(dblock->extent());
     }
@@ -1418,7 +1418,7 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb, Precision::Leve
             const RegisterDescriptor REG_IP = instructionProvider_->instructionPointerRegister();
 
             // Check whether the last instruction is a CALL (or similar) instruction.
-            bool isInsnCall = lastInsn->isFunctionCallFast(bb->instructions(), NULL, NULL);
+            bool isInsnCall = lastInsn->isFunctionCallFast(bb->instructions(), nullptr, nullptr);
 
             // Check whether the basic block has the semantics of a function call.
             //
@@ -1530,7 +1530,7 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb, Precision::Leve
     }
 
     // We don't have semantics, so delegate to the SgAsmInstruction subclass.
-    retval = lastInsn->isFunctionCallFast(bb->instructions(), NULL, NULL);
+    retval = lastInsn->isFunctionCallFast(bb->instructions(), nullptr, nullptr);
     bb->isFunctionCall() = retval;
     return retval;
 }
@@ -1658,7 +1658,7 @@ Partitioner::dataBlocks() const {
 
 DataBlock::Ptr
 Partitioner::dataBlockExists(const DataBlock::Ptr &dblock) const {
-    if (NULL == dblock)
+    if (nullptr == dblock)
         return DataBlock::Ptr();
 
     // If this data block has attached owners, then this data block must already exist in the AUM.
@@ -1685,7 +1685,7 @@ Partitioner::attachDataBlock(const DataBlock::Ptr &toInsert) {
 // Detach data block if it has no owners
 void
 Partitioner::detachDataBlock(const DataBlock::Ptr &dblock) {
-    if (dblock != NULL && dblock->isFrozen()) {
+    if (dblock != nullptr && dblock->isFrozen()) {
         if (dblock->nAttachedOwners() > 0) {
             throw DataBlockError(dblock, dataBlockName(dblock) + " cannot be detached because it has " +
                                  StringUtility::plural(dblock->nAttachedOwners(), "basic block and/or function owners"));
@@ -1720,7 +1720,7 @@ Partitioner::dataBlocksContainedIn(const AddressInterval &interval) const {
 AddressInterval
 Partitioner::dataBlockExtent(const DataBlock::Ptr &dblock) const {
     AddressInterval extent;
-    if (dblock!=NULL)
+    if (dblock!=nullptr)
         extent = dblock->extent();
     return extent;
 }
@@ -1731,13 +1731,13 @@ Partitioner::findBestDataBlock(const AddressInterval &interval) const {
     if (!interval.isEmpty()) {
         std::vector<DataBlock::Ptr> found = dataBlocksSpanning(interval);
         for (const DataBlock::Ptr &dblock: boost::adaptors::reverse(found)) { // choose the smallest one (highest address if tied)
-            if (existing==NULL || dblock->size() < existing->size())
+            if (existing==nullptr || dblock->size() < existing->size())
                 existing = dblock;
         }
-        if (existing==NULL) {
+        if (existing==nullptr) {
             found = dataBlocksOverlapping(AddressInterval(interval.least()));
             for (const DataBlock::Ptr &dblock: boost::adaptors::reverse(found)) { // choose the largest one (highest address if tied)
-                if (existing==NULL || dblock->size() > existing->size())
+                if (existing==nullptr || dblock->size() > existing->size())
                     existing = dblock;
             }
         }
@@ -1831,14 +1831,14 @@ Partitioner::functionExists(rose_addr_t entryVa) const {
 
 Function::Ptr
 Partitioner::functionExists(const BasicBlock::Ptr &entryBlock) const {
-    if (entryBlock == NULL)
+    if (entryBlock == nullptr)
         return Function::Ptr();
     return functionExists(entryBlock->address());
 }
 
 Function::Ptr
 Partitioner::functionExists(const Function::Ptr &function) const {
-    if (function != NULL) {
+    if (function != nullptr) {
         Function::Ptr found = functionExists(function->address());
         if (found == function)
             return function;
@@ -1871,7 +1871,7 @@ Partitioner::functionsOwningBasicBlock(rose_addr_t bblockVa, bool doSort) const 
 
 std::vector<Function::Ptr>
 Partitioner::functionsOwningBasicBlock(const BasicBlock::Ptr &bblock, bool doSort) const {
-    if (bblock==NULL)
+    if (bblock==nullptr)
         return std::vector<Function::Ptr>();
     return functionsOwningBasicBlock(bblock->address(), doSort);
 }
@@ -2119,12 +2119,12 @@ Partitioner::attachOrMergeFunction(const Function::Ptr &newFunction) {
 
     // If there is not some other function with the same entry address, then degenerate to a plain attach.
     Function::Ptr existingFunction = functionExists(newFunction->address());
-    if (existingFunction == NULL) {
+    if (existingFunction == nullptr) {
         attachFunction(newFunction);
         return newFunction;
     }
 
-    // Perhapse use this new function's name.  If the names are the same except for the "@plt" part then use the version with
+    // Perhaps use this new function's name.  If the names are the same except for the "@plt" part then use the version with
     // the "@plt".
     if (existingFunction->name().empty()) {
         existingFunction->name(newFunction->name());
@@ -2383,7 +2383,7 @@ Partitioner::discoverFunctionEntryVertices() const {
 
 Sawyer::Optional<Partitioner::Thunk>
 Partitioner::functionIsThunk(const Function::Ptr &function) const {
-    if (function==NULL || 0==(function->reasons() & SgAsmFunction::FUNC_THUNK) || function->nBasicBlocks()!=1)
+    if (function==nullptr || 0==(function->reasons() & SgAsmFunction::FUNC_THUNK) || function->nBasicBlocks()!=1)
         return Sawyer::Nothing();
 
     // Find the basic block for the thunk
@@ -2657,8 +2657,14 @@ Partitioner::bblockAttached(const ControlFlowGraph::VertexIterator &newVertex) {
                 debug <<"attached empty basic block at " <<StringUtility::addrToString(startVa) <<"\n";
             } else {
                 debug <<"attached basic block:\n";
-                for (SgAsmInstruction *insn: bblock->instructions())
+                for (SgAsmInstruction* insn: bblock->instructions()) {
+                  if (isSgAsmCilInstruction(insn)) {
+                    debug <<"  + " << insn->get_mnemonic() <<"\n";
+                  }
+                  else {
                     debug <<"  + " <<unparse(insn) <<"\n";
+                  }
+                }
             }
         } else {
             debug <<"inserted basic block placeholder at " <<StringUtility::addrToString(startVa) <<"\n";
@@ -2683,8 +2689,13 @@ Partitioner::bblockDetached(rose_addr_t startVa, const BasicBlock::Ptr &bblock) 
                 debug <<"detached empty basic block at " <<StringUtility::addrToString(startVa) <<"\n";
             } else {
                 debug <<"detached basic block:\n";
-                for (SgAsmInstruction *insn: bblock->instructions())
-                    debug <<"  - " <<unparse(insn) <<"\n";
+                for (SgAsmInstruction* insn: bblock->instructions())
+                  if (isSgAsmCilInstruction(insn)) {
+                    debug <<"  + " << insn->get_mnemonic() <<"\n";
+                  }
+                  else {
+                    debug <<"  + " <<unparse(insn) <<"\n";
+                  }
             }
         } else {
             debug <<"erased basic block placeholder at " <<StringUtility::addrToString(startVa) <<"\n";
@@ -2796,8 +2807,8 @@ Partitioner::checkConsistency() const {
 SgAsmGenericSection*
 Partitioner::elfGot(SgAsmElfFileHeader *elfHeader) {
     if (!elfHeader)
-        return NULL;
-    SgAsmGenericSection *found = NULL;
+        return nullptr;
+    SgAsmGenericSection *found = nullptr;
 
     // Get the section pointed to by the DT_PLTGOT entry of the .dynamic section.
     if (SgAsmElfDynamicSection *dynamic = isSgAsmElfDynamicSection(elfHeader->get_section_by_name(".dynamic"))) {
@@ -2941,19 +2952,19 @@ Partitioner::expandIndeterminateCalls() {
 // class method
 std::string
 Partitioner::basicBlockName(const BasicBlock::Ptr &bblock) {
-    return bblock==NULL ? "no basic block" : bblock->printableName();
+    return bblock==nullptr ? "no basic block" : bblock->printableName();
 }
 
 // class method
 std::string
 Partitioner::dataBlockName(const DataBlock::Ptr &dblock) {
-    return dblock==NULL ? "no data block" : dblock->printableName();
+    return dblock==nullptr ? "no data block" : dblock->printableName();
 }
 
 // class method
 std::string
 Partitioner::functionName(const Function::Ptr &function) {
-    return function==NULL ? "no function" : function->printableName();
+    return function==nullptr ? "no function" : function->printableName();
 }
 
 // class method
@@ -3190,7 +3201,7 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
         // Show some basic block properties
         if (BasicBlock::Ptr bb = vertex->value().bblock()) {
             BasicBlockSemantics sem = bb->semantics();
-            if (sem.finalState()==NULL)
+            if (sem.finalState()==nullptr)
                 out <<prefix <<"  no semantics (discarded already, or failed)\n";
 
             // call semantics?
@@ -3414,21 +3425,21 @@ Partitioner::isEdgeInterProcedural(const ControlFlowGraph::Edge &edge,
         edge.value().type() == E_FUNCTION_RETURN)
         return true;
 
-    if (sourceFunction != NULL && targetFunction != NULL) {
+    if (sourceFunction != nullptr && targetFunction != nullptr) {
         if (sourceFunction == targetFunction)
             return false;
         return (edge.source()->value().isOwningFunction(sourceFunction) &&
                 edge.target()->value().isOwningFunction(targetFunction));
-    } else if (sourceFunction != NULL) {
-        ASSERT_require(targetFunction == NULL);
+    } else if (sourceFunction != nullptr) {
+        ASSERT_require(targetFunction == nullptr);
         return (edge.source()->value().isOwningFunction(sourceFunction) &&
                 !edge.target()->value().isOwningFunction(sourceFunction));
-    } else if (targetFunction != NULL) {
-        ASSERT_require(sourceFunction == NULL);
+    } else if (targetFunction != nullptr) {
+        ASSERT_require(sourceFunction == nullptr);
         return (!edge.source()->value().isOwningFunction(targetFunction) &&
                 edge.target()->value().isOwningFunction(targetFunction));
     } else {
-        ASSERT_require(sourceFunction == NULL && targetFunction == NULL);
+        ASSERT_require(sourceFunction == nullptr && targetFunction == nullptr);
         if (edge.source()->value().nOwningFunctions() == 0 && edge.target()->value().nOwningFunctions() == 0)
             return true;
         return edge.source()->value().owningFunctions() != edge.target()->value().owningFunctions();
