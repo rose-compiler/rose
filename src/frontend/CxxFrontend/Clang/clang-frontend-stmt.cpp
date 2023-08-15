@@ -2218,9 +2218,11 @@ bool ClangToSageTranslator::VisitCXXMemberCallExpr(clang::CXXMemberCallExpr * cx
 #endif
      bool res = true;
 
+     clang::CXXMethodDecl* methodDecl = cxx_member_call_expr->getMethodDecl();
+     clang::CXXRecordDecl* recordDecl = cxx_member_call_expr->getRecordDecl();
      // TODO 
 
-     return VisitExpr(cxx_member_call_expr, node) && res;
+     return VisitCallExpr(cxx_member_call_expr, node) && res;
 }
 
 bool ClangToSageTranslator::VisitCXXOperatorCallExpr(clang::CXXOperatorCallExpr * cxx_operator_call_expr, SgNode ** node) {
@@ -3387,6 +3389,7 @@ bool ClangToSageTranslator::VisitMaterializeTemporaryExpr(clang::MaterializeTemp
 bool ClangToSageTranslator::VisitMemberExpr(clang::MemberExpr * member_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
     std::cerr << "ClangToSageTranslator::VisitMemberExpr" << std::endl;
+    std::cerr << "MemberExpr::hasQualifier() " << member_expr->hasQualifier() << std::endl;
 #endif
 
     bool res = true;
