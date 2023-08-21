@@ -1688,6 +1688,24 @@ Leave(SgJovialCompoolStatement* compool_decl)
 }
 
 void SageTreeBuilder::
+Enter(SgJovialLabelDeclaration* &labelDecl, const std::string &name, const SgJovialLabelDeclaration::label_type_enum type)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgJovialLabelDeclaration* &, ...) \n";
+
+   labelDecl = new SgJovialLabelDeclaration(name, type);
+   ASSERT_not_null(labelDecl);
+}
+
+void SageTreeBuilder::
+Leave(SgJovialLabelDeclaration* labelDecl)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgJovialLabelDeclaration*, ...) \n";
+
+   ASSERT_not_null(labelDecl);
+   SageInterface::appendStatement(labelDecl, SageBuilder::topScopeStack());
+}
+
+void SageTreeBuilder::
 Enter(SgJovialOverlayDeclaration* &overlay_decl, SgExpression* address, SgExprListExp* overlay)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgJovialOverlayDeclaration* &, ...) \n";

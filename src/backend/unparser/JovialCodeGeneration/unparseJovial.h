@@ -38,6 +38,7 @@ public:
 
           virtual void unparseBasicBlockStmt         (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseLabelStmt              (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseJovialLabelDecl        (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseForStatement           (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseJovialForThenStmt      (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseWhileStmt              (SgStatement* stmt, SgUnparse_Info& info);
