@@ -4448,8 +4448,22 @@ HEADER_JOVIAL_DIRECTIVE_STATEMENT_START
 
 HEADER_JOVIAL_DIRECTIVE_STATEMENT_END
 
+HEADER_JOVIAL_LABEL_DECLARATION_START
 
-// Rasmussen (5/24/2020): Jovial OverlayDeclaration
+      /*! 15.3.4.2 Statement Name Declaration. A Jovial label can be a variable! */
+          enum label_type_enum
+             {
+               e_unknown = 0,
+               e_jovial_label_decl,    /*!<     LABEL name */
+               e_jovial_label_def,     /*!< DEF LABEL name */
+               e_jovial_label_ref      /*!< REF LABEL name */
+             };
+
+          virtual SgName get_mangled_name() const override;
+
+HEADER_JOVIAL_LABEL_DECLARATION_END
+
+
 HEADER_JOVIAL_OVERLAY_DECLARATION_START
       virtual SgName get_mangled_name (void) const override;
 HEADER_JOVIAL_OVERLAY_DECLARATION_END
@@ -9889,11 +9903,7 @@ SgDeclarationStatement::fixupTemplateNameForMangledNameSupport( const SgName & n
 SgName
 SgDeclarationStatement::get_mangled_name(void) const
    {
-  // printf ("In $CLASSNAME::get_mangled_name() name = %s \n",SageInterface::get_name(this).c_str());
-
-     SgName returnName;
-
-     returnName = "Not_yet_defined_mangled_name";
+     SgName returnName = "Not_yet_defined_mangled_name";
 
      printf ("Warning: mangled name for %s not yet defined, base class SgDeclarationStatement::get_mangled_name called \n",class_name().c_str());
      ROSE_ASSERT(false);
@@ -19900,7 +19910,6 @@ SgAttributeSpecificationStatement::post_construction_initialization()
 SgName
 SgAttributeSpecificationStatement::get_mangled_name(void) const
    {
-  // printf ("Sorry, SgAttributeSpecificationStatement::get_mangled_name() not implemented! \n");
      return SgName ("__attribute_specification_statement__");
    }
 
@@ -20071,7 +20080,6 @@ SgNamelistStatement::post_construction_initialization()
 SgName
 SgNamelistStatement::get_mangled_name(void) const
    {
-  // printf ("Sorry, SgNamelistStatement::get_mangled_name() not implemented! \n");
      return SgName ("__namelist__");
    }
 
@@ -20099,7 +20107,6 @@ SgImportStatement::post_construction_initialization()
 SgName
 SgImportStatement::get_mangled_name(void) const
    {
-  // printf ("Sorry, SgImportStatement::get_mangled_name() not implemented! \n");
      return SgName ("__import__");
    }
 
@@ -20156,44 +20163,20 @@ SgFormatStatement::post_construction_initialization()
 SgName
 SgFormatStatement::get_mangled_name(void) const
    {
-  // printf ("Sorry, SgFormatStatement::get_mangled_name() not implemented! \n");
      return SgName ("__format__");
    }
-
-#if 0
-const SgFormatItemPtrList &
-SgFormatStatement::get_format_item_list() const
-   {
-     return p_format_item_list;
-   }
-
-SgFormatItemPtrList &
-SgFormatStatement::get_format_item_list()
-   {
-     return p_format_item_list;
-   }
-
-void
-SgFormatStatement::set_format_item_list(const SgFormatItemPtrList & format_item_list)
-   {
-     p_format_item_list = format_item_list;
-   }
-#endif
 
 SOURCE_FORMAT_STATEMENT_END
 
 
 SOURCE_FORTRAN_INCLUDE_LINE_START
-       // Not sure if we need these...
-       // virtual unsigned int cfgIndexForEnd() const override;
-       // virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) override;
-       // virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) override;
 
 SgName
 SgFortranIncludeLine::get_mangled_name(void) const
    {
      return SgName ("__fortran_include_line__");
    }
+
 SOURCE_FORTRAN_INCLUDE_LINE_END
 
 
@@ -20225,18 +20208,30 @@ SgName SgJovialDirectiveStatement::get_mangled_name() const
 
 SOURCE_JOVIAL_DIRECTIVE_STATEMENT_END
 
+SOURCE_JOVIAL_LABEL_DECLARATION_START
+
+void
+SgJovialLabelDeclaration::post_construction_initialization()
+   {
+   }
+
+SgName
+SgJovialLabelDeclaration::get_mangled_name(void) const
+   {
+     return get_label();
+   }
+
+SOURCE_JOVIAL_LABEL_DECLARATION_END
 
 SOURCE_JOVIAL_OVERLAY_DECLARATION_START
-
 void
 SgJovialOverlayDeclaration::post_construction_initialization()
    {
-      // Nothing to setup here.
    }
 
 SgName SgJovialOverlayDeclaration::get_mangled_name() const
    {
-       return SgName("_overlay_");
+     return SgName{"__jovial_overlay_declaration__"};
    }
 SOURCE_JOVIAL_OVERLAY_DECLARATION_END
 

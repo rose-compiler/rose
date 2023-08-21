@@ -102,6 +102,7 @@ UnparseJovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Inf
        // executable statements, control flow
           case V_SgBasicBlock:                 unparseBasicBlockStmt (stmt, info);  break;
           case V_SgLabelStatement:             unparseLabelStmt      (stmt, info);  break;
+          case V_SgJovialLabelDeclaration:     unparseJovialLabelDecl(stmt, info);  break;
           case V_SgForStatement:               unparseForStatement   (stmt, info);  break;
           case V_SgJovialForThenStatement:     unparseJovialForThenStmt(stmt, info);  break;
           case V_SgWhileStmt:                  unparseWhileStmt      (stmt, info);  break;
@@ -443,20 +444,42 @@ UnparseJovial::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
      }
    }
 
+// Jovial label statements similar to C/C++
 void UnparseJovial::unparseLabelStmt(SgStatement* stmt, SgUnparse_Info& info)
-   {
-     SgLabelStatement* label_stmt = isSgLabelStatement(stmt);
-     ASSERT_not_null(label_stmt);
+{
+  auto labelStmt = isSgLabelStatement(stmt);
+  ASSERT_not_null(labelStmt);
 
-     curprint (string(label_stmt->get_label().str()) + ":");
-     unp->cur.insert_newline(1);
+  curprint (string(labelStmt->get_label().str()) + ":");
+  unp->cur.insert_newline(1);
 
-     if (label_stmt->get_statement() != NULL) {
-        SgStatement* sg_stmt = label_stmt->get_statement();
-        ASSERT_not_null(sg_stmt);
-        UnparseLanguageIndependentConstructs::unparseStatement(sg_stmt, info);
-     }
-   }
+  if (labelStmt->get_statement() != nullptr) {
+    SgStatement* sgStmt = labelStmt->get_statement();
+    ASSERT_not_null(sgStmt);
+    UnparseLanguageIndependentConstructs::unparseStatement(sgStmt, info);
+  }
+}
+
+// Jovial statement name declarations allow labels to be (const) variables!
+void UnparseJovial::unparseJovialLabelDecl(SgStatement* stmt, SgUnparse_Info& info)
+{
+  auto labelDecl = isSgJovialLabelDeclaration(stmt);
+  ASSERT_not_null(labelDecl);
+  ASSERT_require2(labelDecl->get_label_type() != SgJovialLabelDeclaration::e_unknown, "Jovial label declaration type is unknown\n");
+
+  if (labelDecl->get_label_type() == SgJovialLabelDeclaration::e_jovial_label_decl) {
+    curprint_indented("LABEL ", info);
+  }
+  else if (labelDecl->get_label_type() == SgJovialLabelDeclaration::e_jovial_label_def) {
+    curprint_indented("DEF LABEL ", info);
+  }
+  else if (labelDecl->get_label_type() == SgJovialLabelDeclaration::e_jovial_label_ref) {
+    curprint_indented("REF LABEL ", info);
+  }
+
+  curprint (labelDecl->get_label() + ";");
+  unp->cur.insert_newline(1);
+}
 
 void
 UnparseJovial::unparseForStatement(SgStatement* stmt, SgUnparse_Info& info)
