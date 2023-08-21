@@ -258,6 +258,9 @@ public:
    void Enter(SgJovialCompoolStatement* &, const std::string &, const SourcePositionPair &);
    void Leave(SgJovialCompoolStatement*);
 
+   void Enter(SgJovialLabelDeclaration* &, const std::string &name, const SgJovialLabelDeclaration::label_type_enum);
+   void Leave(SgJovialLabelDeclaration*);
+
    void Enter(SgJovialOverlayDeclaration* &, SgExpression* address, SgExprListExp* overlay);
    void Leave(SgJovialOverlayDeclaration*);
 

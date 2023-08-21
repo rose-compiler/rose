@@ -3345,16 +3345,31 @@ ATbool ATermToSageJovialTraversal::traverse_StatementNameDeclaration(ATerm term,
    ATerm t_name;
    std::string name;
 
-   if (ATmatch(term, "StatementNameDeclaration(<term>)", &t_name)) {
-      mlog[WARN] << "UNIMPLEMENTED: StatementNameDeclaration\n";
+   //TODO: Allow a name list, not just a name
 
+   if (ATmatch(term, "StatementNameDeclaration(<term>)", &t_name)) {
       ATermList tail = (ATermList) ATmake("<term>", t_name);
       while (! ATisEmpty(tail)) {
          ATerm head = ATgetFirst(tail);
          tail = ATgetNext(tail);
          if (traverse_Name(head, name)) {
-            // MATCHED Name
-         } else return ATfalse;
+            SgJovialLabelDeclaration* labelDecl{nullptr};
+
+            auto labelType{SgJovialLabelDeclaration::e_jovial_label_decl};
+            if (def_or_ref == LanguageTranslation::e_storage_modifier_jovial_def) {
+              labelType = SgJovialLabelDeclaration::e_jovial_label_def;
+            } else if (def_or_ref == LanguageTranslation::e_storage_modifier_jovial_ref) {
+              labelType = SgJovialLabelDeclaration::e_jovial_label_ref;
+            }
+
+            // Begin SageTreeBuilder
+            sage_tree_builder.Enter(labelDecl, name, labelType);
+            setSourcePosition(labelDecl, head);
+
+            // End SageTreeBuilder
+            sage_tree_builder.Leave(labelDecl);
+         }
+         else return ATfalse;
       }
    }
    else return ATfalse;
