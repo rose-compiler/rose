@@ -1045,3 +1045,4 @@ SgAsmJvmBootstrapMethods
 SgAsmJvmExceptions
 SgAsmJvmNestMembers
 SgAsmJvmNestHost
+SgJovialLabelDeclaration
