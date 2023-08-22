@@ -64,6 +64,26 @@ SgSymbol * ClangToSageTranslator::GetSymbolFromSymbolTable(clang::NamedDecl * de
             }
             break;
         }
+        case clang::Decl::CXXMethod:
+        {
+            /** Pei-Hung (08/14/23) SgMemberFunctionSymbol can only be found from the SgClassDefinition
+             clang::FunctionProtoType doesn't seem to distinguish between funciton and method 
+             The return type from buildTypeFromQualifiedType can only be SgfuncitonType
+             Tried to lookup by name only and check if the symbol is a SgMemberFunctionSymbol
+            **/
+            /*
+            SgType * tmp_type = buildTypeFromQualifiedType(((clang::CXXMethodDecl *)decl)->getType());
+            SgFunctionType * type = isSgFunctionType(tmp_type);
+            ROSE_ASSERT(type);
+            */
+            clang::CXXRecordDecl* enclosingRecordDecl = ((clang::CXXMethodDecl*)decl)->getParent();
+            SgClassDeclaration* cxxRecordDeclaration  = isSgClassDeclaration(Traverse(enclosingRecordDecl));
+            ROSE_ASSERT(cxxRecordDeclaration);
+            SgClassDefinition* cxxRecordDefinition  = cxxRecordDeclaration->get_definition(); 
+            sym = cxxRecordDefinition->lookup_function_symbol(name);
+            ROSE_ASSERT(isSgMemberFunctionSymbol(sym));
+            break;
+        }
         case clang::Decl::Field:
         {
             // field can be variable or ClassDefinition
@@ -2576,8 +2596,9 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
     ROSE_ASSERT(var_def != NULL);
     applySourceRange(var_def, var_decl->getSourceRange());
 
-    SgVariableSymbol * var_symbol = new SgVariableSymbol(init_name);
-    SageBuilder::topScopeStack()->insert_symbol(name, var_symbol);
+    // Pei-Hung (08/15/23): The following causes duplicated symbols in some cases.  Comment it out and need further investigation
+//    SgVariableSymbol * var_symbol = new SgVariableSymbol(init_name);
+//    SageBuilder::topScopeStack()->insert_symbol(name, var_symbol);
 
     // Pei-Hung (06/16/22) added "extern" modifier
     bool hasExternalStorage = var_decl->hasExternalStorage();
