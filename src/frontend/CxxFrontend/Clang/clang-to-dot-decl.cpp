@@ -156,6 +156,9 @@ ClangToDotTranslator::Traverse(clang::Decl * decl)
         case clang::Decl::CXXDeductionGuide:
             ret_status = VisitCXXDeductionGuideDecl((clang::CXXDeductionGuideDecl *)decl, node_desc);
             break;
+        case clang::Decl::CXXMethod:
+            ret_status = VisitCXXMethodDecl((clang::CXXMethodDecl *)decl, node_desc);
+            break;
         case clang::Decl::CXXConstructor:
             ret_status = VisitCXXConstructorDecl((clang::CXXConstructorDecl *)decl, node_desc);
             break;
