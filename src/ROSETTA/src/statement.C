@@ -260,12 +260,10 @@ Grammar::setUpStatements ()
           "ImageControlStatement", "IMAGE_CONTROL_STATEMENT", false);
 #endif
 
-  // Rasmussen (11/12/2018): Support for Jovial Compool modules
      NEW_TERMINAL_MACRO (JovialCompoolStatement, "JovialCompoolStatement", "JOVIAL_COMPOOL_STATEMENT" );
-
-  // Rasmussen (03/26/2019): Support for Jovial directives and define declarations
      NEW_TERMINAL_MACRO (JovialDefineDeclaration,  "JovialDefineDeclaration",  "JOVIAL_DEFINE_DECLARATION" );
      NEW_TERMINAL_MACRO (JovialDirectiveStatement, "JovialDirectiveStatement", "JOVIAL_DIRECTIVE_STATEMENT" );
+     NEW_TERMINAL_MACRO (JovialLabelDeclaration,   "JovialLabelDeclaration",   "JOVIAL_LABEL_DECLARATION" );
 
   // Rasmussen (5/17/2020): Jovial overlays are used to control memory layout.
      NEW_TERMINAL_MACRO (JovialOverlayDeclaration, "JovialOverlayDeclaration", "JOVIAL_OVERLAY_DECLARATION" );
@@ -559,7 +557,8 @@ Grammar::setUpStatements ()
           JavaImportStatement                     | JavaPackageStatement      | StmtDeclarationStatement     |
           StaticAssertionDeclaration              | OmpDeclareSimdStatement   | MicrosoftAttributeDeclaration|
           JovialCompoolStatement                  | JovialDirectiveStatement  | JovialDefineDeclaration      |
-          JovialOverlayDeclaration                | NonrealDecl               | EmptyDeclaration             |
+          JovialLabelDeclaration                  | JovialOverlayDeclaration  |
+          NonrealDecl                             | EmptyDeclaration          |
           AdaPackageBodyDecl                      | AdaPackageSpecDecl        | AdaRenamingDecl              |
           AdaTaskSpecDecl                         | AdaTaskBodyDecl           | AdaTaskTypeDecl              |
           AdaProtectedSpecDecl                    | AdaProtectedBodyDecl      | AdaProtectedTypeDecl         |
@@ -2110,11 +2109,8 @@ Grammar::setUpStatements ()
   // is always NULL.  Because of the specification in the Grammar, it does make since to have this
   // as a data member, but it is unclear how to use it.  To avoid the possible error, I have have at
   // least marked it to not be traversed for now.
-  // DQ (3/21/2007): This is a fix to be consistant with the C and C++ grammar, but it is not used yet.
-  // I think we want to later make this a constructor parameter.
-     LabelStatement.setDataPrototype     ( "SgStatement*", "statement", "= NULL",
+     LabelStatement.setDataPrototype     ( "SgStatement*", "statement", "= nullptr",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
      LabelStatement.setDataPrototype     ( "bool", "gnu_extension_unused", "= false",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -3635,20 +3631,14 @@ Grammar::setUpStatements ()
      NullifyStatement.setDataPrototype    ( "SgExprListExp*", "pointer_list", "",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-  // DQ (7/21/2007): This is too complex to build write now, so just build an int data member for the moment.
-  // examples such as: "EQUIVALENCE (N<NUMBERS), (B(1),BONE), (HRS, HOURS, TIME)" must be represented.
-  // EquivalenceStatement.setDataPrototype    ( "std::list<std::list<SgVarRefExp*> >", "equivalence_classes", "",
-  //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (7/21/2007): Examples such as: "EQUIVALENCE (N<NUMBERS), (B(1),BONE), (HRS, HOURS, TIME)" must be represented.
      EquivalenceStatement.setDataPrototype    ( "SgExprListExp*", "equivalence_set_list", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (8/25/2007): Added new IR node to represent the Fortran derived type statement
-  // DerivedTypeStatement.setDataPrototype ( "int", "end_numeric_label", "= -1",
-  //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      DerivedTypeStatement.setDataPrototype ( "SgLabelRefExp*", "end_numeric_label", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // Rasmussen (3/18/2019): Added new IR node for Jovial support
      JovialTableStatement.setDataPrototype ( "SgExpression*", "table_entry_size", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      JovialTableStatement.setDataPrototype ( "bool", "has_table_entry_size", "= false",
@@ -3724,12 +3714,6 @@ Grammar::setUpStatements ()
      AssignStatement.setDataPrototype    ( "SgExpression*", "value", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-  // ComputedGotoStatement.setDataPrototype    ( "std::list<SgLabelStatement*>*", "labels", "= NULL",
-  //              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // ComputedGotoStatement.setDataPrototype    ( "SgStatementPtrList", "labels", "",
-  //              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // ComputedGotoStatement.setDataPrototype    ( "SgLabelSymbolPtrList", "labelList", "",
-  //              CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ComputedGotoStatement.setDataPrototype    ( "SgExprListExp*", "labelList", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      ComputedGotoStatement.setDataPrototype    ( "SgExpression*", "label_index", "= NULL",
@@ -3780,8 +3764,6 @@ Grammar::setUpStatements ()
                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL);
 #endif
 
-  // Rasmussen (03/26/2019): Added support for Jovial directives and define declarations.
-
      JovialDirectiveStatement.setFunctionPrototype ( "HEADER_JOVIAL_DIRECTIVE_STATEMENT", "../Grammar/Statement.code" );
      JovialDirectiveStatement.setFunctionSource    ( "SOURCE_JOVIAL_DIRECTIVE_STATEMENT", "../Grammar/Statement.code" );
      JovialDirectiveStatement.setDataPrototype     ( "std::string", "content_string", "= \"\"",
@@ -3792,6 +3774,13 @@ Grammar::setUpStatements ()
      JovialDefineDeclaration.setFunctionPrototype  ( "HEADER_JOVIAL_DEFINE_DECLARATION", "../Grammar/Statement.code" );
      JovialDefineDeclaration.setFunctionSource     ( "SOURCE_JOVIAL_DEFINE_DECLARATION", "../Grammar/Statement.code" );
      JovialDefineDeclaration.setDataPrototype      ( "std::string", "define_string", "= \"\"",
+                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     JovialLabelDeclaration.setFunctionPrototype   ( "HEADER_JOVIAL_LABEL_DECLARATION", "../Grammar/Statement.code" );
+     JovialLabelDeclaration.setFunctionSource      ( "SOURCE_JOVIAL_LABEL_DECLARATION", "../Grammar/Statement.code" );
+     JovialLabelDeclaration.setDataPrototype       ( "std::string", "label", "= \"\"",
+                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     JovialLabelDeclaration.setDataPrototype       ( "SgJovialLabelDeclaration::label_type_enum", "label_type", "= SgJovialLabelDeclaration::e_unknown",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      JovialOverlayDeclaration.setFunctionPrototype ( "HEADER_JOVIAL_OVERLAY_DECLARATION", "../Grammar/Statement.code" );

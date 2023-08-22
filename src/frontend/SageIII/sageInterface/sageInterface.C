@@ -1382,19 +1382,14 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
 
      switch (declaration->variantT())
         {
-       // DQ (12/28/2011): Added seperate support for new design of template IR nodes.
-       // DQ (12/4/2011): Added support for template declarations in the AST.
           case V_SgTemplateMemberFunctionDeclaration:
                name = isSgTemplateMemberFunctionDeclaration(declaration)->get_name().str();
                break;
 
-       // DQ (12/28/2011): Added seperate support for new design of template IR nodes.
           case V_SgTemplateFunctionDeclaration:
                name = isSgTemplateFunctionDeclaration(declaration)->get_name().str();
                break;
 
-       // DQ (12/28/2011): Added seperate support for new design of template IR nodes.
-       // DQ (6/11/2011): Added support for new template IR nodes.
           case V_SgTemplateClassDeclaration:
                name = isSgTemplateClassDeclaration(declaration)->get_name().str();
                break;
@@ -1403,7 +1398,6 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
                name = isSgTemplateDeclaration(declaration)->get_name().str();
                break;
 
-       // DQ (2/10/2007): Use the get_templateName() instead of combining this with the case V_SgClassDeclaration
           case V_SgTemplateInstantiationDecl:
                name = isSgTemplateInstantiationDecl(declaration)->get_templateName().str();
                break;
@@ -1421,6 +1415,10 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
           case V_SgJovialCompoolStatement:
                name = "__" + declaration->class_name() + "_";
                name += StringUtility::numberToString(declaration);
+               break;
+
+          case V_SgJovialLabelDeclaration:
+               name = isSgJovialLabelDeclaration(declaration)->get_label();
                break;
 
           case V_SgEnumDeclaration:
@@ -1957,14 +1955,9 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
 
        // Note that the case for SgVariableDeclaration is not implemented
           default:
-            // name = "default name (default case reached: not handled)";
                printf ("Warning: default case reached in SageInterface::get_name ( const SgDeclarationStatement* declaration ), declaration = %p = %s \n",
                     declaration,declaration->class_name().c_str());
                ROSE_ABORT();
-#if 0 // [Robb Matzke 2021-03-24]: unreachable
-               name = "default_name_case_reached_not_handled";
-               break;
-#endif
         }
 
      return name;
@@ -2062,10 +2055,6 @@ SageInterface::get_name ( const SgStatement* stmt )
              }
             else
              {
-#if 0
-            // DQ (9/5/2005): I think this is good enough for the more general case
-               name = stmt->class_name();
-#else
             // DQ (10/25/2007): This is better since it names the SgLabelStatement case
                switch (stmt->variantT())
                   {
@@ -2101,7 +2090,6 @@ SageInterface::get_name ( const SgStatement* stmt )
                          break;
                        }
                   }
-#endif
              }
         }
 
@@ -21404,6 +21392,7 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
       case V_SgImplicitStatement: // Rasmussen 5/13/2021: TODO: implicit statement with letter-list
       case V_SgJovialDefineDeclaration:
       case V_SgJovialDirectiveStatement:
+      case V_SgJovialLabelDeclaration:
       case V_SgJovialOverlayDeclaration:
       case V_SgPragmaDeclaration:
       case V_SgAdaAttributeClause:
