@@ -2,6 +2,7 @@
 #include "clang-frontend-private.hpp"
 #include "clang-to-rose-support.hpp" 
 
+using namespace Sawyer::Message;
 SgNode * ClangToSageTranslator::Traverse(clang::Stmt * stmt) {
     if (stmt == NULL)
         return NULL;

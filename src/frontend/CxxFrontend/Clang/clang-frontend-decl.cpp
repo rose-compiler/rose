@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "clang-frontend-private.hpp"
 
+using namespace Sawyer::Message;
 SgSymbol * ClangToSageTranslator::GetSymbolFromSymbolTable(clang::NamedDecl * decl) {
     if (decl == NULL) return NULL;
 
