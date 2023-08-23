@@ -763,10 +763,10 @@ namespace
   ///    (e.g., packages, tasks, protected objects). Otherwise,
   ///    the parent scope is the same as returned by si::getEnclosingScope.
   /// @{
-  const SgScopeStatement*
+  SgScopeStatement*
   logicalParentScope(const SgScopeStatement& s);
 
-  const SgScopeStatement*
+  SgScopeStatement*
   logicalParentScope(const SgScopeStatement* s);
   /// @}
 

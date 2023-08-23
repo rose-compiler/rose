@@ -2009,6 +2009,7 @@ SageInterface::get_name ( const SgScopeStatement* scope )
           case V_SgAssociateStatement:
           case V_SgJavaForEachStatement:
 
+          case V_SgFunctionParameterScope:
           case V_SgAdaPackageSpec:
           case V_SgAdaPackageBody:
           case V_SgAdaTaskSpec:
@@ -19268,7 +19269,7 @@ SageInterface::checkSymbolTables ( SgNode* astNode )
      traversal.traverse(astNode, preorder);
    }
 
-//Jim Leek TODO (07/25/2023):  After Dan merges his branch, please clean up all the #1f 0 stuff 
+//Jim Leek TODO (07/25/2023):  After Dan merges his branch, please clean up all the #1f 0 stuff
 void SageInterface::markNodeToBeUnparsed(SgNode* node, int physical_file_id)
    {
 #if 0

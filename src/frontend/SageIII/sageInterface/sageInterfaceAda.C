@@ -3018,7 +3018,7 @@ namespace
   //   in the AST, this returns the logical parent.
   // e.g., a separate function has the package as logical parent, but
   //       the global scope as the actual parent scope.
-  struct LogicalParent : sg::DispatchHandler<const SgScopeStatement*>
+  struct LogicalParent : sg::DispatchHandler<SgScopeStatement*>
   {
     void handle(const SgNode& n)                 { SG_UNEXPECTED_NODE(n); }
 
@@ -3055,11 +3055,11 @@ namespace
     }
 
     static
-    const SgScopeStatement*
+    SgScopeStatement*
     fromParent(const SgNode& n);
   };
 
-  const SgScopeStatement*
+  SgScopeStatement*
   LogicalParent::fromParent(const SgNode& n)
   {
     return sg::dispatch(LogicalParent{}, n.get_parent());
@@ -3106,13 +3106,13 @@ namespace
   };
 }
 
-const SgScopeStatement*
+SgScopeStatement*
 logicalParentScope(const SgScopeStatement& curr)
 {
   return sg::dispatch(LogicalParent{}, &curr);
 }
 
-const SgScopeStatement*
+SgScopeStatement*
 logicalParentScope(const SgScopeStatement* curr)
 {
   return curr ? logicalParentScope(*curr) : nullptr;
