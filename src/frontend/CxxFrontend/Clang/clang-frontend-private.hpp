@@ -170,6 +170,7 @@ class ClangToSageTranslator : public clang::ASTConsumer {
         void setCompilerGeneratedFileInfo(SgNode * node, bool to_be_unparse = false);
 
     protected:
+        static Sawyer::Message::Facility logger;
         std::map<clang::Decl *, SgNode *> p_decl_translation_map;
         std::map<clang::Stmt *, SgNode *> p_stmt_translation_map;
         std::map<const clang::Type *, SgNode *> p_type_translation_map;
@@ -586,6 +587,7 @@ class SagePreprocessorRecord : public clang::PPCallbacks {
   public:
 
   protected:
+    static Sawyer::Message::Facility logger;
     clang::SourceManager * p_source_manager;
 
     std::vector<std::pair<Sg_File_Info *, PreprocessingInfo *> > p_preprocessor_record_list;

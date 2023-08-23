@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "clang-frontend-private.hpp"
 
+using namespace Sawyer::Message;
 SgSymbol * ClangToSageTranslator::GetSymbolFromSymbolTable(clang::NamedDecl * decl) {
     if (decl == NULL) return NULL;
 
@@ -16,14 +17,14 @@ SgSymbol * ClangToSageTranslator::GetSymbolFromSymbolTable(clang::NamedDecl * de
     {
       declName = "__anonymous_" +  generate_source_position_string(decl->getBeginLoc());  
 #if DEBUG_SYMBOL_TABLE_LOOKUP
-    std::cerr << "Find anonymous fieldDecl: " << declName << std::endl;
+    logger[DEBUG] << "Find anonymous fieldDecl: " << declName << "\n";
 #endif
     }
 
     SgName name(declName);
 
 #if DEBUG_SYMBOL_TABLE_LOOKUP
-    std::cerr << "Lookup symbol for: " << name << std::endl;
+    logger[DEBUG] << "Lookup symbol for: " << name << "\n";
 #endif
 
     if (name == "") {
@@ -113,7 +114,7 @@ SgSymbol * ClangToSageTranslator::GetSymbolFromSymbolTable(clang::NamedDecl * de
             SgClassDeclaration * sg_class_decl = isSgClassDeclaration(Traverse(((clang::FieldDecl *)decl)->getParent()));
             ROSE_ASSERT(sg_class_decl != NULL);
             if (sg_class_decl->get_definingDeclaration() == NULL)
-                std::cerr << "Runtime Error: cannot find the definition of the class/struct associate to the field: " << name << std::endl;
+                logger[WARN] << "Runtime Error: cannot find the definition of the class/struct associate to the field: " << name << "\n";
             else {
             /* Pei-Hung (09/20/22) by accessing FieldDecl through here seems to imply the RecordDcl has an associated declarator.
              * Therefore, the isAutonomousDeclaration hould be set false following the definition from EDG.
@@ -176,7 +177,7 @@ SgSymbol * ClangToSageTranslator::GetSymbolFromSymbolTable(clang::NamedDecl * de
             break;
         }
         default:
-            std::cerr << "Runtime Error: Unknown type of Decl. (" << decl->getDeclKindName() << ")" << std::endl;
+            logger[WARN] << "Runtime Error: Unknown type of Decl. (" << decl->getDeclKindName() << ")" << "\n";
     }
 
     return sym;
@@ -189,11 +190,11 @@ SgNode * ClangToSageTranslator::Traverse(clang::Decl * decl) {
     std::map<clang::Decl *, SgNode *>::iterator it = p_decl_translation_map.find(decl);
     if (it != p_decl_translation_map.end()) {
 #if DEBUG_TRAVERSE_DECL
-        std::cerr << "Traverse Decl : " << decl << " ";
+        logger[DEBUG] << "Traverse Decl : " << decl << " ";
         if (clang::NamedDecl::classof(decl)) {
-            std::cerr << ": " << ((clang::NamedDecl *)decl)->getNameAsString() << ") ";
+            logger[DEBUG] << ": " << ((clang::NamedDecl *)decl)->getNameAsString() << ") ";
         }
-        std::cerr << " already visited : node = " << it->second << std::endl;
+        logger[DEBUG] << " already visited : node = " << it->second << "\n";
 #endif
         return it->second;
     }
@@ -448,7 +449,7 @@ SgNode * ClangToSageTranslator::Traverse(clang::Decl * decl) {
             break;
 
         default:
-            std::cerr << "Unknown declacaration kind: " << decl->getDeclKindName() << " !" << std::endl;
+            logger[ERROR] << "Unknown declacaration kind: " << decl->getDeclKindName() << " !" << "\n";
             ROSE_ABORT();
     }
 
@@ -457,11 +458,11 @@ SgNode * ClangToSageTranslator::Traverse(clang::Decl * decl) {
     p_decl_translation_map.insert(std::pair<clang::Decl *, SgNode *>(decl, result));
 
 #if DEBUG_TRAVERSE_DECL
-    std::cerr << "Traverse(clang::Decl : " << decl << " ";
+    logger[DEBUG] << "Traverse(clang::Decl : " << decl << " ";
     if (clang::NamedDecl::classof(decl)) {
-        std::cerr << ": " << ((clang::NamedDecl *)decl)->getNameAsString() << ") ";
+        logger[DEBUG] << ": " << ((clang::NamedDecl *)decl)->getNameAsString() << ") ";
     }
-    std::cerr << " visit done : node = " << result << std::endl;
+    logger[DEBUG] << " visit done : node = " << result << "\n";
 #endif
 
     return ret_status ? result : NULL;
@@ -477,10 +478,10 @@ SgNode * ClangToSageTranslator::TraverseForDeclContext(clang::DeclContext * decl
 
 bool ClangToSageTranslator::VisitDecl(clang::Decl * decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitDecl" << "\n";
 #endif    
     if (*node == NULL) {
-        std::cerr << "Runtime error: No Sage node associated with the declaration..." << std::endl;
+        logger[DEBUG] << "Runtime error: No Sage node associated with the declaration..." << "\n";
         return false;
     }
 
@@ -506,23 +507,23 @@ bool ClangToSageTranslator::VisitDecl(clang::Decl * decl, SgNode ** node) {
           declStmt->get_declarationModifier().get_accessModifier().setDefault();
           break;
         default:
-          std::cerr << "no accessSpecifier is valid" << std::endl;
+          logger[WARN] << "no accessSpecifier is valid" << "\n";
       }
     }
 
 
     // TODO attributes
 /*
-    std::cerr << "Attribute list for " << decl->getDeclKindName() << " (" << decl << "): ";
+    logger[DEBUG] << "Attribute list for " << decl->getDeclKindName() << " (" << decl << "): ";
     clang::Decl::attr_iterator it;
     for (it = decl->attr_begin(); it != decl->attr_end(); it++) {
-        std::cerr << (*it)->getKind() << ", ";
+        logger[DEBUG] << (*it)->getKind() << ", ";
     }
-    std::cerr << std::endl;
+    logger[DEBUG] << "\n";
 
     if (clang::VarDecl::classof(decl)) {
         clang::VarDecl * var_decl = (clang::VarDecl *)decl;
-        std::cerr << "Stoprage class for " << decl->getDeclKindName() << " (" << decl << "): " << var_decl->getStorageClass() << std::endl;
+        logger[DEBUG] << "Stoprage class for " << decl->getDeclKindName() << " (" << decl << "): " << var_decl->getStorageClass() << "\n";
     }
 */
     return true;
@@ -530,13 +531,13 @@ bool ClangToSageTranslator::VisitDecl(clang::Decl * decl, SgNode ** node) {
 
 bool ClangToSageTranslator::VisitAccessSpecDecl(clang::AccessSpecDecl * access_spec_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitAccessSpecDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitAccessSpecDecl" << "\n";
 #endif
     bool res = true;
 
     clang::AccessSpecifier accessSpec = access_spec_decl->getAccess();
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitAccessSpecDecl " << accessSpec << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitAccessSpecDecl " << accessSpec << "\n";
 #endif
     ROSE_ASSERT(FAIL_TODO == 0); // TODO
 
@@ -545,7 +546,7 @@ bool ClangToSageTranslator::VisitAccessSpecDecl(clang::AccessSpecDecl * access_s
 
 bool ClangToSageTranslator::VisitBlockDecl(clang::BlockDecl * block_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitBlockDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitBlockDecl" << "\n";
 #endif
     bool res = true;
 
@@ -556,7 +557,7 @@ bool ClangToSageTranslator::VisitBlockDecl(clang::BlockDecl * block_decl, SgNode
 
 bool ClangToSageTranslator::VisitCapturedDecl(clang::CapturedDecl * captured_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitCapturedDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCapturedDecl" << "\n";
 #endif
     bool res = true;
 
@@ -567,7 +568,7 @@ bool ClangToSageTranslator::VisitCapturedDecl(clang::CapturedDecl * captured_dec
 
 bool ClangToSageTranslator::VisitEmptyDecl(clang::EmptyDecl * empty_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitEmptyDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitEmptyDecl" << "\n";
 #endif
     bool res = true;
 
@@ -579,7 +580,7 @@ bool ClangToSageTranslator::VisitEmptyDecl(clang::EmptyDecl * empty_decl, SgNode
 
 bool ClangToSageTranslator::VisitExportDecl(clang::ExportDecl * export_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitExportDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitExportDecl" << "\n";
 #endif
     bool res = true;
 
@@ -590,7 +591,7 @@ bool ClangToSageTranslator::VisitExportDecl(clang::ExportDecl * export_decl, SgN
 
 bool ClangToSageTranslator::VisitExternCContextDecl(clang::ExternCContextDecl * ccontent_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitCContextDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCContextDecl" << "\n";
 #endif
     bool res = true;
 
@@ -601,7 +602,7 @@ bool ClangToSageTranslator::VisitExternCContextDecl(clang::ExternCContextDecl * 
 
 bool ClangToSageTranslator::VisitFileScopeAsmDecl(clang::FileScopeAsmDecl * file_scope_asm_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitFileScopeAsmDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitFileScopeAsmDecl" << "\n";
 #endif
     bool res = true;
 
@@ -609,7 +610,7 @@ bool ClangToSageTranslator::VisitFileScopeAsmDecl(clang::FileScopeAsmDecl * file
     llvm::StringRef AsmStringRef = AsmStringLiteral->getString();
 
 #if DEBUG_VISIT_DECL
-    std::cerr << "AsmStringRef:" << static_cast<std::string>(AsmStringRef) << std::endl;
+    logger[DEBUG] << "AsmStringRef:" << static_cast<std::string>(AsmStringRef) << "\n";
 #endif
     SgAsmStmt* asmStmt = SageBuilder::buildAsmStatement(static_cast<std::string>(AsmStringRef)); 
     asmStmt->set_firstNondefiningDeclaration(asmStmt);
@@ -622,8 +623,8 @@ bool ClangToSageTranslator::VisitFileScopeAsmDecl(clang::FileScopeAsmDecl * file
 
 bool ClangToSageTranslator::VisitFriendDecl(clang::FriendDecl * friend_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitFriendDecl" << std::endl;
-    std::cerr << "FriendDecl::isUnsupportedFriend () " << friend_decl->isUnsupportedFriend() << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitFriendDecl" << "\n";
+    logger[DEBUG] << "FriendDecl::isUnsupportedFriend () " << friend_decl->isUnsupportedFriend() << "\n";
 #endif
     bool res = true;
 
@@ -678,7 +679,7 @@ bool ClangToSageTranslator::VisitFriendDecl(clang::FriendDecl * friend_decl, SgN
                      type_of_class = SgClassDeclaration::e_union;
                      break;
                  default:
-                     std::cerr << "Runtime error: RecordDecl can only be a struct/class/union." << std::endl;
+                     logger[WARN] << "Runtime error: RecordDecl can only be a struct/class/union." << "\n";
                      res = false;
              }
 
@@ -709,7 +710,7 @@ bool ClangToSageTranslator::VisitFriendDecl(clang::FriendDecl * friend_decl, SgN
 
 bool ClangToSageTranslator::VisitFriendTemplateDecl(clang::FriendTemplateDecl * friend_template_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitFriendTemplateDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitFriendTemplateDecl" << "\n";
 #endif
     bool res = true;
 
@@ -720,7 +721,7 @@ bool ClangToSageTranslator::VisitFriendTemplateDecl(clang::FriendTemplateDecl * 
 
 bool ClangToSageTranslator::VisitImportDecl(clang::ImportDecl * import_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitImportDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitImportDecl" << "\n";
 #endif
     bool res = true;
 
@@ -731,16 +732,16 @@ bool ClangToSageTranslator::VisitImportDecl(clang::ImportDecl * import_decl, SgN
 
 bool ClangToSageTranslator::VisitNamedDecl(clang::NamedDecl * named_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitNamedDecl" << std::endl;
-    std::cerr << "hasLinkage() " << named_decl->hasLinkage() << "\n";
-    std::cerr << "isCXXClassMember() " << named_decl->isCXXClassMember() << "\n";
-    std::cerr << "isCXXInstanceMember() " << named_decl->isCXXInstanceMember() << "\n";
-    std::cerr << "hasExternalFormalLinkage() " << named_decl->hasExternalFormalLinkage() << "\n";
-    std::cerr << "isExternallyVisible () " << named_decl->isExternallyVisible () << "\n";
-    std::cerr << "isExternallyDeclarable () " << named_decl->isExternallyDeclarable () << "\n";
-    std::cerr << "isLinkageValid () " << named_decl->isLinkageValid () << "\n";
-    std::cerr << "hasLinkageBeenComputed() " << named_decl->hasLinkageBeenComputed() << "\n";
-    std::cerr << "isModulePrivate() " << named_decl->isModulePrivate() << "\n";
+    logger[DEBUG] << "ClangToSageTranslator::VisitNamedDecl" << "\n";
+    logger[DEBUG] << "hasLinkage() " << named_decl->hasLinkage() << "\n";
+    logger[DEBUG] << "isCXXClassMember() " << named_decl->isCXXClassMember() << "\n";
+    logger[DEBUG] << "isCXXInstanceMember() " << named_decl->isCXXInstanceMember() << "\n";
+    logger[DEBUG] << "hasExternalFormalLinkage() " << named_decl->hasExternalFormalLinkage() << "\n";
+    logger[DEBUG] << "isExternallyVisible () " << named_decl->isExternallyVisible () << "\n";
+    logger[DEBUG] << "isExternallyDeclarable () " << named_decl->isExternallyDeclarable () << "\n";
+    logger[DEBUG] << "isLinkageValid () " << named_decl->isLinkageValid () << "\n";
+    logger[DEBUG] << "hasLinkageBeenComputed() " << named_decl->hasLinkageBeenComputed() << "\n";
+    logger[DEBUG] << "isModulePrivate() " << named_decl->isModulePrivate() << "\n";
 #endif
     bool res = true;
 
@@ -751,7 +752,7 @@ bool ClangToSageTranslator::VisitNamedDecl(clang::NamedDecl * named_decl, SgNode
 
 bool ClangToSageTranslator::VisitLabelDecl(clang::LabelDecl * label_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitLabelDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitLabelDecl" << "\n";
 #endif
     bool res = true;
 
@@ -762,7 +763,7 @@ bool ClangToSageTranslator::VisitLabelDecl(clang::LabelDecl * label_decl, SgNode
 
 bool ClangToSageTranslator::VisitNamespaceAliasDecl(clang::NamespaceAliasDecl * namespace_alias_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitNamespaceAliasDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitNamespaceAliasDecl" << "\n";
 #endif
     bool res = true;
 
@@ -773,7 +774,7 @@ bool ClangToSageTranslator::VisitNamespaceAliasDecl(clang::NamespaceAliasDecl * 
 
 bool ClangToSageTranslator::VisitNamespaceDecl(clang::NamespaceDecl * namespace_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitNamespaceDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitNamespaceDecl" << "\n";
 #endif
     bool res = true;
 
@@ -784,7 +785,7 @@ bool ClangToSageTranslator::VisitNamespaceDecl(clang::NamespaceDecl * namespace_
 
 bool ClangToSageTranslator::VisitTemplateDecl(clang::TemplateDecl * template_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitTemplateDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitTemplateDecl" << "\n";
 #endif
     bool res = true;
 
@@ -795,7 +796,7 @@ bool ClangToSageTranslator::VisitTemplateDecl(clang::TemplateDecl * template_dec
 
 bool ClangToSageTranslator::VisitBuiltinTemplateDecl(clang::BuiltinTemplateDecl * builtin_template_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitBuiltinTemplateDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitBuiltinTemplateDecl" << "\n";
 #endif
     bool res = true;
 
@@ -806,7 +807,7 @@ bool ClangToSageTranslator::VisitBuiltinTemplateDecl(clang::BuiltinTemplateDecl 
 
 bool ClangToSageTranslator::VisitConceptDecl(clang::ConceptDecl * concept_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitConceptDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitConceptDecl" << "\n";
 #endif
     bool res = true;
 
@@ -817,7 +818,7 @@ bool ClangToSageTranslator::VisitConceptDecl(clang::ConceptDecl * concept_decl, 
 
 bool ClangToSageTranslator::VisitRedeclarableTemplateDecl(clang::RedeclarableTemplateDecl * redeclarable_template_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitRedeclarableTemplateDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitRedeclarableTemplateDecl" << "\n";
 #endif
     bool res = true;
 
@@ -828,7 +829,7 @@ bool ClangToSageTranslator::VisitRedeclarableTemplateDecl(clang::RedeclarableTem
 
 bool ClangToSageTranslator::VisitClassTemplateDecl(clang::ClassTemplateDecl * class_template_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitClassTemplateDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitClassTemplateDecl" << "\n";
 #endif
     bool res = true;
 
@@ -839,7 +840,7 @@ bool ClangToSageTranslator::VisitClassTemplateDecl(clang::ClassTemplateDecl * cl
 
 bool ClangToSageTranslator::VisitFunctionTemplateDecl(clang::FunctionTemplateDecl * function_template_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitFunctionTemplateDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitFunctionTemplateDecl" << "\n";
 #endif
     bool res = true;
 
@@ -850,7 +851,7 @@ bool ClangToSageTranslator::VisitFunctionTemplateDecl(clang::FunctionTemplateDec
 
 bool ClangToSageTranslator::VisitTypeAliasTemplateDecl(clang::TypeAliasTemplateDecl * type_alias_template_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitTypeAliasTemplateDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitTypeAliasTemplateDecl" << "\n";
 #endif
     bool res = true;
 
@@ -862,7 +863,7 @@ bool ClangToSageTranslator::VisitTypeAliasTemplateDecl(clang::TypeAliasTemplateD
 bool ClangToSageTranslator::VisitVarTemplateDecl(clang::VarTemplateDecl * var_template_decl, SgNode ** node) {
 
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitVarTemplateDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitVarTemplateDecl" << "\n";
 #endif
     bool res = true;
 
@@ -874,7 +875,7 @@ bool ClangToSageTranslator::VisitVarTemplateDecl(clang::VarTemplateDecl * var_te
 
 bool ClangToSageTranslator::VisitTemplateTemplateParmDecl(clang::TemplateTemplateParmDecl * template_template_parm_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitTemplateTemplateParmDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitTemplateTemplateParmDecl" << "\n";
 #endif
     bool res = true;
 
@@ -885,7 +886,7 @@ bool ClangToSageTranslator::VisitTemplateTemplateParmDecl(clang::TemplateTemplat
 
 bool ClangToSageTranslator::VisitTypeDecl(clang::TypeDecl * type_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitTypeDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitTypeDecl" << "\n";
 #endif
 
     bool res = true;
@@ -897,21 +898,21 @@ bool ClangToSageTranslator::VisitTypeDecl(clang::TypeDecl * type_decl, SgNode **
 
 bool ClangToSageTranslator::VisitTagDecl(clang::TagDecl * tag_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitTagDecl" << std::endl;
-    std::cerr << "isThisDeclarationADefinition() " << tag_decl->isThisDeclarationADefinition() << "\n";
-    std::cerr << "isCompleteDefinition() " << tag_decl->isCompleteDefinition() << "\n";
-    std::cerr << "isCompleteDefinitionRequired() " << tag_decl->isCompleteDefinitionRequired() << "\n";
-    std::cerr << "isBeingDefined() " << tag_decl->isBeingDefined() << "\n";
-    std::cerr << "isEmbeddedInDeclarator() " << tag_decl->isEmbeddedInDeclarator() << "\n";
-    std::cerr << "isFreeStanding() " << tag_decl->isFreeStanding() << "\n";
-    std::cerr << "mayHaveOutOfDateDef() " << tag_decl->mayHaveOutOfDateDef() << "\n";
-    std::cerr << "isDependentType() " << tag_decl->isDependentType() << "\n";
-    std::cerr << "isThisDeclarationADemotedDefinition() " << tag_decl->isThisDeclarationADemotedDefinition() << "\n";
-    std::cerr << "isStruct () " << tag_decl->isStruct () << "\n";
-    std::cerr << "isInterface () " << tag_decl->isInterface () << "\n";
-    std::cerr << "isUnion () " << tag_decl->isUnion () << "\n";
-    std::cerr << "isEnum () " << tag_decl->isEnum () << "\n";
-    std::cerr << "hasNameForLinkage () " << tag_decl->hasNameForLinkage () << "\n";
+    logger[DEBUG] << "ClangToSageTranslator::VisitTagDecl" << "\n";
+    logger[DEBUG] << "isThisDeclarationADefinition() " << tag_decl->isThisDeclarationADefinition() << "\n";
+    logger[DEBUG] << "isCompleteDefinition() " << tag_decl->isCompleteDefinition() << "\n";
+    logger[DEBUG] << "isCompleteDefinitionRequired() " << tag_decl->isCompleteDefinitionRequired() << "\n";
+    logger[DEBUG] << "isBeingDefined() " << tag_decl->isBeingDefined() << "\n";
+    logger[DEBUG] << "isEmbeddedInDeclarator() " << tag_decl->isEmbeddedInDeclarator() << "\n";
+    logger[DEBUG] << "isFreeStanding() " << tag_decl->isFreeStanding() << "\n";
+    logger[DEBUG] << "mayHaveOutOfDateDef() " << tag_decl->mayHaveOutOfDateDef() << "\n";
+    logger[DEBUG] << "isDependentType() " << tag_decl->isDependentType() << "\n";
+    logger[DEBUG] << "isThisDeclarationADemotedDefinition() " << tag_decl->isThisDeclarationADemotedDefinition() << "\n";
+    logger[DEBUG] << "isStruct () " << tag_decl->isStruct () << "\n";
+    logger[DEBUG] << "isInterface () " << tag_decl->isInterface () << "\n";
+    logger[DEBUG] << "isUnion () " << tag_decl->isUnion () << "\n";
+    logger[DEBUG] << "isEnum () " << tag_decl->isEnum () << "\n";
+    logger[DEBUG] << "hasNameForLinkage () " << tag_decl->hasNameForLinkage () << "\n";
 #endif
 
     bool res = true;
@@ -932,14 +933,14 @@ bool ClangToSageTranslator::VisitTagDecl(clang::TagDecl * tag_decl, SgNode ** no
     }
 
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitTagDecl: casting to DeclContext" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitTagDecl: casting to DeclContext" << "\n";
 #endif
     for (clang::Decl* tmpDecl : decl_context->decls()) {
        // CXXMethodDecl is processed under VisitCXXRecordDecl. Need to check how to merge to here.
        if(llvm::isa<clang::CXXMethodDecl>(tmpDecl))
        {
 #if DEBUG_VISIT_DECL
-         std::cerr << "ClangToSageTranslator::VisitTagDecl: skipping CXXMethodDecl in DeclContext\n";
+         logger[DEBUG] << "ClangToSageTranslator::VisitTagDecl: skipping CXXMethodDecl in DeclContext\n";
 #endif
          continue;
        }
@@ -947,7 +948,7 @@ bool ClangToSageTranslator::VisitTagDecl(clang::TagDecl * tag_decl, SgNode ** no
        if(tmpDecl->isImplicit())
        {
 #if DEBUG_VISIT_DECL
-         std::cerr << "ClangToSageTranslator::VisitTagDecl: skipping implicit in DeclContext\n";
+         logger[DEBUG] << "ClangToSageTranslator::VisitTagDecl: skipping implicit in DeclContext\n";
 #endif
          continue;
        }
@@ -955,12 +956,12 @@ bool ClangToSageTranslator::VisitTagDecl(clang::TagDecl * tag_decl, SgNode ** no
        if(llvm::isa<clang::AccessSpecDecl>(tmpDecl))
        {
 #if DEBUG_VISIT_DECL
-         std::cerr << "ClangToSageTranslator::VisitTagDecl: skipping AccessSpecDecl in DeclContext\n";
+         logger[DEBUG] << "ClangToSageTranslator::VisitTagDecl: skipping AccessSpecDecl in DeclContext\n";
 #endif
          continue;
        }
 #if DEBUG_VISIT_DECL
-       std::cerr << "ClangToSageTranslator::VisitTagDecl: checking decls in DeclContext\n";
+       logger[DEBUG] << "ClangToSageTranslator::VisitTagDecl: checking decls in DeclContext\n";
 #endif
        SgNode * tmp_content = Traverse(tmpDecl);
        SgDeclarationStatement * decl_content = isSgDeclarationStatement(tmp_content);
@@ -971,7 +972,7 @@ bool ClangToSageTranslator::VisitTagDecl(clang::TagDecl * tag_decl, SgNode ** no
          if(llvm::isa<clang::FieldDecl>(tmpDecl))
          {
 #if DEBUG_VISIT_DECL
-            std::cerr << "ClangToSageTranslator::VisitTagDecl: processing decl as a field\n";
+            logger[DEBUG] << "ClangToSageTranslator::VisitTagDecl: processing decl as a field\n";
 #endif   
             sg_class_def->append_member(decl_content);
             decl_content->set_parent(sg_class_def);
@@ -979,7 +980,7 @@ bool ClangToSageTranslator::VisitTagDecl(clang::TagDecl * tag_decl, SgNode ** no
          if(llvm::isa<clang::RecordDecl>(tmpDecl))
          {
 #if DEBUG_VISIT_DECL
-            std::cerr << "ClangToSageTranslator::VisitTagDecl: processing decl as a record\n";
+            logger[DEBUG] << "ClangToSageTranslator::VisitTagDecl: processing decl as a record\n";
 #endif   
 //            sg_class_def->append_member(decl_content);
 //            decl_content->set_parent(sg_class_def);
@@ -987,7 +988,7 @@ bool ClangToSageTranslator::VisitTagDecl(clang::TagDecl * tag_decl, SgNode ** no
          if(llvm::isa<clang::FriendDecl>(tmpDecl))
          {
 #if DEBUG_VISIT_DECL
-            std::cerr << "ClangToSageTranslator::VisitTagDecl: processing decl as a friend decl\n";
+            logger[DEBUG] << "ClangToSageTranslator::VisitTagDecl: processing decl as a friend decl\n";
 #endif   
             sg_class_def->append_member(decl_content);
             decl_content->set_parent(sg_class_def);
@@ -1003,32 +1004,32 @@ bool ClangToSageTranslator::VisitTagDecl(clang::TagDecl * tag_decl, SgNode ** no
 
 bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitRecordDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitRecordDecl" << "\n";
 #endif
 
     // FIXME May have to check the symbol table first, because of out-of-order traversal of C++ classes (Could be done in CxxRecord class...)
 
     bool res = true;
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitRecordDecl name:" <<record_decl->getNameAsString() <<  "\n";
-    std::cerr << "isAnonymousStructOrUnion() " << record_decl->isAnonymousStructOrUnion() << "\n";
-    std::cerr << "hasObjectMember() " << record_decl->hasObjectMember() << "\n";
-    std::cerr << "hasVolatileMember() " << record_decl->hasVolatileMember() << "\n";
-    std::cerr << "hasLoadedFieldsFromExternalStorage() " << record_decl->hasLoadedFieldsFromExternalStorage() << "\n";
-    std::cerr << "isNonTrivialToPrimitiveDefaultInitialize() " << record_decl->isNonTrivialToPrimitiveDefaultInitialize() << "\n";
-    std::cerr << "isNonTrivialToPrimitiveCopy() " << record_decl->isNonTrivialToPrimitiveCopy() << "\n";
-    std::cerr << "isNonTrivialToPrimitiveDestroy() " << record_decl->isNonTrivialToPrimitiveDestroy() << "\n";
-    std::cerr << "hasNonTrivialToPrimitiveDefaultInitializeCUnion() " << record_decl->hasNonTrivialToPrimitiveDefaultInitializeCUnion() << "\n";
-    std::cerr << "hasNonTrivialToPrimitiveDestructCUnion() " << record_decl->hasNonTrivialToPrimitiveDestructCUnion() << "\n";
-    std::cerr << "hasNonTrivialToPrimitiveCopyCUnion() " << record_decl->hasNonTrivialToPrimitiveCopyCUnion() << "\n";
-    std::cerr << "canPassInRegisters() " << record_decl->canPassInRegisters() << "\n";
-    std::cerr << "isParamDestroyedInCallee() " << record_decl->isParamDestroyedInCallee() << "\n";
-    std::cerr << "isRandomized() " << record_decl->isRandomized() << "\n";
-    std::cerr << "isInjectedClassName() " << record_decl->isInjectedClassName() << "\n";
-    std::cerr << "isLambda() " << record_decl->isLambda() << "\n";
-    std::cerr << "isCapturedRecord() " << record_decl->isCapturedRecord() << "\n";
-    std::cerr << "isOrContainsUnion() " << record_decl->isOrContainsUnion() << "\n";
-    std::cerr << "field_empty() " << record_decl->field_empty() << "\n";
+    logger[DEBUG] << "ClangToSageTranslator::VisitRecordDecl name:" <<record_decl->getNameAsString() <<  "\n";
+    logger[DEBUG] << "isAnonymousStructOrUnion() " << record_decl->isAnonymousStructOrUnion() << "\n";
+    logger[DEBUG] << "hasObjectMember() " << record_decl->hasObjectMember() << "\n";
+    logger[DEBUG] << "hasVolatileMember() " << record_decl->hasVolatileMember() << "\n";
+    logger[DEBUG] << "hasLoadedFieldsFromExternalStorage() " << record_decl->hasLoadedFieldsFromExternalStorage() << "\n";
+    logger[DEBUG] << "isNonTrivialToPrimitiveDefaultInitialize() " << record_decl->isNonTrivialToPrimitiveDefaultInitialize() << "\n";
+    logger[DEBUG] << "isNonTrivialToPrimitiveCopy() " << record_decl->isNonTrivialToPrimitiveCopy() << "\n";
+    logger[DEBUG] << "isNonTrivialToPrimitiveDestroy() " << record_decl->isNonTrivialToPrimitiveDestroy() << "\n";
+    logger[DEBUG] << "hasNonTrivialToPrimitiveDefaultInitializeCUnion() " << record_decl->hasNonTrivialToPrimitiveDefaultInitializeCUnion() << "\n";
+    logger[DEBUG] << "hasNonTrivialToPrimitiveDestructCUnion() " << record_decl->hasNonTrivialToPrimitiveDestructCUnion() << "\n";
+    logger[DEBUG] << "hasNonTrivialToPrimitiveCopyCUnion() " << record_decl->hasNonTrivialToPrimitiveCopyCUnion() << "\n";
+    logger[DEBUG] << "canPassInRegisters() " << record_decl->canPassInRegisters() << "\n";
+    logger[DEBUG] << "isParamDestroyedInCallee() " << record_decl->isParamDestroyedInCallee() << "\n";
+    logger[DEBUG] << "isRandomized() " << record_decl->isRandomized() << "\n";
+    logger[DEBUG] << "isInjectedClassName() " << record_decl->isInjectedClassName() << "\n";
+    logger[DEBUG] << "isLambda() " << record_decl->isLambda() << "\n";
+    logger[DEBUG] << "isCapturedRecord() " << record_decl->isCapturedRecord() << "\n";
+    logger[DEBUG] << "isOrContainsUnion() " << record_decl->isOrContainsUnion() << "\n";
+    logger[DEBUG] << "field_empty() " << record_decl->field_empty() << "\n";
 #endif
 
     SgClassDeclaration * sg_class_decl = NULL;
@@ -1042,8 +1043,8 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
     bool hasNameForLinkage = record_decl->hasNameForLinkage();
 
     bool definedInSameDeclContext = (record_decl->getDeclContext() == record_Definition->getDeclContext());
-    //std::cerr << "defining recordDecl and nondefining are in same declContext " << definedInSameDeclContext << "\n"; 
-    //std::cerr << record_decl << ":" << record_decl->getDeclContext() << " " << record_Definition << ":" << record_Definition->getDeclContext() <<  "\n";
+    //logger[DEBUG] << "defining recordDecl and nondefining are in same declContext " << definedInSameDeclContext << "\n"; 
+    //logger[DEBUG] << record_decl << ":" << record_decl->getDeclContext() << " " << record_Definition << ":" << record_Definition->getDeclContext() <<  "\n";
 
     // Finding the scope of enclosing DeclContext
     clang::DeclContext* declContext = record_decl->getDeclContext();
@@ -1112,7 +1113,7 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
             type_of_class = SgClassDeclaration::e_union;
             break;
         default:
-            std::cerr << "Runtime error: RecordDecl can only be a struct/class/union." << std::endl;
+            logger[WARN] << "Runtime error: RecordDecl can only be a struct/class/union." << "\n";
             res = false;
     }
 
@@ -1184,7 +1185,7 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
         clang::RecordDecl* currentRecordDecl = record_decl;
         while(currentRecordDecl = currentRecordDecl->getPreviousDecl())
         {
-          std::cerr << "PrevDecl: " << currentRecordDecl << "\n";
+          logger[DEBUG] << "PrevDecl: " << currentRecordDecl << "\n";
           //currentRecordDecl = record_decl->getPreviousDecl();
           SgClassDeclaration* sg_prev_decl = isSgClassDeclaration(Traverse(currentRecordDecl));
           sg_prev_decl->set_definingDeclaration(sg_def_class_decl);
@@ -1240,10 +1241,10 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
             SgDeclarationStatementPtrList& memberList = sg_class_def->get_members();
             if(std::find(memberList.begin(), memberList.end(), field_decl) != memberList.end() && field_decl->get_parent() == sg_class_def)
             {
-              //std::cerr << "Field is inserted\n";
+              //logger[DEBUG] << "Field is inserted\n";
               continue;
             }
-            //std::cerr << "Field to be inserted\n";
+            //logger[DEBUG] << "Field to be inserted\n";
             sg_class_def->append_member(field_decl);
             field_decl->set_parent(sg_class_def);
         }
@@ -1257,26 +1258,26 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
 
 bool ClangToSageTranslator::VisitCXXRecordDecl(clang::CXXRecordDecl * cxx_record_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitCXXRecordDecl" << std::endl;
-    std:: cerr << "isAggregate() " << cxx_record_decl->isAggregate() << "\n";
-    std:: cerr << "hasInClassInitializer() " << cxx_record_decl->hasInClassInitializer() << "\n";
-    std:: cerr << "hasUninitializedReferenceMember() " << cxx_record_decl->hasUninitializedReferenceMember() << "\n";
-    std:: cerr << "isPOD() " << cxx_record_decl->isPOD() << "\n";
-    std:: cerr << "isCLike() " << cxx_record_decl->isCLike() << "\n";
-    std:: cerr << "isEmpty() " << cxx_record_decl->isEmpty() << "\n";
-    std:: cerr << "hasInitMethod() " << cxx_record_decl->hasInitMethod() << "\n";
-    std:: cerr << "hasProtectedFields() " << cxx_record_decl->hasProtectedFields() << "\n";
-    std:: cerr << "hasPrivateFields() " << cxx_record_decl->hasPrivateFields() << "\n";
-    std:: cerr << "hasDirectFields() " << cxx_record_decl->hasDirectFields() << "\n";
-    std:: cerr << "isPolymorphic() " << cxx_record_decl->isPolymorphic() << "\n";
-    std:: cerr << "isAbstract () " << cxx_record_decl->isAbstract () << "\n";
-    std:: cerr << "isStandardLayout() " << cxx_record_decl->isStandardLayout() << "\n";
-    std:: cerr << "isCXX11StandardLayout () " << cxx_record_decl->isCXX11StandardLayout () << "\n";
-    std:: cerr << "hasMutableFields() " << cxx_record_decl->hasMutableFields() << "\n";
-    std:: cerr << "hasVariantMembers() " << cxx_record_decl->hasVariantMembers() << "\n";
-    std:: cerr << "hasTrivialDefaultConstructor() " << cxx_record_decl->hasTrivialDefaultConstructor() << "\n";
-    std:: cerr << "hasNonTrivialDefaultConstructor() " << cxx_record_decl->hasNonTrivialDefaultConstructor() << "\n";
-    std:: cerr << "isAnonymousStructOrUnion() " << cxx_record_decl->isAnonymousStructOrUnion() << "\n";
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXRecordDecl" << "\n";
+    logger[DEBUG] << "isAggregate() " << cxx_record_decl->isAggregate() << "\n";
+    logger[DEBUG] << "hasInClassInitializer() " << cxx_record_decl->hasInClassInitializer() << "\n";
+    logger[DEBUG] << "hasUninitializedReferenceMember() " << cxx_record_decl->hasUninitializedReferenceMember() << "\n";
+    logger[DEBUG] << "isPOD() " << cxx_record_decl->isPOD() << "\n";
+    logger[DEBUG] << "isCLike() " << cxx_record_decl->isCLike() << "\n";
+    logger[DEBUG] << "isEmpty() " << cxx_record_decl->isEmpty() << "\n";
+    logger[DEBUG] << "hasInitMethod() " << cxx_record_decl->hasInitMethod() << "\n";
+    logger[DEBUG] << "hasProtectedFields() " << cxx_record_decl->hasProtectedFields() << "\n";
+    logger[DEBUG] << "hasPrivateFields() " << cxx_record_decl->hasPrivateFields() << "\n";
+    logger[DEBUG] << "hasDirectFields() " << cxx_record_decl->hasDirectFields() << "\n";
+    logger[DEBUG] << "isPolymorphic() " << cxx_record_decl->isPolymorphic() << "\n";
+    logger[DEBUG] << "isAbstract () " << cxx_record_decl->isAbstract () << "\n";
+    logger[DEBUG] << "isStandardLayout() " << cxx_record_decl->isStandardLayout() << "\n";
+    logger[DEBUG] << "isCXX11StandardLayout () " << cxx_record_decl->isCXX11StandardLayout () << "\n";
+    logger[DEBUG] << "hasMutableFields() " << cxx_record_decl->hasMutableFields() << "\n";
+    logger[DEBUG] << "hasVariantMembers() " << cxx_record_decl->hasVariantMembers() << "\n";
+    logger[DEBUG] << "hasTrivialDefaultConstructor() " << cxx_record_decl->hasTrivialDefaultConstructor() << "\n";
+    logger[DEBUG] << "hasNonTrivialDefaultConstructor() " << cxx_record_decl->hasNonTrivialDefaultConstructor() << "\n";
+    logger[DEBUG] << "isAnonymousStructOrUnion() " << cxx_record_decl->isAnonymousStructOrUnion() << "\n";
     // to be filled up for full list
 #endif
     bool res = VisitRecordDecl(cxx_record_decl, node);
@@ -1298,7 +1299,7 @@ bool ClangToSageTranslator::VisitCXXRecordDecl(clang::CXXRecordDecl * cxx_record
     for (it_method = cxx_record_decl->method_begin(); it_method !=  cxx_record_decl->method_end(); it_method++) {
         // TODO
 #if DEBUG_VISIT_DECL
-        std::cerr << "ClangToSageTranslator::VisitCXXRecordDecl visit method " << (*it_method)->getNameAsString() << std::endl;
+        logger[DEBUG] << "ClangToSageTranslator::VisitCXXRecordDecl visit method " << (*it_method)->getNameAsString() << "\n";
 #endif
         SgNode* methodNode = Traverse(*it_method);
         SgDeclarationStatement* methodDeclStmt = isSgDeclarationStatement(methodNode);
@@ -1308,7 +1309,7 @@ bool ClangToSageTranslator::VisitCXXRecordDecl(clang::CXXRecordDecl * cxx_record
         if((*it_method)->isImplicit())
         {
 #if DEBUG_IMPLICIT_NODE
-           std::cerr << "VisitCXXRecordDecl: implicit method marked as compiler generated: " << (*it_method)->getNameAsString() << std::endl;
+           logger[DEBUG] << "VisitCXXRecordDecl: implicit method marked as compiler generated: " << (*it_method)->getNameAsString() << "\n";
 #endif
            methodDeclStmt->setCompilerGenerated();
         }
@@ -1318,7 +1319,7 @@ bool ClangToSageTranslator::VisitCXXRecordDecl(clang::CXXRecordDecl * cxx_record
     for (it_ctor = cxx_record_decl->ctor_begin(); it_ctor != cxx_record_decl->ctor_end(); it_ctor++) {
         // TODO if not tranversed as methods
 #if DEBUG_VISIT_DECL
-        std::cerr << "ClangToSageTranslator::VisitCXXRecordDecl visit ctor "  << std::endl;
+        logger[DEBUG] << "ClangToSageTranslator::VisitCXXRecordDecl visit ctor "  << "\n";
 #endif
     }
 
@@ -1336,7 +1337,7 @@ bool ClangToSageTranslator::VisitCXXRecordDecl(clang::CXXRecordDecl * cxx_record
 
 bool ClangToSageTranslator::VisitClassTemplateSpecializationDecl(clang::ClassTemplateSpecializationDecl * class_tpl_spec_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitClassTemplateSpecializationDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitClassTemplateSpecializationDecl" << "\n";
 #endif
     bool res = true;
 
@@ -1347,7 +1348,7 @@ bool ClangToSageTranslator::VisitClassTemplateSpecializationDecl(clang::ClassTem
 
 bool ClangToSageTranslator::VisitClassTemplatePartialSpecializationDecl(clang::ClassTemplatePartialSpecializationDecl * class_tpl_part_spec_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitClassTemplatePartialSpecializationDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitClassTemplatePartialSpecializationDecl" << "\n";
 #endif
     bool res = true;
 
@@ -1358,7 +1359,7 @@ bool ClangToSageTranslator::VisitClassTemplatePartialSpecializationDecl(clang::C
 
 bool ClangToSageTranslator::VisitEnumDecl(clang::EnumDecl * enum_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitEnumDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitEnumDecl" << "\n";
 #endif
     bool res = true;
     std::string enumDeclName = enum_decl->getNameAsString();
@@ -1371,9 +1372,9 @@ bool ClangToSageTranslator::VisitEnumDecl(clang::EnumDecl * enum_decl, SgNode **
     SgName name(enumDeclName);
 
 #if DEBUG_VISIT_DECL
-    std::cerr << "isfreestanding:" << enum_decl->isFreeStanding() << " isembedded:" << enum_decl->isEmbeddedInDeclarator() << std::endl;
-    std::cerr << "hasNameForLinkage:" << enum_decl->hasNameForLinkage() << std::endl;
-    std::cerr << "enum name:" << enumDeclName << std::endl;
+    logger[DEBUG] << "isfreestanding:" << enum_decl->isFreeStanding() << " isembedded:" << enum_decl->isEmbeddedInDeclarator() << "\n";
+    logger[DEBUG] << "hasNameForLinkage:" << enum_decl->hasNameForLinkage() << "\n";
+    logger[DEBUG] << "enum name:" << enumDeclName << "\n";
 #endif
 
     clang::EnumDecl * prev_enum_decl = enum_decl->getPreviousDecl();
@@ -1411,7 +1412,7 @@ bool ClangToSageTranslator::VisitEnumDecl(clang::EnumDecl * enum_decl, SgNode **
 
 bool ClangToSageTranslator::VisitTemplateTypeParmDecl(clang::TemplateTypeParmDecl * template_type_parm_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitTemplateTypeParmDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitTemplateTypeParmDecl" << "\n";
 #endif
     bool res = true;
 
@@ -1422,7 +1423,7 @@ bool ClangToSageTranslator::VisitTemplateTypeParmDecl(clang::TemplateTypeParmDec
 
 bool ClangToSageTranslator::VisitTypedefNameDecl(clang::TypedefNameDecl * typedef_name_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitTypedefNameDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitTypedefNameDecl" << "\n";
 #endif
     bool res = true;
 
@@ -1433,7 +1434,7 @@ bool ClangToSageTranslator::VisitTypedefNameDecl(clang::TypedefNameDecl * typede
 
 bool ClangToSageTranslator::VisitTypedefDecl(clang::TypedefDecl * typedef_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitTypedefDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitTypedefDecl" << "\n";
 #endif
     bool res = true;
     SgTypedefDeclaration * sg_typedef_decl;
@@ -1485,7 +1486,7 @@ bool ClangToSageTranslator::VisitTypedefDecl(clang::TypedefDecl * typedef_decl, 
          if(ownedTagDecl != nullptr)
          {
 #if DEBUG_VISIT_DECL
-            std:: cerr << "ClangToSageTranslator::VisitTypedefDecl has ownedTagDecl " << ownedTagDecl->isThisDeclarationADefinition() << "\n";
+            logger[DEBUG] << "ClangToSageTranslator::VisitTypedefDecl has ownedTagDecl " << ownedTagDecl->isThisDeclarationADefinition() << "\n";
 #endif
             isOwnedTagDeclADefinition = ownedTagDecl->isThisDeclarationADefinition();
          }
@@ -1540,11 +1541,11 @@ bool ClangToSageTranslator::VisitTypedefDecl(clang::TypedefDecl * typedef_decl, 
     }
 
 #if DEBUG_VISIT_DECL
-    std::cerr << "isDefinitionaRequired = " << isDefinitionaRequired << "\n";
-    std::cerr << "hasElaboratedType = " << hasElaboratedType << "\n";
-    std::cerr << "iscompleteDefined = " << iscompleteDefined << "\n";
-    std::cerr << "isembedded = " << isembedded << "\n";
-    std::cerr << "isOwnedTagDeclADefinition = " << isOwnedTagDeclADefinition << "\n";
+    logger[DEBUG] << "isDefinitionaRequired = " << isDefinitionaRequired << "\n";
+    logger[DEBUG] << "hasElaboratedType = " << hasElaboratedType << "\n";
+    logger[DEBUG] << "iscompleteDefined = " << iscompleteDefined << "\n";
+    logger[DEBUG] << "isembedded = " << isembedded << "\n";
+    logger[DEBUG] << "isOwnedTagDeclADefinition = " << isOwnedTagDeclADefinition << "\n";
 #endif
 // Pei-Hung (05/31/2022) set "bool_it->second = false" to avoid duplicated definition
     if (isSgClassType(type) && isDefinitionaRequired) {
@@ -1597,7 +1598,7 @@ bool ClangToSageTranslator::VisitTypedefDecl(clang::TypedefDecl * typedef_decl, 
 
 bool ClangToSageTranslator::VisitTypeAliasDecl(clang::TypeAliasDecl * type_alias_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitTypeAliasDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitTypeAliasDecl" << "\n";
 #endif  
     bool res = true;
 
@@ -1608,7 +1609,7 @@ bool ClangToSageTranslator::VisitTypeAliasDecl(clang::TypeAliasDecl * type_alias
 
 bool ClangToSageTranslator::VisitUnresolvedUsingTypenameDecl(clang::UnresolvedUsingTypenameDecl * unresolved_using_type_name_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitUnresolvedUsingTypenameDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitUnresolvedUsingTypenameDecl" << "\n";
 #endif
     bool res = true;
 
@@ -1619,7 +1620,7 @@ bool ClangToSageTranslator::VisitUnresolvedUsingTypenameDecl(clang::UnresolvedUs
 
 bool ClangToSageTranslator::VisitUsingDecl(clang::UsingDecl * using_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitUsingDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitUsingDecl" << "\n";
 #endif  
     bool res = true;
 
@@ -1630,7 +1631,7 @@ bool ClangToSageTranslator::VisitUsingDecl(clang::UsingDecl * using_decl, SgNode
 
 bool ClangToSageTranslator::VisitUsingDirectiveDecl(clang::UsingDirectiveDecl * using_directive_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitUsingDirectiveDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitUsingDirectiveDecl" << "\n";
 #endif  
     bool res = true;
 
@@ -1641,7 +1642,7 @@ bool ClangToSageTranslator::VisitUsingDirectiveDecl(clang::UsingDirectiveDecl * 
 
 bool ClangToSageTranslator::VisitUsingPackDecl(clang::UsingPackDecl * using_pack_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitUsingPackDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitUsingPackDecl" << "\n";
 #endif  
     bool res = true;
 
@@ -1652,7 +1653,7 @@ bool ClangToSageTranslator::VisitUsingPackDecl(clang::UsingPackDecl * using_pack
 
 bool ClangToSageTranslator::VisitUsingShadowDecl(clang::UsingShadowDecl * using_shadow_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitUsingShadowDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitUsingShadowDecl" << "\n";
 #endif  
     bool res = true;
 
@@ -1663,7 +1664,7 @@ bool ClangToSageTranslator::VisitUsingShadowDecl(clang::UsingShadowDecl * using_
 
 bool ClangToSageTranslator::VisitConstructorUsingShadowDecl(clang::ConstructorUsingShadowDecl * constructor_using_shadow_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitConstructorUsingShadowDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitConstructorUsingShadowDecl" << "\n";
 #endif  
     bool res = true;
 
@@ -1674,7 +1675,7 @@ bool ClangToSageTranslator::VisitConstructorUsingShadowDecl(clang::ConstructorUs
 
 bool ClangToSageTranslator::VisitValueDecl(clang::ValueDecl * value_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitValueDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitValueDecl" << "\n";
 #endif  
     bool res = true;
 
@@ -1685,7 +1686,7 @@ bool ClangToSageTranslator::VisitValueDecl(clang::ValueDecl * value_decl, SgNode
 
 bool ClangToSageTranslator::VisitBindingDecl(clang::BindingDecl * binding_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitBindingDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitBindingDecl" << "\n";
 #endif  
     bool res = true;
 
@@ -1696,7 +1697,7 @@ bool ClangToSageTranslator::VisitBindingDecl(clang::BindingDecl * binding_decl, 
     
 bool ClangToSageTranslator::VisitDeclaratorDecl(clang::DeclaratorDecl * declarator_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitDeclaratorDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitDeclaratorDecl" << "\n";
 #endif  
     bool res = true;
 
@@ -1708,13 +1709,13 @@ bool ClangToSageTranslator::VisitDeclaratorDecl(clang::DeclaratorDecl * declarat
 
 bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitFieldDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitFieldDecl" << "\n";
 #endif  
     bool res = true;
     
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitFieldDecl name:" <<field_decl->getNameAsString() <<  "\n";
-    std:: cerr << "isAnonymousStructOrUnion() " << field_decl->isAnonymousStructOrUnion() << "\n";
+    logger[DEBUG] << "ClangToSageTranslator::VisitFieldDecl name:" <<field_decl->getNameAsString() <<  "\n";
+    logger[DEBUG] << "isAnonymousStructOrUnion() " << field_decl->isAnonymousStructOrUnion() << "\n";
 #endif
 
     SgName name(field_decl->getNameAsString());
@@ -1747,7 +1748,7 @@ bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode
          clang::TagDecl* ownedTagDecl = ((clang::ElaboratedType *)fieldType)->getOwnedTagDecl();
          if(ownedTagDecl != nullptr)
          {
-            std:: cerr << "ownedTagDecl " << ownedTagDecl->isThisDeclarationADefinition() << "\n";
+            logger[DEBUG] << "ownedTagDecl " << ownedTagDecl->isThisDeclarationADefinition() << "\n";
             isOwnedTagDeclADefinition = ownedTagDecl->isThisDeclarationADefinition();
          }
        }
@@ -1798,7 +1799,7 @@ bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode
     SgExpression * expr = isSgExpression(tmp_init);
     // TODO expression list if aggregated initializer !
     if (tmp_init != NULL && expr == NULL) {
-        std::cerr << "Runtime error: not a SgInitializer..." << std::endl;
+        logger[WARN] << "Runtime error: not a SgInitializer..." << "\n";
         res = false;
     }
     SgInitializer * init = expr != NULL ? SageBuilder::buildAssignInitializer_nfi(expr, expr->get_type()) : NULL;
@@ -1904,9 +1905,9 @@ bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode
 
 bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitFunctionDecl" << std::endl;
-    std::cerr << "ClangToSageTranslator::VisitFunctionDecl " << function_decl->getNameInfo().getName().getAsString() << std::endl;
-    std:: cerr << "ClangToSageTranslator::VisitFunctionDecl isThisDeclarationADefinition " << function_decl->isThisDeclarationADefinition() << "\n";
+    logger[DEBUG] << "ClangToSageTranslator::VisitFunctionDecl" << "\n";
+    logger[DEBUG] << "ClangToSageTranslator::VisitFunctionDecl " << function_decl->getNameInfo().getName().getAsString() << "\n";
+    logger[DEBUG] << "ClangToSageTranslator::VisitFunctionDecl isThisDeclarationADefinition " << function_decl->isThisDeclarationADefinition() << "\n";
 #endif
     bool res = true;
 
@@ -1938,7 +1939,7 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
 
 
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitFunctionDecl name:" << name.getString() << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitFunctionDecl name:" << name.getString() << "\n";
 #endif
 
     SgType * ret_type = buildTypeFromQualifiedType(function_decl->getReturnType());
@@ -1955,14 +1956,14 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
     SageBuilder::pushScopeStack(declScope);
     
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitFunctionDecl NumParams:" << function_decl->getNumParams() << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitFunctionDecl NumParams:" << function_decl->getNumParams() << "\n";
 #endif
 
     for (unsigned i = 0; i < function_decl->getNumParams(); i++) {
         if(funcProtoType != nullptr && function_decl->getParamDecl(i)->getType() != funcProtoType->getParamType(i))
         {
 #if DEBUG_VISIT_DECL
-            std::cout << "Func arg type :" << function_decl->getParamDecl(i)->getType().getAsString() << " funcProtoType arg type:" << funcProtoType->getParamType(i).getAsString() << std::endl;
+            std::cout << "Func arg type :" << function_decl->getParamDecl(i)->getType().getAsString() << " funcProtoType arg type:" << funcProtoType->getParamType(i).getAsString() << "\n";
 #endif
             diffInProtoType = true;
         } 
@@ -1999,7 +2000,7 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
         }
 
         if (tmp_init_name != NULL && init_name == NULL) {
-            std::cerr << "Runtime error: tmp_init_name != NULL && init_name == NULL" << std::endl;
+            logger[WARN] << "Runtime error: tmp_init_name != NULL && init_name == NULL" << "\n";
             res = false;
             continue;
         }
@@ -2032,7 +2033,7 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
           if(p_decl_translation_map.find(((clang::CXXMethodDecl *)function_decl)->getParent()) != p_decl_translation_map.end())
           {
              cxxRecordDecl = isSgClassDeclaration(Traverse(((clang::CXXMethodDecl *)function_decl)->getParent()));
-             std::cerr << "defining method is in CxxRecordDecl: " << cxxRecordDecl << std::endl;
+             logger[DEBUG] << "defining method is in CxxRecordDecl: " << cxxRecordDecl << "\n";
              methodScope = isSgScopeStatement(cxxRecordDecl->get_definition());
           }
           sg_function_decl = SageBuilder::buildDefiningMemberFunctionDeclaration(name, ret_type, param_list, methodScope);
@@ -2069,7 +2070,7 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
 
         SgNode * tmp_body;
         if (!function_decl->hasBody()) {
-            std::cerr << "Defining function declaration without body..." << std::endl;
+            logger[DEBUG] << "Defining function declaration without body..." << "\n";
             //res = false;
             tmp_body = SageBuilder::buildBasicBlock();
         }
@@ -2082,7 +2083,7 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
         SageBuilder::popScopeStack();
 
         if (tmp_body != NULL && body == NULL) {
-            std::cerr << "Runtime error: tmp_body != NULL && body == NULL" << std::endl;
+            logger[WARN] << "Runtime error: tmp_body != NULL && body == NULL" << "\n";
             res = false;
         }
         else {
@@ -2117,7 +2118,7 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
             SgSymbol * tmp_symbol = GetSymbolFromSymbolTable(function_decl->getFirstDecl());
             SgFunctionSymbol * symbol = isSgFunctionSymbol(tmp_symbol);
             if (tmp_symbol != NULL && symbol == NULL) {
-                std::cerr << "Runtime error: tmp_symbol != NULL && symbol == NULL" << std::endl;
+                logger[WARN] << "Runtime error: tmp_symbol != NULL && symbol == NULL" << "\n";
                 res = false;
             }
             if (symbol != NULL)
@@ -2145,7 +2146,7 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
           if(p_decl_translation_map.find(((clang::CXXMethodDecl *)function_decl)->getParent()) != p_decl_translation_map.end())
           {
              cxxRecordDecl = isSgClassDeclaration(Traverse(((clang::CXXMethodDecl *)function_decl)->getParent()));
-             std::cerr << "Nondefining method is in CxxRecordDecl: " << cxxRecordDecl << std::endl;
+             logger[DEBUG] << "Nondefining method is in CxxRecordDecl: " << cxxRecordDecl << "\n";
              methodScope = isSgScopeStatement(cxxRecordDecl->get_definition());
           }
           sg_function_decl = SageBuilder::buildNondefiningMemberFunctionDeclaration(name, ret_type, param_list, methodScope);
@@ -2165,7 +2166,7 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
             SgSymbol * tmp_symbol = GetSymbolFromSymbolTable(function_decl->getFirstDecl());
             SgFunctionSymbol * symbol = isSgFunctionSymbol(tmp_symbol);
             if (tmp_symbol != NULL && symbol == NULL) {
-                std::cerr << "Runtime error: tmp_symbol != NULL && symbol == NULL" << std::endl;
+                logger[WARN] << "Runtime error: tmp_symbol != NULL && symbol == NULL" << "\n";
                 res = false;
             }
             SgFunctionDeclaration * first_decl = NULL;
@@ -2230,7 +2231,7 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
 
 bool ClangToSageTranslator::VisitCXXDeductionGuideDecl(clang::CXXDeductionGuideDecl * cxx_deduction_guide_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitCXXDeductionGuideDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXDeductionGuideDecl" << "\n";
 #endif
     bool res = true;
 
@@ -2242,15 +2243,15 @@ bool ClangToSageTranslator::VisitCXXDeductionGuideDecl(clang::CXXDeductionGuideD
 bool ClangToSageTranslator::VisitCXXMethodDecl(clang::CXXMethodDecl * cxx_method_decl, SgNode ** node) {
     SgName name(cxx_method_decl->getNameAsString());
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitCXXMethodDecl " << name.getString() << std::endl;
-    std::cerr << "ClangToSageTranslator::VisitCXXMethodDecl isStatic = " << cxx_method_decl->isStatic() << "\n";
-    std::cerr << "ClangToSageTranslator::VisitCXXMethodDecl isInstance = " << cxx_method_decl->isInstance() << "\n";
-    std::cerr << "ClangToSageTranslator::VisitCXXMethodDecl isVolatile = " << cxx_method_decl->isVolatile() << "\n";
-    std::cerr << "ClangToSageTranslator::VisitCXXMethodDecl isVirtual = " << cxx_method_decl->isVirtual() << "\n";
-    std::cerr << "ClangToSageTranslator::VisitCXXMethodDecl isCopyAssignmentOperator = " << cxx_method_decl->isCopyAssignmentOperator() << "\n";
-    std::cerr << "ClangToSageTranslator::VisitCXXMethodDecl isMoveAssignmentOperator = " << cxx_method_decl->isMoveAssignmentOperator() << "\n";
-    std::cerr << "ClangToSageTranslator::VisitCXXMethodDecl hasInlineBody = " << cxx_method_decl->hasInlineBody() << "\n";
-    std::cerr << "ClangToSageTranslator::VisitCXXMethodDecl isLambdaStaticInvoker = " << cxx_method_decl->isLambdaStaticInvoker() << "\n";
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXMethodDecl " << name.getString() << "\n";
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXMethodDecl isStatic = " << cxx_method_decl->isStatic() << "\n";
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXMethodDecl isInstance = " << cxx_method_decl->isInstance() << "\n";
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXMethodDecl isVolatile = " << cxx_method_decl->isVolatile() << "\n";
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXMethodDecl isVirtual = " << cxx_method_decl->isVirtual() << "\n";
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXMethodDecl isCopyAssignmentOperator = " << cxx_method_decl->isCopyAssignmentOperator() << "\n";
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXMethodDecl isMoveAssignmentOperator = " << cxx_method_decl->isMoveAssignmentOperator() << "\n";
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXMethodDecl hasInlineBody = " << cxx_method_decl->hasInlineBody() << "\n";
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXMethodDecl isLambdaStaticInvoker = " << cxx_method_decl->isLambdaStaticInvoker() << "\n";
 #endif
     bool res = VisitFunctionDecl(cxx_method_decl, node);
 
@@ -2268,13 +2269,13 @@ bool ClangToSageTranslator::VisitCXXConstructorDecl(clang::CXXConstructorDecl * 
     bool res = true;
     SgName name(cxx_constructor_decl->getNameAsString());
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitCXXConstructorDecl name:" << name.getString() << std::endl;
-    std::cerr << "isDefaultConstructor = " << cxx_constructor_decl->isDefaultConstructor() << "\n";
-    std::cerr << "isCopyConstructor = " << cxx_constructor_decl->isCopyConstructor() << "\n";
-    std::cerr << "isMoveConstructor = " << cxx_constructor_decl->isMoveConstructor() << "\n";
-    std::cerr << "isInheritingConstructor = " << cxx_constructor_decl->isInheritingConstructor() << "\n";
-    std::cerr << "isExplicit = " << cxx_constructor_decl->isExplicit() << "\n";
-    std::cerr << "isImplicit = " << cxx_constructor_decl->isImplicit() << "\n";
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXConstructorDecl name:" << name.getString() << "\n";
+    logger[DEBUG] << "isDefaultConstructor = " << cxx_constructor_decl->isDefaultConstructor() << "\n";
+    logger[DEBUG] << "isCopyConstructor = " << cxx_constructor_decl->isCopyConstructor() << "\n";
+    logger[DEBUG] << "isMoveConstructor = " << cxx_constructor_decl->isMoveConstructor() << "\n";
+    logger[DEBUG] << "isInheritingConstructor = " << cxx_constructor_decl->isInheritingConstructor() << "\n";
+    logger[DEBUG] << "isExplicit = " << cxx_constructor_decl->isExplicit() << "\n";
+    logger[DEBUG] << "isImplicit = " << cxx_constructor_decl->isImplicit() << "\n";
 #endif
 
     // getting ctorInitializer
@@ -2302,10 +2303,10 @@ bool ClangToSageTranslator::VisitCXXConstructorDecl(clang::CXXConstructorDecl * 
       {
         cnt++;
   #if DEBUG_VISIT_DECL
-        std::cerr << "isBaseInitializer = " << (*initializer)->isBaseInitializer() << "\n";
-        std::cerr << "isMemberInitializer = " << (*initializer)->isMemberInitializer() << "\n";
-        std::cerr << "isAnyMemberInitializer  = " << (*initializer)->isAnyMemberInitializer() << "\n";
-        std::cerr << "isIndirectMemberInitializer = " << (*initializer)->isIndirectMemberInitializer() << "\n";
+        logger[DEBUG] << "isBaseInitializer = " << (*initializer)->isBaseInitializer() << "\n";
+        logger[DEBUG] << "isMemberInitializer = " << (*initializer)->isMemberInitializer() << "\n";
+        logger[DEBUG] << "isAnyMemberInitializer  = " << (*initializer)->isAnyMemberInitializer() << "\n";
+        logger[DEBUG] << "isIndirectMemberInitializer = " << (*initializer)->isIndirectMemberInitializer() << "\n";
   #endif
         if((*initializer)->isMemberInitializer())
         {
@@ -2334,7 +2335,7 @@ bool ClangToSageTranslator::VisitCXXConstructorDecl(clang::CXXConstructorDecl * 
     if(cxx_constructor_decl->isDefaultConstructor())
     {
 #if DEBUG_VISIT_DECL
-      std::cerr << "set as Default constructor\n";
+      logger[DEBUG] << "set as Default constructor\n";
 #endif
       cxxConstructorDecl->get_functionModifier().setDefault(); 
     }
@@ -2344,7 +2345,7 @@ bool ClangToSageTranslator::VisitCXXConstructorDecl(clang::CXXConstructorDecl * 
 
 bool ClangToSageTranslator::VisitCXXConversionDecl(clang::CXXConversionDecl * cxx_conversion_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitCXXConversionDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXConversionDecl" << "\n";
 #endif
     bool res = true;
 
@@ -2355,7 +2356,7 @@ bool ClangToSageTranslator::VisitCXXConversionDecl(clang::CXXConversionDecl * cx
 
 bool ClangToSageTranslator::VisitCXXDestructorDecl(clang::CXXDestructorDecl * cxx_destructor_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitCXXDestructorDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXDestructorDecl" << "\n";
 #endif
     bool res = true;
 
@@ -2369,7 +2370,7 @@ bool ClangToSageTranslator::VisitCXXDestructorDecl(clang::CXXDestructorDecl * cx
 
 bool ClangToSageTranslator::VisitMSPropertyDecl(clang::MSPropertyDecl * ms_property_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitMSPropertyDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitMSPropertyDecl" << "\n";
 #endif
     bool res = true;
 
@@ -2380,7 +2381,7 @@ bool ClangToSageTranslator::VisitMSPropertyDecl(clang::MSPropertyDecl * ms_prope
 
 bool ClangToSageTranslator::VisitNonTypeTemplateParmDecl(clang::NonTypeTemplateParmDecl * non_type_template_param_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitNonTypeTemplateParmDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitNonTypeTemplateParmDecl" << "\n";
 #endif
     bool res = true;
 
@@ -2391,7 +2392,7 @@ bool ClangToSageTranslator::VisitNonTypeTemplateParmDecl(clang::NonTypeTemplateP
 
 bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitVarDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitVarDecl" << "\n";
 #endif
     bool res = true;
 
@@ -2442,7 +2443,7 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
          clang::TagDecl* ownedTagDecl = ((clang::ElaboratedType *)varType)->getOwnedTagDecl();
          if(ownedTagDecl != nullptr)
          {
-            std:: cerr << "ownedTagDecl " << ownedTagDecl->isThisDeclarationADefinition() << "\n";
+            logger[DEBUG] << "ownedTagDecl " << ownedTagDecl->isThisDeclarationADefinition() << "\n";
             isOwnedTagDeclADefinition = ownedTagDecl->isThisDeclarationADefinition();
          }
        }
@@ -2502,7 +2503,7 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
     SgNode * tmp_init = Traverse(init_expr);
     SgExpression * expr = isSgExpression(tmp_init);
     if (tmp_init != NULL && expr == NULL) {
-        std::cerr << "Runtime error: not a SgInitializer..." << std::endl; // TODO
+        logger[WARN] << "Runtime error: not a SgInitializer..." << "\n"; // TODO
         res = false;
     }
     SgExprListExp * expr_list_expr = isSgExprListExp(expr);
@@ -2633,7 +2634,7 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
 
 bool ClangToSageTranslator::VisitDecompositionDecl(clang::DecompositionDecl * decomposition_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitDecompositionDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitDecompositionDecl" << "\n";
 #endif
     bool res = true;
 
@@ -2644,7 +2645,7 @@ bool ClangToSageTranslator::VisitDecompositionDecl(clang::DecompositionDecl * de
 
 bool ClangToSageTranslator::VisitImplicitParamDecl(clang::ImplicitParamDecl * implicit_param_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitImplicitParamDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitImplicitParamDecl" << "\n";
 #endif
     bool res = true;
 
@@ -2655,7 +2656,7 @@ bool ClangToSageTranslator::VisitImplicitParamDecl(clang::ImplicitParamDecl * im
 
 bool ClangToSageTranslator::VisitOMPCaptureExprDecl(clang::OMPCapturedExprDecl * omp_capture_expr_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitOMPCaptureExprDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPCaptureExprDecl" << "\n";
 #endif
     bool res = true;
 
@@ -2666,7 +2667,7 @@ bool ClangToSageTranslator::VisitOMPCaptureExprDecl(clang::OMPCapturedExprDecl *
 
 bool ClangToSageTranslator::VisitParmVarDecl(clang::ParmVarDecl * param_var_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitParmVarDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitParmVarDecl" << "\n";
 #endif
     bool res = true;
 
@@ -2681,7 +2682,7 @@ bool ClangToSageTranslator::VisitParmVarDecl(clang::ParmVarDecl * param_var_decl
         SgNode * tmp_expr = Traverse(param_var_decl->getDefaultArg());
         SgExpression * expr = isSgExpression(tmp_expr);
         if (tmp_expr != NULL && expr == NULL) {
-            std::cerr << "Runtime error: tmp_expr != NULL && expr == NULL" << std::endl;
+            logger[WARN] << "Runtime error: tmp_expr != NULL && expr == NULL" << "\n";
             res = false;
         }
         else {
@@ -2699,7 +2700,7 @@ bool ClangToSageTranslator::VisitParmVarDecl(clang::ParmVarDecl * param_var_decl
 
 bool ClangToSageTranslator::VisitVarTemplateSpecializationDecl(clang::VarTemplateSpecializationDecl * var_template_specialization_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitVarTemplateSpecializationDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitVarTemplateSpecializationDecl" << "\n";
 #endif
     bool res = true;
 
@@ -2710,7 +2711,7 @@ bool ClangToSageTranslator::VisitVarTemplateSpecializationDecl(clang::VarTemplat
 
 bool ClangToSageTranslator::VisitVarTemplatePartialSpecializationDecl(clang::VarTemplatePartialSpecializationDecl * var_template_partial_specialization_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitVarTemplatePartialSpecializationDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitVarTemplatePartialSpecializationDecl" << "\n";
 #endif
     bool res = true;
 
@@ -2721,7 +2722,7 @@ bool ClangToSageTranslator::VisitVarTemplatePartialSpecializationDecl(clang::Var
 
 bool  ClangToSageTranslator::VisitEnumConstantDecl(clang::EnumConstantDecl * enum_constant_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitEnumConstantDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitEnumConstantDecl" << "\n";
 #endif
     bool res = true;
 
@@ -2735,7 +2736,7 @@ bool  ClangToSageTranslator::VisitEnumConstantDecl(clang::EnumConstantDecl * enu
         SgNode * tmp_expr = Traverse(enum_constant_decl->getInitExpr());
         SgExpression * expr = isSgExpression(tmp_expr);
         if (tmp_expr != NULL && expr == NULL) {
-            std::cerr << "Runtime error: tmp_expr != NULL && expr == NULL" << std::endl;
+            logger[WARN] << "Runtime error: tmp_expr != NULL && expr == NULL" << "\n";
             res = false;
         }
         else {
@@ -2756,7 +2757,7 @@ bool  ClangToSageTranslator::VisitEnumConstantDecl(clang::EnumConstantDecl * enu
 
 bool ClangToSageTranslator::VisitIndirectFieldDecl(clang::IndirectFieldDecl * indirect_field_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitIndirectFieldDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitIndirectFieldDecl" << "\n";
 #endif
     bool res = true;
 
@@ -2767,7 +2768,7 @@ bool ClangToSageTranslator::VisitIndirectFieldDecl(clang::IndirectFieldDecl * in
 
 bool ClangToSageTranslator::VisitOMPDeclareMapperDecl(clang::OMPDeclareMapperDecl * omp_declare_mapper_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitOMPDeclareMapperDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPDeclareMapperDecl" << "\n";
 #endif
     bool res = true;
 
@@ -2778,7 +2779,7 @@ bool ClangToSageTranslator::VisitOMPDeclareMapperDecl(clang::OMPDeclareMapperDec
 
 bool ClangToSageTranslator::VisitOMPDeclareReductionDecl(clang::OMPDeclareReductionDecl * omp_declare_reduction_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitOMPDeclareReductionDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPDeclareReductionDecl" << "\n";
 #endif
     bool res = true;
 
@@ -2789,7 +2790,7 @@ bool ClangToSageTranslator::VisitOMPDeclareReductionDecl(clang::OMPDeclareReduct
 
 bool ClangToSageTranslator::VisitUnresolvedUsingValueDecl(clang::UnresolvedUsingValueDecl * unresolved_using_value_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitUnresolvedUsingValueDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitUnresolvedUsingValueDecl" << "\n";
 #endif
     bool res = true;
 
@@ -2800,7 +2801,7 @@ bool ClangToSageTranslator::VisitUnresolvedUsingValueDecl(clang::UnresolvedUsing
 
 bool ClangToSageTranslator::VisitOMPAllocateDecl(clang::OMPAllocateDecl * omp_allocate_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitOMPAllocateDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPAllocateDecl" << "\n";
 #endif
     bool res = true;
 
@@ -2811,7 +2812,7 @@ bool ClangToSageTranslator::VisitOMPAllocateDecl(clang::OMPAllocateDecl * omp_al
 
 bool ClangToSageTranslator::VisitOMPRequiresDecl(clang::OMPRequiresDecl * omp_requires_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitOMPRequiresDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPRequiresDecl" << "\n";
 #endif
     bool res = true;
 
@@ -2822,7 +2823,7 @@ bool ClangToSageTranslator::VisitOMPRequiresDecl(clang::OMPRequiresDecl * omp_re
 
 bool ClangToSageTranslator::VisitOMPThreadPrivateDecl(clang::OMPThreadPrivateDecl * omp_thread_private_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitOMPThreadPrivateDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPThreadPrivateDecl" << "\n";
 #endif
     bool res = true;
 
@@ -2833,7 +2834,7 @@ bool ClangToSageTranslator::VisitOMPThreadPrivateDecl(clang::OMPThreadPrivateDec
 
 bool ClangToSageTranslator::VisitPragmaCommentDecl(clang::PragmaCommentDecl * pragma_comment_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitPragmaCommentDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitPragmaCommentDecl" << "\n";
 #endif
     bool res = true;
 
@@ -2844,7 +2845,7 @@ bool ClangToSageTranslator::VisitPragmaCommentDecl(clang::PragmaCommentDecl * pr
 
 bool ClangToSageTranslator::VisitPragmaDetectMismatchDecl(clang::PragmaDetectMismatchDecl * pragma_detect_mismatch_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitPragmaDetectMismatchDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitPragmaDetectMismatchDecl" << "\n";
 #endif
     bool res = true;
 
@@ -2855,14 +2856,14 @@ bool ClangToSageTranslator::VisitPragmaDetectMismatchDecl(clang::PragmaDetectMis
 
 bool ClangToSageTranslator::VisitStaticAssertDecl(clang::StaticAssertDecl * pragma_static_assert_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitStaticAssertDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitStaticAssertDecl" << "\n";
 #endif
     bool res = true;
 
     SgNode * tmp_condition = Traverse(pragma_static_assert_decl->getAssertExpr());
     SgExpression * condition = isSgExpression(tmp_condition);
     if (tmp_condition != NULL && condition == NULL) {
-        std::cerr << "Runtime error: tmp_condition != NULL && condition == NULL" << std::endl;
+        logger[WARN] << "Runtime error: tmp_condition != NULL && condition == NULL" << "\n";
         res = false;
     } else {
       *node = SageBuilder::buildStaticAssertionDeclaration(condition, pragma_static_assert_decl->getMessage()->getString().str());
@@ -2873,17 +2874,17 @@ bool ClangToSageTranslator::VisitStaticAssertDecl(clang::StaticAssertDecl * prag
 
 bool ClangToSageTranslator::VisitTranslationUnitDecl(clang::TranslationUnitDecl * translation_unit_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    std::cerr << "ClangToSageTranslator::VisitTranslationUnitDecl" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitTranslationUnitDecl" << "\n";
 #endif
     if (*node != NULL) {
-        std::cerr << "Runtime error: The TranslationUnitDecl is already associated to a SAGE node." << std::endl;
+        logger[WARN] << "Runtime error: The TranslationUnitDecl is already associated to a SAGE node." << "\n";
         return false;
     }
 
   // Create the SAGE node: SgGlobal
 
     if (p_global_scope != NULL) {
-        std::cerr << "Runtime error: Global Scope have already been set !" << std::endl;
+        logger[WARN] << "Runtime error: Global Scope have already been set !" << "\n";
         return false;
     }
 
@@ -2910,8 +2911,8 @@ bool ClangToSageTranslator::VisitTranslationUnitDecl(clang::TranslationUnitDecl 
 
         SgDeclarationStatement * decl_stmt = isSgDeclarationStatement(child);
         if (decl_stmt == NULL && child != NULL) {
-            std::cerr << "Runtime error: the node produce for a clang::Decl is not a SgDeclarationStatement !" << std::endl;
-            std::cerr << "    class = " << child->class_name() << std::endl;
+            logger[WARN] << "Runtime error: the node produce for a clang::Decl is not a SgDeclarationStatement !" << "\n";
+            logger[WARN] << "    class = " << child->class_name() << "\n";
             res = false;
         }
         else if (child != NULL) {
