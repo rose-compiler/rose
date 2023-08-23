@@ -3,6 +3,8 @@
 // #include "clang-frontend-private.hpp"
 #include "clang-to-dot-private.hpp"
 
+using namespace Sawyer::Message;
+
 // SgNode * ClangToDotTranslator::Traverse(clang::Stmt * stmt) 
 std::string ClangToDotTranslator::Traverse(clang::Stmt * stmt) 
    {

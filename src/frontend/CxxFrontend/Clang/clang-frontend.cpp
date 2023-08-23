@@ -13,6 +13,10 @@ extern bool roseInstallPrefix(std::string&);
 // DQ (11/28/2020): Use this for testing the DOT graph generator.
 #define EXIT_AFTER_BUILDING_DOT_FILE 0
 
+Rose::Diagnostics::Facility ClangToSageTranslator::logger;
+Rose::Diagnostics::Facility SagePreprocessorRecord::logger;
+
+using namespace Sawyer::Message;
 int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
 
     Rose::Diagnostics::mprefix->showProgramName(false);
@@ -697,7 +701,7 @@ SagePreprocessorRecord::SagePreprocessorRecord(clang::SourceManager * source_man
   p_source_manager(source_manager),
   p_preprocessor_record_list()
 {
-   Rose::Diagnostics::initAndRegister(&logger, "ClangToDotPreprocessorRecord"); 
+   Rose::Diagnostics::initAndRegister(&logger, "SagePreprocessorRecord"); 
    Rose::Diagnostics::mprefix->showProgramName(false);
    Rose::Diagnostics::mprefix->showThreadId(false);
    Rose::Diagnostics::mprefix->showElapsedTime(false);

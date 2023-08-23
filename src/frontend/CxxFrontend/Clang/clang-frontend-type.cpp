@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "clang-frontend-private.hpp"
 
+using namespace Sawyer::Message;
 SgType * ClangToSageTranslator::buildTypeFromQualifiedType(const clang::QualType & qual_type) {
     SgNode * tmp_type = Traverse(qual_type.getTypePtr());
     SgType * type = isSgType(tmp_type);
