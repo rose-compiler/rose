@@ -308,14 +308,21 @@ void SageTreeBuilder::Leave(SgScopeStatement* scope)
          SgInitializedName* prev_init_name = prev_var_sym->get_declaration();
          SgNode* prev_parent = prev_var_ref->get_parent();
 
-      // There may be more options but only two known so far
-         if (isSgBinaryOp(prev_parent) || isSgExprStatement(prev_parent)) {
+      // There may be more options but only three are known so far
+         if (isSgUnaryOp(prev_parent) || isSgBinaryOp(prev_parent) || isSgExprStatement(prev_parent)) {
            SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
            SgFunctionCallExp* func_call = SageBuilder::buildFunctionCallExp(func_sym, params);
            func_call->set_parent(prev_parent);
 
            if (SgExprStatement* expr_stmt = isSgExprStatement(prev_parent)) {
              expr_stmt->set_expression(func_call);
+           }
+           else if (SgUnaryOp* unary_op = isSgUnaryOp(prev_parent)) {
+             SgVarRefExp* var_ref = isSgVarRefExp(unary_op->get_operand());
+             if (var_ref == prev_var_ref) {
+               unary_op->set_operand(func_call);
+             }
+             ASSERT_require(var_ref == prev_var_ref);
            }
            else if (SgBinaryOp* bin_op = isSgBinaryOp(prev_parent)) {
              // Is this left or right operand
