@@ -1,6 +1,8 @@
 #include "sage3basic.h"
 #include "clang-to-dot-private.hpp"
 
+using namespace Sawyer::Message;
+
 std::string ClangToDotTranslator::Traverse(const clang::Type * type) 
    {
      if (type == NULL)

@@ -32,6 +32,11 @@ void clang::PPCallbacks::type_info() {};
 #endif
 #endif
 
+using namespace Sawyer::Message;
+
+Rose::Diagnostics::Facility ClangToDotTranslator::logger;
+Rose::Diagnostics::Facility ClangToDotPreprocessorRecord::logger;
+
 
 extern bool roseInstallPrefix(std::string&);
 
