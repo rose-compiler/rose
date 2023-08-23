@@ -254,6 +254,7 @@ JOVIAL_TESTCODES = \
  gitlab-issue-263.jov                   \
  gitlab-issue-264.jov                   \
  gitlab-issue-287.jov                   \
+ gitlab-issue-288.jov                   \
  charlie.jov                            \
  shadow.jov                             \
  comments.jov                           \
