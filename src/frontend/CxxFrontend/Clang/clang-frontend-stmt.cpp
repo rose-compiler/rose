@@ -2,6 +2,7 @@
 #include "clang-frontend-private.hpp"
 #include "clang-to-rose-support.hpp" 
 
+using namespace Sawyer::Message;
 SgNode * ClangToSageTranslator::Traverse(clang::Stmt * stmt) {
     if (stmt == NULL)
         return NULL;
@@ -651,7 +652,7 @@ SgNode * ClangToSageTranslator::Traverse(clang::Stmt * stmt) {
             break;
 
         default:
-            std::cerr << "Unknown statement kind: " << stmt->getStmtClassName() << " !" << std::endl;
+            logger[ERROR] << "Unknown statement kind: " << stmt->getStmtClassName() << " !" << "\n";
             ROSE_ABORT();
     }
 
@@ -669,12 +670,12 @@ SgNode * ClangToSageTranslator::Traverse(clang::Stmt * stmt) {
 bool ClangToSageTranslator::VisitStmt(clang::Stmt * stmt, SgNode ** node)
    {
 #if DEBUG_VISIT_STMT
-     std::cerr << "ClangToSageTranslator::VisitStmt" << std::endl;
+     logger[DEBUG] << "ClangToSageTranslator::VisitStmt" << "\n";
 #endif
 
      if (*node == NULL) 
         {
-          std::cerr << "Runtime error: No Sage node associated with the Statement..." << std::endl;
+          logger[WARN] << "Runtime error: No Sage node associated with the Statement..." << "\n";
           return false;
         }
 
@@ -690,7 +691,7 @@ bool ClangToSageTranslator::VisitStmt(clang::Stmt * stmt, SgNode ** node)
 
 bool ClangToSageTranslator::VisitAsmStmt(clang::AsmStmt * asm_stmt, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitAsmStmt" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitAsmStmt" << "\n";
 #endif
     bool res = true;
 
@@ -701,7 +702,7 @@ bool ClangToSageTranslator::VisitAsmStmt(clang::AsmStmt * asm_stmt, SgNode ** no
 
 bool ClangToSageTranslator::VisitGCCAsmStmt(clang::GCCAsmStmt * gcc_asm_stmt, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitGCCAsmStmt" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitGCCAsmStmt" << "\n";
 #endif
     bool res = true;
 
@@ -712,9 +713,9 @@ bool ClangToSageTranslator::VisitGCCAsmStmt(clang::GCCAsmStmt * gcc_asm_stmt, Sg
     clang::StringLiteral* AsmStringLiteral = gcc_asm_stmt->getAsmString();
     llvm::StringRef AsmStringRef = AsmStringLiteral->getString();
 
-    std::cout << "input op:" << asmNumInput << " output op: " << asmNumOutput<< std::endl;
+    std::cout << "input op:" << asmNumInput << " output op: " << asmNumOutput<< "\n";
 #if DEBUG_VISIT_STMT
-    std::cerr << "AsmStringRef:" << static_cast<std::string>(AsmStringRef) << std::endl;
+    logger[DEBUG] << "AsmStringRef:" << static_cast<std::string>(AsmStringRef) << "\n";
 #endif
 
     SgAsmStmt* asmStmt = SageBuilder::buildAsmStatement(static_cast<std::string>(AsmStringRef)); 
@@ -730,7 +731,7 @@ bool ClangToSageTranslator::VisitGCCAsmStmt(clang::GCCAsmStmt * gcc_asm_stmt, Sg
     {
       std::string clobberStr = static_cast<std::string>(gcc_asm_stmt->getClobber(i));
 #if DEBUG_VISIT_STMT
-      std::cerr << "AsmOp clobber["<< i<<  "]: " << clobberStr << std::endl;
+      logger[DEBUG] << "AsmOp clobber["<< i<<  "]: " << clobberStr << "\n";
 #endif
       // Pei-Hung "cc" clobber is skipped by EDG
       if(clobberStr.compare(0, sizeof(clobberStr), "cc") == 0)
@@ -759,7 +760,7 @@ bool ClangToSageTranslator::VisitGCCAsmStmt(clang::GCCAsmStmt * gcc_asm_stmt, Sg
       std::string outputConstraintStr = static_cast<std::string>(gcc_asm_stmt->getOutputConstraint(i));
 // Clang's constraint is equivalent to ROSE's modifier + operand constraints 
 #if DEBUG_VISIT_STMT
-      std::cerr << "AsmOp output constraint["<< i<<  "]: " << outputConstraintStr << std::endl;
+      logger[DEBUG] << "AsmOp output constraint["<< i<<  "]: " << outputConstraintStr << "\n";
 #endif
 
       std::smatch sm; 
@@ -772,7 +773,7 @@ bool ClangToSageTranslator::VisitGCCAsmStmt(clang::GCCAsmStmt * gcc_asm_stmt, Sg
           std::cout << "[" << sm[i] << "] \n";
         }
         if(sm.size())
-          std::cout << std::endl;
+          std::cout << "\n";
 #endif
 
       SgAsmOp::asm_operand_constraint_enum constraint = (SgAsmOp::asm_operand_constraint_enum) SgAsmOp::e_any;
@@ -823,7 +824,7 @@ bool ClangToSageTranslator::VisitGCCAsmStmt(clang::GCCAsmStmt * gcc_asm_stmt, Sg
       std::string inputConstraintStr = static_cast<std::string>(gcc_asm_stmt->getInputConstraint(i));
 // Clang's constraint is equivalent to ROSE's modifier + operand constraints 
 #if DEBUG_VISIT_STMT
-      std::cerr << "AsmOp input constraint["<< i<<  "]: " << inputConstraintStr << std::endl;
+      logger[DEBUG] << "AsmOp input constraint["<< i<<  "]: " << inputConstraintStr << "\n";
 #endif
 
       std::smatch sm; 
@@ -836,7 +837,7 @@ bool ClangToSageTranslator::VisitGCCAsmStmt(clang::GCCAsmStmt * gcc_asm_stmt, Sg
           std::cout << "[" << sm[i] << "] \n";
         }
         if(sm.size())
-          std::cout << std::endl;
+          std::cout << "\n";
 #endif
 
       SgAsmOp::asm_operand_constraint_enum constraint = (SgAsmOp::asm_operand_constraint_enum) SgAsmOp::e_any;
@@ -887,7 +888,7 @@ bool ClangToSageTranslator::VisitGCCAsmStmt(clang::GCCAsmStmt * gcc_asm_stmt, Sg
 
 bool ClangToSageTranslator::VisitMSAsmStmt(clang::MSAsmStmt * ms_asm_stmt, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitMSAsmStmt" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitMSAsmStmt" << "\n";
 #endif
     bool res = true;
 
@@ -897,7 +898,7 @@ bool ClangToSageTranslator::VisitMSAsmStmt(clang::MSAsmStmt * ms_asm_stmt, SgNod
 
 bool ClangToSageTranslator::VisitBreakStmt(clang::BreakStmt * break_stmt, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitBreakStmt" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitBreakStmt" << "\n";
 #endif
 
     *node = SageBuilder::buildBreakStmt();
@@ -906,7 +907,7 @@ bool ClangToSageTranslator::VisitBreakStmt(clang::BreakStmt * break_stmt, SgNode
 
 bool ClangToSageTranslator::VisitCapturedStmt(clang::CapturedStmt * captured_stmt, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCapturedStmt" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCapturedStmt" << "\n";
 #endif
     bool res = true;
 
@@ -916,7 +917,7 @@ bool ClangToSageTranslator::VisitCapturedStmt(clang::CapturedStmt * captured_stm
 
 bool ClangToSageTranslator::VisitCompoundStmt(clang::CompoundStmt * compound_stmt, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCompoundStmt" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCompoundStmt" << "\n";
 #endif
 
     bool res = true;
@@ -933,9 +934,9 @@ bool ClangToSageTranslator::VisitCompoundStmt(clang::CompoundStmt * compound_stm
 
 #if DEBUG_VISIT_STMT
         if (tmp_node != NULL)
-          std::cerr << "In VisitCompoundStmt : child is " << tmp_node->class_name() << std::endl;
+          logger[DEBUG] << "In VisitCompoundStmt : child is " << tmp_node->class_name() << "\n";
         else
-          std::cerr << "In VisitCompoundStmt : child is NULL" << std::endl;
+          logger[DEBUG] << "In VisitCompoundStmt : child is NULL" << "\n";
 #endif
 
         SgClassDeclaration * class_decl = isSgClassDeclaration(tmp_node);
@@ -944,13 +945,13 @@ bool ClangToSageTranslator::VisitCompoundStmt(clang::CompoundStmt * compound_stm
         if (enum_decl != NULL && (enum_decl->get_name() == "" || enum_decl->get_isUnNamed())) continue;
 #if DEBUG_VISIT_STMT
         else if (enum_decl != NULL)
-          std::cerr << "enum_decl = " << enum_decl << " >> name: " << enum_decl->get_name() << std::endl;
+          logger[DEBUG] << "enum_decl = " << enum_decl << " >> name: " << enum_decl->get_name() << "\n";
 #endif
 
         SgStatement * stmt  = isSgStatement(tmp_node);
         SgExpression * expr = isSgExpression(tmp_node);
         if (tmp_node != NULL && stmt == NULL && expr == NULL) {
-            std::cerr << "Runtime error: tmp_node != NULL && stmt == NULL && expr == NULL" << std::endl;
+            logger[WARN] << "Runtime error: tmp_node != NULL && stmt == NULL && expr == NULL" << "\n";
             res = false;
         }
         else if (stmt != NULL) {
@@ -971,7 +972,7 @@ bool ClangToSageTranslator::VisitCompoundStmt(clang::CompoundStmt * compound_stm
 
 bool ClangToSageTranslator::VisitContinueStmt(clang::ContinueStmt * continue_stmt, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitContinueStmt" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitContinueStmt" << "\n";
 #endif
 
     *node = SageBuilder::buildContinueStmt();
@@ -980,7 +981,7 @@ bool ClangToSageTranslator::VisitContinueStmt(clang::ContinueStmt * continue_stm
 
 bool ClangToSageTranslator::VisitCoreturnStmt(clang::CoreturnStmt * core_turn_stmt, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCoreturnStmt" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCoreturnStmt" << "\n";
 #endif
     bool res = true;
 
@@ -990,7 +991,7 @@ bool ClangToSageTranslator::VisitCoreturnStmt(clang::CoreturnStmt * core_turn_st
 
 bool ClangToSageTranslator::VisitCoroutineBodyStmt(clang::CoroutineBodyStmt * coroutine_body_stmt, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCoroutineBodyStmt" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCoroutineBodyStmt" << "\n";
 #endif
     bool res = true;
 
@@ -1000,7 +1001,7 @@ bool ClangToSageTranslator::VisitCoroutineBodyStmt(clang::CoroutineBodyStmt * co
 
 bool ClangToSageTranslator::VisitCXXCatchStmt(clang::CXXCatchStmt * cxx_catch_stmt, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCXXCatchStmt" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXCatchStmt" << "\n";
 #endif
     bool res = true;
 
@@ -1010,7 +1011,7 @@ bool ClangToSageTranslator::VisitCXXCatchStmt(clang::CXXCatchStmt * cxx_catch_st
 
 bool ClangToSageTranslator::VisitCXXForRangeStmt(clang::CXXForRangeStmt * cxx_for_range_stmt, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCXXForRangeStmt" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXForRangeStmt" << "\n";
 #endif
     bool res = true;
 
@@ -1020,7 +1021,7 @@ bool ClangToSageTranslator::VisitCXXForRangeStmt(clang::CXXForRangeStmt * cxx_fo
 
 bool ClangToSageTranslator::VisitCXXTryStmt(clang::CXXTryStmt * cxx_try_stmt, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCXXTryStmt" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXTryStmt" << "\n";
 #endif
     bool res = true;
 
@@ -1030,7 +1031,7 @@ bool ClangToSageTranslator::VisitCXXTryStmt(clang::CXXTryStmt * cxx_try_stmt, Sg
 
 bool ClangToSageTranslator::VisitDeclStmt(clang::DeclStmt * decl_stmt, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitDeclStmt" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitDeclStmt" << "\n";
 #endif
 
     bool res = true;
@@ -1038,7 +1039,7 @@ bool ClangToSageTranslator::VisitDeclStmt(clang::DeclStmt * decl_stmt, SgNode **
     if (decl_stmt->isSingleDecl()) {
         *node = Traverse(decl_stmt->getSingleDecl());
 #if DEBUG_VISIT_STMT
-        printf ("In VisitDeclStmt(): *node = %p = %s \n",*node,(*node)->class_name().c_str());
+        logger[DEBUG] << "In VisitDeclStmt(): *node = " << *node << " = " << (*node)->class_name().c_str() << "\n";
 #endif
     }
     else {
@@ -1055,8 +1056,8 @@ bool ClangToSageTranslator::VisitDeclStmt(clang::DeclStmt * decl_stmt, SgNode **
 
             SgDeclarationStatement * sub_decl_stmt = isSgDeclarationStatement(child);
             if (sub_decl_stmt == NULL && child != NULL) {
-                std::cerr << "Runtime error: the node produce for a clang::Decl is not a SgDeclarationStatement !" << std::endl;
-                std::cerr << "    class = " << child->class_name() << std::endl;
+                logger[WARN] << "Runtime error: the node produce for a clang::Decl is not a SgDeclarationStatement !" << "\n";
+                logger[WARN] << "    class = " << child->class_name() << "\n";
                 res = false;
                 continue;
             }
@@ -1083,15 +1084,15 @@ bool ClangToSageTranslator::VisitDeclStmt(clang::DeclStmt * decl_stmt, SgNode **
         SgNode * lastDecl = Traverse((clang::Decl*)(*it));
         SgDeclarationStatement * last_decl_Stmt = isSgDeclarationStatement(lastDecl);
         if (lastDecl != NULL && last_decl_Stmt == NULL) {
-            std::cerr << "Runtime error: lastDecl != NULL && last_decl_Stmt == NULL" << std::endl;
+            logger[WARN] << "Runtime error: lastDecl != NULL && last_decl_Stmt == NULL" << "\n";
             res = false;
         }
         *node = last_decl_Stmt;
     }
 
 #if DEBUG_VISIT_STMT
-    printf ("In VisitDeclStmt(): identify where the parent is not set: *node = %p = %s \n",*node,(*node)->class_name().c_str());
-    printf (" --- *node parent = %p \n",(*node)->get_parent());
+    logger[DEBUG] << "In VisitDeclStmt(): identify where the parent is not set: *node = " << *node << " = " << (*node)->class_name().c_str() << "\n";
+    logger[DEBUG] << " --- *node parent = " << (*node)->get_parent() << "\n";
 #endif
 
     return res;
@@ -1099,7 +1100,7 @@ bool ClangToSageTranslator::VisitDeclStmt(clang::DeclStmt * decl_stmt, SgNode **
 
 bool ClangToSageTranslator::VisitDoStmt(clang::DoStmt * do_stmt, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitDoStmt" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitDoStmt" << "\n";
 #endif
 
     SgNode * tmp_cond = Traverse(do_stmt->getCond());
@@ -1143,7 +1144,7 @@ bool ClangToSageTranslator::VisitDoStmt(clang::DoStmt * do_stmt, SgNode ** node)
 
 bool ClangToSageTranslator::VisitForStmt(clang::ForStmt * for_stmt, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitForStmt" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitForStmt" << "\n";
 #endif
 
     bool res = true;
@@ -1152,7 +1153,7 @@ bool ClangToSageTranslator::VisitForStmt(clang::ForStmt * for_stmt, SgNode ** no
     SgForStatement* sg_for_stmt = new SgForStatement((SgStatement*)NULL,(SgExpression*)NULL,(SgStatement*)NULL);
 
 #if DEBUG_VISIT_STMT
-    printf ("In VisitForStmt(): Setting the parent of the sg_for_stmt \n");
+    logger[DEBUG] << "In VisitForStmt(): Setting the parent of the sg_for_stmt" << "\n";
 #endif
 
  // DQ (11/28/2020): this is required for test2012_127.c.
@@ -1173,7 +1174,7 @@ bool ClangToSageTranslator::VisitForStmt(clang::ForStmt * for_stmt, SgNode ** no
         SgStatement * init_stmt = isSgStatement(tmp_init);
         SgExpression * init_expr = isSgExpression(tmp_init);
         if (tmp_init != NULL && init_stmt == NULL && init_expr == NULL) {
-            std::cerr << "Runtime error: tmp_init != NULL && init_stmt == NULL && init_expr == NULL (" << tmp_init->class_name() << ")" << std::endl;
+            logger[WARN] << "Runtime error: tmp_init != NULL && init_stmt == NULL && init_expr == NULL (" << tmp_init->class_name() << ")" << "\n";
             res = false;
         }
         else if (init_expr != NULL) {
@@ -1193,7 +1194,7 @@ bool ClangToSageTranslator::VisitForStmt(clang::ForStmt * for_stmt, SgNode ** no
         for_init_stmt = SageBuilder::buildForInitStatement_nfi(for_init_stmt_list);
 
 #if DEBUG_VISIT_STMT
-        printf ("In VisitForStmt(): for_init_stmt = %p  \n");
+        logger[DEBUG] << "In VisitForStmt(): for_init_stmt = " << for_init_stmt << "\"n";
 #endif
 
         if (for_stmt->getInit() != NULL)
@@ -1210,7 +1211,7 @@ bool ClangToSageTranslator::VisitForStmt(clang::ForStmt * for_stmt, SgNode ** no
         SgNode * tmp_cond = Traverse(for_stmt->getCond());
         SgExpression * cond = isSgExpression(tmp_cond);
         if (tmp_cond != NULL && cond == NULL) {
-            std::cerr << "Runtime error: tmp_cond != NULL && cond == NULL" << std::endl;
+            logger[WARN] << "Runtime error: tmp_cond != NULL && cond == NULL" << "\n";
             res = false;
         }
         if (cond != NULL) { 
@@ -1231,7 +1232,7 @@ bool ClangToSageTranslator::VisitForStmt(clang::ForStmt * for_stmt, SgNode ** no
         SgNode * tmp_inc  = Traverse(for_stmt->getInc());
         inc = isSgExpression(tmp_inc);
         if (tmp_inc != NULL && inc == NULL) {
-            std::cerr << "Runtime error: tmp_inc != NULL && inc == NULL" << std::endl;
+            logger[WARN] << "Runtime error: tmp_inc != NULL && inc == NULL" << "\n";
             res = false;
         }
         if (inc == NULL) {
@@ -1255,7 +1256,7 @@ bool ClangToSageTranslator::VisitForStmt(clang::ForStmt * for_stmt, SgNode ** no
             }
         }
         if (tmp_body != NULL && body == NULL) {
-            std::cerr << "Runtime error: tmp_body != NULL && body == NULL" << std::endl;
+            logger[WARN] << "Runtime error: tmp_body != NULL && body == NULL" << "\n";
             res = false;
         }
         if (body == NULL) {
@@ -1301,7 +1302,7 @@ bool ClangToSageTranslator::VisitForStmt(clang::ForStmt * for_stmt, SgNode ** no
 
 bool ClangToSageTranslator::VisitGotoStmt(clang::GotoStmt * goto_stmt, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitGotoStmt" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitGotoStmt" << "\n";
 #endif
 
     bool res = true;
@@ -1312,8 +1313,8 @@ bool ClangToSageTranslator::VisitGotoStmt(clang::GotoStmt * goto_stmt, SgNode **
         SgNode * tmp_label = Traverse(goto_stmt->getLabel()->getStmt());
         SgLabelStatement * label_stmt = isSgLabelStatement(tmp_label);
         if (label_stmt == NULL) {
-            std::cerr << "Runtime error: Cannot find the symbol for the label: \"" << goto_stmt->getLabel()->getStmt()->getName() << "\"." << std::endl;
-            std::cerr << "Runtime Error: Cannot find the label: \"" << goto_stmt->getLabel()->getStmt()->getName() << "\"." << std::endl;
+            logger[WARN] << "Runtime error: Cannot find the symbol for the label: \"" << goto_stmt->getLabel()->getStmt()->getName() << "\"." << "\n";
+            logger[WARN] << "Runtime Error: Cannot find the label: \"" << goto_stmt->getLabel()->getStmt()->getName() << "\"." << "\n";
             res = false;
         }
         else {
@@ -1328,7 +1329,7 @@ bool ClangToSageTranslator::VisitGotoStmt(clang::GotoStmt * goto_stmt, SgNode **
     SgNode * tmp_label = Traverse(goto_stmt->getLabel()->getStmt());
     SgLabelStatement * label_stmt = isSgLabelStatement(tmp_label);
     if (label_stmt == NULL) {
-        std::cerr << "Runtime Error: Cannot find the label: \"" << goto_stmt->getLabel()->getStmt()->getName() << "\"." << std::endl;
+        logger[WARN] << "Runtime Error: Cannot find the label: \"" << goto_stmt->getLabel()->getStmt()->getName() << "\"." << "\n";
         res = false;
     }
     else {
@@ -1341,7 +1342,7 @@ bool ClangToSageTranslator::VisitGotoStmt(clang::GotoStmt * goto_stmt, SgNode **
 
 bool ClangToSageTranslator::VisitIfStmt(clang::IfStmt * if_stmt, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitIfStmt" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitIfStmt" << "\n";
 #endif
 
     bool res = true;
@@ -1395,7 +1396,7 @@ bool ClangToSageTranslator::VisitIfStmt(clang::IfStmt * if_stmt, SgNode ** node)
 
 bool ClangToSageTranslator::VisitIndirectGotoStmt(clang::IndirectGotoStmt * indirect_goto_stmt, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitIndirectGotoStmt" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitIndirectGotoStmt" << "\n";
 #endif
     bool res = true;
 
@@ -1406,7 +1407,7 @@ bool ClangToSageTranslator::VisitIndirectGotoStmt(clang::IndirectGotoStmt * indi
 
 bool ClangToSageTranslator::VisitMSDependentExistsStmt(clang::MSDependentExistsStmt * ms_dependent_exists_stmt, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitMSDependentExistsStmt" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitMSDependentExistsStmt" << "\n";
 #endif
     bool res = true;
 
@@ -1417,7 +1418,7 @@ bool ClangToSageTranslator::VisitMSDependentExistsStmt(clang::MSDependentExistsS
 
 bool ClangToSageTranslator::VisitNullStmt(clang::NullStmt * null_stmt, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitNullStmt" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitNullStmt" << "\n";
 #endif
     bool res = true;
 
@@ -1428,7 +1429,7 @@ bool ClangToSageTranslator::VisitNullStmt(clang::NullStmt * null_stmt, SgNode **
 
 bool ClangToSageTranslator::VisitOMPExecutableDirective(clang::OMPExecutableDirective * omp_executable_directive, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitOMPExecutableDirective" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPExecutableDirective" << "\n";
 #endif
     bool res = true;
 
@@ -1439,7 +1440,7 @@ bool ClangToSageTranslator::VisitOMPExecutableDirective(clang::OMPExecutableDire
 
 bool ClangToSageTranslator::VisitOMPAtomicDirective(clang::OMPAtomicDirective * omp_atomic_directive, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitOMPAtomicDirective" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPAtomicDirective" << "\n";
 #endif
     bool res = true;
 
@@ -1450,7 +1451,7 @@ bool ClangToSageTranslator::VisitOMPAtomicDirective(clang::OMPAtomicDirective * 
 
 bool ClangToSageTranslator::VisitOMPBarrierDirective(clang::OMPBarrierDirective * omp_barrier_directive, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitOMPBarrierDirective" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPBarrierDirective" << "\n";
 #endif
     bool res = true;
 
@@ -1461,7 +1462,7 @@ bool ClangToSageTranslator::VisitOMPBarrierDirective(clang::OMPBarrierDirective 
 
 bool ClangToSageTranslator::VisitOMPCancelDirective(clang::OMPCancelDirective * omp_cancel_directive, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitOMPCancelDirective" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPCancelDirective" << "\n";
 #endif
     bool res = true;
 
@@ -1472,7 +1473,7 @@ bool ClangToSageTranslator::VisitOMPCancelDirective(clang::OMPCancelDirective * 
 
 bool ClangToSageTranslator::VisitOMPCancellationPointDirective(clang::OMPCancellationPointDirective * omp_cancellation_point_directive, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitOMPCancellationPointDirective" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPCancellationPointDirective" << "\n";
 #endif
     bool res = true;
 
@@ -1483,7 +1484,7 @@ bool ClangToSageTranslator::VisitOMPCancellationPointDirective(clang::OMPCancell
 
 bool ClangToSageTranslator::VisitOMPCriticalDirective(clang::OMPCriticalDirective * omp_critical_directive, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitOMPCriticalDirective" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPCriticalDirective" << "\n";
 #endif
     bool res = true;
 
@@ -1494,7 +1495,7 @@ bool ClangToSageTranslator::VisitOMPCriticalDirective(clang::OMPCriticalDirectiv
 
 bool ClangToSageTranslator::VisitOMPFlushDirective(clang::OMPFlushDirective * omp_flush_directive, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitOMPFlushDirective" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPFlushDirective" << "\n";
 #endif
     bool res = true;
 
@@ -1505,7 +1506,7 @@ bool ClangToSageTranslator::VisitOMPFlushDirective(clang::OMPFlushDirective * om
 
 bool ClangToSageTranslator::VisitOMPLoopDirective(clang::OMPLoopDirective * omp_loop_directive, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitOMPLoopDirective" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPLoopDirective" << "\n";
 #endif
     bool res = true;
 
@@ -1516,7 +1517,7 @@ bool ClangToSageTranslator::VisitOMPLoopDirective(clang::OMPLoopDirective * omp_
 
 bool ClangToSageTranslator::VisitOMPDistributeDirective(clang::OMPDistributeDirective * omp_distribute_directive, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitOMPDistributeDirective" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPDistributeDirective" << "\n";
 #endif
     bool res = true;
 
@@ -1527,7 +1528,7 @@ bool ClangToSageTranslator::VisitOMPDistributeDirective(clang::OMPDistributeDire
 
 bool ClangToSageTranslator::VisitOMPDistributeParallelForDirective(clang::OMPDistributeParallelForDirective * omp_distribute_parallel_for_directive, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitOMPDistributeParallelForDirective" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPDistributeParallelForDirective" << "\n";
 #endif
     bool res = true;
 
@@ -1538,7 +1539,7 @@ bool ClangToSageTranslator::VisitOMPDistributeParallelForDirective(clang::OMPDis
 
 bool ClangToSageTranslator::VisitOMPDistributeParallelForSimdDirective(clang::OMPDistributeParallelForSimdDirective * omp_distribute_parallel_for_simd_directive, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitOMPDistributeParallelForSimdDirective" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPDistributeParallelForSimdDirective" << "\n";
 #endif
     bool res = true;
 
@@ -1549,7 +1550,7 @@ bool ClangToSageTranslator::VisitOMPDistributeParallelForSimdDirective(clang::OM
 
 bool ClangToSageTranslator::VisitOMPDistributeSimdDirective(clang::OMPDistributeSimdDirective * omp_distribute__simd_directive, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitOMPDistributeSimdDirective" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPDistributeSimdDirective" << "\n";
 #endif
     bool res = true;
 
@@ -1560,7 +1561,7 @@ bool ClangToSageTranslator::VisitOMPDistributeSimdDirective(clang::OMPDistribute
 
 bool ClangToSageTranslator::VisitOMPForDirective(clang::OMPForDirective * omp_for_directive, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitOMPForDirective" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPForDirective" << "\n";
 #endif
     bool res = true;
 
@@ -1571,7 +1572,7 @@ bool ClangToSageTranslator::VisitOMPForDirective(clang::OMPForDirective * omp_fo
 
 bool ClangToSageTranslator::VisitOMPForSimdDirective(clang::OMPForSimdDirective * omp_for_simd_directive, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitOMPForSimdDirective" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPForSimdDirective" << "\n";
 #endif
     bool res = true;
 
@@ -1582,7 +1583,7 @@ bool ClangToSageTranslator::VisitOMPForSimdDirective(clang::OMPForSimdDirective 
 
 bool ClangToSageTranslator::VisitOMPParallelForDirective(clang::OMPParallelForDirective * omp_parallel_for_directive, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitOMPParallelForDirective" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPParallelForDirective" << "\n";
 #endif
     bool res = true;
 
@@ -1593,7 +1594,7 @@ bool ClangToSageTranslator::VisitOMPParallelForDirective(clang::OMPParallelForDi
 
 bool ClangToSageTranslator::VisitOMPParallelForSimdDirective(clang::OMPParallelForSimdDirective * omp_parallel_for_simd_directive, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitOMPParallelForSimdDirective" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPParallelForSimdDirective" << "\n";
 #endif
     bool res = true;
 
@@ -1604,7 +1605,7 @@ bool ClangToSageTranslator::VisitOMPParallelForSimdDirective(clang::OMPParallelF
 
 bool ClangToSageTranslator::VisitOMPSimdDirective(clang::OMPSimdDirective * omp_simd_directive, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitOMPSimdDirective" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPSimdDirective" << "\n";
 #endif
     bool res = true;
 
@@ -1615,7 +1616,7 @@ bool ClangToSageTranslator::VisitOMPSimdDirective(clang::OMPSimdDirective * omp_
 
 bool ClangToSageTranslator::VisitOMPTargetParallelForDirective(clang::OMPTargetParallelForDirective * omp_target_parallel_for_directive, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitOMPTargetParallelForDirective" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPTargetParallelForDirective" << "\n";
 #endif
     bool res = true;
 
@@ -1626,7 +1627,7 @@ bool ClangToSageTranslator::VisitOMPTargetParallelForDirective(clang::OMPTargetP
 
 bool ClangToSageTranslator::VisitOMPTargetParallelForSimdDirective(clang::OMPTargetParallelForSimdDirective * omp_target_parallel_for_simd_directive, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitOMPTargetParallelForSimdDirective" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPTargetParallelForSimdDirective" << "\n";
 #endif
     bool res = true;
 
@@ -1637,7 +1638,7 @@ bool ClangToSageTranslator::VisitOMPTargetParallelForSimdDirective(clang::OMPTar
 
 bool ClangToSageTranslator::VisitOMPTargetSimdDirective(clang::OMPTargetSimdDirective * omp_target_simd_directive, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitOMPTargetSimdDirective" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPTargetSimdDirective" << "\n";
 #endif
     bool res = true;
 
@@ -1648,7 +1649,7 @@ bool ClangToSageTranslator::VisitOMPTargetSimdDirective(clang::OMPTargetSimdDire
 
 bool ClangToSageTranslator::VisitOMPTargetTeamsDistributeDirective(clang::OMPTargetTeamsDistributeDirective * omp_target_teams_distribute_directive, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitOMPTargetTeamsDistributeDirective" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPTargetTeamsDistributeDirective" << "\n";
 #endif
     bool res = true;
 
@@ -1659,7 +1660,7 @@ bool ClangToSageTranslator::VisitOMPTargetTeamsDistributeDirective(clang::OMPTar
 
 bool ClangToSageTranslator::VisitOMPTargetTeamsDistributeSimdDirective(clang::OMPTargetTeamsDistributeSimdDirective * omp_target_teams_distribute_simd_directive, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitOMPTargetTeamsDistributeSimdDirective" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPTargetTeamsDistributeSimdDirective" << "\n";
 #endif
     bool res = true;
 
@@ -1670,7 +1671,7 @@ bool ClangToSageTranslator::VisitOMPTargetTeamsDistributeSimdDirective(clang::OM
 
 bool ClangToSageTranslator::VisitOMPTaskLoopDirective(clang::OMPTaskLoopDirective * omp_task_loop_directive, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitOMPTaskLoopDirective" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPTaskLoopDirective" << "\n";
 #endif
     bool res = true;
 
@@ -1681,7 +1682,7 @@ bool ClangToSageTranslator::VisitOMPTaskLoopDirective(clang::OMPTaskLoopDirectiv
 
 bool ClangToSageTranslator::VisitOMPTaskLoopSimdDirective(clang::OMPTaskLoopSimdDirective * omp_task_loop_simd_directive, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitOMPTaskLoopSimdDirective" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPTaskLoopSimdDirective" << "\n";
 #endif
     bool res = true;
 
@@ -1692,7 +1693,7 @@ bool ClangToSageTranslator::VisitOMPTaskLoopSimdDirective(clang::OMPTaskLoopSimd
 
 bool ClangToSageTranslator::VisitOMPMasterDirective(clang::OMPMasterDirective * omp_master_directive, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitOMPMasterDirective" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPMasterDirective" << "\n";
 #endif
     bool res = true;
 
@@ -1703,7 +1704,7 @@ bool ClangToSageTranslator::VisitOMPMasterDirective(clang::OMPMasterDirective * 
 
 bool ClangToSageTranslator::VisitOMPOrderedDirective(clang::OMPOrderedDirective * omp_ordered_directive, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitOMPOrderedDirective" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPOrderedDirective" << "\n";
 #endif
     bool res = true;
 
@@ -1714,7 +1715,7 @@ bool ClangToSageTranslator::VisitOMPOrderedDirective(clang::OMPOrderedDirective 
 
 bool ClangToSageTranslator::VisitOMPParallelDirective(clang::OMPParallelDirective * omp_parallel_directive, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitOMPParallelDirective" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPParallelDirective" << "\n";
 #endif
     bool res = true;
 
@@ -1725,7 +1726,7 @@ bool ClangToSageTranslator::VisitOMPParallelDirective(clang::OMPParallelDirectiv
 
 bool ClangToSageTranslator::VisitOMPParallelSectionsDirective(clang::OMPParallelSectionsDirective * omp_parallel_sections_directive, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitOMPParallelSectionsDirective" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPParallelSectionsDirective" << "\n";
 #endif
     bool res = true;
 
@@ -1736,7 +1737,7 @@ bool ClangToSageTranslator::VisitOMPParallelSectionsDirective(clang::OMPParallel
 
 bool ClangToSageTranslator::VisitReturnStmt(clang::ReturnStmt * return_stmt, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitReturnStmt" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitReturnStmt" << "\n";
 #endif
 
     bool res = true;
@@ -1744,7 +1745,7 @@ bool ClangToSageTranslator::VisitReturnStmt(clang::ReturnStmt * return_stmt, SgN
     SgNode * tmp_expr = Traverse(return_stmt->getRetValue());
     SgExpression * expr = isSgExpression(tmp_expr);
     if (tmp_expr != NULL && expr == NULL) {
-        std::cerr << "Runtime error: tmp_expr != NULL && expr == NULL" << std::endl;
+        logger[WARN] << "Runtime error: tmp_expr != NULL && expr == NULL" << "\n";
         res = false;
     }
     *node = SageBuilder::buildReturnStmt(expr);
@@ -1754,7 +1755,7 @@ bool ClangToSageTranslator::VisitReturnStmt(clang::ReturnStmt * return_stmt, SgN
 
 bool ClangToSageTranslator::VisitSEHExceptStmt(clang::SEHExceptStmt * seh_except_stmt, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitSEHExceptStmt" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitSEHExceptStmt" << "\n";
 #endif
     bool res = true;
 
@@ -1765,7 +1766,7 @@ bool ClangToSageTranslator::VisitSEHExceptStmt(clang::SEHExceptStmt * seh_except
 
 bool ClangToSageTranslator::VisitSEHFinallyStmt(clang::SEHFinallyStmt * seh_finally_stmt, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitSEHFinallyStmt" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitSEHFinallyStmt" << "\n";
 #endif
     bool res = true;
 
@@ -1776,7 +1777,7 @@ bool ClangToSageTranslator::VisitSEHFinallyStmt(clang::SEHFinallyStmt * seh_fina
 
 bool ClangToSageTranslator::VisitSEHLeaveStmt(clang::SEHLeaveStmt * seh_leave_stmt, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitSEHLeaveStmt" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitSEHLeaveStmt" << "\n";
 #endif
     bool res = true;
 
@@ -1787,7 +1788,7 @@ bool ClangToSageTranslator::VisitSEHLeaveStmt(clang::SEHLeaveStmt * seh_leave_st
 
 bool ClangToSageTranslator::VisitSEHTryStmt(clang::SEHTryStmt * seh_try_stmt, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitSEHTryStmt" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitSEHTryStmt" << "\n";
 #endif
     bool res = true;
 
@@ -1798,7 +1799,7 @@ bool ClangToSageTranslator::VisitSEHTryStmt(clang::SEHTryStmt * seh_try_stmt, Sg
 
 bool ClangToSageTranslator::VisitSwitchCase(clang::SwitchCase * switch_case, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitSwitchCase" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitSwitchCase" << "\n";
 #endif
     bool res = true;
     
@@ -1809,7 +1810,7 @@ bool ClangToSageTranslator::VisitSwitchCase(clang::SwitchCase * switch_case, SgN
 
 bool ClangToSageTranslator::VisitCaseStmt(clang::CaseStmt * case_stmt, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCaseStmt" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCaseStmt" << "\n";
 #endif
 
     SgNode * tmp_stmt = Traverse(case_stmt->getSubStmt());
@@ -1846,7 +1847,7 @@ bool ClangToSageTranslator::VisitCaseStmt(clang::CaseStmt * case_stmt, SgNode **
 
 bool ClangToSageTranslator::VisitDefaultStmt(clang::DefaultStmt * default_stmt, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitDefaultStmt" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitDefaultStmt" << "\n";
 #endif
 
     SgNode * tmp_stmt = Traverse(default_stmt->getSubStmt());
@@ -1865,7 +1866,7 @@ bool ClangToSageTranslator::VisitDefaultStmt(clang::DefaultStmt * default_stmt, 
 
 bool ClangToSageTranslator::VisitSwitchStmt(clang::SwitchStmt * switch_stmt, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitSwitchStmt" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitSwitchStmt" << "\n";
 #endif
 
     SgNode * tmp_cond = Traverse(switch_stmt->getCond());
@@ -1899,7 +1900,7 @@ bool ClangToSageTranslator::VisitSwitchStmt(clang::SwitchStmt * switch_stmt, SgN
 
 bool ClangToSageTranslator::VisitValueStmt(clang::ValueStmt * value_stmt, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitValueStmt" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitValueStmt" << "\n";
 #endif
     bool res = true;
 
@@ -1918,7 +1919,7 @@ bool ClangToSageTranslator::VisitValueStmt(clang::ValueStmt * value_stmt, SgNode
 
 bool ClangToSageTranslator::VisitAttributedStmt(clang::AttributedStmt * attributed_stmt, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitAttributedStmt" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitAttributedStmt" << "\n";
 #endif
     bool res = true;
 
@@ -1929,7 +1930,7 @@ bool ClangToSageTranslator::VisitAttributedStmt(clang::AttributedStmt * attribut
 
 bool ClangToSageTranslator::VisitExpr(clang::Expr * expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitExpr" << "\n";
 #endif
 
      // TODO Is there anything to be done? (maybe in relation with typing?)
@@ -1939,7 +1940,7 @@ bool ClangToSageTranslator::VisitExpr(clang::Expr * expr, SgNode ** node) {
 
 bool ClangToSageTranslator::VisitAbstractConditionalOperator(clang::AbstractConditionalOperator * abstract_conditional_operator, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitAbstractConditionalOperator" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitAbstractConditionalOperator" << "\n";
 #endif
      bool res = true;
 
@@ -1950,7 +1951,7 @@ bool ClangToSageTranslator::VisitAbstractConditionalOperator(clang::AbstractCond
 
 bool ClangToSageTranslator::VisitBinaryConditionalOperator(clang::BinaryConditionalOperator * binary_conditional_operator, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitBinaryConditionalOperator" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitBinaryConditionalOperator" << "\n";
 #endif
      bool res = true;
 
@@ -1971,7 +1972,7 @@ bool ClangToSageTranslator::VisitBinaryConditionalOperator(clang::BinaryConditio
 
 bool ClangToSageTranslator::VisitConditionalOperator(clang::ConditionalOperator * conditional_operator, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitConditionalOperator" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitConditionalOperator" << "\n";
 #endif
 
     bool res = true;
@@ -1993,7 +1994,7 @@ bool ClangToSageTranslator::VisitConditionalOperator(clang::ConditionalOperator 
 
 bool ClangToSageTranslator::VisitAddrLabelExpr(clang::AddrLabelExpr * addr_label_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitAddrLabelExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitAddrLabelExpr" << "\n";
 #endif
      bool res = true;
 
@@ -2004,7 +2005,7 @@ bool ClangToSageTranslator::VisitAddrLabelExpr(clang::AddrLabelExpr * addr_label
 
 bool ClangToSageTranslator::VisitArrayInitIndexExpr(clang::ArrayInitIndexExpr * array_init_index_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitArrayInitIndexExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitArrayInitIndexExpr" << "\n";
 #endif
      bool res = true;
 
@@ -2015,7 +2016,7 @@ bool ClangToSageTranslator::VisitArrayInitIndexExpr(clang::ArrayInitIndexExpr * 
 
 bool ClangToSageTranslator::VisitArrayInitLoopExpr(clang::ArrayInitLoopExpr * array_init_loop_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitArrayInitLoopExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitArrayInitLoopExpr" << "\n";
 #endif
      bool res = true;
 
@@ -2026,7 +2027,7 @@ bool ClangToSageTranslator::VisitArrayInitLoopExpr(clang::ArrayInitLoopExpr * ar
 
 bool ClangToSageTranslator::VisitArraySubscriptExpr(clang::ArraySubscriptExpr * array_subscript_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitArraySubscriptExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitArraySubscriptExpr" << "\n";
 #endif
 
     bool res = true;
@@ -2034,14 +2035,14 @@ bool ClangToSageTranslator::VisitArraySubscriptExpr(clang::ArraySubscriptExpr * 
     SgNode * tmp_base = Traverse(array_subscript_expr->getBase());
     SgExpression * base = isSgExpression(tmp_base);
     if (tmp_base != NULL && base == NULL) {
-        std::cerr << "Runtime error: tmp_base != NULL && base == NULL" << std::endl;
+        logger[WARN] << "Runtime error: tmp_base != NULL && base == NULL" << "\n";
         res = false;
     }
 
     SgNode * tmp_idx = Traverse(array_subscript_expr->getIdx());
     SgExpression * idx = isSgExpression(tmp_idx);
     if (tmp_idx != NULL && idx == NULL) {
-        std::cerr << "Runtime error: tmp_idx != NULL && idx == NULL" << std::endl;
+        logger[WARN] << "Runtime error: tmp_idx != NULL && idx == NULL" << "\n";
         res = false;
     }
 
@@ -2052,7 +2053,7 @@ bool ClangToSageTranslator::VisitArraySubscriptExpr(clang::ArraySubscriptExpr * 
 
 bool ClangToSageTranslator::VisitArrayTypeTraitExpr(clang::ArrayTypeTraitExpr * array_type_trait_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitArrayTypeTraitExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitArrayTypeTraitExpr" << "\n";
 #endif
      bool res = true;
 
@@ -2063,7 +2064,7 @@ bool ClangToSageTranslator::VisitArrayTypeTraitExpr(clang::ArrayTypeTraitExpr * 
 
 bool ClangToSageTranslator::VisitAsTypeExpr(clang::AsTypeExpr * as_type_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitAsTypeExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitAsTypeExpr" << "\n";
 #endif
      bool res = true;
 
@@ -2074,7 +2075,7 @@ bool ClangToSageTranslator::VisitAsTypeExpr(clang::AsTypeExpr * as_type_expr, Sg
 
 bool ClangToSageTranslator::VisitAtomicExpr(clang::AtomicExpr * atomic_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitAtomicExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitAtomicExpr" << "\n";
 #endif
      bool res = true;
 
@@ -2085,7 +2086,7 @@ bool ClangToSageTranslator::VisitAtomicExpr(clang::AtomicExpr * atomic_expr, SgN
 
 bool ClangToSageTranslator::VisitBinaryOperator(clang::BinaryOperator * binary_operator, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitBinaryOperator" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitBinaryOperator" << "\n";
 #endif
 
     bool res = true;
@@ -2093,14 +2094,14 @@ bool ClangToSageTranslator::VisitBinaryOperator(clang::BinaryOperator * binary_o
     SgNode * tmp_lhs = Traverse(binary_operator->getLHS());
     SgExpression * lhs = isSgExpression(tmp_lhs);
     if (tmp_lhs != NULL && lhs == NULL) {
-        std::cerr << "Runtime error: tmp_lhs != NULL && lhs == NULL" << std::endl;
+        logger[WARN] << "Runtime error: tmp_lhs != NULL && lhs == NULL" << "\n";
         res = false;
     }
 
     SgNode * tmp_rhs = Traverse(binary_operator->getRHS());
     SgExpression * rhs = isSgExpression(tmp_rhs);
     if (tmp_rhs != NULL && rhs == NULL) {
-        std::cerr << "Runtime error: tmp_rhs != NULL && rhs == NULL" << std::endl;
+        logger[WARN] << "Runtime error: tmp_rhs != NULL && rhs == NULL" << "\n";
         res = false;
     }
 
@@ -2138,7 +2139,7 @@ bool ClangToSageTranslator::VisitBinaryOperator(clang::BinaryOperator * binary_o
         case clang::BO_OrAssign:  *node = SageBuilder::buildIorAssignOp(lhs, rhs); break;
         case clang::BO_Comma:     *node = SageBuilder::buildCommaOpExp(lhs, rhs); break;
         default:
-            std::cerr << "Unknown opcode for binary operator: " << binary_operator->getOpcodeStr().str() << std::endl;
+            logger[WARN] << "Unknown opcode for binary operator: " << binary_operator->getOpcodeStr().str() << "\n";
             res = false;
     }
 
@@ -2147,7 +2148,7 @@ bool ClangToSageTranslator::VisitBinaryOperator(clang::BinaryOperator * binary_o
 
 bool ClangToSageTranslator::VisitCompoundAssignOperator(clang::CompoundAssignOperator * compound_assign_operator, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCompoundAssignOperator" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCompoundAssignOperator" << "\n";
 #endif
      bool res = true;
 
@@ -2158,7 +2159,7 @@ bool ClangToSageTranslator::VisitCompoundAssignOperator(clang::CompoundAssignOpe
 
 bool ClangToSageTranslator::VisitBlockExpr(clang::BlockExpr * block_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitBlockExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitBlockExpr" << "\n";
 #endif
      bool res = true;
 
@@ -2169,7 +2170,7 @@ bool ClangToSageTranslator::VisitBlockExpr(clang::BlockExpr * block_expr, SgNode
 
 bool ClangToSageTranslator::VisitCallExpr(clang::CallExpr * call_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCallExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCallExpr" << "\n";
 #endif
 
     bool res = true;
@@ -2177,7 +2178,7 @@ bool ClangToSageTranslator::VisitCallExpr(clang::CallExpr * call_expr, SgNode **
     SgNode * tmp_expr = Traverse(call_expr->getCallee());
     SgExpression * expr = isSgExpression(tmp_expr);
     if (tmp_expr != NULL && expr == NULL) {
-        std::cerr << "Runtime error: tmp_expr != NULL && expr == NULLL" << std::endl;
+        logger[WARN] << "Runtime error: tmp_expr != NULL && expr == NULLL" << "\n";
         res = false;
     }
 
@@ -2189,7 +2190,7 @@ bool ClangToSageTranslator::VisitCallExpr(clang::CallExpr * call_expr, SgNode **
         SgNode * tmp_expr = Traverse(*it);
         SgExpression * expr = isSgExpression(tmp_expr);
         if (tmp_expr != NULL && expr == NULL) {
-            std::cerr << "Runtime error: tmp_expr != NULL && expr == NULL" << std::endl;
+            logger[WARN] << "Runtime error: tmp_expr != NULL && expr == NULL" << "\n";
             res = false;
             continue;
         }
@@ -2203,7 +2204,7 @@ bool ClangToSageTranslator::VisitCallExpr(clang::CallExpr * call_expr, SgNode **
 
 bool ClangToSageTranslator::VisitCUDAKernelCallExpr(clang::CUDAKernelCallExpr * cuda_kernel_call_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCUDAKernelCallExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCUDAKernelCallExpr" << "\n";
 #endif
      bool res = true;
 
@@ -2214,7 +2215,7 @@ bool ClangToSageTranslator::VisitCUDAKernelCallExpr(clang::CUDAKernelCallExpr * 
 
 bool ClangToSageTranslator::VisitCXXMemberCallExpr(clang::CXXMemberCallExpr * cxx_member_call_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCXXMemberCallExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXMemberCallExpr" << "\n";
 #endif
      bool res = true;
 
@@ -2227,7 +2228,7 @@ bool ClangToSageTranslator::VisitCXXMemberCallExpr(clang::CXXMemberCallExpr * cx
 
 bool ClangToSageTranslator::VisitCXXOperatorCallExpr(clang::CXXOperatorCallExpr * cxx_operator_call_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCXXOperatorCallExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXOperatorCallExpr" << "\n";
 #endif
      bool res = true;
 
@@ -2238,7 +2239,7 @@ bool ClangToSageTranslator::VisitCXXOperatorCallExpr(clang::CXXOperatorCallExpr 
 
 bool ClangToSageTranslator::VisitUserDefinedLiteral(clang::UserDefinedLiteral * user_defined_literal, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitUserDefinedLiteral" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitUserDefinedLiteral" << "\n";
 #endif
      bool res = true;
 
@@ -2249,7 +2250,7 @@ bool ClangToSageTranslator::VisitUserDefinedLiteral(clang::UserDefinedLiteral * 
 
 bool ClangToSageTranslator::VisitCastExpr(clang::CastExpr * cast_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCastExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCastExpr" << "\n";
 #endif
     bool res = true;
 
@@ -2260,7 +2261,7 @@ bool ClangToSageTranslator::VisitCastExpr(clang::CastExpr * cast_expr, SgNode **
 
 bool ClangToSageTranslator::VisitExplicitCastExpr(clang::ExplicitCastExpr * explicit_cast_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitExplicitCastExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitExplicitCastExpr" << "\n";
 #endif
     bool res = true;
 
@@ -2271,7 +2272,7 @@ bool ClangToSageTranslator::VisitExplicitCastExpr(clang::ExplicitCastExpr * expl
     
 bool ClangToSageTranslator::VisitBuiltinBitCastExpr(clang::BuiltinBitCastExpr * builtin_bit_cast_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitBuiltinBitCastExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitBuiltinBitCastExpr" << "\n";
 #endif
     bool res = true;
 
@@ -2282,7 +2283,7 @@ bool ClangToSageTranslator::VisitBuiltinBitCastExpr(clang::BuiltinBitCastExpr * 
     
 bool ClangToSageTranslator::VisitCStyleCastExpr(clang::CStyleCastExpr * c_style_cast, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCStyleCastExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCStyleCastExpr" << "\n";
 #endif
 
     bool res = true;
@@ -2301,7 +2302,7 @@ bool ClangToSageTranslator::VisitCStyleCastExpr(clang::CStyleCastExpr * c_style_
     
 bool ClangToSageTranslator::VisitCXXFunctionalCastExpr(clang::CXXFunctionalCastExpr * cxx_functional_cast_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCXXFunctionalCastExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXFunctionalCastExpr" << "\n";
 #endif
     bool res = true;
 
@@ -2312,7 +2313,7 @@ bool ClangToSageTranslator::VisitCXXFunctionalCastExpr(clang::CXXFunctionalCastE
     
 bool ClangToSageTranslator::VisitCXXNamedCastExpr(clang::CXXNamedCastExpr * cxx_named_cast_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCXXNamedCastExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXNamedCastExpr" << "\n";
 #endif
     bool res = true;
 
@@ -2323,7 +2324,7 @@ bool ClangToSageTranslator::VisitCXXNamedCastExpr(clang::CXXNamedCastExpr * cxx_
 
 bool ClangToSageTranslator::VisitCXXConstCastExpr(clang::CXXConstCastExpr * cxx_const_cast_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCXXConstCastExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXConstCastExpr" << "\n";
 #endif
     bool res = true;
 
@@ -2334,7 +2335,7 @@ bool ClangToSageTranslator::VisitCXXConstCastExpr(clang::CXXConstCastExpr * cxx_
 
 bool ClangToSageTranslator::VisitCXXDynamicCastExpr(clang::CXXDynamicCastExpr * cxx_dynamic_cast_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCXXDynamicCastExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXDynamicCastExpr" << "\n";
 #endif
     bool res = true;
 
@@ -2345,7 +2346,7 @@ bool ClangToSageTranslator::VisitCXXDynamicCastExpr(clang::CXXDynamicCastExpr * 
 
 bool ClangToSageTranslator::VisitCXXReinterpretCastExpr(clang::CXXReinterpretCastExpr * cxx_reinterpret_cast_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCXXReinterpretCastExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXReinterpretCastExpr" << "\n";
 #endif
     bool res = true;
 
@@ -2356,7 +2357,7 @@ bool ClangToSageTranslator::VisitCXXReinterpretCastExpr(clang::CXXReinterpretCas
 
 bool ClangToSageTranslator::VisitCXXStaticCastExpr(clang::CXXStaticCastExpr * cxx_static_cast_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCXXStaticCastExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXStaticCastExpr" << "\n";
 #endif
     SgNode * tmp_expr = Traverse(cxx_static_cast_expr->getSubExpr());
     SgExpression * expr = isSgExpression(tmp_expr);
@@ -2371,7 +2372,7 @@ bool ClangToSageTranslator::VisitCXXStaticCastExpr(clang::CXXStaticCastExpr * cx
 
 bool ClangToSageTranslator::VisitImplicitCastExpr(clang::ImplicitCastExpr * implicit_cast_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitImplicitCastExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitImplicitCastExpr" << "\n";
 #endif
 
     SgNode * tmp_expr = Traverse(implicit_cast_expr->getSubExpr());
@@ -2395,7 +2396,7 @@ bool ClangToSageTranslator::VisitImplicitCastExpr(clang::ImplicitCastExpr * impl
 
 bool ClangToSageTranslator::VisitCharacterLiteral(clang::CharacterLiteral * character_literal, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCharacterLiteral" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCharacterLiteral" << "\n";
 #endif
 
     *node = SageBuilder::buildCharVal(character_literal->getValue());
@@ -2405,7 +2406,7 @@ bool ClangToSageTranslator::VisitCharacterLiteral(clang::CharacterLiteral * char
 
 bool ClangToSageTranslator::VisitChooseExpr(clang::ChooseExpr * choose_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitChooseExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitChooseExpr" << "\n";
 #endif
     bool res = true;
 
@@ -2416,7 +2417,7 @@ bool ClangToSageTranslator::VisitChooseExpr(clang::ChooseExpr * choose_expr, SgN
 
 bool ClangToSageTranslator::VisitCompoundLiteralExpr(clang::CompoundLiteralExpr * compound_literal, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCompoundLiteralExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCompoundLiteralExpr" << "\n";
 #endif
 
     SgNode * tmp_node = Traverse(compound_literal->getInitializer());
@@ -2449,7 +2450,7 @@ bool ClangToSageTranslator::VisitCompoundLiteralExpr(clang::CompoundLiteralExpr 
 
 //bool ClangToSageTranslator::VisitConceptSpecializationExpr(clang::ConceptSpecializationExpr * concept_specialization_expr, SgNode ** node) {
 //#if DEBUG_VISIT_STMT
-//    std::cerr << "ClangToSageTranslator::VisitConceptSpecializationExpr" << std::endl;
+//    logger[DEBUG] << "ClangToSageTranslator::VisitConceptSpecializationExpr" << "\n";
 //#endif
 //    bool res = true;
 //
@@ -2460,7 +2461,7 @@ bool ClangToSageTranslator::VisitCompoundLiteralExpr(clang::CompoundLiteralExpr 
 
 bool ClangToSageTranslator::VisitConvertVectorExpr(clang::ConvertVectorExpr * convert_vector_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitConvertVectorExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitConvertVectorExpr" << "\n";
 #endif
     bool res = true;
 
@@ -2471,7 +2472,7 @@ bool ClangToSageTranslator::VisitConvertVectorExpr(clang::ConvertVectorExpr * co
 
 bool ClangToSageTranslator::VisitCoroutineSuspendExpr(clang::CoroutineSuspendExpr * coroutine_suspend_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCoroutineSuspendExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCoroutineSuspendExpr" << "\n";
 #endif
     bool res = true;
 
@@ -2482,7 +2483,7 @@ bool ClangToSageTranslator::VisitCoroutineSuspendExpr(clang::CoroutineSuspendExp
 
 bool ClangToSageTranslator::VisitCoawaitExpr(clang::CoawaitExpr * coawait_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCoawaitExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCoawaitExpr" << "\n";
 #endif
     bool res = true;
 
@@ -2493,7 +2494,7 @@ bool ClangToSageTranslator::VisitCoawaitExpr(clang::CoawaitExpr * coawait_expr, 
 
 bool ClangToSageTranslator::VisitCoyieldExpr(clang::CoyieldExpr * coyield_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCoyieldExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCoyieldExpr" << "\n";
 #endif
     bool res = true;
 
@@ -2504,7 +2505,7 @@ bool ClangToSageTranslator::VisitCoyieldExpr(clang::CoyieldExpr * coyield_expr, 
 
 bool ClangToSageTranslator::VisitCXXBindTemporaryExpr(clang::CXXBindTemporaryExpr * cxx_bind_temporary_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCXXBindTemporaryExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXBindTemporaryExpr" << "\n";
 #endif
     bool res = true;
 
@@ -2515,7 +2516,7 @@ bool ClangToSageTranslator::VisitCXXBindTemporaryExpr(clang::CXXBindTemporaryExp
 
 bool ClangToSageTranslator::VisitCXXBoolLiteralExpr(clang::CXXBoolLiteralExpr * cxx_bool_literal_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCXXBoolLiteralExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXBoolLiteralExpr" << "\n";
 #endif
     bool res = true;
 
@@ -2527,13 +2528,13 @@ bool ClangToSageTranslator::VisitCXXBoolLiteralExpr(clang::CXXBoolLiteralExpr * 
 
 bool ClangToSageTranslator::VisitCXXConstructExpr(clang::CXXConstructExpr * cxx_construct_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCXXConstructExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXConstructExpr" << "\n";
     // isElidable seems to be related to copy elision: https://en.cppreference.com/w/cpp/language/copy_elision
-    std::cerr << "isElidable " << cxx_construct_expr->isElidable() << std::endl;
-    std::cerr << "hadMultipleCandidates " << cxx_construct_expr->hadMultipleCandidates() << std::endl;
-    std::cerr << "isListInitialization " << cxx_construct_expr->isListInitialization() << std::endl;
-    std::cerr << "isStdInitListInitialization " << cxx_construct_expr->isStdInitListInitialization() << std::endl;
-    std::cerr << "requiresZeroInitialization " << cxx_construct_expr->requiresZeroInitialization() << std::endl;
+    logger[DEBUG] << "isElidable " << cxx_construct_expr->isElidable() << "\n";
+    logger[DEBUG] << "hadMultipleCandidates " << cxx_construct_expr->hadMultipleCandidates() << "\n";
+    logger[DEBUG] << "isListInitialization " << cxx_construct_expr->isListInitialization() << "\n";
+    logger[DEBUG] << "isStdInitListInitialization " << cxx_construct_expr->isStdInitListInitialization() << "\n";
+    logger[DEBUG] << "requiresZeroInitialization " << cxx_construct_expr->requiresZeroInitialization() << "\n";
 #endif
     bool res = true;
 
@@ -2549,7 +2550,7 @@ bool ClangToSageTranslator::VisitCXXConstructExpr(clang::CXXConstructExpr * cxx_
         SgNode * tmp_expr = Traverse(*it);
         SgExpression * expr = isSgExpression(tmp_expr);
         if (tmp_expr != NULL && expr == NULL) {
-            std::cerr << "Runtime error: tmp_expr != NULL && expr == NULL" << std::endl;
+            logger[WARN] << "Runtime error: tmp_expr != NULL && expr == NULL" << "\n";
             res = false;
             continue;
         }
@@ -2568,8 +2569,8 @@ bool ClangToSageTranslator::VisitCXXConstructExpr(clang::CXXConstructExpr * cxx_
     SgClassDeclaration* enclosingClassDecl = isSgClassDeclaration(enclosingClassDef->get_declaration());
     ROSE_ASSERT(enclosingClassDecl);
 #if DEBUG_VISIT_STMT
-    std::cerr << "clang::CXXConstructExpr: is default constructor: " << cxx_constructor_decl->isDefaultConstructor() << std::endl;
-    std::cerr << "clang::CXXConstructExpr: is from UnNamed class: " << enclosingClassDecl->get_isUnNamed() << std::endl;
+    logger[DEBUG] << "clang::CXXConstructExpr: is default constructor: " << cxx_constructor_decl->isDefaultConstructor() << "\n";
+    logger[DEBUG] << "clang::CXXConstructExpr: is from UnNamed class: " << enclosingClassDecl->get_isUnNamed() << "\n";
 #endif
     if(cxx_constructor_decl->isDefaultConstructor() && enclosingClassDecl->get_isUnNamed())
       isCompilerGenerated = true; 
@@ -2590,7 +2591,7 @@ bool ClangToSageTranslator::VisitCXXConstructExpr(clang::CXXConstructExpr * cxx_
 
 bool ClangToSageTranslator::VisitCXXTemporaryObjectExpr(clang::CXXTemporaryObjectExpr * cxx_temporary_object_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCXXTemporaryObjectExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXTemporaryObjectExpr" << "\n";
 #endif
     bool res = true;
 
@@ -2601,7 +2602,7 @@ bool ClangToSageTranslator::VisitCXXTemporaryObjectExpr(clang::CXXTemporaryObjec
 
 bool ClangToSageTranslator::VisitCXXDefaultArgExpr(clang::CXXDefaultArgExpr * cxx_default_arg_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCXXDefaultArgExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXDefaultArgExpr" << "\n";
 #endif
     bool res = true;
 
@@ -2612,7 +2613,7 @@ bool ClangToSageTranslator::VisitCXXDefaultArgExpr(clang::CXXDefaultArgExpr * cx
 
 bool ClangToSageTranslator::VisitCXXDefaultInitExpr(clang::CXXDefaultInitExpr * cxx_default_init_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCXXDefaultInitExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXDefaultInitExpr" << "\n";
 #endif
     bool res = true;
 
@@ -2623,7 +2624,7 @@ bool ClangToSageTranslator::VisitCXXDefaultInitExpr(clang::CXXDefaultInitExpr * 
 
 bool ClangToSageTranslator::VisitCXXDeleteExpr(clang::CXXDeleteExpr * cxx_delete_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCXXDeleteExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXDeleteExpr" << "\n";
 #endif
     bool res = true;
 
@@ -2634,7 +2635,7 @@ bool ClangToSageTranslator::VisitCXXDeleteExpr(clang::CXXDeleteExpr * cxx_delete
 
 bool ClangToSageTranslator::VisitCXXDependentScopeMemberExpr(clang::CXXDependentScopeMemberExpr * cxx_dependent_scope_member_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCXXDependentScopeMemberExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXDependentScopeMemberExpr" << "\n";
 #endif
     bool res = true;
 
@@ -2645,7 +2646,7 @@ bool ClangToSageTranslator::VisitCXXDependentScopeMemberExpr(clang::CXXDependent
 
 bool ClangToSageTranslator::VisitCXXFoldExpr(clang::CXXFoldExpr * cxx_fold_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCXXFoldExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXFoldExpr" << "\n";
 #endif
     bool res = true;
 
@@ -2656,7 +2657,7 @@ bool ClangToSageTranslator::VisitCXXFoldExpr(clang::CXXFoldExpr * cxx_fold_expr,
 
 bool ClangToSageTranslator::VisitCXXInheritedCtorInitExpr(clang::CXXInheritedCtorInitExpr * cxx_inherited_ctor_init_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCXXInheritedCtorInitExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXInheritedCtorInitExpr" << "\n";
 #endif
     bool res = true;
 
@@ -2667,7 +2668,7 @@ bool ClangToSageTranslator::VisitCXXInheritedCtorInitExpr(clang::CXXInheritedCto
 
 bool ClangToSageTranslator::VisitCXXNewExpr(clang::CXXNewExpr * cxx_new_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCXXNewExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXNewExpr" << "\n";
 #endif
     bool res = true;
     clang::QualType allocatedType = cxx_new_expr->getAllocatedType();
@@ -2714,7 +2715,7 @@ bool ClangToSageTranslator::VisitCXXNewExpr(clang::CXXNewExpr * cxx_new_expr, Sg
 
 bool ClangToSageTranslator::VisitCXXNoexceptExpr(clang::CXXNoexceptExpr * cxx_noexcept_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCXXNoexceptExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXNoexceptExpr" << "\n";
 #endif
     bool res = true;
 
@@ -2725,7 +2726,7 @@ bool ClangToSageTranslator::VisitCXXNoexceptExpr(clang::CXXNoexceptExpr * cxx_no
 
 bool ClangToSageTranslator::VisitCXXNullPtrLiteralExpr(clang::CXXNullPtrLiteralExpr * cxx_null_ptr_literal_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCXXNullPtrLiteralExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXNullPtrLiteralExpr" << "\n";
 #endif
     bool res = true;
 
@@ -2736,7 +2737,7 @@ bool ClangToSageTranslator::VisitCXXNullPtrLiteralExpr(clang::CXXNullPtrLiteralE
 
 bool ClangToSageTranslator::VisitCXXPseudoDestructorExpr(clang::CXXPseudoDestructorExpr * cxx_pseudo_destructor_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCXXPseudoDestructorExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXPseudoDestructorExpr" << "\n";
 #endif
     bool res = true;
 
@@ -2747,7 +2748,7 @@ bool ClangToSageTranslator::VisitCXXPseudoDestructorExpr(clang::CXXPseudoDestruc
 
 //bool ClangToSageTranslator::VisitCXXRewrittenBinaryOperator(clang::CXXRewrittenBinaryOperator * cxx_rewrite_binary_operator, SgNode ** node) {
 //#if DEBUG_VISIT_STMT
-//    std::cerr << "ClangToSageTranslator::VisitCXXRewrittenBinaryOperator" << std::endl;
+//    logger[DEBUG] << "ClangToSageTranslator::VisitCXXRewrittenBinaryOperator" << "\n";
 //#endif
 //    bool res = true;
 //
@@ -2758,7 +2759,7 @@ bool ClangToSageTranslator::VisitCXXPseudoDestructorExpr(clang::CXXPseudoDestruc
 
 bool ClangToSageTranslator::VisitCXXScalarValueInitExpr(clang::CXXScalarValueInitExpr * cxx_scalar_value_init_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCXXScalarValueInitExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXScalarValueInitExpr" << "\n";
 #endif
     bool res = true;
 
@@ -2769,7 +2770,7 @@ bool ClangToSageTranslator::VisitCXXScalarValueInitExpr(clang::CXXScalarValueIni
 
 bool ClangToSageTranslator::VisitCXXStdInitializerListExpr(clang::CXXStdInitializerListExpr * cxx_std_initializer_list_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCXXStdInitializerListExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXStdInitializerListExpr" << "\n";
 #endif
     bool res = true;
 
@@ -2780,8 +2781,8 @@ bool ClangToSageTranslator::VisitCXXStdInitializerListExpr(clang::CXXStdInitiali
 
 bool ClangToSageTranslator::VisitCXXThisExpr(clang::CXXThisExpr * cxx_this_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCXXThisExpr" << std::endl;
-    std::cerr << "isImplicit: " << cxx_this_expr->isImplicit() << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXThisExpr" << "\n";
+    logger[DEBUG] << "isImplicit: " << cxx_this_expr->isImplicit() << "\n";
 #endif
     bool res = true;
     const clang::CXXRecordDecl* cxxRecordDecl = cxx_this_expr->getBestDynamicClassType();
@@ -2795,7 +2796,7 @@ bool ClangToSageTranslator::VisitCXXThisExpr(clang::CXXThisExpr * cxx_this_expr,
 
 bool ClangToSageTranslator::VisitCXXThrowExpr(clang::CXXThrowExpr * cxx_throw_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCXXThrowExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXThrowExpr" << "\n";
 #endif
     bool res = true;
 
@@ -2806,7 +2807,7 @@ bool ClangToSageTranslator::VisitCXXThrowExpr(clang::CXXThrowExpr * cxx_throw_ex
 
 bool ClangToSageTranslator::VisitCXXTypeidExpr(clang::CXXTypeidExpr * cxx_typeid_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCXXTypeidExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXTypeidExpr" << "\n";
 #endif
     bool res = true;
 
@@ -2817,7 +2818,7 @@ bool ClangToSageTranslator::VisitCXXTypeidExpr(clang::CXXTypeidExpr * cxx_typeid
 
 bool ClangToSageTranslator::VisitCXXUnresolvedConstructExpr(clang::CXXUnresolvedConstructExpr * cxx_unresolved_construct_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCXXUnresolvedConstructExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXUnresolvedConstructExpr" << "\n";
 #endif
     bool res = true;
 
@@ -2828,7 +2829,7 @@ bool ClangToSageTranslator::VisitCXXUnresolvedConstructExpr(clang::CXXUnresolved
 
 bool ClangToSageTranslator::VisitCXXUuidofExpr(clang::CXXUuidofExpr * cxx_uuidof_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitCXXUuidofExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitCXXUuidofExpr" << "\n";
 #endif
     bool res = true;
 
@@ -2839,7 +2840,7 @@ bool ClangToSageTranslator::VisitCXXUuidofExpr(clang::CXXUuidofExpr * cxx_uuidof
 
 bool ClangToSageTranslator::VisitDeclRefExpr(clang::DeclRefExpr * decl_ref_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitDeclRefExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitDeclRefExpr" << "\n";
 #endif
 
     bool res = true;
@@ -2860,13 +2861,13 @@ bool ClangToSageTranslator::VisitDeclRefExpr(clang::DeclRefExpr * decl_ref_expr,
           ROSE_ASSERT(tmp_decl != NULL);
 
 #if DEBUG_VISIT_STMT
-          printf ("tmp_decl = %p = %s \n",tmp_decl,tmp_decl->class_name().c_str());
+          logger[DEBUG] << "temp_decl = " << tmp_decl << " = " << tmp_decl->class_name().c_str() << "\n";
 #endif
           SgInitializedName* initializedName = isSgInitializedName(tmp_decl);
 #if DEBUG_VISIT_STMT
           if (initializedName != NULL)
              {
-               printf ("Found SgInitializedName: initializedName->get_name() = %s \n",initializedName->get_name().str());
+               logger[DEBUG] << "Found SgInitializedName: initializedName->get_name() = " << initializedName->get_name().str() << "\n";
              }
 #endif
 
@@ -2921,8 +2922,8 @@ bool ClangToSageTranslator::VisitDeclRefExpr(clang::DeclRefExpr * decl_ref_expr,
                        {
                          if (sym != NULL)
                             {
-                              std::cerr << "Runtime error: Unknown type of symbol for a declaration reference." << std::endl;
-                              std::cerr << "    sym->class_name() = " << sym->class_name()  << std::endl;
+                              logger[ERROR] << "Runtime error: Unknown type of symbol for a declaration reference." << "\n";
+                              logger[ERROR] << "    sym->class_name() = " << sym->class_name()  << "\n";
                               ROSE_ABORT();
                             }
                        }
@@ -2932,7 +2933,7 @@ bool ClangToSageTranslator::VisitDeclRefExpr(clang::DeclRefExpr * decl_ref_expr,
         }
        else
         {
-          std::cerr << "Runtime error: Cannot find the symbol for a declaration reference (even after trying to buil th declaration)" << std::endl;
+          logger[ERROR] << "Runtime error: Cannot find the symbol for a declaration reference (even after trying to buil th declaration)" << "\n";
           ROSE_ABORT();
         }
 
@@ -2941,7 +2942,7 @@ bool ClangToSageTranslator::VisitDeclRefExpr(clang::DeclRefExpr * decl_ref_expr,
 
 bool ClangToSageTranslator::VisitDependentCoawaitExpr(clang::DependentCoawaitExpr * dependent_coawait_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitDependentCoawaitExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitDependentCoawaitExpr" << "\n";
 #endif
     bool res = true;
 
@@ -2952,7 +2953,7 @@ bool ClangToSageTranslator::VisitDependentCoawaitExpr(clang::DependentCoawaitExp
 
 bool ClangToSageTranslator::VisitDependentScopeDeclRefExpr(clang::DependentScopeDeclRefExpr * dependent_scope_decl_ref_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitDependentScopeDeclRefExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitDependentScopeDeclRefExpr" << "\n";
 #endif
     bool res = true;
 
@@ -2965,7 +2966,7 @@ bool ClangToSageTranslator::VisitDependentScopeDeclRefExpr(clang::DependentScope
 
 bool ClangToSageTranslator::VisitDesignatedInitExpr(clang::DesignatedInitExpr * designated_init_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitDesignatedInitExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitDesignatedInitExpr" << "\n";
 #endif
 
     SgInitializer * base_init = NULL;    
@@ -3076,7 +3077,7 @@ bool ClangToSageTranslator::VisitDesignatedInitExpr(clang::DesignatedInitExpr * 
                clang::FullExpr* fullExpr = (clang::FullExpr*) designated_init_expr->getArrayIndex(*D);
                clang::IntegerLiteral* integerLiteral = (clang::IntegerLiteral*) fullExpr->getSubExpr();
                tmp_expr = SageBuilder::buildUnsignedLongVal((unsigned long) integerLiteral->getValue().getSExtValue());
-std::cerr << "idx:" << integerLiteral->getValue().getSExtValue() << std::endl;
+logger[DEBUG] << "idx:" << integerLiteral->getValue().getSExtValue() << "\n";
             }
             else
             {
@@ -3110,7 +3111,7 @@ std::cerr << "idx:" << integerLiteral->getValue().getSExtValue() << std::endl;
 
 bool ClangToSageTranslator::VisitDesignatedInitUpdateExpr(clang::DesignatedInitUpdateExpr * designated_init_update, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitDesignatedInitUpdateExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitDesignatedInitUpdateExpr" << "\n";
 #endif
     bool res = true;
 
@@ -3121,7 +3122,7 @@ bool ClangToSageTranslator::VisitDesignatedInitUpdateExpr(clang::DesignatedInitU
 
 bool ClangToSageTranslator::VisitExpressionTraitExpr(clang::ExpressionTraitExpr * expression_trait_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitExpressionTraitExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitExpressionTraitExpr" << "\n";
 #endif
     bool res = true;
 
@@ -3132,7 +3133,7 @@ bool ClangToSageTranslator::VisitExpressionTraitExpr(clang::ExpressionTraitExpr 
 
 bool ClangToSageTranslator::VisitExtVectorElementExpr(clang::ExtVectorElementExpr * ext_vector_element_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitExtVectorElementExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitExtVectorElementExpr" << "\n";
 #endif
 
     SgNode * tmp_base = Traverse(ext_vector_element_expr->getBase());
@@ -3173,7 +3174,7 @@ bool ClangToSageTranslator::VisitExtVectorElementExpr(clang::ExtVectorElementExp
 
 bool ClangToSageTranslator::VisitFixedPointLiteral(clang::FixedPointLiteral * fixed_point_literal, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitFixedPointLiteral" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitFixedPointLiteral" << "\n";
 #endif
     bool res = true;
 
@@ -3184,7 +3185,7 @@ bool ClangToSageTranslator::VisitFixedPointLiteral(clang::FixedPointLiteral * fi
 
 bool ClangToSageTranslator::VisitFloatingLiteral(clang::FloatingLiteral * floating_literal, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitFloatingLiteral" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitFloatingLiteral" << "\n";
 #endif
 
     unsigned int precision =  llvm::APFloat::semanticsPrecision(floating_literal->getValue().getSemantics());
@@ -3193,8 +3194,8 @@ bool ClangToSageTranslator::VisitFloatingLiteral(clang::FloatingLiteral * floati
     llvm::raw_string_ostream os(str);
     llvmFloat.print(os);
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitFloatingLiteral precision = " << precision  << std::endl;
-    std::cerr << "ClangToSageTranslator::VisitFloatingLiteral value in string = " << os.str()  << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitFloatingLiteral precision = " << precision  << "\n";
+    logger[DEBUG] << "ClangToSageTranslator::VisitFloatingLiteral value in string = " << os.str()  << "\n";
 #endif
 
     if (precision == 24)
@@ -3212,7 +3213,7 @@ bool ClangToSageTranslator::VisitFloatingLiteral(clang::FloatingLiteral * floati
 
 bool ClangToSageTranslator::VisitFullExpr(clang::FullExpr * full_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitFullExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitFullExpr" << "\n";
 #endif
     bool res = true;
 
@@ -3220,7 +3221,7 @@ bool ClangToSageTranslator::VisitFullExpr(clang::FullExpr * full_expr, SgNode **
     SgExpression * expr = isSgExpression(tmp_expr);
 
 #if DEBUG_VISIT_STMT
-    std::cerr <<  "In VisitFullExpr(): built: expr = " << expr << " = " << expr->class_name().c_str() << std::endl;
+    logger[DEBUG] <<  "In VisitFullExpr(): built: expr = " << expr << " = " << expr->class_name().c_str() << "\n";
 #endif
 
     *node = expr;
@@ -3232,7 +3233,7 @@ bool ClangToSageTranslator::VisitFullExpr(clang::FullExpr * full_expr, SgNode **
 
 bool ClangToSageTranslator::VisitConstantExpr(clang::ConstantExpr * constant_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitConstantExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitConstantExpr" << "\n";
 #endif
     bool res = true;
 
@@ -3243,7 +3244,7 @@ bool ClangToSageTranslator::VisitConstantExpr(clang::ConstantExpr * constant_exp
 
 bool ClangToSageTranslator::VisitExprWithCleanups(clang::ExprWithCleanups * expr_with_cleanups, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitExprWithCleanups" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitExprWithCleanups" << "\n";
 #endif
     bool res = true;
 
@@ -3254,7 +3255,7 @@ bool ClangToSageTranslator::VisitExprWithCleanups(clang::ExprWithCleanups * expr
 
 bool ClangToSageTranslator::VisitFunctionParmPackExpr(clang::FunctionParmPackExpr * function_parm_pack_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitFunctionParmPackExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitFunctionParmPackExpr" << "\n";
 #endif
     bool res = true;
 
@@ -3265,7 +3266,7 @@ bool ClangToSageTranslator::VisitFunctionParmPackExpr(clang::FunctionParmPackExp
 
 bool ClangToSageTranslator::VisitGenericSelectionExpr(clang::GenericSelectionExpr * generic_Selection_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitGenericSelectionExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitGenericSelectionExpr" << "\n";
 #endif
     bool res = true;
 
@@ -3276,7 +3277,7 @@ bool ClangToSageTranslator::VisitGenericSelectionExpr(clang::GenericSelectionExp
 
 bool ClangToSageTranslator::VisitGNUNullExpr(clang::GNUNullExpr * gnu_null_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitGNUNullExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitGNUNullExpr" << "\n";
 #endif
     bool res = true;
 
@@ -3287,7 +3288,7 @@ bool ClangToSageTranslator::VisitGNUNullExpr(clang::GNUNullExpr * gnu_null_expr,
 
 bool ClangToSageTranslator::VisitImaginaryLiteral(clang::ImaginaryLiteral * imaginary_literal, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitImaginaryLiteral" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitImaginaryLiteral" << "\n";
 #endif
 
     SgNode * tmp_imag_val = Traverse(imaginary_literal->getSubExpr());
@@ -3303,7 +3304,7 @@ bool ClangToSageTranslator::VisitImaginaryLiteral(clang::ImaginaryLiteral * imag
 
 bool ClangToSageTranslator::VisitImplicitValueInitExpr(clang::ImplicitValueInitExpr * implicit_value_init_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitImplicitValueInitExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitImplicitValueInitExpr" << "\n";
 #endif
     bool res = true;
 
@@ -3314,7 +3315,7 @@ bool ClangToSageTranslator::VisitImplicitValueInitExpr(clang::ImplicitValueInitE
 
 bool ClangToSageTranslator::VisitInitListExpr(clang::InitListExpr * init_list_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitInitListExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitInitListExpr" << "\n";
 #endif
 
     // We use the syntactic version of the initializer if it exists
@@ -3353,7 +3354,7 @@ bool ClangToSageTranslator::VisitInitListExpr(clang::InitListExpr * init_list_ex
 
 bool ClangToSageTranslator::VisitIntegerLiteral(clang::IntegerLiteral * integer_literal, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitIntegerLiteral" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitIntegerLiteral" << "\n";
 #endif
 
     *node = SageBuilder::buildIntVal(integer_literal->getValue().getSExtValue());
@@ -3364,7 +3365,7 @@ bool ClangToSageTranslator::VisitIntegerLiteral(clang::IntegerLiteral * integer_
 
 bool ClangToSageTranslator::VisitLambdaExpr(clang::LambdaExpr * lambda_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitLambdaExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitLambdaExpr" << "\n";
 #endif
     bool res = true;
 
@@ -3375,7 +3376,7 @@ bool ClangToSageTranslator::VisitLambdaExpr(clang::LambdaExpr * lambda_expr, SgN
 
 bool ClangToSageTranslator::VisitMaterializeTemporaryExpr(clang::MaterializeTemporaryExpr * materialize_temporary_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitMaterializeTemporaryExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitMaterializeTemporaryExpr" << "\n";
 #endif
     bool res = true;
 
@@ -3388,8 +3389,8 @@ bool ClangToSageTranslator::VisitMaterializeTemporaryExpr(clang::MaterializeTemp
 
 bool ClangToSageTranslator::VisitMemberExpr(clang::MemberExpr * member_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitMemberExpr" << std::endl;
-    std::cerr << "MemberExpr::hasQualifier() " << member_expr->hasQualifier() << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitMemberExpr" << "\n";
+    logger[DEBUG] << "MemberExpr::hasQualifier() " << member_expr->hasQualifier() << "\n";
 #endif
 
     bool res = true;
@@ -3408,8 +3409,8 @@ bool ClangToSageTranslator::VisitMemberExpr(clang::MemberExpr * member_expr, SgN
 
     bool successful_cast = var_sym || func_sym || class_sym;
     if (sym != NULL && !successful_cast) {
-        std::cerr << "Runtime error: Unknown type of symbol for a member reference." << std::endl;
-        std::cerr << "    sym->class_name() = " << sym->class_name()  << std::endl;
+        logger[WARN] << "Runtime error: Unknown type of symbol for a member reference." << "\n";
+        logger[WARN] << "    sym->class_name() = " << sym->class_name()  << "\n";
         res = false;
     }
     else if (var_sym != NULL) {
@@ -3425,7 +3426,7 @@ bool ClangToSageTranslator::VisitMemberExpr(clang::MemberExpr * member_expr, SgN
 //        if(classDecl->get_isUnNamed())
         {
           SgName varName(generate_name_for_variable(member_expr));
-          std::cerr << "build varName:" << varName << std::endl;
+          logger[DEBUG] << "build varName:" << varName << "\n";
           SgVariableDeclaration * var_decl = SageBuilder::buildVariableDeclaration(varName, classType, NULL,SageBuilder::topScopeStack());
           var_decl->set_baseTypeDefiningDeclaration(classDefDecl);
           var_decl->set_variableDeclarationContainsBaseTypeDefiningDeclaration(true);
@@ -3449,7 +3450,7 @@ bool ClangToSageTranslator::VisitMemberExpr(clang::MemberExpr * member_expr, SgN
 
 bool ClangToSageTranslator::VisitMSPropertyRefExpr(clang::MSPropertyRefExpr * ms_property_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitMSPropertyRefExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitMSPropertyRefExpr" << "\n";
 #endif
     bool res = true;
 
@@ -3460,7 +3461,7 @@ bool ClangToSageTranslator::VisitMSPropertyRefExpr(clang::MSPropertyRefExpr * ms
 
 bool ClangToSageTranslator::VisitMSPropertySubscriptExpr(clang::MSPropertySubscriptExpr * ms_property_subscript_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitMSPropertySubscriptExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitMSPropertySubscriptExpr" << "\n";
 #endif
     bool res = true;
 
@@ -3471,7 +3472,7 @@ bool ClangToSageTranslator::VisitMSPropertySubscriptExpr(clang::MSPropertySubscr
 
 bool ClangToSageTranslator::VisitNoInitExpr(clang::NoInitExpr * no_init_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitNoInitExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitNoInitExpr" << "\n";
 #endif
     bool res = true;
 
@@ -3482,7 +3483,7 @@ bool ClangToSageTranslator::VisitNoInitExpr(clang::NoInitExpr * no_init_expr, Sg
 
 bool ClangToSageTranslator::VisitOffsetOfExpr(clang::OffsetOfExpr * offset_of_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitOffsetOfExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOffsetOfExpr" << "\n";
 #endif
     bool res = true;
 
@@ -3542,7 +3543,7 @@ bool ClangToSageTranslator::VisitOffsetOfExpr(clang::OffsetOfExpr * offset_of_ex
 
 bool ClangToSageTranslator::VisitOMPArraySectionExpr(clang::OMPArraySectionExpr * omp_array_section_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitOMPArraySectionExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOMPArraySectionExpr" << "\n";
 #endif
     bool res = true;
 
@@ -3553,7 +3554,7 @@ bool ClangToSageTranslator::VisitOMPArraySectionExpr(clang::OMPArraySectionExpr 
 
 bool ClangToSageTranslator::VisitOpaqueValueExpr(clang::OpaqueValueExpr * opaque_value_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitOpaqueValueExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOpaqueValueExpr" << "\n";
 #endif
     bool res = true;
 
@@ -3566,7 +3567,7 @@ bool ClangToSageTranslator::VisitOpaqueValueExpr(clang::OpaqueValueExpr * opaque
 
 bool ClangToSageTranslator::VisitOverloadExpr(clang::OverloadExpr * overload_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitOverloadExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitOverloadExpr" << "\n";
 #endif
     bool res = true;
 
@@ -3577,7 +3578,7 @@ bool ClangToSageTranslator::VisitOverloadExpr(clang::OverloadExpr * overload_exp
 
 bool ClangToSageTranslator::VisitUnresolvedLookupExpr(clang::UnresolvedLookupExpr * unresolved_lookup_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitUnresolvedLookupExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitUnresolvedLookupExpr" << "\n";
 #endif
     bool res = true;
 
@@ -3588,7 +3589,7 @@ bool ClangToSageTranslator::VisitUnresolvedLookupExpr(clang::UnresolvedLookupExp
 
 bool ClangToSageTranslator::VisitUnresolvedMemberExpr(clang::UnresolvedMemberExpr * unresolved_member_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitUnresolvedMemberExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitUnresolvedMemberExpr" << "\n";
 #endif
     bool res = true;
 
@@ -3599,7 +3600,7 @@ bool ClangToSageTranslator::VisitUnresolvedMemberExpr(clang::UnresolvedMemberExp
 
 bool ClangToSageTranslator::VisitPackExpansionExpr(clang::PackExpansionExpr * pack_expansion_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitPackExpansionExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitPackExpansionExpr" << "\n";
 #endif
     bool res = true;
 
@@ -3610,7 +3611,7 @@ bool ClangToSageTranslator::VisitPackExpansionExpr(clang::PackExpansionExpr * pa
 
 bool ClangToSageTranslator::VisitParenExpr(clang::ParenExpr * paren_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitParenExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitParenExpr" << "\n";
 #endif
 
     bool res = true;
@@ -3618,7 +3619,7 @@ bool ClangToSageTranslator::VisitParenExpr(clang::ParenExpr * paren_expr, SgNode
     SgNode * tmp_subexpr = Traverse(paren_expr->getSubExpr());
     SgExpression * subexpr = isSgExpression(tmp_subexpr);
     if (tmp_subexpr != NULL && subexpr == NULL) {
-        std::cerr << "Runtime error: tmp_subexpr != NULL && subexpr == NULL" << std::endl;
+        logger[WARN] << "Runtime error: tmp_subexpr != NULL && subexpr == NULL" << "\n";
         res = false;
     }
 
@@ -3630,7 +3631,7 @@ bool ClangToSageTranslator::VisitParenExpr(clang::ParenExpr * paren_expr, SgNode
 
 bool ClangToSageTranslator::VisitParenListExpr(clang::ParenListExpr * paran_list_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitParenListExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitParenListExpr" << "\n";
 #endif
     bool res = true;
 
@@ -3641,7 +3642,7 @@ bool ClangToSageTranslator::VisitParenListExpr(clang::ParenListExpr * paran_list
 
 bool ClangToSageTranslator::VisitPredefinedExpr(clang::PredefinedExpr * predefined_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitPredefinedExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitPredefinedExpr" << "\n";
 #endif
 
     // FIXME It's get tricky here: PredefinedExpr represent compiler generateed variables
@@ -3711,7 +3712,7 @@ bool ClangToSageTranslator::VisitPredefinedExpr(clang::PredefinedExpr * predefin
 
 bool ClangToSageTranslator::VisitPseudoObjectExpr(clang::PseudoObjectExpr * pseudo_object_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitPseudoObjectExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitPseudoObjectExpr" << "\n";
 #endif
     bool res = true;
 
@@ -3722,7 +3723,7 @@ bool ClangToSageTranslator::VisitPseudoObjectExpr(clang::PseudoObjectExpr * pseu
 
 bool ClangToSageTranslator::VisitShuffleVectorExpr(clang::ShuffleVectorExpr * shuffle_vector_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitShuffleVectorExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitShuffleVectorExpr" << "\n";
 #endif
     bool res = true;
 
@@ -3733,7 +3734,7 @@ bool ClangToSageTranslator::VisitShuffleVectorExpr(clang::ShuffleVectorExpr * sh
 
 bool ClangToSageTranslator::VisitSizeOfPackExpr(clang::SizeOfPackExpr * size_of_pack_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitSizeOfPackExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitSizeOfPackExpr" << "\n";
 #endif
     bool res = true;
 
@@ -3744,7 +3745,7 @@ bool ClangToSageTranslator::VisitSizeOfPackExpr(clang::SizeOfPackExpr * size_of_
 
 bool ClangToSageTranslator::VisitSourceLocExpr(clang::SourceLocExpr * source_loc_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitSourceLocExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitSourceLocExpr" << "\n";
 #endif
     bool res = true;
 
@@ -3755,7 +3756,7 @@ bool ClangToSageTranslator::VisitSourceLocExpr(clang::SourceLocExpr * source_loc
 
 bool ClangToSageTranslator::VisitStmtExpr(clang::StmtExpr * stmt_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitStmtExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitStmtExpr" << "\n";
 #endif
 
     bool res = true;
@@ -3763,7 +3764,7 @@ bool ClangToSageTranslator::VisitStmtExpr(clang::StmtExpr * stmt_expr, SgNode **
     SgNode * tmp_substmt = Traverse(stmt_expr->getSubStmt());
     SgStatement * substmt = isSgStatement(tmp_substmt);
     if (tmp_substmt != NULL && substmt == NULL) {
-        std::cerr << "Runtime error: tmp_substmt != NULL && substmt == NULL" << std::endl;
+        logger[WARN] << "Runtime error: tmp_substmt != NULL && substmt == NULL" << "\n";
         res = false;
     }
 
@@ -3774,7 +3775,7 @@ bool ClangToSageTranslator::VisitStmtExpr(clang::StmtExpr * stmt_expr, SgNode **
 
 bool ClangToSageTranslator::VisitStringLiteral(clang::StringLiteral * string_literal, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitStringLiteral" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitStringLiteral" << "\n";
 #endif
     bool res = true;
 
@@ -3782,7 +3783,7 @@ bool ClangToSageTranslator::VisitStringLiteral(clang::StringLiteral * string_lit
     const char * rawdata = string_literal->getBytes().data();
     std::string newstr;
 #if DEBUG_VISIT_STMT
-    std::cerr << "In ClangToSageTranslator string_literal length: " << string_literal->getLength() << " byteLength:" << string_literal->getByteLength() << std::endl;
+    logger[DEBUG] << "In ClangToSageTranslator string_literal length: " << string_literal->getLength() << " byteLength:" << string_literal->getByteLength() << "\n";
 #endif
 
 // Pei-Hung (09/30/2022) handled wchar_t support.  
@@ -3871,7 +3872,7 @@ is less than 00A0 other than 0024 ($), 0040 (@), or 0060 (`), nor one in the ran
 
 bool ClangToSageTranslator::VisitSubstNonTypeTemplateParmExpr(clang::SubstNonTypeTemplateParmExpr * subst_non_type_template_parm_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitSubstNonTypeTemplateParmExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitSubstNonTypeTemplateParmExpr" << "\n";
 #endif
     bool res = true;
 
@@ -3882,7 +3883,7 @@ bool ClangToSageTranslator::VisitSubstNonTypeTemplateParmExpr(clang::SubstNonTyp
 
 bool ClangToSageTranslator::VisitSubstNonTypeTemplateParmPackExpr(clang::SubstNonTypeTemplateParmPackExpr * subst_non_type_template_parm_pack_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitSubstNonTypeTemplateParmPackExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitSubstNonTypeTemplateParmPackExpr" << "\n";
 #endif
     bool res = true;
 
@@ -3893,7 +3894,7 @@ bool ClangToSageTranslator::VisitSubstNonTypeTemplateParmPackExpr(clang::SubstNo
 
 bool ClangToSageTranslator::VisitTypeTraitExpr(clang::TypeTraitExpr * type_trait, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitTypeTraitExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitTypeTraitExpr" << "\n";
 #endif
     bool res = true;
 
@@ -3905,7 +3906,7 @@ bool ClangToSageTranslator::VisitTypeTraitExpr(clang::TypeTraitExpr * type_trait
 
 bool ClangToSageTranslator::VisitTypoExpr(clang::TypoExpr * typo_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitTypoExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitTypoExpr" << "\n";
 #endif
     bool res = true;
 
@@ -3916,7 +3917,7 @@ bool ClangToSageTranslator::VisitTypoExpr(clang::TypoExpr * typo_expr, SgNode **
 
 bool ClangToSageTranslator::VisitUnaryExprOrTypeTraitExpr(clang::UnaryExprOrTypeTraitExpr * unary_expr_or_type_trait_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitUnaryExprOrTypeTraitExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitUnaryExprOrTypeTraitExpr" << "\n";
 #endif
 
     bool res = true;
@@ -3932,7 +3933,7 @@ bool ClangToSageTranslator::VisitUnaryExprOrTypeTraitExpr(clang::UnaryExprOrType
         expr = isSgExpression(tmp_expr);
 
         if (tmp_expr != NULL && expr == NULL) {
-            std::cerr << "Runtime error: tmp_expr != NULL && expr == NULL" << std::endl;
+            logger[WARN] << "Runtime error: tmp_expr != NULL && expr == NULL" << "\n";
             res = false;
         }
     }
@@ -4012,7 +4013,7 @@ bool ClangToSageTranslator::VisitUnaryExprOrTypeTraitExpr(clang::UnaryExprOrType
 
 bool ClangToSageTranslator::VisitUnaryOperator(clang::UnaryOperator * unary_operator, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitUnaryOperator" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitUnaryOperator" << "\n";
 #endif
 
     bool res = true;
@@ -4020,7 +4021,7 @@ bool ClangToSageTranslator::VisitUnaryOperator(clang::UnaryOperator * unary_oper
     SgNode * tmp_subexpr = Traverse(unary_operator->getSubExpr());
     SgExpression * subexpr = isSgExpression(tmp_subexpr);
     if (tmp_subexpr != NULL && subexpr == NULL) {
-        std::cerr << "Runtime error: tmp_subexpr != NULL && subexpr == NULL" << std::endl;
+        logger[WARN] << "Runtime error: tmp_subexpr != NULL && subexpr == NULL" << "\n";
         res = false;
     }
 
@@ -4067,7 +4068,7 @@ bool ClangToSageTranslator::VisitUnaryOperator(clang::UnaryOperator * unary_oper
             *node = subexpr;
             break;
         default:
-            std::cerr << "Runtime error: Unknown unary operator." << std::endl;
+            logger[WARN] << "Runtime error: Unknown unary operator." << "\n";
             res = false;
     }
 
@@ -4076,7 +4077,7 @@ bool ClangToSageTranslator::VisitUnaryOperator(clang::UnaryOperator * unary_oper
 
 bool ClangToSageTranslator::VisitVAArgExpr(clang::VAArgExpr * va_arg_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitVAArgExpr" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitVAArgExpr" << "\n";
 #endif
 
     SgNode * tmp_expr = Traverse(va_arg_expr->getSubExpr());
@@ -4092,7 +4093,7 @@ bool ClangToSageTranslator::VisitVAArgExpr(clang::VAArgExpr * va_arg_expr, SgNod
 }
 bool ClangToSageTranslator::VisitLabelStmt(clang::LabelStmt * label_stmt, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitLabelStmt" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitLabelStmt" << "\n";
 #endif
 
     bool res = true;
@@ -4109,7 +4110,7 @@ bool ClangToSageTranslator::VisitLabelStmt(clang::LabelStmt * label_stmt, SgNode
         it++;
     }
     if (label_scope == NULL) {
-         std::cerr << "Runtime error: Cannot find a surrounding function definition for the label statement: \"" << name << "\"." << std::endl;
+         logger[DEBUG] << "Runtime error: Cannot find a surrounding function definition for the label statement: \"" << name << "\"." << "\n";
          res = false;
     }
     else {
@@ -4136,7 +4137,7 @@ bool ClangToSageTranslator::VisitLabelStmt(clang::LabelStmt * label_stmt, SgNode
 
 bool ClangToSageTranslator::VisitWhileStmt(clang::WhileStmt * while_stmt, SgNode ** node) {
 #if DEBUG_VISIT_STMT
-    std::cerr << "ClangToSageTranslator::VisitWhileStmt" << std::endl;
+    logger[DEBUG] << "ClangToSageTranslator::VisitWhileStmt" << "\n";
 #endif
 
     SgNode * tmp_cond = Traverse(while_stmt->getCond());

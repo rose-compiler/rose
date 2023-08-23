@@ -171,6 +171,7 @@ class ClangToDotTranslator : public clang::ASTConsumer
         };
 
     protected:
+        static Sawyer::Message::Facility logger;
         clang::CompilerInstance  * p_compiler_instance;
 
         std::map<clang::Decl *, std::string> p_decl_translation_map;
@@ -653,6 +654,7 @@ class ClangToDotPreprocessorRecord : public clang::PPCallbacks
      public:
 
      protected:
+          static Sawyer::Message::Facility logger;
           clang::SourceManager * p_source_manager;
 
           std::vector<std::pair<Sg_File_Info *, PreprocessingInfo *> > p_preprocessor_record_list;

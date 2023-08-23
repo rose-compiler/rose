@@ -13,9 +13,17 @@ extern bool roseInstallPrefix(std::string&);
 // DQ (11/28/2020): Use this for testing the DOT graph generator.
 #define EXIT_AFTER_BUILDING_DOT_FILE 0
 
+Rose::Diagnostics::Facility ClangToSageTranslator::logger;
+Rose::Diagnostics::Facility SagePreprocessorRecord::logger;
+
+using namespace Sawyer::Message;
 int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
 
- // printf ("sageFile.get_clang_il_to_graphviz() = %s \n",sageFile.get_clang_il_to_graphviz() ? "true" : "false");
+    Rose::Diagnostics::mprefix->showProgramName(false);
+    Rose::Diagnostics::mprefix->showThreadId(false);
+    Rose::Diagnostics::mprefix->showElapsedTime(false);
+
+ // ::mlog[INFO] << "sageFile.get_clang_il_to_graphviz() = " << (sageFile.get_clang_il_to_graphviz() ? "true" : "false") << "\n";
 
  // DQ (11/27/2020): Use the -rose:clang_il_to_graphviz option to comntrol the use of the Clang Dot generator.
 #if EXIT_AFTER_BUILDING_DOT_FILE
@@ -28,18 +36,18 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
       // DQ (10/23/2020): Calling clang-to-dot generator (I don't think this modifies the argv list).
          int clang_to_dot_status = clang_to_dot_main(argc,argv);
 #if 0
-         printf ("Exiting as a test! \n");
+         ::mlog[ERROR] << "Exiting as a test!" << "\n";
          ROSE_ABORT();
 #endif
          if (clang_to_dot_status != 0)
             {
-              printf ("Error in generation of dot file of Clang IR: returing from top of clang_main(): clang_to_dot_status = %d \n",clang_to_dot_status);
+              ::mlog[WARN] << "Error in generation of dot file of Clang IR: returing from top of clang_main(): clang_to_dot_status = " << clang_to_dot_status << "\n";
               return clang_to_dot_status;
             }
            else
             {
 #if 0
-              printf ("Note: Dot file of Clang IR output in file: clangGraph.dot \n");
+              ::mlog[WARN] << "Note: Dot file of Clang IR output in file: clangGraph.dot \n";
 #endif
             }
 #endif
@@ -93,7 +101,7 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
         else {
             // TODO -include
 #if DEBUG_ARGS
-            std::cerr << "argv[" << i << "] = " << current_arg << " is neither define or include dir. Use it as input file."  << std::endl;
+            ::mlog[DEBUG] << "argv[" << i << "] = " << current_arg << " is neither define or include dir. Use it as input file."  << "\n";
 #endif
             input_file = current_arg;
         }
@@ -172,12 +180,12 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
             break;
         case ClangToSageTranslator::OBJC:
           {
-            printf ("Objective C langauge support is not available in ROSE \n");
+            ::mlog[ERROR] << "Objective C langauge support is not available in ROSE \n";
             ROSE_ABORT();
           }
         default:
           {
-            printf ("Default reached in switch(language) support \n");
+            ::mlog[ERROR] << "Default reached in switch(language) support \n";
             ROSE_ABORT();
           }
     }
@@ -195,7 +203,7 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
         args[i][1] = 'D';
         strcpy(&(args[i][2]), it_str->c_str());
 #if DEBUG_ARGS
-        std::cerr << "args[" << i << "] = " << args[i] << std::endl;
+        ::mlog[DEBUG] << "args[" << i << "] = " << args[i] << "\n";
 #endif
         i++;
     }
@@ -205,7 +213,7 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
         args[i][1] = 'I';
         strcpy(&(args[i][2]), it_str->c_str());
 #if DEBUG_ARGS
-        std::cerr << "args[" << i << "] = " << args[i] << std::endl;
+        ::mlog[DEBUG] << "args[" << i << "] = " << args[i] << "\n";
 #endif
         i++;
     }
@@ -215,7 +223,7 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
         args[i][4] = 's'; args[i][5] = 't'; args[i][6] = 'e'; args[i][7] = 'm';
         strcpy(&(args[i][8]), it_str->c_str());
 #if DEBUG_ARGS
-        std::cerr << "args[" << i << "] = " << args[i] << std::endl;
+        ::mlog[DEBUG] << "args[" << i << "] = " << args[i] << "\n";
 #endif
         i++;
     }
@@ -225,7 +233,7 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
         args[i][4] = 'l'; args[i][5] = 'u'; args[i][6] = 'd'; args[i][7] = 'e';
         strcpy(&(args[i][8]), it_str->c_str());
 #if DEBUG_ARGS
-        std::cerr << "args[" << i << "] = " << args[i] << std::endl;
+        ::mlog[DEBUG] << "args[" << i << "] = " << args[i] << "\n";
 #endif
         i++;
     }
@@ -319,13 +327,13 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
 
   // 3 - Translate
 
-//  printf ("Calling clang::ParseAST()\n");
+//  ::mlog[DEBUG] << "Calling clang::ParseAST()\n";
 
     compiler_instance->getDiagnosticClient().BeginSourceFile(compiler_instance->getLangOpts(), &(compiler_instance->getPreprocessor()));
     clang::ParseAST(compiler_instance->getPreprocessor(), &translator, compiler_instance->getASTContext());
     compiler_instance->getDiagnosticClient().EndSourceFile();
 
-//  printf ("Clang found %d warning and %d errors\n", diag_printer->getNumWarnings(), diag_printer->getNumErrors());
+//  ::mlog[DEBUG] << "Clang found " << diag_printer->getNumWarnings() <<  " warning and " << diag_printer->getNumErrorss() << " errors\n";
 
     SgGlobal * global_scope = translator.getGlobalScope();
 
@@ -390,7 +398,12 @@ ClangToSageTranslator::ClangToSageTranslator(clang::CompilerInstance * compiler_
     p_compiler_instance(compiler_instance),
     p_sage_preprocessor_recorder(new SagePreprocessorRecord(&(p_compiler_instance->getSourceManager()))),
     language(language_)
-{}
+{
+   Rose::Diagnostics::initAndRegister(&logger, "ClangToSageTranslator"); 
+   Rose::Diagnostics::mprefix->showProgramName(false);
+   Rose::Diagnostics::mprefix->showThreadId(false);
+   Rose::Diagnostics::mprefix->showElapsedTime(false);
+}
 
 ClangToSageTranslator::~ClangToSageTranslator() {
     delete p_sage_preprocessor_recorder;
@@ -404,12 +417,12 @@ void ClangToSageTranslator::applySourceRange(SgNode * node, clang::SourceRange s
      SgInitializedName * init_name = isSgInitializedName(node);
 
 #if DEBUG_SOURCE_LOCATION
-     std::cerr << "Set File_Info for " << node << " of type " << node->class_name() << std::endl;
+     logger[DEBUG] << "Set File_Info for " << node << " of type " << node->class_name() << "\n";
 #endif
 
      if (located_node == NULL && init_name == NULL) 
         {
-          std::cerr << "Consistency error: try to apply a source range to a Sage node which is not a SgLocatedNode or a SgInitializedName." << std::endl;
+          logger[ERROR] << "Consistency error: try to apply a source range to a Sage node which is not a SgLocatedNode or a SgInitializedName." << "\n";
           exit(-1);
         }
        else 
@@ -446,9 +459,9 @@ void ClangToSageTranslator::applySourceRange(SgNode * node, clang::SourceRange s
                if (begin.isMacroID())
                   {
 #if DEBUG_SOURCE_LOCATION
-                    std::cerr << "\tDump SourceLocation begin as it is a MacroID: ";
+                    logger[DEBUG] << "\tDump SourceLocation begin as it is a MacroID: ";
                     begin.dump(p_compiler_instance->getSourceManager());
-                    std::cerr << std::endl;
+                    logger[DEBUG] << "\n";
 #endif
                     begin = p_compiler_instance->getSourceManager().getExpansionLoc(begin);
                     ROSE_ASSERT(begin.isValid());
@@ -457,9 +470,9 @@ void ClangToSageTranslator::applySourceRange(SgNode * node, clang::SourceRange s
                if (end.isMacroID())
                   {
 #if DEBUG_SOURCE_LOCATION
-                    std::cerr << "\tDump SourceLocation end as it is a MacroID: ";
+                    logger[DEBUG] << "\tDump SourceLocation end as it is a MacroID: ";
                     end.dump(p_compiler_instance->getSourceManager());
-                    std::cerr << std::endl;
+                    logger[DEBUG] << "\n";
 #endif
                     end = p_compiler_instance->getSourceManager().getExpansionLoc(end);
                     ROSE_ASSERT(end.isValid());
@@ -492,12 +505,12 @@ void ClangToSageTranslator::applySourceRange(SgNode * node, clang::SourceRange s
 #if 0
                     std::string rawFileName         = node->get_file_info()->get_raw_filename();
                     std::string filenameWithoutPath = Rose::StringUtility::stripPathFromFileName(rawFileName);
-                    printf ("filenameWithoutPath = %s file = %s \n",filenameWithoutPath.c_str(),file.c_str());
+                    ::mlog[DEBUG] << "filenameWithoutPath = " << filenameWithoutPath.c_str() << " file = " << file.c_str() << "\n";
 #endif
                     if (file.find("clang-builtin-c.h") != std::string::npos) 
                        {
 #if 0
-                         printf ("Processing a frontend specific file \n");
+                         ::mlog[DEBUG] << "Processing a frontend specific file \n";
 #endif
                          start_fi = new Sg_File_Info(file, ls, cs);
                          end_fi   = new Sg_File_Info(file, le, ce);
@@ -517,17 +530,17 @@ void ClangToSageTranslator::applySourceRange(SgNode * node, clang::SourceRange s
                        }
 
 #if DEBUG_SOURCE_LOCATION
-                    std::cerr << "\tCreate FI for node in " << file << ":" << ls << ":" << cs << std::endl;
+                    logger[DEBUG] << "\tCreate FI for node in " << file << ":" << ls << ":" << cs << "\n";
 #endif
                   }
 #if DEBUG_SOURCE_LOCATION
                  else
                   {
-                    std::cerr << "\tDump SourceLocation for \"Invalid FileID\": " << std::endl << "\t";
+                    logger[DEBUG] << "\tDump SourceLocation for \"Invalid FileID\": " << "\n" << "\t";
                     begin.dump(p_compiler_instance->getSourceManager());
-                    std::cerr << std::endl << "\t";
+                    logger[DEBUG] << "\n" << "\t";
                     end.dump(p_compiler_instance->getSourceManager());
-                    std::cerr << std::endl;
+                    logger[DEBUG] << "\n";
                   }
 #endif
              }
@@ -541,7 +554,7 @@ void ClangToSageTranslator::applySourceRange(SgNode * node, clang::SourceRange s
           start_fi->setCompilerGenerated();
           end_fi->setCompilerGenerated();
 #if DEBUG_SOURCE_LOCATION
-          std::cerr << "Create FI for compiler generated node" << std::endl;
+          logger[DEBUG] << "Create FI for compiler generated node" << "\n";
 #endif
         }
        else
@@ -588,14 +601,14 @@ void ClangToSageTranslator::setCompilerGeneratedFileInfo(SgNode * node, bool to_
     ROSE_ASSERT(start_fi != NULL && end_fi != NULL);
 
 #if DEBUG_SOURCE_LOCATION
-    std::cerr << "Set File_Info for " << node << " of type " << node->class_name() << std::endl;
+    logger[DEBUG] << "Set File_Info for " << node << " of type " << node->class_name() << "\n";
 #endif
 
     SgLocatedNode * located_node = isSgLocatedNode(node);
     SgInitializedName * init_name = isSgInitializedName(node);
 
     if (located_node == NULL && init_name == NULL) {
-        std::cerr << "Consistency error: try to set a Sage node which is not a SgLocatedNode or a SgInitializedName as compiler generated" << std::endl;
+        logger[DEBUG] << "Consistency error: try to set a Sage node which is not a SgLocatedNode or a SgInitializedName as compiler generated" << "\n";
         exit(-1);
     }
     else if (located_node != NULL) {
@@ -687,11 +700,16 @@ NextPreprocessorToInsert * PreprocessorInserter::evaluateInheritedAttribute(SgNo
 SagePreprocessorRecord::SagePreprocessorRecord(clang::SourceManager * source_manager) :
   p_source_manager(source_manager),
   p_preprocessor_record_list()
-{}
+{
+   Rose::Diagnostics::initAndRegister(&logger, "SagePreprocessorRecord"); 
+   Rose::Diagnostics::mprefix->showProgramName(false);
+   Rose::Diagnostics::mprefix->showThreadId(false);
+   Rose::Diagnostics::mprefix->showElapsedTime(false);
+}
 
 void SagePreprocessorRecord::InclusionDirective(clang::SourceLocation HashLoc, const clang::Token & IncludeTok, llvm::StringRef FileName, bool IsAngled,
                                                 const clang::FileEntry * File, clang::SourceLocation EndLoc, llvm::StringRef SearchPath, llvm::StringRef RelativePath) {
-    std::cerr << "InclusionDirective" << std::endl;
+    logger[INFO] << "InclusionDirective" << "\n";
 
     bool inv_begin_line;
     bool inv_begin_col;
@@ -701,10 +719,10 @@ void SagePreprocessorRecord::InclusionDirective(clang::SourceLocation HashLoc, c
 
     std::string file = p_source_manager->getFileEntryForID(p_source_manager->getFileID(HashLoc))->getName().str();
 
-    std::cerr << "    In file  : " << file << std::endl;
-    std::cerr << "    From     : " << ls << ":" << cs << std::endl;
-    std::cerr << "    Included : " << FileName.str() << std::endl;
-    std::cerr << "    Is angled: " << (IsAngled ? "T" : "F") << std::endl;
+    logger[INFO] << "    In file  : " << file << "\n";
+    logger[INFO] << "    From     : " << ls << ":" << cs << "\n";
+    logger[INFO] << "    Included : " << FileName.str() << "\n";
+    logger[INFO] << "    Is angled: " << (IsAngled ? "T" : "F") << "\n";
 
     Sg_File_Info * file_info = new Sg_File_Info(file, ls, cs);
     PreprocessingInfo * preproc_info = new PreprocessingInfo(
@@ -721,92 +739,92 @@ void SagePreprocessorRecord::InclusionDirective(clang::SourceLocation HashLoc, c
 }
 
 void SagePreprocessorRecord::EndOfMainFile() {
-    std::cerr << "EndOfMainFile" << std::endl;
+    logger[INFO] << "EndOfMainFile" << "\n";
     ROSE_ABORT();
 }
 
 void SagePreprocessorRecord::Ident(clang::SourceLocation Loc, const std::string & str) {
-    std::cerr << "Ident" << std::endl;
+    logger[INFO] << "Ident" << "\n";
     ROSE_ABORT();
 }
 
 void SagePreprocessorRecord::PragmaComment(clang::SourceLocation Loc, const clang::IdentifierInfo * Kind, const std::string & Str) {
-    std::cerr << "PragmaComment" << std::endl;
+    logger[INFO] << "PragmaComment" << "\n";
     ROSE_ABORT();
 }
 
 void SagePreprocessorRecord::PragmaMessage(clang::SourceLocation Loc, llvm::StringRef Str) {
-    std::cerr << "PragmaMessage" << std::endl;
+    logger[INFO] << "PragmaMessage" << "\n";
     ROSE_ABORT();
 }
 
 void SagePreprocessorRecord::PragmaDiagnosticPush(clang::SourceLocation Loc, llvm::StringRef Namespace) {
-    std::cerr << "PragmaDiagnosticPush" << std::endl;
+    logger[INFO] << "PragmaDiagnosticPush" << "\n";
     ROSE_ABORT();
 }
 
 void SagePreprocessorRecord::PragmaDiagnosticPop(clang::SourceLocation Loc, llvm::StringRef Namespace) {
-    std::cerr << "PragmaDiagnosticPop" << std::endl;
+    logger[INFO] << "PragmaDiagnosticPop" << "\n";
     ROSE_ABORT();
 }
 
 void SagePreprocessorRecord::PragmaDiagnostic(clang::SourceLocation Loc, llvm::StringRef Namespace, clang::diag::Severity Severity, llvm::StringRef Str) {
-    std::cerr << "PragmaDiagnostic" << std::endl;
+    logger[INFO] << "PragmaDiagnostic" << "\n";
     ROSE_ABORT();
 }
 
 void SagePreprocessorRecord::MacroExpands(const clang::Token & MacroNameTok, const clang::MacroInfo * MI, clang::SourceRange Range) {
-    std::cerr << "MacroExpands" << std::endl;
+    logger[INFO] << "MacroExpands" << "\n";
     ROSE_ABORT();
 }
 
 void SagePreprocessorRecord::MacroDefined(const clang::Token & MacroNameTok, const clang::MacroInfo * MI) {
-    std::cerr << "" << std::endl;
+    logger[INFO] << "" << "\n";
     ROSE_ABORT();
 }
 
 void SagePreprocessorRecord::MacroUndefined(const clang::Token & MacroNameTok, const clang::MacroInfo * MI) {
-    std::cerr << "MacroUndefined" << std::endl;
+    logger[INFO] << "MacroUndefined" << "\n";
     ROSE_ABORT();
 }
 
 void SagePreprocessorRecord::Defined(const clang::Token & MacroNameTok) {
-    std::cerr << "Defined" << std::endl;
+    logger[INFO] << "Defined" << "\n";
     ROSE_ABORT();
 }
 
 void SagePreprocessorRecord::SourceRangeSkipped(clang::SourceRange Range) {
-    std::cerr << "SourceRangeSkipped" << std::endl;
+    logger[INFO] << "SourceRangeSkipped" << "\n";
     ROSE_ABORT();
 }
 
 void SagePreprocessorRecord::If(clang::SourceRange Range) {
-    std::cerr << "If" << std::endl;
+    logger[INFO] << "If" << "\n";
     ROSE_ABORT();
 }
 
 void SagePreprocessorRecord::Elif(clang::SourceRange Range) {
-    std::cerr << "Elif" << std::endl;
+    logger[INFO] << "Elif" << "\n";
     ROSE_ABORT();
 }
 
 void SagePreprocessorRecord::Ifdef(const clang::Token & MacroNameTok) {
-    std::cerr << "Ifdef" << std::endl;
+    logger[INFO] << "Ifdef" << "\n";
     ROSE_ABORT();
 }
 
 void SagePreprocessorRecord::Ifndef(const clang::Token & MacroNameTok) {
-    std::cerr << "Ifndef" << std::endl;
+    logger[INFO] << "Ifndef" << "\n";
     ROSE_ABORT();
 }
 
 void SagePreprocessorRecord::Else() {
-    std::cerr << "Else" << std::endl;
+    logger[INFO] << "Else" << "\n";
     ROSE_ABORT();
 }
 
 void SagePreprocessorRecord::Endif() {
-    std::cerr << "Endif" << std::endl;
+    logger[INFO] << "Endif" << "\n";
     ROSE_ABORT();
 }
 
