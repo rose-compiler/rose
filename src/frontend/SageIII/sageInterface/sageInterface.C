@@ -27336,6 +27336,8 @@ void SageInterface::clearSharedGlobalScopes(SgProject * project) {
 //!  Convert all code within root matching the patern of (&left)->right, and translate them into left.right.  Return the number of matches of the pattern.
 /*
 
+By default, only transformation generated AST nodes will be normalized since this is designed to normalize translator-generated code.
+
 --- p_lhs_operand_i ->@0x7ff2fc3f1010 SgArrowExp c_rc-575-out.cpp 16:13
    |--- p_lhs_operand_i ->@0x7ff2fc428010 SgAddressOfOp c_rc-575-out.cpp 16:4
    |   |___ p_operand_i ->@0x7ff2fc582078 SgVarRefExp c_rc-575-out.cpp 16:5 init name@0x7ff2fcf03890 symbol name="table1"
@@ -27377,7 +27379,7 @@ int SageInterface::normalizeArrowExpWithAddressOfLeftOperand(SgNode* root, bool 
 
     if (transformationGeneratedOnly)
     {
-      if (a_exp->get_file_info()->isTransformation())
+      if (!(a_exp->get_file_info()->isTransformation()))
         continue;
     }
 
