@@ -126,6 +126,21 @@ next_serial_number() {
     fi
 }
 
+# Create a shell script that can be sourced to set up the PATH
+create_adjust_path_script() {
+    local prefix="$1"
+
+    cat <<EOF >"$prefix/env"
+case ":\$PATH:" in
+    *:"$prefix/bin":*)
+        ;;
+    *)
+        export PATH="$prefix/bin:\$PATH"
+        ;;
+esac
+EOF
+}
+
 ####################################################################################################################################
 
 remove_paths=()
@@ -500,3 +515,5 @@ for symlink in "${symlinks[@]}"; do
     rm -f "$symlink"
     ln -s "$prefix" "$symlink"
 done
+
+create_adjust_path_script "$prefix"
