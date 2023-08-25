@@ -175,8 +175,6 @@ CaseAlternative
 CaseBody
 CaseSelectorFormula
 ElseClause
-OptElseClause
-ConditionalStatement
 NumericMachineParameter
 ByFormula
 ThenPhrase
@@ -208,6 +206,9 @@ ReturnStatement
 ProcedureCallStatement
 CaseStatement
 IfStatement
+IfSimpleStatement
+IfElseStatement
+ConditionalStatement
 LoopStatement
 AssignmentStatement
 SubroutineName
@@ -1381,17 +1382,21 @@ context-free syntax
 %% 4.3 IF STATEMENTS
 %%
 
+  IfSimpleStatement          -> IfStatement {prefer}
+  IfElseStatement            -> IfStatement
+
   LabelList
   IfKeyword Formula ';'      %% Generalized to Formula after changes to formulas
-    ConditionalStatement
-    OptElseClause            -> IfStatement            {cons("IfStatement")}
+    ConditionalStatement     -> IfSimpleStatement      {cons("IfSimpleStatement")}
 
-  Statement                  -> ConditionalStatement
+  LabelList
+  IfKeyword Formula ';'
+    ConditionalStatement
+    ElseClause               -> IfElseStatement        {cons("IfElseStatement")}
 
   'ELSE' Statement           -> ElseClause             {cons("ElseClause")}
 
-  ElseClause                 -> OptElseClause
-  % empty %                  -> OptElseClause          {cons("no-else-clause")}
+  Statement                  -> ConditionalStatement
 
 %% 4.4 CASE STATEMENTS
 %%
