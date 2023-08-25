@@ -4,6 +4,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 // #include's for subdirectories and sub-namespaces are at the end of this header.
+#include <Rose/BinaryAnalysis/RegisterDescriptor.h>
 #include <Sawyer/SharedPointer.h>
 #include <memory>
 
