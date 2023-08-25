@@ -5014,63 +5014,67 @@ ATbool ATermToSageJovialTraversal::traverse_IfStatement(ATerm term)
    std::vector<std::string> labels{};
    std::vector<PosInfo> locations{};
    std::vector<RB::Token> before_if_comments{};
-   SgExpression* conditional = nullptr;
-   SgBasicBlock* true_body = nullptr;
-   SgBasicBlock* false_body = nullptr;
-   SgIfStmt* if_stmt = nullptr;
+   SgExpression* conditional{nullptr};
+   SgBasicBlock* true_body{nullptr};
+   SgBasicBlock* false_body{nullptr};
+   SgIfStmt* if_stmt{nullptr};
 
-   if (ATmatch(term, "IfStatement(<term>,<term>,<term>,<term>,<term>)", &t_labels,&t_if,&t_cond,&t_true,&t_else)) {
-      // Save any comments preceding IfStatement
-      sage_tree_builder.consumePrecedingComments(before_if_comments, getLocation(term));
+   bool hasElseClause;
+   if (ATmatch(term, "IfSimpleStatement(<term>,<term>,<term>,<term>)", &t_labels,&t_if,&t_cond,&t_true)) {
+     // MATCHED IfSimpleStatement
+     hasElseClause = false;
+   }
+   else if (ATmatch(term, "IfElseStatement(<term>,<term>,<term>,<term>,<term>)", &t_labels,&t_if,&t_cond,&t_true,&t_else)) {
+     // MATCHED IfElseStatement
+     hasElseClause = true;
+   }
+   else return ATfalse;
 
-      if (traverse_LabelList(t_labels, labels, locations)) {
-         // MATCHED LabelList
-      } else return ATfalse;
+   // Save any comments preceding IfStatement
+   sage_tree_builder.consumePrecedingComments(before_if_comments, getLocation(term));
 
-      // t_if is the keyword 'IF'
+   if (traverse_LabelList(t_labels, labels, locations)) {
+     // MATCHED LabelList
+   } else return ATfalse;
 
-      if (traverse_Formula(t_cond, conditional)) {
-         // BooleanFormula generalized to Formula
-      }
-      else return ATfalse;
+   // t_if is the keyword 'IF'
+
+   if (traverse_Formula(t_cond, conditional)) {
+     // BooleanFormula generalized to Formula
+   }
+   else return ATfalse;
 
    // Create a basic block and push it on the scope stack so there is
    // a place for statements.
-      true_body = SageBuilder::buildBasicBlock_nfi(SageBuilder::topScopeStack());
-      setSourcePosition(true_body, t_true, /*attach_comments*/true);
-      SageBuilder::pushScopeStack(true_body);
+   true_body = SageBuilder::buildBasicBlock_nfi(SageBuilder::topScopeStack());
+   setSourcePosition(true_body, t_true, /*attach_comments*/true);
+   SageBuilder::pushScopeStack(true_body);
 
-      if (traverse_Statement(t_true)) {
-         // MATCHED Statement for the true body
-      } else return ATfalse;
+   if (traverse_Statement(t_true)) {
+     // MATCHED Statement for the true body
+   } else return ATfalse;
 
-      // Attach comments above and at end of line of true_body
-      sage_tree_builder.popScopeStack(/*attach_comments*/true);
+   // Attach comments above and at end of line of true_body
+   sage_tree_builder.popScopeStack(/*attach_comments*/true);
 
-      if (ATmatch(t_else, "no-else-clause()")) {
-         // MATCHED no-else-clase
-      }
-      else if (ATmatch(t_else, "ElseClause(<term>)", &t_false)) {
-        // Save and then attach comments before ELSE clause
-        std::vector<RB::Token> before_else_comments{};
-        sage_tree_builder.consumePrecedingComments(before_else_comments, getLocation(t_else));
-        sage_tree_builder.attachComments(true_body, before_else_comments, /*at_end*/true);
+   if (hasElseClause && ATmatch(t_else, "ElseClause(<term>)", &t_false)) {
+     // Save and then attach comments before ELSE clause
+     std::vector<RB::Token> before_else_comments{};
+     sage_tree_builder.consumePrecedingComments(before_else_comments, getLocation(t_else));
+     sage_tree_builder.attachComments(true_body, before_else_comments, /*at_end*/true);
 
-        // There is a false body
-        false_body = SageBuilder::buildBasicBlock_nfi(SageBuilder::topScopeStack());
-        setSourcePosition(false_body, t_false, /*attach_comments*/true);
-        SageBuilder::pushScopeStack(false_body);
+     // There is a false body
+     false_body = SageBuilder::buildBasicBlock_nfi(SageBuilder::topScopeStack());
+     setSourcePosition(false_body, t_false, /*attach_comments*/true);
+     SageBuilder::pushScopeStack(false_body);
 
-        if (traverse_Statement(t_false)) {
-          // MATCHED Statement for the false body
-        } else return ATfalse;
+     if (traverse_Statement(t_false)) {
+       // MATCHED Statement for the false body
+     } else return ATfalse;
 
-        // Attach comments above and at end of line of true_body
-        sage_tree_builder.popScopeStack(/*attach_comments*/true);
-      }
-      else return ATfalse;
+     // Attach comments above and at end of line of true_body
+     sage_tree_builder.popScopeStack(/*attach_comments*/true);
    }
-   else return ATfalse;
 
 // Begin SageTreeBuilder
    sage_tree_builder.Enter(if_stmt, conditional, true_body, false_body, before_if_comments);

@@ -1,0 +1,15 @@
+START
+DEF PROC main S;
+BEGIN
+   main = 1;
+   IF TRUE ;
+      IF FALSE ;
+      BEGIN
+         main = 2;
+      END
+      ELSE
+      BEGIN
+         main = 0;
+      END
+END
+TERM
