@@ -1,0 +1,90 @@
+"
+ONLY FUNCTION THAT RETURNS IS MAIN.
+CONTROL FLOW. Only procedure calls and goto targets are listed.
+main->PROC5->PROC1->PROC2->PROC5:L2->PROC1->PROC4->main:AGAIN->PROC5->PRCO4->PROC5:L3->PROC4->PROC5:L4->main:why
+"
+
+START
+DEF ITEM SUM U = 0;
+DEF ITEM ITEM1 U = 5;
+DEF ITEM ITEM2 U = 10;
+
+DEF PROC PROC1(L1,L2:A1,A2);
+BEGIN
+   ITEM A1 U;
+   ITEM A2 U;
+   LABEL L1;
+   LABEL L2;
+   L3:
+      A1 = 10;
+   A2 = 10;
+   If A1 = 5; PROC2(L2:A1);
+   If A1 = 6; PROC4(L1,L2,L3);
+   RETURN;
+END
+
+DEF PROC PROC2(L1:A1);
+BEGIN
+   ITEM A1 U;
+   LABEL L1;
+   A1 = 94550;
+   GOTO L1;
+   RETURN;
+END
+
+DEF PROC PROC4(L1,L2,L3);
+BEGIN
+   LABEL L1;
+   LABEL L2;
+   LABEL L3;
+   IF ITEM1 = 5;
+   BEGIN
+      ITEM1 = 6;
+      SUM = SUM + 42;
+      GOTO L1;
+   END
+   IF ITEM1 = 6;
+   BEGIN
+      ITEM1 = 7;
+      GOTO L2;
+   END
+   IF ITEM1 = 7; GOTO L3;
+   RETURN;
+END
+
+DEF PROC PROC5(L1,L5:A1,A2);
+BEGIN
+   ITEM A1 U;
+   ITEM A2 U;
+   LABEL L1;
+   LABEL L5;
+   SUM = SUM + A1 + A2;
+   IF A1 = 5;
+   BEGIN
+      PROC1(L1,L2:A1,A2);
+      SUM = SUM + A1;
+      L2:
+         A1 = 6;
+      PROC1(L1,L2:A1,A2);
+   END
+   ELSE
+   BEGIN
+      L3:
+         SUM = SUM + A2;
+      PROC4(L1,L3,L4);
+      L4:
+         A1 = 42;
+         A2 = 9;
+         GOTO L5;
+   END
+   RETURN;
+END
+
+DEF PROC main S;
+BEGIN
+   AGAIN:
+      PROC5(AGAIN,WHY:ITEM1,ITEM2);
+   WHY:
+      main = SUM + ITEM1 + ITEM2 - 45;
+END
+TERM

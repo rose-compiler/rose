@@ -249,7 +249,7 @@ ATbool traverse_Continuation    (ATerm term, SgExpression* &phrase1, SgExpressio
 ATbool traverse_Phrase          (ATerm term, SgExpression* &expr, int &phrase_enum);
 
 // 4.3 IF STATEMENTS
-ATbool traverse_IfStatement   (ATerm term);
+ATbool traverse_IfStatement     (ATerm term);
 
 // 4.4 CASE STATEMENTS
 ATbool traverse_CaseStatement   (ATerm term);
@@ -307,7 +307,7 @@ ATbool traverse_StatusFormula    (ATerm term, SgExpression* &expr);
 ATbool traverse_PointerFormula   (ATerm term, SgExpression* &expr);
 
 // 6.1 VARIABLE AND BLOCK REFERENCES
-ATbool traverse_Variable         (ATerm term, SgExpression* &var);
+ATbool traverse_Variable         (ATerm term, SgExpression* &var, bool build_ref_expr=false);
 ATbool traverse_VariableLVal     (ATerm term, SgExpression* &var);
 ATbool traverse_VariableList     (ATerm term, std::vector<SgExpression*> &vars);
 ATbool traverse_TableItem        (ATerm term, SgExpression* &var);
