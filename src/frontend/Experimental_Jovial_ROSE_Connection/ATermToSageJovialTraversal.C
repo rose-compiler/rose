@@ -6203,7 +6203,7 @@ ATbool ATermToSageJovialTraversal::traverse_PointerFormula(ATerm term, SgExpress
 //========================================================================================
 // 6.1 VARIABLE AND BLOCK REFERENCES
 //----------------------------------------------------------------------------------------
-ATbool ATermToSageJovialTraversal::traverse_Variable(ATerm term, SgExpression* &var)
+ATbool ATermToSageJovialTraversal::traverse_Variable(ATerm term, SgExpression* &var, bool buildRefExpr)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_Variable: %s\n", ATwriteToString(term));
@@ -6217,13 +6217,18 @@ ATbool ATermToSageJovialTraversal::traverse_Variable(ATerm term, SgExpression* &
 
      var = nullptr;
 
-     // Look for a function call first (function need not be declared yet)
+     // Look for a function call first (functions need not be declared yet)
      //
      if (isSgFunctionSymbol(symbol)) {
-       SgFunctionCallExp* func_call = nullptr;
-       sage_tree_builder.Enter(func_call, std::string(name), nullptr);
-       sage_tree_builder.Leave(func_call);
-       var = func_call;
+       if (buildRefExpr) {
+         var = SageBuilder::buildFunctionRefExp_nfi(isSgFunctionSymbol(symbol));
+       }
+       else {
+         SgFunctionCallExp* funcCall{nullptr};
+         sage_tree_builder.Enter(funcCall, std::string(name), nullptr);
+         sage_tree_builder.Leave(funcCall);
+         var = funcCall;
+       }
      }
      else if (isSgClassSymbol(symbol) || isSgTypedefSymbol(symbol)) {
        var = SageBuilder::buildTypeExpression(symbol->get_type());
@@ -7030,7 +7035,7 @@ ATbool ATermToSageJovialTraversal::traverse_LocFunction(ATerm term, SgFunctionCa
          loc_arg_expr = SageBuilder::buildVarRefExp(loc_arg_str, SageBuilder::topScopeStack());
          ASSERT_not_null(loc_arg_expr);
       }
-      else if (traverse_Variable(t_argument, loc_arg_expr)) {
+      else if (traverse_Variable(t_argument, loc_arg_expr, /*build_ref_expr*/true)) {
          // MATCHED NamedVariable -> Variable
       }
       else if (traverse_UserDefinedFunctionCall(t_argument, loc_arg_expr)) {
