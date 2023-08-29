@@ -113,9 +113,11 @@ CXX2_TESTS_REQUIRED_TO_PASS = \
 	test_119_2021.cpp \
 	test_120_2020.cpp \
 	test_121_2020.cpp \
-	test_52.cpp
+	test_52.cpp \
+	test_2022_11_21.cpp
 
 #This set of CPP files must contain main() to run
+
 # DQ (4/6/2021): Failing test (get_nextStatement() returns error).
 CXX4_TESTS_REQUIRED_TO_RUN=	\
 	ft_cfftz_omp.cpp
@@ -128,6 +130,10 @@ CXX5_TESTS_REQUIRED_TO_RUN=	\
 	ft_cfftz_omp2.cpp
 CXX5_TESTS_OBJECT_REQUIRED_TO_RUN=${CXX5_TESTS_REQUIRED_TO_RUN:.cpp=.o}	
 
+# using #pragma outline to indicate what to outline	
+CXX6_TESTS_REQUIRED_TO_RUN=	\
+	test_2023_3_21.cpp
+CXX6_TESTS_OBJECT_REQUIRED_TO_RUN=${CXX6_TESTS_REQUIRED_TO_RUN:.cpp=.o}	
 
 
 # DQ (11/14/2017): This is failing and I need to learn the depth of what is the problem for the outlining tests.
@@ -376,7 +382,8 @@ $(dlopen3_test_targets): dlopen3_%.passed: % outline
 		USE_SUBDIR=yes \
 		CMD="$$(pwd)/outline$(EXEEXT) $(TEST_INCLUDES) $(dlopen3_test_flags) -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
-
+# use simple dlopen() call convention to find and call the outlined functions saved in
+# new files.It will turn on new_file and parameter_wrapper flags internally
 dlopensimple_test_targets = $(addprefix dlopensimple_,  $(addsuffix .passed, $(CXX2_TESTS_REQUIRED_TO_PASS)))
 C_CXX_RESULTS += $(dlopensimple_test_targets)  
 dlopensimple_test_flags =				\
@@ -437,13 +444,29 @@ $(dlopen5_test_targets): dlopen5_%: % outline
 $(CXX5_TESTS_OBJECT_REQUIRED_TO_RUN): %.o: dlopen5_%.cpp
 $(dlopen5_test_lib_targets): rose_%_lib.cpp: dlopen5_%.cpp
 
+# rules for pragma rose_outline, linking and running the code with main()
+dlopen6_test_targets = $(addprefix dlopen6_,  $(CXX6_TESTS_REQUIRED_TO_RUN))
+dlopen6_test_lib_targets = $(addprefix rose_, $(addsuffix .cpp, $(addsuffix _lib, $(basename $(CXX6_TESTS_REQUIRED_TO_RUN)))))
+dlopen6_test_lib_so_targets = $(addprefix rose_, $(addsuffix .so, $(addsuffix _lib, $(basename $(CXX6_TESTS_REQUIRED_TO_RUN)))))
+C_CXX_RESULTS += $(dlopen6_test_targets)
+dlopen6_test_flags = -fpermissive	\
+	$(INCLUDE_OUTLINING_LIB_HEADER)	\
+	-rose:outline:use_dlopen		\
+	-rose:outline:copy_orig_file		\
+	-rose:unparseHeaderFilesRootFolder unparseHeaderRoot_dlopen4
+$(dlopen6_test_targets): dlopen6_%: % outline
+	./outline$(EXEEXT) $(TEST_INCLUDES) $(dlopen6_test_flags) -c $(abspath $<) -rose:output $@
+$(CXX6_TESTS_OBJECT_REQUIRED_TO_RUN): %.o: dlopen6_%.cpp
+$(dlopen6_test_lib_targets): rose_%_lib.cpp: dlopen6_%.cpp
+
 # shortcut to test the dlopen feature
-test_dlopen: $(dlopen_test_targets) $(dlopen2_test_targets) $(dlopen3_test_targets) $(dlopen4_test_targets) $(dlopen5_test_targets)
+test_dlopen: $(dlopen_test_targets) $(dlopen2_test_targets) $(dlopen3_test_targets) $(dlopen4_test_targets) $(dlopen5_test_targets) $(dlopen6_test_targets)
 test_dlopen4: $(dlopen4_test_targets)
 test_dlopen5: $(dlopen5_test_targets)
+test_dlopen6: $(dlopen6_test_targets)
 
 #build rose_input_lib.so
-Test_lib_so_targets = $(dlopen4_test_lib_so_targets) $(dlopen5_test_lib_so_targets) 
+Test_lib_so_targets = $(dlopen4_test_lib_so_targets) $(dlopen5_test_lib_so_targets) $(dlopen6_test_lib_so_targets) 
 #$(dlopen4_test_lib_so_targets):%.so: %.cpp
 $(Test_lib_so_targets):%.so: %.cpp
 	$(CXX) -I. -g -fPIC -shared $< -o $@
@@ -460,6 +483,7 @@ MY_FINAL_LINK = $(OUTLINING_LIB_PATH)/.libs/liboutlining.a -Wl,--export-dynamic 
 
 PASSING_CXX_TEST_Executables = ${CXX4_TESTS_OBJECT_REQUIRED_TO_RUN:.o=.out}  
 PASSING_CXX_TEST_Executables += ${CXX5_TESTS_OBJECT_REQUIRED_TO_RUN:.o=.out}
+PASSING_CXX_TEST_Executables += ${CXX6_TESTS_OBJECT_REQUIRED_TO_RUN:.o=.out}
 
 #$(PASSING_CXX_TEST_Executables): %.out: %.o $(AUTO_TUNING_PATH)/libautoTuning.a rose_%_lib.so
 $(PASSING_CXX_TEST_Executables): %.out: %.o $(OUTLINING_LIB_PATH)/.libs/liboutlining.a rose_%_lib.so

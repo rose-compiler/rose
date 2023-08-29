@@ -13,21 +13,28 @@
 using namespace std;
 
 NameGenerator::NameGenerator (size_t first_id)
-  : cur_id_ (first_id)
 {
+// all other should also start with this first_id  
+  first_id_ = first_id; 
+  cur_id_[""]=first_id_;
 }
 
 NameGenerator::NameGenerator (const string& pre,
                               size_t first_id,
                               const string& suf)
-  : cur_id_ (first_id), prefix_ (pre), suffix_ (suf)
+  : prefix_ (pre), suffix_ (suf)
 {
+  first_id = first_id; 
+  cur_id_[""]=first_id_;
 }
 
 size_t
-NameGenerator::id (void) const
+NameGenerator::id (std::string full_file_name) 
 {
-  return cur_id_;
+  // First time to get id? 
+  if (cur_id_.count(full_file_name)==0)
+    cur_id_[full_file_name] = first_id_;
+  return cur_id_[full_file_name];
 }
 
 string
@@ -43,18 +50,21 @@ NameGenerator::suffix (void) const
 }
 
 string
-NameGenerator::current (void) const
+NameGenerator::current (std::string full_file_name) 
 {
   stringstream s;
-  s << prefix () << id () << suffix ();
+  s << prefix () << id (full_file_name) << suffix ();
   return s.str ();
 }
 
 string
-NameGenerator::next (void)
+NameGenerator::next (std::string full_file_name)
 {
-  ++cur_id_;
-  return current ();
+  // First time to get id? 
+  if (cur_id_.count(full_file_name)==0)
+    cur_id_[full_file_name] = first_id_;
+  cur_id_[full_file_name]++;
+  return current (full_file_name);
 }
 
 // eof
