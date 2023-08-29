@@ -11,7 +11,7 @@
 #include <iostream>
 #include <list>
 #include <string>
-
+#include "RoseAst.h"
 
 #include "Preprocess.hh"
 #include "Outliner.hh"
@@ -19,6 +19,7 @@
 // =====================================================================
 
 using namespace std;
+using namespace SageInterface;
 
 // a lookup table to avoid inserting headers more than once for a file
 static std::map<std::string, bool> fileHeaderMap; 
@@ -105,9 +106,104 @@ Outliner::Preprocess::preprocessOutlineTarget (SgStatement* s)
   // Make sure we duplicate any locally declared function prototypes.
   gatherNonLocalDecls (s_post);
 
+  // static const member variables in a class: if int or enum type , replace with constant values
+  propagateStaticConstMembers(s_post);
   // Check return value before returning.
   ROSE_ASSERT (s_post);
   return s_post;
+}
+
+// A helper function
+// TODO: move to SageInterface function
+/*
+Starts from a SgVarRefExp (variable reference expression) and checks if 
+it is connected to a class member variable through a variable symbol. 
+Additionally, it verifies if the member variable is static and constant, 
+has an integer or enumeration type, and 
+if the member variable's declaration has a right-hand initializer
+
+AST:
+
+  SgClassDefinition
+  * SgVariableDeclaration
+  ** SgInitializedName
+
+*/
+static SgExpression* isStaticConstIntOrEnumWithInitializer(SgVarRefExp *varRef)
+{
+  // A dictionary to store the initializer, if any
+  static std::map<SgVariableSymbol *, SgExpression*> dict;
+  if (varRef)
+  {
+    SgVariableSymbol *varSymbol = varRef->get_symbol();
+    if (varSymbol)
+    {
+      if (dict.count(varSymbol) == 1)
+           return dict[varSymbol];
+      SgInitializedName *varInit = varSymbol->get_declaration();
+      if (varInit)
+      {
+        SgNode *parentNode = varInit->get_parent();
+        if (parentNode)
+        {
+          SgClassDefinition *classDef = isSgClassDefinition(parentNode->get_parent());
+
+          if (classDef)
+          {
+            SgVariableDeclaration* var_decl = isSgVariableDeclaration(parentNode); 
+            ROSE_ASSERT (var_decl);
+            // static const int var = 1; 
+            // const is a modifier to the type
+            //|SgType::STRIP_REFERENCE_TYPE
+            SgType* base_type = varInit->get_type()->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_TYPEDEF_TYPE);
+            // Check for static, constant, integer or enumeration type, and initialized            
+            if (isStatic(var_decl) &&
+                isConstType(varInit->get_type()) &&
+                (isStrictIntegerType(base_type) || isSgEnumType(base_type)) &&
+                varInit->get_initptr())
+            {
+              dict[varSymbol] = varInit->get_initptr();
+              return dict[varSymbol];
+            }
+          }
+        }
+      }      
+      dict[varSymbol] = NULL;
+    }
+  }
+  return NULL;
+}
+
+/*
+a function to scan all variables within a basic block, 
+check if any of them
+* are members of a class
+* are static
+* are constant 
+* have integer or enumerate type, 
+* have right hand side initialized in the class's declaration. 
+
+If all conditions are true. their variable references in the basic block should 
+be replaced with their corresponding values. 
+*/
+void Outliner::Preprocess::propagateStaticConstMembers(SgBasicBlock *b)
+{
+  RoseAst ast(b);
+  // Traverse the AST to find all variable references
+  for (RoseAst::iterator it = ast.begin(); it != ast.end(); ++it)
+  {
+    SgNode *node = *it;
+    SgVarRefExp *varRef = isSgVarRefExp(node);
+
+    if (varRef)
+    {
+      // Check if the variable reference is a constant static member      
+      if (SgExpression* initor = isStaticConstIntOrEnumWithInitializer(varRef))
+      {      
+        replaceExpression(varRef, deepCopy(initor));
+      }
+    }
+  }
 }
 
 // eof
