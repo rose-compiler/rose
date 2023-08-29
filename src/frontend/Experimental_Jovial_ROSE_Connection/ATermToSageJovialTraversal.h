@@ -249,7 +249,7 @@ ATbool traverse_Continuation    (ATerm term, SgExpression* &phrase1, SgExpressio
 ATbool traverse_Phrase          (ATerm term, SgExpression* &expr, int &phrase_enum);
 
 // 4.3 IF STATEMENTS
-ATbool traverse_IfStatement   (ATerm term);
+ATbool traverse_IfStatement     (ATerm term);
 
 // 4.4 CASE STATEMENTS
 ATbool traverse_CaseStatement   (ATerm term);
