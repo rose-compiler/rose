@@ -1219,9 +1219,11 @@ insertFriendDecls (SgFunctionDeclaration* func,
          {
            printf ("NOTE: In insertFriendDecls(): deferedFriendTransformation.targetClasses.size() = %zu \n",deferedFriendTransformation.targetClasses.size());
          }
+   // DQ (4/19/2022): An essential application code demonstrates that this value can sometimes be as great as 4, so I have increased the limit.
    // DQ (12/11/2019): Modified to increase bound (required for tool_G using some of the later gregression tests (after test_33.cpp).
    // ROSE_ASSERT(deferedFriendTransformation.targetClasses.size() <= 2);
-      ROSE_ASSERT(deferedFriendTransformation.targetClasses.size() <= 3);
+   // ROSE_ASSERT(deferedFriendTransformation.targetClasses.size() <= 3);
+      ROSE_ASSERT(deferedFriendTransformation.targetClasses.size() <= 4);
    // ROSE_ASSERT(deferedFriendTransformation.targetFriends.size() < 2);
       ROSE_ASSERT(deferedFriendTransformation.targetFriends.size() == 0);
     }
@@ -1660,8 +1662,11 @@ Outliner::insert (SgFunctionDeclaration* func,
           ROSE_ASSERT(firstStatement != NULL);
           if (firstStatement != NULL)
              {
-               printf ("In outliner: before inserting outlined function prototype: firstStatement = %p = %s = %s \n",firstStatement,firstStatement->class_name().c_str(),SageInterface::get_name(firstStatement).c_str());
-
+#if 0
+            // DQ (6/5/2021): Supress this output spew for the quarterly review (not an error).
+               printf ("In outliner: before inserting outlined function prototype: firstStatement = %p = %s = %s \n",firstStatement,
+                    firstStatement->class_name().c_str(),SageInterface::get_name(firstStatement).c_str());
+#endif
             // DQ (3/17/2021): When using the token-based unparsing we need to set this so that the surrounding 
             // whitespace will be unparsed from the AST, instead of the token stream.
                firstStatement->set_containsTransformationToSurroundingWhitespace(true);

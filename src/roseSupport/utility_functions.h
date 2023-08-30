@@ -235,6 +235,10 @@ namespace Rose
   // DQ (1/19/2021): This is part of moving to a new map that uses the SgSourceFile pointer instead of the fild_id.
      extern std::map<SgSourceFile*,std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* > tokenSubsequenceMapOfMapsBySourceFile;
 
+  // DQ (5/27/2021): This is required for the token-based unparsing, specifically for knowing when to 
+  // unparse the trailing whitespace at the end of the last statement in a scope to the end of the scope.
+     extern std::map<SgSourceFile*,std::map<SgScopeStatement*,std::pair<SgStatement*,SgStatement*> > > firstAndLastStatementsToUnparseInScopeMapBySourceFile;
+
   // DQ (11/27/2013): Adding vector of nodes in the AST that defines the token unparsing AST frontier.
   // extern std::vector<FrontierNode*> frontierNodes;
   // extern std::map<SgStatement*,FrontierNode*> frontierNodes;
@@ -260,6 +264,10 @@ namespace Rose
 
   // DQ (10/29/2018): Build a map for the unparser to use to locate SgIncludeFile IR nodes.
      extern std::map<std::string, SgIncludeFile*> includeFileMapForUnparsing;
+
+  // DQ (5/8/2021): Added support for source file (header file) specific scope-based reporting on containsTransformation information.
+  // This may or may not be required to be a multi-map.
+  // extern std::map<SgIncludeFile*,std::map<SgScopeStatement*,bool>*> containsTransformationMap;
 
   // DQ (3/5/2017): Added general IR node specific message stream to support debugging message from the ROSE IR nodes.
      extern Sawyer::Message::Facility ir_node_mlog;

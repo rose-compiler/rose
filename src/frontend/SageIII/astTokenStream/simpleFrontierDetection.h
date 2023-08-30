@@ -102,9 +102,13 @@ class SimpleFrontierDetectionForTokenStreamMapping : public SgTopDownBottomUpPro
           int numberOfNodesInSubtree(SgSourceFile* sourceFile);
    };
 
-
+#if 0
+// DQ (5/2/2021): Modified API to support header file unparsing.
 void simpleFrontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile );
-
+#else
+// DQ (5/9/2021): Activate this code.
+void simpleFrontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile, bool traverseHeaderFiles );
+#endif
 
 #endif
 

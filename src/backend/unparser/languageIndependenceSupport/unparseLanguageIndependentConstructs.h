@@ -56,17 +56,24 @@ class UnparseLanguageIndependentConstructs
                e_else_whitespace_end
              };
 
+       // DQ (6/6/2021): Adding the support to provide offsets to modify the starting and ending token sequence to unparse.
        // Single statement specification of token subsequence.
        // void unparseStatementFromTokenStream (SgStatement* stmt, token_sequence_position_enum_type e_leading_whitespace_start, token_sequence_position_enum_type e_token_subsequence_start);
-          void unparseStatementFromTokenStream (SgStatement* stmt, token_sequence_position_enum_type e_leading_whitespace_start, token_sequence_position_enum_type e_token_subsequence_start, SgUnparse_Info& info);
+       // void unparseStatementFromTokenStream (SgStatement* stmt, token_sequence_position_enum_type e_leading_whitespace_start, token_sequence_position_enum_type e_token_subsequence_start, SgUnparse_Info& info);
+          void unparseStatementFromTokenStream (SgStatement* stmt, token_sequence_position_enum_type e_leading_whitespace_start, token_sequence_position_enum_type e_token_subsequence_start, 
+                                                SgUnparse_Info& info, int start_offset = 0, int end_offset = 0 );
 
+       // DQ (6/6/2021): Adding the support to provide offsets to modify the starting and ending token sequence to unparse.
        // Two statement specification of token subsequence (required for "else" case in SgIfStmt).
        // void unparseStatementFromTokenStream (SgStatement* stmt_1, SgStatement* stmt_2, token_sequence_position_enum_type e_leading_whitespace_start, token_sequence_position_enum_type e_token_subsequence_start);
        // void unparseStatementFromTokenStream (SgLocatedNode* stmt_1, SgLocatedNode* stmt_2, token_sequence_position_enum_type e_leading_whitespace_start, token_sequence_position_enum_type e_token_subsequence_start);
        // void unparseStatementFromTokenStream (SgLocatedNode* stmt_1, SgLocatedNode* stmt_2, token_sequence_position_enum_type e_leading_whitespace_start, 
        //                                       token_sequence_position_enum_type e_token_subsequence_start, bool unparseOnlyWhitespace = false );
+       // void unparseStatementFromTokenStream (SgLocatedNode* stmt_1, SgLocatedNode* stmt_2, token_sequence_position_enum_type e_leading_whitespace_start, 
+       //                                       token_sequence_position_enum_type e_token_subsequence_start, SgUnparse_Info& info, bool unparseOnlyWhitespace = false );
           void unparseStatementFromTokenStream (SgLocatedNode* stmt_1, SgLocatedNode* stmt_2, token_sequence_position_enum_type e_leading_whitespace_start, 
-                                                token_sequence_position_enum_type e_token_subsequence_start, SgUnparse_Info& info, bool unparseOnlyWhitespace = false );
+                                                token_sequence_position_enum_type e_token_subsequence_start, SgUnparse_Info& info, bool unparseOnlyWhitespace = false, 
+                                                int start_offset = 0, int end_offset = 0 );
 
        // DQ (12/30/2014): Adding debugging information.
           std::string token_sequence_position_name( token_sequence_position_enum_type e );
@@ -440,6 +447,8 @@ class UnparseLanguageIndependentConstructs
 
        // DQ (10/29/2013): Adding support to unparse statements using the token stream.
        // int unparseStatementFromTokenStream(SgSourceFile* sourceFile, SgStatement* stmt);
+
+       // DQ (6/6/2021): I think this is not needed (was modified to be the version of the function below).
           int unparseStatementFromTokenStream(SgSourceFile* sourceFile, SgStatement* stmt, SgUnparse_Info & info, bool & lastStatementOfGlobalScopeUnparsedUsingTokenStream);
 
        // DQ (11/4/2014): Unparse a partial sequence of tokens up to the next AST node.

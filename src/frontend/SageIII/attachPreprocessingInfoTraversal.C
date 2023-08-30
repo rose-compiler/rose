@@ -85,7 +85,7 @@ using namespace Rose;
 // #define ROSE_ASSERT assert
 
 // DQ (8/23/2018): Adding function declaration to generate comments, CPP directives and the token stream.
-void buildTokenStreamMapping(SgSourceFile* sourceFile);
+// void buildTokenStreamMapping(SgSourceFile* sourceFile);
 
 // It is needed because otherwise, the default destructor breaks something.
 
@@ -997,7 +997,9 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
             // LexTokenStreamTypePointer token_list_pointer = returnListOfAttributes->get_rawTokenStream();
             // ROSE_ASSERT(token_list_pointer != NULL);
                ROSE_ASSERT(returnListOfAttributes->get_rawTokenStream() != NULL);
-
+#if 0
+               printf ("In buildCommentAndCppDirectiveList(): returnListOfAttributes->get_rawTokenStream()->size() = %zu \n",returnListOfAttributes->get_rawTokenStream()->size());
+#endif
 #if 0
             // This is a list<stream_element*> type.
                LexTokenStreamType & tokenList = *(returnListOfAttributes->get_rawTokenStream());
@@ -1044,7 +1046,10 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
             // LexTokenStreamType* tokenStream = getTokenStream(sourceFile);
                LexTokenStreamType* tokenStream = returnListOfAttributes->get_rawTokenStream();
                ROSE_ASSERT(tokenStream != NULL);
-
+#if 0
+               printf ("In buildCommentAndCppDirectiveList(): returnListOfAttributes->get_rawTokenStream()->size() = %zu \n",returnListOfAttributes->get_rawTokenStream()->size());
+               printf ("In buildCommentAndCppDirectiveList(): tokenStream->size() = %zu \n",tokenStream->size());
+#endif
             // Set this value so that we can generate unique keys for any interval.
             // I think that a better mehcanism for generating unique keys would be possible (but this is simple).
                TokenStreamSequenceToNodeMapping::tokenStreamSize = tokenStream->size();
@@ -1065,6 +1070,10 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
                   }
 
             // return tokenVector;
+#endif
+
+#if 0
+               printf ("tokenVector.size() = %zu \n",tokenVector.size());
 #endif
 
 #if 0
@@ -1653,7 +1662,7 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
      printf ("tokenVector.size()        = %zu \n",getTokenStream(sourceFile).size());
 #endif
 
-#if DEBUG_BUILD_COMMENT_AND_CPP_DIRECTIVE_LIST
+#if DEBUG_BUILD_COMMENT_AND_CPP_DIRECTIVE_LIST || 0
      printf ("Leaving AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList(use_Wave = %s) file = %s \n",use_Wave ? "true" : "false",fileNameForDirectivesAndComments.c_str());
 #endif
 

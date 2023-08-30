@@ -528,7 +528,15 @@ ProcessingPhase::outputReport ( int n )
 
 void AstPerformance::generateReport() 
    {
+#if 0
+     printf ("In AstPerformance::generateReport(): calling AstPerformance(\"\",false).generateReportFromObject() \n");
+#endif
+
      AstPerformance("", false).generateReportFromObject();
+
+#if 0
+     printf ("In AstPerformance::generateReport(): DONE: calling AstPerformance(\"\",false).generateReportFromObject() \n");
+#endif
    }
 
 void

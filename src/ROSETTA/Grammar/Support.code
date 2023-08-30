@@ -5393,6 +5393,11 @@ HEADER_FILE_INFORMATION_START
           int  get_physical_line() const;
           void set_physical_source_position_to_match_logical_source_position();
 
+#if 1
+       // DQ (5/20/2021): Added to support debugging.
+          int*  get_physical_file_id_reference ();
+#endif
+
        // DQ (2/28/2019): Support for multi-file handling.
       //! Where this is a shared IR node across multiple files, return the line number location of the IR node for a specific file.
           int  get_physical_line(int file_id) const;
@@ -6096,6 +6101,16 @@ HEADER_APPLICATION_SOURCE_FILE_START
        // DQ (11/30/2015): Provide a statement to use as a key in the macro expansion map to get info about macro expansions.
           void set_macroExpansionMap(std::map<SgStatement*,MacroExpansion*> & macroExpansionMap);
           std::map<SgStatement*,MacroExpansion*> & get_macroExpansionMap();
+
+#if 0
+       // DQ (9/12/2009): Adding support for new name qualification (not ready yet).
+       // typedef std::vector<SgNode*> NumberToStatementType;
+       // void buildStatementNumbering( NumberToStatementType & numberToStatementContainer );
+          void buildStatementNumbering();
+#endif
+
+       // DQ (3/2/2022): Added a function to support initialization of all data members.
+          void initialization();
 
 HEADER_APPLICATION_SOURCE_FILE_END
 
@@ -7123,6 +7138,14 @@ HEADER_UNPARSE_INFO_START
           static bool get_extern_C_with_braces();
           static void set_extern_C_with_braces( bool extern_C_with_braces );
 
+       // DQ (6/5/2021): Support for debugging, we want to debug the transitions between token-based unparsing and unparsing from the AST.
+          static SgStatement* get_previouslyUnparsedStatement();
+          static void set_previouslyUnparsedStatement( SgStatement* previouslyUnparsedStatement );
+
+       // DQ (6/5/2021): Support for debugging, we want to debug the transitions between token-based unparsing and unparsing from the AST.
+          static bool get_previousStatementUnparsedFromTokenStream();
+          static void set_previousStatementUnparsedFromTokenStream( bool previousStatementUnparsedFromTokenStream );
+
 HEADER_UNPARSE_INFO_END
 
 
@@ -7135,6 +7158,7 @@ HEADER_UNPARSE_POSTDECLARATION_START
 extern std::string getSgVariant ( int x);
 
 HEADER_UNPARSE_POSTDECLARATION_END
+
 
 HEADER_TEMPLATE_PARAMETER_START
      public:
@@ -10012,7 +10036,15 @@ SgSymbolTable::find_function()
              {
             // if(isSgFunctionSymbol((*p_iterator).second))
             //      return ((SgFunctionSymbol *)(*p_iterator).second);
-               if (p_iterator->second->variantT() == V_SgFunctionSymbol)
+
+            // DQ (8/3/2022): I think this needs to support the variant being either a V_SgFunctionSymbol or a V_SgMemberFunctionSymbol.
+            // Else we would need another function to support member functions (which might be the better solution).
+            // Better yet, this code should be using a consistant way to check for SgFunctionSymbol IR nodes as is done in 
+            // the next_function_symbol() function.
+            // if (p_iterator->second->variantT() == V_SgFunctionSymbol)
+            //      return (SgFunctionSymbol *) p_iterator->second;
+            // if (p_iterator->second->variantT() == V_SgFunctionSymbol || p_iterator->second->variantT() == V_SgMemberFunctionSymbol)
+               if (isSgFunctionSymbol((*p_iterator).second))
                     return (SgFunctionSymbol *) p_iterator->second;
                p_iterator++;
              }
@@ -12845,6 +12877,15 @@ Sg_File_Info::get_physical_file_id() const
      bool physicalFileOK = (p_physical_file_id >= 0);
      int file_id = get_file_id();
 
+#if 0
+     printf ("In Sg_File_Info::get_physical_file_id(): \n");
+     printf (" --- (before being set) return_physical_file_id = %d \n",return_physical_file_id);
+     printf (" --- p_physical_file_id                         = %d \n",p_physical_file_id);
+     printf (" --- physicalFileOK                             = %s \n",physicalFileOK ? "true" : "false");
+     printf (" --- file_id                                    = %d \n",file_id);
+     printf (" --- isCompilerGenerated()                      = %s \n",isCompilerGenerated() ? "true" : "false");
+#endif
+
   // DQ (8/20/2018): Not clear why this language specific rule is a good idea.
   // PHL (01/06/2014) use get_line for Fortran frontend
      if (SageInterface::is_Fortran_language() )
@@ -12863,7 +12904,22 @@ Sg_File_Info::get_physical_file_id() const
        // DQ (8/22/2018): Use the file_id for compiler generated nodes, because they don't have a valid source position.
           if (isCompilerGenerated() == true)
              {
+#if 1
                return_physical_file_id = file_id;
+#else
+            // DQ (5/20/2021): If the physical_file_id has been set (as we now do to support the header file unparsing) 
+            // then where it is a physical file (id >= 0) then we want to return this value, even of this is marked as 
+            // compiler generated.
+            // if (physicalFileOK == false && file_id < 0)
+               if (physicalFileOK == true)
+                  {
+                    return_physical_file_id = p_physical_file_id;
+                  }
+                 else
+                  {
+                    return_physical_file_id = file_id;
+                  }
+#endif
              }
             else
              {
@@ -12871,8 +12927,24 @@ Sg_File_Info::get_physical_file_id() const
              }
         }
 
+#if 0
+     printf ("Leaving Sg_File_Info::get_physical_file_id(): return_physical_file_id = %d \n",return_physical_file_id);
+#endif
+
      return return_physical_file_id;
    }
+
+
+#if 1
+// DQ (5/20/2021): Added to support debugging.
+int*
+Sg_File_Info::get_physical_file_id_reference()
+   {
+     assert (this != NULL);
+
+     return &p_physical_file_id;
+   }
+#endif
 
 
 int
@@ -12971,7 +13043,7 @@ Sg_File_Info::set_physical_file_id( int physical_file_id )
      set_isModified(true);
 
 #if 0
-     mprintf ("In Sg_File_Info::set_physical_file_id(physical_file_id = %d) this = %p \n",physical_file_id,this);
+     printf ("In Sg_File_Info::set_physical_file_id(physical_file_id = %d) this = %p \n",physical_file_id,this);
 #endif
 
      p_physical_file_id = physical_file_id;
@@ -13699,6 +13771,64 @@ Sg_File_Info::setTransformation()
    {
      assert(this != NULL);
      p_classificationBitField |= e_transformation;
+
+#if 0
+  // DQ (7/13/2021): Added debugging code.
+     static int counter = 0;
+
+     SgNode* parent = this->get_parent();
+     if (parent != NULL)
+        {
+          SgCastExp* castExpression = isSgCastExp(parent);
+          if (castExpression != NULL)
+             {
+               printf ("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX \n");
+               printf ("In Sg_File_Info::setTransformation(): Found SgCastExp %p counter = %d \n",castExpression,counter);
+               printf ("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX \n");
+
+#if 0
+               if (counter > 20)
+                  {
+#if 1
+                    printf ("Exiting as a test: counter = %d \n",counter);
+                    ROSE_ASSERT(false);
+#endif
+                  }
+
+            // counter++;
+#endif
+
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+            else
+             {
+               printf ("In Sg_File_Info::setTransformation(): !SgCastExp: parent = %p = %s counter = %d \n",parent,parent->class_name().c_str(),counter);
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+        }
+       else
+        {
+          printf ("In Sg_File_Info::setTransformation(): parent == NULL: counter = %d \n",counter);
+        }
+
+#if 0
+     if (counter > 250)
+        {
+#if 0
+          printf ("Exiting as a test: counter = %d \n",counter);
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
+
+     counter++;
+#endif
    }
 
 void
@@ -14505,13 +14635,52 @@ SgFile::initialization()
   // DQ (9/19/2019): Support optimizations of header file unparsing (specifically restricting
   // the number of header files for which we collect comments and CPP directives).
   // p_header_file_unparsing_optimization             = false;
-     p_header_file_unparsing_optimization_source_file = false;
-     p_header_file_unparsing_optimization_header_file = false;
+
+  // DQ (6/12/2021): Eliminate this in favor of the now static data member header_file_unparsing_optimization.
+  // p_header_file_unparsing_optimization_source_file = false;
+  // p_header_file_unparsing_optimization_header_file = false;
 
   // DQ (9/17/2020): Added these missing variable initializations.
      p_standard     = e_default_standard;
      p_gnu_standard = false;
+
+  // DQ (5/20/2021): Support for token-based unparsing (computation of first and last statement in source file.
+  // p_firstStatement = NULL;
+  // p_lastStatement  = NULL;
    }
+
+#if 0
+// DQ (9/4/2008): This is now in SgSourceFile (and built using ROSETTA with a different name)
+SgGlobal &
+SgFile::root() ROSE_DEPRECATED_FUNCTION
+   {
+     assert(p_root != NULL);
+     return *p_root;
+   }
+#endif
+
+#if 0
+// DQ (7/19/2005): Added to support better naming of global scope (root is not very clear)
+// get_root() set_root() and root() will be depricated.
+SgGlobal*
+SgFile::get_globalScope() const
+   {
+  // This variable name will be changed in the future (to globalScope)
+     assert(p_root != NULL);
+     return p_root;
+   }
+#endif
+
+#if 0
+// DQ (5/9/2008): Added to support for previous variable name for some backward compatability.
+SgGlobal*
+SgSourceFile::get_root() const
+   {
+  // This variable name will be changed in the future (to globalScope)
+     assert(p_globalScope != NULL);
+     return p_globalScope;
+   }
+#endif
 
 enum SgFile::standard_enum SgFile::get_standard(void) const { return p_standard; }
 void SgFile::set_standard(enum standard_enum e_std) { p_standard = e_std; }
@@ -14806,6 +14975,55 @@ SgFile::generateOutputFileName() const
           objectFileName = baseFileNameWithoutSuffix + ".o";
         }
 
+  // DQ (1/26/2022): Need to enforce consistancy of the output object file path and the output object file.
+     if (get_objectFileNameWithoutPath() != "")
+        {
+          if (get_objectFileNameWithPath() == "")
+             {
+               mprintf ("NOTE: both objectFileNameWithPath and objectFileNameWithoutPath must be set consistantly \n");
+               mprintf (" --- get_objectFileNameWithoutPath() = %s \n",get_objectFileNameWithoutPath().c_str());
+               mprintf (" --- get_objectFileNameWithPath()    = %s \n",get_objectFileNameWithPath().c_str());
+#if 0
+               set_objectFileNameWithPath(get_objectFileNameWithoutPath());
+               printf (" --- after reset: get_objectFileNameWithPath() = %s \n",get_objectFileNameWithPath().c_str());
+#endif
+            // ROSE_ASSERT(false);
+             }
+        }
+       else
+        {
+          if (get_objectFileNameWithPath() != "")
+             {
+               mprintf ("NOTE: both objectFileNameWithPath and objectFileNameWithoutPath must be set consistantly \n");
+               mprintf (" --- get_objectFileNameWithoutPath() = %s \n",get_objectFileNameWithoutPath().c_str());
+               mprintf (" --- get_objectFileNameWithPath()    = %s \n",get_objectFileNameWithPath().c_str());
+#if 0
+               set_objectFileNameWithoutPath(get_objectFileNameWithPath());
+               printf (" --- after reset: get_objectFileNameWithoutPath() = %s \n",get_objectFileNameWithoutPath().c_str());
+#endif
+            // ROSE_ASSERT(false);
+             }
+        }
+
+
+     std::string specified_objectFileName = get_objectFileNameWithoutPath();
+     if (specified_objectFileName.length() == 0)
+        {
+#if 0
+          printf (" --- get_objectFileNameWithoutPath() returned empty string, using generateOutputFileName(): objectFileName = %s \n",objectFileName.c_str());
+#endif
+        }
+       else
+        {
+#if 0
+          printf (" --- using value from get_objectFileNameWithoutPath(): objectFileName = %s \n",objectFileName.c_str());
+#endif
+          objectFileName = specified_objectFileName;
+        }
+
+  // mprintf ("At base of SgFile::generateOutputFileName(): objectFileName = %s \n",objectFileName.c_str());
+  // display("In SgFile::generateOutputFileName()");
+
      return objectFileName;
    }
 
@@ -15019,6 +15237,11 @@ SgFile::display ( const std::string & label ) const
 
   // DQ (12/23/2015): Suppress variable declaration normalizations
      printf ("     p_suppress_variable_declaration_normalization = %s \n",(p_suppress_variable_declaration_normalization == true) ? "true" : "false");
+
+  // DQ (5/20/2021): Support for token-based unparsing (computation of first and last statement in source file.
+  // printf ("     p_firstStatement                            = %p \n",p_firstStatement);
+  // printf ("     p_lastStatement                             = %p \n",p_lastStatement);
+
    }
 
 
@@ -15057,11 +15280,115 @@ SgFile::set_header_file_unparsing_optimization( bool b )
      p_header_file_unparsing_optimization = b;
    }
 
-
 SOURCE_APPLICATION_FILE_END
 
 
 SOURCE_APPLICATION_SOURCE_FILE_START
+
+#if 0
+// DQ (3/2/2022): This default constructor is automatically generated by ROSETTA, so we don't need 
+// it to be explicit. Note that all of the data members are automatically initialized, as can be 
+// seen by looking at the Cxx_Grammar.C (generated code).
+SgSourceFile::SgSourceFile ()
+   {
+  // Default constructor
+
+#if 1
+     printf ("Inside of Default constructor SgSourceFile::SgSourceFile() \n");
+#endif
+
+     SgGlobal* p_root = NULL;
+
+     assert (p_root == NULL);
+
+     initialization();
+
+  // DQ (9/4/2008): Setup of global scope moved from SgFile to SgSourceFile
+  // DQ (8/31/2006): Generate a NULL_FILE (instead of SgFile::SgFile) so that we can
+  // enforce that the filename is always an absolute path (starting with "/").
+  // Sg_File_Info* globalScopeFileInfo = new Sg_File_Info("SgGlobal::SgGlobal",0,0);
+     Sg_File_Info* globalScopeFileInfo = new Sg_File_Info("",0,0);
+     assert (globalScopeFileInfo != NULL);
+
+     p_root = new SgGlobal( globalScopeFileInfo );
+     assert (p_root != NULL);
+
+  // DQ (2/15/2006): Set the parent of the SgGlobal IR node
+     p_root->set_parent(this);
+
+  // DQ (8/21/2008): Set the end of the global scope (even if it is updated later)
+  // mprintf ("In SgFile::initialization(): p_root->get_endOfConstruct() = %p \n",p_root->get_endOfConstruct());
+     assert(p_root->get_endOfConstruct() == NULL);
+     p_root->set_endOfConstruct(new Sg_File_Info("",0,0));
+     assert(p_root->get_endOfConstruct() != NULL);
+   }
+#endif
+
+
+
+
+#if 1
+void
+SgSourceFile::initialization()
+   {
+  // DQ (3/2/2022): The SgSourceFile node has a number of new data members that were not previously initialized.
+
+  // Initialization
+
+#if 0
+     SourceFile.setDataPrototype   ( "SgGlobal*", "globalScope", "= NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     SourceFile.setDataPrototype   ( "SgModuleStatementPtrList", "module_list", "",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     SourceFile.setDataPrototype   ( "SgTokenPtrList", "token_list", "",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     SourceFile.setDataPrototype   ( "SgGlobal*", "temp_holding_scope", "= NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     SourceFile.setDataPrototype   ( "SgJavaPackageStatement *", "package", "= NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
+     SourceFile.setDataPrototype   ( "SgJavaImportStatementList*", "import_list", "= NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
+     SourceFile.setDataPrototype   ( "SgJavaClassDeclarationList*", "class_list", "= NULL",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
+     SourceFile.setDataPrototype   ( "bool", "isHeaderFile", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     SourceFile.setDataPrototype   ( "bool", "isHeaderFileIncludedMoreThanOnce", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     SourceFile.setDataPrototype   ( "SgHeaderFileReport*", "headerFileReport", "= NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
+     SourceFile.setDataPrototype("SgStringList","extraIncludeDirectorySpecifierBeforeList", "",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     SourceFile.setDataPrototype("SgStringList","extraIncludeDirectorySpecifierAfterList", "",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     SourceFile.setDataPrototype   ( "SgIncludeFile*", "associated_include_file", "= NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
+     SourceFile.setDataPrototype   ( "bool", "processedToIncludeCppDirectivesAndComments", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     SourceFile.setDataPrototype ( "SgNodePtrList" , "extra_nodes_for_namequal_init", "" ,
+                                   NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     SourceFile.setDataPrototype   ( "bool", "isDynamicLibrary", "= false",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     SourceFile.setDataPrototype ( "SgStatement*", "firstStatement", " = NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     SourceFile.setDataPrototype ( "SgStatement*", "lastStatement", " = NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+#endif
+
+     p_globalScope                                = NULL;
+     p_temp_holding_scope                         = NULL;
+     p_package                                    = NULL;
+     p_import_list                                = NULL;
+     p_class_list                                 = NULL;
+     p_isHeaderFile                               = false;
+     p_isHeaderFileIncludedMoreThanOnce           = false;
+     p_headerFileReport                           = NULL;
+     p_associated_include_file                    = NULL;
+     p_processedToIncludeCppDirectivesAndComments = NULL;
+     p_isDynamicLibrary                           = false;
+     p_firstStatement                             = NULL;
+     p_lastStatement                              = NULL;
+   }
+#endif
 
 // DQ (1/20/2021): Changed the API to use a pointer to a std::map<SgNode*,TokenStreamSequenceToNodeMapping*> instead of a reference.
 void
@@ -15477,6 +15804,7 @@ SgSourceFile::set_representativeWhitespaceStatementMap(std::map<SgScopeStatement
 #endif
    }
 
+
 std::map<SgScopeStatement*,SgStatement*> &
 SgSourceFile::get_representativeWhitespaceStatementMap()
    {
@@ -15521,7 +15849,6 @@ SgSourceFile::get_representativeWhitespaceStatementMap()
      return *result;
    }
 
-
 void
 SgSourceFile::set_macroExpansionMap(std::map<SgStatement*,MacroExpansion*> & macroExpansionMap)
    {
@@ -15557,6 +15884,7 @@ SgSourceFile::set_macroExpansionMap(std::map<SgStatement*,MacroExpansion*> & mac
      mprintf ("In SgSourceFile::set_macroExpansionMap(): (after): frontierMap.size() = %zu \n",frontierMap.size());
 #endif
    }
+
 
 std::map<SgStatement*,MacroExpansion*> &
 SgSourceFile::get_macroExpansionMap()
@@ -18559,6 +18887,36 @@ SgUnparse_Info::dec_nestingLevel() {
         cerr << "warning: SgUnparse_Info.p_nestingLevel decremented below zero." << endl;
     }
 }
+
+
+// DQ (6/5/2021): Support for debugging, we want to debug the transitions between token-based unparsing and unparsing from the AST.
+SgStatement* SgUnparse_Info::p_previouslyUnparsedStatement              = NULL;
+bool         SgUnparse_Info::p_previousStatementUnparsedFromTokenStream = false;
+
+// DQ (6/5/2021): Support for debugging, we want to debug the transitions between token-based unparsing and unparsing from the AST.
+SgStatement* SgUnparse_Info::get_previouslyUnparsedStatement()
+   {
+     return p_previouslyUnparsedStatement;
+   }
+
+// DQ (6/5/2021): Support for debugging, we want to debug the transitions between token-based unparsing and unparsing from the AST.
+void SgUnparse_Info::set_previouslyUnparsedStatement( SgStatement* previouslyUnparsedStatement )
+   {
+     p_previouslyUnparsedStatement = previouslyUnparsedStatement;
+   }
+
+// DQ (6/5/2021): Support for debugging, we want to debug the transitions between token-based unparsing and unparsing from the AST.
+bool SgUnparse_Info::get_previousStatementUnparsedFromTokenStream()
+   {
+     return p_previousStatementUnparsedFromTokenStream;
+   }
+
+// DQ (6/5/2021): Support for debugging, we want to debug the transitions between token-based unparsing and unparsing from the AST.
+void SgUnparse_Info::set_previousStatementUnparsedFromTokenStream( bool previousStatementUnparsedFromTokenStream )
+   {
+     p_previousStatementUnparsedFromTokenStream = previousStatementUnparsedFromTokenStream;
+   }
+
 
 SOURCE_UNPARSE_INFO_END
 
