@@ -129,8 +129,8 @@ private:
         BidirectionalIterator(const BidirectionalIterator &other): base_(other.base_) {}
 
     public:
-        Derived& operator=(const Derived &other) { base_ = other.base_; return *derived(); }
-        BidirectionalIterator& operator=(const BidirectionalIterator &other) { base_ = other.base; return *this; }
+        Derived& operator=(const Derived &other) { base_ = other.base(); return *derived(); }
+        BidirectionalIterator& operator=(const BidirectionalIterator &other) { base_ = other.base(); return *this; }
 
         /** Pre-increment to next iterator position. */
         Derived& operator++() { ++base_; return *derived(); }
