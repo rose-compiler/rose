@@ -575,16 +575,16 @@ ROSE_DLL_API bool isExtern(SgDeclarationStatement* stmt);
 ROSE_DLL_API void setExtern(SgDeclarationStatement* stmt);
 
 //! True if an SgInitializedName is "mutable' (has storage modifier set)
-bool ROSE_DLL_API isMutable(SgInitializedName* name);
+ROSE_DLL_API bool ROSE_DLL_API isMutable(SgInitializedName* name);
 
 //! True if a parameter name is a Jovial output parameter
-bool ROSE_DLL_API isJovialOutParam(SgInitializedName* name);
+ROSE_DLL_API bool ROSE_DLL_API isJovialOutParam(SgInitializedName* name);
 
 //! Get a vector of Jovial input parameters from the function parameter list (may work for Fortran in the future)
-std::vector<SgInitializedName*> getInParameters(const SgInitializedNamePtrList &params);
+ROSE_DLL_API std::vector<SgInitializedName*> getInParameters(const SgInitializedNamePtrList &params);
 
 //! Get a vector of Jovial output parameters from the function parameter list (may work for Fortran in the future)
-std::vector<SgInitializedName*> getOutParameters(const SgInitializedNamePtrList &params);
+ROSE_DLL_API std::vector<SgInitializedName*> getOutParameters(const SgInitializedNamePtrList &params);
 
 //! Interface for creating a statement whose computation writes its answer into
 //! a given variable.
@@ -597,7 +597,7 @@ class StatementGenerator {
 //! Check if a SgNode _s is an assignment statement (any of =,+=,-=,&=,/=, ^=, etc)
 //!
 //! Return the left hand, right hand expressions and if the left hand variable is also being read
-  bool isAssignmentStatement(SgNode* _s, SgExpression** lhs=NULL, SgExpression** rhs=NULL, bool* readlhs=NULL);
+ROSE_DLL_API bool isAssignmentStatement(SgNode* _s, SgExpression** lhs=NULL, SgExpression** rhs=NULL, bool* readlhs=NULL);
 
 //! Variable references can be introduced by SgVarRef, SgPntrArrRefExp, SgInitializedName, SgMemberFunctionRef etc. For Dot and Arrow Expressions, their lhs is used to obtain SgInitializedName (coarse grain) by default. Otherwise, fine-grain rhs is used.
 ROSE_DLL_API SgInitializedName* convertRefToInitializedName(SgNode* current, bool coarseGrain=true);
@@ -618,32 +618,39 @@ sortSgNodeListBasedOnAppearanceOrderInSource(const std::vector<SgDeclarationStat
 // DQ (4/13/2013): We need these to support the unparing of operators defined by operator syntax or member function names.
 //! Is an overloaded operator a prefix operator (e.g. address operator X * operator&(), dereference operator X & operator*(), unary plus operator X & operator+(), etc.
 // bool isPrefixOperator( const SgMemberFunctionRefExp* memberFunctionRefExp );
-bool isPrefixOperator( SgExpression* exp );
+ROSE_DLL_API bool isPrefixOperator( SgExpression* exp );
 
 //! Check for proper names of possible prefix operators (used in isPrefixOperator()).
-bool isPrefixOperatorName( const SgName & functionName );
+ROSE_DLL_API bool isPrefixOperatorName( const SgName & functionName );
 
 //! Is an overloaded operator a postfix operator. (e.g. ).
-bool isPostfixOperator( SgExpression* exp );
+ROSE_DLL_API bool isPostfixOperator( SgExpression* exp );
 
 //! Is an overloaded operator an index operator (also referred to as call or subscript operators). (e.g. X & operator()() or X & operator[]()).
-bool isIndexOperator( SgExpression* exp );
+ROSE_DLL_API bool isIndexOperator( SgExpression* exp );
 
 // DQ (1/10/2014): Adding more general support for token based unparsing.
 //! Used to support token unparsing (when the output the trailing token sequence).
-SgStatement* lastStatementOfScopeWithTokenInfo (SgScopeStatement* scope, std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap);
+ROSE_DLL_API SgStatement* lastStatementOfScopeWithTokenInfo (SgScopeStatement* scope, std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap);
 
 // DQ (8/12/2020): Check the access permissions of all defining and nodefining declarations.
-void checkAccessPermissions ( SgNode* );
+ROSE_DLL_API void checkAccessPermissions ( SgNode* );
 
 // DQ (8/14/2020): Check the symbol tables for specific scopes (debugging support).
-void checkSymbolTables ( SgNode* );
+ROSE_DLL_API void checkSymbolTables ( SgNode* );
 
 // DQ (11/9/2020): Added support for makring IR nodes and subtrees of the AST to be unparsed (physical_file_id
 // is required when unparsing header files is true or support multiple files and shared IR nodes).
-void markSubtreeToBeUnparsed(SgNode* root, int physical_file_id);
-void markNodeToBeUnparsed(SgNode* node, int physical_file_id);
+ROSE_DLL_API void markSubtreeToBeUnparsed(SgNode* root, int physical_file_id);
+ROSE_DLL_API void markNodeToBeUnparsed(SgNode* node, int physical_file_id);
 
+// DQ (7/8/2021): This is a tree traversal based version of this marking of a subtree which allows special handling of cast expressions.
+// Basically, cast expression should not be marked as transformations. 
+ROSE_DLL_API void markSubtreeToBeUnparsedTreeTraversal(SgNode* root, int physical_file_id);
+
+// DQ (7/12/2021): Debugging code to locate specific node marked as a transforamtion in the AST.
+// Debugging the outliner.
+ ROSE_DLL_API bool findFirstSgCastExpMarkedAsTransformation(SgNode* n, const std::string & s);
 
 //@}
 
@@ -1810,8 +1817,14 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
 
   // DQ (11/15/2018): Adding support for traversals over the include file tree.
   //! return path prefix for subtree of include files.
-  void listHeaderFiles ( SgIncludeFile* includeFile );
+  ROSE_DLL_API void listHeaderFiles ( SgIncludeFile* includeFile );
 
+  // DQ (5/9/2021): Adding support for detection of statements in a scope that must be unparsed.
+  /*! \brief This function supports the token-based unparsing when used with unparsing of header files to know when the scope can be unparsed via it's token stream, even though a statement from a header file may contain a transformation.
+     returns true if there is a statement in the scope that has to be unparsed (is from the same file as the scope).
+     returns false if the scope is empty or contains only statements associated with one or more header files.
+  */
+  ROSE_DLL_API bool scopeHasStatementsFromSameFile(SgScopeStatement* scope);
 
 //@}
 
@@ -1923,6 +1936,12 @@ struct DeferredTransformation
 // DQ (2/24/2009): Simple function to delete an AST subtree (used in outlining).
 //! Function to delete AST subtree's nodes only, users must take care of any dangling pointers, symbols or types that result.
 ROSE_DLL_API void deleteAST(SgNode* node);
+
+// DQ (2/13/2022): Adding support to delete the whole AST (every SgNode).
+ROSE_DLL_API void deleteAllNodes();
+
+// DQ (3/5/2022): Adding support to check AST for invalid poionters.
+ROSE_DLL_API void checkSgNodePointers();
 
 //! Special purpose function for deleting AST expression tress containing valid original expression trees in constant folded expressions (for internal use only).
 ROSE_DLL_API void deleteExpressionTreeWithOriginalExpressionSubtrees(SgNode* root);
@@ -2187,6 +2206,9 @@ ROSE_DLL_API void moveDeclarationToAssociatedNamespace ( SgDeclarationStatement*
 
 ROSE_DLL_API bool isTemplateInstantiationNode(SgNode* node);
 
+// DQ (5/23/2021): Added function to support test for template declaration (commented out, not required).
+// ROSE_DLL_API bool isTemplateDeclarationNode(SgNode* node);
+
 ROSE_DLL_API void wrapAllTemplateInstantiationsInAssociatedNamespaces(SgProject* root);
 
 // DQ (12/1/2015): Adding support for fixup internal data struuctures that have references to statements (e.g. macro expansions).
@@ -2287,6 +2309,9 @@ ROSE_DLL_API void resetModifiedLocatedNodes(const std::set<SgLocatedNode*> & mod
 
 // DQ (10/23/2018): Report nodes that are marked as modified.
 ROSE_DLL_API void reportModifiedStatements(const std::string & label, SgNode* node);
+
+// DQ (6/21/2021): Report nodes that are marked as modified.
+ROSE_DLL_API void reportModifiedLocatedNodes( const std::string & label, SgNode* node );
 
 // DQ (3/22/2019): Translate CPP directives from attached preprocessor information to CPP Directive Declaration IR nodes.
 ROSE_DLL_API void translateToUseCppDeclarations( SgNode* n );

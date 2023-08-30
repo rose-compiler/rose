@@ -1,0 +1,3 @@
+This test checks that ROSE can correctly detect and unparse the
+trailing preprocessor directives in a header file that has at least
+one statement.

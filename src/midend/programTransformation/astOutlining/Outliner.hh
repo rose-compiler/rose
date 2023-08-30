@@ -299,7 +299,7 @@ ROSE_DLL_API Sawyer::CommandLine::SwitchGroup commandLineSwitches();
      * the lib source file's name convention is rose_input_lib.[c|cxx].
      */
     ROSE_DLL_API SgSourceFile* getLibSourceFile(SgBasicBlock* target);
-    
+
     // DQ (3/20/2019): This function operates on the new file used to support outlined function definitions.
     /* \brief XXX 
      * This function operates on the new file used to support outlined function definitions.

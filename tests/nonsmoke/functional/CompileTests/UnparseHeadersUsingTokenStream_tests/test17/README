@@ -1,0 +1,9 @@
+In this test, a single source file includes two header files in
+different scopes. One of the header files declares a class. The other
+one is in a different folder and contains several nested scopes, each
+including one or more other header files from the same folder (4 in
+total), also, it declares a variable in the most outer scope. Only the
+two header files that are included in the source file should be
+unparsed because there are no changes to other included header
+files. The unparsed header files should find correctly their included
+not unparsed header files.

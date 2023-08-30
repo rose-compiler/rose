@@ -1,5 +1,6 @@
 // Example ROSE Translator used for testing ROSE infrastructure
 #include "rose.h"
+#include "Rose/AST/IO.h"
 
 // DQ (3/5/2017): Adding support for EDG/ROSE frontend message logging.
 #ifndef ROSE_USE_CLANG_FRONTEND
@@ -118,6 +119,11 @@ int main( int argc, char * argv[] )
      TimingPerformance::generateReport();
   // TimingPerformance::generateReportToFile(project);
   // TimingPerformance::set_project(SgProject* project);
+
+  // This should delete all of the IR nodes in the AST, and as a result should 
+  // fix all memory leaks from the AST which will better allow tools to detect 
+  // and fix their memory leeks (since that will be all that is left).
+     Rose::AST::IO::free();
 
      return status;
    }

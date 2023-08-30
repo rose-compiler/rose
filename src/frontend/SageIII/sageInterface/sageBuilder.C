@@ -127,7 +127,9 @@ SageBuilder::buildDefaultConstructor (SgClassType* classType)
 
      SgName className = classDeclaration->get_name();
 
+#if 0
      printf ("In SageBuilder::buildDefaultConstructor(): building default constructor for class = %s \n",className.str());
+#endif
 
      SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(classDeclaration->get_definingDeclaration());
      ASSERT_not_null(definingClassDeclaration);
@@ -178,11 +180,19 @@ SageBuilder::buildDefaultConstructor (SgClassType* classType)
 
      ROSE_ASSERT (memberFunctionDeclaration->get_declarationModifier().get_accessModifier().isPublic() == true);
 
+#if 0
+  // DQ (6/27/2021): Added debugging information.  It appears that when we build the prototype for a default 
+  // constructor we also build the defining declaration, which might not always exist in the original source 
+  // file.  So this seems like a potential subtle error.
+     printf ("In SageBuilder::buildDefaultConstructor(): building default constructor for class = %s \n",className.str());
+     printf (" --- memberFunctionDeclaration                                    = %p \n",memberFunctionDeclaration);
+     printf (" --- first_nondefining_declaration                                = %p \n",first_nondefining_declaration);
+     printf (" --- memberFunctionDeclaration->get_firstNondefiningDeclaration() = %p \n",memberFunctionDeclaration->get_firstNondefiningDeclaration());
+     printf (" --- memberFunctionDeclaration->get_definingDeclaration()         = %p \n",memberFunctionDeclaration->get_definingDeclaration());
+#endif
+
      return memberFunctionDeclaration;
    }
-
-
-
 
 
 //! Get the current source position classification (defines how IR nodes built by the SageBuilder interface will be classified).
@@ -472,6 +482,9 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
 
      SgTemplateArgumentPtrList::const_iterator i = templateArgumentsList.begin();
      bool need_separator = false;
+
+     bool exit_after_name_is_generated = false;
+
      while (i != templateArgumentsList.end())
         {
           if ((*i)->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument)
@@ -489,9 +502,243 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
           printf ("In SageBuilder::appendTemplateArgumentsToName(): (top of loop) templateArgumentsList element *i = %p = %s returnName = %s \n",*i,(*i)->class_name().c_str(),returnName.str());
 #endif
 
+       // DQ (2/5/2022): We need to use a fully qualified name as demonstrated by test2022_05.C. 
+       // Where there are two different template arguments with the same name (e.g. in different 
+       // namespaces) the generated names will be the same and the symbols will collide in the 
+       // symbol table for the scope where they are both constructed.
+       // So a fix is to add the fully qualified name of the scope of the expression used as a template argument.
+
+       // DQ (2/6/2022): Newer version of code (still refactoring this section).
+          bool used_fully_qualified_name = false;
+
+#define DEBUG_TEMPLATE_ARGUMENT_NAMES 0
+
+       // DQ (2/6/2022): This is the newly refactored implementation to add name qualification to 
+       // the template arguments in the used in symbol tables key for template instantiations.
+          SgTemplateArgument* templateArgument = *i;
+          ROSE_ASSERT(templateArgument != NULL);
+
+          switch (templateArgument->get_argumentType())
+             {
+               case SgTemplateArgument::type_argument:
+                  {
+                    SgType* type = templateArgument->get_type();
+                    ROSE_ASSERT(type != NULL);
+
+#if DEBUG_TEMPLATE_ARGUMENT_NAMES
+                    printf ("In SageBuilder::appendTemplateArgumentsToName(): case SgTemplateArgument::type_argument: BEFORE stripType: type = %p = %s \n",type,type->class_name().c_str());
+#endif
+                 // I think that we need to strip off any pointer or reference modifier types.
+                 // unsigned char bit_array == (SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_POINTER_TYPE | SgType::STRIP_ARRAY_TYPE | SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_POINTER_MEMBER_TYPE);
+                    unsigned char bit_array = (SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_POINTER_TYPE | SgType::STRIP_ARRAY_TYPE | SgType::STRIP_POINTER_MEMBER_TYPE);
+                    type = type->stripType(bit_array);
+
+#if DEBUG_TEMPLATE_ARGUMENT_NAMES
+                    printf ("In SageBuilder::appendTemplateArgumentsToName(): case SgTemplateArgument::type_argument: AFTER stripType: type = %p = %s \n",type,type->class_name().c_str());
+#endif
+                 // DQ (2/6/2022): We need to find an example of the case where the template argument is a pointer type.
+                    if (isSgPointerType(templateArgument->get_type()) != NULL)
+                       {
+
+#if DEBUG_TEMPLATE_ARGUMENT_NAMES
+                         printf ("Found a templateArgument->get_type() that is SgPointerType: name = %s \n",name.str());
+#endif
+#if 0
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
+
+                    SgNamedType* namedType = isSgNamedType(type);
+                    if (namedType != NULL)
+                       {
+                      // printf ("type = %p = %s \n",type,type->class_name().c_str());
+                      // ROSE_ASSERT(namedType != NULL);
+
+                      // DQ (2/5/2022): Since SgNonrealType is a SgNamedType, is this sufficiant to handle those cases?
+                         SgDeclarationStatement* declaration = namedType->get_declaration();
+                         ROSE_ASSERT(declaration != NULL);
+
+                         switch (declaration->variantT())
+                            {
+                              case V_SgTemplateInstantiationDecl:
+                              case V_SgTemplateClassDeclaration:
+                              case V_SgClassDeclaration:
+                                 {
+                                   SgClassDeclaration* classDeclaration = isSgClassDeclaration(declaration);
+                                   string fully_qualified_name = classDeclaration->get_qualified_name();
+#if DEBUG_TEMPLATE_ARGUMENT_NAMES
+                                   printf ("fully_qualified_name = %s \n",fully_qualified_name.c_str());
+#endif
+                                   returnName += fully_qualified_name;
+                                   used_fully_qualified_name = true;
+                                   break;
+                                 }
+
+                              case V_SgTemplateInstantiationTypedefDeclaration:
+                              case V_SgTemplateTypedefDeclaration:
+                              case V_SgTypedefDeclaration:
+                                 {
+                                   SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(declaration);
+                                   string fully_qualified_name = typedefDeclaration->get_qualified_name();
+#if DEBUG_TEMPLATE_ARGUMENT_NAMES
+                                   printf ("fully_qualified_name = %s \n",fully_qualified_name.c_str());
+#endif
+                                   returnName += fully_qualified_name;
+                                   used_fully_qualified_name = true;
+                                   break;
+                                 }
+
+                              case V_SgEnumDeclaration:
+                                 {
+                                   SgEnumDeclaration* enumDeclaration = isSgEnumDeclaration(declaration);
+                                   string fully_qualified_name = enumDeclaration->get_qualified_name();
+#if DEBUG_TEMPLATE_ARGUMENT_NAMES
+                                   printf ("fully_qualified_name = %s \n",fully_qualified_name.c_str());
+#endif
+                                   returnName += fully_qualified_name;
+                                   used_fully_qualified_name = true;
+                                   break;
+                                 }
+
+                           // DQ (2/5/2022): Is this implementation correct for SgNonrealDecl?
+                              case V_SgNonrealDecl:
+                                 {
+                                   SgNonrealDecl* nonrealDeclaration = isSgNonrealDecl(declaration);
+                                   string fully_qualified_name = nonrealDeclaration->get_qualified_name();
+#if DEBUG_TEMPLATE_ARGUMENT_NAMES
+                                   printf ("fully_qualified_name = %s \n",fully_qualified_name.c_str());
+#endif
+                                   returnName += fully_qualified_name;
+                                   used_fully_qualified_name = true;
+                                   break;
+                                 }
+
+                              default:
+                                 {
+                                // I'm not clear if we need to support any other cases, so this default case is an error.
+                                   printf ("In SageBuilder::appendTemplateArgumentsToName(): default reached: get_type() != NULL: declaration = %s \n",declaration->class_name().c_str());
+                                   ROSE_ASSERT(false);
+                                 }
+                            }
+                       }
+                      else
+                       {
+#if DEBUG_TEMPLATE_ARGUMENT_NAMES
+                         printf ("In SageBuilder::appendTemplateArgumentsToName(): not a SgNamedType: get_type() != NULL: type = %s \n",type->class_name().c_str());
+#endif
+                       }
+
+                    break;
+                  }
+
+               case SgTemplateArgument::nontype_argument:
+                  {
+                 // DQ (8/12/2013): This can be either an SgExpression or SgInitializedName.
+                 // ASSERT_not_null(templateArgument->get_expression());
+                    ROSE_ASSERT (templateArgument->get_expression() != NULL || templateArgument->get_initializedName() != NULL);
+                    ROSE_ASSERT (templateArgument->get_expression() == NULL || templateArgument->get_initializedName() == NULL);
+                    if (templateArgument->get_expression() != NULL)
+                       {
+                         SgExpression* expression = templateArgument->get_expression();
+                         ROSE_ASSERT(expression != NULL);
+
+                      // Now we care about types of expression that could require name qualification.
+                      // Is there anything more than SgVarRefExp that we need to worry about?
+                         SgVarRefExp* varRefExp = isSgVarRefExp(expression);
+                         if (varRefExp != NULL)
+                            {
+                           // SgVariableSymbol* variableSymbol = isSgVariableSymbol(varRefExp->get_symbol());
+                              SgVariableSymbol* variableSymbol = varRefExp->get_symbol();
+                              ROSE_ASSERT(variableSymbol != NULL);
+                              SgInitializedName* initializedName = variableSymbol->get_declaration();
+                              ROSE_ASSERT(initializedName != NULL);
+                              string fully_qualified_name = initializedName->get_qualified_name();
+#if DEBUG_TEMPLATE_ARGUMENT_NAMES
+                              printf ("fully_qualified_name = %s \n",fully_qualified_name.c_str());
+#endif
+                              returnName += fully_qualified_name;
+                              used_fully_qualified_name = true;
+                            }
+                           else
+                            {
+                           // Unclear if we have cases here to support (need more examples of different types of template arguments in use).
+#if DEBUG_TEMPLATE_ARGUMENT_NAMES
+                              printf ("In SageBuilder::appendTemplateArgumentsToName(): Case of template argument varRefExp == NULL: expression = %p = %s \n",
+                                   expression,expression->class_name().c_str());
+#endif
+#if 0
+                              printf ("In SageBuilder::appendTemplateArgumentsToName(): Case of template argument varRefExp == NULL is not yet supported! \n");
+                              ROSE_ASSERT(false);
+#endif
+                            }
+                       }
+                      else
+                       {
+                      // SgType* type = templateArgument->get_initializedName()->get_type();
+                      // ROSE_ASSERT(type != NULL);
+
+                         SgInitializedName* initializedName = templateArgument->get_initializedName();
+                         ROSE_ASSERT(initializedName != NULL);
+                         printf ("initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
+
+                         printf ("In SageBuilder::appendTemplateArgumentsToName(): Case of template argument initializedName != NULL: Unclear what do do in this case \n");
+                         ROSE_ASSERT(false);
+                       }
+
+                    break;
+                  }
+
+               case SgTemplateArgument::template_template_argument:
+                  {
+                    SgDeclarationStatement* decl = templateArgument->get_templateDeclaration();
+                    ASSERT_not_null(decl);
+#if DEBUG_TEMPLATE_ARGUMENT_NAMES
+                    printf ("In SageBuilder::appendTemplateArgumentsToName(): case SgTemplateArgument::template_template_argument: decl = %p = %s \n",decl,decl->class_name().c_str());
+#endif
+                    exit_after_name_is_generated = true;
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                    SgTemplateDeclaration* tpl_decl = isSgTemplateDeclaration(decl);
+                    ROSE_ASSERT(tpl_decl == NULL);
+
+                    break;
+                  }
+
+                case SgTemplateArgument::start_of_pack_expansion_argument:
+                  {
+#if DEBUG_TEMPLATE_ARGUMENT_NAMES
+                    printf("WARNING: start_of_pack_expansion_argument in evaluateNameQualificationForTemplateArgumentList (can happen from some debug output)\n");
+#endif
+                    break;
+                  }
+
+               case SgTemplateArgument::argument_undefined:
+                  {
+                 // mfprintf(mlog [ WARN ] ) ("Error argument_undefined in evaluateNameQualificationForTemplateArgumentList \n");
+                    printf("Error argument_undefined in evaluateNameQualificationForTemplateArgumentList \n");
+                    ROSE_ABORT();
+                    break;
+                  }
+
+               default:
+                  {
+                 // mfprintf(mlog [ WARN ] ) ("Error default reached in evaluateNameQualificationForTemplateArgumentList \n");
+                    printf("Error default reached in evaluateNameQualificationForTemplateArgumentList \n");
+                    ROSE_ABORT();
+                  }
+             }
+
+       // DQ (2/5/2022): if it is not set above then use the old way without name qualification (debugging test2022_05.C).
        // DQ (9/15/2012): We need to communicate that the language so that SgBoolVal will not be unparsed to "1" instead of "true" (see test2012_215.C).
        // Calling the unparseToString (SgUnparse_Info *info) function instead of the version not taking an argument.
-          returnName += (*i)->unparseToString(info);
+       // returnName += (*i)->unparseToString(info);
+          if (used_fully_qualified_name == false)
+             {
+               returnName += (*i)->unparseToString(info);
+             }
 
 #if DEBUG_APPEND_TEMPLATE_ARGUMENT_LIST
           printf ("In SageBuilder::appendTemplateArgumentsToName(): (after appending template name) *i = %p returnName = %s \n",*i,returnName.str());
@@ -507,8 +754,17 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
      if (emptyArgumentList == false)
           returnName += " > ";
 
-#if DEBUG_APPEND_TEMPLATE_ARGUMENT_LIST
+#if DEBUG_APPEND_TEMPLATE_ARGUMENT_LIST || DEBUG_TEMPLATE_ARGUMENT_NAMES
      printf ("Leaving SageBuilder::appendTemplateArgumentsToName(): returnName = %s \n",returnName.str());
+#endif
+
+#if 0
+  // This allows me to test a large number of input codes and identify ones that are using specific features (e.g. template template parameters).
+     if (exit_after_name_is_generated == true)
+        {
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+        }
 #endif
 
      delete info;
@@ -1083,7 +1339,6 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
 // DQ (8/21/2011): Note that the default is to set the declaration modifier's access modifier to be
 // default (which is the same as public).  So the effect it to set it to be public.  This is ignored
 // by the unparser for most languguages in ROSE.
-
   varDecl->set_firstNondefiningDeclaration(varDecl);
 
   if (scope!=NULL)
@@ -1165,6 +1420,9 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
   // because we have added statements explicitly marked as transformations.
   // checkIsModifiedFlag(varDecl);
      unsetNodesMarkedAsModified(varDecl);
+
+// ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(varDecl,"testing buildVariableDeclaration(): 9") == false);
+// ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(scope,"testing buildVariableDeclaration(): 9-scope") == false);
 
   return varDecl;
 }
@@ -3014,8 +3272,18 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (
           i_name->set_scope(scope);
         }
 
+#if 0
+  // DQ (7/12/2021): Debugging where nodes in the outliner are being marked as transformations (SgCastExpressions should not be marked as transformations).
+     printf ("In buildNondefiningFunctionDeclaration_T(): setting the source position information (calling setTransformation()) \n");
+#endif
+
   // DQ (5/2/2012): Test this to make sure we have SgInitializedNames set properly.
      SageInterface::setSourcePosition(paralist);
+
+#if 0
+  // DQ (7/12/2021): Debugging where nodes in the outliner are being marked as transformations (SgCastExpressions should not be marked as transformations).
+     printf ("In buildNondefiningFunctionDeclaration_T(): DONE: setting the source position information (calling setTransformation()) \n");
+#endif
 
 #if BUILDER_MAKE_REDUNDANT_CALLS_TO_DETECT_TRANSFORAMTIONS
   // Liao 11/21/2012: we should assert no transformation only when the current model is NOT transformation
@@ -6140,6 +6408,12 @@ SageBuilder::buildFunctionCallExp(const SgName& name, SgType* return_type, SgExp
      SgFunctionRefExp* func_ref = buildFunctionRefExp(name,func_type,scope);
      SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(func_ref,parameters,func_ref->get_type());
      parameters->set_parent(func_call_expr);
+
+#if 0
+  // DQ (7/12/2021): Debugging where nodes in the outliner are being marked as transformations (SgCastExpressions should not be marked as transformations).
+     printf ("In buildNondefiningFunctionDeclaration_T(): setting the source position information (calling setTransformation()) \n");
+#endif
+
      setOneSourcePositionForTransformation(func_call_expr);
      ASSERT_not_null(func_call_expr);
 
@@ -10048,6 +10322,8 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
      printf ("Leaving buildNondefiningClassDeclaration_nfi(): Calling find_symbol_from_declaration() \n");
      SgSymbol* test_symbol = nondefdecl->get_scope()->find_symbol_from_declaration(nondefdecl);
 
+     printf ("test_symbol = %p \n",test_symbol);
+
   // DQ (1/27/2019): Test that symbol table to debug Cxx11_tests/test2019)33.C.
      printf ("Leaving buildNondefiningClassDeclaration_nfi(): Calling get_symbol_from_symbol_table() \n");
      ROSE_ASSERT(nondefdecl->get_symbol_from_symbol_table() != NULL);
@@ -13862,6 +14138,21 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
   // printf (" --- fullname = %s \n",fullname.c_str());
 #endif
 
+#if 0
+  // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+     ROSE_ASSERT(project != NULL);
+     std::set<SgLocatedNode*> tmp1_collectionOfModifiedLocatedNodes = collectModifiedLocatedNodes(project);
+
+     if (tmp1_collectionOfModifiedLocatedNodes.size() > 0)
+        {
+          printf ("In Traversal::evaluateInheritedAttribute(): tmp1_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp1_collectionOfModifiedLocatedNodes.size());
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
+
      ROSE_ASSERT(inputFileName.size() != 0); // empty file name is not allowed.
 
   // DQ (9/18/2019): I am unclear what the use of fullname is below.
@@ -14001,7 +14292,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 
        // DQ (2/6/2009): Avoid closing this file twice (so put this here, instead of below).
           testfile.close();
-          // should remove the old one here, Liao, 5/1/2009
+       // should remove the old one here, Liao, 5/1/2009
         }
 
   // DQ (2/6/2009): Avoid closing this file twice (moved to false branch above).
@@ -14055,6 +14346,66 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
      printf ("In SageBuilder::buildFile(): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
 #endif
 
+     SgSourceFile* sourceFile = isSgSourceFile(result);
+     if (sourceFile != NULL)
+        {
+          SgGlobal* globalScope = sourceFile->get_globalScope();
+          ROSE_ASSERT(globalScope != NULL);
+
+       // DQ (6/24/2021): We need to end this function with the isModified flag set to false.  This is 
+       // important for the support of the token based unparsing when building a dynamic library.
+       // This is important in permitting the simpleFrontierDetectionForTokenStreamMapping() function 
+       // to generate the correct settings for nodes in the second file constructed from the original file.
+          if (globalScope->get_isModified() == true)
+             {
+#if 0
+               printf ("In SageBuilder::buildFile(): globalScope->get_isModified() == true: reset to false \n");
+#endif
+               globalScope->set_isModified(false);
+#if 0
+               printf ("In SageBuilder::buildFile(): Verify false setting: globalScope->get_isModified() = %s \n",globalScope->get_isModified() ? "true" : "false");
+#endif
+             }
+        }
+
+#if 0
+     reportModifiedStatements("In SageBuilder::buildFile(): calling reportModifiedStatements(): project",project);
+     reportModifiedStatements("In SageBuilder::buildFile(): calling reportModifiedStatements(): result",result);
+
+     reportModifiedLocatedNodes("In SageBuilder::buildFile(): calling reportModifiedLocatedNodes(): project",project);
+     reportModifiedLocatedNodes("In SageBuilder::buildFile(): calling reportModifiedLocatedNodes(): result",result);
+#endif
+
+#if 0
+  // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+     ROSE_ASSERT(project != NULL);
+     std::set<SgLocatedNode*> tmp2_collectionOfModifiedLocatedNodes = collectModifiedLocatedNodes(project);
+
+     if (tmp2_collectionOfModifiedLocatedNodes.size() > 0)
+        {
+          printf ("In Traversal::evaluateInheritedAttribute(): tmp2_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp2_collectionOfModifiedLocatedNodes.size());
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
+
+#if 0
+  // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+     ROSE_ASSERT(project != NULL);
+     std::set<SgLocatedNode*> tmp22_collectionOfModifiedLocatedNodes = collectModifiedLocatedNodes(result);
+
+     if (tmp22_collectionOfModifiedLocatedNodes.size() > 0)
+        {
+          printf ("In Traversal::evaluateInheritedAttribute(): tmp22_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp22_collectionOfModifiedLocatedNodes.size());
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
+
 #if 0
      printf ("Calling outputFileIds() \n");
 
@@ -14067,6 +14418,9 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
   // DQ (9/18/2019): Adding debugging support.
      printf ("In SageBuilder::buildFile(): file = %p = %s result->get_header_file_unparsing_optimization() = %s \n",
           result,result->class_name().c_str(),result->get_header_file_unparsing_optimization() ? "true" : "false");
+#endif
+
+#if 0
      printf ("In SageBuilder::buildFile(): file = %p = %s result->get_header_file_unparsing_optimization_source_file() = %s \n",
           result,result->class_name().c_str(),result->get_header_file_unparsing_optimization_source_file() ? "true" : "false");
      printf ("In SageBuilder::buildFile(): file = %p = %s result->get_header_file_unparsing_optimization_header_file() = %s \n",
@@ -14074,9 +14428,9 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 #endif
 
   // DQ (9/18/2019): Adding debugging support.
-     ROSE_ASSERT(result->get_header_file_unparsing_optimization() == false);
-     ROSE_ASSERT(result->get_header_file_unparsing_optimization_source_file() == false);
-     ROSE_ASSERT(result->get_header_file_unparsing_optimization_header_file() == false);
+  // ROSE_ASSERT(result->get_header_file_unparsing_optimization() == false);
+  // ROSE_ASSERT(result->get_header_file_unparsing_optimization_source_file() == false);
+  // ROSE_ASSERT(result->get_header_file_unparsing_optimization_header_file() == false);
 
   // ROSE_ASSERT(result->get_header_file_unparsing_optimization() == true);
 
@@ -14136,6 +14490,36 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
      printf ("In SageBuilder::buildFile(): Outliner::use_dlopen = %s \n",Outliner::use_dlopen ? "true" : "false");
 #endif
 
+#if 0
+  // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+     ROSE_ASSERT(project != NULL);
+     std::set<SgLocatedNode*> tmp23_collectionOfModifiedLocatedNodes = collectModifiedLocatedNodes(result);
+
+     if (tmp23_collectionOfModifiedLocatedNodes.size() > 0)
+        {
+          printf ("In Traversal::evaluateInheritedAttribute(): tmp23_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp23_collectionOfModifiedLocatedNodes.size());
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
+
+#if 0
+  // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+     ROSE_ASSERT(project != NULL);
+     std::set<SgLocatedNode*> tmp24_collectionOfModifiedLocatedNodes = collectModifiedLocatedNodes(project);
+
+     if (tmp24_collectionOfModifiedLocatedNodes.size() > 0)
+        {
+          printf ("In Traversal::evaluateInheritedAttribute(): tmp24_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp24_collectionOfModifiedLocatedNodes.size());
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
+
   // DQ (3/5/2014): I need to check with Liao to understand this part of the code better.
   // I think that the default value for Outliner::use_dlopen is false, so that when the
   // Java support is used the true branch is taken.  However, if might be the we need
@@ -14144,18 +14528,21 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
      if (!Outliner::use_dlopen)
         {
 #if 0
-          printf ("In SageBuilder::buildFile(): (after test for (!Outliner::use_dlopen) == true: project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
+          printf ("In SageBuilder::buildFile(): (after test for (!Outliner::use_dlopen) == true: project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",
+               project,project->get_fileList_ptr()->get_listOfFiles().size());
 #endif
        // DQ (3/5/2014): If we added the file above, then don't add it here since it is redundant.
           project->set_file(*result);  // equal to push_back()
 #if 0
-          printf ("In SageBuilder::buildFile(): (after 2nd project->set_file()): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
+          printf ("In SageBuilder::buildFile(): (after 2nd project->set_file()): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",
+               project,project->get_fileList_ptr()->get_listOfFiles().size());
 #endif
         }
        else
         {
 #if 0
-          printf ("In SageBuilder::buildFile(): (after test for (!Outliner::use_dlopen) == false: project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
+          printf ("In SageBuilder::buildFile(): (after test for (!Outliner::use_dlopen) == false: project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",
+               project,project->get_fileList_ptr()->get_listOfFiles().size());
 #endif
 
        // Liao, 5/1/2009,
@@ -14168,12 +14555,28 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
        // So we only turn this on if Outliner:: use_dlopen is used for now
        // The semantics of adding a new source file can cause changes to linking phase (new object files etc.)
        // But ROSE has a long-time bug in handling combined compiling and linking command like "translator -o a.out a.c b.c"
-       // It will generated two command line: "translator -o a.out a.c" and "translator -o a.out b.c", which are totally wrong.
+       // It will generated two command lines: "translator -o a.out a.c" and "translator -o a.out b.c", which are totally wrong.
        // This problem is very relevant to the bug.
           SgFilePtrList& flist = project->get_fileList();
           flist.insert(flist.begin(),result);
 #if 0
-          printf ("In SageBuilder::buildFile(): (after flist.insert(flist.begin(),result)): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
+          printf ("In SageBuilder::buildFile(): (after flist.insert(flist.begin(),result)): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",
+               project,project->get_fileList_ptr()->get_listOfFiles().size());
+#endif
+        }
+#endif
+
+#if 0
+  // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+     ROSE_ASSERT(project != NULL);
+     std::set<SgLocatedNode*> tmp25_collectionOfModifiedLocatedNodes = collectModifiedLocatedNodes(project);
+
+     if (tmp25_collectionOfModifiedLocatedNodes.size() > 0)
+        {
+          printf ("In Traversal::evaluateInheritedAttribute(): tmp25_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp25_collectionOfModifiedLocatedNodes.size());
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
 #endif
         }
 #endif
@@ -14201,6 +14604,29 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
   // SageInterface::collectModifiedLocatedNodes() has previously been implemented and used for debugging.
      std::set<SgLocatedNode*> modifiedNodeSet = collectModifiedLocatedNodes(project);
 
+#if 0
+     reportModifiedStatements("In SageBuilder::buildFile(): calling reportModifiedStatements(): project",project);
+  // reportModifiedStatements("In SageBuilder::buildFile(): calling reportModifiedStatements(): result",result);
+
+     reportModifiedLocatedNodes("In SageBuilder::buildFile(): calling reportModifiedLocatedNodes(): project",project);
+  // reportModifiedLocatedNodes("In SageBuilder::buildFile(): calling reportModifiedLocatedNodes(): result",result);
+#endif
+
+#if 0
+  // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+     ROSE_ASSERT(project != NULL);
+     std::set<SgLocatedNode*> tmp251_collectionOfModifiedLocatedNodes = collectModifiedLocatedNodes(project);
+
+     if (tmp251_collectionOfModifiedLocatedNodes.size() > 0)
+        {
+          printf ("In Traversal::evaluateInheritedAttribute(): tmp251_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp251_collectionOfModifiedLocatedNodes.size());
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
+
   // DQ (3/6/2014): For Java, this function can only be called AFTER the SgFile has been added to the file list in the SgProject.
   // For C/C++ it does not appear to matter if the call is made before the SgFile has been added to the file list in the SgProject.
   // DQ (6/14/2013): Since we seperated the construction of the SgFile IR nodes from the invocation of the frontend, we have to call the frontend explicitly.
@@ -14216,6 +14642,31 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
      SageInterface::outputFileIds(result);
 
      printf ("DONE: After result->runFrontend(): calling outputFileIds() \n");
+#endif
+
+#if 0
+     reportModifiedStatements("In SageBuilder::buildFile(): calling reportModifiedStatements(): project",project);
+  // reportModifiedStatements("In SageBuilder::buildFile(): calling reportModifiedStatements(): result",result);
+
+     reportModifiedLocatedNodes("In SageBuilder::buildFile(): calling reportModifiedLocatedNodes(): project",project);
+  // reportModifiedLocatedNodes("In SageBuilder::buildFile(): calling reportModifiedLocatedNodes(): result",result);
+#endif
+
+#if 0
+  // DQ (6/24/2021): This can be expected to fail, because the new AST has been build and all of the 
+  // nodes are marked as isModified until rest in the AstPostProcessing() step (below).
+  // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+     ROSE_ASSERT(project != NULL);
+     std::set<SgLocatedNode*> tmp26_collectionOfModifiedLocatedNodes = collectModifiedLocatedNodes(project);
+
+     if (tmp26_collectionOfModifiedLocatedNodes.size() > 0)
+        {
+          printf ("In Traversal::evaluateInheritedAttribute(): tmp26_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp26_collectionOfModifiedLocatedNodes.size());
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
 #endif
 
 #if 0
@@ -14251,6 +14702,29 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 #endif
 
 #if 0
+     reportModifiedStatements("In SageBuilder::buildFile(): calling reportModifiedStatements(): project",project);
+  // reportModifiedStatements("In SageBuilder::buildFile(): calling reportModifiedStatements(): result",result);
+
+     reportModifiedLocatedNodes("In SageBuilder::buildFile(): calling reportModifiedLocatedNodes(): project",project);
+  // reportModifiedLocatedNodes("In SageBuilder::buildFile(): calling reportModifiedLocatedNodes(): result",result);
+#endif
+
+#if 0
+  // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+     ROSE_ASSERT(project != NULL);
+     std::set<SgLocatedNode*> tmp265_collectionOfModifiedLocatedNodes = collectModifiedLocatedNodes(project);
+
+     if (tmp265_collectionOfModifiedLocatedNodes.size() > 0)
+        {
+          printf ("In Traversal::evaluateInheritedAttribute(): tmp265_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp265_collectionOfModifiedLocatedNodes.size());
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
+
+#if 0
      result->display("SageBuilder::buildFile()");
 #endif
 
@@ -14272,6 +14746,21 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 #if 0
      printf ("Exiting as a test! \n");
      ROSE_ABORT();
+#endif
+
+#if 0
+  // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+     ROSE_ASSERT(project != NULL);
+     std::set<SgLocatedNode*> tmp27_collectionOfModifiedLocatedNodes = collectModifiedLocatedNodes(project);
+
+     if (tmp27_collectionOfModifiedLocatedNodes.size() > 0)
+        {
+          printf ("In Traversal::evaluateInheritedAttribute(): tmp27_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp27_collectionOfModifiedLocatedNodes.size());
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
 #endif
 
   // DQ (11/10/2019): Shared nodes between existing files that are copied need to be marked as shared.
@@ -14337,6 +14826,22 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
                ROSE_ABORT();
 #endif
              }
+
+#if 0
+  // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+     ROSE_ASSERT(project != NULL);
+     std::set<SgLocatedNode*> tmp28_collectionOfModifiedLocatedNodes = collectModifiedLocatedNodes(project);
+
+     if (tmp28_collectionOfModifiedLocatedNodes.size() > 0)
+        {
+          printf ("In Traversal::evaluateInheritedAttribute(): tmp28_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp28_collectionOfModifiedLocatedNodes.size());
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
+
 #else
 
 #error "DEAD CODE!"
@@ -14437,6 +14942,21 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
   // DQ (7/2/2020): Added assertion (fails for snippet tests).
      ROSE_ASSERT(result->get_preprocessorDirectivesAndCommentsList() != NULL);
 
+#if 0
+  // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+     ROSE_ASSERT(project != NULL);
+     std::set<SgLocatedNode*> tmp3_collectionOfModifiedLocatedNodes = collectModifiedLocatedNodes(project);
+
+     if (tmp3_collectionOfModifiedLocatedNodes.size() > 0)
+        {
+          printf ("In Traversal::evaluateInheritedAttribute(): tmp3_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp3_collectionOfModifiedLocatedNodes.size());
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
+
      return result;
 #else
 
@@ -14459,8 +14979,12 @@ SageBuilder::buildSourceFile(const std::string& outputFileName, SgProject* proje
   // This function needs a way to specify the associated language for the generated file.
   // Currently this is taken from the input file (generated from a prefix on the output filename.
 
-#if 0
+#if 1
+     printf ("B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1 \n");
+     printf ("B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1 \n");
      printf ("In SageBuilder::buildSourceFile(outputFileName = %s, project = %p) \n",outputFileName.c_str(),project);
+     printf ("B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1 \n");
+     printf ("B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1 \n");
 #endif
 
   // Call the supporting function to build a file.
@@ -14498,10 +15022,29 @@ SageBuilder::buildSourceFile(const std::string& outputFileName, SgProject* proje
 SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,const std::string& outputFileName, SgProject* project, bool clear_globalScopeAcrossFiles /*=false*/)
    {
 #if 0
+     printf ("B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2  \n");
+     printf ("B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2  \n");
      printf ("In SageBuilder::buildSourceFile(const std::string& inputFileName,const std::string& outputFileName, SgProject* project): calling buildFile() \n");
   // printf (" --- inputFileName  = %s outputFileName = %s \n",inputFileName.c_str(),outputFileName.c_str());
      printf (" --- inputFileName  = %s \n",inputFileName.c_str());
      printf (" --- outputFileName = %s \n",outputFileName.c_str());
+     printf ("B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2  \n");
+     printf ("B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2  \n");
+#endif
+
+#if 0
+  // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+     ROSE_ASSERT(project != NULL);
+     std::set<SgLocatedNode*> tmp1_collectionOfModifiedLocatedNodes = collectModifiedLocatedNodes(project);
+
+     if (tmp1_collectionOfModifiedLocatedNodes.size() > 0)
+        {
+          printf ("In Traversal::evaluateInheritedAttribute(): tmp1_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp1_collectionOfModifiedLocatedNodes.size());
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
 #endif
 
      SgFile* file = buildFile(inputFileName, outputFileName,project,clear_globalScopeAcrossFiles);
@@ -14509,6 +15052,21 @@ SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,cons
 
 #if 0
      printf ("DONE: In SageBuilder::buildSourceFile(): calling buildFile() \n");
+#endif
+
+#if 0
+  // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+     ROSE_ASSERT(project != NULL);
+     std::set<SgLocatedNode*> tmp2_collectionOfModifiedLocatedNodes = collectModifiedLocatedNodes(project);
+
+     if (tmp2_collectionOfModifiedLocatedNodes.size() > 0)
+        {
+          printf ("In Traversal::evaluateInheritedAttribute(): tmp2_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp2_collectionOfModifiedLocatedNodes.size());
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
 #endif
 
      SgSourceFile* sourceFile = isSgSourceFile(file);
@@ -14558,9 +15116,12 @@ SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,cons
                  // (usually as a part of the outlining to a seperate file).  and we need to mark at least the
                  // unparsing headr file optimizations to be the same across thje two file.
 
-                    temp_file->set_header_file_unparsing_optimization(sourceFile->get_header_file_unparsing_optimization());
-                    temp_file->set_header_file_unparsing_optimization_source_file(sourceFile->get_header_file_unparsing_optimization_source_file());
-                    temp_file->set_header_file_unparsing_optimization_header_file(sourceFile->get_header_file_unparsing_optimization_header_file());
+                 // DQ (6/12/2021): The header_file_unparsing_optimization is now a static data member and the
+                 // header_file_unparsing_optimization_source_file and header_file_unparsing_optimization_header_file 
+                 // data members have been removed.
+                 // temp_file->set_header_file_unparsing_optimization(sourceFile->get_header_file_unparsing_optimization());
+                 // temp_file->set_header_file_unparsing_optimization_source_file(sourceFile->get_header_file_unparsing_optimization_source_file());
+                 // temp_file->set_header_file_unparsing_optimization_header_file(sourceFile->get_header_file_unparsing_optimization_header_file());
 #if 0
                     printf ("sourceFile = %p = %s \n",sourceFile,sourceFile->class_name().c_str());
                     printf ("sourceFile->get_header_file_unparsing_optimization()             = %s \n",sourceFile->get_header_file_unparsing_optimization() ? "true" : "false");
@@ -14709,12 +15270,50 @@ SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,cons
      printf ("sourceFile->getFileName() = %s \n",sourceFile->getFileName().c_str());
 #endif
 
+     SgGlobal* globalScope = sourceFile->get_globalScope();
+
 #if 0
      printf ("Leaving SageBuilder::buildSourceFile() sourceFile = %p globalScope = %p \n",sourceFile,sourceFile->get_globalScope());
      printf ("sourceFile->get_file_info()->get_file_id()          = %d \n",sourceFile->get_file_info()->get_file_id());
      printf ("sourceFile->get_file_info()->get_physical_file_id() = %d \n",sourceFile->get_file_info()->get_physical_file_id());
      printf ("sourceFile->get_token_list.size()                   = %zu \n",sourceFile->get_token_list().size());
      printf ("sourceFile->get_tokenSubsequenceMap().size()        = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
+     printf ("inputFileName                                       = %s \n",inputFileName.c_str());
+     printf ("outputFileName                                      = %s \n",outputFileName.c_str());
+     printf ("sourceFile->getFileName()                           = %s \n",sourceFile->getFileName().c_str());
+
+     printf ("sourceFile->get_globalScope()                       = %p \n",globalScope);
+     printf ("globalScope->get_isModified()                       = %s \n",globalScope->get_isModified() ? "true" : "false");
+#endif
+
+  // DQ (6/1/2021): We need to end this function with the isModified flag set to false.  This is 
+  // important for the support of the token based unparsing when building a dynamic library.
+  // This is important in permitting the simpleFrontierDetectionForTokenStreamMapping() function 
+  // to generate the correct settings for nodes in the second file constructed from the original file.
+     if (globalScope->get_isModified() == true)
+        {
+#if 0
+          printf ("globalScope->get_isModified() == true: reset to false \n");
+#endif
+          globalScope->set_isModified(false);
+#if 0
+          printf ("Verify false setting: globalScope->get_isModified() = %s \n",globalScope->get_isModified() ? "true" : "false");
+#endif
+        }
+
+#if 0
+  // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+     ROSE_ASSERT(project != NULL);
+     std::set<SgLocatedNode*> tmp3_collectionOfModifiedLocatedNodes = collectModifiedLocatedNodes(project);
+
+     if (tmp3_collectionOfModifiedLocatedNodes.size() > 0)
+        {
+          printf ("In Traversal::evaluateInheritedAttribute(): tmp3_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp3_collectionOfModifiedLocatedNodes.size());
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
 #endif
 
 #if 0

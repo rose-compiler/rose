@@ -98,7 +98,8 @@ std::string unparseScopeStatementWithoutBasicBlockToString ( SgScopeStatement* s
 std::string unparseStatementWithoutBasicBlockToString      ( SgStatement* statement );
 
 // DQ (3/14/2021): Output include saved in the SgIncludeFile about first and last computed statements in each header file.
-void outputFirstAndLastIncludeFileInfo();
+// void outputFirstAndLastIncludeFileInfo();
+void outputFirstAndLastIncludeFileInfo( SgSourceFile* sourceFile );
 
 // This is the base class for the support or alternative code generation mechanisms (by Qing Yi)
 // and is the basis of the copy based unparsing that unparses the code by copying parts of the

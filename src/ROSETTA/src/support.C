@@ -538,6 +538,12 @@ Grammar::setUpSupport ()
      Unparse_Info.setDataPrototype("bool","context_for_added_parentheses","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/5/2021): Support for debuging, we wnat to debug the transitions between token-based unparsing and unparsing from the AST.
+     Unparse_Info.setDataPrototype("static SgStatement*","previouslyUnparsedStatement","= NULL",
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     Unparse_Info.setDataPrototype("static bool","previousStatementUnparsedFromTokenStream","= false",
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
 
      BaseClass.setFunctionPrototype           ( "HEADER_BASECLASS", "../Grammar/Support.code");
      ExpBaseClass.setFunctionPrototype        ( "HEADER_EXP_BASE_CLASS", "../Grammar/Support.code");
@@ -799,7 +805,15 @@ Grammar::setUpSupport ()
      SourceFile.setDataPrototype   ( "bool", "isDynamicLibrary", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     UnknownFile.setDataPrototype  ( "SgGlobal*", "globalScope", "= nullptr",
+  // DQ (5/20/2021): Save the first and last statement associated with the source file (required to support the 
+  // token-based unparsing (e.g. detecting the last statement so that we can output the trailing whitespace).
+     SourceFile.setDataPrototype ( "SgStatement*", "firstStatement", " = NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     SourceFile.setDataPrototype ( "SgStatement*", "lastStatement", " = NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
+
+     UnknownFile.setDataPrototype   ( "SgGlobal*", "globalScope", "= nullptr",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (9/18/2018): Adding support for building the include file tree for each source file.
@@ -912,6 +926,10 @@ Grammar::setUpSupport ()
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      IncludeFile.setDataPrototype ( "SgStatement*", "lastStatement", " = nullptr",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
+  // DQ (5/9/2021): Support for token-based unparsing when used with header file unparsing.
+  // IncludeFile.setDataPrototype   ( "bool", "headerFileRepresentsAllStatementsInParentScope", "= false",
+  //                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
   // DQ (9/18/2018): We can likely eliminate this IR node now that we store the include file tree directly
@@ -1197,6 +1215,7 @@ Grammar::setUpSupport ()
      File.setDataPrototype( "bool", "translateCommentsAndDirectivesIntoAST", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (5/2/2021): I think this should be a static data member (later).
   // negara1 (07/08/2011): Added to permit optional header files unparsing.
      File.setDataPrototype("bool","unparseHeaderFiles", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1482,6 +1501,7 @@ Grammar::setUpSupport ()
      File.setDataPrototype("bool", "unparse_edg_normalized_method_ROSE_1392", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/12/2021): I think that all static data members must not provide an initializer (else it appears in the generated constructor).
   // DQ (4/24/2021): Change this to be a static data member.
   // DQ (8/19/2019): Adding support to optimize the performance of the header file unarsing.
   // Specifically we want to limit the collection of comments and CPP dirctives to a set determined
@@ -1489,12 +1509,16 @@ Grammar::setUpSupport ()
   // immediiately before the unparsing of each file.
   // File.setDataPrototype("bool", "header_file_unparsing_optimization", "= false",
   //             NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     File.setDataPrototype("static bool", "header_file_unparsing_optimization", "= false",
+  // File.setDataPrototype("static bool", "header_file_unparsing_optimization", "= false",
+  //             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype("static bool", "header_file_unparsing_optimization", "",
                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     File.setDataPrototype("bool", "header_file_unparsing_optimization_source_file", "= false",
-                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     File.setDataPrototype("bool", "header_file_unparsing_optimization_header_file", "= false",
-                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (6/12/2021): Eliminate this in favor of the now static data member header_file_unparsing_optimization.
+  // File.setDataPrototype("bool", "header_file_unparsing_optimization_source_file", "= false",
+  //             NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // File.setDataPrototype("bool", "header_file_unparsing_optimization_header_file", "= false",
+  //             NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype("SgFile::standard_enum", "standard", "= e_default_standard",
                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype("bool", "gnu_standard", "= false",

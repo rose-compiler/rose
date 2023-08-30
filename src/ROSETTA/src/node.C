@@ -252,6 +252,25 @@ Grammar::setUpNodes ()
      Node.setDataPrototype("bool","containsTransformation","= false",
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
+#if 0
+  // DQ (5/2/2021): We need a concept of contains modified code relative to the parent node so that we can support file 
+  // the unparsing from the token stream when header files are nested.
+     Node.setDataPrototype("bool","containsTransformationRelativeToPresentNodeFile","= false",
+                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+#endif
+#if 0
+  // DQ (7/23/2005): Remove this flag since it is no longer used.  It is not particularly eligant to store
+  // the state associated with the traversal within the AST. Some state is required to avoid retraversal
+  // of IR nodes, but that state should be stored in the traversal directly.
+
+  // MK: we need a boolean flag for the tree traversal
+     Node.setDataPrototype("bool","isVisited","= false",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     // MS: make file_info accessible in every AST node. Only set in SgLocatedNode(s)
+     //Node.setDataPrototype("Sg_File_Info*","file_info","= NULL",
+     //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
+#endif
+
   // DQ (10/21/2005): Adding memory pool support variable via ROSETTA so that file I/O can be supported.
      Node.setDataPrototype("$CLASSNAME*","freepointer","= AST_FileIO::IS_VALID_POINTER()",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);

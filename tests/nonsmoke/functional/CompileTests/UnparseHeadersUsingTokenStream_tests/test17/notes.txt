@@ -1,0 +1,9 @@
+// Error in token based unparsing for header file: subdir/SimpleInternal.h
+
+#include "InnerInternal1.h"
+v4 = 11;
+int x;
+
+
+v4 = 11;int x;
+

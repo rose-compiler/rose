@@ -1,0 +1,3 @@
+This test is exactly as test1, except that it is meant to be tested
+using the default root folder for the unparsed header files (i.e. no
+explicit folder provided).

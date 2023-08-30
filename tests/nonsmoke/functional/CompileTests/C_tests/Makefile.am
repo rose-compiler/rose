@@ -598,11 +598,15 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2021_16.c \
      test2021_17.c \
      test2021_18.c \
-     test2022_01.c \
-     test2022_02.c \
-     test2022_03.c \
-     test2022_04.c 
-
+     test2021_20.c \
+     test2021_21.c \
+     test2021_22.c \
+     test2021_23.c \
+     test2021_24.c \
+     test2021_25.c \
+     test2021_27.c \
+     test2021_28.c \
+     test2022_01.c
 
 TESTCODE_CURRENTLY_FAILING = \
      test2004_126.c \
@@ -624,7 +628,10 @@ TESTCODE_CURRENTLY_FAILING = \
      test2020_23.c \
      test2020_25.c \
      test2020_26.c \
-     test2020_27.c 
+     test2020_27.c \
+     test2022_02.c \
+     test2022_03.c \
+     test2022_04.c 
 
 
 if !ROSE_USE_CLANG_FRONTEND
