@@ -1767,6 +1767,8 @@ SgSourceFile::SgSourceFile ( vector<string> & argv , SgProject* project )
      this->p_headerFileReport = nullptr;
      this->p_processedToIncludeCppDirectivesAndComments = false;
      this->p_isHeaderFile = false;
+     this->p_firstStatement = nullptr;
+     this->p_lastStatement = nullptr;
 
      set_globalScope(nullptr);
 
