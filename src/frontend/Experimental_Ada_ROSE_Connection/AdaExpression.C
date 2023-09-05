@@ -611,6 +611,19 @@ namespace
     return res;
   }
 
+  // if \ref id is valid, lookup scope from translation context
+  //   otherwise use si::Ada::operatorScope to find an appropriate scope
+  si::Ada::OperatorScopeInfo
+  operatorScope(const AdaIdentifier& name, SgTypePtrList argTypes, Element_ID id, AstContext ctx)
+  {
+    if (id < 1) return si::Ada::operatorScope(name, std::move(argTypes));
+
+    SgScopeStatement&        scope = queryScopeOfID(id, ctx);
+    si::Ada::DominantArgInfo dom = si::Ada::operatorArgumentWithNamedRootIfAvail(argTypes);
+
+    return { &scope, dom.pos() };
+  }
+
   SgExpression*
   generateOperator(AdaIdentifier name, OperatorCallSupplement suppl, AstContext ctx)
   {
@@ -622,7 +635,7 @@ namespace
 
     sortByArgumentName(suppl.args());
 
-    si::Ada::OperatorScopeInfo scopeinfo = si::Ada::operatorScope(name, extractTypes(suppl.args()));
+    si::Ada::OperatorScopeInfo scopeinfo = operatorScope(name, extractTypes(suppl.args()), suppl.scopeId(), ctx);
     SgScopeStatement&          scope     = SG_DEREF(scopeinfo.scope());
 
     suppl = operatorSignature(name, std::move(suppl), scopeinfo.argpos(), ctx);
@@ -1434,6 +1447,9 @@ namespace
       case A_Selected_Component:                      // 4.1.3
         {
           logKind("A_Selected_Component", elem.ID);
+
+          suppl.scopeId(expr.Prefix);
+
           SgExpression& selector = getExprID(expr.Selector, ctx, std::move(suppl));
           const bool    enumval = isSgEnumVal(&selector) != nullptr;
 
@@ -1905,7 +1921,6 @@ SgExpression& createCall(Element_ID tgtid, ElemIdRange args, bool operatorCallSy
 {
   // Create the arguments first. They may be needed to disambiguate operator calls
   std::vector<SgExpression*> arglist = traverseIDs(args, elemMap(), ArgListCreator{ctx});
-
 
   SgExpression& tgt = getExprID(tgtid, ctx, OperatorCallSupplement(createArgDescList(arglist), nullptr /* unknown return type */));
   SgExpression* res = sg::dispatch(AdaCallBuilder{tgtid, std::move(arglist), operatorCallSyntax, objectCallSyntax, ctx}, &tgt);

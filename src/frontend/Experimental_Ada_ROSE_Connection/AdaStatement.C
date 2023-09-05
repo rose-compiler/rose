@@ -368,20 +368,25 @@ namespace
     template <class SageDecl>
     void def(SageDecl& n) { res = n.get_definition(); }
 
+    template <class SageDecl>
+    void def(SageDecl* n) { if (n) def(*n); }
+
     void handle(SgNode& n)                   { SG_UNEXPECTED_NODE(n); }
 
     // declarations
     void handle(SgAdaPackageSpecDecl& n)     { def(n); }
     void handle(SgAdaPackageBodyDecl& n)     { def(n); }
+    void handle(SgFunctionDeclaration& n)    { def(isSgFunctionDeclaration(n.get_definingDeclaration())); }
 
     void handle(SgAdaGenericDecl& n)
     {
-      SgDeclarationStatement* dcl = n.get_declaration();
+      //~ SgDeclarationStatement* dcl = n.get_declaration();
 
-      if (isSgFunctionDeclaration(dcl))
-        return def(n);
+      //~ if (isSgFunctionDeclaration(dcl)) // \todo correct?
+        //~ return def(n);
 
-      res = find(dcl);
+      //~ res = find(dcl);
+      res = find(n.get_declaration());
     }
 
     void handle(SgAdaGenericInstanceDecl& n)
@@ -390,16 +395,18 @@ namespace
       SgStatementPtrList& stmts   = scope.get_statements();
       SgStatement*        dclstmt = stmts.at(0);
 
-      res = isSgFunctionDeclaration(dclstmt) ? &scope : find(dclstmt);
+      res = find(dclstmt);
     }
 
-    // \todo add handlers as needed
-
-    // \todo
-    // why not add handle(SgFunctionDeclaration&)?
+    // renamings
+    void handle(SgAdaRenamingDecl& n) { res = find(n.get_renamed()); }
+    void handle(SgAdaUnitRefExp& n)   { res = find(n.get_decl()); }
 
     // others
-    void handle(SgBasicBlock& n)             { res = &n; }
+    void handle(SgBasicBlock& n)      { res = &n; }
+
+    // \todo add handlers as needed
+    // ...
 
     static
     ReturnType find(SgNode*);
@@ -412,10 +419,6 @@ namespace
   }
 
 
-  SgScopeStatement&
-  queryScopeOfID(Element_ID& el, AstContext ctx);
-
-
   /// returns the ROSE scope of an already converted Asis element \ref elem.
   SgScopeStatement&
   queryScopeOf(Element_Struct& elem, AstContext ctx)
@@ -425,7 +428,6 @@ namespace
     Expression_Struct& expr = elem.The_Union.Expression;
 
     if (expr.Expression_Kind == A_Selected_Component)
-      //~ return getScopeID(expr.Prefix, ctx);
       return queryScopeOfID(expr.Selector, ctx);
 
     if (expr.Expression_Kind != An_Identifier)
@@ -445,13 +447,6 @@ namespace
 
     return SG_DEREF(ScopeQuery::find(dcl));
   }
-
-  SgScopeStatement&
-  queryScopeOfID(Element_ID& el, AstContext ctx)
-  {
-    return queryScopeOf(retrieveAs(elemMap(), el), ctx);
-  }
-
 
   /// if \ref isPrivate \ref dcl's accessibility is set to private;
   /// otherwise nothing.
@@ -3390,6 +3385,12 @@ namespace
 } // anonymous
 
 
+SgScopeStatement&
+queryScopeOfID(Element_ID el, AstContext ctx)
+{
+  return queryScopeOf(retrieveAs(elemMap(), el), ctx);
+}
+
 SgDeclarationStatement*
 queryDecl(Expression_Struct& expr, AstContext ctx)
 {
@@ -3408,7 +3409,6 @@ void handleRepresentationClause(Element_Struct& elem, AstContext ctx)
   using PragmaContainer = AstContext::PragmaContainer;
 
   Clause_Struct&                clause = elem.The_Union.Clause;
-
   ADA_ASSERT (clause.Clause_Kind == A_Representation_Clause);
 
   Representation_Clause_Struct& repclause = clause.Representation_Clause;
