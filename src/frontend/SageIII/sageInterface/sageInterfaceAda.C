@@ -1370,7 +1370,13 @@ namespace Ada
   {
     ASSERT_not_null(nondef);
 
-    if (const SgScopeStatement* bodyScope = correspondingBody(nondef->get_scope()))
+    const SgScopeStatement* nondefScope = nondef->get_scope();
+
+    // \note should we look for the package spec or package body scope parent?
+    if (const SgAdaGenericDefn* genScope = isSgAdaGenericDefn(nondefScope))
+      nondefScope = logicalParentScope(*genScope);
+
+    if (const SgScopeStatement* bodyScope = correspondingBody(nondefScope))
       if (const SgFunctionDeclaration* secondary = findSecondaryFunctionDecl(*bodyScope, nondef))
         nondef = secondary;
 
