@@ -1931,7 +1931,14 @@ namespace
     //   avoid casts to some composite types, and the code would be unparsed
     //   with the operator being properly scope qualified.
 
+    // if operator syntax is used, it cannot be scope qualified ..
     if (exp.get_uses_operator_syntax()) return;
+
+    // if the operator is not defined in the standard scope, we use it
+    //   without further casting ..
+    if (SgFunctionSymbol* fnsym = exp.getAssociatedFunctionSymbol())
+      if (fnsym->get_scope() != si::Ada::pkgStandardScope())
+        return;
 
     SgNullExpression& dummy = mkNullExpression();
 

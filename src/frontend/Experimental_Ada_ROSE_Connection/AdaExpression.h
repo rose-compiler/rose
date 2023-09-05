@@ -23,16 +23,25 @@ namespace Ada_ROSE_Translation
     SgType*            type() const { return std::get<1>(*this); }
   };
 
-  struct OperatorCallSupplement : std::tuple< std::vector<ArgDesc>, SgType*>
+  struct OperatorCallSupplement : std::tuple< std::vector<ArgDesc>, SgType*, Element_ID>
   {
     using ArgDescList = std::vector<ArgDesc>;
 
-    using base = std::tuple<ArgDescList, SgType*>;
-    using base::base;
+    using base = std::tuple<ArgDescList, SgType*, Element_ID>;
 
-    ArgDescList&       args()             { return std::get<0>(*this); }
-    const ArgDescList& args()   const     { return std::get<0>(*this); }
-    SgType*            result() const     { return std::get<1>(*this); }
+    // explicit
+    OperatorCallSupplement(ArgDescList arglst = {}, SgType* resty = nullptr, Element_ID prefix = -1)
+    : base(std::move(arglst), resty, prefix)
+    {}
+
+    const ArgDescList& args() const { return std::get<0>(*this); }
+    ArgDescList&       args()       { return std::get<0>(*this); }
+
+    SgType* result() const        { return std::get<1>(*this); }
+    void    result(SgType* resty) { std::get<1>(*this) = resty; }
+
+    Element_ID scopeId() const            { return std::get<2>(*this); }
+    void       scopeId(Element_ID prefix) { std::get<2>(*this) = prefix; }
 
     bool args_valid() const { return args().size() > 0; }
     bool valid()      const { return args_valid() && result() != nullptr; }
