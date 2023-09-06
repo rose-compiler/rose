@@ -2100,7 +2100,6 @@ Grammar::setUpStatements ()
 
      ExprStatement.setFunctionPrototype ( "HEADER_EXPRESSION_STATEMENT", "../Grammar/Statement.code" );
 
-  // DQ (11/7/2006): Trying to remove the WRAP mechanism since it is overly complex and not required
      ExprStatement.setDataPrototype ( "SgExpression*", "expression", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
@@ -2112,13 +2111,10 @@ Grammar::setUpStatements ()
 
   // DQ (1/6/2018): This should be handled as a compound statement, meaning that the statement in
   // the label should not be NULL and that it should be traversed.
-  // DQ (10/14/2007): Since this is also in the parent's list of statments it would be an error to
-  // traverse this.  The reason why it is not currently an error is that this data member's value
-  // is always NULL.  Because of the specification in the Grammar, it does make since to have this
-  // as a data member, but it is unclear how to use it.  To avoid the possible error, I have have at
-  // least marked it to not be traversed for now.
      LabelStatement.setDataPrototype     ( "SgStatement*", "statement", "= nullptr",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     LabelStatement.setDataPrototype     ( "SgLabelStatement::label_type_enum", "label_type", "= SgLabelStatement::e_default",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      LabelStatement.setDataPrototype     ( "bool", "gnu_extension_unused", "= false",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -2135,9 +2131,6 @@ Grammar::setUpStatements ()
      WhileStmt.setDataPrototype ( "SgStatement*", "else_body",  "= NULL",
                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-  // DQ (8/24/2007): Added to support Fortran specific use of do ... while construct.
-  // WhileStmt.setDataPrototype ( "int", "end_numeric_label", "= -1",
-  //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      WhileStmt.setDataPrototype ( "SgLabelRefExp*", "end_numeric_label", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ (11/17/2007): Added support for string labels (for Fortran).
