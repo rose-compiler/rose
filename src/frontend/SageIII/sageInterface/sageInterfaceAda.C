@@ -1370,7 +1370,13 @@ namespace Ada
   {
     ASSERT_not_null(nondef);
 
-    if (const SgScopeStatement* bodyScope = correspondingBody(nondef->get_scope()))
+    const SgScopeStatement* nondefScope = nondef->get_scope();
+
+    // \note should we look for the package spec or package body scope parent?
+    if (const SgAdaGenericDefn* genScope = isSgAdaGenericDefn(nondefScope))
+      nondefScope = logicalParentScope(*genScope);
+
+    if (const SgScopeStatement* bodyScope = correspondingBody(nondefScope))
       if (const SgFunctionDeclaration* secondary = findSecondaryFunctionDecl(*bodyScope, nondef))
         nondef = secondary;
 
@@ -1904,24 +1910,26 @@ namespace Ada
     {
       return isFixedSpecial(opname, { const_cast<SgType*>(&ty) });
     }
-
-
-    std::tuple<const SgType*, std::size_t>
-    chooseTypeWithNamedRootIfAvail(const SgTypePtrList& argtypes)
-    {
-      SgType* lhsty = argtypes.front();
-
-      if (argtypes.size() == 1 || isSgNamedType(typeRoot(lhsty).typerep()))
-        return { lhsty, 0 };
-
-      SgType* rhsty = argtypes.back();
-
-      if (isSgNamedType(typeRoot(rhsty).typerep()))
-        return { rhsty, argtypes.size()-1 };
-
-      return { lhsty, 0 };
-    }
   }
+
+  DominantArgInfo
+  operatorArgumentWithNamedRootIfAvail(const SgTypePtrList& argtypes)
+  {
+    ROSE_ASSERT(argtypes.size() == 1 || argtypes.size() == 2);
+
+    SgType* lhsty = argtypes.front();
+
+    if (argtypes.size() == 1 || isSgNamedType(typeRoot(lhsty).typerep()))
+      return { lhsty, 0 };
+
+    SgType* rhsty = argtypes.back();
+
+    if (isSgNamedType(typeRoot(rhsty).typerep()))
+      return { rhsty, argtypes.size()-1 };
+
+    return { lhsty, 0 };
+  }
+
 
   OperatorScopeInfo
   operatorScope(const std::string& opname, const SgTypePtrList& argtypes)
@@ -1934,9 +1942,9 @@ namespace Ada
       return { pkgStandardScope(), 0 };
     }
 
-    std::tuple<const SgType*, std::size_t> dominantType = chooseTypeWithNamedRootIfAvail(argtypes);
+    DominantArgInfo dominantType = operatorArgumentWithNamedRootIfAvail(argtypes);
 
-    return { declarationScope(std::get<0>(dominantType)), std::get<1>(dominantType) };
+    return { declarationScope(dominantType.type()), dominantType.pos() };
   }
 
   SgScopeStatement&

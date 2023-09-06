@@ -514,6 +514,18 @@ namespace
   TypeDescription typeOfExpr(SgExpression*);
   /// @}
 
+  struct DominantArgInfo : std::tuple<const SgType*, std::size_t>
+  {
+    using base = std::tuple<const SgType*, std::size_t>;
+    using base::base;
+
+    const SgType* type() const { return std::get<0>(*this); }
+    std::size_t   pos()  const { return std::get<1>(*this); }
+  };
+
+  DominantArgInfo
+  operatorArgumentWithNamedRootIfAvail(const SgTypePtrList& argtypes);
+
   struct OperatorScopeInfo : std::tuple<SgScopeStatement*, std::size_t>
   {
     using base = std::tuple<SgScopeStatement*, std::size_t>;
