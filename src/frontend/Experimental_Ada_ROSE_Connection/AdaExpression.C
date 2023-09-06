@@ -336,12 +336,13 @@ namespace
 
       // void handle(SgImportStatement& n)
 
-      void handle(SgClassDeclaration& n)     { set(n.get_type()); }
-      void handle(SgTypedefDeclaration& n)   { set(n.get_type()); }
-      void handle(SgEnumDeclaration& n)      { set(n.get_type()); }
-      void handle(SgAdaFormalTypeDecl& n)    { set(n.get_type()); }
-      void handle(SgAdaTaskTypeDecl& n)      { set(n.get_type()); }
-      void handle(SgAdaProtectedTypeDecl& n) { set(n.get_type()); }
+      void handle(SgClassDeclaration& n)         { set(n.get_type()); }
+      void handle(SgTypedefDeclaration& n)       { set(n.get_type()); }
+      void handle(SgEnumDeclaration& n)          { set(n.get_type()); }
+      void handle(SgAdaFormalTypeDecl& n)        { set(n.get_type()); }
+      void handle(SgAdaTaskTypeDecl& n)          { set(n.get_type()); }
+      void handle(SgAdaProtectedTypeDecl& n)     { set(n.get_type()); }
+      void handle(SgAdaDiscriminatedTypeDecl& n) { set(n.get_type()); }
 
     private:
       AstContext ctx;
