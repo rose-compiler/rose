@@ -2355,6 +2355,16 @@ HEADER_EXPRESSION_STATEMENT_END
 
 HEADER_LABEL_STATEMENT_START
 
+      /*! Type of a label statement. */
+          enum label_type_enum
+             {
+               e_default = 0,
+               e_jovial_label_decl,    /*!<     LABEL name */
+               e_jovial_label_def,     /*!< DEF LABEL name */
+               e_jovial_label_ref      /*!< REF LABEL name */
+             };
+
+
      // DQ (1/15/2018): Need to support this member function now that we traverse the statement of the label statement.
         protected:
           virtual bool replace_child(SgStatement *,SgStatement *, bool extractListFromBasicBlock = false) override;
@@ -16279,7 +16289,7 @@ void
 SgLabelStatement::post_construction_initialization()
    {
 #if 0
-  // DQ (1/12/13): This is code that can be helpful in debubbing subtle problems in astCopy and astDelete.
+  // DQ (1/12/13): This is code that can be helpful in debugging subtle problems in astCopy and astDelete.
      printf ("In SgLabelStatement::post_construction_initialization(): this = %p = %s \n",this,this->class_name().c_str());
 #endif
    }
@@ -16351,7 +16361,6 @@ SgJavaLabelStatement::get_symbol_from_symbol_table() const
      ROSE_ASSERT(get_scope()->get_symbol_table() != NULL);
      return get_scope()->get_symbol_table()->find(this);
 #else
-  // return this -> get_symbol_table() -> find(this);
      return this->find_symbol_from_declaration(this);
 #endif
    }
