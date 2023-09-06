@@ -1019,19 +1019,16 @@ namespace
 
     void handle(SgAdaFormalTypeDecl& n)
     {
+      std::string linkword;
+
       prn("type ");
       prn(n.get_name());
-
-      SgAdaFormalType* ty = n.get_type();
-      ASSERT_not_null(ty);
-
-      SgType* formalBase = ty->get_formal_type();
-      ASSERT_not_null(formalBase);
-
-      formalBase = &processUnknownDiscriminantPart(formalBase);
-
+      printPendingDiscriminants();
       prn(" is ");
       modifiers(n);
+
+      SgAdaFormalType& ty = SG_DEREF(n.get_type());
+      SgType&          formalBase = SG_DEREF(ty.get_formal_type());
 
       // \todo what types need to be printed?
       //       print all non-null ty->get_formal_type() ?
@@ -1047,20 +1044,18 @@ namespace
         prn(" delta<> digits<> ");
       else if (si::Ada::isFixedType(formalBase))
         prn(" delta<> ");
-      else if (!isSgTypeDefault(formalBase))
+      else if (!isSgTypeDefault(&formalBase))
       {
-        //~ const bool withRequired = !isSgAdaAccessType(formalBase) && ty->get_is_private();
-        const bool withRequired = ty->get_is_private();
+        type(n, &formalBase);
 
-        type(n, formalBase);
-
-        if (withRequired) prn(" with");
+        linkword = " with";
       }
 
-      if (ty->get_is_private()) {
+      if (ty.get_is_private()) {
+        prn(linkword);
         prn(" private");
       }
-      prn(";\n");
+      prn(STMT_SEP);
     }
 
     void handle(SgAdaFormalPackageDecl& n)
