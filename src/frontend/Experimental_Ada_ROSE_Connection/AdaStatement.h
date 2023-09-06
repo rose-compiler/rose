@@ -84,6 +84,11 @@ namespace Ada_ROSE_Translation
   SgDeclarationStatement*
   queryDecl(Expression_Struct& expr, AstContext ctx);
 
+  /// returns the inner scope (*) of a preceding declaration
+  /// \note the inner scope of a spec-decl, body-decl, func is the spec, body, func-def respectively ...
+  SgScopeStatement&
+  queryScopeOfID(Element_ID id, AstContext ctx);
+
   /// returns the NameData object for a name that is represented
   /// as expression in Asis (e.g., identifier or selected)
   NameData
