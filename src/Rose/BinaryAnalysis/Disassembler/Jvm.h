@@ -51,6 +51,8 @@ public:
 private:
     size_t appendTableswitch(const MemoryMap::Ptr &map, rose_addr_t start,
                              SgUnsignedCharList &chars, SgAsmOperandList* operands);
+    size_t appendLookupswitch(const MemoryMap::Ptr &map, rose_addr_t start,
+                              SgUnsignedCharList &chars, SgAsmOperandList* operands);
     template <class T>
       size_t appendOperand(const MemoryMap::Ptr &map, rose_addr_t va,
                            SgUnsignedCharList &chars, SgAsmOperandList* operands);

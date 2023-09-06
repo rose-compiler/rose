@@ -18,5 +18,6 @@ nonsmoke_specimens_java_classes =		\
     Test3.class					\
     Generic.class				\
     Test4.class					\
+    Worker_TT.class				\
     NestMembersAttribute.class			\
     NestMembersAttribute__InputReader.class

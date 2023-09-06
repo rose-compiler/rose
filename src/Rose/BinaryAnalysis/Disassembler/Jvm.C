@@ -57,21 +57,19 @@ Jvm::appendOperand(const MemoryMap::Ptr &map, rose_addr_t va,
 
 size_t
 Jvm::appendTableswitch(const MemoryMap::Ptr &map, rose_addr_t start,
-                                    SgUnsignedCharList &chars, SgAsmOperandList* operands)
+                       SgUnsignedCharList &chars, SgAsmOperandList* operands)
 {
   rose_addr_t va{start};
 
   // switch default must begin on 4 byte boundary, skip padding
-  const size_t nPad{(4 - (codeOffset()-va)%4)%4};
+  ASSERT_require(va >= codeOffset());
+  const size_t nPad{(4 - (va - codeOffset())%4)%4};
   const size_t nBuf{nPad + 3*sizeof(int32_t)};
   uint8_t buf[nBuf];
 
   size_t nRead = map->at(va).limit(nBuf).require(MemoryMap::READABLE).read(buf).size();
   if (nRead != nBuf) {
-#if TRIALS
-    throw Exception("short read", va);
-#endif
-    ROSE_ASSERT(false && "short read");
+    ASSERT_require2(false, "short read");
   }
   va += nRead;
 
@@ -98,6 +96,50 @@ Jvm::appendTableswitch(const MemoryMap::Ptr &map, rose_addr_t start,
 
   int nOff{high-low+1};
   for (int i = 0; i < nOff; i++) {
+    auto count = appendOperand<int32_t>(map, va, chars, operands);
+    nRead += count;
+    va += count;
+  }
+  return nRead;
+}
+
+size_t
+Jvm::appendLookupswitch(const MemoryMap::Ptr &map, rose_addr_t start,
+                        SgUnsignedCharList &chars, SgAsmOperandList* operands)
+{
+  rose_addr_t va{start};
+
+  // switch default must begin on 4 byte boundary, skip padding
+  ASSERT_require(va >= codeOffset());
+  const size_t nPad{(4 - (va - codeOffset())%4)%4};
+  const size_t nBuf{nPad + 2*sizeof(int32_t)};
+  uint8_t buf[nBuf];
+
+  size_t nRead = map->at(va).limit(nBuf).require(MemoryMap::READABLE).read(buf).size();
+  if (nRead != nBuf) {
+    ASSERT_require2(false, "short read");
+  }
+  va += nRead;
+
+  for (size_t i = 0; i < nRead; i++) {
+    chars.push_back(buf[i]);
+  }
+
+  uint8_t* ptr{buf + nPad};
+  int32_t def = beToHost(*(int32_t*) ptr);  ptr += sizeof(int32_t);
+  int32_t nPairs = beToHost(*(int32_t*) ptr);  ptr += sizeof(int32_t);
+
+#if DEBUG_ON
+  std::cout << "... appendLookupswitch: "
+            << def << ": "
+            << nPairs << ": "
+            << std::endl;
+#endif
+
+  operands->append_operand(SageBuilderAsm::buildValue(def));
+  operands->append_operand(SageBuilderAsm::buildValue(nPairs));
+
+  for (int i = 0; i < 2*nPairs; i++) {
     auto count = appendOperand<int32_t>(map, va, chars, operands);
     nRead += count;
     va += count;
@@ -702,9 +744,10 @@ Jvm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start, AddressSet*)
         mnemonic = "tableswitch";
         va += appendTableswitch(map, va, chars, operands);
         break;
-
-//    case opcode::lookupswitch: // 0xab (171)
-
+      case opcode::lookupswitch: // 0xab (171)
+        mnemonic = "lookupswitch";
+        va += appendLookupswitch(map, va, chars, operands);
+        break;
       case opcode::ireturn: // 0xac (172)
         mnemonic = "ireturn";
         break;
@@ -799,7 +842,7 @@ Jvm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start, AddressSet*)
 //    case opcode::wide: // 0xc4 (196)
 //    case opcode::multianewarray: // 0xc5 (197)
 
-// TODO: Followibg needs test
+// TODO: Following needs test
       case opcode::ifnull: // 0xc6 (198)
         mnemonic = "ifnull";
         va += appendOperand<int16_t>(map, va, chars, operands);
