@@ -12,6 +12,7 @@ using namespace Rose::BinaryAnalysis::Partitioner2;
 using PoolEntry = SgAsmJvmConstantPoolEntry;
 using AddressSegment = Sawyer::Container::AddressSegment<rose_addr_t,uint8_t>;
 using Rose::Diagnostics::DEBUG;
+using Rose::Diagnostics::INFO;
 using Rose::StringUtility::addrToString;
 
 namespace Rose {
@@ -90,7 +91,7 @@ void Class::partition(const PartitionerPtr &partitioner) const
 
         // A new block is needed if this instruction is a target of a branch and nonterminal
         va = insn->get_address();
-        if (targets.find(va) != targets.end() && !insn->terminatesBasicBlock()) {
+        if (targets.find(va) != targets.end()) {
           // But a new block is not needed if this is the first instruction in the block
           if (block && !block->isEmpty() && va != block->address()) {
             mlog[DEBUG] << "... splitting block after: " << addrToString(block->instructions().back()->get_address())
@@ -161,6 +162,7 @@ void Class::partition(const PartitionerPtr &partitioner) const
 void Class::digraph()
 {
   std::ofstream dotFile;
+  mlog[INFO] << "Opening dot file " + name() + ".dot\n";
   dotFile.open(name() + ".dot");
   dotFile << "digraph g {" << "\n";
 
