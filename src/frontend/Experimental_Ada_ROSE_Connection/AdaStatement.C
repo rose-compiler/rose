@@ -855,29 +855,23 @@ namespace
   struct DiscriminantCreator
   {
       DiscriminantCreator(SgAdaDiscriminatedTypeDecl& discrNode, AstContext astctx)
-      : sgnode(discrNode), params(SG_DEREF(discrNode.get_discriminants())), ctx(astctx)
+      : params(SG_DEREF(discrNode.get_discriminants())), ctx(astctx)
+      {}
+
+      DiscriminantCreator(SgAdaFormalTypeDecl& discrNode, AstContext astctx)
+      : params(SG_DEREF(discrNode.get_discriminants())), ctx(astctx)
       {}
 
       void operator()(Element_Struct& elem)
       {
         SgVariableDeclaration& decl = getDiscriminant(elem, ctx);
 
-        // SgDeclarationScope does not hold a list of declarations..
-        // ctx.scope().append_statement(&decl);
-        // alternative: store them in the discriminated decl node's parameter list
         params.append_parameter(&decl);
-
-        //~ logWarn() << decl.unparseToString()
-                  //~ << " in " << typeid(*decl.get_scope()).name()
-                  //~ << std::endl;
-        //~ decl.get_scope();
-        //~ ADA_ASSERT(!isSgBasicBlock(decl.get_scope()));
       }
 
     private:
-      SgAdaDiscriminatedTypeDecl&    sgnode;
-      SgAdaParameterList&            params;
-      AstContext                     ctx;
+      SgAdaParameterList& params;
+      AstContext          ctx;
 
       DiscriminantCreator() = delete;
   };
@@ -998,6 +992,11 @@ namespace
       {
         ADA_ASSERT (n.get_scope() == &dclscope);
 
+        res = &n;
+      }
+
+      void handle(SgAdaDiscriminatedTypeDecl& n)
+      {
         res = &n;
       }
 
@@ -3199,14 +3198,6 @@ namespace
     return sgnode;
   }
 
-  SgAdaDiscriminatedTypeDecl*
-  createDiscriminatedDeclID_opt(Element_ID id, AstContext ctx)
-  {
-    if (id == 0) return nullptr;
-
-    return &createDiscriminatedDeclID(retrieveAs(elemMap(), id), ctx);
-  }
-
 
   // handles incomplete (but completed) and private types
   void handleOpaqueTypes( Element_Struct& elem,
@@ -3384,6 +3375,13 @@ namespace
   }
 } // anonymous
 
+SgAdaDiscriminatedTypeDecl*
+createDiscriminatedDeclID_opt(Element_ID id, AstContext ctx)
+{
+  if (id == 0) return nullptr;
+
+  return &createDiscriminatedDeclID(retrieveAs(elemMap(), id), ctx);
+}
 
 SgScopeStatement&
 queryScopeOfID(Element_ID el, AstContext ctx)
@@ -4353,7 +4351,10 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         privatize(sgnode, isPrivate);
         recordNode(asisTypes(), id, sgnode, nondef != nullptr);
         attachSourceLocation(sgnode, elem, ctx);
-        ctx.appendStatement(sgnode);
+
+        if (isSgAdaDiscriminatedTypeDecl(&sgnode) == nullptr)
+          ctx.appendStatement(sgnode);
+
         assocdecl = &sgnode;
         break;
       }
