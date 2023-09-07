@@ -344,11 +344,11 @@ void SageTreeBuilder::Leave(SgScopeStatement* scope)
            delete prev_var_sym;
            delete prev_var_ref;
          }
-       else {
-         // Unexpected previous parent node
-         mlog[WARN] << "{" << it->first << ": " << it->second << " parent is " << prev_parent << "}\n";
-         it++;
-       }
+         else {
+           // Unexpected previous parent node
+           mlog[WARN] << "{" << it->first << ": " << it->second << " parent is " << prev_parent << "}\n";
+           it++;
+         }
        }
        else {
          mlog[WARN] << "{" << it->first << ": " << it->second << "}\n";
@@ -1145,6 +1145,35 @@ Leave(SgGotoStatement* gotoStmt, const std::vector<std::string> &labels)
 }
 
 void SageTreeBuilder::
+Enter(SgLabelStatement* &labelStmt, const std::string &label)
+{
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgLabelStatement*, ...)\n";
+
+   labelStmt = nullptr;
+
+   // Perhaps a label statement already exists
+   if (labels_.find(label) != labels_.end()) {
+     labelStmt = labels_[label];
+   }
+   else {
+     // Build a temporary placeholder
+     labelStmt = SB::buildLabelStatement_nfi(label, nullptr, SB::topScopeStack());
+     labels_[label] = labelStmt;
+   }
+   ASSERT_not_null(labelStmt);
+}
+
+void SageTreeBuilder::
+Leave(SgLabelStatement* labelStmt, const std::vector<std::string> &labels)
+{
+   mlog[TRACE] << "SageTreeBuilder::Leave(SgGotoStatement*, ...)\n";
+
+   // Append final label statement (if there are labels, otherwise stmt==labelStmt)
+   SgStatement* stmt = wrapStmtWithLabels(labelStmt, labels);
+   SageInterface::appendStatement(stmt, SB::topScopeStack());
+}
+
+void SageTreeBuilder::
 Enter(SgProcessControlStatement* &control_stmt, const std::string &stmt_kind,
       const boost::optional<SgExpression*> &opt_code, const boost::optional<SgExpression*> &opt_quiet)
 {
@@ -1692,24 +1721,6 @@ void SageTreeBuilder::
 Leave(SgJovialCompoolStatement* compool_decl)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgJovialCompoolStatement*, ...) \n";
-}
-
-void SageTreeBuilder::
-Enter(SgJovialLabelDeclaration* &labelDecl, const std::string &name, const SgJovialLabelDeclaration::label_type_enum type)
-{
-   mlog[TRACE] << "SageTreeBuilder::Enter(SgJovialLabelDeclaration* &, ...) \n";
-
-   labelDecl = new SgJovialLabelDeclaration(name, type);
-   ASSERT_not_null(labelDecl);
-}
-
-void SageTreeBuilder::
-Leave(SgJovialLabelDeclaration* labelDecl)
-{
-   mlog[TRACE] << "SageTreeBuilder::Leave(SgJovialLabelDeclaration*, ...) \n";
-
-   ASSERT_not_null(labelDecl);
-   SageInterface::appendStatement(labelDecl, SageBuilder::topScopeStack());
 }
 
 void SageTreeBuilder::

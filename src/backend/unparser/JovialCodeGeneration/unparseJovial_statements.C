@@ -450,6 +450,23 @@ void UnparseJovial::unparseLabelStmt(SgStatement* stmt, SgUnparse_Info& info)
   auto labelStmt = isSgLabelStatement(stmt);
   ASSERT_not_null(labelStmt);
 
+  switch (labelStmt->get_label_type())
+  {
+    case SgLabelStatement::e_jovial_label_decl:
+      curprint_indented("LABEL ", info);
+      curprint (labelStmt->get_label() + ";\n");
+      return;
+    case SgLabelStatement::e_jovial_label_def:
+      curprint_indented("DEF LABEL ", info);
+      curprint (labelStmt->get_label() + ";\n");
+      return;
+    case SgLabelStatement::e_jovial_label_ref:
+      curprint_indented("REF LABEL ", info);
+      curprint (labelStmt->get_label() + ";\n");
+      return;
+    default: ;
+  }
+
   curprint (string(labelStmt->get_label().str()) + ":");
   unp->cur.insert_newline(1);
 

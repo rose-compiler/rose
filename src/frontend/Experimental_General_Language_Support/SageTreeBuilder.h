@@ -124,6 +124,10 @@ public:
      return *tokens_;
    }
 
+   const std::map<const std::string, SgLabelStatement*>& getLabels() {
+     return labels_;
+   }
+
    // Default action for a sage tree node is to do nothing.
    template<typename T> void Enter(T* &) {}
    template<typename T> void Leave(T*)   {}
@@ -197,6 +201,9 @@ public:
               bool is_ifthen = false, bool has_end_stmt = false, bool is_else_if = false);
    void Leave(SgIfStmt*);
 
+   void Enter(SgLabelStatement* &, const std::string &label);
+   void Leave(SgLabelStatement*, const std::vector<std::string> &);
+
    void Enter(SgProcessControlStatement* &, const std::string &, const boost::optional<SgExpression*> &,
                                             const boost::optional<SgExpression*> &quiet=boost::none);
    void Leave(SgProcessControlStatement*, const std::vector<std::string> &);
@@ -257,9 +264,6 @@ public:
 
    void Enter(SgJovialCompoolStatement* &, const std::string &, const SourcePositionPair &);
    void Leave(SgJovialCompoolStatement*);
-
-   void Enter(SgJovialLabelDeclaration* &, const std::string &name, const SgJovialLabelDeclaration::label_type_enum);
-   void Leave(SgJovialLabelDeclaration*);
 
    void Enter(SgJovialOverlayDeclaration* &, SgExpression* address, SgExprListExp* overlay);
    void Leave(SgJovialOverlayDeclaration*);

@@ -402,17 +402,20 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
 
    expr = nullptr;
 
+   // Put these variable references into the global scope to avoid problems in post processing.
+   // Consider creating an instrinsic Compool module for the parameters?
+
    if (ATmatch(term, "BITSINBYTE")) {
      mlog[WARN] << "UNIMPLEMENTED: IntegerMachineParameter - BITSINBYTE\n";
    }
    else if (ATmatch(term, "BITSINWORD")) {
-     expr = SageBuilder::buildVarRefExp("BITSINWORD", SageBuilder::topScopeStack());
+     expr = SageBuilder::buildVarRefExp("BITSINWORD", SageBuilder::getGlobalScopeFromScopeStack());
    }
    else if (ATmatch(term, "BITSINPOINTER")) {
-     expr = SageBuilder::buildVarRefExp("BITSINPOINTER", SageBuilder::topScopeStack());
+     expr = SageBuilder::buildVarRefExp("BITSINPOINTER", SageBuilder::getGlobalScopeFromScopeStack());
    }
    else if (ATmatch(term, "BYTESINWORD")) {
-     expr = SageBuilder::buildVarRefExp("BYTESINWORD", SageBuilder::topScopeStack());
+     expr = SageBuilder::buildVarRefExp("BYTESINWORD", SageBuilder::getGlobalScopeFromScopeStack());
    }
    else if (ATmatch(term, "LOCSINWORD")) {
      mlog[WARN] << "UNIMPLEMENTED: IntegerMachineParameter - LOCSINWORD\n";
@@ -426,8 +429,7 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
      } else return ATfalse;
    }
 
-   //TODO: 'BITSINPOINTER'            -> IntegerMachineParameter {cons("BITSINPOINTER")}
-   //      'INTPRECISION'             -> IntegerMachineParameter {cons("INTPRECISION")}
+   //TODO: 'INTPRECISION'             -> IntegerMachineParameter {cons("INTPRECISION")}
    //      'FLOATPRECISION'           -> IntegerMachineParameter {cons("FLOATPRECISION")}
    //      'FIXEDPRECISION'           -> IntegerMachineParameter {cons("FIXEDPRECISION")}
    //      'FLOATRADIX'               -> IntegerMachineParameter {cons("FLOATRADIX")}
@@ -3345,29 +3347,33 @@ ATbool ATermToSageJovialTraversal::traverse_StatementNameDeclaration(ATerm term,
    ATerm t_name;
    std::string name;
 
-   //TODO: Allow a name list, not just a name
-
+   // Note: Can be a name list, not just a name.
+   // Currently a separate SgLabelStatement is created for each name.
+   //
    if (ATmatch(term, "StatementNameDeclaration(<term>)", &t_name)) {
       ATermList tail = (ATermList) ATmake("<term>", t_name);
       while (! ATisEmpty(tail)) {
          ATerm head = ATgetFirst(tail);
          tail = ATgetNext(tail);
          if (traverse_Name(head, name)) {
-            SgJovialLabelDeclaration* labelDecl{nullptr};
-
-            auto labelType{SgJovialLabelDeclaration::e_jovial_label_decl};
+            auto labelType{SgLabelStatement::e_jovial_label_decl};
             if (def_or_ref == LanguageTranslation::e_storage_modifier_jovial_def) {
-              labelType = SgJovialLabelDeclaration::e_jovial_label_def;
+              labelType = SgLabelStatement::e_jovial_label_def;
             } else if (def_or_ref == LanguageTranslation::e_storage_modifier_jovial_ref) {
-              labelType = SgJovialLabelDeclaration::e_jovial_label_ref;
+              labelType = SgLabelStatement::e_jovial_label_ref;
             }
 
+            // Make a separate label statement for each name in the list
+            SgLabelStatement* labelStmt{nullptr};
+
             // Begin SageTreeBuilder
-            sage_tree_builder.Enter(labelDecl, name, labelType);
-            setSourcePosition(labelDecl, head);
+            sage_tree_builder.Enter(labelStmt, name);
+            setSourcePosition(labelStmt, head);
+            labelStmt->set_label_type(labelType);
 
             // End SageTreeBuilder
-            sage_tree_builder.Leave(labelDecl);
+            std::vector<std::string> labels{};
+            sage_tree_builder.Leave(labelStmt, labels);
          }
          else return ATfalse;
       }
@@ -4192,6 +4198,22 @@ ATbool ATermToSageJovialTraversal::traverse_FunctionDefinition(ATerm term, Langu
 
 // Leave SageTreeBuilder for SgFunctionDeclaration
    sage_tree_builder.Leave(function_decl, param_scope);
+
+// There may be label strings that should be replaced by label references
+   for (const auto &kvp: labelRefs_) {
+     SgStringVal* strVal = kvp.second;
+     if (strVal && strVal->get_value() == kvp.first) {
+       // Replace original SgStringVal with an SgLabelRefExp
+       SgScopeStatement* scope = function_decl->get_definition();
+       auto labelSymbol = isSgLabelSymbol(SI::lookupSymbolInParentScopes(kvp.first, scope));
+       if (labelSymbol) {
+         auto labelRef = SB::buildLabelRefExp(labelSymbol);
+         SI::setOneSourcePositionNull(labelRef);
+         SI::replaceExpression(strVal, labelRef, /*keepOldExp*/false);
+       }
+     }
+   }
+   labelRefs_.clear();
 
    return ATtrue;
 }
@@ -6203,7 +6225,7 @@ ATbool ATermToSageJovialTraversal::traverse_PointerFormula(ATerm term, SgExpress
 //========================================================================================
 // 6.1 VARIABLE AND BLOCK REFERENCES
 //----------------------------------------------------------------------------------------
-ATbool ATermToSageJovialTraversal::traverse_Variable(ATerm term, SgExpression* &var, bool buildRefExpr)
+ATbool ATermToSageJovialTraversal::traverse_Variable(ATerm term, SgExpression* &var)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_Variable: %s\n", ATwriteToString(term));
@@ -6217,25 +6239,32 @@ ATbool ATermToSageJovialTraversal::traverse_Variable(ATerm term, SgExpression* &
 
      var = nullptr;
 
-     // Look for a function call first (functions need not be declared yet)
-     //
-     if (isSgFunctionSymbol(symbol)) {
-       if (buildRefExpr) {
+     // First look for a reference expression (coming from LOC function argument, need not technically be a variable)
+     if (isSgLabelSymbol(symbol)) {
+       var = SageBuilder::buildLabelRefExp(isSgLabelSymbol(symbol));
+       // TODO: need _nfi
+       SI::setOneSourcePositionNull(var);
+     }
+     else if (isSgFunctionSymbol(symbol)) {
          var = SageBuilder::buildFunctionRefExp_nfi(isSgFunctionSymbol(symbol));
-       }
-       else {
-         SgFunctionCallExp* funcCall{nullptr};
-         sage_tree_builder.Enter(funcCall, std::string(name), nullptr);
-         sage_tree_builder.Leave(funcCall);
-         var = funcCall;
-       }
+     }
+
+     // Next look for a function call because functions need not be declared yet
+     //
+     else if (isSgFunctionSymbol(symbol)) {
+       SgFunctionCallExp* funcCall{nullptr};
+       sage_tree_builder.Enter(funcCall, std::string(name), nullptr);
+       sage_tree_builder.Leave(funcCall);
+       var = funcCall;
      }
      else if (isSgClassSymbol(symbol) || isSgTypedefSymbol(symbol)) {
        var = SageBuilder::buildTypeExpression(symbol->get_type());
      }
-     // This probably should be "else" rather than "else if" but want to know what symbols are used
      else if (isSgVariableSymbol(symbol) || isSgEnumSymbol(symbol) || symbol == nullptr) {
        var = sage_tree_builder.buildVarRefExp_nfi(std::string(name));
+     }
+     else {
+       // TODO: look for a define and replace with define/macro name
      }
      ASSERT_not_null(var);
      setSourcePosition(var, term);
@@ -7018,43 +7047,69 @@ ATbool ATermToSageJovialTraversal::traverse_IntrinsicFunctionCall(ATerm term, Sg
 //========================================================================================
 // 6.3.1 LOC FUNCTIONS
 //----------------------------------------------------------------------------------------
-ATbool ATermToSageJovialTraversal::traverse_LocFunction(ATerm term, SgFunctionCallExp* &func_call)
+ATbool ATermToSageJovialTraversal::traverse_LocFunction(ATerm term, SgFunctionCallExp* &funcCall)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_LocFunction: %s\n", ATwriteToString(term));
 #endif
 
    ATerm t_argument;
-   std::string loc_arg_str;
-   SgExpression* loc_arg_expr = nullptr;
+   char* name;
+   std::string locArgStr{};
+   SgExpression* locArgExpr{nullptr};
+   SgType* returnType{nullptr};
 
-   func_call = nullptr;
+   funcCall = nullptr;
 
    if (ATmatch(term, "LocFunction(<term>)", &t_argument)) {
-      if (traverse_Name(t_argument, loc_arg_str)) {
-         loc_arg_expr = SageBuilder::buildVarRefExp(loc_arg_str, SageBuilder::topScopeStack());
-         ASSERT_not_null(loc_arg_expr);
+      if (traverse_Name(t_argument, locArgStr)) {
+         locArgExpr = SB::buildVarRefExp(locArgStr, SageBuilder::topScopeStack());
+         ASSERT_not_null(locArgExpr);
       }
-      else if (traverse_Variable(t_argument, loc_arg_expr, /*build_ref_expr*/true)) {
-         // MATCHED NamedVariable -> Variable
+      else if (ATmatch(t_argument, "<str>" , &name)) {
+         if (!SI::lookupSymbolInParentScopes(name)) {
+            // No symbol but perhaps a label statement already exists
+            auto labels = sage_tree_builder.getLabels();
+            if (labels.find(name) != labels.end()) {
+               // The SgStringVal will later need to be converted to SgLabelRefExp
+               auto stringVal = SB::buildStringVal_nfi(name);
+               labelRefs_.insert(std::make_pair(name, stringVal));
+               locArgExpr = stringVal;
+            }
+         }
       }
-      else if (traverse_UserDefinedFunctionCall(t_argument, loc_arg_expr)) {
-         // MATCHED UserDefinedFunctionCall for when LocFunction argument is a TableItem
-      } else return ATfalse;
-   } else return ATfalse;
 
-   ASSERT_not_null(loc_arg_expr);
+      // Check for more complicated arguments
+      if (!locArgExpr) {
+         if (traverse_Variable(t_argument, locArgExpr)) {
+            // MATCHED NamedVariable -> Variable
+         }
+         else if (traverse_UserDefinedFunctionCall(t_argument, locArgExpr)) {
+            // MATCHED UserDefinedFunctionCall for when LocFunction argument is a TableItem
+         }
+         else return ATfalse;
+      }
+   }
+   else return ATfalse;
+
+   ASSERT_not_null(locArgExpr);
 
    // build the parameter list
    SgExprListExp* params = SageBuilder::buildExprListExp_nfi();
-   params->append_expression(loc_arg_expr);
+   params->append_expression(locArgExpr);
 
-   SgType* return_type = loc_arg_expr->get_type();
-   ASSERT_not_null(return_type);
+   // If the LOC arg is just a string, the function type should be void*
+   if (isSgStringVal(locArgExpr)) {
+      returnType = SB::buildNullptrType();
+   }
+   else {
+      returnType = locArgExpr->get_type();
+   }
+   ASSERT_not_null(returnType);
 
-   func_call = SageBuilder::buildFunctionCallExp("LOC", return_type, params, SageBuilder::topScopeStack());
-   ASSERT_not_null(func_call);
-   setSourcePosition(func_call, term);
+   funcCall = SageBuilder::buildFunctionCallExp("LOC", returnType, params, SageBuilder::topScopeStack());
+   ASSERT_not_null(funcCall);
+   setSourcePosition(funcCall, term);
 
    return ATtrue;
 }
