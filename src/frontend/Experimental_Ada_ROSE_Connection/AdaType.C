@@ -55,28 +55,29 @@ namespace
         set(declaredType);
       }
 
-      void set(SgType* ty)                   { ADA_ASSERT(ty); res = ty; }
+      void set(SgType* ty)                       { ADA_ASSERT(ty); res = ty; }
 
       // error handler
-      void handle(SgNode& n)                 { SG_UNEXPECTED_NODE(n); }
+      void handle(SgNode& n)                     { SG_UNEXPECTED_NODE(n); }
 
       // just use the type
-      void handle(SgType& n)                 { set(&n); }
+      void handle(SgType& n)                     { set(&n); }
+      void handle(SgAdaDiscriminatedTypeDecl& n) { set(n.get_type()); }
 
       // undecorated declarations
-      void handle(SgAdaFormalTypeDecl& n)    { set(n.get_type()); }
 
       // possibly decorated with an SgAdaDiscriminatedTypeDecl
       // \{
-      void handle(SgClassDeclaration& n)     { handleDiscrDecl(n, n.get_type()); }
-      void handle(SgAdaTaskTypeDecl& n)      { handleDiscrDecl(n, n.get_type()); }
-      void handle(SgAdaProtectedTypeDecl& n) { handleDiscrDecl(n, n.get_type()); }
-      void handle(SgEnumDeclaration& n)      { handleDiscrDecl(n, n.get_type()); }
-      void handle(SgTypedefDeclaration& n)   { handleDiscrDecl(n, n.get_type()); }
+      void handle(SgAdaFormalTypeDecl& n)        { handleDiscrDecl(n, n.get_type()); }
+      void handle(SgClassDeclaration& n)         { handleDiscrDecl(n, n.get_type()); }
+      void handle(SgAdaTaskTypeDecl& n)          { handleDiscrDecl(n, n.get_type()); }
+      void handle(SgAdaProtectedTypeDecl& n)     { handleDiscrDecl(n, n.get_type()); }
+      void handle(SgEnumDeclaration& n)          { handleDiscrDecl(n, n.get_type()); }
+      void handle(SgTypedefDeclaration& n)       { handleDiscrDecl(n, n.get_type()); }
       // \}
 
       // others
-      void handle(SgInitializedName& n)      { set(&mkExprAsType(SG_DEREF(sb::buildVarRefExp(&n)))); }
+      void handle(SgInitializedName& n)          { set(&mkExprAsType(SG_DEREF(sb::buildVarRefExp(&n)))); }
 
       void handle(SgAdaAttributeExp& n)
       {
@@ -217,6 +218,9 @@ namespace
     DeclIterator      genpos = std::find_if( genbeg, genend,
                                              [&tyname](const SgDeclarationStatement* prm) -> bool
                                              {
+                                               if (const SgAdaDiscriminatedTypeDecl* discr = isSgAdaDiscriminatedTypeDecl(prm))
+                                                 prm = discr->get_discriminatedDecl();
+
                                                const SgAdaFormalTypeDecl* formalParam = isSgAdaFormalTypeDecl(prm);
 
                                                return (formalParam && (tyname == AdaIdentifier{formalParam->get_name()}));
@@ -957,17 +961,17 @@ namespace
 
   // PP: rewrote this code to create the SgAdaFormalTypeDecl together with the type
   TypeData
-  getFormalTypeFoundation(const std::string& name, Definition_Struct& def, Definition_ID discrId, AstContext ctx)
+  getFormalTypeFoundation(const std::string& name, Definition_Struct& def, AstContext ctx)
   {
     ADA_ASSERT(def.Definition_Kind == A_Formal_Type_Definition);
     logKind("A_Formal_Type_Definition");
 
-    Formal_Type_Definition_Struct& typenode = def.The_Union.The_Formal_Type_Definition;
+    TypeData                       res{nullptr, nullptr, false, false, false};
     SgAdaFormalTypeDecl&           sgnode = mkAdaFormalTypeDecl(name, ctx.scope());
     SgAdaFormalType&               formal = SG_DEREF(sgnode.get_type());
     SgType*                        formalBaseType = nullptr;
     bool                           inheritsDeclarationsAndSubprograms = false;
-    TypeData                       res{nullptr, nullptr, false, false, false};
+    Formal_Type_Definition_Struct& typenode = def.The_Union.The_Formal_Type_Definition;
 
     switch (typenode.Formal_Type_Kind)
     {
@@ -1107,24 +1111,7 @@ namespace
         formalBaseType = &mkTypeUnknown();
       }
 
-    ROSE_ASSERT(formalBaseType);
-
-    // add discriminant decl if needed
-    if (discrId)
-    {
-      // PP (2/16/22)
-      // \todo not sure if this is the right way to represent
-      //       discriminants with subtype constraints.
-      Element_Struct&    discrElem = retrieveAs(elemMap(), discrId);
-      ADA_ASSERT (discrElem.Element_Kind == A_Definition);
-      logKind("A_Definition");
-
-      Definition_Struct& discrDefn = discrElem.The_Union.Definition;
-      ADA_ASSERT (discrDefn.Definition_Kind == An_Unknown_Discriminant_Part);
-      logKind("An_Unknown_Discriminant_Part");
-
-      formalBaseType = &mkAdaSubtype(*formalBaseType, mkAdaDiscriminantConstraint({}));
-    }
+    ADA_ASSERT(formalBaseType);
 
     formal.set_formal_type(formalBaseType);
     res.sageNode(sgnode);
@@ -1336,7 +1323,21 @@ getFormalTypeFoundation(const std::string& name, Declaration_Struct& decl, AstCo
   ADA_ASSERT(elem.Element_Kind == A_Definition);
   Definition_Struct&      def = elem.The_Union.Definition;
   ADA_ASSERT(def.Definition_Kind == A_Formal_Type_Definition);
-  return getFormalTypeFoundation(name, def, decl.Discriminant_Part, ctx);
+
+  if (SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDeclID_opt(decl.Discriminant_Part, ctx))
+  {
+    SgScopeStatement&       discScope = SG_DEREF(discr->get_discriminantScope());
+    TypeData                res = getFormalTypeFoundation(name, def, ctx.scope(discScope));
+    SgDeclarationStatement* sgdecl = isSgDeclarationStatement(&res.sageNode());
+    ADA_ASSERT(sgdecl != nullptr);
+
+    sg::linkParentChild(*discr, *sgdecl, &SgAdaDiscriminatedTypeDecl::set_discriminatedDecl);
+
+    res.sageNode(*discr);
+    return res;
+  }
+
+  return getFormalTypeFoundation(name, def, ctx);
 }
 
 TypeData
