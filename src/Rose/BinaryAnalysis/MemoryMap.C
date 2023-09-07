@@ -1238,6 +1238,7 @@ MemoryMap::align(rose_addr_t loAlignment, rose_addr_t hiAlignment) const {
             const AddressInterval srcAligned = alignInterval(srcNode->key(), loAlignment, hiAlignment);
             if (dstAligned.intersection(srcAligned)) {
                 perms |= srcNode->value().accessibility();
+                dstAligned = AddressInterval::hull(dstAligned.least(), srcAligned.greatest());
             } else {
                 break;
             }
