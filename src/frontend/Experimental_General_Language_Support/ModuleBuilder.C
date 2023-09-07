@@ -10,8 +10,8 @@ void ModuleBuilder::setCurrentProject(SgProject* project)
   currentProject = project;
 }
 
-std::string ModuleBuilder::find_file_from_inputDirs(const std::string &basename)
- {
+std::string ModuleBuilder::findFileFromInputDirs(const std::string &basename)
+{
    std::string dir;
    std::string name;
    int sizeArg = inputDirs.size();
@@ -26,6 +26,20 @@ std::string ModuleBuilder::find_file_from_inputDirs(const std::string &basename)
      }
    }
    return basename;
+}
+
+// Convert to lower case and remove Jovial's extraneous tick (') marks
+std::string ModuleBuilder::namespaceSymbolName(const std::string &name)
+{
+   std::string symbolName;
+   symbolName.reserve(name.size());
+
+   for (auto ch: name) {
+     if (ch != '\'') symbolName += ch;
+   }
+   std::transform(symbolName.cbegin(), symbolName.cend(), symbolName.begin(), ::tolower);
+
+   return symbolName;
 }
 
 void ModuleBuilder::setInputDirs(SgProject* project)
@@ -79,6 +93,19 @@ void ModuleBuilder::loadModule(const std::string &module_name, std::vector<std::
   ASSERT_not_null(module_scope);
 
   namespace_symbol = module_scope->lookup_namespace_symbol(module_name);
+  if (!namespace_symbol) {
+    std::string symbolName = namespaceSymbolName(module_name);
+
+    // Check for alternate/mangled symbol names (Jovial may have extraneous ' marks)
+    for (auto decl: module_scope->get_declarations()) {
+      auto nameDecl = isSgNamespaceDeclarationStatement(decl);
+      if (symbolName == namespaceSymbolName(nameDecl->get_name())) {
+        namespace_symbol = module_scope->lookup_namespace_symbol(nameDecl->get_name());
+        break;
+      }
+    }
+  }
+
   if (namespace_symbol) namespace_decl = namespace_symbol->get_declaration();
   if (namespace_decl) namespace_defn = namespace_decl->get_definition();
   if (namespace_defn) namespace_symbols = namespace_defn->get_symbol_table();
@@ -259,7 +286,7 @@ SgSourceFile* ModuleBuilder::getModule(const std::string &module_name)
   }
 
   std::string lc_module_name = StringUtility::convertToLowerCase(module_name);
-  std::string file_path = find_file_from_inputDirs(lc_module_name);
+  std::string file_path = findFileFromInputDirs(lc_module_name);
 
   // This will run the parser on the module file and load the declarations into global scope
   module_file = createSgSourceFile(file_path);

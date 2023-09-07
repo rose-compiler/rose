@@ -46,7 +46,8 @@ public:
    void addMapping(const std::string &module_name, SgSourceFile* module_stmt);
 
    std::string getModuleFileSuffix() {return std::string(".rcmp");}
-   std::string find_file_from_inputDirs(const std::string &name);
+   std::string findFileFromInputDirs(const std::string &name);
+   std::string namespaceSymbolName(const std::string &name);
 
    void setInputDirs(SgProject*);
  

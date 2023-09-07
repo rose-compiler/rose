@@ -33,6 +33,7 @@ void UnparseJovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpa
 
        // symbol references
           case V_SgFunctionRefExp:      unparseFuncRef    (expr, info);          break;
+          case V_SgLabelRefExp:         unparseLabelRef   (expr, info);          break;
           case V_SgVarRefExp:           unparseVarRef     (expr, info);          break;
           case V_SgPointerDerefExp:     unparsePtrDeref   (expr, info);          break;
           case V_SgTypeExpression:      unparseTypeExpr   (expr, info);          break;
@@ -400,6 +401,17 @@ UnparseJovial::unparseFuncRef(SgExpression* expr, SgUnparse_Info& info)
 
       std::string func_name = func_ref->get_symbol()->get_name().str();
       curprint(func_name);
+   }
+
+void
+UnparseJovial::unparseLabelRef(SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgLabelRefExp* labelRef = isSgLabelRefExp(expr);
+
+     ASSERT_not_null(labelRef);
+     ASSERT_not_null(labelRef->get_symbol());
+
+     curprint(labelRef->get_symbol()->get_name().str());
    }
 
 void

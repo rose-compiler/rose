@@ -99,6 +99,7 @@ public:
 
           virtual void unparseAssignOp       (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseFuncRef        (SgExpression* expr, SgUnparse_Info& info);
+          virtual void unparseLabelRef       (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseVarRef         (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparsePtrDeref       (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseTypeExpr       (SgExpression* expr, SgUnparse_Info& info);
