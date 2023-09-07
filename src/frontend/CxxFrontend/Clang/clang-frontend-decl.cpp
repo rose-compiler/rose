@@ -1235,6 +1235,9 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
         // check if all fields are properly inserted into the definition
         clang::RecordDecl::field_iterator it;
         for (it = record_decl->field_begin(); it != record_decl->field_end(); it++) {
+#if DEBUG_VISIT_DECL
+            logger[DEBUG] << "ClangToSageTranslator::VisitRecordDecl visit field " << (*it)->getNameAsString() << "\n";
+#endif
             SgNode * tmp_field = Traverse(*it);
             SgDeclarationStatement * field_decl = isSgDeclarationStatement(tmp_field);
             ROSE_ASSERT(field_decl != NULL);
@@ -1319,7 +1322,7 @@ bool ClangToSageTranslator::VisitCXXRecordDecl(clang::CXXRecordDecl * cxx_record
     for (it_ctor = cxx_record_decl->ctor_begin(); it_ctor != cxx_record_decl->ctor_end(); it_ctor++) {
         // TODO if not tranversed as methods
 #if DEBUG_VISIT_DECL
-        logger[DEBUG] << "ClangToSageTranslator::VisitCXXRecordDecl visit ctor "  << "\n";
+        logger[DEBUG] << "ClangToSageTranslator::VisitCXXRecordDecl visit ctor " << (*it_ctor)->getNameAsString() << "\n";
 #endif
     }
 
@@ -1710,6 +1713,7 @@ bool ClangToSageTranslator::VisitDeclaratorDecl(clang::DeclaratorDecl * declarat
 bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
     logger[DEBUG] << "ClangToSageTranslator::VisitFieldDecl" << "\n";
+    logger[DEBUG] << "parent: " << field_decl->getParent() << "\n";
 #endif  
     bool res = true;
     
@@ -1719,6 +1723,9 @@ bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode
 #endif
 
     SgName name(field_decl->getNameAsString());
+
+    clang::RecordDecl* enclosingRecordDecl = field_decl->getParent();
+    const clang::Type* encolsingRecordDeclType = enclosingRecordDecl->getTypeForDecl();
 
     clang::QualType fieldQualType = field_decl->getType();
 
@@ -1748,7 +1755,7 @@ bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode
          clang::TagDecl* ownedTagDecl = ((clang::ElaboratedType *)fieldType)->getOwnedTagDecl();
          if(ownedTagDecl != nullptr)
          {
-            logger[DEBUG] << "ownedTagDecl " << ownedTagDecl->isThisDeclarationADefinition() << "\n";
+            logger[DEBUG] << "ClangToSageTranslator::VisitFieldDecl ownedTagDecl " << ownedTagDecl->isThisDeclarationADefinition() << "\n";
             isOwnedTagDeclADefinition = ownedTagDecl->isThisDeclarationADefinition();
          }
        }
@@ -1762,6 +1769,10 @@ bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode
        }
        fieldType = fieldQualType.getTypePtr();
     }
+
+#if DEBUG_VISIT_DECL
+    logger[DEBUG] << "fieldType: " << fieldType << " enclosingRecordDeclType: " << encolsingRecordDeclType <<  "\n";
+#endif
 
     if(llvm::isa<clang::EnumType>(fieldType))
     {
@@ -1844,7 +1855,9 @@ bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode
             SgClassDeclaration* classDefDecl = isSgClassDeclaration(classDecl->get_definingDeclaration());
             classDecl->set_isAutonomousDeclaration(false);
             classDefDecl->set_isAutonomousDeclaration(false);
-            if(isembedded && classDefDecl != nullptr && !isSgDeclarationStatement(classDefDecl->get_parent()))
+            // Pei-Hung (08/29/23) When the field has a pointer type to the enclosing class (e.g. test2003_08.C),
+            // the following setup should be skipped.  Implementation details should be handled under visitVarDecl (at least for tux2003_08.C).
+            if(fieldType != encolsingRecordDeclType && isembedded && classDefDecl != nullptr && !isSgDeclarationStatement(classDefDecl->get_parent()))
             {
               classDefDecl->set_parent(var_decl);
 //              classDefDecl->set_isAutonomousDeclaration(false);
@@ -2392,7 +2405,7 @@ bool ClangToSageTranslator::VisitNonTypeTemplateParmDecl(clang::NonTypeTemplateP
 
 bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    logger[DEBUG] << "ClangToSageTranslator::VisitVarDecl" << "\n";
+    logger[DEBUG] << "ClangToSageTranslator::VisitVarDecl " << var_decl->getNameAsString() << "\n";
 #endif
     bool res = true;
 
@@ -2443,7 +2456,9 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
          clang::TagDecl* ownedTagDecl = ((clang::ElaboratedType *)varType)->getOwnedTagDecl();
          if(ownedTagDecl != nullptr)
          {
+#if DEBUG_VISIT_DECL
             logger[DEBUG] << "ownedTagDecl " << ownedTagDecl->isThisDeclarationADefinition() << "\n";
+#endif
             isOwnedTagDeclADefinition = ownedTagDecl->isThisDeclarationADefinition();
          }
        }
@@ -2485,6 +2500,11 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
 // This might not be the  precise info for set_isAutonomousDeclaration
       isDefinitionaRequired = iscompleteDefined;
     }
+
+#if DEBUG_VISIT_DECL
+            logger[DEBUG] << "isDefinitionaRequired by Clang " << isDefinitionaRequired << "\n";
+            logger[DEBUG] << "isembedded " << isembedded << "\n";
+#endif
 
     SgType * sg_varType = buildTypeFromQualifiedType(varQualType);
     SgType * type = buildTypeFromQualifiedType(var_decl->getType());
@@ -2552,6 +2572,10 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
           classDefDecl->set_isAutonomousDeclaration(isAutonomousDeclaration);
           sg_var_decl->set_baseTypeDefiningDeclaration(classDefDecl);
           sg_var_decl->set_variableDeclarationContainsBaseTypeDefiningDeclaration(true);
+#if DEBUG_VISIT_DECL
+            logger[DEBUG] << "set_baseTypeDefiningDeclaration " << classDefDecl << "\n";
+            logger[DEBUG] << "set_variableDeclarationContainsBaseTypeDefiningDeclaration \n";
+#endif
         }
 
         std::map<SgClassType *, bool>::iterator bool_it = p_class_type_decl_first_see_in_type.find(isSgClassType(type));
@@ -2559,6 +2583,9 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
         if (bool_it->second) {
             sg_var_decl->set_baseTypeDefiningDeclaration(isSgNamedType(type)->get_declaration()->get_definingDeclaration());
             sg_var_decl->set_variableDeclarationContainsBaseTypeDefiningDeclaration(true);
+#if DEBUG_VISIT_DECL
+            logger[DEBUG] << "set_variableDeclarationContainsBaseTypeDefiningDeclaration \n";
+#endif
             bool_it->second = false;
         }
     }
@@ -2571,6 +2598,10 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
           enumDefDecl->set_isAutonomousDeclaration(isAutonomousDeclaration);
           sg_var_decl->set_baseTypeDefiningDeclaration(enumDefDecl);
           sg_var_decl->set_variableDeclarationContainsBaseTypeDefiningDeclaration(true);
+#if DEBUG_VISIT_DECL
+            logger[DEBUG] << "set_baseTypeDefiningDeclaration " << enumDefDecl << "\n";
+            logger[DEBUG] << "set_variableDeclarationContainsBaseTypeDefiningDeclaration \n";
+#endif
         }
 
         std::map<SgEnumType *, bool>::iterator bool_it = p_enum_type_decl_first_see_in_type.find(isSgEnumType(type));
@@ -2578,6 +2609,9 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
         if (bool_it->second) {
             sg_var_decl->set_baseTypeDefiningDeclaration(isSgEnumType(type)->get_declaration()->get_definingDeclaration());
             sg_var_decl->set_variableDeclarationContainsBaseTypeDefiningDeclaration(true);
+#if DEBUG_VISIT_DECL
+            logger[DEBUG] << "set_variableDeclarationContainsBaseTypeDefiningDeclaration \n";
+#endif
             bool_it->second = false;
         }
     }
