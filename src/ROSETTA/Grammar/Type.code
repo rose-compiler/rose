@@ -7030,6 +7030,7 @@ $CLASSNAME::createType(SgExpression* optional_fortran_type_kind)
             // DQ (10/26/2016): Suppress the delete to test mergeTest_04 behavior.
             // It might be that in the memory pool traversal we can't be allocating and deallocating IR nodes that we might be traversing.
             // This is now fixed by making a copy of the nodes to be traversed with the visit function before calling the visit function on those IR nodes.
+               temp_type->set_type_kind(nullptr);
                delete temp_type;
 #endif
                temp_type = NULL;
@@ -7572,6 +7573,7 @@ SgTypeInt::createType(int bitLength, SgExpression* optional_fortran_type_kind)
             // DQ (10/26/2016): Suppress the delete to test mergeTest_04 behavior.
             // It might be that in the memory pool traversal we can't be allocating and deallocating IR nodes that we might be traversing.
             // This is now fixed by making a copy of the nodes to be traversed with the visit function before calling the visit function on those IR nodes.
+               temp_type->set_type_kind(nullptr);
                delete temp_type;
 #endif
                temp_type = NULL;
