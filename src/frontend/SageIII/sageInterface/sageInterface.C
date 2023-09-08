@@ -252,7 +252,7 @@ SageInterface::checkSgNodePointers()
   // Step 1: is to build a map of the boundaries of the memory pools for each IR node kind.
   // Step 2: traverse all of the IR nodes across all of the memory pools and check
   //   a) if the pointer to each node in the list of child IR nodes is in the map from step 1.
-  //   b) if it is then we can expect to dereference the pointer and check the value of 
+  //   b) if it is then we can expect to dereference the pointer and check the value of
   //      get_freepointer(), the value should be 0xffffffffffffffff, else it is an error
   // (when it is an error it usually should be a value that is in the map from step 1, but it
   // is a node that was previously deleted, so it is a stale pointer).
@@ -1362,14 +1362,14 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
                          varRefExp->setTransformation();
 #if 1
                       // DQ (5/2/2021): The traversal over the file will identify the nesting of and transformations in outer (enclosing) IR nodes.
-                      // DQ (5/1/2021): I think that we may have to set the physical node id and maybe make it to be output.  This is 
-                      // special to the case of using the header file unparsing (any maybe the token-based unparsing with the header 
+                      // DQ (5/1/2021): I think that we may have to set the physical node id and maybe make it to be output.  This is
+                      // special to the case of using the header file unparsing (any maybe the token-based unparsing with the header
                       // file unparsing, but I think just the header file unparsing).
 #if 0
                          printf ("In SageInterface::set_name(): When unparsing header files, we need to set the physical file id to the correct file \n");
 #endif
-                      // DQ (4/23/2021): I think it is a problem that the statement is not marked as a transformation so that we 
-                      // know how to handle it with the token-based unparsing.  
+                      // DQ (4/23/2021): I think it is a problem that the statement is not marked as a transformation so that we
+                      // know how to handle it with the token-based unparsing.
                          SgStatement* associatedStatement = getEnclosingStatement(varRefExp);
                          ROSE_ASSERT(associatedStatement != NULL);
                          associatedStatement->setTransformation();
@@ -1437,18 +1437,18 @@ SageInterface::listHeaderFiles ( SgIncludeFile* includeFile )
    }
 
 
-bool 
+bool
 SageInterface::scopeHasStatementsFromSameFile(SgScopeStatement* scope)
    {
   // DQ (5/9/2021): Adding support for detection of statements in a scope that must be unparsed.
-  // This function supports the token-based unparsing when used with unparsing of header files 
-  // to know when the scope can be unparsed via it's token stream, even though a statement from 
+  // This function supports the token-based unparsing when used with unparsing of header files
+  // to know when the scope can be unparsed via it's token stream, even though a statement from
   // a header file may contain a transformation.
   //    returns true if there is a statement in the scope that has to be unparsed (is from the same file as the scope).
   //    returns false if the scope is empty or contains only statements associated with one or more header files.
-  // When the scope has statements from the same file, then if there is a transformation contained in any of 
-  // those statements then we have to unparse the scope one statement at a time when using the token-based 
-  // unparsing.  If the scope has no statements from the same file, then the existance of any statement that 
+  // When the scope has statements from the same file, then if there is a transformation contained in any of
+  // those statements then we have to unparse the scope one statement at a time when using the token-based
+  // unparsing.  If the scope has no statements from the same file, then the existance of any statement that
   // contains a transformation does not case the statements to be unparsed individually.
 
      ROSE_ASSERT(scope != NULL);
@@ -10534,7 +10534,7 @@ void SageInterface::replaceStatement(SgStatement* oldStmt, SgStatement* newStmt,
 
 #if 1
   // DQ (7/20/2021): Need to make the physical_file_ids match and the parents.
-  // Acutally this may be too late in the case of a deferred transformation since 
+  // Acutally this may be too late in the case of a deferred transformation since
   // we run the AST consistancy tests as an intermediate step.
      int physical_file_id = oldStmt->get_startOfConstruct()->get_physical_file_id();
 
@@ -19600,7 +19600,7 @@ void SageInterface::markNodeToBeUnparsed(SgNode* node, int physical_file_id)
 #if 1
                printf ("Note: calling node markTransformationsForOutput(): node = %p = %s \n",node,node->class_name().c_str());
 #endif
-            // DQ (7/14/2021): This is just a redundant traversal over the subtree that only appears 
+            // DQ (7/14/2021): This is just a redundant traversal over the subtree that only appears
             // to call setTransformation() and setOutputInCodeGeneration().
                markTransformationsForOutput(node);
              }
@@ -19639,7 +19639,7 @@ void SageInterface::markNodeToBeUnparsed(SgNode* node, int physical_file_id)
 #endif
              }
 
-       // DQ (7/14/2021): This is just a redundant traversal over the subtree that only appears 
+       // DQ (7/14/2021): This is just a redundant traversal over the subtree that only appears
        // to call setTransformation() and setOutputInCodeGeneration().
        // markTransformationsForOutput(node);
         }
@@ -19684,7 +19684,7 @@ void SageInterface::markSubtreeToBeUnparsed(SgNode* root, int physical_file_id)
 void SageInterface::markSubtreeToBeUnparsedTreeTraversal(SgNode* root, int physical_file_id)
    {
   // DQ (7/13/2021): This function marks nodes in a subtree to be a transformation, but avoids marking subtrees of the SgCastExp.
-  // This is important because currently the marking of an implicit cast will cause it to be unparsed, even though it is marked 
+  // This is important because currently the marking of an implicit cast will cause it to be unparsed, even though it is marked
   // as implicit.  This detail of precedence of implicit flags over transformation flags needs to be fixed seperated.
   // This function has been implemented as part of debugging this issue.
 
@@ -19695,10 +19695,10 @@ void SageInterface::markSubtreeToBeUnparsedTreeTraversal(SgNode* root, int physi
           public:
                int physical_file_id;
                bool isCastSubtree;
-               InheritedAttribute(int file_id): physical_file_id(file_id), isCastSubtree(false) {} 
+               InheritedAttribute(int file_id): physical_file_id(file_id), isCastSubtree(false) {}
                InheritedAttribute(const InheritedAttribute & X)
                   {
-                    isCastSubtree    = X.isCastSubtree; 
+                    isCastSubtree    = X.isCastSubtree;
                     physical_file_id = X.physical_file_id;
                   }
         };
@@ -27809,6 +27809,9 @@ namespace
     template <class SageDeclarationStatement>
     void handle(SageDeclarationStatement& n, SgDeclarationStatement&)
     {
+      // SgDeclarationStatement::get_type is not a virtual function
+      //   => find overloaders returning SgNamedType in subclasses
+      //      by using the full type (SageDeclarationStatement).
       setResult(n.get_type());
     }
 

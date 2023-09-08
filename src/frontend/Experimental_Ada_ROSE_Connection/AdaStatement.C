@@ -2923,9 +2923,10 @@ namespace
   //                                AstContext ctx
   //                              )
 
+  template <class AsisTypeDefinitionStruct>
   void
   processInheritedSubroutines( SgNamedType* derivedTy,
-                               Type_Definition_Struct& tydef,
+                               AsisTypeDefinitionStruct& tydef,
                                AstContext ctx
                              )
   {
@@ -4336,24 +4337,32 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         logKind("A_Formal_Type_Declaration", elem.ID);
 
-        NameData              adaname = singleName(decl, ctx);
+        NameData                adaname = singleName(decl, ctx);
         ADA_ASSERT(adaname.fullName == adaname.ident);
-        TypeData              ty = getFormalTypeFoundation(adaname.ident, decl, ctx);
-        SgScopeStatement&     scope = ctx.scope();
+        FormalTypeData          ty = getFormalTypeFoundation(adaname.ident, decl, ctx);
+        SgScopeStatement&       scope = ctx.scope();
         ADA_ASSERT(scope.get_parent());
 
         Element_ID              id     = adaname.id();
         SgDeclarationStatement* nondef = findFirst(asisTypes(), id);
-        SgDeclarationStatement& sgnode = sg::dispatch(TypeDeclMaker{adaname.ident, scope, ty, nondef}, &ty.sageNode());
+        SgDeclarationStatement& sgnode = ty.sageNode();
 
-        setModifiers(sgnode, ty);
+        setModifiers(sgnode, ty.isAbstract(), ty.isLimited(), ty.isTagged());
 
         privatize(sgnode, isPrivate);
-        recordNode(asisTypes(), id, sgnode, nondef != nullptr);
         attachSourceLocation(sgnode, elem, ctx);
 
-        if (isSgAdaDiscriminatedTypeDecl(&sgnode) == nullptr)
+        if (/*SgAdaDiscriminatedTypeDecl* discr =*/ isSgAdaDiscriminatedTypeDecl(&sgnode))
+          /* do nothing */;
+        else
           ctx.appendStatement(sgnode);
+
+        recordNode(asisTypes(), id, sgnode, nondef != nullptr);
+
+        if (ty.inheritsRoutines())
+        {
+          processInheritedSubroutines(si::getDeclaredType(&sgnode), ty.definitionStruct(), ctx);
+        }
 
         assocdecl = &sgnode;
         break;
