@@ -16,22 +16,38 @@ namespace Ada_ROSE_Translation
 void initializePkgStandard(SgGlobal& global);
 
 /// represents a (partially) converted type
-struct TypeData : std::tuple<Type_Definition_Struct*, SgNode*, bool, bool, bool>
+template <class AsisTypeDefinitionStruct, class SageNode>
+struct TypeDataT : std::tuple<AsisTypeDefinitionStruct*, SageNode*, bool, bool, bool, bool>
 {
-  using base = std::tuple<Type_Definition_Struct*, SgNode*, bool, bool, bool>;
-  using base::base;
+  using base = std::tuple<AsisTypeDefinitionStruct*, SageNode*, bool, bool, bool, bool>;
+  // using base::base;
 
-  Type_Definition_Struct& definitionStruct()  const { return SG_DEREF(std::get<0>(*this)); }
-  SgNode&                 sageNode()          const { return SG_DEREF(std::get<1>(*this)); }
-  bool                    isAbstract()        const { return std::get<2>(*this); }
-  bool                    isLimited()         const { return std::get<3>(*this); }
-  bool                    isTagged()          const { return std::get<4>(*this); }
+  TypeDataT( AsisTypeDefinitionStruct* def = nullptr,
+             SageNode* sgn = nullptr,
+             bool abs = false,
+             bool ltd = false,
+             bool tag = false,
+             bool inh = false
+           )
+  : base(def, sgn, abs, ltd, tag, inh)
+  {}
 
-  void                    sageNode(SgNode& n)       { std::get<1>(*this) = &n; }
-  void                    setAbstract(bool b)       { std::get<2>(*this) = b; }
-  void                    setLimited(bool b)        { std::get<3>(*this) = b; }
-  void                    setTagged(bool b)         { std::get<4>(*this) = b; }
+  AsisTypeDefinitionStruct& definitionStruct()  const { return SG_DEREF(std::get<0>(*this)); }
+  SageNode&                 sageNode()          const { return SG_DEREF(std::get<1>(*this)); }
+  bool                      isAbstract()        const { return std::get<2>(*this); }
+  bool                      isLimited()         const { return std::get<3>(*this); }
+  bool                      isTagged()          const { return std::get<4>(*this); }
+  bool                      inheritsRoutines()  const { return std::get<5>(*this); }
+
+  void                      sageNode(SageNode& n)     { std::get<1>(*this) = &n; }
+  void                      setAbstract(bool b)       { std::get<2>(*this) = b; }
+  void                      setLimited(bool b)        { std::get<3>(*this) = b; }
+  void                      setTagged(bool b)         { std::get<4>(*this) = b; }
+  void                      inheritsRoutines(bool b)  { std::get<5>(*this) = b; }
 };
+
+using TypeData       = TypeDataT<Type_Definition_Struct, SgNode>;
+using FormalTypeData = TypeDataT<Formal_Type_Definition_Struct, SgDeclarationStatement>;
 
 /// traverses over a list of types and creates a joint type (single or unioned)
 /// for the exception handler.
@@ -86,7 +102,7 @@ getDiscreteSubtypeID(Element_ID typeId, Element_ID constraintID, AstContext ctx)
 SgBaseClass&
 getParentTypeID(Element_ID defid, AstContext ctx);
 
-TypeData
+FormalTypeData
 getFormalTypeFoundation(const std::string& name, Declaration_Struct& decl, AstContext ctx);
 
 /// returns a ROSE representation of the type represented by \ref decl

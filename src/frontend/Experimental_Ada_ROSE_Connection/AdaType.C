@@ -3,6 +3,8 @@
 #include <limits>
 #include <cmath>
 
+#include <boost/algorithm/string.hpp>
+
 #include "AdaType.h"
 
 #include "sageGeneric.h"
@@ -180,7 +182,7 @@ namespace
 
 
   SgNode*
-  queryArgumentTypeFromInstantiation(AdaIdentifier tyname, AstContext ctx)
+  queryArgumentTypeFromInstantiation(std::string tyname, AstContext ctx)
   {
     using ExprIterator = SgExpressionPtrList::const_iterator;
     using DeclIterator = SgDeclarationStatementPtrList::const_iterator;
@@ -201,7 +203,7 @@ namespace
                                                {
                                                  const SgActualArgumentExpression* act = isSgActualArgumentExpression(exp);
 
-                                                 return (act && (tyname == AdaIdentifier{act->get_argument_name()}));
+                                                 return act && boost::iequals(tyname, act->get_argument_name().getString());
                                                }
                                              );
 
@@ -223,7 +225,7 @@ namespace
 
                                                const SgAdaFormalTypeDecl* formalParam = isSgAdaFormalTypeDecl(prm);
 
-                                               return (formalParam && (tyname == AdaIdentifier{formalParam->get_name()}));
+                                               return formalParam && boost::iequals(tyname, formalParam->get_name().getString());
                                              }
                                            );
 
@@ -960,18 +962,21 @@ namespace
   }
 
   // PP: rewrote this code to create the SgAdaFormalTypeDecl together with the type
-  TypeData
-  getFormalTypeFoundation(const std::string& name, Definition_Struct& def, AstContext ctx)
+  FormalTypeData
+  getFormalTypeFoundation( const std::string& name,
+                           Definition_Struct& def,
+                           SgScopeStatement& inheritedRoutineScope,
+                           AstContext ctx
+                         )
   {
     ADA_ASSERT(def.Definition_Kind == A_Formal_Type_Definition);
     logKind("A_Formal_Type_Definition");
 
-    TypeData                       res{nullptr, nullptr, false, false, false};
+    Formal_Type_Definition_Struct& typenode = def.The_Union.The_Formal_Type_Definition;
     SgAdaFormalTypeDecl&           sgnode = mkAdaFormalTypeDecl(name, ctx.scope());
+    FormalTypeData                 res{&typenode, &sgnode};
     SgAdaFormalType&               formal = SG_DEREF(sgnode.get_type());
     SgType*                        formalBaseType = nullptr;
-    bool                           inheritsDeclarationsAndSubprograms = false;
-    Formal_Type_Definition_Struct& typenode = def.The_Union.The_Formal_Type_Definition;
 
     switch (typenode.Formal_Type_Kind)
     {
@@ -984,8 +989,7 @@ namespace
 
           res.setAbstract(typenode.Has_Abstract);
           res.setLimited(typenode.Has_Limited);
-
-          if (tagged) res.setTagged(typenode.Has_Tagged);
+          res.setTagged(tagged && typenode.Has_Tagged);
 
           // NOTE: we use a private flag on the type instead of the privatize()
           // code used elsewhere since they currently denote different types of
@@ -1009,7 +1013,7 @@ namespace
           formal.set_is_private(typenode.Has_Private);
           formalBaseType = &mkAdaDerivedType(undertype);
 
-          inheritsDeclarationsAndSubprograms = true;
+          res.inheritsRoutines(true);
 
           /* unused fields:
                bool                 Has_Synchronized
@@ -1109,22 +1113,22 @@ namespace
         //       is not correct.
         ADA_ASSERT(!FAIL_ON_ERROR(ctx));
         formalBaseType = &mkTypeUnknown();
-      }
+    }
 
     ADA_ASSERT(formalBaseType);
 
     formal.set_formal_type(formalBaseType);
-    res.sageNode(sgnode);
 
+/*
     if (inheritsDeclarationsAndSubprograms)
     {
       processInheritedSubroutines( formal,
                                    idRange(typenode.Implicit_Inherited_Subprograms),
                                    idRange(typenode.Implicit_Inherited_Declarations),
-                                   ctx
+                                   ctx.scope(inheritedRoutineScope)
                                  );
     }
-
+*/
     return res;
   }
 } // anonymous
@@ -1315,7 +1319,7 @@ getParentTypeID(Element_ID id, AstContext ctx)
   return mkRecordParent(basety);
 }
 
-TypeData
+FormalTypeData
 getFormalTypeFoundation(const std::string& name, Declaration_Struct& decl, AstContext ctx)
 {
   ADA_ASSERT( decl.Declaration_Kind == A_Formal_Type_Declaration );
@@ -1326,18 +1330,18 @@ getFormalTypeFoundation(const std::string& name, Declaration_Struct& decl, AstCo
 
   if (SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDeclID_opt(decl.Discriminant_Part, ctx))
   {
+    SgScopeStatement&       genericScope = ctx.scope();
     SgScopeStatement&       discScope = SG_DEREF(discr->get_discriminantScope());
-    TypeData                res = getFormalTypeFoundation(name, def, ctx.scope(discScope));
-    SgDeclarationStatement* sgdecl = isSgDeclarationStatement(&res.sageNode());
-    ADA_ASSERT(sgdecl != nullptr);
+    FormalTypeData          res = getFormalTypeFoundation(name, def, genericScope, ctx.scope(discScope));
+    SgDeclarationStatement& sgdecl = res.sageNode();
 
-    sg::linkParentChild(*discr, *sgdecl, &SgAdaDiscriminatedTypeDecl::set_discriminatedDecl);
+    sg::linkParentChild(*discr, sgdecl, &SgAdaDiscriminatedTypeDecl::set_discriminatedDecl);
 
     res.sageNode(*discr);
     return res;
   }
 
-  return getFormalTypeFoundation(name, def, ctx);
+  return getFormalTypeFoundation(name, def, ctx.scope(), ctx);
 }
 
 TypeData
