@@ -107,6 +107,10 @@ version_ok () {
 # DQ (12/22/2005): remove the autoconf caches
 rm -rf autom4te.cache
 
+# Automake manual says that if we use AM_CONFIG_HEADER we have to build the stamp-h.in files
+touch stamp-h.in
+touch stamp-h1.in
+
 ###############################################################################################################################
 # Test libtool version and run libtoolize.  Warn if the libtool version is too old, but run it anyway.  Show the command that
 # is run by preceding it with a "+ " on stderr as is the usual debugging style for shell scripts.
@@ -363,10 +367,6 @@ EOF
 ###############################################################################################################################
 # Finishing up details
 ###############################################################################################################################
-
-# Automake manual says that if we use AM_CONFIG_HEADER we have to build the stamp-h.in files
-touch stamp-h.in
-touch stamp-h1.in
 
 # When timing is selected, add a "time" command to the front of the compiles.  This must be done before the --quiet
 # handler below is run to get the right output command.

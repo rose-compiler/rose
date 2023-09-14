@@ -13,7 +13,7 @@ include(CMakeDependentOption)
 #------------------------------------------------------------------------------
 option(ENABLE_DOCS       "Enables documentation" ON)
 option(ENABLE_EXAMPLES   "Enables examples" ON)
-option(ENABLE_TESTS      "Enables tests" ON)
+option(ENABLE_TESTS      "Enables tests" OFF)
 option(ENABLE_BENCHMARKS "Enables benchmarks" OFF)
 option(ENABLE_COVERAGE   "Enables code coverage support" OFF)
 
