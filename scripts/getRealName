@@ -1,8 +1,0 @@
-#!/bin/sh
-if test -f /usr/bin/dscl; then
-  /usr/bin/dscl . read /Users/$1 RealName | sed -n 2p | sed 's/^ *//'
-elif test -f /usr/bin/getent; then
-  /usr/bin/getent passwd $1 | cut -f 5 -d :
-else
-  grep '^$1:' /etc/passwd | cut -f 5 -d :
-fi

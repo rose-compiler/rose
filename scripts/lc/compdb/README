@@ -1,7 +1,0 @@
-The files in this directory are from branch reynolds12/compdb, based on branch master, version 0.9.10.158, at projects/CompilationDB/scripts.  
-
-The branch master, version 0.9.10.216+, projects/CompilationDB/scripts/comp_db_map.py is incompatible with branch reynolds/compdb, projects/CompilationDB/scripts/render_text.py, so copies of matching comp_db_map.py and render_text.py are here temporarily.
-
-The "support" soft link here is because these python scripts depend on the support package.
-
-
