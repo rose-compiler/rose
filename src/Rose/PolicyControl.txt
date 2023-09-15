@@ -3,3 +3,5 @@
 responsibility = Tristan Vanderbruggen <vanderbrugge1@llnl.gov>
 metaprog.h: disable namespace_capitalization english_words
 Logger.h: disable first_include
+CodeGen.h:  disable namespace_header_includes_all
+AST.h:      disable namespace_header_includes_all
