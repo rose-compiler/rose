@@ -14,9 +14,9 @@ AC_DEFUN([ROSE_SUPPORT_EDG], [
 
     AC_MSG_NOTICE([enable_edg_version = "$enable_edg_version"])
     if test "$enable_edg_version" = ""; then
-       AC_MSG_NOTICE([default version of EDG used (5.0)])
-       edg_major_version_number=5
-       edg_minor_version_number=0
+       AC_MSG_NOTICE([default version of EDG used (6.5)])
+       edg_major_version_number=6
+       edg_minor_version_number=5
     else
        AC_MSG_NOTICE([specifying EDG version is not recommended])
        edg_major_version_number=`echo $enable_edg_version | cut -d\. -f1`
