@@ -12,10 +12,25 @@ using Rose::BinaryAnalysis::ByteOrder::hostToBe;
 using namespace Rose::Diagnostics; // for mlog, INFO, WARN, ERROR, FATAL, etc.
 
 SgAsmJvmConstantPool::SgAsmJvmConstantPool(SgAsmJvmFileHeader* jfh)
-    : SgAsmGenericSection(isSgAsmGenericFile(jfh->get_parent()), jfh) {
-    initializeProperties();
-    set_parent(jfh);
-    set_header(jfh);
+  : SgAsmGenericSection(isSgAsmGenericFile(jfh->get_parent()), jfh) {
+  initializeProperties();
+  set_parent(jfh);
+  set_header(jfh);
+}
+
+/* Children in the AST have already been deleted when called from SageInterface::deleteAST(),
+ * if not, delete children. */
+void
+SgAsmJvmConstantPool::destructorHelper()
+{
+  // Delete entries in the constant pool
+  // NOTE: This likely fails with --with-alloc-memset=3 because deleted pointers are not NULL.
+  mlog[WARN] << "Deleting constant pool entries: pool size is: " << get_entries().size() << "\n";
+  for (auto entry: get_entries()) {
+    delete entry;
+  }
+  // Now that all entries have been deleted, clear the vector
+  get_entries().clear();
 }
 
 // Constructor creating an object ready to be initialized via parse().

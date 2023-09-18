@@ -38,4 +38,8 @@ public:
 
     /** Print some debugging information. */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+
+protected:
+    // Some extra clean-up actions on destruction
+    virtual void destructorHelper() override;
 };

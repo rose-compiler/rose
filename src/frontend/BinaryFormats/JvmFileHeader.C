@@ -46,6 +46,26 @@ SgAsmJvmFileHeader::SgAsmJvmFileHeader(SgAsmGenericFile* f)
   p_isa = ISA_JVM;
 }
 
+/* Children in the AST have already been deleted when called from SageInterface::deleteAST(),
+ * if not, delete children. */
+void
+SgAsmJvmFileHeader::destructorHelper()
+{
+  // NOTE: This fails with --with-alloc-memset=3 because p_constant_pool will have been deleted but not nullptr.
+  if (p_constant_pool) {
+    mlog[WARN] << "WILL DELETE the constant pool: size: " << p_constant_pool->get_entries().size() << "\n";
+    auto it = std::find(p_sections->get_sections().begin(), p_sections->get_sections().end(), p_constant_pool);
+    if (it != p_sections->get_sections().end()) {
+      // erase doesn't delete because entry is a pointer
+      p_sections->get_sections().erase(it);
+    }
+    delete p_constant_pool;
+    p_constant_pool = nullptr;
+  }
+
+  // TODO: delete p_interfaces, p_field_table, p_method_table, p_attribute_table
+}
+
 SgAsmJvmFileHeader*
 SgAsmJvmFileHeader::parse()
 {

@@ -95,4 +95,8 @@ public:
 
     /** Returns true if a cursory look at the file indicates that it could be a JVM class file. */
     static bool is_JVM(SgAsmGenericFile*);
+
+protected:
+    // Some extra clean-up actions on destruction
+    virtual void destructorHelper() override;
 };
