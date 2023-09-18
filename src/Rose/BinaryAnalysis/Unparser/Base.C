@@ -1211,7 +1211,7 @@ Base::emitFunctionReasons(std::ostream &out, const P2::Function::Ptr &function, 
 
         if (flags != 0) {
             char buf[64];
-            sprintf(buf, "0x%08x", flags);
+            snprintf(buf, sizeof(buf), "0x%08x", flags);
             strings.push_back("other (" + std::string(buf));
         }
 

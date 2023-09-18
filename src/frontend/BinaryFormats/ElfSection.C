@@ -104,22 +104,22 @@ SgAsmElfSection::init_from_segment_table(SgAsmElfSegmentTableEntry *shdr, bool m
         /* Name */
         char name[128];
         switch (shdr->get_type()) {
-            case SgAsmElfSegmentTableEntry::PT_LOAD:         strcpy(name, "LOAD");        break;
-            case SgAsmElfSegmentTableEntry::PT_DYNAMIC:      strcpy(name, "DYNAMIC");     break;
-            case SgAsmElfSegmentTableEntry::PT_INTERP:       strcpy(name, "INTERP");      break;
-            case SgAsmElfSegmentTableEntry::PT_NOTE:         strcpy(name, "NOTE");        break;
-            case SgAsmElfSegmentTableEntry::PT_SHLIB:        strcpy(name, "SHLIB");       break;
-            case SgAsmElfSegmentTableEntry::PT_PHDR:         strcpy(name, "PHDR");        break;
-            case SgAsmElfSegmentTableEntry::PT_TLS:          strcpy(name, "TLS");         break;
-            case SgAsmElfSegmentTableEntry::PT_GNU_EH_FRAME: strcpy(name, "EH_FRAME");    break;
-            case SgAsmElfSegmentTableEntry::PT_GNU_STACK:    strcpy(name, "GNU_STACK");   break;
-            case SgAsmElfSegmentTableEntry::PT_GNU_RELRO:    strcpy(name, "GNU_RELRO");   break;
-            case SgAsmElfSegmentTableEntry::PT_PAX_FLAGS:    strcpy(name, "PAX_FLAGS");   break;
-            case SgAsmElfSegmentTableEntry::PT_SUNWBSS:      strcpy(name, "SUNWBSS");     break;
-            case SgAsmElfSegmentTableEntry::PT_SUNWSTACK:    strcpy(name, "SUNWSTACK");   break;
-            default:                                         sprintf(name, "PT_0x%08x", shdr->get_type()); break;
+            case SgAsmElfSegmentTableEntry::PT_LOAD:         strncpy(name, "LOAD", sizeof(name)-1);        break;
+            case SgAsmElfSegmentTableEntry::PT_DYNAMIC:      strncpy(name, "DYNAMIC", sizeof(name)-1);     break;
+            case SgAsmElfSegmentTableEntry::PT_INTERP:       strncpy(name, "INTERP", sizeof(name)-1);      break;
+            case SgAsmElfSegmentTableEntry::PT_NOTE:         strncpy(name, "NOTE", sizeof(name)-1);        break;
+            case SgAsmElfSegmentTableEntry::PT_SHLIB:        strncpy(name, "SHLIB", sizeof(name)-1);       break;
+            case SgAsmElfSegmentTableEntry::PT_PHDR:         strncpy(name, "PHDR", sizeof(name)-1);        break;
+            case SgAsmElfSegmentTableEntry::PT_TLS:          strncpy(name, "TLS", sizeof(name)-1);         break;
+            case SgAsmElfSegmentTableEntry::PT_GNU_EH_FRAME: strncpy(name, "EH_FRAME", sizeof(name)-1);    break;
+            case SgAsmElfSegmentTableEntry::PT_GNU_STACK:    strncpy(name, "GNU_STACK", sizeof(name)-1);   break;
+            case SgAsmElfSegmentTableEntry::PT_GNU_RELRO:    strncpy(name, "GNU_RELRO", sizeof(name)-1);   break;
+            case SgAsmElfSegmentTableEntry::PT_PAX_FLAGS:    strncpy(name, "PAX_FLAGS", sizeof(name)-1);   break;
+            case SgAsmElfSegmentTableEntry::PT_SUNWBSS:      strncpy(name, "SUNWBSS", sizeof(name)-1);     break;
+            case SgAsmElfSegmentTableEntry::PT_SUNWSTACK:    strncpy(name, "SUNWSTACK", sizeof(name)-1);   break;
+            default:                                         snprintf(name, sizeof(name), "PT_0x%08x", shdr->get_type()); break;
         }
-        sprintf(name+strlen(name), "#%" PRIuPTR "", shdr->get_index());
+        snprintf(name+strlen(name), sizeof(name)-strlen(name), "#%" PRIuPTR "", shdr->get_index());
         set_name(new SgAsmBasicString(name));
     }
     
@@ -247,9 +247,9 @@ SgAsmElfSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sElfSection[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sElfSection[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sElfSection.", prefix);
+        snprintf(p, sizeof(p), "%sElfSection.", prefix);
     }
     int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     

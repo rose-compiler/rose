@@ -138,9 +138,9 @@ SgAsmElfNoteEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sElfNoteEntry[%zd]", prefix, idx);
+        snprintf(p, sizeof(p), "%sElfNoteEntry[%zd]", prefix, idx);
     } else {
-        sprintf(p, "%sElfNoteEntry", prefix);
+        snprintf(p, sizeof(p), "%sElfNoteEntry", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
@@ -215,9 +215,9 @@ SgAsmElfNoteSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sElfNoteSection[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sElfNoteSection[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sElfNoteSection.", prefix);
+        snprintf(p, sizeof(p), "%sElfNoteSection.", prefix);
     }
 
     SgAsmElfSection::dump(f, p, -1);

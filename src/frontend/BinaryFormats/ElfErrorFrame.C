@@ -119,9 +119,9 @@ SgAsmElfEHFrameEntryCI::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sCIE[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sCIE[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sCIE.", prefix);
+        snprintf(p, sizeof(p), "%sCIE.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
@@ -228,9 +228,9 @@ SgAsmElfEHFrameEntryFD::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sFDE[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sFDE[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sFDE.", prefix);
+        snprintf(p, sizeof(p), "%sFDE.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
@@ -581,9 +581,9 @@ SgAsmElfEHFrameSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sElfEHFrameSection[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sElfEHFrameSection[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sElfEHFrameSection.", prefix);
+        snprintf(p, sizeof(p), "%sElfEHFrameSection.", prefix);
     }
 
     SgAsmElfSection::dump(f, p, -1);

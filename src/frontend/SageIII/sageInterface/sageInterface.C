@@ -19641,6 +19641,8 @@ void SageInterface::markNodeToBeUnparsed(SgNode* node, int physical_file_id)
 
        // DQ (7/14/2021): This is just a redundant traversal over the subtree that only appears
        // to call setTransformation() and setOutputInCodeGeneration().
+       // Jim Leek (07/25/2023) This doesn't seem to be redundant, it definately marks a bunch of the subtree as transformed
+       // That otherwise isn't, but Reverse Type Dependence often  fails to compile because too much gets unparsed.
        // markTransformationsForOutput(node);
         }
 #endif
@@ -21813,7 +21815,7 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
         {
           // Rasmussen 10/19/2020: Needed for issue RC-227
           SgTypedefDeclaration* typedef_decl = isSgTypedefDeclaration(declaration);
-          ROSE_ASSERT (typedef_decl);
+          ASSERT_not_null(typedef_decl);
           typedef_decl->set_parent(targetBlock);
           typedef_decl->set_scope(targetBlock);
           break;

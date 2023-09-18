@@ -32,9 +32,9 @@ SgAsmGenericDLL::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sDLL[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sDLL[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sDLL.", prefix);
+        snprintf(p, sizeof(p), "%sDLL.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
@@ -73,9 +73,9 @@ SgAsmGenericSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sSymbol[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sSymbol[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sSymbol.", prefix);
+        snprintf(p, sizeof(p), "%sSymbol.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 

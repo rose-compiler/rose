@@ -1601,8 +1601,8 @@ FeasiblePath::insertCallSummary(const P2::ControlFlowGraph::ConstVertexIterator 
 boost::filesystem::path
 FeasiblePath::emitPathGraph(size_t callId, size_t graphId) {
     char callIdStr[32], graphIdStr[32];
-    sprintf(callIdStr, "invoc-%04zu", callId);
-    sprintf(graphIdStr, "cfg-%06zu.dot", graphId);
+    snprintf(callIdStr, sizeof(callIdStr), "invoc-%04zu", callId);
+    snprintf(graphIdStr, sizeof(graphIdStr), "cfg-%06zu.dot", graphId);
     boost::filesystem::path debugDir = boost::filesystem::path("rose-debug/BinaryAnalysis/FeasiblePath") / callIdStr;
     boost::filesystem::create_directories(debugDir);
     boost::filesystem::path pathGraphName = debugDir / graphIdStr;

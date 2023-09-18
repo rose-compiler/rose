@@ -112,9 +112,9 @@ SgAsmElfRelocEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbo
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sElfRelocEntry[%zd]", prefix, idx);
+        snprintf(p, sizeof(p), "%sElfRelocEntry[%zd]", prefix, idx);
     } else {
-        sprintf(p, "%sElfRelocEntry", prefix);
+        snprintf(p, sizeof(p), "%sElfRelocEntry", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
@@ -313,9 +313,9 @@ SgAsmElfRelocSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sRelocSection[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sRelocSection[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sRelocSection.", prefix);
+        snprintf(p, sizeof(p), "%sRelocSection.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 

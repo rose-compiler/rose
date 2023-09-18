@@ -85,9 +85,9 @@ SgAsmElfStringSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sElfStringSection[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sElfStringSection[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sElfStringSection.", prefix);
+        snprintf(p, sizeof(p), "%sElfStringSection.", prefix);
     }
     
     SgAsmElfSection::dump(f, p, -1);

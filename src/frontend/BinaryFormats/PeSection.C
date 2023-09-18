@@ -75,9 +75,9 @@ SgAsmPESection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sPESection[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sPESection[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sPESection.", prefix);
+        snprintf(p, sizeof(p), "%sPESection.", prefix);
     }
 
     SgAsmGenericSection::dump(f, p, -1);

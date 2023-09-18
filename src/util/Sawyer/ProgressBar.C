@@ -89,7 +89,7 @@ ProgressBarImpl::makeBar(double ratio, bool isBackward) {
         if (showPercent_) {
             char buf[16];
 #include <Sawyer/WarningsOff.h>
-            sprintf(buf, "%3.0f%% ", 100.0*ratio);
+            snprintf(buf, sizeof(buf), "%3.0f%% ", 100.0*ratio);
 #include <Sawyer/WarningsRestore.h>
             prefix += buf;
         }

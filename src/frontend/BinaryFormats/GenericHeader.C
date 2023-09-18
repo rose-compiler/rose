@@ -281,9 +281,9 @@ SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sHeader[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sHeader[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sHeader.", prefix);
+        snprintf(p, sizeof(p), "%sHeader.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
@@ -318,7 +318,7 @@ SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %" PRIuPTR " entry points\n", p, w, "entry_rva.size", p_entry_rvas.size());
     for (size_t i = 0; i < p_entry_rvas.size(); i++) {
         char label[64];
-        sprintf(label, "entry_rva[%" PRIuPTR "]", i);
+        snprintf(label, sizeof(label), "entry_rva[%" PRIuPTR "]", i);
         rose_addr_t entry_rva = p_entry_rvas[i].get_rva();
         fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ")\n", p, w, label, entry_rva, entry_rva);
         SgAsmGenericSectionPtrList sections = get_file()->get_sections();
@@ -329,7 +329,7 @@ SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     for (size_t i=0; i<p_sections->get_sections().size(); i++) {
         SgAsmGenericSection *section = p_sections->get_sections()[i];
         char label[1024];
-        sprintf(label, "section[%" PRIuPTR "]", i);
+        snprintf(label, sizeof(label), "section[%" PRIuPTR "]", i);
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, label, section->get_id(), section->get_name()->get_string(true).c_str());
     }
     

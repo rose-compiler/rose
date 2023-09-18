@@ -74,9 +74,9 @@ SgAsmPEExportDirectory::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sPEExportDirectory[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sPEExportDirectory[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sPEExportDirectory.", prefix);
+        snprintf(p, sizeof(p), "%sPEExportDirectory.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
@@ -114,9 +114,9 @@ SgAsmPEExportEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sPEExportEntry[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sPEExportEntry[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sPEExportEntry.", prefix);
+        snprintf(p, sizeof(p), "%sPEExportEntry.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
@@ -318,9 +318,9 @@ SgAsmPEExportSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sPEExportSection[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sPEExportSection[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sPEExportSection.", prefix);
+        snprintf(p, sizeof(p), "%sPEExportSection.", prefix);
     }
 
     SgAsmPESection::dump(f, p, -1);

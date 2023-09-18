@@ -85,9 +85,9 @@ SgAsmElfDynamicEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sElfDynamicEntry[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sElfDynamicEntry[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sElfDynamicEntry.", prefix);
+        snprintf(p, sizeof(p), "%sElfDynamicEntry.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
@@ -320,9 +320,9 @@ SgAsmElfDynamicSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sDynamicSection[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sDynamicSection[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sDynamicSection.", prefix);
+        snprintf(p, sizeof(p), "%sDynamicSection.", prefix);
     }
 
     SgAsmElfSection::dump(f, p, -1);
