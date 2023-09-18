@@ -36,7 +36,7 @@ DOCUMENTATION_should_never_be_defined;
 #else
 #define DECLARE_HEADERS(CLASS_WITHOUT_Sg) \
     CLASS_WITHOUT_Sg.setPredeclarationString("Sg" #CLASS_WITHOUT_Sg "_HEADERS", \
-                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "//src/ROSETTA/src/binaryInstruction.C")
+                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "/src/ROSETTA/src/binaryInstruction.C")
 #endif
 
 #ifdef DOCUMENTATION
@@ -44,7 +44,7 @@ DOCUMENTATION_should_never_be_defined;
 #else
 #define DECLARE_OTHERS(CLASS_WITHOUT_Sg) \
     CLASS_WITHOUT_Sg.setFunctionPrototype("Sg" #CLASS_WITHOUT_Sg "_OTHERS", \
-                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "//src/ROSETTA/src/binaryInstruction.C")
+                          ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR + "/src/ROSETTA/src/binaryInstruction.C")
 #endif
 
 #ifdef DOCUMENTATION
@@ -10334,6 +10334,10 @@ public:
 
     /** Returns true if a cursory look at the file indicates that it could be a JVM class file. */
     static bool is_JVM(SgAsmGenericFile*);
+
+protected:
+    // Some extra clean-up actions on destruction
+    virtual void destructorHelper() override;
 public:
     /** Destructor. */
     virtual ~SgAsmJvmFileHeader();
@@ -11141,6 +11145,10 @@ public:
 
     /** Print some debugging information. */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+
+protected:
+    // Some extra clean-up actions on destruction
+    virtual void destructorHelper() override;
 public:
     /** Destructor. */
     virtual ~SgAsmJvmConstantPool();

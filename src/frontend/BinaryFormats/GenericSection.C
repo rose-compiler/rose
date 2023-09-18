@@ -30,32 +30,34 @@ void
 SgAsmGenericSection::destructorHelper()
 {
     SgAsmGenericFile* ef = get_file();
-    SgAsmGenericHeader *hdr = get_header();
+    SgAsmGenericHeader* hdr = get_header();
 
     /* See constructor comment. This deletes both halves of the header/section link. */
     if (hdr) {
         hdr->remove_section(this);
-        set_header(NULL);
+        set_header(nullptr);
     }
 
     /* See comment in ROSETTA/src/binaryInstruction.C.  We need to explicitly delete the section name. */
     if (p_name) {
         SageInterface::deleteAST(p_name);
-        p_name = NULL;
+        p_name = nullptr;
     }
     
     /* FIXME: holes should probably be their own class, which would make the file/hole bidirectional linking more like the
      *        header/section bidirectional links (RPM 2008-09-02) */
-    ef->remove_hole(this);
+    if (ef) {
+        ef->remove_hole(this);
+    }
 
     /* Delete children */
-    p_file   = NULL; // deleted by SageInterface::deleteAST()
+    p_file = nullptr; // deleted by SageInterface::deleteAST()
 
     /* If the section has allocated its own local pool for the p_data member (rather than pointing into the SgAsmGenericFile)
      * then free that now. */
-    if (local_data_pool!=NULL) {
+    if (local_data_pool != nullptr) {
         free(local_data_pool);
-        local_data_pool = NULL;
+        local_data_pool = nullptr;
     }
 }
 
