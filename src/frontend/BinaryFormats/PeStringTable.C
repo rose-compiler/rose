@@ -77,9 +77,9 @@ SgAsmPEStringSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sPEStringSection[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sPEStringSection[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sPEStringSection.", prefix);
+        snprintf(p, sizeof(p), "%sPEStringSection.", prefix);
     }
     
     SgAsmPESection::dump(f, p, -1);

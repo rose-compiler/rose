@@ -227,9 +227,9 @@ AssemblerX86::InsnDefn::to_str() const
     char buf[1024];
     buf[0] = '\0';
 
-    sprintf(buf, "%s(", mnemonic.c_str());
+    snprintf(buf, sizeof(buf), "%s(", mnemonic.c_str());
     if (mnemonic!=AssemblerX86::to_str(kind))
-        sprintf(buf+strlen(buf),  "[x86_%s] ", AssemblerX86::to_str(kind).c_str());
+      snprintf(buf+strlen(buf), sizeof(buf)-strlen(buf),  "[x86_%s] ", AssemblerX86::to_str(kind).c_str());
 
     if (opcode_modifiers & od_rex_pres) {
         uint8_t rex = od_rex_byte(opcode_modifiers);
@@ -256,17 +256,17 @@ AssemblerX86::InsnDefn::to_str() const
     ROSE_ASSERT(opcode <= 0xffffffffffLLU);
 #endif
     if (opcode > 0xffffffff)
-        sprintf(buf+strlen(buf), "%02X", (unsigned)((opcode>>32) & 0xff));
+        snprintf(buf+strlen(buf), sizeof(buf)-strlen(buf), "%02X", (unsigned)((opcode>>32) & 0xff));
     if (opcode > 0xffffff)
-        sprintf(buf+strlen(buf), "%02X", (unsigned)((opcode>>24) & 0xff));
+        snprintf(buf+strlen(buf), sizeof(buf)-strlen(buf), "%02X", (unsigned)((opcode>>24) & 0xff));
     if (opcode > 0xffff)
-        sprintf(buf+strlen(buf), "%02X ", (unsigned)((opcode>>16) & 0xff));
+        snprintf(buf+strlen(buf), sizeof(buf)-strlen(buf), "%02X ", (unsigned)((opcode>>16) & 0xff));
     if (opcode > 0xff)
-        sprintf(buf+strlen(buf), "%02X ", (unsigned)((opcode>>8) & 0xff));
-    sprintf(buf+strlen(buf), "%02X", (unsigned)(opcode & 0xff));
+        snprintf(buf+strlen(buf), sizeof(buf)-strlen(buf), "%02X ", (unsigned)((opcode>>8) & 0xff));
+    snprintf(buf+strlen(buf), sizeof(buf)-strlen(buf), "%02X", (unsigned)(opcode & 0xff));
 
     if (opcode_modifiers & od_e_mask)
-        sprintf(buf+strlen(buf), "/%" PRIuPTR "", od_e_val(opcode_modifiers));
+        snprintf(buf+strlen(buf), sizeof(buf)-strlen(buf), "/%" PRIuPTR "", od_e_val(opcode_modifiers));
     if (opcode_modifiers & od_modrm)
         strcat(buf, "/r");
 

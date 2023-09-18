@@ -488,9 +488,9 @@ void
 BinaryLoaderElf::VersionedSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sVersionedSymbol[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sVersionedSymbol[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sVersionedSymbol.", prefix);
+        snprintf(p, sizeof(p), "%sVersionedSymbol.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     fprintf(f, "%s%-*s = \"%s\"\n", p, w, "name", getName().c_str());
@@ -778,9 +778,9 @@ void
 BinaryLoaderElf::SymverResolver::dump(FILE *f, const char *prefix, ssize_t idx) const {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sSymverResolver[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sSymverResolver[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sSymverResolver.", prefix);
+        snprintf(p, sizeof(p), "%sSymverResolver.", prefix);
     }
 
     for (SymbolVersionDefinitionMap::const_iterator si=symbolVersionDefMap_.begin(); si!=symbolVersionDefMap_.end(); ++si) {

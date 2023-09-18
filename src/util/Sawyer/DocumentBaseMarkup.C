@@ -8,7 +8,6 @@
 #include <Sawyer/DocumentBaseMarkup.h>
 #include <Sawyer/Message.h>
 #include <boost/algorithm/string/trim.hpp>
-#include <boost/foreach.hpp>
 
 #if 0 // [Robb Matzke 2016-09-18]: see its use below
 #include <boost/date_time/gregorian/gregorian.hpp>
@@ -117,7 +116,7 @@ BaseMarkup::versionDateOrDefault() const {
             const struct tm *tm = localtime(&t);
             ASSERT_not_null(tm);
             char buf[128];
-            sprintf(buf, "%04d-%02d-%02d", tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday);
+            snprintf(buf, sizeof(buf), "%04d-%02d-%02d", tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday);
             dflt = buf;
 #endif
         }
@@ -151,7 +150,7 @@ BaseMarkup::hasNonSpace(const std::string &s) {
 SAWYER_EXPORT std::string
 BaseMarkup::makeOneLine(const std::string &s) {
     std::string retval;
-    BOOST_FOREACH (char ch, s) {
+    for (char ch: s) {
         if ('\n' != ch && '\r' != ch && '\f' != ch)
             retval += ch;
     }
@@ -168,7 +167,7 @@ BaseMarkup::leftJustify(const std::string &s, size_t width) {
 SAWYER_EXPORT std::string
 BaseMarkup::escapeSingleQuoted(const std::string &s) {
     std::string retval;
-    BOOST_FOREACH (char ch, s) {
+    for (char ch: s) {
         if ('\'' == ch) {
             retval += "\\'";
         } else {

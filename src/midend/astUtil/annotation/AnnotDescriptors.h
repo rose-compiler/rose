@@ -173,7 +173,7 @@ class NameDescriptor : public StringDescriptor
 {
  public: 
   NameDescriptor()  {}
-  NameDescriptor( int i) { char buf[10]; sprintf(buf,"%d", i); get_name() =  "par__"+ std::string(buf); }
+  NameDescriptor( int i) { char buf[10]; snprintf(buf,sizeof(buf),"%d", i); get_name() =  "par__"+ std::string(buf); }
   NameDescriptor( const std::string& n ) : StringDescriptor(n) {}
   bool read(std::istream& in);
 };

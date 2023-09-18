@@ -272,9 +272,9 @@ SgAsmDOSFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sDOSFileHeader[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sDOSFileHeader[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sDOSFileHeader.", prefix);
+        snprintf(p, sizeof(p), "%sDOSFileHeader.", prefix);
     }
 
         const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
@@ -380,9 +380,9 @@ SgAsmDOSExtendedHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sDOSExtendedHeader[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sDOSExtendedHeader[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sDOSExtendedHeader.", prefix);
+        snprintf(p, sizeof(p), "%sDOSExtendedHeader.", prefix);
     }
 
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));

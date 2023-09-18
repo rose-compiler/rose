@@ -267,12 +267,12 @@ SgAsmNEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sNEFileHeader[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sNEFileHeader[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sNEFileHeader.", prefix);
+        snprintf(p, sizeof(p), "%sNEFileHeader.", prefix);
     }
 
-        int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     SgAsmGenericHeader::dump(f, p, -1);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_linker_major",         p_e_linker_major);
@@ -383,13 +383,12 @@ SgAsmNESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmNE
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sNESectionTableEntry[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sNESectionTableEntry[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sNESectionTableEntry.", prefix);
+        snprintf(p, sizeof(p), "%sNESectionTableEntry.", prefix);
     }
 
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-
 
     fprintf(f, "%s%-*s = %u",                      p, w, "sector",          p_sector);
     if (fhdr)
@@ -438,9 +437,9 @@ SgAsmNESection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sNESection[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sNESection[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sNESection.", prefix);
+        snprintf(p, sizeof(p), "%sNESection.", prefix);
     }
 
         const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
@@ -555,9 +554,9 @@ SgAsmNESectionTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sNESectionTable[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sNESectionTable[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sNESectionTable.", prefix);
+        snprintf(p, sizeof(p), "%sNESectionTable.", prefix);
     }
     SgAsmGenericSection::dump(f, p, -1);
 }
@@ -637,9 +636,9 @@ SgAsmNENameTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sNENameTable[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sNENameTable[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sNENameTable.", prefix);
+        snprintf(p, sizeof(p), "%sNENameTable.", prefix);
     }
 
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
@@ -719,9 +718,9 @@ SgAsmNEModuleTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sNEModuleTable[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sNEModuleTable[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sNEModuleTable.", prefix);
+        snprintf(p, sizeof(p), "%sNEModuleTable.", prefix);
     }
 
         const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
@@ -783,9 +782,9 @@ SgAsmNEStringTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sNEStringTable[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sNEStringTable[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sNEStringTable.", prefix);
+        snprintf(p, sizeof(p), "%sNEStringTable.", prefix);
     }
 
     SgAsmGenericSection::dump(f, p, -1);
@@ -798,7 +797,7 @@ SgAsmNEStringTable::dump(FILE *f, const char *prefix, ssize_t idx) const
     for (size_t i=0; at<get_size(); i++) {
         std::string s = get_string(at);
         char label[64];
-        sprintf(label, "string-at-%" PRIu64, at);
+        snprintf(label, sizeof(label), "string-at-%" PRIu64, at);
         fprintf(f, "%s%-*s = [%" PRIuPTR "] (offset %" PRIu64 ", %" PRIuPTR " bytes) \"%s\"\n",
                 p, w, "string", i, at, s.size(), s.c_str());
         at += 1 + s.size();
@@ -826,9 +825,9 @@ SgAsmNEEntryPoint::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sNEEntryPoint[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sNEEntryPoint[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sNEEntryPoint.", prefix);
+        snprintf(p, sizeof(p), "%sNEEntryPoint.", prefix);
     }
 
         const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
@@ -1001,9 +1000,9 @@ SgAsmNEEntryTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sNEEntryTable[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sNEEntryTable[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sNEEntryTable.", prefix);
+        snprintf(p, sizeof(p), "%sNEEntryTable.", prefix);
     }
 
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
@@ -1206,12 +1205,12 @@ SgAsmNERelocEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sRelocEntry[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sRelocEntry[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sRelocEntry.", prefix);
+        snprintf(p, sizeof(p), "%sRelocEntry.", prefix);
     }
 
-        const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     const char *s;
     switch (p_src_type) {
@@ -1292,7 +1291,7 @@ SgAsmNERelocTable::SgAsmNERelocTable(SgAsmNEFileHeader *fhdr, SgAsmNESection *se
     grab_content();
 
     char name[64];
-    sprintf(name, "NE Relocation Table %" PRIu64, p_offset);
+    snprintf(name, sizeof(name), "NE Relocation Table %" PRIu64, p_offset);
     set_synthesized(true);
     set_name(new SgAsmBasicString(name));
     set_purpose(SP_HEADER);
@@ -1332,9 +1331,9 @@ SgAsmNERelocTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sNERelocTable[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sNERelocTable[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sNERelocTable.", prefix);
+        snprintf(p, sizeof(p), "%sNERelocTable.", prefix);
     }
 
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));

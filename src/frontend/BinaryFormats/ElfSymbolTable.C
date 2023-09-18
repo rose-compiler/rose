@@ -171,9 +171,9 @@ SgAsmElfSymbol::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmGenericSecti
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sElfSymbol[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sElfSymbol[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sElfSymbol.", prefix);
+        snprintf(p, sizeof(p), "%sElfSymbol.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
@@ -334,9 +334,9 @@ SgAsmElfSymbolSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sElfSymbolSection[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sElfSymbolSection[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sElfSymbolSection.", prefix);
+        snprintf(p, sizeof(p), "%sElfSymbolSection.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 

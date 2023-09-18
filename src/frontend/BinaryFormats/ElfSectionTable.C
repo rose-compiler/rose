@@ -542,9 +542,9 @@ SgAsmElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sElfSectionTableEntry[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sElfSectionTableEntry[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sElfSectionTableEntry.", prefix);
+        snprintf(p, sizeof(p), "%sElfSectionTableEntry.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
@@ -651,9 +651,9 @@ SgAsmElfSectionTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sSectionTable[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sSectionTable[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sSectionTable.", prefix);
+        snprintf(p, sizeof(p), "%sSectionTable.", prefix);
     }
 
     SgAsmGenericSection::dump(f, p, -1);

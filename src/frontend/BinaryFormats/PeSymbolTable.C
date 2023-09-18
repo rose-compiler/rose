@@ -245,13 +245,12 @@ SgAsmCoffSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const
     char p[4096], ss[128], tt[128];
     const char *s=NULL, *t=NULL;
     if (idx>=0) {
-        sprintf(p, "%sCOFFSymbol[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sCOFFSymbol[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sCOFFSymbol.", prefix);
+        snprintf(p, sizeof(p), "%sCOFFSymbol.", prefix);
     }
 
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-
 
     SgAsmGenericSymbol::dump(f, p, -1);
 
@@ -259,7 +258,7 @@ SgAsmCoffSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const
       case 0:  s = "external, not assigned";    break;
       case -1: s = "absolute value";            break;
       case -2: s = "general debug, no section"; break;
-      default: sprintf(ss, "%d", p_st_section_num); s = ss; break;
+      default: snprintf(ss, sizeof(ss), "%d", p_st_section_num); s = ss; break;
     }
     fprintf(f, "%s%-*s = %s\n", p, w, "st_section_num", s);
 
@@ -269,7 +268,7 @@ SgAsmCoffSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const
       case 0x20: s = "function"; break;
       case 0x30: s = "array";    break;
       default:
-        sprintf(ss, "%u", p_st_type >> 8);
+        snprintf(ss, sizeof(ss), "%u", p_st_type >> 8);
         s = ss;
         break;
     }
@@ -291,7 +290,7 @@ SgAsmCoffSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const
       case 0x0e: t = "unsigned int";    break;
       case 0x0f: t = "4-byte unsigned"; break;
       default:
-        sprintf(tt, "%u", p_st_type & 0xf);
+        snprintf(tt, sizeof(tt), "%u", p_st_type & 0xf);
         t = tt;
         break;
     }
@@ -329,7 +328,7 @@ SgAsmCoffSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const
       case 107:  s = "CLR token";       t = "";                                  break;
       case 0xff: s = "end of function"; t = "";                                  break;
       default:
-        sprintf(ss, "%u", p_st_storage_class);
+        snprintf(ss, sizeof(ss), "%u", p_st_storage_class);
         s = ss;
         t = "";  
         break;
@@ -440,11 +439,10 @@ SgAsmCoffSymbolTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sCOFFSymtab[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sCOFFSymtab[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sCOFFSymtab.", prefix);
+        snprintf(p, sizeof(p), "%sCOFFSymtab.", prefix);
     }
-
 
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 

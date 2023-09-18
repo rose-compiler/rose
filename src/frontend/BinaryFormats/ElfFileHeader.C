@@ -551,9 +551,9 @@ SgAsmElfFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sElfFileHeader[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sElfFileHeader[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sElfFileHeader.", prefix);
+        snprintf(p, sizeof(p), "%sElfFileHeader.", prefix);
     }
     int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 

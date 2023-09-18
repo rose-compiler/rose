@@ -69,7 +69,7 @@ cEscape(char ch, char context) {
                 result += ch;
             } else {
                 char buf[8];
-                sprintf(buf, "\\%03o", (unsigned)(unsigned char)ch);
+                snprintf(buf, sizeof(buf), "\\%03o", (unsigned)(unsigned char)ch);
                 result += buf;
             }
             break;

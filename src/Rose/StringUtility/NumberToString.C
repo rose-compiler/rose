@@ -45,14 +45,14 @@ numberToString(unsigned int x) {
 std::string
 numberToString(const void* x) {
     char numberString[128];
-    sprintf(numberString, "%p", x);
+    snprintf(numberString, sizeof(numberString), "%p", x);
     return std::string(numberString);
 }
 
 std::string
 numberToString(double x) {
     char numberString[128];
-    sprintf(numberString, "%2.2f", x);
+    snprintf(numberString, sizeof(numberString), "%2.2f", x);
     return std::string(numberString);
 }
 

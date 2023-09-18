@@ -281,9 +281,9 @@ SgAsmLEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%s%sFileHeader[%zd].", prefix, format_name(), idx);
+        snprintf(p, sizeof(p), "%s%sFileHeader[%zd].", prefix, format_name(), idx);
     } else {
-        sprintf(p, "%s%sFileHeader.", prefix, format_name());
+        snprintf(p, sizeof(p), "%s%sFileHeader.", prefix, format_name());
     }
 
     int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
@@ -426,12 +426,12 @@ SgAsmLEPageTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sPageTableEntry[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sPageTableEntry[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sPageTableEntry.", prefix);
+        snprintf(p, sizeof(p), "%sPageTableEntry.", prefix);
     }
 
-        int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     fprintf(f, "%s%-*s = 0x%04x\n", p, w, "flags",  p_flags);
     fprintf(f, "%s%-*s = %u\n",     p, w, "pageno", p_pageno);
@@ -447,7 +447,7 @@ SgAsmLEPageTable::SgAsmLEPageTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset, 
     grab_content();
 
     char section_name[64];
-    sprintf(section_name, "%s Page Table", fhdr->format_name());
+    snprintf(section_name, sizeof(section_name), "%s Page Table", fhdr->format_name());
     set_synthesized(true);
     set_name(new SgAsmBasicString(section_name));
     set_purpose(SP_HEADER);
@@ -487,9 +487,9 @@ SgAsmLEPageTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%s%sPageTable[%zd].", prefix, get_header()->format_name(), idx);
+        snprintf(p, sizeof(p), "%s%sPageTable[%zd].", prefix, get_header()->format_name(), idx);
     } else {
-        sprintf(p, "%s%sPageTable.", prefix, get_header()->format_name());
+        snprintf(p, sizeof(p), "%s%sPageTable.", prefix, get_header()->format_name());
     }
 
     SgAsmGenericSection::dump(f, p, -1);
@@ -533,12 +533,12 @@ SgAsmLESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sLESectionTableEntry[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sLESectionTableEntry[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sLESectionTableEntry.", prefix);
+        snprintf(p, sizeof(p), "%sLESectionTableEntry.", prefix);
     }
 
-        const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     fprintf(f, "%s%-*s = %" PRIu64 " bytes\n", p, w, "mapped_size",      p_mapped_size);
     fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",   p, w, "base_addr",        p_base_addr);
@@ -585,9 +585,9 @@ SgAsmLESection::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%s%sSection[%zd].", prefix, fhdr->format_name(), idx);
+        snprintf(p, sizeof(p), "%s%sSection[%zd].", prefix, fhdr->format_name(), idx);
     } else {
-        sprintf(p, "%s%sSection.", prefix, fhdr->format_name());
+        snprintf(p, sizeof(p), "%s%sSection.", prefix, fhdr->format_name());
     }
 
     SgAsmGenericSection::dump(f, p, -1);
@@ -605,7 +605,7 @@ SgAsmLESectionTable::SgAsmLESectionTable(SgAsmLEFileHeader *fhdr, rose_addr_t of
 
     set_synthesized(true);
     char section_name[64];
-    sprintf(section_name, "%s Section Table", fhdr->format_name());
+    snprintf(section_name, sizeof(section_name), "%s Section Table", fhdr->format_name());
     set_name(new SgAsmBasicString(section_name));
     set_purpose(SP_HEADER);
 
@@ -706,9 +706,9 @@ SgAsmLESectionTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%s%sSectionTable[%zd].", prefix, get_header()->format_name(), idx);
+        snprintf(p, sizeof(p), "%s%sSectionTable[%zd].", prefix, get_header()->format_name(), idx);
     } else {
-        sprintf(p, "%s%sSectionTable.", prefix, get_header()->format_name());
+        snprintf(p, sizeof(p), "%s%sSectionTable.", prefix, get_header()->format_name());
     }
     SgAsmGenericSection::dump(f, p, -1);
 }
@@ -728,7 +728,7 @@ SgAsmLENameTable::SgAsmLENameTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset)
 
     set_synthesized(true);
     char section_name[64];
-    sprintf(section_name, "%s Name Table", fhdr->format_name());
+    snprintf(section_name, sizeof(section_name), "%s Name Table", fhdr->format_name());
     set_name(new SgAsmBasicString(section_name));
     set_purpose(SP_HEADER);
 
@@ -789,9 +789,9 @@ SgAsmLENameTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sLENameTable[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sLENameTable[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sLENameTable.", prefix);
+        snprintf(p, sizeof(p), "%sLENameTable.", prefix);
     }
 
         const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
@@ -852,9 +852,9 @@ SgAsmLEEntryPoint::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sEntryPoint[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sEntryPoint[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sEntryPoint.", prefix);
+        snprintf(p, sizeof(p), "%sEntryPoint.", prefix);
     }
 
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
@@ -888,7 +888,7 @@ SgAsmLEEntryTable::SgAsmLEEntryTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset
 
     set_synthesized(true);
     char section_name[64];
-    sprintf(section_name, "%s Entry Table", fhdr->format_name());
+    snprintf(section_name, sizeof(section_name), "%s Entry Table", fhdr->format_name());
     set_name(new SgAsmBasicString(section_name));
     set_purpose(SP_HEADER);
 
@@ -943,12 +943,12 @@ SgAsmLEEntryTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%s%sEntryTable[%zd].", prefix, get_header()->format_name(), idx);
+        snprintf(p, sizeof(p), "%s%sEntryTable[%zd].", prefix, get_header()->format_name(), idx);
     } else {
-        sprintf(p, "%s%sEntryTable.", prefix, get_header()->format_name());
+        snprintf(p, sizeof(p), "%s%sEntryTable.", prefix, get_header()->format_name());
     }
 
-        const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     SgAsmGenericSection::dump(f, p, -1);
     fprintf(f, "%s%-*s = %" PRIuPTR " entry points\n", p, w, "size", p_entries.size());
@@ -971,7 +971,7 @@ SgAsmLERelocTable::SgAsmLERelocTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset
     grab_content();
 
     char name[64];
-    sprintf(name, "%s Relocation Table", fhdr->format_name());
+    snprintf(name, sizeof(name), "%s Relocation Table", fhdr->format_name());
     set_synthesized(true);
     set_name(new SgAsmBasicString(name));
     set_purpose(SP_HEADER);
@@ -1004,9 +1004,9 @@ SgAsmLERelocTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%s%sRelocTable[%zd].", prefix, get_header()->format_name(), idx);
+        snprintf(p, sizeof(p), "%s%sRelocTable[%zd].", prefix, get_header()->format_name(), idx);
     } else {
-        sprintf(p, "%s%sRelocTable.", prefix, get_header()->format_name());
+        snprintf(p, sizeof(p), "%s%sRelocTable.", prefix, get_header()->format_name());
     }
 
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
@@ -1063,7 +1063,7 @@ SgAsmLEFileHeader::parse(SgAsmDOSFileHeader *dos_header)
         rose_addr_t table_offset = le_header->get_offset() + le_header->get_e_resnametab_rfo();
         SgAsmLENameTable *table = new SgAsmLENameTable(le_header, table_offset);
         char section_name[64];
-        sprintf(section_name, "%s Resident Name Table", le_header->format_name());
+        snprintf(section_name, sizeof(section_name), "%s Resident Name Table", le_header->format_name());
         table->set_name(new SgAsmBasicString(section_name));
         le_header->set_resname_table(table);
     }
@@ -1073,7 +1073,7 @@ SgAsmLEFileHeader::parse(SgAsmDOSFileHeader *dos_header)
         rose_addr_t table_offset = le_header->get_e_nonresnametab_offset();
         SgAsmLENameTable *table = new SgAsmLENameTable(le_header, table_offset);
         char section_name[64];
-        sprintf(section_name, "%s Non-resident Name Table", le_header->format_name());
+        snprintf(section_name, sizeof(section_name), "%s Non-resident Name Table", le_header->format_name());
         table->set_name(new SgAsmBasicString(section_name));
         le_header->set_nonresname_table(table);
     }
@@ -1103,7 +1103,7 @@ SgAsmLEFileHeader::parse(SgAsmDOSFileHeader *dos_header)
 //        SgAsmGenericSection *table = new SgAsmGenericSection(ef, table_offset, table_size);
 //        table->set_synthesized(true);
 //        char section_name[64];
-//        sprintf(section_name, "%s Per-Page Checksum Table", le_header->format_name());
+//        snprintf(section_name, sizeof(section_name), "%s Per-Page Checksum Table", le_header->format_name());
 //        table->set_name(section_name);
 //        table->set_purpose(SP_HEADER);
 //        table->set_header(le_header);
@@ -1119,7 +1119,7 @@ SgAsmLEFileHeader::parse(SgAsmDOSFileHeader *dos_header)
 //        SgAsmGenericSection *table = new SgAsmGenericSection(ef, table_offset, table_size);
 //        table->set_synthesized(true);
 //        char section_name[64];
-//        sprintf(section_name, "%s Module Format Directives Table", le_header->format_name());
+//        snprintf(section_name, sizeof(section_name), "%s Module Format Directives Table", le_header->format_name());
 //        table->set_name(section_name);
 //        table->set_purpose(SP_HEADER);
 //        table->set_header(le_header);

@@ -46,9 +46,9 @@ SgAsmElfSymverEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sElfSymverEntry[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sElfSymverEntry[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sElfSymver.", prefix);
+        snprintf(p, sizeof(p), "%sElfSymver.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
   
@@ -132,9 +132,9 @@ SgAsmElfSymverSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sElfSymverSection[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sElfSymverSection[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sElfSymverSection.", prefix);
+        snprintf(p, sizeof(p), "%sElfSymverSection.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
   
@@ -178,9 +178,9 @@ SgAsmElfSymverDefinedAux::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sElfSymverDefinedAux[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sElfSymverDefinedAux[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sElfSymverDefinedAux.", prefix);
+        snprintf(p, sizeof(p), "%sElfSymverDefinedAux.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
   
@@ -237,9 +237,9 @@ SgAsmElfSymverDefinedEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sElfSymverDefinedEntry[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sElfSymverDefinedEntry[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sElfSymverDefinedEntry.", prefix);
+        snprintf(p, sizeof(p), "%sElfSymverDefinedEntry.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
@@ -405,9 +405,9 @@ SgAsmElfSymverDefinedSection::dump(FILE *f, const char *prefix, ssize_t idx) con
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sElfSymverDefinedSection[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sElfSymverDefinedSection[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sElfSymverDefinedSection.", prefix);
+        snprintf(p, sizeof(p), "%sElfSymverDefinedSection.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
   
@@ -449,9 +449,9 @@ SgAsmElfSymverNeededAux::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sElfSymverNeededAux[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sElfSymverNeededAux[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sElfSymverNeededAux.", prefix);
+        snprintf(p, sizeof(p), "%sElfSymverNeededAux.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     fprintf(f, "%s%-*s = %04zx\n", p, w, "other", get_other());
@@ -526,9 +526,9 @@ SgAsmElfSymverNeededEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sElfSymverNeededEntry[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sElfSymverNeededEntry[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sElfSymverNeededEntry.", prefix);
+        snprintf(p, sizeof(p), "%sElfSymverNeededEntry.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
@@ -545,7 +545,7 @@ SgAsmElfSymverNeededEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     for (size_t i=0; i<entries.size(); ++i) {
         SgAsmElfSymverNeededAux* aux = entries[i];
         char auxname[32];
-        sprintf(auxname, "aux[%" PRIuPTR "]", i);
+        snprintf(auxname, sizeof(auxname), "aux[%" PRIuPTR "]", i);
         fprintf(f,   "%s%-*s =                                 0x%04zx 0x%08x 0x%04x %s\n", p, w, auxname, 
                 aux->get_other(), aux->get_hash(), aux->get_flags(), aux->get_name()->get_string(true).c_str());
     }
@@ -704,9 +704,9 @@ SgAsmElfSymverNeededSection::dump(FILE *f, const char *prefix, ssize_t idx) cons
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sElfSymverNeededSection[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sElfSymverNeededSection[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sElfSymverNeededSection.", prefix);
+        snprintf(p, sizeof(p), "%sElfSymverNeededSection.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
   

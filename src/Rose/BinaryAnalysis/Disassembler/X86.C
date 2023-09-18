@@ -2932,7 +2932,7 @@ X86::decodeOpcode0F(State &state) const
             getModRegRM(state, rmReturnNull, rmReturnNull, NULL);
             uint8_t thirdOpcodeByte = getByte(state);
             char opcodestr[16];
-            sprintf(opcodestr, "0x0f0f%02x", thirdOpcodeByte);
+            snprintf(opcodestr, sizeof(opcodestr), "0x0f0f%02x", thirdOpcodeByte);
             if (thirdOpcodeByte < 0x80) {
                 /* Conversions */
                 switch (thirdOpcodeByte) {
@@ -3379,7 +3379,7 @@ X86::decodeOpcode0F(State &state) const
                 }
                 default: {
                     char opcodestr[16];
-                    sprintf(opcodestr, "0x0f3a%02x", thirdOpcodeByte);
+                    snprintf(opcodestr, sizeof(opcodestr), "0x0f3a%02x", thirdOpcodeByte);
                     throw ExceptionX86(std::string("bad or unimplemented opcode ")+opcodestr, state);
                 }
             }

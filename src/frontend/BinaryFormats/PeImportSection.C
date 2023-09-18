@@ -189,9 +189,9 @@ SgAsmPEImportSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sPEImportSection[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sPEImportSection[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sPEImportSection.", prefix);
+        snprintf(p, sizeof(p), "%sPEImportSection.", prefix);
     }
 
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));

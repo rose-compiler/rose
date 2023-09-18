@@ -880,9 +880,9 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sPEFileHeader[%zd].", prefix, idx);
+        snprintf(p, sizeof(p), "%sPEFileHeader[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sPEFileHeader.", prefix);
+        snprintf(p, sizeof(p), "%sPEFileHeader.", prefix);
     }
 
     int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));

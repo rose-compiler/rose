@@ -87,7 +87,7 @@ void detectMacroOrIncludeFileExpansions(SgSourceFile* sourceFile);
 
 
 #ifdef _MSC_VER
-// DQ (11/29/2009): MSVC does not support sprintf, but "_snprintf" is equivalent
+// DQ (11/29/2009): MSVC does not support snprintf, but "_snprintf" is equivalent
 // (note: printf_S is the safer version but with a different function argument list).
 // We can use a macro to handle this portability issue for now.
 #define snprintf _snprintf

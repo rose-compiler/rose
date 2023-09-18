@@ -68,7 +68,7 @@ escapeCharacter(char ch) {
         default:
             if (!isprint(ch)) {
                 char buf[16];
-                sprintf(buf, "\\%03o", (unsigned)ch);
+                snprintf(buf, sizeof(buf), "\\%03o", (unsigned)ch);
                 return buf;
             }
             return std::string(1, ch);
