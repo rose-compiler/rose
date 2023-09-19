@@ -10856,6 +10856,15 @@ SageBuilder::buildClassDeclarationStatement_nfi(const SgName & name, SgClassDecl
      return defdecl;
    }
 
+SgNamespaceAliasDeclarationStatement*
+SageBuilder::buildNamespaceAliasDeclarationStatement(const SgName& name, SgNamespaceDeclarationStatement*  namespaceDeclaration)
+   {
+     SgNamespaceAliasDeclarationStatement* aliasdecl = new SgNamespaceAliasDeclarationStatement(name,namespaceDeclaration);
+     setOneSourcePositionForTransformation(aliasdecl);
+     aliasdecl->set_parent(SageBuilder::topScopeStack());
+     return aliasdecl;
+   }
+
 
 SgNamespaceDeclarationStatement*
 SageBuilder::buildNamespaceDeclaration(const SgName& name, SgScopeStatement* scope /*=NULL*/)
