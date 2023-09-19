@@ -85,6 +85,8 @@ namespace
   map_t<OperatorKey, std::vector<OperatorDesc> > operatorSupportMap;
 
   std::vector<SgExpression*> operatorExprsVector;
+
+  std::vector<std::function<void()> > unitCompletions;
 } // anonymous namespace
 
 //~ map_t<int, SgDeclarationStatement*>&        asisUnits() { return asisUnitsMap; }
@@ -166,6 +168,20 @@ AstContext AstContext::pragmas(PragmaContainer& allPragmas) const
   return tmp;
 }
 
+AstContext AstContext::deferredUnitCompletionContainer(DeferredCompletionContainer& cont) const
+{
+  AstContext tmp{*this};
+
+  tmp.unit_completions = &cont;
+  return tmp;
+}
+
+void AstContext::storeDeferredUnitCompletion(DeferredCompletion completion) const
+{
+  SG_DEREF(unit_completions).emplace_back(std::move(completion));
+}
+
+
 AstContext
 AstContext::instantiation(SgAdaGenericInstanceDecl& instance) const
 {
@@ -205,11 +221,11 @@ AstContext::sourceFileName(std::string& file) const
 }
 
 AstContext
-AstContext::pragmaProcessing(bool mode) const
+AstContext::pragmaAspectAnchor(SgDeclarationStatement& dcl) const
 {
   AstContext tmp{*this};
 
-  tmp.pragma_processing = mode;
+  tmp.pragma_aspect_anchor = &dcl;
   return tmp;
 }
 
@@ -383,6 +399,13 @@ void computeSourceRangeFromChildren(SgLocatedNode& n)
                SG_DEREF(isSgLocatedNode(*last)) );
 }
 
+
+void storeUnitCompletion(std::function<void()> completion)
+{
+  unitCompletions.emplace_back(std::move(completion));
+}
+
+
 namespace
 {
   /// clears all mappings created during translation
@@ -535,8 +558,6 @@ namespace
 
   void handleUnit(Unit_Struct& adaUnit, AstContext context)
   {
-    std::string unitFile{adaUnit.Text_Name};
-    AstContext  ctx = context.sourceFileName(unitFile);
     bool        processUnit   = true;
     bool        logParentUnit = false;
     bool        logBodyUnit   = false;
@@ -650,11 +671,16 @@ namespace
       default:
         processUnit = false;
         logWarn() << "unit kind unhandled: " << adaUnit.Unit_Kind << std::endl;
-        ADA_ASSERT(!FAIL_ON_ERROR(ctx));
+        ADA_ASSERT(!FAIL_ON_ERROR(context));
     }
 
     if (processUnit)
     {
+      std::string                             unitFile{adaUnit.Text_Name};
+      AstContext::DeferredCompletionContainer compls;
+      AstContext                              ctx = context.sourceFileName(unitFile)
+                                                           .deferredUnitCompletionContainer(compls);
+
       logTrace()   << "A " << kindName
                    << PrnUnitHeader(adaUnit);
       if (logParentUnit)
@@ -674,6 +700,8 @@ namespace
 
       traverseIDs(range, elemMap(), ElemCreator{ctx});
       handleElementID(adaUnit.Unit_Declaration, ctx, privateDecl);
+
+      for (AstContext::DeferredCompletion& c : compls) c();
     }
   }
 
