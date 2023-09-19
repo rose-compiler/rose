@@ -4,8 +4,7 @@
 #include <Rose/BinaryAnalysis/ByteCode/Cil.h>
 #include <Rose/BinaryAnalysis/Disassembler/Cil.h>
 
-using std::cout;
-using std::endl;
+using namespace Rose::Diagnostics;
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -242,54 +241,61 @@ CilMethod::name(const SgAsmCilMetadata* obj, SgAsmCilMetadataRoot* mdr)
 {
   std::string objName{};
 
-  switch (obj->variantT()) {
-    case V_SgAsmCilMemberRef: {
-      auto memberRef = isSgAsmCilMemberRef(obj);
-      if (const SgAsmCilMetadata* cls = memberRef->get_Class_object()) {
-        // MethodDef, ModuleRef, TypeDef, TypeRef, or TypeSpec
-        objName += CilMethod::name(cls, mdr) + ".";
+  try {
+    switch (obj->variantT()) {
+      case V_SgAsmCilMemberRef: {
+        auto memberRef = isSgAsmCilMemberRef(obj);
+        if (const SgAsmCilMetadata* cls = memberRef->get_Class_object()) {
+          // MethodDef, ModuleRef, TypeDef, TypeRef, or TypeSpec
+          objName += CilMethod::name(cls, mdr) + ".";
+        }
+        objName += utf8ToString(memberRef->get_Name_string());
+        break;
       }
-      objName += utf8ToString(memberRef->get_Name_string());
-      break;
-    }
-    case V_SgAsmCilMethodDef: {
-      auto methodDef = isSgAsmCilMethodDef(obj);
-      objName += utf8ToString(methodDef->get_Name_string());
-      break;
-    }
-    case V_SgAsmCilMethodSpec: {
-      auto methodSpec = isSgAsmCilMethodSpec(obj);
-      // MethodDef or MemberRef
-      uint32_t index = methodSpec->get_Method();
-      if (index > 0) {
-        // TODO: This fails sometime (index==0), resolve it
-        auto mdh = mdr->get_MetadataHeap();
-        SgAsmCilMetadata* specObj = mdh->get_CodedMetadataNode(index, SgAsmCilMetadataHeap::e_ref_method_def_or_ref);
-        objName += CilMethod::name(specObj, mdr);
+      case V_SgAsmCilMethodDef: {
+        auto methodDef = isSgAsmCilMethodDef(obj);
+        objName += utf8ToString(methodDef->get_Name_string());
+        break;
       }
-      break;
+      case V_SgAsmCilMethodSpec: {
+        auto methodSpec = isSgAsmCilMethodSpec(obj);
+        // MethodDef or MemberRef
+        uint32_t index = methodSpec->get_Method();
+        if (index > 0) {
+          auto mdh = mdr->get_MetadataHeap();
+          SgAsmCilMetadata* specObj = mdh->get_CodedMetadataNode(index, SgAsmCilMetadataHeap::e_ref_method_def_or_ref);
+          objName += CilMethod::name(specObj, mdr);
+        } else {
+          mlog[WARN] << "index out_of_range: must be > 0: in CilMethod::name for " << obj->class_name() << "\n";
+        }
+        break;
+      }
+      case V_SgAsmCilModuleRef: {
+        auto moduleRef = isSgAsmCilModuleRef(obj);
+        objName += utf8ToString(moduleRef->get_Name_string());
+        break;
+      }
+      case V_SgAsmCilTypeDef: {
+        auto typeDef = isSgAsmCilTypeDef(obj);
+        objName += utf8ToString(typeDef->get_TypeNamespace_string()) + "." + utf8ToString(typeDef->get_TypeName_string());
+        break;
+      }
+      case V_SgAsmCilTypeRef: {
+        auto typeRef = isSgAsmCilTypeRef(obj);
+        objName += utf8ToString(typeRef->get_TypeNamespace_string()) + "." + utf8ToString(typeRef->get_TypeName_string());
+        break;
+      }
+      case V_SgAsmCilTypeSpec:
+        // Only has a signature
+        break;
+      default: ;
     }
-    case V_SgAsmCilModuleRef: {
-      auto moduleRef = isSgAsmCilModuleRef(obj);
-      objName += utf8ToString(moduleRef->get_Name_string());
-      break;
-    }
-    case V_SgAsmCilTypeDef: {
-      auto typeDef = isSgAsmCilTypeDef(obj);
-      objName += utf8ToString(typeDef->get_TypeNamespace_string()) + "." + utf8ToString(typeDef->get_TypeName_string());
-      break;
-    }
-  case V_SgAsmCilTypeRef: {
-      auto typeRef = isSgAsmCilTypeRef(obj);
-      objName += utf8ToString(typeRef->get_TypeNamespace_string()) + "." + utf8ToString(typeRef->get_TypeName_string());
-      break;
-    }
-    case V_SgAsmCilTypeSpec:
-      // Only has a signature
-      break;
-    default:
-      break;
   }
+  catch(const std::out_of_range& e) {
+    mlog[WARN] << "out_of_range exception: " << e.what() << " in CilMethod::name for " << obj->class_name() << "\n";
+    objName = "UNKNOWN";
+  }
+
   return objName;
 }
 

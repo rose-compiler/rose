@@ -839,7 +839,23 @@ Jvm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start, AddressSet*)
         mnemonic = "monitorexit";
         break;
 
-//    case opcode::wide: // 0xc4 (196)
+      case opcode::wide: { // 0xc4 (196)
+        mnemonic = "wide";
+        // Peek at the wide opcode (the instruction that is wide)
+        uint8_t insn = static_cast<uint8_t>(JvmInstructionKind::unknown);
+        size_t nRead = map->at(va).limit(1).require(MemoryMap::READABLE).read(&insn).size();
+        if (0 == nRead) {
+          throw Disassembler::Exception("short read", va);
+        }
+        va += appendOperand<uint8_t>(map, va, chars, operands); // instruction
+        va += appendOperand<uint16_t>(map, va, chars, operands); // index
+        // opcode::iinc == // 0x84 (132)
+        if (insn == 132) {
+          va += appendOperand<int16_t>(map, va, chars, operands); // constant
+        }
+        break;
+      }
+
 //    case opcode::multianewarray: // 0xc5 (197)
 
 // TODO: Following needs test

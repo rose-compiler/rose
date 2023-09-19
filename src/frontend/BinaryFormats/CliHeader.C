@@ -8,6 +8,7 @@
 #define PRINT_DEBUG 0
 
 using namespace Rose::BinaryAnalysis;
+using namespace Rose::Diagnostics;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -74,7 +75,9 @@ SgAsmCliHeader* SgAsmCliHeader::parse()
 
   /* Always 0 */
   p_managedNativeHeader = ByteOrder::leToHost(*reinterpret_cast<uint64_t*>(data));
-  ROSE_ASSERT(0 == p_managedNativeHeader && "Always 0");
+  if (p_managedNativeHeader != 0) {
+    mlog[WARN] << "p_managedNativeHeader != 0\n";
+  }
   data += 8;
   
   /* Construct and parse the CIL metatdata root */

@@ -15383,7 +15383,7 @@ SgSourceFile::initialization()
      p_isHeaderFileIncludedMoreThanOnce           = false;
      p_headerFileReport                           = NULL;
      p_associated_include_file                    = NULL;
-     p_processedToIncludeCppDirectivesAndComments = NULL;
+     p_processedToIncludeCppDirectivesAndComments = false;
      p_isDynamicLibrary                           = false;
      p_firstStatement                             = NULL;
      p_lastStatement                              = NULL;
