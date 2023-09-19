@@ -2858,7 +2858,7 @@ bool ClangToSageTranslator::VisitDeclRefExpr(clang::DeclRefExpr * decl_ref_expr,
       clang::NamespaceDecl * namespaceDecl = qualifier->getAsNamespace(); 
       clang::NamespaceAliasDecl * namespaceAliasDecl = qualifier->getAsNamespaceAlias(); 
       clang::CXXRecordDecl  * cxxRecordDecl = qualifier->getAsRecordDecl(); 
-      if(namespaceDecl = nullptr)
+      if(namespaceDecl != nullptr)
       {
         SgNamespaceDeclarationStatement* namespaceeDeclStmt = isSgNamespaceDeclarationStatement(Traverse(namespaceDecl));
         ROSE_ASSERT(namespaceeDeclStmt);
@@ -2891,7 +2891,19 @@ bool ClangToSageTranslator::VisitDeclRefExpr(clang::DeclRefExpr * decl_ref_expr,
       }
       else
       {
-        ROSE_ASSERT(0);
+        // This should be the case when namespace is empty (e.g. ::X).
+        if(qualifier->getKind() == clang::NestedNameSpecifier::Global)
+        {
+          SgGlobal* globalScope = SageInterface::getGlobalScope(SageBuilder::topScopeStack());
+          std::string declName = decl_ref_expr->getDecl()->getNameAsString();
+          sym = globalScope->lookup_symbol (declName);
+          ROSE_ASSERT(sym);
+        }
+        else
+        {
+          logger[ERROR] << "No valid qualifier found!\n";
+          ROSE_ASSERT(0);
+        }
       }
     }
     else

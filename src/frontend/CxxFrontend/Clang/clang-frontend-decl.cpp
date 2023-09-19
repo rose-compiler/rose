@@ -1340,25 +1340,29 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
 bool ClangToSageTranslator::VisitCXXRecordDecl(clang::CXXRecordDecl * cxx_record_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
     logger[DEBUG] << "ClangToSageTranslator::VisitCXXRecordDecl" << "\n";
-    logger[DEBUG] << "isAggregate() " << cxx_record_decl->isAggregate() << "\n";
-    logger[DEBUG] << "hasInClassInitializer() " << cxx_record_decl->hasInClassInitializer() << "\n";
-    logger[DEBUG] << "hasUninitializedReferenceMember() " << cxx_record_decl->hasUninitializedReferenceMember() << "\n";
-    logger[DEBUG] << "isPOD() " << cxx_record_decl->isPOD() << "\n";
-    logger[DEBUG] << "isCLike() " << cxx_record_decl->isCLike() << "\n";
-    logger[DEBUG] << "isEmpty() " << cxx_record_decl->isEmpty() << "\n";
-    logger[DEBUG] << "hasInitMethod() " << cxx_record_decl->hasInitMethod() << "\n";
-    logger[DEBUG] << "hasProtectedFields() " << cxx_record_decl->hasProtectedFields() << "\n";
-    logger[DEBUG] << "hasPrivateFields() " << cxx_record_decl->hasPrivateFields() << "\n";
-    logger[DEBUG] << "hasDirectFields() " << cxx_record_decl->hasDirectFields() << "\n";
-    logger[DEBUG] << "isPolymorphic() " << cxx_record_decl->isPolymorphic() << "\n";
-    logger[DEBUG] << "isAbstract () " << cxx_record_decl->isAbstract () << "\n";
-    logger[DEBUG] << "isStandardLayout() " << cxx_record_decl->isStandardLayout() << "\n";
-    logger[DEBUG] << "isCXX11StandardLayout () " << cxx_record_decl->isCXX11StandardLayout () << "\n";
-    logger[DEBUG] << "hasMutableFields() " << cxx_record_decl->hasMutableFields() << "\n";
-    logger[DEBUG] << "hasVariantMembers() " << cxx_record_decl->hasVariantMembers() << "\n";
-    logger[DEBUG] << "hasTrivialDefaultConstructor() " << cxx_record_decl->hasTrivialDefaultConstructor() << "\n";
-    logger[DEBUG] << "hasNonTrivialDefaultConstructor() " << cxx_record_decl->hasNonTrivialDefaultConstructor() << "\n";
-    logger[DEBUG] << "isAnonymousStructOrUnion() " << cxx_record_decl->isAnonymousStructOrUnion() << "\n";
+    logger[DEBUG] << "hasDefinition() " << cxx_record_decl->hasDefinition() << "\n";
+    if(cxx_record_decl->hasDefinition())
+    {
+      logger[DEBUG] << "isAggregate() " << cxx_record_decl->isAggregate() << "\n";
+      logger[DEBUG] << "hasInClassInitializer() " << cxx_record_decl->hasInClassInitializer() << "\n";
+      logger[DEBUG] << "hasUninitializedReferenceMember() " << cxx_record_decl->hasUninitializedReferenceMember() << "\n";
+      logger[DEBUG] << "isPOD() " << cxx_record_decl->isPOD() << "\n";
+      logger[DEBUG] << "isCLike() " << cxx_record_decl->isCLike() << "\n";
+      logger[DEBUG] << "isEmpty() " << cxx_record_decl->isEmpty() << "\n";
+      logger[DEBUG] << "hasInitMethod() " << cxx_record_decl->hasInitMethod() << "\n";
+      logger[DEBUG] << "hasProtectedFields() " << cxx_record_decl->hasProtectedFields() << "\n";
+      logger[DEBUG] << "hasPrivateFields() " << cxx_record_decl->hasPrivateFields() << "\n";
+      logger[DEBUG] << "hasDirectFields() " << cxx_record_decl->hasDirectFields() << "\n";
+      logger[DEBUG] << "isPolymorphic() " << cxx_record_decl->isPolymorphic() << "\n";
+      logger[DEBUG] << "isAbstract () " << cxx_record_decl->isAbstract () << "\n";
+      logger[DEBUG] << "isStandardLayout() " << cxx_record_decl->isStandardLayout() << "\n";
+      logger[DEBUG] << "isCXX11StandardLayout () " << cxx_record_decl->isCXX11StandardLayout () << "\n";
+      logger[DEBUG] << "hasMutableFields() " << cxx_record_decl->hasMutableFields() << "\n";
+      logger[DEBUG] << "hasVariantMembers() " << cxx_record_decl->hasVariantMembers() << "\n";
+      logger[DEBUG] << "hasTrivialDefaultConstructor() " << cxx_record_decl->hasTrivialDefaultConstructor() << "\n";
+      logger[DEBUG] << "hasNonTrivialDefaultConstructor() " << cxx_record_decl->hasNonTrivialDefaultConstructor() << "\n";
+      logger[DEBUG] << "isAnonymousStructOrUnion() " << cxx_record_decl->isAnonymousStructOrUnion() << "\n";
+    }
     // to be filled up for full list
 #endif
     bool res = VisitRecordDecl(cxx_record_decl, node);
