@@ -205,7 +205,7 @@ class ClangToSageTranslator : public clang::ASTConsumer {
         virtual SgNode * Traverse(clang::Decl * decl);
         virtual SgNode * Traverse(clang::Stmt * stmt);
         virtual SgNode * Traverse(const clang::Type * type);
-        virtual SgNode * TraverseForDeclContext(clang::DeclContext * decl_context);
+        virtual bool TraverseForDeclContext(clang::DeclContext * decl_context);
 
   /* Visit methods */
   /* 

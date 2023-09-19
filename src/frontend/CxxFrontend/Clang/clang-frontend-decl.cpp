@@ -468,8 +468,60 @@ SgNode * ClangToSageTranslator::Traverse(clang::Decl * decl) {
     return ret_status ? result : NULL;
 }
 
-SgNode * ClangToSageTranslator::TraverseForDeclContext(clang::DeclContext * decl_context) {
-    return Traverse((clang::Decl*)decl_context);
+
+// Pei-Hung (09/01/2023) Revised this to iterate Decls in the DeclContext.
+// DeclContext is derived into others but this is called only by VisitTranslationUnit and VisitNamesapce for now. 
+// The top scope retrieved from SageBuilder::topScopeStack() should be properly defined before calling this.
+
+bool ClangToSageTranslator::TraverseForDeclContext(clang::DeclContext * decl_context) {
+    SgScopeStatement * scope = SageBuilder::topScopeStack();
+    SgGlobal* global_scope = isSgGlobal(scope);
+    SgNamespaceDefinitionStatement* namespace_scope = isSgNamespaceDefinitionStatement(scope);
+
+    p_decl_context_map.insert(std::pair<clang::DeclContext *, SgScopeStatement *>(decl_context, scope));
+    bool res = true;
+    clang::DeclContext::decl_iterator it;
+    for (it = decl_context->decls_begin(); it != decl_context->decls_end(); it++) {
+        clang::Decl* decl = (*it);
+        if (decl == nullptr) continue;
+        SgNode * child = Traverse(decl);
+
+        SgDeclarationStatement * decl_stmt = isSgDeclarationStatement(child);
+        if (decl_stmt == NULL && child != NULL) {
+            logger[WARN] << "Runtime error: the node produce for a clang::Decl is not a SgDeclarationStatement !" << "\n";
+            logger[WARN] << "    class = " << child->class_name() << "\n";
+            res = false;
+        }
+        else if (child != NULL) {
+            // FIXME This is a hack to avoid autonomous decl of unnamed type to being added to the global scope....
+            SgClassDeclaration * class_decl = isSgClassDeclaration(child);
+            if (class_decl != NULL && (class_decl->get_name() == "" || class_decl->get_isUnNamed())) continue;
+
+            SgEnumDeclaration * enum_decl = isSgEnumDeclaration(child);
+            if (enum_decl != NULL && (enum_decl->get_name() == "" || enum_decl->get_isUnNamed())) continue;
+
+            if(clang::TagDecl::classof(decl))
+            {
+              clang::TagDecl* tagDecl = (clang::TagDecl*)decl;
+              if(tagDecl->isEmbeddedInDeclarator())  continue;
+            }
+
+            if(global_scope)
+            {
+              global_scope->append_declaration(decl_stmt);
+            }
+            else if(namespace_scope)
+            {
+              namespace_scope->append_declaration(decl_stmt);
+            }
+            else
+            {
+              logger[WARN] << "Not global or namespace scope applied in ClangToSageTranslator::TraverseForDeclContext\n";
+              return false;
+            }
+        }
+    }
+    return res;
 }
 
 /**********************/
@@ -763,23 +815,49 @@ bool ClangToSageTranslator::VisitLabelDecl(clang::LabelDecl * label_decl, SgNode
 
 bool ClangToSageTranslator::VisitNamespaceAliasDecl(clang::NamespaceAliasDecl * namespace_alias_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    logger[DEBUG] << "ClangToSageTranslator::VisitNamespaceAliasDecl" << "\n";
+    logger[DEBUG] << "ClangToSageTranslator::VisitNamespaceAliasDecl" << namespace_alias_decl->getAliasedNamespace() <<  "\n";
 #endif
     bool res = true;
 
-    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+    clang::NamespaceDecl* namespaceDecl = namespace_alias_decl->getNamespace();
+    clang::NamedDecl* aliasedNamespaeDecl = namespace_alias_decl->getAliasedNamespace();
 
+    SgNamespaceDeclarationStatement* sgNamespaceDeclStmt = isSgNamespaceDeclarationStatement(Traverse(namespaceDecl));
+    ROSE_ASSERT(sgNamespaceDeclStmt);
+    SgName name(namespace_alias_decl->getNameAsString());
+
+    SgNamespaceAliasDeclarationStatement* sgNamespaceAliasDeclStmt = SageBuilder::buildNamespaceAliasDeclarationStatement(name ,sgNamespaceDeclStmt);
+    *node = sgNamespaceAliasDeclStmt;
     return VisitNamedDecl(namespace_alias_decl, node) && res;
 }
 
 bool ClangToSageTranslator::VisitNamespaceDecl(clang::NamespaceDecl * namespace_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    logger[DEBUG] << "ClangToSageTranslator::VisitNamespaceDecl" << "\n";
+    logger[DEBUG] << "ClangToSageTranslator::VisitNamespaceDecl " << namespace_decl->getNameAsString() << "\n";
+    logger[DEBUG] << "isAnonymousNamespace " << namespace_decl->isAnonymousNamespace() << "\n";
+    logger[DEBUG] << "isInline " << namespace_decl->isInline() << "\n";
+//    logger[DEBUG] << "isNested " << namespace_decl->isNested() << "\n";
+    logger[DEBUG] << "isOriginalNamespace " << namespace_decl->isOriginalNamespace() << "\n";
+    logger[DEBUG] << "isAnonymousNamespace " << namespace_decl->isAnonymousNamespace() << "\n";
 #endif
     bool res = true;
 
-    //ROSE_ASSERT(FAIL_TODO == 0); // TODO
+    SgName name(namespace_decl->getNameAsString());
+    SgScopeStatement * scope = SageBuilder::topScopeStack(); 
+    SgNamespaceDeclarationStatement* namespaceDecl = SageBuilder::buildNamespaceDeclaration(name, scope);
+    SgNamespaceDefinitionStatement* namespaceDefiniton = namespaceDecl->get_definition(); 
+    namespaceDecl->set_isInlinedNamespace(namespace_decl->isInline());
 
+    // The following is using same rpocess from VisitTranslationUnit.  Consider using a function
+    SageBuilder::pushScopeStack(namespaceDefiniton);
+    clang::DeclContext * decl_context = (clang::DeclContext *)namespace_decl; 
+    p_decl_context_map.insert(std::pair<clang::DeclContext *, SgScopeStatement *>(decl_context, namespaceDefiniton));
+    // DeclContext handling is repalced by calling TraverseForDeclContext
+    res = TraverseForDeclContext(decl_context); 
+    SageBuilder::popScopeStack();
+
+    applySourceRange(namespaceDecl, namespace_decl->getSourceRange());
+    *node = namespaceDecl;
     return VisitNamedDecl(namespace_decl, node) && res;
 }
 
@@ -2936,37 +3014,8 @@ bool ClangToSageTranslator::VisitTranslationUnitDecl(clang::TranslationUnitDecl 
 
     clang::DeclContext * decl_context = (clang::DeclContext *)translation_unit_decl; // useless but more clear
     p_decl_context_map.insert(std::pair<clang::DeclContext *, SgScopeStatement *>(decl_context, global_scope));
-    bool res = true;
-    clang::DeclContext::decl_iterator it;
-    for (it = decl_context->decls_begin(); it != decl_context->decls_end(); it++) {
-        clang::Decl* decl = (*it);
-        if (decl == nullptr) continue;
-        SgNode * child = Traverse(decl);
-
-        SgDeclarationStatement * decl_stmt = isSgDeclarationStatement(child);
-        if (decl_stmt == NULL && child != NULL) {
-            logger[WARN] << "Runtime error: the node produce for a clang::Decl is not a SgDeclarationStatement !" << "\n";
-            logger[WARN] << "    class = " << child->class_name() << "\n";
-            res = false;
-        }
-        else if (child != NULL) {
-            // FIXME This is a hack to avoid autonomous decl of unnamed type to being added to the global scope....
-            SgClassDeclaration * class_decl = isSgClassDeclaration(child);
-            if (class_decl != NULL && (class_decl->get_name() == "" || class_decl->get_isUnNamed())) continue;
-
-            SgEnumDeclaration * enum_decl = isSgEnumDeclaration(child);
-            if (enum_decl != NULL && (enum_decl->get_name() == "" || enum_decl->get_isUnNamed())) continue;
-
-            if(clang::TagDecl::classof(decl))
-            {
-              clang::TagDecl* tagDecl = (clang::TagDecl*)decl;
-              if(tagDecl->isEmbeddedInDeclarator())  continue;
-            }
-
-            p_global_scope->append_declaration(decl_stmt);
-        }
-    }
-
+    // DeclContext handling is repalced by calling TraverseForDeclContext
+    bool res = TraverseForDeclContext(decl_context);
     SageBuilder::popScopeStack();
 
   // Traverse the class hierarchy
