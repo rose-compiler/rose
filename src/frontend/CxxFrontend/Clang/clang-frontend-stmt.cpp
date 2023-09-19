@@ -2841,9 +2841,60 @@ bool ClangToSageTranslator::VisitCXXUuidofExpr(clang::CXXUuidofExpr * cxx_uuidof
 bool ClangToSageTranslator::VisitDeclRefExpr(clang::DeclRefExpr * decl_ref_expr, SgNode ** node) {
 #if DEBUG_VISIT_STMT
     logger[DEBUG] << "ClangToSageTranslator::VisitDeclRefExpr" << "\n";
+    logger[DEBUG] << "hasQualifier " << decl_ref_expr->hasQualifier() << "\n";
 #endif
 
     bool res = true;
+    // SgSymbol for symbol representing the varDecl
+    SgSymbol* sym = NULL;
+
+
+    clang::NestedNameSpecifier* qualifier = NULL;
+
+    if(decl_ref_expr->hasQualifier())
+    {
+      qualifier = decl_ref_expr->getQualifier();
+      qualifier->dump();
+      clang::NamespaceDecl * namespaceDecl = qualifier->getAsNamespace(); 
+      clang::NamespaceAliasDecl * namespaceAliasDecl = qualifier->getAsNamespaceAlias(); 
+      clang::CXXRecordDecl  * cxxRecordDecl = qualifier->getAsRecordDecl(); 
+      if(namespaceDecl = nullptr)
+      {
+        SgNamespaceDeclarationStatement* namespaceeDeclStmt = isSgNamespaceDeclarationStatement(Traverse(namespaceDecl));
+        ROSE_ASSERT(namespaceeDeclStmt);
+        SgNamespaceDefinitionStatement* namespaceDefiniton = namespaceeDeclStmt->get_definition(); 
+        // push the namesapce as top scope to look for the symbol
+        SageBuilder::pushScopeStack(namespaceDefiniton);
+        sym = GetSymbolFromSymbolTable(decl_ref_expr->getDecl());
+        SageBuilder::popScopeStack();
+      }
+      else if(cxxRecordDecl != nullptr)
+      {
+        SgClassDeclaration* classDecl = isSgClassDeclaration(Traverse(cxxRecordDecl));
+        ROSE_ASSERT(classDecl);
+        SgClassDefinition* classDef = classDecl->get_definition(); 
+        // push the namesapce as top scope to look for the symbol
+        SageBuilder::pushScopeStack(classDef);
+        sym = GetSymbolFromSymbolTable(decl_ref_expr->getDecl());
+        SageBuilder::popScopeStack();
+      }
+      else if(namespaceAliasDecl != nullptr)
+      {
+        SgNamespaceAliasDeclarationStatement* namespaceAliasDeclStmt = isSgNamespaceAliasDeclarationStatement(Traverse(namespaceAliasDecl)); 
+        SgNamespaceDeclarationStatement* namespaceeDeclStmt = namespaceAliasDeclStmt->get_namespaceDeclaration(); 
+        ROSE_ASSERT(namespaceeDeclStmt);
+        SgNamespaceDefinitionStatement* namespaceDefiniton = namespaceeDeclStmt->get_definition(); 
+        // push the namesapce as top scope to look for the symbol
+        SageBuilder::pushScopeStack(namespaceDefiniton);
+        sym = GetSymbolFromSymbolTable(decl_ref_expr->getDecl());
+        SageBuilder::popScopeStack();
+      }
+      else
+      {
+        ROSE_ASSERT(0);
+      }
+    }
+    else
 
     // SgNode * tmp_node = Traverse(decl_ref_expr->getDecl());
     // DONE: Do not use Traverse(...) as the declaration can not be complete (recursive functions)
@@ -2851,7 +2902,7 @@ bool ClangToSageTranslator::VisitDeclRefExpr(clang::DeclRefExpr * decl_ref_expr,
     // FIXME: This fix will not work for C++ (methods/fields can be use before they are declared...)
     // FIXME: I feel like it could work now, we will see ....
 
-     SgSymbol * sym = GetSymbolFromSymbolTable(decl_ref_expr->getDecl());
+     sym = GetSymbolFromSymbolTable(decl_ref_expr->getDecl());
 
      if (sym == NULL) 
         {
