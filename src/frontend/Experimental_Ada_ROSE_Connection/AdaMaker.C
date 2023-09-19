@@ -757,17 +757,17 @@ mkAdaPackageSpecDecl(const std::string& name, SgScopeStatement& scope)
   return sgnode;
 }
 
+SgDeclarationScope&
+mkDeclarationScope(SgScopeStatement& /* not used */)
+{
+  SgDeclarationScope& sgnode = mkScopeStmt<SgDeclarationScope>();
+
+  //~ sgnode.set_scope(&outer);
+  return sgnode;
+}
+
 namespace
 {
-  SgDeclarationScope&
-  mkDeclarationScope(SgScopeStatement& /* not used */)
-  {
-    SgDeclarationScope& sgnode = mkScopeStmt<SgDeclarationScope>();
-
-    //~ sgnode.set_scope(&outer);
-    return sgnode;
-  }
-
   SgAdaParameterList&
   mkAdaParameterList(SgScopeStatement& /* not used */)
   {

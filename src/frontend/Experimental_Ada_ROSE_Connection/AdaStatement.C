@@ -79,14 +79,21 @@ namespace
         ADA_ASSERT (el.Element_Kind == A_Pragma);
         logKind("A_Pragma", el.ID);
 
-        Pragma_Struct&       pragma = el.The_Union.The_Pragma;
-        std::string          name{pragma.Pragma_Name_Image};
-        ElemIdRange          argRange = idRange(pragma.Pragma_Argument_Associations);
-        SgExprListExp&       args = traverseIDs(argRange, elemMap(), ArgListCreator{ctx.pragmaProcessing(true)});
-        SgPragmaDeclaration& sgnode = mkPragmaDeclaration(name, args, stmt);
+        Pragma_Struct&             pragma   = el.The_Union.The_Pragma;
+        std::string                name{pragma.Pragma_Name_Image};
+        ElemIdRange                argRange = idRange(pragma.Pragma_Argument_Associations);
+        SgExprListExp&             arglist  = mkExprListExp();
+        SgPragmaDeclaration&       sgnode   = mkPragmaDeclaration(name, arglist, stmt);
+        ADA_ASSERT (arglist.get_parent());
+
+        sgnode.set_parent(&ctx.scope()); // set fictitious parent (will be overwritten when pragma is actually placed)
+
+        std::vector<SgExpression*> args     = traverseIDs(argRange, elemMap(), ArgListCreator{ctx.pragmaAspectAnchor(sgnode)});
+
+        arglist.get_expressions().reserve(args.size());
+        for (SgExpression* arg : args) arglist.append_expression(arg);
 
         // \todo do we need to privatize pragmas in the private section?
-        ADA_ASSERT (args.get_parent());
         attachSourceLocation(sgnode, el, ctx);
         attachSourceLocation(SG_DEREF(sgnode.get_pragma()), el, ctx);
         res.push_back(&sgnode);
@@ -1129,7 +1136,7 @@ namespace
     SgAdaTaskSpec&          sgnode   = mkAdaTaskSpec();
     SgAdaTaskSpec*          nodePtr  = &sgnode;
 
-    sgnode.set_hasMembers(true);
+    // sgnode.set_hasMembers(true);
     sgnode.set_hasPrivate(tasknode->Is_Private_Present);
 
     auto deferred = [ctx,nodePtr,tasknode](AstContext::PragmaContainer pragmas) -> void
@@ -3809,6 +3816,111 @@ namespace
 
     return stubdecl.Corresponding_Declaration;
   }
+
+
+  struct AspectCreator
+  {
+      explicit
+      AspectCreator(AstContext astctx)
+      : ctx(astctx), args()
+      {}
+
+      AspectCreator(AspectCreator&&)                 = default;
+      AspectCreator& operator=(AspectCreator&&)      = default;
+
+      // \todo the following copying functions should be removed post C++17
+      // @{
+      AspectCreator(const AspectCreator&)            = default;
+      AspectCreator& operator=(const AspectCreator&) = default;
+      // @}
+
+      const char* aspectName(Expression_Struct& mark)
+      {
+        if (mark.Expression_Kind != An_Identifier) return nullptr;
+
+        return mark.Name_Image;
+      }
+
+      void operator()(Element_Struct& elem)
+      {
+        ADA_ASSERT(elem.Element_Kind == A_Definition);
+
+        Definition_Struct&           def = elem.The_Union.Definition;
+        ADA_ASSERT (def.Definition_Kind == An_Aspect_Specification);
+
+        Aspect_Specification_Struct& asp = def.The_Union.The_Aspect_Specification;
+
+        Element_Struct&              aspmark = retrieveAs(elemMap(), asp.Aspect_Mark);
+        Element_Struct*              aspdefn = retrieveAsOpt(elemMap(), asp.Aspect_Definition);
+
+        if (  (aspmark.Element_Kind != An_Expression)
+           || (aspdefn && (aspdefn->Element_Kind != An_Expression))
+           )
+        {
+          logError() << "Skipping unexpected Aspect representation: "
+                     << aspmark.Element_Kind << "/" << (aspdefn ? aspdefn->Element_Kind : 0)
+                     << std::endl;
+          return;
+        }
+
+        Expression_Struct&           markex   = aspmark.The_Union.Expression;
+        const char*                  markname = aspectName(markex);
+
+        if (markname == nullptr)
+        {
+          logError() << "Unexpected Aspect mark representation: "
+                     << aspmark.Element_Kind << "/" << (aspdefn ? aspdefn->Element_Kind : 0)
+                     << std::endl;
+          return;
+        }
+
+        SgExpression&                sgdefn = getExprID_opt(asp.Aspect_Definition, ctx);
+        SgExpression&                sgnode = SG_DEREF(sb::buildActualArgumentExpression(markname, &sgdefn));
+
+        attachSourceLocation(sgnode, elem, ctx);
+        args.push_back(&sgnode);
+      }
+
+      /// result read-out
+      operator SgExprListExp& ()
+      {
+        return mkExprListExp(args);
+      }
+
+    private:
+      AstContext                 ctx;
+      std::vector<SgExpression*> args;
+
+      AspectCreator() = delete;
+  };
+
+
+  void processAspects(Element_Struct& elem, Declaration_Struct& decl, SgDeclarationStatement* sgnode, AstContext ctx)
+  {
+    ElemIdRange aspectRange = idRange(decl.Aspect_Specifications);
+
+    if (aspectRange.empty()) return;
+
+    if (sgnode == nullptr)
+    {
+      logError() << "found aspects w/o corresponding Sage declaration."
+                 << std::endl;
+      return;
+    }
+
+    // aspects use deferred elaboration, so that they can use
+    //   type-bound operations defined later in scope.
+
+    auto deferredAspectCompletion =
+        [sgnode, aspectRange, ctx]()->void
+        {
+          SgExprListExp& asplist = traverseIDs(aspectRange, elemMap(), AspectCreator{ctx.pragmaAspectAnchor(*sgnode)});
+
+          sg::linkParentChild(*sgnode, asplist, &SgDeclarationStatement::set_adaAspects);
+        };
+
+    ctx.storeDeferredUnitCompletion( std::move(deferredAspectCompletion) );
+  }
 }
 
 void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
@@ -3818,7 +3930,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
   ADA_ASSERT (elem.Element_Kind == A_Declaration);
   logKind("A_Declaration", elem.ID);
 
-  SgStatement*            assocdecl = nullptr;
+  SgDeclarationStatement* assocdecl = nullptr;
   Declaration_Struct&     decl = elem.The_Union.Declaration;
   ElemIdRange             pragmaRange  = idRange(decl.Corresponding_Pragmas);
   std::vector<Element_ID> pragmaVector;
@@ -5348,7 +5460,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         break;
       }
 
-    // \todo handle pragmas on these elements
+    // \todo handle pragmas and aspects on these elements
     case An_Entry_Index_Specification:             // 9.5.2(2)
         // handled by EntryIndexCompletion;
     case A_Choice_Parameter_Specification:         // 11.2(4)
@@ -5371,6 +5483,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       ADA_ASSERT (!FAIL_ON_ERROR(ctx));
   }
 
+  processAspects(elem, decl, assocdecl, ctx);
   recordPragmasID(std::move(pragmaVector), assocdecl, ctx);
 }
 
@@ -5436,6 +5549,8 @@ getName(Element_Struct& elem, AstContext ctx)
     case A_Defining_Identifier:
       {
         logKind("A_Defining_Identifier", elem.ID);
+
+        logTrace() << "* " << ident << std::endl;
         // nothing to do, the fields are already set
         break;
       }

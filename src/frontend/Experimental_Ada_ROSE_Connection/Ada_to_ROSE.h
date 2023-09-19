@@ -214,6 +214,14 @@ map_t<OperatorKey, std::vector<OperatorDesc> >& operatorSupport();
 /// stores all expressions that were generated were operator declarations were expected
 std::vector<SgExpression*>& operatorExprs();
 
+/// deferred unit completions are lambda functions that run at the end of
+///   a unit, when all unit-level declarations have been created.
+/// \note
+///    used for translating aspects; The Ada spec defers the elaboration of
+///    aspects to brake circularity.
+///    http://www.ada-auth.org/standards/12rat/html/Rat12-2-2.html .
+void storeUnitCompletion(std::function<void()> completion);
+
 
 //
 // auxiliary functions and types
@@ -269,8 +277,10 @@ struct ExtendedPragmaID : std::tuple<Element_ID, SgStatement*>
 ///   containts context that is passed top-down
 struct AstContext
 {
-    using StatementHandler = std::function<void(AstContext, SgStatement&)>;
-    using PragmaContainer  = std::vector<ExtendedPragmaID>;
+    using StatementHandler            = std::function<void(AstContext, SgStatement&)>;
+    using PragmaContainer             = std::vector<ExtendedPragmaID>;
+    using DeferredCompletion          = std::function<void()>;
+    using DeferredCompletionContainer = std::vector<DeferredCompletion>;
 
     AstContext()                             = default;
     AstContext(AstContext&&)                 = default;
@@ -323,17 +333,35 @@ struct AstContext
     /// \details
     ///   collects all pragmas during body processing in a user supplied container
     /// \{
-    PragmaContainer& pragmas() { return SG_DEREF(all_pragmas); }
+    PragmaContainer& pragmas() const { return SG_DEREF(all_pragmas); }
     AstContext       pragmas(PragmaContainer& ids) const;
     bool             collectsPragmas() const { return all_pragmas != nullptr; }
     /// \}
 
+    /// parent node for pragma and aspect processing
+    /// \details
+    ///   the translator will lazily create a declaration scope when needed
+    ///   to create new unbound identifiers that appear in pragmas and aspects.
+    /// \{
+    AstContext pragmaAspectAnchor(SgDeclarationStatement& dcl) const;
+    SgDeclarationStatement* pragmaAspectAnchor() { return pragma_aspect_anchor; };
+    /// \}
+
+    /// handles deferred unit completions (currently only aspects)
+    /// \{
+    AstContext deferredUnitCompletionContainer(DeferredCompletionContainer& cont) const;
+    void storeDeferredUnitCompletion(DeferredCompletion completion) const;
+    /// \}
+
+/*
+ *  no longer used - use pragmaAspectAnchor to set the parent node
     /// pragma processing mode property
     ///   elides warnings related to unresolved names
     /// \{
     AstContext pragmaProcessing(bool mode) const;
     bool pragmaProcessing() const { return pragma_processing; }
     /// \}
+*/
 
     /// appends new statements to \ref blk instead of the current scope, \ref the_scope.
     AstContext unscopedBlock(SgAdaUnscopedBlock& blk) const;
@@ -355,12 +383,13 @@ struct AstContext
     void defaultStatementHandler(AstContext, SgStatement&);
 
   private:
-    bool                         pragma_processing       = false;
+    SgDeclarationStatement*      pragma_aspect_anchor    = nullptr;
     SgScopeStatement*            the_scope               = nullptr;
     LabelAndLoopManager*         all_labels_loops        = nullptr;
     const std::string*           unit_file_name          = nullptr;
     SgAdaGenericInstanceDecl*    enclosing_instantiation = nullptr;
     PragmaContainer*             all_pragmas             = nullptr;
+    DeferredCompletionContainer* unit_completions        = nullptr;
     StatementHandler             stmtHandler             = defaultStatementHandler;
     //~ Element_Struct*      elem;
 };
