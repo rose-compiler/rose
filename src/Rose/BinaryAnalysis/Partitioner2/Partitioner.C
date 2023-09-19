@@ -2658,7 +2658,7 @@ Partitioner::bblockAttached(const ControlFlowGraph::VertexIterator &newVertex) {
             } else {
                 debug <<"attached basic block:\n";
                 for (SgAsmInstruction* insn: bblock->instructions()) {
-                  if (isSgAsmCilInstruction(insn)) {
+                  if (isSgAsmCilInstruction(insn) || isSgAsmJvmInstruction(insn)) {
                     debug <<"  + " << insn->get_mnemonic() <<"\n";
                   }
                   else {

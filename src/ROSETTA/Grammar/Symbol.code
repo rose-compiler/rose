@@ -80,8 +80,6 @@ HEADER_LABEL_SYMBOL_START
                e_last_label_type         = 6
              };
 
-       // DQ (2/1/2011): Added support for named lable to handle arternative return parameters in Fortran.
-       // SgLabelSymbol ( const SgName & name );
           SgLabelSymbol ( SgInitializedName* initializedName );
 
 HEADER_LABEL_SYMBOL_END

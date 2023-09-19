@@ -2171,14 +2171,21 @@ disassemble(rose_addr_t base_va, SgAsmCilMethodDef* m, MethodHeader mh,
       }
     }
 
-    // Just checking for when last instruction is not return from function
+    // Just checking for when last instruction is not return from function (or similar terminating instruction)
     ASSERT_require(addr <= sz);
     if (addr == sz) {
-      if (instr->get_anyKind() != 0 &&
-          instr->get_anyKind() != Rose::BinaryAnalysis::CilInstructionKind::Cil_ret &&
-          instr->get_anyKind() != Rose::BinaryAnalysis::CilInstructionKind::Cil_throw &&
-          instr->get_anyKind() != Rose::BinaryAnalysis::CilInstructionKind::Cil_br) {
-        mlog[INFO] << "last instruction in block is not Cil_ret, is 0x" << std::hex << (int) instr->get_anyKind() << std::dec << "\n";
+      switch (instr->get_anyKind())
+      {
+        namespace rb = Rose::BinaryAnalysis;
+        case 0:
+        case rb::CilInstructionKind::Cil_ret:
+        case rb::CilInstructionKind::Cil_throw:
+        case rb::CilInstructionKind::Cil_br:
+        case rb::CilInstructionKind::Cil_br_s:
+        case rb::CilInstructionKind::Cil_endfinally:
+          break;
+        default:
+          mlog[INFO] << "last instruction in block is not Cil_ret (or like), is 0x" << std::hex << (int) instr->get_anyKind() << std::dec << "\n";
       }
     }
   }
