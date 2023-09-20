@@ -838,7 +838,6 @@ Jvm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start, AddressSet*)
       case opcode::monitorexit: // 0xc3 (195)
         mnemonic = "monitorexit";
         break;
-
       case opcode::wide: { // 0xc4 (196)
         mnemonic = "wide";
         // Peek at the wide opcode (the instruction that is wide)
@@ -855,10 +854,11 @@ Jvm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start, AddressSet*)
         }
         break;
       }
-
-//    case opcode::multianewarray: // 0xc5 (197)
-
-// TODO: Following needs test
+      case opcode::multianewarray: // 0xc5 (197)
+        mnemonic = "multianewarray";
+        va += appendOperand<uint16_t>(map, va, chars, operands); // index
+        va += appendOperand<uint8_t>(map, va, chars, operands); // dimensions
+        break;
       case opcode::ifnull: // 0xc6 (198)
         mnemonic = "ifnull";
         va += appendOperand<int16_t>(map, va, chars, operands);
@@ -867,6 +867,7 @@ Jvm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start, AddressSet*)
         mnemonic = "ifnonnull";
         va += appendOperand<int16_t>(map, va, chars, operands);
         break;
+// TODO: Following needs test
       case opcode::goto_w: // 0xc8 (200)
         mnemonic = "goto_w";
         va += appendOperand<int32_t>(map, va, chars, operands);
