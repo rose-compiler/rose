@@ -455,6 +455,9 @@ namespace
     AdaStatementUnparser
     unparserWith(SgAdaDiscriminatedTypeDecl* n);
 
+    // prints aspects associated with a declaration
+    void prnAspects(SgDeclarationStatement& n);
+
     //
     // handlers
 
@@ -541,9 +544,10 @@ namespace
       {
         prn("task type ");
         prn(n.get_name());
-        printPendingDiscriminants();
+        prnPendingDiscriminants();
+        prnAspects(n);
 
-        if (!spec->get_hasMembers())
+        if (spec->get_declarations().size() == 0)
         {
           prn(STMT_SEP);
           return;
@@ -561,7 +565,8 @@ namespace
         // \todo refactor code into a single location to handle these
         prn("type ");
         prn(n.get_name());
-        printPendingDiscriminants();
+        prnPendingDiscriminants();
+        prnAspects(n);
 
         const bool requiresPrivate = si::Ada::withPrivateDefinition(&n);
         const bool requiresIs      = requiresPrivate || hasModifiers(n);
@@ -580,12 +585,12 @@ namespace
 
     void handle(SgAdaProtectedTypeDecl& n)
     {
-
       if (SgAdaProtectedSpec* spec = n.get_definition())
       {
         prn("protected type ");
         prn(n.get_name());
-        printPendingDiscriminants();
+        prnPendingDiscriminants();
+        prnAspects(n);
         prn(" is\n");
         stmt(spec);
 
@@ -598,7 +603,8 @@ namespace
         // \todo refactor code into a single location to handle these
         prn("type ");
         prn(n.get_name());
-        printPendingDiscriminants();
+        prnPendingDiscriminants();
+        prnAspects(n);
 
         const bool requiresPrivate = si::Ada::withPrivateDefinition(&n);
         const bool requiresIs      = requiresPrivate || hasModifiers(n);
@@ -627,10 +633,12 @@ namespace
       {
         // separate declarations are nondefining
         prn(" is separate");
+        prnAspects(n);
         prn(STMT_SEP);
         return;
       }
 
+      prnAspects(n);
       prn(" is\n");
       stmt(n.get_definition());
 
@@ -647,9 +655,10 @@ namespace
       prn("task ");
       prn(n.get_name());
 
+      prnAspects(n);
       SgAdaTaskSpec& spec = SG_DEREF(n.get_definition());
 
-      if (!spec.get_hasMembers())
+      if (spec.get_declarations().size() == 0)
       {
         prn(STMT_SEP);
         return;
@@ -667,6 +676,7 @@ namespace
     {
       prn("protected ");
       prn(n.get_name());
+      prnAspects(n);
 
       SgAdaProtectedSpec& spec = SG_DEREF(n.get_definition());
 
@@ -722,6 +732,7 @@ namespace
       prn("package ");
       prn(pkgqual);
       prn(n.get_name());
+      prnAspects(n);
       prn(" is\n");
 
       stmt(n.get_definition());
@@ -746,10 +757,12 @@ namespace
       {
         // separate declarations are nondefining
         prn(" is separate");
+        prnAspects(n);
         prn(STMT_SEP);
         return;
       }
 
+      prnAspects(n);
       prn(" is\n");
       stmt(n.get_definition());
 
@@ -812,6 +825,7 @@ namespace
         prn("package ");
         prn(pkgqual);
         prn(name.getString());
+        prnAspects(n);
         prn(" is new ");
         prnNameQual(n, *pkg);
         prn(pkg->get_name().getString());
@@ -823,6 +837,7 @@ namespace
         prn(renamed.prefixSyntax());
         prn(pkgqual);
         prn(name.getString());
+        prnAspects(n);
         prn(" is new ");
         prnNameQual(n, *ren);
         prn(ren->get_name().getString());
@@ -831,6 +846,7 @@ namespace
         prn(si::Ada::isFunction(fn->get_type()) ? "function " : "procedure ");
         prn(pkgqual);
         prn(si::Ada::convertRoseOperatorNameToAdaName(name));
+        prnAspects(n);
         prn(" is new ");
         prnNameQual(n, *fn);
         prn(fn->get_name().getString());
@@ -859,6 +875,7 @@ namespace
       std::string          nameSep           = ": ";
       bool                 withType          = renamed.withType();
 
+      // \todo integrate aspect handling if needed
       // this code became a mess quickly ..
       // \todo revise and integrate into renamingSyntax - function
       if (genericFormalPart)
@@ -909,6 +926,7 @@ namespace
         prn(typeAttr);
       }
 
+      prnAspects(n);
       prn(STMT_SEP);
     }
 
@@ -920,7 +938,7 @@ namespace
       prn(" ");
       prn(n.get_name());
 
-      printPendingDiscriminants();
+      prnPendingDiscriminants();
 
       const bool isDefinition    = &n == n.get_definingDeclaration();
       const bool requiresPrivate = (!isDefinition) && si::Ada::withPrivateDefinition(&n);
@@ -940,6 +958,7 @@ namespace
       if (requiresPrivate)
         prn(" private");
 
+      prnAspects(n);
       prn(STMT_SEP);
     }
 
@@ -966,11 +985,13 @@ namespace
       type(primary, primary.get_type());
 
       expr_opt(primary.get_initializer(), " := ");
+      prnAspects(n);
       prn(STMT_SEP);
     }
 
     void handle(SgAdaVariantDecl& n)
     {
+      // \todo process aspects
       prn("case ");
       expr(n.get_discriminant());
       prn(" is\n");
@@ -983,6 +1004,7 @@ namespace
 
     void handle(SgAdaVariantWhenStmt& n)
     {
+      // \todo process aspects
       prn("when ");
       choicelst(n.get_choices());
       prn(" =>\n");
@@ -1023,7 +1045,7 @@ namespace
 
       prn("type ");
       prn(n.get_name());
-      printPendingDiscriminants();
+      prnPendingDiscriminants();
       prn(" is ");
       modifiers(n);
 
@@ -1064,6 +1086,7 @@ namespace
 
       prn("with package ");
       prn(n.get_name());
+      prnAspects(n);
       prn(" is new ");
 
       if (SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(basedcl))
@@ -1493,7 +1516,7 @@ namespace
         support(parents.at(0));
     }
 
-    void printPendingDiscriminants()
+    void prnPendingDiscriminants()
     {
       if (!pendingDiscriminants) return;
 
@@ -1516,7 +1539,7 @@ namespace
       prn("type ");
       prn(n.get_name());
 
-      printPendingDiscriminants();
+      prnPendingDiscriminants();
 
       if (SgClassDefinition* def = n.get_definition())
       {
@@ -1552,6 +1575,7 @@ namespace
         }
       }
 
+      prnAspects(n);
       prn(STMT_SEP);
     }
 
@@ -1592,12 +1616,14 @@ namespace
         prn(")");
       }
 
+      prnAspects(n);
       prn(STMT_SEP);
     }
 
-    void handle(SgEmptyDeclaration&)
+    void handle(SgEmptyDeclaration& n)
     {
       prn("null");
+      prnAspects(n);
       prn(STMT_SEP);
     }
 
@@ -1664,14 +1690,14 @@ namespace
 
     void handle(SgDeclarationScope&)
     {
-      // handled by the discriminant unparser
+      // handled by the respected unparser (if needed)
     }
 
     void handle(SgFunctionDeclaration& n)
     {
       const bool      separate = si::Ada::isSeparatedDefinition(n);
       const bool      isFunc  = si::Ada::isFunction(n.get_type());
-      std::string     keyword = isFunc ? "function" : "procedure";
+      std::string     keyword = isFunc ? " function" : " procedure";
 
       if (separate) prnSeparateQual(n);
 
@@ -2005,6 +2031,7 @@ namespace
       }
       // else this is a procedure declaration defined using renaming-as-body
 
+      prnAspects(n);
       prn(STMT_SEP);
       return;
     }
@@ -2022,6 +2049,7 @@ namespace
       else if (mod.isAdaAbstract())
         prn(" is abstract");
 
+      prnAspects(n);
       prn(STMT_SEP);
       return;
     }
@@ -2029,6 +2057,7 @@ namespace
     if (si::Ada::explicitNullProcedure(*def))
     {
       prn(" is null");
+      prnAspects(n);
       prn(STMT_SEP);
       return;
     }
@@ -2040,6 +2069,7 @@ namespace
       expr_opt(barrier, " when ");
     }
 
+    prnAspects(n);
     prn(" is\n");
     stmt(def);
 
@@ -2265,6 +2295,16 @@ namespace
   void AdaStatementUnparser::support(SgSupport* s)
   {
     sg::dispatch(*this, s);
+  }
+
+  void AdaStatementUnparser::prnAspects(SgDeclarationStatement& n)
+  {
+    if (SgExprListExp* aspects = n.get_adaAspects())
+    {
+      prn(" with\n");
+
+      exprlst(aspects, ",\n");
+    }
   }
 }
 

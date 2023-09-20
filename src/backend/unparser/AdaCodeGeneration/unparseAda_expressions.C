@@ -298,8 +298,7 @@ namespace
         ROSE_ASSERT(aa != zz);
       }
 
-      prn(" else ");
-      expr(aa->trueBranch());
+      expr_opt(aa->trueBranch(), " else ");
 
       ++aa;
       ROSE_ASSERT(aa == zz);
@@ -375,8 +374,7 @@ namespace
     void handle(SgActualArgumentExpression& n)
     {
       prn(n.get_argument_name());
-      prn(" => ");
-      expr(n.get_expression());
+      expr_opt(n.get_expression(), " => ");
     }
 
     void handle(SgVarRefExp& n)
@@ -505,7 +503,7 @@ namespace
                 );
 
     void expr(SgExpression* exp);
-    void expr_opt(SgExpression* exp);
+    void expr_opt(SgExpression* exp, std::string prefix = {}, std::string postfix = {});
     void exprlst(SgExprListExp& exp, std::string sep = ", ");
     void aggregate(SgExprListExp& exp);
     void object_opt(SgExprListExp& args, bool unparseObjectCall = false);
@@ -551,12 +549,14 @@ namespace
     if (withParens) prn(")");
   }
 
-  void AdaExprUnparser::expr_opt(SgExpression* exp)
+  void AdaExprUnparser::expr_opt(SgExpression* exp, std::string prefix_opt, std::string postfix_opt)
   {
     if (exp == nullptr || isSgNullExpression(exp))
       return;
 
+    prn(prefix_opt);
     expr(exp);
+    prn(postfix_opt);
   }
 
   void AdaExprUnparser::handle(SgBinaryOp& n)
