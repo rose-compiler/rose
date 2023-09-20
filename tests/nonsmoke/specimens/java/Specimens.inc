@@ -18,7 +18,10 @@ nonsmoke_specimens_java_classes =		\
     Test3.class					\
     Generic.class				\
     Test4.class					\
+    GiantFunction.class				\
+    MultiArray.class				\
     NestMembersAttribute.class			\
     NestMembersAttribute__InputReader.class	\
+    TestNull.class				\
     Worker_TT.class				\
     CPrint.class
