@@ -752,6 +752,14 @@ namespace Ada_ROSE_Translation
   SgPragmaDeclaration&
   mkPragmaDeclaration(const std::string& name, SgExprListExp& args, SgStatement* assocStmt);
 
+  /// creates a declaration scope
+  /// \note
+  ///    called internally in AdaMaker (\todo revisit)
+  ///    AND from the translator when a pragma or aspect requires a scope for
+  ///    unresolved identifiers.
+  SgDeclarationScope&
+  mkDeclarationScope(SgScopeStatement& /* not used */);
+
   //
   // Expression Makers
 

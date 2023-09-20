@@ -796,6 +796,11 @@ Grammar::setUpStatements ()
      DeclarationStatement.setDataPrototype ("bool", "unparse_template_ast", "= false",
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // PP (09/18/23): Adding support for Ada aspects
+  //                \todo set traversal and DEF_DELETE?
+     DeclarationStatement.setDataPrototype ("SgExprListExp*", "adaAspects", "= nullptr",
+                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
      BasicBlock.setFunctionPrototype ( "HEADER_BASIC_BLOCK", "../Grammar/Statement.code" );
 
@@ -4348,10 +4353,12 @@ Grammar::setUpStatements ()
      AdaTaskSpec.setFunctionPrototype ( "HEADER_ADA_TASK_SPEC_STATEMENT", "../Grammar/Statement.code" );
      AdaTaskSpec.setDataPrototype ( "SgAdaTaskBody*", "body", "= NULL",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     // PP (9/18/23): commented out; instead, just check the number of declarations
      // hasMembers is true, if the task specification has an explicit member list
      //               false, for cases like "task type The_Task_Type;"
-     AdaTaskSpec.setDataPrototype ( "bool", "hasMembers", "= false",
-                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     //~ AdaTaskSpec.setDataPrototype ( "bool", "hasMembers", "= false",
+                                    //~ NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AdaTaskSpec.setDataPrototype ( "SgDeclarationStatementPtrList", "declarations", "",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AdaTaskSpec.setDataPrototype ( "bool", "hasPrivate", "= false",

@@ -1103,6 +1103,12 @@ namespace
       : ifExpr(&sgnode), ctx(astctx)
       {}
 
+      ~IfExprCreator()
+      {
+        if (ifExpr->get_false_exp() == nullptr)
+          ifExpr->set_false_exp(&mkNullExpression());
+      }
+
       void commonBranch(Path_Struct& path, void (SgConditionalExp::*branchSetter)(SgExpression*))
       {
         SgExpression& thenExpr = getExprID(path.Dependent_Expression, ctx);
@@ -1169,7 +1175,6 @@ namespace
   };
 
 
-
   SgExprListExp& createExprListExpIfNeeded(SgExpression& exp)
   {
     SgExprListExp* res = isSgExprListExp(&exp);
@@ -1218,6 +1223,24 @@ namespace
     return nullptr;
   }
 
+  SgScopeStatement& scopeForUnresolvedNames(AstContext ctx)
+  {
+    SgDeclarationStatement* dcl = ctx.pragmaAspectAnchor();
+
+    // if there is no anchor, then just return the scope
+    if (dcl == nullptr) return ctx.scope();
+
+    // create a SgDeclarationScope for the anchor node if needed
+    if (dcl->get_declarationScope() == nullptr)
+    {
+      SgDeclarationScope& dclscope = mkDeclarationScope(ctx.scope());
+
+      sg::linkParentChild(*dcl, dclscope, &SgDeclarationStatement::set_declarationScope);
+    }
+
+    // return the declaration scope of the anchor
+    return SG_DEREF(dcl->get_declarationScope());
+  }
 
   SgExpression&
   getExprID_undecorated(Element_ID el, AstContext ctx, OperatorCallSupplement suppl = {});
@@ -1279,15 +1302,16 @@ namespace
             }
             else
             {
-              // \todo check why the name remained unresolved
-              res = &mkUnresolvedName(expr.Name_Image, ctx.scope());
+              SgScopeStatement& scope = scopeForUnresolvedNames(ctx);
 
-              if (!ctx.pragmaProcessing())
+              if (&scope == &ctx.scope())
               {
-                // inside pragmas (e.g., pragma Import) unresolved names are normal
+                // issue warning for unresolved names outside pragmas and aspects
                 logWarn() << "ADDING unresolved name: " << expr.Name_Image
                           << std::endl;
               }
+
+              res = &mkUnresolvedName(expr.Name_Image, scope);
             }
           }
 

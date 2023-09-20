@@ -174,6 +174,8 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   array_declare_2.ads                  \
   ascii_user.adb                       \
   asm_machine_code.adb                 \
+  aspect_fun.adb                       \
+  aspect_spec.ads                      \
   based_numbers.ads                    \
   blockreference.adb                   \
   box.adb                              \
@@ -323,7 +325,6 @@ ROSE_PASSING_ADA_TESTS :=                           \
 # ROSE_PASSING_IMCOMPLETE_ADA_TESTS :=
 ROSE_FAILING_ADA_TESTS :=                           \
   ancestors.adb                                     \
-  aspect_spec.ads                                   \
   delay_until.adb                                   \
   mpiuse.ads                                        \
   pragma_placement.adb                              \
