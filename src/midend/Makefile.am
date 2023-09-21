@@ -111,8 +111,9 @@ libmidend_la_SOURCES+=\
 	$(mProgramTransformation_la_sources)
 endif
 
-libmidend_la_DEPENDENCIES=\
-	$(mAstQuery_la_dependencies)
+# nodeQuery is already part of the source under mAstQuery_la_sources
+#libmidend_la_DEPENDENCIES=\
+#	$(mAstQuery_la_dependencies)
 
 pkginclude_HEADERS = \
 	$(mAbstractHandle_includeHeaders) \

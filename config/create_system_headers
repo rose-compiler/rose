@@ -397,11 +397,9 @@ elif [ ! -r "$rose_system_cdefs_h" ]; then
     # The "#include </.../cdefs.h> in the ROSE-specific cdefs.h is wrong, so try to fix it.
     real_system_cdefs_h=$(find /usr/include -follow -name cdefs.h |head -n1)
 
-    # Fix cdefs.h path for later versions of Mac OSX [Craig Rasmussen, 2019-01-23]
-    if [[ "$OSTYPE" == "darwin18" ]]; then
-        real_system_cdefs_h="/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/usr/include/sys/cdefs.h"
-    elif [[ "$OSTYPE" == "darwin19" || "$OSTYPE" == "darwin20" ]]; then
-        real_system_cdefs_h="/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/cdefs.h"
+    # Pei-Hung (09/21/2023) detect real_system_cdefs_h path with xcrun 
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        real_system_cdefs_h="$(xcrun --show-sdk-path)/usr/include/sys/cdefs.h"
     fi
 
     if [ ! -r "$real_system_cdefs_h" ]; then

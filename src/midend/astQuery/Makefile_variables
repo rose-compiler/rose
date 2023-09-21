@@ -14,8 +14,9 @@ mAstQuery_la_sources=\
 
 nodeQuery.lo : $(mAstQueryPath)/nodeQuery.C $(mAstQueryPath)/queryVariant.C
 
-mAstQuery_la_dependencies=\
-	$(mAstQueryPath)/nodeQuery.o
+# nodeQuery is already part of the source
+# mAstQuery_la_dependencies=\
+# 	$(mAstQueryPath)/nodeQuery.o
 
 mAstQuery_includeHeaders=\
 	$(mAstQueryPath)/nodeQuery.h \

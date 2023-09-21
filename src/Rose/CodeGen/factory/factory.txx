@@ -139,7 +139,7 @@ SgScopedRefExp * Factory<CRT, API>::build_scoped_ref(SgNamedType * lhs, referenc
 
 template <typename CRT, typename API>
 template <Object otag, typename... Args>
-Factory<CRT, API>::access_return_t<otag> * Factory<CRT, API>::access(symbol_t<otag> * API::* obj, SgNamedType * parent, Args... args) const {
+typename Factory<CRT, API>::template access_return_t<otag> * Factory<CRT, API>::access(symbol_t<otag> * API::* obj, SgNamedType * parent, Args... args) const {
 #if DEBUG__Factory__access_type
   std::cout << "Factory<CRT, API>::access" << std::endl;
   std::cout << "  obj    = " << std::hex << obj << std::endl;
