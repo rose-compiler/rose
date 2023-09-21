@@ -182,8 +182,8 @@ metadataToken(const SgAsmCilMetadataHeap* heap, const SgAsmExpression* expr)
   return metadataToken(heap, isSgAsmIntegerValueExpression(expr));
 }
 
-CilMethod::CilMethod(SgAsmCilMetadataRoot* mdr, SgAsmCilMethodDef* sgMethod)
-  : mdr_{mdr}, sgMethod_{sgMethod}, insns_{nullptr}, code_{nullptr, 0, 0}
+CilMethod::CilMethod(SgAsmCilMetadataRoot* mdr, SgAsmCilMethodDef* sgMethod, const Class* obj)
+  : Method{obj}, mdr_{mdr}, sgMethod_{sgMethod}, insns_{nullptr}, code_{nullptr, 0, 0}
 {
     insns_ = new SgAsmInstructionList;
 
@@ -240,7 +240,6 @@ std::string
 CilMethod::name(const SgAsmCilMetadata* obj, SgAsmCilMetadataRoot* mdr)
 {
   std::string objName{};
-
   try {
     switch (obj->variantT()) {
       case V_SgAsmCilMemberRef: {
@@ -321,7 +320,7 @@ CilClass::CilClass(SgAsmCilMetadataRoot* root, const std::uint8_t* name, size_t 
             continue;
         }      
 
-        auto method = new CilMethod(mdr_, methodDef);
+        auto method = new CilMethod(mdr_, methodDef, this);
         methods_.push_back(method);
 
         if (TRACE_CONSTRUCTION) {
