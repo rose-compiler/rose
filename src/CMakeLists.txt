@@ -316,6 +316,10 @@ if(enable-rosehpct)
   list(APPEND LINK_FILES ${LIBXML2_LIBRARIES})
 endif()
 
+if(enable-ada)
+  list(APPEND LINK_FILES experimentalRoseAda)
+endif()
+
 # This was an experiment to generate smaller files from ROSETTA. (I'm not sure of the status [Matzke 2019-02-02].)
 if(enable-smaller-generated-files )
   set(ROSE_TARGET_LINK libgeneratedIR ${LINK_FILES})
