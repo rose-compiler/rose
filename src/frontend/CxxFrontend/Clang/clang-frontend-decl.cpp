@@ -1041,9 +1041,9 @@ bool ClangToSageTranslator::VisitTagDecl(clang::TagDecl * tag_decl, SgNode ** no
 #if DEBUG_VISIT_DECL
        logger[DEBUG] << "ClangToSageTranslator::VisitTagDecl: checking decls in DeclContext\n";
 #endif
-       SgNode * tmp_content = Traverse(tmpDecl);
-       SgDeclarationStatement * decl_content = isSgDeclarationStatement(tmp_content);
-       ROSE_ASSERT(decl_content != NULL);
+       SgNode * tmp_context = Traverse(tmpDecl);
+       SgDeclarationStatement * decl_context = isSgDeclarationStatement(tmp_context);
+       ROSE_ASSERT(decl_context != NULL);
 
        if(sg_class_def)
        {
@@ -1052,24 +1052,40 @@ bool ClangToSageTranslator::VisitTagDecl(clang::TagDecl * tag_decl, SgNode ** no
 #if DEBUG_VISIT_DECL
             logger[DEBUG] << "ClangToSageTranslator::VisitTagDecl: processing decl as a field\n";
 #endif   
-            sg_class_def->append_member(decl_content);
-            decl_content->set_parent(sg_class_def);
+            sg_class_def->append_member(decl_context);
+            decl_context->set_parent(sg_class_def);
          }
          if(llvm::isa<clang::RecordDecl>(tmpDecl))
          {
 #if DEBUG_VISIT_DECL
             logger[DEBUG] << "ClangToSageTranslator::VisitTagDecl: processing decl as a record\n";
 #endif   
-//            sg_class_def->append_member(decl_content);
-//            decl_content->set_parent(sg_class_def);
+//            sg_class_def->append_member(decl_context);
+//            decl_context->set_parent(sg_class_def);
          }
          if(llvm::isa<clang::FriendDecl>(tmpDecl))
          {
 #if DEBUG_VISIT_DECL
             logger[DEBUG] << "ClangToSageTranslator::VisitTagDecl: processing decl as a friend decl\n";
 #endif   
-            sg_class_def->append_member(decl_content);
-            decl_content->set_parent(sg_class_def);
+            sg_class_def->append_member(decl_context);
+            decl_context->set_parent(sg_class_def);
+         }
+         if(llvm::isa<clang::VarDecl>(tmpDecl))
+         {
+#if DEBUG_VISIT_DECL
+            logger[DEBUG] << "ClangToSageTranslator::VisitTagDecl: processing decl as a var decl\n";
+#endif   
+            clang::VarDecl* varDecl = (clang::VarDecl*)tmpDecl;
+            if(varDecl->isStaticDataMember())
+            {
+              sg_class_def->append_member(decl_context);
+              decl_context->set_parent(sg_class_def);
+            }
+            else
+            {
+              logger[WARN] << "Other clang::VarDecl in the decl_context is not handled";
+            }
          }
        }
 
@@ -2488,6 +2504,8 @@ bool ClangToSageTranslator::VisitNonTypeTemplateParmDecl(clang::NonTypeTemplateP
 bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
     logger[DEBUG] << "ClangToSageTranslator::VisitVarDecl " << var_decl->getNameAsString() << "\n";
+    logger[DEBUG] << "isStaticLocal " << var_decl->isStaticLocal() << "\n";
+    logger[DEBUG] << "isStaticDataMember " << var_decl->isStaticDataMember() << "\n";
 #endif
     bool res = true;
 
@@ -2591,10 +2609,27 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
     SgType * sg_varType = buildTypeFromQualifiedType(varQualType);
     SgType * type = buildTypeFromQualifiedType(var_decl->getType());
 
+    bool isStaticDataMember = var_decl->isStaticDataMember();
+
 //    SgVariableDeclaration * sg_var_decl = new SgVariableDeclaration(name, type, init); // scope: obtain from the scope stack.
    // Pei-Hung (09/01/2022) In test2022_3.c, the variable symbol needs to be avaiable before processing the RHS.
    // calling buildVariableDeclaration_nfi to get the symbol in place.
-   SgVariableDeclaration * sg_var_decl = SageBuilder::buildVariableDeclaration_nfi(name,type, NULL ,SageBuilder::topScopeStack());
+   SgVariableDeclaration * sg_var_decl = NULL;
+   // Pei-Hung (09/29/23) The definition of a staic data member needs to call
+   //  set_prev_decl_item to point to its first static data member declaration inside the class. 
+   // buildVariableDeclaration_nfi will take care of the details by looking up the SgSymbol in
+   // the symbol table of the class. 
+   if(isStaticDataMember && var_decl->getPreviousDecl() != NULL)
+   {
+     clang::VarDecl* prevDecl = var_decl->getPreviousDecl();
+     SgVariableDeclaration* sgPrevDecl = isSgVariableDeclaration(Traverse(prevDecl));
+     ROSE_ASSERT(sgPrevDecl);
+     sg_var_decl = SageBuilder::buildVariableDeclaration_nfi(name,type, NULL , SageInterface::getScope(sgPrevDecl));
+   }
+   else
+   {
+     sg_var_decl = SageBuilder::buildVariableDeclaration_nfi(name,type, NULL ,SageBuilder::topScopeStack());
+   }
 
    // Pei-Hung (09/27/2022) isAssociatedWithDeclarationList should be set to handle multiple variables in
    // a single declaration list.
@@ -2625,7 +2660,6 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
     }
     if (init != NULL)
     {
-        init->set_parent(sg_var_decl);
         //Pei-Hung (07/12/2023): 
         //applySourceRange should be set whenever the SgInitializer was just created.
         //Otherwise, it could cause overwrite the setting done in setCompilerGeneratedFileInfo.
@@ -2705,8 +2739,16 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
 
     SgInitializedName * init_name = sg_var_decl->get_variables()[0];
     ROSE_ASSERT(init_name != NULL);
-    init_name->set_scope(SageBuilder::topScopeStack());
-
+    if(var_decl->hasInit())
+    {
+       init->set_parent(init_name);
+       // (09/29/2023) the scope of SgInitializedName of a static data member
+       // can be set earlier by buildVariableDeclaration_nfi
+       if(init_name->get_scope() == NULL)
+       {
+         init_name->set_scope(SageBuilder::topScopeStack());
+       }
+    }
     applySourceRange(init_name, var_decl->getSourceRange());
 
     SgVariableDefinition * var_def = isSgVariableDefinition(init_name->get_declptr());
@@ -2730,11 +2772,16 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
     {
       sg_var_decl->get_declarationModifier().get_storageModifier().setStatic();
     }
-    bool isStaticDataMember = var_decl->isStaticDataMember();
     // Pei-Hung (03/14/23) added "static" modifier for data member
     if(isStaticDataMember)
     {
-      sg_var_decl->get_declarationModifier().get_storageModifier().setStatic();
+      // Pei-Hung (09/29/23) Only set for the first static data member declaration
+      // This implies the static data member declaration inside the class
+      // Example in test2005_154.C
+      if(var_decl->getPreviousDecl() == NULL)
+      {
+        sg_var_decl->get_declarationModifier().get_storageModifier().setStatic();
+      }
     }
     //Pei-Hung (09/27/2022) setup linkage
     if(var_decl->hasExternalStorage())
