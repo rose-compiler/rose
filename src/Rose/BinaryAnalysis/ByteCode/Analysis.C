@@ -23,18 +23,18 @@ namespace ByteCode {
 // Method
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Method::Method() {}
+Method::Method(const Class* obj) : class_{obj} { }
 
 Method::~Method() {}
 
 const std::vector<BasicBlock::Ptr>&
 Method::blocks() const {
-    return blocks_;
+  return blocks_;
 }
 
 void
 Method::append(BasicBlock::Ptr bb) {
-    blocks_.push_back(bb);
+  blocks_.push_back(bb);
 }
 
 std::set<rose_addr_t>
@@ -79,7 +79,7 @@ void Class::partition(const PartitionerPtr &partitioner) const
 
     if (instructions.size() > 0) {
       auto va = instructions[0]->get_address();
-      function = Partitioner2::Function::instance(va, method->name());
+      function = Partitioner2::Function::instance(va, method->myClass()->name() + "::" + method->name());
 
       for (auto astInsn : instructions) {
         // A copy of the instruction must be made if it is linked to ROSE's AST

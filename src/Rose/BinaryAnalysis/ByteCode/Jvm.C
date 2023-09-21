@@ -25,8 +25,8 @@ const std::string JvmField::name() const
   return std::string{""};
 }
 
-JvmMethod::JvmMethod(SgAsmJvmFileHeader* jfh, SgAsmJvmMethod* method)
-  : jfh_{jfh}, sgMethod_{method}, code_{nullptr,0,0}
+JvmMethod::JvmMethod(SgAsmJvmFileHeader* jfh, SgAsmJvmMethod* method, const Class* obj)
+  : Method{obj}, jfh_{jfh}, sgMethod_{method}, code_{nullptr,0,0}
 {
   ASSERT_not_null(jfh);
   ASSERT_not_null(method);
@@ -105,7 +105,8 @@ JvmMethod::annotate()
     switch (jvmInsn->get_kind()) {
       case opcode::invokevirtual:
       case opcode::invokespecial:
-      case opcode::invokestatic: {
+      case opcode::invokestatic:
+      case opcode::new_: {
         if (auto expr = isSgAsmIntegerValueExpression(insn->get_operandList()->get_operands()[0])) {
           comment = JvmMethod::name(expr->get_value(), pool);
           expr->set_comment(comment);
@@ -211,7 +212,7 @@ JvmClass::JvmClass(SgAsmJvmFileHeader* jfh)
     fields_.push_back(new JvmField{jfh, sgField});
   }
   for (auto sgMethod : methods) {
-    methods_.push_back(new JvmMethod{jfh, sgMethod});
+    methods_.push_back(new JvmMethod{jfh, sgMethod, this});
   }
   for (uint16_t index  : interfaces) {
     interfaces_.push_back(new JvmInterface{jfh, index});
