@@ -13,6 +13,9 @@ namespace ByteCode {
 using BasicBlockPtr = Partitioner2::BasicBlockPtr;
 using PartitionerPtr = Partitioner2::PartitionerPtr;
 
+// Forward reference for Method
+class Class;
+
 class Code {
 public:
   virtual const uint8_t* bytes() const = 0;
@@ -37,6 +40,8 @@ public:
   virtual const void decode(const Disassembler::BasePtr&) const = 0;
   virtual const SgAsmInstructionList* instructions() const = 0;
 
+  const Class* myClass() { return class_; }
+
   /* Annotate the AST (.e.g., add comments to instructions) */
   virtual void annotate() = 0;
 
@@ -48,9 +53,12 @@ public:
   const std::vector<BasicBlockPtr>& blocks() const;
   void append(BasicBlockPtr bb);
 
+  Method() = delete;
+
 protected:
-  Method();
+  Method(const Class*);
   ~Method();
+  const Class* class_;
   Partitioner2::FunctionPtr function_;
   std::vector<BasicBlockPtr> blocks_;
 };

@@ -66,7 +66,7 @@ public:
   static std::string name(uint16_t, const SgAsmJvmConstantPool*);
 
   JvmMethod() = delete;
-  explicit JvmMethod(SgAsmJvmFileHeader*, SgAsmJvmMethod*);
+  explicit JvmMethod(SgAsmJvmFileHeader*, SgAsmJvmMethod*, const Class*);
 
 private:
   SgAsmJvmFileHeader* jfh_;
