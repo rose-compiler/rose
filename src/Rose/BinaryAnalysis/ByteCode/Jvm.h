@@ -126,6 +126,8 @@ public:
     return jfh_->get_constant_pool();
   }
 
+  virtual void dump();
+
   JvmClass() = delete;
   explicit JvmClass(SgAsmJvmFileHeader* jfh);
 

@@ -13,6 +13,8 @@
 #include <Sawyer/FileSystem.h>
 #include <boost/filesystem.hpp>
 
+constexpr bool DEBUG_DUMP = false;
+
 using namespace Rose::Diagnostics;
 using AddressSegment = Sawyer::Container::AddressSegment<rose_addr_t,uint8_t>;
 using std::cout;
@@ -176,6 +178,9 @@ SgProject *
 EngineJvm::roseFrontendReplacement(const std::vector<boost::filesystem::path> &fileNames) {
     ASSERT_forbid(fileNames.empty());
 
+    // "Load" file at this virtual address
+    rose_addr_t baseVa = 0;
+
     // Create the SgAsmGenericFiles (not a type of SgFile), one per fileName, and add them to a SgAsmGenericFileList node.
     auto fileList = new SgAsmGenericFileList;
     for (auto fileName: fileNames) {
@@ -184,6 +189,11 @@ EngineJvm::roseFrontendReplacement(const std::vector<boost::filesystem::path> &f
         auto file = new SgAsmGenericFile{};
         file->parse(fileName.string()); /* this loads file into memory, does no reading of file */
         auto header = new SgAsmJvmFileHeader(file);
+        header->set_base_va(baseVa);
+
+        // Increase base virtual address for next header
+        baseVa += file->get_orig_size() + 1024;
+        baseVa -= baseVa % 1024;
 
         // Check AST
         ASSERT_require(header == file->get_header(SgAsmGenericFile::FAMILY_JVM));
@@ -193,10 +203,10 @@ EngineJvm::roseFrontendReplacement(const std::vector<boost::filesystem::path> &f
         fileList->get_files().push_back(file);
         file->set_parent(fileList);
 
-#ifdef DEBUG_ON
-        cout << "\n --- JVM file header ---\n";
-        header->dump(stdout, "    jfh:", 0);
-#endif
+        if (DEBUG_DUMP) {
+          cout << "\n --- JVM file header ---\n";
+          header->dump(stdout, "    jfh:", 0);
+        }
     }
     SAWYER_MESG(mlog[DEBUG]) <<"parsed " <<StringUtility::plural(fileList->get_files().size(), "container files") <<"\n";
 
@@ -341,58 +351,21 @@ EngineJvm::runPartitionerInit(const Partitioner::Ptr &partitioner) {
 void
 EngineJvm::runPartitionerRecursive(const Partitioner::Ptr &partitioner) {
     Sawyer::Message::Stream where(mlog[WHERE]);
-    SAWYER_MESG(where) <<"EngineJvm::runPartitionerRecursive needs implementation\n";
     SgAsmGenericHeaderList *interpHeaders = interpretation()->get_headers();
     ASSERT_not_null(interpHeaders);
-    SgAsmGenericHeader *header = interpHeaders->get_headers()[0];
 
-    auto jfh = dynamic_cast<SgAsmJvmFileHeader*>(header);
-    auto jvmClass = new ByteCode::JvmClass(jfh);
+    for (SgAsmGenericHeader* header: interpHeaders->get_headers()) {
+      auto jfh = dynamic_cast<SgAsmJvmFileHeader*>(header);
+      auto jvmClass = new ByteCode::JvmClass(jfh);
 
-#ifdef DEBUG_ON
-    //TODO: move this dump somewhere else
-    std::cout << "\n";
-    std::cout << "----------------\n";
-    std::cout << "class '" << jvmClass->name() << "'" << std::endl;
-    std::cout << "----------------\n";
-    std::cout << "   super: " << jvmClass->super_name() << "\n\n";
+      // Start discovering instructions and forming them into basic blocks and functions
+      SAWYER_MESG(where) <<"discovering and populating functions\n";
+      discoverFunctions(partitioner, jvmClass);
 
-    cout << "constant pool\n";
-    cout << "-----------\n";
-    jvmClass->constant_pool()->dump(stdout, "", 1);
-    cout << "-----------\n\n";
-
-    if (jvmClass->interfaces().size() > 0) {
-      cout << "interfaces\n";
-      cout << "-----------\n";
-      for (auto interface : jvmClass->interfaces()) {
-        cout << "   interface: " << interface->name() << endl;
+      if (DEBUG_DUMP) {
+        jvmClass->dump();
       }
-      cout << "-----------\n\n";
     }
-
-    if (jvmClass->fields().size() > 0) {
-      cout << "fields\n";
-      cout << "-----------\n";
-      for (auto field : jvmClass->fields()) {
-        cout << "   field: " << field->name() << endl;
-      }
-      cout << "-----------\n\n";
-    }
-
-    if (jvmClass->attributes().size() > 0) {
-      cout << "attributes\n";
-      cout << "-----------\n";
-      for (auto attribute : jvmClass->attributes()) {
-        cout << "   attribute: " << attribute->name() << endl;
-      }
-      cout << "-----------\n\n";
-    }
-#endif
-
-    // Start discovering instructions and forming them into basic blocks and functions
-    SAWYER_MESG(where) <<"discovering and populating functions\n";
-    discoverFunctions(partitioner, jvmClass);
 }
 
 void
