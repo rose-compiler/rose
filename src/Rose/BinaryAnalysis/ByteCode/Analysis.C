@@ -159,7 +159,7 @@ void Class::partition(const PartitionerPtr &partitioner) const
   // partitioner->dumpCfg(std::cout, "Worker:", true, false);
 }
 
-void Class::digraph()
+void Class::digraph() const
 {
   std::ofstream dotFile;
   mlog[INFO] << "Opening dot file " + name() + ".dot\n";

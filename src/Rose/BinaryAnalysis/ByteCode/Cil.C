@@ -299,7 +299,7 @@ CilMethod::name(const SgAsmCilMetadata* obj, SgAsmCilMetadataRoot* mdr)
 }
 
 CilClass::CilClass(SgAsmCilMetadataRoot* root, const std::uint8_t* name, size_t methodBegin, size_t methodLimit)
-  : mdr_{root}, name_{name}
+  : Class{0}, mdr_{root}, name_{name}
 {
     SgAsmCilMetadataHeap* metadataHeap = mdr_->get_MetadataHeap();
     ASSERT_not_null(metadataHeap);
@@ -331,6 +331,11 @@ CilClass::CilClass(SgAsmCilMetadataRoot* root, const std::uint8_t* name, size_t 
           std::cout << "    }\n";
         }
     }
+}
+
+void CilClass::dump()
+{
+  mlog[WARN] << "CilClass::dump() unimplemented\n";
 }
 
 CilNamespace::CilNamespace(SgAsmCilMetadataRoot* root, const std::uint8_t* name)

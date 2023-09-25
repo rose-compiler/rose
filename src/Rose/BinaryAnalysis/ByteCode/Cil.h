@@ -109,8 +109,10 @@ public:
     return attributes_;
   }
 
-    CilClass() = delete;
-    explicit CilClass(SgAsmCilMetadataRoot*, const std::uint8_t*, size_t, size_t);
+  virtual void dump();
+
+  CilClass() = delete;
+  explicit CilClass(SgAsmCilMetadataRoot*, const std::uint8_t*, size_t, size_t);
 
 private:
     std::vector<const Field*> fields_;
