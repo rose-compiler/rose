@@ -9,8 +9,6 @@
 using PoolEntry = SgAsmJvmConstantPoolEntry;
 using AddressSegment = Sawyer::Container::AddressSegment<rose_addr_t,uint8_t>;
 using opcode = Rose::BinaryAnalysis::JvmInstructionKind;
-using std::cout;
-using std::endl;
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -63,8 +61,8 @@ JvmMethod::instructions() const {
 }
 
 void const JvmMethod::decode(const Disassembler::Base::Ptr &disassembler) const {
-  rose_addr_t va{code_.offset()};
-  rose_addr_t endVa{code_.offset() + code_.size()};
+  rose_addr_t va{class_->address() + code_.offset()};
+  rose_addr_t endVa{va + code_.size()};
 
   auto disassemblerJvm{disassembler.dynamicCast<Disassembler::Jvm>()};
   disassemblerJvm->codeOffset(va);
@@ -81,16 +79,15 @@ void const JvmMethod::decode(const Disassembler::Base::Ptr &disassembler) const 
     insn = disassembler->disassembleOne(map, va);
     if (insn) {
       va += insn->get_size();
-      ROSE_ASSERT((666 != (int)insn->get_anyKind()) && "unknown instruction");
+      ASSERT_require2((666 != (int)insn->get_anyKind()), "unknown instruction");
       insnList->get_instructions().push_back(insn);
       insn->set_parent(insnList);
     }
     else {
-      //TODO: throw exception?
-      ASSERT_require(false && "disassembly failed");
+      ASSERT_require2(false, "disassembly failed for lack of instruction");
     }
   }
-  ASSERT_require((va - code_.offset()) == code_.size());
+  ASSERT_require(va == endVa);
 }
 
 void
@@ -98,7 +95,7 @@ JvmMethod::annotate()
 {
   auto pool = jfh_->get_constant_pool();
 
-  for (auto insn : instructions()->get_instructions()) {
+  for (auto insn: instructions()->get_instructions()) {
     std::string comment{};
     auto jvmInsn{isSgAsmJvmInstruction(insn)};
 
@@ -196,7 +193,7 @@ const std::string JvmAttribute::name() const
 }
 
 JvmClass::JvmClass(SgAsmJvmFileHeader* jfh)
-  : jfh_{jfh}, strings_{std::vector<std::string>()}
+  : Class{jfh->get_base_va()}, jfh_{jfh}, strings_{std::vector<std::string>()}
 {
   ASSERT_not_null(jfh);
   ASSERT_not_null(jfh->get_field_table());
@@ -255,6 +252,49 @@ const std::vector<std::string> &JvmClass::strings()
     }
   }
   return strings_;
+}
+
+void JvmClass::dump()
+{
+  using std::cout;
+
+  cout << "\n";
+  cout << "----------------\n";
+  cout << "class '" << name() << "'" << std::endl;
+  cout << "----------------\n";
+  cout << "   super: " << super_name() << "\n\n";
+
+  cout << "constant pool\n";
+  cout << "-----------\n";
+  constant_pool()->dump(stdout, "", 1);
+  cout << "-----------\n\n";
+
+  if (interfaces().size() > 0) {
+    cout << "interfaces\n";
+    cout << "-----------\n";
+    for (auto interface : interfaces()) {
+      cout << "   interface: " << interface->name() << std::endl;
+    }
+    cout << "-----------\n\n";
+  }
+
+  if (fields().size() > 0) {
+    cout << "fields\n";
+    cout << "-----------\n";
+    for (auto field : fields()) {
+      cout << "   field: " << field->name() << std::endl;
+    }
+    cout << "-----------\n\n";
+  }
+
+  if (attributes().size() > 0) {
+    cout << "attributes\n";
+    cout << "-----------\n";
+    for (auto attribute : attributes()) {
+      cout << "   attribute: " << attribute->name() << std::endl;
+    }
+    cout << "-----------\n\n";
+  }
 }
 
 } // namespace

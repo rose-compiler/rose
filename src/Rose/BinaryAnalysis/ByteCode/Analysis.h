@@ -87,9 +87,16 @@ public:
   virtual const std::vector<const Interface*> &interfaces() const = 0;
   virtual const std::vector<std::string> &strings() = 0;
   virtual void partition(const PartitionerPtr &partitioner) const;
-  virtual void digraph();
+  virtual void digraph() const;
+  virtual void dump() = 0;
+
+  rose_addr_t address() const {return address_;}
+
+  Class() = delete;
+
 protected:
-  Class() {}
+  rose_addr_t address_;
+  Class(rose_addr_t va) : address_{va} {}
 };
 
 class Namespace {
