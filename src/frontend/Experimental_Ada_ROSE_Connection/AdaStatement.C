@@ -1070,7 +1070,7 @@ namespace
   // helper function for combined handling of variables and constant declarations
 
 
-  void
+  SgDeclarationStatement&
   handleNumVarCstDecl( Element_Struct& elem,
                        Declaration_Struct& decl,
                        AstContext ctx,
@@ -1091,22 +1091,23 @@ namespace
                                                                          getVarInit(decl, expectedType, ctx),
                                                                          true /* reuse first initialized name for secondary inits */
                                                                        );
-    SgVariableDeclaration&   vardcl   = mkVarDecl(dclnames, scope);
+    SgVariableDeclaration&   sgnode   = mkVarDecl(dclnames, scope);
 
-    attachSourceLocation(vardcl, elem, ctx);
-    privatize(vardcl, isPrivate);
-    ctx.appendStatement(vardcl);
+    attachSourceLocation(sgnode, elem, ctx);
+    privatize(sgnode, isPrivate);
+    ctx.appendStatement(sgnode);
+    return sgnode;
   }
 
-  void
+  SgDeclarationStatement&
   handleNumberDecl(Element_Struct& elem, Declaration_Struct& decl, AstContext ctx, bool isPrivate, SgType& numty, SgType& expctty)
   {
     SgType& cstty = SG_DEREF( sb::buildConstType(&numty) );
 
-    handleNumVarCstDecl(elem, decl, ctx, isPrivate, cstty, &expctty);
+    return handleNumVarCstDecl(elem, decl, ctx, isPrivate, cstty, &expctty);
   }
 
-  void
+  SgDeclarationStatement&
   handleVarCstDecl( Element_Struct& elem,
                     Declaration_Struct& dcl,
                     AstContext ctx,
@@ -1117,7 +1118,7 @@ namespace
     SgType& basety = constMaker(getVarType(dcl, ctx));
     SgType& varty  = dcl.Has_Aliased ? mkAliasedType(basety) : basety;
 
-    handleNumVarCstDecl(elem, dcl, ctx, isPrivate, varty);
+    return handleNumVarCstDecl(elem, dcl, ctx, isPrivate, varty);
   }
 
 
@@ -3208,11 +3209,12 @@ namespace
 
 
   // handles incomplete (but completed) and private types
-  void handleOpaqueTypes( Element_Struct& elem,
-                          Declaration_Struct& decl,
-                          bool isPrivate,
-                          AstContext ctx
-                        )
+  SgDeclarationStatement&
+  handleOpaqueTypes( Element_Struct& elem,
+                     Declaration_Struct& decl,
+                     bool isPrivate,
+                     AstContext ctx
+                   )
   {
     logTrace() << "\n  abstract: " << decl.Has_Abstract
                << "\n  limited: " << decl.Has_Limited
@@ -3222,8 +3224,10 @@ namespace
     NameData                adaname = singleName(decl, ctx);
     ADA_ASSERT (adaname.fullName == adaname.ident);
 
+#if DEBUG_RECURSION
     try // for debug purposes
     {
+#endif /* DEBUG_RECURSION */
       DefinitionDetails       defdata = queryDeclarationDetails(decl, ctx);
       SgScopeStatement*       parentScope = &ctx.scope();
       SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDeclID_opt(decl.Discriminant_Part, ctx);
@@ -3236,6 +3240,7 @@ namespace
       SgScopeStatement&       scope  = SG_DEREF(parentScope);
       Element_ID              id     = adaname.id();
       SgDeclarationStatement& sgdecl = createOpaqueDecl(adaname, decl, defdata, ctx.scope(scope));
+      SgDeclarationStatement* assocdecl = nullptr;
 
       attachSourceLocation(sgdecl, elem, ctx);
       privatize(sgdecl, isPrivate);
@@ -3246,10 +3251,12 @@ namespace
       {
         ADA_ASSERT(&ctx.scope() == parentScope);
         ctx.appendStatement(sgdecl);
+        assocdecl = &sgdecl;
       }
       else
       {
         completeDiscriminatedDecl(id, elem, *discr, sgdecl, isPrivate, ctx);
+        assocdecl = discr;
       }
 
       if (decl.Declaration_Kind == A_Private_Extension_Declaration)
@@ -3271,6 +3278,7 @@ namespace
           }
         }
       }
+#if DEBUG_RECURSION
     }
     catch (const DbgRecursionError& n)
     {
@@ -3281,6 +3289,9 @@ namespace
                 << std::endl;
       throw;
     }
+#endif /* DEBUG_RECURSION */
+
+    return SG_DEREF(assocdecl);
   }
 
   // returns a function declaration statement for a declaration statement
@@ -4320,7 +4331,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         if (decl.Corresponding_Type_Declaration)
         {
           // \todo handle pragmas in opaque types
-          handleOpaqueTypes(elem, decl, isPrivate, ctx);
+          assocdecl = &handleOpaqueTypes(elem, decl, isPrivate, ctx);
         }
         else
         {
@@ -4359,7 +4370,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
                , elem.ID
                );
 
-        handleOpaqueTypes(elem, decl, isPrivate, ctx);
+        assocdecl = &handleOpaqueTypes(elem, decl, isPrivate, ctx);
 
         /* unused fields:
               bool                           Has_Abstract;
@@ -4372,7 +4383,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
               Declaration_ID                 Corresponding_Last_Constraint;
               Declaration_ID                 Corresponding_Last_Subtype;
         */
-        //~ assocdecl = &sgnode;
         break;
       }
 
@@ -4551,10 +4561,9 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         logKind("A_Variable_Declaration", elem.ID);
 
-        handleVarCstDecl(elem, decl, ctx, isPrivate, tyIdentity);
+        assocdecl = &handleVarCstDecl(elem, decl, ctx, isPrivate, tyIdentity);
         /* unused fields:
         */
-        // assocdecl = &sgnode;
         break;
       }
 
@@ -4562,8 +4571,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         logKind("An_Integer_Number_Declaration", elem.ID);
 
-        handleNumberDecl(elem, decl, ctx, isPrivate, SG_DEREF(sb::buildAutoType()), mkIntegralType());
-
+        assocdecl = &handleNumberDecl(elem, decl, ctx, isPrivate, SG_DEREF(sb::buildAutoType()), mkIntegralType());
         /* unused fields:
         */
         break;
@@ -4574,10 +4582,9 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         logKind(decl.Declaration_Kind == A_Constant_Declaration ? "A_Constant_Declaration" : "A_Deferred_Constant_Declaration", elem.ID);
 
-        handleVarCstDecl(elem, decl, ctx, isPrivate, mkConstType);
+        assocdecl = &handleVarCstDecl(elem, decl, ctx, isPrivate, mkConstType);
         /* unused fields:
         */
-        // assocdecl = &sgnode;
         break;
       }
 
@@ -4585,10 +4592,9 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         logKind("A_Real_Number_Declaration", elem.ID);
 
-        handleNumberDecl(elem, decl, ctx, isPrivate, SG_DEREF(sb::buildAutoType()), mkRealType());
+        assocdecl = &handleNumberDecl(elem, decl, ctx, isPrivate, SG_DEREF(sb::buildAutoType()), mkRealType());
         /* unused fields:
          */
-        // assocdecl = &sgnode;
         break;
       }
 
