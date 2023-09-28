@@ -83,6 +83,42 @@ shuffle(std::vector<T> &vector, size_t nitems = UNLIMITED, size_t limit = UNLIMI
     }
 }
 
+/** Reorder the values of one vector according to another.
+ *
+ *  The second vector says how the first vector is rearranged. The argument @p values are the values to be reordered, and the
+ *  argument @p remap says how to reorder them.  Both arguments must be the same length, <em>n</em>. The @p remap argument contains
+ *  all the integer indices from 0 (inclusive) to <em>n</em> (exclusive).  If the @p values in their original order are named "old"
+ *  and the @p values in their new desired order are named "new", then new[i] = old[remap[i]].
+ *
+ *  This function is useful when sorting parallel arrays. Say we have three parallel arrays named @c a, @c b, and @c c and we want
+ *  to sort them all so array @c a is in ascending order according to its natural less-than operator. We could do that as follows:
+ *
+ * @code
+ *  std::vector<ValueA> a = { ... };
+ *  std::vector<ValueB> b = { ... };
+ *  std::vector<ValueC> c = { ... };
+ *
+ *  std::vector<size_t> remap(a.size());
+ *  std::iota(remap.begin(), remap.end(), 0);
+ *  std::sort(remap.begin(), remap.end(), [&a](const size_t i, const size_t j) {
+ *      return a[i] < a[j];
+ *  });
+ *
+ *  reorder(a, remap);
+ *  reorder(b, remap);
+ *  reorder(c, remap);
+ * @endcode */
+template<class T>
+void
+reorder(std::vector<T> &values, const std::vector<size_t> &remap) {
+    assert(values.size() == remap.size());
+
+    // O(n) implementation using a temporary vector. Alternatively, we could use an O(n^2) algorithm that uses constant space.
+    std::vector<T> old = values;
+    for (size_t i = 0; i < old.size(); ++i)
+        values[i] = old[remap[i]];
+}
+
 /** Hash interface.
  *
  *  This class defines the API for hash functions. A hash function takes an arbitrary size message as input and returns a
