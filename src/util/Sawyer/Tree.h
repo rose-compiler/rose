@@ -18,6 +18,12 @@
 #include <vector>
 
 namespace Sawyer {
+
+/** Tree data structure.
+ *
+ *  The classes in this namespace are for creating a tree data structure having vertices that are polymorphic types, using smart
+ *  pointers to manage vertex memory, having upward "parent" pointers that are managed automatically, and having downward and upward
+ *  traversals. */
 namespace Tree {
 
 /** Traversal event.
@@ -43,7 +49,7 @@ enum class TraversalEvent {
  *  class.
  *
  *  @li Declare the C++ constructors with protected access and replace them with public, static member functions named @c instance
- *  that allocate a new object on the stack and return a pointer to it. This prevents users from accidentally instantiating objects
+ *  that allocate a new object in the heap and return a pointer to it. This prevents users from accidentally instantiating objects
  *  on the stack or in the data segment.
  *
  *  @li Create a nested type named @c Ptr inside the class. This should be an alias for the @c std::shared_ptr type. If you do this
