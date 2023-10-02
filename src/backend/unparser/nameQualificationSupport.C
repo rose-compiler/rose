@@ -480,8 +480,6 @@ namespace
   /// Constructs a path from a scope statement to the top-level (global)
   /// scope.
   /// \param n innermost scope
-  /// \param unp the Ada unparser object (is knowledgeable about visibility,
-  ///            active aliases, and active use clauses).
   ScopePath
   NameQualificationTraversalAda::pathToGlobal(const SgScopeStatement& n) const
   {
@@ -491,7 +489,8 @@ namespace
     /// add all scopes on the path to the global scope
     while (!isSgGlobal(curr))
     {
-      ROSE_ASSERT(std::find(res.rbegin(), res.rend(), curr) == res.rend());
+      // check for circular scopes
+      // ROSE_ASSERT(std::find(res.rbegin(), res.rend(), curr) == res.rend());
 
       res.push_back(curr);
       curr = si::Ada::logicalParentScope(*curr);
@@ -616,7 +615,7 @@ namespace
     const SgDeclarationStatement* dcl = isSgDeclarationStatement(&n);
     const SgScopeStatement*       dclscope = dcl ? dcl->get_scope() : nullptr;
 
-    auto        pred    = [&dclname, &n, dclscope](const SgScopeStatement* scope)->bool
+    auto        pred    = [&dclname, &n, dclscope, dcl](const SgScopeStatement* scope)->bool
                           {
                             const SgSymbol* sym = scope->lookup_symbol(dclname, nullptr, nullptr);
                             bool            shadowed = (sym != nullptr);
@@ -794,7 +793,7 @@ namespace
       if (const SgNode* namedNode = namedAstNode(*remMin))
         refNode = namedNode;
 
-    // while the refnode is aliased along (locMin, locLim] and the scope is extensible |remBeg,remMin| > 0
+    // while the refnode is aliased along [locMin, locLim) and the scope is extensible |remBeg,remMin| > 0
     //   extend the scope by one.
     while ((std::distance(remBeg, remMin) > 0) && isShadowedAlongPath(*refNode, locMin, locLim))
     {
@@ -17687,7 +17686,7 @@ NameQualificationTraversal::setNameQualification ( SgFunctionDeclaration* functi
      SgScopeStatement * scope = traverseNonrealDeclForCorrectScope(functionDeclaration);
 
   // DQ (5/28/2022): The problem is that for a member function build from scratch and added to the AST,
-  // there is one level of name qualification too mucyh being requested, and it is an error to use global 
+  // there is one level of name qualification too mucyh being requested, and it is an error to use global
   // qualification in these cases with at least GNU v10.
   // Introduce error checking to detect when there is too much name qualification being requested.
   // This needs to be fixed correctly before this point.
@@ -18148,7 +18147,7 @@ NameQualificationTraversal::setNameQualification ( SgNamespaceAliasDeclarationSt
    }
 
 // DQ (7/7/2021): Added function to trim the leading "::" from the qualified name.
-static void trimLeadingGlobalNameQualification(std::string &s) 
+static void trimLeadingGlobalNameQualification(std::string &s)
    {
      s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) { return ch != ':'; }));
    }
@@ -18220,8 +18219,8 @@ NameQualificationTraversal::setNameQualificationOnType(SgInitializedName* initia
      mfprintf(mlog [ WARN ] ) ("sourceSequenceForTypeDeclaration = %u \n",sourceSequenceForTypeDeclaration);
 #endif
 
-  // DQ (7/7/2021): For a transformation (e.g. outlining), the values will be zero, so test for this explicitly 
-  // and if so, then we want to output the name qualification. Note that zero for the source sequence implaies 
+  // DQ (7/7/2021): For a transformation (e.g. outlining), the values will be zero, so test for this explicitly
+  // and if so, then we want to output the name qualification. Note that zero for the source sequence implaies
   // that this is a transformation.
   // bool outputNameQualification = sourceSequenceForTypeDeclaration < sourceSequenceForInitializedName;
   // bool outputNameQualification = (sourceSequenceForTypeDeclaration == 0 && sourceSequenceForInitializedName == 0) || sourceSequenceForTypeDeclaration < sourceSequenceForInitializedName;

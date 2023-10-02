@@ -1570,6 +1570,7 @@ namespace
   }
 }
 
+
 SgInitializedName&
 mkInitializedName(const std::string& varname, SgType& vartype, SgExpression* val)
 {
@@ -1582,6 +1583,15 @@ mkInitializedName(const std::string& varname, SgType& vartype, SgExpression* val
     //~ markCompilerGenerated(*varinit);
 
   markCompilerGenerated(sgnode);
+  return sgnode;
+}
+
+SgInitializedName&
+mkEnumeratorDecl(const std::string& ident, SgType& ty, SgExpression& repval, SgScopeStatement& scope)
+{
+  SgInitializedName& sgnode = mkInitializedName(ident, ty, &repval);
+
+  scope.insert_symbol(sgnode.get_name(), &mkBareNode<SgEnumFieldSymbol>(&sgnode));
   return sgnode;
 }
 
