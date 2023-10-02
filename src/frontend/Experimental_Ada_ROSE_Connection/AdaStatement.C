@@ -2650,27 +2650,6 @@ namespace
   {
     ADA_ASSERT (tyKind == A_Derived_Type_Definition);
 
-/*
-    //~ Element_ID baseElemID = typeDefn.The_Union.The_Type_Definition.Corresponding_Parent_Subtype;
-    Element_ID baseElemID = typeDefn.The_Union.The_Type_Definition.Corresponding_Root_Type;
-
-    if (currID == baseElemID)
-      throw DbgRecursionError{"recursive type in ASIS?"};
-
-    // derived enumeration types are handled differently ...
-    //   so, if the representation is a derived enum, we change the tyKind;
-    //   otherwise we keep the A_Derived_Type_Definition.
-    if (Element_Struct* baseElem = retrieveAsOpt(elemMap(), baseElemID))
-    {
-      DefinitionDetails detail = queryDefinitionDetails(*baseElem, ctx);
-
-      if (detail.typeKind() == An_Enumeration_Type_Definition)
-      {
-        tyKind = An_Enumeration_Type_Definition;
-      }
-    }
-    else
-*/
     if (queryIfDerivedFromEnumID(typeDefn.The_Union.The_Type_Definition.Parent_Subtype_Indication, ctx))
     {
       tyKind = An_Enumeration_Type_Definition;
