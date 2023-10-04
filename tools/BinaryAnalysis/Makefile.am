@@ -51,6 +51,13 @@ bat_container_LDFLAGS = $(ROSE_RPATHS)
 bat_container_LDADD = libbatSupport.a $(ROSE_LIBS)
 tests += bat-container.passed
 
+bin_PROGRAMS += bat-dataflow
+bat_dataflow_SOURCES = bat-dataflow.C
+bat_dataflow_CPPFLAGS = $(ROSE_INCLUDES)
+bat_dataflow_LDFLAGS = $(ROSE_RPATHS)
+bat_dataflow_LDADD = libbatSupport.a $(ROSE_LIBS)
+tests += bat-dataflow.passed
+
 bin_PROGRAMS += bat-debug-semantics
 bat_debug_semantics_SOURCES = bat-debug-semantics.C
 bat_debug_semantics_CPPFLAGS = $(ROSE_INCLUDES)
