@@ -444,7 +444,7 @@ public:
                     } else if (merge_(incomingState_[nextVertexId], state)) {
                         if (mlog[DEBUG]) {
                             mlog[DEBUG] <<prefix() <<"    merged with vertex #" <<nextVertexId <<" (which changed as a result)\n";
-                            mlog[DEBUG] <<prefix() <<"    merge state is: "
+                            mlog[DEBUG] <<prefix() <<"    merge state is:\n"
                                         <<StringUtility::prefixLines(xfer_.toString(incomingState_[nextVertexId]),
                                                                      prefix() + "      ", false) <<"\n";
                         }
