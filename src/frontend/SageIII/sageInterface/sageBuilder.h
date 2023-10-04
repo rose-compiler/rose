@@ -1446,6 +1446,9 @@ ROSE_DLL_API SgNamespaceDeclarationStatement *  buildNamespaceDeclaration(const 
 ROSE_DLL_API SgNamespaceDeclarationStatement *  buildNamespaceDeclaration_nfi(const SgName& name, bool unnamednamespace, SgScopeStatement* scope );
 ROSE_DLL_API SgNamespaceDefinitionStatement * buildNamespaceDefinition(SgNamespaceDeclarationStatement* d=NULL);
 
+// Pei-Hung (09/14/2023) :added support for building namespace alias
+ROSE_DLL_API SgNamespaceAliasDeclarationStatement *  buildNamespaceAliasDeclarationStatement(const SgName& name, SgNamespaceDeclarationStatement* namespaceDeclaration);
+
 //! driscoll6 (7/20/11) : Support n-ary operators for python
 ROSE_DLL_API SgNaryComparisonOp* buildNaryComparisonOp(SgExpression* lhs);
 ROSE_DLL_API SgNaryComparisonOp* buildNaryComparisonOp_nfi(SgExpression* lhs);

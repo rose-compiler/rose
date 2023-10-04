@@ -468,8 +468,60 @@ SgNode * ClangToSageTranslator::Traverse(clang::Decl * decl) {
     return ret_status ? result : NULL;
 }
 
-SgNode * ClangToSageTranslator::TraverseForDeclContext(clang::DeclContext * decl_context) {
-    return Traverse((clang::Decl*)decl_context);
+
+// Pei-Hung (09/01/2023) Revised this to iterate Decls in the DeclContext.
+// DeclContext is derived into others but this is called only by VisitTranslationUnit and VisitNamesapce for now. 
+// The top scope retrieved from SageBuilder::topScopeStack() should be properly defined before calling this.
+
+bool ClangToSageTranslator::TraverseForDeclContext(clang::DeclContext * decl_context) {
+    SgScopeStatement * scope = SageBuilder::topScopeStack();
+    SgGlobal* global_scope = isSgGlobal(scope);
+    SgNamespaceDefinitionStatement* namespace_scope = isSgNamespaceDefinitionStatement(scope);
+
+    p_decl_context_map.insert(std::pair<clang::DeclContext *, SgScopeStatement *>(decl_context, scope));
+    bool res = true;
+    clang::DeclContext::decl_iterator it;
+    for (it = decl_context->decls_begin(); it != decl_context->decls_end(); it++) {
+        clang::Decl* decl = (*it);
+        if (decl == nullptr) continue;
+        SgNode * child = Traverse(decl);
+
+        SgDeclarationStatement * decl_stmt = isSgDeclarationStatement(child);
+        if (decl_stmt == NULL && child != NULL) {
+            logger[WARN] << "Runtime error: the node produce for a clang::Decl is not a SgDeclarationStatement !" << "\n";
+            logger[WARN] << "    class = " << child->class_name() << "\n";
+            res = false;
+        }
+        else if (child != NULL) {
+            // FIXME This is a hack to avoid autonomous decl of unnamed type to being added to the global scope....
+            SgClassDeclaration * class_decl = isSgClassDeclaration(child);
+            if (class_decl != NULL && (class_decl->get_name() == "" || class_decl->get_isUnNamed())) continue;
+
+            SgEnumDeclaration * enum_decl = isSgEnumDeclaration(child);
+            if (enum_decl != NULL && (enum_decl->get_name() == "" || enum_decl->get_isUnNamed())) continue;
+
+            if(clang::TagDecl::classof(decl))
+            {
+              clang::TagDecl* tagDecl = (clang::TagDecl*)decl;
+              if(tagDecl->isEmbeddedInDeclarator())  continue;
+            }
+
+            if(global_scope)
+            {
+              global_scope->append_declaration(decl_stmt);
+            }
+            else if(namespace_scope)
+            {
+              namespace_scope->append_declaration(decl_stmt);
+            }
+            else
+            {
+              logger[WARN] << "Not global or namespace scope applied in ClangToSageTranslator::TraverseForDeclContext\n";
+              return false;
+            }
+        }
+    }
+    return res;
 }
 
 /**********************/
@@ -763,23 +815,49 @@ bool ClangToSageTranslator::VisitLabelDecl(clang::LabelDecl * label_decl, SgNode
 
 bool ClangToSageTranslator::VisitNamespaceAliasDecl(clang::NamespaceAliasDecl * namespace_alias_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    logger[DEBUG] << "ClangToSageTranslator::VisitNamespaceAliasDecl" << "\n";
+    logger[DEBUG] << "ClangToSageTranslator::VisitNamespaceAliasDecl" << namespace_alias_decl->getAliasedNamespace() <<  "\n";
 #endif
     bool res = true;
 
-    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+    clang::NamespaceDecl* namespaceDecl = namespace_alias_decl->getNamespace();
+    clang::NamedDecl* aliasedNamespaeDecl = namespace_alias_decl->getAliasedNamespace();
 
+    SgNamespaceDeclarationStatement* sgNamespaceDeclStmt = isSgNamespaceDeclarationStatement(Traverse(namespaceDecl));
+    ROSE_ASSERT(sgNamespaceDeclStmt);
+    SgName name(namespace_alias_decl->getNameAsString());
+
+    SgNamespaceAliasDeclarationStatement* sgNamespaceAliasDeclStmt = SageBuilder::buildNamespaceAliasDeclarationStatement(name ,sgNamespaceDeclStmt);
+    *node = sgNamespaceAliasDeclStmt;
     return VisitNamedDecl(namespace_alias_decl, node) && res;
 }
 
 bool ClangToSageTranslator::VisitNamespaceDecl(clang::NamespaceDecl * namespace_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
-    logger[DEBUG] << "ClangToSageTranslator::VisitNamespaceDecl" << "\n";
+    logger[DEBUG] << "ClangToSageTranslator::VisitNamespaceDecl " << namespace_decl->getNameAsString() << "\n";
+    logger[DEBUG] << "isAnonymousNamespace " << namespace_decl->isAnonymousNamespace() << "\n";
+    logger[DEBUG] << "isInline " << namespace_decl->isInline() << "\n";
+//    logger[DEBUG] << "isNested " << namespace_decl->isNested() << "\n";
+    logger[DEBUG] << "isOriginalNamespace " << namespace_decl->isOriginalNamespace() << "\n";
+    logger[DEBUG] << "isAnonymousNamespace " << namespace_decl->isAnonymousNamespace() << "\n";
 #endif
     bool res = true;
 
-    //ROSE_ASSERT(FAIL_TODO == 0); // TODO
+    SgName name(namespace_decl->getNameAsString());
+    SgScopeStatement * scope = SageBuilder::topScopeStack(); 
+    SgNamespaceDeclarationStatement* namespaceDecl = SageBuilder::buildNamespaceDeclaration(name, scope);
+    SgNamespaceDefinitionStatement* namespaceDefiniton = namespaceDecl->get_definition(); 
+    namespaceDecl->set_isInlinedNamespace(namespace_decl->isInline());
 
+    // The following is using same rpocess from VisitTranslationUnit.  Consider using a function
+    SageBuilder::pushScopeStack(namespaceDefiniton);
+    clang::DeclContext * decl_context = (clang::DeclContext *)namespace_decl; 
+    p_decl_context_map.insert(std::pair<clang::DeclContext *, SgScopeStatement *>(decl_context, namespaceDefiniton));
+    // DeclContext handling is repalced by calling TraverseForDeclContext
+    res = TraverseForDeclContext(decl_context); 
+    SageBuilder::popScopeStack();
+
+    applySourceRange(namespaceDecl, namespace_decl->getSourceRange());
+    *node = namespaceDecl;
     return VisitNamedDecl(namespace_decl, node) && res;
 }
 
@@ -963,9 +1041,9 @@ bool ClangToSageTranslator::VisitTagDecl(clang::TagDecl * tag_decl, SgNode ** no
 #if DEBUG_VISIT_DECL
        logger[DEBUG] << "ClangToSageTranslator::VisitTagDecl: checking decls in DeclContext\n";
 #endif
-       SgNode * tmp_content = Traverse(tmpDecl);
-       SgDeclarationStatement * decl_content = isSgDeclarationStatement(tmp_content);
-       ROSE_ASSERT(decl_content != NULL);
+       SgNode * tmp_context = Traverse(tmpDecl);
+       SgDeclarationStatement * decl_context = isSgDeclarationStatement(tmp_context);
+       ROSE_ASSERT(decl_context != NULL);
 
        if(sg_class_def)
        {
@@ -974,24 +1052,40 @@ bool ClangToSageTranslator::VisitTagDecl(clang::TagDecl * tag_decl, SgNode ** no
 #if DEBUG_VISIT_DECL
             logger[DEBUG] << "ClangToSageTranslator::VisitTagDecl: processing decl as a field\n";
 #endif   
-            sg_class_def->append_member(decl_content);
-            decl_content->set_parent(sg_class_def);
+            sg_class_def->append_member(decl_context);
+            decl_context->set_parent(sg_class_def);
          }
          if(llvm::isa<clang::RecordDecl>(tmpDecl))
          {
 #if DEBUG_VISIT_DECL
             logger[DEBUG] << "ClangToSageTranslator::VisitTagDecl: processing decl as a record\n";
 #endif   
-//            sg_class_def->append_member(decl_content);
-//            decl_content->set_parent(sg_class_def);
+//            sg_class_def->append_member(decl_context);
+//            decl_context->set_parent(sg_class_def);
          }
          if(llvm::isa<clang::FriendDecl>(tmpDecl))
          {
 #if DEBUG_VISIT_DECL
             logger[DEBUG] << "ClangToSageTranslator::VisitTagDecl: processing decl as a friend decl\n";
 #endif   
-            sg_class_def->append_member(decl_content);
-            decl_content->set_parent(sg_class_def);
+            sg_class_def->append_member(decl_context);
+            decl_context->set_parent(sg_class_def);
+         }
+         if(llvm::isa<clang::VarDecl>(tmpDecl))
+         {
+#if DEBUG_VISIT_DECL
+            logger[DEBUG] << "ClangToSageTranslator::VisitTagDecl: processing decl as a var decl\n";
+#endif   
+            clang::VarDecl* varDecl = (clang::VarDecl*)tmpDecl;
+            if(varDecl->isStaticDataMember())
+            {
+              sg_class_def->append_member(decl_context);
+              decl_context->set_parent(sg_class_def);
+            }
+            else
+            {
+              logger[WARN] << "Other clang::VarDecl in the decl_context is not handled";
+            }
          }
        }
 
@@ -1262,25 +1356,29 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
 bool ClangToSageTranslator::VisitCXXRecordDecl(clang::CXXRecordDecl * cxx_record_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
     logger[DEBUG] << "ClangToSageTranslator::VisitCXXRecordDecl" << "\n";
-    logger[DEBUG] << "isAggregate() " << cxx_record_decl->isAggregate() << "\n";
-    logger[DEBUG] << "hasInClassInitializer() " << cxx_record_decl->hasInClassInitializer() << "\n";
-    logger[DEBUG] << "hasUninitializedReferenceMember() " << cxx_record_decl->hasUninitializedReferenceMember() << "\n";
-    logger[DEBUG] << "isPOD() " << cxx_record_decl->isPOD() << "\n";
-    logger[DEBUG] << "isCLike() " << cxx_record_decl->isCLike() << "\n";
-    logger[DEBUG] << "isEmpty() " << cxx_record_decl->isEmpty() << "\n";
-    logger[DEBUG] << "hasInitMethod() " << cxx_record_decl->hasInitMethod() << "\n";
-    logger[DEBUG] << "hasProtectedFields() " << cxx_record_decl->hasProtectedFields() << "\n";
-    logger[DEBUG] << "hasPrivateFields() " << cxx_record_decl->hasPrivateFields() << "\n";
-    logger[DEBUG] << "hasDirectFields() " << cxx_record_decl->hasDirectFields() << "\n";
-    logger[DEBUG] << "isPolymorphic() " << cxx_record_decl->isPolymorphic() << "\n";
-    logger[DEBUG] << "isAbstract () " << cxx_record_decl->isAbstract () << "\n";
-    logger[DEBUG] << "isStandardLayout() " << cxx_record_decl->isStandardLayout() << "\n";
-    logger[DEBUG] << "isCXX11StandardLayout () " << cxx_record_decl->isCXX11StandardLayout () << "\n";
-    logger[DEBUG] << "hasMutableFields() " << cxx_record_decl->hasMutableFields() << "\n";
-    logger[DEBUG] << "hasVariantMembers() " << cxx_record_decl->hasVariantMembers() << "\n";
-    logger[DEBUG] << "hasTrivialDefaultConstructor() " << cxx_record_decl->hasTrivialDefaultConstructor() << "\n";
-    logger[DEBUG] << "hasNonTrivialDefaultConstructor() " << cxx_record_decl->hasNonTrivialDefaultConstructor() << "\n";
-    logger[DEBUG] << "isAnonymousStructOrUnion() " << cxx_record_decl->isAnonymousStructOrUnion() << "\n";
+    logger[DEBUG] << "hasDefinition() " << cxx_record_decl->hasDefinition() << "\n";
+    if(cxx_record_decl->hasDefinition())
+    {
+      logger[DEBUG] << "isAggregate() " << cxx_record_decl->isAggregate() << "\n";
+      logger[DEBUG] << "hasInClassInitializer() " << cxx_record_decl->hasInClassInitializer() << "\n";
+      logger[DEBUG] << "hasUninitializedReferenceMember() " << cxx_record_decl->hasUninitializedReferenceMember() << "\n";
+      logger[DEBUG] << "isPOD() " << cxx_record_decl->isPOD() << "\n";
+      logger[DEBUG] << "isCLike() " << cxx_record_decl->isCLike() << "\n";
+      logger[DEBUG] << "isEmpty() " << cxx_record_decl->isEmpty() << "\n";
+      logger[DEBUG] << "hasInitMethod() " << cxx_record_decl->hasInitMethod() << "\n";
+      logger[DEBUG] << "hasProtectedFields() " << cxx_record_decl->hasProtectedFields() << "\n";
+      logger[DEBUG] << "hasPrivateFields() " << cxx_record_decl->hasPrivateFields() << "\n";
+      logger[DEBUG] << "hasDirectFields() " << cxx_record_decl->hasDirectFields() << "\n";
+      logger[DEBUG] << "isPolymorphic() " << cxx_record_decl->isPolymorphic() << "\n";
+      logger[DEBUG] << "isAbstract () " << cxx_record_decl->isAbstract () << "\n";
+      logger[DEBUG] << "isStandardLayout() " << cxx_record_decl->isStandardLayout() << "\n";
+      logger[DEBUG] << "isCXX11StandardLayout () " << cxx_record_decl->isCXX11StandardLayout () << "\n";
+      logger[DEBUG] << "hasMutableFields() " << cxx_record_decl->hasMutableFields() << "\n";
+      logger[DEBUG] << "hasVariantMembers() " << cxx_record_decl->hasVariantMembers() << "\n";
+      logger[DEBUG] << "hasTrivialDefaultConstructor() " << cxx_record_decl->hasTrivialDefaultConstructor() << "\n";
+      logger[DEBUG] << "hasNonTrivialDefaultConstructor() " << cxx_record_decl->hasNonTrivialDefaultConstructor() << "\n";
+      logger[DEBUG] << "isAnonymousStructOrUnion() " << cxx_record_decl->isAnonymousStructOrUnion() << "\n";
+    }
     // to be filled up for full list
 #endif
     bool res = VisitRecordDecl(cxx_record_decl, node);
@@ -2406,6 +2504,8 @@ bool ClangToSageTranslator::VisitNonTypeTemplateParmDecl(clang::NonTypeTemplateP
 bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** node) {
 #if DEBUG_VISIT_DECL
     logger[DEBUG] << "ClangToSageTranslator::VisitVarDecl " << var_decl->getNameAsString() << "\n";
+    logger[DEBUG] << "isStaticLocal " << var_decl->isStaticLocal() << "\n";
+    logger[DEBUG] << "isStaticDataMember " << var_decl->isStaticDataMember() << "\n";
 #endif
     bool res = true;
 
@@ -2509,10 +2609,27 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
     SgType * sg_varType = buildTypeFromQualifiedType(varQualType);
     SgType * type = buildTypeFromQualifiedType(var_decl->getType());
 
+    bool isStaticDataMember = var_decl->isStaticDataMember();
+
 //    SgVariableDeclaration * sg_var_decl = new SgVariableDeclaration(name, type, init); // scope: obtain from the scope stack.
    // Pei-Hung (09/01/2022) In test2022_3.c, the variable symbol needs to be avaiable before processing the RHS.
    // calling buildVariableDeclaration_nfi to get the symbol in place.
-   SgVariableDeclaration * sg_var_decl = SageBuilder::buildVariableDeclaration_nfi(name,type, NULL ,SageBuilder::topScopeStack());
+   SgVariableDeclaration * sg_var_decl = NULL;
+   // Pei-Hung (09/29/23) The definition of a staic data member needs to call
+   //  set_prev_decl_item to point to its first static data member declaration inside the class. 
+   // buildVariableDeclaration_nfi will take care of the details by looking up the SgSymbol in
+   // the symbol table of the class. 
+   if(isStaticDataMember && var_decl->getPreviousDecl() != NULL)
+   {
+     clang::VarDecl* prevDecl = var_decl->getPreviousDecl();
+     SgVariableDeclaration* sgPrevDecl = isSgVariableDeclaration(Traverse(prevDecl));
+     ROSE_ASSERT(sgPrevDecl);
+     sg_var_decl = SageBuilder::buildVariableDeclaration_nfi(name,type, NULL , SageInterface::getScope(sgPrevDecl));
+   }
+   else
+   {
+     sg_var_decl = SageBuilder::buildVariableDeclaration_nfi(name,type, NULL ,SageBuilder::topScopeStack());
+   }
 
    // Pei-Hung (09/27/2022) isAssociatedWithDeclarationList should be set to handle multiple variables in
    // a single declaration list.
@@ -2543,7 +2660,6 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
     }
     if (init != NULL)
     {
-        init->set_parent(sg_var_decl);
         //Pei-Hung (07/12/2023): 
         //applySourceRange should be set whenever the SgInitializer was just created.
         //Otherwise, it could cause overwrite the setting done in setCompilerGeneratedFileInfo.
@@ -2623,8 +2739,16 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
 
     SgInitializedName * init_name = sg_var_decl->get_variables()[0];
     ROSE_ASSERT(init_name != NULL);
-    init_name->set_scope(SageBuilder::topScopeStack());
-
+    if(var_decl->hasInit())
+    {
+       init->set_parent(init_name);
+       // (09/29/2023) the scope of SgInitializedName of a static data member
+       // can be set earlier by buildVariableDeclaration_nfi
+       if(init_name->get_scope() == NULL)
+       {
+         init_name->set_scope(SageBuilder::topScopeStack());
+       }
+    }
     applySourceRange(init_name, var_decl->getSourceRange());
 
     SgVariableDefinition * var_def = isSgVariableDefinition(init_name->get_declptr());
@@ -2648,11 +2772,16 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
     {
       sg_var_decl->get_declarationModifier().get_storageModifier().setStatic();
     }
-    bool isStaticDataMember = var_decl->isStaticDataMember();
     // Pei-Hung (03/14/23) added "static" modifier for data member
     if(isStaticDataMember)
     {
-      sg_var_decl->get_declarationModifier().get_storageModifier().setStatic();
+      // Pei-Hung (09/29/23) Only set for the first static data member declaration
+      // This implies the static data member declaration inside the class
+      // Example in test2005_154.C
+      if(var_decl->getPreviousDecl() == NULL)
+      {
+        sg_var_decl->get_declarationModifier().get_storageModifier().setStatic();
+      }
     }
     //Pei-Hung (09/27/2022) setup linkage
     if(var_decl->hasExternalStorage())
@@ -2936,37 +3065,8 @@ bool ClangToSageTranslator::VisitTranslationUnitDecl(clang::TranslationUnitDecl 
 
     clang::DeclContext * decl_context = (clang::DeclContext *)translation_unit_decl; // useless but more clear
     p_decl_context_map.insert(std::pair<clang::DeclContext *, SgScopeStatement *>(decl_context, global_scope));
-    bool res = true;
-    clang::DeclContext::decl_iterator it;
-    for (it = decl_context->decls_begin(); it != decl_context->decls_end(); it++) {
-        clang::Decl* decl = (*it);
-        if (decl == nullptr) continue;
-        SgNode * child = Traverse(decl);
-
-        SgDeclarationStatement * decl_stmt = isSgDeclarationStatement(child);
-        if (decl_stmt == NULL && child != NULL) {
-            logger[WARN] << "Runtime error: the node produce for a clang::Decl is not a SgDeclarationStatement !" << "\n";
-            logger[WARN] << "    class = " << child->class_name() << "\n";
-            res = false;
-        }
-        else if (child != NULL) {
-            // FIXME This is a hack to avoid autonomous decl of unnamed type to being added to the global scope....
-            SgClassDeclaration * class_decl = isSgClassDeclaration(child);
-            if (class_decl != NULL && (class_decl->get_name() == "" || class_decl->get_isUnNamed())) continue;
-
-            SgEnumDeclaration * enum_decl = isSgEnumDeclaration(child);
-            if (enum_decl != NULL && (enum_decl->get_name() == "" || enum_decl->get_isUnNamed())) continue;
-
-            if(clang::TagDecl::classof(decl))
-            {
-              clang::TagDecl* tagDecl = (clang::TagDecl*)decl;
-              if(tagDecl->isEmbeddedInDeclarator())  continue;
-            }
-
-            p_global_scope->append_declaration(decl_stmt);
-        }
-    }
-
+    // DeclContext handling is repalced by calling TraverseForDeclContext
+    bool res = TraverseForDeclContext(decl_context);
     SageBuilder::popScopeStack();
 
   // Traverse the class hierarchy
