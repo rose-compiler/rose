@@ -793,9 +793,12 @@ bool ClangToDotTranslator::VisitNamespaceAliasDecl(clang::NamespaceAliasDecl * n
 #endif
      bool res = true;
 
+    clang::NamedDecl* aliasedNamespaeDecl = namespace_alias_decl->getAliasedNamespace();
+
      node_desc.kind_hierarchy.push_back("NamespaceAliasDecl");
 
-     ROSE_ASSERT(FAIL_TODO == 0); // TODO
+     node_desc.successors.push_back(std::pair<std::string, std::string>("Namespace", Traverse(namespace_alias_decl->getNamespace())));
+     node_desc.successors.push_back(std::pair<std::string, std::string>("AliasedNamespace", Traverse(namespace_alias_decl->getAliasedNamespace())));
 
      return VisitNamedDecl(namespace_alias_decl, node_desc) && res;
    }
