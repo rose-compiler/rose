@@ -51,8 +51,8 @@ ROSE_OUTPUT_DIR := rose-ada-output
 # ROSE_OUTPUT_DIR := .
 
 TEST_TARGETS0 := $(addprefix $(ROSE_OUTPUT_DIR)/,$(ROSE_PASSING_ADA_TESTS))
-TEST_TARGETS1 := $(TEST_TARGETS0:.adb=.chk)
-TEST_TARGETS  := $(TEST_TARGETS1:.ads=.chk)
+TEST_TARGETS1 := $(TEST_TARGETS0:.adb=_adb.chk)
+TEST_TARGETS  := $(TEST_TARGETS1:.ads=_ads.chk)
 
 TESTCODES_REQUIRED_TO_PASS := $(TEST_TARGETS)
 
@@ -77,10 +77,18 @@ print:
 #~ compile_tests/$(ROSE_OUTPUT_DIR)/%:
 #~ 	make -C compile_tests $(ROSE_OUTPUT_DIR)/%
 
-$(ROSE_OUTPUT_DIR)/%.chk:$(abs_srcdir)/../tests/%.ads $(ROSE_COMPILER)
+
+#~ $(ROSE_OUTPUT_DIR)/%.ads: compile_tests/$(ROSE_OUTPUT_DIR)/%.ads $(ROSE_COMPILER)
+#~   $(ROSE_COMPILER) $(ROSE_FLAGS) $<
+
+#~ $(ROSE_OUTPUT_DIR)/%.adb: compile_tests/$(ROSE_OUTPUT_DIR)/%.adb $(ROSE_COMPILER)
+#~   $(ROSE_COMPILER) $(ROSE_FLAGS) $<
+
+
+$(ROSE_OUTPUT_DIR)/%_ads.chk: ../compile_tests/$(ROSE_OUTPUT_DIR)/%.ads $(ROSE_COMPILER)
 	$(ROSE_COMPILER) $(ROSE_FLAGS) $<
 
-$(ROSE_OUTPUT_DIR)/%.chk:$(abs_srcdir)/../tests/%.adb $(ROSE_COMPILER)
+$(ROSE_OUTPUT_DIR)/%_adb.chk: ../compile_tests/$(ROSE_OUTPUT_DIR)/%.adb $(ROSE_COMPILER)
 	$(ROSE_COMPILER) $(ROSE_FLAGS) $<
 
 .PHONY: clean-local

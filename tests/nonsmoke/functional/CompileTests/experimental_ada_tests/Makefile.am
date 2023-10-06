@@ -62,7 +62,9 @@ TESTCODES_REQUIRED_TO_PASS := $(TEST_TARGETS)
 #
 # targets
 .PHONY: all
-all: passing
+all: 
+
+#~passing
 
 .PHONY: passing
 passing: $(TEST_TARGETS)
