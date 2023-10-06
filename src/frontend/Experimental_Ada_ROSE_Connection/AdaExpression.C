@@ -799,35 +799,78 @@ namespace
     return SG_DEREF(res);
   }
 
+  auto
+  refFromWithinFunction(const SgFunctionDeclaration& ref, const SgScopeStatement& refedFrom) -> bool
+  {
+    const SgFunctionDeclaration* fun = sg::ancestor<const SgFunctionDeclaration>(&refedFrom);
+
+    while (  (fun != nullptr)
+          && (fun->get_firstNondefiningDeclaration() != ref.get_firstNondefiningDeclaration())
+          )
+    {
+      fun = sg::ancestor<const SgFunctionDeclaration>(fun);
+    }
+
+    return fun != nullptr;
+  }
+
   /// defines ROSE AST types for which we do not generate scope qualification
   struct RoseRequiresScopeQual : sg::DispatchHandler<bool>
   {
-    void handle(const SgNode& n)                 { SG_UNEXPECTED_NODE(n); }
+      using base = sg::DispatchHandler<bool>;
 
-    // scope qual requried for
-    void handle(const SgDeclarationStatement&)   { res = true; } // default for declarations
-    void handle(const SgInitializedName&)        { res = true; }
+      RoseRequiresScopeQual(bool prfx, AstContext astctx)
+      : base(), fromPrefix(prfx), ctx(astctx)
+      {}
 
-    // no scope qual needed for
-    void handle(const SgAdaTaskSpecDecl&)        { res = false; }
-    void handle(const SgAdaProtectedSpecDecl&)   { res = false; }
-    void handle(const SgAdaPackageSpecDecl&)     { res = false; }
-    void handle(const SgImportStatement&)        { res = false; }
-    void handle(const SgBasicBlock&)             { res = false; }
-    void handle(const SgAdaGenericInstanceDecl&) { res = false; }
-    //~ void handle(const SgFunctionDeclaration&)  { res = false; }
+      void handle(const SgNode& n)                 { SG_UNEXPECTED_NODE(n); }
 
-    // dependent on underlying data
-    void handle(const SgAdaRenamingDecl& n)
-    {
-      res = si::Ada::isObjectRenaming(n);
-    }
+      // scope qual requried for
+      void handle(const SgDeclarationStatement&)   { res = true; } // default for declarations
+      void handle(const SgInitializedName&)        { res = true; }
+      void handle(const SgAdaEntryDecl&)           { res = true; } // overrides SgFunctionDeclaration
+
+      // no scope qual needed for
+      void handle(const SgAdaTaskSpecDecl&)        { res = false; }
+      void handle(const SgAdaProtectedSpecDecl&)   { res = false; }
+      void handle(const SgAdaPackageSpecDecl&)     { res = false; }
+      void handle(const SgImportStatement&)        { res = false; }
+      void handle(const SgBasicBlock&)             { res = false; }
+      void handle(const SgAdaGenericInstanceDecl&) { res = false; }
+
+      void handle(const SgFunctionDeclaration& n)
+      {
+        // ASIS_FUNCTION_REF_ISSUE_1
+        // acats test: c41306c.adb
+        // this is to work around a representation issue in Asis
+        //   where the reference to a returned component
+        //   is just represented as identifier.
+        //   e.g., F.x       -- F is expected to be a function call as in
+        //         F(true).x --   but in Asis it is just an identifier reference.
+        //         to distinguish between scoperefs for overload distinction
+        //         which we do not want in ROSE and true calls,
+        //         we check if the reference is from within the same function.
+        //         This method is not perfect. To resolve this issue completely,
+        //         we would need more context...
+        // The AST fix is added by mkSelectedComponent.
+        res = fromPrefix && !refFromWithinFunction(n, ctx.scope());
+      }
+
+      // dependent on underlying data
+      void handle(const SgAdaRenamingDecl& n)
+      {
+        res = si::Ada::isObjectRenaming(n);
+      }
+
+    private:
+      bool       fromPrefix;
+      AstContext ctx;
   };
 
 
   /// tests whether ROSE represents the prefix expression
   ///   (e.g., true for objects, false for scope-qualification)
-  bool roseRequiresPrefixID(Element_ID el, AstContext ctx)
+  bool roseRequiresPrefixID(Element_ID el, bool fromPrefix, AstContext ctx)
   {
     Element_Struct&    elem = retrieveAs(elemMap(), el);
     ADA_ASSERT(elem.Element_Kind == An_Expression);
@@ -844,21 +887,21 @@ namespace
         logTrace() << "Identifier '" << expr.Name_Image << "' has no corresponding node in ROSE."
                    << std::endl;
 
-      return astnode == nullptr || sg::dispatch(RoseRequiresScopeQual{}, astnode);
+      return astnode == nullptr || sg::dispatch(RoseRequiresScopeQual{fromPrefix, ctx}, astnode);
     }
 
     if (expr.Expression_Kind == A_Selected_Component)
     {
       logTrace() << "A_Selected_Component?" << std::endl;
-      return    roseRequiresPrefixID(expr.Prefix, ctx)
-             || roseRequiresPrefixID(expr.Selector, ctx);
+      return    roseRequiresPrefixID(expr.Prefix, true, ctx)
+             || roseRequiresPrefixID(expr.Selector, fromPrefix, ctx);
     }
 
     if (expr.Expression_Kind == An_Indexed_Component)
     {
       logTrace() << "An_Indexed_Component?" << std::endl;
       // \todo should this always return true (like the cases below)?
-      return roseRequiresPrefixID(expr.Prefix, ctx);
+      return roseRequiresPrefixID(expr.Prefix, fromPrefix, ctx);
     }
 
     if (  (expr.Expression_Kind == An_Explicit_Dereference)
@@ -1481,7 +1524,7 @@ namespace
           // Check if the kind requires a prefix in ROSE,
           //   or if the prefix (scope qualification) is implied and
           //   generated by the backend.
-          if (!enumval && roseRequiresPrefixID(expr.Prefix, ctx))
+          if (!enumval && roseRequiresPrefixID(expr.Prefix, true, ctx))
           {
             SgExpression& prefix = getExprID(expr.Prefix, ctx);
 

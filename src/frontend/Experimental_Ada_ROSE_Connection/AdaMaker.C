@@ -1938,11 +1938,16 @@ mkExceptionRef(SgInitializedName& exception, SgScopeStatement& scope)
   return SG_DEREF( sb::buildVarRefExp(&exception, &scope) );
 }
 
-
 SgDotExp&
 mkSelectedComponent(SgExpression& prefix, SgExpression& selector)
 {
-  return SG_DEREF( sb::buildDotExp(&prefix, &selector) );
+  // ASIS_FUNCTION_REF_ISSUE_1
+  //   corrects issue described in AdaExpression.C
+  SgExpression& corrected_prefix
+                   = isSgFunctionRefExp(&prefix) ? mkFunctionCallExp(prefix, mkExprListExp())
+                                                 : prefix;
+
+  return SG_DEREF( sb::buildDotExp(&corrected_prefix, &selector) );
 }
 
 SgAdaTaskRefExp&

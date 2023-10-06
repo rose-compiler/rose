@@ -238,6 +238,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   opergen7.adb                         \
   opergen8.adb                         \
   opergen9.adb                         \
+  overload2.adb                        \
   package_renaming_declaration.ads     \
   parent-child.adb                     \
   pkgrename.ads                        \
@@ -253,6 +254,10 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   renaming_as_body.adb                 \
   requeue_statement_2.adb              \
   requeue_statements.adb               \
+  rep_pkg_a.ads                        \
+  rep_pkg_a-v.ads                      \
+  rep_pkg_a-b.ads                      \
+  rep_pkg_a-b.adb                      \
   rep_e_queue.adb                      \
   rep_e_queue.ads                      \
   rep_e_queue-queue1.adb               \
