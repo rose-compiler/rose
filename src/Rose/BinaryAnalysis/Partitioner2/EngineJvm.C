@@ -158,6 +158,9 @@ EngineJvm::parseContainers(const std::vector<std::string> &fileNames) {
             interpretation(interps.back());    // windows PE is always after DOS
             ASSERT_require(areContainersParsed());
         }
+        else {
+          mlog[WARN] << "No Java class files in specimen\n";
+        }
 
         ASSERT_require(!areSpecimensLoaded());
         return interpretation();
