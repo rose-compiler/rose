@@ -3037,6 +3037,7 @@ namespace
     void handle(const SgAdaProtectedTypeDecl& n) { res = n.get_scope(); }
     void handle(const SgFunctionDeclaration& n)  { res = n.get_scope(); }
     void handle(const SgAdaGenericDecl& n)       { res = n.get_scope(); }
+    void handle(const SgClassDeclaration& n)     { res = n.get_scope(); }
 
     // do not look beyond global
     // (during AST construction the parents of global may not yet be properly linked).
@@ -3054,6 +3055,7 @@ namespace
     void handle(const SgAdaProtectedSpec& n)     { res = fromParent(n); }
     void handle(const SgFunctionDefinition& n)   { res = fromParent(n); }
     void handle(const SgAdaGenericDefn& n)       { res = fromParent(n); }
+    void handle(const SgClassDefinition& n)      { res = fromParent(n); }
 
     void handle(const SgScopeStatement& n)
     {
