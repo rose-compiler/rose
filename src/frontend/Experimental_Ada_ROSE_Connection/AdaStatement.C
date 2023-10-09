@@ -114,7 +114,7 @@ namespace
 
       void operator()(const ExtendedPragmaID& pid)
       {
-        createPragma(retrieveAsOpt(elementMap, pid.id()), pid);
+        createPragma(retrieveElemOpt(elementMap, pid.id()), pid);
       }
 
       operator result_container() && { return std::move(res); }
@@ -472,7 +472,7 @@ namespace
 
     SgNode&           parent  = SG_DEREF(stmt.get_parent());
     SgLabelStatement& sgn     = mkLabelStmt(lblname, stmt, ctx.scope());
-    Element_Struct&   lblelem = retrieveAs(elemMap(), lblid);
+    Element_Struct&   lblelem = retrieveElem(elemMap(), lblid);
 
     //~ copyFileInfo(stmt, sgn);
     attachSourceLocation(sgn, lblelem, ctx);
@@ -636,7 +636,8 @@ namespace
                                    const NameCreator::result_container& names,
                                    SgType& dcltype,
                                    SgExpression* initexpr,
-                                   bool initializeFromFirst = false
+                                   std::vector<Element_ID>& secondaries,
+                                   bool initializeFromFirst = false /* \todo check with Ada Std if this should be always false */
                                  )
   {
     SgInitializedNamePtrList lst;
@@ -650,14 +651,35 @@ namespace
       SgExpression*      init = createInit(lst, initexpr, initializeFromFirst, ctx);
       SgInitializedName& dcl  = mkInitializedName(name, dcltype, init);
 
-      attachSourceLocation(dcl, retrieveAs(elemMap(), id), ctx);
+      attachSourceLocation(dcl, retrieveElem(elemMap(), id), ctx);
 
       lst.push_back(&dcl);
       recordNonUniqueNode(m, id, dcl, true /* overwrite existing entries if needed */);
+
+      if (!secondaries.empty())
+      {
+        recordNonUniqueNode(m, secondaries.back(), dcl, true /* overwrite existing entries if needed */);
+        secondaries.pop_back();
+      }
     }
 
     return lst;
   }
+
+  SgInitializedNamePtrList
+  constructInitializedNamePtrList( AstContext ctx,
+                                   map_t<int, SgInitializedName*>& m,
+                                   const NameCreator::result_container& names,
+                                   SgType& dcltype,
+                                   SgExpression* initexpr,
+                                   bool initializeFromFirst = false
+                                 )
+  {
+    std::vector<Element_ID> dummy;
+
+    return constructInitializedNamePtrList(ctx, m, names, dcltype, initexpr, dummy, initializeFromFirst);
+  }
+
 
 
   /// converts a parameter mode to its ROSE representation
@@ -739,7 +761,7 @@ namespace
 
   Element_ID getLabelRef(Element_ID id, AstContext ctx)
   {
-    Element_Struct&    labelref = retrieveAs(elemMap(), id);
+    Element_Struct&    labelref = retrieveElem(elemMap(), id);
     ADA_ASSERT (labelref.Element_Kind == An_Expression);
 
     Expression_Struct& labelexp = labelref.The_Union.Expression;
@@ -767,8 +789,8 @@ namespace
 
     Declaration_Struct&      asisDecl = elem.The_Union.Declaration;
     ADA_ASSERT (  asisDecl.Declaration_Kind == A_Parameter_Specification
-              || asisDecl.Declaration_Kind == A_Formal_Object_Declaration
-              );
+               || asisDecl.Declaration_Kind == A_Formal_Object_Declaration
+               );
 
     ElemIdRange              range    = idRange(asisDecl.Names);
     name_container           names    = allNames(range, ctx);
@@ -826,10 +848,11 @@ namespace
       AstContext               ctx;
   };
 
+
   /// converts an Asis parameter declaration to a ROSE parameter (i.e., variable)
   ///   declaration.
   SgVariableDeclaration&
-  getDiscriminant(Element_Struct& elem, AstContext ctx)
+  getDiscriminant(Element_Struct& elem, std::vector<Element_ID>& secondaries, AstContext ctx)
   {
     typedef NameCreator::result_container name_container;
 
@@ -847,6 +870,7 @@ namespace
                                                                          names,
                                                                          basety,
                                                                          getVarInit(asisDecl, &basety, ctx),
+                                                                         secondaries,
                                                                          false /* handle like parameters ??? */
                                                                        );
     SgVariableDeclaration&   sgnode   = mkVarDecl(dclnames, ctx.scope());
@@ -861,24 +885,25 @@ namespace
 
   struct DiscriminantCreator
   {
-      DiscriminantCreator(SgAdaDiscriminatedTypeDecl& discrNode, AstContext astctx)
-      : params(SG_DEREF(discrNode.get_discriminants())), ctx(astctx)
+      DiscriminantCreator(SgAdaDiscriminatedTypeDecl& discrNode, std::vector<Element_ID> sec, AstContext astctx)
+      : params(SG_DEREF(discrNode.get_discriminants())), secondaries(std::move(sec)), ctx(astctx)
       {}
 
       DiscriminantCreator(SgAdaFormalTypeDecl& discrNode, AstContext astctx)
-      : params(SG_DEREF(discrNode.get_discriminants())), ctx(astctx)
+      : params(SG_DEREF(discrNode.get_discriminants())), secondaries(), ctx(astctx)
       {}
 
       void operator()(Element_Struct& elem)
       {
-        SgVariableDeclaration& decl = getDiscriminant(elem, ctx);
+        SgVariableDeclaration& decl = getDiscriminant(elem, secondaries, ctx);
 
         params.append_parameter(&decl);
       }
 
     private:
-      SgAdaParameterList& params;
-      AstContext          ctx;
+      SgAdaParameterList&     params;
+      std::vector<Element_ID> secondaries;
+      AstContext              ctx;
 
       DiscriminantCreator() = delete;
   };
@@ -1089,7 +1114,7 @@ namespace
                                                                          names,
                                                                          dclType,
                                                                          getVarInit(decl, expectedType, ctx),
-                                                                         true /* reuse first initialized name for secondary inits */
+                                                                         true /* reuse first initialized name for secondary inits (\todo correct??)*/
                                                                        );
     SgVariableDeclaration&   sgnode   = mkVarDecl(dclnames, scope);
 
@@ -1180,7 +1205,7 @@ namespace
     if (id == 0)
       return std::make_pair(&mkAdaTaskSpec(), nothingToComplete);
 
-    return getTaskSpec(retrieveAs(elemMap(), id), ctx);
+    return getTaskSpec(retrieveElem(elemMap(), id), ctx);
   }
 
   std::pair<SgAdaTaskSpec*, DeferredPragmaBodyCompletion>
@@ -1253,7 +1278,7 @@ namespace
   std::pair<SgAdaProtectedSpec*, DeferredPragmaBodyCompletion>
   getProtectedSpecID(Element_ID id, AstContext ctx)
   {
-    return getProtectedSpec(retrieveAs(elemMap(), id), ctx);
+    return getProtectedSpec(retrieveElem(elemMap(), id), ctx);
   }
 
   std::pair<SgAdaProtectedSpec*, DeferredPragmaBodyCompletion>
@@ -1292,7 +1317,7 @@ namespace
 
         if (choices.size() > 1) return false;
 
-        Element_Struct& el = retrieveAs(elemMap(), *choices.first);
+        Element_Struct& el = retrieveElem(elemMap(), *choices.first);
 
         return (  el.Element_Kind == A_Definition
                && el.The_Union.Definition.Definition_Kind == An_Others_Choice
@@ -1906,7 +1931,7 @@ namespace
 
           SgBasicBlock&          block  = mkBasicBlock();
           SgForStatement&        sgnode = mkForStatement(block);
-          Element_Struct&        forvar = retrieveAs(elemMap(), stmt.For_Loop_Parameter_Specification);
+          Element_Struct&        forvar = retrieveElem(elemMap(), stmt.For_Loop_Parameter_Specification);
           SgForInitStatement&    forini = SG_DEREF( sb::buildForInitStatement(sgnode.getStatementList()) );
 
           attachSourceLocation(forini, forvar, ctx);
@@ -2043,7 +2068,7 @@ namespace
       case A_Return_Statement:                  // 6.5
         {
           logKind("A_Return_Statement", elem.ID);
-          Element_Struct* exprel = retrieveAsOpt(elemMap(), stmt.Return_Expression);
+          Element_Struct* exprel = retrieveElemOpt(elemMap(), stmt.Return_Expression);
           SgExpression*   retval = exprel ? &getExpr(*exprel, ctx) : NULL;
           SgStatement&    sgnode = SG_DEREF( sb::buildReturnStmt(retval) );
 
@@ -2257,7 +2282,7 @@ namespace
   {
     if (id == 0) return NameCreator::result_container();
 
-    Element_Struct& elem = retrieveAs(elemMap(), id);
+    Element_Struct& elem = retrieveElem(elemMap(), id);
 
     ADA_ASSERT (elem.Element_Kind == A_Declaration);
     Declaration_Struct&      asisDecl = elem.The_Union.Declaration;
@@ -2637,7 +2662,7 @@ namespace
 
   bool queryIfDerivedFromEnumID(Element_ID id, AstContext ctx, std::function<bool(AstContext)> fallback)
   {
-    Element_Struct* el = retrieveAsOpt(elemMap(), id);
+    Element_Struct* el = retrieveElemOpt(elemMap(), id);
 
     return el ? queryIfDerivedFromEnum(*el, ctx) : fallback(ctx);
   }
@@ -2694,7 +2719,7 @@ namespace
                 << std::endl;
     }
 
-    Element_Struct&     typeElem = retrieveAs(elemMap(), complDecl.Type_Declaration_View);
+    Element_Struct&     typeElem = retrieveElem(elemMap(), complDecl.Type_Declaration_View);
     ADA_ASSERT (typeElem.Element_Kind == A_Definition);
 
     Definition_Struct&  typeDefn = typeElem.The_Union.Definition;
@@ -2732,7 +2757,7 @@ namespace
   DefinitionDetails
   queryDefinitionDetailsID(Element_ID completeElementId, AstContext ctx)
   {
-    Element_Struct& complElem = retrieveAs(elemMap(), completeElementId);
+    Element_Struct& complElem = retrieveElem(elemMap(), completeElementId);
 
     return queryDefinitionDetails(complElem, ctx);
   }
@@ -2872,7 +2897,7 @@ namespace
         // \todo The code is most similar to the normal EnumeratorCreator in AdaType.C and
         //       could be refactored to eliminate code duplication.
         SgType&             enumTy = SG_DEREF(derivedDcl.get_type());
-        Element_Struct&     elem = retrieveAs(elemMap(), id);
+        Element_Struct&     elem = retrieveElem(elemMap(), id);
         ADA_ASSERT (elem.Element_Kind == A_Declaration);
         logKind("A_Declaration", id);
 
@@ -3037,7 +3062,7 @@ namespace
 
     if (!isInvalidId(decl.Type_Declaration_View))
     {
-      typeview = &retrieveAs(elemMap(), decl.Type_Declaration_View);
+      typeview = &retrieveElem(elemMap(), decl.Type_Declaration_View);
       ADA_ASSERT (typeview->Element_Kind == A_Definition);
     }
 
@@ -3152,8 +3177,91 @@ namespace
     ADA_ASSERT (sgnode.get_parent() == &ctx.scope());
   }
 
+  ElemIdRange
+  secondaryKnownDiscrimnants(Element_Struct* elem, AstContext)
+  {
+    if (elem == nullptr) return { nullptr, nullptr };
+
+    ADA_ASSERT (elem->Element_Kind == A_Definition);
+    Definition_Struct& def = elem->The_Union.Definition;
+
+    if (def.Definition_Kind != A_Known_Discriminant_Part) return { nullptr, nullptr };
+
+    return idRange(def.The_Union.The_Known_Discriminant_Part.Discriminants);
+  }
+
+#if 0
+  std::vector<SgInitializedName*>
+  flattenDiscriminants(SgAdaDiscriminatedTypeDecl& sgnode, AstContext)
+  {
+    std::vector<SgInitializedName*>      res;
+    const SgAdaParameterList&            lst = SG_DEREF(sgnode.get_discriminants());
+    const SgDeclarationStatementPtrList& parms = lst.get_parameters();
+
+    std::for_each( parms.begin(), parms.end(),
+                   [&res](SgDeclarationStatement* dcl)->void
+                   {
+                     if (SgVariableDeclaration* var = isSgVariableDeclaration(dcl))
+                     {
+                       res.insert(res.end(), var->get_variables().begin(), var->get_variables().end());
+                     }
+                   }
+                 );
+
+    return res;
+  }
+#endif /* 0 */
+
+  std::vector<Element_ID>
+  flattenNameLists(ElemIdRange idrange, AstContext ctx)
+  {
+    std::vector<Element_ID> res;
+
+    traverseIDs( idrange, elemMap(),
+                 [&res, ctx](Element_Struct& elem)->void
+                 {
+                   ADA_ASSERT (elem.Element_Kind == A_Declaration);
+
+                   Declaration_Struct& asisDecl = elem.The_Union.Declaration;
+                   ADA_ASSERT (asisDecl.Declaration_Kind == A_Discriminant_Specification);
+
+                   ElemIdRange         range    = idRange(asisDecl.Names);
+
+                   for (const NameData& obj : allNames(range, ctx))
+                   {
+                     res.push_back(obj.id());
+                   }
+                 }
+               );
+
+    return res;
+  }
+
+#if 0
+  void
+  recordSecondaryDiscriminants(SgAdaDiscriminatedTypeDecl& sgnode, Element_Struct* secondary, AstContext ctx)
+  {
+    ElemIdRange secondaryIDs = secondaryKnownDiscrimnants(secondary, ctx);
+
+    if (secondaryIDs.empty()) return;
+
+    std::vector<SgInitializedName*> parameters  = flattenDiscriminants(sgnode, ctx);
+    std::vector<Element_ID>         secondaries = flattenNameLists(secondaryIDs, ctx);
+
+    ADA_ASSERT(parameters.size() == secondaries.size());
+
+    foreach_pair( parameters.begin(), parameters.end(),
+                  secondaries.begin(),
+                  [](SgInitializedName* ini, Element_ID id) -> void
+                  {
+                    recordNonUniqueNode(asisVars(), id, SG_DEREF(ini), true);
+                  }
+                );
+  }
+#endif /* 0 */
+
   SgAdaDiscriminatedTypeDecl&
-  createDiscriminatedDeclID(Element_Struct& elem, AstContext ctx)
+  createDiscriminatedDeclID(Element_Struct& elem, Element_Struct* secondary, AstContext ctx)
   {
     ADA_ASSERT (elem.Element_Kind == A_Definition);
     logKind("A_Definition", elem.ID);
@@ -3163,7 +3271,7 @@ namespace
 
     SgScopeStatement&           scope  = ctx.scope();
     SgAdaDiscriminatedTypeDecl& sgnode = mkAdaDiscriminatedTypeDecl(scope);
-    Definition_Struct&          def = elem.The_Union.Definition;
+    Definition_Struct&          def    = elem.The_Union.Definition;
 
     ctx.appendStatement(sgnode);
 
@@ -3171,10 +3279,22 @@ namespace
     {
       logKind("A_Known_Discriminant_Part", elem.ID);
 
-      ElemIdRange       discriminants = idRange(def.The_Union.The_Known_Discriminant_Part.Discriminants);
+      ElemIdRange             discriminants = idRange(def.The_Union.The_Known_Discriminant_Part.Discriminants);
+      ElemIdRange             secondaryIDs = secondaryKnownDiscrimnants(secondary, ctx);
+      std::vector<Element_ID> secondaries;
+
+      if (!secondaryIDs.empty())
+      {
+        secondaries = flattenNameLists(secondaryIDs, ctx);
+        std::reverse(secondaries.begin(), secondaries.end());
+      }
+
       SgScopeStatement& scope         = SG_DEREF(sgnode.get_discriminantScope());
 
-      traverseIDs(discriminants, elemMap(), DiscriminantCreator{sgnode, ctx.scope(scope)});
+      traverseIDs(discriminants, elemMap(), DiscriminantCreator{sgnode, std::move(secondaries), ctx.scope(scope)});
+
+      //~ recordSecondaryDiscriminants(sgnode, secondary, ctx);
+      ADA_ASSERT(secondaries.empty());
     }
     else
     {
@@ -3209,7 +3329,7 @@ namespace
 #endif /* DEBUG_RECURSION */
       DefinitionDetails       defdata = queryDeclarationDetails(decl, ctx);
       SgScopeStatement*       parentScope = &ctx.scope();
-      SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDeclID_opt(decl.Discriminant_Part, ctx);
+      SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDeclID_opt(decl.Discriminant_Part, 0, ctx);
 
       if (discr)
       {
@@ -3240,7 +3360,7 @@ namespace
 
       if (decl.Declaration_Kind == A_Private_Extension_Declaration)
       {
-        if (Element_Struct* tyview = retrieveAsOpt(elemMap(), decl.Type_Declaration_View))
+        if (Element_Struct* tyview = retrieveElemOpt(elemMap(), decl.Type_Declaration_View))
         {
           ADA_ASSERT(tyview->Element_Kind == A_Definition);
           Definition_Struct& tydef = tyview->The_Union.Definition;
@@ -3314,7 +3434,7 @@ namespace
       {
         std::string     name;
         SgType*         ty   = &mkTypeVoid();
-        Element_Struct* elem = retrieveAsOpt(elemMap(), id);
+        Element_Struct* elem = retrieveElemOpt(elemMap(), id);
 
         if (elem)
         {
@@ -3360,7 +3480,7 @@ namespace
     if (id == 0)
       return false;
 
-    Element_Struct&     elem = retrieveAs(elemMap(), id);
+    Element_Struct&     elem = retrieveElem(elemMap(), id);
 
     if (elem.Element_Kind != A_Declaration)
       return false;
@@ -3374,17 +3494,22 @@ namespace
 } // anonymous
 
 SgAdaDiscriminatedTypeDecl*
-createDiscriminatedDeclID_opt(Element_ID id, AstContext ctx)
+createDiscriminatedDeclID_opt(Element_ID primary, Element_ID secondary, AstContext ctx)
 {
-  if (id == 0) return nullptr;
+  if (primary == 0)
+  {
+    if (secondary != 0) logFlaw() << "Unexpected secondary discriminants" << std::endl;
 
-  return &createDiscriminatedDeclID(retrieveAs(elemMap(), id), ctx);
+    return nullptr;
+  }
+
+  return &createDiscriminatedDeclID(retrieveElem(elemMap(), primary), retrieveElemOpt(elemMap(), secondary), ctx);
 }
 
 SgScopeStatement&
 queryScopeOfID(Element_ID el, AstContext ctx)
 {
-  return queryScopeOf(retrieveAs(elemMap(), el), ctx);
+  return queryScopeOf(retrieveElem(elemMap(), el), ctx);
 }
 
 SgDeclarationStatement*
@@ -3477,7 +3602,7 @@ void handleRepresentationClause(Element_Struct& elem, AstContext ctx)
       {
         logKind("An_Enumeration_Representation_Clause", elem.ID);
         SgType&                 enumty   = getDeclTypeID(repclause.Representation_Clause_Name, ctx);
-        Element_Struct&         inielem  = retrieveAs(elemMap(), repclause.Representation_Clause_Expression);
+        Element_Struct&         inielem  = retrieveElem(elemMap(), repclause.Representation_Clause_Expression);
         ADA_ASSERT (inielem.Element_Kind == An_Expression);
 
         Expression_Struct&      inilist  = inielem.The_Union.Expression;
@@ -3658,7 +3783,7 @@ namespace
 
     if (dcl.Corresponding_Declaration > 0)
     {
-      if (Element_Struct* res = retrieveAsOpt(elemMap(), dcl.Corresponding_Declaration))
+      if (Element_Struct* res = retrieveElemOpt(elemMap(), dcl.Corresponding_Declaration))
       {
         ADA_ASSERT (res->Element_Kind == A_Declaration);
         return res->The_Union.Declaration;
@@ -3667,7 +3792,7 @@ namespace
 
     if (dcl.Corresponding_Body_Stub > 0)
     {
-      if (Element_Struct* stub = retrieveAsOpt(elemMap(), dcl.Corresponding_Body_Stub))
+      if (Element_Struct* stub = retrieveElemOpt(elemMap(), dcl.Corresponding_Body_Stub))
       {
         ADA_ASSERT(stub && (stub->Element_Kind == A_Declaration));
         return firstDeclaration(stub->The_Union.Declaration);
@@ -3679,7 +3804,7 @@ namespace
 
 
   Parameter_Specification_List
-  usableParameterProfile(Declaration_Struct& decl)
+  usableParameterProfile(Declaration_Struct& decl, AstContext)
   {
     // PP (7/29/22): RC-1372 (Asis only?)
     // In the Asis rep. parameter references inside of routine bodies
@@ -3701,6 +3826,22 @@ namespace
       return decl.Parameter_Profile;
 
     return firstDeclaration(decl).Parameter_Profile;
+  }
+
+  Element_ID
+  secondaryDiscriminants(Element_ID id, Declaration_Struct& decl, AstContext)
+  {
+    const bool useThisDecl = (  (decl.Corresponding_Type_Declaration == id)
+                             || (decl.Corresponding_Type_Declaration == 0)
+                             || (decl.Discriminant_Part == 0)
+                             );
+
+    if (useThisDecl) return 0;
+
+    Element_Struct& firstDecl = retrieveElem(elemMap(), decl.Corresponding_Type_Declaration);
+    ADA_ASSERT(firstDecl.Element_Kind == A_Declaration);
+
+    return firstDecl.The_Union.Declaration.Discriminant_Part;
   }
 
   SgExpression&
@@ -3753,7 +3894,7 @@ namespace
     auto splitPragma = [aaa = splitKinds.begin(), zzz = splitKinds.end()]
                        (Element_ID pragmaId) -> bool
                        {
-                         Element_Struct* elem = retrieveAsOpt(elemMap(), pragmaId);
+                         Element_Struct* elem = retrieveElemOpt(elemMap(), pragmaId);
 
                          return (  (elem != nullptr)
                                 && (elem->Element_Kind == A_Pragma)
@@ -3798,7 +3939,7 @@ namespace
       return decl.Corresponding_Declaration;
 
     ADA_ASSERT(decl.Corresponding_Body_Stub);
-    Element_Struct&     stubelem = retrieveAs(elemMap(), decl.Corresponding_Body_Stub);
+    Element_Struct&     stubelem = retrieveElem(elemMap(), decl.Corresponding_Body_Stub);
     ADA_ASSERT(stubelem.Element_Kind == A_Declaration);
 
     Declaration_Struct& stubdecl = stubelem.The_Union.Declaration;
@@ -3840,8 +3981,8 @@ namespace
 
         Aspect_Specification_Struct& asp = def.The_Union.The_Aspect_Specification;
 
-        Element_Struct&              aspmark = retrieveAs(elemMap(), asp.Aspect_Mark);
-        Element_Struct*              aspdefn = retrieveAsOpt(elemMap(), asp.Aspect_Definition);
+        Element_Struct&              aspmark = retrieveElem(elemMap(), asp.Aspect_Mark);
+        Element_Struct*              aspdefn = retrieveElemOpt(elemMap(), asp.Aspect_Definition);
 
         if (  (aspmark.Element_Kind != An_Expression)
            || (aspdefn && (aspdefn->Element_Kind != An_Expression))
@@ -4252,7 +4393,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         const bool              isFunc  = decl.Declaration_Kind == A_Function_Body_Declaration;
         NameData                adaname = singleName(decl, ctx);
-        ElemIdRange             params  = idRange(usableParameterProfile(decl));
+        ElemIdRange             params  = idRange(usableParameterProfile(decl, ctx));
         SgType&                 rettype = isFunc ? getDeclTypeID(decl.Result_Profile, ctx)
                                                  : mkTypeVoid();
 
@@ -4378,7 +4519,9 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         ADA_ASSERT (adaname.fullName == adaname.ident);
 
         SgScopeStatement*           parentScope = &ctx.scope();
-        SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDeclID_opt(decl.Discriminant_Part, ctx);
+        Element_ID                  declDisrElemID = decl.Discriminant_Part;
+        Element_ID                  scndDisrElemID = secondaryDiscriminants(elem.ID, decl, ctx);
+        SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDeclID_opt(declDisrElemID, scndDisrElemID, ctx);
 
         if (discr)
         {
@@ -4626,7 +4769,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         ADA_ASSERT(!incomp || nondef);
 
         SgScopeStatement*           parentScope = &ctx.scope();
-        SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDeclID_opt(decl.Discriminant_Part, ctx);
+        SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDeclID_opt(decl.Discriminant_Part, 0, ctx);
 
         if (discr)
         {
@@ -4691,7 +4834,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         ADA_ASSERT(!ndef || nondef); // ndef => nondef
 
         SgScopeStatement*           parentScope = &ctx.scope();
-        SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDeclID_opt(decl.Discriminant_Part, ctx);
+        SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDeclID_opt(decl.Discriminant_Part, 0, ctx);
 
         if (discr)
         {
@@ -4932,7 +5075,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         //~ SgScopeStatement&       logicalScope = adaname.parent_scope();
         //~ SgAdaEntryDecl&         sgnode  = mkAdaEntryDef(entrydcl, logicalScope, ParameterCompletion{range, ctx});
-        ElemIdRange             params  = idRange(usableParameterProfile(decl));
+        ElemIdRange             params  = idRange(usableParameterProfile(decl, ctx));
 
         // PP (1/20/23): *SCOPE_COMMENT_1
         //               replace outer with entrydcl.get_scope()
@@ -4984,7 +5127,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         NameData                adaname = singleName(decl, ctx);
         ElemIdRange             params  = idRange(decl.Parameter_Profile);
-        //~ ElemIdRange             params  = idRange(usableParameterProfile(decl));
         SgType&                 rettype = isFunc ? getDeclTypeID(decl.Result_Profile, ctx)
                                                  : mkTypeVoid();
 
@@ -5377,7 +5519,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         // PP (4/1/22): fill in the declaration
         ADA_ASSERT(decl.Corresponding_Declaration);
-        handleDeclaration( retrieveAs(elemMap(), decl.Corresponding_Declaration),
+        handleDeclaration( retrieveElem(elemMap(), decl.Corresponding_Declaration),
                            ctx.instantiation(sgnode).scope(SG_DEREF(sgnode.get_instantiatedScope()))
                          );
         // \todo mark whole subtree under sgnode.get_instantiatedScope() as instantiated
@@ -5425,7 +5567,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         //~ privatize(sgnode, isPrivate);
         ctx.appendStatement(sgnode);
 
-        if (Element_Struct* dclElem = retrieveAsOpt(elemMap(), decl.Corresponding_Declaration))
+        if (Element_Struct* dclElem = retrieveElemOpt(elemMap(), decl.Corresponding_Declaration))
         {
           handleDeclaration(*dclElem, ctx.scope(SG_DEREF(sgnode.get_prototypeScope())));
 
@@ -5644,7 +5786,7 @@ getQualName(Element_Struct& elem, AstContext ctx)
 NameData
 getNameID(Element_ID el, AstContext ctx)
 {
-  return getName(retrieveAs(elemMap(), el), ctx);
+  return getName(retrieveElem(elemMap(), el), ctx);
 }
 
 void

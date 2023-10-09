@@ -111,7 +111,7 @@ namespace
   SgAdaGenericInstanceDecl*
   instantiationDeclID(Element_ID id, AstContext ctx)
   {
-    Element_Struct*         elem = retrieveAsOpt(elemMap(), id);
+    Element_Struct*         elem = retrieveElemOpt(elemMap(), id);
     if (!elem || (elem->Element_Kind != An_Expression))
       return nullptr;
 
@@ -306,7 +306,7 @@ namespace
   SgNode&
   getExprTypeID(Element_ID tyid, AstContext ctx)
   {
-    Element_Struct& elem = retrieveAs(elemMap(), tyid);
+    Element_Struct& elem = retrieveElem(elemMap(), tyid);
     ADA_ASSERT(elem.Element_Kind == An_Expression);
 
     return getExprType(elem.The_Union.Expression, ctx);
@@ -513,7 +513,7 @@ namespace
   SgClassDefinition&
   getRecordBodyID(Element_ID recid, AstContext ctx)
   {
-    Element_Struct&           elem = retrieveAs(elemMap(), recid);
+    Element_Struct&           elem = retrieveElem(elemMap(), recid);
     ADA_ASSERT(elem.Element_Kind == A_Definition);
 
     Definition_Struct&        def = elem.The_Union.Definition;
@@ -1193,7 +1193,7 @@ getConstraintID(Element_ID el, AstContext ctx)
   if (el == 0) return mkAdaNullConstraint();
 
   SgAdaTypeConstraint*  res = nullptr;
-  Element_Struct&       elem = retrieveAs(elemMap(), el);
+  Element_Struct&       elem = retrieveElem(elemMap(), el);
   ADA_ASSERT(elem.Element_Kind == A_Definition);
 
   Definition_Struct&    def = elem.The_Union.Definition;
@@ -1282,14 +1282,14 @@ getConstraintID(Element_ID el, AstContext ctx)
 SgType&
 getDeclTypeID(Element_ID id, AstContext ctx)
 {
-  return getDeclType(retrieveAs(elemMap(), id), ctx);
+  return getDeclType(retrieveElem(elemMap(), id), ctx);
 }
 
 
 SgType&
 getDefinitionTypeID(Element_ID defid, AstContext ctx, bool forceSubtype)
 {
-  return getDefinitionType(retrieveAs(elemMap(), defid), ctx, forceSubtype);
+  return getDefinitionType(retrieveElem(elemMap(), defid), ctx, forceSubtype);
 }
 
 /// returns the ROSE type for an Asis definition \ref defid
@@ -1323,12 +1323,12 @@ FormalTypeData
 getFormalTypeFoundation(const std::string& name, Declaration_Struct& decl, AstContext ctx)
 {
   ADA_ASSERT( decl.Declaration_Kind == A_Formal_Type_Declaration );
-  Element_Struct&         elem = retrieveAs(elemMap(), decl.Type_Declaration_View);
+  Element_Struct&         elem = retrieveElem(elemMap(), decl.Type_Declaration_View);
   ADA_ASSERT(elem.Element_Kind == A_Definition);
   Definition_Struct&      def = elem.The_Union.Definition;
   ADA_ASSERT(def.Definition_Kind == A_Formal_Type_Definition);
 
-  if (SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDeclID_opt(decl.Discriminant_Part, ctx))
+  if (SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDeclID_opt(decl.Discriminant_Part, 0, ctx))
   {
     SgScopeStatement&       genericScope = ctx.scope();
     SgScopeStatement&       discScope = SG_DEREF(discr->get_discriminantScope());
@@ -1349,7 +1349,7 @@ getTypeFoundation(const std::string& name, Declaration_Struct& decl, AstContext 
 {
   ADA_ASSERT( decl.Declaration_Kind == An_Ordinary_Type_Declaration );
 
-  Element_Struct&         elem = retrieveAs(elemMap(), decl.Type_Declaration_View);
+  Element_Struct&         elem = retrieveElem(elemMap(), decl.Type_Declaration_View);
   ADA_ASSERT(elem.Element_Kind == A_Definition);
 
   Definition_Struct&      def = elem.The_Union.Definition;

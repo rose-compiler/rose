@@ -637,7 +637,15 @@ namespace
                       shadowed = (dclscope != bdy->get_spec());
                   }
 
-                  //~ const_cast<SgScopeStatement*>(scope)->print_symboltable(dclname, std::cerr);
+
+                  if (DBG_PRINT_SCOPES)
+                  {
+                    std::cerr << "+++    " << typeid(*scope).name() << " " << shadowed
+                              << std::endl;
+
+                    // const_cast<SgScopeStatement*>(scope)->print_symboltable(dclname, std::cerr);
+                  }
+
 
                   // if a symbol with the same name exists in the scope
                   //   but the original declaration does not, then
