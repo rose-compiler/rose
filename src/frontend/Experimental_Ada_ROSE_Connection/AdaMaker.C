@@ -1570,6 +1570,7 @@ namespace
   }
 }
 
+
 SgInitializedName&
 mkInitializedName(const std::string& varname, SgType& vartype, SgExpression* val)
 {
@@ -1582,6 +1583,15 @@ mkInitializedName(const std::string& varname, SgType& vartype, SgExpression* val
     //~ markCompilerGenerated(*varinit);
 
   markCompilerGenerated(sgnode);
+  return sgnode;
+}
+
+SgInitializedName&
+mkEnumeratorDecl(const std::string& ident, SgType& ty, SgExpression& repval, SgScopeStatement& scope)
+{
+  SgInitializedName& sgnode = mkInitializedName(ident, ty, &repval);
+
+  scope.insert_symbol(sgnode.get_name(), &mkBareNode<SgEnumFieldSymbol>(&sgnode));
   return sgnode;
 }
 
@@ -1928,11 +1938,16 @@ mkExceptionRef(SgInitializedName& exception, SgScopeStatement& scope)
   return SG_DEREF( sb::buildVarRefExp(&exception, &scope) );
 }
 
-
 SgDotExp&
 mkSelectedComponent(SgExpression& prefix, SgExpression& selector)
 {
-  return SG_DEREF( sb::buildDotExp(&prefix, &selector) );
+  // ASIS_FUNCTION_REF_ISSUE_1
+  //   corrects issue described in AdaExpression.C
+  SgExpression& corrected_prefix
+                   = isSgFunctionRefExp(&prefix) ? mkFunctionCallExp(prefix, mkExprListExp())
+                                                 : prefix;
+
+  return SG_DEREF( sb::buildDotExp(&corrected_prefix, &selector) );
 }
 
 SgAdaTaskRefExp&
