@@ -704,6 +704,19 @@ namespace Ada_ROSE_Translation
   SgVariableDeclaration&
   mkExceptionDecl(const SgInitializedNamePtrList& vars, SgScopeStatement& scope);
 
+  /// creates an enumerator declaration (to be placed in a SgEnumDeclaration)
+  ///   with name \ref ident, type \ref ty, and representative value \ref repval.
+  ///   A symbol for the enumerator is created in \ref scope.
+  /// \note
+  ///   Like in C++, the symbol is (currently)
+  ///   created in the parent scope of the SgEnumDeclaration.
+  /// \todo
+  ///   Since in Ada, enumerator references may be prefixed with the enumeration's name,
+  ///   it seems more appropriate for Ada to create a symbol inside of SgEnumDeclaration's
+  ///   declaration scope, AND create an alias symbol in its parent scope.
+  SgInitializedName&
+  mkEnumeratorDecl(const std::string& ident, SgType& ty, SgExpression& repval, SgScopeStatement& scope);
+
   /// creates a SgBaseClass object for an Ada type \ref n
   /// \param n a representation of the base type (often an SgClassType, but could be any type in principle.
   ///          e.g., often expression based, wrapped in an SgTypeExpression)

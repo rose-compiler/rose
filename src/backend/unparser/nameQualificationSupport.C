@@ -206,7 +206,7 @@ namespace
       void handle(const SgAdaProtectedSpecDecl& n) { withName(n.get_name()); }
       void handle(const SgAdaProtectedBodyDecl& n) { withName(n.get_name()); }
       void handle(const SgAdaPackageSpecDecl& n)   { withName(n.get_name()); }
-      //~ void handle(const SgAdaPackageBodyDecl& n)   { withName(n.get_name()); }
+      void handle(const SgAdaPackageBodyDecl& n)   { withName(n.get_name()); }
       void handle(const SgAdaRenamingDecl& n)      { withName(n.get_name()); }
       void handle(const SgFunctionDeclaration& n)  { withName(n.get_name()); }
       //~ void handle(const SgAdaGenericDecl& n)       { res = scopeName(n.get_declaration()); }
@@ -480,8 +480,6 @@ namespace
   /// Constructs a path from a scope statement to the top-level (global)
   /// scope.
   /// \param n innermost scope
-  /// \param unp the Ada unparser object (is knowledgeable about visibility,
-  ///            active aliases, and active use clauses).
   ScopePath
   NameQualificationTraversalAda::pathToGlobal(const SgScopeStatement& n) const
   {
@@ -491,7 +489,8 @@ namespace
     /// add all scopes on the path to the global scope
     while (!isSgGlobal(curr))
     {
-      ROSE_ASSERT(std::find(res.rbegin(), res.rend(), curr) == res.rend());
+      // check for circular scopes
+      // ROSE_ASSERT(std::find(res.rbegin(), res.rend(), curr) == res.rend());
 
       res.push_back(curr);
       curr = si::Ada::logicalParentScope(*curr);
@@ -616,40 +615,41 @@ namespace
     const SgDeclarationStatement* dcl = isSgDeclarationStatement(&n);
     const SgScopeStatement*       dclscope = dcl ? dcl->get_scope() : nullptr;
 
-    auto        pred    = [&dclname, &n, dclscope](const SgScopeStatement* scope)->bool
-                          {
-                            const SgSymbol* sym = scope->lookup_symbol(dclname, nullptr, nullptr);
-                            bool            shadowed = (sym != nullptr);
+    auto pred = [&dclname, &n, dclscope, dcl](const SgScopeStatement* scope)->bool
+                {
+                  const SgSymbol* sym = scope->lookup_symbol(dclname, nullptr, nullptr);
+                  bool            shadowed = (sym != nullptr);
 
-                            while (sym && shadowed)
-                            {
-                              shadowed = !symbolMatchesDeclaration(*sym, n);
-                              sym = scope->next_any_symbol();
-                            }
+                  while (sym && shadowed)
+                  {
+                    shadowed = !symbolMatchesDeclaration(*sym, n);
+                    sym = scope->next_any_symbol();
+                  }
 
-                            // for Ada bodies check their dual spec
-                            if (shadowed)
-                            {
-                              if (const SgAdaPackageBody* bdy = isSgAdaPackageBody(scope))
-                                shadowed = (dclscope != bdy->get_spec());
-                              else if (const SgAdaProtectedBody* bdy = isSgAdaProtectedBody(scope))
-                                shadowed = (dclscope != bdy->get_spec());
-                              else if (const SgAdaTaskBody* bdy = isSgAdaTaskBody(scope))
-                                shadowed = (dclscope != bdy->get_spec());
-                            }
+                  // for Ada bodies check their dual spec
+                  if (shadowed)
+                  {
+                    if (const SgAdaPackageBody* bdy = isSgAdaPackageBody(scope))
+                      shadowed = (dclscope != bdy->get_spec());
+                    else if (const SgAdaProtectedBody* bdy = isSgAdaProtectedBody(scope))
+                      shadowed = (dclscope != bdy->get_spec());
+                    else if (const SgAdaTaskBody* bdy = isSgAdaTaskBody(scope))
+                      shadowed = (dclscope != bdy->get_spec());
+                  }
 
-                            //~ const_cast<SgScopeStatement*>(scope)->print_symboltable(dclname, std::cerr);
+                  //~ const_cast<SgScopeStatement*>(scope)->print_symboltable(dclname, std::cerr);
 
-                            // if a symbol with the same name exists in the scope
-                            //   but the original declaration does not, then
-                            //   the declaration is shadowed.
-                            return shadowed;
-                          };
+                  // if a symbol with the same name exists in the scope
+                  //   but the original declaration does not, then
+                  //   the declaration is shadowed.
+
+                  return shadowed;
+                };
 
     bool const res = std::any_of(beg, lim, pred);
 
     if (DBG_PRINT_SCOPES)
-      std::cerr << &n << " " << typeid(n).name() << " :" << dclname
+      std::cerr << "+++++" << dclname << ": " << &n << " " << typeid(n).name()
                 << ": " << std::distance(beg, lim)
                 << ": " << res
                 << std::endl;
@@ -789,12 +789,14 @@ namespace
   {
     const SgNode* refNode = &declOrRef;
 
-    // set the reference Node to the leading scope (or if none use the quasiDecl node instead).
-    if (std::distance(remMin, remLim) > 0)
+    // set the reference Node to the leading scope name (remMin != remLim)
+    //   or start with the actual declOrRef node otherwise.
+    if (remMin != remLim)
       if (const SgNode* namedNode = namedAstNode(*remMin))
         refNode = namedNode;
+      // else ROSE_ABORT(); // \todo do we always have to have a node?
 
-    // while the refnode is aliased along (locMin, locLim] and the scope is extensible |remBeg,remMin| > 0
+    // while the refnode is aliased along [locMin, locLim) and the scope is extensible |remBeg,remMin| > 0
     //   extend the scope by one.
     while ((std::distance(remBeg, remMin) > 0) && isShadowedAlongPath(*refNode, locMin, locLim))
     {
@@ -828,6 +830,50 @@ namespace
     return remMin;
   }
 
+  auto
+  areSpecAndBody(const SgScopeStatement* lhs, const SgScopeStatement* rhs) -> bool
+  {
+    if (const SgAdaProtectedSpec* spec = isSgAdaProtectedSpec(lhs))
+      return spec->get_body() == rhs;
+
+    if (const SgAdaTaskSpec* spec = isSgAdaTaskSpec(lhs))
+      return spec->get_body() == rhs;
+
+    if (const SgAdaPackageSpec* spec = isSgAdaPackageSpec(lhs))
+      return spec->get_body() == rhs;
+
+    return false;
+  }
+
+
+  /// adaPathMismatch finds the first difference in two scope paths
+  ///   [locPos, locLim) and [remPos, remLim)
+  ///   and returns a pair of iterators indicating those positions.
+  /// \note
+  ///   similar to std::mismatch, but pathMismatch takes into account
+  ///   that scope paths in Ada may have two consecutive entries for the
+  ///   the same scope (e.g., PackageSpec, PackageBody).
+  template <class ScopePathIterator>
+  auto
+  adaPathMismatch( ScopePathIterator lhsPos, ScopePathIterator lhsLim,
+                   ScopePathIterator rhsPos, ScopePathIterator rhsLim
+                 )
+    -> std::pair<ScopePathIterator, ScopePathIterator>
+  {
+    while ((lhsPos != lhsLim) && (rhsPos != rhsLim) && (*lhsPos == *rhsPos))
+    {
+      if ((lhsPos != lhsLim) && areSpecAndBody(*lhsPos, *(lhsPos+1)))
+        ++lhsPos;
+
+      if ((rhsPos != rhsLim) && areSpecAndBody(*rhsPos, *(rhsPos+1)))
+        ++rhsPos;
+
+      ++lhsPos; ++rhsPos;
+    }
+
+    return {lhsPos, rhsPos};
+  }
+
   std::string
   NameQualificationTraversalAda::computeNameQual( const SgNode& quasiDecl,
                                                   const SgScopeStatement& local,
@@ -850,16 +896,14 @@ namespace
     //   and referenced in scope a.d.e:
 
     // 1a determine the first mismatch (mismPos) of the (reversed) scope paths "a.b.c" and "a.d.e"
-    const int          pathlen = std::min(localPath.size(), remotePath.size());
     const PathIterator locBeg  = localPath.rbegin();
     const PathIterator locLim  = localPath.rend();
     const PathIterator remBeg  = remotePath.rbegin();
-    PathIterator       remLim  = remotePath.rend();
+    const PathIterator remLim  = remotePath.rend();
 
     // 1b mismPos is  "a|b.c and a|d.e", thus the required scope qualification is b.c
-    auto               mismPos = std::mismatch( locBeg, locBeg + pathlen,
-                                                remBeg
-                                              );
+    auto               mismPos = adaPathMismatch(locBeg, locLim, remBeg, remLim);
+
     // 1c shorten b.c if any scope has a use-directive
     mismPos.second = shortenPathForUseDirectives(remBeg, mismPos.second, remLim, *this);
 
@@ -871,35 +915,20 @@ namespace
 
     // 3 Since a body has its spec as the logical ancestor scope, adjacent spec/body combination
     //   are filtered from the path.
-    auto areSpecAndBody =
-          [](const SgScopeStatement* lhs, const SgScopeStatement* rhs) -> bool
-          {
-            if (const SgAdaProtectedSpec* spec = isSgAdaProtectedSpec(lhs))
-              return spec->get_body() == rhs;
-
-            if (const SgAdaTaskSpec* spec = isSgAdaTaskSpec(lhs))
-              return spec->get_body() == rhs;
-
-            if (const SgAdaPackageSpec* spec = isSgAdaPackageSpec(lhs))
-              return spec->get_body() == rhs;
-
-            return false;
-          };
-
-    // remove adjacent bodies
-    remLim = std::unique(remPos, remLim, areSpecAndBody);
+    const PathIterator remLmt = std::unique(remPos, remLim, areSpecAndBody);
 
     // turn the scope sequence into a name qualification string
-    const std::string res = nameQualString(remPos, remLim);
+    const std::string res = nameQualString(remPos, remLmt);
 
     if (DBG_PRINT_SCOPES)
     {
-      std::cerr << "--- len> " << std::distance(mismPos.first, locLim)
+      std::cerr << "---  " << typeid(quasiDecl).name()
+                << " len> " << std::distance(mismPos.first, locLim)
                 << "/" << localPath.size() << DebugSeqPrinter{localPath}
                 << "/" << nameQualString(locBeg, locLim) // unsquashed
-                << " <> " << std::distance(mismPos.second, remLim)
-                << "/" << std::distance(remPos, remLim)
-                << " /" << nameQualString(remBeg, remLim)
+                << " <> " << std::distance(mismPos.second, remLmt)
+                << "/" << std::distance(remPos, remLmt)
+                << " /" << nameQualString(remBeg, remLmt)
                 << "  => " << res
                 << std::endl;
     }
@@ -17687,7 +17716,7 @@ NameQualificationTraversal::setNameQualification ( SgFunctionDeclaration* functi
      SgScopeStatement * scope = traverseNonrealDeclForCorrectScope(functionDeclaration);
 
   // DQ (5/28/2022): The problem is that for a member function build from scratch and added to the AST,
-  // there is one level of name qualification too mucyh being requested, and it is an error to use global 
+  // there is one level of name qualification too mucyh being requested, and it is an error to use global
   // qualification in these cases with at least GNU v10.
   // Introduce error checking to detect when there is too much name qualification being requested.
   // This needs to be fixed correctly before this point.
@@ -18148,7 +18177,7 @@ NameQualificationTraversal::setNameQualification ( SgNamespaceAliasDeclarationSt
    }
 
 // DQ (7/7/2021): Added function to trim the leading "::" from the qualified name.
-static void trimLeadingGlobalNameQualification(std::string &s) 
+static void trimLeadingGlobalNameQualification(std::string &s)
    {
      s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) { return ch != ':'; }));
    }
@@ -18220,8 +18249,8 @@ NameQualificationTraversal::setNameQualificationOnType(SgInitializedName* initia
      mfprintf(mlog [ WARN ] ) ("sourceSequenceForTypeDeclaration = %u \n",sourceSequenceForTypeDeclaration);
 #endif
 
-  // DQ (7/7/2021): For a transformation (e.g. outlining), the values will be zero, so test for this explicitly 
-  // and if so, then we want to output the name qualification. Note that zero for the source sequence implaies 
+  // DQ (7/7/2021): For a transformation (e.g. outlining), the values will be zero, so test for this explicitly
+  // and if so, then we want to output the name qualification. Note that zero for the source sequence implaies
   // that this is a transformation.
   // bool outputNameQualification = sourceSequenceForTypeDeclaration < sourceSequenceForInitializedName;
   // bool outputNameQualification = (sourceSequenceForTypeDeclaration == 0 && sourceSequenceForInitializedName == 0) || sourceSequenceForTypeDeclaration < sourceSequenceForInitializedName;

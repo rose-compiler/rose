@@ -555,7 +555,7 @@ namespace
         //       since SgEnumDeclaration only accepts SgInitializedName as enumerators
         //       SgInitializedName are created with the name 'c' instead of character constants.
         SgExpression&       repval = getEnumRepresentationValue(name.elem(), ctx);
-        SgInitializedName&  sgnode = mkInitializedName(name.ident, enumty, &repval);
+        SgInitializedName&  sgnode = mkEnumeratorDecl(name.ident, enumty, repval, ctx.scope());
 
         sgnode.set_scope(enumdcl.get_scope());
         attachSourceLocation(sgnode, elem, ctx);
