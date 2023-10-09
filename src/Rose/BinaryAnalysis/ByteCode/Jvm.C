@@ -100,9 +100,13 @@ JvmMethod::annotate()
     auto jvmInsn{isSgAsmJvmInstruction(insn)};
 
     switch (jvmInsn->get_kind()) {
-      case opcode::invokevirtual:
+      case opcode::getstatic:
+      case opcode::putstatic:
+      case opcode::invokedynamic:
+      case opcode::invokeinterface:
       case opcode::invokespecial:
       case opcode::invokestatic:
+      case opcode::invokevirtual:
       case opcode::new_: {
         if (auto expr = isSgAsmIntegerValueExpression(insn->get_operandList()->get_operands()[0])) {
           comment = JvmMethod::name(expr->get_value(), pool);
@@ -110,17 +114,6 @@ JvmMethod::annotate()
         }
         break;
       }
-
-      case opcode::invokeinterface:
-      case opcode::invokedynamic: {
-        // These two have additional operands
-        if (auto expr = isSgAsmIntegerValueExpression(insn->get_operandList()->get_operands()[0])) {
-          comment = JvmMethod::name(expr->get_value(), pool);
-          expr->set_comment(comment);
-        }
-        break;
-      }
-
       default: ;
     }
   }
