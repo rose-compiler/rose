@@ -13,162 +13,6 @@
 
 bool DebugDefUseChain();
 
-template <class Node>
-class BuildDefUseChain
-{
- protected:
-  DefUseChain<Node>* graph;
-  std::vector<Node*>& defvec;
-
-  const ReachingDefinitionGenerator *g;
-  AliasAnalysisInterface& alias;
-  AstInterface& fa;
-
- public:
-  void CreateEdges( Node* cur, const AstNodePtr& ref, const ReachingDefinitions& in)
-  {
-    ReachingDefinitions known = g->get_empty_set();
-    ReachingDefinitions unknown = in;
-    std::string varname;
-    AstNodePtr scope;
-    if (fa.IsVarRef(ref, 0, &varname, &scope)) {
-      unknown = known = g->get_def_set(varname, scope);
-      unknown.complement();
-      known &= in;
-      unknown &= in;
-    }
-    for (size_t i = 0; i < defvec.size(); ++i) {
-        Node* def = defvec[i];
-        assert (def != 0);
-        if (known.has_member(i) ||
-            (unknown.has_member(i) && alias.may_alias( fa, ref, def->get_ref()) )) {
-          if (DebugDefUseChain())
-             std::cerr << " creating edge from " << def->toString() << std::endl;
-          graph->CreateEdge(def, cur);
-        }
-        else if (DebugDefUseChain())  {
-          if (!unknown.has_member(i))
-             std::cerr << "not in reaching definition: " << def->toString();
-          else if (!alias.may_alias( fa, ref, def->get_ref()))
-             std::cerr << "not aliased: " << def->toString();
-        }
-    }
-  }
-  BuildDefUseChain(  DefUseChain<Node>* _graph, std::vector<Node*>& _defvec,
-                     const ReachingDefinitionGenerator *_g,
-                     AliasAnalysisInterface& _alias,
-                     AstInterface& _fa)
-    : graph(_graph), defvec(_defvec), g(_g), alias(_alias), fa(_fa) {}
-};
-
-template <class Node>
-class ProcessGenInfo
-  : public CollectObject<std::pair<AstNodePtr, AstNodePtr> >,
-    public BuildDefUseChain<Node>
-{
-  ReachingDefinitions& in;
-  std::map<AstNodePtr, Node*>& defmap;
-
-  bool operator()( const std::pair<AstNodePtr, AstNodePtr>& mod)
-  {
-    std::string varname;
-    AstNodePtr scope;
-    if (DebugDefUseChain()) {
-      std::cerr << "processing gen mod info : " << AstInterface::AstToString(mod.first) << " : " << AstInterface::AstToString(mod.second) << std::endl;
-      DumpDefSet(BuildDefUseChain<Node>::defvec,in);
-    }
-
-    typename std::map<AstNodePtr,Node*>::const_iterator p = defmap.find( mod.first);
-    assert( p != defmap.end());
-    Node* cur = (*p).second;
-    this->CreateEdges( cur, mod.first, in);
-    if (BuildDefUseChain<Node>::fa.IsVarRef(mod.first, 0, &varname, &scope)) {
-      BuildDefUseChain<Node>::g->add_def( in, varname, scope, mod);
-    }
-    else {
-      BuildDefUseChain<Node>::g->add_unknown_def( in, mod);
-    }
-    if (DebugDefUseChain()) {
-      std::cerr << "finish processing gen mod info : " << AstInterface::AstToString(mod.first) << " : " << AstInterface::AstToString(mod.second) << std::endl;
-      DumpDefSet(BuildDefUseChain<Node>::defvec,in);
-    }
-    return true;
-  }
-public:
-  ProcessGenInfo( DefUseChain<Node>* _graph, std::vector<Node*>& _defvec,
-                     const ReachingDefinitionGenerator *_g,
-                     AliasAnalysisInterface& _alias,
-                     AstInterface& _fa, std::map<AstNodePtr, Node*>& dm, ReachingDefinitions& _in)
-    : BuildDefUseChain<Node>(_graph, _defvec, _g, _alias, _fa), in(_in), defmap(dm) {}
-};
-
-template <class Node>
-class ProcessKillInfo
-  : public CollectObject<std::pair<AstNodePtr, AstNodePtr> >,
-    public BuildDefUseChain<Node>
-{
-  ReachingDefinitions& in;
-  std::map<AstNodePtr, Node*>& defmap;
-
-  bool operator()( const std::pair<AstNodePtr, AstNodePtr>& mod)
-  {
-    std::string varname;
-    AstNodePtr scope;
-    if (DebugDefUseChain()) {
-      std::cerr << "processing kill mod info : " << AstInterface::AstToString(mod.first) << " : " << AstInterface::AstToString(mod.second) << std::endl;
-      DumpDefSet(BuildDefUseChain<Node>::defvec,in);
-    }
-    if (BuildDefUseChain<Node>::fa.IsVarRef(mod.first, 0, &varname, &scope)) {
-      ReachingDefinitions kill = BuildDefUseChain<Node>::g->get_def_set(varname, scope);
-      kill.complement();
-      in &= kill;
-    }
-    if (DebugDefUseChain()) {
-      std::cerr << "finish processing kill mod info : " << AstInterface::AstToString(mod.first) << " : " << AstInterface::AstToString(mod.second) << std::endl;
-      DumpDefSet(BuildDefUseChain<Node>::defvec,in);
-    }
-    return true;
-  }
-public:
-  ProcessKillInfo( DefUseChain<Node>* _graph, std::vector<Node*>& _defvec,
-                     const ReachingDefinitionGenerator *_g,
-                     AliasAnalysisInterface& _alias,
-                     AstInterface& _fa, std::map<AstNodePtr, Node*>& dm, ReachingDefinitions& _in)
-    : BuildDefUseChain<Node>(_graph, _defvec, _g, _alias, _fa), in(_in), defmap(dm) {}
-};
-
-
-
-template <class Node>
-class ProcessUseInfo
-  : public CollectObject< std::pair<AstNodePtr, AstNodePtr> >,
-    public BuildDefUseChain<Node>
-{
-  ReachingDefinitions& in;
-
-  bool operator()( const std::pair<AstNodePtr, AstNodePtr>& read)
-  {
-    if (DebugDefUseChain())  {
-       std::cerr << "processind read info : " << AstInterface::AstToString(read.first) << " : " << AstInterface::AstToString(read.second) << std::endl;
-         DumpDefSet(BuildDefUseChain<Node>::defvec,in);
-    }
-    Node* cur = BuildDefUseChain<Node>::graph->CreateNode( BuildDefUseChain<Node>::fa, read.first, read.second, false);
-    if (cur == 0) {
-       if (DebugDefUseChain())
-           std::cerr << "do not create node in def-use chain \n";
-        return false;
-    }
-    this->CreateEdges( cur, read.first, in);
-    return true;
-  }
-public:
-  ProcessUseInfo( DefUseChain<Node>* _graph, std::vector<Node*>& _defvec,
-                     const ReachingDefinitionGenerator *_g,
-                     AliasAnalysisInterface& _alias,
-                     AstInterface& _fa, ReachingDefinitions& _in)
-    :  BuildDefUseChain<Node>(_graph, _defvec, _g, _alias, _fa), in(_in)  {}
-};
-
 template<class Node>
 void DumpDefSet( const std::vector<Node*>& defvec, const ReachingDefinitions& in)
 {
@@ -205,7 +49,7 @@ build( AstInterface& fa, ReachingDefinitionAnalysis& r,
 {
   std::vector <Node*> defvec;
   const ReachingDefinitionGenerator* g = r.get_generator();
-  StmtSideEffectCollect collect(f);
+  StmtSideEffectCollect<AstNodePtr> collect(fa, f);
 
   std::map<AstNodePtr, Node*> defmap;
   const ReachingDefinitionBase& base = g->get_base();
@@ -232,16 +76,106 @@ build( AstInterface& fa, ReachingDefinitionAnalysis& r,
          std::cerr << std::endl;
       }
 
-      ProcessUseInfo<Node> opread( this, defvec, g, alias,fa, in);
-      ProcessGenInfo<Node> opgen( this, defvec, g, alias, fa, defmap, in);
-      ProcessKillInfo<Node> opkill( this, defvec, g, alias, fa, defmap, in);
+      auto CreateEdges = [&fa,&g,&alias,this,&in,&defvec] 
+              (Node* cur, const AstNodePtr& ref) {
+         ReachingDefinitions known = g->get_empty_set();
+         ReachingDefinitions unknown = in;
+         std::string varname;
+         AstNodePtr scope;
+         if (fa.IsVarRef(ref, 0, &varname, &scope)) {
+           unknown = known = g->get_def_set(varname, scope);
+           unknown.complement();
+           known &= in;
+           unknown &= in;
+         }
+         for (size_t i = 0; i < defvec.size(); ++i) {
+             Node* def = defvec[i];
+             assert (def != 0);
+             if (known.has_member(i) ||
+                 (unknown.has_member(i) && alias.may_alias( fa, ref, def->get_ref()) )) {
+               if (DebugDefUseChain())
+                  std::cerr << " creating edge from " << def->toString() << std::endl;
+               this->CreateEdge(def, cur);
+             }
+             else if (DebugDefUseChain())  {
+               if (!unknown.has_member(i))
+                  std::cerr << "not in reaching definition: " << def->toString();
+               else if (!alias.may_alias( fa, ref, def->get_ref()))
+                  std::cerr << "not aliased: " << def->toString();
+             }
+         }
+      };
+      // Collecting read set.
+      std::function<bool(AstNodePtr,AstNodePtr)>  opread = 
+              [&defvec,this, &g, &alias, &fa, &in, &CreateEdges]
+            ( AstNodePtr read_first, AstNodePtr read_second) {
+        if (DebugDefUseChain())  {
+           std::cerr << "processind read info : " << AstInterface::AstToString(read_first) << " : " << AstInterface::AstToString(read_second) << std::endl;
+            DumpDefSet(defvec,in);
+        }
+        Node* cur = this->CreateNode( fa, read_first, read_second, false);
+        if (cur == 0) {
+           if (DebugDefUseChain())
+               std::cerr << "do not create node in def-use chain \n";
+            return false;
+        }
+        CreateEdges( cur, read_first);
+        return true;
+      };
+      // Collecting mod set.
+      std::function<bool(AstNodePtr,AstNodePtr)> opgen = 
+              [this, &defvec, &g, &alias, &fa, &defmap, &in, &CreateEdges]
+        (AstNodePtr mod_first, AstNodePtr mod_second) {
+          std::string varname;
+          AstNodePtr scope;
+          if (DebugDefUseChain()) {
+            std::cerr << "processing gen mod info : " << AstInterface::AstToString(mod_first) << " : " << AstInterface::AstToString(mod_second) << std::endl;
+            DumpDefSet(defvec,in);
+          }
+          typename std::map<AstNodePtr,Node*>::const_iterator p = defmap.find( mod_first);
+          assert( p != defmap.end());
+          Node* cur = (*p).second;
+          CreateEdges( cur, mod_first);
+          std::pair<AstNodePtr,AstNodePtr> mod(mod_first, mod_second);
+          if (fa.IsVarRef(mod_first, 0, &varname, &scope)) {
+            g->add_def( in, varname, scope, mod);
+          }
+          else {
+            g->add_unknown_def( in, mod);
+          }
+          if (DebugDefUseChain()) {
+            std::cerr << "finish processing gen mod info : " << AstInterface::AstToString(mod_first) << " : " << AstInterface::AstToString(mod_second) << std::endl;
+            DumpDefSet(defvec,in);
+          }
+          return true;
+      };
+      std::function<bool(AstNodePtr, AstNodePtr)> opkill = 
+                      [this, &defvec, g, &alias, &fa, &defmap, &in]
+       (AstNodePtr mod_first, AstNodePtr mod_second) {
+          std::string varname;
+          AstNodePtr scope;
+          if (DebugDefUseChain()) {
+            std::cerr << "processing kill mod info : " << AstInterface::AstToString(mod_first) << " : " << AstInterface::AstToString(mod_second) << std::endl;
+            DumpDefSet(defvec,in);
+          }
+          if (fa.IsVarRef(mod_first, 0, &varname, &scope)) {
+             ReachingDefinitions kill = g->get_def_set(varname, scope);
+             kill.complement();
+             in &= kill;
+           }
+           if (DebugDefUseChain()) {
+             std::cerr << "finish processing kill mod info : " << AstInterface::AstToString(mod_first) << " : " << AstInterface::AstToString(mod_second) << std::endl;
+             DumpDefSet(defvec,in);
+           }
+           return true;
+      };
       std::list <AstNodePtr>& stmts = cur->GetStmts();
       for (std::list<AstNodePtr>::iterator p = stmts.begin(); p != stmts.end();
            ++p) {
         AstNodePtr cur = *p;
         if (DebugDefUseChain())
             std::cerr << "processing stmt : " << AstInterface::AstToString(cur) << std::endl;
-        collect(fa, cur, &opgen, &opread, &opkill);
+        collect(cur, &opgen, &opread, &opkill);
       }
   }
 

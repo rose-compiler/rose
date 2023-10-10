@@ -46,7 +46,7 @@ class  AstTreeDepGraphAnal
 };
 
 class  BuildAstTreeDepGraph : public AstTreeDepGraphAnal, 
-                              public ProcessAstTree
+                              public ProcessAstTree<AstNodePtr>
 {
  private:
    typedef SinglyLinkedListWrap <StmtNodeInfo> StmtStackType;

@@ -220,40 +220,26 @@ Build(LoopTreeLocalityAnal& tc, LoopTreeNode* root)
      
 void DepCompAstRefAnal:: Append(LoopTreeNode* _root)
      {
-       
-       typedef std::map<AstNodePtr,int,std::less<AstNodePtr> > AstIntMap;
-       class CollectModRef : public CollectObject<std::pair<AstNodePtr,AstNodePtr> >  
-        { 
-         AstIntMap& refmap;
-         public:
-         CollectModRef(AstIntMap&  m) : refmap(m){}
-         bool operator()(const std::pair<AstNodePtr,AstNodePtr>& cur)
-          {
-            if (refmap.find(cur.first) == refmap.end()) {
+       std::function<bool(AstNodePtr,AstNodePtr)> modcollect = 
+               [this](AstNodePtr mod_first, AstNodePtr mod_second) {
+            if (refmap.find(mod_first) == refmap.end()) {
                 int num = refmap.size();
-                refmap[cur.first] = -(num+1);
+                refmap[mod_first] = -(num+1);
                 return true;
             }
-            else if (refmap[cur.first] > 0)
-                refmap[cur.first] = -refmap[cur.first];
+            else if (refmap[mod_first] > 0)
+                refmap[mod_first] = -refmap[mod_first];
             return false;
-          }
-       } modcollect(refmap);
-       class CollectReadRef : public CollectObject<std::pair<AstNodePtr,AstNodePtr> >  
-        { 
-         AstIntMap& refmap;
-         public:
-         CollectReadRef(AstIntMap&  m) : refmap(m){}
-         bool operator()(const std::pair<AstNodePtr,AstNodePtr>& cur)
-          {
-            if (refmap.find(cur.first) == refmap.end()) {
+          };
+       std::function<bool(AstNodePtr,AstNodePtr)> readcollect = 
+               [this](AstNodePtr read_first, AstNodePtr read_second) {
+            if (refmap.find(read_first) == refmap.end()) {
                 int num = refmap.size();
-                refmap[cur.first] = num+1;
+                refmap[read_first] = num+1;
                 return true;
             }
              return false;
-          }
-       } readcollect(refmap);
+          };
        int stmtnum = stmtmap.size();
        AstInterface& fa = LoopTransformInterface::getAstInterface();
        for (LoopTreeTraverse stmts(_root, LoopTreeTraverse::PostOrder); 
@@ -261,8 +247,8 @@ void DepCompAstRefAnal:: Append(LoopTreeNode* _root)
            LoopTreeNode* curstmt = stmts.Current();
            assert(stmtmap.find(curstmt) == stmtmap.end());
            stmtmap[curstmt] = stmtnum; 
-           StmtSideEffectCollect effect(LoopTransformInterface::getSideEffectInterface());
-           effect(fa,curstmt->GetOrigStmt(), &modcollect, &readcollect);  
+           StmtSideEffectCollect<AstNodePtr> effect(fa, LoopTransformInterface::getSideEffectInterface());
+           effect(curstmt->GetOrigStmt(), &modcollect, &readcollect);  
        } 
      }
 

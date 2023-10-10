@@ -1,27 +1,36 @@
 #include <iostream>
 #include "ProcessAstTree.h"
+#include "AstInterface_ROSE.h"
 #include <ROSE_ASSERT.h>
 
-void ProcessAstTreeBase:: SetLocation( TraverseLocation state)
+#ifdef TEMPLATE_ONLY
+template <class AstNodePtr>
+void ProcessAstTreeBase<AstNodePtr>:: SetLocation(TraverseLocation state)
    {
      scopeStack.First()->GetEntry().state = state;
    }
-ProcessAstTreeBase::TraverseState ProcessAstTreeBase:: GetScope() const
+template <class AstNodePtr>
+typename ProcessAstTreeBase<AstNodePtr>::TraverseState 
+ProcessAstTreeBase<AstNodePtr>:: GetScope() const
    {
      return (scopeStack.size() > 0)? scopeStack.First()->GetEntry()
                      : TraverseState(AstNodePtr(), 0, BEFORE);
    }
-void ProcessAstTreeBase:: PopScope()
+template <class AstNodePtr>
+void ProcessAstTreeBase<AstNodePtr>:: PopScope()
    {
      scopeStack.PopFirst();
    }
-void ProcessAstTreeBase::
+template <class AstNodePtr>
+void ProcessAstTreeBase<AstNodePtr>::
 PushScope( const AstNodePtr& scope, int skip, TraverseLocation state)
    {
      TraverseState tmp(scope, skip, state);
      scopeStack.PushFirst(tmp);
    }
-bool ProcessAstTreeBase::Traverse( AstInterface &fa, const AstNodePtr& s,
+template <class AstNodePtr>
+bool ProcessAstTreeBase<AstNodePtr>::
+Traverse( AstInterface &fa, const AstNodePtr& s,
                       AstInterface::TraversalVisitType t)
    {
      cur = s;
@@ -47,7 +56,8 @@ bool ProcessAstTreeBase::Traverse( AstInterface &fa, const AstNodePtr& s,
      }
      return result;
    }
-void ProcessAstTreeBase:: Skip( const AstNodePtr& s)
+template <class AstNodePtr>
+void ProcessAstTreeBase<AstNodePtr>:: Skip( const AstNodePtr& s)
      {
         if (cur == s)  {
             PushScope(s, INSIDE, INSIDE);
@@ -56,21 +66,26 @@ void ProcessAstTreeBase:: Skip( const AstNodePtr& s)
             PushScope(s, INSIDE_AT, BEFORE);
         }
      }
-void ProcessAstTreeBase:: SkipUntil( const AstNodePtr& s)
+template <class AstNodePtr>
+void ProcessAstTreeBase<AstNodePtr>:: SkipUntil( const AstNodePtr& s)
      {  PushScope( s,  BEFORE, BEFORE); }
-void ProcessAstTreeBase:: SkipOnly( const AstNodePtr& s)
+template <class AstNodePtr>
+void ProcessAstTreeBase<AstNodePtr>:: SkipOnly( const AstNodePtr& s)
      {
         PushScope( s,  AT, BEFORE);
      }
-bool ProcessAstTreeBase:: operator()( AstInterface &fa, const AstNodePtr& s)
+template <class AstNodePtr>
+bool ProcessAstTreeBase<AstNodePtr>:: operator()( AstInterface &fa, const AstNodePtr& s)
     {
       AstNodePtr tmp = cur;
-      bool r = ReadAstTraverse(fa, s, *this, AstInterface::PreAndPostOrder);
+      AstNodePtrImpl s_(s);
+      bool r = ReadAstTraverse(fa, s_.get_ptr(), *this, AstInterface::PreAndPostOrder);
       cur = tmp;
       return r;
     }
 
-bool ProcessAstTree:: ProcessLoop(AstInterface &fa, const AstNodePtr& s, const AstNodePtr& body,
+template <class AstNodePtr>
+bool ProcessAstTree<AstNodePtr>:: ProcessLoop(AstInterface &fa, const AstNodePtr& s, const AstNodePtr& body,
                        AstInterface::TraversalVisitType t)
      {
         if (t == AstInterface::PreVisit) {
@@ -79,7 +94,8 @@ bool ProcessAstTree:: ProcessLoop(AstInterface &fa, const AstNodePtr& s, const A
         }
         return true;
      }
-bool ProcessAstTree:: ProcessIf( AstInterface &fa, const AstNodePtr& s,
+template <class AstNodePtr>
+bool ProcessAstTree<AstNodePtr>:: ProcessIf( AstInterface &fa, const AstNodePtr& s,
                              const AstNodePtr& cond, const AstNodePtr& truebody,
                              const AstNodePtr& falsebody,
                              AstInterface::TraversalVisitType t)
@@ -89,22 +105,28 @@ bool ProcessAstTree:: ProcessIf( AstInterface &fa, const AstNodePtr& s,
         }
        return true;
      }
-bool ProcessAstTree::
+template <class AstNodePtr>
+bool ProcessAstTree<AstNodePtr>::
 ProcessFunctionDefinition( AstInterface &fa, const AstNodePtr& s,
                          const AstNodePtr& body, AstInterface::TraversalVisitType t)
           { return true;}
-bool ProcessAstTree::
+template <class AstNodePtr>
+bool ProcessAstTree<AstNodePtr>::
 ProcessBlock( AstInterface &fa, const AstNodePtr& s,
                                   AstInterface::TraversalVisitType t)
   { return true;}
-bool ProcessAstTree:: ProcessGoto( AstInterface &fa, const AstNodePtr& s,
+template <class AstNodePtr>
+bool ProcessAstTree<AstNodePtr>:: ProcessGoto( AstInterface &fa, const AstNodePtr& s,
                                const AstNodePtr& dest)
                                 { Skip(s); return true; }
-bool ProcessAstTree:: ProcessDecls(AstInterface &fa, const AstNodePtr& s)
+template <class AstNodePtr>
+bool ProcessAstTree<AstNodePtr>:: ProcessDecls(AstInterface &fa, const AstNodePtr& s)
                                 { Skip(s); return true; }
-bool ProcessAstTree:: ProcessStmt(AstInterface &fa, const AstNodePtr& s)
+template <class AstNodePtr>
+bool ProcessAstTree<AstNodePtr>:: ProcessStmt(AstInterface &fa, const AstNodePtr& s)
                                { Skip(s); return true; }
-bool ProcessAstTree:: ProcessTree( AstInterface &_fa, const AstNodePtr& s,
+template <class AstNodePtr>
+bool ProcessAstTree<AstNodePtr>:: ProcessTree( AstInterface &_fa, const AstNodePtr& s,
                        AstInterface::TraversalVisitType t)
    {
      AstInterface& fa = static_cast<AstInterface&>(_fa);
@@ -132,6 +154,7 @@ bool ProcessAstTree:: ProcessTree( AstInterface &_fa, const AstNodePtr& s,
      }
      return success;
    }
-bool ProcessAstTree:: operator()( AstInterface &fa, const AstNodePtr& s)
+template <class AstNodePtr>
+bool ProcessAstTree<AstNodePtr>:: operator()( AstInterface &fa, const AstNodePtr& s)
     { return ReadAstTraverse(fa, s, *this, AstInterface::PreAndPostOrder); }
-
+#endif

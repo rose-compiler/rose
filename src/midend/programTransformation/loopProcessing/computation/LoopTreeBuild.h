@@ -6,7 +6,7 @@
 #include <ProcessAstTree.h>
 
 
-class LoopTreeBuild : public ProcessAstTree
+class LoopTreeBuild : public ProcessAstTree<AstNodePtr>
 {
   LoopTreeCreate *lt;
   LoopTreeNode *cur;
