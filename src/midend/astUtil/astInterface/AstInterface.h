@@ -87,6 +87,7 @@ protected:
   AstInterfaceImpl *impl;
   
 public:
+  typedef ::AstNodePtr AstNodePtr;
   // Adding Robb's meageage mechanism (data member and function).
   static Sawyer::Message::Facility mlog;
   static void initDiagnostics();
@@ -331,6 +332,7 @@ typedef AstInterface::AstList AstNodeList;
 typedef AstInterface::AstTypeList AstTypeList;
 
 //! Interface class for processing each AstNode from within the ReadAstTraverse function.
+template <class AstNodePtr>
 class ProcessAstNode
 {
   public:
@@ -341,8 +343,8 @@ class ProcessAstNode
 
 //! Traverse an entire AST, where $op$ is invoked on each AST node to gather information. 
 bool ReadAstTraverse(AstInterface& fa, const AstNodePtr& root, 
-                        ProcessAstNode& op, 
-                        AstInterface::TraversalOrderType t = AstInterface::PreOrder); 
+                        ProcessAstNode<AstNodePtr>& op, 
+                        AstInterface::TraversalOrderType t = AstInterface::PreOrder);
 
 //! Interface class for processing each AstNode from within the TransformAstTraverse function.
 class TransformAstTree

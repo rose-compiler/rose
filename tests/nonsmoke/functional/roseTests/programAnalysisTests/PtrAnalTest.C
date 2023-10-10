@@ -15,7 +15,7 @@ void PrintUsage( char* name)
   std::cerr << name << "<program name>" << "\n";
 }
 
-class PrintPtrAnalMap : public ProcessAstNode
+class PrintPtrAnalMap : public ProcessAstNode<AstNodePtr>
 {
    PtrAnal& m;
   public:

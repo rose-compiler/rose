@@ -13,30 +13,32 @@ void PrintUsage( char* name)
   cerr << name << " <options> " << "<program name>" << "\n";
 }
 
-class TestVarRefCollect : public CollectObject< pair<AstNodePtr,AstNodePtr> >
+class TestVarRefCollect 
 {
   string refs;
  public:
-   virtual bool operator()( const pair<AstNodePtr,AstNodePtr>& var) 
-      { refs = refs + " " + AstNodePtrImpl(var.first)->unparseToString(); return true;}
+   virtual bool operator()( AstNodePtr var_first, AstNodePtr var_second) 
+      { refs = refs + " " + AstNodePtrImpl(var_first)->unparseToString(); return true;}
    void DumpOut( ostream& out) 
      { out << refs;  }
    void Clear() { refs = ""; }
 };
 
-class TestStmtModRef : public ProcessAstTree
+class TestStmtModRef : public ProcessAstTree<AstNodePtr>
 {
   TestVarRefCollect mod, use, kill;
-  StmtSideEffectCollect op;
+  StmtSideEffectCollect<AstNodePtr> op;
   void Clear() { mod.Clear(); use.Clear(); kill.Clear(); }
  public:
+  TestStmtModRef(AstInterface& fa) : op(fa) {}
   bool ProcessTree( AstInterface &fa, const AstNodePtr& s,
                        AstInterface::TraversalVisitType t)
   {
      if (t == AstInterface::PreVisit && fa.IsExecutableStmt(s)) {
+         std::function<bool(AstNodePtr,AstNodePtr)> mod_f(mod), use_f(use), kill_f(kill);
          std::cout << AstNodePtrImpl(s)->unparseToString();
          std::cout << "\n";
-         bool r = op ( fa, s, &mod, &use, &kill);
+         bool r = op ( s, &mod_f, &use_f, &kill_f);
          std::cout << "modref: ";
          mod.DumpOut(std::cout);
          std::cout << " ;  readref: ";
@@ -78,9 +80,9 @@ main ( int argc,  char * argv[] )
      ROSE_ASSERT(sageFile != NULL);
 
      SgGlobal *root = sageFile->get_globalScope();
-     TestStmtModRef op;
      AstInterfaceImpl scope(root);
      AstInterface fa(&scope);
+     TestStmtModRef op(fa);
      op( fa, AstNodePtrImpl(&sageProject));
    }
 

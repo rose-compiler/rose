@@ -42,24 +42,17 @@ void PrintResults(const std::string buffer) {
    }
 }
 
-class AccuAstRefs : public CollectObject<std::pair<AstNodePtr,AstNodePtr> >
-{
-   CollectObject<AstNodePtr> &col;
-  public:
-   AccuAstRefs( CollectObject<AstNodePtr> &_col)
-      :  col(_col) {}
-   bool operator()(const std::pair<AstNodePtr,AstNodePtr>& n)
-   {
-      return col(n.first);
-   }
-};
 bool AnalyzeStmtRefs( AstInterface& fa, const AstNodePtr& n,
                       CollectObject<AstNodePtr> &wRefs,
                       CollectObject<AstNodePtr> &rRefs)
 {
-  AccuAstRefs colw(wRefs);
-  AccuAstRefs colr(rRefs);
-  return StmtSideEffectCollect(LoopTransformInterface::getSideEffectInterface())(fa,n,&colw,&colr);
+  std::function<bool(AstNodePtr, AstNodePtr)> colw = [&wRefs]
+          (AstNodePtr mod_first, AstNodePtr mod_second) {
+                  return wRefs(mod_first); };
+  std::function<bool(AstNodePtr, AstNodePtr)> colr = [&rRefs]
+          (AstNodePtr read_first, AstNodePtr read_second) {
+                  return rRefs(read_first); };
+  return StmtSideEffectCollect<AstNodePtr>(fa, LoopTransformInterface::getSideEffectInterface())(n,&colw,&colr);
 }
 
 std::string toString( std::vector<SymbolicVal> & analvec)

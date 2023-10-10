@@ -28,15 +28,18 @@ class NoFunctionSideEffectAnalysis : public FunctionSideEffectInterface
   virtual ~NoFunctionSideEffectAnalysis() {}
 };
 
+template <class AstNodePtr>
 class SideEffectAnalysisInterface 
 {
  public:
+  typedef std::function<bool(AstNodePtr,AstNodePtr)> CollectObject;
+ 
   // returns false if stmts may ---modify-- unknown (non-collected) locations
   virtual bool 
    get_side_effect( AstInterface& fa, const AstNodePtr& stmts,
-                    CollectObject< std::pair<AstNodePtr, AstNodePtr> >* mod,
-                    CollectObject< std::pair<AstNodePtr, AstNodePtr> >* read= 0,
-                    CollectObject< std::pair<AstNodePtr, AstNodePtr> >* kill = 0) = 0;
+                    CollectObject* mod,
+                    CollectObject* read= 0,
+                    CollectObject* kill = 0) = 0;
   virtual ~SideEffectAnalysisInterface() {}
 };
 

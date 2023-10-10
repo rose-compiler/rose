@@ -63,7 +63,7 @@ inline std::string CFGConfig::EdgeType2String( EdgeType e)
 }
 
 template <class Node>
-class BuildCFGTraverse : public ProcessAstTree
+class BuildCFGTraverse : public ProcessAstTree<AstNodePtr>
 {
  public:
   BuildCFGTraverse( BuildCFGConfig<Node>& g) : graph(g), node(0), stmtnum(0) {}

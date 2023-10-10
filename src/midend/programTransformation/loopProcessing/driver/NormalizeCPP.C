@@ -43,7 +43,7 @@ void FixFileInfo(SgNode* n)
   }
 }
 
-class NormalizeLoopTraverse : public ProcessAstTree
+class NormalizeLoopTraverse : public ProcessAstTree<AstNodePtr>
 {
   bool succ;
   virtual bool ProcessLoop(AstInterface &fa, const AstNodePtr& _s,
@@ -142,7 +142,7 @@ class NormalizeLoopTraverse : public ProcessAstTree
    bool operator () ( AstInterface& li, const AstNodePtr& root)
     {
        succ = true;
-       ProcessAstTree::operator()(li, root);
+       ProcessAstTree<AstNodePtr>::operator()(li, root);
        return succ;
     }
 };
