@@ -1644,7 +1644,7 @@ namespace
     void handle(SgTryStmt& n)
     {
       // skip the block, just print the statements
-      const bool    requiresBeginEnd = (  !si::Ada::isFunctionTryBlock(n)
+      const bool    requiresBeginEnd = (  !si::Ada::tryFollowsDeclarativeBlock(n)
                                        && !si::Ada::isPackageTryBlock(n)
                                        && !isOnlyStatementInBlock(n) // \todo does this include the two previous conditions?
                                        );

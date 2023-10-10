@@ -823,13 +823,13 @@ namespace Ada
     return declarationLimit(SG_DEREF(block));
   }
 
-  bool isFunctionTryBlock(const SgTryStmt& n)
+  bool tryFollowsDeclarativeBlock(const SgTryStmt& n)
   {
     SgBasicBlock*                blk = isSgBasicBlock(n.get_parent());
     if (blk == nullptr) return false;
 
-    SgFunctionDefinition*        def = isSgFunctionDefinition(blk->get_parent());
-    if (def == nullptr) return false;
+    //~ SgFunctionDefinition*        def = isSgFunctionDefinition(blk->get_parent());
+    //~ if (def == nullptr) return false;
 
     SgStatementPtrList&          stmts = blk->get_statements();
     SgStatementPtrList::iterator dcllimit = declarationLimit(stmts);
@@ -838,9 +838,9 @@ namespace Ada
     return std::distance(dcllimit, stmts.end()) == 1;
   }
 
-  bool isFunctionTryBlock(const SgTryStmt* n)
+  bool tryFollowsDeclarativeBlock(const SgTryStmt* n)
   {
-    return n && isFunctionTryBlock(*n);
+    return n && tryFollowsDeclarativeBlock(*n);
   }
 
   bool isPackageTryBlock(const SgTryStmt& n)
@@ -851,7 +851,7 @@ namespace Ada
 
   bool isPackageTryBlock(const SgTryStmt* n)
   {
-    return n && isFunctionTryBlock(*n);
+    return n && isPackageTryBlock(*n);
   }
 
   namespace
