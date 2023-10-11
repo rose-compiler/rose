@@ -453,6 +453,7 @@ struct Range : std::pair<T, T>
 };
 
 /// A range of Asis Units
+/*
 struct UnitIdRange : Range<Unit_ID_Ptr>
 {
   using base = Range<Unit_ID_Ptr>;
@@ -460,6 +461,7 @@ struct UnitIdRange : Range<Unit_ID_Ptr>
 
   using base::base;
 };
+*/
 
 /// A range of Asis Elements
 struct ElemIdRange : Range<Element_ID_Ptr>
@@ -583,9 +585,9 @@ namespace
     //~ ADA_ASSERT(replace || m.find(key) == m.end());
     if (!(replace || m.find(key) == m.end()))
     {
-      logError() << "replace node " << typeid(*m[key]).name()
-                 << " with " << typeid(val).name()
-                 << std::endl;
+      logFlaw() << "replace node " << typeid(*m[key]).name()
+                << " with " << typeid(val).name()
+                << std::endl;
     }
 
     m[key] = &val;
@@ -649,7 +651,7 @@ namespace
   /// returns a nullptr if the element is not in the map.
   inline
   Element_Struct*
-  retrieveAsOpt(const ASIS_element_id_to_ASIS_MapType& map, int key)
+  retrieveElemOpt(const ASIS_element_id_to_ASIS_MapType& map, int key)
   {
     ADA_ASSERT(key >= 0); // fails on invalid elements
 
@@ -662,14 +664,15 @@ namespace
   /// retrieves data from the big Asis map
   inline
   Element_Struct&
-  retrieveAs(const ASIS_element_id_to_ASIS_MapType& map, int key)
+  retrieveElem(const ASIS_element_id_to_ASIS_MapType& map, int key)
   {
     ADA_ASSERT(key != 0); // fails on optional elements
 
-    return SG_DEREF(retrieveAsOpt(map, key));
+    return SG_DEREF(retrieveElemOpt(map, key));
   }
 
   /// Type mapping for range element types
+  /*
   template <class T>
   struct range_types {};
 
@@ -684,7 +687,7 @@ namespace
   {
     using type = UnitIdRange;
   };
-
+  */
 
   /// traverses an Asis linked list and calls \ref functor
   ///   for each element in the range [\ref first, \ref limit).
@@ -707,7 +710,7 @@ namespace
 
   /// traverses a list of pointers to Elements (or Units) in the range [\ref first, \ref limit),
   ///   looks up the associated Asis struct, and passes it as argument to \ref func.
-  ///   e.g., func(*retrieveAs(map, *first))
+  ///   e.g., func(*retrieveElem(map, *first))
   /// \tparam ElemT    the type of the element (Unit or Element)
   /// \tparam PtrT     pointer to elements
   /// \tparam AsisMapT the map type
@@ -722,7 +725,7 @@ namespace
   {
     while (first != limit)
     {
-      if (ElemT* el = retrieveAsOpt(map, *first))
+      if (ElemT* el = retrieveElemOpt(map, *first))
       {
         func(*el);
       }
@@ -742,23 +745,20 @@ namespace
   /// traverses all IDs in the range \ref range and calls functor with the associated
   ///   struct of each element.
   /// \returns a copy of \ref func after all elements have been traversed
-  template <class Range, class AsisMapT, class FnT>
+  template <class AsisMapT, class FnT>
   inline
   FnT
-  traverseIDs(Range range, AsisMapT& map, FnT functor)
+  traverseIDs(ElemIdRange range, AsisMapT& map, FnT functor)
   {
-    return traverseIDs<typename Range::value_type>(range.first, range.second, map, functor);
+    return traverseIDs<ElemIdRange::value_type>(range.first, range.second, map, functor);
   }
 
   /// creates a range for a contiguous sequence of IDs
-  template <class Lst>
   inline
-  typename range_types<Lst>::type
-  idRange(Lst lst)
+  ElemIdRange
+  idRange(Element_ID_List lst)
   {
-    typedef typename range_types<Lst>::type RangeType;
-
-    return RangeType(lst.IDs, lst.IDs + lst.Length);
+    return ElemIdRange{lst.IDs, lst.IDs + lst.Length};
   }
 
 
@@ -771,6 +771,25 @@ namespace
   inline
   bool isValidId(int id) { return !isInvalidId(id); }
 
+  /// \brief invokes fn(*lhsbeg, *rhsbeg) for N element pairs.
+  ///        N = std::distance(lhsbeg, lhslim).
+  /// \returns a copy of fn.
+  /// \pre   *(rhsbeg+N) is a valid operation
+  template <class LhsIterator, class RhsIterator, class BinaryFunction>
+  BinaryFunction
+  foreach_pair( LhsIterator lhsbeg, LhsIterator lhslim,
+                RhsIterator rhsbeg,
+                BinaryFunction fn
+              )
+  {
+    while (lhsbeg != lhslim)
+    {
+      fn(*lhsbeg, *rhsbeg);
+      ++lhsbeg; ++rhsbeg;
+    }
+
+    return fn;
+  }
 } // anonymous
 
 
