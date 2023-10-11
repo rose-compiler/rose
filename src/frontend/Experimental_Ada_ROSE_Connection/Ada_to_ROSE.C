@@ -496,7 +496,7 @@ namespace
 
   void handleElementID(Element_ID id, AstContext ctx, bool isPrivate = false)
   {
-    handleElement(retrieveAs(elemMap(), id), ctx, isPrivate);
+    handleElement(retrieveElem(elemMap(), id), ctx, isPrivate);
   }
 
   //

@@ -112,11 +112,14 @@ namespace Ada_ROSE_Translation
   NameData
   getName(Element_Struct& elem, AstContext ctx);
 
-  /// creates a discriminated declaration in scope ctx.scope() iff id is not 0.
+  /// creates a discriminated declaration in scope ctx.scope() iff primary is not 0.
+  /// \param primary   the ID of the discriminant list of this declaration
+  /// \param secondary the optional ID of the discriminant list of a forward declaration in ASIS
+  /// \param ctx       the translation context
   /// \returns a SgAdaDiscriminatedTypeDecl object, iff id is not 0
   ///          nullptr, otherwise
   SgAdaDiscriminatedTypeDecl*
-  createDiscriminatedDeclID_opt(Element_ID id, AstContext ctx);
+  createDiscriminatedDeclID_opt(Element_ID primary, Element_ID secondary, AstContext ctx);
 
   /// processes inherited subprograms and (TODO) declarations
   /// \param derivedType  the derived or extended type

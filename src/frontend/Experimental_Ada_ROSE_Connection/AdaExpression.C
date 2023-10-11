@@ -57,7 +57,7 @@ namespace
     }
 
     SgExpression&       arg        = getExprID(assoc.Actual_Parameter, ctx);
-    Element_Struct*     formalParm = retrieveAsOpt(elemMap(), assoc.Formal_Parameter);
+    Element_Struct*     formalParm = retrieveElemOpt(elemMap(), assoc.Formal_Parameter);
 
     /* unused fields (A_Parameter_Association)
        bool                   Is_Normalized
@@ -872,7 +872,7 @@ namespace
   ///   (e.g., true for objects, false for scope-qualification)
   bool roseRequiresPrefixID(Element_ID el, bool fromPrefix, AstContext ctx)
   {
-    Element_Struct&    elem = retrieveAs(elemMap(), el);
+    Element_Struct&    elem = retrieveElem(elemMap(), el);
     ADA_ASSERT(elem.Element_Kind == An_Expression);
 
     Expression_Struct& expr = elem.The_Union.Expression;
@@ -1128,7 +1128,7 @@ getAttributeExpr(Expression_Struct& expr, AstContext ctx, ElemIdRange argRangeSu
 SgAdaAttributeExp&
 getAttributeExprID(Element_ID el, AstContext ctx, ElemIdRange argRangeSuppl)
 {
-  Element_Struct& elem = retrieveAs(elemMap(), el);
+  Element_Struct& elem = retrieveElem(elemMap(), el);
 
   ADA_ASSERT(elem.Element_Kind == An_Expression);
   SgAdaAttributeExp& sgnode = getAttributeExpr(elem.The_Union.Expression, ctx, argRangeSuppl);
@@ -1227,7 +1227,7 @@ namespace
 
   Expression_Kinds queryExprKindID(Element_ID id)
   {
-    Element_Struct& elem = retrieveAs(elemMap(), id);
+    Element_Struct& elem = retrieveElem(elemMap(), id);
 
     ADA_ASSERT(elem.Element_Kind == An_Expression);
     return elem.The_Union.Expression.Expression_Kind;
@@ -1239,7 +1239,7 @@ namespace
     if (id <= 0)
       return nullptr;
 
-    Element_Struct* elem = retrieveAsOpt(elemMap(), id); // \todo try the non_Opt version
+    Element_Struct* elem = retrieveElemOpt(elemMap(), id); // \todo try the non_Opt version
     if (elem == nullptr || (elem->Element_Kind != A_Declaration))
       return nullptr;
 
@@ -1251,7 +1251,7 @@ namespace
 
     for (Element_ID_Ptr pos = range.first; pos != range.second; ++pos)
     {
-      if (Element_Struct* el = retrieveAsOpt(elemMap(), *pos))
+      if (Element_Struct* el = retrieveElemOpt(elemMap(), *pos))
       {
         if (el->Element_Kind == A_Defining_Name)
         {
@@ -1676,7 +1676,7 @@ namespace
         {
           logKind("An_Allocation_From_Qualified_Expression", elem.ID);
 
-          Element_Struct&    allocElem = retrieveAs(elemMap(), expr.Allocator_Qualified_Expression);
+          Element_Struct&    allocElem = retrieveElem(elemMap(), expr.Allocator_Qualified_Expression);
           ADA_ASSERT(allocElem.Element_Kind == An_Expression);
 
           Expression_Struct& allocExpr = allocElem.The_Union.Expression;
@@ -1736,7 +1736,7 @@ namespace
   SgExpression&
   getExprID_undecorated(Element_ID el, AstContext ctx, OperatorCallSupplement suppl)
   {
-    return getExpr_undecorated(retrieveAs(elemMap(), el), ctx, std::move(suppl));
+    return getExpr_undecorated(retrieveElem(elemMap(), el), ctx, std::move(suppl));
   }
 }
 
@@ -1770,7 +1770,7 @@ getExpr(Element_Struct& elem, AstContext ctx, OperatorCallSupplement suppl)
 SgExpression&
 getExprID(Element_ID el, AstContext ctx, OperatorCallSupplement suppl)
 {
-  return getExpr(retrieveAs(elemMap(), el), ctx, std::move(suppl));
+  return getExpr(retrieveElem(elemMap(), el), ctx, std::move(suppl));
 }
 
 SgExpression&
@@ -1956,13 +1956,13 @@ getDefinitionExpr(Element_Struct& el, AstContext ctx)
 SgExpression&
 getDiscreteRangeID(Element_ID id, AstContext ctx)
 {
-  return getDiscreteRange(retrieveAs(elemMap(), id), ctx);
+  return getDiscreteRange(retrieveElem(elemMap(), id), ctx);
 }
 
 SgExpression&
 getDefinitionExprID(Element_ID id, AstContext ctx)
 {
-  return getDefinitionExpr(retrieveAs(elemMap(), id), ctx);
+  return getDefinitionExpr(retrieveElem(elemMap(), id), ctx);
 }
 
 OperatorCallSupplement::ArgDescList
@@ -2058,7 +2058,7 @@ queryCorrespondingAstNode(Element_Struct& elem, AstContext ctx)
 SgNode*
 queryCorrespondingAstNodeID(Element_ID id, AstContext ctx)
 {
-  return queryCorrespondingAstNode(retrieveAs(elemMap(), id), ctx);
+  return queryCorrespondingAstNode(retrieveElem(elemMap(), id), ctx);
 }
 
 } // namespace Ada_ROSE_Translation
