@@ -328,7 +328,7 @@ RosettaGenerator::genPropertyDataMember(std::ostream &rosetta, std::ostream &hea
     //   NO_DELETE
     //     This controls whether ROSETTA's generated destructors delete data members. However, it's always possible to define
     //     data members in such a way that they get deleted automatically by the default destructor, so Rosetta always uses
-    //     NO_DELETE, does not generate `delete` calls in the destructur, and leaves it up to the node authors. For instance,
+    //     NO_DELETE, does not generate `delete` calls in the destructor, and leaves it up to the node authors. For instance,
     //     if a node points to something that should be deleted, then the type for that member should be a smart pointer that
     //     indicates that the node owns the pointed-to data. Furthermore, we've disabled ROSETTA's generation of destructors.
     //   COPY_DATA
