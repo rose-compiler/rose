@@ -39,7 +39,6 @@ Grammar::setUpExpressions () {
     AbsOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                               "../Grammar/Expression.code" );
     AbsOp.editSubstitute           ( "PRECEDENCE_VALUE", "15" );
-    AbsOp.setFunctionPrototype ( "HEADER_ABS_OPERATOR", "../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #ifdef USE_FORTRAN_IR_NODES
@@ -65,9 +64,6 @@ Grammar::setUpExpressions () {
     NEW_TERMINAL_MACRO (AdaAttributeExp,        "AdaAttributeExp",        "ADA_ATTRIBUTE_EXP" );
     AdaAttributeExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                         "../Grammar/Expression.code" );
-    AdaAttributeExp.setFunctionPrototype ( "HEADER_ADA_ATTRIBUTE_EXPRESSION", "../Grammar/Expression.code" );
-    //~ AdaAttributeExp.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_FUNCTIONS", "../Grammar/Expression.code" );
-    //~ AdaAttributeExp.editSubstitute       ( "LIST_NAME", "arg" );
     AdaAttributeExp.setDataPrototype ( "SgName", "attribute", "",
                                        CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     AdaAttributeExp.setDataPrototype ( "SgExpression*", "object", "= nullptr",
@@ -80,7 +76,6 @@ Grammar::setUpExpressions () {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (AdaFloatVal,            "AdaFloatVal",            "ADA_FLOAT_VAL" );
     AdaFloatVal.setFunctionSource      ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
-    AdaFloatVal.setFunctionPrototype ( "HEADER_ADA_FLOAT_VALUE_EXPRESSION", "../Grammar/Expression.code" );
     AdaFloatVal.setDataPrototype ( "std::string", "valueString", "= \"\"",
                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     AdaFloatVal.setFunctionSource            ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
@@ -92,7 +87,6 @@ Grammar::setUpExpressions () {
     NEW_TERMINAL_MACRO (AdaOthersExp,           "AdaOthersExp",               "ADA_OTHERS_EXPR" );
     AdaOthersExp.setFunctionSource   ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
     AdaOthersExp.editSubstitute      ( "PRECEDENCE_VALUE", "16" );
-    AdaOthersExp.setFunctionPrototype    ( "HEADER_ADA_OTHERS_EXPRESSION", "../Grammar/Expression.code" );
     AdaOthersExp.setFunctionSource      ( "SOURCE_GET_TYPE_GENERIC", "../Grammar/Expression.code" );
     AdaOthersExp.editSubstitute         ( "GENERIC_TYPE", "SgTypeDefault" );
 
@@ -101,7 +95,6 @@ Grammar::setUpExpressions () {
     AdaProtectedRefExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                            "../Grammar/Expression.code" );
 
-    AdaProtectedRefExp.setFunctionPrototype ( "HEADER_ADA_PROTECTED_REF_EXPRESSION", "../Grammar/Expression.code" );
     AdaProtectedRefExp.setDataPrototype ( "SgAdaProtectedSpecDecl*", "decl", "= NULL",
                                           CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -109,7 +102,6 @@ Grammar::setUpExpressions () {
     NEW_TERMINAL_MACRO (AdaRenamingRefExp,      "AdaRenamingRefExp",      "ADA_RENAMING_REF" );
     AdaRenamingRefExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                           "../Grammar/Expression.code" );
-    AdaRenamingRefExp.setFunctionPrototype ( "HEADER_ADA_RENAMING_REF_EXPRESSION", "../Grammar/Expression.code" );
     AdaRenamingRefExp.setDataPrototype ( "SgAdaRenamingDecl*", "decl", "= NULL",
                                          CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -117,7 +109,6 @@ Grammar::setUpExpressions () {
     NEW_TERMINAL_MACRO (AdaTaskRefExp,          "AdaTaskRefExp",          "ADA_TASK_REF" );
     AdaTaskRefExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                       "../Grammar/Expression.code" );
-    AdaTaskRefExp.setFunctionPrototype ( "HEADER_ADA_TASK_REF_EXPRESSION", "../Grammar/Expression.code" );
     AdaTaskRefExp.setDataPrototype ( "SgAdaTaskSpecDecl*", "decl", "= NULL",
                                      CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -125,7 +116,6 @@ Grammar::setUpExpressions () {
     NEW_TERMINAL_MACRO (AdaUnitRefExp,          "AdaUnitRefExp",          "ADA_UNIT_REF" );
     AdaUnitRefExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                       "../Grammar/Expression.code" );
-    AdaUnitRefExp.setFunctionPrototype ( "HEADER_ADA_UNIT_REF_EXPRESSION", "../Grammar/Expression.code" );
     // PP (06/30/21): For now AdaUnitRefExp can refer to any declaration.
     //                Consider narrowing that to packages via SgAdaPackageSymbol/SgAdaPackageSpecDecl
     //                once we have generic packages.
@@ -137,7 +127,6 @@ Grammar::setUpExpressions () {
     AddOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                               "../Grammar/Expression.code" );
     AddOp.editSubstitute           ( "PRECEDENCE_VALUE", "12" );
-    AddOp.setFunctionPrototype ( "HEADER_ADD_OPERATOR", "../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (AddressOfOp,            "AddressOfOp",            "ADDRESS_OP" );
@@ -354,7 +343,6 @@ Grammar::setUpExpressions () {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #if USE_X10_IR_NODES
     NEW_TERMINAL_MACRO (AtExp,      "AtExp",      "ATEXP_NODE" );
-    AtExp.setFunctionPrototype          ( "HEADER_ATEXP_EXPRESSION", "../Grammar/Expression.code");
     AtExp.setDataPrototype              ( "SgExpression*", "expression", "= NULL",
                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
     AtExp.setDataPrototype              ( "SgStatement*", "body", "= NULL",
@@ -367,13 +355,11 @@ Grammar::setUpExpressions () {
     AtOp.setFunctionSource  ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                               "../Grammar/Expression.code" );
     AtOp.editSubstitute            ( "PRECEDENCE_VALUE", "15" );
-    AtOp.setFunctionPrototype  ( "HEADER_AT_OPERATOR",  "../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (AwaitExpression,           "AwaitExpression",           "AWAIT_EXPR" );
     AwaitExpression.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
     // DQ (7/25/2020): Adding C++17 language features (required for C++20 support).
-    AwaitExpression.setFunctionPrototype        ( "HEADER_AWAIT_EXPRESSION", "../Grammar/Expression.code" );
     AwaitExpression.setDataPrototype            ( "SgExpression*", "value", "= NULL",
                                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
     AwaitExpression.setFunctionSource     ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
@@ -383,7 +369,6 @@ Grammar::setUpExpressions () {
     BitAndOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                  "../Grammar/Expression.code" );
     BitAndOp.editSubstitute        ( "PRECEDENCE_VALUE", " 8" );
-    BitAndOp.setFunctionPrototype ( "HEADER_BIT_AND_OPERATOR", "../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (BitComplementOp,        "BitComplementOp",        "BIT_COMPLEMENT_OP" );
@@ -391,7 +376,6 @@ Grammar::setUpExpressions () {
     // automatically generated version of the post_construction_initialization function.
     // BitComplementOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
     BitComplementOp.editSubstitute ( "PRECEDENCE_VALUE", "15" );
-    BitComplementOp.setFunctionPrototype ( "HEADER_BIT_COMPLEMENT_OPERATOR", "../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // CR (4/28/2020): Added this node to support the Jovial bitwise EQV operator.
@@ -399,26 +383,22 @@ Grammar::setUpExpressions () {
     BitEqvOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                  "../Grammar/Expression.code" );
     BitEqvOp.editSubstitute        ( "PRECEDENCE_VALUE", " 6" );
-    BitEqvOp.setFunctionPrototype ( "HEADER_BIT_EQV_OPERATOR", "../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (BitOrOp,                "BitOrOp",                "BITOR_OP"  );
     BitOrOp.setFunctionSource  ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                  "../Grammar/Expression.code" );
     BitOrOp.editSubstitute         ( "PRECEDENCE_VALUE", " 6" );
-    BitOrOp.setFunctionPrototype  ( "HEADER_BIT_OR_OPERATOR",  "../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (BitXorOp,               "BitXorOp",               "BITXOR_OP" );
     BitXorOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                  "../Grammar/Expression.code" );
     BitXorOp.editSubstitute        ( "PRECEDENCE_VALUE", " 7" );
-    BitXorOp.setFunctionPrototype ( "HEADER_BIT_XOR_OPERATOR", "../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (BoolValExp,             "BoolValExp",             "BOOL_VAL" );
     BoolValExp.setFunctionSource       ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
-    BoolValExp.setFunctionPrototype ( "HEADER_BOOLEAN_VALUE_EXPRESSION", "../Grammar/Expression.code" );
     BoolValExp.setDataPrototype ( "int", "value", "= 0",
                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     BoolValExp.setFunctionSource             ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
@@ -449,7 +429,6 @@ Grammar::setUpExpressions () {
     // FMZ (2/6/2009): Added for SgCAFCoExpression--following SgPntrArrRefExp
     CAFCoExpression.editSubstitute ( "PRECEDENCE_VALUE", " 16" );
     //FMZ (2/5/2009): Added for CAFCoExpression => change teamId from "SgName" to "SgVarRefExp*"
-    CAFCoExpression.setFunctionPrototype ( "HEADER_CO_EXPRESSION", "../Grammar/Expression.code" );
 
     //CAFCoExpression.setDataPrototype ( "SgName", "teamId",  "= \"\"",
     //                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,NO_TRAVERSAL,NO_DELETE);
@@ -555,7 +534,6 @@ Grammar::setUpExpressions () {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (CharVal,                "CharVal",                "CHAR_VAL" );
     CharVal.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
-    CharVal.setFunctionPrototype ( "HEADER_CHAR_VALUE_EXPRESSION", "../Grammar/Expression.code" );
     CharVal.setDataPrototype ( "char", "value", "= 0",
                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     CharVal.setDataPrototype ( "std::string", "valueString", "= \"\"",
@@ -567,7 +545,6 @@ Grammar::setUpExpressions () {
     NEW_TERMINAL_MACRO (ChooseExpression,          "ChooseExpression",          "CHOOSE_EXPR" );
     ChooseExpression.setFunctionSource        ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
     // DQ (7/25/2020): Adding C++17 language features (required for C++20 support).
-    ChooseExpression.setFunctionPrototype        ( "HEADER_CHOOSE_EXPRESSION", "../Grammar/Expression.code" );
     ChooseExpression.setDataPrototype            ( "SgExpression*", "value", "= NULL",
                                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
     ChooseExpression.setFunctionSource    ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
@@ -586,7 +563,6 @@ Grammar::setUpExpressions () {
     ClassNameRefExp.excludeFunctionPrototype ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
     ClassNameRefExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                         "../Grammar/Expression.code" );
-    ClassNameRefExp.setFunctionPrototype ( "HEADER_CLASS_NAME_REF_EXPRESSION", "../Grammar/Expression.code" );
     ClassNameRefExp.setDataPrototype ( "SgClassSymbol*", "symbol", "= NULL",
                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -601,7 +577,6 @@ Grammar::setUpExpressions () {
     ColonShapeExp.editSubstitute       ( "PRECEDENCE_VALUE", " 17" );
     // DQ (11/18/2007): This IR node is used in declarations!
     // Colon.setFunctionPrototype ( "HEADER_COLON_EXPRESSION", "../Grammar/Expression.code" );
-    ColonShapeExp.setFunctionPrototype ( "HEADER_COLON_SHAPE_EXPRESSION", "../Grammar/Expression.code" );
     // Colon.setDataPrototype ( "SgExpression*", "lowerBound", "= NULL",
     //                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
     // Colon.setDataPrototype ( "SgExpression*", "stride", "= NULL",
@@ -624,7 +599,6 @@ Grammar::setUpExpressions () {
     ComplexVal.setFunctionSource       ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
     // DQ (8/27/2006): Added support for Complex values (save the values as long doubles internally within the AST)
     // JJW (11/22/2008): Changed members to SgValueExp*; real_value can be NULL for imaginary numbers
-    ComplexVal.setFunctionPrototype ( "HEADER_COMPLEX_VALUE_EXPRESSION", "../Grammar/Expression.code" );
     // DQ (10/7/2014): Added missing default values (caught by ROSETTA generated aterm support).
     ComplexVal.setDataPrototype ( "SgValueExp*", "real_value", "= NULL",
                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -681,7 +655,6 @@ Grammar::setUpExpressions () {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (Comprehension,             "Comprehension",                "COMPREHENSION");
     Comprehension.setFunctionSource           ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
-    Comprehension.setFunctionPrototype ( "HEADER_COMPREHENSION", "../Grammar/Expression.code" );
     Comprehension.setDataPrototype ("SgExpression*", "target", "= NULL",
                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
     Comprehension.setDataPrototype ("SgExpression*", "iter", "= NULL",
@@ -696,14 +669,12 @@ Grammar::setUpExpressions () {
     ConcatenationOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                         "../Grammar/Expression.code" );
     ConcatenationOp.editSubstitute ( "PRECEDENCE_VALUE", " 3" );
-    ConcatenationOp.setFunctionPrototype ( "HEADER_CONCATENATION_OPERATOR", "../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (ConjugateOp,            "ConjugateOp",            "CONJUGATE_OP" );
     ConjugateOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                     "../Grammar/Expression.code" );
     ConjugateOp.editSubstitute      ( "PRECEDENCE_VALUE", "15" );
-    ConjugateOp.setFunctionPrototype ( "HEADER_CONJUGATE_OPERATOR", "../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (ConditionalExp,         "ConditionalExp",         "EXPR_CONDITIONAL" );
@@ -789,7 +760,6 @@ Grammar::setUpExpressions () {
     // sgCudaKernelCallExp is a node for CUDA support, it catch kernel's call.
     NEW_TERMINAL_MACRO (CudaKernelCallExp,        "CudaKernelCallExp",        "KERN_CALL" );
     CudaKernelCallExp.editSubstitute ( "PRECEDENCE_VALUE", " 0" );
-    CudaKernelCallExp.setFunctionPrototype ( "HEADER_CUDA_KERNEL_CALL_EXPRESSION", "../Grammar/Expression.code" );
     CudaKernelCallExp.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_FUNCTIONS", "../Grammar/Expression.code" );
     CudaKernelCallExp.setDataPrototype ( "SgCudaKernelExecConfig*", "exec_config", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
@@ -799,7 +769,6 @@ Grammar::setUpExpressions () {
     NEW_TERMINAL_MACRO (CudaKernelExecConfig,     "CudaKernelExecConfig",     "EXEC_CONF" );
     CudaKernelExecConfig.editSubstitute ( "PRECEDENCE_VALUE", " 0" );
     // TV (04/22/2010): CUDA support
-    CudaKernelExecConfig.setFunctionPrototype ( "HEADER_CUDA_KERNEL_EXEC_CONFIG", "../Grammar/Expression.code" );
     CudaKernelExecConfig.setDataPrototype ( "SgExpression*", "grid",   "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
     CudaKernelExecConfig.setDataPrototype ( "SgExpression*", "blocks", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
     CudaKernelExecConfig.setDataPrototype ( "SgExpression*", "shared", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -847,7 +816,6 @@ Grammar::setUpExpressions () {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (DictionaryComprehension,   "DictionaryComprehension",      "DICTIONARY_COMPREHENSION" );
     DictionaryComprehension.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
-    DictionaryComprehension.setFunctionPrototype ( "HEADER_DICTIONARY_COMPREHENSION", "../Grammar/Expression.code" );
     DictionaryComprehension.setDataPrototype ("SgKeyDatumPair*", "element", "= NULL",
                                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
     DictionaryComprehension.setDataPrototype ("SgExprListExp*", "generators", "= NULL",
@@ -875,7 +843,6 @@ Grammar::setUpExpressions () {
     DivideOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                  "../Grammar/Expression.code" );
     DivideOp.editSubstitute        ( "PRECEDENCE_VALUE", "13" );
-    DivideOp.setFunctionPrototype ( "HEADER_DIVIDE_OPERATOR", "../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #if USE_X10_IR_NODES
@@ -909,7 +876,6 @@ Grammar::setUpExpressions () {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (DoubleVal,              "DoubleVal",              "DOUBLE_VAL" );
     DoubleVal.setFunctionSource        ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
-    DoubleVal.setFunctionPrototype ( "HEADER_DOUBLE_VALUE_EXPRESSION", "../Grammar/Expression.code" );
     DoubleVal.setDataPrototype ( "double", "value", "= 0.0",
                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     // DQ (11/9/2005): Added string to hold source code constant precisely (part of work with Andreas)
@@ -1016,7 +982,6 @@ Grammar::setUpExpressions () {
     ExponentiationAssignOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                                "../Grammar/Expression.code" );
     ExponentiationAssignOp.editSubstitute ( "PRECEDENCE_VALUE", " 2" );
-    ExponentiationAssignOp.setFunctionPrototype ( "HEADER_EXPONENTIATION_ASSIGN_OP", "../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #if USE_FORTRAN_IR_NODES
@@ -1030,16 +995,20 @@ Grammar::setUpExpressions () {
     // *** Expression objects using empty (non-existant) post_construction_initialization() member functions
     ExpressionRoot.setFunctionSource   ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
     ExpressionRoot.excludeFunctionPrototype ( "HEADER_PRECEDENCE", "../Grammar/Expression.code" );
-    ExpressionRoot.setFunctionPrototype ( "HEADER_EXPRESSION_ROOT_EXPRESSION", "../Grammar/Expression.code" );
     // QY:9/30/04: remove statement pointer. use parent pointer instead
     // ExpressionRoot.setDataPrototype ( "SgStatement*", "statement", "= NULL",
     //      CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     // ExpressionRoot.setAutomaticGenerationOfDataAccessFunctions(false);
+    // QY: 9/30/2004: removed stmt pointer inside exprRoot. Use parent pointer instead.
+    // void initialize_root (SgExpression* exp, SgStatement* stmt);
+
+    // DQ (12/17/2006): Removed to clean up code (not used, I think).
+    // void set_statement( SgStatement* stmt );
+    // SgStatement* get_statement() const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #if USE_X10_IR_NODES
     NEW_TERMINAL_MACRO (FinishExp,  "FinishExp",  "FINISHEXP_NODE" );
-    FinishExp.setFunctionPrototype      ( "HEADER_FINISHEXP_EXPRESSION", "../Grammar/Expression.code");
     FinishExp.setDataPrototype          ( "SgExpression*", "expression", "= NULL",
                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
     FinishExp.setDataPrototype          ( "SgStatement*", "body", "= NULL",
@@ -1049,7 +1018,6 @@ Grammar::setUpExpressions () {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (Float128Val,            "Float128Val",            "FLOAT_128_VAL" );
     Float128Val.setFunctionSource      ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
-    Float128Val.setFunctionPrototype ( "HEADER_FLOAT_128_VALUE_EXPRESSION", "../Grammar/Expression.code" );
     Float128Val.setDataPrototype ( "long double", "value", "= 0.0",
                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     // DQ (11/9/2005): Added string to hold source code constant precisely (part of work with Andreas)
@@ -1061,7 +1029,6 @@ Grammar::setUpExpressions () {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (Float80Val,             "Float80Val",             "FLOAT_80_VAL" );
     Float80Val.setFunctionSource       ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
-    Float80Val.setFunctionPrototype ( "HEADER_FLOAT_80_VALUE_EXPRESSION", "../Grammar/Expression.code" );
     Float80Val.setDataPrototype ( "long double", "value", "= 0.0",
                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     // DQ (11/9/2005): Added string to hold source code constant precisely (part of work with Andreas)
@@ -1073,7 +1040,6 @@ Grammar::setUpExpressions () {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (FloatVal,               "FloatVal",               "FLOAT_VAL" );
     FloatVal.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
-    FloatVal.setFunctionPrototype ( "HEADER_FLOAT_VALUE_EXPRESSION", "../Grammar/Expression.code" );
     FloatVal.setDataPrototype ( "float", "value", "= 0.0",
                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     // DQ (11/9/2005): Added string to hold source code constant precisely (part of work with Andreas)
@@ -1088,7 +1054,6 @@ Grammar::setUpExpressions () {
     // DQ (7/25/2020): Adding support for C++17 and C++20.
     FoldExpression.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
     // DQ (7/25/2020): Adding C++17 language features (required for C++20 support).
-    FoldExpression.setFunctionPrototype        ( "HEADER_FOLD_EXPRESSION", "../Grammar/Expression.code" );
     FoldExpression.setDataPrototype            ( "SgExpression*", "operands", "= NULL",
                                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
     FoldExpression.setDataPrototype            ( "std::string", "operator_token", "= \"\"",
@@ -1106,7 +1071,6 @@ Grammar::setUpExpressions () {
     // DQ (8/11/2014): Added support for C++11 decltype used in new function return syntax.
     FunctionParameterRefExp.editSubstitute ( "PRECEDENCE_VALUE", "16" );
     // DQ (8/8/2014): Added support for function parameter reference used in C++11 decltype type declarations.
-    FunctionParameterRefExp.setFunctionPrototype ( "HEADER_FUNCTION_PARAMETER_REFERENCE_EXPRESSION", "../Grammar/Expression.code" );
     FunctionParameterRefExp.setDataPrototype ("int", "parameter_number", "= -1",
                                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     FunctionParameterRefExp.setDataPrototype ("int", "parameter_levels_up", "= -1",
@@ -1196,7 +1160,6 @@ Grammar::setUpExpressions () {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #if USE_X10_IR_NODES
     NEW_TERMINAL_MACRO (HereExp,    "HereExp",    "HERE_NODE"   );
-    HereExp.setFunctionPrototype        ( "HEADER_HERE_EXPRESSION", "../Grammar/Expression.code");
     HereExp.setDataPrototype            ( "SgType*", "expression_type", "= NULL",
                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     HereExp.setDataPrototype            ( "SgExpression*", "expression", "= NULL",
@@ -1208,7 +1171,6 @@ Grammar::setUpExpressions () {
     ImagPartOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                    "../Grammar/Expression.code" );
     ImagPartOp.editSubstitute      ( "PRECEDENCE_VALUE", "15" );
-    ImagPartOp.setFunctionPrototype ( "HEADER_IMAG_PART_OPERATOR", "../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #if USE_FORTRAN_IR_NODES
@@ -1252,19 +1214,16 @@ Grammar::setUpExpressions () {
     IntegerDivideAssignOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                               "../Grammar/Expression.code" );
     IntegerDivideAssignOp.editSubstitute  ( "PRECEDENCE_VALUE", " 2" );
-    IntegerDivideAssignOp.setFunctionPrototype ( "HEADER_INTEGER_DIVIDE_ASSIGN_OP", "../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (IntegerDivideOp,        "IntegerDivideOp",        "INTEGER_DIV_OP" );
     IntegerDivideOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                         "../Grammar/Expression.code" );
     IntegerDivideOp.editSubstitute ( "PRECEDENCE_VALUE", "13" );
-    IntegerDivideOp.setFunctionPrototype ( "HEADER_INTEGER_DIVIDE_OPERATOR", "../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (IntVal,                 "IntVal",                 "INT_VAL" );
     IntVal.setFunctionSource           ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
-    IntVal.setFunctionPrototype ( "HEADER_INT_VALUE_EXPRESSION", "../Grammar/Expression.code" );
     IntVal.setDataPrototype ( "int", "value", "= 0",
                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     IntVal.setDataPrototype ( "std::string", "valueString", "= \"\"",
@@ -1276,7 +1235,6 @@ Grammar::setUpExpressions () {
 #if USE_FORTRAN_IR_NODES
     NEW_TERMINAL_MACRO (IOItemExpression,       "IOItemExpression",       "IO_ITEM_EXPR" );
     IOItemExpression.editSubstitute    ( "PRECEDENCE_VALUE", " 2" );
-    IOItemExpression.setFunctionPrototype ( "HEADER_IO_ITEM_EXPR", "../Grammar/Expression.code" );
     IOItemExpression.setDataPrototype ( "SgName", "name", "= \"\"",
                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     IOItemExpression.setDataPrototype ( "SgExpression*", "io_item", "= NULL",
@@ -1331,8 +1289,6 @@ Grammar::setUpExpressions () {
     NEW_TERMINAL_MACRO (JavaMarkerAnnotation,         "JavaMarkerAnnotation",         "JAVA_MARKER_ANNOTATION" );
     JavaMarkerAnnotation.setFunctionSource       ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
     JavaMarkerAnnotation.editSubstitute       ( "PRECEDENCE_VALUE", "16" );
-    // DQ (1/13/2014): Added Java support for Java annotations.
-    JavaMarkerAnnotation.setFunctionPrototype ( "HEADER_JAVA_MARKER_ANNOTATION", "../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (JavaNormalAnnotation,         "JavaNormalAnnotation",         "JAVA_NORMAL_ANNOTATION" );
@@ -1350,7 +1306,6 @@ Grammar::setUpExpressions () {
     JavaSingleMemberAnnotation.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
     JavaSingleMemberAnnotation.editSubstitute ( "PRECEDENCE_VALUE", "16" );
     // DQ (1/13/2014): Added Java support for Java annotations.
-    JavaSingleMemberAnnotation.setFunctionPrototype ( "HEADER_JAVA_SINGLE_MEMBER_ANNOTATION", "../Grammar/Expression.code" );
     JavaSingleMemberAnnotation.setDataPrototype ( "SgExpression*", "value", "= NULL",
                                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
@@ -1383,7 +1338,6 @@ Grammar::setUpExpressions () {
     JavaUnsignedRshiftOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                              "../Grammar/Expression.code" );
     JavaUnsignedRshiftOp.editSubstitute        ( "PRECEDENCE_VALUE", "11" );
-    JavaUnsignedRshiftOp.setFunctionPrototype ( "HEADER_JAVA_UNSIGNED_RIGHT_SHIFT_OPERATOR", "../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Rasmussen (04/09/2021) Used for specifying a value at a position/location in a Jovial table
@@ -1397,13 +1351,11 @@ Grammar::setUpExpressions () {
     // Rasmussen (06/24/2020) Initializer for Jovial tables (wraps SgExprListExp, useful for unparsing/analysis)
     NEW_TERMINAL_MACRO (JovialTablePresetExp, "JovialTablePresetExp", "JOVIAL_TABLE_PRESET_EXP" );
     // Rasmussen (6/24/2020): An initializer for Jovial tables
-    JovialTablePresetExp.setFunctionPrototype ( "HEADER_JOVIAL_TABLE_PRESET_EXP", "../Grammar/Expression.code" );
     JovialTablePresetExp.setDataPrototype("SgExprListExp*", "preset_list", "= NULL",   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (KeyDatumPair,              "KeyDatumPair",                 "KEY_DATUM_PAIR" );
     KeyDatumPair.setFunctionSource     ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
-    KeyDatumPair.setFunctionPrototype ( "HEADER_KEY_DATUM_PAIR", "../Grammar/Expression.code" );
     KeyDatumPair.setDataPrototype ("SgExpression*", "key", "= NULL",
                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
     KeyDatumPair.setDataPrototype ("SgExpression*", "datum", "= NULL",
@@ -1432,7 +1384,6 @@ Grammar::setUpExpressions () {
     // DQ (9/2/2014): Adding support for C++11 lambda expresions.
     LambdaExp.editSubstitute ( "PRECEDENCE_VALUE", "16" );
     // DQ (9/2/2014): Adding support for C++11 lambda expresions.
-    LambdaExp.setFunctionPrototype ( "HEADER_LAMBDA_EXPRESSION", "../Grammar/Expression.code" );
     LambdaExp.setDataPrototype ("SgLambdaCaptureList*", "lambda_capture_list", "= NULL",
                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
@@ -1500,7 +1451,6 @@ Grammar::setUpExpressions () {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (ListComprehension,         "ListComprehension",            "LIST_COMPREHENSION" );
     ListComprehension.setFunctionSource       ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
-    ListComprehension.setFunctionPrototype ( "HEADER_LIST_COMPREHENSION", "../Grammar/Expression.code" );
     ListComprehension.setDataPrototype ("SgExpression*", "element", "= NULL",
                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
     ListComprehension.setDataPrototype ("SgExprListExp*", "generators", "= NULL",
@@ -1510,13 +1460,11 @@ Grammar::setUpExpressions () {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (ListExp,                   "ListExp",                      "LIST_EXP" );
     ListExp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
-    ListExp.setFunctionPrototype ( "HEADER_LIST_EXP", "../Grammar/Expression.code" );
     ListExp.setFunctionSource      ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (LongDoubleVal,          "LongDoubleVal",          "LONG_DOUBLE_VAL" );
     LongDoubleVal.setFunctionSource    ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
-    LongDoubleVal.setFunctionPrototype ( "HEADER_LONG_DOUBLE_VALUE_EXPRESSION", "../Grammar/Expression.code" );
     LongDoubleVal.setDataPrototype ( "long double", "value", "= 0.0",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     // DQ (11/9/2005): Added string to hold source code constant precisely (part of work with Andreas)
@@ -1528,7 +1476,6 @@ Grammar::setUpExpressions () {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (LongIntVal,             "LongIntVal",             "LONG_INT_VAL" );
     LongIntVal.setFunctionSource       ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
-    LongIntVal.setFunctionPrototype ( "HEADER_LONG_INT_VALUE_EXPRESSION", "../Grammar/Expression.code" );
     LongIntVal.setDataPrototype ( "long int", "value", "= 0",
                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     LongIntVal.setDataPrototype ( "std::string", "valueString", "= \"\"",
@@ -1539,7 +1486,6 @@ Grammar::setUpExpressions () {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (LongLongIntVal,         "LongLongIntVal",         "LONG_LONG_INT_VAL" );
     LongLongIntVal.setFunctionSource   ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
-    LongLongIntVal.setFunctionPrototype ( "HEADER_LONG_LONG_VALUE_EXPRESSION", "../Grammar/Expression.code" );
     LongLongIntVal.setDataPrototype ( "long long int", "value", "= 0",
                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     LongLongIntVal.setDataPrototype ( "std::string", "valueString", "= \"\"",
@@ -1564,7 +1510,6 @@ Grammar::setUpExpressions () {
     // LshiftOp.editSubstitute        ( "PRECEDENCE_VALUE", "11" );
     // RshiftOp.editSubstitute        ( "PRECEDENCE_VALUE", "11" );
     LshiftOp.editSubstitute        ( "PRECEDENCE_VALUE", "11" );
-    LshiftOp.setFunctionPrototype ( "HEADER_LEFT_SHIFT_OPERATOR", "../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //Sk (07/16/2015) This Expression represents a : in Matlab also called magic colon
@@ -1576,8 +1521,6 @@ Grammar::setUpExpressions () {
     //SK (06/23/2015) SgMatrixExp for Matlab Matrix
     NEW_TERMINAL_MACRO (MatrixExp, "MatrixExp", "MATRIX_EXP");
     MatrixExp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
-    // DQ (comment only): These are Matlab IR nodes:
-    MatrixExp.setFunctionPrototype ( "HEADER_MATRIX_EXP", "../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (MatrixTransposeOp, "MatrixTransposeOp", "MATRIX_TRANSPOSE_OP");
@@ -1660,7 +1603,6 @@ Grammar::setUpExpressions () {
     MinusOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                 "../Grammar/Expression.code" );
     MinusOp.editSubstitute         ( "PRECEDENCE_VALUE", "15" );
-    MinusOp.setFunctionPrototype ( "HEADER_MINUS_OPERATOR", "../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (ModAssignOp,            "ModAssignOp",            "MOD_ASSIGN_OP" );
@@ -1673,7 +1615,6 @@ Grammar::setUpExpressions () {
     ModOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                               "../Grammar/Expression.code" );
     ModOp.editSubstitute           ( "PRECEDENCE_VALUE", "13" );
-    ModOp.setFunctionPrototype ( "HEADER_MOD_OPERATOR", "../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (MultAssignOp,           "MultAssignOp",           "MULT_ASSIGN_OP" );
@@ -1686,7 +1627,6 @@ Grammar::setUpExpressions () {
     MultiplyOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                    "../Grammar/Expression.code" );
     MultiplyOp.editSubstitute      ( "PRECEDENCE_VALUE", "13" );
-    MultiplyOp.setFunctionPrototype ( "HEADER_MULTIPLY_OPERATOR", "../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (NaryBooleanOp,          "NaryBooleanOp",          "NARY_BOOLEAN_OP");
@@ -1833,7 +1773,6 @@ Grammar::setUpExpressions () {
     NEW_TERMINAL_MACRO (NullptrValExp,          "NullptrValExp",          "NULLPTR_VAL" );
     NullptrValExp.setFunctionSource    ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
     // DQ (7/31/2014): Adding support for nullptr constant value expression.
-    NullptrValExp.setFunctionPrototype ( "HEADER_NULLPTR_VALUE_EXPRESSION", "../Grammar/Expression.code" );
     // DQ (7/31/2014): I don't think this need a value.
     // NullptrValExp.setDataPrototype ( "SgNullptrType*", "value", "= 0",
     //                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1929,13 +1868,11 @@ Grammar::setUpExpressions () {
     RealPartOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                    "../Grammar/Expression.code" );
     RealPartOp.editSubstitute      ( "PRECEDENCE_VALUE", "15" );
-    RealPartOp.setFunctionPrototype ( "HEADER_REAL_PART_OPERATOR", "../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (RefExp,                 "RefExp",                 "TYPE_REF" );
     RefExp.excludeFunctionPrototype          ( "HEADER_GET_TYPE", "../Grammar/Expression.code" );
     RefExp.setFunctionSource           ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
-    RefExp.setFunctionPrototype ( "HEADER_REFERENCE_EXPRESSION", "../Grammar/Expression.code" );
     RefExp.setDataPrototype     ( "SgType*", "type_name", "= NULL",
                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -1945,7 +1882,6 @@ Grammar::setUpExpressions () {
     RemOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                               "../Grammar/Expression.code" );
     RemOp.editSubstitute           ( "PRECEDENCE_VALUE", "13" );
-    RemOp.setFunctionPrototype ( "HEADER_REM_OPERATOR", "../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // CR (07/26/2020): Jovial replication operator for initialization expressions, also seen in Fortran
@@ -1953,7 +1889,6 @@ Grammar::setUpExpressions () {
     ReplicationOp.setFunctionSource   ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                         "../Grammar/Expression.code" );
     ReplicationOp.editSubstitute   ( "PRECEDENCE_VALUE", "13" );
-    ReplicationOp.setFunctionPrototype   ( "HEADER_REPLICATION_OPERATOR",   "../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (RshiftAssignOp,         "RshiftAssignOp",         "RSHIFT_ASSIGN_OP" );
@@ -1966,7 +1901,6 @@ Grammar::setUpExpressions () {
     RshiftOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                  "../Grammar/Expression.code" );
     RshiftOp.editSubstitute        ( "PRECEDENCE_VALUE", "11" );
-    RshiftOp.setFunctionPrototype ( "HEADER_RIGHT_SHIFT_OPERATOR", "../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (ScopeOp,                "ScopeOp",                "SCOPE_OP" );
@@ -1978,7 +1912,6 @@ Grammar::setUpExpressions () {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (SetComprehension,          "SetComprehension",             "SET_COMPREHENSION" );
     SetComprehension.setFunctionSource        ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
-    SetComprehension.setFunctionPrototype ( "HEADER_SET_COMPREHENSION", "../Grammar/Expression.code" );
     SetComprehension.setDataPrototype ("SgExpression*", "element", "= NULL",
                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
     SetComprehension.setDataPrototype ("SgExprListExp*", "generators", "= NULL",
@@ -1989,7 +1922,6 @@ Grammar::setUpExpressions () {
     NEW_TERMINAL_MACRO (ShortVal,               "ShortVal",               "SHORT_VAL" );
     ShortVal.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
     // URK (08/22/2006): Added string to hold source code constants of integer and character types precisely.
-    ShortVal.setFunctionPrototype ( "HEADER_SHORT_VALUE_EXPRESSION", "../Grammar/Expression.code" );
     ShortVal.setDataPrototype ( "short", "value", "= 0",
                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     ShortVal.setDataPrototype ( "std::string", "valueString", "= \"\"",
@@ -2066,8 +1998,6 @@ Grammar::setUpExpressions () {
                                     "../Grammar/Expression.code" );
     // DQ (7/25/2020): Adding C++20 support (need to lookup the correct operator precedence, made it the same as AddOp for now).
     SpaceshipOp.editSubstitute           ( "PRECEDENCE_VALUE", "12" );
-    // DQ (7/25/2020): Adding C++20 support (need to lookup the correct operator precedence, made it the same as AddOp for now).
-    SpaceshipOp.setFunctionPrototype ( "HEADER_SPACESHIP_OPERATOR", "../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // DQ (7/21/2006): Added support for GNU Statement Expression extension.
@@ -2082,7 +2012,6 @@ Grammar::setUpExpressions () {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (StringConversion,          "StringConversion",              "STR_CONV" );
     StringConversion.setFunctionSource        ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
-    StringConversion.setFunctionPrototype ( "HEADER_STRING_CONVERSION", "../Grammar/Expression.code" );
     StringConversion.setDataPrototype ("SgExpression*", "expression", "= NULL",
                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
     StringConversion.setFunctionSource     ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
@@ -2148,7 +2077,6 @@ Grammar::setUpExpressions () {
     SubtractOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                    "../Grammar/Expression.code" );
     SubtractOp.editSubstitute      ( "PRECEDENCE_VALUE", "12" );
-    SubtractOp.setFunctionPrototype ( "HEADER_SUBTRACT_OPERATOR", "../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (SuperExp,               "SuperExp",               "SUPER_NODE" );
@@ -2298,7 +2226,6 @@ Grammar::setUpExpressions () {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (TupleExp,                  "TupleExp",                     "TUPLE_EXP" );
     TupleExp.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
-    TupleExp.setFunctionPrototype ( "HEADER_TUPLE_EXP", "../Grammar/Expression.code" );
     TupleExp.setFunctionSource     ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2388,7 +2315,6 @@ Grammar::setUpExpressions () {
     UnaryAddOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                    "../Grammar/Expression.code" );
     UnaryAddOp.editSubstitute      ( "PRECEDENCE_VALUE", "15" );
-    UnaryAddOp.setFunctionPrototype ( "HEADER_UNARY_ADD_OPERATOR", "../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #if USE_FORTRAN_IR_NODES
@@ -2398,7 +2324,6 @@ Grammar::setUpExpressions () {
     UnknownArrayOrFunctionReference.editSubstitute ( "PRECEDENCE_VALUE", " 2" );
     // DQ (11/24/2007): Added new IR node to handle unknown array reference vs. function call problem in Fortran.
     // These are translated to either array references or function calls within post-processing steps.
-    UnknownArrayOrFunctionReference.setFunctionPrototype ( "HEADER_UNKNOWN_ARRAY_OR_FUNCTION_REFERENCE", "../Grammar/Expression.code" );
 
     // This is the name of the array variable being referenced or the name of the function (to be decided in post-processing).
     UnknownArrayOrFunctionReference.setDataPrototype ( "std::string", "name", "= \"\"",
@@ -2416,7 +2341,6 @@ Grammar::setUpExpressions () {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (UnsignedCharVal,        "UnsignedCharVal",        "UNSIGNED_CHAR_VAL" );
     UnsignedCharVal.setFunctionSource  ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
-    UnsignedCharVal.setFunctionPrototype ( "HEADER_UNSIGNED_CHAR_VALUE_EXPRESSION", "../Grammar/Expression.code" );
     UnsignedCharVal.setDataPrototype ( "unsigned char", "value", "= 0",
                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     UnsignedCharVal.setDataPrototype ( "std::string", "valueString", "= \"\"",
@@ -2427,7 +2351,6 @@ Grammar::setUpExpressions () {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (UnsignedIntVal,         "UnsignedIntVal",         "UNSIGNED_INT_VAL" );
     UnsignedIntVal.setFunctionSource   ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
-    UnsignedIntVal.setFunctionPrototype ( "HEADER_UNSIGNED_INT_VALUE_EXPRESSION", "../Grammar/Expression.code" );
     UnsignedIntVal.setDataPrototype ( "unsigned int", "value", "= 0",
                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     UnsignedIntVal.setDataPrototype ( "std::string", "valueString", "= \"\"",
@@ -2438,7 +2361,6 @@ Grammar::setUpExpressions () {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (UnsignedLongLongIntVal, "UnsignedLongLongIntVal", "UNSIGNED_LONG_LONG_INT_VAL" );
     UnsignedLongLongIntVal.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
-    UnsignedLongLongIntVal.setFunctionPrototype ( "HEADER_UNSIGNED_LONG_LONG_VALUE_EXPRESSION", "../Grammar/Expression.code" );
     UnsignedLongLongIntVal.setDataPrototype ( "unsigned long long int", "value", "= 0",
                                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     UnsignedLongLongIntVal.setDataPrototype ( "std::string", "valueString", "= \"\"",
@@ -2449,7 +2371,6 @@ Grammar::setUpExpressions () {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (UnsignedLongVal,        "UnsignedLongVal",        "UNSIGNED_LONG_INT_VAL" );
     UnsignedLongVal.setFunctionSource  ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
-    UnsignedLongVal.setFunctionPrototype ( "HEADER_UNSIGNED_LONG_VALUE_EXPRESSION", "../Grammar/Expression.code" );
     UnsignedLongVal.setDataPrototype ( "unsigned long", "value", "= 0",
                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     UnsignedLongVal.setDataPrototype ( "std::string", "valueString", "= \"\"",
@@ -2460,7 +2381,6 @@ Grammar::setUpExpressions () {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (UnsignedShortVal,       "UnsignedShortVal",       "UNSIGNED_SHORT_VAL" );
     UnsignedShortVal.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
-    UnsignedShortVal.setFunctionPrototype ( "HEADER_UNSIGNED_SHORT_VALUE_EXPRESSION", "../Grammar/Expression.code" );
     UnsignedShortVal.setDataPrototype ( "unsigned short", "value", "= 0",
                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     UnsignedShortVal.setDataPrototype ( "std::string", "valueString", "= \"\"",
@@ -2471,7 +2391,6 @@ Grammar::setUpExpressions () {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #if USE_UPC_IR_NODES
     NEW_TERMINAL_MACRO (UpcBlocksizeofExpression,    "UpcBlocksizeofExpression",    "UPC_BLOCK_SIZEOF_EXPR" );
-    UpcBlocksizeofExpression.setFunctionPrototype ( "HEADER_UPC_BLOCK_SIZEOF_EXPRESSION", "../Grammar/Expression.code" );
     UpcBlocksizeofExpression.setDataPrototype ( "SgExpression*", "expression", "= NULL",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
     UpcBlocksizeofExpression.setDataPrototype ( "SgType*", "operand_type", "= NULL",
@@ -2484,7 +2403,6 @@ Grammar::setUpExpressions () {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #if USE_UPC_IR_NODES
     NEW_TERMINAL_MACRO (UpcElemsizeofExpression,     "UpcElemsizeofExpression",     "UPC_ELEM_SIZEOF_EXPR" );
-    UpcElemsizeofExpression.setFunctionPrototype  ( "HEADER_UPC_ELEM_SIZEOF_EXPRESSION",  "../Grammar/Expression.code" );
     UpcElemsizeofExpression.setDataPrototype ( "SgExpression*", "expression", "= NULL",
                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
     UpcElemsizeofExpression.setDataPrototype ( "SgType*", "operand_type", "= NULL",
@@ -2500,7 +2418,6 @@ Grammar::setUpExpressions () {
     NEW_TERMINAL_MACRO (UpcLocalsizeofExpression,    "UpcLocalsizeofExpression",    "UPC_LOCAL_SIZEOF_EXPR" );
     // DQ (2/12/2011): Added support for types to UPC specific sizeof operators.
     // DQ and Liao (6/10/2008): Added new IR nodes specific to UPC.
-    UpcLocalsizeofExpression.setFunctionPrototype ( "HEADER_UPC_LOCAL_SIZEOF_EXPRESSION", "../Grammar/Expression.code" );
     UpcLocalsizeofExpression.setDataPrototype ( "SgExpression*", "expression", "= NULL",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
     UpcLocalsizeofExpression.setDataPrototype ( "SgType*", "operand_type", "= NULL",
@@ -2514,7 +2431,6 @@ Grammar::setUpExpressions () {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (UpcMythread,             "UpcMythread",                 "UPC_MYTHREAD" );
     UpcMythread.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
-    UpcMythread.setFunctionPrototype ( "HEADER_UPC_MYTHREAD_EXPRESSION", "../Grammar/Expression.code" );
     UpcMythread.setDataPrototype ( "int", "value", "= 0",
                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     UpcMythread.setDataPrototype ( "std::string", "valueString", "= \"\"",
@@ -2527,7 +2443,6 @@ Grammar::setUpExpressions () {
     NEW_TERMINAL_MACRO (UpcThreads,              "UpcThreads",                 "UPC_THREADS" );
     UpcThreads.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
     // Liao 6/18/2008, UPC THREADS, MYTHREAD
-    UpcThreads.setFunctionPrototype ( "HEADER_UPC_THREADS_EXPRESSION", "../Grammar/Expression.code" );
     UpcThreads.setDataPrototype ( "int", "value", "= 0",
                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     UpcThreads.setDataPrototype ( "std::string", "valueString", "= \"\"",
@@ -2640,7 +2555,6 @@ Grammar::setUpExpressions () {
     NEW_TERMINAL_MACRO (VariantExpression,      "VariantExpression",          "VARIANT_EXPR" );
     VariantExpression.setFunctionSource( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
     VariantExpression.editSubstitute ( "PRECEDENCE_VALUE", "16" );
-    VariantExpression.setFunctionPrototype ( "HEADER_VARIANT_EXPRESSION", "../Grammar/Expression.code" );
     // VariantExpression.setDataPrototype        ( "SgType*", "expression_type", "= NULL",
     //                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     // VariantExpression.setFunctionSource ( "SOURCE_DEFAULT_GET_TYPE", "../Grammar/Expression.code" );
@@ -2704,7 +2618,6 @@ Grammar::setUpExpressions () {
     // DQ (2/14/2019): Added support for C++14 void values.
     NEW_TERMINAL_MACRO (VoidVal,          "VoidVal",          "VOID_VAL" );
     VoidVal.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
-    VoidVal.setFunctionPrototype ( "HEADER_VOID_VALUE_EXPRESSION", "../Grammar/Expression.code" );
     VoidVal.setFunctionSource                ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
     VoidVal.editSubstitute                ( "GENERIC_TYPE", "SgTypeVoid" );
 
@@ -2729,7 +2642,6 @@ Grammar::setUpExpressions () {
     NEW_TERMINAL_MACRO (YieldExpression,           "YieldExpression",               "YIELD_EXP" );
     // NEW_TERMINAL_MACRO (YieldExpression,           "YieldExpression",           "YIELD_EXPR" );
     YieldExpression.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
-    YieldExpression.setFunctionPrototype        ( "HEADER_YIELD_EXPRESSION", "../Grammar/Expression.code" );
     YieldExpression.setDataPrototype            ( "SgExpression*", "value", "= NULL",
                                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
     YieldExpression.setFunctionSource      ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
@@ -2759,7 +2671,6 @@ Grammar::setUpExpressions () {
                            "ElementwiseOp", "ELEMENT_WISE_OP", false);
     ElementwiseOp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
     ElementwiseOp.excludeFunctionPrototype ( "HEADER_PRECEDENCE", "../Grammar/Expression.code" );
-    ElementwiseOp.setFunctionPrototype ( "HEADER_ELEMENT_WISE_OP", "../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_NONTERMINAL_MACRO (BinaryOp,
@@ -3048,9 +2959,7 @@ Grammar::setUpExpressions () {
      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
      // What is this?
 #ifdef HL_GRAMMARS
-     X_Expression.setFunctionPrototype          ( "HEADER_X_EXPRESSION",     "../Grammar/Expression.code" );
      X_Expression.setAutomaticGenerationOfCopyFunction(false);
-     non_X_Expression.setFunctionPrototype      ( "HEADER_NON_X_EXPRESSION", "../Grammar/Expression.code" );
 #endif
 
 }
