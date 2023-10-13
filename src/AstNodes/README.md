@@ -104,6 +104,13 @@ attributes.
   the class definition in order to generate code for subclasses, but
   should not generate the base class.
 
+* The `Rosebud::tag` attribute takes a single argument which is a
+  symbol to use as the ROSETTA-generated type tag when it needs to be
+  different than the automatically generated tag. The auto-generated
+  take is the type name without the leading "Sg" and with a "Tag"
+  suffix. For instance, the tag for the class `SgAsmInstruction` would
+  default to `AsmInstructionTag`.
+
 Property attributes
 -------------------
 

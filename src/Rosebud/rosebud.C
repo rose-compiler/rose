@@ -41,6 +41,7 @@ static const std::vector<std::string> validPropertyAttrNames {
 static const std::vector<std::string> validClassAttrNames {
     "Rosebud::abstract",                                // class cannot be instantiated
     "Rosebud::suppress",                                // don't generate code for this type
+    "Rosebud::tag"                                      // specify the tag string, 3rd arg of ROSETTA's NEW_TERMINAL_MACRO
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -580,6 +581,11 @@ checkAndApplyClassAttributes(const Ast::File::Ptr &file, const Ast::Class::Ptr &
         } else if ("Rosebud::abstract" == attr->fqName ||
                    "Rosebud::suppress" == attr->fqName) {
             checkNumberOfArguments(file, attr(), 0);
+
+        } else if ("Rosebud::tag" == attr->fqName) {
+            // One argument which is the tag symbol, the 3rd argument of ROSETTA's NEW_TERMINAL_MACRO macro.
+            if (checkNumberOfArguments(file, attr(), 1))
+                c->tag = attr->arguments->elmts[0]->string(file);
 
         } else {
             ASSERT_not_implemented("attribute = " + attr->fqName);
