@@ -131,6 +131,13 @@ Property attributes
   order they are declared starting with those in the base class,
   recursively.
   
+* The `Rosebud::cloneptr` attribute causes the `copy` member function
+  to allocate a new instance of the pointed object using the
+  compile-time type of that object and its copy constructor. This is
+  intended to be a temporary attribute replaced in the future by a
+  smart pointer type. Besides, the ROSETTA-generated code in this case
+  seems to incorrectly handle pointers to polymorphic types.
+
 * The `Rosebud::no_serialize` attribute indicates that the property
   should not participate in serialization or
   deserialization. Normally, if one or more serialization backends are

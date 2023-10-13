@@ -331,9 +331,10 @@ RosettaGenerator::genPropertyDataMember(std::ostream &rosetta, std::ostream &hea
     //     NO_DELETE, does not generate `delete` calls in the destructor, and leaves it up to the node authors. For instance,
     //     if a node points to something that should be deleted, then the type for that member should be a smart pointer that
     //     indicates that the node owns the pointed-to data. Furthermore, we've disabled ROSETTA's generation of destructors.
-    //   COPY_DATA
+    //   COPY_DATA | CLONE_PTR
     //     This controls whether ROSETTA's generated copy mechanism (not copy constructors) copy the data member's value from
-    //     the source node to the destination node. We assume that all data members should be copied.
+    //     the source node to the destination node. We assume that all data members should be copied unless an attribute such
+    //     as Rosetta::cloneptr is present.
     if (p->findAttribute("Rosebud::rosetta")) {
         rosetta <<"\n"
                 <<THIS_LOCATION <<"#ifndef DOCUMENTATION\n";
@@ -345,7 +346,9 @@ RosettaGenerator::genPropertyDataMember(std::ostream &rosetta, std::ostream &hea
         rosetta <<"\",\n"
                 <<"        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, "
                 <<(p->findAttribute("Rosebud::traverse") ? "DEF_TRAVERSAL" : "NO_TRAVERSAL") <<", "
-                <<"NO_DELETE, COPY_DATA);\n"
+                <<"NO_DELETE, "
+                <<(p->findAttribute("Rosebud::cloneptr") ? "CLONE_PTR" : "COPY_DATA")
+                <<");\n"
                 <<THIS_LOCATION <<"#endif // !DOCUMENTATION\n";
     } else {
         header <<"\n"

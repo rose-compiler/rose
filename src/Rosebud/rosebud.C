@@ -32,7 +32,10 @@ static const std::vector<std::string> validPropertyAttrNames {
     "Rosebud::property",                                // data member is a property even if no other attributes are specified
     "Rosebud::mutators",                                // mutator names or empty
     "Rosebud::rosetta",                                 // make attribute known to ROSETTA
-    "Rosebud::traverse"                                 // make attribute part of the traversed AST
+    "Rosebud::traverse",                                // make attribute part of the traversed AST
+
+    // Stopgap attributes for ROSETTA backward compatibility
+    "Rosebud::cloneptr"                                 // 8th arg for setDataPrototype should be CLONE_PTR
 };
 
 static const std::vector<std::string> validClassAttrNames {
@@ -605,7 +608,8 @@ checkAndApplyPropertyAttributes(const Ast::File::Ptr &file, const Ast::Property:
                    "Rosebud::large" == attr->fqName ||
                    "Rosebud::no_serialize" == attr->fqName ||
                    "Rosebud::property" == attr->fqName ||
-                   "Rosebud::traverse" == attr->fqName) {
+                   "Rosebud::traverse" == attr->fqName ||
+                   "Rosebud::cloneptr" == attr->fqName) {
             checkNumberOfArguments(file, attr(), 0);
 
         } else if ("Rosebud::rosetta" == attr->fqName) {
