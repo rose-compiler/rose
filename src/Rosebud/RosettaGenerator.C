@@ -156,9 +156,15 @@ RosettaGenerator::genRosettaFileBegin(std::ostream &rosetta) {
             <<"\n"
             <<"#ifdef DOCUMENTATION\n"
             <<"#define DECLARE_LEAF_CLASS(CLASS_WITHOUT_Sg) /*void*/\n"
+            <<"#define DECLARE_LEAF_CLASS2(CLASS_WITHOUT_Sg, TAG) /*void*/\n"
             <<"#else\n"
             <<"#define DECLARE_LEAF_CLASS(CLASS_WITHOUT_Sg) \\\n"
             <<"    NEW_TERMINAL_MACRO(CLASS_WITHOUT_Sg, #CLASS_WITHOUT_Sg, #CLASS_WITHOUT_Sg \"Tag\"); \\\n"
+            <<"    CLASS_WITHOUT_Sg.setCppCondition(\"!defined(DOCUMENTATION)\");\\\n"
+            <<"    CLASS_WITHOUT_Sg.setAutomaticGenerationOfConstructor(false);\\\n"
+            <<"    CLASS_WITHOUT_Sg.setAutomaticGenerationOfDestructor(false)\n"
+            <<"#define DECLARE_LEAF_CLASS2(CLASS_WITHOUT_Sg, TAG) \\\n"
+            <<"    NEW_TERMINAL_MACRO(CLASS_WITHOUT_Sg, #CLASS_WITHOUT_Sg, #TAG); \\\n"
             <<"    CLASS_WITHOUT_Sg.setCppCondition(\"!defined(DOCUMENTATION)\");\\\n"
             <<"    CLASS_WITHOUT_Sg.setAutomaticGenerationOfConstructor(false);\\\n"
             <<"    CLASS_WITHOUT_Sg.setAutomaticGenerationOfDestructor(false)\n"
@@ -531,7 +537,11 @@ void
 RosettaGenerator::genLeafMacros(std::ostream &rosetta, const Ast::Class::Ptr &c) {
     ASSERT_not_null(c);
 
-    rosetta <<THIS_LOCATION <<"DECLARE_LEAF_CLASS(" <<shortName(c) <<");\n";
+    if (c->tag.empty() || c->tag == shortName(c) + "Tag") {
+        rosetta <<THIS_LOCATION <<"DECLARE_LEAF_CLASS(" <<shortName(c) <<");\n";
+    } else {
+        rosetta <<THIS_LOCATION <<"DECLARE_LEAF_CLASS2(" <<shortName(c) <<", " <<c->tag <<");\n";
+    }
 
     auto serializer = Serializer::lookup(settings.serializer);
     ASSERT_not_null(serializer);
