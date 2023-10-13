@@ -1312,7 +1312,7 @@ namespace
           break;
 
         case SgProcessControlStatement::e_requeue_with_abort:
-          stmt = " with abort";
+          postfix = " with abort";
           /* fall-through */
 
         case SgProcessControlStatement::e_requeue:
