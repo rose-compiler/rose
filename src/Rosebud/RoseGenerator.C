@@ -320,6 +320,9 @@ RoseGenerator::genSerialization(std::ostream &header, std::ostream &impl, const 
 void
 RoseGenerator::genClass(const Ast::Class::Ptr &c, const Hierarchy &h) {
     ASSERT_not_null(c);
+    if (c->findAttribute("Rosebud::suppress"))
+        return;
+
     auto file = c->findAncestor<Ast::File>();
     ASSERT_not_null(file);
 
@@ -426,13 +429,15 @@ RoseGenerator::genBasicTypes(const Ast::Project::Ptr &project) {
     });
 
     for (const auto &c: classes) {
-        header <<"\n"
-               <<THIS_LOCATION <<locationDirective(c, c->startToken)
-               <<"class " <<c->name <<";\n"
-               <<"\n"
-               <<THIS_LOCATION <<locationDirective(c, c->startToken)
-               <<"/** Shared-ownership pointer to @ref " <<c->name <<"*/\n"
-               <<"using " <<c->name <<"Ptr = std::shared_ptr<" <<c->name <<">;\n";
+        if (!c->findAttribute("Rosebud::suppress")) {
+            header <<"\n"
+                   <<THIS_LOCATION <<locationDirective(c, c->startToken)
+                   <<"class " <<c->name <<";\n"
+                   <<"\n"
+                   <<THIS_LOCATION <<locationDirective(c, c->startToken)
+                   <<"/** Shared-ownership pointer to @ref " <<c->name <<"*/\n"
+                   <<"using " <<c->name <<"Ptr = std::shared_ptr<" <<c->name <<">;\n";
+        }
     }
 
     header <<"\n"

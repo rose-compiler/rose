@@ -39,7 +39,8 @@ static const std::vector<std::string> validPropertyAttrNames {
 };
 
 static const std::vector<std::string> validClassAttrNames {
-    "Rosebud::abstract"                                 // class cannot be instantiated
+    "Rosebud::abstract",                                // class cannot be instantiated
+    "Rosebud::suppress",                                // don't generate code for this type
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -576,7 +577,8 @@ checkAndApplyClassAttributes(const Ast::File::Ptr &file, const Ast::Class::Ptr &
             message(ERROR, file, attr->nameTokens, "attribute \"" + attr->fqName + "\" is specified multiple times");
             message(INFO, file, seen[attr->fqName]->nameTokens, "previously specified here");
 
-        } else if ("Rosebud::abstract" == attr->fqName) {
+        } else if ("Rosebud::abstract" == attr->fqName ||
+                   "Rosebud::suppress" == attr->fqName) {
             checkNumberOfArguments(file, attr(), 0);
 
         } else {

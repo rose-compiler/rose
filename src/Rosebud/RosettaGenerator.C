@@ -244,8 +244,10 @@ void
 RosettaGenerator::genClassDeclarations(std::ostream &rosetta, const Classes &classes) {
     std::set<std::string> bases;
     for (const auto &c: classes) {
-        for (const auto &super: c->inheritance)
-            bases.insert(super.second);
+        if (!c->findAttribute("Rosebud::suppress")) {
+            for (const auto &super: c->inheritance)
+                bases.insert(super.second);
+        }
     }
 
     rosetta <<"\n"
@@ -584,6 +586,8 @@ RosettaGenerator::isBaseClass(const Ast::Class::Ptr &c, const Hierarchy &h) {
 void
 RosettaGenerator::genClassDefinition(std::ostream &rosetta, const Ast::Class::Ptr &c, const Hierarchy &h) {
     ASSERT_not_null(c);
+    if (c->findAttribute("Rosebud::suppress"))
+        return;
 
     std::ostringstream header;                          // Non-ROSETTA class definition stuff
 
@@ -703,8 +707,10 @@ std::vector<std::string>
 RosettaGenerator::implementationFileNames(const Classes &classes) {
     std::vector<std::string> names;
     names.reserve(classes.size());
-    for (const auto &c: classes)
-        names.push_back(c->name + ".C");
+    for (const auto &c: classes) {
+        if (!c->findAttribute("Rosebud::suppress"))
+            names.push_back(c->name + ".C");
+    }
     std::sort(names.begin(), names.end());
     return names;
 }
@@ -838,7 +844,7 @@ RosettaGenerator::adjustNodeList(const std::shared_ptr<Ast::Project> &project) {
         bool changed = false;
         const Classes classes = project->allClassesFileOrder();
         for (const auto &c: classes) {
-            if (std::find(names.begin(), names.end(), c->name) == names.end()) {
+            if (!c->findAttribute("Rosebud::suppress") && std::find(names.begin(), names.end(), c->name) == names.end()) {
                 names.push_back(c->name);
                 changed = true;
             }

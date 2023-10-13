@@ -99,6 +99,11 @@ attributes.
   function to the class to force it to never be instantiated causes
   problems in ROSETTA-generated code.
 
+* The `Rosebud::suppress` attribute prevents Rosebud from generating
+  any code for this class. This is useful when Rosebud needs to know
+  the class definition in order to generate code for subclasses, but
+  should not generate the base class.
+
 Property attributes
 -------------------
 
