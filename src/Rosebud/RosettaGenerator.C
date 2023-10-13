@@ -513,10 +513,16 @@ RosettaGenerator::genNonterminalMacros(std::ostream &rosetta, const Ast::Class::
     ASSERT_not_null(c);
 
     rosetta <<THIS_LOCATION <<"#ifndef DOCUMENTATION\n";
+
     genNewNonterminalMacro(rosetta, c, h);
-    rosetta <<THIS_LOCATION <<shortName(c) <<".setCppCondition(\"!defined(DOCUMENTATION)\");\n"
-            <<shortName(c) <<".isBoostSerializable(true);\n"
-            <<shortName(c) <<".setAutomaticGenerationOfConstructor(false);\n"
+    rosetta <<THIS_LOCATION <<shortName(c) <<".setCppCondition(\"!defined(DOCUMENTATION)\");\n";
+
+    auto serializer = Serializer::lookup(settings.serializer);
+    ASSERT_not_null(serializer);
+    if (serializer->isSerializable(c))
+        rosetta <<THIS_LOCATION <<shortName(c) <<".isBoostSerializable(true);\n";
+
+    rosetta <<THIS_LOCATION <<shortName(c) <<".setAutomaticGenerationOfConstructor(false);\n"
             <<shortName(c) <<".setAutomaticGenerationOfDestructor(false);\n"
             <<"#endif // !DOCUMENTATION\n";
 }
