@@ -19545,11 +19545,15 @@ SgExpression * instantiateNonrealRefExps(
 #if DEBUG_Rose_Builder_Templates_instantiateNonrealRefExps
   std::cout << "Rose::Builder::Templates::instantiateNonrealRefExps" << std::endl;
   std::cout << "  expr    = " << std::hex << expr << " : " << ( expr ? expr->class_name() : "" ) << std::endl;
+  std::cout << "          = " << ( expr ? expr->unparseToString() : "" ) << std::endl;
 #endif
   if (!expr) {
     return nullptr;
   } else if (isSgNonrealRefExp(expr)) {
-    ROSE_ABORT();
+#if DEBUG_Rose_Builder_Templates_instantiateNonrealRefExps
+    std::cerr << "Error: In instantiateNonrealRefExps: case of a SgNonrealRefExp!!!" << std::endl;
+#endif
+    return nullptr;
   } else if (isSgVarRefExp(expr)) {
     SgVarRefExp * vref = (SgVarRefExp*)expr;
     SgInitializedName * iname = vref->get_symbol()->get_declaration();
@@ -19625,8 +19629,12 @@ SgExpression * instantiateNonrealRefExps(
     return szo;
   } else if (isSgCastExp(expr)) {
     SgCastExp * cast = (SgCastExp*)expr;
-    cast->set_operand_i(instantiateNonrealRefExps(cast->get_operand_i(), tpl_params, tpl_args));
-    cast->set_type(instantiateNonrealTypes(cast->get_type(), tpl_params, tpl_args));
+    auto operand = instantiateNonrealRefExps(cast->get_operand_i(), tpl_params, tpl_args);
+    if (operand == nullptr) return nullptr;
+    auto type = instantiateNonrealTypes(cast->get_type(), tpl_params, tpl_args);
+    if (type == nullptr) return operand;
+    cast->set_operand_i(operand);
+    cast->set_type(type);
     return cast;
   } else if (isSgUnaryOp(expr)) {
     SgUnaryOp * uop = (SgUnaryOp*)expr;
@@ -19663,6 +19671,7 @@ SgType * instantiateNonrealTypes(
 #if DEBUG_Rose_Builder_Templates_instantiateNonrealTypes
   std::cout << "Rose::Builder::Templates::instantiateNonrealTypes" << std::endl;
   std::cout << "  type    = " << std::hex << type << " : " << ( type ? type->class_name() : "" ) << std::endl;
+  std::cout << "          = " << ( type ? type->unparseToString() : "" ) << std::endl;
 #endif
   if (!type) {
     return nullptr;

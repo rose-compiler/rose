@@ -1,0 +1,4 @@
+# -*- conf -*-
+
+responsibility = Tristan Vanderbruggen <vanderbrugge1@llnl.gov>
+SymbolScanner.h: disable namespace_header_includes_all

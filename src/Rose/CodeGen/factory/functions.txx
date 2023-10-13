@@ -92,19 +92,29 @@ declaration_t<Object::a_function> * __factory_helper_t<CRT, API, Object::a_funct
 
   } else if (tpl_mfdecl) {
 
+    bool unk_ptype = false;
     while (isSgTypedefType(parent)) {
-      parent = isSgNamedType(((SgTypedefType*)parent)->get_base_type());
+      SgType * ptype = ((SgTypedefType*)parent)->get_base_type();
+      if (isSgTypeInt(ptype)) {
+        unk_ptype = true;
+        break;
+      }
+      parent = isSgNamedType(ptype);
       ROSE_ASSERT(parent);
     }
 
-    SgTemplateInstantiationDecl * inst_pdecl = isSgTemplateInstantiationDecl(parent->get_declaration());
-    ROSE_ASSERT(inst_pdecl);
+    if (unk_ptype) {
+      defn_scope = decl->get_scope();
+    } else {
+      SgTemplateInstantiationDecl * inst_pdecl = isSgTemplateInstantiationDecl(parent->get_declaration());
+      ROSE_ASSERT(inst_pdecl);
 #if DEBUG___factory_helper_t__a_function__instantiate
-    std::cout << "  inst_pdecl    = " << std::hex << inst_pdecl << " : " << ( inst_pdecl ? inst_pdecl->class_name() : "" ) << std::endl;
+      std::cout << "  inst_pdecl    = " << std::hex << inst_pdecl << " : " << ( inst_pdecl ? inst_pdecl->class_name() : "" ) << std::endl;
 #endif
-    inst_pdecl = isSgTemplateInstantiationDecl(inst_pdecl->get_definingDeclaration());
-    ROSE_ASSERT(inst_pdecl);
-    defn_scope = inst_pdecl->get_definition();
+      inst_pdecl = isSgTemplateInstantiationDecl(inst_pdecl->get_definingDeclaration());
+      ROSE_ASSERT(inst_pdecl);
+      defn_scope = inst_pdecl->get_definition();
+    }
 
     SgMemberFunctionDeclaration * inst_mfdecl = new SgTemplateInstantiationMemberFunctionDecl(
         fname_tplargs, ftype, nullptr, tpl_mfdecl, tpl_args

@@ -37,21 +37,26 @@ reference_t<otag> * Factory<CRT, API>::reference(symbol_t<otag> * API::* obj, Sg
   std::cout << "    ->name() = " << std::hex << sym->get_name().getString() << std::endl;
 #endif
 
+  bool unk_ptype = false; // This bypass is for generated type-alias where `int` is used as the base type
+                          // Happens when I don't go properly construct template instantiations in old codegen
+
   SgType * pp = parent;
   while (pp && !isSgClassType(pp)) {
 #if DEBUG__Factory__reference
     std::cout << "  pp        = " << std::hex << pp << " : " << ( pp ? pp->class_name() : "" ) << std::endl;
+    std::cout << "            = " << ( pp ? pp->unparseToString() : "" ) << std::endl;
 #endif
     if (isSgTypedefType(pp)) pp = ((SgTypedefType*)pp)->get_base_type();
     else if (isSgModifierType(pp)) pp = ((SgModifierType*)pp)->get_base_type();
+    else if (isSgTypeInt(pp)) { pp = nullptr; unk_ptype = true; }
     else {
       std::cerr << "FATAL: pp = " << std::hex << pp << " ( " << (pp ? pp->class_name() : "") << " )" << std::endl;
       ROSE_ABORT();
     }
   }
-  ROSE_ASSERT(!parent || pp);
+  ROSE_ASSERT(!(parent && !unk_ptype) || pp);
   SgClassType * xp = isSgClassType(pp);
-  ROSE_ASSERT(!parent || xp);
+  ROSE_ASSERT(!(parent && !unk_ptype) || xp);
 
   SgScopeStatement * scope_of_symbol = sym->get_scope();
 #if DEBUG__Factory__reference
@@ -61,12 +66,13 @@ reference_t<otag> * Factory<CRT, API>::reference(symbol_t<otag> * API::* obj, Sg
   ROSE_ASSERT(!parent || xdefn_of_symbol);
 
   SgDeclarationStatement * decl_from_symbol = parent ? xdefn_of_symbol->get_declaration() : nullptr;
-  SgDeclarationStatement * decl_from_parent = parent ? xp->get_declaration() : nullptr;
+  SgDeclarationStatement * decl_from_parent = (parent && !unk_ptype) ? xp->get_declaration() : nullptr;
 #if DEBUG__Factory__reference
   std::cout << "  decl_from_symbol = " << std::hex << decl_from_symbol << " : " << ( decl_from_symbol ? decl_from_symbol->class_name() : "" ) << std::endl;
   std::cout << "  decl_from_parent = " << std::hex << decl_from_parent << " : " << ( decl_from_parent ? decl_from_parent->class_name() : "" ) << std::endl;
 #endif
-  
+
+  // The rhs of the OR will be true when unk_ptype is true which should only occur when it is a template
   if (is_template_symbol_variant<otag>(sym->variantT()) || (parent && decl_from_symbol != decl_from_parent) ) {
     declaration_t<otag> * decl = instantiate<otag>(obj, parent, args...);
     ROSE_ASSERT(decl != nullptr);
@@ -85,15 +91,47 @@ template <typename CRT, typename API>
 template <Object otag, typename... Args>
 SgExpression * Factory<CRT, API>::access(symbol_t<otag> * API::* obj, SgExpression * parent, Args... args) const {
 #if DEBUG__Factory__access_expr
-  std::cout << "Factory<CRT, API>::access" << std::endl;
+  std::cout << "Factory<CRT, API>::access (expr)" << std::endl;
   std::cout << "  obj    = " << std::hex << obj << std::endl;
   std::cout << "  parent = " << std::hex << parent << " : " << ( parent ? parent->class_name() : "" ) << std::endl;
+  std::cout << "         = " << ( parent ? parent->unparseToString() : "" ) << std::endl;
 #endif
 
   SgType * ptype = parent->get_type(); // TODO strip type modifiers and references
 #if DEBUG__Factory__access_expr
   std::cout << "  ptype = " << std::hex << ptype << " : " << ( ptype ? ptype->class_name() : "" ) << std::endl;
+  std::cout << "        = " << ( ptype ? ptype->unparseToString() : "" ) << std::endl;
 #endif
+  // Handling use case where `array->operator()(index)` is generated as `array(index)`
+  // 
+  if (isSgTypeUnknown(ptype)) {
+    ROSE_ASSERT(isSgFunctionCallExp(parent));
+    SgExpression * fnc = ((SgFunctionCallExp*)parent)->get_function();
+#if DEBUG__Factory__access_expr
+    std::cout << "  fnc = " << std::hex << fnc << " : " << ( fnc ? fnc->class_name() : "" ) << std::endl;
+    std::cout << "      = " << ( fnc ? fnc->unparseToString() : "" ) << std::endl;
+#endif
+    SgType * ftype = fnc->get_type();
+#if DEBUG__Factory__access_expr
+    std::cout << "  ftype = " << std::hex << ftype << " : " << ( ftype ? ftype->class_name() : "" ) << std::endl;
+    std::cout << "        = " << ( ftype ? ftype->unparseToString() : "" ) << std::endl;
+#endif
+    while (isSgTypedefType(ftype)) ftype = ((SgTypedefType*)ftype)->get_base_type();
+#if DEBUG__Factory__access_expr
+    std::cout << "  ftype = " << std::hex << ftype << " : " << ( ftype ? ftype->class_name() : "" ) << std::endl;
+    std::cout << "        = " << ( ftype ? ftype->unparseToString() : "" ) << std::endl;
+#endif
+    ROSE_ASSERT(isSgClassType(ftype));
+    SgTemplateInstantiationDecl * tidecl = isSgTemplateInstantiationDecl(((SgClassType*)ftype)->get_declaration());
+    ROSE_ASSERT(tidecl != nullptr);
+    auto tplargs = tidecl->get_templateArguments();
+    ROSE_ASSERT(tplargs.size() > 0);
+    ptype = tplargs[0]->get_type();
+#if DEBUG__Factory__access_expr
+    std::cout << "  ptype = " << std::hex << ptype << " : " << ( ptype ? ptype->class_name() : "" ) << std::endl;
+    std::cout << "        = " << ( ptype ? ptype->unparseToString() : "" ) << std::endl;
+#endif
+  }
 
   bool lhs_has_ptr_type = isSgPointerType(parent->get_type());
   if (lhs_has_ptr_type) {
@@ -101,6 +139,7 @@ SgExpression * Factory<CRT, API>::access(symbol_t<otag> * API::* obj, SgExpressi
   }
 #if DEBUG__Factory__access_expr
   std::cout << "  ptype = " << std::hex << ptype << " : " << ( ptype ? ptype->class_name() : "" ) << std::endl;
+  std::cout << "        = " << ( ptype ? ptype->unparseToString() : "" ) << std::endl;
 #endif
 
   SgNamedType * ntype = isSgNamedType(ptype);
@@ -141,7 +180,7 @@ template <typename CRT, typename API>
 template <Object otag, typename... Args>
 typename Factory<CRT, API>::template access_return_t<otag> * Factory<CRT, API>::access(symbol_t<otag> * API::* obj, SgNamedType * parent, Args... args) const {
 #if DEBUG__Factory__access_type
-  std::cout << "Factory<CRT, API>::access" << std::endl;
+  std::cout << "Factory<CRT, API>::access (type)" << std::endl;
   std::cout << "  obj    = " << std::hex << obj << std::endl;
   std::cout << "  parent = " << std::hex << parent << " : " << ( parent ? parent->class_name() : "" ) << std::endl;
 #endif
