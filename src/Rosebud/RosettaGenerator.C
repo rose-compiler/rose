@@ -156,9 +156,15 @@ RosettaGenerator::genRosettaFileBegin(std::ostream &rosetta) {
             <<"\n"
             <<"#ifdef DOCUMENTATION\n"
             <<"#define DECLARE_LEAF_CLASS(CLASS_WITHOUT_Sg) /*void*/\n"
+            <<"#define DECLARE_LEAF_CLASS2(CLASS_WITHOUT_Sg, TAG) /*void*/\n"
             <<"#else\n"
             <<"#define DECLARE_LEAF_CLASS(CLASS_WITHOUT_Sg) \\\n"
             <<"    NEW_TERMINAL_MACRO(CLASS_WITHOUT_Sg, #CLASS_WITHOUT_Sg, #CLASS_WITHOUT_Sg \"Tag\"); \\\n"
+            <<"    CLASS_WITHOUT_Sg.setCppCondition(\"!defined(DOCUMENTATION)\");\\\n"
+            <<"    CLASS_WITHOUT_Sg.setAutomaticGenerationOfConstructor(false);\\\n"
+            <<"    CLASS_WITHOUT_Sg.setAutomaticGenerationOfDestructor(false)\n"
+            <<"#define DECLARE_LEAF_CLASS2(CLASS_WITHOUT_Sg, TAG) \\\n"
+            <<"    NEW_TERMINAL_MACRO(CLASS_WITHOUT_Sg, #CLASS_WITHOUT_Sg, #TAG); \\\n"
             <<"    CLASS_WITHOUT_Sg.setCppCondition(\"!defined(DOCUMENTATION)\");\\\n"
             <<"    CLASS_WITHOUT_Sg.setAutomaticGenerationOfConstructor(false);\\\n"
             <<"    CLASS_WITHOUT_Sg.setAutomaticGenerationOfDestructor(false)\n"
@@ -244,8 +250,10 @@ void
 RosettaGenerator::genClassDeclarations(std::ostream &rosetta, const Classes &classes) {
     std::set<std::string> bases;
     for (const auto &c: classes) {
-        for (const auto &super: c->inheritance)
-            bases.insert(super.second);
+        if (!c->findAttribute("Rosebud::suppress")) {
+            for (const auto &super: c->inheritance)
+                bases.insert(super.second);
+        }
     }
 
     rosetta <<"\n"
@@ -328,12 +336,13 @@ RosettaGenerator::genPropertyDataMember(std::ostream &rosetta, std::ostream &hea
     //   NO_DELETE
     //     This controls whether ROSETTA's generated destructors delete data members. However, it's always possible to define
     //     data members in such a way that they get deleted automatically by the default destructor, so Rosetta always uses
-    //     NO_DELETE, does not generate `delete` calls in the destructur, and leaves it up to the node authors. For instance,
+    //     NO_DELETE, does not generate `delete` calls in the destructor, and leaves it up to the node authors. For instance,
     //     if a node points to something that should be deleted, then the type for that member should be a smart pointer that
     //     indicates that the node owns the pointed-to data. Furthermore, we've disabled ROSETTA's generation of destructors.
-    //   COPY_DATA
+    //   COPY_DATA | CLONE_PTR
     //     This controls whether ROSETTA's generated copy mechanism (not copy constructors) copy the data member's value from
-    //     the source node to the destination node. We assume that all data members should be copied.
+    //     the source node to the destination node. We assume that all data members should be copied unless an attribute such
+    //     as Rosetta::cloneptr is present.
     if (p->findAttribute("Rosebud::rosetta")) {
         rosetta <<"\n"
                 <<THIS_LOCATION <<"#ifndef DOCUMENTATION\n";
@@ -345,7 +354,9 @@ RosettaGenerator::genPropertyDataMember(std::ostream &rosetta, std::ostream &hea
         rosetta <<"\",\n"
                 <<"        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, "
                 <<(p->findAttribute("Rosebud::traverse") ? "DEF_TRAVERSAL" : "NO_TRAVERSAL") <<", "
-                <<"NO_DELETE, COPY_DATA);\n"
+                <<"NO_DELETE, "
+                <<(p->findAttribute("Rosebud::cloneptr") ? "CLONE_PTR" : "COPY_DATA")
+                <<");\n"
                 <<THIS_LOCATION <<"#endif // !DOCUMENTATION\n";
     } else {
         header <<"\n"
@@ -508,10 +519,16 @@ RosettaGenerator::genNonterminalMacros(std::ostream &rosetta, const Ast::Class::
     ASSERT_not_null(c);
 
     rosetta <<THIS_LOCATION <<"#ifndef DOCUMENTATION\n";
+
     genNewNonterminalMacro(rosetta, c, h);
-    rosetta <<THIS_LOCATION <<shortName(c) <<".setCppCondition(\"!defined(DOCUMENTATION)\");\n"
-            <<shortName(c) <<".isBoostSerializable(true);\n"
-            <<shortName(c) <<".setAutomaticGenerationOfConstructor(false);\n"
+    rosetta <<THIS_LOCATION <<shortName(c) <<".setCppCondition(\"!defined(DOCUMENTATION)\");\n";
+
+    auto serializer = Serializer::lookup(settings.serializer);
+    ASSERT_not_null(serializer);
+    if (serializer->isSerializable(c))
+        rosetta <<THIS_LOCATION <<shortName(c) <<".isBoostSerializable(true);\n";
+
+    rosetta <<THIS_LOCATION <<shortName(c) <<".setAutomaticGenerationOfConstructor(false);\n"
             <<shortName(c) <<".setAutomaticGenerationOfDestructor(false);\n"
             <<"#endif // !DOCUMENTATION\n";
 }
@@ -520,7 +537,11 @@ void
 RosettaGenerator::genLeafMacros(std::ostream &rosetta, const Ast::Class::Ptr &c) {
     ASSERT_not_null(c);
 
-    rosetta <<THIS_LOCATION <<"DECLARE_LEAF_CLASS(" <<shortName(c) <<");\n";
+    if (c->tag.empty() || c->tag == shortName(c) + "Tag") {
+        rosetta <<THIS_LOCATION <<"DECLARE_LEAF_CLASS(" <<shortName(c) <<");\n";
+    } else {
+        rosetta <<THIS_LOCATION <<"DECLARE_LEAF_CLASS2(" <<shortName(c) <<", " <<c->tag <<");\n";
+    }
 
     auto serializer = Serializer::lookup(settings.serializer);
     ASSERT_not_null(serializer);
@@ -581,6 +602,8 @@ RosettaGenerator::isBaseClass(const Ast::Class::Ptr &c, const Hierarchy &h) {
 void
 RosettaGenerator::genClassDefinition(std::ostream &rosetta, const Ast::Class::Ptr &c, const Hierarchy &h) {
     ASSERT_not_null(c);
+    if (c->findAttribute("Rosebud::suppress"))
+        return;
 
     std::ostringstream header;                          // Non-ROSETTA class definition stuff
 
@@ -700,8 +723,10 @@ std::vector<std::string>
 RosettaGenerator::implementationFileNames(const Classes &classes) {
     std::vector<std::string> names;
     names.reserve(classes.size());
-    for (const auto &c: classes)
-        names.push_back(c->name + ".C");
+    for (const auto &c: classes) {
+        if (!c->findAttribute("Rosebud::suppress"))
+            names.push_back(c->name + ".C");
+    }
     std::sort(names.begin(), names.end());
     return names;
 }
@@ -835,7 +860,7 @@ RosettaGenerator::adjustNodeList(const std::shared_ptr<Ast::Project> &project) {
         bool changed = false;
         const Classes classes = project->allClassesFileOrder();
         for (const auto &c: classes) {
-            if (std::find(names.begin(), names.end(), c->name) == names.end()) {
+            if (!c->findAttribute("Rosebud::suppress") && std::find(names.begin(), names.end(), c->name) == names.end()) {
                 names.push_back(c->name);
                 changed = true;
             }
