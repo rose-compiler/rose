@@ -701,6 +701,9 @@ namespace
       traverseIDs(range, elemMap(), ElemCreator{ctx});
       handleElementID(adaUnit.Unit_Declaration, ctx, privateDecl);
 
+      // \todo process compilation pragmas
+      //~ ElemIdRange pragmaRange = idRange(adaUnit.Compilation_Pragmas);
+
       for (AstContext::DeferredCompletion& c : compls) c();
     }
   }

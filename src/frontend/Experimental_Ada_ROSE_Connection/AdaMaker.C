@@ -618,8 +618,8 @@ mkAbortStmt(SgExprListExp& abortList)
 SgProcessControlStatement&
 mkRequeueStmt(SgExpression& entryexpr, bool withAbort)
 {
-  auto kind = withAbort ? SgProcessControlStatement::e_requeue
-                        : SgProcessControlStatement::e_requeue_with_abort;
+  auto kind = withAbort ? SgProcessControlStatement::e_requeue_with_abort
+                        : SgProcessControlStatement::e_requeue;
 
   return mkProcessControlStatement(entryexpr, kind);
 };
