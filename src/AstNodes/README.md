@@ -99,6 +99,18 @@ attributes.
   function to the class to force it to never be instantiated causes
   problems in ROSETTA-generated code.
 
+* The `Rosebud::suppress` attribute prevents Rosebud from generating
+  any code for this class. This is useful when Rosebud needs to know
+  the class definition in order to generate code for subclasses, but
+  should not generate the base class.
+
+* The `Rosebud::tag` attribute takes a single argument which is a
+  symbol to use as the ROSETTA-generated type tag when it needs to be
+  different than the automatically generated tag. The auto-generated
+  take is the type name without the leading "Sg" and with a "Tag"
+  suffix. For instance, the tag for the class `SgAsmInstruction` would
+  default to `AsmInstructionTag`.
+
 Property attributes
 -------------------
 
@@ -131,6 +143,13 @@ Property attributes
   order they are declared starting with those in the base class,
   recursively.
   
+* The `Rosebud::cloneptr` attribute causes the `copy` member function
+  to allocate a new instance of the pointed object using the
+  compile-time type of that object and its copy constructor. This is
+  intended to be a temporary attribute replaced in the future by a
+  smart pointer type. Besides, the ROSETTA-generated code in this case
+  seems to incorrectly handle pointers to polymorphic types.
+
 * The `Rosebud::no_serialize` attribute indicates that the property
   should not participate in serialization or
   deserialization. Normally, if one or more serialization backends are

@@ -10,8 +10,8 @@ below for details.
 Locations of files
 ------------------
 
-The inputs for these files are in the ROSE source tree in the
-src/AstNodes/BinaryAnalysis directory. Each header file therein
+The inputs for generating these files are the *.h files in the ROSE
+source tree under the src/AstNodes directory. Each header file therein
 contains the definition for exactly one ROSE IR node.
 
 The source code for the `rosebud` tool is located in the ROSE source
@@ -29,7 +29,8 @@ To regenerate generated source files:
    similar. Its only dependencies are Boost and Sawyer, the latter of
    which is distributed with ROSE and built automatically.
    
-2. See documentation with `rosebud --help`.
+2. See documentation with `rosebud --help` if you're interested, and
+   also to check that the command was built and it runs.
 
 3. Generate the files. I'm assuming you're in src/Rosebud in the build
    tree, but that's not strictly necessary as long as you adjust the
@@ -39,10 +40,10 @@ To regenerate generated source files:
    $ROSE_SOURCE/src/Rosebud/generate ./rosebud
 ```
 
-4. Commit src/ROSETTA/src/binaryInstruction.C and all the
-   src/generated files in their own commit so that merge conflicts can
-   be handled by simply regenerating these files. Eventually these
-   generated files will not be part of the repository.
+4. Commit all the resulting generated files together in their own Git
+   commit with nothing else so that if there are any merge conflicts
+   they can be resolved by simply regenerating the files. Eventually
+   these generated files will not be part of the repository.
    
 Writing your own generators
 ---------------------------

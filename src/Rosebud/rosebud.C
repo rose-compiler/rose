@@ -32,11 +32,16 @@ static const std::vector<std::string> validPropertyAttrNames {
     "Rosebud::property",                                // data member is a property even if no other attributes are specified
     "Rosebud::mutators",                                // mutator names or empty
     "Rosebud::rosetta",                                 // make attribute known to ROSETTA
-    "Rosebud::traverse"                                 // make attribute part of the traversed AST
+    "Rosebud::traverse",                                // make attribute part of the traversed AST
+
+    // Stopgap attributes for ROSETTA backward compatibility
+    "Rosebud::cloneptr"                                 // 8th arg for setDataPrototype should be CLONE_PTR
 };
 
 static const std::vector<std::string> validClassAttrNames {
-    "Rosebud::abstract"                                 // class cannot be instantiated
+    "Rosebud::abstract",                                // class cannot be instantiated
+    "Rosebud::suppress",                                // don't generate code for this type
+    "Rosebud::tag"                                      // specify the tag string, 3rd arg of ROSETTA's NEW_TERMINAL_MACRO
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -573,8 +578,14 @@ checkAndApplyClassAttributes(const Ast::File::Ptr &file, const Ast::Class::Ptr &
             message(ERROR, file, attr->nameTokens, "attribute \"" + attr->fqName + "\" is specified multiple times");
             message(INFO, file, seen[attr->fqName]->nameTokens, "previously specified here");
 
-        } else if ("Rosebud::abstract" == attr->fqName) {
+        } else if ("Rosebud::abstract" == attr->fqName ||
+                   "Rosebud::suppress" == attr->fqName) {
             checkNumberOfArguments(file, attr(), 0);
+
+        } else if ("Rosebud::tag" == attr->fqName) {
+            // One argument which is the tag symbol, the 3rd argument of ROSETTA's NEW_TERMINAL_MACRO macro.
+            if (checkNumberOfArguments(file, attr(), 1))
+                c->tag = attr->arguments->elmts[0]->string(file);
 
         } else {
             ASSERT_not_implemented("attribute = " + attr->fqName);
@@ -605,7 +616,8 @@ checkAndApplyPropertyAttributes(const Ast::File::Ptr &file, const Ast::Property:
                    "Rosebud::large" == attr->fqName ||
                    "Rosebud::no_serialize" == attr->fqName ||
                    "Rosebud::property" == attr->fqName ||
-                   "Rosebud::traverse" == attr->fqName) {
+                   "Rosebud::traverse" == attr->fqName ||
+                   "Rosebud::cloneptr" == attr->fqName) {
             checkNumberOfArguments(file, attr(), 0);
 
         } else if ("Rosebud::rosetta" == attr->fqName) {

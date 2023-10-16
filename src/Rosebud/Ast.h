@@ -382,6 +382,9 @@ public:
      *  This generated token of type TOK_OTHER encloses the file content that produced `endText`. */
     Token endTextToken;
 
+    /** If non-empty, overrides the tag name for this type. */
+    std::string tag;
+
 protected:
     /** Default constructor used only by derived classes. */
     Class();
