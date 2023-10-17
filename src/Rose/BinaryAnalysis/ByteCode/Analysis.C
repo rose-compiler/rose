@@ -23,7 +23,7 @@ namespace ByteCode {
 // Method
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Method::Method(const Class* obj) : class_{obj} { }
+Method::Method(rose_addr_t va) : classAddr_{va} {}
 
 Method::~Method() {}
 
@@ -55,11 +55,12 @@ Method::targets() const {
 // Class
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Class::partition(const PartitionerPtr &partitioner) const
+void Class::partition(const PartitionerPtr &partitioner, std::map<std::string,rose_addr_t> &discoveredFunctions) const
 {
   const size_t nBits = 64;
 
   for (auto constMethod : methods()) {
+    rose_addr_t va{0};
     bool needNewBlock{true};
     FunctionPtr function{};
     BasicBlockPtr block{};
@@ -70,93 +71,122 @@ void Class::partition(const PartitionerPtr &partitioner) const
     // Annotate the instructions
     method->annotate();
 
-    // Determine if this method has been seen before (e.g., ".ctor" of parent class)
     auto instructions = method->instructions()->get_instructions();
-    if (instructions.size() < 1) continue;
-    if (partitioner->placeholderExists(instructions[0]->get_address())) continue;
+    if (instructions.size() > 0) {
+      // The address of the Partitioner2::Function is the address of the first basic block
+      va = instructions[0]->get_address();
+    } else {
+      // A Java interface has no instructions, use the class address instead
+      va = address();
+    }
+
+    // Determine if this method/function has been seen before (e.g., ".ctor" of parent class)
+    if (partitioner->placeholderExists(va)) continue;
+
+    // Create the (Partitioner2) function
+    std::string functionName = name() + "::" + method->name();
+    function = Partitioner2::Function::instance(va, functionName);
+
+    // Add newly discovered function to the list
+    if (discoveredFunctions.find(functionName) == discoveredFunctions.end()) {
+      discoveredFunctions[functionName] = va;
+    }
+    else {
+      // I don't think this can happen, remove after awhile 2023.10.13
+      mlog[Diagnostics::WARN] << "Class::partition(): discovered duplicate function: " << functionName << "\n";
+    }
 
     std::set<rose_addr_t> targets = method->targets();
 
-    if (instructions.size() > 0) {
-      auto va = instructions[0]->get_address();
-      function = Partitioner2::Function::instance(va, method->myClass()->name() + "::" + method->name());
+    for (auto astInsn : instructions) {
+      // A copy of the instruction must be made if it is linked to ROSE's AST
+      SgTreeCopy deep;
+      SgAsmInstruction* insn = isSgAsmInstruction(astInsn->copy(deep));
+      ASSERT_not_null(insn);
+      ASSERT_require(insn != astInsn);
+      ASSERT_require(insn->get_address() == astInsn->get_address());
 
-      for (auto astInsn : instructions) {
-        // A copy of the instruction must be made if it is linked to ROSE's AST
-        SgTreeCopy deep;
-        SgAsmInstruction* insn = isSgAsmInstruction(astInsn->copy(deep));
-        ASSERT_not_null(insn);
-        ASSERT_require(insn != astInsn);
-        ASSERT_require(insn->get_address() == astInsn->get_address());
+      // A new block is needed if this instruction is a target of a branch and nonterminal
+      va = insn->get_address();
+      if (targets.find(va) != targets.end()) {
+        // But a new block is not needed if this is the first instruction in the block
+        if (block && !block->isEmpty() && va != block->address()) {
+          mlog[DEBUG] << "... splitting block after: " << addrToString(block->instructions().back()->get_address())
+                      << " va: " << addrToString(va)
+                      << " fallthrough: " << addrToString(block->fallthroughVa())
+                      << " kind:" << insn->get_anyKind() << " :" << insn->get_mnemonic() << "\n";
 
-        // A new block is needed if this instruction is a target of a branch and nonterminal
-        va = insn->get_address();
-        if (targets.find(va) != targets.end()) {
-          // But a new block is not needed if this is the first instruction in the block
-          if (block && !block->isEmpty() && va != block->address()) {
-            mlog[DEBUG] << "... splitting block after: " << addrToString(block->instructions().back()->get_address())
-                        << " va: " << addrToString(va)
-                        << " fallthrough: " << addrToString(block->fallthroughVa())
-                        << " kind:" << insn->get_anyKind() << " :" << insn->get_mnemonic() << "\n";
-
-            // If the instruction doesn't have a branch target, add fall through successor
-            if (!block->instructions().back()->branchTarget()) {
-              mlog[DEBUG] << "... adding successor fall-through edge from va: "
-                          << addrToString(block->instructions().back()->get_address())
-                          << " to: " << addrToString(block->fallthroughVa()) << "\n";
-              block->insertSuccessor(block->fallthroughVa(), nBits, EdgeType::E_NORMAL, Confidence::PROVED);
-            }
-            needNewBlock = true;
-          }
-        }
-
-        if (needNewBlock) {
-          needNewBlock = false;
-          if (block && !block->isEmpty() && va != block->address()) {
-            // Attach the block only if the old block's address differs from the instruction's
-            partitioner->attachBasicBlock(block);
-          }
-          block = Partitioner2::BasicBlock::instance(va, partitioner);
-          function->insertBasicBlock(va);
-          method->append(block);
-        }
-
-        // Warning: this instruction can't be linked into ROSE's AST (parent must be null)
-        block->append(partitioner, insn);
-
-        // Add successors if this instruction terminates the block
-        if (insn->terminatesBasicBlock() && insn != instructions.back()) {
-          bool complete;
-          auto successors = insn->getSuccessors(complete/*out*/);
-          for (auto successor : successors.values()) {
-            mlog[DEBUG] << "... adding successor edge from va: " << addrToString(va) << " to: " << addrToString(successor) << "\n";
-            block->insertSuccessor(successor, nBits, EdgeType::E_NORMAL, Confidence::PROVED);
-          }
-          // Set properties of the block
-          SgAsmInstruction* last = block->instructions().back();
-          if (last->isFunctionReturnFast(block->instructions())) {
-            block->isFunctionReturn(true);
-          }
-          else if (last->isFunctionCallFast(block->instructions(), nullptr, nullptr)) {
-            block->isFunctionCall(true);
+          // If the instruction doesn't have a branch target, add fall through successor
+          if (!block->instructions().back()->branchTarget()) {
+            mlog[DEBUG] << "... adding successor fall-through edge from va: "
+                        << addrToString(block->instructions().back()->get_address())
+                        << " to: " << addrToString(block->fallthroughVa()) << "\n";
+            block->insertSuccessor(block->fallthroughVa(), nBits, EdgeType::E_NORMAL, Confidence::PROVED);
           }
           needNewBlock = true;
         }
       }
+
+      if (needNewBlock) {
+        needNewBlock = false;
+        if (block && !block->isEmpty() && va != block->address()) {
+          // Attach the block only if the old block's address differs from the instruction's
+          partitioner->attachBasicBlock(block);
+        }
+        block = Partitioner2::BasicBlock::instance(va, partitioner);
+        function->insertBasicBlock(va);
+        method->append(block);
+      }
+
+      // Warning: this instruction can't be linked into ROSE's AST (parent must be null)
+      block->append(partitioner, insn);
+
+      // Add successors if this instruction terminates the block
+      if (insn->terminatesBasicBlock() && insn != instructions.back()) {
+        bool complete;
+        auto successors = insn->getSuccessors(complete/*out*/);
+        for (auto successor : successors.values()) {
+          mlog[DEBUG] << "Adding successor edge from va: " << addrToString(va) << " to: " << addrToString(successor) << "\n";
+          block->insertSuccessor(successor, nBits, EdgeType::E_NORMAL, Confidence::PROVED);
+        }
+        // Set properties of the block
+        SgAsmInstruction* last = block->instructions().back();
+        if (last->isFunctionReturnFast(block->instructions())) {
+          block->isFunctionReturn(true);
+        }
+        else if (last->isFunctionCallFast(block->instructions(), nullptr, nullptr)) {
+          block->isFunctionCall(true);
+          // Fully resoved function name is stored in the comment of the call instruction
+          std::string comment = last->get_comment();
+          if (discoveredFunctions.find(comment) != discoveredFunctions.end()) {
+            auto itr = discoveredFunctions.find(comment);
+            mlog[DEBUG] << "Adding call edge from va: " << addrToString(va) << " to: " << addrToString(itr->second) << "\n";
+            block->insertSuccessor(itr->second, nBits, EdgeType::E_FUNCTION_CALL, Confidence::PROVED);
+          }
+        }
+        needNewBlock = true;
+      }
     }
 
-    // Attach function return block
-    SgAsmInstruction* last = block->instructions().back();
-    ASSERT_not_null(last);
-    if (last->terminatesBasicBlock() && last->isFunctionReturnFast(block->instructions())) {
-      block->isFunctionReturn(true);
+    // If this is an interface an empty block will need to be created
+    if (block == nullptr) {
+        block = Partitioner2::BasicBlock::instance(va, partitioner);
+        function->insertBasicBlock(va);
+        method->append(block);
     }
 
-    // Finally add terminating block and function to the CFG
+    // Attach function return block and block to partitioner
+    if (block->instructions().size() > 0) {
+      SgAsmInstruction* last = block->instructions().back();
+      if (last->terminatesBasicBlock() && last->isFunctionReturnFast(block->instructions())) {
+        block->isFunctionReturn(true);
+      }
+    }
+
+    // Finally add block and function to the CFG
     partitioner->attachBasicBlock(block);
     partitioner->attachFunction(function);
   }
-  // partitioner->dumpCfg(std::cout, "Worker:", true, false);
 }
 
 void Class::digraph() const
@@ -237,7 +267,9 @@ void Class::digraph() const
 void
 Namespace::partition(const PartitionerPtr &partitioner) const {
     for (auto cls: classes()) {
-        cls->partition(partitioner);
+      // No called functions available here, passing empty map
+      std::map<std::string,rose_addr_t> discoveredFunctions{};
+      cls->partition(partitioner, discoveredFunctions);
     }
 }
 

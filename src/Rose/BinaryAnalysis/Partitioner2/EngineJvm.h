@@ -40,6 +40,17 @@ private:
     // Data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
+    // Mapping of class names to virtual address
+    std::map<std::string, SgAsmGenericFile*> classes_;
+
+    // Mapping of function names to virtual address
+    std::map<std::string, rose_addr_t> functions_;
+
+    // Mapping of unresolved (added to partitioner) function names to virtual address
+    std::map<std::string, rose_addr_t> unresolvedFunctions_;
+
+    static constexpr rose_addr_t vaDefaultIncrement{4*1024};
+    rose_addr_t nextFunctionVa_;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Constructors
@@ -158,7 +169,7 @@ public:
      *  Specifically, returns true if the memory map is non-empty. */
     virtual bool areSpecimensLoaded() const override;
 
-    /** Load and/or link interpretation.
+    /** Load interpretation.
      *
      *  Loads and/or links the engine's interpretation according to the engine's binary loader with these steps:
      *
@@ -179,6 +190,52 @@ public:
      *
      * @{ */
     virtual MemoryMapPtr loadSpecimens(const std::vector<std::string> &fileNames = std::vector<std::string>()) override;
+
+    /** Load a class file by parsing its contents at the given address.
+     *
+     *  Returns the AST node representing the file.
+     *
+     * @{ */
+    rose_addr_t loadClassFile(boost::filesystem::path, SgAsmGenericFileList*, rose_addr_t);
+
+    /** Recursively find and load all super classes starting at the given address.
+     *
+     *  Returns the address of the last preloaded class.
+     *
+     * @{ */
+    rose_addr_t loadSuperClasses(const std::string &, SgAsmGenericFileList*, rose_addr_t);
+
+    /** Load classes discoverable from the file list starting at the given address.
+     *
+     *  Loads all classes and superclasses discovered by examining instructions.
+     *
+     *  Returns the next available address.
+     *
+     * @{ */
+    rose_addr_t loadDiscoverableClasses(SgAsmGenericFileList*, rose_addr_t);
+
+    /** Load class and super class starting at the given address.
+     *
+     *  Loads the class and super class from the file header and adds new files to the file list.
+     *
+     *  Returns the next available address.
+     *
+     * @{ */
+    rose_addr_t loadClass(uint16_t, SgAsmJvmConstantPool*, SgAsmGenericFileList*, rose_addr_t);
+
+    /** Path to the given class.
+     *
+     *  Returns the path to the class (may not exist).
+     *
+     * @{ */
+    boost::filesystem::path pathToClass(const std::string &);
+
+    /** Discover function calls (invoke instructions) made from a method.
+     *
+     *  Stores in a map of fully resolved function names to unique virtual addresses.
+     *
+     * @{ */
+    void discoverFunctionCalls(SgAsmJvmMethod*, SgAsmJvmConstantPool*, std::map<std::string,rose_addr_t> &);
 
     /** Partition instructions into basic blocks and functions.
      *

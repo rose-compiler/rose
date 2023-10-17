@@ -54,7 +54,7 @@ public:
   static std::string name(const SgAsmCilMetadata*, SgAsmCilMetadataRoot*);
 
   CilMethod() = delete;
-  explicit CilMethod(SgAsmCilMetadataRoot*, SgAsmCilMethodDef*, const Class*);
+  explicit CilMethod(SgAsmCilMetadataRoot*, SgAsmCilMethodDef*, rose_addr_t);
 
 private:
   SgAsmCilMetadataRoot* mdr_;

@@ -23,8 +23,8 @@ const std::string JvmField::name() const
   return std::string{""};
 }
 
-JvmMethod::JvmMethod(SgAsmJvmFileHeader* jfh, SgAsmJvmMethod* method, const Class* obj)
-  : Method{obj}, jfh_{jfh}, sgMethod_{method}, code_{nullptr,0,0}
+JvmMethod::JvmMethod(SgAsmJvmFileHeader* jfh, SgAsmJvmMethod* method, rose_addr_t va)
+  : Method{va}, jfh_{jfh}, sgMethod_{method}, code_{nullptr,0,0}
 {
   ASSERT_not_null(jfh);
   ASSERT_not_null(method);
@@ -61,7 +61,7 @@ JvmMethod::instructions() const {
 }
 
 void const JvmMethod::decode(const Disassembler::Base::Ptr &disassembler) const {
-  rose_addr_t va{class_->address() + code_.offset()};
+  rose_addr_t va{classAddr_ + code_.offset()};
   rose_addr_t endVa{va + code_.size()};
 
   auto disassemblerJvm{disassembler.dynamicCast<Disassembler::Jvm>()};
@@ -109,53 +109,16 @@ JvmMethod::annotate()
       case opcode::invokevirtual:
       case opcode::new_: {
         if (auto expr = isSgAsmIntegerValueExpression(insn->get_operandList()->get_operands()[0])) {
-          comment = JvmMethod::name(expr->get_value(), pool);
+          comment = JvmClass::name(expr->get_value(), pool);
           expr->set_comment(comment);
+          // Also store the callee name in the instruction's comment for partitioning
+          insn->set_comment(comment);
         }
         break;
       }
       default: ;
     }
   }
-}
-
-std::string
-JvmMethod::name(uint16_t index, const SgAsmJvmConstantPool* pool)
-{
-  SgAsmJvmConstantPoolEntry* entry = pool->get_entry(index);
-
-  switch (entry->get_tag()) {
-    case PoolEntry::CONSTANT_Class: // 4.4.1  CONSTANT_Class_info table entry
-    case PoolEntry::CONSTANT_NameAndType: // 4.4.6 CONSTANT_NameAndType_info table entry
-    case PoolEntry::CONSTANT_Module: // 4.4.11 CONSTANT_Module_info table entry
-    case PoolEntry::CONSTANT_Package: // 4.4.12 CONSTANT_Package_info table entry
-      return JvmMethod::name(entry->get_name_index(), pool);
-
-    case PoolEntry::CONSTANT_String: // 4.4.2 CONSTANT_String_info table entry
-      return JvmMethod::name(entry->get_string_index(), pool);
-
-    case PoolEntry::CONSTANT_Fieldref: // 4.4.3 CONSTANT_Fieldref_info table entry
-    case PoolEntry::CONSTANT_Methodref: // 4.4.3 CONSTANT_Methodref_info table entry
-    case PoolEntry::CONSTANT_InterfaceMethodref: { // 4.4.3 CONSTANT_InterfeceMethodref_info table entry
-      std::string className{JvmMethod::name(entry->get_class_index(), pool)};
-      return className + "::" + JvmMethod::name(entry->get_name_and_type_index(), pool);
-      break;
-    }
-
-    case PoolEntry::CONSTANT_Utf8: // 4.4.7 CONSTANT_Utf8_info table entry
-      return pool->get_utf8_string(index);
-
-    // Perhaps needed
-    case PoolEntry::CONSTANT_MethodHandle: // 4.4.8 CONSTANT_MethodHandle_info table entry
-    case PoolEntry::CONSTANT_MethodType: // 4.4.9 CONSTANT_MethodType_info table entry
-    case PoolEntry::CONSTANT_Dynamic: // 4.4.10 CONSTANT_Dynamic_info table entry
-    case PoolEntry::CONSTANT_InvokeDynamic: // 4.4.10 CONSTANT_InvokeDynamic_info table entry
-      break;
-
-    default: ;
-  }
-
-  return std::string{""};
 }
 
 const std::string
@@ -202,7 +165,7 @@ JvmClass::JvmClass(SgAsmJvmFileHeader* jfh)
     fields_.push_back(new JvmField{jfh, sgField});
   }
   for (auto sgMethod : methods) {
-    methods_.push_back(new JvmMethod{jfh, sgMethod, this});
+    methods_.push_back(new JvmMethod{jfh, sgMethod, address()});
   }
   for (uint16_t index  : interfaces) {
     interfaces_.push_back(new JvmInterface{jfh, index});
@@ -210,6 +173,45 @@ JvmClass::JvmClass(SgAsmJvmFileHeader* jfh)
   for (auto sgAttribute : attributes) {
     attributes_.push_back(new JvmAttribute{jfh, sgAttribute->get_attribute_name_index()});
   }
+}
+
+std::string
+JvmClass::name(uint16_t index, const SgAsmJvmConstantPool* pool)
+{
+  SgAsmJvmConstantPoolEntry* entry = pool->get_entry(index);
+
+  switch (entry->get_tag()) {
+    case PoolEntry::CONSTANT_Class: // 4.4.1  CONSTANT_Class_info table entry
+    case PoolEntry::CONSTANT_NameAndType: // 4.4.6 CONSTANT_NameAndType_info table entry
+    case PoolEntry::CONSTANT_Module: // 4.4.11 CONSTANT_Module_info table entry
+    case PoolEntry::CONSTANT_Package: // 4.4.12 CONSTANT_Package_info table entry
+      return JvmClass::name(entry->get_name_index(), pool);
+
+    case PoolEntry::CONSTANT_String: // 4.4.2 CONSTANT_String_info table entry
+      return JvmClass::name(entry->get_string_index(), pool);
+
+    case PoolEntry::CONSTANT_Fieldref: // 4.4.3 CONSTANT_Fieldref_info table entry
+    case PoolEntry::CONSTANT_Methodref: // 4.4.3 CONSTANT_Methodref_info table entry
+    case PoolEntry::CONSTANT_InterfaceMethodref: { // 4.4.3 CONSTANT_InterfaceMethodref_info table entry
+      std::string className{JvmClass::name(entry->get_class_index(), pool)};
+      return className + "::" + JvmClass::name(entry->get_name_and_type_index(), pool);
+      break;
+    }
+
+    case PoolEntry::CONSTANT_Utf8: // 4.4.7 CONSTANT_Utf8_info table entry
+      return pool->get_utf8_string(index);
+
+    // Perhaps needed
+    case PoolEntry::CONSTANT_MethodHandle: // 4.4.8 CONSTANT_MethodHandle_info table entry
+    case PoolEntry::CONSTANT_MethodType: // 4.4.9 CONSTANT_MethodType_info table entry
+    case PoolEntry::CONSTANT_Dynamic: // 4.4.10 CONSTANT_Dynamic_info table entry
+    case PoolEntry::CONSTANT_InvokeDynamic: // 4.4.10 CONSTANT_InvokeDynamic_info table entry
+      break;
+
+    default: ;
+  }
+
+  return std::string{""};
 }
 
 const std::string JvmClass::name() const

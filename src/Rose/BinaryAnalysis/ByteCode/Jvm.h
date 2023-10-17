@@ -63,10 +63,8 @@ public:
 
   virtual void annotate() override;
 
-  static std::string name(uint16_t, const SgAsmJvmConstantPool*);
-
   JvmMethod() = delete;
-  explicit JvmMethod(SgAsmJvmFileHeader*, SgAsmJvmMethod*, const Class*);
+  explicit JvmMethod(SgAsmJvmFileHeader*, SgAsmJvmMethod*, rose_addr_t);
 
 private:
   SgAsmJvmFileHeader* jfh_;
@@ -125,8 +123,9 @@ public:
   SgAsmJvmConstantPool* constant_pool() {
     return jfh_->get_constant_pool();
   }
-
   virtual void dump();
+
+  static std::string name(uint16_t, const SgAsmJvmConstantPool*);
 
   JvmClass() = delete;
   explicit JvmClass(SgAsmJvmFileHeader* jfh);
