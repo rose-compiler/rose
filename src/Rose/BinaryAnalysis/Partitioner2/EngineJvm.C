@@ -13,10 +13,11 @@
 #include <Sawyer/FileSystem.h>
 #include <boost/filesystem.hpp>
 
-constexpr bool DEBUG_DUMP = false;
+constexpr bool DEBUG_WITH_DUMP = false;
 
 using namespace Rose::Diagnostics;
 using AddressSegment = Sawyer::Container::AddressSegment<rose_addr_t,uint8_t>;
+using opcode = Rose::BinaryAnalysis::JvmInstructionKind;
 using std::cout;
 using std::endl;
 
@@ -25,7 +26,7 @@ namespace BinaryAnalysis {
 namespace Partitioner2 {
 
 EngineJvm::EngineJvm(const Settings &settings)
-    : Engine("JVM", settings) {
+    : Engine("JVM", settings), nextFunctionVa_{static_cast<rose_addr_t>(-1)} {
 }
 
 EngineJvm::~EngineJvm() {}
@@ -174,43 +175,195 @@ EngineJvm::parseContainers(const std::vector<std::string> &fileNames) {
     }
 }
 
+boost::filesystem::path
+EngineJvm::pathToClass(const std::string &className) {
+    boost::filesystem::path classPath{boost::filesystem::current_path().string() + "/" + className + ".class"};
+    if (!boost::filesystem::exists(classPath)) {
+        mlog[WARN] << "path to class " << className << " does not exist\n";
+    }
+    return classPath;
+}
+
+// Load class and super classes
+rose_addr_t
+EngineJvm::loadClass(uint16_t classIndex, SgAsmJvmConstantPool* pool, SgAsmGenericFileList* fileList, rose_addr_t baseVa) {
+    SgAsmGenericFile* file{nullptr};
+    std::string superName{};
+    std::string className{ByteCode::JvmClass::name(classIndex, pool)};
+
+    // Don't load classes from java/lang/...
+    if (className.substr(0,10) == "java/lang/") {
+        return baseVa;
+    }
+
+    auto path = pathToClass(className);
+    if (boost::filesystem::exists(path)) {
+        baseVa = loadClassFile(path, fileList, baseVa);
+    }
+
+    return baseVa;
+}
+
+rose_addr_t
+EngineJvm::loadClassFile(boost::filesystem::path path, SgAsmGenericFileList* fileList, rose_addr_t baseVa) {
+    if (!boost::filesystem::exists(path)) {
+        mlog[WARN] << "EngineJvm::loadClassFile failed to find path: " << path.string() << "\n";
+        return baseVa;
+    }
+
+    // Make sure the class has not already been processed
+    if (classes_.find(path.stem().string()) != classes_.end()) {
+        return baseVa;
+    }
+
+    std::string fileName = path.string();
+    SAWYER_MESG(mlog[TRACE]) << "loading and parsing " << fileName <<"\n";
+
+    auto file = new SgAsmGenericFile{};
+    file->parse(fileName); /* this loads file into memory, does no reading of file */
+
+    auto jfh = new SgAsmJvmFileHeader(file);
+    jfh->set_base_va(baseVa);
+
+    // Check AST
+    ASSERT_require(jfh == file->get_header(SgAsmGenericFile::FAMILY_JVM));
+    ASSERT_require(jfh->get_parent() == file);
+
+    jfh->parse();
+
+    auto pool = jfh->get_constant_pool();
+    std::string className = ByteCode::JvmClass::name(jfh->get_this_class(), pool);
+    classes_[className] = file;
+
+    fileList->get_files().push_back(file);
+    file->set_parent(fileList);
+
+    // Increase base virtual address for the next class
+    baseVa += file->get_orig_size() + vaDefaultIncrement;
+    baseVa -= baseVa % vaDefaultIncrement;
+
+    // Decode instructions for usage downstream
+    auto disassembler = Disassembler::lookup("jvm");
+    for (auto sgMethod: jfh->get_method_table()->get_methods()) {
+      ByteCode::JvmMethod method{jfh, sgMethod, jfh->get_base_va()};
+      method.decode(disassembler);
+      discoverFunctionCalls(sgMethod, jfh->get_constant_pool(), functions_);
+    }
+
+    // Find and load super classes
+    baseVa = loadSuperClasses(className, fileList, baseVa);
+
+    return baseVa;
+}
+
+rose_addr_t
+EngineJvm::loadDiscoverableClasses(SgAsmGenericFileList* fileList, rose_addr_t baseVa) {
+    for (auto file: fileList->get_files()) {
+        auto jfh = dynamic_cast<SgAsmJvmFileHeader*>(file->get_header(SgAsmGenericFile::FAMILY_JVM));
+        auto pool = jfh->get_constant_pool();
+
+        for (auto sgMethod: jfh->get_method_table()->get_methods()) {
+          // Examine instructions for classes
+            for (auto insn: sgMethod->get_instruction_list()->get_instructions()) {
+              auto jvmInsn{isSgAsmJvmInstruction(insn)};
+              switch (isSgAsmJvmInstruction(insn)->get_kind()) {
+                case opcode::new_:
+                  if (auto expr = isSgAsmIntegerValueExpression(insn->get_operandList()->get_operands()[0])) {
+                    std::string className = ByteCode::JvmClass::name(expr->get_value(), pool);
+                    baseVa = loadClassFile(pathToClass(className), fileList, baseVa);
+                  }
+                  break;
+                case opcode::getstatic: // get static field from class
+                  if (auto expr = isSgAsmIntegerValueExpression(insn->get_operandList()->get_operands()[0])) {
+                    auto fieldEntry = pool->get_entry(expr->get_value());
+                    if (fieldEntry->get_tag() == SgAsmJvmConstantPoolEntry::CONSTANT_Fieldref) {
+                      uint16_t classIndex = fieldEntry->get_class_index();
+                      baseVa = loadClass(classIndex, pool, fileList, baseVa);
+                    }
+                  }
+                  break;
+                default: ;
+              }
+            }
+        }
+    }
+    return baseVa;
+}
+
+rose_addr_t
+EngineJvm::loadSuperClasses(const std::string &className, SgAsmGenericFileList* fileList, rose_addr_t baseVa) {
+    // Make sure the class has been processed and the SgAsmGenericFile for it exists
+    if (classes_.find(className) == classes_.end()) {
+        return baseVa;
+    }
+    SgAsmGenericFile* file = classes_[className];
+
+    auto jfh = dynamic_cast<SgAsmJvmFileHeader*>(file->get_header(SgAsmGenericFile::FAMILY_JVM));
+    auto pool = jfh->get_constant_pool();
+
+    // Load interfaces
+    for (auto interface: jfh->get_interfaces()) {
+        std::string interfaceName = ByteCode::JvmClass::name(interface, pool);
+        auto interfacePath = pathToClass(interfaceName);
+        if (boost::filesystem::exists(interfacePath)) {
+            baseVa = loadClassFile(interfacePath, fileList, baseVa);
+        }
+    }
+
+    std::string superName = ByteCode::JvmClass::name(jfh->get_super_class(), pool);
+    if (superName.substr(0,10) == "java/lang/") {
+        return baseVa;
+    }
+
+    // Load super class
+    auto superPath = pathToClass(superName);
+    if (boost::filesystem::exists(superPath)) {
+        baseVa = loadClassFile(superPath, fileList, baseVa);
+    }
+    return baseVa;
+}
+
+void
+EngineJvm::discoverFunctionCalls(SgAsmJvmMethod* sgMethod, SgAsmJvmConstantPool* pool, std::map<std::string,rose_addr_t> &fnm) {
+    for (auto insn: sgMethod->get_instruction_list()->get_instructions()) {
+        auto jvmInsn{isSgAsmJvmInstruction(insn)};
+        switch (isSgAsmJvmInstruction(insn)->get_kind()) {
+          case opcode::invokevirtual:
+          case opcode::invokespecial:
+          case opcode::invokestatic:
+          case opcode::invokeinterface:
+          case opcode::invokedynamic:
+            if (auto expr = isSgAsmIntegerValueExpression(insn->get_operandList()->get_operands()[0])) {
+                std::string functionName = ByteCode::JvmClass::name(expr->get_value(), pool);
+                fnm[functionName] = nextFunctionVa_;
+                nextFunctionVa_ -= 1024;
+            }
+            break;
+          default: ;
+        }
+    }
+}
+
 // Replacement for ::frontend, which is a complete mess, in order create a project containing multiple files. Nothing
 // special happens to any of the input file names--that should have already been done by this point. All the fileNames
 // are expected to be names of existing Java class or jar files.
-SgProject *
-EngineJvm::roseFrontendReplacement(const std::vector<boost::filesystem::path> &fileNames) {
-    ASSERT_forbid(fileNames.empty());
+SgProject*
+EngineJvm::roseFrontendReplacement(const std::vector<boost::filesystem::path> &paths) {
+    ASSERT_forbid(paths.empty());
 
-    // "Load" file at this virtual address
+    // Load class files starting at this virtual address
     rose_addr_t baseVa = 0;
 
-    // Create the SgAsmGenericFiles (not a type of SgFile), one per fileName, and add them to a SgAsmGenericFileList node.
     auto fileList = new SgAsmGenericFileList;
-    for (auto fileName: fileNames) {
-        SAWYER_MESG(mlog[TRACE]) <<"parsing " <<fileName <<"\n";
 
-        auto file = new SgAsmGenericFile{};
-        file->parse(fileName.string()); /* this loads file into memory, does no reading of file */
-        auto header = new SgAsmJvmFileHeader(file);
-        header->set_base_va(baseVa);
-
-        // Increase base virtual address for next header
-        baseVa += file->get_orig_size() + 1024;
-        baseVa -= baseVa % 1024;
-
-        // Check AST
-        ASSERT_require(header == file->get_header(SgAsmGenericFile::FAMILY_JVM));
-        ASSERT_require(header->get_parent() == file);
-
-        header->parse();
-        fileList->get_files().push_back(file);
-        file->set_parent(fileList);
-
-        if (DEBUG_DUMP) {
-          cout << "\n --- JVM file header ---\n";
-          header->dump(stdout, "    jfh:", 0);
-        }
+    // Load classes
+    for (auto path: paths) {
+        baseVa = loadClassFile(path, fileList, baseVa);
     }
+
+    // Scan instructions for classes
+    baseVa = loadDiscoverableClasses(fileList, baseVa);
+
     SAWYER_MESG(mlog[DEBUG]) <<"parsed " <<StringUtility::plural(fileList->get_files().size(), "container files") <<"\n";
 
     // DQ (11/25/2020): Add support to set this as a binary file (there is at least one binary file processed by ROSE).
@@ -230,10 +383,10 @@ EngineJvm::roseFrontendReplacement(const std::vector<boost::filesystem::path> &f
     jvmComposite->set_binary_only(true);
     jvmComposite->set_requires_C_preprocessor(false);
     jvmComposite->set_isObjectFile(false);
-    jvmComposite->set_sourceFileNameWithPath(boost::filesystem::absolute(fileNames[0]).string()); // best we can do
-    jvmComposite->set_sourceFileNameWithoutPath(fileNames[0].filename().string());                // best we can do
-    jvmComposite->initializeSourcePosition(fileNames[0].string());                                // best we can do
-    jvmComposite->set_originalCommandLineArgumentList(std::vector<std::string>(1, fileNames[0].string())); // best we can do
+    jvmComposite->set_sourceFileNameWithPath(boost::filesystem::absolute(paths[0]).string()); // best we can do
+    jvmComposite->set_sourceFileNameWithoutPath(paths[0].filename().string());                // best we can do
+    jvmComposite->initializeSourcePosition(paths[0].string());                                // best we can do
+    jvmComposite->set_originalCommandLineArgumentList(std::vector<std::string>(1, paths[0].string())); // best we can do
     ASSERT_not_null(jvmComposite->get_file_info());
 
     // Create one or more SgAsmInterpretation nodes. If all the SgAsmGenericFile objects are ELF files, then there's one
@@ -341,11 +494,6 @@ void
 EngineJvm::runPartitionerInit(const Partitioner::Ptr &partitioner) {
     Sawyer::Message::Stream where(mlog[WHERE]);
     SAWYER_MESG(where) <<"EngineJvm::runPartitionerInit\n";
-    // check on JvmComposite & interpretation stuff
-    SgAsmInterpretation* interp{nullptr};
-    ASSERT_not_null(interp = interpretation());
-    //TODO: check on interp family
-    // ASSERT_require(interp->name() == "jvm");
 
     // Assume the JVM will return from a function call
     partitioner->autoAddCallReturnEdges(true);
@@ -357,24 +505,105 @@ EngineJvm::runPartitionerRecursive(const Partitioner::Ptr &partitioner) {
     SgAsmGenericHeaderList *interpHeaders = interpretation()->get_headers();
     ASSERT_not_null(interpHeaders);
 
-    for (SgAsmGenericHeader* header: interpHeaders->get_headers()) {
-      auto jfh = dynamic_cast<SgAsmJvmFileHeader*>(header);
-      auto jvmClass = new ByteCode::JvmClass(jfh);
+    // Attach empty functions as targets for invoke of "java/" functions
+    for (auto itr = functions_.begin(); itr != functions_.end(); ) {
+        rose_addr_t va = itr->second;
+        std::string name = itr->first;
+        if (name.substr(0,5)=="java/") {
+            auto function = Partitioner2::Function::instance(va, name);
+            auto block = Partitioner2::BasicBlock::instance(va, partitioner);
+            function->insertBasicBlock(va);
+            partitioner->attachBasicBlock(block);
+            partitioner->attachFunction(function);
+            itr++;
+        }
+        else {
+            unresolvedFunctions_[name] = va;
+            itr = functions_.erase(itr);
+        }
+    }
 
-      // Start discovering instructions and forming them into basic blocks and functions
-      SAWYER_MESG(where) <<"discovering and populating functions\n";
-      discoverFunctions(partitioner, jvmClass);
+    // Discover functions in the reverse order of headers because classes are loaded from derived to base
+    // and functions should be "discovered" from the base class to derived.  Then the Partitioner2::Function
+    // (e.g.) Base::<init> will be available for derived classes to call when they are created.
+    for (auto itr = interpHeaders->get_headers().rbegin(); itr != interpHeaders->get_headers().rend(); itr++) {
+        auto header = *itr;
+        auto jvmClass{ByteCode::JvmClass(dynamic_cast<SgAsmJvmFileHeader*>(header))};
 
-      if (DEBUG_DUMP) {
-        jvmClass->dump();
-      }
+        // Start discovering instructions and forming them into basic blocks and functions
+        SAWYER_MESG(where) <<"discovering and populating functions\n";
+        discoverFunctions(partitioner, &jvmClass);
+
+        if (DEBUG_WITH_DUMP) {
+            jvmClass.dump();
+            jvmClass.digraph();
+        }
     }
 }
 
 void
 EngineJvm::runPartitionerFinal(const Partitioner::Ptr &partitioner) {
     Sawyer::Message::Stream where(mlog[WHERE]);
-    SAWYER_MESG(where) <<"EngineJvm::runPartitionerFinal needs implementation\n";
+    SAWYER_MESG(where) <<"EngineJvm::runPartitionerFinal\n";
+
+    // TODO: Work out edges to indeterminate vertex, for now, just print warning
+    //
+    // Look for unmatched call sites
+    ControlFlowGraph::VertexIterator indeterminate = partitioner->indeterminateVertex();
+    for (auto incoming: indeterminate->inEdges()) {
+        if (incoming.value().type() == E_FUNCTION_CALL) {
+            std::cerr << "WARNING: Edge to indeterminate vertex, from: " << incoming.source()->id() <<"\n";
+        }
+    }
+
+
+#if 0
+    // For efficiency create a map of function names to addresses
+    std::map<std::string,rose_addr_t> functionNameMap;
+    for (auto function: partitioner->functions()) {
+      functionNameMap[function->name()] = function->address();
+      std::cout << "... discovered function name: " << function->name() << " address: " << StringUtility::addrToString(function->address()) <<"\n";
+    }
+    for (auto pair: unresolvedFunctions_) {
+        rose_addr_t va = pair.second;
+        std::string name = pair.first;
+        functionNameMap[name] = va;
+        std::cout << "... undiscovered function name: " << name << " address: " << StringUtility::addrToString(va) <<"\n";
+    }
+#endif
+
+#if 0
+  ControlFlowGraph::VertexIterator indeterminate = partitioner->indeterminateVertex();
+  for (auto incoming: indeterminate->inEdges()) {
+    if (incoming.value().type() == E_FUNCTION_CALL) {
+      std::cout << "... Edge " << " from vertex " << incoming.source()->id() <<"\n";
+      auto source = incoming.source();
+      if (source->value().type() == V_BASIC_BLOCK) {
+        auto value = source->value();
+        if (BasicBlock::Ptr bb = source->value().bblock()) {
+          rose_addr_t sourceVa = bb->address();
+          std::cout << "... call va: " << StringUtility::addrToString(sourceVa) << "\n";
+          SgAsmInstruction* last = bb->instructions().back();
+          std::string functionName = last->get_comment();
+          if (functionNameMap.find(functionName) != functionNameMap.end()) {
+            rose_addr_t functionVa = functionNameMap[functionName];
+            std::cout << "... function va: " << StringUtility::addrToString(functionVa) << "\n";
+            //TODO:  const size_t nBits = 64;
+            auto detached = partitioner->detachBasicBlock(sourceVa);
+            //            bb->insertSuccessor(functionVa, 64, EdgeType::E_FUNCTION_CALL, Confidence::PROVED);
+#if 0
+            detached->insertSuccessor(functionVa, 64, EdgeType::E_FUNCTION_CALL, Confidence::PROVED);
+            partitioner->attachBasicBlock(detached);
+#endif
+          }
+        }
+      }
+    }
+  }
+#endif
+
+  // partitioner->dumpCfg(std::cout, "Worker:", true, false);
+
 }
 
 Partitioner::Ptr
@@ -440,16 +669,8 @@ EngineJvm::discoverBasicBlocks(const PartitionerPtr& partitioner, const ByteCode
 
 void
 EngineJvm::discoverFunctions(const PartitionerPtr& partitioner, const ByteCode::Class* bcClass) {
-  // Decode/disassemble instructions
-  for (auto method : bcClass->methods()) {
-    method->decode(disassembler());
-  }
-
   // Partition the instructions into basic blocks
-  bcClass->partition(partitioner);
-
-  auto bcc = const_cast<ByteCode::Class*>(bcClass);
-  bcc->digraph();
+  bcClass->partition(partitioner, functions_);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

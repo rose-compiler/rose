@@ -40,8 +40,6 @@ public:
   virtual const void decode(const Disassembler::BasePtr&) const = 0;
   virtual const SgAsmInstructionList* instructions() const = 0;
 
-  const Class* myClass() { return class_; }
-
   /* Annotate the AST (.e.g., add comments to instructions) */
   virtual void annotate() = 0;
 
@@ -56,9 +54,9 @@ public:
   Method() = delete;
 
 protected:
-  Method(const Class*);
+  Method(rose_addr_t);
   ~Method();
-  const Class* class_;
+  rose_addr_t classAddr_;
   Partitioner2::FunctionPtr function_;
   std::vector<BasicBlockPtr> blocks_;
 };
@@ -86,7 +84,7 @@ public:
   virtual const std::vector<const Attribute*> &attributes() const = 0;
   virtual const std::vector<const Interface*> &interfaces() const = 0;
   virtual const std::vector<std::string> &strings() = 0;
-  virtual void partition(const PartitionerPtr &partitioner) const;
+  virtual void partition(const PartitionerPtr &, std::map<std::string,rose_addr_t> &) const;
   virtual void digraph() const;
   virtual void dump() = 0;
 

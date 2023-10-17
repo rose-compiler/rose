@@ -19,9 +19,14 @@ nonsmoke_specimens_java_classes =		\
     Generic.class				\
     Test4.class					\
     GiantFunction.class				\
+    MembersOnly.class				\
+      Bottom.class Middle.class Base.class	\
     MultiArray.class				\
     NestMembersAttribute.class			\
     NestMembersAttribute__InputReader.class	\
     TestNull.class				\
+    TestInterface.class				\
+      CompleteChild.class PartialParent.class PartialParent.class	\
+      InterfaceImplOther.class InterfaceImpl.class TheInterface.class	\
     Worker_TT.class				\
     CPrint.class

@@ -182,8 +182,8 @@ metadataToken(const SgAsmCilMetadataHeap* heap, const SgAsmExpression* expr)
   return metadataToken(heap, isSgAsmIntegerValueExpression(expr));
 }
 
-CilMethod::CilMethod(SgAsmCilMetadataRoot* mdr, SgAsmCilMethodDef* sgMethod, const Class* obj)
-  : Method{obj}, mdr_{mdr}, sgMethod_{sgMethod}, insns_{nullptr}, code_{nullptr, 0, 0}
+CilMethod::CilMethod(SgAsmCilMetadataRoot* mdr, SgAsmCilMethodDef* sgMethod, rose_addr_t va)
+  : Method{va}, mdr_{mdr}, sgMethod_{sgMethod}, insns_{nullptr}, code_{nullptr, 0, 0}
 {
     insns_ = new SgAsmInstructionList;
 
@@ -320,7 +320,7 @@ CilClass::CilClass(SgAsmCilMetadataRoot* root, const std::uint8_t* name, size_t 
             continue;
         }      
 
-        auto method = new CilMethod(mdr_, methodDef, this);
+        auto method = new CilMethod(mdr_, methodDef, address());
         methods_.push_back(method);
 
         if (TRACE_CONSTRUCTION) {
