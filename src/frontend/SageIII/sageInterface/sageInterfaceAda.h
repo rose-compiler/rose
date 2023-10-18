@@ -384,6 +384,12 @@ namespace
   bool hasUnknownDiscriminants(const SgAdaDiscriminatedTypeDecl* n);
   /// @}
 
+  /// returns if \ref n is a dispatching call
+  /// @{
+  //~ bool isDispatching(const SgFunctionCallExpr& n);
+  //~ bool isDispatching(const SgFunctionCallExpr* n);
+  /// @}
+
 
   /// return if the type @ref ty is the corresponding universal type representation in ROSE
   /// @{

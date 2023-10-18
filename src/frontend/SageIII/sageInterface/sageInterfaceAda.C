@@ -949,6 +949,20 @@ namespace Ada
     return isGenericDecl(*n);
   }
 
+  //~ bool isDispatching(const SgFunctionCallExpr& n)
+  //~ {
+    //~ // an argument is of type 'class
+    //~ // and the argument is of tagged type
+    //~ // and the target is a primitive operation of that type
+    //~ return false;
+  //~ }
+
+  //~ bool isDispatching(const SgFunctionCallExpr* n)
+  //~ {
+    //~ return n && isDispatching(*n);
+  //~ }
+
+
   namespace
   {
     bool isLogicalChildScopeOfDecl(const SgScopeStatement* scope, const SgDeclarationStatement* decl)

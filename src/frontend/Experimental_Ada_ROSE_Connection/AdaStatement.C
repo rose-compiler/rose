@@ -59,6 +59,34 @@ namespace
   //
   // pragma handling
 
+  SgPragmaDeclaration&
+  createPragma_common(Element_Struct& el, SgStatement* stmtOpt, AstContext ctx)
+  {
+    ADA_ASSERT (el.Element_Kind == A_Pragma);
+    logKind("A_Pragma", el.ID);
+
+    Pragma_Struct&             pragma   = el.The_Union.The_Pragma;
+    std::string                name{pragma.Pragma_Name_Image};
+    ElemIdRange                argRange = idRange(pragma.Pragma_Argument_Associations);
+    SgExprListExp&             arglist  = mkExprListExp();
+    SgPragmaDeclaration&       sgnode   = mkPragmaDeclaration(name, arglist, stmtOpt);
+    ADA_ASSERT (arglist.get_parent());
+
+    sgnode.set_parent(&ctx.scope()); // set fictitious parent (will be overwritten when pragma is actually placed)
+
+    std::vector<SgExpression*> args     = traverseIDs(argRange, elemMap(), ArgListCreator{ctx.pragmaAspectAnchor(sgnode)});
+
+    arglist.get_expressions().reserve(args.size());
+    for (SgExpression* arg : args) arglist.append_expression(arg);
+
+    // \todo do we need to privatize pragmas in the private section?
+    attachSourceLocation(sgnode, el, ctx);
+    attachSourceLocation(SG_DEREF(sgnode.get_pragma()), el, ctx);
+    recordNode(asisDecls(), el.ID, sgnode);
+
+    return sgnode;
+  }
+
   struct PragmaCreator
   {
       using result_container = std::vector<SgPragmaDeclaration*>;
@@ -76,29 +104,10 @@ namespace
         if (findFirst(asisDecls(), el.ID))
           return;
 
-        ADA_ASSERT (el.Element_Kind == A_Pragma);
-        logKind("A_Pragma", el.ID);
+        logWarn() << "fallback to legacy pragma procesing.."
+                  << std::endl;
 
-        Pragma_Struct&             pragma   = el.The_Union.The_Pragma;
-        std::string                name{pragma.Pragma_Name_Image};
-        ElemIdRange                argRange = idRange(pragma.Pragma_Argument_Associations);
-        SgExprListExp&             arglist  = mkExprListExp();
-        SgPragmaDeclaration&       sgnode   = mkPragmaDeclaration(name, arglist, stmt);
-        ADA_ASSERT (arglist.get_parent());
-
-        sgnode.set_parent(&ctx.scope()); // set fictitious parent (will be overwritten when pragma is actually placed)
-
-        std::vector<SgExpression*> args     = traverseIDs(argRange, elemMap(), ArgListCreator{ctx.pragmaAspectAnchor(sgnode)});
-
-        arglist.get_expressions().reserve(args.size());
-        for (SgExpression* arg : args) arglist.append_expression(arg);
-
-        // \todo do we need to privatize pragmas in the private section?
-        attachSourceLocation(sgnode, el, ctx);
-        attachSourceLocation(SG_DEREF(sgnode.get_pragma()), el, ctx);
-        res.push_back(&sgnode);
-
-        recordNode(asisDecls(), el.ID, sgnode);
+        res.push_back(&createPragma_common(el, stmt, ctx));
       }
 
       void createPragma(Element_Struct* el, const ExtendedPragmaID& pid)
@@ -4042,6 +4051,11 @@ namespace
 
     ctx.storeDeferredUnitCompletion( std::move(deferredAspectCompletion) );
   }
+}
+
+void handlePragma(Element_Struct& el, SgStatement* stmtOpt, AstContext ctx)
+{
+  ctx.appendStatement(createPragma_common(el, stmtOpt, ctx));
 }
 
 void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)

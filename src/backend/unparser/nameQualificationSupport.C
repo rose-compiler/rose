@@ -1502,7 +1502,12 @@ namespace
 
       void handle(const SgFunctionCallExp& n)
       {
-        if (n.get_uses_operator_syntax() || n.get_usesObjectCallSyntax())
+        const bool suppressNameQual = (  n.get_uses_operator_syntax()
+                                      || n.get_usesObjectCallSyntax()
+                                      // || si::Ada::isDispatching(n)
+                                      );
+
+        if (suppressNameQual)
           suppressNameQualification(n.get_function());
       }
 

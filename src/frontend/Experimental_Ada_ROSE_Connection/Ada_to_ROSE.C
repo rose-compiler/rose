@@ -483,6 +483,10 @@ namespace
         }
 
       case A_Pragma:                  // Asis.Elements
+        {
+          handlePragma(elem, nullptr /* no stmt */, ctx);
+          break;
+        }
 
       case Not_An_Element:  // Nil_Element
       case A_Path:                    // Asis.Statements

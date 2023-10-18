@@ -75,6 +75,9 @@ namespace Ada_ROSE_Translation
   /// converts an Asis declaration and adds the new node to the current scope
   void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate = false);
 
+  /// converts an Asis pragma and adds the new node to the current scope
+  void handlePragma(Element_Struct& el, SgStatement* stmtOpt, AstContext ctx);
+
   /// converts an Asis definition and adds the new node to the current scope
   void handleDefinition(Element_Struct& elem, AstContext ctx);
 
