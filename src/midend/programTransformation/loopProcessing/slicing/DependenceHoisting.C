@@ -157,7 +157,7 @@ void DependenceHoisting ::
 Analyze( LoopTreeDepComp &comp, LoopTreeTransDepGraphCreate *tg,
          CompSliceNest& result)
 {
-  LoopTreeInterface interface;
+  LoopTreeInterface looptreeInterface;
   LoopTreeNode *root = comp.GetLoopTreeRoot();
   int rootlevel = root->LoopLevel();
   int size, slicesize;
@@ -178,8 +178,8 @@ Analyze( LoopTreeDepComp &comp, LoopTreeTransDepGraphCreate *tg,
   if (stmt == 0) return;
   size = 0;
   int index = stmt->LoopLevel()-1;
-  for (LoopTreeNode *loop = GetEnclosingLoop(stmt, interface);
-       index >= rootlevel; loop = GetEnclosingLoop(loop, interface)) {
+  for (LoopTreeNode *loop = GetEnclosingLoop(stmt, looptreeInterface);
+       index >= rootlevel; loop = GetEnclosingLoop(loop, looptreeInterface)) {
     SliceInfo curloop(stmt, loop, index--);
     TransSlicingAnal anal;
     if (anal.LoopSlicible( comp, tg, curloop, buf1)) {
@@ -196,8 +196,8 @@ Analyze( LoopTreeDepComp &comp, LoopTreeTransDepGraphCreate *tg,
     for ( stmtIter++; (stmt= stmtIter.Current()); stmtIter++) {
       SliceInfo curloop(stmt);
       index = stmt->LoopLevel()-1;
-      LoopTreeNode *loop = GetEnclosingLoop(stmt, interface);
-      for ( ; index >= rootlevel; loop = GetEnclosingLoop(loop, interface)) {
+      LoopTreeNode *loop = GetEnclosingLoop(stmt, looptreeInterface);
+      for ( ; index >= rootlevel; loop = GetEnclosingLoop(loop, looptreeInterface)) {
         curloop.SetLoop(loop, index--);
         if (anal.LoopSlicible( comp, tg, curloop, buf1))
            break;
@@ -205,8 +205,8 @@ Analyze( LoopTreeDepComp &comp, LoopTreeTransDepGraphCreate *tg,
       if (loop == 0) /* QY: no slicable loop has been found for stmt */
          { break; }
       else {
-         for (loop = GetEnclosingLoop(loop, interface);
-              index >= rootlevel; loop = GetEnclosingLoop(loop, interface)) {
+         for (loop = GetEnclosingLoop(loop, looptreeInterface);
+              index >= rootlevel; loop = GetEnclosingLoop(loop, looptreeInterface)) {
            SliceInfo curloop1(stmt, loop,index--);
            if (anal.LoopSlicible( comp, tg, curloop1, buf2) ) {
               tmpSlices[size++] = anal;

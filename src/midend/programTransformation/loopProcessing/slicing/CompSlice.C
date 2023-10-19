@@ -334,14 +334,14 @@ SymbolicVar SliceLoopIvar( AstInterface &fa, const CompSlice *slice)
   typedef std::set<std::string, std::less<std::string> > nameset;
   nameset sliceVars, usedVars;
   CompSlice::ConstLoopIterator loopIter = slice->GetConstLoopIterator();
-  LoopTreeInterface interface;
+  LoopTreeInterface looptreeInterface;
   for (LoopTreeNode *loop; (loop = loopIter.Current()); loopIter.Advance()) {
     std::string name = loop->GetLoopInfo()->GetVar().GetVarName();
     sliceVars.insert( name);
     CompSlice::ConstStmtIterator stmtIter=loopIter.GetConstStmtIterator();
     for (LoopTreeNode *stmt; (stmt=stmtIter.Current()); stmtIter.Advance()) {
-       for (LoopTreeNode *l = GetEnclosingLoop(stmt,interface);
-            l != 0; l = GetEnclosingLoop(l, interface) ) {
+       for (LoopTreeNode *l = GetEnclosingLoop(stmt,looptreeInterface);
+            l != 0; l = GetEnclosingLoop(l, looptreeInterface) ) {
           if (l == loop) continue;
           name = l->GetLoopInfo()->GetVar().GetVarName();
           usedVars.insert( (name) );
