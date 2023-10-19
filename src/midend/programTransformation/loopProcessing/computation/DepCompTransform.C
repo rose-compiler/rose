@@ -326,8 +326,8 @@ OutmostCopyRoot( CopyArrayUnit& unit, DepCompAstRefGraphCreate& refDep, LoopTree
      }
      if (!ep.ReachEnd())
         break;
-     LoopTreeInterface interface;
-     unit.root = GetEnclosingLoop(unit.root, interface);
+     LoopTreeInterface looptreeInterface;
+     unit.root = GetEnclosingLoop(unit.root, looptreeInterface);
   }
   LoopTreeNode* res = unit.root;
   if (res == 0)
@@ -342,13 +342,13 @@ OutmostCopyRoot( CopyArrayUnit& unit, DepCompAstRefGraphCreate& refDep, LoopTree
 
 LoopTreeNode*  DepCompCopyArrayCollect:: ComputeCommonRoot(CopyArrayUnit::NodeSet& refs)
 {
-    LoopTreeInterface interface;
+    LoopTreeInterface looptreeInterface;
     CopyArrayUnit::NodeSet::const_iterator rp = refs.begin();
 
-    LoopTreeNode *curroot = GetEnclosingLoop((*rp)->GetInfo().stmt, interface);
+    LoopTreeNode *curroot = GetEnclosingLoop((*rp)->GetInfo().stmt, looptreeInterface);
     for ( ++rp; !rp.ReachEnd(); ++rp) {
       const DepCompAstRefGraphNode* n = *rp;
-      LoopTreeNode* nroot = GetCommonLoop(interface, curroot, n->GetInfo().stmt);
+      LoopTreeNode* nroot = GetCommonLoop(looptreeInterface, curroot, n->GetInfo().stmt);
       if (nroot == 0) {
          curroot = get_stmtref_info().get_tree_root();
          break;
@@ -363,7 +363,7 @@ bool EnforceCopyRootRemove(NodeIter nodes, const DepCompAstRefGraphNode* outnode
                            int copylevel,
                      DepCompCopyArrayCollect::CopyArrayUnit::NodeSet& cuts)
 {
-   LoopTreeInterface interface;
+   LoopTreeInterface looptreeInterface;
    bool removeall = true;
    LoopTreeNode* outstmt = outnode->GetInfo().stmt;
    for ( ; !nodes.ReachEnd(); ++nodes) {
@@ -373,8 +373,8 @@ bool EnforceCopyRootRemove(NodeIter nodes, const DepCompAstRefGraphNode* outnode
       LoopTreeNode* stmt = cur->GetInfo().stmt;
       LoopTreeNode* tmp = 0;
       if (stmt == outstmt ||
-          ((tmp = GetCommonLoop(interface,stmt, outstmt)) != 0 &&
-             GetLoopLevel(tmp, interface) >= copylevel))  {
+          ((tmp = GetCommonLoop(looptreeInterface,stmt, outstmt)) != 0 &&
+             GetLoopLevel(tmp, looptreeInterface) >= copylevel))  {
           cuts.insert(cur);
       }
       else

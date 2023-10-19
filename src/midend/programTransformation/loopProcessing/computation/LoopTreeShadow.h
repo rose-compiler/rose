@@ -39,7 +39,7 @@ class LoopTreeShadowNode : public LoopTreeNode
   virtual LoopTreeNode* set_preAnnot(const std::string& content) { return 0; }
   virtual LoopTreeNode* set_postAnnot(const std::string& content) { return 0; }
   
-  std::string GetClassName() const { return "LoopTreeShadowNode"; }
+  std::string LoopTreeGetClassName() const override { return "LoopTreeShadowNode"; }
   LoopTreeNode *Clone() const { return 0; }
   virtual LoopTreeShadowNode* CloneNode(LoopTreeNode *n) const
     { return new LoopTreeShadowNode(n, *this); }

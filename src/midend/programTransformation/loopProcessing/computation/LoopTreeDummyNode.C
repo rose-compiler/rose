@@ -158,7 +158,7 @@ class SelectRestrLoopAnces : public RoseSelectObject<LoopTreeNode*>
   bool operator ()( LoopTreeNode * const& n)  const
    { if (n == node->GetRestrLoop())
         return true;
-     if (n->GetClassName() != node->GetClassName())
+     if (n->LoopTreeGetClassName() != node->LoopTreeGetClassName())
         return false;
      LoopTreeRestrLoopRange * that = static_cast<LoopTreeRestrLoopRange* const>(n);
      return that->GetRestrLoop() == node->GetRestrLoop();
@@ -203,7 +203,7 @@ bool LoopTreeRestrLoopRange :: MergeSibling( int opt)
      for (LoopTreeNode *that = p2;
           that != 0;
           that = (that->ChildCount() == 1)? that->FirstChild() : 0) {
-        if (that->GetClassName() != GetClassName())
+        if (that->LoopTreeGetClassName() != LoopTreeGetClassName())
            continue;
         LoopTreeRestrLoopRange *n = static_cast<LoopTreeRestrLoopRange*>(that);
         if ( n->GetRestrLoop() == GetRestrLoop()) {
@@ -297,7 +297,7 @@ bool LoopTreeRelateLoopIvar :: MergeSibling( int opt)
      for (LoopTreeNode *that = p2;
           that != 0 ;
           that = (that->ChildCount() == 1)? that->FirstChild() : 0) {
-        if (that->GetClassName() != GetClassName())
+        if (that->LoopTreeGetClassName() != LoopTreeGetClassName())
            continue;
         LoopTreeRelateLoopIvar *n = static_cast<LoopTreeRelateLoopIvar*>(that);
         if ( n->GetLoop1() == GetLoop1() && n->GetLoop2() == GetLoop2()
@@ -353,7 +353,7 @@ bool LoopTreeReplLoopVar :: SelfRemove()
       if (ChildCount()==1) {
         for (LoopTreeNode *n1 = FirstChild(); n1->ChildCount() == 1;
              n1 = n1->FirstChild()) {
-           if (n1->GetClassName() != GetClassName())
+           if (n1->LoopTreeGetClassName() != LoopTreeGetClassName())
                 continue;
            LoopTreeReplLoopVar *tmp =  static_cast <LoopTreeReplLoopVar*>(n1);
            if (tmp->GetNewVal() == GetOldVar()) {

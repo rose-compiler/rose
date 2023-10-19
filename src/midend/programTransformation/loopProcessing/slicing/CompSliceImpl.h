@@ -46,7 +46,7 @@ class CompSliceLoop : public LoopTreeShadowNode, public LoopTreeObserver
          res = res + " loop reversible ";
       return res;
     }
-  virtual std::string GetClassName() const { return "CompSliceLoop"; }
+  virtual std::string CompSliceGetClassName() const { return "CompSliceLoop"; }
 };
 
 class CompSliceStmt : public LoopTreeShadowNode, public LoopTreeObserver
@@ -94,7 +94,7 @@ class CompSliceStmt : public LoopTreeShadowNode, public LoopTreeObserver
        sprintf( buf, "%d", align);
        return  "stmt: " + GetRepr()->toString() + "\nslicing alignment: " + std::string(buf)+"\n";
     }
-  virtual std::string GetClassName() const { return "CompSliceStmt"; }
+  virtual std::string CompSliceGetClassName() const { return "CompSliceStmt"; }
 };
 
 inline CompSlice::SliceLoopInfo CompSliceLoop:: GetSliceInfo() const
