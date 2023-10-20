@@ -23,7 +23,6 @@
 using namespace Rose::Diagnostics;
 Sawyer::Message::Facility AstInterface::mlog;
 
-// jichi (9/29/2009): Add test for Fortran language
 #define IS_FORTRAN_LANGUAGE() \
         SageInterface::is_Fortran_language()
 
@@ -3762,12 +3761,11 @@ class BoolAttribute
   BoolAttribute( bool v = true) : val(v) {}
   operator bool() const { return val; } 
 };
-
 class SageProcessAstNode : public AstTopDownBottomUpProcessing<BoolAttribute,BoolAttribute> 
 {
    AstInterface *fa;
    AstInterface::TraversalOrderType t;
-   ProcessAstNode& op;
+   ProcessAstNode<AstNodePtr>& op;
    BoolAttribute evaluateInheritedAttribute(SgNode* astNode, 
                                             BoolAttribute inheritedValue)
      { if (t == AstInterface::PostOrder)
@@ -3787,22 +3785,13 @@ class SageProcessAstNode : public AstTopDownBottomUpProcessing<BoolAttribute,Boo
         return op.Traverse( *fa, AstNodePtrImpl(astNode), AstInterface::PostVisit); 
     }
   public:
-   SageProcessAstNode( ProcessAstNode& _op) : op(_op) {}
+   SageProcessAstNode( ProcessAstNode<AstNodePtr>& _op) : op(_op) {}
    bool Traverse( AstInterface *_fa, SgNode* node, AstInterface::TraversalOrderType _t)
        { fa = _fa;
          t = _t; 
          return AstTopDownBottomUpProcessing<BoolAttribute,BoolAttribute>::traverse(node, true);
        }
 };
-
-
-bool 
-ReadAstTraverse( AstInterface& fa, const AstNodePtr& _root, ProcessAstNode& op,
-                 AstInterface::TraversalOrderType t)
-{
-   AstNodePtrImpl root(_root);
-   return SageProcessAstNode(op).Traverse(&fa, root.get_ptr(), t);
-}
 
 template <class Transform>
 class PerformPreTransformationTraversal 
@@ -3916,6 +3905,14 @@ AstNodePtr TransformAstTraverse( AstInterface& fa, const AstNodePtr& r,
      AstNodePtr result = traverse(AstNodePtrImpl(r).get_ptr());
      return result;
   }
+}
+
+bool ReadAstTraverse(AstInterface& fa, const AstNodePtr& _root,
+                        ProcessAstNode<AstNodePtr>& op,
+                        AstInterface::TraversalOrderType t)
+{
+   AstNodePtrImpl root(_root);
+   return SageProcessAstNode(op).Traverse(&fa, root.get_ptr(), t);
 }
 
 
@@ -4034,4 +4031,3 @@ ROSE_DLL_API void FixSgProject( SgProject &sageProject)
    }
 }
 
-/* EOF */

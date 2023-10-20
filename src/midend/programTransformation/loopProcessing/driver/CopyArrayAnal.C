@@ -158,7 +158,7 @@ SplitDisconnectedUnit( DepCompCopyArrayCollect& collect,
 void CopyArrayUnderSizeLimit::
 ModifyCopyArrayCollect( DepCompCopyArrayCollect& collect, DepCompAstRefGraphCreate& refDep)
 {
-   LoopTreeInterface interface;
+   LoopTreeInterface looptreeInterface;
    if (DebugCopyRoot())
       std::cerr << "copydim = " << copydim << std::endl;
    for (DepCompCopyArrayCollect::iterator arrays = collect.begin();
@@ -178,11 +178,11 @@ ModifyCopyArrayCollect( DepCompCopyArrayCollect& collect, DepCompAstRefGraphCrea
              assert(origroot != unit.root);
              LoopTreeNode* n = origroot;
              assert(n != NULL);
-             LoopTreeNode* p = GetEnclosingLoop(n,interface);
+             LoopTreeNode* p = GetEnclosingLoop(n,looptreeInterface);
              LoopTreeNode* rootloop = (unit.root->GetLoopInfo() == 0)? 0 : unit.root;
              while (n != rootloop && p != rootloop) {
                  n = p;
-                 p = GetEnclosingLoop(p, interface);
+                 p = GetEnclosingLoop(p, looptreeInterface);
              }
              if (DebugCopyRoot())
                std::cerr << "resetting copy root to be " << n->toString() << std::endl;
@@ -216,7 +216,7 @@ ModifyCopyArrayCollect( DepCompCopyArrayCollect& collect, DepCompAstRefGraphCrea
            if (reuselevel > copylevel) {
               LoopTreeNode *cur = origroot;
               for (int curlevel = origroot->LoopLevel(); reuselevel  <= curlevel;
-                   cur = GetEnclosingLoop(cur, interface), --curlevel);
+                   cur = GetEnclosingLoop(cur, looptreeInterface), --curlevel);
               if (DebugCopyRoot())
                   std::cerr << "After reuse anal, resetting copy root to be " << cur->toString() << std::endl;
               unit.root = cur;

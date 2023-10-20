@@ -5,7 +5,8 @@
 #include "AstInterface.h"
 #include "SinglyLinkedList.h"
 
-class ProcessAstTreeBase : public ProcessAstNode
+template <class AstNodePtr>
+class ProcessAstTreeBase : public ProcessAstNode<AstNodePtr>
 {
  public:
   typedef enum {BEFORE = 1, AT = 2, INSIDE = 4, BEFORE_AT = 3, INSIDE_AT = 6} TraverseLocation;
@@ -44,10 +45,13 @@ class ProcessAstTreeBase : public ProcessAstNode
    virtual ~ProcessAstTreeBase() {}      
 };
 
-
-class ProcessAstTree : public ProcessAstTreeBase
+template <class AstNodePtr>
+class ProcessAstTree : public ProcessAstTreeBase<AstNodePtr>
 {
  protected:
+  using ProcessAstTreeBase<AstNodePtr>::Skip;
+  using ProcessAstTreeBase<AstNodePtr>::SkipUntil;
+  using ProcessAstTreeBase<AstNodePtr>::SkipOnly;
   virtual bool ProcessLoop(AstInterface &fa, const AstNodePtr& s, 
                            const AstNodePtr& body,
                            AstInterface::TraversalVisitType t) ;
@@ -69,5 +73,9 @@ class ProcessAstTree : public ProcessAstTreeBase
  public:
   bool operator()( AstInterface &fa, const AstNodePtr& s);
 };
+
+#define TEMPLATE_ONLY
+#include "ProcessAstTree.C"
+#undef TEMPLATE_ONLY
 
 #endif

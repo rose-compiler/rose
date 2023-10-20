@@ -74,7 +74,7 @@ class LoopTreeNode  : public TreeNodeImpl<LoopTreeNode>
        { return Parent()->LoopLevel() + Parent()->IncreaseLoopLevel(); }
   virtual int IncreaseLoopLevel() const { return 0; }
 
-  virtual std::string GetClassName() const = 0;
+  virtual std::string LoopTreeGetClassName() const = 0;
 
   virtual VarInfo GetVarInfo() const { return VarInfo(); }
   /* QY: returns the original stmt only if the stmt is not a loop */
@@ -132,7 +132,7 @@ class LoopTreeStmtNode : public LoopTreeNode
      : LoopTreeNode(that), start(that.start) {}
  public:
   virtual std::string toString() const;
-  virtual std::string GetClassName() const { return "LoopTreeStmtNode"; }
+  virtual std::string LoopTreeGetClassName() const { return "LoopTreeStmtNode"; }
 
   virtual AstNodePtr CodeGen(const AstNodePtr& c) const;
   virtual AstNodePtr GetOrigStmt() const { return start; }
@@ -150,7 +150,7 @@ class LoopTreeIfCond : public LoopTreeStmtNode
      : LoopTreeStmtNode(that), cond(that.cond) {}
  public:
   virtual std::string toString() const { return "if (" + cond.toString() + ")"; }
-  virtual std::string GetClassName() const { return "LoopTreeIfCond"; }
+  virtual std::string LoopTreeGetClassName() const { return "LoopTreeIfCond"; }
 
   virtual AstNodePtr CodeGen(const AstNodePtr& c) const;
   virtual LoopTreeNode* Clone() const { return new LoopTreeIfCond( *this ); }
@@ -177,7 +177,7 @@ class LoopTreeLoopNode : public LoopTreeNode, public LoopTreeObserver
   void UpdateSwapNode( const SwapNodeInfo& info);
  public:
   virtual std::string toString() const;
-  virtual std::string GetClassName() const { return "LoopTreeLoopNode"; }
+  virtual std::string LoopTreeGetClassName() const { return "LoopTreeLoopNode"; }
   virtual int IncreaseLoopLevel() const { return 1; }
   virtual LoopTreeNode* Clone() const
      { return new LoopTreeLoopNode( *this ); }
@@ -201,7 +201,7 @@ class LoopTreeRoot : public LoopTreeNode
  public:
   std::string toString() const;
   LoopTreeNode* Clone() const { return 0; }
-  std::string GetClassName() const { return "LoopTreeRoot"; }
+  std::string LoopTreeGetClassName() const { return "LoopTreeRoot"; }
   virtual int LoopLevel() const { return level; }
 
  friend class LoopTreeCreate;
