@@ -7,7 +7,7 @@
 #include <CFG.h>
 
 class PtrAnal 
-: public ProcessAstTreeBase, public AliasAnalysisInterface
+: public ProcessAstTreeBase<AstNodePtr>, public AliasAnalysisInterface
 {
  public:
    typedef enum { EQ, NE, LT, GT, LE, GE, OTHER } OpType;

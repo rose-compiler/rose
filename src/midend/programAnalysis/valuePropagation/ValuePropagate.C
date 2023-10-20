@@ -136,7 +136,7 @@ class AppendValueNode : public Collect2Object< AstNodePtr, HasValueDescriptor >
 };
 
 class CollectKnownValue 
-  : public ProcessAstNode
+  : public ProcessAstNode<AstNodePtr>
 {
   HasValueMap& valmap;
   HasValueCodeGen& astcodegen;

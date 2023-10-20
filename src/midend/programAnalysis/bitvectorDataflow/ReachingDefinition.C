@@ -20,14 +20,15 @@ bool DebugReachingDef()
 
 
 class ConstructReachingDefinitionBase
-  : public  CollectObject< std::pair<AstNodePtr, AstNodePtr> >
 {
   ReachingDefinitionBase& base;
   AstInterface& fa;
-  bool operator()( const std::pair<AstNodePtr, AstNodePtr>& mod)
+ public:
+  bool operator()( AstNodePtr mod_first, AstNodePtr mod_second)
   {
     std::string varname;
     AstNodePtr scope;
+    std::pair<AstNodePtr,AstNodePtr> mod(mod_first, mod_second);
     if (fa.IsVarRef(mod.first, 0, &varname, &scope)) {
       base.add_ref( varname, scope, mod);
       if (DebugReachingDef())
@@ -69,8 +70,9 @@ collect_refs ( AstInterface& fa, const AstNodePtr& h, FunctionSideEffectInterfac
         add_ref(varname, scope, std::pair<AstNodePtr, AstNodePtr>(cur, AST_NULL) );
   }
   ConstructReachingDefinitionBase collect(fa, *this);
-  StmtSideEffectCollect op(a);
-  op(fa, h, &collect);
+  std::function<bool(AstNodePtr,AstNodePtr)> collect_f(collect);
+  StmtSideEffectCollect<AstNodePtr> op(fa, a);
+  op(h, &collect_f);
 }
 
 void ReachingDefinitionGenerator::
@@ -94,17 +96,19 @@ get_def_set( const std::string& varname, const AstNodePtr& scope) const
    return get_empty_set();
 }
 
-class CollectLocalDefinitions : public CollectObject< std::pair<AstNodePtr, AstNodePtr> >
+class CollectLocalDefinitions
 {
   AstInterface& fa;
   std::map<std::string, std::pair<AstNodePtr, std::pair<AstNodePtr,AstNodePtr> > > defvars;
   ReachingDefinitions gen;
   const ReachingDefinitionGenerator& g;
 
-  bool operator()( const std::pair<AstNodePtr,AstNodePtr>& mod)
+ public:
+  bool operator()( AstNodePtr mod_first, AstNodePtr mod_second)
   {
     std::string varname;
     AstNodePtr scope;
+    std::pair<AstNodePtr,AstNodePtr> mod(mod_first, mod_second);
     if (fa.IsVarRef(mod.first, 0, &varname, &scope)) {
       assert(mod.second != AST_NULL);
       defvars[varname] = std::pair<AstNodePtr, std::pair<AstNodePtr,AstNodePtr> >(scope, mod);
@@ -137,17 +141,17 @@ public:
   }
 };
 
-class CollectKillDefinitions : public CollectObject< std::pair<AstNodePtr, AstNodePtr> >
+class CollectKillDefinitions
 {
   AstInterface& fa;
   ReachingDefinitions kill;
   const ReachingDefinitionGenerator& g;
-
-  bool operator()( const std::pair<AstNodePtr,AstNodePtr>& mod)
+ public:
+  bool operator()( AstNodePtr mod_first, AstNodePtr mod_second)
   {
     std::string varname;
     AstNodePtr scope;
-    if (fa.IsVarRef(mod.first, 0, &varname, &scope)) {
+    if (fa.IsVarRef(mod_first, 0, &varname, &scope)) {
       kill |= g.get_def_set(varname, scope);
     }
     return true;
@@ -169,11 +173,12 @@ finalize( AstInterface& fa, const ReachingDefinitionGenerator& g,
 {
   CollectLocalDefinitions collectgen(fa, g);
   CollectKillDefinitions collectkill(fa, g);
-  StmtSideEffectCollect op(a);
+  std::function<bool(AstNodePtr, AstNodePtr)> collectgen_f(collectgen), collectkill_f(collectkill);
+  StmtSideEffectCollect<AstNodePtr> op(fa, a);
   std::list <AstNodePtr>& stmts = GetStmts();
   for (std::list<AstNodePtr>::iterator p = stmts.begin(); p != stmts.end();
        ++p) {
-    op( fa, *p, &collectgen, 0, &collectkill);
+    op( *p, &collectgen_f, 0, &collectkill_f);
   }
   gen = collectgen.get_gen();
   notkill = collectkill.get_kill();

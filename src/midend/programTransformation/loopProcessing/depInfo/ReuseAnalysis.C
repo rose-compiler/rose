@@ -16,7 +16,7 @@ int GetConstArrayBound( const AstNodePtr& array,
    return defaultSize;
 }
 
-class AstRefGetAccessStride : public ProcessAstNode
+class AstRefGetAccessStride : public ProcessAstNode<AstNodePtr>
 {
   std::string name;
   bool Traverse ( AstInterface &fa, const AstNodePtr& v,

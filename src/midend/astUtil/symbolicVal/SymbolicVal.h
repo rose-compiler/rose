@@ -407,7 +407,7 @@ bool FindVal( const SymbolicVal &v, const SymbolicVal &sub);
 SymbolicVal ReplaceVal( const SymbolicVal &v, const SymbolicVal &sub, const SymbolicVal& newval);
 SymbolicVal ReplaceVal( const SymbolicVal &v, MapObject<SymbolicVal, SymbolicVal>& valmap);
 
-class AstTreeReplaceVar : public ProcessAstNode
+class AstTreeReplaceVar : public ProcessAstNode<AstNodePtr>
 {
    SymbolicVar oldvar;
    SymbolicVal val;

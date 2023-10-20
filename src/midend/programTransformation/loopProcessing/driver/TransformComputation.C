@@ -88,7 +88,7 @@ int ApplyOptLevel()
   return level;
 }
 
-class AstTreeOptimizable : public ProcessAstTree
+class AstTreeOptimizable : public ProcessAstTree<AstNodePtr>
 {
   private:
    AstNodePtr loop, top;
@@ -113,7 +113,7 @@ class AstTreeOptimizable : public ProcessAstTree
             succ = -1;
             return false;
         }
-        return ProcessAstTree::ProcessDecls(fa, s);
+        return ProcessAstTree<AstNodePtr>::ProcessDecls(fa, s);
      }
    bool ProcessLoop(AstInterface &fa, const AstNodePtr& s, const AstNodePtr& body,
                         AstInterface::TraversalVisitType t)
@@ -144,14 +144,14 @@ class AstTreeOptimizable : public ProcessAstTree
               return false;
            }
         }
-        return ProcessAstTree::ProcessLoop(fa, s, body, t);
+        return ProcessAstTree<AstNodePtr>::ProcessLoop(fa, s, body, t);
      }
   bool ProcessGoto(AstInterface &fa, const AstNodePtr& s, const AstNodePtr& dest)
      {
         if (succ < 0)
            return false;
         loop = AST_NULL;
-        return ProcessAstTree::ProcessGoto(fa, s, dest);
+        return ProcessAstTree<AstNodePtr>::ProcessGoto(fa, s, dest);
      }
   bool ProcessIf(AstInterface &fa, const AstNodePtr& s,
                    const AstNodePtr& cond, const AstNodePtr& truebody,
@@ -174,7 +174,7 @@ class AstTreeOptimizable : public ProcessAstTree
        loop = AST_NULL; succ = 0;
        top = head;
        if (optType & LoopTransformOptions::LOOP_DATA_OPT) {
-          ProcessAstTree::operator()(LoopTransformInterface::getAstInterface(), head);
+          ProcessAstTree<AstNodePtr>::operator()(LoopTransformInterface::getAstInterface(), head);
           if (succ <= 0) {
              optType &= (~LoopTransformOptions::LOOP_DATA_OPT);
           }
@@ -197,7 +197,7 @@ class AstTreeOptimizable : public ProcessAstTree
 
 };
 
-class CopyDeclarations : public ProcessAstTree
+class CopyDeclarations : public ProcessAstTree<AstNodePtr>
 {
   AstNodePtr dest;
  protected:
@@ -217,7 +217,7 @@ class CopyDeclarations : public ProcessAstTree
   {
     AstNodePtr ndecl = fa.CopyAstTree(decl);
     fa.BlockAppendStmt( dest, ndecl);
-    return ProcessAstTree::ProcessDecls( fa, decl);
+    return ProcessAstTree<AstNodePtr>::ProcessDecls( fa, decl);
   }
   bool ProcessStmt(AstInterface &fa, const AstNodePtr& s)
   {
