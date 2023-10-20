@@ -704,6 +704,24 @@ namespace
   primitiveParameterPositions(const SgFunctionDeclaration*);
   /// @}
 
+  /// returns \ref n or a pointer to \ref n if \ref n declares an exception type.
+  /// \param  n an exception declaration candidate
+  /// \return a pointer to a exception declaration or nullptr
+  /// \{
+  const SgVariableDeclaration*
+  exceptionTypeDecl(const SgVariableDeclaration& n);
+
+  const SgVariableDeclaration*
+  exceptionTypeDecl(const SgVariableDeclaration* n);
+
+  SgVariableDeclaration*
+  exceptionTypeDecl(SgVariableDeclaration& n);
+
+  SgVariableDeclaration*
+  exceptionTypeDecl(SgVariableDeclaration* n);
+  /// \}
+
+
   /// returns a list of arguments with named arguments placed at the correct position
   /// \note defaulted arguments are not represented and the list may contain holes (nullptr)
   /// \throws std::logic_error when there is no function associated with the call,
@@ -713,6 +731,20 @@ namespace
   SgExpressionPtrList
   normalizedCallArguments(const SgFunctionCallExp& n);
   /// \}
+
+  /// returns the function parameter list of the associated callee (if available).
+  /// \param  n a function call expression
+  /// \return the list of the parameter list of the associated function declaration or renaming declaration.
+  ///         nullptr, if no such function can be identified.
+  /// \todo handle computed functions (e.g., access to routine)
+  /// \{
+  SgFunctionParameterList*
+  calleeParameterList(const SgFunctionCallExp& n);
+
+  SgFunctionParameterList*
+  calleeParameterList(const SgFunctionCallExp* n);
+  /// \}
+
 
   /// returns the parameter position of arg in the callee, after the parameters have been
   /// normalized.

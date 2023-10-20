@@ -590,31 +590,20 @@ namespace
   /// creates an initializer for a variable/parameter declaration if needed
   /// \param lst the subset of completed variable declarations
   /// \param exp the original initializing expression
-  /// \param initializeFromFirst true, if secondary variables should be initialized from the primary
   /// \param ctx the context
   /// \details
   ///    consider a variable or parameter declaration of the form.
   ///      a,b : Integer := InitExpr
-  ///    for variable declarations (initializeFromFirst) the C-style AST looks like:
-  ///      int a = InitExpr, int b = a
-  ///    for parameter declarations (!initializeFromFirst) the C-style AST looks like:
-  ///      int a = InitExpr, int b = clone(InitExpr)
-  ///      NOTE: SIDE-EFFECTS of executing InitExpr twice NEED TO BE CONSIDERED.
+  ///    The ROSE AST looks like:
+  ///      int a = InitExpr, int b = InitExpr
   SgExpression*
-  createInit(SgInitializedNamePtrList& lst, SgExpression* exp, bool initializeFromFirst, AstContext ctx)
+  createInit(SgInitializedNamePtrList& lst, SgExpression* exp, AstContext ctx)
   {
     // the first variable declarations gets the original initializer
     if ((exp == nullptr) || lst.empty()) return exp;
 
-    // secondary variable declarations are either initialized from the first (variables)
-    //   or from a clone (parameters).
-    // \todo NOTE: cloning the expression may produce side-effects.
-    if (!initializeFromFirst)
-      logWarn() << "cloning parameter's default init expressions may produce side effects!."
-                << std::endl;
-
-    exp = initializeFromFirst ? sb::buildVarRefExp(lst.front(), &ctx.scope())
-                              : si::deepCopy(exp);
+    // \todo consider rebuilding from the ASIS expression
+    exp = si::deepCopy(exp);
 
     // \todo use a traversal to set all children nodes to compiler generated
     markCompilerGenerated(SG_DEREF(exp));
@@ -628,16 +617,13 @@ namespace
   /// \param dcltype  the type of all initialized name
   /// \param initexpr the initializer (if it exists) that will be cloned for each
   ///                 of the initialized names.
-  /// \param initializeFromFirst if true, secondary initialized names are initialized from the first
-  ///                            otherwise, clone the initexpr
   SgInitializedNamePtrList
   constructInitializedNamePtrList( AstContext ctx,
                                    map_t<int, SgInitializedName*>& m,
                                    const NameCreator::result_container& names,
                                    SgType& dcltype,
                                    SgExpression* initexpr,
-                                   std::vector<Element_ID>& secondaries,
-                                   bool initializeFromFirst = false /* \todo check with Ada Std if this should be always false */
+                                   std::vector<Element_ID>& secondaries
                                  )
   {
     SgInitializedNamePtrList lst;
@@ -648,7 +634,7 @@ namespace
 
       const std::string& name = obj.fullName;
       Element_ID         id   = obj.id();
-      SgExpression*      init = createInit(lst, initexpr, initializeFromFirst, ctx);
+      SgExpression*      init = createInit(lst, initexpr, ctx);
       SgInitializedName& dcl  = mkInitializedName(name, dcltype, init);
 
       attachSourceLocation(dcl, retrieveElem(elemMap(), id), ctx);
@@ -671,13 +657,12 @@ namespace
                                    map_t<int, SgInitializedName*>& m,
                                    const NameCreator::result_container& names,
                                    SgType& dcltype,
-                                   SgExpression* initexpr,
-                                   bool initializeFromFirst = false
+                                   SgExpression* initexpr
                                  )
   {
     std::vector<Element_ID> dummy;
 
-    return constructInitializedNamePtrList(ctx, m, names, dcltype, initexpr, dummy, initializeFromFirst);
+    return constructInitializedNamePtrList(ctx, m, names, dcltype, initexpr, dummy);
   }
 
 
@@ -801,8 +786,7 @@ namespace
                                                                          asisVars(),
                                                                          names,
                                                                          parmtype,
-                                                                         getVarInit(asisDecl, &parmtype, ctx),
-                                                                         false /* do not reuse first initialized name */
+                                                                         getVarInit(asisDecl, &parmtype, ctx)
                                                                        );
     SgVariableDeclaration&   sgnode   = mkParameter(dclnames, getMode(asisDecl.Mode_Kind), ctx.scope());
 
@@ -870,8 +854,7 @@ namespace
                                                                          names,
                                                                          basety,
                                                                          getVarInit(asisDecl, &basety, ctx),
-                                                                         secondaries,
-                                                                         false /* handle like parameters ??? */
+                                                                         secondaries
                                                                        );
     SgVariableDeclaration&   sgnode   = mkVarDecl(dclnames, ctx.scope());
 
@@ -1109,12 +1092,19 @@ namespace
     ElemIdRange              range    = idRange(decl.Names);
     name_container           names    = allNames(range, ctx);
     SgScopeStatement&        scope    = ctx.scope();
+    //
+    // https://www.adaic.com/resources/add_content/standards/05rm/html/RM-3-3-1.html#S0032
+    // $7: Any declaration that includes a defining_identifier_list with more than one defining_identifier
+    //     is equivalent to a series of declarations each containing one defining_identifier from the list,
+    //     with the rest of the text of the declaration copied for each declaration in the series, in the
+    //     same order as the list. The remainder of this International Standard relies on this equivalence;
+    //     explanations are given for declarations with a single defining_identifier.
+    // => clone the initializing expression instead of creating references to the first one..
     SgInitializedNamePtrList dclnames = constructInitializedNamePtrList( ctx,
                                                                          asisVars(),
                                                                          names,
                                                                          dclType,
-                                                                         getVarInit(decl, expectedType, ctx),
-                                                                         true /* reuse first initialized name for secondary inits (\todo correct??)*/
+                                                                         getVarInit(decl, expectedType, ctx)
                                                                        );
     SgVariableDeclaration&   sgnode   = mkVarDecl(dclnames, scope);
 
@@ -2376,12 +2366,7 @@ namespace
         recordNode(asisDecls(), el.ID, sgnode);
         attachSourceLocation(sgnode, el, ctx);
 
-
-        //~ sg::linkParentChild(scope, as<SgStatement>(sgnode), &SgScopeStatement::append_statement);
         ctx.appendStatement(sgnode);
-
-        // an imported element may not be in the AST
-        //   -> add the mapping if the element has not been seen.
 
         recordNonUniqueNode(asisDecls(), impID, sgnode);
         ADA_ASSERT (sgnode.get_parent() == &scope);
