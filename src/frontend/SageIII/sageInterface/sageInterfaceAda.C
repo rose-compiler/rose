@@ -2358,9 +2358,77 @@ namespace Ada
     }
   }
 
+  namespace
+  {
+    bool declaresException(const SgVariableDeclaration& n)
+    {
+      const SgInitializedNamePtrList& varlst = n.get_variables();
+      const SgInitializedName*        first = varlst.at(0);
+      if (!first) return false;
+
+      const SgTypedefType*            ty = isSgTypedefType(first->get_type());
+
+      return ty && (ty->get_name() == si::Ada::exceptionName);
+    }
+  }
+
+
+  const SgVariableDeclaration*
+  exceptionTypeDecl(const SgVariableDeclaration& n)
+  {
+    return declaresException(n) ? &n : nullptr;
+  }
+
+  const SgVariableDeclaration*
+  exceptionTypeDecl(const SgVariableDeclaration* n)
+  {
+    return (n && declaresException(*n)) ? n : nullptr;
+  }
+
+  SgVariableDeclaration*
+  exceptionTypeDecl(SgVariableDeclaration& n)
+  {
+    return declaresException(n) ? &n : nullptr;
+  }
+
+  SgVariableDeclaration*
+  exceptionTypeDecl(SgVariableDeclaration* n)
+  {
+    return (n && declaresException(*n)) ? n : nullptr;
+  }
+
+  SgFunctionParameterList*
+  calleeParameterList(const SgFunctionCallExp& n)
+  {
+    if (SgFunctionDeclaration* assocfn = n.getAssociatedFunctionDeclaration())
+      return assocfn->get_parameterList();
+
+    if (const SgAdaRenamingRefExp* renex = isSgAdaRenamingRefExp(n.get_function()))
+    {
+      const SgAdaRenamingDecl& rendcl = SG_DEREF(renex->get_decl());
+
+      if (const SgAdaSubroutineType* routty = isSgAdaSubroutineType(rendcl.get_type()))
+        return routty->get_parameterList();
+
+      // return nullptr;
+    }
+
+    return nullptr;
+  }
+
+  SgFunctionParameterList*
+  calleeParameterList(const SgFunctionCallExp* n)
+  {
+    return n ? calleeParameterList(*n) : nullptr;
+  }
+
   SgExpressionPtrList
   normalizedCallArguments(const SgFunctionCallExp& n)
   {
+    SgFunctionParameterList*      fnparms  = calleeParameterList(n);
+    if (fnparms == nullptr)
+      throw std::logic_error("unable to retrieve associated function parameter list");
+
     SgExpressionPtrList           res;
     SgExpressionPtrList&          orig = SG_DEREF(n.get_args()).get_expressions();
     size_t                        posArgLimit = positionalArgumentLimit(orig);
@@ -2371,13 +2439,7 @@ namespace Ada
     res.reserve(orig.size());
     std::copy(aaa, pos, std::back_inserter(res));
 
-    SgFunctionDeclaration*        pfn = n.getAssociatedFunctionDeclaration();
-    if (pfn == nullptr)
-      throw std::logic_error("unable to retrieve associated function");
-
-    SgFunctionDeclaration&        fndecl   = SG_DEREF(n.getAssociatedFunctionDeclaration());
-    SgFunctionParameterList&      fnparms  = SG_DEREF(fndecl.get_parameterList());
-    SgInitializedNamePtrList&     parmList = fnparms.get_args();
+    SgInitializedNamePtrList&     parmList = fnparms->get_args();
 
     ROSE_ASSERT(res.size() <= parmList.size());
     extend(res, parmList.size()); // make arglist as long as function parameter list
