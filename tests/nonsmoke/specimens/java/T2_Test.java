@@ -1,9 +1,9 @@
-interface WorkerInterface {
+interface T2_WorkerInterface {
     int work(int x);
 }
 
-class Worker1 implements WorkerInterface {
-    public Worker1() { }
+class T2_Worker1 implements T2_WorkerInterface {
+    public T2_Worker1() { }
 
     public int work(int x) {
         if (x > 10) {
@@ -14,16 +14,16 @@ class Worker1 implements WorkerInterface {
     }
 }
 
-class Worker2 implements WorkerInterface {
-    public Worker2() { }
+class T2_Worker2 implements T2_WorkerInterface {
+    public T2_Worker2() { }
 
     public int work(int x) {
         return x * 42;
     }
 }
 
-class Test2 {
-    static int doWork(WorkerInterface w, int i) {
+class T2_Test {
+    static int doWork(T2_WorkerInterface w, int i) {
         return w.work(i);
     }
 
@@ -34,8 +34,8 @@ class Test2 {
 
             z = x + y;
 
-            WorkerInterface w1 = new Worker1();
-            WorkerInterface w2 = new Worker2();
+            T2_WorkerInterface w1 = new T2_Worker1();
+            T2_WorkerInterface w2 = new T2_Worker2();
 
             for (int i = 0; i < y; i++) {
                 z = doWork(w1, z);

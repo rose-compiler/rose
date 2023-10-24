@@ -1,5 +1,4 @@
-
-public class GiantFunction {
+public class T5_GiantFunction {
   public static void main(String args[]) {
     int bigarray[] = new int[4321];
     int x0 = 0 + 1;

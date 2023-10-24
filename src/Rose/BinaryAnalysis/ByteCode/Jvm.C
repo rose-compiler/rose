@@ -100,18 +100,22 @@ JvmMethod::annotate()
     auto jvmInsn{isSgAsmJvmInstruction(insn)};
 
     switch (jvmInsn->get_kind()) {
+      case opcode::checkcast:
+      case opcode::getfield:
       case opcode::getstatic:
-      case opcode::putstatic:
+      case opcode::instanceof:
       case opcode::invokedynamic:
       case opcode::invokeinterface:
       case opcode::invokespecial:
       case opcode::invokestatic:
       case opcode::invokevirtual:
-      case opcode::new_: {
+      case opcode::new_:
+      case opcode::putfield:
+      case opcode::putstatic: {
         if (auto expr = isSgAsmIntegerValueExpression(insn->get_operandList()->get_operands()[0])) {
           comment = JvmClass::name(expr->get_value(), pool);
           expr->set_comment(comment);
-          // Also store the callee name in the instruction's comment for partitioning
+          // Also store the callee name in the instruction's comment for convenience in partitioning
           insn->set_comment(comment);
         }
         break;
@@ -195,18 +199,20 @@ JvmClass::name(uint16_t index, const SgAsmJvmConstantPool* pool)
     case PoolEntry::CONSTANT_InterfaceMethodref: { // 4.4.3 CONSTANT_InterfaceMethodref_info table entry
       std::string className{JvmClass::name(entry->get_class_index(), pool)};
       return className + "::" + JvmClass::name(entry->get_name_and_type_index(), pool);
-      break;
     }
 
     case PoolEntry::CONSTANT_Utf8: // 4.4.7 CONSTANT_Utf8_info table entry
       return pool->get_utf8_string(index);
 
-    // Perhaps needed
     case PoolEntry::CONSTANT_MethodHandle: // 4.4.8 CONSTANT_MethodHandle_info table entry
+      return JvmClass::name(entry->get_reference_index(), pool);
+
     case PoolEntry::CONSTANT_MethodType: // 4.4.9 CONSTANT_MethodType_info table entry
+      return JvmClass::name(entry->get_descriptor_index(), pool);
+
     case PoolEntry::CONSTANT_Dynamic: // 4.4.10 CONSTANT_Dynamic_info table entry
     case PoolEntry::CONSTANT_InvokeDynamic: // 4.4.10 CONSTANT_InvokeDynamic_info table entry
-      break;
+      return std::string{"bootstrap_method::"} + JvmClass::name(entry->get_name_and_type_index(), pool);
 
     default: ;
   }

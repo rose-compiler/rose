@@ -1,4 +1,4 @@
-public class MultiArray {
+public class T6_MultiArray {
     public static void main(String[] args) {
         int[][] matrix = new int[3][4]; // Creates a 3x4 integer matrix
 

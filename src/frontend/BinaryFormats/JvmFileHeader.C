@@ -53,7 +53,7 @@ SgAsmJvmFileHeader::destructorHelper()
 {
   // NOTE: This fails with --with-alloc-memset=3 because p_constant_pool will have been deleted but not nullptr.
   if (p_constant_pool) {
-    mlog[WARN] << "WILL DELETE the constant pool: size: " << p_constant_pool->get_entries().size() << "\n";
+    mlog[WARN] << "WILL DELETE (fix --with-alloc-memset=3) constant pool: size: " << p_constant_pool->get_entries().size() << "\n";
     auto it = std::find(p_sections->get_sections().begin(), p_sections->get_sections().end(), p_constant_pool);
     if (it != p_sections->get_sections().end()) {
       // erase doesn't delete because entry is a pointer

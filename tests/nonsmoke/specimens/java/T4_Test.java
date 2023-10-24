@@ -1,4 +1,4 @@
-class Test4 {
+class T4_Test {
     public static void main(String args[]) {
         int x = -43;
         int y = 42;

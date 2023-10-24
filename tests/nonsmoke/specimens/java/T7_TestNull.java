@@ -1,4 +1,4 @@
-public class TestNull {
+public class T7_TestNull {
     public static void main(String[] args) {
         // Declare a reference variable without initializing it
         String myString = null;

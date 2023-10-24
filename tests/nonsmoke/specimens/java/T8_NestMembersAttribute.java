@@ -1,7 +1,7 @@
 import java.io.*;
 import java.util.*;
 
-public class NestMembersAttribute {
+public class T8_NestMembersAttribute {
     InputReader in;
     PrintWriter out;
     
@@ -44,6 +44,6 @@ public class NestMembersAttribute {
     }
 
     public static void main(String[] arg) {
-        new NestMembersAttribute().run();
+        new T8_NestMembersAttribute().run();
     }
 }
