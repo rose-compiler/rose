@@ -43,17 +43,24 @@ extern bool DebugAliasAnal ();
 #ifdef TEMPLATE_ONLY
 template <class AstNodePtr>
 void StmtInfoCollect<AstNodePtr>::
-AppendFuncCallArguments( AstInterface& fa, const AstNodePtr& fc)
+AppendFuncCallArguments( AstInterface& fa, const AstNodePtr& fc, AstNodePtr* callee)
 {
   AstInterface::AstNodeList args;
-  if (!fa.IsFunctionCall(fc, 0, &args))
+  AstInterface::AstNodePtr p_callee;
+  if (!fa.IsFunctionCall(fc, &p_callee, &args))
       ROSE_ABORT();
+  if (callee != 0) {
+    *callee = AstNodePtrImpl(p_callee).get_ptr();
+  }
 
   for (AstInterface::AstNodeList::const_iterator p1 = args.begin();
        p1 != args.end(); ++p1) {
     AstNodePtr c = AstNodePtrImpl(*p1).get_ptr();
     if ( c == AstNodePtr())
         continue;
+    if (DebugLocalInfoCollect()) {
+      std::cerr << "Function Argument: " << AstInterface::AstToString(c) << "\n";
+    }
     operator()(fa, c);
   }
 }
@@ -71,6 +78,9 @@ AppendFuncCallWrite( AstInterface& fa, const AstNodePtr& fc)
     if (c == AstNodePtr())
        continue;
     if (fa.IsMemoryAccess(c))
+       if (DebugLocalInfoCollect()) {
+         std::cerr << "Function Argument modification: " << AstInterface::AstToString(c) << "\n";
+       }
        AppendModLoc( fa, c, AstNodePtr());
   }
 }
@@ -116,6 +126,8 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
 
    AstNodePtr s_ptr = AstNodePtrImpl(s).get_ptr();
    if (fa.IsAssignment(s, &lhs, &rhs, &readlhs)) {
+     if (DebugLocalInfoCollect())
+        std::cerr << "Is assignment.\n";
      ModMap *mp = modstack.size()?  &modstack.back().modmap : 0;
      if (mp == 0 || mp->find(AstNodePtrImpl(lhs).get_ptr()) == mp->end()) {
         modstack.push_back(s_ptr);
@@ -124,6 +136,8 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
    }
    else if (fa.IsUnaryOp(s, &opr, &lhs) &&
            (opr == AstInterface::UOP_INCR1 || opr == AstInterface::UOP_DECR1)){
+     if (DebugLocalInfoCollect())
+        std::cerr << "Is unary operator.\n";
      ModMap *mp = modstack.size()?  &modstack.back().modmap : 0;
      if (mp == 0 || mp->find(AstNodePtrImpl(lhs).get_ptr()) == mp->end()) {
         modstack.push_back(s_ptr);
@@ -131,6 +145,8 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
      }
    }
    else if (fa.IsVariableDecl( s, &vars, &args)) {
+     if (DebugLocalInfoCollect())
+        std::cerr << "Is variable declaration.\n";
       AstInterface::AstNodeList::const_iterator pv = vars.begin();
       AstInterface::AstNodeList::const_iterator pa = args.begin();
       modstack.push_back(s_ptr);
@@ -142,6 +158,8 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
       }
    }
    else  if (fa.IsIOInputStmt(s, &args)) {
+     if (DebugLocalInfoCollect())
+        std::cerr << "Is IOInput stmt.\n";
      modstack.push_back(s_ptr);
      for (AstInterface::AstNodeList::reverse_iterator p = args.rbegin();
            p != args.rend(); ++p) {
@@ -158,14 +176,14 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
      }
      // Jim Leek 2023/02/07  Added IsSgAddressOfOp because I want it
      // to behave the same as a memory access, although it isn't one exactly
-     if ( fa.IsMemoryAccess(s) || fa.IsAddressOfOp(s)) {
+     else if ( fa.IsMemoryAccess(s) || fa.IsAddressOfOp(s)) {
+        if (DebugLocalInfoCollect())
+             std::cerr << " append read set " << AstInterface::AstToString(s) << std::endl;
         if (!fa.IsSameVarRef(s, fa.GetParent(s))) { /*QY: skip s if it refers to the same thing as parent*/
           ModMap *mp = modstack.size()?  &modstack.back().modmap : 0;
           if (mp == 0 || mp->find(s_ptr) == mp->end() || (*mp)[s_ptr].readlhs) {
               AppendReadLoc(fa, s_ptr);
-             
           }
-          
         }
         AstNodeList arglist;
         if (fa.IsArrayAccess(s, 0, &arglist))  {
@@ -174,9 +192,8 @@ ProcessTree( AstInterface &fa, const AstInterface::AstNodePtr& s,
                AstNodePtr c = AstNodePtrImpl(*p).get_ptr();
                operator()(fa, c);
            }
-           Skip(s);
         }
-        
+        Skip(s);
       }
    }
  }
@@ -215,24 +232,59 @@ class CollectReadRefWrap : public CollectObject<AstInterface::AstNodePtr>
     : collect(c), func(f), stmt(_stmt), fa(_fa) {}
   bool operator() ( const AstInterface::AstNodePtr& ref)
    {
-      AstNodeList args;
-      if (fa.IsFunctionCall(ref))
-         func->get_read(fa, ref, this);
-      else if (fa.IsArrayAccess(ref, 0, &args)) {
+      AstInterface::AstNodeList args;
+      AstInterface::AstNodePtr callee;
+      if (fa.IsArrayAccess(ref, 0, &args)) {
         for (AstNodeList::const_iterator p = args.begin();
              p != args.end(); ++p) {
                operator()(*p);
         }
-      }
-      if (fa.IsMemoryAccess(ref)) {
         if (DebugLocalInfoCollect())
            std::cerr << "appending reading " << AstInterface::AstToString(ref) << " : " << AstInterface::AstToString(stmt) << std::endl;
         if (collect != 0)
           (*collect)( AstNodePtrImpl(ref).get_ptr(), stmt);
       }
+      else if (fa.IsMemoryAccess(ref)) {
+        if (DebugLocalInfoCollect())
+           std::cerr << "appending reading " << AstInterface::AstToString(ref) << " : " << AstInterface::AstToString(stmt) << std::endl;
+        if (collect != 0)
+          (*collect)( AstNodePtrImpl(ref).get_ptr(), stmt);
+      } else {
+        std::cerr << "Expecting a memory reference but getting:" << AstInterface::AstToString(ref) << "\n";
+        ROSE_ABORT();
+      }
       return true;
    }
 };
+
+template <class AstNodePtr>
+class CollectCallRefWrap : public CollectObject<AstInterface::AstNodePtr>
+{
+  typedef typename SideEffectAnalysisInterface<AstNodePtr>::CollectObject CollectObject; 
+  CollectObject* collect;
+  FunctionSideEffectInterface* func;
+ protected:
+  AstNodePtr stmt;
+  AstInterface& fa;
+ public:
+  CollectCallRefWrap( AstInterface& _fa, FunctionSideEffectInterface* f,
+                      const AstNodePtr& _stmt,
+                      CollectObject* c)
+    : collect(c), func(f), stmt(_stmt), fa(_fa) {}
+  bool operator() ( const AstInterface::AstNodePtr& ref)
+   {
+      AstInterface::AstNodeList args;
+      AstInterface::AstNodePtr callee;
+      if (fa.IsFunctionCall(ref, &callee)) {
+         (*collect)(AstNodePtrImpl(callee).get_ptr(), stmt);
+      } else {
+        std::cerr << "Expecting a function call but getting:" << AstInterface::AstToString(ref) << "\n";
+        ROSE_ABORT();
+      }
+      return true;
+   }
+};
+
 
 template <class AstNodePtr>
 class CollectModRefWrap : public CollectReadRefWrap<AstNodePtr>
@@ -258,8 +310,6 @@ class CollectModRefWrap : public CollectReadRefWrap<AstNodePtr>
                read(*p);
         }
       }
-      if (DebugLocalInfoCollect())
-          std::cerr << "appending modifying " << AstInterface::AstToString(ref) << " : " << AstInterface::AstToString(stmt) << std::endl;
       if (mod != 0)
         (*mod)(AstNodePtrImpl(ref).get_ptr(), stmt);
       return true;
@@ -297,12 +347,33 @@ template <class AstNodePtr>
 void StmtSideEffectCollect<AstNodePtr>::
 AppendFuncCall( AstInterface& fa, const AstNodePtr& fc)
 {
+ std::cerr << "Inside AppendFuncCall\n";
  CollectReadRefWrap<AstNodePtr> read(fa, funcanal, curstmt, readcollect);
+ std::cerr << "Checking function info\n";
  if (funcanal == 0 || !funcanal->get_read(fa, fc, &read))  {
       readunknown = true;
-      if (DebugLocalInfoCollect())
+      AstNodePtr callee;
+      if (DebugLocalInfoCollect()) {
          std::cerr << "no interprecedural read info for : " << AstInterface::AstToString(fc) << std::endl;
-      AppendFuncCallArguments(fa, fc);
+         std::cerr << "adding function call arguments.\n";
+      }
+      AppendFuncCallArguments(fa, fc, &callee);
+      if (callcollect != 0) {
+         if (DebugLocalInfoCollect()) {
+             std::cerr << "invoking collecting call\n";
+         }
+        (*callcollect)(callee, curstmt);
+      }
+  } else if (callcollect != 0) {
+    assert(funcanal != 0);
+    if (DebugLocalInfoCollect()) {
+      std::cerr << "Has existing call analysis from annotation\n";
+    }
+    CollectCallRefWrap<AstNodePtr> call(fa, funcanal, curstmt, callcollect);
+    if (!funcanal->get_call(fa, fc, &call)) {
+       std::cerr << "Error: Expecting annotation to provide call information but getting none.";
+       ROSE_ABORT();
+    }
   }
 
   CollectModRefWrap<AstNodePtr> mod(fa, funcanal, curstmt, readcollect, modcollect);
@@ -334,7 +405,7 @@ public:
   {
     std::string varname;
     AstNodePtr scope;
-    if (cur.first == AST_NULL || !fa.IsVarRef(cur.first, 0, &varname, &scope))
+    if (cur.first == AST_NULL || !fa.IsVarRef(cur.first, 0, &varname, &scope, 0, /*use_global_unique_name=*/true))
       return false;
     if (cur.second == index) {
       aliasmap.get_alias_map(varname, scope)->union_with(repr);

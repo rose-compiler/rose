@@ -29,34 +29,6 @@ get_inline( AstInterface& fa, const AstNodePtr& h, SymbolicVal* val)
   return known_operator( fa, h, val);
 }
 
-bool OperatorSideEffectAnnotation::
-get_modify( AstInterface& fa, const AstNodePtr& fc,
-                CollectObject< AstNodePtr >* collect)
-{
-  AstInterface::AstNodeList args;
-  OperatorSideEffectDescriptor mod;
-  if (modInfo.known_operator( fa, fc, &args, &mod)) {
-    if (collect != 0)
-      mod.get_side_effect(fa, args, *collect);
-    return true;
-  }
-  return false;
-}
-
-bool OperatorSideEffectAnnotation::
-get_read( AstInterface& fa, const AstNodePtr& fc,
-                CollectObject< AstNodePtr >* collect)
-{
-  AstInterface::AstNodeList args;
-  OperatorSideEffectDescriptor read;
-  if  (readInfo.known_operator( fa, fc, &args, &read)) {
-       if (collect != 0)
-         read.get_side_effect(fa, args, *collect);
-       return true;
-   }
-  return false;
-}
-
 static bool
 AliasAnnotAnal(AstInterface& fa,
                OperatorAnnotCollection <OperatorAliasDescriptor>& aliasInfo,
@@ -67,6 +39,12 @@ AliasAnnotAnal(AstInterface& fa,
   OperatorAliasDescriptor desc;
   if (!aliasInfo.known_operator( fa, fc, &args, &desc, false) )
     return false;
+  if (desc.get_param_decl().get_params().size() != args.size()) {
+    if (DebugAnnot()) {
+       std::cerr << "Parameter and argument sizes are different. \n";
+    }
+    return false;
+  }
   ReplaceParams paramMap( desc.get_param_decl().get_params(), args);
   paramMap.add("result", result);
   int index = 0;

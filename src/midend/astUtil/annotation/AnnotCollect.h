@@ -2,6 +2,7 @@
 #ifndef __ANNOT_COLLECT_H
 #define __ANNOT_COLLECT_H
 
+#include "TypeAnnotation.h"
 #include "OperatorDescriptors.h"
 
 typedef AnnotCollectionBase<OperatorDeclaration> OperatorCollectionBase;

@@ -1028,6 +1028,9 @@ bool AstInterface :: get_fileInfo(const AstNodePtr& _n, std:: string* fname, int
 {
   SgNode* n = AstNodePtrImpl(_n).get_ptr();
   Sg_File_Info *f =n->get_file_info(); 
+  if (f == 0) {
+    return false;
+  }
   if (fname != NULL) {
      *fname = f->get_filename();
   }
@@ -1343,6 +1346,26 @@ AstNodePtr GetFunctionDecl( const AstNodePtr& _s)
     ROSE_ABORT();
 }
 
+//! Returns whether t is a function type and if yes, returns its parameter
+//! types and return type.
+bool AstInterface:: IsFunctionType( const AstNodeType& t,
+                       AstTypeList* paramtypes, AstNodeType* returntype) {
+    SgFunctionType* ftype = isSgFunctionType(AstNodeTypeImpl(t).get_ptr());
+     if (ftype != 0) {
+        if (paramtypes != 0) {
+        SgTypePtrList atypes = ftype->get_arguments();
+          for (SgTypePtrList::const_iterator p = atypes.begin(); p != atypes.end(); ++p) {
+            paramtypes->push_back(AstNodeTypeImpl(*p));
+          }
+        }
+        if (returntype != 0)
+           *returntype = AstNodeTypeImpl(ftype->get_return_type());
+        return true;
+    }
+    return false;
+}
+
+
 bool AstInterface::
 IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
                     AstNodeList* params, AstNodeList* outpars, AstNodePtr* body,
@@ -1407,6 +1430,7 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
          l = decl->get_parameterList();
        break;
    } 
+  case V_SgTemplateMemberFunctionDeclaration:
   case V_SgMemberFunctionDeclaration:
     {
       SgMemberFunctionDeclaration* decl = isSgMemberFunctionDeclaration(d);
@@ -1678,10 +1702,9 @@ IsSameVarRef( const AstNodePtr& _n1, const AstNodePtr& _n2)
 bool AstInterface:: IsMin( const AstNodePtr& _exp)
 {
    std::string name;
-   if (!IsVarRef(_exp, 0, &name, 0, 0))
-{
+   if (!IsVarRef(_exp, 0, &name, 0, 0)) {
       return false;
-}
+   }
    if (name == "min" || name == "min2" || name=="min3")
       return true;
    return false;
@@ -1702,7 +1725,7 @@ bool AstInterface::IsMax( const AstNodePtr& _exp)
 /* Does not deal correctly with templates SgNorealExp */
 bool AstInterfaceImpl::
 IsVarRef( SgNode* exp, SgType** vartype, string* varname,
-          SgNode** _scope, bool *isglobal ) 
+          SgNode** _scope, bool *isglobal, bool use_global_unique_name) 
 { 
   exp = AstInterface::SkipCasting(exp); //If there's a cast, skip it
   SgNode *decl = 0;
@@ -1710,7 +1733,9 @@ IsVarRef( SgNode* exp, SgType** vartype, string* varname,
     case V_SgNonrealRefExp:
       {
          SgNonrealSymbol *sb = isSgNonrealRefExp(exp)->get_symbol();
+         assert(sb != 0);
          SgScopeStatement *cdef = sb->get_scope();
+         assert(cdef != 0);
          if (varname != 0) {
             *varname = StripGlobalQualifier(cdef->get_qualified_name())+"::"+StripGlobalQualifier(sb->get_name().str());
          }
@@ -1720,105 +1745,97 @@ IsVarRef( SgNode* exp, SgType** vartype, string* varname,
 
     case V_SgMemberFunctionRefExp: 
       {
-         SgMemberFunctionSymbol *sb = isSgMemberFunctionRefExp(exp)->get_symbol();
-         SgClassDefinition *cdef = sb->get_scope();
-         if (varname != 0) {
-            *varname = StripGlobalQualifier(cdef->get_qualified_name())+"::"+StripGlobalQualifier(sb->get_name().str());
+        SgMemberFunctionSymbol *sb = isSgMemberFunctionRefExp(exp)->get_symbol();
+        assert(sb != 0);
+        if (vartype != 0) *vartype = sb->get_type();
+        if (varname != 0) {
+           SgScopeStatement *cdef = sb->get_scope();
+           assert(cdef != 0);
+           *varname = StripGlobalQualifier(cdef->get_qualified_name())+"::"+StripGlobalQualifier(sb->get_name().str());
          }
-         if (vartype != 0) *vartype = sb->get_type();
       }
       break;
     case V_SgTemplateMemberFunctionRefExp: 
       {
          SgTemplateMemberFunctionSymbol *sb = isSgTemplateMemberFunctionRefExp(exp)->get_symbol();
+         assert(sb != 0);
          if (varname != 0) { //Getting the scope returned null, not sure if this gives complete info -Jim Leek
            *varname = sb->get_name().getString();
          }
          if (vartype != 0) *vartype = sb->get_type();
       }
       break;
-  case V_SgFunctionRefExp:
-    {
-      const SgFunctionRefExp *var = isSgFunctionRefExp( exp );
-      SgFunctionSymbol *sb = var->get_symbol();
-      if (vartype != 0) *vartype = sb->get_type();
-      if (varname != 0)  *varname = sb->get_name().str();
-      decl = 0; // sb->get_declaration();
-    }
-    break;
-  case V_SgTemplateFunctionRefExp:
-    {
-      const SgTemplateFunctionRefExp *var = isSgTemplateFunctionRefExp( exp );
-      SgTemplateFunctionSymbol *sb = var->get_symbol();
-      if (vartype != 0) *vartype = sb->get_type();
-      if (varname != 0)  *varname = sb->get_name().str();
-      decl = 0; // sb->get_declaration();
-    }
-    break;
-  case V_SgVarRefExp:
-    {
-      const SgVarRefExp *var = isSgVarRefExp( exp );
-      SgVariableSymbol *sb = var->get_symbol();
-      if (vartype != 0) *vartype = sb->get_type();
-      if (varname != 0) *varname = sb->get_name().str();
-      decl = sb->get_declaration();
-    }
-     break;
-  case V_SgThisExp:
-    {
-      const SgThisExp *var = isSgThisExp( exp );
-      if (vartype != 0) *vartype = var->get_type();
-      if (varname != 0) *varname = "this";
-      decl = exp->get_parent();
-      while (decl->variantT() != V_SgFunctionDefinition)
+    case V_SgFunctionRefExp:
+      {
+        const SgFunctionRefExp *var = isSgFunctionRefExp( exp );
+        assert(var != 0);
+        SgFunctionSymbol *sb = var->get_symbol();
+        assert(sb != 0);
+        if (vartype != 0) *vartype = sb->get_type();
+        if (varname != 0)  *varname = sb->get_name().str();
+        decl = 0; // sb->get_declaration();
+      }
+      break;
+    case V_SgTemplateFunctionRefExp:
+      {
+        const SgTemplateFunctionRefExp *var = isSgTemplateFunctionRefExp( exp );
+        SgTemplateFunctionSymbol *sb = var->get_symbol();
+        if (vartype != 0) *vartype = sb->get_type();
+        if (varname != 0)  *varname = sb->get_name().str();
+        decl = 0; // sb->get_declaration();
+      }
+      break;
+    case V_SgVarRefExp:
+      {
+        const SgVarRefExp *var = isSgVarRefExp( exp );
+        SgVariableSymbol *sb = var->get_symbol();
+        if (vartype != 0) *vartype = sb->get_type();
+        if (varname != 0) *varname = sb->get_name().str();
+        decl = sb->get_declaration();
+      }
+      break;
+    case V_SgThisExp:
+      {
+        const SgThisExp *var = isSgThisExp( exp );
+        if (vartype != 0) *vartype = var->get_type();
+        if (varname != 0) *varname = "this";
+        decl = exp->get_parent();
+        while (decl->variantT() != V_SgFunctionDefinition)
           {decl = decl->get_parent();} 
-    }
-     break;
-  case V_SgConstructorInitializer: 
-    {
-      SgClassDeclaration *decl = isSgConstructorInitializer(exp)->get_class_decl();
-      if (decl != 0) {
-        if (varname != 0) {
-           *varname = StripGlobalQualifier(decl->get_qualified_name());
-           *varname = *varname + "::" + (*varname);
-        }
-        if (vartype != 0)  *vartype = decl->get_type();
       }
-      else return false;
-    }
-    break;
-  case V_SgInitializedName:
-    {
-      SgInitializedName* var = isSgInitializedName(exp);
-      if (var->get_name().str() == 0) {
-     std::cerr << "no name for initname " << var->unparseToString() << "\n";
+       break;
+    case V_SgInitializedName:
+      {
+        SgInitializedName* var = isSgInitializedName(exp);
+        if (var->get_name().str() == 0) {
+           std::cerr << "no name for initname " << var->unparseToString() << "\n";
            return false;
+        }
+        SgType* t = var->get_type();
+        assert( t != 0);
+        if (vartype != 0) *vartype = t;
+        if (varname != 0) *varname = var->get_name().str();
+        decl = var;
       }
-      SgType* t = var->get_type();
-      assert( t != 0);
-      if (vartype != 0) *vartype = t;
-      if (varname != 0) *varname = var->get_name().str();
-      decl = var;
-    }
-    break;
-  case V_SgArrowExp:
-   {
-     const SgArrowExp *exp1 = isSgArrowExp(exp);
-     SgNode* lhs = exp1->get_lhs_operand();
-     if (isSgThisExp(lhs)!=0) { return IsVarRef(exp1->get_rhs_operand(),vartype,varname,_scope, isglobal); } 
-     SgVarRefExp* var1 = isSgVarRefExp(lhs);
-     SgVarRefExp* var2 = isSgVarRefExp(exp1->get_rhs_operand());
-     if (var1 == 0 || var2 == 0)
-        return false;
-     SgVariableSymbol *sb1 = var1->get_symbol();
-     SgVariableSymbol *sb2 = var2->get_symbol();
-     if (vartype != 0) *vartype = sb2->get_type();
-     if (varname != 0)
-        *varname = string(sb1->get_name().str()) + "->" + StripQualifier(string(sb2->get_name().str()));
-     decl = sb1->get_declaration();
-     break;
-   }
-  case V_SgDotExp:
+      break;
+    case V_SgArrowExp:
+     {
+       const SgArrowExp *exp1 = isSgArrowExp(exp);
+       SgNode* lhs = exp1->get_lhs_operand();
+       if (isSgThisExp(lhs)!=0) { return IsVarRef(exp1->get_rhs_operand(),vartype,varname,_scope, isglobal, use_global_unique_name); } 
+       SgVarRefExp* var1 = isSgVarRefExp(lhs);
+       SgVarRefExp* var2 = isSgVarRefExp(exp1->get_rhs_operand());
+       if (var1 == 0 || var2 == 0)
+          return false;
+       SgVariableSymbol *sb1 = var1->get_symbol();
+       SgVariableSymbol *sb2 = var2->get_symbol();
+       if (vartype != 0) *vartype = sb2->get_type();
+       if (varname != 0)
+          *varname = string(sb1->get_name().str()) + "->" + StripQualifier(string(sb2->get_name().str()));
+       decl = sb1->get_declaration();
+       break;
+     }
+    case V_SgDotExp:
    {
      const SgDotExp *exp1 = isSgDotExp(exp);
      SgVarRefExp* var1 = isSgVarRefExp(exp1->get_lhs_operand());
@@ -1836,11 +1853,15 @@ IsVarRef( SgNode* exp, SgType** vartype, string* varname,
   default:
     return false;
   }
-  if (_scope != 0 || isglobal != 0) {
+  if (_scope != 0 || isglobal != 0 || use_global_unique_name) {
     SgScopeStatement *scope = (decl == 0)? 0 : GetScope(decl);
     if (_scope != 0) *_scope =  scope;
+    bool var_is_global = scope == 0 || (scope->variantT() == V_SgGlobal);
     if (isglobal != 0)
-       *isglobal = scope == 0 || (scope->variantT() == V_SgGlobal);
+       *isglobal = var_is_global;
+    if (use_global_unique_name && !var_is_global && varname != 0 && (*varname) != "") {
+       *varname = AstInterface::GetScopeName(scope) + "::" + (*varname);
+    }
   }
   return true;
 }
@@ -1861,12 +1882,35 @@ SgNode* AstInterface::SkipCasting(SgNode*  exp)
 
 bool AstInterface::
 IsVarRef( const AstNodePtr& _exp, AstNodeType* vartype, string* varname,
-          AstNodePtr* scope, bool *isglobal ) 
+          AstNodePtr* scope, bool *isglobal, bool use_global_unique_name ) 
 { 
   SgNode* exp=AstNodePtrImpl(_exp).get_ptr();
   SgType** _vartype = (vartype==0)? (SgType**)0 : (SgType**)&vartype->get_ptr();
   SgNode** _scope = (scope==0)? (SgNode**) 0 : (SgNode**)&scope->get_ptr();
-  return AstInterfaceImpl::IsVarRef(exp,_vartype, varname, _scope, isglobal);
+  return AstInterfaceImpl::IsVarRef(exp,_vartype, varname, _scope, isglobal, use_global_unique_name);
+}
+
+bool AstInterface::
+IsGlobalVarRef( const AstNodePtr& _exp, const AstNodePtr& _scope)
+{
+  SgNode* exp=AstNodePtrImpl(_exp).get_ptr();
+  SgNode* scope = AstNodePtrImpl(_scope).get_ptr();
+  SgNode* exp_scope = 0;
+  bool isglobal = false;
+  if (!AstInterfaceImpl::IsVarRef(exp,0, 0, &exp_scope, &isglobal)) {
+    return false;
+  }
+  if (isglobal) {
+   return true;
+  }
+  assert(exp_scope != 0);
+  for (SgNode* p = exp_scope; p != 0; p = p->get_parent()) {
+    if (p == scope) {
+      // The given exp is a local variable inside the given scope.
+      return false;
+    }
+  }
+  return true;
 }
 
 std::string AstInterface::GetScopeName( const AstNodePtr& _scope)
@@ -1878,11 +1922,16 @@ std::string AstInterface::GetScopeName( const AstNodePtr& _scope)
 }
 
 
-string AstInterface::GetVarName( const AstNodePtr& _exp)
+string AstInterface::GetVarName( const AstNodePtr& _exp, bool use_global_unique_name)
 {
   AstNodePtrImpl exp(_exp);
   string name;
-  IsVarRef(exp, 0, &name);
+  AstNodePtr scope; 
+  bool is_global = false;
+  if (!IsVarRef(exp, 0, &name, &scope, &is_global, use_global_unique_name)) {
+    std::cerr << "Error: expecting a variable reference but getting:" << AstToString(exp) << "\n";
+    ROSE_ABORT();
+  }
   return name;
 }
 
@@ -2140,6 +2189,8 @@ IsMemoryAccess( const AstNodePtr& _s)
   SgNode* s = AstNodePtrImpl(_s).get_ptr();
   if (IsVarRef(_s) || IsArrayAccess(_s)) return true;
   switch (s->variantT()) {
+  case V_SgConstructorInitializer:
+     return false;
   case V_SgPntrArrRefExp:
   case V_SgPointerDerefExp:
      break;
@@ -2345,6 +2396,9 @@ bool AstInterface::IsBlock( const AstNodePtr& _exp)
   case V_SgBasicBlock:
   case V_SgSwitchStatement:
   case V_SgForInitStatement:
+  case V_SgGlobal:
+  case V_SgNamespaceDeclarationStatement:
+  case V_SgClassDeclaration:
     return true;
   default: break;
   };
@@ -2372,23 +2426,9 @@ IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args)
   case V_SgFunctionCallExp:
     {
       SgFunctionCallExp *fs = isSgFunctionCallExp(exp);
-      f = fs->get_function(); //Should be SgFunctionRefExp 
-      if(isSgFunctionRefExp(f) == NULL) {
-        //must be a function pointer call, bail out!-leek2 2021
-        func = 0; args = 0;
-        return false;
-      }
+      f = fs->get_function(); //Can be SgFunctionRefExp or a class method.
       argexp = fs->get_args(); // SgExprListExp
     }
-    break;
-  case V_SgConstructorInitializer: {
-     SgConstructorInitializer* isinit_exp = isSgConstructorInitializer(exp);
-    if (isinit_exp->get_class_decl() != 0 && isinit_exp->get_declaration() != 0) {
-       f = exp;
-       argexp =  isSgConstructorInitializer(exp)->get_args();
-    }
-    else return false;
-    } 
     break;
   default:
     return false;
@@ -2400,12 +2440,6 @@ IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args)
         SgDotExp* dot = isSgDotExp(f);
         SgNode* cur = dot->get_lhs_operand();
         f = dot->get_rhs_operand();
-        if(!isSgFunctionType(f)) {
-          //It is NOT safe to assume rhs is a function!
-          //If it's not it must be a function pointer call, bail out!-leek2 2021
-          func = 0; args = 0;
-          return false;
-        } 
         if (args != 0)
           args->push_back( cur ); 
       }
@@ -2415,12 +2449,6 @@ IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args)
         SgArrowExp* arrow = isSgArrowExp(f);
         SgNode* cur = arrow->get_lhs_operand();
         f = arrow->get_rhs_operand();
-        if(!isSgFunctionType(f)) {
-          //It is NOT safe to assume rhs is a function!
-          //If it's not it must be a function pointer call, bail out!-leek2 2021
-          func = 0; args = 0;
-          return false;
-        } 
         if (args != 0)
           args->push_back( cur ); 
       }
@@ -2430,12 +2458,6 @@ IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args)
         SgArrowStarOp* arrow = isSgArrowStarOp(f);
         SgNode* cur = arrow->get_lhs_operand();
         f = arrow->get_rhs_operand();
-        if(!isSgFunctionType(f)) {
-          //It is NOT safe to assume rhs is a function!
-          //If it's not it must be a function pointer call, bail out!-leek2 2021
-          func = 0; args = 0;
-          return false;
-        } 
         if (args != 0)
           args->push_back( cur ); 
       }
@@ -2445,12 +2467,6 @@ IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args)
         SgPntrArrRefExp* arrow = isSgPntrArrRefExp(f);
         SgNode* cur = arrow->get_lhs_operand();
         f = arrow->get_rhs_operand();
-        if(!isSgFunctionType(f)) {
-          //It is NOT safe to assume rhs is a function!
-          //If it's not it must be a function pointer call, bail out!-leek2 2021
-          func = 0; args = 0;
-          return false;
-        } 
         if (args != 0)
           args->push_back( cur ); 
       }
@@ -2461,10 +2477,6 @@ IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args)
          break;
       }
   case V_SgVarRefExp:
-    {  // If we got a SgVarRefExp for f, it was a function pointer call, so we don't know
-       // What function it actually points to.  Give up now!  -leek2 2021
-      return false;
-    }
   default: break;
   }
   if (argexp != 0) {
@@ -2517,16 +2529,7 @@ IsFunctionCall( const AstNodePtr& _s, AstNodePtr* fname, AstNodeList* args,
      ROSE_ASSERT(t != NULL);
      if (t->variantT() == V_SgPointerType)
         t = static_cast<SgPointerType*>(t)->get_base_type();
-     SgFunctionType* ftype = isSgFunctionType(t);
-     if (ftype != 0) {
-        SgTypePtrList atypes = ftype->get_arguments();
-        for (SgTypePtrList::const_iterator p = atypes.begin(); p != atypes.end(); ++p) {
-           paramtypes->push_back(AstNodeTypeImpl(*p));
-        }
-        if (returntype != 0)
-           *returntype = AstNodeTypeImpl(ftype->get_return_type());
-     }
-     else { // not a function type
+     if (!IsFunctionType(_ftype, paramtypes, returntype)) {// not a function type
         AstNodePtr fdecl = GetFunctionDecl(AstNodePtrImpl(f));
         if (fdecl == 0) {
             std::cerr << "func has no decl: " << AstToString(s) << "\n";
@@ -3053,8 +3056,13 @@ AstInterface::AstNodeList AstInterface::GetBlockStmtList( const AstNodePtr& _n)
        }
        return result;
       }
-  default:  
-      ROSE_ABORT();
+  case V_SgNamespaceDeclarationStatement: 
+  case V_SgNamespaceDefinitionStatement: 
+  case V_SgClassDeclaration: 
+  case V_SgClassDefinition: 
+       return GetChildrenList(_n);;
+  default:
+    return AstNodeList();
   }
   for (SgStatementPtrList::iterator p = l.begin(); p != l.end(); ++p) {
      result.push_back(*p);
@@ -3705,11 +3713,6 @@ bool AstInterface::RemoveStmt( const AstNodePtr& _n)
 bool AstInterfaceImpl::
 ReplaceAst( SgNode* orig, SgNode* n)
 { 
-/*
-    if (!HasNullParent(n)) {
-         std::cerr << "SgNode does not have null parent: " << n->unparseToString() << "\n"; assert(0);
-    }
-*/
     SgNode *p = orig->get_parent();
     if (p == 0) return false;
     n->set_parent(p);

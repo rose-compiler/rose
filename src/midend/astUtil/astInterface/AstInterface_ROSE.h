@@ -103,7 +103,7 @@ class AstInterfaceImpl : public ObserveObject< AstObserver>
   /*QY: if yes, set vartype, varname,scope, and isglobal accordingly*/
   static bool IsVarRef( SgNode* exp, SgType** vartype = 0,
                    std::string* varname = 0, SgNode** scope = 0, 
-                    bool *isglobal = 0) ;
+                    bool *isglobal = 0, bool use_global_unique_name = false) ;
 
   SgMemberFunctionSymbol* 
   NewMemberFunc( SgClassSymbol *decl, const std:: string& name,

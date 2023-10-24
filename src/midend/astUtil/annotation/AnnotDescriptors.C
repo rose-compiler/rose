@@ -4,6 +4,7 @@
 #include <sstream>
 #include <list>
 #include <ROSE_ASSERT.h>
+#include "AstInterface.h"
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
@@ -97,9 +98,6 @@ bool SelectPair<First,Second, sep, sel>:: read( istream& in)
 template <class First, class Second, char sep>
 void CollectPair<First,Second, sep>::write( ostream& out) const
      {
-  // pmp 08JUN05
-  //   cmp previous comment
-
        this->first.write(out);
        if (sep != 0)
           out << sep;
@@ -174,6 +172,45 @@ bool NameDescriptor:: read(istream& in)
      c = peek_ch(in);
   }
  return true;
+}
+
+//! Read in a variable name, supporting qualified names
+bool NameDescriptor::write(std::ostream& out, const std::string& content) 
+{
+  auto output_char = [&out, &content] (const char c) {
+       if (std::isalnum(c) || c == ':') {
+         out << c;
+       } else if (c == '<' || c == '>' || c == '_' || c == ',' || c == '(' || c == ')') {
+         out << '_';
+       } else if (c == '&') {
+         out << "_ref_";
+       } else if (c == ' ' || c == '\t' || c == '\n') {
+         /* skip empty space */
+       } else {
+          std::cerr << "Output special character " << c << " in name:" << content << "\n";
+          out << c;
+       }
+  };
+  for (const char c : content) {
+     output_char(c);
+  }
+  return true;
+}
+
+std::string NameDescriptor:: get_signature(const std::string& name) {
+  std::stringstream output;
+  write(output, name);
+  return output.str();
+}
+
+std::string NameDescriptor::
+get_signature(AstInterface& fa, const AstNodePtr& exp) {
+  std::string name;
+  if (fa.IsVarRef(exp,0,&name, 0, 0, true)) {
+      std::cerr << "Error: expecting a variable but get: " << fa.AstToString(exp) << "\n";
+      assert(0);
+  }
+  return get_signature(name);
 }
 
 #endif

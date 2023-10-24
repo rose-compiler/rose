@@ -70,19 +70,23 @@ void ReadAnnotCollection<TargetInfo,sep1,sep2,e>:: read( istream& in)
      cerr << endl << m.msg << endl;
      throw;
   }
-
 }
 
 template <class Descriptor>
-void TypeCollection<Descriptor>:: Dump() const
+void TypeCollection<Descriptor>:: write(ostream& out) const
 {
   for (const_iterator p = begin(); p != end(); ++p) {
-    cerr << " ";
-    p.get_type().Dump();
-    cerr << " : ";
-    p.get_desc().Dump();
-    cerr << endl;
+    out << " ";
+    p.get_type().write(out);
+    out << " : ";
+    p.get_desc().write(out);
+    out << endl;
   }
+}
+
+template <class Descriptor>
+void TypeCollection<Descriptor>:: Dump() const {
+  write(std::cerr);
 }
 
 template <class Descriptor>

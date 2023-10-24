@@ -7,6 +7,7 @@
 #include <string>
 #include <map>
 #include <sstream>
+#include <iostream>
 #include <assert.h>
 #include <stdio.h>
 //! Input interface of a container
@@ -149,6 +150,7 @@ class StringDescriptor
   std::string name;
  protected:
   //Return the identifier
+  std::string get_name() const { return name; }
   std::string& get_name() { return name; }
  public:
   StringDescriptor() : name("") {}
@@ -169,13 +171,20 @@ class StringDescriptor
   std::string ToString() const { return name; }
 };
 
+class AstInterface;
+class AstNodePtr;
 class NameDescriptor : public StringDescriptor
 {
  public: 
   NameDescriptor()  {}
   NameDescriptor( int i) { char buf[10]; snprintf(buf,sizeof(buf),"%d", i); get_name() =  "par__"+ std::string(buf); }
   NameDescriptor( const std::string& n ) : StringDescriptor(n) {}
+  NameDescriptor(AstInterface& fa, const AstNodePtr& exp) : StringDescriptor(get_signature(fa, exp)) {}
   bool read(std::istream& in);
+  bool write(std::ostream& out) const { return write(out, get_name()); }
+  static bool write(std::ostream& out, const std::string& content);
+  static std::string get_signature(AstInterface& fa, const AstNodePtr& exp); 
+  static std::string get_signature(const std::string& name);
 };
 
 class TypeDescriptor : public StringDescriptor

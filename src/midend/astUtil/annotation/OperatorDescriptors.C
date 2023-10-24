@@ -1,8 +1,7 @@
 
-
+#include <cctype>
+#include <string>
 #include "OperatorDescriptors.h"
-#include <ROSE_ASSERT.h>
-#include <string.h>
 
 using namespace std;
 
@@ -11,7 +10,12 @@ ReplaceParams::
 ReplaceParams ( const ParamDescriptor& decl, AstInterface::AstNodeList& args,
                 Map2Object<AstInterface*,AstNodePtr,AstNodePtr>* codegen)
 {
-  assert(decl.size() == args.size());
+  if (decl.size() != args.size()) {
+    std::cerr << "Error: mismatching numbers of parameters and arguments in annotation." 
+            << decl.size() << " vs " << args.size() << "\n";
+    assert(false);
+    throw MisMatchError();
+  }
   int index = 0;
   for (AstInterface::AstNodeList::iterator p1 = args.begin();
        p1 != args.end(); ++p1, ++index) {
@@ -35,6 +39,9 @@ SymbolicAstWrap ReplaceParams:: find( const string& varname)
   if (p != parmap.end()) {
     return (*p).second;
   }
+  if (DebugAnnot()) {
+    std::cerr << "Error: Cannot find argument for parameter: " << varname << "\n";
+  }
   return SymbolicAstWrap();
 }
 
@@ -57,17 +64,65 @@ string OperatorDeclaration::
 get_signiture( AstInterface& fa, const std::string& fname,
                                     const AstInterface::AstTypeList& plist)
 {
-  std::string r = fname;
+  std::stringstream fname_stream;
+  NameDescriptor::write(fname_stream, fname);
   if (!unique)
     for ( AstInterface::AstTypeList::const_iterator p = plist.begin();
           p != plist.end();  ++p) {
       AstNodeType t = *p;
       string name;
       fa.GetTypeInfo( t, &name);
-      r = r + "_" + name;
+      fname_stream << "_";
+      NameDescriptor::write(fname_stream, name);
     }
-  return r;
+  return fname_stream.str();
 }
+
+std::string OperatorDeclaration::operator_signature(AstInterface& fa, 
+                                 const AstNodePtr& exp, 
+                                 AstInterface::AstNodeList* argp,
+                                 AstInterface::AstTypeList* paramp) {
+    if (DebugAnnot()) {
+      std::cerr << "Creating operator signature:" << fa.AstToString(exp) << "\n";
+    }
+    std::string fname;
+    AstInterface::AstTypeList params;
+    AstNodePtr f;
+    AstNodeType t;
+    if (fa.IsVarRef(exp,&t,&fname, 0, 0, true) && fa.IsFunctionType(t, &params)) {
+       if (DebugAnnot()) {
+          std::cerr << "Generating signature from function type for: " << fname << "\n";
+       }
+       assert(argp == 0);
+    } else if (fa.IsFunctionCall(exp, &f, argp, 0, &params) && fa.IsVarRef(f,0,&fname)
+       || fa.IsFunctionDefinition(exp,&fname,argp,0,0, &params)) { 
+       if (DebugAnnot()) {
+          std::cerr << "Generating signature from function call or definition for: " << fname << "\n";
+       }
+    } else {
+      std::cerr << "Error: expecting a function but get: " << fa.AstToString(exp) << "\n";
+      assert(0);
+    }
+    if (paramp != 0) {
+      *paramp = params;
+    }
+    std::string sig = OperatorDeclaration::get_signiture(fa, fname, params);
+    return sig;
+  }
+
+OperatorDeclaration:: OperatorDeclaration(AstInterface& fa, AstNodePtr op_ast) {
+    AstInterface::AstTypeList params;
+    AstInterface::AstNodeList args;
+    signiture = operator_signature(fa, op_ast, &args, &params);
+    assert(params.size() == args.size());
+    AstInterface::AstNodeList::const_iterator p1 = args.begin();
+    AstInterface::AstTypeList::const_iterator p2 = params.begin(); 
+    while (p2 != params.end() && p1 != args.end()) {
+       pars.add_param(AstInterface::GetTypeName(*p2), AstInterface::GetVarName(*p1));
+       ++p1; ++p2;
+    }
+}
+
 //! Read in an operator (function) declaration: name + a list of parameter types and names)
 OperatorDeclaration& OperatorDeclaration:: read ( istream& in )
    {
@@ -122,38 +177,3 @@ void OperatorDeclaration:: write( ostream& out) const
       pars.write(out);
    }
 
-bool OperatorSideEffectDescriptor::read( istream& in, const OperatorDeclaration& op)
-{
-  param_num = 0;
-  if (BaseClass::read(in, op)) {
-    for (size_t i = 0; i < decl.num_of_params(); ++i) {
-      if (contain_parameter(i))
-        ++param_num;
-    }
-    return true;
-  }
-  return false;
-}
-
-void OperatorSideEffectDescriptor::
-get_side_effect( AstInterface& fa,
-                 AstInterface::AstNodeList& args, CollectObject< AstNodePtr >& collect)
-{
-  ReplaceParams paramMap( get_param_decl().get_params(), args);
-  for (OperatorSideEffectDescriptor::const_iterator p = begin(); p != end(); ++p) {
-      string varname = *p;
-      AstNodePtr arg = paramMap.find(varname).get_ast();
-      if (arg != AST_NULL) {  // if it is one of the function arguments, collect it
-        collect( arg);
-      }
-      else { // otherwise, it is a global variable, create a reference to it.
-        AstNodePtr var = fa.CreateVarRef(varname);
-        collect( var);
-      }
-  }
-}
-
-// DQ (1/8/2006): force instantiation of this template so that the "read" member function will be available (required for g++ 4.0.2)
-// template class ReadContainer<ParameterDeclaration, CollectPair<TypeDescriptor, NameDescriptor,0>, ',', '(', ')'>;
-
-// template bool ReadContainer<ParameterDeclaration, CollectPair<TypeDescriptor, NameDescriptor, (char)0>, (char)44, (char)40, (char)41>::read(ParameterDeclaration&, std::basic_istream<char, std::char_traits<char> >&);

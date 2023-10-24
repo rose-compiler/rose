@@ -7,12 +7,18 @@
 class FunctionSideEffectInterface
 {
  public:
+  //! traverses a function call to collect data being modified. 
   // returns false if unknown function encountered
   virtual bool get_modify(AstInterface& fa, const AstNodePtr& fc,
                                CollectObject<AstNodePtr>* collect = 0) = 0 ;
 
+  //! traverses a function call to collect data being read. Returns the callee if requested.
   virtual bool get_read(AstInterface& fa, const AstNodePtr& fc,
                                CollectObject<AstNodePtr>* collect = 0) = 0;
+  virtual bool get_call( AstInterface& fa, const AstNodePtr& fc, 
+                         CollectObject<AstNodePtr>* collect = 0)  {
+     return false;
+  }
   virtual ~FunctionSideEffectInterface() {}
 };
 
@@ -23,7 +29,11 @@ class NoFunctionSideEffectAnalysis : public FunctionSideEffectInterface
                                CollectObject<AstNodePtr>* collect = 0) 
    { return false; }
   virtual bool get_read(AstInterface& fa, const AstNodePtr& fc,
-                               CollectObject<AstNodePtr>* collect = 0) 
+                               CollectObject<AstNodePtr>* collect = 0,
+                               AstNodePtr* callee = 0) 
+   { return false; }
+  virtual bool get_call( AstInterface& fa, const AstNodePtr& fc, 
+                         CollectObject<AstNodePtr>* collect = 0) 
    { return false; }
   virtual ~NoFunctionSideEffectAnalysis() {}
 };
@@ -39,7 +49,8 @@ class SideEffectAnalysisInterface
    get_side_effect( AstInterface& fa, const AstNodePtr& stmts,
                     CollectObject* mod,
                     CollectObject* read= 0,
-                    CollectObject* kill = 0) = 0;
+                    CollectObject* kill = 0,
+                    CollectObject* call = 0) = 0;
   virtual ~SideEffectAnalysisInterface() {}
 };
 

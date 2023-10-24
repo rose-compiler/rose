@@ -9,6 +9,8 @@
 #include <vector>
 #include "AnnotDescriptors.h"
 #include "SymbolicVal.h"
+
+bool DebugAnnot();
 //! An interface to a single annotation item
 template <class TargetInfo>
 class  AnnotCollectionBase {
@@ -83,6 +85,7 @@ class TypeCollection
                    Descriptor* desc = 0) const;
   bool known_type( AstInterface& fa, const AstNodeType& exp, 
                    Descriptor* desc = 0) const;
+  void write( std::ostream& out) const; 
   void Dump() const;
 };
 
@@ -99,8 +102,12 @@ class TypeAnnotCollection
  public:
   void add_annot( const TypeDescriptor& name, const Descriptor& d)
       {
-    // pmp 08JUN05
-    //   was: typemap[name] = d;
+       if (DebugAnnot()) {
+         std::cerr << "Adding annotation:";
+         name.Dump();
+         d.Dump();
+         std::cerr << "Done Adding annotation:";
+       }
        this->typemap[name] = d;
       }
 };

@@ -37,7 +37,8 @@ class StmtInfoCollect : public ProcessAstTreeBase<AstInterface::AstNodePtr>
   virtual void AppendReadLoc( AstInterface& fa, const AstNodePtr& read) = 0; 
   virtual void AppendFuncCall( AstInterface& fa, const AstNodePtr& fc) = 0; 
 
-  void AppendFuncCallArguments( AstInterface& fa, const AstNodePtr& fc) ; 
+  // Analyzes call arguments to determine what are read. Returns callee if requested.
+  void AppendFuncCallArguments( AstInterface& fa, const AstNodePtr& fc, AstNodePtr* callee) ; 
   void AppendFuncCallWrite( AstInterface& fa, const AstNodePtr& fc) ; 
  
   virtual bool ProcessTree( AstInterface &_fa, const AstInterface::AstNodePtr& s,
@@ -54,7 +55,7 @@ class StmtSideEffectCollect
  public:
   StmtSideEffectCollect(AstInterface& fa, FunctionSideEffectInterface* a=0) 
      : fa_(fa), modunknown(false), readunknown(false),funcanal(a), modcollect(0), 
-       readcollect(0), killcollect(0) {}
+       readcollect(0), killcollect(0), callcollect(0) {}
 
   //typedef SgNode* AstNodePtr;
   typedef typename SideEffectAnalysisInterface<AstNodePtr>::CollectObject  CollectObject;
@@ -62,16 +63,18 @@ class StmtSideEffectCollect
   virtual bool get_side_effect(AstInterface& fa, const AstNodePtr& h,
                     CollectObject* collectmod,
                     CollectObject* collectread= 0,
-                    CollectObject* collectkill = 0) override 
+                    CollectObject* collectkill = 0,
+                    CollectObject* collectcall = 0) override
     { return operator()( h, collectmod, collectread, collectkill); }
   bool operator()( const AstNodePtr& h, 
                     CollectObject* mod,
                     CollectObject* read= 0,
-                    CollectObject* kill = 0)
-    {
+                    CollectObject* kill = 0,
+                    CollectObject* call = 0) {
       modcollect = mod;
       readcollect = read;
       killcollect = kill;
+      callcollect = call;
       modunknown = readunknown = false;
       StmtInfoCollect<AstNodePtr>::operator()(fa_, h);
       return !modunknown && !readunknown;
@@ -88,7 +91,7 @@ class StmtSideEffectCollect
     using StmtInfoCollect<AstNodePtr>::curstmt;
     bool modunknown, readunknown;
     FunctionSideEffectInterface* funcanal;
-    CollectObject *modcollect, *readcollect, *killcollect;
+    CollectObject *modcollect, *readcollect, *killcollect, *callcollect;
 };
 
 class Ast2StringMap {

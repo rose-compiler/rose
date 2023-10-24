@@ -2,9 +2,10 @@
 #ifndef ___OPERATION_DESCRIPTORS_H
 #define ___OPERATION_DESCRIPTORS_H
 
-#include "TypeAnnotation.h"
 #include "AnnotExpr.h"
 #include "FunctionObject.h"
+
+bool DebugAnnot();
 //!Paramter names
 typedef ContainerDescriptor<std::vector<NameDescriptor>, NameDescriptor,',','(',')'>
     ParamDescriptor;
@@ -52,6 +53,7 @@ class ReplaceParams
   std::map<std::string, SymbolicAstWrap> parmap;
   SymbolicVal cur;
 public:
+  class MisMatchError {};
   ReplaceParams() {}
   ReplaceParams(const ParamDescriptor& decl,
                 AstInterface::AstNodeList& args, 
@@ -69,10 +71,15 @@ class OperatorDeclaration {
   static bool unique;
 public:
   OperatorDeclaration() : signiture("") {}
+  OperatorDeclaration(AstInterface& fa, AstNodePtr op_ast);
   
   std::string get_signiture () const { return signiture; }
   static std::string get_signiture( AstInterface& fa, const std::string& fname,
                                     const AstInterface::AstTypeList& params);
+  static std::string operator_signature(AstInterface& fa, 
+                                 const AstNodePtr& exp, 
+                                 AstInterface::AstNodeList* argp= 0,
+                                 AstInterface::AstTypeList* paramp = 0); 
   static void set_unique() { unique = true; }
   
   const ParameterDeclaration& get_param_info() const { return pars; }
@@ -105,6 +112,8 @@ class OPDescriptorTemp : public BaseClass
      BaseClass::write(out);
    }
   void Dump() const { write(std::cerr); }
+  void collect(AstInterface& fa, AstInterface::AstNodeList& args,
+                       CollectObject<AstNodePtr>& collect_f) { }
 };
 //! a set of names separated by ',', begin with '(', end with ')'
 typedef  SetDescriptor<NameDescriptor,',','(',')'> NameGroup; 
@@ -116,20 +125,51 @@ OperatorAliasDescriptor;
 class OperatorSideEffectDescriptor
 : public OPDescriptorTemp <SetDescriptor<NameDescriptor, ',','{','}'> >              
 {
-  int param_num;
   typedef OPDescriptorTemp <SetDescriptor<NameDescriptor, ',','{','}'> >
     BaseClass;
  public:
-  OperatorSideEffectDescriptor() : param_num(0) {}
-  bool contain_parameter(int index) const
+  OperatorSideEffectDescriptor() {}
+  using BaseClass::read;
+
+  // Whether the given parameter is part of the side effect description.
+  bool contains_parameter_in_annotation(int index) const
     { 
       NameDescriptor n (decl.get_param(index));
       return find(n) != end();  
     }
-  bool contain_global() const { return size() - param_num > 0; }
-  void get_side_effect(AstInterface& fa, AstInterface::AstNodeList& args,
-                       CollectObject<AstNodePtr>& collect);
-  bool read( std::istream& in, const OperatorDeclaration& op);
+  bool contains_global_variables_in_annotation() const {
+      size_t param_num = 0;
+      for (size_t i = 0; i < decl.num_of_params(); ++i) {
+         if (contains_parameter_in_annotation(i))
+         ++param_num;
+      }
+      // Returns true if annotation contains more than function parameters.
+      return size() > param_num;
+    }
+  void collect(AstInterface& fa, AstInterface::AstNodeList& args,
+                       CollectObject<AstNodePtr>& collect_f) {
+    ReplaceParams paramMap( get_param_decl().get_params(), args);
+    for (const_iterator p = begin(); p != end(); ++p) {
+      std::string varname = *p;
+      if (DebugAnnot()) {
+        std::cerr << "Side effect Descriptor collecting " << varname << "\n";
+      }
+      AstNodePtr arg = paramMap.find(varname).get_ast();
+      if (arg != AST_NULL) {  // if it is one of the function arguments, collect it
+        if (DebugAnnot()) {
+           std::cerr << "Side effect Descriptor varname " << varname << " is a parameter\n";
+        }
+        collect_f( arg);
+      }
+      else { // otherwise, it is a global variable, create a reference to it.
+        if (DebugAnnot()) {
+           std::cerr << "Side effect Descriptor varname " << varname << " is a global variable\n";
+        }
+        AstNodePtr var = fa.CreateVarRef(varname);
+        collect_f( var);
+      }
+    }
+  }
 };
 
 class OperatorInlineDescriptor 

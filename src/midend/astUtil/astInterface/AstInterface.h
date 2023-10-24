@@ -127,7 +127,7 @@ public:
   void AttachObserver(AstObserver* ob);
   void DetachObserver(AstObserver* ob);
 
-  bool get_fileInfo(const AstNodePtr& n, std:: string* fname= 0, int* lineno = 0);
+  static bool get_fileInfo(const AstNodePtr& n, std:: string* fname= 0, int* lineno = 0);
 
   void InsertStmt( const AstNodePtr& orig, const AstNodePtr& n, 
                    bool before = true, bool extractFromBlock = false);
@@ -204,13 +204,15 @@ public:
   bool IsLabelStatement( const AstNodePtr& s);
   bool IsReturn(const AstNodePtr& s, AstNodePtr* val=0);
 
-  bool GetFunctionCallSideEffect( const AstNodePtr& fc,  
-                     CollectObject<AstNodePtr>& collectmod,  
-                     CollectObject<AstNodePtr>& collectread);
-  //! \brief Returns true iff s is a function call, false otherwise. But also attempts to extract
-  //!        a bunch of info about the call.
+  //!  Returns whether s is a function call, and if yes, returns information
+  //!  about its parameters and return values.
   bool IsFunctionCall( const AstNodePtr& s, AstNodePtr* f = 0, 
                        AstList* args = 0, AstList* outargs = 0, 
+                       AstTypeList* paramtypes = 0, AstNodeType* returntype=0);
+
+  //! Returns whether t is a function type and if yes, returns its parameter
+  //! types and return type.
+  bool IsFunctionType( const AstNodeType& t, 
                        AstTypeList* paramtypes = 0, AstNodeType* returntype=0);
   bool IsMin(const AstNodePtr& exp);
   bool IsMax(const AstNodePtr& exp);
@@ -249,9 +251,11 @@ public:
   //! Check whether $exp$ is a variable reference; If yes, return type, name, scope, and global/local etc.
   static bool IsVarRef( const AstNodePtr& exp, AstNodeType* vartype = 0,
                    std::string* varname = 0, AstNodePtr* scope = 0, 
-                    bool *isglobal = 0) ;
+                    bool *isglobal = 0, bool use_global_unique_name=false) ;
+  //! Check whether $exp$ is a non-local variable referenced from inside $scope$.
+  static bool IsGlobalVarRef( const AstNodePtr& exp, const AstNodePtr& scope); 
 
-  static std::string GetVarName( const AstNodePtr& exp);
+  static std::string GetVarName( const AstNodePtr& exp, bool use_global_unique_name = false);
   static std::string GetScopeName( const AstNodePtr& scope);
 
   bool IsSameVarRef( const AstNodePtr& v1, const AstNodePtr& v2);

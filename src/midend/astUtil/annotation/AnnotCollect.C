@@ -2,7 +2,6 @@
 
 #include "AnnotCollect.h"
 #include "CommandOptions.h"
-#include <ROSE_ASSERT.h>
 
 using namespace std;
 
