@@ -2,10 +2,8 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ByteCode/Analysis.h>
-
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
-
 #include <iostream>
 
 using namespace Rose::BinaryAnalysis::Partitioner2;
@@ -61,9 +59,10 @@ void Class::partition(const PartitionerPtr &partitioner, std::map<std::string,ro
 
   for (auto constMethod : methods()) {
     rose_addr_t va{0};
-    bool needNewBlock{true};
     FunctionPtr function{};
     BasicBlockPtr block{};
+    bool needNewBlock{true};
+    bool insertFallthroughSuccessors{true};
 
     // Allow const_cast only here: TODO: consider fixing this (adding basic blocks)?
     Method* method = const_cast<Method*>(constMethod);
@@ -92,7 +91,8 @@ void Class::partition(const PartitionerPtr &partitioner, std::map<std::string,ro
       discoveredFunctions[functionName] = va;
     }
     else {
-      // I don't think this can happen, remove after awhile 2023.10.13
+      // This occurs for a nested/inner class with a constructor having an input parameter
+      // of a dynamic type (I think, for example, see T8_NestMembersAttribute.java).
       mlog[Diagnostics::WARN] << "Class::partition(): discovered duplicate function: " << functionName << "\n";
     }
 
@@ -111,17 +111,21 @@ void Class::partition(const PartitionerPtr &partitioner, std::map<std::string,ro
       if (targets.find(va) != targets.end()) {
         // But a new block is not needed if this is the first instruction in the block
         if (block && !block->isEmpty() && va != block->address()) {
-          mlog[DEBUG] << "... splitting block after: " << addrToString(block->instructions().back()->get_address())
+          mlog[DEBUG] << "Splitting block after: " << addrToString(block->instructions().back()->get_address())
                       << " va: " << addrToString(va)
                       << " fallthrough: " << addrToString(block->fallthroughVa())
                       << " kind:" << insn->get_anyKind() << " :" << insn->get_mnemonic() << "\n";
 
           // If the instruction doesn't have a branch target, add fall through successor
           if (!block->instructions().back()->branchTarget()) {
-            mlog[DEBUG] << "... adding successor fall-through edge from va: "
+            mlog[DEBUG] << "Adding successor fall-through edge from va: "
                         << addrToString(block->instructions().back()->get_address())
                         << " to: " << addrToString(block->fallthroughVa()) << "\n";
-            block->insertSuccessor(block->fallthroughVa(), nBits, EdgeType::E_NORMAL, Confidence::PROVED);
+            if (insertFallthroughSuccessors) {
+              block->insertSuccessor(block->fallthroughVa(), nBits, EdgeType::E_NORMAL, Confidence::PROVED);
+            } else {
+              insertFallthroughSuccessors = true;
+            }
           }
           needNewBlock = true;
         }
@@ -160,8 +164,30 @@ void Class::partition(const PartitionerPtr &partitioner, std::map<std::string,ro
           std::string comment = last->get_comment();
           if (discoveredFunctions.find(comment) != discoveredFunctions.end()) {
             auto itr = discoveredFunctions.find(comment);
-            mlog[DEBUG] << "Adding call edge from va: " << addrToString(va) << " to: " << addrToString(itr->second) << "\n";
+            mlog[DEBUG] << "Adding call edge from va: " << addrToString(va) << " to: " << addrToString(itr->second)
+                        << " : " << comment << "\n";
             block->insertSuccessor(itr->second, nBits, EdgeType::E_FUNCTION_CALL, Confidence::PROVED);
+          }
+          else {
+            mlog[DEBUG] << "Failed to find function, NOT adding call edge from va: " <<addrToString(va) <<" to: " <<comment <<"\n";
+            // No fallthrough successor should be added to allow edge to indeterminate vertex to be created
+            insertFallthroughSuccessors = false;
+
+// Ask Robb if there is a way to add a call edge to the indeterminate vertex, then it won't have to be magically
+// discovered later. Note that then insertFallthroughSuccessors won't be needed; it is kind of a hack.
+#if 0
+            auto indeterminate = partitioner->indeterminateVertex();
+            CfgEdge edge(EdgeType::E_FUNCTION_CALL, Confidence::PROVED);
+            std::pair<ControlFlowGraph::VertexIterator, CfgEdge> pair{indeterminate, edge};
+            // auto pair = VertexEdgePair(indeterminate, edge);
+            block->insertSuccessor(pair);
+#endif
+#if 0
+            rose_addr_t addr = indeterminate.address();
+            std::cout << "Adding call edge from va: " << addrToString(va) << " to: " << addrToString(addr)
+                      << " : " << comment << "\n";
+            block->insertSuccessor(addr, nBits, EdgeType::E_FUNCTION_CALL, Confidence::PROVED);
+#endif
           }
         }
         needNewBlock = true;

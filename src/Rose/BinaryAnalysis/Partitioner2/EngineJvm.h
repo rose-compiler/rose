@@ -232,10 +232,12 @@ public:
 
     /** Discover function calls (invoke instructions) made from a method.
      *
-     *  Stores in a map of fully resolved function names to unique virtual addresses.
+     *  Stores results in a map of fully resolved function names to unique virtual addresses.  Also
+     *  stores the class names of the discovered functions.
      *
      * @{ */
-    void discoverFunctionCalls(SgAsmJvmMethod*, SgAsmJvmConstantPool*, std::map<std::string,rose_addr_t> &);
+    void discoverFunctionCalls(SgAsmJvmMethod*, SgAsmJvmConstantPool*,
+                               std::map<std::string,rose_addr_t> &, std::set<std::string> &);
 
     /** Partition instructions into basic blocks and functions.
      *
