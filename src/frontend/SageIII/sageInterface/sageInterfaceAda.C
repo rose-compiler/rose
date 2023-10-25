@@ -1563,7 +1563,7 @@ namespace Ada
       void handle(SgTypeChar32& n)        { res = desc(&n); }
 
       // true fundamental types
-      void handle(SgClassType& n)         { res = desc(&n); /* \todo check if this is a derived enum */ }
+      void handle(SgClassType& n)         { res = desc(&n); /* \todo check if this is a derived class */ }
       void handle(SgEnumType& n)          { res = desc(&n); /* \todo check if this is a derived enum */ }
       void handle(SgAdaTaskType& n)       { res = desc(&n); }
       void handle(SgAdaProtectedType& n)  { res = desc(&n); }
@@ -2403,7 +2403,9 @@ namespace Ada
     if (SgFunctionDeclaration* assocfn = n.getAssociatedFunctionDeclaration())
       return assocfn->get_parameterList();
 
-    if (const SgAdaRenamingRefExp* renex = isSgAdaRenamingRefExp(n.get_function()))
+    const SgExpression& target = SG_DEREF(n.get_function());
+
+    if (const SgAdaRenamingRefExp* renex = isSgAdaRenamingRefExp(&target))
     {
       const SgAdaRenamingDecl& rendcl = SG_DEREF(renex->get_decl());
 
@@ -2411,6 +2413,11 @@ namespace Ada
         return routty->get_parameterList();
 
       // return nullptr;
+    }
+    else if (const SgPointerDerefExp* drfexp = isSgPointerDerefExp(&target))
+    {
+      if (const SgAdaSubroutineType* routty = isSgAdaSubroutineType(drfexp->get_type()))
+        return routty->get_parameterList();
     }
 
     return nullptr;
@@ -2422,16 +2429,345 @@ namespace Ada
     return n ? calleeParameterList(*n) : nullptr;
   }
 
-  SgExpressionPtrList
-  normalizedCallArguments(const SgFunctionCallExp& n)
+  namespace
   {
-    SgFunctionParameterList*      fnparms  = calleeParameterList(n);
-    if (fnparms == nullptr)
-      throw std::logic_error("unable to retrieve associated function parameter list");
+    /// \param n a class type
+    /// \param publicAncestorConstraint, if false gets the base
+    ///
+    SgType*
+    baseTypeOfClass(const SgClassType& n, bool publicInfoPreferred = false)
+    {
+      // \todo this requires revision
+      //       do we want to get the base type constraint from get_adaParentType
+      //       or the precise base class from the definition?
+      SgType*             res       = nullptr;
+      SgClassDeclaration& cldcl     = SG_DEREF(isSgClassDeclaration(n.get_declaration()));
+      SgClassDeclaration& nondefdcl = SG_DEREF(isSgClassDeclaration(cldcl.get_firstNondefiningDeclaration()));
+      SgClassDeclaration& defdcl    = SG_DEREF(isSgClassDeclaration(nondefdcl.get_definingDeclaration()));
+      SgBaseClass*        basecl    = nullptr;
 
+      // the specific parent is known by the defining declaration
+      const bool          privateDecl = isPrivate(nondefdcl);
+      const bool          privateDefn = isPrivate(defdcl);
+
+      // get the direct inheritance if both decls are public, both decls are private,
+      //   or if publicInfoPreferred was not set.
+      if ((privateDecl == privateDefn) || !publicInfoPreferred)
+      {
+        SgClassDefinition&  cldef = SG_DEREF(defdcl.get_definition());
+        SgBaseClassPtrList& bases = cldef.get_inheritances();
+
+        if (bases.size()) basecl = bases.front();
+      }
+
+      // when publicInfoPreferred was requested or when the previous method failed.
+      // \todo maybe this should just be an else branch of the previous condition..
+      if (basecl == nullptr)
+      {
+        basecl = nondefdcl.get_adaParentType();
+      }
+
+      if (const SgExpBaseClass* basexp = isSgExpBaseClass(basecl))
+      {
+        //~ std::cerr << "BaseTypeFinder: found expression base class" << std::endl;
+        res = typeOfExpr(basexp->get_base_class_exp()).typerep();
+      }
+      else if (basecl)
+      {
+        SgClassDeclaration& basedcl = SG_DEREF(basecl->get_base_class());
+
+        res = basedcl.get_type();
+      }
+
+      return res;
+    }
+
+
+
+    /// checks if the scope of \ref dcl is visible from \ref scope.
+    bool
+    isVisibleFrom(const SgDeclarationStatement& dcl, const SgScopeStatement& scope)
+    {
+      ScopePath path = pathToGlobal(scope);
+      auto      lim  = path.end();
+
+      return lim != std::find(path.begin(), lim, dcl.get_scope());
+    }
+
+
+
+
+#if 0
+    SgNamedType& assertNamedType(SgType* ty)
+    {
+      SgNamedType* res = isSgNamedType(ty);
+      ASSERT_not_null(res);
+
+      return *res;
+    }
+
+    /// extracts the base type from a base and inherited function signature.
+    /// \note
+    ///   the implementation matches the type of each argument position
+    ///   and return type and returns the first mismatched type in \ref orig.
+    SgNamedType&
+    extractBaseTypeFromSignature(const SgFunctionType& orig, const SgFunctionType& derv)
+    {
+      if (orig.get_return_type() != derv.get_return_type())
+        return assertNamedType(orig.get_return_type());
+
+      SgTypePtrList& origParams = SG_DEREF(orig.get_argument_list()).get_arguments();
+      SgTypePtrList& dervParams = SG_DEREF(derv.get_argument_list()).get_arguments();
+      ASSERT_require(origParams.size() == dervParams.size());
+
+      auto iterpair = std::mismatch( origParams.begin(), origParams.end(), dervParams.begin() );
+      ASSERT_require(iterpair.first != origParams.end());
+
+      return assertNamedType(*iterpair.first);
+    }
+
+    /// produce a linearized list of ancestor classes (records) of cldcl
+    std::vector<const SgType*>
+    linearizePublicAncestors(const SgClassDeclaration& cldcl, const SgScopeStatement* /*scope_opt*/ = nullptr)
+    {
+      std::vector<const SgType*> res;
+      SgClassType*               clsty = cldcl.get_type();
+
+      while (clsty)
+      {
+        res.push_back(clsty);
+
+        // \todo passing true (only public) is not entirely correct
+        //       b/c whether private or public is needed depends on
+        //       whether the FULL decl associated with clsty is
+        //       visible from scope \ref scope_opt.
+        clsty = isSgClassType(baseTypeOfClass(*clsty, true /* only public */));
+      }
+
+      return res;
+    }
+
+    /// tests if basety is a public ancestor of drvty.
+    bool isPublicAncestorOf(const SgNamedType& basety, const SgNamedType& drvty)
+    {
+      // find the most derived public declaration of drvty
+      SgDeclarationStatement& drvdeclany    = SG_DEREF(drvty.get_declaration());
+
+      // if the def is public => immediate parent is public => basetype is a public ancestor
+      SgDeclarationStatement* drvdeclDef    = drvdeclany.get_definingDeclaration();
+      if (drvdeclDef && (!isPrivate(*drvdeclDef)))
+        return true;
+
+      SgDeclarationStatement& drvdeclNondef = SG_DEREF(drvdeclany.get_firstNondefiningDeclaration());
+      SgClassDeclaration*     drvclssNondef = isSgClassDeclaration(&drvdeclNondef);
+
+      // PP believes that only classes can have distinct public and private ancestor/parent
+      //    specification.
+      if (drvclssNondef == nullptr)
+        return isPrivate(drvdeclNondef);
+
+      // check if basety is an ancestor of the most derived public declaration inheritance spec
+      std::vector<const SgType*> ancestors = linearizePublicAncestors(*drvclssNondef);
+      auto                       lim = ancestors.end();
+
+      return lim != std::find(ancestors.begin(), lim, &basety);
+    }
+#endif /* 0 */
+
+
+    bool overridesBase(const SgFunctionType& dervFunTy, const SgType& dervTy, const SgFunctionType& baseFunTy, const SgType& baseTy)
+    {
+      auto validBaseOverriderType =
+         [&dervTy, &baseTy](const SgType* drv, const SgType* bas) -> bool
+         {
+           return (  ((drv == &dervTy) && (bas == &baseTy))
+                  || ((drv != &dervTy) && (bas == drv))
+                  );
+         };
+
+      const SgTypePtrList& dervArgs = SG_DEREF(dervFunTy.get_argument_list()).get_arguments();
+      const SgTypePtrList& baseArgs = SG_DEREF(baseFunTy.get_argument_list()).get_arguments();
+
+      return (  validBaseOverriderType(dervFunTy.get_return_type(), baseFunTy.get_return_type())
+             && std::equal( dervArgs.begin(), dervArgs.end(),
+                            baseArgs.begin(), baseArgs.end(),
+                            validBaseOverriderType
+                          )
+             );
+    }
+
+    SgFunctionSymbol*
+    symbolForBaseFunction(SgSymbol& sym, const SgFunctionType& dervFunTy, const SgType& baseTy, const SgType& dervTy)
+    {
+      SgFunctionSymbol* res = nullptr;
+
+      if (SgFunctionType* candty = isSgFunctionType(sym.get_type()))
+      {
+        if (overridesBase(dervFunTy, dervTy, *candty, baseTy))
+        {
+          res = isSgFunctionSymbol(&sym);
+          ASSERT_not_null(res);
+        }
+      }
+
+      return res;
+    }
+
+
+    /// finds a function symbol (or inherited function symbol) with the same name
+    ///   as fndcl, such as the symbol has a similar type-signature with a derived class replaced
+    ///   by the class \ref cls.
+    SgFunctionSymbol*
+    findFunctionSymbolForType( const SgClassType& basety,
+                               const SgType& dervty,
+                               std::string fnname,
+                               const SgFunctionType& drvFunType
+                             )
+    {
+      const SgClassDeclaration& clsdcl = SG_DEREF(isSgClassDeclaration(basety.get_declaration()));
+      const SgScopeStatement&   scope  = SG_DEREF(clsdcl.get_scope());
+      SgSymbol*                 sym    = scope.lookup_symbol(fnname, nullptr, nullptr);
+      SgFunctionSymbol*         res    = nullptr;
+
+      while (sym && !res)
+      {
+        res = symbolForBaseFunction(*sym, drvFunType, basety, dervty);
+        sym = scope.next_any_symbol();
+      }
+
+      return res;
+    }
+
+    SgDeclarationStatement&
+    instantiatedDeclaration(const SgAdaGenericInstanceDecl& n)
+    {
+      SgScopeStatement&       scope = SG_DEREF(n.get_instantiatedScope());
+      SgDeclarationStatement* res   = isSgDeclarationStatement(scope.firstStatement());
+
+      ASSERT_not_null(res);
+      ASSERT_require(res == scope.lastStatement()); // any instantiation contains one decl
+      return *res;
+    }
+
+    struct AccessibleArgumentListFinder : sg::DispatchHandler<SgFunctionParameterList*>
+    {
+        using base = sg::DispatchHandler<SgFunctionParameterList*>;
+
+        explicit
+        AccessibleArgumentListFinder(const SgFunctionCallExp& callexp)
+        : base(), call(&callexp)
+        {}
+
+        void handle(const SgNode& n)                   { SG_UNEXPECTED_NODE(n); }
+
+        //
+        // types
+
+        void handle(const SgAdaSubroutineType& n)      { res = n.get_parameterList(); }
+
+        //
+        // declarations
+        void handle(const SgFunctionDeclaration& n)    { res = n.get_parameterList(); }
+        void handle(const SgAdaGenericInstanceDecl& n) { res = find(&instantiatedDeclaration(n)); }
+
+        //
+        // expressions
+
+        void handle(const SgPointerDerefExp& n)        { res = find(n.get_type()); }
+        void handle(const SgFunctionRefExp& n)         { res = find(n.get_symbol()); }
+        void handle(const SgAdaUnitRefExp& n)          { res = find(n.get_decl()); }
+
+        void handle(const SgAdaRenamingRefExp& n)
+        {
+          // \todo give AdaRenamingRefExp a proper type
+          // res = find(n.get_type());
+
+          res = find( SG_DEREF(n.get_decl()).get_type() );
+        }
+
+        //
+        // symbols
+
+        // trust Asis for directly linked functions -> no visibility check
+        void handle(const SgFunctionSymbol& n)
+        {
+          res = find(n.get_declaration());
+        }
+
+        void handle(const SgAdaInheritedFunctionSymbol& n)
+        {
+          SgFunctionDeclaration& fndcl    = SG_DEREF(n.get_declaration());
+
+          if (isVisibleFrom(fndcl, sg::ancestor<const SgScopeStatement>(*call)))
+          {
+            res = find(&fndcl);
+            return;
+          }
+
+          res = find(n.get_publiclyVisibleFunctionSymbol());
+        }
+
+        //
+        // helpers
+
+        SgFunctionParameterList* find(SgNode* n)
+        {
+          return find(n, *call);
+        }
+
+        static
+        SgFunctionParameterList* find(SgNode* n, const SgFunctionCallExp& call);
+
+      private:
+        const SgFunctionCallExp* call;
+    };
+
+    SgFunctionParameterList*
+    AccessibleArgumentListFinder::find(SgNode* n, const SgFunctionCallExp& call)
+    {
+      return sg::dispatch(AccessibleArgumentListFinder{call}, n);
+    }
+  }
+
+  SgFunctionSymbol*
+  findPubliclyVisibleFunction( SgFunctionSymbol& fnsym,
+                               const SgFunctionType& drvFunTy,
+                               const SgNamedType& dervTy
+                             )
+  {
+    //~ std::cerr << dervTy.get_name() << " " << &dervTy << std::endl;
+
+    const SgDeclarationStatement& dervDcl      = SG_DEREF(dervTy.get_declaration());
+    const SgDeclarationStatement& firstDervDcl = SG_DEREF(dervDcl.get_firstNondefiningDeclaration());
+    if (isPrivate(firstDervDcl))
+      return &fnsym; // nullptr
+
+    const SgDeclarationStatement* defnDervDcl  = firstDervDcl.get_definingDeclaration();
+
+    if (defnDervDcl == nullptr || (!isPrivate(*defnDervDcl)))
+      return &fnsym;
+
+    const SgClassDeclaration*     firstClsDcl  = isSgClassDeclaration(&firstDervDcl);
+    if (firstClsDcl == nullptr)
+      return &fnsym;
+
+    SgFunctionSymbol*  res   = &fnsym; // nullptr
+    const SgClassType& clsty = SG_DEREF(firstClsDcl->get_type());
+
+    if (const SgClassType* basety = isSgClassType(baseTypeOfClass(clsty, true /* public ancestor preferred*/)))
+    {
+      res = findFunctionSymbolForType(*basety, dervTy, fnsym.get_name(), drvFunTy);
+    }
+
+    return res;
+  }
+
+  SgExpressionPtrList
+  normalizedCallArguments2(const SgFunctionCallExp& n, const SgFunctionParameterList& arglist)
+  {
     SgExpressionPtrList           res;
     SgExpressionPtrList&          orig = SG_DEREF(n.get_args()).get_expressions();
-    size_t                        posArgLimit = positionalArgumentLimit(orig);
+    const size_t                  posArgLimit = positionalArgumentLimit(orig);
     SgExpressionPtrList::iterator aaa = orig.begin();
     SgExpressionPtrList::iterator pos = aaa + posArgLimit;
     SgExpressionPtrList::iterator zzz = orig.end();
@@ -2439,7 +2775,7 @@ namespace Ada
     res.reserve(orig.size());
     std::copy(aaa, pos, std::back_inserter(res));
 
-    SgInitializedNamePtrList&     parmList = fnparms->get_args();
+    const SgInitializedNamePtrList& parmList = arglist.get_args();
 
     ROSE_ASSERT(res.size() <= parmList.size());
     extend(res, parmList.size()); // make arglist as long as function parameter list
@@ -2450,12 +2786,22 @@ namespace Ada
                      SgActualArgumentExpression& arg = SG_DEREF(isSgActualArgumentExpression(e));
                      const std::size_t           pos = namedArgumentPosition(parmList, arg.get_argument_name());
 
-                     ROSE_ASSERT(res[pos] == nullptr); // do not overwrite a valid arg
+                     ASSERT_require(res[pos] == nullptr); // do not overwrite a valid arg
                      res[pos] = arg.get_expression();
                    }
                  );
 
     return res;
+  }
+
+  SgExpressionPtrList
+  normalizedCallArguments(const SgFunctionCallExp& n)
+  {
+    SgFunctionParameterList*      fnparms  = AccessibleArgumentListFinder::find(n.get_function(), n);
+    if (fnparms == nullptr)
+      throw std::logic_error("unable to retrieve associated function parameter list");
+
+    return normalizedCallArguments2(n, *fnparms);
   }
 
   std::size_t
@@ -2472,6 +2818,70 @@ namespace Ada
 
     return std::distance(beg, pos);
   }
+
+  namespace
+  {
+    bool
+    nodeProperty(const Sg_File_Info* n, bool (Sg_File_Info::*property)() const)
+    {
+      return n && (n->*property)();
+    }
+
+    bool
+    nodeProperty(const SgLocatedNode& n, bool (Sg_File_Info::*property)() const)
+    {
+      return (  nodeProperty(n.get_file_info(),        property)
+             || nodeProperty(n.get_startOfConstruct(), property)
+             || nodeProperty(n.get_endOfConstruct(),   property)
+             );
+    }
+  }
+
+
+  bool blockExistsInSource(const SgBasicBlock& n)
+  {
+    if (nodeProperty(n, &Sg_File_Info::isCompilerGenerated))
+      return false;
+
+    const SgNode* par = n.get_parent();
+
+    bool blockIsFrontendGenerated = (  isSgFunctionDefinition(par)
+                                    || isSgTryStmt(par)
+                                    || isSgIfStmt(par)
+                                    || isSgSwitchStatement(par)
+                                    || isSgForStatement(par)
+                                    || isSgWhileStmt(par)
+                                    || isSgAdaLoopStmt(par)
+                                    || isSgAdaAcceptStmt(par)
+                                    || isSgCatchOptionStmt(par)
+                                    // \todo AdaSelectStmt, AdaGenericInstance, ..
+                                    );
+
+    return !blockIsFrontendGenerated;
+  }
+
+  bool blockExistsInSource(const SgBasicBlock* n)
+  {
+    return n && blockExistsInSource(*n);
+  }
+
+  ScopePath pathToGlobal(const SgScopeStatement& n)
+  {
+    ScopePath               res;
+    const SgScopeStatement* curr = &n;
+
+    /// add all scopes on the path to the global scope
+    while (!isSgGlobal(curr))
+    {
+      // check for circular scopes
+      // ASSERT_require(std::find(res.rbegin(), res.rend(), curr) == res.rend());
+      res.push_back(curr);
+      curr = logicalParentScope(*curr);
+    }
+
+    return res;
+  }
+
 
   void conversionTraversal(std::function<void(SgNode*)>&& fn, SgNode* root)
   {
@@ -2989,35 +3399,7 @@ namespace
 
     void handle(const SgClassType& n)
     {
-      // \todo this requires revision
-      //       do we want to get the base type constraint from get_adaParentType
-      //       or the precise base class from the definition?
-      SgClassDeclaration& cldcl  = SG_DEREF(isSgClassDeclaration(n.get_declaration()));
-      SgBaseClass*        basecl = cldcl.get_adaParentType();
-
-      // if the base type is hidden, look at the inheritance list of the class definition
-      if (basecl == nullptr)
-      {
-        if (SgClassDeclaration* defdcl = isSgClassDeclaration(cldcl.get_definingDeclaration()))
-        {
-          SgClassDefinition&  cldef = SG_DEREF(defdcl->get_definition());
-          SgBaseClassPtrList& bases = cldef.get_inheritances();
-
-          if (bases.size()) basecl = bases.front();
-        }
-      }
-
-      if (const SgExpBaseClass* basexp = isSgExpBaseClass(basecl))
-      {
-        //~ std::cerr << "BaseTypeFinder: found expression base class" << std::endl;
-        res = typeOfExpr(basexp->get_base_class_exp()).typerep();
-      }
-      else if (basecl)
-      {
-        SgClassDeclaration& basedcl = SG_DEREF(basecl->get_base_class());
-
-        res = basedcl.get_type();
-      }
+      res = baseTypeOfClass(n);
     }
 
     void handle(const SgEnumType& n)

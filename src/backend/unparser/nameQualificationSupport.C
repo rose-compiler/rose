@@ -79,42 +79,6 @@ namespace
     std::vector<const SgScopeStatement*> addedVisibleScopes;
   };
 
-  /// \brief stores a path from an innermost scope to the global scope (not part of the path)
-  ///        in form of a sequence of Sage nodes that represent scopes
-  ///        (SgScopeStatements or SgDeclarationStatements).
-  /// \details
-  ///    - The path is traversed using the range [rbegin(), rend()) to get the scopes
-  ///      in order from outermost scope to innermost scope.
-  ///    - The path may contain scopes without names. Those will be skipped
-  ///      when the qualified name is stringified.
-  struct ScopePath : private std::vector<const SgScopeStatement*>
-  {
-      using base = std::vector<const SgScopeStatement*>;
-      using base::base;
-
-      using base::const_reverse_iterator;
-      using base::reverse_iterator;
-      using base::const_iterator;
-      using base::rend;
-      using base::rbegin;
-      using base::value_type;
-      using base::reference;
-      using base::size;
-
-      using base::end;
-      using base::begin;
-
-      /// overload vector's push_back to check element validity
-      void push_back(base::value_type ptr)
-      {
-        ROSE_ASSERT(isSgScopeStatement(ptr) || isSgDeclarationStatement(ptr));
-        ROSE_ASSERT(!isSgGlobal(ptr));
-
-        base::push_back(ptr);
-      }
-  };
-
-
   struct ScopeDetails : std::tuple<std::string, bool>
   {
     using base = std::tuple<std::string, bool>;
@@ -125,57 +89,29 @@ namespace
     // \todo rename qualBarrier to compilerGenerated and set for all nodes
   };
 
-  bool
-  nodeProperty(const Sg_File_Info* n, bool (Sg_File_Info::*property)() const)
-  {
-    return n && (n->*property)();
-  }
-
-  bool
-  nodeProperty(const SgLocatedNode& n, bool (Sg_File_Info::*property)() const)
-  {
-    return (  nodeProperty(n.get_file_info(),        property)
-           || nodeProperty(n.get_startOfConstruct(), property)
-           || nodeProperty(n.get_endOfConstruct(),   property)
-           );
-  }
 
   ScopeDetails
   scopeName(const SgStatement* n);
 
   struct ScopeName : sg::DispatchHandler<ScopeDetails>
   {
+      // records the scope name, and if the scope is a qualification barrier.
+      // \note a qualification barrier is an unnamed block; as it does not
+      //       allow its elements being fully prefixed from global to inner scope.
       void withName(const std::string& name, bool actsAsBarrier = false);
+
+      // a scope whose name does not appear in the scope qualification list.
+      //   this does not introduce a qualification barrier.
       void withoutName() {}
-
-      bool blockIsExplicitInCode(const SgBasicBlock& n)
-      {
-        if (nodeProperty(n, &Sg_File_Info::isCompilerGenerated))
-          return false;
-
-        SgNode* par = n.get_parent();
-
-        bool blockIsFrontendGenerated = (  isSgFunctionDefinition(par)
-                                        || isSgTryStmt(par)
-                                        || isSgIfStmt(par)
-                                        || isSgSwitchStatement(par)
-                                        || isSgForStatement(par)
-                                        || isSgWhileStmt(par)
-                                        || isSgAdaLoopStmt(par)
-                                        || isSgAdaAcceptStmt(par)
-                                        || isSgCatchOptionStmt(par)
-                                        // \todo AdaSelectStmt, AdaGenericInstance, ..
-                                        );
-
-        return !blockIsFrontendGenerated;
-      }
 
       void checkParent(const SgScopeStatement& n);
 
       void handle(const SgNode& n)                 { SG_UNEXPECTED_NODE(n); }
 
       // default for all scopes and declarations
-      void handle(const SgStatement& n)            { withoutName(); }
+      void handle(const SgStatement&)              { withoutName(); }
+
+      // void handle(const SgGlobal&)               { withName("Standard"); } // \todo
 
       // scopes that may have names
       // \todo do we also need named loops?
@@ -186,20 +122,13 @@ namespace
       void handle(const SgAdaPackageBody& n)       { checkParent(n); }
       void handle(const SgAdaPackageSpec& n)       { checkParent(n); }
       void handle(const SgFunctionDefinition& n)   { checkParent(n); }
-      //~ void handle(const SgAdaGenericDefn& n)       { checkParent(n); }
 
-      // FunctionDefinition, ..
-
-      void handle(const SgBasicBlock& n)
-      {
-        const std::string blockName     = n.get_string_label();
-        const bool        qualBarrier   = blockName.empty() && blockIsExplicitInCode(n);
-
-        withName(blockName, qualBarrier);
-      }
+      // generics and discriminated declarations do not have names per se.
+      //   Instead they provide binding-context to some other declaration.
+      //   e.g., package, subroutine (generics); record, task, protected object, .. (discriminated types)
 
       // parent handlers
-      void handle(const SgDeclarationStatement& n) { withoutName(); }
+      void handle(const SgDeclarationStatement&)   { withoutName(); }
 
       void handle(const SgAdaTaskSpecDecl& n)      { withName(n.get_name()); }
       void handle(const SgAdaTaskBodyDecl& n)      { withName(n.get_name()); }
@@ -209,9 +138,14 @@ namespace
       void handle(const SgAdaPackageBodyDecl& n)   { withName(n.get_name()); }
       void handle(const SgAdaRenamingDecl& n)      { withName(n.get_name()); }
       void handle(const SgFunctionDeclaration& n)  { withName(n.get_name()); }
-      //~ void handle(const SgAdaGenericDecl& n)       { res = scopeName(n.get_declaration()); }
 
-      // FunctionDeclaration, ..
+      void handle(const SgBasicBlock& n)
+      {
+        const std::string blockName     = n.get_string_label();
+        const bool        qualBarrier   = blockName.empty() && si::Ada::blockExistsInSource(n);
+
+        withName(blockName, qualBarrier);
+      }
   };
 
   void ScopeName::withName(const std::string& s, bool actsAsBarrier)
@@ -381,27 +315,13 @@ namespace
       void recordNameQual(const SgNode& n, std::string qual);
       void recordNameQual(std::map<SgNode*, std::string>& m, const SgNode& n, std::string qual);
 
-      /// replaces the scope to be unparsed with a different representation
-      ///   (i.e., scope or alias declaration).
-      /// \param  n the original scope to be unparsed
-      /// \result a representation of the scope to be unparsed
-      /// \details
-      ///    If no replacement is required, \ref n is returned.
-      ///    A replacement may happen due to multiple reasons
-      ///    - a package body scope's represented is represented by its specification
-      ///    - a scope is not visible, but an alias (renamed decl) is
-      /// \note
-      ///    active use clauses are handled (by design, but currently disabled)
-      ///    by \ref requiresNameQual.
-      //  const SgStatement& scopeForNameQualification(const SgScopeStatement& n) const;
-
       /// Constructs a path from a scope statement to the top-level (global)
       /// scope.
       /// \param n innermost scope
-      ScopePath pathToGlobal(const SgScopeStatement& n) const;
+      si::Ada::ScopePath pathToGlobal(const SgScopeStatement& n) const;
 
       /// Generates a string for the scope path [beg, lim) while considering visible and renamed scopes
-      std::string nameQualString(ScopePath::const_reverse_iterator beg, ScopePath::const_reverse_iterator lim) const;
+      std::string nameQualString(si::Ada::ScopePath::const_reverse_iterator beg, si::Ada::ScopePath::const_reverse_iterator lim) const;
 
       /// computes the name qualification for a reference in scope \ref local
       ///   to a declaration \ref node in scope \ref remote.
@@ -480,21 +400,10 @@ namespace
   /// Constructs a path from a scope statement to the top-level (global)
   /// scope.
   /// \param n innermost scope
-  ScopePath
+  si::Ada::ScopePath
   NameQualificationTraversalAda::pathToGlobal(const SgScopeStatement& n) const
   {
-    ScopePath               res;
-    const SgScopeStatement* curr = &n;
-
-    /// add all scopes on the path to the global scope
-    while (!isSgGlobal(curr))
-    {
-      // check for circular scopes
-      // ROSE_ASSERT(std::find(res.rbegin(), res.rend(), curr) == res.rend());
-
-      res.push_back(curr);
-      curr = si::Ada::logicalParentScope(*curr);
-    }
+    si::Ada::ScopePath res = si::Ada::pathToGlobal(n);
 
     // Add the fictitious (?) root of all scopes ;)
     //   A procedure referring to itself needs to add the standard prefix "Standard."
@@ -529,16 +438,16 @@ namespace
       return &dcl == si::Ada::getSpecificationDeclaration(bdydcl);
 
     if (const SgAdaTaskBodyDecl* bdydcl = isSgAdaTaskBodyDecl(&dcl))
-      return symdcl == si::Ada::getSpecificationDeclaration(bdydcl); // bdydcl->get_specificationDeclaration();
+      return symdcl == si::Ada::getSpecificationDeclaration(bdydcl);
 
     if (const SgAdaTaskBodyDecl* bdydcl = isSgAdaTaskBodyDecl(symdcl))
-      return &dcl == si::Ada::getSpecificationDeclaration(bdydcl); // bdydcl->get_specificationDeclaration();
+      return &dcl == si::Ada::getSpecificationDeclaration(bdydcl);
 
     if (const SgAdaProtectedBodyDecl* bdydcl = isSgAdaProtectedBodyDecl(&dcl))
-      return symdcl == si::Ada::getSpecificationDeclaration(bdydcl); // SG_DEREF(bdydcl->get_spec()).get_parent();
+      return symdcl == si::Ada::getSpecificationDeclaration(bdydcl);
 
     if (const SgAdaProtectedBodyDecl* bdydcl = isSgAdaProtectedBodyDecl(symdcl))
-      return &dcl == si::Ada::getSpecificationDeclaration(bdydcl); // SG_DEREF(bdydcl->get_spec()).get_parent();
+      return &dcl == si::Ada::getSpecificationDeclaration(bdydcl);
 
     // for functions check that they have the same first nondefining declaration.
     if (const SgFunctionDeclaration* fndcl = isSgFunctionDeclaration(&dcl))
@@ -580,7 +489,7 @@ namespace
 
   struct DebugSeqPrinter
   {
-    const ScopePath& el;
+    const si::Ada::ScopePath& el;
   };
 
   std::ostream& operator<<(std::ostream& os, const DebugSeqPrinter& s)
@@ -608,7 +517,7 @@ namespace
   }
 
   bool isShadowedAlongPath( const SgNode& n,
-                            ScopePath::const_reverse_iterator beg, ScopePath::const_reverse_iterator lim
+                            si::Ada::ScopePath::const_reverse_iterator beg, si::Ada::ScopePath::const_reverse_iterator lim
                           )
   {
     std::string                   dclname = nodeName(n);
@@ -666,8 +575,8 @@ namespace
   }
 
   std::string
-  NameQualificationTraversalAda::nameQualString( ScopePath::const_reverse_iterator beg,
-                                                 ScopePath::const_reverse_iterator lim
+  NameQualificationTraversalAda::nameQualString( si::Ada::ScopePath::const_reverse_iterator beg,
+                                                 si::Ada::ScopePath::const_reverse_iterator lim
                                                ) const
   {
     const NameQualificationTraversalAda* self = this;
@@ -888,10 +797,10 @@ namespace
                                                   const SgScopeStatement& remote
                                                 ) const
   {
-    using PathIterator = ScopePath::reverse_iterator;
+    using PathIterator = si::Ada::ScopePath::reverse_iterator;
 
-    ScopePath          remotePath = pathToGlobal(remote);
-    ScopePath          localPath  = pathToGlobal(local);
+    si::Ada::ScopePath remotePath = pathToGlobal(remote);
+    si::Ada::ScopePath localPath  = pathToGlobal(local);
     ASSERT_require(remotePath.size() != 0);
 
     if (DBG_PRINT_SCOPES)

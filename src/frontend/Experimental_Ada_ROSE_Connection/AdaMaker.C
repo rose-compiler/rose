@@ -2169,17 +2169,12 @@ namespace
 
   SgType& firstLastTypeAttr(SgExpression& obj, SgExprListExp& args)
   {
-    SgType* basety = nullptr;
-
-    if (SgTypeExpression* tyexp = isSgTypeExpression(&obj))
-      basety = tyexp->get_type();
-    else
-      basety = obj.get_type();
-
+    SgTypeExpression*      tyexp = isSgTypeExpression(&obj);
+    SgType&                basety = SG_DEREF(tyexp ? tyexp->get_type() : obj.get_type());
     si::Ada::FlatArrayType flatty = si::Ada::getArrayTypeInfo(basety);
 
     if (flatty.type() == nullptr)
-      return SG_DEREF(basety);
+      return basety;
 
     SgType* resty = nullptr;
 
@@ -2202,9 +2197,6 @@ namespace
 
   SgType& exprTypeAttr(SgExpression& tyrep, SgExprListExp&)
   {
-    //~ logError() << " >>> " << tyrep.unparseToString() << " " << typeid(*tyrep.get_type()).name()
-                //~ << std::endl;
-
     return SG_DEREF(tyrep.get_type());
   }
 
@@ -2213,6 +2205,16 @@ namespace
     SgExpression& exp = SG_DEREF(args.get_expressions().front());
 
     return SG_DEREF(exp.get_type());
+  }
+
+  SgType& funTypeAttr(SgExpression& funref, SgExprListExp& args)
+  {
+    if (SgFunctionType* funty = isSgFunctionType(funref.get_type()))
+      return SG_DEREF(funty->get_return_type());
+
+    logWarn() << "unable to get 'result type" << funref.unparseToString()
+              << std::endl;
+    return unknownTypeAttr(funref, args);
   }
 
   SgType&
@@ -2283,6 +2285,7 @@ namespace
                                      , { "model_mantissa",       &integralTypeAttr }
                                      , { "model_small",          &realTypeAttr }
                                      , { "modulus",              &integralTypeAttr }
+                                     , { "old",                  &exprTypeAttr }
                                      , { "object_size",          &integralTypeAttr }
                                      , { "overlaps_storage",     &boolTypeAttr }
                                      , { "pos",                  &integralTypeAttr }
@@ -2290,6 +2293,7 @@ namespace
                                      //~ , { "pred",                 &argTypeAttr }
                                      , { "pred",                 &exprTypeAttr }   // Type'Pred may have no arguments when it is passed as function
                                      , { "remainder",            &argTypeAttr }
+                                     , { "result",               &funTypeAttr }
                                      , { "rounding",             &argTypeAttr }
                                      //~ , { "range",                &unknownTypeAttr }   // \todo consider creating a range type
                                      //~ , { "output",               &unknownTypeAttr }   // ???
@@ -2374,9 +2378,6 @@ namespace
   SgType&
   convertType(SgType& actual, SgType& origRoot, SgNamedType& derv)
   {
-    // not strictly needed
-    //~ if (isSgTypeVoid(&actual)) return actual;
-
     SgType*    actualRoot             = si::Ada::typeRoot(actual).typerep();
     const bool replaceWithDerivedType = (&origRoot == actualRoot);
 
@@ -2426,12 +2427,11 @@ namespace
       if (newArgTy != origArgTy) ++numUpdTypes;
     }
 
-    //~ logWarn() //<< si::get_name(baseTypeDecl) << " "
-              //~ << "tyupd: " << numUpdTypes
-              //~ << " @" << &funcTy << ": " << &originalType << '(' << typeid(originalType).name() << ')'
-              //~ << " -> " << &derivedType << '(' << typeid(derivedType).name() << ')'
-              //~ << std::endl;
-
+    if (false)
+      logWarn() << "tyupd: " << numUpdTypes
+                << " @" << &funcTy << ": " << &originalType << '(' << typeid(originalType).name() << ')'
+                << " -> " << &derivedType << '(' << typeid(derivedType).name() << ')'
+                << std::endl;
 
     // only create new nodes if everything worked
     if (numUpdTypes == 0)
@@ -2458,7 +2458,7 @@ namespace
 
 
 SgAdaInheritedFunctionSymbol&
-mkAdaInheritedFunctionSymbol(const SgFunctionSymbol& baseSym, SgNamedType& assocType, SgScopeStatement& scope)
+mkAdaInheritedFunctionSymbol(SgFunctionSymbol& baseSym, SgNamedType& assocType, SgScopeStatement& scope)
 {
   SgFunctionDeclaration& fn     = SG_DEREF(baseSym.get_declaration());
   SgFunctionType&        functy = baseFunctionType(fn, baseSym);
@@ -2472,7 +2472,8 @@ mkAdaInheritedFunctionSymbol(const SgFunctionSymbol& baseSym, SgNamedType& assoc
               << std::endl;
   }
 
-  SgAdaInheritedFunctionSymbol& sgnode = mkBareNode<SgAdaInheritedFunctionSymbol>(&fn, &dervty, &assocType);
+  SgFunctionSymbol*      visfun = si::Ada::findPubliclyVisibleFunction(baseSym, dervty, assocType);
+  SgAdaInheritedFunctionSymbol& sgnode = mkBareNode<SgAdaInheritedFunctionSymbol>(&fn, &dervty, &assocType, visfun);
 
   scope.insert_symbol(fn.get_name(), &sgnode);
 

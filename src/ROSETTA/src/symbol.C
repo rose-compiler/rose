@@ -241,6 +241,9 @@ Grammar::setUpSymbols ()
      AdaInheritedFunctionSymbol.setDataPrototype ( "SgNamedType*",    "associatedDerivedType", "= nullptr",
                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     AdaInheritedFunctionSymbol.setDataPrototype ( "SgFunctionSymbol*", "publiclyVisibleFunctionSymbol", "= nullptr",
+                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
   // DQ (2/29/2004): Header file support code for template declaration support
   // TemplateInstantiationSymbol.setFunctionPrototype( "HEADER_TEMPLATE_INSTANTIATION_DECLARATION", "../Grammar/Symbol.code" );

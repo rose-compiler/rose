@@ -939,7 +939,7 @@ namespace Ada_ROSE_Translation
   /// \todo
   ///    support derived enum types
   SgAdaInheritedFunctionSymbol&
-  mkAdaInheritedFunctionSymbol(const SgFunctionSymbol& basesym, SgNamedType& assocType, SgScopeStatement& scope);
+  mkAdaInheritedFunctionSymbol(SgFunctionSymbol& basesym, SgNamedType& assocType, SgScopeStatement& scope);
 
   //
   // conversions

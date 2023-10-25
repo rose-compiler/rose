@@ -721,12 +721,24 @@ namespace
   exceptionTypeDecl(SgVariableDeclaration* n);
   /// \}
 
+  /// returns a list of arguments with named arguments placed at the correct position by taking into
+  ///   account the supplied argument list.
+  /// \param n       the call expression
+  /// \param arglist a argument list
+  /// \throws std::logic_error when named arguments cannot be identified.
+  /// \note
+  ///    * defaulted arguments are not represented and the list may contain holes (nullptr)
+  ///    * use this function during AST construction
+  SgExpressionPtrList
+  normalizedCallArguments2(const SgFunctionCallExp& n, const SgFunctionParameterList& arglist);
 
-  /// returns a list of arguments with named arguments placed at the correct position
-  /// \note defaulted arguments are not represented and the list may contain holes (nullptr)
+  /// attempts to identify the argument list automatically and uses it to invoke the preceding
+  ///   normalizedCallArguments2 function.
+  /// \param n       the call expression
   /// \throws std::logic_error when there is no function associated with the call,
-  ///         or when named arguments cannot be identified.
-  ///         For an example for the latter, see test case ancestors.adb
+  ///         or when normalizedCallArguments2 throws.
+  /// \note
+  ///   calling this function is preferred in the general case.
   /// \{
   SgExpressionPtrList
   normalizedCallArguments(const SgFunctionCallExp& n);
@@ -890,6 +902,30 @@ namespace
   positionalArgumentLimit(const SgExprListExp* args);
   /// @}
 
+  /// checks if the block \ref blk is present in the Ada source code.
+  /// \param  blk a reference ot pointer to a ROSE basic block object.
+  /// \return true  of the block is in the source code.
+  ///         false if the block is ROSE artifact (or nullptr).
+  /// @{
+  bool blockExistsInSource(const SgBasicBlock* blk);
+  bool blockExistsInSource(const SgBasicBlock& blk);
+  /// @}
+
+  /// finds the function symbol for a publicly accessible function.
+  /// \param  fnsym    the function symbol (maybe be private)
+  /// \param  drvFunTy the derived function type
+  /// \param  dervTy   the derived type for which the symbol is sought
+  /// \return a function that is publicly accessible and can be used
+  ///         for default argument resolution. if none is found
+  ///         a pointer to fnsym is returned..
+  /// \todo   if no public function can be found return nullptr
+  SgFunctionSymbol*
+  findPubliclyVisibleFunction( SgFunctionSymbol& fnsym,
+                               const SgFunctionType& drvFunTy,
+                               const SgNamedType& dervTy
+                             );
+
+
   /// converts text to constant values
   /// \{
   long long int convertIntegerLiteral(const char* img);
@@ -900,6 +936,48 @@ namespace
 
   char convertCharLiteral(const char* img);
   /// \}
+
+  /// \brief stores a path from an innermost scope to the global scope (not part of the path)
+  ///        in form of a sequence of Sage nodes that represent scopes
+  ///        (SgScopeStatements or SgDeclarationStatements).
+  /// \details
+  ///    - The path is traversed using the range [rbegin(), rend()) to get the scopes
+  ///      in order from outermost scope to innermost scope.
+  ///    - The path may contain scopes without names. Those will be skipped
+  ///      when the qualified name is stringified.
+  struct ScopePath : private std::vector<const SgScopeStatement*>
+  {
+      using base = std::vector<const SgScopeStatement*>;
+      using base::base;
+
+      using base::const_reverse_iterator;
+      using base::reverse_iterator;
+      using base::const_iterator;
+      using base::rend;
+      using base::rbegin;
+      using base::value_type;
+      using base::reference;
+      using base::size;
+
+      using base::end;
+      using base::begin;
+
+      /// overload vector's push_back to check element validity
+      void push_back(base::value_type ptr)
+      {
+        ROSE_ASSERT(isSgScopeStatement(ptr) || isSgDeclarationStatement(ptr));
+        ROSE_ASSERT(!isSgGlobal(ptr));
+
+        base::push_back(ptr);
+      }
+  };
+
+  /// Constructs a path from a scope statement to the top-level (global)
+  /// scope. The path contains [n, global)
+  /// \param n innermost scope
+  /// \todo consider adding global into the sequence
+  ///       (the namequalification already adds pkgStandard...)
+  ScopePath pathToGlobal(const SgScopeStatement& n);
 
 
   /// converts all Ada style comments to C++ comments

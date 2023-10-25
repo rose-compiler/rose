@@ -5781,30 +5781,39 @@ processInheritedSubroutines( SgNamedType& derivedType,
                              AstContext ctx
                            )
 {
-  SgType*              baseType     = si::Ada::baseType(derivedType);
-  SgType*              baseRootRaw  = si::Ada::typeRoot(baseType).typerep();
-  SgNamedType*         baseRootType = isSgNamedType(baseRootRaw);
+  // use a deferred unit completion, so that all information of records
+  //   (i.e., detailed inheritance relationship) have been seen when
+  //   the inherited subroutines are processed.
+  auto deferredSubRoutineProcessing =
+       [&derivedType, subprograms, declarations, ctx]() -> void
+       {
+         SgType*      baseType     = si::Ada::baseType(derivedType);
+         SgType*      baseRootRaw  = si::Ada::typeRoot(baseType).typerep();
+         SgNamedType* baseRootType = isSgNamedType(baseRootRaw);
 
-  if (baseRootType == nullptr)
-  {
-    // if baseRootRaw != nullptr
-    //   it will correspond to a universal type in package standard.
-    //   -> not an error
-    if (baseRootRaw == nullptr)
-      logFlaw() << "unable to find any base-root for " << derivedType.get_name()
-                << " / base = " << baseType
-                << std::endl;
-    return;
-  }
+         if (baseRootType == nullptr)
+         {
+           // if baseRootRaw != nullptr
+           //   it will correspond to a universal type in package standard.
+           //   -> not an error
+           if (baseRootRaw == nullptr)
+             logFlaw() << "unable to find any base-root for " << derivedType.get_name()
+                       << " / base = " << baseType
+                       << std::endl;
+           return;
+         }
 
-  //~ logWarn() << "drv: " << derivedType.get_name() << " / " << baseRootType->get_name()
-            //~ << std::endl;
-  traverseIDs(subprograms, elemMap(), InheritedSymbolCreator{*baseRootType, derivedType, ctx});
+         //~ logWarn() << "drv: " << derivedType.get_name() << " / " << baseRootType->get_name()
+                   //~ << std::endl;
+         traverseIDs(subprograms, elemMap(), InheritedSymbolCreator{*baseRootType, derivedType, ctx});
 
-  if (!declarations.empty())
-    logWarn() << "A derived/extension record type's implicit declaration is not empty: "
-               << derivedType.get_name()
-               << std::endl;
+         if (!declarations.empty())
+           logWarn() << "A derived/extension record type's implicit declaration is not empty: "
+                     << derivedType.get_name()
+                     << std::endl;
+       };
+
+  ctx.storeDeferredUnitCompletion(std::move(deferredSubRoutineProcessing));
 }
 
 }

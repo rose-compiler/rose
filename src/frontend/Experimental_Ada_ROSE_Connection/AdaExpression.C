@@ -1369,11 +1369,6 @@ namespace
         {
           logKind("A_Function_Call", elem.ID);
 
-          //~ logTrace() << "A_Function_Call: "
-                     //~ << expr.Is_Prefix_Notation << " (Is_Prefix_Notation) "
-                     //~ << expr.Is_Prefix_Call << " (Is_Prefix_Call)"
-                     //~ << std::endl;
-
           ElemIdRange             range  = idRange(expr.Function_Call_Parameters);
 
           // PP (04/22/22) if the callee is an Ada Attribute then integrate

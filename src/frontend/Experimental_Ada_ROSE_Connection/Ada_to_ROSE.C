@@ -1459,7 +1459,7 @@ namespace
       const bool               res = (  (argRoot.typerep() != nullptr)
                                      && (argRoot.typerep() == prmRoot.typerep())
                                      );
-      if (true)
+      if (false)
       {
         logFlaw() << res << '\n'
                   << " * a " << (argRoot.typerep() ? typeid(*argRoot.typerep()).name() : std::string{})
@@ -1609,22 +1609,44 @@ namespace
            );
   }
 
-  SgExpressionPtrList
-  normalizedArguments(const SgFunctionCallExp* fncall)
+  const SgFunctionParameterList&
+  parameterList(const SgFunctionSymbol& fnsym)
   {
-    try
+    if (const SgAdaInheritedFunctionSymbol* inhsym = isSgAdaInheritedFunctionSymbol(&fnsym))
+      if (const SgFunctionSymbol* pubsym = inhsym->get_publiclyVisibleFunctionSymbol())
+      {
+        return parameterList(*pubsym);
+      }
+
+    const SgFunctionDeclaration& fndcl = SG_DEREF(fnsym.get_declaration());
+    return SG_DEREF(fndcl.get_parameterList());
+  }
+
+  SgExpressionPtrList
+  normalizedArguments(const SgFunctionCallExp& fncall, const OverloadMap& allrefs)
+  {
+    SgFunctionRefExp* fnref = isSgFunctionRefExp(fncall.get_function());
+    if (fnref == nullptr) return {};
+
+    for (const SgFunctionSymbol* fnsym : allrefs.at(fnref).ovlset())
     {
-      if (fncall != nullptr)
-        return si::Ada::normalizedCallArguments(*fncall);
-    }
-    catch (const std::logic_error& e)
-    {
-      logError() << e.what() << " in call "
-                 << (fncall ? fncall->unparseToString() : "<nullptr>")
-                 << std::endl;
+      try
+      {
+        return si::Ada::normalizedCallArguments2(fncall, parameterList(SG_DEREF(fnsym)));
+      }
+      catch (const std::logic_error& e) {}
     }
 
+    logError() << "Unable to normalize argument list in call "
+               << fncall.unparseToString()
+               << std::endl;
     return {};
+  }
+
+  SgExpressionPtrList
+  normalizedArguments(const SgFunctionCallExp* fncall, const OverloadMap& allrefs)
+  {
+    return normalizedArguments(SG_DEREF(fncall), allrefs);
   }
 
 /*
@@ -1641,7 +1663,7 @@ namespace
                               const OverloadMap& allrefs
                             )
   {
-    const SgExpression* arg = normalizedArguments(&parentCall).at(pos);
+    const SgExpression* arg = normalizedArguments(parentCall, allrefs).at(pos);
 
     return resultTypes(arg, allrefs);
   }
@@ -1662,32 +1684,20 @@ namespace
     OverloadMap::const_iterator  ovpos = allrefs.find(fnref);
 
     if (ovpos == allrefs.end())
-    {
-      //~ logTrace() << "typesFromCallContext: ret {} @: "
-                 //~ << (ovpos != allrefs.end()) << " / " << (fnref == nullptr)
-                 //~ << parentCall.get_function()
-                 //~ << std::endl;
       return {};
-    }
 
     ADA_ASSERT(fnref != nullptr);
     const SgFunctionDeclaration* fndcl = fnref->getAssociatedFunctionDeclaration();
 
     // do not trust arguments of compiler generated functions
     if (fndcl == nullptr)
-    {
-      //~ logTrace() << "typesFromCallContext: ret {} @ 2" << std::endl;
       return {};
-    }
 
     const bool compilerGenerated     = testProperty(*fndcl, &Sg_File_Info::isCompilerGenerated);
     const bool compilerGenComparison = compilerGenerated && isComparisonOperator(*fndcl);
 
     if (compilerGenerated && !compilerGenComparison)
-    {
-      //~ logTrace() << "typesFromCallContext: ret {} @ 3" << std::endl;
       return {};
-    }
 
     std::set<const SgType*> res;
 
@@ -1700,14 +1710,11 @@ namespace
 
       if (!compilerGenComparison)
       {
-        //~ logTrace() << "typesFromCallContext: normal" << std::endl;
-
         for (SgFunctionSymbol* fnsym : ovpos->second.ovlset())
           res.insert(parameterTypes(fnsym).at(argpos));
       }
       else
       {
-        //~ logTrace() << "typesFromCallContext: compgen" << std::endl;
         ADA_ASSERT(ovpos->second.ovlset().size() < 2);
         ADA_ASSERT(argpos == 0 || argpos == 1);
 
@@ -1717,7 +1724,7 @@ namespace
     catch (const std::logic_error& e)
     {
       /* catches exceptions from normalizedArgumentPosition. */
-      logTrace() << "typesFromCallContext: ex " << e.what() << std::endl;
+      logWarn() << "ex: " << e.what() << std::endl;
       ADA_ASSERT(res.empty());
     }
 
@@ -1771,7 +1778,7 @@ namespace
 
       if (fnref == nullptr)
       {
-        logWarn() << "implement context resolution in function pointers .."
+        logFlaw() << "resolve context for fn-pointer calls .. [incomplete]"
                   << std::endl;
       }
       else
@@ -2042,7 +2049,7 @@ namespace
 
       SgFunctionRefExp&         fnref  = SG_DEREF(item.first);
       const SgFunctionCallExp*  fncall = callNode(fnref);
-      const SgExpressionPtrList args   = normalizedArguments(fncall);
+      const SgExpressionPtrList args   = normalizedArguments(fncall, allrefs);
 
       if (numcands != 1)
         logInfo() << "resolve: " << fnref.get_parent()->unparseToString() << " " << numcands
