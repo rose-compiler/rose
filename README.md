@@ -29,9 +29,13 @@ sudo apt-get install rose-tools # Optional: Installs ROSE tools in addition to R
 
 For full install instructions go to https://github.com/rose-compiler/rose/wiki/How-to-Set-Up-ROSE
 
+# Supported Compilers
+When ROSE is configured with c/c++ support it is required to download an EDG binary. Currently we generate these for GCC 7 through 12. The support for 11 and 12 is in progress, so for fully supported version use GCC 7 through 10.
+
+When not using c/c++ support GCC 7 through 13 are supported.
+
 # ROSE Directories 
 * `src`: all source code for ROSE
-* `tests`: several subdirectories of test codes for ROSE.
 * `tools`: usable feature complete tools
 * `projects`: in development and incomplete tools
 * `tutorial`: exmples of ROSE features
