@@ -2109,6 +2109,27 @@ src/util/Sawyer/Makefile
 src/util/stringSupport/Makefile
 src/util/support/Makefile
 stamp-h
+tools/Makefile
+tools/BinaryAnalysis/Makefile
+tools/CodeThorn/Makefile
+tools/CodeThorn/src/Makefile
+tools/checkFortranInterfaces/Makefile
+tools/classMemberVariablesInLambdas/Makefile
+tools/featureVector/Makefile
+tools/globalVariablesInLambdas/Makefile
+tools/PortabilityTesting/Makefile
+tools/PortabilityTesting/scripts/Makefile
+tools/PortabilityTesting/src/Makefile
+tutorial/Makefile
+tutorial/binaryAnalysis/Makefile
+tutorial/exampleMakefile
+tutorial/intelPin/Makefile
+tutorial/outliner/Makefile
+tutorial/roseHPCT/Makefile
+])
+
+AC_CHECK_FILE([$srcdir/tests/Readme.md],
+[AC_CONFIG_FILES([
 tests/Makefile
 tests/nonsmoke/ExamplesForTestWriters/Makefile
 tests/nonsmoke/Makefile
@@ -2117,7 +2138,6 @@ tests/nonsmoke/functional/BinaryAnalysis/Dwarf_tests/Makefile
 tests/nonsmoke/functional/BinaryAnalysis/Makefile
 tests/nonsmoke/functional/BinaryAnalysis/Pin_tests/Makefile
 tests/nonsmoke/functional/BinaryAnalysis/libraryIdentification_tests/Makefile
-tests/nonsmoke/functional/BinaryAnalysis/ByteCode/Makefile
 tests/nonsmoke/functional/BinaryAnalysis/Concolic/Makefile
 tests/nonsmoke/functional/CompileTests/A++Code/Makefile
 tests/nonsmoke/functional/CompileTests/A++Tests/Makefile
@@ -2315,24 +2335,9 @@ tests/smoke/unit/Boost/Makefile
 tests/smoke/unit/Makefile
 tests/smoke/unit/Sawyer/Makefile
 tests/smoke/unit/Utility/Makefile
-tools/Makefile
-tools/BinaryAnalysis/Makefile
-tools/CodeThorn/Makefile
-tools/CodeThorn/src/Makefile
-tools/checkFortranInterfaces/Makefile
-tools/classMemberVariablesInLambdas/Makefile
-tools/featureVector/Makefile
-tools/globalVariablesInLambdas/Makefile
-tools/PortabilityTesting/Makefile
-tools/PortabilityTesting/scripts/Makefile
-tools/PortabilityTesting/src/Makefile
-tutorial/Makefile
-tutorial/binaryAnalysis/Makefile
-tutorial/exampleMakefile
-tutorial/intelPin/Makefile
-tutorial/outliner/Makefile
-tutorial/roseHPCT/Makefile
 ])
+],
+[])
 
 # DQ (3/8/2017): Removed these directories from testing (pre-smoke and pre-nonsmoke test directories.
 # tests/CompileTests/Makefile

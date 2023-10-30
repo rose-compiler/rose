@@ -583,7 +583,11 @@ find_package(Perl REQUIRED)
 # FIXME: All options should be in the affirmative (i.e., enable-whatever instead of disable-whatever)
 option(disable-binary-analysis-tests "Disable tests of ROSE binary analysis code" ON)
 option(disable-example-translators-directory "Disable compilation and testing of exampleTranslators directory" ON)
-option(disable-tests-directory "Disable compilation and testing of the ROSE/tests directory" OFF)
+if(EXISTS "${PROJECT_SOURCE_DIR}/tests/Readme.md")
+  option(disable-tests-directory "Disable compilation and testing of the ROSE/tests directory" OFF)
+else()
+  option(disable-tests-directory "Disable compilation and testing of the ROSE/tests directory" ON)
+endif()
 option(disable-tutorial-directory "Disable compilation and testing of the ROSE/tutorial directory" OFF)
 
 option(enable-advanced-warnings "Support for an advanced uniform warning level for ROSE development" OFF)
@@ -1340,9 +1344,11 @@ configure_file(${ROSE_TOP_SRC_DIR}/rose_config.h.in.cmake ${ROSE_TOP_BINARY_DIR}
 ########################################################################################################################
 
 add_subdirectory(tools)
-enable_testing()
-add_subdirectory(tests)
-add_subdirectory(tutorial)
+if(NOT disable-tests-directory)
+  enable_testing()
+  add_subdirectory(tests)
+  add_subdirectory(tutorial)
+endif()
 
 ########################################################################################################################
 # Miscellaneous final actions

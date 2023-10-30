@@ -1,7 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 EXTRA_DIST =
 
-
 # DQ "config" and "src" must preceed any other directories, and 
 # "tutorial" and "exampleTranslators" must preceed "docs" since 
 # they generate data that is subsequently used in the generated 
@@ -21,7 +20,7 @@ if ROSE_BUILD_TESTS_DIRECTORY_SUPPORT
    SUBDIRS += tests/smoke
 endif
 if ROSE_USE_LONG_MAKE_CHECK_RULE
-SUBDIRS += tests/nonsmoke
+  SUBDIRS += tests/nonsmoke
 endif
 
 if !ROSE_USE_CLANG_FRONTEND
@@ -64,7 +63,7 @@ if !ROSE_USING_GCC_VERSION_4_8_CXX11
 
 if ROSE_BUILD_TUTORIAL_DIRECTORY_SUPPORT
  # If we can't process the tutorial directory then we can't generate example translators or the documentation
-   SUBDIRS += tutorial exampleTranslators docs 
+#   SUBDIRS += tutorial exampleTranslators docs 
 endif
 SUBDIRS += tools scripts 
 
