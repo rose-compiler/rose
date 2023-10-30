@@ -1,0 +1,368 @@
+variables:
+    THIS_FILE: ".gitlab-ci.yml"
+    SSH_ORIGIN: "ssh://git@rosecompiler2.llnl.gov:10022/rose-compiler/rose.git"
+    TEST_SCRIPTS: "ssh://git@rosecompiler2.llnl.gov:10022/rose-compiler/testing-scripts.git"
+    ROSE_REMOTE_URL: "rose-github:rose-compiler/rose.git"
+    TEST_SUITE: "ssh://git@rosecompiler2.llnl.gov:10022/rose-compiler/rose-tests.git"
+    TEST_DIRECTORY: "testing-scripts"
+    GIT_SUBMODULE_STRATEGY: recursive
+    GIT_STRATEGY: clone
+    PIPE_LOCK: "false"
+    FULL_TEST: "false"
+
+workflow:
+    rules:
+        - if: $TEST_TYPE == "release"
+          when: always
+          variables:
+              PIPE_TYPE: "release"
+              PIPE_NAME: "Release Testing"
+        - if: $TEST_TYPE == "nightly-merge"
+          when: always
+          variables:
+              PIPE_TYPE: "nightly-merge"
+              PIPE_NAME: "Nightly Merge"
+        - if: $CI_COMMIT_BRANCH == "nightly"
+          when: always
+          variables:
+              PIPE_TYPE: "develop"
+              PIPE_NAME: "Nightly Testing"
+              FULL_TEST: "true"
+        - if: $CI_COMMIT_BRANCH =~ /-smoke/
+          when: always
+          variables:
+              PIPE_TYPE: "smoke"
+              PIPE_NAME: "Smoke test for $CI_COMMIT_BRANCH"
+        - if: $CI_COMMIT_BRANCH =~ /-pack/
+          when: always
+          variables:
+              PIPE_TYPE: "pack"
+              PIPE_NAME: "Packaging branch $CI_COMMIT_BRANCH for release"
+        - if: $CI_COMMIT_BRANCH =~ /-test/
+          when: always 
+          variables:
+              PIPE_TYPE: "develop"
+              PIPE_NAME: "Develop test for $CI_COMMIT_BRANCH"
+        - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+          when: always 
+          variables:
+              PIPE_TYPE: "develop"
+              PIPE_NAME: "Develop test for merging $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME"
+              PIPE_LOCK: "true"
+        - when: never
+    name: "$PIPE_NAME"
+
+stages:
+    - Policy
+    - Release
+    - Smoke-Tests
+    - Develop-Tests
+    - Release-Tests
+    - Status-Tests
+    - EDG
+    - Deploy
+
+
+#individual testing --------------------------------------------------------------------------------------------------------------------------------------------------
+Smoke-Test:
+    rules:
+        - if: $PIPE_TYPE == "smoke"
+          when: on_success
+        - when: never
+    before_script:
+        - echo "No before script."
+    stage: Smoke-Tests
+    tags:
+        - workpool
+    script:
+        - rm -rf build_tree install_tree
+        - echo $THREAD_COUNT $CORE_COUNT
+        - ./build
+        - mkdir build_tree install_tree
+        - cd build_tree
+        - ../configure --prefix=$(pwd)/../install_tree --enable-languages=c,c++,binaries --with-boost=/usr --with-boost-libdir=/usr/lib64
+        - make core         -j$THREAD_COUNT
+        - make install-core -j$THREAD_COUNT
+        - make check-core   -j$THREAD_COUNT
+
+Build-Pack:
+    rules:
+        - if: $PIPE_TYPE == "pack"
+          when: on_success
+        - when: never
+    stage: Smoke-Tests
+    tags:
+        - workpool
+    before_script:
+        - if [ -d $TEST_DIRECTORY ] ; then cd $TEST_DIRECTORY ; git pull origin master ; cd .. ; else git clone $TEST_SCRIPTS $TEST_DIRECTORY ; fi
+    script:
+        - ./$TEST_DIRECTORY/util/pack.sh
+
+#jobs for development pipeline ----------------------------------------------------------------------------------------------------------------------------------
+.develop-base:
+    rules:
+        - if: $PIPE_TYPE == "develop"
+          when: on_success
+        - when: never
+    stage: Develop-Tests
+    tags:
+        - workpool
+    before_script:
+        - if [ -d $TEST_DIRECTORY ] ; then cd $TEST_DIRECTORY ; git pull origin master ; cd .. ; else git clone $TEST_SCRIPTS $TEST_DIRECTORY ; fi
+    script:
+        - ./$TEST_DIRECTORY/develop_launcher.sh $CI_JOB_NAME
+
+#The point of this job is to block the completion of the development pipeline if another pipeline is in the process of pushing to certain branches. If not
+#other pipelines are holding the recource this job will immidiatly exit.
+Deploy-Blocker:
+    rules:
+        - if: $PIPE_TYPE == "develop" && $PIPE_LOCK == "true" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /-rc/
+          when: on_success
+        - when: never
+    stage: Deploy
+    tags:
+        - workpool
+    resource_group: deployment
+    variables:
+        GIT_STRATEGY: none
+    script:
+        - echo "Wait Complete"
+
+Policy-Checker:
+    extends: .develop-base
+    stage: Policy
+    script:
+        - ./$TEST_DIRECTORY/util/policy_check.sh
+
+RHEL8-Full:
+    extends: .develop-base
+    tags:
+        - workpool:large
+
+RHEL7-Full:
+    extends: .develop-base
+    tags:
+        - workpool:large
+
+CMake-Build:
+    extends: .develop-base
+
+Intel-Full:
+    extends: .develop-base
+    tags:
+        - workpool:large
+
+WINE:
+    extends: .develop-base
+
+Jovial:
+    extends: .develop-base
+
+Ada:
+    extends: .develop-base
+
+Language-Test:
+    extends: .develop-base
+    parallel:
+        matrix:
+            - LANGUAGE: 
+                - all
+                - cxx
+                - binaries
+                - fortran
+    script:
+        - ./$TEST_DIRECTORY/develop_launcher.sh $CI_JOB_NAME $LANGUAGE
+
+Clang:
+    extends: .develop-base
+    parallel:
+        matrix:
+            - VERSION: 
+                - 14
+                - 15
+    script:
+        - ./$TEST_DIRECTORY/develop_launcher.sh $CI_JOB_NAME $VERSION
+
+Windows-Build:
+    extends: .develop-base
+    tags:
+        - workpool:windows
+    before_script:
+        - if (Test-Path -Path $TEST_DIRECTORY){ cd $TEST_DIRECTORY ; git pull origin master ; cd ..}  else {git clone $TEST_SCRIPTS $TEST_DIRECTORY}
+    script:
+        - powershell ./$TEST_DIRECTORY/development/cmake-windows.ps1
+
+Mac:
+    extends: .develop-base
+    tags:
+        - workpool:mac
+
+CMake-Mac:
+    extends: .develop-base
+    tags:
+        - workpool:mac
+
+Clang-Mac:
+    extends: .develop-base
+    tags:
+        - workpool:mac
+
+#jobs for nightly merging and status testing --------------------------------------------------------------------------------------------------------------------
+.status-base:
+    rules:
+        - if: $PIPE_TYPE == "develop" && $FULL_TEST == "true"
+          when: always
+        - when: never
+    stage: Status-Tests
+    tags:
+        - workpool
+    allow_failure: true
+    before_script:
+        - if [ -d $TEST_DIRECTORY ] ; then cd $TEST_DIRECTORY ; git pull origin master ; cd .. ; else git clone $TEST_SCRIPTS $TEST_DIRECTORY ; fi
+    script:
+        - ./$TEST_DIRECTORY/status_launcher.sh $CI_JOB_NAME
+
+#This job will take what is in staging-rc and modify it for release then push to the nightly branch. The nightly branch will then be tested 
+Push-Nightly:
+    rules:
+        - if: $PIPE_TYPE == "nightly-merge"
+          when: on_success
+        - when: never
+    stage: Deploy
+    tags:
+        - network
+    resource_group: deployment
+    variables:
+        GIT_STRATEGY: clone
+    before_script:
+        - if [ -d $TEST_DIRECTORY ] ; then cd $TEST_DIRECTORY ; git pull origin master ; cd .. ; else git clone $TEST_SCRIPTS $TEST_DIRECTORY ; fi
+    script:
+        - ./$TEST_DIRECTORY/util/create_nightly.sh
+        
+Status-Outliner:
+    extends: .status-base
+
+Status-GCC10:
+    extends: .status-base
+    
+Push-Develop:
+    rules:
+        - if: $PIPE_TYPE == "develop" && $CI_COMMIT_BRANCH == "nightly"
+          when: on_success
+        - when: never
+    stage: Deploy
+    tags:
+        - network
+    resource_group: deployment
+    variables:
+        GIT_STRATEGY: clone
+    before_script:
+        - if [ -d $TEST_DIRECTORY ] ; then cd $TEST_DIRECTORY ; git pull origin master ; cd .. ; else git clone $TEST_SCRIPTS $TEST_DIRECTORY ; fi
+    script:
+        - ./$TEST_DIRECTORY/util/push_develop.sh
+    
+Failure-Cleanup:
+    rules:
+        - if: $PIPE_TYPE == "develop" && $CI_COMMIT_BRANCH == "nightly"
+          when: on_failure
+        - when: never
+    stage: Deploy
+    tags:
+        - workpool
+    resource_group: deployment
+    script:
+        - git push -f $SSH_ORIGIN origin/staging-backup:refs/heads/staging-rc
+        
+#jobs to relese edg binaries ------------------------------------------------------------------------------------------------------------------------------------
+
+EDG-Binaries:
+    rules:
+        - if: $PIPE_TYPE == "develop" && $FULL_TEST == "true" && $CI_COMMIT_BRANCH == "nightly"
+          when: on_success
+        - when: never
+    stage: EDG
+    tags:
+        - workpool
+    parallel:
+        matrix:
+            - COMPILER: 
+                - gcc7
+                - gcc8
+                - gcc9
+                - gcc10
+                - gcc11
+                - gcc12
+                - gcc13
+    before_script:
+        - if [ -d $TEST_DIRECTORY ] ; then cd $TEST_DIRECTORY ; git pull origin master ; cd .. ; else git clone $TEST_SCRIPTS $TEST_DIRECTORY ; fi
+    script:
+        - ./$TEST_DIRECTORY/edg_launcher.sh $COMPILER
+
+#jobs for release pipeline --------------------------------------------------------------------------------------------------------------------------------------
+.release-base:
+    rules:
+        - if: $PIPE_TYPE == "release"
+          when: always
+        - when: never
+    stage: Release-Tests
+    tags:
+        - workpool
+    allow_failure: true
+    before_script:
+        - if [ -d $TEST_DIRECTORY ] ; then cd $TEST_DIRECTORY ; git pull origin master ; cd .. ; else git clone $TEST_SCRIPTS $TEST_DIRECTORY ; fi
+    script:
+        - ./$TEST_DIRECTORY/release_launcher.sh $CI_JOB_NAME
+
+Push-Weekly:
+    extends: .release-base
+    stage: Release
+    tags:
+        - network
+    resource_group: deployment
+    before_script:
+        - echo "Nothing needed."
+    script:
+        - ./$TEST_DIRECTORY/util/push_weekly.sh
+
+Clang-Frontend:
+    extends: .release-base
+
+EDG-Binary-Build:
+    extends: .release-base
+
+NPB-OMP:
+    extends: .release-base
+
+PolyOpt:
+    extends: .release-base
+
+LULESH:
+    extends: .release-base
+
+SPEC:
+    extends: .release-base
+    
+Project:
+    extends: .release-base
+    
+32Bit:
+    extends: .release-base
+    
+Offline-Build:
+    extends: .release-base
+    
+RMC2-Install:
+    extends: .release-base
+    
+OMP-Runtime:
+    extends: .release-base 
+    
+GPU:
+    extends: .release-base 
+    
+Doxygen:
+    extends: .release-base 
+    stage: Deploy
+    tags:
+        - network
+
