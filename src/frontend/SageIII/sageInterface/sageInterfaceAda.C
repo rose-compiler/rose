@@ -31,23 +31,50 @@ namespace Ada
 
 namespace
 {
-  ///
-  enum TypeSkip
+  //
+  // convenience functions to identify Ada attributes
+
+  bool isAttribute(const SgAdaAttributeExp& attr, const std::string& attrname)
   {
-    skipNone                 = 0,
-    skipAdaSubtype           = (1 << 0),
-    skipAdaDerivedType       = (1 << 1),
-    skipTypedefType          = (1 << 2),
-    skipModifierType         = (1 << 3),
-    skipPointerType          = (1 << 4),
-    skipReferenceType        = (1 << 5),  /* C++ */
-    skipRvalueReferenceType  = (1 << 6),  /* C++ */
-    skipAllReferenceTypes    = (skipReferenceType | skipRvalueReferenceType),  /* C++ */
-    skipAdaAccessType        = (1 << 7),
-    //~ skipUsingDecls           = (1 << 8),  /* C++ */
-    //~ skipAdaUseTypes      = (1 << 9),  /* Ada */
-    skipLast                 = (1 << 30)
-  };
+    return boost::iequals(attr.get_attribute().getString(), attrname);
+  }
+
+  bool isClassAttribute(const SgAdaAttributeExp& attr)
+  {
+    const std::string attrname = "class";
+
+    return isAttribute(attr, attrname);
+  }
+
+  bool isRangeAttribute(const SgAdaAttributeExp& attr)
+  {
+    const std::string attrname = "range";
+
+    return isAttribute(attr, attrname);
+  }
+
+
+  /// the dominant declaration of a typedef type is the defining declaration,
+  ///   if not present the declaration associated with the typedef type.
+  const SgTypedefDeclaration&
+  dominant_declaration(const SgTypedefType& n)
+  {
+    const SgTypedefDeclaration* dcl    = isSgTypedefDeclaration(n.get_declaration());
+    ASSERT_not_null(dcl);
+    const SgTypedefDeclaration* defdcl = isSgTypedefDeclaration(dcl->get_definingDeclaration());
+
+    if (defdcl != nullptr) dcl = defdcl;
+    return *dcl;
+  }
+
+  /// queries the base type from the dominant declaration
+  /// \details in Ada a first typedef can be incomplete and return e.g., SgTypeDefault.
+  ///          to get the most defined available type, it is queried from
+  ///          the dominant declaration.
+  SgType& base_type(const SgTypedefType& n)
+  {
+    return SG_DEREF(dominant_declaration(n).get_base_type());
+  }
 
 
   struct ArrayType : sg::DispatchHandler<SgArrayType*>
@@ -56,7 +83,7 @@ namespace
       SgArrayType* find(SgType* n);
       //~ find(SgType* n, TypeSkip skipWhat = skipNone);
 
-      ReturnType recurse(SgType* n);
+      ReturnType descend(SgType* n);
 
       // invalid case
       void handle(SgNode& n)                { SG_UNEXPECTED_NODE(n); }
@@ -66,14 +93,14 @@ namespace
       void handle(SgArrayType& n)           { res = &n; }
 
       // possibly skipped types
-      void handle(SgAdaSubtype& n)          { res = recurse(n.get_base_type()); }
-      void handle(SgAdaDerivedType& n)      { res = recurse(n.get_base_type()); }
-      void handle(SgTypedefType& n)         { res = recurse(n.get_base_type()); }
-      void handle(SgModifierType& n)        { res = recurse(n.get_base_type()); }
-      //~ void handle(SgPointerType& n)         { res = recurse(n.get_base_type()); }
-      //~ void handle(SgReferenceType& n)       { res = recurse(n.get_base_type()); }
-      //~ void handle(SgRvalueReferenceType& n) { res = recurse(n.get_base_type()); }
-      //~ void handle(SgAdaAccessType& n)       { res = recurse(n.get_base_type()); }
+      void handle(SgAdaSubtype& n)          { res = descend(n.get_base_type()); }
+      void handle(SgAdaDerivedType& n)      { res = descend(n.get_base_type()); }
+      void handle(SgTypedefType& n)         { res = descend(&base_type(n)); }
+      void handle(SgModifierType& n)        { res = descend(n.get_base_type()); }
+      //~ void handle(SgPointerType& n)         { res = descend(n.get_base_type()); }
+      //~ void handle(SgReferenceType& n)       { res = descend(n.get_base_type()); }
+      //~ void handle(SgRvalueReferenceType& n) { res = descend(n.get_base_type()); }
+      //~ void handle(SgAdaAccessType& n)       { res = descend(n.get_base_type()); }
   };
 
   SgArrayType*
@@ -85,7 +112,7 @@ namespace
   }
 
   ArrayType::ReturnType
-  ArrayType::recurse(SgType* n)
+  ArrayType::descend(SgType* n)
   {
     return ArrayType::find(n);
   }
@@ -101,29 +128,33 @@ namespace
       // invalid case
       void handle(SgNode& n)                { SG_UNEXPECTED_NODE(n); }
 
-      //
-      void handle(SgType&)                  { /* do nothing to return the type-expression */ }
+      // allow all expressions, to test if an expr. denotes a range
+      void handle(SgExpression&)            { /* do nothing -> returns nullptr */ }
 
-      // base cases for expressions
-      //~ void handle(SgExpression&)            { res = nullptr; }
       void handle(SgRangeExp& n)            { res = &n; }
-      void handle(SgAdaAttributeExp& n)     { res = &n; }
+
+      void handle(SgAdaAttributeExp& n)
+      {
+        if (isRangeAttribute(n))
+          res = &n;
+      }
 
       // switch from expression to types
       void handle(SgTypeExpression& n)
       {
-        // try to extract the range form the type
-        DimRange::ReturnType sub = descend(n.get_type());
+        // try to extract the range from the type
+        res = descend(n.get_type());
 
         // if that did not work, return the type expression
-        res = sub ? sub : &n;
+        if (res == nullptr)
+          res = &n;
       }
 
       // base case for types
-      //~ void handle(SgType& n)                { res = nullptr; }
+      void handle(SgType&)                  { /* do nothing to return the type-expression */ }
 
       // type expressions
-      void handle(SgTypedefType& n)         { res = descend(n.get_base_type()); }
+      void handle(SgTypedefType& n)         { res = descend(&base_type(n)); }
 
       void handle(SgAdaSubtype& n)
       {
@@ -152,7 +183,7 @@ namespace
       find(SgType* n, SgArrayType* baseType);
 
       ReturnType
-      recurse(SgType* n);
+      descend(SgType* n);
 
       // invalid case
       void handle(SgNode& n)                { SG_UNEXPECTED_NODE(n); }
@@ -161,9 +192,9 @@ namespace
       //~ void handle(SgType&)                  { /* do nothing */; }
 
       // skipped types
-      void handle(SgAdaDerivedType& n)      { res = recurse(n.get_base_type()); }
-      void handle(SgTypedefType& n)         { res = recurse(n.get_base_type()); }
-      void handle(SgModifierType& n)        { res = recurse(n.get_base_type()); }
+      void handle(SgAdaDerivedType& n)      { res = descend(n.get_base_type()); }
+      void handle(SgTypedefType& n)         { res = descend(&base_type(n)); }
+      void handle(SgModifierType& n)        { res = descend(n.get_base_type()); }
 
       // subtype -> get the dimension info for each
       void handle(SgAdaSubtype& n)
@@ -174,7 +205,7 @@ namespace
         //   must be located underneath.
         if (isSgAdaNullConstraint(constraint))
         {
-          res = recurse(n.get_base_type());
+          res = descend(n.get_base_type());
           return;
         }
 
@@ -209,7 +240,7 @@ namespace
   }
 
   ArrayBounds::ReturnType
-  ArrayBounds::recurse(SgType* n)
+  ArrayBounds::descend(SgType* n)
   {
     return sg::dispatch(ArrayBounds{}, n);
   }
@@ -218,7 +249,7 @@ namespace
   {
     void handle(const SgNode& n)     { SG_UNEXPECTED_NODE(n); }
 
-    void handle(SgExpression& n)
+    void handle(const SgExpression& n)
     {
       static const char* const msg = "sageInterface::ada: Expected constant integral value, got ";
 
@@ -239,7 +270,7 @@ namespace
 
   struct RangeExp : sg::DispatchHandler<SgRangeExp*>
   {
-      typedef sg::DispatchHandler<SgRangeExp*> base;
+      using base = sg::DispatchHandler<SgRangeExp*>;
 
       explicit
       RangeExp(size_t whichDimension)
@@ -251,7 +282,7 @@ namespace
       find(SgNode* n, size_t dim);
 
       ReturnType
-      recurse(SgNode* n);
+      descend(SgNode* n);
 
       void notFound() const { ROSE_ASSERT(!res); }
 
@@ -277,11 +308,11 @@ namespace
       // \note the ROSE AST may not yet compute the correct type for all
       //       Ada expressions. Rather than putting on band aid here,
       //       this would need to be fixed in the AST (if this is an issue).
-      void handle(SgExpression& n)         { res = recurse(n.get_type()); }
+      void handle(SgExpression& n)         { res = descend(n.get_type()); }
 
       void handle(SgAdaAttributeExp& n)    { res = ::si::Ada::range(n); }
 
-      void handle(SgAdaRangeConstraint& n) { res = recurse(n.get_range()); }
+      void handle(SgAdaRangeConstraint& n) { res = descend(n.get_range()); }
 
       void handle(SgAdaIndexConstraint& n)
       {
@@ -292,7 +323,7 @@ namespace
       {
         SgNode* constraint = n.get_constraint();
 
-        res = recurse(constraint ? constraint : n.get_base_type());
+        res = descend(constraint ? constraint : n.get_base_type());
       }
 
       void handle(SgArrayType& n)
@@ -305,8 +336,8 @@ namespace
         res = find(exprlst.get_expressions().at(dimension()), 1);
       }
 
-      void handle(SgAdaDerivedType& n)     { res = recurse(n.get_base_type()); }
-      void handle(SgTypedefType& n)        { res = recurse(n.get_base_type()); }
+      void handle(SgAdaDerivedType& n)     { res = descend(n.get_base_type()); }
+      void handle(SgTypedefType& n)        { res = descend(&base_type(n)); }
 
     private:
       size_t dim;
@@ -319,7 +350,7 @@ namespace
   }
 
   RangeExp::ReturnType
-  RangeExp::recurse(SgNode* n)
+  RangeExp::descend(SgNode* n)
   {
     return find(n, dim);
   }
@@ -330,16 +361,16 @@ namespace
       ReturnType find(SgType* n);
 
       ReturnType
-      recurse(SgType* n);
+      descend(SgType* n);
 
       void handle(const SgNode& n) { SG_UNEXPECTED_NODE(n); }
       void handle(const SgType& n) { /* not found */ }
 
       void handle(const SgNamedType& n)           { res = n.get_declaration(); }
 
-      void handle(const SgAdaSubtype& n)          { res = recurse(n.get_base_type()); }
-      void handle(const SgModifierType& n)        { res = recurse(n.get_base_type()); }
-      void handle(const SgAdaDerivedType& n)      { res = recurse(n.get_base_type()); }
+      void handle(const SgAdaSubtype& n)          { res = descend(n.get_base_type()); }
+      void handle(const SgModifierType& n)        { res = descend(n.get_base_type()); }
+      void handle(const SgAdaDerivedType& n)      { res = descend(n.get_base_type()); }
   };
 
   BaseTypeDecl::ReturnType
@@ -349,7 +380,7 @@ namespace
   }
 
   BaseTypeDecl::ReturnType
-  BaseTypeDecl::recurse(SgType* n)
+  BaseTypeDecl::descend(SgType* n)
   {
     return find(n);
   }
@@ -656,7 +687,7 @@ namespace Ada
   SgRangeExp*
   range(const SgAdaAttributeExp& n)
   {
-    if (boost::to_upper_copy(n.get_attribute().getString()) != "RANGE")
+    if (!isRangeAttribute(n))
       return nullptr;
 
     const int dim = si::Ada::firstLastDimension(SG_DEREF(n.get_args()));
@@ -1186,7 +1217,7 @@ namespace Ada
     if (!ty) return false;
 
     if (const SgTypedefType* tydef = isSgTypedefType(ty))
-      return isScalarType(tydef->get_base_type());
+      return isScalarType(&base_type(*tydef));
 
     return (  isModularType(*ty)
            || isIntegerType(*ty)
@@ -1231,9 +1262,6 @@ namespace Ada
   }
 
 
-
-
-
   namespace
   {
     struct TypeResolver : sg::DispatchHandler<bool>
@@ -1245,7 +1273,7 @@ namespace Ada
         : base(), checker(typetest)
         {}
 
-        void checkChild(const SgType*);
+        bool descend(const SgType*);
 
         void handle(SgNode& n)              { SG_UNEXPECTED_NODE(n); }
 
@@ -1257,28 +1285,19 @@ namespace Ada
         // types
 
         void handle(SgType& n)              { res = checker(n); }
-        void handle(SgModifierType& n)      { checkChild(n.get_base_type()); }
-        void handle(SgAdaSubtype& n)        { checkChild(n.get_base_type()); }
-        void handle(SgAdaDerivedType& n)    { checkChild(n.get_base_type()); }
-
-        void handle(SgTypedefType& n)
-        {
-          SgTypedefDeclaration* dcl    = isSgTypedefDeclaration(n.get_declaration());
-          ASSERT_not_null(dcl);
-          SgTypedefDeclaration* defdcl = isSgTypedefDeclaration(dcl->get_definingDeclaration());
-
-          if (defdcl != nullptr) dcl = defdcl;
-
-          checkChild(dcl->get_base_type());
-        }
+        void handle(SgModifierType& n)      { res = descend(n.get_base_type()); }
+        void handle(SgAdaSubtype& n)        { res = descend(n.get_base_type()); }
+        void handle(SgAdaDerivedType& n)    { res = descend(n.get_base_type()); }
+        void handle(SgTypedefType& n)       { res = descend(&base_type(n)); }
+        // void handle(SgAdaFormalType& n)     { checkChild(n.get_base_type()); } // \todo enable??
 
       private:
         std::function<bool (const SgType&)> checker;
     };
 
-    void TypeResolver::checkChild(const SgType* ty)
+    bool TypeResolver::descend(const SgType* ty)
     {
-      res = ty && sg::dispatch(TypeResolver{std::move(checker)}, ty);
+      return ty && sg::dispatch(TypeResolver{std::move(checker)}, ty);
     }
   }
 
@@ -1398,12 +1417,12 @@ namespace Ada
   namespace
   {
     // root types as implemented by AdaMaker.C
-    SgType* integralType() { return sb::buildLongLongType(); }
-    SgType* realType()     { return sb::buildLongDoubleType(); }
-    SgType* fixedType()    { return sb::buildFixedType(nullptr, nullptr); }
-    SgType* pointerType()  { return sb::buildNullptrType(); }
+    SgType& integralType() { return SG_DEREF(sb::buildLongLongType()); }
+    SgType& realType()     { return SG_DEREF(sb::buildLongDoubleType()); }
+    SgType& fixedType()    { return SG_DEREF(sb::buildFixedType(nullptr, nullptr)); }
+    SgType& pointerType()  { return SG_DEREF(sb::buildNullptrType()); }
 
-    SgType* arrayType(SgType* base)
+    SgType& arrayType(SgType* base)
     {
       // poor man's type unifier
       static std::map<SgType*, SgArrayType*> m;
@@ -1414,32 +1433,142 @@ namespace Ada
       //       check mkArrayType in AdaMaker.C for details.
       if (res == nullptr) res = sb::buildArrayType(base);
 
-      return res;
+      return SG_DEREF(res);
     };
 
-    SgType* standardType(std::string name)
+    SgType& standardType(std::string name)
     {
       ASSERT_not_null(pkgStandardScope());
 
       SgTypedefSymbol&      tysy  = SG_DEREF(pkgStandardScope()->lookup_typedef_symbol(name));
       SgTypedefDeclaration& tydcl = SG_DEREF(tysy.get_declaration());
 
-      return tydcl.get_type();
+      return SG_DEREF(tydcl.get_type());
+    }
+
+    bool denotesRange(const SgExpression* exp)
+    {
+      return sg::dispatch(DimRange{}, exp) != nullptr;
+    }
+
+    bool containsRange(const SgExpression& arglst)
+    {
+      const SgExprListExp* args = isSgExprListExp(&arglst);
+      if (args == nullptr) return false;
+
+      const SgExpressionPtrList& lst = args->get_expressions();
+      const auto                 lim = lst.end();
+
+      return lim != std::find_if(lst.begin(), lim, denotesRange);
+    }
+
+    template <class ResolverT>
+    struct TypeDescResolver : sg::DispatchHandler<TypeDescription>
+    {
+      TypeDescription descend(SgType* ty)
+      {
+        return static_cast<ResolverT&>(*this).descend(ty);
+      }
+
+      void handle(SgNode& n)           { SG_UNEXPECTED_NODE(n); }
+
+      // could be enabled as fallback, but generally indicates an error..
+      //~ void handle(SgType& n)           { res = TypeDescription{n}; }
+
+      // get the real typedefed type, which can be an access type
+      void handle(SgTypedefType& n)    { res = descend(&base_type(n)); }
+
+      // a modifier type can be an access type ??
+      void handle(SgModifierType& n)   { res = descend(n.get_base_type()); }
+
+      // a derived type can be an access type
+      void handle(SgAdaDerivedType& n) { res = descend(n.get_base_type()); }
+
+      // a subtype could be an access type with range constraints whose subtype is an array
+      void handle(SgAdaSubtype& n)
+      {
+        TypeDescription                   dt = descend(n.get_base_type());
+        std::vector<SgAdaTypeConstraint*> constr = std::move(dt).toplevelConstraints();
+
+        constr.insert(constr.begin(), n.get_constraint());
+
+        res = TypeDescription{dt.typerep_ref(), dt.polymorphic(), std::move(constr)};
+      }
+
+      // a formal type can be an access type
+      void handle(SgAdaFormalType& n)  { res = descend(n.get_formal_type()); }
+    };
+
+
+
+    struct DerefedType : TypeDescResolver<DerefedType>
+    {
+      using base = TypeDescResolver<DerefedType>;
+
+      TypeDescription descend(SgType* ty);
+
+      using base::handle;
+
+      // deref one level of access types
+      void handle(SgAdaAccessType& n)  { res = TypeDescription{n.get_base_type()}; }
+
+      // \todo should not be reached in Ada NO_POINTER_IN_ADA
+      void handle(SgPointerType& n)    { res = TypeDescription{n.get_base_type()}; }
+    };
+
+    TypeDescription
+    DerefedType::descend(SgType* ty)
+    {
+      return sg::dispatch(DerefedType{}, ty);
+    }
+
+
+    struct IndexedType : TypeDescResolver<IndexedType>
+    {
+        using base = TypeDescResolver<IndexedType>;
+
+        explicit
+        IndexedType(const SgExpression& index)
+        : base(), idx(&index)
+        {}
+
+        TypeDescription descend(SgType* ty);
+
+        using base::handle;
+
+        // handle implicit dereferenes ..
+        //   \todo should we explicitly represent implcit dereference operations
+        void handle(SgAdaAccessType& n)  { res = descend(n.get_base_type()); }
+
+        // \todo should not be reached in Ada NO_POINTER_IN_ADA
+        void handle(SgPointerType& n)    { res = descend(n.get_base_type()); }
+
+        // deref one level of access types
+        void handle(SgArrayType& n)      { res = TypeDescription{n.get_base_type()}; }
+      private:
+        const SgExpression* idx = nullptr;  /* currently not used */
+    };
+
+
+    TypeDescription
+    IndexedType::descend(SgType* ty)
+    {
+      return sg::dispatch(IndexedType{*idx}, ty);
     }
 
     // \todo should this be moved into the Sage class hierarchy?
     struct ExprTypeFinder : sg::DispatchHandler<TypeDescription>
     {
-      void handle(SgNode& n)              { SG_UNEXPECTED_NODE(n); }
+      void handle(const SgNode& n)              { SG_UNEXPECTED_NODE(n); }
 
       // by default use the expression's type
-      void handle(SgExpression& n)        { res = TypeDescription{n.get_type(), false}; }
+      void handle(const SgExpression& n)        { res = TypeDescription{n.get_type()}; }
 
       // If a var is just constant, take the type from the initializer
       // NOTE: this is not correct, as the type should be determined by the context
-      void handle(SgVarRefExp& n)
+      void handle(const SgVarRefExp& n)
       {
-        res = TypeDescription{n.get_type(), false};
+        res = TypeDescription{n.get_type()};
 
         if (isSgAutoType(res.typerep()))
         {
@@ -1452,47 +1581,63 @@ namespace Ada
         }
       }
 
+      void handle(const SgPointerDerefExp& n)
+      {
+        const SgExpression& op = SG_DEREF(n.get_operand());
+
+        res = sg::dispatch(DerefedType{}, typeOfExpr(op).typerep());
+      }
+
+      void handle(const SgPntrArrRefExp& n)
+      {
+        const SgExpression& arr   = SG_DEREF(n.get_lhs_operand());
+        SgType*             arrty = typeOfExpr(arr).typerep();
+        const SgExpression& idx   = SG_DEREF(n.get_rhs_operand());
+
+        if (containsRange(idx))
+          res = TypeDescription{arrty};
+        else
+          res = sg::dispatch(IndexedType{idx}, arrty);
+      }
+
       // SgRangeExp::get_type returns TypeDefault
       //   returning the type of the range elements seems more appropriate
       // \todo it seems appropriate to introduce a RangeType with underlying type?
-      void handle(SgRangeExp& n)
+      void handle(const SgRangeExp& n)
       {
         const SgExpression& lhs = SG_DEREF(n.get_start());
 
-        res = TypeDescription{lhs.get_type(), false};
+        res = TypeDescription{lhs.get_type()};
       }
 
       // SgTypeString does not preserve the 'wideness', so let's just get
       //   this info from the literal.
-      void handle(SgStringVal& n)
+      void handle(const SgStringVal& n)
       {
         SgType* strty = nullptr;
 
-        if (n.get_is16bitString())      strty = standardType("Wide_String");
-        else if (n.get_is32bitString()) strty = standardType("Wide_Wide_String");
-        else                            strty = standardType("String");
+        if (n.get_is16bitString())      strty = &standardType("Wide_String");
+        else if (n.get_is32bitString()) strty = &standardType("Wide_Wide_String");
+        else                            strty = &standardType("String");
 
         ASSERT_not_null(strty);
         //~ std::cerr << typeid(*strty).name() << std::endl;
-        res = TypeDescription{strty, false};
+        res = TypeDescription{strty};
       }
 
       // Currently, we have no concept of class-wide type,
       //   thus the information is returned as flag.
       // \todo it seems appropriate to introduce a AdaClassType with underlying type?
-      void handle(SgAdaAttributeExp& n)
+      void handle(const SgAdaAttributeExp& n)
       {
-        static const std::string CLASS_ATTR = "class";
+        const bool polymorph = isClassAttribute(n);
 
-        std::string attr      = n.get_attribute();
-        const bool  polymorph = boost::iequals(attr, CLASS_ATTR);
-
-        res = TypeDescription{ n.get_type(), polymorph };
+        res = TypeDescription{ SG_DEREF(n.get_type()), polymorph };
       }
 
       // an actual argument expression could have one of the special cases
       //   underneath. => use typeOfExpr..
-      void handle(SgActualArgumentExpression& n)
+      void handle(const SgActualArgumentExpression& n)
       {
         res = typeOfExpr(n.get_expression());
       }
@@ -1505,89 +1650,83 @@ namespace Ada
 
     struct RootTypeFinder : sg::DispatchHandler<TypeDescription>
     {
-      TypeDescription desc(SgType* ty, bool poly = false)
-      {
-        return {ty, poly};
-      }
-
       void handle(SgNode& n)              { SG_UNEXPECTED_NODE(n); }
 
       //~ void handle(SgType& n) { res = &n; }
 
       // all root types (according to the three builder function in AdaMaker.C)
-      void handle(SgTypeLongLong& n)      { res = desc(integralType()); }
-      void handle(SgTypeLongDouble& n)    { res = desc(realType()); }
-      void handle(SgTypeFixed& n)         { res = desc(fixedType()); }
+      void handle(SgTypeLongLong& n)      { res = TypeDescription{integralType()}; }
+      void handle(SgTypeLongDouble& n)    { res = TypeDescription{realType()}; }
+      void handle(SgTypeFixed& n)         { res = TypeDescription{fixedType()}; }
 
       // plus discrete type indicator for Ada generics
-      void handle(SgAdaDiscreteType& n)   { res = desc(&n); }
+      void handle(SgAdaDiscreteType& n)   { res = TypeDescription{n}; }
 
       // modular type: handle like int?
-      void handle(SgAdaModularType& n)    { res = desc(integralType()); }
+      void handle(SgAdaModularType& n)    { res = TypeDescription{integralType()}; }
 
       // are subroutines their own root type?
-      void handle(SgAdaSubroutineType& n) { res = desc(&n); }
+      void handle(SgAdaSubroutineType& n) { res = TypeDescription{n}; }
 
       // plus types used by AdaMaker but that do not have a direct correspondence
       //   in the Ada Standard.
-      void handle(SgTypeVoid& n)          { res = desc(&n); }
-      void handle(SgTypeUnknown& n)       { res = desc(&n); }
-      void handle(SgAutoType& n)          { res = desc(&n); }
+      void handle(SgTypeVoid& n)          { res = TypeDescription{n}; }
+      void handle(SgTypeUnknown& n)       { res = TypeDescription{n}; }
+      void handle(SgAutoType& n)          { res = TypeDescription{n}; }
 
       void handle(SgTypeDefault& n)
       {
         // this is a type used by a opaque declaration.
         // \todo maybe needs replacement with the actual type.
-        res = desc(&n);
+        res = TypeDescription{n};
       }
 
       // the package standard uses an enumeration to define boolean, so include the
       //   ROSE bool type also.
       // \todo remove BOOL_IS_ENUM_IN_ADA
-      void handle(SgTypeBool& n)          { res = desc(&n); }
+      void handle(SgTypeBool& n)          { res = TypeDescription{n}; }
 
       // plus: map all other fundamental types introduced by initializeStandardPackage in AdaType.C
       //       onto the root types defined by AdaMaker.C
       // \todo eventually all types in initializeStandardPackage should be rooted in
       //       the root types as defined by AdaMaker.C.
-      void handle(SgTypeInt&)             { res = desc(integralType()); }
-      void handle(SgTypeLong&)            { res = desc(integralType()); }
-      void handle(SgTypeShort&)           { res = desc(integralType()); }
+      void handle(SgTypeInt&)             { res = TypeDescription{integralType()}; }
+      void handle(SgTypeLong&)            { res = TypeDescription{integralType()}; }
+      void handle(SgTypeShort&)           { res = TypeDescription{integralType()}; }
 
-      void handle(SgTypeFloat&)           { res = desc(realType()); }
-      void handle(SgTypeDouble&)          { res = desc(realType()); }
-      void handle(SgTypeFloat128&)        { res = desc(realType()); }
+      void handle(SgTypeFloat&)           { res = TypeDescription{realType()}; }
+      void handle(SgTypeDouble&)          { res = TypeDescription{realType()}; }
+      void handle(SgTypeFloat128&)        { res = TypeDescription{realType()}; }
 
-      void handle(SgTypeChar& n)          { res = desc(&n); }
-      void handle(SgTypeChar16& n)        { res = desc(&n); }
-      void handle(SgTypeChar32& n)        { res = desc(&n); }
+      void handle(SgTypeChar& n)          { res = TypeDescription{n}; }
+      void handle(SgTypeChar16& n)        { res = TypeDescription{n}; }
+      void handle(SgTypeChar32& n)        { res = TypeDescription{n}; }
 
       // true fundamental types
-      void handle(SgClassType& n)         { res = desc(&n); /* \todo check if this is a derived class */ }
-      void handle(SgEnumType& n)          { res = desc(&n); /* \todo check if this is a derived enum */ }
-      void handle(SgAdaTaskType& n)       { res = desc(&n); }
-      void handle(SgAdaProtectedType& n)  { res = desc(&n); }
-      void handle(SgAdaFormalType& n)     { res = desc(&n); /* what else? */ }
+      void handle(SgClassType& n)         { res = TypeDescription{n}; /* \todo check if this is a derived class */ }
+      void handle(SgEnumType& n)          { res = TypeDescription{n}; /* \todo check if this is a derived enum */ }
+      void handle(SgAdaTaskType& n)       { res = TypeDescription{n}; }
+      void handle(SgAdaProtectedType& n)  { res = TypeDescription{n}; }
+      void handle(SgAdaFormalType& n)     { res = TypeDescription{n}; /* what else? */ }
 
 
       // an array is fundamental - its underlying type may not be, so it may can be discovered if needed
       void handle(SgArrayType& n)
       {
-        res = desc(arrayType(find(n.get_base_type()).typerep()));
+        res = TypeDescription{arrayType(find(n.get_base_type()).typerep())};
       }
 
       void handle(SgTypeString& n)
       {
         // can be reached from any string literal, which stores the character type is attribute...
         // since we have no info about the character type, just return the standard string type
-        res = desc(arrayType(sb::buildCharType()));
+        res = TypeDescription{arrayType(sb::buildCharType())};
       }
 
-
       // pointer types
-      void handle(SgTypeNullptr& n)       { res = desc(pointerType()); } // \todo correct?
-      void handle(SgPointerType& n)       { res = desc(pointerType()); } // \todo should not be in Ada
-      void handle(SgAdaAccessType& n)     { res = desc(pointerType()); } // \todo should not we use the base type?
+      void handle(SgTypeNullptr& n)       { res = TypeDescription{pointerType()}; } // \todo correct?
+      void handle(SgPointerType& n)       { res = TypeDescription{pointerType()}; } // \todo NO_POINTER_IN_ADA
+      void handle(SgAdaAccessType& n)     { res = TypeDescription{pointerType()}; }
 
 
       // \todo add string types as introduced by initializeStandardPackage in AdaType.C
@@ -1600,18 +1739,7 @@ namespace Ada
 
       void handle(SgTypedefType& n)
       {
-        // section coped from DeclScopeFinder
-        // \todo factor out common code into a function
-        SgTypedefDeclaration* dcl    = isSgTypedefDeclaration(n.get_declaration());
-        ASSERT_not_null(dcl);
-        SgTypedefDeclaration* defdcl = isSgTypedefDeclaration(dcl->get_definingDeclaration());
-
-        if (defdcl != nullptr) dcl = defdcl;
-
-        SgType*               basety = dcl->get_base_type();
-        ASSERT_not_null(basety);
-
-        basety = basety->stripType(SgType::STRIP_MODIFIER_TYPE);
+        SgType* basety = base_type(n).stripType(SgType::STRIP_MODIFIER_TYPE);
 
         const bool useThisDecl = (  isSgAdaDerivedType(basety)
                                  || isSgAdaAccessType(basety)
@@ -1621,13 +1749,13 @@ namespace Ada
                                  );
 
         // end copied code
-        res = useThisDecl ? desc(&n) : find(basety);
+        res = useThisDecl ? TypeDescription{n} : find(basety);
       }
 
       void handle(SgAdaDiscriminatedType& n)
       {
         // \todo not sure..
-        res = desc(&n);
+        res = TypeDescription{n};
       }
 
       void handle(SgDeclType& n)
@@ -1668,7 +1796,7 @@ namespace Ada
         {
           res = pkgStandardScope();
 
-          if (boost::to_upper_copy(n.get_attribute().getString()) == "CLASS")
+          if (isClassAttribute(n))
             if (SgTypeExpression* tyex = isSgTypeExpression(n.get_object()))
               res = find(tyex->get_type());
         }
@@ -1731,7 +1859,7 @@ namespace Ada
         void handle(const SgArrayType& n)         { res = pkgStandardScope(); }
         void handle(const SgTypeNullptr& n)       { res = pkgStandardScope(); }
 
-        void handle(const SgPointerType& n)       { res = find(n.get_base_type()); } // \todo should not be in Ada
+        void handle(const SgPointerType& n)       { res = find(n.get_base_type()); } // \todo NO_POINTER_IN_ADA
         void handle(const SgAdaAccessType& n)     { res = find(n.get_base_type()); } // \todo or scope of underlying type?
 
         // \todo add string types as introduced by AdaType.C:initializePkgStandard
@@ -1750,16 +1878,7 @@ namespace Ada
 
         void handle(const SgTypedefType& n)
         {
-          SgTypedefDeclaration* dcl    = isSgTypedefDeclaration(n.get_declaration());
-          ASSERT_not_null(dcl);
-          SgTypedefDeclaration* defdcl = isSgTypedefDeclaration(dcl->get_definingDeclaration());
-
-          if (defdcl != nullptr) dcl = defdcl;
-
-          SgType*    basety      = dcl->get_base_type();
-          ASSERT_not_null(basety);
-
-          basety = basety->stripType(SgType::STRIP_MODIFIER_TYPE);
+          SgType* basety = base_type(n).stripType(SgType::STRIP_MODIFIER_TYPE);
 
           const bool useThisDecl = (  isSgAdaDerivedType(basety)
                                    || isSgAdaAccessType(basety)
@@ -1773,7 +1892,7 @@ namespace Ada
                     //~ << std::endl;
 
           if (useThisDecl)
-            res = dcl->get_scope();
+            res = dominant_declaration(n).get_scope();
           else
             res = find(basety);
         }
@@ -1798,7 +1917,7 @@ namespace Ada
       void handle(SgModifierType& n)      { res = associatedDeclaration(n.get_base_type()); }
       void handle(SgAdaSubtype& n)        { res = associatedDeclaration(n.get_base_type()); }
       void handle(SgAdaDerivedType& n)    { res = associatedDeclaration(n.get_base_type()); }
-      void handle(SgPointerType& n)       { res = associatedDeclaration(n.get_base_type()); } // \todo should not be in Ada
+      void handle(SgPointerType& n)       { res = associatedDeclaration(n.get_base_type()); } // \todo NO_POINTER_IN_ADA
       void handle(SgAdaAccessType& n)     { res = associatedDeclaration(n.get_base_type()); } // \todo or scope of underlying type?
       //~ void handle(SgArrayType& n)         { res = associatedDeclaration(n.get_base_type()); }
       // void handle(SgDeclType& n)             { res = pkgStandardScope(); }
@@ -1868,17 +1987,17 @@ namespace Ada
 
   TypeDescription typeRoot(SgType* ty)
   {
-    return ty ? typeRoot(*ty) : TypeDescription{nullptr, false};
+    return ty ? typeRoot(*ty) : TypeDescription{nullptr};
   }
 
-  TypeDescription typeOfExpr(SgExpression& exp)
+  TypeDescription typeOfExpr(const SgExpression& exp)
   {
     return sg::dispatch(ExprTypeFinder{}, &exp);
   }
 
-  TypeDescription typeOfExpr(SgExpression* exp)
+  TypeDescription typeOfExpr(const SgExpression* exp)
   {
-    return exp ? typeOfExpr(*exp) : TypeDescription{nullptr, false};
+    return exp ? typeOfExpr(*exp) : TypeDescription{nullptr};
   }
 
   namespace
@@ -2735,6 +2854,9 @@ namespace Ada
                                const SgNamedType& dervTy
                              )
   {
+    // note: the function returns fnsym in many cases for which it was
+    //       not written.
+
     //~ std::cerr << dervTy.get_name() << " " << &dervTy << std::endl;
 
     const SgDeclarationStatement& dervDcl      = SG_DEREF(dervTy.get_declaration());
@@ -2759,7 +2881,7 @@ namespace Ada
       res = findFunctionSymbolForType(*basety, dervTy, fnsym.get_name(), drvFunTy);
     }
 
-    return res;
+    return res ? res : &fnsym;
   }
 
   SgExpressionPtrList
@@ -3378,10 +3500,7 @@ namespace
     // non-base cases
     void handle(const SgTypedefType& n)
     {
-      const SgTypedefDeclaration* tydcl = isSgTypedefDeclaration(n.get_declaration());
-      ASSERT_not_null(tydcl);
-
-      res = tydcl->get_base_type();
+      res = &base_type(n);
     }
 
     void handle(const SgAdaFormalType& n)

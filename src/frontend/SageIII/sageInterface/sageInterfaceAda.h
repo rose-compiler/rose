@@ -489,14 +489,31 @@ namespace
   bool isSeparatedDefinition(const SgFunctionDeclaration* n);
   /// @}
 
-  struct TypeDescription : std::tuple<SgType*, bool>
+  struct TypeDescription : std::tuple<SgType*, bool, std::vector<SgAdaTypeConstraint*> >
   {
-    using base = std::tuple<SgType*, bool>;
-    using base::base;
+    static constexpr bool classwide = true;
+
+    using base = std::tuple<SgType*, bool, std::vector<SgAdaTypeConstraint*> >;
+
+    explicit
+    TypeDescription(SgType& ty, bool polymorph = false, std::vector<SgAdaTypeConstraint*> constr = {})
+    : base(&ty, polymorph, std::move(constr))
+    {}
+
+    explicit
+    TypeDescription(SgType* ty = nullptr)
+    : base(ty, false, {})
+    {}
 
     SgType* typerep()     const { return std::get<0>(*this); }
     SgType& typerep_ref() const;
     bool    polymorphic() const { return std::get<1>(*this); }
+
+    const std::vector<SgAdaTypeConstraint*>&
+    toplevelConstraints() const & { return std::get<2>(*this); }
+
+    std::vector<SgAdaTypeConstraint*>
+    toplevelConstraints() &&    { return std::move(std::get<2>(*this)); }
   };
 
   /// returns the most fundamental type
@@ -510,8 +527,8 @@ namespace
   ///   corrects for some peculiarities in the AST
   /// \todo could be integrated into SgExpression::get_type ...
   /// @{
-  TypeDescription typeOfExpr(SgExpression&);
-  TypeDescription typeOfExpr(SgExpression*);
+  TypeDescription typeOfExpr(const SgExpression&);
+  TypeDescription typeOfExpr(const SgExpression*);
   /// @}
 
   struct DominantArgInfo : std::tuple<const SgType*, std::size_t>

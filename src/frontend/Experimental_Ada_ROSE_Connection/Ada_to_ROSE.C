@@ -1453,7 +1453,11 @@ namespace
       si::Ada::TypeDescription prmRoot = si::Ada::typeRoot(const_cast<SgType&>(prm));
 
       // \todo this assumes that the argument is a subtype of prmRoot
-      if (prmRoot.polymorphic()) return true;
+      if (prmRoot.polymorphic())
+      {
+        logInfo() << "polymorphic arg type" << std::endl;
+        return true;
+      }
 
       si::Ada::TypeDescription argRoot = si::Ada::typeRoot(const_cast<SgType&>(arg));
       const bool               res = (  (argRoot.typerep() != nullptr)
@@ -1529,8 +1533,8 @@ namespace
     if (isAdaLiteralExp(&arg))
       return {};
 
-    //~ return { si::Ada::typeOfExpr(arg) };
-    return { arg.get_type() };
+    return { si::Ada::typeOfExpr(arg).typerep() };
+    // return { arg.get_type() };
   }
 
   const SgType*
@@ -1575,8 +1579,8 @@ namespace
 
     OverloadMap::const_iterator pos = allrefs.find(fnref);
 
-    if (pos == allrefs.end())
-      return { arg.get_type() };
+    if (pos == allrefs.end()) // fallback ..
+      return simpleExpressionType(arg);
 
     ResultType res;
 
@@ -2079,6 +2083,9 @@ namespace
         // put in place candidates
         if (viables.size())
           overloads.swap(viables);
+        else
+          logFlaw() << "0-viables (a) " << fnref.get_parent()->unparseToString()
+                    << std::endl;
       }
 
       {
@@ -2105,6 +2112,9 @@ namespace
         // put in place candidates
         if (viables.size())
           overloads.swap(viables);
+        else
+          logFlaw() << "0-viables (r) " << fnref.get_parent()->unparseToString()
+                    << std::endl;
       }
 
       // was there any progress (i.e., was the overloadset reduced) ?

@@ -2577,6 +2577,14 @@ namespace
         return queryIfDerivedFromEnumID(subtype.Subtype_Mark, ctx);
       }
 
+      if (def.Definition_Kind != A_Formal_Type_Definition)
+      {
+        // \todo could this require enum handling?
+        logInfo() << "qid: definition-kind: A_Formal_Type_Definition"
+                  << std::endl;
+        return false;
+      }
+
       if (def.Definition_Kind != A_Type_Definition)
       {
         logWarn() << "qid: unexpected definition-kind: " << def.Definition_Kind
@@ -5525,7 +5533,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
           logKind("A_Formal_Package_Declaration_With_Box", elem.ID);
 
         // \todo consider merging the code with A_Package_Instantiation above
-        NameData                  adaname = singleName(decl, ctx);
+        NameData                  adaname  = singleName(decl, ctx);
 
         // re basedecl see MS comment on A_Package_Instantiation above
         NameData                  basename = getNameID(decl.Generic_Unit_Name, ctx);
@@ -5662,7 +5670,7 @@ getName(Element_Struct& elem, AstContext ctx)
       {
         logKind("A_Defining_Identifier", elem.ID);
 
-        logTrace() << "* " << ident << std::endl;
+        //~ logTrace() << "* " << ident << std::endl;
         // nothing to do, the fields are already set
         break;
       }
