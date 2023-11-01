@@ -313,6 +313,7 @@ if [[ ! -d tests ]] ; then
         tests/nonsmoke/functional/BinaryAnalysis/Pin_tests/Makefile.in \
         tests/nonsmoke/functional/BinaryAnalysis/libraryIdentification_tests/Makefile.in \
         tests/nonsmoke/functional/BinaryAnalysis/Concolic/Makefile.in \
+        tests/nonsmoke/functional/BinaryAnalysis/ByteCode/Makefile.in \
         tests/nonsmoke/functional/CompileTests/A++Code/Makefile.in \
         tests/nonsmoke/functional/CompileTests/A++Tests/Makefile.in \
         tests/nonsmoke/functional/CompileTests/C_tests/Makefile.in \

@@ -2138,6 +2138,7 @@ tests/nonsmoke/functional/BinaryAnalysis/Dwarf_tests/Makefile
 tests/nonsmoke/functional/BinaryAnalysis/Makefile
 tests/nonsmoke/functional/BinaryAnalysis/Pin_tests/Makefile
 tests/nonsmoke/functional/BinaryAnalysis/libraryIdentification_tests/Makefile
+tests/nonsmoke/functional/BinaryAnalysis/ByteCode/Makefile
 tests/nonsmoke/functional/BinaryAnalysis/Concolic/Makefile
 tests/nonsmoke/functional/CompileTests/A++Code/Makefile
 tests/nonsmoke/functional/CompileTests/A++Tests/Makefile
