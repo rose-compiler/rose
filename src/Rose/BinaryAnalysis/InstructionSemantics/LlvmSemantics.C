@@ -387,7 +387,7 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
     SgAsmFunction *func = getEnclosingNode<SgAsmFunction>(bb);
     SgAsmInterpretation *interp = getEnclosingNode<SgAsmInterpretation>(func);
     ASSERT_not_null(interp);                            // instructions must be part of the global AST
-    const InstructionMap &insns = interp->get_instruction_map();
+    const InstructionMap &insns = interp->get_instructionMap();
     SValue::Ptr eip = get_instruction_pointer();
     rose_addr_t fallthrough_va = latest_insn->get_address() + latest_insn->get_size();
 
@@ -617,7 +617,7 @@ std::string
 RiscOperators::function_label(SgAsmFunction *func)
 {
     ASSERT_not_null(func);
-    std::string retval = "L_" + StringUtility::addrToString(func->get_entry_va());
+    std::string retval = "L_" + StringUtility::addrToString(func->get_entryVa());
     std::string fname = func->get_name();
     if (!fname.empty())
         retval += "_" + fname;
@@ -1647,7 +1647,7 @@ Transcoder::transcodeFunction(SgAsmFunction *func, std::ostream &o)
     // LLVM.
     {
         RiscOperators::Indent insn_indentation(operators);
-        std::string label = operators->addr_label(func->get_entry_va());
+        std::string label = operators->addr_label(func->get_entryVa());
         o <<operators->prefix() <<"br label %" <<label <<"\n";
     }
 
@@ -1673,7 +1673,7 @@ Transcoder::transcodeFunction(SgAsmFunction *func, std::ostream &o)
     // Function epilogue.  This is to handle ROSE functions that have no basic blocks--they still need to be valid functions in
     // LLVM.
     if (0==nbbs) {
-        std::string label = operators->addr_label(func->get_entry_va());
+        std::string label = operators->addr_label(func->get_entryVa());
         o <<"\n" <<operators->prefix() <<label <<"\n";
         {
             RiscOperators::Indent insn_indentation(operators);

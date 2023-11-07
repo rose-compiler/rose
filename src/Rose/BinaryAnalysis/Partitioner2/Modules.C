@@ -615,21 +615,21 @@ labelSymbolAddresses(const Partitioner::Ptr &partitioner, SgAsmGenericHeader *fi
                         name = "(" + boost::to_lower_copy(typeName) + ")" + name;
                     }
 
-                    rose_addr_t value = fileHeader->get_base_va() + symbol->get_value();
+                    rose_addr_t value = fileHeader->get_baseVa() + symbol->get_value();
                     SgAsmGenericSection *section = symbol->get_bound();
 
                     // Assume symbol's value is a virtual address, but make adjustments if its section is relocated
                     rose_addr_t va = value;
-                    if (section && section->is_mapped() &&
-                        section->get_mapped_preferred_va() != section->get_mapped_actual_va()) {
-                        va += section->get_mapped_actual_va() - section->get_mapped_preferred_va();
+                    if (section && section->isMapped() &&
+                        section->get_mappedPreferredVa() != section->get_mappedActualVa()) {
+                        va += section->get_mappedActualVa() - section->get_mappedPreferredVa();
                     }
                     if (partitioner->memoryMap()->at(va).exists())
                         partitioner->addressName(va, name);
 
                     // Sometimes weak symbol values are offsets w.r.t. their linked section.
                     if (section && symbol->get_binding() == SgAsmGenericSymbol::SYM_WEAK) {
-                        va = value + section->get_mapped_actual_va();
+                        va = value + section->get_mappedActualVa();
                         if (partitioner->memoryMap()->at(va).exists())
                             partitioner->addressName(va, name);
                     }
@@ -740,19 +740,19 @@ findSymbolFunctions(const Partitioner::ConstPtr &partitioner, SgAsmGenericHeader
 
         void visit(SgNode *node) {
             if (SgAsmGenericSymbol *symbol = isSgAsmGenericSymbol(node)) {
-                if (symbol->get_def_state() == SgAsmGenericSymbol::SYM_DEFINED &&
+                if (symbol->get_definitionState() == SgAsmGenericSymbol::SYM_DEFINED &&
                     symbol->get_type()      == SgAsmGenericSymbol::SYM_FUNC &&
                     symbol->get_value()     != 0) {
-                    rose_addr_t value = fileHeader->get_base_va() + symbol->get_value();
+                    rose_addr_t value = fileHeader->get_baseVa() + symbol->get_value();
                     SgAsmGenericSection *section = symbol->get_bound();
 
                     // Add a function at the symbol's value. If the symbol is bound to a section and the section is mapped at a
                     // different address than it expected to be mapped, then adjust the symbol's value by the same amount. Keep
                     // only the first non-empty name we find for each address.
                     rose_addr_t va = value;
-                    if (section!=NULL && section->is_mapped() &&
-                        section->get_mapped_preferred_va() != section->get_mapped_actual_va()) {
-                        va += section->get_mapped_actual_va() - section->get_mapped_preferred_va();
+                    if (section!=NULL && section->isMapped() &&
+                        section->get_mappedPreferredVa() != section->get_mappedActualVa()) {
+                        va += section->get_mappedActualVa() - section->get_mappedPreferredVa();
                     }
                     if (partitioner->discoverInstruction(va)) {
                         std::string &s = addrNames.insertMaybeDefault(va);
@@ -763,7 +763,7 @@ findSymbolFunctions(const Partitioner::ConstPtr &partitioner, SgAsmGenericHeader
                     // Sometimes weak symbol values are offsets from a section (this code handles that), but other times
                     // they're the value is used directly (the above code handled that case). */
                     if (section && symbol->get_binding() == SgAsmGenericSymbol::SYM_WEAK)
-                        value += section->get_mapped_actual_va();
+                        value += section->get_mappedActualVa();
                     if (partitioner->discoverInstruction(value)) {
                         std::string &s = addrNames.insertMaybeDefault(value);
                         if (s.empty())
@@ -936,7 +936,7 @@ buildBasicBlockAst(const Partitioner::ConstPtr &partitioner, const BasicBlock::P
         reasons |= SgAsmBlock::BLK_CFGHEAD;
 
     ast->set_reason(reasons);
-    ast->set_code_likelihood(1.0);                      // FIXME[Robb P. Matzke 2014-08-07]
+    ast->set_codeLikelihood(1.0);                       // FIXME[Robb P. Matzke 2014-08-07]
 
     // Stack delta analysis results for this block in the context of the owning function. If blocks are shared they can have
     // different stack deltas (e.g., eax might have different values in function F and G which means the block "sub esp, eax"
@@ -974,7 +974,7 @@ buildBasicBlockAst(const Partitioner::ConstPtr &partitioner, const BasicBlock::P
                 ast->get_successors().push_back(succ);
             }
         }
-        ast->set_successors_complete(isComplete);
+        ast->set_successorsComplete(isComplete);
     } else {
         bool isComplete = true;
         for (rose_addr_t successorVa: partitioner->basicBlockConcreteSuccessors(bb, &isComplete)) {
@@ -982,7 +982,7 @@ buildBasicBlockAst(const Partitioner::ConstPtr &partitioner, const BasicBlock::P
             succ->set_parent(ast);
             ast->get_successors().push_back(succ);
         }
-        ast->set_successors_complete(isComplete);
+        ast->set_successorsComplete(isComplete);
     }
     return ast;
 }
@@ -1084,7 +1084,7 @@ buildFunctionAst(const Partitioner::ConstPtr &partitioner, const Function::Ptr &
     ast->set_reason(reasons);
     ast->set_name(function->name());
     ast->set_comment(function->comment());
-    ast->set_may_return(mayReturn);
+    ast->set_mayReturn(mayReturn);
     ast->set_stackDelta(function->stackDeltaConcrete());
     ast->set_callingConvention(bestCallingConvention);
     return ast;
@@ -1124,9 +1124,9 @@ buildAst(const Partitioner::ConstPtr &partitioner, SgAsmInterpretation *interp/*
         fixupAstPointers(global, interp);
         fixupAstCallingConventions(partitioner, global);
         if (interp) {
-            if (SgAsmBlock *oldGlobalBlock = interp->get_global_block())
+            if (SgAsmBlock *oldGlobalBlock = interp->get_globalBlock())
                 oldGlobalBlock->set_parent(NULL);
-            interp->set_global_block(global);
+            interp->set_globalBlock(global);
             global->set_parent(interp);
         }
         return global;
@@ -1149,7 +1149,7 @@ fixupAstPointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/) {
                 if (!block->get_statementList().empty() && isSgAsmInstruction(block->get_statementList().front()))
                     bblockIndex.insert(block->get_address(), block);
             } else if (SgAsmFunction *func = isSgAsmFunction(node)) {
-                funcIndex.insert(func->get_entry_va(), func);
+                funcIndex.insert(func->get_entryVa(), func);
             }
         }
     } indexer;
@@ -1161,10 +1161,10 @@ fixupAstPointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/) {
     Index sectionIndex;
     if (interp) {
         for (SgAsmGenericHeader *header: interp->get_headers()->get_headers()) {
-            if (header->is_mapped())
+            if (header->isMapped())
                 mappedSections.push_back(header);
-            for (SgAsmGenericSection *section: header->get_mapped_sections()) {
-                if (!section->get_mapped_xperm())
+            for (SgAsmGenericSection *section: header->get_mappedSections()) {
+                if (!section->get_mappedExecutePermission())
                     mappedSections.push_back(section);
             }
         }
@@ -1192,7 +1192,7 @@ fixupAstPointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/) {
                     if (funcIndex.getOptional(va).assignTo(base) || bblockIndex.getOptional(va).assignTo(base) ||
                         insnIndex.getOptional(va).assignTo(base)) {
                         ival->makeRelativeTo(base);
-                    } else if (SgAsmGenericSection *section = SgAsmGenericFile::best_section_by_va(mappedSections, va)) {
+                    } else if (SgAsmGenericSection *section = SgAsmGenericFile::bestSectionByVa(mappedSections, va)) {
                         ival->makeRelativeTo(section);
                     }
                 }

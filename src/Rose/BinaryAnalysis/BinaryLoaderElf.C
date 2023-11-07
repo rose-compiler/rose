@@ -31,15 +31,15 @@ sectionCmp(SgAsmGenericSection *_a, SgAsmGenericSection *_b) {
     SgAsmElfSection *b = isSgAsmElfSection(_b);
     ASSERT_not_null(a);
     ASSERT_not_null(b);
-    SgAsmElfSegmentTableEntry *a_seg = a->get_segment_entry();
-    SgAsmElfSegmentTableEntry *b_seg = b->get_segment_entry();
+    SgAsmElfSegmentTableEntry *a_seg = a->get_segmentEntry();
+    SgAsmElfSegmentTableEntry *b_seg = b->get_segmentEntry();
     if (a_seg && b_seg) {
 #if 0
         /* Sort ELF Segments by position in ELF Segment Table */
         return a_seg->get_index() < b_seg->get_index();
 #else
         /* Sort ELF Segments by preferred virtual address */
-        return a->get_mapped_preferred_rva() < b->get_mapped_preferred_rva();
+        return a->get_mappedPreferredRva() < b->get_mappedPreferredRva();
 #endif
     } else if (a_seg) {
         /* ELF Segments come before ELF Sections */
@@ -52,7 +52,7 @@ sectionCmp(SgAsmGenericSection *_a, SgAsmGenericSection *_b) {
 
 SgAsmGenericSectionPtrList
 BinaryLoaderElf::getRemapSections(SgAsmGenericHeader *header) {
-    SgAsmGenericSectionPtrList retval = header->get_mapped_sections();
+    SgAsmGenericSectionPtrList retval = header->get_mappedSections();
     std::sort(retval.begin(), retval.end(), sectionCmp);
     return retval;
 }
@@ -67,7 +67,7 @@ BinaryLoaderElf::rebase(const MemoryMap::Ptr &map, SgAsmGenericHeader *header, c
     // If this is a library then restrict where it can be mapped.  This is to try to make BinaryLoaderElf behave more like the
     // native loader on Linux (at least when run with "i386 --addr-compat-layout --addr-no-randomize), but it's a failing
     // proposition because the headers in ROSE are apparently not processed in the same order as in Linux.
-    SgAsmGenericFormat *fmt = header->get_exec_format();
+    SgAsmGenericFormat *fmt = header->get_executableFormat();
     if (fmt->get_purpose() == SgAsmGenericFormat::PURPOSE_LIBRARY)
         mappableArea = AddressInterval::hull(0x55555000, mappableArea.greatest());
 #endif
@@ -75,8 +75,8 @@ BinaryLoaderElf::rebase(const MemoryMap::Ptr &map, SgAsmGenericHeader *header, c
     // Find the minimum address desired by the sections to be mapped.
     rose_addr_t min_preferred_rva = (uint64_t)(-1);
     for (SgAsmGenericSectionPtrList::const_iterator si=sections.begin(); si!=sections.end(); ++si)
-        min_preferred_rva = std::min(min_preferred_rva, (*si)->get_mapped_preferred_rva());
-    rose_addr_t min_preferred_va = header->get_base_va() + min_preferred_rva;
+        min_preferred_rva = std::min(min_preferred_rva, (*si)->get_mappedPreferredRva());
+    rose_addr_t min_preferred_va = header->get_baseVa() + min_preferred_rva;
 
     // Minimum address at which to map
     AddressInterval freeSpace = map->unmapped(mappableArea.greatest(), Sawyer::Container::MATCH_BACKWARD);
@@ -95,7 +95,7 @@ BinaryLoaderElf::rebase(const MemoryMap::Ptr &map, SgAsmGenericHeader *header, c
     }
 
     // No need to rebase
-    return header->get_base_va();
+    return header->get_baseVa();
 }
 
 BinaryLoader::MappingContribution
@@ -135,7 +135,7 @@ BinaryLoaderElf::alignValues(SgAsmGenericSection *_section, const MemoryMap::Ptr
      * contents for the low area and zeros for the high area. Due to our rebase() method, there should be no conflicts between
      * this header's sections and sections previously mapped from other headers.  Any conflicts are within a single header and
      * are resolved by moving the segment to a free area. */
-    if (section->get_segment_entry()) {
+    if (section->get_segmentEntry()) {
         MappingContribution retval = BinaryLoader::alignValues(section, map, malign_lo_p, malign_hi_p, va_p,
                                                                mem_size_p, offset_p, file_size_p, map_private_p, va_offset_p,
                                                                anon_lo_p, anon_hi_p, resolve_p);
@@ -144,7 +144,7 @@ BinaryLoaderElf::alignValues(SgAsmGenericSection *_section, const MemoryMap::Ptr
         *map_private_p = true;
         *resolve_p = RESOLVE_OVERMAP;
 
-        if (section->get_mapped_size()==section->get_size()) {
+        if (section->get_mappedSize()==section->get_size()) {
             *anon_hi_p = false;
         } else {
             *anon_hi_p = true;
@@ -159,20 +159,20 @@ BinaryLoaderElf::alignValues(SgAsmGenericSection *_section, const MemoryMap::Ptr
      * that has been mapped to an address other than its preferred address, then we must make sure the ELF Section is also
      * similarly moved along with the ELF Segment. */
     SgAsmElfSection *part_of = NULL; /*what segment is this section a part of (if any)? */
-    SgAsmGenericSectionPtrList sections = section->get_header()->get_mapped_sections();
+    SgAsmGenericSectionPtrList sections = section->get_header()->get_mappedSections();
     for (SgAsmGenericSectionPtrList::iterator si=sections.begin(); si!=sections.end(); ++si) {
         SgAsmElfSection *segment = isSgAsmElfSection(*si);
-        if (segment && segment->get_segment_entry() &&
-            section->get_mapped_preferred_rva() >= segment->get_mapped_preferred_rva() &&
-            section->get_mapped_preferred_rva() < segment->get_mapped_preferred_rva() + segment->get_mapped_size()) {
+        if (segment && segment->get_segmentEntry() &&
+            section->get_mappedPreferredRva() >= segment->get_mappedPreferredRva() &&
+            section->get_mappedPreferredRva() < segment->get_mappedPreferredRva() + segment->get_mappedSize()) {
             part_of = segment;
             break;
         }
     }
-    rose_addr_t diff = part_of ? part_of->get_mapped_actual_va() - part_of->get_mapped_preferred_va() : 0;
+    rose_addr_t diff = part_of ? part_of->get_mappedActualVa() - part_of->get_mappedPreferredVa() : 0;
     *malign_hi_p = *malign_lo_p = 1; /*no alignment constraint*/
-    *va_p = section->get_header()->get_base_va() + section->get_mapped_preferred_rva() + diff;
-    *mem_size_p = section->get_mapped_size();
+    *va_p = section->get_header()->get_baseVa() + section->get_mappedPreferredRva() + diff;
+    *mem_size_p = section->get_mappedSize();
     *offset_p = section->get_offset();
     *file_size_p = section->get_size();
     *va_offset_p = 0;
@@ -187,7 +187,7 @@ void
 BinaryLoaderElf::getDynamicVars(SgAsmGenericHeader *hdr, std::string &rpath/*out*/, std::string &runpath/*out*/) {
     rpath = runpath = "";
 
-    SgAsmElfDynamicSection *dynamic = isSgAsmElfDynamicSection(hdr->get_section_by_name(".dynamic"));
+    SgAsmElfDynamicSection *dynamic = isSgAsmElfDynamicSection(hdr->get_sectionByName(".dynamic"));
     if (dynamic) {
         SgAsmElfDynamicEntryPtrList& entries = dynamic->get_entries()->get_entries();
         for (size_t i=0; i<entries.size(); ++i) {
@@ -291,11 +291,11 @@ BinaryLoaderElf::buildMasterSymbolTable(SgAsmInterpretation *interp) {
          *
          * Manual 1-10 under SHT_SYMTAB and SHT_DYNSYM: ...SHT_DYNSYM section holds a minimal set of dynamic linking symbols.
          * FIXME: Technically, the dynsym may be omitted, and we should truly use the .dynamic section's DT_SYMTAB entry(ies) */
-        SgAsmElfSymbolSection *dynsym = isSgAsmElfSymbolSection(header->get_section_by_name(".dynsym"));
+        SgAsmElfSymbolSection *dynsym = isSgAsmElfSymbolSection(header->get_sectionByName(".dynsym"));
         if (!dynsym)
             continue;
-        ASSERT_not_null(dynsym->get_section_entry());
-        ASSERT_require(SgAsmElfSectionTableEntry::SHT_DYNSYM == dynsym->get_section_entry()->get_sh_type());
+        ASSERT_not_null(dynsym->get_sectionEntry());
+        ASSERT_require(SgAsmElfSectionTableEntry::SHT_DYNSYM == dynsym->get_sectionEntry()->get_sh_type());
 
         /* Add each symbol definition to the SymbolMap and then add the SymbolMap to the symbolMaps */
         SymbolMap* symbolMap = new SymbolMap;
@@ -382,23 +382,23 @@ BinaryLoaderElf::fixup(SgAsmInterpretation *interp, FixupErrors *errors) {
 SgAsmGenericSection *
 BinaryLoaderElf::findSectionByPreferredVa(SgAsmGenericHeader* header, rose_addr_t va) {
     SgAsmGenericSection *retval = NULL;
-    SgAsmGenericSectionPtrList sections = header->get_sections_by_va(va, true);
+    SgAsmGenericSectionPtrList sections = header->get_sectionsByVa(va, true);
     for (SgAsmGenericSectionPtrList::iterator si=sections.begin(); si!=sections.end(); ++si) {
         SgAsmElfSection *elf_section = isSgAsmElfSection(*si);
-        if (elf_section && elf_section->get_section_entry()) {
-            if ((elf_section->get_section_entry()->get_sh_flags() & SgAsmElfSectionTableEntry::SHF_TLS) &&
-                elf_section->get_section_entry()->get_sh_type() == SgAsmElfSectionTableEntry::SHT_NOBITS) {
+        if (elf_section && elf_section->get_sectionEntry()) {
+            if ((elf_section->get_sectionEntry()->get_sh_flags() & SgAsmElfSectionTableEntry::SHF_TLS) &&
+                elf_section->get_sectionEntry()->get_sh_type() == SgAsmElfSectionTableEntry::SHT_NOBITS) {
                 /* TODO: handle .tbss correctly */
             } else if (retval != NULL) {
                 using namespace Rose::StringUtility;
                 mlog[ERROR] <<"find_section_by_preferred_va: multiple sections match " <<addrToString(va) <<"\n";
-                mlog[ERROR] <<"  section at " <<addrToString(retval->get_mapped_actual_va())
-                            <<" + " <<addrToString(retval->get_mapped_size())
-                            <<" = " <<addrToString(retval->get_mapped_actual_va() + retval->get_mapped_size())
+                mlog[ERROR] <<"  section at " <<addrToString(retval->get_mappedActualVa())
+                            <<" + " <<addrToString(retval->get_mappedSize())
+                            <<" = " <<addrToString(retval->get_mappedActualVa() + retval->get_mappedSize())
                             <<" " <<cEscape(retval->get_name()->get_string()) <<"\n";
-                mlog[ERROR] <<"  section at " <<addrToString(elf_section->get_mapped_actual_va())
-                            <<" + " <<addrToString(elf_section->get_mapped_size())
-                            <<" = " <<addrToString(elf_section->get_mapped_actual_va() + elf_section->get_mapped_size())
+                mlog[ERROR] <<"  section at " <<addrToString(elf_section->get_mappedActualVa())
+                            <<" + " <<addrToString(elf_section->get_mappedSize())
+                            <<" = " <<addrToString(elf_section->get_mappedActualVa() + elf_section->get_mappedSize())
                             <<" " <<cEscape(elf_section->get_name()->get_string()) <<"\n";
             } else {
                 ASSERT_require2(retval==NULL, "there should be only one matching section");
@@ -419,7 +419,7 @@ bool
 BinaryLoaderElf::VersionedSymbol::isLocal() const {
     if (versionEntry_ && versionEntry_->get_value() == 0) {
         return true;
-    } else if (symbol_->SgAsmElfSymbol::STB_LOCAL == symbol_->get_elf_binding()) {
+    } else if (symbol_->SgAsmElfSymbol::STB_LOCAL == symbol_->get_elfBinding()) {
         return true;
     }
     return false;
@@ -572,8 +572,8 @@ BinaryLoaderElf::SymbolMapEntry::merge(const SymbolMapEntry& newEntry) {
 
     /* Merge base definitions. */
     if (oldSymbol.isBaseDefinition() && newSymbol.isBaseDefinition()) {
-        if (oldSymbol.symbol()->get_elf_binding() == SgAsmElfSymbol::STB_WEAK &&
-            newSymbol.symbol()->get_elf_binding() == SgAsmElfSymbol::STB_GLOBAL) {
+        if (oldSymbol.symbol()->get_elfBinding() == SgAsmElfSymbol::STB_WEAK &&
+            newSymbol.symbol()->get_elfBinding() == SgAsmElfSymbol::STB_GLOBAL) {
             /* the new symbol becomes the new base */
             versions_[0] = newSymbol;
             start=1;
@@ -597,8 +597,8 @@ BinaryLoaderElf::SymbolMapEntry::merge(const SymbolMapEntry& newEntry) {
         for (size_t j=0; j<versions_.size(); ++j) {
             oldSymbol = versions_[j];
             if (oldSymbol.getVersion() == newSymbol.getVersion() &&                     /* matching version string */
-                oldSymbol.symbol()->get_elf_binding() == SgAsmElfSymbol::STB_WEAK &&  /* old is weak */
-                newSymbol.symbol()->get_elf_binding() == SgAsmElfSymbol::STB_GLOBAL) {/* new is strong */
+                oldSymbol.symbol()->get_elfBinding() == SgAsmElfSymbol::STB_WEAK &&  /* old is weak */
+                newSymbol.symbol()->get_elfBinding() == SgAsmElfSymbol::STB_GLOBAL) {/* new is strong */
                 versions_[j] = newSymbol; /* override the old symbol */
                 found=true;
                 break;
@@ -667,7 +667,7 @@ BinaryLoaderElf::SymverResolver::ctor(SgAsmGenericHeader* header) {
     SgAsmGenericSectionPtrList& sections = header->get_sections()->get_sections();
     for (size_t sec=0; sec < sections.size(); ++sec) {
         SgAsmGenericSection* section = sections[sec];
-        if (isSgAsmElfSymbolSection(section) && isSgAsmElfSymbolSection(section)->get_is_dynamic()) {
+        if (isSgAsmElfSymbolSection(section) && isSgAsmElfSymbolSection(section)->get_isDynamic()) {
             dynsym = isSgAsmElfSymbolSection(section);
         } else if(isSgAsmElfSymverSection(section)) {
             symver = isSgAsmElfSymverSection(section);
@@ -712,7 +712,7 @@ BinaryLoaderElf::SymverResolver::makeSymbolVersionNeedMap(SgAsmElfSymverNeededSe
 
 void
 BinaryLoaderElf::SymverResolver::makeVersionedSymbolMap(SgAsmElfSymbolSection* dynsym, SgAsmElfSymverSection* symver/*=NULL*/) {
-    ASSERT_require(dynsym && dynsym->get_is_dynamic());
+    ASSERT_require(dynsym && dynsym->get_isDynamic());
     SgAsmElfSymbolPtrList& symbols = dynsym->get_symbols()->get_symbols();
 
     /* symverSection may be NULL, but if it isn't, it must have the same number of entries as dynsym */
@@ -822,14 +822,14 @@ BinaryLoaderElf::fixupInfoRelocSymbol(SgAsmElfRelocEntry *reloc, const SymverRes
     /* Look up symbol referenced by the relocation entry */
     SgAsmElfSection *reloc_section = SageInterface::getEnclosingNode<SgAsmElfSection>(reloc);
     ASSERT_not_null(reloc_section);
-    SgAsmElfSymbolSection* symbol_section = isSgAsmElfSymbolSection(reloc_section->get_linked_section());
+    SgAsmElfSymbolSection* symbol_section = isSgAsmElfSymbolSection(reloc_section->get_linkedSection());
     ASSERT_not_null(symbol_section);
     ASSERT_require(reloc->get_sym() < symbol_section->get_symbols()->get_symbols().size());
     SgAsmElfSymbol *reloc_sym = symbol_section->get_symbols()->get_symbols()[reloc->get_sym()];
     ASSERT_not_null(reloc_sym);
     VersionedSymbol reloc_vsym = resolver.getVersionedSymbol(reloc_sym);
     trace <<"    reloc symbol: " <<reloc_vsym.getVersionedName() <<"\n";
-    bool is_weak = reloc_sym->get_elf_binding() == SgAsmElfSymbol::STB_WEAK;
+    bool is_weak = reloc_sym->get_elfBinding() == SgAsmElfSymbol::STB_WEAK;
     bool is_local = reloc_vsym.isHidden() || reloc_vsym.isLocal();
 
     /* Find the defining versioned symbol associated with the relocation symbol. */
@@ -871,14 +871,14 @@ BinaryLoaderElf::fixupInfoTargetVa(SgAsmElfRelocEntry *reloc, SgAsmGenericSectio
         throw Exception("reloc target " + StringUtility::addrToString(reloc->get_r_offset()) + " is not mapped");
     }
 
-    rose_addr_t target_adj = section->get_mapped_actual_va() - section->get_mapped_preferred_va();
+    rose_addr_t target_adj = section->get_mappedActualVa() - section->get_mappedPreferredVa();
     rose_addr_t target_va = reloc->get_r_offset() + target_adj;
 
     if (trace) {
         trace <<"    target: file=\"" <<header->get_file()->get_name() <<"\"\n";
         trace <<"            section=[" <<section->get_id() <<"] \"" <<section->get_name()->get_string(true) <<"\"\n";
-        trace <<"            preferred=" <<StringUtility::addrToString(section->get_mapped_preferred_va())
-              <<", actual=" <<StringUtility::addrToString(section->get_mapped_actual_va()) <<"\n";
+        trace <<"            preferred=" <<StringUtility::addrToString(section->get_mappedPreferredVa())
+              <<", actual=" <<StringUtility::addrToString(section->get_mappedActualVa()) <<"\n";
         trace <<"            va " <<StringUtility::addrToString(reloc->get_r_offset()) <<" + adjustment "
               <<StringUtility::addrToString(target_adj) <<" = " <<StringUtility::addrToString(target_va) <<"\n";
     }
@@ -910,13 +910,13 @@ BinaryLoaderElf::fixupInfoSymbolVa(SgAsmElfSymbol *symbol, SgAsmGenericSection *
         throw Exception("symbol value " + StringUtility::addrToString(symbol->get_value()) + " is not mapped");
     }
 
-    rose_addr_t symbol_adj = section->get_mapped_actual_va() - section->get_mapped_preferred_va();
+    rose_addr_t symbol_adj = section->get_mappedActualVa() - section->get_mappedPreferredVa();
     rose_addr_t symbol_va = symbol->get_value() + symbol_adj;
     if (trace) {
         trace <<"    symbol: file=\"" <<header->get_file()->get_name() <<"\"\n";
         trace <<"            section=[" <<section->get_id() <<"] \"" <<section->get_name()->get_string(true) <<"\"\n";
-        trace <<"            preferred=" <<StringUtility::addrToString(section->get_mapped_preferred_va())
-              <<", actual=" <<StringUtility::addrToString(section->get_mapped_actual_va()) <<"\n";
+        trace <<"            preferred=" <<StringUtility::addrToString(section->get_mappedPreferredVa())
+              <<", actual=" <<StringUtility::addrToString(section->get_mappedActualVa()) <<"\n";
         trace <<"            value " <<StringUtility::addrToString(symbol->get_value())
               <<" + adjustment " <<StringUtility::addrToString(symbol_adj)
               <<" = " <<StringUtility::addrToString(symbol_va) <<"\n";
@@ -937,9 +937,9 @@ BinaryLoaderElf::fixupInfoAddend(SgAsmElfRelocEntry *reloc, rose_addr_t target_v
     SgAsmElfRelocSection *reloc_section = SageInterface::getEnclosingNode<SgAsmElfRelocSection>(reloc);
     ASSERT_not_null(reloc_section);
     if (0==nbytes)
-        nbytes = reloc_section->get_header()->get_word_size();
+        nbytes = reloc_section->get_header()->get_wordSize();
 
-    if (reloc_section->get_uses_addend()) {
+    if (reloc_section->get_usesAddend()) {
         trace <<"    addend from reloc is " <<StringUtility::addrToString(reloc->get_r_addend()) <<"\n";
         return reloc->get_r_addend();
     }
@@ -1049,7 +1049,7 @@ BinaryLoaderElf::fixupApply(rose_addr_t value, SgAsmElfRelocEntry *reloc, const 
     if (0==target_va)
         target_va = fixupInfoTargetVa(reloc);
     if (0==nbytes)
-        nbytes = header->get_word_size();
+        nbytes = header->get_wordSize();
 
     trace <<"    writing " <<StringUtility::addrToString(value) <<" (" <<StringUtility::plural(nbytes, "bytes") <<")"
           <<" to address " <<StringUtility::addrToString(target_va) <<"\n";
@@ -1189,12 +1189,12 @@ BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolv
     ASSERT_not_null2(header, "ELF file header for relocation entry");
     SgAsmGenericHeader::InsSetArchitecture isa = header->get_isa();
 
-    SgAsmElfSymbolSection* linkedSymbolSection = isSgAsmElfSymbolSection(parentSection->get_linked_section());
+    SgAsmElfSymbolSection* linkedSymbolSection = isSgAsmElfSymbolSection(parentSection->get_linkedSection());
     ASSERT_not_null2(linkedSymbolSection, "linked ELF section for relocation entry");
     ASSERT_require(reloc->get_sym() < linkedSymbolSection->get_symbols()->get_symbols().size());
     SgAsmElfSymbol* relocSymbol = linkedSymbolSection->get_symbols()->get_symbols()[reloc->get_sym()];
     ASSERT_not_null2(relocSymbol, "relocation symbol");
-    trace <<"  " <<StringUtility::addrToString(reloc->get_r_offset()) <<" " <<reloc->reloc_name()
+    trace <<"  " <<StringUtility::addrToString(reloc->get_r_offset()) <<" " <<reloc->toString()
           <<" for \"" <<relocSymbol->get_name()->get_string(true) <<"\"\n";
 
     rose_addr_t target_va = 0;
@@ -1242,12 +1242,12 @@ BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolv
                 case SgAsmElfRelocEntry::R_386_TLS_DTPOFF32:
                 case SgAsmElfRelocEntry::R_386_TLS_TPOFF32: {
                     trace <<"    thread local storage not supported\n";
-                    throw Exception("relocation " + reloc->reloc_name() + " not supported");
+                    throw Exception("relocation " + reloc->toString() + " not supported");
                     break;
                 }
                 default: {
                     trace <<"    not implemented\n";
-                    throw Exception("relocation " + reloc->reloc_name() + " not implemented");
+                    throw Exception("relocation " + reloc->toString() + " not implemented");
                     break;
                 }
             };
@@ -1291,21 +1291,21 @@ BinaryLoaderElf::performRelocation(SgAsmElfRelocEntry* reloc, const SymverResolv
                 }
                 default:
                     trace <<"    not implemented\n";
-                    throw Exception("relocation " + reloc->reloc_name() + " not implemented");
+                    throw Exception("relocation " + reloc->toString() + " not implemented");
                     break;
             }
             break;
 
         default:
             trace <<"    not implemented\n";
-            throw Exception("relocation " + reloc->reloc_name() + " not implemented");
+            throw Exception("relocation " + reloc->toString() + " not implemented");
     }
 }
 
 void
 BinaryLoaderElf::performRelocations(SgAsmElfFileHeader* elfHeader, const MemoryMap::Ptr &memmap) {
     SymverResolver resolver(elfHeader);
-    SgAsmGenericSectionPtrList sections = elfHeader->get_sectab_sections();
+    SgAsmGenericSectionPtrList sections = elfHeader->get_sectionTableSections();
     for (size_t sec=0; sec < sections.size(); ++sec) {
         SgAsmElfRelocSection* relocSection = isSgAsmElfRelocSection(sections[sec]);
         if (NULL == relocSection)

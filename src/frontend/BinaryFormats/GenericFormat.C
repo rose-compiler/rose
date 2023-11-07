@@ -18,15 +18,15 @@ SgAsmGenericFormat::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
-    fprintf(f, "%s%-*s = %s\n", p, w, "family", to_string(get_family()).c_str());
-    fprintf(f, "%s%-*s = %s\n", p, w, "purpose", to_string(get_purpose()).c_str());
+    fprintf(f, "%s%-*s = %s\n", p, w, "family", toString(get_family()).c_str());
+    fprintf(f, "%s%-*s = %s\n", p, w, "purpose", toString(get_purpose()).c_str());
     fprintf(f, "%s%-*s = %s\n", p, w, "sex", stringifyByteOrderEndianness(get_sex()).c_str());
 
-    fprintf(f, "%s%-*s = %u (%scurrent)\n", p, w, "version", get_version(), get_is_current_version() ? "" : "not-" );
+    fprintf(f, "%s%-*s = %u (%scurrent)\n", p, w, "version", get_version(), get_isCurrentVersion() ? "" : "not-" );
     
-    fprintf(f, "%s%-*s = %s\n",  p, w, "ABI",      to_string(get_abi()).c_str());
-    fprintf(f, "%s%-*s = %u\n",  p, w, "ABIvers",  get_abi_version());
-    fprintf(f, "%s%-*s = %" PRIuPTR "\n", p, w, "wordsize", get_word_size());
+    fprintf(f, "%s%-*s = %s\n",  p, w, "ABI",      toString(get_abi()).c_str());
+    fprintf(f, "%s%-*s = %u\n",  p, w, "ABIvers",  get_abiVersion());
+    fprintf(f, "%s%-*s = %" PRIuPTR "\n", p, w, "wordsize", get_wordSize());
 }
 
 bool

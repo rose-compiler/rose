@@ -153,7 +153,7 @@ const std::string JvmAttribute::name() const
 }
 
 JvmClass::JvmClass(SgAsmJvmFileHeader* jfh)
-  : Class{jfh->get_base_va()}, jfh_{jfh}, strings_{std::vector<std::string>()}
+  : Class{jfh->get_baseVa()}, jfh_{jfh}, strings_{std::vector<std::string>()}
 {
   ASSERT_not_null(jfh);
   ASSERT_not_null(jfh->get_field_table());

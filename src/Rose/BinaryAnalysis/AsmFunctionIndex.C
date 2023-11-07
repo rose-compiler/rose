@@ -221,7 +221,7 @@ bool
 AsmFunctionIndex::EntryAddrCallback::operator()(bool enabled, const DataArgs &args)
 {
     if (enabled)
-        args.output <<data_prefix <<std::setw(width) <<StringUtility::addrToString(args.func->get_entry_va());
+        args.output <<data_prefix <<std::setw(width) <<StringUtility::addrToString(args.func->get_entryVa());
     return enabled;
 }
 
@@ -287,11 +287,11 @@ bool
 AsmFunctionIndex::ReasonCallback::operator()(bool enabled, const HeadingArgs &args)
 {
     if (enabled) {
-        size_t width = SgAsmFunction::reason_str(true, 0).size();
+        size_t width = SgAsmFunction::reasonString(true, 0).size();
         if (args.sep) {
             args.output <<separator_prefix <<std::setw(width) <<std::string(width, args.sep);
         } else {
-            size_t footnote = args.footnotes->add_footnote(SgAsmFunction::reason_key());
+            size_t footnote = args.footnotes->add_footnote(SgAsmFunction::reasonKey());
             args.output <<header_prefix <<center(name+"("+args.footnotes->get_footnote_name(footnote)+")", width);
         }
     }
@@ -302,7 +302,7 @@ bool
 AsmFunctionIndex::ReasonCallback::operator()(bool enabled, const DataArgs &args)
 {
     if (enabled) {
-        std::string s = args.func->reason_str(true);
+        std::string s = args.func->reasonString(true);
         args.output <<data_prefix <<s;
     }
     return enabled;
@@ -327,7 +327,7 @@ AsmFunctionIndex::MayReturnCallback::operator()(bool enabled, const DataArgs &ar
 {
     if (enabled) {
         std::string value;
-        switch (args.func->get_may_return()) {
+        switch (args.func->get_mayReturn()) {
             case SgAsmFunction::RET_UNKNOWN:   value = "";       break;
             case SgAsmFunction::RET_NEVER:     value = "no";     break;
             case SgAsmFunction::RET_SOMETIMES: value = "yes";    break;

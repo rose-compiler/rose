@@ -28,11 +28,11 @@ Visitor::visit(SgNode* n)
 
           std::string typeStr = Rose::stringifySgAsmGenericSymbolSymbolType(symbol->get_type());
           std::string bindingStr = Rose::stringifySgAsmGenericSymbolSymbolBinding(symbol->get_binding());
-          std::string stateStr = Rose::stringifySgAsmGenericSymbolSymbolDefState(symbol->get_def_state());
+          std::string stateStr = Rose::stringifySgAsmGenericSymbolSymbolDefState(symbol->get_definitionState());
 
           printf ("symbol->get_type()      = %u = %s\n", symbol->get_type(), typeStr.c_str());
           printf ("symbol->get_binding()   = %u = %s\n", symbol->get_binding(), bindingStr.c_str());
-          printf ("symbol->get_def_state() = %u = %s\n", symbol->get_def_state(), stateStr.c_str());
+          printf ("symbol->get_definitionState() = %u = %s\n", symbol->get_definitionState(), stateStr.c_str());
 
           /* All the ELF-specific stuff and most of the COFF-specific stuff is also represented in the base class, displayed
            * above.  The general rule is that notions that are present in at least two file formats are represented in a
@@ -60,8 +60,8 @@ Visitor::visit(SgNode* n)
                printf ("   coffSymbol->get_st_type()            = %u  \n",coffSymbol->get_st_type());
                printf ("   coffSymbol->get_st_storage_class()   = %u  \n",coffSymbol->get_st_storage_class());
                printf ("   coffSymbol->get_st_num_aux_entries() = %u \n",coffSymbol->get_st_num_aux_entries());
-               printf ("   coffSymbol->get_aux_data():  size    = %zu \n",coffSymbol->get_aux_data().size());
-               for (const auto &auxData: coffSymbol->get_aux_data())
+               printf ("   coffSymbol->get_aux_data():  size    = %zu \n",coffSymbol->get_auxiliaryData().size());
+               for (const auto &auxData: coffSymbol->get_auxiliaryData())
                   {
                     printf ("      coffSymbol->get_aux_data() = %u \n",auxData);
                   }

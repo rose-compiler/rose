@@ -476,8 +476,8 @@ X86::makeAddrSizeValue(State &state, int64_t val, size_t bit_offset, size_t bit_
             ASSERT_not_reachable("not a valid effective address size " +
                                  stringifyBinaryAnalysisX86InstructionSize(effectiveAddressSize(state)));
     }
-    retval->set_bit_offset(bit_offset);
-    retval->set_bit_size(bit_size);
+    retval->set_bitOffset(bit_offset);
+    retval->set_bitSize(bit_size);
     return retval;
 }
 
@@ -491,7 +491,7 @@ X86::makeInstruction(State &state, X86InstructionKind kind, const std::string &m
     insn->set_lockPrefix(state.lock);
     insn->set_repeatPrefix(state.repeatPrefix);
     if (state.insnbufat > 0)
-        insn->set_raw_bytes(SgUnsignedCharList(&(state.insnbuf[0]), &(state.insnbuf[0])+state.insnbufat));
+        insn->set_rawBytes(SgUnsignedCharList(&(state.insnbuf[0]), &(state.insnbuf[0])+state.insnbufat));
     if (state.segOverride != x86_segreg_none)
         insn->set_segmentOverride(state.segOverride);
     if (state.branchPredictionEnabled)
@@ -724,8 +724,8 @@ X86::decodeModrmMemory(State &state) const
             /* Special case */
             size_t bit_offset = 8*state.insnbufat;
             SgAsmValueExpression *ve = SageBuilderAsm::buildValueX86Word(getWord(state));
-            ve->set_bit_offset(bit_offset);
-            ve->set_bit_size(32);
+            ve->set_bitOffset(bit_offset);
+            ve->set_bitSize(32);
             addressExpr = ve;
         } else {
             switch (state.rmField) {
@@ -770,8 +770,8 @@ X86::decodeModrmMemory(State &state) const
                     size_t bit_offset = 8*state.insnbufat;
                     uint8_t offset = getByte(state);
                     SgAsmValueExpression *wv = SageBuilderAsm::buildValueX86Word((int16_t)(int8_t)offset);
-                    wv->set_bit_offset(bit_offset);
-                    wv->set_bit_size(8);
+                    wv->set_bitOffset(bit_offset);
+                    wv->set_bitSize(8);
                     addressExpr = SageBuilderAsm::buildAddExpression(addressExpr, wv);
                     break;
                 }
@@ -779,8 +779,8 @@ X86::decodeModrmMemory(State &state) const
                     size_t bit_offset = 8*state.insnbufat;
                     uint16_t offset = getWord(state);
                     SgAsmValueExpression *wv = SageBuilderAsm::buildValueX86Word(offset);
-                    wv->set_bit_offset(bit_offset);
-                    wv->set_bit_size(16);
+                    wv->set_bitOffset(bit_offset);
+                    wv->set_bitSize(16);
                     addressExpr = SageBuilderAsm::buildAddExpression(addressExpr, wv);
                     break;
                 }
@@ -854,8 +854,8 @@ X86::decodeModrmMemory(State &state) const
                     size_t bit_offset = 8*state.insnbufat;
                     uint8_t offset = getByte(state);
                     SgAsmIntegerValueExpression *offsetExpr = SageBuilderAsm::buildValueX86Byte(offset);
-                    offsetExpr->set_bit_offset(bit_offset);
-                    offsetExpr->set_bit_size(8);
+                    offsetExpr->set_bitOffset(bit_offset);
+                    offsetExpr->set_bitSize(8);
                     addressExpr = SageBuilderAsm::buildAddExpression(addressExpr, offsetExpr);
                     break;
                 }
@@ -863,8 +863,8 @@ X86::decodeModrmMemory(State &state) const
                     size_t bit_offset = 8*state.insnbufat;
                     uint32_t offset = getDWord(state);
                     SgAsmIntegerValueExpression *offsetExpr = SageBuilderAsm::buildValueX86DWord(offset);
-                    offsetExpr->set_bit_offset(bit_offset);
-                    offsetExpr->set_bit_size(32);
+                    offsetExpr->set_bitOffset(bit_offset);
+                    offsetExpr->set_bitSize(32);
                     addressExpr = SageBuilderAsm::buildAddExpression(addressExpr, offsetExpr);
                     break;
                 }
@@ -933,8 +933,8 @@ X86::getImmByte(State &state) const
 {
     size_t bit_offset = 8*state.insnbufat;
     SgAsmValueExpression *retval = SageBuilderAsm::buildValueX86Byte(getByte(state));
-    retval->set_bit_offset(bit_offset);
-    retval->set_bit_size(8);
+    retval->set_bitOffset(bit_offset);
+    retval->set_bitSize(8);
     return retval;
 }
 
@@ -943,8 +943,8 @@ X86::getImmWord(State &state) const
 {
     size_t bit_offset = 8*state.insnbufat;
     SgAsmValueExpression *retval = SageBuilderAsm::buildValueX86Word(getWord(state));
-    retval->set_bit_offset(bit_offset);
-    retval->set_bit_size(16);
+    retval->set_bitOffset(bit_offset);
+    retval->set_bitSize(16);
     return retval;
 }
 
@@ -953,8 +953,8 @@ X86::getImmDWord(State &state) const
 {
     size_t bit_offset = 8*state.insnbufat;
     SgAsmValueExpression *retval = SageBuilderAsm::buildValueX86DWord(getDWord(state));
-    retval->set_bit_offset(bit_offset);
-    retval->set_bit_size(32);
+    retval->set_bitOffset(bit_offset);
+    retval->set_bitSize(32);
     return retval;
 }
 
@@ -963,8 +963,8 @@ X86::getImmQWord(State &state) const
 {
     size_t bit_offset = 8*state.insnbufat;
     SgAsmValueExpression *retval = SageBuilderAsm::buildValueX86QWord(getQWord(state));
-    retval->set_bit_offset(bit_offset);
-    retval->set_bit_size(64);
+    retval->set_bitOffset(bit_offset);
+    retval->set_bitSize(64);
     return retval;
 }
 
@@ -1027,8 +1027,8 @@ X86::getImmJz(State &state) const
             retval = SageBuilderAsm::buildValueX86QWord(target);
             break;
     }
-    retval->set_bit_offset(bit_offset);
-    retval->set_bit_size(bit_size);
+    retval->set_bitOffset(bit_offset);
+    retval->set_bitSize(bit_size);
     return retval;
 }
 
@@ -1039,8 +1039,8 @@ X86::getImmByteAsIv(State &state) const
     size_t bit_offset = 8*state.insnbufat;
     uint8_t val = getByte(state);
     retval = SageBuilderAsm::buildValueX86Byte(val);
-    retval->set_bit_offset(bit_offset);
-    retval->set_bit_size(8);
+    retval->set_bitOffset(bit_offset);
+    retval->set_bitSize(8);
     return retval;
 }
 
@@ -1086,8 +1086,8 @@ X86::getImmJb(State &state) const
                                  stringifyBinaryAnalysisX86InstructionSize(insnSize));
             return NULL;                                // not reachable, but avoids MSCV warning
     }
-    retval->set_bit_offset(bit_offset);
-    retval->set_bit_size(8);
+    retval->set_bitOffset(bit_offset);
+    retval->set_bitSize(8);
     return retval;
 }
 

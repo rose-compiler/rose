@@ -1088,7 +1088,7 @@ Engine::updateAnalysisResults(const Partitioner::Ptr &partitioner) {
 void
 Engine::disassembleForRoseFrontend(SgAsmInterpretation *interp) {
     ASSERT_not_null(interp);
-    ASSERT_require(interp->get_global_block() == nullptr);
+    ASSERT_require(interp->get_globalBlock() == nullptr);
 
     if (interp->get_map() == nullptr) {
         mlog[WARN] <<"no virtual memory to disassemble for";
@@ -1106,7 +1106,7 @@ Engine::disassembleForRoseFrontend(SgAsmInterpretation *interp) {
     engine->interpretation(interp);
 
     if (SgAsmBlock *gblock = engine->buildAst()) {
-        interp->set_global_block(gblock);
+        interp->set_globalBlock(gblock);
         interp->set_map(engine->memoryMap());
     }
 }

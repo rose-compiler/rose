@@ -85,7 +85,7 @@ SgAsmElfSectionTable::SgAsmElfSectionTable(SgAsmElfFileHeader *fhdr)
     initializeProperties();
 
     /* There can be only one ELF Section Table */
-    ASSERT_require(fhdr->get_section_table() == nullptr);
+    ASSERT_require(fhdr->get_sectionTable() == nullptr);
 
     set_synthesized(true);                              /* the section table isn't really a section itself */
     set_name(new SgAsmBasicString("ELF Section Table"));
@@ -96,7 +96,7 @@ SgAsmElfSectionTable::SgAsmElfSectionTable(SgAsmElfFileHeader *fhdr)
     if (fhdr->get_e_shnum()<1)
         fhdr->set_e_shnum(1);
 
-    fhdr->set_section_table(this);
+    fhdr->set_sectionTable(this);
 }
     
 SgAsmElfSectionTable *
@@ -109,7 +109,7 @@ SgAsmElfSectionTable::parse()
     Rose::BinaryAnalysis::ByteOrder::Endianness sex = fhdr->get_sex();
 
     size_t ent_size, struct_size, opt_size, nentries;
-    calculate_sizes(&ent_size, &struct_size, &opt_size, &nentries);
+    calculateSizes(&ent_size, &struct_size, &opt_size, &nentries);
     ROSE_ASSERT(opt_size==fhdr->get_shextrasz() && nentries==fhdr->get_e_shnum());
 
     /* If the current size is very small (0 or 1 byte) then we're coming straight from the constructor and the parsing should
@@ -125,17 +125,17 @@ SgAsmElfSectionTable::parse()
     try {
         for (size_t i=0; i<nentries; i++, offset+=ent_size) {
             SgAsmElfSectionTableEntry *shdr = NULL;
-            if (4 == fhdr->get_word_size()) {
+            if (4 == fhdr->get_wordSize()) {
                 SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk disk;
-                read_content_local(offset, &disk, struct_size);
+                readContentLocal(offset, &disk, struct_size);
                 shdr = new SgAsmElfSectionTableEntry(sex, &disk);
             } else {
                 SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk disk;
-                read_content_local(offset, &disk, struct_size);
+                readContentLocal(offset, &disk, struct_size);
                 shdr = new SgAsmElfSectionTableEntry(sex, &disk);
             }
             if (opt_size>0)
-                shdr->get_extra() = read_content_local_ucl(offset+struct_size, opt_size);
+                shdr->get_extra() = readContentLocalUcl(offset+struct_size, opt_size);
             entries.push_back(shdr);
         }
     } catch (const ShortRead &error) {
@@ -158,7 +158,7 @@ SgAsmElfSectionTable::parse()
         SgAsmElfSectionTableEntry *entry = entries[fhdr->get_e_shstrndx()];
         ASSERT_not_null(entry);
         section_name_strings = new SgAsmElfStringSection(fhdr);
-        section_name_strings->init_from_section_table(entry, section_name_strings, fhdr->get_e_shstrndx());
+        section_name_strings->initFromSectionTable(entry, section_name_strings, fhdr->get_e_shstrndx());
         section_name_strings->parse();
         is_parsed[fhdr->get_e_shstrndx()] = section_name_strings;
     }
@@ -208,7 +208,7 @@ SgAsmElfSectionTable::parse()
                         SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(linked);
                         ROSE_ASSERT(strsec);
                         SgAsmElfSymbolSection *symsec = new SgAsmElfSymbolSection(fhdr, strsec);
-                        symsec->set_is_dynamic(true);
+                        symsec->set_isDynamic(true);
                         is_parsed[i] = symsec;
                         break;
                     }
@@ -216,7 +216,7 @@ SgAsmElfSectionTable::parse()
                         SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(linked);
                         ROSE_ASSERT(strsec);
                         SgAsmElfSymbolSection *symsec = new SgAsmElfSymbolSection(fhdr, strsec);
-                        symsec->set_is_dynamic(false);
+                        symsec->set_isDynamic(false);
                         is_parsed[i] = symsec;
                         break;
                     }
@@ -226,14 +226,14 @@ SgAsmElfSectionTable::parse()
                     case SgAsmElfSectionTableEntry::SHT_REL: {
                         SgAsmElfSymbolSection *symbols = dynamic_cast<SgAsmElfSymbolSection*>(linked);
                         SgAsmElfRelocSection *relocsec = new SgAsmElfRelocSection(fhdr, symbols, info_linked);
-                        relocsec->set_uses_addend(false);
+                        relocsec->set_usesAddend(false);
                         is_parsed[i] = relocsec;
                         break;
                     }
                     case SgAsmElfSectionTableEntry::SHT_RELA: {
                         SgAsmElfSymbolSection *symbols = dynamic_cast<SgAsmElfSymbolSection*>(linked);
                         SgAsmElfRelocSection *relocsec = new SgAsmElfRelocSection(fhdr, symbols, info_linked);
-                        relocsec->set_uses_addend(true);
+                        relocsec->set_usesAddend(true);
                         is_parsed[i] = relocsec;
                         break;
                     }
@@ -242,7 +242,7 @@ SgAsmElfSectionTable::parse()
                             fprintf(stderr, "SgAsmElfSectionTable::parse(): no string table for section table\n");
                             is_parsed[i] = new SgAsmElfSection(fhdr);
                         } else {
-                            std::string section_name = section_name_strings->read_content_local_str(entry->get_sh_name());
+                            std::string section_name = section_name_strings->readContentLocalString(entry->get_sh_name());
                             if (section_name == ".eh_frame") {
                                 is_parsed[i] = new SgAsmElfEHFrameSection(fhdr);
                             } else {
@@ -271,7 +271,7 @@ SgAsmElfSectionTable::parse()
                         is_parsed[i] = new SgAsmElfSection(fhdr);
                         break;
                 }
-                is_parsed[i]->init_from_section_table(entry, section_name_strings, i);
+                is_parsed[i]->initFromSectionTable(entry, section_name_strings, i);
                 is_parsed[i]->parse();
             }
         }
@@ -283,16 +283,16 @@ SgAsmElfSectionTable::parse()
     for (size_t i = 0; i < entries.size(); i++) {
         SgAsmElfSectionTableEntry *shdr = entries[i];
         if (shdr->get_sh_link() > 0) {
-            SgAsmElfSection *source = isSgAsmElfSection(fhdr->get_file()->get_section_by_id(i));
-            SgAsmElfSection *target = isSgAsmElfSection(fhdr->get_file()->get_section_by_id(shdr->get_sh_link()));
+            SgAsmElfSection *source = isSgAsmElfSection(fhdr->get_file()->get_sectionById(i));
+            SgAsmElfSection *target = isSgAsmElfSection(fhdr->get_file()->get_sectionById(shdr->get_sh_link()));
             assert(source);     /* because we created it above */
-            source->set_linked_section(target);
+            source->set_linkedSection(target);
         }
     }
 
     /* Finish parsing sections now that we have basic info for all the sections. */
     for (size_t i=0; i<is_parsed.size(); i++)
-        is_parsed[i]->finish_parsing();
+        is_parsed[i]->finishParsing();
 
     return this;
 }
@@ -309,7 +309,7 @@ SgAsmElfSectionTable::addSection(SgAsmElfSection *section)
     ROSE_ASSERT(section!=NULL);
     ROSE_ASSERT(section->get_file()==get_file());
     ROSE_ASSERT(section->get_header()==get_header());
-    ROSE_ASSERT(section->get_section_entry()==NULL);            /* must not be in the section table yet */
+    ROSE_ASSERT(section->get_sectionEntry()==NULL);            /* must not be in the section table yet */
     
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
@@ -332,24 +332,24 @@ SgAsmElfSectionTable::addSection(SgAsmElfSection *section)
             SgAsmGenericSectionList *all = fhdr->get_sections();
             for (size_t i=0; i<all->get_sections().size(); i++) {
                 SgAsmElfSection *s = dynamic_cast<SgAsmElfSection*>(all->get_sections()[i]);
-                if (s && s->get_id()>=0 && s->get_section_entry()!=NULL) {
-                    s->allocate_name_to_storage(strsec);
+                if (s && s->get_id()>=0 && s->get_sectionEntry()!=NULL) {
+                    s->allocateNameToStorage(strsec);
                 }
             }
         }
     } else {
-        strsec = dynamic_cast<SgAsmElfStringSection*>(fhdr->get_section_by_id(fhdr->get_e_shstrndx()));
+        strsec = dynamic_cast<SgAsmElfStringSection*>(fhdr->get_sectionById(fhdr->get_e_shstrndx()));
         ROSE_ASSERT(strsec!=NULL);
     }
 
     /* Make sure the name is in the correct string table */
     if (strsec)
-        section->allocate_name_to_storage(strsec);
+        section->allocateNameToStorage(strsec);
 
     /* Create a new section table entry. */
     SgAsmElfSectionTableEntry *shdr = new SgAsmElfSectionTableEntry;
-    shdr->update_from_section(section);
-    section->set_section_entry(shdr);
+    shdr->updateFromSection(section);
+    section->set_sectionEntry(shdr);
 
     return shdr;
 }
@@ -372,9 +372,9 @@ SgAsmElfSectionTable::calculateSizes(size_t *entsize, size_t *required, size_t *
     size_t nentries = 0;
 
     /* Size of required part of each entry */
-    if (4==fhdr->get_word_size()) {
+    if (4==fhdr->get_wordSize()) {
         struct_size = sizeof(SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk);
-    } else if (8==fhdr->get_word_size()) {
+    } else if (8==fhdr->get_wordSize()) {
         struct_size = sizeof(SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk);
     } else {
         throw FormatError("bad ELF word size");
@@ -388,10 +388,10 @@ SgAsmElfSectionTable::calculateSizes(size_t *entsize, size_t *required, size_t *
     SgAsmGenericSectionPtrList sections = fhdr->get_sections()->get_sections();
     for (size_t i=0; i<sections.size(); i++) {
         SgAsmElfSection *elfsec = dynamic_cast<SgAsmElfSection*>(sections[i]);
-        if (elfsec && elfsec->get_section_entry()) {
+        if (elfsec && elfsec->get_sectionEntry()) {
             ROSE_ASSERT(elfsec->get_id()>=0);
             nentries = std::max(nentries, (size_t)elfsec->get_id()+1);
-            extra_size = std::max(extra_size, elfsec->get_section_entry()->get_extra().size());
+            extra_size = std::max(extra_size, elfsec->get_sectionEntry()->get_extra().size());
         }
     }
 
@@ -429,21 +429,21 @@ SgAsmElfSectionTableEntry::updateFromSection(SgAsmElfSection *section)
     }
 
     set_sh_offset(section->get_offset());
-    if (get_sh_type()==SHT_NOBITS && section->is_mapped()) {
-        set_sh_size(section->get_mapped_size());
+    if (get_sh_type()==SHT_NOBITS && section->isMapped()) {
+        set_sh_size(section->get_mappedSize());
     } else {
         set_sh_size(section->get_size());
     }
 
-    if (section->is_mapped()) {
-        set_sh_addr(section->get_mapped_preferred_rva());
-        set_sh_addralign(section->get_mapped_alignment());
-        if (section->get_mapped_wperm()) {
+    if (section->isMapped()) {
+        set_sh_addr(section->get_mappedPreferredRva());
+        set_sh_addralign(section->get_mappedAlignment());
+        if (section->get_mappedWritePermission()) {
             p_sh_flags |= SHF_WRITE;
         } else {
             p_sh_flags &= ~SHF_WRITE;
         }
-        if (section->get_mapped_xperm()) {
+        if (section->get_mappedExecutePermission()) {
             p_sh_flags |=  SHF_EXECINSTR;
         } else {
             p_sh_flags &= ~SHF_EXECINSTR;
@@ -453,7 +453,7 @@ SgAsmElfSectionTableEntry::updateFromSection(SgAsmElfSection *section)
         p_sh_flags &= ~(SHF_WRITE | SHF_EXECINSTR); /*clear write & execute bits*/
     }
     
-    SgAsmElfSection *linked_to = section->get_linked_section();
+    SgAsmElfSection *linked_to = section->get_linkedSection();
     if (linked_to) {
         ROSE_ASSERT(linked_to->get_id()>0);
         set_sh_link(linked_to->get_id());
@@ -565,7 +565,7 @@ SgAsmElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     
     fprintf(f, "%s%-*s = %u bytes into strtab\n",                      p, w, "sh_name",        p_sh_name);
     fprintf(f, "%s%-*s = 0x%x (%d) %s\n",                              p, w, "sh_type", 
-            p_sh_type, p_sh_type, to_string(p_sh_type).c_str());
+            p_sh_type, p_sh_type, toString(p_sh_type).c_str());
     fprintf(f, "%s%-*s = %lu\n",                                       p, w, "sh_link",        p_sh_link);
     fprintf(f, "%s%-*s = %lu\n",                                       p, w, "sh_info",        p_sh_info);
     fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",                           p, w, "sh_flags",       p_sh_flags);
@@ -588,17 +588,17 @@ SgAsmElfSectionTable::reallocate()
 
     /* Resize based on word size from ELF File Header */
     size_t opt_size, nentries;
-    rose_addr_t need = calculate_sizes(NULL, NULL, &opt_size, &nentries);
+    rose_addr_t need = calculateSizes(NULL, NULL, &opt_size, &nentries);
     if (need < get_size()) {
-        if (is_mapped()) {
-            ROSE_ASSERT(get_mapped_size()==get_size());
-            set_mapped_size(need);
+        if (isMapped()) {
+            ROSE_ASSERT(get_mappedSize()==get_size());
+            set_mappedSize(need);
         }
         set_size(need);
         reallocated = true;
         
     } else if (need > get_size()) {
-        get_file()->shift_extend(this, 0, need-get_size(), SgAsmGenericFile::ADDRSP_ALL, SgAsmGenericFile::ELASTIC_HOLE);
+        get_file()->shiftExtend(this, 0, need-get_size(), SgAsmGenericFile::ADDRSP_ALL, SgAsmGenericFile::ELASTIC_HOLE);
         reallocated = true;
     }
 
@@ -616,16 +616,16 @@ SgAsmElfSectionTable::unparse(std::ostream &f) const
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
     Rose::BinaryAnalysis::ByteOrder::Endianness sex = fhdr->get_sex();
-    SgAsmGenericSectionPtrList sections = fhdr->get_sectab_sections();
+    SgAsmGenericSectionPtrList sections = fhdr->get_sectionTableSections();
 
     /* Write the sections first */
     for (size_t i=0; i<sections.size(); i++)
         sections[i]->unparse(f);
-    unparse_holes(f);
+    unparseHoles(f);
 
     /* Calculate sizes. The ELF File Header should have been updated in reallocate() prior to unparsing. */
     size_t ent_size, struct_size, opt_size, nentries;
-    calculate_sizes(&ent_size, &struct_size, &opt_size, &nentries);
+    calculateSizes(&ent_size, &struct_size, &opt_size, &nentries);
     ROSE_ASSERT(fhdr->get_shextrasz()==opt_size);
     ROSE_ASSERT(fhdr->get_e_shnum()==nentries);
     
@@ -633,7 +633,7 @@ SgAsmElfSectionTable::unparse(std::ostream &f) const
     for (size_t i=0; i<sections.size(); ++i) {
         SgAsmElfSection *section = dynamic_cast<SgAsmElfSection*>(sections[i]);
         ROSE_ASSERT(section!=NULL);
-        SgAsmElfSectionTableEntry *shdr = section->get_section_entry();
+        SgAsmElfSectionTableEntry *shdr = section->get_sectionEntry();
         ROSE_ASSERT(shdr!=NULL);
         ROSE_ASSERT(shdr->get_sh_offset()==section->get_offset());/*section table entry should have been updated in reallocate()*/
 
@@ -644,9 +644,9 @@ SgAsmElfSectionTable::unparse(std::ostream &f) const
         SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk disk64;
         void *disk  = NULL;
 
-        if (4==fhdr->get_word_size()) {
+        if (4==fhdr->get_wordSize()) {
             disk = shdr->encode(sex, &disk32);
-        } else if (8==fhdr->get_word_size()) {
+        } else if (8==fhdr->get_wordSize()) {
             disk = shdr->encode(sex, &disk64);
         } else {
             ROSE_ASSERT(!"invalid word size");

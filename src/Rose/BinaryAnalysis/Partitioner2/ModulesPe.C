@@ -37,7 +37,7 @@ getImportIndex(const Partitioner::ConstPtr&, SgAsmPEFileHeader *peHeader, Import
     if (peHeader != nullptr) {
         for (SgAsmGenericSection *section: peHeader->get_sections()->get_sections()) {
             if (SgAsmPEImportSection *importSection = isSgAsmPEImportSection(section)) {
-                for (SgAsmPEImportDirectory *importDir: importSection->get_import_directories()->get_vector()) {
+                for (SgAsmPEImportDirectory *importDir: importSection->get_importDirectories()->get_vector()) {
                     for (SgAsmPEImportItem *import: importDir->get_imports()->get_vector()) {
                         if (import->get_hintname_rva() != 0 || import->get_hint() != 0 ||
                             !import->get_name()->get_string().empty()) {
@@ -78,7 +78,7 @@ findExportFunctions(const Partitioner::ConstPtr &partitioner, SgAsmPEFileHeader 
         for (SgAsmGenericSection *section: peHeader->get_sections()->get_sections()) {
             if (SgAsmPEExportSection *exportSection = isSgAsmPEExportSection(section)) {
                 for (SgAsmPEExportEntry *exportEntry: exportSection->get_exports()->get_exports()) {
-                    rose_addr_t va = exportEntry->get_export_rva().get_va();
+                    rose_addr_t va = exportEntry->get_exportRva().get_va();
                     if (partitioner->discoverInstruction(va)) {
                         Function::Ptr function = Function::instance(va, exportEntry->get_name()->get_string(),
                                                                     SgAsmFunction::FUNC_EXPORT);
@@ -117,8 +117,8 @@ findImportFunctions(const Partitioner::ConstPtr&, SgAsmPEFileHeader *peHeader, c
         for (const ImportIndex::Node &import: imports.nodes()) {
             std::string name = import.value()->get_name()->get_string();
             SgAsmPEImportDirectory *importDir = SageInterface::getEnclosingNode<SgAsmPEImportDirectory>(import.value());
-            if (importDir && !importDir->get_dll_name()->get_string().empty())
-                name += "@" + importDir->get_dll_name()->get_string();
+            if (importDir && !importDir->get_dllName()->get_string().empty())
+                name += "@" + importDir->get_dllName()->get_string();
             Function::Ptr function = Function::instance(import.key(), name, SgAsmFunction::FUNC_IMPORT);
             if (insertUnique(functions, function, sortFunctionsByAddress))
                 ++nInserted;
@@ -189,7 +189,7 @@ rebaseImportAddressTables(const Partitioner::Ptr &partitioner, const ImportIndex
     for (const ImportIndex::Node &node: index.nodes()) {
         if (node.value()->get_iat_written())
             continue;
-        const rose_addr_t iatVa = node.value()->get_iat_entry_va();
+        const rose_addr_t iatVa = node.value()->get_iatEntryVa();
         toWrite |= AddressInterval::baseSize(iatVa, wordSize);
     }
     makeMemoryWritable(partitioner->memoryMap(), toWrite);
@@ -219,7 +219,7 @@ rebaseImportAddressTables(const Partitioner::Ptr &partitioner, const ImportIndex
                 ASSERT_not_reachable("unknown default byte order");
         }
         
-        rose_addr_t iatVa = node.value()->get_iat_entry_va();
+        rose_addr_t iatVa = node.value()->get_iatEntryVa();
         if (wordSize != partitioner->memoryMap()->at(iatVa).limit(wordSize).write(packed).size()){
             ASSERT_not_reachable("write failed to map we just created");
         }else{
@@ -238,10 +238,10 @@ nameImportThunks(const Partitioner::ConstPtr &partitioner, SgAsmInterpretation *
     // Get the addresses for the PE Import Address Tables
     AddressIntervalSet iatExtent;
     for (SgAsmGenericHeader *fileHeader: interp->get_headers()->get_headers()) {
-        SgAsmGenericSectionPtrList iatSections = fileHeader->get_sections_by_name("Import Address Table");
+        SgAsmGenericSectionPtrList iatSections = fileHeader->get_sectionsByName("Import Address Table");
         for (SgAsmGenericSection *section: iatSections) {
-            if (section->get_id()==-1 && section->is_mapped())
-                iatExtent.insert(AddressInterval::baseSize(section->get_mapped_actual_va(), section->get_mapped_size()));
+            if (section->get_id()==-1 && section->isMapped())
+                iatExtent.insert(AddressInterval::baseSize(section->get_mappedActualVa(), section->get_mappedSize()));
         }
     }
     if (iatExtent.isEmpty())
@@ -290,8 +290,8 @@ nameImportThunks(const Partitioner::ConstPtr &partitioner, SgAsmInterpretation *
         // Merge the new name into the function
         std::string importName = importItem->get_name()->get_string();
         SgAsmPEImportDirectory *importDir = SageInterface::getEnclosingNode<SgAsmPEImportDirectory>(importItem);
-        if (importDir && !importDir->get_dll_name()->get_string().empty())
-            importName += "@" + importDir->get_dll_name()->get_string();
+        if (importDir && !importDir->get_dllName()->get_string().empty())
+            importName += "@" + importDir->get_dllName()->get_string();
         function->name(importName);
         function->insertReasons(SgAsmFunction::FUNC_THUNK | SgAsmFunction::FUNC_IMPORT);
     }

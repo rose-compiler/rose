@@ -56,7 +56,7 @@ main(int argc, char *argv[]) {
         if (SgBinaryComposite *binComp = isSgBinaryComposite(file)) {
             if (SgAsmGenericFileList *genFileList = binComp->get_genericFileList()) {
                 for (SgAsmGenericFile *asmFile: genFileList->get_files()) {
-                    std::cout <<asmFile->format_name() <<"\n";
+                    std::cout <<asmFile->formatName() <<"\n";
 
                     // A table describing the sections of the file
                     asmFile->dump(stdout);

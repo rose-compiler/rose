@@ -68,9 +68,9 @@ bool
 Aarch32::canDisassemble(SgAsmGenericHeader *header) const {
     SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
     if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_ARM_Family) {
-        if (header->get_exec_format()->get_word_size() == 4) {
+        if (header->get_executableFormat()->get_wordSize() == 4) {
             return !modes_.isSet(Mode::THUMB);
-        } else if (header->get_exec_format()->get_word_size() == 2) {
+        } else if (header->get_executableFormat()->get_wordSize() == 2) {
             return modes_.isSet(Mode::THUMB);
         }
     }
@@ -208,7 +208,7 @@ Aarch32::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet *s
             operand->set_parent(operands);
         }
         auto insn = new SgAsmAarch32Instruction(va, fixMnemonic(r.csi->mnemonic, detail.cc), (Aarch32InstructionKind)r.csi->id, detail.cc);
-        insn->set_raw_bytes(SgUnsignedCharList(r.csi->bytes, r.csi->bytes + r.csi->size));
+        insn->set_rawBytes(SgUnsignedCharList(r.csi->bytes, r.csi->bytes + r.csi->size));
         insn->set_updatesFlags(detail.update_flags);
         insn->set_operandList(operands);
         operands->set_parent(insn);
@@ -340,7 +340,7 @@ Aarch32::makeUnknownInstruction(const Exception &e) {
     SgAsmOperandList *operands = new SgAsmOperandList();
     insn->set_operandList(operands);
     operands->set_parent(insn);
-    insn->set_raw_bytes(e.bytes);
+    insn->set_rawBytes(e.bytes);
     insn->set_condition(Aarch32InstructionCondition::ARM_CC_AL);
     return insn;
 }

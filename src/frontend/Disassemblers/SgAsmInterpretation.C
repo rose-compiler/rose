@@ -74,7 +74,7 @@ SgAsmInterpretation::get_instructionMap(bool recompute)
 {
     if (recompute || instruction_map.empty()) {
         instruction_map.clear();
-        insert_instructions(instruction_map);
+        insertInstructions(instruction_map);
     }
     return instruction_map;
 }

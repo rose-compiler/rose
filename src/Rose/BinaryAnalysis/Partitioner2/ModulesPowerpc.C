@@ -159,8 +159,8 @@ nameImportThunks(const Partitioner::ConstPtr &partitioner, SgAsmInterpretation *
     AddressIntervalSet pltAddresses;
     std::vector<SgAsmElfSection*> pltSections = ModulesElf::findSectionsByName(interp, ".plt");
     for (SgAsmElfSection *section: pltSections) {
-        if (section->is_mapped())
-            pltAddresses |= AddressInterval::baseSize(section->get_mapped_actual_va(), section->get_mapped_size());
+        if (section->isMapped())
+            pltAddresses |= AddressInterval::baseSize(section->get_mappedActualVa(), section->get_mappedSize());
     }
 
     // Look at all the functions that don't have names yet. If the function looks like a PowerPC ELF dynamic function
@@ -179,7 +179,7 @@ nameImportThunks(const Partitioner::ConstPtr &partitioner, SgAsmInterpretation *
             SgAsmElfRelocSection *relocs = isSgAsmElfRelocSection(genericRelocSection);
             if (!relocs || !relocs->get_entries())
                 break;
-            SgAsmElfSymbolSection *symtab = isSgAsmElfSymbolSection(relocs->get_linked_section());
+            SgAsmElfSymbolSection *symtab = isSgAsmElfSymbolSection(relocs->get_linkedSection());
             if (!symtab)
                 break;
 

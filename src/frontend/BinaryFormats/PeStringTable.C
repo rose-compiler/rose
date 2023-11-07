@@ -49,7 +49,7 @@ void
 SgAsmPEStringSection::unparse(std::ostream &f) const
 {
     get_strtab()->unparse(f);
-    unparse_holes(f);
+    unparseHoles(f);
 }
 
 /* Augments superclass to make sure free list and such are adjusted properly */
@@ -63,11 +63,11 @@ SgAsmPEStringSection::set_size(rose_addr_t newsize)
     if (get_size() > orig_size) {
         /* Add new address space to string table free list */
         rose_addr_t n = get_size() - orig_size;
-        strtab->get_freelist().insert(AddressInterval::baseSize(orig_size, n));
+        strtab->get_freeList().insert(AddressInterval::baseSize(orig_size, n));
     } else if (get_size() < orig_size) {
         /* Remove deleted address space from string table free list */
         rose_addr_t n = orig_size - get_size();
-        strtab->get_freelist().erase(AddressInterval::baseSize(get_size(), n));
+        strtab->get_freeList().erase(AddressInterval::baseSize(get_size(), n));
     }
 }
 
@@ -137,7 +137,7 @@ SgAsmCoffStrtab::createStorage(rose_addr_t offset, bool shared)
 
     /* Read string length byte */
     unsigned char byte;
-    container->read_content_local(offset, &byte, 1);
+    container->readContentLocal(offset, &byte, 1);
     unsigned len = byte;
 
     /* Make sure new storage isn't inside some other string. (We don't support nested strings in COFF where the length byte of
@@ -150,7 +150,7 @@ SgAsmCoffStrtab::createStorage(rose_addr_t offset, bool shared)
 
     /* Create storage object */
     char *buf = new char[len];
-    container->read_content_local(offset+1, buf, len);
+    container->readContentLocal(offset+1, buf, len);
     SgAsmStringStorage *storage = new SgAsmStringStorage(this, std::string(buf, len), offset);
     delete[] buf;
 
@@ -197,7 +197,7 @@ SgAsmCoffStrtab::unparse(std::ostream &f) const
     }
     
     /* Fill free areas with zero */
-    BOOST_FOREACH (const AddressInterval &interval, get_freelist().intervals())
+    BOOST_FOREACH (const AddressInterval &interval, get_freeList().intervals())
         container->write(f, interval.least(), std::string(interval.size(), '\0'));
 }
 

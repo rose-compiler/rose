@@ -31,7 +31,7 @@ SgAsmCoffSymbol::SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *s
     static uint8_t zeroRecord[COFFSymbol_disk_size];
     memset(zeroRecord, 0, sizeof zeroRecord);
     COFFSymbol_disk disk;
-    symtab->read_content_local(idx * COFFSymbol_disk_size, &disk, COFFSymbol_disk_size);
+    symtab->readContentLocal(idx * COFFSymbol_disk_size, &disk, COFFSymbol_disk_size);
     if (0 == memcmp(&disk, zeroRecord, COFFSymbol_disk_size))
         throw FormatError("zero symbol record");
 
@@ -39,7 +39,7 @@ SgAsmCoffSymbol::SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *s
         p_st_name_offset = Rose::BinaryAnalysis::ByteOrder::leToHost(disk.st_offset);
         if (p_st_name_offset < 4)
             throw FormatError("name collides with size field");
-        std::string s = strtab->read_content_local_str(p_st_name_offset);
+        std::string s = strtab->readContentLocalString(p_st_name_offset);
         set_name(new SgAsmBasicString(s));
     } else {
         char temp[9];
@@ -56,9 +56,9 @@ SgAsmCoffSymbol::SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *s
     p_st_num_aux_entries = Rose::BinaryAnalysis::ByteOrder::leToHost(disk.st_num_aux_entries);
 
     /* Bind to section number. We can do this now because we've already parsed the PE Section Table */
-    ASSERT_not_null(fhdr->get_section_table());
+    ASSERT_not_null(fhdr->get_sectionTable());
     if (p_st_section_num > 0) {
-        p_bound = fhdr->get_file()->get_section_by_id(p_st_section_num);
+        p_bound = fhdr->get_file()->get_sectionById(p_st_section_num);
         if (NULL==p_bound) {
             mlog[WARN] <<"PE symbol \"" <<StringUtility::cEscape(p_st_name) <<"\" (index " <<idx <<")"
                        <<" is not bound to any section (section " <<p_st_section_num <<")\n";
@@ -120,7 +120,7 @@ SgAsmCoffSymbol::SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *s
     
     /* Read additional aux entries. We keep this as 'char' to avoid alignment problems. */
     if (p_st_num_aux_entries > 0) {
-        p_auxiliaryData = symtab->read_content_local_ucl((idx+1)*COFFSymbol_disk_size, p_st_num_aux_entries * COFFSymbol_disk_size);
+        p_auxiliaryData = symtab->readContentLocalUcl((idx+1)*COFFSymbol_disk_size, p_st_num_aux_entries * COFFSymbol_disk_size);
 
         if (2 /*external*/ == p_st_storage_class && get_type() == SYM_FUNC && p_st_section_num > 0) {
             // Auxiliary record format 1: Function definitions
@@ -163,7 +163,7 @@ SgAsmCoffSymbol::SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *s
                 rose_addr_t fname_offset = Rose::BinaryAnalysis::ByteOrder::leToHost(d->st_offset);
                 if (fname_offset < 4)
                     throw FormatError("name collides with size field");
-                set_name(new SgAsmBasicString(strtab->read_content_local_str(fname_offset)));
+                set_name(new SgAsmBasicString(strtab->readContentLocalString(fname_offset)));
                 SAWYER_MESG(debug) <<"COFF aux file: offset=" <<fname_offset
                                    <<", name=\"" <<get_name()->get_string(true) <<"\"\n";
 
@@ -178,7 +178,7 @@ SgAsmCoffSymbol::SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *s
             }
             set_type(SYM_FILE);
 
-        } else if (p_st_storage_class == 3/*static*/ && NULL != fhdr->get_file()->get_section_by_name(p_st_name, '$')) {
+        } else if (p_st_storage_class == 3/*static*/ && NULL != fhdr->get_file()->get_sectionByName(p_st_name, '$')) {
             // Auxiliary record format 5: Section definition.
             unsigned size         = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_auxiliaryData[0])); /*same as section header SizeOfRawData */
             unsigned nrel         = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint16_t*)&(p_auxiliaryData[4])); /*number of relocations*/
@@ -195,7 +195,7 @@ SgAsmCoffSymbol::SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *s
                                <<", res1=" <<res1 <<", res2=" <<res2 <<"\n";
             
         } else if (p_st_storage_class==3/*static*/ && (p_st_type & 0xf)==0/*null*/ &&
-                   get_value()==0 && NULL!=fhdr->get_file()->get_section_by_name(p_st_name)) {
+                   get_value()==0 && NULL!=fhdr->get_file()->get_sectionByName(p_st_name)) {
             // Auxiliary record for common data (COMDAT) sections
             // FIXME[Robb P Matzke 2017-05-17]: The record format isn't documented in the reference listed above.
             if (debug) {
@@ -371,7 +371,7 @@ SgAsmCoffSymbolTable::parse()
     p_strtab->parse();
 
     uint32_t word;
-    p_strtab->read_content(0, &word, sizeof word);
+    p_strtab->readContent(0, &word, sizeof word);
     rose_addr_t strtab_size = Rose::BinaryAnalysis::ByteOrder::leToHost(word);
     if (strtab_size < sizeof(uint32_t))
         throw FormatError("COFF symbol table string table size is less than four bytes");
@@ -427,7 +427,7 @@ SgAsmCoffSymbolTable::unparse(std::ostream &f) const
         SgAsmCoffSymbol::COFFSymbol_disk disk;
         symbol->encode(&disk);
         spos = write(f, spos, SgAsmCoffSymbol::COFFSymbol_disk_size, &disk);
-        spos = write(f, (rose_addr_t) spos, symbol->get_aux_data());
+        spos = write(f, (rose_addr_t) spos, symbol->get_auxiliaryData());
     }
     if (get_strtab())
         get_strtab()->unparse(f);

@@ -83,7 +83,7 @@ Base::mark_referenced_instructions(SgAsmInterpretation *interp, const MemoryMap:
                 /* Find the memory map segment and the file that goes with that segment (if any) */
                 if (si==map->nodes().end() || !si->key().contains(va)) {
                     if (file) {
-                        file->set_tracking_references(was_tracking);
+                        file->set_trackingReferences(was_tracking);
                         file = NULL;
                     }
                     si = map->at(va).findNode();
@@ -98,8 +98,8 @@ Base::mark_referenced_instructions(SgAsmInterpretation *interp, const MemoryMap:
                     for (size_t i=0; i<files.size(); i++) {
                         if (&(files[i]->get_data()[0]) == si->value().buffer()->data()) {
                             file = files[i];
-                            was_tracking = file->get_tracking_references();
-                            file->set_tracking_references(true);
+                            was_tracking = file->get_trackingReferences();
+                            file->set_trackingReferences(true);
                             break;
                         }
                     }
@@ -110,17 +110,17 @@ Base::mark_referenced_instructions(SgAsmInterpretation *interp, const MemoryMap:
                 size_t n = std::min(nbytes, (size_t)si->key().size()-sgmt_offset);
                 if (file) {
                     size_t file_offset = si->value().offset() + sgmt_offset;
-                    file->read_content(file_offset, buf, n, false);
+                    file->readContent(file_offset, buf, n, false);
                 }
                 nbytes -= n;
                 va += n;
             }
         }
         if (file)
-            file->set_tracking_references(was_tracking);
+            file->set_trackingReferences(was_tracking);
     } catch(...) {
         if (file)
-            file->set_tracking_references(was_tracking);
+            file->set_trackingReferences(was_tracking);
         throw;
     }
 }

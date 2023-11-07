@@ -470,7 +470,7 @@ private:
                 // Add the function entry block before the other blocks of the function.  This ensures that the entry block
                 // of a function has a lower vertex number than the other blocks of the function (the traversal is not
                 // guaranteed to visit the function basic blocks in that order).
-                conditionally_add_vertex(isSgAsmFunction(node)->get_entry_block());
+                conditionally_add_vertex(isSgAsmFunction(node)->get_entryBlock());
             } else {
                 conditionally_add_vertex(isSgAsmBlock(node));
             }
@@ -608,7 +608,7 @@ ControlFlow::apply_to_ast(const ControlFlowGraph &cfg)
             delete *ti;
 
         /* Add new targets */
-        block->set_successors_complete(true);
+        block->set_successorsComplete(true);
         block->get_successors().clear();
         typename boost::graph_traits<ControlFlowGraph>::out_edge_iterator ei, ei_end;
         for (boost::tie(ei, ei_end)=boost::out_edges(*vi, cfg); ei!=ei_end; ++ei) {
@@ -631,7 +631,7 @@ ControlFlow::cache_vertex_descriptors(const ControlFlowGraph &cfg)
     for (boost::tie(vi, vi_end)=boost::vertices(cfg); vi!=vi_end; ++vi) {
         SgAsmBlock *block = get_ast_node(cfg, *vi); // FIXME: Instruction CFGs not supported yet
         if (block && !is_vertex_filtered(block))
-            block->set_cached_vertex(*vi);
+            block->set_cachedVertex(*vi);
     }
 }
 
@@ -639,7 +639,7 @@ template<class ControlFlowGraph>
 void
 ControlFlow::VertexInserter<ControlFlowGraph>::conditionally_add_vertex(SgAsmBlock *block)
 {
-    if (block && block->has_instructions() && !analyzer->is_vertex_filtered(block) && !bv_map.exists(block)) {
+    if (block && block->hasInstructions() && !analyzer->is_vertex_filtered(block) && !bv_map.exists(block)) {
         Vertex vertex = boost::add_vertex(cfg);
         bv_map[block] = vertex;
         put_ast_node(cfg, vertex, block);
@@ -701,7 +701,7 @@ ControlFlow::build_cg_from_ast(SgNode *root, ControlFlowGraph &cfg/*out*/)
             SgAsmFunction *src_func = SageInterface::getEnclosingNode<SgAsmFunction>(src, true);
             SgAsmBlock *dst_block = SageInterface::getEnclosingNode<SgAsmBlock>(dst, true);
             SgAsmFunction *dst_func = SageInterface::getEnclosingNode<SgAsmFunction>(dst_block);
-            if (!src_func || !dst_func || dst_block!=dst_func->get_entry_block()) {
+            if (!src_func || !dst_func || dst_block!=dst_func->get_entryBlock()) {
                 return false;
             } else if (src_func!=dst_func) {
                 // inter-function call, not a return edge
@@ -860,7 +860,7 @@ ControlFlow::fixup_fcall_fret(InsnCFG &cfg, bool preserve_call_fallthrough_edges
             : insn_to_vertex(insn_to_vertex), imap(imap) {}
         CFG_Vertex operator()(SgAsmInstruction *insn) {
             SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(insn, true);
-            SgAsmInstruction *entry_insn = imap.get_one(func->get_entry_va());
+            SgAsmInstruction *entry_insn = imap.get_one(func->get_entryVa());
             CFG_Vertex entry_vertex = insn_to_vertex.get_one(entry_insn);
             return entry_vertex;
         }
@@ -894,7 +894,7 @@ ControlFlow::fixup_fcall_fret(InsnCFG &cfg, bool preserve_call_fallthrough_edges
                         SgAsmBlock *caller_block = SageInterface::getEnclosingNode<SgAsmBlock>(caller_insn);
                         assert(caller_block!=NULL);
                         rose_addr_t target_va, returnee_va; // returnee_va is usually the call's fall-through address
-                        if (caller_block->is_function_call(target_va/*out*/, returnee_va/*out*/)) {
+                        if (caller_block->isFunctionCall(target_va/*out*/, returnee_va/*out*/)) {
                             // This is a true call, so we need to add a return edge from the return instruction (the
                             // "returner") to what is probably the fall-through address of the call site (the returnee).
                             SgAsmInstruction *returnee_insn = insns.get_value_or(returnee_va, NULL);
@@ -1048,11 +1048,11 @@ ControlFlow::write_graphviz(std::ostream &out, const CFG &cfg,
             SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(node, true);
             const size_t maxNameSize = 63;
             char cluster_name[maxNameSize+1];
-            snprintf(cluster_name, maxNameSize, "cluster_F%" PRIx64, func->get_entry_va());
+            snprintf(cluster_name, maxNameSize, "cluster_F%" PRIx64, func->get_entryVa());
             out <<"  subgraph " <<cluster_name <<" {\n"
                 <<"    style=filled;\n"
                 <<"    color=lightgrey;\n"
-                <<"    label=\"Function " <<StringUtility::addrToString(func->get_entry_va())
+                <<"    label=\"Function " <<StringUtility::addrToString(func->get_entryVa())
                 <<(func->get_name().empty()?std::string(""):(" <"+func->get_name()+">")) <<"\";\n";
             for (size_t i=0; i<f.vertices.size(); ++i) {
                 out <<"    " <<f.vertices[i];

@@ -52,8 +52,8 @@ void NopReplacementTraversal::visit ( SgNode* n )
           for (int j = 0; j < numberOfOriginalNopInstructions; j++)
              {
                ROSE_ASSERT(i != l.end());
-               printf ("--- NOP #%2d is length = %2d \n",j,(int)isSgAsmInstruction(*i)->get_raw_bytes().size());
-               nop_sled_size += (int)isSgAsmInstruction(*i)->get_raw_bytes().size();
+               printf ("--- NOP #%2d is length = %2d \n",j,(int)isSgAsmInstruction(*i)->get_rawBytes().size());
+               nop_sled_size += (int)isSgAsmInstruction(*i)->get_rawBytes().size();
                i++;
              }
 

@@ -59,7 +59,7 @@ Null::makeUnknownInstruction(const Exception &e) {
     SgAsmOperandList *operands = new SgAsmOperandList;
     insn->set_operandList(operands);
     operands->set_parent(insn);
-    insn->set_raw_bytes(e.bytes);
+    insn->set_rawBytes(e.bytes);
     return insn;
 }
 

@@ -170,7 +170,7 @@ SgAsmM68kInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& i
         using namespace Rose::BinaryAnalysis;
         using namespace Rose::BinaryAnalysis::InstructionSemantics;
         using namespace Rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics;
-        const InstructionMap &imap = interp->get_instruction_map();
+        const InstructionMap &imap = interp->get_instructionMap();
         RegisterDictionary::Ptr regdict = RegisterDictionary::instanceForIsa(interp);
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         BaseSemantics::RiscOperators::Ptr ops = RiscOperators::instanceFromRegisters(regdict, solver);
@@ -188,7 +188,7 @@ SgAsmM68kInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& i
         SValue::Ptr ip = SValue::promote(ops->peekRegister(dispatcher->REG_PC));
         if (auto target_va = ip->toUnsigned()) {
             SgAsmFunction *target_func = SageInterface::getEnclosingNode<SgAsmFunction>(imap.get_value_or(*target_va, NULL));
-            if (!target_func || *target_va!=target_func->get_entry_va())
+            if (!target_func || *target_va!=target_func->get_entryVa())
                 return false;
         }
 

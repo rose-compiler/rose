@@ -79,11 +79,11 @@ SgAsmPEImportItem::get_iatEntryVa() const
 {
     SgAsmPEImportDirectory *idir = SageInterface::getEnclosingNode<SgAsmPEImportDirectory>(this);
     assert(idir!=NULL); // we need some context in order to find the address
-    int idx = idir->find_import_item(this);
+    int idx = idir->findImportItem(this);
     assert(idx>=0); // parent/child connectivity problem
     SgAsmPEFileHeader *fhdr = SageInterface::getEnclosingNode<SgAsmPEFileHeader>(idir);
     assert(fhdr!=NULL);
-    rose_addr_t entry_size = fhdr->get_word_size();
+    rose_addr_t entry_size = fhdr->get_wordSize();
     return idir->get_iat_rva().get_va() + idx * entry_size;
 }
 

@@ -55,22 +55,22 @@ SgAsmElfNoteEntry::parse(rose_addr_t at)
     
     /* Length of note entry name, including NUL termination */
     uint32_t u32;
-    notes->read_content_local(at, &u32, 4);
+    notes->readContentLocal(at, &u32, 4);
     size_t name_size = diskToHost(fhdr->get_sex(), u32);
     at += 4;
 
     /* Length of note entry description (i.e., the payload) */
-    notes->read_content_local(at, &u32, 4);
+    notes->readContentLocal(at, &u32, 4);
     size_t payload_size = diskToHost(fhdr->get_sex(), u32);
     at += 4;
 
     /* Type of note */
-    notes->read_content_local(at, &u32, 4);
+    notes->readContentLocal(at, &u32, 4);
     unsigned type = diskToHost(fhdr->get_sex(), u32);
     at += 4;
 
     /* NUL-terminated name */
-    std::string note_name = notes->read_content_local_str(at);
+    std::string note_name = notes->readContentLocalString(at);
     if (note_name.size() + 1 > name_size && name_size > 0)
         note_name = note_name.substr(0, name_size-1);
     at += name_size;
@@ -79,7 +79,7 @@ SgAsmElfNoteEntry::parse(rose_addr_t at)
     /* Set properties */
     get_name()->set_string(note_name);
     set_type(type);
-    p_payload = notes->read_content_local_ucl(at, payload_size);
+    p_payload = notes->readContentLocalUcl(at, payload_size);
 
     return at + payload_size;
 }
@@ -185,19 +185,19 @@ SgAsmElfNoteSection::reallocate()
     rose_addr_t need = 0;
     for (size_t i=0; i<p_entries->get_entries().size(); i++) {
         SgAsmElfNoteEntry *ent = p_entries->get_entries()[i];
-        need += ent->calculate_size();
+        need += ent->calculateSize();
     }
 
     /* Adjust the section/segment size */
     if (need < get_size()) {
-        if (is_mapped()) {
-            ROSE_ASSERT(get_mapped_size()==get_size());
-            set_mapped_size(need);
+        if (isMapped()) {
+            ROSE_ASSERT(get_mappedSize()==get_size());
+            set_mappedSize(need);
         }
         set_size(need);
         reallocated = true;
     } else if (need > get_size()) {
-        get_file()->shift_extend(this, 0, need-get_size(), SgAsmGenericFile::ADDRSP_ALL, SgAsmGenericFile::ELASTIC_HOLE);
+        get_file()->shiftExtend(this, 0, need-get_size(), SgAsmGenericFile::ADDRSP_ALL, SgAsmGenericFile::ELASTIC_HOLE);
         reallocated = true;
     }
     

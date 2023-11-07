@@ -37,7 +37,7 @@ SgAsmIntegerValueExpression::virtualAddress(SgNode *node)
     if (!node)
         return 0;
     if (isSgAsmFunction(node))
-        return isSgAsmFunction(node)->get_entry_va();
+        return isSgAsmFunction(node)->get_entryVa();
     if (isSgAsmStatement(node)) // instructions, block, function, staticdata, ...
         return isSgAsmStatement(node)->get_address();
     if (isSgAsmGenericSymbol(node))
@@ -48,8 +48,8 @@ SgAsmIntegerValueExpression::virtualAddress(SgNode *node)
         return isSgAsmPERVASizePair(node)->get_e_rva().get_va();
     if (isSgAsmGenericSection(node)) {
         SgAsmGenericSection *section = isSgAsmGenericSection(node);
-        if (section->is_mapped())
-            return section->get_mapped_actual_va();
+        if (section->isMapped())
+            return section->get_mappedActualVa();
         return 0;
     }
 
@@ -77,7 +77,7 @@ SgAsmIntegerValueExpression::get_label(bool /*quiet=false*/) const
         retval = isSgAsmPEImportItem(node)->get_name()->get_string();
         refkind = "Import";
     } else if (isSgAsmGenericSection(node)) {
-        retval = isSgAsmGenericSection(node)->get_short_name();
+        retval = isSgAsmGenericSection(node)->get_shortName();
         refkind = "Section";
     } else if (isSgAsmInstruction(node)) {
         refkind = "Insn";

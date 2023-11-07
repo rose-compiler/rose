@@ -74,7 +74,7 @@ SgAsmNEFileHeader::SgAsmNEFileHeader(SgAsmGenericFile *f, rose_addr_t offset)
 
     set_offset(offset);
     set_size(sizeof(NEFileHeader_disk));
-    grab_content();
+    grabContent();
 
     set_name(new SgAsmBasicString("NE File Header"));
     set_synthesized(true);
@@ -84,7 +84,7 @@ SgAsmNEFileHeader::SgAsmNEFileHeader(SgAsmGenericFile *f, rose_addr_t offset)
     f->set_parent(this);
 
     NEFileHeader_disk fh;
-    read_content_local(0, &fh, sizeof fh);
+    readContentLocal(0, &fh, sizeof fh);
 
     /* Check magic number early */
     if (fh.e_magic[0] != 'N' || fh.e_magic[1] != 'E')
@@ -130,11 +130,11 @@ SgAsmNEFileHeader::SgAsmNEFileHeader(SgAsmGenericFile *f, rose_addr_t offset)
     get_executableFormat()->set_purpose(p_e_flags1 & HF1_LIBRARY ? PURPOSE_LIBRARY : PURPOSE_EXECUTABLE);
     get_executableFormat()->set_sex(Rose::BinaryAnalysis::ByteOrder::ORDER_LSB);
     get_executableFormat()->set_abi(ABI_NT);
-    get_executableFormat()->set_abi_version(0);
-    get_executableFormat()->set_word_size(2);
+    get_executableFormat()->set_abiVersion(0);
+    get_executableFormat()->set_wordSize(2);
     ROSE_ASSERT(p_e_linker_major <= 0xff && p_e_linker_minor <= 0xff);
     get_executableFormat()->set_version((p_e_linker_major<<8) | p_e_linker_minor);
-    get_executableFormat()->set_is_current_version(true); /*FIXME*/
+    get_executableFormat()->set_isCurrentVersion(true); /*FIXME*/
 
     /* Target architecture */
     switch (p_e_exetype) {
@@ -172,32 +172,32 @@ SgAsmNEFileHeader::isNe(SgAsmGenericFile *file)
 {
     /* Turn off byte reference tracking for the duration of this function. We don't want our testing the file contents to
      * affect the list of bytes that we've already referenced or which we might reference later. */
-    bool was_tracking = file->get_tracking_references();
-    file->set_tracking_references(false);
+    bool was_tracking = file->get_trackingReferences();
+    file->set_trackingReferences(false);
 
     try {
         /* Check DOS File Header magic number at beginning of the file */
         unsigned char dos_magic[2];
-        file->read_content(0, dos_magic, sizeof dos_magic);
+        file->readContent(0, dos_magic, sizeof dos_magic);
         if ('M'!=dos_magic[0] || 'Z'!=dos_magic[1])
             throw 1;
 
         /* Read four-byte offset of potential PE File Header at offset 0x3c */
         uint32_t lfanew_disk;
-        file->read_content(0x3c, &lfanew_disk, sizeof lfanew_disk);
+        file->readContent(0x3c, &lfanew_disk, sizeof lfanew_disk);
         rose_addr_t ne_offset = Rose::BinaryAnalysis::ByteOrder::leToHost(lfanew_disk);
         
         /* Look for the NE File Header magic number */
         unsigned char ne_magic[2];
-        file->read_content(ne_offset, ne_magic, sizeof ne_magic);
+        file->readContent(ne_offset, ne_magic, sizeof ne_magic);
         if ('N'!=ne_magic[0] || 'E'!=ne_magic[1])
             throw 1;
     } catch (...) {
-        file->set_tracking_references(was_tracking);
+        file->set_trackingReferences(was_tracking);
         return false;
     }
     
-    file->set_tracking_references(was_tracking);
+    file->set_trackingReferences(was_tracking);
     return true;
 }
 
@@ -424,8 +424,8 @@ SgAsmNESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmNE
 SgAsmNESection::SgAsmNESection(SgAsmNEFileHeader *fhdr)
     : SgAsmGenericSection(fhdr->get_file(), fhdr) {
     initializeProperties();
-    set_st_entry(nullptr);
-    set_reloc_table(nullptr);
+    set_sectionTableEntry(nullptr);
+    set_relocationTable(nullptr);
 }
 
 /* Write section back to disk */
@@ -466,10 +466,10 @@ SgAsmNESectionTable::SgAsmNESectionTable(SgAsmNEFileHeader *fhdr)
     : SgAsmGenericSection(fhdr->get_file(), fhdr) {
     initializeProperties();
 
-    set_offset(fhdr->get_end_offset());
+    set_offset(fhdr->get_endOffset());
     set_size(fhdr->get_e_nsections() * sizeof(SgAsmNESectionTableEntry::NESectionTableEntry_disk));
 
-    grab_content();
+    grabContent();
 
     set_synthesized(true);
     set_name(new SgAsmBasicString("NE Section Table"));
@@ -480,48 +480,48 @@ SgAsmNESectionTable::SgAsmNESectionTable(SgAsmNEFileHeader *fhdr)
     for (size_t i = 0; i < fhdr->get_e_nsections(); i++) {
         /* Parse the section table entry */
         SgAsmNESectionTableEntry::NESectionTableEntry_disk disk;
-        read_content_local(i*entsize, &disk, entsize);
+        readContentLocal(i*entsize, &disk, entsize);
         SgAsmNESectionTableEntry *entry = new SgAsmNESectionTableEntry(&disk);
 
         /* The section */
         rose_addr_t section_offset = entry->get_sector() << fhdr->get_e_sector_align();
         SgAsmNESection *section = new SgAsmNESection(fhdr);
         section->set_offset(section_offset);
-        section->set_size(0==section_offset ? 0 : entry->get_physical_size());
-        section->grab_content();
+        section->set_size(0==section_offset ? 0 : entry->get_physicalSize());
+        section->grabContent();
         section->set_synthesized(false);
         section->set_id(i+1); /*numbered starting at 1, not zero*/
         section->set_purpose(SP_PROGRAM);
-        section->set_st_entry(entry);
+        section->set_sectionTableEntry(entry);
 
         /* All NE sections are mapped. Their desired address is apparently based on their file offset. */
         rose_addr_t mapped_rva = section_offset - fhdr->get_offset();
-        section->set_mapped_preferred_rva(mapped_rva);
-        section->set_mapped_actual_va(0); /*assigned by Loader*/
-        section->set_mapped_size(entry->get_virtual_size());
+        section->set_mappedPreferredRva(mapped_rva);
+        section->set_mappedActualVa(0); /*assigned by Loader*/
+        section->set_mappedSize(entry->get_virtualSize());
 
         unsigned section_type = entry->get_flags() & SgAsmNESectionTableEntry::SF_TYPE_MASK;
         if (0 == section_offset) {
             section->set_name(new SgAsmBasicString(".bss"));
-            section->set_mapped_rperm(true);
-            section->set_mapped_wperm(entry->get_flags() & SgAsmNESectionTableEntry::SF_NOT_WRITABLE ? false : true);
-            section->set_mapped_xperm(false);
+            section->set_mappedReadPermission(true);
+            section->set_mappedWritePermission(entry->get_flags() & SgAsmNESectionTableEntry::SF_NOT_WRITABLE ? false : true);
+            section->set_mappedExecutePermission(false);
         } else if (0 == section_type) {
             section->set_name(new SgAsmBasicString(".text"));
-            section->set_mapped_rperm(true);
-            section->set_mapped_wperm(entry->get_flags() & SgAsmNESectionTableEntry::SF_NOT_WRITABLE ? false : true);
-            section->set_mapped_xperm(true);
+            section->set_mappedReadPermission(true);
+            section->set_mappedWritePermission(entry->get_flags() & SgAsmNESectionTableEntry::SF_NOT_WRITABLE ? false : true);
+            section->set_mappedExecutePermission(true);
         } else if (section_type & SgAsmNESectionTableEntry::SF_DATA) {
             section->set_name(new SgAsmBasicString(".data"));
-            section->set_mapped_rperm(true);
-            section->set_mapped_wperm(entry->get_flags() & (SgAsmNESectionTableEntry::SF_PRELOAD |
+            section->set_mappedReadPermission(true);
+            section->set_mappedWritePermission(entry->get_flags() & (SgAsmNESectionTableEntry::SF_PRELOAD |
                                                             SgAsmNESectionTableEntry::SF_NOT_WRITABLE) ? false : true);
-            section->set_mapped_xperm(false);
+            section->set_mappedExecutePermission(false);
         }
 
         if (entry->get_flags() & SgAsmNESectionTableEntry::SF_RELOCINFO) {
             SgAsmNERelocTable *relocs = new SgAsmNERelocTable(fhdr, section);
-            section->set_reloc_table(relocs);
+            section->set_relocationTable(relocs);
         }
     }
 }
@@ -541,15 +541,15 @@ SgAsmNESectionTable::unparse(std::ostream &f) const
             /* Write the table entry */
             ROSE_ASSERT(section->get_id()>0); /*ID's are 1-origin in NE*/
             size_t slot = section->get_id()-1;
-            SgAsmNESectionTableEntry *shdr = section->get_st_entry();
+            SgAsmNESectionTableEntry *shdr = section->get_sectionTableEntry();
             SgAsmNESectionTableEntry::NESectionTableEntry_disk disk;
             shdr->encode(&disk);
             write(f, slot*sizeof(disk), sizeof disk, &disk);
 
             /* Write the section and it's optional relocation table */
             section->unparse(f);
-            if (section->get_reloc_table())
-                section->get_reloc_table()->unparse(f);
+            if (section->get_relocationTable())
+                section->get_relocationTable()->unparse(f);
         }
     }
 }
@@ -578,7 +578,7 @@ SgAsmNENameTable::SgAsmNENameTable(SgAsmNEFileHeader *fhdr, rose_addr_t offset)
 
     set_offset(offset);
     set_size(0);
-    grab_content();
+    grabContent();
 
     set_synthesized(true);
     set_name(new SgAsmBasicString("NE Name Table"));
@@ -590,20 +590,20 @@ SgAsmNENameTable::SgAsmNENameTable(SgAsmNEFileHeader *fhdr, rose_addr_t offset)
     while (1) {
         extend(1);
         unsigned char byte;
-        read_content_local(at++, &byte, 1);
+        readContentLocal(at++, &byte, 1);
         size_t length = byte;
         if (0==length) break;
 
         extend(length);
         char *buf = new char[length];
-        read_content_local(at, buf, length);
+        readContentLocal(at, buf, length);
         p_names.push_back(std::string(buf, length));
         delete[] buf;
         at += length;
 
         extend(2);
         uint16_t u16_disk;
-        read_content_local(at, &u16_disk, 2);
+        readContentLocal(at, &u16_disk, 2);
         p_ordinals.push_back(Rose::BinaryAnalysis::ByteOrder::leToHost(u16_disk));
         at += 2;
     }
@@ -688,7 +688,7 @@ SgAsmNEModuleTable::SgAsmNEModuleTable(SgAsmNEFileHeader *fhdr, SgAsmNEStringTab
 
     set_offset(offset);
     set_size(size);
-    grab_content();
+    grabContent();
 
     set_synthesized(true);
     set_name(new SgAsmBasicString("NE Module Reference Table"));
@@ -698,7 +698,7 @@ SgAsmNEModuleTable::SgAsmNEModuleTable(SgAsmNEFileHeader *fhdr, SgAsmNEStringTab
 
     for (rose_addr_t at = 0; at < get_size(); at += 2) {
         uint16_t u16_disk;
-        read_content_local(at, &u16_disk, 2);
+        readContentLocal(at, &u16_disk, 2);
         rose_addr_t name_offset = Rose::BinaryAnalysis::ByteOrder::leToHost(u16_disk);
         p_nameOffsets.push_back(name_offset);
         p_names.push_back(p_strtab->get_string(name_offset));
@@ -706,7 +706,7 @@ SgAsmNEModuleTable::SgAsmNEModuleTable(SgAsmNEFileHeader *fhdr, SgAsmNEStringTab
 
     /* Add libraries to file header */
     for (size_t i = 0; i < p_names.size(); i++) {
-        fhdr->add_dll(new SgAsmGenericDLL(new SgAsmBasicString(p_names[i])));
+        fhdr->addDll(new SgAsmGenericDLL(new SgAsmBasicString(p_names[i])));
     }
 }
 
@@ -764,7 +764,7 @@ SgAsmNEStringTable::SgAsmNEStringTable(SgAsmNEFileHeader *fhdr, rose_addr_t offs
 
     set_offset(offset);
     set_size(size);
-    grab_content();
+    grabContent();
 
     set_synthesized(true);
     set_name(new SgAsmBasicString("NE String Table"));
@@ -778,11 +778,11 @@ std::string
 SgAsmNEStringTable::get_string(rose_addr_t offset)
 {
     unsigned char byte;
-    read_content_local(offset, &byte, 1);
+    readContentLocal(offset, &byte, 1);
     size_t length = byte;
 
     char *buf = new char[length];
-    read_content_local(offset+1, buf, length);
+    readContentLocal(offset+1, buf, length);
     std::string retval(buf, length);
     delete[] buf;
     return retval;
@@ -827,8 +827,8 @@ SgAsmNEEntryPoint::SgAsmNEEntryPoint(SgAsmNEEntryPoint::NEEntryFlags flags, unsi
     initializeProperties();
     set_flags(flags);
     set_int3f(int3f);
-    set_section_idx(s_idx);
-    set_section_offset(s_off);
+    set_sectionIndex(s_idx);
+    set_sectionOffset(s_off);
 }
 
 /* Print some debugging info */
@@ -870,7 +870,7 @@ SgAsmNEEntryTable::SgAsmNEEntryTable(SgAsmNEFileHeader *fhdr, rose_addr_t offset
 
     set_offset(offset);
     set_size(size);
-    grab_content();
+    grabContent();
 
     set_synthesized(true);
     set_name(new SgAsmBasicString("NE Entry Table"));
@@ -880,11 +880,11 @@ SgAsmNEEntryTable::SgAsmNEEntryTable(SgAsmNEFileHeader *fhdr, rose_addr_t offset
     uint16_t u16_disk;
 
     rose_addr_t at = 0;
-    read_content_local(at++, &byte, 1);
+    readContentLocal(at++, &byte, 1);
     size_t bundle_nentries = byte;
     while (bundle_nentries > 0) {
         p_bundle_sizes.push_back(bundle_nentries);
-        read_content_local(at++, &byte, 1);
+        readContentLocal(at++, &byte, 1);
         unsigned segment_indicator = byte;
         if (0 == segment_indicator) {
             /* Unused entries */
@@ -894,34 +894,34 @@ SgAsmNEEntryTable::SgAsmNEEntryTable(SgAsmNEFileHeader *fhdr, rose_addr_t offset
         } else if (0xff == segment_indicator) {
             /* Movable segment entries. */
             for (size_t i = 0; i < bundle_nentries; i++, at+=6) {
-                read_content_local(at, &byte, 1);
+                readContentLocal(at, &byte, 1);
                 SgAsmNEEntryPoint::NEEntryFlags flags = (SgAsmNEEntryPoint::NEEntryFlags)byte;
-                read_content_local(at+1, &u16_disk, 2);
+                readContentLocal(at+1, &u16_disk, 2);
                 unsigned int3f = Rose::BinaryAnalysis::ByteOrder::leToHost(u16_disk);
                 ROSE_ASSERT(int3f!=0); /*because we use zero to indicate a fixed entry in unparse()*/
-                read_content_local(at+3, &byte, 1);
+                readContentLocal(at+3, &byte, 1);
                 unsigned segno = byte;
-                read_content_local(at+4, &u16_disk, 2);
+                readContentLocal(at+4, &u16_disk, 2);
                 unsigned segoffset = Rose::BinaryAnalysis::ByteOrder::leToHost(u16_disk);
                 p_entries.push_back(new SgAsmNEEntryPoint(flags, int3f, segno, segoffset));
             }
         } else {
             /* Fixed segment entries */
             for (size_t i = 0; i < bundle_nentries; i++, at+=3) {
-                read_content_local(at, &byte, 1);
+                readContentLocal(at, &byte, 1);
                 SgAsmNEEntryPoint::NEEntryFlags flags = (SgAsmNEEntryPoint::NEEntryFlags)byte;
-                read_content_local(at+1, &u16_disk, 2);
+                readContentLocal(at+1, &u16_disk, 2);
                 unsigned segoffset = Rose::BinaryAnalysis::ByteOrder::leToHost(u16_disk);
                 p_entries.push_back(new SgAsmNEEntryPoint(flags, 0, segment_indicator, segoffset));
             }
         }
         
-        read_content_local(at++, &byte, 1);
+        readContentLocal(at++, &byte, 1);
         bundle_nentries = byte;
     }
 }
 
-/* Populates the entry_rvas vector of the NE header based on the contents of this Entry Table. The Section (Object) Table must
+/* Populates the entryRvas vector of the NE header based on the contents of this Entry Table. The Section (Object) Table must
  * have already been parsed and nonsynthesized sections constructed. */
 void
 SgAsmNEEntryTable::populate_entries()
@@ -930,15 +930,15 @@ SgAsmNEEntryTable::populate_entries()
     for (size_t i=0; i < p_entries.size(); i++) {
         const SgAsmNEEntryPoint & entry = *(p_entries[i]);
         SgAsmGenericSection *section = NULL;
-        if (0 == entry.get_section_idx()) {
+        if (0 == entry.get_sectionIndex()) {
             /* Unused entry */
-        } else if (NULL == (section = get_file()->get_section_by_id(entry.get_section_idx()))) {
+        } else if (NULL == (section = get_file()->get_sectionById(entry.get_sectionIndex()))) {
             mlog[WARN] <<"ignoring bad entry section_idx\n"; // FIXME[Robb P. Matzke 2015-07-07]
             entry.dump(stderr, "      ", i);
         } else {
-            ROSE_ASSERT(section->is_mapped());
-            rose_addr_t entry_rva = section->get_mapped_preferred_rva() + entry.get_section_offset();
-            fhdr->add_entry_rva(entry_rva);
+            ROSE_ASSERT(section->isMapped());
+            rose_addr_t entry_rva = section->get_mappedPreferredRva() + entry.get_sectionOffset();
+            fhdr->addEntryRva(entry_rva);
 #if 0 /*DEBUGGING*/
             /* Entry points often have names. Here's how to get them. */
             SgAsmNEFileHeader *ne_header = dynamic_cast<SgAsmNEFileHeader*>(fhdr);
@@ -965,29 +965,29 @@ SgAsmNEEntryTable::unparse(std::ostream &f) const
         spos = write(f, spos, n);
 
         ROSE_ASSERT(ei + p_bundle_sizes[bi] <= p_entries.size());
-        if (0 == p_entries[ei]->get_section_idx()) {
+        if (0 == p_entries[ei]->get_sectionIndex()) {
             /* Unused entries */
             spos = write(f, spos, '\0');
         } else if (0 == p_entries[ei]->get_int3f()) {
             /* Fixed entries */
-            ROSE_ASSERT(p_entries[ei]->get_section_idx() <= 0xff);
-            unsigned char n = p_entries[ei]->get_section_idx();
+            ROSE_ASSERT(p_entries[ei]->get_sectionIndex() <= 0xff);
+            unsigned char n = p_entries[ei]->get_sectionIndex();
             spos = write(f, spos, n);
             for (size_t i = 0; i < p_bundle_sizes[bi]; i++) {
-                ROSE_ASSERT(p_entries[ei]->get_section_idx() == p_entries[ei+i]->get_section_idx());
+                ROSE_ASSERT(p_entries[ei]->get_sectionIndex() == p_entries[ei+i]->get_sectionIndex());
                 ROSE_ASSERT(p_entries[ei+i]->get_int3f() == 0);
                 ROSE_ASSERT(p_entries[ei+i]->get_flags() <= 0xff);
                 n = p_entries[ei+i]->get_flags();
                 spos = write(f, spos, n);
                 uint16_t eoff_le;
-                Rose::BinaryAnalysis::ByteOrder::hostToLe(p_entries[ei+i]->get_section_offset(), &eoff_le);
+                Rose::BinaryAnalysis::ByteOrder::hostToLe(p_entries[ei+i]->get_sectionOffset(), &eoff_le);
                 spos = write(f, spos, sizeof eoff_le, &eoff_le);
             }
         } else {
             /* Movable entries */
             spos = write(f, spos, '\377');
             for (size_t i = 0; i < p_bundle_sizes[bi]; i++) {
-                ROSE_ASSERT(p_entries[ei+i]->get_section_idx() > 0);
+                ROSE_ASSERT(p_entries[ei+i]->get_sectionIndex() > 0);
                 ROSE_ASSERT(p_entries[ei+i]->get_int3f() != 0);
                 ROSE_ASSERT(p_entries[ei+i]->get_flags() <= 0xff);
                 n = p_entries[ei+i]->get_flags();
@@ -995,10 +995,10 @@ SgAsmNEEntryTable::unparse(std::ostream &f) const
                 uint16_t word;
                 Rose::BinaryAnalysis::ByteOrder::hostToLe(p_entries[ei+i]->get_int3f(), &word);
                 spos = write(f, spos, sizeof word, &word);
-                ROSE_ASSERT(p_entries[ei+i]->get_section_idx() <= 0xff);
-                n = p_entries[ei+i]->get_section_idx();
+                ROSE_ASSERT(p_entries[ei+i]->get_sectionIndex() <= 0xff);
+                n = p_entries[ei+i]->get_sectionIndex();
                 spos = write(f, spos, n);
-                Rose::BinaryAnalysis::ByteOrder::hostToLe(p_entries[ei+i]->get_section_offset(), &word);
+                Rose::BinaryAnalysis::ByteOrder::hostToLe(p_entries[ei+i]->get_sectionOffset(), &word);
                 spos = write(f, spos, sizeof word, &word);
             }
         }
@@ -1046,14 +1046,14 @@ SgAsmNERelocEntry::SgAsmNERelocEntry(SgAsmGenericSection *relocs, rose_addr_t at
 
     /* Only the low nibble is used for source type; the high nibble is modifier bits */
     relocs->extend(1);
-    relocs->read_content_local(at++, &byte, 1);
+    relocs->readContentLocal(at++, &byte, 1);
     unsigned n = byte;
     p_src_type = (SgAsmNERelocEntry::NERelocSrcType)(n & 0x0f);
     p_modifier = (SgAsmNERelocEntry::NERelocModifiers)(n>>8);
 
     /* The target type (3 bits), additive flag (1 bit), and target flags */
     relocs->extend(1);
-    relocs->read_content_local(at++, &byte, 1);
+    relocs->readContentLocal(at++, &byte, 1);
     n = byte;
     p_tgt_type = (SgAsmNERelocEntry::NERelocTgtType)(n & 0x03);
     p_flags = (SgAsmNERelocEntry::NERelocFlags)(n>>2);
@@ -1062,7 +1062,7 @@ SgAsmNERelocEntry::SgAsmNERelocEntry(SgAsmGenericSection *relocs, rose_addr_t at
      * the source will be patched by adding the target value to the value stored at the source. Otherwise the target value is
      * written to the source and the old contents of the source contains the next source offset, until we get 0xffff. */
     relocs->extend(2);
-    relocs->read_content_local(at, &u16_disk, 2);
+    relocs->readContentLocal(at, &u16_disk, 2);
     p_src_offset = Rose::BinaryAnalysis::ByteOrder::leToHost(u16_disk);
     at += 2;
 
@@ -1070,31 +1070,31 @@ SgAsmNERelocEntry::SgAsmNERelocEntry(SgAsmGenericSection *relocs, rose_addr_t at
       case RF_TGTTYPE_IREF:
         /* Internal reference */
         relocs->extend(4);
-        relocs->read_content_local(at++, &byte, 1);
+        relocs->readContentLocal(at++, &byte, 1);
         p_iref.sect_idx = byte;
-        relocs->read_content_local(at++, &byte, 1);
+        relocs->readContentLocal(at++, &byte, 1);
         p_iref.res1  = byte;
-        relocs->read_content_local(at, &u16_disk, 2);
+        relocs->readContentLocal(at, &u16_disk, 2);
         p_iref.tgt_offset = Rose::BinaryAnalysis::ByteOrder::leToHost(u16_disk);
         at += 2;
         break;
       case RF_TGTTYPE_IORD:
         /* Imported ordinal */
         relocs->extend(4);
-        relocs->read_content_local(at, &u16_disk, 2);
+        relocs->readContentLocal(at, &u16_disk, 2);
         p_iord.modref  = Rose::BinaryAnalysis::ByteOrder::leToHost(u16_disk);
-        relocs->read_content_local(at+2, &u16_disk, 2);
+        relocs->readContentLocal(at+2, &u16_disk, 2);
         p_iord.ordinal = Rose::BinaryAnalysis::ByteOrder::leToHost(u16_disk);
         at += 4;
         if (p_flags & RF_2EXTRA) {
             if (p_flags & RF_32ADD) {
                 relocs->extend(4);
-                relocs->read_content_local(at+8, &u32_disk, 4);
+                relocs->readContentLocal(at+8, &u32_disk, 4);
                 p_iord.addend = Rose::BinaryAnalysis::ByteOrder::leToHost(u32_disk);
                 at += 4;
             } else {
                 relocs->extend(2);
-                relocs->read_content_local(at+8, &u16_disk, 2);
+                relocs->readContentLocal(at+8, &u16_disk, 2);
                 p_iord.addend = Rose::BinaryAnalysis::ByteOrder::leToHost(u16_disk);
                 at += 2;
             }
@@ -1105,20 +1105,20 @@ SgAsmNERelocEntry::SgAsmNERelocEntry(SgAsmGenericSection *relocs, rose_addr_t at
       case RF_TGTTYPE_INAME:
         /* Imported name */
         relocs->extend(4);
-        relocs->read_content_local(at, &u16_disk, 2);
+        relocs->readContentLocal(at, &u16_disk, 2);
         p_iname.modref = Rose::BinaryAnalysis::ByteOrder::leToHost(u16_disk);
-        relocs->read_content_local(at+2, &u16_disk, 2);
+        relocs->readContentLocal(at+2, &u16_disk, 2);
         p_iname.nm_off = Rose::BinaryAnalysis::ByteOrder::leToHost(u16_disk);
         at += 4;
         if (p_flags & RF_2EXTRA) {
             if (p_flags & RF_32ADD) {
                 relocs->extend(4);
-                relocs->read_content_local(at+8, &u32_disk, 4);
+                relocs->readContentLocal(at+8, &u32_disk, 4);
                 p_iname.addend = Rose::BinaryAnalysis::ByteOrder::leToHost(u32_disk);
                 at += 4;
             } else {
                 relocs->extend(2);
-                relocs->read_content_local(at+8, &u16_disk, 2);
+                relocs->readContentLocal(at+8, &u16_disk, 2);
                 p_iname.addend = Rose::BinaryAnalysis::ByteOrder::leToHost(u16_disk);
                 at += 2;
             }
@@ -1129,9 +1129,9 @@ SgAsmNERelocEntry::SgAsmNERelocEntry(SgAsmGenericSection *relocs, rose_addr_t at
       case RF_TGTTYPE_OSFIXUP:
         /* Operating system fixup */
         relocs->extend(4);
-        relocs->read_content_local(at, &u16_disk, 2);
+        relocs->readContentLocal(at, &u16_disk, 2);
         p_osfixup.type = Rose::BinaryAnalysis::ByteOrder::leToHost(u16_disk);
-        relocs->read_content_local(at+2, &u16_disk, 2);
+        relocs->readContentLocal(at+2, &u16_disk, 2);
         p_osfixup.res3 = Rose::BinaryAnalysis::ByteOrder::leToHost(u16_disk);
         at += 4;
         break;
@@ -1300,7 +1300,7 @@ SgAsmNERelocTable::SgAsmNERelocTable(SgAsmNEFileHeader *fhdr, SgAsmNESection *se
     ROSE_ASSERT(section!=NULL);
     set_offset(section->get_offset() + section->get_size()); /*reloc section begins immediately after section payload*/
     set_size(0);
-    grab_content();
+    grabContent();
 
     char name[64];
     snprintf(name, sizeof(name), "NE Relocation Table %" PRIu64, p_offset);
@@ -1314,7 +1314,7 @@ SgAsmNERelocTable::SgAsmNERelocTable(SgAsmNEFileHeader *fhdr, SgAsmNESection *se
 
     extend(2);
     uint16_t u16_disk;
-    read_content_local(at, &u16_disk, 2);
+    readContentLocal(at, &u16_disk, 2);
     size_t nrelocs = Rose::BinaryAnalysis::ByteOrder::leToHost(u16_disk);
     at += 2;
     
@@ -1374,14 +1374,14 @@ SgAsmNEFileHeader::parse(SgAsmDOSFileHeader *dos_header)
     
     /* The NE header */
     SgAsmNEFileHeader *ne_header = new SgAsmNEFileHeader(ef, dos2_header->get_e_lfanew());
-    ne_header->set_dos2_header(dos2_header);
+    ne_header->set_dos2Header(dos2_header);
 
     /* Sections defined by the NE file header */
     if (ne_header->get_e_resnametab_rfo() > 0) {
         rose_addr_t resnames_offset = ne_header->get_offset() + ne_header->get_e_resnametab_rfo();
         SgAsmNENameTable *resnames = new SgAsmNENameTable(ne_header, resnames_offset);
         resnames->set_name(new SgAsmBasicString("NE Resident Name Table"));
-        ne_header->set_resname_table(resnames);
+        ne_header->set_residentNameTable(resnames);
     }
     if (ne_header->get_e_modreftab_rfo() > 0 && ne_header->get_e_importnametab_rfo() > ne_header->get_e_modreftab_rfo()) {
         /* Imported Name Table must be read before the Module Reference Table since the latter references the former. However,
@@ -1396,26 +1396,26 @@ SgAsmNEFileHeader::parse(SgAsmDOSFileHeader *dos_header)
         rose_addr_t modref_offset = ne_header->get_offset() + ne_header->get_e_modreftab_rfo();
         rose_addr_t modref_size   = ne_header->get_e_importnametab_rfo() - ne_header->get_e_modreftab_rfo();
         SgAsmNEModuleTable *modtab = new SgAsmNEModuleTable(ne_header, strtab, modref_offset, modref_size);
-        ne_header->set_module_table(modtab);
+        ne_header->set_moduleTable(modtab);
     }
     if (ne_header->get_e_entrytab_rfo() > 0 && ne_header->get_e_entrytab_size() > 0) {
         rose_addr_t enttab_offset = ne_header->get_offset() + ne_header->get_e_entrytab_rfo();
         rose_addr_t enttab_size = ne_header->get_e_entrytab_size();
         SgAsmNEEntryTable *enttab = new SgAsmNEEntryTable(ne_header, enttab_offset, enttab_size);
-        ne_header->set_entry_table(enttab);
+        ne_header->set_entryTable(enttab);
     }
     if (ne_header->get_e_nonresnametab_offset() > 0) {
         SgAsmNENameTable *nonres = new SgAsmNENameTable(ne_header, ne_header->get_e_nonresnametab_offset());
         nonres->set_name(new SgAsmBasicString("NE Non-Resident Name Table"));
-        ne_header->set_nonresname_table(nonres);
+        ne_header->set_nonresidentNameTable(nonres);
     }
 
     /* Construct the section table and its sections (non-synthesized sections) */
-    ne_header->set_section_table(new SgAsmNESectionTable(ne_header));
+    ne_header->set_sectionTable(new SgAsmNESectionTable(ne_header));
 
     // DQ (11/8/2008): Note that "enttab" appears twice as a variable name in this function (in different nested scopes)
     /* NE files have multiple entry points that are defined in the Entry Table */
-    if (SgAsmNEEntryTable *enttab = ne_header->get_entry_table())
+    if (SgAsmNEEntryTable *enttab = ne_header->get_entryTable())
         enttab->populate_entries();
     
     return ne_header;

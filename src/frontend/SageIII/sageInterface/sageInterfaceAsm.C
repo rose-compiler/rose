@@ -170,7 +170,7 @@ SageInterface::getSection ( SgProject* project, size_t ptr )
                  // Is there a better way to avoid searching over this section which contains all sections?
                     if (asmElfSection->get_name()->get_string() != "ELF Load (segment 2)")
                        {
-                         size_t section_address_base = asmElfSection->get_mapped_preferred_rva();
+                         size_t section_address_base = asmElfSection->get_mappedPreferredRva();
                          size_t section_size         = asmElfSection->get_size();
                          if (ptr >= section_address_base && ptr < section_address_base + section_size)
                             {

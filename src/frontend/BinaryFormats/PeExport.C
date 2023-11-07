@@ -21,11 +21,11 @@ SgAsmPEExportDirectory::SgAsmPEExportDirectory(SgAsmPEExportSection *section) {
     /* Read disk-formatted export directory */
     PEExportDirectory_disk disk;
     try {
-        section->read_content(fhdr->get_loader_map(), section->get_mapped_actual_va(), &disk, sizeof disk);
+        section->readContent(fhdr->get_loaderMap(), section->get_mappedActualVa(), &disk, sizeof disk);
     } catch (const MemoryMap::NotMapped &e) {
         if (mlog[ERROR]) {
             mlog[ERROR] <<"SgAsmPEExportDirectory::ctor: export directory at va "
-                        <<StringUtility::addrToString(section->get_mapped_actual_va())
+                        <<StringUtility::addrToString(section->get_mappedActualVa())
                         <<" contains unmapped va " <<StringUtility::addrToString(e.va) <<"\n";
             if (e.map) {
                 mlog[ERROR] <<"Memory map in effect at time of error:\n";
@@ -51,7 +51,7 @@ SgAsmPEExportDirectory::SgAsmPEExportDirectory(SgAsmPEExportSection *section) {
     /* Read the name */
     std::string name;
     try {
-        name = section->read_content_str(fhdr->get_loader_map(), p_name_rva.get_va());
+        name = section->readContentString(fhdr->get_loaderMap(), p_name_rva.get_va());
     } catch (const MemoryMap::NotMapped &e) {
         if (mlog[WARN]) {
             mlog[WARN] <<"SgAsmPEExportDirectory::ctor: directory name at rva "
@@ -104,7 +104,7 @@ SgAsmPEExportEntry::SgAsmPEExportEntry(SgAsmGenericString *fname, unsigned ordin
         fname->set_parent(this);
 
     set_ordinal(ordinal);
-    set_export_rva(expaddr);
+    set_exportRva(expaddr);
     set_forwarder(forwarder);
 }
 
@@ -167,7 +167,7 @@ SgAsmPEExportSection::parse()
     p_exportDirectory = new SgAsmPEExportDirectory(this);
 
     // Check that the p_export_dir.p_nameptr_n is not out of range.
-    rose_addr_t availBytes = fhdr->get_loader_map()->at(get_exportDirectory()->get_nameptr_rva().get_va()).available().size();
+    rose_addr_t availBytes = fhdr->get_loaderMap()->at(get_exportDirectory()->get_nameptr_rva().get_va()).available().size();
     size_t availElmts = availBytes / sizeof(ExportNamePtr_disk);
     if (get_exportDirectory()->get_nameptr_n() > availElmts) {
         mlog[ERROR] <<"SgAsmPEExportSection::parse: number of entries indicated (" <<get_exportDirectory()->get_nameptr_n() <<")"
@@ -190,7 +190,7 @@ SgAsmPEExportSection::parse()
         rose_addr_t nameptr_va = get_exportDirectory()->get_nameptr_rva().get_va() + i*sizeof(nameptr_disk);
         bool badFunctionNameVa = false;
         try {
-            read_content(fhdr->get_loader_map(), nameptr_va, &nameptr_disk, sizeof nameptr_disk);
+            readContent(fhdr->get_loaderMap(), nameptr_va, &nameptr_disk, sizeof nameptr_disk);
         } catch (const MemoryMap::NotMapped &e) {
             badFunctionNameVa = true;
             if (mlog[ERROR]) {
@@ -205,12 +205,12 @@ SgAsmPEExportSection::parse()
             nameptr_disk = 0;
         }
         rose_addr_t fname_rva = ByteOrder::leToHost(nameptr_disk);
-        rose_addr_t fname_va = fname_rva + fhdr->get_base_va();
+        rose_addr_t fname_va = fname_rva + fhdr->get_baseVa();
 
         /* Function name (fname) */
         std::string s;
         try {
-            s = read_content_str(fhdr->get_loader_map(), fname_va);
+            s = readContentString(fhdr->get_loaderMap(), fname_va);
         } catch (const MemoryMap::NotMapped &e) {
             if (mlog[ERROR]) {
                 mlog[ERROR] <<"SgAsmPEExportSection::parse: export name #" <<i
@@ -229,7 +229,7 @@ SgAsmPEExportSection::parse()
         rose_addr_t ordinal_va = get_exportDirectory()->get_ordinals_rva().get_va() + i*sizeof(ordinal_disk);
         bool badOrdinalVa = false;
         try {
-            read_content(fhdr->get_loader_map(), ordinal_va, &ordinal_disk, sizeof ordinal_disk);
+            readContent(fhdr->get_loaderMap(), ordinal_va, &ordinal_disk, sizeof ordinal_disk);
         } catch (const MemoryMap::NotMapped &e) {
             badOrdinalVa = true;
             if (mlog[ERROR]) {
@@ -257,7 +257,7 @@ SgAsmPEExportSection::parse()
         const rose_addr_t expaddr_va = get_exportDirectory()->get_expaddr_rva().get_va() + ordinal * sizeof(ExportAddress_disk);
         try {
             ExportAddress_disk expaddr_disk;
-            read_content(fhdr->get_loader_map(), expaddr_va, &expaddr_disk, sizeof expaddr_disk);
+            readContent(fhdr->get_loaderMap(), expaddr_va, &expaddr_disk, sizeof expaddr_disk);
             expaddr = ByteOrder::leToHost(expaddr_disk);
             expaddr.bind(fhdr);
         } catch (const MemoryMap::NotMapped &e) {
@@ -276,10 +276,10 @@ SgAsmPEExportSection::parse()
         /* If export address is within this section then it points to a NUL-terminated forwarder name.
          * FIXME: Is this the proper precondition? [RPM 2009-08-20] */
         SgAsmGenericString *forwarder = NULL;
-        if (expaddr.get_va()>=get_mapped_actual_va() && expaddr.get_va()<get_mapped_actual_va()+get_mapped_size()) {
+        if (expaddr.get_va()>=get_mappedActualVa() && expaddr.get_va()<get_mappedActualVa()+get_mappedSize()) {
             std::string s;
             try {
-                s = read_content_str(fhdr->get_loader_map(), expaddr.get_va());
+                s = readContentString(fhdr->get_loaderMap(), expaddr.get_va());
             } catch (const MemoryMap::NotMapped &e) {
                 if (mlog[ERROR]) {
                     mlog[ERROR] <<"SgAsmPEExportSection::parse: forwarder " <<i
@@ -295,7 +295,7 @@ SgAsmPEExportSection::parse()
         }
 
         SgAsmPEExportEntry *entry = new SgAsmPEExportEntry(fname, ordinal, expaddr, forwarder);
-        add_entry(entry);
+        addEntry(entry);
     }
     return this;
 }

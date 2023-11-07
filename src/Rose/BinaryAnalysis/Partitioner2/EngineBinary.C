@@ -895,7 +895,7 @@ EngineBinary::specimenNameDocumentation() {
         "adjusts a memory map by reading the process' memory. " + MemoryMap::insertProcessDocumentation() + "}"
 
         "@bullet{If the name begins with the string \"run:\" then it is first treated like a normal file by ROSE's "
-        "\"fontend\" function, and then during a second pass it will be loaded natively under a debugger, run until "
+        "\"frontend\" function, and then during a second pass it will be loaded natively under a debugger, run until "
         "a mapped executable address is reached, and then its memory is copied into ROSE's memory map possibly "
         "overwriting existing parts of the map.  This can be useful when the user wants accurate information about "
         "how that native loader links in shared objects since ROSE's linker doesn't always have identical behavior. "
@@ -1124,7 +1124,7 @@ EngineBinary::roseFrontendReplacement(const std::vector<boost::filesystem::path>
         SgAsmGenericHeaderList *headerList = file->get_headers();
         ASSERT_not_null(headerList);
         for (SgAsmGenericHeader *header: headerList->get_headers()) {
-            SgAsmGenericFormat *format = header->get_exec_format();
+            SgAsmGenericFormat *format = header->get_executableFormat();
             ASSERT_not_null(format);
 
             // Find or create the interpretation that holds this family of headers.
@@ -1484,7 +1484,7 @@ EngineBinary::createPartitionerFromAst(SgAsmInterpretation *interp) {
     // Create and attach basic blocks
     for (SgAsmNode *node: SageInterface::querySubTree<SgAsmNode>(interp)) {
         SgAsmBlock *blockAst = isSgAsmBlock(node);
-        if (!blockAst || !blockAst->has_instructions())
+        if (!blockAst || !blockAst->hasInstructions())
             continue;
         BasicBlock::Ptr bblock = BasicBlock::instance(blockAst->get_address(), partitioner);
         bblock->comment(blockAst->get_comment());
@@ -1500,7 +1500,7 @@ EngineBinary::createPartitionerFromAst(SgAsmInterpretation *interp) {
         const SgAsmIntegerValuePtrList &successors = blockAst->get_successors();
         for (SgAsmIntegerValueExpression *ival: successors)
             bblock->insertSuccessor(ival->get_absoluteValue(), ival->get_significantBits());
-        if (!blockAst->get_successors_complete()) {
+        if (!blockAst->get_successorsComplete()) {
             size_t nbits = partitioner->instructionProvider().instructionPointerRegister().nBits();
             bblock->insertSuccessor(Semantics::SValue::instance_undefined(nbits));
         }
@@ -1512,13 +1512,13 @@ EngineBinary::createPartitionerFromAst(SgAsmInterpretation *interp) {
     for (SgAsmFunction *funcAst: SageInterface::querySubTree<SgAsmFunction>(interp)) {
         if (0!=(funcAst->get_reason() & SgAsmFunction::FUNC_LEFTOVERS))
             continue;                                   // this isn't really a true function
-        Function::Ptr function = Function::instance(funcAst->get_entry_va(), funcAst->get_name());
+        Function::Ptr function = Function::instance(funcAst->get_entryVa(), funcAst->get_name());
         function->comment(funcAst->get_comment());
         function->reasons(funcAst->get_reason());
         function->reasonComment(funcAst->get_reasonComment());
 
         for (SgAsmBlock *blockAst: SageInterface::querySubTree<SgAsmBlock>(funcAst)) {
-            if (blockAst->has_instructions())
+            if (blockAst->hasInstructions())
                 function->insertBasicBlock(blockAst->get_address());
         }
 
@@ -1674,7 +1674,7 @@ bool
 EngineBinary::hasCilCodeSection() {
     if (auto interp{interpretation()}) {
         for (SgAsmGenericHeader* header : interp->get_headers()->get_headers()) {
-            auto sections = header->get_sections_by_name("CLR Runtime Header");
+            auto sections = header->get_sectionsByName("CLR Runtime Header");
             return sections.size() > 0;
         }
     }
@@ -1686,7 +1686,7 @@ EngineBinary::partitionCilSections(const Partitioner::Ptr &partitioner) {
     SgAsmCilMetadataRoot* mdr{nullptr};
     if (auto interp{interpretation()}) {
         for (SgAsmGenericHeader* header : interp->get_headers()->get_headers()) {
-            auto sections = header->get_sections_by_name("CLR Runtime Header");
+            auto sections = header->get_sectionsByName("CLR Runtime Header");
             for (SgAsmGenericSection* section : sections) {
                 if (auto cliHeader = isSgAsmCliHeader(section)) {
                     if (mdr != nullptr) {
@@ -1749,8 +1749,8 @@ EngineBinary::makeEntryFunctions(const Partitioner::Ptr &partitioner, SgAsmInter
     std::vector<Function::Ptr> retval;
     if (interp) {
         for (SgAsmGenericHeader *fileHeader: interp->get_headers()->get_headers()) {
-            for (const rose_rva_t &rva: fileHeader->get_entry_rvas()) {
-                rose_addr_t va = rva.get_rva() + fileHeader->get_base_va();
+            for (const rose_rva_t &rva: fileHeader->get_entryRvas()) {
+                rose_addr_t va = rva.get_rva() + fileHeader->get_baseVa();
                 Function::Ptr function = Function::instance(va, "_start", SgAsmFunction::FUNC_ENTRY_POINT);
                 insertUnique(retval, partitioner->attachOrMergeFunction(function), sortFunctionsByAddress);
                 ASSERT_require2(function->address() == va, function->printableName());

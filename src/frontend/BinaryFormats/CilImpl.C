@@ -2116,7 +2116,7 @@ MethodHeader
 parseFatHeader(rose_addr_t base_va, std::uint32_t rva, SgAsmPEFileHeader* fhdr)
 {
   std::uint8_t         buf[12];
-  const std::size_t    nread = fhdr->get_loader_map()->readQuick(&buf, base_va + rva, sizeof(buf));
+  const std::size_t    nread = fhdr->get_loaderMap()->readQuick(&buf, base_va + rva, sizeof(buf));
   ROSE_ASSERT(nread == 12);
 
   const std::uint16_t  flags    = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint16_t*>(buf+0));
@@ -2164,8 +2164,8 @@ disassemble(rose_addr_t base_va, SgAsmCilMethodDef* m, MethodHeader mh,
       SgUnsignedCharList rawBytes(1,'\0');
       while (addr < sz) {
         auto insn = new SgAsmCilInstruction(base_va+addr, "nop", Rose::BinaryAnalysis::CilInstructionKind::Cil_nop);
-        insn->set_raw_bytes(rawBytes);
-        ASSERT_require(insn->get_raw_bytes().size() == 1);
+        insn->set_rawBytes(rawBytes);
+        ASSERT_require(insn->get_rawBytes().size() == 1);
         lst.push_back(insn);
         addr += insn->get_size();
       }
@@ -2228,7 +2228,7 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
       
     // parse header
     std::uint8_t   mh0;
-    std::size_t    nread = fhdr->get_loader_map()->readQuick(&mh0, base_va + rva, 1);
+    std::size_t    nread = fhdr->get_loaderMap()->readQuick(&mh0, base_va + rva, 1);
     ROSE_ASSERT(nread == 1);
 
     const bool     isTiny = (mh0 & MethodHeader::FORMAT) == MethodHeader::TINY;
@@ -2244,7 +2244,7 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
     std::uint32_t  codeLen = mh.codeSize();
 
     std::vector<std::uint8_t> code(codeLen, 0);
-    std::size_t nreadCode = fhdr->get_loader_map()->readQuick(code.data(), base_va + codeRVA, codeLen);
+    std::size_t nreadCode = fhdr->get_loaderMap()->readQuick(code.data(), base_va + codeRVA, codeLen);
     ROSE_ASSERT(nreadCode == codeLen);
 
     SgAsmBlock* blk = nullptr;
@@ -2311,8 +2311,8 @@ void SgAsmCilMetadataRoot::parse()
   uint8_t*    data = reinterpret_cast<uint8_t*>(&metaData);
   rose_addr_t rva = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(data));
   size_t      size = Rose::BinaryAnalysis::ByteOrder::leToHost(*reinterpret_cast<uint32_t*>(data+4));
-  rose_addr_t base_va = clih->get_base_va();
-  rose_addr_t rva_offset = clih->get_rva_offset(rva);
+  rose_addr_t base_va = clih->get_baseVa();
+  rose_addr_t rva_offset = clih->get_rvaOffset(rva);
 
   if (TRACE_CONSTRUCTION)
   {
@@ -2325,7 +2325,7 @@ void SgAsmCilMetadataRoot::parse()
   // Note: probably want to allocate a larger buffer
   std::vector<uint8_t> buf(size, 0);
 
-  size_t nread = fhdr->get_loader_map()->readQuick(buf.data(), base_va + rva, size);
+  size_t nread = fhdr->get_loaderMap()->readQuick(buf.data(), base_va + rva, size);
   ASSERT_require(nread == size);
 
   this->parse(buf, 0);

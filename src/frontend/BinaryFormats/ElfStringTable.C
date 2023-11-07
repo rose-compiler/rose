@@ -33,7 +33,7 @@ SgAsmElfStringSection::parse()
 {
     SgAsmElfSection::parse();
     ROSE_ASSERT(p_strtab);
-    p_strtab->get_freelist().clear(); /*because set_size() during construction added to the free list*/
+    p_strtab->get_freeList().clear(); /*because set_size() during construction added to the free list*/
     p_strtab->parse();
     return this;
 }
@@ -46,7 +46,7 @@ SgAsmElfStringSection::reallocate()
         reallocated = true;
 
     /* Update parts of the section and segment tables not updated by superclass */
-    SgAsmElfSectionTableEntry *secent = get_section_entry();
+    SgAsmElfSectionTableEntry *secent = get_sectionEntry();
     if (secent)
         secent->set_sh_type(SgAsmElfSectionTableEntry::SHT_STRTAB);
 
@@ -57,7 +57,7 @@ void
 SgAsmElfStringSection::unparse(std::ostream &f) const
 {
     get_strtab()->unparse(f);
-    unparse_holes(f);
+    unparseHoles(f);
 }
 
 void
@@ -71,11 +71,11 @@ SgAsmElfStringSection::set_size(rose_addr_t newsize)
         if (get_size() > orig_size) {
             /* Add new address space to string table free list */
             rose_addr_t n = get_size() - orig_size;
-            strtab->get_freelist().insert(AddressInterval::baseSize(orig_size, n));
+            strtab->get_freeList().insert(AddressInterval::baseSize(orig_size, n));
         } else if (get_size() < orig_size) {
             /* Remove deleted address space from string table free list */
             rose_addr_t n = orig_size - get_size();
-            strtab->get_freelist().erase(AddressInterval::baseSize(get_size(), n));
+            strtab->get_freeList().erase(AddressInterval::baseSize(get_size(), n));
         }
     }
 }
@@ -105,7 +105,7 @@ SgAsmElfStrtab::SgAsmElfStrtab(class SgAsmElfSection *containing_section)
     ASSERT_not_null(get_container());
     if (get_container()->get_size() == 0)
         get_container()->set_size(1);
-    set_dont_free(create_storage(0, false));
+    set_dontFree(createStorage(0, false));
 }
 
 SgAsmElfStrtab *
@@ -115,12 +115,12 @@ SgAsmElfStrtab::parse()
     ROSE_ASSERT(get_container());
     if (get_container()->get_size()>0) {
         unsigned char first_byte;
-        get_container()->read_content_local(0, &first_byte, 1);
+        get_container()->readContentLocal(0, &first_byte, 1);
         if (first_byte=='\0') {
             if (get_dontFree()) {
                 ROSE_ASSERT(0==get_dontFree()->get_offset());
             } else {
-                p_dontFree = create_storage(0, false);
+                p_dontFree = createStorage(0, false);
             }
         } else if (get_dontFree()) {
             p_dontFree = NULL;
@@ -166,7 +166,7 @@ SgAsmElfStrtab::createStorage(rose_addr_t offset, bool shared)
         ROSE_ASSERT(get_container()->get_size()>=1);
         storage = new SgAsmStringStorage(this, "", 0);
     } else {
-        std::string s = get_container()->read_content_local_str(offset);
+        std::string s = get_container()->readContentLocalString(offset);
         storage = new SgAsmStringStorage(this, s, offset);
     }
 
@@ -174,11 +174,11 @@ SgAsmElfStrtab::createStorage(rose_addr_t offset, bool shared)
      * the case where offset 1 is "domain" and offset 3 is "main" (i.e., they overlap). If we modify "main" before knowing
      * about "domain" then we'll end up freeing the last part of "domain" (and possibly replacing it with something else)!
      *
-     * The only time we can guarantee this is OK is when the new storage points to the same file location as "dont_free"
+     * The only time we can guarantee this is OK is when the new storage points to the same file location as "dontFree"
      * since the latter is guaranteed to never be freed or shared. This exception is used when creating a new, unallocated
      * string (see SgAsmStoredString(SgAsmGenericStrtab,const std::string&)). */
     if (get_numberFreed()>0 && (!get_dontFree() || offset!=get_dontFree()->get_offset())) {
-        mlog[WARN] <<"SgAsmElfStrtab::create_storage(" <<StringUtility::addrToString(offset) <<"): "
+        mlog[WARN] <<"SgAsmElfStrtab::createStorage(" <<StringUtility::addrToString(offset) <<"): "
                    <<StringUtility::plural(p_numberFreed, "other strings")
                    <<" (of " <<p_storageList.size() <<" created)"
                    <<" in [" <<get_container()->get_id() <<"] \"" <<get_container()->get_name()->get_string(true) <<"\" "
@@ -195,7 +195,7 @@ void
 SgAsmElfStrtab::rebind(SgAsmStringStorage *storage, rose_addr_t offset)
 {
     ROSE_ASSERT(get_dontFree() && storage!=get_dontFree() && storage->get_offset()==get_dontFree()->get_offset());
-    std::string s = get_container()->read_content_local_str(offset, false /*relax*/);
+    std::string s = get_container()->readContentLocalString(offset, false /*relax*/);
     storage->set_offset(offset);
     storage->set_string(s);
 }
@@ -234,8 +234,8 @@ SgAsmElfStrtab::allocateOverlap(SgAsmStringStorage *storage)
                 /* New string ends with an existing string. Check for, and allocate, free space. */
                 rose_addr_t offset = existing->get_offset() - (need-have); /* positive diffs checked above */
                 AddressInterval allocationRequest = AddressInterval::baseSize(offset, need-have);
-                if (get_freelist().contains(allocationRequest)) {
-                    get_freelist().erase(allocationRequest);
+                if (get_freeList().contains(allocationRequest)) {
+                    get_freeList().erase(allocationRequest);
                     storage->set_offset(offset);
                     return;
                 }
@@ -262,7 +262,7 @@ SgAsmElfStrtab::unparse(std::ostream &f) const
     }
     
     /* Fill free areas with zero */
-    BOOST_FOREACH (const AddressInterval &interval, get_freelist().intervals())
+    BOOST_FOREACH (const AddressInterval &interval, get_freeList().intervals())
         container->write(f, interval.least(), std::string(interval.size(), '\0'));
 }
 

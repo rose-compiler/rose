@@ -19,7 +19,7 @@ ControlFlow::clear_ast(SgNode *root)
             SgAsmBlock *block = isSgAsmBlock(node);
             if (block && !analyzer->is_vertex_filtered(block)) {
                 block->get_successors().clear();
-                block->set_successors_complete(false);
+                block->set_successorsComplete(false);
             }
         }
     };

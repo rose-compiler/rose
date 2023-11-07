@@ -37,11 +37,11 @@ SgAsmJvmFileHeader::SgAsmJvmFileHeader(SgAsmGenericFile* f)
   get_executableFormat()->set_family(FAMILY_JVM);
   get_executableFormat()->set_purpose(PURPOSE_EXECUTABLE);
   get_executableFormat()->set_sex(Rose::BinaryAnalysis::ByteOrder::ORDER_MSB);
-  get_executableFormat()->set_word_size(4);
+  get_executableFormat()->set_wordSize(4);
   get_executableFormat()->set_version(0);
-  get_executableFormat()->set_is_current_version(false);
+  get_executableFormat()->set_isCurrentVersion(false);
   get_executableFormat()->set_abi(ABI_JVM);
-  get_executableFormat()->set_abi_version(0);
+  get_executableFormat()->set_abiVersion(0);
 
   p_isa = ISA_JVM;
 }
@@ -84,7 +84,7 @@ SgAsmJvmFileHeader::parse()
 
   /* Ensure magic number in file is correct */
   unsigned char magic[4];
-  auto count = read_content(offset, magic, sizeof magic);
+  auto count = readContent(offset, magic, sizeof magic);
   if (4!=count || p_magic.size()!=count || p_magic[0]!=magic[0]
                || p_magic[1]!=magic[1] || p_magic[2]!=magic[2] || p_magic[3]!=magic[3]) {
     throw FormatError("Bad Java class file magic number");
@@ -98,8 +98,8 @@ SgAsmJvmFileHeader::parse()
 
   ASSERT_not_null(get_executableFormat());
   get_executableFormat()->set_version(p_major_version);
-  get_executableFormat()->set_is_current_version(true);
-  get_executableFormat()->set_abi_version(p_major_version);
+  get_executableFormat()->set_isCurrentVersion(true);
+  get_executableFormat()->set_abiVersion(p_major_version);
 
   /* And finally the constant pool can be parsed */
   pool->parse();
@@ -134,7 +134,7 @@ SgAsmJvmFileHeader::parse()
   ASSERT_not_null(attributes->get_parent());
   attributes->parse(pool);
 
-  if (1 != (get_end_offset() - get_offset())) {
+  if (1 != (get_endOffset() - get_offset())) {
     mlog[FATAL] << "Error reading file, end of file not reached\n";
     ROSE_ABORT();
   }
@@ -208,8 +208,8 @@ SgAsmJvmFileHeader::unparse(std::ostream &f) const
   f.write(bytes, data.size()-count);
 
   // The end-of-file marker is read during parsing, don't rewrite or write '\0' bytes padding at end
-  // However, it seems logic is wrong in GenericFile.C used to call extend_to_eof(), thus following required for JVM
-  gf->set_truncate_zeros(true);
+  // However, it seems logic is wrong in GenericFile.C used to call extendToEof(), thus following required for JVM
+  gf->set_truncateZeros(true);
 }
 
 // This should be added to ROSETTA
@@ -231,19 +231,19 @@ SgAsmJvmFileHeader::is_JVM(SgAsmGenericFile* file)
 
   /* Turn off byte reference tracking for the duration of this function. We don't want our testing the file contents to
    * affect the list of bytes that we've already referenced or which we might reference later. */
-  bool was_tracking = file->get_tracking_references();
-  file->set_tracking_references(false);
+  bool was_tracking = file->get_trackingReferences();
+  file->set_trackingReferences(false);
   try {
     unsigned char magic[4];
-    auto count = file->read_content(0, magic, sizeof magic);
+    auto count = file->readContent(0, magic, sizeof magic);
     if (4 != count || 0xCA!=magic[0] || 0xFE!=magic[1] || 0xBA!=magic[2] || 0xBE!=magic[3]) {
       throw 1;
     }
   } catch (...) {
-    file->set_tracking_references(was_tracking);
+    file->set_trackingReferences(was_tracking);
     return false;
   }
-  file->set_tracking_references(was_tracking);
+  file->set_trackingReferences(was_tracking);
   return true;
 }
 

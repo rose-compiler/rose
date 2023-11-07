@@ -222,7 +222,7 @@ EngineJvm::loadClassFile(boost::filesystem::path path, SgAsmGenericFileList* fil
     file->parse(fileName); /* this loads file into memory, does no reading of file */
 
     auto jfh = new SgAsmJvmFileHeader(file);
-    jfh->set_base_va(baseVa);
+    jfh->set_baseVa(baseVa);
 
     // Check AST
     ASSERT_require(jfh == file->get_header(SgAsmGenericFile::FAMILY_JVM));
@@ -238,14 +238,14 @@ EngineJvm::loadClassFile(boost::filesystem::path path, SgAsmGenericFileList* fil
     file->set_parent(fileList);
 
     // Increase base virtual address for the next class
-    baseVa += file->get_orig_size() + vaDefaultIncrement;
+    baseVa += file->get_originalSize() + vaDefaultIncrement;
     baseVa -= baseVa % vaDefaultIncrement;
 
     // Decode instructions for usage downstream
     std::set<std::string> discoveredClasses{};
     auto disassembler = Disassembler::lookup("jvm");
     for (auto sgMethod: jfh->get_method_table()->get_methods()) {
-      ByteCode::JvmMethod method{jfh, sgMethod, jfh->get_base_va()};
+      ByteCode::JvmMethod method{jfh, sgMethod, jfh->get_baseVa()};
       method.decode(disassembler);
       discoverFunctionCalls(sgMethod, jfh->get_constant_pool(), functions_, discoveredClasses);
     }
@@ -420,7 +420,7 @@ EngineJvm::roseFrontendReplacement(const std::vector<boost::filesystem::path> &p
         SgAsmGenericHeaderList *headerList = file->get_headers();
         ASSERT_not_null(headerList);
         for (SgAsmGenericHeader *header: headerList->get_headers()) {
-            SgAsmGenericFormat *format = header->get_exec_format();
+            SgAsmGenericFormat *format = header->get_executableFormat();
             ASSERT_not_null(format);
 
             // Find or create the interpretation that holds this family of headers.

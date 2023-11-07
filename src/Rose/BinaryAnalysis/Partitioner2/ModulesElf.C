@@ -586,15 +586,15 @@ findPlt(const Partitioner::ConstPtr &partitioner, SgAsmGenericSection *got, SgAs
                     // separate table. When it's a separate table, we want to parse it instead of .plt because the .plt.sec is what
                     // has the offsets into the .got, which in turn is what the relocation symbols refer to.  This is used, for
                     // instance, when compiling with -fPIC on i386.
-                    section = elfHeader->get_section_by_name(".plt.sec");
+                    section = elfHeader->get_sectionByName(".plt.sec");
                     break;
                 case 1:
                     // The normal .plt is used when there is no .plt.sec.
-                    section = elfHeader->get_section_by_name(".plt");
+                    section = elfHeader->get_sectionByName(".plt");
                     break;
                 case 2:
                     // Not sure what this is.
-                    section = elfHeader->get_section_by_name(".plt.got");
+                    section = elfHeader->get_sectionByName(".plt.got");
                     break;
             }
 
@@ -603,14 +603,14 @@ findPlt(const Partitioner::ConstPtr &partitioner, SgAsmGenericSection *got, SgAs
                 foundSection = true;
                 SAWYER_MESG(mlog[DEBUG]) <<"searching for PLT in \""
                                          <<StringUtility::cEscape(section->get_name()->get_string()) <<"\""
-                                         <<" at " <<StringUtility::addrToString(section->get_mapped_actual_va())
-                                         <<" + " <<StringUtility::addrToString(section->get_mapped_size())
-                                         <<" = " <<StringUtility::addrToString(section->get_mapped_actual_va() +
-                                                                               section->get_mapped_size())
+                                         <<" at " <<StringUtility::addrToString(section->get_mappedActualVa())
+                                         <<" + " <<StringUtility::addrToString(section->get_mappedSize())
+                                         <<" = " <<StringUtility::addrToString(section->get_mappedActualVa() +
+                                                                               section->get_mappedSize())
                                          <<"\n";
                 for (size_t offset = 0; offset < section->get_size(); ++offset) {
-                    PltEntryMatcher matcher(got ? got->get_mapped_actual_va() : 0);
-                    if (matcher.match(partitioner, section->get_mapped_actual_va() + offset)) {
+                    PltEntryMatcher matcher(got ? got->get_mappedActualVa() : 0);
+                    if (matcher.match(partitioner, section->get_mappedActualVa() + offset)) {
                         SAWYER_MESG(mlog[DEBUG]) <<"  matched PLT " <<matcher.nBytesMatched() <<" byte entry"
                                                  <<" at offset " <<offset <<"\n";
                         if (offset + matcher.nBytesMatched() > section->get_size()) {
@@ -649,7 +649,7 @@ findPltFunctions(const Partitioner::Ptr &partitioner, SgAsmElfFileHeader *elfHea
     // Find important sections
     SgAsmGenericSection *got = partitioner->elfGot(elfHeader);
     PltInfo plt = findPlt(partitioner, got, elfHeader);
-    if (!plt.section || !plt.section->is_mapped() || !got || !got->is_mapped() || 0 == plt.entrySize)
+    if (!plt.section || !plt.section->isMapped() || !got || !got->isMapped() || 0 == plt.entrySize)
         return 0;
 
     // Find all relocation sections
@@ -666,15 +666,15 @@ findPltFunctions(const Partitioner::Ptr &partitioner, SgAsmElfFileHeader *elfHea
     // then we've found the beginning of a plt trampoline.
     size_t nInserted = 0;
     for (rose_addr_t pltOffset = plt.firstOffset;
-         pltOffset + plt.entrySize <= plt.section->get_mapped_size();
+         pltOffset + plt.entrySize <= plt.section->get_mappedSize();
          pltOffset += plt.entrySize) {
-        PltEntryMatcher matcher(got->get_mapped_actual_va());
-        rose_addr_t pltEntryVa = plt.section->get_mapped_actual_va() + pltOffset;
+        PltEntryMatcher matcher(got->get_mappedActualVa());
+        rose_addr_t pltEntryVa = plt.section->get_mappedActualVa() + pltOffset;
         if (!matcher.match(partitioner, pltEntryVa))
             continue;
         rose_addr_t gotVa = matcher.gotEntryVa();    // address that was read by indirect branch
-        if (gotVa <  elfHeader->get_base_va() + got->get_mapped_preferred_rva() ||
-            gotVa >= elfHeader->get_base_va() + got->get_mapped_preferred_rva() + got->get_mapped_size()) {
+        if (gotVa <  elfHeader->get_baseVa() + got->get_mappedPreferredRva() ||
+            gotVa >= elfHeader->get_baseVa() + got->get_mappedPreferredRva() + got->get_mappedSize()) {
             continue;                                   // jump is not indirect through the .got.plt section
         }
         SAWYER_MESG(debug) <<"symbolizing PLT entry " <<StringUtility::addrToString(pltEntryVa)
@@ -683,7 +683,7 @@ findPltFunctions(const Partitioner::Ptr &partitioner, SgAsmElfFileHeader *elfHea
         // Find the relocation entry whose offset is the gotVa and use that entry's symbol for the function name
         std::string name;
         for (SgAsmElfRelocSection *relocSection: relocSections) {
-            SgAsmElfSymbolSection *symbolSection = isSgAsmElfSymbolSection(relocSection->get_linked_section());
+            SgAsmElfSymbolSection *symbolSection = isSgAsmElfSymbolSection(relocSection->get_linkedSection());
             if (SgAsmElfSymbolList *symbols = symbolSection ? symbolSection->get_symbols() : NULL) {
                 for (SgAsmElfRelocEntry *rel: relocSection->get_entries()->get_entries()) {
                     if (rel->get_r_offset() == gotVa) {
@@ -711,7 +711,7 @@ findPltFunctions(const Partitioner::Ptr &partitioner, SgAsmElfFileHeader *elfHea
 
     // The first entry of the .plt section is the call to the function that resolves dynamic links
     if (plt.firstOffset > 0) {
-        Function::Ptr linkerTrampoline = Function::instance(plt.section->get_mapped_actual_va(), "DYNAMIC_LINKER_TRAMPOLINE",
+        Function::Ptr linkerTrampoline = Function::instance(plt.section->get_mappedActualVa(), "DYNAMIC_LINKER_TRAMPOLINE",
                                                             SgAsmFunction::FUNC_IMPORT);
         if (insertUnique(functions, linkerTrampoline, sortFunctionsByAddress))
             ++nInserted;
@@ -970,7 +970,7 @@ findSectionsByName(SgAsmInterpretation *interp, const std::string &name) {
     std::vector<SgAsmElfSection*> retval;
     if (interp!=NULL) {
         for (SgAsmGenericHeader *fileHeader: interp->get_headers()->get_headers()) {
-            std::vector<SgAsmGenericSection*> sections = fileHeader->get_sections_by_name(name);
+            std::vector<SgAsmGenericSection*> sections = fileHeader->get_sectionsByName(name);
             for (SgAsmGenericSection *section: sections) {
                 if (SgAsmElfSection *elfSection = isSgAsmElfSection(section))
                     retval.push_back(elfSection);

@@ -234,7 +234,7 @@ namespace VirtualBinCFG {
                 while (f && !isSgAsmBlock(f) && !isSgAsmFunction(f)) f = f->get_parent();
                 if (!f) return;
                 //cerr << "Found function of target" << endl;
-                uint64_t next = insn->get_address() + insn->get_raw_bytes().size();
+                uint64_t next = insn->get_address() + insn->get_rawBytes().size();
                 info->returnTargets[isSgAsmStatement(f)].insert(next);
             }
         };

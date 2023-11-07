@@ -24,17 +24,17 @@ BinaryLoaderPe::rebase(const MemoryMap::Ptr &map, SgAsmGenericHeader *header, co
     SgAsmPEFileHeader* pe_header = isSgAsmPEFileHeader(header);
     ROSE_ASSERT(pe_header != NULL);
     const size_t maximum_alignment = pe_header->get_e_section_align();
-    rose_addr_t original = pe_header->get_base_va();
+    rose_addr_t original = pe_header->get_baseVa();
 
     // Find the minimum address desired by the sections to be mapped.
     rose_addr_t min_preferred_rva = (uint64_t)(-1);
     for (SgAsmGenericSectionPtrList::const_iterator si=sections.begin(); si!=sections.end(); ++si)
-        min_preferred_rva = std::min(min_preferred_rva, (*si)->get_mapped_preferred_rva());
-    rose_addr_t min_preferred_va = header->get_base_va() + min_preferred_rva;
+        min_preferred_rva = std::min(min_preferred_rva, (*si)->get_mappedPreferredRva());
+    rose_addr_t min_preferred_va = header->get_baseVa() + min_preferred_rva;
 
     // Minimum address at which to map
     //AddressInterval freeSpace = map->unmapped(mappableArea.greatest(), Sawyer::Container::MATCH_BACKWARD);
-    AddressInterval valid_range = AddressInterval::hull(pe_header->get_base_va(),0x7FFFFFFFFFFF);
+    AddressInterval valid_range = AddressInterval::hull(pe_header->get_baseVa(),0x7FFFFFFFFFFF);
     ROSE_ASSERT(!valid_range.isEmpty());
     rose_addr_t map_base_va = map->findFreeSpace(pe_header->get_e_image_size(), maximum_alignment, valid_range).get();
     map_base_va = alignUp(map_base_va, (rose_addr_t)maximum_alignment);
@@ -52,7 +52,7 @@ BinaryLoaderPe::rebase(const MemoryMap::Ptr &map, SgAsmGenericHeader *header, co
         return map_base_va;
     }
 
-    return header->get_base_va();
+    return header->get_baseVa();
 }
 
 /* Returns sections to be mapped */
@@ -91,14 +91,14 @@ BinaryLoaderPe::alignValues(SgAsmGenericSection *section, const MemoryMap::Ptr&,
     if (!header) header = section->get_header();
     ASSERT_not_null(header);
 
-    if (!section->is_mapped())
+    if (!section->isMapped())
         return CONTRIBUTE_NONE;
 
     /* File and memory alignment must be between 1 and 0x200 (512), inclusive */
-    rose_addr_t file_alignment = section->get_file_alignment();
+    rose_addr_t file_alignment = section->get_fileAlignment();
     if (file_alignment>0x200 || 0==file_alignment)
         file_alignment = 0x200;
-    rose_addr_t mapped_alignment = section->get_mapped_alignment();
+    rose_addr_t mapped_alignment = section->get_mappedAlignment();
     if (0==mapped_alignment)
         mapped_alignment = 0x200;
 
@@ -106,14 +106,14 @@ BinaryLoaderPe::alignValues(SgAsmGenericSection *section, const MemoryMap::Ptr&,
     rose_addr_t file_size = alignUp(section->get_size(), file_alignment);
 
     /* Map the entire section's file content (aligned) or the requested map size, whichever is larger. */
-    rose_addr_t mapped_size = std::max(section->get_mapped_size(), file_size);
+    rose_addr_t mapped_size = std::max(section->get_mappedSize(), file_size);
 
     /* Align file offset downward but do not adjust file size. */
     rose_addr_t file_offset = alignDown(section->get_offset(), file_alignment);
 
     /* Align the preferred relative virtual address downward without regard for the base virtual address, and do not adjust
      * mapped size. */
-    rose_addr_t mapped_va = header->get_base_va() + alignDown(section->get_mapped_preferred_rva(), mapped_alignment);
+    rose_addr_t mapped_va = header->get_baseVa() + alignDown(section->get_mappedPreferredRva(), mapped_alignment);
 
     *malign_lo_p = mapped_alignment;
     *malign_hi_p = 1;
@@ -287,11 +287,11 @@ BinaryLoaderPe::fixup(SgAsmInterpretation *interp, FixupErrors *errors) {
     //Traverse sections to ensure mapped address and sections are properly set.
     for(auto h = headers.begin(); h != headers.end(); ++h) {
         SgAsmGenericSectionPtrList& sections = (*h)->get_sections()->get_sections();
-        rose_addr_t headerOffset = (*h)->get_mapped_actual_va() - (*h)->get_base_va();
+        rose_addr_t headerOffset = (*h)->get_mappedActualVa() - (*h)->get_baseVa();
         for(auto s = sections.begin(); s != sections.end(); ++s){
             SgAsmGenericSection* section = *s;
-            if((headerOffset + section->get_base_va()) > section->get_mapped_actual_va()){
-                section->set_mapped_actual_va(section->get_mapped_actual_va() + headerOffset);
+            if((headerOffset + section->get_baseVa()) > section->get_mappedActualVa()){
+                section->set_mappedActualVa(section->get_mappedActualVa() + headerOffset);
             }
         }
     }
@@ -302,7 +302,7 @@ BinaryLoaderPe::fixup(SgAsmInterpretation *interp, FixupErrors *errors) {
         SgAsmGenericSectionPtrList& sections = (*h)->get_sections()->get_sections();
         for(auto s = sections.begin(); s != sections.end(); ++s){
             if(SgAsmPEExportSection* exportSection = isSgAsmPEExportSection(*s)){
-                SgAsmPEExportDirectory* exportDir = exportSection->get_export_dir();
+                SgAsmPEExportDirectory* exportDir = exportSection->get_exportDirectory();
                 SgAsmPEExportEntryPtrList& exports = exportSection->get_exports()->get_exports();
                 string dirName = exportDir->get_name()->get_string();
                 boost::to_lower(dirName);
@@ -323,10 +323,10 @@ BinaryLoaderPe::fixup(SgAsmInterpretation *interp, FixupErrors *errors) {
         SgAsmGenericSectionPtrList& sections = (*h)->get_sections()->get_sections();
         for(auto s = sections.begin(); s != sections.end(); ++s){
             if(SgAsmPEImportSection* importSection = isSgAsmPEImportSection(*s)){
-                SgAsmPEImportDirectoryPtrList& directories = (importSection)->get_import_directories()->get_vector();
+                SgAsmPEImportDirectoryPtrList& directories = (importSection)->get_importDirectories()->get_vector();
                 for(auto d = directories.begin(); d != directories.end(); ++d){
                     SgAsmPEImportItemPtrList& imports = (*d)->get_imports()->get_vector();
-                    string dirName = (*d)->get_dll_name()->get_string();
+                    string dirName = (*d)->get_dllName()->get_string();
                     boost::to_lower(dirName);
                     for(auto i = imports.begin(); i != imports.end(); ++i){
                         SgAsmPEImportItem* importEntry = *i;
@@ -381,8 +381,8 @@ BinaryLoaderPe::fixup(SgAsmInterpretation *interp, FixupErrors *errors) {
                         }
                         //Export entry found. Set address in the IAT
                         if(exportEntry != nullptr){
-                            rose_addr_t exportAddr   = exportEntry->get_export_rva().get_va();
-                            rose_addr_t iatEntryAddr = importEntry->get_iat_entry_va();
+                            rose_addr_t exportAddr   = exportEntry->get_exportRva().get_va();
+                            rose_addr_t iatEntryAddr = importEntry->get_iatEntryVa();
                             size_t written = memoryMap->writeUnsigned(exportAddr,iatEntryAddr);
                             if(written > 0) importEntry->set_iat_written(true);
                             mlog[TRACE]<<"Setting value in IAT: "<<dirName<<"."<<importName<<"-"<<entryOrdinal<<": IAT 0x"<<hex<<iatEntryAddr<<" Export: 0x"<<exportAddr<<dec<<endl;

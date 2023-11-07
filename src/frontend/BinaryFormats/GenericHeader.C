@@ -36,7 +36,7 @@ size_t
 SgAsmGenericHeader::get_wordSize() const
    {
      ROSE_ASSERT(get_executableFormat() != NULL);
-     return get_executableFormat()->get_word_size();
+     return get_executableFormat()->get_wordSize();
    }
 
 
@@ -49,7 +49,7 @@ SgAsmGenericHeader::SgAsmGenericHeader(SgAsmGenericFile *ef)
 
     /* The bidirectional link between file and header */
     ASSERT_not_null(get_file());
-    get_file()->add_header(this);
+    get_file()->addHeader(this);
 }
 
 /* Destructor must remove header/file link. Children in the AST have already been deleted when called from
@@ -62,7 +62,7 @@ SgAsmGenericHeader::destructorHelper()
 
     /* Destroy the header/file bidirectional link. See comment in constructor. */
     ROSE_ASSERT(get_file()!=NULL);
-    get_file()->remove_header(this);
+    get_file()->removeHeader(this);
 }
 
 bool
@@ -180,7 +180,7 @@ SgAsmGenericHeader::get_mappedSections() const
 {
     SgAsmGenericSectionPtrList retval;
     for (auto section: p_sections->get_sections()) {
-        if (section->is_mapped()) {
+        if (section->isMapped()) {
             retval.push_back(section);
         }
     }
@@ -214,7 +214,7 @@ SgAsmGenericHeader::get_section_by_id(int id, size_t *nfound/*optional*/) const
 SgAsmGenericSection *
 SgAsmGenericHeader::get_sectionById(int id, size_t *nfound/*optional*/) const
 {
-    SgAsmGenericSectionPtrList possible = get_sections_by_id(id);
+    SgAsmGenericSectionPtrList possible = get_sectionsById(id);
     if (nfound) *nfound = possible.size();
     return possible.size()==1 ? possible[0] : NULL;
 }
@@ -257,7 +257,7 @@ SgAsmGenericHeader::get_section_by_name(const std::string &name, char sep/*or NU
 SgAsmGenericSection *
 SgAsmGenericHeader::get_sectionByName(const std::string &name, char sep/*or NUL*/, size_t *nfound/*optional*/) const
 {
-    SgAsmGenericSectionPtrList possible = get_sections_by_name(name, sep);
+    SgAsmGenericSectionPtrList possible = get_sectionsByName(name, sep);
     if (nfound) *nfound = possible.size();
     return possible.size()==1 ? possible[0] : NULL;
 }
@@ -290,7 +290,7 @@ SgAsmGenericHeader::get_section_by_offset(rose_addr_t offset, rose_addr_t size, 
 SgAsmGenericSection *
 SgAsmGenericHeader::get_sectionByOffset(rose_addr_t offset, rose_addr_t size, size_t *nfound/*optional*/) const
 {
-    SgAsmGenericSectionPtrList possible = get_sections_by_offset(offset, size);
+    SgAsmGenericSectionPtrList possible = get_sectionsByOffset(offset, size);
     if (nfound) *nfound = possible.size();
     return possible.size()==1 ? possible[0] : NULL;
 }
@@ -306,8 +306,8 @@ SgAsmGenericHeader::get_sectionsByRva(rose_addr_t rva) const
 {
     SgAsmGenericSectionPtrList retval;
     for (auto section: p_sections->get_sections()) {
-        if (section->is_mapped() &&
-            rva >= section->get_mapped_preferred_rva() && rva < section->get_mapped_preferred_rva() + section->get_mapped_size()) {
+        if (section->isMapped() &&
+            rva >= section->get_mappedPreferredRva() && rva < section->get_mappedPreferredRva() + section->get_mappedSize()) {
             retval.push_back(section);
         }
     }
@@ -317,13 +317,13 @@ SgAsmGenericHeader::get_sectionsByRva(rose_addr_t rva) const
 SgAsmGenericSection *
 SgAsmGenericHeader::get_section_by_rva(rose_addr_t rva, size_t *nfound/*optional*/) const
 {
-    return get_section_by_rva(rva, nfound);
+    return get_sectionByRva(rva, nfound);
 }
 
 SgAsmGenericSection *
 SgAsmGenericHeader::get_sectionByRva(rose_addr_t rva, size_t *nfound/*optional*/) const
 {
-    SgAsmGenericSectionPtrList possible = get_sections_by_rva(rva);
+    SgAsmGenericSectionPtrList possible = get_sectionsByRva(rva);
     if (nfound) *nfound = possible.size();
     return possible.size()==1 ? possible[0] : NULL;
 }
@@ -338,17 +338,17 @@ SgAsmGenericSectionPtrList
 SgAsmGenericHeader::get_sectionsByVa(rose_addr_t va, bool use_preferred) const
 {
     if (use_preferred) {
-        if (va < get_base_va())
+        if (va < get_baseVa())
             return SgAsmGenericSectionPtrList();
-        rose_addr_t rva = va - get_base_va();
-        return get_sections_by_rva(rva);
+        rose_addr_t rva = va - get_baseVa();
+        return get_sectionsByRva(rva);
     }
      
     SgAsmGenericSectionPtrList retval;
     for (size_t i=0; i<p_sections->get_sections().size(); i++) {
         SgAsmGenericSection *section = p_sections->get_sections()[i];
-        if (section->is_mapped() &&
-            va>=section->get_mapped_actual_va() && va<section->get_mapped_actual_va()+section->get_mapped_size())
+        if (section->isMapped() &&
+            va>=section->get_mappedActualVa() && va<section->get_mappedActualVa()+section->get_mappedSize())
             retval.push_back(section);
     }
     return retval;
@@ -363,7 +363,7 @@ SgAsmGenericHeader::get_section_by_va(rose_addr_t va, bool use_preferred, size_t
 SgAsmGenericSection *
 SgAsmGenericHeader::get_sectionByVa(rose_addr_t va, bool use_preferred, size_t *nfound/*optional*/) const
 {
-    SgAsmGenericSectionPtrList possible = get_sections_by_va(va, use_preferred);
+    SgAsmGenericSectionPtrList possible = get_sectionsByVa(va, use_preferred);
     if (nfound) *nfound = possible.size();
     return possible.size()==1 ? possible[0] : NULL;
 }
@@ -377,9 +377,9 @@ SgAsmGenericHeader::get_best_section_by_va(rose_addr_t va, bool use_preferred, s
 SgAsmGenericSection *
 SgAsmGenericHeader::get_bestSectionByVa(rose_addr_t va, bool use_preferred, size_t *nfound) const
 {
-    const SgAsmGenericSectionPtrList &candidates = get_sections_by_va(va, use_preferred);
+    const SgAsmGenericSectionPtrList &candidates = get_sectionsByVa(va, use_preferred);
     if (nfound) *nfound = candidates.size();
-    return SgAsmGenericFile::best_section_by_va(candidates, va);
+    return SgAsmGenericFile::bestSectionByVa(candidates, va);
 }
 
 void
@@ -420,7 +420,7 @@ SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fputs("\"\n", f);
 
     /* Base virtual address and entry addresses */
-    fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ")\n", p, w, "base_va", get_base_va(), get_base_va());
+    fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ")\n", p, w, "base_va", get_baseVa(), get_baseVa());
     fprintf(f, "%s%-*s = %" PRIuPTR " entry points\n", p, w, "entry_rva.size", get_entryRvas().size());
     for (size_t i = 0; i < get_entryRvas().size(); i++) {
         char label[64];
@@ -428,7 +428,7 @@ SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
         rose_addr_t entry_rva = get_entryRvas()[i].get_rva();
         fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ")\n", p, w, label, entry_rva, entry_rva);
         SgAsmGenericSectionPtrList sections = get_file()->get_sections();
-        dump_containing_sections(f, std::string(p)+label, entry_rva, sections);
+        dumpContainingSections(f, std::string(p)+label, entry_rva, sections);
     }
 
     fprintf(f, "%s%-*s = %" PRIuPTR " sections\n", p, w, "section", p_sections->get_sections().size());

@@ -38,9 +38,9 @@ printSgAsmExpression(FILE *f, SgAsmExpression *e, const std::string &prefix, uns
 
         case V_SgAsmValueExpression: {
             SgAsmValueExpression *ee = isSgAsmValueExpression(e);
-            fprintf(f, ",\n%sbit_offset=%u, bit_size=%u", prefix.c_str(), ee->get_bit_offset(), ee->get_bit_size());
+            fprintf(f, ",\n%sbit_offset=%u, bit_size=%u", prefix.c_str(), ee->get_bitOffset(), ee->get_bitSize());
             fprintf(f, ", unfolded=");
-            printSgAsmExpression(f, ee->get_unfolded_expression_tree(), prefix+"  ");
+            printSgAsmExpression(f, ee->get_unfoldedExpression(), prefix+"  ");
             printSgAsmExpression(f, e, prefix, V_SgAsmExpression);
             break;
         }
@@ -193,7 +193,7 @@ printSgAsmExpression(FILE *f, SgAsmExpression *e, const std::string &prefix, uns
             
         case V_SgAsmControlFlagsExpression: {
             SgAsmControlFlagsExpression *ee = isSgAsmControlFlagsExpression(e);
-            fprintf(f, "ControlFlags {bit_flags=0x%08lx", ee->get_bit_flags());
+            fprintf(f, "ControlFlags {bit_flags=0x%08lx", ee->get_bitFlags());
             printSgAsmExpression(f, e, prefix, V_SgAsmExpression);
             fprintf(f, "}");
             break;
@@ -1200,7 +1200,7 @@ AssemblerX86::fixup_prefix_bytes(SgAsmX86Instruction *insn, SgUnsignedCharList s
     /* Copy target prefixes into return value provided they're present in the source. */
     std::set<uint8_t> pushed;
     SgUnsignedCharList reordered;
-    const SgUnsignedCharList &target = insn->get_raw_bytes();
+    const SgUnsignedCharList &target = insn->get_rawBytes();
     for (size_t i=0; i<target.size(); i++) {
         switch (target[i]) {
             case 0x2e:
@@ -1667,7 +1667,7 @@ AssemblerX86::assembleOne(SgAsmInstruction *_insn)
         hf.prefix = "            ";
         hf.width = 16;
         hf.pad_numeric = hf.show_chars = false;
-        SgAsmExecutableFileFormat::hexdump(p_debug, insn->get_address(),  &(insn->get_raw_bytes()[0]),
+        SgAsmExecutableFileFormat::hexdump(p_debug, insn->get_address(),  &(insn->get_rawBytes()[0]),
                                            insn->get_size(), hf);
         fprintf(p_debug, " | %s\n", unparseInstruction(insn).c_str());
 #if 0 /*DEBUGGING*/
@@ -1727,7 +1727,7 @@ AssemblerX86::assembleOne(SgAsmInstruction *_insn)
                     best = s;
                 break;
             case ET_MATCHES:
-                if (s==insn->get_raw_bytes()) {
+                if (s==insn->get_rawBytes()) {
                     if (p_debug)
                         fprintf(p_debug, "  MATCHES!\n");
                     return s; /*no need to continue searching*/

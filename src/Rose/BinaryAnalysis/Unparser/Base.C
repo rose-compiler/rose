@@ -1974,7 +1974,7 @@ Base::emitInstructionBytes(std::ostream &out, SgAsmInstruction *insn, State &sta
     if (nextUnparser()) {
         nextUnparser()->emitInstructionBytes(out, insn, state);
     } else {
-        const SgUnsignedCharList &bytes = insn->get_raw_bytes();
+        const SgUnsignedCharList &bytes = insn->get_rawBytes();
         for (size_t i = 0; i < bytes.size(); ++i) {
             if (0 == i) {
                 // void

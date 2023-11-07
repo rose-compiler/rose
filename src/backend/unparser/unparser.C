@@ -1865,7 +1865,7 @@ Unparser::unparseAsmFile(SgAsmGenericFile *file, SgUnparse_Info &info) // blame 
      * certain relocations and normalization to the AST. */
     // DQ (8/30/2008): This is temporary, we should review how we want to name the files
     // generated in the unparse phase of processing a binary.
-    file->dump_all(true, ".dump");
+    file->dumpAll(true, ".dump");
 
     /* Generate file name for uparser output */
     // DQ (8/30/2008): This is temporary, we should review how we want to name the files

@@ -49,32 +49,32 @@ SgAsmPESectionTableEntry::updateFromSection(SgAsmPESection *section)
     SgAsmPEFileHeader *fhdr = SageInterface::getEnclosingNode<SgAsmPEFileHeader>(section);
     ROSE_ASSERT(fhdr!=nullptr);
 
-    p_virtual_size = section->get_mapped_size();
-    p_rva = section->get_mapped_preferred_rva();
+    p_virtual_size = section->get_mappedSize();
+    p_rva = section->get_mappedPreferredRva();
     p_physical_size = section->get_size();
     p_physical_offset = section->get_offset();
     p_name = section->get_name()->get_string();
 
     /* Mapping permissions */
-    if (section->get_mapped_rperm()) {
+    if (section->get_mappedReadPermission()) {
         p_flags |= SgAsmPESectionTableEntry::OF_READABLE;
     } else {
         p_flags &= ~SgAsmPESectionTableEntry::OF_READABLE;
     }
-    if (section->get_mapped_wperm()) {
+    if (section->get_mappedWritePermission()) {
         p_flags |= SgAsmPESectionTableEntry::OF_WRITABLE;
     } else {
         p_flags &= ~SgAsmPESectionTableEntry::OF_WRITABLE;
     }
-    if (section->get_mapped_xperm()) {
+    if (section->get_mappedExecutePermission()) {
         p_flags |= SgAsmPESectionTableEntry::OF_EXECUTABLE;
     } else {
         p_flags &= ~SgAsmPESectionTableEntry::OF_EXECUTABLE;
     }
 
     /* Mapping alignment */
-    if (section->is_mapped() && section->get_mapped_alignment()!=fhdr->get_e_section_align()) {
-        switch (section->get_mapped_alignment()) {
+    if (section->isMapped() && section->get_mappedAlignment()!=fhdr->get_e_section_align()) {
+        switch (section->get_mappedAlignment()) {
             case 0:
             case 1:
                 p_flags &= ~SgAsmPESectionTableEntry::OF_ALIGN_MASK;
@@ -203,7 +203,7 @@ SgAsmPESectionTable::SgAsmPESectionTable(SgAsmPEFileHeader *fhdr)
     initializeProperties();
 
     ROSE_ASSERT(fhdr!=nullptr);
-    fhdr->set_section_table(this);
+    fhdr->set_sectionTable(this);
 
     set_synthesized(true);
     set_name(new SgAsmBasicString("PE Section Table"));
@@ -224,7 +224,7 @@ SgAsmPESectionTable::parse()
     const size_t entsize = sizeof(SgAsmPESectionTableEntry::PESectionTableEntry_disk);
     for (size_t i=0; i<fhdr->get_e_nsections(); i++) {
         SgAsmPESectionTableEntry::PESectionTableEntry_disk disk;
-        if (entsize!=read_content_local(i * entsize, &disk, entsize, false))
+        if (entsize!=readContentLocal(i * entsize, &disk, entsize, false))
             mlog[WARN] <<"SgAsmPESectionTable::parse: section table entry " <<i
                        <<" at file offset " <<StringUtility::addrToString(get_offset()+i*entsize)
                        <<" extends beyond end of defined section table.\n";
@@ -235,7 +235,7 @@ SgAsmPESectionTable::parse()
             // If the PAIR_IMPORTS rva/size pair has a non-zero pointer, then avoid creating an import table from this ".idata"
             // section. Sometimes the rva/size pair will point to a different region in memory than ".idata", in which case the
             // rva/size pair should be honored instead.
-            SgAsmPERVASizePair *pair = fhdr->get_rvasize_pairs()->get_pairs()[SgAsmPEFileHeader::PAIR_IMPORTS];
+            SgAsmPERVASizePair *pair = fhdr->get_rvaSizePairs()->get_pairs()[SgAsmPEFileHeader::PAIR_IMPORTS];
             if (pair->get_e_rva().get_va()==0) {
                 section = new SgAsmPEImportSection(fhdr); // treat .idata as an import table
             } else {
@@ -244,19 +244,19 @@ SgAsmPESectionTable::parse()
         } else {
             section = new SgAsmPESection(fhdr);
         }
-        section->init_from_section_table(entry, i+1);
+        section->initFromSectionTable(entry, i+1);
         pending.push_back(section);
     }
 
     /* Build the memory mapping like the real loader would do. This is the same code used by
      * SgAsmExecutableFileFormat::parseBinaryFormat() except we're doing it here early because we need it in the rest of the
      * PE parser. */
-    ROSE_ASSERT(nullptr==fhdr->get_loader_map());
+    ROSE_ASSERT(nullptr==fhdr->get_loaderMap());
     BinaryLoader::Ptr loader = BinaryLoader::lookup(fhdr); /*no need to clone; we're not changing any settings*/
     ASSERT_not_null(loader);
     MemoryMap::Ptr loader_map = MemoryMap::instance();
     loader->remap(loader_map, fhdr);
-    fhdr->set_loader_map(loader_map);
+    fhdr->set_loaderMap(loader_map);
 
     /* Parse each section after the loader map is created */
     for (size_t i=0; i<pending.size(); i++)
@@ -297,7 +297,7 @@ SgAsmPESectionTable::addSection(SgAsmPESection *section)
     
     /* Create a new section table entry. */
     SgAsmPESectionTableEntry *entry = new SgAsmPESectionTableEntry;
-    entry->update_from_section(section);
+    entry->updateFromSection(section);
     section->set_section_entry(entry);
 }
 
@@ -321,14 +321,14 @@ SgAsmPESectionTable::reallocate()
     size_t nsections = max_id; /*PE section IDs are 1-origin*/
     size_t need = nsections * sizeof(SgAsmPESectionTableEntry::PESectionTableEntry_disk);
     if (need < get_size()) {
-        if (is_mapped()) {
-            ROSE_ASSERT(get_mapped_size()==get_size());
-            set_mapped_size(need);
+        if (isMapped()) {
+            ROSE_ASSERT(get_mappedSize()==get_size());
+            set_mappedSize(need);
         }
         set_size(need);
         reallocated = true;
     } else if (need > get_size()) {
-        get_file()->shift_extend(this, 0, need-get_size(), SgAsmGenericFile::ADDRSP_ALL, SgAsmGenericFile::ELASTIC_HOLE);
+        get_file()->shiftExtend(this, 0, need-get_size(), SgAsmGenericFile::ADDRSP_ALL, SgAsmGenericFile::ELASTIC_HOLE);
         reallocated = true;
     }
 

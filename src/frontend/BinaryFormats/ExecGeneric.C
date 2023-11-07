@@ -60,7 +60,7 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
                 BOOST_FOREACH (DataConverter *converter, converters)
                     delete converter;
                 if (ef)
-                    delete ef->get_data_converter();
+                    delete ef->get_dataConverter();
                 SageInterface::deleteAST(ef);
             }
         }
@@ -68,13 +68,13 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
 
     for (size_t ci=0; !ef && ci<converters.size(); ci++) {
         ef = new SgAsmGenericFile();
-        ef->set_data_converter(converters[ci]);
+        ef->set_dataConverter(converters[ci]);
         converters[ci] = nullptr;
         ef->parse(name);
 
-        if (SgAsmElfFileHeader::is_ELF(ef)) {
+        if (SgAsmElfFileHeader::isElf(ef)) {
             (new SgAsmElfFileHeader(ef))->parse();
-        } else if (SgAsmDOSFileHeader::is_DOS(ef)) {
+        } else if (SgAsmDOSFileHeader::isDos(ef)) {
             SgAsmDOSFileHeader *dos_hdr = new SgAsmDOSFileHeader(ef);
             dos_hdr->parse(false); /*delay parsing the DOS Real Mode Section*/
 
@@ -82,20 +82,20 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
              * immediately after the DOS File Header (various forms of Extended DOS Header exist). The Extended DOS Header
              * contains a file offset to a PE, NE, LE, or LX File Header, the first bytes of which are a magic number. The
              * is_* methods check for this magic number. */
-            if (SgAsmPEFileHeader::is_PE(ef)) {
+            if (SgAsmPEFileHeader::isPe(ef)) {
                 SgAsmDOSExtendedHeader *dos2_hdr = new SgAsmDOSExtendedHeader(dos_hdr);
                 dos2_hdr->parse();
                 SgAsmPEFileHeader *pe_hdr = new SgAsmPEFileHeader(ef);
                 pe_hdr->set_offset(dos2_hdr->get_e_lfanew());
                 pe_hdr->parse();
-            } else if (SgAsmNEFileHeader::is_NE(ef)) {
+            } else if (SgAsmNEFileHeader::isNe(ef)) {
                 SgAsmNEFileHeader::parse(dos_hdr);
-            } else if (SgAsmLEFileHeader::is_LE(ef)) { /*or LX*/
+            } else if (SgAsmLEFileHeader::isLe(ef)) { /*or LX*/
                 SgAsmLEFileHeader::parse(dos_hdr);
             }
-            dos_hdr->parse_rm_section(0);
+            dos_hdr->parseRealModeSection(0);
         } else {
-            if (ef) delete ef->get_data_converter();
+            if (ef) delete ef->get_dataConverter();
             SageInterface::deleteAST(ef);      /* ~SgAsmGenericFile() closes ef->p_fd if it was opened. */
             ef = nullptr;
         }
@@ -143,11 +143,11 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
 #endif
     }
 
-    ef->set_tracking_references(false); /*all done parsing*/
+    ef->set_trackingReferences(false); /*all done parsing*/
 
-    /* Is the file large enough to hold all sections?  If any section extends past the EOF then set truncate_zeros, which will
+    /* Is the file large enough to hold all sections?  If any section extends past the EOF then set truncateZeros, which will
      * cause the unparser to not write zero bytes to the end of the file. */
-    ef->set_truncate_zeros(ef->get_current_size()>ef->get_orig_size());
+    ef->set_truncateZeros(ef->get_currentSize()>ef->get_originalSize());
 
     /* If any section is the target of a function symbol then mark that section as containing code even if that section is not
      * memory mapped with execute permission. */
@@ -160,7 +160,7 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
             if (symbol && symbol->get_type()==SgAsmGenericSymbol::SYM_FUNC) {
                 SgAsmGenericSection *section = symbol->get_bound();
                 if (section)
-                    section->set_contains_code(true);
+                    section->set_containsCode(true);
             }
         }
     } t1;
@@ -172,7 +172,7 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
 }
 std::string SgAsmExecutableFileFormat::to_string(SgAsmExecutableFileFormat::InsSetArchitecture isa)
 {
-  return isa_to_string(isa);
+  return isaToString(isa);
 }
 
 std::string

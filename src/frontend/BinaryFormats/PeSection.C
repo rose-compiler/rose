@@ -16,7 +16,7 @@ SgAsmPESection::reallocate()
 
     SgAsmPESectionTableEntry *shdr = get_section_entry();
     if (shdr)
-        shdr->update_from_section(this);
+        shdr->updateFromSection(this);
     
     return reallocated;
 }
@@ -44,28 +44,28 @@ SgAsmPESection::initFromSectionTable(SgAsmPESectionTableEntry *entry, int id)
     /* File mapping */
     set_offset(entry->get_physical_offset());
     set_size(entry->get_physical_size());
-    set_file_alignment(fhdr->get_e_file_align());
+    set_fileAlignment(fhdr->get_e_file_align());
 
     /* Memory mapping */
     if (entry->get_rva() > 0) {
-        set_mapped_preferred_rva(entry->get_rva());
-        set_mapped_actual_va(0); /*will be asigned by BinaryLoader*/
-        set_mapped_size(entry->get_virtual_size());
-        set_mapped_alignment(fhdr->get_e_section_align());
-        set_mapped_rperm((entry->get_flags() & SgAsmPESectionTableEntry::OF_READABLE)
+        set_mappedPreferredRva(entry->get_rva());
+        set_mappedActualVa(0); /*will be asigned by BinaryLoader*/
+        set_mappedSize(entry->get_virtual_size());
+        set_mappedAlignment(fhdr->get_e_section_align());
+        set_mappedReadPermission((entry->get_flags() & SgAsmPESectionTableEntry::OF_READABLE)
                          == SgAsmPESectionTableEntry::OF_READABLE);
-        set_mapped_wperm((entry->get_flags() & SgAsmPESectionTableEntry::OF_WRITABLE)
+        set_mappedWritePermission((entry->get_flags() & SgAsmPESectionTableEntry::OF_WRITABLE)
                          == SgAsmPESectionTableEntry::OF_WRITABLE);
-        set_mapped_xperm((entry->get_flags() & SgAsmPESectionTableEntry::OF_EXECUTABLE)
+        set_mappedExecutePermission((entry->get_flags() & SgAsmPESectionTableEntry::OF_EXECUTABLE)
                          == SgAsmPESectionTableEntry::OF_EXECUTABLE);
     } else {
-        set_mapped_preferred_rva(0);
-        set_mapped_actual_va(0); /*will be assigned by Loader*/
-        set_mapped_size(0);
-        set_mapped_rperm(false);
-        set_mapped_wperm(false);
-        set_mapped_xperm(false);
-        set_mapped_alignment(fhdr->get_e_section_align());
+        set_mappedPreferredRva(0);
+        set_mappedActualVa(0); /*will be assigned by Loader*/
+        set_mappedSize(0);
+        set_mappedReadPermission(false);
+        set_mappedWritePermission(false);
+        set_mappedExecutePermission(false);
+        set_mappedAlignment(fhdr->get_e_section_align());
     }
     
     /* Add section table entry to section */

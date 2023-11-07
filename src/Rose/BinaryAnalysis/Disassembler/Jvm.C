@@ -45,7 +45,7 @@ Jvm::appendOperand(const MemoryMap::Ptr &map, rose_addr_t va,
   }
 
   T val = beToHost(*reinterpret_cast<T*>(buf));
-  operands->append_operand(SageBuilderAsm::buildValue(val));
+  operands->appendOperand(SageBuilderAsm::buildValue(val));
 
   // TODO: Perhaps there is a more efficient way to do this
   for (size_t i = 0; i < nRead; i++) {
@@ -90,9 +90,9 @@ Jvm::appendTableswitch(const MemoryMap::Ptr &map, rose_addr_t start,
             << std::endl;
 #endif
 
-  operands->append_operand(SageBuilderAsm::buildValue(def));
-  operands->append_operand(SageBuilderAsm::buildValue(low));
-  operands->append_operand(SageBuilderAsm::buildValue(high));
+  operands->appendOperand(SageBuilderAsm::buildValue(def));
+  operands->appendOperand(SageBuilderAsm::buildValue(low));
+  operands->appendOperand(SageBuilderAsm::buildValue(high));
 
   int nOff{high-low+1};
   for (int i = 0; i < nOff; i++) {
@@ -136,8 +136,8 @@ Jvm::appendLookupswitch(const MemoryMap::Ptr &map, rose_addr_t start,
             << std::endl;
 #endif
 
-  operands->append_operand(SageBuilderAsm::buildValue(def));
-  operands->append_operand(SageBuilderAsm::buildValue(nPairs));
+  operands->appendOperand(SageBuilderAsm::buildValue(def));
+  operands->appendOperand(SageBuilderAsm::buildValue(nPairs));
 
   for (int i = 0; i < 2*nPairs; i++) {
     auto count = appendOperand<int32_t>(map, va, chars, operands);
@@ -904,7 +904,7 @@ Jvm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start, AddressSet*)
   insn = new SgAsmJvmInstruction(start, mnemonic, kind);
   insn->set_operandList(operands);
   operands->set_parent(insn);
-  insn->set_raw_bytes(chars);
+  insn->set_rawBytes(chars);
 
 #if DEBUG_ON
   cout << "... insn: " << (int)kind << ": " << insn->get_mnemonic()
@@ -934,7 +934,7 @@ Jvm::makeUnknownInstruction(const Disassembler::Exception &e) {
     SgAsmOperandList *operands = new SgAsmOperandList;
     insn->set_operandList(operands);
     operands->set_parent(insn);
-    insn->set_raw_bytes(e.bytes);
+    insn->set_rawBytes(e.bytes);
     return insn;
 }
 

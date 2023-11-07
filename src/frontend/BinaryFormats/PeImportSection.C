@@ -54,14 +54,14 @@ SgAsmPEImportSection::SgAsmPEImportSection(SgAsmPEFileHeader *fhdr)
 SgAsmPEImportSection*
 SgAsmPEImportSection::parse()
 {
-    import_mesg_reset();
+    importMessageReset();
     SgAsmPESection::parse();
 
     SgAsmPEFileHeader *fhdr = isSgAsmPEFileHeader(get_header());
     ROSE_ASSERT(fhdr!=NULL);
 
-    ROSE_ASSERT(is_mapped());
-    rose_addr_t idir_va = get_mapped_actual_va();
+    ROSE_ASSERT(isMapped());
+    rose_addr_t idir_va = get_mappedActualVa();
 
     // Some compilers don't actually terminate the Import Directory list with an all-zero entry as specified in Microsoft's PE
     // format documenttion. Instead, they apparently assume that that loader uses the size of the import section to calculate
@@ -78,14 +78,14 @@ SgAsmPEImportSection::parse()
         SgAsmPEImportDirectory *idir = new SgAsmPEImportDirectory(this);
         if (NULL==idir->parse(idir_va, i+1 == nEntries)) {
             /* We've reached the zero entry. Remove this directory from the section and delete it. */
-            remove_import_directory(idir);
+            removeImportDirectory(idir);
             SageInterface::deleteAST(idir);
             break;
         }
         idir_va += sizeof(SgAsmPEImportDirectory::PEImportDirectory_disk);
 #if 1   /* FIXME: Do we really want this stuff duplicated in the AST? [RPM 2008-12-12] */
-        SgAsmGenericString *name2 = new SgAsmBasicString(idir->get_dll_name()->get_string());
-        fhdr->add_dll(new SgAsmGenericDLL(name2));
+        SgAsmGenericString *name2 = new SgAsmBasicString(idir->get_dllName()->get_string());
+        fhdr->addDll(new SgAsmGenericDLL(name2));
 #endif
     }
     return this;
@@ -100,15 +100,15 @@ SgAsmPEImportSection::add_import_directory(SgAsmPEImportDirectory *d)
 void
 SgAsmPEImportSection::addImportDirectory(SgAsmPEImportDirectory *d)
 {
-    ROSE_ASSERT(get_import_directories()!=NULL);
-    SgAsmPEImportDirectoryPtrList &dirlist = get_import_directories()->get_vector();
+    ROSE_ASSERT(get_importDirectories()!=NULL);
+    SgAsmPEImportDirectoryPtrList &dirlist = get_importDirectories()->get_vector();
 
     /* Make sure it's not already on the list */
     ROSE_ASSERT(dirlist.end()==std::find(dirlist.begin(), dirlist.end(), d));
 
     dirlist.push_back(d);
-    get_import_directories()->set_isModified(true);
-    d->set_parent(get_import_directories());
+    get_importDirectories()->set_isModified(true);
+    d->set_parent(get_importDirectories());
 }
 
 void
@@ -120,7 +120,7 @@ SgAsmPEImportSection::remove_import_directory(SgAsmPEImportDirectory *d)
 void
 SgAsmPEImportSection::removeImportDirectory(SgAsmPEImportDirectory *d)
 {
-    SgAsmPEImportDirectoryPtrList &dirlist = get_import_directories()->get_vector();
+    SgAsmPEImportDirectoryPtrList &dirlist = get_importDirectories()->get_vector();
     SgAsmPEImportDirectoryPtrList::iterator found = std::find(dirlist.begin(), dirlist.end(), d);
     if (found!=dirlist.end()) {
         dirlist.erase(found);
@@ -136,10 +136,10 @@ SgAsmPEImportSection::removeImportDirectory(SgAsmPEImportDirectory *d)
 bool
 SgAsmPEImportSection::reallocate()
 {
-    import_mesg_reset();
+    importMessageReset();
     bool reallocated = SgAsmPESection::reallocate();
-    rose_rva_t end_rva(this->get_mapped_preferred_rva(), this);
-    SgAsmPEImportDirectoryPtrList &dirlist = get_import_directories()->get_vector();
+    rose_rva_t end_rva(this->get_mappedPreferredRva(), this);
+    SgAsmPEImportDirectoryPtrList &dirlist = get_importDirectories()->get_vector();
 
     /* Space needed for the list of import directory structs. The list is terminated with a zero entry. */
     size_t nimports = dirlist.size();
@@ -152,12 +152,12 @@ SgAsmPEImportSection::reallocate()
     /* Adjust the section size */
     rose_addr_t need = end_rva.get_rel();
     if (need < get_size()) {
-        if (is_mapped())
-            set_mapped_size(need);
+        if (isMapped())
+            set_mappedSize(need);
         set_size(need);
         reallocated = true;
     } else if (need > get_size()) {
-        get_file()->shift_extend(this, 0, need-get_size(), SgAsmGenericFile::ADDRSP_ALL, SgAsmGenericFile::ELASTIC_HOLE);
+        get_file()->shiftExtend(this, 0, need-get_size(), SgAsmGenericFile::ADDRSP_ALL, SgAsmGenericFile::ELASTIC_HOLE);
         reallocated = true;
     }
 
@@ -174,10 +174,10 @@ size_t
 SgAsmPEImportSection::reallocateIats(rose_rva_t start_at)
 {
     rose_rva_t rva = start_at;
-    const SgAsmPEImportDirectoryPtrList &dirs = get_import_directories()->get_vector();
+    const SgAsmPEImportDirectoryPtrList &dirs = get_importDirectories()->get_vector();
     for (SgAsmPEImportDirectoryPtrList::const_iterator di=dirs.begin(); di!=dirs.end(); ++di) {
         (*di)->set_iat_rva(rva);
-        size_t need = (*di)->iat_required_size();
+        size_t need = (*di)->iatRequiredSize();
         (*di)->set_iat_nalloc(need);
         rva.increment(need);
     }
@@ -189,7 +189,7 @@ SgAsmPEImportSection::reallocateIats(rose_rva_t start_at)
 void
 SgAsmPEImportSection::unparse(std::ostream &f) const
 {
-    import_mesg_reset();
+    importMessageReset();
 #if 1 /* DEBUGGING [RPM 2010-11-09] */
     {
         uint8_t byte = 0;
@@ -198,15 +198,15 @@ SgAsmPEImportSection::unparse(std::ostream &f) const
     }
 #endif
 
-    unparse_holes(f);
+    unparseHoles(f);
 
     /* Import Directory Entries and all they point to (even in other sections) */
-    for (size_t i=0; i<get_import_directories()->get_vector().size(); i++) {
-        SgAsmPEImportDirectory *idir = get_import_directories()->get_vector()[i];
+    for (size_t i=0; i<get_importDirectories()->get_vector().size(); i++) {
+        SgAsmPEImportDirectory *idir = get_importDirectories()->get_vector()[i];
         try {
             idir->unparse(f, this, i);
         } catch(const ShortWrite&) {
-            if (show_import_mesg())
+            if (showImportMessage())
                 mlog[WARN] <<"SgAsmImportSection::unparse: Import Directory #" <<i <<" skipped (short write)\n";
         }
     }
@@ -214,7 +214,7 @@ SgAsmPEImportSection::unparse(std::ostream &f) const
     /* Zero terminated */
     SgAsmPEImportDirectory::PEImportDirectory_disk zero;
     memset(&zero, 0, sizeof zero);
-    write(f, get_import_directories()->get_vector().size()*sizeof(zero), sizeof zero, &zero);
+    write(f, get_importDirectories()->get_vector().size()*sizeof(zero), sizeof zero, &zero);
 }
 
 /* Print debugging info */
@@ -231,12 +231,22 @@ SgAsmPEImportSection::dump(FILE *f, const char *prefix, ssize_t idx) const
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     SgAsmPESection::dump(f, p, -1);
-    fprintf(f, "%s%-*s = %" PRIuPTR "\n", p, w, "ndirectories", p_import_directories->get_vector().size());
-    for (size_t i=0; i<p_import_directories->get_vector().size(); i++)
-        p_import_directories->get_vector()[i]->dump(f, p, i);
+    fprintf(f, "%s%-*s = %" PRIuPTR "\n", p, w, "ndirectories", p_importDirectories->get_vector().size());
+    for (size_t i=0; i<p_importDirectories->get_vector().size(); i++)
+        p_importDirectories->get_vector()[i]->dump(f, p, i);
 
     if (variantT() == V_SgAsmPEImportSection) //unless a base class
         hexdump(f, 0, std::string(p)+"data at ", p_data);
+}
+
+SgAsmPEImportDirectoryList*
+SgAsmPEImportSection::get_import_directories() const {
+    return get_importDirectories();
+}
+
+void
+SgAsmPEImportSection::set_import_directories(SgAsmPEImportDirectoryList *x) {
+    set_importDirectories(x);
 }
 
 #endif

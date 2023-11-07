@@ -484,7 +484,7 @@ buildX86MultibyteNopInstruction(size_t nBytes) {
         insnbuf.push_back(0x66);
     insnbuf.push_back(0x90);
 
-    instruction->set_raw_bytes(insnbuf);
+    instruction->set_rawBytes(insnbuf);
     instruction->set_lockPrefix(false);
     instruction->set_repeatPrefix(x86_repeat_none);
 
@@ -797,7 +797,7 @@ SgAsmStaticData*
 buildStaticData(rose_addr_t startVa, const SgUnsignedCharList &rawData) {
     SgAsmStaticData *sd = new SgAsmStaticData;
     sd->set_address(startVa);
-    sd->set_raw_bytes(rawData);
+    sd->set_rawBytes(rawData);
     return sd;
 }
 
@@ -815,7 +815,7 @@ buildDataBlock(SgAsmStaticData *staticData) {
 SgAsmFunction*
 buildFunction(rose_addr_t entryVa, const std::vector<SgAsmBlock*> &blocks) {
     SgAsmFunction *func = new SgAsmFunction;
-    func->set_entry_va(entryVa);
+    func->set_entryVa(entryVa);
     if (!blocks.empty()) {
         func->set_address(blocks.front()->get_address());
         BOOST_FOREACH (SgAsmBlock *block, blocks) {

@@ -42,7 +42,7 @@ SgAsmFunction::reason_str(bool do_pad) const
 std::string
 SgAsmFunction::reasonString(bool do_pad) const
 {
-    return reason_str(do_pad, get_reason());
+    return reasonString(do_pad, get_reason());
 }
 
 std::string
@@ -191,10 +191,10 @@ SgAsmFunction::get_sha1(uint8_t digest[20], NodeSelector *selector)
             SgAsmInstruction *insn = isSgAsmInstruction(node);
             SgAsmStaticData *data = isSgAsmStaticData(node);
             if (insn) {
-                SgUnsignedCharList buf = insn->get_raw_bytes();
+                SgUnsignedCharList buf = insn->get_rawBytes();
                 gcry_md_write(md, &buf[0], buf.size());
             } else if (data) {
-                SgUnsignedCharList buf = data->get_raw_bytes();
+                SgUnsignedCharList buf = data->get_rawBytes();
                 gcry_md_write(md, &buf[0], buf.size());
             }
         }

@@ -53,7 +53,7 @@ void CountTraversal::visit ( SgNode* n )
                      int counter = 0;
                      while ( (*i != asmInstruction) && (i != l.end()) )
                         {
-                          printf ("--- NOP #%2d is length = %2d \n",counter++,(int)isSgAsmInstruction(*i)->get_raw_bytes().size());
+                          printf ("--- NOP #%2d is length = %2d \n",counter++,(int)isSgAsmInstruction(*i)->get_rawBytes().size());
                           i++;
                         }
                    }

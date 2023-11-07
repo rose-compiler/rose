@@ -17,7 +17,7 @@ class SgAsmElfRelocSection: public SgAsmElfSection {
 public:
     SgAsmElfRelocSection(SgAsmElfFileHeader *fhdr, SgAsmElfSymbolSection *symsec,SgAsmElfSection* targetsec);
 
-    using SgAsmElfSection::calculate_sizes;
+    using SgAsmElfSection::calculateSizes;
     /** Parse an existing ELF Rela Section */
     virtual SgAsmElfRelocSection *parse() override;
 
@@ -41,5 +41,6 @@ public:
     void set_uses_addend(bool) ROSE_DEPRECATED("use set_usesAddend");
     SgAsmElfSection* get_target_section() const ROSE_DEPRECATED("use get_targetSection");
     void set_target_section(SgAsmElfSection*) ROSE_DEPRECATED("use set_targetSection");
+    using SgAsmElfSection::calculate_sizes;
     virtual rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const override ROSE_DEPRECATED("use calculateSizes");
 };

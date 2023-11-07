@@ -206,10 +206,10 @@ public:
         : pos1_(0), pos2_(0) {
         ASSERT_require(P2::isSorted(functions1, P2::sortFunctionNodesByAddress));
         for (SgAsmFunction *function: functions1)
-            fmap1_.insert(function, function->get_entry_va());
+            fmap1_.insert(function, function->get_entryVa());
         ASSERT_require(P2::isSorted(functions1, P2::sortFunctionNodesByAddress));
         for (SgAsmFunction *function: functions2)
-            fmap2_.insert(function, function->get_entry_va());
+            fmap2_.insert(function, function->get_entryVa());
     }
     void setTree1(SgNode *ast) { SizeDistance::setTree1(ast); setTree(ast, fmap1_, pos1_/*out*/); }
     void setTree2(SgNode *ast) { SizeDistance::setTree2(ast); setTree(ast, fmap2_, pos2_/*out*/); }
@@ -502,10 +502,10 @@ main(int argc, char *argv[]) {
         if (i<functions1.size() && j<functions2.size()) {
             bool nameClash = functions1[i]->get_name() != functions2[j]->get_name();
             results.insert(i, 0, distance(i, j));
-            results.insert(i, 1, StringUtility::addrToString(functions1[i]->get_entry_va()));
+            results.insert(i, 1, StringUtility::addrToString(functions1[i]->get_entryVa()));
             results.insert(i, 2, treeSize(functions1[i]));
             results.insert(i, 3, cEscape(functions1[i]->get_name()));
-            results.insert(i, 4, StringUtility::addrToString(functions2[j]->get_entry_va()));
+            results.insert(i, 4, StringUtility::addrToString(functions2[j]->get_entryVa()));
             results.insert(i, 5, treeSize(functions2[j]));
             results.insert(i, 6, cEscape(functions2[j]->get_name()));
             results.insert(i, 7, nameClash?"clash":"");
@@ -513,7 +513,7 @@ main(int argc, char *argv[]) {
                 ++nClashes;
         } else if (i<functions1.size()) {
             results.insert(i, 0, 0.0);
-            results.insert(i, 1, StringUtility::addrToString(functions1[i]->get_entry_va()));
+            results.insert(i, 1, StringUtility::addrToString(functions1[i]->get_entryVa()));
             results.insert(i, 2, treeSize(functions1[i]));
             results.insert(i, 3, cEscape(functions1[i]->get_name()));
             results.insert(i, 4, 0);
@@ -525,7 +525,7 @@ main(int argc, char *argv[]) {
             results.insert(i, 1, 0);
             results.insert(i, 2, 0);
             results.insert(i, 3, "");
-            results.insert(i, 4, StringUtility::addrToString(functions2[j]->get_entry_va()));
+            results.insert(i, 4, StringUtility::addrToString(functions2[j]->get_entryVa()));
             results.insert(i, 5, treeSize(functions2[j]));
             results.insert(i, 6, cEscape(functions2[j]->get_name()));
             results.insert(i, 7, "");

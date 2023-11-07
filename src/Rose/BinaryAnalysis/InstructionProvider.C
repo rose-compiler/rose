@@ -44,7 +44,7 @@ InstructionProvider::operator[](rose_addr_t va) const {
                 if (0 == insn->get_size()) {
                     uint8_t byte;
                     if (1==memMap_->at(va).limit(1).require(MemoryMap::EXECUTABLE).read(&byte).size())
-                        insn->set_raw_bytes(SgUnsignedCharList(1, byte));
+                        insn->set_rawBytes(SgUnsignedCharList(1, byte));
                     ASSERT_require(insn->get_size()==1);
                 }
             }

@@ -52,7 +52,7 @@ bool
 Aarch64::canDisassemble(SgAsmGenericHeader *header) const {
     SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
     return ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_ARM_Family &&
-            header->get_exec_format()->get_word_size() == 8);
+            header->get_executableFormat()->get_wordSize() == 8);
 }
 
 void
@@ -139,7 +139,7 @@ Aarch64::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet *s
     }
     wrapPrePostIncrement(operands, detail);
     auto insn = new SgAsmAarch64Instruction(va, r.csi->mnemonic, (Aarch64InstructionKind)r.csi->id, detail.cc);
-    insn->set_raw_bytes(SgUnsignedCharList(r.csi->bytes, r.csi->bytes + r.csi->size));
+    insn->set_rawBytes(SgUnsignedCharList(r.csi->bytes, r.csi->bytes + r.csi->size));
     insn->set_operandList(operands);
     insn->set_updatesFlags(detail.update_flags);
     operands->set_parent(insn);
@@ -220,7 +220,7 @@ Aarch64::makeUnknownInstruction(const Exception &e) {
     SgAsmOperandList *operands = new SgAsmOperandList();
     insn->set_operandList(operands);
     operands->set_parent(insn);
-    insn->set_raw_bytes(e.bytes);
+    insn->set_rawBytes(e.bytes);
     return insn;
 }
 
@@ -592,7 +592,7 @@ Aarch64::opcode(const cs_insn &insn) {
 uint32_t
 Aarch64::opcode(SgAsmInstruction *insn) {
     ASSERT_not_null(insn);
-    const std::vector<uint8_t> &bytes = insn->get_raw_bytes();
+    const std::vector<uint8_t> &bytes = insn->get_rawBytes();
     ASSERT_require(bytes.size() == 4);
     uint32_t code = bytes[0] | (bytes[1] << 8) | (bytes[2] << 16) | (bytes[3] << 24);
     return ByteOrder::diskToHost(byteOrder(), code);

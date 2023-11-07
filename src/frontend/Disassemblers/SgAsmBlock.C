@@ -44,7 +44,7 @@ SgAsmBlock::reasonKey(const std::string &prefix)
 std::string
 SgAsmBlock::reasonString(bool do_pad) const
 {
-    return reason_str(do_pad, get_reason());
+    return reasonString(do_pad, get_reason());
 }
 
 std::string
@@ -105,7 +105,7 @@ SgAsmBlock::isFunctionCall(rose_addr_t &target_va, rose_addr_t &return_va)
 {
     static const rose_addr_t INVALID_ADDR = (rose_addr_t)(-1);
     target_va = return_va = INVALID_ADDR;;
-    if (!is_basic_block())
+    if (!isBasicBlock())
         return false;
     std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(this);
     assert(!insns.empty()); // basic blocks must have instructions
@@ -116,13 +116,13 @@ SgAsmBlock::isFunctionCall(rose_addr_t &target_va, rose_addr_t &return_va)
     SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(func);
     std::set<rose_addr_t> callee_vas;
     if (interp) {
-        const InstructionMap &imap = interp->get_instruction_map();
+        const InstructionMap &imap = interp->get_instructionMap();
         const SgAsmIntegerValuePtrList &successors = get_successors();
         for (SgAsmIntegerValuePtrList::const_iterator si=successors.begin(); si!=successors.end(); ++si) {
             rose_addr_t successor_va = (*si)->get_absoluteValue();
             if (SgAsmInstruction *target_insn = imap.get_value_or(successor_va, NULL)) {
                 SgAsmFunction *target_func = SageInterface::getEnclosingNode<SgAsmFunction>(target_insn);
-                if (successor_va==target_func->get_entry_va()) {
+                if (successor_va==target_func->get_entryVa()) {
                     callee_vas.insert(successor_va); // branches to a function entry point
                 } else if (return_va!=INVALID_ADDR) {
                     target_va = return_va = INVALID_ADDR;

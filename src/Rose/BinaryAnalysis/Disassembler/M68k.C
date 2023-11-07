@@ -849,9 +849,9 @@ M68k::makeUnknownInstruction(const Exception &e)
 
     if (e.bytes.empty()) {
         SgUnsignedCharList raw_bytes(1, '\0');          // we don't know what, but an instruction is never zero bytes wide
-        insn->set_raw_bytes(raw_bytes);
+        insn->set_rawBytes(raw_bytes);
     } else {
-        insn->set_raw_bytes(e.bytes);
+        insn->set_rawBytes(e.bytes);
     }
 
     return insn;
@@ -1005,7 +1005,7 @@ M68k::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet
 
     ASSERT_require(state.niwords_used>0);
     SgUnsignedCharList raw_bytes(buf+0, buf+2*state.niwords_used);
-    insn->set_raw_bytes(raw_bytes);
+    insn->set_rawBytes(raw_bytes);
 
     if (successors) {
         bool complete;

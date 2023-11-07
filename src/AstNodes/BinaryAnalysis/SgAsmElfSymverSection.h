@@ -17,7 +17,7 @@ public:
     /** Initializes section by parsing the file. */
     virtual SgAsmElfSymverSection* parse() override;
 
-    using SgAsmElfSection::calculate_sizes;
+    using SgAsmElfSection::calculateSizes;
     /** Return sizes for various parts of the table.
      *
      *  See documentation for @ref SgAsmElfSection::calculate_sizes. */
@@ -33,5 +33,6 @@ public:
     // Deprecated 2023-11
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    using SgAsmElfSection::calculate_sizes;
     virtual rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const override ROSE_DEPRECATED("use calculateSizes");
 };

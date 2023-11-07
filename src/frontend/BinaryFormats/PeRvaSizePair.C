@@ -44,8 +44,8 @@ SgAsmPERVASizePair::set_section(SgAsmGenericSection *section)
         set_isModified(true);
     p_section = section;
     if (section) {
-        set_e_rva(rose_rva_t(section->get_mapped_preferred_rva(), section));
-        set_e_size(section->get_mapped_size());
+        set_e_rva(rose_rva_t(section->get_mappedPreferredRva(), section));
+        set_e_size(section->get_mappedSize());
     } else {
         set_e_rva(0);
         set_e_size(0);

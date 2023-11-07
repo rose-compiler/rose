@@ -27,7 +27,7 @@ SgAsmElfEHFrameEntryCI::SgAsmElfEHFrameEntryCI(SgAsmElfEHFrameSection *ehframe) 
 std::string
 SgAsmElfEHFrameEntryCI::unparse(const SgAsmElfEHFrameSection *ehframe) const 
 {
-    SgAsmElfFileHeader *fhdr = ehframe->get_elf_header();
+    SgAsmElfFileHeader *fhdr = ehframe->get_elfHeader();
     ROSE_ASSERT(fhdr!=NULL);
 
     /* Allocate worst-case size for results */
@@ -39,7 +39,7 @@ SgAsmElfEHFrameEntryCI::unparse(const SgAsmElfEHFrameSection *ehframe) const
                          10+
                          get_augmentation_data_length()+
                          get_instructions().size()+
-                         fhdr->get_word_size());
+                         fhdr->get_wordSize());
     unsigned char *buf = new unsigned char[worst_size];
 
     rose_addr_t at = 0;
@@ -59,11 +59,11 @@ SgAsmElfEHFrameEntryCI::unparse(const SgAsmElfEHFrameSection *ehframe) const
     memcpy(buf+at, get_augmentation_string().c_str(), sz); at+=sz;
 
     /* Alignment factors */
-    at = ehframe->write_uleb128(buf, at, get_code_alignment_factor());
-    at = ehframe->write_sleb128(buf, at, get_data_alignment_factor());
+    at = ehframe->writeUleb128(buf, at, get_code_alignment_factor());
+    at = ehframe->writeSleb128(buf, at, get_data_alignment_factor());
 
     /* Augmentation data */
-    at = ehframe->write_uleb128(buf, at, get_augmentation_data_length());
+    at = ehframe->writeUleb128(buf, at, get_augmentation_data_length());
     std::string astr = get_augmentation_string();
     if (!astr.empty() && astr[0]=='z') {
         for (size_t i=1; i<astr.size(); i++) {
@@ -166,11 +166,11 @@ SgAsmElfEHFrameEntryFD::SgAsmElfEHFrameEntryFD(SgAsmElfEHFrameEntryCI *cie) {
 std::string
 SgAsmElfEHFrameEntryFD::unparse(const SgAsmElfEHFrameSection *ehframe, SgAsmElfEHFrameEntryCI *cie) const
 {
-    SgAsmElfFileHeader *fhdr = ehframe->get_elf_header();
+    SgAsmElfFileHeader *fhdr = ehframe->get_elfHeader();
     ROSE_ASSERT(fhdr!=NULL);
 
     /* Allocate worst-case size for results */
-    size_t worst_size = 8 + get_augmentation_data().size() + get_instructions().size() + fhdr->get_word_size();
+    size_t worst_size = 8 + get_augmentation_data().size() + get_instructions().size() + fhdr->get_wordSize();
     unsigned char *buf = new unsigned char[worst_size];
 
     size_t sz;
@@ -202,7 +202,7 @@ SgAsmElfEHFrameEntryFD::unparse(const SgAsmElfEHFrameSection *ehframe, SgAsmElfE
     /* Augmentation Data */
     std::string astr = cie->get_augmentation_string();
     if (astr.size()>0 && astr[0]=='z') {
-        at = ehframe->write_uleb128(buf, at, get_augmentation_data().size());
+        at = ehframe->writeUleb128(buf, at, get_augmentation_data().size());
         sz = get_augmentation_data().size();
         if (sz>0) {
             memcpy(buf+at, &(get_augmentation_data()[0]), sz);
@@ -253,7 +253,7 @@ SgAsmElfEHFrameSection *
 SgAsmElfEHFrameSection::parse()
 {
     SgAsmElfSection::parse();
-    SgAsmElfFileHeader *fhdr = get_elf_header();
+    SgAsmElfFileHeader *fhdr = get_elfHeader();
     ROSE_ASSERT(fhdr!=NULL);
 
     rose_addr_t record_offset=0;
@@ -273,10 +273,10 @@ SgAsmElfEHFrameSection::parse()
 
         /* Length or extended length */
         rose_addr_t length_field_size = 4; /*number of bytes not counted in length*/
-        read_content_local(at, &u32_disk, 4); at += 4;
+        readContentLocal(at, &u32_disk, 4); at += 4;
         rose_addr_t record_size = diskToHost(fhdr->get_sex(), u32_disk);
         if (record_size==0xffffffff) {
-            read_content_local(at, &u64_disk, 8); at += 8;
+            readContentLocal(at, &u64_disk, 8); at += 8;
             record_size = diskToHost(fhdr->get_sex(), u64_disk);
             length_field_size += 8;                     // length field size is both "length" and "extended length"
         }
@@ -286,7 +286,7 @@ SgAsmElfEHFrameSection::parse()
         }
 
         /* Backward offset to CIE record, or zero if this is a CIE record. */
-        read_content_local(at, &u32_disk, 4); at += 4;
+        readContentLocal(at, &u32_disk, 4); at += 4;
         rose_addr_t cie_back_offset = diskToHost(fhdr->get_sex(), u32_disk);
         if (0==cie_back_offset) {
             /* This is a CIE record */
@@ -296,11 +296,11 @@ SgAsmElfEHFrameSection::parse()
 
             /* Version. This parser was written based on version 1 documentation. */
             uint8_t cie_version;
-            read_content_local(at++, &cie_version, 1);
+            readContentLocal(at++, &cie_version, 1);
             cie->set_version(cie_version);
 
             /* Augmentation String */
-            std::string astr = read_content_local_str(at);
+            std::string astr = readContentLocalString(at);
             at += astr.size() + 1;
             cie->set_augmentation_string(astr);
 
@@ -308,11 +308,11 @@ SgAsmElfEHFrameSection::parse()
              * "contains" in the documentation apparently means the string is _equal_ to "eh". */
             if (astr == "eh") {
                 uint64_t eh_data;
-                if (4==fhdr->get_exec_format()->get_word_size()) {
-                    read_content_local(at, &u32_disk, 4); at += 4;
+                if (4==fhdr->get_executableFormat()->get_wordSize()) {
+                    readContentLocal(at, &u32_disk, 4); at += 4;
                     eh_data = diskToHost(fhdr->get_sex(), u32_disk);
                 } else {
-                    read_content_local(at, &u64_disk, 8); at += 8;
+                    readContentLocal(at, &u64_disk, 8); at += 8;
                     eh_data = diskToHost(fhdr->get_sex(), u64_disk);
                 }
                 cie->set_eh_data(eh_data);
@@ -325,34 +325,34 @@ SgAsmElfEHFrameSection::parse()
              * + data_alignment_factor: A signed LEB128 encoded value that is factored out of all offset instructions that are
              *   associated with this CIE or its FDEs. This value shall be multiplied by the register offset argument of an
              *   offset instruction to obtain the new offset value. */
-            cie->set_code_alignment_factor(read_content_local_uleb128(&at));
-            cie->set_data_alignment_factor(read_content_local_sleb128(&at));
+            cie->set_code_alignment_factor(readContentLocalUleb128(&at));
+            cie->set_data_alignment_factor(readContentLocalSleb128(&at));
 
             /* Augmentation data length. This is apparently the length of the data described by the Augmentation String plus
              * the Initial Instructions plus any padding [RPM 2009-01-15].  This field is present only if the augmentation
              * string starts with the character "z" [Robb P. Matzke 2014-12-15]. */
             if (!astr.empty() && astr[0]=='z')
-                cie->set_augmentation_data_length(read_content_local_uleb128(&at));
+                cie->set_augmentation_data_length(readContentLocalUleb128(&at));
             
             /* Augmentation data. The format of the augmentation data in the CIE record is determined by reading the
              * characters of the augmentation string. */ 
             if (!astr.empty() && astr[0]=='z') {
                 for (size_t i=1; i<astr.size(); i++) {
                     if ('L'==astr[i]) {
-                        read_content_local(at++, &u8_disk, 1);
+                        readContentLocal(at++, &u8_disk, 1);
                         cie->set_lsda_encoding(u8_disk);
                     } else if ('P'==astr[i]) {
                         /* The first byte is an encoding method which describes the following bytes, which are the address of
                          * a Personality Routine Handler. There appears to be very little documentation about these fields. */
-                        read_content_local(at++, &u8_disk, 1);
+                        readContentLocal(at++, &u8_disk, 1);
                         cie->set_prh_encoding(u8_disk);
                         switch (cie->get_prh_encoding()) {
                             case 0x05:          /* See Ubuntu 32bit /usr/bin/aptitude */
                             case 0x06:          /* See second CIE record for Gentoo-Amd64 /usr/bin/addftinfo */
                             case 0x07:          /* See first CIE record for Gentoo-Amd64 /usr/bin/addftinfo */
-                                read_content_local(at++, &u8_disk, 1); /* not sure what this is; arg for __gxx_personality_v0? */
+                                readContentLocal(at++, &u8_disk, 1); /* not sure what this is; arg for __gxx_personality_v0? */
                                 cie->set_prh_arg(u8_disk);
-                                read_content_local(at, &u32_disk, 4); at+=4; /* address of <__gxx_personality_v0@plt> */
+                                readContentLocal(at, &u32_disk, 4); at+=4; /* address of <__gxx_personality_v0@plt> */
                                 cie->set_prh_addr(Rose::BinaryAnalysis::ByteOrder::leToHost(u32_disk));
                                 break;
                             case 0x09:          /* *.o file generated by gcc-4.0.x */
@@ -374,7 +374,7 @@ SgAsmElfEHFrameSection::parse()
                             }
                         }
                     } else if ('R'==astr[i]) {
-                        read_content_local(at++, &u8_disk, 1);
+                        readContentLocal(at++, &u8_disk, 1);
                         cie->set_addr_encoding(u8_disk);
                     } else if ('S'==astr[i]) {
                         /* See http://lkml.indiana.edu/hypermail/linux/kernel/0602.3/1144.html and GCC PR #26208*/
@@ -394,7 +394,7 @@ SgAsmElfEHFrameSection::parse()
             /* Initial instructions. These are apparently included in the augmentation_data_length. The final instructions can
              * be zero padding (no-op instructions) to bring the record up to a multiple of the word size. */
             rose_addr_t init_insn_size = (length_field_size + record_size) - (at - record_offset);
-            cie->get_instructions() = read_content_local_ucl(at, init_insn_size);
+            cie->get_instructions() = readContentLocalUcl(at, init_insn_size);
             ROSE_ASSERT(cie->get_instructions().size()==init_insn_size);
 
         } else {
@@ -426,9 +426,9 @@ SgAsmElfEHFrameSection::parse()
               case 0x03:
               case 0x1b:        /* Address doesn't look valid (e.g., 0xfffd74e8) but still four bytes [RPM 2008-01-16]*/
               {
-                  read_content_local(at, &u32_disk, 4); at+=4;
+                  readContentLocal(at, &u32_disk, 4); at+=4;
                   fde->set_begin_rva(Rose::BinaryAnalysis::ByteOrder::leToHost(u32_disk));
-                  read_content_local(at, &u32_disk, 4); at+=4;
+                  readContentLocal(at, &u32_disk, 4); at+=4;
                   fde->set_size(Rose::BinaryAnalysis::ByteOrder::leToHost(u32_disk));
                   break;
               }
@@ -445,8 +445,8 @@ SgAsmElfEHFrameSection::parse()
                 /* Augmentation Data */
                 std::string astring = cie->get_augmentation_string();
                 if (astring.size()>0 && astring[0]=='z') {
-                    rose_addr_t aug_length = read_content_local_uleb128(&at);
-                    fde->get_augmentation_data() = read_content_local_ucl(at, aug_length);
+                    rose_addr_t aug_length = readContentLocalUleb128(&at);
+                    fde->get_augmentation_data() = readContentLocalUcl(at, aug_length);
                     at += aug_length;
                     ROSE_ASSERT(fde->get_augmentation_data().size()==aug_length);
                 }
@@ -458,7 +458,7 @@ SgAsmElfEHFrameSection::parse()
                                 <<": invalid call frame instructions size (skipping)\n";
                 } else {
                     rose_addr_t cf_insn_size = (length_field_size + record_size) - (at - record_offset);
-                    fde->get_instructions() = read_content_local_ucl(at, cf_insn_size);
+                    fde->get_instructions() = readContentLocalUcl(at, cf_insn_size);
                     ROSE_ASSERT(fde->get_instructions().size()==cf_insn_size);
                 }
             }
@@ -505,7 +505,7 @@ SgAsmElfEHFrameSection::unparse(std::ostream &f) const
 rose_addr_t
 SgAsmElfEHFrameSection::unparse(std::ostream *fp) const
 {
-    SgAsmElfFileHeader *fhdr = get_elf_header();
+    SgAsmElfFileHeader *fhdr = get_elfHeader();
     ROSE_ASSERT(fhdr!=NULL);
 
     rose_addr_t at=0;

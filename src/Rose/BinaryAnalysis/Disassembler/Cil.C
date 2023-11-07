@@ -38,7 +38,7 @@ Cil::clone() const {
 
 bool
 Cil::canDisassemble(SgAsmGenericHeader* header) const {
-    return (header->get_sections_by_name("CLR Runtime Header").size() > 0)? true : false;
+    return (header->get_sectionsByName("CLR Runtime Header").size() > 0)? true : false;
 }
 
 Unparser::BasePtr
@@ -498,10 +498,10 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
            for (uint32_t i = 0; i < nTargets; ++i) {
              const int32_t entryofs = minSwitchSize + i * sizeof(std::int32_t);
              const int32_t jmpofs = ByteOrder::leToHost(*((int32_t*)(rawBytes.data()+entryofs)));
-             oplst->append_operand(SageBuilderAsm::buildValueI32(jmpofs));
+             oplst->appendOperand(SageBuilderAsm::buildValueI32(jmpofs));
            }
 
-           insn->set_raw_bytes(rawBytes);
+           insn->set_rawBytes(rawBytes);
            ASSERT_require(insn->get_size() == rawBytes.size());
            break;
         }
@@ -1315,7 +1315,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
                printf ("Found Cil_conv_ovf_i1 instruction (convert to an int8 (on the stack as a int32) and throw exception on overflow) \n");
 
              insn = makeInstruction(va, rawBytes, 1, Cil_conv_ovf_i1, "conv_ovf_i1");
-             insn->set_raw_bytes(rawBytes);
+             insn->set_rawBytes(rawBytes);
              break;
            }
 
@@ -1771,7 +1771,7 @@ Cil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*)
     }
 
     ASSERT_not_null(insn);
-    ASSERT_require(insn->get_raw_bytes().size() > 0);
+    ASSERT_require(insn->get_rawBytes().size() > 0);
 
     return insn;
 }
@@ -1785,9 +1785,9 @@ Cil::makeUnknownInstruction(const Disassembler::Exception &e) {
 
     if (e.bytes.empty()) {
         SgUnsignedCharList rawBytes(1,'\0'); // we don't know what, but an instruction is never zero bytes wide
-        insn->set_raw_bytes(rawBytes);
+        insn->set_rawBytes(rawBytes);
     } else {
-        insn->set_raw_bytes(e.bytes);
+        insn->set_rawBytes(e.bytes);
     }
     return insn;
 }
@@ -1801,7 +1801,7 @@ Cil::makeUnknownInstruction(rose_addr_t va, SgUnsignedCharList &bytes, size_t si
     operands->set_parent(insn);
 
     bytes.resize(size);
-    insn->set_raw_bytes(bytes);
+    insn->set_rawBytes(bytes);
 
     return insn;
 }
@@ -1822,7 +1822,7 @@ Cil::makeInstruction(rose_addr_t va, SgUnsignedCharList &bytes, size_t size,
     }
 
     bytes.resize(size);
-    insn->set_raw_bytes(bytes);
+    insn->set_rawBytes(bytes);
 
     // Sanity checks while implementing
     ASSERT_require(insn->get_size() > 0);

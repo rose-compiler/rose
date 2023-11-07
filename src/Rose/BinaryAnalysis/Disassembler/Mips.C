@@ -119,7 +119,7 @@ Mips::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t insn_va, AddressSet 
     SgAsmMipsInstruction *insn = disassemble_insn(insn_va, insn_bits);
     if (!insn)
         throw Exception("cannot disassemble MIPS instruction: " + StringUtility::addrToString(insn_bits), insn_va);
-    insn->set_raw_bytes(SgUnsignedCharList((unsigned char*)&insn_disk, (unsigned char*)&insn_disk+4));
+    insn->set_rawBytes(SgUnsignedCharList((unsigned char*)&insn_disk, (unsigned char*)&insn_disk+4));
 
     if (successors) {
         bool complete;
@@ -133,14 +133,14 @@ SgAsmInstruction *
 Mips::makeUnknownInstruction(const Exception &e)
 {
     SgAsmMipsInstruction *insn = makeInstruction(e.ip, mips_unknown_instruction, "unknown");
-    insn->set_raw_bytes(e.bytes);
+    insn->set_rawBytes(e.bytes);
     return insn;
 }
 
 SgAsmMipsInstruction*
 Mips::makeUnknownInstruction(rose_addr_t insn_va, unsigned ib) const {
     SgAsmMipsInstruction *insn = makeInstruction(insn_va, mips_unknown_instruction, "unknown");
-    insn->set_raw_bytes(SgUnsignedCharList((unsigned char*)&ib, (unsigned char*)&ib + 4));
+    insn->set_rawBytes(SgUnsignedCharList((unsigned char*)&ib, (unsigned char*)&ib + 4));
     return insn;
 }
 
@@ -482,8 +482,8 @@ Mips::makeImmediate8(unsigned value, size_t bit_offset, size_t nbits) const
 {
     ASSERT_require(0==(value & ~0xff));
     SgAsmIntegerValueExpression *retval = SageBuilderAsm::buildValueU8(value);
-    retval->set_bit_offset(bit_offset);
-    retval->set_bit_size(nbits);
+    retval->set_bitOffset(bit_offset);
+    retval->set_bitSize(nbits);
     return retval;
 }
 
@@ -492,8 +492,8 @@ Mips::makeImmediate16(unsigned value, size_t bit_offset, size_t nbits) const
 {
     ASSERT_require(0==(value & ~0xffff));
     SgAsmIntegerValueExpression *retval = SageBuilderAsm::buildValueU16(value);
-    retval->set_bit_offset(bit_offset);
-    retval->set_bit_size(nbits);
+    retval->set_bitOffset(bit_offset);
+    retval->set_bitSize(nbits);
     return retval;
 }
 
@@ -502,8 +502,8 @@ Mips::makeImmediate32(unsigned value, size_t bit_offset, size_t nbits) const
 {
     ASSERT_require(0==(value & ~0xffffffffull));
     SgAsmIntegerValueExpression *retval = SageBuilderAsm::buildValueU32(value);
-    retval->set_bit_offset(bit_offset);
-    retval->set_bit_size(nbits);
+    retval->set_bitOffset(bit_offset);
+    retval->set_bitSize(nbits);
     return retval;
 }
 
@@ -516,8 +516,8 @@ Mips::makeBranchTargetRelative(rose_addr_t insn_va, unsigned pc_offset, size_t b
     pc_offset = signExtend<18, 32>(pc_offset);      // offsets are signed
     unsigned target = (insn_va + 4 + pc_offset) & GenMask<unsigned, 32>::value; // measured from next instruction
     SgAsmIntegerValueExpression *retval = SageBuilderAsm::buildValueU32(target);
-    retval->set_bit_offset(bit_offset);
-    retval->set_bit_size(nbits);
+    retval->set_bitOffset(bit_offset);
+    retval->set_bitSize(nbits);
     return retval;
 }
 

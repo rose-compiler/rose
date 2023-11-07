@@ -58,7 +58,7 @@ bool
 sortFunctionNodesByAddress(const SgAsmFunction *a, const SgAsmFunction *b) {
     ASSERT_not_null(a);
     ASSERT_not_null(b);
-    return a->get_entry_va() < b->get_entry_va();
+    return a->get_entryVa() < b->get_entryVa();
 }
 
 

@@ -365,7 +365,7 @@ public:
      *
      *  Returns the sections in the order they should be mapped. */
     virtual SgAsmGenericSectionPtrList getRemapSections(SgAsmGenericHeader *header) {
-        return header->get_mapped_sections();
+        return header->get_mappedSections();
     }
 
     /** Returns an alternate base virtual address if necessary for remapping.
@@ -378,7 +378,7 @@ public:
      *  This method is called with a memory map that describes what has been mapped so far, a file header for the sections
      *  that are about to be mapped, and a list of sections about to be mapped. */
     virtual rose_addr_t rebase(const MemoryMap::Ptr&/*in,out*/, SgAsmGenericHeader *header, const SgAsmGenericSectionPtrList&) {
-        return header->get_base_va();
+        return header->get_baseVa();
     }
 
     /** Extended Euclid Algorithm.

@@ -317,13 +317,13 @@ void
 Architecture::checkInstruction(SgAsmInstruction *insn) {
     ASSERT_not_null(insn);
     std::vector<uint8_t> buf = debugger()->readMemory(insn->get_address(), insn->get_size());
-    if (buf.size() != insn->get_size() || !std::equal(buf.begin(), buf.end(), insn->get_raw_bytes().begin())) {
+    if (buf.size() != insn->get_size() || !std::equal(buf.begin(), buf.end(), insn->get_rawBytes().begin())) {
         if (mlog[ERROR]) {
             mlog[ERROR] <<"symbolic instruction doesn't match concrete instruction at "
                         <<StringUtility::addrToString(insn->get_address()) <<"\n"
                         <<"  symbolic insn:  " <<insn->toString() <<"\n"
                         <<"  symbolic bytes:";
-            for (uint8_t byte: insn->get_raw_bytes())
+            for (uint8_t byte: insn->get_rawBytes())
                 mlog[ERROR] <<(boost::format(" %02x") % (unsigned)byte);
             mlog[ERROR] <<"\n"
                         <<"  concrete bytes:";

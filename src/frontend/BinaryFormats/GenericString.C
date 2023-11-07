@@ -86,13 +86,13 @@ SgAsmBasicString::dump(FILE *f, const char *prefix, ssize_t idx) const
 SgAsmStoredString::SgAsmStoredString(SgAsmGenericStrtab *strtab, rose_addr_t offset) {
     initializeProperties();
     ASSERT_not_null(strtab);
-    p_storage = strtab->create_storage(offset, false);
+    p_storage = strtab->createStorage(offset, false);
 }
 
 SgAsmStoredString::SgAsmStoredString(SgAsmGenericStrtab *strtab, const std::string &s) {
     initializeProperties();
     ASSERT_not_null(strtab);
-    p_storage = strtab->create_storage(0, false);
+    p_storage = strtab->createStorage(0, false);
     set_string(s);
 }
 
@@ -217,7 +217,7 @@ SgAsmGenericStrtab::create_string(rose_addr_t offset, bool shared)
 SgAsmStoredString *
 SgAsmGenericStrtab::createString(rose_addr_t offset, bool shared)
 {
-    SgAsmStringStorage *storage = create_storage(offset, shared);
+    SgAsmStringStorage *storage = createStorage(offset, shared);
     return new SgAsmStoredString(storage);
 }
 
@@ -245,7 +245,7 @@ SgAsmGenericStrtab::free(rose_addr_t offset, rose_addr_t size)
     
     /* Make sure area is not already in free list.  The freelist.insert() handles this gracefully, but if we're freeing
      * something that's already in the list then we have a logic error somewhere. */
-    ROSE_ASSERT(!get_freelist().overlaps(AddressInterval::baseSize(offset, size)));
+    ROSE_ASSERT(!get_freeList().overlaps(AddressInterval::baseSize(offset, size)));
 
     /* Preserve anything that's still referenced. The caller should have assigned SgAsmStoredString::unalloced to the "offset"
      * member of the string storage to indicate that it's memory in the string table is no longer in use. */
@@ -254,11 +254,11 @@ SgAsmGenericStrtab::free(rose_addr_t offset, rose_addr_t size)
     for (size_t i=0; i<p_storageList.size(); i++) {
         SgAsmStringStorage *storage = p_storageList[i];
         if (storage->get_offset()!=SgAsmGenericString::unallocated)
-            toFree.erase(AddressInterval::baseSize(storage->get_offset(), get_storage_size(storage)));
+            toFree.erase(AddressInterval::baseSize(storage->get_offset(), get_storageSize(storage)));
     }
 
     /* Add un-referenced extents to free list. */
-    get_freelist().insertMultiple(toFree);
+    get_freeList().insertMultiple(toFree);
 }
 
 void
@@ -272,7 +272,7 @@ SgAsmGenericStrtab::freeAllStrings(bool blow_away_holes)
 {
     SgAsmGenericSection *container = get_container();
     SgAsmGenericFile *file = container->get_file();
-    bool is_tracking = file->get_tracking_references();
+    bool is_tracking = file->get_trackingReferences();
     set_isModified(true);
 
     /* Mark all storage objects as being unallocated. Never free the dont_free storage (if any). */
@@ -285,17 +285,17 @@ SgAsmGenericStrtab::freeAllStrings(bool blow_away_holes)
 
     /* Mark holes as referenced */
     if (blow_away_holes) {
-        file->set_tracking_references(true);
-        file->mark_referenced_extent(container->get_offset(), container->get_size());
-        file->set_tracking_references(is_tracking);
+        file->set_trackingReferences(true);
+        file->markReferencedExtent(container->get_offset(), container->get_size());
+        file->set_trackingReferences(is_tracking);
     }
 
     /* The free list is everything that's been referenced in the container section. */
-    get_freelist() = container->get_referenced_extents();
+    get_freeList() = container->get_referencedExtents();
 
     /* Remove the empty string from the free list */
     if (get_dontFree())
-        get_freelist().erase(AddressInterval::baseSize(get_dontFree()->get_offset(), get_dontFree()->get_string().size()+1));
+        get_freeList().erase(AddressInterval::baseSize(get_dontFree()->get_offset(), get_dontFree()->get_string().size()+1));
 }
 
 bool
@@ -349,19 +349,19 @@ SgAsmGenericStrtab::reallocate(bool shrink)
         /* Some string tables may be able to overlap strings. For instance, ELF can overlap "domain" and "main" since it
          * encodes strings with NUL termination. */
         if (storage->get_offset()==SgAsmGenericString::unallocated)
-            allocate_overlap(storage);
+            allocateOverlap(storage);
         
         /* If we couldn't share another string then try to allocate from free space (avoiding holes) */
         if (storage->get_offset()==SgAsmGenericString::unallocated) {
             try {
                 size_t need = storage->get_string().size() + 1;
-                AddressIntervalSet::ConstIntervalIterator iter = get_freelist().bestFit(need,
-                                                                                        get_freelist().intervals().begin());
-                if (iter==get_freelist().intervals().end())
+                AddressIntervalSet::ConstIntervalIterator iter = get_freeList().bestFit(need,
+                                                                                        get_freeList().intervals().begin());
+                if (iter==get_freeList().intervals().end())
                     throw std::bad_alloc();
                 ASSERT_require(iter->size() >= need);
                 AddressInterval allocated = AddressInterval::baseSize(iter->least(), need);
-                get_freelist().erase(allocated);
+                get_freeList().erase(allocated);
                 rose_addr_t new_offset = allocated.least();
                 storage->set_offset(new_offset);
             } catch(std::bad_alloc &x) {
@@ -385,13 +385,13 @@ SgAsmGenericStrtab::reallocate(bool shrink)
          * containing section's "set_size" method should add the new space to the string table's free list. If our recursion
          * level is more than two calls deep then something went horribly wrong! */
         reallocated = true;
-        container->get_file()->shift_extend(container, 0, extend_size);
+        container->get_file()->shiftExtend(container, 0, extend_size);
         reallocate(false);
-    } else if (shrink && get_freelist().size()>0) {
+    } else if (shrink && get_freeList().size()>0) {
         /* See if we can release any address space and shrink the containing section. The containing section's "set_size"
          * method will adjust the free list by removing some bytes from it. */
-        AddressIntervalSet::ConstIntervalIterator iter = get_freelist().intervals().end();
-        ASSERT_forbid(iter == get_freelist().intervals().begin());
+        AddressIntervalSet::ConstIntervalIterator iter = get_freeList().intervals().end();
+        ASSERT_forbid(iter == get_freeList().intervals().begin());
         --iter;
         AddressInterval hi = *iter;
         if (hi.least() + hi.size() == container->get_size())
@@ -447,8 +447,8 @@ SgAsmGenericStrtab::dump(FILE *f, const char *prefix, ssize_t idx) const
         p_storageList[i]->dump(f, p, i);
     }
 
-    fprintf(f, "%s%-*s = %" PRIu64 " free regions\n", p, w, "freelist", get_freelist().size());
-    BOOST_FOREACH (const AddressInterval &interval, get_freelist().intervals()) {
+    fprintf(f, "%s%-*s = %" PRIu64 " free regions\n", p, w, "freelist", get_freeList().size());
+    BOOST_FOREACH (const AddressInterval &interval, get_freeList().intervals()) {
         fprintf(f, "%s%-*s = offset 0x%08" PRIx64 " (%" PRIu64 "),"
                 " for 0x%08" PRIx64 " (%" PRIu64 ") byte%s,"
                 " ending at 0x%08" PRIx64 " (%" PRIu64 ")\n",

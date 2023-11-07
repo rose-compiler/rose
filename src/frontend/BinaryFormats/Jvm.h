@@ -17,7 +17,7 @@ size_t read_bytes(const SgAsmJvmConstantPool* pool, char* &bytes, T &length)
   rose_addr_t offset{header->get_offset()};
 
   /* read length of the array */
-  size_t count = header->read_content(offset, &length, sizeof(length));
+  size_t count = header->readContent(offset, &length, sizeof(length));
   if (count != sizeof(length)) {
     //throw FormatError("Error reading JVM bytes array length");
     ROSE_ASSERT(false && "Error reading JVM bytes array length");
@@ -30,7 +30,7 @@ size_t read_bytes(const SgAsmJvmConstantPool* pool, char* &bytes, T &length)
   bytes = new char[length];
 
   /* read array */
-  count = header->read_content(offset, bytes, length);
+  count = header->readContent(offset, bytes, length);
   if (count != length) {
     //throw FormatError("Error reading JVM bytes array");
     ROSE_ASSERT(false && "Error reading JVM bytes array");
@@ -47,7 +47,7 @@ size_t read_value(const SgAsmJvmConstantPool* pool, T &value, bool advanceOffset
   SgAsmGenericHeader* header{pool->get_header()};
   rose_addr_t offset{header->get_offset()};
 
-  size_t count = header->read_content(offset, &value, sizeof(T));
+  size_t count = header->readContent(offset, &value, sizeof(T));
   if (count != sizeof(T)) {
     //throw FormatError("Error reading JVM value");
     ROSE_ASSERT(false && "Error reading JVM value");

@@ -100,8 +100,8 @@ Architecture::entryAddress() {
     if (SgAsmInterpretation *interp = partitioner()->interpretation()) {
         for (SgAsmGenericHeader *header: interp->get_headers()->get_headers()) {
             ASSERT_not_null(header);
-            for (const rose_rva_t &rva: header->get_entry_rvas())
-                return header->get_base_va() + rva.get_rva();
+            for (const rose_rva_t &rva: header->get_entryRvas())
+                return header->get_baseVa() + rva.get_rva();
         }
     }
 

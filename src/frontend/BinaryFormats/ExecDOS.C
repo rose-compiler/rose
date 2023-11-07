@@ -32,15 +32,15 @@ SgAsmDOSFileHeader::SgAsmDOSFileHeader(SgAsmGenericFile *f)
     get_magic().push_back('Z');
 
     /* Executable Format */
-    ASSERT_not_null(get_exec_format());
-    get_exec_format()->set_family(FAMILY_DOS);
-    get_exec_format()->set_purpose(PURPOSE_EXECUTABLE);
-    get_exec_format()->set_sex(Rose::BinaryAnalysis::ByteOrder::ORDER_LSB);
-    get_exec_format()->set_abi(ABI_MSDOS);
-    get_exec_format()->set_abi_version(0);
-    get_exec_format()->set_word_size(2);
-    get_exec_format()->set_version(0);
-    get_exec_format()->set_is_current_version(true);
+    ASSERT_not_null(get_executableFormat());
+    get_executableFormat()->set_family(FAMILY_DOS);
+    get_executableFormat()->set_purpose(PURPOSE_EXECUTABLE);
+    get_executableFormat()->set_sex(Rose::BinaryAnalysis::ByteOrder::ORDER_LSB);
+    get_executableFormat()->set_abi(ABI_MSDOS);
+    get_executableFormat()->set_abiVersion(0);
+    get_executableFormat()->set_wordSize(2);
+    get_executableFormat()->set_version(0);
+    get_executableFormat()->set_isCurrentVersion(true);
 
     set_isa(ISA_IA32_Family);
 }
@@ -50,19 +50,19 @@ SgAsmDOSFileHeader::isDos(SgAsmGenericFile *file)
 {
     /* Turn off byte reference tracking for the duration of this function. We don't want our testing the file contents to
      * affect the list of bytes that we've already referenced or which we might reference later. */
-    bool was_tracking = file->get_tracking_references();
-    file->set_tracking_references(false);
+    bool was_tracking = file->get_trackingReferences();
+    file->set_trackingReferences(false);
 
     try {
         unsigned char magic[2];
-        file->read_content(0, magic, sizeof magic);
+        file->readContent(0, magic, sizeof magic);
         if ('M'!=magic[0] || 'Z'!=magic[1])
             throw 1;
     } catch (...) {
-        file->set_tracking_references(was_tracking);
+        file->set_trackingReferences(was_tracking);
         return false;
     }
-    file->set_tracking_references(was_tracking);
+    file->set_trackingReferences(was_tracking);
     return true;
 }
 
@@ -75,7 +75,7 @@ SgAsmDOSFileHeader::parse(bool define_rm_section)
     DOSFileHeader_disk disk;
     if (sizeof(disk)>get_size())
         extend(sizeof(disk)-get_size());
-    read_content_local(0, &disk, sizeof disk);
+    readContentLocal(0, &disk, sizeof disk);
 
     /* Check magic number early. 
      * Some old compilers were little-endian ignorant and stored "ZM", but we will ignore this [DQ]. */
@@ -122,7 +122,7 @@ SgAsmDOSFileHeader::parse(bool define_rm_section)
 
     /* Entry point */
     p_baseVa = 0;
-    add_entry_rva(Rose::BinaryAnalysis::ByteOrder::leToHost(disk.e_ip));
+    addEntryRva(Rose::BinaryAnalysis::ByteOrder::leToHost(disk.e_ip));
 
     return this;
 }
@@ -175,14 +175,14 @@ SgAsmDOSFileHeader::reallocate()
 
     rose_addr_t need = sizeof(DOSFileHeader_disk);
     if (need < get_size()) {
-        if (is_mapped()) {
-            ROSE_ASSERT(get_mapped_size()==get_size());
-            set_mapped_size(need);
+        if (isMapped()) {
+            ROSE_ASSERT(get_mappedSize()==get_size());
+            set_mappedSize(need);
         }
         set_size(need);
         reallocated = true;
     } else if (need > get_size()) {
-        get_file()->shift_extend(this, 0, need-get_size(), SgAsmGenericFile::ADDRSP_ALL, SgAsmGenericFile::ELASTIC_HOLE);
+        get_file()->shiftExtend(this, 0, need-get_size(), SgAsmGenericFile::ADDRSP_ALL, SgAsmGenericFile::ELASTIC_HOLE);
         reallocated = true;
     }
 
@@ -257,12 +257,12 @@ SgAsmDOSFileHeader::parseRealModeSection(rose_addr_t max_offset)
     p_rm_section->set_name(new SgAsmBasicString("DOS real-mode text/data"));
     p_rm_section->set_synthesized(true);
     p_rm_section->set_purpose(SP_PROGRAM);
-    p_rm_section->set_mapped_preferred_rva(0);
-    p_rm_section->set_mapped_actual_va(0); /*will be assigned by Loader*/
-    p_rm_section->set_mapped_size(rm_size);
-    p_rm_section->set_mapped_rperm(true);
-    p_rm_section->set_mapped_wperm(true);
-    p_rm_section->set_mapped_xperm(true);
+    p_rm_section->set_mappedPreferredRva(0);
+    p_rm_section->set_mappedActualVa(0); /*will be assigned by Loader*/
+    p_rm_section->set_mappedSize(rm_size);
+    p_rm_section->set_mappedReadPermission(true);
+    p_rm_section->set_mappedWritePermission(true);
+    p_rm_section->set_mappedExecutePermission(true);
     return p_rm_section;
 }
 
@@ -332,7 +332,7 @@ SgAsmDOSExtendedHeader::parse()
     
     /* Read header from file */
     DOSExtendedHeader_disk disk;
-    read_content_local(0, &disk, sizeof disk);
+    readContentLocal(0, &disk, sizeof disk);
 
     /* Decode file format */
     ROSE_ASSERT(get_header()!=NULL); /*should be the DOS File Header*/

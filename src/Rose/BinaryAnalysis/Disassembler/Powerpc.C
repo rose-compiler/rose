@@ -68,7 +68,7 @@ Powerpc::canDisassemble(SgAsmGenericHeader *header) const {
     }
 
     // Check the byte order
-    SgAsmGenericFormat *fmt = header->get_exec_format();
+    SgAsmGenericFormat *fmt = header->get_executableFormat();
     ASSERT_not_null(fmt);
     if (fmt->get_sex() != sex_)
         return false;
@@ -158,7 +158,7 @@ Powerpc::makeUnknownInstruction(const Exception &e) {
     SgAsmOperandList *operands = new SgAsmOperandList();
     insn->set_operandList(operands);
     operands->set_parent(insn);
-    insn->set_raw_bytes(e.bytes);
+    insn->set_rawBytes(e.bytes);
     return insn;
 }
 
@@ -283,7 +283,7 @@ Powerpc::makeInstructionWithoutOperands(uint64_t address, const std::string& mne
     for (int i = 0; i < 4; ++i)
         bytes[i] = (insn >> (24 - (8 * i))) & 0xFF; // Force big-endian
 
-    instruction->set_raw_bytes(bytes);
+    instruction->set_rawBytes(bytes);
     return instruction;
 }
 

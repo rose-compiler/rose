@@ -142,7 +142,7 @@ CodeInserter::replaceBlockInsns(const P2::BasicBlock::Ptr &bb, size_t index, siz
 
             toReplace.push_back(nextInsn);
             toReplaceVas |= AddressInterval::baseSize(nextInsn->get_address(), nextInsn->get_size());
-            std::vector<uint8_t> bytes = nextInsn->get_raw_bytes();
+            std::vector<uint8_t> bytes = nextInsn->get_rawBytes();
             replacement.insert(replacement.end(), bytes.begin(), bytes.end());
 
             SAWYER_MESG(debug) <<"  enlarged area by redirecting a successor:\n"
@@ -162,7 +162,7 @@ CodeInserter::replaceBlockInsns(const P2::BasicBlock::Ptr &bb, size_t index, siz
 
             toReplace.insert(toReplace.begin(), prevInsn);
             toReplaceVas |= AddressInterval::baseSize(prevInsn->get_address(), prevInsn->get_size());
-            std::vector<uint8_t> bytes = prevInsn->get_raw_bytes();
+            std::vector<uint8_t> bytes = prevInsn->get_rawBytes();
             replacement.insert(replacement.begin(), bytes.begin(), bytes.end());
             relocStart += bytes.size();
 

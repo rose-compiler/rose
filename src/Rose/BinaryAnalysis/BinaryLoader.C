@@ -328,49 +328,49 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header) {
     trace <<"remapping sections of " <<header->get_file()->get_name() <<"\n";
     SgAsmGenericSectionPtrList sections = getRemapSections(header);
 
-    rose_addr_t old_base_va = header->get_base_va();
+    rose_addr_t old_base_va = header->get_baseVa();
     rose_addr_t new_base_va = rebase(map, header, sections);
     if (new_base_va != old_base_va) {
         trace <<"  temporarily rebasing header from " <<StringUtility::addrToString(old_base_va)
               <<" to " <<StringUtility::addrToString(new_base_va) <<"\n";
-        header->set_base_va(new_base_va);
+        header->set_baseVa(new_base_va);
     }
 
     try {
         for (auto section: sections) {
-            section->set_mapped_actual_va(0); /*reset in case previously mapped*/
+            section->set_mappedActualVa(0); /*reset in case previously mapped*/
             unsigned mapperms = mappingPermissions(section);
 
             if (trace) {
                 trace <<"  mapping section [" <<section->get_id() <<"] \"" <<section->get_name()->get_string(true) <<"\"";
-                if (section->get_base_va()!=0)
-                    trace <<" with base va " <<StringUtility::addrToString(section->get_base_va());
+                if (section->get_baseVa()!=0)
+                    trace <<" with base va " <<StringUtility::addrToString(section->get_baseVa());
                 trace <<"\n";
-                trace <<"    specified RVA:       " <<StringUtility::addrToString(section->get_mapped_preferred_rva())
-                      <<" + " <<StringUtility::addrToString(section->get_mapped_size()) <<" bytes"
-                      <<" = " <<StringUtility::addrToString(section->get_mapped_preferred_rva()+section->get_mapped_size())
+                trace <<"    specified RVA:       " <<StringUtility::addrToString(section->get_mappedPreferredRva())
+                      <<" + " <<StringUtility::addrToString(section->get_mappedSize()) <<" bytes"
+                      <<" = " <<StringUtility::addrToString(section->get_mappedPreferredRva()+section->get_mappedSize())
                       <<"\n";
-                if (section->get_base_va()!=0) {
+                if (section->get_baseVa()!=0) {
                     trace <<"    specified  VA:       "
-                          <<StringUtility::addrToString(section->get_base_va() + section->get_mapped_preferred_rva()) <<" + "
-                          <<StringUtility::addrToString(section->get_mapped_size()) <<" bytes = "
-                          <<StringUtility::addrToString(section->get_base_va() + section->get_mapped_preferred_rva() +
-                                                        section->get_mapped_size()) <<"\n";
+                          <<StringUtility::addrToString(section->get_baseVa() + section->get_mappedPreferredRva()) <<" + "
+                          <<StringUtility::addrToString(section->get_mappedSize()) <<" bytes = "
+                          <<StringUtility::addrToString(section->get_baseVa() + section->get_mappedPreferredRva() +
+                                                        section->get_mappedSize()) <<"\n";
                 }
                 trace <<"    specified offset:    "
                       <<StringUtility::addrToString(section->get_offset()) <<" + "
                       <<StringUtility::addrToString(section->get_size()) <<" bytes = "
                       <<StringUtility::addrToString(section->get_offset()+section->get_size()) <<"\n";
                 trace <<"    specified alignment: memory="
-                      <<StringUtility::addrToString(section->get_mapped_alignment()) <<", file="
-                      <<StringUtility::addrToString(section->get_file_alignment()) <<"\n";
+                      <<StringUtility::addrToString(section->get_mappedAlignment()) <<", file="
+                      <<StringUtility::addrToString(section->get_fileAlignment()) <<"\n";
             }
 
             // Initial guesses
-            rose_addr_t malign_lo = std::max(section->get_mapped_alignment(), (rose_addr_t)1);
-            rose_addr_t malign_hi = std::min(std::max(section->get_mapped_alignment(), (rose_addr_t)1), (rose_addr_t)4096);
-            rose_addr_t va        = header->get_base_va() + section->get_mapped_preferred_rva();
-            rose_addr_t mem_size  = section->get_mapped_size();
+            rose_addr_t malign_lo = std::max(section->get_mappedAlignment(), (rose_addr_t)1);
+            rose_addr_t malign_hi = std::min(std::max(section->get_mappedAlignment(), (rose_addr_t)1), (rose_addr_t)4096);
+            rose_addr_t va        = header->get_baseVa() + section->get_mappedPreferredRva();
+            rose_addr_t mem_size  = section->get_mappedSize();
             rose_addr_t offset    = section->get_offset();
             rose_addr_t file_size = section->get_size();
 
@@ -384,7 +384,7 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header) {
                                                       &offset, &file_size, &map_private, /* file location outputs */
                                                       &va_offset, &anon_lo, &anon_hi,    /* internal location outputs */
                                                       &resolve);                         /* conflict resolution output */
-            rose_addr_t falign_lo = std::max(section->get_file_alignment(), (rose_addr_t)1);
+            rose_addr_t falign_lo = std::max(section->get_fileAlignment(), (rose_addr_t)1);
             rose_addr_t falign_hi = falign_lo;
 
             if (trace) {
@@ -400,8 +400,8 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header) {
                           <<StringUtility::addrToString(va) <<" + "
                           <<StringUtility::addrToString(mem_size) <<" bytes = "
                           <<StringUtility::addrToString(va+mem_size);
-                    if (section->get_base_va()+section->get_mapped_preferred_rva()==va &&
-                        section->get_mapped_size()==mem_size) {
+                    if (section->get_baseVa()+section->get_mappedPreferredRva()==va &&
+                        section->get_mappedSize()==mem_size) {
                         trace <<" (no change)\n";
                     } else {
                         trace <<"\n";
@@ -434,7 +434,7 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header) {
                 continue;
             ASSERT_require(va_offset<mem_size);
             if (file_size>mem_size) file_size = mem_size;
-            ASSERT_require(va + va_offset >= header->get_base_va());
+            ASSERT_require(va + va_offset >= header->get_baseVa());
             if (trace) {
                 trace <<"    current memory map (before we map this section)\n";
                 map->dump(trace, "        ");
@@ -478,7 +478,7 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header) {
 
             /* Save the virtual address where this section is (will be) mapped.  When a section is mapped more than once
              * (perfectly legal to do so) only the last mapping is saved. */
-            section->set_mapped_actual_va(va + va_offset);
+            section->set_mappedActualVa(va + va_offset);
 
             /* Segment name for debugging. This is the file base name and section name concatenated. */
             std::string::size_type file_basename_pos = file->get_name().find_last_of("/");
@@ -562,9 +562,9 @@ BinaryLoader::remap(MemoryMap::Ptr &map, SgAsmGenericHeader *header) {
                 map->dump(trace, "      ");
             }
         }
-        header->set_base_va(old_base_va);
+        header->set_baseVa(old_base_va);
     } catch(...) {
-        header->set_base_va(old_base_va);
+        header->set_baseVa(old_base_va);
         throw;
     }
 }
@@ -711,7 +711,7 @@ BinaryLoader::alignValues(SgAsmGenericSection *section, const MemoryMap::Ptr&,
                           rose_addr_t *va_offset_p, bool *anon_lo_p, bool *anon_hi_p,
                           ConflictResolution *resolve_p) {
     ASSERT_not_null(section);
-    ASSERT_require2(section->is_mapped(), "section must be mapped to virtual memory");
+    ASSERT_require2(section->isMapped(), "section must be mapped to virtual memory");
     ASSERT_not_null(malign_lo_p);
     ASSERT_not_null(malign_hi_p);
     ASSERT_not_null(va_p);
@@ -732,7 +732,7 @@ BinaryLoader::alignValues(SgAsmGenericSection *section, const MemoryMap::Ptr&,
     rose_addr_t va = *va_p;
     rose_addr_t mem_size = *mem_size_p;
     rose_addr_t offset = *offset_p;
-    rose_addr_t falign_lo = std::max(section->get_file_alignment(), (rose_addr_t)1);
+    rose_addr_t falign_lo = std::max(section->get_fileAlignment(), (rose_addr_t)1);
     rose_addr_t file_size = *file_size_p;
 
     /* Align lower end of mapped region to satisfy both memory and file alignment constraints. */
@@ -773,11 +773,11 @@ BinaryLoader::alignValues(SgAsmGenericSection *section, const MemoryMap::Ptr&,
 unsigned
 BinaryLoader::mappingPermissions(SgAsmGenericSection *section) const {
     unsigned mapperms=0;
-    if (section->get_mapped_rperm())
+    if (section->get_mappedReadPermission())
         mapperms |= MemoryMap::READABLE;
-    if (section->get_mapped_wperm())
+    if (section->get_mappedWritePermission())
         mapperms |= MemoryMap::WRITABLE;
-    if (section->get_mapped_xperm())
+    if (section->get_mappedExecutePermission())
         mapperms |= MemoryMap::EXECUTABLE;
     return mapperms;
 }

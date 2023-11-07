@@ -279,9 +279,9 @@ FunctionCall::build_cg_from_cfg(const ControlFlowGraph &cfg, FunctionCallGraph &
         ASSERT_not_null(block_a);
         SgAsmBlock *block_b = SageInterface::getEnclosingNode<SgAsmBlock>(get_ast_node(cfg, cfg_b), true/* inc. self */);
         ASSERT_not_null(block_b);
-        SgAsmFunction *func_a = block_a->get_enclosing_function();
-        SgAsmFunction *func_b = block_b->get_enclosing_function();
-        if (func_a && func_b && block_b==func_b->get_entry_block() && !is_edge_filtered(func_a, func_b)) {
+        SgAsmFunction *func_a = block_a->get_enclosingFunction();
+        SgAsmFunction *func_b = block_b->get_enclosingFunction();
+        if (func_a && func_b && block_b==func_b->get_entryBlock() && !is_edge_filtered(func_a, func_b)) {
             typename FunctionVertexMap::iterator fi_a = fv_map.find(func_a);
             if (fi_a!=fv_map.end()) {
                 typename FunctionVertexMap::iterator fi_b = fv_map.find(func_b);
@@ -339,7 +339,7 @@ FunctionCall::build_cg_from_ast(SgNode *root, FunctionCallGraph &cg/*out*/)
             : analyzer(analyzer), cg(cg), fv_map(fv_map), source_vertex(source_vertex)
             {}
         SgAsmFunction *function_of(SgAsmBlock *block) {
-            return block ? block->get_enclosing_function() : NULL;
+            return block ? block->get_enclosingFunction() : NULL;
         }
         void visit(SgNode *node) {
             SgAsmBlock *block_a = isSgAsmBlock(node); /* the calling block */
@@ -352,7 +352,7 @@ FunctionCall::build_cg_from_ast(SgNode *root, FunctionCallGraph &cg/*out*/)
                 if (func_b == NULL) {
                     SgAsmBlock *block_b = isSgAsmBlock((*si)->get_baseNode()); /* the called block */
                     func_b = function_of(block_b); /* the called function */
-                    if (func_b && func_b->get_entry_va() != block_b->get_address())
+                    if (func_b && func_b->get_entryVa() != block_b->get_address())
                         continue;
                 }
                 if (func_b && !analyzer->is_edge_filtered(func_a, func_b)) {

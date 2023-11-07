@@ -7,7 +7,7 @@ using namespace Rose;
 Sawyer::Result<unsigned, std::string>
 SgAsmPEExportEntry::biasedOrdinal() const {
     if (auto exportSection = SageInterface::getEnclosingNode<SgAsmPEExportSection>(this)) {
-        if (auto exportDir = exportSection->get_export_dir()) {
+        if (auto exportDir = exportSection->get_exportDirectory()) {
             return Sawyer::makeOk(get_ordinal() + exportDir->get_ord_base());
         } else {
             return Sawyer::makeError("export section has no export directory");

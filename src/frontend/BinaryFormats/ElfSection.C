@@ -64,26 +64,26 @@ SgAsmElfSection::initFromSectionTable(SgAsmElfSectionTableEntry *shdr, SgAsmElfS
     } else {
         set_size(shdr->get_sh_size());
     }
-    set_file_alignment(shdr->get_sh_addralign());
-    grab_content();
+    set_fileAlignment(shdr->get_sh_addralign());
+    grabContent();
 
     /* Memory mapping */
     if (shdr->get_sh_addr() > 0) {
-        set_mapped_preferred_rva(shdr->get_sh_addr());
-        set_mapped_actual_va(0); /*will be assigned by Loader*/
-        set_mapped_size(shdr->get_sh_size());
-        set_mapped_rperm(true);
-        set_mapped_wperm((shdr->get_sh_flags() & 0x01) == 0x01);
-        set_mapped_xperm((shdr->get_sh_flags() & 0x04) == 0x04);
-        set_mapped_alignment(shdr->get_sh_addralign());
+        set_mappedPreferredRva(shdr->get_sh_addr());
+        set_mappedActualVa(0); /*will be assigned by Loader*/
+        set_mappedSize(shdr->get_sh_size());
+        set_mappedReadPermission(true);
+        set_mappedWritePermission((shdr->get_sh_flags() & 0x01) == 0x01);
+        set_mappedExecutePermission((shdr->get_sh_flags() & 0x04) == 0x04);
+        set_mappedAlignment(shdr->get_sh_addralign());
     } else {
-        set_mapped_preferred_rva(0);
-        set_mapped_actual_va(0); /*will be assigned by Loader*/
-        set_mapped_size(0);
-        set_mapped_rperm(false);
-        set_mapped_wperm(false);
-        set_mapped_xperm(false);
-        set_mapped_alignment(shdr->get_sh_addralign());
+        set_mappedPreferredRva(0);
+        set_mappedActualVa(0); /*will be assigned by Loader*/
+        set_mappedSize(0);
+        set_mappedReadPermission(false);
+        set_mappedWritePermission(false);
+        set_mappedExecutePermission(false);
+        set_mappedAlignment(shdr->get_sh_addralign());
     }
 
     /* Name. This has to be near the end because possibly strsec==this, in which case we have to call set_size() to extend the
@@ -92,7 +92,7 @@ SgAsmElfSection::initFromSectionTable(SgAsmElfSectionTableEntry *shdr, SgAsmElfS
     set_name(new SgAsmStoredString(strsec->get_strtab(), shdr->get_sh_name()));
 
     /* Add section table entry to section */
-    set_section_entry(shdr);
+    set_sectionEntry(shdr);
     shdr->set_parent(this);
 
     return this;
@@ -114,8 +114,8 @@ SgAsmElfSection::initFromSegmentTable(SgAsmElfSegmentTableEntry *shdr, bool mmap
         /* File mapping */
         set_offset(shdr->get_offset());
         set_size(shdr->get_filesz());
-        set_file_alignment(shdr->get_align());
-        grab_content();
+        set_fileAlignment(shdr->get_align());
+        grabContent();
     
         /* Name */
         char name[128];
@@ -140,16 +140,16 @@ SgAsmElfSection::initFromSegmentTable(SgAsmElfSegmentTableEntry *shdr, bool mmap
     }
     
     /* Memory mapping */
-    set_mapped_preferred_rva(shdr->get_vaddr());
-    set_mapped_actual_va(0); /*will be assigned by Loader*/
-    set_mapped_size(shdr->get_memsz());
-    set_mapped_alignment(shdr->get_align());
-    set_mapped_rperm(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_RPERM ? true : false);
-    set_mapped_wperm(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_WPERM ? true : false);
-    set_mapped_xperm(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_XPERM ? true : false);
+    set_mappedPreferredRva(shdr->get_vaddr());
+    set_mappedActualVa(0); /*will be assigned by Loader*/
+    set_mappedSize(shdr->get_memsz());
+    set_mappedAlignment(shdr->get_align());
+    set_mappedReadPermission(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_RPERM ? true : false);
+    set_mappedWritePermission(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_WPERM ? true : false);
+    set_mappedExecutePermission(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_XPERM ? true : false);
 
     /* Add segment table entry to section */
-    set_segment_entry(shdr);
+    set_segmentEntry(shdr);
     shdr->set_parent(this);
 
     return this;
@@ -183,11 +183,11 @@ SgAsmElfSection::calculateSizes(size_t r32size, size_t r64size,       /*size of 
     size_t extra_size = 0;
     size_t entry_size = 0;
     size_t nentries = 0;
-    SgAsmElfFileHeader *fhdr = get_elf_header();
+    SgAsmElfFileHeader *fhdr = get_elfHeader();
 
     /* Assume ELF Section Table Entry is correct for now for the size of each entry in the table. */
-    ROSE_ASSERT(get_section_entry()!=NULL);
-    entry_size = get_section_entry()->get_sh_entsize();
+    ROSE_ASSERT(get_sectionEntry()!=NULL);
+    entry_size = get_sectionEntry()->get_sh_entsize();
 
     /* Size of required part of each entry */
     if (0==r32size && 0==r64size) {
@@ -196,9 +196,9 @@ SgAsmElfSection::calculateSizes(size_t r32size, size_t r64size,       /*size of 
          * the ELF Section Table has a zero sh_entsize and we'll treat the section as if it were a table with one huge entry.
          * Otherwise we'll assume that the struct size is the same as the sh_entsize and there's no optional data. */
         struct_size = entry_size>0 ? entry_size : get_size();
-    } else if (4==fhdr->get_word_size()) {
+    } else if (4==fhdr->get_wordSize()) {
         struct_size = r32size;
-    } else if (8==fhdr->get_word_size()) {
+    } else if (8==fhdr->get_wordSize()) {
         struct_size = r64size;
     } else {
         throw FormatError("bad ELF word size");
@@ -249,30 +249,30 @@ bool
 SgAsmElfSection::reallocate()
 {
     bool reallocated = false;
-    SgAsmElfSectionTableEntry *sechdr = get_section_entry();
-    SgAsmElfSegmentTableEntry *seghdr = get_segment_entry();
+    SgAsmElfSectionTableEntry *sechdr = get_sectionEntry();
+    SgAsmElfSegmentTableEntry *seghdr = get_segmentEntry();
 
     /* Change section size if this section was defined in the ELF Section Table */
     if (sechdr!=NULL) {
-        rose_addr_t need = calculate_sizes(NULL, NULL, NULL, NULL);
+        rose_addr_t need = calculateSizes(NULL, NULL, NULL, NULL);
         if (need < get_size()) {
-            if (is_mapped()) {
-                ROSE_ASSERT(get_mapped_size()==get_size());
-                set_mapped_size(need);
+            if (isMapped()) {
+                ROSE_ASSERT(get_mappedSize()==get_size());
+                set_mappedSize(need);
             }
             set_size(need);
             reallocated = true;
         } else if (need > get_size()) {
-            get_file()->shift_extend(this, 0, need-get_size(), SgAsmGenericFile::ADDRSP_ALL, SgAsmGenericFile::ELASTIC_HOLE);
+            get_file()->shiftExtend(this, 0, need-get_size(), SgAsmGenericFile::ADDRSP_ALL, SgAsmGenericFile::ELASTIC_HOLE);
             reallocated = true;
         }
     }
 
     /* Update entry in the ELF Section Table and/or ELF Segment Table */
     if (sechdr)
-        sechdr->update_from_section(this);
+        sechdr->updateFromSection(this);
     if (seghdr)
-        seghdr->update_from_section(this);
+        seghdr->updateFromSection(this);
     
     return reallocated;
 }
@@ -290,10 +290,10 @@ SgAsmElfSection::dump(FILE *f, const char *prefix, ssize_t idx) const
     
     SgAsmGenericSection::dump(f, p, -1);
     
-    if (get_section_entry())
-        get_section_entry()->dump(f, p, -1);
-    if (get_segment_entry())
-        get_segment_entry()->dump(f, p, -1);
+    if (get_sectionEntry())
+        get_sectionEntry()->dump(f, p, -1);
+    if (get_segmentEntry())
+        get_segmentEntry()->dump(f, p, -1);
 
     if (get_linkedSection()) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "linked_to",

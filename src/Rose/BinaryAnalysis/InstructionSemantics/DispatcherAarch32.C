@@ -809,10 +809,10 @@ struct IP_msr: P {
     void p(D d, Ops ops, I insn, A args, V enabled) {
         assert_args(insn, args, 2);
 
-        uint32_t word = insn->get_raw_bytes()[0] |
-                        ((uint32_t)insn->get_raw_bytes()[1] << 8) |
-                        ((uint32_t)insn->get_raw_bytes()[2] << 16) |
-                        ((uint32_t)insn->get_raw_bytes()[3] << 24);
+        uint32_t word = insn->get_rawBytes()[0] |
+                        ((uint32_t)insn->get_rawBytes()[1] << 8) |
+                        ((uint32_t)insn->get_rawBytes()[2] << 16) |
+                        ((uint32_t)insn->get_rawBytes()[3] << 24);
         if (BitOps::bits(word, 12, 27) == 0b0011011000001111) {
             // MSR MASK==0 && R == 1 is constrainted unpredictable behavior. The choices are that this instruction
             // is either UNDEFINED or executes as NOP. ROSE will do the latter.

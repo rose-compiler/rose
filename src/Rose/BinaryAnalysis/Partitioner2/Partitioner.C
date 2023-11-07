@@ -2811,7 +2811,7 @@ Partitioner::elfGot(SgAsmElfFileHeader *elfHeader) {
     SgAsmGenericSection *found = nullptr;
 
     // Get the section pointed to by the DT_PLTGOT entry of the .dynamic section.
-    if (SgAsmElfDynamicSection *dynamic = isSgAsmElfDynamicSection(elfHeader->get_section_by_name(".dynamic"))) {
+    if (SgAsmElfDynamicSection *dynamic = isSgAsmElfDynamicSection(elfHeader->get_sectionByName(".dynamic"))) {
         if (SgAsmElfDynamicEntryList *dentriesNode = dynamic->get_entries()) {
             for (SgAsmElfDynamicEntry *dentry: dentriesNode->get_entries()) {
                 if (dentry->get_d_tag() == SgAsmElfDynamicEntry::DT_PLTGOT) {
@@ -2825,12 +2825,12 @@ Partitioner::elfGot(SgAsmElfFileHeader *elfHeader) {
 
     // If that failed, just try some common names.
     if (!found)
-        found = elfHeader->get_section_by_name(".got.plt");
+        found = elfHeader->get_sectionByName(".got.plt");
     if (!found)
-        found = elfHeader->get_section_by_name(".plt.got");
+        found = elfHeader->get_sectionByName(".plt.got");
 
     if (found) {
-        elfGotVa_ = found->get_mapped_actual_va();
+        elfGotVa_ = found->get_mappedActualVa();
     } else {
         elfGotVa_.reset();
     }

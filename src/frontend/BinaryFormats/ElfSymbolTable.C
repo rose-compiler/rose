@@ -16,7 +16,7 @@ using namespace Rose;
 SgAsmElfSymbol::SgAsmElfSymbol(SgAsmElfSymbolSection *symtab) {
     initializeProperties();
     ASSERT_not_null(symtab);
-    SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(symtab->get_linked_section());
+    SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(symtab->get_linkedSection());
     ASSERT_not_null(strsec);
     
     set_name(new SgAsmStoredString(strsec->get_strtab(), 0));
@@ -70,7 +70,7 @@ void
 SgAsmElfSymbol::parse_common()
 {
     /* Binding */
-    switch (get_elf_binding()) {
+    switch (get_elfBinding()) {
         case STB_LOCAL:   p_binding = SYM_LOCAL;      break;
         case STB_GLOBAL:  p_binding = SYM_GLOBAL;     break;
         case STB_WEAK:    p_binding = SYM_WEAK;       break;
@@ -78,7 +78,7 @@ SgAsmElfSymbol::parse_common()
     }
 
     /* Type */
-    switch (get_elf_type()) {
+    switch (get_elfType()) {
         case STT_NOTYPE:  p_type = SYM_NO_TYPE; break;
         case STT_OBJECT:  p_type = SYM_DATA;    break;
         case STT_FUNC:    p_type = SYM_FUNC;    break;
@@ -93,7 +93,7 @@ SgAsmElfSymbol::parse_common()
     /* Definition state */
     if (p_value || p_size) {
         p_definitionState = SYM_DEFINED;
-    } else if (p_name->get_string().size() > 0 || get_elf_type()) {
+    } else if (p_name->get_string().size() > 0 || get_elfType()) {
         p_definitionState = SYM_TENTATIVE;
     } else {
         p_definitionState = SYM_UNDEFINED;
@@ -203,7 +203,7 @@ SgAsmElfSymbol::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmGenericSecti
     SgAsmGenericSymbol::dump(f, p, -1);
 
     fprintf(f, "%s%-*s = %u",          p, w, "st_info",  p_st_info);
-    fprintf(f, " (%s %s)\n",to_string(get_elf_binding()).c_str(),to_string(get_elf_type()).c_str());
+    fprintf(f, " (%s %s)\n",toString(get_elfBinding()).c_str(),toString(get_elfType()).c_str());
     fprintf(f, "%s%-*s = %u\n",         p, w, "st_res1", p_st_res1);
     fprintf(f, "%s%-*s = %" PRIu64 "\n",  p, w, "st_size", p_st_size);
 
@@ -223,7 +223,7 @@ SgAsmElfSymbolSection::SgAsmElfSymbolSection(SgAsmElfFileHeader *fhdr, SgAsmElfS
     : SgAsmElfSection(fhdr) {
     initializeProperties();
     ASSERT_not_null(strings);
-    set_linked_section(strings);
+    set_linkedSection(strings);
 }
 
 SgAsmElfSymbolSection *
@@ -231,33 +231,33 @@ SgAsmElfSymbolSection::parse()
 {
     SgAsmElfSection::parse();
 
-    SgAsmElfFileHeader *fhdr = get_elf_header();
+    SgAsmElfFileHeader *fhdr = get_elfHeader();
     ROSE_ASSERT(fhdr!=NULL);
-    SgAsmElfSectionTableEntry *shdr = get_section_entry();
+    SgAsmElfSectionTableEntry *shdr = get_sectionEntry();
     ASSERT_always_require(shdr!=NULL);
 
     size_t entry_size, struct_size, extra_size, nentries;
-    calculate_sizes(&entry_size, &struct_size, &extra_size, &nentries);
+    calculateSizes(&entry_size, &struct_size, &extra_size, &nentries);
     ROSE_ASSERT(entry_size==shdr->get_sh_entsize());
 
     /* Parse each entry */
     for (size_t i=0; i<nentries; i++) {
         SgAsmElfSymbol *entry=0;
-        if (4==fhdr->get_word_size()) {
+        if (4==fhdr->get_wordSize()) {
             entry = new SgAsmElfSymbol(this); /*adds symbol to this symbol table*/
             SgAsmElfSymbol::Elf32SymbolEntry_disk disk;
-            read_content_local(i*entry_size, &disk, struct_size);
+            readContentLocal(i*entry_size, &disk, struct_size);
             entry->parse(fhdr->get_sex(), &disk);
-        } else if (8==fhdr->get_word_size()) {
+        } else if (8==fhdr->get_wordSize()) {
             entry = new SgAsmElfSymbol(this); /*adds symbol to this symbol table*/
             SgAsmElfSymbol::Elf64SymbolEntry_disk disk;
-            read_content_local(i*entry_size, &disk, struct_size);
+            readContentLocal(i*entry_size, &disk, struct_size);
             entry->parse(fhdr->get_sex(), &disk);
         } else {
             throw FormatError("unsupported ELF word size");
         }
         if (extra_size>0)
-            entry->get_extra() = read_content_local_ucl(i*entry_size+struct_size, extra_size);
+            entry->get_extra() = readContentLocalUcl(i*entry_size+struct_size, extra_size);
     }
     return this;
 }
@@ -274,7 +274,7 @@ SgAsmElfSymbolSection::calculateSizes(size_t *entsize, size_t *required, size_t 
     std::vector<size_t> extra_sizes;
     for (size_t i=0; i<p_symbols->get_symbols().size(); i++)
         extra_sizes.push_back(p_symbols->get_symbols()[i]->get_extra().size());
-    return calculate_sizes(sizeof(SgAsmElfSymbol::Elf32SymbolEntry_disk),
+    return calculateSizes(sizeof(SgAsmElfSymbol::Elf32SymbolEntry_disk),
                            sizeof(SgAsmElfSymbol::Elf64SymbolEntry_disk),
                            extra_sizes,
                            entsize, required, optional, entcount);
@@ -294,7 +294,7 @@ SgAsmElfSymbolSection::finishParsing()
 
         /* Get bound section ptr */
         if (symbol->get_st_shndx() > 0 && symbol->get_st_shndx() < 0xff00) {
-            if (SgAsmGenericSection *bound = get_file()->get_section_by_id(symbol->get_st_shndx()))
+            if (SgAsmGenericSection *bound = get_file()->get_sectionById(symbol->get_st_shndx()))
                 symbol->set_bound(bound);
         }
     }
@@ -322,7 +322,7 @@ SgAsmElfSymbolSection::reallocate()
     bool reallocated = SgAsmElfSection::reallocate();
 
     /* Update parts of the section and segment tables not updated by superclass */
-    SgAsmElfSectionTableEntry *secent = get_section_entry();
+    SgAsmElfSectionTableEntry *secent = get_sectionEntry();
     if (secent)
         secent->set_sh_type(get_isDynamic() ?
                             SgAsmElfSectionTableEntry::SHT_DYNSYM :
@@ -333,15 +333,15 @@ SgAsmElfSymbolSection::reallocate()
 void
 SgAsmElfSymbolSection::unparse(std::ostream &f) const
 {
-    SgAsmElfFileHeader *fhdr = get_elf_header();
+    SgAsmElfFileHeader *fhdr = get_elfHeader();
     ROSE_ASSERT(fhdr);
     Rose::BinaryAnalysis::ByteOrder::Endianness sex = fhdr->get_sex();
 
     size_t entry_size, struct_size, extra_size, nentries;
-    calculate_sizes(&entry_size, &struct_size, &extra_size, &nentries);
+    calculateSizes(&entry_size, &struct_size, &extra_size, &nentries);
     
     /* Adjust the entry size stored in the ELF Section Table */
-    get_section_entry()->set_sh_entsize(entry_size);
+    get_sectionEntry()->set_sh_entsize(entry_size);
 
     /* Write each entry's required part followed by the optional part */
     for (size_t i=0; i<nentries; i++) {
@@ -351,9 +351,9 @@ SgAsmElfSymbolSection::unparse(std::ostream &f) const
 
         SgAsmElfSymbol *entry = p_symbols->get_symbols()[i];
         
-        if (4==fhdr->get_word_size()) {
+        if (4==fhdr->get_wordSize()) {
             disk = entry->encode(sex, &disk32);
-        } else if (8==fhdr->get_word_size()) {
+        } else if (8==fhdr->get_wordSize()) {
             disk = entry->encode(sex, &disk64);
         } else {
             ROSE_ASSERT(!"unsupported word size");
@@ -367,7 +367,7 @@ SgAsmElfSymbolSection::unparse(std::ostream &f) const
         }
     }
 
-    unparse_holes(f);
+    unparseHoles(f);
 }
 
 void
@@ -385,7 +385,7 @@ SgAsmElfSymbolSection::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %s\n", p, w, "is_dynamic", get_isDynamic() ? "yes" : "no");
     fprintf(f, "%s%-*s = %" PRIuPTR " symbols\n", p, w, "ElfSymbol.size", p_symbols->get_symbols().size());
     for (size_t i = 0; i < p_symbols->get_symbols().size(); i++) {
-        SgAsmGenericSection *section = get_file()->get_section_by_id(p_symbols->get_symbols()[i]->get_st_shndx());
+        SgAsmGenericSection *section = get_file()->get_sectionById(p_symbols->get_symbols()[i]->get_st_shndx());
         p_symbols->get_symbols()[i]->dump(f, p, i, section);
     }
 

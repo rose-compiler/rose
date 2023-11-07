@@ -71,13 +71,13 @@ SgAsmElfSymverSection::parse()
 {
     SgAsmElfSection::parse();
   
-    SgAsmElfFileHeader *fhdr = get_elf_header();
+    SgAsmElfFileHeader *fhdr = get_elfHeader();
     ROSE_ASSERT(fhdr!=NULL);
-    SgAsmElfSectionTableEntry *shdr = get_section_entry();
+    SgAsmElfSectionTableEntry *shdr = get_sectionEntry();
     ASSERT_always_require(shdr!=NULL);
   
     size_t entry_size, struct_size, extra_size, nentries;
-    calculate_sizes(&entry_size, &struct_size, &extra_size, &nentries);
+    calculateSizes(&entry_size, &struct_size, &extra_size, &nentries);
     ROSE_ASSERT(entry_size==shdr->get_sh_entsize());
   
     /* Parse each entry */
@@ -85,7 +85,7 @@ SgAsmElfSymverSection::parse()
         SgAsmElfSymverEntry *entry=0;
         entry = new SgAsmElfSymverEntry(this); /*adds symver to this symver table*/
         uint16_t value;
-        read_content_local(i*entry_size, &value, struct_size);
+        readContentLocal(i*entry_size, &value, struct_size);
         entry->set_value(diskToHost(fhdr->get_sex(), value));
     }
     return this;
@@ -101,7 +101,7 @@ rose_addr_t
 SgAsmElfSymverSection::calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
     std::vector<size_t> extra_sizes;
-    return calculate_sizes(sizeof(uint16_t),
+    return calculateSizes(sizeof(uint16_t),
                            sizeof(uint16_t),
                            extra_sizes,
                            entsize, required, optional, entcount);
@@ -110,15 +110,15 @@ SgAsmElfSymverSection::calculateSizes(size_t *entsize, size_t *required, size_t 
 void
 SgAsmElfSymverSection::unparse(std::ostream &f) const
 {
-    SgAsmElfFileHeader *fhdr = get_elf_header();
+    SgAsmElfFileHeader *fhdr = get_elfHeader();
     ROSE_ASSERT(fhdr);
     Rose::BinaryAnalysis::ByteOrder::Endianness sex = fhdr->get_sex();
   
     size_t entry_size, struct_size, extra_size, nentries;
-    calculate_sizes(&entry_size, &struct_size, &extra_size, &nentries);
+    calculateSizes(&entry_size, &struct_size, &extra_size, &nentries);
 
     /* Adjust the entry size stored in the ELF Section Table */
-    get_section_entry()->set_sh_entsize(entry_size);
+    get_sectionEntry()->set_sh_entsize(entry_size);
   
     /* Write each entry's required part followed by the optional part */
     for (size_t i=0; i<nentries; i++) {
@@ -130,7 +130,7 @@ SgAsmElfSymverSection::unparse(std::ostream &f) const
         rose_addr_t spos = i * entry_size;
         spos = write(f, spos, struct_size, &val);
     }
-    unparse_holes(f);
+    unparseHoles(f);
 }
 
 void
@@ -165,7 +165,7 @@ SgAsmElfSymverSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 SgAsmElfSymverDefinedAux::SgAsmElfSymverDefinedAux(SgAsmElfSymverDefinedEntry *entry, SgAsmElfSymverDefinedSection *symver) {
     initializeProperties();
 
-    SgAsmElfStringSection *strsec = isSgAsmElfStringSection(symver->get_linked_section());
+    SgAsmElfStringSection *strsec = isSgAsmElfStringSection(symver->get_linkedSection());
     ASSERT_not_null(strsec);
 
     SgAsmStoredString *name = new SgAsmStoredString(strsec->get_strtab(), 0);
@@ -265,7 +265,7 @@ SgAsmElfSymverDefinedSection::SgAsmElfSymverDefinedSection(SgAsmElfFileHeader *f
     initializeProperties();
 
     ASSERT_not_null(strings);
-    set_linked_section(strings);
+    set_linkedSection(strings);
 }
 
 SgAsmElfSymverDefinedSection *
@@ -273,7 +273,7 @@ SgAsmElfSymverDefinedSection::parse()
 {
     SgAsmElfSection::parse();
   
-    SgAsmElfFileHeader *fhdr = get_elf_header();
+    SgAsmElfFileHeader *fhdr = get_elfHeader();
     ROSE_ASSERT(NULL!=fhdr);
 
     rose_addr_t entry_addr=0;
@@ -283,7 +283,7 @@ SgAsmElfSymverDefinedSection::parse()
     while (entry_addr < this->get_size()) {
         SgAsmElfSymverDefinedEntry *entry=new SgAsmElfSymverDefinedEntry(this); /*adds SymverDefinedEntry to this*/
         SgAsmElfSymverDefinedEntry::ElfSymverDefinedEntry_disk entryDisk;
-        read_content_local(entry_addr, &entryDisk, sizeof(entryDisk));
+        readContentLocal(entry_addr, &entryDisk, sizeof(entryDisk));
         entry->parse(sex, &entryDisk);
 
         /* These are relative to the start of this entry - i.e. entry_addr */
@@ -295,7 +295,7 @@ SgAsmElfSymverDefinedSection::parse()
         for (size_t i=0; i < num_aux; ++i) {
             SgAsmElfSymverDefinedAux *aux=new SgAsmElfSymverDefinedAux(entry,this); /*adds SymverDefinedAux to this entry*/
             SgAsmElfSymverDefinedAux::ElfSymverDefinedAux_disk auxDisk;
-            read_content_local(aux_addr, &auxDisk, sizeof(auxDisk));
+            readContentLocal(aux_addr, &auxDisk, sizeof(auxDisk));
             aux->parse(fhdr->get_sex(), &auxDisk);
 
             size_t next_aux = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex,auxDisk.vda_next);
@@ -356,14 +356,14 @@ SgAsmElfSymverDefinedSection::calculateSizes(size_t *entsize, size_t *required, 
 void
 SgAsmElfSymverDefinedSection::unparse(std::ostream &f) const
 {
-    SgAsmElfFileHeader *fhdr = get_elf_header();
+    SgAsmElfFileHeader *fhdr = get_elfHeader();
     ROSE_ASSERT(NULL != fhdr);
     Rose::BinaryAnalysis::ByteOrder::Endianness sex = fhdr->get_sex();
     size_t nentries;
-    calculate_sizes(NULL,NULL,NULL,&nentries);
+    calculateSizes(NULL,NULL,NULL,&nentries);
 
     /* Adjust the entry size stored in the ELF Section Table */
-    get_section_entry()->set_sh_entsize(0); /*This doesn't have consistently sized entries, zero it*/
+    get_sectionEntry()->set_sh_entsize(0); /*This doesn't have consistently sized entries, zero it*/
   
     /* Write each entry's required part followed by the optional part */
     rose_addr_t entry_addr=0;/*as offset from section*/
@@ -409,7 +409,7 @@ SgAsmElfSymverDefinedSection::unparse(std::ostream &f) const
         entry_addr += next_entry;
     }
 
-    unparse_holes(f);
+    unparseHoles(f);
 }
 
 void
@@ -444,7 +444,7 @@ SgAsmElfSymverDefinedSection::dump(FILE *f, const char *prefix, ssize_t idx) con
 SgAsmElfSymverNeededAux::SgAsmElfSymverNeededAux(SgAsmElfSymverNeededEntry* entry, SgAsmElfSymverNeededSection* symver) {
     initializeProperties();
 
-    SgAsmElfStringSection *strsec = isSgAsmElfStringSection(symver->get_linked_section());
+    SgAsmElfStringSection *strsec = isSgAsmElfStringSection(symver->get_linkedSection());
     ASSERT_not_null(strsec);
 
     set_name(new SgAsmStoredString(strsec->get_strtab(), 0));
@@ -505,11 +505,11 @@ SgAsmElfSymverNeededEntry::SgAsmElfSymverNeededEntry(SgAsmElfSymverNeededSection
     ASSERT_require(section->get_entries()->get_entries().size() > 0);
     set_parent(section->get_entries());
 
-    SgAsmElfStringSection *strsec = isSgAsmElfStringSection(section->get_linked_section());
+    SgAsmElfStringSection *strsec = isSgAsmElfStringSection(section->get_linkedSection());
     ASSERT_not_null(strsec);
 
     SgAsmStoredString *name = new SgAsmStoredString(strsec->get_strtab(), 0);
-    set_file_name(name);
+    set_fileName(name);
     name->set_parent(this);
 }
 
@@ -518,7 +518,7 @@ SgAsmElfSymverNeededEntry::parse(Rose::BinaryAnalysis::ByteOrder::Endianness sex
 {
     p_version  = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->vn_version);
     rose_addr_t file_offset  = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->vn_file);
-    get_file_name()->set_string(file_offset);
+    get_fileName()->set_string(file_offset);
 }
 
 void *
@@ -547,7 +547,7 @@ SgAsmElfSymverNeededEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     /* compact one-line-per-entry format */
     if (0==idx)
         fprintf(f, "%s%-*s   %-8s %-22s %6s %10s %6s %s\n", p, w, "", "Version", "File", "Other", "Hash", "Flags", "Name");
-    fprintf(f,   "%s%-*s =   0x%04zx %s", p, w, "", p_version, get_file_name()->get_string(true).c_str());
+    fprintf(f,   "%s%-*s =   0x%04zx %s", p, w, "", p_version, get_fileName()->get_string(true).c_str());
     const SgAsmElfSymverNeededAuxPtrList &entries=get_entries()->get_entries();
     if (entries.empty()) {
         fprintf(f, "<no auxiliary entries>\n");
@@ -570,7 +570,7 @@ SgAsmElfSymverNeededSection::SgAsmElfSymverNeededSection(SgAsmElfFileHeader *fhd
     initializeProperties();
 
     ASSERT_not_null(strings);
-    set_linked_section(strings);
+    set_linkedSection(strings);
 }
 
 SgAsmElfSymverNeededSection *
@@ -578,7 +578,7 @@ SgAsmElfSymverNeededSection::parse()
 {
     SgAsmElfSection::parse();
   
-    SgAsmElfFileHeader *fhdr = get_elf_header();
+    SgAsmElfFileHeader *fhdr = get_elfHeader();
     ROSE_ASSERT(NULL!=fhdr);
 
     //size_t struct_size=sizeof(SgAsmElfSymverNeededEntry::ElfSymverNeededEntry_disk);
@@ -590,7 +590,7 @@ SgAsmElfSymverNeededSection::parse()
     while (entry_addr < this->get_size()) {
         SgAsmElfSymverNeededEntry *entry=new SgAsmElfSymverNeededEntry(this); /*adds SymverNeededEntry to this*/
         SgAsmElfSymverNeededEntry::ElfSymverNeededEntry_disk entryDisk;
-        read_content_local(entry_addr, &entryDisk, sizeof(entryDisk));
+        readContentLocal(entry_addr, &entryDisk, sizeof(entryDisk));
         entry->parse(sex, &entryDisk);
 
         /* These are relative to the start of this entry - i.e. entry_addr */
@@ -602,7 +602,7 @@ SgAsmElfSymverNeededSection::parse()
         for (size_t i=0; i < num_aux; ++i) {
             SgAsmElfSymverNeededAux *aux=new SgAsmElfSymverNeededAux(entry,this); /*adds SymverNeededAux to this entry*/
             SgAsmElfSymverNeededAux::ElfSymverNeededAux_disk auxDisk;
-            read_content_local(aux_addr, &auxDisk, sizeof(auxDisk));
+            readContentLocal(aux_addr, &auxDisk, sizeof(auxDisk));
             aux->parse(sex, &auxDisk);
 
             size_t next_aux = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex,auxDisk.vna_next);
@@ -662,14 +662,14 @@ SgAsmElfSymverNeededSection::calculateSizes(size_t *entsize, size_t *required, s
 void
 SgAsmElfSymverNeededSection::unparse(std::ostream &f) const
 {
-    SgAsmElfFileHeader *fhdr = get_elf_header();
+    SgAsmElfFileHeader *fhdr = get_elfHeader();
     ROSE_ASSERT(NULL != fhdr);
     Rose::BinaryAnalysis::ByteOrder::Endianness sex = fhdr->get_sex();
     size_t nentries;
-    calculate_sizes(NULL,NULL,NULL,&nentries);
+    calculateSizes(NULL,NULL,NULL,&nentries);
 
     /* Adjust the entry size stored in the ELF Section Table */
-    get_section_entry()->set_sh_entsize(0); /* This doesn't have consistently sized entries, zero it */
+    get_sectionEntry()->set_sh_entsize(0); /* This doesn't have consistently sized entries, zero it */
   
     /* Write each entry's required part followed by the optional part */
     /* Parse each entry*/
@@ -714,7 +714,7 @@ SgAsmElfSymverNeededSection::unparse(std::ostream &f) const
         }
         entry_addr += next_entry;
     }
-    unparse_holes(f);
+    unparseHoles(f);
 }
 
 void

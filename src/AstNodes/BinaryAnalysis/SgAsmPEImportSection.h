@@ -145,7 +145,7 @@ class SgAsmPEImportSection: public SgAsmPESection {
      *
      *  See PE specification. */
     [[using Rosebud: rosetta, traverse]]
-    SgAsmPEImportDirectoryList* import_directories = createAndParent<SgAsmPEImportDirectoryList>(this);
+    SgAsmPEImportDirectoryList* importDirectories = createAndParent<SgAsmPEImportDirectoryList>(this);
 
 public:
     explicit SgAsmPEImportSection(SgAsmPEFileHeader*);
@@ -178,6 +178,8 @@ private:
     // Deprecated 2023-11
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    SgAsmPEImportDirectoryList* get_import_directories() const ROSE_DEPRECATED("use get_importDirectories");
+    void set_import_directories(SgAsmPEImportDirectoryList*) ROSE_DEPRECATED("use set_importDirectories");
     void add_import_directory(SgAsmPEImportDirectory*) ROSE_DEPRECATED("use addImportDirectory");
     void remove_import_directory(SgAsmPEImportDirectory*) ROSE_DEPRECATED("use removeImportDirectory");
     static bool show_import_mesg() ROSE_DEPRECATED("use showImportMessage");

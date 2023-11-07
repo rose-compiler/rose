@@ -68,8 +68,8 @@ rose_rva_t
 rose_rva_t::section_relative(SgAsmGenericSection *section, rose_addr_t offset)
 {
     assert(section!=NULL);
-    assert(section->is_mapped());
-    rose_addr_t rva =section->get_mapped_preferred_rva() + offset;
+    assert(section->isMapped());
+    rose_addr_t rva =section->get_mappedPreferredRva() + offset;
     return rose_rva_t(rva, section);
 }
 
@@ -87,8 +87,8 @@ rose_rva_t::get_rva() const
 {
     rose_addr_t rva = addr;
     if (section) {
-        assert(section->is_mapped());
-        rva += section->get_mapped_preferred_rva();
+        assert(section->isMapped());
+        rva += section->get_mappedPreferredRva();
     }
     return rva;
 }
@@ -100,8 +100,8 @@ rose_rva_t::set_rva(rose_addr_t rva)
 {
     addr = rva;
     if (section) {
-        assert(section->is_mapped());
-        addr -= section->get_mapped_preferred_rva();
+        assert(section->isMapped());
+        addr -= section->get_mappedPreferredRva();
     }
     return *this;
 }
@@ -118,13 +118,13 @@ rose_rva_t::get_section() const
 rose_rva_t&
 rose_rva_t::set_section(SgAsmGenericSection *new_section)
 {
-    assert(new_section==NULL || new_section->is_mapped());
+    assert(new_section==NULL || new_section->isMapped());
     if (section) {
-        addr += section->get_mapped_preferred_rva();
+        addr += section->get_mappedPreferredRva();
         section = NULL;
     }
     if (new_section)
-        addr -= new_section->get_mapped_preferred_rva();
+        addr -= new_section->get_mappedPreferredRva();
     section = new_section;
     return *this;
 }
@@ -134,8 +134,8 @@ rose_rva_t::set_section(SgAsmGenericSection *new_section)
 rose_rva_t&
 rose_rva_t::bind(SgAsmGenericHeader *fhdr)
 {
-    rose_addr_t va = get_rva() + fhdr->get_base_va();
-    SgAsmGenericSection *secbind = fhdr->get_best_section_by_va(va, true);
+    rose_addr_t va = get_rva() + fhdr->get_baseVa();
+    SgAsmGenericSection *secbind = fhdr->get_bestSectionByVa(va, true);
     return set_section(secbind);
 }
 
@@ -146,8 +146,8 @@ rose_rva_t::get_va() const
 {
     if (!section)
         return addr;
-    assert(section->is_mapped());
-    return addr + section->get_mapped_actual_va();
+    assert(section->isMapped());
+    return addr + section->get_mappedActualVa();
 }
 
 /** Returns an offset from the currently bound section.  If this rose_rva_t is not bound to a section then the RVA numeric
@@ -162,8 +162,8 @@ rose_rva_t::get_rel() const
 rose_addr_t
 rose_rva_t::get_rel(SgAsmGenericSection *s)
 {
-    assert(s!=NULL && s->is_mapped());
-    return get_rva() - s->get_mapped_preferred_rva();
+    assert(s!=NULL && s->isMapped());
+    return get_rva() - s->get_mappedPreferredRva();
 }
 
 /** Increment the address by the specified amount, keeping it attached to the same (if any) section. */

@@ -23,7 +23,7 @@ struct InsnCFGVertexWriter {
         SgAsmX86Instruction *x86 = isSgAsmX86Instruction(insn);
         SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(insn);
         output <<"[ label=\"[" <<v << "] " <<insn->toString() <<"\"";
-        if (insn->get_address()==func->get_entry_va()) {
+        if (insn->get_address()==func->get_entryVa()) {
             output <<", style=filled, color=\"#cd853f\"";
         } else if (x86 && x86_ret==x86->get_kind()) {
             output <<", style=filled, color=\"#fed3a7\"";

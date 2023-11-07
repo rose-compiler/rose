@@ -128,10 +128,10 @@ public:
     /** Functor for sorting by function entry virtual address. */
     struct SortByEntryAddr {
         bool operator()(SgAsmFunction *a, SgAsmFunction *b) {
-            return a->get_entry_va() < b->get_entry_va();
+            return a->get_entryVa() < b->get_entryVa();
         }
         bool unique(SgAsmFunction *a, SgAsmFunction *b) {
-            return a->get_entry_va() != b->get_entry_va();
+            return a->get_entryVa() != b->get_entryVa();
         }
     };
 

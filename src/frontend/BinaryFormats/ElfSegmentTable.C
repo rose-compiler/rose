@@ -83,21 +83,21 @@ SgAsmElfSegmentTableEntry::updateFromSection(SgAsmElfSection *section)
 {
     set_offset(section->get_offset());
     set_filesz(section->get_size());
-    set_vaddr(section->get_mapped_preferred_va());
-    set_memsz(section->get_mapped_size());
-    set_align(section->is_mapped() ? section->get_mapped_alignment() : section->get_file_alignment());
+    set_vaddr(section->get_mappedPreferredVa());
+    set_memsz(section->get_mappedSize());
+    set_align(section->isMapped() ? section->get_mappedAlignment() : section->get_fileAlignment());
 
-    if (section->get_mapped_rperm()) {
+    if (section->get_mappedReadPermission()) {
         set_flags((SegmentFlags)(p_flags | PF_RPERM));
     } else {
         set_flags((SegmentFlags)(p_flags & ~PF_RPERM));
     }
-    if (section->get_mapped_wperm()) {
+    if (section->get_mappedWritePermission()) {
         set_flags((SegmentFlags)(p_flags | PF_WPERM));
     } else {
         set_flags((SegmentFlags)(p_flags & ~PF_WPERM));
     }
-    if (section->get_mapped_xperm()) {
+    if (section->get_mappedExecutePermission()) {
         set_flags((SegmentFlags)(p_flags | PF_XPERM));
     } else {
         set_flags((SegmentFlags)(p_flags & ~PF_XPERM));
@@ -120,7 +120,7 @@ SgAsmElfSegmentTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     fprintf(f, "%s%-*s = %" PRIuPTR "\n",                             p, w, "index",  p_index);
-    fprintf(f, "%s%-*s = 0x%08x = %s\n",                     p, w, "type",   p_type,  to_string(p_type).c_str());
+    fprintf(f, "%s%-*s = 0x%08x = %s\n",                     p, w, "type",   p_type,  toString(p_type).c_str());
     fprintf(f, "%s%-*s = 0x%08x ",                           p, w, "flags",  p_flags);
     fputc(p_flags & PF_RPERM ? 'r' : '-', f);
     fputc(p_flags & PF_WPERM ? 'w' : '-', f);
@@ -210,14 +210,14 @@ SgAsmElfSegmentTable::SgAsmElfSegmentTable(SgAsmElfFileHeader *fhdr)
     initializeProperties();
 
     /* There can be only one ELF Segment Table */
-    ASSERT_require(fhdr->get_segment_table() == nullptr);
-    fhdr->set_segment_table(this);
+    ASSERT_require(fhdr->get_segmentTable() == nullptr);
+    fhdr->set_segmentTable(this);
     
     set_synthesized(true);                              /* the segment table isn't part of any explicit section */
     set_name(new SgAsmBasicString("ELF Segment Table"));
     set_purpose(SP_HEADER);
 
-    fhdr->set_segment_table(this);
+    fhdr->set_segmentTable(this);
 }
 
 SgAsmElfSegmentTable *
@@ -230,7 +230,7 @@ SgAsmElfSegmentTable::parse()
     Rose::BinaryAnalysis::ByteOrder::Endianness sex = fhdr->get_sex();
 
     size_t ent_size, struct_size, opt_size, nentries;
-    calculate_sizes(&ent_size, &struct_size, &opt_size, &nentries);
+    calculateSizes(&ent_size, &struct_size, &opt_size, &nentries);
     ROSE_ASSERT(opt_size==fhdr->get_phextrasz() && nentries==fhdr->get_e_phnum());
 
     /* If the current size is very small (0 or 1 byte) then we're coming straight from the constructor and the parsing should
@@ -243,18 +243,18 @@ SgAsmElfSegmentTable::parse()
     for (size_t i=0; i<nentries; i++, offset+=ent_size) {
         /* Read/decode the segment header */
         SgAsmElfSegmentTableEntry *shdr = NULL;
-        if (4==fhdr->get_word_size()) {
+        if (4==fhdr->get_wordSize()) {
             SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk disk;
-            read_content_local(offset, &disk, struct_size);
+            readContentLocal(offset, &disk, struct_size);
             shdr = new SgAsmElfSegmentTableEntry(sex, &disk);
         } else {
             SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk disk;
-            read_content_local(offset, &disk, struct_size);
+            readContentLocal(offset, &disk, struct_size);
             shdr = new SgAsmElfSegmentTableEntry(sex, &disk);
         }
         shdr->set_index(i);
         if (opt_size>0)
-            shdr->get_extra() = read_content_local_ucl(offset+struct_size, opt_size);
+            shdr->get_extra() = readContentLocalUcl(offset+struct_size, opt_size);
 
         /* Null segments are just unused slots in the table; no real section to create */
         if (SgAsmElfSegmentTableEntry::PT_NULL == shdr->get_type())
@@ -264,17 +264,17 @@ SgAsmElfSegmentTable::parse()
          * that's the same offset and size as a section from the Elf Section Table (and the memory mappings are
          * consistent) then use the preexisting section instead of creating a new one. */
         SgAsmElfSection *s = NULL;
-        SgAsmGenericSectionPtrList possible = fhdr->get_file()->get_sections_by_offset(shdr->get_offset(), shdr->get_filesz());
+        SgAsmGenericSectionPtrList possible = fhdr->get_file()->get_sectionsByOffset(shdr->get_offset(), shdr->get_filesz());
         for (size_t j=0; !s && j<possible.size(); j++) {
             if (possible[j]->get_offset()!=shdr->get_offset() || possible[j]->get_size()!=shdr->get_filesz())
                 continue; /*different file extent*/
-            if (possible[j]->is_mapped()) {
-                if (possible[j]->get_mapped_preferred_rva()!=shdr->get_vaddr() ||
-                    possible[j]->get_mapped_size()!=shdr->get_memsz())
+            if (possible[j]->isMapped()) {
+                if (possible[j]->get_mappedPreferredRva()!=shdr->get_vaddr() ||
+                    possible[j]->get_mappedSize()!=shdr->get_memsz())
                     continue; /*different mapped address or size*/
-                unsigned section_perms = (possible[j]->get_mapped_rperm() ? 0x01 : 0x00) |
-                                         (possible[j]->get_mapped_wperm() ? 0x02 : 0x00) |
-                                         (possible[j]->get_mapped_xperm() ? 0x04 : 0x00);
+                unsigned section_perms = (possible[j]->get_mappedReadPermission() ? 0x01 : 0x00) |
+                                         (possible[j]->get_mappedWritePermission() ? 0x02 : 0x00) |
+                                         (possible[j]->get_mappedExecutePermission() ? 0x04 : 0x00);
                 unsigned segment_perms = (shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_RPERM ? 0x01 : 0x00) |
                                          (shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_WPERM ? 0x02 : 0x00) |
                                          (shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_XPERM ? 0x04 : 0x00);
@@ -285,8 +285,8 @@ SgAsmElfSegmentTable::parse()
             /* Found a match. Set memory mapping params only. */
             s = dynamic_cast<SgAsmElfSection*>(possible[j]);
             if (!s) continue; /*potential match was not from the ELF Section or Segment table*/
-            if (s->get_segment_entry()) continue; /*potential match is assigned to some other segment table entry*/
-            s->init_from_segment_table(shdr, true); /*true=>set memory mapping params only*/
+            if (s->get_segmentEntry()) continue; /*potential match is assigned to some other segment table entry*/
+            s->initFromSegmentTable(shdr, true); /*true=>set memory mapping params only*/
         }
 
         /* Create a new segment if no matching section was found. */
@@ -296,7 +296,7 @@ SgAsmElfSegmentTable::parse()
             } else {
                 s = new SgAsmElfSection(fhdr);
             }
-            s->init_from_segment_table(shdr);
+            s->initFromSegmentTable(shdr);
             s->parse();
         }
     }
@@ -315,7 +315,7 @@ SgAsmElfSegmentTable::addSection(SgAsmElfSection *section)
     ROSE_ASSERT(section!=NULL);
     ROSE_ASSERT(section->get_file()==get_file());
     ROSE_ASSERT(section->get_header()==get_header());
-    ROSE_ASSERT(section->get_segment_entry()==NULL);            /* must not be in the segment table yet */
+    ROSE_ASSERT(section->get_segmentEntry()==NULL);            /* must not be in the segment table yet */
 
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
     ROSE_ASSERT(fhdr);
@@ -327,8 +327,8 @@ SgAsmElfSegmentTable::addSection(SgAsmElfSection *section)
     /* Create a new segment table entry */
     SgAsmElfSegmentTableEntry *shdr = new SgAsmElfSegmentTableEntry;
     shdr->set_index(idx);
-    shdr->update_from_section(section);
-    section->set_segment_entry(shdr);
+    shdr->updateFromSection(section);
+    section->set_segmentEntry(shdr);
 
     return shdr;
 }
@@ -351,9 +351,9 @@ SgAsmElfSegmentTable::calculateSizes(size_t *entsize, size_t *required, size_t *
     size_t nentries = 0;
 
     /* Size of required part of each entry */
-    if (4==fhdr->get_word_size()) {
+    if (4==fhdr->get_wordSize()) {
         struct_size = sizeof(SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk);
-    } else if (8==fhdr->get_word_size()) {
+    } else if (8==fhdr->get_wordSize()) {
         struct_size = sizeof(SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk);
     } else {
         throw FormatError("bad ELF word size");
@@ -367,9 +367,9 @@ SgAsmElfSegmentTable::calculateSizes(size_t *entsize, size_t *required, size_t *
     SgAsmGenericSectionPtrList sections = fhdr->get_sections()->get_sections();
     for (size_t i=0; i<sections.size(); i++) {
         SgAsmElfSection *elfsec = dynamic_cast<SgAsmElfSection*>(sections[i]);
-        if (elfsec && elfsec->get_segment_entry()) {
+        if (elfsec && elfsec->get_segmentEntry()) {
             nentries++;
-            extra_size = std::max(extra_size, elfsec->get_segment_entry()->get_extra().size());
+            extra_size = std::max(extra_size, elfsec->get_segmentEntry()->get_extra().size());
         }
     }
 
@@ -398,16 +398,16 @@ SgAsmElfSegmentTable::reallocate()
 
     /* Resize based on word size from ELF File Header */
     size_t opt_size, nentries;
-    rose_addr_t need = calculate_sizes(NULL, NULL, &opt_size, &nentries);
+    rose_addr_t need = calculateSizes(NULL, NULL, &opt_size, &nentries);
     if (need < get_size()) {
-        if (is_mapped()) {
-            ROSE_ASSERT(get_mapped_size()==get_size());
-            set_mapped_size(need);
+        if (isMapped()) {
+            ROSE_ASSERT(get_mappedSize()==get_size());
+            set_mappedSize(need);
         }
         set_size(need);
         reallocated = true;
     } else if (need > get_size()) {
-        get_file()->shift_extend(this, 0, need-get_size(), SgAsmGenericFile::ADDRSP_ALL, SgAsmGenericFile::ELASTIC_HOLE);
+        get_file()->shiftExtend(this, 0, need-get_size(), SgAsmGenericFile::ADDRSP_ALL, SgAsmGenericFile::ELASTIC_HOLE);
         reallocated = true;
     }
 
@@ -425,16 +425,16 @@ SgAsmElfSegmentTable::unparse(std::ostream &f) const
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
     Rose::BinaryAnalysis::ByteOrder::Endianness sex = fhdr->get_sex();
-    SgAsmGenericSectionPtrList sections = fhdr->get_segtab_sections();
+    SgAsmGenericSectionPtrList sections = fhdr->get_segmentTableSections();
 
     /* Write the segments first */
     for (size_t i=0; i<sections.size(); i++)
         sections[i]->unparse(f);
-    unparse_holes(f);
+    unparseHoles(f);
 
     /* Calculate sizes. The ELF File Header should have been updated in reallocate() prior to unparsing. */
     size_t ent_size, struct_size, opt_size, nentries;
-    calculate_sizes(&ent_size, &struct_size, &opt_size, &nentries);
+    calculateSizes(&ent_size, &struct_size, &opt_size, &nentries);
     ROSE_ASSERT(fhdr->get_phextrasz()==opt_size);
     ROSE_ASSERT(fhdr->get_e_phnum()==nentries);
     
@@ -442,7 +442,7 @@ SgAsmElfSegmentTable::unparse(std::ostream &f) const
     for (size_t i=0; i < sections.size(); ++i) {
         SgAsmElfSection *section = dynamic_cast<SgAsmElfSection*>(sections[i]);
         ROSE_ASSERT(section!=NULL);
-        SgAsmElfSegmentTableEntry *shdr = section->get_segment_entry();
+        SgAsmElfSegmentTableEntry *shdr = section->get_segmentEntry();
         ROSE_ASSERT(shdr!=NULL);
         ROSE_ASSERT(shdr->get_offset()==section->get_offset()); /*segment table entry should have been updated in reallocate()*/
 
@@ -453,9 +453,9 @@ SgAsmElfSegmentTable::unparse(std::ostream &f) const
         SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk disk64;
         void *disk = NULL;
         
-        if (4==fhdr->get_word_size()) {
+        if (4==fhdr->get_wordSize()) {
             disk = shdr->encode(sex, &disk32);
-        } else if (8==fhdr->get_word_size()) {
+        } else if (8==fhdr->get_wordSize()) {
             disk = shdr->encode(sex, &disk64);
         } else {
             ROSE_ASSERT(!"invalid word size");
