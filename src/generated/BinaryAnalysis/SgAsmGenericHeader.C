@@ -7,13 +7,13 @@
 #include <sage3basic.h>
 
 SgAsmGenericFormat* const&
-SgAsmGenericHeader::get_exec_format() const {
-    return p_exec_format;
+SgAsmGenericHeader::get_executableFormat() const {
+    return p_executableFormat;
 }
 
 void
-SgAsmGenericHeader::set_exec_format(SgAsmGenericFormat* const& x) {
-    changeChildPointer(this->p_exec_format, const_cast<SgAsmGenericFormat*&>(x));
+SgAsmGenericHeader::set_executableFormat(SgAsmGenericFormat* const& x) {
+    changeChildPointer(this->p_executableFormat, const_cast<SgAsmGenericFormat*&>(x));
     set_isModified(true);
 }
 
@@ -45,29 +45,29 @@ SgAsmGenericHeader::set_isa(SgAsmGenericFormat::InsSetArchitecture const& x) {
 }
 
 rose_addr_t const&
-SgAsmGenericHeader::get_base_va() const {
-    return p_base_va;
+SgAsmGenericHeader::get_baseVa() const {
+    return p_baseVa;
 }
 
 void
-SgAsmGenericHeader::set_base_va(rose_addr_t const& x) {
-    this->p_base_va = x;
+SgAsmGenericHeader::set_baseVa(rose_addr_t const& x) {
+    this->p_baseVa = x;
     set_isModified(true);
 }
 
 SgRVAList const&
-SgAsmGenericHeader::get_entry_rvas() const {
-    return p_entry_rvas;
+SgAsmGenericHeader::get_entryRvas() const {
+    return p_entryRvas;
 }
 
 SgRVAList&
-SgAsmGenericHeader::get_entry_rvas() {
-    return p_entry_rvas;
+SgAsmGenericHeader::get_entryRvas() {
+    return p_entryRvas;
 }
 
 void
-SgAsmGenericHeader::set_entry_rvas(SgRVAList const& x) {
-    this->p_entry_rvas = x;
+SgAsmGenericHeader::set_entryRvas(SgRVAList const& x) {
+    this->p_entryRvas = x;
     set_isModified(true);
 }
 
@@ -98,17 +98,17 @@ SgAsmGenericHeader::~SgAsmGenericHeader() {
 }
 
 SgAsmGenericHeader::SgAsmGenericHeader()
-    : p_exec_format(createAndParent<SgAsmGenericFormat>(this))
+    : p_executableFormat(createAndParent<SgAsmGenericFormat>(this))
     , p_isa(SgAsmGenericFormat::ISA_UNSPECIFIED)
-    , p_base_va(0)
+    , p_baseVa(0)
     , p_dlls(createAndParent<SgAsmGenericDLLList>(this))
     , p_sections(createAndParent<SgAsmGenericSectionList>(this)) {}
 
 void
 SgAsmGenericHeader::initializeProperties() {
-    p_exec_format = createAndParent<SgAsmGenericFormat>(this);
+    p_executableFormat = createAndParent<SgAsmGenericFormat>(this);
     p_isa = SgAsmGenericFormat::ISA_UNSPECIFIED;
-    p_base_va = 0;
+    p_baseVa = 0;
     p_dlls = createAndParent<SgAsmGenericDLLList>(this);
     p_sections = createAndParent<SgAsmGenericSectionList>(this);
 }

@@ -7,13 +7,13 @@
 #include <sage3basic.h>
 
 SgAsmLESectionTableEntry* const&
-SgAsmLESection::get_st_entry() const {
-    return p_st_entry;
+SgAsmLESection::get_sectionTableEntry() const {
+    return p_sectionTableEntry;
 }
 
 void
-SgAsmLESection::set_st_entry(SgAsmLESectionTableEntry* const& x) {
-    changeChildPointer(this->p_st_entry, const_cast<SgAsmLESectionTableEntry*&>(x));
+SgAsmLESection::set_sectionTableEntry(SgAsmLESectionTableEntry* const& x) {
+    changeChildPointer(this->p_sectionTableEntry, const_cast<SgAsmLESectionTableEntry*&>(x));
     set_isModified(true);
 }
 
@@ -22,11 +22,11 @@ SgAsmLESection::~SgAsmLESection() {
 }
 
 SgAsmLESection::SgAsmLESection()
-    : p_st_entry(NULL) {}
+    : p_sectionTableEntry(nullptr) {}
 
 void
 SgAsmLESection::initializeProperties() {
-    p_st_entry = NULL;
+    p_sectionTableEntry = nullptr;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

@@ -61,46 +61,46 @@ SgAsmBlock::set_successors(SgAsmIntegerValuePtrList const& x) {
 }
 
 bool const&
-SgAsmBlock::get_successors_complete() const {
-    return p_successors_complete;
+SgAsmBlock::get_successorsComplete() const {
+    return p_successorsComplete;
 }
 
 void
-SgAsmBlock::set_successors_complete(bool const& x) {
-    this->p_successors_complete = x;
+SgAsmBlock::set_successorsComplete(bool const& x) {
+    this->p_successorsComplete = x;
     set_isModified(true);
 }
 
 SgAsmBlock* const&
-SgAsmBlock::get_immediate_dominator() const {
-    return p_immediate_dominator;
+SgAsmBlock::get_immediateDominator() const {
+    return p_immediateDominator;
 }
 
 void
-SgAsmBlock::set_immediate_dominator(SgAsmBlock* const& x) {
-    this->p_immediate_dominator = x;
+SgAsmBlock::set_immediateDominator(SgAsmBlock* const& x) {
+    this->p_immediateDominator = x;
     set_isModified(true);
 }
 
 size_t const&
-SgAsmBlock::get_cached_vertex() const {
-    return p_cached_vertex;
+SgAsmBlock::get_cachedVertex() const {
+    return p_cachedVertex;
 }
 
 void
-SgAsmBlock::set_cached_vertex(size_t const& x) {
-    this->p_cached_vertex = x;
+SgAsmBlock::set_cachedVertex(size_t const& x) {
+    this->p_cachedVertex = x;
     set_isModified(true);
 }
 
 double const&
-SgAsmBlock::get_code_likelihood() const {
-    return p_code_likelihood;
+SgAsmBlock::get_codeLikelihood() const {
+    return p_codeLikelihood;
 }
 
 void
-SgAsmBlock::set_code_likelihood(double const& x) {
-    this->p_code_likelihood = x;
+SgAsmBlock::set_codeLikelihood(double const& x) {
+    this->p_codeLikelihood = x;
     set_isModified(true);
 }
 
@@ -122,10 +122,10 @@ SgAsmBlock::~SgAsmBlock() {
 SgAsmBlock::SgAsmBlock()
     : p_id(0)
     , p_reason(SgAsmBlock::BLK_NONE)
-    , p_successors_complete(false)
-    , p_immediate_dominator(nullptr)
-    , p_cached_vertex((size_t)(-1))
-    , p_code_likelihood(0.0)
+    , p_successorsComplete(false)
+    , p_immediateDominator(nullptr)
+    , p_cachedVertex((size_t)(-1))
+    , p_codeLikelihood(0.0)
     , p_stackDeltaOut(SgAsmInstruction::INVALID_STACK_DELTA) {}
 
 // The association between constructor arguments and their classes:
@@ -134,20 +134,20 @@ SgAsmBlock::SgAsmBlock(rose_addr_t const& address)
     : SgAsmStatement(address)
     , p_id(0)
     , p_reason(SgAsmBlock::BLK_NONE)
-    , p_successors_complete(false)
-    , p_immediate_dominator(nullptr)
-    , p_cached_vertex((size_t)(-1))
-    , p_code_likelihood(0.0)
+    , p_successorsComplete(false)
+    , p_immediateDominator(nullptr)
+    , p_cachedVertex((size_t)(-1))
+    , p_codeLikelihood(0.0)
     , p_stackDeltaOut(SgAsmInstruction::INVALID_STACK_DELTA) {}
 
 void
 SgAsmBlock::initializeProperties() {
     p_id = 0;
     p_reason = SgAsmBlock::BLK_NONE;
-    p_successors_complete = false;
-    p_immediate_dominator = nullptr;
-    p_cached_vertex = (size_t)(-1);
-    p_code_likelihood = 0.0;
+    p_successorsComplete = false;
+    p_immediateDominator = nullptr;
+    p_cachedVertex = (size_t)(-1);
+    p_codeLikelihood = 0.0;
     p_stackDeltaOut = SgAsmInstruction::INVALID_STACK_DELTA;
 }
 

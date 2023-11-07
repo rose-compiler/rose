@@ -29,13 +29,13 @@ SgAsmGenericSection::set_header(SgAsmGenericHeader* const& x) {
 }
 
 rose_addr_t const&
-SgAsmGenericSection::get_file_alignment() const {
-    return p_file_alignment;
+SgAsmGenericSection::get_fileAlignment() const {
+    return p_fileAlignment;
 }
 
 void
-SgAsmGenericSection::set_file_alignment(rose_addr_t const& x) {
-    this->p_file_alignment = x;
+SgAsmGenericSection::set_fileAlignment(rose_addr_t const& x) {
+    this->p_fileAlignment = x;
     set_isModified(true);
 }
 
@@ -83,69 +83,90 @@ SgAsmGenericSection::set_id(int const& x) {
     set_isModified(true);
 }
 
-rose_addr_t const&
-SgAsmGenericSection::get_mapped_alignment() const {
-    return p_mapped_alignment;
+SgAsmGenericString* const&
+SgAsmGenericSection::get_name() const {
+    return p_name;
 }
 
 void
-SgAsmGenericSection::set_mapped_alignment(rose_addr_t const& x) {
-    this->p_mapped_alignment = x;
-    set_isModified(true);
-}
-
-bool const&
-SgAsmGenericSection::get_mapped_rperm() const {
-    return p_mapped_rperm;
-}
-
-void
-SgAsmGenericSection::set_mapped_rperm(bool const& x) {
-    this->p_mapped_rperm = x;
-    set_isModified(true);
-}
-
-bool const&
-SgAsmGenericSection::get_mapped_wperm() const {
-    return p_mapped_wperm;
-}
-
-void
-SgAsmGenericSection::set_mapped_wperm(bool const& x) {
-    this->p_mapped_wperm = x;
-    set_isModified(true);
-}
-
-bool const&
-SgAsmGenericSection::get_mapped_xperm() const {
-    return p_mapped_xperm;
-}
-
-void
-SgAsmGenericSection::set_mapped_xperm(bool const& x) {
-    this->p_mapped_xperm = x;
-    set_isModified(true);
-}
-
-bool const&
-SgAsmGenericSection::get_contains_code() const {
-    return p_contains_code;
-}
-
-void
-SgAsmGenericSection::set_contains_code(bool const& x) {
-    this->p_contains_code = x;
+SgAsmGenericSection::set_shortName(std::string const& x) {
+    this->p_shortName = x;
     set_isModified(true);
 }
 
 rose_addr_t const&
-SgAsmGenericSection::get_mapped_actual_va() const {
-    return p_mapped_actual_va;
+SgAsmGenericSection::get_mappedPreferredRva() const {
+    return p_mappedPreferredRva;
+}
+
+rose_addr_t const&
+SgAsmGenericSection::get_mappedSize() const {
+    return p_mappedSize;
+}
+
+rose_addr_t const&
+SgAsmGenericSection::get_mappedAlignment() const {
+    return p_mappedAlignment;
 }
 
 void
-SgAsmGenericSection::set_mapped_actual_va(rose_addr_t const& x) {
-    this->p_mapped_actual_va = x;
+SgAsmGenericSection::set_mappedAlignment(rose_addr_t const& x) {
+    this->p_mappedAlignment = x;
+    set_isModified(true);
+}
+
+bool const&
+SgAsmGenericSection::get_mappedReadPermission() const {
+    return p_mappedReadPermission;
+}
+
+void
+SgAsmGenericSection::set_mappedReadPermission(bool const& x) {
+    this->p_mappedReadPermission = x;
+    set_isModified(true);
+}
+
+bool const&
+SgAsmGenericSection::get_mappedWritePermission() const {
+    return p_mappedWritePermission;
+}
+
+void
+SgAsmGenericSection::set_mappedWritePermission(bool const& x) {
+    this->p_mappedWritePermission = x;
+    set_isModified(true);
+}
+
+bool const&
+SgAsmGenericSection::get_mappedExecutePermission() const {
+    return p_mappedExecutePermission;
+}
+
+void
+SgAsmGenericSection::set_mappedExecutePermission(bool const& x) {
+    this->p_mappedExecutePermission = x;
+    set_isModified(true);
+}
+
+bool const&
+SgAsmGenericSection::get_containsCode() const {
+    return p_containsCode;
+}
+
+void
+SgAsmGenericSection::set_containsCode(bool const& x) {
+    this->p_containsCode = x;
+    set_isModified(true);
+}
+
+rose_addr_t const&
+SgAsmGenericSection::get_mappedActualVa() const {
+    return p_mappedActualVa;
+}
+
+void
+SgAsmGenericSection::set_mappedActualVa(rose_addr_t const& x) {
+    this->p_mappedActualVa = x;
     set_isModified(true);
 }
 
@@ -158,19 +179,19 @@ SgAsmGenericSection::SgAsmGenericSection()
     , p_header(nullptr)
     , p_size(0)
     , p_offset(0)
-    , p_file_alignment(0)
+    , p_fileAlignment(0)
     , p_purpose(SgAsmGenericSection::SP_UNSPECIFIED)
     , p_synthesized(false)
     , p_id(-1)
     , p_name(createAndParent<SgAsmBasicString>(this))
-    , p_mapped_preferred_rva(0)
-    , p_mapped_size(0)
-    , p_mapped_alignment(0)
-    , p_mapped_rperm(false)
-    , p_mapped_wperm(false)
-    , p_mapped_xperm(false)
-    , p_contains_code(false)
-    , p_mapped_actual_va(0) {}
+    , p_mappedPreferredRva(0)
+    , p_mappedSize(0)
+    , p_mappedAlignment(0)
+    , p_mappedReadPermission(false)
+    , p_mappedWritePermission(false)
+    , p_mappedExecutePermission(false)
+    , p_containsCode(false)
+    , p_mappedActualVa(0) {}
 
 void
 SgAsmGenericSection::initializeProperties() {
@@ -178,19 +199,19 @@ SgAsmGenericSection::initializeProperties() {
     p_header = nullptr;
     p_size = 0;
     p_offset = 0;
-    p_file_alignment = 0;
+    p_fileAlignment = 0;
     p_purpose = SgAsmGenericSection::SP_UNSPECIFIED;
     p_synthesized = false;
     p_id = -1;
     p_name = createAndParent<SgAsmBasicString>(this);
-    p_mapped_preferred_rva = 0;
-    p_mapped_size = 0;
-    p_mapped_alignment = 0;
-    p_mapped_rperm = false;
-    p_mapped_wperm = false;
-    p_mapped_xperm = false;
-    p_contains_code = false;
-    p_mapped_actual_va = 0;
+    p_mappedPreferredRva = 0;
+    p_mappedSize = 0;
+    p_mappedAlignment = 0;
+    p_mappedReadPermission = false;
+    p_mappedWritePermission = false;
+    p_mappedExecutePermission = false;
+    p_containsCode = false;
+    p_mappedActualVa = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

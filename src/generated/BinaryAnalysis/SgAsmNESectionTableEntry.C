@@ -29,24 +29,24 @@ SgAsmNESectionTableEntry::set_sector(unsigned const& x) {
 }
 
 rose_addr_t const&
-SgAsmNESectionTableEntry::get_physical_size() const {
-    return p_physical_size;
+SgAsmNESectionTableEntry::get_physicalSize() const {
+    return p_physicalSize;
 }
 
 void
-SgAsmNESectionTableEntry::set_physical_size(rose_addr_t const& x) {
-    this->p_physical_size = x;
+SgAsmNESectionTableEntry::set_physicalSize(rose_addr_t const& x) {
+    this->p_physicalSize = x;
     set_isModified(true);
 }
 
 rose_addr_t const&
-SgAsmNESectionTableEntry::get_virtual_size() const {
-    return p_virtual_size;
+SgAsmNESectionTableEntry::get_virtualSize() const {
+    return p_virtualSize;
 }
 
 void
-SgAsmNESectionTableEntry::set_virtual_size(rose_addr_t const& x) {
-    this->p_virtual_size = x;
+SgAsmNESectionTableEntry::set_virtualSize(rose_addr_t const& x) {
+    this->p_virtualSize = x;
     set_isModified(true);
 }
 
@@ -57,15 +57,15 @@ SgAsmNESectionTableEntry::~SgAsmNESectionTableEntry() {
 SgAsmNESectionTableEntry::SgAsmNESectionTableEntry()
     : p_flags(0)
     , p_sector(0)
-    , p_physical_size(0)
-    , p_virtual_size(0) {}
+    , p_physicalSize(0)
+    , p_virtualSize(0) {}
 
 void
 SgAsmNESectionTableEntry::initializeProperties() {
     p_flags = 0;
     p_sector = 0;
-    p_physical_size = 0;
-    p_virtual_size = 0;
+    p_physicalSize = 0;
+    p_virtualSize = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

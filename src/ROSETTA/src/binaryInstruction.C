@@ -23,9 +23,15 @@ DOCUMENTATION_should_never_be_defined;
 
 #ifdef DOCUMENTATION
 #define DECLARE_LEAF_CLASS(CLASS_WITHOUT_Sg) /*void*/
+#define DECLARE_LEAF_CLASS2(CLASS_WITHOUT_Sg, TAG) /*void*/
 #else
 #define DECLARE_LEAF_CLASS(CLASS_WITHOUT_Sg) \
     NEW_TERMINAL_MACRO(CLASS_WITHOUT_Sg, #CLASS_WITHOUT_Sg, #CLASS_WITHOUT_Sg "Tag"); \
+    CLASS_WITHOUT_Sg.setCppCondition("!defined(DOCUMENTATION)");\
+    CLASS_WITHOUT_Sg.setAutomaticGenerationOfConstructor(false);\
+    CLASS_WITHOUT_Sg.setAutomaticGenerationOfDestructor(false)
+#define DECLARE_LEAF_CLASS2(CLASS_WITHOUT_Sg, TAG) \
+    NEW_TERMINAL_MACRO(CLASS_WITHOUT_Sg, #CLASS_WITHOUT_Sg, #TAG); \
     CLASS_WITHOUT_Sg.setCppCondition("!defined(DOCUMENTATION)");\
     CLASS_WITHOUT_Sg.setAutomaticGenerationOfConstructor(false);\
     CLASS_WITHOUT_Sg.setAutomaticGenerationOfDestructor(false)
@@ -1026,9 +1032,15 @@ protected:
 
 public:
     /** Appends another declaration. */
-    void append_declaration(SgAsmSynthesizedDeclaration *declaration) {
+    void appendDeclaration(SgAsmSynthesizedDeclaration *declaration) {
         p_declarationList.push_back(declaration);
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    void append_declaration(SgAsmSynthesizedDeclaration*) ROSE_DEPRECATED("use appendDeclaration");
 public:
     /** Destructor. */
     virtual ~SgAsmSynthesizedDataStructureDeclaration();
@@ -1281,7 +1293,7 @@ class SgAsmStaticData: public SgAsmStatement {
 
 #ifndef DOCUMENTATION
     AsmStaticData.setDataPrototype(
-        "SgUnsignedCharList", "raw_bytes", "",
+        "SgUnsignedCharList", "rawBytes", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -1297,7 +1309,7 @@ private:
     void serialize(S &s, const unsigned /*version*/) {
         debugSerializationBegin("SgAsmStaticData");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmStatement);
-        s & BOOST_SERIALIZATION_NVP(p_raw_bytes);
+        s & BOOST_SERIALIZATION_NVP(p_rawBytes);
         debugSerializationEnd("SgAsmStaticData");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -1309,14 +1321,21 @@ public:
      *  these bytes. 
      *  
      *  @{ */
-    SgUnsignedCharList const& get_raw_bytes() const;
-    void set_raw_bytes(SgUnsignedCharList const&);
+    SgUnsignedCharList const& get_rawBytes() const;
+    void set_rawBytes(SgUnsignedCharList const&);
     /** @} */
 public:
     /** Property: Size of static data in bytes.
      *
      *  This returns the number of raw data bytes rather than the size of any data type painted onto those bytes. */
-    size_t get_size() const { return p_raw_bytes.size(); }
+    size_t get_size() const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    const SgUnsignedCharList& get_raw_bytes() const ROSE_DEPRECATED("use get_rawBytes");
+    void set_raw_bytes(const SgUnsignedCharList&) ROSE_DEPRECATED("use set_rawBytes");
 public:
     /** Destructor. */
     virtual ~SgAsmStaticData();
@@ -1357,7 +1376,7 @@ class SgAsmStackExpression: public SgAsmExpression {
 
 #ifndef DOCUMENTATION
     AsmStackExpression.setDataPrototype(
-        "int", "stack_position", "= 0",
+        "int", "stackPosition", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -1373,7 +1392,7 @@ private:
     void serialize(S &s, const unsigned /*version*/) {
         debugSerializationBegin("SgAsmStackExpression");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
-        s & BOOST_SERIALIZATION_NVP(p_stack_position);
+        s & BOOST_SERIALIZATION_NVP(p_stackPosition);
         debugSerializationEnd("SgAsmStackExpression");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -1385,10 +1404,15 @@ public:
      *  stack). 
      *  
      *  @{ */
-    int const& get_stack_position() const;
-    void set_stack_position(int const&);
+    int const& get_stackPosition() const;
+    void set_stackPosition(int const&);
     /** @} */
-
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    int get_stack_position() const ROSE_DEPRECATED("use get_stackPosition");
+    void set_stack_position(int)  ROSE_DEPRECATED("use set_stackPosition");
 public:
     /** Destructor. */
     virtual ~SgAsmStackExpression();
@@ -1399,7 +1423,7 @@ public:
 
 public:
     /** Constructor. */
-    explicit SgAsmStackExpression(int const& stack_position);
+    explicit SgAsmStackExpression(int const& stackPosition);
 
 protected:
     /** Initialize all properties that have explicit initial values.
@@ -1882,10 +1906,16 @@ public:
      *
      *  This method complements SgAsmPESection::init_from_section_table. This method initializes the section table from the
      *  section while init_from_section_table() initializes the section from the section table. */
-    void add_section(SgAsmPESection *section);
+    void addSection(SgAsmPESection *section);
     virtual bool reallocate() override;
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    void add_section(SgAsmPESection*) ROSE_DEPRECATED("use addSection");
 public:
     /** Destructor. */
     virtual ~SgAsmPESectionTable();
@@ -2161,9 +2191,15 @@ public:
     explicit SgAsmPESectionTableEntry(const SgAsmPESectionTableEntry::PESectionTableEntry_disk *disk);
 
     /** Update this section table entry with newer information from the section */
-    void update_from_section(SgAsmPESection *section);
+    void updateFromSection(SgAsmPESection *section);
     void *encode(SgAsmPESectionTableEntry::PESectionTableEntry_disk*) const;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    void update_from_section(SgAsmPESection*) ROSE_DEPRECATED("use updateFromSection");
 public:
     /** Destructor. */
     virtual ~SgAsmPESectionTableEntry();
@@ -2553,7 +2589,7 @@ class SgAsmPEImportSection: public SgAsmPESection {
 
 #ifndef DOCUMENTATION
     AsmPEImportSection.setDataPrototype(
-        "SgAsmPEImportDirectoryList*", "import_directories", "= createAndParent<SgAsmPEImportDirectoryList>(this)",
+        "SgAsmPEImportDirectoryList*", "importDirectories", "= createAndParent<SgAsmPEImportDirectoryList>(this)",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -2569,7 +2605,7 @@ private:
     void serialize(S &s, const unsigned /*version*/) {
         debugSerializationBegin("SgAsmPEImportSection");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmPESection);
-        s & BOOST_SERIALIZATION_NVP(p_import_directories);
+        s & BOOST_SERIALIZATION_NVP(p_importDirectories);
         debugSerializationEnd("SgAsmPEImportSection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -2580,8 +2616,8 @@ public:
      *  See PE specification. 
      *  
      *  @{ */
-    SgAsmPEImportDirectoryList* const& get_import_directories() const;
-    void set_import_directories(SgAsmPEImportDirectoryList* const&);
+    SgAsmPEImportDirectoryList* const& get_importDirectories() const;
+    void set_importDirectories(SgAsmPEImportDirectoryList* const&);
     /** @} */
 public:
     explicit SgAsmPEImportSection(SgAsmPEFileHeader*);
@@ -2591,12 +2627,12 @@ public:
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
     /** Add an import directory to the end of the import directory list. */
-    void add_import_directory(SgAsmPEImportDirectory*);
+    void addImportDirectory(SgAsmPEImportDirectory*);
 
     /** Remove an import directory from the import directory list. Does not delete it. */
-    void remove_import_directory(SgAsmPEImportDirectory*);
-    static bool show_import_mesg();
-    static void import_mesg_reset() { mesg_nprinted=0; }
+    void removeImportDirectory(SgAsmPEImportDirectory*);
+    static bool showImportMessage();
+    static void importMessageReset();
 
     /** Reallocate space for all Import Address Table.
      *
@@ -2605,10 +2641,22 @@ public:
      *  needed to store the entire table.  Each subsequent IAT is given the next available address and it's size is also
      *  updated.  The result is that all the IATs under this Import Section are given addresses and sizes that make them
      *  contiguous in memory. This method returns the total number of bytes required for all the IATs. */
-    size_t reallocate_iats(rose_rva_t start_at);
+    size_t reallocateIats(rose_rva_t start_at);
 
 private:
     static size_t mesg_nprinted; //counter for import_mesg()
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmPEImportDirectoryList* get_import_directories() const ROSE_DEPRECATED("use get_importDirectories");
+    void set_import_directories(SgAsmPEImportDirectoryList*) ROSE_DEPRECATED("use set_importDirectories");
+    void add_import_directory(SgAsmPEImportDirectory*) ROSE_DEPRECATED("use addImportDirectory");
+    void remove_import_directory(SgAsmPEImportDirectory*) ROSE_DEPRECATED("use removeImportDirectory");
+    static bool show_import_mesg() ROSE_DEPRECATED("use showImportMessage");
+    static void import_mesg_reset() ROSE_DEPRECATED("use importMessageReset");
+    size_t reallocate_iats(rose_rva_t) ROSE_DEPRECATED("use reallocateIats");
 public:
     /** Destructor. */
     virtual ~SgAsmPEImportSection();
@@ -2884,16 +2932,23 @@ public:
      *  A hint/name pair consists of a two-byte, little endian, unsigned hint and a NUL-terminated ASCII string.  An
      *  optional zero byte padding appears after the string's NUL terminator if necessary to make the total size of the
      *  hint/name pair a multiple of two. */
-    size_t hintname_required_size() const;
+    size_t hintNameRequiredSize() const;
 
     /** Virtual address of an IAT entry.
      *
      *  Returns the virtual address of the IAT slot for this import item.  This import item must be linked into the AST in
      *  order for this method to succeed. */
-    rose_addr_t get_iat_entry_va() const;
+    rose_addr_t get_iatEntryVa() const;
 
 private:
     void initFromParent(SgAsmPEImportItemList *parent);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    size_t hintname_required_size() const ROSE_DEPRECATED("use hintNameRequiredSize");
+    rose_addr_t get_iat_entry_va() const ROSE_DEPRECATED("use get_iatEntryVa");
 public:
     /** Destructor. */
     virtual ~SgAsmPEImportItem();
@@ -3004,13 +3059,13 @@ class SgAsmPEImportDirectory: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmPEImportDirectory.setDataPrototype(
-        "SgAsmGenericString*", "dll_name", "= 0",
+        "SgAsmGenericString*", "dllName", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmPEImportDirectory.setDataPrototype(
-        "rose_rva_t", "dll_name_rva", "= 0",
+        "rose_rva_t", "dllNameRva", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -3074,8 +3129,8 @@ private:
     void serialize(S &s, const unsigned /*version*/) {
         debugSerializationBegin("SgAsmPEImportDirectory");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
-        s & BOOST_SERIALIZATION_NVP(p_dll_name);
-        s & BOOST_SERIALIZATION_NVP(p_dll_name_rva);
+        s & BOOST_SERIALIZATION_NVP(p_dllName);
+        s & BOOST_SERIALIZATION_NVP(p_dllNameRva);
         s & BOOST_SERIALIZATION_NVP(p_dll_name_nalloc);
         s & BOOST_SERIALIZATION_NVP(p_time);
         s & BOOST_SERIALIZATION_NVP(p_forwarder_chain);
@@ -3118,8 +3173,8 @@ public:
      *  See PE specification. 
      *  
      *  @{ */
-    SgAsmGenericString* const& get_dll_name() const;
-    void set_dll_name(SgAsmGenericString* const&);
+    SgAsmGenericString* const& get_dllName() const;
+    void set_dllName(SgAsmGenericString* const&);
     /** @} */
 
 public:
@@ -3128,9 +3183,9 @@ public:
      *  See PE specification. 
      *  
      *  @{ */
-    rose_rva_t const& get_dll_name_rva() const;
-    rose_rva_t& get_dll_name_rva();
-    void set_dll_name_rva(rose_rva_t const&);
+    rose_rva_t const& get_dllNameRva() const;
+    rose_rva_t& get_dllNameRva();
+    void set_dllNameRva(rose_rva_t const&);
     /** @} */
 
 public:
@@ -3246,13 +3301,13 @@ public:
      *  Returns the number of bytes required for the entire IAT or ILT (including the zero terminator) as it is currently
      *  defined in the Import Directory.  The returned size does not include space required to store any Hint/Name pairs,
      *  which are outside the ILT/IAT but pointed to by the ILT/IAT. */
-    size_t iat_required_size() const;
+    size_t iatRequiredSize() const;
 
     /** Find an import item in an import directory.
      *
      *  Returns the index of the specified import item in this directory, or -1 if the import item is not a child of this
      *  directory.  The hint index is checked first. */
-    int find_import_item(const SgAsmPEImportItem *item, int hint=0) const;
+    int findImportItem(const SgAsmPEImportItem *item, int hint=0) const;
 
     /** Obtains the virtual address of the Hint/Name Table.
      *
@@ -3265,11 +3320,24 @@ public:
      *  This function will scan this Import Directory's import items, observe which items make references to Hint/Name
      *  pairs that have known addresses, and add those areas of virtual memory to the specified extent map.  This function
      *  returns the number of ILT entries that reference a Hint/Name pair. */
-    size_t hintname_table_extent(AddressIntervalSet &extent/*in,out*/) const;
+    size_t hintNameTableExtent(AddressIntervalSet &extent/*in,out*/) const;
 
 private:
     void parse_ilt_iat(const rose_rva_t &table_start, bool assume_bound);
     void unparse_ilt_iat(std::ostream&,const rose_rva_t &table_start, bool assume_bound, size_t nalloc) const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmGenericString* get_dll_name() const ROSE_DEPRECATED("use get_dllName");
+    void set_dll_name(SgAsmGenericString*) ROSE_DEPRECATED("use set_dllName");
+    const rose_rva_t& get_dll_name_rva() const ROSE_DEPRECATED("use get_dllNameRva");
+    rose_rva_t& get_dll_name_rva() ROSE_DEPRECATED("use get_dllNameRva");
+    void set_dll_name_rva(const rose_rva_t&) ROSE_DEPRECATED("use set_dllNameRva");
+    size_t iat_required_size() const ROSE_DEPRECATED("use iatRequiredSize");
+    int find_import_item(const SgAsmPEImportItem*, int=0) const ROSE_DEPRECATED("use findImportItem");
+    size_t hintname_table_extent(AddressIntervalSet&) const ROSE_DEPRECATED("use hintNameTableExtent");
 public:
     /** Destructor. */
     virtual ~SgAsmPEImportDirectory();
@@ -3518,19 +3586,19 @@ class SgAsmPEFileHeader: public SgAsmGenericHeader {
 
 #ifndef DOCUMENTATION
     AsmPEFileHeader.setDataPrototype(
-        "SgAsmPERVASizePairList*", "rvasize_pairs", "= nullptr",
+        "SgAsmPERVASizePairList*", "rvaSizePairs", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmPEFileHeader.setDataPrototype(
-        "SgAsmPESectionTable*", "section_table", "= NULL",
+        "SgAsmPESectionTable*", "sectionTable", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmPEFileHeader.setDataPrototype(
-        "SgAsmCoffSymbolTable*", "coff_symtab", "= NULL",
+        "SgAsmCoffSymbolTable*", "coffSymbolTable", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -3581,9 +3649,9 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_e_heap_commit_size);
         s & BOOST_SERIALIZATION_NVP(p_e_loader_flags);
         s & BOOST_SERIALIZATION_NVP(p_e_num_rvasize_pairs);
-        s & BOOST_SERIALIZATION_NVP(p_rvasize_pairs);
-        s & BOOST_SERIALIZATION_NVP(p_section_table);
-        s & BOOST_SERIALIZATION_NVP(p_coff_symtab);
+        s & BOOST_SERIALIZATION_NVP(p_rvaSizePairs);
+        s & BOOST_SERIALIZATION_NVP(p_sectionTable);
+        s & BOOST_SERIALIZATION_NVP(p_coffSymbolTable);
         debugSerializationEnd("SgAsmPEFileHeader");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -4096,8 +4164,8 @@ public:
      *  See PE specification. 
      *  
      *  @{ */
-    SgAsmPERVASizePairList* const& get_rvasize_pairs() const;
-    void set_rvasize_pairs(SgAsmPERVASizePairList* const&);
+    SgAsmPERVASizePairList* const& get_rvaSizePairs() const;
+    void set_rvaSizePairs(SgAsmPERVASizePairList* const&);
     /** @} */
 
 public:
@@ -4106,8 +4174,8 @@ public:
      *  See PE specification. 
      *  
      *  @{ */
-    SgAsmPESectionTable* const& get_section_table() const;
-    void set_section_table(SgAsmPESectionTable* const&);
+    SgAsmPESectionTable* const& get_sectionTable() const;
+    void set_sectionTable(SgAsmPESectionTable* const&);
     /** @} */
 
 public:
@@ -4116,8 +4184,8 @@ public:
      *  See PE specification. 
      *  
      *  @{ */
-    SgAsmCoffSymbolTable* const& get_coff_symtab() const;
-    void set_coff_symtab(SgAsmCoffSymbolTable* const&);
+    SgAsmCoffSymbolTable* const& get_coffSymbolTable() const;
+    void set_coffSymbolTable(SgAsmCoffSymbolTable* const&);
     /** @} */
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
@@ -4125,44 +4193,64 @@ public:
 public:
     explicit SgAsmPEFileHeader(SgAsmGenericFile*);
 
-    virtual const char *format_name() const override {return "PE";}
+    virtual const char* formatName() const override;
 
     /** Return true if the file looks like it might be a PE file according to the magic number.
      *
      *  The file must contain what appears to be a DOS File Header at address zero, and what appears to be a PE File Header
      *  at a file offset specified in part of the DOS File Header (actually, in the bytes that follow the DOS File
      *  Header). */
-    static bool is_PE (SgAsmGenericFile*);
+    static bool isPe(SgAsmGenericFile*);
 
     /** Convert an RVA/Size Pair index number into a section name.
      *
      *  This is different than @ref stringifySgAsmPEFileHeaderPairPurpose because it returns a section name rather than an
      *  enum name. */
-    std::string rvasize_pair_name(PairPurpose, const char **short_name);
+    std::string rvaSizePairName(PairPurpose, const char **short_name);
 
     /** Define an RVA/Size pair in the PE file header. */
-    void set_rvasize_pair(PairPurpose, SgAsmPESection*);
+    void set_rvaSizePair(PairPurpose, SgAsmPESection*);
 
     /** Update all the RVA/Size pair info from the section to which it points. */
-    void update_rvasize_pairs();
+    void updateRvaSizePairs();
 
-    void add_rvasize_pairs();
+    void addRvaSizePairs();
 
     virtual SgAsmPEFileHeader *parse() override;
     virtual bool reallocate() override;
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-    void create_table_sections();
+    void createTableSections();
 
     /* Loader memory maps */
-    Rose::BinaryAnalysis::MemoryMap::Ptr get_loader_map() const {return p_loader_map;}
-    void set_loader_map(const Rose::BinaryAnalysis::MemoryMap::Ptr &map) {p_loader_map=map;}
+    Rose::BinaryAnalysis::MemoryMap::Ptr get_loaderMap() const;
+    void set_loaderMap(const Rose::BinaryAnalysis::MemoryMap::Ptr&);
 
 private:
     void *encode(SgAsmPEFileHeader::PEFileHeader_disk*) const;
     void *encode(SgAsmPEFileHeader::PE32OptHeader_disk*) const;
     void *encode(SgAsmPEFileHeader::PE64OptHeader_disk*) const;
     Rose::BinaryAnalysis::MemoryMap::Ptr p_loader_map;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmPERVASizePairList* get_rvasize_pairs() const ROSE_DEPRECATED("use get_rvaSizePairs");
+    void set_rvasize_pairs(SgAsmPERVASizePairList*) ROSE_DEPRECATED("use set_rvaSizePairs");
+    SgAsmPESectionTable* get_section_table() const ROSE_DEPRECATED("use get_sectionTable");
+    void set_section_table(SgAsmPESectionTable*) ROSE_DEPRECATED("use set_sectionTable");
+    SgAsmCoffSymbolTable* get_coff_symtab() const ROSE_DEPRECATED("use get_coffSymbolTable");
+    void set_coff_symtab(SgAsmCoffSymbolTable*) ROSE_DEPRECATED("use set_coffSymbolTable");
+    virtual const char *format_name() const override ROSE_DEPRECATED("use formatName");
+    static bool is_PE (SgAsmGenericFile*) ROSE_DEPRECATED("use isPe");
+    std::string rvasize_pair_name(PairPurpose, const char**) ROSE_DEPRECATED("use rvaSizePairName");
+    void set_rvasize_pair(PairPurpose, SgAsmPESection*) ROSE_DEPRECATED("use set_rvaSizePair");
+    void update_rvasize_pairs() ROSE_DEPRECATED("use updateRvaSizePairs");
+    void add_rvasize_pairs() ROSE_DEPRECATED("use addRvaSizePairs");
+    void create_table_sections() ROSE_DEPRECATED("use createTableSections");
+    Rose::BinaryAnalysis::MemoryMap::Ptr get_loader_map() const ROSE_DEPRECATED("use get_loaderMap");
+    void set_loader_map(const Rose::BinaryAnalysis::MemoryMap::Ptr&) ROSE_DEPRECATED("use set_loaderMap");
 public:
     /** Destructor. */
     virtual ~SgAsmPEFileHeader();
@@ -4199,7 +4287,7 @@ class SgAsmPEExportSection: public SgAsmPESection {
 
 #ifndef DOCUMENTATION
     AsmPEExportSection.setDataPrototype(
-        "SgAsmPEExportDirectory*", "export_dir", "= nullptr",
+        "SgAsmPEExportDirectory*", "exportDirectory", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -4221,7 +4309,7 @@ private:
     void serialize(S &s, const unsigned /*version*/) {
         debugSerializationBegin("SgAsmPEExportSection");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmPESection);
-        s & BOOST_SERIALIZATION_NVP(p_export_dir);
+        s & BOOST_SERIALIZATION_NVP(p_exportDirectory);
         s & BOOST_SERIALIZATION_NVP(p_exports);
         debugSerializationEnd("SgAsmPEExportSection");
     }
@@ -4233,8 +4321,8 @@ public:
      *  See PE specification. 
      *  
      *  @{ */
-    SgAsmPEExportDirectory* const& get_export_dir() const;
-    void set_export_dir(SgAsmPEExportDirectory* const&);
+    SgAsmPEExportDirectory* const& get_exportDirectory() const;
+    void set_exportDirectory(SgAsmPEExportDirectory* const&);
     /** @} */
 
 public:
@@ -4267,7 +4355,15 @@ public:
     SgAsmPEExportSection(SgAsmPEFileHeader*);
     virtual SgAsmPEExportSection *parse() override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-    void add_entry(SgAsmPEExportEntry*);
+    void addEntry(SgAsmPEExportEntry*);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmPEExportDirectory* get_export_dir() const ROSE_DEPRECATED("use get_exportDirectory");
+    void set_export_dir(SgAsmPEExportDirectory*) ROSE_DEPRECATED("use set_exportDirectory");
+    void add_entry(SgAsmPEExportEntry*) ROSE_DEPRECATED("use addEntry");
 public:
     /** Destructor. */
     virtual ~SgAsmPEExportSection();
@@ -4357,9 +4453,15 @@ public:
      *  This includes the section offset, size, memory mapping, alignments, permissions, etc. This function complements
      *  SgAsmPESectionTable::add_section(): this function initializes this section from the section table while
      *  add_section() initializes the section table from the section. */
-    SgAsmPESection *init_from_section_table(SgAsmPESectionTableEntry *entry, int id);
+    SgAsmPESection *initFromSectionTable(SgAsmPESectionTableEntry *entry, int id);
     virtual bool reallocate() override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmPESection *init_from_section_table(SgAsmPESectionTableEntry*, int) ROSE_DEPRECATED("use initFromSectionTable");
 public:
     /** Destructor. */
     virtual ~SgAsmPESection();
@@ -4477,7 +4579,7 @@ class SgAsmPEExportEntry: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmPEExportEntry.setDataPrototype(
-        "rose_rva_t", "export_rva", "= 0",
+        "rose_rva_t", "exportRva", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -4501,7 +4603,7 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_name);
         s & BOOST_SERIALIZATION_NVP(p_ordinal);
-        s & BOOST_SERIALIZATION_NVP(p_export_rva);
+        s & BOOST_SERIALIZATION_NVP(p_exportRva);
         s & BOOST_SERIALIZATION_NVP(p_forwarder);
         debugSerializationEnd("SgAsmPEExportEntry");
     }
@@ -4532,9 +4634,9 @@ public:
      *  See PE specification. 
      *  
      *  @{ */
-    rose_rva_t const& get_export_rva() const;
-    rose_rva_t& get_export_rva();
-    void set_export_rva(rose_rva_t const&);
+    rose_rva_t const& get_exportRva() const;
+    rose_rva_t& get_exportRva();
+    void set_exportRva(rose_rva_t const&);
     /** @} */
 
 public:
@@ -4558,6 +4660,13 @@ public:
      *  This is a read-only value calculated by following the parent pointer to the SgAsmPEExportSection node and
      *  then down to its SgAsmPEExportDirectory. If any links are missing then an error is returned. */
     Sawyer::Result<unsigned /*ordinal*/, std::string /*reason*/> biasedOrdinal() const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    const rose_rva_t& get_export_rva() const ROSE_DEPRECATED("use get_exportRva");
+    void set_export_rva(const rose_rva_t&) ROSE_DEPRECATED("use set_exportRva");
 public:
     /** Destructor. */
     virtual ~SgAsmPEExportEntry();
@@ -4922,7 +5031,13 @@ public:
     /** @} */
 public:
     /** Append another operand expression to this node. */
-    void append_operand(SgAsmExpression* operand);
+    void appendOperand(SgAsmExpression* operand);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    void append_operand(SgAsmExpression*) ROSE_DEPRECATED("use appendOperand");
 public:
     /** Destructor. */
     virtual ~SgAsmOperandList();
@@ -5095,13 +5210,13 @@ class SgAsmNESectionTable: public SgAsmGenericSection {
 
 #ifndef DOCUMENTATION
     AsmNESectionTable.setDataPrototype(
-        "rose_addr_t", "physical_size", "= 0",
+        "rose_addr_t", "physicalSize", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmNESectionTable.setDataPrototype(
-        "rose_addr_t", "virtual_size", "= 0",
+        "rose_addr_t", "virtualSize", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -5119,8 +5234,8 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
         s & BOOST_SERIALIZATION_NVP(p_flags);
         s & BOOST_SERIALIZATION_NVP(p_sector);
-        s & BOOST_SERIALIZATION_NVP(p_physical_size);
-        s & BOOST_SERIALIZATION_NVP(p_virtual_size);
+        s & BOOST_SERIALIZATION_NVP(p_physicalSize);
+        s & BOOST_SERIALIZATION_NVP(p_virtualSize);
         debugSerializationEnd("SgAsmNESectionTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -5134,16 +5249,25 @@ public:
     void set_sector(unsigned const&);
 
 public:
-    rose_addr_t const& get_physical_size() const;
-    void set_physical_size(rose_addr_t const&);
+    rose_addr_t const& get_physicalSize() const;
+    void set_physicalSize(rose_addr_t const&);
 
 public:
-    rose_addr_t const& get_virtual_size() const;
-    void set_virtual_size(rose_addr_t const&);
+    rose_addr_t const& get_virtualSize() const;
+    void set_virtualSize(rose_addr_t const&);
 public:
     explicit SgAsmNESectionTable(SgAsmNEFileHeader*);
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    rose_addr_t get_physical_size() const ROSE_DEPRECATED("use get_physicalSize");
+    void set_physical_size(rose_addr_t) ROSE_DEPRECATED("use set_physicalSize");
+    rose_addr_t get_virtual_size() const ROSE_DEPRECATED("use get_virtualSize");
+    void set_virtual_size(rose_addr_t) ROSE_DEPRECATED("use set_virtualSize");
 public:
     /** Destructor. */
     virtual ~SgAsmNESectionTable();
@@ -5191,13 +5315,13 @@ class SgAsmNESectionTableEntry: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmNESectionTableEntry.setDataPrototype(
-        "rose_addr_t", "physical_size", "= 0",
+        "rose_addr_t", "physicalSize", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmNESectionTableEntry.setDataPrototype(
-        "rose_addr_t", "virtual_size", "= 0",
+        "rose_addr_t", "virtualSize", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -5215,8 +5339,8 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_flags);
         s & BOOST_SERIALIZATION_NVP(p_sector);
-        s & BOOST_SERIALIZATION_NVP(p_physical_size);
-        s & BOOST_SERIALIZATION_NVP(p_virtual_size);
+        s & BOOST_SERIALIZATION_NVP(p_physicalSize);
+        s & BOOST_SERIALIZATION_NVP(p_virtualSize);
         debugSerializationEnd("SgAsmNESectionTableEntry");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -5275,12 +5399,12 @@ public:
     void set_sector(unsigned const&);
 
 public:
-    rose_addr_t const& get_physical_size() const;
-    void set_physical_size(rose_addr_t const&);
+    rose_addr_t const& get_physicalSize() const;
+    void set_physicalSize(rose_addr_t const&);
 
 public:
-    rose_addr_t const& get_virtual_size() const;
-    void set_virtual_size(rose_addr_t const&);
+    rose_addr_t const& get_virtualSize() const;
+    void set_virtualSize(rose_addr_t const&);
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -5289,6 +5413,15 @@ public:
     void *encode(SgAsmNESectionTableEntry::NESectionTableEntry_disk*) const;
     virtual void dump(FILE *f, const char *prefix, ssize_t idx) const {dump(f, prefix, idx, NULL);}
     void dump(FILE*, const char *prefix, ssize_t idx, SgAsmNEFileHeader *fhdr) const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    rose_addr_t get_physical_size() const ROSE_DEPRECATED("use get_physicalSize");
+    void set_physical_size(rose_addr_t) ROSE_DEPRECATED("use set_physicalSize");
+    rose_addr_t get_virtual_size() const ROSE_DEPRECATED("use get_virtualSize");
+    void set_virtual_size(rose_addr_t) ROSE_DEPRECATED("use set_virtualSize");
 public:
     /** Destructor. */
     virtual ~SgAsmNESectionTableEntry();
@@ -5324,13 +5457,13 @@ class SgAsmNESection: public SgAsmGenericSection {
 
 #ifndef DOCUMENTATION
     AsmNESection.setDataPrototype(
-        "SgAsmNESectionTableEntry*", "st_entry", "= nullptr",
+        "SgAsmNESectionTableEntry*", "sectionTableEntry", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmNESection.setDataPrototype(
-        "SgAsmNERelocTable*", "reloc_table", "= nullptr",
+        "SgAsmNERelocTable*", "relocationTable", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -5346,23 +5479,32 @@ private:
     void serialize(S &s, const unsigned /*version*/) {
         debugSerializationBegin("SgAsmNESection");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
-        s & BOOST_SERIALIZATION_NVP(p_st_entry);
-        s & BOOST_SERIALIZATION_NVP(p_reloc_table);
+        s & BOOST_SERIALIZATION_NVP(p_sectionTableEntry);
+        s & BOOST_SERIALIZATION_NVP(p_relocationTable);
         debugSerializationEnd("SgAsmNESection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    SgAsmNESectionTableEntry* const& get_st_entry() const;
-    void set_st_entry(SgAsmNESectionTableEntry* const&);
+    SgAsmNESectionTableEntry* const& get_sectionTableEntry() const;
+    void set_sectionTableEntry(SgAsmNESectionTableEntry* const&);
 
 public:
-    SgAsmNERelocTable* const& get_reloc_table() const;
-    void set_reloc_table(SgAsmNERelocTable* const&);
+    SgAsmNERelocTable* const& get_relocationTable() const;
+    void set_relocationTable(SgAsmNERelocTable* const&);
 public:
     explicit SgAsmNESection(SgAsmNEFileHeader *fhdr);
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmNESectionTableEntry* get_st_entry() const ROSE_DEPRECATED("use get_sectionTableEntry");
+    void set_st_entry(SgAsmNESectionTableEntry*) ROSE_DEPRECATED("use set_sectionTableEntry");
+    SgAsmNERelocTable* get_reloc_table() const ROSE_DEPRECATED("use get_relocationTable");
+    void set_reloc_table(SgAsmNERelocTable*) ROSE_DEPRECATED("use set_relocationTable");
 public:
     /** Destructor. */
     virtual ~SgAsmNESection();
@@ -5777,7 +5919,13 @@ public:
     SgAsmNENameTable(SgAsmNEFileHeader *fhdr, rose_addr_t offset);
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-    std::vector<std::string> get_names_by_ordinal(unsigned ordinal);
+    std::vector<std::string> get_namesByOrdinal(unsigned ordinal);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    std::vector<std::string> get_names_by_ordinal(unsigned) ROSE_DEPRECATED("use get_namesByOrdinal");
 public:
     /** Destructor. */
     virtual ~SgAsmNENameTable();
@@ -5819,7 +5967,7 @@ class SgAsmNEModuleTable: public SgAsmGenericSection {
 
 #ifndef DOCUMENTATION
     AsmNEModuleTable.setDataPrototype(
-        "SgAddressList", "name_offsets", "",
+        "SgAddressList", "nameOffsets", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -5842,7 +5990,7 @@ private:
         debugSerializationBegin("SgAsmNEModuleTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
         s & BOOST_SERIALIZATION_NVP(p_strtab);
-        s & BOOST_SERIALIZATION_NVP(p_name_offsets);
+        s & BOOST_SERIALIZATION_NVP(p_nameOffsets);
         s & BOOST_SERIALIZATION_NVP(p_names);
         debugSerializationEnd("SgAsmNEModuleTable");
     }
@@ -5853,8 +6001,8 @@ public:
     void set_strtab(SgAsmNEStringTable* const&);
 
 public:
-    SgAddressList const& get_name_offsets() const;
-    void set_name_offsets(SgAddressList const&);
+    SgAddressList const& get_nameOffsets() const;
+    void set_nameOffsets(SgAddressList const&);
 
 public:
     SgStringList const& get_names() const;
@@ -5863,6 +6011,13 @@ public:
     SgAsmNEModuleTable(SgAsmNEFileHeader *fhdr, SgAsmNEStringTable *strtab, rose_addr_t offset, rose_addr_t size);
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    const SgAddressList& get_name_offsets() const ROSE_DEPRECATED("use get_nameOffsets");
+    void set_name_offsets(const SgAddressList&) ROSE_DEPRECATED("use set_nameOffsets");
 public:
     /** Destructor. */
     virtual ~SgAsmNEModuleTable();
@@ -6072,37 +6227,37 @@ class SgAsmNEFileHeader: public SgAsmGenericHeader {
 
 #ifndef DOCUMENTATION
     AsmNEFileHeader.setDataPrototype(
-        "SgAsmDOSExtendedHeader*", "dos2_header", "= nullptr",
+        "SgAsmDOSExtendedHeader*", "dos2Header", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmNEFileHeader.setDataPrototype(
-        "SgAsmNESectionTable*", "section_table", "= nullptr",
+        "SgAsmNESectionTable*", "sectionTable", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmNEFileHeader.setDataPrototype(
-        "SgAsmNENameTable*", "resname_table", "= nullptr",
+        "SgAsmNENameTable*", "residentNameTable", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmNEFileHeader.setDataPrototype(
-        "SgAsmNENameTable*", "nonresname_table", "= nullptr",
+        "SgAsmNENameTable*", "nonresidentNameTable", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmNEFileHeader.setDataPrototype(
-        "SgAsmNEModuleTable*", "module_table", "= nullptr",
+        "SgAsmNEModuleTable*", "moduleTable", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmNEFileHeader.setDataPrototype(
-        "SgAsmNEEntryTable*", "entry_table", "= nullptr",
+        "SgAsmNEEntryTable*", "entryTable", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -6147,12 +6302,12 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_e_nonresnametab_offset);
         s & BOOST_SERIALIZATION_NVP(p_e_fastload_sector);
         s & BOOST_SERIALIZATION_NVP(p_e_fastload_nsectors);
-        s & BOOST_SERIALIZATION_NVP(p_dos2_header);
-        s & BOOST_SERIALIZATION_NVP(p_section_table);
-        s & BOOST_SERIALIZATION_NVP(p_resname_table);
-        s & BOOST_SERIALIZATION_NVP(p_nonresname_table);
-        s & BOOST_SERIALIZATION_NVP(p_module_table);
-        s & BOOST_SERIALIZATION_NVP(p_entry_table);
+        s & BOOST_SERIALIZATION_NVP(p_dos2Header);
+        s & BOOST_SERIALIZATION_NVP(p_sectionTable);
+        s & BOOST_SERIALIZATION_NVP(p_residentNameTable);
+        s & BOOST_SERIALIZATION_NVP(p_nonresidentNameTable);
+        s & BOOST_SERIALIZATION_NVP(p_moduleTable);
+        s & BOOST_SERIALIZATION_NVP(p_entryTable);
         debugSerializationEnd("SgAsmNEFileHeader");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -6356,42 +6511,61 @@ public:
     void set_e_fastload_nsectors(rose_addr_t const&);
 
 public:
-    SgAsmDOSExtendedHeader* const& get_dos2_header() const;
-    void set_dos2_header(SgAsmDOSExtendedHeader* const&);
+    SgAsmDOSExtendedHeader* const& get_dos2Header() const;
+    void set_dos2Header(SgAsmDOSExtendedHeader* const&);
 
 public:
-    SgAsmNESectionTable* const& get_section_table() const;
-    void set_section_table(SgAsmNESectionTable* const&);
+    SgAsmNESectionTable* const& get_sectionTable() const;
+    void set_sectionTable(SgAsmNESectionTable* const&);
 
 public:
-    SgAsmNENameTable* const& get_resname_table() const;
-    void set_resname_table(SgAsmNENameTable* const&);
+    SgAsmNENameTable* const& get_residentNameTable() const;
+    void set_residentNameTable(SgAsmNENameTable* const&);
 
 public:
-    SgAsmNENameTable* const& get_nonresname_table() const;
-    void set_nonresname_table(SgAsmNENameTable* const&);
+    SgAsmNENameTable* const& get_nonresidentNameTable() const;
+    void set_nonresidentNameTable(SgAsmNENameTable* const&);
 
 public:
-    SgAsmNEModuleTable* const& get_module_table() const;
-    void set_module_table(SgAsmNEModuleTable* const&);
+    SgAsmNEModuleTable* const& get_moduleTable() const;
+    void set_moduleTable(SgAsmNEModuleTable* const&);
 
 public:
-    SgAsmNEEntryTable* const& get_entry_table() const;
-    void set_entry_table(SgAsmNEEntryTable* const&);
+    SgAsmNEEntryTable* const& get_entryTable() const;
+    void set_entryTable(SgAsmNEEntryTable* const&);
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     SgAsmNEFileHeader(SgAsmGenericFile *f, rose_addr_t offset);
 
-    static bool is_NE (SgAsmGenericFile*);
+    static bool isNe (SgAsmGenericFile*);
     static SgAsmNEFileHeader *parse(SgAsmDOSFileHeader*);
     virtual void unparse(std::ostream&) const override;
-    virtual const char *format_name() const override {return "NE";}
+    virtual const char *formatName() const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
 private:
     void *encode(SgAsmNEFileHeader::NEFileHeader_disk*) const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmDOSExtendedHeader* get_dos2_header() const ROSE_DEPRECATED("use get_dos2Header");
+    void set_dos2_header(SgAsmDOSExtendedHeader*) ROSE_DEPRECATED("use set_dos2Header");
+    SgAsmNESectionTable* get_section_table() const ROSE_DEPRECATED("use get_sectionTable");
+    void set_section_table(SgAsmNESectionTable*) ROSE_DEPRECATED("use set_sectionTable");
+    SgAsmNENameTable* get_resname_table() const ROSE_DEPRECATED("use get_residentNameTable");
+    void set_resname_table(SgAsmNENameTable*) ROSE_DEPRECATED("use set_residentNameTable");
+    SgAsmNENameTable* get_nonresname_table() const ROSE_DEPRECATED("use get_nonresidentNameTable");
+    void set_nonresname_table(SgAsmNENameTable*) ROSE_DEPRECATED("use set_nonresidentNameTable");
+    SgAsmNEModuleTable* get_module_table() const ROSE_DEPRECATED("use get_moduleTable");
+    void set_module_table(SgAsmNEModuleTable*) ROSE_DEPRECATED("use set_moduleTable");
+    SgAsmNEEntryTable* get_entry_table() const ROSE_DEPRECATED("use get_entryTable");
+    void set_entry_table(SgAsmNEEntryTable*) ROSE_DEPRECATED("use set_entryTable");
+    static bool is_NE (SgAsmGenericFile*) ROSE_DEPRECATED("use isNe");
+    virtual const char *format_name() const override ROSE_DEPRECATED("use formatName");
 public:
     /** Destructor. */
     virtual ~SgAsmNEFileHeader();
@@ -6515,13 +6689,13 @@ class SgAsmNEEntryPoint: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmNEEntryPoint.setDataPrototype(
-        "unsigned", "section_idx", "= 0",
+        "unsigned", "sectionIndex", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmNEEntryPoint.setDataPrototype(
-        "unsigned", "section_offset", "= 0",
+        "unsigned", "sectionOffset", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -6539,8 +6713,8 @@ private:
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_flags);
         s & BOOST_SERIALIZATION_NVP(p_int3f);
-        s & BOOST_SERIALIZATION_NVP(p_section_idx);
-        s & BOOST_SERIALIZATION_NVP(p_section_offset);
+        s & BOOST_SERIALIZATION_NVP(p_sectionIndex);
+        s & BOOST_SERIALIZATION_NVP(p_sectionOffset);
         debugSerializationEnd("SgAsmNEEntryPoint");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -6567,18 +6741,27 @@ public:
     void set_int3f(unsigned const&);
 
 public:
-    unsigned const& get_section_idx() const;
-    void set_section_idx(unsigned const&);
+    unsigned const& get_sectionIndex() const;
+    void set_sectionIndex(unsigned const&);
 
 public:
-    unsigned const& get_section_offset() const;
-    void set_section_offset(unsigned const&);
+    unsigned const& get_sectionOffset() const;
+    void set_sectionOffset(unsigned const&);
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     SgAsmNEEntryPoint(SgAsmNEEntryPoint::NEEntryFlags flags, unsigned int3f, unsigned s_idx, unsigned s_off);
     void dump(FILE*, const char *prefix, ssize_t idx) const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    unsigned get_section_idx() const ROSE_DEPRECATED("use get_sectionIndex");
+    void set_section_idx(unsigned) ROSE_DEPRECATED("use set_sectionIndex");
+    unsigned get_section_offset() const ROSE_DEPRECATED("use get_sectionOffset");
+    void set_section_offset(unsigned) ROSE_DEPRECATED("use set_sectionOffset");
 public:
     /** Destructor. */
     virtual ~SgAsmNEEntryPoint();
@@ -6957,13 +7140,13 @@ class SgAsmLESectionTableEntry: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmLESectionTableEntry.setDataPrototype(
-        "unsigned", "pagemap_index", "= 0",
+        "unsigned", "pageMapIndex", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmLESectionTableEntry.setDataPrototype(
-        "unsigned", "pagemap_nentries", "= 0",
+        "unsigned", "pageMapNEntries", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -6975,13 +7158,13 @@ class SgAsmLESectionTableEntry: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmLESectionTableEntry.setDataPrototype(
-        "rose_addr_t", "mapped_size", "= 0",
+        "rose_addr_t", "mappedSize", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmLESectionTableEntry.setDataPrototype(
-        "rose_addr_t", "base_addr", "= 0",
+        "rose_addr_t", "baseAddr", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -6998,11 +7181,11 @@ private:
         debugSerializationBegin("SgAsmLESectionTableEntry");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_flags);
-        s & BOOST_SERIALIZATION_NVP(p_pagemap_index);
-        s & BOOST_SERIALIZATION_NVP(p_pagemap_nentries);
+        s & BOOST_SERIALIZATION_NVP(p_pageMapIndex);
+        s & BOOST_SERIALIZATION_NVP(p_pageMapNEntries);
         s & BOOST_SERIALIZATION_NVP(p_res1);
-        s & BOOST_SERIALIZATION_NVP(p_mapped_size);
-        s & BOOST_SERIALIZATION_NVP(p_base_addr);
+        s & BOOST_SERIALIZATION_NVP(p_mappedSize);
+        s & BOOST_SERIALIZATION_NVP(p_baseAddr);
         debugSerializationEnd("SgAsmLESectionTableEntry");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -7072,24 +7255,24 @@ public:
     void set_flags(unsigned const&);
 
 public:
-    unsigned const& get_pagemap_index() const;
-    void set_pagemap_index(unsigned const&);
+    unsigned const& get_pageMapIndex() const;
+    void set_pageMapIndex(unsigned const&);
 
 public:
-    unsigned const& get_pagemap_nentries() const;
-    void set_pagemap_nentries(unsigned const&);
+    unsigned const& get_pageMapNEntries() const;
+    void set_pageMapNEntries(unsigned const&);
 
 public:
     unsigned const& get_res1() const;
     void set_res1(unsigned const&);
 
 public:
-    rose_addr_t const& get_mapped_size() const;
-    void set_mapped_size(rose_addr_t const&);
+    rose_addr_t const& get_mappedSize() const;
+    void set_mappedSize(rose_addr_t const&);
 
 public:
-    rose_addr_t const& get_base_addr() const;
-    void set_base_addr(rose_addr_t const&);
+    rose_addr_t const& get_baseAddr() const;
+    void set_baseAddr(rose_addr_t const&);
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -7098,6 +7281,19 @@ public:
                              const SgAsmLESectionTableEntry::LESectionTableEntry_disk *disk);
     void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmLESectionTableEntry::LESectionTableEntry_disk*) const;
     virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    unsigned get_pagemap_index() const ROSE_DEPRECATED("use get pageMapIndex");
+    void set_pagemap_index(unsigned) ROSE_DEPRECATED("use set_pageMapIndex");
+    unsigned get_pagemap_nentries() const ROSE_DEPRECATED("use get_pageMapNEntries");
+    void set_pagemap_nentries(unsigned) ROSE_DEPRECATED("use set_pageMapNEntries");
+    rose_addr_t get_mapped_size() const ROSE_DEPRECATED("use get_mappedSize");
+    void set_mapped_size(rose_addr_t) ROSE_DEPRECATED("use set_mappedSize");
+    rose_addr_t get_base_addr() const ROSE_DEPRECATED("use get_baseAddr");
+    void set_base_addr(rose_addr_t) ROSE_DEPRECATED("use set_baseAddr");
 public:
     /** Destructor. */
     virtual ~SgAsmLESectionTableEntry();
@@ -7133,7 +7329,7 @@ class SgAsmLESection: public SgAsmGenericSection {
 
 #ifndef DOCUMENTATION
     AsmLESection.setDataPrototype(
-        "SgAsmLESectionTableEntry*", "st_entry", "= NULL",
+        "SgAsmLESectionTableEntry*", "sectionTableEntry", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -7149,17 +7345,24 @@ private:
     void serialize(S &s, const unsigned /*version*/) {
         debugSerializationBegin("SgAsmLESection");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
-        s & BOOST_SERIALIZATION_NVP(p_st_entry);
+        s & BOOST_SERIALIZATION_NVP(p_sectionTableEntry);
         debugSerializationEnd("SgAsmLESection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    SgAsmLESectionTableEntry* const& get_st_entry() const;
-    void set_st_entry(SgAsmLESectionTableEntry* const&);
+    SgAsmLESectionTableEntry* const& get_sectionTableEntry() const;
+    void set_sectionTableEntry(SgAsmLESectionTableEntry* const&);
 public:
     explicit SgAsmLESection(SgAsmLEFileHeader*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmLESectionTableEntry* get_st_entry() const ROSE_DEPRECATED("use get_sectionTableEntry");
+    void set_st_entry(SgAsmLESectionTableEntry*) ROSE_DEPRECATED("use set_sectionTableEntry");
 public:
     /** Destructor. */
     virtual ~SgAsmLESection();
@@ -7797,43 +8000,43 @@ class SgAsmLEFileHeader: public SgAsmGenericHeader {
 
 #ifndef DOCUMENTATION
     AsmLEFileHeader.setDataPrototype(
-        "SgAsmDOSExtendedHeader*", "dos2_header", "= nullptr",
+        "SgAsmDOSExtendedHeader*", "dos2Header", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmLEFileHeader.setDataPrototype(
-        "SgAsmLESectionTable*", "section_table", "= nullptr",
+        "SgAsmLESectionTable*", "sectionTable", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmLEFileHeader.setDataPrototype(
-        "SgAsmLEPageTable*", "page_table", "= nullptr",
+        "SgAsmLEPageTable*", "pageTable", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmLEFileHeader.setDataPrototype(
-        "SgAsmLENameTable*", "resname_table", "= nullptr",
+        "SgAsmLENameTable*", "residentNameTable", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmLEFileHeader.setDataPrototype(
-        "SgAsmLENameTable*", "nonresname_table", "= nullptr",
+        "SgAsmLENameTable*", "nonresidentNameTable", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmLEFileHeader.setDataPrototype(
-        "SgAsmLEEntryTable*", "entry_table", "= nullptr",
+        "SgAsmLEEntryTable*", "entryTable", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmLEFileHeader.setDataPrototype(
-        "SgAsmLERelocTable*", "reloc_table", "= nullptr",
+        "SgAsmLERelocTable*", "relocationTable", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -7895,13 +8098,13 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_e_data_pages_offset);
         s & BOOST_SERIALIZATION_NVP(p_e_nonresnametab_offset);
         s & BOOST_SERIALIZATION_NVP(p_e_debug_info_rfo);
-        s & BOOST_SERIALIZATION_NVP(p_dos2_header);
-        s & BOOST_SERIALIZATION_NVP(p_section_table);
-        s & BOOST_SERIALIZATION_NVP(p_page_table);
-        s & BOOST_SERIALIZATION_NVP(p_resname_table);
-        s & BOOST_SERIALIZATION_NVP(p_nonresname_table);
-        s & BOOST_SERIALIZATION_NVP(p_entry_table);
-        s & BOOST_SERIALIZATION_NVP(p_reloc_table);
+        s & BOOST_SERIALIZATION_NVP(p_dos2Header);
+        s & BOOST_SERIALIZATION_NVP(p_sectionTable);
+        s & BOOST_SERIALIZATION_NVP(p_pageTable);
+        s & BOOST_SERIALIZATION_NVP(p_residentNameTable);
+        s & BOOST_SERIALIZATION_NVP(p_nonresidentNameTable);
+        s & BOOST_SERIALIZATION_NVP(p_entryTable);
+        s & BOOST_SERIALIZATION_NVP(p_relocationTable);
         debugSerializationEnd("SgAsmLEFileHeader");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -8179,32 +8382,32 @@ public:
     void set_e_debug_info_rfo(rose_addr_t const&);
 
 public:
-    SgAsmDOSExtendedHeader* const& get_dos2_header() const;
-    void set_dos2_header(SgAsmDOSExtendedHeader* const&);
+    SgAsmDOSExtendedHeader* const& get_dos2Header() const;
+    void set_dos2Header(SgAsmDOSExtendedHeader* const&);
 
 public:
-    SgAsmLESectionTable* const& get_section_table() const;
-    void set_section_table(SgAsmLESectionTable* const&);
+    SgAsmLESectionTable* const& get_sectionTable() const;
+    void set_sectionTable(SgAsmLESectionTable* const&);
 
 public:
-    SgAsmLEPageTable* const& get_page_table() const;
-    void set_page_table(SgAsmLEPageTable* const&);
+    SgAsmLEPageTable* const& get_pageTable() const;
+    void set_pageTable(SgAsmLEPageTable* const&);
 
 public:
-    SgAsmLENameTable* const& get_resname_table() const;
-    void set_resname_table(SgAsmLENameTable* const&);
+    SgAsmLENameTable* const& get_residentNameTable() const;
+    void set_residentNameTable(SgAsmLENameTable* const&);
 
 public:
-    SgAsmLENameTable* const& get_nonresname_table() const;
-    void set_nonresname_table(SgAsmLENameTable* const&);
+    SgAsmLENameTable* const& get_nonresidentNameTable() const;
+    void set_nonresidentNameTable(SgAsmLENameTable* const&);
 
 public:
-    SgAsmLEEntryTable* const& get_entry_table() const;
-    void set_entry_table(SgAsmLEEntryTable* const&);
+    SgAsmLEEntryTable* const& get_entryTable() const;
+    void set_entryTable(SgAsmLEEntryTable* const&);
 
 public:
-    SgAsmLERelocTable* const& get_reloc_table() const;
-    void set_reloc_table(SgAsmLERelocTable* const&);
+    SgAsmLERelocTable* const& get_relocationTable() const;
+    void set_relocationTable(SgAsmLERelocTable* const&);
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -8214,13 +8417,34 @@ public:
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
     // Overloaded base class virtual function
-    const char *format_name() const override;
+    const char *formatName() const override;
 
-    static bool is_LE (SgAsmGenericFile*);
+    static bool isLe (SgAsmGenericFile*);
     static SgAsmLEFileHeader *parse(SgAsmDOSFileHeader*);
 
 private:
     void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex, SgAsmLEFileHeader::LEFileHeader_disk*) const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmDOSExtendedHeader* get_dos2_header() const ROSE_DEPRECATED("use get_dos2Header");
+    void set_dos2_header(SgAsmDOSExtendedHeader*) ROSE_DEPRECATED("use set_dos2Header");
+    SgAsmLESectionTable* get_section_table() const ROSE_DEPRECATED("use get_sectionTable");
+    void set_section_table(SgAsmLESectionTable*) ROSE_DEPRECATED("use set_sectionTable");
+    SgAsmLEPageTable* get_page_table() const ROSE_DEPRECATED("use get_pageTable");
+    void set_page_table(SgAsmLEPageTable*) ROSE_DEPRECATED("use set_pageTable");
+    SgAsmLENameTable* get_resname_table() const ROSE_DEPRECATED("use get_residentNameTable");
+    void set_resname_table(SgAsmLENameTable*) ROSE_DEPRECATED("use set_residentNameTable");
+    SgAsmLENameTable* get_nonresname_table() const ROSE_DEPRECATED("use get_nonresidentNameTable");
+    void set_nonresname_table(SgAsmLENameTable*) ROSE_DEPRECATED("use set_nonresidentNameTable");
+    SgAsmLEEntryTable* get_entry_table() const ROSE_DEPRECATED("use get_entryTable");
+    void set_entry_table(SgAsmLEEntryTable*) ROSE_DEPRECATED("use set_entryTable");
+    SgAsmLERelocTable* get_reloc_table() const ROSE_DEPRECATED("use get_relocationTable");
+    void set_reloc_table(SgAsmLERelocTable*) ROSE_DEPRECATED("use set_relocationTable");
+    const char *format_name() const override ROSE_DEPRECATED("use formatName");
+    static bool is_LE (SgAsmGenericFile*) ROSE_DEPRECATED("use isLe");
 public:
     /** Destructor. */
     virtual ~SgAsmLEFileHeader();
@@ -12456,7 +12680,7 @@ class SgAsmInterpretation: public SgAsmNode {
 
 #ifndef DOCUMENTATION
     AsmInterpretation.setDataPrototype(
-        "SgAsmBlock*", "global_block", "= nullptr",
+        "SgAsmBlock*", "globalBlock", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -12485,7 +12709,7 @@ private:
         debugSerializationBegin("SgAsmInterpretation");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
         s & BOOST_SERIALIZATION_NVP(p_headers);
-        s & BOOST_SERIALIZATION_NVP(p_global_block);
+        s & BOOST_SERIALIZATION_NVP(p_globalBlock);
         s & BOOST_SERIALIZATION_NVP(p_map);
         s & BOOST_SERIALIZATION_NVP(instruction_map);
         s & BOOST_SERIALIZATION_NVP(p_coverageComputed);
@@ -12513,8 +12737,8 @@ public:
      *  The global block is the top of the AST for this interpretation's functions, basic blocks, and instructions. 
      *  
      *  @{ */
-    SgAsmBlock* const& get_global_block() const;
-    void set_global_block(SgAsmBlock* const&);
+    SgAsmBlock* const& get_globalBlock() const;
+    void set_globalBlock(SgAsmBlock* const&);
     /** @} */
     // ROSETTA doesn't understand this type, but we want this treated like a property whose data member name is "p_map"
     // and which has automatically generator accessors and mutators named "get_map" and "set_map" and is serialized.
@@ -12545,8 +12769,8 @@ public:
      *  @{ */
          // cached instruction map
 
-    InstructionMap& get_instruction_map(bool recompute = false);
-    void set_instruction_map(const InstructionMap&);
+    InstructionMap& get_instructionMap(bool recompute = false);
+    void set_instructionMap(const InstructionMap&);
     /** @} */
 public:
     /** Property: code coverage percent.
@@ -12581,13 +12805,24 @@ public:
      *
      *  This function traverses the AST rooted at the @ref get_global_block "global_block" and inserts each encountered
      *  instruction into the provided @ref InstructionMap based on its starting virtual address. */
-    void insert_instructions(InstructionMap&/*in,out*/);
+    void insertInstructions(InstructionMap&/*in,out*/);
 
     /** Erase instructions from a map.
      *
      *  This function traverses the AST rooted at the @ref get_global_block "global_block" and erases each encountered
      *  instruction from the provided @ref InstructionMap based on its starting virtual address. */
-    void erase_instructions(InstructionMap&/*in,out*/);
+    void eraseInstructions(InstructionMap&/*in,out*/);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmBlock* get_global_block() const ROSE_DEPRECATED("use get_globalBlock");
+    void set_global_block(SgAsmBlock*) ROSE_DEPRECATED("use set_globalBlock");
+    InstructionMap& get_instruction_map(bool=false) ROSE_DEPRECATED("use get_instructionMap");
+    void set_instruction_map(const InstructionMap&) ROSE_DEPRECATED("use set_instructionMap");
+    void insert_instructions(InstructionMap&) ROSE_DEPRECATED("use insertInstructions");
+    void erase_instructions(InstructionMap&) ROSE_DEPRECATED("use eraseInstructions");
 public:
     /** Destructor. */
     virtual ~SgAsmInterpretation();
@@ -13317,7 +13552,7 @@ class SgAsmGenericFormat: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmGenericFormat.setDataPrototype(
-        "bool", "is_current_version", "= false",
+        "bool", "isCurrentVersion", "= false",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -13329,13 +13564,13 @@ class SgAsmGenericFormat: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmGenericFormat.setDataPrototype(
-        "unsigned", "abi_version", "= 0",
+        "unsigned", "abiVersion", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmGenericFormat.setDataPrototype(
-        "size_t", "word_size", "= 0",
+        "size_t", "wordSize", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -13355,10 +13590,10 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_purpose);
         s & BOOST_SERIALIZATION_NVP(p_sex);
         s & BOOST_SERIALIZATION_NVP(p_version);
-        s & BOOST_SERIALIZATION_NVP(p_is_current_version);
+        s & BOOST_SERIALIZATION_NVP(p_isCurrentVersion);
         s & BOOST_SERIALIZATION_NVP(p_abi);
-        s & BOOST_SERIALIZATION_NVP(p_abi_version);
-        s & BOOST_SERIALIZATION_NVP(p_word_size);
+        s & BOOST_SERIALIZATION_NVP(p_abiVersion);
+        s & BOOST_SERIALIZATION_NVP(p_wordSize);
         debugSerializationEnd("SgAsmGenericFormat");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -13402,8 +13637,8 @@ public:
      *  format. 
      *  
      *  @{ */
-    bool const& get_is_current_version() const;
-    void set_is_current_version(bool const&);
+    bool const& get_isCurrentVersion() const;
+    void set_isCurrentVersion(bool const&);
     /** @} */
 
 public:
@@ -13418,20 +13653,31 @@ public:
     /** Property: Application binary interface version. 
      * 
      * @{ */
-    unsigned const& get_abi_version() const;
-    void set_abi_version(unsigned const&);
+    unsigned const& get_abiVersion() const;
+    void set_abiVersion(unsigned const&);
     /** @} */
 
 public:
     /** Property: Natural word size in bytes. 
      * 
      * @{ */
-    size_t const& get_word_size() const;
-    void set_word_size(size_t const&);
+    size_t const& get_wordSize() const;
+    void set_wordSize(size_t const&);
     /** @} */
 public:
     /** Print some debugging info. */
     void dump(FILE*, const char *prefix, ssize_t idx) const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    bool get_is_current_version() const ROSE_DEPRECATED("use get_isCurrentVersion");
+    void set_is_current_version(bool) ROSE_DEPRECATED("use set_isCurrentVersion");
+    unsigned get_abi_version() const ROSE_DEPRECATED("use get_abiVersion");
+    void set_abi_version(unsigned) ROSE_DEPRECATED("use set_abiVersion");
+    size_t get_word_size() const ROSE_DEPRECATED("use get_wordSize");
+    void set_word_size(size_t) ROSE_DEPRECATED("use set_wordSize");
 public:
     /** Destructor. */
     virtual ~SgAsmGenericFormat();
@@ -13544,7 +13790,7 @@ class SgAsmGenericFile: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmGenericFile.setDataPrototype(
-        "SgAsmDwarfCompilationUnitList*", "dwarf_info", "= nullptr",
+        "SgAsmDwarfCompilationUnitList*", "dwarfInfo", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -13586,19 +13832,19 @@ class SgAsmGenericFile: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmGenericFile.setDataPrototype(
-        "bool", "truncate_zeros", "= false",
+        "bool", "truncateZeros", "= false",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmGenericFile.setDataPrototype(
-        "bool", "tracking_references", "= true",
+        "bool", "trackingReferences", "= true",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmGenericFile.setDataPrototype(
-        "AddressIntervalSet", "referenced_extents", "",
+        "AddressIntervalSet", "referencedExtents", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -13620,15 +13866,15 @@ private:
     void serialize(S &s, const unsigned /*version*/) {
         debugSerializationBegin("SgAsmGenericFile");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
-        s & BOOST_SERIALIZATION_NVP(p_dwarf_info);
+        s & BOOST_SERIALIZATION_NVP(p_dwarfInfo);
         s & BOOST_SERIALIZATION_NVP(p_name);
         s & BOOST_SERIALIZATION_NVP(p_sb);
         s & BOOST_SERIALIZATION_NVP(p_data);
         s & BOOST_SERIALIZATION_NVP(p_headers);
         s & BOOST_SERIALIZATION_NVP(p_holes);
-        s & BOOST_SERIALIZATION_NVP(p_truncate_zeros);
-        s & BOOST_SERIALIZATION_NVP(p_tracking_references);
-        s & BOOST_SERIALIZATION_NVP(p_referenced_extents);
+        s & BOOST_SERIALIZATION_NVP(p_truncateZeros);
+        s & BOOST_SERIALIZATION_NVP(p_trackingReferences);
+        s & BOOST_SERIALIZATION_NVP(p_referencedExtents);
         s & BOOST_SERIALIZATION_NVP(p_neuter);
         debugSerializationEnd("SgAsmGenericFile");
     }
@@ -13658,8 +13904,8 @@ public:
     /** Property: DWARF debugging hiearchy. 
      * 
      * @{ */
-    SgAsmDwarfCompilationUnitList* const& get_dwarf_info() const;
-    void set_dwarf_info(SgAsmDwarfCompilationUnitList* const&);
+    SgAsmDwarfCompilationUnitList* const& get_dwarfInfo() const;
+    void set_dwarfInfo(SgAsmDwarfCompilationUnitList* const&);
     /** @} */
 
 public:
@@ -13716,24 +13962,24 @@ public:
     /** Property: Whether to truncate zeros on writes. 
      * 
      * @{ */
-    bool const& get_truncate_zeros() const;
-    void set_truncate_zeros(bool const&);
+    bool const& get_truncateZeros() const;
+    void set_truncateZeros(bool const&);
     /** @} */
 
 public:
     /** Property: Whether to track referenced areas during parsing. 
      * 
      * @{ */
-    bool const& get_tracking_references() const;
-    void set_tracking_references(bool const&);
+    bool const& get_trackingReferences() const;
+    void set_trackingReferences(bool const&);
     /** @} */
 
 public:
     /** Property: Addresses referenced during parsing. 
      * 
      * @{ */
-    AddressIntervalSet const& get_referenced_extents() const;
-    void set_referenced_extents(AddressIntervalSet const&);
+    AddressIntervalSet const& get_referencedExtents() const;
+    void set_referencedExtents(AddressIntervalSet const&);
     /** @} */
 
 public:
@@ -13769,7 +14015,7 @@ public:
     void unparse(std::ostream&) const;
 
     /** Extend the output file by writing the last byte if it hasn't been written yet. */
-    void extend_to_eof(std::ostream&) const;
+    void extendToEof(std::ostream&) const;
 
     /** Print basic info about the sections of a file. */
     void dump(FILE*) const;
@@ -13780,31 +14026,31 @@ public:
      *  the binary file (the default is to create the file in the current working directory).  If @p ext is non-null then
      *  these characters are added to the end of the binary file name. The default null pointer causes the string ".dump"
      *  to be appended to the file name. */
-    void dump_all(bool in_cwd=true, const char *ext=NULL);
+    void dumpAll(bool in_cwd=true, const char *ext=NULL);
 
     /** Print text file containing all known information about a binary file. */
-    void dump_all(const std::string& dumpname);
+    void dumpAll(const std::string& dumpname);
 
     /** Returns the parts of the file that have never been referenced. */
-    const AddressIntervalSet& get_unreferenced_extents() const;
+    const AddressIntervalSet& get_unreferencedExtents() const;
 
     /** Marks part of a file as having been referenced if tracking references. */
-    void mark_referenced_extent(rose_addr_t start_rva, rose_addr_t size);
+    void markReferencedExtent(rose_addr_t start_rva, rose_addr_t size);
 
     /** Property: Data converter.
      *
      *  Function to encode/decode data as it's transferred to/from disk.  The default is to do no transformation.
      *
      * @{ */
-    void set_data_converter(DataConverter* dc) {p_data_converter=dc;}
-    DataConverter* get_data_converter() const {return p_data_converter;}
+    DataConverter* get_dataConverter() const;
+    void set_dataConverter(DataConverter*);
     /** @} */
 
     /** Returns current size of file based on section with highest ending address. */
-    rose_addr_t get_current_size() const;
+    rose_addr_t get_currentSize() const;
 
     /** Returns original size of file, based on file system. */
-    rose_addr_t get_orig_size() const;
+    rose_addr_t get_originalSize() const;
 
     /** Reads data from a file.
      *
@@ -13813,7 +14059,7 @@ public:
      *  is less than @p size then one of two things happen: if @p strict is true then an @ref
      *  SgAsmExecutableFileFormat::ShortRead exception is thrown; otherwise @p dst_buf is zero padded so that exactly @p
      *  size bytes are always initialized. */
-    size_t read_content(rose_addr_t offset, void *dst_buf, rose_addr_t size, bool strict=true);
+    size_t readContent(rose_addr_t offset, void *dst_buf, rose_addr_t size, bool strict=true);
 
     /** Reads data from a file.
      *
@@ -13822,8 +14068,8 @@ public:
      *  mapped we stop reading and do one of two things: if @p strict is set then a @ref MemoryMap::NotMapped exception is
      *  thrown; otherwise the rest of the @p dst_buf is zero filled and the number of bytes read (not filled) is
      *  returned. */
-    size_t read_content(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t va, void *dst_buf,
-                        rose_addr_t size, bool strict=true);
+    size_t readContent(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t va, void *dst_buf,
+                       rose_addr_t size, bool strict=true);
 
     /** Reads a string from a file.
      *
@@ -13832,7 +14078,7 @@ public:
      *  mapped. If we reach an address which is not mapped then one of two things happen: if @p strict is set then a @ref
      *  MemoryMap::NotMapped exception is thrown; otherwise the string is simply terminated. The returned string does not
      *  include the NUL byte. */
-    std::string read_content_str(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t va, bool strict=true);
+    std::string readContentString(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t va, bool strict=true);
 
     /** Reads a string from a file.
      *
@@ -13841,7 +14087,7 @@ public:
      *  file offset. If we reach an invalid file offset one of two things happen: if @p strict is set (the default) then an
      *  @ref SgAsmExecutableFileFormat::ShortRead exception is thrown; otherwise the string is simply terminated. The
      *  returned string does not include the NUL byte. */
-    std::string read_content_str(rose_addr_t abs_offset, bool strict=true);
+    std::string readContentString(rose_addr_t abs_offset, bool strict=true);
 
     /** Property: Entire file contents. */
     const SgFileContentList& content() { return p_data; }
@@ -13855,72 +14101,72 @@ public:
     SgFileContentList content(rose_addr_t offset, rose_addr_t size);
 
     /** Returns list of all sections in the file that are memory mapped, including headers and holes. */
-    SgAsmGenericSectionPtrList get_mapped_sections() const;
+    SgAsmGenericSectionPtrList get_mappedSections() const;
 
     /** Returns list of all sections in the file (including headers, holes, etc). */
     SgAsmGenericSectionPtrList get_sections(bool include_holes=true) const;
 
     /** Returns sections having specified ID across all headers, including headers and holes. */
-    SgAsmGenericSectionPtrList get_sections_by_id(int id) const;
+    SgAsmGenericSectionPtrList get_sectionsById(int id) const;
 
     /** Returns all sections having specified name across all headers, including headers and holes. */
-    SgAsmGenericSectionPtrList get_sections_by_name(std::string, char sep='\0') const;
+    SgAsmGenericSectionPtrList get_sectionsByName(std::string, char sep='\0') const;
 
     /** Find sections by their offset.
      *
      *  Returns all sections that contain all of the specified portion of the file across all headers, including headers
      *  and holes. */
-    SgAsmGenericSectionPtrList get_sections_by_offset(rose_addr_t offset, rose_addr_t size) const;
+    SgAsmGenericSectionPtrList get_sectionsByOffset(rose_addr_t offset, rose_addr_t size) const;
 
     /** Find sections by address.
      *
      *  Returns all sections that are mapped to include the specified relative virtual address across all headers,
      *  including headers and holes. This uses the preferred mapping of the section rather than the actual mapping. */
-    SgAsmGenericSectionPtrList get_sections_by_rva(rose_addr_t rva) const;
+    SgAsmGenericSectionPtrList get_sectionsByRva(rose_addr_t rva) const;
 
     /** Find sections by address.
      *
      *  Returns all sections that are mapped to include the specified virtual address across all headers, including headers
      *  and holes. This uses the preferred mapping rather than the actual mapping. */
-    SgAsmGenericSectionPtrList get_sections_by_va(rose_addr_t va) const;
+    SgAsmGenericSectionPtrList get_sectionsByVa(rose_addr_t va) const;
 
     /** Find section with specified ID.
      *
      *  Returns the pointer to section with the specified ID across all headers only if there's exactly one match. Headers
      *  and holes are included in the results. */
-    SgAsmGenericSection *get_section_by_id(int id, size_t *nfound=0) const;
+    SgAsmGenericSection *get_sectionById(int id, size_t *nfound=0) const;
 
     /** Find section by name.
      *
      *  Returns pointer to the section with the specified name, or NULL if there isn't exactly one match. Any characters in
      *  the name after the first occurrence of SEP are ignored (default is NUL). For instance, if sep=='$' then the
      *  following names are all equivalent: .idata, .idata$, and .idata$1 */
-    SgAsmGenericSection *get_section_by_name(const std::string&, char sep=0, size_t *nfound=0) const;
+    SgAsmGenericSection *get_sectionByName(const std::string&, char sep=0, size_t *nfound=0) const;
 
     /** Find section by file offset.
      *
      *  Returns single section that contains all of the specified portion of the file across all headers, including headers
      *  and holes. */
-    SgAsmGenericSection *get_section_by_offset(rose_addr_t offset, rose_addr_t size, size_t *nfound=0) const;
+    SgAsmGenericSection *get_sectionByOffset(rose_addr_t offset, rose_addr_t size, size_t *nfound=0) const;
 
     /** Find section by address.
      *
      *  Returns single section that is mapped to include the specified relative virtual file address across all headers,
      *  including headers and holes. */
-    SgAsmGenericSection *get_section_by_rva(rose_addr_t rva, size_t *nfound=0) const;
+    SgAsmGenericSection *get_sectionByRva(rose_addr_t rva, size_t *nfound=0) const;
 
     /** Find section by address.
      *
      *  Returns single section that is mapped to include the specified virtual address across all headers. See also
      *  @ref get_best_section_by_va. */
-    SgAsmGenericSection *get_section_by_va(rose_addr_t va, size_t *nfound=0) const;
+    SgAsmGenericSection *get_sectionByVa(rose_addr_t va, size_t *nfound=0) const;
 
     /** Find section by address.
      *
      *  Similar to @ref get_section_by_va except when more than one section contains the specified virtual address this
      *  choose the "best" one. All candidates must map the virtual address to the same file address or else we fail (return
      *  null and number of candidates). See @ref best_section_by_va for definition of "best". */
-    SgAsmGenericSection *get_best_section_by_va(rose_addr_t va, size_t *nfound=0) const;
+    SgAsmGenericSection *get_bestSectionByVa(rose_addr_t va, size_t *nfound=0) const;
 
     /** Definition for "best".
      *
@@ -13932,7 +14178,7 @@ public:
      *  don't have names.  If more than one section remains, return the section that is earliest in the specified list of
      *  sections.  Return the null pointer if no section contains the specified virtual address, or if any two sections
      *  that contain the virtual address map it to different parts of the underlying binary file. */
-    static SgAsmGenericSection *best_section_by_va(const SgAsmGenericSectionPtrList &sections, rose_addr_t va);
+    static SgAsmGenericSection *bestSectionByVa(const SgAsmGenericSectionPtrList &sections, rose_addr_t va);
 
     /** Moves and enlarges a section.
      *
@@ -13973,45 +14219,43 @@ public:
      *  space).
      *
      * @{ */
-    void shift_extend(SgAsmGenericSection*, rose_addr_t sa, rose_addr_t sn, AddressSpace, Elasticity);
-    void shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr_t sn) {
-        shift_extend(s, sa, sn, ADDRSP_ALL, ELASTIC_UNREF);
-    }
+    void shiftExtend(SgAsmGenericSection*, rose_addr_t sa, rose_addr_t sn, AddressSpace, Elasticity);
+    void shiftExtend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr_t sn);
     /** @} */
 
     /** File offset of next section.
      *
      *  Given a file address, return the file offset of the following section.  If there is no following section then
      *  return an address of -1 (when signed) */
-    rose_addr_t get_next_section_offset(rose_addr_t offset);
+    rose_addr_t get_nextSectionOffset(rose_addr_t offset);
 
     /** Adds a new hole to the file.
      *
      *  This is called implicitly by the hole constructor. */
-    void add_hole(SgAsmGenericSection*);
+    void addHole(SgAsmGenericSection*);
 
     /** Removes a hole from the list of holes in a file. */
-    void remove_hole(SgAsmGenericSection*);
+    void removeHole(SgAsmGenericSection*);
 
     /** Find holes in file and create sections to fill them.
      *
      *  Synthesizes "hole" sections to describe the parts of the file that are not yet referenced by other sections.  Note
      *  that holes are used to represent parts of the original file data, before sections were modified by walking the AST
      *  (at this time it is not possible to create a hole outside the original file content). */
-    void fill_holes();
+    void fillHoles();
 
     /** Deletes "hole" sections.
      *
      *  Undoes what @ref fill_holes did. */
-    void unfill_holes();
+    void unfillHoles();
 
     /** Adds a new header to the file.
      *
      *  This is called implicitly by the header constructor */
-    void add_header(SgAsmGenericHeader*);
+    void addHeader(SgAsmGenericHeader*);
 
     /** Removes a header from the header list in a file. */
-    void remove_header(SgAsmGenericHeader*);
+    void removeHeader(SgAsmGenericHeader*);
 
     /** Returns the header for the specified format. */
     SgAsmGenericHeader *get_header(SgAsmExecutableFileFormat::ExecFamily);
@@ -14020,11 +14264,65 @@ public:
      *
      *  This uses the last header so that files like PE, NE, LE, LX, etc. which also have a DOS header report the format of
      *  the second (PE, etc.) header rather than the DOS header. */
-    const char *format_name() const;
+    const char *formatName() const;
 
 protected:
     // Some extra clean-up actions on destruction
     virtual void destructorHelper() override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmDwarfCompilationUnitList* get_dwarf_info() const ROSE_DEPRECATED("use get_dwarfInfo");
+    void set_dwarf_info(SgAsmDwarfCompilationUnitList*) ROSE_DEPRECATED("use set_dwarfInfo");
+    bool get_truncate_zeros() const ROSE_DEPRECATED("use get_truncateZeros");
+    void set_truncate_zeros(bool) ROSE_DEPRECATED("use set_truncateZeros");
+    bool get_tracking_references() const ROSE_DEPRECATED("use get_trackingReferences");
+    void set_tracking_references(bool) ROSE_DEPRECATED("use set_trackingReferences");
+    const AddressIntervalSet& get_referenced_extents() const ROSE_DEPRECATED("use get_referencedExtents");
+    void set_referenced_extents(const AddressIntervalSet&) ROSE_DEPRECATED("use set_referencedExtents");
+    void extend_to_eof(std::ostream&) const ROSE_DEPRECATED("use extendToEof");
+    void dump_all(bool in_cwd=true, const char *ext=NULL) ROSE_DEPRECATED("use dumpAll");
+    void dump_all(const std::string& dumpname) ROSE_DEPRECATED("use dumpAll");
+    const AddressIntervalSet& get_unreferenced_extents() const ROSE_DEPRECATED("use get_unreferencedExtents");
+    void mark_referenced_extent(rose_addr_t, rose_addr_t) ROSE_DEPRECATED("use markReferencedExtent");
+    DataConverter* get_data_converter() const ROSE_DEPRECATED("use get_dataConverter");
+    void set_data_converter(DataConverter*) ROSE_DEPRECATED("use set_dataConverter");
+    rose_addr_t get_current_size() const ROSE_DEPRECATED("use get_currentSize");
+    rose_addr_t get_orig_size() const ROSE_DEPRECATED("use get_originalSize");
+    size_t read_content(rose_addr_t, void*, rose_addr_t, bool=true) ROSE_DEPRECATED("use readContent");
+    size_t read_content(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t, void*, rose_addr_t, bool=true)
+        ROSE_DEPRECATED("use readContent");
+    std::string read_content_str(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t, bool=true)
+        ROSE_DEPRECATED("use readContentString");
+    std::string read_content_str(rose_addr_t, bool=true) ROSE_DEPRECATED("use readContentString");
+    SgAsmGenericSectionPtrList get_mapped_sections() const ROSE_DEPRECATED("use get_mappedSections");
+    SgAsmGenericSectionPtrList get_sections_by_id(int id) const ROSE_DEPRECATED("use get_sectionById");
+    SgAsmGenericSectionPtrList get_sections_by_name(std::string, char='\0') const ROSE_DEPRECATED("use get_sectionsByName");
+    SgAsmGenericSectionPtrList get_sections_by_offset(rose_addr_t, rose_addr_t) const ROSE_DEPRECATED("use get_sectionsByOffset");
+    SgAsmGenericSectionPtrList get_sections_by_rva(rose_addr_t) const ROSE_DEPRECATED("use get_sectionsByRva");
+    SgAsmGenericSectionPtrList get_sections_by_va(rose_addr_t) const ROSE_DEPRECATED("use get_sectionsByVa");
+    SgAsmGenericSection *get_section_by_id(int, size_t* = nullptr) const ROSE_DEPRECATED("use get_sectionById");
+    SgAsmGenericSection *get_section_by_name(const std::string&, char=0, size_t* = nullptr) const
+        ROSE_DEPRECATED("use get_sectionByName");
+    SgAsmGenericSection *get_section_by_offset(rose_addr_t, rose_addr_t, size_t* = nullptr) const
+        ROSE_DEPRECATED("use get_sectionByOffset");
+    SgAsmGenericSection *get_section_by_rva(rose_addr_t, size_t* = nullptr) const ROSE_DEPRECATED("use get_sectionByRva");
+    SgAsmGenericSection *get_section_by_va(rose_addr_t, size_t* = nullptr) const ROSE_DEPRECATED("use get_sectionByVa");
+    SgAsmGenericSection *get_best_section_by_va(rose_addr_t, size_t* = nullptr) const ROSE_DEPRECATED("use get_bestSectionByVa");
+    static SgAsmGenericSection *best_section_by_va(const SgAsmGenericSectionPtrList&, rose_addr_t)
+        ROSE_DEPRECATED("use bestSectionByVa");
+    void shift_extend(SgAsmGenericSection*, rose_addr_t, rose_addr_t, AddressSpace, Elasticity) ROSE_DEPRECATED("use shiftExtend");
+    void shift_extend(SgAsmGenericSection*, rose_addr_t, rose_addr_t) ROSE_DEPRECATED("use shiftExtend");
+    rose_addr_t get_next_section_offset(rose_addr_t) ROSE_DEPRECATED("use get_nextSectionOffset");
+    void add_hole(SgAsmGenericSection*) ROSE_DEPRECATED("use addHole");
+    void remove_hole(SgAsmGenericSection*) ROSE_DEPRECATED("use remoeHole");
+    void fill_holes() ROSE_DEPRECATED("use fillHoles");
+    void unfill_holes() ROSE_DEPRECATED("use unfillHoles");
+    void add_header(SgAsmGenericHeader*) ROSE_DEPRECATED("use addHeader");
+    void remove_header(SgAsmGenericHeader*) ROSE_DEPRECATED("use removeHeader");
+    const char *format_name() const ROSE_DEPRECATED("use formatName");
 public:
     /** Destructor. */
     virtual ~SgAsmGenericFile();
@@ -14180,9 +14478,13 @@ public:
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 
     /** Add a needed symbol to the import list for this DLL. */
-    void add_symbol(const std::string &s) {
-        p_symbols.push_back(s);
-    }
+    void addSymbol(const std::string&);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    void add_symbol(const std::string&) ROSE_DEPRECATED("use addSymbol");
 public:
     /** Destructor. */
     virtual ~SgAsmGenericDLL();
@@ -14251,19 +14553,19 @@ class SgAsmFunction: public SgAsmSynthesizedDeclaration {
 
 #ifndef DOCUMENTATION
     AsmFunction.setDataPrototype(
-        "SgAsmFunction::function_kind_enum", "function_kind", "= SgAsmFunction::e_unknown",
+        "SgAsmFunction::function_kind_enum", "functionKind", "= SgAsmFunction::e_unknown",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmFunction.setDataPrototype(
-        "SgAsmFunction::MayReturn", "may_return", "= SgAsmFunction::RET_UNKNOWN",
+        "SgAsmFunction::MayReturn", "mayReturn", "= SgAsmFunction::RET_UNKNOWN",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmFunction.setDataPrototype(
-        "std::string", "name_md5", "",
+        "std::string", "nameMd5", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -14281,19 +14583,19 @@ class SgAsmFunction: public SgAsmSynthesizedDeclaration {
 
 #ifndef DOCUMENTATION
     AsmFunction.setDataPrototype(
-        "rose_addr_t", "entry_va", "= 0",
+        "rose_addr_t", "entryVa", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmFunction.setDataPrototype(
-        "SgSymbolTable*", "symbol_table", "= nullptr",
+        "SgSymbolTable*", "symbolTable", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmFunction.setDataPrototype(
-        "size_t", "cached_vertex", "= (size_t)(-1)",
+        "size_t", "cachedVertex", "= (size_t)(-1)",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -14324,13 +14626,13 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_name);
         s & BOOST_SERIALIZATION_NVP(p_reason);
         s & BOOST_SERIALIZATION_NVP(p_reasonComment);
-        s & BOOST_SERIALIZATION_NVP(p_function_kind);
-        s & BOOST_SERIALIZATION_NVP(p_may_return);
-        s & BOOST_SERIALIZATION_NVP(p_name_md5);
+        s & BOOST_SERIALIZATION_NVP(p_functionKind);
+        s & BOOST_SERIALIZATION_NVP(p_mayReturn);
+        s & BOOST_SERIALIZATION_NVP(p_nameMd5);
         s & BOOST_SERIALIZATION_NVP(p_statementList);
         s & BOOST_SERIALIZATION_NVP(p_dest);
-        s & BOOST_SERIALIZATION_NVP(p_entry_va);
-        s & BOOST_SERIALIZATION_NVP(p_cached_vertex);
+        s & BOOST_SERIALIZATION_NVP(p_entryVa);
+        s & BOOST_SERIALIZATION_NVP(p_cachedVertex);
         s & BOOST_SERIALIZATION_NVP(p_stackDelta);
         s & BOOST_SERIALIZATION_NVP(p_callingConvention);
         debugSerializationEnd("SgAsmFunction");
@@ -14489,16 +14791,16 @@ public:
      *  This enum constant describes the kind of function. See @ref SgAsmFunction::function_kind_enum for details. 
      *  
      *  @{ */
-    SgAsmFunction::function_kind_enum const& get_function_kind() const;
-    void set_function_kind(SgAsmFunction::function_kind_enum const&);
+    SgAsmFunction::function_kind_enum const& get_functionKind() const;
+    void set_functionKind(SgAsmFunction::function_kind_enum const&);
     /** @} */
 
 public:
     /** Property: Whether a function could return to its caller. 
      * 
      * @{ */
-    SgAsmFunction::MayReturn const& get_may_return() const;
-    void set_may_return(SgAsmFunction::MayReturn const&);
+    SgAsmFunction::MayReturn const& get_mayReturn() const;
+    void set_mayReturn(SgAsmFunction::MayReturn const&);
     /** @} */
 
 public:
@@ -14507,8 +14809,8 @@ public:
      *  This is unused by ROSE, but can be set by users to identify a function by hash string. 
      *  
      *  @{ */
-    std::string const& get_name_md5() const;
-    void set_name_md5(std::string const&);
+    std::string const& get_nameMd5() const;
+    void set_nameMd5(std::string const&);
     /** @} */
 
 public:
@@ -14533,8 +14835,8 @@ public:
      *  address of the function's entry instruction.  The abbreviation "va" means "virtual address". 
      *  
      *  @{ */
-    rose_addr_t const& get_entry_va() const;
-    void set_entry_va(rose_addr_t const&);
+    rose_addr_t const& get_entryVa() const;
+    void set_entryVa(rose_addr_t const&);
     /** @} */
 
 public:
@@ -14544,13 +14846,13 @@ public:
      *  binary specimen, such as ELF or PE symbol tables. 
      *  
      *  @{ */
-    SgSymbolTable* const& get_symbol_table() const;
-    void set_symbol_table(SgSymbolTable* const&);
+    SgSymbolTable* const& get_symbolTable() const;
+    void set_symbolTable(SgSymbolTable* const&);
     /** @} */
     // FIXME[Robb P Matzke 2017-02-13]: what is this?
 public:
-    size_t const& get_cached_vertex() const;
-    void set_cached_vertex(size_t const&);
+    size_t const& get_cachedVertex() const;
+    void set_cachedVertex(size_t const&);
 
 public:
     /** Property: Net effect of function on the stack pointer.
@@ -14583,31 +14885,31 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Adds statement to end of statement list. */
-    void append_statement(SgAsmStatement*);
+    void appendStatement(SgAsmStatement*);
 
     /** Erases statement from statement list.
      *
      *  If the specified statement is found in the list of statements then it is erased without being deleted. */
-    void remove_statement(SgAsmStatement* statement);
+    void removeStatement(SgAsmStatement* statement);
 
     /** Function entry basic block.
      *
      *  Returns the basic block that represents the function primary entry point. Returns null for a function
      *  that contains no instructions. */
-    SgAsmBlock* get_entry_block() const;
+    SgAsmBlock* get_entryBlock() const;
 
     /** Multi-line description of function reason keys from unparser.
      *
      *  Returns a string that describes what the one-letter function reasons mean in the unparser output. */
-    static std::string reason_key(const std::string &prefix="");
+    static std::string reasonKey(const std::string &prefix = "");
 
     /** Returns a very short string describing the reason mask. */
-    std::string reason_str(bool pad) const;
+    std::string reasonString(bool pad) const;
 
     /** Class method that converts a reason bit vector to a human-friendly string.
      *
      *  The second argument is the bit vector of SgAsmFunction::FunctionReason bits. */
-    static std::string reason_str(bool pad, unsigned reason);
+    static std::string reasonString(bool pad, unsigned reason);
 
     /** Selection functor for SgAsmFunction::get_extent(). */
     class NodeSelector {
@@ -14664,6 +14966,29 @@ public:
      *  gcrypt functions are not available. The optional @p selector argument can be used to limit the digest to only
      *  certain nodes of the function; by default, all instructions and static data are accumulated. */
     bool get_sha1(uint8_t digest[20]/*out*/, NodeSelector *selector=NULL);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    function_kind_enum get_function_kind() const ROSE_DEPRECATED("use get_functionKind");
+    void set_function_kind(function_kind_enum) ROSE_DEPRECATED("use set_functionKind");
+    MayReturn get_may_return() const ROSE_DEPRECATED("use get_mayReturn");
+    void set_may_return(MayReturn) ROSE_DEPRECATED("use set_mayReturn");
+    const std::string& get_name_md5() const ROSE_DEPRECATED("use get_nameMd5");
+    void set_name_md5(const std::string&) ROSE_DEPRECATED("use set_nameMd5");
+    rose_addr_t get_entry_va() const ROSE_DEPRECATED("use get_entryVa");
+    void set_entry_va(rose_addr_t) ROSE_DEPRECATED("use set_entryVa");
+    SgSymbolTable* get_symbol_table() const ROSE_DEPRECATED("use get_symbolTable");
+    void set_symbol_table(SgSymbolTable*) ROSE_DEPRECATED("use set_symbolTable");
+    size_t get_cached_vertex() const ROSE_DEPRECATED("use get_cachedVertex");
+    void set_cached_vertex(size_t) ROSE_DEPRECATED("use set_cahcedVertex");
+    void append_statement(SgAsmStatement*) ROSE_DEPRECATED("use appendStatement");
+    void remove_statement(SgAsmStatement* statement) ROSE_DEPRECATED("use removeStatement");
+    SgAsmBlock* get_entry_block() const ROSE_DEPRECATED("use get_entryBlock");
+    static std::string reason_key(const std::string &prefix="") ROSE_DEPRECATED("use reasonKey");
+    std::string reason_str(bool) const ROSE_DEPRECATED("use reasonString");
+    static std::string reason_str(bool, unsigned) ROSE_DEPRECATED("use reasonString");
 public:
     /** Destructor. */
     virtual ~SgAsmFunction();
@@ -14677,7 +15002,7 @@ public:
     SgAsmFunction(rose_addr_t const& address,
                   std::string const& name,
                   unsigned const& reason,
-                  SgAsmFunction::function_kind_enum const& function_kind);
+                  SgAsmFunction::function_kind_enum const& functionKind);
 
 protected:
     /** Initialize all properties that have explicit initial values.
@@ -15420,17 +15745,24 @@ public:
     /** Initializes section by parsing the file. */
     virtual SgAsmElfSymverSection* parse() override;
 
-    using SgAsmElfSection::calculate_sizes;
+    using SgAsmElfSection::calculateSizes;
     /** Return sizes for various parts of the table.
      *
      *  See documentation for @ref SgAsmElfSection::calculate_sizes. */
-    virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const override;
+    virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const override;
 
     /** Write symver table sections back to disk */
     virtual void unparse(std::ostream&) const override;
 
     /** Print some debugging info */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    using SgAsmElfSection::calculate_sizes;
+    virtual rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const override ROSE_DEPRECATED("use calculateSizes");
 public:
     /** Destructor. */
     virtual ~SgAsmElfSymverSection();
@@ -15523,7 +15855,7 @@ public:
     /** Return sizes for various parts of the table.
      *
      *  See documentation for @ref SgAsmElfSection::calculate_sizes. */
-    virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const override;
+    virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const override;
 
     /** Write SymverNeeded section back to disk.
      *
@@ -15532,6 +15864,12 @@ public:
 
     /** Print some debugging info */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    virtual rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const override ROSE_DEPRECATED("use calculateSizes");
 public:
     /** Destructor. */
     virtual ~SgAsmElfSymverNeededSection();
@@ -15648,7 +15986,7 @@ class SgAsmElfSymverNeededEntry: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmElfSymverNeededEntry.setDataPrototype(
-        "SgAsmGenericString*", "file_name", "= nullptr",
+        "SgAsmGenericString*", "fileName", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -15671,7 +16009,7 @@ private:
         debugSerializationBegin("SgAsmElfSymverNeededEntry");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_version);
-        s & BOOST_SERIALIZATION_NVP(p_file_name);
+        s & BOOST_SERIALIZATION_NVP(p_fileName);
         s & BOOST_SERIALIZATION_NVP(p_entries);
         debugSerializationEnd("SgAsmElfSymverNeededEntry");
     }
@@ -15718,8 +16056,8 @@ public:
     /** Property: File name. 
      * 
      * @{ */
-    SgAsmGenericString* const& get_file_name() const;
-    void set_file_name(SgAsmGenericString* const&);
+    SgAsmGenericString* const& get_fileName() const;
+    void set_fileName(SgAsmGenericString* const&);
     /** @} */
 
 public:
@@ -15747,6 +16085,13 @@ public:
 
     /** Print debugging information. */
     virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmGenericString* get_file_name() const ROSE_DEPRECATED("use get_fileName");
+    void set_file_name(SgAsmGenericString*) ROSE_DEPRECATED("use set_fileName");
 public:
     /** Destructor. */
     virtual ~SgAsmElfSymverNeededEntry();
@@ -16271,9 +16616,9 @@ public:
      *  section also takes care of creating both *Entries and *Auxes and tying them together correctly. */
     virtual SgAsmElfSymverDefinedSection* parse() override;
 
-    using SgAsmElfSection::calculate_sizes;
+    using SgAsmElfSection::calculateSizes;
     /** Return sizes for various parts of the table. See doc for SgAsmElfSection::calculate_sizes. */
-    virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const override;
+    virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const override;
 
     /** Write SymverDefined section back to disk.
      *
@@ -16282,6 +16627,13 @@ public:
 
     /** Print some debugging info. */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    using SgAsmElfSection::calculate_sizes;
+    virtual rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const override ROSE_DEPRECATED("use calculateSizes");
 public:
     /** Destructor. */
     virtual ~SgAsmElfSymverDefinedSection();
@@ -16752,7 +17104,7 @@ class SgAsmElfSymbolSection: public SgAsmElfSection {
 
 #ifndef DOCUMENTATION
     AsmElfSymbolSection.setDataPrototype(
-        "bool", "is_dynamic", "= false",
+        "bool", "isDynamic", "= false",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -16774,7 +17126,7 @@ private:
     void serialize(S &s, const unsigned /*version*/) {
         debugSerializationBegin("SgAsmElfSymbolSection");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmElfSection);
-        s & BOOST_SERIALIZATION_NVP(p_is_dynamic);
+        s & BOOST_SERIALIZATION_NVP(p_isDynamic);
         s & BOOST_SERIALIZATION_NVP(p_symbols);
         debugSerializationEnd("SgAsmElfSymbolSection");
     }
@@ -16784,8 +17136,8 @@ public:
     /** Property: Whether this section represents dynamic linking symbols. 
      * 
      * @{ */
-    bool const& get_is_dynamic() const;
-    void set_is_dynamic(bool const&);
+    bool const& get_isDynamic() const;
+    void set_isDynamic(bool const&);
     /** @} */
 
 public:
@@ -16817,16 +17169,16 @@ public:
      *  @li 0xff00-0xff1f: processor specific values
      *  @li 0xfff1: symbol has absolute value not affected by relocation
      *  @li 0xfff2: symbol is fortran common or unallocated C extern */
-    virtual void finish_parsing() override;
+    virtual void finishParsing() override;
 
     /** Given a symbol, return its index in this symbol table. */
-    size_t index_of(SgAsmElfSymbol*);
+    size_t indexOf(SgAsmElfSymbol*);
 
-    using SgAsmElfSection::calculate_sizes;
+    using SgAsmElfSection::calculateSizes;
     /** Return sizes for various parts of the table.
      *
      *  See documentation for @ref SgAsmElfSection::calculate_sizes. */
-    virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const override;
+    virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const override;
 
     /** Called prior to unparsing.
      *
@@ -16838,6 +17190,17 @@ public:
 
     /** Print some debugging info */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    bool get_is_dynamic() const ROSE_DEPRECATED("use get_isDynamic");
+    void set_is_dynamic(bool) ROSE_DEPRECATED("use set_isDynamic");
+    virtual void finish_parsing() override ROSE_DEPRECATED("use finishParsing");
+    size_t index_of(SgAsmElfSymbol*) ROSE_DEPRECATED("use indexOf");
+    using SgAsmElfSection::calculate_sizes;
+    virtual rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const override ROSE_DEPRECATED("use calculateSizes");
 public:
     /** Destructor. */
     virtual ~SgAsmElfSymbolSection();
@@ -17141,19 +17504,28 @@ public:
     /** @} */
 
     /** Returns binding as an enum constant. */
-    SgAsmElfSymbol::ElfSymBinding get_elf_binding() const;
+    SgAsmElfSymbol::ElfSymBinding get_elfBinding() const;
 
     /** Returns type as an enum constant. */
-    SgAsmElfSymbol::ElfSymType get_elf_type() const;
+    SgAsmElfSymbol::ElfSymType get_elfType() const;
 
     /** Converts enum constant to string. */
-    static std::string to_string(SgAsmElfSymbol::ElfSymBinding);
+    static std::string toString(SgAsmElfSymbol::ElfSymBinding);
 
     /** Converts enum constant to string. */
-    static std::string to_string(SgAsmElfSymbol::ElfSymType);
+    static std::string toString(SgAsmElfSymbol::ElfSymType);
 
 private:
     void parse_common();                            // initialization common to all parse() methods
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmElfSymbol::ElfSymBinding get_elf_binding() const ROSE_DEPRECATED("use get_elfBinding");
+    SgAsmElfSymbol::ElfSymType get_elf_type() const ROSE_DEPRECATED("use get_elfType");
+    static std::string to_string(SgAsmElfSymbol::ElfSymBinding) ROSE_DEPRECATED("use toString");
+    static std::string to_string(SgAsmElfSymbol::ElfSymType) ROSE_DEPRECATED("use toString");
 public:
     /** Destructor. */
     virtual ~SgAsmElfSymbol();
@@ -17232,12 +17604,12 @@ public:
      *  If @p shared is true then attempt to re-use a previous storage object, otherwise always create a new one. Each
      *  storage object is considered a separate string, therefore when two strings share the same storage object, changing
      *  one string changes the other. */
-    virtual SgAsmStringStorage *create_storage(rose_addr_t offset, bool shared) override;
+    virtual SgAsmStringStorage *createStorage(rose_addr_t offset, bool shared) override;
 
     /** Returns the number of bytes required to store the string in the string table.
      *
      *  This is the length of the string plus one for the NUL terminator. */
-    virtual rose_addr_t get_storage_size(const SgAsmStringStorage*) override;
+    virtual rose_addr_t get_storageSize(const SgAsmStringStorage*) override;
 
     /** Find offset for a string.
      *
@@ -17248,10 +17620,18 @@ public:
      *  in this case) then we allocate some of that free space and use a suitable offset. In any case, upon return
      *  <code>storege->get_offset()</code> will return the allocated offset if successful, or
      *  @ref SgAsmGenericString::unallocated if we couldn't find an overlap. */
-    virtual void allocate_overlap(SgAsmStringStorage*) override;
+    virtual void allocateOverlap(SgAsmStringStorage*) override;
 
     /** Similar to create_storage() but uses a storage object that's already been allocated. */
     virtual void rebind(SgAsmStringStorage*, rose_addr_t) override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    virtual SgAsmStringStorage *create_storage(rose_addr_t, bool) override ROSE_DEPRECATED("use createStorage");
+    virtual rose_addr_t get_storage_size(const SgAsmStringStorage*) override ROSE_DEPRECATED("use get_storageSize");
+    virtual void allocate_overlap(SgAsmStringStorage*) override ROSE_DEPRECATED("use allocateOverlap");
 public:
     /** Destructor. */
     virtual ~SgAsmElfStrtab();
@@ -17423,12 +17803,12 @@ public:
      *  @ref get_segment_entry.
      *
      *  Returns the new segment table entry linked into the AST. */
-    SgAsmElfSegmentTableEntry *add_section(SgAsmElfSection*);
+    SgAsmElfSegmentTableEntry *addSection(SgAsmElfSection*);
 
     /** Returns info about the size of the entries based on information already available.
      *
      *  Any or all arguments may be null pointers if the caller is not interested in the value. */
-    rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
+    rose_addr_t calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 
     /** Pre-unparsing updates */
     virtual bool reallocate() override;
@@ -17438,6 +17818,13 @@ public:
 
     /** Print some debugging info */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmElfSegmentTableEntry *add_section(SgAsmElfSection*) ROSE_DEPRECATED("use addSection");
+    rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const ROSE_DEPRECATED("use calculateSizes");
 public:
     /** Destructor. */
     virtual ~SgAsmElfSegmentTable();
@@ -17836,16 +18223,24 @@ public:
     /** @} */
 
     /** Update this segment table entry with newer information from the section */
-    void update_from_section(SgAsmElfSection*);
+    void updateFromSection(SgAsmElfSection*);
 
     /** Print some debugging info */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 
     /** Convert segment type to string. */
-    static std::string to_string(SgAsmElfSegmentTableEntry::SegmentType);
+    static std::string toString(SgAsmElfSegmentTableEntry::SegmentType);
 
     /** Convert segment flags to string. */
-    static std::string to_string(SgAsmElfSegmentTableEntry::SegmentFlags);
+    static std::string toString(SgAsmElfSegmentTableEntry::SegmentFlags);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    void update_from_section(SgAsmElfSection*) ROSE_DEPRECATED("use updateFromSection");
+    static std::string to_string(SgAsmElfSegmentTableEntry::SegmentType) ROSE_DEPRECATED("use toString");
+    static std::string to_string(SgAsmElfSegmentTableEntry::SegmentFlags) ROSE_DEPRECATED("use toString");
 public:
     /** Destructor. */
     virtual ~SgAsmElfSegmentTableEntry();
@@ -17920,12 +18315,12 @@ public:
      *  the section while init_from_section_table() initializes the section from the section table.
      *
      *  Returns the new section table entry linked into the AST. */
-    SgAsmElfSectionTableEntry *add_section(SgAsmElfSection*);
+    SgAsmElfSectionTableEntry *addSection(SgAsmElfSection*);
 
     /** Returns info about the size of the entries based on information already available.
      *
      *  Any or all arguments may be null pointers if the caller is not interested in the value. */
-    rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
+    rose_addr_t calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 
     /** Update prior to unparsing. */
     virtual bool reallocate() override;
@@ -17935,6 +18330,13 @@ public:
 
     /** Print some debugging info */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmElfSectionTableEntry *add_section(SgAsmElfSection*) ROSE_DEPRECATED("use addSection");
+    rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const ROSE_DEPRECATED("use calculateSizes");
 public:
     /** Destructor. */
     virtual ~SgAsmElfSectionTable();
@@ -18295,14 +18697,22 @@ public:
     /** @} */
 
     /** Update this section table entry with newer information from the section. */
-    void update_from_section(SgAsmElfSection*);
+    void updateFromSection(SgAsmElfSection*);
 
     /** Print some debugging info */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 
     // Use Rose::stringify... function instead.
-    static std::string to_string(SgAsmElfSectionTableEntry::SectionType);
-    static std::string to_string(SgAsmElfSectionTableEntry::SectionFlags);
+    static std::string toString(SgAsmElfSectionTableEntry::SectionType);
+    static std::string toString(SgAsmElfSectionTableEntry::SectionFlags);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    void update_from_section(SgAsmElfSection*) ROSE_DEPRECATED("use updateFromSection");
+    static std::string to_string(SgAsmElfSectionTableEntry::SectionType) ROSE_DEPRECATED("use toString");
+    static std::string to_string(SgAsmElfSectionTableEntry::SectionFlags) ROSE_DEPRECATED("use toString");
 public:
     /** Destructor. */
     virtual ~SgAsmElfSectionTableEntry();
@@ -18339,13 +18749,13 @@ class SgAsmElfRelocSection: public SgAsmElfSection {
 
 #ifndef DOCUMENTATION
     AsmElfRelocSection.setDataPrototype(
-        "bool", "uses_addend", "= true",
+        "bool", "usesAddend", "= true",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmElfRelocSection.setDataPrototype(
-        "SgAsmElfSection*", "target_section", "= nullptr",
+        "SgAsmElfSection*", "targetSection", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -18367,8 +18777,8 @@ private:
     void serialize(S &s, const unsigned /*version*/) {
         debugSerializationBegin("SgAsmElfRelocSection");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmElfSection);
-        s & BOOST_SERIALIZATION_NVP(p_uses_addend);
-        s & BOOST_SERIALIZATION_NVP(p_target_section);
+        s & BOOST_SERIALIZATION_NVP(p_usesAddend);
+        s & BOOST_SERIALIZATION_NVP(p_targetSection);
         s & BOOST_SERIALIZATION_NVP(p_entries);
         debugSerializationEnd("SgAsmElfRelocSection");
     }
@@ -18378,16 +18788,16 @@ public:
     /** Property: Whether entries in this section use the addend format. 
      * 
      * @{ */
-    bool const& get_uses_addend() const;
-    void set_uses_addend(bool const&);
+    bool const& get_usesAddend() const;
+    void set_usesAddend(bool const&);
     /** @} */
 
 public:
     /** Property: Section targeted by these relocations. 
      * 
      * @{ */
-    SgAsmElfSection* const& get_target_section() const;
-    void set_target_section(SgAsmElfSection* const&);
+    SgAsmElfSection* const& get_targetSection() const;
+    void set_targetSection(SgAsmElfSection* const&);
     /** @} */
 
 public:
@@ -18402,12 +18812,12 @@ public:
 public:
     SgAsmElfRelocSection(SgAsmElfFileHeader *fhdr, SgAsmElfSymbolSection *symsec,SgAsmElfSection* targetsec);
 
-    using SgAsmElfSection::calculate_sizes;
+    using SgAsmElfSection::calculateSizes;
     /** Parse an existing ELF Rela Section */
     virtual SgAsmElfRelocSection *parse() override;
 
     /** Return sizes for various parts of the table. See doc for SgAsmElfSection::calculate_sizes. */
-    virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const override;
+    virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const override;
 
     /** Pre-unparsing adjustments */
     virtual bool reallocate() override;
@@ -18417,6 +18827,17 @@ public:
 
     /** Print some debugging info */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    bool get_uses_addend() const ROSE_DEPRECATED("use get_usesAddend");
+    void set_uses_addend(bool) ROSE_DEPRECATED("use set_usesAddend");
+    SgAsmElfSection* get_target_section() const ROSE_DEPRECATED("use get_targetSection");
+    void set_target_section(SgAsmElfSection*) ROSE_DEPRECATED("use set_targetSection");
+    using SgAsmElfSection::calculate_sizes;
+    virtual rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const override ROSE_DEPRECATED("use calculateSizes");
 public:
     /** Destructor. */
     virtual ~SgAsmElfRelocSection();
@@ -18778,7 +19199,13 @@ public:
     /** @} */
 
     /** Convert relocation to string for debugging. */
-    std::string reloc_name() const;
+    std::string toString() const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    std::string reloc_name() const ROSE_DEPRECATED("use toString");
 public:
     /** Destructor. */
     virtual ~SgAsmElfRelocEntry();
@@ -19061,7 +19488,13 @@ public:
     void set_payload(const void*, size_t nbytes);
 
     /** Returns the number of bytes needed to store this note. */
-    rose_addr_t calculate_size() const;
+    rose_addr_t calculateSize() const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    rose_addr_t calculate_size() const ROSE_DEPRECATED("use calculateSize");
 public:
     /** Destructor. */
     virtual ~SgAsmElfNoteEntry();
@@ -19188,13 +19621,13 @@ class SgAsmElfFileHeader: public SgAsmGenericHeader {
 
 #ifndef DOCUMENTATION
     AsmElfFileHeader.setDataPrototype(
-        "SgAsmElfSectionTable*", "section_table", "= nullptr",
+        "SgAsmElfSectionTable*", "sectionTable", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmElfFileHeader.setDataPrototype(
-        "SgAsmElfSegmentTable*", "segment_table", "= nullptr",
+        "SgAsmElfSegmentTable*", "segmentTable", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -19223,8 +19656,8 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_shextrasz);
         s & BOOST_SERIALIZATION_NVP(p_e_shnum);
         s & BOOST_SERIALIZATION_NVP(p_e_shstrndx);
-        s & BOOST_SERIALIZATION_NVP(p_section_table);
-        s & BOOST_SERIALIZATION_NVP(p_segment_table);
+        s & BOOST_SERIALIZATION_NVP(p_sectionTable);
+        s & BOOST_SERIALIZATION_NVP(p_segmentTable);
         debugSerializationEnd("SgAsmElfFileHeader");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -19455,8 +19888,8 @@ public:
      *  program loader. 
      *  
      *  @{ */
-    SgAsmElfSectionTable* const& get_section_table() const;
-    void set_section_table(SgAsmElfSectionTable* const&);
+    SgAsmElfSectionTable* const& get_sectionTable() const;
+    void set_sectionTable(SgAsmElfSectionTable* const&);
     /** @} */
 
 public:
@@ -19466,8 +19899,8 @@ public:
      *  describe how parts of the file are mapped into virtual memory by the loader. 
      *  
      *  @{ */
-    SgAsmElfSegmentTable* const& get_segment_table() const;
-    void set_segment_table(SgAsmElfSegmentTable* const&);
+    SgAsmElfSegmentTable* const& get_segmentTable() const;
+    void set_segmentTable(SgAsmElfSegmentTable* const&);
     /** @} */
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
@@ -19486,13 +19919,13 @@ public:
      *  This is used by the loader when calculating the program base address. Since parts of the file are mapped into the
      *  process address space those parts must be aligned (both in the file and in memory) on the largest possible page
      *  boundary so that any smaller page boundary will also work correctly. */
-    uint64_t max_page_size();
+    uint64_t maximumPageSize();
 
     /** Convert ELF "machine" identifier to generic instruction set architecture value. */
-    static SgAsmExecutableFileFormat::InsSetArchitecture machine_to_isa(unsigned machine);
+    static SgAsmExecutableFileFormat::InsSetArchitecture machineToIsa(unsigned machine);
 
     /** Convert architecture value to an ELF "machine" value. */
-    unsigned isa_to_machine(SgAsmExecutableFileFormat::InsSetArchitecture isa) const;
+    unsigned isaToMachine(SgAsmExecutableFileFormat::InsSetArchitecture isa) const;
 
     /** Parse header from file.
      *
@@ -19511,20 +19944,36 @@ public:
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
     /** Return true if the file looks like it might be an ELF file according to the magic number. */
-    static bool is_ELF(SgAsmGenericFile*);
+    static bool isElf(SgAsmGenericFile*);
 
     /** Get the list of sections defined in the ELF Section Table */
-    SgAsmGenericSectionPtrList get_sectab_sections();
+    SgAsmGenericSectionPtrList get_sectionTableSections();
 
     /** Get the list of sections defined in the ELF Segment Table */
-    SgAsmGenericSectionPtrList get_segtab_sections();
+    SgAsmGenericSectionPtrList get_segmentTableSections();
 
     // Overrides documented in base class
-    virtual const char *format_name() const override;
+    virtual const char *formatName() const override;
 
 private:
     void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfFileHeader::Elf32FileHeader_disk*) const;
     void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfFileHeader::Elf64FileHeader_disk*) const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmElfSectionTable* get_section_table() const ROSE_DEPRECATED("use get_sectionTable");
+    void set_section_table(SgAsmElfSectionTable*) ROSE_DEPRECATED("use set_sectionTable");
+    SgAsmElfSegmentTable* get_segment_table() const ROSE_DEPRECATED("use get_segmentTable");
+    void set_segment_table(SgAsmElfSegmentTable*) ROSE_DEPRECATED("use set_segmentTable");
+    uint64_t max_page_size() ROSE_DEPRECATED("use maximumPageSize");
+    static SgAsmExecutableFileFormat::InsSetArchitecture machine_to_isa(unsigned) ROSE_DEPRECATED("use machineToIsa");
+    unsigned isa_to_machine(SgAsmExecutableFileFormat::InsSetArchitecture) const ROSE_DEPRECATED("use isaToMachine");
+    static bool is_ELF(SgAsmGenericFile*) ROSE_DEPRECATED("use isElf");
+    SgAsmGenericSectionPtrList get_sectab_sections() ROSE_DEPRECATED("use get_sectionTableSections");
+    SgAsmGenericSectionPtrList get_segtab_sections() ROSE_DEPRECATED("use get_segmentTableSections");
+    virtual const char *format_name() const override ROSE_DEPRECATED("use formatName");
 public:
     /** Destructor. */
     virtual ~SgAsmElfFileHeader();
@@ -19603,7 +20052,7 @@ public:
      *
      *  See documentation for @ref SgAsmElfSection::calculate_sizes. Since EH Frame Sections are run-length encoded, we
      *  need to actually unparse the section in order to determine its size. */
-    virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const override;
+    virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const override;
 
     /** Write data to .eh_frame section */
     virtual void unparse(std::ostream&) const override;
@@ -19616,6 +20065,12 @@ public:
 
     /** Print some debugging info */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    virtual rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const override ROSE_DEPRECATED("use calculateSizes");
 public:
     /** Destructor. */
     virtual ~SgAsmElfEHFrameSection();
@@ -20264,11 +20719,11 @@ public:
     virtual SgAsmElfDynamicSection* parse() override;
 
     /** Finish initializing the section entries. */
-    virtual void finish_parsing() override;
+    virtual void finishParsing() override;
 
-    using SgAsmElfSection::calculate_sizes;
+    using SgAsmElfSection::calculateSizes;
     /** Return sizes for various parts of the table. See documentation for @ref SgAsmElfSection::calculate_sizes. */
-    virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const override;
+    virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const override;
 
     /** Called prior to unparse to make things consistent. */
     virtual bool reallocate() override;
@@ -20278,6 +20733,14 @@ public:
 
     /** Print some debugging info */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    virtual void finish_parsing() override ROSE_DEPRECATED("use finishParsing") ROSE_DEPRECATED("use finishParsing");
+    using SgAsmElfSection::calculate_sizes;
+    virtual rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const override ROSE_DEPRECATED("use calculateSizes");
 public:
     /** Destructor. */
     virtual ~SgAsmElfDynamicSection();
@@ -20335,19 +20798,19 @@ class SgAsmElfSection: public SgAsmGenericSection {
 
 #ifndef DOCUMENTATION
     AsmElfSection.setDataPrototype(
-        "SgAsmElfSection*", "linked_section", "= nullptr",
+        "SgAsmElfSection*", "linkedSection", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmElfSection.setDataPrototype(
-        "SgAsmElfSectionTableEntry*", "section_entry", "= nullptr",
+        "SgAsmElfSectionTableEntry*", "sectionEntry", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmElfSection.setDataPrototype(
-        "SgAsmElfSegmentTableEntry*", "segment_entry", "= nullptr",
+        "SgAsmElfSegmentTableEntry*", "segmentEntry", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -20363,9 +20826,9 @@ private:
     void serialize(S &s, const unsigned /*version*/) {
         debugSerializationBegin("SgAsmElfSection");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
-        s & BOOST_SERIALIZATION_NVP(p_linked_section);
-        s & BOOST_SERIALIZATION_NVP(p_section_entry);
-        s & BOOST_SERIALIZATION_NVP(p_segment_entry);
+        s & BOOST_SERIALIZATION_NVP(p_linkedSection);
+        s & BOOST_SERIALIZATION_NVP(p_sectionEntry);
+        s & BOOST_SERIALIZATION_NVP(p_segmentEntry);
         debugSerializationEnd("SgAsmElfSection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -20376,23 +20839,23 @@ public:
      *  Points to an optional related section. See official ELF specification.
      *
      * @{ */
-    SgAsmElfSection* get_linked_section() const;
-    virtual void set_linked_section(SgAsmElfSection*);
+    SgAsmElfSection* const& get_linkedSection() const;
+    virtual void set_linkedSection(SgAsmElfSection*);
     /** @} */
 public:
     /** Property: The section table entry corresponding to this section. 
      * 
      * @{ */
-    SgAsmElfSectionTableEntry* const& get_section_entry() const;
-    void set_section_entry(SgAsmElfSectionTableEntry* const&);
+    SgAsmElfSectionTableEntry* const& get_sectionEntry() const;
+    void set_sectionEntry(SgAsmElfSectionTableEntry* const&);
     /** @} */
 
 public:
     /** Property: The segment table entry corresponding to this section. 
      * 
      * @{ */
-    SgAsmElfSegmentTableEntry* const& get_segment_entry() const;
-    void set_segment_entry(SgAsmElfSegmentTableEntry* const&);
+    SgAsmElfSegmentTableEntry* const& get_segmentEntry() const;
+    void set_segmentEntry(SgAsmElfSegmentTableEntry* const&);
     /** @} */
 public:
     /** Constructor for sections not yet in a table.
@@ -20407,12 +20870,12 @@ public:
      *  section table. This function complements @ref SgAsmElfSectionTable::add_section in that this function initializes
      *  this section from the section table while @ref SgAsmElfSectionTable::add_section "add_section" initializes the
      *  section table from the section. */
-    SgAsmElfSection *init_from_section_table(SgAsmElfSectionTableEntry*, SgAsmElfStringSection*, int id);
+    SgAsmElfSection *initFromSectionTable(SgAsmElfSectionTableEntry*, SgAsmElfStringSection*, int id);
 
     /** Initializes the section from data parse from the ELF Segment Table.
      *
      *  This is similar to @ref init_from_section_table but for segments instead of sections. */
-    SgAsmElfSection *init_from_segment_table(SgAsmElfSegmentTableEntry*, bool mmap_only=false);
+    SgAsmElfSection *initFromSegmentTable(SgAsmElfSegmentTableEntry*, bool mmapOnly=false);
 
     /** Returns info about the size of the entries based on information already available.
      *
@@ -20434,10 +20897,10 @@ public:
      *
      *  Return value is the total size needed for the section. In all cases, it is the product of @p entsize and @p
      *  entcount. */
-    rose_addr_t calculate_sizes(size_t r32size, size_t r64size, const std::vector<size_t> &optsizes,
-                                size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
+    rose_addr_t calculateSizes(size_t r32size, size_t r64size, const std::vector<size_t> &optsizes,
+                               size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 
-    virtual void finish_parsing() {}
+    virtual void finishParsing();
 
     /** Base implementation for calculating sizes.
      *
@@ -20455,7 +20918,7 @@ public:
      *
      *  The return size is the product of @p entsize and @p entcount, which, if this section is a table (nonzero
      *  sh_entsize), could be smaller than the total size of the section. */
-    virtual rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
+    virtual rose_addr_t calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 
     /** Called prior to unparse to make things consistent. */
     virtual bool reallocate() override;
@@ -20464,12 +20927,33 @@ public:
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
     /** Make this section's name to be stored in the specified string table. */
-    void allocate_name_to_storage(SgAsmElfStringSection*);
+    void allocateNameToStorage(SgAsmElfStringSection*);
 
     /** Obtain ELF header.
      *
      *  This is just a convenience function so we don't need to constantly cast the return value from @ref get_header. */
-    SgAsmElfFileHeader *get_elf_header() const;
+    SgAsmElfFileHeader *get_elfHeader() const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmElfSection* get_linked_section() const ROSE_DEPRECATED("use get_linkedSection");
+    virtual void set_linked_section(SgAsmElfSection*) ROSE_DEPRECATED("use set_linkSection");
+    SgAsmElfSectionTableEntry* get_section_entry() const ROSE_DEPRECATED("use get_sectionEntry");
+    void set_section_entry(SgAsmElfSectionTableEntry*) ROSE_DEPRECATED("use set_sectionEntry");
+    SgAsmElfSegmentTableEntry* get_segment_entry() const ROSE_DEPRECATED("use get_segmentEntry");
+    void set_segment_entry(SgAsmElfSegmentTableEntry*) ROSE_DEPRECATED("use set_segmentEntry");
+    SgAsmElfSection *init_from_section_table(SgAsmElfSectionTableEntry*, SgAsmElfStringSection*, int)
+        ROSE_DEPRECATED("use initFromSectionTable");
+    SgAsmElfSection *init_from_segment_table(SgAsmElfSegmentTableEntry*, bool mmap_only=false)
+        ROSE_DEPRECATED("use initFromSegmentTable");
+    rose_addr_t calculate_sizes(size_t, size_t, const std::vector<size_t>&, size_t*, size_t*, size_t*, size_t*) const
+        ROSE_DEPRECATED("use calculateSizes");
+    virtual void finish_parsing() ROSE_DEPRECATED("use finishParsing");
+    virtual rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const ROSE_DEPRECATED("use calculateSizes");
+    void allocate_name_to_storage(SgAsmElfStringSection*) ROSE_DEPRECATED("use allocateNameToStorage");
+    SgAsmElfFileHeader *get_elf_header() const ROSE_DEPRECATED("use get_elfHeader");
 public:
     /** Destructor. */
     virtual ~SgAsmElfSection();
@@ -20789,7 +21273,13 @@ public:
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 
     /** Convert Dynamic Entry Tag to a string */
-    static std::string to_string(SgAsmElfDynamicEntry::EntryType);
+    static std::string toString(SgAsmElfDynamicEntry::EntryType);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    static std::string to_string(SgAsmElfDynamicEntry::EntryType) ROSE_DEPRECATED("use toString");
 public:
     /** Destructor. */
     virtual ~SgAsmElfDynamicEntry();
@@ -25632,27 +26122,36 @@ public:
     virtual bool reallocate() override;
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-    virtual const char *format_name() const override {return "DOS";}
+    virtual const char *formatName() const override;
 
     /** Parses the DOS real-mode text+data section and adds it to the AST.
      *
      *  If max_offset is non-zero then use that as the maximum offset of the real-mode section. If the DOS header indicates a zero
      *  sized section then return NULL. If the section exists or is zero size due to the max_offset then return the section. See
      *  also, update_from_rm_section(). */
-    SgAsmGenericSection *parse_rm_section(rose_addr_t max_offset=0);
+    SgAsmGenericSection *parseRealModeSection(rose_addr_t max_offset=0);
 
     /** Update DOS header with data from real-mode section.
      *
      *  The DOS real-mode data+text section is assumed to appear immediately after the DOS Extended Header, which appears
      *  immediately after the DOS File Header, which appears at the beginning of the file. These assumptions are not checked until
      *  SgAsmDOSFileHeader::unparse() is called. See also, @ref parse_rm_section. */
-    void update_from_rm_section();
+    void updateFromRealModeSection();
 
     /** Returns true if a cursory look at the file indicates that it could be a DOS executable file. */
-    static bool is_DOS(SgAsmGenericFile*);
+    static bool isDos(SgAsmGenericFile*);
 
 private:
     void *encode(SgAsmDOSFileHeader::DOSFileHeader_disk*) const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    virtual const char* format_name() const override ROSE_DEPRECATED("use formatName");
+    SgAsmGenericSection* parse_rm_section(rose_addr_t max_offset = 0) ROSE_DEPRECATED("use parseRealModeSection");
+    void update_from_rm_section() ROSE_DEPRECATED("use updateFromRealModeSection");
+    static bool is_DOS(SgAsmGenericFile*) ROSE_DEPRECATED("use isDos");
 public:
     /** Destructor. */
     virtual ~SgAsmDOSFileHeader();
@@ -25712,7 +26211,7 @@ class SgAsmGenericHeader: public SgAsmGenericSection {
 
 #ifndef DOCUMENTATION
     AsmGenericHeader.setDataPrototype(
-        "SgAsmGenericFormat*", "exec_format", "= createAndParent<SgAsmGenericFormat>(this)",
+        "SgAsmGenericFormat*", "executableFormat", "= createAndParent<SgAsmGenericFormat>(this)",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -25730,13 +26229,13 @@ class SgAsmGenericHeader: public SgAsmGenericSection {
 
 #ifndef DOCUMENTATION
     AsmGenericHeader.setDataPrototype(
-        "rose_addr_t", "base_va", "= 0",
+        "rose_addr_t", "baseVa", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmGenericHeader.setDataPrototype(
-        "SgRVAList", "entry_rvas", "",
+        "SgRVAList", "entryRvas", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -25764,11 +26263,11 @@ private:
     void serialize(S &s, const unsigned /*version*/) {
         debugSerializationBegin("SgAsmGenericHeader");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
-        s & BOOST_SERIALIZATION_NVP(p_exec_format);
+        s & BOOST_SERIALIZATION_NVP(p_executableFormat);
         s & BOOST_SERIALIZATION_NVP(p_magic);
         s & BOOST_SERIALIZATION_NVP(p_isa);
-        s & BOOST_SERIALIZATION_NVP(p_base_va);
-        s & BOOST_SERIALIZATION_NVP(p_entry_rvas);
+        s & BOOST_SERIALIZATION_NVP(p_baseVa);
+        s & BOOST_SERIALIZATION_NVP(p_entryRvas);
         s & BOOST_SERIALIZATION_NVP(p_dlls);
         s & BOOST_SERIALIZATION_NVP(p_sections);
         debugSerializationEnd("SgAsmGenericHeader");
@@ -25779,8 +26278,8 @@ public:
     /** Property: General info about the executable format. 
      * 
      * @{ */
-    SgAsmGenericFormat* const& get_exec_format() const;
-    void set_exec_format(SgAsmGenericFormat* const&);
+    SgAsmGenericFormat* const& get_executableFormat() const;
+    void set_executableFormat(SgAsmGenericFormat* const&);
     /** @} */
 
 public:
@@ -25804,17 +26303,17 @@ public:
     /** Property: Base virtual address used by all relative virtual addresses. 
      * 
      * @{ */
-    rose_addr_t const& get_base_va() const;
-    void set_base_va(rose_addr_t const&);
+    rose_addr_t const& get_baseVa() const;
+    void set_baseVa(rose_addr_t const&);
     /** @} */
 
 public:
     /** Property: Code entry point wrt base virtual address. 
      * 
      * @{ */
-    SgRVAList const& get_entry_rvas() const;
-    SgRVAList& get_entry_rvas();
-    void set_entry_rvas(SgRVAList const&);
+    SgRVAList const& get_entryRvas() const;
+    SgRVAList& get_entryRvas();
+    void set_entryRvas(SgRVAList const&);
     /** @} */
 
 public:
@@ -25852,10 +26351,10 @@ public:
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
     /** Returns the name of the file format. */
-    virtual const char *format_name() const;
+    virtual const char *formatName() const;
 
     /** Add a new DLL to the header DLL list */
-    void add_dll(SgAsmGenericDLL *dll);
+    void addDll(SgAsmGenericDLL *dll);
 
     /** Vector of dynamically loaded libraries. */
     std::vector<SgAsmGenericDLL*>& get_dlls() {
@@ -25867,41 +26366,39 @@ public:
      *
      *  The return value is relative to the header's base virtual address. If there are no entry points defined then
      *  returns a zero RVA. */
-    rose_addr_t get_entry_rva() const;
+    rose_addr_t get_entryRva() const;
 
     /** Append an RVA to the list of entry points. */
-    void add_entry_rva(const rose_rva_t &rva) {
-        p_entry_rvas.push_back(rva);
-    }
+    void addEntryRva(const rose_rva_t&);
 
     /* Convenience functions */
     Rose::BinaryAnalysis::ByteOrder::Endianness get_sex() const;
-    size_t get_word_size() const;
+    size_t get_wordSize() const;
 
     /** Adds a new section to the header.
      *
      *  This is called implicitly by the section constructor. */
-    void add_section(SgAsmGenericSection*);
+    void addSection(SgAsmGenericSection*);
 
     /** Removes a secton from the header's section list. */
-    void remove_section(SgAsmGenericSection*);
+    void removeSection(SgAsmGenericSection*);
 
     /** Returns the list of sections that are memory mapped */
-    SgAsmGenericSectionPtrList get_mapped_sections() const;
+    SgAsmGenericSectionPtrList get_mappedSections() const;
 
     /** Returns sections in this header that have the specified ID. */
-    SgAsmGenericSectionPtrList get_sections_by_id(int id) const;
+    SgAsmGenericSectionPtrList get_sectionsById(int id) const;
 
     /** Returns sections in this header that have the specified name.
      *
      *  If @p sep is a non-null string then ignore any part of name at and after @p sep. */
-    SgAsmGenericSectionPtrList get_sections_by_name(std::string, char sep=0) const;
+    SgAsmGenericSectionPtrList get_sectionsByName(std::string, char sep=0) const;
 
     /** Returns sectons in this header that contain all of the specified portion of the file. */
-    SgAsmGenericSectionPtrList get_sections_by_offset(rose_addr_t offset, rose_addr_t size) const;
+    SgAsmGenericSectionPtrList get_sectionsByOffset(rose_addr_t offset, rose_addr_t size) const;
 
     /** Returns sections that have a preferred mapping that includes the specified relative virtual address. */
-    SgAsmGenericSectionPtrList get_sections_by_rva(rose_addr_t rva) const;
+    SgAsmGenericSectionPtrList get_sectionsByRva(rose_addr_t rva) const;
 
     /** Returns sections having a preferred or actual mapping that includes the specified virtual address.
      *
@@ -25909,21 +26406,21 @@ public:
      *  otherwise the actual mapping is used.  If an actual mapping is used, the specified virtual address must be part of
      *  the actual mapped section, not merely in the memory region that was also mapped to satisfy alignment
      *  constraints. */
-    SgAsmGenericSectionPtrList get_sections_by_va(rose_addr_t va, bool use_preferred) const;
+    SgAsmGenericSectionPtrList get_sectionsByVa(rose_addr_t va, bool use_preferred) const;
 
     /** Returns single section in this header that has the specified ID. */
-    SgAsmGenericSection *get_section_by_id(int id, size_t *nfound=0) const;
+    SgAsmGenericSection *get_sectionById(int id, size_t *nfound=0) const;
 
     /** Returns single section in this header that has the specified name. */
-    SgAsmGenericSection *get_section_by_name(const std::string&, char sep=0, size_t *nfound=0) const;
+    SgAsmGenericSection *get_sectionByName(const std::string&, char sep=0, size_t *nfound=0) const;
 
     /** Returns single section in this header that contains all of the specified portion of the file. */
-    SgAsmGenericSection *get_section_by_offset(rose_addr_t offset, rose_addr_t size, size_t *nfound=0) const;
+    SgAsmGenericSection *get_sectionByOffset(rose_addr_t offset, rose_addr_t size, size_t *nfound=0) const;
 
     /** Returns the single section having a preferred mapping that includes the specified relative virtual address.
      *
      *  If there are no sections or multiple sections satisfying this condition then a null pointer is returned. */
-    SgAsmGenericSection *get_section_by_rva(rose_addr_t rva, size_t *nfound=0) const;
+    SgAsmGenericSection *get_sectionByRva(rose_addr_t rva, size_t *nfound=0) const;
 
     /** Returns the section having a preferred or actual mapping that includes the specified virtual address.
      *
@@ -25931,13 +26428,46 @@ public:
      *  otherwise the actual mapping is used. If an actual mapping is used, the specified virtual address must be part of
      *  the actual mapped section, not merely in the memory region that was also mapped to satisfy alignment constraints.
      *  If there are no sections or multiple sections satisfying this condition then a null pointer is returned. */
-    SgAsmGenericSection *get_section_by_va(rose_addr_t va, bool use_preferred, size_t *nfound=0) const;
+    SgAsmGenericSection *get_sectionByVa(rose_addr_t va, bool use_preferred, size_t *nfound=0) const;
 
     /** Like SgAsmGenericFile::get_best_section_by_va() except considers only sections defined in this header. */
-    SgAsmGenericSection *get_best_section_by_va(rose_addr_t va, bool use_preferred, size_t *nfound=0) const;
+    SgAsmGenericSection *get_bestSectionByVa(rose_addr_t va, bool use_preferred, size_t *nfound=0) const;
 
 protected:
     virtual void destructorHelper() override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmGenericFormat* get_exec_format() const ROSE_DEPRECATED("use get_executableFormat");
+    void set_exec_format(SgAsmGenericFormat*) ROSE_DEPRECATED("use set_executableFormat");
+    rose_addr_t get_base_va() const ROSE_DEPRECATED("use get_baseVa");
+    void set_base_va(rose_addr_t) ROSE_DEPRECATED("use set_baseVa");
+    SgRVAList& get_entry_rvas() ROSE_DEPRECATED("use get_entryRvas");
+    const SgRVAList& get_entry_rvas() const ROSE_DEPRECATED("use get_entryRvas");
+    void set_entry_rvas(const SgRVAList&) ROSE_DEPRECATED("use set_entryRvas");
+    virtual const char *format_name() const ROSE_DEPRECATED("use formatName");
+    void add_dll(SgAsmGenericDLL*) ROSE_DEPRECATED("use addDll");
+    rose_addr_t get_entry_rva() const ROSE_DEPRECATED("use get_entryRva");
+    void add_entry_rva(const rose_rva_t&) ROSE_DEPRECATED("use addEntryRva");
+    size_t get_word_size() const ROSE_DEPRECATED("use get_wordSize");
+    void add_section(SgAsmGenericSection*) ROSE_DEPRECATED("use addSection");
+    void remove_section(SgAsmGenericSection*) ROSE_DEPRECATED("use removeSection");
+    SgAsmGenericSectionPtrList get_mapped_sections() const ROSE_DEPRECATED("use get_mappedSections");
+    SgAsmGenericSectionPtrList get_sections_by_id(int) const ROSE_DEPRECATED("use get_sectionsById");
+    SgAsmGenericSectionPtrList get_sections_by_name(std::string, char=0) const ROSE_DEPRECATED("use get_sectionsByName");
+    SgAsmGenericSectionPtrList get_sections_by_offset(rose_addr_t, rose_addr_t) const ROSE_DEPRECATED("use get_sectionsByOffset");
+    SgAsmGenericSectionPtrList get_sections_by_rva(rose_addr_t) const ROSE_DEPRECATED("use get_sectionsByRva");
+    SgAsmGenericSectionPtrList get_sections_by_va(rose_addr_t, bool) const ROSE_DEPRECATED("use get_sectionsByVa");
+    SgAsmGenericSection *get_section_by_id(int, size_t* = nullptr) const ROSE_DEPRECATED("use get_sectionById");
+    SgAsmGenericSection *get_section_by_name(const std::string&, char=0, size_t* = nullptr) const
+        ROSE_DEPRECATED("use get_sectionByName");
+    SgAsmGenericSection *get_section_by_offset(rose_addr_t, rose_addr_t, size_t* = nullptr) const
+        ROSE_DEPRECATED("use get_sectionByOffset");
+    SgAsmGenericSection *get_section_by_rva(rose_addr_t, size_t* = nullptr) const ROSE_DEPRECATED("use get_sectionByRva");
+    SgAsmGenericSection *get_section_by_va(rose_addr_t, bool, size_t* = nullptr) const ROSE_DEPRECATED("use get_sectionByVa");
+    SgAsmGenericSection *get_best_section_by_va(rose_addr_t, bool, size_t* = nullptr) const ROSE_DEPRECATED("use get_bestSectionByVa");
 public:
     /** Destructor. */
     virtual ~SgAsmGenericHeader();
@@ -26373,7 +26903,7 @@ class SgAsmControlFlagsExpression: public SgAsmExpression {
 
 #ifndef DOCUMENTATION
     AsmControlFlagsExpression.setDataPrototype(
-        "unsigned long", "bit_flags", "= 0",
+        "unsigned long", "bitFlags", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -26389,15 +26919,17 @@ private:
     void serialize(S &s, const unsigned /*version*/) {
         debugSerializationBegin("SgAsmControlFlagsExpression");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
-        s & BOOST_SERIALIZATION_NVP(p_bit_flags);
+        s & BOOST_SERIALIZATION_NVP(p_bitFlags);
         debugSerializationEnd("SgAsmControlFlagsExpression");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 
 public:
-    unsigned long const& get_bit_flags() const;
-    void set_bit_flags(unsigned long const&);
-
+    unsigned long const& get_bitFlags() const;
+    void set_bitFlags(unsigned long const&);
+    // [Robb Matzke 2023-11-06] deprecated 2023-11
+    unsigned long get_bit_flags() const ROSE_DEPRECATED("use get_bitFlags");
+    void set_bit_flags(unsigned long) ROSE_DEPRECATED("use set_bitFlags");
 public:
     /** Destructor. */
     virtual ~SgAsmControlFlagsExpression();
@@ -26543,19 +27075,19 @@ class SgAsmValueExpression: public SgAsmExpression {
 
 #ifndef DOCUMENTATION
     AsmValueExpression.setDataPrototype(
-        "SgAsmValueExpression*", "unfolded_expression_tree", "= nullptr",
+        "SgAsmValueExpression*", "unfoldedExpression", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmValueExpression.setDataPrototype(
-        "unsigned short", "bit_offset", "= 0",
+        "unsigned short", "bitOffset", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmValueExpression.setDataPrototype(
-        "unsigned short", "bit_size", "= 0",
+        "unsigned short", "bitSize", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -26577,9 +27109,9 @@ private:
     void serialize(S &s, const unsigned /*version*/) {
         debugSerializationBegin("SgAsmValueExpression");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
-        s & BOOST_SERIALIZATION_NVP(p_unfolded_expression_tree);
-        s & BOOST_SERIALIZATION_NVP(p_bit_offset);
-        s & BOOST_SERIALIZATION_NVP(p_bit_size);
+        s & BOOST_SERIALIZATION_NVP(p_unfoldedExpression);
+        s & BOOST_SERIALIZATION_NVP(p_bitOffset);
+        s & BOOST_SERIALIZATION_NVP(p_bitSize);
         debugSerializationEnd("SgAsmValueExpression");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -26592,8 +27124,8 @@ public:
      *  Note: All of the ROSE disassemblers always set this to null regardless of whether they do any constant folding. 
      *  
      *  @{ */
-    SgAsmValueExpression* const& get_unfolded_expression_tree() const;
-    void set_unfolded_expression_tree(SgAsmValueExpression* const&);
+    SgAsmValueExpression* const& get_unfoldedExpression() const;
+    void set_unfoldedExpression(SgAsmValueExpression* const&);
     /** @} */
 
 public:
@@ -26605,8 +27137,8 @@ public:
      *  bits are numbered so that lower indexes are less significant bits. 
      *  
      *  @{ */
-    unsigned short const& get_bit_offset() const;
-    void set_bit_offset(unsigned short const&);
+    unsigned short const& get_bitOffset() const;
+    void set_bitOffset(unsigned short const&);
     /** @} */
 
 public:
@@ -26616,8 +27148,8 @@ public:
      *  the architecture, it will be set to zero. 
      *  
      *  @{ */
-    unsigned short const& get_bit_size() const;
-    void set_bit_size(unsigned short const&);
+    unsigned short const& get_bitSize() const;
+    void set_bitSize(unsigned short const&);
     /** @} */
 
 public:
@@ -26630,7 +27162,16 @@ public:
     SgSymbol* const& get_symbol() const;
     void set_symbol(SgSymbol* const&);
     /** @} */
-
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmValueExpression* get_unfolded_expression_tree() const ROSE_DEPRECATED("use get_unfoldedExpression");
+    void set_unfolded_expression_tree(SgAsmValueExpression*) ROSE_DEPRECATED("use set_unfoldedExpression");
+    unsigned short get_bit_offset() const ROSE_DEPRECATED("use get_bitOffset");
+    void set_bit_offset(unsigned short) ROSE_DEPRECATED("use set_bitOffset");
+    unsigned short get_bit_size() const ROSE_DEPRECATED("use get_bitSize");
+    void set_bit_size(unsigned short) ROSE_DEPRECATED("use set_bitSize");
 public:
     /** Destructor. */
     virtual ~SgAsmValueExpression();
@@ -26923,7 +27464,7 @@ class SgAsmCoffSymbol: public SgAsmGenericSymbol {
 
 #ifndef DOCUMENTATION
     AsmCoffSymbol.setDataPrototype(
-        "SgUnsignedCharList", "aux_data", "",
+        "SgUnsignedCharList", "auxiliaryData", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -26945,7 +27486,7 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_st_type);
         s & BOOST_SERIALIZATION_NVP(p_st_storage_class);
         s & BOOST_SERIALIZATION_NVP(p_st_num_aux_entries);
-        s & BOOST_SERIALIZATION_NVP(p_aux_data);
+        s & BOOST_SERIALIZATION_NVP(p_auxiliaryData);
         debugSerializationEnd("SgAsmCoffSymbol");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -27034,9 +27575,9 @@ public:
     /** Property: Auxilliary data. 
      * 
      * @{ */
-    SgUnsignedCharList const& get_aux_data() const;
-    SgUnsignedCharList& get_aux_data();
-    void set_aux_data(SgUnsignedCharList const&);
+    SgUnsignedCharList const& get_auxiliaryData() const;
+    SgUnsignedCharList& get_auxiliaryData();
+    void set_auxiliaryData(SgUnsignedCharList const&);
     /** @} */
 public:
     static const unsigned int COFFSymbol_disk_size = 18;
@@ -27048,6 +27589,13 @@ public:
     SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAsmGenericSection *strtab, size_t idx);
     void *encode(SgAsmCoffSymbol::COFFSymbol_disk*) const;
     virtual void dump(FILE *f, const char *prefix, ssize_t idx) const override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    const SgUnsignedCharList& get_aux_data() const ROSE_DEPRECATED("use get_auxiliaryData");
+    void set_aux_data(const SgUnsignedCharList&) ROSE_DEPRECATED("use set_auxiliaryData");
 public:
     /** Destructor. */
     virtual ~SgAsmCoffSymbol();
@@ -27102,7 +27650,7 @@ class SgAsmGenericSymbol: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmGenericSymbol.setDataPrototype(
-        "SgAsmGenericSymbol::SymbolDefState", "def_state", "= SgAsmGenericSymbol::SYM_UNDEFINED",
+        "SgAsmGenericSymbol::SymbolDefState", "definitionState", "= SgAsmGenericSymbol::SYM_UNDEFINED",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -27154,7 +27702,7 @@ private:
     void serialize(S &s, const unsigned /*version*/) {
         debugSerializationBegin("SgAsmGenericSymbol");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
-        s & BOOST_SERIALIZATION_NVP(p_def_state);
+        s & BOOST_SERIALIZATION_NVP(p_definitionState);
         s & BOOST_SERIALIZATION_NVP(p_binding);
         s & BOOST_SERIALIZATION_NVP(p_type);
         s & BOOST_SERIALIZATION_NVP(p_value);
@@ -27204,8 +27752,8 @@ public:
     /** Property: Definition state. 
      * 
      * @{ */
-    SgAsmGenericSymbol::SymbolDefState const& get_def_state() const;
-    void set_def_state(SgAsmGenericSymbol::SymbolDefState const&);
+    SgAsmGenericSymbol::SymbolDefState const& get_definitionState() const;
+    void set_definitionState(SgAsmGenericSymbol::SymbolDefState const&);
     /** @} */
 
 public:
@@ -27262,6 +27810,13 @@ public:
 public:
     /** Print some debugging info. */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SymbolDefState get_def_state() const ROSE_DEPRECATED("use get_definitionState");
+    void set_def_state(SymbolDefState) ROSE_DEPRECATED("use set_definitionState");
 public:
     /** Destructor. */
     virtual ~SgAsmGenericSymbol();
@@ -27315,8 +27870,14 @@ public:
     explicit SgAsmCoffStrtab(class SgAsmPESection *containing_section);
     void destructorHelper() override;
     virtual void unparse(std::ostream&) const;
-    virtual SgAsmStringStorage *create_storage(rose_addr_t offset, bool shared) override;
-    virtual rose_addr_t get_storage_size(const SgAsmStringStorage*) override;
+    virtual SgAsmStringStorage *createStorage(rose_addr_t offset, bool shared) override;
+    virtual rose_addr_t get_storageSize(const SgAsmStringStorage*) override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    virtual SgAsmStringStorage *create_storage(rose_addr_t, bool) override ROSE_DEPRECATED("use createStorage");
+    virtual rose_addr_t get_storage_size(const SgAsmStringStorage*) override ROSE_DEPRECATED("use get_storageSize");
 public:
     /** Destructor. */
     virtual ~SgAsmCoffStrtab();
@@ -27373,25 +27934,25 @@ class SgAsmGenericStrtab: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmGenericStrtab.setDataPrototype(
-        "SgAsmGenericStrtab::referenced_t", "storage_list", "",
+        "SgAsmGenericStrtab::referenced_t", "storageList", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmGenericStrtab.setDataPrototype(
-        "AddressIntervalSet", "freelist", "",
+        "AddressIntervalSet", "freeList", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmGenericStrtab.setDataPrototype(
-        "SgAsmStringStorage*", "dont_free", "= nullptr",
+        "SgAsmStringStorage*", "dontFree", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmGenericStrtab.setDataPrototype(
-        "size_t", "num_freed", "= 0",
+        "size_t", "numberFreed", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -27408,10 +27969,10 @@ private:
         debugSerializationBegin("SgAsmGenericStrtab");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat);
         s & BOOST_SERIALIZATION_NVP(p_container);
-        s & BOOST_SERIALIZATION_NVP(p_storage_list);
-        s & BOOST_SERIALIZATION_NVP(p_freelist);
-        s & BOOST_SERIALIZATION_NVP(p_dont_free);
-        s & BOOST_SERIALIZATION_NVP(p_num_freed);
+        s & BOOST_SERIALIZATION_NVP(p_storageList);
+        s & BOOST_SERIALIZATION_NVP(p_freeList);
+        s & BOOST_SERIALIZATION_NVP(p_dontFree);
+        s & BOOST_SERIALIZATION_NVP(p_numberFreed);
         debugSerializationEnd("SgAsmGenericStrtab");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -27436,8 +27997,8 @@ public:
     /** Property: String storage list. 
      * 
      * @{ */
-    SgAsmGenericStrtab::referenced_t const& get_storage_list() const;
-    void set_storage_list(SgAsmGenericStrtab::referenced_t const&);
+    SgAsmGenericStrtab::referenced_t const& get_storageList() const;
+    void set_storageList(SgAsmGenericStrtab::referenced_t const&);
     /** @} */
 
 public:
@@ -27446,23 +28007,23 @@ public:
      *  This list stores space which is available for new strings.
      *
      *  @{ */
-    const AddressIntervalSet& get_freelist() const;
-    AddressIntervalSet& get_freelist();
+    AddressIntervalSet const& get_freeList() const;
+    AddressIntervalSet& get_freeList();
     /** @} */
 public:
     /** Property: Space that should never be freed. 
      * 
      * @{ */
-    SgAsmStringStorage* const& get_dont_free() const;
-    void set_dont_free(SgAsmStringStorage* const&);
+    SgAsmStringStorage* const& get_dontFree() const;
+    void set_dontFree(SgAsmStringStorage* const&);
     /** @} */
 
 public:
     /** Property: Number of strings freed thus far. 
      * 
      * @{ */
-    size_t const& get_num_freed() const;
-    void set_num_freed(size_t const&);
+    size_t const& get_numberFreed() const;
+    void set_numberFreed(size_t const&);
     /** @} */
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
@@ -27478,7 +28039,7 @@ public:
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 
     /** Constructs an SgAsmStoredString from an offset into this string table. */
-    SgAsmStoredString *create_string(rose_addr_t offset, bool shared);
+    SgAsmStoredString *createString(rose_addr_t offset, bool shared);
 
     /** Free area of this string table that corresponds to the string currently stored.
      *
@@ -27495,9 +28056,9 @@ public:
      *
      *  This is more efficient than calling @ref free for each storage object. If @p blow_away_holes is true then any areas
      *  that are unreferenced in the string table will be marked as referenced and added to the free list. */
-    void free_all_strings(bool blow_away_holes=false);
+    void freeAllStrings(bool blow_away_holes=false);
 
-    virtual void allocate_overlap(SgAsmStringStorage*) {};
+    virtual void allocateOverlap(SgAsmStringStorage*);
 
     /** Allocates storage for strings that have been modified but not allocated.
      *
@@ -27507,9 +28068,27 @@ public:
     bool reallocate(bool shrink);
 
     //These should be pure virtual but ROSETTA apparently doesn't support that (RPM 2008-10-03)
-    virtual SgAsmStringStorage *create_storage(rose_addr_t /*offset*/, bool /*shared*/) {abort(); return NULL;}
-    virtual rose_addr_t get_storage_size(const SgAsmStringStorage*) {abort(); return 0;}
-    virtual void rebind(SgAsmStringStorage*, rose_addr_t) {abort();}
+    virtual SgAsmStringStorage *createStorage(rose_addr_t /*offset*/, bool /*shared*/);
+    virtual rose_addr_t get_storageSize(const SgAsmStringStorage*);
+    virtual void rebind(SgAsmStringStorage*, rose_addr_t);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    const referenced_t& get_storage_list() const ROSE_DEPRECATED("use get_storageList");
+    void set_storage_list(const referenced_t&) ROSE_DEPRECATED("use set_storageList");
+    const AddressIntervalSet& get_freelist() const ROSE_DEPRECATED("use get_freeList");
+    AddressIntervalSet& get_freelist() ROSE_DEPRECATED("use set_freeList");
+    SgAsmStringStorage* get_dont_free() const ROSE_DEPRECATED("use get_dontFree");
+    void set_dont_free(SgAsmStringStorage*) ROSE_DEPRECATED("use set_dontFree");
+    size_t get_num_freed() const ROSE_DEPRECATED("use get_numberFreed");
+    void set_num_freed(size_t) ROSE_DEPRECATED("use set_numberFreed");
+    SgAsmStoredString *create_string(rose_addr_t, bool) ROSE_DEPRECATED("use createString");
+    void free_all_strings(bool=false) ROSE_DEPRECATED("use freeAllStrings");
+    virtual void allocate_overlap(SgAsmStringStorage*) ROSE_DEPRECATED("use allocateOverlap");
+    virtual SgAsmStringStorage *create_storage(rose_addr_t, bool) ROSE_DEPRECATED("use createStorage");
+    virtual rose_addr_t get_storage_size(const SgAsmStringStorage*) ROSE_DEPRECATED("use get_storageSize");
 public:
     /** Destructor. */
     virtual ~SgAsmGenericStrtab();
@@ -27891,7 +28470,7 @@ class SgAsmGenericSection: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmGenericSection.setDataPrototype(
-        "rose_addr_t", "file_alignment", "= 0",
+        "rose_addr_t", "fileAlignment", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -27927,55 +28506,55 @@ class SgAsmGenericSection: public SgAsmExecutableFileFormat {
 
 #ifndef DOCUMENTATION
     AsmGenericSection.setDataPrototype(
-        "std::string", "short_name", "",
+        "std::string", "shortName", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmGenericSection.setDataPrototype(
-        "rose_addr_t", "mapped_preferred_rva", "= 0",
+        "rose_addr_t", "mappedPreferredRva", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmGenericSection.setDataPrototype(
-        "rose_addr_t", "mapped_size", "= 0",
+        "rose_addr_t", "mappedSize", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmGenericSection.setDataPrototype(
-        "rose_addr_t", "mapped_alignment", "= 0",
+        "rose_addr_t", "mappedAlignment", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmGenericSection.setDataPrototype(
-        "bool", "mapped_rperm", "= false",
+        "bool", "mappedReadPermission", "= false",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmGenericSection.setDataPrototype(
-        "bool", "mapped_wperm", "= false",
+        "bool", "mappedWritePermission", "= false",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmGenericSection.setDataPrototype(
-        "bool", "mapped_xperm", "= false",
+        "bool", "mappedExecutePermission", "= false",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmGenericSection.setDataPrototype(
-        "bool", "contains_code", "= false",
+        "bool", "containsCode", "= false",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmGenericSection.setDataPrototype(
-        "rose_addr_t", "mapped_actual_va", "= 0",
+        "rose_addr_t", "mappedActualVa", "= 0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -27995,21 +28574,21 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_header);
         s & BOOST_SERIALIZATION_NVP(p_size);
         s & BOOST_SERIALIZATION_NVP(p_offset);
-        s & BOOST_SERIALIZATION_NVP(p_file_alignment);
+        s & BOOST_SERIALIZATION_NVP(p_fileAlignment);
         s & BOOST_SERIALIZATION_NVP(p_data);
         s & BOOST_SERIALIZATION_NVP(p_purpose);
         s & BOOST_SERIALIZATION_NVP(p_synthesized);
         s & BOOST_SERIALIZATION_NVP(p_id);
         s & BOOST_SERIALIZATION_NVP(p_name);
-        s & BOOST_SERIALIZATION_NVP(p_short_name);
-        s & BOOST_SERIALIZATION_NVP(p_mapped_preferred_rva);
-        s & BOOST_SERIALIZATION_NVP(p_mapped_size);
-        s & BOOST_SERIALIZATION_NVP(p_mapped_alignment);
-        s & BOOST_SERIALIZATION_NVP(p_mapped_rperm);
-        s & BOOST_SERIALIZATION_NVP(p_mapped_wperm);
-        s & BOOST_SERIALIZATION_NVP(p_mapped_xperm);
-        s & BOOST_SERIALIZATION_NVP(p_contains_code);
-        s & BOOST_SERIALIZATION_NVP(p_mapped_actual_va);
+        s & BOOST_SERIALIZATION_NVP(p_shortName);
+        s & BOOST_SERIALIZATION_NVP(p_mappedPreferredRva);
+        s & BOOST_SERIALIZATION_NVP(p_mappedSize);
+        s & BOOST_SERIALIZATION_NVP(p_mappedAlignment);
+        s & BOOST_SERIALIZATION_NVP(p_mappedReadPermission);
+        s & BOOST_SERIALIZATION_NVP(p_mappedWritePermission);
+        s & BOOST_SERIALIZATION_NVP(p_mappedExecutePermission);
+        s & BOOST_SERIALIZATION_NVP(p_containsCode);
+        s & BOOST_SERIALIZATION_NVP(p_mappedActualVa);
         debugSerializationEnd("SgAsmGenericSection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -28081,8 +28660,8 @@ public:
      *  Zero and one both imply byte alignment. 
      *  
      *  @{ */
-    rose_addr_t const& get_file_alignment() const;
-    void set_file_alignment(rose_addr_t const&);
+    rose_addr_t const& get_fileAlignment() const;
+    void set_fileAlignment(rose_addr_t const&);
     /** @} */
 
 public:
@@ -28131,7 +28710,7 @@ public:
      *  specified string node.
      *
      *  @{ */
-    SgAsmGenericString *get_name() const;
+    SgAsmGenericString* const& get_name() const;
     void set_name(SgAsmGenericString *s);
     /** @} */
 public:
@@ -28142,8 +28721,8 @@ public:
      *  if it's non-empty, otherwise the full name.
      *
      *  @{ */
-    std::string get_short_name() const;
-    void set_short_name(const std::string&);
+    void set_shortName(std::string const&);
+    std::string get_shortName() const;
     /** @} */
 public:
     /** Property: Relative virtual address where section prefers to be mapped.
@@ -28155,8 +28734,8 @@ public:
      *  The virtual address is relative to the base address stored in the file header.
      *
      *  @{ */
-    rose_addr_t get_mapped_preferred_rva() const;
-    virtual void set_mapped_preferred_rva(rose_addr_t);
+    rose_addr_t const& get_mappedPreferredRva() const;
+    virtual void set_mappedPreferredRva(rose_addr_t);
     /** @} */
 public:
     /** Property: Mapped size.
@@ -28164,39 +28743,39 @@ public:
      *  Size of section in bytes when it's mapped into virtual memory.
      *
      *  @{ */
-    rose_addr_t get_mapped_size() const;
-    virtual void set_mapped_size(rose_addr_t);
+    rose_addr_t const& get_mappedSize() const;
+    virtual void set_mappedSize(rose_addr_t);
     /** @} */
 public:
     /** Property: Alignment in virtual memory. 
      * 
      * @{ */
-    rose_addr_t const& get_mapped_alignment() const;
-    void set_mapped_alignment(rose_addr_t const&);
+    rose_addr_t const& get_mappedAlignment() const;
+    void set_mappedAlignment(rose_addr_t const&);
     /** @} */
 
 public:
     /** Property: Whether mapped with read permission. 
      * 
      * @{ */
-    bool const& get_mapped_rperm() const;
-    void set_mapped_rperm(bool const&);
+    bool const& get_mappedReadPermission() const;
+    void set_mappedReadPermission(bool const&);
     /** @} */
 
 public:
     /** Property: Whether mapped with write permission. 
      * 
      * @{ */
-    bool const& get_mapped_wperm() const;
-    void set_mapped_wperm(bool const&);
+    bool const& get_mappedWritePermission() const;
+    void set_mappedWritePermission(bool const&);
     /** @} */
 
 public:
     /** Property: Whether mapped with execute permission. 
      * 
      * @{ */
-    bool const& get_mapped_xperm() const;
-    void set_mapped_xperm(bool const&);
+    bool const& get_mappedExecutePermission() const;
+    void set_mappedExecutePermission(bool const&);
     /** @} */
 
 public:
@@ -28209,8 +28788,8 @@ public:
      *  class, knows that the section should be mapped to virtual memory for disassembly. 
      *  
      *  @{ */
-    bool const& get_contains_code() const;
-    void set_contains_code(bool const&);
+    bool const& get_containsCode() const;
+    void set_containsCode(bool const&);
     /** @} */
 
 public:
@@ -28227,8 +28806,8 @@ public:
      *  only to preferred mapping attributes. 
      *  
      *  @{ */
-    rose_addr_t const& get_mapped_actual_va() const;
-    void set_mapped_actual_va(rose_addr_t const&);
+    rose_addr_t const& get_mappedActualVa() const;
+    void set_mappedActualVa(rose_addr_t const&);
     /** @} */
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Non-property data members
@@ -28254,13 +28833,13 @@ public:
     SgAsmGenericSection(SgAsmGenericFile*, SgAsmGenericHeader*);
 
     /** Prints info about offsets into known sections. */
-    static void dump_containing_sections(FILE*, const std::string &prefix, rose_rva_t, const SgAsmGenericSectionPtrList&);
+    static void dumpContainingSections(FILE*, const std::string &prefix, rose_rva_t, const SgAsmGenericSectionPtrList&);
 
     /** Saves a reference to the original file data for a section based on the section's current offset and size.
      *
      *  Once this happens, changing the offset or size of the file will not affect the original data. The original data can
      *  be extended, however, by calling @ref extend, which is typically done during parsing. */
-    void grab_content();
+    void grabContent();
 
     virtual SgAsmGenericSection* parse();
 
@@ -28279,16 +28858,16 @@ public:
     void unparse(std::ostream&, const ExtentMap&) const;
 
     /** Write holes (unreferenced areas) back to the file */
-    void unparse_holes(std::ostream&) const;
+    void unparseHoles(std::ostream&) const;
 
     /** Predicate determining whether this section is also a top-level file header.
      *
      *  Returns true (the associated @ref SgAsmGenericHeader pointer) if this section is a top-level file header, false
      *  (NULL) otherwise. */
-    SgAsmGenericHeader *is_file_header();
+    SgAsmGenericHeader *isFileHeader();
 
     /** File offset for end of section. */
-    rose_addr_t   get_end_offset() const;
+    rose_addr_t get_endOffset() const;
 
     /** Extend a section by some number of bytes during the construction and/or parsing phase.
      *
@@ -28323,12 +28902,12 @@ public:
     /** Write an unsigned little-endian 128-bit value.
      *
      *  Encode an unsigned value as LEB128 and return the next offset. */
-    rose_addr_t   write_uleb128(unsigned char*, rose_addr_t offset, uint64_t) const;
+    rose_addr_t writeUleb128(unsigned char*, rose_addr_t offset, uint64_t) const;
 
     /** Write a signed little-endian 128-bit value.
      *
      *  Encode an signed value as LEB128 and return the next offset. */
-    rose_addr_t   write_sleb128(unsigned char*, rose_addr_t offset, int64_t) const;
+    rose_addr_t writeSleb128(unsigned char*, rose_addr_t offset, int64_t) const;
 
     /** Reads data from a file.
      *
@@ -28337,7 +28916,7 @@ public:
      *  end-of-file is reached. If the return value is smaller than @p size then one of two things happen: if @p strict is
      *  set (the default) then an @ref SgAsmExecutableFileFormat::ShortRead exception is thrown; otherwise the @p dst_buf
      *  will be padded with zero bytes so that exactly @p size bytes of @p dst_buf are always initialized. */
-    size_t read_content(rose_addr_t abs_offset, void *dst_buf, rose_addr_t size, bool strict=true);
+    size_t readContent(rose_addr_t abs_offset, void *dst_buf, rose_addr_t size, bool strict=true);
 
     /** Reads data from a file.
      *
@@ -28350,10 +28929,10 @@ public:
      *  to file offsets; if @p map is NULL then the map defined in the underlying file is used.
      *
      * @{ */
-    size_t read_content(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t start,  void *dst_buf,
-                        rose_addr_t size, bool strict=true);
-    size_t read_content(const Rose::BinaryAnalysis::MemoryMap::Ptr&, const rose_rva_t &start, void *dst_buf,
-                        rose_addr_t size, bool strict=true);
+    size_t readContent(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t start,  void *dst_buf,
+                       rose_addr_t size, bool strict=true);
+    size_t readContent(const Rose::BinaryAnalysis::MemoryMap::Ptr&, const rose_rva_t &start, void *dst_buf,
+                       rose_addr_t size, bool strict=true);
     /** @} */
 
     /** Reads data from a file.
@@ -28362,7 +28941,7 @@ public:
      *  Reading past the end of the section is not allowed and treated as a short read, and one of two things happen: if @p
      *  strict is set (the default) then an @ref SgAsmExecutableFileFormat::ShortRead exception is thrown, otherwise the
      *  result is zero padded so as to contain exactly @p size bytes. */
-    size_t read_content_local(rose_addr_t rel_offset, void *dst_buf, rose_addr_t size, bool strict=true);
+    size_t readContentLocal(rose_addr_t rel_offset, void *dst_buf, rose_addr_t size, bool strict=true);
 
     /** Reads a string from the file.
      *
@@ -28370,7 +28949,7 @@ public:
      *  address that is not mapped. However, if @p strict is set (the default) and we reach an unmapped address then an
      *  @ref MemoryMap::NotMapped exception is thrown. The @p map defines the mapping from virtual addresses to file
      *  offsets; if @p map is NULL then the map defined in the underlying file is used. */
-    std::string read_content_str(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t va, bool strict=true);
+    std::string readContentString(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t va, bool strict=true);
 
     /** Reads a string from the file.
      *
@@ -28379,10 +28958,8 @@ public:
      *  SgAsmExecutableFileFormat::ShortRead exception is thrown.
      *
      * @{ */
-    std::string read_content_str(rose_addr_t abs_offset, bool strict=true);
-    std::string read_content_str(const Rose::BinaryAnalysis::MemoryMap::Ptr &map, rose_rva_t rva, bool strict=true) {
-        return read_content_str(map, rva.get_va(), strict);
-    }
+    std::string readContentString(rose_addr_t abs_offset, bool strict=true);
+    std::string readContentString(const Rose::BinaryAnalysis::MemoryMap::Ptr &map, rose_rva_t rva, bool strict=true);
     /** @} */
 
     /** Reads a string from the file.
@@ -28390,27 +28967,27 @@ public:
      *  The string begins at the specified file offset relative to the start of this section and continues until the first
      *  NUL byte or the end of section is reached. However, if @p strict is set (the default) and we reach the
      *  end-of-section then an @ref SgAsmExecutableFileFormat::ShortRead exception is thrown. */
-    std::string read_content_local_str(rose_addr_t rel_offset, bool strict=true);
+    std::string readContentLocalString(rose_addr_t rel_offset, bool strict=true);
 
     /** Reads content of a section and returns it as a container.
      *
      *  The returned container will always have exactly @p size byte.  If @p size bytes are not available in this section
      *  at the specified offset then the container will be zero padded. This method always behaves as a non-strict read. */
-    SgUnsignedCharList read_content_local_ucl(rose_addr_t rel_offset, rose_addr_t size);
+    SgUnsignedCharList readContentLocalUcl(rose_addr_t rel_offset, rose_addr_t size);
 
     /** Read a signed little-endian 128-bit value.
      *
      *  Extract a signed LEB128 value and adjust @p rel_offset according to how many bytes it occupied. If @p strict is set
      *  (the default) and the end of the section is reached then throw an @ref SgAsmExecutableFileFormat::ShortRead
      *  exception. Upon return, the @p rel_offset will be adjusted to point to the first byte after the LEB128 value. */
-    int64_t read_content_local_sleb128(rose_addr_t *rel_offset, bool strict=true);
+    int64_t readContentLocalSleb128(rose_addr_t *rel_offset, bool strict=true);
 
     /** Read an unsigned little-endian 128-bit value.
      *
      *  Extract an unsigned LEB128 value and adjust @p rel_offset according to how many bytes it occupied.  If @p strict is
      *  set (the default) and the end of the section is reached then throw an @ref SgAsmExecutableFileFormat::ShortRead
      *  exception. Upon return, the @p rel_offset will be adjusted to point to the first byte after the LEB128 value. */
-    uint64_t read_content_local_uleb128(rose_addr_t *rel_offset, bool strict=true);
+    uint64_t readContentLocalUleb128(rose_addr_t *rel_offset, bool strict=true);
 
     /** Obtain a local, writable pool to hold content.
      *
@@ -28420,66 +28997,66 @@ public:
      *  overriding the @ref unparse method or by modifying the @ref p_data "data" property. But in order to modify @ref
      *  p_data "data" we have to make sure that it's pointing to a read/write memory pool. This function replaces the
      *  read-only memory pool with a new one containing @p nbytes bytes of zeros. */
-    unsigned char *writable_content(size_t nbytes);
+    unsigned char *writableContent(size_t nbytes);
 
     /** Returns a list of parts of a single section that have been referenced.
      *
      *  The offsets are relative to the start of the section. The tracking actually happens at the entire file level (see
      *  @ref SgAsmGenericFile::get_referenced_extents) and this function returns that same information but limits the
      *  results to this section, and returns section offsets rather than file offsets. */
-    AddressIntervalSet get_referenced_extents() const;
+    AddressIntervalSet get_referencedExtents() const;
 
     /** Returns a list of parts of a single section that have not been referenced.
      *
      *  The offsets are relative to the start of the section. The tracking actually happens at the entire file level
      *  (see @ref SgAsmGenericFile::get_unreferenced_extents) and this function returns that same information but
      *  limits the results to this section, and returns section offsets rather than file offsets. */
-    AddressIntervalSet get_unreferenced_extents() const;
+    AddressIntervalSet get_unreferencedExtents() const;
 
     /** Whether section desires to be mapped to memory.
      *
      *  This predicate is true iff this section has a non-zero mapped address and size. */
-    bool is_mapped() const;
+    bool isMapped() const;
 
     /** Causes section to not be mapped to memory.
      *
      *  This method sets the mapped address and size to zero. */
-    void clear_mapped();
+    void clearMapped();
 
     /** Base virtual address for a section.
      *
      *  Returns  zero if the section is not associated with a header.  This is just a convenience method to get the base
      *  virtual address of the file header that owns this section. */
-    rose_addr_t get_base_va() const;
+    rose_addr_t get_baseVa() const;
 
     /** Virtual address where section prefers to be mapped.
      *
      *  Returns (non-relative) virtual address if mapped, zero otherwise. See also, the @ref get_mapped_preferred_rva
      *  "mapped_preferred_rva" property. */
-    rose_addr_t get_mapped_preferred_va() const;
+    rose_addr_t get_mappedPreferredVa() const;
 
     /** File offset for specified virtual address.
      *
      *  Returns the file offset associated with the virtual address of a mapped section. The @ref MemoryMap class is a
      *  better interface to this same information. */
-    rose_addr_t get_va_offset(rose_addr_t va) const;
+    rose_addr_t get_vaOffset(rose_addr_t va) const;
 
     /** File offset for specified relative virtual address.
      *
      *  Returns the file offset associated with the relative virtual address of a mapped section.  The @ref MemoryMap class
      *  is a better interface to this same information. */
-    rose_addr_t get_rva_offset(rose_addr_t rva) const;
+    rose_addr_t get_rvaOffset(rose_addr_t rva) const;
 
     /** Returns the file extent for the section.
      *
      *  The extent end points are determined by calling @ref get_offset and @ref get_size. */
-    Extent get_file_extent() const;
+    Extent get_fileExtent() const;
 
     /** Returns the memory extent for a mapped section.
      *
      *  If the section is not mapped then offset and size will be zero. The return value is computed from the @ref
      *  get_mapped_preferred_rva "mapped_preferred_rva" and @ref get_mapped_size "mapped_size" properties. */
-    Extent get_mapped_preferred_extent() const;
+    Extent get_mappedPreferredExtent() const;
 
     /** Increase file offset and mapping address to satisfy alignment constraints.
      *
@@ -28498,6 +29075,65 @@ public:
 
 protected:
     virtual void destructorHelper() override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    rose_addr_t get_file_alignment() const ROSE_DEPRECATED("use get_fileAlignment");
+    void set_file_alignment(rose_addr_t) ROSE_DEPRECATED("use set_fileAlignment");
+    std::string get_short_name() const ROSE_DEPRECATED("use get_shortName");
+    void set_short_name(const std::string&) ROSE_DEPRECATED("use set_shortName");
+    rose_addr_t get_mapped_preferred_rva() const ROSE_DEPRECATED("use get_mappedPreferredRva");
+    void set_mapped_preferred_rva(rose_addr_t) ROSE_DEPRECATED("use set_mappedPreferredRva");
+    rose_addr_t get_mapped_size() const ROSE_DEPRECATED("use get_mappedSize");
+    void set_mapped_size(rose_addr_t) ROSE_DEPRECATED("use set_mappedSize");
+    rose_addr_t get_mapped_alignment() const ROSE_DEPRECATED("use get_mappedAlignment");
+    void set_mapped_alignment(rose_addr_t) ROSE_DEPRECATED("use set_mappedAlignment");
+    bool get_mapped_rperm() const ROSE_DEPRECATED("use get_mappedReadPermission");
+    void set_mapped_rperm(bool) ROSE_DEPRECATED("use set_mappedReadPermission");
+    bool get_mapped_wperm() const ROSE_DEPRECATED("use get_mappedWritePermission");
+    void set_mapped_wperm(bool) ROSE_DEPRECATED("use set_mappedWritePermission");
+    bool get_mapped_xperm() const ROSE_DEPRECATED("use get_mappedExecutePermission");
+    void set_mapped_xperm(bool) ROSE_DEPRECATED("use set_mappedExecutePermission");
+    bool get_contains_code() const ROSE_DEPRECATED("use get_containsCode");
+    void set_contains_code(bool) ROSE_DEPRECATED("use set_containsCode");
+    rose_addr_t get_mapped_actual_va() const ROSE_DEPRECATED("use get_mappedActualVa");
+    void set_mapped_actual_va(rose_addr_t) ROSE_DEPRECATED("use set_mappedActualVa");
+    static void dump_containing_sections(FILE*, const std::string&, rose_rva_t, const SgAsmGenericSectionPtrList&)
+        ROSE_DEPRECATED("use dumpContainingSections");
+    void grab_content() ROSE_DEPRECATED("use grabContent");
+    void unparse_holes(std::ostream&) const ROSE_DEPRECATED("use unparseHoles");
+    SgAsmGenericHeader *is_file_header() ROSE_DEPRECATED("use isFileHeader");
+    rose_addr_t get_end_offset() const ROSE_DEPRECATED("use get_endOffset");
+    rose_addr_t write_uleb128(unsigned char*, rose_addr_t, uint64_t) const ROSE_DEPRECATED("use writeUleb128");
+    rose_addr_t write_sleb128(unsigned char*, rose_addr_t, int64_t) const ROSE_DEPRECATED("use writeSleb128");
+    size_t read_content(rose_addr_t, void*, rose_addr_t, bool=true) ROSE_DEPRECATED("use readContent");
+    size_t read_content(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t,  void*, rose_addr_t, bool=true)
+        ROSE_DEPRECATED("use readContent");
+    size_t read_content(const Rose::BinaryAnalysis::MemoryMap::Ptr&, const rose_rva_t&, void*, rose_addr_t, bool=true)
+        ROSE_DEPRECATED("use readContent");
+    size_t read_content_local(rose_addr_t, void*, rose_addr_t, bool=true) ROSE_DEPRECATED("use readContentLocal");
+    std::string read_content_str(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t, bool=true)
+        ROSE_DEPRECATED("use readContentString");
+    std::string read_content_str(rose_addr_t, bool=true) ROSE_DEPRECATED("use readContentString");
+    std::string read_content_str(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_rva_t, bool=true)
+        ROSE_DEPRECATED("use readContentString");
+    std::string read_content_local_str(rose_addr_t, bool=true) ROSE_DEPRECATED("use readContentLocalString");
+    SgUnsignedCharList read_content_local_ucl(rose_addr_t, rose_addr_t) ROSE_DEPRECATED("use readContentLocalUcl");
+    int64_t read_content_local_sleb128(rose_addr_t*, bool=true) ROSE_DEPRECATED("use readContentLocalSleb128");
+    uint64_t read_content_local_uleb128(rose_addr_t*, bool=true) ROSE_DEPRECATED("use readContentLocalUleb128");
+    unsigned char *writable_content(size_t) ROSE_DEPRECATED("use writableContent");
+    AddressIntervalSet get_referenced_extents() const ROSE_DEPRECATED("use get_referencedExtents");
+    AddressIntervalSet get_unreferenced_extents() const ROSE_DEPRECATED("use get_unreferencedExtents");
+    bool is_mapped() const ROSE_DEPRECATED("use isMapped");
+    void clear_mapped() ROSE_DEPRECATED("use clearMapped");
+    rose_addr_t get_base_va() const ROSE_DEPRECATED("use get_baseVa");
+    rose_addr_t get_mapped_preferred_va() const ROSE_DEPRECATED("use get_mappedPreferredVa");
+    rose_addr_t get_va_offset(rose_addr_t) const ROSE_DEPRECATED("use get_vaOffset");
+    rose_addr_t get_rva_offset(rose_addr_t) const ROSE_DEPRECATED("use get_rvaOffset");
+    Extent get_file_extent() const ROSE_DEPRECATED("use get_fileExtent");
+    Extent get_mapped_preferred_extent() const ROSE_DEPRECATED("use get_mappedPreferredExtent");
 public:
     /** Destructor. */
     virtual ~SgAsmGenericSection();
@@ -36897,25 +37533,25 @@ class SgAsmBlock: public SgAsmStatement {
 
 #ifndef DOCUMENTATION
     AsmBlock.setDataPrototype(
-        "bool", "successors_complete", "= false",
+        "bool", "successorsComplete", "= false",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmBlock.setDataPrototype(
-        "SgAsmBlock*", "immediate_dominator", "= nullptr",
+        "SgAsmBlock*", "immediateDominator", "= nullptr",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmBlock.setDataPrototype(
-        "size_t", "cached_vertex", "= (size_t)(-1)",
+        "size_t", "cachedVertex", "= (size_t)(-1)",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmBlock.setDataPrototype(
-        "double", "code_likelihood", "= 0.0",
+        "double", "codeLikelihood", "= 0.0",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -36940,10 +37576,10 @@ private:
         s & BOOST_SERIALIZATION_NVP(p_reason);
         s & BOOST_SERIALIZATION_NVP(p_statementList);
         s & BOOST_SERIALIZATION_NVP(p_successors);
-        s & BOOST_SERIALIZATION_NVP(p_successors_complete);
-        s & BOOST_SERIALIZATION_NVP(p_immediate_dominator);
-        s & BOOST_SERIALIZATION_NVP(p_cached_vertex);
-        s & BOOST_SERIALIZATION_NVP(p_code_likelihood);
+        s & BOOST_SERIALIZATION_NVP(p_successorsComplete);
+        s & BOOST_SERIALIZATION_NVP(p_immediateDominator);
+        s & BOOST_SERIALIZATION_NVP(p_cachedVertex);
+        s & BOOST_SERIALIZATION_NVP(p_codeLikelihood);
         s & BOOST_SERIALIZATION_NVP(p_stackDeltaOut);
         debugSerializationEnd("SgAsmBlock");
     }
@@ -36954,7 +37590,7 @@ private:
 public:
     /** Reasons why a basic block might have been assigned to a function. */
     enum Reason {
-        // Please update SgAsmBlock::reason_str() if you change this enum!
+        // Please update SgAsmBlock::reasonString() if you change this enum!
         BLK_NONE        = 0x00000000,           /**< No particular reason.  Mostly just for initialization. */
         BLK_ENTRY_POINT = 0x00010000,           /**< Block is an entry point for the function. */
         BLK_PADDING     = 0x00020000,           /**< Block is used for padding. */
@@ -37049,8 +37685,8 @@ public:
      *  graph that can reference indeterminate addresses and store data in the edges, and which is copiable. 
      *  
      *  @{ */
-    bool const& get_successors_complete() const;
-    void set_successors_complete(bool const&);
+    bool const& get_successorsComplete() const;
+    void set_successorsComplete(bool const&);
     /** @} */
 
 public:
@@ -37063,8 +37699,8 @@ public:
      *  graph that can reference indeterminate addresses and store data in the edges, and which is copiable. 
      *  
      *  @{ */
-    SgAsmBlock* const& get_immediate_dominator() const;
-    void set_immediate_dominator(SgAsmBlock* const&);
+    SgAsmBlock* const& get_immediateDominator() const;
+    void set_immediateDominator(SgAsmBlock* const&);
     /** @} */
 
 public:
@@ -37076,8 +37712,8 @@ public:
      *  graph that can reference indeterminate addresses and store data in the edges, and which is copiable. 
      *  
      *  @{ */
-    size_t const& get_cached_vertex() const;
-    void set_cached_vertex(size_t const&);
+    size_t const& get_cachedVertex() const;
+    void set_cachedVertex(size_t const&);
     /** @} */
  // see BinaryAnalysis::ControlFlow
 public:
@@ -37087,8 +37723,8 @@ public:
      *  basic block was disassembled represents actual instructions that would be executed when the specimen runs. 
      *  
      *  @{ */
-    double const& get_code_likelihood() const;
-    void set_code_likelihood(double const&);
+    double const& get_codeLikelihood() const;
+    void set_codeLikelihood(double const&);
     /** @} */
 
 public:
@@ -37110,44 +37746,44 @@ public:
     /** Add the specified statement to the end of the statement list.
      *
      *  This is is usually used to add the next instruction to the end of a basic block. */
-    void append_statement(SgAsmStatement*);
+    void appendStatement(SgAsmStatement*);
 
     /** Erase the specified statement.
      *
      *  If the specified statement exists in the "statementList" property then it is erased but not deleted. */
-    void remove_statement(SgAsmStatement*);
+    void removeStatement(SgAsmStatement*);
 
     // FIXME[Robb P Matzke 2017-02-13]: wrong name -- erases only statements, not all children
     /** Removes all statements from the block.
      *
      *  This makes the block empty, and not having a unique starting virtual address. It does not erase all children, just
      *  the statement children.  None of the statements that are erased are deleted. */
-    void remove_children();
+    void removeChildren();
 
     /** Fall-through virtual address.
      *
      *  A block's fall-through address is the virtual address that follows the last byte of the block's last instruction.
      *  The block must have instructions (e.g., it cannot be a strict data block). */
-    rose_addr_t get_fallthrough_va();
+    rose_addr_t get_fallthroughVa();
 
     /** Returns the function that owns this block.
      *
      *  This is just a convenience wrapper around @ref SageInterface::getEnclosingNode. */
-    SgAsmFunction *get_enclosing_function() const;
+    SgAsmFunction *get_enclosingFunction() const;
 
     /** Determins if a block contains instructions.
      *
      *  Returns true if the block has instructions, false otherwise. We look only at the immediate descendants of this
      *  block.  See also, @ref SageInterface::querySubTree in order to get the list of all instructions or to consider all
      *  descendants. */
-    bool has_instructions() const;
+    bool hasInstructions() const;
 
     /** Determine if a block contains instructions.
      *
      *  Returns true if the block has instructions, false otherwise. We look only at the immediate descendants of this
      *  block.  See also, @ref SageInterface::querySubTree in order to get the list of all instructions or to consider all
      *  descendants. */
-    bool is_basic_block() const { return has_instructions(); }
+    bool isBasicBlock() const;
 
     /** Returns true if basic block appears to be a function call.
      *
@@ -37158,24 +37794,49 @@ public:
      *
      * Note: Use this function in preference to SgAsmInstruction::isFunctionCallSlow() because the latter is intended to be
      * used by the Partitioner before an AST is created and might not be as accurate. */
-    bool is_function_call(rose_addr_t &target_va/*out*/, rose_addr_t &return_va/*out*/);
+    bool isFunctionCall(rose_addr_t &target_va/*out*/, rose_addr_t &return_va/*out*/);
 
     /** Multi-line string describing the letters used for basic block reasons.
      *
-     *  The letters are returned by the padding version of @ref reason_str and appear in unparser output. */
-    static std::string reason_key(const std::string &prefix="");
+     *  The letters are returned by the padding version of @ref reasonString and appear in unparser output. */
+    static std::string reasonKey(const std::string &prefix = "");
 
     /** Returns reason string for this block.
      *
      *  The reason string is a very short string describing the reason that the block was created. */
-    std::string reason_str(bool pad) const;
+    std::string reasonString(bool pad) const;
 
     /** Converts a reason bit vector to a human-friendly string.
      *
      *  The second argument is the bit vector of @ref SgAsmBlock::Reason bits.  Some of the positions in the padded return
      *  value are used for more than one bit.  For instance, the first character can be "L" for leftovers, "N" for padding,
      *  "E" for entry point, or "-" for none of the above. */
-    static std::string reason_str(bool pad, unsigned reason);
+    static std::string reasonString(bool pad, unsigned reason);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // [Robb Matzke 2023-11-06]: deprecated 2023-11
+    bool get_successors_complete() const ROSE_DEPRECATED("use get_successorsComplete");
+    void set_successors_complete(bool) ROSE_DEPRECATED("use get_successorsComplete");
+    SgAsmBlock* get_immediate_dominator() const ROSE_DEPRECATED("use get_immediateDominator");
+    void set_immediate_dominator(SgAsmBlock*) ROSE_DEPRECATED("use set_immediateDominator");
+    size_t get_cached_vertex() const ROSE_DEPRECATED("use get_cachedVertex");
+    void set_cached_vertex(size_t) ROSE_DEPRECATED("use set_cachedVertex");
+    double get_code_likelihood() const ROSE_DEPRECATED("use get_codeLikelihood");
+    void set_code_likelihood(double) ROSE_DEPRECATED("use set_codeLikelihood");
+    void append_statement(SgAsmStatement*) ROSE_DEPRECATED("use appendStatement");
+    void remove_statement(SgAsmStatement*) ROSE_DEPRECATED("use removeStatement");
+    void remove_children() ROSE_DEPRECATED("use removeChildren");
+    rose_addr_t get_fallthrough_va() ROSE_DEPRECATED("use getFallthroughVa");
+    SgAsmFunction* get_enclosing_function() const ROSE_DEPRECATED("use get_enclosingFunction");
+    bool has_instructions() const ROSE_DEPRECATED("use hasInstructions");
+    bool is_basic_block() const ROSE_DEPRECATED("use isBasicBlock");
+    bool is_function_call(rose_addr_t&, rose_addr_t&) ROSE_DEPRECATED("use isFunctionCall");
+    static std::string reason_key(const std::string& = "") ROSE_DEPRECATED("use reasonKey");
+    std::string reason_str(bool) const ROSE_DEPRECATED("use reasonString");
+    static std::string reason_str(bool, unsigned) ROSE_DEPRECATED("use reasonString");
 public:
     /** Destructor. */
     virtual ~SgAsmBlock();
@@ -38630,12 +39291,23 @@ public:
 
     // These convert enums to strings. It is better to use the automatic enum stringification instead. They have names like
     // Rose::stringifySgAsmExecutableFileFormatInsnSetArchitecture, etc. */
-    static std::string isa_family_to_string(SgAsmExecutableFileFormat::InsSetArchitecture);
-    static std::string isa_to_string(SgAsmExecutableFileFormat::InsSetArchitecture);
-    static std::string to_string(SgAsmExecutableFileFormat::InsSetArchitecture);
-    static std::string to_string(SgAsmExecutableFileFormat::ExecFamily);
-    static std::string to_string(SgAsmExecutableFileFormat::ExecABI);
-    static std::string to_string(SgAsmExecutableFileFormat::ExecPurpose);
+    static std::string isaFamilyToString(SgAsmExecutableFileFormat::InsSetArchitecture);
+    static std::string isaToString(SgAsmExecutableFileFormat::InsSetArchitecture);
+    static std::string toString(SgAsmExecutableFileFormat::InsSetArchitecture);
+    static std::string toString(SgAsmExecutableFileFormat::ExecFamily);
+    static std::string toString(SgAsmExecutableFileFormat::ExecABI);
+    static std::string toString(SgAsmExecutableFileFormat::ExecPurpose);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    static std::string isa_family_to_string(SgAsmExecutableFileFormat::InsSetArchitecture) ROSE_DEPRECATED("use isaFamilyToString");
+    static std::string isa_to_string(SgAsmExecutableFileFormat::InsSetArchitecture) ROSE_DEPRECATED("use isaToString");
+    static std::string to_string(SgAsmExecutableFileFormat::InsSetArchitecture) ROSE_DEPRECATED("use toString");
+    static std::string to_string(SgAsmExecutableFileFormat::ExecFamily) ROSE_DEPRECATED("use toString");
+    static std::string to_string(SgAsmExecutableFileFormat::ExecABI) ROSE_DEPRECATED("use toString");
+    static std::string to_string(SgAsmExecutableFileFormat::ExecPurpose) ROSE_DEPRECATED("use toString");
 public:
     /** Destructor. */
     virtual ~SgAsmExecutableFileFormat();
@@ -39400,7 +40072,7 @@ class SgAsmInstruction: public SgAsmStatement {
 
 #ifndef DOCUMENTATION
     AsmInstruction.setDataPrototype(
-        "SgUnsignedCharList", "raw_bytes", "",
+        "SgUnsignedCharList", "rawBytes", "",
         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 #endif // !DOCUMENTATION
 
@@ -39447,7 +40119,7 @@ private:
         debugSerializationBegin("SgAsmInstruction");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmStatement);
         s & BOOST_SERIALIZATION_NVP(p_mnemonic);
-        s & BOOST_SERIALIZATION_NVP(p_raw_bytes);
+        s & BOOST_SERIALIZATION_NVP(p_rawBytes);
         s & BOOST_SERIALIZATION_NVP(p_operandList);
         s & BOOST_SERIALIZATION_NVP(p_cacheLockCount);
         s & BOOST_SERIALIZATION_NVP(p_sources);
@@ -39494,8 +40166,8 @@ public:
      *  These are the bytes that were actually decoded to obtain the instruction AST. 
      *  
      *  @{ */
-    SgUnsignedCharList const& get_raw_bytes() const;
-    void set_raw_bytes(SgUnsignedCharList const&);
+    SgUnsignedCharList const& get_rawBytes() const;
+    void set_rawBytes(SgUnsignedCharList const&);
     /** @} */
 
 public:
@@ -39907,6 +40579,13 @@ public:
      *
      *  Returns true if anything changed, false otherwise. */
     bool normalizeOperands();
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    const SgUnsignedCharList& get_raw_bytes() const ROSE_DEPRECATED("use get_rawBytes");
+    void set_raw_bytes(const SgUnsignedCharList&) ROSE_DEPRECATED("use set_rawBytes");
 public:
     /** Destructor. */
     virtual ~SgAsmInstruction();

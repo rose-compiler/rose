@@ -73,18 +73,18 @@ SgAsmCoffSymbol::set_st_num_aux_entries(unsigned const& x) {
 }
 
 SgUnsignedCharList const&
-SgAsmCoffSymbol::get_aux_data() const {
-    return p_aux_data;
+SgAsmCoffSymbol::get_auxiliaryData() const {
+    return p_auxiliaryData;
 }
 
 SgUnsignedCharList&
-SgAsmCoffSymbol::get_aux_data() {
-    return p_aux_data;
+SgAsmCoffSymbol::get_auxiliaryData() {
+    return p_auxiliaryData;
 }
 
 void
-SgAsmCoffSymbol::set_aux_data(SgUnsignedCharList const& x) {
-    this->p_aux_data = x;
+SgAsmCoffSymbol::set_auxiliaryData(SgUnsignedCharList const& x) {
+    this->p_auxiliaryData = x;
     set_isModified(true);
 }
 

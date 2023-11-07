@@ -7,29 +7,29 @@
 #include <sage3basic.h>
 
 SgAsmGenericString* const&
-SgAsmPEImportDirectory::get_dll_name() const {
-    return p_dll_name;
+SgAsmPEImportDirectory::get_dllName() const {
+    return p_dllName;
 }
 
 void
-SgAsmPEImportDirectory::set_dll_name(SgAsmGenericString* const& x) {
-    changeChildPointer(this->p_dll_name, const_cast<SgAsmGenericString*&>(x));
+SgAsmPEImportDirectory::set_dllName(SgAsmGenericString* const& x) {
+    changeChildPointer(this->p_dllName, const_cast<SgAsmGenericString*&>(x));
     set_isModified(true);
 }
 
 rose_rva_t const&
-SgAsmPEImportDirectory::get_dll_name_rva() const {
-    return p_dll_name_rva;
+SgAsmPEImportDirectory::get_dllNameRva() const {
+    return p_dllNameRva;
 }
 
 rose_rva_t&
-SgAsmPEImportDirectory::get_dll_name_rva() {
-    return p_dll_name_rva;
+SgAsmPEImportDirectory::get_dllNameRva() {
+    return p_dllNameRva;
 }
 
 void
-SgAsmPEImportDirectory::set_dll_name_rva(rose_rva_t const& x) {
-    this->p_dll_name_rva = x;
+SgAsmPEImportDirectory::set_dllNameRva(rose_rva_t const& x) {
+    this->p_dllNameRva = x;
     set_isModified(true);
 }
 
@@ -136,8 +136,8 @@ SgAsmPEImportDirectory::~SgAsmPEImportDirectory() {
 }
 
 SgAsmPEImportDirectory::SgAsmPEImportDirectory()
-    : p_dll_name(0)
-    , p_dll_name_rva(0)
+    : p_dllName(nullptr)
+    , p_dllNameRva(0)
     , p_dll_name_nalloc(0)
     , p_time(0)
     , p_forwarder_chain(0)
@@ -149,8 +149,8 @@ SgAsmPEImportDirectory::SgAsmPEImportDirectory()
 
 void
 SgAsmPEImportDirectory::initializeProperties() {
-    p_dll_name = 0;
-    p_dll_name_rva = 0;
+    p_dllName = nullptr;
+    p_dllNameRva = 0;
     p_dll_name_nalloc = 0;
     p_time = 0;
     p_forwarder_chain = 0;

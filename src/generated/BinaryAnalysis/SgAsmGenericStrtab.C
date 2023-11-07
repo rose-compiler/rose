@@ -18,35 +18,45 @@ SgAsmGenericStrtab::set_container(SgAsmGenericSection* const& x) {
 }
 
 SgAsmGenericStrtab::referenced_t const&
-SgAsmGenericStrtab::get_storage_list() const {
-    return p_storage_list;
+SgAsmGenericStrtab::get_storageList() const {
+    return p_storageList;
 }
 
 void
-SgAsmGenericStrtab::set_storage_list(SgAsmGenericStrtab::referenced_t const& x) {
-    this->p_storage_list = x;
+SgAsmGenericStrtab::set_storageList(SgAsmGenericStrtab::referenced_t const& x) {
+    this->p_storageList = x;
     set_isModified(true);
 }
 
+AddressIntervalSet const&
+SgAsmGenericStrtab::get_freeList() const {
+    return p_freeList;
+}
+
+AddressIntervalSet&
+SgAsmGenericStrtab::get_freeList() {
+    return p_freeList;
+}
+
 SgAsmStringStorage* const&
-SgAsmGenericStrtab::get_dont_free() const {
-    return p_dont_free;
+SgAsmGenericStrtab::get_dontFree() const {
+    return p_dontFree;
 }
 
 void
-SgAsmGenericStrtab::set_dont_free(SgAsmStringStorage* const& x) {
-    this->p_dont_free = x;
+SgAsmGenericStrtab::set_dontFree(SgAsmStringStorage* const& x) {
+    this->p_dontFree = x;
     set_isModified(true);
 }
 
 size_t const&
-SgAsmGenericStrtab::get_num_freed() const {
-    return p_num_freed;
+SgAsmGenericStrtab::get_numberFreed() const {
+    return p_numberFreed;
 }
 
 void
-SgAsmGenericStrtab::set_num_freed(size_t const& x) {
-    this->p_num_freed = x;
+SgAsmGenericStrtab::set_numberFreed(size_t const& x) {
+    this->p_numberFreed = x;
     set_isModified(true);
 }
 
@@ -56,14 +66,14 @@ SgAsmGenericStrtab::~SgAsmGenericStrtab() {
 
 SgAsmGenericStrtab::SgAsmGenericStrtab()
     : p_container(nullptr)
-    , p_dont_free(nullptr)
-    , p_num_freed(0) {}
+    , p_dontFree(nullptr)
+    , p_numberFreed(0) {}
 
 void
 SgAsmGenericStrtab::initializeProperties() {
     p_container = nullptr;
-    p_dont_free = nullptr;
-    p_num_freed = 0;
+    p_dontFree = nullptr;
+    p_numberFreed = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

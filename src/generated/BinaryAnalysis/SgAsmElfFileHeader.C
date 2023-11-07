@@ -150,24 +150,24 @@ SgAsmElfFileHeader::set_e_shstrndx(unsigned long const& x) {
 }
 
 SgAsmElfSectionTable* const&
-SgAsmElfFileHeader::get_section_table() const {
-    return p_section_table;
+SgAsmElfFileHeader::get_sectionTable() const {
+    return p_sectionTable;
 }
 
 void
-SgAsmElfFileHeader::set_section_table(SgAsmElfSectionTable* const& x) {
-    this->p_section_table = x;
+SgAsmElfFileHeader::set_sectionTable(SgAsmElfSectionTable* const& x) {
+    this->p_sectionTable = x;
     set_isModified(true);
 }
 
 SgAsmElfSegmentTable* const&
-SgAsmElfFileHeader::get_segment_table() const {
-    return p_segment_table;
+SgAsmElfFileHeader::get_segmentTable() const {
+    return p_segmentTable;
 }
 
 void
-SgAsmElfFileHeader::set_segment_table(SgAsmElfSegmentTable* const& x) {
-    this->p_segment_table = x;
+SgAsmElfFileHeader::set_segmentTable(SgAsmElfSegmentTable* const& x) {
+    this->p_segmentTable = x;
     set_isModified(true);
 }
 
@@ -188,8 +188,8 @@ SgAsmElfFileHeader::SgAsmElfFileHeader()
     , p_shextrasz(0)
     , p_e_shnum(0)
     , p_e_shstrndx(0)
-    , p_section_table(nullptr)
-    , p_segment_table(nullptr) {}
+    , p_sectionTable(nullptr)
+    , p_segmentTable(nullptr) {}
 
 void
 SgAsmElfFileHeader::initializeProperties() {
@@ -205,8 +205,8 @@ SgAsmElfFileHeader::initializeProperties() {
     p_shextrasz = 0;
     p_e_shnum = 0;
     p_e_shstrndx = 0;
-    p_section_table = nullptr;
-    p_segment_table = nullptr;
+    p_sectionTable = nullptr;
+    p_segmentTable = nullptr;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

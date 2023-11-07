@@ -6,25 +6,30 @@
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS)
 #include <sage3basic.h>
 
+SgAsmElfSection* const&
+SgAsmElfSection::get_linkedSection() const {
+    return p_linkedSection;
+}
+
 SgAsmElfSectionTableEntry* const&
-SgAsmElfSection::get_section_entry() const {
-    return p_section_entry;
+SgAsmElfSection::get_sectionEntry() const {
+    return p_sectionEntry;
 }
 
 void
-SgAsmElfSection::set_section_entry(SgAsmElfSectionTableEntry* const& x) {
-    changeChildPointer(this->p_section_entry, const_cast<SgAsmElfSectionTableEntry*&>(x));
+SgAsmElfSection::set_sectionEntry(SgAsmElfSectionTableEntry* const& x) {
+    changeChildPointer(this->p_sectionEntry, const_cast<SgAsmElfSectionTableEntry*&>(x));
     set_isModified(true);
 }
 
 SgAsmElfSegmentTableEntry* const&
-SgAsmElfSection::get_segment_entry() const {
-    return p_segment_entry;
+SgAsmElfSection::get_segmentEntry() const {
+    return p_segmentEntry;
 }
 
 void
-SgAsmElfSection::set_segment_entry(SgAsmElfSegmentTableEntry* const& x) {
-    changeChildPointer(this->p_segment_entry, const_cast<SgAsmElfSegmentTableEntry*&>(x));
+SgAsmElfSection::set_segmentEntry(SgAsmElfSegmentTableEntry* const& x) {
+    changeChildPointer(this->p_segmentEntry, const_cast<SgAsmElfSegmentTableEntry*&>(x));
     set_isModified(true);
 }
 
@@ -33,15 +38,15 @@ SgAsmElfSection::~SgAsmElfSection() {
 }
 
 SgAsmElfSection::SgAsmElfSection()
-    : p_linked_section(nullptr)
-    , p_section_entry(nullptr)
-    , p_segment_entry(nullptr) {}
+    : p_linkedSection(nullptr)
+    , p_sectionEntry(nullptr)
+    , p_segmentEntry(nullptr) {}
 
 void
 SgAsmElfSection::initializeProperties() {
-    p_linked_section = nullptr;
-    p_section_entry = nullptr;
-    p_segment_entry = nullptr;
+    p_linkedSection = nullptr;
+    p_sectionEntry = nullptr;
+    p_segmentEntry = nullptr;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

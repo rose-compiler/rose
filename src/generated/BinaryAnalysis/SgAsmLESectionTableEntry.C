@@ -18,24 +18,24 @@ SgAsmLESectionTableEntry::set_flags(unsigned const& x) {
 }
 
 unsigned const&
-SgAsmLESectionTableEntry::get_pagemap_index() const {
-    return p_pagemap_index;
+SgAsmLESectionTableEntry::get_pageMapIndex() const {
+    return p_pageMapIndex;
 }
 
 void
-SgAsmLESectionTableEntry::set_pagemap_index(unsigned const& x) {
-    this->p_pagemap_index = x;
+SgAsmLESectionTableEntry::set_pageMapIndex(unsigned const& x) {
+    this->p_pageMapIndex = x;
     set_isModified(true);
 }
 
 unsigned const&
-SgAsmLESectionTableEntry::get_pagemap_nentries() const {
-    return p_pagemap_nentries;
+SgAsmLESectionTableEntry::get_pageMapNEntries() const {
+    return p_pageMapNEntries;
 }
 
 void
-SgAsmLESectionTableEntry::set_pagemap_nentries(unsigned const& x) {
-    this->p_pagemap_nentries = x;
+SgAsmLESectionTableEntry::set_pageMapNEntries(unsigned const& x) {
+    this->p_pageMapNEntries = x;
     set_isModified(true);
 }
 
@@ -51,24 +51,24 @@ SgAsmLESectionTableEntry::set_res1(unsigned const& x) {
 }
 
 rose_addr_t const&
-SgAsmLESectionTableEntry::get_mapped_size() const {
-    return p_mapped_size;
+SgAsmLESectionTableEntry::get_mappedSize() const {
+    return p_mappedSize;
 }
 
 void
-SgAsmLESectionTableEntry::set_mapped_size(rose_addr_t const& x) {
-    this->p_mapped_size = x;
+SgAsmLESectionTableEntry::set_mappedSize(rose_addr_t const& x) {
+    this->p_mappedSize = x;
     set_isModified(true);
 }
 
 rose_addr_t const&
-SgAsmLESectionTableEntry::get_base_addr() const {
-    return p_base_addr;
+SgAsmLESectionTableEntry::get_baseAddr() const {
+    return p_baseAddr;
 }
 
 void
-SgAsmLESectionTableEntry::set_base_addr(rose_addr_t const& x) {
-    this->p_base_addr = x;
+SgAsmLESectionTableEntry::set_baseAddr(rose_addr_t const& x) {
+    this->p_baseAddr = x;
     set_isModified(true);
 }
 
@@ -78,20 +78,20 @@ SgAsmLESectionTableEntry::~SgAsmLESectionTableEntry() {
 
 SgAsmLESectionTableEntry::SgAsmLESectionTableEntry()
     : p_flags(0)
-    , p_pagemap_index(0)
-    , p_pagemap_nentries(0)
+    , p_pageMapIndex(0)
+    , p_pageMapNEntries(0)
     , p_res1(0)
-    , p_mapped_size(0)
-    , p_base_addr(0) {}
+    , p_mappedSize(0)
+    , p_baseAddr(0) {}
 
 void
 SgAsmLESectionTableEntry::initializeProperties() {
     p_flags = 0;
-    p_pagemap_index = 0;
-    p_pagemap_nentries = 0;
+    p_pageMapIndex = 0;
+    p_pageMapNEntries = 0;
     p_res1 = 0;
-    p_mapped_size = 0;
-    p_base_addr = 0;
+    p_mappedSize = 0;
+    p_baseAddr = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

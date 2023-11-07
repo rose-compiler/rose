@@ -29,24 +29,24 @@ SgAsmNEEntryPoint::set_int3f(unsigned const& x) {
 }
 
 unsigned const&
-SgAsmNEEntryPoint::get_section_idx() const {
-    return p_section_idx;
+SgAsmNEEntryPoint::get_sectionIndex() const {
+    return p_sectionIndex;
 }
 
 void
-SgAsmNEEntryPoint::set_section_idx(unsigned const& x) {
-    this->p_section_idx = x;
+SgAsmNEEntryPoint::set_sectionIndex(unsigned const& x) {
+    this->p_sectionIndex = x;
     set_isModified(true);
 }
 
 unsigned const&
-SgAsmNEEntryPoint::get_section_offset() const {
-    return p_section_offset;
+SgAsmNEEntryPoint::get_sectionOffset() const {
+    return p_sectionOffset;
 }
 
 void
-SgAsmNEEntryPoint::set_section_offset(unsigned const& x) {
-    this->p_section_offset = x;
+SgAsmNEEntryPoint::set_sectionOffset(unsigned const& x) {
+    this->p_sectionOffset = x;
     set_isModified(true);
 }
 
@@ -57,15 +57,15 @@ SgAsmNEEntryPoint::~SgAsmNEEntryPoint() {
 SgAsmNEEntryPoint::SgAsmNEEntryPoint()
     : p_flags(SgAsmNEEntryPoint::EF_ZERO)
     , p_int3f(0)
-    , p_section_idx(0)
-    , p_section_offset(0) {}
+    , p_sectionIndex(0)
+    , p_sectionOffset(0) {}
 
 void
 SgAsmNEEntryPoint::initializeProperties() {
     p_flags = SgAsmNEEntryPoint::EF_ZERO;
     p_int3f = 0;
-    p_section_idx = 0;
-    p_section_offset = 0;
+    p_sectionIndex = 0;
+    p_sectionOffset = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

@@ -18,13 +18,13 @@ SgAsmElfSymverNeededEntry::set_version(size_t const& x) {
 }
 
 SgAsmGenericString* const&
-SgAsmElfSymverNeededEntry::get_file_name() const {
-    return p_file_name;
+SgAsmElfSymverNeededEntry::get_fileName() const {
+    return p_fileName;
 }
 
 void
-SgAsmElfSymverNeededEntry::set_file_name(SgAsmGenericString* const& x) {
-    changeChildPointer(this->p_file_name, const_cast<SgAsmGenericString*&>(x));
+SgAsmElfSymverNeededEntry::set_fileName(SgAsmGenericString* const& x) {
+    changeChildPointer(this->p_fileName, const_cast<SgAsmGenericString*&>(x));
     set_isModified(true);
 }
 
@@ -45,13 +45,13 @@ SgAsmElfSymverNeededEntry::~SgAsmElfSymverNeededEntry() {
 
 SgAsmElfSymverNeededEntry::SgAsmElfSymverNeededEntry()
     : p_version(0)
-    , p_file_name(nullptr)
+    , p_fileName(nullptr)
     , p_entries(createAndParent<SgAsmElfSymverNeededAuxList>(this)) {}
 
 void
 SgAsmElfSymverNeededEntry::initializeProperties() {
     p_version = 0;
-    p_file_name = nullptr;
+    p_fileName = nullptr;
     p_entries = createAndParent<SgAsmElfSymverNeededAuxList>(this);
 }
 

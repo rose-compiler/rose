@@ -7,24 +7,24 @@
 #include <sage3basic.h>
 
 SgAsmNESectionTableEntry* const&
-SgAsmNESection::get_st_entry() const {
-    return p_st_entry;
+SgAsmNESection::get_sectionTableEntry() const {
+    return p_sectionTableEntry;
 }
 
 void
-SgAsmNESection::set_st_entry(SgAsmNESectionTableEntry* const& x) {
-    changeChildPointer(this->p_st_entry, const_cast<SgAsmNESectionTableEntry*&>(x));
+SgAsmNESection::set_sectionTableEntry(SgAsmNESectionTableEntry* const& x) {
+    changeChildPointer(this->p_sectionTableEntry, const_cast<SgAsmNESectionTableEntry*&>(x));
     set_isModified(true);
 }
 
 SgAsmNERelocTable* const&
-SgAsmNESection::get_reloc_table() const {
-    return p_reloc_table;
+SgAsmNESection::get_relocationTable() const {
+    return p_relocationTable;
 }
 
 void
-SgAsmNESection::set_reloc_table(SgAsmNERelocTable* const& x) {
-    changeChildPointer(this->p_reloc_table, const_cast<SgAsmNERelocTable*&>(x));
+SgAsmNESection::set_relocationTable(SgAsmNERelocTable* const& x) {
+    changeChildPointer(this->p_relocationTable, const_cast<SgAsmNERelocTable*&>(x));
     set_isModified(true);
 }
 
@@ -33,13 +33,13 @@ SgAsmNESection::~SgAsmNESection() {
 }
 
 SgAsmNESection::SgAsmNESection()
-    : p_st_entry(nullptr)
-    , p_reloc_table(nullptr) {}
+    : p_sectionTableEntry(nullptr)
+    , p_relocationTable(nullptr) {}
 
 void
 SgAsmNESection::initializeProperties() {
-    p_st_entry = nullptr;
-    p_reloc_table = nullptr;
+    p_sectionTableEntry = nullptr;
+    p_relocationTable = nullptr;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

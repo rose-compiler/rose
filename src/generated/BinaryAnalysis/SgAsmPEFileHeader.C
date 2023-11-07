@@ -402,35 +402,35 @@ SgAsmPEFileHeader::set_e_num_rvasize_pairs(unsigned const& x) {
 }
 
 SgAsmPERVASizePairList* const&
-SgAsmPEFileHeader::get_rvasize_pairs() const {
-    return p_rvasize_pairs;
+SgAsmPEFileHeader::get_rvaSizePairs() const {
+    return p_rvaSizePairs;
 }
 
 void
-SgAsmPEFileHeader::set_rvasize_pairs(SgAsmPERVASizePairList* const& x) {
-    changeChildPointer(this->p_rvasize_pairs, const_cast<SgAsmPERVASizePairList*&>(x));
+SgAsmPEFileHeader::set_rvaSizePairs(SgAsmPERVASizePairList* const& x) {
+    changeChildPointer(this->p_rvaSizePairs, const_cast<SgAsmPERVASizePairList*&>(x));
     set_isModified(true);
 }
 
 SgAsmPESectionTable* const&
-SgAsmPEFileHeader::get_section_table() const {
-    return p_section_table;
+SgAsmPEFileHeader::get_sectionTable() const {
+    return p_sectionTable;
 }
 
 void
-SgAsmPEFileHeader::set_section_table(SgAsmPESectionTable* const& x) {
-    this->p_section_table = x;
+SgAsmPEFileHeader::set_sectionTable(SgAsmPESectionTable* const& x) {
+    this->p_sectionTable = x;
     set_isModified(true);
 }
 
 SgAsmCoffSymbolTable* const&
-SgAsmPEFileHeader::get_coff_symtab() const {
-    return p_coff_symtab;
+SgAsmPEFileHeader::get_coffSymbolTable() const {
+    return p_coffSymbolTable;
 }
 
 void
-SgAsmPEFileHeader::set_coff_symtab(SgAsmCoffSymbolTable* const& x) {
-    this->p_coff_symtab = x;
+SgAsmPEFileHeader::set_coffSymbolTable(SgAsmCoffSymbolTable* const& x) {
+    this->p_coffSymbolTable = x;
     set_isModified(true);
 }
 
@@ -474,9 +474,9 @@ SgAsmPEFileHeader::SgAsmPEFileHeader()
     , p_e_heap_commit_size(0)
     , p_e_loader_flags(0)
     , p_e_num_rvasize_pairs(0)
-    , p_rvasize_pairs(nullptr)
-    , p_section_table(NULL)
-    , p_coff_symtab(NULL) {}
+    , p_rvaSizePairs(nullptr)
+    , p_sectionTable(nullptr)
+    , p_coffSymbolTable(nullptr) {}
 
 void
 SgAsmPEFileHeader::initializeProperties() {
@@ -515,9 +515,9 @@ SgAsmPEFileHeader::initializeProperties() {
     p_e_heap_commit_size = 0;
     p_e_loader_flags = 0;
     p_e_num_rvasize_pairs = 0;
-    p_rvasize_pairs = nullptr;
-    p_section_table = NULL;
-    p_coff_symtab = NULL;
+    p_rvaSizePairs = nullptr;
+    p_sectionTable = nullptr;
+    p_coffSymbolTable = nullptr;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

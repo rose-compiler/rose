@@ -18,13 +18,13 @@ SgAsmInterpretation::set_headers(SgAsmGenericHeaderList* const& x) {
 }
 
 SgAsmBlock* const&
-SgAsmInterpretation::get_global_block() const {
-    return p_global_block;
+SgAsmInterpretation::get_globalBlock() const {
+    return p_globalBlock;
 }
 
 void
-SgAsmInterpretation::set_global_block(SgAsmBlock* const& x) {
-    changeChildPointer(this->p_global_block, const_cast<SgAsmBlock*&>(x));
+SgAsmInterpretation::set_globalBlock(SgAsmBlock* const& x) {
+    changeChildPointer(this->p_globalBlock, const_cast<SgAsmBlock*&>(x));
     set_isModified(true);
 }
 
@@ -67,14 +67,14 @@ SgAsmInterpretation::~SgAsmInterpretation() {
 
 SgAsmInterpretation::SgAsmInterpretation()
     : p_headers(createAndParent<SgAsmGenericHeaderList>(this))
-    , p_global_block(nullptr)
+    , p_globalBlock(nullptr)
     , p_coverageComputed(false)
     , p_percentageCoverage(NAN) {}
 
 void
 SgAsmInterpretation::initializeProperties() {
     p_headers = createAndParent<SgAsmGenericHeaderList>(this);
-    p_global_block = nullptr;
+    p_globalBlock = nullptr;
     p_coverageComputed = false;
     p_percentageCoverage = NAN;
 }

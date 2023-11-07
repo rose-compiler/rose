@@ -513,79 +513,79 @@ SgAsmLEFileHeader::set_e_debug_info_rfo(rose_addr_t const& x) {
 }
 
 SgAsmDOSExtendedHeader* const&
-SgAsmLEFileHeader::get_dos2_header() const {
-    return p_dos2_header;
+SgAsmLEFileHeader::get_dos2Header() const {
+    return p_dos2Header;
 }
 
 void
-SgAsmLEFileHeader::set_dos2_header(SgAsmDOSExtendedHeader* const& x) {
-    changeChildPointer(this->p_dos2_header, const_cast<SgAsmDOSExtendedHeader*&>(x));
+SgAsmLEFileHeader::set_dos2Header(SgAsmDOSExtendedHeader* const& x) {
+    changeChildPointer(this->p_dos2Header, const_cast<SgAsmDOSExtendedHeader*&>(x));
     set_isModified(true);
 }
 
 SgAsmLESectionTable* const&
-SgAsmLEFileHeader::get_section_table() const {
-    return p_section_table;
+SgAsmLEFileHeader::get_sectionTable() const {
+    return p_sectionTable;
 }
 
 void
-SgAsmLEFileHeader::set_section_table(SgAsmLESectionTable* const& x) {
-    this->p_section_table = x;
+SgAsmLEFileHeader::set_sectionTable(SgAsmLESectionTable* const& x) {
+    this->p_sectionTable = x;
     set_isModified(true);
 }
 
 SgAsmLEPageTable* const&
-SgAsmLEFileHeader::get_page_table() const {
-    return p_page_table;
+SgAsmLEFileHeader::get_pageTable() const {
+    return p_pageTable;
 }
 
 void
-SgAsmLEFileHeader::set_page_table(SgAsmLEPageTable* const& x) {
-    changeChildPointer(this->p_page_table, const_cast<SgAsmLEPageTable*&>(x));
+SgAsmLEFileHeader::set_pageTable(SgAsmLEPageTable* const& x) {
+    changeChildPointer(this->p_pageTable, const_cast<SgAsmLEPageTable*&>(x));
     set_isModified(true);
 }
 
 SgAsmLENameTable* const&
-SgAsmLEFileHeader::get_resname_table() const {
-    return p_resname_table;
+SgAsmLEFileHeader::get_residentNameTable() const {
+    return p_residentNameTable;
 }
 
 void
-SgAsmLEFileHeader::set_resname_table(SgAsmLENameTable* const& x) {
-    changeChildPointer(this->p_resname_table, const_cast<SgAsmLENameTable*&>(x));
+SgAsmLEFileHeader::set_residentNameTable(SgAsmLENameTable* const& x) {
+    changeChildPointer(this->p_residentNameTable, const_cast<SgAsmLENameTable*&>(x));
     set_isModified(true);
 }
 
 SgAsmLENameTable* const&
-SgAsmLEFileHeader::get_nonresname_table() const {
-    return p_nonresname_table;
+SgAsmLEFileHeader::get_nonresidentNameTable() const {
+    return p_nonresidentNameTable;
 }
 
 void
-SgAsmLEFileHeader::set_nonresname_table(SgAsmLENameTable* const& x) {
-    changeChildPointer(this->p_nonresname_table, const_cast<SgAsmLENameTable*&>(x));
+SgAsmLEFileHeader::set_nonresidentNameTable(SgAsmLENameTable* const& x) {
+    changeChildPointer(this->p_nonresidentNameTable, const_cast<SgAsmLENameTable*&>(x));
     set_isModified(true);
 }
 
 SgAsmLEEntryTable* const&
-SgAsmLEFileHeader::get_entry_table() const {
-    return p_entry_table;
+SgAsmLEFileHeader::get_entryTable() const {
+    return p_entryTable;
 }
 
 void
-SgAsmLEFileHeader::set_entry_table(SgAsmLEEntryTable* const& x) {
-    changeChildPointer(this->p_entry_table, const_cast<SgAsmLEEntryTable*&>(x));
+SgAsmLEFileHeader::set_entryTable(SgAsmLEEntryTable* const& x) {
+    changeChildPointer(this->p_entryTable, const_cast<SgAsmLEEntryTable*&>(x));
     set_isModified(true);
 }
 
 SgAsmLERelocTable* const&
-SgAsmLEFileHeader::get_reloc_table() const {
-    return p_reloc_table;
+SgAsmLEFileHeader::get_relocationTable() const {
+    return p_relocationTable;
 }
 
 void
-SgAsmLEFileHeader::set_reloc_table(SgAsmLERelocTable* const& x) {
-    changeChildPointer(this->p_reloc_table, const_cast<SgAsmLERelocTable*&>(x));
+SgAsmLEFileHeader::set_relocationTable(SgAsmLERelocTable* const& x) {
+    changeChildPointer(this->p_relocationTable, const_cast<SgAsmLERelocTable*&>(x));
     set_isModified(true);
 }
 
@@ -640,13 +640,13 @@ SgAsmLEFileHeader::SgAsmLEFileHeader()
     , p_e_data_pages_offset(0)
     , p_e_nonresnametab_offset(0)
     , p_e_debug_info_rfo(0)
-    , p_dos2_header(nullptr)
-    , p_section_table(nullptr)
-    , p_page_table(nullptr)
-    , p_resname_table(nullptr)
-    , p_nonresname_table(nullptr)
-    , p_entry_table(nullptr)
-    , p_reloc_table(nullptr) {}
+    , p_dos2Header(nullptr)
+    , p_sectionTable(nullptr)
+    , p_pageTable(nullptr)
+    , p_residentNameTable(nullptr)
+    , p_nonresidentNameTable(nullptr)
+    , p_entryTable(nullptr)
+    , p_relocationTable(nullptr) {}
 
 void
 SgAsmLEFileHeader::initializeProperties() {
@@ -696,13 +696,13 @@ SgAsmLEFileHeader::initializeProperties() {
     p_e_data_pages_offset = 0;
     p_e_nonresnametab_offset = 0;
     p_e_debug_info_rfo = 0;
-    p_dos2_header = nullptr;
-    p_section_table = nullptr;
-    p_page_table = nullptr;
-    p_resname_table = nullptr;
-    p_nonresname_table = nullptr;
-    p_entry_table = nullptr;
-    p_reloc_table = nullptr;
+    p_dos2Header = nullptr;
+    p_sectionTable = nullptr;
+    p_pageTable = nullptr;
+    p_residentNameTable = nullptr;
+    p_nonresidentNameTable = nullptr;
+    p_entryTable = nullptr;
+    p_relocationTable = nullptr;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

@@ -7,13 +7,13 @@
 #include <sage3basic.h>
 
 SgAsmPEImportDirectoryList* const&
-SgAsmPEImportSection::get_import_directories() const {
-    return p_import_directories;
+SgAsmPEImportSection::get_importDirectories() const {
+    return p_importDirectories;
 }
 
 void
-SgAsmPEImportSection::set_import_directories(SgAsmPEImportDirectoryList* const& x) {
-    changeChildPointer(this->p_import_directories, const_cast<SgAsmPEImportDirectoryList*&>(x));
+SgAsmPEImportSection::set_importDirectories(SgAsmPEImportDirectoryList* const& x) {
+    changeChildPointer(this->p_importDirectories, const_cast<SgAsmPEImportDirectoryList*&>(x));
     set_isModified(true);
 }
 
@@ -22,11 +22,11 @@ SgAsmPEImportSection::~SgAsmPEImportSection() {
 }
 
 SgAsmPEImportSection::SgAsmPEImportSection()
-    : p_import_directories(createAndParent<SgAsmPEImportDirectoryList>(this)) {}
+    : p_importDirectories(createAndParent<SgAsmPEImportDirectoryList>(this)) {}
 
 void
 SgAsmPEImportSection::initializeProperties() {
-    p_import_directories = createAndParent<SgAsmPEImportDirectoryList>(this);
+    p_importDirectories = createAndParent<SgAsmPEImportDirectoryList>(this);
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

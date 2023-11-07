@@ -23,18 +23,18 @@ SgAsmPEExportEntry::set_ordinal(unsigned const& x) {
 }
 
 rose_rva_t const&
-SgAsmPEExportEntry::get_export_rva() const {
-    return p_export_rva;
+SgAsmPEExportEntry::get_exportRva() const {
+    return p_exportRva;
 }
 
 rose_rva_t&
-SgAsmPEExportEntry::get_export_rva() {
-    return p_export_rva;
+SgAsmPEExportEntry::get_exportRva() {
+    return p_exportRva;
 }
 
 void
-SgAsmPEExportEntry::set_export_rva(rose_rva_t const& x) {
-    this->p_export_rva = x;
+SgAsmPEExportEntry::set_exportRva(rose_rva_t const& x) {
+    this->p_exportRva = x;
     set_isModified(true);
 }
 
@@ -50,14 +50,14 @@ SgAsmPEExportEntry::~SgAsmPEExportEntry() {
 SgAsmPEExportEntry::SgAsmPEExportEntry()
     : p_name(nullptr)
     , p_ordinal(0)
-    , p_export_rva(0)
+    , p_exportRva(0)
     , p_forwarder(nullptr) {}
 
 void
 SgAsmPEExportEntry::initializeProperties() {
     p_name = nullptr;
     p_ordinal = 0;
-    p_export_rva = 0;
+    p_exportRva = 0;
     p_forwarder = nullptr;
 }
 

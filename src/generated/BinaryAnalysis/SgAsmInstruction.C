@@ -18,13 +18,13 @@ SgAsmInstruction::set_mnemonic(std::string const& x) {
 }
 
 SgUnsignedCharList const&
-SgAsmInstruction::get_raw_bytes() const {
-    return p_raw_bytes;
+SgAsmInstruction::get_rawBytes() const {
+    return p_rawBytes;
 }
 
 void
-SgAsmInstruction::set_raw_bytes(SgUnsignedCharList const& x) {
-    this->p_raw_bytes = x;
+SgAsmInstruction::set_rawBytes(SgUnsignedCharList const& x) {
+    this->p_rawBytes = x;
     set_isModified(true);
 }
 

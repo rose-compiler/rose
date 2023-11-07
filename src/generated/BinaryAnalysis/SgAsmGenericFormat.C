@@ -51,13 +51,13 @@ SgAsmGenericFormat::set_version(unsigned const& x) {
 }
 
 bool const&
-SgAsmGenericFormat::get_is_current_version() const {
-    return p_is_current_version;
+SgAsmGenericFormat::get_isCurrentVersion() const {
+    return p_isCurrentVersion;
 }
 
 void
-SgAsmGenericFormat::set_is_current_version(bool const& x) {
-    this->p_is_current_version = x;
+SgAsmGenericFormat::set_isCurrentVersion(bool const& x) {
+    this->p_isCurrentVersion = x;
     set_isModified(true);
 }
 
@@ -73,24 +73,24 @@ SgAsmGenericFormat::set_abi(SgAsmGenericFormat::ExecABI const& x) {
 }
 
 unsigned const&
-SgAsmGenericFormat::get_abi_version() const {
-    return p_abi_version;
+SgAsmGenericFormat::get_abiVersion() const {
+    return p_abiVersion;
 }
 
 void
-SgAsmGenericFormat::set_abi_version(unsigned const& x) {
-    this->p_abi_version = x;
+SgAsmGenericFormat::set_abiVersion(unsigned const& x) {
+    this->p_abiVersion = x;
     set_isModified(true);
 }
 
 size_t const&
-SgAsmGenericFormat::get_word_size() const {
-    return p_word_size;
+SgAsmGenericFormat::get_wordSize() const {
+    return p_wordSize;
 }
 
 void
-SgAsmGenericFormat::set_word_size(size_t const& x) {
-    this->p_word_size = x;
+SgAsmGenericFormat::set_wordSize(size_t const& x) {
+    this->p_wordSize = x;
     set_isModified(true);
 }
 
@@ -103,10 +103,10 @@ SgAsmGenericFormat::SgAsmGenericFormat()
     , p_purpose(SgAsmGenericFormat::PURPOSE_EXECUTABLE)
     , p_sex(Rose::BinaryAnalysis::ByteOrder::ORDER_UNSPECIFIED)
     , p_version(0)
-    , p_is_current_version(false)
+    , p_isCurrentVersion(false)
     , p_abi(SgAsmGenericFormat::ABI_UNSPECIFIED)
-    , p_abi_version(0)
-    , p_word_size(0) {}
+    , p_abiVersion(0)
+    , p_wordSize(0) {}
 
 void
 SgAsmGenericFormat::initializeProperties() {
@@ -114,10 +114,10 @@ SgAsmGenericFormat::initializeProperties() {
     p_purpose = SgAsmGenericFormat::PURPOSE_EXECUTABLE;
     p_sex = Rose::BinaryAnalysis::ByteOrder::ORDER_UNSPECIFIED;
     p_version = 0;
-    p_is_current_version = false;
+    p_isCurrentVersion = false;
     p_abi = SgAsmGenericFormat::ABI_UNSPECIFIED;
-    p_abi_version = 0;
-    p_word_size = 0;
+    p_abiVersion = 0;
+    p_wordSize = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

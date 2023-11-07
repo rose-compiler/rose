@@ -7,13 +7,13 @@
 #include <sage3basic.h>
 
 int const&
-SgAsmStackExpression::get_stack_position() const {
-    return p_stack_position;
+SgAsmStackExpression::get_stackPosition() const {
+    return p_stackPosition;
 }
 
 void
-SgAsmStackExpression::set_stack_position(int const& x) {
-    this->p_stack_position = x;
+SgAsmStackExpression::set_stackPosition(int const& x) {
+    this->p_stackPosition = x;
     set_isModified(true);
 }
 
@@ -22,16 +22,16 @@ SgAsmStackExpression::~SgAsmStackExpression() {
 }
 
 SgAsmStackExpression::SgAsmStackExpression()
-    : p_stack_position(0) {}
+    : p_stackPosition(0) {}
 
 // The association between constructor arguments and their classes:
-//    property=stack_position   class=SgAsmStackExpression
-SgAsmStackExpression::SgAsmStackExpression(int const& stack_position)
-    : p_stack_position(stack_position) {}
+//    property=stackPosition    class=SgAsmStackExpression
+SgAsmStackExpression::SgAsmStackExpression(int const& stackPosition)
+    : p_stackPosition(stackPosition) {}
 
 void
 SgAsmStackExpression::initializeProperties() {
-    p_stack_position = 0;
+    p_stackPosition = 0;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

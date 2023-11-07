@@ -7,35 +7,35 @@
 #include <sage3basic.h>
 
 SgAsmValueExpression* const&
-SgAsmValueExpression::get_unfolded_expression_tree() const {
-    return p_unfolded_expression_tree;
+SgAsmValueExpression::get_unfoldedExpression() const {
+    return p_unfoldedExpression;
 }
 
 void
-SgAsmValueExpression::set_unfolded_expression_tree(SgAsmValueExpression* const& x) {
-    changeChildPointer(this->p_unfolded_expression_tree, const_cast<SgAsmValueExpression*&>(x));
+SgAsmValueExpression::set_unfoldedExpression(SgAsmValueExpression* const& x) {
+    changeChildPointer(this->p_unfoldedExpression, const_cast<SgAsmValueExpression*&>(x));
     set_isModified(true);
 }
 
 unsigned short const&
-SgAsmValueExpression::get_bit_offset() const {
-    return p_bit_offset;
+SgAsmValueExpression::get_bitOffset() const {
+    return p_bitOffset;
 }
 
 void
-SgAsmValueExpression::set_bit_offset(unsigned short const& x) {
-    this->p_bit_offset = x;
+SgAsmValueExpression::set_bitOffset(unsigned short const& x) {
+    this->p_bitOffset = x;
     set_isModified(true);
 }
 
 unsigned short const&
-SgAsmValueExpression::get_bit_size() const {
-    return p_bit_size;
+SgAsmValueExpression::get_bitSize() const {
+    return p_bitSize;
 }
 
 void
-SgAsmValueExpression::set_bit_size(unsigned short const& x) {
-    this->p_bit_size = x;
+SgAsmValueExpression::set_bitSize(unsigned short const& x) {
+    this->p_bitSize = x;
     set_isModified(true);
 }
 
@@ -55,16 +55,16 @@ SgAsmValueExpression::~SgAsmValueExpression() {
 }
 
 SgAsmValueExpression::SgAsmValueExpression()
-    : p_unfolded_expression_tree(nullptr)
-    , p_bit_offset(0)
-    , p_bit_size(0)
+    : p_unfoldedExpression(nullptr)
+    , p_bitOffset(0)
+    , p_bitSize(0)
     , p_symbol(nullptr) {}
 
 void
 SgAsmValueExpression::initializeProperties() {
-    p_unfolded_expression_tree = nullptr;
-    p_bit_offset = 0;
-    p_bit_size = 0;
+    p_unfoldedExpression = nullptr;
+    p_bitOffset = 0;
+    p_bitSize = 0;
     p_symbol = nullptr;
 }
 

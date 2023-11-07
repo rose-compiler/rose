@@ -7,24 +7,24 @@
 #include <sage3basic.h>
 
 bool const&
-SgAsmElfRelocSection::get_uses_addend() const {
-    return p_uses_addend;
+SgAsmElfRelocSection::get_usesAddend() const {
+    return p_usesAddend;
 }
 
 void
-SgAsmElfRelocSection::set_uses_addend(bool const& x) {
-    this->p_uses_addend = x;
+SgAsmElfRelocSection::set_usesAddend(bool const& x) {
+    this->p_usesAddend = x;
     set_isModified(true);
 }
 
 SgAsmElfSection* const&
-SgAsmElfRelocSection::get_target_section() const {
-    return p_target_section;
+SgAsmElfRelocSection::get_targetSection() const {
+    return p_targetSection;
 }
 
 void
-SgAsmElfRelocSection::set_target_section(SgAsmElfSection* const& x) {
-    this->p_target_section = x;
+SgAsmElfRelocSection::set_targetSection(SgAsmElfSection* const& x) {
+    this->p_targetSection = x;
     set_isModified(true);
 }
 
@@ -44,14 +44,14 @@ SgAsmElfRelocSection::~SgAsmElfRelocSection() {
 }
 
 SgAsmElfRelocSection::SgAsmElfRelocSection()
-    : p_uses_addend(true)
-    , p_target_section(nullptr)
+    : p_usesAddend(true)
+    , p_targetSection(nullptr)
     , p_entries(createAndParent<SgAsmElfRelocEntryList>(this)) {}
 
 void
 SgAsmElfRelocSection::initializeProperties() {
-    p_uses_addend = true;
-    p_target_section = nullptr;
+    p_usesAddend = true;
+    p_targetSection = nullptr;
     p_entries = createAndParent<SgAsmElfRelocEntryList>(this);
 }
 

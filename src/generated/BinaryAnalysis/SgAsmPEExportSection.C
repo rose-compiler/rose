@@ -7,13 +7,13 @@
 #include <sage3basic.h>
 
 SgAsmPEExportDirectory* const&
-SgAsmPEExportSection::get_export_dir() const {
-    return p_export_dir;
+SgAsmPEExportSection::get_exportDirectory() const {
+    return p_exportDirectory;
 }
 
 void
-SgAsmPEExportSection::set_export_dir(SgAsmPEExportDirectory* const& x) {
-    changeChildPointer(this->p_export_dir, const_cast<SgAsmPEExportDirectory*&>(x));
+SgAsmPEExportSection::set_exportDirectory(SgAsmPEExportDirectory* const& x) {
+    changeChildPointer(this->p_exportDirectory, const_cast<SgAsmPEExportDirectory*&>(x));
     set_isModified(true);
 }
 
@@ -33,12 +33,12 @@ SgAsmPEExportSection::~SgAsmPEExportSection() {
 }
 
 SgAsmPEExportSection::SgAsmPEExportSection()
-    : p_export_dir(nullptr)
+    : p_exportDirectory(nullptr)
     , p_exports(createAndParent<SgAsmPEExportEntryList>(this)) {}
 
 void
 SgAsmPEExportSection::initializeProperties() {
-    p_export_dir = nullptr;
+    p_exportDirectory = nullptr;
     p_exports = createAndParent<SgAsmPEExportEntryList>(this);
 }
 

@@ -22,9 +22,15 @@ DOCUMENTATION_should_never_be_defined;
 
 #ifdef DOCUMENTATION
 #define DECLARE_LEAF_CLASS(CLASS_WITHOUT_Sg) /*void*/
+#define DECLARE_LEAF_CLASS2(CLASS_WITHOUT_Sg, TAG) /*void*/
 #else
 #define DECLARE_LEAF_CLASS(CLASS_WITHOUT_Sg) \
     NEW_TERMINAL_MACRO(CLASS_WITHOUT_Sg, #CLASS_WITHOUT_Sg, #CLASS_WITHOUT_Sg "Tag"); \
+    CLASS_WITHOUT_Sg.setCppCondition("!defined(DOCUMENTATION)");\
+    CLASS_WITHOUT_Sg.setAutomaticGenerationOfConstructor(false);\
+    CLASS_WITHOUT_Sg.setAutomaticGenerationOfDestructor(false)
+#define DECLARE_LEAF_CLASS2(CLASS_WITHOUT_Sg, TAG) \
+    NEW_TERMINAL_MACRO(CLASS_WITHOUT_Sg, #CLASS_WITHOUT_Sg, #TAG); \
     CLASS_WITHOUT_Sg.setCppCondition("!defined(DOCUMENTATION)");\
     CLASS_WITHOUT_Sg.setAutomaticGenerationOfConstructor(false);\
     CLASS_WITHOUT_Sg.setAutomaticGenerationOfDestructor(false)

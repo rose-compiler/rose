@@ -7,13 +7,13 @@
 #include <sage3basic.h>
 
 SgUnsignedCharList const&
-SgAsmStaticData::get_raw_bytes() const {
-    return p_raw_bytes;
+SgAsmStaticData::get_rawBytes() const {
+    return p_rawBytes;
 }
 
 void
-SgAsmStaticData::set_raw_bytes(SgUnsignedCharList const& x) {
-    this->p_raw_bytes = x;
+SgAsmStaticData::set_rawBytes(SgUnsignedCharList const& x) {
+    this->p_rawBytes = x;
     set_isModified(true);
 }
 

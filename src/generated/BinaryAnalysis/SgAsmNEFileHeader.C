@@ -326,68 +326,68 @@ SgAsmNEFileHeader::set_e_fastload_nsectors(rose_addr_t const& x) {
 }
 
 SgAsmDOSExtendedHeader* const&
-SgAsmNEFileHeader::get_dos2_header() const {
-    return p_dos2_header;
+SgAsmNEFileHeader::get_dos2Header() const {
+    return p_dos2Header;
 }
 
 void
-SgAsmNEFileHeader::set_dos2_header(SgAsmDOSExtendedHeader* const& x) {
-    changeChildPointer(this->p_dos2_header, const_cast<SgAsmDOSExtendedHeader*&>(x));
+SgAsmNEFileHeader::set_dos2Header(SgAsmDOSExtendedHeader* const& x) {
+    changeChildPointer(this->p_dos2Header, const_cast<SgAsmDOSExtendedHeader*&>(x));
     set_isModified(true);
 }
 
 SgAsmNESectionTable* const&
-SgAsmNEFileHeader::get_section_table() const {
-    return p_section_table;
+SgAsmNEFileHeader::get_sectionTable() const {
+    return p_sectionTable;
 }
 
 void
-SgAsmNEFileHeader::set_section_table(SgAsmNESectionTable* const& x) {
-    this->p_section_table = x;
+SgAsmNEFileHeader::set_sectionTable(SgAsmNESectionTable* const& x) {
+    this->p_sectionTable = x;
     set_isModified(true);
 }
 
 SgAsmNENameTable* const&
-SgAsmNEFileHeader::get_resname_table() const {
-    return p_resname_table;
+SgAsmNEFileHeader::get_residentNameTable() const {
+    return p_residentNameTable;
 }
 
 void
-SgAsmNEFileHeader::set_resname_table(SgAsmNENameTable* const& x) {
-    changeChildPointer(this->p_resname_table, const_cast<SgAsmNENameTable*&>(x));
+SgAsmNEFileHeader::set_residentNameTable(SgAsmNENameTable* const& x) {
+    changeChildPointer(this->p_residentNameTable, const_cast<SgAsmNENameTable*&>(x));
     set_isModified(true);
 }
 
 SgAsmNENameTable* const&
-SgAsmNEFileHeader::get_nonresname_table() const {
-    return p_nonresname_table;
+SgAsmNEFileHeader::get_nonresidentNameTable() const {
+    return p_nonresidentNameTable;
 }
 
 void
-SgAsmNEFileHeader::set_nonresname_table(SgAsmNENameTable* const& x) {
-    changeChildPointer(this->p_nonresname_table, const_cast<SgAsmNENameTable*&>(x));
+SgAsmNEFileHeader::set_nonresidentNameTable(SgAsmNENameTable* const& x) {
+    changeChildPointer(this->p_nonresidentNameTable, const_cast<SgAsmNENameTable*&>(x));
     set_isModified(true);
 }
 
 SgAsmNEModuleTable* const&
-SgAsmNEFileHeader::get_module_table() const {
-    return p_module_table;
+SgAsmNEFileHeader::get_moduleTable() const {
+    return p_moduleTable;
 }
 
 void
-SgAsmNEFileHeader::set_module_table(SgAsmNEModuleTable* const& x) {
-    changeChildPointer(this->p_module_table, const_cast<SgAsmNEModuleTable*&>(x));
+SgAsmNEFileHeader::set_moduleTable(SgAsmNEModuleTable* const& x) {
+    changeChildPointer(this->p_moduleTable, const_cast<SgAsmNEModuleTable*&>(x));
     set_isModified(true);
 }
 
 SgAsmNEEntryTable* const&
-SgAsmNEFileHeader::get_entry_table() const {
-    return p_entry_table;
+SgAsmNEFileHeader::get_entryTable() const {
+    return p_entryTable;
 }
 
 void
-SgAsmNEFileHeader::set_entry_table(SgAsmNEEntryTable* const& x) {
-    changeChildPointer(this->p_entry_table, const_cast<SgAsmNEEntryTable*&>(x));
+SgAsmNEFileHeader::set_entryTable(SgAsmNEEntryTable* const& x) {
+    changeChildPointer(this->p_entryTable, const_cast<SgAsmNEEntryTable*&>(x));
     set_isModified(true);
 }
 
@@ -425,12 +425,12 @@ SgAsmNEFileHeader::SgAsmNEFileHeader()
     , p_e_nonresnametab_offset(0)
     , p_e_fastload_sector(0)
     , p_e_fastload_nsectors(0)
-    , p_dos2_header(nullptr)
-    , p_section_table(nullptr)
-    , p_resname_table(nullptr)
-    , p_nonresname_table(nullptr)
-    , p_module_table(nullptr)
-    , p_entry_table(nullptr) {}
+    , p_dos2Header(nullptr)
+    , p_sectionTable(nullptr)
+    , p_residentNameTable(nullptr)
+    , p_nonresidentNameTable(nullptr)
+    , p_moduleTable(nullptr)
+    , p_entryTable(nullptr) {}
 
 void
 SgAsmNEFileHeader::initializeProperties() {
@@ -463,12 +463,12 @@ SgAsmNEFileHeader::initializeProperties() {
     p_e_nonresnametab_offset = 0;
     p_e_fastload_sector = 0;
     p_e_fastload_nsectors = 0;
-    p_dos2_header = nullptr;
-    p_section_table = nullptr;
-    p_resname_table = nullptr;
-    p_nonresname_table = nullptr;
-    p_module_table = nullptr;
-    p_entry_table = nullptr;
+    p_dos2Header = nullptr;
+    p_sectionTable = nullptr;
+    p_residentNameTable = nullptr;
+    p_nonresidentNameTable = nullptr;
+    p_moduleTable = nullptr;
+    p_entryTable = nullptr;
 }
 
 #endif // defined(ROSE_ENABLE_BINARY_ANALYSIS)

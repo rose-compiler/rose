@@ -7,13 +7,13 @@
 #include <sage3basic.h>
 
 SgAsmDwarfCompilationUnitList* const&
-SgAsmGenericFile::get_dwarf_info() const {
-    return p_dwarf_info;
+SgAsmGenericFile::get_dwarfInfo() const {
+    return p_dwarfInfo;
 }
 
 void
-SgAsmGenericFile::set_dwarf_info(SgAsmDwarfCompilationUnitList* const& x) {
-    changeChildPointer(this->p_dwarf_info, const_cast<SgAsmDwarfCompilationUnitList*&>(x));
+SgAsmGenericFile::set_dwarfInfo(SgAsmDwarfCompilationUnitList* const& x) {
+    changeChildPointer(this->p_dwarfInfo, const_cast<SgAsmDwarfCompilationUnitList*&>(x));
     set_isModified(true);
 }
 
@@ -78,35 +78,35 @@ SgAsmGenericFile::set_holes(SgAsmGenericSectionList* const& x) {
 }
 
 bool const&
-SgAsmGenericFile::get_truncate_zeros() const {
-    return p_truncate_zeros;
+SgAsmGenericFile::get_truncateZeros() const {
+    return p_truncateZeros;
 }
 
 void
-SgAsmGenericFile::set_truncate_zeros(bool const& x) {
-    this->p_truncate_zeros = x;
+SgAsmGenericFile::set_truncateZeros(bool const& x) {
+    this->p_truncateZeros = x;
     set_isModified(true);
 }
 
 bool const&
-SgAsmGenericFile::get_tracking_references() const {
-    return p_tracking_references;
+SgAsmGenericFile::get_trackingReferences() const {
+    return p_trackingReferences;
 }
 
 void
-SgAsmGenericFile::set_tracking_references(bool const& x) {
-    this->p_tracking_references = x;
+SgAsmGenericFile::set_trackingReferences(bool const& x) {
+    this->p_trackingReferences = x;
     set_isModified(true);
 }
 
 AddressIntervalSet const&
-SgAsmGenericFile::get_referenced_extents() const {
-    return p_referenced_extents;
+SgAsmGenericFile::get_referencedExtents() const {
+    return p_referencedExtents;
 }
 
 void
-SgAsmGenericFile::set_referenced_extents(AddressIntervalSet const& x) {
-    this->p_referenced_extents = x;
+SgAsmGenericFile::set_referencedExtents(AddressIntervalSet const& x) {
+    this->p_referencedExtents = x;
     set_isModified(true);
 }
 
@@ -126,22 +126,22 @@ SgAsmGenericFile::~SgAsmGenericFile() {
 }
 
 SgAsmGenericFile::SgAsmGenericFile()
-    : p_dwarf_info(nullptr)
+    : p_dwarfInfo(nullptr)
     , p_fd(-1)
     , p_headers(createAndParent<SgAsmGenericHeaderList>(this))
     , p_holes(createAndParent<SgAsmGenericSectionList>(this))
-    , p_truncate_zeros(false)
-    , p_tracking_references(true)
+    , p_truncateZeros(false)
+    , p_trackingReferences(true)
     , p_neuter(false) {}
 
 void
 SgAsmGenericFile::initializeProperties() {
-    p_dwarf_info = nullptr;
+    p_dwarfInfo = nullptr;
     p_fd = -1;
     p_headers = createAndParent<SgAsmGenericHeaderList>(this);
     p_holes = createAndParent<SgAsmGenericSectionList>(this);
-    p_truncate_zeros = false;
-    p_tracking_references = true;
+    p_truncateZeros = false;
+    p_trackingReferences = true;
     p_neuter = false;
 }
 

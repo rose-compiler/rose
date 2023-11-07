@@ -7,13 +7,13 @@
 #include <sage3basic.h>
 
 bool const&
-SgAsmElfSymbolSection::get_is_dynamic() const {
-    return p_is_dynamic;
+SgAsmElfSymbolSection::get_isDynamic() const {
+    return p_isDynamic;
 }
 
 void
-SgAsmElfSymbolSection::set_is_dynamic(bool const& x) {
-    this->p_is_dynamic = x;
+SgAsmElfSymbolSection::set_isDynamic(bool const& x) {
+    this->p_isDynamic = x;
     set_isModified(true);
 }
 
@@ -33,12 +33,12 @@ SgAsmElfSymbolSection::~SgAsmElfSymbolSection() {
 }
 
 SgAsmElfSymbolSection::SgAsmElfSymbolSection()
-    : p_is_dynamic(false)
+    : p_isDynamic(false)
     , p_symbols(createAndParent<SgAsmElfSymbolList>(this)) {}
 
 void
 SgAsmElfSymbolSection::initializeProperties() {
-    p_is_dynamic = false;
+    p_isDynamic = false;
     p_symbols = createAndParent<SgAsmElfSymbolList>(this);
 }
 

@@ -7,13 +7,13 @@
 #include <sage3basic.h>
 
 SgAsmGenericSymbol::SymbolDefState const&
-SgAsmGenericSymbol::get_def_state() const {
-    return p_def_state;
+SgAsmGenericSymbol::get_definitionState() const {
+    return p_definitionState;
 }
 
 void
-SgAsmGenericSymbol::set_def_state(SgAsmGenericSymbol::SymbolDefState const& x) {
-    this->p_def_state = x;
+SgAsmGenericSymbol::set_definitionState(SgAsmGenericSymbol::SymbolDefState const& x) {
+    this->p_definitionState = x;
     set_isModified(true);
 }
 
@@ -77,7 +77,7 @@ SgAsmGenericSymbol::~SgAsmGenericSymbol() {
 }
 
 SgAsmGenericSymbol::SgAsmGenericSymbol()
-    : p_def_state(SgAsmGenericSymbol::SYM_UNDEFINED)
+    : p_definitionState(SgAsmGenericSymbol::SYM_UNDEFINED)
     , p_binding(SgAsmGenericSymbol::SYM_NO_BINDING)
     , p_type(SgAsmGenericSymbol::SYM_NO_TYPE)
     , p_value(0)
@@ -87,7 +87,7 @@ SgAsmGenericSymbol::SgAsmGenericSymbol()
 
 void
 SgAsmGenericSymbol::initializeProperties() {
-    p_def_state = SgAsmGenericSymbol::SYM_UNDEFINED;
+    p_definitionState = SgAsmGenericSymbol::SYM_UNDEFINED;
     p_binding = SgAsmGenericSymbol::SYM_NO_BINDING;
     p_type = SgAsmGenericSymbol::SYM_NO_TYPE;
     p_value = 0;

@@ -18,13 +18,13 @@ SgAsmNEModuleTable::set_strtab(SgAsmNEStringTable* const& x) {
 }
 
 SgAddressList const&
-SgAsmNEModuleTable::get_name_offsets() const {
-    return p_name_offsets;
+SgAsmNEModuleTable::get_nameOffsets() const {
+    return p_nameOffsets;
 }
 
 void
-SgAsmNEModuleTable::set_name_offsets(SgAddressList const& x) {
-    this->p_name_offsets = x;
+SgAsmNEModuleTable::set_nameOffsets(SgAddressList const& x) {
+    this->p_nameOffsets = x;
     set_isModified(true);
 }
 
