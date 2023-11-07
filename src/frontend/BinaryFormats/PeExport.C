@@ -126,7 +126,7 @@ SgAsmPEExportEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         fprintf(f, ", biased=%s]", ordinal.unwrapError().c_str());
     }
-    fprintf(f, " rva=%s \"%s\"", p_export_rva.to_string().c_str(), p_name->get_string(true).c_str());
+    fprintf(f, " rva=%s \"%s\"", p_exportRva.to_string().c_str(), p_name->get_string(true).c_str());
     if (p_forwarder)
         fprintf(f, " -> \"%s\"", p_forwarder->get_string(true).c_str());
     fputc('\n', f);
@@ -164,19 +164,19 @@ SgAsmPEExportSection::parse()
     SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
 
-    p_export_dir = new SgAsmPEExportDirectory(this);
+    p_exportDirectory = new SgAsmPEExportDirectory(this);
 
     // Check that the p_export_dir.p_nameptr_n is not out of range.
-    rose_addr_t availBytes = fhdr->get_loader_map()->at(p_export_dir->get_nameptr_rva().get_va()).available().size();
+    rose_addr_t availBytes = fhdr->get_loader_map()->at(get_exportDirectory()->get_nameptr_rva().get_va()).available().size();
     size_t availElmts = availBytes / sizeof(ExportNamePtr_disk);
-    if (p_export_dir->get_nameptr_n() > availElmts) {
-        mlog[ERROR] <<"SgAsmPEExportSection::parse: number of entries indicated (" <<p_export_dir->get_nameptr_n() <<")"
+    if (get_exportDirectory()->get_nameptr_n() > availElmts) {
+        mlog[ERROR] <<"SgAsmPEExportSection::parse: number of entries indicated (" <<get_exportDirectory()->get_nameptr_n() <<")"
                     <<" exceeds available mapped memory (room for " <<StringUtility::plural(availElmts, "entries") <<")\n";
     }
     static const size_t maxNamePtrN = 10000;
-    if (p_export_dir->get_nameptr_n() > maxNamePtrN) {
+    if (get_exportDirectory()->get_nameptr_n() > maxNamePtrN) {
         availElmts = std::min(availElmts, maxNamePtrN);
-        mlog[WARN] <<"SgAsmPEExportSection::parse: number of entries indicated (" <<p_export_dir->get_nameptr_n() <<")"
+        mlog[WARN] <<"SgAsmPEExportSection::parse: number of entries indicated (" <<get_exportDirectory()->get_nameptr_n() <<")"
                    <<" is large; resetting to " <<availElmts <<"\n";
     }
 
@@ -184,10 +184,10 @@ SgAsmPEExportSection::parse()
      *   1. An array of RVAs that point to NUL-terminated names.
      *   2. An array of "ordinals" which serve as indices into the Export Address Table.
      *   3. An array of export addresses (see note below). */
-    for (size_t i=0; i<std::min(p_export_dir->get_nameptr_n(), availElmts); i++) {
+    for (size_t i=0; i<std::min(get_exportDirectory()->get_nameptr_n(), availElmts); i++) {
         /* Function name RVA (nameptr)*/
         ExportNamePtr_disk nameptr_disk = 0;
-        rose_addr_t nameptr_va = p_export_dir->get_nameptr_rva().get_va() + i*sizeof(nameptr_disk);
+        rose_addr_t nameptr_va = get_exportDirectory()->get_nameptr_rva().get_va() + i*sizeof(nameptr_disk);
         bool badFunctionNameVa = false;
         try {
             read_content(fhdr->get_loader_map(), nameptr_va, &nameptr_disk, sizeof nameptr_disk);
@@ -226,7 +226,7 @@ SgAsmPEExportSection::parse()
 
         /* Ordinal (an index into the Export Address Table) */
         ExportOrdinal_disk ordinal_disk = 0;
-        rose_addr_t ordinal_va = p_export_dir->get_ordinals_rva().get_va() + i*sizeof(ordinal_disk);
+        rose_addr_t ordinal_va = get_exportDirectory()->get_ordinals_rva().get_va() + i*sizeof(ordinal_disk);
         bool badOrdinalVa = false;
         try {
             read_content(fhdr->get_loader_map(), ordinal_va, &ordinal_disk, sizeof ordinal_disk);
@@ -254,7 +254,7 @@ SgAsmPEExportSection::parse()
 
         // Read the address from the Export Address Table. This table is indexed by ordinal.
         rose_rva_t expaddr = 0;                         // export address
-        const rose_addr_t expaddr_va = p_export_dir->get_expaddr_rva().get_va() + ordinal * sizeof(ExportAddress_disk);
+        const rose_addr_t expaddr_va = get_exportDirectory()->get_expaddr_rva().get_va() + ordinal * sizeof(ExportAddress_disk);
         try {
             ExportAddress_disk expaddr_disk;
             read_content(fhdr->get_loader_map(), expaddr_va, &expaddr_disk, sizeof expaddr_disk);
@@ -302,6 +302,11 @@ SgAsmPEExportSection::parse()
 
 void
 SgAsmPEExportSection::add_entry(SgAsmPEExportEntry *entry) {
+    addEntry(entry);
+}
+
+void
+SgAsmPEExportSection::addEntry(SgAsmPEExportEntry *entry) {
     ASSERT_not_null(entry);
     ASSERT_forbid2(entry->get_parent(), "already linked into AST; remove it first");
     ASSERT_not_null(p_exports);
@@ -325,13 +330,33 @@ SgAsmPEExportSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     SgAsmPESection::dump(f, p, -1);
 
-    if (p_export_dir)
-        p_export_dir->dump(f, p, -1);
+    if (get_exportDirectory())
+        get_exportDirectory()->dump(f, p, -1);
     for (size_t i=0; i<p_exports->get_exports().size(); i++)
         p_exports->get_exports()[i]->dump(f, p, i);
 
     if (variantT() == V_SgAsmPEExportSection) //unless a base class
         hexdump(f, 0, std::string(p)+"data at ", p_data);
+}
+
+const rose_rva_t&
+SgAsmPEExportEntry::get_export_rva() const {
+    return get_exportRva();
+}
+
+void
+SgAsmPEExportEntry::set_export_rva(const rose_rva_t &x) {
+    set_exportRva(x);
+}
+
+SgAsmPEExportDirectory*
+SgAsmPEExportSection::get_export_dir() const {
+    return get_exportDirectory();
+}
+
+void
+SgAsmPEExportSection::set_export_dir(SgAsmPEExportDirectory *x) {
+    set_exportDirectory(x);
 }
 
 #endif

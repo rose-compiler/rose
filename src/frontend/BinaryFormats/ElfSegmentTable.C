@@ -75,6 +75,12 @@ SgAsmElfSegmentTableEntry::encode(Rose::BinaryAnalysis::ByteOrder::Endianness se
 void
 SgAsmElfSegmentTableEntry::update_from_section(SgAsmElfSection *section)
 {
+    updateFromSection(section);
+}
+
+void
+SgAsmElfSegmentTableEntry::updateFromSection(SgAsmElfSection *section)
+{
     set_offset(section->get_offset());
     set_filesz(section->get_size());
     set_vaddr(section->get_mapped_preferred_va());
@@ -136,7 +142,13 @@ SgAsmElfSegmentTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 }
 
 std::string
-SgAsmElfSegmentTableEntry::to_string(SegmentType kind) 
+SgAsmElfSegmentTableEntry::to_string(SegmentType kind)
+{
+    return toString(kind);
+}
+
+std::string
+SgAsmElfSegmentTableEntry::toString(SegmentType kind)
 {
 #ifndef _MSC_VER
     return stringifySgAsmElfSegmentTableEntrySegmentType(kind);
@@ -147,6 +159,12 @@ SgAsmElfSegmentTableEntry::to_string(SegmentType kind)
 
 std::string
 SgAsmElfSegmentTableEntry::to_string(SegmentFlags val)
+{
+    return toString(val);
+}
+
+std::string
+SgAsmElfSegmentTableEntry::toString(SegmentFlags val)
 {
     std::string str;
     for( size_t i=0; (1u << i) <= PF_RPERM; ++i){
@@ -288,6 +306,12 @@ SgAsmElfSegmentTable::parse()
 SgAsmElfSegmentTableEntry *
 SgAsmElfSegmentTable::add_section(SgAsmElfSection *section)
 {
+    return addSection(section);
+}
+
+SgAsmElfSegmentTableEntry *
+SgAsmElfSegmentTable::addSection(SgAsmElfSection *section)
+{
     ROSE_ASSERT(section!=NULL);
     ROSE_ASSERT(section->get_file()==get_file());
     ROSE_ASSERT(section->get_header()==get_header());
@@ -311,6 +335,12 @@ SgAsmElfSegmentTable::add_section(SgAsmElfSection *section)
 
 rose_addr_t
 SgAsmElfSegmentTable::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
+{
+    return calculateSizes(entsize, required, optional, entcount);
+}
+
+rose_addr_t
+SgAsmElfSegmentTable::calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);

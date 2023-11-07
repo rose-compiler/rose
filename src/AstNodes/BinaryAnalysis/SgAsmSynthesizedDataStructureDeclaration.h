@@ -14,7 +14,13 @@ protected:
 
 public:
     /** Appends another declaration. */
-    void append_declaration(SgAsmSynthesizedDeclaration *declaration) {
+    void appendDeclaration(SgAsmSynthesizedDeclaration *declaration) {
         p_declarationList.push_back(declaration);
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    void append_declaration(SgAsmSynthesizedDeclaration*) ROSE_DEPRECATED("use appendDeclaration");
 };

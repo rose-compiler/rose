@@ -10,7 +10,12 @@
 using namespace Rose;
 
 const char *
-SgAsmGenericHeader::format_name() const
+SgAsmGenericHeader::format_name() const {
+    return formatName();
+}
+
+const char *
+SgAsmGenericHeader::formatName() const
    {
      return "ASM_GENERIC_HEADER";
    }
@@ -18,15 +23,20 @@ SgAsmGenericHeader::format_name() const
 Rose::BinaryAnalysis::ByteOrder::Endianness
 SgAsmGenericHeader::get_sex() const
    {
-     ROSE_ASSERT(p_exec_format != NULL);
-     return p_exec_format->get_sex();
+     ROSE_ASSERT(get_executableFormat() != NULL);
+     return get_executableFormat()->get_sex();
    }
 
 size_t
-SgAsmGenericHeader::get_word_size() const
+SgAsmGenericHeader::get_word_size() const {
+    return get_wordSize();
+}
+
+size_t
+SgAsmGenericHeader::get_wordSize() const
    {
-     ROSE_ASSERT(p_exec_format != NULL);
-     return p_exec_format->get_word_size();
+     ROSE_ASSERT(get_executableFormat() != NULL);
+     return get_executableFormat()->get_word_size();
    }
 
 
@@ -80,13 +90,25 @@ SgAsmGenericHeader::unparse(std::ostream &f) const
 rose_addr_t
 SgAsmGenericHeader::get_entry_rva() const
 {
-    if (p_entry_rvas.size()==0)
+    return get_entryRva();
+}
+
+rose_addr_t
+SgAsmGenericHeader::get_entryRva() const
+{
+    if (get_entryRvas().size()==0)
         return rose_addr_t();
-    return p_entry_rvas[0].get_rva();
+    return get_entryRvas()[0].get_rva();
 }
 
 void
 SgAsmGenericHeader::add_section(SgAsmGenericSection *section)
+{
+    addSection(section);
+}
+
+void
+SgAsmGenericHeader::addSection(SgAsmGenericSection *section)
 {
     ROSE_ASSERT(section != NULL);
     ROSE_ASSERT(p_sections != NULL);
@@ -106,6 +128,12 @@ SgAsmGenericHeader::add_section(SgAsmGenericSection *section)
 void
 SgAsmGenericHeader::remove_section(SgAsmGenericSection *section)
 {
+    removeSection(section);
+}
+
+void
+SgAsmGenericHeader::removeSection(SgAsmGenericSection *section)
+{
     if (section!=NULL) {
         ROSE_ASSERT(p_sections != NULL);
         SgAsmGenericSectionPtrList::iterator i = find(p_sections->get_sections().begin(),
@@ -120,6 +148,12 @@ SgAsmGenericHeader::remove_section(SgAsmGenericSection *section)
 
 void
 SgAsmGenericHeader::add_dll(SgAsmGenericDLL *dll)
+{
+    addDll(dll);
+}
+
+void
+SgAsmGenericHeader::addDll(SgAsmGenericDLL *dll)
 {
     ROSE_ASSERT(p_dlls != NULL);
     p_dlls->set_isModified(true);
@@ -138,6 +172,12 @@ SgAsmGenericHeader::add_dll(SgAsmGenericDLL *dll)
 SgAsmGenericSectionPtrList
 SgAsmGenericHeader::get_mapped_sections() const
 {
+    return get_mappedSections();
+}
+
+SgAsmGenericSectionPtrList
+SgAsmGenericHeader::get_mappedSections() const
+{
     SgAsmGenericSectionPtrList retval;
     for (auto section: p_sections->get_sections()) {
         if (section->is_mapped()) {
@@ -149,6 +189,12 @@ SgAsmGenericHeader::get_mapped_sections() const
     
 SgAsmGenericSectionPtrList
 SgAsmGenericHeader::get_sections_by_id(int id) const
+{
+    return get_sectionsById(id);
+}
+
+SgAsmGenericSectionPtrList
+SgAsmGenericHeader::get_sectionsById(int id) const
 {
     SgAsmGenericSectionPtrList retval;
     for (auto section: p_sections->get_sections()) {
@@ -162,6 +208,12 @@ SgAsmGenericHeader::get_sections_by_id(int id) const
 SgAsmGenericSection *
 SgAsmGenericHeader::get_section_by_id(int id, size_t *nfound/*optional*/) const
 {
+    return get_sectionById(id, nfound);
+}
+
+SgAsmGenericSection *
+SgAsmGenericHeader::get_sectionById(int id, size_t *nfound/*optional*/) const
+{
     SgAsmGenericSectionPtrList possible = get_sections_by_id(id);
     if (nfound) *nfound = possible.size();
     return possible.size()==1 ? possible[0] : NULL;
@@ -169,6 +221,12 @@ SgAsmGenericHeader::get_section_by_id(int id, size_t *nfound/*optional*/) const
 
 SgAsmGenericSectionPtrList
 SgAsmGenericHeader::get_sections_by_name(std::string name, char sep/*or NUL*/) const
+{
+    return get_sectionsByName(name, sep);
+}
+
+SgAsmGenericSectionPtrList
+SgAsmGenericHeader::get_sectionsByName(std::string name, char sep/*or NUL*/) const
 {
     if (sep) {
         size_t pos = name.find(sep);
@@ -193,6 +251,12 @@ SgAsmGenericHeader::get_sections_by_name(std::string name, char sep/*or NUL*/) c
 SgAsmGenericSection *
 SgAsmGenericHeader::get_section_by_name(const std::string &name, char sep/*or NUL*/, size_t *nfound/*optional*/) const
 {
+    return get_sectionByName(name, sep, nfound);
+}
+
+SgAsmGenericSection *
+SgAsmGenericHeader::get_sectionByName(const std::string &name, char sep/*or NUL*/, size_t *nfound/*optional*/) const
+{
     SgAsmGenericSectionPtrList possible = get_sections_by_name(name, sep);
     if (nfound) *nfound = possible.size();
     return possible.size()==1 ? possible[0] : NULL;
@@ -200,6 +264,12 @@ SgAsmGenericHeader::get_section_by_name(const std::string &name, char sep/*or NU
 
 SgAsmGenericSectionPtrList
 SgAsmGenericHeader::get_sections_by_offset(rose_addr_t offset, rose_addr_t size) const
+{
+    return get_sectionsByOffset(offset, size);
+}
+
+SgAsmGenericSectionPtrList
+SgAsmGenericHeader::get_sectionsByOffset(rose_addr_t offset, rose_addr_t size) const
 {
     SgAsmGenericSectionPtrList retval;
     for (auto section: p_sections->get_sections()) {
@@ -214,6 +284,12 @@ SgAsmGenericHeader::get_sections_by_offset(rose_addr_t offset, rose_addr_t size)
 SgAsmGenericSection *
 SgAsmGenericHeader::get_section_by_offset(rose_addr_t offset, rose_addr_t size, size_t *nfound/*optional*/) const
 {
+    return get_sectionByOffset(offset, size, nfound);
+}
+
+SgAsmGenericSection *
+SgAsmGenericHeader::get_sectionByOffset(rose_addr_t offset, rose_addr_t size, size_t *nfound/*optional*/) const
+{
     SgAsmGenericSectionPtrList possible = get_sections_by_offset(offset, size);
     if (nfound) *nfound = possible.size();
     return possible.size()==1 ? possible[0] : NULL;
@@ -221,6 +297,12 @@ SgAsmGenericHeader::get_section_by_offset(rose_addr_t offset, rose_addr_t size, 
 
 SgAsmGenericSectionPtrList
 SgAsmGenericHeader::get_sections_by_rva(rose_addr_t rva) const
+{
+    return get_sectionsByRva(rva);
+}
+
+SgAsmGenericSectionPtrList
+SgAsmGenericHeader::get_sectionsByRva(rose_addr_t rva) const
 {
     SgAsmGenericSectionPtrList retval;
     for (auto section: p_sections->get_sections()) {
@@ -235,6 +317,12 @@ SgAsmGenericHeader::get_sections_by_rva(rose_addr_t rva) const
 SgAsmGenericSection *
 SgAsmGenericHeader::get_section_by_rva(rose_addr_t rva, size_t *nfound/*optional*/) const
 {
+    return get_section_by_rva(rva, nfound);
+}
+
+SgAsmGenericSection *
+SgAsmGenericHeader::get_sectionByRva(rose_addr_t rva, size_t *nfound/*optional*/) const
+{
     SgAsmGenericSectionPtrList possible = get_sections_by_rva(rva);
     if (nfound) *nfound = possible.size();
     return possible.size()==1 ? possible[0] : NULL;
@@ -242,6 +330,12 @@ SgAsmGenericHeader::get_section_by_rva(rose_addr_t rva, size_t *nfound/*optional
 
 SgAsmGenericSectionPtrList
 SgAsmGenericHeader::get_sections_by_va(rose_addr_t va, bool use_preferred) const
+{
+    return get_sectionsByVa(va, use_preferred);
+}
+
+SgAsmGenericSectionPtrList
+SgAsmGenericHeader::get_sectionsByVa(rose_addr_t va, bool use_preferred) const
 {
     if (use_preferred) {
         if (va < get_base_va())
@@ -263,6 +357,12 @@ SgAsmGenericHeader::get_sections_by_va(rose_addr_t va, bool use_preferred) const
 SgAsmGenericSection *
 SgAsmGenericHeader::get_section_by_va(rose_addr_t va, bool use_preferred, size_t *nfound/*optional*/) const
 {
+    return get_sectionByVa(va, use_preferred, nfound);
+}
+
+SgAsmGenericSection *
+SgAsmGenericHeader::get_sectionByVa(rose_addr_t va, bool use_preferred, size_t *nfound/*optional*/) const
+{
     SgAsmGenericSectionPtrList possible = get_sections_by_va(va, use_preferred);
     if (nfound) *nfound = possible.size();
     return possible.size()==1 ? possible[0] : NULL;
@@ -270,6 +370,12 @@ SgAsmGenericHeader::get_section_by_va(rose_addr_t va, bool use_preferred, size_t
 
 SgAsmGenericSection *
 SgAsmGenericHeader::get_best_section_by_va(rose_addr_t va, bool use_preferred, size_t *nfound) const
+{
+    return get_bestSectionByVa(va, use_preferred, nfound);
+}
+
+SgAsmGenericSection *
+SgAsmGenericHeader::get_bestSectionByVa(rose_addr_t va, bool use_preferred, size_t *nfound) const
 {
     const SgAsmGenericSectionPtrList &candidates = get_sections_by_va(va, use_preferred);
     if (nfound) *nfound = candidates.size();
@@ -289,8 +395,8 @@ SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     SgAsmGenericSection::dump(f, p, -1);
 
-    ROSE_ASSERT(p_exec_format != NULL);
-    p_exec_format->dump(f, p, -1);
+    ROSE_ASSERT(get_executableFormat() != NULL);
+    get_executableFormat()->dump(f, p, -1);
 
     fprintf(f, "%s%-*s = 0x%x (%s)\n", p, w, "ins_arch",
             p_isa, stringifySgAsmExecutableFileFormatInsSetArchitecture(p_isa).c_str());
@@ -315,11 +421,11 @@ SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     /* Base virtual address and entry addresses */
     fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ")\n", p, w, "base_va", get_base_va(), get_base_va());
-    fprintf(f, "%s%-*s = %" PRIuPTR " entry points\n", p, w, "entry_rva.size", p_entry_rvas.size());
-    for (size_t i = 0; i < p_entry_rvas.size(); i++) {
+    fprintf(f, "%s%-*s = %" PRIuPTR " entry points\n", p, w, "entry_rva.size", get_entryRvas().size());
+    for (size_t i = 0; i < get_entryRvas().size(); i++) {
         char label[64];
         snprintf(label, sizeof(label), "entry_rva[%" PRIuPTR "]", i);
-        rose_addr_t entry_rva = p_entry_rvas[i].get_rva();
+        rose_addr_t entry_rva = get_entryRvas()[i].get_rva();
         fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ")\n", p, w, label, entry_rva, entry_rva);
         SgAsmGenericSectionPtrList sections = get_file()->get_sections();
         dump_containing_sections(f, std::string(p)+label, entry_rva, sections);
@@ -336,6 +442,51 @@ SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %" PRIuPTR " entries\n", p, w, "DLL.size", p_dlls->get_dlls().size());
     for (size_t i = 0; i < p_dlls->get_dlls().size(); i++)
         p_dlls->get_dlls()[i]->dump(f, p, i);
+}
+
+SgAsmGenericFormat*
+SgAsmGenericHeader::get_exec_format() const {
+    return get_executableFormat();
+}
+
+void
+SgAsmGenericHeader::set_exec_format(SgAsmGenericFormat *x) {
+    set_executableFormat(x);
+}
+
+rose_addr_t
+SgAsmGenericHeader::get_base_va() const {
+    return get_baseVa();
+}
+
+void
+SgAsmGenericHeader::set_base_va(rose_addr_t x) {
+    set_baseVa(x);
+}
+
+SgRVAList&
+SgAsmGenericHeader::get_entry_rvas() {
+    return get_entryRvas();
+}
+
+const SgRVAList&
+SgAsmGenericHeader::get_entry_rvas() const {
+    return get_entryRvas();
+}
+
+void
+SgAsmGenericHeader::set_entry_rvas(const SgRVAList &x) {
+    set_entryRvas(x);
+}
+
+void
+SgAsmGenericHeader::add_entry_rva(const rose_rva_t &rva) {
+    addEntryRva(rva);
+}
+
+void
+SgAsmGenericHeader::addEntryRva(const rose_rva_t &rva) {
+    p_entryRvas.push_back(rva);
 }
 
 #endif

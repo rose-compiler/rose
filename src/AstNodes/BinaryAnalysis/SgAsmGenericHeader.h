@@ -4,7 +4,7 @@
 class SgAsmGenericHeader: public SgAsmGenericSection {
     /** Property: General info about the executable format. */
     [[using Rosebud: rosetta, traverse]]
-    SgAsmGenericFormat* exec_format = createAndParent<SgAsmGenericFormat>(this);
+    SgAsmGenericFormat* executableFormat = createAndParent<SgAsmGenericFormat>(this);
 
     /** Property: Optional magic number in file byte order. */
     [[using Rosebud: rosetta, large]]
@@ -16,11 +16,11 @@ class SgAsmGenericHeader: public SgAsmGenericSection {
 
     /** Property: Base virtual address used by all relative virtual addresses. */
     [[using Rosebud: rosetta]]
-    rose_addr_t base_va = 0;
+    rose_addr_t baseVa = 0;
 
     /** Property: Code entry point wrt base virtual address. */
     [[using Rosebud: rosetta, large]]
-    SgRVAList entry_rvas;
+    SgRVAList entryRvas;
 
     /** Property: List of dynamically linked libraries. */
     [[using Rosebud: rosetta, traverse]]
@@ -50,10 +50,10 @@ public:
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
     /** Returns the name of the file format. */
-    virtual const char *format_name() const;
+    virtual const char *formatName() const;
 
     /** Add a new DLL to the header DLL list */
-    void add_dll(SgAsmGenericDLL *dll);
+    void addDll(SgAsmGenericDLL *dll);
 
     /** Vector of dynamically loaded libraries. */
     std::vector<SgAsmGenericDLL*>& get_dlls() {
@@ -65,41 +65,39 @@ public:
      *
      *  The return value is relative to the header's base virtual address. If there are no entry points defined then
      *  returns a zero RVA. */
-    rose_addr_t get_entry_rva() const;
+    rose_addr_t get_entryRva() const;
 
     /** Append an RVA to the list of entry points. */
-    void add_entry_rva(const rose_rva_t &rva) {
-        p_entry_rvas.push_back(rva);
-    }
+    void addEntryRva(const rose_rva_t&);
 
     /* Convenience functions */
     Rose::BinaryAnalysis::ByteOrder::Endianness get_sex() const;
-    size_t get_word_size() const;
+    size_t get_wordSize() const;
 
     /** Adds a new section to the header.
      *
      *  This is called implicitly by the section constructor. */
-    void add_section(SgAsmGenericSection*);
+    void addSection(SgAsmGenericSection*);
 
     /** Removes a secton from the header's section list. */
-    void remove_section(SgAsmGenericSection*);
+    void removeSection(SgAsmGenericSection*);
 
     /** Returns the list of sections that are memory mapped */
-    SgAsmGenericSectionPtrList get_mapped_sections() const;
+    SgAsmGenericSectionPtrList get_mappedSections() const;
 
     /** Returns sections in this header that have the specified ID. */
-    SgAsmGenericSectionPtrList get_sections_by_id(int id) const;
+    SgAsmGenericSectionPtrList get_sectionsById(int id) const;
 
     /** Returns sections in this header that have the specified name.
      *
      *  If @p sep is a non-null string then ignore any part of name at and after @p sep. */
-    SgAsmGenericSectionPtrList get_sections_by_name(std::string, char sep=0) const;
+    SgAsmGenericSectionPtrList get_sectionsByName(std::string, char sep=0) const;
 
     /** Returns sectons in this header that contain all of the specified portion of the file. */
-    SgAsmGenericSectionPtrList get_sections_by_offset(rose_addr_t offset, rose_addr_t size) const;
+    SgAsmGenericSectionPtrList get_sectionsByOffset(rose_addr_t offset, rose_addr_t size) const;
 
     /** Returns sections that have a preferred mapping that includes the specified relative virtual address. */
-    SgAsmGenericSectionPtrList get_sections_by_rva(rose_addr_t rva) const;
+    SgAsmGenericSectionPtrList get_sectionsByRva(rose_addr_t rva) const;
 
     /** Returns sections having a preferred or actual mapping that includes the specified virtual address.
      *
@@ -107,21 +105,21 @@ public:
      *  otherwise the actual mapping is used.  If an actual mapping is used, the specified virtual address must be part of
      *  the actual mapped section, not merely in the memory region that was also mapped to satisfy alignment
      *  constraints. */
-    SgAsmGenericSectionPtrList get_sections_by_va(rose_addr_t va, bool use_preferred) const;
+    SgAsmGenericSectionPtrList get_sectionsByVa(rose_addr_t va, bool use_preferred) const;
 
     /** Returns single section in this header that has the specified ID. */
-    SgAsmGenericSection *get_section_by_id(int id, size_t *nfound=0) const;
+    SgAsmGenericSection *get_sectionById(int id, size_t *nfound=0) const;
 
     /** Returns single section in this header that has the specified name. */
-    SgAsmGenericSection *get_section_by_name(const std::string&, char sep=0, size_t *nfound=0) const;
+    SgAsmGenericSection *get_sectionByName(const std::string&, char sep=0, size_t *nfound=0) const;
 
     /** Returns single section in this header that contains all of the specified portion of the file. */
-    SgAsmGenericSection *get_section_by_offset(rose_addr_t offset, rose_addr_t size, size_t *nfound=0) const;
+    SgAsmGenericSection *get_sectionByOffset(rose_addr_t offset, rose_addr_t size, size_t *nfound=0) const;
 
     /** Returns the single section having a preferred mapping that includes the specified relative virtual address.
      *
      *  If there are no sections or multiple sections satisfying this condition then a null pointer is returned. */
-    SgAsmGenericSection *get_section_by_rva(rose_addr_t rva, size_t *nfound=0) const;
+    SgAsmGenericSection *get_sectionByRva(rose_addr_t rva, size_t *nfound=0) const;
 
     /** Returns the section having a preferred or actual mapping that includes the specified virtual address.
      *
@@ -129,11 +127,44 @@ public:
      *  otherwise the actual mapping is used. If an actual mapping is used, the specified virtual address must be part of
      *  the actual mapped section, not merely in the memory region that was also mapped to satisfy alignment constraints.
      *  If there are no sections or multiple sections satisfying this condition then a null pointer is returned. */
-    SgAsmGenericSection *get_section_by_va(rose_addr_t va, bool use_preferred, size_t *nfound=0) const;
+    SgAsmGenericSection *get_sectionByVa(rose_addr_t va, bool use_preferred, size_t *nfound=0) const;
 
     /** Like SgAsmGenericFile::get_best_section_by_va() except considers only sections defined in this header. */
-    SgAsmGenericSection *get_best_section_by_va(rose_addr_t va, bool use_preferred, size_t *nfound=0) const;
+    SgAsmGenericSection *get_bestSectionByVa(rose_addr_t va, bool use_preferred, size_t *nfound=0) const;
 
 protected:
     virtual void destructorHelper() override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmGenericFormat* get_exec_format() const ROSE_DEPRECATED("use get_executableFormat");
+    void set_exec_format(SgAsmGenericFormat*) ROSE_DEPRECATED("use set_executableFormat");
+    rose_addr_t get_base_va() const ROSE_DEPRECATED("use get_baseVa");
+    void set_base_va(rose_addr_t) ROSE_DEPRECATED("use set_baseVa");
+    SgRVAList& get_entry_rvas() ROSE_DEPRECATED("use get_entryRvas");
+    const SgRVAList& get_entry_rvas() const ROSE_DEPRECATED("use get_entryRvas");
+    void set_entry_rvas(const SgRVAList&) ROSE_DEPRECATED("use set_entryRvas");
+    virtual const char *format_name() const ROSE_DEPRECATED("use formatName");
+    void add_dll(SgAsmGenericDLL*) ROSE_DEPRECATED("use addDll");
+    rose_addr_t get_entry_rva() const ROSE_DEPRECATED("use get_entryRva");
+    void add_entry_rva(const rose_rva_t&) ROSE_DEPRECATED("use addEntryRva");
+    size_t get_word_size() const ROSE_DEPRECATED("use get_wordSize");
+    void add_section(SgAsmGenericSection*) ROSE_DEPRECATED("use addSection");
+    void remove_section(SgAsmGenericSection*) ROSE_DEPRECATED("use removeSection");
+    SgAsmGenericSectionPtrList get_mapped_sections() const ROSE_DEPRECATED("use get_mappedSections");
+    SgAsmGenericSectionPtrList get_sections_by_id(int) const ROSE_DEPRECATED("use get_sectionsById");
+    SgAsmGenericSectionPtrList get_sections_by_name(std::string, char=0) const ROSE_DEPRECATED("use get_sectionsByName");
+    SgAsmGenericSectionPtrList get_sections_by_offset(rose_addr_t, rose_addr_t) const ROSE_DEPRECATED("use get_sectionsByOffset");
+    SgAsmGenericSectionPtrList get_sections_by_rva(rose_addr_t) const ROSE_DEPRECATED("use get_sectionsByRva");
+    SgAsmGenericSectionPtrList get_sections_by_va(rose_addr_t, bool) const ROSE_DEPRECATED("use get_sectionsByVa");
+    SgAsmGenericSection *get_section_by_id(int, size_t* = nullptr) const ROSE_DEPRECATED("use get_sectionById");
+    SgAsmGenericSection *get_section_by_name(const std::string&, char=0, size_t* = nullptr) const
+        ROSE_DEPRECATED("use get_sectionByName");
+    SgAsmGenericSection *get_section_by_offset(rose_addr_t, rose_addr_t, size_t* = nullptr) const
+        ROSE_DEPRECATED("use get_sectionByOffset");
+    SgAsmGenericSection *get_section_by_rva(rose_addr_t, size_t* = nullptr) const ROSE_DEPRECATED("use get_sectionByRva");
+    SgAsmGenericSection *get_section_by_va(rose_addr_t, bool, size_t* = nullptr) const ROSE_DEPRECATED("use get_sectionByVa");
+    SgAsmGenericSection *get_best_section_by_va(rose_addr_t, bool, size_t* = nullptr) const ROSE_DEPRECATED("use get_bestSectionByVa");
 };

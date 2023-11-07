@@ -40,7 +40,7 @@ public:
 
     /** Property: Definition state. */
     [[using Rosebud: rosetta]]
-    SgAsmGenericSymbol::SymbolDefState def_state = SgAsmGenericSymbol::SYM_UNDEFINED;
+    SgAsmGenericSymbol::SymbolDefState definitionState = SgAsmGenericSymbol::SYM_UNDEFINED;
 
     /** Property: Symbol binding. */
     [[using Rosebud: rosetta]]
@@ -78,4 +78,11 @@ public:
 public:
     /** Print some debugging info. */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SymbolDefState get_def_state() const ROSE_DEPRECATED("use get_definitionState");
+    void set_def_state(SymbolDefState) ROSE_DEPRECATED("use set_definitionState");
 };

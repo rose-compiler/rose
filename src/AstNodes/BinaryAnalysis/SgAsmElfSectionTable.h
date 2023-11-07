@@ -25,12 +25,12 @@ public:
      *  the section while init_from_section_table() initializes the section from the section table.
      *
      *  Returns the new section table entry linked into the AST. */
-    SgAsmElfSectionTableEntry *add_section(SgAsmElfSection*);
+    SgAsmElfSectionTableEntry *addSection(SgAsmElfSection*);
 
     /** Returns info about the size of the entries based on information already available.
      *
      *  Any or all arguments may be null pointers if the caller is not interested in the value. */
-    rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
+    rose_addr_t calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 
     /** Update prior to unparsing. */
     virtual bool reallocate() override;
@@ -40,4 +40,11 @@ public:
 
     /** Print some debugging info */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmElfSectionTableEntry *add_section(SgAsmElfSection*) ROSE_DEPRECATED("use addSection");
+    rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const ROSE_DEPRECATED("use calculateSizes");
 };

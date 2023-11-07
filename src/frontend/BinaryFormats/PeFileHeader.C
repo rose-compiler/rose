@@ -26,6 +26,12 @@ using namespace Rose::BinaryAnalysis;
 std::string
 SgAsmPEFileHeader::rvasize_pair_name(PairPurpose idx, const char **short_name)
 {
+    return rvaSizePairName(idx, short_name);
+}
+
+std::string
+SgAsmPEFileHeader::rvaSizePairName(PairPurpose idx, const char **short_name)
+{
     const char *full="", *abbr="";
     switch (idx) {
         case PAIR_EXPORTS:              full="Export Table";            abbr="Exports";   break;
@@ -64,7 +70,7 @@ SgAsmPEFileHeader::SgAsmPEFileHeader(SgAsmGenericFile *f)
     set_synthesized(true);
     set_purpose(SP_HEADER);
 
-    p_rvasize_pairs = new SgAsmPERVASizePairList(this);
+    p_rvaSizePairs = new SgAsmPERVASizePairList(this);
 
     /* Magic number */
     p_magic.clear();
@@ -74,15 +80,15 @@ SgAsmPEFileHeader::SgAsmPEFileHeader(SgAsmGenericFile *f)
     p_magic.push_back('\0');
 
     /* Executable Format */
-    ROSE_ASSERT(p_exec_format!=NULL);
-    p_exec_format->set_family(FAMILY_PE);
-    p_exec_format->set_purpose(PURPOSE_EXECUTABLE);
-    p_exec_format->set_sex(ByteOrder::ORDER_LSB);
-    p_exec_format->set_word_size(4);
-    p_exec_format->set_version(0);
-    p_exec_format->set_is_current_version(true);
-    p_exec_format->set_abi(ABI_NT);
-    p_exec_format->set_abi_version(0);
+    ROSE_ASSERT(get_executableFormat()!=NULL);
+    get_executableFormat()->set_family(FAMILY_PE);
+    get_executableFormat()->set_purpose(PURPOSE_EXECUTABLE);
+    get_executableFormat()->set_sex(ByteOrder::ORDER_LSB);
+    get_executableFormat()->set_word_size(4);
+    get_executableFormat()->set_version(0);
+    get_executableFormat()->set_is_current_version(true);
+    get_executableFormat()->set_abi(ABI_NT);
+    get_executableFormat()->set_abi_version(0);
 
     /* Default instruction architecture */
     p_e_cpu_type = 0x014c; /*i386*/
@@ -94,6 +100,12 @@ SgAsmPEFileHeader::SgAsmPEFileHeader(SgAsmGenericFile *f)
 
 bool
 SgAsmPEFileHeader::is_PE(SgAsmGenericFile *file)
+{
+    return isPe(file);
+}
+
+bool
+SgAsmPEFileHeader::isPe(SgAsmGenericFile *file)
 {
     /* Turn off byte reference tracking for the duration of this function. We don't want our testing the file contents to
      * affect the list of bytes that we've already referenced or which we might reference later. */
@@ -169,12 +181,12 @@ SgAsmPEFileHeader::parse()
     p_e_opt_magic = ByteOrder::leToHost(oh32.e_opt_magic);
     
     /* File format changes from ctor() */
-    p_exec_format->set_purpose(p_e_flags & HF_PROGRAM ? PURPOSE_EXECUTABLE : PURPOSE_LIBRARY);
-    p_exec_format->set_word_size(0x010b==p_e_opt_magic? 4 : 8);
+    get_executableFormat()->set_purpose(p_e_flags & HF_PROGRAM ? PURPOSE_EXECUTABLE : PURPOSE_LIBRARY);
+    get_executableFormat()->set_word_size(0x010b==p_e_opt_magic? 4 : 8);
 
     /* Decode the optional header. */
     rose_addr_t entry_rva;
-    if (4==p_exec_format->get_word_size()) {
+    if (4==get_executableFormat()->get_word_size()) {
         p_e_lmajor             = ByteOrder::leToHost(oh32.e_lmajor);
         p_e_lminor             = ByteOrder::leToHost(oh32.e_lminor);
         p_e_code_size          = ByteOrder::leToHost(oh32.e_code_size);
@@ -183,7 +195,7 @@ SgAsmPEFileHeader::parse()
         entry_rva              = ByteOrder::leToHost(oh32.e_entrypoint_rva);
         p_e_code_rva           = ByteOrder::leToHost(oh32.e_code_rva);
         p_e_data_rva           = ByteOrder::leToHost(oh32.e_data_rva);
-        p_base_va              = ByteOrder::leToHost(oh32.e_image_base);
+        p_baseVa              = ByteOrder::leToHost(oh32.e_image_base);
         p_e_section_align      = ByteOrder::leToHost(oh32.e_section_align);
         p_e_file_align         = ByteOrder::leToHost(oh32.e_file_align);
         p_e_os_major           = ByteOrder::leToHost(oh32.e_os_major);
@@ -204,7 +216,7 @@ SgAsmPEFileHeader::parse()
         p_e_heap_commit_size   = ByteOrder::leToHost(oh32.e_heap_commit_size);
         p_e_loader_flags       = ByteOrder::leToHost(oh32.e_loader_flags);
         p_e_num_rvasize_pairs  = ByteOrder::leToHost(oh32.e_num_rvasize_pairs);
-    } else if (8==p_exec_format->get_word_size()) {
+    } else if (8==get_executableFormat()->get_word_size()) {
         /* We guessed wrong. This is a 64-bit header, not 32-bit. */
         PE64OptHeader_disk oh64;
         rose_addr_t need64 = sizeof(PEFileHeader_disk) + std::min(p_e_nt_hdr_size, (rose_addr_t)(sizeof oh64));
@@ -221,7 +233,7 @@ SgAsmPEFileHeader::parse()
         entry_rva              = ByteOrder::leToHost(oh64.e_entrypoint_rva);
         p_e_code_rva           = ByteOrder::leToHost(oh64.e_code_rva);
      // p_e_data_rva           = ByteOrder::leToHost(oh.e_data_rva);             /* not in PE32+ */
-        p_base_va              = ByteOrder::leToHost(oh64.e_image_base);
+        p_baseVa              = ByteOrder::leToHost(oh64.e_image_base);
         p_e_section_align      = ByteOrder::leToHost(oh64.e_section_align);
         p_e_file_align         = ByteOrder::leToHost(oh64.e_file_align);
         p_e_os_major           = ByteOrder::leToHost(oh64.e_os_major);
@@ -253,8 +265,8 @@ SgAsmPEFileHeader::parse()
 
     /* File format */
     ROSE_ASSERT(p_e_lmajor <= 0xffff && p_e_lminor <= 0xffff);
-    p_exec_format->set_version((p_e_lmajor << 16) | p_e_lminor);
-    p_exec_format->set_is_current_version(true); /*FIXME*/
+    get_executableFormat()->set_version((p_e_lmajor << 16) | p_e_lminor);
+    get_executableFormat()->set_is_current_version(true); /*FIXME*/
 
     /* Target architecture */
     switch (p_e_cpu_type) {
@@ -466,6 +478,12 @@ SgAsmPEFileHeader::encode(PE64OptHeader_disk *disk) const
 void
 SgAsmPEFileHeader::set_rvasize_pair(PairPurpose idx, SgAsmPESection *section)
 {
+    set_rvaSizePair(idx, section);
+}
+
+void
+SgAsmPEFileHeader::set_rvaSizePair(PairPurpose idx, SgAsmPESection *section)
+{
     ROSE_ASSERT(get_rvasize_pairs()!=NULL);
     ROSE_ASSERT(section->get_parent()!=NULL);
     ROSE_ASSERT(isSgAsmPEFileHeader(section->get_header())!=NULL);
@@ -521,6 +539,12 @@ SgAsmPEFileHeader::set_rvasize_pair(PairPurpose idx, SgAsmPESection *section)
 void
 SgAsmPEFileHeader::update_rvasize_pairs()
 {
+    updateRvaSizePairs();
+}
+
+void
+SgAsmPEFileHeader::updateRvaSizePairs()
+{
     for (size_t i=0; i<get_rvasize_pairs()->get_pairs().size(); i++) {
         SgAsmPERVASizePair *pair = get_rvasize_pairs()->get_pairs()[i];
         SgAsmGenericSection *section = pair->get_section();
@@ -531,17 +555,23 @@ SgAsmPEFileHeader::update_rvasize_pairs()
     }
 }
 
-/* Adds the RVA/Size pairs to the end of the PE file header */
 void
 SgAsmPEFileHeader::add_rvasize_pairs()
+{
+    return addRvaSizePairs();
+}
+
+/* Adds the RVA/Size pairs to the end of the PE file header */
+void
+SgAsmPEFileHeader::addRvaSizePairs()
 {
     rose_addr_t pairs_offset = get_size();
     rose_addr_t pairs_size   = p_e_num_rvasize_pairs * sizeof(SgAsmPERVASizePair::RVASizePair_disk);
     SgAsmPERVASizePair::RVASizePair_disk pairs_disk;
 
-    ROSE_ASSERT(p_rvasize_pairs != NULL);
-    ROSE_ASSERT(p_rvasize_pairs->get_pairs().size()==0);
-    p_rvasize_pairs->set_isModified(true);
+    ROSE_ASSERT(get_rvaSizePairs() != NULL);
+    ROSE_ASSERT(get_rvaSizePairs()->get_pairs().size()==0);
+    get_rvaSizePairs()->set_isModified(true);
 
     extend(pairs_size);
     for (size_t i = 0; i < p_e_num_rvasize_pairs; i++, pairs_offset += sizeof pairs_disk) {
@@ -549,19 +579,25 @@ SgAsmPEFileHeader::add_rvasize_pairs()
             mlog[WARN] <<"SgAsmPEFileHeader::add_rvasize_pairs: RVA/Size pair " <<i
                        <<" at file offset " <<StringUtility::addrToString(get_offset()+pairs_offset)
                        <<" extends beyond the end of file (assuming 0/0)\n";
-        p_rvasize_pairs->get_pairs().push_back(new SgAsmPERVASizePair(p_rvasize_pairs, &pairs_disk));
+        get_rvaSizePairs()->get_pairs().push_back(new SgAsmPERVASizePair(get_rvaSizePairs(), &pairs_disk));
     }
+}
+
+void
+SgAsmPEFileHeader::create_table_sections()
+{
+    createTableSections();
 }
 
 /* Looks at the RVA/Size pairs in the PE header and creates an SgAsmGenericSection object for each one.  This must be done
  * after we build the mapping from virtual addresses to file offsets. */
 void
-SgAsmPEFileHeader::create_table_sections()
+SgAsmPEFileHeader::createTableSections()
 {
 
     /* First, only create the sections. */
-    for (size_t i=0; i<p_rvasize_pairs->get_pairs().size(); i++) {
-        SgAsmPERVASizePair *pair = p_rvasize_pairs->get_pairs()[i];
+    for (size_t i=0; i<get_rvaSizePairs()->get_pairs().size(); i++) {
+        SgAsmPERVASizePair *pair = get_rvaSizePairs()->get_pairs()[i];
 
         if (0==pair->get_e_size())
             continue;
@@ -658,8 +694,8 @@ SgAsmPEFileHeader::create_table_sections()
     }
 
     /* Now parse the sections */
-    for (size_t i=0; i<p_rvasize_pairs->get_pairs().size(); i++) {
-        SgAsmPERVASizePair *pair = p_rvasize_pairs->get_pairs()[i];
+    for (size_t i=0; i<get_rvaSizePairs()->get_pairs().size(); i++) {
+        SgAsmPERVASizePair *pair = get_rvaSizePairs()->get_pairs()[i];
         SgAsmGenericSection *tabsec = pair->get_section();
         if (tabsec)
             tabsec->parse();
@@ -687,7 +723,7 @@ SgAsmPEFileHeader::reallocate()
     } else {
         throw FormatError("unsupported PE word size");
     }
-    need += p_rvasize_pairs->get_pairs().size() * sizeof(SgAsmPERVASizePair::RVASizePair_disk);
+    need += get_rvaSizePairs()->get_pairs().size() * sizeof(SgAsmPERVASizePair::RVASizePair_disk);
     if (need<get_size()) {
         if (is_mapped()) {
             ROSE_ASSERT(get_mapped_size()==get_size());
@@ -706,8 +742,8 @@ SgAsmPEFileHeader::reallocate()
 
     /* Make sure header is consistent with sections. Reallocate() has already been called recursively for the sections.
      * Count the number of sections in the table and update the header's e_nsections member. */
-    if (p_section_table) {
-        ROSE_ASSERT(p_section_table->get_header()==this);
+    if (get_sectionTable()) {
+        ROSE_ASSERT(get_sectionTable()->get_header()==this);
         SgAsmGenericSectionList *all = get_sections();
         p_e_nsections = 0;
         for (size_t i=0; i<all->get_sections().size(); i++) {
@@ -716,7 +752,7 @@ SgAsmPEFileHeader::reallocate()
                 p_e_nsections++;
         }
 
-        rose_addr_t header_size = alignUp(p_section_table->get_offset() + p_section_table->get_size(),
+        rose_addr_t header_size = alignUp(get_sectionTable()->get_offset() + get_sectionTable()->get_size(),
                                           (rose_addr_t)(p_e_file_align>0 ? p_e_file_align : 1));
 #if 1
         /* The PE Specification regarding e_header_size (known as "SizeOfHeader" on page 14 of "Microsoft Portable Executable
@@ -751,9 +787,9 @@ SgAsmPEFileHeader::reallocate()
 
     /* The size of the optional header. If there's a section table then we use its offset to calculate the optional header
      * size in order to be compatible with the PE loader. Otherwise use the actual optional header size. */
-    if (p_section_table) {
-        ROSE_ASSERT(p_section_table->get_offset() >= get_offset() + sizeof(PEFileHeader_disk));
-        p_e_nt_hdr_size = p_section_table->get_offset() - (get_offset() + sizeof(PEFileHeader_disk));
+    if (get_sectionTable()) {
+        ROSE_ASSERT(get_sectionTable()->get_offset() >= get_offset() + sizeof(PEFileHeader_disk));
+        p_e_nt_hdr_size = get_sectionTable()->get_offset() - (get_offset() + sizeof(PEFileHeader_disk));
     } else if (4==get_word_size()) {
         p_e_nt_hdr_size = sizeof(PE32OptHeader_disk);
     } else if (8==get_word_size()) {
@@ -778,7 +814,7 @@ SgAsmPEFileHeader::reallocate()
     /* Adjust the COFF Header's e_nt_hdr_size to accommodate the NT Optional Header in such a way that EXEs from tinype.com
      * don't change (i.e., don't increase e_nt_hdr_size if the bytes beyond it are zero anyway, and if they aren't then adjust
      * it as little as possible.  The RVA/Size pairs are considered to be part of the NT Optional Header. */
-    size_t oh_size = p_rvasize_pairs->get_pairs().size() * sizeof(SgAsmPERVASizePair::RVASizePair_disk);
+    size_t oh_size = get_rvaSizePairs()->get_pairs().size() * sizeof(SgAsmPERVASizePair::RVASizePair_disk);
     if (4==get_word_size()) {
         oh_size += sizeof(PE32OptHeader_disk);
     } else if (8==get_word_size()) {
@@ -836,7 +872,7 @@ SgAsmPEFileHeader::unparse(std::ostream &f) const
      * e_nt_hdr_size to accommodate the NT Optional Header in such a way that EXEs from tinype.com don't change (i.e., don't
      * increase e_nt_hdr_size if the bytes beyond it are zero anyway, and if they aren't then adjust it as little as possible.
      * The RVA/Size pairs are considered to be part of the NT Optional Header. */
-    size_t oh_size = p_rvasize_pairs->get_pairs().size() * sizeof(SgAsmPERVASizePair::RVASizePair_disk);
+    size_t oh_size = get_rvaSizePairs()->get_pairs().size() * sizeof(SgAsmPERVASizePair::RVASizePair_disk);
     size_t rvasize_offset; /*offset with respect to "oh" buffer allocated below*/
     if (4==get_word_size()) {
         oh_size += sizeof(PE32OptHeader_disk);
@@ -855,9 +891,9 @@ SgAsmPEFileHeader::unparse(std::ostream &f) const
     } else {
         throw FormatError("unsupported PE word size");
     }
-    for (size_t i=0; i<p_rvasize_pairs->get_pairs().size(); i++, rvasize_offset+=sizeof(SgAsmPERVASizePair::RVASizePair_disk)) {
+    for (size_t i=0; i<get_rvaSizePairs()->get_pairs().size(); i++, rvasize_offset+=sizeof(SgAsmPERVASizePair::RVASizePair_disk)) {
         SgAsmPERVASizePair::RVASizePair_disk *rvasize_disk = (SgAsmPERVASizePair::RVASizePair_disk*)(r.oh+rvasize_offset);
-        p_rvasize_pairs->get_pairs()[i]->encode(rvasize_disk);
+        get_rvaSizePairs()->get_pairs()[i]->encode(rvasize_disk);
     }
     while (oh_size>p_e_nt_hdr_size) {
         if (0!=r.oh[oh_size-1]) break;
@@ -901,9 +937,9 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %u (%s)\n",                   p, w, "e_time",              p_e_time, time_str);
     fprintf(f, "%s%-*s = 0x%08" PRIx64 " (%" PRIu64 ")\n", p, w, "e_coff_symtab",   p_e_coff_symtab, p_e_coff_symtab);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_coff_nsyms",        p_e_coff_nsyms);
-    if (p_coff_symtab) {
+    if (get_coffSymbolTable()) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n",           p, w, "coff_symtab",
-                p_coff_symtab->get_id(), p_coff_symtab->get_name()->get_string(true).c_str());
+                get_coffSymbolTable()->get_id(), get_coffSymbolTable()->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n",                  p, w, "coff_symtab");
     }
@@ -935,16 +971,16 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "e_heap_commit_size",  p_e_heap_commit_size, p_e_heap_commit_size);
     fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "e_loader_flags",      p_e_loader_flags, p_e_loader_flags);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_num_rvasize_pairs", p_e_num_rvasize_pairs);
-    for (unsigned i = 0; i < p_rvasize_pairs->get_pairs().size(); i++) {
+    for (unsigned i = 0; i < get_rvaSizePairs()->get_pairs().size(); i++) {
         std::string p2 = (boost::format("%s.pair[%d].") %p %i).str();
         w = std::max(1, DUMP_FIELD_WIDTH-(int)p2.size());
         fprintf(f, "%s%-*s = rva %s,\tsize 0x%08" PRIx64 " (%" PRIu64 ")\n", p2.c_str(), w, "..",
-                p_rvasize_pairs->get_pairs()[i]->get_e_rva().to_string().c_str(),
-                p_rvasize_pairs->get_pairs()[i]->get_e_size(), p_rvasize_pairs->get_pairs()[i]->get_e_size());
+                get_rvaSizePairs()->get_pairs()[i]->get_e_rva().to_string().c_str(),
+                get_rvaSizePairs()->get_pairs()[i]->get_e_size(), get_rvaSizePairs()->get_pairs()[i]->get_e_size());
     }
-    if (p_section_table) {
+    if (get_sectionTable()) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "section_table",
-                p_section_table->get_id(), p_section_table->get_name()->get_string(true).c_str());
+                get_sectionTable()->get_id(), get_sectionTable()->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "section_table");
     }
@@ -959,6 +995,66 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     } else {
         fprintf(f, "%s%-*s = not defined\n", p, w, "loader_map");
     }
+}
+
+SgAsmPERVASizePairList*
+SgAsmPEFileHeader::get_rvasize_pairs() const {
+    return get_rvaSizePairs();
+}
+
+void
+SgAsmPEFileHeader::set_rvasize_pairs(SgAsmPERVASizePairList *x) {
+    set_rvaSizePairs(x);
+}
+
+SgAsmPESectionTable*
+SgAsmPEFileHeader::get_section_table() const {
+    return get_sectionTable();
+}
+
+void
+SgAsmPEFileHeader::set_section_table(SgAsmPESectionTable *x) {
+    set_sectionTable(x);
+}
+
+SgAsmCoffSymbolTable*
+SgAsmPEFileHeader::get_coff_symtab() const {
+    return get_coffSymbolTable();
+}
+
+void
+SgAsmPEFileHeader::set_coff_symtab(SgAsmCoffSymbolTable *x) {
+    set_coffSymbolTable(x);
+}
+
+const char*
+SgAsmPEFileHeader::format_name() const {
+    return formatName();
+}
+
+const char*
+SgAsmPEFileHeader::formatName() const {
+    return "PE";
+}
+
+MemoryMap::Ptr
+SgAsmPEFileHeader::get_loader_map() const {
+    return get_loaderMap();
+}
+
+MemoryMap::Ptr
+SgAsmPEFileHeader::get_loaderMap() const {
+    return p_loader_map;
+}
+
+void
+SgAsmPEFileHeader::set_loader_map(const MemoryMap::Ptr &x) {
+    set_loaderMap(x);
+}
+
+void
+SgAsmPEFileHeader::set_loaderMap(const MemoryMap::Ptr &x) {
+    p_loader_map = x;
 }
 
 #endif

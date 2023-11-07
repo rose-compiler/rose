@@ -154,25 +154,34 @@ public:
     virtual bool reallocate() override;
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-    virtual const char *format_name() const override {return "DOS";}
+    virtual const char *formatName() const override;
 
     /** Parses the DOS real-mode text+data section and adds it to the AST.
      *
      *  If max_offset is non-zero then use that as the maximum offset of the real-mode section. If the DOS header indicates a zero
      *  sized section then return NULL. If the section exists or is zero size due to the max_offset then return the section. See
      *  also, update_from_rm_section(). */
-    SgAsmGenericSection *parse_rm_section(rose_addr_t max_offset=0);
+    SgAsmGenericSection *parseRealModeSection(rose_addr_t max_offset=0);
 
     /** Update DOS header with data from real-mode section.
      *
      *  The DOS real-mode data+text section is assumed to appear immediately after the DOS Extended Header, which appears
      *  immediately after the DOS File Header, which appears at the beginning of the file. These assumptions are not checked until
      *  SgAsmDOSFileHeader::unparse() is called. See also, @ref parse_rm_section. */
-    void update_from_rm_section();
+    void updateFromRealModeSection();
 
     /** Returns true if a cursory look at the file indicates that it could be a DOS executable file. */
-    static bool is_DOS(SgAsmGenericFile*);
+    static bool isDos(SgAsmGenericFile*);
 
 private:
     void *encode(SgAsmDOSFileHeader::DOSFileHeader_disk*) const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    virtual const char* format_name() const override ROSE_DEPRECATED("use formatName");
+    SgAsmGenericSection* parse_rm_section(rose_addr_t max_offset = 0) ROSE_DEPRECATED("use parseRealModeSection");
+    void update_from_rm_section() ROSE_DEPRECATED("use updateFromRealModeSection");
+    static bool is_DOS(SgAsmGenericFile*) ROSE_DEPRECATED("use isDos");
 };

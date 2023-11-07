@@ -15,11 +15,11 @@ public:
     virtual SgAsmElfDynamicSection* parse() override;
 
     /** Finish initializing the section entries. */
-    virtual void finish_parsing() override;
+    virtual void finishParsing() override;
 
-    using SgAsmElfSection::calculate_sizes;
+    using SgAsmElfSection::calculateSizes;
     /** Return sizes for various parts of the table. See documentation for @ref SgAsmElfSection::calculate_sizes. */
-    virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const override;
+    virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const override;
 
     /** Called prior to unparse to make things consistent. */
     virtual bool reallocate() override;
@@ -29,4 +29,12 @@ public:
 
     /** Print some debugging info */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    virtual void finish_parsing() override ROSE_DEPRECATED("use finishParsing") ROSE_DEPRECATED("use finishParsing");
+    using SgAsmElfSection::calculate_sizes;
+    virtual rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const override ROSE_DEPRECATED("use calculateSizes");
 };

@@ -29,12 +29,12 @@ public:
      *  If @p shared is true then attempt to re-use a previous storage object, otherwise always create a new one. Each
      *  storage object is considered a separate string, therefore when two strings share the same storage object, changing
      *  one string changes the other. */
-    virtual SgAsmStringStorage *create_storage(rose_addr_t offset, bool shared) override;
+    virtual SgAsmStringStorage *createStorage(rose_addr_t offset, bool shared) override;
 
     /** Returns the number of bytes required to store the string in the string table.
      *
      *  This is the length of the string plus one for the NUL terminator. */
-    virtual rose_addr_t get_storage_size(const SgAsmStringStorage*) override;
+    virtual rose_addr_t get_storageSize(const SgAsmStringStorage*) override;
 
     /** Find offset for a string.
      *
@@ -45,8 +45,16 @@ public:
      *  in this case) then we allocate some of that free space and use a suitable offset. In any case, upon return
      *  <code>storege->get_offset()</code> will return the allocated offset if successful, or
      *  @ref SgAsmGenericString::unallocated if we couldn't find an overlap. */
-    virtual void allocate_overlap(SgAsmStringStorage*) override;
+    virtual void allocateOverlap(SgAsmStringStorage*) override;
 
     /** Similar to create_storage() but uses a storage object that's already been allocated. */
     virtual void rebind(SgAsmStringStorage*, rose_addr_t) override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    virtual SgAsmStringStorage *create_storage(rose_addr_t, bool) override ROSE_DEPRECATED("use createStorage");
+    virtual rose_addr_t get_storage_size(const SgAsmStringStorage*) override ROSE_DEPRECATED("use get_storageSize");
+    virtual void allocate_overlap(SgAsmStringStorage*) override ROSE_DEPRECATED("use allocateOverlap");
 };

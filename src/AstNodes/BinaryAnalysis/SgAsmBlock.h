@@ -25,7 +25,7 @@ class SgAsmBlock: public SgAsmStatement {
 public:
     /** Reasons why a basic block might have been assigned to a function. */
     enum Reason {
-        // Please update SgAsmBlock::reason_str() if you change this enum!
+        // Please update SgAsmBlock::reasonString() if you change this enum!
         BLK_NONE        = 0x00000000,           /**< No particular reason.  Mostly just for initialization. */
         BLK_ENTRY_POINT = 0x00010000,           /**< Block is an entry point for the function. */
         BLK_PADDING     = 0x00020000,           /**< Block is used for padding. */
@@ -102,7 +102,7 @@ public:
      *  The @ref Rose::BinaryAnalysis::Partitioner2 "Partitioner2" name space has a more useful definition of control flow
      *  graph that can reference indeterminate addresses and store data in the edges, and which is copiable. */
     [[using Rosebud: rosetta]]
-    bool successors_complete = false;
+    bool successorsComplete = false;
 
     /** Property: Holds the immediate dominator block in the control flow graph.
      *
@@ -112,7 +112,7 @@ public:
      *  The @ref Rose::BinaryAnalysis::Partitioner2 "Partitioner2" name space has a more useful definition of control flow
      *  graph that can reference indeterminate addresses and store data in the edges, and which is copiable. */
     [[using Rosebud: rosetta]]
-    SgAsmBlock* immediate_dominator = nullptr;
+    SgAsmBlock* immediateDominator = nullptr;
 
     /** Property: Cached vertex for control flow graphs.
      *
@@ -121,14 +121,14 @@ public:
      *  The @ref Rose::BinaryAnalysis::Partitioner2 "Partitioner2" name space has a more useful definition of control flow
      *  graph that can reference indeterminate addresses and store data in the edges, and which is copiable. */
     [[using Rosebud: rosetta]]
-    size_t cached_vertex = (size_t)(-1); // see BinaryAnalysis::ControlFlow
+    size_t cachedVertex = (size_t)(-1); // see BinaryAnalysis::ControlFlow
 
     /** Property: Likelihood that this block represents real instructions.
      *
      *  This property holds the results of an analysis that determines how likely it is that the memory from which this
      *  basic block was disassembled represents actual instructions that would be executed when the specimen runs. */
     [[using Rosebud: rosetta]]
-    double code_likelihood = 0.0;
+    double codeLikelihood = 0.0;
 
     /** Property: Stack pointer at block exit w.r.t. stack pointer at function entry.
      *
@@ -146,44 +146,44 @@ public:
     /** Add the specified statement to the end of the statement list.
      *
      *  This is is usually used to add the next instruction to the end of a basic block. */
-    void append_statement(SgAsmStatement*);
+    void appendStatement(SgAsmStatement*);
 
     /** Erase the specified statement.
      *
      *  If the specified statement exists in the "statementList" property then it is erased but not deleted. */
-    void remove_statement(SgAsmStatement*);
+    void removeStatement(SgAsmStatement*);
 
     // FIXME[Robb P Matzke 2017-02-13]: wrong name -- erases only statements, not all children
     /** Removes all statements from the block.
      *
      *  This makes the block empty, and not having a unique starting virtual address. It does not erase all children, just
      *  the statement children.  None of the statements that are erased are deleted. */
-    void remove_children();
+    void removeChildren();
 
     /** Fall-through virtual address.
      *
      *  A block's fall-through address is the virtual address that follows the last byte of the block's last instruction.
      *  The block must have instructions (e.g., it cannot be a strict data block). */
-    rose_addr_t get_fallthrough_va();
+    rose_addr_t get_fallthroughVa();
 
     /** Returns the function that owns this block.
      *
      *  This is just a convenience wrapper around @ref SageInterface::getEnclosingNode. */
-    SgAsmFunction *get_enclosing_function() const;
+    SgAsmFunction *get_enclosingFunction() const;
 
     /** Determins if a block contains instructions.
      *
      *  Returns true if the block has instructions, false otherwise. We look only at the immediate descendants of this
      *  block.  See also, @ref SageInterface::querySubTree in order to get the list of all instructions or to consider all
      *  descendants. */
-    bool has_instructions() const;
+    bool hasInstructions() const;
 
     /** Determine if a block contains instructions.
      *
      *  Returns true if the block has instructions, false otherwise. We look only at the immediate descendants of this
      *  block.  See also, @ref SageInterface::querySubTree in order to get the list of all instructions or to consider all
      *  descendants. */
-    bool is_basic_block() const { return has_instructions(); }
+    bool isBasicBlock() const;
 
     /** Returns true if basic block appears to be a function call.
      *
@@ -194,22 +194,47 @@ public:
      *
      * Note: Use this function in preference to SgAsmInstruction::isFunctionCallSlow() because the latter is intended to be
      * used by the Partitioner before an AST is created and might not be as accurate. */
-    bool is_function_call(rose_addr_t &target_va/*out*/, rose_addr_t &return_va/*out*/);
+    bool isFunctionCall(rose_addr_t &target_va/*out*/, rose_addr_t &return_va/*out*/);
 
     /** Multi-line string describing the letters used for basic block reasons.
      *
-     *  The letters are returned by the padding version of @ref reason_str and appear in unparser output. */
-    static std::string reason_key(const std::string &prefix="");
+     *  The letters are returned by the padding version of @ref reasonString and appear in unparser output. */
+    static std::string reasonKey(const std::string &prefix = "");
 
     /** Returns reason string for this block.
      *
      *  The reason string is a very short string describing the reason that the block was created. */
-    std::string reason_str(bool pad) const;
+    std::string reasonString(bool pad) const;
 
     /** Converts a reason bit vector to a human-friendly string.
      *
      *  The second argument is the bit vector of @ref SgAsmBlock::Reason bits.  Some of the positions in the padded return
      *  value are used for more than one bit.  For instance, the first character can be "L" for leftovers, "N" for padding,
      *  "E" for entry point, or "-" for none of the above. */
-    static std::string reason_str(bool pad, unsigned reason);
+    static std::string reasonString(bool pad, unsigned reason);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // [Robb Matzke 2023-11-06]: deprecated 2023-11
+    bool get_successors_complete() const ROSE_DEPRECATED("use get_successorsComplete");
+    void set_successors_complete(bool) ROSE_DEPRECATED("use get_successorsComplete");
+    SgAsmBlock* get_immediate_dominator() const ROSE_DEPRECATED("use get_immediateDominator");
+    void set_immediate_dominator(SgAsmBlock*) ROSE_DEPRECATED("use set_immediateDominator");
+    size_t get_cached_vertex() const ROSE_DEPRECATED("use get_cachedVertex");
+    void set_cached_vertex(size_t) ROSE_DEPRECATED("use set_cachedVertex");
+    double get_code_likelihood() const ROSE_DEPRECATED("use get_codeLikelihood");
+    void set_code_likelihood(double) ROSE_DEPRECATED("use set_codeLikelihood");
+    void append_statement(SgAsmStatement*) ROSE_DEPRECATED("use appendStatement");
+    void remove_statement(SgAsmStatement*) ROSE_DEPRECATED("use removeStatement");
+    void remove_children() ROSE_DEPRECATED("use removeChildren");
+    rose_addr_t get_fallthrough_va() ROSE_DEPRECATED("use getFallthroughVa");
+    SgAsmFunction* get_enclosing_function() const ROSE_DEPRECATED("use get_enclosingFunction");
+    bool has_instructions() const ROSE_DEPRECATED("use hasInstructions");
+    bool is_basic_block() const ROSE_DEPRECATED("use isBasicBlock");
+    bool is_function_call(rose_addr_t&, rose_addr_t&) ROSE_DEPRECATED("use isFunctionCall");
+    static std::string reason_key(const std::string& = "") ROSE_DEPRECATED("use reasonKey");
+    std::string reason_str(bool) const ROSE_DEPRECATED("use reasonString");
+    static std::string reason_str(bool, unsigned) ROSE_DEPRECATED("use reasonString");
 };

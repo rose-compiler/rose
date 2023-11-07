@@ -170,22 +170,22 @@ public:
     rose_addr_t e_fastload_nsectors = 0;
 
     [[using Rosebud: rosetta, traverse]]
-    SgAsmDOSExtendedHeader* dos2_header = nullptr;
+    SgAsmDOSExtendedHeader* dos2Header = nullptr;
 
     [[using Rosebud: rosetta]]
-    SgAsmNESectionTable* section_table = nullptr;
+    SgAsmNESectionTable* sectionTable = nullptr;
 
     [[using Rosebud: rosetta, traverse]]
-    SgAsmNENameTable* resname_table = nullptr;
+    SgAsmNENameTable* residentNameTable = nullptr;
 
     [[using Rosebud: rosetta, traverse]]
-    SgAsmNENameTable* nonresname_table = nullptr;
+    SgAsmNENameTable* nonresidentNameTable = nullptr;
 
     [[using Rosebud: rosetta, traverse]]
-    SgAsmNEModuleTable* module_table = nullptr;
+    SgAsmNEModuleTable* moduleTable = nullptr;
 
     [[using Rosebud: rosetta, traverse]]
-    SgAsmNEEntryTable* entry_table = nullptr;
+    SgAsmNEEntryTable* entryTable = nullptr;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
@@ -193,12 +193,32 @@ public:
 public:
     SgAsmNEFileHeader(SgAsmGenericFile *f, rose_addr_t offset);
 
-    static bool is_NE (SgAsmGenericFile*);
+    static bool isNe (SgAsmGenericFile*);
     static SgAsmNEFileHeader *parse(SgAsmDOSFileHeader*);
     virtual void unparse(std::ostream&) const override;
-    virtual const char *format_name() const override {return "NE";}
+    virtual const char *formatName() const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
 private:
     void *encode(SgAsmNEFileHeader::NEFileHeader_disk*) const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmDOSExtendedHeader* get_dos2_header() const ROSE_DEPRECATED("use get_dos2Header");
+    void set_dos2_header(SgAsmDOSExtendedHeader*) ROSE_DEPRECATED("use set_dos2Header");
+    SgAsmNESectionTable* get_section_table() const ROSE_DEPRECATED("use get_sectionTable");
+    void set_section_table(SgAsmNESectionTable*) ROSE_DEPRECATED("use set_sectionTable");
+    SgAsmNENameTable* get_resname_table() const ROSE_DEPRECATED("use get_residentNameTable");
+    void set_resname_table(SgAsmNENameTable*) ROSE_DEPRECATED("use set_residentNameTable");
+    SgAsmNENameTable* get_nonresname_table() const ROSE_DEPRECATED("use get_nonresidentNameTable");
+    void set_nonresname_table(SgAsmNENameTable*) ROSE_DEPRECATED("use set_nonresidentNameTable");
+    SgAsmNEModuleTable* get_module_table() const ROSE_DEPRECATED("use get_moduleTable");
+    void set_module_table(SgAsmNEModuleTable*) ROSE_DEPRECATED("use set_moduleTable");
+    SgAsmNEEntryTable* get_entry_table() const ROSE_DEPRECATED("use get_entryTable");
+    void set_entry_table(SgAsmNEEntryTable*) ROSE_DEPRECATED("use set_entryTable");
+    static bool is_NE (SgAsmGenericFile*) ROSE_DEPRECATED("use isNe");
+    virtual const char *format_name() const override ROSE_DEPRECATED("use formatName");
+
 };

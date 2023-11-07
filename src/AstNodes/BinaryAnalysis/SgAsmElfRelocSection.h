@@ -2,11 +2,11 @@
 class SgAsmElfRelocSection: public SgAsmElfSection {
     /** Property: Whether entries in this section use the addend format. */
     [[using Rosebud: rosetta]]
-    bool uses_addend = true;
+    bool usesAddend = true;
 
     /** Property: Section targeted by these relocations. */
     [[using Rosebud: rosetta]]
-    SgAsmElfSection* target_section = nullptr;
+    SgAsmElfSection* targetSection = nullptr;
 
     /** Property: List of entries.
      *
@@ -22,7 +22,7 @@ public:
     virtual SgAsmElfRelocSection *parse() override;
 
     /** Return sizes for various parts of the table. See doc for SgAsmElfSection::calculate_sizes. */
-    virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const override;
+    virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const override;
 
     /** Pre-unparsing adjustments */
     virtual bool reallocate() override;
@@ -32,4 +32,14 @@ public:
 
     /** Print some debugging info */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    bool get_uses_addend() const ROSE_DEPRECATED("use get_usesAddend");
+    void set_uses_addend(bool) ROSE_DEPRECATED("use set_usesAddend");
+    SgAsmElfSection* get_target_section() const ROSE_DEPRECATED("use get_targetSection");
+    void set_target_section(SgAsmElfSection*) ROSE_DEPRECATED("use set_targetSection");
+    virtual rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const override ROSE_DEPRECATED("use calculateSizes");
 };

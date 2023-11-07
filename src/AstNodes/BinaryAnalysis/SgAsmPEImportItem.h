@@ -67,14 +67,22 @@ public:
      *  A hint/name pair consists of a two-byte, little endian, unsigned hint and a NUL-terminated ASCII string.  An
      *  optional zero byte padding appears after the string's NUL terminator if necessary to make the total size of the
      *  hint/name pair a multiple of two. */
-    size_t hintname_required_size() const;
+    size_t hintNameRequiredSize() const;
 
     /** Virtual address of an IAT entry.
      *
      *  Returns the virtual address of the IAT slot for this import item.  This import item must be linked into the AST in
      *  order for this method to succeed. */
-    rose_addr_t get_iat_entry_va() const;
+    rose_addr_t get_iatEntryVa() const;
 
 private:
     void initFromParent(SgAsmPEImportItemList *parent);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    size_t hintname_required_size() const ROSE_DEPRECATED("use hintNameRequiredSize");
+    rose_addr_t get_iat_entry_va() const ROSE_DEPRECATED("use get_iatEntryVa");
+
 };

@@ -66,7 +66,7 @@ public:
      *
      *  Zero and one both imply byte alignment. */
     [[using Rosebud: rosetta]]
-    rose_addr_t file_alignment = 0;
+    rose_addr_t fileAlignment = 0;
 
     /** Property: Original content of just this section.
      *
@@ -97,10 +97,8 @@ public:
      *  specified string node.
      *
      *  @{ */
-    [[using Rosebud: rosetta, accessors(), mutators()]]
+    [[using Rosebud: rosetta, mutators()]]
     SgAsmGenericString* name = createAndParent<SgAsmBasicString>(this);
-
-    SgAsmGenericString *get_name() const;
     void set_name(SgAsmGenericString *s);
     /** @} */
 
@@ -111,11 +109,9 @@ public:
      *  if it's non-empty, otherwise the full name.
      *
      *  @{ */
-    [[using Rosebud: rosetta, accessors(), mutators()]]
-    std::string short_name;
-
-    std::string get_short_name() const;
-    void set_short_name(const std::string&);
+    [[using Rosebud: rosetta, accessors()]]
+    std::string shortName;
+    std::string get_shortName() const;
     /** @} */
 
     /** Property: Relative virtual address where section prefers to be mapped.
@@ -127,11 +123,9 @@ public:
      *  The virtual address is relative to the base address stored in the file header.
      *
      *  @{ */
-    [[using Rosebud: rosetta, accessors(), mutators()]]
-    rose_addr_t mapped_preferred_rva = 0;
-
-    rose_addr_t get_mapped_preferred_rva() const;
-    virtual void set_mapped_preferred_rva(rose_addr_t);
+    [[using Rosebud: rosetta, mutators()]]
+    rose_addr_t mappedPreferredRva = 0;
+    virtual void set_mappedPreferredRva(rose_addr_t);
     /** @} */
 
     /** Property: Mapped size.
@@ -139,28 +133,26 @@ public:
      *  Size of section in bytes when it's mapped into virtual memory.
      *
      *  @{ */
-    [[using Rosebud: rosetta, accessors(), mutators()]]
-    rose_addr_t mapped_size = 0;
-
-    rose_addr_t get_mapped_size() const;
-    virtual void set_mapped_size(rose_addr_t);
+    [[using Rosebud: rosetta, mutators()]]
+    rose_addr_t mappedSize = 0;
+    virtual void set_mappedSize(rose_addr_t);
     /** @} */
 
     /** Property: Alignment in virtual memory. */
     [[using Rosebud: rosetta]]
-    rose_addr_t mapped_alignment = 0;
+    rose_addr_t mappedAlignment = 0;
 
     /** Property: Whether mapped with read permission. */
     [[using Rosebud: rosetta]]
-    bool mapped_rperm = false;
+    bool mappedReadPermission = false;
 
     /** Property: Whether mapped with write permission. */
     [[using Rosebud: rosetta]]
-    bool mapped_wperm = false;
+    bool mappedWritePermission = false;
 
     /** Property: Whether mapped with execute permission. */
     [[using Rosebud: rosetta]]
-    bool mapped_xperm = false;
+    bool mappedExecutePermission = false;
 
     /** Property: Whether a section is known to contain code.
      *
@@ -170,7 +162,7 @@ public:
      *  none of which have a memory mapping specification.  By marking those sections as containing code, the LoaderELFObj
      *  class, knows that the section should be mapped to virtual memory for disassembly. */
     [[using Rosebud: rosetta]]
-    bool contains_code = false;
+    bool containsCode = false;
 
     /** Property: Virtual address where ROSE maps this section.
      *
@@ -184,7 +176,7 @@ public:
      *  section is not reset to zero.  The return value is not conditional upon @ref is_mapped since that predicate applies
      *  only to preferred mapping attributes. */
     [[using Rosebud: rosetta]]
-    rose_addr_t mapped_actual_va = 0;
+    rose_addr_t mappedActualVa = 0;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Non-property data members
@@ -210,13 +202,13 @@ public:
     SgAsmGenericSection(SgAsmGenericFile*, SgAsmGenericHeader*);
 
     /** Prints info about offsets into known sections. */
-    static void dump_containing_sections(FILE*, const std::string &prefix, rose_rva_t, const SgAsmGenericSectionPtrList&);
+    static void dumpContainingSections(FILE*, const std::string &prefix, rose_rva_t, const SgAsmGenericSectionPtrList&);
 
     /** Saves a reference to the original file data for a section based on the section's current offset and size.
      *
      *  Once this happens, changing the offset or size of the file will not affect the original data. The original data can
      *  be extended, however, by calling @ref extend, which is typically done during parsing. */
-    void grab_content();
+    void grabContent();
 
     virtual SgAsmGenericSection* parse();
 
@@ -235,16 +227,16 @@ public:
     void unparse(std::ostream&, const ExtentMap&) const;
 
     /** Write holes (unreferenced areas) back to the file */
-    void unparse_holes(std::ostream&) const;
+    void unparseHoles(std::ostream&) const;
 
     /** Predicate determining whether this section is also a top-level file header.
      *
      *  Returns true (the associated @ref SgAsmGenericHeader pointer) if this section is a top-level file header, false
      *  (NULL) otherwise. */
-    SgAsmGenericHeader *is_file_header();
+    SgAsmGenericHeader *isFileHeader();
 
     /** File offset for end of section. */
-    rose_addr_t   get_end_offset() const;
+    rose_addr_t get_endOffset() const;
 
     /** Extend a section by some number of bytes during the construction and/or parsing phase.
      *
@@ -279,12 +271,12 @@ public:
     /** Write an unsigned little-endian 128-bit value.
      *
      *  Encode an unsigned value as LEB128 and return the next offset. */
-    rose_addr_t   write_uleb128(unsigned char*, rose_addr_t offset, uint64_t) const;
+    rose_addr_t writeUleb128(unsigned char*, rose_addr_t offset, uint64_t) const;
 
     /** Write a signed little-endian 128-bit value.
      *
      *  Encode an signed value as LEB128 and return the next offset. */
-    rose_addr_t   write_sleb128(unsigned char*, rose_addr_t offset, int64_t) const;
+    rose_addr_t writeSleb128(unsigned char*, rose_addr_t offset, int64_t) const;
 
     /** Reads data from a file.
      *
@@ -293,7 +285,7 @@ public:
      *  end-of-file is reached. If the return value is smaller than @p size then one of two things happen: if @p strict is
      *  set (the default) then an @ref SgAsmExecutableFileFormat::ShortRead exception is thrown; otherwise the @p dst_buf
      *  will be padded with zero bytes so that exactly @p size bytes of @p dst_buf are always initialized. */
-    size_t read_content(rose_addr_t abs_offset, void *dst_buf, rose_addr_t size, bool strict=true);
+    size_t readContent(rose_addr_t abs_offset, void *dst_buf, rose_addr_t size, bool strict=true);
 
     /** Reads data from a file.
      *
@@ -306,10 +298,10 @@ public:
      *  to file offsets; if @p map is NULL then the map defined in the underlying file is used.
      *
      * @{ */
-    size_t read_content(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t start,  void *dst_buf,
-                        rose_addr_t size, bool strict=true);
-    size_t read_content(const Rose::BinaryAnalysis::MemoryMap::Ptr&, const rose_rva_t &start, void *dst_buf,
-                        rose_addr_t size, bool strict=true);
+    size_t readContent(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t start,  void *dst_buf,
+                       rose_addr_t size, bool strict=true);
+    size_t readContent(const Rose::BinaryAnalysis::MemoryMap::Ptr&, const rose_rva_t &start, void *dst_buf,
+                       rose_addr_t size, bool strict=true);
     /** @} */
 
     /** Reads data from a file.
@@ -318,7 +310,7 @@ public:
      *  Reading past the end of the section is not allowed and treated as a short read, and one of two things happen: if @p
      *  strict is set (the default) then an @ref SgAsmExecutableFileFormat::ShortRead exception is thrown, otherwise the
      *  result is zero padded so as to contain exactly @p size bytes. */
-    size_t read_content_local(rose_addr_t rel_offset, void *dst_buf, rose_addr_t size, bool strict=true);
+    size_t readContentLocal(rose_addr_t rel_offset, void *dst_buf, rose_addr_t size, bool strict=true);
 
     /** Reads a string from the file.
      *
@@ -326,7 +318,7 @@ public:
      *  address that is not mapped. However, if @p strict is set (the default) and we reach an unmapped address then an
      *  @ref MemoryMap::NotMapped exception is thrown. The @p map defines the mapping from virtual addresses to file
      *  offsets; if @p map is NULL then the map defined in the underlying file is used. */
-    std::string read_content_str(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t va, bool strict=true);
+    std::string readContentString(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t va, bool strict=true);
 
     /** Reads a string from the file.
      *
@@ -335,10 +327,8 @@ public:
      *  SgAsmExecutableFileFormat::ShortRead exception is thrown.
      *
      * @{ */
-    std::string read_content_str(rose_addr_t abs_offset, bool strict=true);
-    std::string read_content_str(const Rose::BinaryAnalysis::MemoryMap::Ptr &map, rose_rva_t rva, bool strict=true) {
-        return read_content_str(map, rva.get_va(), strict);
-    }
+    std::string readContentString(rose_addr_t abs_offset, bool strict=true);
+    std::string readContentString(const Rose::BinaryAnalysis::MemoryMap::Ptr &map, rose_rva_t rva, bool strict=true);
     /** @} */
 
     /** Reads a string from the file.
@@ -346,27 +336,27 @@ public:
      *  The string begins at the specified file offset relative to the start of this section and continues until the first
      *  NUL byte or the end of section is reached. However, if @p strict is set (the default) and we reach the
      *  end-of-section then an @ref SgAsmExecutableFileFormat::ShortRead exception is thrown. */
-    std::string read_content_local_str(rose_addr_t rel_offset, bool strict=true);
+    std::string readContentLocalString(rose_addr_t rel_offset, bool strict=true);
 
     /** Reads content of a section and returns it as a container.
      *
      *  The returned container will always have exactly @p size byte.  If @p size bytes are not available in this section
      *  at the specified offset then the container will be zero padded. This method always behaves as a non-strict read. */
-    SgUnsignedCharList read_content_local_ucl(rose_addr_t rel_offset, rose_addr_t size);
+    SgUnsignedCharList readContentLocalUcl(rose_addr_t rel_offset, rose_addr_t size);
 
     /** Read a signed little-endian 128-bit value.
      *
      *  Extract a signed LEB128 value and adjust @p rel_offset according to how many bytes it occupied. If @p strict is set
      *  (the default) and the end of the section is reached then throw an @ref SgAsmExecutableFileFormat::ShortRead
      *  exception. Upon return, the @p rel_offset will be adjusted to point to the first byte after the LEB128 value. */
-    int64_t read_content_local_sleb128(rose_addr_t *rel_offset, bool strict=true);
+    int64_t readContentLocalSleb128(rose_addr_t *rel_offset, bool strict=true);
 
     /** Read an unsigned little-endian 128-bit value.
      *
      *  Extract an unsigned LEB128 value and adjust @p rel_offset according to how many bytes it occupied.  If @p strict is
      *  set (the default) and the end of the section is reached then throw an @ref SgAsmExecutableFileFormat::ShortRead
      *  exception. Upon return, the @p rel_offset will be adjusted to point to the first byte after the LEB128 value. */
-    uint64_t read_content_local_uleb128(rose_addr_t *rel_offset, bool strict=true);
+    uint64_t readContentLocalUleb128(rose_addr_t *rel_offset, bool strict=true);
 
     /** Obtain a local, writable pool to hold content.
      *
@@ -376,66 +366,66 @@ public:
      *  overriding the @ref unparse method or by modifying the @ref p_data "data" property. But in order to modify @ref
      *  p_data "data" we have to make sure that it's pointing to a read/write memory pool. This function replaces the
      *  read-only memory pool with a new one containing @p nbytes bytes of zeros. */
-    unsigned char *writable_content(size_t nbytes);
+    unsigned char *writableContent(size_t nbytes);
 
     /** Returns a list of parts of a single section that have been referenced.
      *
      *  The offsets are relative to the start of the section. The tracking actually happens at the entire file level (see
      *  @ref SgAsmGenericFile::get_referenced_extents) and this function returns that same information but limits the
      *  results to this section, and returns section offsets rather than file offsets. */
-    AddressIntervalSet get_referenced_extents() const;
+    AddressIntervalSet get_referencedExtents() const;
 
     /** Returns a list of parts of a single section that have not been referenced.
      *
      *  The offsets are relative to the start of the section. The tracking actually happens at the entire file level
      *  (see @ref SgAsmGenericFile::get_unreferenced_extents) and this function returns that same information but
      *  limits the results to this section, and returns section offsets rather than file offsets. */
-    AddressIntervalSet get_unreferenced_extents() const;
+    AddressIntervalSet get_unreferencedExtents() const;
 
     /** Whether section desires to be mapped to memory.
      *
      *  This predicate is true iff this section has a non-zero mapped address and size. */
-    bool is_mapped() const;
+    bool isMapped() const;
 
     /** Causes section to not be mapped to memory.
      *
      *  This method sets the mapped address and size to zero. */
-    void clear_mapped();
+    void clearMapped();
 
     /** Base virtual address for a section.
      *
      *  Returns  zero if the section is not associated with a header.  This is just a convenience method to get the base
      *  virtual address of the file header that owns this section. */
-    rose_addr_t get_base_va() const;
+    rose_addr_t get_baseVa() const;
 
     /** Virtual address where section prefers to be mapped.
      *
      *  Returns (non-relative) virtual address if mapped, zero otherwise. See also, the @ref get_mapped_preferred_rva
      *  "mapped_preferred_rva" property. */
-    rose_addr_t get_mapped_preferred_va() const;
+    rose_addr_t get_mappedPreferredVa() const;
 
     /** File offset for specified virtual address.
      *
      *  Returns the file offset associated with the virtual address of a mapped section. The @ref MemoryMap class is a
      *  better interface to this same information. */
-    rose_addr_t get_va_offset(rose_addr_t va) const;
+    rose_addr_t get_vaOffset(rose_addr_t va) const;
 
     /** File offset for specified relative virtual address.
      *
      *  Returns the file offset associated with the relative virtual address of a mapped section.  The @ref MemoryMap class
      *  is a better interface to this same information. */
-    rose_addr_t get_rva_offset(rose_addr_t rva) const;
+    rose_addr_t get_rvaOffset(rose_addr_t rva) const;
 
     /** Returns the file extent for the section.
      *
      *  The extent end points are determined by calling @ref get_offset and @ref get_size. */
-    Extent get_file_extent() const;
+    Extent get_fileExtent() const;
 
     /** Returns the memory extent for a mapped section.
      *
      *  If the section is not mapped then offset and size will be zero. The return value is computed from the @ref
      *  get_mapped_preferred_rva "mapped_preferred_rva" and @ref get_mapped_size "mapped_size" properties. */
-    Extent get_mapped_preferred_extent() const;
+    Extent get_mappedPreferredExtent() const;
 
     /** Increase file offset and mapping address to satisfy alignment constraints.
      *
@@ -454,4 +444,63 @@ public:
 
 protected:
     virtual void destructorHelper() override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    rose_addr_t get_file_alignment() const ROSE_DEPRECATED("use get_fileAlignment");
+    void set_file_alignment(rose_addr_t) ROSE_DEPRECATED("use set_fileAlignment");
+    std::string get_short_name() const ROSE_DEPRECATED("use get_shortName");
+    void set_short_name(const std::string&) ROSE_DEPRECATED("use set_shortName");
+    rose_addr_t get_mapped_preferred_rva() const ROSE_DEPRECATED("use get_mappedPreferredRva");
+    void set_mapped_preferred_rva(rose_addr_t) ROSE_DEPRECATED("use set_mappedPreferredRva");
+    rose_addr_t get_mapped_size() const ROSE_DEPRECATED("use get_mappedSize");
+    void set_mapped_size(rose_addr_t) ROSE_DEPRECATED("use set_mappedSize");
+    rose_addr_t get_mapped_alignment() const ROSE_DEPRECATED("use get_mappedAlignment");
+    void set_mapped_alignment(rose_addr_t) ROSE_DEPRECATED("use set_mappedAlignment");
+    bool get_mapped_rperm() const ROSE_DEPRECATED("use get_mappedReadPermission");
+    void set_mapped_rperm(bool) ROSE_DEPRECATED("use set_mappedReadPermission");
+    bool get_mapped_wperm() const ROSE_DEPRECATED("use get_mappedWritePermission");
+    void set_mapped_wperm(bool) ROSE_DEPRECATED("use set_mappedWritePermission");
+    bool get_mapped_xperm() const ROSE_DEPRECATED("use get_mappedExecutePermission");
+    void set_mapped_xperm(bool) ROSE_DEPRECATED("use set_mappedExecutePermission");
+    bool get_contains_code() const ROSE_DEPRECATED("use get_containsCode");
+    void set_contains_code(bool) ROSE_DEPRECATED("use set_containsCode");
+    rose_addr_t get_mapped_actual_va() const ROSE_DEPRECATED("use get_mappedActualVa");
+    void set_mapped_actual_va(rose_addr_t) ROSE_DEPRECATED("use set_mappedActualVa");
+    static void dump_containing_sections(FILE*, const std::string&, rose_rva_t, const SgAsmGenericSectionPtrList&)
+        ROSE_DEPRECATED("use dumpContainingSections");
+    void grab_content() ROSE_DEPRECATED("use grabContent");
+    void unparse_holes(std::ostream&) const ROSE_DEPRECATED("use unparseHoles");
+    SgAsmGenericHeader *is_file_header() ROSE_DEPRECATED("use isFileHeader");
+    rose_addr_t get_end_offset() const ROSE_DEPRECATED("use get_endOffset");
+    rose_addr_t write_uleb128(unsigned char*, rose_addr_t, uint64_t) const ROSE_DEPRECATED("use writeUleb128");
+    rose_addr_t write_sleb128(unsigned char*, rose_addr_t, int64_t) const ROSE_DEPRECATED("use writeSleb128");
+    size_t read_content(rose_addr_t, void*, rose_addr_t, bool=true) ROSE_DEPRECATED("use readContent");
+    size_t read_content(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t,  void*, rose_addr_t, bool=true)
+        ROSE_DEPRECATED("use readContent");
+    size_t read_content(const Rose::BinaryAnalysis::MemoryMap::Ptr&, const rose_rva_t&, void*, rose_addr_t, bool=true)
+        ROSE_DEPRECATED("use readContent");
+    size_t read_content_local(rose_addr_t, void*, rose_addr_t, bool=true) ROSE_DEPRECATED("use readContentLocal");
+    std::string read_content_str(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t, bool=true)
+        ROSE_DEPRECATED("use readContentString");
+    std::string read_content_str(rose_addr_t, bool=true) ROSE_DEPRECATED("use readContentString");
+    std::string read_content_str(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_rva_t, bool=true)
+        ROSE_DEPRECATED("use readContentString");
+    std::string read_content_local_str(rose_addr_t, bool=true) ROSE_DEPRECATED("use readContentLocalString");
+    SgUnsignedCharList read_content_local_ucl(rose_addr_t, rose_addr_t) ROSE_DEPRECATED("use readContentLocalUcl");
+    int64_t read_content_local_sleb128(rose_addr_t*, bool=true) ROSE_DEPRECATED("use readContentLocalSleb128");
+    uint64_t read_content_local_uleb128(rose_addr_t*, bool=true) ROSE_DEPRECATED("use readContentLocalUleb128");
+    unsigned char *writable_content(size_t) ROSE_DEPRECATED("use writableContent");
+    AddressIntervalSet get_referenced_extents() const ROSE_DEPRECATED("use get_referencedExtents");
+    AddressIntervalSet get_unreferenced_extents() const ROSE_DEPRECATED("use get_unreferencedExtents");
+    bool is_mapped() const ROSE_DEPRECATED("use isMapped");
+    void clear_mapped() ROSE_DEPRECATED("use clearMapped");
+    rose_addr_t get_base_va() const ROSE_DEPRECATED("use get_baseVa");
+    rose_addr_t get_mapped_preferred_va() const ROSE_DEPRECATED("use get_mappedPreferredVa");
+    rose_addr_t get_va_offset(rose_addr_t) const ROSE_DEPRECATED("use get_vaOffset");
+    rose_addr_t get_rva_offset(rose_addr_t) const ROSE_DEPRECATED("use get_rvaOffset");
+    Extent get_file_extent() const ROSE_DEPRECATED("use get_fileExtent");
+    Extent get_mapped_preferred_extent() const ROSE_DEPRECATED("use get_mappedPreferredExtent");
 };

@@ -13,7 +13,7 @@ class SgAsmValueExpression: public SgAsmExpression {
      *
      *  Note: All of the ROSE disassemblers always set this to null regardless of whether they do any constant folding. */
     [[using Rosebud: rosetta, traverse]]
-    SgAsmValueExpression* unfolded_expression_tree = nullptr;
+    SgAsmValueExpression* unfoldedExpression = nullptr;
 
     /** Property: Where this expression is encoded within the instruction.
      *
@@ -22,14 +22,14 @@ class SgAsmValueExpression: public SgAsmExpression {
      *  bits zero through seven are in the first byte, bits eight through 15 are in the second byte, etc. Within a byte,
      *  bits are numbered so that lower indexes are less significant bits. */
     [[using Rosebud: rosetta]]
-    unsigned short bit_offset = 0;
+    unsigned short bitOffset = 0;
 
     /** Property: Where this expression is encoded within the instruction.
      *
      *  This is the size in bits of the encoding for this expression within the instruction.  If it is not supported by
      *  the architecture, it will be set to zero. */
     [[using Rosebud: rosetta]]
-    unsigned short bit_size = 0;
+    unsigned short bitSize = 0;
 
     /** Property: Symbol corresponding to this expression.
      *
@@ -37,4 +37,15 @@ class SgAsmValueExpression: public SgAsmExpression {
      *  considered to be a child of this node in the AST. */
     [[using Rosebud: rosetta, no_serialize]]
     SgSymbol* symbol = nullptr;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmValueExpression* get_unfolded_expression_tree() const ROSE_DEPRECATED("use get_unfoldedExpression");
+    void set_unfolded_expression_tree(SgAsmValueExpression*) ROSE_DEPRECATED("use set_unfoldedExpression");
+    unsigned short get_bit_offset() const ROSE_DEPRECATED("use get_bitOffset");
+    void set_bit_offset(unsigned short) ROSE_DEPRECATED("use set_bitOffset");
+    unsigned short get_bit_size() const ROSE_DEPRECATED("use get_bitSize");
+    void set_bit_size(unsigned short) ROSE_DEPRECATED("use set_bitSize");
 };

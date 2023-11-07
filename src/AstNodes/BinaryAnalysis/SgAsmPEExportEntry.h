@@ -21,7 +21,7 @@ class SgAsmPEExportEntry: public SgAsmExecutableFileFormat {
      *
      *  See PE specification. */
     [[using Rosebud: rosetta, large]]
-    rose_rva_t export_rva = 0;
+    rose_rva_t exportRva = 0;
 
     /** Property: Forwarder.
      *
@@ -45,4 +45,12 @@ public:
      *  This is a read-only value calculated by following the parent pointer to the SgAsmPEExportSection node and
      *  then down to its SgAsmPEExportDirectory. If any links are missing then an error is returned. */
     Sawyer::Result<unsigned /*ordinal*/, std::string /*reason*/> biasedOrdinal() const;
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    const rose_rva_t& get_export_rva() const ROSE_DEPRECATED("use get_exportRva");
+    void set_export_rva(const rose_rva_t&) ROSE_DEPRECATED("use set_exportRva");
 };

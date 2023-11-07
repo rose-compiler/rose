@@ -14,7 +14,13 @@ public:
      *  This includes the section offset, size, memory mapping, alignments, permissions, etc. This function complements
      *  SgAsmPESectionTable::add_section(): this function initializes this section from the section table while
      *  add_section() initializes the section table from the section. */
-    SgAsmPESection *init_from_section_table(SgAsmPESectionTableEntry *entry, int id);
+    SgAsmPESection *initFromSectionTable(SgAsmPESectionTableEntry *entry, int id);
     virtual bool reallocate() override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmPESection *init_from_section_table(SgAsmPESectionTableEntry*, int) ROSE_DEPRECATED("use initFromSectionTable");
 };

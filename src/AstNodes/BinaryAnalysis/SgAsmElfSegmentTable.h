@@ -28,12 +28,12 @@ public:
      *  @ref get_segment_entry.
      *
      *  Returns the new segment table entry linked into the AST. */
-    SgAsmElfSegmentTableEntry *add_section(SgAsmElfSection*);
+    SgAsmElfSegmentTableEntry *addSection(SgAsmElfSection*);
 
     /** Returns info about the size of the entries based on information already available.
      *
      *  Any or all arguments may be null pointers if the caller is not interested in the value. */
-    rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
+    rose_addr_t calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 
     /** Pre-unparsing updates */
     virtual bool reallocate() override;
@@ -43,4 +43,11 @@ public:
 
     /** Print some debugging info */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmElfSegmentTableEntry *add_section(SgAsmElfSection*) ROSE_DEPRECATED("use addSection");
+    rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const ROSE_DEPRECATED("use calculateSizes");
 };

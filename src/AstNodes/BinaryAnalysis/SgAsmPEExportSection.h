@@ -4,7 +4,7 @@ class SgAsmPEExportSection: public SgAsmPESection {
      *
      *  See PE specification. */
     [[using Rosebud: rosetta, traverse]]
-    SgAsmPEExportDirectory* export_dir = nullptr;
+    SgAsmPEExportDirectory* exportDirectory = nullptr;
 
     /** Property: List of export entries.
      *
@@ -33,5 +33,14 @@ public:
     SgAsmPEExportSection(SgAsmPEFileHeader*);
     virtual SgAsmPEExportSection *parse() override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-    void add_entry(SgAsmPEExportEntry*);
+    void addEntry(SgAsmPEExportEntry*);
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmPEExportDirectory* get_export_dir() const ROSE_DEPRECATED("use get_exportDirectory");
+    void set_export_dir(SgAsmPEExportDirectory*) ROSE_DEPRECATED("use set_exportDirectory");
+    void add_entry(SgAsmPEExportEntry*) ROSE_DEPRECATED("use addEntry");
 };

@@ -96,9 +96,14 @@ SgAsmElfRelocEntry::encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex, Elf6
     return disk;
 }
 
+std::string
+SgAsmElfRelocEntry::reloc_name() const {
+    return toString();
+}
+
 /* TODO, needs to handle multiple architectures [MCB] */
 std::string
-SgAsmElfRelocEntry::reloc_name() const
+SgAsmElfRelocEntry::toString() const
 {
 #ifndef _MSC_VER
         return stringifySgAsmElfRelocEntryRelocType(get_type());
@@ -190,7 +195,7 @@ SgAsmElfRelocSection::parse()
     for (size_t i=0; i<nentries; i++) {
         SgAsmElfRelocEntry *entry = 0;
         if (4==fhdr->get_word_size()) {
-            if (p_uses_addend) {
+            if (get_usesAddend()) {
                 SgAsmElfRelocEntry::Elf32RelaEntry_disk disk;
                 read_content_local(i*entry_size, &disk, struct_size);
                 entry = new SgAsmElfRelocEntry(this);
@@ -202,7 +207,7 @@ SgAsmElfRelocSection::parse()
                 entry->parse(fhdr->get_sex(), &disk);
             }
         } else if (8==fhdr->get_word_size()) {
-            if (p_uses_addend) {
+            if (get_usesAddend()) {
                 SgAsmElfRelocEntry::Elf64RelaEntry_disk disk;
                 read_content_local(i*entry_size, &disk, struct_size);
                 entry = new SgAsmElfRelocEntry(this);
@@ -223,13 +228,18 @@ SgAsmElfRelocSection::parse()
 }
 
 rose_addr_t
-SgAsmElfRelocSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
+SgAsmElfRelocSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const {
+    return calculateSizes(entsize, required, optional, entcount);
+}
+
+rose_addr_t
+SgAsmElfRelocSection::calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
     rose_addr_t retval=0;
     std::vector<size_t> extra_sizes;
     for (size_t i=0; i<p_entries->get_entries().size(); i++)
         extra_sizes.push_back(p_entries->get_entries()[i]->get_extra().size());
-    if (p_uses_addend) {
+    if (get_usesAddend()) {
         retval =  calculate_sizes(sizeof(SgAsmElfRelocEntry::Elf32RelaEntry_disk),
                                   sizeof(SgAsmElfRelocEntry::Elf64RelaEntry_disk),
                                   extra_sizes, entsize, required, optional, entcount);
@@ -249,7 +259,7 @@ SgAsmElfRelocSection::reallocate()
     /* Update parts of the section and segment tables not updated by superclass */
     SgAsmElfSectionTableEntry *secent = get_section_entry();
     if (secent)
-        secent->set_sh_type(p_uses_addend ?
+        secent->set_sh_type(get_usesAddend() ?
                             SgAsmElfSectionTableEntry::SHT_RELA :
                             SgAsmElfSectionTableEntry::SHT_REL);
 
@@ -280,13 +290,13 @@ SgAsmElfRelocSection::unparse(std::ostream &f) const
         SgAsmElfRelocEntry *entry = p_entries->get_entries()[i];
 
         if (4==fhdr->get_word_size()) {
-            if (p_uses_addend) {
+            if (get_usesAddend()) {
                 disk = entry->encode(sex, &diska32);
             } else {
                 disk = entry->encode(sex, &disk32);
             }
         } else if (8==fhdr->get_word_size()) {
-            if (p_uses_addend) {
+            if (get_usesAddend()) {
                 disk = entry->encode(sex, &diska64);
             } else {
                 disk = entry->encode(sex, &disk64);
@@ -321,11 +331,11 @@ SgAsmElfRelocSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     SgAsmElfSection::dump(f, p, -1);
     SgAsmElfSymbolSection *symtab = dynamic_cast<SgAsmElfSymbolSection*>(get_linked_section());
-    fprintf(f, "%s%-*s = %s\n", p, w, "uses_addend", p_uses_addend ? "yes" : "no");
+    fprintf(f, "%s%-*s = %s\n", p, w, "uses_addend", get_usesAddend() ? "yes" : "no");
 
-    if (p_target_section) {
+    if (get_targetSection()) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "target_section",
-                p_target_section->get_id(), p_target_section->get_name()->get_string(true).c_str());
+                get_targetSection()->get_id(), get_targetSection()->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = NULL\n", p, w, "target_section");
     }
@@ -337,6 +347,26 @@ SgAsmElfRelocSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     if (variantT() == V_SgAsmElfRelocSection) //unless a base class
         hexdump(f, 0, std::string(p)+"data at ", p_data);
+}
+
+bool
+SgAsmElfRelocSection::get_uses_addend() const {
+    return get_usesAddend();
+}
+
+void
+SgAsmElfRelocSection::set_uses_addend(bool x) {
+    set_usesAddend(x);
+}
+
+SgAsmElfSection*
+SgAsmElfRelocSection::get_target_section() const {
+    get_targetSection();
+}
+
+void
+SgAsmElfRelocSection::set_target_section(SgAsmElfSection *x) {
+    set_targetSection(x);
 }
 
 #endif

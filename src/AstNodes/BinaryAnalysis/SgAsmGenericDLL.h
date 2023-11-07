@@ -20,7 +20,11 @@ public:
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 
     /** Add a needed symbol to the import list for this DLL. */
-    void add_symbol(const std::string &s) {
-        p_symbols.push_back(s);
-    }
+    void addSymbol(const std::string&);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    void add_symbol(const std::string&) ROSE_DEPRECATED("use addSymbol");
 };

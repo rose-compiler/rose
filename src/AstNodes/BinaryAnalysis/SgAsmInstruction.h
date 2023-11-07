@@ -57,7 +57,7 @@ private:
      *
      *  These are the bytes that were actually decoded to obtain the instruction AST. */
     [[using Rosebud: rosetta]]
-    SgUnsignedCharList raw_bytes;
+    SgUnsignedCharList rawBytes;
 
     /** Property: AST node that holds all operands.
      *
@@ -459,4 +459,11 @@ public:
      *
      *  Returns true if anything changed, false otherwise. */
     bool normalizeOperands();
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    const SgUnsignedCharList& get_raw_bytes() const ROSE_DEPRECATED("use get_rawBytes");
+    void set_raw_bytes(const SgUnsignedCharList&) ROSE_DEPRECATED("use set_rawBytes");
 };

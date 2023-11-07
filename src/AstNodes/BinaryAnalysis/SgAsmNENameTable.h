@@ -9,5 +9,12 @@ public:
     SgAsmNENameTable(SgAsmNEFileHeader *fhdr, rose_addr_t offset);
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-    std::vector<std::string> get_names_by_ordinal(unsigned ordinal);
+    std::vector<std::string> get_namesByOrdinal(unsigned ordinal);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    std::vector<std::string> get_names_by_ordinal(unsigned) ROSE_DEPRECATED("use get_namesByOrdinal");
+
 };

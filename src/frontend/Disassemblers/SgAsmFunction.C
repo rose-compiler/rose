@@ -15,6 +15,12 @@ using namespace Rose;
 std::string
 SgAsmFunction::reason_key(const std::string &prefix)
 {
+    return reasonKey(prefix);
+}
+
+std::string
+SgAsmFunction::reasonKey(const std::string &prefix)
+{
     return (prefix + "E = entry address         H = CFG head             C = function call(*)\n" +
             prefix + "X = exception frame       T = thunk, t = target    I = imported/dyn-linked\n" +
             prefix + "O = exported              S = function symbol      P = instruction pattern\n" +
@@ -30,11 +36,23 @@ SgAsmFunction::reason_key(const std::string &prefix)
 std::string
 SgAsmFunction::reason_str(bool do_pad) const
 {
+    return reasonString(do_pad);
+}
+
+std::string
+SgAsmFunction::reasonString(bool do_pad) const
+{
     return reason_str(do_pad, get_reason());
 }
 
 std::string
 SgAsmFunction::reason_str(bool do_pad, unsigned r)
+{
+    return reasonString(do_pad, r);
+}
+
+std::string
+SgAsmFunction::reasonString(bool do_pad, unsigned r)
 {
     using namespace StringUtility; // for add_to_reason_string()
     std::string result;
@@ -199,22 +217,37 @@ SgAsmFunction::get_sha1(uint8_t digest[20], NodeSelector *selector)
 
 SgAsmBlock *
 SgAsmFunction::get_entry_block() const {
+    return get_entryBlock();
+}
+
+SgAsmBlock *
+SgAsmFunction::get_entryBlock() const {
     for (SgAsmStatementPtrList::const_iterator si=p_statementList.begin(); si!=p_statementList.end(); ++si) {
         SgAsmBlock *bb = isSgAsmBlock(*si);
-        if (bb && bb->get_address()==p_entry_va)
+        if (bb && bb->get_address()==get_entryVa())
             return bb;
     }
     return NULL;
 }
 
 void
-SgAsmFunction::append_statement( SgAsmStatement* statement )
+SgAsmFunction::append_statement( SgAsmStatement* statement ) {
+    appendStatement(statement);
+}
+
+void
+SgAsmFunction::appendStatement( SgAsmStatement* statement )
    {
      p_statementList.push_back(statement);
    }
 
 void
-SgAsmFunction::remove_statement( SgAsmStatement* statement )
+SgAsmFunction::remove_statement( SgAsmStatement* statement ) {
+    removeStatement(statement);
+}
+
+void
+SgAsmFunction::removeStatement( SgAsmStatement* statement )
    {
      SgAsmStatementPtrList::iterator l = p_statementList.begin();
      for (;l!=p_statementList.end();l++) {
@@ -226,5 +259,65 @@ SgAsmFunction::remove_statement( SgAsmStatement* statement )
         if (l!=p_statementList.end())
             p_statementList.erase(l);
    }
+
+SgAsmFunction::function_kind_enum
+SgAsmFunction::get_function_kind() const {
+    return get_functionKind();
+}
+
+void
+SgAsmFunction::set_function_kind(SgAsmFunction::function_kind_enum x) {
+    set_functionKind(x);
+}
+
+SgAsmFunction::MayReturn
+SgAsmFunction::get_may_return() const {
+    return get_mayReturn();
+}
+
+void
+SgAsmFunction::set_may_return(MayReturn x) {
+    set_mayReturn(x);
+}
+
+const std::string&
+SgAsmFunction::get_name_md5() const {
+    return get_nameMd5();
+}
+
+void
+SgAsmFunction::set_name_md5(const std::string &x) {
+    set_nameMd5(x);
+}
+
+rose_addr_t
+SgAsmFunction::get_entry_va() const {
+    return get_entryVa();
+}
+
+void
+SgAsmFunction::set_entry_va(rose_addr_t x) {
+    set_entryVa(x);
+}
+
+SgSymbolTable*
+SgAsmFunction::get_symbol_table() const {
+    return get_symbolTable();
+}
+
+void
+SgAsmFunction::set_symbol_table(SgSymbolTable *x) {
+    return set_symbolTable(x);
+}
+
+size_t
+SgAsmFunction::get_cached_vertex() const {
+    return get_cachedVertex();
+}
+
+void
+SgAsmFunction::set_cached_vertex(size_t x) {
+    set_cachedVertex(x);
+}
 
 #endif

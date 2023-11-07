@@ -194,7 +194,7 @@ SgAsmInstruction::findNoopSubsequences(const std::vector<SgAsmInstruction*>& ins
 size_t
 SgAsmInstruction::get_size() const
 {
-    return p_raw_bytes.size();
+    return get_rawBytes().size();
 }
 
 bool
@@ -310,6 +310,16 @@ SgAsmInstruction::normalizeOperands() {
         }
     }
     return changed;
+}
+
+const SgUnsignedCharList&
+SgAsmInstruction::get_raw_bytes() const {
+    return get_rawBytes();
+}
+
+void
+SgAsmInstruction::set_raw_bytes(const SgUnsignedCharList &x) {
+    set_rawBytes(x);
 }
 
 #endif

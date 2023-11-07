@@ -230,25 +230,25 @@ public:
     rose_addr_t e_debug_info_rfo = 0;
 
     [[using Rosebud: rosetta, traverse]]
-    SgAsmDOSExtendedHeader* dos2_header = nullptr;
+    SgAsmDOSExtendedHeader* dos2Header = nullptr;
 
     [[using Rosebud: rosetta]]
-    SgAsmLESectionTable* section_table = nullptr;
+    SgAsmLESectionTable* sectionTable = nullptr;
 
     [[using Rosebud: rosetta, traverse]]
-    SgAsmLEPageTable* page_table = nullptr;
+    SgAsmLEPageTable* pageTable = nullptr;
 
     [[using Rosebud: rosetta, traverse]]
-    SgAsmLENameTable* resname_table = nullptr;
+    SgAsmLENameTable* residentNameTable = nullptr;
 
     [[using Rosebud: rosetta, traverse]]
-    SgAsmLENameTable* nonresname_table = nullptr;
+    SgAsmLENameTable* nonresidentNameTable = nullptr;
 
     [[using Rosebud: rosetta, traverse]]
-    SgAsmLEEntryTable* entry_table = nullptr;
+    SgAsmLEEntryTable* entryTable = nullptr;
 
     [[using Rosebud: rosetta, traverse]]
-    SgAsmLERelocTable* reloc_table = nullptr;
+    SgAsmLERelocTable* relocationTable = nullptr;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
@@ -259,11 +259,32 @@ public:
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
     // Overloaded base class virtual function
-    const char *format_name() const override;
+    const char *formatName() const override;
 
-    static bool is_LE (SgAsmGenericFile*);
+    static bool isLe (SgAsmGenericFile*);
     static SgAsmLEFileHeader *parse(SgAsmDOSFileHeader*);
 
 private:
     void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex, SgAsmLEFileHeader::LEFileHeader_disk*) const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmDOSExtendedHeader* get_dos2_header() const ROSE_DEPRECATED("use get_dos2Header");
+    void set_dos2_header(SgAsmDOSExtendedHeader*) ROSE_DEPRECATED("use set_dos2Header");
+    SgAsmLESectionTable* get_section_table() const ROSE_DEPRECATED("use get_sectionTable");
+    void set_section_table(SgAsmLESectionTable*) ROSE_DEPRECATED("use set_sectionTable");
+    SgAsmLEPageTable* get_page_table() const ROSE_DEPRECATED("use get_pageTable");
+    void set_page_table(SgAsmLEPageTable*) ROSE_DEPRECATED("use set_pageTable");
+    SgAsmLENameTable* get_resname_table() const ROSE_DEPRECATED("use get_residentNameTable");
+    void set_resname_table(SgAsmLENameTable*) ROSE_DEPRECATED("use set_residentNameTable");
+    SgAsmLENameTable* get_nonresname_table() const ROSE_DEPRECATED("use get_nonresidentNameTable");
+    void set_nonresname_table(SgAsmLENameTable*) ROSE_DEPRECATED("use set_nonresidentNameTable");
+    SgAsmLEEntryTable* get_entry_table() const ROSE_DEPRECATED("use get_entryTable");
+    void set_entry_table(SgAsmLEEntryTable*) ROSE_DEPRECATED("use set_entryTable");
+    SgAsmLERelocTable* get_reloc_table() const ROSE_DEPRECATED("use get_relocationTable");
+    void set_reloc_table(SgAsmLERelocTable*) ROSE_DEPRECATED("use set_relocationTable");
+    const char *format_name() const override ROSE_DEPRECATED("use formatName");
+    static bool is_LE (SgAsmGenericFile*) ROSE_DEPRECATED("use isLe");
 };

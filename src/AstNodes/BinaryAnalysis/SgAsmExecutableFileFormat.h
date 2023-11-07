@@ -345,10 +345,21 @@ public:
 
     // These convert enums to strings. It is better to use the automatic enum stringification instead. They have names like
     // Rose::stringifySgAsmExecutableFileFormatInsnSetArchitecture, etc. */
-    static std::string isa_family_to_string(SgAsmExecutableFileFormat::InsSetArchitecture);
-    static std::string isa_to_string(SgAsmExecutableFileFormat::InsSetArchitecture);
-    static std::string to_string(SgAsmExecutableFileFormat::InsSetArchitecture);
-    static std::string to_string(SgAsmExecutableFileFormat::ExecFamily);
-    static std::string to_string(SgAsmExecutableFileFormat::ExecABI);
-    static std::string to_string(SgAsmExecutableFileFormat::ExecPurpose);
+    static std::string isaFamilyToString(SgAsmExecutableFileFormat::InsSetArchitecture);
+    static std::string isaToString(SgAsmExecutableFileFormat::InsSetArchitecture);
+    static std::string toString(SgAsmExecutableFileFormat::InsSetArchitecture);
+    static std::string toString(SgAsmExecutableFileFormat::ExecFamily);
+    static std::string toString(SgAsmExecutableFileFormat::ExecABI);
+    static std::string toString(SgAsmExecutableFileFormat::ExecPurpose);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    static std::string isa_family_to_string(SgAsmExecutableFileFormat::InsSetArchitecture) ROSE_DEPRECATED("use isaFamilyToString");
+    static std::string isa_to_string(SgAsmExecutableFileFormat::InsSetArchitecture) ROSE_DEPRECATED("use isaToString");
+    static std::string to_string(SgAsmExecutableFileFormat::InsSetArchitecture) ROSE_DEPRECATED("use toString");
+    static std::string to_string(SgAsmExecutableFileFormat::ExecFamily) ROSE_DEPRECATED("use toString");
+    static std::string to_string(SgAsmExecutableFileFormat::ExecABI) ROSE_DEPRECATED("use toString");
+    static std::string to_string(SgAsmExecutableFileFormat::ExecPurpose) ROSE_DEPRECATED("use toString");
 };

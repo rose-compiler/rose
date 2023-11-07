@@ -28,7 +28,7 @@ public:
 
     /** Property: DWARF debugging hiearchy. */
     [[using Rosebud: rosetta, traverse]]
-    SgAsmDwarfCompilationUnitList* dwarf_info = nullptr;
+    SgAsmDwarfCompilationUnitList* dwarfInfo = nullptr;
 
     /** Property: Name of file. */
     [[using Rosebud: rosetta]]
@@ -62,15 +62,15 @@ public:
 
     /** Property: Whether to truncate zeros on writes. */
     [[using Rosebud: rosetta]]
-    bool truncate_zeros = false;
+    bool truncateZeros = false;
 
     /** Property: Whether to track referenced areas during parsing. */
     [[using Rosebud: rosetta]]
-    bool tracking_references = true;
+    bool trackingReferences = true;
 
     /** Property: Addresses referenced during parsing. */
     [[using Rosebud: rosetta]]
-    AddressIntervalSet referenced_extents;
+    AddressIntervalSet referencedExtents;
 
     /** Property: If set, refuse to unparse file. */
     [[using Rosebud: rosetta]]
@@ -102,7 +102,7 @@ public:
     void unparse(std::ostream&) const;
 
     /** Extend the output file by writing the last byte if it hasn't been written yet. */
-    void extend_to_eof(std::ostream&) const;
+    void extendToEof(std::ostream&) const;
 
     /** Print basic info about the sections of a file. */
     void dump(FILE*) const;
@@ -113,31 +113,31 @@ public:
      *  the binary file (the default is to create the file in the current working directory).  If @p ext is non-null then
      *  these characters are added to the end of the binary file name. The default null pointer causes the string ".dump"
      *  to be appended to the file name. */
-    void dump_all(bool in_cwd=true, const char *ext=NULL);
+    void dumpAll(bool in_cwd=true, const char *ext=NULL);
 
     /** Print text file containing all known information about a binary file. */
-    void dump_all(const std::string& dumpname);
+    void dumpAll(const std::string& dumpname);
 
     /** Returns the parts of the file that have never been referenced. */
-    const AddressIntervalSet& get_unreferenced_extents() const;
+    const AddressIntervalSet& get_unreferencedExtents() const;
 
     /** Marks part of a file as having been referenced if tracking references. */
-    void mark_referenced_extent(rose_addr_t start_rva, rose_addr_t size);
+    void markReferencedExtent(rose_addr_t start_rva, rose_addr_t size);
 
     /** Property: Data converter.
      *
      *  Function to encode/decode data as it's transferred to/from disk.  The default is to do no transformation.
      *
      * @{ */
-    void set_data_converter(DataConverter* dc) {p_data_converter=dc;}
-    DataConverter* get_data_converter() const {return p_data_converter;}
+    DataConverter* get_dataConverter() const;
+    void set_dataConverter(DataConverter*);
     /** @} */
 
     /** Returns current size of file based on section with highest ending address. */
-    rose_addr_t get_current_size() const;
+    rose_addr_t get_currentSize() const;
 
     /** Returns original size of file, based on file system. */
-    rose_addr_t get_orig_size() const;
+    rose_addr_t get_originalSize() const;
 
     /** Reads data from a file.
      *
@@ -146,7 +146,7 @@ public:
      *  is less than @p size then one of two things happen: if @p strict is true then an @ref
      *  SgAsmExecutableFileFormat::ShortRead exception is thrown; otherwise @p dst_buf is zero padded so that exactly @p
      *  size bytes are always initialized. */
-    size_t read_content(rose_addr_t offset, void *dst_buf, rose_addr_t size, bool strict=true);
+    size_t readContent(rose_addr_t offset, void *dst_buf, rose_addr_t size, bool strict=true);
 
     /** Reads data from a file.
      *
@@ -155,8 +155,8 @@ public:
      *  mapped we stop reading and do one of two things: if @p strict is set then a @ref MemoryMap::NotMapped exception is
      *  thrown; otherwise the rest of the @p dst_buf is zero filled and the number of bytes read (not filled) is
      *  returned. */
-    size_t read_content(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t va, void *dst_buf,
-                        rose_addr_t size, bool strict=true);
+    size_t readContent(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t va, void *dst_buf,
+                       rose_addr_t size, bool strict=true);
 
     /** Reads a string from a file.
      *
@@ -165,7 +165,7 @@ public:
      *  mapped. If we reach an address which is not mapped then one of two things happen: if @p strict is set then a @ref
      *  MemoryMap::NotMapped exception is thrown; otherwise the string is simply terminated. The returned string does not
      *  include the NUL byte. */
-    std::string read_content_str(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t va, bool strict=true);
+    std::string readContentString(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t va, bool strict=true);
 
     /** Reads a string from a file.
      *
@@ -174,7 +174,7 @@ public:
      *  file offset. If we reach an invalid file offset one of two things happen: if @p strict is set (the default) then an
      *  @ref SgAsmExecutableFileFormat::ShortRead exception is thrown; otherwise the string is simply terminated. The
      *  returned string does not include the NUL byte. */
-    std::string read_content_str(rose_addr_t abs_offset, bool strict=true);
+    std::string readContentString(rose_addr_t abs_offset, bool strict=true);
 
     /** Property: Entire file contents. */
     const SgFileContentList& content() { return p_data; }
@@ -188,72 +188,72 @@ public:
     SgFileContentList content(rose_addr_t offset, rose_addr_t size);
 
     /** Returns list of all sections in the file that are memory mapped, including headers and holes. */
-    SgAsmGenericSectionPtrList get_mapped_sections() const;
+    SgAsmGenericSectionPtrList get_mappedSections() const;
 
     /** Returns list of all sections in the file (including headers, holes, etc). */
     SgAsmGenericSectionPtrList get_sections(bool include_holes=true) const;
 
     /** Returns sections having specified ID across all headers, including headers and holes. */
-    SgAsmGenericSectionPtrList get_sections_by_id(int id) const;
+    SgAsmGenericSectionPtrList get_sectionsById(int id) const;
 
     /** Returns all sections having specified name across all headers, including headers and holes. */
-    SgAsmGenericSectionPtrList get_sections_by_name(std::string, char sep='\0') const;
+    SgAsmGenericSectionPtrList get_sectionsByName(std::string, char sep='\0') const;
 
     /** Find sections by their offset.
      *
      *  Returns all sections that contain all of the specified portion of the file across all headers, including headers
      *  and holes. */
-    SgAsmGenericSectionPtrList get_sections_by_offset(rose_addr_t offset, rose_addr_t size) const;
+    SgAsmGenericSectionPtrList get_sectionsByOffset(rose_addr_t offset, rose_addr_t size) const;
 
     /** Find sections by address.
      *
      *  Returns all sections that are mapped to include the specified relative virtual address across all headers,
      *  including headers and holes. This uses the preferred mapping of the section rather than the actual mapping. */
-    SgAsmGenericSectionPtrList get_sections_by_rva(rose_addr_t rva) const;
+    SgAsmGenericSectionPtrList get_sectionsByRva(rose_addr_t rva) const;
 
     /** Find sections by address.
      *
      *  Returns all sections that are mapped to include the specified virtual address across all headers, including headers
      *  and holes. This uses the preferred mapping rather than the actual mapping. */
-    SgAsmGenericSectionPtrList get_sections_by_va(rose_addr_t va) const;
+    SgAsmGenericSectionPtrList get_sectionsByVa(rose_addr_t va) const;
 
     /** Find section with specified ID.
      *
      *  Returns the pointer to section with the specified ID across all headers only if there's exactly one match. Headers
      *  and holes are included in the results. */
-    SgAsmGenericSection *get_section_by_id(int id, size_t *nfound=0) const;
+    SgAsmGenericSection *get_sectionById(int id, size_t *nfound=0) const;
 
     /** Find section by name.
      *
      *  Returns pointer to the section with the specified name, or NULL if there isn't exactly one match. Any characters in
      *  the name after the first occurrence of SEP are ignored (default is NUL). For instance, if sep=='$' then the
      *  following names are all equivalent: .idata, .idata$, and .idata$1 */
-    SgAsmGenericSection *get_section_by_name(const std::string&, char sep=0, size_t *nfound=0) const;
+    SgAsmGenericSection *get_sectionByName(const std::string&, char sep=0, size_t *nfound=0) const;
 
     /** Find section by file offset.
      *
      *  Returns single section that contains all of the specified portion of the file across all headers, including headers
      *  and holes. */
-    SgAsmGenericSection *get_section_by_offset(rose_addr_t offset, rose_addr_t size, size_t *nfound=0) const;
+    SgAsmGenericSection *get_sectionByOffset(rose_addr_t offset, rose_addr_t size, size_t *nfound=0) const;
 
     /** Find section by address.
      *
      *  Returns single section that is mapped to include the specified relative virtual file address across all headers,
      *  including headers and holes. */
-    SgAsmGenericSection *get_section_by_rva(rose_addr_t rva, size_t *nfound=0) const;
+    SgAsmGenericSection *get_sectionByRva(rose_addr_t rva, size_t *nfound=0) const;
 
     /** Find section by address.
      *
      *  Returns single section that is mapped to include the specified virtual address across all headers. See also
      *  @ref get_best_section_by_va. */
-    SgAsmGenericSection *get_section_by_va(rose_addr_t va, size_t *nfound=0) const;
+    SgAsmGenericSection *get_sectionByVa(rose_addr_t va, size_t *nfound=0) const;
 
     /** Find section by address.
      *
      *  Similar to @ref get_section_by_va except when more than one section contains the specified virtual address this
      *  choose the "best" one. All candidates must map the virtual address to the same file address or else we fail (return
      *  null and number of candidates). See @ref best_section_by_va for definition of "best". */
-    SgAsmGenericSection *get_best_section_by_va(rose_addr_t va, size_t *nfound=0) const;
+    SgAsmGenericSection *get_bestSectionByVa(rose_addr_t va, size_t *nfound=0) const;
 
     /** Definition for "best".
      *
@@ -265,7 +265,7 @@ public:
      *  don't have names.  If more than one section remains, return the section that is earliest in the specified list of
      *  sections.  Return the null pointer if no section contains the specified virtual address, or if any two sections
      *  that contain the virtual address map it to different parts of the underlying binary file. */
-    static SgAsmGenericSection *best_section_by_va(const SgAsmGenericSectionPtrList &sections, rose_addr_t va);
+    static SgAsmGenericSection *bestSectionByVa(const SgAsmGenericSectionPtrList &sections, rose_addr_t va);
 
     /** Moves and enlarges a section.
      *
@@ -306,45 +306,43 @@ public:
      *  space).
      *
      * @{ */
-    void shift_extend(SgAsmGenericSection*, rose_addr_t sa, rose_addr_t sn, AddressSpace, Elasticity);
-    void shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr_t sn) {
-        shift_extend(s, sa, sn, ADDRSP_ALL, ELASTIC_UNREF);
-    }
+    void shiftExtend(SgAsmGenericSection*, rose_addr_t sa, rose_addr_t sn, AddressSpace, Elasticity);
+    void shiftExtend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr_t sn);
     /** @} */
 
     /** File offset of next section.
      *
      *  Given a file address, return the file offset of the following section.  If there is no following section then
      *  return an address of -1 (when signed) */
-    rose_addr_t get_next_section_offset(rose_addr_t offset);
+    rose_addr_t get_nextSectionOffset(rose_addr_t offset);
 
     /** Adds a new hole to the file.
      *
      *  This is called implicitly by the hole constructor. */
-    void add_hole(SgAsmGenericSection*);
+    void addHole(SgAsmGenericSection*);
 
     /** Removes a hole from the list of holes in a file. */
-    void remove_hole(SgAsmGenericSection*);
+    void removeHole(SgAsmGenericSection*);
 
     /** Find holes in file and create sections to fill them.
      *
      *  Synthesizes "hole" sections to describe the parts of the file that are not yet referenced by other sections.  Note
      *  that holes are used to represent parts of the original file data, before sections were modified by walking the AST
      *  (at this time it is not possible to create a hole outside the original file content). */
-    void fill_holes();
+    void fillHoles();
 
     /** Deletes "hole" sections.
      *
      *  Undoes what @ref fill_holes did. */
-    void unfill_holes();
+    void unfillHoles();
 
     /** Adds a new header to the file.
      *
      *  This is called implicitly by the header constructor */
-    void add_header(SgAsmGenericHeader*);
+    void addHeader(SgAsmGenericHeader*);
 
     /** Removes a header from the header list in a file. */
-    void remove_header(SgAsmGenericHeader*);
+    void removeHeader(SgAsmGenericHeader*);
 
     /** Returns the header for the specified format. */
     SgAsmGenericHeader *get_header(SgAsmExecutableFileFormat::ExecFamily);
@@ -353,9 +351,63 @@ public:
      *
      *  This uses the last header so that files like PE, NE, LE, LX, etc. which also have a DOS header report the format of
      *  the second (PE, etc.) header rather than the DOS header. */
-    const char *format_name() const;
+    const char *formatName() const;
 
 protected:
     // Some extra clean-up actions on destruction
     virtual void destructorHelper() override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmDwarfCompilationUnitList* get_dwarf_info() const ROSE_DEPRECATED("use get_dwarfInfo");
+    void set_dwarf_info(SgAsmDwarfCompilationUnitList*) ROSE_DEPRECATED("use set_dwarfInfo");
+    bool get_truncate_zeros() const ROSE_DEPRECATED("use get_truncateZeros");
+    void set_truncate_zeros(bool) ROSE_DEPRECATED("use set_truncateZeros");
+    bool get_tracking_references() const ROSE_DEPRECATED("use get_trackingReferences");
+    void set_tracking_references(bool) ROSE_DEPRECATED("use set_trackingReferences");
+    const AddressIntervalSet& get_referenced_extents() const ROSE_DEPRECATED("use get_referencedExtents");
+    void set_referenced_extents(const AddressIntervalSet&) ROSE_DEPRECATED("use set_referencedExtents");
+    void extend_to_eof(std::ostream&) const ROSE_DEPRECATED("use extendToEof");
+    void dump_all(bool in_cwd=true, const char *ext=NULL) ROSE_DEPRECATED("use dumpAll");
+    void dump_all(const std::string& dumpname) ROSE_DEPRECATED("use dumpAll");
+    const AddressIntervalSet& get_unreferenced_extents() const ROSE_DEPRECATED("use get_unreferencedExtents");
+    void mark_referenced_extent(rose_addr_t, rose_addr_t) ROSE_DEPRECATED("use markReferencedExtent");
+    DataConverter* get_data_converter() const ROSE_DEPRECATED("use get_dataConverter");
+    void set_data_converter(DataConverter*) ROSE_DEPRECATED("use set_dataConverter");
+    rose_addr_t get_current_size() const ROSE_DEPRECATED("use get_currentSize");
+    rose_addr_t get_orig_size() const ROSE_DEPRECATED("use get_originalSize");
+    size_t read_content(rose_addr_t, void*, rose_addr_t, bool=true) ROSE_DEPRECATED("use readContent");
+    size_t read_content(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t, void*, rose_addr_t, bool=true)
+        ROSE_DEPRECATED("use readContent");
+    std::string read_content_str(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t, bool=true)
+        ROSE_DEPRECATED("use readContentString");
+    std::string read_content_str(rose_addr_t, bool=true) ROSE_DEPRECATED("use readContentString");
+    SgAsmGenericSectionPtrList get_mapped_sections() const ROSE_DEPRECATED("use get_mappedSections");
+    SgAsmGenericSectionPtrList get_sections_by_id(int id) const ROSE_DEPRECATED("use get_sectionById");
+    SgAsmGenericSectionPtrList get_sections_by_name(std::string, char='\0') const ROSE_DEPRECATED("use get_sectionsByName");
+    SgAsmGenericSectionPtrList get_sections_by_offset(rose_addr_t, rose_addr_t) const ROSE_DEPRECATED("use get_sectionsByOffset");
+    SgAsmGenericSectionPtrList get_sections_by_rva(rose_addr_t) const ROSE_DEPRECATED("use get_sectionsByRva");
+    SgAsmGenericSectionPtrList get_sections_by_va(rose_addr_t) const ROSE_DEPRECATED("use get_sectionsByVa");
+    SgAsmGenericSection *get_section_by_id(int, size_t* = nullptr) const ROSE_DEPRECATED("use get_sectionById");
+    SgAsmGenericSection *get_section_by_name(const std::string&, char=0, size_t* = nullptr) const
+        ROSE_DEPRECATED("use get_sectionByName");
+    SgAsmGenericSection *get_section_by_offset(rose_addr_t, rose_addr_t, size_t* = nullptr) const
+        ROSE_DEPRECATED("use get_sectionByOffset");
+    SgAsmGenericSection *get_section_by_rva(rose_addr_t, size_t* = nullptr) const ROSE_DEPRECATED("use get_sectionByRva");
+    SgAsmGenericSection *get_section_by_va(rose_addr_t, size_t* = nullptr) const ROSE_DEPRECATED("use get_sectionByVa");
+    SgAsmGenericSection *get_best_section_by_va(rose_addr_t, size_t* = nullptr) const ROSE_DEPRECATED("use get_bestSectionByVa");
+    static SgAsmGenericSection *best_section_by_va(const SgAsmGenericSectionPtrList&, rose_addr_t)
+        ROSE_DEPRECATED("use bestSectionByVa");
+    void shift_extend(SgAsmGenericSection*, rose_addr_t, rose_addr_t, AddressSpace, Elasticity) ROSE_DEPRECATED("use shiftExtend");
+    void shift_extend(SgAsmGenericSection*, rose_addr_t, rose_addr_t) ROSE_DEPRECATED("use shiftExtend");
+    rose_addr_t get_next_section_offset(rose_addr_t) ROSE_DEPRECATED("use get_nextSectionOffset");
+    void add_hole(SgAsmGenericSection*) ROSE_DEPRECATED("use addHole");
+    void remove_hole(SgAsmGenericSection*) ROSE_DEPRECATED("use remoeHole");
+    void fill_holes() ROSE_DEPRECATED("use fillHoles");
+    void unfill_holes() ROSE_DEPRECATED("use unfillHoles");
+    void add_header(SgAsmGenericHeader*) ROSE_DEPRECATED("use addHeader");
+    void remove_header(SgAsmGenericHeader*) ROSE_DEPRECATED("use removeHeader");
+    const char *format_name() const ROSE_DEPRECATED("use formatName");
 };

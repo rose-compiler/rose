@@ -68,19 +68,19 @@ public:
     unsigned flags = 0;
 
     [[using Rosebud: rosetta]]
-    unsigned pagemap_index = 0;
+    unsigned pageMapIndex = 0;
 
     [[using Rosebud: rosetta]]
-    unsigned pagemap_nentries = 0;
+    unsigned pageMapNEntries = 0;
 
     [[using Rosebud: rosetta]]
     unsigned res1 = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t mapped_size = 0;
+    rose_addr_t mappedSize = 0;
 
     [[using Rosebud: rosetta]]
-    rose_addr_t base_addr = 0;
+    rose_addr_t baseAddr = 0;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
@@ -90,4 +90,17 @@ public:
                              const SgAsmLESectionTableEntry::LESectionTableEntry_disk *disk);
     void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmLESectionTableEntry::LESectionTableEntry_disk*) const;
     virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    unsigned get_pagemap_index() const ROSE_DEPRECATED("use get pageMapIndex");
+    void set_pagemap_index(unsigned) ROSE_DEPRECATED("use set_pageMapIndex");
+    unsigned get_pagemap_nentries() const ROSE_DEPRECATED("use get_pageMapNEntries");
+    void set_pagemap_nentries(unsigned) ROSE_DEPRECATED("use set_pageMapNEntries");
+    rose_addr_t get_mapped_size() const ROSE_DEPRECATED("use get_mappedSize");
+    void set_mapped_size(rose_addr_t) ROSE_DEPRECATED("use set_mappedSize");
+    rose_addr_t get_base_addr() const ROSE_DEPRECATED("use get_baseAddr");
+    void set_base_addr(rose_addr_t) ROSE_DEPRECATED("use set_baseAddr");
 };

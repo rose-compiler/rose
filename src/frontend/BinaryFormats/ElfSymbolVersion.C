@@ -94,6 +94,12 @@ SgAsmElfSymverSection::parse()
 rose_addr_t
 SgAsmElfSymverSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
+    return calculateSizes(entsize, required, optional, entcount);
+}
+
+rose_addr_t
+SgAsmElfSymverSection::calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
+{
     std::vector<size_t> extra_sizes;
     return calculate_sizes(sizeof(uint16_t),
                            sizeof(uint16_t),
@@ -309,6 +315,12 @@ SgAsmElfSymverDefinedSection::parse()
 rose_addr_t
 SgAsmElfSymverDefinedSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
+    return calculateSizes(entsize, required, optional, entcount);
+}
+
+rose_addr_t
+SgAsmElfSymverDefinedSection::calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
+{
     size_t struct_size = sizeof(SgAsmElfSymverDefinedEntry::ElfSymverDefinedEntry_disk);
     size_t aux_size = sizeof(SgAsmElfSymverDefinedAux::ElfSymverDefinedAux_disk);
 
@@ -514,7 +526,7 @@ SgAsmElfSymverNeededEntry::encode(Rose::BinaryAnalysis::ByteOrder::Endianness se
 {
     Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_version, &(disk->vn_version));
 
-    rose_addr_t file_offset = p_file_name->get_offset();
+    rose_addr_t file_offset = get_fileName()->get_offset();
     ROSE_ASSERT(file_offset!=SgAsmGenericString::unallocated);
     Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, file_offset, &(disk->vn_file));
 
@@ -608,6 +620,12 @@ SgAsmElfSymverNeededSection::parse()
 
 rose_addr_t
 SgAsmElfSymverNeededSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
+{
+    return calculateSizes(entsize, required, optional, entcount);
+}
+
+rose_addr_t
+SgAsmElfSymverNeededSection::calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
     size_t struct_size = sizeof(SgAsmElfSymverNeededEntry::ElfSymverNeededEntry_disk);
     size_t aux_size = sizeof(SgAsmElfSymverNeededAux::ElfSymverNeededAux_disk);
@@ -718,6 +736,16 @@ SgAsmElfSymverNeededSection::dump(FILE *f, const char *prefix, ssize_t idx) cons
   
     if (variantT() == V_SgAsmElfSymverNeededSection) /*unless a base class*/
         hexdump(f, 0, std::string(p)+"data at ", p_data);
+}
+
+SgAsmGenericString*
+SgAsmElfSymverNeededEntry::get_file_name() const {
+    return get_fileName();
+}
+
+void
+SgAsmElfSymverNeededEntry::set_file_name(SgAsmGenericString *x) {
+    set_fileName(x);
 }
 
 #endif

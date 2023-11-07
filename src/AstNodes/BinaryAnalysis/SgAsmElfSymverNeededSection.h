@@ -32,7 +32,7 @@ public:
     /** Return sizes for various parts of the table.
      *
      *  See documentation for @ref SgAsmElfSection::calculate_sizes. */
-    virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const override;
+    virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const override;
 
     /** Write SymverNeeded section back to disk.
      *
@@ -41,4 +41,10 @@ public:
 
     /** Print some debugging info */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    virtual rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const override ROSE_DEPRECATED("use calculateSizes");
 };

@@ -8,7 +8,7 @@
 using namespace Rose;
 
 rose_addr_t
-SgAsmBlock::get_fallthrough_va()
+SgAsmBlock::get_fallthroughVa()
 {
     ROSE_ASSERT(!get_statementList().empty());
     SgAsmInstruction *last = isSgAsmInstruction(get_statementList().back());
@@ -17,7 +17,7 @@ SgAsmBlock::get_fallthrough_va()
 }
 
 bool
-SgAsmBlock::has_instructions() const
+SgAsmBlock::hasInstructions() const
 {
     const SgAsmStatementPtrList &stmts = get_statementList();
     for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si) {
@@ -27,8 +27,13 @@ SgAsmBlock::has_instructions() const
     return false;
 }
 
+bool
+SgAsmBlock::isBasicBlock() const {
+    return hasInstructions();
+}
+
 std::string
-SgAsmBlock::reason_key(const std::string &prefix)
+SgAsmBlock::reasonKey(const std::string &prefix)
 {
     return (prefix + "L = left over blocks    N = NOP/zero padding     F = fragment\n" +
             prefix + "J = jump table          E = Function entry\n" +
@@ -37,13 +42,13 @@ SgAsmBlock::reason_key(const std::string &prefix)
 }
 
 std::string
-SgAsmBlock::reason_str(bool do_pad) const
+SgAsmBlock::reasonString(bool do_pad) const
 {
     return reason_str(do_pad, get_reason());
 }
 
 std::string
-SgAsmBlock::reason_str(bool do_pad, unsigned r)
+SgAsmBlock::reasonString(bool do_pad, unsigned r)
 {
     using namespace StringUtility; // for add_to_reason_string()
     std::string result;
@@ -96,7 +101,7 @@ SgAsmBlock::reason_str(bool do_pad, unsigned r)
 }
 
 bool
-SgAsmBlock::is_function_call(rose_addr_t &target_va, rose_addr_t &return_va) 
+SgAsmBlock::isFunctionCall(rose_addr_t &target_va, rose_addr_t &return_va)
 {
     static const rose_addr_t INVALID_ADDR = (rose_addr_t)(-1);
     target_va = return_va = INVALID_ADDR;;
@@ -141,19 +146,19 @@ SgAsmBlock::is_function_call(rose_addr_t &target_va, rose_addr_t &return_va)
 }
 
 void
-SgAsmBlock::append_statement( SgAsmStatement* statement )
+SgAsmBlock::appendStatement( SgAsmStatement* statement )
    {
      p_statementList.push_back(statement);
    }
 
 void
-SgAsmBlock::remove_children(  )
+SgAsmBlock::removeChildren(  )
    {
      p_statementList.clear();
    }
 
 void
-SgAsmBlock::remove_statement( SgAsmStatement* statement )
+SgAsmBlock::removeStatement( SgAsmStatement* statement )
    {
      SgAsmStatementPtrList::iterator l = p_statementList.begin();
      for (;l!=p_statementList.end();l++) {
@@ -167,8 +172,103 @@ SgAsmBlock::remove_statement( SgAsmStatement* statement )
    }
 
 SgAsmFunction *
-SgAsmBlock::get_enclosing_function() const {
+SgAsmBlock::get_enclosingFunction() const {
         return SageInterface::getEnclosingNode<SgAsmFunction>(this);
+}
+
+bool
+SgAsmBlock::get_successors_complete() const {
+    return get_successorsComplete();
+}
+
+void
+SgAsmBlock::set_successors_complete(bool x) {
+    set_successorsComplete(x);
+}
+
+SgAsmBlock*
+SgAsmBlock::get_immediate_dominator() const {
+    return get_immediateDominator();
+}
+
+void
+SgAsmBlock::set_immediate_dominator(SgAsmBlock *x) {
+    set_immediateDominator(x);
+}
+
+size_t
+SgAsmBlock::get_cached_vertex() const {
+    return get_cachedVertex();
+}
+
+void
+SgAsmBlock::set_cached_vertex(size_t x) {
+    set_cachedVertex(x);
+}
+
+double
+SgAsmBlock::get_code_likelihood() const {
+    return get_codeLikelihood();
+}
+
+void
+SgAsmBlock::set_code_likelihood(double x) {
+    set_codeLikelihood(x);
+}
+
+void
+SgAsmBlock::append_statement(SgAsmStatement *x) {
+    appendStatement(x);
+}
+
+void
+SgAsmBlock::remove_statement(SgAsmStatement *x) {
+    return removeStatement(x);
+}
+
+void
+SgAsmBlock::remove_children() {
+    removeChildren();
+}
+
+rose_addr_t
+SgAsmBlock::get_fallthrough_va() {
+    return get_fallthroughVa();
+}
+
+SgAsmFunction*
+SgAsmBlock::get_enclosing_function() const {
+    return get_enclosingFunction();
+}
+
+bool
+SgAsmBlock::has_instructions() const {
+    return hasInstructions();
+}
+
+bool
+SgAsmBlock::is_basic_block() const {
+    return isBasicBlock();
+}
+
+bool
+SgAsmBlock::is_function_call(rose_addr_t &target_va/*out*/, rose_addr_t &return_va/*out*/) {
+    return isFunctionCall(target_va, return_va);
+}
+
+std::string
+SgAsmBlock::reason_key(const std::string &prefix) {
+    return reasonKey(prefix);
+}
+
+std::string
+SgAsmBlock::reason_str(bool pad) const {
+    return reasonString(pad);
+}
+
+std::string
+SgAsmBlock::reason_str(bool pad, unsigned reason) {
+    return reasonString(pad, reason);
 }
 
 #endif

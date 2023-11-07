@@ -211,6 +211,12 @@ SgAsmGenericStrtab::SgAsmGenericStrtab(SgAsmGenericSection *container) {
 SgAsmStoredString *
 SgAsmGenericStrtab::create_string(rose_addr_t offset, bool shared)
 {
+    return createString(offset, shared);
+}
+
+SgAsmStoredString *
+SgAsmGenericStrtab::createString(rose_addr_t offset, bool shared)
+{
     SgAsmStringStorage *storage = create_storage(offset, shared);
     return new SgAsmStoredString(storage);
 }
@@ -219,7 +225,7 @@ void
 SgAsmGenericStrtab::free(SgAsmStringStorage *storage)
 {
     ROSE_ASSERT(storage!=NULL);
-    ROSE_ASSERT(storage!=p_dont_free);
+    ROSE_ASSERT(storage!=get_dontFree());
     rose_addr_t old_offset = storage->get_offset();
     if (old_offset!=SgAsmGenericString::unallocated) {
         set_isModified(true);
@@ -245,8 +251,8 @@ SgAsmGenericStrtab::free(rose_addr_t offset, rose_addr_t size)
      * member of the string storage to indicate that it's memory in the string table is no longer in use. */
     AddressIntervalSet toFree;
     toFree.insert(AddressInterval::baseSize(offset, size));
-    for (size_t i=0; i<p_storage_list.size(); i++) {
-        SgAsmStringStorage *storage = p_storage_list[i];
+    for (size_t i=0; i<p_storageList.size(); i++) {
+        SgAsmStringStorage *storage = p_storageList[i];
         if (storage->get_offset()!=SgAsmGenericString::unallocated)
             toFree.erase(AddressInterval::baseSize(storage->get_offset(), get_storage_size(storage)));
     }
@@ -258,16 +264,22 @@ SgAsmGenericStrtab::free(rose_addr_t offset, rose_addr_t size)
 void
 SgAsmGenericStrtab::free_all_strings(bool blow_away_holes)
 {
+    freeAllStrings(blow_away_holes);
+}
+
+void
+SgAsmGenericStrtab::freeAllStrings(bool blow_away_holes)
+{
     SgAsmGenericSection *container = get_container();
     SgAsmGenericFile *file = container->get_file();
     bool is_tracking = file->get_tracking_references();
     set_isModified(true);
 
     /* Mark all storage objects as being unallocated. Never free the dont_free storage (if any). */
-    for (size_t i=0; i<p_storage_list.size(); i++) {
-        if (p_storage_list[i]->get_offset()!=SgAsmGenericString::unallocated && p_storage_list[i]!=p_dont_free) {
-            p_num_freed++;
-            p_storage_list[i]->set_offset(SgAsmGenericString::unallocated);
+    for (size_t i=0; i<p_storageList.size(); i++) {
+        if (p_storageList[i]->get_offset()!=SgAsmGenericString::unallocated && p_storageList[i]!=get_dontFree()) {
+            p_numberFreed++;
+            p_storageList[i]->set_offset(SgAsmGenericString::unallocated);
         }
     }
 
@@ -282,8 +294,8 @@ SgAsmGenericStrtab::free_all_strings(bool blow_away_holes)
     get_freelist() = container->get_referenced_extents();
 
     /* Remove the empty string from the free list */
-    if (p_dont_free)
-        get_freelist().erase(AddressInterval::baseSize(p_dont_free->get_offset(), p_dont_free->get_string().size()+1));
+    if (get_dontFree())
+        get_freelist().erase(AddressInterval::baseSize(get_dontFree()->get_offset(), get_dontFree()->get_string().size()+1));
 }
 
 bool
@@ -295,15 +307,15 @@ SgAsmGenericStrtab::reallocate(bool shrink)
 
     /* Get list of strings that need to be allocated and sort by descending size. */
     std::vector<size_t> map;
-    for (size_t i=0; i<p_storage_list.size(); i++) {
-        SgAsmStringStorage *storage = p_storage_list[i];
+    for (size_t i=0; i<p_storageList.size(); i++) {
+        SgAsmStringStorage *storage = p_storageList[i];
         if (storage->get_offset()==SgAsmGenericString::unallocated) {
             map.push_back(i);
         }
     }
     for (size_t i=1; i<map.size(); i++) {
         for (size_t j=0; j<i; j++) {
-            if (p_storage_list[map[j]]->get_string().size() < p_storage_list[map[i]]->get_string().size()) {
+            if (p_storageList[map[j]]->get_string().size() < p_storageList[map[i]]->get_string().size()) {
                 size_t x = map[i];
                 map[i] = map[j];
                 map[j] = x;
@@ -313,20 +325,20 @@ SgAsmGenericStrtab::reallocate(bool shrink)
 
     /* Allocate from largest to smallest so we have the best chance of finding overlaps */
     for (size_t i=0; i<map.size(); i++) {
-        SgAsmStringStorage *storage = p_storage_list[map[i]];
+        SgAsmStringStorage *storage = p_storageList[map[i]];
         ROSE_ASSERT(storage->get_offset()==SgAsmGenericString::unallocated);
 
         /* We point empty strings at the dont_free storage if possible. */
-        if (storage->get_string()=="" && p_dont_free) {
-            ROSE_ASSERT(p_dont_free->get_string()=="");
+        if (storage->get_string()=="" && get_dontFree()) {
+            ROSE_ASSERT(get_dontFree()->get_string()=="");
             storage->set_offset(0);
         }
 
         /* If there's already a string with the same value then they can share space in the string table. They're still
          * considered two separate strings, so changing one doesn't affect the other. */
         if (storage->get_offset()==SgAsmGenericString::unallocated) {
-            for (size_t j=0; j<p_storage_list.size(); j++) {
-                SgAsmStringStorage *previous = p_storage_list[j];
+            for (size_t j=0; j<p_storageList.size(); j++) {
+                SgAsmStringStorage *previous = p_storageList[j];
                 if (previous->get_offset()!=SgAsmGenericString::unallocated && previous->get_string()==storage->get_string()) {
                     storage->set_offset(previous->get_offset());
                     break;
@@ -394,13 +406,13 @@ SgAsmGenericStrtab::reallocate(bool shrink)
 const AddressIntervalSet&
 SgAsmGenericStrtab::get_freelist() const
 {
-    return p_freelist;
+    return get_freeList();
 }
 
 AddressIntervalSet&
 SgAsmGenericStrtab::get_freelist()
 {
-    return p_freelist;
+    return get_freeList();
 }
 
 void
@@ -424,15 +436,15 @@ SgAsmGenericStrtab::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
 
     fprintf(f, "%s%-*s =", p, w, "dont_free");
-    for (size_t i=0; i<p_storage_list.size(); ++i) {
-        if (p_storage_list[i] == p_dont_free)
-            fprintf(f, " p_storage_list[%" PRIuPTR "]", i);
+    for (size_t i=0; i<p_storageList.size(); ++i) {
+        if (p_storageList[i] == get_dontFree())
+            fprintf(f, " p_storageList[%" PRIuPTR "]", i);
     }
     fputc('\n', f);
     
-    fprintf(f, "%s%-*s = %" PRIuPTR " strings\n", p, w, "referenced", p_storage_list.size());
-    for (size_t i=0; i<p_storage_list.size(); i++) {
-        p_storage_list[i]->dump(f, p, i);
+    fprintf(f, "%s%-*s = %" PRIuPTR " strings\n", p, w, "referenced", p_storageList.size());
+    for (size_t i=0; i<p_storageList.size(); i++) {
+        p_storageList[i]->dump(f, p, i);
     }
 
     fprintf(f, "%s%-*s = %" PRIu64 " free regions\n", p, w, "freelist", get_freelist().size());
@@ -445,6 +457,69 @@ SgAsmGenericStrtab::dump(FILE *f, const char *prefix, ssize_t idx) const
                 interval.size(), interval.size(), 1==interval.size()?"":"s",
                 interval.greatest()+1, interval.greatest()+1);
     }
+}
+
+const SgAsmGenericStrtab::referenced_t&
+SgAsmGenericStrtab::get_storage_list() const {
+    return get_storageList();
+}
+
+void
+SgAsmGenericStrtab::set_storage_list(const referenced_t &x) {
+    set_storageList(x);
+}
+
+SgAsmStringStorage*
+SgAsmGenericStrtab::get_dont_free() const {
+    return get_dontFree();
+}
+
+void
+SgAsmGenericStrtab::set_dont_free(SgAsmStringStorage *x) {
+    set_dontFree(x);
+}
+
+size_t
+SgAsmGenericStrtab::get_num_freed() const {
+    return get_numberFreed();
+}
+
+void
+SgAsmGenericStrtab::set_num_freed(size_t x) {
+    set_numberFreed(x);
+}
+
+void
+SgAsmGenericStrtab::allocate_overlap(SgAsmStringStorage *x) {
+    allocateOverlap(x);
+}
+
+void
+SgAsmGenericStrtab::allocateOverlap(SgAsmStringStorage *) {}
+
+SgAsmStringStorage*
+SgAsmGenericStrtab::create_storage(rose_addr_t x, bool y) {
+    return createStorage(x, y);
+}
+
+SgAsmStringStorage*
+SgAsmGenericStrtab::createStorage(rose_addr_t, bool) {
+    ASSERT_not_implemented("subclass must implement");
+}
+
+rose_addr_t
+SgAsmGenericStrtab::get_storage_size(const SgAsmStringStorage *x) {
+    return get_storageSize(x);
+}
+
+rose_addr_t
+SgAsmGenericStrtab::get_storageSize(const SgAsmStringStorage*) {
+    ASSERT_not_implemented("subclass must implement");
+}
+
+void
+SgAsmGenericStrtab::rebind(SgAsmStringStorage*, rose_addr_t) {
+    ASSERT_not_implemented("subclass must implement");
 }
 
 #endif

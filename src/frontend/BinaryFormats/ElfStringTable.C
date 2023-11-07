@@ -117,13 +117,13 @@ SgAsmElfStrtab::parse()
         unsigned char first_byte;
         get_container()->read_content_local(0, &first_byte, 1);
         if (first_byte=='\0') {
-            if (p_dont_free) {
-                ROSE_ASSERT(0==p_dont_free->get_offset());
+            if (get_dontFree()) {
+                ROSE_ASSERT(0==get_dontFree()->get_offset());
             } else {
-                p_dont_free = create_storage(0, false);
+                p_dontFree = create_storage(0, false);
             }
-        } else if (p_dont_free) {
-            p_dont_free = NULL;
+        } else if (get_dontFree()) {
+            p_dontFree = NULL;
         }
     }
     return this;
@@ -131,17 +131,22 @@ SgAsmElfStrtab::parse()
 
 void
 SgAsmElfStrtab::destructorHelper() {
-    for (referenced_t::iterator i = p_storage_list.begin(); i != p_storage_list.end(); ++i) {
+    for (referenced_t::iterator i = p_storageList.begin(); i != p_storageList.end(); ++i) {
         SgAsmStringStorage *storage = *i;
         storage->set_strtab(NULL);
         storage->set_offset(SgAsmGenericString::unallocated);
     }
-    p_storage_list.clear();
-    p_dont_free = NULL; /*FIXME: can't delete for same reason as in SgAsmStoredString destructor. (RPM 2008-09-05) */
+    p_storageList.clear();
+    p_dontFree = NULL; /*FIXME: can't delete for same reason as in SgAsmStoredString destructor. (RPM 2008-09-05) */
 }
 
 SgAsmStringStorage *
-SgAsmElfStrtab::create_storage(rose_addr_t offset, bool shared)
+SgAsmElfStrtab::create_storage(rose_addr_t offset, bool shared) {
+    return createStorage(offset, shared);
+}
+
+SgAsmStringStorage *
+SgAsmElfStrtab::createStorage(rose_addr_t offset, bool shared)
 {
     ROSE_ASSERT(offset!=SgAsmGenericString::unallocated);
 
@@ -149,8 +154,8 @@ SgAsmElfStrtab::create_storage(rose_addr_t offset, bool shared)
      * offset zero created when this string table was constructed because the ELF spec says it needs to stay there whether
      * referenced or not. */
     if (shared) {
-        for (referenced_t::iterator i=p_storage_list.begin(); i!=p_storage_list.end(); i++) {
-            if ((*i)->get_offset()==offset && (*i) != p_dont_free)
+        for (referenced_t::iterator i=p_storageList.begin(); i!=p_storageList.end(); i++) {
+            if ((*i)->get_offset()==offset && (*i) != get_dontFree())
                 return *i;
         }
     }
@@ -172,16 +177,16 @@ SgAsmElfStrtab::create_storage(rose_addr_t offset, bool shared)
      * The only time we can guarantee this is OK is when the new storage points to the same file location as "dont_free"
      * since the latter is guaranteed to never be freed or shared. This exception is used when creating a new, unallocated
      * string (see SgAsmStoredString(SgAsmGenericStrtab,const std::string&)). */
-    if (p_num_freed>0 && (!p_dont_free || offset!=p_dont_free->get_offset())) {
+    if (get_numberFreed()>0 && (!get_dontFree() || offset!=get_dontFree()->get_offset())) {
         mlog[WARN] <<"SgAsmElfStrtab::create_storage(" <<StringUtility::addrToString(offset) <<"): "
-                   <<StringUtility::plural(p_num_freed, "other strings")
-                   <<" (of " <<p_storage_list.size() <<" created)"
+                   <<StringUtility::plural(p_numberFreed, "other strings")
+                   <<" (of " <<p_storageList.size() <<" created)"
                    <<" in [" <<get_container()->get_id() <<"] \"" <<get_container()->get_name()->get_string(true) <<"\" "
-                   <<(1==p_num_freed?"has":"have") <<" been modified and/or reallocated\n";
-        ROSE_ASSERT(0==p_num_freed);
+                   <<(1==get_numberFreed()?"has":"have") <<" been modified and/or reallocated\n";
+        ROSE_ASSERT(0==get_numberFreed());
     }
     
-    p_storage_list.push_back(storage);
+    p_storageList.push_back(storage);
     set_isModified(true);
     return storage;
 }
@@ -189,7 +194,7 @@ SgAsmElfStrtab::create_storage(rose_addr_t offset, bool shared)
 void
 SgAsmElfStrtab::rebind(SgAsmStringStorage *storage, rose_addr_t offset)
 {
-    ROSE_ASSERT(p_dont_free && storage!=p_dont_free && storage->get_offset()==p_dont_free->get_offset());
+    ROSE_ASSERT(get_dontFree() && storage!=get_dontFree() && storage->get_offset()==get_dontFree()->get_offset());
     std::string s = get_container()->read_content_local_str(offset, false /*relax*/);
     storage->set_offset(offset);
     storage->set_string(s);
@@ -197,16 +202,27 @@ SgAsmElfStrtab::rebind(SgAsmStringStorage *storage, rose_addr_t offset)
 
 rose_addr_t
 SgAsmElfStrtab::get_storage_size(const SgAsmStringStorage *storage) {
+    return get_storageSize(storage);
+}
+
+rose_addr_t
+SgAsmElfStrtab::get_storageSize(const SgAsmStringStorage *storage) {
     return storage->get_string().size() + 1;
 }
 
 void
 SgAsmElfStrtab::allocate_overlap(SgAsmStringStorage *storage)
 {
+    return allocateOverlap(storage);
+}
+
+void
+SgAsmElfStrtab::allocateOverlap(SgAsmStringStorage *storage)
+{
     ROSE_ASSERT(storage->get_offset()==SgAsmGenericString::unallocated);
     size_t need = storage->get_string().size();
-    for (size_t i=0; i<p_storage_list.size(); i++) {
-        SgAsmStringStorage *existing = p_storage_list[i];
+    for (size_t i=0; i<p_storageList.size(); i++) {
+        SgAsmStringStorage *existing = p_storageList[i];
         if (existing->get_offset()!=SgAsmGenericString::unallocated) {
             size_t have = existing->get_string().size();
             if (need<=have && 0==existing->get_string().compare(have-need, need, storage->get_string())) {
@@ -234,8 +250,8 @@ SgAsmElfStrtab::unparse(std::ostream &f) const
     SgAsmGenericSection *container = get_container();
     
     /* Write strings with NUL termination. Shared strings will be written more than once, but that's OK. */
-    for (size_t i=0; i<p_storage_list.size(); i++) {
-        SgAsmStringStorage *storage = p_storage_list[i];
+    for (size_t i=0; i<p_storageList.size(); i++) {
+        SgAsmStringStorage *storage = p_storageList[i];
         if (storage->get_offset() == SgAsmGenericString::unallocated) {
             mlog[WARN] <<"during unparsing, this string is unallocated in the string table and will be discarded: "
                        <<"\"" <<StringUtility::cEscape(storage->get_string()) <<"\"\n";

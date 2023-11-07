@@ -29,4 +29,34 @@ SgAsmGenericFormat::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %" PRIuPTR "\n", p, w, "wordsize", get_word_size());
 }
 
+bool
+SgAsmGenericFormat::get_is_current_version() const {
+    return get_isCurrentVersion();
+}
+
+void
+SgAsmGenericFormat::set_is_current_version(bool x) {
+    set_isCurrentVersion(x);
+}
+
+unsigned
+SgAsmGenericFormat::get_abi_version() const {
+    return get_abiVersion();
+}
+
+void
+SgAsmGenericFormat::set_abi_version(unsigned x) {
+    set_abiVersion(x);
+}
+
+size_t
+SgAsmGenericFormat::get_word_size() const {
+    return get_wordSize();
+}
+
+void
+SgAsmGenericFormat::set_word_size(size_t x) {
+    set_wordSize(x);
+}
+
 #endif

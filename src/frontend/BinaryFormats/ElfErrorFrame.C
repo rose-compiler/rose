@@ -477,7 +477,12 @@ SgAsmElfEHFrameSection::parse()
 }
 
 rose_addr_t
-SgAsmElfEHFrameSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
+SgAsmElfEHFrameSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const {
+    return calculateSizes(entsize, required, optional, entcount);
+}
+
+rose_addr_t
+SgAsmElfEHFrameSection::calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
     rose_addr_t whole = unparse(NULL);
     if (entsize)

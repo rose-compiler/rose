@@ -129,17 +129,26 @@ public:
     /** @} */
 
     /** Returns binding as an enum constant. */
-    SgAsmElfSymbol::ElfSymBinding get_elf_binding() const;
+    SgAsmElfSymbol::ElfSymBinding get_elfBinding() const;
 
     /** Returns type as an enum constant. */
-    SgAsmElfSymbol::ElfSymType get_elf_type() const;
+    SgAsmElfSymbol::ElfSymType get_elfType() const;
 
     /** Converts enum constant to string. */
-    static std::string to_string(SgAsmElfSymbol::ElfSymBinding);
+    static std::string toString(SgAsmElfSymbol::ElfSymBinding);
 
     /** Converts enum constant to string. */
-    static std::string to_string(SgAsmElfSymbol::ElfSymType);
+    static std::string toString(SgAsmElfSymbol::ElfSymType);
 
 private:
     void parse_common();                            // initialization common to all parse() methods
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmElfSymbol::ElfSymBinding get_elf_binding() const ROSE_DEPRECATED("use get_elfBinding");
+    SgAsmElfSymbol::ElfSymType get_elf_type() const ROSE_DEPRECATED("use get_elfType");
+    static std::string to_string(SgAsmElfSymbol::ElfSymBinding) ROSE_DEPRECATED("use toString");
+    static std::string to_string(SgAsmElfSymbol::ElfSymType) ROSE_DEPRECATED("use toString");
 };

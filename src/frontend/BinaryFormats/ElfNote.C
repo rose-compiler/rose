@@ -126,6 +126,11 @@ SgAsmElfNoteEntry::unparse(std::ostream &f, rose_addr_t at)
 
 rose_addr_t
 SgAsmElfNoteEntry::calculate_size() const {
+    return calculateSize();
+}
+
+rose_addr_t
+SgAsmElfNoteEntry::calculateSize() const {
     rose_addr_t need = 12;                           /*namesize, payloadsize, type*/
     need += p_name->get_string().size() + 1;    /*name plus NUL terminator*/
     need = (need+3) & ~0x3;                     /*pad to align payload on a four-byte offset */

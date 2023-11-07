@@ -92,11 +92,11 @@ SgAsmElfSymbol::parse_common()
 
     /* Definition state */
     if (p_value || p_size) {
-        p_def_state = SYM_DEFINED;
+        p_definitionState = SYM_DEFINED;
     } else if (p_name->get_string().size() > 0 || get_elf_type()) {
-        p_def_state = SYM_TENTATIVE;
+        p_definitionState = SYM_TENTATIVE;
     } else {
-        p_def_state = SYM_UNDEFINED;
+        p_definitionState = SYM_UNDEFINED;
     }
 }
 
@@ -109,6 +109,12 @@ SgAsmElfSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const
 std::string
 SgAsmElfSymbol::to_string(ElfSymBinding val)
 {
+    return toString(val);
+}
+
+std::string
+SgAsmElfSymbol::toString(ElfSymBinding val)
+{
 #ifndef _MSC_VER
     return stringifySgAsmElfSymbolElfSymBinding(val);
 #else
@@ -119,6 +125,12 @@ SgAsmElfSymbol::to_string(ElfSymBinding val)
 std::string
 SgAsmElfSymbol::to_string(ElfSymType val)
 {
+    return toString(val);
+}
+
+std::string
+SgAsmElfSymbol::toString(ElfSymType val)
+{
 #ifndef _MSC_VER
     return stringifySgAsmElfSymbolElfSymType(val);
 #else
@@ -126,15 +138,26 @@ SgAsmElfSymbol::to_string(ElfSymType val)
 #endif
 }  
 
-
 SgAsmElfSymbol::ElfSymBinding
 SgAsmElfSymbol::get_elf_binding() const
+{
+    return get_elfBinding();
+}
+
+SgAsmElfSymbol::ElfSymBinding
+SgAsmElfSymbol::get_elfBinding() const
 {
     return (ElfSymBinding)(p_st_info >> 4);
 }
 
 SgAsmElfSymbol::ElfSymType
 SgAsmElfSymbol::get_elf_type() const
+{
+    return get_elfType();
+}
+
+SgAsmElfSymbol::ElfSymType
+SgAsmElfSymbol::get_elfType() const
 {
     return (ElfSymType)(p_st_info & 0xf);
 }
@@ -242,6 +265,12 @@ SgAsmElfSymbolSection::parse()
 rose_addr_t
 SgAsmElfSymbolSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
+    return calculateSizes(entsize, required, optional, entcount);
+}
+
+rose_addr_t
+SgAsmElfSymbolSection::calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
+{
     std::vector<size_t> extra_sizes;
     for (size_t i=0; i<p_symbols->get_symbols().size(); i++)
         extra_sizes.push_back(p_symbols->get_symbols()[i]->get_extra().size());
@@ -253,6 +282,12 @@ SgAsmElfSymbolSection::calculate_sizes(size_t *entsize, size_t *required, size_t
 
 void
 SgAsmElfSymbolSection::finish_parsing()
+{
+    finishParsing();
+}
+
+void
+SgAsmElfSymbolSection::finishParsing()
 {
     for (size_t i=0; i < p_symbols->get_symbols().size(); i++) {
         SgAsmElfSymbol *symbol = p_symbols->get_symbols()[i];
@@ -267,6 +302,12 @@ SgAsmElfSymbolSection::finish_parsing()
 
 size_t
 SgAsmElfSymbolSection::index_of(SgAsmElfSymbol *symbol)
+{
+    return indexOf(symbol);
+}
+
+size_t
+SgAsmElfSymbolSection::indexOf(SgAsmElfSymbol *symbol)
 {
     for (size_t i=0; i<p_symbols->get_symbols().size(); i++) {
         if (p_symbols->get_symbols()[i]==symbol)
@@ -283,7 +324,7 @@ SgAsmElfSymbolSection::reallocate()
     /* Update parts of the section and segment tables not updated by superclass */
     SgAsmElfSectionTableEntry *secent = get_section_entry();
     if (secent)
-        secent->set_sh_type(p_is_dynamic ?
+        secent->set_sh_type(get_isDynamic() ?
                             SgAsmElfSectionTableEntry::SHT_DYNSYM :
                             SgAsmElfSectionTableEntry::SHT_SYMTAB);
     return reallocated;
@@ -341,7 +382,7 @@ SgAsmElfSymbolSection::dump(FILE *f, const char *prefix, ssize_t idx) const
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     SgAsmElfSection::dump(f, p, -1);
-    fprintf(f, "%s%-*s = %s\n", p, w, "is_dynamic", p_is_dynamic ? "yes" : "no");
+    fprintf(f, "%s%-*s = %s\n", p, w, "is_dynamic", get_isDynamic() ? "yes" : "no");
     fprintf(f, "%s%-*s = %" PRIuPTR " symbols\n", p, w, "ElfSymbol.size", p_symbols->get_symbols().size());
     for (size_t i = 0; i < p_symbols->get_symbols().size(); i++) {
         SgAsmGenericSection *section = get_file()->get_section_by_id(p_symbols->get_symbols()[i]->get_st_shndx());
@@ -350,6 +391,16 @@ SgAsmElfSymbolSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     if (variantT() == V_SgAsmElfSymbolSection) //unless a base class
         hexdump(f, 0, std::string(p)+"data at ", p_data);
+}
+
+bool
+SgAsmElfSymbolSection::get_is_dynamic() const {
+    return get_isDynamic();
+}
+
+void
+SgAsmElfSymbolSection::set_is_dynamic(bool x) {
+    set_isDynamic(x);
 }
 
 #endif

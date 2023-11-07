@@ -38,8 +38,8 @@ SgAsmLEFileHeader::SgAsmLEFileHeader(SgAsmGenericFile *f, rose_addr_t offset)
         throw FormatError("Bad LE/LX magic number");
 
     /* Decode file header */
-    p_exec_format->set_family( fh.e_magic[1]=='E' ? FAMILY_LE : FAMILY_LX );
-    const char *section_name = FAMILY_LE == p_exec_format->get_family() ? "LE File Header" : "LX File Header";
+    get_executableFormat()->set_family( fh.e_magic[1]=='E' ? FAMILY_LE : FAMILY_LX );
+    const char *section_name = FAMILY_LE == get_executableFormat()->get_family() ? "LE File Header" : "LX File Header";
     set_name(new SgAsmBasicString(section_name));
     set_synthesized(true);
     set_purpose(SP_HEADER);
@@ -59,11 +59,11 @@ SgAsmLEFileHeader::SgAsmLEFileHeader(SgAsmGenericFile *f, rose_addr_t offset)
     p_e_esp_section            = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_esp_section);
     p_e_esp                    = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_esp);
     p_e_page_size              = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_page_size);
-    if (FAMILY_LE == p_exec_format->get_family()) {
+    if (FAMILY_LE == get_executableFormat()->get_family()) {
         p_e_last_page_size     = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_lps_or_shift);
         p_e_page_offset_shift  = 0;
     } else {
-        ROSE_ASSERT(FAMILY_LX == p_exec_format->get_family());
+        ROSE_ASSERT(FAMILY_LX == get_executableFormat()->get_family());
         p_e_last_page_size     = 0;
         p_e_page_offset_shift  = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, fh.e_lps_or_shift);
     }
@@ -105,20 +105,20 @@ SgAsmLEFileHeader::SgAsmLEFileHeader(SgAsmGenericFile *f, rose_addr_t offset)
 
     /* File format */
     //exec_format.family    = ???; /*set above*/
-    p_exec_format->set_purpose( HF_MODTYPE_PROG == (p_e_flags & HF_MODTYPE_MASK) ? PURPOSE_EXECUTABLE : PURPOSE_LIBRARY );
-    p_exec_format->set_sex( sex );
+    get_executableFormat()->set_purpose( HF_MODTYPE_PROG == (p_e_flags & HF_MODTYPE_MASK) ? PURPOSE_EXECUTABLE : PURPOSE_LIBRARY );
+    get_executableFormat()->set_sex( sex );
     switch (p_e_os_type) {
-      case 0:  p_exec_format->set_abi( ABI_UNSPECIFIED ); break;
-      case 1:  p_exec_format->set_abi( ABI_OS2 );         break;
-      case 2:  p_exec_format->set_abi( ABI_NT );          break;
-      case 3:  p_exec_format->set_abi( ABI_MSDOS );       break;
-      case 4:  p_exec_format->set_abi( ABI_WIN386 );      break;
-      default: p_exec_format->set_abi( ABI_OTHER );       break;
+      case 0:  get_executableFormat()->set_abi( ABI_UNSPECIFIED ); break;
+      case 1:  get_executableFormat()->set_abi( ABI_OS2 );         break;
+      case 2:  get_executableFormat()->set_abi( ABI_NT );          break;
+      case 3:  get_executableFormat()->set_abi( ABI_MSDOS );       break;
+      case 4:  get_executableFormat()->set_abi( ABI_WIN386 );      break;
+      default: get_executableFormat()->set_abi( ABI_OTHER );       break;
     }
-    p_exec_format->set_abi_version( 0 );
-    p_exec_format->set_word_size( 4 );
-    p_exec_format->set_version( p_e_format_level );
-    p_exec_format->set_is_current_version( 0 == p_e_format_level );
+    get_executableFormat()->set_abi_version( 0 );
+    get_executableFormat()->set_word_size( 4 );
+    get_executableFormat()->set_version( p_e_format_level );
+    get_executableFormat()->set_is_current_version( 0 == p_e_format_level );
 
     /* Target architecture */
     switch (p_e_cpu_type) {
@@ -138,11 +138,17 @@ SgAsmLEFileHeader::SgAsmLEFileHeader(SgAsmGenericFile *f, rose_addr_t offset)
 //    entry_rva = ???; /*FIXME: see e_eip and e_eip_section; we must parse section table first */
 }
 
+bool
+SgAsmLEFileHeader::is_LE(SgAsmGenericFile *file)
+{
+    return isLe(file);
+}
+
 /* Return true if the file looks like it might be an LE or LX file according to the magic number.  The file must contain what
  * appears to be a DOS File Header at address zero, and what appears to be an LE or LX File Header at a file offset specified in
  * part of the DOS File Header (actually, in the bytes that follow the DOS File Header). */
 bool
-SgAsmLEFileHeader::is_LE(SgAsmGenericFile *file)
+SgAsmLEFileHeader::isLe(SgAsmGenericFile *file)
 {
     /* Turn off byte reference tracking for the duration of this function. We don't want our testing the file contents to
      * affect the list of bytes that we've already referenced or which we might reference later. */
@@ -194,10 +200,10 @@ SgAsmLEFileHeader::encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex, LEFil
     hostToDisk(sex, p_e_esp_section,            &(disk->e_esp_section));
     hostToDisk(sex, p_e_esp,                    &(disk->e_esp));
     hostToDisk(sex, p_e_page_size,              &(disk->e_page_size));
-    if (FAMILY_LE == p_exec_format->get_family()) {
+    if (FAMILY_LE == get_executableFormat()->get_family()) {
         hostToDisk(sex, p_e_last_page_size,     &(disk->e_lps_or_shift));
     } else {
-        ROSE_ASSERT(FAMILY_LX == p_exec_format->get_family());
+        ROSE_ASSERT(FAMILY_LX == get_executableFormat()->get_family());
         hostToDisk(sex, p_e_page_offset_shift,  &(disk->e_lps_or_shift));
     }
     hostToDisk(sex, p_e_fixup_sect_size,        &(disk->e_fixup_sect_size));
@@ -243,34 +249,39 @@ SgAsmLEFileHeader::unparse(std::ostream &f) const
     write(f, 0, sizeof fh, &fh);
 
     /* The extended DOS header */
-    if (p_dos2_header)
-        p_dos2_header->unparse(f);
+    if (get_dos2Header())
+        get_dos2Header()->unparse(f);
 
     /* The section table and all the non-synthesized sections */
-    if (p_section_table)
-        p_section_table->unparse(f);
+    if (get_sectionTable())
+        get_sectionTable()->unparse(f);
 
     /* Sections defined in the file header */
-    if (p_page_table)
-        p_page_table->unparse(f);
-    if (p_resname_table)
-        p_resname_table->unparse(f);
-    if (p_nonresname_table)
-        p_nonresname_table->unparse(f);
-    if (p_entry_table)
-        p_entry_table->unparse(f);
-    if (p_reloc_table)
-        p_reloc_table->unparse(f);
+    if (get_pageTable())
+        get_pageTable()->unparse(f);
+    if (get_residentNameTable())
+        get_residentNameTable()->unparse(f);
+    if (get_nonresidentNameTable())
+        get_nonresidentNameTable()->unparse(f);
+    if (get_entryTable())
+        get_entryTable()->unparse(f);
+    if (get_relocationTable())
+        get_relocationTable()->unparse(f);
 }
 
-/* Format name */
 const char *
 SgAsmLEFileHeader::format_name() const
 {
-    if (FAMILY_LE == p_exec_format->get_family()) {
+    return formatName();
+}
+
+const char *
+SgAsmLEFileHeader::formatName() const
+{
+    if (FAMILY_LE == get_executableFormat()->get_family()) {
         return "LE";
     } else {
-        ROSE_ASSERT(FAMILY_LX == p_exec_format->get_family());
+        ROSE_ASSERT(FAMILY_LX == get_executableFormat()->get_family());
         return "LX";
     }
 }
@@ -302,10 +313,10 @@ SgAsmLEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_esp_section",            p_e_esp_section);
     fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",           p, w, "e_esp",                    p_e_esp);
     fprintf(f, "%s%-*s = %" PRIu64 "\n",               p, w, "e_page_size",              p_e_page_size);
-    if (FAMILY_LE == p_exec_format->get_family()) {
+    if (FAMILY_LE == get_executableFormat()->get_family()) {
         fprintf(f, "%s%-*s = %u\n",                    p, w, "e_last_page_size",         p_e_last_page_size);
     } else {
-        ROSE_ASSERT(FAMILY_LX == p_exec_format->get_family());
+        ROSE_ASSERT(FAMILY_LX == get_executableFormat()->get_family());
         fprintf(f, "%s%-*s = %u\n",                    p, w, "e_page_offset_shift",      p_e_page_offset_shift);
     }
     fprintf(f, "%s%-*s = %" PRIu64 "\n",               p, w, "e_fixup_sect_size",        p_e_fixup_sect_size);
@@ -352,45 +363,45 @@ SgAsmLEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_num_instance_demand",    p_e_num_instance_demand);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_heap_size",              p_e_heap_size);
 
-    if (p_dos2_header) {
+    if (get_dos2Header()) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "dos2_header",
-                p_dos2_header->get_id(), p_dos2_header->get_name()->get_string(true).c_str());
+                get_dos2Header()->get_id(), get_dos2Header()->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "dos2_header");
     }
-    if (p_section_table) {
+    if (get_sectionTable()) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "section_table",
-                p_section_table->get_id(), p_section_table->get_name()->get_string(true).c_str());
+                get_sectionTable()->get_id(), get_sectionTable()->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "section_table");
     }
-    if (p_page_table) {
+    if (get_pageTable()) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "page_table",
-                p_page_table->get_id(), p_page_table->get_name()->get_string(true).c_str());
+                get_pageTable()->get_id(), get_pageTable()->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "page_table");
     }
-    if (p_resname_table) {
+    if (get_residentNameTable()) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "resname_table",
-                p_resname_table->get_id(), p_resname_table->get_name()->get_string(true).c_str());
+                get_residentNameTable()->get_id(), get_residentNameTable()->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "resname_table");
     }
-    if (p_nonresname_table) {
+    if (get_nonresidentNameTable()) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "nonresname_table",
-                p_nonresname_table->get_id(), p_nonresname_table->get_name()->get_string(true).c_str());
+                get_nonresidentNameTable()->get_id(), get_nonresidentNameTable()->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "nonresname_table");
     }
-    if (p_entry_table) {
+    if (get_entryTable()) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "entry_table",
-                p_entry_table->get_id(), p_entry_table->get_name()->get_string(true).c_str());
+                get_entryTable()->get_id(), get_entryTable()->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "entry_table");
     }
-    if (p_reloc_table) {
+    if (get_relocationTable()) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "reloc_table",
-                p_reloc_table->get_id(), p_reloc_table->get_name()->get_string(true).c_str());
+                get_relocationTable()->get_id(), get_relocationTable()->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "reloc_table");
     }
@@ -506,11 +517,11 @@ SgAsmLEPageTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 SgAsmLESectionTableEntry::SgAsmLESectionTableEntry(Rose::BinaryAnalysis::ByteOrder::Endianness sex, const LESectionTableEntry_disk *disk) {
     initializeProperties();
 
-    p_mapped_size      = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->mapped_size);
-    p_base_addr        = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->base_addr);
+    p_mappedSize      = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->mapped_size);
+    p_baseAddr        = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->base_addr);
     p_flags            = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->flags);
-    p_pagemap_index    = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->pagemap_index);
-    p_pagemap_nentries = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->pagemap_nentries);
+    p_pageMapIndex    = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->pagemap_index);
+    p_pageMapNEntries = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->pagemap_nentries);
     p_res1             = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk->res1);
 }
 
@@ -518,11 +529,11 @@ SgAsmLESectionTableEntry::SgAsmLESectionTableEntry(Rose::BinaryAnalysis::ByteOrd
 void *
 SgAsmLESectionTableEntry::encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex, LESectionTableEntry_disk *disk) const
 {
-    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_mapped_size,      &(disk->mapped_size));
-    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_base_addr,        &(disk->base_addr));
+    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_mappedSize,      &(disk->mapped_size));
+    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_baseAddr,        &(disk->base_addr));
     Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_flags,            &(disk->flags));
-    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_pagemap_index,    &(disk->pagemap_index));
-    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_pagemap_nentries, &(disk->pagemap_nentries));
+    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_pageMapIndex,    &(disk->pagemap_index));
+    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_pageMapNEntries, &(disk->pagemap_nentries));
     Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_res1,             &(disk->res1));
     return disk;
 }
@@ -540,8 +551,8 @@ SgAsmLESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
-    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n", p, w, "mapped_size",      p_mapped_size);
-    fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",   p, w, "base_addr",        p_base_addr);
+    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n", p, w, "mapped_size",      p_mappedSize);
+    fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",   p, w, "base_addr",        p_baseAddr);
 
     fprintf(f, "%s%-*s = 0x%08x",            p, w, "flags",            p_flags);
     switch (p_flags & SF_TYPE_MASK) {
@@ -567,8 +578,8 @@ SgAsmLESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     if (p_flags & SF_IO_PRIV)       fputs(" io-priv",       f);
     fputc('\n', f);
     
-    fprintf(f, "%s%-*s = %u\n",              p, w, "pagemap_index",    p_pagemap_index);
-    fprintf(f, "%s%-*s = %u entries\n",      p, w, "pagemap_nentries", p_pagemap_nentries);
+    fprintf(f, "%s%-*s = %u\n",              p, w, "pagemap_index",    p_pageMapIndex);
+    fprintf(f, "%s%-*s = %u entries\n",      p, w, "pagemap_nentries", p_pageMapNEntries);
     fprintf(f, "%s%-*s = 0x%08x\n",          p, w, "res1",             p_res1);
 }
     
@@ -591,7 +602,7 @@ SgAsmLESection::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
 
     SgAsmGenericSection::dump(f, p, -1);
-    p_st_entry->dump(f, p, -1);
+    get_sectionTableEntry()->dump(f, p, -1);
 }
 
 /* Constructor */
@@ -1131,5 +1142,125 @@ SgAsmLEFileHeader::parse(SgAsmDOSFileHeader *dos_header)
 
 // }; //namespace LE
 // }; //namespace Exec
+
+SgAsmDOSExtendedHeader*
+SgAsmLEFileHeader::get_dos2_header() const {
+    return get_dos2Header();
+}
+
+void
+SgAsmLEFileHeader::set_dos2_header(SgAsmDOSExtendedHeader *x) {
+    set_dos2Header(x);
+}
+
+SgAsmLESectionTable*
+SgAsmLEFileHeader::get_section_table() const {
+    return get_sectionTable();
+}
+
+void
+SgAsmLEFileHeader::set_section_table(SgAsmLESectionTable *x) {
+    set_sectionTable(x);
+}
+
+SgAsmLEPageTable*
+SgAsmLEFileHeader::get_page_table() const {
+    return get_pageTable();
+}
+
+void
+SgAsmLEFileHeader::set_page_table(SgAsmLEPageTable *x) {
+    set_pageTable(x);
+}
+
+SgAsmLENameTable*
+SgAsmLEFileHeader::get_resname_table() const {
+    return get_residentNameTable();
+}
+
+void
+SgAsmLEFileHeader::set_resname_table(SgAsmLENameTable *x) {
+    set_residentNameTable(x);
+}
+
+SgAsmLENameTable*
+SgAsmLEFileHeader::get_nonresname_table() const {
+    return get_nonresidentNameTable();
+}
+
+void
+SgAsmLEFileHeader::set_nonresname_table(SgAsmLENameTable *x) {
+    set_nonresidentNameTable(x);
+}
+
+SgAsmLEEntryTable*
+SgAsmLEFileHeader::get_entry_table() const {
+    return get_entryTable();
+}
+
+void
+SgAsmLEFileHeader::set_entry_table(SgAsmLEEntryTable *x) {
+    set_entryTable(x);
+}
+
+SgAsmLERelocTable*
+SgAsmLEFileHeader::get_reloc_table() const {
+    return get_relocationTable();
+}
+
+void
+SgAsmLEFileHeader::set_reloc_table(SgAsmLERelocTable *x) {
+    set_relocationTable(x);
+}
+
+unsigned
+SgAsmLESectionTableEntry::get_pagemap_index() const {
+    return get_pageMapIndex();
+}
+
+void
+SgAsmLESectionTableEntry::set_pagemap_index(unsigned x) {
+    set_pageMapIndex(x);
+}
+
+unsigned
+SgAsmLESectionTableEntry::get_pagemap_nentries() const {
+    return get_pageMapNEntries();
+}
+
+void
+SgAsmLESectionTableEntry::set_pagemap_nentries(unsigned x) {
+    set_pageMapNEntries(x);
+}
+
+rose_addr_t
+SgAsmLESectionTableEntry::get_mapped_size() const {
+    return get_mappedSize();
+}
+
+void
+SgAsmLESectionTableEntry::set_mapped_size(rose_addr_t x) {
+    set_mappedSize(x);
+}
+
+rose_addr_t
+SgAsmLESectionTableEntry::get_base_addr() const {
+    return get_baseAddr();
+}
+
+void
+SgAsmLESectionTableEntry::set_base_addr(rose_addr_t x) {
+    set_baseAddr(x);
+}
+
+SgAsmLESectionTableEntry*
+SgAsmLESection::get_st_entry() const {
+    return get_sectionTableEntry();
+}
+
+void
+SgAsmLESection::set_st_entry(SgAsmLESectionTableEntry *x) {
+    set_sectionTableEntry(x);
+}
 
 #endif

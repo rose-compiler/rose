@@ -33,19 +33,19 @@ public:
      *
      *  See PE specification. */
     [[using Rosebud: rosetta, traverse]]
-    SgAsmGenericString* dll_name =0;
+    SgAsmGenericString* dllName = nullptr;
 
     /** Property: Address of the import library name.
      *
      *  See PE specification. */
     [[using Rosebud: rosetta, large]]
-    rose_rva_t dll_name_rva = 0;
+    rose_rva_t dllNameRva = 0;
 
     /** Property: Bytes allocated in the file for the name.
      *
      *  See PE specification. */
     [[using Rosebud: rosetta]]
-    size_t dll_name_nalloc =0;
+    size_t dll_name_nalloc = 0;
 
     /** Property: Time.
      *
@@ -121,13 +121,13 @@ public:
      *  Returns the number of bytes required for the entire IAT or ILT (including the zero terminator) as it is currently
      *  defined in the Import Directory.  The returned size does not include space required to store any Hint/Name pairs,
      *  which are outside the ILT/IAT but pointed to by the ILT/IAT. */
-    size_t iat_required_size() const;
+    size_t iatRequiredSize() const;
 
     /** Find an import item in an import directory.
      *
      *  Returns the index of the specified import item in this directory, or -1 if the import item is not a child of this
      *  directory.  The hint index is checked first. */
-    int find_import_item(const SgAsmPEImportItem *item, int hint=0) const;
+    int findImportItem(const SgAsmPEImportItem *item, int hint=0) const;
 
     /** Obtains the virtual address of the Hint/Name Table.
      *
@@ -140,9 +140,22 @@ public:
      *  This function will scan this Import Directory's import items, observe which items make references to Hint/Name
      *  pairs that have known addresses, and add those areas of virtual memory to the specified extent map.  This function
      *  returns the number of ILT entries that reference a Hint/Name pair. */
-    size_t hintname_table_extent(AddressIntervalSet &extent/*in,out*/) const;
+    size_t hintNameTableExtent(AddressIntervalSet &extent/*in,out*/) const;
 
 private:
     void parse_ilt_iat(const rose_rva_t &table_start, bool assume_bound);
     void unparse_ilt_iat(std::ostream&,const rose_rva_t &table_start, bool assume_bound, size_t nalloc) const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmGenericString* get_dll_name() const ROSE_DEPRECATED("use get_dllName");
+    void set_dll_name(SgAsmGenericString*) ROSE_DEPRECATED("use set_dllName");
+    const rose_rva_t& get_dll_name_rva() const ROSE_DEPRECATED("use get_dllNameRva");
+    rose_rva_t& get_dll_name_rva() ROSE_DEPRECATED("use get_dllNameRva");
+    void set_dll_name_rva(const rose_rva_t&) ROSE_DEPRECATED("use set_dllNameRva");
+    size_t iat_required_size() const ROSE_DEPRECATED("use iatRequiredSize");
+    int find_import_item(const SgAsmPEImportItem*, int=0) const ROSE_DEPRECATED("use findImportItem");
+    size_t hintname_table_extent(AddressIntervalSet&) const ROSE_DEPRECATED("use hintNameTableExtent");
 };

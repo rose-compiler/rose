@@ -1,12 +1,21 @@
 class SgAsmNESection: public SgAsmGenericSection {
     [[using Rosebud: rosetta, traverse]]
-    SgAsmNESectionTableEntry* st_entry = nullptr;
+    SgAsmNESectionTableEntry* sectionTableEntry = nullptr;
 
     [[using Rosebud: rosetta, traverse]]
-    SgAsmNERelocTable* reloc_table = nullptr;
+    SgAsmNERelocTable* relocationTable = nullptr;
 
 public:
     explicit SgAsmNESection(SgAsmNEFileHeader *fhdr);
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmNESectionTableEntry* get_st_entry() const ROSE_DEPRECATED("use get_sectionTableEntry");
+    void set_st_entry(SgAsmNESectionTableEntry*) ROSE_DEPRECATED("use set_sectionTableEntry");
+    SgAsmNERelocTable* get_reloc_table() const ROSE_DEPRECATED("use get_relocationTable");
+    void set_reloc_table(SgAsmNERelocTable*) ROSE_DEPRECATED("use set_relocationTable");
 };

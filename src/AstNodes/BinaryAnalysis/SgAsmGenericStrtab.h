@@ -17,27 +17,24 @@ public:
 
     /** Property: String storage list. */
     [[using Rosebud: rosetta]]
-    SgAsmGenericStrtab::referenced_t storage_list;
+    SgAsmGenericStrtab::referenced_t storageList;
 
     /** Property: Free space list.
      *
      *  This list stores space which is available for new strings.
      *
      *  @{ */
-    [[using Rosebud: rosetta, accessors(), mutators()]]
-    AddressIntervalSet freelist;
-
-    const AddressIntervalSet& get_freelist() const;
-    AddressIntervalSet& get_freelist();
+    [[using Rosebud: rosetta, large, mutators()]]
+    AddressIntervalSet freeList;
     /** @} */
 
     /** Property: Space that should never be freed. */
     [[using Rosebud: rosetta]]
-    SgAsmStringStorage* dont_free = nullptr;
+    SgAsmStringStorage* dontFree = nullptr;
 
     /** Property: Number of strings freed thus far. */
     [[using Rosebud: rosetta]]
-    size_t num_freed = 0;
+    size_t numberFreed = 0;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
@@ -53,7 +50,7 @@ public:
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 
     /** Constructs an SgAsmStoredString from an offset into this string table. */
-    SgAsmStoredString *create_string(rose_addr_t offset, bool shared);
+    SgAsmStoredString *createString(rose_addr_t offset, bool shared);
 
     /** Free area of this string table that corresponds to the string currently stored.
      *
@@ -70,9 +67,9 @@ public:
      *
      *  This is more efficient than calling @ref free for each storage object. If @p blow_away_holes is true then any areas
      *  that are unreferenced in the string table will be marked as referenced and added to the free list. */
-    void free_all_strings(bool blow_away_holes=false);
+    void freeAllStrings(bool blow_away_holes=false);
 
-    virtual void allocate_overlap(SgAsmStringStorage*) {};
+    virtual void allocateOverlap(SgAsmStringStorage*);
 
     /** Allocates storage for strings that have been modified but not allocated.
      *
@@ -83,7 +80,25 @@ public:
 
 
     //These should be pure virtual but ROSETTA apparently doesn't support that (RPM 2008-10-03)
-    virtual SgAsmStringStorage *create_storage(rose_addr_t /*offset*/, bool /*shared*/) {abort(); return NULL;}
-    virtual rose_addr_t get_storage_size(const SgAsmStringStorage*) {abort(); return 0;}
-    virtual void rebind(SgAsmStringStorage*, rose_addr_t) {abort();}
+    virtual SgAsmStringStorage *createStorage(rose_addr_t /*offset*/, bool /*shared*/);
+    virtual rose_addr_t get_storageSize(const SgAsmStringStorage*);
+    virtual void rebind(SgAsmStringStorage*, rose_addr_t);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    const referenced_t& get_storage_list() const ROSE_DEPRECATED("use get_storageList");
+    void set_storage_list(const referenced_t&) ROSE_DEPRECATED("use set_storageList");
+    const AddressIntervalSet& get_freelist() const ROSE_DEPRECATED("use get_freeList");
+    AddressIntervalSet& get_freelist() ROSE_DEPRECATED("use set_freeList");
+    SgAsmStringStorage* get_dont_free() const ROSE_DEPRECATED("use get_dontFree");
+    void set_dont_free(SgAsmStringStorage*) ROSE_DEPRECATED("use set_dontFree");
+    size_t get_num_freed() const ROSE_DEPRECATED("use get_numberFreed");
+    void set_num_freed(size_t) ROSE_DEPRECATED("use set_numberFreed");
+    SgAsmStoredString *create_string(rose_addr_t, bool) ROSE_DEPRECATED("use createString");
+    void free_all_strings(bool=false) ROSE_DEPRECATED("use freeAllStrings");
+    virtual void allocate_overlap(SgAsmStringStorage*) ROSE_DEPRECATED("use allocateOverlap");
+    virtual SgAsmStringStorage *create_storage(rose_addr_t, bool) ROSE_DEPRECATED("use createStorage");
+    virtual rose_addr_t get_storage_size(const SgAsmStringStorage*) ROSE_DEPRECATED("use get_storageSize");
 };

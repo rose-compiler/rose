@@ -25,12 +25,18 @@ SgAsmPEImportDirectory::SgAsmPEImportDirectory(SgAsmPEImportSection *section, co
     section->add_import_directory(this);
     p_time = time(nullptr);
 
-    p_dll_name = new SgAsmBasicString(dll_name);
-    p_dll_name->set_parent(this);
+    p_dllName = new SgAsmBasicString(dll_name);
+    get_dllName()->set_parent(this);
 }
 
 size_t
 SgAsmPEImportDirectory::iat_required_size() const
+{
+    return iatRequiredSize();
+}
+
+size_t
+SgAsmPEImportDirectory::iatRequiredSize() const
 {
     SgAsmPEFileHeader *fhdr = SageInterface::getEnclosingNode<SgAsmPEFileHeader>(this);
     assert(fhdr!=nullptr);
@@ -39,6 +45,12 @@ SgAsmPEImportDirectory::iat_required_size() const
 
 int
 SgAsmPEImportDirectory::find_import_item(const SgAsmPEImportItem *item, int hint) const
+{
+    return findImportItem(item, hint);
+}
+
+int
+SgAsmPEImportDirectory::findImportItem(const SgAsmPEImportItem *item, int hint) const
 {
     const SgAsmPEImportItemPtrList &imports = get_imports()->get_vector();
     if (hint>=0 && (size_t)hint<imports.size() && imports[hint]==item)
@@ -52,6 +64,12 @@ SgAsmPEImportDirectory::find_import_item(const SgAsmPEImportItem *item, int hint
 
 size_t
 SgAsmPEImportDirectory::hintname_table_extent(AddressIntervalSet &extent/*in,out*/) const
+{
+    return hintNameTableExtent(extent);
+}
+
+size_t
+SgAsmPEImportDirectory::hintNameTableExtent(AddressIntervalSet &extent/*in,out*/) const
 {
     size_t retval = 0;
     const SgAsmPEImportItemPtrList &imports = get_imports()->get_vector();
@@ -99,30 +117,30 @@ SgAsmPEImportDirectory::parse(rose_addr_t idir_va, bool /*isLastEntry*/)
     p_ilt_rva         = ByteOrder::leToHost(disk.ilt_rva);
     p_time            = ByteOrder::leToHost(disk.time);
     p_forwarder_chain = ByteOrder::leToHost(disk.forwarder_chain);
-    p_dll_name_rva    = ByteOrder::leToHost(disk.dll_name_rva);
+    p_dllNameRva    = ByteOrder::leToHost(disk.dll_name_rva);
     p_iat_rva         = ByteOrder::leToHost(disk.iat_rva);
 
     /* Bind RVAs to best sections */
     p_ilt_rva.bind(fhdr);
-    p_dll_name_rva.bind(fhdr);
+    p_dllNameRva.bind(fhdr);
     p_iat_rva.bind(fhdr);
 
     /* Library name.  The PE format specification does not require the name to be contained in the import section, but we issue
      * a warning because ROSE may have problems allocating new space for the name if it's changed. */
-    ROSE_ASSERT(p_dll_name!=nullptr);
+    ROSE_ASSERT(get_dllName()!=nullptr);
     std::string dll_name;
-    if (0==p_dll_name_rva.get_section()) {
+    if (0==get_dllNameRva().get_section()) {
         if (SgAsmPEImportSection::show_import_mesg()) {
             mlog[WARN] <<"SgAsmPEImportDirectory::parse: import directory at va " <<StringUtility::addrToString(idir_va)
-                       <<" has bad DLL name rva " <<p_dll_name_rva <<"\n";
+                       <<" has bad DLL name rva " <<get_dllNameRva() <<"\n";
         }
     } else {
         try {
-            dll_name = p_dll_name_rva.get_section()->read_content_str(fhdr->get_loader_map(), p_dll_name_rva.get_va());
+            dll_name = get_dllNameRva().get_section()->read_content_str(fhdr->get_loader_map(), get_dllNameRva().get_va());
         } catch (const MemoryMap::NotMapped &e) {
             if (SgAsmPEImportSection::show_import_mesg()) {
                 mlog[WARN] <<"SgAsmPEImportDirectory::parse: short read of dll name at rva "
-                           << p_dll_name_rva <<" for import directory at va " <<StringUtility::addrToString(idir_va) <<"\n";
+                           << get_dllNameRva() <<" for import directory at va " <<StringUtility::addrToString(idir_va) <<"\n";
                 if (e.map) {
                     mlog[WARN] <<"    Memory map in effect at time of error is:\n";
                     e.map->dump(mlog[WARN], "        ");
@@ -130,7 +148,7 @@ SgAsmPEImportDirectory::parse(rose_addr_t idir_va, bool /*isLastEntry*/)
             }
         }
     }
-    p_dll_name->set_string(dll_name);
+    get_dllName()->set_string(dll_name);
     p_dll_name_nalloc = dll_name.size() + 1;
 
     parse_ilt_iat(p_ilt_rva, false);
@@ -501,7 +519,7 @@ SgAsmPEImportDirectory::encode(PEImportDirectory_disk *disk) const
     ByteOrder::hostToLe(p_ilt_rva.get_rva(),      &(disk->ilt_rva));
     ByteOrder::hostToLe(p_time,                   &(disk->time));
     ByteOrder::hostToLe(p_forwarder_chain,        &(disk->forwarder_chain));
-    ByteOrder::hostToLe(p_dll_name_rva.get_rva(), &(disk->dll_name_rva));
+    ByteOrder::hostToLe(get_dllNameRva().get_rva(), &(disk->dll_name_rva));
     ByteOrder::hostToLe(p_iat_rva.get_rva(),      &(disk->iat_rva));
     return disk;
 }
@@ -514,9 +532,9 @@ SgAsmPEImportDirectory::reallocate(rose_rva_t start_rva)
 
     /* Allocate space for the name if it hasn't been allocated already; reallocate space if its allocated in the import
      * section.  Allocate space even if the name is the empty string. */
-    if (0==p_dll_name_rva.get_rva() || p_dll_name_rva.get_section()==end_rva.get_section()) {
+    if (0==get_dllNameRva().get_rva() || get_dllNameRva().get_section()==end_rva.get_section()) {
         p_dll_name_nalloc = get_dll_name()->get_string().size() + 1;
-        p_dll_name_rva = end_rva;
+        p_dllNameRva = end_rva;
         end_rva.increment(p_dll_name_nalloc);
     }
 
@@ -558,21 +576,21 @@ void
 SgAsmPEImportDirectory::unparse(std::ostream &f, const SgAsmPEImportSection *section, size_t idx) const
 {
     /* The DLL name */
-    if (0==p_dll_name_rva.get_rva() || nullptr==p_dll_name_rva.get_section()) {
+    if (0==get_dllNameRva().get_rva() || nullptr==get_dllNameRva().get_section()) {
         if (SgAsmPEImportSection::show_import_mesg()) {
-            mlog[WARN] <<"SgAsmPEImportDirectory: DLL name address " <<p_dll_name_rva
+            mlog[WARN] <<"SgAsmPEImportDirectory: DLL name address " <<get_dllNameRva()
                        <<" is invalid or not bound to any file section\n";
         }
-    } else if (p_dll_name->get_string().size()+1 > p_dll_name_nalloc) {
+    } else if (get_dllName()->get_string().size()+1 > p_dll_name_nalloc) {
         if (SgAsmPEImportSection::show_import_mesg()) {
             mlog[WARN] <<"SgAsmPEImportDirectory: insufficient space allocated ("
                        <<StringUtility::plural(p_dll_name_nalloc, "bytes") <<")"
-                       <<" for DLL name (need " <<StringUtility::plural(p_dll_name->get_string().size()+1, "bytes") <<")\n";
+                       <<" for DLL name (need " <<StringUtility::plural(get_dllName()->get_string().size()+1, "bytes") <<")\n";
         }
     } else if (p_dll_name_nalloc > 0) {
         std::vector<uint8_t> buf(p_dll_name_nalloc, 0);
-        memcpy(&buf[0], p_dll_name->get_string().c_str(), p_dll_name->get_string().size());
-        p_dll_name_rva.get_section()->write(f, p_dll_name_rva.get_rel(), p_dll_name_nalloc, &buf[0]);
+        memcpy(&buf[0], get_dllName()->get_string().c_str(), get_dllName()->get_string().size());
+        get_dllNameRva().get_section()->write(f, get_dllNameRva().get_rel(), p_dll_name_nalloc, &buf[0]);
     }
 
     /* Import Lookup Table and Import Address Table (and indirectly, Hint/Name entries). According to the PE secification: "The
@@ -601,9 +619,9 @@ SgAsmPEImportDirectory::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
-    fprintf(f, "%s%-*s = %s for %" PRIuPTR " bytes", p, w, "dll_name_rva", p_dll_name_rva.to_string().c_str(), p_dll_name_nalloc);
-    if (p_dll_name)
-        fprintf(f, " \"%s\"", p_dll_name->get_string(true).c_str());
+    fprintf(f, "%s%-*s = %s for %" PRIuPTR " bytes", p, w, "dll_name_rva", get_dllNameRva().to_string().c_str(), p_dll_name_nalloc);
+    if (get_dllName())
+        fprintf(f, " \"%s\"", get_dllName()->get_string(true).c_str());
     fputc('\n', f);
 
     fprintf(f, "%s%-*s = %lu %s",        p, w, "time", (unsigned long)p_time, ctime(&p_time));
@@ -616,6 +634,31 @@ SgAsmPEImportDirectory::dump(FILE *f, const char *prefix, ssize_t idx) const
         SgAsmPEImportItem *import = p_imports->get_vector()[i];
         import->dump(f, p, i);
     }
+}
+
+SgAsmGenericString*
+SgAsmPEImportDirectory::get_dll_name() const {
+    return get_dllName();
+}
+
+void
+SgAsmPEImportDirectory::set_dll_name(SgAsmGenericString *x) {
+    set_dllName(x);
+}
+
+const rose_rva_t&
+SgAsmPEImportDirectory::get_dll_name_rva() const {
+    return get_dllNameRva();
+}
+
+rose_rva_t&
+SgAsmPEImportDirectory::get_dll_name_rva() {
+    return get_dllNameRva();
+}
+
+void
+SgAsmPEImportDirectory::set_dll_name_rva(const rose_rva_t &x) {
+    set_dllNameRva(x);
 }
 
 #endif

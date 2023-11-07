@@ -188,12 +188,20 @@ public:
     /** @} */
 
     /** Update this section table entry with newer information from the section. */
-    void update_from_section(SgAsmElfSection*);
+    void updateFromSection(SgAsmElfSection*);
 
     /** Print some debugging info */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 
     // Use Rose::stringify... function instead.
-    static std::string to_string(SgAsmElfSectionTableEntry::SectionType);
-    static std::string to_string(SgAsmElfSectionTableEntry::SectionFlags);
+    static std::string toString(SgAsmElfSectionTableEntry::SectionType);
+    static std::string toString(SgAsmElfSectionTableEntry::SectionFlags);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    void update_from_section(SgAsmElfSection*) ROSE_DEPRECATED("use updateFromSection");
+    static std::string to_string(SgAsmElfSectionTableEntry::SectionType) ROSE_DEPRECATED("use toString");
+    static std::string to_string(SgAsmElfSectionTableEntry::SectionFlags) ROSE_DEPRECATED("use toString");
 };

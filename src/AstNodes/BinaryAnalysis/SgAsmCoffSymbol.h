@@ -60,7 +60,7 @@ public:
 
     /** Property: Auxilliary data. */
     [[using Rosebud: rosetta, large]]
-    SgUnsignedCharList aux_data ;
+    SgUnsignedCharList auxiliaryData ;
 
 public:
     static const unsigned int COFFSymbol_disk_size = 18;
@@ -72,4 +72,13 @@ public:
     SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAsmGenericSection *strtab, size_t idx);
     void *encode(SgAsmCoffSymbol::COFFSymbol_disk*) const;
     virtual void dump(FILE *f, const char *prefix, ssize_t idx) const override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    const SgUnsignedCharList& get_aux_data() const ROSE_DEPRECATED("use get_auxiliaryData");
+    void set_aux_data(const SgUnsignedCharList&) ROSE_DEPRECATED("use set_auxiliaryData");
+
+
 };

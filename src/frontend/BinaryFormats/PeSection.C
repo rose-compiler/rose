@@ -24,6 +24,12 @@ SgAsmPESection::reallocate()
 SgAsmPESection *
 SgAsmPESection::init_from_section_table(SgAsmPESectionTableEntry *entry, int id)
 {
+    return initFromSectionTable(entry, id);
+}
+
+SgAsmPESection *
+SgAsmPESection::initFromSectionTable(SgAsmPESectionTableEntry *entry, int id)
+{
     ROSE_ASSERT(entry);
     ROSE_ASSERT(id>=0);
     

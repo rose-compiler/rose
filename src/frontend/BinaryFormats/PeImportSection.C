@@ -15,8 +15,24 @@ size_t SgAsmPEImportSection::mesg_nprinted = 0;
 bool
 SgAsmPEImportSection::show_import_mesg()
 {
+    return showImportMessage();
+}
+
+bool
+SgAsmPEImportSection::showImportMessage()
+{
     static const size_t max_to_print=15;
     return ++mesg_nprinted <= max_to_print;
+}
+
+void
+SgAsmPEImportSection::import_mesg_reset() {
+    importMessageReset();
+}
+
+void
+SgAsmPEImportSection::importMessageReset() {
+    mesg_nprinted=0;
 }
 
 SgAsmPEImportSection::SgAsmPEImportSection(SgAsmPEFileHeader *fhdr)
@@ -78,6 +94,12 @@ SgAsmPEImportSection::parse()
 void
 SgAsmPEImportSection::add_import_directory(SgAsmPEImportDirectory *d)
 {
+    addImportDirectory(d);
+}
+
+void
+SgAsmPEImportSection::addImportDirectory(SgAsmPEImportDirectory *d)
+{
     ROSE_ASSERT(get_import_directories()!=NULL);
     SgAsmPEImportDirectoryPtrList &dirlist = get_import_directories()->get_vector();
 
@@ -91,6 +113,12 @@ SgAsmPEImportSection::add_import_directory(SgAsmPEImportDirectory *d)
 
 void
 SgAsmPEImportSection::remove_import_directory(SgAsmPEImportDirectory *d)
+{
+    removeImportDirectory(d);
+}
+
+void
+SgAsmPEImportSection::removeImportDirectory(SgAsmPEImportDirectory *d)
 {
     SgAsmPEImportDirectoryPtrList &dirlist = get_import_directories()->get_vector();
     SgAsmPEImportDirectoryPtrList::iterator found = std::find(dirlist.begin(), dirlist.end(), d);
@@ -138,6 +166,12 @@ SgAsmPEImportSection::reallocate()
 
 size_t
 SgAsmPEImportSection::reallocate_iats(rose_rva_t start_at)
+{
+    return reallocateIats(start_at);
+}
+
+size_t
+SgAsmPEImportSection::reallocateIats(rose_rva_t start_at)
 {
     rose_rva_t rva = start_at;
     const SgAsmPEImportDirectoryPtrList &dirs = get_import_directories()->get_vector();

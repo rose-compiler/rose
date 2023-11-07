@@ -61,9 +61,9 @@ Visitor::visit(SgNode* n)
                printf ("   coffSymbol->get_st_storage_class()   = %u  \n",coffSymbol->get_st_storage_class());
                printf ("   coffSymbol->get_st_num_aux_entries() = %u \n",coffSymbol->get_st_num_aux_entries());
                printf ("   coffSymbol->get_aux_data():  size    = %zu \n",coffSymbol->get_aux_data().size());
-               for (SgUnsignedCharList::iterator i = coffSymbol->get_aux_data().begin(); i != coffSymbol->get_aux_data().end(); i++)
+               for (const auto &auxData: coffSymbol->get_aux_data())
                   {
-                    printf ("      coffSymbol->get_aux_data() = %u \n",*i);
+                    printf ("      coffSymbol->get_aux_data() = %u \n",auxData);
                   }
              }
         }

@@ -368,19 +368,19 @@ public:
      *
      *  See PE specification. */
     [[using Rosebud: rosetta, traverse]]
-    SgAsmPERVASizePairList* rvasize_pairs = nullptr;
+    SgAsmPERVASizePairList* rvaSizePairs = nullptr;
 
     /** Property: Section table.
      *
      *  See PE specification. */
     [[using Rosebud: rosetta]]
-    SgAsmPESectionTable* section_table = NULL;
+    SgAsmPESectionTable* sectionTable = nullptr;
 
     /** Property: COFF symbol table.
      *
      *  See PE specification. */
     [[using Rosebud: rosetta]]
-    SgAsmCoffSymbolTable* coff_symtab = NULL;
+    SgAsmCoffSymbolTable* coffSymbolTable = nullptr;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
@@ -388,42 +388,62 @@ public:
 public:
     explicit SgAsmPEFileHeader(SgAsmGenericFile*);
 
-    virtual const char *format_name() const override {return "PE";}
+    virtual const char* formatName() const override;
 
     /** Return true if the file looks like it might be a PE file according to the magic number.
      *
      *  The file must contain what appears to be a DOS File Header at address zero, and what appears to be a PE File Header
      *  at a file offset specified in part of the DOS File Header (actually, in the bytes that follow the DOS File
      *  Header). */
-    static bool is_PE (SgAsmGenericFile*);
+    static bool isPe(SgAsmGenericFile*);
 
     /** Convert an RVA/Size Pair index number into a section name.
      *
      *  This is different than @ref stringifySgAsmPEFileHeaderPairPurpose because it returns a section name rather than an
      *  enum name. */
-    std::string rvasize_pair_name(PairPurpose, const char **short_name);
+    std::string rvaSizePairName(PairPurpose, const char **short_name);
 
     /** Define an RVA/Size pair in the PE file header. */
-    void set_rvasize_pair(PairPurpose, SgAsmPESection*);
+    void set_rvaSizePair(PairPurpose, SgAsmPESection*);
 
     /** Update all the RVA/Size pair info from the section to which it points. */
-    void update_rvasize_pairs();
+    void updateRvaSizePairs();
 
-    void add_rvasize_pairs();
+    void addRvaSizePairs();
 
     virtual SgAsmPEFileHeader *parse() override;
     virtual bool reallocate() override;
     virtual void unparse(std::ostream&) const override;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-    void create_table_sections();
+    void createTableSections();
 
     /* Loader memory maps */
-    Rose::BinaryAnalysis::MemoryMap::Ptr get_loader_map() const {return p_loader_map;}
-    void set_loader_map(const Rose::BinaryAnalysis::MemoryMap::Ptr &map) {p_loader_map=map;}
+    Rose::BinaryAnalysis::MemoryMap::Ptr get_loaderMap() const;
+    void set_loaderMap(const Rose::BinaryAnalysis::MemoryMap::Ptr&);
 
 private:
     void *encode(SgAsmPEFileHeader::PEFileHeader_disk*) const;
     void *encode(SgAsmPEFileHeader::PE32OptHeader_disk*) const;
     void *encode(SgAsmPEFileHeader::PE64OptHeader_disk*) const;
     Rose::BinaryAnalysis::MemoryMap::Ptr p_loader_map;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmPERVASizePairList* get_rvasize_pairs() const ROSE_DEPRECATED("use get_rvaSizePairs");
+    void set_rvasize_pairs(SgAsmPERVASizePairList*) ROSE_DEPRECATED("use set_rvaSizePairs");
+    SgAsmPESectionTable* get_section_table() const ROSE_DEPRECATED("use get_sectionTable");
+    void set_section_table(SgAsmPESectionTable*) ROSE_DEPRECATED("use set_sectionTable");
+    SgAsmCoffSymbolTable* get_coff_symtab() const ROSE_DEPRECATED("use get_coffSymbolTable");
+    void set_coff_symtab(SgAsmCoffSymbolTable*) ROSE_DEPRECATED("use set_coffSymbolTable");
+    virtual const char *format_name() const override ROSE_DEPRECATED("use formatName");
+    static bool is_PE (SgAsmGenericFile*) ROSE_DEPRECATED("use isPe");
+    std::string rvasize_pair_name(PairPurpose, const char**) ROSE_DEPRECATED("use rvaSizePairName");
+    void set_rvasize_pair(PairPurpose, SgAsmPESection*) ROSE_DEPRECATED("use set_rvaSizePair");
+    void update_rvasize_pairs() ROSE_DEPRECATED("use updateRvaSizePairs");
+    void add_rvasize_pairs() ROSE_DEPRECATED("use addRvaSizePairs");
+    void create_table_sections() ROSE_DEPRECATED("use createTableSections");
+    Rose::BinaryAnalysis::MemoryMap::Ptr get_loader_map() const ROSE_DEPRECATED("use get_loaderMap");
+    void set_loader_map(const Rose::BinaryAnalysis::MemoryMap::Ptr&) ROSE_DEPRECATED("use set_loaderMap");
 };

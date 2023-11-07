@@ -26,6 +26,12 @@ SgAsmInterpretation::get_files() const
 void
 SgAsmInterpretation::insert_instructions(InstructionMap &imap/*in,out*/)
 {
+    return insertInstructions(imap);
+}
+
+void
+SgAsmInterpretation::insertInstructions(InstructionMap &imap/*in,out*/)
+{
     struct T: AstSimpleProcessing {
         InstructionMap &imap;
         T(InstructionMap &imap): imap(imap) {}
@@ -39,6 +45,12 @@ SgAsmInterpretation::insert_instructions(InstructionMap &imap/*in,out*/)
 
 void
 SgAsmInterpretation::erase_instructions(InstructionMap &imap/*in,out*/)
+{
+    eraseInstructions(imap);
+}
+
+void
+SgAsmInterpretation::eraseInstructions(InstructionMap &imap/*in,out*/)
 {
     struct T: AstSimpleProcessing {
         InstructionMap &imap;
@@ -54,6 +66,12 @@ SgAsmInterpretation::erase_instructions(InstructionMap &imap/*in,out*/)
 InstructionMap &
 SgAsmInterpretation::get_instruction_map(bool recompute)
 {
+    return get_instructionMap(recompute);
+}
+
+InstructionMap &
+SgAsmInterpretation::get_instructionMap(bool recompute)
+{
     if (recompute || instruction_map.empty()) {
         instruction_map.clear();
         insert_instructions(instruction_map);
@@ -64,7 +82,23 @@ SgAsmInterpretation::get_instruction_map(bool recompute)
 void
 SgAsmInterpretation::set_instruction_map(const InstructionMap &imap)
 {
+    set_instructionMap(imap);
+}
+
+void
+SgAsmInterpretation::set_instructionMap(const InstructionMap &imap)
+{
     instruction_map = imap;
+}
+
+SgAsmBlock*
+SgAsmInterpretation::get_global_block() const {
+    return get_globalBlock();
+}
+
+void
+SgAsmInterpretation::set_global_block(SgAsmBlock *x) {
+    set_globalBlock(x);
 }
 
 #endif

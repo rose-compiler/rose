@@ -67,7 +67,7 @@ SgAsmCoffSymbol::SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *s
     
     /* Make initial guesses for storage class, type, and definition state. We'll adjust them after reading aux entries. */
     p_value = Rose::BinaryAnalysis::ByteOrder::leToHost(disk.st_value);
-    p_def_state = SYM_DEFINED;
+    p_definitionState = SYM_DEFINED;
     switch (p_st_storage_class) {
       case 0:    p_binding = SYM_NO_BINDING; break; /*none*/
       case 1:    p_binding = SYM_LOCAL;      break; /*stack*/
@@ -113,22 +113,22 @@ SgAsmCoffSymbol::SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *s
               <<", p_st_storage_class=" <<p_st_storage_class
               <<", p_st_num_aux_entries=" <<p_st_num_aux_entries
               <<", p_value=" <<p_value
-              <<", p_def_state=" <<p_def_state
+              <<", p_def_state=" <<get_definitionState()
               <<", p_binding=" <<p_binding
               <<", p_type=" <<p_type <<"\n";
     }
     
     /* Read additional aux entries. We keep this as 'char' to avoid alignment problems. */
     if (p_st_num_aux_entries > 0) {
-        p_aux_data = symtab->read_content_local_ucl((idx+1)*COFFSymbol_disk_size, p_st_num_aux_entries * COFFSymbol_disk_size);
+        p_auxiliaryData = symtab->read_content_local_ucl((idx+1)*COFFSymbol_disk_size, p_st_num_aux_entries * COFFSymbol_disk_size);
 
         if (2 /*external*/ == p_st_storage_class && get_type() == SYM_FUNC && p_st_section_num > 0) {
             // Auxiliary record format 1: Function definitions
-            unsigned bf_idx      = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_aux_data[0]));
-            unsigned size        = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_aux_data[4]));
-            unsigned lnum_ptr    = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_aux_data[8]));
-            unsigned next_fn_idx = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_aux_data[12]));
-            unsigned res1        = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint16_t*)&(p_aux_data[16]));
+            unsigned bf_idx      = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_auxiliaryData[0]));
+            unsigned size        = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_auxiliaryData[4]));
+            unsigned lnum_ptr    = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_auxiliaryData[8]));
+            unsigned next_fn_idx = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_auxiliaryData[12]));
+            unsigned res1        = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint16_t*)&(p_auxiliaryData[16]));
             set_size(size);
             SAWYER_MESG(debug) <<"COFF aux func " <<escapeString(p_st_name) <<": bf_idx=" <<bf_idx
                                <<", size=" <<size <<", lnum_ptr=" <<StringUtility::addrToString(lnum_ptr)
@@ -136,29 +136,29 @@ SgAsmCoffSymbol::SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *s
             
         } else if (p_st_storage_class == 101 /*function*/ && (p_st_name == ".bf" || p_st_name == ".ef")) {
             // Auxiliary record format 2: .bf and .ef symbols
-            unsigned res1        = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_aux_data[0]));
-            unsigned lnum        = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint16_t*)&(p_aux_data[4])); /*line num within source file*/
-            unsigned res2        = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint16_t*)&(p_aux_data[6]));
-            unsigned res3        = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_aux_data[8]));
-            unsigned next_bf     = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_aux_data[12])); /*only for .bf; reserved in .ef*/
-            unsigned res4        = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint16_t*)&(p_aux_data[16]));
+            unsigned res1        = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_auxiliaryData[0]));
+            unsigned lnum        = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint16_t*)&(p_auxiliaryData[4])); /*line num within source file*/
+            unsigned res2        = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint16_t*)&(p_auxiliaryData[6]));
+            unsigned res3        = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_auxiliaryData[8]));
+            unsigned next_bf     = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_auxiliaryData[12])); /*only for .bf; reserved in .ef*/
+            unsigned res4        = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint16_t*)&(p_auxiliaryData[16]));
             SAWYER_MESG(debug) <<"COFF aux " <<escapeString(p_st_name) <<": res1=" <<res1 <<", lnum=" <<lnum
                                <<", res2=" <<res2 <<", res3=" <<res3 <<", next_bf=" <<next_bf <<", res4=" <<res4 <<"\n";
             
         } else if (p_st_storage_class == 2/*external*/ && p_st_section_num == 0/*undef*/ && get_value()==0) {
             // Auxiliary record format 3: weak externals
-            unsigned sym2_idx    = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_aux_data[0]));
-            unsigned flags       = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_aux_data[4]));
-            unsigned res1        = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_aux_data[8]));
-            unsigned res2        = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_aux_data[12]));
-            unsigned res3        = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint16_t*)&(p_aux_data[16]));
+            unsigned sym2_idx    = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_auxiliaryData[0]));
+            unsigned flags       = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_auxiliaryData[4]));
+            unsigned res1        = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_auxiliaryData[8]));
+            unsigned res2        = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_auxiliaryData[12]));
+            unsigned res3        = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint16_t*)&(p_auxiliaryData[16]));
             SAWYER_MESG(debug) <<"COFF aux weak " <<escapeString(p_st_name) <<": sym2_idx=" <<sym2_idx
                                <<", flags=" <<flags <<", res1=" <<res1 <<", res2=" <<res2 <<", res3=" <<res3 <<"\n";
             
         } else if (p_st_storage_class == 103/*file*/ && 0 == p_st_name.compare(".file")) {
             // Auxiliary record format 4: files. The file name is stored in the aux data as either the name itself or an offset
             // into the string table. Replace the fake ".file" with the real file name.
-            const COFFSymbol_disk *d = (const COFFSymbol_disk*) &(p_aux_data[0]);
+            const COFFSymbol_disk *d = (const COFFSymbol_disk*) &(p_auxiliaryData[0]);
             if (0 == d->st_zero) {
                 rose_addr_t fname_offset = Rose::BinaryAnalysis::ByteOrder::leToHost(d->st_offset);
                 if (fname_offset < 4)
@@ -171,7 +171,7 @@ SgAsmCoffSymbol::SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *s
                 /* Aux data contains a NUL-padded name; the NULs (if any) are not part of the name. */
                 ASSERT_require(p_st_num_aux_entries == 1);
                 char fname[COFFSymbol_disk_size+1];
-                memcpy(fname, &(p_aux_data[0]), COFFSymbol_disk_size);
+                memcpy(fname, &(p_auxiliaryData[0]), COFFSymbol_disk_size);
                 fname[COFFSymbol_disk_size] = '\0';
                 set_name(new SgAsmBasicString(fname));
                 SAWYER_MESG(debug) <<"COFF aux file: inline-name=\"" <<get_name()->get_string(true) <<"\"\n";
@@ -180,14 +180,14 @@ SgAsmCoffSymbol::SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *s
 
         } else if (p_st_storage_class == 3/*static*/ && NULL != fhdr->get_file()->get_section_by_name(p_st_name, '$')) {
             // Auxiliary record format 5: Section definition.
-            unsigned size         = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_aux_data[0])); /*same as section header SizeOfRawData */
-            unsigned nrel         = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint16_t*)&(p_aux_data[4])); /*number of relocations*/
-            unsigned nln_ents     = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint16_t*)&(p_aux_data[6])); /*number of line number entries */
-            unsigned cksum        = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_aux_data[8]));
-            unsigned sect_id      = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint16_t*)&(p_aux_data[12])); /*1-base index into section table*/
-            unsigned comdat       = p_aux_data[14]; /*comdat selection number if section is a COMDAT section*/
-            unsigned res1         = p_aux_data[15];
-            unsigned res2         = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint16_t*)&(p_aux_data[16]));
+            unsigned size         = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_auxiliaryData[0])); /*same as section header SizeOfRawData */
+            unsigned nrel         = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint16_t*)&(p_auxiliaryData[4])); /*number of relocations*/
+            unsigned nln_ents     = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint16_t*)&(p_auxiliaryData[6])); /*number of line number entries */
+            unsigned cksum        = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint32_t*)&(p_auxiliaryData[8]));
+            unsigned sect_id      = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint16_t*)&(p_auxiliaryData[12])); /*1-base index into section table*/
+            unsigned comdat       = p_auxiliaryData[14]; /*comdat selection number if section is a COMDAT section*/
+            unsigned res1         = p_auxiliaryData[15];
+            unsigned res2         = Rose::BinaryAnalysis::ByteOrder::leToHost(*(uint16_t*)&(p_auxiliaryData[16]));
             set_size(size);
             set_type(SYM_SECTION);
             SAWYER_MESG(debug) <<"COFF aux section: size=" <<size <<", nrel=" <<nrel <<", nln_ents=" <<nln_ents
@@ -200,7 +200,7 @@ SgAsmCoffSymbol::SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *s
             // FIXME[Robb P Matzke 2017-05-17]: The record format isn't documented in the reference listed above.
             if (debug) {
                 debug <<"COFF aux comdat " <<escapeString(p_st_name) <<": aux record ignored\n";
-                hexdump(debug, (rose_addr_t) symtab->get_offset()+(idx+1)*COFFSymbol_disk_size, "    ", p_aux_data);
+                hexdump(debug, (rose_addr_t) symtab->get_offset()+(idx+1)*COFFSymbol_disk_size, "    ", p_auxiliaryData);
             }
 
         } else {
@@ -208,7 +208,7 @@ SgAsmCoffSymbol::SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *s
                 mlog[WARN] <<"COFF aux unknown " <<escapeString(p_st_name)
                            <<": st_storage_class=" <<p_st_storage_class
                            <<", st_type=" <<p_st_type <<", st_section_num=" <<p_st_section_num <<"\n";
-                hexdump(mlog[WARN], symtab->get_offset()+(idx+1)*COFFSymbol_disk_size, "    ", p_aux_data);
+                hexdump(mlog[WARN], symtab->get_offset()+(idx+1)*COFFSymbol_disk_size, "    ", p_auxiliaryData);
             }
         }
     }
@@ -336,8 +336,8 @@ SgAsmCoffSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %s\n",               p, w, "st_storage_class", s);
     fprintf(f, "%s%-*s = \"%s\"\n",           p, w, "st_name", escapeString(p_st_name).c_str());
     fprintf(f, "%s%-*s = %u\n",               p, w, "st_num_aux_entries", p_st_num_aux_entries);
-    fprintf(f, "%s%-*s = %" PRIuPTR " bytes\n",        p, w, "aux_data", p_aux_data.size());
-    hexdump(f, 0, std::string(p)+"aux_data at ", p_aux_data);
+    fprintf(f, "%s%-*s = %" PRIuPTR " bytes\n",        p, w, "aux_data", p_auxiliaryData.size());
+    hexdump(f, 0, std::string(p)+"aux_data at ", p_auxiliaryData);
 }
 
 SgAsmCoffSymbolTable::SgAsmCoffSymbolTable(SgAsmPEFileHeader *fhdr)
@@ -454,6 +454,16 @@ SgAsmCoffSymbolTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     if (variantT() == V_SgAsmCoffSymbolTable) //unless a base class
         hexdump(f, 0, std::string(p)+"data at ", p_data);
+}
+
+const SgUnsignedCharList&
+SgAsmCoffSymbol::get_aux_data() const {
+    return get_auxiliaryData();
+}
+
+void
+SgAsmCoffSymbol::set_aux_data(const SgUnsignedCharList &x) {
+    set_auxiliaryData(x);
 }
 
 #endif

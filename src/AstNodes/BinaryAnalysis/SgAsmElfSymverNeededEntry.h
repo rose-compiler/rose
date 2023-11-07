@@ -39,7 +39,7 @@ public:
 
     /** Property: File name. */
     [[using Rosebud: rosetta, traverse]]
-    SgAsmGenericString* file_name = nullptr;
+    SgAsmGenericString* fileName = nullptr;
 
     /** Property: List of entries.
      *
@@ -63,4 +63,11 @@ public:
 
     /** Print debugging information. */
     virtual void dump(FILE *f, const char *prefix, ssize_t idx) const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmGenericString* get_file_name() const ROSE_DEPRECATED("use get_fileName");
+    void set_file_name(SgAsmGenericString*) ROSE_DEPRECATED("use set_fileName");
 };

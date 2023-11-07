@@ -3,16 +3,20 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
-// DQ (8/22/2008): These are not automatically generated since one of them must be virtual.
-SgAsmElfSection* 
+SgAsmElfSection*
 SgAsmElfSection::get_linked_section() const {
-    return p_linked_section;
+    return get_linkedSection();
 }
 
 void
-SgAsmElfSection::set_linked_section(SgAsmElfSection* linked_section) {
+SgAsmElfSection::set_linked_section(SgAsmElfSection* x) {
+    set_linkedSection(x);
+}
+
+void
+SgAsmElfSection::set_linkedSection(SgAsmElfSection* linked_section) {
     set_isModified(true);
-    p_linked_section = linked_section;
+    p_linkedSection = linked_section;
 }
 
 SgAsmElfSection::SgAsmElfSection(SgAsmGenericHeader *fhdr)
@@ -24,6 +28,12 @@ SgAsmElfSection::SgAsmElfSection(SgAsmGenericHeader *fhdr)
 
 SgAsmElfSection *
 SgAsmElfSection::init_from_section_table(SgAsmElfSectionTableEntry *shdr, SgAsmElfStringSection *strsec, int id)
+{
+    return initFromSectionTable(shdr, strsec, id);
+}
+
+SgAsmElfSection *
+SgAsmElfSection::initFromSectionTable(SgAsmElfSectionTableEntry *shdr, SgAsmElfStringSection *strsec, int id)
 {
     ROSE_ASSERT(shdr);
     ROSE_ASSERT(strsec);
@@ -91,6 +101,12 @@ SgAsmElfSection::init_from_section_table(SgAsmElfSectionTableEntry *shdr, SgAsmE
 SgAsmElfSection *
 SgAsmElfSection::init_from_segment_table(SgAsmElfSegmentTableEntry *shdr, bool mmap_only)
 {
+    return initFromSegmentTable(shdr, mmap_only);
+}
+
+SgAsmElfSection *
+SgAsmElfSection::initFromSegmentTable(SgAsmElfSegmentTableEntry *shdr, bool mmap_only)
+{
     if (!mmap_only) {
         /* Purpose */
         set_purpose(SP_HEADER);
@@ -142,13 +158,26 @@ SgAsmElfSection::init_from_segment_table(SgAsmElfSegmentTableEntry *shdr, bool m
 SgAsmElfFileHeader*
 SgAsmElfSection::get_elf_header() const
 {
+    return get_elfHeader();
+}
+
+SgAsmElfFileHeader*
+SgAsmElfSection::get_elfHeader() const
+{
     return dynamic_cast<SgAsmElfFileHeader*>(get_header());
 }
 
 rose_addr_t
 SgAsmElfSection::calculate_sizes(size_t r32size, size_t r64size,       /*size of required parts*/
                                  const std::vector<size_t> &optsizes,  /*size of optional parts and number of parts parsed*/
-                                 size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
+                                 size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const {
+    return calculateSizes(r32size, r64size, optsizes, entsize, required, optional, entcount);
+}
+
+rose_addr_t
+SgAsmElfSection::calculateSizes(size_t r32size, size_t r64size,       /*size of required parts*/
+                                const std::vector<size_t> &optsizes,  /*size of optional parts and number of parts parsed*/
+                                size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
     size_t struct_size = 0;
     size_t extra_size = 0;
@@ -207,7 +236,13 @@ SgAsmElfSection::calculate_sizes(size_t r32size, size_t r64size,       /*size of
 rose_addr_t
 SgAsmElfSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
-    return calculate_sizes(0, 0, std::vector<size_t>(), entsize, required, optional, entcount);
+    return calculateSizes(entsize, required, optional, entcount);
+}
+
+rose_addr_t
+SgAsmElfSection::calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
+{
+    return calculateSizes(0, 0, std::vector<size_t>(), entsize, required, optional, entcount);
 }
 
 bool
@@ -260,15 +295,64 @@ SgAsmElfSection::dump(FILE *f, const char *prefix, ssize_t idx) const
     if (get_segment_entry())
         get_segment_entry()->dump(f, p, -1);
 
-    if (p_linked_section) {
+    if (get_linkedSection()) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "linked_to",
-                p_linked_section->get_id(), p_linked_section->get_name()->get_string(true).c_str());
+                get_linkedSection()->get_id(), get_linkedSection()->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = NULL\n",    p, w, "linked_to");
     }
 
     if (variantT() == V_SgAsmElfSection) //unless a base class
         hexdump(f, 0, std::string(p)+"data at ", p_data);
+}
+
+SgAsmElfSectionTableEntry*
+SgAsmElfSection::get_section_entry() const {
+    return get_sectionEntry();
+}
+
+void
+SgAsmElfSection::set_section_entry(SgAsmElfSectionTableEntry *x) {
+    set_sectionEntry(x);
+}
+
+SgAsmElfSegmentTableEntry*
+SgAsmElfSection::get_segment_entry() const {
+    return get_segmentEntry();
+}
+
+void
+SgAsmElfSection::set_segment_entry(SgAsmElfSegmentTableEntry *x) {
+    set_segmentEntry(x);
+}
+
+void
+SgAsmElfSection::finish_parsing() {
+    finishParsing();
+}
+
+void
+SgAsmElfSection::finishParsing() {}
+
+void
+SgAsmElfSection::allocate_name_to_storage(SgAsmElfStringSection *strsec)
+{
+    allocateNameToStorage(strsec);
+}
+
+void
+SgAsmElfSection::allocateNameToStorage(SgAsmElfStringSection *strsec)
+{
+    if (get_name()) {
+        SgAsmStoredString *old_stored = dynamic_cast<SgAsmStoredString*>(get_name());
+        if (!old_stored || old_stored->get_strtab()!=strsec->get_strtab()) {
+            /* Reallocate string to new string table */
+            SgAsmStoredString *new_stored = new SgAsmStoredString(strsec->get_strtab(), 0);
+            new_stored->set_string(get_name()->get_string());
+            get_name()->set_string(""); /*free old string*/
+            set_name(new_stored);
+        }
+    }
 }
 
 #endif

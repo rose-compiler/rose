@@ -169,14 +169,22 @@ public:
     /** @} */
 
     /** Update this segment table entry with newer information from the section */
-    void update_from_section(SgAsmElfSection*);
+    void updateFromSection(SgAsmElfSection*);
 
     /** Print some debugging info */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 
     /** Convert segment type to string. */
-    static std::string to_string(SgAsmElfSegmentTableEntry::SegmentType);
+    static std::string toString(SgAsmElfSegmentTableEntry::SegmentType);
 
     /** Convert segment flags to string. */
-    static std::string to_string(SgAsmElfSegmentTableEntry::SegmentFlags);
+    static std::string toString(SgAsmElfSegmentTableEntry::SegmentFlags);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    void update_from_section(SgAsmElfSection*) ROSE_DEPRECATED("use updateFromSection");
+    static std::string to_string(SgAsmElfSegmentTableEntry::SegmentType) ROSE_DEPRECATED("use toString");
+    static std::string to_string(SgAsmElfSegmentTableEntry::SegmentFlags) ROSE_DEPRECATED("use toString");
 };

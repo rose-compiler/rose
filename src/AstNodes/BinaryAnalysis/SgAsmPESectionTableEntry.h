@@ -129,7 +129,13 @@ public:
     explicit SgAsmPESectionTableEntry(const SgAsmPESectionTableEntry::PESectionTableEntry_disk *disk);
 
     /** Update this section table entry with newer information from the section */
-    void update_from_section(SgAsmPESection *section);
+    void updateFromSection(SgAsmPESection *section);
     void *encode(SgAsmPESectionTableEntry::PESectionTableEntry_disk*) const;
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    void update_from_section(SgAsmPESection*) ROSE_DEPRECATED("use updateFromSection");
 };

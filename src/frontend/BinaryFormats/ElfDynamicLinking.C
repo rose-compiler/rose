@@ -55,14 +55,18 @@ SgAsmElfDynamicEntry::encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex, El
 }
 
 std::string
-SgAsmElfDynamicEntry::to_string(EntryType t) 
+SgAsmElfDynamicEntry::toString(EntryType t)
 {
 #ifndef _MSC_VER
     return stringifySgAsmElfDynamicEntryEntryType(t);
 #else
         ROSE_ABORT();
 #endif
+}
 
+std::string
+SgAsmElfDynamicEntry::to_string(EntryType x) {
+    return toString(x);
 }
 
 void
@@ -110,7 +114,7 @@ SgAsmElfDynamicSection::SgAsmElfDynamicSection(SgAsmElfFileHeader *fhdr, SgAsmEl
     : SgAsmElfSection(fhdr) {
     initializeProperties();
     ASSERT_not_null(strsec);
-    p_linked_section = strsec;
+    p_linkedSection = strsec;
 }
 
 SgAsmElfDynamicSection *
@@ -164,7 +168,12 @@ SgAsmElfDynamicSection::parse()
 }
 
 rose_addr_t
-SgAsmElfDynamicSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
+SgAsmElfDynamicSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const {
+    return calculateSizes(entsize, required, optional, entcount);
+}
+
+rose_addr_t
+SgAsmElfDynamicSection::calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
     std::vector<size_t> extra_sizes;
     for (size_t i=0; i<p_entries->get_entries().size(); i++)
@@ -174,9 +183,14 @@ SgAsmElfDynamicSection::calculate_sizes(size_t *entsize, size_t *required, size_
                            extra_sizes,
                            entsize, required, optional, entcount);
 }
-    
+
 void
-SgAsmElfDynamicSection::finish_parsing() 
+SgAsmElfDynamicSection::finish_parsing() {
+    finishParsing();
+}
+
+void
+SgAsmElfDynamicSection::finishParsing()
 {
     SgAsmElfFileHeader *fhdr = get_elf_header();
     ROSE_ASSERT(fhdr!=NULL);

@@ -160,5 +160,11 @@ public:
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 
     /** Convert Dynamic Entry Tag to a string */
-    static std::string to_string(SgAsmElfDynamicEntry::EntryType);
+    static std::string toString(SgAsmElfDynamicEntry::EntryType);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    static std::string to_string(SgAsmElfDynamicEntry::EntryType) ROSE_DEPRECATED("use toString");
 };

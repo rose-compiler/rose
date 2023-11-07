@@ -59,11 +59,23 @@ SgAsmPEImportItem::SgAsmPEImportItem(SgAsmPEImportDirectory *idir, unsigned ordi
 size_t
 SgAsmPEImportItem::hintname_required_size() const
 {
+    return hintNameRequiredSize();
+}
+
+size_t
+SgAsmPEImportItem::hintNameRequiredSize() const
+{
     return alignUp(2/*hint*/ + p_name->get_string().size() + 1/*NUL*/, (size_t)2);
 }
 
 rose_addr_t
 SgAsmPEImportItem::get_iat_entry_va() const
+{
+    return get_iatEntryVa();
+}
+
+rose_addr_t
+SgAsmPEImportItem::get_iatEntryVa() const
 {
     SgAsmPEImportDirectory *idir = SageInterface::getEnclosingNode<SgAsmPEImportDirectory>(this);
     assert(idir!=NULL); // we need some context in order to find the address

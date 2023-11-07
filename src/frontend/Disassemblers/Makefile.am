@@ -13,8 +13,9 @@ libroseDisassemblers_la_SOURCES = SgAsmBlock.C SgAsmFunction.C					\
 	SgAsmX86Instruction.C SgAsmCilInstruction.C SgAsmJvmInstruction.C			\
 	SgAsmMipsInstruction.C SgAsmM68kInstruction.C SgAsmNullInstruction.C			\
 	SgAsmExecutableFileFormat.C x86InstructionProperties.C					\
-	SgAsmInterpretation.C SgAsmIntegerValueExpression.C					\
+	SgAsmInterpretation.C SgAsmIntegerValueExpression.C SgAsmControlFlagsExpression.C	\
 	SgAsmFloatValueExpression.C SgAsmExpression.C SgAsmType.C				\
+	SgAsmStackExpression.C SgAsmStaticData.C SgAsmValueExpression.C				\
 	Assembler.C AssemblerX86.C AssemblerX86Init.C SgAsmOperandList.C			\
 	AssemblerX86Init1.C AssemblerX86Init2.C AssemblerX86Init3.C				\
 	AssemblerX86Init4.C AssemblerX86Init5.C AssemblerX86Init6.C				\

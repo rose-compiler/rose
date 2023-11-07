@@ -40,6 +40,12 @@ SgAsmPESectionTableEntry::SgAsmPESectionTableEntry(const SgAsmPESectionTableEntr
 void
 SgAsmPESectionTableEntry::update_from_section(SgAsmPESection *section)
 {
+    updateFromSection(section);
+}
+
+void
+SgAsmPESectionTableEntry::updateFromSection(SgAsmPESection *section)
+{
     SgAsmPEFileHeader *fhdr = SageInterface::getEnclosingNode<SgAsmPEFileHeader>(section);
     ROSE_ASSERT(fhdr!=nullptr);
 
@@ -261,6 +267,12 @@ SgAsmPESectionTable::parse()
 
 void
 SgAsmPESectionTable::add_section(SgAsmPESection *section)
+{
+    addSection(section);
+}
+
+void
+SgAsmPESectionTable::addSection(SgAsmPESection *section)
 {
     ROSE_ASSERT(section!=nullptr);
     ROSE_ASSERT(section->get_file()==get_file());

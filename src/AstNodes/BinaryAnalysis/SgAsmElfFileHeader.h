@@ -183,14 +183,14 @@ public:
      *  are generally those parts of the file that are of interest to linkers, debuggers, etc. but not needed by the
      *  program loader. */
     [[using Rosebud: rosetta]]
-    SgAsmElfSectionTable* section_table = nullptr;
+    SgAsmElfSectionTable* sectionTable = nullptr;
 
     /** Property: Segment table.
      *
      *  Points to the AST node that represents the ELF segment table that describes each segment of the file. Segments
      *  describe how parts of the file are mapped into virtual memory by the loader. */
     [[using Rosebud: rosetta]]
-    SgAsmElfSegmentTable* segment_table = nullptr;
+    SgAsmElfSegmentTable* segmentTable = nullptr;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
@@ -209,13 +209,13 @@ public:
      *  This is used by the loader when calculating the program base address. Since parts of the file are mapped into the
      *  process address space those parts must be aligned (both in the file and in memory) on the largest possible page
      *  boundary so that any smaller page boundary will also work correctly. */
-    uint64_t max_page_size();
+    uint64_t maximumPageSize();
 
     /** Convert ELF "machine" identifier to generic instruction set architecture value. */
-    static SgAsmExecutableFileFormat::InsSetArchitecture machine_to_isa(unsigned machine);
+    static SgAsmExecutableFileFormat::InsSetArchitecture machineToIsa(unsigned machine);
 
     /** Convert architecture value to an ELF "machine" value. */
-    unsigned isa_to_machine(SgAsmExecutableFileFormat::InsSetArchitecture isa) const;
+    unsigned isaToMachine(SgAsmExecutableFileFormat::InsSetArchitecture isa) const;
 
     /** Parse header from file.
      *
@@ -234,18 +234,34 @@ public:
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
     /** Return true if the file looks like it might be an ELF file according to the magic number. */
-    static bool is_ELF(SgAsmGenericFile*);
+    static bool isElf(SgAsmGenericFile*);
 
     /** Get the list of sections defined in the ELF Section Table */
-    SgAsmGenericSectionPtrList get_sectab_sections();
+    SgAsmGenericSectionPtrList get_sectionTableSections();
 
     /** Get the list of sections defined in the ELF Segment Table */
-    SgAsmGenericSectionPtrList get_segtab_sections();
+    SgAsmGenericSectionPtrList get_segmentTableSections();
 
     // Overrides documented in base class
-    virtual const char *format_name() const override;
+    virtual const char *formatName() const override;
 
 private:
     void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfFileHeader::Elf32FileHeader_disk*) const;
     void *encode(Rose::BinaryAnalysis::ByteOrder::Endianness, SgAsmElfFileHeader::Elf64FileHeader_disk*) const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmElfSectionTable* get_section_table() const ROSE_DEPRECATED("use get_sectionTable");
+    void set_section_table(SgAsmElfSectionTable*) ROSE_DEPRECATED("use set_sectionTable");
+    SgAsmElfSegmentTable* get_segment_table() const ROSE_DEPRECATED("use get_segmentTable");
+    void set_segment_table(SgAsmElfSegmentTable*) ROSE_DEPRECATED("use set_segmentTable");
+    uint64_t max_page_size() ROSE_DEPRECATED("use maximumPageSize");
+    static SgAsmExecutableFileFormat::InsSetArchitecture machine_to_isa(unsigned) ROSE_DEPRECATED("use machineToIsa");
+    unsigned isa_to_machine(SgAsmExecutableFileFormat::InsSetArchitecture) const ROSE_DEPRECATED("use isaToMachine");
+    static bool is_ELF(SgAsmGenericFile*) ROSE_DEPRECATED("use isElf");
+    SgAsmGenericSectionPtrList get_sectab_sections() ROSE_DEPRECATED("use get_sectionTableSections");
+    SgAsmGenericSectionPtrList get_segtab_sections() ROSE_DEPRECATED("use get_segmentTableSections");
+    virtual const char *format_name() const override ROSE_DEPRECATED("use formatName");
 };

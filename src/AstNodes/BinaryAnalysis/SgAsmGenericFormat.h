@@ -23,7 +23,7 @@ class SgAsmGenericFormat: public SgAsmExecutableFileFormat {
      *  True if the @ref get_version "version" property is considered to be the current, supported version for this file
      *  format. */
     [[using Rosebud: rosetta]]
-    bool is_current_version = false;
+    bool isCurrentVersion = false;
 
     /** Property: Application binary interface. */
     [[using Rosebud: rosetta]]
@@ -31,13 +31,24 @@ class SgAsmGenericFormat: public SgAsmExecutableFileFormat {
 
     /** Property: Application binary interface version. */
     [[using Rosebud: rosetta]]
-    unsigned abi_version = 0;
+    unsigned abiVersion = 0;
 
     /** Property: Natural word size in bytes. */
     [[using Rosebud: rosetta]]
-    size_t word_size = 0;
+    size_t wordSize = 0;
 
 public:
     /** Print some debugging info. */
     void dump(FILE*, const char *prefix, ssize_t idx) const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    bool get_is_current_version() const ROSE_DEPRECATED("use get_isCurrentVersion");
+    void set_is_current_version(bool) ROSE_DEPRECATED("use set_isCurrentVersion");
+    unsigned get_abi_version() const ROSE_DEPRECATED("use get_abiVersion");
+    void set_abi_version(unsigned) ROSE_DEPRECATED("use set_abiVersion");
+    size_t get_word_size() const ROSE_DEPRECATED("use get_wordSize");
+    void set_word_size(size_t) ROSE_DEPRECATED("use set_wordSize");
 };

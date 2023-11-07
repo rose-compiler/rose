@@ -47,7 +47,12 @@ SgAsmElfFileHeader::SgAsmElfFileHeader(SgAsmGenericFile *f)
 }
 
 bool
-SgAsmElfFileHeader::is_ELF(SgAsmGenericFile *file)
+SgAsmElfFileHeader::is_ELF(SgAsmGenericFile *file) {
+    return isElf(file);
+}
+
+bool
+SgAsmElfFileHeader::isElf(SgAsmGenericFile *file)
 {
     /* Turn off byte reference tracking for the duration of this function. We don't want our testing the file contents to
      * affect the list of bytes that we've already referenced or which we might reference later. */
@@ -67,9 +72,14 @@ SgAsmElfFileHeader::is_ELF(SgAsmGenericFile *file)
     return true;
 }
 
-// class method
 SgAsmExecutableFileFormat::InsSetArchitecture
 SgAsmElfFileHeader::machine_to_isa(unsigned machine) {
+    return machineToIsa(machine);
+}
+
+// class method
+SgAsmExecutableFileFormat::InsSetArchitecture
+SgAsmElfFileHeader::machineToIsa(unsigned machine) {
     switch (machine) {                                /* These come from the Portable Formats Specification v1.1 */
         case 0:        return ISA_UNSPECIFIED;
         case 1:        return ISA_ATT_WE_32100;
@@ -94,6 +104,11 @@ SgAsmElfFileHeader::machine_to_isa(unsigned machine) {
 
 unsigned
 SgAsmElfFileHeader::isa_to_machine(SgAsmExecutableFileFormat::InsSetArchitecture isa) const {
+    return isaToMachine(isa);
+}
+
+unsigned
+SgAsmElfFileHeader::isaToMachine(SgAsmExecutableFileFormat::InsSetArchitecture isa) const {
     switch (isa) {
         case ISA_UNSPECIFIED:
         case ISA_OTHER:        return p_e_machine;
@@ -161,14 +176,14 @@ SgAsmElfFileHeader::parse()
         /* Ambiguous order */
         throw FormatError("invalid ELF header byte order");
     }
-    ROSE_ASSERT(p_exec_format != NULL);
-    p_exec_format->set_sex(sex);
+    ROSE_ASSERT(get_executableFormat() != NULL);
+    get_executableFormat()->set_sex(sex);
     p_e_ident_data_encoding = disk32.e_ident_data_encoding; /*save original value*/
 
     /* Decode header to native format */
     rose_rva_t entry_rva, sectab_rva, segtab_rva;
     if (1 == disk32.e_ident_file_class) {
-        p_exec_format->set_word_size(4);
+        get_executableFormat()->set_word_size(4);
 
         p_e_ident_padding.clear();
         for (size_t i=0; i<sizeof(disk32.e_ident_padding); i++)
@@ -178,7 +193,7 @@ SgAsmElfFileHeader::parse()
         p_e_ident_file_version  = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk32.e_ident_file_version);
         p_e_type                = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk32.e_type);
         p_e_machine             = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk32.e_machine);
-        p_exec_format->set_version(Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk32.e_version));
+        get_executableFormat()->set_version(Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk32.e_version));
         entry_rva               = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk32.e_entry);
         segtab_rva              = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk32.e_phoff);
         sectab_rva              = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk32.e_shoff);
@@ -206,7 +221,7 @@ SgAsmElfFileHeader::parse()
         p_e_shstrndx            = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk32.e_shstrndx);
     } else if (2 == disk32.e_ident_file_class) {
         /* We guessed wrong. This is a 64-bit header, not 32-bit. */
-        p_exec_format->set_word_size(8);
+        get_executableFormat()->set_word_size(8);
         Elf64FileHeader_disk disk64;
         if (sizeof(disk64)>get_size())
             extend(sizeof(disk64)-get_size());
@@ -220,7 +235,7 @@ SgAsmElfFileHeader::parse()
         p_e_ident_file_version  = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk64.e_ident_file_version);
         p_e_type                = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk64.e_type);
         p_e_machine             = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk64.e_machine);
-        p_exec_format->set_version(Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk64.e_version));
+        get_executableFormat()->set_version(Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk64.e_version));
         entry_rva               = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk64.e_entry);
         segtab_rva              = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk64.e_phoff);
         sectab_rva              = Rose::BinaryAnalysis::ByteOrder::diskToHost(sex, disk64.e_shoff);
@@ -256,32 +271,32 @@ SgAsmElfFileHeader::parse()
         p_magic.push_back(disk32.e_ident_magic[i]);
     
     /* File format */
-    p_exec_format->set_family(FAMILY_ELF);
+    get_executableFormat()->set_family(FAMILY_ELF);
     switch (p_e_type) {
       case 0:
-        p_exec_format->set_purpose(PURPOSE_UNSPECIFIED);
+        get_executableFormat()->set_purpose(PURPOSE_UNSPECIFIED);
         break;
       case 1:
       case 3:
-        p_exec_format->set_purpose(PURPOSE_LIBRARY);
+        get_executableFormat()->set_purpose(PURPOSE_LIBRARY);
         break;
       case 2:
-        p_exec_format->set_purpose(PURPOSE_EXECUTABLE);
+        get_executableFormat()->set_purpose(PURPOSE_EXECUTABLE);
         break;
       case 4:
-        p_exec_format->set_purpose(PURPOSE_CORE_DUMP);
+        get_executableFormat()->set_purpose(PURPOSE_CORE_DUMP);
         break;
       default:
         if (p_e_type >= 0xff00 && p_e_type <= 0xffff) {
-            p_exec_format->set_purpose(PURPOSE_PROC_SPECIFIC);
+            get_executableFormat()->set_purpose(PURPOSE_PROC_SPECIFIC);
         } else {
-            p_exec_format->set_purpose(PURPOSE_OTHER);
+            get_executableFormat()->set_purpose(PURPOSE_OTHER);
         }
         break;
     }
-    p_exec_format->set_is_current_version(1 == p_exec_format->get_version());
-    p_exec_format->set_abi(ABI_UNSPECIFIED);                 /* ELF specifies a target architecture rather than an ABI */
-    p_exec_format->set_abi_version(0);
+    get_executableFormat()->set_is_current_version(1 == get_executableFormat()->get_version());
+    get_executableFormat()->set_abi(ABI_UNSPECIFIED);                 /* ELF specifies a target architecture rather than an ABI */
+    get_executableFormat()->set_abi_version(0);
 
     /* Target architecture */
     set_isa(machine_to_isa(p_e_machine));
@@ -308,7 +323,12 @@ SgAsmElfFileHeader::parse()
 }
 
 uint64_t
-SgAsmElfFileHeader::max_page_size()
+SgAsmElfFileHeader::max_page_size() {
+    return maximumPageSize();
+}
+
+uint64_t
+SgAsmElfFileHeader::maximumPageSize()
 {
     /* FIXME:
      *    System V max page size is 4k.
@@ -321,6 +341,11 @@ SgAsmElfFileHeader::max_page_size()
 SgAsmGenericSectionPtrList
 SgAsmElfFileHeader::get_sectab_sections()
 {
+    return get_sectionTableSections();
+}
+
+SgAsmGenericSectionPtrList
+SgAsmElfFileHeader::get_sectionTableSections() {
     SgAsmGenericSectionPtrList retval;
     SgAsmGenericSectionPtrList sections = get_sections()->get_sections();
     for (size_t i=0; i<sections.size(); i++) {
@@ -332,7 +357,12 @@ SgAsmElfFileHeader::get_sectab_sections()
 }
 
 SgAsmGenericSectionPtrList
-SgAsmElfFileHeader::get_segtab_sections()
+SgAsmElfFileHeader::get_segtab_sections() {
+    return get_segmentTableSections();
+}
+
+SgAsmGenericSectionPtrList
+SgAsmElfFileHeader::get_segmentTableSections()
 {
     SgAsmGenericSectionPtrList retval;
     SgAsmGenericSectionPtrList sections = get_sections()->get_sections();
@@ -358,7 +388,7 @@ SgAsmElfFileHeader::encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex, Elf3
         disk->e_ident_padding[i] = p_e_ident_padding[i];
     Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_e_type, &(disk->e_type));
     Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_e_machine, &(disk->e_machine));
-    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_exec_format->get_version(), &(disk->e_version));
+    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, get_executableFormat()->get_version(), &(disk->e_version));
     Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, get_entry_rva(), &(disk->e_entry));
     if (get_segment_table()) {
         Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, get_segment_table()->get_offset(), &(disk->e_phoff));
@@ -405,7 +435,7 @@ SgAsmElfFileHeader::encode(Rose::BinaryAnalysis::ByteOrder::Endianness sex, Elf6
         disk->e_ident_padding[i] = p_e_ident_padding[i];
     Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_e_type, &(disk->e_type));
     Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_e_machine, &(disk->e_machine));
-    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, p_exec_format->get_version(), &(disk->e_version));
+    Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, get_executableFormat()->get_version(), &(disk->e_version));
     Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, get_entry_rva(),         &(disk->e_entry));
     if (get_segment_table()) {
         Rose::BinaryAnalysis::ByteOrder::hostToDisk(sex, get_segment_table()->get_offset(), &(disk->e_phoff));
@@ -480,7 +510,7 @@ SgAsmElfFileHeader::reallocate()
     }
 
     /* Update ELF-specific file type from generic data. */
-    switch (p_exec_format->get_purpose()) {
+    switch (get_executableFormat()->get_purpose()) {
       case PURPOSE_UNSPECIFIED:
       case PURPOSE_PROC_SPECIFIC:
       case PURPOSE_OS_SPECIFIC:
@@ -518,15 +548,15 @@ SgAsmElfFileHeader::unparse(std::ostream &f) const
 
     /* Write the ELF segment table and segments first since they generally overlap with more specific things which may have
      * been modified when walking the AST. (We generally don't modify segments, just the more specific sections.) */
-    if (p_segment_table) {
-        ROSE_ASSERT(p_segment_table->get_header()==this);
-        p_segment_table->unparse(f);
+    if (get_segmentTable()) {
+        ROSE_ASSERT(get_segmentTable()->get_header()==this);
+        get_segmentTable()->unparse(f);
     }
 
     /* Write the ELF section table and, indirectly, the sections themselves. */
-    if (p_section_table) {
-        ROSE_ASSERT(p_section_table->get_header()==this);
-        p_section_table->unparse(f);
+    if (get_sectionTable()) {
+        ROSE_ASSERT(get_sectionTable()->get_header()==this);
+        get_sectionTable()->unparse(f);
     }
     
     /* Encode and write the ELF file header */
@@ -573,15 +603,15 @@ SgAsmElfFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = 0x%08lx (%lu) bytes\n",            p, w, "shextrasz",              p_shextrasz, p_shextrasz);
     fprintf(f, "%s%-*s = %lu\n",                            p, w, "e_shnum",                p_e_shnum);
     fprintf(f, "%s%-*s = %lu\n",                            p, w, "e_shstrndx",             p_e_shstrndx);
-    if (p_section_table) {
+    if (get_sectionTable()) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n",                p, w, "section_table",
-                p_section_table->get_id(), p_section_table->get_name()->get_string(true).c_str());
+                get_sectionTable()->get_id(), get_sectionTable()->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n",                       p, w, "section_table");
     }
-    if (p_segment_table) {
+    if (get_segmentTable()) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n",                p, w, "segment_table",
-                p_segment_table->get_id(), p_segment_table->get_name()->get_string(true).c_str());
+                get_segmentTable()->get_id(), get_segmentTable()->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n",                       p, w, "segment_table");
     }
@@ -590,9 +620,34 @@ SgAsmElfFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
         hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
-const char *
+const char*
 SgAsmElfFileHeader::format_name() const {
+    return formatName();
+}
+
+const char *
+SgAsmElfFileHeader::formatName() const {
     return "ELF";
+}
+
+SgAsmElfSectionTable*
+SgAsmElfFileHeader::get_section_table() const {
+    return get_sectionTable();
+}
+
+void
+SgAsmElfFileHeader::set_section_table(SgAsmElfSectionTable *x) {
+    set_sectionTable(x);
+}
+
+SgAsmElfSegmentTable*
+SgAsmElfFileHeader::get_segment_table() const {
+    return get_segmentTable();
+}
+
+void
+SgAsmElfFileHeader::set_segment_table(SgAsmElfSegmentTable *x) {
+    set_segmentTable(x);
 }
 
 #endif

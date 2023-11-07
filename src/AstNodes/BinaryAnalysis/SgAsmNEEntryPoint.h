@@ -20,10 +20,10 @@ public:
     unsigned int3f = 0;
 
     [[using Rosebud: rosetta]]
-    unsigned section_idx = 0;
+    unsigned sectionIndex = 0;
 
     [[using Rosebud: rosetta]]
-    unsigned section_offset = 0;
+    unsigned sectionOffset = 0;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions
@@ -31,4 +31,13 @@ public:
 public:
     SgAsmNEEntryPoint(SgAsmNEEntryPoint::NEEntryFlags flags, unsigned int3f, unsigned s_idx, unsigned s_off);
     void dump(FILE*, const char *prefix, ssize_t idx) const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    unsigned get_section_idx() const ROSE_DEPRECATED("use get_sectionIndex");
+    void set_section_idx(unsigned) ROSE_DEPRECATED("use set_sectionIndex");
+    unsigned get_section_offset() const ROSE_DEPRECATED("use get_sectionOffset");
+    void set_section_offset(unsigned) ROSE_DEPRECATED("use set_sectionOffset");
 };

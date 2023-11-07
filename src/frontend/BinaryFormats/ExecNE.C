@@ -126,15 +126,15 @@ SgAsmNEFileHeader::SgAsmNEFileHeader(SgAsmGenericFile *f, rose_addr_t offset)
         p_magic.push_back(fh.e_magic[i]);
 
     /* File format */
-    p_exec_format->set_family(FAMILY_NE);
-    p_exec_format->set_purpose(p_e_flags1 & HF1_LIBRARY ? PURPOSE_LIBRARY : PURPOSE_EXECUTABLE);
-    p_exec_format->set_sex(Rose::BinaryAnalysis::ByteOrder::ORDER_LSB);
-    p_exec_format->set_abi(ABI_NT);
-    p_exec_format->set_abi_version(0);
-    p_exec_format->set_word_size(2);
+    get_executableFormat()->set_family(FAMILY_NE);
+    get_executableFormat()->set_purpose(p_e_flags1 & HF1_LIBRARY ? PURPOSE_LIBRARY : PURPOSE_EXECUTABLE);
+    get_executableFormat()->set_sex(Rose::BinaryAnalysis::ByteOrder::ORDER_LSB);
+    get_executableFormat()->set_abi(ABI_NT);
+    get_executableFormat()->set_abi_version(0);
+    get_executableFormat()->set_word_size(2);
     ROSE_ASSERT(p_e_linker_major <= 0xff && p_e_linker_minor <= 0xff);
-    p_exec_format->set_version((p_e_linker_major<<8) | p_e_linker_minor);
-    p_exec_format->set_is_current_version(true); /*FIXME*/
+    get_executableFormat()->set_version((p_e_linker_major<<8) | p_e_linker_minor);
+    get_executableFormat()->set_is_current_version(true); /*FIXME*/
 
     /* Target architecture */
     switch (p_e_exetype) {
@@ -158,11 +158,17 @@ SgAsmNEFileHeader::SgAsmNEFileHeader(SgAsmGenericFile *f, rose_addr_t offset)
 //    entry_rva = e_entrypoint_rva; /*FIXME*/
 }
 
+bool
+SgAsmNEFileHeader::is_NE(SgAsmGenericFile *file)
+{
+    return isNe(file);
+}
+
 /* Return true if the file looks like it might be an NE file according to the magic number.  The file must contain what
  * appears to be a DOS File Header at address zero, and what appears to be an NE File Header at a file offset specified in
  * part of the DOS File Header (actually, in the bytes that follow the DOS File Header). */
 bool
-SgAsmNEFileHeader::is_NE(SgAsmGenericFile *file)
+SgAsmNEFileHeader::isNe(SgAsmGenericFile *file)
 {
     /* Turn off byte reference tracking for the duration of this function. We don't want our testing the file contents to
      * affect the list of bytes that we've already referenced or which we might reference later. */
@@ -243,22 +249,22 @@ SgAsmNEFileHeader::unparse(std::ostream &f) const
     write(f, 0, sizeof fh, &fh);
 
     /* The extended DOS header */
-    if (p_dos2_header)
-        p_dos2_header->unparse(f);
+    if (get_dos2Header())
+        get_dos2Header()->unparse(f);
 
     /* The section table and all the non-synthesized sections */
-    if (p_section_table)
-        p_section_table->unparse(f);
+    if (get_sectionTable())
+        get_sectionTable()->unparse(f);
 
     /* Sections defined in the NE file header */
-    if (p_resname_table)
-        p_resname_table->unparse(f);
-    if (p_nonresname_table)
-        p_nonresname_table->unparse(f);
-    if (p_module_table)
-        p_module_table->unparse(f);
-    if (p_entry_table)
-        p_entry_table->unparse(f);
+    if (get_residentNameTable())
+        get_residentNameTable()->unparse(f);
+    if (get_nonresidentNameTable())
+        get_nonresidentNameTable()->unparse(f);
+    if (get_moduleTable())
+        get_moduleTable()->unparse(f);
+    if (get_entryTable())
+        get_entryTable()->unparse(f);
 }
     
 /* Print some debugging information */
@@ -311,39 +317,39 @@ SgAsmNEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = 0x%04x\n",                    p, w, "e_res1",                 p_e_res1);
     fprintf(f, "%s%-*s = 0x%04x\n",                    p, w, "e_winvers",              p_e_winvers);
 
-    if (p_dos2_header) {
+    if (get_dos2Header()) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "dos2_header",
-                p_dos2_header->get_id(), p_dos2_header->get_name()->get_string(true).c_str());
+                get_dos2Header()->get_id(), get_dos2Header()->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "dos2_header");
     }
-    if (p_section_table) {
+    if (get_sectionTable()) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "section_table",
-                p_section_table->get_id(), p_section_table->get_name()->get_string(true).c_str());
+                get_sectionTable()->get_id(), get_sectionTable()->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "section_table");
     }
-    if (p_resname_table) {
+    if (get_residentNameTable()) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "resname_table",
-                p_resname_table->get_id(), p_resname_table->get_name()->get_string(true).c_str());
+                get_residentNameTable()->get_id(), get_residentNameTable()->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "resname_table");
     }
-    if (p_nonresname_table) {
+    if (get_nonresidentNameTable()) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "nonresname_table",
-                p_nonresname_table->get_id(), p_nonresname_table->get_name()->get_string(true).c_str());
+                get_nonresidentNameTable()->get_id(), get_nonresidentNameTable()->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "nonresname_table");
     }
-    if (p_module_table) {
+    if (get_moduleTable()) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "module_table",
-                p_module_table->get_id(), p_module_table->get_name()->get_string(true).c_str());
+                get_moduleTable()->get_id(), get_moduleTable()->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "module_table");
     }
-    if (p_entry_table) {
+    if (get_entryTable()) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "entry_table",
-                p_entry_table->get_id(), p_entry_table->get_name()->get_string(true).c_str());
+                get_entryTable()->get_id(), get_entryTable()->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "entry_table");
     }
@@ -357,11 +363,11 @@ SgAsmNESectionTableEntry::SgAsmNESectionTableEntry(const SgAsmNESectionTableEntr
     initializeProperties();
     ASSERT_not_null(disk);
     p_sector          = Rose::BinaryAnalysis::ByteOrder::leToHost(disk->sector);
-    p_physical_size   = Rose::BinaryAnalysis::ByteOrder::leToHost(disk->physical_size);
-    if (0==p_physical_size && p_sector!=0) p_physical_size = 64*1024;
+    p_physicalSize   = Rose::BinaryAnalysis::ByteOrder::leToHost(disk->physical_size);
+    if (0==p_physicalSize && p_sector!=0) p_physicalSize = 64*1024;
     p_flags           = Rose::BinaryAnalysis::ByteOrder::leToHost(disk->flags);
-    p_virtual_size    = Rose::BinaryAnalysis::ByteOrder::leToHost(disk->virtual_size);
-    if (0==p_virtual_size) p_virtual_size = 64*1024;
+    p_virtualSize    = Rose::BinaryAnalysis::ByteOrder::leToHost(disk->virtual_size);
+    if (0==p_virtualSize) p_virtualSize = 64*1024;
 }
 
 /* Encodes a section table entry back into disk format. */
@@ -369,10 +375,10 @@ void *
 SgAsmNESectionTableEntry::encode(NESectionTableEntry_disk *disk) const
 {
     Rose::BinaryAnalysis::ByteOrder::hostToLe(p_sector,          &(disk->sector));
-    unsigned x_physical_size = p_physical_size==64*1024 ? 0 : p_physical_size;
+    unsigned x_physical_size = p_physicalSize==64*1024 ? 0 : p_physicalSize;
     Rose::BinaryAnalysis::ByteOrder::hostToLe(x_physical_size, &(disk->physical_size));
     Rose::BinaryAnalysis::ByteOrder::hostToLe(p_flags,           &(disk->flags));
-    unsigned x_virtual_size = p_virtual_size==64*1024 ? 0 : p_virtual_size;
+    unsigned x_virtual_size = p_virtualSize==64*1024 ? 0 : p_virtualSize;
     Rose::BinaryAnalysis::ByteOrder::hostToLe(x_virtual_size,  &(disk->virtual_size));
     return disk;
 }
@@ -394,8 +400,8 @@ SgAsmNESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmNE
     if (fhdr)
         fprintf(f, " (%" PRIu64 " byte offset)", (rose_addr_t) p_sector << fhdr->get_e_sector_align());
     fputc('\n', f);
-    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",     p, w, "physical_size",   p_physical_size);
-    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",     p, w, "virtual_size",    p_virtual_size);
+    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",     p, w, "physical_size",   p_physicalSize);
+    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",     p, w, "virtual_size",    p_virtualSize);
     fprintf(f, "%s%-*s = 0x%08x",                  p, w, "flags",           p_flags);
     switch (p_flags & SF_TYPE_MASK) {
       case SF_CODE:  fputs(" code", f);  break;
@@ -427,8 +433,8 @@ void
 SgAsmNESection::unparse(std::ostream &f) const
 {
     SgAsmGenericSection::unparse(f);
-    if (p_reloc_table)
-        p_reloc_table->unparse(f);
+    if (get_relocationTable())
+        get_relocationTable()->unparse(f);
 }
     
 /* Print some debugging info. */
@@ -446,10 +452,10 @@ SgAsmNESection::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     SgAsmGenericSection::dump(f, p, -1);
     SgAsmNEFileHeader *fhdr = dynamic_cast<SgAsmNEFileHeader*>(get_header());
-    p_st_entry->dump(f, p, -1, fhdr);
-    if (p_reloc_table) {
+    get_sectionTableEntry()->dump(f, p, -1, fhdr);
+    if (get_relocationTable()) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "reloc_table",
-                p_reloc_table->get_id(), p_reloc_table->get_name()->get_string(true).c_str());
+                get_relocationTable()->get_id(), get_relocationTable()->get_name()->get_string(true).c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "reloc_table");
     }
@@ -651,9 +657,15 @@ SgAsmNENameTable::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
 }
 
-/* Returns all names associated with a particular ordinal */
 std::vector<std::string>
 SgAsmNENameTable::get_names_by_ordinal(unsigned ordinal)
+{
+    return get_namesByOrdinal(ordinal);
+}
+
+/* Returns all names associated with a particular ordinal */
+std::vector<std::string>
+SgAsmNENameTable::get_namesByOrdinal(unsigned ordinal)
 {
     std::vector<std::string> retval;
     for (size_t i = 0; i < p_ordinals.size(); i++) {
@@ -688,7 +700,7 @@ SgAsmNEModuleTable::SgAsmNEModuleTable(SgAsmNEFileHeader *fhdr, SgAsmNEStringTab
         uint16_t u16_disk;
         read_content_local(at, &u16_disk, 2);
         rose_addr_t name_offset = Rose::BinaryAnalysis::ByteOrder::leToHost(u16_disk);
-        p_name_offsets.push_back(name_offset);
+        p_nameOffsets.push_back(name_offset);
         p_names.push_back(p_strtab->get_string(name_offset));
     }
 
@@ -705,9 +717,9 @@ SgAsmNEModuleTable::unparse(std::ostream &f) const
     rose_addr_t spos = 0; /*section offset*/
     p_strtab->unparse(f);
 
-    for (size_t i = 0; i < p_name_offsets.size(); i++) {
+    for (size_t i = 0; i < p_nameOffsets.size(); i++) {
         uint16_t name_offset_le;
-        Rose::BinaryAnalysis::ByteOrder::hostToLe(p_name_offsets[i], &name_offset_le);
+        Rose::BinaryAnalysis::ByteOrder::hostToLe(p_nameOffsets[i], &name_offset_le);
         spos = write(f, spos, sizeof name_offset_le, &name_offset_le);
     }
 }
@@ -736,7 +748,7 @@ SgAsmNEModuleTable::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     for (size_t i = 0; i < p_names.size(); i++) {
         fprintf(f, "%s%-*s = [%" PRIuPTR "] (offset %" PRIu64 ", %" PRIuPTR " bytes) \"%s\"\n",
-                p, w, "name", i, p_name_offsets[i], p_names[i].size(), escapeString(p_names[i]).c_str());
+                p, w, "name", i, p_nameOffsets[i], p_names[i].size(), escapeString(p_names[i]).c_str());
     }
 }
 
@@ -832,11 +844,11 @@ SgAsmNEEntryPoint::dump(FILE *f, const char *prefix, ssize_t idx) const
 
         const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
-    if (0 == p_section_idx) {
+    if (0 == get_sectionIndex()) {
         fprintf(f, "%s%-*s = %s\n", p, w, "type", "unused");
         ROSE_ASSERT(SgAsmNEEntryPoint::EF_ZERO == p_flags);
         ROSE_ASSERT(0 == p_int3f);
-        ROSE_ASSERT(0 == p_section_offset);
+        ROSE_ASSERT(0 == get_sectionOffset());
     } else {
         fprintf(f, "%s%-*s = %s\n",         p, w, "type",           0 == p_int3f ? "fixed" : "movable");
         fprintf(f, "%s%-*s = 0x%02x",       p, w, "flags",          p_flags);
@@ -846,8 +858,8 @@ SgAsmNEEntryPoint::dump(FILE *f, const char *prefix, ssize_t idx) const
         fputc('\n', f);
         if (p_int3f)
             fprintf(f, "%s%-*s = 0x%04x\n", p, w, "int3f",          p_int3f);
-        fprintf(f, "%s%-*s = %d\n",         p, w, "section_idx",    p_section_idx);
-        fprintf(f, "%s%-*s = 0x%04x\n",     p, w, "section_offset", p_section_offset);
+        fprintf(f, "%s%-*s = %d\n",         p, w, "section_idx",    get_sectionIndex());
+        fprintf(f, "%s%-*s = 0x%04x\n",     p, w, "section_offset", get_sectionOffset());
     }
 }
 
@@ -1407,6 +1419,166 @@ SgAsmNEFileHeader::parse(SgAsmDOSFileHeader *dos_header)
         enttab->populate_entries();
     
     return ne_header;
+}
+
+unsigned
+SgAsmNEEntryPoint::get_section_idx() const {
+    return get_sectionIndex();
+}
+
+void
+SgAsmNEEntryPoint::set_section_idx(unsigned x) {
+    set_sectionIndex(x);
+}
+
+unsigned
+SgAsmNEEntryPoint::get_section_offset() const {
+    return get_sectionOffset();
+}
+
+void
+SgAsmNEEntryPoint::set_section_offset(unsigned x) {
+    set_sectionOffset(x);
+}
+
+SgAsmDOSExtendedHeader*
+SgAsmNEFileHeader::get_dos2_header() const {
+    return get_dos2Header();
+}
+
+void
+SgAsmNEFileHeader::set_dos2_header(SgAsmDOSExtendedHeader *x) {
+    set_dos2Header(x);
+}
+
+SgAsmNESectionTable*
+SgAsmNEFileHeader::get_section_table() const {
+    return get_sectionTable();
+}
+
+void
+SgAsmNEFileHeader::set_section_table(SgAsmNESectionTable *x) {
+    set_sectionTable(x);
+}
+
+SgAsmNENameTable*
+SgAsmNEFileHeader::get_resname_table() const {
+    return get_residentNameTable();
+}
+
+void
+SgAsmNEFileHeader::set_resname_table(SgAsmNENameTable *x) {
+    set_residentNameTable(x);
+}
+
+SgAsmNENameTable*
+SgAsmNEFileHeader::get_nonresname_table() const {
+    return get_nonresidentNameTable();
+}
+
+void
+SgAsmNEFileHeader::set_nonresname_table(SgAsmNENameTable *x) {
+    set_nonresidentNameTable(x);
+}
+
+SgAsmNEModuleTable*
+SgAsmNEFileHeader::get_module_table() const {
+    return get_moduleTable();
+}
+
+void
+SgAsmNEFileHeader::set_module_table(SgAsmNEModuleTable *x) {
+    set_moduleTable(x);
+}
+
+SgAsmNEEntryTable*
+SgAsmNEFileHeader::get_entry_table() const {
+    return get_entryTable();
+}
+
+void
+SgAsmNEFileHeader::set_entry_table(SgAsmNEEntryTable *x) {
+    set_entryTable(x);
+}
+
+const char*
+SgAsmNEFileHeader::format_name() const {
+    return formatName();
+}
+
+const char*
+SgAsmNEFileHeader::formatName() const {
+    return "NE";
+}
+
+const SgAddressList&
+SgAsmNEModuleTable::get_name_offsets() const {
+    return get_nameOffsets();
+}
+
+void
+SgAsmNEModuleTable::set_name_offsets(const SgAddressList &x) {
+    set_nameOffsets(x);
+}
+
+SgAsmNESectionTableEntry*
+SgAsmNESection::get_st_entry() const {
+    return get_sectionTableEntry();
+}
+
+void
+SgAsmNESection::set_st_entry(SgAsmNESectionTableEntry *x) {
+    set_sectionTableEntry(x);
+}
+
+SgAsmNERelocTable*
+SgAsmNESection::get_reloc_table() const {
+    return get_relocationTable();
+}
+
+void
+SgAsmNESection::set_reloc_table(SgAsmNERelocTable *x) {
+    set_relocationTable(x);
+}
+
+rose_addr_t
+SgAsmNESectionTableEntry::get_physical_size() const {
+    return get_physicalSize();
+}
+
+void
+SgAsmNESectionTableEntry::set_physical_size(rose_addr_t x) {
+    set_physicalSize(x);
+}
+
+rose_addr_t
+SgAsmNESectionTableEntry::get_virtual_size() const {
+    return get_virtualSize();
+}
+
+void
+SgAsmNESectionTableEntry::set_virtual_size(rose_addr_t x) {
+    set_virtualSize(x);
+}
+
+rose_addr_t
+SgAsmNESectionTable::get_physical_size() const {
+    return get_physicalSize();
+}
+
+void
+SgAsmNESectionTable::set_physical_size(rose_addr_t x) {
+    set_physicalSize(x);
+}
+
+rose_addr_t
+SgAsmNESectionTable::get_virtual_size() const {
+    return get_virtualSize();
+}
+
+void
+SgAsmNESectionTable::set_virtual_size(rose_addr_t x) {
+    set_virtualSize(x);
 }
 
 #endif

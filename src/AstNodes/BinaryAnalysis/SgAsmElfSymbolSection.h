@@ -2,7 +2,7 @@
 class SgAsmElfSymbolSection: public SgAsmElfSection {
     /** Property: Whether this section represents dynamic linking symbols. */
     [[using Rosebud: rosetta]]
-    bool is_dynamic = false;
+    bool isDynamic = false;
 
     /** Property: Symbols.
      *
@@ -30,16 +30,16 @@ public:
      *  @li 0xff00-0xff1f: processor specific values
      *  @li 0xfff1: symbol has absolute value not affected by relocation
      *  @li 0xfff2: symbol is fortran common or unallocated C extern */
-    virtual void finish_parsing() override;
+    virtual void finishParsing() override;
 
     /** Given a symbol, return its index in this symbol table. */
-    size_t index_of(SgAsmElfSymbol*);
+    size_t indexOf(SgAsmElfSymbol*);
 
-    using SgAsmElfSection::calculate_sizes;
+    using SgAsmElfSection::calculateSizes;
     /** Return sizes for various parts of the table.
      *
      *  See documentation for @ref SgAsmElfSection::calculate_sizes. */
-    virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const override;
+    virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const override;
 
     /** Called prior to unparsing.
      *
@@ -51,4 +51,15 @@ public:
 
     /** Print some debugging info */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    bool get_is_dynamic() const ROSE_DEPRECATED("use get_isDynamic");
+    void set_is_dynamic(bool) ROSE_DEPRECATED("use set_isDynamic");
+    virtual void finish_parsing() override ROSE_DEPRECATED("use finishParsing");
+    size_t index_of(SgAsmElfSymbol*) ROSE_DEPRECATED("use indexOf");
+    using SgAsmElfSection::calculate_sizes;
+    virtual rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const override ROSE_DEPRECATED("use calculateSizes");
 };

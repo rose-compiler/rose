@@ -46,7 +46,7 @@ SgAsmDOSFileHeader::SgAsmDOSFileHeader(SgAsmGenericFile *f)
 }
 
 bool
-SgAsmDOSFileHeader::is_DOS(SgAsmGenericFile *file)
+SgAsmDOSFileHeader::isDos(SgAsmGenericFile *file)
 {
     /* Turn off byte reference tracking for the duration of this function. We don't want our testing the file contents to
      * affect the list of bytes that we've already referenced or which we might reference later. */
@@ -83,7 +83,7 @@ SgAsmDOSFileHeader::parse(bool define_rm_section)
         throw FormatError("Bad DOS magic number");
     
     /* Decode file format */
-    ROSE_ASSERT(Rose::BinaryAnalysis::ByteOrder::ORDER_LSB==p_exec_format->get_sex());
+    ROSE_ASSERT(Rose::BinaryAnalysis::ByteOrder::ORDER_LSB==get_executableFormat()->get_sex());
     p_e_last_page_size    = Rose::BinaryAnalysis::ByteOrder::leToHost(disk.e_last_page_size);
     p_e_total_pages       = Rose::BinaryAnalysis::ByteOrder::leToHost(disk.e_total_pages);
     p_e_nrelocs           = Rose::BinaryAnalysis::ByteOrder::leToHost(disk.e_nrelocs);
@@ -118,17 +118,17 @@ SgAsmDOSFileHeader::parse(bool define_rm_section)
     
     /* DOS real-mode text/data/etc. */
     if (define_rm_section)
-        parse_rm_section();
+        parseRealModeSection();
 
     /* Entry point */
-    p_base_va = 0;
+    p_baseVa = 0;
     add_entry_rva(Rose::BinaryAnalysis::ByteOrder::leToHost(disk.e_ip));
 
     return this;
 }
 
 void
-SgAsmDOSFileHeader::update_from_rm_section()
+SgAsmDOSFileHeader::updateFromRealModeSection()
 {
     /* Find the DOS Extended Header */
     SgAsmDOSFileHeader *dos1 = this;
@@ -188,7 +188,7 @@ SgAsmDOSFileHeader::reallocate()
 
     if (p_relocs)
         p_e_relocs_offset = p_relocs->get_offset();
-    update_from_rm_section();
+    updateFromRealModeSection();
 
     return reallocated;
 }
@@ -221,7 +221,7 @@ SgAsmDOSFileHeader::unparse(std::ostream &f) const
 }
 
 SgAsmGenericSection *
-SgAsmDOSFileHeader::parse_rm_section(rose_addr_t max_offset)
+SgAsmDOSFileHeader::parseRealModeSection(rose_addr_t max_offset)
 {
     ROSE_ASSERT(NULL == p_rm_section);
     
@@ -400,6 +400,31 @@ SgAsmDOSExtendedHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     if (variantT() == V_SgAsmDOSExtendedHeader) //unless a base class
         hexdump(f, 0, std::string(p)+"data at ", p_data);
+}
+
+const char*
+SgAsmDOSFileHeader::format_name() const {
+    return formatName();
+}
+
+const char*
+SgAsmDOSFileHeader::formatName() const {
+    return "DOS";
+}
+
+SgAsmGenericSection*
+SgAsmDOSFileHeader::parse_rm_section(rose_addr_t x) {
+    return parseRealModeSection(x);
+}
+
+void
+SgAsmDOSFileHeader::update_from_rm_section() {
+    updateFromRealModeSection();
+}
+
+bool
+SgAsmDOSFileHeader::is_DOS(SgAsmGenericFile *x) {
+    return isDos(x);
 }
 
 #endif

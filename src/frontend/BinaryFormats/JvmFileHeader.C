@@ -33,15 +33,15 @@ SgAsmJvmFileHeader::SgAsmJvmFileHeader(SgAsmGenericFile* f)
   p_magic.push_back(0xBE);
 
   /* Executable Format */
-  ASSERT_not_null(p_exec_format);
-  p_exec_format->set_family(FAMILY_JVM);
-  p_exec_format->set_purpose(PURPOSE_EXECUTABLE);
-  p_exec_format->set_sex(Rose::BinaryAnalysis::ByteOrder::ORDER_MSB);
-  p_exec_format->set_word_size(4);
-  p_exec_format->set_version(0);
-  p_exec_format->set_is_current_version(false);
-  p_exec_format->set_abi(ABI_JVM);
-  p_exec_format->set_abi_version(0);
+  ASSERT_not_null(get_executableFormat());
+  get_executableFormat()->set_family(FAMILY_JVM);
+  get_executableFormat()->set_purpose(PURPOSE_EXECUTABLE);
+  get_executableFormat()->set_sex(Rose::BinaryAnalysis::ByteOrder::ORDER_MSB);
+  get_executableFormat()->set_word_size(4);
+  get_executableFormat()->set_version(0);
+  get_executableFormat()->set_is_current_version(false);
+  get_executableFormat()->set_abi(ABI_JVM);
+  get_executableFormat()->set_abi_version(0);
 
   p_isa = ISA_JVM;
 }
@@ -96,10 +96,10 @@ SgAsmJvmFileHeader::parse()
   Jvm::read_value(pool, p_minor_version);
   Jvm::read_value(pool, p_major_version);
 
-  ASSERT_not_null(p_exec_format);
-  p_exec_format->set_version(p_major_version);
-  p_exec_format->set_is_current_version(true);
-  p_exec_format->set_abi_version(p_major_version);
+  ASSERT_not_null(get_executableFormat());
+  get_executableFormat()->set_version(p_major_version);
+  get_executableFormat()->set_is_current_version(true);
+  get_executableFormat()->set_abi_version(p_major_version);
 
   /* And finally the constant pool can be parsed */
   pool->parse();

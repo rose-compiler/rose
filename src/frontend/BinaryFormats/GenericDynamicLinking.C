@@ -43,6 +43,17 @@ SgAsmGenericDLL::dump(FILE *f, const char *prefix, ssize_t idx) const
         fprintf(f, "%s%-*s = [%zd] \"%s\"\n", p, w, "symbol_name", i, escapeString(p_symbols[i]).c_str());
 }
 
+void
+SgAsmGenericDLL::add_symbol(const std::string &s) {
+    addSymbol(s);
+}
+
+void
+SgAsmGenericDLL::addSymbol(const std::string &s) {
+    p_symbols.push_back(s);
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Symbols and symbol tables
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -82,7 +93,7 @@ SgAsmGenericSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = \"%s\"\n", p, w, "name", p_name->get_string(true).c_str());
 
     const char *s_def_state = NULL;
-    switch (p_def_state) {
+    switch (get_definitionState()) {
       case SYM_UNDEFINED: s_def_state = "undefined"; break;
       case SYM_TENTATIVE: s_def_state = "tentative"; break;
       case SYM_DEFINED:   s_def_state = "defined";   break;
@@ -126,6 +137,16 @@ SgAsmGenericSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const
     fputc('\n', f);
 
     fprintf(f, "%s%-*s = %" PRIu64 " bytes\n", p, w, "size", p_size);
+}
+
+SgAsmGenericSymbol::SymbolDefState
+SgAsmGenericSymbol::get_def_state() const {
+    return get_definitionState();
+}
+
+void
+SgAsmGenericSymbol::set_def_state(SymbolDefState x) {
+    set_definitionState(x);
 }
 
 #endif

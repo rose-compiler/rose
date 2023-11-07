@@ -154,17 +154,17 @@ public:
      *
      *  This enum constant describes the kind of function. See @ref SgAsmFunction::function_kind_enum for details. */
     [[using Rosebud: rosetta, ctor_arg]]
-    SgAsmFunction::function_kind_enum function_kind = SgAsmFunction::e_unknown;
+    SgAsmFunction::function_kind_enum functionKind = SgAsmFunction::e_unknown;
 
     /** Property: Whether a function could return to its caller. */
     [[using Rosebud: rosetta]]
-    SgAsmFunction::MayReturn may_return = SgAsmFunction::RET_UNKNOWN;
+    SgAsmFunction::MayReturn mayReturn = SgAsmFunction::RET_UNKNOWN;
 
     /** Property: Hash of the function.
      *
      *  This is unused by ROSE, but can be set by users to identify a function by hash string. */
     [[using Rosebud: rosetta]]
-    std::string name_md5;
+    std::string nameMd5;
 
     /** Property: Statements that make up a function.
      *
@@ -181,18 +181,18 @@ public:
      *  Every function has one primary entry address that uniquely identifies the function in the AST. This is the starting
      *  address of the function's entry instruction.  The abbreviation "va" means "virtual address". */
     [[using Rosebud: rosetta]]
-    rose_addr_t entry_va = 0;
+    rose_addr_t entryVa = 0;
 
     /** Property: Symbol table.
      *
      *  A ROSE symbol table associated with this function. This is not the same as the symbol table that appears in the
      *  binary specimen, such as ELF or PE symbol tables. */
     [[using Rosebud: rosetta, no_serialize]]
-    SgSymbolTable* symbol_table = nullptr;
+    SgSymbolTable* symbolTable = nullptr;
 
     // FIXME[Robb P Matzke 2017-02-13]: what is this?
     [[using Rosebud: rosetta]]
-    size_t cached_vertex = (size_t)(-1);
+    size_t cachedVertex = (size_t)(-1);
 
     /** Property: Net effect of function on the stack pointer.
      *
@@ -218,31 +218,31 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Adds statement to end of statement list. */
-    void append_statement(SgAsmStatement*);
+    void appendStatement(SgAsmStatement*);
 
     /** Erases statement from statement list.
      *
      *  If the specified statement is found in the list of statements then it is erased without being deleted. */
-    void remove_statement(SgAsmStatement* statement);
+    void removeStatement(SgAsmStatement* statement);
 
     /** Function entry basic block.
      *
      *  Returns the basic block that represents the function primary entry point. Returns null for a function
      *  that contains no instructions. */
-    SgAsmBlock* get_entry_block() const;
+    SgAsmBlock* get_entryBlock() const;
 
     /** Multi-line description of function reason keys from unparser.
      *
      *  Returns a string that describes what the one-letter function reasons mean in the unparser output. */
-    static std::string reason_key(const std::string &prefix="");
+    static std::string reasonKey(const std::string &prefix = "");
 
     /** Returns a very short string describing the reason mask. */
-    std::string reason_str(bool pad) const;
+    std::string reasonString(bool pad) const;
 
     /** Class method that converts a reason bit vector to a human-friendly string.
      *
      *  The second argument is the bit vector of SgAsmFunction::FunctionReason bits. */
-    static std::string reason_str(bool pad, unsigned reason);
+    static std::string reasonString(bool pad, unsigned reason);
 
     /** Selection functor for SgAsmFunction::get_extent(). */
     class NodeSelector {
@@ -299,4 +299,27 @@ public:
      *  gcrypt functions are not available. The optional @p selector argument can be used to limit the digest to only
      *  certain nodes of the function; by default, all instructions and static data are accumulated. */
     bool get_sha1(uint8_t digest[20]/*out*/, NodeSelector *selector=NULL);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    function_kind_enum get_function_kind() const ROSE_DEPRECATED("use get_functionKind");
+    void set_function_kind(function_kind_enum) ROSE_DEPRECATED("use set_functionKind");
+    MayReturn get_may_return() const ROSE_DEPRECATED("use get_mayReturn");
+    void set_may_return(MayReturn) ROSE_DEPRECATED("use set_mayReturn");
+    const std::string& get_name_md5() const ROSE_DEPRECATED("use get_nameMd5");
+    void set_name_md5(const std::string&) ROSE_DEPRECATED("use set_nameMd5");
+    rose_addr_t get_entry_va() const ROSE_DEPRECATED("use get_entryVa");
+    void set_entry_va(rose_addr_t) ROSE_DEPRECATED("use set_entryVa");
+    SgSymbolTable* get_symbol_table() const ROSE_DEPRECATED("use get_symbolTable");
+    void set_symbol_table(SgSymbolTable*) ROSE_DEPRECATED("use set_symbolTable");
+    size_t get_cached_vertex() const ROSE_DEPRECATED("use get_cachedVertex");
+    void set_cached_vertex(size_t) ROSE_DEPRECATED("use set_cahcedVertex");
+    void append_statement(SgAsmStatement*) ROSE_DEPRECATED("use appendStatement");
+    void remove_statement(SgAsmStatement* statement) ROSE_DEPRECATED("use removeStatement");
+    SgAsmBlock* get_entry_block() const ROSE_DEPRECATED("use get_entryBlock");
+    static std::string reason_key(const std::string &prefix="") ROSE_DEPRECATED("use reasonKey");
+    std::string reason_str(bool) const ROSE_DEPRECATED("use reasonString");
+    static std::string reason_str(bool, unsigned) ROSE_DEPRECATED("use reasonString");
 };

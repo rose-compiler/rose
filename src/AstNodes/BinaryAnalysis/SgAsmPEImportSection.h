@@ -155,12 +155,12 @@ public:
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
     /** Add an import directory to the end of the import directory list. */
-    void add_import_directory(SgAsmPEImportDirectory*);
+    void addImportDirectory(SgAsmPEImportDirectory*);
 
     /** Remove an import directory from the import directory list. Does not delete it. */
-    void remove_import_directory(SgAsmPEImportDirectory*);
-    static bool show_import_mesg();
-    static void import_mesg_reset() { mesg_nprinted=0; }
+    void removeImportDirectory(SgAsmPEImportDirectory*);
+    static bool showImportMessage();
+    static void importMessageReset();
 
     /** Reallocate space for all Import Address Table.
      *
@@ -169,8 +169,18 @@ public:
      *  needed to store the entire table.  Each subsequent IAT is given the next available address and it's size is also
      *  updated.  The result is that all the IATs under this Import Section are given addresses and sizes that make them
      *  contiguous in memory. This method returns the total number of bytes required for all the IATs. */
-    size_t reallocate_iats(rose_rva_t start_at);
+    size_t reallocateIats(rose_rva_t start_at);
 
 private:
     static size_t mesg_nprinted; //counter for import_mesg()
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    void add_import_directory(SgAsmPEImportDirectory*) ROSE_DEPRECATED("use addImportDirectory");
+    void remove_import_directory(SgAsmPEImportDirectory*) ROSE_DEPRECATED("use removeImportDirectory");
+    static bool show_import_mesg() ROSE_DEPRECATED("use showImportMessage");
+    static void import_mesg_reset() ROSE_DEPRECATED("use importMessageReset");
+    size_t reallocate_iats(rose_rva_t) ROSE_DEPRECATED("use reallocateIats");
 };

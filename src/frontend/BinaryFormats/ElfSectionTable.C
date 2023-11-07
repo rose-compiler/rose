@@ -300,6 +300,12 @@ SgAsmElfSectionTable::parse()
 SgAsmElfSectionTableEntry *
 SgAsmElfSectionTable::add_section(SgAsmElfSection *section)
 {
+    return addSection(section);
+}
+
+SgAsmElfSectionTableEntry *
+SgAsmElfSectionTable::addSection(SgAsmElfSection *section)
+{
     ROSE_ASSERT(section!=NULL);
     ROSE_ASSERT(section->get_file()==get_file());
     ROSE_ASSERT(section->get_header()==get_header());
@@ -348,23 +354,14 @@ SgAsmElfSectionTable::add_section(SgAsmElfSection *section)
     return shdr;
 }
 
-void
-SgAsmElfSection::allocate_name_to_storage(SgAsmElfStringSection *strsec)
+rose_addr_t
+SgAsmElfSectionTable::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
-    if (get_name()) {
-        SgAsmStoredString *old_stored = dynamic_cast<SgAsmStoredString*>(get_name());
-        if (!old_stored || old_stored->get_strtab()!=strsec->get_strtab()) {
-            /* Reallocate string to new string table */
-            SgAsmStoredString *new_stored = new SgAsmStoredString(strsec->get_strtab(), 0);
-            new_stored->set_string(get_name()->get_string());
-            get_name()->set_string(""); /*free old string*/
-            set_name(new_stored);
-        }
-    }
+    return calculateSizes(entsize, required, optional, entcount);
 }
 
 rose_addr_t
-SgAsmElfSectionTable::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
+SgAsmElfSectionTable::calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const
 {
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
@@ -419,6 +416,12 @@ SgAsmElfSectionTable::calculate_sizes(size_t *entsize, size_t *required, size_t 
 void
 SgAsmElfSectionTableEntry::update_from_section(SgAsmElfSection *section)
 {
+    updateFromSection(section);
+}
+
+void
+SgAsmElfSectionTableEntry::updateFromSection(SgAsmElfSection *section)
+{
     if (section->get_name()->get_offset()==SgAsmGenericString::unallocated) {
         p_sh_name = 0; /*not a stored string after all*/
     } else {
@@ -462,6 +465,12 @@ SgAsmElfSectionTableEntry::update_from_section(SgAsmElfSection *section)
 std::string
 SgAsmElfSectionTableEntry::to_string(SectionType t)
 {
+    return toString(t);
+}
+
+std::string
+SgAsmElfSectionTableEntry::toString(SectionType t)
+{
 #ifndef _MSC_VER
     std::string retval = stringifySgAsmElfSectionTableEntrySectionType(t);
 #else
@@ -490,6 +499,12 @@ SgAsmElfSectionTableEntry::to_string(SectionType t)
 
 std::string
 SgAsmElfSectionTableEntry::to_string(SectionFlags val)
+{
+    return toString(val);
+}
+
+std::string
+SgAsmElfSectionTableEntry::toString(SectionFlags val)
 {
   std::string str;
   static const uint32_t kBaseMask=0x3ff;

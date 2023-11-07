@@ -21,7 +21,7 @@ class SgAsmInterpretation: public SgAsmNode {
      *
      *  The global block is the top of the AST for this interpretation's functions, basic blocks, and instructions. */
     [[using Rosebud: rosetta, traverse]]
-    SgAsmBlock* global_block = nullptr;
+    SgAsmBlock* globalBlock = nullptr;
 
     // ROSETTA doesn't understand this type, but we want this treated like a property whose data member name is "p_map"
     // and which has automatically generator accessors and mutators named "get_map" and "set_map" and is serialized.
@@ -43,8 +43,8 @@ class SgAsmInterpretation: public SgAsmNode {
     [[using Rosebud: data(instruction_map), accessors(), mutators()]]
     mutable InstructionMap instruction_map;         // cached instruction map
 
-    InstructionMap& get_instruction_map(bool recompute = false);
-    void set_instruction_map(const InstructionMap&);
+    InstructionMap& get_instructionMap(bool recompute = false);
+    void set_instructionMap(const InstructionMap&);
     /** @} */
 
     /** Property: code coverage percent.
@@ -73,11 +73,22 @@ public:
      *
      *  This function traverses the AST rooted at the @ref get_global_block "global_block" and inserts each encountered
      *  instruction into the provided @ref InstructionMap based on its starting virtual address. */
-    void insert_instructions(InstructionMap&/*in,out*/);
+    void insertInstructions(InstructionMap&/*in,out*/);
 
     /** Erase instructions from a map.
      *
      *  This function traverses the AST rooted at the @ref get_global_block "global_block" and erases each encountered
      *  instruction from the provided @ref InstructionMap based on its starting virtual address. */
-    void erase_instructions(InstructionMap&/*in,out*/);
+    void eraseInstructions(InstructionMap&/*in,out*/);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmBlock* get_global_block() const ROSE_DEPRECATED("use get_globalBlock");
+    void set_global_block(SgAsmBlock*) ROSE_DEPRECATED("use set_globalBlock");
+    InstructionMap& get_instruction_map(bool=false) ROSE_DEPRECATED("use get_instructionMap");
+    void set_instruction_map(const InstructionMap&) ROSE_DEPRECATED("use set_instructionMap");
+    void insert_instructions(InstructionMap&) ROSE_DEPRECATED("use insertInstructions");
+    void erase_instructions(InstructionMap&) ROSE_DEPRECATED("use eraseInstructions");
 };

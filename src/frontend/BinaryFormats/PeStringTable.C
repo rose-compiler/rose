@@ -109,28 +109,28 @@ SgAsmCoffStrtab::SgAsmCoffStrtab(class SgAsmPESection *containing_section)
  * properly and their destructors (~SgAsmStoredString) will free their storage. */
 void
 SgAsmCoffStrtab::destructorHelper() {
-    for (referenced_t::iterator i = p_storage_list.begin(); i != p_storage_list.end(); ++i) {
+    for (referenced_t::iterator i = p_storageList.begin(); i != p_storageList.end(); ++i) {
         SgAsmStringStorage *storage = *i;
         storage->set_strtab(NULL);
         storage->set_offset(SgAsmGenericString::unallocated);
     }
-    p_storage_list.clear();
-    p_dont_free = NULL; /*FIXME: can't delete for same reason as in SgAsmStoredString destructor. (RPM 2008-09-05) */
+    p_storageList.clear();
+    p_dontFree = NULL; /*FIXME: can't delete for same reason as in SgAsmStoredString destructor. (RPM 2008-09-05) */
 }
 
 /* Creates the storage item for the string at the specified offset. If "shared" is true then attempt to re-use a previous storage
  * object, otherwise create a new one. Each storage object is considered to be a separate string, therefore when two strings
  * share the same storage object, changing one string changes the other. */
 SgAsmStringStorage *
-SgAsmCoffStrtab::create_storage(rose_addr_t offset, bool shared)
+SgAsmCoffStrtab::createStorage(rose_addr_t offset, bool shared)
 {
     ROSE_ASSERT(offset!=SgAsmGenericString::unallocated);
     SgAsmGenericSection *container = get_container();
 
     /* Has the string already been created? */
     if (shared) {
-        for (referenced_t::iterator i=p_storage_list.begin(); i!=p_storage_list.end(); ++i) {
-            if ((*i)->get_offset()==offset && (*i)!=p_dont_free)
+        for (referenced_t::iterator i=p_storageList.begin(); i!=p_storageList.end(); ++i) {
+            if ((*i)->get_offset()==offset && (*i)!=get_dontFree())
                 return *i;
         }
     }
@@ -142,7 +142,7 @@ SgAsmCoffStrtab::create_storage(rose_addr_t offset, bool shared)
 
     /* Make sure new storage isn't inside some other string. (We don't support nested strings in COFF where the length byte of
      * the nested string is one of the characters of the outer string.) */
-    for (referenced_t::iterator i=p_storage_list.begin(); i!=p_storage_list.end(); ++i) {
+    for (referenced_t::iterator i=p_storageList.begin(); i!=p_storageList.end(); ++i) {
         ROSE_ASSERT((*i)->get_offset()==SgAsmGenericString::unallocated ||
                     offset + 1 + len <= (*i)->get_offset() ||
                     offset >= 1 + (*i)->get_string().size());
@@ -161,24 +161,24 @@ SgAsmCoffStrtab::create_storage(rose_addr_t offset, bool shared)
      * The only time we can guarantee this is OK is when the new storage points to the same file location as "dont_free"
      * since the latter is guaranteed to never be freed or shared. This exception is used when creating a new, unallocated
      * string (see SgAsmStoredString(SgAsmGenericStrtab,const std::string&)). */
-    if (p_num_freed>0 && (!p_dont_free || offset!=p_dont_free->get_offset())) {
+    if (get_numberFreed()>0 && (!get_dontFree() || offset!=get_dontFree()->get_offset())) {
         mlog[WARN] <<"SgAsmCoffStrtab::create_storage(" <<offset <<"): "
-                   <<StringUtility::plural(p_num_freed, "other strings")
-                   <<" (of " <<p_storage_list.size() <<" created) in [" <<container->get_id() <<"]"
+                   <<StringUtility::plural(p_numberFreed, "other strings")
+                   <<" (of " <<p_storageList.size() <<" created) in [" <<container->get_id() <<"]"
                    <<" \"" <<container->get_name()->get_string(true) <<"\""
-                   <<(1==p_num_freed?"has":"have") <<" been modified and/or reallocated\n";
-        ROSE_ASSERT(0==p_num_freed);
+                   <<(1==get_numberFreed()?"has":"have") <<" been modified and/or reallocated\n";
+        ROSE_ASSERT(0==get_numberFreed());
     }
 
     set_isModified(true);
-    p_storage_list.push_back(storage);
+    p_storageList.push_back(storage);
     return storage;
 }
 
 /* Returns the number of bytes required to store the string in the string table. This is one (the length byte) plus the
  * length of the string. */
 rose_addr_t
-SgAsmCoffStrtab::get_storage_size(const SgAsmStringStorage *storage) {
+SgAsmCoffStrtab::get_storageSize(const SgAsmStringStorage *storage) {
     return 1 + storage->get_string().size();
 }
 
@@ -189,8 +189,8 @@ SgAsmCoffStrtab::unparse(std::ostream &f) const
     SgAsmGenericSection *container = get_container();
 
     /* Write length coded strings. Shared strings will be written more than once, but that's OK. */
-    for (size_t i=0; i<p_storage_list.size(); i++) {
-        SgAsmStringStorage *storage = p_storage_list[i];
+    for (size_t i=0; i<p_storageList.size(); i++) {
+        SgAsmStringStorage *storage = p_storageList[i];
         ROSE_ASSERT(storage->get_offset()!=SgAsmGenericString::unallocated);
         rose_addr_t at = container->write(f, storage->get_offset(), storage->get_string());
         container->write(f, at, '\0');
@@ -199,6 +199,16 @@ SgAsmCoffStrtab::unparse(std::ostream &f) const
     /* Fill free areas with zero */
     BOOST_FOREACH (const AddressInterval &interval, get_freelist().intervals())
         container->write(f, interval.least(), std::string(interval.size(), '\0'));
+}
+
+SgAsmStringStorage*
+SgAsmCoffStrtab::create_storage(rose_addr_t x, bool y) {
+    return createStorage(x, y);
+}
+
+rose_addr_t
+SgAsmCoffStrtab::get_storage_size(const SgAsmStringStorage *x) {
+    return get_storageSize(x);
 }
 
 #endif

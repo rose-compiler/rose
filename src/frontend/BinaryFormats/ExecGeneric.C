@@ -177,6 +177,11 @@ std::string SgAsmExecutableFileFormat::to_string(SgAsmExecutableFileFormat::InsS
 
 std::string
 SgAsmExecutableFileFormat::isa_family_to_string(SgAsmExecutableFileFormat::InsSetArchitecture isa) {
+    return isaFamilyToString(isa);
+}
+
+std::string
+SgAsmExecutableFileFormat::isaFamilyToString(SgAsmExecutableFileFormat::InsSetArchitecture isa) {
     switch(isa & ISA_FAMILY_MASK){
         case ISA_IA32_Family:  return "Intel x86";     /* x86 IA-32 family of architectures; Intel, AMD, VIA, ... */
         case ISA_X8664_Family: return "x86-64";        /* x86-64 family of architectures: Intel, AMD, VIA, ... */
@@ -201,9 +206,13 @@ SgAsmExecutableFileFormat::isa_family_to_string(SgAsmExecutableFileFormat::InsSe
     return "unknown isa family (" + StringUtility::unsignedToHex(isa & ISA_FAMILY_MASK) + ")";
 }
 
-
 std::string
 SgAsmExecutableFileFormat::isa_to_string(SgAsmExecutableFileFormat::InsSetArchitecture isa) {
+    return isaToString(isa);
+}
+
+std::string
+SgAsmExecutableFileFormat::isaToString(SgAsmExecutableFileFormat::InsSetArchitecture isa) {
     if (const char *s = stringify::SgAsmExecutableFileFormat::InsSetArchitecture(isa))
         return s;
     return "unknown isa (" + StringUtility::unsignedToHex(isa) + ")";
@@ -211,6 +220,11 @@ SgAsmExecutableFileFormat::isa_to_string(SgAsmExecutableFileFormat::InsSetArchit
 
 std::string
 SgAsmExecutableFileFormat::to_string(SgAsmExecutableFileFormat::ExecFamily family) {
+    return toString(family);
+}
+
+std::string
+SgAsmExecutableFileFormat::toString(SgAsmExecutableFileFormat::ExecFamily family) {
     switch(family){
         case FAMILY_UNSPECIFIED:  return "unspecified";
         case FAMILY_DOS:          return "Microsoft DOS";
@@ -227,6 +241,11 @@ SgAsmExecutableFileFormat::to_string(SgAsmExecutableFileFormat::ExecFamily famil
 
 std::string
 SgAsmExecutableFileFormat::to_string(SgAsmExecutableFileFormat::ExecABI abi) {
+    return toString(abi);
+}
+
+std::string
+SgAsmExecutableFileFormat::toString(SgAsmExecutableFileFormat::ExecABI abi) {
     switch(abi){
         case ABI_UNSPECIFIED: return "unspecified";
         case ABI_OTHER:       return "other";
@@ -256,6 +275,11 @@ SgAsmExecutableFileFormat::to_string(SgAsmExecutableFileFormat::ExecABI abi) {
 
 std::string
 SgAsmExecutableFileFormat::to_string(SgAsmExecutableFileFormat::ExecPurpose purpose) {
+    return toString(purpose);
+}
+
+std::string
+SgAsmExecutableFileFormat::toString(SgAsmExecutableFileFormat::ExecPurpose purpose) {
     switch(purpose){
         case PURPOSE_UNSPECIFIED:   return "unspecified";
         case PURPOSE_OTHER:         return "other";

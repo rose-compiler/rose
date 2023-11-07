@@ -5,20 +5,18 @@ class SgAsmElfSection: public SgAsmGenericSection {
      *  Points to an optional related section. See official ELF specification.
      *
      * @{ */
-    [[using Rosebud: rosetta, accessors(), mutators()]]
-    SgAsmElfSection* linked_section = nullptr;
-
-    SgAsmElfSection* get_linked_section() const;
-    virtual void set_linked_section(SgAsmElfSection*);
+    [[using Rosebud: rosetta, mutators()]]
+    SgAsmElfSection* linkedSection = nullptr;
+    virtual void set_linkedSection(SgAsmElfSection*);
     /** @} */
 
     /** Property: The section table entry corresponding to this section. */
     [[using Rosebud: rosetta, traverse]]
-    SgAsmElfSectionTableEntry* section_entry = nullptr;
+    SgAsmElfSectionTableEntry* sectionEntry = nullptr;
 
     /** Property: The segment table entry corresponding to this section. */
     [[using Rosebud: rosetta, traverse]]
-    SgAsmElfSegmentTableEntry* segment_entry = nullptr;
+    SgAsmElfSegmentTableEntry* segmentEntry = nullptr;
 
 public:
     /** Constructor for sections not yet in a table.
@@ -33,12 +31,12 @@ public:
      *  section table. This function complements @ref SgAsmElfSectionTable::add_section in that this function initializes
      *  this section from the section table while @ref SgAsmElfSectionTable::add_section "add_section" initializes the
      *  section table from the section. */
-    SgAsmElfSection *init_from_section_table(SgAsmElfSectionTableEntry*, SgAsmElfStringSection*, int id);
+    SgAsmElfSection *initFromSectionTable(SgAsmElfSectionTableEntry*, SgAsmElfStringSection*, int id);
 
     /** Initializes the section from data parse from the ELF Segment Table.
      *
      *  This is similar to @ref init_from_section_table but for segments instead of sections. */
-    SgAsmElfSection *init_from_segment_table(SgAsmElfSegmentTableEntry*, bool mmap_only=false);
+    SgAsmElfSection *initFromSegmentTable(SgAsmElfSegmentTableEntry*, bool mmapOnly=false);
 
     /** Returns info about the size of the entries based on information already available.
      *
@@ -60,10 +58,10 @@ public:
      *
      *  Return value is the total size needed for the section. In all cases, it is the product of @p entsize and @p
      *  entcount. */
-    rose_addr_t calculate_sizes(size_t r32size, size_t r64size, const std::vector<size_t> &optsizes,
-                                size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
+    rose_addr_t calculateSizes(size_t r32size, size_t r64size, const std::vector<size_t> &optsizes,
+                               size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 
-    virtual void finish_parsing() {}
+    virtual void finishParsing();
 
     /** Base implementation for calculating sizes.
      *
@@ -81,7 +79,7 @@ public:
      *
      *  The return size is the product of @p entsize and @p entcount, which, if this section is a table (nonzero
      *  sh_entsize), could be smaller than the total size of the section. */
-    virtual rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
+    virtual rose_addr_t calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 
     /** Called prior to unparse to make things consistent. */
     virtual bool reallocate() override;
@@ -90,10 +88,31 @@ public:
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
     /** Make this section's name to be stored in the specified string table. */
-    void allocate_name_to_storage(SgAsmElfStringSection*);
+    void allocateNameToStorage(SgAsmElfStringSection*);
 
     /** Obtain ELF header.
      *
      *  This is just a convenience function so we don't need to constantly cast the return value from @ref get_header. */
-    SgAsmElfFileHeader *get_elf_header() const;
+    SgAsmElfFileHeader *get_elfHeader() const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmElfSection* get_linked_section() const ROSE_DEPRECATED("use get_linkedSection");
+    virtual void set_linked_section(SgAsmElfSection*) ROSE_DEPRECATED("use set_linkSection");
+    SgAsmElfSectionTableEntry* get_section_entry() const ROSE_DEPRECATED("use get_sectionEntry");
+    void set_section_entry(SgAsmElfSectionTableEntry*) ROSE_DEPRECATED("use set_sectionEntry");
+    SgAsmElfSegmentTableEntry* get_segment_entry() const ROSE_DEPRECATED("use get_segmentEntry");
+    void set_segment_entry(SgAsmElfSegmentTableEntry*) ROSE_DEPRECATED("use set_segmentEntry");
+    SgAsmElfSection *init_from_section_table(SgAsmElfSectionTableEntry*, SgAsmElfStringSection*, int)
+        ROSE_DEPRECATED("use initFromSectionTable");
+    SgAsmElfSection *init_from_segment_table(SgAsmElfSegmentTableEntry*, bool mmap_only=false)
+        ROSE_DEPRECATED("use initFromSegmentTable");
+    rose_addr_t calculate_sizes(size_t, size_t, const std::vector<size_t>&, size_t*, size_t*, size_t*, size_t*) const
+        ROSE_DEPRECATED("use calculateSizes");
+    virtual void finish_parsing() ROSE_DEPRECATED("use finishParsing");
+    virtual rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const ROSE_DEPRECATED("use calculateSizes");
+    void allocate_name_to_storage(SgAsmElfStringSection*) ROSE_DEPRECATED("use allocateNameToStorage");
+    SgAsmElfFileHeader *get_elf_header() const ROSE_DEPRECATED("use get_elfHeader");
 };
