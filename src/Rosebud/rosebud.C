@@ -8,6 +8,7 @@ static const char* gDescription =
 #include <Rosebud/Utility.h>
 
 #include <Sawyer/CommandLine.h>
+#include <Sawyer/Stopwatch.h>
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -965,7 +966,6 @@ int main(int argc, char *argv[]) {
     Sawyer::initializeLibrary();
     mlog.initialize("tool");
     Sawyer::Message::mfacilities.insertAndAdjust(mlog);
-    mlog[INFO].enable();
 
     // Parse the command-line
     Sawyer::CommandLine::Parser cmdlineParser = makeCommandLineParser();
@@ -973,11 +973,14 @@ int main(int argc, char *argv[]) {
     const std::vector<std::string> args = parseCommandLine(cmdlineParser, argc, argv);
 
     // Parse the input files to produce the AST
+    SAWYER_MESG(mlog[INFO]) <<"parsing input files...\n"; // don't use partial lines due to `error` functions
+    Sawyer::Stopwatch timer;
     auto project = Ast::Project::instance();
     for (const std::string &arg: args) {
         if (auto file = parseFile(arg))
             project->files.push_back(file);
     }
+    SAWYER_MESG(mlog[INFO]) <<"parsing input files; took " <<timer.toString() <<"\n";
 
     // Additional warnings that we can't check until all the files are parsed
     if (settings.showingWarnings) {
@@ -991,9 +994,12 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    SAWYER_MESG(mlog[INFO]) <<"generating output files...\n"; // no partial lines due to `error` functions
+    timer.restart();
     Generator::Ptr generator = Generator::lookup(settings.backend);
     ASSERT_not_null(generator);
     generator->generate(project);
+    SAWYER_MESG(mlog[INFO]) <<"generating output files; took " <<timer.toString() <<"\n";
 
     return nErrors > 0 ? 1 : 0;
 }

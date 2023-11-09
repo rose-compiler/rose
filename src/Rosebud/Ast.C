@@ -2,12 +2,14 @@
 
 #include <Rosebud/Utility.h>
 
+#include <Sawyer/AllocatingBuffer.h>
 #include <Sawyer/Interval.h>
 #include <Sawyer/IntervalSet.h>
 #include <Sawyer/Message.h>
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/filesystem.hpp>
 #include <boost/range/adaptors.hpp>
 
 #include <fstream>
@@ -239,8 +241,45 @@ Class::instance() {
 // File
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// Read the file the hard way with extra data copying because boost::iostreams::mapped_file holds the file descriptor open even
+// though mmap doesn't require that. On macOS, this results in the process eventually having too many open file descriptors since
+// there's one per parsed Rosebud input file.
+static Sawyer::Container::Buffer<size_t, char>::Ptr
+readFile(const boost::filesystem::path &name) {
+    std::ifstream input(name);
+    if (!input)
+        throw std::runtime_error("cannot open \"" + name.string() + "\" for reading");
+    size_t nChars = boost::filesystem::file_size(name);
+    auto retval = Sawyer::Container::AllocatingBuffer<size_t, char>::instance(nChars);
+    std::vector<char> buf(4096);
+    for (size_t at = 0; at < nChars; /*void*/) {
+        input.read(buf.data(), buf.size());
+        const size_t nRead = input.gcount();
+        if (nRead > 0) {
+            const size_t nWritten = retval->write(buf.data(), at, nRead);
+            ASSERT_always_require(nWritten == nRead);
+            at += nRead;
+        } else {
+            ASSERT_always_require(at == retval->size());
+            break;
+        }
+    }
+    return retval;
+}
+
 File::File(const std::string &name)
-    : stream_(name), classes(*this) {}
+    :
+#if 1
+    // Copy the file into memory. It turns out this is almost as fast as mapping the file.
+      stream_(name, readFile(name)),
+#else
+    // Map the file into memory. This is fast, but we use boost::iostreams::mapped_file which holds the file open for the lifetime
+    // of the mapped_file object. This can result in an EMFILE error (the per-process limit on number of open file descriptors has
+    // been reached).
+      stream_(name),
+#endif
+      classes(*this) {}
+
 
 File::Ptr
 File::instance(const std::string &name) {
