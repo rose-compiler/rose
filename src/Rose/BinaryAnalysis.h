@@ -2,6 +2,7 @@
 #define ROSE_BinaryAnalysis_H
 
 #include <Rose/BinaryAnalysis/AbstractLocation.h>
+#include <Rose/BinaryAnalysis/Architecture.h>
 #include <Rose/BinaryAnalysis/AsmFunctionIndex.h>
 #include <Rose/BinaryAnalysis/AstHash.h>
 #include <Rose/BinaryAnalysis/BasicTypes.h>

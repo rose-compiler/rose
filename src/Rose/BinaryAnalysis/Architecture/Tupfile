@@ -1,0 +1,7 @@
+include_rules
+
+run $(librose_compile) \
+    Base.C
+
+run $(public_header) -o include/rose/Rose/BinaryAnalysis/Architecture \
+    Base.h

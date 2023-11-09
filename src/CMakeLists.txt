@@ -146,6 +146,7 @@ set(rose_LIB_OBJS
   roseAstNodesExpression
   roseNamespace
   roseBinaryAnalysis
+  roseBinaryAnalysisArchitecture
   roseBinaryAnalysisByteCode
   roseBinaryAnalysisConcolic
   roseBinaryAnalysisConcolicCallback

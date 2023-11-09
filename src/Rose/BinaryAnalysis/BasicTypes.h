@@ -137,6 +137,7 @@ using VariableFinderPtr = Sawyer::SharedPointer<VariableFinder>; /**< Reference 
 #endif
 
 // #include's for sub-namespaces and sub-directories
+#include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Debugger/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>

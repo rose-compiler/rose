@@ -1,3 +1,4 @@
+add_subdirectory(Architecture)
 add_subdirectory(ByteCode)
 add_subdirectory(Concolic)
 add_subdirectory(Debugger)
