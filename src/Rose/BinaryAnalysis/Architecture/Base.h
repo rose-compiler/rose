@@ -16,6 +16,11 @@ public:
 
 private:
     std::string name_;                                  // name of architecture
+    RegisterDictionaryPtr registerDictionary_;
+
+protected:
+    Base();
+    ~Base();
 
 public:
     /** Property: Architecture definition name.
@@ -29,11 +34,25 @@ public:
      *  across all architecture names. See the list of ROSE built-in architecture names for ideas (this list can be obtained from
      *  many binary analysis tools, or the @ref Architecture::registeredNames function).
      *
-     *  Thread safety: Not thread safe.
+     *  Thread safety: Not thread safe.  It is assumed that an architecture is given a name when it's being defined, and then the
+     *  name is not changed once the architecture is registered with the ROSE library.
      *
      * @{ */
     const std::string &name() const;
     void name(const std::string&);
+    /** @} */
+
+    /** Property: Register dictionary.
+     *
+     *  The register dictionary defines a mapping between register names and register descriptors (@ref RegisterDescriptor), and
+     *  thus how the registers map into hardware.
+     *
+     *  Thread safety: Not thread safe. It is assumed that an architecture is given a register dictionary when it's being defined,
+     *  and then the register dictionary is not changed once the architecture is registered with the ROSE library.
+     *
+     * @{ */
+    const RegisterDictionaryPtr& registerDictionary() const;
+    void registerDictionary(const RegisterDictionaryPtr&);
     /** @} */
 };
 

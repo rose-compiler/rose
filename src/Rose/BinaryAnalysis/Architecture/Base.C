@@ -7,6 +7,10 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Architecture {
 
+Base::Base() {}
+
+Base::~Base() {}
+
 const std::string&
 Base::name() const {
     return name_;
@@ -16,6 +20,17 @@ void
 Base::name(const std::string &s) {
     name_ = s;
 }
+
+const RegisterDictionary::Ptr&
+Base::registerDictionary() const {
+    return registerDictionary_;
+}
+
+void
+Base::registerDictionary(const RegisterDictionary::Ptr &regdict) {
+    registerDictionary_ = regdict;
+}
+
 
 } // namespace
 } // namespace
