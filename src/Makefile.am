@@ -271,6 +271,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/AbstractLocation.h						\
 	Rose/BinaryAnalysis/Architecture.h						\
 	Rose/BinaryAnalysis/Architecture/Base.h						\
+	Rose/BinaryAnalysis/Architecture/BasicTypes.h					\
 	Rose/BinaryAnalysis/AsmFunctionIndex.h						\
 	Rose/BinaryAnalysis/AstHash.h							\
 	Rose/BinaryAnalysis/BasicTypes.h						\

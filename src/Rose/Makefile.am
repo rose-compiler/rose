@@ -39,6 +39,7 @@ librose_partial_la_SOURCES =								\
 	AST/utils/edge_ptr_repl.C							\
 	BinaryAnalysis/AbstractLocation.C						\
 	BinaryAnalysis/Architecture/Base.C						\
+	BinaryAnalysis/Architecture/BasicTypes.C					\
 	BinaryAnalysis/AsmFunctionIndex.C						\
 	BinaryAnalysis/AstHash.C							\
 	BinaryAnalysis/BestMapAddress.C							\

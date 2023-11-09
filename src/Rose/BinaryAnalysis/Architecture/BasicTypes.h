@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Sawyer/Message.h>
 #include <memory>
 
 // Basic types needed by almost all architectures
@@ -15,6 +16,14 @@ class Base;
 
 /** Reference counted pointer for architecture definitions. */
 using BasePtr = std::shared_ptr<Base>;
+
+/** Diagnostic facility for architecture definitions. */
+extern Sawyer::Message::Facility mlog;
+
+/** Initialize and registers architecture diagnostic streams.
+ *
+ *  See @ref Rose::Diagnostics::initialize. */
+void initDiagnostics();
 
 } // namespace
 } // namespace

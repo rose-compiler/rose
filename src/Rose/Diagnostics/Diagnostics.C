@@ -30,6 +30,7 @@
 
 namespace Rose {
 namespace BinaryAnalysis {
+    namespace Architecture { void initDiagnostics(); }
     namespace CallingConvention { void initDiagnostics(); }
     namespace Dwarf { void initDiagnostics(); }
     namespace Partitioner2 { void initDiagnostics(); }
@@ -128,16 +129,17 @@ void initialize() {
         // point to the Rose::Diagnostics::destination that we set above.  Generally speaking, if a frontend language is
         // disabled there should be a dummy initDiagnostics that does nothing so we don't need lots of #ifdefs here.
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-        BinaryAnalysis::BinaryLoader::initDiagnostics();
+        BinaryAnalysis::Architecture::initDiagnostics();
         BinaryAnalysis::AsmUnparser::initDiagnostics();
         BinaryAnalysis::BestMapAddress::initDiagnostics();
-        BinaryAnalysis::Debugger::initDiagnostics();
+        BinaryAnalysis::BinaryLoader::initDiagnostics();
         BinaryAnalysis::CallingConvention::initDiagnostics();
         BinaryAnalysis::CodeInserter::initDiagnostics();
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING                     // conditionally defined in Rose/BinaryAnalysis/Concolic.h
         BinaryAnalysis::Concolic::initDiagnostics();
 #endif
         BinaryAnalysis::DataFlow::initDiagnostics();
+        BinaryAnalysis::Debugger::initDiagnostics();
         BinaryAnalysis::Disassembler::initDiagnostics();
         BinaryAnalysis::Dwarf::initDiagnostics();
         BinaryAnalysis::FeasiblePath::initDiagnostics();
@@ -152,9 +154,7 @@ void initialize() {
 #endif
         BinaryAnalysis::NoOperation::initDiagnostics();
         BinaryAnalysis::Partitioner2::initDiagnostics();
-#if __cplusplus >= 201103L
         BinaryAnalysis::Partitioner2::Experimental::ParallelPartitioner::initDiagnostics();
-#endif
         BinaryAnalysis::PointerDetection::initDiagnostics();
         BinaryAnalysis::Reachability::initDiagnostics();
         BinaryAnalysis::ReturnValueUsed::initDiagnostics();
