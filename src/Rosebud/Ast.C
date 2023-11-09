@@ -246,7 +246,7 @@ Class::instance() {
 // there's one per parsed Rosebud input file.
 static Sawyer::Container::Buffer<size_t, char>::Ptr
 readFile(const boost::filesystem::path &name) {
-    std::ifstream input(name);
+    std::ifstream input(name.c_str());
     if (!input)
         throw std::runtime_error("cannot open \"" + name.string() + "\" for reading");
     size_t nChars = boost::filesystem::file_size(name);
