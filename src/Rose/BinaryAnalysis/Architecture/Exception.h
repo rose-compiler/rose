@@ -19,6 +19,13 @@ public:
     ~Exception() throw();
 };
 
+class NotFound: public Exception {
+public:
+    /** Constructs exception with message. */
+    NotFound(const std::string &message);
+    ~NotFound() throw();
+};
+
 } // namespace
 } // namespace
 } // namespace

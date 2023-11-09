@@ -16,11 +16,11 @@ public:
 
 private:
     std::string name_;                                  // name of architecture
-    RegisterDictionaryPtr registerDictionary_;
+    Disassembler::BasePtr instructionDecoderFactory_;
 
 protected:
     Base();
-    ~Base();
+    virtual ~Base();
 
 public:
     /** Property: Architecture definition name.
@@ -38,22 +38,72 @@ public:
      *  name is not changed once the architecture is registered with the ROSE library.
      *
      * @{ */
-    const std::string &name() const;
+    const std::string& name() const;
     void name(const std::string&);
     /** @} */
+
+    /** Property: Instruction decoder factory..
+     *
+     *  The instruction decoder is responsible for decoding a machine instruction from memory into an internal representation (@ref
+     *  SgAsmInstruction) for a single instruction at a time.
+     *
+     *  This property points to an architecture decoder factory, not an actual decoder (though they both have the same type). When
+     *  an actual decoder is needed, the factory's @ref Disassembler::Base::clone "clone" method is called. For convenence, see the
+     *  @ref newInstructionDecoder method.
+     *
+     *  Thread safety: Not thread safe. It is assumed that an architecture is given an instruction decoder when it's being defined
+     *  and then the decoder is not changed once the architecture is registered with the ROSE library.
+     *
+     * @{ */
+    virtual const Disassembler::BasePtr& instructionDecoderFactory() const;
+    virtual void instructionDecoderFactory(const Disassembler::BasePtr&);
+    /** @} */
+
+    /** Return a new instruction decoder.
+     *
+     *  The instruction decoder is obtained from the @ref instructionDecoderFactory by calling its @ref Disassembler::Base::clone
+     *  "clone" method method. This function throws a @ref NotFound exception if there is no instruction decoder. */
+    virtual Disassembler::BasePtr newInstructionDecoder() const;
 
     /** Property: Register dictionary.
      *
      *  The register dictionary defines a mapping between register names and register descriptors (@ref RegisterDescriptor), and
      *  thus how the registers map into hardware.
      *
+     *  This property comes from the instruction decoder factory ans is read-only. A @ref NotFound exception is thrown if the @ref
+     *  instructionDecoderFactory property is null.
+     *
      *  Thread safety: Not thread safe. It is assumed that an architecture is given a register dictionary when it's being defined,
-     *  and then the register dictionary is not changed once the architecture is registered with the ROSE library.
+     *  and then the register dictionary is not changed once the architecture is registered with the ROSE library. */
+    virtual RegisterDictionaryPtr registerDictionary() const;
+
+    /** Property: Word size.
+     *
+     *  This is the natural word size for the architecture, measured in bits or bytes (depending on the property name).
+     *
+     *  This property comes from the instruction decoder factory and is read-only. A @ref NotFound exception is thrown if the @ref
+     *  instructionDecoderFactory property is null.
+     *
+     *  Thread safety: Not thread safe. It is assumed that an architecture is given an instruction decoder when it's being defined
+     *  and then the decoder is not changed once the architecture is registered with the ROSE library.
      *
      * @{ */
-    const RegisterDictionaryPtr& registerDictionary() const;
-    void registerDictionary(const RegisterDictionaryPtr&);
+    virtual size_t wordSizeBytes() const;
+    virtual size_t wordSizeBits() const;
     /** @} */
+
+    /** Property: Byte order for memory.
+     *
+     *  When multi-byte values (such as 32-bit integral values) are stored in memory, this property is the order in which the
+     *  value's bytes are stored. If the order is little endian, then the least significant byte is stored at the lowest address; if
+     *  the order is big endian then the most significant byte is stored at the lowest address.
+     *
+     *  This property comes from the instruction decoder factory ans is read-only. A @ref NotFound exception is thrown if the @ref
+     *  instructionDecoderFactory property is null.
+     *
+     *  Thread safety: Not thread safe. It is assumed that an architecture is given a register dictionary when it's being defined,
+     *  and then the register dictionary is not changed once the architecture is registered with the ROSE library. */
+    virtual ByteOrder::Endianness byteOrder() const;
 };
 
 } // namespace

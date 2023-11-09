@@ -3,6 +3,11 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 
+#include <Rose/BinaryAnalysis/Architecture/Exception.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/StringUtility/Escape.h>
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Architecture {
@@ -21,16 +26,48 @@ Base::name(const std::string &s) {
     name_ = s;
 }
 
-const RegisterDictionary::Ptr&
-Base::registerDictionary() const {
-    return registerDictionary_;
+const Disassembler::Base::Ptr&
+Base::instructionDecoderFactory() const {
+    return instructionDecoderFactory_;
 }
 
 void
-Base::registerDictionary(const RegisterDictionary::Ptr &regdict) {
-    registerDictionary_ = regdict;
+Base::instructionDecoderFactory(const Disassembler::Base::Ptr &decoder) {
+    instructionDecoderFactory_ = decoder;
 }
 
+Disassembler::Base::Ptr
+Base::newInstructionDecoder() const {
+    if (!instructionDecoderFactory_)
+        return instructionDecoderFactory_->clone();
+    throw NotFound("no instruction decoder for \"" + StringUtility::cEscape(name()) + "\"");
+}
+
+RegisterDictionary::Ptr
+Base::registerDictionary() const {
+    if (instructionDecoderFactory_)
+        return instructionDecoderFactory_->registerDictionary();
+    throw NotFound("no instruction decoder for \"" + StringUtility::cEscape(name()) + "\"");
+}
+
+size_t
+Base::wordSizeBytes() const {
+    if (instructionDecoderFactory_)
+        return instructionDecoderFactory_->wordSizeBytes();
+    throw NotFound("no instruction decoder for \"" + StringUtility::cEscape(name()) + "\"");
+}
+
+size_t
+Base::wordSizeBits() const {
+    return wordSizeBytes() * 8;
+}
+
+ByteOrder::Endianness
+Base::byteOrder() const {
+    if (instructionDecoderFactory_)
+        return instructionDecoderFactory_->byteOrder();
+    throw NotFound("no instruction decoder for \"" + StringUtility::cEscape(name()) + "\"");
+}
 
 } // namespace
 } // namespace
