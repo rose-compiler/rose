@@ -7,6 +7,16 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Architecture {
 
+const std::string&
+Base::name() const {
+    return name_;
+}
+
+void
+Base::name(const std::string &s) {
+    name_ = s;
+}
+
 } // namespace
 } // namespace
 } // namespace
