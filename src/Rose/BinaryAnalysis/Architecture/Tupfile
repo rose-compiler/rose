@@ -2,8 +2,10 @@ include_rules
 
 run $(librose_compile) \
     Base.C \
-    BasicTypes.C
+    BasicTypes.C \
+    Exception.C
 
 run $(public_header) -o include/rose/Rose/BinaryAnalysis/Architecture \
     Base.h \
-    BasicTypes.h
+    BasicTypes.h \
+    Exception.h

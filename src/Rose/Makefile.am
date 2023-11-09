@@ -40,6 +40,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/AbstractLocation.C						\
 	BinaryAnalysis/Architecture/Base.C						\
 	BinaryAnalysis/Architecture/BasicTypes.C					\
+	BinaryAnalysis/Architecture/Exception.C						\
 	BinaryAnalysis/AsmFunctionIndex.C						\
 	BinaryAnalysis/AstHash.C							\
 	BinaryAnalysis/BestMapAddress.C							\

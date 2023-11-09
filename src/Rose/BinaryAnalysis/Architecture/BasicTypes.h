@@ -12,7 +12,9 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Architecture {
 
+// Forward declarations
 class Base;
+class Exception;
 
 /** Reference counted pointer for architecture definitions. */
 using BasePtr = std::shared_ptr<Base>;
