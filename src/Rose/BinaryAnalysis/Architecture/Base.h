@@ -4,6 +4,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -173,6 +174,21 @@ public:
      *  Thread safety: Not thread safe. It is assumed that this property is given a value when the architecture is being defined and
      *  then this value is not changed once the architecture is registered with the ROSE library. */
     virtual RegisterDescriptor callReturnRegister() const;
+
+    /** Construct instruction dispatcher for specified domain.
+     *
+     *  Constructs a new instruction dispatcher for instruction semantics using the specified domain. The domain defines the type of
+     *  values stored in machine states and operated on by the instruction semantics. Examples are concrete domains whose primitive
+     *  bit values are 0 or 1; and symbolic domains whose primitive bit values are 0, 1, or a variable; interval domains; taint
+     *  domains; user defined domains, etc.
+     *
+     *  Returns a pointer to a new instruction dispatcher if this architecture has instruction semantics, or a null pointer if this
+     *  architecture has no semantics.  Even if a non-null pointer is returned, the object may not be able to handle all
+     *  instructions of the architecture.
+     *
+     *  Thread safety: The implementation must be thread safe. */
+    virtual InstructionSemantics::BaseSemantics::DispatcherPtr
+    newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) const;
 };
 
 } // namespace

@@ -5,6 +5,7 @@
 
 #include <Rose/BinaryAnalysis/Architecture/Exception.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/StringUtility/Escape.h>
 
@@ -109,6 +110,11 @@ Base::callReturnRegister() const {
     if (instructionDecoderFactory_)
         return instructionDecoderFactory_->callReturnRegister();
     throw NotFound("no instruction decoder for \"" + StringUtility::cEscape(name()) + "\"");
+}
+
+InstructionSemantics::BaseSemantics::Dispatcher::Ptr
+Base::newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &ops) const {
+    return {};
 }
 
 } // namespace
