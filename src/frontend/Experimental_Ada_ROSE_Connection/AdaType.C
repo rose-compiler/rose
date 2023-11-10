@@ -535,9 +535,11 @@ namespace
 
   struct EnumeratorCreator
   {
-      EnumeratorCreator(SgEnumDeclaration& n, AstContext astctx)
-      : enumdcl(n), enumty(SG_DEREF(n.get_type())), ctx(astctx)
-      {}
+      EnumeratorCreator(SgEnumDeclaration& defn, AstContext astctx)
+      : enumdef(defn), enumty(SG_DEREF(defn.get_type())), ctx(astctx)
+      {
+        ADA_ASSERT(enumdef.get_definingDeclaration() == &enumdef);
+      }
 
       void operator()(Element_Struct& elem)
       {
@@ -555,19 +557,18 @@ namespace
         //       since SgEnumDeclaration only accepts SgInitializedName as enumerators
         //       SgInitializedName are created with the name 'c' instead of character constants.
         SgExpression&       repval = getEnumRepresentationValue(name.elem(), ctx);
-        SgInitializedName&  sgnode = mkEnumeratorDecl(name.ident, enumty, repval, ctx.scope());
+        SgInitializedName&  sgnode = mkEnumeratorDecl(enumdef, name.ident, enumty, repval);
 
-        sgnode.set_scope(enumdcl.get_scope());
         attachSourceLocation(sgnode, elem, ctx);
         //~ sg::linkParentChild(enumdcl, sgnode, &SgEnumDeclaration::append_enumerator);
-        enumdcl.append_enumerator(&sgnode);
-        ADA_ASSERT(sgnode.get_parent() == &enumdcl);
+        enumdef.append_enumerator(&sgnode);
+        ADA_ASSERT(sgnode.get_parent() == &enumdef);
 
         recordNode(asisVars(), name.id(), sgnode);
       }
 
     private:
-      SgEnumDeclaration& enumdcl;
+      SgEnumDeclaration& enumdef;
       SgType&            enumty;
       AstContext         ctx;
   };

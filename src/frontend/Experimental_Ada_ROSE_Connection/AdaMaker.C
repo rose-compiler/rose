@@ -341,7 +341,11 @@ mkEnumDecl(const std::string& name, SgScopeStatement& scope)
 SgEnumDeclaration&
 mkEnumDefn(const std::string& name, SgScopeStatement& scope)
 {
-  return SG_DEREF(sb::buildEnumDeclaration_nfi(name, &scope));
+  SgEnumDeclaration&  sgnode = SG_DEREF(sb::buildEnumDeclaration_nfi(name, &scope));
+  SgDeclarationScope& dclscope = mkDeclarationScope(scope);
+
+  sg::linkParentChild<SgDeclarationStatement>(sgnode, dclscope, &SgDeclarationStatement::set_declarationScope);
+  return sgnode;
 }
 
 SgAdaAccessType&
@@ -1587,11 +1591,17 @@ mkInitializedName(const std::string& varname, SgType& vartype, SgExpression* val
 }
 
 SgInitializedName&
-mkEnumeratorDecl(const std::string& ident, SgType& ty, SgExpression& repval, SgScopeStatement& scope)
+mkEnumeratorDecl(SgEnumDeclaration& enumdef, const std::string& ident, SgType& ty, SgExpression& repval)
 {
-  SgInitializedName& sgnode = mkInitializedName(ident, ty, &repval);
+  SgInitializedName& sgnode    = mkInitializedName(ident, ty, &repval);
+  SgScopeStatement&  enumScope = SG_DEREF(enumdef.get_declarationScope());
+  SgScopeStatement&  enclScope = SG_DEREF(enumdef.get_scope());
+  SgEnumFieldSymbol& primary   = mkBareNode<SgEnumFieldSymbol>(&sgnode);
 
-  scope.insert_symbol(sgnode.get_name(), &mkBareNode<SgEnumFieldSymbol>(&sgnode));
+  enumScope.insert_symbol(ident, &primary);
+  enclScope.insert_symbol(ident, &mkBareNode<SgAliasSymbol>(&primary));
+  sgnode.set_scope(&enumScope);
+
   return sgnode;
 }
 

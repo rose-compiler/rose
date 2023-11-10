@@ -2577,7 +2577,7 @@ namespace
         return queryIfDerivedFromEnumID(subtype.Subtype_Mark, ctx);
       }
 
-      if (def.Definition_Kind != A_Formal_Type_Definition)
+      if (def.Definition_Kind == A_Formal_Type_Definition)
       {
         // \todo could this require enum handling?
         logInfo() << "qid: definition-kind: A_Formal_Type_Definition"
