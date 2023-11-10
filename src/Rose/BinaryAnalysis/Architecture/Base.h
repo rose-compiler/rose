@@ -4,6 +4,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
+#include <Rose/BinaryAnalysis/CallingConvention.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 
 namespace Rose {
@@ -18,6 +19,7 @@ public:
 private:
     std::string name_;                                  // name of architecture
     Disassembler::BasePtr instructionDecoderFactory_;
+    CallingConvention::Dictionary callingConventions_;
 
 protected:
     Base();
@@ -189,6 +191,20 @@ public:
      *  Thread safety: The implementation must be thread safe. */
     virtual InstructionSemantics::BaseSemantics::DispatcherPtr
     newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) const;
+
+    /** Property: Calling convention definitions.
+     *
+     *  This is a list of calling convention definitions for this architecture.
+     *
+     *  Thread safety: Not thread safe. It is assumed that this property is given a value when the architecture is being defined and
+     *  then this value is not changed once the architecture is registered with the ROSE library.
+     *
+     * @{ */
+    const CallingConvention::Dictionary& callingConventions() const;
+    CallingConvention::Dictionary& callingConventions();
+    void callingConventions(const CallingConvention::Dictionary&);
+    /** @} */
+
 };
 
 } // namespace

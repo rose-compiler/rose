@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 
 #include <Rose/BinaryAnalysis/Architecture/Exception.h>
+#include <Rose/BinaryAnalysis/CallingConvention.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
@@ -116,6 +117,23 @@ InstructionSemantics::BaseSemantics::Dispatcher::Ptr
 Base::newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &ops) const {
     return {};
 }
+
+const CallingConvention::Dictionary&
+Base::callingConventions() const {
+    return callingConventions_;
+}
+
+CallingConvention::Dictionary&
+Base::callingConventions() {
+    return callingConventions_;
+}
+
+void
+Base::callingConventions(const CallingConvention::Dictionary &ccdict) {
+    callingConventions_ = ccdict;
+}
+
+
 
 } // namespace
 } // namespace
