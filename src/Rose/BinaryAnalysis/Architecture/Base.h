@@ -84,8 +84,8 @@ public:
      *  This property comes from the instruction decoder factory and is read-only. A @ref NotFound exception is thrown if the @ref
      *  instructionDecoderFactory property is null.
      *
-     *  Thread safety: Not thread safe. It is assumed that an architecture is given an instruction decoder when it's being defined
-     *  and then the decoder is not changed once the architecture is registered with the ROSE library.
+     *  Thread safety: Not thread safe. It is assumed that this property is given a value when the architecture is being defined and
+     *  then this value is not changed once the architecture is registered with the ROSE library.
      *
      * @{ */
     virtual size_t wordSizeBytes() const;
@@ -101,9 +101,78 @@ public:
      *  This property comes from the instruction decoder factory ans is read-only. A @ref NotFound exception is thrown if the @ref
      *  instructionDecoderFactory property is null.
      *
-     *  Thread safety: Not thread safe. It is assumed that an architecture is given a register dictionary when it's being defined,
-     *  and then the register dictionary is not changed once the architecture is registered with the ROSE library. */
+     *  Thread safety: Not thread safe. It is assumed that this property is given a value when the architecture is being defined and
+     *  then this value is not changed once the architecture is registered with the ROSE library. */
     virtual ByteOrder::Endianness byteOrder() const;
+
+    /** Property: Instruction alignment.
+     *
+     *  The alignment that's required for instruction addresses. The return value is a positive number of bytes.
+     *
+     *  This property comes from the instruction decoder factory ans is read-only. A @ref NotFound exception is thrown if the @ref
+     *  instructionDecoderFactory property is null.
+     *
+     *  Thread safety: Not thread safe. It is assumed that this property is given a value when the architecture is being defined and
+     *  then this value is not changed once the architecture is registered with the ROSE library. */
+    virtual size_t instructionAlignment() const;
+
+    /** Property: Returns the register that points to instructions.
+     *
+     *  This function will return a valid register descriptor since all architectures need to be able to point to instructions.
+     *
+     *  This property comes from the instruction decoder factory ans is read-only. A @ref NotFound exception is thrown if the @ref
+     *  instructionDecoderFactory property is null.
+     *
+     *  Thread safety: Not thread safe. It is assumed that this property is given a value when the architecture is being defined and
+     *  then this value is not changed once the architecture is registered with the ROSE library. */
+    virtual RegisterDescriptor instructionPointerRegister() const;
+
+    /** Returns the register that points to the stack.
+     *
+     *  This function will return a valid register descriptor if the architecture has such a register.
+     *
+     *  This property comes from the instruction decoder factory ans is read-only. A @ref NotFound exception is thrown if the @ref
+     *  instructionDecoderFactory property is null.
+     *
+     *  Thread safety: Not thread safe. It is assumed that this property is given a value when the architecture is being defined and
+     *  then this value is not changed once the architecture is registered with the ROSE library. */
+    virtual RegisterDescriptor stackPointerRegister() const;
+
+    /** Returns the register that ponts to the stack frame.
+     *
+     *  This function will return a valid register descriptor if the architecture has such a register, otherwise it returns an empty
+     *  descriptor.
+     *
+     *  This property comes from the instruction decoder factory ans is read-only. A @ref NotFound exception is thrown if the @ref
+     *  instructionDecoderFactory property is null.
+     *
+     *  Thread safety: Not thread safe. It is assumed that this property is given a value when the architecture is being defined and
+     *  then this value is not changed once the architecture is registered with the ROSE library. */
+    virtual RegisterDescriptor stackFrameRegister() const;
+
+    /** Returns the segment register for accessing the stack.
+     *
+     *  This function will return a valid register descriptor if the architecture has such a register, otherwise it returns an empty
+     *  descriptor.
+     *
+     *  This property comes from the instruction decoder factory ans is read-only. A @ref NotFound exception is thrown if the @ref
+     *  instructionDecoderFactory property is null.
+     *
+     *  Thread safety: Not thread safe. It is assumed that this property is given a value when the architecture is being defined and
+     *  then this value is not changed once the architecture is registered with the ROSE library. */
+    virtual RegisterDescriptor stackSegmentRegister() const;
+
+    /** Returns the register that holds the return address for a function.
+     *
+     *  This function will return a valid register descriptor if the architecture has such a register, otherwise it returns an empty
+     *  descriptor.
+     *
+     *  This property comes from the instruction decoder factory ans is read-only. A @ref NotFound exception is thrown if the @ref
+     *  instructionDecoderFactory property is null.
+     *
+     *  Thread safety: Not thread safe. It is assumed that this property is given a value when the architecture is being defined and
+     *  then this value is not changed once the architecture is registered with the ROSE library. */
+    virtual RegisterDescriptor callReturnRegister() const;
 };
 
 } // namespace

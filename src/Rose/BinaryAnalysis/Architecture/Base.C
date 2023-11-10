@@ -69,6 +69,48 @@ Base::byteOrder() const {
     throw NotFound("no instruction decoder for \"" + StringUtility::cEscape(name()) + "\"");
 }
 
+size_t
+Base::instructionAlignment() const {
+    if (instructionDecoderFactory_)
+        return instructionDecoderFactory_->instructionAlignment();
+    throw NotFound("no instruction decoder for \"" + StringUtility::cEscape(name()) + "\"");
+}
+
+RegisterDescriptor
+Base::instructionPointerRegister() const {
+    if (instructionDecoderFactory_)
+        return instructionDecoderFactory_->instructionPointerRegister();
+    throw NotFound("no instruction decoder for \"" + StringUtility::cEscape(name()) + "\"");
+}
+
+RegisterDescriptor
+Base::stackPointerRegister() const {
+    if (instructionDecoderFactory_)
+        return instructionDecoderFactory_->stackPointerRegister();
+    throw NotFound("no instruction decoder for \"" + StringUtility::cEscape(name()) + "\"");
+}
+
+RegisterDescriptor
+Base::stackFrameRegister() const {
+    if (instructionDecoderFactory_)
+        return instructionDecoderFactory_->stackFrameRegister();
+    throw NotFound("no instruction decoder for \"" + StringUtility::cEscape(name()) + "\"");
+}
+
+RegisterDescriptor
+Base::stackSegmentRegister() const {
+    if (instructionDecoderFactory_)
+        return instructionDecoderFactory_->stackSegmentRegister();
+    throw NotFound("no instruction decoder for \"" + StringUtility::cEscape(name()) + "\"");
+}
+
+RegisterDescriptor
+Base::callReturnRegister() const {
+    if (instructionDecoderFactory_)
+        return instructionDecoderFactory_->callReturnRegister();
+    throw NotFound("no instruction decoder for \"" + StringUtility::cEscape(name()) + "\"");
+}
+
 } // namespace
 } // namespace
 } // namespace
