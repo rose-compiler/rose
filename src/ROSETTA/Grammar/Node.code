@@ -700,6 +700,12 @@ typedef SgAsmJvmFieldPtrList*              SgAsmJvmFieldPtrListPtr;
 typedef Rose_STL_Container<SgAsmJvmLineNumberEntry*> SgAsmJvmLineNumberEntryPtrList;
 typedef SgAsmJvmLineNumberEntryPtrList*              SgAsmJvmLineNumberEntryPtrListPtr;
 
+typedef Rose_STL_Container<SgAsmJvmLocalVariableEntry*> SgAsmJvmLocalVariableEntryPtrList;
+typedef SgAsmJvmLocalVariableEntryPtrList*              SgAsmJvmLocalVariableEntryPtrListPtr;
+
+typedef Rose_STL_Container<SgAsmJvmLocalVariableTypeEntry*> SgAsmJvmLocalVariableTypeEntryPtrList;
+typedef SgAsmJvmLocalVariableTypeEntryPtrList*              SgAsmJvmLocalVariableTypeEntryPtrListPtr;
+
 typedef Rose_STL_Container<SgAsmJvmMethod*> SgAsmJvmMethodPtrList;
 typedef SgAsmJvmMethodPtrList*              SgAsmJvmMethodPtrListPtr;
 

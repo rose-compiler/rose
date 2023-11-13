@@ -1046,3 +1046,7 @@ SgAsmJvmExceptions
 SgAsmJvmNestMembers
 SgAsmJvmNestHost
 SgJovialLabelDeclaration
+SgAsmJvmLocalVariableEntry
+SgAsmJvmLocalVariableTable
+SgAsmJvmLocalVariableTypeEntry
+SgAsmJvmLocalVariableTypeTable

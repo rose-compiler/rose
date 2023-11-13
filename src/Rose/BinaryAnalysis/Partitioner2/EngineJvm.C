@@ -178,7 +178,7 @@ EngineJvm::pathToClass(const std::string &className) {
     boost::filesystem::path classPath{boost::filesystem::current_path().string() + "/" + className + ".class"};
     if (!boost::filesystem::exists(classPath)) {
         if (className.substr(0,5) != "java/" && className.substr(0,16) != "bootstrap_method") {
-            mlog[WARN] << "path to class " << className << " does not exist\n";
+            mlog[WARN] << "path to class " << className + ".class" << " does not exist\n";
         }
     }
     return classPath;
@@ -222,7 +222,7 @@ EngineJvm::loadClassFile(boost::filesystem::path path, SgAsmGenericFileList* fil
     file->parse(fileName); /* this loads file into memory, does no reading of file */
 
     auto jfh = new SgAsmJvmFileHeader(file);
-    jfh->set_baseVa(baseVa);
+    jfh->set_base_va(baseVa);
 
     // Check AST
     ASSERT_require(jfh == file->get_header(SgAsmGenericFile::FAMILY_JVM));
@@ -238,14 +238,14 @@ EngineJvm::loadClassFile(boost::filesystem::path path, SgAsmGenericFileList* fil
     file->set_parent(fileList);
 
     // Increase base virtual address for the next class
-    baseVa += file->get_originalSize() + vaDefaultIncrement;
+    baseVa += file->get_orig_size() + vaDefaultIncrement;
     baseVa -= baseVa % vaDefaultIncrement;
 
     // Decode instructions for usage downstream
     std::set<std::string> discoveredClasses{};
     auto disassembler = Disassembler::lookup("jvm");
     for (auto sgMethod: jfh->get_method_table()->get_methods()) {
-      ByteCode::JvmMethod method{jfh, sgMethod, jfh->get_baseVa()};
+      ByteCode::JvmMethod method{jfh, sgMethod, jfh->get_base_va()};
       method.decode(disassembler);
       discoverFunctionCalls(sgMethod, jfh->get_constant_pool(), functions_, discoveredClasses);
     }
@@ -420,7 +420,7 @@ EngineJvm::roseFrontendReplacement(const std::vector<boost::filesystem::path> &p
         SgAsmGenericHeaderList *headerList = file->get_headers();
         ASSERT_not_null(headerList);
         for (SgAsmGenericHeader *header: headerList->get_headers()) {
-            SgAsmGenericFormat *format = header->get_executableFormat();
+            SgAsmGenericFormat *format = header->get_exec_format();
             ASSERT_not_null(format);
 
             // Find or create the interpretation that holds this family of headers.

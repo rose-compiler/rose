@@ -2,7 +2,7 @@
  *
  *  The LineNumberTable attribute is an optional variable-length attribute in the attributes table of a Code attribute (4.7.3). It
  *  may be used by debuggers to determine which part of the code array corresponds to a given line number in the original source
- *  file.  See section 4.7.10 of the JVM specification. */
+ *  file.  See section 4.7.12 of the JVM specification. */
 class SgAsmJvmLineNumberTable: public SgAsmJvmAttribute {
     /** Property: line_number_table
      *
@@ -19,7 +19,7 @@ public:
     /** Initialize the attribute by parsing the file. */
     virtual SgAsmJvmLineNumberTable* parse(SgAsmJvmConstantPool* pool) override;
 
-    /** Write line number table to a binary file. */
+    /** Write the line number table to a binary file. */
     virtual void unparse(std::ostream&) const override;
 
     /** Print some debugging information. */

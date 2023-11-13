@@ -46,6 +46,12 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::instance(SgAsmJvmConstantPool* pool, SgAsm
   else if (name == "LineNumberTable") { // 4.7.12
     return new SgAsmJvmLineNumberTable(parent);
   }
+  else if (name == "LocalVariableTable") { // 4.7.13
+    return new SgAsmJvmLocalVariableTable(parent);
+  }
+  else if (name == "LocalVariableTypeTable") { // 4.7.14
+    return new SgAsmJvmLocalVariableTable(parent);
+  }
   else if (name == "BootstrapMethods") { // 4.7.23
     return new SgAsmJvmBootstrapMethods(parent);
   }
@@ -758,11 +764,149 @@ void SgAsmJvmLineNumberEntry::dump(FILE* f, const char* prefix, ssize_t idx) con
 //
 // 4.7.13 The LocalVariableTable Attribute. LocalVariableTable_attribute represented by the TODO class.
 //
+SgAsmJvmLocalVariableTable::SgAsmJvmLocalVariableTable(SgAsmJvmAttributeTable* parent)
+{
+  initializeProperties();
+  set_parent(parent);
+}
+
+SgAsmJvmLocalVariableTable* SgAsmJvmLocalVariableTable::parse(SgAsmJvmConstantPool* pool)
+{
+  uint16_t tableLength;
+  ASSERT_not_null(get_parent());
+
+  SgAsmJvmAttribute::parse(pool);
+  Jvm::read_value(pool, tableLength);
+
+  for (int ii = 0; ii < tableLength; ii++) {
+    auto entry = new SgAsmJvmLocalVariableEntry(this);
+    entry->parse(pool);
+    get_local_variable_table().push_back(entry);
+  }
+  return this;
+}
+
+void SgAsmJvmLocalVariableTable::unparse(std::ostream& os) const
+{
+  SgAsmJvmAttribute::unparse(os);
+
+  uint16_t tableLength = get_local_variable_table().size();
+  Jvm::writeValue(os, tableLength);
+
+  for (auto local_variable : get_local_variable_table()) {
+    local_variable->unparse(os);
+  }
+}
+
+void SgAsmJvmLocalVariableTable::dump(FILE* f, const char* prefix, ssize_t idx) const
+{
+  fprintf(f, "%s:%ld: SgAsmJvmLocalVariableTable::dump()\n", prefix, idx);
+}
+
+SgAsmJvmLocalVariableEntry::SgAsmJvmLocalVariableEntry(SgAsmJvmLocalVariableTable* table)
+{
+  initializeProperties();
+  set_parent(table);
+}
+
+SgAsmJvmLocalVariableEntry* SgAsmJvmLocalVariableEntry::parse(SgAsmJvmConstantPool* pool)
+{
+  Jvm::read_value(pool, p_start_pc);
+  Jvm::read_value(pool, p_length);
+  Jvm::read_value(pool, p_name_index);
+  Jvm::read_value(pool, p_descriptor_index);
+  Jvm::read_value(pool, p_index);
+  return this;
+}
+
+void SgAsmJvmLocalVariableEntry::unparse(std::ostream& os) const
+{
+  Jvm::writeValue(os, p_start_pc);
+  Jvm::writeValue(os, p_length);
+  Jvm::writeValue(os, p_name_index);
+  Jvm::writeValue(os, p_descriptor_index);
+  Jvm::writeValue(os, p_index);
+}
+
+void SgAsmJvmLocalVariableEntry::dump(FILE* f, const char* prefix, ssize_t idx) const
+{
+  fprintf(f, "%s:%ld: start_pc:%d length:%d name_index:%d descriptor_index:%d index:%d\n",
+          prefix, idx, p_start_pc, p_length, p_name_index, p_descriptor_index, p_index);
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // 4.7.14 The LocalVariableTypeTable Attribute. LocalVariableTypeTable_attribute represented by the TODO class.
 //
+SgAsmJvmLocalVariableTypeTable::SgAsmJvmLocalVariableTypeTable(SgAsmJvmAttributeTable* parent)
+{
+  initializeProperties();
+  set_parent(parent);
+}
+
+SgAsmJvmLocalVariableTypeTable* SgAsmJvmLocalVariableTypeTable::parse(SgAsmJvmConstantPool* pool)
+{
+  uint16_t tableLength;
+  ASSERT_not_null(get_parent());
+
+  SgAsmJvmAttribute::parse(pool);
+  Jvm::read_value(pool, tableLength);
+
+  for (int ii = 0; ii < tableLength; ii++) {
+    auto entry = new SgAsmJvmLocalVariableTypeEntry(this);
+    entry->parse(pool);
+    get_local_variable_type_table().push_back(entry);
+  }
+  return this;
+}
+
+void SgAsmJvmLocalVariableTypeTable::unparse(std::ostream& os) const
+{
+  SgAsmJvmAttribute::unparse(os);
+
+  uint16_t tableLength = get_local_variable_type_table().size();
+  Jvm::writeValue(os, tableLength);
+
+  for (auto local_variable_type : get_local_variable_type_table()) {
+    local_variable_type->unparse(os);
+  }
+}
+
+void SgAsmJvmLocalVariableTypeTable::dump(FILE* f, const char* prefix, ssize_t idx) const
+{
+  fprintf(f, "%s:%ld: SgAsmJvmLocalVariableTypeTable::dump()\n", prefix, idx);
+}
+
+SgAsmJvmLocalVariableTypeEntry::SgAsmJvmLocalVariableTypeEntry(SgAsmJvmLocalVariableTypeTable* table)
+{
+  initializeProperties();
+  set_parent(table);
+}
+
+SgAsmJvmLocalVariableTypeEntry* SgAsmJvmLocalVariableTypeEntry::parse(SgAsmJvmConstantPool* pool)
+{
+  Jvm::read_value(pool, p_start_pc);
+  Jvm::read_value(pool, p_length);
+  Jvm::read_value(pool, p_name_index);
+  Jvm::read_value(pool, p_signature_index);
+  Jvm::read_value(pool, p_index);
+  return this;
+}
+
+void SgAsmJvmLocalVariableTypeEntry::unparse(std::ostream& os) const
+{
+  Jvm::writeValue(os, p_start_pc);
+  Jvm::writeValue(os, p_length);
+  Jvm::writeValue(os, p_name_index);
+  Jvm::writeValue(os, p_signature_index);
+  Jvm::writeValue(os, p_index);
+}
+
+void SgAsmJvmLocalVariableTypeEntry::dump(FILE* f, const char* prefix, ssize_t idx) const
+{
+  fprintf(f, "%s:%ld: start_pc:%d length:%d name_index:%d signature_index:%d index:%d\n",
+          prefix, idx, p_start_pc, p_length, p_name_index, p_signature_index, p_index);
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
