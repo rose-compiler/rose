@@ -1327,6 +1327,12 @@ SgAsmCilTypeDef::get_MethodList_object() const
   return getMetadataHeap(this).get_CodedMetadataNode(get_MethodList(), SgAsmCilMetadataHeap::e_ref_method_def);
 }     
       
+const SgAsmCilMetadata*
+SgAsmCilTypeDef::get_MethodList_object(const SgAsmCilMethodDef* methodDef) const
+{
+  return nullptr;
+}
+
 
 void SgAsmCilTypeRef::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -2297,8 +2303,6 @@ getHeapInternal(const std::vector<SgAsmCilDataStream*>& streams, int8_t& idx, co
 }
 
 
-
-
 void SgAsmCilMetadataRoot::parse()
 {
   SgAsmCliHeader* clih = isSgAsmCliHeader(get_parent());
@@ -2331,7 +2335,6 @@ void SgAsmCilMetadataRoot::parse()
   this->parse(buf, 0);
   decodeMetadata(base_va, get_MetadataHeap(), this);
 }
-
 
 
 void SgAsmCilMetadataRoot::parse(std::vector<uint8_t>& buf, size_t index)

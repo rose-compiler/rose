@@ -30283,6 +30283,7 @@ public:
     const SgAsmCilMetadata* get_Extends_object() const;
     const SgAsmCilMetadata* get_FieldList_object() const;
     const SgAsmCilMetadata* get_MethodList_object() const;
+    const SgAsmCilMetadata* get_MethodList_object(const SgAsmCilMethodDef*) const;
 public:
     /** Destructor. */
     virtual ~SgAsmCilTypeDef();
