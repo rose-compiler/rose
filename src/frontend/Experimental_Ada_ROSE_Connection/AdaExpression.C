@@ -74,7 +74,7 @@ namespace
               );
 
     logKind("An_Identifier", formalParm->ID);
-    SgExpression&       namedArg = SG_DEREF(sb::buildActualArgumentExpression(formalName.Name_Image, &arg));
+    SgExpression&       namedArg = SG_DEREF(sb::buildActualArgumentExpression_nfi(formalName.Name_Image, &arg));
 
     attachSourceLocation(namedArg, elem, ctx);
     return namedArg;
@@ -291,13 +291,13 @@ namespace
       {
         logError() << "ExprRefMaker: " << typeid(n).name() << std::endl;
 
-        res = sb::buildIntVal();
+        res = sb::buildIntVal_nfi();
         ADA_ASSERT(!FAIL_ON_ERROR(ctx));
       }
 
       // void handle(SgImportStatement& n)
 
-      void handle(SgFunctionDeclaration& n)    { res = sb::buildFunctionRefExp(&n); }
+      void handle(SgFunctionDeclaration& n)    { res = &mkFunctionRefExp(n); }
       void handle(SgAdaRenamingDecl& n)        { res = &mkAdaRenamingRefExp(n); }
       void handle(SgAdaTaskSpecDecl& n)        { res = &mkAdaTaskRefExp(n); }
       void handle(SgAdaProtectedSpecDecl& n)   { res = &mkAdaProtectedRefExp(n); }
@@ -377,27 +377,27 @@ namespace
     using OperatorMakerMap = std::map<Operator_Kinds, std::pair<const char*, MkWrapperFn> >;
 
     static const OperatorMakerMap makerMap =
-    { { An_And_Operator,                  {"An_And_Operator",                  mk2_wrapper<SgBitAndOp,         sb::buildBitAndOp> }},
-      { An_Or_Operator,                   {"An_Or_Operator",                   mk2_wrapper<SgBitOrOp,          sb::buildBitOrOp> }},
-      { An_Xor_Operator,                  {"An_Xor_Operator",                  mk2_wrapper<SgBitXorOp,         sb::buildBitXorOp> }},
-      { An_Equal_Operator,                {"An_Equal_Operator",                mk2_wrapper<SgEqualityOp,       sb::buildEqualityOp> }},
-      { A_Not_Equal_Operator,             {"A_Not_Equal_Operator",             mk2_wrapper<SgNotEqualOp,       sb::buildNotEqualOp> }},
-      { A_Less_Than_Operator,             {"A_Less_Than_Operator",             mk2_wrapper<SgLessThanOp,       sb::buildLessThanOp> }},
-      { A_Less_Than_Or_Equal_Operator,    {"A_Less_Than_Or_Equal_Operator",    mk2_wrapper<SgLessOrEqualOp,    sb::buildLessOrEqualOp> }},
-      { A_Greater_Than_Operator,          {"A_Greater_Than_Operator",          mk2_wrapper<SgGreaterThanOp,    sb::buildGreaterThanOp> }},
-      { A_Greater_Than_Or_Equal_Operator, {"A_Greater_Than_Or_Equal_Operator", mk2_wrapper<SgGreaterOrEqualOp, sb::buildGreaterOrEqualOp> }},
-      { A_Plus_Operator,                  {"A_Plus_Operator",                  mk2_wrapper<SgAddOp,            sb::buildAddOp> }},
-      { A_Minus_Operator,                 {"A_Minus_Operator",                 mk2_wrapper<SgSubtractOp,       sb::buildSubtractOp> }},
-      { A_Concatenate_Operator,           {"A_Concatenate_Operator",           mk2_wrapper<SgConcatenationOp,  sb::buildConcatenationOp> }},
-      { A_Unary_Plus_Operator,            {"A_Unary_Plus_Operator",            mk1_wrapper<SgUnaryAddOp,       sb::buildUnaryAddOp> }},
-      { A_Unary_Minus_Operator,           {"A_Unary_Minus_Operator",           mk1_wrapper<SgMinusOp,          sb::buildMinusOp> }},
-      { A_Multiply_Operator,              {"A_Multiply_Operator",              mk2_wrapper<SgMultiplyOp,       sb::buildMultiplyOp> }},
-      { A_Divide_Operator,                {"A_Divide_Operator",                mk2_wrapper<SgDivideOp,         sb::buildDivideOp> }},
-      { A_Mod_Operator,                   {"A_Mod_Operator",                   mk2_wrapper<SgModOp,            sb::buildModOp> }},
-      { A_Rem_Operator,                   {"A_Rem_Operator",                   mk2_wrapper<SgRemOp,            sb::buildRemOp> }},
-      { An_Exponentiate_Operator,         {"An_Exponentiate_Operator",         mk2_wrapper<SgExponentiationOp, sb::buildExponentiationOp> }},
-      { An_Abs_Operator,                  {"An_Abs_Operator",                  mk1_wrapper<SgAbsOp,            sb::buildAbsOp> }},
-      { A_Not_Operator,                   {"A_Not_Operator",                   mk1_wrapper<SgNotOp,            sb::buildNotOp> }},
+    { { An_And_Operator,                  {"An_And_Operator",                  mk2_wrapper<SgBitAndOp,         sb::buildBitAndOp_nfi> }},
+      { An_Or_Operator,                   {"An_Or_Operator",                   mk2_wrapper<SgBitOrOp,          sb::buildBitOrOp_nfi> }},
+      { An_Xor_Operator,                  {"An_Xor_Operator",                  mk2_wrapper<SgBitXorOp,         sb::buildBitXorOp_nfi> }},
+      { An_Equal_Operator,                {"An_Equal_Operator",                mk2_wrapper<SgEqualityOp,       sb::buildEqualityOp_nfi> }},
+      { A_Not_Equal_Operator,             {"A_Not_Equal_Operator",             mk2_wrapper<SgNotEqualOp,       sb::buildNotEqualOp_nfi> }},
+      { A_Less_Than_Operator,             {"A_Less_Than_Operator",             mk2_wrapper<SgLessThanOp,       sb::buildLessThanOp_nfi> }},
+      { A_Less_Than_Or_Equal_Operator,    {"A_Less_Than_Or_Equal_Operator",    mk2_wrapper<SgLessOrEqualOp,    sb::buildLessOrEqualOp_nfi> }},
+      { A_Greater_Than_Operator,          {"A_Greater_Than_Operator",          mk2_wrapper<SgGreaterThanOp,    sb::buildGreaterThanOp_nfi> }},
+      { A_Greater_Than_Or_Equal_Operator, {"A_Greater_Than_Or_Equal_Operator", mk2_wrapper<SgGreaterOrEqualOp, sb::buildGreaterOrEqualOp_nfi> }},
+      { A_Plus_Operator,                  {"A_Plus_Operator",                  mk2_wrapper<SgAddOp,            sb::buildAddOp_nfi> }},
+      { A_Minus_Operator,                 {"A_Minus_Operator",                 mk2_wrapper<SgSubtractOp,       sb::buildSubtractOp_nfi> }},
+      { A_Concatenate_Operator,           {"A_Concatenate_Operator",           mk2_wrapper<SgConcatenationOp,  sb::buildConcatenationOp_nfi> }},
+      { A_Unary_Plus_Operator,            {"A_Unary_Plus_Operator",            mk1_wrapper<SgUnaryAddOp,       sb::buildUnaryAddOp_nfi> }},
+      { A_Unary_Minus_Operator,           {"A_Unary_Minus_Operator",           mk1_wrapper<SgMinusOp,          sb::buildMinusOp_nfi> }},
+      { A_Multiply_Operator,              {"A_Multiply_Operator",              mk2_wrapper<SgMultiplyOp,       sb::buildMultiplyOp_nfi> }},
+      { A_Divide_Operator,                {"A_Divide_Operator",                mk2_wrapper<SgDivideOp,         sb::buildDivideOp_nfi> }},
+      { A_Mod_Operator,                   {"A_Mod_Operator",                   mk2_wrapper<SgModOp,            sb::buildModOp_nfi> }},
+      { A_Rem_Operator,                   {"A_Rem_Operator",                   mk2_wrapper<SgRemOp,            sb::buildRemOp_nfi> }},
+      { An_Exponentiate_Operator,         {"An_Exponentiate_Operator",         mk2_wrapper<SgExponentiationOp, sb::buildExponentiationOp_nfi> }},
+      { An_Abs_Operator,                  {"An_Abs_Operator",                  mk1_wrapper<SgAbsOp,            sb::buildAbsOp_nfi> }},
+      { A_Not_Operator,                   {"A_Not_Operator",                   mk1_wrapper<SgNotOp,            sb::buildNotOp_nfi> }},
     };
 
     ADA_ASSERT(expr.Expression_Kind == An_Operator_Symbol);
@@ -649,7 +649,7 @@ namespace
     }
 
     if (SgFunctionDeclaration* fndcl = findExistingOperator(name, scope, suppl))
-      return sb::buildFunctionRefExp(fndcl);
+      return &mkFunctionRefExp(*fndcl);
 
     std::string            opname   = si::Ada::roseOperatorPrefix + name;
 
@@ -677,7 +677,7 @@ namespace
     SgFunctionDeclaration& opdcl = mkProcedureDecl_nondef(opname, scope, *suppl.result(), complete);
 
     operatorSupport()[{&scope, name}].emplace_back(&opdcl, OperatorDesc::COMPILER_GENERATED);
-    return sb::buildFunctionRefExp(&opdcl);
+    return &mkFunctionRefExp(opdcl);
   }
 
 
@@ -852,7 +852,7 @@ namespace
         //         we check if the reference is from within the same function.
         //         This method is not perfect. To resolve this issue completely,
         //         we would need more context...
-        // The AST fix is added by mkSelectedComponent.
+        // The AST fix is added by mkDotExp.
         res = fromPrefix && !refFromWithinFunction(n, ctx.scope());
       }
 
@@ -1466,11 +1466,7 @@ namespace
 
           SgExpression& exp = getExprID(expr.Prefix, ctx);
 
-          // prefix calls are incorrectly unparsed as infix (check if data is avail in Asis)
-          // in this case, parenthesis are missing.
-          // if (isSgBinaryOp(&exp)) exp.set_need_paren(true);
-
-          res = sb::buildPointerDerefExp(&exp);
+          res = &mkPointerDerefExp(exp);
           break;
         }
 
@@ -1481,9 +1477,9 @@ namespace
           SgExpression&              prefix = getExprID(expr.Prefix, ctx);
           ElemIdRange                idxrange = idRange(expr.Index_Expressions);
           std::vector<SgExpression*> idxexpr = traverseIDs(idxrange, elemMap(), ExprSeqCreator{ctx});
-          SgExpression&              indices = mkExprListExp(idxexpr);
+          SgExprListExp&             indices = mkExprListExp(idxexpr);
 
-          res = sb::buildPntrArrRefExp(&prefix, &indices);
+          res = &mkPntrArrRefExp(prefix, indices);
           ADA_ASSERT(indices.get_parent());
           /* unused fields
              Declaration_ID        Corresponding_Called_Function; // An_Indexed_Component (Is_Generalized_Indexing == true) //ASIS 2012 // 4.1.1
@@ -1501,7 +1497,7 @@ namespace
           SgExprListExp& index  = mkExprListExp({&range});
 
           // \todo consider introducing a ROSE IR node for array slices
-          res = sb::buildPntrArrRefExp(&prefix, &index);
+          res = &mkPntrArrRefExp(prefix, index);
           /* unused fields
           */
           break;
@@ -1523,7 +1519,7 @@ namespace
           {
             SgExpression& prefix = getExprID(expr.Prefix, ctx);
 
-            res = &mkSelectedComponent(prefix, selector);
+            res = &mkDotExp(prefix, selector);
           }
           else
           {
@@ -1577,7 +1573,7 @@ namespace
           SgExpression& lhs = getExprID(expr.Short_Circuit_Operation_Left_Expression, ctx);
           SgExpression& rhs = getExprID(expr.Short_Circuit_Operation_Right_Expression, ctx);
 
-          res = sb::buildAndOp(&lhs, &rhs);
+          res = sb::buildAndOp_nfi(&lhs, &rhs);
           /* unused fields: (Expression_Struct)
           */
           break;
@@ -1590,7 +1586,7 @@ namespace
           SgExpression& lhs = getExprID_opt(expr.Short_Circuit_Operation_Left_Expression, ctx);
           SgExpression& rhs = getExprID_opt(expr.Short_Circuit_Operation_Right_Expression, ctx);
 
-          res = sb::buildOrOp(&lhs, &rhs);
+          res = sb::buildOrOp_nfi(&lhs, &rhs);
           /* unused fields: (Expression_Struct)
           */
           break;
@@ -1628,8 +1624,8 @@ namespace
           std::vector<SgExpression*> choices = traverseIDs(range, elemMap(), ExprSeqCreator{ctx});
           SgExpression&              choiceexp = mkChoiceExpIfNeeded(std::move(choices));
 
-          res = inTest ? static_cast<SgExpression*>(sb::buildMembershipOp(&test, &choiceexp))
-                       : sb::buildNonMembershipOp(&test, &choiceexp)
+          res = inTest ? static_cast<SgExpression*>(sb::buildMembershipOp_nfi(&test, &choiceexp))
+                       : sb::buildNonMembershipOp_nfi(&test, &choiceexp)
                        ;
           break;
         }
@@ -1970,6 +1966,15 @@ createArgDescList(const SgExpressionPtrList& args)
 
                             if (SgActualArgumentExpression* act = isSgActualArgumentExpression(exp))
                               optArgName = act->get_argument_name();
+
+                            if (true)
+                            {
+                              SgType* ty = si::Ada::typeOfExpr(exp).typerep();
+
+                              logTrace() << exp->unparseToString() << " " << si::Ada::typeOfExpr(exp).typerep()
+                                         << " " << (ty ? typeid(*ty).name() : std::string{"!"})
+                                         << std::endl;
+                            }
 
                             return { optArgName, si::Ada::typeOfExpr(exp).typerep() };
                           };

@@ -1816,11 +1816,10 @@ namespace
         {
           logKind("An_Assignment_Statement", elem.ID);
 
-          SgExpression& lhs    = getExprID(stmt.Assignment_Variable_Name, ctx);
-          SgExpression& rhs    = getExprID(stmt.Assignment_Expression, ctx);
-
-          SgExpression& assign = SG_DEREF(sb::buildAssignOp(&lhs, &rhs));
-          SgStatement&  sgnode = SG_DEREF(sb::buildExprStatement(&assign));
+          SgExpression&    lhs    = getExprID(stmt.Assignment_Variable_Name, ctx);
+          SgExpression&    rhs    = getExprID(stmt.Assignment_Expression, ctx);
+          SgExprStatement& sgnode = mkAssignStmt(lhs, rhs);
+          SgExpression&    assign = SG_DEREF(sgnode.get_expression());
 
           attachSourceLocation(assign, elem, ctx);
           completeStmt(sgnode, elem, ctx);
@@ -2059,8 +2058,8 @@ namespace
         {
           logKind("A_Return_Statement", elem.ID);
           Element_Struct* exprel = retrieveElemOpt(elemMap(), stmt.Return_Expression);
-          SgExpression*   retval = exprel ? &getExpr(*exprel, ctx) : NULL;
-          SgStatement&    sgnode = SG_DEREF( sb::buildReturnStmt(retval) );
+          SgExpression*   retval = exprel ? &getExpr(*exprel, ctx) : nullptr;
+          SgReturnStmt&   sgnode = mkReturnStmt(retval);
 
           completeStmt(sgnode, elem, ctx);
           /* unused fields:
@@ -2675,8 +2674,6 @@ namespace
 
     return tyKind;
   }
-
-
 
   DefinitionDetails
   queryDefinitionDetails(Element_Struct& complElem, AstContext ctx)

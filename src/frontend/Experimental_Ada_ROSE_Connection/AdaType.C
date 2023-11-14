@@ -951,12 +951,12 @@ namespace
       // \todo SgActualArgumentExpression only supports 1:1 mapping from name to an expression
       //       but not n:1.
       //       => create an entry for each name, and duplicate the expression
-      elems.push_back(sb::buildActualArgumentExpression(name.ident, &sgnode));
+      elems.push_back(sb::buildActualArgumentExpression_nfi(name.ident, &sgnode));
 
       std::for_each( std::next(names.begin()), names.end(),
                      [&](NameData discrName) -> void
                      {
-                       elems.push_back(sb::buildActualArgumentExpression(discrName.ident, si::deepCopy(&sgnode)));
+                       elems.push_back(sb::buildActualArgumentExpression_nfi(discrName.ident, si::deepCopy(&sgnode)));
                      }
                    );
     }

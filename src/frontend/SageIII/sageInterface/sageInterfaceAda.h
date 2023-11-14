@@ -531,6 +531,15 @@ namespace
   TypeDescription typeOfExpr(const SgExpression*);
   /// @}
 
+  /// returns the base type if ty is an access type
+  /// \param  ty some type
+  /// \return the base type of ty, iff ty is some access type
+  ///         nullptr otherwise;
+  /// @{
+  SgType* baseOfAccessType(const SgType* ty);
+  SgType* baseOfAccessType(const SgType& ty);
+  /// @}
+
   struct DominantArgInfo : std::tuple<const SgType*, std::size_t>
   {
     using base = std::tuple<const SgType*, std::size_t>;
@@ -941,6 +950,20 @@ namespace
                                const SgFunctionType& drvFunTy,
                                const SgNamedType& dervTy
                              );
+
+  /// tests if \ref attr is an attribute with name \ref attrname.
+  bool isAttribute(const SgAdaAttributeExp& attr, const std::string& attrname);
+
+  /// Traverses all AST nodes in an unspecified order.
+  /// \details
+  ///   Only traverses the links that are commonly traversed by ROSE's standard
+  ///   traversal mechanism.
+  /// \note
+  ///   \ref fn is typically a functor that collects all nodes that need to be
+  ///   converted in a first pass.
+  ///   A second pass, triggered by fn's destructor carries out the
+  ///   actual transformations.
+  void conversionTraversal(std::function<void(SgNode*)>&& fn, SgNode* root);
 
 
   /// converts text to constant values

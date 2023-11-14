@@ -429,7 +429,7 @@ SgType& mkAliasedType(SgType& underType)
 SgExprStatement&
 mkExprStatement(SgExpression& expr)
 {
-  SgExprStatement& sgnode  = SG_DEREF( sb::buildExprStatement_nfi(&expr) );
+  SgExprStatement& sgnode = SG_DEREF( sb::buildExprStatement_nfi(&expr) );
 
   markCompilerGenerated(sgnode);
   return sgnode;
@@ -443,9 +443,9 @@ mkRaiseStmt(SgExpression& raised, SgExpression* what_opt)
 
   auto             thrwKnd = rethrow  ? SgThrowOp::rethrow
                                       : SgThrowOp::throw_expression;
-  SgExpression*    args    = what_opt ? sb::buildExprListExp(&raised, what_opt)
-                                      : &raised;
-  SgExpression&    raiseop = SG_DEREF( sb::buildThrowOp(args, thrwKnd) );
+  SgExpression&    args    = what_opt ? mkExprListExp({&raised, what_opt})
+                                      : raised;
+  SgExpression&    raiseop = SG_DEREF( sb::buildThrowOp(&args, thrwKnd) );
   SgExprStatement& sgnode  = mkExprStatement(raiseop);
 
   markCompilerGenerated(raiseop);
@@ -1924,6 +1924,28 @@ mkAdaBoxExp()
   return SG_DEREF(sb::buildVoidVal());
 }
 
+/// creates a function ref expression
+SgFunctionRefExp&
+mkFunctionRefExp(SgFunctionDeclaration& dcl)
+{
+  return SG_DEREF( sb::buildFunctionRefExp(&dcl) );
+}
+
+
+/// creates an assignment statement
+SgExprStatement&
+mkAssignStmt(SgExpression& lhs, SgExpression& rhs)
+{
+  return mkExprStatement(SG_DEREF(sb::buildAssignOp_nfi(&lhs, &rhs)));
+}
+
+SgReturnStmt&
+mkReturnStmt(SgExpression* expr_opt)
+{
+  return SG_DEREF( sb::buildReturnStmt_nfi(expr_opt) );
+}
+
+
 
 
 SgAdaOthersExp&
@@ -1948,17 +1970,6 @@ mkExceptionRef(SgInitializedName& exception, SgScopeStatement& scope)
   return SG_DEREF( sb::buildVarRefExp(&exception, &scope) );
 }
 
-SgDotExp&
-mkSelectedComponent(SgExpression& prefix, SgExpression& selector)
-{
-  // ASIS_FUNCTION_REF_ISSUE_1
-  //   corrects issue described in AdaExpression.C
-  SgExpression& corrected_prefix
-                   = isSgFunctionRefExp(&prefix) ? mkFunctionCallExp(prefix, mkExprListExp())
-                                                 : prefix;
-
-  return SG_DEREF( sb::buildDotExp(&corrected_prefix, &selector) );
-}
 
 SgAdaTaskRefExp&
 mkAdaTaskRefExp(SgAdaTaskSpecDecl& task)
@@ -1990,18 +2001,6 @@ mkCastExp(SgExpression& expr, SgType& ty)
 {
   return SG_DEREF(sb::buildCastExp_nfi(&expr, &ty, SgCastExp::e_static_cast));
 }
-
-
-SgFunctionCallExp&
-mkFunctionCallExp(SgExpression& target, SgExprListExp& arglst, bool usesOperatorSyntax, bool usesObjectCallSyntax)
-{
-  SgFunctionCallExp& sgnode = SG_DEREF(sb::buildFunctionCallExp_nfi(&target, &arglst));
-
-  sgnode.set_uses_operator_syntax(usesOperatorSyntax);
-  sgnode.set_usesObjectCallSyntax(usesObjectCallSyntax);
-  return sgnode;
-}
-
 
 
 SgExpression&
@@ -2069,12 +2068,157 @@ mkForLoopTest(bool forward, SgVariableDeclaration& var)
   return sgnode;
 }
 
+SgPointerDerefExp&
+mkPointerDerefExp(SgExpression& e)
+{
+  return SG_DEREF(sb::buildPointerDerefExp_nfi(&e));
+}
+
+namespace
+{
+  SgPointerDerefExp& insertImplicitDeref(SgExpression& e)
+  {
+    SgPointerDerefExp& sgnode = mkPointerDerefExp(e);
+
+    sgnode.setCompilerGenerated();
+    sgnode.unsetOutputInCodeGeneration();
+    sgnode.unsetTransformation();
+    return sgnode;
+  }
+
+  SgExpression& insertAccessArrayDerefIfNeeded(SgExpression& e, SgType* basety)
+  {
+    if (si::Ada::getArrayTypeInfo(basety).type() != nullptr)
+      return insertImplicitDeref(e);
+
+    return e;
+  }
+
+  SgExpression& insertAccessTaskDerefIfNeeded(SgExpression& e, SgType* basety)
+  {
+    // \todo check basety
+    if (basety)
+      return insertImplicitDeref(e);
+
+    return e;
+  }
+
+  SgExpression& insertAccessDiscrDerefIfNeeded(SgExpression& e, SgType* basety)
+  {
+    // \todo check basety
+    if (basety)
+      return insertImplicitDeref(e);
+
+    return e;
+  }
+
+  SgExpression& insertAccessObjectDerefIfNeeded(SgExpression& e, SgType* basety)
+  {
+    // \todo check basety
+    if (basety)
+      return insertImplicitDeref(e);
+
+    return e;
+  }
+
+  SgExpression& insertAccessObjectDerefIfNeeded(SgExpression& e)
+  {
+    // \todo check for composite/task/protected object type
+    return insertAccessObjectDerefIfNeeded(e, si::Ada::baseOfAccessType(si::Ada::typeOfExpr(e).typerep()));
+  }
+
+  SgExpression& insertAccessRoutineDerefIfNeeded(SgExpression& e)
+  {
+    // \todo check for subroutine type
+    if (si::Ada::baseOfAccessType(si::Ada::typeOfExpr(e).typerep()) != nullptr)
+      return insertImplicitDeref(e);
+
+    return e;
+  }
+
+  SgExpression& insertAccessArrayDerefIfNeeded(SgExpression& e)
+  {
+    return insertAccessArrayDerefIfNeeded(e, si::Ada::baseOfAccessType(si::Ada::typeOfExpr(e).typerep()));
+  }
+
+  SgExpression& insertAccessDerefIfNeeded(SgExpression& e, const std::string& ident)
+  {
+    SgType* basety = si::Ada::baseOfAccessType(si::Ada::typeOfExpr(e).typerep());
+
+    if (basety == nullptr)
+      return e;
+
+    const bool impliedArrayCheck = (  boost::iequals(ident, "first")
+                                   || boost::iequals(ident, "last")
+                                   || boost::iequals(ident, "length")
+                                   || boost::iequals(ident, "range")
+                                   || boost::iequals(ident, "component_size")
+                                   );
+
+    if (impliedArrayCheck)
+      return insertAccessArrayDerefIfNeeded(e, basety);
+
+    const bool impliedTaskCheck = (  boost::iequals(ident, "callable")
+                                  || boost::iequals(ident, "identity")
+                                  || boost::iequals(ident, "storage_size")
+                                  || boost::iequals(ident, "terminated")
+                                  );
+
+    if (impliedTaskCheck)
+      return insertAccessTaskDerefIfNeeded(e, basety);
+
+    const bool impliedObjectCheck = boost::iequals(ident, "valid");
+
+    if (impliedObjectCheck)
+      return insertAccessObjectDerefIfNeeded(e, basety);
+
+    const bool impliedDiscrCheck = boost::iequals(ident, "constrained");
+
+    if (impliedDiscrCheck)
+      return insertAccessDiscrDerefIfNeeded(e, basety);
+
+    return e;
+  }
+}
+
+
+SgDotExp&
+mkDotExp(SgExpression& prefix, SgExpression& selector)
+{
+  // ASIS_FUNCTION_REF_ISSUE_1
+  //   corrects issue described in AdaExpression.C
+  SgFunctionRefExp* fnref   = isSgFunctionRefExp(&prefix);
+  SgExpression&     prefix2 = fnref ? mkFunctionCallExp(prefix, mkExprListExp())
+                                    : prefix;
+  SgExpression&     objexp  = insertAccessObjectDerefIfNeeded(prefix2);
+
+  return SG_DEREF( sb::buildDotExp_nfi(&objexp, &selector) );
+}
+
+SgPntrArrRefExp&
+mkPntrArrRefExp(SgExpression& prefix, SgExprListExp& indices)
+{
+  SgExpression& arrayexp = insertAccessArrayDerefIfNeeded(prefix);
+
+  return SG_DEREF(sb::buildPntrArrRefExp_nfi(&arrayexp, &indices));
+}
+
+SgFunctionCallExp&
+mkFunctionCallExp(SgExpression& target, SgExprListExp& arglst, bool usesOperatorSyntax, bool usesObjectCallSyntax)
+{
+  SgExpression&      callee = insertAccessRoutineDerefIfNeeded(target);
+  SgFunctionCallExp& sgnode = SG_DEREF(sb::buildFunctionCallExp_nfi(&callee, &arglst));
+
+  sgnode.set_uses_operator_syntax(usesOperatorSyntax);
+  sgnode.set_usesObjectCallSyntax(usesObjectCallSyntax);
+  return sgnode;
+}
 
 
 SgExprListExp&
 mkExprListExp(const std::vector<SgExpression*>& exprs)
 {
-  SgExprListExp& sgnode = SG_DEREF(sb::buildExprListExp(exprs));
+  SgExprListExp& sgnode = SG_DEREF(sb::buildExprListExp_nfi(exprs));
 
   markCompilerGenerated(sgnode);
   return sgnode;
@@ -2179,10 +2323,10 @@ namespace
 
   SgType& firstLastTypeAttr(SgExpression& obj, SgExprListExp& args)
   {
-    SgTypeExpression*      tyexp = isSgTypeExpression(&obj);
-    SgType&                basety = SG_DEREF(tyexp ? tyexp->get_type() : obj.get_type());
+    SgType&                basety = SG_DEREF(si::Ada::typeOfExpr(obj).typerep());
     si::Ada::FlatArrayType flatty = si::Ada::getArrayTypeInfo(basety);
 
+    // 'first/'last applied on a non-array type, Integer'First
     if (flatty.type() == nullptr)
       return basety;
 
@@ -2192,11 +2336,11 @@ namespace
     {
       const int dim = si::Ada::firstLastDimension(args);
 
-      resty = SG_DEREF(flatty.dims().at(dim-1)).get_type();
+      resty = si::Ada::typeOfExpr(flatty.dims().at(dim-1)).typerep();
     }
     catch (...)
     {
-      logWarn() << "unable to fold " << args.get_expressions().at(0)->unparseToString()
+      logWarn() << "unknown 'first/'last type: " << obj.unparseToString()
                 << std::endl;
 
       resty = &mkTypeUnknown();
@@ -2226,6 +2370,10 @@ namespace
               << std::endl;
     return unknownTypeAttr(funref, args);
   }
+
+  // \todo
+  //   A'Range A'Range is equivalent to the range A'First .. A'Last, except that the prefix A is only evaluated once.
+  //   A'Range(N) A'Range(N) is equivalent to the range A'First(N) .. A'Last(N), except that the prefix A is only evaluated once.
 
   SgType&
   attributeType(SgExpression& expr, const std::string& ident, SgExprListExp& args)
@@ -2326,7 +2474,7 @@ namespace
                                      , { "truncation",           &argTypeAttr }
                                      , { "to_address",           &integralTypeAttr }
                                      , { "unbiased_rounding",    &argTypeAttr }
-                                     , { "unconstrained_Array",  &boolTypeAttr }
+                                     , { "unconstrained_array",  &boolTypeAttr }
                                      , { "unchecked_access",     &accessTypeAttr }
                                      , { "unrestricted_access",  &accessTypeAttr }
                                      , { "val",                  &exprTypeAttr }
@@ -2344,8 +2492,10 @@ namespace
                                      , { "word_size",            &integralTypeAttr }
                                      };
 
-    auto      pos = typecalc.find(ident);
-    TypeMaker bldr = ((pos != typecalc.end()) ? pos->second : nullptr);
+
+    SgExpression& obj  = insertAccessDerefIfNeeded(expr, ident);
+    auto          pos  = typecalc.find(ident);
+    TypeMaker     bldr = ((pos != typecalc.end()) ? pos->second : nullptr);
 
     if ((bldr == &argTypeAttr) && (args.get_expressions().size() == 0))
     {
@@ -2359,7 +2509,7 @@ namespace
       logWarn() << "unknown attribute type for '" << ident << std::endl;
     }
 
-    return bldr(expr, args);
+    return bldr(obj, args);
   }
 }
 

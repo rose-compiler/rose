@@ -848,9 +848,31 @@ namespace Ada_ROSE_Translation
   SgAdaRenamingRefExp&
   mkAdaRenamingRefExp(SgAdaRenamingDecl& decl);
 
-  /// creates a field selection expression (expr.field)
+  /// creates a field selection expression for: prefix.selector
+  /// \details
+  ///    - when prefix is just a function name, insert a call expression.
+  ///      on top of \ref prefix.
+  ///      This works around an Asis representation issue
+  ///      ASIS_FUNCTION_REF_ISSUE_1.
+  ///    - inserts a compiler-generated pointer deref expression on top
+  ///      of \ref prefix if \ref prefix has an access type.
   SgDotExp&
-  mkSelectedComponent(SgExpression& prefix, SgExpression& selector);
+  mkDotExp(SgExpression& prefix, SgExpression& selector);
+
+  /// creates a pointer dereference expression for: e.all
+  SgPointerDerefExp&
+  mkPointerDerefExp(SgExpression& e);
+
+  /// creates an array index expression for: prefix(indices).
+  /// \details
+  ///    inserts a compiler-generated pointer deref expression on top
+  ///    of \ref prefix if \ref prefix has an access to array type.
+  /// \note
+  ///    to attain a homogeneous representation, an SgExprListExp object
+  ///    is required to represent the indices, even when only a single
+  ///    dimension or slice is used.
+  SgPntrArrRefExp&
+  mkPntrArrRefExp(SgExpression& prefix, SgExprListExp& indices);
 
   /// returns a combined expression representing an Ada choice
   /// \param choices a non-empty sequence of choices
@@ -863,7 +885,11 @@ namespace Ada_ROSE_Translation
   SgCastExp&
   mkCastExp(SgExpression& expr, SgType& ty);
 
-  /// creates a call in the form of target(arglist).
+  /// creates a call for: target(arglist).
+  /// \details
+  ///    inserts a compiler-generated pointer deref expression on top
+  ///    of \ref target if \ref target has an access type
+  ///    (\todo check for access to subroutine).
   /// \param target the expression denoting the callee
   /// \param arglist the arguments
   /// \param usesOperatorSyntax true if call should be unparsed
@@ -917,9 +943,23 @@ namespace Ada_ROSE_Translation
   SgExpression&
   mkEnumeratorRef(SgEnumDeclaration&, SgInitializedName&);
 
+  /// creates a function ref expression
+  SgFunctionRefExp&
+  mkFunctionRefExp(SgFunctionDeclaration& dcl);
+
   /// creates and if statement
   SgIfStmt&
   mkIfStmt(bool elseIfPath = false);
+
+
+  /// creates an assignment statement for: lhs := rhs;
+  SgExprStatement&
+  mkAssignStmt(SgExpression& lhs, SgExpression& rhs);
+
+  /// builds a return statement for: return [expr_opt];
+  SgReturnStmt&
+  mkReturnStmt(SgExpression* expr_opt = nullptr);
+
 
   //
   // special Ada symbols

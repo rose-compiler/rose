@@ -33,24 +33,18 @@ namespace
 {
   //
   // convenience functions to identify Ada attributes
-
-  bool isAttribute(const SgAdaAttributeExp& attr, const std::string& attrname)
-  {
-    return boost::iequals(attr.get_attribute().getString(), attrname);
-  }
-
   bool isClassAttribute(const SgAdaAttributeExp& attr)
   {
     const std::string attrname = "class";
 
-    return isAttribute(attr, attrname);
+    return ::si::Ada::isAttribute(attr, attrname);
   }
 
   bool isRangeAttribute(const SgAdaAttributeExp& attr)
   {
     const std::string attrname = "range";
 
-    return isAttribute(attr, attrname);
+    return ::si::Ada::isAttribute(attr, attrname);
   }
 
 
@@ -97,6 +91,8 @@ namespace
       void handle(SgAdaDerivedType& n)      { res = descend(n.get_base_type()); }
       void handle(SgTypedefType& n)         { res = descend(&base_type(n)); }
       void handle(SgModifierType& n)        { res = descend(n.get_base_type()); }
+      void handle(SgAdaFormalType& n)       { res = descend(n.get_formal_type()); }
+
       //~ void handle(SgPointerType& n)         { res = descend(n.get_base_type()); }
       //~ void handle(SgReferenceType& n)       { res = descend(n.get_base_type()); }
       //~ void handle(SgRvalueReferenceType& n) { res = descend(n.get_base_type()); }
@@ -155,6 +151,7 @@ namespace
 
       // type expressions
       void handle(SgTypedefType& n)         { res = descend(&base_type(n)); }
+      void handle(SgAdaFormalType& n)       { res = descend(n.get_formal_type()); }
 
       void handle(SgAdaSubtype& n)
       {
@@ -195,6 +192,7 @@ namespace
       void handle(SgAdaDerivedType& n)      { res = descend(n.get_base_type()); }
       void handle(SgTypedefType& n)         { res = descend(&base_type(n)); }
       void handle(SgModifierType& n)        { res = descend(n.get_base_type()); }
+      void handle(SgAdaFormalType& n)       { res = descend(n.get_formal_type()); }
 
       // subtype -> get the dimension info for each
       void handle(SgAdaSubtype& n)
@@ -516,15 +514,18 @@ namespace Ada
   FlatArrayType
   getArrayTypeInfo(SgType* atype)
   {
-    SgArrayType* restype = ArrayType::find(atype);
+    if (atype == nullptr)
+      return { nullptr, {} };
 
-    return { restype, ArrayBounds::find(atype, restype) };
+    return getArrayTypeInfo(*atype);
   }
 
   FlatArrayType
   getArrayTypeInfo(SgType& atype)
   {
-    return getArrayTypeInfo(&atype);
+    SgArrayType* restype = ArrayType::find(&atype);
+
+    return { restype, ArrayBounds::find(&atype, restype) };
   }
 
   namespace
@@ -1523,42 +1524,19 @@ namespace Ada
     }
 
 
-    struct IndexedType : TypeDescResolver<IndexedType>
-    {
-        using base = TypeDescResolver<IndexedType>;
-
-        explicit
-        IndexedType(const SgExpression& index)
-        : base(), idx(&index)
-        {}
-
-        TypeDescription descend(SgType* ty);
-
-        using base::handle;
-
-        // handle implicit dereferenes ..
-        //   \todo should we explicitly represent implcit dereference operations
-        void handle(SgAdaAccessType& n)  { res = descend(n.get_base_type()); }
-
-        // \todo should not be reached in Ada NO_POINTER_IN_ADA
-        void handle(SgPointerType& n)    { res = descend(n.get_base_type()); }
-
-        // deref one level of access types
-        void handle(SgArrayType& n)      { res = TypeDescription{n.get_base_type()}; }
-      private:
-        const SgExpression* idx = nullptr;  /* currently not used */
-    };
-
-
-    TypeDescription
-    IndexedType::descend(SgType* ty)
-    {
-      return sg::dispatch(IndexedType{*idx}, ty);
-    }
-
     // \todo should this be moved into the Sage class hierarchy?
     struct ExprTypeFinder : sg::DispatchHandler<TypeDescription>
     {
+      SgType* arrayBaseType(SgType* ty)
+      {
+        if (SgArrayType* arrty = getArrayTypeInfo(ty).type())
+          return arrty->get_base_type();
+
+        // should not happen
+        return nullptr;
+      }
+
+
       void handle(const SgNode& n)              { SG_UNEXPECTED_NODE(n); }
 
       // by default use the expression's type
@@ -1591,13 +1569,13 @@ namespace Ada
       void handle(const SgPntrArrRefExp& n)
       {
         const SgExpression& arr   = SG_DEREF(n.get_lhs_operand());
-        SgType*             arrty = typeOfExpr(arr).typerep();
+        SgType*             resty = typeOfExpr(arr).typerep();
         const SgExpression& idx   = SG_DEREF(n.get_rhs_operand());
+        const bool          slice = containsRange(idx);
 
-        if (containsRange(idx))
-          res = TypeDescription{arrty};
-        else
-          res = sg::dispatch(IndexedType{idx}, arrty);
+        if (!slice) resty = arrayBaseType(resty); // resolve to element type
+
+        res = TypeDescription{resty};
       }
 
       // SgRangeExp::get_type returns TypeDefault
@@ -1608,6 +1586,11 @@ namespace Ada
         const SgExpression& lhs = SG_DEREF(n.get_start());
 
         res = TypeDescription{lhs.get_type()};
+      }
+
+      void handle(const SgTypeExpression& n)
+      {
+        res = TypeDescription{n.get_type()};
       }
 
       // SgTypeString does not preserve the 'wideness', so let's just get
@@ -2000,6 +1983,37 @@ namespace Ada
     return exp ? typeOfExpr(*exp) : TypeDescription{nullptr};
   }
 
+  SgType* baseOfAccessType(const SgType* ty)
+  {
+    if (const SgAdaAccessType* acc = isSgAdaAccessType(ty))
+      return acc->get_base_type();
+
+    if (const SgAdaDerivedType* drv = isSgAdaDerivedType(ty))
+      return baseOfAccessType(drv->get_base_type());
+
+    if (const SgAdaSubtype* sub = isSgAdaSubtype(ty))
+      return baseOfAccessType(sub->get_base_type());
+
+    if (const SgPointerType* ptr = isSgPointerType(ty))
+      return ptr->get_base_type();
+
+    if (const SgTypedefType* tydef = isSgTypedefType(ty))
+      return baseOfAccessType(base_type(*tydef));
+
+    if (const SgModifierType* modty = isSgModifierType(ty))
+      return baseOfAccessType(modty->get_base_type());
+
+    if (const SgAdaFormalType* frmty = isSgAdaFormalType(ty))
+      return baseOfAccessType(frmty->get_formal_type());
+
+    return nullptr;
+  }
+
+  SgType* baseOfAccessType(const SgType& ty)
+  {
+    return baseOfAccessType(&ty);
+  }
+
   namespace
   {
     // function checks if opname requires special handling for fixed types
@@ -2312,6 +2326,7 @@ namespace Ada
       //~ FunctionCallToOperatorConverter& operator=(const FunctionCallToOperatorConverter&) = delete;
       //~ FunctionCallToOperatorConverter& operator=(FunctionCallToOperatorConverter&&)      = delete;
   };
+
 
   int arity(const SgFunctionCallExp& fncall)
   {
@@ -3005,6 +3020,7 @@ namespace Ada
   }
 
 
+
   void conversionTraversal(std::function<void(SgNode*)>&& fn, SgNode* root)
   {
     ROSE_ASSERT(root);
@@ -3028,6 +3044,7 @@ namespace Ada
   {
     conversionTraversal(FunctionCallToOperatorConverter{convertCallSyntax, convertNamedArguments}, root);
   }
+
 
   /*
   template<class T>
@@ -3715,6 +3732,12 @@ SgDeclarationStatement* associatedDeclaration(const SgSymbol& n)
 {
   return sg::dispatch(AssociatedDecl{}, &n);
 }
+
+bool isAttribute(const SgAdaAttributeExp& attr, const std::string& attrname)
+{
+  return boost::iequals(attr.get_attribute().getString(), attrname);
+}
+
 
 
 } // ada

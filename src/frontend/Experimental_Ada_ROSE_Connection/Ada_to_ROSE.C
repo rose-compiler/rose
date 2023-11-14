@@ -1945,6 +1945,7 @@ namespace
     logInfo() << "Replaced " << ctr << " nullptr with SgNullExpression." << std::endl;
   }
 
+
 #define EXPERIMENTAL_CODE_1 1
 
 #if EXPERIMENTAL_CODE_1
@@ -2191,11 +2192,18 @@ void convertAsisToROSE(Nodes_Struct& headNodes, SgSourceFile* file)
 
   setSymbolTableCaseSensitivity(astScope);
 
+  // sort all units topologically, so that all references can be resolved
+  //   by a single translation pass.
   std::vector<Unit_Struct*> units    = sortUnitsTopologically(adaUnit, AstContext{}.scope(astScope));
 
+  // define the package standard
+  //   as we are not able to read it out from Asis
   initializePkgStandard(astScope);
+
+  // translate all units
   std::for_each(units.begin(), units.end(), UnitCreator{AstContext{}.scope(astScope)});
 
+  // post processing
   replaceNullptrWithNullExpr();
   resolveInheritedFunctionOverloads(astScope);
 

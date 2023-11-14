@@ -222,7 +222,9 @@ namespace
     {
       SgExpression* target = n.get_operand();
       expr(target);
-      prn(".all");
+
+      if (n.isOutputInCodeGeneration())
+        prn(".all");
     }
 
     void handle(SgRangeExp& n)
