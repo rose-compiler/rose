@@ -689,6 +689,7 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
 			 @top_srcdir@/src/Rose \
 			 @top_srcdir@/src/Rose/AST \
 			 @top_srcdir@/src/Rose/BinaryAnalysis \
+			 @top_srcdir@/src/Rose/BinaryAnalysis/Architecture \
 			 @top_srcdir@/src/Rose/BinaryAnalysis/ByteCode \
 			 @top_srcdir@/src/Rose/BinaryAnalysis/Concolic \
 			 @top_srcdir@/src/Rose/BinaryAnalysis/Concolic/Callback \

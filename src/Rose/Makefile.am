@@ -38,9 +38,26 @@ librose_partial_la_SOURCES =								\
 	AST/Utils.C									\
 	AST/utils/edge_ptr_repl.C							\
 	BinaryAnalysis/AbstractLocation.C						\
+	BinaryAnalysis/Architecture/Amd64.C						\
+	BinaryAnalysis/Architecture/ArmAarch32.C					\
+	BinaryAnalysis/Architecture/ArmAarch64.C					\
 	BinaryAnalysis/Architecture/Base.C						\
 	BinaryAnalysis/Architecture/BasicTypes.C					\
 	BinaryAnalysis/Architecture/Exception.C						\
+	BinaryAnalysis/Architecture/Intel80286.C					\
+	BinaryAnalysis/Architecture/Intel8086.C						\
+	BinaryAnalysis/Architecture/Intel8088.C						\
+	BinaryAnalysis/Architecture/IntelI386.C						\
+	BinaryAnalysis/Architecture/IntelI486.C						\
+	BinaryAnalysis/Architecture/IntelPentium.C					\
+	BinaryAnalysis/Architecture/IntelPentiumii.C					\
+	BinaryAnalysis/Architecture/IntelPentiumiii.C					\
+	BinaryAnalysis/Architecture/IntelPentium4.C					\
+	BinaryAnalysis/Architecture/Mips32.C						\
+	BinaryAnalysis/Architecture/Motorola68040.C					\
+	BinaryAnalysis/Architecture/NxpColdfire.C					\
+	BinaryAnalysis/Architecture/Powerpc32.C						\
+	BinaryAnalysis/Architecture/Powerpc64.C						\
 	BinaryAnalysis/AsmFunctionIndex.C						\
 	BinaryAnalysis/AstHash.C							\
 	BinaryAnalysis/BestMapAddress.C							\
