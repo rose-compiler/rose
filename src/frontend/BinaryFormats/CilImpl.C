@@ -7,10 +7,11 @@
 #include "sage3basic.h"
 
 #include <unordered_map>
-#include "Rose/Diagnostics.h"
-#include "Rose/BinaryAnalysis/Disassembler/Cil.h"
-#include "Rose/BinaryAnalysis/Disassembler/X86.h"
-#include "frontend/SageIII/sageInterface/SageBuilderAsm.h"
+#include <Rose/Diagnostics.h>
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
+#include <Rose/BinaryAnalysis/Disassembler/Cil.h>
+#include <Rose/BinaryAnalysis/Disassembler/X86.h>
+#include <frontend/SageIII/sageInterface/SageBuilderAsm.h>
 
 namespace sb = Rose::SageBuilderAsm;
 using namespace Rose::Diagnostics; // mlog WARN, ...
@@ -2286,13 +2287,17 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
     {
       namespace rb = Rose::BinaryAnalysis;
 
-      case CIL_CODE:
-        blk = disassemble(base_va + codeRVA, m, mh, code, rb::Disassembler::Cil::instance());
+      case CIL_CODE: {
+        auto arch = rb::Architecture::findByName("cil").orThrow();
+        blk = disassemble(base_va + codeRVA, m, mh, code, rb::Disassembler::Cil::instance(arch));
         break;
+      }
 
-      case NATIVE_CODE:
-        blk = disassemble(base_va + codeRVA, m, mh, code, rb::Disassembler::X86::instance(4 /* word size */));
+      case NATIVE_CODE: {
+        auto arch = rb::Architecture::findByName("intel-pentium4").orThrow();
+        blk = disassemble(base_va + codeRVA, m, mh, code, rb::Disassembler::X86::instance(arch));
         break;
+      }
 
       case RUNTIME_CODE:
         std::cerr << "  - runtime provided: " << code.size()

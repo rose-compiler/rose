@@ -2,8 +2,10 @@
 #define ROSE_BinaryAnalysis_Disassembler_Null_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
+
+#include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
+
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 
@@ -31,16 +33,15 @@ private:
 #endif
 
 protected:
-    Null();
+    Null(const Architecture::BaseConstPtr&);
 
 public:
     virtual ~Null();
 
     /** Allocating constructor. */
-    static Ptr instance();
+    static Ptr instance(const Architecture::BaseConstPtr&);
 
     virtual Base::Ptr clone() const override;
-    virtual bool canDisassemble(SgAsmGenericHeader*) const override;
     virtual Unparser::BasePtr unparser() const override;
     virtual SgAsmInstruction* disassembleOne(const MemoryMap::Ptr&, rose_addr_t va, AddressSet *successors = NULL) override;
     virtual SgAsmInstruction* makeUnknownInstruction(const Exception&) override;

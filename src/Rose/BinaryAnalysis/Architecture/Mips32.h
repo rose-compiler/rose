@@ -21,9 +21,7 @@ namespace Architecture {
  *  The MIPS architecture has several optional extensions. MIPS-3D which is a simple set of floating-point SIMD instructions
  *  dedicated to common 3D tasks, MDMX (MaDMaX) which is a more extensive integer SIMD instruction set using the 64-bit
  *  floating-point registers, MIPS16e which adds compression to the instruction stream to make programs take up less room, and
- *  MIPS MT, which adds multithreading capability.
- *
- *  See also, https://en.wikipedia.org/wiki/MIPS_architecture */
+ *  MIPS MT, which adds multithreading capability. */
 class Mips32: public Base {
 public:
     using Ptr = Mips32Ptr;
@@ -39,6 +37,8 @@ public:
 
 public:
     RegisterDictionary::Ptr registerDictionary() const override;
+    bool matchesHeader(SgAsmGenericHeader*) const override;
+    Disassembler::BasePtr newInstructionDecoder() const override;
 };
 
 } // namespace

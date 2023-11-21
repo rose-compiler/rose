@@ -38,15 +38,13 @@ namespace Architecture {
  *  The x86-64 architecture was quickly adopted for desktop and laptop personal computers and servers which were commonly configured
  *  for 16GB of memory or more. It has effectively replaced the discontinued Intel Itanium architecture (formerly IA-64), which was
  *  originally intended to replace the x86 architecture. x86-64 and Itanium are not compatible on the native instruction set level,
- *  and operating systems and applications compiled for one architecture cannot be run on the other natively.
- *
- * See also, https://en.wikipedia.org/wiki/X86-64 */
+ *  and operating systems and applications compiled for one architecture cannot be run on the other natively. */
 class Amd64: public Base {
 public:
     using Ptr = Amd64Ptr;
 
 protected:
-    Amd64();                                        // use `instance` instead
+    Amd64();                                            // use `instance` instead
 public:
     ~Amd64();
 
@@ -56,6 +54,8 @@ public:
 
 public:
     RegisterDictionary::Ptr registerDictionary() const override;
+    bool matchesHeader(SgAsmGenericHeader*) const override;
+    Disassembler::BasePtr newInstructionDecoder() const override;
 };
 
 } // namespace

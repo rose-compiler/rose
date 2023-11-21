@@ -20,15 +20,13 @@ namespace Architecture {
  *  computers and the Pentium II Xeon line for servers and workstations. The Celeron was characterized by a reduced or omitted (in
  *  some cases present but disabled) on-die full-speed L2 cache and a 66 MT/s FSB. The Xeon was characterized by a range of
  *  full-speed L2 cache (from 512 KB to 2048 KB), a 100 MT/s FSB, a different physical interface (Slot 2), and support for symmetric
- *  multiprocessing.
- *
- * See also, https://en.wikipedia.org/wiki/Pentium_II */
+ *  multiprocessing. */
 class IntelPentiumii: public Base {
 public:
     using Ptr = IntelPentiumiiPtr;
 
 protected:
-    IntelPentiumii();                                        // use `instance` instead
+    IntelPentiumii();                                   // use `instance` instead
 public:
     ~IntelPentiumii();
 
@@ -38,6 +36,8 @@ public:
 
 public:
     RegisterDictionary::Ptr registerDictionary() const override;
+    bool matchesHeader(SgAsmGenericHeader*) const override;
+    Disassembler::BasePtr newInstructionDecoder() const override;
 };
 
 } // namespace

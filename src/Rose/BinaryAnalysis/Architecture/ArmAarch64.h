@@ -11,9 +11,7 @@ namespace Architecture {
 /** Architecture-specific information for ARM AArch64.
  *
  *  AArch64 or ARM64 is the 64-bit extension of the ARM architecture family.  It was first introduced with the Armv8-A
- *  architecture. Arm releases a new extension every year.
- *
- *  See also, https://en.wikipedia.org/wiki/AArch64 */
+ *  architecture. Arm releases a new extension every year. */
 class ArmAarch64: public Base {
 public:
     using Ptr = ArmAarch64Ptr;
@@ -29,6 +27,8 @@ public:
 
 public:
     RegisterDictionary::Ptr registerDictionary() const override;
+    bool matchesHeader(SgAsmGenericHeader*) const override;
+    Disassembler::BasePtr newInstructionDecoder() const override;
 };
 
 } // namespace

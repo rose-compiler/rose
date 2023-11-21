@@ -17,9 +17,7 @@ namespace Architecture {
  *  and 8088 processors.
  *
  *  The 80286 was employed for the IBM PC/AT, introduced in 1984, and then widely used in most PC/AT compatible computers until the
- *  early 1990s. In 1987, Intel shipped its five-millionth 80286 microprocessor.
- *
- *  See https://en.wikipedia.org/wiki/Intel_80286 */
+ *  early 1990s. In 1987, Intel shipped its five-millionth 80286 microprocessor. */
 class Intel80286: public Base {
 public:
     using Ptr = Intel80286Ptr;
@@ -35,6 +33,8 @@ public:
 
 public:
     RegisterDictionary::Ptr registerDictionary() const override;
+    bool matchesHeader(SgAsmGenericHeader*) const override;
+    Disassembler::BasePtr newInstructionDecoder() const override;
 };
 
 } // namespace

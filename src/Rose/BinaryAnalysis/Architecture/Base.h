@@ -6,6 +6,7 @@
 #include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
 #include <Rose/BinaryAnalysis/ByteOrder.h>
 #include <Rose/BinaryAnalysis/CallingConvention.h>
+#include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 
@@ -14,9 +15,13 @@ namespace BinaryAnalysis {
 namespace Architecture {
 
 /** Base class for architecture definitions. */
-class Base {
+class Base: public std::enable_shared_from_this<Base> {
 public:
+    /** Reference counting pointer. */
     using Ptr = BasePtr;
+
+    /** Reference counting pointer to const object. */
+    using ConstPtr = BaseConstPtr;
 
 private:
     std::string name_;                                  // name of architecture
@@ -30,6 +35,9 @@ protected:
     explicit Base(const std::string &name, size_t bytesPerWord, ByteOrder::Endianness byteOrder);
     virtual ~Base();
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Properties
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Property: Architecture definition name.
      *
@@ -75,6 +83,33 @@ public:
      *
      *  Thread safety: Thread safe. */
     virtual RegisterDictionaryPtr registerDictionary() const = 0;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Lookup functions
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Tests whether this architecture matches a name.
+     *
+     *  Returns true if this architecture matches the specified name, and false otherwise.
+     *
+     *  The default implementation matches the name exactly, which is what one usually wants. */
+    virtual bool matchesName(const std::string&) const;
+
+    /** Tests whether this architecture matches a file header.
+     *
+     *  Returns true if this architecture matches the specified file header, and false otherwise.
+     *
+     *  The default implementation always returns false. */
+    virtual bool matchesHeader(SgAsmGenericHeader*) const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Factories
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Construct and return a new instruction decoder.
+     *
+     * Returns a new decoder for this architecture if possible, otherwise a null pointer. */
+    virtual Disassembler::BasePtr newInstructionDecoder() const = 0;
 };
 
 } // namespace

@@ -275,6 +275,7 @@ nobase_pkginclude_HEADERS=								\
 	BinaryAnalysis/Architecture/ArmAarch64.h					\
 	BinaryAnalysis/Architecture/Base.h						\
 	BinaryAnalysis/Architecture/BasicTypes.h					\
+	BinaryAnalysis/Architecture/Cil.h						\
 	BinaryAnalysis/Architecture/Exception.h						\
 	BinaryAnalysis/Architecture/Intel80286.h					\
 	BinaryAnalysis/Architecture/Intel8086.h						\
@@ -285,6 +286,7 @@ nobase_pkginclude_HEADERS=								\
 	BinaryAnalysis/Architecture/IntelPentiumii.h					\
 	BinaryAnalysis/Architecture/IntelPentiumiii.h					\
 	BinaryAnalysis/Architecture/IntelPentium4.h					\
+	BinaryAnalysis/Architecture/Jvm.h						\
 	BinaryAnalysis/Architecture/Mips32.h						\
 	BinaryAnalysis/Architecture/Motorola68040.h					\
 	BinaryAnalysis/Architecture/NxpColdfire.h					\

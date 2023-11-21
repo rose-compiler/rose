@@ -3,6 +3,8 @@
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #ifdef ROSE_ENABLE_ASM_AARCH32
 
+#include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
+
 #include <capstone/capstone.h>
 
 namespace Rose {
@@ -36,22 +38,21 @@ private:
 
 protected:
     // Constructor for specific architecture. */
-    explicit Aarch32(Modes = Modes());
+    explicit Aarch32(const Architecture::BaseConstPtr&, Modes = Modes());
 
 public:
     /** Allocating constructor for an A32 instruction set decoder. */
-    static Ptr instanceA32();
+    static Ptr instanceA32(const Architecture::BaseConstPtr&);
 
     /** Allocating constructor for a T32 instruction set decoder. */
-    static Ptr instanceT32();
+    static Ptr instanceT32(const Architecture::BaseConstPtr&);
 
     /** Allocating constructor for A32 instruction set decoder. */
-    static Ptr instance();
+    static Ptr instance(const Architecture::BaseConstPtr&);
 
     ~Aarch32();
 
     // overrides
-    bool canDisassemble(SgAsmGenericHeader*) const override;
     Base::Ptr clone() const override;
     Unparser::BasePtr unparser() const override;
     SgAsmInstruction* disassembleOne(const MemoryMap::Ptr&, rose_addr_t startVa, AddressSet *successors=nullptr) override;

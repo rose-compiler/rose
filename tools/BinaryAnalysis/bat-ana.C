@@ -14,6 +14,7 @@ static const char *description =
 #include <rose.h>
 #include <batSupport.h>
 
+#include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
 #include <Rose/BinaryAnalysis/BestMapAddress.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
@@ -155,7 +156,7 @@ main(int argc, char *argv[]) {
 
     // Check some informational switches before we die for lack of specimen.
     if (engine->settings().disassembler.isaName == "list") {
-        for (const std::string &name: Disassembler::isaNames())
+        for (const std::string &name: Architecture::registeredNames())
             std::cout <<name <<"\n";
         exit(0);
     }

@@ -5,6 +5,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 
+#include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
 #include <Rose/BinaryAnalysis/ByteOrder.h>
 #include <Rose/BinaryAnalysis/InstructionEnumsMips.h>
 
@@ -20,16 +21,15 @@ public:
     using Ptr = MipsPtr;
 
 protected:
-    explicit Mips(ByteOrder::Endianness sex = ByteOrder::ORDER_MSB);
+    explicit Mips(const Architecture::BaseConstPtr&);
 
 public:
     /** Allocating constructor for MIPS decoder.
      *
      *  MIPS executables can be big- or little-endian. */
-    static Ptr instance(ByteOrder::Endianness sex = ByteOrder::ORDER_MSB);
+    static Ptr instance(const Architecture::BaseConstPtr&);
 
     virtual Base::Ptr clone() const override;
-    virtual bool canDisassemble(SgAsmGenericHeader*) const override;
     virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr&, rose_addr_t start_va,
                                              AddressSet *successors=NULL) override;
     virtual SgAsmInstruction *makeUnknownInstruction(const Exception&) override;

@@ -9,6 +9,7 @@
 #include <SageBuilderAsm.h>
 #include <integerOps.h>
 #include <stringify.h>
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/Unparser/X86.h>
@@ -45,35 +46,19 @@ namespace Disassembler {
  * X86 primary methods, mostly defined by the superclass.
  *========================================================================================================================*/
 
-X86::X86()
-    : insnSize(x86_insnsize_none), wordSize(0) {}
-
-X86::X86(size_t wordsize)
-    : insnSize(x86_insnsize_none), wordSize(wordsize) {
-    init(wordSize);
+X86::X86(const Architecture::Base::ConstPtr &arch)
+    : Base(arch), insnSize(x86_insnsize_none), wordSize(arch->bytesPerWord()) {
+    init(arch->bytesPerWord());
 }
 
 X86::Ptr
-X86::instance(size_t wordSize) {
-    return Ptr(new X86(wordSize));
+X86::instance(const Architecture::Base::ConstPtr &arch) {
+    return Ptr(new X86(arch));
 }
 
 Base::Ptr
 X86::clone() const {
     return Ptr(new X86(*this));
-}
-
-bool
-X86::canDisassemble(SgAsmGenericHeader *header) const
-{
-    SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
-    if (isSgAsmDOSFileHeader(header))
-        return 2==wordSizeBytes();
-    if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_IA32_Family)
-        return 4==wordSizeBytes();
-    if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_X8664_Family)
-        return 8==wordSizeBytes();
-    return false;
 }
 
 Unparser::BasePtr
@@ -90,7 +75,6 @@ X86::init(size_t wordsize)
     size_t addrWidth=0;
     switch (wordsize) {
         case 2:
-            name("i286");
             addrWidth = 16;
             insnSize = x86_insnsize_16;
 #if 0 // [Robb P. Matzke 2015-06-23]
@@ -108,7 +92,6 @@ X86::init(size_t wordsize)
             REG_SF = regdict->findOrThrow("bp");
             break;
         case 4:
-            name("i386");
             addrWidth = 32;
             insnSize = x86_insnsize_32;
             regdict = RegisterDictionary::instancePentium4();
@@ -119,7 +102,6 @@ X86::init(size_t wordsize)
             callingConventions(CallingConvention::dictionaryX86());
             break;
         case 8:
-            name("amd64");
             addrWidth = 64;
             insnSize = x86_insnsize_64;
             regdict = RegisterDictionary::instanceAmd64();

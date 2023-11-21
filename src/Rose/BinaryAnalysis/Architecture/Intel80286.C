@@ -3,6 +3,8 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Architecture/Intel80286.h>
 
+#include <Rose/BinaryAnalysis/Disassembler/X86.h>
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Architecture {
@@ -24,6 +26,20 @@ Intel80286::registerDictionary() const {
     if (!registerDictionary_.isCached())
         registerDictionary_ = RegisterDictionary::instanceI286();
     return registerDictionary_.get();
+}
+
+bool
+Intel80286::matchesHeader(SgAsmGenericHeader *header) const {
+    ASSERT_not_null(header);
+    const SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
+    return isSgAsmDOSFileHeader(header) &&
+        (isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_IA32_Family &&
+        header->get_executableFormat()->get_wordSize() == bytesPerWord();
+}
+
+Disassembler::Base::Ptr
+Intel80286::newInstructionDecoder() const {
+    return Disassembler::X86::instance(shared_from_this());
 }
 
 } // namespace

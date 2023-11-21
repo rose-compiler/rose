@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
 #include <Rose/BinaryAnalysis/CallingConvention.h>
 #include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Disassembler/Exception.h>
@@ -45,12 +46,8 @@ typedef Map<rose_addr_t, SgAsmInstruction*> InstructionMap;
  *  subclasses of @ref SgAsmExpression. If an error occurs during the disassembly of a single instruction, the disassembler
  *  will throw an exception.
  *
- *  New architectures can be added to ROSE without modifying any ROSE source code. One does this by subclassing an existing
- *  disassembler, overriding any necessary virtual methods, and registering an instance of the subclass with @ref
- *  registerFactory.  If the new subclass can handle multiple architectures then a disassembler should be registered for each
- *  of those architectures. When ROSE needs to disassemble something, it calls @ref lookup, which in turn calls the @ref
- *  canDisassemble method for all registered disassemblers.  The first disassembler whose @ref canDisassemble returns true is
- *  used for the disassembly. */
+ *  New architectures can be added to ROSE without modifying any ROSE source code. One does this through the @ref
+ *  Rose::Architecture API. */
 class Base: public Sawyer::SharedObject {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Types
@@ -62,6 +59,7 @@ public:
     //                                  Data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
+    Architecture::BaseConstPtr architecture_;
     CallingConvention::Dictionary callingConventions_;
 
 protected:
@@ -69,7 +67,6 @@ protected:
     RegisterDescriptor REG_IP, REG_SP, REG_SS, REG_SF, REG_LINK; /**< Register descriptors initialized during construction. */
     ByteOrder::Endianness p_byteOrder = ByteOrder::ORDER_LSB;    /**< Byte order of instructions in memory. */
     size_t p_wordSizeBytes = 4;                                  /**< Basic word size in bytes. */
-    std::string p_name;                                          /**< Name by which this dissassembler is registered. */
     size_t instructionAlignment_ = 1;                            /**< Positive alignment constraint for instruction addresses. */
 
     /** Prototypical dispatcher for creating real dispatchers */
@@ -94,7 +91,6 @@ private:
             s & BOOST_SERIALIZATION_NVP(REG_SF);
         s & BOOST_SERIALIZATION_NVP(p_byteOrder);
         s & BOOST_SERIALIZATION_NVP(p_wordSizeBytes);
-        s & BOOST_SERIALIZATION_NVP(p_name);
         if (version >= 2)
             s & BOOST_SERIALIZATION_NVP(instructionAlignment_);
     }
@@ -105,33 +101,10 @@ private:
     //                                  Constructors
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 protected:
-    Base() {}
+    explicit Base(const Architecture::BaseConstPtr&);
 
 public:
-    virtual ~Base() {}
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Registration and lookup methods
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-public:
-    /** Predicate determining the suitability of a disassembler for a specific file header.  If this disassembler is capable
-     *  of disassembling machine code described by the specified file header, then this predicate returns true, otherwise it
-     *  returns false.
-     *
-     *  Thread safety: The thread safety of this virtual method depends on the implementation in the subclass. */
-    virtual bool canDisassemble(SgAsmGenericHeader*) const = 0;
-
-    /** Property: Name by which disassembler is registered.
-     *
-     * @{ */
-    const std::string& name() const {
-        return p_name;
-    }
-    void name(const std::string &s) {
-        p_name = s;
-    }
-    /** @} */
+    virtual ~Base();
 
     /** Creates a new copy of a disassembler. The new copy has all the same settings as the original.
      *
@@ -143,6 +116,12 @@ public:
      *                                          Disassembler properties and settings
      ***************************************************************************************************************************/
 public:
+    /** Property: Architecture. */
+    Architecture::BaseConstPtr architecture() const;
+
+    /** Property: Name. */
+    const std::string& name() const;
+
     /** Unparser.
      *
      *  Returns an unparser suitable for unparsing the same instruction set architecture as recognized and produced by this

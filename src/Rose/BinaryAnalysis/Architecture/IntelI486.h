@@ -25,9 +25,7 @@ namespace Architecture {
  *  per cycle. The intel 80387 FPU ("i387") was a separate, optional math coprocessor that was installed in a motherboard socket
  *  alongside the i386.
  *
- *  The i486 was succeeded by the original Pentium.
- *
- * See also, https://en.wikipedia.org/wiki/Intel_I486 */
+ *  The i486 was succeeded by the original Pentium. */
 class IntelI486: public Base {
 public:
     using Ptr = IntelI486Ptr;
@@ -43,6 +41,8 @@ public:
 
 public:
     RegisterDictionary::Ptr registerDictionary() const override;
+    bool matchesHeader(SgAsmGenericHeader*) const override;
+    Disassembler::BasePtr newInstructionDecoder() const override;
 };
 
 } // namespace

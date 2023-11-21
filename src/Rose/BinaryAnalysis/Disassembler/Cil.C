@@ -2,6 +2,8 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Disassembler/Cil.h>
+
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/Unparser/Cil.h>
 
@@ -17,28 +19,23 @@ namespace Disassembler {
 using namespace ByteOrder;
 using namespace Rose::Diagnostics; // mlog WARN, ...
 
-Cil::Cil() {
-    name("cil");
+Cil::Cil(const Architecture::Base::ConstPtr &arch)
+    : Base(arch) {
     wordSizeBytes(2);
     byteOrder(ByteOrder::ORDER_MSB);
     registerDictionary(RegisterDictionary::instanceCil());
 }
 
 Cil::Ptr
-Cil::instance() {
-    return Ptr(new Cil);
+Cil::instance(const Architecture::Base::ConstPtr &arch) {
+    return Ptr(new Cil(arch));
 }
 
 Cil::~Cil() {}
 
 Disassembler::Base::Ptr
 Cil::clone() const {
-    return Ptr(new Cil);
-}
-
-bool
-Cil::canDisassemble(SgAsmGenericHeader* header) const {
-    return (header->get_sectionsByName("CLR Runtime Header").size() > 0)? true : false;
+    return Ptr(new Cil(architecture()));
 }
 
 Unparser::BasePtr

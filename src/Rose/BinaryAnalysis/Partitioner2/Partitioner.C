@@ -304,7 +304,8 @@ Partitioner::init(const Disassembler::Base::Ptr &disassembler, const MemoryMap::
         insnPlainUnparser_ = disassembler->unparser()->copy();
         configureInsnPlainUnparser(insnPlainUnparser_);
     } else {
-        instructionProvider_ = InstructionProvider::instance(Disassembler::Null::instance(), map);
+        auto anyArch = Architecture::findByName("intel-pentium4").orThrow(); // not used by null decoder
+        instructionProvider_ = InstructionProvider::instance(Disassembler::Null::instance(anyArch), map);
     }
     undiscoveredVertex_ = cfg_.insertVertex(CfgVertex(V_UNDISCOVERED));
     indeterminateVertex_ = cfg_.insertVertex(CfgVertex(V_INDETERMINATE));
@@ -2031,7 +2032,7 @@ Partitioner::attachFunction(const Function::Ptr &function) {
             function->name(c.defaultName());            // default name if function has none
         if (function->name().empty())
             function->name(addressName(function->address())); // use address name if nothing else
-        if (c.comment().empty())
+        if (!c.comment().empty())
             function->comment(c.comment());
         if (!c.sourceLocation().isEmpty()) {
             function->sourceLocation(c.sourceLocation());

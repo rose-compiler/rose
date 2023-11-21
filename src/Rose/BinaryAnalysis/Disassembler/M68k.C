@@ -7,6 +7,7 @@
 #include "integerOps.h"
 #include "stringify.h"
 #include "SageBuilderAsm.h"
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h>
 #include <Rose/BinaryAnalysis/Unparser/M68k.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
@@ -323,17 +324,17 @@ formatNBits(M68kDataFormat fmt)
     ASSERT_not_reachable("invalid m68k data format: " + stringifyBinaryAnalysisM68kDataFormat(fmt));
 }
 
-M68k::M68k()
-    : family(m68k_freescale_cpu32) {}
+M68k::M68k(const Architecture::Base::ConstPtr &arch)
+    : Base(arch), family(m68k_freescale_cpu32) {}
 
-M68k::M68k(M68kFamily family)
-    : family(family) {
+M68k::M68k(const Architecture::Base::ConstPtr &arch, M68kFamily family)
+    : Base(arch), family(family) {
     init();
 }
 
 M68k::Ptr
-M68k::instance(M68kFamily family) {
-    return Ptr(new M68k(family));
+M68k::instance(const Architecture::Base::ConstPtr &arch, M68kFamily family) {
+    return Ptr(new M68k(arch, family));
 }
 
 Base::Ptr
@@ -341,14 +342,6 @@ M68k::clone() const {
     return Ptr(new M68k(*this));
 }
 
-
-// see base class
-bool
-M68k::canDisassemble(SgAsmGenericHeader *header) const
-{
-    SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
-    return (isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_M68K_Family;
-}
 
 Unparser::BasePtr
 M68k::unparser() const {
@@ -4870,10 +4863,8 @@ M68k::init()
     // Default register dictionary
     RegisterDictionary::Ptr regdict;
     if ((family & m68k_freescale) != 0) {
-        name("coldfire");
         regdict = RegisterDictionary::instanceColdfireEmac();
     } else {
-        name("m68040");
         regdict = RegisterDictionary::instanceM68000();
     }
     registerDictionary(regdict);

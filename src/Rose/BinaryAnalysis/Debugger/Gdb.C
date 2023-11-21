@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Debugger/Gdb.h>
 
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Debugger/Exception.h>
 #include <Rose/BinaryAnalysis/Disassembler/M68k.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
@@ -278,9 +279,9 @@ Gdb::attach(const Specimen &specimen) {
             if (const Yaml::Node &node = response.exec.results["frame"]["arch"]) {
                 const std::string arch = node.as<std::string>();
                 if ("m68k" == arch) {
-                    disassembler_ = Disassembler::M68k::instance(m68k_freescale_cpu32);
+                    disassembler_ = Architecture::findByName("nxp-coldfire").orThrow()->newInstructionDecoder();
                 } else if ("m68k:isa-a:nodiv" == arch) {
-                    disassembler_ = Disassembler::M68k::instance(m68k_freescale_cpu32);
+                    disassembler_ = Architecture::findByName("nxp-coldfire").orThrow()->newInstructionDecoder();
                 } else {
                     ASSERT_not_implemented("unrecognized architecture: " + arch);
                 }

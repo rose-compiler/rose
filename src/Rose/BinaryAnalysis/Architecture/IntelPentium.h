@@ -26,15 +26,13 @@ namespace Architecture {
  *
  *  The Pentium was the first Intel x86 to build in robust hardware support for multiprocessing similar to that of large IBM
  *  mainframe computers. Intel worked closely with IBM to define this ability and then Intel designed it into the P5
- *  microarchitecture. This new ability was absent in prior x86 generations and x86 copies from competitors.
- *
- * See also, https://en.wikipedia.org/wiki/Pentium_(original) */
+ *  microarchitecture. This new ability was absent in prior x86 generations and x86 copies from competitors. */
 class IntelPentium: public Base {
 public:
     using Ptr = IntelPentiumPtr;
 
 protected:
-    IntelPentium();                                        // use `instance` instead
+    IntelPentium();                                     // use `instance` instead
 public:
     ~IntelPentium();
 
@@ -44,6 +42,8 @@ public:
 
 public:
     RegisterDictionary::Ptr registerDictionary() const override;
+    bool matchesHeader(SgAsmGenericHeader*) const override;
+    Disassembler::BasePtr newInstructionDecoder() const override;
 };
 
 } // namespace

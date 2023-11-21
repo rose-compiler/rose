@@ -4,9 +4,10 @@
 #include <Rose/BinaryAnalysis/Disassembler/Mips.h>
 
 #include "integerOps.h"
-#include <Rose/Diagnostics.h>
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/Unparser/Mips.h>
+#include <Rose/Diagnostics.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -78,26 +79,20 @@ static SgAsmType *type_U16() { return SageBuilderAsm::buildTypeU16(); }
 
 /*****************************************************************************************************************************/
 
-Mips::Mips(ByteOrder::Endianness sex) {
-    init(sex);
+Mips::Mips(const Architecture::Base::ConstPtr &arch)
+    : Base(arch) {
+    ASSERT_not_null(arch);
+    init(arch->byteOrder());
 }
 
 Mips::Ptr
-Mips::instance(ByteOrder::Endianness sex) {
-    return Ptr(new Mips(sex));
+Mips::instance(const Architecture::Base::ConstPtr &arch) {
+    return Ptr(new Mips(arch));
 }
 
 Base::Ptr
 Mips::clone() const {
     return Ptr(new Mips(*this));
-}
-
-// see base class
-bool
-Mips::canDisassemble(SgAsmGenericHeader *header) const
-{
-    SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
-    return (isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_MIPS_Family;
 }
 
 Unparser::BasePtr
@@ -3620,17 +3615,6 @@ static struct Mips32_xori: Mips::Decoder {
 void
 Mips::init(ByteOrder::Endianness sex)
 {
-    switch (sex) {
-        case ByteOrder::ORDER_MSB:
-            name("mips-be");
-            break;
-        case ByteOrder::ORDER_LSB:
-            name("mips-le");
-            break;
-        default:
-            ASSERT_not_reachable("invalid MIPS disassembler byte order");
-    }
-
     registerDictionary(RegisterDictionary::instanceMips32()); // only a default
     REG_IP = registerDictionary()->findOrThrow("pc");
     REG_SP = registerDictionary()->findOrThrow("sp");

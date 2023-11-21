@@ -3,10 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Architecture/Motorola68040.h>
 
-#include <Rose/BinaryAnalysis/CallingConvention.h>
-#include <Rose/BinaryAnalysis/Disassembler/X86.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
-#include <Rose/BinaryAnalysis/Unparser/X86.h>
+#include <Rose/BinaryAnalysis/Disassembler/M68k.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -29,6 +26,18 @@ Motorola68040::registerDictionary() const {
     if (!registerDictionary_.isCached())
         registerDictionary_ = RegisterDictionary::instanceM68000AlternateNames();
     return registerDictionary_.get();
+}
+
+bool
+Motorola68040::matchesHeader(SgAsmGenericHeader *header) const {
+    ASSERT_not_null(header);
+    const SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
+    return (isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_M68K_Family;
+}
+
+Disassembler::Base::Ptr
+Motorola68040::newInstructionDecoder() const {
+    return Disassembler::M68k::instance(shared_from_this(), m68k_68040);
 }
 
 } // namespace

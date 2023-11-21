@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/CallingConvention.h>
 #include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
@@ -84,10 +85,11 @@ private:
         }
 
         if (hasDisassembler) {
-            std::string disName;
-            s >>BOOST_SERIALIZATION_NVP(disName);
-            disassembler_ = Disassembler::lookup(disName);
-            ASSERT_not_null2(disassembler_, "disassembler name=" + disName);
+            std::string archName;
+            s >>BOOST_SERIALIZATION_NVP(archName);
+            auto arch = Architecture::findByName(archName).orThrow();
+            disassembler_ = arch->newInstructionDecoder();
+            ASSERT_not_null2(disassembler_, "architecture name=" + Architecture::name(arch));
         }
     }
 

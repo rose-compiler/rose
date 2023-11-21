@@ -7,6 +7,8 @@
 #include "AssemblerX86.h"
 #include "AsmUnparser_compat.h"
 #include "SageBuilderAsm.h"
+
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/Unparser/Powerpc.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherPowerpc.h>
@@ -35,45 +37,22 @@ namespace Disassembler {
 #define T_V2_FLOAT32 (SageBuilderAsm::buildTypeVector(2, T_FLOAT32))
 #define T_V2_FLOAT64 (SageBuilderAsm::buildTypeVector(2, T_FLOAT64))
 
-Powerpc::Powerpc(PowerpcWordSize wordSize, ByteOrder::Endianness sex)
-    : wordSize_(wordSize), sex_(sex) {
+Powerpc::Powerpc(const Architecture::Base::ConstPtr &arch)
+    : Base(arch),
+      wordSize_(4 == arch->bytesPerWord() ? powerpc_32 : powerpc_64),
+      sex_(arch->byteOrder()) {
     init();
 }
 
 Powerpc::Ptr
-Powerpc::instance(PowerpcWordSize wordSize, ByteOrder::Endianness sex) {
-    return Ptr(new Powerpc(wordSize, sex));
+Powerpc::instance(const Architecture::Base::ConstPtr &arch) {
+    ASSERT_not_null(arch);
+    return Ptr(new Powerpc(arch));
 }
 
 Base::Ptr
 Powerpc::clone() const {
     return Ptr(new Powerpc(*this));
-}
-
-bool
-Powerpc::canDisassemble(SgAsmGenericHeader *header) const {
-    // Check the architecture and word size
-    SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
-    switch (wordSize_) {
-        case powerpc_32:
-            if (SgAsmExecutableFileFormat::ISA_PowerPC != isa)
-                return false;
-            break;
-        case powerpc_64:
-            if (SgAsmExecutableFileFormat::ISA_PowerPC_64bit != isa)
-                return false;
-            break;
-        default:
-            return false;
-    }
-
-    // Check the byte order
-    SgAsmGenericFormat *fmt = header->get_executableFormat();
-    ASSERT_not_null(fmt);
-    if (fmt->get_sex() != sex_)
-        return false;
-
-    return true;
 }
 
 Unparser::BasePtr
@@ -86,13 +65,11 @@ Powerpc::init() {
     RegisterDictionary::Ptr regdict;
     switch (wordSize_) {
         case powerpc_32:
-            name("ppc32");
             wordSizeBytes(4);
             regdict = RegisterDictionary::instancePowerpc32();
             callingConventions(CallingConvention::dictionaryPowerpc32());
             break;
         case powerpc_64:
-            name("ppc64");
             wordSizeBytes(8);
             regdict = RegisterDictionary::instancePowerpc64();
             callingConventions(CallingConvention::dictionaryPowerpc64());
@@ -100,16 +77,6 @@ Powerpc::init() {
     }
 
     byteOrder(ByteOrder::ORDER_MSB);
-    switch (sex_) {
-        case ByteOrder::ORDER_MSB:
-            name(name() + "-be");
-            break;
-        case ByteOrder::ORDER_LSB:
-            name(name() + "-le");
-            break;
-        default:
-            ASSERT_not_reachable("invalid byte order");
-    }
 
     REG_IP = regdict->findOrThrow("iar");
     REG_SP = regdict->findOrThrow("r1");

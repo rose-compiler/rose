@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
@@ -24,12 +25,11 @@ public:
     // Constructors
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 protected:
-    // Default constructor for serialization
-    Jvm();
+    explicit Jvm(const Architecture::BaseConstPtr&);
 
 public:
   /** Allocating constructor. */
-  static Ptr instance();
+    static Ptr instance(const Architecture::BaseConstPtr&);
 
   virtual ~Jvm();
 
@@ -39,8 +39,6 @@ public:
     // Public methods
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    virtual bool canDisassemble(SgAsmGenericHeader*) const override;
-
     virtual Unparser::BasePtr unparser() const override;
 
     virtual SgAsmInstruction* disassembleOne(const MemoryMap::Ptr&, rose_addr_t va,

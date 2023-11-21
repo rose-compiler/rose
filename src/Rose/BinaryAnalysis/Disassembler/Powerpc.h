@@ -5,6 +5,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 
+#include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
 #include "integerOps.h"
 #include "SageBuilderAsm.h"
 
@@ -30,16 +31,15 @@ private:
     ByteOrder::Endianness sex_;
 
 protected:
-    explicit Powerpc(PowerpcWordSize, ByteOrder::Endianness);
+    explicit Powerpc(const Architecture::BaseConstPtr&);
 
 public:
     /** Allocating constructor for 32- or 64-bit disassembler. */
-    static Ptr instance(PowerpcWordSize wordSize, ByteOrder::Endianness sex);
+    static Ptr instance(const Architecture::BaseConstPtr&);
 
     // Overrides documented in a super class
     virtual ~Powerpc() {}
     virtual Base::Ptr clone() const;
-    virtual bool canDisassemble(SgAsmGenericHeader*) const;
     virtual Unparser::BasePtr unparser() const;
     virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet *successors=NULL);
     virtual void assembleOne(SgAsmInstruction*, SgUnsignedCharList&) {abort();}

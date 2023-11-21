@@ -2,6 +2,8 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Disassembler/Null.h>
+
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/Unparser/Null.h>
 
@@ -9,8 +11,8 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Disassembler {
 
-Null::Null() {
-    name("null");
+Null::Null(const Architecture::Base::ConstPtr &arch)
+    : Base(arch) {
     wordSizeBytes(1);
     byteOrder(ByteOrder::ORDER_LSB);
     registerDictionary(RegisterDictionary::instanceNull());
@@ -22,18 +24,13 @@ Null::Null() {
 Null::~Null() {}
 
 Null::Ptr
-Null::instance() {
-    return Ptr(new Null);
+Null::instance(const Architecture::Base::ConstPtr &arch) {
+    return Ptr(new Null(arch));
 }
 
 Base::Ptr
 Null::clone() const {
-    return Ptr(new Null);
-}
-
-bool
-Null::canDisassemble(SgAsmGenericHeader*) const {
-    return false;
+    return Ptr(new Null(architecture()));
 }
 
 Unparser::BasePtr

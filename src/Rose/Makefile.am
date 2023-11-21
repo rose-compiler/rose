@@ -43,6 +43,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/Architecture/ArmAarch64.C					\
 	BinaryAnalysis/Architecture/Base.C						\
 	BinaryAnalysis/Architecture/BasicTypes.C					\
+	BinaryAnalysis/Architecture/Cil.C						\
 	BinaryAnalysis/Architecture/Exception.C						\
 	BinaryAnalysis/Architecture/Intel80286.C					\
 	BinaryAnalysis/Architecture/Intel8086.C						\
@@ -53,6 +54,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/Architecture/IntelPentiumii.C					\
 	BinaryAnalysis/Architecture/IntelPentiumiii.C					\
 	BinaryAnalysis/Architecture/IntelPentium4.C					\
+	BinaryAnalysis/Architecture/Jvm.C						\
 	BinaryAnalysis/Architecture/Mips32.C						\
 	BinaryAnalysis/Architecture/Motorola68040.C					\
 	BinaryAnalysis/Architecture/NxpColdfire.C					\

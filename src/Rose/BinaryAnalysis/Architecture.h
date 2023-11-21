@@ -8,6 +8,7 @@
 #include <Rose/BinaryAnalysis/Architecture/ArmAarch64.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
+#include <Rose/BinaryAnalysis/Architecture/Cil.h>
 #include <Rose/BinaryAnalysis/Architecture/Exception.h>
 #include <Rose/BinaryAnalysis/Architecture/Intel80286.h>
 #include <Rose/BinaryAnalysis/Architecture/Intel8086.h>
@@ -18,6 +19,7 @@
 #include <Rose/BinaryAnalysis/Architecture/IntelPentiumii.h>
 #include <Rose/BinaryAnalysis/Architecture/IntelPentiumiii.h>
 #include <Rose/BinaryAnalysis/Architecture/IntelPentium4.h>
+#include <Rose/BinaryAnalysis/Architecture/Jvm.h>
 #include <Rose/BinaryAnalysis/Architecture/Mips32.h>
 #include <Rose/BinaryAnalysis/Architecture/Motorola68040.h>
 #include <Rose/BinaryAnalysis/Architecture/NxpColdfire.h>

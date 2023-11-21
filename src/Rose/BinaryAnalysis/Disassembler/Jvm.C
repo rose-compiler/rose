@@ -2,6 +2,8 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Disassembler/Jvm.h>
+
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/Unparser/Jvm.h>
 
@@ -147,29 +149,23 @@ Jvm::appendLookupswitch(const MemoryMap::Ptr &map, rose_addr_t start,
   return nRead;
 }
 
-Jvm::Jvm() {
-    name("jvm");
+Jvm::Jvm(const Architecture::Base::ConstPtr &arch)
+    : Base(arch) {
     wordSizeBytes(1);
     byteOrder(ByteOrder::ORDER_LSB);
     registerDictionary(RegisterDictionary::instanceJvm());
 }
 
 Jvm::Ptr
-Jvm::instance() {
-    return Ptr(new Jvm);
+Jvm::instance(const Architecture::Base::ConstPtr &arch) {
+    return Ptr(new Jvm(arch));
 }
 
 Jvm::~Jvm() {}
 
 Disassembler::Base::Ptr
 Jvm::clone() const {
-    return Ptr(new Jvm);
-}
-
-bool
-Jvm::canDisassemble(SgAsmGenericHeader* header) const {
-    auto isa = header->get_isa();
-    return (isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_JVM;
+    return Ptr(new Jvm(architecture()));
 }
 
 Unparser::BasePtr

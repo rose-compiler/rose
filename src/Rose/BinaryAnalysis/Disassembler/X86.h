@@ -5,6 +5,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 
+#include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionEnumsX86.h>
 #include "Cxx_GrammarSerialization.h"
 
@@ -97,14 +98,11 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 protected:
-    // Default constructor for serialization
-    X86();
-
-    explicit X86(size_t wordsize);
+    explicit X86(const Architecture::BaseConstPtr&);
 
 public:
     /** Allocating constructor. */
-    static Ptr instance(size_t wordSize);
+    static Ptr instance(const Architecture::BaseConstPtr&);
 
     virtual ~X86() {}
 
@@ -114,8 +112,6 @@ public:
     // Public methods
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    virtual bool canDisassemble(SgAsmGenericHeader*) const override;
-
     virtual Unparser::BasePtr unparser() const override;
 
     virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va,

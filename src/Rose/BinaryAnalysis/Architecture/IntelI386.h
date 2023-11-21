@@ -18,9 +18,8 @@ namespace Architecture {
  *  ubiquitous in early PCs. As the original implementation of the 32-bit extension of the 80286 architecture, the i386 instruction
  *  set, programming model, and binary encodings are still the common denominator for all 32-bit x86 processors, which is termed the
  *  i386 architecture, x86, or IA-32, depending on context. Over the years, successively newer implementations of the same
- *  architecture have become several hundreds of times faster than the original 80386 (and thousands of times faster than the 8086).
- *
- * See also, https://en.wikipedia.org/wiki/I386 */
+ *  architecture have become several hundreds of times faster than the original 80386 (and thousands of times faster than the
+ *  8086). */
 class IntelI386: public Base {
 public:
     using Ptr = IntelI386Ptr;
@@ -36,6 +35,8 @@ public:
 
 public:
     RegisterDictionary::Ptr registerDictionary() const override;
+    bool matchesHeader(SgAsmGenericHeader*) const override;
+    Disassembler::BasePtr newInstructionDecoder() const override;
 };
 
 } // namespace

@@ -5,6 +5,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 
+#include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionEnumsM68k.h>
 #include "BitPattern.h"
 
@@ -95,9 +96,9 @@ private:
 
 protected:
     // undocumented constructor for serialization. The init() will be called by the serialization.
-    M68k();
+    explicit M68k(const Architecture::BaseConstPtr&);
 
-    explicit M68k(M68kFamily family);
+    M68k(const Architecture::BaseConstPtr&, M68kFamily family);
 
 public:
     /** Allocating constructor for a specific family.
@@ -108,10 +109,9 @@ public:
      * @code
      *  Disassembler::Ptr disassembler = M68k::instance(m68k_freescale_isab);
      * @endcode */
-    static Ptr instance(M68kFamily);
+    static Ptr instance(const Architecture::BaseConstPtr&, M68kFamily);
 
     virtual Base::Ptr clone() const override;
-    virtual bool canDisassemble(SgAsmGenericHeader*) const override;
     virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr&, rose_addr_t start_va,
                                              AddressSet *successors = nullptr) override;
     virtual SgAsmInstruction *makeUnknownInstruction(const Exception&) override;

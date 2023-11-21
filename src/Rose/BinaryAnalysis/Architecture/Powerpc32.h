@@ -24,9 +24,7 @@ namespace Architecture {
  *
  *  PowerPC is largely based on the earlier IBM POWER architecture, and retains a high level of compatibility with it; the
  *  architectures have remained close enough that the same programs and operating systems will run on both if some care is taken in
- *  preparation; newer chips in the Power series use the Power ISA.
- *
- *  See also, https://en.wikipedia.org/wiki/PowerPC */
+ *  preparation; newer chips in the Power series use the Power ISA. */
 class Powerpc32: public Base {
 public:
     using Ptr = Powerpc32Ptr;
@@ -42,6 +40,8 @@ public:
 
 public:
     RegisterDictionary::Ptr registerDictionary() const override;
+    bool matchesHeader(SgAsmGenericHeader*) const override;
+    Disassembler::BasePtr newInstructionDecoder() const override;
 };
 
 } // namespace

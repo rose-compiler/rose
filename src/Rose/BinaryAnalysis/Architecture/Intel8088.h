@@ -14,9 +14,7 @@ namespace Architecture {
  *  1979, the 8088 has an eight-bit external data bus instead of the 16-bit bus of the 8086. The 16-bit registers and the one
  *  megabyte address range are unchanged, however. In fact, according to the Intel documentation, the 8086 and 8088 have the same
  *  execution unit (EU)—only the bus interface unit (BIU) is different. The 8088 was used in the original IBM PC and in IBM PC
- *  compatible clones.
- *
- * See also, https://en.wikipedia.org/wiki/Intel_8088 */
+ *  compatible clones. */
 class Intel8088: public Base {
 public:
     using Ptr = Intel8088Ptr;
@@ -32,6 +30,8 @@ public:
 
 public:
     RegisterDictionary::Ptr registerDictionary() const override;
+    bool matchesHeader(SgAsmGenericHeader*) const override;
+    Disassembler::BasePtr newInstructionDecoder() const override;
 };
 
 } // namespace

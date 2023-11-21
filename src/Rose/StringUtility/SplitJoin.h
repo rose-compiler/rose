@@ -5,6 +5,7 @@
 #include <rosedll.h>
 
 #include <list>
+#include <set>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -92,10 +93,16 @@ ROSE_UTIL_API std::string join(char separator, const char *strings[], size_t nst
  *  E.g., <code>("foo", "bar", "baz") => "foo, bar, and baz"</code>
  *
  *  No transformations are performed on the input phrases. Space characters are inserted after each @p separator and @p
- *  finalIntro. A space is also inserted before the @p finalIntro when the input is two phrases. */
+ *  finalIntro. A space is also inserted before the @p finalIntro when the input is two phrases.
+ *
+ * @{ */
 ROSE_UTIL_API std::string joinEnglish(const std::vector<std::string> &phrases,
                                       const std::string &separator = ",",
                                       const std::string &finalIntro = "and");
+ROSE_UTIL_API std::string joinEnglish(const std::set<std::string> &phrases,
+                                      const std::string &separator = ",",
+                                      const std::string &finalIntro = "and");
+/** @} */
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Container versus scalar functions

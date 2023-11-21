@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 
+#include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
 #include <Rose/BinaryAnalysis/BinaryLoader.h>
 #include <Rose/BinaryAnalysis/ByteCode/Cil.h>
 #include <Rose/BinaryAnalysis/Debugger/Linux.h>
@@ -326,7 +327,7 @@ EngineBinary::disassemblerSwitches(DisassemblerSettings &settings) {
               .argument("architecture", anyParser(settings.isaName))
               .doc("Name of instruction set architecture.  If no name is specified then the architecture is obtained from "
                    "the binary container (ELF, PE). The following ISA names are supported: " +
-                   StringUtility::joinEnglish(Disassembler::isaNames()) + "."));
+                   StringUtility::joinEnglish(Architecture::registeredNames()) + "."));
 
     return sg;
 }

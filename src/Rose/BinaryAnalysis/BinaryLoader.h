@@ -460,8 +460,8 @@ public:
      *
      *  Find all headers in @p candidateHeaders that are similar to @p matchHeader.
      *
-     *  This is used to determine whether two headers can be placed in the same SgAsmInterpretation. We make this determination
-     *  by looking at whether the Disassembler::Base for each header is the same.  In other words, an x86_64 header will not be
+     *  This is used to determine whether two headers can be placed in the same SgAsmInterpretation. In order to be similar the
+     *  headers must be of the same class and belong to the same architecture.  In other words, an x86_64 header will not be
      *  similar to an i386 header even though they are both ELF headers and both x86 architectures. */
     static SgAsmGenericHeaderPtrList findSimilarHeaders(SgAsmGenericHeader *matchHeader,
                                                         SgAsmGenericHeaderPtrList &candidateHeaders);

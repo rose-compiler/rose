@@ -5,6 +5,7 @@
 
 #include <Assembler.h>
 #include <AssemblerX86.h>
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/BinaryLoader.h>
 #include <Rose/BinaryAnalysis/Disassembler/Exception.h>
 #include <Rose/Diagnostics.h>
@@ -23,6 +24,23 @@ namespace Disassembler {
 
 using namespace Diagnostics;
 using namespace StringUtility;
+
+Base::~Base() {}
+
+Base::Base(const Architecture::Base::ConstPtr &architecture)
+    : architecture_(architecture) {
+    ASSERT_not_null(architecture);
+}
+
+Architecture::Base::ConstPtr
+Base::architecture() const {
+    return architecture_;
+}
+
+const std::string&
+Base::name() const {
+    return architecture_->name();
+}
 
 size_t
 Base::instructionAlignment() const {

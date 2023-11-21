@@ -4,6 +4,7 @@ add_library(roseBinaryAnalysisArchitecture OBJECT
   ArmAarch64.C
   Base.C
   BasicTypes.C
+  Cil.C
   Exception.C
   Intel80286.C
   Intel8086.C
@@ -14,6 +15,7 @@ add_library(roseBinaryAnalysisArchitecture OBJECT
   IntelPentiumii.C
   IntelPentiumiii.C
   IntelPentium4.C
+  Jvm.C
   Mips32.C
   Motorola68040.C
   NxpColdfire.C
@@ -29,6 +31,7 @@ install(FILES
   ArmAarch64.h
   Base.h
   BasicTypes.h
+  Cil.h
   Exception.h
   Intel80286.h
   Intel8086.h
@@ -39,6 +42,7 @@ install(FILES
   IntelPentiumii.h
   IntelPentiumiii.h
   IntelPentium4.h
+  Jvm.h
   Mips32.h
   Motorola68040.h
   NxpColdfire.h

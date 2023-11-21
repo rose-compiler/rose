@@ -3,6 +3,7 @@
 
 #include <sage3basic.h>
 #include <Rose/BitOps.h>
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Disassembler/Aarch64.h>
 #include <Rose/BinaryAnalysis/Unparser/Aarch64.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch64.h>
@@ -16,8 +17,8 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Disassembler {
 
-Aarch64::Aarch64(Modes modes)
-    : modes_(modes) {
+Aarch64::Aarch64(const Architecture::Base::ConstPtr &arch, Modes modes)
+    : Base(arch), modes_(modes) {
     // ROSE disassembler properties, and choose a somewhat descriptive name (at least something better than "ARM").
     std::string name = "a64";
     wordSizeBytes(8);
@@ -28,9 +29,6 @@ Aarch64::Aarch64(Modes modes)
     instructionAlignment_ = 4;
 
     ASSERT_forbid(modes_.isAnySet(~Mode::MODE_MCLASS));
-    if (modes_.isSet(Mode::MODE_MCLASS))
-        name += "_microprocessor"; // apparently the "microprocessor profile for Cortex processors"
-    this->name(name);
 
     // Architecture independent ROSE disassembler properties
     REG_IP = registerDictionary()->findOrThrow("pc");
@@ -39,20 +37,13 @@ Aarch64::Aarch64(Modes modes)
 }
 
 Aarch64::Ptr
-Aarch64::instance(Modes modes) {
-    return Ptr(new Aarch64(modes));
+Aarch64::instance(const Architecture::Base::ConstPtr &arch, Modes modes) {
+    return Ptr(new Aarch64(arch, modes));
 }
 
 Base::Ptr
 Aarch64::clone() const {
     return Ptr(new Aarch64(*this));
-}
-
-bool
-Aarch64::canDisassemble(SgAsmGenericHeader *header) const {
-    SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
-    return ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_ARM_Family &&
-            header->get_executableFormat()->get_wordSize() == 8);
 }
 
 void

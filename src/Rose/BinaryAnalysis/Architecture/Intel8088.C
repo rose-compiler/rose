@@ -3,6 +3,8 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Architecture/Intel8088.h>
 
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Architecture {
@@ -24,6 +26,17 @@ Intel8088::registerDictionary() const {
     if (!registerDictionary_.isCached())
         registerDictionary_ = RegisterDictionary::instanceI8088();
     return registerDictionary_.get();
+}
+
+bool
+Intel8088::matchesHeader(SgAsmGenericHeader*) const {
+    return false;
+}
+
+Disassembler::Base::Ptr
+Intel8088::newInstructionDecoder() const {
+    // FIXME[Robb Matzke 2023-11-21]: No Disassembler::X86 API to create an Intel 8088 decoder.
+    return {};
 }
 
 } // namespace

@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Debugger/Linux.h>
 
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Debugger/Exception.h>
 #include <Rose/BinaryAnalysis/Disassembler/X86.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
@@ -306,7 +307,7 @@ Linux::Linux() {
     // natural size of the register (e.g., The 16-bit segment registers are listed as 32 or 64 bits).
 #if defined(__x86_64) && __WORDSIZE==64
     declareSystemCalls(32);
-    disassembler_ = Disassembler::X86::instance(8 /*bytes*/);
+    disassembler_ = Architecture::findByName("amd64").orThrow()->newInstructionDecoder();
 
     //------------------------------------                                                 struct  struct
     // Entries for 64-bit user_regs_struct                                                 offset  size

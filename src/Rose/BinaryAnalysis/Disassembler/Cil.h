@@ -2,8 +2,10 @@
 #define ROSE_BinaryAnalysis_Disassembler_Cil_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
+
+#include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
+
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 
@@ -24,11 +26,11 @@ public:
     // Constructors
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 protected:
-    Cil();
+    explicit Cil(const Architecture::BaseConstPtr&);
 
 public:
     /** Allocating constructor. */
-    static Ptr instance();
+    static Ptr instance(const Architecture::BaseConstPtr&);
 
     virtual ~Cil();
 
@@ -38,8 +40,6 @@ public:
     // Public methods
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    virtual bool canDisassemble(SgAsmGenericHeader*) const override;
-
     virtual Unparser::BasePtr unparser() const override;
 
     virtual SgAsmInstruction* disassembleOne(const MemoryMap::Ptr&, rose_addr_t va,

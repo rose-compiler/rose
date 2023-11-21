@@ -12,9 +12,7 @@ namespace Architecture {
  *
  *  The NXP ColdFire is a microprocessor that derives from the Motorola 68000 family architecture, manufactured for embedded systems
  *  development by NXP Semiconductors. It was formerly manufactured by Freescale Semiconductor (formerly the semiconductor division
- *  of Motorola) which merged with NXP in 2015.
- *
- *  See also, https://en.wikipedia.org/wiki/NXP_Coldfire */
+ *  of Motorola) which merged with NXP in 2015. */
 class NxpColdfire: public Base {
 public:
     using Ptr = NxpColdfirePtr;
@@ -30,6 +28,8 @@ public:
 
 public:
     RegisterDictionary::Ptr registerDictionary() const override;
+    bool matchesHeader(SgAsmGenericHeader*) const override;
+    Disassembler::BasePtr newInstructionDecoder() const override;
 };
 
 } // namespace

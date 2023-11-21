@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Partitioner2/EngineJvm.h>
 
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/ByteCode/Jvm.h>
 #include <Rose/BinaryAnalysis/Disassembler/Jvm.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
@@ -242,7 +243,7 @@ EngineJvm::loadClassFile(boost::filesystem::path path, SgAsmGenericFileList* fil
 
     // Decode instructions for usage downstream
     std::set<std::string> discoveredClasses{};
-    auto disassembler = Disassembler::lookup("jvm");
+    auto disassembler = Architecture::findByName("jvm").orThrow()->newInstructionDecoder();
     for (auto sgMethod: jfh->get_method_table()->get_methods()) {
       ByteCode::JvmMethod method{jfh, sgMethod, jfh->get_baseVa()};
       method.decode(disassembler);

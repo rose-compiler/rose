@@ -57,16 +57,15 @@ private:
 
 protected:
     // Constructor for specific architecture.
-    explicit Aarch64(Modes);
+    Aarch64(const Architecture::BaseConstPtr&, Modes);
 
 public:
     /** Allocating constructor for Aarch64 decoder. */
-    static Ptr instance(Modes modes = Modes());
+    static Ptr instance(const Architecture::BaseConstPtr&, Modes modes = Modes());
 
     ~Aarch64();
 
     // overrides
-    bool canDisassemble(SgAsmGenericHeader*) const override;
     Base::Ptr clone() const override;
     Unparser::BasePtr unparser() const override;
     SgAsmInstruction* disassembleOne(const MemoryMap::Ptr&, rose_addr_t startVa, AddressSet *successors=nullptr) override;

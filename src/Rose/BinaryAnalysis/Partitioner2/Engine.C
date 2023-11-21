@@ -7,6 +7,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 #include <Rose/BinaryAnalysis/Partitioner2/EngineJvm.h>
 
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/BinaryLoader.h>
 #include <Rose/BinaryAnalysis/Disassembler.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
@@ -783,8 +784,10 @@ Engine::parseCommandLine(const std::vector<std::string> &args, const std::string
 
 void
 Engine::checkSettings() {
-    if (!disassembler_ && !settings().disassembler.isaName.empty())
-        disassembler_ = Disassembler::lookup(settings().disassembler.isaName);
+    if (!disassembler_ && !settings().disassembler.isaName.empty()) {
+        auto arch = Architecture::findByName(settings().disassembler.isaName).orThrow();
+        disassembler_ = arch->newInstructionDecoder();
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -857,10 +860,10 @@ Engine::obtainDisassembler() {
 Disassembler::Base::Ptr
 Engine::obtainDisassembler(const Disassembler::Base::Ptr &hint) {
     if (!disassembler_ && !settings().disassembler.isaName.empty())
-        disassembler_ = Disassembler::lookup(settings().disassembler.isaName);
+        disassembler_ = Architecture::findByName(settings().disassembler.isaName).orThrow()->newInstructionDecoder();
 
     if (!disassembler_ && interpretation())
-        disassembler_ = Disassembler::lookup(interpretation());
+        disassembler_ = Architecture::findByInterpretation(interpretation()).orThrow()->newInstructionDecoder();
 
     if (!disassembler_ && hint)
         disassembler_ = hint;

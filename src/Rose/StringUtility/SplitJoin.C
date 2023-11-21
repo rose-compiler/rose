@@ -77,19 +77,39 @@ join(char separator, const char *strings[], size_t nstrings) {
     return join_range(std::string(1, separator), strings, strings+nstrings);
 }
 
+template<class ContainerOfStrings>
+static std::string
+joinEnglishHelper(ContainerOfStrings &phrases, const std::string &separator, const std::string &finalIntro) {
+    if (phrases.empty()) {
+        return "";
+    } else if (phrases.size() == 1) {
+        return *phrases.begin();
+    } else if (phrases.size() == 2) {
+        auto first = phrases.begin();
+        auto second = first; ++second;
+        return *first + " " + finalIntro + " " + *second;
+    } else {
+        std::string s;
+        size_t i = 0;
+        for (const std::string &phrase: phrases) {
+            if (i < phrases.size() - 1) {
+                s += phrase + separator + " ";
+            } else {
+                s += finalIntro + " " + phrase;
+            }
+        }
+        return s;
+    }
+}
+
 std::string
 joinEnglish(const std::vector<std::string> &phrases, const std::string &separator, const std::string &finalIntro) {
-    if (phrases.empty())
-        return "";
-    if (phrases.size() == 1)
-        return phrases[0];
-    if (phrases.size() == 2)
-        return phrases[0] + " " + finalIntro + " " + phrases[1];
+    return joinEnglishHelper(phrases, separator, finalIntro);
+}
 
-    std::string s;
-    for (size_t i=0; i<phrases.size()-1; ++i)
-        s += phrases[i] + separator + " ";
-    return s + finalIntro + " " + phrases.back();
+std::string
+joinEnglish(const std::set<std::string> &phrases, const std::string &separator, const std::string &finalIntro) {
+    return joinEnglishHelper(phrases, separator, finalIntro);
 }
 
 std::string

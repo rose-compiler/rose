@@ -42,6 +42,16 @@ Base::byteOrder() const {
     return byteOrder_;
 }
 
+bool
+Base::matchesName(const std::string &name) const {
+    return name_ == name;
+}
+
+bool
+Base::matchesHeader(SgAsmGenericHeader*) const {
+    return false;
+}
+
 } // namespace
 } // namespace
 } // namespace

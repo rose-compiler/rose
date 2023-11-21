@@ -3,7 +3,10 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/Architecture/Exception.h> // needed for Result<T,NotFound>
+
 #include <Sawyer/Message.h>
+#include <Sawyer/Result.h>
 #include <memory>
 #include <set>
 #include <string>
@@ -16,103 +19,69 @@ namespace BinaryAnalysis {
 namespace Architecture {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Forward class declarations and their reference-counting pointers.
+// Forward class declarations for built-in architectures and their reference-counting pointers.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class Amd64;
-
-/** Reference counted pointer for @ref Amd64. */
-using Amd64Ptr = std::shared_ptr<Amd64>;
+using Amd64Ptr = std::shared_ptr<Amd64>;                /** Reference counted pointer for @ref Amd64. */
 
 class ArmAarch32;
-
-/** Reference counted pointer for @ref ArmAarch32. */
-using ArmAarch32Ptr = std::shared_ptr<ArmAarch32>;
+using ArmAarch32Ptr = std::shared_ptr<ArmAarch32>;      /** Reference counted pointer for @ref ArmAarch32. */
 
 class ArmAarch64;
-
-/** Reference counted pointer for @ref ArmAarch64. */
-using ArmAarch64Ptr = std::shared_ptr<ArmAarch64>;
+using ArmAarch64Ptr = std::shared_ptr<ArmAarch64>;      /** Reference counted pointer for @ref ArmAarch64. */
 
 class Base;
+using BasePtr = std::shared_ptr<Base>;                  /** Reference counted pointer for @ref Base. */
+using BaseConstPtr = std::shared_ptr<const Base>;       /** Reference counted pointer for @ref Base. */
 
-/** Reference counted pointer for @ref Base. */
-using BasePtr = std::shared_ptr<Base>;
-
-class Exception;
-
-/** Reference counted pointer for @ref Exception. */
-using ExceptionPtr = std::shared_ptr<Exception>;
+class Cil;
+using CilPtr = std::shared_ptr<Cil>;                    /** Reference counted pointer for @ref Cil. */
 
 class Intel80286;
-
-/** Reference counted pointer for @ref Intel80286. */
-using Intel80286Ptr = std::shared_ptr<Intel80286>;
+using Intel80286Ptr = std::shared_ptr<Intel80286>;      /** Reference counted pointer for @ref Intel80286. */
 
 class Intel8086;
-
-/** Reference counted pointer for @ref Intel8086. */
-using Intel8086Ptr = std::shared_ptr<Intel8086>;
+using Intel8086Ptr = std::shared_ptr<Intel8086>;        /** Reference counted pointer for @ref Intel8086. */
 
 class Intel8088;
-
-/** Reference counted pointer for @ref Intel8088. */
-using Intel8088Ptr = std::shared_ptr<Intel8088>;
+using Intel8088Ptr = std::shared_ptr<Intel8088>;        /** Reference counted pointer for @ref Intel8088. */
 
 class IntelI386;
-
-/** Reference counted pointer for @ref IntelI386. */
-using IntelI386Ptr = std::shared_ptr<IntelI386>;
+using IntelI386Ptr = std::shared_ptr<IntelI386>;        /** Reference counted pointer for @ref IntelI386. */
 
 class IntelI486;
-
-/** Reference counted pointer for @ref IntelI486. */
-using IntelI486Ptr = std::shared_ptr<IntelI486>;
+using IntelI486Ptr = std::shared_ptr<IntelI486>;        /** Reference counted pointer for @ref IntelI486. */
 
 class IntelPentium;
-
-/** Reference counted pointer for @ref IntelPentium. */
-using IntelPentiumPtr = std::shared_ptr<IntelPentium>;
+using IntelPentiumPtr = std::shared_ptr<IntelPentium>;  /** Reference counted pointer for @ref IntelPentium. */
 
 class IntelPentiumii;
-
-/** Reference counted pointer for @ref IntelPentiumii. */
-using IntelPentiumiiPtr = std::shared_ptr<IntelPentiumii>;
+using IntelPentiumiiPtr = std::shared_ptr<IntelPentiumii>; /** Reference counted pointer for @ref IntelPentiumii. */
 
 class IntelPentiumiii;
-
-/** Reference counted pointer for @ref IntelPentiumiii. */
-using IntelPentiumiiiPtr = std::shared_ptr<IntelPentiumiii>;
+using IntelPentiumiiiPtr = std::shared_ptr<IntelPentiumiii>; /** Reference counted pointer for @ref IntelPentiumiii. */
 
 class IntelPentium4;
+using IntelPentium4Ptr = std::shared_ptr<IntelPentium4>; /** Reference counted pointer for @ref IntelPentium4. */
 
-/** Reference counted pointer for @ref IntelPentium4. */
-using IntelPentium4Ptr = std::shared_ptr<IntelPentium4>;
+class Jvm;
+using JvmPtr = std::shared_ptr<Jvm>;                    /** Reference counted pointer for @ref Jvm. */
 
 class Mips32;
-
-/** Reference counted pointer for @ref Mips32. */
-using Mips32Ptr = std::shared_ptr<Mips32>;
+using Mips32Ptr = std::shared_ptr<Mips32>;              /** Reference counted pointer for @ref Mips32. */
 
 class Motorola68040;
-
-/** Reference counted pointer for @ref Motorola68040. */
-using Motorola68040Ptr = std::shared_ptr<Motorola68040>;
+using Motorola68040Ptr = std::shared_ptr<Motorola68040>; /** Reference counted pointer for @ref Motorola68040. */
 
 class NxpColdfire;
-
-/** Reference counted pointer for @ref NxpColdfire. */
-using NxpColdfirePtr = std::shared_ptr<NxpColdfire>;
+using NxpColdfirePtr = std::shared_ptr<NxpColdfire>;    /** Reference counted pointer for @ref NxpColdfire. */
 
 class Powerpc32;
-
-/** Reference counted pointer for @ref Powerpc32. */
-using Powerpc32Ptr = std::shared_ptr<Powerpc32>;
+using Powerpc32Ptr = std::shared_ptr<Powerpc32>;        /** Reference counted pointer for @ref Powerpc32. */
 
 class Powerpc64;
-
-/** Reference counted pointer for @ref Powerpc64. */
-using Powerpc64Ptr = std::shared_ptr<Powerpc64>;
+using Powerpc64Ptr = std::shared_ptr<Powerpc64>;        /** Reference counted pointer for @ref Powerpc64. */
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Diagnostics
@@ -150,7 +119,7 @@ bool deregisterDefinition(const BasePtr&);
 
 /** Registered architectures.
  *
- *  Returns the registered architectures in the order they were registered.
+ *  Returns the registered architectures in the reverse order they were registered.
  *
  *  Thread safety: This function is thread safe. */
 std::vector<BasePtr> registeredDefinitions();
@@ -163,13 +132,43 @@ std::vector<BasePtr> registeredDefinitions();
  *  Thread safety: This function is thread safe. */
 std::set<std::string> registeredNames();
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Searching for suitable architectures
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /** Look up a new architecture by name.
  *
- *  Returns the latest registered architecture having the specified name. If no matching architecture is found then a null pointer
- *  is returned.
+ *  Looks through the list of registered architectures (from most recently registered to earliest registered) and returns
+ *  the first one whose @c matchesName predicate returns true. If none match, then a @ref Architecture::NotFound error is returned.
  *
  *  Thread safety: This function is thread safe. */
-BasePtr findByName(const std::string&);
+Sawyer::Result<BasePtr, NotFound> findByName(const std::string&);
+
+/** Finds a suitable architecture for a file header.
+ *
+ *  Looks through the list of registered architectures (from most recently registered to earliest registered) and returns the first
+ *  one whose matchesHeader() predicate returns true. If none match, then a @ref Architecture::NotFound error is returned.
+ *
+ *  Thread safety: This function is thread safe. However, no other thread can be modifying the AST at the same time. */
+Sawyer::Result<BasePtr, NotFound> findByHeader(SgAsmGenericHeader*);
+
+/** Finds a suitable architecture for a binary interpretation.
+ *
+ *  Looks through the list of registered architectures (from most recently registered to earliest registered) and returns the first
+ *  one whose matchesHeader() predicate returns true for all the headers in the interpration. Returns the architecture that matches,
+ *  or a @ref Architecture::NotFound error.
+ *
+ *  Thread safety: This function is thread safe. However, no other thread can be modifying the AST at the same time. */
+Sawyer::Result<BasePtr, NotFound> findByInterpretation(SgAsmInterpretation*);
+
+/** Finds the architecture that matches the most file headers.
+ *
+ *  Given an interpretation containing zero of more file headers, find the architecture that matches the most headers and return
+ *  it along with now many headers it matched. If there is a tie, then the latest such registered architecture is returned. If no
+ *  architecture matches any of the headers, then a null pointer and zero is returned.
+ *
+ *  Thread safety: This function is thread safe. However, no other thread can be modifying the AST at the same time. */
+std::pair<BasePtr, size_t> findBestByInterpretation(SgAsmInterpretation*);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Helper functions

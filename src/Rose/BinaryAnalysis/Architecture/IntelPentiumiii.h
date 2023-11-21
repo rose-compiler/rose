@@ -17,15 +17,13 @@ namespace Architecture {
  *  controversial serial number embedded in the chip during manufacturing. The Pentium III is also a single-core processor.
  *
  *  Even after the release of the Pentium 4 in late 2000, the Pentium III continued to be produced with new models introduced up
- *  until early 2003. They were then discontinued in April 2004 for desktop units and May 2007 for mobile units.
- *
- * See also, https://en.wikipedia.org/wiki/Pentium_III */
+ *  until early 2003. They were then discontinued in April 2004 for desktop units and May 2007 for mobile units. */
 class IntelPentiumiii: public Base {
 public:
     using Ptr = IntelPentiumiiiPtr;
 
 protected:
-    IntelPentiumiii();                                        // use `instance` instead
+    IntelPentiumiii();                                  // use `instance` instead
 public:
     ~IntelPentiumiii();
 
@@ -35,6 +33,8 @@ public:
 
 public:
     RegisterDictionary::Ptr registerDictionary() const override;
+    bool matchesHeader(SgAsmGenericHeader*) const override;
+    Disassembler::BasePtr newInstructionDecoder() const override;
 };
 
 } // namespace

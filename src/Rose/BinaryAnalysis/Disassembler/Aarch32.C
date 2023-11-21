@@ -3,6 +3,7 @@
 
 #include <sage3basic.h>
 #include <Rose/BitOps.h>
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Disassembler/Aarch32.h>
 #include <Rose/BinaryAnalysis/Unparser/Aarch32.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch32.h>
@@ -16,8 +17,8 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Disassembler {
 
-Aarch32::Aarch32(Modes modes)
-    : modes_(modes) {
+Aarch32::Aarch32(const Architecture::Base::ConstPtr &arch, Modes modes)
+    : Base(arch), modes_(modes) {
     // ROSE disassembler properties, and choose a somewhat descriptive name (at least something better than "ARM").
     std::string name;
     if (modes_.isSet(Mode::THUMB)) {
@@ -33,10 +34,6 @@ Aarch32::Aarch32(Modes modes)
     callingConventions(CallingConvention::dictionaryAarch32());
     p_proto_dispatcher = InstructionSemantics::DispatcherAarch32::instance();
 
-    if (modes_.isSet(Mode::MCLASS))
-        name += "_microprocessor"; // apparently the "microprocessor profile for Cortex processors"
-    this->name(name);
-
     // Architecture independent ROSE disassembler properties
     REG_IP = registerDictionary()->findOrThrow("pc");
     REG_SP = registerDictionary()->findOrThrow("sp");
@@ -45,36 +42,23 @@ Aarch32::Aarch32(Modes modes)
 }
 
 Aarch32::Ptr
-Aarch32::instanceA32() {
-    return Ptr(new Aarch32(Modes(Mode::ARM32)));
+Aarch32::instanceA32(const Architecture::Base::ConstPtr &arch) {
+    return Ptr(new Aarch32(arch, Modes(Mode::ARM32)));
 }
 
 Aarch32::Ptr
-Aarch32::instanceT32() {
-    return Ptr(new Aarch32(Modes(Mode::THUMB)));
+Aarch32::instanceT32(const Architecture::Base::ConstPtr &arch) {
+    return Ptr(new Aarch32(arch, Modes(Mode::THUMB)));
 }
 
 Aarch32::Ptr
-Aarch32::instance() {
-    return Ptr(new Aarch32);
+Aarch32::instance(const Architecture::Base::ConstPtr &arch) {
+    return Ptr(new Aarch32(arch));
 }
 
 Base::Ptr
 Aarch32::clone() const {
     return Ptr(new Aarch32(*this));
-}
-
-bool
-Aarch32::canDisassemble(SgAsmGenericHeader *header) const {
-    SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
-    if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_ARM_Family) {
-        if (header->get_executableFormat()->get_wordSize() == 4) {
-            return !modes_.isSet(Mode::THUMB);
-        } else if (header->get_executableFormat()->get_wordSize() == 2) {
-            return modes_.isSet(Mode::THUMB);
-        }
-    }
-    return false;
 }
 
 void

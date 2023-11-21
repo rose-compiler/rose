@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/BinaryLoader.h>
 #include <Rose/BinaryAnalysis/BinaryLoaderElf.h>
 #include <Rose/BinaryAnalysis/BinaryLoaderElfObj.h>
@@ -235,16 +236,17 @@ BinaryLoader::link(SgAsmInterpretation* interp) {
 /* class method */
 SgAsmGenericHeaderPtrList
 BinaryLoader::findSimilarHeaders(SgAsmGenericHeader *match, SgAsmGenericHeaderPtrList &candidates) {
+    ASSERT_not_null(match);
+
     SgAsmGenericHeaderPtrList retval;
-    Disassembler::Base::Ptr d1 = Disassembler::lookup(match);
+    auto arch1 = Architecture::findByHeader(match).orThrow();
 
     for (auto candidate: candidates) {
-        Disassembler::Base::Ptr d2 = d1 ? Disassembler::lookup(candidate) : Disassembler::Base::Ptr();
-        if (!d1 && !d2) {
-            if (match->variantT() == candidate->variantT())
+        ASSERT_not_null(candidate);
+        if (match->class_name() == candidate->class_name()) {
+            auto arch2 = Architecture::findByHeader(candidate).orThrow();
+            if (arch1 == arch2)
                 retval.push_back(candidate);
-        } else if (d1->name() == d2->name()) {
-            retval.push_back(candidate);
         }
     }
     return retval;
