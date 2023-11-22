@@ -1970,6 +1970,17 @@ mkExceptionRef(SgInitializedName& exception, SgScopeStatement& scope)
   return SG_DEREF( sb::buildVarRefExp(&exception, &scope) );
 }
 
+SgDotExp&
+mkSelectedComponent(SgExpression& prefix, SgExpression& selector)
+{
+  // ASIS_FUNCTION_REF_ISSUE_1
+  //   corrects issue described in AdaExpression.C
+  SgExpression& corrected_prefix
+                   = isSgFunctionRefExp(&prefix) ? mkFunctionCallExp(prefix, mkExprListExp())
+                                                 : prefix;
+
+  return SG_DEREF( sb::buildDotExp(&corrected_prefix, &selector) );
+}
 
 SgAdaTaskRefExp&
 mkAdaTaskRefExp(SgAdaTaskSpecDecl& task)
@@ -2001,7 +2012,6 @@ mkCastExp(SgExpression& expr, SgType& ty)
 {
   return SG_DEREF(sb::buildCastExp_nfi(&expr, &ty, SgCastExp::e_static_cast));
 }
-
 
 SgExpression&
 mkQualifiedExp(SgExpression& expr, SgType& ty)

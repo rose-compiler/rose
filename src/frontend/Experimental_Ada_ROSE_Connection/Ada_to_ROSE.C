@@ -796,7 +796,8 @@ namespace
 
     void operator()(Element_Struct& elem)
     {
-      ADA_ASSERT(elem.Element_Kind == A_Clause);
+      if (elem.Element_Kind != A_Clause)
+        return;
 
       Clause_Struct& clause = elem.The_Union.Clause;
 

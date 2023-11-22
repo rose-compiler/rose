@@ -104,8 +104,8 @@ namespace
         if (findFirst(asisDecls(), el.ID))
           return;
 
-        logWarn() << "fallback to legacy pragma procesing.."
-                  << std::endl;
+        //~ logWarn() << "fallback to legacy pragma procesing.."
+                  //~ << std::endl;
 
         res.push_back(&createPragma_common(el, stmt, ctx));
       }

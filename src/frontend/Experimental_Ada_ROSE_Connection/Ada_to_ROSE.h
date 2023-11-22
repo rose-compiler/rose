@@ -353,15 +353,6 @@ struct AstContext
     void storeDeferredUnitCompletion(DeferredCompletion completion) const;
     /// \}
 
-/*
- *  no longer used - use pragmaAspectAnchor to set the parent node
-    /// pragma processing mode property
-    ///   elides warnings related to unresolved names
-    /// \{
-    AstContext pragmaProcessing(bool mode) const;
-    bool pragmaProcessing() const { return pragma_processing; }
-    /// \}
-*/
 
     /// appends new statements to \ref blk instead of the current scope, \ref the_scope.
     AstContext unscopedBlock(SgAdaUnscopedBlock& blk) const;
@@ -370,14 +361,6 @@ struct AstContext
 
     //
     // policies for building the AST depending on context
-
-/**
-    /// returns a new context with the element
-    AstContext element(Element_struct& el) const;
-
-    /// returns the current element and returns a new context
-    Element_struct& element() const;
-**/
 
     static
     void defaultStatementHandler(AstContext, SgStatement&);
