@@ -34,7 +34,7 @@ package body Asis_Adapter.Element.Statements is
       begin
          Add_Element_List
            (This           => State,
-            Elements_In    => Asis.Statements.Accept_Body_Exception_Handlers (Element),
+            Elements_In    => Asis.Statements.Accept_Body_Exception_Handlers (Element, true),
             Dot_Label_Name => "Accept_Body_Exception_Handlers",
             List_Out       => Result.Accept_Body_Exception_Handlers,
             Add_Edges      => True);
@@ -44,7 +44,7 @@ package body Asis_Adapter.Element.Statements is
       begin
          Add_Element_List
            (This           => State,
-            Elements_In    => Asis.Statements.Accept_Body_Statements (Element),
+            Elements_In    => Asis.Statements.Accept_Body_Statements (Element, true),
             Dot_Label_Name => "Accept_Body_Statements",
             List_Out       => Result.Accept_Body_Statements,
             Add_Edges      => True);
@@ -104,7 +104,7 @@ package body Asis_Adapter.Element.Statements is
       begin
          Add_Element_List
            (This           => State,
-            Elements_In    => Asis.Statements.Block_Declarative_Items (Element),
+            Elements_In    => Asis.Statements.Block_Declarative_Items (Element, true),
             Dot_Label_Name => "Block_Declarative_Items",
             List_Out       => Result.Block_Declarative_Items,
             Add_Edges      => True);
@@ -113,7 +113,7 @@ package body Asis_Adapter.Element.Statements is
       procedure Add_Block_Exception_Handlers is begin
          Add_Element_List
            (This           => State,
-            Elements_In    => Asis.Statements.Block_Exception_Handlers (Element),
+            Elements_In    => Asis.Statements.Block_Exception_Handlers (Element, true),
             Dot_Label_Name => "Block_Exception_Handlers",
             List_Out       => Result.Block_Exception_Handlers,
             Add_Edges      => True);
@@ -123,7 +123,7 @@ package body Asis_Adapter.Element.Statements is
       begin
          Add_Element_List
            (This           => State,
-            Elements_In    => Asis.Statements.Block_Statements (Element),
+            Elements_In    => Asis.Statements.Block_Statements (Element, true),
             Dot_Label_Name => "Block_Statements",
             List_Out       => Result.Block_Statements,
             Add_Edges      => True);
@@ -292,7 +292,7 @@ package body Asis_Adapter.Element.Statements is
       begin
          Add_Element_List
            (This           => State,
-            Elements_In    => Asis.Statements.Loop_Statements (Element),
+            Elements_In    => Asis.Statements.Loop_Statements (Element, true),
             Dot_Label_Name => "Loop_Statements",
             List_Out       => Result.Loop_Statements,
             Add_Edges      => True);
@@ -342,7 +342,7 @@ package body Asis_Adapter.Element.Statements is
       begin
          Add_Element_List
            (This           => State,
-            Elements_In    => Asis.Statements.Statement_Paths (Element),
+            Elements_In    => Asis.Statements.Statement_Paths (Element, true),
             Dot_Label_Name => "Statement_Paths",
             List_Out       => Result.Statement_Paths,
             Add_Edges      => True);

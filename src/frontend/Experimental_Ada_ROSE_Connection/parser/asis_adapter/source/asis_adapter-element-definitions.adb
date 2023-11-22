@@ -347,7 +347,7 @@ package body Asis_Adapter.Element.Definitions is
       begin
          return To_Element_ID_List
            (This           => State,
-            Elements_In    => Asis.Definitions.Private_Part_Items (Element),
+            Elements_In    => Asis.Definitions.Private_Part_Items (Element, true),
             Dot_Label_Name => "Private_Part_Items",
             Add_Edges      => True);
       end;
@@ -372,7 +372,7 @@ package body Asis_Adapter.Element.Definitions is
       begin
          return To_Element_ID_List
            (This           => State,
-            Elements_In    => Asis.Definitions.Record_Components (Element),
+            Elements_In    => Asis.Definitions.Record_Components (Element, true),
             Dot_Label_Name => "Record_Components",
             Add_Edges      => True);
       end;
@@ -422,7 +422,7 @@ package body Asis_Adapter.Element.Definitions is
       begin
          return To_Element_ID_List
            (This           => State,
-            Elements_In    => Asis.Definitions.Variants (Element),
+            Elements_In    => Asis.Definitions.Variants (Element, true),
             Dot_Label_Name => "Variants",
             Add_Edges      => True);
       end;
@@ -431,7 +431,7 @@ package body Asis_Adapter.Element.Definitions is
       begin
          return To_Element_ID_List
            (This           => State,
-            Elements_In    => Asis.Definitions.Visible_Part_Items (Element),
+            Elements_In    => Asis.Definitions.Visible_Part_Items (Element, true),
             Dot_Label_Name => "Visible_Part_Items",
             Add_Edges      => True);
       end;

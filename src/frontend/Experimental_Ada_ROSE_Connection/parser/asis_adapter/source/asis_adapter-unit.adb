@@ -308,7 +308,7 @@ package body Asis_Adapter.Unit is
       begin
          Add_Element_List
            (This           => This,
-            Elements_In    => Asis.Elements.Context_Clause_Elements (Unit),
+            Elements_In    => Asis.Elements.Context_Clause_Elements (Unit, true),
             Dot_Label_Name => "Context_Clause_Elements",
             List_Out       => This.A_Unit.Context_Clause_Elements);
       end;

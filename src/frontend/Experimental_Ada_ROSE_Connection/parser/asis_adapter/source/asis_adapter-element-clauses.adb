@@ -85,7 +85,7 @@ package body Asis_Adapter.Element.Clauses is
          begin
             Add_Element_List
               (This           => State,
-               Elements_In    => Asis.Clauses.Component_Clauses (Element),
+               Elements_In    => Asis.Clauses.Component_Clauses (Element, true),
                Dot_Label_Name => "Component_Clauses",
                List_Out       => Result.Component_Clauses,
                Add_Edges      => True);
