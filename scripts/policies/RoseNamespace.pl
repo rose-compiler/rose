@@ -250,6 +250,7 @@ my @extra_words = qw/
     AST 			# Abstract Syntax Tree
     CFG				# Control Flow Graph
     CIL				# Common Intermediate Language
+    ColdFire                    # Microprocessor
     GDB				# GNU Debugger
     JVM				# Java Virtual Machine
     callback                    # executable code passed as an argument
@@ -263,7 +264,11 @@ my @extra_words = qw/
     linux                       # an operating system kernel
     LLVM			# the compiler technology
     M68k			# Motorola 68000
+    NXP				# Microprocessor manufacturer
     partitioner			# missing from dictionary
+    Pentium			# Intel processor
+    PentiumII			# Intel processor
+    PentiumIII			# Intel processor
     PowerPC                     # a computer architecture
     reachability		# missing from dictionary
     RISC			# Reduced Instruction Set Computer
