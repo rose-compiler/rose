@@ -55,7 +55,6 @@ RegisterDictionary::instanceI8086() {
     static RegisterDictionary::Ptr regs;
     if (!regs) {
         regs = RegisterDictionary::instance("i8086");
-
         /*  16-bit general purpose registers. Each has three names depending on which bytes are reference. */
         regs->insert("al", x86_regclass_gpr, x86_gpr_ax, 0, 8);
         regs->insert("ah", x86_regclass_gpr, x86_gpr_ax, 8, 8);
@@ -116,6 +115,12 @@ RegisterDictionary::instanceI8086() {
         regs->insert("f12",   x86_regclass_flags, x86_flags_status, 12,  1);
         regs->insert("f13",   x86_regclass_flags, x86_flags_status, 13,  1);
         regs->insert("f15",   x86_regclass_flags, x86_flags_status, 15,  1);
+
+        // Special registers
+        regs->instructionPointerRegister("ip");
+        regs->stackPointerRegister("sp");
+        regs->stackFrameRegister("bp");
+        regs->stackSegmentRegister("ss");
     }
     return regs;
 }
@@ -197,6 +202,11 @@ RegisterDictionary::instanceI386() {
         regs->insert("dr6", x86_regclass_dr, 6, 0, 32);
         regs->insert("dr7", x86_regclass_dr, 7, 0, 32);
 
+        // Special registers
+        regs->instructionPointerRegister("eip");
+        regs->stackPointerRegister("esp");
+        regs->stackFrameRegister("ebp");
+        regs->stackSegmentRegister("ss");
     }
     return regs;
 }
@@ -420,6 +430,12 @@ RegisterDictionary::instanceAmd64() {
         regs->resize("dr3", 64);                                /* dr4 and dr5 are reserved */
         regs->resize("dr6", 64);
         regs->resize("dr7", 64);
+
+        // Special registers
+        regs->instructionPointerRegister("rip");
+        regs->stackPointerRegister("rsp");
+        regs->stackFrameRegister("rbp");
+        regs->stackSegmentRegister("ss");
     }
     return regs;
 }
@@ -602,6 +618,12 @@ RegisterDictionary::instanceAarch64() {
 
         // Conditional execution registers. [1. p. A3-79]
         regs->insert("nzcv", aarch64_regclass_cc, 0, 0, 4);
+
+        // Special registers
+        regs->instructionPointerRegister("pc");
+        regs->stackPointerRegister("sp");
+        regs->stackFrameRegister("fp");
+        regs->callReturnRegister("lr");
     }
     return regs;
 }
@@ -853,6 +875,12 @@ RegisterDictionary::instanceAarch32() {
             regs->insert("componentid" + boost::lexical_cast<std::string>(i), aarch32_regclass_debug,
                          aarch32_debug_componentid0+i, 0, 32);
         }
+
+        // Special registers
+        regs->instructionPointerRegister("pc");
+        regs->stackPointerRegister("sp");
+        regs->stackFrameRegister("fp");
+        regs->callReturnRegister("lr");
     }
     return regs;
 }
@@ -1004,6 +1032,12 @@ RegisterDictionary::instancePowerpc32() {
 
         regs->insert("tbl", powerpc_regclass_tbr, powerpc_tbr_tbl, 0, 32);      /* time base lower */
         regs->insert("tbu", powerpc_regclass_tbr, powerpc_tbr_tbu, 0, 32);      /* time base upper */
+
+        // Special registers
+        regs->instructionPointerRegister("iar");
+        regs->stackPointerRegister("r1");
+        regs->stackFrameRegister("r31");
+        regs->callReturnRegister("lr");
     }
     return regs;
 }
@@ -1154,6 +1188,12 @@ RegisterDictionary::instancePowerpc64() {
 
         regs->insert("tbl", powerpc_regclass_tbr, powerpc_tbr_tbl, 0, 64);      /* time base lower */
         regs->insert("tbu", powerpc_regclass_tbr, powerpc_tbr_tbu, 0, 64);      /* time base upper */
+
+        // Special registers
+        regs->instructionPointerRegister("iar");
+        regs->stackPointerRegister("r1");
+        regs->stackFrameRegister("r31");
+        regs->callReturnRegister("lr");
     }
     return regs;
 }
@@ -1236,6 +1276,12 @@ RegisterDictionary::instanceMips32() {
         // Additional implementation-specific coprocessor 2 registers are not part of the dictionary. Coprocessor 2 may have up
         // to 32 general purpose registers and up to 32 control registers.  They use the major numbers mips_regclass_cp2gpr and
         // mips_regclass_cp2spr.
+
+        // Special registers
+        regs->instructionPointerRegister("pc");
+        regs->stackPointerRegister("sp");
+        regs->stackFrameRegister("fp");
+        regs->callReturnRegister("ra");
     }
     return regs;
 }
@@ -1384,6 +1430,11 @@ RegisterDictionary::instanceM68000() {
         // Supervisor registers (SR register is listed above since its CCR bits are available in user mode)
         regs->insert("ssp",      m68k_regclass_sup, m68k_sup_ssp,       0, 32); // supervisor A7 stack pointer
         regs->insert("vbr",      m68k_regclass_sup, m68k_sup_vbr,       0, 32); // vector base register
+
+        // Special registers
+        regs->instructionPointerRegister("pc");
+        regs->stackPointerRegister("a7");
+        regs->stackFrameRegister("a6");
     }
     return regs;
 }
@@ -1618,6 +1669,12 @@ RegisterDictionary::insert(const Ptr &other) {
     const Entries &entries = other->registers();
     for (Entries::const_iterator ei = entries.begin(); ei != entries.end(); ++ei)
         insert(ei->first, ei->second);
+
+    instructionPointer_ = other->instructionPointer_;
+    stackPointer_ = other->stackPointer_;
+    stackFrame_ = other->stackFrame_;
+    stackSegment_ = other->stackSegment_;
+    callReturn_ = other->callReturn_;
 }
 
 void
@@ -1805,6 +1862,81 @@ std::ostream&
 operator<<(std::ostream &out, const RegisterDictionary &dict) {
     dict.print(out);
     return out;
+}
+
+RegisterDescriptor
+RegisterDictionary::instructionPointerRegister() const {
+    return instructionPointer_;
+}
+
+void
+RegisterDictionary::instructionPointerRegister(RegisterDescriptor reg) {
+    instructionPointer_ = reg;
+}
+
+void
+RegisterDictionary::instructionPointerRegister(const std::string &name) {
+    instructionPointer_ = findOrThrow(name);
+}
+
+RegisterDescriptor
+RegisterDictionary::stackPointerRegister() const {
+    return stackPointer_;
+}
+
+void
+RegisterDictionary::stackPointerRegister(RegisterDescriptor reg) {
+    stackPointer_ = reg;
+}
+
+void
+RegisterDictionary::stackPointerRegister(const std::string &name) {
+    stackPointer_ = findOrThrow(name);
+}
+
+RegisterDescriptor
+RegisterDictionary::stackFrameRegister() const {
+    return stackFrame_;
+}
+
+void
+RegisterDictionary::stackFrameRegister(RegisterDescriptor reg) {
+    stackFrame_ = reg;
+}
+
+void
+RegisterDictionary::stackFrameRegister(const std::string &name) {
+    stackFrame_ = findOrThrow(name);
+}
+
+RegisterDescriptor
+RegisterDictionary::stackSegmentRegister() const {
+    return stackSegment_;
+}
+
+void
+RegisterDictionary::stackSegmentRegister(RegisterDescriptor reg) {
+    stackSegment_ = reg;
+}
+
+void
+RegisterDictionary::stackSegmentRegister(const std::string &name) {
+    stackSegment_ = findOrThrow(name);
+}
+
+RegisterDescriptor
+RegisterDictionary::callReturnRegister() const {
+    return callReturn_;
+}
+
+void
+RegisterDictionary::callReturnRegister(RegisterDescriptor reg) {
+    callReturn_ = reg;
+}
+
+void
+RegisterDictionary::callReturnRegister(const std::string &name) {
+    callReturn_ = findOrThrow(name);
 }
 
 } // namespace
