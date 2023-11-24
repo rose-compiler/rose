@@ -270,28 +270,28 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis.h								\
 	Rose/BinaryAnalysis/AbstractLocation.h						\
 	Rose/BinaryAnalysis/Architecture.h						\
-	BinaryAnalysis/Architecture/Amd64.h						\
-	BinaryAnalysis/Architecture/ArmAarch32.h					\
-	BinaryAnalysis/Architecture/ArmAarch64.h					\
-	BinaryAnalysis/Architecture/Base.h						\
-	BinaryAnalysis/Architecture/BasicTypes.h					\
-	BinaryAnalysis/Architecture/Cil.h						\
-	BinaryAnalysis/Architecture/Exception.h						\
-	BinaryAnalysis/Architecture/Intel80286.h					\
-	BinaryAnalysis/Architecture/Intel8086.h						\
-	BinaryAnalysis/Architecture/Intel8088.h						\
-	BinaryAnalysis/Architecture/IntelI386.h						\
-	BinaryAnalysis/Architecture/IntelI486.h						\
-	BinaryAnalysis/Architecture/IntelPentium.h					\
-	BinaryAnalysis/Architecture/IntelPentiumii.h					\
-	BinaryAnalysis/Architecture/IntelPentiumiii.h					\
-	BinaryAnalysis/Architecture/IntelPentium4.h					\
-	BinaryAnalysis/Architecture/Jvm.h						\
-	BinaryAnalysis/Architecture/Mips32.h						\
-	BinaryAnalysis/Architecture/Motorola68040.h					\
-	BinaryAnalysis/Architecture/NxpColdfire.h					\
-	BinaryAnalysis/Architecture/Powerpc32.h						\
-	BinaryAnalysis/Architecture/Powerpc64.h						\
+	Rose/BinaryAnalysis/Architecture/Amd64.h					\
+	Rose/BinaryAnalysis/Architecture/ArmAarch32.h					\
+	Rose/BinaryAnalysis/Architecture/ArmAarch64.h					\
+	Rose/BinaryAnalysis/Architecture/Base.h						\
+	Rose/BinaryAnalysis/Architecture/BasicTypes.h					\
+	Rose/BinaryAnalysis/Architecture/Cil.h						\
+	Rose/BinaryAnalysis/Architecture/Exception.h					\
+	Rose/BinaryAnalysis/Architecture/Intel80286.h					\
+	Rose/BinaryAnalysis/Architecture/Intel8086.h					\
+	Rose/BinaryAnalysis/Architecture/Intel8088.h					\
+	Rose/BinaryAnalysis/Architecture/IntelI386.h					\
+	Rose/BinaryAnalysis/Architecture/IntelI486.h					\
+	Rose/BinaryAnalysis/Architecture/IntelPentium.h					\
+	Rose/BinaryAnalysis/Architecture/IntelPentiumii.h				\
+	Rose/BinaryAnalysis/Architecture/IntelPentiumiii.h				\
+	Rose/BinaryAnalysis/Architecture/IntelPentium4.h				\
+	Rose/BinaryAnalysis/Architecture/Jvm.h						\
+	Rose/BinaryAnalysis/Architecture/Mips32.h					\
+	Rose/BinaryAnalysis/Architecture/Motorola68040.h				\
+	Rose/BinaryAnalysis/Architecture/NxpColdfire.h					\
+	Rose/BinaryAnalysis/Architecture/Powerpc32.h					\
+	Rose/BinaryAnalysis/Architecture/Powerpc64.h					\
 	Rose/BinaryAnalysis/AsmFunctionIndex.h						\
 	Rose/BinaryAnalysis/AstHash.h							\
 	Rose/BinaryAnalysis/BasicTypes.h						\
