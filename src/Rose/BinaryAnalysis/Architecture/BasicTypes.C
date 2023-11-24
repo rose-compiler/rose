@@ -57,9 +57,13 @@ initRegistryHelper() {
     registry.push_back(Jvm::instance());
 
     // ARM
+#ifdef ROSE_ENABLE_ASM_AARCH32
     registry.push_back(ArmAarch32::instance(ArmAarch32::InstructionSet::T32));
     registry.push_back(ArmAarch32::instance(ArmAarch32::InstructionSet::A32));
+#endif
+#ifdef ROSE_ENABLE_ASM_AARCH64
     registry.push_back(ArmAarch64::instance());
+#endif
 
     // MIPS
     registry.push_back(Mips32::instance(ByteOrder::ORDER_MSB));

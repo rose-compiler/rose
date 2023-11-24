@@ -1,5 +1,5 @@
 #include <featureTests.h>
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#ifdef ROSE_ENABLE_ASM_AARCH64
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Architecture/ArmAarch64.h>
 

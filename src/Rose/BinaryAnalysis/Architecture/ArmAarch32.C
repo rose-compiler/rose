@@ -1,8 +1,9 @@
 #include <featureTests.h>
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#ifdef ROSE_ENABLE_ASM_AARCH32
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Architecture/ArmAarch32.h>
 
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/Disassembler/Aarch32.h>
 
 namespace Rose {

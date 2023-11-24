@@ -1,7 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_Architecture_ArmAarch64_H
 #define ROSE_BinaryAnalysis_Architecture_ArmAarch64_H
 #include <featureTests.h>
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#ifdef ROSE_ENABLE_ASM_AARCH64
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 
 namespace Rose {
