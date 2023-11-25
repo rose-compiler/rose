@@ -42,6 +42,18 @@ Base::name() const {
     return architecture_->name();
 }
 
+// [Robb Matzke 2023-11-24]: deprecated
+size_t
+Base::wordSizeBytes() const {
+    return architecture()->bytesPerWord();
+}
+
+// [Robb Matzke 2023-11-24]: deprecated
+RegisterDictionaryPtr
+Base::registerDictionary() const {
+    return architecture()->registerDictionary();
+}
+
 size_t
 Base::instructionAlignment() const {
     ASSERT_require(instructionAlignment_ > 0);

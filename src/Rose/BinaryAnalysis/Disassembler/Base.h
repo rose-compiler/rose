@@ -63,10 +63,8 @@ private:
     CallingConvention::Dictionary callingConventions_;
 
 protected:
-    RegisterDictionaryPtr p_registers;                           /**< Description of registers available for this platform. */
     RegisterDescriptor REG_IP, REG_SP, REG_SS, REG_SF, REG_LINK; /**< Register descriptors initialized during construction. */
     ByteOrder::Endianness p_byteOrder = ByteOrder::ORDER_LSB;    /**< Byte order of instructions in memory. */
-    size_t p_wordSizeBytes = 4;                                  /**< Basic word size in bytes. */
     size_t instructionAlignment_ = 1;                            /**< Positive alignment constraint for instruction addresses. */
 
     /** Prototypical dispatcher for creating real dispatchers */
@@ -84,13 +82,11 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned version) {
-        s & BOOST_SERIALIZATION_NVP(p_registers);
         s & BOOST_SERIALIZATION_NVP(REG_IP);
         s & BOOST_SERIALIZATION_NVP(REG_SS);
         if (version >= 1)
             s & BOOST_SERIALIZATION_NVP(REG_SF);
         s & BOOST_SERIALIZATION_NVP(p_byteOrder);
-        s & BOOST_SERIALIZATION_NVP(p_wordSizeBytes);
         if (version >= 2)
             s & BOOST_SERIALIZATION_NVP(instructionAlignment_);
     }
@@ -135,36 +131,11 @@ public:
     void byteOrder(ByteOrder::Endianness sex) { p_byteOrder = sex; }
     /** @} */
 
-    /** Property: Basic word size in bytes.
-     *
-     * @{ */
-    size_t wordSizeBytes() const { return p_wordSizeBytes; }
-    void wordSizeBytes(size_t nbytes) { p_wordSizeBytes = nbytes; }
-    /** @} */
-
     /** Property: Instruction alignment requirement.
      *
      *  The alignment that's required for instruction addresses. The return value is a positive number of bytes. */
     size_t instructionAlignment() const;
     
-    /** Properties: Register dictionary.
-     *
-     *  Specifies the registers available on this architecture.  Rather than using hard-coded class, number, and position
-     *  constants, the disassembler should perform a name lookup in this supplied register dictionary and use the values found
-     *  therein. There's usually no need for the user to specify a value because either it will be obtained from an
-     *  SgAsmInterpretation or the subclass will initialize it.
-     *
-     *  Thread safety: It is not safe to change the register dictionary while another thread is using this same Base
-     *  object.
-     *
-     * @{ */
-    void registerDictionary(const RegisterDictionaryPtr &rdict) {
-        p_registers = rdict;
-    }
-    RegisterDictionaryPtr registerDictionary() const {
-        return p_registers;
-    }
-
     /** Property: Calling convention dictionary.
      *
      *  This is a dictionary of the common calling conventions for this architecture.
@@ -267,6 +238,13 @@ public:
      *  Thread safety: This class method is thread safe provided no other thread is modifying the instruction map nor the
      *  instructions to which the map points, particularly the instructions' virtual address and raw bytes. */
     static SgAsmInstruction *find_instruction_containing(const InstructionMap &insns, rose_addr_t va);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated [Robb Matzke 2023-11-24]
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    size_t wordSizeBytes() const ROSE_DEPRECATED("use architecture()->bytesPerWord()");
+    RegisterDictionaryPtr registerDictionary() const ROSE_DEPRECATED("use architecture()->registerDictionary()");
 };
 
 } // namespace
@@ -274,7 +252,7 @@ public:
 } // namespace
 
 // Class versions must be at global scope
-BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Disassembler::Base, 2);
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Disassembler::Base, 3);
 
 #endif
 #endif

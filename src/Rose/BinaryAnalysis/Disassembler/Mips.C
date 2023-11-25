@@ -175,7 +175,7 @@ SgAsmRegisterReferenceExpression *
 Mips::makeRegister(rose_addr_t insn_va, unsigned regnum) const
 {
     std::string regname = "r" + StringUtility::numberToString(regnum);
-    const RegisterDescriptor regdesc = registerDictionary()->find(regname);
+    const RegisterDescriptor regdesc = architecture()->registerDictionary()->find(regname);
     if (!regdesc)
         throw Exception("no such register: "+regname, insn_va);
     return new SgAsmDirectRegisterExpression(regdesc);
@@ -185,7 +185,7 @@ SgAsmRegisterReferenceExpression *
 Mips::makeFpRegister(rose_addr_t insn_va, unsigned regnum) const
 {
     std::string regname = "f" + StringUtility::numberToString(regnum);
-    const RegisterDescriptor regdesc = registerDictionary()->find(regname);
+    const RegisterDescriptor regdesc = architecture()->registerDictionary()->find(regname);
     if (!regdesc)
         throw Exception("no such register: "+regname, insn_va);
     return new SgAsmDirectRegisterExpression(regdesc);
@@ -419,7 +419,7 @@ Mips::makeCp0Register(rose_addr_t insn_va, unsigned regnum, unsigned sel) const
     if (s.empty())
         throw Exception("invalid CP0 register "+StringUtility::numberToString(regnum)+
                         " (sel="+StringUtility::numberToString(sel)+")", insn_va);
-    const RegisterDescriptor regdesc = registerDictionary()->find(s);
+    const RegisterDescriptor regdesc = architecture()->registerDictionary()->find(s);
     if (!regdesc)
         throw Exception("no such register: " + s, insn_va);
     return new SgAsmDirectRegisterExpression(regdesc);
@@ -429,7 +429,7 @@ SgAsmRegisterReferenceExpression *
 Mips::makeFpccRegister(rose_addr_t insn_va, unsigned cc) const
 {
     ASSERT_require(cc<=7);
-    const RegisterDescriptor regdesc = registerDictionary()->find("fscr");
+    const RegisterDescriptor regdesc = architecture()->registerDictionary()->find("fscr");
     if (!regdesc)
         throw Exception("no such register: fcsr", insn_va);
     RegisterDescriptor r(regdesc.majorNumber(), regdesc.minorNumber(), cc?24+cc:23, 1);
@@ -3615,11 +3615,11 @@ static struct Mips32_xori: Mips::Decoder {
 void
 Mips::init(ByteOrder::Endianness sex)
 {
-    registerDictionary(RegisterDictionary::instanceMips32()); // only a default
-    REG_IP = registerDictionary()->findOrThrow("pc");
-    REG_SP = registerDictionary()->findOrThrow("sp");
+    REG_IP = architecture()->registerDictionary()->instructionPointerRegister();
+    REG_SP = architecture()->registerDictionary()->stackPointerRegister();
+    ASSERT_require(REG_IP);
+    ASSERT_require(REG_SP);
 
-    wordSizeBytes(4);
     instructionAlignment_ = 4;
     byteOrder(sex);
     callingConventions(CallingConvention::dictionaryMips());

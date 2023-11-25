@@ -71,55 +71,43 @@ X86::init(size_t wordsize)
 {
     /* The default register dictionary.  If a register dictionary is specified in an SgAsmInterpretation, then that one will be
      * used instead of the default we set here. */
-    RegisterDictionary::Ptr regdict;
     size_t addrWidth=0;
     switch (wordsize) {
         case 2:
             addrWidth = 16;
             insnSize = x86_insnsize_16;
-#if 0 // [Robb P. Matzke 2015-06-23]
-            regdict = RegisterDictionary::instanceI286();
-#else
             // A word size of 2 bytes doesn't necessarily mean 80286. E.g., $ROSE/binaries/samples/exefmt.exe has a header that
             // advertises architecture ISA_IA32_Family with a word size of 2 and which contains an occasional 32-bit floating
             // point instruction, although perhaps because of disassembling data with a disassembler that understands 32-bit op
             // codes.
-            regdict = RegisterDictionary::instanceI386Math();
-#endif
-            REG_IP = regdict->findOrThrow("ip");
-            REG_SP = regdict->findOrThrow("sp");
-            REG_SS = regdict->findOrThrow("ss");
-            REG_SF = regdict->findOrThrow("bp");
             break;
         case 4:
             addrWidth = 32;
             insnSize = x86_insnsize_32;
-            regdict = RegisterDictionary::instancePentium4();
-            REG_IP = regdict->findOrThrow("eip");
-            REG_SP = regdict->findOrThrow("esp");
-            REG_SS = regdict->findOrThrow("ss");
-            REG_SF = regdict->findOrThrow("ebp");
             callingConventions(CallingConvention::dictionaryX86());
             break;
         case 8:
             addrWidth = 64;
             insnSize = x86_insnsize_64;
-            regdict = RegisterDictionary::instanceAmd64();
-            REG_IP = regdict->findOrThrow("rip");
-            REG_SP = regdict->findOrThrow("rsp");
-            REG_SS = regdict->findOrThrow("ss");
-            REG_SF = regdict->findOrThrow("rbp");
             callingConventions(CallingConvention::dictionaryAmd64());
             break;
         default:
             ASSERT_not_reachable("instruction must be 2, 4, or 8 bytes");
     }
-    InstructionSemantics::DispatcherX86Ptr d = InstructionSemantics::DispatcherX86::instance(addrWidth, regdict);
-    d->registerDictionary(regdict);                     // so register cache is initialized
+
+    REG_IP = architecture()->registerDictionary()->instructionPointerRegister();
+    REG_SP = architecture()->registerDictionary()->stackPointerRegister();
+    REG_SS = architecture()->registerDictionary()->stackSegmentRegister();
+    REG_SF = architecture()->registerDictionary()->stackFrameRegister();
+    ASSERT_require(REG_IP);
+    ASSERT_require(REG_SP);
+    ASSERT_require(REG_SS);
+    ASSERT_require(REG_SF);
+
+    auto d = InstructionSemantics::DispatcherX86::instance(addrWidth, architecture()->registerDictionary());
+    d->registerDictionary(architecture()->registerDictionary()); // so register cache is initialized
     p_proto_dispatcher = d; 
 
-    registerDictionary(regdict);
-    wordSizeBytes(wordsize);
     byteOrder(ByteOrder::ORDER_LSB);
 }
 
@@ -157,7 +145,7 @@ X86::commentIpRelative(SgAsmInstruction *insn) {
                 }
             }
         }
-    } v(insn, 8*wordSizeBytes());
+    } v(insn, architecture()->bitsPerWord());
     v.traverse(insn, preorder);
 }
 
@@ -202,7 +190,7 @@ X86::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet 
                             if (isSgAsmDirectRegisterExpression(mul->get_lhs()) && isSgAsmIntegerValueExpression(mul->get_rhs())) {
                                 if (auto c2 = isSgAsmIntegerValueExpression(add1->get_rhs())) {
                                     const RegisterDescriptor REG_FP =
-                                        registerDictionary()->findLargestRegister(x86_regclass_gpr, x86_gpr_bp);
+                                        architecture()->registerDictionary()->findLargestRegister(x86_regclass_gpr, x86_gpr_bp);
                                     ASSERT_require(REG_FP);
                                     ASSERT_require(REG_SP);
                                     if (fp->get_descriptor() == REG_FP || fp->get_descriptor() == REG_SP) {
@@ -631,10 +619,9 @@ X86::makeRegister(State &state, uint8_t fullRegisterNumber, RegisterMode m, SgAs
     ASSERT_forbid(name.empty());
 
     /* Now that we have a register name, obtain the register descriptor from the dictionary. */
-    ASSERT_not_null(registerDictionary());
-    const RegisterDescriptor rdesc = registerDictionary()->find(name);
+    const RegisterDescriptor rdesc = architecture()->registerDictionary()->find(name);
     if (!rdesc)
-        throw ExceptionX86("register \"" + name + "\" is not available for " + registerDictionary()->name(), state);
+        throw ExceptionX86("register \"" + name + "\" is not available for " + architecture()->registerDictionary()->name(), state);
 
     /* Construct the return value. */
     SgAsmRegisterReferenceExpression *rre = NULL;

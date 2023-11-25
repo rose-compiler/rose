@@ -21,9 +21,7 @@ using namespace Rose::Diagnostics; // mlog WARN, ...
 
 Cil::Cil(const Architecture::Base::ConstPtr &arch)
     : Base(arch) {
-    wordSizeBytes(2);
     byteOrder(ByteOrder::ORDER_MSB);
-    registerDictionary(RegisterDictionary::instanceCil());
 }
 
 Cil::Ptr

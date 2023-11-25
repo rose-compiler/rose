@@ -62,30 +62,30 @@ Powerpc::unparser() const {
 
 void
 Powerpc::init() {
-    RegisterDictionary::Ptr regdict;
     switch (wordSize_) {
         case powerpc_32:
-            wordSizeBytes(4);
-            regdict = RegisterDictionary::instancePowerpc32();
             callingConventions(CallingConvention::dictionaryPowerpc32());
             break;
         case powerpc_64:
-            wordSizeBytes(8);
-            regdict = RegisterDictionary::instancePowerpc64();
             callingConventions(CallingConvention::dictionaryPowerpc64());
             break;
     }
 
     byteOrder(ByteOrder::ORDER_MSB);
 
-    REG_IP = regdict->findOrThrow("iar");
-    REG_SP = regdict->findOrThrow("r1");
-    REG_SF = regdict->findOrThrow("r31");
-    REG_LINK = regdict->findOrThrow("lr");
-    InstructionSemantics::DispatcherPowerpcPtr d = InstructionSemantics::DispatcherPowerpc::instance(8*wordSizeBytes(), regdict);
-    d->registerDictionary(regdict);
+    REG_IP =   architecture()->registerDictionary()->instructionPointerRegister();
+    REG_SP =   architecture()->registerDictionary()->stackPointerRegister();
+    REG_SF =   architecture()->registerDictionary()->stackFrameRegister();
+    REG_LINK = architecture()->registerDictionary()->callReturnRegister();
+    ASSERT_require(REG_IP);
+    ASSERT_require(REG_SP);
+    ASSERT_require(REG_SF);
+    ASSERT_require(REG_LINK);
+
+    InstructionSemantics::DispatcherPowerpcPtr d =
+        InstructionSemantics::DispatcherPowerpc::instance(architecture()->bitsPerWord(), architecture()->registerDictionary());
+    d->registerDictionary(architecture()->registerDictionary());
     p_proto_dispatcher = d;
-    registerDictionary(regdict);
 }
 
 // This is a bit of a kludge for now because we're trying to use an unmodified version of the PowerpcDisassembler name space.
@@ -390,10 +390,9 @@ Powerpc::makeRegister(State &state, PowerpcRegisterClass reg_class, int reg_numb
     ASSERT_not_null(registerType);
 
     // Obtain a register descriptor from the dictionary
-    ASSERT_not_null(registerDictionary());
-    const RegisterDescriptor rdesc = registerDictionary()->find(name);
+    const RegisterDescriptor rdesc = architecture()->registerDictionary()->find(name);
     if (!rdesc)
-        throw ExceptionPowerpc("register \"" + name + "\" is not available for " + registerDictionary()->name(), state);
+        throw ExceptionPowerpc("register \"" + name + "\" is not available for " + architecture()->registerDictionary()->name(), state);
     ASSERT_require2(rdesc.nBits() == registerType->get_nBits(),
                     (boost::format("register width (%|u|) doesn't match type width (%|u|)")
                      % rdesc.nBits() % registerType->get_nBits()).str());

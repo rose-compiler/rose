@@ -4861,22 +4861,17 @@ void
 M68k::init()
 {
     // Default register dictionary
-    RegisterDictionary::Ptr regdict;
-    if ((family & m68k_freescale) != 0) {
-        regdict = RegisterDictionary::instanceColdfireEmac();
-    } else {
-        regdict = RegisterDictionary::instanceM68000();
-    }
-    registerDictionary(regdict);
-    REG_IP = registerDictionary()->findOrThrow("pc");
-    REG_SP = registerDictionary()->findOrThrow("a7");
-    REG_SF = registerDictionary()->findOrThrow("a6");
+    REG_IP = architecture()->registerDictionary()->instructionPointerRegister();
+    REG_SP = architecture()->registerDictionary()->stackPointerRegister();
+    REG_SF = architecture()->registerDictionary()->stackFrameRegister();
+    ASSERT_require(REG_IP);
+    ASSERT_require(REG_SP);
+    ASSERT_require(REG_SF);
 
     p_proto_dispatcher = InstructionSemantics::DispatcherM68k::instance();
     p_proto_dispatcher->addressWidth(32);
-    p_proto_dispatcher->registerDictionary(regdict);
+    p_proto_dispatcher->registerDictionary(architecture()->registerDictionary());
 
-    wordSizeBytes(4);
     instructionAlignment_ = 2;
     byteOrder(ByteOrder::ORDER_MSB);
     callingConventions(CallingConvention::dictionaryM68k());

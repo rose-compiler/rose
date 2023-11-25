@@ -13,12 +13,9 @@ namespace Disassembler {
 
 Null::Null(const Architecture::Base::ConstPtr &arch)
     : Base(arch) {
-    wordSizeBytes(1);
     byteOrder(ByteOrder::ORDER_LSB);
-    registerDictionary(RegisterDictionary::instanceNull());
-
-    REG_IP = registerDictionary()->findOrThrow("pc");
-    REG_SP = registerDictionary()->findOrThrow("sp");
+    REG_IP = architecture()->registerDictionary()->instructionPointerRegister();
+    REG_SP = architecture()->registerDictionary()->stackPointerRegister();
 }
 
 Null::~Null() {}

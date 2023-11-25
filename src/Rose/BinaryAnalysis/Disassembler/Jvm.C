@@ -151,9 +151,7 @@ Jvm::appendLookupswitch(const MemoryMap::Ptr &map, rose_addr_t start,
 
 Jvm::Jvm(const Architecture::Base::ConstPtr &arch)
     : Base(arch) {
-    wordSizeBytes(1);
     byteOrder(ByteOrder::ORDER_LSB);
-    registerDictionary(RegisterDictionary::instanceJvm());
 }
 
 Jvm::Ptr

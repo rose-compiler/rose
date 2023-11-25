@@ -19,11 +19,7 @@ namespace Disassembler {
 
 Aarch64::Aarch64(const Architecture::Base::ConstPtr &arch, Modes modes)
     : Base(arch), modes_(modes) {
-    // ROSE disassembler properties, and choose a somewhat descriptive name (at least something better than "ARM").
-    std::string name = "a64";
-    wordSizeBytes(8);
     byteOrder(ByteOrder::ORDER_LSB);
-    registerDictionary(RegisterDictionary::instanceAarch64());
     callingConventions(CallingConvention::dictionaryAarch64());
     p_proto_dispatcher = InstructionSemantics::DispatcherAarch64::instance();
     instructionAlignment_ = 4;
@@ -31,9 +27,12 @@ Aarch64::Aarch64(const Architecture::Base::ConstPtr &arch, Modes modes)
     ASSERT_forbid(modes_.isAnySet(~Mode::MODE_MCLASS));
 
     // Architecture independent ROSE disassembler properties
-    REG_IP = registerDictionary()->findOrThrow("pc");
-    REG_SP = registerDictionary()->findOrThrow("sp");
-    REG_LINK = registerDictionary()->findOrThrow("lr");
+    REG_IP = architecture()->registerDictionary()->instructionPointerRegister();
+    REG_SP = architecture()->registerDictionary()->stackPointerRegister();
+    REG_LINK = architecture()->registerDictionary()->callReturnRegister();
+    ASSERT_require(REG_IP);
+    ASSERT_require(REG_SP);
+    ASSERT_require(REG_LINK);
 }
 
 Aarch64::Ptr
@@ -975,8 +974,7 @@ Aarch64::registerType(RegisterDescriptor reg, arm64_vas arrangement) {
 
 RegisterDescriptor
 Aarch64::makeRegister(arm64_reg reg) {
-    ASSERT_not_null(registerDictionary());
-    RegisterDictionary::Ptr dict = registerDictionary();
+    RegisterDictionary::Ptr dict = architecture()->registerDictionary();
     RegisterDescriptor retval;
 
     switch (reg) {

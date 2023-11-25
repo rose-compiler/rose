@@ -20,25 +20,24 @@ namespace Disassembler {
 Aarch32::Aarch32(const Architecture::Base::ConstPtr &arch, Modes modes)
     : Base(arch), modes_(modes) {
     // ROSE disassembler properties, and choose a somewhat descriptive name (at least something better than "ARM").
-    std::string name;
     if (modes_.isSet(Mode::THUMB)) {
-        name = "t32";
         instructionAlignment_ = 2;
     } else {
-        name = "a32";
         instructionAlignment_ = 4;
     }
-    wordSizeBytes(4);
     byteOrder(ByteOrder::ORDER_LSB);
-    registerDictionary(RegisterDictionary::instanceAarch32());
     callingConventions(CallingConvention::dictionaryAarch32());
     p_proto_dispatcher = InstructionSemantics::DispatcherAarch32::instance();
 
     // Architecture independent ROSE disassembler properties
-    REG_IP = registerDictionary()->findOrThrow("pc");
-    REG_SP = registerDictionary()->findOrThrow("sp");
-    REG_SF = registerDictionary()->findOrThrow("fp");
-    REG_LINK = registerDictionary()->findOrThrow("lr");
+    REG_IP = architecture()->registerDictionary()->instructionPointerRegister();
+    REG_SP = architecture()->registerDictionary()->stackPointerRegister();
+    REG_SF = architecture()->registerDictionary()->stackFrameRegister();
+    REG_LINK = architecture()->registerDictionary()->callReturnRegister();
+    ASSERT_require(REG_IP);
+    ASSERT_require(REG_SP);
+    ASSERT_require(REG_SF);
+    ASSERT_require(REG_LINK);
 }
 
 Aarch32::Ptr
@@ -523,7 +522,7 @@ Aarch32::shiftOrRotate(SgAsmExpression *baseExpr, const cs_arm_op &op) {
                 return SageBuilderAsm::buildRorExpression(baseExpr, amount, u32);
             }
             case ARM_SFT_RRX: {                         // rotate right with extend
-                RegisterDescriptor carryReg = registerDictionary()->find("cpsr_c");
+                RegisterDescriptor carryReg = architecture()->registerDictionary()->find("cpsr_c");
                 SgAsmExpression *carry = new SgAsmDirectRegisterExpression(carryReg);
                 carry->set_type(registerType(carryReg));
                 SgAsmExpression *wide = SageBuilderAsm::buildConcatExpression(carry, baseExpr);
@@ -555,7 +554,7 @@ Aarch32::shiftOrRotate(SgAsmExpression *baseExpr, const cs_arm_op &op) {
                 return SageBuilderAsm::buildRorExpression(baseExpr, amount, u32);
             }
             case ARM_SFT_RRX_REG: {                     // shift with register
-                RegisterDescriptor carryReg = registerDictionary()->find("cpsr_c");
+                RegisterDescriptor carryReg = architecture()->registerDictionary()->find("cpsr_c");
                 SgAsmExpression *carry = new SgAsmDirectRegisterExpression(carryReg);
                 carry->set_type(registerType(carryReg));
                 SgAsmExpression *wide = SageBuilderAsm::buildConcatExpression(carry, baseExpr);
@@ -586,8 +585,7 @@ Aarch32::makeCoprocRegister(int registerNumber) {
 
 RegisterDescriptor
 Aarch32::makeRegister(arm_reg reg) {
-    ASSERT_not_null(registerDictionary());
-    RegisterDictionary::Ptr dict = registerDictionary();
+    RegisterDictionary::Ptr dict = architecture()->registerDictionary();
     RegisterDescriptor retval;
 
     switch (reg) {
@@ -934,8 +932,7 @@ Aarch32::makeRegister(arm_reg reg) {
 
 SgAsmExpression*
 Aarch32::makeSystemRegister(arm_sysreg capreg) {
-    ASSERT_not_null(registerDictionary());
-    RegisterDictionary::Ptr dict = registerDictionary();
+    RegisterDictionary::Ptr dict = architecture()->registerDictionary();
     SgAsmExpression *retval = nullptr;
     RegisterDescriptor reg;
 
@@ -1460,7 +1457,7 @@ Aarch32::wrapPrePostIncrement(SgAsmAarch32Instruction *insn, const cs_insn &csIn
                  id == ARM_INS_VLDMDB ||
                  id == ARM_INS_VLDMIA)) {
                 // If the same register is being loaded from memory and updated, then its final value is unknown.
-                const RegisterDescriptor unknown = registerDictionary()->findOrThrow("unknown");
+                const RegisterDescriptor unknown = architecture()->registerDictionary()->findOrThrow("unknown");
                 newValue = new SgAsmDirectRegisterExpression(unknown);
                 newValue->set_type(SageBuilderAsm::buildTypeU32());
             } else if (id == ARM_INS_FLDMDBX ||
