@@ -150,9 +150,7 @@ Jvm::appendLookupswitch(const MemoryMap::Ptr &map, rose_addr_t start,
 }
 
 Jvm::Jvm(const Architecture::Base::ConstPtr &arch)
-    : Base(arch) {
-    byteOrder(ByteOrder::ORDER_LSB);
-}
+    : Base(arch) {}
 
 Jvm::Ptr
 Jvm::instance(const Architecture::Base::ConstPtr &arch) {

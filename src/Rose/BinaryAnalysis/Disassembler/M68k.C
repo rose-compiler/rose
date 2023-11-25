@@ -4873,7 +4873,6 @@ M68k::init()
     p_proto_dispatcher->registerDictionary(architecture()->registerDictionary());
 
     instructionAlignment_ = 2;
-    byteOrder(ByteOrder::ORDER_MSB);
     callingConventions(CallingConvention::dictionaryM68k());
 
     idis_table.resize(17);

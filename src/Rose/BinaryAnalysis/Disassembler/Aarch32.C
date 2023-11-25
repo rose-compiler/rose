@@ -25,7 +25,6 @@ Aarch32::Aarch32(const Architecture::Base::ConstPtr &arch, Modes modes)
     } else {
         instructionAlignment_ = 4;
     }
-    byteOrder(ByteOrder::ORDER_LSB);
     callingConventions(CallingConvention::dictionaryAarch32());
     p_proto_dispatcher = InstructionSemantics::DispatcherAarch32::instance();
 

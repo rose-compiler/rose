@@ -13,7 +13,6 @@ namespace Disassembler {
 
 Null::Null(const Architecture::Base::ConstPtr &arch)
     : Base(arch) {
-    byteOrder(ByteOrder::ORDER_LSB);
     REG_IP = architecture()->registerDictionary()->instructionPointerRegister();
     REG_SP = architecture()->registerDictionary()->stackPointerRegister();
 }

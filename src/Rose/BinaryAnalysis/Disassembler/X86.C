@@ -107,8 +107,6 @@ X86::init(size_t wordsize)
     auto d = InstructionSemantics::DispatcherX86::instance(addrWidth, architecture()->registerDictionary());
     d->registerDictionary(architecture()->registerDictionary()); // so register cache is initialized
     p_proto_dispatcher = d; 
-
-    byteOrder(ByteOrder::ORDER_LSB);
 }
 
 void

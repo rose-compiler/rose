@@ -45,7 +45,17 @@ Base::name() const {
 // [Robb Matzke 2023-11-24]: deprecated
 size_t
 Base::wordSizeBytes() const {
+    return bytesPerWord();
+}
+
+size_t
+Base::bytesPerWord() const {
     return architecture()->bytesPerWord();
+}
+
+ByteOrder::Endianness
+Base::byteOrder() const {
+    return architecture()->byteOrder();
 }
 
 // [Robb Matzke 2023-11-24]: deprecated
@@ -173,6 +183,31 @@ Base::get_block_successors(const InstructionMap& insns, bool &complete)
         successors.insert(return_va);
 
     return successors;
+}
+
+RegisterDescriptor
+Base::instructionPointerRegister() const {
+    return architecture()->registerDictionary()->instructionPointerRegister();
+}
+
+RegisterDescriptor
+Base::stackPointerRegister() const {
+    return architecture()->registerDictionary()->stackPointerRegister();
+}
+
+RegisterDescriptor
+Base::stackFrameRegister() const {
+    return architecture()->registerDictionary()->stackFrameRegister();
+}
+
+RegisterDescriptor
+Base::stackSegmentRegister() const {
+    return architecture()->registerDictionary()->stackSegmentRegister();
+}
+
+RegisterDescriptor
+Base::callReturnRegister() const {
+    return architecture()->registerDictionary()->callReturnRegister();
 }
 
 } // namespace

@@ -64,7 +64,6 @@ private:
 
 protected:
     RegisterDescriptor REG_IP, REG_SP, REG_SS, REG_SF, REG_LINK; /**< Register descriptors initialized during construction. */
-    ByteOrder::Endianness p_byteOrder = ByteOrder::ORDER_LSB;    /**< Byte order of instructions in memory. */
     size_t instructionAlignment_ = 1;                            /**< Positive alignment constraint for instruction addresses. */
 
     /** Prototypical dispatcher for creating real dispatchers */
@@ -86,7 +85,6 @@ private:
         s & BOOST_SERIALIZATION_NVP(REG_SS);
         if (version >= 1)
             s & BOOST_SERIALIZATION_NVP(REG_SF);
-        s & BOOST_SERIALIZATION_NVP(p_byteOrder);
         if (version >= 2)
             s & BOOST_SERIALIZATION_NVP(instructionAlignment_);
     }
@@ -112,24 +110,27 @@ public:
      *                                          Disassembler properties and settings
      ***************************************************************************************************************************/
 public:
-    /** Property: Architecture. */
+    /** Property: Architecture.
+     *
+     *  The architecture is always non-null. */
     Architecture::BaseConstPtr architecture() const;
 
-    /** Property: Name. */
-    const std::string& name() const;
+    /** Property: Name.
+     *
+     *  The disassembler name is normally the same as the architecture name. */
+    virtual const std::string& name() const;
+
+    /** Property: Bytes per word for the architecture. */
+    virtual size_t bytesPerWord() const;
+
+    /** Property: Byte order of memory. */
+    virtual ByteOrder::Endianness byteOrder() const;
 
     /** Unparser.
      *
      *  Returns an unparser suitable for unparsing the same instruction set architecture as recognized and produced by this
      *  disassembler. */
     virtual Unparser::BasePtr unparser() const = 0;
-
-    /** Property: Byte order of instructions in memory.
-     *
-     * @{ */
-    ByteOrder::Endianness byteOrder() const { return p_byteOrder; }
-    void byteOrder(ByteOrder::Endianness sex) { p_byteOrder = sex; }
-    /** @} */
 
     /** Property: Instruction alignment requirement.
      *
@@ -145,36 +146,6 @@ public:
     CallingConvention::Dictionary& callingConventions() { return callingConventions_; }
     void callingConventions(const CallingConvention::Dictionary &d) { callingConventions_ = d; }
     /** @} */
-
-    /** Returns the register that points to instructions. */
-    virtual RegisterDescriptor instructionPointerRegister() const {
-        ASSERT_forbid(REG_IP.isEmpty());
-        return REG_IP;
-    }
-
-    /** Returns the register that points to the stack. */
-    virtual RegisterDescriptor stackPointerRegister() const {
-        ASSERT_forbid(REG_SP.isEmpty());
-        return REG_SP;
-    }
-
-    /** Returns the register that ponts to the stack frame. */
-    virtual RegisterDescriptor stackFrameRegister() const {
-        return REG_SF;                                  // need not be valid
-    }
-
-    /** Returns the segment register for accessing the stack.  Not all architectures have this register, in which case the
-     * default-constructed register descriptor is returned. */
-    virtual RegisterDescriptor stackSegmentRegister() const {
-        return REG_SS;                                  // need not be valid
-    }
-
-    /** Returns the register that holds the return address for a function.
-     *
-     *  If the architecture doesn't have such a register then a default constructed descriptor is returned. */
-    virtual RegisterDescriptor callReturnRegister() const {
-        return REG_LINK;                                // need not be valid
-    }
 
     /** Return an instruction semantics dispatcher if possible.
      *
@@ -243,8 +214,13 @@ public:
     // Deprecated [Robb Matzke 2023-11-24]
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    size_t wordSizeBytes() const ROSE_DEPRECATED("use architecture()->bytesPerWord()");
-    RegisterDictionaryPtr registerDictionary() const ROSE_DEPRECATED("use architecture()->registerDictionary()");
+    size_t wordSizeBytes() const ROSE_DEPRECATED("use bytesPerWord()");
+    RegisterDictionaryPtr registerDictionary() const ROSE_DEPRECATED("use architecture()");
+    virtual RegisterDescriptor instructionPointerRegister() const ROSE_DEPRECATED("use architecture()");
+    virtual RegisterDescriptor stackPointerRegister() const ROSE_DEPRECATED("use architecture()");
+    virtual RegisterDescriptor stackFrameRegister() const ROSE_DEPRECATED("use architecture()");
+    virtual RegisterDescriptor stackSegmentRegister() const ROSE_DEPRECATED("use architecture()");
+    virtual RegisterDescriptor callReturnRegister() const ROSE_DEPRECATED("use architecture()");
 };
 
 } // namespace

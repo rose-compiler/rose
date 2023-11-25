@@ -71,8 +71,6 @@ Powerpc::init() {
             break;
     }
 
-    byteOrder(ByteOrder::ORDER_MSB);
-
     REG_IP =   architecture()->registerDictionary()->instructionPointerRegister();
     REG_SP =   architecture()->registerDictionary()->stackPointerRegister();
     REG_SF =   architecture()->registerDictionary()->stackFrameRegister();

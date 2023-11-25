@@ -20,9 +20,7 @@ using namespace ByteOrder;
 using namespace Rose::Diagnostics; // mlog WARN, ...
 
 Cil::Cil(const Architecture::Base::ConstPtr &arch)
-    : Base(arch) {
-    byteOrder(ByteOrder::ORDER_MSB);
-}
+    : Base(arch) {}
 
 Cil::Ptr
 Cil::instance(const Architecture::Base::ConstPtr &arch) {
