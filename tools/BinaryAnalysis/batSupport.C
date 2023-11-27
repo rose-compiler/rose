@@ -2,6 +2,7 @@
 
 #include <rose.h>
 
+#include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/State.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
@@ -663,7 +664,8 @@ struct CheckRbaIo: Rose::CommandLine::SelfTest {
             SerialOutput::Ptr output = SerialOutput::instance();
             output->format(SerialIo::BINARY);
             output->open(tempRbaFile.name());
-            auto partitioner = P2::Partitioner::instance();
+            auto arch = Architecture::findByName("intel-pentium4").orThrow();
+            auto partitioner = P2::Partitioner::instance(arch);
             output->savePartitioner(partitioner);
         }
 

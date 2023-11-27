@@ -175,7 +175,7 @@ main(int argc, char *argv[]) {
         P2::Engine::Settings settings = engine->settings();
         settings.partitioner.doingPostAnalysis = false;
         if (settings.disassembler.isaName.empty()) {
-            Disassembler::Base::Ptr disassembler = engine->obtainDisassembler();
+            Disassembler::Base::Ptr disassembler = engine->architecture()->newInstructionDecoder();
             if (!disassembler) {
                 mlog[FATAL] <<"no disassembler found and none specified\n";
                 exit(1);
@@ -190,7 +190,7 @@ main(int argc, char *argv[]) {
 
     P2::Partitioner::Ptr partitioner;
     if (engine->settings().disassembler.doDisassemble) {
-        mlog[INFO] <<"using the " <<engine->obtainDisassembler()->name() <<" disassembler\n";
+        mlog[INFO] <<"using the " <<engine->architecture()->name() <<" architecture\n";
         partitioner = engine->partition(specimen);
     } else {
         partitioner = engine->createPartitioner();

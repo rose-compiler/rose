@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Unparser/Aarch64.h>
 
+#include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BitOps.h>
@@ -29,7 +30,8 @@ unparseAarch64Expression(SgAsmExpression *expr, const LabelMap *labels, Register
         registers = RegisterDictionary::instanceAarch64();
     auto unparser = Aarch64::instance(Aarch64Settings());
     std::ostringstream ss;
-    auto p = Partitioner2::Partitioner::instance();
+    auto arch = Architecture::findByName("arm-a64").orThrow();
+    auto p = Partitioner2::Partitioner::instance(arch);
     State state(p, registers, unparser->settings(), *unparser);
     unparser->emitOperand(ss, expr, state);
     return ss.str();

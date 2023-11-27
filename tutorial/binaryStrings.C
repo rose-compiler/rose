@@ -1,6 +1,7 @@
 //! [headers]
 #include <rose.h>
 
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 #include <Rose/BinaryAnalysis/String.h>
@@ -30,7 +31,7 @@ main(int argc, char *argv[]) {
 
     //! [load]
     MemoryMap::Ptr map = engine->loadSpecimens(specimen);
-    ByteOrder::Endianness sex = engine->obtainDisassembler()->byteOrder();
+    ByteOrder::Endianness sex = engine->architecture()->byteOrder();
     //! [load]
 
     //! [analysis]

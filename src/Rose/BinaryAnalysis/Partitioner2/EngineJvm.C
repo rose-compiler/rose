@@ -501,10 +501,7 @@ EngineJvm::loadSpecimens(const std::vector<std::string> &fileNames) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
-EngineJvm::checkCreatePartitionerPrerequisites() const {
-    if (nullptr == disassembler() && settings().disassembler.doDisassemble)
-        throw std::runtime_error("Engine::createBarePartitioner needs a prior disassembler");
-}
+EngineJvm::checkCreatePartitionerPrerequisites() const {}
 
 Partitioner::Ptr
 EngineJvm::createPartitioner() {
@@ -644,7 +641,7 @@ EngineJvm::partition(const std::vector<std::string> &fileNames) {
         } else {
             if (!areSpecimensLoaded()) {
                 loadSpecimens(fileNames); }
-            obtainDisassembler();
+            obtainArchitecture();
             Partitioner::Ptr partitioner = createPartitioner();
             runPartitioner(partitioner);
             return partitioner;
@@ -673,7 +670,7 @@ EngineJvm::discoverBasicBlocks(const PartitionerPtr& partitioner, const ByteCode
     rose_addr_t va{startVa};
 
     // Not sure where this goes (I suppose this discovers basic blocks), at least part of it, as it disassembles
-    method->decode(disassembler());
+    method->decode(architecture()->newInstructionDecoder());
 
     //TODO:
     // 1. create basic block

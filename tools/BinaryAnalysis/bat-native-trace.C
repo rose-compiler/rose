@@ -35,7 +35,7 @@ makeInstructionProvider(const P2::Engine::Ptr &engine) {
     using Rose::BinaryAnalysis::MemoryMap;
     ASSERT_not_null(engine);
 
-    Disassembler::Base::Ptr disasm = engine->obtainDisassembler();
+    Disassembler::Base::Ptr disasm = engine->architecture()->newInstructionDecoder();
     MemoryMap::Ptr memmap = engine->memoryMap();
 
     if (!disasm) {
@@ -132,7 +132,7 @@ main(int argc, char *argv[]) {
     if (WITH_INSTRUCTION_PROVIDER)
         instructionProvider = makeInstructionProvider(engine);
 
-    Disassembler::Base::Ptr disassembler = engine->obtainDisassembler();
+    Disassembler::Base::Ptr disassembler = engine->architecture()->newInstructionDecoder();
     if (!disassembler) {
         ::mlog[FATAL] <<"no disassembler for this architecture\n";
         exit(1);

@@ -640,7 +640,7 @@ Engine::init() {
 void
 Engine::reset() {
     interpretation(nullptr);
-    disassembler_ = Disassembler::Base::Ptr();
+    architecture_ = Architecture::Base::ConstPtr();
     map_ = MemoryMap::Ptr();
     basicBlockWorkList_ = BasicBlockWorkList::instance(sharedFromThis(), settings().partitioner.functionReturnAnalysisMaxSorts);
 }
@@ -784,10 +784,8 @@ Engine::parseCommandLine(const std::vector<std::string> &args, const std::string
 
 void
 Engine::checkSettings() {
-    if (!disassembler_ && !settings().disassembler.isaName.empty()) {
-        auto arch = Architecture::findByName(settings().disassembler.isaName).orThrow();
-        disassembler_ = arch->newInstructionDecoder();
-    }
+    if (!architecture_ && !settings().disassembler.isaName.empty())
+        architecture_ = obtainArchitecture();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -849,29 +847,37 @@ Engine::loadSpecimens(const std::string &fileName) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      Disassembler creation
+//                                      Architecture stuff
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Disassembler::Base::Ptr
-Engine::obtainDisassembler() {
-    return obtainDisassembler(Disassembler::Base::Ptr());
+Architecture::Base::ConstPtr
+Engine::architecture() {
+    if (!architecture_)
+        obtainArchitecture();
+    ASSERT_not_null(architecture_);
+    return architecture_;
 }
 
-Disassembler::Base::Ptr
-Engine::obtainDisassembler(const Disassembler::Base::Ptr &hint) {
-    if (!disassembler_ && !settings().disassembler.isaName.empty())
-        disassembler_ = Architecture::findByName(settings().disassembler.isaName).orThrow()->newInstructionDecoder();
+Architecture::Base::ConstPtr
+Engine::obtainArchitecture() {
+    return obtainArchitecture(Architecture::Base::ConstPtr());
+}
 
-    if (!disassembler_ && interpretation())
-        disassembler_ = Architecture::findByInterpretation(interpretation()).orThrow()->newInstructionDecoder();
+Architecture::Base::ConstPtr
+Engine::obtainArchitecture(const Architecture::Base::ConstPtr &hint) {
+    if (!architecture_ && !settings().disassembler.isaName.empty())
+        architecture_ = Architecture::findByName(settings().disassembler.isaName).orThrow();
 
-    if (!disassembler_ && hint)
-        disassembler_ = hint;
+    if (!architecture_ && interpretation())
+        architecture_ = Architecture::findByInterpretation(interpretation()).orThrow();
 
-    if (!disassembler_ && settings().disassembler.doDisassemble)
-        throw std::runtime_error("no disassembler found and none specified");
+    if (!architecture_ && hint)
+        architecture_ = hint;
 
-    return disassembler_;
+    if (!architecture_)
+        throw Architecture::NotFound("no architecture found and none specified");
+
+    return architecture_;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -880,8 +886,6 @@ Engine::obtainDisassembler(const Disassembler::Base::Ptr &hint) {
 
 void
 Engine::checkCreatePartitionerPrerequisites() const {
-    if (nullptr == disassembler_ && settings().disassembler.doDisassemble)
-        throw std::runtime_error("Engine::createBarePartitioner needs a prior disassembler");
     if (!map_ || map_->isEmpty())
         mlog[WARN] <<"Engine::createBarePartitioner: using an empty memory map\n";
 }
@@ -891,9 +895,9 @@ Engine::createBarePartitioner() {
     Sawyer::Message::Stream info(mlog[MARCH]);
 
     checkCreatePartitionerPrerequisites();
-    auto partitioner = Partitioner::instance(disassembler(), memoryMap());
-    if (partitioner->memoryMap() && partitioner->memoryMap()->byteOrder() == ByteOrder::ORDER_UNSPECIFIED && disassembler())
-        partitioner->memoryMap()->byteOrder(disassembler()->byteOrder());
+    auto partitioner = Partitioner::instance(architecture(), memoryMap());
+    if (partitioner->memoryMap() && partitioner->memoryMap()->byteOrder() == ByteOrder::ORDER_UNSPECIFIED)
+        partitioner->memoryMap()->byteOrder(architecture()->byteOrder());
     partitioner->settings(settings().partitioner.base);
     partitioner->progress(progress());
 
@@ -1130,16 +1134,6 @@ Engine::buildAst(const std::string &fileName) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Settings and Properties
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-Disassembler::Base::Ptr
-Engine::disassembler() const {
-    return disassembler_;
-}
-
-void
-Engine::disassembler(const Disassembler::Base::Ptr &d) {
-    disassembler_ = d;
-}
 
 Progress::Ptr
 Engine::progress() const {

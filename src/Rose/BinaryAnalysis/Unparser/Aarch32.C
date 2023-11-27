@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Unparser/Aarch32.h>
 
+#include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <boost/lexical_cast.hpp>
@@ -27,7 +28,8 @@ unparseAarch32Expression(SgAsmExpression *expr, const LabelMap *labels, Register
         registers = RegisterDictionary::instanceAarch32();
     auto unparser = Aarch32::instance(Aarch32Settings());
     std::ostringstream ss;
-    auto p = Partitioner2::Partitioner::instance();
+    auto arch = Architecture::findByName("arm-a32").orThrow();
+    auto p = Partitioner2::Partitioner::instance(arch);
     State state(p, registers, unparser->settings(), *unparser);
     unparser->emitOperand(ss, expr, state);
     return ss.str();

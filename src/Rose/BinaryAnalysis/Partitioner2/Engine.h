@@ -4,6 +4,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BasicTypes.h>
+#include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Exception.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
 #include <Rose/BinaryAnalysis/SerialIo.h>
@@ -345,7 +346,7 @@ private:
     std::string name_;                                  // factory name
     Settings settings_;                                 // Settings for the partitioner.
     SgAsmInterpretation *interp_;                       // interpretation set by loadSpecimen
-    Disassembler::BasePtr disassembler_;                // not ref-counted yet, but don't destroy it since user owns it
+    Architecture::BaseConstPtr architecture_;           // architecture-specific information
     MemoryMapPtr map_;                                  // memory map initialized by load()
     BasicBlockWorkList::Ptr basicBlockWorkList_;        // what blocks to work on next
     CodeConstants::Ptr codeFunctionPointers_;           // generates constants that are found in instruction ASTs
@@ -610,9 +611,9 @@ public:
 public:
     /** Reset the engine to its initial state.
      *
-     *  This does not reset the settings properties since that can be done easily by constructing a new engine.  It only resets
-     *  the interpretation, binary loader, disassembler, and memory map so all the top-level steps get executed again. This is
-     *  a useful way to re-use the same partitioner to process multiple specimens. */
+     *  This does not reset the settings properties since that can be done easily by constructing a new engine.  It only resets the
+     *  interpretation, binary loader, and memory map so all the top-level steps get executed again. This is a useful way to re-use
+     *  the same partitioner to process multiple specimens. */
     virtual void reset();
 
     /** Parse the command-line.
@@ -692,9 +693,8 @@ public:
      *  are recognized as raw data or other non-containers then they are skipped over at this stage but processed during the
      *  @ref loadSpecimens stage.
      *
-     *  This method tries to allocate a disassembler if none is set and an ISA name is specified in the settings, otherwise the
-     *  disassembler is chosen later.  It also resets the interpretation to be the return value (see below), and clears the
-     *  memory map.
+     *  This method tries to determine the specimen architecture. It also resets the interpretation to be the return value (see
+     *  below), and clears the memory map.
      *
      *  Returns a binary interpretation (perhaps one of many). ELF files have only one interpretation; PE files have a DOS and
      *  a PE interpretation and this method will return the PE interpretation. The user may, at this point, select a different
@@ -740,7 +740,7 @@ public:
      *  @li If the specimen is not loaded (@ref areSpecimensLoaded) then call @ref loadSpecimens. The no-argument version of
      *  this function requires that specimens have already been loaded.
      *
-     *  @li Obtain a disassembler by calling @ref obtainDisassembler.
+     *  @li Determine the architecture for the specimen by calling @ref obtainArchitecture.
      *
      *  @li Create a partitioner by calling @ref createPartitioner.
      *
@@ -761,7 +761,7 @@ public:
      *  This does some checks and further configuration immediately after processing the command line. It's also called by most
      *  of the top-level operations.
      *
-     *  If an ISA name is specified in the settings and no disassembler has been set yet, then a disassembler is allocated. */
+     *  If an ISA name is specified in the settings and no architecture has been set yet, then an architecture is chosen. */
     virtual void checkSettings();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -818,31 +818,30 @@ public:
     /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Disassembler
+    //                                  Architecture
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Obtain a disassembler.
+    /** Determine the architecture.
      *
-     *  Chooses a disassembler based on one of the following (in this order):
+     *  Chooses an architecture based on one of the following (in this order):
      *
-     *  @li If this engine's @ref disassembler property is non-null, then return that disassembler.
+     *  @li If this engine's @ref architecture property is non-null, then return that architecture.
      *
-     *  @li If this engine's ISA name setting is non-empty, then use it to obtain a disassembler.
+     *  @li If this engine's ISA name setting is non-empty, then use an architecture that handles that name.
      *
      *  @li If a binary container was parsed (@ref areContainersParsed returns true and @ref interpretation is non-null) then
-     *      try to obtain a disassembler based on the interpretation.
+     *      try to choose an architecture based on the interpretation.
      *
      *  @li If a @p hint is supplied, then use it.
      *
-     *  @li If the engine @ref doDisassemble property is false, return no disassembler (nullptr).
+     *  @li Fail by throwing a @ref Architecture::NotFound error.
      *
-     *  @li Fail by throwing an <code>std::runtime_error</code>.
+     *  In any case, the @ref architecture property is set to this method's return value.
      *
-     *  In any case, the @ref disassembler property is set to this method's return value. */
-    virtual Disassembler::BasePtr obtainDisassembler();
-    virtual Disassembler::BasePtr obtainDisassembler(const Disassembler::BasePtr &hint);
+     * @{ */
+    virtual Architecture::BaseConstPtr obtainArchitecture();
+    virtual Architecture::BaseConstPtr obtainArchitecture(const Architecture::BaseConstPtr &hint);
     /** @} */
-
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner high-level functions
@@ -857,9 +856,7 @@ public:
      *
      *  A bare partitioner, as far as the engine is concerned, is one that has characteristics that are common across all
      *  architectures but which is missing all architecture-specific functionality.  Using the partitioner's own constructor is
-     *  not quite the same--that would produce an even more bare partitioner!  The engine must have @ref disassembler (if @ref
-     *  doDisassemble is set) and @ref memoryMap properties already either assigned explicitly or as the result of earlier
-     *  steps. */
+     *  not quite the same--that would produce an even more bare partitioner! */
     virtual PartitionerPtr createBarePartitioner();
 
     /** Create partitioner.
@@ -949,6 +946,12 @@ public:
     void name(const std::string&);
     /** @} */
 
+    /** Property: Architecture.
+     *
+     *  The non-null object representing architecture-specific information is returned, or an @ref Architecture::NotFound exception
+     *  is thrown if there is no architecture and none can be determined. */
+    Architecture::BaseConstPtr architecture();
+
     /** Property: All settings.
      *
      *  Returns a reference to the engine settings structures.  Alternatively, some settings also have a corresponding engine
@@ -975,16 +978,6 @@ public:
      * @{ */
     CodeConstants::Ptr codeFunctionPointers() const /*final*/;
     void codeFunctionPointers(const CodeConstants::Ptr&) /*final*/;
-    /** @} */
-
-    /** Property: Disassembler.
-     *
-     *  This property holds the disassembler to use whenever a new partitioner is created. If null, then the engine will choose
-     *  a disassembler based on the binary container (unless @ref doDisassemble property is clear).
-     *
-     * @{ */
-    Disassembler::BasePtr disassembler() const;
-    virtual void disassembler(const Disassembler::BasePtr&);
     /** @} */
 
     /** Property: interpretation

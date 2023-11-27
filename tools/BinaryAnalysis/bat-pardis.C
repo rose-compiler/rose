@@ -1,5 +1,5 @@
 #include <featureTests.h>
-#if defined(ROSE_BUILD_BINARY_ANALYSIS_SUPPORT) && __cplusplus >= 201103L
+#ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 
 static const char *purpose = "experimental parallel disassembly";
 static const char *description =
@@ -286,7 +286,7 @@ int main(int argc, char *argv[]) {
     P2::Engine::Ptr engine = P2::EngineBinary::instance();
     std::vector<std::string> specimenName = engine->parseCommandLine(argc, argv, purpose, description).unreachedArgs();
     MemoryMap::Ptr memory = engine->loadSpecimens(specimenName);
-    Disassembler::Base::Ptr decoder = engine->obtainDisassembler();
+    Disassembler::Base::Ptr decoder = engine->architecture()->newInstructionDecoder();
 
     // Create the parallel partitioner
     PP::Settings ppSettings;

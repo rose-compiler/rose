@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesLinux.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
@@ -324,13 +325,6 @@ public:
     // top-level: partition
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Create a generic partitioner.
-     *
-     *  A generic partitioner should work for any architecture but is not fine-tuned for any particular architecture. The
-     *  engine must have @ref disassembler (if @ref doDisassemble property is set) and @ref memoryMap properties assigned
-     *  already, either explicitly or as the result of earlier steps. */
-    virtual PartitionerPtr createGenericPartitioner();
-
     /** Create a tuned partitioner.
      *
      *  Returns a partitioner that is tuned to operate on a specific instruction set architecture. The engine must have @ref

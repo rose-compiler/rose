@@ -267,10 +267,11 @@ main(int argc, char *argv[]) {
     if (settings.showingInsns) {
         std::string specimen = "proc:noattach:" + boost::lexical_cast<std::string>(*process->processId());
         P2::Engine::Ptr engine = P2::EngineBinary::instance();
-        engine->settings().disassembler.isaName = "i386";// FIXME[Robb Matzke 2019-12-12]
+        engine->settings().disassembler.isaName = "intel-pentium4";// FIXME[Robb Matzke 2019-12-12]
         partitioner = engine->partition(specimen);
     } else {
-        partitioner = P2::Partitioner::instance();
+        auto arch = Architecture::findByName("intel-pentium4").orThrow(); // FIXME[Robb Matzke 2023-11-27]
+        partitioner = P2::Partitioner::instance(arch);
     }
 
     TraceFilter filter(settings.compareFile);

@@ -69,28 +69,29 @@ Partitioner::Thunk::~Thunk() {}
 // Constructors
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Partitioner::Partitioner()
-    : interpretation_(nullptr), solver_(SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver)),
-      autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
-      semanticMemoryParadigm_(LIST_BASED_MEMORY), progress_(Progress::instance()), cfgProgressTotal_(0) {
-    init(Disassembler::Base::Ptr(), memoryMap_);
+// Used only by boost::serialization
+Partitioner::Partitioner() {}
+
+Partitioner::Partitioner(const Architecture::Base::ConstPtr &architecture)
+    : architecture_(architecture), solver_(SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver)),
+      progress_(Progress::instance()) {
+    init(MemoryMap::Ptr());
 }
 
-Partitioner::Partitioner(const Disassembler::Base::Ptr &disassembler, const MemoryMap::Ptr &map)
-    : memoryMap_(map), interpretation_(nullptr), solver_(SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver)),
-      autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
-      semanticMemoryParadigm_(LIST_BASED_MEMORY), progress_(Progress::instance()), cfgProgressTotal_(0) {
-    init(disassembler, map);
-}
-
-Partitioner::Ptr
-Partitioner::instance() {
-    return Ptr(new Partitioner);
+Partitioner::Partitioner(const Architecture::Base::ConstPtr &architecture, const MemoryMap::Ptr &map)
+    : architecture_(architecture), memoryMap_(map), solver_(SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver)),
+      progress_(Progress::instance()) {
+    init(map);
 }
 
 Partitioner::Ptr
-Partitioner::instance(const Disassembler::Base::Ptr &disassembler, const MemoryMap::Ptr &memoryMap) {
-    return Ptr(new Partitioner(disassembler, memoryMap));
+Partitioner::instance(const Architecture::Base::ConstPtr &architecture) {
+    return Ptr(new Partitioner(architecture));
+}
+
+Partitioner::Ptr
+Partitioner::instance(const Architecture::Base::ConstPtr &architecture, const MemoryMap::Ptr &memoryMap) {
+    return Ptr(new Partitioner(architecture, memoryMap));
 }
 
 Partitioner::Ptr
@@ -154,6 +155,7 @@ Partitioner::operator=(BOOST_RV_REF(Partitioner) other) {
     Sawyer::Attribute::Storage<>::operator=(other);
     settings_ = other.settings_;
     config_ = other.config_;
+    architecture_ = other.architecture_;
     cfg_ = other.cfg_;
     aum_ = other.aum_;
     vertexIndex_.clear();                               // initialized by init(other)
@@ -229,9 +231,9 @@ Partitioner::~Partitioner() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Partitioner::Partitioner(const Partitioner &other)
-    : solver_(SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver)), autoAddCallReturnEdges_(false),
-      assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1), semanticMemoryParadigm_(LIST_BASED_MEMORY),
-      progress_(Progress::instance()), cfgProgressTotal_(0) {
+    : architecture_(other.architecture_), solver_(SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver)),
+      autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
+      semanticMemoryParadigm_(LIST_BASED_MEMORY), progress_(Progress::instance()), cfgProgressTotal_(0) {
     // WARNING: This is a dangerous operation. Both partitioners will now be pointing to the same data and confusion is likely.
     // The only safe thing to do with the other partitioner is to delete it.
     *this = other;
@@ -244,6 +246,7 @@ Partitioner::operator=(const Partitioner &other) {
     Sawyer::Attribute::Storage<>::operator=(other);
     settings_ = other.settings_;
     config_ = other.config_;
+    architecture_ = other.architecture_;
     cfg_ = other.cfg_;
     aum_ = other.aum_;
     vertexIndex_.clear();                               // initialized by init(other)
@@ -292,11 +295,12 @@ Partitioner::~Partitioner() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
-Partitioner::init(const Disassembler::Base::Ptr &disassembler, const MemoryMap::Ptr &map) {
+Partitioner::init(const MemoryMap::Ptr &map) {
     // Start with a large hash table to reduce early rehashing. There's a high chance that we'll need this much.
     vertexIndex_.rehash(100000);
 
-    if (disassembler) {
+    ASSERT_not_null(architecture_);
+    if (auto disassembler = architecture_->newInstructionDecoder()) {
         instructionProvider_ = InstructionProvider::instance(disassembler, map);
         unparser_ = disassembler->unparser()->copy();
         insnUnparser_ = disassembler->unparser()->copy();

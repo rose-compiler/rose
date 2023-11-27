@@ -9,6 +9,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Semantics.h>
 
+#include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionProvider.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/SerialIo.h>
@@ -338,20 +339,21 @@ public:
 private:
     BasePartitionerSettings settings_;                  // settings adjustable from the command-line
     Configuration config_;                              // configuration information about functions, blocks, etc.
+    Architecture::BaseConstPtr architecture_;           // architecture information such as the ISA, word size, etc.
     InstructionProvider::Ptr instructionProvider_;      // cache for all disassembled instructions
     MemoryMap::Ptr memoryMap_;                          // description of memory, especially insns and non-writable
-    SgAsmInterpretation *interpretation_;               // Interpretation corresponding to the memory map
+    SgAsmInterpretation *interpretation_ = nullptr;     // Interpretation corresponding to the memory map
     ControlFlowGraph cfg_;                              // basic blocks that will become part of the ROSE AST
     CfgVertexIndex vertexIndex_;                        // Vertex-by-address index for the CFG
     AddressUsageMap aum_;                               // How addresses are used for each address represented by the CFG
     SmtSolverPtr solver_;                               // Satisfiable modulo theory solver used by semantic expressions
     Functions functions_;                               // List of all attached functions by entry address
-    bool autoAddCallReturnEdges_;                       // Add E_CALL_RETURN edges when blocks are attached to CFG?
-    bool assumeFunctionsReturn_;                        // Assume that unproven functions return to caller?
-    size_t stackDeltaInterproceduralLimit_;             // Max depth of call stack when computing stack deltas
+    bool autoAddCallReturnEdges_ = false;               // Add E_CALL_RETURN edges when blocks are attached to CFG?
+    bool assumeFunctionsReturn_ = true;                 // Assume that unproven functions return to caller?
+    size_t stackDeltaInterproceduralLimit_ = 1;         // Max depth of call stack when computing stack deltas
     AddressNameMap addressNames_;                       // Names for various addresses
     SourceLocations sourceLocations_;                   // Mapping between source locations and addresses
-    SemanticMemoryParadigm semanticMemoryParadigm_;     // Slow and precise, or fast and imprecise?
+    SemanticMemoryParadigm semanticMemoryParadigm_ = LIST_BASED_MEMORY; // Slow and precise, or fast and imprecise?
     Unparser::BasePtr unparser_;                        // For unparsing things to pseudo-assembly
     Unparser::BasePtr insnUnparser_;                    // For unparsing single instructions in diagnostics
     Unparser::BasePtr insnPlainUnparser_;               // For unparsing just instruction mnemonic and operands
@@ -374,7 +376,7 @@ private:
     // Protects the following data members
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_;
     Progress::Ptr progress_;                            // Progress reporter to update, or null
-    mutable size_t cfgProgressTotal_;                   // Expected total for the CFG progress bar; initialized at first report
+    mutable size_t cfgProgressTotal_ = 0;               // Expected total for the CFG progress bar; initialized at first report
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -444,6 +446,11 @@ private:
         const_cast<Partitioner*>(this)->serializeCommon(s, version);
         if (version >= 3)
             saveAst(s, interpretation_);
+        if (version >= 4) {
+            ASSERT_not_null(architecture_);
+            std::string architecture = architecture_->name();
+            s & BOOST_SERIALIZATION_NVP(architecture);
+        }
     }
 
     template<class S>
@@ -453,6 +460,11 @@ private:
             SgNode *node = restoreAst(s);
             interpretation_ = isSgAsmInterpretation(node);
             ASSERT_require(!node || interpretation_);
+        }
+        if (version >= 4) {
+            std::string architecture;
+            s & BOOST_SERIALIZATION_NVP(architecture);
+            architecture_ = Architecture::findByName(architecture).orThrow();
         }
         rebuildVertexIndices();
     }
@@ -468,11 +480,13 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
+    Partitioner();                                      // needed for Boost serialization
+
     // Partitioner objects are reference counted and always allocated on the heap. Use the `instance` methods to construct
     // these objects.  Also, since the Partitioner class is final, we make the constructors private instead of the usual
     // protected constructors elsewhere in ROSE.
-    Partitioner();
-    Partitioner(const Disassembler::BasePtr&, const MemoryMap::Ptr&);
+    Partitioner(const Architecture::BaseConstPtr&);
+    Partitioner(const Architecture::BaseConstPtr&, const MemoryMap::Ptr&);
 public:
     ~Partitioner();
 
@@ -481,13 +495,13 @@ public:
      *
      *  The default constructor does not produce a usable partitioner, but is convenient when one needs to pass a default
      *  partitioner by value or reference. */
-    static Ptr instance();
+    static Ptr instance(const Architecture::BaseConstPtr&);
 
     /** Construct a partitioner.
      *
      *  The partitioner must be provided with a disassembler, which also determines the specimen's target architecture, and a
      *  memory map that represents a (partially) loaded instance of the specimen (i.e., a process). */
-    static Ptr instance(const Disassembler::BasePtr&, const MemoryMap::Ptr&);
+    static Ptr instance(const Architecture::BaseConstPtr&, const MemoryMap::Ptr&);
 
     /** Construct a partitioner by loading it and an AST from a file.
      *
@@ -2578,7 +2592,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
-    void init(const Disassembler::BasePtr&, const MemoryMap::Ptr&);
+    void init(const MemoryMap::Ptr&);
     void init(const Partitioner&);
     void updateCfgProgress();
 
@@ -2616,7 +2630,7 @@ private:
 } // namespace
 
 // Class versions must be at global scope
-BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::Partitioner, 3);
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::Partitioner, 4);
 
 #endif
 #endif
