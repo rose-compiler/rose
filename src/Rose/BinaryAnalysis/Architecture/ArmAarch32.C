@@ -5,6 +5,7 @@
 
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/Disassembler/Aarch32.h>
+#include <Rose/BinaryAnalysis/Unparser/Aarch32.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -305,6 +306,11 @@ ArmAarch32::newInstructionDecoder() const {
             return Disassembler::Aarch32::instanceT32(shared_from_this());
     }
     ASSERT_not_reachable("invalid instruction set");
+}
+
+Unparser::Base::Ptr
+ArmAarch32::newUnparser() const {
+    return Unparser::Aarch32::instance(shared_from_this());
 }
 
 } // namespace

@@ -121,6 +121,21 @@ unparsePowerpcExpression(SgAsmExpression *expr, const LabelMap *labels, const Re
 // Powerpc
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+Powerpc::~Powerpc() {}
+
+Powerpc::Powerpc(const Architecture::Base::ConstPtr &arch, const PowerpcSettings &settings)
+    : Base(arch), settings_(settings) {}
+
+Powerpc::Ptr
+Powerpc::instance(const Architecture::Base::ConstPtr &arch, const PowerpcSettings &settings) {
+    return Ptr(new Powerpc(arch, settings));
+}
+
+Base::Ptr
+Powerpc::copy() const {
+    return instance(architecture(), settings());
+}
+
 void
 Powerpc::emitInstruction(std::ostream &out, SgAsmInstruction *insn_, State &state) const {
     ASSERT_not_null(isSgAsmPowerpcInstruction(insn_));

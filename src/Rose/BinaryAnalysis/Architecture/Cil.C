@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/Architecture/Cil.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Cil.h>
+#include <Rose/BinaryAnalysis/Unparser/Cil.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -38,6 +39,11 @@ Cil::matchesHeader(SgAsmGenericHeader *header) const {
 Disassembler::Base::Ptr
 Cil::newInstructionDecoder() const {
     return Disassembler::Cil::instance(shared_from_this());
+}
+
+Unparser::Base::Ptr
+Cil::newUnparser() const {
+    return Unparser::Cil::instance(shared_from_this());
 }
 
 } // namespace

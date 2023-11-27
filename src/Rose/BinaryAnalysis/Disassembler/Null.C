@@ -5,7 +5,6 @@
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
-#include <Rose/BinaryAnalysis/Unparser/Null.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -27,11 +26,6 @@ Null::instance(const Architecture::Base::ConstPtr &arch) {
 Base::Ptr
 Null::clone() const {
     return Ptr(new Null(architecture()));
-}
-
-Unparser::BasePtr
-Null::unparser() const {
-    return Unparser::Null::instance();
 }
 
 SgAsmInstruction*

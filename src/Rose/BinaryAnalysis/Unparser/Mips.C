@@ -124,6 +124,21 @@ unparseMipsExpression(SgAsmExpression *expr, const LabelMap *labels, const Regis
 // Mips
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+Mips::~Mips() {}
+
+Mips::Mips(const Architecture::Base::ConstPtr &arch, const MipsSettings &settings)
+    : Base(arch), settings_(settings) {}
+
+Mips::Ptr
+Mips::instance(const Architecture::Base::ConstPtr &arch, const MipsSettings &settings) {
+    return Ptr(new Mips(arch, settings));
+}
+
+Base::Ptr
+Mips::copy() const {
+    return instance(architecture(), settings());
+}
+
 void
 Mips::emitInstruction(std::ostream &out, SgAsmInstruction *insn_, State &state) const {
     ASSERT_not_null(isSgAsmMipsInstruction(insn_));

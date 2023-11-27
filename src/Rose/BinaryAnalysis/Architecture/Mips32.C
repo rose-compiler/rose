@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/Architecture/Mips32.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Mips.h>
+#include <Rose/BinaryAnalysis/Unparser/Mips.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -120,6 +121,11 @@ Mips32::matchesHeader(SgAsmGenericHeader *header) const {
 Disassembler::Base::Ptr
 Mips32::newInstructionDecoder() const {
     return Disassembler::Mips::instance(shared_from_this());
+}
+
+Unparser::Base::Ptr
+Mips32::newUnparser() const {
+    return Unparser::Mips::instance(shared_from_this());
 }
 
 } // namespace

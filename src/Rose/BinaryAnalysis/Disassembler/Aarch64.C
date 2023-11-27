@@ -5,7 +5,6 @@
 #include <Rose/BitOps.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Disassembler/Aarch64.h>
-#include <Rose/BinaryAnalysis/Unparser/Aarch64.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch64.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
@@ -67,11 +66,6 @@ Aarch64::~Aarch64() {
         cs_err err = cs_close(&capstone_);
         ASSERT_always_require2(CS_ERR_OK == err, "capstone cs_close failed");
     }
-}
-
-Unparser::BasePtr
-Aarch64::unparser() const {
-    return Unparser::Aarch64::instance();
 }
 
 SgAsmInstruction*

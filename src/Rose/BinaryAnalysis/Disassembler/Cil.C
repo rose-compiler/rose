@@ -5,7 +5,6 @@
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
-#include <Rose/BinaryAnalysis/Unparser/Cil.h>
 
 #include <SageBuilderAsm.h>
 
@@ -32,11 +31,6 @@ Cil::~Cil() {}
 Disassembler::Base::Ptr
 Cil::clone() const {
     return Ptr(new Cil(architecture()));
-}
-
-Unparser::BasePtr
-Cil::unparser() const {
-    return Unparser::Cil::instance();
 }
 
 SgAsmInstruction*

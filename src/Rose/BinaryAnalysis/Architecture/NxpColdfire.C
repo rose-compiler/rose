@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/Architecture/NxpColdfire.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/M68k.h>
+#include <Rose/BinaryAnalysis/Unparser/M68k.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -110,6 +111,11 @@ NxpColdfire::matchesHeader(SgAsmGenericHeader *header) const {
 Disassembler::Base::Ptr
 NxpColdfire::newInstructionDecoder() const {
     return Disassembler::M68k::instance(shared_from_this(), m68k_freescale_cpu32);
+}
+
+Unparser::Base::Ptr
+NxpColdfire::newUnparser() const {
+    return Unparser::M68k::instance(shared_from_this());
 }
 
 } // namespace

@@ -20,19 +20,14 @@ class Jvm: public Base {
     JvmSettings settings_;
 
 protected:
-    explicit Jvm(const JvmSettings &settings)
-        : settings_(settings) {}
+    explicit Jvm(const Architecture::BaseConstPtr&, const JvmSettings&);
 
 public:
-    ~Jvm() {}
+    ~Jvm();
 
-    static Ptr instance(const JvmSettings &settings = JvmSettings()) {
-        return Ptr(new Jvm(settings));
-    }
+    static Ptr instance(const Architecture::BaseConstPtr&, const JvmSettings& = JvmSettings());
 
-    Ptr copy() const override {
-        return instance(settings());
-    }
+    Ptr copy() const override;
 
     const JvmSettings& settings() const override { return settings_; }
     JvmSettings& settings() override { return settings_; }

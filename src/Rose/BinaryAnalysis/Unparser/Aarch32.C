@@ -24,11 +24,12 @@ unparseAarch32Mnemonic(SgAsmAarch32Instruction *insn) {
 
 std::string
 unparseAarch32Expression(SgAsmExpression *expr, const LabelMap *labels, RegisterDictionary::Ptr registers) {
-    if (!registers)
-        registers = Architecture::findByName("arm-a32").orThrow()->registerDictionary();
-    auto unparser = Aarch32::instance(Aarch32Settings());
-    std::ostringstream ss;
     auto arch = Architecture::findByName("arm-a32").orThrow();
+
+    if (!registers)
+        registers = arch->registerDictionary();
+    auto unparser = arch->newUnparser();
+    std::ostringstream ss;
     auto p = Partitioner2::Partitioner::instance(arch);
     State state(p, registers, unparser->settings(), *unparser);
     unparser->emitOperand(ss, expr, state);
@@ -38,6 +39,21 @@ unparseAarch32Expression(SgAsmExpression *expr, const LabelMap *labels, Register
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Aarch32
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Aarch32::~Aarch32() {}
+
+Aarch32::Aarch32(const Architecture::Base::ConstPtr &arch, const Aarch32Settings &settings)
+    : Base(arch), settings_(settings) {}
+
+Aarch32::Ptr
+Aarch32::instance(const Architecture::Base::ConstPtr &arch, const Aarch32Settings &settings) {
+    return Ptr(new Aarch32(arch, settings));
+}
+
+Base::Ptr
+Aarch32::copy() const {
+    return instance(architecture(), settings());
+}
 
 void
 Aarch32::emitInstructionMnemonic(std::ostream &out, SgAsmInstruction *insn_, State&) const {

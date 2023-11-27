@@ -6,7 +6,6 @@
 #include "integerOps.h"
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
-#include <Rose/BinaryAnalysis/Unparser/Mips.h>
 #include <Rose/Diagnostics.h>
 
 namespace Rose {
@@ -93,11 +92,6 @@ Mips::instance(const Architecture::Base::ConstPtr &arch) {
 Base::Ptr
 Mips::clone() const {
     return Ptr(new Mips(*this));
-}
-
-Unparser::BasePtr
-Mips::unparser() const {
-    return Unparser::Mips::instance();
 }
 
 // see base class

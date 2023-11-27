@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/Architecture/Intel80286.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/X86.h>
+#include <Rose/BinaryAnalysis/Unparser/X86.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -47,6 +48,11 @@ Intel80286::matchesHeader(SgAsmGenericHeader *header) const {
 Disassembler::Base::Ptr
 Intel80286::newInstructionDecoder() const {
     return Disassembler::X86::instance(shared_from_this());
+}
+
+Unparser::Base::Ptr
+Intel80286::newUnparser() const {
+    return Unparser::X86::instance(shared_from_this());
 }
 
 } // namespace

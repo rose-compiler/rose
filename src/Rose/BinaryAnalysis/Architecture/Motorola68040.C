@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/Architecture/Motorola68040.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/M68k.h>
+#include <Rose/BinaryAnalysis/Unparser/M68k.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -140,6 +141,11 @@ Motorola68040::matchesHeader(SgAsmGenericHeader *header) const {
 Disassembler::Base::Ptr
 Motorola68040::newInstructionDecoder() const {
     return Disassembler::M68k::instance(shared_from_this(), m68k_68040);
+}
+
+Unparser::Base::Ptr
+Motorola68040::newUnparser() const {
+    return Unparser::M68k::instance(shared_from_this());
 }
 
 } // namespace

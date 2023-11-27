@@ -8,6 +8,7 @@
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/BinaryLoader.h>
 #include <Rose/BinaryAnalysis/Disassembler/Exception.h>
+#include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/Diagnostics.h>
 
 #include <integerOps.h>
@@ -208,6 +209,11 @@ Base::stackSegmentRegister() const {
 RegisterDescriptor
 Base::callReturnRegister() const {
     return architecture()->registerDictionary()->callReturnRegister();
+}
+
+Unparser::Base::Ptr
+Base::unparser() const {
+    return architecture()->newUnparser();
 }
 
 } // namespace

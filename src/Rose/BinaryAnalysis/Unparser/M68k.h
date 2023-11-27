@@ -21,18 +21,16 @@ class M68k: public Base {
     M68kSettings settings_;
 
 protected:
-    explicit M68k(const M68kSettings &settings)
-        : settings_(settings) {}
+    explicit M68k(const Architecture::BaseConstPtr&, const M68kSettings&);
 
 public:
-    static Ptr instance(const M68kSettings &settings = M68kSettings()) {
-        return Ptr(new M68k(settings));
-    }
+    ~M68k();
 
-    Ptr copy() const override {
-        return instance(settings());
-    }
-    
+public:
+    static Ptr instance(const Architecture::BaseConstPtr&, const M68kSettings& = M68kSettings());
+
+    Ptr copy() const override;
+
     const M68kSettings& settings() const override { return settings_; }
     M68kSettings& settings() override { return settings_; }
 

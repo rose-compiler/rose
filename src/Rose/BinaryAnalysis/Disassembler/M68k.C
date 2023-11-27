@@ -9,7 +9,6 @@
 #include "SageBuilderAsm.h"
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h>
-#include <Rose/BinaryAnalysis/Unparser/M68k.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 #include <Sawyer/Assert.h>                              // FIXME[Robb P. Matzke 2014-06-19]: replace with "Diagnostics.h"
@@ -342,11 +341,6 @@ M68k::clone() const {
     return Ptr(new M68k(*this));
 }
 
-
-Unparser::BasePtr
-M68k::unparser() const {
-    return Unparser::M68k::instance();
-}
 
 SgAsmType *
 M68k::makeType(State &state, M68kDataFormat fmt) const

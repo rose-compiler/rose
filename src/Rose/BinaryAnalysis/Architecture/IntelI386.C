@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/Architecture/IntelI386.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/Unparser/X86.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -146,6 +147,11 @@ Disassembler::Base::Ptr
 IntelI386::newInstructionDecoder() const {
     // FIXME[Robb Matzke 2023-11-21]: No Disassembler::X86 API to create an Intel Pentium decoder.
     return {};
+}
+
+Unparser::Base::Ptr
+IntelI386::newUnparser() const {
+    return Unparser::X86::instance(shared_from_this());
 }
 
 } // namespace

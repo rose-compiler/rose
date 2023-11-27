@@ -130,7 +130,7 @@ public:
      *
      *  Returns an unparser suitable for unparsing the same instruction set architecture as recognized and produced by this
      *  disassembler. */
-    virtual Unparser::BasePtr unparser() const = 0;
+    Unparser::BasePtr unparser() const;
 
     /** Property: Instruction alignment requirement.
      *

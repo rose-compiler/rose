@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/Architecture/IntelPentium4.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/X86.h>
+#include <Rose/BinaryAnalysis/Unparser/X86.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -44,6 +45,11 @@ IntelPentium4::matchesHeader(SgAsmGenericHeader *header) const {
 Disassembler::Base::Ptr
 IntelPentium4::newInstructionDecoder() const {
     return Disassembler::X86::instance(shared_from_this());
+}
+
+Unparser::Base::Ptr
+IntelPentium4::newUnparser() const {
+    return Unparser::X86::instance(shared_from_this());
 }
 
 } // namespace

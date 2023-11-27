@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
@@ -415,13 +416,25 @@ ArrowMargin::render(Sawyer::Optional<EdgeArrows::VertexId> currentEntity) {
 //                                      Constructors, etc.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Base::Base() {}
+Base::Base(const Architecture::Base::ConstPtr &architecture)
+    : architecture_(architecture) {
+    ASSERT_not_null(architecture);
+}
 
 Base::Base(const Ptr &nextUnparser)
-    : nextUnparser_(nextUnparser) {}
+    : architecture_(nextUnparser->architecture()), nextUnparser_(nextUnparser) {}
 
 Base::~Base() {}
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Unparser properties
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Architecture::Base::ConstPtr
+Base::architecture() const {
+    ASSERT_not_null(architecture_);
+    return architecture_;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Supporting functions

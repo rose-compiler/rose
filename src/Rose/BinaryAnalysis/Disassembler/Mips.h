@@ -34,7 +34,6 @@ public:
                                              AddressSet *successors=NULL) override;
     virtual SgAsmInstruction *makeUnknownInstruction(const Exception&) override;
     SgAsmMipsInstruction *makeUnknownInstruction(rose_addr_t insn_va, unsigned opcode) const;
-    virtual Unparser::BasePtr unparser() const override;
 
     /** Interface for disassembling a single instruction.  Each instruction (or in some cases groups of closely related
      *  instructions) will define a subclass whose operator() unparses a single instruction word and returns an

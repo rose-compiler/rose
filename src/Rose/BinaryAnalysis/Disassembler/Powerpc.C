@@ -10,7 +10,6 @@
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
-#include <Rose/BinaryAnalysis/Unparser/Powerpc.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherPowerpc.h>
 
 namespace Rose {
@@ -53,11 +52,6 @@ Powerpc::instance(const Architecture::Base::ConstPtr &arch) {
 Base::Ptr
 Powerpc::clone() const {
     return Ptr(new Powerpc(*this));
-}
-
-Unparser::BasePtr
-Powerpc::unparser() const {
-    return Unparser::Powerpc::instance();
 }
 
 void

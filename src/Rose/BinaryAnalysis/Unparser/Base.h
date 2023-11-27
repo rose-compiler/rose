@@ -416,9 +416,10 @@ public:
 
 private:
     Ptr nextUnparser_;
+    Architecture::BaseConstPtr architecture_;           // non-null architecture
 
 protected:
-    Base();
+    explicit Base(const Architecture::BaseConstPtr&);
     explicit Base(const Ptr &nextUnparser);
 
 public:
@@ -451,6 +452,11 @@ public:
     Ptr nextUnparser() const { return nextUnparser_; }
     void nextUnparser(Ptr next) { nextUnparser_ = next; }
     /** @} */
+
+    /** Property: Architecture.
+     *
+     *  A non-null pointer to the architecture that this unparser unparses. */
+    Architecture::BaseConstPtr architecture() const;
 
     /** Emit the entity to an output stream.
      *

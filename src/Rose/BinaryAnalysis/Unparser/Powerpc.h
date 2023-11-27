@@ -21,18 +21,16 @@ class Powerpc: public Base {
     PowerpcSettings settings_;
 
 protected:
-    explicit Powerpc(const PowerpcSettings &settings)
-        : settings_(settings) {}
+    explicit Powerpc(const Architecture::BaseConstPtr&, const PowerpcSettings&);
 
 public:
-    static Ptr instance(const PowerpcSettings &settings = PowerpcSettings()) {
-        return Ptr(new Powerpc(settings));
-    }
+    ~Powerpc();
 
-    Ptr copy() const override {
-        return instance(settings());
-    }
-    
+public:
+    static Ptr instance(const Architecture::BaseConstPtr&, const PowerpcSettings& = PowerpcSettings());
+
+    Ptr copy() const override;
+
     const PowerpcSettings& settings() const override { return settings_; }
     PowerpcSettings& settings() override { return settings_; }
 

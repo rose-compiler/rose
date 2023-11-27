@@ -196,6 +196,21 @@ unparseX86Expression(SgAsmExpression *expr, const LabelMap *labels, const Regist
 // X86
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+X86::~X86() {}
+
+X86::X86(const Architecture::Base::ConstPtr &arch, const X86Settings &settings)
+    : Base(arch), settings_(settings) {}
+
+X86::Ptr
+X86::instance(const Architecture::Base::ConstPtr &arch, const X86Settings &settings) {
+    return Ptr(new X86(arch, settings));
+}
+
+Base::Ptr
+X86::copy() const {
+    return instance(architecture(), settings());
+}
+
 void
 X86::emitInstructionMnemonic(std::ostream &out, SgAsmInstruction *insn_, State&) const {
     SgAsmX86Instruction *insn = isSgAsmX86Instruction(insn_);

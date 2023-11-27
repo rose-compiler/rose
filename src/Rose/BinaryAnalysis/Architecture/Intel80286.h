@@ -35,6 +35,7 @@ public:
     RegisterDictionary::Ptr registerDictionary() const override;
     bool matchesHeader(SgAsmGenericHeader*) const override;
     Disassembler::BasePtr newInstructionDecoder() const override;
+    Unparser::BasePtr newUnparser() const override;
 };
 
 } // namespace

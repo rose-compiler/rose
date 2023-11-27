@@ -5,7 +5,6 @@
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
-#include <Rose/BinaryAnalysis/Unparser/Jvm.h>
 
 #include <SageBuilderAsm.h>
 
@@ -162,11 +161,6 @@ Jvm::~Jvm() {}
 Disassembler::Base::Ptr
 Jvm::clone() const {
     return Ptr(new Jvm(architecture()));
-}
-
-Unparser::BasePtr
-Jvm::unparser() const {
-    return Unparser::Jvm::instance();
 }
 
 SgAsmInstruction*

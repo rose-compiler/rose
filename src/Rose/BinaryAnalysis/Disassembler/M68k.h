@@ -115,7 +115,6 @@ public:
     virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr&, rose_addr_t start_va,
                                              AddressSet *successors = nullptr) override;
     virtual SgAsmInstruction *makeUnknownInstruction(const Exception&) override;
-    virtual Unparser::BasePtr unparser() const override;
 
     typedef std::pair<SgAsmExpression*, SgAsmExpression*> ExpressionPair;
 

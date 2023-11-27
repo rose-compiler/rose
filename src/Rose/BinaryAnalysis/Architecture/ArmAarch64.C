@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/Architecture/ArmAarch64.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Aarch64.h>
+#include <Rose/BinaryAnalysis/Unparser/Aarch64.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -220,6 +221,11 @@ ArmAarch64::matchesHeader(SgAsmGenericHeader *header) const {
 Disassembler::Base::Ptr
 ArmAarch64::newInstructionDecoder() const {
     return Disassembler::Aarch64::instance(shared_from_this());
+}
+
+Unparser::Base::Ptr
+ArmAarch64::newUnparser() const {
+    return Unparser::Aarch64::instance(shared_from_this());
 }
 
 } // namespace

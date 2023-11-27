@@ -26,11 +26,11 @@ unparseAarch64Mnemonic(SgAsmAarch64Instruction *insn) {
 
 std::string
 unparseAarch64Expression(SgAsmExpression *expr, const LabelMap *labels, RegisterDictionary::Ptr registers) {
-    if (!registers)
-        registers = Architecture::findByName("arm-a64").orThrow()->registerDictionary();
-    auto unparser = Aarch64::instance(Aarch64Settings());
-    std::ostringstream ss;
     auto arch = Architecture::findByName("arm-a64").orThrow();
+    if (!registers)
+        registers = arch->registerDictionary();
+    auto unparser = arch->newUnparser();
+    std::ostringstream ss;
     auto p = Partitioner2::Partitioner::instance(arch);
     State state(p, registers, unparser->settings(), *unparser);
     unparser->emitOperand(ss, expr, state);
@@ -40,6 +40,21 @@ unparseAarch64Expression(SgAsmExpression *expr, const LabelMap *labels, Register
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Aarch64
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Aarch64::~Aarch64() {}
+
+Aarch64::Aarch64(const Architecture::Base::ConstPtr &arch, const Aarch64Settings &settings)
+    : Base(arch), settings_(settings) {}
+
+Aarch64::Ptr
+Aarch64::instance(const Architecture::Base::ConstPtr &arch, const Aarch64Settings &settings) {
+    return Ptr(new Aarch64(arch, settings));
+}
+
+Base::Ptr
+Aarch64::copy() const {
+    return instance(architecture(), settings());
+}
 
 // class method
 std::string

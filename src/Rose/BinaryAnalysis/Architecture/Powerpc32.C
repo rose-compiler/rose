@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/Architecture/Powerpc32.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Powerpc.h>
+#include <Rose/BinaryAnalysis/Unparser/Powerpc.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -196,6 +197,11 @@ Powerpc32::matchesHeader(SgAsmGenericHeader *header) const {
 Disassembler::Base::Ptr
 Powerpc32::newInstructionDecoder() const {
     return Disassembler::Powerpc::instance(shared_from_this());
+}
+
+Unparser::Base::Ptr
+Powerpc32::newUnparser() const {
+    return Unparser::Powerpc::instance(shared_from_this());
 }
 
 } // namespace

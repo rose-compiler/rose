@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/Architecture/Jvm.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Jvm.h>
+#include <Rose/BinaryAnalysis/Unparser/Jvm.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -38,6 +39,11 @@ Jvm::matchesHeader(SgAsmGenericHeader *header) const {
 Disassembler::Base::Ptr
 Jvm::newInstructionDecoder() const {
     return Disassembler::Jvm::instance(shared_from_this());
+}
+
+Unparser::Base::Ptr
+Jvm::newUnparser() const {
+    return Unparser::Jvm::instance(shared_from_this());
 }
 
 } // namespace

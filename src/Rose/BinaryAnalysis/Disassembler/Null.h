@@ -42,7 +42,6 @@ public:
     static Ptr instance(const Architecture::BaseConstPtr&);
 
     virtual Base::Ptr clone() const override;
-    virtual Unparser::BasePtr unparser() const override;
     virtual SgAsmInstruction* disassembleOne(const MemoryMap::Ptr&, rose_addr_t va, AddressSet *successors = NULL) override;
     virtual SgAsmInstruction* makeUnknownInstruction(const Exception&) override;
 };

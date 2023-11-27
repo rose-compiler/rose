@@ -22,18 +22,16 @@ class Mips: public Base {
     MipsSettings settings_;
 
 protected:
-    explicit Mips(const MipsSettings &settings)
-        : settings_(settings) {}
+    explicit Mips(const Architecture::BaseConstPtr&, const MipsSettings&);
 
 public:
-    static Ptr instance(const MipsSettings &settings = MipsSettings()) {
-        return Ptr(new Mips(settings));
-    }
+    ~Mips();
 
-    Ptr copy() const override {
-        return instance(settings());
-    }
-    
+public:
+    static Ptr instance(const Architecture::BaseConstPtr&, const MipsSettings& = MipsSettings());
+
+    Ptr copy() const override;
+
     const MipsSettings& settings() const override { return settings_; }
     MipsSettings& settings() override { return settings_; }
 

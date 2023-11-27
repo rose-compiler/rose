@@ -40,7 +40,6 @@ public:
     // Overrides documented in a super class
     virtual ~Powerpc() {}
     virtual Base::Ptr clone() const;
-    virtual Unparser::BasePtr unparser() const;
     virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet *successors=NULL);
     virtual void assembleOne(SgAsmInstruction*, SgUnsignedCharList&) {abort();}
     virtual SgAsmInstruction *makeUnknownInstruction(const Exception&);

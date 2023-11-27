@@ -21,18 +21,15 @@ class Cil: public Base {
     CilSettings settings_;
 
 protected:
-    explicit Cil(const CilSettings &settings)
-        : settings_(settings) {}
+    explicit Cil(const Architecture::BaseConstPtr&, const CilSettings&);
 
 public:
-    static Ptr instance(const CilSettings &settings = CilSettings()) {
-        return Ptr(new Cil(settings));
-    }
+    ~Cil();
 
-    Ptr copy() const override {
-        return instance(settings());
-    }
-    
+    static Ptr instance(const Architecture::BaseConstPtr&, const CilSettings& = CilSettings());
+
+    Ptr copy() const override;
+
     const CilSettings& settings() const override { return settings_; }
     CilSettings& settings() override { return settings_; }
 

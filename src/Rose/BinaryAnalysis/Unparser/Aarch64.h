@@ -23,20 +23,15 @@ class Aarch64: public Base {
     Aarch64Settings settings_;
 
 protected:
-    explicit Aarch64(const Aarch64Settings &settings)
-        : settings_(settings) {}
+    explicit Aarch64(const Architecture::BaseConstPtr&, const Aarch64Settings&);
 
 public:
-    ~Aarch64() {}
+    ~Aarch64();
 
-    static Ptr instance(const Aarch64Settings &settings = Aarch64Settings()) {
-        return Ptr(new Aarch64(settings));
-    }
+    static Ptr instance(const Architecture::BaseConstPtr&, const Aarch64Settings& = Aarch64Settings());
 
-    Ptr copy() const override {
-        return instance(settings());
-    }
-    
+    Ptr copy() const override;
+
     const Aarch64Settings& settings() const override { return settings_; }
     Aarch64Settings& settings() override { return settings_; }
 

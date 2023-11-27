@@ -24,17 +24,15 @@ class X86: public Base {
     X86Settings settings_;
 
 protected:
-    explicit X86(const X86Settings &settings)
-        : settings_(settings) {}
+    explicit X86(const Architecture::BaseConstPtr&, const X86Settings&);
 
 public:
-    static Ptr instance(const X86Settings &settings = X86Settings()) {
-        return Ptr(new X86(settings));
-    }
+    ~X86();
 
-    Ptr copy() const override {
-        return instance(settings());
-    }
+public:
+    static Ptr instance(const Architecture::BaseConstPtr&, const X86Settings& = X86Settings());
+
+    Ptr copy() const override;
 
     const X86Settings& settings() const override { return settings_; }
     X86Settings& settings() override { return settings_; }

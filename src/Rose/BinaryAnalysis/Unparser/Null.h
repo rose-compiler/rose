@@ -17,19 +17,14 @@ class Null: public Base {
     NullSettings settings_;
 
 protected:
-    explicit Null(const NullSettings &settings)
-        : settings_(settings) {}
+    explicit Null(const Architecture::BaseConstPtr&, const NullSettings&);
 
 public:
-    ~Null() {}
+    ~Null();
 
-    static Ptr instance(const NullSettings &settings = NullSettings()) {
-        return Ptr(new Null(settings));
-    }
+    static Ptr instance(const Architecture::BaseConstPtr&, const NullSettings& = NullSettings());
 
-    Ptr copy() const override {
-        return instance(settings());
-    }
+    Ptr copy() const override;
 
     const NullSettings& settings() const override { return settings_; }
     NullSettings& settings() override { return settings_; }

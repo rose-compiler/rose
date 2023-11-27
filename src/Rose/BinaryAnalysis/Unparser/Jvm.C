@@ -3,6 +3,8 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Unparser/Jvm.h>
 
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Unparser {
@@ -55,6 +57,21 @@ unparseJvmExpression(SgAsmExpression* expr, const LabelMap* labels, RegisterDict
 
     result = StringUtility::appendAsmComment(result, expr->get_comment());
     return result;
+}
+
+Jvm::~Jvm() {}
+
+Jvm::Jvm(const Architecture::Base::ConstPtr &arch, const JvmSettings &settings)
+    : Base(arch), settings_(settings) {}
+
+Jvm::Ptr
+Jvm::instance(const Architecture::Base::ConstPtr &arch, const JvmSettings &settings) {
+    return Ptr(new Jvm(arch, settings));
+}
+
+Base::Ptr
+Jvm::copy() const {
+    return instance(architecture(), settings());
 }
 
 void

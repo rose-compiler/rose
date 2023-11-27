@@ -12,7 +12,6 @@
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
-#include <Rose/BinaryAnalysis/Unparser/X86.h>
 
 #include <sstream>
 
@@ -59,11 +58,6 @@ X86::instance(const Architecture::Base::ConstPtr &arch) {
 Base::Ptr
 X86::clone() const {
     return Ptr(new X86(*this));
-}
-
-Unparser::BasePtr
-X86::unparser() const {
-    return Unparser::X86::instance();
 }
 
 void

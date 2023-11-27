@@ -23,19 +23,14 @@ class Aarch32: public Base {
     Aarch32Settings settings_;
 
 protected:
-    explicit Aarch32(const Aarch32Settings &settings)
-        : settings_(settings) {}
+    explicit Aarch32(const Architecture::BaseConstPtr&, const Aarch32Settings&);
 
 public:
-    ~Aarch32() {}
+    ~Aarch32();
 
-    static Ptr instance(const Aarch32Settings &settings = Aarch32Settings()) {
-        return Ptr(new Aarch32(settings));
-    }
+    static Ptr instance(const Architecture::BaseConstPtr&, const Aarch32Settings& = Aarch32Settings());
 
-    Ptr copy() const override {
-        return instance(settings());
-    }
+    Ptr copy() const override;
 
     const Aarch32Settings& settings() const override { return settings_; }
     Aarch32Settings& settings() override { return settings_; }

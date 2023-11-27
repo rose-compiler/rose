@@ -108,8 +108,17 @@ public:
 public:
     /** Construct and return a new instruction decoder.
      *
-     * Returns a new decoder for this architecture if possible, otherwise a null pointer. */
+     *  Returns a new decoder for this architecture if possible, otherwise a null pointer.
+     *
+     *  Thread safety: Thread safe. */
     virtual Disassembler::BasePtr newInstructionDecoder() const = 0;
+
+    /** Construct and return a new instruction unparser.
+     *
+     *  An unparser is responsible for generating pseudo assembly listings.
+     *
+     *  Thread safety: Thread safe. */
+    virtual Unparser::BasePtr newUnparser() const = 0;
 };
 
 } // namespace

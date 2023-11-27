@@ -112,8 +112,6 @@ public:
     // Public methods
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    virtual Unparser::BasePtr unparser() const override;
-
     virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va,
                                              AddressSet *successors=nullptr) override;
 
