@@ -676,12 +676,12 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                             PreprocessingInfo::directiveTypeName(currentPreprocessingInfoPtr->getTypeOfDirective()).c_str(),
                             PreprocessingInfo::relativePositionName(currentPreprocessingInfoPtr->getRelativePosition()).c_str());
 #endif
-#if 1
+#if 1 /* ACTIVE_1 */
                  // This uses the old code to attach comments and CPP directives to the AST as attributes.
                     locatedNode->addToAttachedPreprocessingInfo(currentPreprocessingInfoPtr);
 #if DEBUG_IterateOverList
                     printf ("DONE: Attaching CPP directives %s to IR nodes as attributes. \n",PreprocessingInfo::directiveTypeName(currentPreprocessingInfoPtr->getTypeOfDirective()).c_str());
-#endif
+
                  // DQ (12/2/2018): This fails for the C/C++ snippet insertion tests.
                  // DQ (12/2/2018): This fails for Fortran.
                  // DQ (9/5/2018): We should have already set the preprocessorDirectivesAndCommentsList, checked in getTokenStream().
@@ -691,7 +691,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                        {
                       // ROSE_ASSERT(sourceFile->get_preprocessorDirectivesAndCommentsList() != NULL);
                        }
-#if DEBUG_IterateOverList
+
                     printf ("sourceFile->getFileName()                            = %s \n",sourceFile->getFileName().c_str());
                     printf ("sourceFile->get_unparseHeaderFiles()                 = %s \n",sourceFile->get_unparseHeaderFiles() ? "true" : "false");
                     printf ("sourceFile->get_header_file_unparsing_optimization() = %s \n",sourceFile->get_header_file_unparsing_optimization() ? "true" : "false");
@@ -709,12 +709,12 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
                        }
 #endif
 
-#else
+#else /* !ACTIVE_1 */
 
 #error "DEAD CODE!"
 
                  // Removed older equivalent code!
-#endif
+#endif /* ACTIVE_1 */
 
                  // For now leave the lists unmodified so that we can support debugging.
                  // delete currentPreprocessingInfoPtr;
@@ -1764,7 +1764,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
      printf (" --- sourceFile->get_globalScope() = %p \n",sourceFile->get_globalScope());
 #endif
 
-#if 0
+#if 0 /* LEGACY_2 */
      printf ("\n\n**********************************************************\n");
      printf ("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): n = %p = %s \n",n,n->class_name().c_str());
      SgStatement* currentStatement = isSgStatement(n);
@@ -1780,7 +1780,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
           currentStatement->get_endOfConstruct()->display("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): (END) debug");
 #endif
         }
-#endif
+#endif /* LEGACY_2 */
 
      ROSE_ASSERT(n != NULL);
   // printf ("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): n = %p = %s \n",n,n->class_name().c_str());
@@ -2121,25 +2121,25 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
        // DQ (11/2/2019): This is the call that can be redundant.
           ROSEAttributesList* currentListOfAttributes = getListOfAttributes(currentFileNameId);
 
-#if 0
+#if 0 /* LEGACY_3 */
        // DQ (4/24/2021): This is dead code. Debugging the header file optimization.
        // DQ (8/19/2019): The comments and CPP directives are being attached to the AST twice for those statements in the source file.
        // We need to prevent this by setting currentListOfAttributes = NULL when doing the header file optimization within the header file phase.
           ROSE_ASSERT(sourceFile != NULL);
           if (sourceFile->get_header_file_unparsing_optimization_header_file() == true)
              {
-#if 0
+#if 0 /* LEGACY_3_1 */
 #if 0
                printf ("&&&&& Set currentListOfAttributes = NULL for the header file phase of the header file optimization \n");
 #endif
                currentListOfAttributes = NULL;
-#else
+#else /* LEGACY_3_1 */
 #if 0
                printf ("&&&&& Commented out setting currentListOfAttributes = NULL for header file optimization \n");
 #endif
-#endif
+#endif /* LEGACY_3_1 */
              }
-#endif
+#endif /* LEGACY_3 */
 
 #if 0
           printf ("currentListOfAttributes = %p \n",currentListOfAttributes);
@@ -2174,7 +2174,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
 
             // Try to not call get_filename() if it would be inappropriate (either when isCompilerGenerated || isTransformation)
 
-#if 0
+#if 0 /* LEGACY_4 */
             // DQ (10/27/2007): Initialized to -1 upon suggestion by Andreas.
                int fileIdForOriginOfCurrentLocatedNode = -1;
                if ( !isCompilerGenerated && !isTransformation )
@@ -2200,7 +2200,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
 
                printf ("evaluateInheritedAttribute: isCompilerGenerated = %s isTransformation = %s fileIdForOriginOfCurrentLocatedNode = %d \n",
                     isCompilerGenerated ? "true" : "false",isTransformation ? "true" : "false",fileIdForOriginOfCurrentLocatedNode);
-#endif
+#endif /* LEGACY_4 */
 #if 0
                printf ("evaluateInheritedAttribute: isCompilerGenerated = %s isTransformation = %s \n",
                     isCompilerGenerated ? "true" : "false",isTransformation ? "true" : "false");
@@ -2557,7 +2557,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
      SgFile* fileNode           = isSgFile(n);
 
 
-#if 0
+#if 0 /* LEGACY_5 */
   // DQ (11/3/2019): Force processing to exist afer a selected header file is processed.
      if (fileNode != NULL)
         {
@@ -2585,7 +2585,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #endif
              }
         }
-#endif
+#endif /* LEGACY_5 */
 
      SgLocatedNode* locatedNode = isSgLocatedNode(n);
 
@@ -2916,7 +2916,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                          break;
                        }
 #endif
-                 // I wanted to leave the SgFile case in the switch statement rather 
+                 // I wanted to leave the SgFile case in the switch statement rather
                  // than separating it out in a conditional statement at the top of the file.
                  // case V_SgFile:
                     case V_SgSourceFile:

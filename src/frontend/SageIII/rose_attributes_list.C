@@ -2007,7 +2007,7 @@ ROSEAttributesList::collectFixedFormatPreprocessorDirectivesAndCommentsForAST( c
 namespace
 {
   // PP: for gnatprep's Ada preprocessor
-  //     recognize "if" in "#end if"
+  //     recognize "if" in "#end if" and "#elsif"
   void gnatprepHandling(const string& line, std::string& cppIndentifier, int& lastChar)
   {
     if (!SageInterface::is_Ada_language())
@@ -2015,7 +2015,9 @@ namespace
 
     boost::to_lower(cppIndentifier);
 
-    if (cppIndentifier != "end")
+    const bool end_ifHandling   = (cppIndentifier == "end");
+
+    if (!end_ifHandling)
       return;
 
     const int len = line.size();
@@ -2030,10 +2032,8 @@ namespace
        && (line[pos+1] == 'f' || line[pos+1] == 'F')
        )
     {
-      pos += 2;
-
       cppIndentifier.append(" if"); // note, only one blank
-      lastChar = pos-2;
+      lastChar = pos;
     }
   }
 }
@@ -2282,11 +2282,15 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
              {
                cppDeclarationKind = PreprocessingInfo::CpreprocessorElifDeclaration;
              }
+            else if (cppIndentifier == "elsif") // Ada GNAT
+             {
+               cppDeclarationKind = PreprocessingInfo::CpreprocessorElsifDeclaration;
+             }
             else if (cppIndentifier == "endif")
              {
                cppDeclarationKind = PreprocessingInfo::CpreprocessorEndifDeclaration;
              }
-            else if (cppIndentifier == "end if")
+            else if (cppIndentifier == "end if") // Ada GNAT
              {
                cppDeclarationKind = PreprocessingInfo::CpreprocessorEnd_ifDeclaration;
              }

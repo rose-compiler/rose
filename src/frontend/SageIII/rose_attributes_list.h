@@ -184,6 +184,8 @@ class PreprocessingInfo
                CpreprocessorElseDeclaration,
                CpreprocessorElifDeclaration,
                CpreprocessorEndifDeclaration,
+               CpreprocessorElsifDeclaration,  // PP (27/11/23): Ada "elsif"
+               CpreprocessorEnd_ifDeclaration, // PP (10/1/21): Ada "end if"
                CpreprocessorLineDeclaration,
                CpreprocessorErrorDeclaration,
 
@@ -233,8 +235,6 @@ class PreprocessingInfo
             // the function via AST transformations and the function body using a mechanism provided here and that would define
             // a simple appoach to adding large complex functions for which it is impractical to build up an AST.
                RawText,
-
-               CpreprocessorEnd_ifDeclaration, // PP (10/1/21): Ada "end if"
 
                LastDirectiveType
              };

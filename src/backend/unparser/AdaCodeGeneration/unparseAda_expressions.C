@@ -546,9 +546,14 @@ namespace
     // or just handle everything
     const bool withParens = exp->get_need_paren();
 
+    unparser.unparseAttachedPreprocessingInfo(exp, info, PreprocessingInfo::before);
+    unparser.unparseAttachedPreprocessingInfo(exp, info, PreprocessingInfo::inside);
+
     if (withParens) prn("(");
     sg::dispatch(AdaExprUnparser{unparser, info, os}, exp);
     if (withParens) prn(")");
+
+    unparser.unparseAttachedPreprocessingInfo(exp, info, PreprocessingInfo::after);
   }
 
   void AdaExprUnparser::expr_opt(SgExpression* exp, std::string prefix_opt, std::string postfix_opt)

@@ -3614,6 +3614,25 @@ explicitNullRecord(const SgClassDefinition& recdef)
   return recdef.get_members().empty();
 }
 
+boost::optional<bool>
+booleanConstant(const SgExpression* e)
+{
+  using ResultType = boost::optional<bool>;
+
+  if (const SgEnumVal* enumval = isSgEnumVal(e))
+    if (isBooleanType(enumval->get_type()))
+      return ResultType{enumval->get_name() == "True"}; // spelling in AdaType.C
+
+  return ResultType{};
+}
+
+boost::optional<bool>
+booleanConstant(const SgExpression& e)
+{
+  return booleanConstant(&e);
+}
+
+
 namespace
 {
   // In contrast to si::getEnclosingScope, which seems to return the actual parent scope

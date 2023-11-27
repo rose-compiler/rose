@@ -149,12 +149,16 @@ namespace
 
     void operator()(SgInitializedName* enumerator)
     {
-      ROSE_ASSERT(enumerator);
+      ASSERT_not_null(enumerator);
+
+      unparser.unparseAttachedPreprocessingInfo(enumerator, info, PreprocessingInfo::before);
+      unparser.unparseAttachedPreprocessingInfo(enumerator, info, PreprocessingInfo::inside);
 
       prn(*sep);
       prn(enumerator->get_name());
-
       sep = &COMMA_SEP;
+
+      unparser.unparseAttachedPreprocessingInfo(enumerator, info, PreprocessingInfo::after);
     }
   };
 
@@ -402,6 +406,9 @@ namespace
     void prnSeparateQual(const std::string& qual);
     void prnSeparateQual(const SgDeclarationStatement& n);
     /// \}
+
+    /// returns true if n's handler prints PreprocessorInfo::inside
+    bool handlerProcessesInsidePreprocessorInfo(const SgStatement* n);
 
     //
     // sequences
@@ -1589,6 +1596,8 @@ namespace
 
       if (!isDefinition)
       {
+        unparser.unparseAttachedPreprocessingInfo(&n, info, PreprocessingInfo::inside);
+
         // unparse as forward declaration
         const bool requiresPrivate = si::Ada::withPrivateDefinition(&n);
         const bool requiresIs      = requiresPrivate || hasModifiers(n);
@@ -1603,6 +1612,8 @@ namespace
       }
       else if (SgType* parentType = n.get_adaParentType())
       {
+        unparser.unparseAttachedPreprocessingInfo(&n, info, PreprocessingInfo::inside);
+
         // unparse as derived type
         prn(" is ");
         type(n, parentType);
@@ -1613,6 +1624,7 @@ namespace
         prn(" is");
         prn(" (");
         std::for_each(lst.begin(), lst.end(), AdaEnumeratorUnparser{unparser, info, os});
+        unparser.unparseAttachedPreprocessingInfo(&n, info, PreprocessingInfo::inside);
         prn(")");
       }
 
@@ -2287,7 +2299,10 @@ namespace
     startPrivateIfNeeded(isSgDeclarationStatement(s));
 
     unparser.unparseAttachedPreprocessingInfo(s, info, PreprocessingInfo::before);
-    unparser.unparseAttachedPreprocessingInfo(s, info, PreprocessingInfo::inside);
+
+    if (!handlerProcessesInsidePreprocessorInfo(s))
+      unparser.unparseAttachedPreprocessingInfo(s, info, PreprocessingInfo::inside);
+
     sg::dispatch(unparserWith(n), s);
     unparser.unparseAttachedPreprocessingInfo(s, info, PreprocessingInfo::after);
   }
@@ -2305,6 +2320,11 @@ namespace
 
       exprlst(aspects, ",\n");
     }
+  }
+
+  bool AdaStatementUnparser::handlerProcessesInsidePreprocessorInfo(const SgStatement* n)
+  {
+    return isSgEnumDeclaration(n);
   }
 }
 

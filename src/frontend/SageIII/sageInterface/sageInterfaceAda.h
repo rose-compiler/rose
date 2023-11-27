@@ -8,6 +8,8 @@
 
 #include <tuple>
 
+#include <boost/optional.hpp>
+
 namespace SageInterface
 {
 
@@ -384,12 +386,6 @@ namespace
   bool hasUnknownDiscriminants(const SgAdaDiscriminatedTypeDecl* n);
   /// @}
 
-  /// returns if \ref n is a dispatching call
-  /// @{
-  //~ bool isDispatching(const SgFunctionCallExpr& n);
-  //~ bool isDispatching(const SgFunctionCallExpr* n);
-  /// @}
-
 
   /// return if the type @ref ty is the corresponding universal type representation in ROSE
   /// @{
@@ -440,6 +436,20 @@ namespace
   bool isDecimalFixedType(const SgType* ty);
   bool isDecimalFixedType(const SgType& ty);
   /// @}
+
+
+  /// if e denotes an Ada boolean constant, it is returned; otherwise
+  ///   an empty result is returned.
+  /// \details
+  ///   the function does not perform any constant folding
+  /// @{
+  boost::optional<bool>
+  booleanConstant(const SgExpression* e);
+
+  boost::optional<bool>
+  booleanConstant(const SgExpression& e);
+  /// @}
+
 
   /// Returns the SgAdaGenericDecl node that makes a declaration (either function/procedure or package)
   /// generic.
