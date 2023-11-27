@@ -23,8 +23,14 @@ RegisterDictionary::Ptr
 IntelI486::registerDictionary() const {
     static SAWYER_THREAD_TRAITS::Mutex mutex;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
-    if (!registerDictionary_.isCached())
-        registerDictionary_ = RegisterDictionary::instanceI486();
+
+    if (!registerDictionary_.isCached()) {
+        auto regs = RegisterDictionary::instance(name());
+        regs->insert(Architecture::findByName("intel-i386").orThrow()->registerDictionary());
+        regs->insert("ac", x86_regclass_flags, x86_flags_status, 18, 1); /* alignment check system flag */
+        registerDictionary_ = regs;
+    }
+
     return registerDictionary_.get();
 }
 

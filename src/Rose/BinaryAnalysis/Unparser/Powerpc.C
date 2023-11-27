@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Unparser/Powerpc.h>
 
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <integerOps.h>
 
@@ -17,7 +18,7 @@ namespace Unparser {
 static std::string
 unparsePowerpcRegister(SgAsmInstruction *insn, RegisterDescriptor rdesc, RegisterDictionary::Ptr registers) {
     if (!registers)
-        registers = RegisterDictionary::instancePowerpc32();
+        registers = Architecture::findByName("ppc32-be").orThrow()->registerDictionary();
     std::string name = registers->lookup(rdesc);
     if (name.empty())
         name = invalidRegister(insn, rdesc, registers);

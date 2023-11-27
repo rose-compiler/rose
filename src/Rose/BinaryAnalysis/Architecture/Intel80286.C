@@ -23,8 +23,15 @@ RegisterDictionary::Ptr
 Intel80286::registerDictionary() const {
     static SAWYER_THREAD_TRAITS::Mutex mutex;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
-    if (!registerDictionary_.isCached())
-        registerDictionary_ = RegisterDictionary::instanceI286();
+
+    if (!registerDictionary_.isCached()) {
+        auto regs = RegisterDictionary::instance(name());
+        regs->insert(Architecture::findByName("intel-8088").orThrow()->registerDictionary());
+        regs->insert("iopl", x86_regclass_flags, x86_flags_status, 12, 2); /*  I/O privilege level flag */
+        regs->insert("nt",   x86_regclass_flags, x86_flags_status, 14, 1); /*  nested task system flag */
+        registerDictionary_ = regs;
+    }
+
     return registerDictionary_.get();
 }
 

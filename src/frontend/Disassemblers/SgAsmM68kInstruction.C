@@ -6,6 +6,7 @@
 #include "AsmUnparser_compat.h"
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/PartialSymbolicSemantics.h>
@@ -171,7 +172,7 @@ SgAsmM68kInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& i
         using namespace Rose::BinaryAnalysis::InstructionSemantics;
         using namespace Rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics;
         const InstructionMap &imap = interp->get_instructionMap();
-        RegisterDictionary::Ptr regdict = RegisterDictionary::instanceForIsa(interp);
+        RegisterDictionary::Ptr regdict = Architecture::findByInterpretation(interp).orThrow()->registerDictionary();
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         BaseSemantics::RiscOperators::Ptr ops = RiscOperators::instanceFromRegisters(regdict, solver);
         ASSERT_not_null(ops);
@@ -228,7 +229,7 @@ SgAsmM68kInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& i
         using namespace Rose::BinaryAnalysis;
         using namespace Rose::BinaryAnalysis::InstructionSemantics;
         using namespace Rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics;
-        RegisterDictionary::Ptr regdict = RegisterDictionary::instanceColdfireEmac();
+        RegisterDictionary::Ptr regdict = Architecture::findByName("nxp-coldfire").orThrow()->registerDictionary();
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         BaseSemantics::RiscOperators::Ptr ops = RiscOperators::instanceFromRegisters(regdict, solver);
         DispatcherM68kPtr dispatcher = DispatcherM68k::instance(ops, 32, RegisterDictionary::Ptr());
@@ -444,7 +445,7 @@ SgAsmM68kInstruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns,
     if (!complete || successors.size()>1) {
         using namespace Rose::BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics;
 
-        RegisterDictionary::Ptr regdict = RegisterDictionary::instanceColdfireEmac();
+        RegisterDictionary::Ptr regdict = Architecture::findByName("nxp-coldfire").orThrow()->registerDictionary();
         RiscOperators::Ptr ops = RiscOperators::instanceFromRegisters(regdict);
         ops->set_memory_map(initial_memory);
         DispatcherM68kPtr dispatcher = DispatcherM68k::instance(ops, 32, RegisterDictionary::Ptr());

@@ -3,6 +3,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
@@ -13,8 +14,8 @@ using namespace Rose::BinaryAnalysis;
 RegisterDictionary::Ptr
 SgAsmPowerpcInstruction::registersForWidth(size_t nBits) {
     switch (nBits) {
-        case 32: return RegisterDictionary::instancePowerpc32();
-        case 64: return RegisterDictionary::instancePowerpc64();
+        case 32: return Architecture::findByName("ppc32-be").orThrow()->registerDictionary();
+        case 64: return Architecture::findByName("ppc64-be").orThrow()->registerDictionary();
         default: ASSERT_not_reachable("invalid PowerPC instruction size");
     }
 }

@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch32.h>
 
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
@@ -2981,10 +2982,10 @@ struct IP_uxth: P {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 DispatcherAarch32::DispatcherAarch32()
-    : BaseSemantics::Dispatcher(32, RegisterDictionary::instanceAarch32()) {}
+    : BaseSemantics::Dispatcher(32, Architecture::findByName("arm-a32").orThrow()->registerDictionary()) {}
 
 DispatcherAarch32::DispatcherAarch32(const BaseSemantics::RiscOperators::Ptr &ops, const RegisterDictionary::Ptr &regs)
-    : BaseSemantics::Dispatcher(ops, 32, regs ? regs : RegisterDictionary::instanceAarch32()) {
+    : BaseSemantics::Dispatcher(ops, 32, regs ? regs : Architecture::findByName("arm-a32").orThrow()->registerDictionary()) {
     initializeRegisterDescriptors();
     initializeInsnDispatchTable();
     initializeMemory();

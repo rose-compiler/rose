@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Unparser/Mips.h>
 
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 using namespace Sawyer::Message::Common;
@@ -29,7 +30,7 @@ std::string
 unparseMipsRegister(SgAsmInstruction *insn, RegisterDescriptor reg, RegisterDictionary::Ptr registers) {
     using namespace StringUtility;
     if (!registers)
-        registers = RegisterDictionary::instanceMips32();
+        registers = Architecture::findByName("mips32-be").orThrow()->registerDictionary();
     std::string name = registers->lookup(reg);
     if (name.empty())
         name = invalidRegister(insn, reg, registers);

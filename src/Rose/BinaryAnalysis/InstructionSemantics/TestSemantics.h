@@ -4,6 +4,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/CommandLine.h>
@@ -120,7 +121,7 @@ public:
               const BaseSemantics::StatePtr &state,
               const BaseSemantics::RiscOperatorsPtr &ops) {
 
-        RegisterDictionary::Ptr regdict = RegisterDictionary::instancePentium4();
+        RegisterDictionary::Ptr regdict = Architecture::findByName("amd64").orThrow()->registerDictionary();
         const RegisterDescriptor reg32 = regdict->findOrThrow("eip");
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
 

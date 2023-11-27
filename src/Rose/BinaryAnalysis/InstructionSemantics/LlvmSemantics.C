@@ -3,10 +3,11 @@
 #include "sage3basic.h"
 #include <Rose/BinaryAnalysis/InstructionSemantics/LlvmSemantics.h>
 
-#include <Rose/Diagnostics.h>
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
+#include <Rose/Diagnostics.h>
 #include "AsmUnparser_compat.h"
 #include "integerOps.h"
 #include "stringify.h"
@@ -1455,7 +1456,7 @@ Transcoder::instance(const BaseSemantics::Dispatcher::Ptr &dispatcher) {
 
 Transcoder::Ptr
 Transcoder::instanceX86() {
-    RegisterDictionary::Ptr regdict = RegisterDictionary::instancePentium4();
+    RegisterDictionary::Ptr regdict = Architecture::findByName("intel-pentium4").orThrow()->registerDictionary();
     SmtSolver::Ptr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
     RiscOperators::Ptr ops = RiscOperators::instanceFromRegisters(regdict, solver);
     BaseSemantics::Dispatcher::Ptr dispatcher = DispatcherX86::instance(ops, 32, RegisterDictionary::Ptr());

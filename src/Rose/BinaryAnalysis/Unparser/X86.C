@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Unparser/X86.h>
 
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 #include <boost/algorithm/string/erase.hpp>
@@ -44,7 +45,7 @@ unparseX86Mnemonic(SgAsmX86Instruction *insn) {
 std::string
 unparseX86Register(SgAsmInstruction *insn, RegisterDescriptor reg, RegisterDictionary::Ptr registers) {
     if (!registers)
-        registers = RegisterDictionary::instanceAmd64();
+        registers = Architecture::findByName("amd64").orThrow()->registerDictionary();
     std::string name = registers->lookup(reg);
     if (name.empty())
         name = invalidRegister(insn, reg, registers);

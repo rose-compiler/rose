@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/CallingConvention.h>
 
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/DataFlow.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellList.h>
@@ -63,7 +64,7 @@ dictionaryM68k() {
     static Dictionary dict;
     if (dict.empty()) {
         // https://m680x0.github.io/doc/abi.html
-        const RegisterDictionary::Ptr regdict = RegisterDictionary::instanceColdfire();
+        const RegisterDictionary::Ptr regdict = Architecture::findByName("nxp-coldfire").orThrow()->registerDictionary();
         const RegisterDescriptor SP = regdict->findOrThrow("a7"); // a.k.a., "sp" in some dictionaries
 
         Definition::Ptr cc = Definition::instance(SP.nBits(), "sysv", "m68k-sysv", regdict);
@@ -244,7 +245,7 @@ Definition::Ptr
 Definition::x86_32bit_cdecl() {
     static Ptr cc;
     if (!cc)
-        cc = x86_cdecl(RegisterDictionary::instancePentium4());
+        cc = x86_cdecl(Architecture::findByName("intel-pentium4").orThrow()->registerDictionary());
     return cc;
 }
 
@@ -253,7 +254,7 @@ Definition::Ptr
 Definition::x86_64bit_cdecl() {
     static Ptr cc;
     if (!cc)
-        cc = x86_cdecl(RegisterDictionary::instanceAmd64());
+        cc = x86_cdecl(Architecture::findByName("amd64").orThrow()->registerDictionary());
     return cc;
 }
 
@@ -317,7 +318,7 @@ Definition::Ptr
 Definition::ppc_32bit_ibm() {
     static Ptr cc;
     if (!cc)
-        cc = ppc_ibm(RegisterDictionary::instancePowerpc32());
+        cc = ppc_ibm(Architecture::findByName("ppc32-be").orThrow()->registerDictionary());
     return cc;
 }
 
@@ -416,7 +417,7 @@ Definition::Ptr
 Definition::x86_32bit_stdcall() {
     static Ptr cc;
     if (!cc)
-        cc = x86_stdcall(RegisterDictionary::instancePentium4());
+        cc = x86_stdcall(Architecture::findByName("intel-pentium4").orThrow()->registerDictionary());
     return cc;
 }
 
@@ -425,7 +426,7 @@ Definition::Ptr
 Definition::x86_64bit_stdcall() {
     static Ptr cc;
     if (!cc)
-        cc = x86_stdcall(RegisterDictionary::instanceAmd64());
+        cc = x86_stdcall(Architecture::findByName("amd64").orThrow()->registerDictionary());
     return cc;
 }
 
@@ -489,7 +490,7 @@ Definition::Ptr
 Definition::x86_32bit_fastcall() {
     static Ptr cc;
     if (!cc)
-        cc = x86_fastcall(RegisterDictionary::instancePentium4());
+        cc = x86_fastcall(Architecture::findByName("intel-pentium4").orThrow()->registerDictionary());
     return cc;
 }
 
@@ -555,7 +556,7 @@ Definition::Ptr
 Definition::x86_64bit_sysv() {
     static Ptr cc;
     if (!cc) {
-        RegisterDictionary::Ptr regDict = RegisterDictionary::instanceAmd64();
+        RegisterDictionary::Ptr regDict = Architecture::findByName("amd64").orThrow()->registerDictionary();
         const RegisterDescriptor SP = regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
 
         cc = instance(64, "sysv", "x86-64 sysv", regDict);

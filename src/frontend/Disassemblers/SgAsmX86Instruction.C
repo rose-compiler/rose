@@ -4,6 +4,7 @@
 #include "sage3basic.h"
 
 #include "AsmUnparser_compat.h"
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/PartialSymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
@@ -56,9 +57,9 @@ SgAsmX86Instruction::widthForInstructionSize(X86InstructionSize isize) {
 RegisterDictionary::Ptr
 SgAsmX86Instruction::registersForInstructionSize(X86InstructionSize isize) {
     switch (isize) {
-        case x86_insnsize_16: return RegisterDictionary::instanceI286();
-        case x86_insnsize_32: return RegisterDictionary::instancePentium4();
-        case x86_insnsize_64: return RegisterDictionary::instanceAmd64();
+        case x86_insnsize_16: return Architecture::findByName("intel-80286").orThrow()->registerDictionary();
+        case x86_insnsize_32: return Architecture::findByName("intel-pentium4").orThrow()->registerDictionary();
+        case x86_insnsize_64: return Architecture::findByName("amd64").orThrow()->registerDictionary();
         default: ASSERT_not_reachable("invalid x86 instruction size");
     }
 }
@@ -116,7 +117,7 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &in
         using namespace Rose::BinaryAnalysis::InstructionSemantics;
         using namespace Rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics;
         const InstructionMap &imap = interp->get_instructionMap();
-        RegisterDictionary::Ptr regdict = RegisterDictionary::instanceForIsa(interp);
+        RegisterDictionary::Ptr regdict = Architecture::findByInterpretation(interp).orThrow()->registerDictionary();
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         BaseSemantics::RiscOperators::Ptr ops = RiscOperators::instanceFromRegisters(regdict, solver);
         ASSERT_not_null(ops);
@@ -388,17 +389,17 @@ SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, 
     if (!complete || successors.size()>1) {
         RegisterDictionary::Ptr regdict;
         if (SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(this)) {
-            regdict = RegisterDictionary::instanceForIsa(interp);
+            regdict = Architecture::findByInterpretation(interp).orThrow()->registerDictionary();
         } else {
             switch (get_baseSize()) {
                 case x86_insnsize_16:
-                    regdict = RegisterDictionary::instanceI286();
+                    regdict = Architecture::findByName("intel-80286").orThrow()->registerDictionary();
                     break;
                 case x86_insnsize_32:
-                    regdict = RegisterDictionary::instancePentium4();
+                    regdict = Architecture::findByName("intel-pentium4").orThrow()->registerDictionary();
                     break;
                 case x86_insnsize_64:
-                    regdict = RegisterDictionary::instanceAmd64();
+                    regdict = Architecture::findByName("amd64").orThrow()->registerDictionary();
                     break;
                 default:
                     ASSERT_not_reachable("invalid x86 instruction size");

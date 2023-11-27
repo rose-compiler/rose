@@ -23,8 +23,9 @@ RegisterDictionary::Ptr
 Cil::registerDictionary() const {
     static SAWYER_THREAD_TRAITS::Mutex mutex;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
     if (!registerDictionary_.isCached())
-        registerDictionary_ = RegisterDictionary::instanceCil();
+        registerDictionary_ = RegisterDictionary::instance(name());
     return registerDictionary_.get();
 }
 

@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Unparser/M68k.h>
 
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 namespace Rose {
@@ -22,7 +23,7 @@ unparseM68kMnemonic(SgAsmM68kInstruction *insn) {
 std::string
 unparseM68kExpression(SgAsmExpression *expr, const LabelMap *labels, RegisterDictionary::Ptr registers) {
     if (!registers)
-        registers = RegisterDictionary::instanceColdfireEmac();
+        registers = Architecture::findByName("nxp-coldfire").orThrow()->registerDictionary();
     RegisterNames name_of(registers);
     std::string result = "";
     if (expr==nullptr)

@@ -4,6 +4,7 @@
 #include "AsmUnparser.h"
 
 #include "AsmUnparser_compat.h" /*FIXME: needed until no longer dependent upon unparseInstruction()*/
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
@@ -477,7 +478,7 @@ bool
 AsmUnparser::unparse_interpretation(bool enabled, std::ostream &output, SgAsmInterpretation *interp)
 {
     RegisterDictionary::Ptr old_interp_registers = interp_registers;
-    interp_registers = RegisterDictionary::instanceForIsa(interp);
+    interp_registers = Architecture::findByInterpretation(interp).orThrow()->registerDictionary();
     try {
         const SgAsmGenericHeaderPtrList &hdrs = interp->get_headers()->get_headers();
         if (!hdrs.empty()) {

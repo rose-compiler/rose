@@ -23,8 +23,13 @@ RegisterDictionary::Ptr
 Intel8088::registerDictionary() const {
     static SAWYER_THREAD_TRAITS::Mutex mutex;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
-    if (!registerDictionary_.isCached())
-        registerDictionary_ = RegisterDictionary::instanceI8088();
+
+    if (!registerDictionary_.isCached()) {
+        auto regs = RegisterDictionary::instance(name());
+        regs->insert(Architecture::findByName("intel-8086").orThrow()->registerDictionary());
+        registerDictionary_ = regs;
+    }
+
     return registerDictionary_.get();
 }
 

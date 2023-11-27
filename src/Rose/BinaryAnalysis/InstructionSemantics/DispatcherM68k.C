@@ -3,11 +3,12 @@
 #include "sage3basic.h"
 
 #include "AsmUnparser_compat.h"
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
-#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/Diagnostics.h>
 #include "integerOps.h"
 #include "stringify.h"
 
@@ -3488,13 +3489,13 @@ struct IP_unpk: P {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 DispatcherM68k::DispatcherM68k()
-    : BaseSemantics::Dispatcher(32, RegisterDictionary::instanceColdfireEmac()) {}
+    : BaseSemantics::Dispatcher(32, Architecture::findByName("nxp-coldfire").orThrow()->registerDictionary()) {}
 
 
 DispatcherM68k::~DispatcherM68k() {}
 
 DispatcherM68k::DispatcherM68k(const BaseSemantics::RiscOperators::Ptr &ops, size_t addrWidth, const RegisterDictionary::Ptr &regs)
-    : BaseSemantics::Dispatcher(ops, addrWidth, regs ? regs : RegisterDictionary::instanceColdfireEmac()) {
+    : BaseSemantics::Dispatcher(ops, addrWidth, regs ? regs : Architecture::findByName("nxp-coldfire").orThrow()->registerDictionary()) {
     ASSERT_require(32==addrWidth);
     regcache_init();
     iproc_init();

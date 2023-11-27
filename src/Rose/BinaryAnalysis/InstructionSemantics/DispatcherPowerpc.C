@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherPowerpc.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
@@ -2467,7 +2468,7 @@ struct IP_xoris: P {
  *******************************************************************************************************************************/
 
 DispatcherPowerpc::DispatcherPowerpc()
-    : BaseSemantics::Dispatcher(32, RegisterDictionary::instancePowerpc32()) {}
+    : BaseSemantics::Dispatcher(32, Architecture::findByName("ppc32-be").orThrow()->registerDictionary()) {}
 
 DispatcherPowerpc::DispatcherPowerpc(size_t addrWidth, const RegisterDictionary::Ptr &regs/*=NULL*/)
     : BaseSemantics::Dispatcher(addrWidth, regs ? regs : SgAsmPowerpcInstruction::registersForWidth(addrWidth)) {}

@@ -23,8 +23,13 @@ RegisterDictionary::Ptr
 IntelPentium4::registerDictionary() const {
     static SAWYER_THREAD_TRAITS::Mutex mutex;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
-    if (!registerDictionary_.isCached())
-        registerDictionary_ = RegisterDictionary::instancePentium4();
+
+    if (!registerDictionary_.isCached()) {
+        auto regs = RegisterDictionary::instance(name());
+        regs->insert(Architecture::findByName("intel-pentiumiii").orThrow()->registerDictionary());
+        registerDictionary_ = regs;
+    }
+
     return registerDictionary_.get();
 }
 

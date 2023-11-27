@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch64.h>
 
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BitOps.h>
@@ -1799,10 +1800,10 @@ struct IP_yield: P {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 DispatcherAarch64::DispatcherAarch64()
-    : BaseSemantics::Dispatcher(64, RegisterDictionary::instanceAarch64()) {}
+    : BaseSemantics::Dispatcher(64, Architecture::findByName("arm-a64").orThrow()->registerDictionary()) {}
 
 DispatcherAarch64::DispatcherAarch64(const BaseSemantics::RiscOperators::Ptr &ops, const RegisterDictionary::Ptr &regs)
-    : BaseSemantics::Dispatcher(ops, 64, regs ? regs : RegisterDictionary::instanceAarch64()) {
+    : BaseSemantics::Dispatcher(ops, 64, regs ? regs : Architecture::findByName("arm-a64").orThrow()->registerDictionary()) {
     initializeRegisterDescriptors();
     initializeInsnDispatchTable();
     initializeMemory();
