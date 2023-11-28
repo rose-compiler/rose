@@ -5,7 +5,6 @@
 #include <Rose/BitOps.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Disassembler/Aarch32.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch32.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 #include <SageBuilderAsm.h>
@@ -25,7 +24,6 @@ Aarch32::Aarch32(const Architecture::Base::ConstPtr &arch, Modes modes)
         instructionAlignment_ = 4;
     }
     callingConventions(CallingConvention::dictionaryAarch32());
-    p_proto_dispatcher = InstructionSemantics::DispatcherAarch32::instance(arch);
 
     // Architecture independent ROSE disassembler properties
     REG_IP = architecture()->registerDictionary()->instructionPointerRegister();

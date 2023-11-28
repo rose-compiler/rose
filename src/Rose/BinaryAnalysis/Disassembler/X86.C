@@ -10,7 +10,6 @@
 #include <integerOps.h>
 #include <stringify.h>
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 #include <sstream>
@@ -93,8 +92,6 @@ X86::init(size_t wordsize)
     ASSERT_require(REG_SP);
     ASSERT_require(REG_SS);
     ASSERT_require(REG_SF);
-
-    p_proto_dispatcher = InstructionSemantics::DispatcherX86::instance(architecture());
 }
 
 void

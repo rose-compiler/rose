@@ -1,5 +1,5 @@
 #include <featureTests.h>
-#if defined(ROSE_ENABLE_BINARY_ANALYSIS) && __cplusplus >= 201103L
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ParallelPartitioner.h>
 
@@ -570,8 +570,7 @@ Partitioner::basicBlockSemantics(const InsnInfo::List &insns) {
     // Add the non-prefix instructions to the semantic state. If there's a semantic failure then erase the current state (it would
     // be wrong anyway. If there is no current state then there's no point in processing the instruction.
     if (ops->currentState()) {
-        if (BaseSemantics::Dispatcher::Ptr protoCpu = instructionCache().decoder()->dispatcher()) {
-            BaseSemantics::Dispatcher::Ptr cpu = protoCpu->create(ops);
+        if (BaseSemantics::Dispatcher::Ptr cpu = instructionCache().decoder()->architecture()->newInstructionDispatcher(ops)) {
             for (auto insn = insns.begin() + prefix.size(); insn != insns.end(); ++insn) {
                 try {
                     cpu->processInstruction((*insn)->ast().lock().get());

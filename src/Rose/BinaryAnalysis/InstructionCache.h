@@ -1,7 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_InstructionCache_H
 #define ROSE_BinaryAnalysis_InstructionCache_H
 #include <featureTests.h>
-#if defined(ROSE_ENABLE_BINARY_ANALYSIS) && __cplusplus >= 201103L
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
 

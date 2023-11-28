@@ -188,11 +188,11 @@ CfgEmitter::init() {
     }
 
     // Instance initialization
-    if (BaseSemantics::Dispatcher::Ptr cpu = partitioner_->instructionProvider().dispatcher()) {
-        SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
-        RegisterDictionary::Ptr regdict = partitioner_->instructionProvider().registerDictionary();
-        BaseSemantics::RiscOperators::Ptr ops = SymbolicSemantics::RiscOperators::instanceFromRegisters(regdict, solver);
-        noOpAnalysis_ = NoOperation(cpu->create(ops));
+    SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
+    RegisterDictionary::Ptr regdict = partitioner_->instructionProvider().registerDictionary();
+    BaseSemantics::RiscOperators::Ptr ops = SymbolicSemantics::RiscOperators::instanceFromRegisters(regdict, solver);
+    if (BaseSemantics::Dispatcher::Ptr cpu = partitioner_->architecture()->newInstructionDispatcher(ops)) {
+        noOpAnalysis_ = NoOperation(cpu);
         noOpAnalysis_.initialStackPointer(0xdddd0001); // optional; odd prevents false positives for stack aligning instructions
     }
     nameVertices();

@@ -48,7 +48,7 @@ Analysis::init(const Disassembler::Base::Ptr &disassembler) {
         BaseSemantics::State::Ptr state = SymbolicSemantics::State::instance(registers, memory);
         BaseSemantics::RiscOperators::Ptr ops = SymbolicSemantics::RiscOperators::instanceFromState(state, solver);
 
-        cpu_ = disassembler->dispatcher()->create(ops);
+        cpu_ = disassembler->architecture()->newInstructionDispatcher(ops);
     }
 }
 

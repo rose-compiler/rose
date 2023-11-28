@@ -66,9 +66,6 @@ protected:
     RegisterDescriptor REG_IP, REG_SP, REG_SS, REG_SF, REG_LINK; /**< Register descriptors initialized during construction. */
     size_t instructionAlignment_ = 1;                            /**< Positive alignment constraint for instruction addresses. */
 
-    /** Prototypical dispatcher for creating real dispatchers */
-    InstructionSemantics::BaseSemantics::DispatcherPtr p_proto_dispatcher;
-
 public:
 
 
@@ -147,14 +144,6 @@ public:
     void callingConventions(const CallingConvention::Dictionary &d) { callingConventions_ = d; }
     /** @} */
 
-    /** Return an instruction semantics dispatcher if possible.
-     *
-     *  If instruction semantics are implemented for this architecure then return a pointer to a dispatcher. The dispatcher
-     *  will have no attached RISC operators and can only be used to create a new dispatcher via its virtual constructor.  If
-     *  instruction semantics are not implemented then the null pointer is returned. */
-    const Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::DispatcherPtr& dispatcher() const {
-        return p_proto_dispatcher;
-    }
 
     /***************************************************************************************************************************
      *                                          Instruction disassembly functions

@@ -8,7 +8,6 @@
 #include "stringify.h"
 #include "SageBuilderAsm.h"
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 #include <Sawyer/Assert.h>                              // FIXME[Robb P. Matzke 2014-06-19]: replace with "Diagnostics.h"
@@ -4861,8 +4860,6 @@ M68k::init()
     ASSERT_require(REG_IP);
     ASSERT_require(REG_SP);
     ASSERT_require(REG_SF);
-
-    p_proto_dispatcher = InstructionSemantics::DispatcherM68k::instance(architecture());
 
     instructionAlignment_ = 2;
     callingConventions(CallingConvention::dictionaryM68k());

@@ -1021,7 +1021,6 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner::ConstPtr &partitioner, cons
         ops->hotPatch().append(HotPatch::Record(REG_IP, oldValue, newValue, HotPatch::Record::MATCH_BREAK));
     }
 
-    ASSERT_not_null(partitioner->instructionProvider().dispatcher());
     BaseSemantics::Dispatcher::Ptr cpu = partitioner->architecture()->newInstructionDispatcher(ops);
     ASSERT_not_null(cpu);
 

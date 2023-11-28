@@ -10,7 +10,6 @@
 
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherPowerpc.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -73,8 +72,6 @@ Powerpc::init() {
     ASSERT_require(REG_SP);
     ASSERT_require(REG_SF);
     ASSERT_require(REG_LINK);
-
-    p_proto_dispatcher = InstructionSemantics::DispatcherPowerpc::instance(architecture());
 }
 
 // This is a bit of a kludge for now because we're trying to use an unmodified version of the PowerpcDisassembler name space.

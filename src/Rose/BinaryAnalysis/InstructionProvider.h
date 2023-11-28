@@ -184,9 +184,9 @@ public:
     /** Instruction dispatcher.
      *
      *  Returns a pointer to a dispatcher used for instruction semantics.  Not all architectures support instruction semantics,
-     *  in which case a null pointer is returned.  The returned dispatcher is not connected to any semantic domain, so it can
-     *  only be used to call its virtual constructor to create a valid dispatcher. */
-    InstructionSemantics::BaseSemantics::DispatcherPtr dispatcher() const;
+     *  in which case a null pointer is returned. */
+    InstructionSemantics::BaseSemantics::DispatcherPtr
+    dispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) const;
 
     /** Print some partitioner performance statistics. */
     void showStatistics() const;

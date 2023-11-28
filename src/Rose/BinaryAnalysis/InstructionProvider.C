@@ -130,10 +130,8 @@ InstructionProvider::instructionAlignment() const {
 }
 
 InstructionSemantics::BaseSemantics::Dispatcher::Ptr
-InstructionProvider::dispatcher() const {
-    // FIXME[Robb Matzke 2023-11-27]: use Architecture API
-    ASSERT_not_null(disassembler_);
-    return disassembler_->dispatcher();
+InstructionProvider::dispatcher(const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &ops) const {
+    return architecture_->newInstructionDispatcher(ops);
 }
 
 void

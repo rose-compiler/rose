@@ -47,7 +47,7 @@ Analysis::init(const Disassembler::Base::Ptr &disassembler) {
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         SymbolicSemantics::RiscOperators::Ptr ops = SymbolicSemantics::RiscOperators::instanceFromRegisters(registerDictionary, solver);
 
-        cpu_ = disassembler->dispatcher()->create(ops);
+        cpu_ = disassembler->architecture()->newInstructionDispatcher(ops);
     }
 }
 

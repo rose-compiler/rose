@@ -851,9 +851,7 @@ Partitioner::newOperators(SemanticMemoryParadigm memType) const {
 BaseSemantics::Dispatcher::Ptr
 Partitioner::newDispatcher(const BaseSemantics::RiscOperators::Ptr &ops) const {
     ASSERT_not_null(ops);
-    if (instructionProvider_->dispatcher() == nullptr)
-        return BaseSemantics::Dispatcher::Ptr();          // instruction semantics are not implemented for this architecture
-    return instructionProvider_->dispatcher()->create(ops);
+    return architecture()->newInstructionDispatcher(ops);
 }
 
 BasicBlock::Ptr

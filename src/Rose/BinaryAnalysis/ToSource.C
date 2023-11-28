@@ -55,15 +55,14 @@ BinaryToSource::init(const P2::Partitioner::ConstPtr &partitioner) {
     disassembler_ = partitioner->instructionProvider().disassembler();
     RegisterDictionary::Ptr regDict = disassembler_->registerDictionary();
     raisingOps_ = RiscOperators::instanceFromRegisters(regDict, SmtSolverPtr());
-    BaseSemantics::Dispatcher::Ptr protoCpu = disassembler_->dispatcher();
-    if (!protoCpu)
-        throw Exception("no instruction semantics for architecture");
     if (settings_.traceRiscOps) {
         tracingOps_ = TraceSemantics::RiscOperators::instance(raisingOps_);
-        raisingCpu_ = protoCpu->create(tracingOps_);
+        raisingCpu_ = disassembler_->architecture()->newInstructionDispatcher(tracingOps_);
     } else {
-        raisingCpu_ = protoCpu->create(raisingOps_);
+        raisingCpu_ = disassembler_->architecture()->newInstructionDispatcher(raisingOps_);
     }
+    if (!raisingCpu_)
+        throw Exception("no instruction semantics for architecture");
 }
 
 // class method
