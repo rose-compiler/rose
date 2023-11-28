@@ -39,10 +39,10 @@ public:
     typedef Sawyer::Container::HashMap<rose_addr_t, SgAsmInstruction*> InsnMap;
 
 private:
-    Disassembler::BasePtr disassembler_;
-    MemoryMap::Ptr memMap_;
+    Architecture::BaseConstPtr architecture_;           // required architecture
+    Disassembler::BasePtr disassembler_;                // disassembler_ is non-null iff memMap_ is non-null
+    MemoryMap::Ptr memMap_;                             // optional map from which instructions are decoded if disassembler_
     mutable InsnMap insnMap_;                           // this is a cache
-    bool useDisassembler_;
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
@@ -51,9 +51,6 @@ private:
     template<class S>
     void save(S &s, const unsigned /*version*/) const {
         roseAstSerializationRegistration(s);            // so we can save instructions through SgAsmInstruction base ptrs
-        bool hasDisassembler = disassembler_ != NULL;
-        s <<BOOST_SERIALIZATION_NVP(hasDisassembler);
-        s <<BOOST_SERIALIZATION_NVP(useDisassembler_);
         s <<BOOST_SERIALIZATION_NVP(memMap_);
 
         const size_t mapSize = insnMap_.size();
@@ -61,18 +58,15 @@ private:
         for (const auto &insn: insnMap_.values())
             saveAst(s, insn);
 
-        if (hasDisassembler) {
-            std::string disName = Disassembler::name(disassembler_);
-            s <<BOOST_SERIALIZATION_NVP(disName);
-        }
+        ASSERT_not_null(architecture_);
+        const std::string architecture = architecture_->name();
+        s <<BOOST_SERIALIZATION_NVP(architecture);
     }
 
     template<class S>
-    void load(S &s, const unsigned /*version*/) {
+    void load(S &s, const unsigned version) {
+        ASSERT_always_require(version >= 2);
         roseAstSerializationRegistration(s);
-        bool hasDisassembler = false;
-        s >>BOOST_SERIALIZATION_NVP(hasDisassembler);
-        s >>BOOST_SERIALIZATION_NVP(useDisassembler_);
         s >>BOOST_SERIALIZATION_NVP(memMap_);
 
         size_t mapSize;
@@ -84,54 +78,43 @@ private:
             insnMap_.insert(insn->get_address(), insn);
         }
 
-        if (hasDisassembler) {
-            std::string archName;
-            s >>BOOST_SERIALIZATION_NVP(archName);
-            auto arch = Architecture::findByName(archName).orThrow();
-            disassembler_ = arch->newInstructionDecoder();
-            ASSERT_not_null2(disassembler_, "architecture name=" + Architecture::name(arch));
+        std::string architecture;
+        s >>BOOST_SERIALIZATION_NVP(architecture);
+        architecture_ = Architecture::findByName(architecture).orThrow();
+
+        if (memMap_) {
+            disassembler_ = architecture_->newInstructionDecoder();
+            ASSERT_not_null(disassembler_);
         }
     }
 
     BOOST_SERIALIZATION_SPLIT_MEMBER();
 #endif
 
+private:
+    InstructionProvider();                              // used only by boost::serialization
 protected:
-    InstructionProvider();
-
-    InstructionProvider(const Disassembler::BasePtr &disassembler, const MemoryMap::Ptr &map);
+    InstructionProvider(const Architecture::BaseConstPtr&, const MemoryMap::Ptr &map);
 
 public:
     ~InstructionProvider();
 
-    /** Static allocating Constructor.
+    /** Allocating Constructor.
      *
-     *  The disassembler is required even if the user plans to turn off the ability to obtain instructions from the
-     *  disassembler.  The memory map should be configured so that all segments that potentially contain instructions have
-     *  execute permission.  Any readable/nonwritable segments will be considered to be constant for the life of the specimen.
-     *  For instance, if a linking step has initialized the dynamic linking tables then those tables can be marked as readable
-     *  and non-writable so that indirect jumps through the table will result in concrete execution addresses.
+     *  Caches instructions for the specified architecture. If a memory map is provided then it will also decode instructions and
+     *  add them to the cache if a query is made for an instruction that doesn't exist.
      *
-     *  The disassembler is owned by the caller and should not be freed until after the instruction provider is destroyed.  The
-     *  memory map is copied into the instruction provider. */
-    static Ptr instance(const Disassembler::BasePtr &disassembler, const MemoryMap::Ptr &map) {
-        return Ptr(new InstructionProvider(disassembler, map));
-    }
+     *  If a memory map is provided, the map should be configured so that all segments that potentially contain instructions have
+     *  execute permission.  Any readable/nonwritable segments will be considered to be constant for the life of the specimen.  For
+     *  instance, if a linking step has initialized the dynamic linking tables then those tables can be marked as readable and
+     *  non-writable so that indirect jumps through the table will result in concrete execution addresses. */
+    static Ptr instance(const Architecture::BaseConstPtr&, const MemoryMap::Ptr&);
 
     /** Enable or disable the disassembler.
      *
      *  When the disassembler is disabled then it is not called when a new instruction is needed, but rather a null instruction
-     *  pointer is returned (and cached).
-     *
-     * @{ */
-    bool isDisassemblerEnabled() const {
-        return useDisassembler_;
-    }
-    void enableDisassembler(bool enable=true);
-    void disableDisassembler() {
-        useDisassembler_ = false;
-    }
-    /** @} */
+     *  pointer is returned (and cached). */
+    bool isDisassemblerEnabled() const;
 
     /** Returns the instruction at the specified virtual address, or null.
      *
@@ -211,6 +194,9 @@ public:
 
 } // namespace
 } // namespace
+
+// Class versions must be at global scope
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::InstructionProvider, 2);
 
 #endif
 #endif

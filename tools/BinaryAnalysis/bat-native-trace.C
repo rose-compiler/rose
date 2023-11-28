@@ -48,7 +48,7 @@ makeInstructionProvider(const P2::Engine::Ptr &engine) {
         exit(1);
     }
 
-    return Rose::BinaryAnalysis::InstructionProvider::instance(disasm, memmap);
+    return Rose::BinaryAnalysis::InstructionProvider::instance(engine->architecture(), memmap);
 }
 
 SgAsmInstruction*

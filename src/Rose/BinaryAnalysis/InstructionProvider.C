@@ -9,32 +9,41 @@
 namespace Rose {
 namespace BinaryAnalysis {
 
-InstructionProvider::InstructionProvider()
-    : useDisassembler_(false) {
+InstructionProvider::InstructionProvider() {
     // Start off with a large map to reduce early rehashing. There will probably be a lot of instructions.
     insnMap_.rehash(1000000);
 }
 
-InstructionProvider::InstructionProvider(const Disassembler::Base::Ptr &disassembler, const MemoryMap::Ptr &map)
-    : disassembler_(disassembler), memMap_(map), useDisassembler_(true) {
-    ASSERT_not_null(disassembler);
+InstructionProvider::InstructionProvider(const Architecture::Base::ConstPtr &arch, const MemoryMap::Ptr &map)
+    : architecture_(arch), memMap_(map) {
+    ASSERT_not_null(architecture_);
+    if (map) {
+        disassembler_ = arch->newInstructionDecoder();
+        ASSERT_not_null(disassembler_);
+    }
+
     // Start off with a large map to reduce early rehashing. There will probably be a lot of instructions.
     insnMap_.rehash(1000000);
 }
 
 InstructionProvider::~InstructionProvider() {}
 
-void
-InstructionProvider::enableDisassembler(bool enable) {
-    ASSERT_require(!enable || disassembler_);
-    useDisassembler_ = enable;
+InstructionProvider::Ptr
+InstructionProvider::instance(const Architecture::Base::ConstPtr &arch, const MemoryMap::Ptr &map) {
+    return Ptr(new InstructionProvider(arch, map));
+}
+
+bool
+InstructionProvider::isDisassemblerEnabled() const {
+    return memMap_ != nullptr;
 }
 
 SgAsmInstruction*
 InstructionProvider::operator[](rose_addr_t va) const {
-    SgAsmInstruction *insn = NULL;
+    SgAsmInstruction *insn = nullptr;
     if (!insnMap_.getOptional(va).assignTo(insn)) {
-        if (useDisassembler_ && memMap_->at(va).require(MemoryMap::EXECUTABLE).exists()) {
+        if (memMap_ && memMap_->at(va).require(MemoryMap::EXECUTABLE).exists()) {
+            ASSERT_not_null(disassembler_);
             try {
                 insn = disassembler_->disassembleOne(memMap_, va);
             } catch (const Disassembler::Exception &e) {
@@ -69,56 +78,61 @@ InstructionProvider::disassembler() const {
 
 RegisterDictionary::Ptr
 InstructionProvider::registerDictionary() const {
-    return disassembler_->registerDictionary();
+    return architecture_->registerDictionary();
 }
 
 const CallingConvention::Dictionary&
 InstructionProvider::callingConventions() const {
+    // FIXME[Robb Matzke 2023-11-27]: use Architecture API
+    ASSERT_not_null(disassembler_);
     return disassembler_->callingConventions();
 }
 
 RegisterDescriptor
 InstructionProvider::instructionPointerRegister() const {
-    return disassembler_->instructionPointerRegister();
+    return architecture_->registerDictionary()->instructionPointerRegister();
 }
 
 RegisterDescriptor
 InstructionProvider::stackPointerRegister() const {
-    return disassembler_->stackPointerRegister();
+    return architecture_->registerDictionary()->stackPointerRegister();
 }
 
 RegisterDescriptor
 InstructionProvider::stackFrameRegister() const {
-    return disassembler_->stackFrameRegister();
+    return architecture_->registerDictionary()->stackFrameRegister();
 }
 
 RegisterDescriptor
 InstructionProvider::callReturnRegister() const {
-    return disassembler_->callReturnRegister();
+    return architecture_->registerDictionary()->callReturnRegister();
 }
 
 RegisterDescriptor
 InstructionProvider::stackSegmentRegister() const {
-    return disassembler_->stackSegmentRegister();
+    return architecture_->registerDictionary()->stackSegmentRegister();
 }
 
 ByteOrder::Endianness
 InstructionProvider::defaultByteOrder() const {
-    return disassembler_->byteOrder();
+    return architecture_->byteOrder();
 }
 
 size_t
 InstructionProvider::wordSize() const {
-    return 8 * disassembler_->wordSizeBytes();
+    return architecture_->bitsPerWord();
 }
 
 size_t
 InstructionProvider::instructionAlignment() const {
+    ASSERT_not_null(disassembler_);
     return disassembler_->instructionAlignment();
 }
 
 InstructionSemantics::BaseSemantics::Dispatcher::Ptr
 InstructionProvider::dispatcher() const {
+    // FIXME[Robb Matzke 2023-11-27]: use Architecture API
+    ASSERT_not_null(disassembler_);
     return disassembler_->dispatcher();
 }
 

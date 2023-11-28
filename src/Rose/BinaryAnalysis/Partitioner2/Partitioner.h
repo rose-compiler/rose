@@ -546,6 +546,11 @@ public:
     const Configuration& configuration() const;
     /** @} */
 
+    /** Property: Architecture information.
+     *
+     *  Returns a non-null pointer to the architecture information. */
+    Architecture::BaseConstPtr architecture() const;
+
     /** Returns the instruction provider.
      *
      *  Thread safety: Not thread safe.

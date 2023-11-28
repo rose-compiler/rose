@@ -299,18 +299,13 @@ Partitioner::init(const MemoryMap::Ptr &map) {
     // Start with a large hash table to reduce early rehashing. There's a high chance that we'll need this much.
     vertexIndex_.rehash(100000);
 
-    ASSERT_not_null(architecture_);
-    if (auto disassembler = architecture_->newInstructionDecoder()) {
-        instructionProvider_ = InstructionProvider::instance(disassembler, map);
-        unparser_ = disassembler->unparser()->copy();
-        insnUnparser_ = disassembler->unparser()->copy();
-        configureInsnUnparser(insnUnparser_);
-        insnPlainUnparser_ = disassembler->unparser()->copy();
-        configureInsnPlainUnparser(insnPlainUnparser_);
-    } else {
-        auto anyArch = Architecture::findByName("intel-pentium4").orThrow(); // not used by null decoder
-        instructionProvider_ = InstructionProvider::instance(Disassembler::Null::instance(anyArch), map);
-    }
+    instructionProvider_ = InstructionProvider::instance(architecture(), map);
+    unparser_ = architecture()->newUnparser();
+    insnUnparser_ = architecture()->newUnparser();
+    configureInsnUnparser(insnUnparser_);
+    insnPlainUnparser_ = architecture()->newUnparser();
+    configureInsnPlainUnparser(insnPlainUnparser_);
+
     undiscoveredVertex_ = cfg_.insertVertex(CfgVertex(V_UNDISCOVERED));
     indeterminateVertex_ = cfg_.insertVertex(CfgVertex(V_INDETERMINATE));
     nonexistingVertex_ = cfg_.insertVertex(CfgVertex(V_NONEXISTING));
@@ -347,6 +342,12 @@ Partitioner::configuration() {
 const Configuration&
 Partitioner::configuration() const {
     return config_;
+}
+
+Architecture::Base::ConstPtr
+Partitioner::architecture() const {
+    ASSERT_not_null(architecture_);
+    return architecture_;
 }
 
 InstructionProvider&
