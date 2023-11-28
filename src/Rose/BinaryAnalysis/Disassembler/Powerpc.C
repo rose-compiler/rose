@@ -74,10 +74,7 @@ Powerpc::init() {
     ASSERT_require(REG_SF);
     ASSERT_require(REG_LINK);
 
-    InstructionSemantics::DispatcherPowerpcPtr d =
-        InstructionSemantics::DispatcherPowerpc::instance(architecture()->bitsPerWord(), architecture()->registerDictionary());
-    d->registerDictionary(architecture()->registerDictionary());
-    p_proto_dispatcher = d;
+    p_proto_dispatcher = InstructionSemantics::DispatcherPowerpc::instance(architecture());
 }
 
 // This is a bit of a kludge for now because we're trying to use an unmodified version of the PowerpcDisassembler name space.

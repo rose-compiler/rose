@@ -117,12 +117,13 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &in
         using namespace Rose::BinaryAnalysis::InstructionSemantics;
         using namespace Rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics;
         const InstructionMap &imap = interp->get_instructionMap();
-        RegisterDictionary::Ptr regdict = Architecture::findByInterpretation(interp).orThrow()->registerDictionary();
+        auto arch = Architecture::findByInterpretation(interp).orThrow();
+        RegisterDictionary::Ptr regdict = arch->registerDictionary();
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         BaseSemantics::RiscOperators::Ptr ops = RiscOperators::instanceFromRegisters(regdict, solver);
         ASSERT_not_null(ops);
         const RegisterDescriptor SP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
-        DispatcherX86::Ptr dispatcher = DispatcherX86::instance(ops, SP.nBits(), RegisterDictionary::Ptr());
+        DispatcherX86::Ptr dispatcher = DispatcherX86::promote(arch->newInstructionDispatcher(ops));
         SValue::Ptr orig_esp = SValue::promote(ops->peekRegister(dispatcher->REG_anySP));
         try {
             for (size_t i=0; i<insns.size(); ++i)
@@ -186,7 +187,8 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &in
         RegisterDictionary::Ptr regdict = registersForInstructionSize(x86insn->get_addressSize());
         const RegisterDescriptor SP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
         BaseSemantics::RiscOperators::Ptr ops = RiscOperators::instanceFromRegisters(regdict, solver);
-        DispatcherX86::Ptr dispatcher = DispatcherX86::instance(ops, SP.nBits(), RegisterDictionary::Ptr());
+        auto arch = Architecture::findByInterpretation(interp).orThrow();
+        DispatcherX86::Ptr dispatcher = DispatcherX86::promote(arch->newInstructionDispatcher(ops));
         try {
             for (size_t i=0; i<insns.size(); ++i)
                 dispatcher->processInstruction(insns[i]);
@@ -387,28 +389,30 @@ SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, 
      * successors, a thorough analysis might be able to narrow it down to a single successor. We should not make special
      * assumptions about CALL and FARCALL instructions -- their only successor is the specified address operand. */
     if (!complete || successors.size()>1) {
-        RegisterDictionary::Ptr regdict;
+
+        Architecture::Base::ConstPtr arch;
         if (SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(this)) {
-            regdict = Architecture::findByInterpretation(interp).orThrow()->registerDictionary();
+            arch = Architecture::findByInterpretation(interp).orThrow();
         } else {
             switch (get_baseSize()) {
                 case x86_insnsize_16:
-                    regdict = Architecture::findByName("intel-80286").orThrow()->registerDictionary();
+                    arch = Architecture::findByName("intel-80286").orThrow();
                     break;
                 case x86_insnsize_32:
-                    regdict = Architecture::findByName("intel-pentium4").orThrow()->registerDictionary();
+                    arch = Architecture::findByName("intel-pentium4").orThrow();
                     break;
                 case x86_insnsize_64:
-                    regdict = Architecture::findByName("amd64").orThrow()->registerDictionary();
+                    arch = Architecture::findByName("amd64").orThrow();
                     break;
                 default:
                     ASSERT_not_reachable("invalid x86 instruction size");
             }
         }
+        RegisterDictionary::Ptr regdict = arch->registerDictionary();
         const RegisterDescriptor IP = regdict->findLargestRegister(x86_regclass_ip, 0);
         PartialSymbolicSemantics::RiscOperators::Ptr ops = PartialSymbolicSemantics::RiscOperators::instanceFromRegisters(regdict);
         ops->set_memory_map(initial_memory);
-        BaseSemantics::Dispatcher::Ptr cpu = DispatcherX86::instance(ops, IP.nBits(), regdict);
+        BaseSemantics::Dispatcher::Ptr cpu = arch->newInstructionDispatcher(ops);
 
         try {
             BOOST_FOREACH (SgAsmInstruction *insn, insns) {

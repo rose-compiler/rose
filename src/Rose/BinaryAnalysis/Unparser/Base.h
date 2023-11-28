@@ -415,8 +415,8 @@ public:
     typedef Sawyer::SharedPointer<Base> Ptr;
 
 private:
-    Ptr nextUnparser_;
     Architecture::BaseConstPtr architecture_;           // non-null architecture
+    Ptr nextUnparser_;
 
 protected:
     explicit Base(const Architecture::BaseConstPtr&);

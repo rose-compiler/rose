@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/Architecture/NxpColdfire.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/M68k.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h>
 #include <Rose/BinaryAnalysis/Unparser/M68k.h>
 
 namespace Rose {
@@ -116,6 +117,11 @@ NxpColdfire::newInstructionDecoder() const {
 Unparser::Base::Ptr
 NxpColdfire::newUnparser() const {
     return Unparser::M68k::instance(shared_from_this());
+}
+
+InstructionSemantics::BaseSemantics::DispatcherPtr
+NxpColdfire::newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops) const {
+    return InstructionSemantics::DispatcherM68k::instance(shared_from_this(), ops);
 }
 
 } // namespace

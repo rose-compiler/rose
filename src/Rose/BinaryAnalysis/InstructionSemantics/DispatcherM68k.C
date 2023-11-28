@@ -3488,15 +3488,16 @@ struct IP_unpk: P {
 //                                      DispatcherM68k
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-DispatcherM68k::DispatcherM68k()
-    : BaseSemantics::Dispatcher(32, Architecture::findByName("nxp-coldfire").orThrow()->registerDictionary()) {}
+DispatcherM68k::DispatcherM68k() {}
+
+DispatcherM68k::DispatcherM68k(const Architecture::Base::ConstPtr &arch)
+    : BaseSemantics::Dispatcher(arch) {}
 
 
 DispatcherM68k::~DispatcherM68k() {}
 
-DispatcherM68k::DispatcherM68k(const BaseSemantics::RiscOperators::Ptr &ops, size_t addrWidth, const RegisterDictionary::Ptr &regs)
-    : BaseSemantics::Dispatcher(ops, addrWidth, regs ? regs : Architecture::findByName("nxp-coldfire").orThrow()->registerDictionary()) {
-    ASSERT_require(32==addrWidth);
+DispatcherM68k::DispatcherM68k(const Architecture::Base::ConstPtr &arch, const BaseSemantics::RiscOperators::Ptr &ops)
+    : BaseSemantics::Dispatcher(arch, ops) {
     regcache_init();
     iproc_init();
     memory_init();
@@ -3504,21 +3505,18 @@ DispatcherM68k::DispatcherM68k(const BaseSemantics::RiscOperators::Ptr &ops, siz
 }
 
 DispatcherM68k::Ptr
-DispatcherM68k::instance() {
-    return Ptr(new DispatcherM68k);
+DispatcherM68k::instance(const Architecture::Base::ConstPtr &arch) {
+    return Ptr(new DispatcherM68k(arch));
 }
 
 DispatcherM68k::Ptr
-DispatcherM68k::instance(const BaseSemantics::RiscOperators::Ptr &ops, size_t addrWidth,
-                         const RegisterDictionary::Ptr &regs) {
-    return Ptr(new DispatcherM68k(ops, addrWidth, regs));
+DispatcherM68k::instance(const Architecture::Base::ConstPtr &arch, const BaseSemantics::RiscOperators::Ptr &ops) {
+    return Ptr(new DispatcherM68k(arch, ops));
 }
 
 BaseSemantics::Dispatcher::Ptr
-DispatcherM68k::create(const BaseSemantics::RiscOperators::Ptr &ops, size_t addrWidth, const RegisterDictionary::Ptr &regs) const {
-    if (0 == addrWidth)
-        addrWidth = addressWidth();
-    return instance(ops, addrWidth, regs ? regs : registerDictionary());
+DispatcherM68k::create(const BaseSemantics::RiscOperators::Ptr &ops) const {
+    return instance(architecture(), ops);
 }
 
 DispatcherM68k::Ptr
@@ -3763,64 +3761,62 @@ DispatcherM68k::iproc_init() {
 
 void
 DispatcherM68k::regcache_init() {
-    if (regdict) {
-        for (int i=0; i<8; ++i) {
-            REG_D[i] = findRegister("d"+StringUtility::numberToString(i), 32);
-            REG_A[i] = findRegister("a"+StringUtility::numberToString(i), 32);
-            REG_FP[i] = findRegister("fp"+StringUtility::numberToString(i));
-            ASSERT_require2(REG_FP[i].nBits()==64 || REG_FP[i].nBits()==80, "invalid floating point register size");
-        }
-        REG_PC = findRegister("pc", 32);
-        REG_CCR   = findRegister("ccr", 8);
-        REG_CCR_C = findRegister("ccr_c", 1);
-        REG_CCR_V = findRegister("ccr_v", 1);
-        REG_CCR_Z = findRegister("ccr_z", 1);
-        REG_CCR_N = findRegister("ccr_n", 1);
-        REG_CCR_X = findRegister("ccr_x", 1);
-        REG_SR_S  = findRegister("sr_s",  1);
-        REG_SR    = findRegister("sr", 16);
-        REG_VBR   = findRegister("vbr", 32);
-        REG_SSP   = findRegister("ssp", 32);
-
-        // TOO1 (8/11/2014): Renamed variable from "OPTIONAL" to "IS_OPTIONAL".
-        //                   "OPTIONAL" is a predefined macro in Windows.
-        // Multiply-accumulated registers.  These are optional.
-        static const bool IS_OPTIONAL = true;
-        REG_MACSR_SU = findRegister("macsr_su", 1, IS_OPTIONAL);
-        REG_MACSR_FI = findRegister("macsr_fi", 1, IS_OPTIONAL);
-        REG_MACSR_N  = findRegister("macsr_n",  1, IS_OPTIONAL);
-        REG_MACSR_Z  = findRegister("macsr_z",  1, IS_OPTIONAL);
-        REG_MACSR_V  = findRegister("macsr_v",  1, IS_OPTIONAL);
-        REG_MACSR_C  = findRegister("macsr_c",  1, IS_OPTIONAL);
-        REG_MAC_MASK = findRegister("mask",    32, IS_OPTIONAL);
-        REG_MACEXT0  = findRegister("accext0", 16, IS_OPTIONAL);
-        REG_MACEXT1  = findRegister("accext1", 16, IS_OPTIONAL);
-        REG_MACEXT2  = findRegister("accext2", 16, IS_OPTIONAL);
-        REG_MACEXT3  = findRegister("accext3", 16, IS_OPTIONAL);
-
-        // Floating-point condition code bits
-        REG_FPCC_NAN = findRegister("fpcc_nan", 1);     // result is not a number
-        REG_FPCC_I   = findRegister("fpcc_i",   1);     // result is +/- infinity
-        REG_FPCC_Z   = findRegister("fpcc_z",   1);     // result is +/- zero
-        REG_FPCC_N   = findRegister("fpcc_n",   1);     // result is negative
-
-        // Floating-point status register exception bits
-        REG_EXC_BSUN  = findRegister("exc_bsun",  1);   // branch/set on unordered
-        REG_EXC_OPERR = findRegister("exc_operr", 1);   // operand error
-        REG_EXC_OVFL  = findRegister("exc_ovfl",  1);   // overflow
-        REG_EXC_UNFL  = findRegister("exc_unfl",  1);   // underflow
-        REG_EXC_DZ    = findRegister("exc_dz",    1);   // divide by zero
-        REG_EXC_INAN  = findRegister("exc_snan",  1);   // is not-a-number
-        REG_EXC_IDE   = findRegister("exc_inex1", 1);   // input is denormalized
-        REG_EXC_INEX  = findRegister("exc_inex2", 1);   // inexact result
-
-        // Floating-point status register accrued exception bits
-        REG_AEXC_IOP  = findRegister("aexc_iop",  1);
-        REG_AEXC_OVFL = findRegister("aexc_ovfl", 1);
-        REG_AEXC_UNFL = findRegister("aexc_unfl", 1);
-        REG_AEXC_DZ   = findRegister("aexc_dz",   1);
-        REG_AEXC_INEX = findRegister("aexc_inex", 1);
+    for (int i=0; i<8; ++i) {
+        REG_D[i] = findRegister("d"+StringUtility::numberToString(i), 32);
+        REG_A[i] = findRegister("a"+StringUtility::numberToString(i), 32);
+        REG_FP[i] = findRegister("fp"+StringUtility::numberToString(i));
+        ASSERT_require2(REG_FP[i].nBits()==64 || REG_FP[i].nBits()==80, "invalid floating point register size");
     }
+    REG_PC = findRegister("pc", 32);
+    REG_CCR   = findRegister("ccr", 8);
+    REG_CCR_C = findRegister("ccr_c", 1);
+    REG_CCR_V = findRegister("ccr_v", 1);
+    REG_CCR_Z = findRegister("ccr_z", 1);
+    REG_CCR_N = findRegister("ccr_n", 1);
+    REG_CCR_X = findRegister("ccr_x", 1);
+    REG_SR_S  = findRegister("sr_s",  1);
+    REG_SR    = findRegister("sr", 16);
+    REG_VBR   = findRegister("vbr", 32);
+    REG_SSP   = findRegister("ssp", 32);
+
+    // TOO1 (8/11/2014): Renamed variable from "OPTIONAL" to "IS_OPTIONAL".
+    //                   "OPTIONAL" is a predefined macro in Windows.
+    // Multiply-accumulated registers.  These are optional.
+    static const bool IS_OPTIONAL = true;
+    REG_MACSR_SU = findRegister("macsr_su", 1, IS_OPTIONAL);
+    REG_MACSR_FI = findRegister("macsr_fi", 1, IS_OPTIONAL);
+    REG_MACSR_N  = findRegister("macsr_n",  1, IS_OPTIONAL);
+    REG_MACSR_Z  = findRegister("macsr_z",  1, IS_OPTIONAL);
+    REG_MACSR_V  = findRegister("macsr_v",  1, IS_OPTIONAL);
+    REG_MACSR_C  = findRegister("macsr_c",  1, IS_OPTIONAL);
+    REG_MAC_MASK = findRegister("mask",    32, IS_OPTIONAL);
+    REG_MACEXT0  = findRegister("accext0", 16, IS_OPTIONAL);
+    REG_MACEXT1  = findRegister("accext1", 16, IS_OPTIONAL);
+    REG_MACEXT2  = findRegister("accext2", 16, IS_OPTIONAL);
+    REG_MACEXT3  = findRegister("accext3", 16, IS_OPTIONAL);
+
+    // Floating-point condition code bits
+    REG_FPCC_NAN = findRegister("fpcc_nan", 1);     // result is not a number
+    REG_FPCC_I   = findRegister("fpcc_i",   1);     // result is +/- infinity
+    REG_FPCC_Z   = findRegister("fpcc_z",   1);     // result is +/- zero
+    REG_FPCC_N   = findRegister("fpcc_n",   1);     // result is negative
+
+    // Floating-point status register exception bits
+    REG_EXC_BSUN  = findRegister("exc_bsun",  1);   // branch/set on unordered
+    REG_EXC_OPERR = findRegister("exc_operr", 1);   // operand error
+    REG_EXC_OVFL  = findRegister("exc_ovfl",  1);   // overflow
+    REG_EXC_UNFL  = findRegister("exc_unfl",  1);   // underflow
+    REG_EXC_DZ    = findRegister("exc_dz",    1);   // divide by zero
+    REG_EXC_INAN  = findRegister("exc_snan",  1);   // is not-a-number
+    REG_EXC_IDE   = findRegister("exc_inex1", 1);   // input is denormalized
+    REG_EXC_INEX  = findRegister("exc_inex2", 1);   // inexact result
+
+    // Floating-point status register accrued exception bits
+    REG_AEXC_IOP  = findRegister("aexc_iop",  1);
+    REG_AEXC_OVFL = findRegister("aexc_ovfl", 1);
+    REG_AEXC_UNFL = findRegister("aexc_unfl", 1);
+    REG_AEXC_DZ   = findRegister("aexc_dz",   1);
+    REG_AEXC_INEX = findRegister("aexc_inex", 1);
 }
 
 void
@@ -3859,12 +3855,6 @@ DispatcherM68k::stackFrameRegister() const {
 RegisterDescriptor
 DispatcherM68k::callReturnRegister() const {
     return RegisterDescriptor();
-}
-
-void
-DispatcherM68k::set_register_dictionary(const RegisterDictionary::Ptr &regdict) {
-    BaseSemantics::Dispatcher::set_register_dictionary(regdict);
-    regcache_init();
 }
 
 SValue::Ptr

@@ -172,11 +172,12 @@ SgAsmM68kInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& i
         using namespace Rose::BinaryAnalysis::InstructionSemantics;
         using namespace Rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics;
         const InstructionMap &imap = interp->get_instructionMap();
-        RegisterDictionary::Ptr regdict = Architecture::findByInterpretation(interp).orThrow()->registerDictionary();
+        auto arch = Architecture::findByInterpretation(interp).orThrow();
+        RegisterDictionary::Ptr regdict = arch->registerDictionary();
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         BaseSemantics::RiscOperators::Ptr ops = RiscOperators::instanceFromRegisters(regdict, solver);
         ASSERT_not_null(ops);
-        DispatcherM68kPtr dispatcher = DispatcherM68k::instance(ops, 32, RegisterDictionary::Ptr());
+        DispatcherM68kPtr dispatcher = DispatcherM68k::promote(arch->newInstructionDispatcher(ops));
         SValue::Ptr orig_sp = SValue::promote(ops->peekRegister(dispatcher->REG_A[7]));
         try {
             for (size_t i=0; i<insns.size(); ++i)
@@ -229,10 +230,11 @@ SgAsmM68kInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& i
         using namespace Rose::BinaryAnalysis;
         using namespace Rose::BinaryAnalysis::InstructionSemantics;
         using namespace Rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics;
-        RegisterDictionary::Ptr regdict = Architecture::findByName("nxp-coldfire").orThrow()->registerDictionary();
+        auto arch = Architecture::findByName("nxp-coldfire").orThrow();
+        RegisterDictionary::Ptr regdict = arch->registerDictionary();
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         BaseSemantics::RiscOperators::Ptr ops = RiscOperators::instanceFromRegisters(regdict, solver);
-        DispatcherM68kPtr dispatcher = DispatcherM68k::instance(ops, 32, RegisterDictionary::Ptr());
+        DispatcherM68kPtr dispatcher = DispatcherM68k::promote(arch->newInstructionDispatcher(ops));
         try {
             for (size_t i=0; i<insns.size(); ++i)
                 dispatcher->processInstruction(insns[i]);
@@ -445,10 +447,11 @@ SgAsmM68kInstruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns,
     if (!complete || successors.size()>1) {
         using namespace Rose::BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics;
 
-        RegisterDictionary::Ptr regdict = Architecture::findByName("nxp-coldfire").orThrow()->registerDictionary();
+        auto arch = Architecture::findByName("nxp-coldfire").orThrow();
+        RegisterDictionary::Ptr regdict = arch->registerDictionary();
         RiscOperators::Ptr ops = RiscOperators::instanceFromRegisters(regdict);
         ops->set_memory_map(initial_memory);
-        DispatcherM68kPtr dispatcher = DispatcherM68k::instance(ops, 32, RegisterDictionary::Ptr());
+        DispatcherM68kPtr dispatcher = DispatcherM68k::promote(arch->newInstructionDispatcher(ops));
         
         try {
             for (size_t i=0; i<insns.size(); ++i) {

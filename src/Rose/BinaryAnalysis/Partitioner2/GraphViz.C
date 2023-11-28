@@ -191,9 +191,8 @@ CfgEmitter::init() {
     if (BaseSemantics::Dispatcher::Ptr cpu = partitioner_->instructionProvider().dispatcher()) {
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         RegisterDictionary::Ptr regdict = partitioner_->instructionProvider().registerDictionary();
-        size_t addrWidth = partitioner_->instructionProvider().instructionPointerRegister().nBits();
         BaseSemantics::RiscOperators::Ptr ops = SymbolicSemantics::RiscOperators::instanceFromRegisters(regdict, solver);
-        noOpAnalysis_ = NoOperation(cpu->create(ops, addrWidth, regdict));
+        noOpAnalysis_ = NoOperation(cpu->create(ops));
         noOpAnalysis_.initialStackPointer(0xdddd0001); // optional; odd prevents false positives for stack aligning instructions
     }
     nameVertices();

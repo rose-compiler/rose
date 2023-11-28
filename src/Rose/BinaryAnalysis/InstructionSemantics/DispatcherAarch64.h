@@ -57,11 +57,14 @@ private:
     BOOST_SERIALIZATION_SPLIT_MEMBER();
 #endif
 
+private:
+    DispatcherAarch64();                                // used only by boost::serialization
+
 protected:
     // prototypical constructor
-    DispatcherAarch64();
+    DispatcherAarch64(const Architecture::BaseConstPtr&);
 
-    DispatcherAarch64(const BaseSemantics::RiscOperatorsPtr&, const RegisterDictionaryPtr&);
+    DispatcherAarch64(const Architecture::BaseConstPtr&, const BaseSemantics::RiscOperatorsPtr&);
 
 public:
     ~DispatcherAarch64();
@@ -69,14 +72,13 @@ public:
     /** Construct a prototypical dispatcher.
      *
      *  The only thing this dispatcher can be used for is to create another dispatcher with the virtual @ref create method. */
-    static DispatcherAarch64Ptr instance();
+    static DispatcherAarch64Ptr instance(const Architecture::BaseConstPtr&);
 
     /** Allocating constructor. */
-    static DispatcherAarch64Ptr instance(const BaseSemantics::RiscOperatorsPtr&, const RegisterDictionaryPtr&);
+    static DispatcherAarch64Ptr instance(const Architecture::BaseConstPtr&, const BaseSemantics::RiscOperatorsPtr&);
 
     /** Virtual constructor. */
-    virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr&, size_t addrWidth,
-                                                const RegisterDictionaryPtr&) const override;
+    virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr&) const override;
 
     /** Dynamic cast to DispatcherAarch64 with assertion. */
     static DispatcherAarch64Ptr promote(const BaseSemantics::DispatcherPtr&);
@@ -143,7 +145,6 @@ protected:
     RegisterDescriptor stackPointerRegister() const override;
     RegisterDescriptor stackFrameRegister() const override;
     RegisterDescriptor callReturnRegister() const override;
-    void set_register_dictionary(const RegisterDictionaryPtr&) override;
 };
 
 } // namespace

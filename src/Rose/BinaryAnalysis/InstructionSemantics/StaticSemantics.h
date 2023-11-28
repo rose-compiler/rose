@@ -54,7 +54,7 @@ namespace StaticSemantics {
  *  StaticSemantics dispatcher since all side effects are attached to the AST instead of being written to some state.
  *
  * @{ */
-void attachInstructionSemantics(SgNode *ast, const Disassembler::BasePtr&);
+void attachInstructionSemantics(SgNode *ast, const Architecture::BaseConstPtr&);
 void attachInstructionSemantics(SgNode *ast, const BaseSemantics::DispatcherPtr&);
 /** @} */
 

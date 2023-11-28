@@ -52,6 +52,11 @@ Base::matchesHeader(SgAsmGenericHeader*) const {
     return false;
 }
 
+InstructionSemantics::BaseSemantics::Dispatcher::Ptr
+Base::newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperators::Ptr&) const {
+    return {};
+}
+
 } // namespace
 } // namespace
 } // namespace

@@ -571,7 +571,7 @@ Partitioner::basicBlockSemantics(const InsnInfo::List &insns) {
     // be wrong anyway. If there is no current state then there's no point in processing the instruction.
     if (ops->currentState()) {
         if (BaseSemantics::Dispatcher::Ptr protoCpu = instructionCache().decoder()->dispatcher()) {
-            BaseSemantics::Dispatcher::Ptr cpu = protoCpu->create(ops, 0, RegisterDictionary::Ptr());
+            BaseSemantics::Dispatcher::Ptr cpu = protoCpu->create(ops);
             for (auto insn = insns.begin() + prefix.size(); insn != insns.end(); ++insn) {
                 try {
                     cpu->processInstruction((*insn)->ast().lock().get());

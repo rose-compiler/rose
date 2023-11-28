@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/NoOperation.h>
 
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellList.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
@@ -150,7 +151,7 @@ NoOperation::NoOperation(const Disassembler::Base::Ptr &disassembler) {
         ASSERT_not_null(mstate);
         mstate->occlusionsErased(true);
 
-        cpu_ = disassembler->dispatcher()->create(ops, addrWidth, registerDictionary);
+        cpu_ = disassembler->architecture()->newInstructionDispatcher(ops);
     }
 }
 

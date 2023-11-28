@@ -2981,11 +2981,13 @@ struct IP_uxth: P {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-DispatcherAarch32::DispatcherAarch32()
-    : BaseSemantics::Dispatcher(32, Architecture::findByName("arm-a32").orThrow()->registerDictionary()) {}
+DispatcherAarch32::DispatcherAarch32() {}
 
-DispatcherAarch32::DispatcherAarch32(const BaseSemantics::RiscOperators::Ptr &ops, const RegisterDictionary::Ptr &regs)
-    : BaseSemantics::Dispatcher(ops, 32, regs ? regs : Architecture::findByName("arm-a32").orThrow()->registerDictionary()) {
+DispatcherAarch32::DispatcherAarch32(const Architecture::Base::ConstPtr &arch)
+    : BaseSemantics::Dispatcher(arch) {}
+
+DispatcherAarch32::DispatcherAarch32(const Architecture::Base::ConstPtr &arch, const BaseSemantics::RiscOperators::Ptr &ops)
+    : BaseSemantics::Dispatcher(arch, ops) {
     initializeRegisterDescriptors();
     initializeInsnDispatchTable();
     initializeMemory();
@@ -2995,20 +2997,18 @@ DispatcherAarch32::DispatcherAarch32(const BaseSemantics::RiscOperators::Ptr &op
 DispatcherAarch32::~DispatcherAarch32() {}
 
 DispatcherAarch32::Ptr
-DispatcherAarch32::instance() {
-    return Ptr(new DispatcherAarch32);
+DispatcherAarch32::instance(const Architecture::Base::ConstPtr &arch) {
+    return Ptr(new DispatcherAarch32(arch));
 }
 
 DispatcherAarch32::Ptr
-DispatcherAarch32::instance(const BaseSemantics::RiscOperators::Ptr &ops, const RegisterDictionary::Ptr &regs) {
-    return Ptr(new DispatcherAarch32(ops, regs));
+DispatcherAarch32::instance(const Architecture::Base::ConstPtr &arch, const BaseSemantics::RiscOperators::Ptr &ops) {
+    return Ptr(new DispatcherAarch32(arch, ops));
 }
 
 BaseSemantics::Dispatcher::Ptr
-DispatcherAarch32::create(const BaseSemantics::RiscOperators::Ptr &ops, size_t addrWidth,
-                          const RegisterDictionary::Ptr &regs) const {
-    ASSERT_always_require(0 == addrWidth || 32 == addrWidth);
-    return instance(ops, regs);
+DispatcherAarch32::create(const BaseSemantics::RiscOperators::Ptr &ops) const {
+    return instance(architecture(), ops);
 }
 
 DispatcherAarch32::Ptr
@@ -3184,27 +3184,25 @@ DispatcherAarch32::initializeInsnDispatchTable() {
 
 void
 DispatcherAarch32::initializeRegisterDescriptors() {
-    if (regdict) {
-        REG_PC = findRegister("pc", 32);
-        REG_SP = findRegister("sp", 32);
-        REG_LR = findRegister("lr", 32);
+    REG_PC = findRegister("pc", 32);
+    REG_SP = findRegister("sp", 32);
+    REG_LR = findRegister("lr", 32);
 
-        REG_CPSR = findRegister("cpsr", 32);
-        REG_PSTATE_N = findRegister("cpsr_n", 1);
-        REG_PSTATE_Z = findRegister("cpsr_z", 1);
-        REG_PSTATE_C = findRegister("cpsr_c", 1);
-        REG_PSTATE_V = findRegister("cpsr_v", 1);
-        REG_PSTATE_T = findRegister("cpsr_t", 1);
-        REG_PSTATE_E = findRegister("cpsr_e", 1);
-        REG_PSTATE_Q = findRegister("cpsr_q", 1);
-        REG_PSTATE_NZCV = findRegister("cpsr_nzcv", 4);
-        REG_PSTATE_GE = findRegister("cpsr_ge", 4);
+    REG_CPSR = findRegister("cpsr", 32);
+    REG_PSTATE_N = findRegister("cpsr_n", 1);
+    REG_PSTATE_Z = findRegister("cpsr_z", 1);
+    REG_PSTATE_C = findRegister("cpsr_c", 1);
+    REG_PSTATE_V = findRegister("cpsr_v", 1);
+    REG_PSTATE_T = findRegister("cpsr_t", 1);
+    REG_PSTATE_E = findRegister("cpsr_e", 1);
+    REG_PSTATE_Q = findRegister("cpsr_q", 1);
+    REG_PSTATE_NZCV = findRegister("cpsr_nzcv", 4);
+    REG_PSTATE_GE = findRegister("cpsr_ge", 4);
 
-        REG_SPSR = findRegister("spsr", 32);
-        REG_DTRTX = findRegister("dtrtx", 32);
+    REG_SPSR = findRegister("spsr", 32);
+    REG_DTRTX = findRegister("dtrtx", 32);
 
-        REG_UNKNOWN = findRegister("unknown", 32);
-    }
+    REG_UNKNOWN = findRegister("unknown", 32);
 }
 
 void
@@ -3243,12 +3241,6 @@ DispatcherAarch32::stackFrameRegister() const {
 RegisterDescriptor
 DispatcherAarch32::callReturnRegister() const {
     return REG_LR;
-}
-
-void
-DispatcherAarch32::set_register_dictionary(const RegisterDictionary::Ptr &regdict) {
-    BaseSemantics::Dispatcher::set_register_dictionary(regdict);
-    initializeRegisterDescriptors();
 }
 
 int

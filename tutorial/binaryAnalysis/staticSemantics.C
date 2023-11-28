@@ -68,7 +68,7 @@ struct SemanticsAttacher: AstSimpleProcessing {
             }
 
             // Now build the side effect trees for this same single instruciton and print the results
-            IS::StaticSemantics::attachInstructionSemantics(insn, partitioner->instructionProvider().disassembler());
+            IS::StaticSemantics::attachInstructionSemantics(insn, partitioner->architecture());
             if (!insn->get_semantics() || insn->get_semantics()->get_expressions().empty()) {
                 std::cerr <<"  no side effects\n";
             } else {

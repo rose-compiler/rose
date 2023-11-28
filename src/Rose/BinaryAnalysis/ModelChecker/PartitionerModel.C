@@ -1528,8 +1528,9 @@ SemanticCallbacks::initializeState(const BS::RiscOperators::Ptr &ops) {
 BS::Dispatcher::Ptr
 SemanticCallbacks::createDispatcher(const BS::RiscOperators::Ptr &ops) {
     ASSERT_not_null(ops);
-    ASSERT_not_null2(partitioner_->instructionProvider().dispatcher(), "no semantics for this ISA");
-    return partitioner_->instructionProvider().dispatcher()->create(ops, 0, RegisterDictionary::Ptr());
+    BS::Dispatcher::Ptr dispatcher = partitioner_->architecture()->newInstructionDispatcher(ops);
+    ASSERT_not_null2(dispatcher, "no semantics for this ISA");
+    return  dispatcher;
 }
 
 SmtSolver::Ptr

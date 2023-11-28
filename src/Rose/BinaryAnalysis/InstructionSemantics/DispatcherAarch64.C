@@ -1799,11 +1799,13 @@ struct IP_yield: P {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-DispatcherAarch64::DispatcherAarch64()
-    : BaseSemantics::Dispatcher(64, Architecture::findByName("arm-a64").orThrow()->registerDictionary()) {}
+DispatcherAarch64::DispatcherAarch64() {}
 
-DispatcherAarch64::DispatcherAarch64(const BaseSemantics::RiscOperators::Ptr &ops, const RegisterDictionary::Ptr &regs)
-    : BaseSemantics::Dispatcher(ops, 64, regs ? regs : Architecture::findByName("arm-a64").orThrow()->registerDictionary()) {
+DispatcherAarch64::DispatcherAarch64(const Architecture::Base::ConstPtr &arch)
+    : BaseSemantics::Dispatcher(arch) {}
+
+DispatcherAarch64::DispatcherAarch64(const Architecture::Base::ConstPtr &arch, const BaseSemantics::RiscOperators::Ptr &ops)
+    : BaseSemantics::Dispatcher(arch, ops) {
     initializeRegisterDescriptors();
     initializeInsnDispatchTable();
     initializeMemory();
@@ -1813,20 +1815,18 @@ DispatcherAarch64::DispatcherAarch64(const BaseSemantics::RiscOperators::Ptr &op
 DispatcherAarch64::~DispatcherAarch64() {}
 
 DispatcherAarch64::Ptr
-DispatcherAarch64::instance() {
-    return Ptr(new DispatcherAarch64);
+DispatcherAarch64::instance(const Architecture::Base::ConstPtr &arch) {
+    return Ptr(new DispatcherAarch64(arch));
 }
 
 DispatcherAarch64::Ptr
-DispatcherAarch64::instance(const BaseSemantics::RiscOperators::Ptr &ops, const RegisterDictionary::Ptr &regs) {
-    return DispatcherAarch64Ptr(new DispatcherAarch64(ops, regs));
+DispatcherAarch64::instance(const Architecture::Base::ConstPtr &arch, const BaseSemantics::RiscOperators::Ptr &ops) {
+    return DispatcherAarch64Ptr(new DispatcherAarch64(arch, ops));
 }
 
 BaseSemantics::Dispatcher::Ptr
-DispatcherAarch64::create(const BaseSemantics::RiscOperators::Ptr &ops, size_t addrWidth,
-                          const RegisterDictionary::Ptr &regs) const {
-    ASSERT_always_require(0 == addrWidth || 64 == addrWidth);
-    return instance(ops, regs);
+DispatcherAarch64::create(const BaseSemantics::RiscOperators::Ptr &ops) const {
+    return instance(architecture(), ops);
 }
 
 DispatcherAarch64::Ptr
@@ -1988,15 +1988,13 @@ DispatcherAarch64::initializeInsnDispatchTable() {
 
 void
 DispatcherAarch64::initializeRegisterDescriptors() {
-    if (regdict) {
-        REG_PC = findRegister("pc", 64);
-        REG_SP = findRegister("sp", 64);
-        REG_LR = findRegister("lr", 64);
-        REG_CPSR_N = findRegister("cpsr.n", 1);
-        REG_CPSR_Z = findRegister("cpsr.z", 1);
-        REG_CPSR_C = findRegister("cpsr.c", 1);
-        REG_CPSR_V = findRegister("cpsr.v", 1);
-    }
+    REG_PC = findRegister("pc", 64);
+    REG_SP = findRegister("sp", 64);
+    REG_LR = findRegister("lr", 64);
+    REG_CPSR_N = findRegister("cpsr.n", 1);
+    REG_CPSR_Z = findRegister("cpsr.z", 1);
+    REG_CPSR_C = findRegister("cpsr.c", 1);
+    REG_CPSR_V = findRegister("cpsr.v", 1);
 }
 
 void
@@ -2035,12 +2033,6 @@ DispatcherAarch64::stackFrameRegister() const {
 RegisterDescriptor
 DispatcherAarch64::callReturnRegister() const {
     return REG_LR;
-}
-
-void
-DispatcherAarch64::set_register_dictionary(const RegisterDictionary::Ptr &regdict) {
-    BaseSemantics::Dispatcher::set_register_dictionary(regdict);
-    initializeRegisterDescriptors();
 }
 
 int

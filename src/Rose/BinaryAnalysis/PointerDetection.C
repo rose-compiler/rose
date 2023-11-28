@@ -43,12 +43,11 @@ Analysis::init(const Disassembler::Base::Ptr &disassembler) {
     if (disassembler) {
         RegisterDictionary::Ptr registerDictionary = disassembler->registerDictionary();
         ASSERT_not_null(registerDictionary);
-        size_t addrWidth = disassembler->instructionPointerRegister().nBits();
 
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         SymbolicSemantics::RiscOperators::Ptr ops = SymbolicSemantics::RiscOperators::instanceFromRegisters(registerDictionary, solver);
 
-        cpu_ = disassembler->dispatcher()->create(ops, addrWidth, registerDictionary);
+        cpu_ = disassembler->dispatcher()->create(ops);
     }
 }
 

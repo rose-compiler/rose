@@ -40,7 +40,6 @@ Analysis::init(const Disassembler::Base::Ptr &disassembler) {
     if (disassembler) {
         RegisterDictionary::Ptr regdict = disassembler->registerDictionary();
         ASSERT_not_null(regdict);
-        size_t addrWidth = disassembler->instructionPointerRegister().nBits();
 
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         BaseSemantics::SValue::Ptr protoval = SymbolicSemantics::SValue::instance();
@@ -49,7 +48,7 @@ Analysis::init(const Disassembler::Base::Ptr &disassembler) {
         BaseSemantics::State::Ptr state = SymbolicSemantics::State::instance(registers, memory);
         BaseSemantics::RiscOperators::Ptr ops = SymbolicSemantics::RiscOperators::instanceFromState(state, solver);
 
-        cpu_ = disassembler->dispatcher()->create(ops, addrWidth, regdict);
+        cpu_ = disassembler->dispatcher()->create(ops);
     }
 }
 

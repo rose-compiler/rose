@@ -3,6 +3,7 @@
 #include "sage3basic.h"
 #include <Rose/BinaryAnalysis/InstructionSemantics/StaticSemantics.h>
 
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include "stringify.h"
@@ -16,14 +17,13 @@ namespace StaticSemantics {
 //                                      User-level supporting functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void attachInstructionSemantics(SgNode *ast, const Disassembler::Base::Ptr &disassembler) {
+void attachInstructionSemantics(SgNode *ast, const Architecture::Base::ConstPtr &arch) {
     ASSERT_not_null(ast);
-    ASSERT_not_null(disassembler);
+    ASSERT_not_null(arch);
     RiscOperators::Ptr ops = RiscOperators::instanceFromProtoval(SValue::instance(), SmtSolver::Ptr());
-    BaseSemantics::Dispatcher::Ptr cpu = disassembler->dispatcher();
+    BaseSemantics::Dispatcher::Ptr cpu = arch->newInstructionDispatcher(ops);
     if (!cpu)
         throw BaseSemantics::Exception("no instruction semantics for architecture", NULL);
-    cpu = cpu->create(ops, 0, RegisterDictionary::Ptr());
     attachInstructionSemantics(ast, cpu);
 }
 

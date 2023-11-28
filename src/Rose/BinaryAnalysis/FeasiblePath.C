@@ -1022,7 +1022,7 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner::ConstPtr &partitioner, cons
     }
 
     ASSERT_not_null(partitioner->instructionProvider().dispatcher());
-    BaseSemantics::Dispatcher::Ptr cpu = partitioner->instructionProvider().dispatcher()->create(ops, 0, RegisterDictionary::Ptr());
+    BaseSemantics::Dispatcher::Ptr cpu = partitioner->architecture()->newInstructionDispatcher(ops);
     ASSERT_not_null(cpu);
 
     // More return value stuff, continued from above

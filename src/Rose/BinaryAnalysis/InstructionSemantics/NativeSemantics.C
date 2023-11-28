@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/NativeSemantics.h>
 
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
@@ -206,41 +207,41 @@ RiscOperators::promote(const BaseSemantics::RiscOperators::Ptr &x) {
 // Dispatcher
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Dispatcher::Dispatcher(const Debugger::Linux::Ptr &process, const BaseSemantics::SValue::Ptr &protoval)
-    : process_(process) {
-    registerDictionary(process_->registerDictionary());
-    addressWidth(process_->kernelWordSize());
+Dispatcher::Dispatcher(const Architecture::Base::ConstPtr &arch, const Debugger::Linux::Ptr &process,
+                       const BaseSemantics::SValue::Ptr &protoval)
+    : BaseSemantics::Dispatcher(arch), process_(process) {
+    ASSERT_require(process_->kernelWordSize() == arch->bitsPerWord());
     operators(RiscOperators::instanceFromProtoval(protoval, process_));
 }
 
-Dispatcher::Dispatcher(const BaseSemantics::RiscOperators::Ptr &ops)
-    : process_(RiscOperators::promote(ops)->process()) {
-    registerDictionary(process_->registerDictionary());
-    addressWidth(process_->kernelWordSize());
-    operators(ops);
+Dispatcher::Dispatcher(const Architecture::Base::ConstPtr &arch, const BaseSemantics::RiscOperators::Ptr &ops)
+    : BaseSemantics::Dispatcher(arch, ops), process_(RiscOperators::promote(ops)->process()) {
+    ASSERT_require(process_->kernelWordSize() == arch->bitsPerWord());
 }
 
 Dispatcher::~Dispatcher() {}
 
 Dispatcher::Ptr
-Dispatcher::instance(const Debugger::Linux::Ptr &process, const BaseSemantics::SValue::Ptr &protoval) {
-    return Ptr(new Dispatcher(process, protoval));
+Dispatcher::instance(const Architecture::Base::ConstPtr &arch, const Debugger::Linux::Ptr &process,
+                     const BaseSemantics::SValue::Ptr &protoval) {
+    return Ptr(new Dispatcher(arch, process, protoval));
 }
 
 Dispatcher::Ptr
-Dispatcher::instance(const Debugger::Linux::Specimen &specimen, const BaseSemantics::SValue::Ptr &protoval) {
+Dispatcher::instance(const Architecture::Base::ConstPtr &arch, const Debugger::Linux::Specimen &specimen,
+                     const BaseSemantics::SValue::Ptr &protoval) {
     Debugger::Linux::Ptr process = Debugger::Linux::instance(specimen);
-    return Ptr(new Dispatcher(process, protoval));
+    return Ptr(new Dispatcher(arch, process, protoval));
 }
 
 Dispatcher::Ptr
-Dispatcher::instance(const BaseSemantics::RiscOperators::Ptr &ops) {
+Dispatcher::instance(const Architecture::Base::ConstPtr &arch, const BaseSemantics::RiscOperators::Ptr &ops) {
     (void) RiscOperators::promote(ops);             // check type
-    return Ptr(new Dispatcher(ops));
+    return Ptr(new Dispatcher(arch, ops));
 }
 
 BaseSemantics::Dispatcher::Ptr
-Dispatcher::create(const BaseSemantics::RiscOperators::Ptr&, size_t /*addrWidth*/, const RegisterDictionary::Ptr&) const {
+Dispatcher::create(const BaseSemantics::RiscOperators::Ptr&) const {
     notApplicable("create");
 }
 

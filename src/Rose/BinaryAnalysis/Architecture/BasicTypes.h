@@ -179,7 +179,7 @@ std::pair<BasePtr, size_t> findBestByInterpretation(SgAsmInterpretation*);
  *  This is a convenient way to obtain an architecture definition's name without having to include "Base.h", and is therefore useful
  *  in header files that try to include a minimal number of type definitions. Returns a null pointer if the argument is a null
  *  pointer. */
-const std::string& name(const BasePtr&);
+const std::string& name(const BaseConstPtr&);
 
 } // namespace
 } // namespace

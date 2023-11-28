@@ -60,9 +60,9 @@ BinaryToSource::init(const P2::Partitioner::ConstPtr &partitioner) {
         throw Exception("no instruction semantics for architecture");
     if (settings_.traceRiscOps) {
         tracingOps_ = TraceSemantics::RiscOperators::instance(raisingOps_);
-        raisingCpu_ = protoCpu->create(tracingOps_, 0, RegisterDictionary::Ptr());
+        raisingCpu_ = protoCpu->create(tracingOps_);
     } else {
-        raisingCpu_ = protoCpu->create(raisingOps_, 0, RegisterDictionary::Ptr());
+        raisingCpu_ = protoCpu->create(raisingOps_);
     }
 }
 

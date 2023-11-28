@@ -64,14 +64,18 @@ private:
 
     BOOST_SERIALIZATION_SPLIT_MEMBER();
 #endif
-    
+
+private:
+    DispatcherCil();                                    // used only by boost::serialization
+
 protected:
-    // prototypical constructor
-    DispatcherCil();
+    DispatcherCil(const Architecture::BaseConstPtr&);   // prototypical constructor
 
-    DispatcherCil(const BaseSemantics::RiscOperatorsPtr&, size_t addrWidth, const RegisterDictionaryPtr&);
+    DispatcherCil(const Architecture::BaseConstPtr&, const BaseSemantics::RiscOperatorsPtr&);
 
-    /** Loads the iproc table with instruction processing functors. This normally happens from the constructor. */
+    /** Loads the iproc table with instruction processing functors.
+     *
+     *  This normally happens from the constructor. */
     void iproc_init();
 
     /** Load the cached register descriptors.
@@ -79,27 +83,27 @@ protected:
      *  This happens at construction when the @ref registerDictionary property is changed. */
     void regcache_init();
 
-    /** Make sure memory is set up correctly. For instance, byte order should be big endian. */
+    /** Make sure memory is set up correctly.
+     *
+     *  For instance, byte order should be big endian. */
     void memory_init();
 
 public:
     ~DispatcherCil();
 
-    /** Construct a prototypical dispatcher.  The only thing this dispatcher can be used for is to create another dispatcher
-     *  with the virtual @ref create method. */
-    static DispatcherCilPtr instance();
+    /** Construct a prototypical dispatcher.
+     *
+     *  The only thing this dispatcher can be used for is to create another dispatcher with the virtual @ref create method. */
+    static DispatcherCilPtr instance(const Architecture::BaseConstPtr&);
 
     /** Constructor. */
-    static DispatcherCilPtr instance(const BaseSemantics::RiscOperatorsPtr&, size_t addrWidth, const RegisterDictionaryPtr&);
+    static DispatcherCilPtr instance(const Architecture::BaseConstPtr&, const BaseSemantics::RiscOperatorsPtr&);
 
     /** Virtual constructor. */
-    virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr&, size_t addrWidth,
-                                                const RegisterDictionaryPtr&) const override;
+    virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr&) const override;
 
     /** Dynamic cast to DispatcherCilPtr with assertion. */
     static DispatcherCilPtr promote(const BaseSemantics::DispatcherPtr&);
-
-    virtual void set_register_dictionary(const RegisterDictionaryPtr&) override;
 
     virtual RegisterDescriptor instructionPointerRegister() const override;
     virtual RegisterDescriptor stackPointerRegister() const override;

@@ -65,10 +65,8 @@ X86::init(size_t wordsize)
 {
     /* The default register dictionary.  If a register dictionary is specified in an SgAsmInterpretation, then that one will be
      * used instead of the default we set here. */
-    size_t addrWidth=0;
     switch (wordsize) {
         case 2:
-            addrWidth = 16;
             insnSize = x86_insnsize_16;
             // A word size of 2 bytes doesn't necessarily mean 80286. E.g., $ROSE/binaries/samples/exefmt.exe has a header that
             // advertises architecture ISA_IA32_Family with a word size of 2 and which contains an occasional 32-bit floating
@@ -76,12 +74,10 @@ X86::init(size_t wordsize)
             // codes.
             break;
         case 4:
-            addrWidth = 32;
             insnSize = x86_insnsize_32;
             callingConventions(CallingConvention::dictionaryX86());
             break;
         case 8:
-            addrWidth = 64;
             insnSize = x86_insnsize_64;
             callingConventions(CallingConvention::dictionaryAmd64());
             break;
@@ -98,9 +94,7 @@ X86::init(size_t wordsize)
     ASSERT_require(REG_SS);
     ASSERT_require(REG_SF);
 
-    auto d = InstructionSemantics::DispatcherX86::instance(addrWidth, architecture()->registerDictionary());
-    d->registerDictionary(architecture()->registerDictionary()); // so register cache is initialized
-    p_proto_dispatcher = d; 
+    p_proto_dispatcher = InstructionSemantics::DispatcherX86::instance(architecture());
 }
 
 void

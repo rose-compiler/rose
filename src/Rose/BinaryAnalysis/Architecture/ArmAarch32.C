@@ -5,6 +5,7 @@
 
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/Disassembler/Aarch32.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch32.h>
 #include <Rose/BinaryAnalysis/Unparser/Aarch32.h>
 
 namespace Rose {
@@ -311,6 +312,11 @@ ArmAarch32::newInstructionDecoder() const {
 Unparser::Base::Ptr
 ArmAarch32::newUnparser() const {
     return Unparser::Aarch32::instance(shared_from_this());
+}
+
+InstructionSemantics::BaseSemantics::DispatcherPtr
+ArmAarch32::newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops) const {
+    return InstructionSemantics::DispatcherAarch32::instance(shared_from_this(), ops);
 }
 
 } // namespace

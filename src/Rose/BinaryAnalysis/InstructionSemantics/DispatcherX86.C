@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
@@ -4038,17 +4039,15 @@ struct IP_xor: P {
  *                                      DispatcherX86
  *******************************************************************************************************************************/
 
-DispatcherX86::DispatcherX86()
-    : BaseSemantics::Dispatcher(32, SgAsmX86Instruction::registersForInstructionSize(x86_insnsize_32)),
-    processorMode_(x86_insnsize_32) {}
+DispatcherX86::DispatcherX86() {}
 
-DispatcherX86::DispatcherX86(size_t addrWidth, const RegisterDictionary::Ptr &regs)
-    : BaseSemantics::Dispatcher(addrWidth, regs ? regs : SgAsmX86Instruction::registersForWidth(addrWidth)),
-    processorMode_(SgAsmX86Instruction::instructionSizeForWidth(addrWidth)) {}
+DispatcherX86::DispatcherX86(const Architecture::Base::ConstPtr &arch)
+    : BaseSemantics::Dispatcher(arch),
+      processorMode_(SgAsmX86Instruction::instructionSizeForWidth(arch->bitsPerWord())) {}
 
-DispatcherX86::DispatcherX86(const BaseSemantics::RiscOperators::Ptr &ops, size_t addrWidth, const RegisterDictionary::Ptr &regs)
-    : BaseSemantics::Dispatcher(ops, addrWidth, regs ? regs : SgAsmX86Instruction::registersForWidth(addrWidth)),
-    processorMode_(SgAsmX86Instruction::instructionSizeForWidth(addrWidth)) {
+DispatcherX86::DispatcherX86(const Architecture::Base::ConstPtr &arch, const BaseSemantics::RiscOperators::Ptr &ops)
+    : BaseSemantics::Dispatcher(arch, ops),
+      processorMode_(SgAsmX86Instruction::instructionSizeForWidth(arch->bitsPerWord())) {
     regcache_init();
     iproc_init();
     memory_init();
@@ -4058,25 +4057,18 @@ DispatcherX86::DispatcherX86(const BaseSemantics::RiscOperators::Ptr &ops, size_
 DispatcherX86::~DispatcherX86() {}
 
 DispatcherX86::Ptr
-DispatcherX86::instance() {
-    return Ptr(new DispatcherX86);
+DispatcherX86::instance(const Architecture::Base::ConstPtr &arch) {
+    return Ptr(new DispatcherX86(arch));
 }
 
 DispatcherX86::Ptr
-DispatcherX86::instance(size_t addrWidth, const RegisterDictionary::Ptr &regs) {
-    return Ptr(new DispatcherX86(addrWidth, regs));
-}
-
-DispatcherX86::Ptr
-DispatcherX86::instance(const BaseSemantics::RiscOperators::Ptr &ops, size_t addrWidth, const RegisterDictionary::Ptr &regs) {
-    return Ptr(new DispatcherX86(ops, addrWidth, regs));
+DispatcherX86::instance(const Architecture::Base::ConstPtr &arch, const BaseSemantics::RiscOperators::Ptr &ops) {
+    return Ptr(new DispatcherX86(arch, ops));
 }
 
 BaseSemantics::Dispatcher::Ptr
-DispatcherX86::create(const BaseSemantics::RiscOperators::Ptr &ops, size_t addrWidth, const RegisterDictionary::Ptr &regs) const {
-    if (0 == addrWidth)
-        addrWidth = addressWidth();
-    return instance(ops, addrWidth, regs ? regs : registerDictionary());
+DispatcherX86::create(const BaseSemantics::RiscOperators::Ptr &ops) const {
+    return instance(architecture(), ops);
 }
 
 DispatcherX86::Ptr
@@ -4434,107 +4426,107 @@ DispatcherX86::iproc_init()
 void
 DispatcherX86::regcache_init()
 {
-    if (regdict) {
-        switch (processorMode()) {
-            case x86_insnsize_64:
-                REG_RAX = findRegister("rax", 64);
-                REG_RBX = findRegister("rbx", 64);
-                REG_RCX = findRegister("rcx", 64);
-                REG_RDX = findRegister("rdx", 64);
-                REG_RDI = findRegister("rdi", 64);
-                REG_RSI = findRegister("rsi", 64);
-                REG_RSP = findRegister("rsp", 64);
-                REG_RBP = findRegister("rbp", 64);
-                REG_RIP = findRegister("rip", 64);
-                REG_RFLAGS = findRegister("rflags", 64);
-                REG_R8 = findRegister("r8", 64);
-                REG_R9 = findRegister("r9", 64);
-                REG_R10 = findRegister("r10", 64);
-                REG_R11 = findRegister("r11", 64);
-                REG_R12 = findRegister("r12", 64);
-                REG_R13 = findRegister("r13", 64);
-                REG_R14 = findRegister("r14", 64);
-                REG_R15 = findRegister("r15", 64);
-                // fall through...
-            case x86_insnsize_32:
-                REG_EAX = findRegister("eax", 32);
-                REG_EBX = findRegister("ebx", 32);
-                REG_ECX = findRegister("ecx", 32);
-                REG_EDX = findRegister("edx", 32);
-                REG_EDI = findRegister("edi", 32);
-                REG_ESI = findRegister("esi", 32);
-                REG_ESP = findRegister("esp", 32);
-                REG_EBP = findRegister("ebp", 32);
-                REG_EIP = findRegister("eip", 32);
-                REG_EFLAGS= findRegister("eflags", 32);
-                REG_MXCSR = findRegister("mxcsr", 32);
-                REG_FS = findRegister("fs", 16);
-                REG_GS = findRegister("gs", 16);
-                // fall through...
-            case x86_insnsize_16:
-                REG_AX = findRegister("ax", 16);
-                REG_BX = findRegister("bx", 16);
-                REG_CX = findRegister("cx", 16);
-                REG_DX = findRegister("dx", 16);
-                REG_DI = findRegister("di", 16);
-                REG_SI = findRegister("si", 16);
-                REG_SP = findRegister("sp", 16);
-                REG_BP = findRegister("bp", 16);
-                REG_IP = findRegister("ip", 16);
-                REG_AL = findRegister("al", 8);
-                REG_BL = findRegister("bl", 8);
-                REG_CL = findRegister("cl", 8);
-                REG_DL = findRegister("dl", 8);
-                REG_AH = findRegister("ah", 8);
-                REG_BH = findRegister("bh", 8);
-                REG_CH = findRegister("ch", 8);
-                REG_DH = findRegister("dh", 8);
-                REG_FLAGS = findRegister("flags", 16);
-                REG_AF = findRegister("af", 1);
-                REG_CF = findRegister("cf", 1);
-                REG_DF = findRegister("df", 1);
-                REG_OF = findRegister("of", 1);
-                REG_PF = findRegister("pf", 1);
-                REG_SF = findRegister("sf", 1);
-                REG_TF = findRegister("tf", 1);
-                REG_ZF = findRegister("zf", 1);
-                REG_CS = findRegister("cs", 16);
-                REG_DS = findRegister("ds", 16);
-                REG_ES = findRegister("es", 16);
-                REG_SS = findRegister("ss", 16);
+    switch (processorMode()) {
+        case x86_insnsize_64:
+            REG_RAX = findRegister("rax", 64);
+            REG_RBX = findRegister("rbx", 64);
+            REG_RCX = findRegister("rcx", 64);
+            REG_RDX = findRegister("rdx", 64);
+            REG_RDI = findRegister("rdi", 64);
+            REG_RSI = findRegister("rsi", 64);
+            REG_RSP = findRegister("rsp", 64);
+            REG_RBP = findRegister("rbp", 64);
+            REG_RIP = findRegister("rip", 64);
+            REG_RFLAGS = findRegister("rflags", 64);
+            REG_R8 = findRegister("r8", 64);
+            REG_R9 = findRegister("r9", 64);
+            REG_R10 = findRegister("r10", 64);
+            REG_R11 = findRegister("r11", 64);
+            REG_R12 = findRegister("r12", 64);
+            REG_R13 = findRegister("r13", 64);
+            REG_R14 = findRegister("r14", 64);
+            REG_R15 = findRegister("r15", 64);
+            // fall through...
+        case x86_insnsize_32:
+            REG_EAX = findRegister("eax", 32);
+            REG_EBX = findRegister("ebx", 32);
+            REG_ECX = findRegister("ecx", 32);
+            REG_EDX = findRegister("edx", 32);
+            REG_EDI = findRegister("edi", 32);
+            REG_ESI = findRegister("esi", 32);
+            REG_ESP = findRegister("esp", 32);
+            REG_EBP = findRegister("ebp", 32);
+            REG_EIP = findRegister("eip", 32);
+            REG_EFLAGS= findRegister("eflags", 32);
+            REG_MXCSR = findRegister("mxcsr", 32);
+            REG_FS = findRegister("fs", 16);
+            REG_GS = findRegister("gs", 16);
+            // fall through...
+        case x86_insnsize_16:
+            REG_AX = findRegister("ax", 16);
+            REG_BX = findRegister("bx", 16);
+            REG_CX = findRegister("cx", 16);
+            REG_DX = findRegister("dx", 16);
+            REG_DI = findRegister("di", 16);
+            REG_SI = findRegister("si", 16);
+            REG_SP = findRegister("sp", 16);
+            REG_BP = findRegister("bp", 16);
+            REG_IP = findRegister("ip", 16);
+            REG_AL = findRegister("al", 8);
+            REG_BL = findRegister("bl", 8);
+            REG_CL = findRegister("cl", 8);
+            REG_DL = findRegister("dl", 8);
+            REG_AH = findRegister("ah", 8);
+            REG_BH = findRegister("bh", 8);
+            REG_CH = findRegister("ch", 8);
+            REG_DH = findRegister("dh", 8);
+            REG_FLAGS = findRegister("flags", 16);
+            REG_AF = findRegister("af", 1);
+            REG_CF = findRegister("cf", 1);
+            REG_DF = findRegister("df", 1);
+            REG_OF = findRegister("of", 1);
+            REG_PF = findRegister("pf", 1);
+            REG_SF = findRegister("sf", 1);
+            REG_TF = findRegister("tf", 1);
+            REG_ZF = findRegister("zf", 1);
+            REG_CS = findRegister("cs", 16);
+            REG_DS = findRegister("ds", 16);
+            REG_ES = findRegister("es", 16);
+            REG_SS = findRegister("ss", 16);
 
-                // These next few are not in every 16-bit architecture
-                REG_FPSTATUS = findRegister("fpstatus", 16, true);
-                REG_FPSTATUS_TOP = findRegister("fpstatus_top", 3, true);
-                REG_ST0 = findRegister("st0", 80, true);
-                REG_FPCTL = findRegister("fpctl", 16, true);
-                break;
-            default:
-                ASSERT_not_reachable("invalid instruction size");
-        }
-
-        size_t maxWidth = 0;
-        switch (processorMode()) {
-            case x86_insnsize_64: maxWidth = 64; break;
-            case x86_insnsize_32: maxWidth = 32; break;
-            case x86_insnsize_16: maxWidth = 16; break;
-            default: ASSERT_not_reachable("invalid processor mode");
-        }
-
-        REG_anyAX = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax, maxWidth);
-        REG_anyBX = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_bx, maxWidth);
-        REG_anyCX = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_cx, maxWidth);
-        REG_anyDX = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx, maxWidth);
-
-        REG_anyDI = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_di, maxWidth);
-        REG_anySI = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_si, maxWidth);
-
-        REG_anyIP = regdict->findLargestRegister(x86_regclass_ip,  0,          maxWidth);
-        REG_anySP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp, maxWidth);
-        REG_anyBP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_bp, maxWidth);
-
-        REG_anyFLAGS = regdict->findLargestRegister(x86_regclass_flags, x86_flags_status, maxWidth);
+            // These next few are not in every 16-bit architecture
+            REG_FPSTATUS = findRegister("fpstatus", 16, true);
+            REG_FPSTATUS_TOP = findRegister("fpstatus_top", 3, true);
+            REG_ST0 = findRegister("st0", 80, true);
+            REG_FPCTL = findRegister("fpctl", 16, true);
+            break;
+        default:
+            ASSERT_not_reachable("invalid instruction size");
     }
+
+    size_t maxWidth = 0;
+    switch (processorMode()) {
+        case x86_insnsize_64: maxWidth = 64; break;
+        case x86_insnsize_32: maxWidth = 32; break;
+        case x86_insnsize_16: maxWidth = 16; break;
+        default: ASSERT_not_reachable("invalid processor mode");
+    }
+
+    RegisterDictionary::Ptr regdict = architecture()->registerDictionary();
+
+    REG_anyAX = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax, maxWidth);
+    REG_anyBX = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_bx, maxWidth);
+    REG_anyCX = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_cx, maxWidth);
+    REG_anyDX = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx, maxWidth);
+
+    REG_anyDI = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_di, maxWidth);
+    REG_anySI = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_si, maxWidth);
+
+    REG_anyIP = regdict->findLargestRegister(x86_regclass_ip,  0,          maxWidth);
+    REG_anySP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp, maxWidth);
+    REG_anyBP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_bp, maxWidth);
+
+    REG_anyFLAGS = regdict->findLargestRegister(x86_regclass_flags, x86_flags_status, maxWidth);
 }
 
 void
@@ -4614,6 +4606,7 @@ isStatusRegister(RegisterDescriptor reg) {
 RegisterDictionary::RegisterDescriptors
 DispatcherX86::get_usual_registers() const
 {
+    RegisterDictionary::Ptr regdict = architecture()->registerDictionary();
     RegisterDictionary::RegisterDescriptors registers = regdict->getLargestRegisters();
     registers.erase(std::remove_if(registers.begin(), registers.end(), isStatusRegister), registers.end());
     for (RegisterDescriptor reg: regdict->getSmallestRegisters()) {
@@ -4621,13 +4614,6 @@ DispatcherX86::get_usual_registers() const
             registers.push_back(reg);
     }
     return registers;
-}
-
-void
-DispatcherX86::set_register_dictionary(const RegisterDictionary::Ptr &regdict)
-{
-    BaseSemantics::Dispatcher::set_register_dictionary(regdict);
-    regcache_init();
 }
 
 void

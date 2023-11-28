@@ -2467,16 +2467,13 @@ struct IP_xoris: P {
  *                                      DispatcherPowerpc
  *******************************************************************************************************************************/
 
-DispatcherPowerpc::DispatcherPowerpc()
-    : BaseSemantics::Dispatcher(32, Architecture::findByName("ppc32-be").orThrow()->registerDictionary()) {}
+DispatcherPowerpc::DispatcherPowerpc() {}
 
-DispatcherPowerpc::DispatcherPowerpc(size_t addrWidth, const RegisterDictionary::Ptr &regs/*=NULL*/)
-    : BaseSemantics::Dispatcher(addrWidth, regs ? regs : SgAsmPowerpcInstruction::registersForWidth(addrWidth)) {}
+DispatcherPowerpc::DispatcherPowerpc(const Architecture::Base::ConstPtr &arch)
+    : BaseSemantics::Dispatcher(arch) {}
 
-DispatcherPowerpc::DispatcherPowerpc(const BaseSemantics::RiscOperators::Ptr &ops, size_t addrWidth,
-                                     const RegisterDictionary::Ptr &regs)
-    : BaseSemantics::Dispatcher(ops, addrWidth, regs ? regs : SgAsmPowerpcInstruction::registersForWidth(addrWidth)) {
-    ASSERT_require(32==addrWidth || 64==addrWidth);
+DispatcherPowerpc::DispatcherPowerpc(const Architecture::Base::ConstPtr &arch, const BaseSemantics::RiscOperators::Ptr &ops)
+    : BaseSemantics::Dispatcher(arch, ops) {
     regcache_init();
     iproc_init();
     memory_init();
@@ -2486,26 +2483,18 @@ DispatcherPowerpc::DispatcherPowerpc(const BaseSemantics::RiscOperators::Ptr &op
 DispatcherPowerpc::~DispatcherPowerpc() {}
 
 DispatcherPowerpc::Ptr
-DispatcherPowerpc::instance() {
-    return Ptr(new DispatcherPowerpc);
+DispatcherPowerpc::instance(const Architecture::Base::ConstPtr &arch) {
+    return Ptr(new DispatcherPowerpc(arch));
 }
 
 DispatcherPowerpc::Ptr
-DispatcherPowerpc::instance(size_t addrWidth, const RegisterDictionary::Ptr &regs) {
-    return Ptr(new DispatcherPowerpc(addrWidth, regs));
-}
-
-DispatcherPowerpc::Ptr
-DispatcherPowerpc::instance(const BaseSemantics::RiscOperators::Ptr &ops, size_t addrWidth, const RegisterDictionary::Ptr &regs) {
-    return Ptr(new DispatcherPowerpc(ops, addrWidth, regs));
+DispatcherPowerpc::instance(const Architecture::Base::ConstPtr &arch, const BaseSemantics::RiscOperators::Ptr &ops) {
+    return Ptr(new DispatcherPowerpc(arch, ops));
 }
 
 BaseSemantics::Dispatcher::Ptr
-DispatcherPowerpc::create(const BaseSemantics::RiscOperators::Ptr &ops, size_t addrWidth,
-                          const RegisterDictionary::Ptr &regs) const {
-    if (0 == addrWidth)
-        addrWidth = addressWidth();
-    return instance(ops, addrWidth, regs ? regs : registerDictionary());
+DispatcherPowerpc::create(const BaseSemantics::RiscOperators::Ptr &ops) const {
+    return instance(architecture(), ops);
 }
 
 DispatcherPowerpc::Ptr
@@ -2761,30 +2750,16 @@ DispatcherPowerpc::iproc_init() {
 
 void
 DispatcherPowerpc::regcache_init() {
-    if (regdict) {
-        switch (addressWidth()) {
-            case 32:
-                REG_IAR = findRegister("iar", 32);      // instruction address register (instruction pointer)
-                REG_LR  = findRegister("lr", 32);       // link register
-                REG_XER = findRegister("xer", 32);      // fixed-point exception register
-                REG_CTR = findRegister("ctr", 32);      // count register
-                break;
-            case 64:
-                REG_IAR = findRegister("iar", 64);      // instruction address register (instruction pointer)
-                REG_LR  = findRegister("lr", 64);       // link register
-                REG_XER = findRegister("xer", 64);      // fixed-point exception register
-                REG_CTR = findRegister("ctr", 64);      // count register
-                break;
-            default:
-                ASSERT_not_reachable("invalid address width");
-        }
-        REG_XER_CA = findRegister("xer_ca", 1);         // carry
-        REG_XER_SO = findRegister("xer_so", 1);         // summary overflow
-        REG_XER_OV = findRegister("xer_ov", 1);         // summary overflow
-        REG_CR  = findRegister("cr", 32);               // condition register
-        REG_CR0 = findRegister("cr0", 4);               // CR Field 0, result of fixed-point instruction; set by updateCr()
-        REG_CR0_LT = findRegister("cr0.lt", 1);         // LT field of CR0 field of CR register
-    }
+    REG_IAR    = findRegister("iar",    addressWidth());      // instruction address register (instruction pointer)
+    REG_LR     = findRegister("lr",     addressWidth());      // link register
+    REG_XER    = findRegister("xer",    addressWidth());      // fixed-point exception register
+    REG_CTR    = findRegister("ctr",    addressWidth());      // count register
+    REG_XER_CA = findRegister("xer_ca",              1);      // carry
+    REG_XER_SO = findRegister("xer_so",              1);      // summary overflow
+    REG_XER_OV = findRegister("xer_ov",              1);      // summary overflow
+    REG_CR     = findRegister("cr",                 32);      // condition register
+    REG_CR0    = findRegister("cr0",                 4);      // CR Field 0, result of fixed-point instruction; set by updateCr()
+    REG_CR0_LT = findRegister("cr0.lt",              1);      // LT field of CR0 field of CR register
 }
 
 void
@@ -2803,12 +2778,6 @@ DispatcherPowerpc::memory_init() {
             }
         }
     }
-}
-
-void
-DispatcherPowerpc::set_register_dictionary(const RegisterDictionary::Ptr &regdict) {
-    BaseSemantics::Dispatcher::set_register_dictionary(regdict);
-    regcache_init();
 }
 
 RegisterDescriptor

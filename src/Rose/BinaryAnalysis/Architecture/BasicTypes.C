@@ -224,7 +224,7 @@ findByInterpretation(SgAsmInterpretation *interp) {
 }
 
 const std::string&
-name(const Base::Ptr &arch) {
+name(const Base::ConstPtr &arch) {
     static const std::string empty;
     return arch ? arch->name() : empty;
 }

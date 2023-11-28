@@ -1027,9 +1027,8 @@ Architecture::partition(const P2::Engine::Ptr &engine, const std::string &specim
 BS::Dispatcher::Ptr
 Architecture::makeDispatcher(const BS::RiscOperators::Ptr &ops) {
     ASSERT_not_null(ops);
-    return IS::DispatcherX86::instance(ops,
-                                       Emulation::Dispatcher::unwrapEmulationOperators(ops)->wordSizeBits(),
-                                       Emulation::Dispatcher::unwrapEmulationOperators(ops)->registerDictionary());
+    auto arch = BinaryAnalysis::Architecture::findByName("intel-pentium4").orThrow();
+    return IS::DispatcherX86::instance(arch, ops);
 }
 
 void

@@ -356,9 +356,9 @@ private:
     // Real constructors
     //----------------------------------------
 protected:
-    Dispatcher(const Debugger::Linux::Ptr &process, const BaseSemantics::SValuePtr &protoval);
+    Dispatcher(const Architecture::BaseConstPtr&, const Debugger::Linux::Ptr &process, const BaseSemantics::SValuePtr &protoval);
 
-    Dispatcher(const BaseSemantics::RiscOperatorsPtr&);
+    Dispatcher(const Architecture::BaseConstPtr&, const BaseSemantics::RiscOperatorsPtr&);
 
     //----------------------------------------
     // Static allocating constructors
@@ -367,22 +367,24 @@ public:
     ~Dispatcher();
 
     /** Create a new dispatcher using the specified process. */
-    static DispatcherPtr instance(const Debugger::Linux::Ptr &process, const BaseSemantics::SValuePtr &protoval = SValue::instance());
+    static DispatcherPtr instance(const Architecture::BaseConstPtr&, const Debugger::Linux::Ptr &process,
+                                  const BaseSemantics::SValuePtr &protoval = SValue::instance());
 
     /** Create a new dispatcher using the specified executable specimen. */
-    static DispatcherPtr instance(const Debugger::Linux::Specimen&, const BaseSemantics::SValuePtr &protoval = SValue::instance());
+    static DispatcherPtr instance(const Architecture::BaseConstPtr&, const Debugger::Linux::Specimen&,
+                                  const BaseSemantics::SValuePtr &protoval = SValue::instance());
 
     /** Create a new dispatcher using the specified operators.
      *
      *  The operators must derive from @ref NativeSemantics::RiscOperators. */
-    static DispatcherPtr instance(const BaseSemantics::RiscOperatorsPtr&);
+    static DispatcherPtr instance(const Architecture::BaseConstPtr&, const BaseSemantics::RiscOperatorsPtr&);
 
     //----------------------------------------
     // Virtual constructors
     //----------------------------------------
 public:
     virtual BaseSemantics::DispatcherPtr
-    create(const BaseSemantics::RiscOperatorsPtr&, size_t addrWidth, const RegisterDictionaryPtr&) const override;
+    create(const BaseSemantics::RiscOperatorsPtr&) const override;
 
     //----------------------------------------
     // Operations

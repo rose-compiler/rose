@@ -25,7 +25,7 @@ Aarch32::Aarch32(const Architecture::Base::ConstPtr &arch, Modes modes)
         instructionAlignment_ = 4;
     }
     callingConventions(CallingConvention::dictionaryAarch32());
-    p_proto_dispatcher = InstructionSemantics::DispatcherAarch32::instance();
+    p_proto_dispatcher = InstructionSemantics::DispatcherAarch32::instance(arch);
 
     // Architecture independent ROSE disassembler properties
     REG_IP = architecture()->registerDictionary()->instructionPointerRegister();

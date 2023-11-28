@@ -46,12 +46,11 @@ public:
     using Ptr = DispatcherPtr;
 
 private:
+    Architecture::BaseConstPtr architecture_;           // Required architecture
     RiscOperatorsPtr operators_;
 
 protected:
-    RegisterDictionaryPtr regdict;                      /**< See @ref registerDictionary property. */
-    size_t addrWidth_;                                  /**< Width of memory addresses in bits. */
-    bool autoResetInstructionPointer_;                  /**< Reset instruction pointer register for each instruction. */
+    bool autoResetInstructionPointer_ = true;           /**< Reset instruction pointer register for each instruction. */
 
     // Dispatchers keep a table of all the kinds of instructions they can handle.  The lookup key is typically some sort of
     // instruction identifier, such as from SgAsmX86Instruction::get_kind(), and comes from the iprocKey() virtual method.
@@ -63,25 +62,41 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
+    void serializeCommon(S &s, const unsigned version) {
+        ASSERT_always_require(version >= 2);
         s & boost::serialization::make_nvp("operators", operators_); // for backward compatibility
-        s & BOOST_SERIALIZATION_NVP(regdict);
-        s & BOOST_SERIALIZATION_NVP(addrWidth_);
         s & BOOST_SERIALIZATION_NVP(autoResetInstructionPointer_);
         //s & iproc_table; -- not saved
     }
+
+    template<class S>
+    void save(S &s, const unsigned version) const {
+        const_cast<Dispatcher*>(this)->serializeCommon(s, version);
+        ASSERT_not_null(architecture_);
+        const std::string architecture = Architecture::name(architecture_);
+        s & BOOST_SERIALIZATION_NVP(architecture);
+    }
+
+    template<class S>
+    void load(S &s, const unsigned version) {
+        serializeCommon(s, version);
+        std::string architecture;
+        s & BOOST_SERIALIZATION_NVP(architecture);
+        architecture_ = Architecture::findByName(architecture).orThrow();
+    }
+
+    BOOST_SERIALIZATION_SPLIT_MEMBER();
 #endif
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    // Prototypical constructor
-    Dispatcher();
+    Dispatcher();                                       // used only by boost::serialization
 
     // Prototypical constructor
-    Dispatcher(size_t addrWidth, const RegisterDictionaryPtr&);
+    explicit Dispatcher(const Architecture::BaseConstPtr&);
 
-    Dispatcher(const RiscOperatorsPtr&, size_t addrWidth, const RegisterDictionaryPtr&);
+    Dispatcher(const Architecture::BaseConstPtr&, const RiscOperatorsPtr&);
 
 public:
     virtual ~Dispatcher();
@@ -94,7 +109,7 @@ public:
     // Virtual constructors
 public:
     /** Virtual constructor. */
-    virtual DispatcherPtr create(const RiscOperatorsPtr &ops, size_t addrWidth, const RegisterDictionaryPtr&) const = 0;
+    virtual DispatcherPtr create(const RiscOperatorsPtr &ops) const = 0;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods to process instructions
@@ -129,16 +144,18 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Convenience methods that defer the call to some member object
 public:
-    // Deprecated [Robb Matzke 2020-11-19]
-    virtual RiscOperatorsPtr get_operators() const ROSE_DEPRECATED("use \"operators\" instead") { return operators_; }
+    /** Property: Architecture.
+     *
+     *  Non-null pointer to architecture-specific information. */
+    Architecture::BaseConstPtr architecture() const;
 
     /** Property: RISC operators.
      *
      *  The RISC operators also contain the current and initial state on which they operate.
      *
      * @{ */
-    virtual RiscOperatorsPtr operators() const { return operators_; }
-    virtual void operators(const RiscOperatorsPtr &ops);
+    virtual RiscOperatorsPtr operators() const;
+    virtual void operators(const RiscOperatorsPtr&);
     /** @} */
 
     /** Get a pointer to the state object. The state is stored in the RISC operators object, so this is just here for
@@ -169,28 +186,11 @@ public:
 public:
     /** Property: Register dictionary.
      *
-     *  The register dictionary defines the set of registers over which the RISC operators may operate. This should be same
-     *  registers (or superset thereof) whose values are stored in the machine state(s).  This dictionary is used by the
-     *  Dispatcher class to translate register names to register descriptors.  For instance, to read from the "eax" register,
-     *  the dispatcher will look up "eax" in its register dictionary and then pass that descriptor to the @ref
-     *  RiscOperators::readRegister operation.  Register descriptors are also stored in instructions when the instruction is
-     *  disassembled, so the dispatcher should probably be using the same registers as the disassembler, or a superset thereof.
+     *  The register dictionary translates register descriptors to names and vice versa and provides descriptors for common
+     *  registers such as instruction and stack pointer registers.
      *
-     *  The register dictionary should not be changed after a dispatcher is instantiated because the dispatcher's constructor
-     *  may query the dictionary and cache the resultant register descriptors.
-     *
-     *  This function should not be redefined in subclasses. Instead, override @c get_register_dictionary or @c
-     *  set_register_dictionary.
-     *
-     * @{ */
+     *  This function is simply a wrapper that obtains the register dictionary from the architecture. */
     RegisterDictionaryPtr registerDictionary() const /*final*/;
-    void registerDictionary(const RegisterDictionaryPtr &rd) /*final*/;
-    /** @} */
-
-    // Old names, the ones which are overridden in subclasses if necessary. These are deprecated and might go away someday, so
-    // it's in your best interrest to use C++11 "override" in your declarations.
-    virtual RegisterDictionaryPtr get_register_dictionary() const;
-    virtual void set_register_dictionary(const RegisterDictionaryPtr &regdict);
 
     /** Lookup a register by name.  This dispatcher's register dictionary is consulted and the specified register is located by
      *  name.  If a bit width is specified (@p nbits) then it must match the size of register that was found.  If a valid
@@ -198,15 +198,11 @@ public:
      *  @p allowMissing is false or true, respectively. */
     virtual RegisterDescriptor findRegister(const std::string &regname, size_t nbits=0, bool allowMissing=false) const;
 
-    /** Property: Width of memory addresses.
+    /** Property: Width of memory addresses in bits.
      *
      *  This property defines the width of memory addresses. All memory reads and writes (and any other defined memory
-     *  operations) should pass address expressions that are this width.  The address width cannot be changed once it's set.
-     *
-     * @{ */
-    size_t addressWidth() const { return addrWidth_; }
-    void addressWidth(size_t nbits);
-    /** @} */
+     *  operations) should pass address expressions that are this width. */
+    size_t addressWidth() const;
 
     /** Returns the instruction pointer register. */
     virtual RegisterDescriptor instructionPointerRegister() const = 0;
@@ -302,6 +298,7 @@ public:
 } // namespace
 
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::Dispatcher);
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::Dispatcher, 2);
 
 #endif
 #endif

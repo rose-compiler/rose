@@ -87,21 +87,23 @@ private:
 
     BOOST_SERIALIZATION_SPLIT_MEMBER();
 #endif
-    
+
+private:
+    DispatcherX86();                                    // used only by boost::serialization
+
 protected:
     // Prototypical constructor
-    DispatcherX86();
-
-    // Prototypical constructor
-    DispatcherX86(size_t addrWidth, const RegisterDictionaryPtr &regs);
+    DispatcherX86(const Architecture::BaseConstPtr&);
 
     // Normal constructor
-    DispatcherX86(const BaseSemantics::RiscOperatorsPtr&, size_t addrWidth, const RegisterDictionaryPtr&);
+    DispatcherX86(const Architecture::BaseConstPtr&, const BaseSemantics::RiscOperatorsPtr&);
 
 public:
     ~DispatcherX86();
 
-    /** Loads the iproc table with instruction processing functors. This normally happens from the constructor. */
+    /** Loads the iproc table with instruction processing functors.
+     *
+     *  This normally happens from the constructor. */
     void iproc_init();
 
     /** Load the cached register descriptors.
@@ -109,25 +111,22 @@ public:
      *  This happens at construction and when the @ref registerDictionary property is changed. */
     void regcache_init();
 
-    /** Make sure memory properties are set up correctly. For instance, byte order should be little endian. */
+    /** Make sure memory properties are set up correctly.
+     *
+     *  For instance, byte order should be little endian. */
     void memory_init();
 
 public:
-    /** Construct a prototypical dispatcher.  The only thing this dispatcher can be used for is to create another dispatcher
-     *  with the virtual @ref create method. */
-    static DispatcherX86Ptr instance();
-
-    /** Construct a prototyipcal dispatcher. Construct a prototypical dispatcher with a specified address size. The only thing
-     * this dispatcher can be used for is to create another dispatcher with the virtual @ref create method. */
-    static DispatcherX86Ptr instance(size_t addrWidth, const RegisterDictionaryPtr&);
+    /** Construct a prototypical dispatcher.
+     *
+     *  The only thing this dispatcher can be used for is to create another dispatcher with the virtual @ref create method. */
+    static DispatcherX86Ptr instance(const Architecture::BaseConstPtr&);
 
     /** Constructor. */
-    static DispatcherX86Ptr instance(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth,
-                                     const RegisterDictionaryPtr&);
+    static DispatcherX86Ptr instance(const Architecture::BaseConstPtr&, const BaseSemantics::RiscOperatorsPtr&);
 
     /** Virtual constructor. */
-    virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr&, size_t addrWidth,
-                                                const RegisterDictionaryPtr&) const override;
+    virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr&) const override;
 
     /** Dynamic cast to a DispatcherX86Ptr with assertion. */
     static DispatcherX86Ptr promote(const BaseSemantics::DispatcherPtr&);
@@ -138,8 +137,6 @@ public:
     X86InstructionSize processorMode() const { return processorMode_; }
     void processorMode(X86InstructionSize m) { processorMode_ = m; }
     /** @} */
-
-    virtual void set_register_dictionary(const RegisterDictionaryPtr &regdict) override;
 
     /** Get list of common registers. Returns a list of non-overlapping registers composed of the largest registers except
      *  using individual flags for the fields of the FLAGS/EFLAGS register. */

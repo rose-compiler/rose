@@ -19,7 +19,7 @@ namespace Disassembler {
 Aarch64::Aarch64(const Architecture::Base::ConstPtr &arch, Modes modes)
     : Base(arch), modes_(modes) {
     callingConventions(CallingConvention::dictionaryAarch64());
-    p_proto_dispatcher = InstructionSemantics::DispatcherAarch64::instance();
+    p_proto_dispatcher = InstructionSemantics::DispatcherAarch64::instance(architecture());
     instructionAlignment_ = 4;
 
     ASSERT_forbid(modes_.isAnySet(~Mode::MODE_MCLASS));

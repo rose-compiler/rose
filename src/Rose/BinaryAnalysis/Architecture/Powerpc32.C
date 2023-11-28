@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/Architecture/Powerpc32.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Powerpc.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherPowerpc.h>
 #include <Rose/BinaryAnalysis/Unparser/Powerpc.h>
 
 namespace Rose {
@@ -202,6 +203,11 @@ Powerpc32::newInstructionDecoder() const {
 Unparser::Base::Ptr
 Powerpc32::newUnparser() const {
     return Unparser::Powerpc::instance(shared_from_this());
+}
+
+InstructionSemantics::BaseSemantics::DispatcherPtr
+Powerpc32::newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops) const {
+    return InstructionSemantics::DispatcherPowerpc::instance(shared_from_this(), ops);
 }
 
 } // namespace

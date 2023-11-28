@@ -119,6 +119,18 @@ public:
      *
      *  Thread safety: Thread safe. */
     virtual Unparser::BasePtr newUnparser() const = 0;
+
+    /** Construct and return a new instruction dispatcher.
+     *
+     * The dispatcher knows the semantics for instructions, but not the low-level operators (arithmetic, memory I/O, etc), nor the
+     * domain (concrete, symbolic, etc) on which those operators operate. These other things are supplied by the argument, which
+     * also points to the states that are modified by executing the instructions.
+     *
+     * The default implementation returns a null pointer, signifying that instruction semantics are not known.
+     *
+     * Thread safety: Thread safe. */
+    virtual InstructionSemantics::BaseSemantics::DispatcherPtr
+    newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) const;
 };
 
 } // namespace

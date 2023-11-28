@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.h>
 
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Exception.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RegisterStateGeneric.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RiscOperators.h>
@@ -16,21 +17,34 @@ namespace BinaryAnalysis {
 namespace InstructionSemantics {
 namespace BaseSemantics {
 
-Dispatcher::Dispatcher()
-    : addrWidth_(0), autoResetInstructionPointer_(true) {}
+Dispatcher::Dispatcher() {}
 
-Dispatcher::Dispatcher(size_t addrWidth, const RegisterDictionary::Ptr &regs)
-    : regdict(regs), addrWidth_(addrWidth), autoResetInstructionPointer_(true) {}
+Dispatcher::Dispatcher(const Architecture::Base::ConstPtr &arch)
+    : architecture_(arch) {
+    ASSERT_not_null(architecture_);
+}
 
-Dispatcher::Dispatcher(const RiscOperators::Ptr &ops, size_t addrWidth, const RegisterDictionary::Ptr &regs)
-    : operators_(ops), regdict(regs), addrWidth_(addrWidth), autoResetInstructionPointer_(true) {
+Dispatcher::Dispatcher(const Architecture::Base::ConstPtr &arch, const RiscOperators::Ptr &ops)
+    : architecture_(arch), operators_(ops) {
+    ASSERT_not_null(architecture_);
     ASSERT_not_null(operators_);
-    ASSERT_not_null(regs);
 }
 
 Dispatcher::~Dispatcher() {
     for (InsnProcessors::iterator iter = iproc_table.begin(); iter != iproc_table.end(); ++iter)
         delete *iter;
+}
+
+Architecture::Base::ConstPtr
+Dispatcher::architecture() const {
+    ASSERT_not_null(architecture_);
+    return architecture_;
+}
+
+RiscOperators::Ptr
+Dispatcher::operators() const {
+    ASSERT_not_null(operators_);
+    return operators_;
 }
 
 void
@@ -74,22 +88,12 @@ Dispatcher::number_(size_t nbits, uint64_t number) const {
 
 RegisterDictionary::Ptr
 Dispatcher::registerDictionary() const {
-    return get_register_dictionary();
+    return architecture()->registerDictionary();
 }
 
-void
-Dispatcher::registerDictionary(const RegisterDictionary::Ptr &rd) {
-    set_register_dictionary(rd);
-}
-
-RegisterDictionary::Ptr
-Dispatcher::get_register_dictionary() const {
-    return regdict;
-}
-
-void
-Dispatcher::set_register_dictionary(const RegisterDictionary::Ptr &rd) {
-    regdict = rd;
+size_t
+Dispatcher::addressWidth() const {
+    return architecture()->bitsPerWord();
 }
 
 void
@@ -108,12 +112,6 @@ Dispatcher::advanceInstructionPointer(SgAsmInstruction *insn) {
         ipValue = operators()->number_(nBits, insn->get_address());
     ipValue = operators()->add(ipValue, operators()->number_(nBits, insn->get_size()));
     operators()->writeRegister(ipReg, ipValue);
-}
-
-void
-Dispatcher::addressWidth(size_t nBits) {
-    ASSERT_require2(nBits==addrWidth_ || addrWidth_==0, "address width cannot be changed once it is set");
-    addrWidth_ = nBits;
 }
 
 void
@@ -404,7 +402,7 @@ Dispatcher::write(SgAsmExpression *e, const SValue::Ptr &value, size_t addr_nbit
         operators()->writeRegister(reg, value);
     } else if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(e)) {
         SValue::Ptr addr = effectiveAddress(mre, addr_nbits);
-        ASSERT_require(0==addrWidth_ || addr->nBits()==addrWidth_);
+        ASSERT_require(addr->nBits() == architecture()->bitsPerWord());
         operators()->writeMemory(segmentRegister(mre), addr, value, operators()->boolean_(true));
     } else {
         ASSERT_not_implemented(e->class_name());
@@ -441,7 +439,7 @@ Dispatcher::read(SgAsmExpression *e, size_t value_nbits/*=0*/, size_t addr_nbits
         retval = operators()->readRegister(reg);
     } else if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(e)) {
         BaseSemantics::SValue::Ptr addr = effectiveAddress(mre, addr_nbits);
-        ASSERT_require(0==addrWidth_ || addr->nBits()==addrWidth_);
+        ASSERT_require(addr->nBits() == architecture()->bitsPerWord());
         BaseSemantics::SValue::Ptr dflt = undefined_(value_nbits);
         retval = operators()->readMemory(segmentRegister(mre), addr, dflt, operators()->boolean_(true));
     } else if (SgAsmValueExpression *ve = isSgAsmValueExpression(e)) {

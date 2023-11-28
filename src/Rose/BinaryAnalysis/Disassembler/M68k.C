@@ -4862,9 +4862,7 @@ M68k::init()
     ASSERT_require(REG_SP);
     ASSERT_require(REG_SF);
 
-    p_proto_dispatcher = InstructionSemantics::DispatcherM68k::instance();
-    p_proto_dispatcher->addressWidth(32);
-    p_proto_dispatcher->registerDictionary(architecture()->registerDictionary());
+    p_proto_dispatcher = InstructionSemantics::DispatcherM68k::instance(architecture());
 
     instructionAlignment_ = 2;
     callingConventions(CallingConvention::dictionaryM68k());

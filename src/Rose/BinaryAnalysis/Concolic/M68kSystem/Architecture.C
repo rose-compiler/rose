@@ -87,9 +87,8 @@ Architecture::configureSystemCalls() {
 BS::Dispatcher::Ptr
 Architecture::makeDispatcher(const BS::RiscOperators::Ptr &ops) {
     ASSERT_not_null(ops);
-    return IS::DispatcherM68k::instance(ops,
-                                        Emulation::Dispatcher::unwrapEmulationOperators(ops)->wordSizeBits(),
-                                        Emulation::Dispatcher::unwrapEmulationOperators(ops)->registerDictionary());
+    auto arch = BinaryAnalysis::Architecture::findByName("nxp-coldfire").orThrow();
+    return IS::DispatcherM68k::instance(arch, ops);
 }
 
 Sawyer::Optional<rose_addr_t>

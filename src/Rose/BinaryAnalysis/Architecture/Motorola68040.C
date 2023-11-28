@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/Architecture/Motorola68040.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/M68k.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h>
 #include <Rose/BinaryAnalysis/Unparser/M68k.h>
 
 namespace Rose {
@@ -146,6 +147,11 @@ Motorola68040::newInstructionDecoder() const {
 Unparser::Base::Ptr
 Motorola68040::newUnparser() const {
     return Unparser::M68k::instance(shared_from_this());
+}
+
+InstructionSemantics::BaseSemantics::DispatcherPtr
+Motorola68040::newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops) const {
+    return InstructionSemantics::DispatcherM68k::instance(shared_from_this(), ops);
 }
 
 } // namespace
