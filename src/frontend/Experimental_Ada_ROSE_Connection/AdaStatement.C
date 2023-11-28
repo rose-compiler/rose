@@ -1797,6 +1797,13 @@ namespace
       return;
     }
 
+    if (elem.Element_Kind == A_Pragma)
+    {
+      handlePragma(elem, nullptr, ctx);
+      return;
+    }
+
+    //~ logError() << ":: " << elem.Element_Kind << std::endl;
     ADA_ASSERT (elem.Element_Kind == A_Statement);
 
     SgStatement*            assocstmt = nullptr;

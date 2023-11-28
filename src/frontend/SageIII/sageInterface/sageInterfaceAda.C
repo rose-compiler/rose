@@ -817,12 +817,46 @@ namespace Ada
     {
       return isSgDeclarationStatement(s) == nullptr;
     }
+
+    bool isNondeclarativePragma(const SgStatement* s)
+    {
+      const SgPragmaDeclaration* pdcl = isSgPragmaDeclaration(s);
+      if (pdcl == nullptr) return false;
+
+      const SgPragma&            prgm = SG_DEREF(pdcl->get_pragma());
+      std::string                prgName = boost::to_lower_copy(prgm.get_pragma());
+
+      return (  (prgName != "import")
+             && (prgName != "export")
+             && (prgName != "priority")
+             );
+    }
+
+    template <class SageStatementPtrList>
+    auto findDeclarationLimit(SageStatementPtrList& list) -> decltype(list.begin())
+    {
+      using IteratorType = decltype(list.begin());
+
+      IteratorType beg = list.begin();
+      IteratorType lim = list.end();
+      IteratorType pos = std::find_if(beg, lim, isNormalStatement);
+      IteratorType prv = std::prev(pos);
+
+      // read back over pragmas in order not to introduce spurious declare sections
+      while ((pos != beg) && isNondeclarativePragma(*prv))
+      {
+        pos = prv;
+        prv = std::prev(pos);
+      }
+
+      return pos;
+    }
   }
 
   SgStatementPtrList::const_iterator
   declarationLimit(const SgStatementPtrList& list)
   {
-    return std::find_if(list.begin(), list.end(), isNormalStatement);
+    return findDeclarationLimit(list);
   }
 
   SgStatementPtrList::const_iterator
@@ -840,7 +874,7 @@ namespace Ada
   SgStatementPtrList::iterator
   declarationLimit(SgStatementPtrList& list)
   {
-    return std::find_if(list.begin(), list.end(), isNormalStatement);
+    return findDeclarationLimit(list);
   }
 
   SgStatementPtrList::iterator
