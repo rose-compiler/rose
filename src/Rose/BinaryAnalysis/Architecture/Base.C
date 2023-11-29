@@ -7,6 +7,7 @@
 #include <Rose/BinaryAnalysis/CallingConvention.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/Unparser.h>
 #include <Rose/StringUtility/Escape.h>
@@ -54,6 +55,11 @@ Base::matchesHeader(SgAsmGenericHeader*) const {
 
 InstructionSemantics::BaseSemantics::Dispatcher::Ptr
 Base::newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperators::Ptr&) const {
+    return {};
+}
+
+std::vector<Partitioner2::FunctionPrologueMatcher::Ptr>
+Base::functionPrologueMatchers(const Partitioner2::EnginePtr&) const {
     return {};
 }
 

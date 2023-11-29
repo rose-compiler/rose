@@ -5,6 +5,7 @@
 
 #include <Rose/BinaryAnalysis/Disassembler/M68k.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h>
+#include <Rose/BinaryAnalysis/Partitioner2/ModulesM68k.h>
 #include <Rose/BinaryAnalysis/Unparser/M68k.h>
 
 namespace Rose {
@@ -12,7 +13,7 @@ namespace BinaryAnalysis {
 namespace Architecture {
 
 NxpColdfire::NxpColdfire()
-    : Base("nxp-coldfire", 4, ByteOrder::ORDER_MSB) {}
+    : Motorola("nxp-coldfire") {}
 
 NxpColdfire::~NxpColdfire() {}
 
@@ -112,16 +113,6 @@ NxpColdfire::matchesHeader(SgAsmGenericHeader *header) const {
 Disassembler::Base::Ptr
 NxpColdfire::newInstructionDecoder() const {
     return Disassembler::M68k::instance(shared_from_this(), m68k_freescale_cpu32);
-}
-
-Unparser::Base::Ptr
-NxpColdfire::newUnparser() const {
-    return Unparser::M68k::instance(shared_from_this());
-}
-
-InstructionSemantics::BaseSemantics::DispatcherPtr
-NxpColdfire::newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops) const {
-    return InstructionSemantics::DispatcherM68k::instance(shared_from_this(), ops);
 }
 
 } // namespace

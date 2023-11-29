@@ -12,7 +12,7 @@ namespace BinaryAnalysis {
 namespace Architecture {
 
 Intel8086::Intel8086()
-    : Base("intel-8086", 2, ByteOrder::ORDER_LSB) {}
+    : X86("intel-8086", 2) {}
 
 Intel8086::~Intel8086() {}
 
@@ -105,22 +105,6 @@ Intel8086::registerDictionary() const {
 bool
 Intel8086::matchesHeader(SgAsmGenericHeader*) const {
     return false;
-}
-
-Disassembler::Base::Ptr
-Intel8086::newInstructionDecoder() const {
-    // FIXME[Robb Matzke 2023-11-21]: No Disassembler::X86 API to create an Intel 8086 decoder.
-    return {};
-}
-
-Unparser::Base::Ptr
-Intel8086::newUnparser() const {
-    return Unparser::X86::instance(shared_from_this());
-}
-
-InstructionSemantics::BaseSemantics::DispatcherPtr
-Intel8086::newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops) const {
-    return InstructionSemantics::DispatcherX86::instance(shared_from_this(), ops);
 }
 
 } // namespace

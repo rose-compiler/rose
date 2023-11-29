@@ -2,7 +2,7 @@
 #define ROSE_BinaryAnalysis_Architecture_Intel80286_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <Rose/BinaryAnalysis/Architecture/Base.h>
+#include <Rose/BinaryAnalysis/Architecture/X86.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -18,7 +18,7 @@ namespace Architecture {
  *
  *  The 80286 was employed for the IBM PC/AT, introduced in 1984, and then widely used in most PC/AT compatible computers until the
  *  early 1990s. In 1987, Intel shipped its five-millionth 80286 microprocessor. */
-class Intel80286: public Base {
+class Intel80286: public X86 {
 public:
     using Ptr = Intel80286Ptr;
 
@@ -34,11 +34,6 @@ public:
 public:
     RegisterDictionary::Ptr registerDictionary() const override;
     bool matchesHeader(SgAsmGenericHeader*) const override;
-    Disassembler::BasePtr newInstructionDecoder() const override;
-    Unparser::BasePtr newUnparser() const override;
-
-    virtual InstructionSemantics::BaseSemantics::DispatcherPtr
-    newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) const override;
 };
 
 } // namespace

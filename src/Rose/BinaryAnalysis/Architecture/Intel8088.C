@@ -12,7 +12,7 @@ namespace BinaryAnalysis {
 namespace Architecture {
 
 Intel8088::Intel8088()
-    : Base("intel-8088", 2, ByteOrder::ORDER_LSB) {}
+    : X86("intel-8088", 2) {}
 
 Intel8088::~Intel8088() {}
 
@@ -38,22 +38,6 @@ Intel8088::registerDictionary() const {
 bool
 Intel8088::matchesHeader(SgAsmGenericHeader*) const {
     return false;
-}
-
-Disassembler::Base::Ptr
-Intel8088::newInstructionDecoder() const {
-    // FIXME[Robb Matzke 2023-11-21]: No Disassembler::X86 API to create an Intel 8088 decoder.
-    return {};
-}
-
-Unparser::Base::Ptr
-Intel8088::newUnparser() const {
-    return Unparser::X86::instance(shared_from_this());
-}
-
-InstructionSemantics::BaseSemantics::DispatcherPtr
-Intel8088::newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops) const {
-    return InstructionSemantics::DispatcherX86::instance(shared_from_this(), ops);
 }
 
 } // namespace

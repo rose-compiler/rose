@@ -12,7 +12,7 @@ namespace BinaryAnalysis {
 namespace Architecture {
 
 IntelI386::IntelI386()
-    : Base("intel-i386", 4, ByteOrder::ORDER_LSB) {}
+    : X86("intel-i386", 4) {}
 
 IntelI386::~IntelI386() {}
 
@@ -142,22 +142,6 @@ IntelI386::matchesHeader(SgAsmGenericHeader *header) const {
     const SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
     return (isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_IA32_Family &&
         header->get_executableFormat()->get_wordSize() == bytesPerWord();
-}
-
-Disassembler::Base::Ptr
-IntelI386::newInstructionDecoder() const {
-    // FIXME[Robb Matzke 2023-11-21]: No Disassembler::X86 API to create an Intel Pentium decoder.
-    return {};
-}
-
-Unparser::Base::Ptr
-IntelI386::newUnparser() const {
-    return Unparser::X86::instance(shared_from_this());
-}
-
-InstructionSemantics::BaseSemantics::DispatcherPtr
-IntelI386::newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops) const {
-    return InstructionSemantics::DispatcherX86::instance(shared_from_this(), ops);
 }
 
 } // namespace

@@ -2,7 +2,7 @@
 #define ROSE_BinaryAnalysis_Architecture_IntelPentium_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <Rose/BinaryAnalysis/Architecture/Base.h>
+#include <Rose/BinaryAnalysis/Architecture/X86.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -27,7 +27,7 @@ namespace Architecture {
  *  The Pentium was the first Intel x86 to build in robust hardware support for multiprocessing similar to that of large IBM
  *  mainframe computers. Intel worked closely with IBM to define this ability and then Intel designed it into the P5
  *  microarchitecture. This new ability was absent in prior x86 generations and x86 copies from competitors. */
-class IntelPentium: public Base {
+class IntelPentium: public X86 {
 public:
     using Ptr = IntelPentiumPtr;
 
@@ -43,11 +43,6 @@ public:
 public:
     RegisterDictionary::Ptr registerDictionary() const override;
     bool matchesHeader(SgAsmGenericHeader*) const override;
-    Disassembler::BasePtr newInstructionDecoder() const override;
-    Unparser::BasePtr newUnparser() const override;
-
-    virtual InstructionSemantics::BaseSemantics::DispatcherPtr
-    newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) const override;
 };
 
 } // namespace

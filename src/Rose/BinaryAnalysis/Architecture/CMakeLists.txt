@@ -17,10 +17,13 @@ add_library(roseBinaryAnalysisArchitecture OBJECT
   IntelPentium4.C
   Jvm.C
   Mips32.C
+  Motorola.C
   Motorola68040.C
   NxpColdfire.C
+  Powerpc.C
   Powerpc32.C
   Powerpc64.C
+  X86.C
 )
 
 add_dependencies(roseBinaryAnalysisArchitecture rosetta_generated)
@@ -44,10 +47,13 @@ install(FILES
   IntelPentium4.h
   Jvm.h
   Mips32.h
+  Motorola.h
   Motorola68040.h
   NxpColdfire.h
+  Powerpc.h
   Powerpc32.h
   Powerpc64.h
+  X86.h
 
   DESTINATION ${INCLUDE_INSTALL_DIR}/Rose/BinaryAnalysis/Architecture)
 

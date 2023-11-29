@@ -12,7 +12,7 @@ namespace BinaryAnalysis {
 namespace Architecture {
 
 Amd64::Amd64()
-    : Base("amd64", 8, ByteOrder::ORDER_LSB) {}
+    : X86("amd64", 8) {}
 
 Amd64::~Amd64() {}
 
@@ -92,21 +92,6 @@ Amd64::matchesHeader(SgAsmGenericHeader *header) const {
     ASSERT_not_null(header);
     const SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
     return (isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_X8664_Family;
-}
-
-Disassembler::Base::Ptr
-Amd64::newInstructionDecoder() const {
-    return Disassembler::X86::instance(shared_from_this());
-}
-
-Unparser::Base::Ptr
-Amd64::newUnparser() const {
-    return Unparser::X86::instance(shared_from_this());
-}
-
-InstructionSemantics::BaseSemantics::DispatcherPtr
-Amd64::newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops) const {
-    return InstructionSemantics::DispatcherX86::instance(shared_from_this(), ops);
 }
 
 } // namespace

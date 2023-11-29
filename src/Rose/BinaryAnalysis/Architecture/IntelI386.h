@@ -2,7 +2,7 @@
 #define ROSE_BinaryAnalysis_Architecture_IntelI386_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <Rose/BinaryAnalysis/Architecture/Base.h>
+#include <Rose/BinaryAnalysis/Architecture/X86.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -20,7 +20,7 @@ namespace Architecture {
  *  i386 architecture, x86, or IA-32, depending on context. Over the years, successively newer implementations of the same
  *  architecture have become several hundreds of times faster than the original 80386 (and thousands of times faster than the
  *  8086). */
-class IntelI386: public Base {
+class IntelI386: public X86 {
 public:
     using Ptr = IntelI386Ptr;
 
@@ -36,11 +36,6 @@ public:
 public:
     RegisterDictionary::Ptr registerDictionary() const override;
     bool matchesHeader(SgAsmGenericHeader*) const override;
-    Disassembler::BasePtr newInstructionDecoder() const override;
-    Unparser::BasePtr newUnparser() const override;
-
-    virtual InstructionSemantics::BaseSemantics::DispatcherPtr
-    newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) const override;
 };
 
 } // namespace

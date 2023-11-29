@@ -2,7 +2,7 @@
 #define ROSE_BinaryAnalysis_Architecture_IntelI486_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <Rose/BinaryAnalysis/Architecture/Base.h>
+#include <Rose/BinaryAnalysis/Architecture/X86.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -26,7 +26,7 @@ namespace Architecture {
  *  alongside the i386.
  *
  *  The i486 was succeeded by the original Pentium. */
-class IntelI486: public Base {
+class IntelI486: public X86 {
 public:
     using Ptr = IntelI486Ptr;
 
@@ -42,11 +42,6 @@ public:
 public:
     RegisterDictionary::Ptr registerDictionary() const override;
     bool matchesHeader(SgAsmGenericHeader*) const override;
-    Disassembler::BasePtr newInstructionDecoder() const override;
-    Unparser::BasePtr newUnparser() const override;
-
-    virtual InstructionSemantics::BaseSemantics::DispatcherPtr
-    newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) const override;
 };
 
 } // namespace

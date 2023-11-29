@@ -40,6 +40,9 @@ public:
     bool matchesHeader(SgAsmGenericHeader*) const override;
     Disassembler::BasePtr newInstructionDecoder() const override;
     Unparser::BasePtr newUnparser() const override;
+
+    std::vector<Partitioner2::FunctionPrologueMatcherPtr>
+    functionPrologueMatchers(const Partitioner2::EnginePtr&) const override;
 };
 
 } // namespace

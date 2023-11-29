@@ -2,7 +2,7 @@
 #define ROSE_BinaryAnalysis_Architecture_NxpColdfire_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <Rose/BinaryAnalysis/Architecture/Base.h>
+#include <Rose/BinaryAnalysis/Architecture/Motorola.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -13,7 +13,7 @@ namespace Architecture {
  *  The NXP ColdFire is a microprocessor that derives from the Motorola 68000 family architecture, manufactured for embedded systems
  *  development by NXP Semiconductors. It was formerly manufactured by Freescale Semiconductor (formerly the semiconductor division
  *  of Motorola) which merged with NXP in 2015. */
-class NxpColdfire: public Base {
+class NxpColdfire: public Motorola {
 public:
     using Ptr = NxpColdfirePtr;
 
@@ -30,10 +30,6 @@ public:
     RegisterDictionary::Ptr registerDictionary() const override;
     bool matchesHeader(SgAsmGenericHeader*) const override;
     Disassembler::BasePtr newInstructionDecoder() const override;
-    Unparser::BasePtr newUnparser() const override;
-
-    virtual InstructionSemantics::BaseSemantics::DispatcherPtr
-    newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) const override;
 };
 
 } // namespace

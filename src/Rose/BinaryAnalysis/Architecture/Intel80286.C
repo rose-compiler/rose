@@ -12,7 +12,7 @@ namespace BinaryAnalysis {
 namespace Architecture {
 
 Intel80286::Intel80286()
-    : Base("intel-80286", 2, ByteOrder::ORDER_LSB) {}
+    : X86("intel-80286", 2) {}
 
 Intel80286::~Intel80286() {}
 
@@ -44,21 +44,6 @@ Intel80286::matchesHeader(SgAsmGenericHeader *header) const {
     return isSgAsmDOSFileHeader(header) &&
         (isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_IA32_Family &&
         header->get_executableFormat()->get_wordSize() == bytesPerWord();
-}
-
-Disassembler::Base::Ptr
-Intel80286::newInstructionDecoder() const {
-    return Disassembler::X86::instance(shared_from_this());
-}
-
-Unparser::Base::Ptr
-Intel80286::newUnparser() const {
-    return Unparser::X86::instance(shared_from_this());
-}
-
-InstructionSemantics::BaseSemantics::DispatcherPtr
-Intel80286::newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops) const {
-    return InstructionSemantics::DispatcherX86::instance(shared_from_this(), ops);
 }
 
 } // namespace

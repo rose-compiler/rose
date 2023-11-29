@@ -12,7 +12,7 @@ namespace BinaryAnalysis {
 namespace Architecture {
 
 IntelI486::IntelI486()
-    : Base("intel-i486", 4, ByteOrder::ORDER_LSB) {}
+    : X86("intel-i486", 4) {}
 
 IntelI486::~IntelI486() {}
 
@@ -42,22 +42,6 @@ IntelI486::matchesHeader(SgAsmGenericHeader *header) const {
     const SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
     return (isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_IA32_Family &&
         header->get_executableFormat()->get_wordSize() == bytesPerWord();
-}
-
-Disassembler::Base::Ptr
-IntelI486::newInstructionDecoder() const {
-    // FIXME[Robb Matzke 2023-11-21]: No Disassembler::X86 API to create an Intel i486 decoder.
-    return {};
-}
-
-Unparser::Base::Ptr
-IntelI486::newUnparser() const {
-    return Unparser::X86::instance(shared_from_this());
-}
-
-InstructionSemantics::BaseSemantics::DispatcherPtr
-IntelI486::newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops) const {
-    return InstructionSemantics::DispatcherX86::instance(shared_from_this(), ops);
 }
 
 } // namespace

@@ -12,7 +12,7 @@ namespace BinaryAnalysis {
 namespace Architecture {
 
 IntelPentium4::IntelPentium4()
-    : Base("intel-pentium4", 4, ByteOrder::ORDER_LSB) {}
+    : X86("intel-pentium4", 4) {}
 
 IntelPentium4::~IntelPentium4() {}
 
@@ -41,21 +41,6 @@ IntelPentium4::matchesHeader(SgAsmGenericHeader *header) const {
     const SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
     return (isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_IA32_Family &&
         header->get_executableFormat()->get_wordSize() == bytesPerWord();
-}
-
-Disassembler::Base::Ptr
-IntelPentium4::newInstructionDecoder() const {
-    return Disassembler::X86::instance(shared_from_this());
-}
-
-Unparser::Base::Ptr
-IntelPentium4::newUnparser() const {
-    return Unparser::X86::instance(shared_from_this());
-}
-
-InstructionSemantics::BaseSemantics::DispatcherPtr
-IntelPentium4::newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops) const {
-    return InstructionSemantics::DispatcherX86::instance(shared_from_this(), ops);
 }
 
 } // namespace

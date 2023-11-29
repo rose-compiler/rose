@@ -2,7 +2,7 @@
 #define ROSE_BinaryAnalysis_Architecture_IntelPentium4_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <Rose/BinaryAnalysis/Architecture/Base.h>
+#include <Rose/BinaryAnalysis/Architecture/X86.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -26,7 +26,7 @@ namespace Architecture {
  *  Intel also marketed a version of their low-end Celeron processors based on the NetBurst microarchitecture (often referred to as
  *  Celeron 4), and a high-end derivative, Xeon, intended for multi-socket servers and workstations. In 2005, the Pentium 4 was
  *  complemented by the dual-core-brands Pentium D and Pentium Extreme Edition. */
-class IntelPentium4: public Base {
+class IntelPentium4: public X86 {
 public:
     using Ptr = IntelPentium4Ptr;
 
@@ -42,11 +42,6 @@ public:
 public:
     RegisterDictionary::Ptr registerDictionary() const override;
     bool matchesHeader(SgAsmGenericHeader*) const override;
-    Disassembler::BasePtr newInstructionDecoder() const override;
-    Unparser::BasePtr newUnparser() const override;
-
-    virtual InstructionSemantics::BaseSemantics::DispatcherPtr
-    newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) const override;
 };
 
 } // namespace

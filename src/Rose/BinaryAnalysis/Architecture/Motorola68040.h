@@ -2,7 +2,7 @@
 #define ROSE_BinaryAnalysis_Architecture_Motorola68040_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <Rose/BinaryAnalysis/Architecture/Base.h>
+#include <Rose/BinaryAnalysis/Architecture/Motorola.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -25,7 +25,7 @@ namespace Architecture {
  *  Motorola produced several speed grades. The 16 MHz and 20 MHz parts were never qualified (XC designation) and used as
  *  prototyping samples. 25 MHz and 33 MHz grades featured across the whole line, but until around 2000 the 40 MHz grade was only
  *  for the "full" 68040. A planned 50 MHz grade was canceled after it exceeded the thermal design envelope. */
-class Motorola68040: public Base {
+class Motorola68040: public Motorola {
 public:
     using Ptr = Motorola68040Ptr;
 
@@ -42,10 +42,6 @@ public:
     RegisterDictionary::Ptr registerDictionary() const override;
     bool matchesHeader(SgAsmGenericHeader*) const override;
     Disassembler::BasePtr newInstructionDecoder() const override;
-    Unparser::BasePtr newUnparser() const override;
-
-    virtual InstructionSemantics::BaseSemantics::DispatcherPtr
-    newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) const override;
 };
 
 } // namespace

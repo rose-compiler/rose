@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/Architecture/Mips32.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Mips.h>
+#include <Rose/BinaryAnalysis/Partitioner2/ModulesMips.h>
 #include <Rose/BinaryAnalysis/Unparser/Mips.h>
 
 namespace Rose {
@@ -126,6 +127,13 @@ Mips32::newInstructionDecoder() const {
 Unparser::Base::Ptr
 Mips32::newUnparser() const {
     return Unparser::Mips::instance(shared_from_this());
+}
+
+std::vector<Partitioner2::FunctionPrologueMatcher::Ptr>
+Mips32::functionPrologueMatchers(const Partitioner2::EnginePtr&) const {
+    std::vector<Partitioner2::FunctionPrologueMatcher::Ptr> retval;
+    retval.push_back(Partitioner2::ModulesMips::MatchRetAddiu::instance());
+    return retval;
 }
 
 } // namespace

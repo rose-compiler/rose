@@ -2,7 +2,7 @@
 #define ROSE_BinaryAnalysis_Architecture_Intel8086_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <Rose/BinaryAnalysis/Architecture/Base.h>
+#include <Rose/BinaryAnalysis/Architecture/X86.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -16,7 +16,7 @@ namespace Architecture {
  *
  *  The 8086 gave rise to the x86 architecture, which eventually became Intel's most successful line of processors. On June 5, 2018,
  *  Intel released a limited-edition CPU celebrating the 40th anniversary of the Intel 8086, called the Intel Core i7-8086K. */
-class Intel8086: public Base {
+class Intel8086: public X86 {
 public:
     using Ptr = Intel8086Ptr;
 
@@ -32,11 +32,6 @@ public:
 public:
     RegisterDictionary::Ptr registerDictionary() const override;
     bool matchesHeader(SgAsmGenericHeader*) const override;
-    Disassembler::BasePtr newInstructionDecoder() const override;
-    Unparser::BasePtr newUnparser() const override;
-
-    virtual InstructionSemantics::BaseSemantics::DispatcherPtr
-    newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) const override;
 };
 
 } // namespace

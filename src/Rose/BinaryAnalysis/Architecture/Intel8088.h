@@ -2,7 +2,7 @@
 #define ROSE_BinaryAnalysis_Architecture_Intel8088_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <Rose/BinaryAnalysis/Architecture/Base.h>
+#include <Rose/BinaryAnalysis/Architecture/X86.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -15,7 +15,7 @@ namespace Architecture {
  *  megabyte address range are unchanged, however. In fact, according to the Intel documentation, the 8086 and 8088 have the same
  *  execution unit (EU)—only the bus interface unit (BIU) is different. The 8088 was used in the original IBM PC and in IBM PC
  *  compatible clones. */
-class Intel8088: public Base {
+class Intel8088: public X86 {
 public:
     using Ptr = Intel8088Ptr;
 
@@ -31,11 +31,6 @@ public:
 public:
     RegisterDictionary::Ptr registerDictionary() const override;
     bool matchesHeader(SgAsmGenericHeader*) const override;
-    Disassembler::BasePtr newInstructionDecoder() const override;
-    Unparser::BasePtr newUnparser() const override;
-
-    virtual InstructionSemantics::BaseSemantics::DispatcherPtr
-    newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) const override;
 };
 
 } // namespace

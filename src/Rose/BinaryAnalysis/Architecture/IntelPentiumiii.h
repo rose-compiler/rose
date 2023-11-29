@@ -2,7 +2,7 @@
 #define ROSE_BinaryAnalysis_Architecture_IntelPentiumiii_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <Rose/BinaryAnalysis/Architecture/Base.h>
+#include <Rose/BinaryAnalysis/Architecture/X86.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -18,7 +18,7 @@ namespace Architecture {
  *
  *  Even after the release of the Pentium 4 in late 2000, the Pentium III continued to be produced with new models introduced up
  *  until early 2003. They were then discontinued in April 2004 for desktop units and May 2007 for mobile units. */
-class IntelPentiumiii: public Base {
+class IntelPentiumiii: public X86 {
 public:
     using Ptr = IntelPentiumiiiPtr;
 
@@ -34,11 +34,6 @@ public:
 public:
     RegisterDictionary::Ptr registerDictionary() const override;
     bool matchesHeader(SgAsmGenericHeader*) const override;
-    Disassembler::BasePtr newInstructionDecoder() const override;
-    Unparser::BasePtr newUnparser() const override;
-
-    virtual InstructionSemantics::BaseSemantics::DispatcherPtr
-    newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) const override;
 };
 
 } // namespace

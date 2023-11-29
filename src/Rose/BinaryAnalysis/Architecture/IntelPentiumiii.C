@@ -12,7 +12,7 @@ namespace BinaryAnalysis {
 namespace Architecture {
 
 IntelPentiumiii::IntelPentiumiii()
-    : Base("intel-pentiumiii", 4, ByteOrder::ORDER_LSB) {}
+    : X86("intel-pentiumiii", 4) {}
 
 IntelPentiumiii::~IntelPentiumiii() {}
 
@@ -69,22 +69,6 @@ IntelPentiumiii::matchesHeader(SgAsmGenericHeader *header) const {
     const SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
     return (isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_IA32_Family &&
         header->get_executableFormat()->get_wordSize() == bytesPerWord();
-}
-
-Disassembler::Base::Ptr
-IntelPentiumiii::newInstructionDecoder() const {
-    // FIXME[Robb Matzke 2023-11-21]: No Disassembler::X86 API to create an Intel Pentium III decoder.
-    return {};
-}
-
-Unparser::Base::Ptr
-IntelPentiumiii::newUnparser() const {
-    return Unparser::X86::instance(shared_from_this());
-}
-
-InstructionSemantics::BaseSemantics::DispatcherPtr
-IntelPentiumiii::newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops) const {
-    return InstructionSemantics::DispatcherX86::instance(shared_from_this(), ops);
 }
 
 } // namespace

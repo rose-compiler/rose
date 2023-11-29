@@ -288,10 +288,13 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/Architecture/IntelPentium4.h				\
 	Rose/BinaryAnalysis/Architecture/Jvm.h						\
 	Rose/BinaryAnalysis/Architecture/Mips32.h					\
+	Rose/BinaryAnalysis/Architecture/Motorola.h					\
 	Rose/BinaryAnalysis/Architecture/Motorola68040.h				\
 	Rose/BinaryAnalysis/Architecture/NxpColdfire.h					\
+	Rose/BinaryAnalysis/Architecture/Powerpc.h					\
 	Rose/BinaryAnalysis/Architecture/Powerpc32.h					\
 	Rose/BinaryAnalysis/Architecture/Powerpc64.h					\
+	Rose/BinaryAnalysis/Architecture/X86.h						\
 	Rose/BinaryAnalysis/AsmFunctionIndex.h						\
 	Rose/BinaryAnalysis/AstHash.h							\
 	Rose/BinaryAnalysis/BasicTypes.h						\

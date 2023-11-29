@@ -1406,27 +1406,21 @@ EngineBinary::loadSpecimens(const std::vector<std::string> &fileNames) {
 
 Partitioner::Ptr
 EngineBinary::createTunedPartitioner() {
-    Disassembler::Base::Ptr decoder = architecture()->newInstructionDecoder();
+    checkCreatePartitionerPrerequisites();
+    Partitioner::Ptr partitioner = createBarePartitioner();
 
+    for (FunctionPrologueMatcher::Ptr &matcher: architecture()->functionPrologueMatchers(sharedFromThis()))
+        partitioner->functionPrologueMatchers().push_back(matcher);
+
+
+    Disassembler::Base::Ptr decoder = architecture()->newInstructionDecoder();
     if (decoder.dynamicCast<Disassembler::M68k>()) {
-        checkCreatePartitionerPrerequisites();
-        Partitioner::Ptr partitioner = createBarePartitioner();
-        partitioner->functionPrologueMatchers().push_back(ModulesM68k::MatchLink::instance());
         partitioner->basicBlockCallbacks().append(ModulesM68k::SwitchSuccessors::instance());
         partitioner->basicBlockCallbacks().append(libcStartMain_ = ModulesLinux::LibcStartMain::instance());
         return partitioner;
     }
 
     if (decoder.dynamicCast<Disassembler::X86>()) {
-        checkCreatePartitionerPrerequisites();
-        Partitioner::Ptr partitioner = createBarePartitioner();
-        partitioner->functionPrologueMatchers().push_back(ModulesX86::MatchHotPatchPrologue::instance());
-        partitioner->functionPrologueMatchers().push_back(ModulesX86::MatchStandardPrologue::instance());
-        partitioner->functionPrologueMatchers().push_back(ModulesX86::MatchAbbreviatedPrologue::instance());
-        partitioner->functionPrologueMatchers().push_back(ModulesX86::MatchEnterPrologue::instance());
-        if (settings().partitioner.findingThunks)
-            partitioner->functionPrologueMatchers().push_back(Modules::MatchThunk::instance(functionMatcherThunks_));
-        partitioner->functionPrologueMatchers().push_back(ModulesX86::MatchRetPadPush::instance());
         partitioner->basicBlockCallbacks().append(ModulesX86::FunctionReturnDetector::instance());
         partitioner->basicBlockCallbacks().append(ModulesX86::SwitchSuccessors::instance());
         partitioner->basicBlockCallbacks().append(ModulesLinux::SyscallSuccessors::instance(partitioner,
@@ -1436,31 +1430,21 @@ EngineBinary::createTunedPartitioner() {
     }
 
     if (decoder.dynamicCast<Disassembler::Powerpc>()) {
-        checkCreatePartitionerPrerequisites();
-        Partitioner::Ptr partitioner = createBarePartitioner();
-        partitioner->functionPrologueMatchers().push_back(ModulesPowerpc::MatchStwuPrologue::instance());
         return partitioner;
     }
 
     if (decoder.dynamicCast<Disassembler::Mips>()) {
-        checkCreatePartitionerPrerequisites();
-        Partitioner::Ptr partitioner = createBarePartitioner();
-        partitioner->functionPrologueMatchers().push_back(ModulesMips::MatchRetAddiu::instance());
         return partitioner;
     }
 
 #ifdef ROSE_ENABLE_ASM_AARCH32
     if (decoder.dynamicCast<Disassembler::Aarch32>()) {
-        checkCreatePartitionerPrerequisites();
-        Partitioner::Ptr partitioner = createBarePartitioner();
         return partitioner;
     }
 #endif
 
 #ifdef ROSE_ENABLE_ASM_AARCH64
     if (decoder.dynamicCast<Disassembler::Aarch64>()) {
-        checkCreatePartitionerPrerequisites();
-        Partitioner::Ptr partitioner = createBarePartitioner();
         return partitioner;
     }
 #endif

@@ -12,8 +12,7 @@ namespace BinaryAnalysis {
 namespace Architecture {
 
 Powerpc32::Powerpc32(ByteOrder::Endianness byteOrder)
-    : Base(ByteOrder::ORDER_MSB == byteOrder ? "ppc32-be" : (ByteOrder::ORDER_LSB == byteOrder ? "ppc32-el" : "ppc32"),
-           4, byteOrder) {}
+    : Powerpc(4, byteOrder) {}
 
 Powerpc32::~Powerpc32() {}
 
@@ -193,21 +192,6 @@ Powerpc32::matchesHeader(SgAsmGenericHeader *header) const {
     SgAsmGenericFormat *fmt = header->get_executableFormat();
     ASSERT_not_null(fmt);
     return SgAsmExecutableFileFormat::ISA_PowerPC == isa && fmt->get_sex() == byteOrder();
-}
-
-Disassembler::Base::Ptr
-Powerpc32::newInstructionDecoder() const {
-    return Disassembler::Powerpc::instance(shared_from_this());
-}
-
-Unparser::Base::Ptr
-Powerpc32::newUnparser() const {
-    return Unparser::Powerpc::instance(shared_from_this());
-}
-
-InstructionSemantics::BaseSemantics::DispatcherPtr
-Powerpc32::newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops) const {
-    return InstructionSemantics::DispatcherPowerpc::instance(shared_from_this(), ops);
 }
 
 } // namespace

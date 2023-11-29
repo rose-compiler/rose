@@ -56,10 +56,13 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/Architecture/IntelPentium4.C					\
 	BinaryAnalysis/Architecture/Jvm.C						\
 	BinaryAnalysis/Architecture/Mips32.C						\
+	BinaryAnalysis/Architecture/Motorola.C						\
 	BinaryAnalysis/Architecture/Motorola68040.C					\
 	BinaryAnalysis/Architecture/NxpColdfire.C					\
+	BinaryAnalysis/Architecture/Powerpc.C						\
 	BinaryAnalysis/Architecture/Powerpc32.C						\
 	BinaryAnalysis/Architecture/Powerpc64.C						\
+	BinaryAnalysis/Architecture/X86.C						\
 	BinaryAnalysis/AsmFunctionIndex.C						\
 	BinaryAnalysis/AstHash.C							\
 	BinaryAnalysis/BestMapAddress.C							\

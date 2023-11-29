@@ -2,7 +2,7 @@
 #define ROSE_BinaryAnalysis_Architecture_Amd64_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <Rose/BinaryAnalysis/Architecture/Base.h>
+#include <Rose/BinaryAnalysis/Architecture/X86.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -39,7 +39,7 @@ namespace Architecture {
  *  for 16GB of memory or more. It has effectively replaced the discontinued Intel Itanium architecture (formerly IA-64), which was
  *  originally intended to replace the x86 architecture. x86-64 and Itanium are not compatible on the native instruction set level,
  *  and operating systems and applications compiled for one architecture cannot be run on the other natively. */
-class Amd64: public Base {
+class Amd64: public X86 {
 public:
     using Ptr = Amd64Ptr;
 
@@ -55,11 +55,6 @@ public:
 public:
     RegisterDictionary::Ptr registerDictionary() const override;
     bool matchesHeader(SgAsmGenericHeader*) const override;
-    Disassembler::BasePtr newInstructionDecoder() const override;
-    Unparser::BasePtr newUnparser() const override;
-
-    virtual InstructionSemantics::BaseSemantics::DispatcherPtr
-    newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) const override;
 };
 
 } // namespace
