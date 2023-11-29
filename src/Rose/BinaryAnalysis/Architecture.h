@@ -21,10 +21,13 @@
 #include <Rose/BinaryAnalysis/Architecture/IntelPentium4.h>
 #include <Rose/BinaryAnalysis/Architecture/Jvm.h>
 #include <Rose/BinaryAnalysis/Architecture/Mips32.h>
+#include <Rose/BinaryAnalysis/Architecture/Motorola.h>
 #include <Rose/BinaryAnalysis/Architecture/Motorola68040.h>
 #include <Rose/BinaryAnalysis/Architecture/NxpColdfire.h>
+#include <Rose/BinaryAnalysis/Architecture/Powerpc.h>
 #include <Rose/BinaryAnalysis/Architecture/Powerpc32.h>
 #include <Rose/BinaryAnalysis/Architecture/Powerpc64.h>
+#include <Rose/BinaryAnalysis/Architecture/X86.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
