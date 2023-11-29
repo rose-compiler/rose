@@ -247,6 +247,8 @@ class ClassAnalysis : std::unordered_map<ClassKeyType, ClassData>
     : base(), completeTranslationUnit(fullTranslUnit)
     {}
 
+    ClassAnalysis() = default;
+
     using base::value_type;
     using base::mapped_type;
     using base::key_type;
@@ -289,14 +291,17 @@ class ClassAnalysis : std::unordered_map<ClassKeyType, ClassData>
     /// convenience function to access the map using a SgClassDefinition&.
     const ClassData& at(const SgClassDefinition& clsdef) const { return this->at(&clsdef); }
 
-    /// returns a list of concrete descendant classes of \ref classkey
+    /// returns a list of concrete descendant classes of \ref classkey (i.e., const SgClassDefinition*)
     std::vector<InheritanceDesc>
     concreteDescendants(ClassKeyType classKey) const;
 
+    /// returns true if this class was built from the AST root (SgProject)
+    /// returns false if this class was built specifically to represent
+    ///   the inheritance hierarchy of a single class.
     bool containsAllClasses() const { return completeTranslationUnit; }
 
   private:
-    bool completeTranslationUnit;
+    bool completeTranslationUnit = false;
 };
 
 
