@@ -1754,7 +1754,6 @@ Unparse_ExprStmt::unparseClassRef(SgExpression* expr, SgUnparse_Info&)
      curprint (  classname_ref->get_symbol()->get_declaration()->get_name().str());
    }
 
-
 void
 Unparse_ExprStmt::unparseFuncRef(SgExpression* expr, SgUnparse_Info& info)
    {
@@ -2029,8 +2028,7 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
 #if DEBUG_FUNCTION_REFERENCE_SUPPORT
                printf ("declaration->get_declarationModifier().isFriend() = %s \n",declaration->get_declarationModifier().isFriend() ? "true" : "false");
 #endif
-               bool useNameQualification = useNameQualification && (uses_operator_syntax == false);
-               useNameQualification = useNameQualification && !isSgScopedRefExp(expr->get_parent());
+               bool useNameQualification = (uses_operator_syntax == false) && !isSgScopedRefExp(expr->get_parent());
 
                if ( useNameQualification == true )
                   {

@@ -110,6 +110,8 @@ declaration_t<Object::a_function> * __factory_helper_t<CRT, API, Object::a_funct
       ROSE_ASSERT(inst_pdecl);
 #if DEBUG___factory_helper_t__a_function__instantiate
       std::cout << "  inst_pdecl    = " << std::hex << inst_pdecl << " : " << ( inst_pdecl ? inst_pdecl->class_name() : "" ) << std::endl;
+      std::cout << "    ->get_name()    = " << inst_pdecl->get_name() << std::endl;
+      std::cout << "    ->get_templateName()    = " << inst_pdecl->get_templateName() << std::endl;
 #endif
       inst_pdecl = isSgTemplateInstantiationDecl(inst_pdecl->get_definingDeclaration());
       ROSE_ASSERT(inst_pdecl);
