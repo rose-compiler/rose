@@ -48,6 +48,14 @@ X86::functionPrologueMatchers(const Partitioner2::Engine::Ptr &engine) const {
     return retval;
 }
 
+std::vector<Partitioner2::BasicBlockCallback::Ptr>
+X86::basicBlockCreationHooks(const Partitioner2::Engine::Ptr&) const {
+    std::vector<Partitioner2::BasicBlockCallback::Ptr> retval;
+    retval.push_back(Partitioner2::ModulesX86::FunctionReturnDetector::instance());
+    retval.push_back(Partitioner2::ModulesX86::SwitchSuccessors::instance());
+    return retval;
+}
+
 } // namespace
 } // namespace
 } // namespace

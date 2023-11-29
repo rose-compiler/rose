@@ -34,6 +34,13 @@ Motorola::functionPrologueMatchers(const Partitioner2::EnginePtr&) const {
     return retval;
 }
 
+std::vector<Partitioner2::BasicBlockCallback::Ptr>
+Motorola::basicBlockCreationHooks(const Partitioner2::EnginePtr&) const {
+    std::vector<Partitioner2::BasicBlockCallback::Ptr> retval;
+    retval.push_back(Partitioner2::ModulesM68k::SwitchSuccessors::instance());
+    return retval;
+}
+
 } // namespace
 } // namespace
 } // namespace

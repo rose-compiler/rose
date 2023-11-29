@@ -63,6 +63,11 @@ Base::functionPrologueMatchers(const Partitioner2::EnginePtr&) const {
     return {};
 }
 
+std::vector<Partitioner2::BasicBlockCallback::Ptr>
+Base::basicBlockCreationHooks(const Partitioner2::EnginePtr&) const {
+    return {};
+}
+
 } // namespace
 } // namespace
 } // namespace

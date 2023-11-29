@@ -26,6 +26,9 @@ public:
 
     std::vector<Partitioner2::FunctionPrologueMatcherPtr>
     functionPrologueMatchers(const Partitioner2::EnginePtr&) const override;
+
+    virtual std::vector<Partitioner2::BasicBlockCallbackPtr>
+    basicBlockCreationHooks(const Partitioner2::EnginePtr&) const override;
 };
 
 } // namespace

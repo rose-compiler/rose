@@ -1412,44 +1412,22 @@ EngineBinary::createTunedPartitioner() {
     for (FunctionPrologueMatcher::Ptr &matcher: architecture()->functionPrologueMatchers(sharedFromThis()))
         partitioner->functionPrologueMatchers().push_back(matcher);
 
+    for (BasicBlockCallback::Ptr &callback: architecture()->basicBlockCreationHooks(sharedFromThis()))
+        partitioner->basicBlockCallbacks().append(callback);
+
+
 
     Disassembler::Base::Ptr decoder = architecture()->newInstructionDecoder();
-    if (decoder.dynamicCast<Disassembler::M68k>()) {
-        partitioner->basicBlockCallbacks().append(ModulesM68k::SwitchSuccessors::instance());
+    if (decoder.dynamicCast<Disassembler::M68k>())
         partitioner->basicBlockCallbacks().append(libcStartMain_ = ModulesLinux::LibcStartMain::instance());
-        return partitioner;
-    }
 
     if (decoder.dynamicCast<Disassembler::X86>()) {
-        partitioner->basicBlockCallbacks().append(ModulesX86::FunctionReturnDetector::instance());
-        partitioner->basicBlockCallbacks().append(ModulesX86::SwitchSuccessors::instance());
         partitioner->basicBlockCallbacks().append(ModulesLinux::SyscallSuccessors::instance(partitioner,
                                                                                             settings().partitioner.syscallHeader));
         partitioner->basicBlockCallbacks().append(libcStartMain_ = ModulesLinux::LibcStartMain::instance());
-        return partitioner;
     }
 
-    if (decoder.dynamicCast<Disassembler::Powerpc>()) {
-        return partitioner;
-    }
-
-    if (decoder.dynamicCast<Disassembler::Mips>()) {
-        return partitioner;
-    }
-
-#ifdef ROSE_ENABLE_ASM_AARCH32
-    if (decoder.dynamicCast<Disassembler::Aarch32>()) {
-        return partitioner;
-    }
-#endif
-
-#ifdef ROSE_ENABLE_ASM_AARCH64
-    if (decoder.dynamicCast<Disassembler::Aarch64>()) {
-        return partitioner;
-    }
-#endif
-
-    ASSERT_not_reachable("This function should be using the Architecture API instead of hard-coded cases");
+    return partitioner;
 }
 
 Partitioner::Ptr

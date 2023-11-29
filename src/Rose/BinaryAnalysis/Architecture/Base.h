@@ -140,6 +140,14 @@ public:
      * The default implementation returns an empty list. */
     virtual std::vector<Partitioner2::FunctionPrologueMatcherPtr>
     functionPrologueMatchers(const Partitioner2::EnginePtr&) const;
+
+    /** Architecture-specific basic block callbacks for partitioning.
+     *
+     *  Returns a list of basic block callbacks used by the partitioner during disassembly.
+     *
+     *  The default implementation returns an empty list. */
+    virtual std::vector<Partitioner2::BasicBlockCallbackPtr>
+    basicBlockCreationHooks(const Partitioner2::EnginePtr&) const;
 };
 
 } // namespace
