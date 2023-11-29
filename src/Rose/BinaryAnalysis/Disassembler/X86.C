@@ -74,11 +74,9 @@ X86::init(size_t wordsize)
             break;
         case 4:
             insnSize = x86_insnsize_32;
-            callingConventions(CallingConvention::dictionaryX86());
             break;
         case 8:
             insnSize = x86_insnsize_64;
-            callingConventions(CallingConvention::dictionaryAmd64());
             break;
         default:
             ASSERT_not_reachable("instruction must be 2, 4, or 8 bytes");

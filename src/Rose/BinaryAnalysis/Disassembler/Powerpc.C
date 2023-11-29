@@ -55,15 +55,6 @@ Powerpc::clone() const {
 
 void
 Powerpc::init() {
-    switch (wordSize_) {
-        case powerpc_32:
-            callingConventions(CallingConvention::dictionaryPowerpc32());
-            break;
-        case powerpc_64:
-            callingConventions(CallingConvention::dictionaryPowerpc64());
-            break;
-    }
-
     REG_IP =   architecture()->registerDictionary()->instructionPointerRegister();
     REG_SP =   architecture()->registerDictionary()->stackPointerRegister();
     REG_SF =   architecture()->registerDictionary()->stackFrameRegister();

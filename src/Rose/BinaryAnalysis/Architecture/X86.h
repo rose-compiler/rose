@@ -19,6 +19,7 @@ public:
     ~X86();
 
 public:
+    virtual const CallingConvention::Dictionary& callingConventions() const override;
     Disassembler::BasePtr newInstructionDecoder() const override;
     Unparser::BasePtr newUnparser() const override;
 
@@ -30,6 +31,16 @@ public:
 
     virtual std::vector<Partitioner2::BasicBlockCallbackPtr>
     basicBlockCreationHooks(const Partitioner2::EnginePtr&) const override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Supporting functions
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+protected:
+    // Create a new calling convention definition. The bitsPerWord is passed because, e.g., a 64-bit architecture can use a 32-bit
+    // calling convention since x86 architectures are generally backward compatible.
+    CallingConvention::Definition::Ptr cc_cdecl(size_t bitsPerWord) const;
+    CallingConvention::Definition::Ptr cc_stdcall(size_t bitsPerWord) const;
+    CallingConvention::Definition::Ptr cc_fastcall(size_t bitsPerWord) const;
 };
 
 } // namespace

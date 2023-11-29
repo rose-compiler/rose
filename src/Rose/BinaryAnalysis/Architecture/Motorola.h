@@ -19,6 +19,8 @@ public:
     ~Motorola();
 
 public:
+    const CallingConvention::Dictionary& callingConventions() const override;
+
     Unparser::BasePtr newUnparser() const override;
 
     virtual InstructionSemantics::BaseSemantics::DispatcherPtr

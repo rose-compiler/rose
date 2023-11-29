@@ -4862,8 +4862,6 @@ M68k::init()
     ASSERT_require(REG_SF);
 
     instructionAlignment_ = 2;
-    callingConventions(CallingConvention::dictionaryM68k());
-
     idis_table.resize(17);
 
 #define M68k_DECODER(NAME)                                                                                                     \

@@ -27,16 +27,22 @@ ConcreteLocation::operator=(const ConcreteLocation &other) {
 }
 
 ConcreteLocation::ConcreteLocation(RegisterDescriptor reg)
-    : reg_(reg) {}
+    : reg_(reg) {
+    ASSERT_require(reg.isValid());
+}
 
 ConcreteLocation::ConcreteLocation(RegisterDescriptor reg, const RegisterDictionary::Ptr &regdict)
-    : reg_(reg), regdict_(regdict) {}
+    : reg_(reg), regdict_(regdict) {
+    ASSERT_require(reg.isValid());
+}
 
 ConcreteLocation::ConcreteLocation(rose_addr_t va)
     : va_(va) {}
 
 ConcreteLocation::ConcreteLocation(RegisterDescriptor reg, int64_t offset)
-    : reg_(reg), va_(offset) {}
+    : reg_(reg), va_(offset) {
+    ASSERT_require(reg.isValid());
+}
 
 ConcreteLocation
 ConcreteLocation::parse(const std::string&) {

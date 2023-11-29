@@ -4,7 +4,6 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
-#include <Rose/BinaryAnalysis/CallingConvention.h>
 #include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Disassembler/Exception.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
@@ -60,7 +59,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
     Architecture::BaseConstPtr architecture_;
-    CallingConvention::Dictionary callingConventions_;
 
 protected:
     RegisterDescriptor REG_IP, REG_SP, REG_SS, REG_SF, REG_LINK; /**< Register descriptors initialized during construction. */
@@ -133,16 +131,6 @@ public:
      *
      *  The alignment that's required for instruction addresses. The return value is a positive number of bytes. */
     size_t instructionAlignment() const;
-    
-    /** Property: Calling convention dictionary.
-     *
-     *  This is a dictionary of the common calling conventions for this architecture.
-     *
-     * @{ */
-    const CallingConvention::Dictionary& callingConventions() const { return callingConventions_; }
-    CallingConvention::Dictionary& callingConventions() { return callingConventions_; }
-    void callingConventions(const CallingConvention::Dictionary &d) { callingConventions_ = d; }
-    /** @} */
 
 
     /***************************************************************************************************************************

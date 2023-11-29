@@ -55,6 +55,10 @@ public:
 public:
     RegisterDictionary::Ptr registerDictionary() const override;
     bool matchesHeader(SgAsmGenericHeader*) const override;
+    const CallingConvention::Dictionary& callingConventions() const override;
+
+protected:
+    CallingConvention::DefinitionPtr cc_sysv() const;
 };
 
 } // namespace

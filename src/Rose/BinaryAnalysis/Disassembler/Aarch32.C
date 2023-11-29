@@ -23,7 +23,6 @@ Aarch32::Aarch32(const Architecture::Base::ConstPtr &arch, Modes modes)
     } else {
         instructionAlignment_ = 4;
     }
-    callingConventions(CallingConvention::dictionaryAarch32());
 
     // Architecture independent ROSE disassembler properties
     REG_IP = architecture()->registerDictionary()->instructionPointerRegister();

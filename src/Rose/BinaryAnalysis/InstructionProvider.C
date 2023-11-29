@@ -83,9 +83,7 @@ InstructionProvider::registerDictionary() const {
 
 const CallingConvention::Dictionary&
 InstructionProvider::callingConventions() const {
-    // FIXME[Robb Matzke 2023-11-27]: use Architecture API
-    ASSERT_not_null(disassembler_);
-    return disassembler_->callingConventions();
+    return architecture_->callingConventions();
 }
 
 RegisterDescriptor

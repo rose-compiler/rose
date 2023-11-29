@@ -159,27 +159,6 @@ public:
     }
 
 public:
-    /** Returns a predefined, cached calling convention.
-     *
-     * @{ */
-    static Ptr x86_32bit_cdecl();
-    static Ptr x86_64bit_cdecl();
-    static Ptr x86_32bit_stdcall();
-    static Ptr x86_64bit_stdcall();
-    static Ptr x86_32bit_fastcall();
-    static Ptr x86_64bit_sysv();
-    static Ptr ppc_32bit_ibm();
-    /** @} */
-
-    /** Constructs a new pre-defined calling convention based on a register dictionary.
-     *
-     * @{ */
-    static Ptr x86_cdecl(const RegisterDictionaryPtr&);
-    static Ptr x86_stdcall(const RegisterDictionaryPtr&);
-    static Ptr x86_fastcall(const RegisterDictionaryPtr&);
-    static Ptr ppc_ibm(const RegisterDictionaryPtr&);
-    /** @} */
-
     /** Property: Register dictionary.
      *
      *  The register dictionary imparts names to the various register descriptors.
@@ -497,31 +476,6 @@ public:
 
 /** A ordered collection of calling convention definitions. */
 typedef std::vector<Definition::Ptr> Dictionary;
-
-/** Common calling conventions for amd64 (x86-64). */
-const Dictionary& dictionaryAmd64();
-
-/** Common calling conventions for ARM AArch32. */
-const Dictionary& dictionaryAarch32();
-
-/** Common calling conventions for ARM AArch64. */
-const Dictionary& dictionaryAarch64();
-
-/** Common calling conventions for m68k. */
-const Dictionary& dictionaryM68k();
-
-/** Common calling conventions for MIPS. */
-const Dictionary& dictionaryMips();
-
-/** Common calling conventions for PowerPC-32. */
-const Dictionary& dictionaryPowerpc32();
-
-/** Common calling conventions for PowerPC-64. */
-const Dictionary& dictionaryPowerpc64();
-
-/** Common calling conventions for 32-bit x86. */
-const Dictionary& dictionaryX86();
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Analysis

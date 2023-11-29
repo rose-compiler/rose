@@ -3615,7 +3615,6 @@ Mips::init(ByteOrder::Endianness sex)
     ASSERT_require(REG_SP);
 
     instructionAlignment_ = 4;
-    callingConventions(CallingConvention::dictionaryMips());
 
     insert_idis(&mips32_abs_s);
     insert_idis(&mips32_abs_d);

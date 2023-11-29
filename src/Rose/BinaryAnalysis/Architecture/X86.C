@@ -9,6 +9,8 @@
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesX86.h>
 #include <Rose/BinaryAnalysis/Unparser/X86.h>
 
+#include <boost/lexical_cast.hpp>
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Architecture {
@@ -17,6 +19,231 @@ X86::X86(const std::string &name, size_t bytesPerWord)
     : Base(name, bytesPerWord, ByteOrder::ORDER_LSB) {}
 
 X86::~X86() {}
+
+static std::string
+registerPrefix(size_t bitsPerWord) {
+    switch (bitsPerWord) {
+        case 16:
+            return "";
+        case 32:
+            return "e";
+        case 64:
+            return "r";
+    }
+    ASSERT_not_reachable("invalid number of bits per word");
+}
+
+CallingConvention::Definition::Ptr
+X86::cc_cdecl(size_t bitsPerWord) const {
+    // Register prefix letter for things like "ax", "eax", "rax"
+    const std::string prefix = registerPrefix(bitsPerWord);
+    RegisterDictionary::Ptr regdict = registerDictionary();
+    auto cc = CallingConvention::Definition::instance(bitsPerWord, "cdecl",
+                                                      "x86-" + boost::lexical_cast<std::string>(bitsPerWord) + " cdecl",
+                                                      regdict);
+    const RegisterDescriptor SP = regdict->stackPointerRegister();
+
+    //==== Address locations ====
+    cc->instructionPointerRegister(regdict->instructionPointerRegister());
+    cc->returnAddressLocation(ConcreteLocation(SP, 0));
+
+    //==== Stack characteristics ====
+    cc->stackPointerRegister(SP);
+    cc->stackDirection(CallingConvention::StackDirection::GROWS_DOWN);
+    cc->nonParameterStackSize(bitsPerWord >> 3);        // return address
+
+    //==== Function parameters ====
+    // All parameters are passed on the stack.
+    cc->stackParameterOrder(CallingConvention::StackParameterOrder::RIGHT_TO_LEFT);
+    cc->stackCleanup(CallingConvention::StackCleanup::BY_CALLER);
+
+    //==== Other inputs ====
+    // direction flag is always assumed to be valid
+    cc->nonParameterInputs().push_back(ConcreteLocation(regdict->findOrThrow("df"), regdict));
+    // code segment register is assumed to be valid
+    cc->nonParameterInputs().push_back(ConcreteLocation(regdict->findOrThrow("cs"), regdict));
+    // data segment register is assumed to be valid
+    cc->nonParameterInputs().push_back(ConcreteLocation(regdict->findOrThrow("ds"), regdict));
+    // stack segment register is assumed to be valid
+    cc->nonParameterInputs().push_back(ConcreteLocation(regdict->findOrThrow("ss"), regdict));
+
+    //==== Return values ====
+    cc->appendOutputParameter(regdict->findOrThrow(prefix + "ax"));
+    if (const RegisterDescriptor ST0 = regdict->findLargestRegister(x86_regclass_st, x86_st_0))
+        cc->appendOutputParameter(ST0);
+    cc->appendOutputParameter(SP);                      // final value is usually one word greater than initial value
+
+    //==== Scratch registers ====
+    // (i.e., modified, not callee-saved, not return registers)
+    cc->scratchRegisters().insert(regdict->findOrThrow(prefix + "cx"));
+    cc->scratchRegisters().insert(regdict->findOrThrow(prefix + "dx"));
+    cc->scratchRegisters().insert(regdict->instructionPointerRegister());
+    cc->scratchRegisters().insert(regdict->findOrThrow(prefix + "flags"));
+    if (const RegisterDescriptor FPSTATUS = regdict->findLargestRegister(x86_regclass_flags, x86_flags_fpstatus))
+        cc->scratchRegisters().insert(FPSTATUS);
+
+    //==== Callee-saved registers ====
+    // Everything else
+    RegisterParts regParts = regdict->getAllParts() - cc->getUsedRegisterParts();
+    std::vector<RegisterDescriptor> registers = regParts.extract(regdict);
+    cc->calleeSavedRegisters().insert(registers.begin(), registers.end());
+
+    return cc;
+}
+
+CallingConvention::Definition::Ptr
+X86::cc_stdcall(size_t bitsPerWord) const {
+    const std::string prefix = registerPrefix(bitsPerWord);
+    RegisterDictionary::Ptr regdict = registerDictionary();
+    auto cc = CallingConvention::Definition::instance(bitsPerWord, "stdcall",
+                                                      "x86-" + boost::lexical_cast<std::string>(bitsPerWord) + " stdcall",
+                                                      regdict);
+    const RegisterDescriptor SP = regdict->stackPointerRegister();
+
+    //==== Address locations ====
+    cc->instructionPointerRegister(regdict->instructionPointerRegister());
+    cc->returnAddressLocation(ConcreteLocation(SP, 0));
+
+    //==== Stack characteristics ====
+    cc->stackPointerRegister(SP);
+    cc->stackDirection(CallingConvention::StackDirection::GROWS_DOWN);
+    cc->nonParameterStackSize(bitsPerWord >> 3);        // return address
+
+    //==== Function parameters ====
+    // All parameters are passed on the stack
+    cc->stackParameterOrder(CallingConvention::StackParameterOrder::RIGHT_TO_LEFT);
+    cc->stackCleanup(CallingConvention::StackCleanup::BY_CALLEE);
+
+    //==== Other inputs ====
+    // direction flag is always assumed to be valid
+    cc->nonParameterInputs().push_back(ConcreteLocation(regdict->findOrThrow("df"), regdict));
+    // code segment register is assumed to be valid
+    cc->nonParameterInputs().push_back(ConcreteLocation(regdict->findOrThrow("cs"), regdict));
+    // data segment register is assumed to be valid
+    cc->nonParameterInputs().push_back(ConcreteLocation(regdict->findOrThrow("ds"), regdict));
+    // stack segment register is assumed to be valid
+    cc->nonParameterInputs().push_back(ConcreteLocation(regdict->findOrThrow("ss"), regdict));
+
+    //==== Return values ====
+    cc->appendOutputParameter(regdict->findOrThrow(prefix + "ax"));
+    if (const RegisterDescriptor ST0 = regdict->findLargestRegister(x86_regclass_st, x86_st_0))
+        cc->appendOutputParameter(ST0);
+    cc->appendOutputParameter(SP);
+
+    //==== Scratch registers ====
+    // Modified, not callee-saved, not return registers
+    cc->scratchRegisters().insert(regdict->findOrThrow(prefix + "cx"));
+    cc->scratchRegisters().insert(regdict->findOrThrow(prefix + "dx"));
+    cc->scratchRegisters().insert(regdict->instructionPointerRegister());
+    cc->scratchRegisters().insert(regdict->findOrThrow(prefix + "flags"));
+    if (const RegisterDescriptor FPSTATUS = regdict->findLargestRegister(x86_regclass_flags, x86_flags_fpstatus))
+        cc->scratchRegisters().insert(FPSTATUS);
+
+    //==== Callee-saved registers ====
+    // Everything else
+    RegisterParts regParts = regdict->getAllParts() - cc->getUsedRegisterParts();
+    std::vector<RegisterDescriptor> registers = regParts.extract(regdict);
+    cc->calleeSavedRegisters().insert(registers.begin(), registers.end());
+
+    return cc;
+}
+
+CallingConvention::Definition::Ptr
+X86::cc_fastcall(size_t bitsPerWord) const {
+    const std::string prefix = registerPrefix(bitsPerWord);
+    RegisterDictionary::Ptr regdict = registerDictionary();
+    auto cc = CallingConvention::Definition::instance(bitsPerWord, "fastcall",
+                                                      "x86-" + boost::lexical_cast<std::string>(bitsPerWord) + " fastcall",
+                                                      regdict);
+    const RegisterDescriptor SP = regdict->stackPointerRegister();
+
+    //==== Address locations ====
+    cc->instructionPointerRegister(regdict->instructionPointerRegister());
+    cc->returnAddressLocation(ConcreteLocation(SP, 0));
+
+    //==== Stack characteristics ====
+    cc->stackPointerRegister(SP);
+    cc->stackDirection(CallingConvention::StackDirection::GROWS_DOWN);
+    cc->nonParameterStackSize(bitsPerWord >> 3);        // return address
+
+    //==== Function parameters ====
+    // Uses ECX and EDX for first args that fit; all other parameters are passed on the stack.
+    cc->appendInputParameter(regdict->findOrThrow(prefix + "cx"));
+    cc->appendInputParameter(regdict->findOrThrow(prefix + "dx"));
+    cc->stackParameterOrder(CallingConvention::StackParameterOrder::RIGHT_TO_LEFT);
+    cc->stackCleanup(CallingConvention::StackCleanup::BY_CALLEE);
+
+    //==== Other inputs ====
+    // direction flag is always assumed to be valid
+    cc->nonParameterInputs().push_back(ConcreteLocation(regdict->findOrThrow("df"), regdict));
+    // code segment register is assumed to be valid
+    cc->nonParameterInputs().push_back(ConcreteLocation(regdict->findOrThrow("cs"), regdict));
+    // data segment register is assumed to be valid
+    cc->nonParameterInputs().push_back(ConcreteLocation(regdict->findOrThrow("ds"), regdict));
+    // stack segment register is assumed to be valid
+    cc->nonParameterInputs().push_back(ConcreteLocation(regdict->findOrThrow("ss"), regdict));
+
+    //==== Return values ====
+    cc->appendOutputParameter(regdict->findOrThrow(prefix + "ax"));
+    if (const auto ST0 = regdict->findLargestRegister(x86_regclass_st, x86_st_0))
+        cc->appendOutputParameter(ST0);
+    cc->appendOutputParameter(SP);
+
+    //==== Scratch registers ====
+    // I.e., modified, not callee-saved, not return registers
+    cc->scratchRegisters().insert(regdict->findOrThrow(prefix + "cx"));
+    cc->scratchRegisters().insert(regdict->findOrThrow(prefix + "dx"));
+    cc->scratchRegisters().insert(regdict->instructionPointerRegister());
+    cc->scratchRegisters().insert(regdict->findOrThrow(prefix + "flags"));
+    if (const auto FPSTATUS = regdict->findLargestRegister(x86_regclass_flags, x86_flags_fpstatus))
+        cc->scratchRegisters().insert(FPSTATUS);
+
+    //==== Callee-saved registers ====
+    // Everything else
+    RegisterParts regParts = regdict->getAllParts() - cc->getUsedRegisterParts();
+    std::vector<RegisterDescriptor> registers = regParts.extract(regdict);
+    cc->calleeSavedRegisters().insert(registers.begin(), registers.end());
+
+    return cc;
+}
+
+const CallingConvention::Dictionary&
+X86::callingConventions() const {
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
+    if (!callingConventions_.isCached()) {
+        CallingConvention::Dictionary dict;
+
+#if 0 // [Robb P. Matzke 2015-08-21]: don't bother distinguishing because alignment is not used yet.
+        // cdecl: gcc < 4.5 uses 4-byte stack alignment
+        {
+            auto cc = cc_cdecl(bitsPerWord());
+            cc->comment(cc.comment() + " 4-byte alignment");
+            cc->stackAlignment(4);
+            dict.push_back(cc);
+        }
+
+        // cdecl: gcc >= 4.5 uses 16-byte stack alignment
+        {
+            auto cc = cc_cdecl(bitsPerWord());
+            cc->comment(cc.comment() + " 16-byte alignment");
+            cc->stackAlignment(16);
+            dict.push_back(cc);
+        }
+#else
+        dict.push_back(cc_cdecl(bitsPerWord()));
+#endif
+
+        // other conventions
+        dict.push_back(cc_stdcall(bitsPerWord()));
+        dict.push_back(cc_fastcall(bitsPerWord()));
+
+        callingConventions_ = dict;
+    }
+
+    return callingConventions_.get();
+}
 
 Disassembler::Base::Ptr
 X86::newInstructionDecoder() const {

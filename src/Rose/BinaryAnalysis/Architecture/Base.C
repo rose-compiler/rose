@@ -53,6 +53,12 @@ Base::matchesHeader(SgAsmGenericHeader*) const {
     return false;
 }
 
+const CallingConvention::Dictionary&
+Base::callingConventions() const {
+    static const CallingConvention::Dictionary empty;
+    return empty;
+}
+
 InstructionSemantics::BaseSemantics::Dispatcher::Ptr
 Base::newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperators::Ptr&) const {
     return {};
