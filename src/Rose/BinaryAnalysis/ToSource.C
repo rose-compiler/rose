@@ -52,14 +52,14 @@ BinaryToSource::~BinaryToSource() {}
 void
 BinaryToSource::init(const P2::Partitioner::ConstPtr &partitioner) {
     ASSERT_not_null(partitioner);
-    disassembler_ = partitioner->instructionProvider().disassembler();
-    RegisterDictionary::Ptr regDict = disassembler_->registerDictionary();
-    raisingOps_ = RiscOperators::instanceFromRegisters(regDict, SmtSolverPtr());
+    Architecture::Base::ConstPtr arch = partitioner->architecture();
+    disassembler_ = arch->newInstructionDecoder();
+    raisingOps_ = RiscOperators::instanceFromRegisters(arch->registerDictionary(), SmtSolverPtr());
     if (settings_.traceRiscOps) {
         tracingOps_ = TraceSemantics::RiscOperators::instance(raisingOps_);
-        raisingCpu_ = disassembler_->architecture()->newInstructionDispatcher(tracingOps_);
+        raisingCpu_ = arch->newInstructionDispatcher(tracingOps_);
     } else {
-        raisingCpu_ = disassembler_->architecture()->newInstructionDispatcher(raisingOps_);
+        raisingCpu_ = arch->newInstructionDispatcher(raisingOps_);
     }
     if (!raisingCpu_)
         throw Exception("no instruction semantics for architecture");
@@ -194,7 +194,7 @@ BinaryToSource::defineInterrupts(std::ostream &out) {
     out <<"\n"
         <<"void interrupt(int majr, int minr) {\n";
 
-    if (disassembler_->instructionPointerRegister().nBits() == 32) {
+    if (disassembler_->architecture()->bitsPerWord() == 32) {
         out <<"    if (0 == majr && 0x80 == minr && 1 == R_eax) {\n"
             <<"        fprintf(stderr, \"exited with status %d\", R_ebx);\n"
             <<"        exit(R_ebx);\n";
@@ -309,7 +309,7 @@ BinaryToSource::emitFunction(const P2::Partitioner::ConstPtr &partitioner, const
     if (!name.empty())
         out <<"/* " <<name <<" */\n";
 
-    const RegisterDescriptor IP = disassembler_->instructionPointerRegister();
+    const RegisterDescriptor IP = disassembler_->architecture()->registerDictionary()->instructionPointerRegister();
     out <<"void F_" <<StringUtility::addrToString(function->address()).substr(2) <<"("
         <<"const " <<SValue::unsignedTypeNameForSize(IP.nBits()) <<" ret_va"
         <<") {\n"
@@ -344,9 +344,10 @@ BinaryToSource::emitFunctionDispatcher(const P2::Partitioner::ConstPtr &partitio
         <<"function_call(void) {\n";
 
     // To whence does this call return?
-    const RegisterDescriptor IP = disassembler_->instructionPointerRegister();
-    const RegisterDescriptor SP = disassembler_->stackPointerRegister();
-    const RegisterDescriptor SS = disassembler_->stackSegmentRegister();
+    Architecture::Base::ConstPtr arch = disassembler_->architecture();
+    const RegisterDescriptor IP = arch->registerDictionary()->instructionPointerRegister();
+    const RegisterDescriptor SP = arch->registerDictionary()->stackPointerRegister();
+    const RegisterDescriptor SS = arch->registerDictionary()->stackSegmentRegister();
     raisingOps_->reset();
     BaseSemantics::SValue::Ptr spDflt = raisingOps_->undefined_(SP.nBits());
     BaseSemantics::SValue::Ptr returnTarget = raisingOps_->readMemory(SS,
@@ -423,6 +424,8 @@ BinaryToSource::emitMain(const P2::Partitioner::ConstPtr &partitioner, std::ostr
         <<"main() {\n"
         <<"    initialize_memory();\n";
 
+    Architecture::Base::ConstPtr arch = partitioner->architecture();
+
     // Initialize regsiters
     Sawyer::Optional<rose_addr_t> initialIp;
     if (settings_.initialInstructionPointer) {
@@ -438,13 +441,13 @@ BinaryToSource::emitMain(const P2::Partitioner::ConstPtr &partitioner, std::ostr
     if (!initialIp) {
         mlog[ERROR] <<"no initial value specified for instruction pointer register, an no \"_start\" function found\n";
     } else {
-        const RegisterDescriptor reg = disassembler_->instructionPointerRegister();
+        const RegisterDescriptor reg = arch->registerDictionary()->instructionPointerRegister();
         SValue::Ptr val = SValue::promote(raisingOps_->number_(reg.nBits(), *initialIp));
         out <<"    " <<raisingOps_->registerVariableName(reg) <<" = " <<val->ctext() <<";\n";
     }
 
     if (settings_.initialStackPointer) {
-        const RegisterDescriptor reg = disassembler_->stackPointerRegister();
+        const RegisterDescriptor reg = arch->registerDictionary()->stackPointerRegister();
         SValue::Ptr val = SValue::promote(raisingOps_->number_(reg.nBits(), *settings_.initialStackPointer));
         out <<"    " <<raisingOps_->registerVariableName(reg) <<" = " <<val->ctext() <<";\n";
     }
@@ -452,8 +455,8 @@ BinaryToSource::emitMain(const P2::Partitioner::ConstPtr &partitioner, std::ostr
     // Initialize call frame
     {
         static const rose_addr_t magic = 0xfffffffffffffeull ; // arbitrary
-        size_t bytesPerWord = disassembler_->wordSizeBytes();
-        std::string sp = raisingOps_->registerVariableName(disassembler_->stackPointerRegister());
+        const size_t bytesPerWord = arch->bytesPerWord();
+        std::string sp = raisingOps_->registerVariableName(arch->registerDictionary()->stackPointerRegister());
         for (size_t i=0; i<bytesPerWord; ++i)
             out <<"    mem[--" <<sp <<"] = " <<((magic>>(8*i)) & 0xff) <<"; /* arbitrary */\n";
     }

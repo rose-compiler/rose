@@ -267,13 +267,14 @@ Analysis::~Analysis() {}
 void
 Analysis::init(const Disassembler::Base::Ptr &disassembler) {
     if (disassembler) {
-        RegisterDictionary::Ptr registerDictionary = disassembler->registerDictionary();
+        Architecture::Base::ConstPtr arch = disassembler->architecture();
+        RegisterDictionary::Ptr registerDictionary = arch->registerDictionary();
         ASSERT_not_null(registerDictionary);
 
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
-        SymbolicSemantics::RiscOperators::Ptr ops = SymbolicSemantics::RiscOperators::instanceFromRegisters(registerDictionary, solver);
+        auto ops = SymbolicSemantics::RiscOperators::instanceFromRegisters(registerDictionary, solver);
 
-        cpu_ = disassembler->architecture()->newInstructionDispatcher(ops);
+        cpu_ = arch->newInstructionDispatcher(ops);
     }
 }
 

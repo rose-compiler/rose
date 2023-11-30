@@ -38,7 +38,7 @@ initDiagnostics() {
 void
 Analysis::init(const Disassembler::Base::Ptr &disassembler) {
     if (disassembler) {
-        RegisterDictionary::Ptr regdict = disassembler->registerDictionary();
+        RegisterDictionary::Ptr regdict = disassembler->architecture()->registerDictionary();
         ASSERT_not_null(regdict);
 
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);

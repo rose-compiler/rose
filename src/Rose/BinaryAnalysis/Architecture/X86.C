@@ -15,10 +15,9 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Architecture {
 
-X86::X86(const std::string &name, size_t bytesPerWord)
-    : Base(name, bytesPerWord, ByteOrder::ORDER_LSB) {}
-
-X86::~X86() {}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Supporting functions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static std::string
 registerPrefix(size_t bitsPerWord) {
@@ -32,6 +31,65 @@ registerPrefix(size_t bitsPerWord) {
     }
     ASSERT_not_reachable("invalid number of bits per word");
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Constructors
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+X86::X86(const std::string &name, size_t bytesPerWord)
+    : Base(name, bytesPerWord, ByteOrder::ORDER_LSB) {}
+
+X86::~X86() {}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Factories
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Disassembler::Base::Ptr
+X86::newInstructionDecoder() const {
+    return Disassembler::X86::instance(shared_from_this());
+}
+
+Unparser::Base::Ptr
+X86::newUnparser() const {
+    return Unparser::X86::instance(shared_from_this());
+}
+
+InstructionSemantics::BaseSemantics::DispatcherPtr
+X86::newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops) const {
+    return InstructionSemantics::DispatcherX86::instance(shared_from_this(), ops);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Partitioner matchers and callbacks
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::vector<Partitioner2::FunctionPrologueMatcher::Ptr>
+X86::functionPrologueMatchers(const Partitioner2::Engine::Ptr &engine) const {
+    std::vector<Partitioner2::FunctionPrologueMatcher::Ptr> retval;
+    retval.push_back(Partitioner2::ModulesX86::MatchHotPatchPrologue::instance());
+    retval.push_back(Partitioner2::ModulesX86::MatchStandardPrologue::instance());
+    retval.push_back(Partitioner2::ModulesX86::MatchAbbreviatedPrologue::instance());
+    retval.push_back(Partitioner2::ModulesX86::MatchEnterPrologue::instance());
+    if (engine->settings().partitioner.findingThunks) {
+        if (auto engineBinary = engine.dynamicCast<Partitioner2::EngineBinary>())
+            retval.push_back(Partitioner2::Modules::MatchThunk::instance(engineBinary->functionMatcherThunks()));
+    }
+    retval.push_back(Partitioner2::ModulesX86::MatchRetPadPush::instance());
+    return retval;
+}
+
+std::vector<Partitioner2::BasicBlockCallback::Ptr>
+X86::basicBlockCreationHooks(const Partitioner2::Engine::Ptr&) const {
+    std::vector<Partitioner2::BasicBlockCallback::Ptr> retval;
+    retval.push_back(Partitioner2::ModulesX86::FunctionReturnDetector::instance());
+    retval.push_back(Partitioner2::ModulesX86::SwitchSuccessors::instance());
+    return retval;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Calling conventions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 CallingConvention::Definition::Ptr
 X86::cc_cdecl(size_t bitsPerWord) const {
@@ -243,44 +301,6 @@ X86::callingConventions() const {
     }
 
     return callingConventions_.get();
-}
-
-Disassembler::Base::Ptr
-X86::newInstructionDecoder() const {
-    return Disassembler::X86::instance(shared_from_this());
-}
-
-Unparser::Base::Ptr
-X86::newUnparser() const {
-    return Unparser::X86::instance(shared_from_this());
-}
-
-InstructionSemantics::BaseSemantics::DispatcherPtr
-X86::newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops) const {
-    return InstructionSemantics::DispatcherX86::instance(shared_from_this(), ops);
-}
-
-std::vector<Partitioner2::FunctionPrologueMatcher::Ptr>
-X86::functionPrologueMatchers(const Partitioner2::Engine::Ptr &engine) const {
-    std::vector<Partitioner2::FunctionPrologueMatcher::Ptr> retval;
-    retval.push_back(Partitioner2::ModulesX86::MatchHotPatchPrologue::instance());
-    retval.push_back(Partitioner2::ModulesX86::MatchStandardPrologue::instance());
-    retval.push_back(Partitioner2::ModulesX86::MatchAbbreviatedPrologue::instance());
-    retval.push_back(Partitioner2::ModulesX86::MatchEnterPrologue::instance());
-    if (engine->settings().partitioner.findingThunks) {
-        if (auto engineBinary = engine.dynamicCast<Partitioner2::EngineBinary>())
-            retval.push_back(Partitioner2::Modules::MatchThunk::instance(engineBinary->functionMatcherThunks()));
-    }
-    retval.push_back(Partitioner2::ModulesX86::MatchRetPadPush::instance());
-    return retval;
-}
-
-std::vector<Partitioner2::BasicBlockCallback::Ptr>
-X86::basicBlockCreationHooks(const Partitioner2::Engine::Ptr&) const {
-    std::vector<Partitioner2::BasicBlockCallback::Ptr> retval;
-    retval.push_back(Partitioner2::ModulesX86::FunctionReturnDetector::instance());
-    retval.push_back(Partitioner2::ModulesX86::SwitchSuccessors::instance());
-    return retval;
 }
 
 } // namespace

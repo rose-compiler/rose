@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Debugger/Base.h>
 
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/Debugger/Exception.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 
@@ -36,7 +37,7 @@ rose_addr_t
 Base::executionAddress(ThreadId tid) {
     if (!isAttached())
         throw Exception("not attached to subordinate process");
-    const RegisterDescriptor REG_PC = disassembler()->instructionPointerRegister();
+    const RegisterDescriptor REG_PC = disassembler()->architecture()->registerDictionary()->instructionPointerRegister();
     return readRegister(tid, REG_PC).toInteger();
 }
 
@@ -44,7 +45,7 @@ void
 Base::executionAddress(ThreadId tid, rose_addr_t va) {
     if (!isAttached())
         throw Exception("not attached to subordinate process");
-    const RegisterDescriptor REG_PC = disassembler()->instructionPointerRegister();
+    const RegisterDescriptor REG_PC = disassembler()->architecture()->registerDictionary()->instructionPointerRegister();
     writeRegister(tid, REG_PC, va);
 }
 
@@ -57,7 +58,7 @@ Base::disassembler() {
 RegisterDictionary::Ptr
 Base::registerDictionary() {
     ASSERT_not_null(disassembler());
-    return disassembler()->registerDictionary();
+    return disassembler()->architecture()->registerDictionary();
 }
 
 std::string

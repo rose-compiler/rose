@@ -554,7 +554,7 @@ Partitioner::basicBlockSemantics(const InsnInfo::List &insns) {
     // first part of this basic block--they'll always ask for the whole block.
     if (prefix.empty()) {
         SmtSolver::Ptr solver; // FIXME[Robb Matzke 2020-07-29]: use a solver for semantics? Probably not needed.
-        RegisterDictionary::Ptr regdict = instructionCache().decoder()->registerDictionary();
+        RegisterDictionary::Ptr regdict = instructionCache().decoder()->architecture()->registerDictionary();
         ops = Semantics::RiscOperators::instance(regdict, solver, settings_.semanticMemoryParadigm);
         BaseSemantics::MemoryState::Ptr mem = ops->currentState()->memoryState();
         if (auto ml = boost::dynamic_pointer_cast<Semantics::MemoryListState>(mem)) {
@@ -592,7 +592,7 @@ Partitioner::splitSuccessors(const BaseSemantics::RiscOperators::Ptr &ops) {
     ASSERT_not_null(ops);
     ASSERT_not_null(ops->currentState());
     std::vector<SymbolicExpression::Ptr> retval;
-    const RegisterDescriptor IP = instructionCache().decoder()->instructionPointerRegister();
+    const RegisterDescriptor IP = instructionCache().decoder()->architecture()->registerDictionary()->instructionPointerRegister();
     BaseSemantics::SValue::Ptr dfltIp = ops->undefined_(IP.nBits());
     SymbolicExpression::Ptr ip = Semantics::SValue::promote(ops->peekRegister(IP, dfltIp))->get_expression();
     if (ip->isIntegerConstant() || ip->isIntegerVariable()) {
@@ -623,7 +623,7 @@ std::vector<SymbolicExpression::Ptr>
 Partitioner::computeSuccessors(const InsnInfo::List &insns, Accuracy accuracy) {
     accuracy = choose(accuracy, settings_.successorAccuracy);
     std::vector<SymbolicExpression::Ptr> retval;
-    const RegisterDescriptor IP = instructionCache().decoder()->instructionPointerRegister();
+    const RegisterDescriptor IP = instructionCache().decoder()->architecture()->registerDictionary()->instructionPointerRegister();
 
     if (Accuracy::HIGH == accuracy) {
         auto borrowedOps = basicBlockSemantics(insns);
@@ -929,7 +929,7 @@ Partitioner::remap() {
 
     BestMapAddress bma;
     bma.settings().nThreads = 0;                        // all hardware threads
-    bma.nBits(instructionCache().decoder()->instructionPointerRegister().nBits());
+    bma.nBits(instructionCache().decoder()->architecture()->bitsPerWord());
     for (auto vertex: insnCfg_.vertices()) {
         if (vertex.value()->functionReasons().isAnySet()) {
             bma.insertEntryAddress(vertex.value()->address());
@@ -985,7 +985,7 @@ Partitioner::transferResults(const Rose::BinaryAnalysis::Partitioner2::Partition
         auto borrowedOps = basicBlockSemantics(insns);
         BaseSemantics::RiscOperators::Ptr ops = borrowedOps.get().orElse(nullptr);
         ASSERT_not_null(ops);
-        const RegisterDescriptor IP = instructionCache().decoder()->instructionPointerRegister();
+        const RegisterDescriptor IP = instructionCache().decoder()->architecture()->registerDictionary()->instructionPointerRegister();
         auto vertex = insnCfg_.findVertexKey(insns.back()->address());
         ASSERT_require(vertex != insnCfg_.vertices().end());
         for (auto edge: vertex->outEdges()) {

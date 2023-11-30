@@ -272,25 +272,25 @@ Dispatcher::currentInstruction() const {
 RegisterDescriptor
 Dispatcher::instructionPointerRegister() const {
     ASSERT_not_null(process_);
-    return process_->disassembler()->instructionPointerRegister();
+    return process_->disassembler()->architecture()->registerDictionary()->instructionPointerRegister();
 }
 
 RegisterDescriptor
 Dispatcher::stackPointerRegister() const {
     ASSERT_not_null(process_);
-    return process_->disassembler()->stackPointerRegister();
+    return process_->disassembler()->architecture()->registerDictionary()->stackPointerRegister();
 }
 
 RegisterDescriptor
 Dispatcher::stackFrameRegister() const {
     ASSERT_not_null(process_);
-    return process_->disassembler()->stackFrameRegister();
+    return process_->disassembler()->architecture()->registerDictionary()->stackFrameRegister();
 }
 
 RegisterDescriptor
 Dispatcher::callReturnRegister() const {
     ASSERT_not_null(process_);
-    return process_->disassembler()->callReturnRegister();
+    return process_->disassembler()->architecture()->registerDictionary()->callReturnRegister();
 }
 
 } // namespace

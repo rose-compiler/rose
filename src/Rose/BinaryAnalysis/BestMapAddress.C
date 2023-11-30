@@ -51,12 +51,12 @@ BestMapAddress::mask() const {
 
 void
 BestMapAddress::gatherAddresses(P2::Engine &engine) {
-    Disassembler::Base::Ptr dis = engine.architecture()->newInstructionDecoder();
+    Architecture::Base::ConstPtr arch = engine.architecture();
     if (0 == nBits_) {
-        if (!dis)
+        if (!arch->newInstructionDecoder())
             throw Exception("no disassembler");
-        nBits_ = dis->instructionPointerRegister().nBits();
-    } else if (dis->wordSizeBytes()*8 != nBits_) {
+        nBits_ = arch->bitsPerWord();
+    } else if (arch->bitsPerWord() != nBits_) {
         throw Exception("mismatched address sizes");
     }
 

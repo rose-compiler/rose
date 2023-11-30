@@ -132,12 +132,13 @@ main(int argc, char *argv[]) {
     if (WITH_INSTRUCTION_PROVIDER)
         instructionProvider = makeInstructionProvider(engine);
 
-    Disassembler::Base::Ptr disassembler = engine->architecture()->newInstructionDecoder();
+    Architecture::Base::ConstPtr arch = engine->architecture();
+    Disassembler::Base::Ptr disassembler = arch->newInstructionDecoder();
     if (!disassembler) {
         ::mlog[FATAL] <<"no disassembler for this architecture\n";
         exit(1);
     }
-    const RegisterDescriptor REG_IP = disassembler->instructionPointerRegister();
+    const RegisterDescriptor REG_IP = arch->registerDictionary()->instructionPointerRegister();
     ASSERT_forbid2(REG_IP.isEmpty(), "simulation must know what register serves as the instruction pointer");
 
     // Single-step the specimen natively in a debugger and show each instruction.

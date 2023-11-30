@@ -138,9 +138,10 @@ NoOperation::NoOperation(const Disassembler::Base::Ptr &disassembler) {
     normalizer_ = StateNormalizer::instance();
 
     if (disassembler) {
-        RegisterDictionary::Ptr registerDictionary = disassembler->registerDictionary();
+        Architecture::Base::ConstPtr arch = disassembler->architecture();
+        RegisterDictionary::Ptr registerDictionary = arch->registerDictionary();
         ASSERT_not_null(registerDictionary);
-        size_t addrWidth = disassembler->instructionPointerRegister().nBits();
+        size_t addrWidth = arch->bitsPerWord();
 
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         SymbolicSemantics::RiscOperators::Ptr ops = SymbolicSemantics::RiscOperators::instanceFromRegisters(registerDictionary, solver);
@@ -151,7 +152,7 @@ NoOperation::NoOperation(const Disassembler::Base::Ptr &disassembler) {
         ASSERT_not_null(mstate);
         mstate->occlusionsErased(true);
 
-        cpu_ = disassembler->architecture()->newInstructionDispatcher(ops);
+        cpu_ = arch->newInstructionDispatcher(ops);
     }
 }
 
