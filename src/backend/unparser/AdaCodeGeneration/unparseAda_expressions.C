@@ -88,9 +88,9 @@ namespace
       operator_symbols[V_SgRemOp] =            "rem";
 
       // not really in Ada
-      operator_symbols[V_SgCommaOpExp] =       "|";    // clause separator
-      operator_symbols[V_SgPlusPlusOp] =       "loop"; // loop direction indicator
-      operator_symbols[V_SgMinusMinusOp] =     "reverse loop"; // loop direction indicator
+      operator_symbols[V_SgCommaOpExp] =       "|";     // clause separator
+      operator_symbols[V_SgPlusPlusOp] =       "next "; // loop direction indicator
+      operator_symbols[V_SgMinusMinusOp] =     "prev "; // loop direction indicator
 
       // not an operator in Ada
       operator_symbols[V_SgMembershipOp] =     "in";

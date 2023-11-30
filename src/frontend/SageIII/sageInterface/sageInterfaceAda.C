@@ -3648,6 +3648,32 @@ explicitNullRecord(const SgClassDefinition& recdef)
   return recdef.get_members().empty();
 }
 
+bool
+isReverseForLoop(const SgForStatement& n)
+{
+  return isSgMinusMinusOp(n.get_increment());
+}
+
+bool
+isReverseForLoop(const SgForStatement* n)
+{
+  return n && isReverseForLoop(*n);
+}
+
+bool
+isReverseForLoop(const SgForInitStatement& n)
+{
+  return isReverseForLoop(isSgForStatement(n.get_parent()));
+}
+
+bool
+isReverseForLoop(const SgForInitStatement* n)
+{
+  return n && isReverseForLoop(*n);
+}
+
+
+
 boost::optional<bool>
 booleanConstant(const SgExpression* e)
 {

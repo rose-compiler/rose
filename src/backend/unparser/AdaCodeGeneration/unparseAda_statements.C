@@ -1204,22 +1204,15 @@ namespace
     // added to support independent unparsing of SgForInitStatement
     void handle(SgForInitStatement& n)
     {
-      bool isReverse = false;
-
-      if (SgForStatement* forStmt = isSgForStatement(n.get_parent()))
-        isReverse = isSgMinusMinusOp(forStmt->get_increment());
-
-      forInitStmt(n, isReverse);
+      forInitStmt(n, si::Ada::isReverseForLoop(n));
     }
 
     void handle(SgForStatement& n)
     {
       ROSE_ASSERT(n.get_increment());
 
-      const bool isReverse = isSgMinusMinusOp(n.get_increment());
-
       prn("for ");
-      forInitStmt(SG_DEREF(n.get_for_init_stmt()), isReverse);
+      forInitStmt(SG_DEREF(n.get_for_init_stmt()), si::Ada::isReverseForLoop(n));
       prn(" loop\n");
       stmt(n.get_loop_body());
       prn("end loop");

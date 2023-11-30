@@ -925,6 +925,15 @@ namespace
   /// returns true, iff \ref recdef is the body of an explicit null record
   bool explicitNullRecord(const SgClassDefinition& recdef);
 
+  /// returns true, iff \ref n is a reverse for loop; returns false otherwise
+  /// \{
+  bool isReverseForLoop(const SgForStatement* n);
+  bool isReverseForLoop(const SgForStatement& n);
+  bool isReverseForLoop(const SgForInitStatement* n);
+  bool isReverseForLoop(const SgForInitStatement& n);
+  /// \}
+
+
   /// finds the one past the last positional argument (aka the first named argument position).
   /// \return one past the index of the last positional argument.
   /// \details
