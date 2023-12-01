@@ -8300,6 +8300,25 @@ SgGlobal::get_qualified_name() const
      std::string globalScopeDelimiter;
      if (SageInterface::is_Java_language())
          globalScopeDelimiter = "";
+     else if (SageInterface::is_Ada_language())
+     {
+         // In Ada, the prefix is almost always optional, but if it is needed
+         //   to disambiguate names, "Standard" is used. However, it cannot
+         //   be used when withing packages.
+         // \begincode
+         //   procedure P is
+         //     p : integer := 0 ;
+         //   begin
+         //     Standard.P; -- call P recursively;
+         //     -- uses Standard to refer to procedure P instead of local variable P.
+         //   end P;
+         // -- however:
+         //   use Standard.P; -- NOT allowed.
+         // \endcode
+
+         globalScopeDelimiter = "";
+         // globalScopeDelimiter = "Standard";
+     }
      else
          globalScopeDelimiter = "::";
      return SgName (globalScopeDelimiter);
@@ -12026,7 +12045,7 @@ SgFunctionDeclaration::get_mangled_name() const
           mangledName = SageInterface::addMangledNameToCache(const_cast<SgFunctionDeclaration*>(this),mangledName);
        // printf ("TEMP RETURN: Inside of SgFunctionDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
 #if 0
-       // DQ (6/21/2022): This redundantly appends the mangled name for the parameter to the end and 
+       // DQ (6/21/2022): This redundantly appends the mangled name for the parameter to the end and
        // results in a compressed version of the string that is not translation unit independent.
        // This results in infinite recursion in the evaluation.
           SgFunctionParameterList* parameterList = this->get_parameterList();
@@ -20820,8 +20839,10 @@ SgAdaGenericDecl::get_mangled_name() const
 SgName
 SgAdaGenericDecl::get_qualified_name() const
 {
-  // TODO: this is a placeholder
-  return "ada$generic$decl";
+  SgScopeStatement* scope = get_scope();
+
+  ROSE_ASSERT(scope);
+  return SgName::assembleQualifiedName(scope->get_qualified_name(), get_name());
 }
 
 bool SgAdaGenericDecl::hasExplicitScope() const { return true; }
@@ -20835,7 +20856,7 @@ SgAdaGenericInstanceDecl::get_symbol_from_symbol_table() const
 {
   SgScopeStatement* scope = get_scope();
 
-  ROSE_ASSERT(scope);
+  ASSERT_not_null(scope);
   return scope->find_symbol_from_declaration(this);
 }
 
@@ -20851,8 +20872,10 @@ SgAdaGenericInstanceDecl::get_mangled_name() const
 SgName
 SgAdaGenericInstanceDecl::get_qualified_name() const
 {
-  // TODO: this is a placeholder
-  return "ada$genericinstance$decl";
+  SgScopeStatement* scope = get_scope();
+
+  ASSERT_not_null(scope);
+  return SgName::assembleQualifiedName(scope->get_qualified_name(), get_name());
 }
 
 bool SgAdaGenericInstanceDecl::hasExplicitScope() const { return true; }
@@ -20885,14 +20908,10 @@ SgAdaFormalTypeDecl::get_mangled_name() const
 SgName
 SgAdaFormalTypeDecl::get_qualified_name() const
 {
-/*
-  SgAdaGenericDecl* decl = isSgAdaGenericDecl(get_parent());
+  SgScopeStatement* scope = SageInterface::getEnclosingScope(const_cast<SgAdaFormalTypeDecl*>(this));
 
-  ROSE_ASSERT(decl);
-  return decl->get_qualified_name();
-*/
-  // TODO: this is a placeholder
-  return "ada$generic$decl";
+  ASSERT_not_null(scope);
+  return SgName::assembleQualifiedName(scope->get_qualified_name(), get_name());
 }
 
 bool SgAdaFormalTypeDecl::hasExplicitScope() const { return true; }
@@ -20919,7 +20938,10 @@ SgName SgAdaFormalPackageDecl::get_mangled_name() const
 
 SgName SgAdaFormalPackageDecl::get_qualified_name() const
 {
-  return "ada$formal$pkg$PLACEHOLDER";
+  SgScopeStatement* scope = get_scope();
+
+  ASSERT_not_null(scope);
+  return SgName::assembleQualifiedName(scope->get_qualified_name(), get_name());
 }
 SOURCE_ADA_FORMAL_PACKAGE_DECL_STATEMENT_END
 
