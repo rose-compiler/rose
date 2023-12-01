@@ -141,7 +141,6 @@ NoOperation::NoOperation(const Disassembler::Base::Ptr &disassembler) {
         Architecture::Base::ConstPtr arch = disassembler->architecture();
         RegisterDictionary::Ptr registerDictionary = arch->registerDictionary();
         ASSERT_not_null(registerDictionary);
-        size_t addrWidth = arch->bitsPerWord();
 
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         SymbolicSemantics::RiscOperators::Ptr ops = SymbolicSemantics::RiscOperators::instanceFromRegisters(registerDictionary, solver);
