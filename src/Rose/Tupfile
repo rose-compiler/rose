@@ -8,6 +8,7 @@ run $(librose_compile)				\
     Yaml.C
 
 run $(public_header) -o include/rose/Rose	\
+    Affirm.h					\
     AST.h					\
     BasicTypes.h     				\
     BinaryAnalysis.h				\
