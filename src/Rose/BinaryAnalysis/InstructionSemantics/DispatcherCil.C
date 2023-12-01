@@ -3975,17 +3975,16 @@ DispatcherCil::condition(CilInstructionKind kind, RiscOperators *ops) {
 BaseSemantics::SValuePtr
 DispatcherCil::read(SgAsmExpression *e, size_t value_nbits, size_t addr_nbits/*=0*/) {
     ASSERT_not_null(e);
-    SValuePtr retval;
-    if (SgAsmDirectRegisterExpression *re = isSgAsmDirectRegisterExpression(e)) {
 #if M68K
+    if (SgAsmDirectRegisterExpression *re = isSgAsmDirectRegisterExpression(e)) {
         static const RegisterDescriptor REG_PC(Cil_regclass_spr, Cil_spr_pc, 0, 32);
         if (re->get_descriptor() == REG_PC) {
             SgAsmInstruction *insn = currentInstruction();
             ASSERT_not_null(insn);
             return operators()->number_(32, insn->get_address() + 2);
         }
-#endif
     }
+#endif
     return Dispatcher::read(e, value_nbits, addr_nbits);
 }
 

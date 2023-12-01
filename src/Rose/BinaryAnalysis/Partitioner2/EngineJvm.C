@@ -187,7 +187,6 @@ EngineJvm::pathToClass(const std::string &className) {
 // Load class and super classes
 rose_addr_t
 EngineJvm::loadClass(uint16_t classIndex, SgAsmJvmConstantPool* pool, SgAsmGenericFileList* fileList, rose_addr_t baseVa) {
-    SgAsmGenericFile* file{nullptr};
     std::string superName{};
     std::string className{ByteCode::JvmClass::name(classIndex, pool)};
 
@@ -273,7 +272,6 @@ EngineJvm::loadDiscoverableClasses(SgAsmGenericFileList* fileList, rose_addr_t b
         for (auto sgMethod: jfh->get_method_table()->get_methods()) {
           // Examine instructions for classes
             for (auto insn: sgMethod->get_instruction_list()->get_instructions()) {
-              auto jvmInsn{isSgAsmJvmInstruction(insn)};
               switch (isSgAsmJvmInstruction(insn)->get_kind()) {
                 case opcode::checkcast: // class, array, or interface type
                 case opcode::instanceof: // class, array, or interface type
@@ -341,7 +339,6 @@ void
 EngineJvm::discoverFunctionCalls(SgAsmJvmMethod* sgMethod, SgAsmJvmConstantPool* pool,
                                  std::map<std::string,rose_addr_t> &fnm, std::set<std::string> &classes) {
     for (auto insn: sgMethod->get_instruction_list()->get_instructions()) {
-        auto jvmInsn{isSgAsmJvmInstruction(insn)};
         switch (isSgAsmJvmInstruction(insn)->get_kind()) {
           case opcode::invokedynamic:
           case opcode::invokeinterface:
@@ -596,7 +593,6 @@ EngineJvm::runPartitionerFinal(const Partitioner::Ptr &partitioner) {
       if (source->value().type() == V_BASIC_BLOCK) {
         auto value = source->value();
         if (BasicBlock::Ptr bb = source->value().bblock()) {
-          rose_addr_t sourceVa = bb->address();
           SgAsmInstruction* last = bb->instructions().back();
           std::string functionName = last->get_comment();
           if (functionNameMap.find(functionName) != functionNameMap.end()) {

@@ -8,6 +8,7 @@ using std::string;
 using std::vector;
 using namespace Rose::Diagnostics; // for mlog, INFO, WARN, ERROR, FATAL, etc.
 
+#if 0
 static
 vector<string> getFilesInDir(string &path, string &extension) {
   vector<string> files;
@@ -25,7 +26,9 @@ vector<string> getFilesInDir(string &path, string &extension) {
   }
   return files;
 }
+#endif
 
+#if 0
 // Extract class files from a jar file
 static vector<string> extractClassFiles(string &jar)
 {
@@ -61,6 +64,7 @@ static vector<string> extractClassFiles(string &jar)
 
   return classes;
 }
+#endif
 
 SgJvmComposite::SgJvmComposite(vector<string> & argv, SgProject* project)
   : SgBinaryComposite(argv, project)

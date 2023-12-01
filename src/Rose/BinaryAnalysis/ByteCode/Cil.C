@@ -299,7 +299,7 @@ CilMethod::name(const SgAsmCilMetadata* obj, SgAsmCilMetadataRoot* mdr)
 }
 
 CilClass::CilClass(SgAsmCilMetadataRoot* root, const std::uint8_t* name, size_t methodBegin, size_t methodLimit)
-  : Class{0}, mdr_{root}, name_{name}
+    : Class{0}, name_{name}, mdr_{root}
 {
     SgAsmCilMetadataHeap* metadataHeap = mdr_->get_MetadataHeap();
     ASSERT_not_null(metadataHeap);

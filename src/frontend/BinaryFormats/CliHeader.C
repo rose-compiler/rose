@@ -97,20 +97,20 @@ void SgAsmCliHeader::dump(FILE*f, const char* prefix, ssize_t idx) const
 {
   fprintf(f, "%s:\n", prefix);
   fprintf(f, "   name: %s\n", get_name()->get_string().c_str());
-  fprintf(f, "   offset: %llu\n", get_offset());
+  fprintf(f, "   offset: 0x%08" PRIx64 "\n", get_offset());
   fprintf(f, "   data: %s\n", &(p_data[0]));
   fprintf(f, "   cb: %u\n", p_cb);
   fprintf(f, "   majorRuntimeVersion: %u\n", p_majorRuntimeVersion);
   fprintf(f, "   minorRuntimeVersion: %u\n", p_minorRuntimeVersion);
-  fprintf(f, "   metaData: %llu\n", p_metaData);
+  fprintf(f, "   metaData: 0x%08" PRIx64 "\n", p_metaData);
   fprintf(f, "   flags: %u\n", p_flags);
   fprintf(f, "   entryPointToken: %u\n", p_entryPointToken);
-  fprintf(f, "   resources: %llu\n", p_resources);
-  fprintf(f, "   strongNameSignature: %llu\n", p_strongNameSignature);
-  fprintf(f, "   codeManagerTable: %llu\n", p_codeManagerTable);
-  fprintf(f, "   vTableFixups: %llu\n", p_vTableFixups);
-  fprintf(f, "   exportAddressTableJumps: %llu\n", p_exportAddressTableJumps);
-  fprintf(f, "   managedNativeHeader: %llu\n", p_managedNativeHeader);
+  fprintf(f, "   resources: 0x%08" PRIx64 "\n", p_resources);
+  fprintf(f, "   strongNameSignature: 0x%08" PRIx64 "\n", p_strongNameSignature);
+  fprintf(f, "   codeManagerTable: 0x%08" PRIx64 "\n", p_codeManagerTable);
+  fprintf(f, "   vTableFixups: 0x%08" PRIx64 "\n", p_vTableFixups);
+  fprintf(f, "   exportAddressTableJumps: 0x%08" PRIx64 "\n", p_exportAddressTableJumps);
+  fprintf(f, "   managedNativeHeader: 0x%08" PRIx64 "\n", p_managedNativeHeader);
 }
 
 #endif // ROSE_ENABLE_BINARY_ANALYSIS

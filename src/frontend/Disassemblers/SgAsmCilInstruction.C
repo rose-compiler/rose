@@ -5,6 +5,7 @@
 using namespace Rose;                                   // temporary until this lives in "rose"
 using namespace Rose::BinaryAnalysis;
 
+#if 0
 // Temporary enumeration of all possibilities
 static bool isValidCilInstruction()
 {
@@ -349,6 +350,7 @@ static bool isValidCilInstruction()
   }
     return true;
 }
+#endif
 
 bool
 SgAsmCilInstruction::terminatesBasicBlock() {
@@ -550,7 +552,7 @@ switchSuccessors(const SgAsmCilInstruction* insn, bool &complete) {
 
   retval.insert(fallThrough);
 
-  for (int n{1}; n < insn->nOperands(); n++) {
+  for (size_t n{1}; n < insn->nOperands(); n++) {
     if ((ival = isSgAsmIntegerValueExpression(insn->operand(n)))) {
       retval.insert(fallThrough + ival->get_signedValue());
     }
