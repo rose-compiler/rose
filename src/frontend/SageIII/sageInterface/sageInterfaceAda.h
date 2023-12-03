@@ -615,9 +615,13 @@ namespace
   /// \}
 
   /// describes properties of imported units
-  struct ImportedUnitResult : std::tuple<std::string, const SgDeclarationStatement*, const SgAdaRenamingDecl*>
+  struct ImportedUnitResult : std::tuple< std::string,
+                                          const SgDeclarationStatement*,
+                                          const SgAdaRenamingDecl*,
+                                          const SgExpression*
+                                        >
   {
-    using base = std::tuple<std::string, const SgDeclarationStatement*, const SgAdaRenamingDecl*>;
+    using base = std::tuple<std::string, const SgDeclarationStatement*, const SgAdaRenamingDecl*, const SgExpression*>;
     using base::base;
 
     const std::string&            name()         const { return std::get<0>(*this); }
@@ -629,15 +633,23 @@ namespace
     }
 
     const SgAdaRenamingDecl*      renamingDecl() const { return std::get<2>(*this); }
+
+    const SgExpression&           unitref()      const
+    {
+      ASSERT_not_null(std::get<3>(*this));
+      return *std::get<3>(*this);
+    }
   };
 
-  /// queries properties of an imported unit
-  ImportedUnitResult
-  importedUnit(const SgImportStatement& impdcl);
+  /// queries properties of all units in an import statement
+  std::vector<ImportedUnitResult>
+  importedUnits(const SgImportStatement& impdcl);
 
+#if OBSOLETE_CODE
   /// returns the imported element (i.e., the first entry in n's import_list
   const SgExpression&
   importedElement(const SgImportStatement& n);
+#endif /* OBSOLETE_CODE */
 
 
   /// do not use, this is temporary

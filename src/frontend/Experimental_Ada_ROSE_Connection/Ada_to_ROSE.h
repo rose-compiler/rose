@@ -22,7 +22,7 @@
 namespace Ada_ROSE_Translation
 {
 
-static constexpr bool LOG_FLAW_AS_ERROR = true;
+static constexpr bool LOG_FLAW_AS_ERROR = false;
 
 //
 // debugging
@@ -51,7 +51,7 @@ void initialize(const Rose::Cmdline::Ada::CmdlineSettings& settings);
 ///   converts each identifier to a common representation (i.e., upper case)
 struct AdaIdentifier : std::string
 {
-  typedef std::string base;
+  using base = std::string;
 
   AdaIdentifier()                                = default;
   AdaIdentifier(const AdaIdentifier&)            = default;

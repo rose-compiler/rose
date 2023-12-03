@@ -1962,16 +1962,18 @@ namespace Ada
     {
         using base = sg::DispatchHandler<ImportedUnitResult>;
 
+#if OBSOLETE_CODE
         explicit
         ImportedUnit(const SgImportStatement& import)
         : base(), impdcl(import)
         {}
+#endif /* OBSOLETE_CODE */
 
         void handle(const SgNode& n) { SG_UNEXPECTED_NODE(n); }
 
         void handle(const SgFunctionRefExp& n)
         {
-          res = ReturnType{ nameOf(n), &declOf(n), nullptr };
+          res = ReturnType{ nameOf(n), &declOf(n), nullptr, &n };
         }
 
         void handle(const SgAdaUnitRefExp& n)
@@ -1982,14 +1984,15 @@ namespace Ada
             dcl = gendcl->get_declaration();
 
           ASSERT_not_null(dcl);
-          res = ReturnType{ nameOf(n), dcl, nullptr };
+          res = ReturnType{ nameOf(n), dcl, nullptr, &n };
         }
 
         void handle(const SgAdaRenamingRefExp& n)
         {
-          res = ReturnType{ nameOf(n), n.get_decl(), n.get_decl() };
+          res = ReturnType{ nameOf(n), n.get_decl(), n.get_decl(), &n};
         }
 
+#if OBSOLETE_CODE
         void handle(const SgVarRefExp& n)
         {
           res = ReturnType{ nameOf(n), &impdcl, nullptr };
@@ -1997,6 +2000,7 @@ namespace Ada
 
       private:
         const SgImportStatement& impdcl; // fallback package when unit is not avail
+#endif /* OBSOLETE_CODE */
     };
   } // end anonymous namespace
 
@@ -2166,6 +2170,7 @@ namespace Ada
     return ty ? associatedDeclaration(*ty) : nullptr;
   }
 
+#if OBSOLETE_CODE
   const SgExpression&
   importedElement(const SgImportStatement& n)
   {
@@ -2174,11 +2179,25 @@ namespace Ada
 
     return SG_DEREF(lst.back());
   }
+#endif /* OBSOLETE_CODE */
 
-  ImportedUnitResult
-  importedUnit(const SgImportStatement& impdcl)
+  std::vector<ImportedUnitResult>
+  importedUnits(const SgImportStatement& impdcl)
   {
-    return sg::dispatch(ImportedUnit{ impdcl }, &importedElement(impdcl));
+    //~ return sg::dispatch(ImportedUnit{ impdcl }, &importedElement(impdcl));
+
+    std::vector<ImportedUnitResult> res;
+    const SgExpressionPtrList&      lst = impdcl.get_import_list();
+
+    std::transform( lst.begin(), lst.end(),
+                    std::back_inserter(res),
+                    [](const SgExpression* exp) -> ImportedUnitResult
+                    {
+                      return sg::dispatch(ImportedUnit{}, exp);
+                    }
+                  );
+
+    return res;
   }
 
 

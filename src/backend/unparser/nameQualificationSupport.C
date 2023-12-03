@@ -1029,11 +1029,13 @@ namespace
     SG_UNEXPECTED_NODE(n);
   }
 
+#if OBSOLETE_CODE
   const SgDeclarationStatement&
   importedDecl(const SgImportStatement& impstm)
   {
     return si::Ada::importedUnit(impstm).decl();
   }
+#endif /* OBSOLETE_CODE */
 
   struct AdaPreNameQualifier : sg::DispatchHandler<NameQualificationTraversalAda::InheritedAttribute>
   {
@@ -1221,22 +1223,23 @@ namespace
       {
         handle(sg::asBaseType(n));
 
-        const SgExpression&           importElem = si::Ada::importedElement(n);
-        const SgDeclarationStatement& importDecl = importedDecl(n);
-
-        //~ std::cerr << importElem->unparseToString() << typeid(*importDecl.get_scope()).name() << std::endl;
-
-        recordNameQualIfNeeded(importElem, importDecl.get_scope());
-
-        // check whether a renamed unit was imported
-        if (const SgAdaRenamingRefExp* renexp = isSgAdaRenamingRefExp(&importElem))
+        for (si::Ada::ImportedUnitResult impUnit : si::Ada::importedUnits(n))
         {
-          const SgAdaRenamingDecl& rendcl = SG_DEREF(renexp->get_decl());
+          const SgExpression&           importExpr = impUnit.unitref();
+          const SgDeclarationStatement& importDecl = impUnit.decl();
 
-          addRenamedScopeIfNeeded(rendcl.get_renamed(), rendcl);
+          recordNameQualIfNeeded(importExpr, importDecl.get_scope());
+
+          // check whether a renamed unit was imported
+          if (const SgAdaRenamingRefExp* renexp = isSgAdaRenamingRefExp(&importExpr))
+          {
+            const SgAdaRenamingDecl& rendcl = SG_DEREF(renexp->get_decl());
+
+            addRenamedScopeIfNeeded(rendcl.get_renamed(), rendcl);
+          }
+          else if (const SgScopeStatement* unitDef = unitDefinition(importDecl))
+            addVisibleScope(unitDef);
         }
-        else if (const SgScopeStatement* unitDef = unitDefinition(importDecl))
-          addVisibleScope(unitDef);
       }
 
       void handle(const SgAdaRepresentationClause& n)
@@ -1344,9 +1347,12 @@ namespace
 
         const SgDeclarationStatement* usedDcl = n.get_declaration();
 
+        ASSERT_require(isSgImportStatement(usedDcl) == nullptr);
+
+/*
         if (const SgImportStatement* impstm = isSgImportStatement(usedDcl))
           usedDcl = &importedDecl(*impstm);
-
+*/
         recordNameQualIfNeeded(n, SG_DEREF(usedDcl).get_scope());
         addUsedScopeIfNeeded(n.get_declaration());
       }

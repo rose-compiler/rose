@@ -2356,12 +2356,14 @@ namespace
   ///   for each element of a with clause; e.g., with Ada.Calendar, Ada.Clock;
   ///   yields two important statements, each of them is its own declaration
   ///   that can be referenced.
-  struct WithClauseCreator
+  struct WithListCreator
   {
       explicit
-      WithClauseCreator(AstContext astctx)
+      WithListCreator(AstContext astctx)
       : ctx(astctx)
       {}
+
+      ~WithListCreator() = default;
 
       void operator()(Element_Struct& el)
       {
@@ -2369,28 +2371,27 @@ namespace
 
         NameData                   imported = getName(el, ctx);
         Element_Struct&            impEl    = imported.elem();
-        Element_ID                 impID    = asisExpression(impEl).Corresponding_Name_Declaration;
-        SgExpression*              res      = &getExpr(impEl, ctx);
-        SgScopeStatement&          scope    = ctx.scope();
+        SgExpression&              sgnode   = getExpr(impEl, ctx);
 
-        ADA_ASSERT(isSgVarRefExp(res) == nullptr);
+        // make sure an early workaround is not used any longer
+        ADA_ASSERT(isSgVarRefExp(&sgnode) == nullptr);
 
-        std::vector<SgExpression*> elems{res};
-        SgImportStatement&         sgnode = mkWithClause(std::move(elems));
-
-        recordNode(asisDecls(), el.ID, sgnode);
+        // store source location of the fully qualified name
         attachSourceLocation(sgnode, el, ctx);
-
-        ctx.appendStatement(sgnode);
-
-        recordNonUniqueNode(asisDecls(), impID, sgnode);
-        ADA_ASSERT (sgnode.get_parent() == &scope);
+        importedUnits.push_back(&sgnode);
       }
 
-    private:
-      AstContext ctx;
+      operator SgExpressionPtrList () &&
+      {
+        return std::move(importedUnits);
+      }
 
-      WithClauseCreator() = delete;
+
+    private:
+      SgExpressionPtrList importedUnits;
+      AstContext          ctx;
+
+      WithListCreator() = delete;
   };
 
 
@@ -3647,9 +3648,18 @@ void handleClause(Element_Struct& elem, AstContext ctx)
     case A_With_Clause:                // 10.1.2
       {
         logKind("A_With_Clause", elem.ID);
-        ElemIdRange        range  = idRange(clause.Clause_Names);
+        ElemIdRange         range  = idRange(clause.Clause_Names);
+        SgExpressionPtrList implst = traverseIDs(range, elemMap(), WithListCreator{ctx});
+        SgImportStatement&  sgnode = mkWithClause(std::move(implst));
+        SgScopeStatement&   scope  = ctx.scope();
 
-        traverseIDs(range, elemMap(), WithClauseCreator{ctx});
+        attachSourceLocation(sgnode, elem, ctx);
+        recordNode(asisDecls(), elem.ID, sgnode);
+        ctx.appendStatement(sgnode);
+        ADA_ASSERT (sgnode.get_parent() == &scope);
+
+        // recordNonUniqueNode(asisDecls(), impID, sgnode);
+
         /* unused fields:
             bool   Has_Limited
         */
@@ -3666,7 +3676,6 @@ void handleClause(Element_Struct& elem, AstContext ctx)
         ElemIdRange        range  = idRange(clause.Clause_Names);
         traverseIDs(range, elemMap(), UseClauseCreator{(typeClause ? asisTypes() : asisDecls()), ctx});
         /* unused fields:
-            bool   Has_Limited
         */
         break;
       }

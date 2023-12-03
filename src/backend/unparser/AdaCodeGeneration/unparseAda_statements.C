@@ -362,13 +362,15 @@ namespace
     void handle(const SgAdaProtectedTypeDecl& n)   { usetype(n.get_name(), n); }
     void handle(const SgClassDeclaration& n)       { usetype(n.get_name(), n); }
     void handle(const SgEnumDeclaration& n)        { usetype(n.get_name(), n); }
-
+/*
+ *  PP EXPERIMENT_IMPORT_1
     void handle(const SgImportStatement& n)
     {
       si::Ada::ImportedUnitResult imported = si::Ada::importedUnit(n);
 
       usepkg(imported.name(), imported.decl());
     }
+*/
   };
 
   UseClauseSyntaxResult
@@ -1290,13 +1292,22 @@ namespace
 
     void handle(SgImportStatement& n)
     {
-      const SgExpression&         elem     = si::Ada::importedElement(n);
-      si::Ada::ImportedUnitResult imported = si::Ada::importedUnit(n);
-      // SgScopeStatement*           scope    = imported.decl().get_scope();
+      using ImportedUnits = std::vector<si::Ada::ImportedUnitResult>;
 
       prn("with ");
-      prnNameQual(elem);
-      prn(imported.name());
+
+      ImportedUnits imported = si::Ada::importedUnits(n);
+      const char*   sep = "";
+
+      for (si::Ada::ImportedUnitResult impunit : imported)
+      {
+        prn(sep);
+        prnNameQual(impunit.unitref());
+        prn(impunit.name());
+
+        sep = ", ";
+      }
+
       prn(STMT_SEP);
     }
 
