@@ -44,43 +44,6 @@ buildBinaryComposite(const std::string &fileName) {
     return retval;
 }
 
-SgAsmX86Instruction*
-buildX86Instruction(X86InstructionKind kind) {
-    // These are the default values used for the construction of new instructions.
-    rose_addr_t address = 0;
-    std::string mnemonic = "";
-    X86InstructionSize baseSize  = x86_insnsize_none;
-    X86InstructionSize operandSize = x86_insnsize_none; 
-    X86InstructionSize addressSize = x86_insnsize_none;
-
-    SgAsmX86Instruction* instruction = new SgAsmX86Instruction(address, mnemonic, kind, baseSize, operandSize, addressSize);
-
-    // This should not have been set yet.
-    ASSERT_require(instruction->get_operandList() == NULL);
-
-    // All instructions are required to have a valid SgAsmOperandList pointer.
-    instruction->set_operandList(new SgAsmOperandList);
-    instruction->get_operandList()->set_parent(instruction);
-
-    return instruction;
-}
-
-SgAsmX86Instruction*
-buildX86Instruction(X86InstructionKind kind, SgAsmExpression *operand)
-{
-    SgAsmX86Instruction* instruction = buildX86Instruction(kind);
-    appendOperand(instruction,operand);
-    return instruction;
-}
-
-SgAsmX86Instruction*
-buildX86Instruction(X86InstructionKind kind, SgAsmExpression *lhs, SgAsmExpression *rhs) {
-    SgAsmX86Instruction* instruction = buildX86Instruction(kind);
-    appendOperand(instruction,lhs);
-    appendOperand(instruction,rhs);
-    return instruction;
-}
-
 SgAsmIntegerValueExpression*
 buildValueInteger(uint64_t value, SgAsmType *type) {
     return new SgAsmIntegerValueExpression(value, type);
