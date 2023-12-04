@@ -2197,7 +2197,8 @@ disassemble(rose_addr_t base_va, SgAsmCilMethodDef* m, MethodHeader mh,
       // TODO: don't pad with noops, pad by expanding current unknown instruction
       SgUnsignedCharList rawBytes(1,'\0');
       while (addr < sz) {
-        auto insn = new SgAsmCilInstruction(base_va+addr, "nop", Rose::BinaryAnalysis::CilInstructionKind::Cil_nop);
+        auto insn = new SgAsmCilInstruction(base_va+addr, disasm->architecture()->name(), "nop",
+                                            Rose::BinaryAnalysis::CilInstructionKind::Cil_nop);
         insn->set_rawBytes(rawBytes);
         ASSERT_require(insn->get_rawBytes().size() == 1);
         lst.push_back(insn);

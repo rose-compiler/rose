@@ -118,7 +118,8 @@ Aarch64::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet *s
         operand->set_parent(operands);
     }
     wrapPrePostIncrement(operands, detail);
-    auto insn = new SgAsmAarch64Instruction(va, r.csi->mnemonic, (Aarch64InstructionKind)r.csi->id, detail.cc);
+    auto insn = new SgAsmAarch64Instruction(va, architecture()->name(), r.csi->mnemonic,
+                                            (Aarch64InstructionKind)r.csi->id, detail.cc);
     insn->set_rawBytes(SgUnsignedCharList(r.csi->bytes, r.csi->bytes + r.csi->size));
     insn->set_operandList(operands);
     insn->set_updatesFlags(detail.update_flags);
@@ -196,7 +197,8 @@ Aarch64::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet *s
 
 SgAsmInstruction*
 Aarch64::makeUnknownInstruction(const Exception &e) {
-    SgAsmAarch64Instruction *insn = new SgAsmAarch64Instruction(e.ip, "unknown", ARM64_INS_INVALID, ARM64_CC_INVALID);
+    SgAsmAarch64Instruction *insn = new SgAsmAarch64Instruction(e.ip, architecture()->name(), "unknown",
+                                                                ARM64_INS_INVALID, ARM64_CC_INVALID);
     SgAsmOperandList *operands = new SgAsmOperandList();
     insn->set_operandList(operands);
     operands->set_parent(insn);

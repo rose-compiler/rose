@@ -438,7 +438,7 @@ buildX86MultibyteNopInstruction(size_t nBytes) {
     ASSERT_require(nBytes > 0);
     ASSERT_require(nBytes <= 9);
 
-    SgAsmX86Instruction *instruction = new SgAsmX86Instruction(0, "nop", x86_nop,
+    SgAsmX86Instruction *instruction = new SgAsmX86Instruction(0, "intel-pentium4", "nop", x86_nop,
                                                                x86_insnsize_32, x86_insnsize_32, x86_insnsize_32);
 
     // Build a simple version of multi-byte nop using repeated prefixes.

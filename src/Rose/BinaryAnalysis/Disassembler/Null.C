@@ -42,7 +42,7 @@ Null::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*) {
 
 SgAsmInstruction*
 Null::makeUnknownInstruction(const Exception &e) {
-    SgAsmInstruction *insn = new SgAsmNullInstruction(e.ip, "unknown");
+    SgAsmInstruction *insn = new SgAsmNullInstruction(e.ip, architecture()->name(), "unknown");
     SgAsmOperandList *operands = new SgAsmOperandList;
     insn->set_operandList(operands);
     operands->set_parent(insn);

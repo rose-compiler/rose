@@ -436,8 +436,8 @@ SgAsmX86Instruction *
 X86::makeInstruction(State &state, X86InstructionKind kind, const std::string &mnemonic,
                                  SgAsmExpression *op1, SgAsmExpression *op2, SgAsmExpression *op3, SgAsmExpression *op4) const
 {
-    SgAsmX86Instruction *insn = new SgAsmX86Instruction(state.ip, mnemonic, kind, insnSize, effectiveOperandSize(state),
-                                                        effectiveAddressSize(state));
+    SgAsmX86Instruction *insn = new SgAsmX86Instruction(state.ip, architecture()->name(), mnemonic, kind, insnSize,
+                                                        effectiveOperandSize(state), effectiveAddressSize(state));
     ASSERT_not_null(insn);
     insn->set_lockPrefix(state.lock);
     insn->set_repeatPrefix(state.repeatPrefix);

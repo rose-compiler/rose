@@ -1,4 +1,6 @@
+#include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
+#include <Sawyer/Cached.h>
 
 /** Base class for machine instructions.
  *
@@ -43,6 +45,12 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /** Property: Architecture name.
+     *
+     *  The name of the architecture to which this instruction belongs. */
+    [[using Rosebud: rosetta, ctor_arg, mutators()]]
+    std::string architectureName;
 
     /** Property: Instruction mnemonic string.
      *
@@ -112,6 +120,9 @@ private:
     // code) should be procted by the mutex_. Additionally, the p_cacheLockCount data member is synchronized.
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_;
 
+    // Cached architecture pointer corresponding to the architectureName property.
+    Sawyer::Cached<Rose::BinaryAnalysis::Architecture::BaseConstPtr> architecture_;
+
 public:
     /** Represents an invalid stack delta.
      *
@@ -123,6 +134,14 @@ public:
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Architecture for instruction.
+     *
+     *  Returns a cached architecture pointer if available. Otherwise, it uses the @ref architectureName property to look up
+     *  an architecture that can handle this instruction and caches the pointer before returning it.
+     *
+     *  Thread safety: This function is thread safe. */
+    Rose::BinaryAnalysis::Architecture::BaseConstPtr architecture() const /*final*/;
+
     /** Return a description of this instruction.
      *
      *  Descriptions are useful for generating comments in the disassembly listing to say what each instruction does when
