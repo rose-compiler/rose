@@ -311,6 +311,7 @@ public:
 public:
     /** Constructor. */
     SgAsmX86Instruction(rose_addr_t const& address,
+                        std::string const& architectureName,
                         std::string const& mnemonic,
                         Rose::BinaryAnalysis::X86InstructionKind const& kind,
                         Rose::BinaryAnalysis::X86InstructionSize const& baseSize,
@@ -1781,6 +1782,7 @@ public:
 public:
     /** Constructor. */
     SgAsmPowerpcInstruction(rose_addr_t const& address,
+                            std::string const& architectureName,
                             std::string const& mnemonic,
                             Rose::BinaryAnalysis::PowerpcInstructionKind const& kind);
 
@@ -1866,6 +1868,73 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmPEStringSection_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmPESectionTable           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmPESectionTable);
+IS_SERIALIZABLE(AsmPESectionTable);
+
+#ifdef DOCUMENTATION
+/** Section table. */
+class SgAsmPESectionTable: public SgAsmGenericSection {
+#endif // DOCUMENTATION
+
+    DECLARE_OTHERS(AsmPESectionTable);
+#if defined(SgAsmPESectionTable_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmPESectionTable -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmPESectionTable");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+        debugSerializationEnd("SgAsmPESectionTable");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+public:
+    explicit SgAsmPESectionTable(SgAsmPEFileHeader*);
+    virtual SgAsmPESectionTable* parse() override;
+
+    /** Attaches a previously unattached PE Section to the PE Section Table.
+     *
+     *  This method complements SgAsmPESection::init_from_section_table. This method initializes the section table from the
+     *  section while init_from_section_table() initializes the section from the section table. */
+    void addSection(SgAsmPESection *section);
+    virtual bool reallocate() override;
+    virtual void unparse(std::ostream&) const override;
+    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    void add_section(SgAsmPESection*) ROSE_DEPRECATED("use addSection");
+public:
+    /** Destructor. */
+    virtual ~SgAsmPESectionTable();
+
+public:
+    /** Default constructor. */
+    SgAsmPESectionTable();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmPESectionTable_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -2150,73 +2219,6 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmPESectionTableEntry_OTHERS
-#ifdef DOCUMENTATION
-};
-#endif // DOCUMENTATION
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmPESectionTable           -- MACHINE GENERATED; DO NOT MODIFY --
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-DECLARE_LEAF_CLASS(AsmPESectionTable);
-IS_SERIALIZABLE(AsmPESectionTable);
-
-#ifdef DOCUMENTATION
-/** Section table. */
-class SgAsmPESectionTable: public SgAsmGenericSection {
-#endif // DOCUMENTATION
-
-    DECLARE_OTHERS(AsmPESectionTable);
-#if defined(SgAsmPESectionTable_OTHERS) || defined(DOCUMENTATION)
-
-    //----------------------- Boost serialization for SgAsmPESectionTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmPESectionTable");
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
-        debugSerializationEnd("SgAsmPESectionTable");
-    }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
-    explicit SgAsmPESectionTable(SgAsmPEFileHeader*);
-    virtual SgAsmPESectionTable* parse() override;
-
-    /** Attaches a previously unattached PE Section to the PE Section Table.
-     *
-     *  This method complements SgAsmPESection::init_from_section_table. This method initializes the section table from the
-     *  section while init_from_section_table() initializes the section from the section table. */
-    void addSection(SgAsmPESection *section);
-    virtual bool reallocate() override;
-    virtual void unparse(std::ostream&) const override;
-    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Deprecated 2023-11
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-public:
-    void add_section(SgAsmPESection*) ROSE_DEPRECATED("use addSection");
-public:
-    /** Destructor. */
-    virtual ~SgAsmPESectionTable();
-
-public:
-    /** Default constructor. */
-    SgAsmPESectionTable();
-
-protected:
-    /** Initialize all properties that have explicit initial values.
-     *
-     *  This function is mostly for use in user-defined constructors where the user desires to initialize
-     *  all the properties but does not know the names of the data members that store the property values.
-     *  This function initializes the properties that have explicit initializations within this class, but
-     *  does not recursively initialize base classes. */
-    void initializeProperties();
-#endif // SgAsmPESectionTable_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -5117,6 +5119,7 @@ public:
 public:
     /** Constructor. */
     SgAsmNullInstruction(rose_addr_t const& address,
+                         std::string const& architectureName,
                          std::string const& mnemonic);
 
 protected:
@@ -5180,6 +5183,111 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmNEStringTable_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmNESectionTable           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmNESectionTable);
+IS_SERIALIZABLE(AsmNESectionTable);
+
+#ifdef DOCUMENTATION
+class SgAsmNESectionTable: public SgAsmGenericSection {
+#endif // DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmNESectionTable.setDataPrototype(
+        "unsigned", "flags", "= 0",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmNESectionTable.setDataPrototype(
+        "unsigned", "sector", "= 0",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmNESectionTable.setDataPrototype(
+        "rose_addr_t", "physicalSize", "= 0",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmNESectionTable.setDataPrototype(
+        "rose_addr_t", "virtualSize", "= 0",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+    DECLARE_OTHERS(AsmNESectionTable);
+#if defined(SgAsmNESectionTable_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmNESectionTable -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmNESectionTable");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+        s & BOOST_SERIALIZATION_NVP(p_flags);
+        s & BOOST_SERIALIZATION_NVP(p_sector);
+        s & BOOST_SERIALIZATION_NVP(p_physicalSize);
+        s & BOOST_SERIALIZATION_NVP(p_virtualSize);
+        debugSerializationEnd("SgAsmNESectionTable");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+
+public:
+    unsigned const& get_flags() const;
+    void set_flags(unsigned const&);
+
+public:
+    unsigned const& get_sector() const;
+    void set_sector(unsigned const&);
+
+public:
+    rose_addr_t const& get_physicalSize() const;
+    void set_physicalSize(rose_addr_t const&);
+
+public:
+    rose_addr_t const& get_virtualSize() const;
+    void set_virtualSize(rose_addr_t const&);
+public:
+    explicit SgAsmNESectionTable(SgAsmNEFileHeader*);
+    virtual void unparse(std::ostream&) const override;
+    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    rose_addr_t get_physical_size() const ROSE_DEPRECATED("use get_physicalSize");
+    void set_physical_size(rose_addr_t) ROSE_DEPRECATED("use set_physicalSize");
+    rose_addr_t get_virtual_size() const ROSE_DEPRECATED("use get_virtualSize");
+    void set_virtual_size(rose_addr_t) ROSE_DEPRECATED("use set_virtualSize");
+public:
+    /** Destructor. */
+    virtual ~SgAsmNESectionTable();
+
+public:
+    /** Default constructor. */
+    SgAsmNESectionTable();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmNESectionTable_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -5334,111 +5442,6 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmNESectionTableEntry_OTHERS
-#ifdef DOCUMENTATION
-};
-#endif // DOCUMENTATION
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmNESectionTable           -- MACHINE GENERATED; DO NOT MODIFY --
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-DECLARE_LEAF_CLASS(AsmNESectionTable);
-IS_SERIALIZABLE(AsmNESectionTable);
-
-#ifdef DOCUMENTATION
-class SgAsmNESectionTable: public SgAsmGenericSection {
-#endif // DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmNESectionTable.setDataPrototype(
-        "unsigned", "flags", "= 0",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmNESectionTable.setDataPrototype(
-        "unsigned", "sector", "= 0",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmNESectionTable.setDataPrototype(
-        "rose_addr_t", "physicalSize", "= 0",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmNESectionTable.setDataPrototype(
-        "rose_addr_t", "virtualSize", "= 0",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-    DECLARE_OTHERS(AsmNESectionTable);
-#if defined(SgAsmNESectionTable_OTHERS) || defined(DOCUMENTATION)
-
-    //----------------------- Boost serialization for SgAsmNESectionTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmNESectionTable");
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
-        s & BOOST_SERIALIZATION_NVP(p_flags);
-        s & BOOST_SERIALIZATION_NVP(p_sector);
-        s & BOOST_SERIALIZATION_NVP(p_physicalSize);
-        s & BOOST_SERIALIZATION_NVP(p_virtualSize);
-        debugSerializationEnd("SgAsmNESectionTable");
-    }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
-public:
-    unsigned const& get_flags() const;
-    void set_flags(unsigned const&);
-
-public:
-    unsigned const& get_sector() const;
-    void set_sector(unsigned const&);
-
-public:
-    rose_addr_t const& get_physicalSize() const;
-    void set_physicalSize(rose_addr_t const&);
-
-public:
-    rose_addr_t const& get_virtualSize() const;
-    void set_virtualSize(rose_addr_t const&);
-public:
-    explicit SgAsmNESectionTable(SgAsmNEFileHeader*);
-    virtual void unparse(std::ostream&) const override;
-    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Deprecated 2023-11
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-public:
-    rose_addr_t get_physical_size() const ROSE_DEPRECATED("use get_physicalSize");
-    void set_physical_size(rose_addr_t) ROSE_DEPRECATED("use set_physicalSize");
-    rose_addr_t get_virtual_size() const ROSE_DEPRECATED("use get_virtualSize");
-    void set_virtual_size(rose_addr_t) ROSE_DEPRECATED("use set_virtualSize");
-public:
-    /** Destructor. */
-    virtual ~SgAsmNESectionTable();
-
-public:
-    /** Default constructor. */
-    SgAsmNESectionTable();
-
-protected:
-    /** Initialize all properties that have explicit initial values.
-     *
-     *  This function is mostly for use in user-defined constructors where the user desires to initialize
-     *  all the properties but does not know the names of the data members that store the property values.
-     *  This function initializes the properties that have explicit initializations within this class, but
-     *  does not recursively initialize base classes. */
-    void initializeProperties();
-#endif // SgAsmNESectionTable_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -6859,6 +6862,7 @@ public:
 public:
     /** Constructor. */
     SgAsmMipsInstruction(rose_addr_t const& address,
+                         std::string const& architectureName,
                          std::string const& mnemonic,
                          Rose::BinaryAnalysis::MipsInstructionKind const& kind);
 
@@ -7047,6 +7051,7 @@ public:
 public:
     /** Constructor. */
     SgAsmM68kInstruction(rose_addr_t const& address,
+                         std::string const& architectureName,
                          std::string const& mnemonic,
                          Rose::BinaryAnalysis::M68kInstructionKind const& kind);
 
@@ -7059,6 +7064,58 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmM68kInstruction_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmLESectionTable           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmLESectionTable);
+IS_SERIALIZABLE(AsmLESectionTable);
+
+#ifdef DOCUMENTATION
+class SgAsmLESectionTable: public SgAsmGenericSection {
+#endif // DOCUMENTATION
+
+    DECLARE_OTHERS(AsmLESectionTable);
+#if defined(SgAsmLESectionTable_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmLESectionTable -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmLESectionTable");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+        debugSerializationEnd("SgAsmLESectionTable");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+public:
+    SgAsmLESectionTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset, rose_addr_t size);
+    virtual void unparse(std::ostream&) const override;
+    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+public:
+    /** Destructor. */
+    virtual ~SgAsmLESectionTable();
+
+public:
+    /** Default constructor. */
+    SgAsmLESectionTable();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmLESectionTable_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -7265,58 +7322,6 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmLESectionTable           -- MACHINE GENERATED; DO NOT MODIFY --
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-DECLARE_LEAF_CLASS(AsmLESectionTable);
-IS_SERIALIZABLE(AsmLESectionTable);
-
-#ifdef DOCUMENTATION
-class SgAsmLESectionTable: public SgAsmGenericSection {
-#endif // DOCUMENTATION
-
-    DECLARE_OTHERS(AsmLESectionTable);
-#if defined(SgAsmLESectionTable_OTHERS) || defined(DOCUMENTATION)
-
-    //----------------------- Boost serialization for SgAsmLESectionTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmLESectionTable");
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
-        debugSerializationEnd("SgAsmLESectionTable");
-    }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
-    SgAsmLESectionTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset, rose_addr_t size);
-    virtual void unparse(std::ostream&) const override;
-    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-public:
-    /** Destructor. */
-    virtual ~SgAsmLESectionTable();
-
-public:
-    /** Default constructor. */
-    SgAsmLESectionTable();
-
-protected:
-    /** Initialize all properties that have explicit initial values.
-     *
-     *  This function is mostly for use in user-defined constructors where the user desires to initialize
-     *  all the properties but does not know the names of the data members that store the property values.
-     *  This function initializes the properties that have explicit initializations within this class, but
-     *  does not recursively initialize base classes. */
-    void initializeProperties();
-#endif // SgAsmLESectionTable_OTHERS
-#ifdef DOCUMENTATION
-};
-#endif // DOCUMENTATION
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmLESection           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -7449,6 +7454,71 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmLEPageTable           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmLEPageTable);
+IS_SERIALIZABLE(AsmLEPageTable);
+
+#ifdef DOCUMENTATION
+class SgAsmLEPageTable: public SgAsmGenericSection {
+#endif // DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmLEPageTable.setDataPrototype(
+        "SgAsmLEPageTableEntryPtrList", "entries", "",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+    DECLARE_OTHERS(AsmLEPageTable);
+#if defined(SgAsmLEPageTable_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmLEPageTable -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmLEPageTable");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+        s & BOOST_SERIALIZATION_NVP(p_entries);
+        debugSerializationEnd("SgAsmLEPageTable");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+
+public:
+    SgAsmLEPageTableEntryPtrList const& get_entries() const;
+    SgAsmLEPageTableEntryPtrList& get_entries();
+    void set_entries(SgAsmLEPageTableEntryPtrList const&);
+public:
+    SgAsmLEPageTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset, rose_addr_t size);
+    virtual void unparse(std::ostream&) const override;
+    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+    SgAsmLEPageTableEntry *get_page(size_t idx);
+public:
+    /** Destructor. */
+    virtual ~SgAsmLEPageTable();
+
+public:
+    /** Default constructor. */
+    SgAsmLEPageTable();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmLEPageTable_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmLEPageTableEntry           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -7558,71 +7628,6 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmLEPageTableEntry_OTHERS
-#ifdef DOCUMENTATION
-};
-#endif // DOCUMENTATION
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmLEPageTable           -- MACHINE GENERATED; DO NOT MODIFY --
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-DECLARE_LEAF_CLASS(AsmLEPageTable);
-IS_SERIALIZABLE(AsmLEPageTable);
-
-#ifdef DOCUMENTATION
-class SgAsmLEPageTable: public SgAsmGenericSection {
-#endif // DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmLEPageTable.setDataPrototype(
-        "SgAsmLEPageTableEntryPtrList", "entries", "",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-    DECLARE_OTHERS(AsmLEPageTable);
-#if defined(SgAsmLEPageTable_OTHERS) || defined(DOCUMENTATION)
-
-    //----------------------- Boost serialization for SgAsmLEPageTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmLEPageTable");
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
-        s & BOOST_SERIALIZATION_NVP(p_entries);
-        debugSerializationEnd("SgAsmLEPageTable");
-    }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
-public:
-    SgAsmLEPageTableEntryPtrList const& get_entries() const;
-    SgAsmLEPageTableEntryPtrList& get_entries();
-    void set_entries(SgAsmLEPageTableEntryPtrList const&);
-public:
-    SgAsmLEPageTable(SgAsmLEFileHeader *fhdr, rose_addr_t offset, rose_addr_t size);
-    virtual void unparse(std::ostream&) const override;
-    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-    SgAsmLEPageTableEntry *get_page(size_t idx);
-public:
-    /** Destructor. */
-    virtual ~SgAsmLEPageTable();
-
-public:
-    /** Default constructor. */
-    SgAsmLEPageTable();
-
-protected:
-    /** Initialize all properties that have explicit initial values.
-     *
-     *  This function is mostly for use in user-defined constructors where the user desires to initialize
-     *  all the properties but does not know the names of the data members that store the property values.
-     *  This function initializes the properties that have explicit initializations within this class, but
-     *  does not recursively initialize base classes. */
-    void initializeProperties();
-#endif // SgAsmLEPageTable_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -10569,6 +10574,7 @@ public:
 public:
     /** Constructor. */
     SgAsmJvmInstruction(rose_addr_t const& address,
+                        std::string const& architectureName,
                         std::string const& mnemonic,
                         Rose::BinaryAnalysis::JvmInstructionKind const& kind);
 
@@ -10581,6 +10587,92 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmJvmInstruction_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmJvmInnerClasses           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmJvmInnerClasses);
+IS_SERIALIZABLE(AsmJvmInnerClasses);
+
+#ifdef DOCUMENTATION
+/** Represents a JVM InnerClasses attribute.
+ *
+ *  The InnerClasses attribute is a variable-length attribute in the attributes table of a ClassFile structure. See section 4.7.6 of
+ *  the JVM specification.
+ */
+class SgAsmJvmInnerClasses: public SgAsmJvmAttribute {
+#endif // DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmInnerClasses.setDataPrototype(
+        "SgAsmJvmInnerClassesEntryPtrList", "classes", "",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+    DECLARE_OTHERS(AsmJvmInnerClasses);
+#if defined(SgAsmJvmInnerClasses_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmJvmInnerClasses -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmInnerClasses");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmAttribute);
+        s & BOOST_SERIALIZATION_NVP(p_classes);
+        debugSerializationEnd("SgAsmJvmInnerClasses");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+
+public:
+    /** Property: List of pointers to InnerClasses attribute entry. 
+     * 
+     * @{ */
+    SgAsmJvmInnerClassesEntryPtrList const& get_classes() const;
+    SgAsmJvmInnerClassesEntryPtrList& get_classes();
+    void set_classes(SgAsmJvmInnerClassesEntryPtrList const&);
+    /** @} */
+public:
+    /** Initialize the InnerClasses attribute before parsing.
+     *
+     *  This is the preferred constructor to use before parsing as it sets its parent. */
+    explicit SgAsmJvmInnerClasses(SgAsmJvmAttributeTable* table);
+
+    /** Parses a JVM InnerClasses attribute.
+     *
+     * Parses a JVM InnerClasses attribute and constructs and parses all classes
+     * entries reachable from the table. Returns a pointer to this object. */
+    SgAsmJvmInnerClasses* parse(SgAsmJvmConstantPool*) override;
+
+    /** Write the InnerClasses attribute to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
+    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+public:
+    /** Destructor. */
+    virtual ~SgAsmJvmInnerClasses();
+
+public:
+    /** Default constructor. */
+    SgAsmJvmInnerClasses();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmJvmInnerClasses_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -10720,92 +10812,6 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmJvmInnerClassesEntry_OTHERS
-#ifdef DOCUMENTATION
-};
-#endif // DOCUMENTATION
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmJvmInnerClasses           -- MACHINE GENERATED; DO NOT MODIFY --
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-DECLARE_LEAF_CLASS(AsmJvmInnerClasses);
-IS_SERIALIZABLE(AsmJvmInnerClasses);
-
-#ifdef DOCUMENTATION
-/** Represents a JVM InnerClasses attribute.
- *
- *  The InnerClasses attribute is a variable-length attribute in the attributes table of a ClassFile structure. See section 4.7.6 of
- *  the JVM specification.
- */
-class SgAsmJvmInnerClasses: public SgAsmJvmAttribute {
-#endif // DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmJvmInnerClasses.setDataPrototype(
-        "SgAsmJvmInnerClassesEntryPtrList", "classes", "",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-    DECLARE_OTHERS(AsmJvmInnerClasses);
-#if defined(SgAsmJvmInnerClasses_OTHERS) || defined(DOCUMENTATION)
-
-    //----------------------- Boost serialization for SgAsmJvmInnerClasses -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmJvmInnerClasses");
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmAttribute);
-        s & BOOST_SERIALIZATION_NVP(p_classes);
-        debugSerializationEnd("SgAsmJvmInnerClasses");
-    }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
-public:
-    /** Property: List of pointers to InnerClasses attribute entry. 
-     * 
-     * @{ */
-    SgAsmJvmInnerClassesEntryPtrList const& get_classes() const;
-    SgAsmJvmInnerClassesEntryPtrList& get_classes();
-    void set_classes(SgAsmJvmInnerClassesEntryPtrList const&);
-    /** @} */
-public:
-    /** Initialize the InnerClasses attribute before parsing.
-     *
-     *  This is the preferred constructor to use before parsing as it sets its parent. */
-    explicit SgAsmJvmInnerClasses(SgAsmJvmAttributeTable* table);
-
-    /** Parses a JVM InnerClasses attribute.
-     *
-     * Parses a JVM InnerClasses attribute and constructs and parses all classes
-     * entries reachable from the table. Returns a pointer to this object. */
-    SgAsmJvmInnerClasses* parse(SgAsmJvmConstantPool*) override;
-
-    /** Write the InnerClasses attribute to a binary file. */
-    virtual void unparse(std::ostream&) const override;
-
-    /** Print some debugging information. */
-    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-public:
-    /** Destructor. */
-    virtual ~SgAsmJvmInnerClasses();
-
-public:
-    /** Default constructor. */
-    SgAsmJvmInnerClasses();
-
-protected:
-    /** Initialize all properties that have explicit initial values.
-     *
-     *  This function is mostly for use in user-defined constructors where the user desires to initialize
-     *  all the properties but does not know the names of the data members that store the property values.
-     *  This function initializes the properties that have explicit initializations within this class, but
-     *  does not recursively initialize base classes. */
-    void initializeProperties();
-#endif // SgAsmJvmInnerClasses_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -11288,6 +11294,91 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmJvmExceptionTable           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmJvmExceptionTable);
+IS_SERIALIZABLE(AsmJvmExceptionTable);
+
+#ifdef DOCUMENTATION
+/** Represents a JVM exception_info table/array.
+ *
+ *  The JVM exceptions table is an SgAsmJvmNode containing SgAsmJvmExceptionHandler entries.
+ *  Each entry in the table describes one exception handler in the code array. */
+class SgAsmJvmExceptionTable: public SgAsmJvmNode {
+#endif // DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmExceptionTable.setDataPrototype(
+        "SgAsmJvmExceptionHandlerPtrList", "handlers", "",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+    DECLARE_OTHERS(AsmJvmExceptionTable);
+#if defined(SgAsmJvmExceptionTable_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmJvmExceptionTable -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmExceptionTable");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmNode);
+        s & BOOST_SERIALIZATION_NVP(p_handlers);
+        debugSerializationEnd("SgAsmJvmExceptionTable");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+
+public:
+    /** Property: List of pointers to exceptions. 
+     * 
+     * @{ */
+    SgAsmJvmExceptionHandlerPtrList const& get_handlers() const;
+    SgAsmJvmExceptionHandlerPtrList& get_handlers();
+    void set_handlers(SgAsmJvmExceptionHandlerPtrList const&);
+    /** @} */
+public:
+    /** Initialize the exception table before parsing.
+     *
+     *  This is the preferred constructor to use before parsing as it sets its parent. */
+    explicit SgAsmJvmExceptionTable(SgAsmJvmCodeAttribute*);
+
+    /** Parses a JVM exception table.
+     *
+     *  Parses a JVM exception table and constructs and parses all exceptions reachable from the table.  Returns a pointer to this
+     *  object. */
+    SgAsmJvmExceptionTable* parse(SgAsmJvmConstantPool*);
+
+    /** Write exception table to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
+    void dump(FILE*, const char *prefix, ssize_t idx) const override;
+public:
+    /** Destructor. */
+    virtual ~SgAsmJvmExceptionTable();
+
+public:
+    /** Default constructor. */
+    SgAsmJvmExceptionTable();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmJvmExceptionTable_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmJvmExceptions           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -11368,91 +11459,6 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmJvmExceptions_OTHERS
-#ifdef DOCUMENTATION
-};
-#endif // DOCUMENTATION
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmJvmExceptionTable           -- MACHINE GENERATED; DO NOT MODIFY --
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-DECLARE_LEAF_CLASS(AsmJvmExceptionTable);
-IS_SERIALIZABLE(AsmJvmExceptionTable);
-
-#ifdef DOCUMENTATION
-/** Represents a JVM exception_info table/array.
- *
- *  The JVM exceptions table is an SgAsmJvmNode containing SgAsmJvmExceptionHandler entries.
- *  Each entry in the table describes one exception handler in the code array. */
-class SgAsmJvmExceptionTable: public SgAsmJvmNode {
-#endif // DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmJvmExceptionTable.setDataPrototype(
-        "SgAsmJvmExceptionHandlerPtrList", "handlers", "",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-    DECLARE_OTHERS(AsmJvmExceptionTable);
-#if defined(SgAsmJvmExceptionTable_OTHERS) || defined(DOCUMENTATION)
-
-    //----------------------- Boost serialization for SgAsmJvmExceptionTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmJvmExceptionTable");
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmNode);
-        s & BOOST_SERIALIZATION_NVP(p_handlers);
-        debugSerializationEnd("SgAsmJvmExceptionTable");
-    }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
-public:
-    /** Property: List of pointers to exceptions. 
-     * 
-     * @{ */
-    SgAsmJvmExceptionHandlerPtrList const& get_handlers() const;
-    SgAsmJvmExceptionHandlerPtrList& get_handlers();
-    void set_handlers(SgAsmJvmExceptionHandlerPtrList const&);
-    /** @} */
-public:
-    /** Initialize the exception table before parsing.
-     *
-     *  This is the preferred constructor to use before parsing as it sets its parent. */
-    explicit SgAsmJvmExceptionTable(SgAsmJvmCodeAttribute*);
-
-    /** Parses a JVM exception table.
-     *
-     *  Parses a JVM exception table and constructs and parses all exceptions reachable from the table.  Returns a pointer to this
-     *  object. */
-    SgAsmJvmExceptionTable* parse(SgAsmJvmConstantPool*);
-
-    /** Write exception table to a binary file. */
-    virtual void unparse(std::ostream&) const override;
-
-    /** Print some debugging information. */
-    void dump(FILE*, const char *prefix, ssize_t idx) const override;
-public:
-    /** Destructor. */
-    virtual ~SgAsmJvmExceptionTable();
-
-public:
-    /** Default constructor. */
-    SgAsmJvmExceptionTable();
-
-protected:
-    /** Initialize all properties that have explicit initial values.
-     *
-     *  This function is mostly for use in user-defined constructors where the user desires to initialize
-     *  all the properties but does not know the names of the data members that store the property values.
-     *  This function initializes the properties that have explicit initializations within this class, but
-     *  does not recursively initialize base classes. */
-    void initializeProperties();
-#endif // SgAsmJvmExceptionTable_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -11773,6 +11779,109 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmJvmConstantValue_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmJvmConstantPool           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmJvmConstantPool);
+IS_SERIALIZABLE(AsmJvmConstantPool);
+
+#ifdef DOCUMENTATION
+/** Represents an JVM constant pool.
+ *
+ *  The JVM Constant Pool is itself a section.  The entries of the table are stored with the section they describe rather
+ *  than storing them all in the SgAsmSectionTable node.  We can reconstruct the JVM Section Table since sections have
+ *  unique ID numbers that are their original indices in the JVM Section Table. */
+class SgAsmJvmConstantPool: public SgAsmGenericSection {
+#endif // DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmJvmConstantPool.setDataPrototype(
+        "SgAsmJvmConstantPoolEntryPtrList", "entries", "",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+    DECLARE_OTHERS(AsmJvmConstantPool);
+#if defined(SgAsmJvmConstantPool_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmJvmConstantPool -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmJvmConstantPool");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+        s & BOOST_SERIALIZATION_NVP(p_entries);
+        debugSerializationEnd("SgAsmJvmConstantPool");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+
+public:
+    /** Property: List of constant pool entries. 
+     * 
+     * @{ */
+    SgAsmJvmConstantPoolEntryPtrList const& get_entries() const;
+    SgAsmJvmConstantPoolEntryPtrList& get_entries();
+    void set_entries(SgAsmJvmConstantPoolEntryPtrList const&);
+    /** @} */
+public:
+    /** Non-parsing constructor. */
+    explicit SgAsmJvmConstantPool(SgAsmJvmFileHeader*);
+
+    /** Parses a JVM Constant Pool.
+     *
+     *  Parses a JVM constant pool and constructs and parses all sections reachable from the table. The section is
+     *  extended as necessary based on the number of entries and the size of each entry. Returns a pointer to this
+     *  object. */
+    virtual SgAsmJvmConstantPool* parse() override;
+
+    /** Returns constant pool entry at given index.
+     *
+     *  Index starts at one.
+     * @{ */
+    SgAsmJvmConstantPoolEntry* get_entry(size_t index) const;
+    /** @} */
+
+    /** Return a string at the given index.
+     *
+     *  Throws an error if the index is invalid or if the constant pool entry
+     *  at the index is not a CONSTANT_Utf8_info.
+     */
+    std::string get_utf8_string(size_t index) const;
+
+    /** Write constant pool to a binary file. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging information. */
+    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+
+protected:
+    // Some extra clean-up actions on destruction
+    virtual void destructorHelper() override;
+public:
+    /** Destructor. */
+    virtual ~SgAsmJvmConstantPool();
+
+public:
+    /** Default constructor. */
+    SgAsmJvmConstantPool();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmJvmConstantPool_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -12239,109 +12348,6 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmJvmConstantPoolEntry_OTHERS
-#ifdef DOCUMENTATION
-};
-#endif // DOCUMENTATION
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmJvmConstantPool           -- MACHINE GENERATED; DO NOT MODIFY --
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-DECLARE_LEAF_CLASS(AsmJvmConstantPool);
-IS_SERIALIZABLE(AsmJvmConstantPool);
-
-#ifdef DOCUMENTATION
-/** Represents an JVM constant pool.
- *
- *  The JVM Constant Pool is itself a section.  The entries of the table are stored with the section they describe rather
- *  than storing them all in the SgAsmSectionTable node.  We can reconstruct the JVM Section Table since sections have
- *  unique ID numbers that are their original indices in the JVM Section Table. */
-class SgAsmJvmConstantPool: public SgAsmGenericSection {
-#endif // DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmJvmConstantPool.setDataPrototype(
-        "SgAsmJvmConstantPoolEntryPtrList", "entries", "",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-    DECLARE_OTHERS(AsmJvmConstantPool);
-#if defined(SgAsmJvmConstantPool_OTHERS) || defined(DOCUMENTATION)
-
-    //----------------------- Boost serialization for SgAsmJvmConstantPool -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmJvmConstantPool");
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
-        s & BOOST_SERIALIZATION_NVP(p_entries);
-        debugSerializationEnd("SgAsmJvmConstantPool");
-    }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
-public:
-    /** Property: List of constant pool entries. 
-     * 
-     * @{ */
-    SgAsmJvmConstantPoolEntryPtrList const& get_entries() const;
-    SgAsmJvmConstantPoolEntryPtrList& get_entries();
-    void set_entries(SgAsmJvmConstantPoolEntryPtrList const&);
-    /** @} */
-public:
-    /** Non-parsing constructor. */
-    explicit SgAsmJvmConstantPool(SgAsmJvmFileHeader*);
-
-    /** Parses a JVM Constant Pool.
-     *
-     *  Parses a JVM constant pool and constructs and parses all sections reachable from the table. The section is
-     *  extended as necessary based on the number of entries and the size of each entry. Returns a pointer to this
-     *  object. */
-    virtual SgAsmJvmConstantPool* parse() override;
-
-    /** Returns constant pool entry at given index.
-     *
-     *  Index starts at one.
-     * @{ */
-    SgAsmJvmConstantPoolEntry* get_entry(size_t index) const;
-    /** @} */
-
-    /** Return a string at the given index.
-     *
-     *  Throws an error if the index is invalid or if the constant pool entry
-     *  at the index is not a CONSTANT_Utf8_info.
-     */
-    std::string get_utf8_string(size_t index) const;
-
-    /** Write constant pool to a binary file. */
-    virtual void unparse(std::ostream&) const override;
-
-    /** Print some debugging information. */
-    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
-protected:
-    // Some extra clean-up actions on destruction
-    virtual void destructorHelper() override;
-public:
-    /** Destructor. */
-    virtual ~SgAsmJvmConstantPool();
-
-public:
-    /** Default constructor. */
-    SgAsmJvmConstantPool();
-
-protected:
-    /** Initialize all properties that have explicit initial values.
-     *
-     *  This function is mostly for use in user-defined constructors where the user desires to initialize
-     *  all the properties but does not know the names of the data members that store the property values.
-     *  This function initializes the properties that have explicit initializations within this class, but
-     *  does not recursively initialize base classes. */
-    void initializeProperties();
-#endif // SgAsmJvmConstantPool_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -18239,6 +18245,105 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmElfSegmentTable           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmElfSegmentTable);
+IS_SERIALIZABLE(AsmElfSegmentTable);
+
+#ifdef DOCUMENTATION
+/** Represents an ELF segment table.
+ *
+ * The ELF Segment Table is an ELF Section that has entries describing the various segments of the ELF file.  Each segment
+ * is also an SgAsmElfSection and the entries of the ELF Segment Table are associated with the SgAsmElfSection they
+ * describe.  The ELF Segment Table can be reconstructed by traversing the AST and finding the SgAsmElfSegmentTableEntry
+ * nodes. */
+class SgAsmElfSegmentTable: public SgAsmGenericSection {
+#endif // DOCUMENTATION
+
+    DECLARE_OTHERS(AsmElfSegmentTable);
+#if defined(SgAsmElfSegmentTable_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmElfSegmentTable -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmElfSegmentTable");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+        debugSerializationEnd("SgAsmElfSegmentTable");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+public:
+    /** Constuct segment table linked into the AST. */
+    explicit SgAsmElfSegmentTable(SgAsmElfFileHeader*);
+
+    /** Parses an ELF Segment (Program Header) Table.
+     *
+     *  Parses an ELF segment table and constructs and parses all segments reachable from the table. The section is
+     *  extended as necessary based on the number of entries and teh size of each entry. */
+    virtual SgAsmElfSegmentTable *parse() override;
+
+    /** Attaches new segments to the segment table.
+     *
+     *  Attaches a previously unattached ELF Segment (@ref SgAsmElfSection) to the ELF Segment Table (@ref
+     *  SgAsmElfSegmentTable). This method complements @ref SgAsmElfSection::init_from_segment_table. This method
+     *  initializes the segment table from the segment while init_from_segment_table initializes the segment from the
+     *  segment table.
+     *
+     *  ELF Segments are represented by @ref SgAsmElfSection objects since ELF Segments and ELF Sections overlap very much
+     *  in their features and thus should share an interface. An @ref SgAsmElfSection can appear in the ELF Section Table
+     *  and/or the ELF Segment Table and you can determine where it was located by calling @ref get_section_entry and
+     *  @ref get_segment_entry.
+     *
+     *  Returns the new segment table entry linked into the AST. */
+    SgAsmElfSegmentTableEntry *addSection(SgAsmElfSection*);
+
+    /** Returns info about the size of the entries based on information already available.
+     *
+     *  Any or all arguments may be null pointers if the caller is not interested in the value. */
+    rose_addr_t calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
+
+    /** Pre-unparsing updates */
+    virtual bool reallocate() override;
+
+    /** Write the segment table to disk. */
+    virtual void unparse(std::ostream&) const override;
+
+    /** Print some debugging info */
+    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Deprecated 2023-11
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    SgAsmElfSegmentTableEntry *add_section(SgAsmElfSection*) ROSE_DEPRECATED("use addSection");
+    rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const ROSE_DEPRECATED("use calculateSizes");
+public:
+    /** Destructor. */
+    virtual ~SgAsmElfSegmentTable();
+
+public:
+    /** Default constructor. */
+    SgAsmElfSegmentTable();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmElfSegmentTable_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmElfSegmentTableEntryList           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -18655,71 +18760,68 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmElfSegmentTable           -- MACHINE GENERATED; DO NOT MODIFY --
+// SgAsmElfSectionTable           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-DECLARE_LEAF_CLASS(AsmElfSegmentTable);
-IS_SERIALIZABLE(AsmElfSegmentTable);
+DECLARE_LEAF_CLASS(AsmElfSectionTable);
+IS_SERIALIZABLE(AsmElfSectionTable);
 
 #ifdef DOCUMENTATION
-/** Represents an ELF segment table.
+/** Represents an ELF section table.
  *
- * The ELF Segment Table is an ELF Section that has entries describing the various segments of the ELF file.  Each segment
- * is also an SgAsmElfSection and the entries of the ELF Segment Table are associated with the SgAsmElfSection they
- * describe.  The ELF Segment Table can be reconstructed by traversing the AST and finding the SgAsmElfSegmentTableEntry
- * nodes. */
-class SgAsmElfSegmentTable: public SgAsmGenericSection {
+ *  The ELF Section Table is itself a section.  The entries of the table are stored with the section they describe rather
+ *  than storing them all in the SgAsmSectionTable node.  We can reconstruct the ELF Section Table since sections have
+ *  unique ID numbers that are their original indices in the ELF Section Table. */
+class SgAsmElfSectionTable: public SgAsmGenericSection {
 #endif // DOCUMENTATION
 
-    DECLARE_OTHERS(AsmElfSegmentTable);
-#if defined(SgAsmElfSegmentTable_OTHERS) || defined(DOCUMENTATION)
+    DECLARE_OTHERS(AsmElfSectionTable);
+#if defined(SgAsmElfSectionTable_OTHERS) || defined(DOCUMENTATION)
 
-    //----------------------- Boost serialization for SgAsmElfSegmentTable -----------------------
+    //----------------------- Boost serialization for SgAsmElfSectionTable -----------------------
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmElfSegmentTable");
+        debugSerializationBegin("SgAsmElfSectionTable");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
-        debugSerializationEnd("SgAsmElfSegmentTable");
+        debugSerializationEnd("SgAsmElfSectionTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 public:
-    /** Constuct segment table linked into the AST. */
-    explicit SgAsmElfSegmentTable(SgAsmElfFileHeader*);
+    /** Constructor creates section table within the AST. */
+    explicit SgAsmElfSectionTable(SgAsmElfFileHeader*);
 
-    /** Parses an ELF Segment (Program Header) Table.
+    /** Parses an ELF Section Table.
      *
-     *  Parses an ELF segment table and constructs and parses all segments reachable from the table. The section is
-     *  extended as necessary based on the number of entries and teh size of each entry. */
-    virtual SgAsmElfSegmentTable *parse() override;
+     *  Parses an ELF section table and constructs and parses all sections reachable from the table. The section is
+     *  extended as necessary based on the number of entries and the size of each entry. Returns a pointer to this
+     *  object. */
+    virtual SgAsmElfSectionTable *parse() override;
 
-    /** Attaches new segments to the segment table.
+    /** Attaches a previously unattached ELF Section to the section table.
      *
-     *  Attaches a previously unattached ELF Segment (@ref SgAsmElfSection) to the ELF Segment Table (@ref
-     *  SgAsmElfSegmentTable). This method complements @ref SgAsmElfSection::init_from_segment_table. This method
-     *  initializes the segment table from the segment while init_from_segment_table initializes the segment from the
-     *  segment table.
+     *  If @p section is an ELF String Section (SgAsmElfStringSection) that contains an ELF String Table
+     *  (SgAsmElfStringTable) and the ELF Section Table has no associated string table then the @p section will be used as
+     *  the string table to hold the section names.
      *
-     *  ELF Segments are represented by @ref SgAsmElfSection objects since ELF Segments and ELF Sections overlap very much
-     *  in their features and thus should share an interface. An @ref SgAsmElfSection can appear in the ELF Section Table
-     *  and/or the ELF Segment Table and you can determine where it was located by calling @ref get_section_entry and
-     *  @ref get_segment_entry.
+     *  This method complements SgAsmElfSection::init_from_section_table. This method initializes the section table from
+     *  the section while init_from_section_table() initializes the section from the section table.
      *
-     *  Returns the new segment table entry linked into the AST. */
-    SgAsmElfSegmentTableEntry *addSection(SgAsmElfSection*);
+     *  Returns the new section table entry linked into the AST. */
+    SgAsmElfSectionTableEntry *addSection(SgAsmElfSection*);
 
     /** Returns info about the size of the entries based on information already available.
      *
      *  Any or all arguments may be null pointers if the caller is not interested in the value. */
     rose_addr_t calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 
-    /** Pre-unparsing updates */
+    /** Update prior to unparsing. */
     virtual bool reallocate() override;
 
-    /** Write the segment table to disk. */
+    /** Write the section table section back to disk */
     virtual void unparse(std::ostream&) const override;
 
     /** Print some debugging info */
@@ -18729,15 +18831,15 @@ public:
     // Deprecated 2023-11
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    SgAsmElfSegmentTableEntry *add_section(SgAsmElfSection*) ROSE_DEPRECATED("use addSection");
+    SgAsmElfSectionTableEntry *add_section(SgAsmElfSection*) ROSE_DEPRECATED("use addSection");
     rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const ROSE_DEPRECATED("use calculateSizes");
 public:
     /** Destructor. */
-    virtual ~SgAsmElfSegmentTable();
+    virtual ~SgAsmElfSectionTable();
 
 public:
     /** Default constructor. */
-    SgAsmElfSegmentTable();
+    SgAsmElfSectionTable();
 
 protected:
     /** Initialize all properties that have explicit initial values.
@@ -18747,7 +18849,7 @@ protected:
      *  This function initializes the properties that have explicit initializations within this class, but
      *  does not recursively initialize base classes. */
     void initializeProperties();
-#endif // SgAsmElfSegmentTable_OTHERS
+#endif // SgAsmElfSectionTable_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -19124,102 +19226,6 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmElfSectionTableEntry_OTHERS
-#ifdef DOCUMENTATION
-};
-#endif // DOCUMENTATION
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmElfSectionTable           -- MACHINE GENERATED; DO NOT MODIFY --
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-DECLARE_LEAF_CLASS(AsmElfSectionTable);
-IS_SERIALIZABLE(AsmElfSectionTable);
-
-#ifdef DOCUMENTATION
-/** Represents an ELF section table.
- *
- *  The ELF Section Table is itself a section.  The entries of the table are stored with the section they describe rather
- *  than storing them all in the SgAsmSectionTable node.  We can reconstruct the ELF Section Table since sections have
- *  unique ID numbers that are their original indices in the ELF Section Table. */
-class SgAsmElfSectionTable: public SgAsmGenericSection {
-#endif // DOCUMENTATION
-
-    DECLARE_OTHERS(AsmElfSectionTable);
-#if defined(SgAsmElfSectionTable_OTHERS) || defined(DOCUMENTATION)
-
-    //----------------------- Boost serialization for SgAsmElfSectionTable -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmElfSectionTable");
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
-        debugSerializationEnd("SgAsmElfSectionTable");
-    }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-public:
-    /** Constructor creates section table within the AST. */
-    explicit SgAsmElfSectionTable(SgAsmElfFileHeader*);
-
-    /** Parses an ELF Section Table.
-     *
-     *  Parses an ELF section table and constructs and parses all sections reachable from the table. The section is
-     *  extended as necessary based on the number of entries and the size of each entry. Returns a pointer to this
-     *  object. */
-    virtual SgAsmElfSectionTable *parse() override;
-
-    /** Attaches a previously unattached ELF Section to the section table.
-     *
-     *  If @p section is an ELF String Section (SgAsmElfStringSection) that contains an ELF String Table
-     *  (SgAsmElfStringTable) and the ELF Section Table has no associated string table then the @p section will be used as
-     *  the string table to hold the section names.
-     *
-     *  This method complements SgAsmElfSection::init_from_section_table. This method initializes the section table from
-     *  the section while init_from_section_table() initializes the section from the section table.
-     *
-     *  Returns the new section table entry linked into the AST. */
-    SgAsmElfSectionTableEntry *addSection(SgAsmElfSection*);
-
-    /** Returns info about the size of the entries based on information already available.
-     *
-     *  Any or all arguments may be null pointers if the caller is not interested in the value. */
-    rose_addr_t calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
-
-    /** Update prior to unparsing. */
-    virtual bool reallocate() override;
-
-    /** Write the section table section back to disk */
-    virtual void unparse(std::ostream&) const override;
-
-    /** Print some debugging info */
-    virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Deprecated 2023-11
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-public:
-    SgAsmElfSectionTableEntry *add_section(SgAsmElfSection*) ROSE_DEPRECATED("use addSection");
-    rose_addr_t calculate_sizes(size_t*, size_t*, size_t*, size_t*) const ROSE_DEPRECATED("use calculateSizes");
-public:
-    /** Destructor. */
-    virtual ~SgAsmElfSectionTable();
-
-public:
-    /** Default constructor. */
-    SgAsmElfSectionTable();
-
-protected:
-    /** Initialize all properties that have explicit initial values.
-     *
-     *  This function is mostly for use in user-defined constructors where the user desires to initialize
-     *  all the properties but does not know the names of the data members that store the property values.
-     *  This function initializes the properties that have explicit initializations within this class, but
-     *  does not recursively initialize base classes. */
-    void initializeProperties();
-#endif // SgAsmElfSectionTable_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -25051,6 +25057,61 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmDwarfConstType           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmDwarfConstType);
+IS_SERIALIZABLE(AsmDwarfConstType);
+
+#ifdef DOCUMENTATION
+class SgAsmDwarfConstType: public SgAsmDwarfConstruct {
+#endif // DOCUMENTATION
+
+    DECLARE_OTHERS(AsmDwarfConstType);
+#if defined(SgAsmDwarfConstType_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmDwarfConstType -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDwarfConstType");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
+        debugSerializationEnd("SgAsmDwarfConstType");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+
+public:
+    /** Destructor. */
+    virtual ~SgAsmDwarfConstType();
+
+public:
+    /** Default constructor. */
+    SgAsmDwarfConstType();
+
+public:
+    /** Constructor. */
+    SgAsmDwarfConstType(int const& nesting_level,
+                        uint64_t const& offset,
+                        uint64_t const& overall_offset);
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmDwarfConstType_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmDwarfConstructList           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -25161,61 +25222,6 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmDwarfConstant_OTHERS
-#ifdef DOCUMENTATION
-};
-#endif // DOCUMENTATION
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmDwarfConstType           -- MACHINE GENERATED; DO NOT MODIFY --
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-DECLARE_LEAF_CLASS(AsmDwarfConstType);
-IS_SERIALIZABLE(AsmDwarfConstType);
-
-#ifdef DOCUMENTATION
-class SgAsmDwarfConstType: public SgAsmDwarfConstruct {
-#endif // DOCUMENTATION
-
-    DECLARE_OTHERS(AsmDwarfConstType);
-#if defined(SgAsmDwarfConstType_OTHERS) || defined(DOCUMENTATION)
-
-    //----------------------- Boost serialization for SgAsmDwarfConstType -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmDwarfConstType");
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmDwarfConstruct);
-        debugSerializationEnd("SgAsmDwarfConstType");
-    }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
-public:
-    /** Destructor. */
-    virtual ~SgAsmDwarfConstType();
-
-public:
-    /** Default constructor. */
-    SgAsmDwarfConstType();
-
-public:
-    /** Constructor. */
-    SgAsmDwarfConstType(int const& nesting_level,
-                        uint64_t const& offset,
-                        uint64_t const& overall_offset);
-
-protected:
-    /** Initialize all properties that have explicit initial values.
-     *
-     *  This function is mostly for use in user-defined constructors where the user desires to initialize
-     *  all the properties but does not know the names of the data members that store the property values.
-     *  This function initializes the properties that have explicit initializations within this class, but
-     *  does not recursively initialize base classes. */
-    void initializeProperties();
-#endif // SgAsmDwarfConstType_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -26011,8 +26017,8 @@ AstNodeClass& AsmDwarfConstruct = nonTerminalConstructor(
         | AsmDwarfCommonInclusion
         | AsmDwarfCompilationUnit
         | AsmDwarfCondition
-        | AsmDwarfConstType
         | AsmDwarfConstant
+        | AsmDwarfConstType
         | AsmDwarfDwarfProcedure
         | AsmDwarfEntryPoint
         | AsmDwarfEnumerationType
@@ -26252,160 +26258,6 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmDwarfInformation_OTHERS
-#ifdef DOCUMENTATION
-};
-#endif // DOCUMENTATION
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmDirectRegisterExpression           -- MACHINE GENERATED; DO NOT MODIFY --
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-DECLARE_LEAF_CLASS(AsmDirectRegisterExpression);
-IS_SERIALIZABLE(AsmDirectRegisterExpression);
-
-#ifdef DOCUMENTATION
-/** Expression representing a machine register. */
-class SgAsmDirectRegisterExpression: public SgAsmRegisterReferenceExpression {
-#endif // DOCUMENTATION
-
-    DECLARE_OTHERS(AsmDirectRegisterExpression);
-#if defined(SgAsmDirectRegisterExpression_OTHERS) || defined(DOCUMENTATION)
-
-    //----------------------- Boost serialization for SgAsmDirectRegisterExpression -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmDirectRegisterExpression");
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmRegisterReferenceExpression);
-        debugSerializationEnd("SgAsmDirectRegisterExpression");
-    }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
-public:
-    /** Destructor. */
-    virtual ~SgAsmDirectRegisterExpression();
-
-public:
-    /** Default constructor. */
-    SgAsmDirectRegisterExpression();
-
-public:
-    /** Constructor. */
-    explicit SgAsmDirectRegisterExpression(Rose::BinaryAnalysis::RegisterDescriptor const& descriptor);
-
-protected:
-    /** Initialize all properties that have explicit initial values.
-     *
-     *  This function is mostly for use in user-defined constructors where the user desires to initialize
-     *  all the properties but does not know the names of the data members that store the property values.
-     *  This function initializes the properties that have explicit initializations within this class, but
-     *  does not recursively initialize base classes. */
-    void initializeProperties();
-#endif // SgAsmDirectRegisterExpression_OTHERS
-#ifdef DOCUMENTATION
-};
-#endif // DOCUMENTATION
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmRegisterReferenceExpression           -- MACHINE GENERATED; DO NOT MODIFY --
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-#ifndef DOCUMENTATION
-AstNodeClass& AsmRegisterReferenceExpression = nonTerminalConstructor(
-    "AsmRegisterReferenceExpression",
-    *this,
-    "AsmRegisterReferenceExpression",
-    "AsmRegisterReferenceExpressionTag",
-    SubclassListBuilder()
-        | AsmDirectRegisterExpression
-        | AsmIndirectRegisterExpression
-    , false);
-assert(AsmRegisterReferenceExpression.associatedGrammar != nullptr);
-AsmRegisterReferenceExpression.setCppCondition("!defined(DOCUMENTATION)");
-AsmRegisterReferenceExpression.isBoostSerializable(true);
-AsmRegisterReferenceExpression.setAutomaticGenerationOfConstructor(false);
-AsmRegisterReferenceExpression.setAutomaticGenerationOfDestructor(false);
-#endif // !DOCUMENTATION
-
-#ifdef DOCUMENTATION
-/** Base class for references to a machine register. */
-class SgAsmRegisterReferenceExpression: public SgAsmExpression {
-#endif // DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmRegisterReferenceExpression.setDataPrototype(
-        "Rose::BinaryAnalysis::RegisterDescriptor", "descriptor", "",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmRegisterReferenceExpression.setDataPrototype(
-        "int", "adjustment", "= 0",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-    DECLARE_OTHERS(AsmRegisterReferenceExpression);
-#if defined(SgAsmRegisterReferenceExpression_OTHERS) || defined(DOCUMENTATION)
-
-    //----------------------- Boost serialization for SgAsmRegisterReferenceExpression -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmRegisterReferenceExpression");
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
-        s & BOOST_SERIALIZATION_NVP(p_descriptor);
-        s & BOOST_SERIALIZATION_NVP(p_adjustment);
-        debugSerializationEnd("SgAsmRegisterReferenceExpression");
-    }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
-public:
-    /** Property: Descriptor for accessed register. 
-     * 
-     * @{ */
-    Rose::BinaryAnalysis::RegisterDescriptor const& get_descriptor() const;
-    void set_descriptor(Rose::BinaryAnalysis::RegisterDescriptor const&);
-    /** @} */
-
-public:
-    /** Property: Post-increment or pre-decrement amount.
-     *
-     *  This is a value that's added or subtracted from a register each time the containing instruction is executed. 
-     *  
-     *  @{ */
-    int const& get_adjustment() const;
-    void set_adjustment(int const&);
-    /** @} */
-
-public:
-    /** Destructor. */
-    virtual ~SgAsmRegisterReferenceExpression();
-
-protected:
-    /** Default constructor. */
-    SgAsmRegisterReferenceExpression();
-
-protected:
-    /** Constructor. */
-    explicit SgAsmRegisterReferenceExpression(Rose::BinaryAnalysis::RegisterDescriptor const& descriptor);
-
-protected:
-    /** Initialize all properties that have explicit initial values.
-     *
-     *  This function is mostly for use in user-defined constructors where the user desires to initialize
-     *  all the properties but does not know the names of the data members that store the property values.
-     *  This function initializes the properties that have explicit initializations within this class, but
-     *  does not recursively initialize base classes. */
-    void initializeProperties();
-#endif // SgAsmRegisterReferenceExpression_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -27367,6 +27219,160 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmDOSExtendedHeader_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmDirectRegisterExpression           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmDirectRegisterExpression);
+IS_SERIALIZABLE(AsmDirectRegisterExpression);
+
+#ifdef DOCUMENTATION
+/** Expression representing a machine register. */
+class SgAsmDirectRegisterExpression: public SgAsmRegisterReferenceExpression {
+#endif // DOCUMENTATION
+
+    DECLARE_OTHERS(AsmDirectRegisterExpression);
+#if defined(SgAsmDirectRegisterExpression_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmDirectRegisterExpression -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmDirectRegisterExpression");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmRegisterReferenceExpression);
+        debugSerializationEnd("SgAsmDirectRegisterExpression");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+
+public:
+    /** Destructor. */
+    virtual ~SgAsmDirectRegisterExpression();
+
+public:
+    /** Default constructor. */
+    SgAsmDirectRegisterExpression();
+
+public:
+    /** Constructor. */
+    explicit SgAsmDirectRegisterExpression(Rose::BinaryAnalysis::RegisterDescriptor const& descriptor);
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmDirectRegisterExpression_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmRegisterReferenceExpression           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#ifndef DOCUMENTATION
+AstNodeClass& AsmRegisterReferenceExpression = nonTerminalConstructor(
+    "AsmRegisterReferenceExpression",
+    *this,
+    "AsmRegisterReferenceExpression",
+    "AsmRegisterReferenceExpressionTag",
+    SubclassListBuilder()
+        | AsmDirectRegisterExpression
+        | AsmIndirectRegisterExpression
+    , false);
+assert(AsmRegisterReferenceExpression.associatedGrammar != nullptr);
+AsmRegisterReferenceExpression.setCppCondition("!defined(DOCUMENTATION)");
+AsmRegisterReferenceExpression.isBoostSerializable(true);
+AsmRegisterReferenceExpression.setAutomaticGenerationOfConstructor(false);
+AsmRegisterReferenceExpression.setAutomaticGenerationOfDestructor(false);
+#endif // !DOCUMENTATION
+
+#ifdef DOCUMENTATION
+/** Base class for references to a machine register. */
+class SgAsmRegisterReferenceExpression: public SgAsmExpression {
+#endif // DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmRegisterReferenceExpression.setDataPrototype(
+        "Rose::BinaryAnalysis::RegisterDescriptor", "descriptor", "",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmRegisterReferenceExpression.setDataPrototype(
+        "int", "adjustment", "= 0",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+    DECLARE_OTHERS(AsmRegisterReferenceExpression);
+#if defined(SgAsmRegisterReferenceExpression_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmRegisterReferenceExpression -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmRegisterReferenceExpression");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
+        s & BOOST_SERIALIZATION_NVP(p_descriptor);
+        s & BOOST_SERIALIZATION_NVP(p_adjustment);
+        debugSerializationEnd("SgAsmRegisterReferenceExpression");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+
+public:
+    /** Property: Descriptor for accessed register. 
+     * 
+     * @{ */
+    Rose::BinaryAnalysis::RegisterDescriptor const& get_descriptor() const;
+    void set_descriptor(Rose::BinaryAnalysis::RegisterDescriptor const&);
+    /** @} */
+
+public:
+    /** Property: Post-increment or pre-decrement amount.
+     *
+     *  This is a value that's added or subtracted from a register each time the containing instruction is executed. 
+     *  
+     *  @{ */
+    int const& get_adjustment() const;
+    void set_adjustment(int const&);
+    /** @} */
+
+public:
+    /** Destructor. */
+    virtual ~SgAsmRegisterReferenceExpression();
+
+protected:
+    /** Default constructor. */
+    SgAsmRegisterReferenceExpression();
+
+protected:
+    /** Constructor. */
+    explicit SgAsmRegisterReferenceExpression(Rose::BinaryAnalysis::RegisterDescriptor const& descriptor);
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmRegisterReferenceExpression_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -33848,6 +33854,7 @@ public:
 public:
     /** Constructor. */
     SgAsmCilInstruction(rose_addr_t const& address,
+                        std::string const& architectureName,
                         std::string const& mnemonic,
                         Rose::BinaryAnalysis::CilInstructionKind const& kind);
 
@@ -34113,6 +34120,128 @@ protected:
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmCilGenericParam           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmCilGenericParam);
+IS_SERIALIZABLE(AsmCilGenericParam);
+
+#ifdef DOCUMENTATION
+/** CIL GenericParam node (II.22.20). */
+class SgAsmCilGenericParam: public SgAsmCilMetadata {
+#endif // DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmCilGenericParam.setDataPrototype(
+        "uint16_t", "Number", "= 0",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmCilGenericParam.setDataPrototype(
+        "uint16_t", "Flags", "= 0",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmCilGenericParam.setDataPrototype(
+        "uint32_t", "Owner", "= 0",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmCilGenericParam.setDataPrototype(
+        "uint32_t", "Name", "= 0",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+    DECLARE_OTHERS(AsmCilGenericParam);
+#if defined(SgAsmCilGenericParam_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmCilGenericParam -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmCilGenericParam");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
+        s & BOOST_SERIALIZATION_NVP(p_Number);
+        s & BOOST_SERIALIZATION_NVP(p_Flags);
+        s & BOOST_SERIALIZATION_NVP(p_Owner);
+        s & BOOST_SERIALIZATION_NVP(p_Name);
+        debugSerializationEnd("SgAsmCilGenericParam");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+
+public:
+    /** Property: Number.
+     *
+     *  The 2-byte index of the generic parameter. 
+     *  
+     *  @{ */
+    uint16_t const& get_Number() const;
+    void set_Number(uint16_t const&);
+    /** @} */
+
+public:
+    /** Property: Flags.
+     *
+     *  A 2-byte bitmask of type GenericParamAttributes. 
+     *  
+     *  @{ */
+    uint16_t const& get_Flags() const;
+    void set_Flags(uint16_t const&);
+    /** @} */
+
+public:
+    /** Property: Owner.
+     *
+     *  An index into the TypeDef or MethodDef table. 
+     *  
+     *  @{ */
+    uint32_t const& get_Owner() const;
+    void set_Owner(uint32_t const&);
+    /** @} */
+
+public:
+    /** Property: Name.
+     *
+     *  An index into the String heap. 
+     *  
+     *  @{ */
+    uint32_t const& get_Name() const;
+    void set_Name(uint32_t const&);
+    /** @} */
+public:
+    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+
+    const SgAsmCilMetadata* get_Owner_object() const;
+    const std::uint8_t* get_Name_string() const;
+public:
+    /** Destructor. */
+    virtual ~SgAsmCilGenericParam();
+
+public:
+    /** Default constructor. */
+    SgAsmCilGenericParam();
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmCilGenericParam_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmCilGenericParamConstraintTable           -- MACHINE GENERATED; DO NOT MODIFY --
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -34257,128 +34386,6 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmCilGenericParamConstraint_OTHERS
-#ifdef DOCUMENTATION
-};
-#endif // DOCUMENTATION
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmCilGenericParam           -- MACHINE GENERATED; DO NOT MODIFY --
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-DECLARE_LEAF_CLASS(AsmCilGenericParam);
-IS_SERIALIZABLE(AsmCilGenericParam);
-
-#ifdef DOCUMENTATION
-/** CIL GenericParam node (II.22.20). */
-class SgAsmCilGenericParam: public SgAsmCilMetadata {
-#endif // DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmCilGenericParam.setDataPrototype(
-        "uint16_t", "Number", "= 0",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmCilGenericParam.setDataPrototype(
-        "uint16_t", "Flags", "= 0",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmCilGenericParam.setDataPrototype(
-        "uint32_t", "Owner", "= 0",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-#ifndef DOCUMENTATION
-    AsmCilGenericParam.setDataPrototype(
-        "uint32_t", "Name", "= 0",
-        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-#endif // !DOCUMENTATION
-
-    DECLARE_OTHERS(AsmCilGenericParam);
-#if defined(SgAsmCilGenericParam_OTHERS) || defined(DOCUMENTATION)
-
-    //----------------------- Boost serialization for SgAsmCilGenericParam -----------------------
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        debugSerializationBegin("SgAsmCilGenericParam");
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilMetadata);
-        s & BOOST_SERIALIZATION_NVP(p_Number);
-        s & BOOST_SERIALIZATION_NVP(p_Flags);
-        s & BOOST_SERIALIZATION_NVP(p_Owner);
-        s & BOOST_SERIALIZATION_NVP(p_Name);
-        debugSerializationEnd("SgAsmCilGenericParam");
-    }
-#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
-public:
-    /** Property: Number.
-     *
-     *  The 2-byte index of the generic parameter. 
-     *  
-     *  @{ */
-    uint16_t const& get_Number() const;
-    void set_Number(uint16_t const&);
-    /** @} */
-
-public:
-    /** Property: Flags.
-     *
-     *  A 2-byte bitmask of type GenericParamAttributes. 
-     *  
-     *  @{ */
-    uint16_t const& get_Flags() const;
-    void set_Flags(uint16_t const&);
-    /** @} */
-
-public:
-    /** Property: Owner.
-     *
-     *  An index into the TypeDef or MethodDef table. 
-     *  
-     *  @{ */
-    uint32_t const& get_Owner() const;
-    void set_Owner(uint32_t const&);
-    /** @} */
-
-public:
-    /** Property: Name.
-     *
-     *  An index into the String heap. 
-     *  
-     *  @{ */
-    uint32_t const& get_Name() const;
-    void set_Name(uint32_t const&);
-    /** @} */
-public:
-    void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
-
-    const SgAsmCilMetadata* get_Owner_object() const;
-    const std::uint8_t* get_Name_string() const;
-public:
-    /** Destructor. */
-    virtual ~SgAsmCilGenericParam();
-
-public:
-    /** Default constructor. */
-    SgAsmCilGenericParam();
-
-protected:
-    /** Initialize all properties that have explicit initial values.
-     *
-     *  This function is mostly for use in user-defined constructors where the user desires to initialize
-     *  all the properties but does not know the names of the data members that store the property values.
-     *  This function initializes the properties that have explicit initializations within this class, but
-     *  does not recursively initialize base classes. */
-    void initializeProperties();
-#endif // SgAsmCilGenericParam_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -37737,9 +37744,9 @@ AstNodeClass& AsmCilMetadata = nonTerminalConstructor(
         | AsmCilFieldTable
         | AsmCilFile
         | AsmCilFileTable
-        | AsmCilGenericParam
         | AsmCilGenericParamConstraint
         | AsmCilGenericParamConstraintTable
+        | AsmCilGenericParam
         | AsmCilGenericParamTable
         | AsmCilImplMap
         | AsmCilImplMapTable
@@ -40079,6 +40086,7 @@ public:
 public:
     /** Constructor. */
     SgAsmAarch64Instruction(rose_addr_t const& address,
+                            std::string const& architectureName,
                             std::string const& mnemonic,
                             Rose::BinaryAnalysis::Aarch64InstructionKind const& kind,
                             Rose::BinaryAnalysis::Aarch64InstructionCondition const& condition);
@@ -40471,6 +40479,7 @@ public:
 public:
     /** Constructor. */
     SgAsmAarch32Instruction(rose_addr_t const& address,
+                            std::string const& architectureName,
                             std::string const& mnemonic,
                             Rose::BinaryAnalysis::Aarch32InstructionKind const& kind,
                             Rose::BinaryAnalysis::Aarch32InstructionCondition const& condition);
@@ -40524,7 +40533,9 @@ AsmInstruction.setAutomaticGenerationOfDestructor(false);
 
 DECLARE_HEADERS(AsmInstruction);
 #if defined(SgAsmInstruction_HEADERS) || defined(DOCUMENTATION)
+#include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
+#include <Sawyer/Cached.h>
 #endif // SgAsmInstruction_HEADERS
 
 #ifdef DOCUMENTATION
@@ -40551,6 +40562,12 @@ DECLARE_HEADERS(AsmInstruction);
  *  are guaranteed to have different starting addresses unless the specimen is self-modifying. */
 class SgAsmInstruction: public SgAsmStatement {
 #endif // DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmInstruction.setDataPrototype(
+        "std::string", "architectureName", "",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
 
 #ifndef DOCUMENTATION
     AsmInstruction.setDataPrototype(
@@ -40606,6 +40623,7 @@ private:
     void serialize(S &s, const unsigned /*version*/) {
         debugSerializationBegin("SgAsmInstruction");
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmStatement);
+        s & BOOST_SERIALIZATION_NVP(p_architectureName);
         s & BOOST_SERIALIZATION_NVP(p_mnemonic);
         s & BOOST_SERIALIZATION_NVP(p_rawBytes);
         s & BOOST_SERIALIZATION_NVP(p_operandList);
@@ -40635,6 +40653,15 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Property: Architecture name.
+     *
+     *  The name of the architecture to which this instruction belongs. 
+     *  
+     *  @{ */
+    std::string const& get_architectureName() const;
+    /** @} */
+
 public:
     /** Property: Instruction mnemonic string.
      *
@@ -40720,6 +40747,9 @@ private:
     // code) should be procted by the mutex_. Additionally, the p_cacheLockCount data member is synchronized.
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_;
 
+    // Cached architecture pointer corresponding to the architectureName property.
+    Sawyer::Cached<Rose::BinaryAnalysis::Architecture::BaseConstPtr> architecture_;
+
 public:
     /** Represents an invalid stack delta.
      *
@@ -40731,6 +40761,14 @@ public:
     // Functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Architecture for instruction.
+     *
+     *  Returns a cached architecture pointer if available. Otherwise, it uses the @ref architectureName property to look up
+     *  an architecture that can handle this instruction and caches the pointer before returning it.
+     *
+     *  Thread safety: This function is thread safe. */
+    Rose::BinaryAnalysis::Architecture::BaseConstPtr architecture() const /*final*/;
+
     /** Return a description of this instruction.
      *
      *  Descriptions are useful for generating comments in the disassembly listing to say what each instruction does when
@@ -41085,6 +41123,7 @@ public:
 public:
     /** Constructor. */
     SgAsmInstruction(rose_addr_t const& address,
+                     std::string const& architectureName,
                      std::string const& mnemonic);
 
 protected:

@@ -51,14 +51,16 @@ SgAsmAarch64Instruction::SgAsmAarch64Instruction()
 
 // The association between constructor arguments and their classes:
 //    property=address          class=SgAsmStatement
+//    property=architectureName class=SgAsmInstruction
 //    property=mnemonic         class=SgAsmInstruction
 //    property=kind             class=SgAsmAarch64Instruction
 //    property=condition        class=SgAsmAarch64Instruction
 SgAsmAarch64Instruction::SgAsmAarch64Instruction(rose_addr_t const& address,
+                                                 std::string const& architectureName,
                                                  std::string const& mnemonic,
                                                  Rose::BinaryAnalysis::Aarch64InstructionKind const& kind,
                                                  Rose::BinaryAnalysis::Aarch64InstructionCondition const& condition)
-    : SgAsmInstruction(address, mnemonic)
+    : SgAsmInstruction(address, architectureName, mnemonic)
     , p_kind(kind)
     , p_condition(condition)
     , p_updatesFlags(false) {}

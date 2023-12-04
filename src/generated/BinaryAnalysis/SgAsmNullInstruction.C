@@ -14,10 +14,12 @@ SgAsmNullInstruction::SgAsmNullInstruction() {}
 
 // The association between constructor arguments and their classes:
 //    property=address          class=SgAsmStatement
+//    property=architectureName class=SgAsmInstruction
 //    property=mnemonic         class=SgAsmInstruction
 SgAsmNullInstruction::SgAsmNullInstruction(rose_addr_t const& address,
+                                           std::string const& architectureName,
                                            std::string const& mnemonic)
-    : SgAsmInstruction(address, mnemonic) {}
+    : SgAsmInstruction(address, architectureName, mnemonic) {}
 
 void
 SgAsmNullInstruction::initializeProperties() {

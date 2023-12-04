@@ -26,12 +26,14 @@ SgAsmM68kInstruction::SgAsmM68kInstruction()
 
 // The association between constructor arguments and their classes:
 //    property=address          class=SgAsmStatement
+//    property=architectureName class=SgAsmInstruction
 //    property=mnemonic         class=SgAsmInstruction
 //    property=kind             class=SgAsmM68kInstruction
 SgAsmM68kInstruction::SgAsmM68kInstruction(rose_addr_t const& address,
+                                           std::string const& architectureName,
                                            std::string const& mnemonic,
                                            Rose::BinaryAnalysis::M68kInstructionKind const& kind)
-    : SgAsmInstruction(address, mnemonic)
+    : SgAsmInstruction(address, architectureName, mnemonic)
     , p_kind(kind) {}
 
 void

@@ -7,6 +7,11 @@
 #include <sage3basic.h>
 
 std::string const&
+SgAsmInstruction::get_architectureName() const {
+    return p_architectureName;
+}
+
+std::string const&
 SgAsmInstruction::get_mnemonic() const {
     return p_mnemonic;
 }
@@ -73,10 +78,13 @@ SgAsmInstruction::SgAsmInstruction()
 
 // The association between constructor arguments and their classes:
 //    property=address          class=SgAsmStatement
+//    property=architectureName class=SgAsmInstruction
 //    property=mnemonic         class=SgAsmInstruction
 SgAsmInstruction::SgAsmInstruction(rose_addr_t const& address,
+                                   std::string const& architectureName,
                                    std::string const& mnemonic)
     : SgAsmStatement(address)
+    , p_architectureName(architectureName)
     , p_mnemonic(mnemonic)
     , p_operandList(nullptr)
     , p_cacheLockCount(0)
