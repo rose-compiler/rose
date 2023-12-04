@@ -97,32 +97,6 @@ SgAsmPowerpcInstruction::getSuccessors(bool &complete) {
     return retval;
 }
 
-bool
-SgAsmPowerpcInstruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) {
-    if (insns.empty())
-        return false;
-    SgAsmPowerpcInstruction *insn = isSgAsmPowerpcInstruction(insns.back());
-    if (!insn)
-        return false;
-
-    // Quick method based only on the kind of instruction.  Returns are normally coded as
-    //    BCLR BO, BI, BH
-    // where the BO field is the 5-bit constant 0b1x1xx where the x means 0 or 1
-    // where the BI field is anything (usually zero)
-    // where the BH field is zero
-    if (insn->get_kind() == powerpc_bclr && insn->nOperands() == 3 &&
-        (insn->operand(0)->asUnsigned().orElse(0) & 0x14) == 0x14 &&
-        insn->operand(2)->asUnsigned().orElse(1) == 0)
-        return true;
-
-    return false;
-}
-
-bool
-SgAsmPowerpcInstruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) {
-    return isFunctionReturnFast(insns);
-}
-
 // Determines whether this is the special PowerPC "unknown" instruction.
 bool
 SgAsmPowerpcInstruction::isUnknown() const

@@ -467,6 +467,23 @@ Cil::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t
     }
 }
 
+bool
+Cil::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) const {
+    auto last = isSgAsmCilInstruction(insns.back());
+    ASSERT_not_null(last);
+
+    switch (last->get_kind()) {
+        case Cil_ret:             // name="ret",input="VarPop",output="Push0",args="InlineNone",o1="0xFF",o2="0x2A",flow="return"
+        case Cil_endfinally:      // name="endfinally",input="Pop0",output="Push0",args="InlineNone",o1="0xFF",o2="0xDC",flow="return"
+        case Cil_endfilter:       // name="endfilter",input="PopI",output="Push0",args="InlineNone",o1="0xFE",o2="0x11",flow="return"
+        case Cil_mono_retobj:     // name="mono_retobj",input="PopI",output="Push0",args="InlineType",o1="0xF0",o2="0x05",flow="return"
+        case Cil_mono_ldnativeobj:// name="mono_ldnativeobj",input="PopI",output="Push1",args="InlineType",o1="0xF0",o2="0x06",flow="return"
+            return true;
+        default:
+            return false;
+    }
+}
+
 Disassembler::Base::Ptr
 Cil::newInstructionDecoder() const {
     return Disassembler::Cil::instance(shared_from_this());

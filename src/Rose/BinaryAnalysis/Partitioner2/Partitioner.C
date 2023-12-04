@@ -1570,7 +1570,7 @@ Partitioner::basicBlockIsFunctionReturn(const BasicBlock::Ptr &bb) const {
 
     // No semantics, so delegate to SgAsmInstruction subclasses
     SAWYER_MESG(debug) <<"  block does not have semantic information\n";
-    retval = lastInsn->isFunctionReturnFast(bb->instructions());
+    retval = architecture()->isFunctionReturnFast(bb->instructions());
     bb->isFunctionReturn() = retval;
     SAWYER_MESG(debug) <<"  returning " <<(retval ? "true" : "false") <<"\n";
     return retval;

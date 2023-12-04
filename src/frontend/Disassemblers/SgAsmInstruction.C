@@ -91,16 +91,16 @@ SgAsmInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &insns
     return architecture()->isFunctionCallSlow(insns, target, return_va);
 }
 
+// [Robb Matzke 2023-12-04]: deprecated
 bool
-SgAsmInstruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*>&)
-{
-    return false;
+SgAsmInstruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) {
+    return architecture()->isFunctionReturnFast(insns);
 }
 
+// [Robb Matzke 2023-12-04]: deprecated
 bool
-SgAsmInstruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&)
-{
-    return false;
+SgAsmInstruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) {
+    return architecture()->isFunctionReturnSlow(insns);
 }
 
 bool

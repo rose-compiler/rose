@@ -79,6 +79,16 @@ Base::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& insns, rose_addr_
     return isFunctionCallSlow(insns, target, ret);
 }
 
+bool
+Base::isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) const {
+    return false;
+}
+
+bool
+Base::isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) const {
+    return isFunctionReturnFast(insns);
+}
+
 std::vector<Partitioner2::FunctionPrologueMatcher::Ptr>
 Base::functionPrologueMatchers(const Partitioner2::EnginePtr&) const {
     return {};

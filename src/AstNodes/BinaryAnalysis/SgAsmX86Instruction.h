@@ -68,8 +68,6 @@ public:
     static Rose::BinaryAnalysis::RegisterDictionaryPtr registersForWidth(size_t);
 
     // Overrides are documented in the base class
-    virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) override;
-    virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) override;
     virtual Sawyer::Optional<rose_addr_t> branchTarget() override;
     virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) override;
     virtual Rose::BinaryAnalysis::AddressSet getSuccessors(const std::vector<SgAsmInstruction*>&,

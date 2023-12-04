@@ -28,6 +28,4 @@ public:
     virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) override;
     virtual bool isUnknown() const override;
     virtual unsigned get_anyKind() const override;
-    virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) override;
-    virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) override;
 };

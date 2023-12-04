@@ -5,16 +5,6 @@
 using namespace Rose;                                   // temporary until this lives in "rose"
 using namespace Rose::BinaryAnalysis;
 
-bool
-SgAsmNullInstruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) {
-    return false;
-}
-
-bool
-SgAsmNullInstruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) {
-    return false;
-}
-
 Sawyer::Optional<rose_addr_t>
 SgAsmNullInstruction::branchTarget() {
     return Sawyer::Nothing();

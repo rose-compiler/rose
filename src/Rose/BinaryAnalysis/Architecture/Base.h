@@ -179,14 +179,27 @@ public:
      *  The "fast" and "slow" versions differ only in what kind of anlysis they do.  The "fast" version typically looks
      *  only at instruction patterns while the slow version might incur more expense by looking at instruction semantics.
      *
-     *  The base implementation of the fast method always returns false. The base implementation of the slow method just calls
-     *  the fast method.
+     *  The base implementation of the fast method always returns false. The base implementation of the slow method just calls the
+     *  fast method.
      *
      *  Thread safety: Thread safe.
      *
      * @{ */
     virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret) const;
     virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret) const;
+    /** @} */
+
+    /** Returns true if the specified basic block looks like a function return.
+     *
+     *  The "fast" and "slow" versions differ only in what kind of anlysis they do.  The "fast" version typically looks
+     *  only at instruction patterns while the slow version might incur more expense by looking at instruction semantics.
+     *
+     *  The base implementaiton of the fast method always returns false. The base implementation of the slow method just calls the
+     *  fast method.
+     *
+     * @{ */
+    virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) const;
+    virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) const;
     /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

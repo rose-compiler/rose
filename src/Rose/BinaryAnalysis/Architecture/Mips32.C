@@ -512,6 +512,26 @@ Mips32::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_add
     }
 }
 
+bool
+Mips32::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) const {
+    if (insns.empty())
+        return false;
+    auto last = isSgAsmMipsInstruction(insns.back());
+    ASSERT_not_null(last);
+
+    if (last->get_kind() != mips_jr)
+        return false;
+    const SgAsmExpressionPtrList &args = last->get_operandList()->get_operands();
+    if (args.size() < 1)
+        return false;
+    SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(args[0]);
+    if (!rre)
+        return false;
+    if (rre->get_descriptor().majorNumber() != mips_regclass_gpr || rre->get_descriptor().minorNumber() != 31)
+        return false;
+    return true; // this is a "JR ra" instruction.
+}
+
 Disassembler::Base::Ptr
 Mips32::newInstructionDecoder() const {
     return Disassembler::Mips::instance(shared_from_this());

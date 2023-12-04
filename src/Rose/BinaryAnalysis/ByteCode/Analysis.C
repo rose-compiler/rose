@@ -158,7 +158,7 @@ void Class::partition(const PartitionerPtr &partitioner, std::map<std::string,ro
 
         // Set properties of the block
         SgAsmInstruction* last = block->instructions().back();
-        if (last->isFunctionReturnFast(block->instructions())) {
+        if (partitioner->architecture()->isFunctionReturnFast(block->instructions())) {
           block->isFunctionReturn(true);
         }
         else if (partitioner->architecture()->isFunctionCallFast(block->instructions(), nullptr, nullptr)) {

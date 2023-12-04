@@ -12,35 +12,6 @@ SgAsmMipsInstruction::get_anyKind() const {
 }
 
 // see base class
-bool
-SgAsmMipsInstruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns)
-{
-    if (insns.empty())
-        return false;
-    SgAsmMipsInstruction *last = isSgAsmMipsInstruction(insns.back());
-    if (!last)
-        return false;
-    if (last->get_kind()!=mips_jr)
-        return false;
-    const SgAsmExpressionPtrList &args = last->get_operandList()->get_operands();
-    if (args.size()<1)
-        return false;
-    SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(args[0]);
-    if (!rre)
-        return false;
-    if (rre->get_descriptor().majorNumber()!=mips_regclass_gpr || rre->get_descriptor().minorNumber()!=31)
-        return false;
-    return true; // this is a "JR ra" instruction.
-}
-
-// see base class
-bool
-SgAsmMipsInstruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns)
-{
-    return isFunctionReturnFast(insns);
-}
-
-// see base class
 AddressSet
 SgAsmMipsInstruction::getSuccessors(bool &complete)
 {

@@ -62,26 +62,6 @@ SgAsmX86Instruction::registersForWidth(size_t nbits) {
     return registersForInstructionSize(instructionSizeForWidth(nbits));
 }
 
-
-// See base class.
-bool
-SgAsmX86Instruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) {
-    if (insns.empty())
-        return false;
-    SgAsmX86Instruction *last_insn = isSgAsmX86Instruction(insns.back());
-    if (!last_insn)
-        return false;
-    if (last_insn->get_kind()==x86_ret || last_insn->get_kind()==x86_retf)
-        return true;
-    return false;
-}
-
-// See base class.
-bool
-SgAsmX86Instruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) {
-    return isFunctionReturnFast(insns);
-}
-
 bool
 SgAsmX86Instruction::isUnknown() const
 {

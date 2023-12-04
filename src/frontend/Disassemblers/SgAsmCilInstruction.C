@@ -352,30 +352,6 @@ static bool isValidCilInstruction()
 }
 #endif
 
-bool
-SgAsmCilInstruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) {
-  auto iCil = isSgAsmCilInstruction(insns.back());
-  if (iCil) {
-    switch (iCil->get_kind()) {
-      case Cil_ret:             // name="ret",input="VarPop",output="Push0",args="InlineNone",o1="0xFF",o2="0x2A",flow="return"
-      case Cil_endfinally:      // name="endfinally",input="Pop0",output="Push0",args="InlineNone",o1="0xFF",o2="0xDC",flow="return"
-      case Cil_endfilter:       // name="endfilter",input="PopI",output="Push0",args="InlineNone",o1="0xFE",o2="0x11",flow="return"
-      case Cil_mono_retobj:     // name="mono_retobj",input="PopI",output="Push0",args="InlineType",o1="0xF0",o2="0x05",flow="return"
-      case Cil_mono_ldnativeobj:// name="mono_ldnativeobj",input="PopI",output="Push1",args="InlineType",o1="0xF0",o2="0x06",flow="return"
-          return true;
-      default:
-        return false;
-    }
-  }
-  return false;
-}
-
-bool
-SgAsmCilInstruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*>& insns) {
-    return isFunctionReturnFast(insns);
-    return false;
-}
-
 Sawyer::Optional<rose_addr_t>
 SgAsmCilInstruction::branchTarget() {
   CilInstructionKind kind = get_kind();

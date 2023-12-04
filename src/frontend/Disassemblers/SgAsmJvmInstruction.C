@@ -15,31 +15,6 @@ SgAsmJvmInstruction::get_anyKind() const {
 }
 
 bool
-SgAsmJvmInstruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) {
-  auto iJvm = isSgAsmJvmInstruction(insns.back());
-  if (iJvm) {
-    switch (iJvm->get_kind()) {
-      case JvmOp::ret:
-      case JvmOp::ireturn:
-      case JvmOp::lreturn:
-      case JvmOp::freturn:
-      case JvmOp::dreturn:
-      case JvmOp::areturn:
-      case JvmOp::return_:
-        return true;
-      default:
-        return false;
-    }
-  }
-  return false;
-}
-
-bool
-SgAsmJvmInstruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) {
-  return isFunctionReturnFast(insns);
-}
-
-bool
 SgAsmJvmInstruction::isUnknown() const
 {
   return JvmOp::unknown == get_kind();

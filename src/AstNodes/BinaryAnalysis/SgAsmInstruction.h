@@ -159,19 +159,10 @@ public:
         ROSE_DEPRECATED("use Architecture::Base::isFunctionCallFast");
     virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret) final
         ROSE_DEPRECATED("use Architecture::Base::isFunctionCallSlow");
-
-    /** Returns true if the specified basic block looks like a function return.
-     *
-     *  This instruction object is only used to select the appropriate virtual method; the basic block to be analyzed is
-     *  the first argument to the function.
-     *
-     *  The "fast" and "slow" versions differ only in what kind of anlysis they do.  The "fast" version typically looks
-     *  only at instruction patterns while the slow version might incur more expense by looking at instruction semantics.
-     *
-     * @{ */
-    virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&);
-    virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&);
-    /** @} */
+    virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) final
+        ROSE_DEPRECATED("use Architecture::Base::isFunctionReturnFast");
+    virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) final
+        ROSE_DEPRECATED("use Architecture::Base::isFunctionReturnSlow");
 
     /** Returns true if this instruction is the first instruction in a basic block.
      *

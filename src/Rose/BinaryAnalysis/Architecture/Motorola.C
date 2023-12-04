@@ -568,6 +568,24 @@ Motorola::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& insns, rose_a
     return false;
 }
 
+bool
+Motorola::isFunctionReturnFast(const std::vector<SgAsmInstruction*>& insns) const {
+    if (insns.empty())
+        return false;
+    auto last = isSgAsmM68kInstruction(insns.back());
+    ASSERT_not_null(last);
+
+    switch (last->get_kind()) {
+        case m68k_rtd:
+        case m68k_rtm:
+        case m68k_rtr:
+        case m68k_rts:
+            return true;
+        default:
+            return false;
+    }
+}
+
 Unparser::Base::Ptr
 Motorola::newUnparser() const {
     return Unparser::M68k::instance(shared_from_this());

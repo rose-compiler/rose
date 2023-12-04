@@ -230,6 +230,16 @@ X86::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &insns, rose_addr_t
     return false;
 }
 
+bool
+X86::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) const {
+    if (insns.empty())
+        return false;
+    auto last = isSgAsmX86Instruction(insns.back());
+    ASSERT_not_null(last);
+
+    return last->get_kind() == x86_ret || last->get_kind() == x86_retf;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Factories
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

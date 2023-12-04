@@ -349,6 +349,25 @@ Jvm::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t
     }
 }
 
+bool
+Jvm::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) const {
+    auto last = isSgAsmJvmInstruction(insns.back());
+    ASSERT_not_null(last);
+
+    switch (last->get_kind()) {
+        case JvmInstructionKind::ret:
+        case JvmInstructionKind::ireturn:
+        case JvmInstructionKind::lreturn:
+        case JvmInstructionKind::freturn:
+        case JvmInstructionKind::dreturn:
+        case JvmInstructionKind::areturn:
+        case JvmInstructionKind::return_:
+            return true;
+        default:
+            return false;
+    }
+}
+
 Disassembler::Base::Ptr
 Jvm::newInstructionDecoder() const {
     return Disassembler::Jvm::instance(shared_from_this());

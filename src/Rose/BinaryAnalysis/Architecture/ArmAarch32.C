@@ -766,6 +766,16 @@ ArmAarch32::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose
     }
 }
 
+bool
+ArmAarch32::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) const {
+    // Function returns are typically performed by popping the return address from the stack.
+    if (insns.empty())
+        return false;
+    auto last = isSgAsmAarch32Instruction(insns.back());
+    ASSERT_not_null(last);
+    return last->get_kind() == Aarch32InstructionKind::ARM_INS_POP && last->get_writesToIp();
+}
+
 Disassembler::Base::Ptr
 ArmAarch32::newInstructionDecoder() const {
     switch (instructionSet()) {

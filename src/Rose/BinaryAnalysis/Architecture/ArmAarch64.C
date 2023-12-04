@@ -1063,6 +1063,23 @@ ArmAarch64::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose
     }
 }
 
+bool
+ArmAarch64::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) const {
+    if (insns.empty())
+        return false;
+    auto last = isSgAsmAarch64Instruction(insns.back());
+    ASSERT_not_null(last);
+
+    switch (last->get_kind()) {
+        case Aarch64InstructionKind::ARM64_INS_RET:
+        //case Aarch64InstructionKind::ARM64_INS_RETAA: -- not present in capstone
+        //case Aarch64InstructionKind::ARM64_INS_RETAB: -- not present in capstone
+            return true;
+        default:
+            return false;
+    }
+}
+
 Disassembler::Base::Ptr
 ArmAarch64::newInstructionDecoder() const {
     return Disassembler::Aarch64::instance(shared_from_this());

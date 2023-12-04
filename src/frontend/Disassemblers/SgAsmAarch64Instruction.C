@@ -13,33 +13,6 @@ SgAsmAarch64Instruction::get_anyKind() const {
     return p_kind;
 }
 
-
-// see base class
-bool
-SgAsmAarch64Instruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) {
-    if (insns.empty())
-        return false;
-    SgAsmAarch64Instruction *last_insn = isSgAsmAarch64Instruction(insns.back());
-    if (!last_insn)
-        return false;
-
-    using Kind = ::Rose::BinaryAnalysis::Aarch64InstructionKind;
-    switch (last_insn->get_kind()) {
-        case Kind::ARM64_INS_RET:
-        //case Kind::ARM64_INS_RETAA: -- not present in capstone
-        //case Kind::ARM64_INS_RETAB: -- not present in capstone
-            return true;
-        default:
-            return false;
-    }
-}
-
-// see base class
-bool
-SgAsmAarch64Instruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) {
-    return isFunctionReturnFast(insns);
-}
-
 AddressSet
 SgAsmAarch64Instruction::getSuccessors(bool &complete) {
     using Kind = ::Rose::BinaryAnalysis::Aarch64InstructionKind;

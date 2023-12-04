@@ -557,6 +557,22 @@ Powerpc::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_ad
     return false;
 }
 
+bool
+Powerpc::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) const {
+    if (insns.empty())
+        return false;
+    auto last = isSgAsmPowerpcInstruction(insns.back());
+    ASSERT_not_null(last);
+
+    // Quick method based only on the kind of instruction.  Returns are normally coded as
+    //    BCLR BO, BI, BH
+    // where the BO field is the 5-bit constant 0b1x1xx where the x means 0 or 1
+    // where the BI field is anything (usually zero)
+    // where the BH field is zero
+    return (last->get_kind() == powerpc_bclr && last->nOperands() == 3 &&
+            (last->operand(0)->asUnsigned().orElse(0) & 0x14) == 0x14 &&
+            last->operand(2)->asUnsigned().orElse(1) == 0);
+}
 
 Unparser::Base::Ptr
 Powerpc::newUnparser() const {

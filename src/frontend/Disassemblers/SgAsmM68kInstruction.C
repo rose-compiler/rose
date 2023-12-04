@@ -23,25 +23,6 @@ SgAsmM68kInstruction::get_anyKind() const {
 }
 
 bool
-SgAsmM68kInstruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*>& insns)
-{
-    if (insns.empty())
-        return false;
-    SgAsmM68kInstruction *last = isSgAsmM68kInstruction(insns.back());
-    if (!last)
-        return false;
-    if (last->get_kind()==m68k_rtd || last->get_kind()==m68k_rtm || last->get_kind()==m68k_rtr || last->get_kind()==m68k_rts)
-        return true;
-    return false;
-}
-
-bool 
-SgAsmM68kInstruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*>& insns)
-{
-    return isFunctionReturnFast(insns);
-}
-
-bool
 SgAsmM68kInstruction::isUnknown() const
 {
     return m68k_unknown_instruction == get_kind();

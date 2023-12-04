@@ -13,24 +13,6 @@ SgAsmAarch32Instruction::get_anyKind() const {
     return p_kind;
 }
 
-bool
-SgAsmAarch32Instruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) {
-    // Function returns are typically performed by popping the return address from the stack.
-    if (insns.empty())
-        return false;
-    SgAsmAarch32Instruction *insn = isSgAsmAarch32Instruction(insns.back());
-    if (!insn)
-        return false;
-    return insn->get_kind() == Aarch32InstructionKind::ARM_INS_POP && insn->get_writesToIp();
-}
-
-bool
-SgAsmAarch32Instruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) {
-    // FIXME[Robb Matzke 2021-03-02]: Not implemented yet. Just use the fast version.
-    return isFunctionReturnFast(insns);
-}
-
-
 AddressSet
 SgAsmAarch32Instruction::getSuccessors(bool &complete) {
     complete = true;                                    // assume true, and prove otherwise
