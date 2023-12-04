@@ -25,7 +25,6 @@ public:
     static Rose::BinaryAnalysis::RegisterDictionaryPtr registersForWidth(size_t);
 
     // Overrides are documented in the base class
-    virtual bool terminatesBasicBlock() override;
     virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) override;
     virtual bool isUnknown() const override;
     virtual unsigned get_anyKind() const override;

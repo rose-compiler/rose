@@ -22,7 +22,6 @@ bool x86InstructionIsFloatingPoint(SgAsmX86Instruction*);
 
 bool x86InstructionIsConditionalFlagBitAndByte(SgAsmX86Instruction* inst);
 
-bool x86InstructionIsControlTransfer(SgAsmX86Instruction* inst);
 bool x86InstructionIsUnconditionalBranch(SgAsmX86Instruction* inst);
 bool x86InstructionIsConditionalBranch(SgAsmX86Instruction* inst);
 bool x86InstructionIsDataTransfer(SgAsmX86Instruction* inst);

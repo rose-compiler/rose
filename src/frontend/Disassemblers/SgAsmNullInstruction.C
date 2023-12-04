@@ -6,11 +6,6 @@ using namespace Rose;                                   // temporary until this 
 using namespace Rose::BinaryAnalysis;
 
 bool
-SgAsmNullInstruction::terminatesBasicBlock() {
-    return true;
-}
-
-bool
 SgAsmNullInstruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t* /*target,inout*/,
                                          rose_addr_t*/*ret,inout*/) {
     return false;

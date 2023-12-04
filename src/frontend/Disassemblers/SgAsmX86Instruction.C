@@ -23,14 +23,6 @@ SgAsmX86Instruction::get_anyKind() const {
     return p_kind;
 }
 
-// see base class
-bool
-SgAsmX86Instruction::terminatesBasicBlock() {
-    if (get_kind()==x86_unknown_instruction)
-        return true;
-    return x86InstructionIsControlTransfer(this);
-}
-
 // class method
 X86InstructionSize
 SgAsmX86Instruction::instructionSizeForWidth(size_t nbits) {

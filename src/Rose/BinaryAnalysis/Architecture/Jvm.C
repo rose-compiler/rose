@@ -254,6 +254,71 @@ Jvm::instructionDescription(const SgAsmInstruction *insn_) const {
     ASSERT_not_reachable("invalid JVM instruction kind: " + std::to_string(static_cast<int>(insn->get_kind())));
 }
 
+bool
+Jvm::terminatesBasicBlock(SgAsmInstruction *insn_) const {
+    auto insn = isSgAsmJvmInstruction(insn_);
+    ASSERT_not_null(insn);
+    switch (insn->get_kind()) {
+        case JvmInstructionKind::ifeq:
+        case JvmInstructionKind::ifne:
+        case JvmInstructionKind::iflt:
+        case JvmInstructionKind::ifge:
+        case JvmInstructionKind::ifgt:
+        case JvmInstructionKind::ifle:
+        case JvmInstructionKind::if_icmpeq:
+        case JvmInstructionKind::if_icmpne:
+        case JvmInstructionKind::if_icmplt:
+        case JvmInstructionKind::if_icmpge:
+        case JvmInstructionKind::if_icmpgt:
+        case JvmInstructionKind::if_icmple:
+        case JvmInstructionKind::if_acmpeq:
+        case JvmInstructionKind::if_acmpne:
+        case JvmInstructionKind::goto_:
+        case JvmInstructionKind::jsr:
+        case JvmInstructionKind::ret:
+        case JvmInstructionKind::tableswitch:
+        case JvmInstructionKind::lookupswitch:
+        case JvmInstructionKind::ireturn:
+        case JvmInstructionKind::lreturn:
+        case JvmInstructionKind::freturn:
+        case JvmInstructionKind::dreturn:
+        case JvmInstructionKind::areturn:
+        case JvmInstructionKind::return_:
+#if 0 // NOT_SURE
+        case JvmInstructionKind::getstatic: return "Get static field from class";
+        case JvmInstructionKind::putstatic: return "Set static field in class";
+        case JvmInstructionKind::getfield:  return "Fetch field from object";
+        case JvmInstructionKind::putfield:  return "Set field in object";
+#endif
+        case JvmInstructionKind::invokevirtual:
+        case JvmInstructionKind::invokespecial:
+        case JvmInstructionKind::invokestatic:
+        case JvmInstructionKind::invokeinterface:
+        case JvmInstructionKind::invokedynamic:
+#if 0 // NOT_SURE
+        case JvmInstructionKind::new_:        return "Create new object";
+        case JvmInstructionKind::newarray:    return "Create new array";
+        case JvmInstructionKind::anewarray:   return "Create new array of reference";
+        case JvmInstructionKind::athrow:      return "Throw exception or error";
+        case JvmInstructionKind::monitorenter: return "Enter monitor for object";
+        case JvmInstructionKind::monitorexit:  return "Exit monitor for object";
+#endif
+        case JvmInstructionKind::ifnull:
+        case JvmInstructionKind::ifnonnull:
+        case JvmInstructionKind::goto_w:
+        case JvmInstructionKind::jsr_w:
+#if 0 // NOT_SURE
+        case JvmInstructionKind::breakpoint: return "Breakpoint (reserved opcode)";
+        case JvmInstructionKind::impdep1: return "Implementation dependent 1 (reserved opcode)";
+        case JvmInstructionKind::impdep2: return "Implementation dependent 2 (reserved opcode)";
+        case JvmInstructionKind::unknown: return "Unknown opcode";
+#endif
+            return true;
+        default:
+            return false;
+    }
+}
+
 Disassembler::Base::Ptr
 Jvm::newInstructionDecoder() const {
     return Disassembler::Jvm::instance(shared_from_this());

@@ -438,6 +438,53 @@ Mips32::instructionDescription(const SgAsmInstruction *insn_) const {
     ASSERT_not_reachable("invalid mips instruction kind: " + StringUtility::numberToString(insn->get_kind()));
 }
 
+bool
+Mips32::terminatesBasicBlock(SgAsmInstruction *insn_) const {
+    auto insn = isSgAsmMipsInstruction(insn_);
+    ASSERT_not_null(insn);
+    switch (insn->get_kind()) {
+        case mips_beq:
+        case mips_beql:
+        case mips_bgez:
+        case mips_bgezal:
+        case mips_bgezall:
+        case mips_bgezl:
+        case mips_bgtz:
+        case mips_bgtzl:
+        case mips_blez:
+        case mips_blezl:
+        case mips_bltz:
+        case mips_bltzal:
+        case mips_bltzall:
+        case mips_bltzl:
+        case mips_bne:
+        case mips_bnel:
+        case mips_break: // ???
+        case mips_j:
+        case mips_jal:
+        case mips_jalr:
+        case mips_jalx:
+        case mips_jr:
+        case mips_jr_hb:
+        case mips_syscall:
+        case mips_teq:
+        case mips_teqi:
+        case mips_tge:
+        case mips_tgei:
+        case mips_tgeiu:
+        case mips_tgeu:
+        case mips_tlt:
+        case mips_tlti:
+        case mips_tltiu:
+        case mips_tltu:
+        case mips_tne:
+        case mips_tnei:
+            return true;
+        default:
+            return false;
+    }
+}
+
 Disassembler::Base::Ptr
 Mips32::newInstructionDecoder() const {
     return Disassembler::Mips::instance(shared_from_this());

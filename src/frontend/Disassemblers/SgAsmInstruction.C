@@ -73,13 +73,10 @@ SgAsmInstruction::getSuccessors(const std::vector<SgAsmInstruction*>& basic_bloc
     return basic_block.back()->getSuccessors(complete/*out*/);
 }
 
+// [Robb Matzke 2023-12-04]: deprecated
 bool
-SgAsmInstruction::terminatesBasicBlock()
-{
-    abort();                                            // rosetta doesn't support pure virtual functions
-#ifdef _MSC_VER
-    return false;                                       // tps (12/9/2009) : MSC requires a return value
-#endif
+SgAsmInstruction::terminatesBasicBlock() {
+    return architecture()->terminatesBasicBlock(this);
 }
 
 bool

@@ -13,53 +13,6 @@ SgAsmMipsInstruction::get_anyKind() const {
 
 // see base class
 bool
-SgAsmMipsInstruction::terminatesBasicBlock()
-{
-    switch (get_kind()) {
-        case mips_beq:
-        case mips_beql:
-        case mips_bgez:
-        case mips_bgezal:
-        case mips_bgezall:
-        case mips_bgezl:
-        case mips_bgtz:
-        case mips_bgtzl:
-        case mips_blez:
-        case mips_blezl:
-        case mips_bltz:
-        case mips_bltzal:
-        case mips_bltzall:
-        case mips_bltzl:
-        case mips_bne:
-        case mips_bnel:
-        case mips_break: // ???
-        case mips_j:
-        case mips_jal:
-        case mips_jalr:
-        case mips_jalx:
-        case mips_jr:
-        case mips_jr_hb:
-        case mips_syscall:
-        case mips_teq:
-        case mips_teqi:
-        case mips_tge:
-        case mips_tgei:
-        case mips_tgeiu:
-        case mips_tgeu:
-        case mips_tlt:
-        case mips_tlti:
-        case mips_tltiu:
-        case mips_tltu:
-        case mips_tne:
-        case mips_tnei:
-            return true;
-        default:
-            return false;
-    }
-}
-
-// see base class
-bool
 SgAsmMipsInstruction::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va)
 {
     if (insns.size()==0)

@@ -1117,11 +1117,6 @@ SgAsmAarch32Instruction::branchTarget() {
 }
 
 bool
-SgAsmAarch32Instruction::terminatesBasicBlock() {
-    return get_writesToIp();
-}
-
-bool
 SgAsmAarch32Instruction::isUnknown() const {
     return Aarch32InstructionKind::ARM_INS_INVALID == get_kind();
 }

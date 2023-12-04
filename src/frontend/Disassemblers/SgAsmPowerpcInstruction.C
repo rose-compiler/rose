@@ -97,34 +97,6 @@ SgAsmPowerpcInstruction::getSuccessors(bool &complete) {
     return retval;
 }
 
-// Does instruction terminate basic block? See base class for full documentation.
-bool
-SgAsmPowerpcInstruction::terminatesBasicBlock() {
-    switch (get_kind()) {
-        case powerpc_unknown_instruction:
-        case powerpc_b:         /* branch instructions... */
-        case powerpc_ba:
-        case powerpc_bl:
-        case powerpc_bla:
-        case powerpc_bc:
-        case powerpc_bca:
-        case powerpc_bcl:
-        case powerpc_bcla:
-        case powerpc_bcctr:
-        case powerpc_bcctrl:
-        case powerpc_bclr:
-        case powerpc_bclrl:
-        case powerpc_tw:        /* trap instructions... */
-        case powerpc_twi:
-        case powerpc_sc:        /* system call */
-        case powerpc_rfi:       /* return from interrupt */
-            return true;
-
-        default:
-            return false;
-    }
-}
-
 bool
 SgAsmPowerpcInstruction::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target,
                                             rose_addr_t *return_va) {

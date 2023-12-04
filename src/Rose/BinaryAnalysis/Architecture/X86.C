@@ -42,6 +42,59 @@ X86::X86(const std::string &name, size_t bytesPerWord)
 X86::~X86() {}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Instruction characteristics
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool
+X86::terminatesBasicBlock(SgAsmInstruction *insn_) const {
+    auto insn = isSgAsmX86Instruction(insn_);
+    ASSERT_not_null(insn);
+    switch (insn->get_kind()) {
+        case x86_unknown_instruction:
+        case x86_call:
+        case x86_ret:
+        case x86_iret:
+        case x86_farcall:
+        case x86_farjmp:
+        case x86_hlt:
+        case x86_jmp:
+        case x86_int:
+        case x86_int1:
+        case x86_int3:
+        case x86_into:
+        case x86_ja:
+        case x86_jae:
+        case x86_jb:
+        case x86_jbe:
+        case x86_jcxz:
+        case x86_je:
+        case x86_jecxz:
+        case x86_jg:
+        case x86_jge:
+        case x86_jl:
+        case x86_jle:
+        case x86_jne:
+        case x86_jno:
+        case x86_jns:
+        case x86_jo:
+        case x86_jpe:
+        case x86_jpo:
+        case x86_jrcxz:
+        case x86_js:
+        case x86_loop:
+        case x86_loopnz:
+        case x86_loopz:
+        case x86_retf:
+        case x86_rsm:
+        case x86_syscall:
+        case x86_sysret:
+        case x86_ud2:
+            return true;
+        default: return false;
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Factories
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

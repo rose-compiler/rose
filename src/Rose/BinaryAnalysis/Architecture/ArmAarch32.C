@@ -742,6 +742,13 @@ ArmAarch32::instructionDescription(const SgAsmInstruction *insn_) const {
     ASSERT_not_reachable("invalid AArch32 instruction kind: " + StringUtility::numberToString(insn->get_kind()));
 }
 
+bool
+ArmAarch32::terminatesBasicBlock(SgAsmInstruction *insn_) const {
+    auto insn = isSgAsmAarch32Instruction(insn_);
+    ASSERT_not_null(insn);
+    return insn->get_writesToIp();
+}
+
 Disassembler::Base::Ptr
 ArmAarch32::newInstructionDecoder() const {
     switch (instructionSet()) {

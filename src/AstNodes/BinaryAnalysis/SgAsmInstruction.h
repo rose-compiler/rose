@@ -153,13 +153,8 @@ public:
      *  If the operand index is out of range, then null is returned. */
     SgAsmExpression* operand(size_t) const;
 
-    /** Determines if this instruction normally terminates a basic block.
-     *
-     *  The analysis only looks at the individual instruction and therefore is not very sophisticated.  For instance, a
-     *  conditional branch will always terminate a basic block by this method even if its condition is opaque.  The base
-     *  class implementation always aborts; architecture-specific subclasses should override this to do something useful
-     *  (pure virtual is not possible due to ROSETTA). */
-    virtual bool terminatesBasicBlock();
+    // [Robb Matzke 2023-12-04]: deprecated
+    virtual bool terminatesBasicBlock() final ROSE_DEPRECATED("use Architecture::Base::terminatesBasicBlock");
 
     /** Returns true if the specified basic block looks like a function call.
      *

@@ -11,7 +11,6 @@ public:
 
 public:
     // Overrides are documented in the base class
-    virtual bool terminatesBasicBlock() override;
     virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns,
                                     rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) override;
     virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,

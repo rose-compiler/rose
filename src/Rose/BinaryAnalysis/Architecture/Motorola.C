@@ -337,6 +337,108 @@ Motorola::instructionDescription(const SgAsmInstruction *insn_) const {
     ASSERT_not_reachable("invalid m68k instruction kind: " + StringUtility::numberToString(insn->get_kind()));
 }
 
+bool
+Motorola::terminatesBasicBlock(SgAsmInstruction *insn_) const {
+    auto insn = isSgAsmM68kInstruction(insn_);
+    ASSERT_not_null(insn);
+    switch (insn->get_kind()) {
+        case m68k_unknown_instruction:
+        case m68k_bcc:
+        case m68k_bcs:
+        case m68k_beq:
+        case m68k_bge:
+        case m68k_bgt:
+        case m68k_bhi:
+        case m68k_ble:
+        case m68k_bls:
+        case m68k_blt:
+        case m68k_bmi:
+        case m68k_bne:
+        case m68k_bpl:
+        case m68k_bvc:
+        case m68k_bvs:
+        case m68k_bra:
+        case m68k_bsr:
+        case m68k_callm:
+        case m68k_dbcc:
+        case m68k_dbcs:
+        case m68k_dbeq:
+        case m68k_dbf:
+        case m68k_dbge:
+        case m68k_dbgt:
+        case m68k_dbhi:
+        case m68k_dble:
+        case m68k_dbls:
+        case m68k_dblt:
+        case m68k_dbmi:
+        case m68k_dbne:
+        case m68k_dbpl:
+        case m68k_dbt:
+        case m68k_dbvc:
+        case m68k_dbvs:
+        case m68k_illegal:
+        case m68k_jmp:
+        case m68k_jsr:
+        case m68k_rtd:
+        case m68k_rtm:
+        case m68k_rtr:
+        case m68k_rts:
+        case m68k_trap:
+        case m68k_trapcc:
+        case m68k_trapcs:
+        case m68k_trapeq:
+        case m68k_trapf:
+        case m68k_trapge:
+        case m68k_trapgt:
+        case m68k_traphi:
+        case m68k_traple:
+        case m68k_trapls:
+        case m68k_traplt:
+        case m68k_trapmi:
+        case m68k_trapne:
+        case m68k_trappl:
+        case m68k_trapt:
+        case m68k_trapvc:
+        case m68k_trapvs:
+        case m68k_trapv:
+        case m68k_fbeq:
+        case m68k_fbne:
+        case m68k_fbgt:
+        case m68k_fbngt:
+        case m68k_fbge:
+        case m68k_fbnge:
+        case m68k_fblt:
+        case m68k_fbnlt:
+        case m68k_fble:
+        case m68k_fbnle:
+        case m68k_fbgl:
+        case m68k_fbngl:
+        case m68k_fbgle:
+        case m68k_fbngle:
+        case m68k_fbogt:
+        case m68k_fbule:
+        case m68k_fboge:
+        case m68k_fbult:
+        case m68k_fbolt:
+        case m68k_fbuge:
+        case m68k_fbole:
+        case m68k_fbugt:
+        case m68k_fbogl:
+        case m68k_fbueq:
+        case m68k_fbor:
+        case m68k_fbun:
+        case m68k_fbf:
+        case m68k_fbt:
+        case m68k_fbsf:
+        case m68k_fbst:
+        case m68k_fbseq:
+        case m68k_fbsne:
+            return true;
+        default:
+            return false;
+    }
+}
+
 Unparser::Base::Ptr
 Motorola::newUnparser() const {
     return Unparser::M68k::instance(shared_from_this());

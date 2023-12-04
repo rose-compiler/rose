@@ -68,7 +68,6 @@ public:
     static Rose::BinaryAnalysis::RegisterDictionaryPtr registersForWidth(size_t);
 
     // Overrides are documented in the base class
-    virtual bool terminatesBasicBlock() override;
     virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&,
                                     rose_addr_t *target, rose_addr_t *ret) override;
     virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,

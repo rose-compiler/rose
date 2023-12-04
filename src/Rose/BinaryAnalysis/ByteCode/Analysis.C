@@ -148,7 +148,7 @@ void Class::partition(const PartitionerPtr &partitioner, std::map<std::string,ro
       block->append(partitioner, insn);
 
       // If this instruction terminates the block, add successors and set block properties
-      if (insn->terminatesBasicBlock()) {
+      if (partitioner->architecture()->terminatesBasicBlock(insn)) {
         bool complete;
         auto successors = insn->getSuccessors(complete/*out*/);
         for (auto successor : successors.values()) {

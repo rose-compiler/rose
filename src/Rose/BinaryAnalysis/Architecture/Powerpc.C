@@ -492,6 +492,35 @@ Powerpc::instructionDescription(const SgAsmInstruction *insn_) const {
     ASSERT_not_reachable("invalid powerpc instruction kind: " + StringUtility::numberToString(insn->get_kind()));
 }
 
+bool
+Powerpc::terminatesBasicBlock(SgAsmInstruction *insn_) const {
+    auto insn = isSgAsmPowerpcInstruction(insn_);
+    ASSERT_not_null(insn);
+    switch (insn->get_kind()) {
+        case powerpc_unknown_instruction:
+        case powerpc_b:         /* branch instructions... */
+        case powerpc_ba:
+        case powerpc_bl:
+        case powerpc_bla:
+        case powerpc_bc:
+        case powerpc_bca:
+        case powerpc_bcl:
+        case powerpc_bcla:
+        case powerpc_bcctr:
+        case powerpc_bcctrl:
+        case powerpc_bclr:
+        case powerpc_bclrl:
+        case powerpc_tw:        /* trap instructions... */
+        case powerpc_twi:
+        case powerpc_sc:        /* system call */
+        case powerpc_rfi:       /* return from interrupt */
+            return true;
+
+        default:
+            return false;
+    }
+}
+
 Unparser::Base::Ptr
 Powerpc::newUnparser() const {
     return Unparser::Powerpc::instance(shared_from_this());

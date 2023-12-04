@@ -160,6 +160,15 @@ public:
      *  Thread safety: Thread safe. */
     virtual std::string instructionDescription(const SgAsmInstruction*) const;
 
+    /** Determines whether the specified instruction normally terminates a basic block.
+     *
+     *  The analysis generally only looks at the individual instruction and therefore is not very sophisticated.  For instance, a
+     *  conditional branch will always terminate a basic block by this method even if its condition is opaque. The instruction
+     *  argument must not be a null pointer.
+     *
+     *  Thread safety: Thread safe. */
+    virtual bool terminatesBasicBlock(SgAsmInstruction*) const = 0;
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Architecture-specific stuff for a partitioning engine.
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
