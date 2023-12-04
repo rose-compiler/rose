@@ -155,23 +155,10 @@ public:
 
     // [Robb Matzke 2023-12-04]: deprecated
     virtual bool terminatesBasicBlock() final ROSE_DEPRECATED("use Architecture::Base::terminatesBasicBlock");
-
-    /** Returns true if the specified basic block looks like a function call.
-     *
-     *  This instruction object is only used to select the appropriate virtual method; the basic block to be analyzed is
-     *  the first argument to the function.  If the basic block looks like a function call then this method returns true.
-     *  If (and only if) the target address is known (i.e., the address of the called function) then @p target is set to
-     *  this address (otherwise @p target is unmodified). If the return address is known or can be guessed, then return_va
-     *  is initialized to the return address, which is normally the fall-through address of the last instruction; otherwise
-     *  the return_va is unmodified.
-     *
-     *  The "fast" and "slow" versions differ only in what kind of anlysis they do.  The "fast" version typically looks
-     *  only at instruction patterns while the slow version might incur more expense by looking at instruction semantics.
-     *
-     * @{ */
-    virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret);
-    virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret);
-    /** @} */
+    virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret) final
+        ROSE_DEPRECATED("use Architecture::Base::isFunctionCallFast");
+    virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret) final
+        ROSE_DEPRECATED("use Architecture::Base::isFunctionCallSlow");
 
     /** Returns true if the specified basic block looks like a function return.
      *

@@ -1422,7 +1422,7 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb, Precision::Leve
             const RegisterDescriptor REG_IP = instructionProvider_->instructionPointerRegister();
 
             // Check whether the last instruction is a CALL (or similar) instruction.
-            bool isInsnCall = lastInsn->isFunctionCallFast(bb->instructions(), nullptr, nullptr);
+            bool isInsnCall = architecture()->isFunctionCallFast(bb->instructions(), nullptr, nullptr);
 
             // Check whether the basic block has the semantics of a function call.
             //
@@ -1534,7 +1534,7 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb, Precision::Leve
     }
 
     // We don't have semantics, so delegate to the SgAsmInstruction subclass.
-    retval = lastInsn->isFunctionCallFast(bb->instructions(), nullptr, nullptr);
+    retval = architecture()->isFunctionCallFast(bb->instructions(), nullptr, nullptr);
     bb->isFunctionCall() = retval;
     return retval;
 }

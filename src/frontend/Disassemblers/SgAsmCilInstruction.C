@@ -353,42 +353,6 @@ static bool isValidCilInstruction()
 #endif
 
 bool
-SgAsmCilInstruction::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va)
-{
-  SgAsmCilInstruction* last{nullptr};
-
-  if (!insns.empty() && (last=isSgAsmCilInstruction(insns.back()))) {
-    // Quick method based only on the kind of instruction
-    switch (last->get_kind()) {
-      case Cil_jmp:       // name="jmp",input="Pop0",output="Push0",args="InlineMethod",o1="0xFF",o2="0x27",flow="call"
-      case Cil_call:      // name="call",input="VarPop",output="VarPush",args="InlineMethod",o1="0xFF",o2="0x28",flow="call"
-      case Cil_calli:     // name="calli",input="VarPop",output="VarPush",args="InlineSig",o1="0xFF",o2="0x29",flow="call"
-      case Cil_callvirt:  // name="callvirt",input="VarPop",output="VarPush",args="InlineMethod",o1="0xFF",o2="0x6F",flow="call"
-      case Cil_newobj:    // name="newobj",input="VarPop",output="PushRef",args="InlineMethod",o1="0xFF",o2="0x73",flow="call"
-      case Cil_mono_calli_extra_arg: // name="mono_calli_extra_arg",input="VarPop",output="VarPush",args="InlineSig",o1="0xF0",o2="0x18",flow="call"
-
-        if (target) {
-          last->branchTarget().assignTo(*target);
-        }
-        if (return_va) {
-          *return_va = last->get_address() + last->get_size();
-        }
-        return true;
-
-      default:
-        return false;
-    }
-  }
-
-  return false;
-}
-
-bool
-SgAsmCilInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &insns, rose_addr_t* target, rose_addr_t* return_va) {
-    return isFunctionCallFast(insns, target, return_va);
-}
-
-bool
 SgAsmCilInstruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) {
   auto iCil = isSgAsmCilInstruction(insns.back());
   if (iCil) {

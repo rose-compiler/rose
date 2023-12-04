@@ -438,6 +438,35 @@ Cil::terminatesBasicBlock(SgAsmInstruction *insn_) const {
     }
 }
 
+bool
+Cil::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va) const {
+    if (insns.empty())
+        return false;
+    auto last = isSgAsmCilInstruction(insns.back());
+    ASSERT_not_null(last);
+
+    // Quick method based only on the kind of instruction
+    switch (last->get_kind()) {
+        case Cil_jmp:       // name="jmp",input="Pop0",output="Push0",args="InlineMethod",o1="0xFF",o2="0x27",flow="call"
+        case Cil_call:      // name="call",input="VarPop",output="VarPush",args="InlineMethod",o1="0xFF",o2="0x28",flow="call"
+        case Cil_calli:     // name="calli",input="VarPop",output="VarPush",args="InlineSig",o1="0xFF",o2="0x29",flow="call"
+        case Cil_callvirt:  // name="callvirt",input="VarPop",output="VarPush",args="InlineMethod",o1="0xFF",o2="0x6F",flow="call"
+        case Cil_newobj:    // name="newobj",input="VarPop",output="PushRef",args="InlineMethod",o1="0xFF",o2="0x73",flow="call"
+        case Cil_mono_calli_extra_arg: // name="mono_calli_extra_arg",input="VarPop",output="VarPush",args="InlineSig",o1="0xF0",o2="0x18",flow="call"
+
+            if (target) {
+                last->branchTarget().assignTo(*target);
+            }
+            if (return_va) {
+                *return_va = last->get_address() + last->get_size();
+            }
+            return true;
+
+        default:
+            return false;
+    }
+}
+
 Disassembler::Base::Ptr
 Cil::newInstructionDecoder() const {
     return Disassembler::Cil::instance(shared_from_this());

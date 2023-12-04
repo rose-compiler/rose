@@ -485,6 +485,33 @@ Mips32::terminatesBasicBlock(SgAsmInstruction *insn_) const {
     }
 }
 
+bool
+Mips32::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va) const {
+    if (insns.empty())
+        return false;
+    auto last = isSgAsmMipsInstruction(insns.back());
+    ASSERT_not_null(last);
+
+    switch (last->get_kind()) {
+        case mips_bgezal:
+        case mips_bgezall:
+        case mips_bltzal:
+        case mips_bltzall:
+        case mips_jal:
+        case mips_jalr:
+        case mips_jalr_hb:
+        case mips_jalx: {
+            if (target)
+                last->branchTarget().assignTo(*target); // target will not be changed if unknown
+            if (return_va)
+                *return_va = last->get_address() + last->get_size();
+            return true;
+        }
+        default:
+            return false;
+    }
+}
+
 Disassembler::Base::Ptr
 Mips32::newInstructionDecoder() const {
     return Disassembler::Mips::instance(shared_from_this());

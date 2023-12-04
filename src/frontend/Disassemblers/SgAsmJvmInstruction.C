@@ -14,44 +14,6 @@ SgAsmJvmInstruction::get_anyKind() const {
   return static_cast<unsigned>(p_kind);
 }
 
-
-bool
-SgAsmJvmInstruction::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va)
-{
-  SgAsmJvmInstruction* last{nullptr};
-
-  if (!insns.empty() && (last=isSgAsmJvmInstruction(insns.back()))) {
-    // Quick method based only on the kind of instruction
-    switch (last->get_kind()) {
-      case JvmOp::invokevirtual:
-      case JvmOp::invokespecial:
-      case JvmOp::invokestatic:
-      case JvmOp::invokeinterface:
-      case JvmOp::invokedynamic:
-//    case JvmOp::jsr: ???
-
-        if (target) {
-          last->branchTarget().assignTo(*target);
-        }
-        if (return_va) {
-          *return_va = last->get_address() + last->get_size();
-        }
-        return true;
-
-      default:
-        return false;
-    }
-  }
-
-  return false;
-}
-
-bool
-SgAsmJvmInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va)
-{
-  return isFunctionCallFast(insns, target, return_va);
-}
-
 bool
 SgAsmJvmInstruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) {
   auto iJvm = isSgAsmJvmInstruction(insns.back());

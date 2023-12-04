@@ -79,16 +79,16 @@ SgAsmInstruction::terminatesBasicBlock() {
     return architecture()->terminatesBasicBlock(this);
 }
 
+// [Robb Matzke 2023-12-04]: deprecated
 bool
-SgAsmInstruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t */*target*/, rose_addr_t */*return_va*/)
-{
-    return false;
+SgAsmInstruction::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va) {
+    return architecture()->isFunctionCallFast(insns, target, return_va);
 }
 
+// [Robb Matzke 2023-12-04]: deprecated
 bool
-SgAsmInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t */*target*/, rose_addr_t */*return_va*/)
-{
-    return false;
+SgAsmInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va) {
+    return architecture()->isFunctionCallSlow(insns, target, return_va);
 }
 
 bool

@@ -5,8 +5,10 @@
 
 #include <Rose/BinaryAnalysis/Disassembler/M68k.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesM68k.h>
 #include <Rose/BinaryAnalysis/Unparser/M68k.h>
+#include <Rose/CommandLine/Parser.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -437,6 +439,133 @@ Motorola::terminatesBasicBlock(SgAsmInstruction *insn_) const {
         default:
             return false;
     }
+}
+
+bool
+Motorola::isFunctionCallFast(const std::vector<SgAsmInstruction*>& insns, rose_addr_t *target_va, rose_addr_t *return_va) const {
+    if (insns.empty())
+        return false;
+    auto last = isSgAsmM68kInstruction(insns.back());
+    ASSERT_not_null(last);
+
+    // Quick method based only on the kind of instruction
+    if (m68k_bsr == last->get_kind() || m68k_jsr == last->get_kind() || m68k_callm == last->get_kind()) {
+        if (target_va)
+            last->branchTarget().assignTo(*target_va);  // only modifies target_va if it can be determined
+        if (return_va)
+            *return_va = last->get_address() + last->get_size();
+        return true;
+    }
+
+    return false;
+}
+
+bool
+Motorola::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& insns, rose_addr_t *target_va,
+                                         rose_addr_t *return_va) const {
+    if (isFunctionCallFast(insns, target_va, return_va))
+        return true;
+
+    static const size_t EXECUTION_LIMIT = 25; // max size of basic blocks for expensive analyses
+    if (insns.empty())
+        return false;
+    auto last = isSgAsmM68kInstruction(insns.back());
+    ASSERT_not_null(last);
+    SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(last);
+    SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(func);
+
+    // Slow method: Emulate the instructions and then look at the program counter (PC) and stack (A7).  If the PC points outside the
+    // current function and the top of the stack holds an address of an instruction within the current function, then this must be a
+    // function call.
+    if (interp && insns.size() <= EXECUTION_LIMIT) {
+        using namespace Rose::BinaryAnalysis;
+        using namespace Rose::BinaryAnalysis::InstructionSemantics;
+        using namespace Rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics;
+        const InstructionMap &imap = interp->get_instructionMap();
+        RegisterDictionary::Ptr regdict = registerDictionary();
+        SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
+        BaseSemantics::RiscOperators::Ptr ops = RiscOperators::instanceFromRegisters(regdict, solver);
+        ASSERT_not_null(ops);
+        DispatcherM68kPtr dispatcher = DispatcherM68k::promote(newInstructionDispatcher(ops));
+        SValue::Ptr orig_sp = SValue::promote(ops->peekRegister(dispatcher->REG_A[7]));
+        try {
+            for (size_t i = 0; i < insns.size(); ++i)
+                dispatcher->processInstruction(insns[i]);
+        } catch (const BaseSemantics::Exception &e) {
+            return false;
+        }
+
+        // If the next instruction address is concrete but does not point to a function entry point, then this is not a call.
+        SValue::Ptr ip = SValue::promote(ops->peekRegister(regdict->instructionPointerRegister()));
+        if (auto target_va = ip->toUnsigned()) {
+            SgAsmFunction *target_func = SageInterface::getEnclosingNode<SgAsmFunction>(imap.get_value_or(*target_va, NULL));
+            if (!target_func || *target_va != target_func->get_entryVa())
+                return false;
+        }
+
+        // If nothing was pushed onto the stack, then this isn't a function call.
+        SValue::Ptr sp = SValue::promote(ops->peekRegister(regdict->stackPointerRegister()));
+        SValue::Ptr stack_delta = SValue::promote(ops->add(sp, ops->negate(orig_sp)));
+        SValue::Ptr stack_delta_sign = SValue::promote(ops->extract(stack_delta, 31, 32));
+        if (stack_delta_sign->isFalse())
+            return false;
+
+        // If the top of the stack does not contain a concrete value or the top of the stack does not point to an instruction in
+        // this basic block's function, then this is not a function call.
+        SValue::Ptr top = SValue::promote(ops->peekMemory(RegisterDescriptor(), sp, sp->undefined_(32)));
+        if (auto va = top->toUnsigned()) {
+            SgAsmFunction *return_func = SageInterface::getEnclosingNode<SgAsmFunction>(imap.get_value_or(*va, NULL));
+            if (!return_func || return_func!=func) {
+                return false;
+            }
+        } else {
+            return false;
+        }
+
+        // Since the instruction pointer might point to a function entry address and since the top of the stack contains a pointer
+        // to an instruction in this function, we assume that this is a function call.
+        if (target_va)
+            ip->toUnsigned().assignTo(*target_va);
+        if (return_va)
+            top->toUnsigned().assignTo(*return_va);
+        return true;
+    }
+
+    // Similar to the above method, but works when all we have is the basic block (e.g., this case gets hit quite a bit from the
+    // Partitioner).  Returns true if, after executing the basic block, the top of the stack contains the fall-through address of
+    // the basic block. We depend on our caller to figure out if the instruction pointer is reasonably a function entry address.
+    if (!interp && insns.size() <= EXECUTION_LIMIT) {
+        using namespace Rose::BinaryAnalysis;
+        using namespace Rose::BinaryAnalysis::InstructionSemantics;
+        using namespace Rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics;
+        RegisterDictionary::Ptr regdict = registerDictionary();
+        SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
+        BaseSemantics::RiscOperators::Ptr ops = RiscOperators::instanceFromRegisters(regdict, solver);
+        DispatcherM68kPtr dispatcher = DispatcherM68k::promote(newInstructionDispatcher(ops));
+        try {
+            for (size_t i = 0; i < insns.size(); ++i)
+                dispatcher->processInstruction(insns[i]);
+        } catch (const BaseSemantics::Exception &e) {
+            return false;
+        }
+
+        // Look at the top of the stack
+        const RegisterDescriptor SP = regdict->stackPointerRegister();
+        const RegisterDescriptor IP = regdict->instructionPointerRegister();
+        SValue::Ptr top = SValue::promote(ops->peekMemory(RegisterDescriptor(), ops->peekRegister(SP),
+                                                          ops->protoval()->undefined_(32)));
+        if (top->toUnsigned().orElse(0) == last->get_address() + last->get_size()) {
+            if (target_va) {
+                SValue::Ptr ip = SValue::promote(ops->peekRegister(IP));
+                ip->toUnsigned().assignTo(*target_va);
+            }
+            if (return_va)
+                top->toUnsigned().assignTo(*return_va);
+            return true;
+        }
+    }
+
+    return false;
 }
 
 Unparser::Base::Ptr

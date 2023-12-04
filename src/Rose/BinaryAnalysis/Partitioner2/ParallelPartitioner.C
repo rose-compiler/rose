@@ -717,7 +717,7 @@ Partitioner::isFunctionCall(rose_addr_t insnVa, Accuracy accuracy) {
             if (InstructionPtr insn = existingInstructionAst(insnVa)) {
                 auto locked = insn.lock();
                 std::vector<SgAsmInstruction*> tmp{locked.get()};
-                return insn->isFunctionCallFast(tmp, nullptr, nullptr);
+                return instructionCache().decoder()->architecture()->isFunctionCallFast(tmp, nullptr, nullptr);
             } else {
                 return false;
             }
@@ -734,7 +734,7 @@ Partitioner::isFunctionCall(rose_addr_t insnVa, Accuracy accuracy) {
                 return *cached;
 
             auto locked = lockInCache(insns);
-            bool retval = locked.insns.front()->isFunctionCallFast(locked.insns, nullptr, nullptr);
+            bool retval = instructionCache().decoder()->architecture()->isFunctionCallFast(locked.insns, nullptr, nullptr);
             insns.back()->cached().isFunctionCall.set(key, retval);
             return retval;
         }

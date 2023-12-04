@@ -1105,7 +1105,8 @@ RiscOperators::finishInstruction(SgAsmInstruction *insn) {
         if (P2::BasicBlock::Ptr bb = partitioner_->basicBlockContainingInstruction(insn->get_address())) {
             isFunctionCall = partitioner_->basicBlockIsFunctionCall(bb);
         } else {
-            isFunctionCall = insn->isFunctionCallFast(std::vector<SgAsmInstruction*>{insn}, nullptr, nullptr);
+            isFunctionCall = partitioner_->architecture()->isFunctionCallFast(std::vector<SgAsmInstruction*>{insn},
+                                                                              nullptr, nullptr);
         }
         if (isFunctionCall) {
             const RegisterDescriptor IP = partitioner_->instructionProvider().instructionPointerRegister();

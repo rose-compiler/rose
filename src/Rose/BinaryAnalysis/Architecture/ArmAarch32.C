@@ -749,6 +749,23 @@ ArmAarch32::terminatesBasicBlock(SgAsmInstruction *insn_) const {
     return insn->get_writesToIp();
 }
 
+bool
+ArmAarch32::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t */*target*/,
+                               rose_addr_t */*return_va*/) const {
+    if (insns.empty())
+        return false;
+    auto back = isSgAsmAarch32Instruction(insns.back());
+    ASSERT_not_null(back);
+
+    switch (back->get_kind()) {
+        case Aarch32InstructionKind::ARM_INS_BL:
+        case Aarch32InstructionKind::ARM_INS_BLX:
+            return true;
+        default:
+            return false;
+    }
+}
+
 Disassembler::Base::Ptr
 ArmAarch32::newInstructionDecoder() const {
     switch (instructionSet()) {

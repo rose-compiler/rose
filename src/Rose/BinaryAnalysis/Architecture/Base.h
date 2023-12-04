@@ -169,6 +169,26 @@ public:
      *  Thread safety: Thread safe. */
     virtual bool terminatesBasicBlock(SgAsmInstruction*) const = 0;
 
+    /** Returns true if the specified basic block looks like a function call.
+     *
+     *  If the basic block looks like a function call then this method returns true.  If (and only if) the target address is known
+     *  (i.e., the address of the called function) then @p target is set to this address (otherwise @p target is unmodified). If the
+     *  return address is known or can be guessed, then return_va is initialized to the return address, which is normally the
+     *  fall-through address of the last instruction; otherwise the return_va is unmodified.
+     *
+     *  The "fast" and "slow" versions differ only in what kind of anlysis they do.  The "fast" version typically looks
+     *  only at instruction patterns while the slow version might incur more expense by looking at instruction semantics.
+     *
+     *  The base implementation of the fast method always returns false. The base implementation of the slow method just calls
+     *  the fast method.
+     *
+     *  Thread safety: Thread safe.
+     *
+     * @{ */
+    virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret) const;
+    virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret) const;
+    /** @} */
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Architecture-specific stuff for a partitioning engine.
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

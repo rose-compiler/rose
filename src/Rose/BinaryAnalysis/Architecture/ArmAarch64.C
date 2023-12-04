@@ -1038,6 +1038,31 @@ ArmAarch64::terminatesBasicBlock(SgAsmInstruction *insn_) const {
     return insn->get_kind()==Aarch64InstructionKind::ARM64_INS_INVALID || modifies_ip(insn);
 }
 
+bool
+ArmAarch64::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va) const {
+    if (insns.empty())
+        return false;
+    auto last = isSgAsmAarch64Instruction(insns.back());
+    ASSERT_not_null(last);
+
+    // Quick method based only on the kind of instruction
+    switch (last->get_kind()) {
+        case Aarch64InstructionKind::ARM64_INS_BL:
+        case Aarch64InstructionKind::ARM64_INS_BLR:
+        //case Aarch64InstructionKind::ARM64_INS_BLRAA: -- not in capstone
+        //case Aarch64InstructionKind::ARM64_INS_BLRAAZ: -- not in capstone
+        //case Aarch64InstructionKind::ARM64_INS_BLRAB: -- not in capstone
+        //case Aarch64InstructionKind::ARM64_INS_BLRABZ: -- not in capstone
+            if (target)
+                last->branchTarget().assignTo(*target);
+            if (return_va)
+                *return_va = last->get_address() + last->get_size();
+            return true;
+        default:
+            return false;
+    }
+}
+
 Disassembler::Base::Ptr
 ArmAarch64::newInstructionDecoder() const {
     return Disassembler::Aarch64::instance(shared_from_this());

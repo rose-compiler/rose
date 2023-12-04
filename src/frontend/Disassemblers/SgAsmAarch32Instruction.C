@@ -14,29 +14,6 @@ SgAsmAarch32Instruction::get_anyKind() const {
 }
 
 bool
-SgAsmAarch32Instruction::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t */*target*/,
-                                            rose_addr_t */*return_va*/) {
-    if (insns.empty())
-        return false;
-
-    using Kind = ::Rose::BinaryAnalysis::Aarch32InstructionKind;
-    switch (get_kind()) {
-        case Kind::ARM_INS_BL:
-        case Kind::ARM_INS_BLX:
-            return true;
-        default:
-            return false;
-    }
-}
-
-bool
-SgAsmAarch32Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target,
-                                 rose_addr_t *return_va) {
-    // FIXME[Robb Matzke 2021-03-02]: For now, just use the fast method
-    return isFunctionCallFast(insns, target, return_va);
-}
-
-bool
 SgAsmAarch32Instruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) {
     // Function returns are typically performed by popping the return address from the stack.
     if (insns.empty())

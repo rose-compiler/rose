@@ -69,6 +69,16 @@ Base::instructionDescription(const SgAsmInstruction*) const {
     return {};
 }
 
+bool
+Base::isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t*, rose_addr_t*) const {
+    return false;
+}
+
+bool
+Base::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& insns, rose_addr_t *target, rose_addr_t *ret) const {
+    return isFunctionCallSlow(insns, target, ret);
+}
+
 std::vector<Partitioner2::FunctionPrologueMatcher::Ptr>
 Base::functionPrologueMatchers(const Partitioner2::EnginePtr&) const {
     return {};

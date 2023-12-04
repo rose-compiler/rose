@@ -22,6 +22,8 @@ public:
     const CallingConvention::Dictionary& callingConventions() const override;
     std::string instructionDescription(const SgAsmInstruction*) const override;
     bool terminatesBasicBlock(SgAsmInstruction*) const override;
+    bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret) const override;
+    bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret) const override;
 
     Unparser::BasePtr newUnparser() const override;
 

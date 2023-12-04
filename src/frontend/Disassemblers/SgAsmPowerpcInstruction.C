@@ -98,50 +98,6 @@ SgAsmPowerpcInstruction::getSuccessors(bool &complete) {
 }
 
 bool
-SgAsmPowerpcInstruction::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target,
-                                            rose_addr_t *return_va) {
-    if (insns.empty())
-        return false;
-    SgAsmPowerpcInstruction *insn = isSgAsmPowerpcInstruction(insns.back());
-    if (!insn)
-        return false;
-
-    // Quick method based only on the kind of instruction
-    rose_addr_t tgt;
-    if (insn->get_kind() == powerpc_bl && insn->nOperands() == 1 && insn->operand(0)->asUnsigned().assignTo(tgt)) {
-        if (target)
-            *target = tgt;
-        if (return_va)
-            *return_va = insn->get_address() + insn->get_size();
-        return true;
-    } else if (insn->get_kind() == powerpc_bclrl && insn->nOperands() == 3 &&
-               (insn->operand(0)->asUnsigned().orElse(0) & 0x14) == 0x14 &&
-               insn->operand(2)->asUnsigned().orElse(1) == 0) {
-        // Indirect function call, assuming the LR register is dynamically initialized with the target address.
-        if (return_va)
-            *return_va = insn->get_address() + insn->get_size();
-        return true;
-    } else if (insn->get_kind() == powerpc_bcctrl && insn->nOperands() == 3 &&
-               (insn->operand(0)->asUnsigned().orElse(0) & 0x14) == 0x14 &&
-               insn->operand(2)->asUnsigned().orElse(1) == 0) {
-        // Indirect function call, as in:
-        //   mtspr    ctr, r9                                  ; copy to special-purpose register
-        //   bcctrl   0x14<20>, cr0.lt, 0                      ; branch to count register and link unconditionally
-        if (return_va)
-            *return_va = insn->get_address() + insn->get_size();
-        return true;
-    }
-    
-    return false;
-}
-
-bool
-SgAsmPowerpcInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target,
-                                            rose_addr_t *return_va) {
-    return isFunctionCallFast(insns, target, return_va);
-}
-
-bool
 SgAsmPowerpcInstruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) {
     if (insns.empty())
         return false;

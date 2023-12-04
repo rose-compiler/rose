@@ -13,42 +13,6 @@ SgAsmMipsInstruction::get_anyKind() const {
 
 // see base class
 bool
-SgAsmMipsInstruction::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va)
-{
-    if (insns.size()==0)
-        return false;
-    SgAsmMipsInstruction *last = isSgAsmMipsInstruction(insns.back());
-    if (!last)
-        return false;
-    switch (last->get_kind()) {
-        case mips_bgezal:
-        case mips_bgezall:
-        case mips_bltzal:
-        case mips_bltzall:
-        case mips_jal:
-        case mips_jalr:
-        case mips_jalr_hb:
-        case mips_jalx: {
-            if (target)
-                last->branchTarget().assignTo(*target); // target will not be changed if unknown
-            if (return_va)
-                *return_va = last->get_address() + last->get_size();
-            return true;
-        }
-        default:
-            return false;
-    }
-}
-
-// see base class
-bool
-SgAsmMipsInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va)
-{
-    return isFunctionCallFast(insns, target, return_va);
-}
-
-// see base class
-bool
 SgAsmMipsInstruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns)
 {
     if (insns.empty())

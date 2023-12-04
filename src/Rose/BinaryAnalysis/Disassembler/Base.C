@@ -179,8 +179,7 @@ Base::get_block_successors(const InstructionMap& insns, bool &complete)
      * resume at the address following the CALL. This is true 99% of the time.  Higher software layers (e.g., Partitioner) may
      * make other assumptions, which is why this code is not in SgAsmX86Instruction::getSuccessors(). [RPM 2010-05-09] */
     rose_addr_t target, return_va;
-    SgAsmInstruction *last_insn = block.back();
-    if (last_insn->isFunctionCallSlow(block, &target, &return_va))
+    if (architecture()->isFunctionCallSlow(block, &target, &return_va))
         successors.insert(return_va);
 
     return successors;

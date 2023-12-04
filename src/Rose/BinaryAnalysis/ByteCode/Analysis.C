@@ -161,7 +161,7 @@ void Class::partition(const PartitionerPtr &partitioner, std::map<std::string,ro
         if (last->isFunctionReturnFast(block->instructions())) {
           block->isFunctionReturn(true);
         }
-        else if (last->isFunctionCallFast(block->instructions(), nullptr, nullptr)) {
+        else if (partitioner->architecture()->isFunctionCallFast(block->instructions(), nullptr, nullptr)) {
           block->isFunctionCall(true);
 
           // Fully resoved function name is stored in the comment of the call instruction

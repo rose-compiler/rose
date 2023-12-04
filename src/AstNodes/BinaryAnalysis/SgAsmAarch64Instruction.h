@@ -25,10 +25,6 @@ public:
     virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) override;
     virtual bool isUnknown() const override;
     virtual unsigned get_anyKind() const override;
-    virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t *target,
-                                    rose_addr_t *return_va) override;
-    virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t *target,
-                                    rose_addr_t *return_va) override;
     virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) override;
     virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) override;
     virtual Sawyer::Optional<rose_addr_t> branchTarget() override;

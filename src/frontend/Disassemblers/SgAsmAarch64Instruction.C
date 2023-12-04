@@ -13,41 +13,6 @@ SgAsmAarch64Instruction::get_anyKind() const {
     return p_kind;
 }
 
-// see base class
-bool
-SgAsmAarch64Instruction::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target,
-                                            rose_addr_t *return_va) {
-    if (insns.empty())
-        return false;
-    SgAsmAarch64Instruction *last = isSgAsmAarch64Instruction(insns.back());
-    if (!last)
-        return false;
-
-    // Quick method based only on the kind of instruction
-    using Kind = ::Rose::BinaryAnalysis::Aarch64InstructionKind;
-    switch (last->get_kind()) {
-        case Kind::ARM64_INS_BL:
-        case Kind::ARM64_INS_BLR:
-        //case Kind::ARM64_INS_BLRAA: -- not in capstone
-        //case Kind::ARM64_INS_BLRAAZ: -- not in capstone
-        //case Kind::ARM64_INS_BLRAB: -- not in capstone
-        //case Kind::ARM64_INS_BLRABZ: -- not in capstone
-            if (target)
-                last->branchTarget().assignTo(*target);
-            if (return_va)
-                *return_va = last->get_address() + last->get_size();
-            return true;
-        default:
-            return false;
-    }
-}
-
-// see base class
-bool
-SgAsmAarch64Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target,
-                                            rose_addr_t *return_va) {
-    return isFunctionCallFast(insns, target, return_va);
-}
 
 // see base class
 bool

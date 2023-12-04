@@ -319,6 +319,36 @@ Jvm::terminatesBasicBlock(SgAsmInstruction *insn_) const {
     }
 }
 
+bool
+Jvm::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target, rose_addr_t *return_va) const {
+    if (insns.empty())
+        return false;
+
+    auto last = isSgAsmJvmInstruction(insns.back());
+    ASSERT_not_null(last);
+
+    // Quick method based only on the kind of instruction
+    switch (last->get_kind()) {
+        case JvmInstructionKind::invokevirtual:
+        case JvmInstructionKind::invokespecial:
+        case JvmInstructionKind::invokestatic:
+        case JvmInstructionKind::invokeinterface:
+        case JvmInstructionKind::invokedynamic:
+            //    case JvmInstructionKind::jsr: ???
+
+            if (target) {
+                last->branchTarget().assignTo(*target);
+            }
+            if (return_va) {
+                *return_va = last->get_address() + last->get_size();
+            }
+            return true;
+
+        default:
+            return false;
+    }
+}
+
 Disassembler::Base::Ptr
 Jvm::newInstructionDecoder() const {
     return Disassembler::Jvm::instance(shared_from_this());

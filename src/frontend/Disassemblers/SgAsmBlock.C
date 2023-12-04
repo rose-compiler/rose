@@ -1,8 +1,9 @@
 // SgAsmBlock member definitions.
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
+#include <sage3basic.h>
 
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include "stringify.h"
 
 using namespace Rose;
@@ -136,7 +137,7 @@ SgAsmBlock::isFunctionCall(rose_addr_t &target_va, rose_addr_t &return_va)
 
     // Now for the architecture-dependent determination.  This will not update target_va or return_va if they cannot be
     // determined or are ambiguous; so we must reset them to INVALID_ADDR if we're about to return false.
-    bool retval = insns.front()->isFunctionCallSlow(insns, &target_va, &return_va);
+    bool retval = insns.front()->architecture()->isFunctionCallSlow(insns, &target_va, &return_va);
     if (!retval) {
         target_va = return_va = INVALID_ADDR;
     } else if (INVALID_ADDR==target_va && 1==callee_vas.size()) {

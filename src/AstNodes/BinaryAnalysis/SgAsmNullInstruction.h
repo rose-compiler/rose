@@ -4,10 +4,6 @@ public:
     enum Kind { null_unknown };
 
 public: // overrides
-    virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns,
-                                    rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) override;
-    virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
-                                    rose_addr_t *target, rose_addr_t *ret) override;
     virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) override;
     virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) override;
     virtual Sawyer::Optional<rose_addr_t> branchTarget() override;
