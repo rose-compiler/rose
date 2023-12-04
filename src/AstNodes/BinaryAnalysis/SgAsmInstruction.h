@@ -142,12 +142,8 @@ public:
      *  Thread safety: This function is thread safe. */
     Rose::BinaryAnalysis::Architecture::BaseConstPtr architecture() const /*final*/;
 
-    /** Return a description of this instruction.
-     *
-     *  Descriptions are useful for generating comments in the disassembly listing to say what each instruction does when
-     *  the audience is not well versed in that instruction set architecture.  The base implementation always returns an
-     *  empty string. */
-    virtual std::string description() const { return ""; }
+    // [Robb Matzke 2023-12-04]: deprecated
+    virtual std::string description() const final ROSE_DEPRECATED("use Architecture::Base::instructionDescription");
 
     /** Number of operands. */
     size_t nOperands() const;

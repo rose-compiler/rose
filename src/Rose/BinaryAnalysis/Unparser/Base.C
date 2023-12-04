@@ -2069,7 +2069,7 @@ Base::emitInstructionComment(std::ostream &out, SgAsmInstruction *insn, State &s
         std::string comment = insn->get_comment();
         boost::trim(comment);
         if (comment.empty() && settings().insn.comment.usingDescription)
-            comment = insn->description();
+            comment = architecture()->instructionDescription(insn);
         if (!comment.empty()) {
             StyleGuard style(state.styleStack(), settings().comment.trailing.style);
             out <<style.render() <<"; " <<StringUtility::cEscape(comment) <<style.restore();

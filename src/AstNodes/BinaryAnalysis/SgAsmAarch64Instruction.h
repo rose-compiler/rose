@@ -22,7 +22,6 @@ class SgAsmAarch64Instruction: public SgAsmInstruction {
 
 public:
     // Overrides are documented in the base class
-    virtual std::string description() const override;
     virtual bool terminatesBasicBlock() override;
     virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) override;
     virtual bool isUnknown() const override;

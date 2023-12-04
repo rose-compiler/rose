@@ -26,6 +26,12 @@ SgAsmInstruction::architecture() const {
     return architecture_.get();
 }
 
+// [Robb Matzke 2023-12-04]: deprecated
+std::string
+SgAsmInstruction::description() const {
+    return architecture()->instructionDescription(this);
+}
+
 size_t
 SgAsmInstruction::nOperands() const {
     if (!get_operandList())

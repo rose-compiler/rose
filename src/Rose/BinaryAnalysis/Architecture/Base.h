@@ -145,6 +145,22 @@ public:
     newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Instruction characteristics
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Description for an instruction.
+     *
+     *  Returns the description for a particular instruction. The description must be a single line with no leading or trailing
+     *  white space, no line termination characters, and no non-printable characters.  Most subclasses will just return a string
+     *  based on the instruction mnemonic, such as "push a value onto the stack" for a `PUSH` instruction.  The instruction argument
+     *  must not be a null pointer.
+     *
+     *  The default implementation returns an empty string.
+     *
+     *  Thread safety: Thread safe. */
+    virtual std::string instructionDescription(const SgAsmInstruction*) const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Architecture-specific stuff for a partitioning engine.
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:

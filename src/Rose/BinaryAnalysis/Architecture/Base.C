@@ -64,6 +64,11 @@ Base::newInstructionDispatcher(const InstructionSemantics::BaseSemantics::RiscOp
     return {};
 }
 
+std::string
+Base::instructionDescription(const SgAsmInstruction*) const {
+    return {};
+}
+
 std::vector<Partitioner2::FunctionPrologueMatcher::Ptr>
 Base::functionPrologueMatchers(const Partitioner2::EnginePtr&) const {
     return {};

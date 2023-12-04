@@ -20,6 +20,7 @@ public:
 
 public:
     const CallingConvention::Dictionary& callingConventions() const override;
+    std::string instructionDescription(const SgAsmInstruction*) const override;
 
     Unparser::BasePtr newUnparser() const override;
 

@@ -10,7 +10,6 @@ class SgAsmCilInstruction: public SgAsmInstruction {
 
 public:
     // Overrides are documented in the base class
-    virtual std::string description() const override;
     virtual bool terminatesBasicBlock() override;
     virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns,
                                     rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) override;
