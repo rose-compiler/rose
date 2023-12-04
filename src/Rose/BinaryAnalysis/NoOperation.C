@@ -276,7 +276,7 @@ NoOperation::findNoopSubsequences(const std::vector<SgAsmInstruction*> &insns) c
     // after each instruction.
     if (ignoreTerminalBranches_ && insns.size() > 1 && states.size() == insns.size() + 1) {
         bool isComplete = true;
-        AddressSet succs = insns.back()->getSuccessors(isComplete/*out*/);
+        AddressSet succs = cpu_->architecture()->getSuccessors(insns.back(), isComplete/*out*/);
         if (succs.size() > 1 || !isComplete) {
             states.pop_back();
         } else if (succs.size() == 1 && succs.least() != insns.back()->get_address() + insns.back()->get_size()) {

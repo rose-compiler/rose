@@ -636,7 +636,7 @@ Partitioner::computeSuccessors(const InsnInfo::List &insns, Accuracy accuracy) {
     if (!insns.empty()) {
         ASSERT_not_null(insns.back());
         bool complete = true;
-        AddressSet succs = insns.back()->ast().lock().get()->getSuccessors(complete /*out*/);
+        AddressSet succs = instructionCache().decoder()->architecture()->getSuccessors(insns.back()->ast().lock().get(), complete /*out*/);
         for (rose_addr_t va: succs.values())
             retval.push_back(SymbolicExpression::makeIntegerConstant(IP.nBits(), va));
         if (!complete)
@@ -687,7 +687,7 @@ Partitioner::computedConcreteSuccessors(rose_addr_t insnVa, Accuracy accuracy) {
         case Accuracy::LOW: {
             if (InstructionPtr insn = existingInstructionAst(insnVa)) {
                 bool complete = true;
-                return insn->getSuccessors(complete/*out*/);
+                return instructionCache().decoder()->architecture()->getSuccessors(insn.lock().get(), complete/*out*/);
             } else {
                 return AddressSet();
             }
@@ -1005,7 +1005,7 @@ Partitioner::transferResults(const Rose::BinaryAnalysis::Partitioner2::Partition
             }
         } else {
             bool complete;
-            insns.back()->ast().lock().get()->getSuccessors(complete /*out*/);
+            instructionCache().decoder()->architecture()->getSuccessors(insns.back()->ast().lock().get(), complete /*out*/);
             if (!complete)
                 bblock->insertSuccessor(ops->undefined_(IP.nBits()), E_NORMAL);
         }

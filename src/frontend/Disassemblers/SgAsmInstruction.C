@@ -55,22 +55,17 @@ SgAsmInstruction::get_anyKind() const {
     ASSERT_not_reachable("SgAsmInstruction::get_kind() should have been implemented in " + class_name());
 }
 
+// [Robb Matzke 2023-12-04]: deprecated
 AddressSet
-SgAsmInstruction::getSuccessors(bool &/*complete*/) {
-    abort();
-    // tps (12/9/2009) : MSC requires a return value
-    return AddressSet();
+SgAsmInstruction::getSuccessors(bool &complete) {
+    return architecture()->getSuccessors(this, complete);
 }
 
+// [Robb Matzke 2023-12-04]: deprecated
 AddressSet
-SgAsmInstruction::getSuccessors(const std::vector<SgAsmInstruction*>& basic_block, bool &complete/*out*/,
-                                const MemoryMap::Ptr &  /*initial_memory=NULL*/)
-{
-    if (basic_block.size()==0) {
-        complete = true;
-        return AddressSet();
-    }
-    return basic_block.back()->getSuccessors(complete/*out*/);
+SgAsmInstruction::getSuccessors(const std::vector<SgAsmInstruction*>& basic_block, bool &complete,
+                                const MemoryMap::Ptr &initial_memory) {
+    return architecture()->getSuccessors(basic_block, complete /*out*/, initial_memory);
 }
 
 // [Robb Matzke 2023-12-04]: deprecated
@@ -131,10 +126,10 @@ SgAsmInstruction::isLastInBlock()
     return false;
 }
 
-// This would normally be pure virtual, but ROSETTA-generated classes can't handle such basic C++.
+// [Robb Matzke 2023-12-04]: deprecated
 Sawyer::Optional<rose_addr_t>
 SgAsmInstruction::branchTarget() {
-    ASSERT_not_reachable("you forgot to implement this in a subclass"); // runtime error is the best we can do with ROSETTA
+    return architecture()->branchTarget(this);
 }
 
 bool

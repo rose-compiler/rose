@@ -89,6 +89,27 @@ Base::isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) const {
     return isFunctionReturnFast(insns);
 }
 
+Sawyer::Optional<rose_addr_t>
+Base::branchTarget(SgAsmInstruction*) const {
+    return Sawyer::Nothing();
+}
+
+AddressSet
+Base::getSuccessors(SgAsmInstruction*, bool &complete) const {
+    complete = false;
+    return AddressSet();
+}
+
+AddressSet
+Base::getSuccessors(const std::vector<SgAsmInstruction*> &insns, bool &complete, const MemoryMapPtr &initial_memory) const {
+    if (insns.empty()) {
+        complete = true;
+        return AddressSet();
+    } else {
+        return getSuccessors(insns.back(), complete /*out*/);
+    }
+}
+
 std::vector<Partitioner2::FunctionPrologueMatcher::Ptr>
 Base::functionPrologueMatchers(const Partitioner2::EnginePtr&) const {
     return {};

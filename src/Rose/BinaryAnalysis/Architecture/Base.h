@@ -197,10 +197,49 @@ public:
      *  The base implementaiton of the fast method always returns false. The base implementation of the slow method just calls the
      *  fast method.
      *
+     *  Thread safety: Thread safe.
+     *
      * @{ */
     virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) const;
     virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) const;
     /** @} */
+
+    /** Obtains the virtual address for a branching instruction.
+     *
+     *  Returns the branch target address if the specified instruction is a branching instruction and the target is known; otherwise
+     *  returns nothing.
+     *
+     *  The default implementation returns nothing.
+     *
+     *  Thread safety: Thread safe. */
+    virtual Sawyer::Optional<rose_addr_t> branchTarget(SgAsmInstruction*) const;
+
+    /** Control flow successors for a single instruction.
+     *
+     *  The return value does not consider neighboring instructions, and therefore is quite naive.  It returns only the
+     *  information it can glean from this single instruction.  If the returned set of virtual instructions is fully known
+     *  then the @p complete argument will be set to true, otherwise false.
+     *
+     *  The default implementation always returns an empty set and clears @p complete.
+     *
+     *  Thread safety: Thread saafe. */
+    virtual AddressSet getSuccessors(SgAsmInstruction*, bool &complete) const;
+
+    /** Control flow successors for a basic block.
+     *
+     *  The @p basicBlock argument is a vector of instructions that is assumed to be a basic block that is entered only at
+     *  the first instruction and exits only at the last instruction.  A memory map can supply initial values for the
+     *  analysis' memory state.  The return value is a set of control flow successor virtual addresses, and the @p complete
+     *  argument return value indicates whether the returned set is known to be complete (aside from interrupts, faults,
+     *  etc).
+     *
+     *  The default implementation calls the single-instruction version, so architecture-specific subclasses
+     *  might want to override this to do something more sophisticated. However, if the basic block is empty then this function
+     *  instead returns an empty set and sets @p complete to true.
+     *
+     *  Thread safety: Thread safe. */
+    virtual AddressSet getSuccessors(const std::vector<SgAsmInstruction*> &basicBlock, bool &complete,
+                                     const MemoryMapPtr &initial_memory = MemoryMapPtr()) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Architecture-specific stuff for a partitioning engine.

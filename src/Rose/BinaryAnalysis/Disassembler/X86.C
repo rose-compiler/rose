@@ -197,7 +197,7 @@ X86::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet 
     /* Note successors if necesssary */
     if (successors) {
         bool complete;
-        *successors |= insn->getSuccessors(complete/*out*/);
+        *successors |= architecture()->getSuccessors(insn, complete/*out*/);
     }
 
     commentIpRelative(insn);

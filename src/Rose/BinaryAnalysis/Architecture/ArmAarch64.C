@@ -1054,7 +1054,7 @@ ArmAarch64::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose
         //case Aarch64InstructionKind::ARM64_INS_BLRAB: -- not in capstone
         //case Aarch64InstructionKind::ARM64_INS_BLRABZ: -- not in capstone
             if (target)
-                last->branchTarget().assignTo(*target);
+                branchTarget(last).assignTo(*target);
             if (return_va)
                 *return_va = last->get_address() + last->get_size();
             return true;
@@ -1078,6 +1078,127 @@ ArmAarch64::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) co
         default:
             return false;
     }
+}
+
+Sawyer::Optional<rose_addr_t>
+ArmAarch64::branchTarget(SgAsmInstruction *insn_) const {
+    auto insn = isSgAsmAarch32Instruction(insn_);
+    ASSERT_not_null(insn);
+
+    const std::vector<SgAsmExpression*> &exprs = insn->get_operandList()->get_operands();
+    switch (insn->get_kind()) {
+        case Aarch64InstructionKind::ARM64_INS_B:
+        case Aarch64InstructionKind::ARM64_INS_BL:
+        case Aarch64InstructionKind::ARM64_INS_BLR:
+        case Aarch64InstructionKind::ARM64_INS_BR:
+            // First argument is the branch target
+            ASSERT_require(exprs.size() == 1);
+            if (auto ival = isSgAsmIntegerValueExpression(exprs[0]))
+                return ival->get_absoluteValue();
+            break;
+
+        case Aarch64InstructionKind::ARM64_INS_BRK:
+        case Aarch64InstructionKind::ARM64_INS_ERET:
+        case Aarch64InstructionKind::ARM64_INS_HVC:
+        case Aarch64InstructionKind::ARM64_INS_RET:
+        case Aarch64InstructionKind::ARM64_INS_SMC:
+        case Aarch64InstructionKind::ARM64_INS_SVC:
+            // branch instruction, but target is not known
+            break;
+
+        case Aarch64InstructionKind::ARM64_INS_CBNZ:
+        case Aarch64InstructionKind::ARM64_INS_CBZ:
+            ASSERT_require(exprs.size() == 2);
+            if (auto ival = isSgAsmIntegerValueExpression(exprs[1]))
+                return ival->get_absoluteValue();
+            break;
+
+        case Aarch64InstructionKind::ARM64_INS_HLT:
+            // not considered a branching instruction (no successors)
+            break;
+
+        case Aarch64InstructionKind::ARM64_INS_TBNZ:
+        case Aarch64InstructionKind::ARM64_INS_TBZ:
+            ASSERT_require(exprs.size() == 3);
+            if (auto ival = isSgAsmIntegerValueExpression(exprs[1]))
+                return ival->get_absoluteValue();
+            break;
+        default:
+            break;
+    }
+    return false;
+}
+
+AddressSet
+ArmAarch64::getSuccessors(SgAsmInstruction *insn_, bool &complete) const {
+    auto insn = isSgAsmAarch64Instruction(insn_);
+    ASSERT_not_null(insn);
+
+    complete = true;           // set to true for now, change below if necessary
+
+    AddressSet retval;
+    const std::vector<SgAsmExpression*> &exprs = insn->get_operandList()->get_operands();
+
+    switch (insn->get_kind()) {
+        case Aarch64InstructionKind::ARM64_INS_B:
+            if (insn->get_condition() != ARM64_CC_AL && insn->get_condition() != ARM64_CC_NV) {
+                // This is a conditional branch, so the fall through address is a possible successor.
+                retval.insert(insn->get_address() + insn->get_size());
+            }
+            [[fallthrough]];
+        case Aarch64InstructionKind::ARM64_INS_BL:
+        case Aarch64InstructionKind::ARM64_INS_BLR:
+        case Aarch64InstructionKind::ARM64_INS_BR:
+            // First argument is the branch target
+            ASSERT_require(exprs.size() == 1);
+            if (auto ival = isSgAsmIntegerValueExpression(exprs[0])) {
+                retval.insert(ival->get_absoluteValue());
+            } else {
+                complete = false;
+            }
+            break;
+
+        case Aarch64InstructionKind::ARM64_INS_BRK:
+        case Aarch64InstructionKind::ARM64_INS_ERET:
+        case Aarch64InstructionKind::ARM64_INS_HVC:
+        case Aarch64InstructionKind::ARM64_INS_RET:
+        case Aarch64InstructionKind::ARM64_INS_SMC:
+        case Aarch64InstructionKind::ARM64_INS_SVC:
+            complete = false;
+            break;
+
+        case Aarch64InstructionKind::ARM64_INS_CBNZ:
+        case Aarch64InstructionKind::ARM64_INS_CBZ:
+            ASSERT_require(exprs.size() == 2);
+            retval.insert(insn->get_address() + insn->get_size());
+            if (auto ival = isSgAsmIntegerValueExpression(exprs[1])) {
+                retval.insert(ival->get_absoluteValue());
+            } else {
+                complete = false;
+            }
+            break;
+
+        case Aarch64InstructionKind::ARM64_INS_HLT:
+            // no successors
+            break;
+
+        case Aarch64InstructionKind::ARM64_INS_TBNZ:
+        case Aarch64InstructionKind::ARM64_INS_TBZ:
+            ASSERT_require(exprs.size() == 3);
+            retval.insert(insn->get_address() + insn->get_size());
+            if (auto ival = isSgAsmIntegerValueExpression(exprs[1])) {
+                retval.insert(ival->get_absoluteValue());
+            } else {
+                complete = false;
+            }
+            break;
+
+        default:
+            // all other instructions only ever fall through to the next address
+            retval.insert(insn->get_address() + insn->get_size());
+            break;
+    }
+    return retval;
 }
 
 Disassembler::Base::Ptr

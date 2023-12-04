@@ -163,6 +163,8 @@ public:
         ROSE_DEPRECATED("use Architecture::Base::isFunctionReturnFast");
     virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) final
         ROSE_DEPRECATED("use Architecture::Base::isFunctionReturnSlow");
+    virtual Sawyer::Optional<rose_addr_t> branchTarget() final
+        ROSE_DEPRECATED("use Architecture::Base::branchTarget");
 
     /** Returns true if this instruction is the first instruction in a basic block.
      *
@@ -173,15 +175,6 @@ public:
      *
      *  This method looks only at the AST to make this determination. */
     bool isLastInBlock();
-
-    /** Obtains the virtual address for a branching instruction.
-     *
-     *  Returns the branch target address if this instruction is a branching instruction and the target is known; otherwise
-     *  returns nothing. */
-    virtual Sawyer::Optional<rose_addr_t> branchTarget();
-
-    // FIXME[Robb Matzke 2021-03-02]: deprecated
-    bool getBranchTarget(rose_addr_t *target /*out*/) ROSE_DEPRECATED("use branchTarget instead");
 
     /** Determines whether a single instruction has an effect.
      *
@@ -343,26 +336,14 @@ public:
     findNoopSubsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch=false,
                          bool relax_stack_semantics=false);
 
-    /** Control flow successors for a single instruction.
-     *
-     *  The return value does not consider neighboring instructions, and therefore is quite naive.  It returns only the
-     *  information it can glean from this single instruction.  If the returned set of virtual instructions is fully known
-     *  then the @p complete argument will be set to true, otherwise false.  The base class implementation always
-     *  aborts()--it must be defined in an architecture-specific subclass (pure virtual is not possible due to ROSETTA). */
-    virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete); /*subclasses must redefine*/
-
-    /** Control flow successors for a basic block.
-     *
-     *  The @p basicBlock argument is a vector of instructions that is assumed to be a basic block that is entered only at
-     *  the first instruction and exits only at the last instruction.  A memory map can supply initial values for the
-     *  analysis' memory state.  The return value is a set of control flow successor virtual addresses, and the @p complete
-     *  argument return value indicates whether the returned set is known to be complete (aside from interrupts, faults,
-     *  etc).  The base class implementation just calls the single-instruction version, so architecture-specific subclasses
-     *  might want to override this to do something more sophisticated. */
+    // [Robb Matzke 2023-12-04]: deprecated
+    virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete)
+        ROSE_DEPRECATED("use Architecture::Base::getSuccessors");
     virtual Rose::BinaryAnalysis::AddressSet getSuccessors(const std::vector<SgAsmInstruction*> &basicBlock,
                                                            bool &complete,
                                                            const Rose::BinaryAnalysis::MemoryMap::Ptr &initial_memory =
-                                                           Rose::BinaryAnalysis::MemoryMap::Ptr());
+                                                           Rose::BinaryAnalysis::MemoryMap::Ptr())
+        ROSE_DEPRECATED("use Architecture::Base::getSuccessors");
 
     /** Returns the size of an instruction in bytes.
      *

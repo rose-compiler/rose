@@ -776,6 +776,1071 @@ ArmAarch32::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) co
     return last->get_kind() == Aarch32InstructionKind::ARM_INS_POP && last->get_writesToIp();
 }
 
+Sawyer::Optional<rose_addr_t>
+ArmAarch32::branchTarget(SgAsmInstruction *insn_) const {
+    auto insn = isSgAsmAarch32Instruction(insn_);
+    ASSERT_not_null(insn);
+
+    switch (insn->get_kind()) {
+        case Aarch32InstructionKind::ARM_INS_INVALID:
+        case Aarch32InstructionKind::ARM_INS_ENDING:
+            return Sawyer::Nothing();
+
+        //----------------------------------------------------------------------------------------------------
+        // Fall through only.
+        //----------------------------------------------------------------------------------------------------
+        case Aarch32InstructionKind::ARM_INS_AESD:
+        case Aarch32InstructionKind::ARM_INS_AESE:
+        case Aarch32InstructionKind::ARM_INS_AESIMC:
+        case Aarch32InstructionKind::ARM_INS_AESMC:
+        case Aarch32InstructionKind::ARM_INS_CLREX:
+        case Aarch32InstructionKind::ARM_INS_CMN:
+        case Aarch32InstructionKind::ARM_INS_CMP:
+        case Aarch32InstructionKind::ARM_INS_CPS:
+        case Aarch32InstructionKind::ARM_INS_DBG:
+        case Aarch32InstructionKind::ARM_INS_DCPS1:
+        case Aarch32InstructionKind::ARM_INS_DCPS2:
+        case Aarch32InstructionKind::ARM_INS_DCPS3:
+        case Aarch32InstructionKind::ARM_INS_DMB:
+        case Aarch32InstructionKind::ARM_INS_DSB:
+        case Aarch32InstructionKind::ARM_INS_ISB:
+        case Aarch32InstructionKind::ARM_INS_LDC:
+        case Aarch32InstructionKind::ARM_INS_MCR:
+        case Aarch32InstructionKind::ARM_INS_MCRR:
+        case Aarch32InstructionKind::ARM_INS_MSR:
+        case Aarch32InstructionKind::ARM_INS_NOP:
+        case Aarch32InstructionKind::ARM_INS_PLD:
+        case Aarch32InstructionKind::ARM_INS_PLDW:
+        case Aarch32InstructionKind::ARM_INS_PLI:
+        case Aarch32InstructionKind::ARM_INS_PUSH:
+        case Aarch32InstructionKind::ARM_INS_SETEND:
+        case Aarch32InstructionKind::ARM_INS_SEV:
+        case Aarch32InstructionKind::ARM_INS_SEVL:
+        case Aarch32InstructionKind::ARM_INS_SRSDA:
+        case Aarch32InstructionKind::ARM_INS_SRSDB:
+        case Aarch32InstructionKind::ARM_INS_SRSIA:
+        case Aarch32InstructionKind::ARM_INS_SRSIB:
+        case Aarch32InstructionKind::ARM_INS_TEQ:
+        case Aarch32InstructionKind::ARM_INS_TST:
+        case Aarch32InstructionKind::ARM_INS_YIELD:
+        case Aarch32InstructionKind::ARM_INS_VABA:
+        case Aarch32InstructionKind::ARM_INS_VABAL:
+        case Aarch32InstructionKind::ARM_INS_VABD:
+        case Aarch32InstructionKind::ARM_INS_VABDL:
+        case Aarch32InstructionKind::ARM_INS_VABS:
+        case Aarch32InstructionKind::ARM_INS_VACGE:
+        case Aarch32InstructionKind::ARM_INS_VACGT:
+        case Aarch32InstructionKind::ARM_INS_VADD:
+        case Aarch32InstructionKind::ARM_INS_VADDHN:
+        case Aarch32InstructionKind::ARM_INS_VADDL:
+        case Aarch32InstructionKind::ARM_INS_VADDW:
+        case Aarch32InstructionKind::ARM_INS_VAND:
+        case Aarch32InstructionKind::ARM_INS_VBIC:
+        case Aarch32InstructionKind::ARM_INS_VBIF:
+        case Aarch32InstructionKind::ARM_INS_VBIT:
+        case Aarch32InstructionKind::ARM_INS_VBSL:
+        case Aarch32InstructionKind::ARM_INS_VCEQ:
+        case Aarch32InstructionKind::ARM_INS_VCGE:
+        case Aarch32InstructionKind::ARM_INS_VCGT:
+        case Aarch32InstructionKind::ARM_INS_VCLE:
+        case Aarch32InstructionKind::ARM_INS_VCLS:
+        case Aarch32InstructionKind::ARM_INS_VCLT:
+        case Aarch32InstructionKind::ARM_INS_VCLZ:
+        case Aarch32InstructionKind::ARM_INS_VCMP:
+        case Aarch32InstructionKind::ARM_INS_VCMPE:
+        case Aarch32InstructionKind::ARM_INS_VCNT:
+        case Aarch32InstructionKind::ARM_INS_VCVT:
+        case Aarch32InstructionKind::ARM_INS_VCVTA:
+        case Aarch32InstructionKind::ARM_INS_VCVTB:
+        case Aarch32InstructionKind::ARM_INS_VCVTM:
+        case Aarch32InstructionKind::ARM_INS_VCVTN:
+        case Aarch32InstructionKind::ARM_INS_VCVTP:
+        case Aarch32InstructionKind::ARM_INS_VCVTR:
+        case Aarch32InstructionKind::ARM_INS_VCVTT:
+        case Aarch32InstructionKind::ARM_INS_VDIV:
+        case Aarch32InstructionKind::ARM_INS_VDUP:
+        case Aarch32InstructionKind::ARM_INS_VEOR:
+        case Aarch32InstructionKind::ARM_INS_VEXT:
+        case Aarch32InstructionKind::ARM_INS_VFMA:
+        case Aarch32InstructionKind::ARM_INS_VFMS:
+        case Aarch32InstructionKind::ARM_INS_VFNMA:
+        case Aarch32InstructionKind::ARM_INS_VFNMS:
+        case Aarch32InstructionKind::ARM_INS_VHADD:
+        case Aarch32InstructionKind::ARM_INS_VHSUB:
+        case Aarch32InstructionKind::ARM_INS_VLDR:
+        case Aarch32InstructionKind::ARM_INS_VMAX:
+        case Aarch32InstructionKind::ARM_INS_VMAXNM:
+        case Aarch32InstructionKind::ARM_INS_VMIN:
+        case Aarch32InstructionKind::ARM_INS_VMINNM:
+        case Aarch32InstructionKind::ARM_INS_VMLA:
+        case Aarch32InstructionKind::ARM_INS_VMLAL:
+        case Aarch32InstructionKind::ARM_INS_VMLS:
+        case Aarch32InstructionKind::ARM_INS_VMLSL:
+        case Aarch32InstructionKind::ARM_INS_VMOVL:
+        case Aarch32InstructionKind::ARM_INS_VMOVN:
+        case Aarch32InstructionKind::ARM_INS_VMUL:
+        case Aarch32InstructionKind::ARM_INS_VMULL:
+        case Aarch32InstructionKind::ARM_INS_VMVN:
+        case Aarch32InstructionKind::ARM_INS_VNEG:
+        case Aarch32InstructionKind::ARM_INS_VNMLA:
+        case Aarch32InstructionKind::ARM_INS_VNMLS:
+        case Aarch32InstructionKind::ARM_INS_VNMUL:
+        case Aarch32InstructionKind::ARM_INS_VORN:
+        case Aarch32InstructionKind::ARM_INS_VORR:
+        case Aarch32InstructionKind::ARM_INS_VPADAL:
+        case Aarch32InstructionKind::ARM_INS_VPADD:
+        case Aarch32InstructionKind::ARM_INS_VPADDL:
+        case Aarch32InstructionKind::ARM_INS_VPMAX:
+        case Aarch32InstructionKind::ARM_INS_VPMIN:
+        case Aarch32InstructionKind::ARM_INS_VQABS:
+        case Aarch32InstructionKind::ARM_INS_VQADD:
+        case Aarch32InstructionKind::ARM_INS_VQDMLAL:
+        case Aarch32InstructionKind::ARM_INS_VQDMLSL:
+        case Aarch32InstructionKind::ARM_INS_VQDMULH:
+        case Aarch32InstructionKind::ARM_INS_VQDMULL:
+        case Aarch32InstructionKind::ARM_INS_VQMOVN:
+        case Aarch32InstructionKind::ARM_INS_VQMOVUN:
+        case Aarch32InstructionKind::ARM_INS_VQNEG:
+        case Aarch32InstructionKind::ARM_INS_VQRDMULH:
+        case Aarch32InstructionKind::ARM_INS_VQRSHL:
+        case Aarch32InstructionKind::ARM_INS_VQRSHRN:
+        case Aarch32InstructionKind::ARM_INS_VQRSHRUN:
+        case Aarch32InstructionKind::ARM_INS_VQSHL:
+        case Aarch32InstructionKind::ARM_INS_VQSHLU:
+        case Aarch32InstructionKind::ARM_INS_VQSHRN:
+        case Aarch32InstructionKind::ARM_INS_VQSHRUN:
+        case Aarch32InstructionKind::ARM_INS_VQSUB:
+        case Aarch32InstructionKind::ARM_INS_VRADDHN:
+        case Aarch32InstructionKind::ARM_INS_VRECPE:
+        case Aarch32InstructionKind::ARM_INS_VRECPS:
+        case Aarch32InstructionKind::ARM_INS_VREV16:
+        case Aarch32InstructionKind::ARM_INS_VREV32:
+        case Aarch32InstructionKind::ARM_INS_VREV64:
+        case Aarch32InstructionKind::ARM_INS_VRHADD:
+        case Aarch32InstructionKind::ARM_INS_VRINTA:
+        case Aarch32InstructionKind::ARM_INS_VRINTM:
+        case Aarch32InstructionKind::ARM_INS_VRINTN:
+        case Aarch32InstructionKind::ARM_INS_VRINTP:
+        case Aarch32InstructionKind::ARM_INS_VRINTR:
+        case Aarch32InstructionKind::ARM_INS_VRINTX:
+        case Aarch32InstructionKind::ARM_INS_VRINTZ:
+        case Aarch32InstructionKind::ARM_INS_VRSHL:
+        case Aarch32InstructionKind::ARM_INS_VRSHR:
+        case Aarch32InstructionKind::ARM_INS_VRSHRN:
+        case Aarch32InstructionKind::ARM_INS_VRSQRTE:
+        case Aarch32InstructionKind::ARM_INS_VRSQRTS:
+        case Aarch32InstructionKind::ARM_INS_VRSRA:
+        case Aarch32InstructionKind::ARM_INS_VRSUBHN:
+        case Aarch32InstructionKind::ARM_INS_VSELEQ:
+        case Aarch32InstructionKind::ARM_INS_VSELGE:
+        case Aarch32InstructionKind::ARM_INS_VSELGT:
+        case Aarch32InstructionKind::ARM_INS_VSELVS:
+        case Aarch32InstructionKind::ARM_INS_VSHL:
+        case Aarch32InstructionKind::ARM_INS_VSHLL:
+        case Aarch32InstructionKind::ARM_INS_VSHR:
+        case Aarch32InstructionKind::ARM_INS_VSHRN:
+        case Aarch32InstructionKind::ARM_INS_VSLI:
+        case Aarch32InstructionKind::ARM_INS_VSQRT:
+        case Aarch32InstructionKind::ARM_INS_VSRA:
+        case Aarch32InstructionKind::ARM_INS_VSRI:
+        case Aarch32InstructionKind::ARM_INS_VSUB:
+        case Aarch32InstructionKind::ARM_INS_VSUBHN:
+        case Aarch32InstructionKind::ARM_INS_VSUBL:
+        case Aarch32InstructionKind::ARM_INS_VSUBW:
+        case Aarch32InstructionKind::ARM_INS_VSWP:
+        case Aarch32InstructionKind::ARM_INS_VTBL:
+        case Aarch32InstructionKind::ARM_INS_VTBX:
+        case Aarch32InstructionKind::ARM_INS_VTRN:
+        case Aarch32InstructionKind::ARM_INS_VTST:
+        case Aarch32InstructionKind::ARM_INS_VUZP:
+        case Aarch32InstructionKind::ARM_INS_VZIP:
+            return Sawyer::Nothing();
+
+        //----------------------------------------------------------------------------------------------------
+        // Fall through, or UNPREDICTABLE behavior.
+        //----------------------------------------------------------------------------------------------------
+        case Aarch32InstructionKind::ARM_INS_ADC:
+        case Aarch32InstructionKind::ARM_INS_BFC:
+        case Aarch32InstructionKind::ARM_INS_BFI:
+        case Aarch32InstructionKind::ARM_INS_CLZ:
+        case Aarch32InstructionKind::ARM_INS_CRC32B:
+        case Aarch32InstructionKind::ARM_INS_CRC32H:
+        case Aarch32InstructionKind::ARM_INS_CRC32W:
+        case Aarch32InstructionKind::ARM_INS_CRC32CB:
+        case Aarch32InstructionKind::ARM_INS_CRC32CH:
+        case Aarch32InstructionKind::ARM_INS_CRC32CW:
+        case Aarch32InstructionKind::ARM_INS_FLDMDBX:
+        case Aarch32InstructionKind::ARM_INS_FLDMIAX:
+        case Aarch32InstructionKind::ARM_INS_FSTMDBX:
+        case Aarch32InstructionKind::ARM_INS_FSTMIAX:
+        case Aarch32InstructionKind::ARM_INS_LDA:
+        case Aarch32InstructionKind::ARM_INS_LDAB:
+        case Aarch32InstructionKind::ARM_INS_LDAEX:
+        case Aarch32InstructionKind::ARM_INS_LDAEXB:
+        case Aarch32InstructionKind::ARM_INS_LDAEXD:
+        case Aarch32InstructionKind::ARM_INS_LDAEXH:
+        case Aarch32InstructionKind::ARM_INS_LDAH:
+        case Aarch32InstructionKind::ARM_INS_LDRBT:
+        case Aarch32InstructionKind::ARM_INS_LDRD:
+        case Aarch32InstructionKind::ARM_INS_LDREX:
+        case Aarch32InstructionKind::ARM_INS_LDREXB:
+        case Aarch32InstructionKind::ARM_INS_LDREXD:
+        case Aarch32InstructionKind::ARM_INS_LDREXH:
+        case Aarch32InstructionKind::ARM_INS_LDRH:
+        case Aarch32InstructionKind::ARM_INS_LDRHT:
+        case Aarch32InstructionKind::ARM_INS_LDRSB:
+        case Aarch32InstructionKind::ARM_INS_LDRSBT:
+        case Aarch32InstructionKind::ARM_INS_LDRSH:
+        case Aarch32InstructionKind::ARM_INS_LDRSHT:
+        case Aarch32InstructionKind::ARM_INS_LDRT:
+        case Aarch32InstructionKind::ARM_INS_MLA:
+        case Aarch32InstructionKind::ARM_INS_MLS:
+        case Aarch32InstructionKind::ARM_INS_MOVT:
+        case Aarch32InstructionKind::ARM_INS_MRRC:
+        case Aarch32InstructionKind::ARM_INS_MRS:
+        case Aarch32InstructionKind::ARM_INS_MUL:
+        case Aarch32InstructionKind::ARM_INS_ORN:
+        case Aarch32InstructionKind::ARM_INS_PKHBT:
+        case Aarch32InstructionKind::ARM_INS_PKHTB:
+        case Aarch32InstructionKind::ARM_INS_QADD:
+        case Aarch32InstructionKind::ARM_INS_QADD16:
+        case Aarch32InstructionKind::ARM_INS_QADD8:
+        case Aarch32InstructionKind::ARM_INS_QASX:
+        case Aarch32InstructionKind::ARM_INS_QDADD:
+        case Aarch32InstructionKind::ARM_INS_QDSUB:
+        case Aarch32InstructionKind::ARM_INS_QSAX:
+        case Aarch32InstructionKind::ARM_INS_QSUB:
+        case Aarch32InstructionKind::ARM_INS_QSUB16:
+        case Aarch32InstructionKind::ARM_INS_QSUB8:
+        case Aarch32InstructionKind::ARM_INS_RBIT:
+        case Aarch32InstructionKind::ARM_INS_REV:
+        case Aarch32InstructionKind::ARM_INS_REV16:
+        case Aarch32InstructionKind::ARM_INS_REVSH:
+        case Aarch32InstructionKind::ARM_INS_SADD16:
+        case Aarch32InstructionKind::ARM_INS_SADD8:
+        case Aarch32InstructionKind::ARM_INS_SASX:
+        case Aarch32InstructionKind::ARM_INS_SBFX:
+        case Aarch32InstructionKind::ARM_INS_SDIV:
+        case Aarch32InstructionKind::ARM_INS_SEL:
+        case Aarch32InstructionKind::ARM_INS_SHA1C:
+        case Aarch32InstructionKind::ARM_INS_SHA1H:
+        case Aarch32InstructionKind::ARM_INS_SHA1M:
+        case Aarch32InstructionKind::ARM_INS_SHA1P:
+        case Aarch32InstructionKind::ARM_INS_SHA1SU0:
+        case Aarch32InstructionKind::ARM_INS_SHA1SU1:
+        case Aarch32InstructionKind::ARM_INS_SHA256H:
+        case Aarch32InstructionKind::ARM_INS_SHA256H2:
+        case Aarch32InstructionKind::ARM_INS_SHA256SU0:
+        case Aarch32InstructionKind::ARM_INS_SHA256SU1:
+        case Aarch32InstructionKind::ARM_INS_SHADD16:
+        case Aarch32InstructionKind::ARM_INS_SHADD8:
+        case Aarch32InstructionKind::ARM_INS_SHASX:
+        case Aarch32InstructionKind::ARM_INS_SHSAX:
+        case Aarch32InstructionKind::ARM_INS_SHSUB16:
+        case Aarch32InstructionKind::ARM_INS_SHSUB8:
+        case Aarch32InstructionKind::ARM_INS_SMLABB:
+        case Aarch32InstructionKind::ARM_INS_SMLABT:
+        case Aarch32InstructionKind::ARM_INS_SMLATB:
+        case Aarch32InstructionKind::ARM_INS_SMLATT:
+        case Aarch32InstructionKind::ARM_INS_SMLAD:
+        case Aarch32InstructionKind::ARM_INS_SMLADX:
+        case Aarch32InstructionKind::ARM_INS_SMLAL:
+        case Aarch32InstructionKind::ARM_INS_SMLALBB:
+        case Aarch32InstructionKind::ARM_INS_SMLALBT:
+        case Aarch32InstructionKind::ARM_INS_SMLALTB:
+        case Aarch32InstructionKind::ARM_INS_SMLALTT:
+        case Aarch32InstructionKind::ARM_INS_SMLALD:
+        case Aarch32InstructionKind::ARM_INS_SMLALDX:
+        case Aarch32InstructionKind::ARM_INS_SMLAWB:
+        case Aarch32InstructionKind::ARM_INS_SMLAWT:
+        case Aarch32InstructionKind::ARM_INS_SMLSD:
+        case Aarch32InstructionKind::ARM_INS_SMLSDX:
+        case Aarch32InstructionKind::ARM_INS_SMLSLD:
+        case Aarch32InstructionKind::ARM_INS_SMLSLDX:
+        case Aarch32InstructionKind::ARM_INS_SMMLA:
+        case Aarch32InstructionKind::ARM_INS_SMMLAR:
+        case Aarch32InstructionKind::ARM_INS_SMMLS:
+        case Aarch32InstructionKind::ARM_INS_SMMLSR:
+        case Aarch32InstructionKind::ARM_INS_SMMUL:
+        case Aarch32InstructionKind::ARM_INS_SMMULR:
+        case Aarch32InstructionKind::ARM_INS_SMUAD:
+        case Aarch32InstructionKind::ARM_INS_SMUADX:
+        case Aarch32InstructionKind::ARM_INS_SMULBB:
+        case Aarch32InstructionKind::ARM_INS_SMULBT:
+        case Aarch32InstructionKind::ARM_INS_SMULTB:
+        case Aarch32InstructionKind::ARM_INS_SMULTT:
+        case Aarch32InstructionKind::ARM_INS_SMULL:
+        case Aarch32InstructionKind::ARM_INS_SMULWB:
+        case Aarch32InstructionKind::ARM_INS_SMULWT:
+        case Aarch32InstructionKind::ARM_INS_SMUSD:
+        case Aarch32InstructionKind::ARM_INS_SMUSDX:
+        case Aarch32InstructionKind::ARM_INS_SSAT:
+        case Aarch32InstructionKind::ARM_INS_SSAT16:
+        case Aarch32InstructionKind::ARM_INS_SSAX:
+        case Aarch32InstructionKind::ARM_INS_SSUB16:
+        case Aarch32InstructionKind::ARM_INS_SSUB8:
+        case Aarch32InstructionKind::ARM_INS_STL:
+        case Aarch32InstructionKind::ARM_INS_STLB:
+        case Aarch32InstructionKind::ARM_INS_STLEX:
+        case Aarch32InstructionKind::ARM_INS_STLEXB:
+        case Aarch32InstructionKind::ARM_INS_STLEXD:
+        case Aarch32InstructionKind::ARM_INS_STLEXH:
+        case Aarch32InstructionKind::ARM_INS_STLH:
+        case Aarch32InstructionKind::ARM_INS_STM:
+        case Aarch32InstructionKind::ARM_INS_STMDA:
+        case Aarch32InstructionKind::ARM_INS_STMDB:
+        case Aarch32InstructionKind::ARM_INS_STMIB:
+        case Aarch32InstructionKind::ARM_INS_STR:
+        case Aarch32InstructionKind::ARM_INS_STRB:
+        case Aarch32InstructionKind::ARM_INS_STRBT:
+        case Aarch32InstructionKind::ARM_INS_STRD:
+        case Aarch32InstructionKind::ARM_INS_STREX:
+        case Aarch32InstructionKind::ARM_INS_STREXB:
+        case Aarch32InstructionKind::ARM_INS_STREXD:
+        case Aarch32InstructionKind::ARM_INS_STREXH:
+        case Aarch32InstructionKind::ARM_INS_STRH:
+        case Aarch32InstructionKind::ARM_INS_STRHT:
+        case Aarch32InstructionKind::ARM_INS_STRT:
+        case Aarch32InstructionKind::ARM_INS_SXTAB:
+        case Aarch32InstructionKind::ARM_INS_SXTAB16:
+        case Aarch32InstructionKind::ARM_INS_SXTAH:
+        case Aarch32InstructionKind::ARM_INS_SXTB:
+        case Aarch32InstructionKind::ARM_INS_SXTB16:
+        case Aarch32InstructionKind::ARM_INS_SXTH:
+        case Aarch32InstructionKind::ARM_INS_UADD16:
+        case Aarch32InstructionKind::ARM_INS_UADD8:
+        case Aarch32InstructionKind::ARM_INS_UASX:
+        case Aarch32InstructionKind::ARM_INS_UBFX:
+        case Aarch32InstructionKind::ARM_INS_UDIV:
+        case Aarch32InstructionKind::ARM_INS_UHADD16:
+        case Aarch32InstructionKind::ARM_INS_UHADD8:
+        case Aarch32InstructionKind::ARM_INS_UHASX:
+        case Aarch32InstructionKind::ARM_INS_UHSAX:
+        case Aarch32InstructionKind::ARM_INS_UHSUB16:
+        case Aarch32InstructionKind::ARM_INS_UHSUB8:
+        case Aarch32InstructionKind::ARM_INS_UMAAL:
+        case Aarch32InstructionKind::ARM_INS_UMLAL:
+        case Aarch32InstructionKind::ARM_INS_UMULL:
+        case Aarch32InstructionKind::ARM_INS_UQADD16:
+        case Aarch32InstructionKind::ARM_INS_UQADD8:
+        case Aarch32InstructionKind::ARM_INS_UQASX:
+        case Aarch32InstructionKind::ARM_INS_UQSAX:
+        case Aarch32InstructionKind::ARM_INS_UQSUB16:
+        case Aarch32InstructionKind::ARM_INS_UQSUB8:
+        case Aarch32InstructionKind::ARM_INS_USAD8:
+        case Aarch32InstructionKind::ARM_INS_USADA8:
+        case Aarch32InstructionKind::ARM_INS_USAT:
+        case Aarch32InstructionKind::ARM_INS_USAT16:
+        case Aarch32InstructionKind::ARM_INS_USAX:
+        case Aarch32InstructionKind::ARM_INS_USUB16:
+        case Aarch32InstructionKind::ARM_INS_USUB8:
+        case Aarch32InstructionKind::ARM_INS_UXTAB:
+        case Aarch32InstructionKind::ARM_INS_UXTAB16:
+        case Aarch32InstructionKind::ARM_INS_UXTAH:
+        case Aarch32InstructionKind::ARM_INS_UXTB:
+        case Aarch32InstructionKind::ARM_INS_UXTB16:
+        case Aarch32InstructionKind::ARM_INS_UXTH:
+        case Aarch32InstructionKind::ARM_INS_VLD1:
+        case Aarch32InstructionKind::ARM_INS_VLD2:
+        case Aarch32InstructionKind::ARM_INS_VLD3:
+        case Aarch32InstructionKind::ARM_INS_VLD4:
+        case Aarch32InstructionKind::ARM_INS_VLDMDB:
+        case Aarch32InstructionKind::ARM_INS_VLDMIA:
+        case Aarch32InstructionKind::ARM_INS_VMOV:
+        case Aarch32InstructionKind::ARM_INS_VMRS:
+        case Aarch32InstructionKind::ARM_INS_VMSR:
+        case Aarch32InstructionKind::ARM_INS_VPOP:
+        case Aarch32InstructionKind::ARM_INS_VPUSH:
+        case Aarch32InstructionKind::ARM_INS_VST1:
+        case Aarch32InstructionKind::ARM_INS_VST2:
+        case Aarch32InstructionKind::ARM_INS_VST3:
+        case Aarch32InstructionKind::ARM_INS_VST4:
+        case Aarch32InstructionKind::ARM_INS_VSTMDB:
+        case Aarch32InstructionKind::ARM_INS_VSTMIA:
+        case Aarch32InstructionKind::ARM_INS_VSTR:
+            // These instructions, when writing to the instruction pointer register, have "UNPREDICTABLE" behavior, otherwise
+            // they fall through to the next instruction.
+            return Sawyer::Nothing();
+
+        //----------------------------------------------------------------------------------------------------
+        // Fall through, or conditionally branch.
+        //----------------------------------------------------------------------------------------------------
+        case Aarch32InstructionKind::ARM_INS_ADD:
+        case Aarch32InstructionKind::ARM_INS_ADDW:
+        case Aarch32InstructionKind::ARM_INS_ADR:
+        case Aarch32InstructionKind::ARM_INS_AND:
+        case Aarch32InstructionKind::ARM_INS_ASR:
+        case Aarch32InstructionKind::ARM_INS_BIC:
+        case Aarch32InstructionKind::ARM_INS_EOR:
+        case Aarch32InstructionKind::ARM_INS_LDM:
+        case Aarch32InstructionKind::ARM_INS_LDMDA:
+        case Aarch32InstructionKind::ARM_INS_LDMDB:
+        case Aarch32InstructionKind::ARM_INS_LDMIB:
+        case Aarch32InstructionKind::ARM_INS_LDR:
+        case Aarch32InstructionKind::ARM_INS_LDRB:                        // FIXME[Robb Matzke 2021-03-01]: recheck up to here, some might be UNPREDICTABLE instead
+        case Aarch32InstructionKind::ARM_INS_LSL:
+        case Aarch32InstructionKind::ARM_INS_LSR:
+        case Aarch32InstructionKind::ARM_INS_MOV:
+        case Aarch32InstructionKind::ARM_INS_MOVW:
+        case Aarch32InstructionKind::ARM_INS_MRC:
+        case Aarch32InstructionKind::ARM_INS_MVN:
+        case Aarch32InstructionKind::ARM_INS_ORR:
+        case Aarch32InstructionKind::ARM_INS_POP:
+        case Aarch32InstructionKind::ARM_INS_ROR:
+        case Aarch32InstructionKind::ARM_INS_RRX:
+        case Aarch32InstructionKind::ARM_INS_RSB:
+        case Aarch32InstructionKind::ARM_INS_RSC:
+        case Aarch32InstructionKind::ARM_INS_SBC:
+        case Aarch32InstructionKind::ARM_INS_STC:
+        case Aarch32InstructionKind::ARM_INS_SUB:
+        case Aarch32InstructionKind::ARM_INS_SUBW:
+            // These instructions fall through, or branch if they write to the IP.
+            //
+            // The fall through address is normally the only successor. However, if the instruction writes to the instruction
+            // pointer register, then the value written is the basis for the next instruction address. We say "basis" because
+            // various additional operations are performed on the address before using it as the next instruciton address
+            // (e.g., rounding, changing processor modes, etc).
+            //
+            // Furthermore, if the instruction writes to the instrunction pointer register and is conditionally executed, then
+            // it behaves like a conditional branch.
+            //
+            // Most of the time, we can't know the resulting value written to the instruction pointer register. The only time
+            // we do know is when the constant is available as an immediate value in the instruction encoding, either as an
+            // absolute address or a IP-relative address.
+            if (insn->get_writesToIp()) {
+                if (insn->get_condition() == ARM_CC_AL) {
+                    // Acting like an unconditional branch.
+                    // FIXME[Robb Matzke 2021-03-01]: sometimes we might know the address
+                    return Sawyer::Nothing();
+                } else {
+                    // Acting like a conditional branch.
+                    // FIXME[Robb Matzke 2021-03-01]: sometimes we might know the address
+                    return Sawyer::Nothing();
+                }
+            }
+            return Sawyer::Nothing();
+
+        //----------------------------------------------------------------------------------------------------
+        // Explicit branch to possibly known address, or fall through if disabled
+        //----------------------------------------------------------------------------------------------------
+        case Aarch32InstructionKind::ARM_INS_B:
+        case Aarch32InstructionKind::ARM_INS_BL:
+        case Aarch32InstructionKind::ARM_INS_BLX:
+        case Aarch32InstructionKind::ARM_INS_CBNZ:
+        case Aarch32InstructionKind::ARM_INS_CBZ:
+            // The branch target is the immediate argument, if present. Some of these instructions can do indirect branching,
+            // in which case there won't be an immediate argument.
+            for (size_t i = 0; i < insn->nOperands(); ++i) {
+                if (isSgAsmIntegerValueExpression(insn->operand(i)))
+                    return isSgAsmIntegerValueExpression(insn->operand(i))->get_absoluteValue();
+            }
+            return Sawyer::Nothing();
+
+        //----------------------------------------------------------------------------------------------------
+        // Explicit branch to impossibly known address, or fall through if disabled
+        //----------------------------------------------------------------------------------------------------
+        case Aarch32InstructionKind::ARM_INS_BX:
+        case Aarch32InstructionKind::ARM_INS_BXJ:
+        case Aarch32InstructionKind::ARM_INS_ERET:
+        case Aarch32InstructionKind::ARM_INS_RFEDA:
+        case Aarch32InstructionKind::ARM_INS_RFEDB:
+        case Aarch32InstructionKind::ARM_INS_RFEIA:
+        case Aarch32InstructionKind::ARM_INS_RFEIB:
+            // Conditional or unconditional branch instructions
+            ASSERT_require(insn->get_writesToIp());
+            return Sawyer::Nothing();
+
+        //----------------------------------------------------------------------------------------------------
+        // Unconditional branch to unknown address
+        //----------------------------------------------------------------------------------------------------
+        case Aarch32InstructionKind::ARM_INS_BKPT:
+        case Aarch32InstructionKind::ARM_INS_HVC:
+        case Aarch32InstructionKind::ARM_INS_SMC:
+        case Aarch32InstructionKind::ARM_INS_SVC:
+        case Aarch32InstructionKind::ARM_INS_TBB:
+        case Aarch32InstructionKind::ARM_INS_TBH:
+        case Aarch32InstructionKind::ARM_INS_UDF:
+        case Aarch32InstructionKind::ARM_INS_WFE:
+        case Aarch32InstructionKind::ARM_INS_WFI:
+            // We never know where these instructions go next.
+            return Sawyer::Nothing();
+
+        //----------------------------------------------------------------------------------------------------
+        // Unconditional branch to itself (infininte loop)
+        //----------------------------------------------------------------------------------------------------
+        case Aarch32InstructionKind::ARM_INS_HLT:
+            return insn->get_address();
+
+        //----------------------------------------------------------------------------------------------------
+        // Too weird to handle easily.
+        //----------------------------------------------------------------------------------------------------
+        case Aarch32InstructionKind::ARM_INS_IT:
+            return Sawyer::Nothing();
+
+        //----------------------------------------------------------------------------------------------------
+        // These are undocumented (at least in the documentation I have), so assume nothing.
+        //----------------------------------------------------------------------------------------------------
+        case Aarch32InstructionKind::ARM_INS_CDP:
+        case Aarch32InstructionKind::ARM_INS_CDP2:
+        case Aarch32InstructionKind::ARM_INS_HINT:
+        case Aarch32InstructionKind::ARM_INS_LDC2:
+        case Aarch32InstructionKind::ARM_INS_LDC2L:
+        case Aarch32InstructionKind::ARM_INS_LDCL:
+        case Aarch32InstructionKind::ARM_INS_MCR2:
+        case Aarch32InstructionKind::ARM_INS_MCRR2:
+        case Aarch32InstructionKind::ARM_INS_MRC2:
+        case Aarch32InstructionKind::ARM_INS_MRRC2:
+        case Aarch32InstructionKind::ARM_INS_STC2:
+        case Aarch32InstructionKind::ARM_INS_STC2L:
+        case Aarch32InstructionKind::ARM_INS_STCL:
+        case Aarch32InstructionKind::ARM_INS_SWP:
+        case Aarch32InstructionKind::ARM_INS_SWPB:
+        case Aarch32InstructionKind::ARM_INS_TRAP:
+            return Sawyer::Nothing();
+    }
+    ASSERT_not_reachable("insn not handled: " + insn->get_mnemonic());
+}
+
+AddressSet
+ArmAarch32::getSuccessors(SgAsmInstruction *insn_, bool &complete) const {
+    auto insn = isSgAsmAarch32Instruction(insn_);
+    ASSERT_not_null(insn);
+
+    complete = true;                                    // assume true, and prove otherwise
+    ASSERT_forbid(insn->get_condition() == ARM_CC_INVALID);
+    rose_addr_t fallThroughVa = insn->get_address() + insn->get_size();
+    AddressSet retval;
+    switch (insn->get_kind()) {
+        case Aarch32InstructionKind::ARM_INS_INVALID:
+        case Aarch32InstructionKind::ARM_INS_ENDING:
+            complete = false;
+            break;
+
+        //----------------------------------------------------------------------------------------------------
+        // Fall through only.
+        //----------------------------------------------------------------------------------------------------
+        case Aarch32InstructionKind::ARM_INS_AESD:
+        case Aarch32InstructionKind::ARM_INS_AESE:
+        case Aarch32InstructionKind::ARM_INS_AESIMC:
+        case Aarch32InstructionKind::ARM_INS_AESMC:
+        case Aarch32InstructionKind::ARM_INS_CLREX:
+        case Aarch32InstructionKind::ARM_INS_CMN:
+        case Aarch32InstructionKind::ARM_INS_CMP:
+        case Aarch32InstructionKind::ARM_INS_CPS:
+        case Aarch32InstructionKind::ARM_INS_DBG:
+        case Aarch32InstructionKind::ARM_INS_DCPS1:
+        case Aarch32InstructionKind::ARM_INS_DCPS2:
+        case Aarch32InstructionKind::ARM_INS_DCPS3:
+        case Aarch32InstructionKind::ARM_INS_DMB:
+        case Aarch32InstructionKind::ARM_INS_DSB:
+        case Aarch32InstructionKind::ARM_INS_ISB:
+        case Aarch32InstructionKind::ARM_INS_LDC:
+        case Aarch32InstructionKind::ARM_INS_MCR:
+        case Aarch32InstructionKind::ARM_INS_MCRR:
+        case Aarch32InstructionKind::ARM_INS_MSR:
+        case Aarch32InstructionKind::ARM_INS_NOP:
+        case Aarch32InstructionKind::ARM_INS_PLD:
+        case Aarch32InstructionKind::ARM_INS_PLDW:
+        case Aarch32InstructionKind::ARM_INS_PLI:
+        case Aarch32InstructionKind::ARM_INS_PUSH:
+        case Aarch32InstructionKind::ARM_INS_SETEND:
+        case Aarch32InstructionKind::ARM_INS_SEV:
+        case Aarch32InstructionKind::ARM_INS_SEVL:
+        case Aarch32InstructionKind::ARM_INS_SRSDA:
+        case Aarch32InstructionKind::ARM_INS_SRSDB:
+        case Aarch32InstructionKind::ARM_INS_SRSIA:
+        case Aarch32InstructionKind::ARM_INS_SRSIB:
+        case Aarch32InstructionKind::ARM_INS_TEQ:
+        case Aarch32InstructionKind::ARM_INS_TST:
+        case Aarch32InstructionKind::ARM_INS_YIELD:
+        case Aarch32InstructionKind::ARM_INS_VABA:
+        case Aarch32InstructionKind::ARM_INS_VABAL:
+        case Aarch32InstructionKind::ARM_INS_VABD:
+        case Aarch32InstructionKind::ARM_INS_VABDL:
+        case Aarch32InstructionKind::ARM_INS_VABS:
+        case Aarch32InstructionKind::ARM_INS_VACGE:
+        case Aarch32InstructionKind::ARM_INS_VACGT:
+        case Aarch32InstructionKind::ARM_INS_VADD:
+        case Aarch32InstructionKind::ARM_INS_VADDHN:
+        case Aarch32InstructionKind::ARM_INS_VADDL:
+        case Aarch32InstructionKind::ARM_INS_VADDW:
+        case Aarch32InstructionKind::ARM_INS_VAND:
+        case Aarch32InstructionKind::ARM_INS_VBIC:
+        case Aarch32InstructionKind::ARM_INS_VBIF:
+        case Aarch32InstructionKind::ARM_INS_VBIT:
+        case Aarch32InstructionKind::ARM_INS_VBSL:
+        case Aarch32InstructionKind::ARM_INS_VCEQ:
+        case Aarch32InstructionKind::ARM_INS_VCGE:
+        case Aarch32InstructionKind::ARM_INS_VCGT:
+        case Aarch32InstructionKind::ARM_INS_VCLE:
+        case Aarch32InstructionKind::ARM_INS_VCLS:
+        case Aarch32InstructionKind::ARM_INS_VCLT:
+        case Aarch32InstructionKind::ARM_INS_VCLZ:
+        case Aarch32InstructionKind::ARM_INS_VCMP:
+        case Aarch32InstructionKind::ARM_INS_VCMPE:
+        case Aarch32InstructionKind::ARM_INS_VCNT:
+        case Aarch32InstructionKind::ARM_INS_VCVT:
+        case Aarch32InstructionKind::ARM_INS_VCVTA:
+        case Aarch32InstructionKind::ARM_INS_VCVTB:
+        case Aarch32InstructionKind::ARM_INS_VCVTM:
+        case Aarch32InstructionKind::ARM_INS_VCVTN:
+        case Aarch32InstructionKind::ARM_INS_VCVTP:
+        case Aarch32InstructionKind::ARM_INS_VCVTR:
+        case Aarch32InstructionKind::ARM_INS_VCVTT:
+        case Aarch32InstructionKind::ARM_INS_VDIV:
+        case Aarch32InstructionKind::ARM_INS_VDUP:
+        case Aarch32InstructionKind::ARM_INS_VEOR:
+        case Aarch32InstructionKind::ARM_INS_VEXT:
+        case Aarch32InstructionKind::ARM_INS_VFMA:
+        case Aarch32InstructionKind::ARM_INS_VFMS:
+        case Aarch32InstructionKind::ARM_INS_VFNMA:
+        case Aarch32InstructionKind::ARM_INS_VFNMS:
+        case Aarch32InstructionKind::ARM_INS_VHADD:
+        case Aarch32InstructionKind::ARM_INS_VHSUB:
+        case Aarch32InstructionKind::ARM_INS_VLDR:
+        case Aarch32InstructionKind::ARM_INS_VMAX:
+        case Aarch32InstructionKind::ARM_INS_VMAXNM:
+        case Aarch32InstructionKind::ARM_INS_VMIN:
+        case Aarch32InstructionKind::ARM_INS_VMINNM:
+        case Aarch32InstructionKind::ARM_INS_VMLA:
+        case Aarch32InstructionKind::ARM_INS_VMLAL:
+        case Aarch32InstructionKind::ARM_INS_VMLS:
+        case Aarch32InstructionKind::ARM_INS_VMLSL:
+        case Aarch32InstructionKind::ARM_INS_VMOVL:
+        case Aarch32InstructionKind::ARM_INS_VMOVN:
+        case Aarch32InstructionKind::ARM_INS_VMUL:
+        case Aarch32InstructionKind::ARM_INS_VMULL:
+        case Aarch32InstructionKind::ARM_INS_VMVN:
+        case Aarch32InstructionKind::ARM_INS_VNEG:
+        case Aarch32InstructionKind::ARM_INS_VNMLA:
+        case Aarch32InstructionKind::ARM_INS_VNMLS:
+        case Aarch32InstructionKind::ARM_INS_VNMUL:
+        case Aarch32InstructionKind::ARM_INS_VORN:
+        case Aarch32InstructionKind::ARM_INS_VORR:
+        case Aarch32InstructionKind::ARM_INS_VPADAL:
+        case Aarch32InstructionKind::ARM_INS_VPADD:
+        case Aarch32InstructionKind::ARM_INS_VPADDL:
+        case Aarch32InstructionKind::ARM_INS_VPMAX:
+        case Aarch32InstructionKind::ARM_INS_VPMIN:
+        case Aarch32InstructionKind::ARM_INS_VQABS:
+        case Aarch32InstructionKind::ARM_INS_VQADD:
+        case Aarch32InstructionKind::ARM_INS_VQDMLAL:
+        case Aarch32InstructionKind::ARM_INS_VQDMLSL:
+        case Aarch32InstructionKind::ARM_INS_VQDMULH:
+        case Aarch32InstructionKind::ARM_INS_VQDMULL:
+        case Aarch32InstructionKind::ARM_INS_VQMOVN:
+        case Aarch32InstructionKind::ARM_INS_VQMOVUN:
+        case Aarch32InstructionKind::ARM_INS_VQNEG:
+        case Aarch32InstructionKind::ARM_INS_VQRDMULH:
+        case Aarch32InstructionKind::ARM_INS_VQRSHL:
+        case Aarch32InstructionKind::ARM_INS_VQRSHRN:
+        case Aarch32InstructionKind::ARM_INS_VQRSHRUN:
+        case Aarch32InstructionKind::ARM_INS_VQSHL:
+        case Aarch32InstructionKind::ARM_INS_VQSHLU:
+        case Aarch32InstructionKind::ARM_INS_VQSHRN:
+        case Aarch32InstructionKind::ARM_INS_VQSHRUN:
+        case Aarch32InstructionKind::ARM_INS_VQSUB:
+        case Aarch32InstructionKind::ARM_INS_VRADDHN:
+        case Aarch32InstructionKind::ARM_INS_VRECPE:
+        case Aarch32InstructionKind::ARM_INS_VRECPS:
+        case Aarch32InstructionKind::ARM_INS_VREV16:
+        case Aarch32InstructionKind::ARM_INS_VREV32:
+        case Aarch32InstructionKind::ARM_INS_VREV64:
+        case Aarch32InstructionKind::ARM_INS_VRHADD:
+        case Aarch32InstructionKind::ARM_INS_VRINTA:
+        case Aarch32InstructionKind::ARM_INS_VRINTM:
+        case Aarch32InstructionKind::ARM_INS_VRINTN:
+        case Aarch32InstructionKind::ARM_INS_VRINTP:
+        case Aarch32InstructionKind::ARM_INS_VRINTR:
+        case Aarch32InstructionKind::ARM_INS_VRINTX:
+        case Aarch32InstructionKind::ARM_INS_VRINTZ:
+        case Aarch32InstructionKind::ARM_INS_VRSHL:
+        case Aarch32InstructionKind::ARM_INS_VRSHR:
+        case Aarch32InstructionKind::ARM_INS_VRSHRN:
+        case Aarch32InstructionKind::ARM_INS_VRSQRTE:
+        case Aarch32InstructionKind::ARM_INS_VRSQRTS:
+        case Aarch32InstructionKind::ARM_INS_VRSRA:
+        case Aarch32InstructionKind::ARM_INS_VRSUBHN:
+        case Aarch32InstructionKind::ARM_INS_VSELEQ:
+        case Aarch32InstructionKind::ARM_INS_VSELGE:
+        case Aarch32InstructionKind::ARM_INS_VSELGT:
+        case Aarch32InstructionKind::ARM_INS_VSELVS:
+        case Aarch32InstructionKind::ARM_INS_VSHL:
+        case Aarch32InstructionKind::ARM_INS_VSHLL:
+        case Aarch32InstructionKind::ARM_INS_VSHR:
+        case Aarch32InstructionKind::ARM_INS_VSHRN:
+        case Aarch32InstructionKind::ARM_INS_VSLI:
+        case Aarch32InstructionKind::ARM_INS_VSQRT:
+        case Aarch32InstructionKind::ARM_INS_VSRA:
+        case Aarch32InstructionKind::ARM_INS_VSRI:
+        case Aarch32InstructionKind::ARM_INS_VSUB:
+        case Aarch32InstructionKind::ARM_INS_VSUBHN:
+        case Aarch32InstructionKind::ARM_INS_VSUBL:
+        case Aarch32InstructionKind::ARM_INS_VSUBW:
+        case Aarch32InstructionKind::ARM_INS_VSWP:
+        case Aarch32InstructionKind::ARM_INS_VTBL:
+        case Aarch32InstructionKind::ARM_INS_VTBX:
+        case Aarch32InstructionKind::ARM_INS_VTRN:
+        case Aarch32InstructionKind::ARM_INS_VTST:
+        case Aarch32InstructionKind::ARM_INS_VUZP:
+        case Aarch32InstructionKind::ARM_INS_VZIP:
+            // These instructions always fall through to the next instruction, and never anything else. They cannot write to
+            // the IP.
+            ASSERT_forbid(insn->get_writesToIp());
+            retval.insert(fallThroughVa);
+            break;
+
+        //----------------------------------------------------------------------------------------------------
+        // Fall through, or UNPREDICTABLE behavior.
+        //----------------------------------------------------------------------------------------------------
+        case Aarch32InstructionKind::ARM_INS_ADC:
+        case Aarch32InstructionKind::ARM_INS_BFC:
+        case Aarch32InstructionKind::ARM_INS_BFI:
+        case Aarch32InstructionKind::ARM_INS_CLZ:
+        case Aarch32InstructionKind::ARM_INS_CRC32B:
+        case Aarch32InstructionKind::ARM_INS_CRC32H:
+        case Aarch32InstructionKind::ARM_INS_CRC32W:
+        case Aarch32InstructionKind::ARM_INS_CRC32CB:
+        case Aarch32InstructionKind::ARM_INS_CRC32CH:
+        case Aarch32InstructionKind::ARM_INS_CRC32CW:
+        case Aarch32InstructionKind::ARM_INS_FLDMDBX:
+        case Aarch32InstructionKind::ARM_INS_FLDMIAX:
+        case Aarch32InstructionKind::ARM_INS_FSTMDBX:
+        case Aarch32InstructionKind::ARM_INS_FSTMIAX:
+        case Aarch32InstructionKind::ARM_INS_LDA:
+        case Aarch32InstructionKind::ARM_INS_LDAB:
+        case Aarch32InstructionKind::ARM_INS_LDAEX:
+        case Aarch32InstructionKind::ARM_INS_LDAEXB:
+        case Aarch32InstructionKind::ARM_INS_LDAEXD:
+        case Aarch32InstructionKind::ARM_INS_LDAEXH:
+        case Aarch32InstructionKind::ARM_INS_LDAH:
+        case Aarch32InstructionKind::ARM_INS_LDRBT:
+        case Aarch32InstructionKind::ARM_INS_LDRD:
+        case Aarch32InstructionKind::ARM_INS_LDREX:
+        case Aarch32InstructionKind::ARM_INS_LDREXB:
+        case Aarch32InstructionKind::ARM_INS_LDREXD:
+        case Aarch32InstructionKind::ARM_INS_LDREXH:
+        case Aarch32InstructionKind::ARM_INS_LDRH:
+        case Aarch32InstructionKind::ARM_INS_LDRHT:
+        case Aarch32InstructionKind::ARM_INS_LDRSB:
+        case Aarch32InstructionKind::ARM_INS_LDRSBT:
+        case Aarch32InstructionKind::ARM_INS_LDRSH:
+        case Aarch32InstructionKind::ARM_INS_LDRSHT:
+        case Aarch32InstructionKind::ARM_INS_LDRT:
+        case Aarch32InstructionKind::ARM_INS_MLA:
+        case Aarch32InstructionKind::ARM_INS_MLS:
+        case Aarch32InstructionKind::ARM_INS_MOVT:
+        case Aarch32InstructionKind::ARM_INS_MRRC:
+        case Aarch32InstructionKind::ARM_INS_MRS:
+        case Aarch32InstructionKind::ARM_INS_MUL:
+        case Aarch32InstructionKind::ARM_INS_ORN:
+        case Aarch32InstructionKind::ARM_INS_PKHBT:
+        case Aarch32InstructionKind::ARM_INS_PKHTB:
+        case Aarch32InstructionKind::ARM_INS_QADD:
+        case Aarch32InstructionKind::ARM_INS_QADD16:
+        case Aarch32InstructionKind::ARM_INS_QADD8:
+        case Aarch32InstructionKind::ARM_INS_QASX:
+        case Aarch32InstructionKind::ARM_INS_QDADD:
+        case Aarch32InstructionKind::ARM_INS_QDSUB:
+        case Aarch32InstructionKind::ARM_INS_QSAX:
+        case Aarch32InstructionKind::ARM_INS_QSUB:
+        case Aarch32InstructionKind::ARM_INS_QSUB16:
+        case Aarch32InstructionKind::ARM_INS_QSUB8:
+        case Aarch32InstructionKind::ARM_INS_RBIT:
+        case Aarch32InstructionKind::ARM_INS_REV:
+        case Aarch32InstructionKind::ARM_INS_REV16:
+        case Aarch32InstructionKind::ARM_INS_REVSH:
+        case Aarch32InstructionKind::ARM_INS_SADD16:
+        case Aarch32InstructionKind::ARM_INS_SADD8:
+        case Aarch32InstructionKind::ARM_INS_SASX:
+        case Aarch32InstructionKind::ARM_INS_SBFX:
+        case Aarch32InstructionKind::ARM_INS_SDIV:
+        case Aarch32InstructionKind::ARM_INS_SEL:
+        case Aarch32InstructionKind::ARM_INS_SHA1C:
+        case Aarch32InstructionKind::ARM_INS_SHA1H:
+        case Aarch32InstructionKind::ARM_INS_SHA1M:
+        case Aarch32InstructionKind::ARM_INS_SHA1P:
+        case Aarch32InstructionKind::ARM_INS_SHA1SU0:
+        case Aarch32InstructionKind::ARM_INS_SHA1SU1:
+        case Aarch32InstructionKind::ARM_INS_SHA256H:
+        case Aarch32InstructionKind::ARM_INS_SHA256H2:
+        case Aarch32InstructionKind::ARM_INS_SHA256SU0:
+        case Aarch32InstructionKind::ARM_INS_SHA256SU1:
+        case Aarch32InstructionKind::ARM_INS_SHADD16:
+        case Aarch32InstructionKind::ARM_INS_SHADD8:
+        case Aarch32InstructionKind::ARM_INS_SHASX:
+        case Aarch32InstructionKind::ARM_INS_SHSAX:
+        case Aarch32InstructionKind::ARM_INS_SHSUB16:
+        case Aarch32InstructionKind::ARM_INS_SHSUB8:
+        case Aarch32InstructionKind::ARM_INS_SMLABB:
+        case Aarch32InstructionKind::ARM_INS_SMLABT:
+        case Aarch32InstructionKind::ARM_INS_SMLATB:
+        case Aarch32InstructionKind::ARM_INS_SMLATT:
+        case Aarch32InstructionKind::ARM_INS_SMLAD:
+        case Aarch32InstructionKind::ARM_INS_SMLADX:
+        case Aarch32InstructionKind::ARM_INS_SMLAL:
+        case Aarch32InstructionKind::ARM_INS_SMLALBB:
+        case Aarch32InstructionKind::ARM_INS_SMLALBT:
+        case Aarch32InstructionKind::ARM_INS_SMLALTB:
+        case Aarch32InstructionKind::ARM_INS_SMLALTT:
+        case Aarch32InstructionKind::ARM_INS_SMLALD:
+        case Aarch32InstructionKind::ARM_INS_SMLALDX:
+        case Aarch32InstructionKind::ARM_INS_SMLAWB:
+        case Aarch32InstructionKind::ARM_INS_SMLAWT:
+        case Aarch32InstructionKind::ARM_INS_SMLSD:
+        case Aarch32InstructionKind::ARM_INS_SMLSDX:
+        case Aarch32InstructionKind::ARM_INS_SMLSLD:
+        case Aarch32InstructionKind::ARM_INS_SMLSLDX:
+        case Aarch32InstructionKind::ARM_INS_SMMLA:
+        case Aarch32InstructionKind::ARM_INS_SMMLAR:
+        case Aarch32InstructionKind::ARM_INS_SMMLS:
+        case Aarch32InstructionKind::ARM_INS_SMMLSR:
+        case Aarch32InstructionKind::ARM_INS_SMMUL:
+        case Aarch32InstructionKind::ARM_INS_SMMULR:
+        case Aarch32InstructionKind::ARM_INS_SMUAD:
+        case Aarch32InstructionKind::ARM_INS_SMUADX:
+        case Aarch32InstructionKind::ARM_INS_SMULBB:
+        case Aarch32InstructionKind::ARM_INS_SMULBT:
+        case Aarch32InstructionKind::ARM_INS_SMULTB:
+        case Aarch32InstructionKind::ARM_INS_SMULTT:
+        case Aarch32InstructionKind::ARM_INS_SMULL:
+        case Aarch32InstructionKind::ARM_INS_SMULWB:
+        case Aarch32InstructionKind::ARM_INS_SMULWT:
+        case Aarch32InstructionKind::ARM_INS_SMUSD:
+        case Aarch32InstructionKind::ARM_INS_SMUSDX:
+        case Aarch32InstructionKind::ARM_INS_SSAT:
+        case Aarch32InstructionKind::ARM_INS_SSAT16:
+        case Aarch32InstructionKind::ARM_INS_SSAX:
+        case Aarch32InstructionKind::ARM_INS_SSUB16:
+        case Aarch32InstructionKind::ARM_INS_SSUB8:
+        case Aarch32InstructionKind::ARM_INS_STL:
+        case Aarch32InstructionKind::ARM_INS_STLB:
+        case Aarch32InstructionKind::ARM_INS_STLEX:
+        case Aarch32InstructionKind::ARM_INS_STLEXB:
+        case Aarch32InstructionKind::ARM_INS_STLEXD:
+        case Aarch32InstructionKind::ARM_INS_STLEXH:
+        case Aarch32InstructionKind::ARM_INS_STLH:
+        case Aarch32InstructionKind::ARM_INS_STM:
+        case Aarch32InstructionKind::ARM_INS_STMDA:
+        case Aarch32InstructionKind::ARM_INS_STMDB:
+        case Aarch32InstructionKind::ARM_INS_STMIB:
+        case Aarch32InstructionKind::ARM_INS_STR:
+        case Aarch32InstructionKind::ARM_INS_STRB:
+        case Aarch32InstructionKind::ARM_INS_STRBT:
+        case Aarch32InstructionKind::ARM_INS_STRD:
+        case Aarch32InstructionKind::ARM_INS_STREX:
+        case Aarch32InstructionKind::ARM_INS_STREXB:
+        case Aarch32InstructionKind::ARM_INS_STREXD:
+        case Aarch32InstructionKind::ARM_INS_STREXH:
+        case Aarch32InstructionKind::ARM_INS_STRH:
+        case Aarch32InstructionKind::ARM_INS_STRHT:
+        case Aarch32InstructionKind::ARM_INS_STRT:
+        case Aarch32InstructionKind::ARM_INS_SXTAB:
+        case Aarch32InstructionKind::ARM_INS_SXTAB16:
+        case Aarch32InstructionKind::ARM_INS_SXTAH:
+        case Aarch32InstructionKind::ARM_INS_SXTB:
+        case Aarch32InstructionKind::ARM_INS_SXTB16:
+        case Aarch32InstructionKind::ARM_INS_SXTH:
+        case Aarch32InstructionKind::ARM_INS_UADD16:
+        case Aarch32InstructionKind::ARM_INS_UADD8:
+        case Aarch32InstructionKind::ARM_INS_UASX:
+        case Aarch32InstructionKind::ARM_INS_UBFX:
+        case Aarch32InstructionKind::ARM_INS_UDIV:
+        case Aarch32InstructionKind::ARM_INS_UHADD16:
+        case Aarch32InstructionKind::ARM_INS_UHADD8:
+        case Aarch32InstructionKind::ARM_INS_UHASX:
+        case Aarch32InstructionKind::ARM_INS_UHSAX:
+        case Aarch32InstructionKind::ARM_INS_UHSUB16:
+        case Aarch32InstructionKind::ARM_INS_UHSUB8:
+        case Aarch32InstructionKind::ARM_INS_UMAAL:
+        case Aarch32InstructionKind::ARM_INS_UMLAL:
+        case Aarch32InstructionKind::ARM_INS_UMULL:
+        case Aarch32InstructionKind::ARM_INS_UQADD16:
+        case Aarch32InstructionKind::ARM_INS_UQADD8:
+        case Aarch32InstructionKind::ARM_INS_UQASX:
+        case Aarch32InstructionKind::ARM_INS_UQSAX:
+        case Aarch32InstructionKind::ARM_INS_UQSUB16:
+        case Aarch32InstructionKind::ARM_INS_UQSUB8:
+        case Aarch32InstructionKind::ARM_INS_USAD8:
+        case Aarch32InstructionKind::ARM_INS_USADA8:
+        case Aarch32InstructionKind::ARM_INS_USAT:
+        case Aarch32InstructionKind::ARM_INS_USAT16:
+        case Aarch32InstructionKind::ARM_INS_USAX:
+        case Aarch32InstructionKind::ARM_INS_USUB16:
+        case Aarch32InstructionKind::ARM_INS_USUB8:
+        case Aarch32InstructionKind::ARM_INS_UXTAB:
+        case Aarch32InstructionKind::ARM_INS_UXTAB16:
+        case Aarch32InstructionKind::ARM_INS_UXTAH:
+        case Aarch32InstructionKind::ARM_INS_UXTB:
+        case Aarch32InstructionKind::ARM_INS_UXTB16:
+        case Aarch32InstructionKind::ARM_INS_UXTH:
+        case Aarch32InstructionKind::ARM_INS_VLD1:
+        case Aarch32InstructionKind::ARM_INS_VLD2:
+        case Aarch32InstructionKind::ARM_INS_VLD3:
+        case Aarch32InstructionKind::ARM_INS_VLD4:
+        case Aarch32InstructionKind::ARM_INS_VLDMDB:
+        case Aarch32InstructionKind::ARM_INS_VLDMIA:
+        case Aarch32InstructionKind::ARM_INS_VMOV:
+        case Aarch32InstructionKind::ARM_INS_VMRS:
+        case Aarch32InstructionKind::ARM_INS_VMSR:
+        case Aarch32InstructionKind::ARM_INS_VPOP:
+        case Aarch32InstructionKind::ARM_INS_VPUSH:
+        case Aarch32InstructionKind::ARM_INS_VST1:
+        case Aarch32InstructionKind::ARM_INS_VST2:
+        case Aarch32InstructionKind::ARM_INS_VST3:
+        case Aarch32InstructionKind::ARM_INS_VST4:
+        case Aarch32InstructionKind::ARM_INS_VSTMDB:
+        case Aarch32InstructionKind::ARM_INS_VSTMIA:
+        case Aarch32InstructionKind::ARM_INS_VSTR:
+            // These instructions, when writing to the instruction pointer register, have "UNPREDICTABLE" behavior, otherwise
+            // they fall through to the next instruction.
+            if (insn->get_writesToIp()) {
+                complete = false;
+            } else {
+                retval.insert(fallThroughVa);
+            }
+            break;
+
+        //----------------------------------------------------------------------------------------------------
+        // Fall through, or conditionally branch.
+        //----------------------------------------------------------------------------------------------------
+        case Aarch32InstructionKind::ARM_INS_ADD:
+        case Aarch32InstructionKind::ARM_INS_ADDW:
+        case Aarch32InstructionKind::ARM_INS_ADR:
+        case Aarch32InstructionKind::ARM_INS_AND:
+        case Aarch32InstructionKind::ARM_INS_ASR:
+        case Aarch32InstructionKind::ARM_INS_BIC:
+        case Aarch32InstructionKind::ARM_INS_EOR:
+        case Aarch32InstructionKind::ARM_INS_LDM:
+        case Aarch32InstructionKind::ARM_INS_LDMDA:
+        case Aarch32InstructionKind::ARM_INS_LDMDB:
+        case Aarch32InstructionKind::ARM_INS_LDMIB:
+        case Aarch32InstructionKind::ARM_INS_LDR:
+        case Aarch32InstructionKind::ARM_INS_LDRB:                        // FIXME[Robb Matzke 2021-03-01]: recheck up to here, some might be UNPREDICTABLE instead
+        case Aarch32InstructionKind::ARM_INS_LSL:
+        case Aarch32InstructionKind::ARM_INS_LSR:
+        case Aarch32InstructionKind::ARM_INS_MOV:
+        case Aarch32InstructionKind::ARM_INS_MOVW:
+        case Aarch32InstructionKind::ARM_INS_MRC:
+        case Aarch32InstructionKind::ARM_INS_MVN:
+        case Aarch32InstructionKind::ARM_INS_ORR:
+        case Aarch32InstructionKind::ARM_INS_POP:
+        case Aarch32InstructionKind::ARM_INS_ROR:
+        case Aarch32InstructionKind::ARM_INS_RRX:
+        case Aarch32InstructionKind::ARM_INS_RSB:
+        case Aarch32InstructionKind::ARM_INS_RSC:
+        case Aarch32InstructionKind::ARM_INS_SBC:
+        case Aarch32InstructionKind::ARM_INS_STC:
+        case Aarch32InstructionKind::ARM_INS_SUB:
+        case Aarch32InstructionKind::ARM_INS_SUBW:
+            // These instructions fall through, or branch if they write to the IP.
+            //
+            // The fall through address is normally the only successor. However, if the instruction writes to the instruction
+            // pointer register, then the value written is the basis for the next instruction address. We say "basis" because
+            // various additional operations are performed on the address before using it as the next instruciton address
+            // (e.g., rounding, changing processor modes, etc).
+            //
+            // Furthermore, if the instruction writes to the instrunction pointer register and is conditionally executed, then
+            // it behaves like a conditional branch.
+            //
+            // Most of the time, we can't know the resulting value written to the instruction pointer register. The only time
+            // we do know is when the constant is available as an immediate value in the instruction encoding, either as an
+            // absolute address or a IP-relative address.
+            if (insn->get_writesToIp()) {
+                if (insn->get_condition() == ARM_CC_AL) {
+                    // Acting like an unconditional branch.
+                    complete = false;                   // FIXME[Robb Matzke 2021-03-01]: sometimes we might know the address
+                } else {
+                    // Acting like a conditional branch.
+                    complete = false;                   // FIXME[Robb Matzke 2021-03-01]: sometimes we might know the address
+                    retval.insert(fallThroughVa);
+                }
+            } else {
+                retval.insert(fallThroughVa);
+            }
+            break;
+
+        //----------------------------------------------------------------------------------------------------
+        // Explicit branch (known or unknown target), or fall through if disabled
+        //----------------------------------------------------------------------------------------------------
+        case Aarch32InstructionKind::ARM_INS_B:
+        case Aarch32InstructionKind::ARM_INS_BL:
+        case Aarch32InstructionKind::ARM_INS_BLX:
+        case Aarch32InstructionKind::ARM_INS_BX:
+        case Aarch32InstructionKind::ARM_INS_BXJ:
+        case Aarch32InstructionKind::ARM_INS_CBNZ:
+        case Aarch32InstructionKind::ARM_INS_CBZ:
+        case Aarch32InstructionKind::ARM_INS_ERET:
+        case Aarch32InstructionKind::ARM_INS_RFEDA:
+        case Aarch32InstructionKind::ARM_INS_RFEDB:
+        case Aarch32InstructionKind::ARM_INS_RFEIA:
+        case Aarch32InstructionKind::ARM_INS_RFEIB:
+            // Conditional or unconditional branch instructions
+            ASSERT_require(insn->get_writesToIp());
+            if (auto target = branchTarget(insn)) {
+                retval.insert(*target);
+            } else {
+                complete = false;
+            }
+            if (insn->get_condition() != ARM_CC_AL)
+                retval.insert(fallThroughVa);
+            break;
+
+        //----------------------------------------------------------------------------------------------------
+        // Unconditional branch to unknown address
+        //----------------------------------------------------------------------------------------------------
+        case Aarch32InstructionKind::ARM_INS_BKPT:
+        case Aarch32InstructionKind::ARM_INS_HVC:
+        case Aarch32InstructionKind::ARM_INS_SMC:
+        case Aarch32InstructionKind::ARM_INS_SVC:
+        case Aarch32InstructionKind::ARM_INS_TBB:
+        case Aarch32InstructionKind::ARM_INS_TBH:
+        case Aarch32InstructionKind::ARM_INS_UDF:
+        case Aarch32InstructionKind::ARM_INS_WFE:
+        case Aarch32InstructionKind::ARM_INS_WFI:
+            // We never know where these instructions go next.
+            complete = false;
+            break;
+
+        //----------------------------------------------------------------------------------------------------
+        // Unconditional branch to itself (infininte loop)
+        //----------------------------------------------------------------------------------------------------
+        case Aarch32InstructionKind::ARM_INS_HLT:
+            retval.insert(insn->get_address());
+            break;
+
+        //----------------------------------------------------------------------------------------------------
+        // Too weird to handle easily.
+        //----------------------------------------------------------------------------------------------------
+        case Aarch32InstructionKind::ARM_INS_IT:
+            complete = false;
+            break;
+
+        //----------------------------------------------------------------------------------------------------
+        // These are undocumented (at least in the documentation I have), so assume nothing.
+        //----------------------------------------------------------------------------------------------------
+        case Aarch32InstructionKind::ARM_INS_CDP:
+        case Aarch32InstructionKind::ARM_INS_CDP2:
+        case Aarch32InstructionKind::ARM_INS_HINT:
+        case Aarch32InstructionKind::ARM_INS_LDC2:
+        case Aarch32InstructionKind::ARM_INS_LDC2L:
+        case Aarch32InstructionKind::ARM_INS_LDCL:
+        case Aarch32InstructionKind::ARM_INS_MCR2:
+        case Aarch32InstructionKind::ARM_INS_MCRR2:
+        case Aarch32InstructionKind::ARM_INS_MRC2:
+        case Aarch32InstructionKind::ARM_INS_MRRC2:
+        case Aarch32InstructionKind::ARM_INS_STC2:
+        case Aarch32InstructionKind::ARM_INS_STC2L:
+        case Aarch32InstructionKind::ARM_INS_STCL:
+        case Aarch32InstructionKind::ARM_INS_SWP:
+        case Aarch32InstructionKind::ARM_INS_SWPB:
+        case Aarch32InstructionKind::ARM_INS_TRAP:
+            complete = false;
+            break;
+    }
+    return retval;
+}
+
 Disassembler::Base::Ptr
 ArmAarch32::newInstructionDecoder() const {
     switch (instructionSet()) {

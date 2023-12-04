@@ -1,6 +1,9 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"
+#include <sage3basic.h>
+
+#include <Rose/BinaryAnalysis/Architecture/Base.h>
+
 #include "virtualBinCFG.h"
 
 using namespace std;
@@ -224,7 +227,7 @@ namespace VirtualBinCFG {
                 if (insn->get_kind() != Rose::BinaryAnalysis::x86_call) return;
                 //cerr << "Found call xxx at " << hex << insn->get_address() << endl;
                 uint64_t tgtAddr = 0;
-                if (!insn->branchTarget().assignTo(tgtAddr))
+                if (!insn->architecture()->branchTarget(insn).assignTo(tgtAddr))
                     return;
                 //cerr << "Found call at " << hex << insn->get_address() << " with known target " << hex << tgtAddr << endl;
                 SgAsmInstruction* tgt = info->getInstructionAtAddress(tgtAddr);

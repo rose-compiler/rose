@@ -112,7 +112,7 @@ Mips::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t insn_va, AddressSet 
 
     if (successors) {
         bool complete;
-        *successors |= insn->getSuccessors(complete/*out*/);
+        *successors |= architecture()->getSuccessors(insn, complete/*out*/);
     }
     return insn;
 }

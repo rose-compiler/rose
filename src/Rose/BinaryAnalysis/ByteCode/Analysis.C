@@ -40,7 +40,7 @@ Method::targets() const {
   std::set<rose_addr_t> retval{};
   for (auto insn : instructions()->get_instructions()) {
     bool complete = true;
-    auto successors = insn->getSuccessors(complete /*out*/);
+    auto successors = insn->architecture()->getSuccessors(insn, complete /*out*/);
     for (auto successor : successors.values()) {
       mlog[DEBUG] << "... Method::targets():adding successor target va: " << addrToString(successor)<< "\n";
       retval.insert(successor);
@@ -118,7 +118,7 @@ void Class::partition(const PartitionerPtr &partitioner, std::map<std::string,ro
                       << " kind:" << insn->get_anyKind() << " :" << insn->get_mnemonic() << "\n";
 
           // If the instruction doesn't have a branch target, add fall through successor
-          if (!block->instructions().back()->branchTarget()) {
+          if (!partitioner->architecture()->branchTarget(block->instructions().back())) {
             mlog[DEBUG] << "Adding successor fall-through edge from va: "
                         << addrToString(block->instructions().back()->get_address())
                         << " to: " << addrToString(block->fallthroughVa()) << "\n";
@@ -150,7 +150,7 @@ void Class::partition(const PartitionerPtr &partitioner, std::map<std::string,ro
       // If this instruction terminates the block, add successors and set block properties
       if (partitioner->architecture()->terminatesBasicBlock(insn)) {
         bool complete;
-        auto successors = insn->getSuccessors(complete/*out*/);
+        auto successors = partitioner->architecture()->getSuccessors(insn, complete/*out*/);
         for (auto successor : successors.values()) {
           mlog[DEBUG] << "Adding successor edge from va: " << addrToString(va) << " to: " << addrToString(successor) << "\n";
           block->insertSuccessor(successor, nBits, EdgeType::E_NORMAL, Confidence::PROVED);

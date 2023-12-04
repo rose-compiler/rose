@@ -6,6 +6,9 @@
 #include <Rose/BinaryAnalysis/Disassembler/Jvm.h>
 #include <Rose/BinaryAnalysis/Unparser/Jvm.h>
 
+// FIXME[Robb Matzke 2023-12-04]: copied from old code; use Sawyer::Message instead.
+#define DEBUG_PRINT 0
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Architecture {
@@ -337,7 +340,7 @@ Jvm::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t
             //    case JvmInstructionKind::jsr: ???
 
             if (target) {
-                last->branchTarget().assignTo(*target);
+                branchTarget(last).assignTo(*target);
             }
             if (return_va) {
                 *return_va = last->get_address() + last->get_size();
@@ -366,6 +369,193 @@ Jvm::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) const {
         default:
             return false;
     }
+}
+
+Sawyer::Optional<rose_addr_t>
+Jvm::branchTarget(SgAsmInstruction *insn_) const {
+    auto insn = isSgAsmJvmInstruction(insn_);
+    ASSERT_not_null(insn);
+
+    switch (insn->get_kind()) {
+        case JvmInstructionKind::ifeq: // "Branch if int 'eq' comparison with zero succeeds"
+        case JvmInstructionKind::ifne: // "Branch if int 'ne' comparison with zero succeeds";
+        case JvmInstructionKind::iflt: // "Branch if int 'lt' comparison with zero succeeds";
+        case JvmInstructionKind::ifge: // "Branch if int 'ge' comparison with zero succeeds";
+        case JvmInstructionKind::ifgt: // "Branch if int 'gt' comparison with zero succeeds";
+        case JvmInstructionKind::ifle: // "Branch if int 'le' comparison with zero succeeds";
+        case JvmInstructionKind::if_icmpeq: // "Branch if int 'eq' comparison succeeds";
+        case JvmInstructionKind::if_icmpne: // "Branch if int 'ne' comparison succeeds";
+        case JvmInstructionKind::if_icmplt: // "Branch if int 'lt' comparison succeeds";
+        case JvmInstructionKind::if_icmpge: // "Branch if int 'ge' comparison succeeds";
+        case JvmInstructionKind::if_icmpgt: // "Branch if int 'gt' comparison succeeds";
+        case JvmInstructionKind::if_icmple: // "Branch if int 'le' comparison succeeds";
+        case JvmInstructionKind::if_acmpeq: // "Branch if reference 'eq' comparison succeeds";
+        case JvmInstructionKind::if_acmpne: // "Branch if reference 'ne' comparison succeeds";
+        case JvmInstructionKind::ifnull:    // "Branch if reference is null";
+        case JvmInstructionKind::ifnonnull: // "Branch if reference not null";
+        case JvmInstructionKind::goto_:     // "Branch always";
+        case JvmInstructionKind::goto_w:    // "Branch always (wide index)";
+        case JvmInstructionKind::jsr:       // "Jump subroutine";
+        case JvmInstructionKind::jsr_w:     // "Jump subroutine (wide index)";
+            break;
+
+            // A branch instruction but branch target (an offset) is not available
+        case JvmInstructionKind::invokevirtual:   // "Invoke instance method; dispatch based on class";
+        case JvmInstructionKind::invokespecial:   // "Invoke instance method; direct invocation...";
+        case JvmInstructionKind::invokestatic:    // "Invoke a class (static) method";
+        case JvmInstructionKind::invokeinterface: // "Invoke interface method";
+        case JvmInstructionKind::invokedynamic:   // "Invoke a dynamically-computed call site";
+        case JvmInstructionKind::athrow:       // "Throw exception or error";
+        case JvmInstructionKind::monitorenter: // "Enter monitor for object";
+        case JvmInstructionKind::monitorexit:  // "Exit monitor for object";
+            return Sawyer::Nothing();
+
+            // A branch instruction but branch target(s) (offsets) need to be calculated
+        case JvmInstructionKind::tableswitch:  // "Access jump table by index and jump";
+        case JvmInstructionKind::lookupswitch: // "Access jump table by key match and jump";
+            return Sawyer::Nothing();
+
+            // Not a branching instruction
+        default:
+            return Sawyer::Nothing();
+    }
+
+    if (insn->nOperands() == 1) {
+        if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(insn->operand(0))) {
+            return insn->get_address() + ival->get_signedValue();
+        }
+    }
+    return Sawyer::Nothing();
+}
+
+static AddressSet
+switchSuccessors(const SgAsmJvmInstruction* insn, bool &complete) {
+    SgAsmIntegerValueExpression* ival{nullptr};
+    AddressSet retval{};
+    rose_addr_t va{insn->get_address()};
+    auto kind{insn->get_kind()};
+
+    complete = false;
+
+    if ((kind == JvmInstructionKind::lookupswitch) && (1 < insn->nOperands())) {
+        size_t nOperands{0};
+        int32_t defOff{0}, nPairs{0};
+        if ((ival = isSgAsmIntegerValueExpression(insn->operand(0))))
+            defOff = ival->get_signedValue();
+        if ((ival = isSgAsmIntegerValueExpression(insn->operand(1))))
+            nPairs = ival->get_signedValue();
+
+        nOperands = 2 + 2*nPairs;
+        if (nOperands == insn->nOperands()) {
+            retval.insert(va + defOff);
+#if DEBUG_PRINT
+            std::cout << "... switchSuccessors: insert " << va + defOff << std::endl;
+#endif
+            for (size_t n{3}; n < nOperands; n+=2) {
+                if ((ival = isSgAsmIntegerValueExpression(insn->operand(n)))) {
+                    retval.insert(va + ival->get_signedValue());
+#if DEBUG_PRINT
+                    std::cout << "... switchSuccessors: insert " << va + ival->get_signedValue() << std::endl;
+#endif
+                } else {
+                    return AddressSet{};
+                }
+            }
+        } else {
+            return AddressSet{};
+        }
+    } else if ((kind == JvmInstructionKind::tableswitch) && (2 < insn->nOperands())) {
+        size_t nOperands{0};
+        int32_t defOff{0}, low{0}, high{0};
+        if ((ival = isSgAsmIntegerValueExpression(insn->operand(0))))
+            defOff = ival->get_signedValue();
+        if ((ival = isSgAsmIntegerValueExpression(insn->operand(1))))
+            low = ival->get_signedValue();
+        if ((ival = isSgAsmIntegerValueExpression(insn->operand(2))))
+            high = ival->get_signedValue();
+
+#if DEBUG_PRINT
+        std::cout << "... switchSuccessors: " << insn->nOperands()
+                  << ": " << defOff
+                  << ": " << low
+                  << ": " << high
+                  << ": va: " << va
+                  << ": fall_through: " << va + insn->get_size()
+                  << std::endl;
+#endif
+
+        nOperands = 3 + high - low + 1;
+        if (nOperands == insn->nOperands()) {
+            retval.insert(va + defOff);
+#if DEBUG_PRINT
+            if (kind == JvmInstructionKind::goto_)
+                std::cout << "WARNING: GOTO!!!\n";
+            std::cout << "... switchSuccessors (fall through): insert " << va + defOff << std::endl;
+#endif
+            for (int n{3}; n < nOperands; n++) {
+                if ((ival = isSgAsmIntegerValueExpression(insn->operand(n)))) {
+                    retval.insert(va + ival->get_signedValue());
+#if DEBUG_PRINT
+                    std::cout << "... switchSuccessors: insert " << va + ival->get_signedValue() << std::endl;
+#endif
+                } else {
+                    return AddressSet{};
+                }
+            }
+        } else {
+            return AddressSet{};
+        }
+    } else {
+        return AddressSet{};
+    }
+
+    complete = true;
+    return retval;
+}
+
+AddressSet
+Jvm::getSuccessors(SgAsmInstruction *insn_, bool &complete) const {
+    auto insn = isSgAsmJvmInstruction(insn_);
+    ASSERT_not_null(insn);
+
+    auto kind{insn->get_kind()};
+    complete = false;
+
+    switch (kind) {
+        case JvmInstructionKind::tableswitch:  // "Access jump table by index and jump";
+        case JvmInstructionKind::lookupswitch: // "Access jump table by key match and jump";
+            return switchSuccessors(insn, complete);
+
+            // A branch instruction but branch target is not immediately available
+        case JvmInstructionKind::invokevirtual:   // "Invoke instance method; dispatch based on class";
+        case JvmInstructionKind::invokespecial:   // "Invoke instance method; direct invocation...";
+        case JvmInstructionKind::invokestatic:    // "Invoke a class (static) method";
+        case JvmInstructionKind::invokeinterface: // "Invoke interface method";
+        case JvmInstructionKind::invokedynamic:   // "Invoke a dynamically-computed call site";
+        case JvmInstructionKind::monitorenter: // "Enter monitor for object";
+        case JvmInstructionKind::monitorexit:  // "Exit monitor for object";
+            // Don't assume a CALL instruction returns to the fall-through address, but
+            // by default, EngineJvm reverses this with partitioner->autoAddCallReturnEdges(true)
+            return AddressSet{};
+
+        case JvmInstructionKind::athrow: // "Throw exception or error";
+            return AddressSet{};
+
+        default:
+            break;
+    }
+
+    if (auto target{branchTarget(insn)}) {
+        AddressSet retval{*target};
+        // Add fall through target if not a branch always instruction
+        if ((kind != JvmInstructionKind::goto_) && (kind != JvmInstructionKind::goto_w)) {
+            retval.insert(insn->get_address() + insn->get_size());
+        }
+        complete = true;
+        return retval;
+    }
+
+    return AddressSet{};
 }
 
 Disassembler::Base::Ptr

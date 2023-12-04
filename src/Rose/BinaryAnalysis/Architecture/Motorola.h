@@ -20,11 +20,16 @@ public:
 
 public:
     const CallingConvention::Dictionary& callingConventions() const override;
+
     std::string instructionDescription(const SgAsmInstruction*) const override;
     bool terminatesBasicBlock(SgAsmInstruction*) const override;
     bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret) const override;
     bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret) const override;
     bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) const override;
+    Sawyer::Optional<rose_addr_t> branchTarget(SgAsmInstruction*) const override;
+    AddressSet getSuccessors(SgAsmInstruction*, bool &complete) const override;
+    AddressSet getSuccessors(const std::vector<SgAsmInstruction*> &basicBlock, bool &complete,
+                             const MemoryMapPtr &initial_memory = MemoryMapPtr()) const override;
 
     Unparser::BasePtr newUnparser() const override;
 

@@ -206,7 +206,7 @@ Aarch32::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet *s
     // Note successors if necessary
     if (successors) {
         bool complete = false;
-        *successors |= retval->getSuccessors(complete /*out*/);
+        *successors |= architecture()->getSuccessors(retval, complete /*out*/);
     }
 
     //--------------------------------------------------------------------------------

@@ -137,16 +137,16 @@ public:
      *                                          Instruction disassembly functions
      ***************************************************************************************************************************/
 public:
-    /** This is the lowest level disassembly function and is implemented in the architecture-specific subclasses. It
-     *  disassembles one instruction at the specified virtual address. The @p map is a mapping from virtual addresses to
-     *  buffer and enables instructions to span file segments that are mapped contiguously in virtual memory by the loader but
-     *  which might not be contiguous in the file.  The instruction's successor virtual addresses are added to the optional
-     *  successor set (note that successors of an individual instruction can also be obtained via
-     *  SgAsmInstruction::getSuccessors). If the instruction cannot be disassembled then an exception is thrown and the
-     *  successors set is not modified.
+    /** This is the lowest level disassembly function and is implemented in the architecture-specific subclasses.
      *
-     *  Thread safety:  The safety of this method depends on its implementation in the subclass. In any case, no other thread
-     *  can be modifying the MemoryMap or successors set at the same time. */
+     *  It disassembles one instruction at the specified virtual address. The @p map is a mapping from virtual addresses to buffer
+     *  and enables instructions to span file segments that are mapped contiguously in virtual memory by the loader but which might
+     *  not be contiguous in the file.  The instruction's successor virtual addresses are added to the optional successor set (note
+     *  that successors of an individual instruction can also be obtained via @ref Architecture::Base::getSuccessors). If the
+     *  instruction cannot be disassembled then an exception is thrown and the successors set is not modified.
+     *
+     *  Thread safety: The safety of this method depends on its implementation in the subclass. In any case, no other thread can be
+     *  modifying the MemoryMap or successors set at the same time. */
     virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet *successors=NULL) = 0;
 
     /** Similar in functionality to the disassembleOne method that takes a MemoryMap argument, except the content buffer is

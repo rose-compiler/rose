@@ -11,8 +11,6 @@ class SgAsmMipsInstruction: public SgAsmInstruction {
 
 public:
     // Overrides are documented in the base class
-    virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) override;
     virtual bool isUnknown() const override;
-    virtual Sawyer::Optional<rose_addr_t> branchTarget() override;
     virtual unsigned get_anyKind() const override;
 };

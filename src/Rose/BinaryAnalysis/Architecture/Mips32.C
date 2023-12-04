@@ -502,7 +502,7 @@ Mips32::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_add
         case mips_jalr_hb:
         case mips_jalx: {
             if (target)
-                last->branchTarget().assignTo(*target); // target will not be changed if unknown
+                branchTarget(last).assignTo(*target); // target will not be changed if unknown
             if (return_va)
                 *return_va = last->get_address() + last->get_size();
             return true;
@@ -530,6 +530,122 @@ Mips32::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) const 
     if (rre->get_descriptor().majorNumber() != mips_regclass_gpr || rre->get_descriptor().minorNumber() != 31)
         return false;
     return true; // this is a "JR ra" instruction.
+}
+
+Sawyer::Optional<rose_addr_t>
+Mips32::branchTarget(SgAsmInstruction *insn_) const {
+    auto insn = isSgAsmMipsInstruction(insn_);
+    ASSERT_not_null(insn);
+
+    SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
+    switch (insn->get_kind()) {
+        case mips_j:
+        case mips_jal:
+        case mips_jalx:
+            // target address stored in first argument
+            ASSERT_require(args.size() >= 1);
+            ASSERT_require(isSgAsmIntegerValueExpression(args[0]));
+            return isSgAsmIntegerValueExpression(args[0])->get_absoluteValue();
+
+        case mips_bgez:
+        case mips_bgezal:
+        case mips_bgezall:
+        case mips_bgezl:
+        case mips_bgtz:
+        case mips_bgtzl:
+        case mips_blez:
+        case mips_blezl:
+        case mips_bltz:
+        case mips_bltzal:
+        case mips_bltzall:
+        case mips_bltzl:
+            // target address stored in the second argument
+            ASSERT_require(args.size() >= 2);
+            ASSERT_require(isSgAsmIntegerValueExpression(args[1]));
+            return isSgAsmIntegerValueExpression(args[1])->get_absoluteValue();
+
+        case mips_beq:
+        case mips_beql:
+        case mips_bne:
+        case mips_bnel:
+            // target address stored in the third argument
+            ASSERT_require(args.size() >= 3);
+            ASSERT_require(isSgAsmIntegerValueExpression(args[2]));
+            return isSgAsmIntegerValueExpression(args[2])->get_absoluteValue();
+
+        default:
+            // no known target
+            return Sawyer::Nothing();
+    }
+}
+
+AddressSet
+Mips32::getSuccessors(SgAsmInstruction *insn_, bool &complete) const {
+    auto insn = isSgAsmMipsInstruction(insn_);
+    ASSERT_not_null(insn);
+
+    complete = false;
+    AddressSet successors;
+
+    switch (insn->get_kind()) {
+        case mips_break:
+        case mips_j:
+        case mips_jal:
+        case mips_jalr:
+        case mips_jalx:
+        case mips_jr:
+        case mips_jr_hb:
+        case mips_syscall:
+            // unconditional branch
+            if (Sawyer::Optional<rose_addr_t> target = branchTarget(insn)) {
+                successors.insert(*target);
+                complete = true;
+            }
+            break;
+
+        case mips_beq:
+        case mips_beql:
+        case mips_bgez:
+        case mips_bgezal:
+        case mips_bgezall:
+        case mips_bgezl:
+        case mips_bgtz:
+        case mips_bgtzl:
+        case mips_blez:
+        case mips_blezl:
+        case mips_bltz:
+        case mips_bltzal:
+        case mips_bltzall:
+        case mips_bltzl:
+        case mips_bne:
+        case mips_bnel:
+        case mips_teq:
+        case mips_teqi:
+        case mips_tge:
+        case mips_tgei:
+        case mips_tgeiu:
+        case mips_tgeu:
+        case mips_tlt:
+        case mips_tlti:
+        case mips_tltiu:
+        case mips_tltu:
+        case mips_tne:
+        case mips_tnei:
+            // conditional branch
+            if (Sawyer::Optional<rose_addr_t> target = branchTarget(insn)) {
+                successors.insert(*target);
+                complete = true;
+            }
+            successors.insert(insn->get_address() + insn->get_size()); // fall through address
+            break;
+
+        default:
+            // fall through
+            successors.insert(insn->get_address() + insn->get_size());
+            complete = true;
+            break;
+    }
+    return successors;
 }
 
 Disassembler::Base::Ptr

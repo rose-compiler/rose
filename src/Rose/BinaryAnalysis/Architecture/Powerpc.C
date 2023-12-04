@@ -574,6 +574,80 @@ Powerpc::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) const
             last->operand(2)->asUnsigned().orElse(1) == 0);
 }
 
+AddressSet
+Powerpc::getSuccessors(SgAsmInstruction *insn_, bool &complete) const {
+    auto insn = isSgAsmPowerpcInstruction(insn_);
+    ASSERT_not_null(insn);
+
+    AddressSet retval;
+    complete = true; /*assume retval is the complete set of successors for now*/
+
+    switch (insn->get_kind()) {
+        case powerpc_bc:
+        case powerpc_bca:
+        case powerpc_bcl:
+        case powerpc_bcla: {
+            /* Conditional branches: bcX BO,BI,TARGET */
+            const std::vector<SgAsmExpression*> &exprs = insn->get_operandList()->get_operands();
+            ASSERT_require(exprs.size() == 3);
+            ASSERT_require(isSgAsmValueExpression(exprs[2]));
+            SgAsmValueExpression *ve = isSgAsmValueExpression(exprs[2]);
+            ASSERT_not_null(ve);
+            rose_addr_t target = SageInterface::getAsmConstant(ve);
+            retval.insert(target);
+
+            // Fall-through address only happens for conditional branches. If the BO field of a B-form conditional branch is
+            // equal to 1x1xx (where x is 0 or 1) then the branch is unconditional.
+            if (insn->nOperands() < 1 || (insn->operand(0)->asUnsigned().orElse(0) & 0x14) != 0x14)
+                retval.insert(insn->get_address() + insn->get_size());
+            break;
+        }
+
+        case powerpc_bcctr:
+        case powerpc_bcctrl:
+        case powerpc_bclr:
+        case powerpc_bclrl:
+            /* Conditional branches to count register; target is unknown */
+            complete = false;
+
+            // Fall-through address only happens for conditional branches. If the BO field of a XL-form conditional branch is
+            // equal to 1x1xx (where x is 0 or 1) then the branch is unconditional.
+            if (insn->nOperands() < 1 || (insn->operand(0)->asUnsigned().orElse(0) & 0x14) != 0x14)
+                retval.insert(insn->get_address() + insn->get_size());
+            break;
+
+        case powerpc_b:
+        case powerpc_ba:
+        case powerpc_bl:
+        case powerpc_bla: {
+            /* Unconditional branches */
+            const std::vector<SgAsmExpression*> &exprs = insn->get_operandList()->get_operands();
+            ASSERT_require(exprs.size() == 1);
+            ASSERT_not_null(isSgAsmValueExpression(exprs[0]));
+            SgAsmValueExpression *ve = isSgAsmValueExpression(exprs[0]);
+            ASSERT_not_null(ve);
+            rose_addr_t target = SageInterface::getAsmConstant(ve);
+            retval.insert(target);
+            break;
+        }
+
+        case powerpc_unknown_instruction:
+        case powerpc_tw:
+        case powerpc_twi:
+        case powerpc_rfi:
+        case powerpc_sc:
+            /* No known successors */
+            complete = false;
+            break;
+
+        default:
+            /* All others fall through to next instruction */
+            retval.insert(insn->get_address() + insn->get_size());
+            break;
+    }
+    return retval;
+}
+
 Unparser::Base::Ptr
 Powerpc::newUnparser() const {
     return Unparser::Powerpc::instance(shared_from_this());

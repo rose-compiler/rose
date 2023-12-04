@@ -5,13 +5,17 @@
 
 #include <Rose/BinaryAnalysis/Disassembler/X86.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/PartialSymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/EngineBinary.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesX86.h>
 #include <Rose/BinaryAnalysis/Unparser/X86.h>
 #include <Rose/CommandLine/Parser.h>
 
+#include <Sawyer/Message.h>
 #include <boost/lexical_cast.hpp>
+
+using namespace Sawyer::Message::Common;
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -106,7 +110,7 @@ X86::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t
     // Quick method based only on the kind of instruction
     if (x86_call == last->get_kind() || x86_farcall == last->get_kind()) {
         if (target)
-            last->branchTarget().assignTo(*target);
+            branchTarget(last).assignTo(*target);
         if (return_va)
             *return_va = last->get_address() + last->get_size();
         return true;
@@ -238,6 +242,192 @@ X86::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) const {
     ASSERT_not_null(last);
 
     return last->get_kind() == x86_ret || last->get_kind() == x86_retf;
+}
+
+Sawyer::Optional<rose_addr_t>
+X86::branchTarget(SgAsmInstruction *insn_) const {
+    auto insn = isSgAsmX86Instruction(insn_);
+    ASSERT_not_null(insn);
+
+    // Treats far destinations as "unknown"
+    switch (insn->get_kind()) {
+        case x86_call:
+        case x86_farcall:
+        case x86_jmp:
+        case x86_ja:
+        case x86_jae:
+        case x86_jb:
+        case x86_jbe:
+        case x86_jcxz:
+        case x86_jecxz:
+        case x86_jrcxz:
+        case x86_je:
+        case x86_jg:
+        case x86_jge:
+        case x86_jl:
+        case x86_jle:
+        case x86_jne:
+        case x86_jno:
+        case x86_jns:
+        case x86_jo:
+        case x86_jpe:
+        case x86_jpo:
+        case x86_js:
+        case x86_loop:
+        case x86_loopnz:
+        case x86_loopz:
+            if (insn->nOperands() == 1) {
+                if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(insn->operand(0)))
+                    return ival->get_absoluteValue();
+            }
+            return Sawyer::Nothing();
+
+        default:
+            return Sawyer::Nothing();
+    }
+}
+
+AddressSet
+X86::getSuccessors(SgAsmInstruction *insn_, bool &complete) const {
+    auto insn = isSgAsmX86Instruction(insn_);
+    ASSERT_not_null(insn);
+
+    AddressSet retval;
+    complete = true; /*assume true and prove otherwise*/
+
+    switch (insn->get_kind()) {
+        case x86_call:
+        case x86_farcall:
+        case x86_jmp:
+        case x86_farjmp:
+            /* Unconditional branch to operand-specified address. We cannot assume that a CALL instruction returns to the
+             * fall-through address. */
+            if (Sawyer::Optional<rose_addr_t> va = branchTarget(insn)) {
+                retval.insert(*va);
+            } else {
+                complete = false;
+            }
+            break;
+
+        case x86_ja:
+        case x86_jae:
+        case x86_jb:
+        case x86_jbe:
+        case x86_jcxz:
+        case x86_jecxz:
+        case x86_jrcxz:
+        case x86_je:
+        case x86_jg:
+        case x86_jge:
+        case x86_jl:
+        case x86_jle:
+        case x86_jne:
+        case x86_jno:
+        case x86_jns:
+        case x86_jo:
+        case x86_jpe:
+        case x86_jpo:
+        case x86_js:
+        case x86_loop:
+        case x86_loopnz:
+        case x86_loopz:
+            /* Conditional branches to operand-specified address */
+            if (Sawyer::Optional<rose_addr_t> va = branchTarget(insn)) {
+                retval.insert(*va);
+            } else {
+                complete = false;
+            }
+            retval.insert(insn->get_address() + insn->get_size());
+            break;
+
+        case x86_int:                                   // assumes interrupts return
+        case x86_int1:
+        case x86_int3:
+        case x86_into:
+        case x86_syscall: {
+            retval.insert(insn->get_address() + insn->get_size());  // probable return point
+            complete = false;
+            break;
+        }
+
+        case x86_ret:
+        case x86_iret:
+        case x86_rsm:
+        case x86_sysret:
+        case x86_ud2:
+        case x86_retf: {
+            /* Unconditional branch to run-time specified address */
+            complete = false;
+            break;
+        }
+
+        case x86_hlt: {
+            /* Instructions having no successor. */
+            break;
+        }
+
+        case x86_unknown_instruction: {
+            /* Instructions having unknown successors */
+            complete = false;
+            break;
+        }
+
+        default: {
+            /* Instructions that always fall through to the next instruction */
+            retval.insert(insn->get_address() + insn->get_size());
+            break;
+        }
+    }
+    return retval;
+}
+
+AddressSet
+X86::getSuccessors(const std::vector<SgAsmInstruction*>& insns, bool &complete, const MemoryMap::Ptr &initial_memory) const {
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    using namespace Rose::BinaryAnalysis::InstructionSemantics;
+
+    if (debug) {
+        debug <<"X86::getSuccessors(" <<StringUtility::addrToString(insns.front()->get_address())
+              <<" for " <<insns.size() <<" instruction" <<(1==insns.size()?"":"s") <<"):" <<"\n";
+    }
+
+    AddressSet successors = Base::getSuccessors(insns, complete/*out*/);
+
+    // If we couldn't determine all the successors, or a cursory analysis couldn't narrow it down to a single successor then we'll
+    // do a more thorough analysis now. In the case where the cursory analysis returned a complete set containing two successors, a
+    // thorough analysis might be able to narrow it down to a single successor. We should not make special assumptions about CALL
+    // and FARCALL instructions -- their only successor is the specified address operand.
+    if (!complete || successors.size() > 1) {
+        RegisterDictionary::Ptr regdict = registerDictionary();
+        PartialSymbolicSemantics::RiscOperators::Ptr ops = PartialSymbolicSemantics::RiscOperators::instanceFromRegisters(regdict);
+        ops->set_memory_map(initial_memory);
+        BaseSemantics::Dispatcher::Ptr cpu = newInstructionDispatcher(ops);
+
+        try {
+            for (SgAsmInstruction *insn: insns) {
+                cpu->processInstruction(insn);
+                SAWYER_MESG(debug) <<"  state after " <<insn->toString() <<"\n" <<*ops;
+            }
+            BaseSemantics::SValue::Ptr ip = ops->peekRegister(regdict->instructionPointerRegister());
+            if (auto ipval = ip->toUnsigned()) {
+                successors.clear();
+                successors.insert(*ipval);
+                complete = true;
+            }
+        } catch(const BaseSemantics::Exception &e) {
+            /* Abandon entire basic block if we hit an instruction that's not implemented. */
+            debug <<e <<"\n";
+        }
+    }
+
+    if (debug) {
+        debug <<"  successors:";
+        for (rose_addr_t va: successors.values())
+            debug <<" " <<StringUtility::addrToString(va);
+        debug <<(complete?"":"...") <<"\n";
+    }
+
+    return successors;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

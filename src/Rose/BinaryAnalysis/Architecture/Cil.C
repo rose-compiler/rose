@@ -455,7 +455,7 @@ Cil::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t
         case Cil_mono_calli_extra_arg: // name="mono_calli_extra_arg",input="VarPop",output="VarPush",args="InlineSig",o1="0xF0",o2="0x18",flow="call"
 
             if (target) {
-                last->branchTarget().assignTo(*target);
+                branchTarget(last).assignTo(*target);
             }
             if (return_va) {
                 *return_va = last->get_address() + last->get_size();
@@ -482,6 +482,144 @@ Cil::isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) const {
         default:
             return false;
     }
+}
+
+Sawyer::Optional<rose_addr_t>
+Cil::branchTarget(SgAsmInstruction *insn_) const {
+    auto insn = isSgAsmCilInstruction(insn_);
+    ASSERT_not_null(insn);
+
+    const CilInstructionKind kind = insn->get_kind();
+    switch (kind) {
+        case Cil_br_s:      // name="br.s",input="Pop0",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x2B",flow="branch"
+        case Cil_brfalse_s: // name="brfalse.s",input="PopI",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x2C",flow="cond-branch"
+        case Cil_brtrue_s:  // name="brtrue.s",input="PopI",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x2D",flow="cond-branch"
+        case Cil_beq_s:     // name="beq.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x2E",flow="cond-branch"
+        case Cil_bge_s:     // name="bge.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x2F",flow="cond-branch"
+        case Cil_bgt_s:     // name="bgt.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x30",flow="cond-branch"
+        case Cil_ble_s:     // name="ble.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x31",flow="cond-branch"
+        case Cil_blt_s:     // name="blt.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x32",flow="cond-branch"
+        case Cil_bne_un_s:  // name="bne.un.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x33",flow="cond-branch"
+        case Cil_bge_un_s:  // name="bge.un.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x34",flow="cond-branch"
+        case Cil_bgt_un_s:  // name="bgt.un.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x35",flow="cond-branch"
+        case Cil_ble_un_s:  // name="ble.un.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x36",flow="cond-branch"
+        case Cil_blt_un_s:  // name="blt.un.s",input="Pop1+Pop1",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0x37",flow="cond-branch"
+        case Cil_br:        // name="br",input="Pop0",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x38",flow="branch"
+        case Cil_brfalse:   // name="brfalse",input="PopI",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x39",flow="cond-branch"
+        case Cil_brtrue:    // name="brtrue",input="PopI",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x3A",flow="cond-branch"
+        case Cil_beq:       // name="beq",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x3B",flow="cond-branch"
+        case Cil_bge:       // name="bge",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x3C",flow="cond-branch"
+        case Cil_bgt:       // name="bgt",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x3D",flow="cond-branch"
+        case Cil_ble:       // name="ble",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x3E",flow="cond-branch"
+        case Cil_blt:       // name="blt",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x3F",flow="cond-branch"
+        case Cil_bne_un:    // name="bne.un",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x40",flow="cond-branch"
+        case Cil_bge_un:    // name="bge.un",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x41",flow="cond-branch"
+        case Cil_bgt_un:    // name="bgt.un",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x42",flow="cond-branch"
+        case Cil_ble_un:    // name="ble.un",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x43",flow="cond-branch"
+        case Cil_blt_un:    // name="blt.un",input="Pop1+Pop1",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0x44",flow="cond-branch"
+        case Cil_leave:     // name="leave",input="Pop0",output="Push0",args="InlineBrTarget",o1="0xFF",o2="0xDD",flow="branch"
+        case Cil_leave_s:   // name="leave.s",input="Pop0",output="Push0",args="ShortInlineBrTarget",o1="0xFF",o2="0xDE",flow="branch"
+            break;
+
+            // A branch instruction but branch target is not immediately available
+        case Cil_jmp:       // name="jmp",input="Pop0",output="Push0",args="InlineMethod",o1="0xFF",o2="0x27",flow="call"
+        case Cil_call:      // name="call",input="VarPop",output="VarPush",args="InlineMethod",o1="0xFF",o2="0x28",flow="call"
+        case Cil_calli:     // name="calli",input="VarPop",output="VarPush",args="InlineSig",o1="0xFF",o2="0x29",flow="call"
+        case Cil_callvirt:  // name="callvirt",input="VarPop",output="VarPush",args="InlineMethod",o1="0xFF",o2="0x6F",flow="call"
+        case Cil_newobj:    // name="newobj",input="VarPop",output="PushRef",args="InlineMethod",o1="0xFF",o2="0x73",flow="call"
+        case Cil_throw:     // name="throw",input="PopRef",output="Push0",args="InlineNone",o1="0xFF",o2="0x7A",flow="throw"
+        case Cil_mono_calli_extra_arg: // name="mono_calli_extra_arg",input="VarPop",output="VarPush",args="InlineSig",o1="0xF0",o2="0x18",flow="call"
+        case Cil_mono_rethrow: // name="mono_rethrow",input="PopRef",output="Push0",args="InlineNone",o1="0xF0",o2="0x1F",flow="throw"
+            return Sawyer::Nothing();
+
+            // A branch instruction but branch target(s) (offsets) need to be calculated
+        case Cil_switch:    // name="switch",input="PopI",output="Push0",args="InlineSwitch",o1="0xFF",o2="0x45",flow="cond-branch"
+            return Sawyer::Nothing();
+
+            // Not a branching instruction
+        default:
+            return Sawyer::Nothing();
+    }
+
+    if (insn->nOperands() == 1) {
+        if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(insn->operand(0))) {
+            // The target of a CIL branch instruction is "from the beginning of the instruction following the current instruction"
+            return insn->get_address() + insn->get_size() + ival->get_signedValue();
+        }
+    }
+
+    return Sawyer::Nothing();
+}
+
+static AddressSet
+switchSuccessors(const SgAsmCilInstruction* insn, bool &complete) {
+    SgAsmIntegerValueExpression* ival{nullptr};
+    AddressSet retval{};
+    uint32_t nTargets{0};
+    rose_addr_t va{insn->get_address()};
+    rose_addr_t fallThrough{va + insn->get_size()};
+
+    complete = false;
+
+    CilInstructionKind kind{insn->get_kind()};
+    ASSERT_require(kind == Cil_switch);
+
+    if ((ival = isSgAsmIntegerValueExpression(insn->operand(0)))) {
+        nTargets = ival->get_value();
+    }
+    ASSERT_require(nTargets+1 == insn->nOperands());
+
+    retval.insert(fallThrough);
+
+    for (int n{1}; n < insn->nOperands(); n++) {
+        if ((ival = isSgAsmIntegerValueExpression(insn->operand(n)))) {
+            retval.insert(fallThrough + ival->get_signedValue());
+        }
+        else return AddressSet{};
+    }
+
+    complete = true;
+    return retval;
+}
+
+Rose::BinaryAnalysis::AddressSet
+Cil::getSuccessors(SgAsmInstruction *insn_, bool &complete) const {
+    auto insn = isSgAsmCilInstruction(insn_);
+    ASSERT_not_null(insn);
+
+    complete = false;
+    CilInstructionKind kind = insn->get_kind();
+
+    switch (kind) {
+        case Cil_switch:
+            return switchSuccessors(insn, complete);
+
+            // A branch instruction but branch target is not immediately available
+        case Cil_jmp:       // name="jmp",input="Pop0",output="Push0",args="InlineMethod",o1="0xFF",o2="0x27",flow="call"
+        case Cil_call:      // name="call",input="VarPop",output="VarPush",args="InlineMethod",o1="0xFF",o2="0x28",flow="call"
+        case Cil_calli:     // name="calli",input="VarPop",output="VarPush",args="InlineSig",o1="0xFF",o2="0x29",flow="call"
+        case Cil_callvirt:  // name="callvirt",input="VarPop",output="VarPush",args="InlineMethod",o1="0xFF",o2="0x6F",flow="call"
+        case Cil_newobj:    // name="newobj",input="VarPop",output="PushRef",args="InlineMethod",o1="0xFF",o2="0x73",flow="call"
+        case Cil_throw:     // name="throw",input="PopRef",output="Push0",args="InlineNone",o1="0xFF",o2="0x7A",flow="throw"
+        case Cil_mono_calli_extra_arg: // name="mono_calli_extra_arg",input="VarPop",output="VarPush",args="InlineSig",o1="0xF0",o2="0x18",flow="call"
+        case Cil_mono_rethrow: // name="mono_rethrow",input="PopRef",output="Push0",args="InlineNone",o1="0xF0",o2="0x1F",flow="throw"
+            return AddressSet{};
+
+        default:
+            break;
+    }
+
+    if (auto target{branchTarget(insn)}) {
+        AddressSet retval{*target};
+        // Add fall through target if not a branch always instruction
+        if ((kind != Cil_br) && (kind != Cil_br_s)) {
+            retval.insert(insn->get_address() + insn->get_size());
+        }
+        complete = true;
+        return retval;
+    }
+
+    return AddressSet{};
 }
 
 Disassembler::Base::Ptr
