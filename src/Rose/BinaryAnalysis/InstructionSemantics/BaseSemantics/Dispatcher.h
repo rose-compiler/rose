@@ -205,16 +205,16 @@ public:
     size_t addressWidth() const;
 
     /** Returns the instruction pointer register. */
-    virtual RegisterDescriptor instructionPointerRegister() const = 0;
+    virtual RegisterDescriptor instructionPointerRegister() const;
 
     /** Returns the stack pointer register. */
-    virtual RegisterDescriptor stackPointerRegister() const = 0;
+    virtual RegisterDescriptor stackPointerRegister() const;
 
     /** Returns the stack call frame register. */
-    virtual RegisterDescriptor stackFrameRegister() const = 0;
+    virtual RegisterDescriptor stackFrameRegister() const;
 
     /** Returns the function call return address register. */
-    virtual RegisterDescriptor callReturnRegister() const = 0;
+    virtual RegisterDescriptor callReturnRegister() const;
 
     /** Property: Reset instruction pointer register for each instruction.
      *

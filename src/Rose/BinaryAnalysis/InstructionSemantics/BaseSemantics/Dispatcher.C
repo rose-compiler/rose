@@ -96,6 +96,26 @@ Dispatcher::addressWidth() const {
     return architecture()->bitsPerWord();
 }
 
+RegisterDescriptor
+Dispatcher::instructionPointerRegister() const {
+    return architecture()->registerDictionary()->instructionPointerRegister();
+}
+
+RegisterDescriptor
+Dispatcher::stackPointerRegister() const {
+    return architecture()->registerDictionary()->stackPointerRegister();
+}
+
+RegisterDescriptor
+Dispatcher::stackFrameRegister() const {
+    return architecture()->registerDictionary()->stackFrameRegister();
+}
+
+RegisterDescriptor
+Dispatcher::callReturnRegister() const {
+    return architecture()->registerDictionary()->callReturnRegister();
+}
+
 void
 Dispatcher::advanceInstructionPointer(SgAsmInstruction *insn) {
     operators()->comment("advancing instruction pointer");
