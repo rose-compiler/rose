@@ -69,7 +69,7 @@ private:
     DispatcherM68k();                                   // used only by boost::serialization
     
 protected:
-    DispatcherM68k(const Architecture::BaseConstPtr&);  // prototypical constructor
+    explicit DispatcherM68k(const Architecture::BaseConstPtr&);  // prototypical constructor
 
     DispatcherM68k(const Architecture::BaseConstPtr&, const BaseSemantics::RiscOperatorsPtr&);
 
