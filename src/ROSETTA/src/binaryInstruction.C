@@ -285,20 +285,6 @@ public:
     static Rose::BinaryAnalysis::RegisterDictionaryPtr registersForWidth(size_t);
 
     // Overrides are documented in the base class
-    virtual bool terminatesBasicBlock() override;
-    virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&,
-                                    rose_addr_t *target, rose_addr_t *ret) override;
-    virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
-                                    rose_addr_t *target, rose_addr_t *ret) override;
-    virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) override;
-    virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) override;
-    virtual Sawyer::Optional<rose_addr_t> branchTarget() override;
-    virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) override;
-    virtual Rose::BinaryAnalysis::AddressSet getSuccessors(const std::vector<SgAsmInstruction*>&,
-                                                           bool &complete,
-                                                           const Rose::BinaryAnalysis::MemoryMap::Ptr &initial_memory =
-                                                           Rose::BinaryAnalysis::MemoryMap::Ptr()) override;
-    virtual bool isUnknown() const override;
     virtual unsigned get_anyKind() const override;
 public:
     /** Destructor. */
@@ -471,6 +457,86 @@ protected:
      *  does not recursively initialize base classes. */
     void initializeProperties();
 #endif // SgAsmVectorType_OTHERS
+#ifdef DOCUMENTATION
+};
+#endif // DOCUMENTATION
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SgAsmUserInstruction           -- MACHINE GENERATED; DO NOT MODIFY --
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DECLARE_LEAF_CLASS(AsmUserInstruction);
+IS_SERIALIZABLE(AsmUserInstruction);
+
+#ifdef DOCUMENTATION
+/** Instructions defined at runtime.
+ *
+ *  This class describes instructions whose form is not known until runtime. Most architectures have their own instruction class
+ *  derived from @ref SgAsmInstruction, but for architectures intended to be defined outside the ROSE library, we need some way
+ *  to represent their decoded machine instructions. This class serves that purpose. */
+class SgAsmUserInstruction: public SgAsmInstruction {
+#endif // DOCUMENTATION
+
+#ifndef DOCUMENTATION
+    AsmUserInstruction.setDataPrototype(
+        "unsigned", "kind", "= 0",
+        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+#endif // !DOCUMENTATION
+
+    DECLARE_OTHERS(AsmUserInstruction);
+#if defined(SgAsmUserInstruction_OTHERS) || defined(DOCUMENTATION)
+
+    //----------------------- Boost serialization for SgAsmUserInstruction -----------------------
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        debugSerializationBegin("SgAsmUserInstruction");
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmInstruction);
+        s & BOOST_SERIALIZATION_NVP(p_kind);
+        debugSerializationEnd("SgAsmUserInstruction");
+    }
+#endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
+public:
+public:
+    /** Property: Instruction kind.
+     *
+     *  The instruction kind distinguishes between different kinds of instructions within a single architecture. 
+     *  
+     *  @{ */
+    unsigned const& get_kind() const;
+    void set_kind(unsigned const&);
+    /** @} */
+public:
+    // Overrides are documented in the base class
+    virtual unsigned get_anyKind() const override;
+public:
+    /** Destructor. */
+    virtual ~SgAsmUserInstruction();
+
+public:
+    /** Default constructor. */
+    SgAsmUserInstruction();
+
+public:
+    /** Constructor. */
+    SgAsmUserInstruction(rose_addr_t const& address,
+                         std::string const& architectureName,
+                         std::string const& mnemonic,
+                         unsigned const& kind);
+
+protected:
+    /** Initialize all properties that have explicit initial values.
+     *
+     *  This function is mostly for use in user-defined constructors where the user desires to initialize
+     *  all the properties but does not know the names of the data members that store the property values.
+     *  This function initializes the properties that have explicit initializations within this class, but
+     *  does not recursively initialize base classes. */
+    void initializeProperties();
+#endif // SgAsmUserInstruction_OTHERS
 #ifdef DOCUMENTATION
 };
 #endif // DOCUMENTATION
@@ -1760,17 +1826,7 @@ public:
     static Rose::BinaryAnalysis::RegisterDictionaryPtr registersForWidth(size_t);
 
     // Overrides are documented in the base class
-    virtual std::string description() const override;
-    virtual bool terminatesBasicBlock() override;
-    virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) override;
-    virtual bool isUnknown() const override;
     virtual unsigned get_anyKind() const override;
-    virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&,
-                                    rose_addr_t *target, rose_addr_t *retva) override;
-    virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
-                                    rose_addr_t *target, rose_addr_t *retva) override;
-    virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) override;
-    virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) override;
 public:
     /** Destructor. */
     virtual ~SgAsmPowerpcInstruction();
@@ -5093,20 +5149,6 @@ public:
     enum Kind { null_unknown };
 
 public: // overrides
-    virtual bool terminatesBasicBlock() override;
-    virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns,
-                                    rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) override;
-    virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
-                                    rose_addr_t *target, rose_addr_t *ret) override;
-    virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) override;
-    virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) override;
-    virtual Sawyer::Optional<rose_addr_t> branchTarget() override;
-    virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) override;
-    virtual Rose::BinaryAnalysis::AddressSet getSuccessors(const std::vector<SgAsmInstruction*>&,
-                                                           bool &complete,
-                                                           const Rose::BinaryAnalysis::MemoryMap::Ptr &initial_memory =
-                                                           Rose::BinaryAnalysis::MemoryMap::Ptr()) override;
-    virtual bool isUnknown() const override;
     virtual unsigned get_anyKind() const override;
 public:
     /** Destructor. */
@@ -6839,17 +6881,6 @@ public:
     /** @} */
 public:
     // Overrides are documented in the base class
-    virtual std::string description() const override;
-    virtual bool terminatesBasicBlock() override;
-    virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns,
-                                    rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) override;
-    virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
-                                    rose_addr_t *target, rose_addr_t *ret) override;
-    virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) override;
-    virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) override;
-    virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) override;
-    virtual bool isUnknown() const override;
-    virtual Sawyer::Optional<rose_addr_t> branchTarget() override;
     virtual unsigned get_anyKind() const override;
 public:
     /** Destructor. */
@@ -7024,21 +7055,6 @@ public:
     /** @} */
 public:
     // Overrides are documented in the base class
-    virtual std::string description() const override;
-    virtual bool terminatesBasicBlock() override;
-    virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns,
-                                    rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) override;
-    virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
-                                    rose_addr_t *target, rose_addr_t *ret) override;
-    virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) override;
-    virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) override;
-    virtual Sawyer::Optional<rose_addr_t> branchTarget() override;
-    virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) override;
-    virtual Rose::BinaryAnalysis::AddressSet getSuccessors(const std::vector<SgAsmInstruction*>&,
-                                                           bool &complete,
-                                                           const Rose::BinaryAnalysis::MemoryMap::Ptr &initial_memory =
-                                                           Rose::BinaryAnalysis::MemoryMap::Ptr()) override;
-    virtual bool isUnknown() const override;
     virtual unsigned get_anyKind() const override;
 public:
     /** Destructor. */
@@ -10551,17 +10567,6 @@ public:
     /** @} */
 public:
     // Overrides are documented in the base class
-    virtual std::string description() const override;
-    virtual bool terminatesBasicBlock() override;
-    virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns,
-                                    rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) override;
-    virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
-                                    rose_addr_t *target, rose_addr_t *ret) override;
-    virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) override;
-    virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) override;
-    virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) override;
-    virtual bool isUnknown() const override;
-    virtual Sawyer::Optional<rose_addr_t> branchTarget() override;
     virtual unsigned get_anyKind() const override;
 public:
     /** Destructor. */
@@ -33826,22 +33831,7 @@ public:
     void set_kind(Rose::BinaryAnalysis::CilInstructionKind const&);
     /** @} */
 public:
-    // Overrides are documented in the base class
-    virtual std::string description() const override;
-    virtual bool terminatesBasicBlock() override;
-    virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns,
-                                    rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) override;
-    virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
-                                    rose_addr_t *target, rose_addr_t *ret) override;
-    virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) override;
-    virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) override;
-    virtual Sawyer::Optional<rose_addr_t> branchTarget() override;
-    virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) override;
-    virtual Rose::BinaryAnalysis::AddressSet getSuccessors(const std::vector<SgAsmInstruction*>&,
-                                                           bool &complete,
-                                                           const Rose::BinaryAnalysis::MemoryMap::Ptr &initial_memory =
-                                                           Rose::BinaryAnalysis::MemoryMap::Ptr()) override;
-    virtual bool isUnknown() const override;
+    // Overrides are documented in the base classa
     virtual unsigned get_anyKind() const override;
 public:
     /** Destructor. */
@@ -40063,18 +40053,7 @@ public:
     /** @} */
 public:
     // Overrides are documented in the base class
-    virtual std::string description() const override;
-    virtual bool terminatesBasicBlock() override;
-    virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) override;
-    virtual bool isUnknown() const override;
     virtual unsigned get_anyKind() const override;
-    virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t *target,
-                                    rose_addr_t *return_va) override;
-    virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t *target,
-                                    rose_addr_t *return_va) override;
-    virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) override;
-    virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) override;
-    virtual Sawyer::Optional<rose_addr_t> branchTarget() override;
 public:
     /** Destructor. */
     virtual ~SgAsmAarch64Instruction();
@@ -40456,18 +40435,7 @@ public:
     /** @} */
 public:
     // Overrides are documented in the base class
-    virtual std::string description() const override;
-    virtual bool terminatesBasicBlock() override;
-    virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) override;
-    virtual bool isUnknown() const override;
     virtual unsigned get_anyKind() const override;
-    virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t *target,
-                                    rose_addr_t *return_va) override;
-    virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t *target,
-                                    rose_addr_t *return_va) override;
-    virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) override;
-    virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) override;
-    virtual Sawyer::Optional<rose_addr_t> branchTarget() override;
 public:
     /** Destructor. */
     virtual ~SgAsmAarch32Instruction();
@@ -40522,6 +40490,7 @@ AstNodeClass& AsmInstruction = nonTerminalConstructor(
         | AsmMipsInstruction
         | AsmNullInstruction
         | AsmPowerpcInstruction
+        | AsmUserInstruction
         | AsmX86Instruction
     , true);
 assert(AsmInstruction.associatedGrammar != nullptr);
@@ -40769,12 +40738,8 @@ public:
      *  Thread safety: This function is thread safe. */
     Rose::BinaryAnalysis::Architecture::BaseConstPtr architecture() const /*final*/;
 
-    /** Return a description of this instruction.
-     *
-     *  Descriptions are useful for generating comments in the disassembly listing to say what each instruction does when
-     *  the audience is not well versed in that instruction set architecture.  The base implementation always returns an
-     *  empty string. */
-    virtual std::string description() const { return ""; }
+    // [Robb Matzke 2023-12-04]: deprecated
+    virtual std::string description() const final ROSE_DEPRECATED("use Architecture::Base::instructionDescription");
 
     /** Number of operands. */
     size_t nOperands() const;
@@ -40784,43 +40749,18 @@ public:
      *  If the operand index is out of range, then null is returned. */
     SgAsmExpression* operand(size_t) const;
 
-    /** Determines if this instruction normally terminates a basic block.
-     *
-     *  The analysis only looks at the individual instruction and therefore is not very sophisticated.  For instance, a
-     *  conditional branch will always terminate a basic block by this method even if its condition is opaque.  The base
-     *  class implementation always aborts; architecture-specific subclasses should override this to do something useful
-     *  (pure virtual is not possible due to ROSETTA). */
-    virtual bool terminatesBasicBlock();
-
-    /** Returns true if the specified basic block looks like a function call.
-     *
-     *  This instruction object is only used to select the appropriate virtual method; the basic block to be analyzed is
-     *  the first argument to the function.  If the basic block looks like a function call then this method returns true.
-     *  If (and only if) the target address is known (i.e., the address of the called function) then @p target is set to
-     *  this address (otherwise @p target is unmodified). If the return address is known or can be guessed, then return_va
-     *  is initialized to the return address, which is normally the fall-through address of the last instruction; otherwise
-     *  the return_va is unmodified.
-     *
-     *  The "fast" and "slow" versions differ only in what kind of anlysis they do.  The "fast" version typically looks
-     *  only at instruction patterns while the slow version might incur more expense by looking at instruction semantics.
-     *
-     * @{ */
-    virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret);
-    virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret);
-    /** @} */
-
-    /** Returns true if the specified basic block looks like a function return.
-     *
-     *  This instruction object is only used to select the appropriate virtual method; the basic block to be analyzed is
-     *  the first argument to the function.
-     *
-     *  The "fast" and "slow" versions differ only in what kind of anlysis they do.  The "fast" version typically looks
-     *  only at instruction patterns while the slow version might incur more expense by looking at instruction semantics.
-     *
-     * @{ */
-    virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&);
-    virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&);
-    /** @} */
+    // [Robb Matzke 2023-12-04]: deprecated
+    virtual bool terminatesBasicBlock() final ROSE_DEPRECATED("use Architecture::Base::terminatesBasicBlock");
+    virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret) final
+        ROSE_DEPRECATED("use Architecture::Base::isFunctionCallFast");
+    virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret) final
+        ROSE_DEPRECATED("use Architecture::Base::isFunctionCallSlow");
+    virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) final
+        ROSE_DEPRECATED("use Architecture::Base::isFunctionReturnFast");
+    virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) final
+        ROSE_DEPRECATED("use Architecture::Base::isFunctionReturnSlow");
+    virtual Sawyer::Optional<rose_addr_t> branchTarget() final
+        ROSE_DEPRECATED("use Architecture::Base::branchTarget");
 
     /** Returns true if this instruction is the first instruction in a basic block.
      *
@@ -40831,15 +40771,6 @@ public:
      *
      *  This method looks only at the AST to make this determination. */
     bool isLastInBlock();
-
-    /** Obtains the virtual address for a branching instruction.
-     *
-     *  Returns the branch target address if this instruction is a branching instruction and the target is known; otherwise
-     *  returns nothing. */
-    virtual Sawyer::Optional<rose_addr_t> branchTarget();
-
-    // FIXME[Robb Matzke 2021-03-02]: deprecated
-    bool getBranchTarget(rose_addr_t *target /*out*/) ROSE_DEPRECATED("use branchTarget instead");
 
     /** Determines whether a single instruction has an effect.
      *
@@ -41001,26 +40932,14 @@ public:
     findNoopSubsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch=false,
                          bool relax_stack_semantics=false);
 
-    /** Control flow successors for a single instruction.
-     *
-     *  The return value does not consider neighboring instructions, and therefore is quite naive.  It returns only the
-     *  information it can glean from this single instruction.  If the returned set of virtual instructions is fully known
-     *  then the @p complete argument will be set to true, otherwise false.  The base class implementation always
-     *  aborts()--it must be defined in an architecture-specific subclass (pure virtual is not possible due to ROSETTA). */
-    virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete); /*subclasses must redefine*/
-
-    /** Control flow successors for a basic block.
-     *
-     *  The @p basicBlock argument is a vector of instructions that is assumed to be a basic block that is entered only at
-     *  the first instruction and exits only at the last instruction.  A memory map can supply initial values for the
-     *  analysis' memory state.  The return value is a set of control flow successor virtual addresses, and the @p complete
-     *  argument return value indicates whether the returned set is known to be complete (aside from interrupts, faults,
-     *  etc).  The base class implementation just calls the single-instruction version, so architecture-specific subclasses
-     *  might want to override this to do something more sophisticated. */
+    // [Robb Matzke 2023-12-04]: deprecated
+    virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete)
+        ROSE_DEPRECATED("use Architecture::Base::getSuccessors");
     virtual Rose::BinaryAnalysis::AddressSet getSuccessors(const std::vector<SgAsmInstruction*> &basicBlock,
                                                            bool &complete,
                                                            const Rose::BinaryAnalysis::MemoryMap::Ptr &initial_memory =
-                                                           Rose::BinaryAnalysis::MemoryMap::Ptr());
+                                                           Rose::BinaryAnalysis::MemoryMap::Ptr())
+        ROSE_DEPRECATED("use Architecture::Base::getSuccessors");
 
     /** Returns the size of an instruction in bytes.
      *
@@ -41029,12 +40948,8 @@ public:
      *  modified instruction if it were to be reassembled. */
     virtual size_t get_size() const;
 
-    /** Returns true if this instruction is the special "unknown" instruction.
-     *
-     *  Each instruction architecture in ROSE defines an "unknown" instruction to be used when the disassembler is unable
-     *  to create a real instruction.  This can happen, for instance, if the bit pattern does not represent a valid
-     *  instruction for the architecture. */
-    virtual bool isUnknown() const;
+    // [Robb Matzke 2023-12-05]: deprecated
+    virtual bool isUnknown() const final ROSE_DEPRECATED("use Architecture::Base::isUnknown");
 
     /** Returns instruction kind for any architecture.
      *

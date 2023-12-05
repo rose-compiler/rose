@@ -365,6 +365,7 @@ run $(librose_compile) \
     SgAsmUnarySignedExtend.C \
     SgAsmUnaryTruncate.C \
     SgAsmUnaryUnsignedExtend.C \
+    SgAsmUserInstruction.C \
     SgAsmValueExpression.C \
     SgAsmVectorType.C \
     SgAsmX86Instruction.C

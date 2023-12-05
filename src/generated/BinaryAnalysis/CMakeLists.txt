@@ -364,6 +364,7 @@ add_library(roseGeneratedBinaryAnalysis OBJECT
   SgAsmUnarySignedExtend.C
   SgAsmUnaryTruncate.C
   SgAsmUnaryUnsignedExtend.C
+  SgAsmUserInstruction.C
   SgAsmValueExpression.C
   SgAsmVectorType.C
   SgAsmX86Instruction.C)

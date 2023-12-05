@@ -368,6 +368,7 @@ libroseGeneratedBinaryAnalysis_la_SOURCES = \
         SgAsmUnarySignedExtend.C \
         SgAsmUnaryTruncate.C \
         SgAsmUnaryUnsignedExtend.C \
+        SgAsmUserInstruction.C \
         SgAsmValueExpression.C \
         SgAsmVectorType.C \
         SgAsmX86Instruction.C

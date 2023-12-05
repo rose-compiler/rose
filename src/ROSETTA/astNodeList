@@ -1050,3 +1050,4 @@ SgAsmJvmLocalVariableEntry
 SgAsmJvmLocalVariableTable
 SgAsmJvmLocalVariableTypeEntry
 SgAsmJvmLocalVariableTypeTable
+SgAsmUserInstruction
