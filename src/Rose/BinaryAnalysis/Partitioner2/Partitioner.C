@@ -946,7 +946,7 @@ Partitioner::discoverBasicBlockInternal(rose_addr_t startVa) const {
         if (insn==nullptr)                                              // case: no instruction available
             goto done;
         retval->append(sharedFromThis(), insn);
-        if (insn->isUnknown() && !settings_.ignoringUnknownInsns)       // case: "unknown" instruction
+        if (architecture()->isUnknown(insn) && !settings_.ignoringUnknownInsns) // case: "unknown" instruction
             goto done;
 
         // Give user chance to adjust basic block successors and/or pre-compute cached analysis results
@@ -1226,7 +1226,7 @@ Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb, Precision::Level pr
 
     BasicBlockSemantics sem = bb->semantics();
     BaseSemantics::State::Ptr state;
-    if (settings_.ignoringUnknownInsns && lastInsn->isUnknown()) {
+    if (settings_.ignoringUnknownInsns && architecture()->isUnknown(lastInsn)) {
         // Special case for "unknown" instructions... the successor is assumed to be the fall-through address.
         rose_addr_t va = lastInsn->get_address() + lastInsn->get_size();
         size_t nBits = instructionProvider_->wordSize();

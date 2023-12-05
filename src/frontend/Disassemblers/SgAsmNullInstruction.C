@@ -5,11 +5,6 @@
 using namespace Rose;                                   // temporary until this lives in "rose"
 using namespace Rose::BinaryAnalysis;
 
-bool
-SgAsmNullInstruction::isUnknown() const {
-    return true;
-}
-
 unsigned
 SgAsmNullInstruction::get_anyKind() const {
     return (unsigned)null_unknown;

@@ -1915,7 +1915,7 @@ EngineBinary::makeNextDataReferencedFunction(const Partitioner::ConstPtr &partit
 
         // Sanity checks
         SgAsmInstruction *insn = partitioner->discoverInstruction(targetVa);
-        if (!insn || insn->isUnknown()) {
+        if (!insn || architecture()->isUnknown(insn)) {
             readVa = incrementAddress(readVa, wordSize, maxaddr);
             continue;                                   // no instruction
         }
@@ -1950,7 +1950,7 @@ EngineBinary::makeNextCodeReferencedFunction(const Partitioner::ConstPtr &partit
         ASSERT_not_null(srcInsn);
 
         SgAsmInstruction *targetInsn = partitioner->discoverInstruction(constant);
-        if (!targetInsn || targetInsn->isUnknown())
+        if (!targetInsn || architecture()->isUnknown(targetInsn))
             continue;                                   // no instruction
 
         AddressInterval insnInterval = AddressInterval::baseSize(targetInsn->get_address(), targetInsn->get_size());

@@ -139,7 +139,7 @@ BasicBlockUnit::address() const {
 bool
 BasicBlockUnit::containsUnknownInsn() const {
     for (SgAsmInstruction *insn: bblock_->instructions()) {
-        if (insn->isUnknown())
+        if (partitioner_->architecture()->isUnknown(insn))
             return true;
     }
     return false;

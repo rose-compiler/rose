@@ -208,7 +208,7 @@ main(int argc, char *argv[]) {
                 }
             }
 
-            if (settings.countMnemonics && !insn->isUnknown())
+            if (settings.countMnemonics && !partitioner->architecture()->isUnknown(insn))
                 ++histogram[baseMnemonic(insn)];
 
         } else {

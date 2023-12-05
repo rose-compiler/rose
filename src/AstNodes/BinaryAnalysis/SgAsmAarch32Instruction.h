@@ -35,7 +35,6 @@ public:
 
 public:
     // Overrides are documented in the base class
-    virtual bool isUnknown() const override;
     virtual unsigned get_anyKind() const override;
 };
 #endif // ROSE_ENABLE_ASM_AARCH32

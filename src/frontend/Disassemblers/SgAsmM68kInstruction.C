@@ -22,10 +22,4 @@ SgAsmM68kInstruction::get_anyKind() const {
     return p_kind;
 }
 
-bool
-SgAsmM68kInstruction::isUnknown() const
-{
-    return m68k_unknown_instruction == get_kind();
-}
-
 #endif

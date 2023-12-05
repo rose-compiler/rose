@@ -2192,7 +2192,7 @@ disassemble(rose_addr_t base_va, SgAsmCilMethodDef* m, MethodHeader mh,
     lst.push_back(instr);
     addr += instr->get_size();
 
-    if (instr->isUnknown()) {
+    if (disasm->architecture()->isUnknown(instr)) {
       // Pad block with noops because something went wrong
       // TODO: don't pad with noops, pad by expanding current unknown instruction
       SgUnsignedCharList rawBytes(1,'\0');

@@ -13,10 +13,4 @@ SgAsmJvmInstruction::get_anyKind() const {
   return static_cast<unsigned>(p_kind);
 }
 
-bool
-SgAsmJvmInstruction::isUnknown() const
-{
-  return JvmOp::unknown == get_kind();
-}
-
 #endif

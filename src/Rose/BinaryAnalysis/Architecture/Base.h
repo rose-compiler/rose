@@ -153,18 +153,27 @@ public:
      *  Returns the description for a particular instruction. The description must be a single line with no leading or trailing
      *  white space, no line termination characters, and no non-printable characters.  Most subclasses will just return a string
      *  based on the instruction mnemonic, such as "push a value onto the stack" for a `PUSH` instruction.  The instruction argument
-     *  must not be a null pointer.
+     *  must not be a null pointer and must be valid for this architecture.
      *
      *  The default implementation returns an empty string.
      *
      *  Thread safety: Thread safe. */
     virtual std::string instructionDescription(const SgAsmInstruction*) const;
 
+    /** Returns true if the instruction is the special "unknown" instruction.
+     *
+     *  Each instruction architecture in ROSE defines an "unknown" instruction to be used when the disassembler is unable to create
+     *  a real instruction.  This can happen, for instance, if the bit pattern does not represent a valid instruction for the
+     *  architecture. The instruction must not be a null pointer, and must be valid for this architecture.
+     *
+     *  Thread safety: Thread safe. */
+    virtual bool isUnknown(const SgAsmInstruction*) const = 0;
+
     /** Determines whether the specified instruction normally terminates a basic block.
      *
      *  The analysis generally only looks at the individual instruction and therefore is not very sophisticated.  For instance, a
      *  conditional branch will always terminate a basic block by this method even if its condition is opaque. The instruction
-     *  argument must not be a null pointer.
+     *  argument must not be a null pointer and must be valid for this architecture.
      *
      *  Thread safety: Thread safe. */
     virtual bool terminatesBasicBlock(SgAsmInstruction*) const = 0;
@@ -176,8 +185,8 @@ public:
      *  return address is known or can be guessed, then return_va is initialized to the return address, which is normally the
      *  fall-through address of the last instruction; otherwise the return_va is unmodified.
      *
-     *  The "fast" and "slow" versions differ only in what kind of anlysis they do.  The "fast" version typically looks
-     *  only at instruction patterns while the slow version might incur more expense by looking at instruction semantics.
+     *  The "fast" and "slow" versions differ only in what kind of anlysis they do.  The "fast" version typically looks only at
+     *  instruction patterns while the slow version might incur more expense by looking at instruction semantics.
      *
      *  The base implementation of the fast method always returns false. The base implementation of the slow method just calls the
      *  fast method.
@@ -191,8 +200,8 @@ public:
 
     /** Returns true if the specified basic block looks like a function return.
      *
-     *  The "fast" and "slow" versions differ only in what kind of anlysis they do.  The "fast" version typically looks
-     *  only at instruction patterns while the slow version might incur more expense by looking at instruction semantics.
+     *  The "fast" and "slow" versions differ only in what kind of anlysis they do.  The "fast" version typically looks only at
+     *  instruction patterns while the slow version might incur more expense by looking at instruction semantics.
      *
      *  The base implementaiton of the fast method always returns false. The base implementation of the slow method just calls the
      *  fast method.
@@ -216,9 +225,9 @@ public:
 
     /** Control flow successors for a single instruction.
      *
-     *  The return value does not consider neighboring instructions, and therefore is quite naive.  It returns only the
-     *  information it can glean from this single instruction.  If the returned set of virtual instructions is fully known
-     *  then the @p complete argument will be set to true, otherwise false.
+     *  The return value does not consider neighboring instructions, and therefore is quite naive.  It returns only the information
+     *  it can glean from this single instruction.  If the returned set of virtual instructions is fully known then the @p complete
+     *  argument will be set to true, otherwise false. The instruction must not be null, and must be valid for this architecture.
      *
      *  The default implementation always returns an empty set and clears @p complete.
      *
@@ -227,15 +236,14 @@ public:
 
     /** Control flow successors for a basic block.
      *
-     *  The @p basicBlock argument is a vector of instructions that is assumed to be a basic block that is entered only at
-     *  the first instruction and exits only at the last instruction.  A memory map can supply initial values for the
-     *  analysis' memory state.  The return value is a set of control flow successor virtual addresses, and the @p complete
-     *  argument return value indicates whether the returned set is known to be complete (aside from interrupts, faults,
-     *  etc).
+     *  The @p basicBlock argument is a vector of instructions that is assumed to be a basic block that is entered only at the first
+     *  instruction and exits only at the last instruction.  A memory map can supply initial values for the analysis' memory state.
+     *  The return value is a set of control flow successor virtual addresses, and the @p complete argument return value indicates
+     *  whether the returned set is known to be complete (aside from interrupts, faults, etc).
      *
-     *  The default implementation calls the single-instruction version, so architecture-specific subclasses
-     *  might want to override this to do something more sophisticated. However, if the basic block is empty then this function
-     *  instead returns an empty set and sets @p complete to true.
+     *  The default implementation calls the single-instruction version, so architecture-specific subclasses might want to override
+     *  this to do something more sophisticated. However, if the basic block is empty then this function instead returns an empty
+     *  set and sets @p complete to true.
      *
      *  Thread safety: Thread safe. */
     virtual AddressSet getSuccessors(const std::vector<SgAsmInstruction*> &basicBlock, bool &complete,

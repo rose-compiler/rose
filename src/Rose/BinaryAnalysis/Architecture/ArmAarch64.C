@@ -1000,6 +1000,13 @@ ArmAarch64::instructionDescription(const SgAsmInstruction *insn_) const {
     ASSERT_not_reachable("invalid AArch64 A64 instruction kind: " + StringUtility::numberToString(insn->get_kind()));
 }
 
+bool
+ArmAarch64::isUnknown(const SgAsmInstruction *insn_) const {
+    auto insn = isSgAsmAarch64Instruction(insn_);
+    ASSERT_not_null(insn);
+    return Aarch64InstructionKind::ARM64_INS_INVALID == insn->get_kind();
+}
+
 // Returns true if the instruction modifies the instruction pointer.  Most instructions modify the instruction pointer to
 // advancing it to the fall-through address (the instruction at the following memory address), in which this function returns
 // false. This function returns true if @c this instruction can cause the instruction pointer to point somewhere other than the

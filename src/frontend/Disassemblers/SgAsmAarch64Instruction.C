@@ -13,11 +13,4 @@ SgAsmAarch64Instruction::get_anyKind() const {
     return p_kind;
 }
 
-// Determines whether this is the special ARM "unkown" instruction. See base class for documentation.
-bool
-SgAsmAarch64Instruction::isUnknown() const {
-    return Aarch64InstructionKind::ARM64_INS_INVALID == get_kind();
-}
-
-
 #endif

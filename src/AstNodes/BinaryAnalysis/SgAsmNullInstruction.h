@@ -4,6 +4,5 @@ public:
     enum Kind { null_unknown };
 
 public: // overrides
-    virtual bool isUnknown() const override;
     virtual unsigned get_anyKind() const override;
 };

@@ -383,6 +383,13 @@ Cil::instructionDescription(const SgAsmInstruction *insn_) const {
 }
 
 bool
+Cil::isUnknown(const SgAsmInstruction *insn_) const {
+    auto insn = isSgAsmCilInstruction(insn_);
+    ASSERT_not_null(insn);
+    return Cil_unknown_instruction == insn->get_kind();
+}
+
+bool
 Cil::terminatesBasicBlock(SgAsmInstruction *insn_) const {
     auto insn = isSgAsmCilInstruction(insn_);
     ASSERT_not_null(insn);

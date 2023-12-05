@@ -743,6 +743,13 @@ ArmAarch32::instructionDescription(const SgAsmInstruction *insn_) const {
 }
 
 bool
+ArmAarch32::isUnknown(const SgAsmInstruction *insn_) const {
+    auto insn = isSgAsmAarch32Instruction(insn_);
+    ASSERT_not_null(insn);
+    return Aarch32InstructionKind::ARM_INS_INVALID == insn->get_kind();
+}
+
+bool
 ArmAarch32::terminatesBasicBlock(SgAsmInstruction *insn_) const {
     auto insn = isSgAsmAarch32Instruction(insn_);
     ASSERT_not_null(insn);

@@ -402,7 +402,7 @@ isInvalidTarget(rose_addr_t target, const AddressInterval &targetLimits, const P
         return "target is not in executable memory";
     } else {
         SgAsmInstruction *targetInsn = partitioner->instructionProvider()[target];
-        if (!targetInsn || targetInsn->isUnknown()) {
+        if (!targetInsn || partitioner->architecture()->isUnknown(targetInsn)) {
             return "target does not point to a valid instruction";
         } else {
             std::vector<SgAsmInstruction*> overlappingInsns = partitioner->instructionsOverlapping(target);

@@ -10,6 +10,5 @@ class SgAsmCilInstruction: public SgAsmInstruction {
 
 public:
     // Overrides are documented in the base classa
-    virtual bool isUnknown() const override;
     virtual unsigned get_anyKind() const override;
 };

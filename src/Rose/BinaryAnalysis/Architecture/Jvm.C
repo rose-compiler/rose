@@ -258,6 +258,13 @@ Jvm::instructionDescription(const SgAsmInstruction *insn_) const {
 }
 
 bool
+Jvm::isUnknown(const SgAsmInstruction *insn_) const {
+    auto insn = isSgAsmJvmInstruction(insn_);
+    ASSERT_not_null(insn);
+    return JvmInstructionKind::unknown == insn->get_kind();
+}
+
+bool
 Jvm::terminatesBasicBlock(SgAsmInstruction *insn_) const {
     auto insn = isSgAsmJvmInstruction(insn_);
     ASSERT_not_null(insn);

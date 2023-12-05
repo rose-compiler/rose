@@ -493,6 +493,13 @@ Powerpc::instructionDescription(const SgAsmInstruction *insn_) const {
 }
 
 bool
+Powerpc::isUnknown(const SgAsmInstruction *insn_) const {
+    auto insn = isSgAsmPowerpcInstruction(insn_);
+    ASSERT_not_null(insn);
+    return powerpc_unknown_instruction == insn->get_kind();
+}
+
+bool
 Powerpc::terminatesBasicBlock(SgAsmInstruction *insn_) const {
     auto insn = isSgAsmPowerpcInstruction(insn_);
     ASSERT_not_null(insn);

@@ -62,10 +62,4 @@ SgAsmX86Instruction::registersForWidth(size_t nbits) {
     return registersForInstructionSize(instructionSizeForWidth(nbits));
 }
 
-bool
-SgAsmX86Instruction::isUnknown() const
-{
-    return x86_unknown_instruction == get_kind();
-}
-
 #endif

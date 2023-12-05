@@ -11,11 +11,4 @@ SgAsmMipsInstruction::get_anyKind() const {
     return p_kind;
 }
 
-// see base class
-bool
-SgAsmMipsInstruction::isUnknown() const
-{
-    return mips_unknown_instruction == get_kind();
-}
-
 #endif

@@ -205,11 +205,9 @@ SgAsmInstruction::get_size() const
     return get_rawBytes().size();
 }
 
-bool
-SgAsmInstruction::isUnknown() const
-{
-    abort(); // too bad ROSETTA doesn't allow virtual base classes
-    return false;
+// [Robb Matzke 2023-12-05]: deprecated
+bool SgAsmInstruction::isUnknown() const {
+    return architecture()->isUnknown(this);
 }
 
 std::string

@@ -13,9 +13,4 @@ SgAsmAarch32Instruction::get_anyKind() const {
     return p_kind;
 }
 
-bool
-SgAsmAarch32Instruction::isUnknown() const {
-    return Aarch32InstructionKind::ARM_INS_INVALID == get_kind();
-}
-
 #endif

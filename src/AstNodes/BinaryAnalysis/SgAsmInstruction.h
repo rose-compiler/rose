@@ -352,12 +352,8 @@ public:
      *  modified instruction if it were to be reassembled. */
     virtual size_t get_size() const;
 
-    /** Returns true if this instruction is the special "unknown" instruction.
-     *
-     *  Each instruction architecture in ROSE defines an "unknown" instruction to be used when the disassembler is unable
-     *  to create a real instruction.  This can happen, for instance, if the bit pattern does not represent a valid
-     *  instruction for the architecture. */
-    virtual bool isUnknown() const;
+    // [Robb Matzke 2023-12-05]: deprecated
+    virtual bool isUnknown() const final ROSE_DEPRECATED("use Architecture::Base::isUnknown");
 
     /** Returns instruction kind for any architecture.
      *

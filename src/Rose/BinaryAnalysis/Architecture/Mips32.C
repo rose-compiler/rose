@@ -439,6 +439,13 @@ Mips32::instructionDescription(const SgAsmInstruction *insn_) const {
 }
 
 bool
+Mips32::isUnknown(const SgAsmInstruction *insn_) const {
+    auto insn = isSgAsmMipsInstruction(insn_);
+    ASSERT_not_null(insn);
+    return mips_unknown_instruction == insn->get_kind();
+}
+
+bool
 Mips32::terminatesBasicBlock(SgAsmInstruction *insn_) const {
     auto insn = isSgAsmMipsInstruction(insn_);
     ASSERT_not_null(insn);

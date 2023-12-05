@@ -25,6 +25,5 @@ public:
     static Rose::BinaryAnalysis::RegisterDictionaryPtr registersForWidth(size_t);
 
     // Overrides are documented in the base class
-    virtual bool isUnknown() const override;
     virtual unsigned get_anyKind() const override;
 };

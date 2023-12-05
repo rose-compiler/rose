@@ -52,6 +52,13 @@ X86::~X86() {}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool
+X86::isUnknown(const SgAsmInstruction *insn_) const {
+    auto insn = isSgAsmX86Instruction(insn_);
+    ASSERT_not_null(insn);
+    return x86_unknown_instruction == insn->get_kind();
+}
+
+bool
 X86::terminatesBasicBlock(SgAsmInstruction *insn_) const {
     auto insn = isSgAsmX86Instruction(insn_);
     ASSERT_not_null(insn);

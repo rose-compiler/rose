@@ -350,12 +350,6 @@ static bool isValidCilInstruction()
     return true;
 }
 
-bool
-SgAsmCilInstruction::isUnknown() const
-{
-  return Cil_unknown_instruction == get_kind();
-}
-
 unsigned
 SgAsmCilInstruction::get_anyKind() const {
  // return (unsigned)null_unknown;

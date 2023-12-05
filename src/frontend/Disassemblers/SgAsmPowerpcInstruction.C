@@ -25,14 +25,6 @@ SgAsmPowerpcInstruction::get_anyKind() const {
     return p_kind;
 }
 
-// Determines whether this is the special PowerPC "unknown" instruction.
-bool
-SgAsmPowerpcInstruction::isUnknown() const
-{
-    return powerpc_unknown_instruction == get_kind();
-}
-
-
 std::string
 SgAsmPowerpcInstruction::conditionalBranchDescription() const {
     std::string retval;

@@ -345,6 +345,13 @@ Motorola::instructionDescription(const SgAsmInstruction *insn_) const {
 }
 
 bool
+Motorola::isUnknown(const SgAsmInstruction *insn_) const {
+    auto insn = isSgAsmM68kInstruction(insn_);
+    ASSERT_not_null(insn);
+    return m68k_unknown_instruction == insn->get_kind();
+}
+
+bool
 Motorola::terminatesBasicBlock(SgAsmInstruction *insn_) const {
     auto insn = isSgAsmM68kInstruction(insn_);
     ASSERT_not_null(insn);
