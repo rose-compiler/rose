@@ -56,6 +56,9 @@ private:
     }
     
 public:
+    /** Initialize to an empty value. */
+    Cached() {}
+
     /** Cached state.
      *
      *  Returns true when a value is cached, or false when nothing is cached. */
@@ -81,6 +84,26 @@ public:
     }
     Value& get() {
         return value_.get();
+    }
+    const Value& operator*() const {
+        return value_.get();
+    }
+    Value& operator*() {
+        return value_.get();
+    }
+    /** @} */
+
+    /** Return pointer to cached value.
+     *
+     *  If a value is cached then its address is returned. This should not be called unless a cached value is present (see @ref
+     *  isCached).
+     *
+     * @{ */
+    const Value* operator->() const {
+        return &value_.get();
+    }
+    Value* operator->() {
+        return &value_.get();
     }
     /** @} */
 

@@ -429,6 +429,13 @@ public:
     }
     /** @} */
 
+    /** Returns a pointer to the success value, or thows an exception.
+     *
+     *  If this result is okay, then returns a pointer to its value, otherwise throws an <code>std::runtime_error</code>. */
+    const T* operator->() const {
+        return &unwrap();
+    }
+
     /** Returns the contained @ref Ok value or a provided default. */
     const T orElse(const T &dflt) const {
         return isOk() ? unwrap() : dflt;
@@ -580,16 +587,24 @@ public:
 
     /** Conditionally save a value.
      *
-     *  If this result has a value, then assign it to the argument and return true, otherwise do nothing and return false. */
+     *  If this result has a value, then assign it to the argument. Returns the result.
+     *
+     *
+     * @{ */
     template<class U>
-    bool assignTo(U &out) const {
-        if (isOk()) {
+    const Result& assignTo(U &out) const {
+        if (isOk())
             out = unwrap();
-            return true;
-        } else {
-            return false;
-        }
+        return *this;
     }
+
+    template<class U>
+    Result& assignTo(U &out) const {
+        if (isOk())
+            out = unwrap();
+        return *this;
+    }
+    /** @} */
 };
 
 } // namespace
