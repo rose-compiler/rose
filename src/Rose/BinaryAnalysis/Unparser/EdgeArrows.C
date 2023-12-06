@@ -95,6 +95,7 @@ EdgeArrows::computeLayout(const Graph &graph, const std::vector<VertexId> &order
 
 void
 EdgeArrows::computeCfgBlockLayout(const P2::Partitioner::ConstPtr &partitioner, const P2::Function::Ptr &function) {
+    ASSERT_not_null(partitioner);
     ASSERT_not_null(function);
 
     // We use the basic block addresses as the arrow vertex names since the unparser will emit the basic blocks in order of

@@ -224,8 +224,10 @@ public:
     State(const Partitioner2::PartitionerConstPtr&, const RegisterDictionaryPtr&, const Settings&, const Base &frontUnparser);
     virtual ~State();
 
+    /** Property: Partitioner, which may be null. */
     Partitioner2::PartitionerConstPtr partitioner() const;
 
+    /** Property: Call grap, which may be empty. */
     const Partitioner2::FunctionCallGraph& cg() const;
 
     /** Property: Reachability analysis results.
@@ -470,6 +472,7 @@ public:
     void operator()(std::ostream&, const Partitioner2::PartitionerConstPtr&, const Partitioner2::BasicBlockPtr&) const /*final*/;
     void operator()(std::ostream&, const Partitioner2::PartitionerConstPtr&, const Partitioner2::DataBlockPtr&) const /*final*/;
     void operator()(std::ostream&, const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&) const /*final*/;
+    void operator()(std::ostream&, SgAsmInstruction*) const /*final*/;
     /** @} */
 
     /** Emit the entity to a string.
@@ -482,6 +485,7 @@ public:
     std::string operator()(const Partitioner2::PartitionerConstPtr&, const Partitioner2::BasicBlockPtr&) const /*final*/;
     std::string operator()(const Partitioner2::PartitionerConstPtr&, const Partitioner2::DataBlockPtr&) const /*final*/;
     std::string operator()(const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&) const /*final*/;
+    std::string operator()(SgAsmInstruction*) const /*final*/;
     /** @} */
 
 public:
@@ -495,12 +499,14 @@ public:
     void unparse(std::ostream&, const Partitioner2::PartitionerConstPtr&, const Partitioner2::BasicBlockPtr&) const /*final*/;
     void unparse(std::ostream&, const Partitioner2::PartitionerConstPtr&, const Partitioner2::DataBlockPtr&) const /*final*/;
     void unparse(std::ostream&, const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&) const /*final*/;
+    void unparse(std::ostream&, SgAsmInstruction*) const /*final*/;
 
     std::string unparse(const Partitioner2::PartitionerConstPtr&, const Progress::Ptr& = Progress::Ptr()) const /*final*/;
     std::string unparse(const Partitioner2::PartitionerConstPtr&, SgAsmInstruction*) const /*final*/;
     std::string unparse(const Partitioner2::PartitionerConstPtr&, const Partitioner2::BasicBlockPtr&) const /*final*/;
     std::string unparse(const Partitioner2::PartitionerConstPtr&, const Partitioner2::DataBlockPtr&) const /*final*/;
     std::string unparse(const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&) const /*final*/;
+    std::string unparse(SgAsmInstruction*) const /*final*/;
     /** @} */
 
 public:
@@ -578,6 +584,7 @@ public:
     virtual void emitOperandBody(std::ostream&, SgAsmExpression*, State&) const;
     virtual void emitOperandEpilogue(std::ostream&, SgAsmExpression*, State&) const;
 
+    virtual void emitExpression(std::ostream&, SgAsmExpression*, State&) const;
     virtual void emitRegister(std::ostream&, RegisterDescriptor, State&) const;
     virtual std::vector<std::string> emitUnsignedInteger(std::ostream&, const Sawyer::Container::BitVector&, State&) const;
     virtual std::vector<std::string> emitSignedInteger(std::ostream&, const Sawyer::Container::BitVector&, State&) const;

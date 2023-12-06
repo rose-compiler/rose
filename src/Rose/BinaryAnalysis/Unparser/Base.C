@@ -172,9 +172,10 @@ StyleGuard::restore() const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 State::State(const P2::Partitioner::ConstPtr &partitioner, const Settings &settings, const Base &frontUnparser)
-    : partitioner_(partitioner), registerNames_(partitioner->instructionProvider().registerDictionary()),
-      frontUnparser_(frontUnparser) {
-    if (settings.function.cg.showing)
+    : partitioner_(partitioner), frontUnparser_(frontUnparser) {
+    if (partitioner)
+        registerNames_ = partitioner->architecture()->registerDictionary();
+    if (settings.function.cg.showing && partitioner)
         cg_ = partitioner->functionCallGraph(P2::AllowParallelEdges::NO);
     intraFunctionCfgArrows_.arrows.arrowStyle(settings.arrow.style, EdgeArrows::LEFT);
     intraFunctionBlockArrows_.arrows.arrowStyle(settings.arrow.style, EdgeArrows::LEFT);
@@ -187,7 +188,7 @@ State::State(const P2::Partitioner::ConstPtr &partitioner, const Settings &setti
 State::State(const P2::Partitioner::ConstPtr &partitioner, const RegisterDictionary::Ptr &regdict, const Settings &settings,
              const Base &frontUnparser)
     : partitioner_(partitioner), registerNames_(regdict), frontUnparser_(frontUnparser) {
-    if (settings.function.cg.showing)
+    if (settings.function.cg.showing && partitioner)
         cg_ = partitioner->functionCallGraph(P2::AllowParallelEdges::NO);
     intraFunctionCfgArrows_.arrows.arrowStyle(settings.arrow.style, EdgeArrows::LEFT);
     intraFunctionBlockArrows_.arrows.arrowStyle(settings.arrow.style, EdgeArrows::LEFT);
@@ -827,6 +828,11 @@ Base::operator()(std::ostream &out, const P2::Partitioner::ConstPtr &partitioner
     unparse(out, partitioner, f);
 }
 
+void
+Base::operator()(std::ostream &out, SgAsmInstruction *insn) const {
+    unparse(out, insn);
+}
+
 std::string
 Base::operator()(const P2::Partitioner::ConstPtr &partitioner, const Progress::Ptr &progress) const {
     return unparse(partitioner, progress);
@@ -850,6 +856,11 @@ Base::operator()(const P2::Partitioner::ConstPtr &partitioner, const P2::DataBlo
 std::string
 Base::operator()(const P2::Partitioner::ConstPtr &partitioner, const P2::Function::Ptr &f) const {
     return unparse(partitioner, f);
+}
+
+std::string
+Base::operator()(SgAsmInstruction *insn) const {
+    return unparse(insn);
 }
 
 std::string
@@ -887,8 +898,16 @@ Base::unparse(const P2::Partitioner::ConstPtr &partitioner, const Partitioner2::
     return ss.str();
 }
 
+std::string
+Base::unparse(SgAsmInstruction *insn) const {
+    std::ostringstream ss;
+    unparse(ss, insn);
+    return ss.str();
+}
+
 void
 Base::unparse(std::ostream &out, const Partitioner2::Partitioner::ConstPtr &partitioner, const Progress::Ptr &progress) const {
+    ASSERT_not_null(partitioner);
     Sawyer::ProgressBar<size_t> progressBar(partitioner->nFunctions(), mlog[MARCH], "unparse");
     progressBar.suffix(" functions");
     State state(partitioner, settings(), *this);
@@ -929,6 +948,12 @@ Base::unparse(std::ostream &out, const P2::Partitioner::ConstPtr &partitioner, c
     emitFunction(out, f, state);
 }
 
+void
+Base::unparse(std::ostream &out, SgAsmInstruction *insn) const {
+    State state(P2::Partitioner::Ptr(), settings(), *this);
+    initializeState(state);
+    emitInstruction(out, insn, state);
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Functions
@@ -1114,6 +1139,7 @@ Base::emitFunctionBody(std::ostream &out, const P2::Function::Ptr &function, Sta
         std::set<P2::DataBlock::Ptr> dblocks;
         std::vector<InsnsOrData> blocks;
         blocks.reserve(function->nBasicBlocks() + function->nDataBlocks());
+        ASSERT_not_null(state.partitioner());
         for (rose_addr_t bbVa: function->basicBlockAddresses()) {
             if (P2::BasicBlock::Ptr bb = state.partitioner()->basicBlockExists(bbVa)) {
                 blocks.push_back(bb);
@@ -1355,6 +1381,7 @@ Base::emitFunctionCallingConvention(std::ostream &out, const P2::Function::Ptr &
                 state.frontUnparser().emitCommentBlock(out, ss.str(), state, ";;;   ");
 
                 // Calling convention dictionary matches
+                ASSERT_not_null(state.partitioner());
                 CallingConvention::Dictionary matches = state.partitioner()->functionCallingConventionDefinitions(function);
                 std::string s = "calling convention definitions:";
                 if (!matches.empty()) {
@@ -1394,7 +1421,7 @@ void
 Base::emitFunctionMayReturn(std::ostream &out, const P2::Function::Ptr &function, State &state) const {
     if (nextUnparser()) {
         nextUnparser()->emitFunctionMayReturn(out, function, state);
-    } else {
+    } else if (state.partitioner()) {
         if (!state.partitioner()->functionOptionalMayReturn(function).orElse(true)) {
             state.frontUnparser().emitLinePrefix(out, state);
             StyleGuard style(state.styleStack(), settings().comment.line.style);
@@ -1525,7 +1552,7 @@ Base::emitBasicBlockSharing(std::ostream &out, const P2::BasicBlock::Ptr &bb, St
     ASSERT_not_null(bb);
     if (nextUnparser()) {
         nextUnparser()->emitBasicBlockSharing(out, bb, state);
-    } else {
+    } else if (state.partitioner()) {
         std::vector<P2::Function::Ptr> functions = state.partitioner()->functionsOwningBasicBlock(bb);
         std::vector<P2::Function::Ptr>::iterator current =
             std::find(functions.begin(), functions.end(), state.currentFunction());
@@ -2080,7 +2107,7 @@ Base::emitInstructionComment(std::ostream &out, SgAsmInstruction *insn, State &s
 void
 Base::emitInstructionSemantics(std::ostream &out, SgAsmInstruction *insn, State &state) const {
     ASSERT_not_null(insn);
-    if (settings().insn.semantics.showing) {
+    if (state.partitioner() && settings().insn.semantics.showing) {
         S2::BaseSemantics::RiscOperators::Ptr ops = state.partitioner()->newOperators();
         if (settings().insn.semantics.tracing)
             ops = S2::TraceSemantics::RiscOperators::instance(ops);
@@ -2127,6 +2154,7 @@ Base::emitOperandBody(std::ostream &out, SgAsmExpression *expr, State &state) co
     if (nextUnparser()) {
         nextUnparser()->emitOperandBody(out, expr, state);
     } else {
+        emitExpression(out, expr, state);
     }
 }
 
@@ -2148,13 +2176,15 @@ Base::emitAddress(std::ostream &out, rose_addr_t va, State &state, bool always) 
             out <<"basic block " <<label;
             return true;
         }
-        if (P2::Function::Ptr f = state.partitioner()->functionExists(va)) {
-            out <<f->printableName();
-            return true;
-        }
-        if (P2::BasicBlock::Ptr bb = state.partitioner()->basicBlockExists(va)) {
-            out <<bb->printableName();
-            return true;
+        if (state.partitioner()) {
+            if (P2::Function::Ptr f = state.partitioner()->functionExists(va)) {
+                out <<f->printableName();
+                return true;
+            }
+            if (P2::BasicBlock::Ptr bb = state.partitioner()->basicBlockExists(va)) {
+                out <<bb->printableName();
+                return true;
+            }
         }
         if (always) {
             out <<StringUtility::addrToString(va);
@@ -2188,7 +2218,7 @@ Base::emitInteger(std::ostream &out, const Sawyer::Container::BitVector &bv, Sta
         std::vector<std::string> comments;
         std::string label;
 
-        if (!state.partitioner()->isDefaultConstructed() &&
+        if (state.partitioner() && !state.partitioner()->isDefaultConstructed() &&
             bv.size() == state.partitioner()->instructionProvider().instructionPointerRegister().nBits() &&
             state.frontUnparser().emitAddress(out, bv, state, false)) {
             // address with a label, existing basic block, or existing function.
@@ -2297,6 +2327,250 @@ Base::emitTypeName(std::ostream &out, SgAsmType *type, State &state) const {
     }
 }
 
+// Parentheses for emitting expressions with inverted precedences
+struct Parens {
+    std::string left, right;
+    Parens() {}
+    Parens(const std::string &left, const std::string &right)
+        : left(left), right(right) {}
+};
+
+static int
+operatorPrecedence(SgAsmExpression *expr) {
+    ASSERT_not_null(expr);
+    if (isSgAsmBinaryPostupdate(expr) ||
+        isSgAsmBinaryPreupdate(expr)) {
+        return 0;                                       // these look like "X then Y" or "X after Y"
+
+    } else if (isSgAsmBinaryLsr(expr) ||
+               isSgAsmBinaryLsl(expr)) {
+        return 1;                                       // shift/rotate
+
+
+    } else if (isSgAsmBinaryAdd(expr) ||
+               isSgAsmBinarySubtract(expr)) {
+        return 2;
+
+    } else if (isSgAsmBinaryConcat(expr)) {
+        return 3;
+
+    } else if (isSgAsmMemoryReferenceExpression(expr) ||
+               isSgAsmDirectRegisterExpression(expr) ||
+               isSgAsmIntegerValueExpression(expr) ||
+               isSgAsmFloatValueExpression(expr) ||
+               isSgAsmUnaryUnsignedExtend(expr) ||
+               isSgAsmUnarySignedExtend(expr) ||
+               isSgAsmUnaryTruncate(expr) ||
+               isSgAsmBinaryAsr(expr) ||
+               isSgAsmBinaryRor(expr) ||
+               isSgAsmBinaryMsl(expr) ||
+               isSgAsmAarch32Coprocessor(expr) ||
+               isSgAsmByteOrder(expr) ||
+               isSgAsmRegisterNames(expr)) {
+        return 4;
+
+    } else {
+        ASSERT_not_reachable("invalid operator for disassembly");
+    }
+}
+
+static Parens
+parensForPrecedence(int rootPrec, SgAsmExpression *subexpr) {
+    ASSERT_not_null(subexpr);
+    int subPrec = operatorPrecedence(subexpr);
+    if (subPrec < rootPrec) {
+        return Parens("(", ")");
+    } else {
+        return Parens();
+    }
+}
+
+void
+Base::emitExpression(std::ostream &out, SgAsmExpression *expr, State &state) const {
+    ASSERT_not_null(expr);
+    std::vector<std::string> comments;
+
+    if (SgAsmBinaryAdd *op = isSgAsmBinaryAdd(expr)) {
+        // Print the "+" and RHS only if RHS is non-zero
+        SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(op->get_rhs());
+        if (!ival || !ival->get_bitVector().isAllClear()) {
+            int prec = operatorPrecedence(expr);
+            Parens parens = parensForPrecedence(prec, op->get_lhs());
+            out <<parens.left;
+            emitExpression(out, op->get_lhs(), state);
+            out <<parens.right;
+
+            out <<" + ";
+
+            parens = parensForPrecedence(prec, op->get_rhs());
+            out <<parens.left;
+            emitExpression(out, op->get_rhs(), state);
+            out <<parens.right;
+        } else {
+            emitExpression(out, op->get_lhs(), state);
+        }
+
+    } else if (SgAsmBinarySubtract *op = isSgAsmBinarySubtract(expr)) {
+        // Print the "-" and RHS only if RHS is non-zero
+        SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(op->get_rhs());
+        if (!ival || !ival->get_bitVector().isAllClear()) {
+            int prec = operatorPrecedence(expr);
+            Parens parens = parensForPrecedence(prec, op->get_lhs());
+            out <<parens.left;
+            emitExpression(out, op->get_lhs(), state);
+            out <<parens.right;
+
+            out <<" - ";
+
+            parens = parensForPrecedence(prec, op->get_rhs());
+            out <<parens.left;
+            emitExpression(out, op->get_rhs(), state);
+            out <<parens.right;
+        } else {
+            emitExpression(out, op->get_lhs(), state);
+        }
+
+    } else if (SgAsmBinaryPreupdate *op = isSgAsmBinaryPreupdate(expr)) {
+        emitExpression(out, op->get_lhs(), state);
+        out <<" (after ";
+        emitExpression(out, op->get_lhs(), state);
+        out <<" = ";
+        emitExpression(out, op->get_rhs(), state);
+        out <<")";
+
+    } else if (SgAsmBinaryPostupdate *op = isSgAsmBinaryPostupdate(expr)) {
+        emitExpression(out, op->get_lhs(), state);
+        out <<" (then ";
+        emitExpression(out, op->get_lhs(), state);
+        out <<" = ";
+        emitExpression(out, op->get_rhs(), state);
+        out <<")";
+
+    } else if (SgAsmMemoryReferenceExpression *op = isSgAsmMemoryReferenceExpression(expr)) {
+        state.frontUnparser().emitTypeName(out, op->get_type(), state);
+        out <<" [";
+        emitExpression(out, op->get_address(), state);
+        out <<"]";
+
+    } else if (SgAsmDirectRegisterExpression *op = isSgAsmDirectRegisterExpression(expr)) {
+        emitRegister(out, op->get_descriptor(), state);
+
+    } else if (SgAsmIntegerValueExpression *op = isSgAsmIntegerValueExpression(expr)) {
+        comments = state.frontUnparser().emitSignedInteger(out, op->get_bitVector(), state);
+
+    } else if (SgAsmFloatValueExpression *op = isSgAsmFloatValueExpression(expr)) {
+        out <<op->get_nativeValue();
+
+    } else if (SgAsmUnaryUnsignedExtend *op = isSgAsmUnaryUnsignedExtend(expr)) {
+        out <<"uext(";
+        emitExpression(out, op->get_operand(), state);
+        out <<", " <<op->get_nBits() <<")";
+
+    } else if (SgAsmUnarySignedExtend *op = isSgAsmUnarySignedExtend(expr)) {
+        out <<"sext(";
+        emitExpression(out, op->get_operand(), state);
+        out <<", " <<op->get_nBits() <<")";
+
+    } else if (SgAsmUnaryTruncate *op = isSgAsmUnaryTruncate(expr)) {
+        out <<"trunc(";
+        emitExpression(out, op->get_operand(), state);
+        out <<", " <<op->get_nBits() <<")";
+
+    } else if (SgAsmBinaryAsr *op = isSgAsmBinaryAsr(expr)) {
+        out <<"asr(";
+        emitExpression(out, op->get_lhs(), state);
+        out <<", ";
+        emitExpression(out, op->get_rhs(), state);
+        out <<")";
+
+    } else if (SgAsmBinaryRor *op = isSgAsmBinaryRor(expr)) {
+        out <<"ror(";
+        emitExpression(out, op->get_lhs(), state);
+        out <<", ";
+        emitExpression(out, op->get_rhs(), state);
+        out <<")";
+
+    } else if (SgAsmBinaryLsr *op = isSgAsmBinaryLsr(expr)) {
+        int prec = operatorPrecedence(expr);
+        Parens parens = parensForPrecedence(prec, op->get_lhs());
+        out <<parens.left;
+        emitExpression(out, op->get_lhs(), state);
+        out <<parens.right;
+
+        out <<" >> ";
+
+        parens = parensForPrecedence(prec, op->get_rhs());
+        out <<parens.left;
+        emitExpression(out, op->get_rhs(), state);
+        out <<parens.right;
+
+    } else if (SgAsmBinaryLsl *op = isSgAsmBinaryLsl(expr)) {
+        int prec = operatorPrecedence(expr);
+        Parens parens = parensForPrecedence(prec, op->get_lhs());
+        out <<parens.left;
+        emitExpression(out, op->get_lhs(), state);
+        out <<parens.right;
+
+        out <<" << ";
+
+        parens = parensForPrecedence(prec, op->get_rhs());
+        out <<parens.left;
+        emitExpression(out, op->get_rhs(), state);
+        out <<parens.right;
+
+    } else if (SgAsmBinaryMsl *op = isSgAsmBinaryMsl(expr)) {
+        out <<"msl(";
+        emitExpression(out, op->get_lhs(), state);
+        out <<", ";
+        emitExpression(out, op->get_rhs(), state);
+        out <<")";
+
+    } else if (SgAsmAarch32Coprocessor *op = isSgAsmAarch32Coprocessor(expr)) {
+        out <<"p" <<op->coprocessor();
+
+    } else if (SgAsmByteOrder *op = isSgAsmByteOrder(expr)) {
+        switch (op->byteOrder()) {
+            case ByteOrder::ORDER_MSB:
+                out <<"be";
+                break;
+            case ByteOrder::ORDER_LSB:
+                out <<"le";
+                break;
+            default:
+                ASSERT_not_reachable("invalid byte order " + boost::lexical_cast<std::string>(op->byteOrder()));
+        }
+
+    } else if (SgAsmRegisterNames *op = isSgAsmRegisterNames(expr)) {
+        for (size_t i = 0; i < op->get_registers().size(); ++i) {
+            out <<(0 == i ? "{" : ", ");
+            emitExpression(out, op->get_registers()[i], state);
+        }
+        out <<"}";
+
+    } else if (SgAsmBinaryConcat *op = isSgAsmBinaryConcat(expr)) {
+        int prec = operatorPrecedence(expr);
+        Parens parens = parensForPrecedence(prec, op->get_lhs());
+        out <<parens.left;
+        emitExpression(out, op->get_lhs(), state);
+        out <<parens.right;
+
+        out <<":";
+        parens = parensForPrecedence(prec, op->get_rhs());
+        out <<parens.left;
+        emitExpression(out, op->get_rhs(), state);
+        out <<parens.right;
+
+    } else {
+        ASSERT_not_implemented(expr->class_name());
+    }
+
+    if (!expr->get_comment().empty())
+        comments.push_back(expr->get_comment());
+    if (!comments.empty())
+        out <<"<" + boost::join(comments, ",") <<">";
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Line control
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2384,12 +2658,15 @@ Base::ascendingTargetAddress(P2::ControlFlowGraph::ConstEdgeIterator a, P2::Cont
 std::vector<P2::ControlFlowGraph::ConstEdgeIterator>
 Base::orderedBlockPredecessors(const P2::Partitioner::ConstPtr &partitioner, const P2::BasicBlock::Ptr &bb) {
     ASSERT_not_null(bb);
-    P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner->findPlaceholder(bb->address());
     std::vector<P2::ControlFlowGraph::ConstEdgeIterator> retval;
-    retval.reserve(vertex->nInEdges());
-    for (P2::ControlFlowGraph::ConstEdgeIterator edge = vertex->inEdges().begin(); edge != vertex->inEdges().end(); ++edge)
-        retval.push_back(edge);
-    std::sort(retval.begin(), retval.end(), ascendingSourceAddress);
+
+    if (partitioner) {
+        P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner->findPlaceholder(bb->address());
+        retval.reserve(vertex->nInEdges());
+        for (P2::ControlFlowGraph::ConstEdgeIterator edge = vertex->inEdges().begin(); edge != vertex->inEdges().end(); ++edge)
+            retval.push_back(edge);
+        std::sort(retval.begin(), retval.end(), ascendingSourceAddress);
+    }
     return retval;
 }
 
@@ -2397,12 +2674,15 @@ Base::orderedBlockPredecessors(const P2::Partitioner::ConstPtr &partitioner, con
 std::vector<P2::ControlFlowGraph::ConstEdgeIterator>
 Base::orderedBlockSuccessors(const P2::Partitioner::ConstPtr &partitioner, const P2::BasicBlock::Ptr &bb) {
     ASSERT_not_null(bb);
-    P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner->findPlaceholder(bb->address());
     std::vector<P2::ControlFlowGraph::ConstEdgeIterator> retval;
-    retval.reserve(vertex->nOutEdges());
-    for (P2::ControlFlowGraph::ConstEdgeIterator edge = vertex->outEdges().begin(); edge != vertex->outEdges().end(); ++edge)
-        retval.push_back(edge);
-    std::sort(retval.begin(), retval.end(), ascendingTargetAddress);
+
+    if (partitioner) {
+        P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner->findPlaceholder(bb->address());
+        retval.reserve(vertex->nOutEdges());
+        for (P2::ControlFlowGraph::ConstEdgeIterator edge = vertex->outEdges().begin(); edge != vertex->outEdges().end(); ++edge)
+            retval.push_back(edge);
+        std::sort(retval.begin(), retval.end(), ascendingTargetAddress);
+    }
     return retval;
 }
 

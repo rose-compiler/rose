@@ -7,6 +7,7 @@
 #include <Rose/BinaryAnalysis/Architecture/Base.h>
 #include <Rose/BinaryAnalysis/ControlFlow.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/Unparser/Aarch32.h>
 #include <Rose/BinaryAnalysis/Unparser/Aarch64.h>
@@ -29,6 +30,9 @@ std::string unparseInstruction(SgAsmInstruction *insn, const Rose::BinaryAnalysi
 /* FIXME: this should be a SgAsmInstruction class method. */
 std::string unparseInstruction(SgAsmInstruction* insn, const AsmUnparser::LabelMap *labels,
                                const RegisterDictionary::Ptr &registers) {
+    if (isSgAsmUserInstruction(insn))
+        return insn->toString();
+
     /* Mnemonic */
     if (!insn) return "BOGUS:NULL";
     std::string result = unparseMnemonic(insn);
@@ -81,7 +85,7 @@ std::string unparseMnemonic(SgAsmInstruction *insn) {
         case V_SgAsmJvmInstruction:
             return unparseJvmMnemonic(isSgAsmJvmInstruction(insn));
         default:
-            ASSERT_not_reachable("unhandled variant: " + insn->class_name());
+            return insn->get_mnemonic();
     }
 #ifdef _MSC_VER
     return "error in unparseMnemonic"; /*MSC doesn't know that abort() doesn't return*/
@@ -160,7 +164,14 @@ unparseAsmStatement(SgAsmStatement* stmt)
             u.unparse(s, isSgAsmFunction(stmt));
             return s.str();
         default:
-            ASSERT_not_reachable("unhandled variant: " + stmt->class_name());
+            if (auto insn = isSgAsmInstruction(stmt)) {
+                // Use the real unparser, although this is somewhat slow for this use case since we'll create and configure a new
+                // unparser for each instruction.
+                auto unparser = insn->architecture()->newUnparser();
+                return unparser->unparse(Partitioner2::PartitionerConstPtr(), insn);
+            } else {
+                ASSERT_not_reachable("unhandled variant: " + stmt->class_name());
+            }
     }
 #ifdef _MSC_VER
     return "ERROR in unparseAsmStatement()"; /*MSC doesn't know that abort() doesn't return*/

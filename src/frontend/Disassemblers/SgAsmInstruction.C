@@ -7,6 +7,7 @@
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.h>
 #include <Rose/BinaryAnalysis/NoOperation.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/Diagnostics.h>
 
 #include "AsmUnparser_compat.h"
@@ -213,6 +214,11 @@ bool SgAsmInstruction::isUnknown() const {
 std::string
 SgAsmInstruction::toString() const {
     SgAsmInstruction *insn = const_cast<SgAsmInstruction*>(this); // old API doesn't use 'const'
+#if 1 // [Robb Matzke 2023-12-05]: not very efficient
+    if (isSgAsmUserInstruction(insn))
+        return insn->architecture()->newUnparser()->unparse(Partitioner2::PartitionerConstPtr(), insn);
+#endif
+
     std::string retval = StringUtility::addrToString(get_address()) + ": " + unparseMnemonic(insn);
     if (SgAsmOperandList *opList = insn->get_operandList()) {
         const SgAsmExpressionPtrList &operands = opList->get_operands();
