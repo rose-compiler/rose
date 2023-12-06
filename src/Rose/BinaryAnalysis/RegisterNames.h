@@ -24,7 +24,8 @@ public:
      *
      * @{ */
     RegisterNames();
-    explicit RegisterNames(const RegisterDictionaryPtr &dict);
+    explicit RegisterNames(const RegisterDictionaryPtr&);
+    RegisterNames& operator=(const RegisterDictionaryPtr&);
     /** @} */
 
     /** Obtain a name for a register descriptor.

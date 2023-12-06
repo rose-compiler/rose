@@ -13,6 +13,12 @@ RegisterNames::RegisterNames() {}
 RegisterNames::RegisterNames(const RegisterDictionary::Ptr &regdict)
     : dictionary(regdict) {}
 
+RegisterNames&
+RegisterNames::operator=(const RegisterDictionary::Ptr &regdict) {
+    dictionary = regdict;
+    return *this;
+}
+
 std::string
 RegisterNames::operator()(RegisterDescriptor reg) const {
     return (*this)(reg, dictionary);
