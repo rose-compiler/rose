@@ -31,6 +31,7 @@ private:
 protected:
     Sawyer::Cached<RegisterDictionaryPtr> registerDictionary_;
     Sawyer::Cached<CallingConvention::Dictionary> callingConventions_;
+    Sawyer::Cached<Unparser::Base::Ptr> insnToString_, insnToStringNoAddr_;
 
 protected:
     Base(const std::string &name, size_t bytesPerWord, ByteOrder::Endianness byteOrder);
@@ -148,6 +149,18 @@ public:
     // Instruction characteristics
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Unparse an instruction to a string.
+     *
+     *  The returned string is a simple, one-line string with no leading or trailing white space and no line termination. If the
+     *  instruction is null, then the word "null" is printed.
+     *
+     *  Thread safety: Thread safe.
+     *
+     * @{ */
+    virtual std::string toString(const SgAsmInstruction*) const;
+    virtual std::string toStringNoAddr(const SgAsmInstruction*) const;
+    /** @} */
+
     /** Description for an instruction.
      *
      *  Returns the description for a particular instruction. The description must be a single line with no leading or trailing

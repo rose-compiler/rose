@@ -213,12 +213,11 @@ bool SgAsmInstruction::isUnknown() const {
 
 std::string
 SgAsmInstruction::toString() const {
-    SgAsmInstruction *insn = const_cast<SgAsmInstruction*>(this); // old API doesn't use 'const'
-#if 1 // [Robb Matzke 2023-12-05]: not very efficient
-    if (isSgAsmUserInstruction(insn))
-        return insn->architecture()->newUnparser()->unparse(Partitioner2::PartitionerConstPtr(), insn);
-#endif
+    if (isSgAsmUserInstruction(this))
+        return architecture()->toString(this);
 
+    // Old backward-compatible stuff that we'd like to eventually remove
+    SgAsmInstruction *insn = const_cast<SgAsmInstruction*>(this); // old API doesn't use 'const'
     std::string retval = StringUtility::addrToString(get_address()) + ": " + unparseMnemonic(insn);
     if (SgAsmOperandList *opList = insn->get_operandList()) {
         const SgAsmExpressionPtrList &operands = opList->get_operands();
