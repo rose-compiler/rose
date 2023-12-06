@@ -152,14 +152,9 @@ main(int argc, char *argv[]) {
     auto parser = buildSwitchParser(settings);
     P2::Engine::Ptr engine = P2::Engine::forge(argc, argv, parser/*in,out*/);
     std::vector<std::string> specimen = parser.parse(argc, argv).apply().unreachedArgs();
-    mlog[INFO] <<"using the " <<engine->name() <<" partitioning engine\n";
+    const std::string archName = engine->name();        // use a temp var so exceptions don't interfere with following output
+    mlog[INFO] <<"using the " <<archName <<" partitioning engine\n";
 
-    // Check some informational switches before we die for lack of specimen.
-    if (engine->settings().disassembler.isaName == "list") {
-        for (const std::string &name: Architecture::registeredNames())
-            std::cout <<name <<"\n";
-        exit(0);
-    }
     if (specimen.empty()) {
         mlog[FATAL] <<"no binary specimen specified; see --help\n";
         exit(1);

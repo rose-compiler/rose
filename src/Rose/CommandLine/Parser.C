@@ -1,6 +1,7 @@
 #include <sage3basic.h>                                 // must be first ROSE include
 #include <Rose/CommandLine/Parser.h>
 
+#include <Rose/BinaryAnalysis/Architecture/BasicTypes.h>
 #include <Rose/CommandLine/SelfTest.h>
 #include <Rose/CommandLine/License.h>
 #include <Rose/CommandLine/Version.h>
@@ -83,6 +84,25 @@ createEmptyParserStage(const std::string &purpose, const std::string &descriptio
 // Global place to store result of parsing genericSwitches.
 GenericSwitchArgs genericSwitchArgs;
 
+// Helper for --architectures switch
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+class ArchitectureLoader: public Sawyer::CommandLine::SwitchAction {
+public:
+    using Ptr = Sawyer::SharedPointer<ArchitectureLoader>;
+
+    static Ptr instance() {
+        return Ptr(new ArchitectureLoader);
+    }
+
+protected:
+    void operator()(const Sawyer::CommandLine::ParserResult &cmdline) {
+        ASSERT_always_require(cmdline.have("architectures"));
+        BinaryAnalysis::Architecture::registerDefinitions(genericSwitchArgs.architectureLibraries.begin(),
+                                                          genericSwitchArgs.architectureLibraries.end());
+    }
+};
+#endif
+
 // Returns command-line description for switches that should be always available.
 // Don't add anything to this that might not be applicable to some tool -- this is for all tools, both source and binary.
 // See header file for more documentation including examples.
@@ -156,6 +176,37 @@ genericSwitches() {
                .argument("name", anyParser(genericSwitchArgs.smtSolver))
                .action(BinaryAnalysis::SmtSolverValidator::instance())
                .doc(BinaryAnalysis::smtSolverDocumentationString(genericSwitchArgs.smtSolver)));
+#endif
+
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+    gen.insert(Switch("architectures")
+               .argument("names", listParser(anyParser(genericSwitchArgs.architectureLibraries), ":"))
+               .explosiveLists(true)
+               .whichValue(SAVE_ALL)
+               .action(ArchitectureLoader::instance())
+               .doc("List of shared libraries that define instruction set architectures for binary analysis. The argument should "
+                    "be a list of one or more names separated by colons, and if this switch appears multiple times then the full "
+                    "list is the concatenation of the individual lists. Each item in the list is:"
+
+                    "@bullet{A name of an existing directory, in which case that item is expanded to a list of file names "
+                    "to be processed as described below, except that no errors are reported for files that cannot be loaded. "
+                    "Directories are not searched recursively.}"
+
+                    "@bullet{A file name containing at least one slash (\"/\") character. These names are passed to "
+                    "@man{dlopen}{3} directly, which will search for them as named (absolute, or relative to the current "
+                    "working directory). If the file cannot be loaded, then an error is reported unless the file name was "
+                    "expanded from a directory as mentioned above.}"
+
+                    "@bullet{A library name containing no slashes. The names are first passed to @man{dlopen}{3}, which may search "
+                    "various directories to find the library. If the library cannot be found with the specified name, then three "
+                    "additional variations are tried by appending \".so\", prepending \"lib\", and doing both. If none of the "
+                    "four forms of the name can be loaded, then an error is reported.}"
+
+                    "Once a library is found and loaded, its @c{registerArchitectures} function is called, if any. This "
+                    "function should have C linkage, not take any arguments, and not return any value. It should register "
+                    "architecture definitions with the ROSE library by calling "
+                    "@c{Rose::BinaryAnalysis::Architecture::registerDifinition}. Absence of this function or failure to register "
+                    "any definitions is not an error, but may cause a warning message."));
 #endif
 
     gen.insert(Switch("self-test")

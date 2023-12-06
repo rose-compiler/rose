@@ -24,13 +24,19 @@
 #include <Rose/BinaryAnalysis/Architecture/NxpColdfire.h>
 #include <Rose/BinaryAnalysis/Architecture/Powerpc32.h>
 #include <Rose/BinaryAnalysis/Architecture/Powerpc64.h>
+#include <Rose/CommandLine/Parser.h>
 #include <Rose/Diagnostics.h>
 #include <Rose/StringUtility/Diagnostics.h>
 #include <Rose/StringUtility/Escape.h>
 
 #include <Sawyer/Synchronization.h>
+#include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
 #include <set>
+
+#ifdef __linux__
+#include <dlfcn.h>
+#endif
 
 using namespace Sawyer::Message::Common;
 
@@ -115,6 +121,103 @@ registerDefinition(const Base::Ptr &arch) {
 
     SAWYER_THREAD_TRAITS::LockGuard lock(registryMutex);
     registry.push_back(arch);
+}
+
+static std::string
+nameVariation(const std::string &name, int variation) {
+    switch (variation) {
+        case 0:
+            return name;
+        case 1:
+            return name + ".so";
+        case 2:
+            return "lib" + name;
+        case 3:                                     // libfoo.so
+            return "lib" + name + ".so";
+        default:
+            ASSERT_not_reachable("invalid variation");
+    }
+}
+
+// Returns architecture names, error message, and/or warning message
+static std::tuple<std::vector<std::string>, std::string, std::string>
+loadSharedLibrary(const std::string &name) {
+    const bool isFileName = name.find('/') != std::string::npos;
+    std::vector<std::string> newArchNames;
+
+    // Load the library or return an error
+    std::string loadedName;
+    void *so = nullptr;
+    if (isFileName) {
+        so = dlopen(name.c_str(), RTLD_LAZY);
+        if (!so)
+            return {newArchNames, dlerror(), ""};
+        loadedName = name;
+    } else {
+        std::string firstError;
+        for (int i = 0; i < 4 && !so; ++i) {
+            loadedName = nameVariation(name, i);
+            so = dlopen(loadedName.c_str(), RTLD_LAZY);
+            if (!so && 0 == i)
+                firstError = dlerror();
+        }
+        if (!so)
+            return {newArchNames, firstError, ""};
+    }
+
+    // Call the library's main architecture registration function
+    const std::set<std::string> oldArchNames = registeredNames();
+    ASSERT_not_null(so);
+    if (auto func = reinterpret_cast<void(*)()>(dlsym(so, "registerArchitectures"))) {
+        func();
+    } else {
+        dlclose(so);
+        return {
+            newArchNames,
+            "",
+            "no \"registerArchitecture\" function in \"" + StringUtility::cEscape(loadedName) + "\""
+        };
+    }
+
+    // Show what architectures were registered
+    const std::set<std::string> allArchNames = registeredNames();
+    std::set_difference(allArchNames.begin(), allArchNames.end(), oldArchNames.begin(), oldArchNames.end(),
+                        std::inserter(newArchNames, newArchNames.begin()));
+    if (newArchNames.empty()) {
+        return {
+            newArchNames,
+            "",
+            "library \"" + StringUtility::cEscape(loadedName) + "\" did not define any new architectures\n"
+        };
+    } else {
+        return {newArchNames, "", ""};
+    }
+}
+
+void
+registerDefinition(const std::string &name) {
+#ifdef __linux__
+    namespace bfs = boost::filesystem;
+    if (bfs::is_directory(name)) {
+        for (bfs::directory_iterator dentry(name), end; dentry != end; ++dentry) {
+            if (dentry->path().extension() == ".so")
+                loadSharedLibrary(dentry->path().string()); // do not emit errors or warnings from directory expansion
+        }
+    } else {
+        auto result = loadSharedLibrary(name);
+        if (!std::get<1>(result).empty()) {
+            mlog[ERROR] <<std::get<1>(result) <<"\n";
+        } else if (!std::get<2>(result).empty()) {
+            mlog[WARN] <<std::get<2>(result) <<"\n";
+        } else if (!std::get<0>(result).empty()) {
+            mlog[INFO] <<"architectures loaded from \"" <<StringUtility::cEscape(name) <<"\"\n";
+            for (const std::string &archName: std::get<0>(result))
+                mlog[INFO] <<"  " <<archName <<"\n";
+        }
+    }
+#else
+    mlog[ERROR] <<"loading architecture definitions from shared objects is not supported on this platform\n";
+#endif
 }
 
 bool

@@ -308,6 +308,25 @@ EngineBinary::loaderSwitches(LoaderSettings &settings) {
     return sg;
 }
 
+// Helper for the --isa switch
+class IsaLister: public Sawyer::CommandLine::SwitchAction {
+public:
+    using Ptr = Sawyer::SharedPointer<IsaLister>;
+
+    static Ptr instance() {
+        return Ptr(new IsaLister);
+    }
+
+protected:
+    void operator()(const Sawyer::CommandLine::ParserResult &cmdline) {
+        if (cmdline.have("isa") && cmdline.parsed("isa", 0).string() == "list") {
+            for (const std::string &name: Architecture::registeredNames())
+                std::cout <<name <<"\n";
+            exit(0);
+        }
+    }
+};
+
 // class method
 Sawyer::CommandLine::SwitchGroup
 EngineBinary::disassemblerSwitches(DisassemblerSettings &settings) {
@@ -327,9 +346,12 @@ EngineBinary::disassemblerSwitches(DisassemblerSettings &settings) {
 
     sg.insert(Switch("isa")
               .argument("architecture", anyParser(settings.isaName))
+              .action(IsaLister::instance())
               .doc("Name of instruction set architecture.  If no name is specified then the architecture is obtained from "
-                   "the binary container (ELF, PE). The following ISA names are supported: " +
-                   StringUtility::joinEnglish(Architecture::registeredNames()) + "."));
+                   "the binary container (ELF, PE). For a list of supported architectuers, say \"@s{isa}=list\"."));
+
+    // Not called here because we don't want to do this until after the architecture shared libraries are loaded.
+    // StringUtility::joinEnglish(Architecture::registeredNames()));
 
     return sg;
 }

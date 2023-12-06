@@ -4,9 +4,11 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/Architecture/Exception.h> // needed for Result<T,NotFound>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 
 #include <Sawyer/Message.h>
 #include <Sawyer/Result.h>
+#include <boost/filesystem.hpp>
 #include <memory>
 #include <set>
 #include <string>
@@ -115,6 +117,25 @@ void initDiagnostics();
  *
  *  Thread safety: This function is thread safe. */
 void registerDefinition(const BasePtr&);
+
+/** Register definitions from shared libraries.
+ *
+ *  If a vector of names is specified, then the files are loaded in the order specified. If a name is a directory, then all files
+ *  whose names end with ".so" are loaded. If the shared library has a function named "registerArchitectures" then it will be
+ *  called. It must have C linkage and a type of @c void(). This function is expected to register zero or more architecture
+ *  definitions.  The library must be compiled and linked in a manner consistent with the ROSE library.
+ *
+ *  Thread safety: Thread safe.
+ *
+ * @{ */
+void registerDefinition(const std::string&);
+
+template<class Iterator>
+void registerDefinitions(Iterator begin, Iterator end) {
+    for (/*void*/; begin != end; ++begin)
+        registerDefinition(*begin);
+}
+/** @} */
 
 /** Remove the specified architecture from the list of registered architectures.
  *
