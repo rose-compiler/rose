@@ -50,7 +50,13 @@ main(int argc, char *argv[]) {
     Bat::registerSelfTests();
 
     boost::filesystem::path inputFileName = parseCommandLine(argc, argv);
-    auto partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, stateFormat);
+    P2::Partitioner::Ptr partitioner;
+    try {
+        partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, stateFormat);
+    } catch (const std::exception &e) {
+        mlog[FATAL] <<"cannot load partitioner from " <<inputFileName <<": " <<e.what() <<"\n";
+        exit(1);
+    }
 
     for (SgFile *file: SageInterface::generateFileList()) {
         if (SgBinaryComposite *binComp = isSgBinaryComposite(file)) {

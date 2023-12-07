@@ -223,7 +223,13 @@ main(int argc, char *argv[]) {
     boost::filesystem::path inputFileName = parseCommandLine(argc, argv, parser, settings);
     
     // Read the state file
-    P2::PartitionerPtr partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, settings.stateFormat);
+    P2::PartitionerPtr partitioner;
+    try {
+        partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, settings.stateFormat);
+    } catch (const std::exception &e) {
+        mlog[FATAL] <<"cannot load partitioner from " <<inputFileName <<": " <<e.what() <<"\n";
+        exit(1);
+    }
 
     // Create the output state file early so that the user will get an error early if the file can't be created. The alternative
     // is to wait until after all calling convention analysis is completed, which could be a while!

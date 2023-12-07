@@ -66,7 +66,13 @@ main(int argc, char *argv[]) {
     Bat::registerSelfTests();
 
     boost::filesystem::path inputFileName = parseCommandLine(argc, argv);
-    auto partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, format);
+    P2::Partitioner::Ptr partitioner;
+    try {
+        partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, format);
+    } catch (const std::exception &e) {
+        mlog[FATAL] <<"cannot load partitioner from " <<inputFileName <<": " <<e.what() <<"\n";
+        exit(1);
+    }
 
     for (const P2::ControlFlowGraph::Vertex &vertex: partitioner->cfg().vertices()) {
         using namespace StringUtility;

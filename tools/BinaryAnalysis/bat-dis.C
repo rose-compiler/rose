@@ -176,7 +176,13 @@ main(int argc, char *argv[]) {
     if (boost::ends_with(argv[0], "-simple"))
         settings.unparser = BinaryAnalysis::Unparser::Settings::minimal();
     boost::filesystem::path inputFileName = parseCommandLine(argc, argv, settings);
-    auto partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, settings.stateFormat);
+    P2::Partitioner::Ptr partitioner;
+    try {
+        partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, settings.stateFormat);
+    } catch (const std::exception &e) {
+        mlog[FATAL] <<"cannot load partitioner from " <<inputFileName <<": " <<e.what() <<"\n";
+        exit(1);
+    }
 
     // Make sure output directories exit
     boost::filesystem::path dir = boost::filesystem::path(settings.fileNamePrefix).parent_path();

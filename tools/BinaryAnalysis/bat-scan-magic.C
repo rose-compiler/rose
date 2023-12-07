@@ -96,7 +96,13 @@ main(int argc, char *argv[]) {
 
     Settings settings;
     boost::filesystem::path rbaFile = parseCommandLine(argc, argv, settings /*in,out*/);
-    auto partitioner = P2::Partitioner::instanceFromRbaFile(rbaFile, settings.stateFormat);
+    P2::Partitioner::Ptr partitioner;
+    try {
+        partitioner = P2::Partitioner::instanceFromRbaFile(rbaFile, settings.stateFormat);
+    } catch (const std::exception &e) {
+        mlog[FATAL] <<"cannot load partitioner from " <<rbaFile <<": " <<e.what() <<"\n";
+        exit(1);
+    }
 
 
     BinaryAnalysis::MagicNumber analyzer;

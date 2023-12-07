@@ -75,7 +75,13 @@ main(int argc, char *argv[]) {
 
     Settings settings;
     boost::filesystem::path inputFileName = parseCommandLine(argc, argv, settings);
-    auto partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, format);
+    P2::Partitioner::Ptr partitioner;
+    try {
+        partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, format);
+    } catch (const std::exception &e) {
+        mlog[FATAL] <<"cannot load partitioner from " <<inputFileName <<": " <<e.what() <<"\n";
+        exit(1);
+    }
 
     P2::AddressUsers allUsers = partitioner->aum().overlapping(partitioner->aum().hull());
     for (const P2::AddressUser &user: allUsers.addressUsers()) {

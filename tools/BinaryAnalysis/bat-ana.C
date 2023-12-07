@@ -143,62 +143,67 @@ main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
     Diagnostics::initAndRegister(&mlog, "tool");
     mlog.comment("pre-analyzing binary specimens");
-    Bat::checkRoseVersionNumber(MINIMUM_ROSE_LIBRARY_VERSION, mlog[FATAL]);
-    Bat::registerSelfTests();
+    try {
+        Bat::checkRoseVersionNumber(MINIMUM_ROSE_LIBRARY_VERSION, mlog[FATAL]);
+        Bat::registerSelfTests();
 
-    // Build command line parser (without any knowledge of engine settings), choose the appropriate partitioner engine type, and
-    // parse and apply the command-line to the settings, engine, etc. using the appropriately modified command-line parser.
-    Settings settings;
-    auto parser = buildSwitchParser(settings);
-    P2::Engine::Ptr engine = P2::Engine::forge(argc, argv, parser/*in,out*/);
-    std::vector<std::string> specimen = parser.parse(argc, argv).apply().unreachedArgs();
-    const std::string archName = engine->name();        // use a temp var so exceptions don't interfere with following output
-    mlog[INFO] <<"using the " <<archName <<" partitioning engine\n";
+        // Build command line parser (without any knowledge of engine settings), choose the appropriate partitioner engine type, and
+        // parse and apply the command-line to the settings, engine, etc. using the appropriately modified command-line parser.
+        Settings settings;
+        auto parser = buildSwitchParser(settings);
+        P2::Engine::Ptr engine = P2::Engine::forge(argc, argv, parser/*in,out*/);
+        std::vector<std::string> specimen = parser.parse(argc, argv).apply().unreachedArgs();
+        mlog[INFO] <<"using the " <<engine->name() <<" partitioning engine\n";
 
-    if (specimen.empty()) {
-        mlog[FATAL] <<"no binary specimen specified; see --help\n";
-        exit(1);
-    }
-
-    Bat::checkRbaOutput(settings.outputFileName, mlog);
-
-    MemoryMap::Ptr map = engine->loadSpecimens(specimen);
-    map->dump(mlog[INFO]);
-
-    //TODO: should be skipped for JVM (throw error if jvm)
-    if (settings.doRemap) {
-        P2::Engine::Settings settings = engine->settings();
-        settings.partitioner.doingPostAnalysis = false;
-        if (settings.disassembler.isaName.empty()) {
-            Disassembler::Base::Ptr disassembler = engine->architecture()->newInstructionDecoder();
-            if (!disassembler) {
-                mlog[FATAL] <<"no disassembler found and none specified\n";
-                exit(1);
-            }
-            settings.disassembler.isaName = disassembler->name();
+        if (specimen.empty()) {
+            mlog[FATAL] <<"no binary specimen specified; see --help\n";
+            exit(1);
         }
-        MemoryMap::Ptr newMap = BestMapAddress::align(map, settings);
-        mlog[INFO] <<"Remapped addresses:\n";
-        newMap->dump(mlog[INFO]);
-        engine->memoryMap(newMap);
-    }
 
-    P2::Partitioner::Ptr partitioner;
-    if (engine->settings().disassembler.doDisassemble) {
-        mlog[INFO] <<"using the " <<engine->architecture()->name() <<" architecture\n";
-        partitioner = engine->partition(specimen);
-    } else {
-        partitioner = engine->createPartitioner();
-        engine->runPartitionerInit(partitioner);
-        engine->runPartitionerFinal(partitioner);
-    }
+        Bat::checkRbaOutput(settings.outputFileName, mlog);
 
-#if 0 // DEBUGGING [Robb Matzke 2018-10-24]
-    partitioner->showStatistics();                      // debugging
-#endif
+        MemoryMap::Ptr map = engine->loadSpecimens(specimen);
+        map->dump(mlog[INFO]);
 
-    if (!settings.skipOutput) {
-        partitioner->basicBlockDropSemantics();
-        partitioner->saveAsRbaFile(settings.outputFileName, settings.stateFormat);
+        //TODO: should be skipped for JVM (throw error if jvm)
+        if (settings.doRemap) {
+            P2::Engine::Settings settings = engine->settings();
+            settings.partitioner.doingPostAnalysis = false;
+            if (settings.disassembler.isaName.empty()) {
+                Disassembler::Base::Ptr disassembler = engine->architecture()->newInstructionDecoder();
+                if (!disassembler) {
+                    mlog[FATAL] <<"no disassembler found and none specified\n";
+                    exit(1);
+                }
+                settings.disassembler.isaName = disassembler->name();
+            }
+            MemoryMap::Ptr newMap = BestMapAddress::align(map, settings);
+            mlog[INFO] <<"Remapped addresses:\n";
+            newMap->dump(mlog[INFO]);
+            engine->memoryMap(newMap);
+        }
+
+        P2::Partitioner::Ptr partitioner;
+        if (engine->settings().disassembler.doDisassemble) {
+            const std::string archName = engine->architecture()->name(); // temp var so exceptions don't interfere with output
+            mlog[INFO] <<"using the " <<archName <<" architecture\n";
+            partitioner = engine->partition(specimen);
+        } else {
+            partitioner = engine->createPartitioner();
+            engine->runPartitionerInit(partitioner);
+            engine->runPartitionerFinal(partitioner);
+        }
+
+    #if 0 // DEBUGGING [Robb Matzke 2018-10-24]
+        partitioner->showStatistics();                      // debugging
+    #endif
+
+        if (!settings.skipOutput) {
+            partitioner->basicBlockDropSemantics();
+            partitioner->saveAsRbaFile(settings.outputFileName, settings.stateFormat);
+        }
+    } catch (const std::exception &e) {
+        mlog[FATAL] <<e.what() <<"\n";
+        exit(1);
     }
 }

@@ -121,7 +121,13 @@ hashLibrary(const MemoryMap::Ptr &map) {
 
 static void
 copyFromRba(const Settings &settings, Flir &dst, const std::string &rbaName) {
-    auto partitioner = P2::Partitioner::instanceFromRbaFile(rbaName, settings.stateFormat);
+    P2::Partitioner::Ptr partitioner;
+    try {
+        partitioner = P2::Partitioner::instanceFromRbaFile(rbaName, settings.stateFormat);
+    } catch (const std::exception &e) {
+        mlog[FATAL] <<"cannot load partitioner from \"" <<StringUtility::cEscape(rbaName) <<"\": " <<e.what() <<"\n";
+        exit(1);
+    }
 
     std::string libraryHash = settings.libraryHash;
     if (libraryHash.empty()) {

@@ -416,7 +416,7 @@ private:
             }
             objectType(objectTypeId);
 #if !defined(ROSE_DEBUG_SERIAL_IO)
-        } catch (const Exception &e) {
+        } catch (std::exception &e) {
             *errorMessage = e.what();
         } catch (...) {
             *errorMessage = "failed to write object to output stream";
@@ -585,7 +585,7 @@ private:
                     break;
             }
 #if !defined(ROSE_DEBUG_SERIAL_IO)
-        } catch (const Exception &e) {
+        } catch (const std::exception &e) {
             *errorMessage = e.what();
         } catch (...) {
             *errorMessage = "failed to read object from input stream";

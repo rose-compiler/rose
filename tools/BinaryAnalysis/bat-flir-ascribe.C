@@ -130,7 +130,13 @@ main(int argc, char *argv[]) {
     ASSERT_require(args.size() >= 2);
     std::string rbaFileName = args.front();
     args.erase(args.begin(), args.begin()+1);
-    auto partitioner = P2::Partitioner::instanceFromRbaFile(rbaFileName, settings.stateFormat);
+    P2::Partitioner::Ptr partitioner;
+    try {
+        partitioner = P2::Partitioner::instanceFromRbaFile(rbaFileName, settings.stateFormat);
+    } catch (const std::exception &e) {
+        mlog[FATAL] <<"cannot load partitioner from \"" <<StringUtility::cEscape(rbaFileName) <<"\": " <<e.what() <<"\n";
+        exit(1);
+    }
 
     // Match each function against the databases. It's fastest to open each database just once.
     SAWYER_THREAD_TRAITS::Mutex resultMutex;            // guards 'functions' and 'libraries' as they're being initialized

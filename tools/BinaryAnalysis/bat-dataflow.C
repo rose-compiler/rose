@@ -132,7 +132,13 @@ main(int argc, char *argv[]) {
 
     Settings settings;
     boost::filesystem::path inputFileName = parseCommandLine(argc, argv, settings);
-    auto partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, settings.stateFormat);
+    P2::Partitioner::Ptr partitioner;
+    try {
+        partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, settings.stateFormat);
+    } catch (const std::exception &e) {
+        mlog[FATAL] <<"cannot load partitioner from " <<inputFileName <<": " <<e.what() <<"\n";
+        exit(1);
+    }
 
     const std::vector<P2::Function::Ptr> functions = [&settings, &partitioner]() {
         if (settings.functionNames.empty()) {

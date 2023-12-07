@@ -262,7 +262,13 @@ main(int argc, char *argv[]) {
         exit(1);
     size_t showAllProperties = std::count(args.begin(), args.end(), "all");
 
-    auto partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, stateFormat);
+    P2::Partitioner::Ptr partitioner;
+    try {
+        partitioner = P2::Partitioner::instanceFromRbaFile(inputFileName, stateFormat);
+    } catch (const std::exception &e) {
+        mlog[FATAL] <<"cannot load partitioner from " <<inputFileName <<": " <<e.what() <<"\n";
+        exit(1);
+    }
 
     if (showAllProperties) {
         properties.evalAll(partitioner);

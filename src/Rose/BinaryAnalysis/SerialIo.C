@@ -186,7 +186,8 @@ SerialOutput::open(const boost::filesystem::path &fileName) {
 
 void
 SerialOutput::savePartitioner(const Partitioner2::Partitioner::ConstPtr &partitioner) {
-    saveObject(PARTITIONER, partitioner);
+    const Partitioner2::Partitioner *raw = partitioner.getRawPointer();
+    saveObject(PARTITIONER, raw);
 }
 
 void
@@ -336,9 +337,9 @@ SerialInput::advanceObjectType() {
 
 Partitioner2::Partitioner::Ptr
 SerialInput::loadPartitioner() {
-    Partitioner2::Partitioner::Ptr partitioner;
-    loadObject(PARTITIONER, partitioner);
-    return partitioner;
+    Partitioner2::Partitioner *raw = nullptr;
+    loadObject(PARTITIONER, raw);
+    return Partitioner2::Partitioner::Ptr(raw);
 }
 
 SgNode*

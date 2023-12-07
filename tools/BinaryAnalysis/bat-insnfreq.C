@@ -79,7 +79,13 @@ main(int argc, char *argv[]) {
 
     // Compute the histogram
     for (const boost::filesystem::path &rbaFile: rbaFiles) {
-        auto partitioner = P2::Partitioner::instanceFromRbaFile(rbaFile, stateFormat);
+        P2::Partitioner::Ptr partitioner;
+        try {
+            partitioner = P2::Partitioner::instanceFromRbaFile(rbaFile, stateFormat);
+        } catch (const std::exception &e) {
+            mlog[FATAL] <<"cannot load partitioner from " <<rbaFile <<": " <<e.what() <<"\n";
+            exit(1);
+        }
         MemoryMap::Ptr map = partitioner->memoryMap();
         ASSERT_not_null(map);
         mergeInsnHistogram(histogram, computeInsnHistogram(partitioner->instructionProvider(), map));
