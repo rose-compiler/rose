@@ -332,6 +332,11 @@ name(const Base::ConstPtr &arch) {
     return arch ? arch->name() : empty;
 }
 
+InstructionSemantics::BaseSemantics::DispatcherPtr
+newInstructionDispatcher(const std::string &name, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops) {
+    return findByName(name).orThrow()->newInstructionDispatcher(ops);
+}
+
 } // namespace
 } // namespace
 } // namespace

@@ -18,6 +18,7 @@
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/set.hpp>
+#include <boost/serialization/split_member.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
 
@@ -222,7 +223,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned version) {
+    void serializeCommon(S &s, const unsigned version) {
         //s & boost::serialization::base_object<Sawyer::Attribute::Storage<> >(*this); -- not saved
         s & BOOST_SERIALIZATION_NVP(isFrozen_);
         s & BOOST_SERIALIZATION_NVP(startVa_);
@@ -235,7 +236,8 @@ private:
             transferAst(s, insns_[i]);
 
         s & BOOST_SERIALIZATION_NVP(insns_);
-        s & boost::serialization::make_nvp("dispatcher_", semantics_.dispatcher);
+        if (version < 3)
+            s & boost::serialization::make_nvp("dispatcher_", semantics_.dispatcher);
         s & boost::serialization::make_nvp("operators_", semantics_.operators);
         s & boost::serialization::make_nvp("initialState_", semantics_.initialState);
         s & boost::serialization::make_nvp("usingDispatcher_", semantics_.usingDispatcher);
@@ -252,6 +254,38 @@ private:
         if (version >= 2)
             s & BOOST_SERIALIZATION_NVP(sourceLocation_);
     }
+
+    template<class S>
+    void save(S &s, const unsigned version) const {
+        const_cast<BasicBlock*>(this)->serializeCommon(s, version);
+        if (version >= 3) {
+            // Save only the dispatcher name and its operators, which should be sufficient to load it later.
+            std::string archName;
+            InstructionSemantics::BaseSemantics::RiscOperators::Ptr ops;
+            if (semantics_.dispatcher) {
+                archName = Architecture::name(semantics_.dispatcher->architecture());
+                ops = semantics_.dispatcher->operators();
+            }
+            s & BOOST_SERIALIZATION_NVP(archName);
+            s & BOOST_SERIALIZATION_NVP(ops);
+        }
+    }
+
+    template<class S>
+    void load(S &s, const unsigned version) {
+        serializeCommon(s, version);
+        if (version >= 3) {
+            // Restore the dispatcher from its saved name and operators.
+            std::string archName;
+            InstructionSemantics::BaseSemantics::RiscOperators::Ptr ops;
+            s & BOOST_SERIALIZATION_NVP(archName);
+            s & BOOST_SERIALIZATION_NVP(ops);
+            if (!archName.empty())
+                semantics_.dispatcher = Architecture::newInstructionDispatcher(archName, ops);
+        }
+    }
+
+    BOOST_SERIALIZATION_SPLIT_MEMBER();
 #endif
 
 
@@ -658,7 +692,7 @@ private:
 } // namespace
 
 // Class versions must be at global scope
-BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::BasicBlock, 2);
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::BasicBlock, 3);
 
 #endif
 #endif

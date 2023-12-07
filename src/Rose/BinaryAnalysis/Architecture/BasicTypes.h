@@ -211,6 +211,13 @@ std::pair<BasePtr, size_t> findBestByInterpretation(SgAsmInterpretation*);
  *  pointer. */
 const std::string& name(const BaseConstPtr&);
 
+/** Create a new instruction dispatcher by name.
+ *
+ *  This is a conventient way to obtain a dispatcher without having to include "Base.h" and is therefore useful in header files that try
+ *  to include a minimal number of type definitions. Throws a @ref Architecture::NotFound error if the name is not found. */
+InstructionSemantics::BaseSemantics::DispatcherPtr
+newInstructionDispatcher(const std::string &name, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
+
 } // namespace
 } // namespace
 } // namespace

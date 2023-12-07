@@ -9,6 +9,7 @@
 #include <Sawyer/Map.h>
 
 #include <boost/serialization/access.hpp>
+#include <boost/serialization/split_member.hpp>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -79,8 +80,9 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        s & BOOST_SERIALIZATION_NVP(cpu_);
+    void serializeCommon(S &s, const unsigned version) {
+        if (version < 1)
+            s & BOOST_SERIALIZATION_NVP(cpu_);
         s & BOOST_SERIALIZATION_NVP(initialConcreteStackPointer_);
         s & BOOST_SERIALIZATION_NVP(hasResults_);
         s & BOOST_SERIALIZATION_NVP(didConverge_);
@@ -91,6 +93,36 @@ private:
         s & BOOST_SERIALIZATION_NVP(insnStackPtrs_);
         s & BOOST_SERIALIZATION_NVP(insnDeltas_);
     }
+
+    template<class S>
+    void save(S &s, const unsigned version) const {
+        const_cast<Analysis*>(this)->serializeCommon(s, version);
+        if (version >= 1) {
+            std::string archName;
+            InstructionSemantics::BaseSemantics::RiscOperators::Ptr ops;
+            if (cpu_) {
+                archName = Architecture::name(cpu_->architecture());
+                ops = cpu_->operators();
+            }
+            s & BOOST_SERIALIZATION_NVP(archName);
+            s & BOOST_SERIALIZATION_NVP(ops);
+        }
+    }
+
+    template<class S>
+    void load(S &s, const unsigned version) {
+        serializeCommon(s, version);
+        if (version >= 1) {
+            std::string archName;
+            InstructionSemantics::BaseSemantics::RiscOperators::Ptr ops;
+            s & BOOST_SERIALIZATION_NVP(archName);
+            s & BOOST_SERIALIZATION_NVP(ops);
+            if (!archName.empty())
+                cpu_ = Architecture::newInstructionDispatcher(archName, ops);
+        }
+    }
+
+    BOOST_SERIALIZATION_SPLIT_MEMBER();
 #endif
     
 public:
@@ -292,6 +324,9 @@ std::ostream& operator<<(std::ostream&, const Analysis&);
 } // namespace
 } // namespace
 } // namespace
+
+// Class versions must be at global scope
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::StackDelta::Analysis, 1);
 
 #endif
 #endif
