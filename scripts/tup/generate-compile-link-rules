@@ -138,12 +138,10 @@ specified, based on the types of inputs.
 
 Emit macros instead of commands. See below for a description of what macros or commands are emitted.
 
-=item --map=I<SOURCE_DIR>,I<ROOT>
+=item --map=I<FROM>,I<TO>
 
-Defines how tup maps the root of the source code hierarchy onto the root of the build hierarchy. The I<SOURCE_DIR> is
-the absolute name of the root of the source code (i.e., where Tupfile.ini would be if it were present), and I<ROOT> is
-the relative path from the current working directory to the root of the build tree (where tup.config would be for the
-variant that's being built, i.e., tup's $(TUP_CWD) variable).
+Defines how to map the input file name to a file name stored in the DWARF information. The I<FROM> argument is converted
+to an absolute file name. The input file's name is changed by replacing the leading absolute part with I<TO>.
 
 =item --objects=I<BIN_NAME>
 
@@ -542,13 +540,26 @@ sub parse_command_line {
 sub cxx_debug_prefix_map {
     my @switches;
     if (@mapped_dirs) {
-	my $top_srcdir_abs = TupScripts::absolute_name($mapped_dirs[0]);
-	my $cwd_rootrel = TupScripts::cwd_build_relative($mapped_dirs[1]);
-	my $srcdir = TupScripts::canonical_name($top_srcdir_abs . "/" . $cwd_rootrel);
-	my $blddir = Cwd::cwd();
 
-	push @switches, "-fdebug-prefix-map=$blddir=$srcdir";
+	# Top of the build tree from the Tup $(TUP_CWD) variable. Since tup union mounts the source directory at this
+	# location, it's also effectively the top of the source tree, but only while Tup is running.
+	my $top_blddir_abs = TupScripts::canonical_name(TupScripts::absolute_name($mapped_dirs[0]));
+
+	# CWD is somewhere under $top_blddir_abs, so remove that prefix and what's left is CWD relative to
+	# $top_blddir_abs
+	my $cwd_abs = TupScripts::canonical_name(Cwd::cwd());
+
+	die "$arg0: top build dir is not a prefix of CWD (top=$top_blddir_abs cwd=$cwd_abs)\n"
+	    unless substr($cwd_abs, 0, length($top_blddir_abs)) eq $top_blddir_abs;
+
+	my $cwd_rel = substr($cwd_abs, length($top_blddir_abs));
+	$cwd_rel = substr($cwd_rel, 1) if substr($cwd_rel, 0, 1) eq '/';
+
+	my $replacement = $mapped_dirs[1] . "/" . $cwd_rel;
+
+	push @switches, "-fdebug-prefix-map==$replacement/";
     }
+
     return @switches;
 }
 
@@ -797,6 +808,7 @@ sub generate_link_rules {
 	if ($lang eq 'd') {
 	    push @compiler_args, "\@(${uc_compiler}_O_SWITCH)\%o", TupScripts::tup_input_variable(@linker_inputs);
 	} else {
+	    push @compiler_args, cxx_debug_prefix_map();
 	    push @compiler_args, "\@(${uc_compiler}_O_SWITCH)\%o", TupScripts::tup_input_variable(@linker_inputs);
 	}
     } elsif ($link eq "lib" || $link eq "python") {
@@ -806,6 +818,7 @@ sub generate_link_rules {
 	    die unless $linkage eq "shared";
             $link_macro = "${phase}linklib_" . linker_language(keys %{$sources});
             if ($lang eq 'cxx' || $lang eq 'c') {
+		push @compiler_args, cxx_debug_prefix_map();
                 push @compiler_args, '-shared', "\@(${uc_compiler}_O_SWITCH)\%o", TupScripts::tup_input_variable(@linker_inputs);
             } elsif ($lang eq 'd') {
                 push @compiler_args, '-lib', "\@(${uc_compiler}_O_SWITCH)\%o", TupScripts::tup_input_variable(@linker_inputs);
