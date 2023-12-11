@@ -10,8 +10,9 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace ByteOrder {
 
-// Caution: the symbols LITTLE_ENDIAN and BIG_ENDIAN are already defined on some systems, so we use other names in ROSE.
+/** Byte order. */
 enum Endianness {
+    // Caution: the symbols LITTLE_ENDIAN and BIG_ENDIAN are already defined on some systems, so we use other names in ROSE.
     ORDER_UNSPECIFIED=0,                /**< Endianness is unspecified and unknown. */
     ORDER_LSB,                          /**< Least significant byte first, i.e., little-endian. */
     ORDER_MSB                           /**< Most significant byte first, i.e., big-endian. */
