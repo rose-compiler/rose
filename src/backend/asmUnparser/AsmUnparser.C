@@ -478,7 +478,12 @@ bool
 AsmUnparser::unparse_interpretation(bool enabled, std::ostream &output, SgAsmInterpretation *interp)
 {
     RegisterDictionary::Ptr old_interp_registers = interp_registers;
-    interp_registers = Architecture::findByInterpretation(interp).orThrow()->registerDictionary();
+    if (auto arch = Architecture::findByInterpretation(interp)) {
+        interp_registers = (*arch)->registerDictionary();
+    } else {
+        interp_registers = RegisterDictionary::Ptr();
+    }
+
     try {
         const SgAsmGenericHeaderPtrList &hdrs = interp->get_headers()->get_headers();
         if (!hdrs.empty()) {

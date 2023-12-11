@@ -7,6 +7,7 @@
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 
 #include <boost/version.hpp>
+#include <boost/scope_exit.hpp>
 #if BOOST_VERSION < 106700
 #include <boost/math/common_factor.hpp>                 // deprecated in 1.67.0
 #else
@@ -1088,38 +1089,37 @@ void
 SgAsmGenericFile::dumpAll(const std::string &dump_name)
 {
     FILE *dumpFile = fopen(dump_name.c_str(), "wb");
-    try {
-        // The file type should be the first; test harness depends on it
-        fprintf(dumpFile, "%s\n", formatName());
-
-        // A table describing the sections of the file
-        dump(dumpFile);
-
-        // Detailed info about each section
-        const SgAsmGenericSectionPtrList &sections = get_sections();
-        for (size_t i = 0; i < sections.size(); i++) {
-            fprintf(dumpFile, "Section [%zd]:\n", i);
-            ASSERT_not_null(sections[i]);
-            sections[i]->dump(dumpFile, "  ", -1);
-        }
-
-        /* Dump interpretations that point only to this file. */
-        SgBinaryComposite *binary = SageInterface::getEnclosingNode<SgBinaryComposite>(this);
-        ASSERT_not_null(binary);
-        const SgAsmInterpretationPtrList &interps = binary->get_interpretations()->get_interpretations();
-        for (size_t i=0; i<interps.size(); i++) {
-            SgAsmGenericFilePtrList interp_files = interps[i]->get_files();
-            if (interp_files.size()==1 && interp_files[0]==this) {
-                std::string assembly = unparseAsmInterpretation(interps[i]);
-                fputs(assembly.c_str(), dumpFile);
-            }
-        }
-
-    } catch(...) {
+    if (!dumpFile)
+        throw Rose::Exception("cannot open \"" + StringUtility::cEscape(dump_name) + "\" for writing");
+    BOOST_SCOPE_EXIT(&dumpFile) {
         fclose(dumpFile);
-        throw;
+    } BOOST_SCOPE_EXIT_END;
+
+    // The file type should be the first; test harness depends on it
+    fprintf(dumpFile, "%s\n", formatName());
+
+    // A table describing the sections of the file
+    dump(dumpFile);
+
+    // Detailed info about each section
+    const SgAsmGenericSectionPtrList &sections = get_sections();
+    for (size_t i = 0; i < sections.size(); i++) {
+        fprintf(dumpFile, "Section [%zd]:\n", i);
+        ASSERT_not_null(sections[i]);
+        sections[i]->dump(dumpFile, "  ", -1);
     }
-    fclose(dumpFile);
+
+    /* Dump interpretations that point only to this file. */
+    SgBinaryComposite *binary = SageInterface::getEnclosingNode<SgBinaryComposite>(this);
+    ASSERT_not_null(binary);
+    const SgAsmInterpretationPtrList &interps = binary->get_interpretations()->get_interpretations();
+    for (size_t i=0; i<interps.size(); i++) {
+        SgAsmGenericFilePtrList interp_files = interps[i]->get_files();
+        if (interp_files.size()==1 && interp_files[0]==this) {
+            std::string assembly = unparseAsmInterpretation(interps[i]);
+            fputs(assembly.c_str(), dumpFile);
+        }
+    }
 }
 
 void
