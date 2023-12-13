@@ -80,4 +80,16 @@ ifeq (@(ENABLE_TESTS),yes)
     run $(test) bat-xml-to-json       ./bat-xml-to-json	      --self-test --no-error-if-disabled
 endif
 
+# SimpleArchitecture example
+run $(tool_compile_linklib) --install -I. -o libSimpleArch SimpleArch.C ../../src/librose
+run $(tool_compile_linkexe) --install -I. -o simple-arch-assembler simpleArchAssembler.C libSimpleArch ../../src/librose
+ifeq (@(ENABLE_TESTS),yes)
+     #run $(test) simpleArchTest.sh -x simpleArch.asm.bin -x simpleArch.asm.rba
+     run $(test) simpleArchTest.sh \
+         -i simple-arch-assembler -i bat-ana -i bat-dis -i bat-dis-simple -i bat-mem -i simpleArch.asm -i libSimpleArch.so \
+	 -x simpleArch.asm.bin -x simpleArch.asm.rba \
+	 --answer=simpleArchTest.ans \
+         ./simpleArchTest.sh simpleArch.asm
+endif
+     
 endif
