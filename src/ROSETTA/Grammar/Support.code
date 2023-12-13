@@ -14377,8 +14377,6 @@ SgFile::initialization()
      p_upc_threads             = 0;
 
      p_Cxx_only                = false;
-
-  // DQ (8/11/2007): Added support for Fortran
      p_Fortran_only            = false;
 
   // DQ (1/23/2009): Added CoArray Fortran support.
@@ -16739,7 +16737,7 @@ SgProject::set_Cxx_only     (bool value)
 void
 SgProject::set_Fortran_only (bool value)
    {
-     ROSE_ASSERT(this != NULL);
+     ASSERT_not_null(this);
      p_Fortran_only = value;
    }
 

@@ -48,12 +48,24 @@ void setSgSourceFile(SgSourceFile* sg_file);
 void Build(const Fortran::parser::Program &x, Fortran::parser::AllCookedSources &cooked);
 
 template<typename T> void Build(const Fortran::parser::           ProgramUnit &x, T* scope);
-template<typename T> void Build(const Fortran::parser::           MainProgram &x, T* scope);
-template<typename T> void Build(const Fortran::parser::                Module &x, T* scope);
-template<typename T> void Build(const Fortran::parser::    FunctionSubprogram &x, T* scope);
-template<typename T> void Build(const Fortran::parser::  SubroutineSubprogram &x, T* scope);
-template<typename T> void Build(const Fortran::parser::             Submodule &x, T* scope);
-template<typename T> void Build(const Fortran::parser::             BlockData &x, T* scope);
+
+void Build(const Fortran::parser:: MainProgram &x);
+void Build(const Fortran::parser:: FunctionSubprogram &x);
+void Build(const Fortran::parser:: SubroutineSubprogram &x);
+void Build(const Fortran::parser:: Module &x);
+void Build(const Fortran::parser:: Submodule &x);
+void Build(const Fortran::parser:: BlockData &x);
+void Build(const Fortran::parser:: CompilerDirective &x);
+void Build(const Fortran::parser:: OpenACCRoutineConstruct&x);
+
+void Build(const Fortran::parser:: OpenMPDeclarativeConstruct &x);
+void Build(const Fortran::parser::OpenACCDeclarativeConstruct &x);
+
+template<typename T> void Build(const Fortran::parser::        OpenMPConstruct &x, T* scope);
+template<typename T> void Build(const Fortran::parser::       OpenACCConstruct &x, T* scope);
+template<typename T> void Build(const Fortran::parser::AccEndCombinedDirective &x, T* scope);
+template<typename T> void Build(const Fortran::parser::    OmpEndLoopDirective &x, T* scope);
+template<typename T> void Build(const Fortran::parser::    CUFKernelDoConstruct &x, T* scope);
 
 void Build(const           Fortran::parser::ModuleSubprogramPart &x);
 void Build(const std::list<Fortran::parser::ModuleSubprogram>    &x);
@@ -344,11 +356,6 @@ template<typename T> void Build(const Fortran::parser::    SelectRankConstruct&x
 template<typename T> void Build(const Fortran::parser::    SelectTypeConstruct&x, T* scope);
 template<typename T> void Build(const Fortran::parser::         WhereConstruct&x, T* scope);
 template<typename T> void Build(const Fortran::parser::        ForallConstruct&x, T* scope);
-template<typename T> void Build(const Fortran::parser::      CompilerDirective&x, T* scope);
-template<typename T> void Build(const Fortran::parser::        OpenMPConstruct&x, T* scope);
-template<typename T> void Build(const Fortran::parser::       OpenACCConstruct&x, T* scope);
-template<typename T> void Build(const Fortran::parser::AccEndCombinedDirective&x, T* scope);
-template<typename T> void Build(const Fortran::parser::    OmpEndLoopDirective&x, T* scope);
 
 // DerivedTypeDef
 void Build(const Fortran::parser::Statement<Fortran::parser::ComponentDefStmt>&x, SgStatement* &stmt);
@@ -383,8 +390,6 @@ void Build(const Fortran::parser::     OtherSpecificationStmt&x, const OptLabel 
 void Build(const Fortran::parser::                GenericStmt&x, const OptLabel &);
 #endif
 template<typename T> void Build(const Fortran::parser::   ProcedureDeclarationStmt&x, T* scope);
-template<typename T> void Build(const Fortran::parser:: OpenMPDeclarativeConstruct&x, T* scope);
-template<typename T> void Build(const Fortran::parser::OpenACCDeclarativeConstruct&x, T* scope);
 
 // AttrSpec
 void Build(const Fortran::parser::         AccessSpec &x, LanguageTranslation::ExpressionKind &modifier_enum);

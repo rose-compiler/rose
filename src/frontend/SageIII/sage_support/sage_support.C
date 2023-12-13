@@ -3263,10 +3263,10 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
 #if defined(ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION)
        status = experimental_fortran_main(flangArgc, flangArgv, const_cast<SgSourceFile*>(this));
-       ROSE_ASSERT(status == 0);
+       ASSERT_require(status == 0);
 #else
-       ROSE_ASSERT(! "[FATAL] [ROSE] [frontend] [Fortran] "
-                     "error: ROSE was not configured to support the Fortran Flang frontend.");
+       ASSERT_require(! "[FATAL] [ROSE] [frontend] [Fortran] "
+                        "error: ROSE was not configured to support the Fortran Flang frontend.");
 #endif
        return status;
      }
@@ -5141,9 +5141,6 @@ SgSourceFile::build_Jovial_AST( vector<string> argv, vector<string> inputCommand
 int
 SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
    {
-  // printf ("######################## Inside of SgSourceFile::buildAST() ##########################\n");
-
-  // TV (09/24/2018): Skip actually calling the frontend (used to test the backend with ROSE command line processing)
      if (get_skip_parser()) return 0;
 
   // DXN (01/10/2011): except for building C and Cxx AST, frontend fails when frontend error level > 0.
@@ -5155,9 +5152,8 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
           frontendErrorLevel = build_Fortran_AST(argv,inputCommandLine);
           frontend_failed = (frontendErrorLevel > 1);  // DXN (01/18/2011): needed to pass make check.  TODO: need fixing up
 #else
-       // DQ (2/21/2016): Added "error: " to allow this to be caught by the ROSE Matrix Testing.
-          ROSE_ASSERT (! "[FATAL] [ROSE] [frontend] [Fortran] "
-                         "error: ROSE was not configured to support the Fortran frontend.");
+          ASSERT_require (! "[FATAL] [ROSE] [frontend] [Fortran] "
+                          "error: ROSE was not configured to support the Fortran frontend.");
 #endif
         }
        else
