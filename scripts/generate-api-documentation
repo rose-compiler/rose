@@ -1,0 +1,75 @@
+#!/bin/bash
+set -e
+set -o pipefail
+
+arg0="${0##*/}"
+dir0="${0%/*}"
+
+####################################################################################################################################
+# Die with an error message
+die() {
+    echo "$arg0: error:" "$@" >&2
+    exit 1
+}
+
+####################################################################################################################################
+# Find top of ROSE source code
+cached_rose_source=
+rose-source() {
+    if [ "$cached_rose_source" = "" ]; then
+	local rose_src=
+	for rose_src in "$ROSE_SOURCE" "$RG_SRC" "$dir0/.." "$ROSE"; do
+	    if [ -n "$rose_src" ] && [ -d "$rose_src/." ] && [ -f "$rose_src/ROSE_VERSION" ]; then
+		cached_rose_source="$(cd "$rose_src"; pwd)"
+		break
+	    fi
+	done
+    fi
+    [ -n "$cached_rose_source" ] || die "cannot find the top of the ROSE source tree"
+    echo "$cached_rose_source"
+}
+
+####################################################################################################################################
+# Returns the ROSE version number
+rose-version() {
+    cat "$(rose-source)/ROSE_VERSION"
+}
+
+####################################################################################################################################
+# Assert prerequisites
+check-prerequisites() {
+    # Doxygen
+    type -t doxygen >/dev/null || die "doxygen command is required"
+    doxygen --version >/dev/null || die "cannot run doxygen command"
+}
+
+####################################################################################################################################
+# Filter out some doxygen warnings
+filter-doxygen-warnings() {
+    sed -e "
+	/unable to resolve reference to 'SageInterface/d
+        /unable to resolve reference to 'parse_rm_section'/d
+	/unable to resolve reference to 'stringify[A-Z]/d
+	/unable to resolve reference to 'heap_object_shared_ownership'/d
+
+	# Concolic testing framework is work in progress
+	/src\\/Rose\\/BinaryAnalysis\\/Concolic/d
+
+	# Need to figure out what this was renamed
+	/unable to resolve reference to 'SgAsmGenericFile::resize'/d
+
+	# Defined in outside of the Rose namespace or not under the src/Rose directory.
+	/unable to resolve reference to 'InstructionMap'/d
+	/unable to resolve reference to 'frontend'/d
+	/unable to resolve reference to 'Sg_File_Info'/d
+	/unable to resolve reference to 'rose_addr_t'/d
+	"
+}
+
+####################################################################################################################################
+
+check-prerequisites
+
+cd $(rose-source)
+env ROSE_SOURCE="$(rose-source)" ROSE_VERSION="$(rose-version)" \
+     doxygen "$(rose-source)/docs/Rose/robb.cfg" 2>&1 | filter-doxygen-warnings
