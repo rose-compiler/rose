@@ -1,6 +1,6 @@
 /** CIL Module node (II.22.30). */
 class SgAsmCilModule: public SgAsmCilMetadata {
-
+public:
     /** Property: Generation.
      *
      *  A 2-byte value, reserved, shall be zero. */

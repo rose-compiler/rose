@@ -45,7 +45,7 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+public:
     /** Property: Architecture name.
      *
      *  The name of the architecture to which this instruction belongs. */
@@ -54,10 +54,10 @@ private:
 
     /** Property: Instruction mnemonic string.
      *
-     *  The short string that describes the instruction. When comparing instructions, it's faster to use the @ref get_kind
-     *  or @ref get_anyKind methods instead of comparing mnemonic strings. But be aware that some architectures have
-     *  mnemonics that include information about the instruction operands and this information is typically not represented
-     *  by the instruction kind enum constants. */
+     *  The short string that describes the instruction. When comparing instructions, it's faster to use the @c kind property
+     *  defined in the subclasses, or the @ref SgAsmInstruction::get_anyKind function instead of comparing mnemonic strings. But be
+     *  aware that some architectures have mnemonics that include information about the instruction operands and this information is
+     *  typically not represented by the instruction kind enum constants. */
     [[using Rosebud: rosetta, ctor_arg]]
     std::string mnemonic;
 

@@ -1,6 +1,6 @@
 /** CIL File node (II.22.19). */
 class SgAsmCilFile: public SgAsmCilMetadata {
-
+public:
     /** Property: Flags.
      *
      *  A 4-byte bitmask of type FileAttributes. */

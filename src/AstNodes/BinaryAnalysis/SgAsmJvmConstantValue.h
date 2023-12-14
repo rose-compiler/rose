@@ -3,6 +3,7 @@
  *  A ConstantValue attribute represents the value of a constant expression, see section 4.7.2 of the JVM specification.
  */
 class SgAsmJvmConstantValue: public SgAsmJvmAttribute {
+public:
     /** Property: constantvalue_index
      *
      *  The value of the constantvalue_index item must be a valid index into the constant_pool table (see JVM specification). */

@@ -1,6 +1,7 @@
 /** Base class for references to a machine register. */
 [[Rosebud::abstract]]
 class SgAsmRegisterReferenceExpression: public SgAsmExpression {
+public:
     /** Property: Descriptor for accessed register. */
     [[using Rosebud: rosetta, ctor_arg]]
     Rose::BinaryAnalysis::RegisterDescriptor descriptor;

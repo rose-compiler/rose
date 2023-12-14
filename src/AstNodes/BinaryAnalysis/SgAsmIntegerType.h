@@ -2,6 +2,7 @@
 
 /** Integer types. */
 class SgAsmIntegerType: public SgAsmScalarType {
+public:
     /** Property: whether the integral type is signed or unsigned.
      *
      *  Returns true if this is a signed type, otherwise false.

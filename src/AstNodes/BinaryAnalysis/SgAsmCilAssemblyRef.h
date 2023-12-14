@@ -1,6 +1,6 @@
 /** CIL AssemblyRef node (II.22.5). */
 class SgAsmCilAssemblyRef: public SgAsmCilMetadata {
-
+public:
     /** Property: MajorVersion.
      *
      *  Major version number. */

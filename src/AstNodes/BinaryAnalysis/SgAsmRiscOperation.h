@@ -77,7 +77,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+public:
     // Note that the qualification for the type is necessary only for ROSETTA. Remove it when ROSETTA finally goes away.
     /** Property: Low-level semantic operation.
      *
@@ -88,8 +88,8 @@ public:
 
     /** Property: Operands for the low-level operation.
      *
-     *  These are the operands used by the low-level operation. The actual list is stored in a separate @ref
-     *  SgAsmExprListExpr AST node instead of directly in this node due to limitations of ROSETTA. */
+     *  These are the operands used by the low-level operation. The actual list is stored in a separate @ref SgAsmExprListExp AST
+     *  node instead of directly in this node due to limitations of ROSETTA. */
     [[using Rosebud: rosetta, traverse]]
     SgAsmExprListExp* operands = nullptr;
 };

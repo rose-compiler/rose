@@ -1,4 +1,5 @@
 class SgAsmNERelocTable: public SgAsmGenericSection {
+public:
     [[using Rosebud: rosetta, traverse, large]]
     SgAsmNERelocEntryPtrList entries;
 

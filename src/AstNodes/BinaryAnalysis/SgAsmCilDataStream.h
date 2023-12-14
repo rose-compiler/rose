@@ -1,6 +1,7 @@
 /** Base class for CIL branch of binary analysis IR nodes. */
 [[Rosebud::abstract]]
 class SgAsmCilDataStream : public SgAsmCilNode {
+public:
     /** Property: Start offset of the byte stream. */
     [[using Rosebud: rosetta, ctor_arg]]
     uint32_t Offset;

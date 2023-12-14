@@ -4,6 +4,7 @@
  *  Definitions Table, namey that the table object (@ref SgAsmElfSymverNeededSection) points to a list of entries (@ref
  *  SgAsmElfSymverNeededEntry), which of which point to a list of auxilliary information (@ref SgAsmElfSymverNeededAux). */
 class SgAsmElfSymverNeededSection: public SgAsmElfSection {
+public:
     /** Property: List of entries.
      *
      *  This property points to an AST node whose only purpose is to hold the list of entries. The only reason the entries
@@ -31,7 +32,7 @@ public:
     using SgAsmElfSection::calculate_sizes;
     /** Return sizes for various parts of the table.
      *
-     *  See documentation for @ref SgAsmElfSection::calculate_sizes. */
+     *  See documentation for @ref SgAsmElfSection::calculateSizes. */
     virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const override;
 
     /** Write SymverNeeded section back to disk.

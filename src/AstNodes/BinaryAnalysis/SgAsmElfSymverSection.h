@@ -1,8 +1,9 @@
 /** The ELF symbol version table.
  *
- *  Often named ".gnu.version section", this section points to an @ref SgAsmElfSymverEntryPtrList containing a list of
+ *  Often named ".gnu.version section", this section points to an @ref SgAsmElfSymverEntryList containing a list of
  *  SgAsmElfSymverEntry objects. */
 class SgAsmElfSymverSection: public SgAsmElfSection {
+public:
     /** Property: List of table entries.
      *
      *  The list of entries in this section. The only reason the list is stored in a separate AST node instead of being
@@ -20,7 +21,7 @@ public:
     using SgAsmElfSection::calculateSizes;
     /** Return sizes for various parts of the table.
      *
-     *  See documentation for @ref SgAsmElfSection::calculate_sizes. */
+     *  See documentation for @ref SgAsmElfSection::calculateSizes. */
     virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const override;
 
     /** Write symver table sections back to disk */

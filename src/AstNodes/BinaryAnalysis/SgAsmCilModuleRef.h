@@ -1,6 +1,6 @@
 /** CIL ModuleRef node (II.22.31). */
 class SgAsmCilModuleRef: public SgAsmCilMetadata {
-
+public:
     /** Property: Name.
      *
      *  An index into the String heap. */

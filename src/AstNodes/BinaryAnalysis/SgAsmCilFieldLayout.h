@@ -1,6 +1,6 @@
 /** CIL FieldLayout node (II.22.16). */
 class SgAsmCilFieldLayout: public SgAsmCilMetadata {
-
+public:
     /** Property: Offset.
      *
      *  A 4-byte constant. */

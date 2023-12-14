@@ -3,6 +3,7 @@
  *  A ModuleMainClass attribute stores a signature for a class, interface, constructor, method, field, or record component, see
  *  section 4.7.27 of the JVM specification. */
 class SgAsmJvmModuleMainClass: public SgAsmJvmAttribute {
+public:
     /** Property: main_class_index
      *
      *  The value of the main_class_index item must be a valid index into the constant_pool table (see JVM specification). */

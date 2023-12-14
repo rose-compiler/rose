@@ -2,7 +2,7 @@
  *
  *  A function is a collection of blocks holding instructions (basic blocks) or static data.  Instructions might have
  *  references to addresses or data which are described by symbols (not to be confused with the binary's symbol table) in
- *  the function's symbol table (@ref get_symbol_table).  Functions do not explicitly exist in a binary, but are
+ *  the function's symbol table (@ref symbolTable property).  Functions do not explicitly exist in a binary, but are
  *  synthesized by ROSE as part of the disassembly and partitioning steps. The individual instructions and/or individual
  *  static data areas need not cover a contiguous region of the address space.  Some synthesized functions will likely not
  *  be a "function" or "produceure" in the strict sense of those words due to such factors as compiler optimizations,
@@ -128,7 +128,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+public:
     /** Property: Name.
      *
      *  The optional string name of a function. */
@@ -145,7 +145,7 @@ public:
     /** Property: Additional function existance reason comment.
      *
      *  This reason comment gets filled in automatically by certain function analyses. It's a free-form string that
-     *  contains additional information about why this function exists and is used in conjunction with the @ref get_reason
+     *  contains additional information about why this function exists and is used in conjunction with the @ref reason
      *  property. */
     [[using Rosebud: rosetta]]
     std::string reasonComment;

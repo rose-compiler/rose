@@ -4,6 +4,7 @@
  *  than storing them all in the SgAsmSectionTable node.  We can reconstruct the JVM Section Table since sections have
  *  unique ID numbers that are their original indices in the JVM Section Table. */
 class SgAsmJvmConstantPool: public SgAsmGenericSection {
+public:
     /** Property: List of constant pool entries. */
     [[using Rosebud: rosetta, large]]
     SgAsmJvmConstantPoolEntryPtrList entries;

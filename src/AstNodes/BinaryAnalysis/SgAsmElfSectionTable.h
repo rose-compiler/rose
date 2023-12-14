@@ -32,7 +32,6 @@ public:
      *  Any or all arguments may be null pointers if the caller is not interested in the value. */
     rose_addr_t calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 
-    /** Update prior to unparsing. */
     virtual bool reallocate() override;
 
     /** Write the section table section back to disk */

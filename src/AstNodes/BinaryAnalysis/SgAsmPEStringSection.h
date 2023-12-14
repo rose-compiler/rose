@@ -1,5 +1,6 @@
 /** String section. */
 class SgAsmPEStringSection: public SgAsmPESection {
+public:
     /** Property: String table.
      *
      *  See PE specification. */

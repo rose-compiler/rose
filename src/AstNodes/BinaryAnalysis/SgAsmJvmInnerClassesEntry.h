@@ -3,6 +3,7 @@
  *  See the JVM specification (section 4.7.6) for more information.
  */
 class SgAsmJvmInnerClassesEntry: public SgAsmJvmNode {
+public:
     /** Property: inner_class_info_index.
      *
      *  The value of the inner_class_info_index must be a valid index into the constant_pool table (see the JVM specification

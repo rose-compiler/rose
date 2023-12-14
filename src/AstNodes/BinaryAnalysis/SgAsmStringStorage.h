@@ -1,5 +1,6 @@
 /** Strings stored in an ELF or PE container. */
 class SgAsmStringStorage: public SgAsmExecutableFileFormat {
+public:
     /** Property: String table holding the string. */
     [[using Rosebud: rosetta]]
     SgAsmGenericStrtab* strtab = nullptr;

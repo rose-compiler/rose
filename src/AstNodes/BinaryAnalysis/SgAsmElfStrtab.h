@@ -8,7 +8,7 @@ public:
 
     /** Free StringStorage objects associated with this string table.
      *
-     *  It may not be safe to blow them away yet since other objects may still have @ref SgAsmStoredStrings pointing to
+     *  It may not be safe to blow them away yet since other objects may still have @ref SgAsmStoredString objects pointing to
      *  these storage objects. So instead, we will mark all this strtab's storage objects as no longer being associated
      *  with a string table. This allows the @ref SgAsmStoredString objects to still function properly and their
      *  destructors will free their storage. */

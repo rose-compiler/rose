@@ -1,6 +1,6 @@
 /** CIL ClassLayout node (II.22.8). */
 class SgAsmCilClassLayout: public SgAsmCilMetadata {
-
+public:
     /** Property: PackingSize.
      *
      *  A 2-byte constant. */

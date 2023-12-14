@@ -1,6 +1,6 @@
 /** CIL TypeDef node (II.22.37). */
 class SgAsmCilTypeDef: public SgAsmCilMetadata {
-
+public:
     /** Property: Flags.
      *
      *  A 4-byte bitmask of type TypeAttributes. */

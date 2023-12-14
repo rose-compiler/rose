@@ -4,6 +4,7 @@
  *  membership in the nest hosted by the current class or interface, see section 4.7.29 of the
  *  JVM specification. */
 class SgAsmJvmNestMembers: public SgAsmJvmAttribute {
+public:
     /** Property: classes
      *
      *  Each value in the classes array must be a valid index into the constant_pool table.

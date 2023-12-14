@@ -1,6 +1,6 @@
 /** CIL Event node (II.22.13). */
 class SgAsmCilEvent: public SgAsmCilMetadata {
-
+public:
     /** Property: EventFlags.
      *
      *  A 2-byte bitmask of type EventAttribute. */

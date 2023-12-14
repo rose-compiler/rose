@@ -1,6 +1,6 @@
 /** CIL AssemblyOS node (II.22.3). */
 class SgAsmCilAssemblyOS: public SgAsmCilMetadata {
-
+public:
     /** Property: OSPlatformID.
      *
      *  A 4-byte constant. */

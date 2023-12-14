@@ -1,5 +1,6 @@
 /** Export file section. */
 class SgAsmPEExportSection: public SgAsmPESection {
+public:
     /** Property: Export directory.
      *
      *  See PE specification. */

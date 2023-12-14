@@ -1,5 +1,6 @@
 /** Base class for PE sections. */
 class SgAsmPESection: public SgAsmGenericSection {
+public:
     /** Property: Section table entry.
      *
      *  See PE specification. */

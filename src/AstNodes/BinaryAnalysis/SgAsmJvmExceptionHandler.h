@@ -2,6 +2,7 @@
  *
  *  Each exception handler is described by an anonymous structure defined in Code_attribute, section 4.7.3 of the JVM specification. */
 class SgAsmJvmExceptionHandler: public SgAsmJvmNode {
+public:
     /** Property: start_pc
      *
      *  The value of the start_pc item must be a valid index into the constant_pool table (see JVM specification).  Present in an

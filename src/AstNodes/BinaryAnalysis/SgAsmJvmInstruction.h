@@ -2,6 +2,7 @@
 
 /** Represents one JVS machine instruction. */
 class SgAsmJvmInstruction: public SgAsmInstruction {
+public:
     /** Property: Instruction kind.
      *
      *  Returns an enum constant describing the JVM instruction. These enum constants correspond roughly 1:1 with

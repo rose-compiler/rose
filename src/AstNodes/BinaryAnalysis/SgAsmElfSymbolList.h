@@ -1,4 +1,5 @@
 class SgAsmElfSymbolList: public SgAsmExecutableFileFormat {
+public:
     /** Property: Symbol list.
      *
      *  This points to an AST node that contains the actual symbol list. The reason that the list is not held directly in

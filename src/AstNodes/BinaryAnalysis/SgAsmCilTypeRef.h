@@ -1,6 +1,6 @@
 /** CIL TypeRef node (II.22.38). */
 class SgAsmCilTypeRef: public SgAsmCilMetadata {
-
+public:
     /** Property: ResolutionScope.
      *
      *  An index into a Module, ModuleRef, AssemblyRef or TypeRef table, or null. */

@@ -1,6 +1,7 @@
 #include <Rose/BinaryAnalysis/InstructionEnumsCil.h>
 
 class SgAsmCilInstruction: public SgAsmInstruction {
+public:
     /** Property: Instruction kind.
      *
      *  Returns an enum constant describing the CIL instruction. These enum constants correspond roughly 1:1 with

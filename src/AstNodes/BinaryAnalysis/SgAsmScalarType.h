@@ -3,6 +3,7 @@
 /** Base class for scalar types. */
 [[Rosebud::abstract]]
 class SgAsmScalarType: public SgAsmType {
+public:
     [[using Rosebud: rosetta, accessors(), mutators()]]
     Rose::BinaryAnalysis::ByteOrder::Endianness minorOrder = Rose::BinaryAnalysis::ByteOrder::ORDER_UNSPECIFIED;
 

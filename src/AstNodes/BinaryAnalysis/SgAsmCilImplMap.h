@@ -1,6 +1,6 @@
 /** CIL ImplMap node (II.22.22). */
 class SgAsmCilImplMap: public SgAsmCilMetadata {
-
+public:
     /** Property: MappingFlags.
      *
      *  A 2-byte bitmask of type PInvokeAttributes. */

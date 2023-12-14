@@ -8,6 +8,7 @@
  *  executables in the one container. All the DOS-related stuff will be under one SgAsmInterpretation AST and all the
  *  Windows-related stuff will be under another SgAsmInterpretation AST. */
 class SgAsmInterpretation: public SgAsmNode {
+public:
     /** Property: File headers.
      *
      *  List of pointers to the file headers that compose this interpretation.
@@ -65,20 +66,20 @@ class SgAsmInterpretation: public SgAsmNode {
 public:
     /** Returns a list of all files referenced by an interpretation.
      *
-     *  It does this by looking at the file headers referenced by the interpretation, following their parent pointers up to
-     *  an SgAsmGenericFile node, and returning a vector of those nodes with duplicate files removed. */
+     *  It does this by looking at the file headers referenced by the interpretation, following their parent pointers up to an
+     *  SgAsmGenericFile node, and returning a vector of those nodes with duplicate files removed. */
     SgAsmGenericFilePtrList get_files() const;
 
     /** Populate a map of instructions indexed by their virtual addresses.
      *
-     *  This function traverses the AST rooted at the @ref get_global_block "global_block" and inserts each encountered
-     *  instruction into the provided @ref InstructionMap based on its starting virtual address. */
+     *  This function traverses the AST rooted at the @ref globalBlock and inserts each encountered instruction into the provided
+     *  @ref InstructionMap based on its starting virtual address. */
     void insertInstructions(InstructionMap&/*in,out*/);
 
     /** Erase instructions from a map.
      *
-     *  This function traverses the AST rooted at the @ref get_global_block "global_block" and erases each encountered
-     *  instruction from the provided @ref InstructionMap based on its starting virtual address. */
+     *  This function traverses the AST rooted at the @ref globalBlock and erases each encountered instruction from the provided
+     *  @ref InstructionMap based on its starting virtual address. */
     void eraseInstructions(InstructionMap&/*in,out*/);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

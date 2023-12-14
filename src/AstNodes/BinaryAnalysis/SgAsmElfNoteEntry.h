@@ -1,5 +1,6 @@
 /** One entry of an ELF notes table. */
 class SgAsmElfNoteEntry: public SgAsmExecutableFileFormat {
+public:
     /** Property: Type of note.
      *
      *  See official ELF specification. */

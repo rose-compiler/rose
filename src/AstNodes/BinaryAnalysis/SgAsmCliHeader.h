@@ -2,6 +2,7 @@
  *
  *  "CLI" means "common language infrastructure; "CIL" is "common intermediate language". */
 class SgAsmCliHeader: public SgAsmGenericSection {
+public:
     /** Property: Cb
      *
      *  Size of the header in bytes */

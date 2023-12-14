@@ -4,6 +4,7 @@
 
 /** Operand for an ARM AArch64 A64 AT instruction. */
 class SgAsmAarch64AtOperand: public SgAsmExpression {
+public:
     /** Property: AT Operation.
      *
      *  An enum representing the operation to be performed. */

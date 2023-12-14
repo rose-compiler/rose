@@ -14,6 +14,7 @@
  *  get_relativeValue() and set_relativeValue() methods. The class also defines get_absoluteValue() and
  *  set_aabsoluteValue() methods that operate on the absolute value (which isn't actually stored anywhere). */
 class SgAsmIntegerValueExpression: public SgAsmConstantExpression {
+public:
     /** Property: Base node associated with an integer.
      *
      * When setting this property, the base node is changed without updating this object's relative value, thus this
@@ -55,12 +56,12 @@ public:
      *  a known, unnamed function, a non-entry instruction within a function, or some memory location we didn't
      *  disassemble.  But when labeled with @p quiet being false, the output will be:
      *
-     *  <ul>
-     *    <li>call 0x004126bb<main>; points to a function with a name</li>
-     *    <li>call 0x004126bb<<Func>>; points to a function without a name</li>
-     *    <li>call 0x004126bb<<Insn>>; points to an instruction that's not a function entry point</li>
-     *    <li>call 0x004126bb; points to something that's not been disassembled</li>
-     *  </ul> */
+     *  @code
+     *  call 0x004126bb<main>; points to a function with a name
+     *  call 0x004126bb<<Func>>; points to a function without a name
+     *  call 0x004126bb<<Insn>>; points to an instruction that's not a function entry point
+     *  call 0x004126bb; points to something that's not been disassembled
+     *  @endcode */
     std::string get_label(bool quiet=false) const;
 
     /** Return the number of significant bits in the value. */

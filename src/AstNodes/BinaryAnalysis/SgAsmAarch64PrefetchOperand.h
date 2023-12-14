@@ -4,7 +4,7 @@
 
 /** Operand for an ARM AArch64 A64 prefetch instruction. */
 class SgAsmAarch64PrefetchOperand: public SgAsmExpression {
-
+public:
     /** Property: Prefetch operation.
      *
      *  An enum representing the operation to be performed. */

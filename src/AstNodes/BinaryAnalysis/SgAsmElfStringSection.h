@@ -2,6 +2,7 @@
  *
  *  A file section that holds string literals such as symbol names. */
 class SgAsmElfStringSection: public SgAsmElfSection {
+public:
     /** Property: String table.
      *
      *  Pointer to the actual string table for this section. */

@@ -1,4 +1,5 @@
 class SgAsmElfSegmentTableEntryList: public SgAsmExecutableFileFormat {
+public:
     /** Property: Segment table entries.
      *
      *  List of entries in this segment table.  The reason we have a whole AST node dedicated to holding this list rather

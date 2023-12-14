@@ -1,6 +1,6 @@
 /** CIL CustomAttribute node (II.22.10). */
 class SgAsmCilCustomAttribute: public SgAsmCilMetadata {
-
+public:
     /** Property: Parent.
      *
      *  An index into a metadata table that has an associated HasCustomAttribute index. */

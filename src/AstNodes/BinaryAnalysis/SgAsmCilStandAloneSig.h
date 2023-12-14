@@ -1,6 +1,6 @@
 /** CIL StandAloneSig node (II.22.36). */
 class SgAsmCilStandAloneSig: public SgAsmCilMetadata {
-
+public:
     /** Property: Signature.
      *
      *  An index into the Blob heap. */

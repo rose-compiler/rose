@@ -1,5 +1,6 @@
 /** Strings stored in an ELF or PE container. */
 class SgAsmStoredString: public SgAsmGenericString {
+public:
     /** Property: Storage area for this string. */
     [[using Rosebud: rosetta]]
     SgAsmStringStorage* storage = nullptr;

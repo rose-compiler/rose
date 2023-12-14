@@ -1,6 +1,6 @@
 /** CIL Field node (II.22.15). */
 class SgAsmCilField: public SgAsmCilMetadata {
-
+public:
     /** Property: Flags.
      *
      *  A 2-byte bitmask of type FieldAttributes. */

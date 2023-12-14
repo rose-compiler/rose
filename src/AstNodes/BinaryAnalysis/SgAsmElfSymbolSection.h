@@ -1,5 +1,6 @@
 /** ELF file section containing symbols. */
 class SgAsmElfSymbolSection: public SgAsmElfSection {
+public:
     /** Property: Whether this section represents dynamic linking symbols. */
     [[using Rosebud: rosetta]]
     bool isDynamic = false;
@@ -38,7 +39,7 @@ public:
     using SgAsmElfSection::calculateSizes;
     /** Return sizes for various parts of the table.
      *
-     *  See documentation for @ref SgAsmElfSection::calculate_sizes. */
+     *  See documentation for @ref SgAsmElfSection::calculateSizes. */
     virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const override;
 
     /** Called prior to unparsing.

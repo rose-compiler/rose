@@ -1,6 +1,6 @@
 /** CIL MethodSpec node (II.22.29). */
 class SgAsmCilMethodSpec: public SgAsmCilMetadata {
-
+public:
     /** Property: Method.
      *
      *  An index into the MethodDef or MemberRef table. */

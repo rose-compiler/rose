@@ -1,8 +1,6 @@
 [[Rosebud::abstract]]
 class SgAsmDwarfConstruct: public SgAsmDwarfInformation {
-    // AsmDwarfConstruct.setFunctionPrototype("HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
-    // AsmDwarfConstruct.setFunctionSource("SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
-
+public:
     // For now we will store the nesting level (just to support debugging), then it will be removed.
     [[using Rosebud: rosetta, ctor_arg]]
     int nesting_level = 0;

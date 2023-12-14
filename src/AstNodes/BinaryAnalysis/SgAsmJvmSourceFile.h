@@ -2,6 +2,7 @@
  *
  *  A SourceFile attribute stores an index to the name of the class file, see section 4.7.10 of the JVM specification. */
 class SgAsmJvmSourceFile: public SgAsmJvmAttribute {
+public:
     /** Property: sourcefile_index
      *
      *  The value of the sourcefile_index item must be a valid index into the constant_pool table (see JVM specification). */

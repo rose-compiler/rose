@@ -3,6 +3,7 @@
  *  The NestHost attribute records the nest host of the nest to which the current class or
  *  interface claims to belong, see section 4.7.28 of the JVM specification. */
 class SgAsmJvmNestHost: public SgAsmJvmAttribute {
+public:
     /** Property: classes
      *
      *  The value in the host_class_index item must be a valid index into the constant_pool table.

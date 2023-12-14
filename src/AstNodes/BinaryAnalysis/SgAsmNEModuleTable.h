@@ -1,4 +1,5 @@
 class SgAsmNEModuleTable: public SgAsmGenericSection {
+public:
     [[using Rosebud: rosetta, traverse]]
     SgAsmNEStringTable* strtab = nullptr;
 

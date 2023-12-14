@@ -294,14 +294,14 @@ public:
 
     /** Dump debugging information into a named text file.
      *
-     *  Writes a new file from the IR node for a parsed executable file. Warning: This function might modify the AST by
-     *  calling @ref reallocate, which makes sure all parts of the AST are consistent with respect to each other. */
+     *  Writes a new file from the IR node for a parsed executable file. Warning: This function might modify the AST by calling @ref
+     *  SgAsmGenericSection::reallocate, which makes sure all parts of the AST are consistent with respect to each other. */
     static void unparseBinaryFormat(const std::string &name, SgAsmGenericFile*);
 
     /** Dump debugging information to specified stream.
      *
-     *  Unparses an executable file into the supplied output stream. Warning: This function might modify the AST by calling
-     *  reallocate(), which makes sure all parts of the AST are consistent with respect to each other. */
+     *  Unparses an executable file into the supplied output stream. Warning: This function might modify the AST by calling @ref
+     *  SgAsmGenericSection::reallocate, which makes sure all parts of the AST are consistent with respect to each other. */
     static void unparseBinaryFormat(std::ostream&, SgAsmGenericFile*);
 
     /** Diagnostic stream. */
@@ -309,7 +309,7 @@ public:
 
     /** Initialize diagnostic streams.
      *
-     *  This is called automatically by @ref Rose::initializeLibrary. */
+     *  This is called automatically by @ref Rose::initialize. */
     static void initDiagnostics();
 
     /** Display binary data.

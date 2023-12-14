@@ -1,6 +1,6 @@
 /** CIL InterfaceImpl node (II.22.23). */
 class SgAsmCilInterfaceImpl: public SgAsmCilMetadata {
-
+public:
     /** Property: Class.
      *
      *  An index into the TypeDef table. */

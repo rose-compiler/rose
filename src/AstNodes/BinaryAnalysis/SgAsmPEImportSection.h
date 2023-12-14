@@ -141,6 +141,7 @@
  *      SgAsmPEImportItem
  */
 class SgAsmPEImportSection: public SgAsmPESection {
+public:
     /** Property: List of import directories.
      *
      *  See PE specification. */

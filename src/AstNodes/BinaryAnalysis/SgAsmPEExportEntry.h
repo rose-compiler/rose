@@ -1,5 +1,6 @@
 /** Export entry. */
 class SgAsmPEExportEntry: public SgAsmExecutableFileFormat {
+public:
     /** Property: Name.
      *
      *  See PE specification.

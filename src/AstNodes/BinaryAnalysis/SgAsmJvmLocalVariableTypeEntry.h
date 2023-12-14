@@ -2,6 +2,7 @@
  *
  *  Each local_variable is described by a local_variable_table anonymous structure.  See the JVM specification, section 4.7.14. */
 class SgAsmJvmLocalVariableTypeEntry: public SgAsmJvmNode {
+public:
     /** Property: start_pc
      *
      *  The value of the start_pc item must be a valid index into the code array of this Code attribute and must be

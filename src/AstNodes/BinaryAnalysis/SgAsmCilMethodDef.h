@@ -1,6 +1,6 @@
 /** CIL MethodDef node (II.22.26). */
 class SgAsmCilMethodDef: public SgAsmCilMetadata {
-
+public:
     /** Property: RVA.
      *
      *  A 4-byte constant. */

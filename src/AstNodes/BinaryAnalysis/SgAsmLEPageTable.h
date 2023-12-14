@@ -1,4 +1,5 @@
 class SgAsmLEPageTable: public SgAsmGenericSection {
+public:
     [[using Rosebud: rosetta, traverse, large]]
     SgAsmLEPageTableEntryPtrList entries;
 

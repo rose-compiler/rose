@@ -5,6 +5,7 @@
  *  replicated here.
  */
 class SgAsmJvmFileHeader: public SgAsmGenericHeader {
+public:
     /** Property: Minor version.
      *
      *  Minor version number of this class file. */

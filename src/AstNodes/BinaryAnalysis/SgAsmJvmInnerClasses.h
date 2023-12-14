@@ -4,6 +4,7 @@
  *  the JVM specification.
  */
 class SgAsmJvmInnerClasses: public SgAsmJvmAttribute {
+public:
     /** Property: List of pointers to InnerClasses attribute entry. */
     [[using Rosebud: rosetta, large]]
     SgAsmJvmInnerClassesEntryPtrList classes;

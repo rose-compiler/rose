@@ -4,6 +4,7 @@
  *  a bootstrap method, and a sequence (perhaps empty) of indexes to static arguments for the bootstrap method.
  */
 class SgAsmJvmBootstrapMethod: public SgAsmJvmNode {
+public:
     /** Property: bootstrap_method_ref.
      *
      *  The value of the bootstrap_method_ref item must be a valid index into the constant_pool table.

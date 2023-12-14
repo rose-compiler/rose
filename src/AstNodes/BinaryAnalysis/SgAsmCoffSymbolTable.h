@@ -2,6 +2,7 @@
  *
  *  This is a symbol table used by Microsoft PE format. */
 class SgAsmCoffSymbolTable: public SgAsmGenericSection {
+public:
     /** Property: String table.
      *
      *  Table that holds the strings for the symbol names. */

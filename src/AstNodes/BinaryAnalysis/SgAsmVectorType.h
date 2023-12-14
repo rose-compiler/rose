@@ -1,5 +1,6 @@
 /** Base class for vector types. */
 class SgAsmVectorType: public SgAsmType {
+public:
     /** Property: Number of elements in vector. */
     [[using Rosebud: rosetta, accessors(), mutators()]]
     size_t nElmts = 0;

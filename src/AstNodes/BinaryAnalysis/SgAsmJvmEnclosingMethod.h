@@ -3,6 +3,7 @@
  *  A class must have an EnclosingMethod attribute if and only if it represents a local class or an anonymous class, see section
  *  4.7.7 of the JVM specification. */
 class SgAsmJvmEnclosingMethod: public SgAsmJvmAttribute {
+public:
     /** Property: class_index
      *
      *  The value of the class_index item must be a valid index into the constant_pool table (see JVM specification). */

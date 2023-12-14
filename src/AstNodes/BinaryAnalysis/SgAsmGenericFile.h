@@ -8,14 +8,14 @@ class SgAsmGenericFile: public SgAsmExecutableFileFormat {
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Section modification functions for @ref shift_extend. */
+    /** Section modification functions for @ref shiftExtend. */
     enum AddressSpace {
         ADDRSP_MEMORY = 0x0001,
         ADDRSP_FILE   = 0x0002,
         ADDRSP_ALL    = 0x0003
     };
 
-    /** Elasticity argument for @ref shift_extend. */
+    /** Elasticity argument for @ref shiftExtend. */
     enum Elasticity {
         ELASTIC_NONE  = 0,                          /**< Nothing is elastic; other parts of space are shifted. */
         ELASTIC_UNREF = 1,                          /**< Unreferenced address space is elastic. */
@@ -25,7 +25,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+public:
     /** Property: DWARF debugging hiearchy. */
     [[using Rosebud: rosetta, traverse]]
     SgAsmDwarfCompilationUnitList* dwarfInfo = nullptr;
@@ -90,7 +90,6 @@ public:
     /** Loads file contents into memory. */
     SgAsmGenericFile* parse(std::string file_name);
 
-    /** Call this before unparsing to make sure everything is consistent. */
     void reallocate();
 
     /** Mirror image of parsing an executable file.
@@ -150,21 +149,20 @@ public:
 
     /** Reads data from a file.
      *
-     *  Reads up to @p size bytes of data starting at the specified (absolute) virtual address. The @p map specifies how
-     *  virtual addresses are mapped to file offsets.  As bytes are read, if we encounter a virtual address that is not
-     *  mapped we stop reading and do one of two things: if @p strict is set then a @ref MemoryMap::NotMapped exception is
-     *  thrown; otherwise the rest of the @p dst_buf is zero filled and the number of bytes read (not filled) is
-     *  returned. */
+     *  Reads up to @p size bytes of data starting at the specified (absolute) virtual address. The @p map specifies how virtual
+     *  addresses are mapped to file offsets.  As bytes are read, if we encounter a virtual address that is not mapped we stop
+     *  reading and do one of two things: if @p strict is set then a @ref Rose::BinaryAnalysis::MemoryMap::NotMapped exception is
+     *  thrown; otherwise the rest of the @p dst_buf is zero filled and the number of bytes read (not filled) is returned. */
     size_t readContent(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t va, void *dst_buf,
                        rose_addr_t size, bool strict=true);
 
     /** Reads a string from a file.
      *
-     *  Returns the string stored at the specified (absolute) virtual address. The returned string contains the bytes
-     *  beginning at the starting virtual address and continuing until we reach a NUL byte or an address which is not
-     *  mapped. If we reach an address which is not mapped then one of two things happen: if @p strict is set then a @ref
-     *  MemoryMap::NotMapped exception is thrown; otherwise the string is simply terminated. The returned string does not
-     *  include the NUL byte. */
+     *  Returns the string stored at the specified (absolute) virtual address. The returned string contains the bytes beginning at
+     *  the starting virtual address and continuing until we reach a NUL byte or an address which is not mapped. If we reach an
+     *  address which is not mapped then one of two things happen: if @p strict is set then a @ref
+     *  Rose::BinaryAnalysis::MemoryMap::NotMapped exception is thrown; otherwise the string is simply terminated. The returned
+     *  string does not include the NUL byte. */
     std::string readContentString(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t va, bool strict=true);
 
     /** Reads a string from a file.
@@ -245,20 +243,20 @@ public:
     /** Find section by address.
      *
      *  Returns single section that is mapped to include the specified virtual address across all headers. See also
-     *  @ref get_best_section_by_va. */
+     *  @ref get_bestSectionByVa. */
     SgAsmGenericSection *get_sectionByVa(rose_addr_t va, size_t *nfound=0) const;
 
     /** Find section by address.
      *
-     *  Similar to @ref get_section_by_va except when more than one section contains the specified virtual address this
+     *  Similar to @ref get_sectionByVa except when more than one section contains the specified virtual address this
      *  choose the "best" one. All candidates must map the virtual address to the same file address or else we fail (return
-     *  null and number of candidates). See @ref best_section_by_va for definition of "best". */
+     *  null and number of candidates). See @ref bestSectionByVa for definition of "best". */
     SgAsmGenericSection *get_bestSectionByVa(rose_addr_t va, size_t *nfound=0) const;
 
     /** Definition for "best".
      *
-     *  This is the definition of "best" as used by @ref get_best_section_by_va and @ref
-     *  SgAsmGenericHeader::get_best_section_by_va.  The specified list of sections is scanned and the best one
+     *  This is the definition of "best" as used by @ref get_bestSectionByVa and @ref
+     *  SgAsmGenericHeader::get_bestSectionByVa.  The specified list of sections is scanned and the best one
      *  containing the specified virtual address is returned.  The operation is equivalent to the successive elimination of
      *  bad sections: first eliminate all sections that do not contain the virtual address.  If more than one remains,
      *  eliminate all but the smallest.  If two or more are tied in size and at least one has a name, eliminate those that
@@ -333,7 +331,7 @@ public:
 
     /** Deletes "hole" sections.
      *
-     *  Undoes what @ref fill_holes did. */
+     *  Undoes what @ref fillHoles did. */
     void unfillHoles();
 
     /** Adds a new header to the file.

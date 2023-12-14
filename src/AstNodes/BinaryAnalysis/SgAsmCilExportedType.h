@@ -1,6 +1,6 @@
 /** CIL ExportedType node (II.22.14). */
 class SgAsmCilExportedType: public SgAsmCilMetadata {
-
+public:
     /** Property: EventFlags.
      *
      *  A 4-byte bitmask of type TypeAttribute. */

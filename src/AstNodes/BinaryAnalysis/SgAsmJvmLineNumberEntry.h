@@ -2,6 +2,7 @@
  *
  *  Each line_number is described by a line_number_table anonymous structure.  See the JVM specification, section 4.7.12. */
 class SgAsmJvmLineNumberEntry: public SgAsmJvmNode {
+public:
     /** Property: start_pc
      *
      *  The value of the start_pc item must be a valid index into the constant_pool table (see JVM specification). */

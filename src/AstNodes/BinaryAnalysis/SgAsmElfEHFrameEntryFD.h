@@ -1,5 +1,6 @@
 /** ELF error handling frame entry frame description entry. */
 class SgAsmElfEHFrameEntryFD: public SgAsmExecutableFileFormat {
+public:
     /** Property: Beginning relative virtual address.
      *
      *  See official ELF specification. */

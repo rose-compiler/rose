@@ -4,6 +4,7 @@
  *  initialization method and a class or interface initialization method, see section 4.7.3 of the JVM specification.
  */
 class SgAsmJvmCodeAttribute: public SgAsmJvmAttribute {
+public:
     /** Property: max_stack
      *
      *  The value of the max_stack item gives the maximum depth of the operand stack of this method at any point during execution of

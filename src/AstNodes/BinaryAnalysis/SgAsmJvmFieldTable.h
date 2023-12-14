@@ -4,6 +4,7 @@
  *  all in the SgAsmSectionTable node.  We can reconstruct the JVM Section Table since sections have unique ID numbers that are
  *  their original indices in the JVM Section Table. */
 class SgAsmJvmFieldTable: public SgAsmGenericSection {
+public:
     /** Property: List of pointers to fields. */
     [[using Rosebud: rosetta, traverse, large]]
     SgAsmJvmFieldPtrList fields;

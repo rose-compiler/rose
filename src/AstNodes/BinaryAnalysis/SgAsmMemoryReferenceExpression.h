@@ -1,5 +1,6 @@
 /** Reference to memory locations. */
 class SgAsmMemoryReferenceExpression: public SgAsmExpression {
+public:
     /** Property: Memory address expression.
      *
      *  This property stores the address of the memory reference.  If the reference is for multiple bytes of memory, then

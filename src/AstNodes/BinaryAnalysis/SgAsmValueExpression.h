@@ -7,6 +7,7 @@
  *  literals and will not have associated symbols. */
 [[Rosebud::abstract]]
 class SgAsmValueExpression: public SgAsmExpression {
+public:
     /** Property: Alternate expression without constant folding.
      *
      *  This is an optional expression that's equivalent to this expression but without constant folding.

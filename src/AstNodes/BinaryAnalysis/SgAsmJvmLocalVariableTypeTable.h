@@ -4,6 +4,7 @@
  *  attribute (4.7.3). It may be used by debuggers to determine the value of a given local variable during the
  *  execution of a method. See section 4.7.14 of the JVM specification. */
 class SgAsmJvmLocalVariableTypeTable: public SgAsmJvmAttribute {
+public:
     /** Property: local_variable_table
      *
      *  List of pointers to local_variable_type_table entries (see the JVM specification 4.7.14). */

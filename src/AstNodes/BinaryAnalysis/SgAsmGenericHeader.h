@@ -2,6 +2,7 @@
 
 /** Base class for container file headers. */
 class SgAsmGenericHeader: public SgAsmGenericSection {
+public:
     /** Property: General info about the executable format. */
     [[using Rosebud: rosetta, traverse]]
     SgAsmGenericFormat* executableFormat = createAndParent<SgAsmGenericFormat>(this);
@@ -40,7 +41,6 @@ public:
      *  the destructors. */
     explicit SgAsmGenericHeader(SgAsmGenericFile*);
 
-    /** Allow all sections to reallocate themselves */
     virtual bool reallocate() override;
 
     /** Unparse headers and all they point to */

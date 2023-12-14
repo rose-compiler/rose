@@ -1,4 +1,5 @@
 class SgAsmNENameTable: public SgAsmGenericSection {
+public:
     [[using Rosebud: rosetta]]
     SgStringList names;
 

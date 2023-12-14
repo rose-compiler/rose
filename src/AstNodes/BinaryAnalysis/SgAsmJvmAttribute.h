@@ -1,6 +1,7 @@
 /** Base class for a JVM attribute. */
 [[Rosebud::abstract]]
 class SgAsmJvmAttribute: public SgAsmJvmNode {
+public:
     /** Property: attribute_name_index
      *
      *  The value of the attribute_name_index item must be a valid index into the constant_pool table (see JVM specification). */

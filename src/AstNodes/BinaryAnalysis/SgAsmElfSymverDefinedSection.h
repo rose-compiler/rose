@@ -1,9 +1,10 @@
 /** The GNU symbol version definitions.
  *
- *  This section is usually named ".gnu.version_d".  The @ref SgAsmElfSymverDefinedSection points to a list of
- * entries (@ref SgAsmSymverDefinedEntry), which in turn point to a list of auxilliary members (@ref
- * SgAsmSymverDefinedAux). See @ref SgAsmSymverDefinedSection::parse for a good description of the disk format. */
+ *  This section is usually named ".gnu.version_d".  The @ref SgAsmElfSymverDefinedSection points to a list of entries (@ref
+ *  SgAsmElfSymverDefinedEntry), which in turn point to a list of auxilliary members (@ref SgAsmElfSymverDefinedAux). See @ref
+ *  SgAsmElfSymverDefinedSection::parse for a good description of the disk format. */
 class SgAsmElfSymverDefinedSection: public SgAsmElfSection {
+public:
     /** Property: List of entries.
      *
      *  This is a pointer to an AST node which contains the list. The reason the list isn't stored here directly is due to
@@ -86,7 +87,7 @@ public:
     virtual SgAsmElfSymverDefinedSection* parse() override;
 
     using SgAsmElfSection::calculateSizes;
-    /** Return sizes for various parts of the table. See doc for SgAsmElfSection::calculate_sizes. */
+    /** Return sizes for various parts of the table. See doc for SgAsmElfSection::calculateSizes. */
     virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const override;
 
     /** Write SymverDefined section back to disk.

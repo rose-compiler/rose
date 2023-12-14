@@ -22,7 +22,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+public:
     /** Property: File to which this section belongs. */
     [[using Rosebud: rosetta]]
     SgAsmGenericFile* file = nullptr;
@@ -35,7 +35,7 @@ public:
      *
      *  This is the current file size of the section in bytes as it exists in the file.. The original size of the
      *  section (available when @ref parse is called for the function, but possibly updated while parsing) is available
-     *  through the size of the original @ref p_data "data" property.
+     *  through the size of the original @ref data property.
      *
      *  When ths size is set, some types of sections may do additional work. That additional work must not adjust the size
      *  of other sections or the mapping of any section (use @ref SgAsmGenericFile::resize to do that).
@@ -166,15 +166,15 @@ public:
 
     /** Property: Virtual address where ROSE maps this section.
      *
-     *  The actual mapping is sometimes different than the preferred mapping indicated in the section table due to file
-     *  and/or memory alignment constraints or conflicts with other sections.  The only place values are assigned to this
-     *  data member is in the @ref BinaryLoader class and subclasses thereof.
+     *  The actual mapping is sometimes different than the preferred mapping indicated in the section table due to file and/or
+     *  memory alignment constraints or conflicts with other sections.  The only place values are assigned to this data member is in
+     *  the @ref Rose::BinaryAnalysis::BinaryLoader class and subclasses thereof.
      *
-     *  The address corresponds to the latest call into the @ref BinaryLoader classes.  Depending on the loader employed,
-     *  it's possible for a section to be mapped, this @c mapped_actual_va value to be set, and then some other section to
-     *  be mapped over the top of all or part of the first section. In that case, the @c mapped_actual_va of the first
-     *  section is not reset to zero.  The return value is not conditional upon @ref is_mapped since that predicate applies
-     *  only to preferred mapping attributes. */
+     *  The address corresponds to the latest call into the @ref Rose::BinaryAnalysis::BinaryLoader classes.  Depending on the
+     *  loader employed, it's possible for a section to be mapped, this @c mapped_actual_va value to be set, and then some other
+     *  section to be mapped over the top of all or part of the first section. In that case, the @c mapped_actual_va of the first
+     *  section is not reset to zero.  The return value is not conditional upon @ref isMapped since that predicate applies only to
+     *  preferred mapping attributes. */
     [[using Rosebud: rosetta]]
     rose_addr_t mappedActualVa = 0;
 
@@ -185,7 +185,7 @@ private:
     /* This is an optional local, writable pool for the p_data member. Normally a section will point into the pool
      * for its SgAsmGenericFile which is memory-mapped (read-only) from the actual file being parsed. The default
      * unparsing action is to write the original data back to the file. By allowing a section to allocate its own
-     * pool for p_data we create a very easy way to get data into the unparsed file (the alternative is to derive
+     * pool for `data` we create a very easy way to get data into the unparsed file (the alternative is to derive
      * a new class and override the unparse() method). */
     unsigned char *local_data_pool;
 
@@ -210,12 +210,15 @@ public:
      *  be extended, however, by calling @ref extend, which is typically done during parsing. */
     void grabContent();
 
+    /** Parse contents of the section.
+     *
+     *  This is normally reimplemented in subclasses. */
     virtual SgAsmGenericSection* parse();
 
     /** Print some debugging info. */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 
-    // Implemented in subclasses
+    /** Called prior to unparse to make things consistent. */
     virtual bool reallocate() { return false; }
 
     /** Write a section back to the file.
@@ -240,25 +243,23 @@ public:
 
     /** Extend a section by some number of bytes during the construction and/or parsing phase.
      *
-     *  This is function is considered to be part of the parsing and construction of a section--it changes the part of the
-     *  file that's considered the "original size" of the section. To adjust the size of a section after the executable
-     *  file is parsed, see @ref SgAsmGenericFile::resize.  Sections are allowed to extend beyond the end of the file and
-     *  the original data (the @ref get_data "data" property) is extended only up to the end of the file. */
+     *  This is function is considered to be part of the parsing and construction of a section--it changes the part of the file
+     *  that's considered the "original size" of the section. To adjust the size of a section after the executable file is parsed,
+     *  see @ref SgAsmGenericFile::resize.  Sections are allowed to extend beyond the end of the file and the original data (the
+     *  @ref data property) is extended only up to the end of the file. */
     void extend(rose_addr_t nbytes);
 
     /** Write data to a file section.
      *
-     *  @param f       Output steam to which to write
-     *  @param offset  Byte offset relative to start of this section
-     *  @param bufsize Size of @p buf in bytes
-     *  @param buf     Buffer of bytes to be written
+     *  Writes data to the specified file at the specified offset (first two arguments). The remaining arguments specify the
+     *  data to be written.
      *
-     *  @returns Returns the section-relative byte offset for the first byte beyond what would have been written if all
-     *  bytes of the buffer were written.
+     *  Returns the section-relative byte offset for the first byte beyond what would have been written if all bytes of the buffer
+     *  were written.
      *
-     *  The buffer is allowed to extend past the end of the section as long as the part that extends beyond is all
-     *  zeros. The zeros will not be written to the output file.  Furthermore, any trailing zeros that extend beyond the
-     *  end of the file will not be written (end-of-file is determined by @ref SgAsmGenericFile::get_orig_size).
+     *  The buffer is allowed to extend past the end of the section as long as the part that extends beyond is all zeros. The zeros
+     *  will not be written to the output file.  Furthermore, any trailing zeros that extend beyond the end of the file will not be
+     *  written (end-of-file is determined by @ref SgAsmGenericFile::get_originalSize).
      *
      * @{ */
     rose_addr_t   write(std::ostream &f, rose_addr_t offset, size_t bufsize, const void *buf) const;
@@ -289,13 +290,13 @@ public:
 
     /** Reads data from a file.
      *
-     *  Reads up to @p size bytes of data beginning at byte @p start (absolute or relative virtual address) in the mapped
-     *  address space and placing the results in @p dst_buf and returning the number of bytes read. The return value could
-     *  be smaller than @p size if the reading encounters virtual addresses that are not mapped.  When an unmapped virtual
-     *  address is encountered the reading stops (even if subsequent virtual addresses are defined) and one of two things
-     *  happen: if @p strict is set (the default) then an @ref MemoryMap::NotMapped exception is thrown, otherwise the @p
-     *  dst_buf is padded with zeros so that all @p size bytes are initialized. The @p map is used to map virtual addresses
-     *  to file offsets; if @p map is NULL then the map defined in the underlying file is used.
+     *  Reads up to @p size bytes of data beginning at byte @p start (absolute or relative virtual address) in the mapped address
+     *  space and placing the results in @p dst_buf and returning the number of bytes read. The return value could be smaller than
+     *  @p size if the reading encounters virtual addresses that are not mapped.  When an unmapped virtual address is encountered
+     *  the reading stops (even if subsequent virtual addresses are defined) and one of two things happen: if @p strict is set (the
+     *  default) then an @ref Rose::BinaryAnalysis::MemoryMap::NotMapped exception is thrown, otherwise the @p dst_buf is padded
+     *  with zeros so that all @p size bytes are initialized. The @p map is used to map virtual addresses to file offsets; if @p map
+     *  is NULL then the map defined in the underlying file is used.
      *
      * @{ */
     size_t readContent(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t start,  void *dst_buf,
@@ -306,18 +307,18 @@ public:
 
     /** Reads data from a file.
      *
-     *  This behaves the same as @ref read_content except the starting offset is relative to the beginning of this section.
-     *  Reading past the end of the section is not allowed and treated as a short read, and one of two things happen: if @p
-     *  strict is set (the default) then an @ref SgAsmExecutableFileFormat::ShortRead exception is thrown, otherwise the
-     *  result is zero padded so as to contain exactly @p size bytes. */
+     *  This behaves the same as @ref readContent except the starting offset is relative to the beginning of this section.  Reading
+     *  past the end of the section is not allowed and treated as a short read, and one of two things happen: if @p strict is set
+     *  (the default) then an @ref SgAsmExecutableFileFormat::ShortRead exception is thrown, otherwise the result is zero padded so
+     *  as to contain exactly @p size bytes. */
     size_t readContentLocal(rose_addr_t rel_offset, void *dst_buf, rose_addr_t size, bool strict=true);
 
     /** Reads a string from the file.
      *
-     *  The string begins at the specified virtual address and continues until the first NUL byte or until we reach an
-     *  address that is not mapped. However, if @p strict is set (the default) and we reach an unmapped address then an
-     *  @ref MemoryMap::NotMapped exception is thrown. The @p map defines the mapping from virtual addresses to file
-     *  offsets; if @p map is NULL then the map defined in the underlying file is used. */
+     *  The string begins at the specified virtual address and continues until the first NUL byte or until we reach an address that
+     *  is not mapped. However, if @p strict is set (the default) and we reach an unmapped address then an @ref
+     *  Rose::BinaryAnalysis::MemoryMap::NotMapped exception is thrown. The @p map defines the mapping from virtual addresses to
+     *  file offsets; if @p map is NULL then the map defined in the underlying file is used. */
     std::string readContentString(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t va, bool strict=true);
 
     /** Reads a string from the file.
@@ -360,26 +361,25 @@ public:
 
     /** Obtain a local, writable pool to hold content.
      *
-     *  Sections typically point into the memory mapped, read-only file stored in the SgAsmGenericFile parent initialized
-     *  by calling @ref grab_content (or indirectly by calling @ref parse).  This is also the same data which is, by
-     *  default, written back out to the new file during @ref unparse.  Programs modify section content by either
-     *  overriding the @ref unparse method or by modifying the @ref p_data "data" property. But in order to modify @ref
-     *  p_data "data" we have to make sure that it's pointing to a read/write memory pool. This function replaces the
-     *  read-only memory pool with a new one containing @p nbytes bytes of zeros. */
+     *  Sections typically point into the memory mapped, read-only file stored in the SgAsmGenericFile parent initialized by calling
+     *  @ref grabContent (or indirectly by calling @ref parse).  This is also the same data which is, by default, written back out
+     *  to the new file during @ref unparse.  Programs modify section content by either overriding the @ref unparse method or by
+     *  modifying the @ref data property. But in order to modify @ref data we have to make sure that it's pointing to a read/write
+     *  memory pool. This function replaces the read-only memory pool with a new one containing @p nbytes bytes of zeros. */
     unsigned char *writableContent(size_t nbytes);
 
     /** Returns a list of parts of a single section that have been referenced.
      *
-     *  The offsets are relative to the start of the section. The tracking actually happens at the entire file level (see
-     *  @ref SgAsmGenericFile::get_referenced_extents) and this function returns that same information but limits the
-     *  results to this section, and returns section offsets rather than file offsets. */
+     *  The offsets are relative to the start of the section. The tracking actually happens at the entire file level (see the @ref
+     *  SgAsmGenericFile::referencedExtents property) and this function returns that same information but limits the results to this
+     *  section, and returns section offsets rather than file offsets. */
     AddressIntervalSet get_referencedExtents() const;
 
     /** Returns a list of parts of a single section that have not been referenced.
      *
-     *  The offsets are relative to the start of the section. The tracking actually happens at the entire file level
-     *  (see @ref SgAsmGenericFile::get_unreferenced_extents) and this function returns that same information but
-     *  limits the results to this section, and returns section offsets rather than file offsets. */
+     *  The offsets are relative to the start of the section. The tracking actually happens at the entire file level (see @ref
+     *  SgAsmGenericFile::get_unreferencedExtents) and this function returns that same information but limits the results to this
+     *  section, and returns section offsets rather than file offsets. */
     AddressIntervalSet get_unreferencedExtents() const;
 
     /** Whether section desires to be mapped to memory.
@@ -400,20 +400,19 @@ public:
 
     /** Virtual address where section prefers to be mapped.
      *
-     *  Returns (non-relative) virtual address if mapped, zero otherwise. See also, the @ref get_mapped_preferred_rva
-     *  "mapped_preferred_rva" property. */
+     *  Returns (non-relative) virtual address if mapped, zero otherwise. See also, the @ref mappedPreferredRva property. */
     rose_addr_t get_mappedPreferredVa() const;
 
     /** File offset for specified virtual address.
      *
-     *  Returns the file offset associated with the virtual address of a mapped section. The @ref MemoryMap class is a
-     *  better interface to this same information. */
+     *  Returns the file offset associated with the virtual address of a mapped section. The @ref Rose::BinaryAnalysis::MemoryMap
+     *  class is a better interface to this same information. */
     rose_addr_t get_vaOffset(rose_addr_t va) const;
 
     /** File offset for specified relative virtual address.
      *
-     *  Returns the file offset associated with the relative virtual address of a mapped section.  The @ref MemoryMap class
-     *  is a better interface to this same information. */
+     *  Returns the file offset associated with the relative virtual address of a mapped section.  The @ref
+     *  Rose::BinaryAnalysis::MemoryMap class is a better interface to this same information. */
     rose_addr_t get_rvaOffset(rose_addr_t rva) const;
 
     /** Returns the file extent for the section.
@@ -424,20 +423,20 @@ public:
     /** Returns the memory extent for a mapped section.
      *
      *  If the section is not mapped then offset and size will be zero. The return value is computed from the @ref
-     *  get_mapped_preferred_rva "mapped_preferred_rva" and @ref get_mapped_size "mapped_size" properties. */
+     *  mappedPreferredRva and @ref mappedSize properties. */
     Extent get_mappedPreferredExtent() const;
 
     /** Increase file offset and mapping address to satisfy alignment constraints.
      *
-     *  This is typically done when initializing a new section. The constructor places the new section at the end of the
-     *  file before it knows what the alignment constraints will be. The user should then set the alignment constraints
-     *  (see @ref set_file_alignment "file_alignment" and @ref set_mapped_alignment "mapped_alignment" properties) and call
-     *  this method.  This method must be called before any additional sections are appended to the file.
+     *  This is typically done when initializing a new section. The constructor places the new section at the end of the file before
+     *  it knows what the alignment constraints will be. The user should then set the alignment constraints (see @ref fileAlignment
+     *  and @ref mappedAlignment properties) and call this method.  This method must be called before any additional sections are
+     *  appended to the file.
      *
      *  The file offset and memory mapping address are adjusted independently.
      *
      *  On the other hand, if additional sections are in the way, they must first be moved out of the way with the
-     *  @ref SgAsmGenericFile::shift_extend method.
+     *  @ref SgAsmGenericFile::shiftExtend method.
      *
      *  Returns true if the file offset and/or mapping address changed as a result of this call. */
     bool align();

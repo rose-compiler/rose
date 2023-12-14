@@ -1,5 +1,6 @@
 /** Entry in an ELF symbol version table. */
 class SgAsmElfSymverEntry: public SgAsmExecutableFileFormat {
+public:
     /** Property: Value.
      *
      *  Numeric value of this symbol. */

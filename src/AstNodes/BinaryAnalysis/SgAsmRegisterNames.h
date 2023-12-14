@@ -1,5 +1,6 @@
 /** An ordered list of registers. */
 class SgAsmRegisterNames: public SgAsmExpression {
+public:
     /** Property: List of registers.
      *
      *  These are the actual registers contained in this node.  Registers are stored in this node instead of directly in a

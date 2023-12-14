@@ -1,6 +1,6 @@
 /** CIL GenericParam node (II.22.20). */
 class SgAsmCilGenericParam: public SgAsmCilMetadata {
-
+public:
     /** Property: Number.
      *
      *  The 2-byte index of the generic parameter. */

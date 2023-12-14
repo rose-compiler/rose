@@ -1,5 +1,6 @@
 /** Base class for ELF file sections. */
 class SgAsmElfSection: public SgAsmGenericSection {
+public:
     /** Property: Linked section.
      *
      *  Points to an optional related section. See official ELF specification.
@@ -27,15 +28,14 @@ public:
 
     /** Initializes the section from data parsed from the ELF Section Table.
      *
-     *  This includes the section name, offset, size, memory mapping, and alignments. The @p id is the index into the
-     *  section table. This function complements @ref SgAsmElfSectionTable::add_section in that this function initializes
-     *  this section from the section table while @ref SgAsmElfSectionTable::add_section "add_section" initializes the
-     *  section table from the section. */
+     *  This includes the section name, offset, size, memory mapping, and alignments. The @p id is the index into the section
+     *  table. This function complements @ref SgAsmElfSectionTable::addSection in that this function initializes this section from
+     *  the section table while @ref SgAsmElfSectionTable::addSection initializes the section table from the section. */
     SgAsmElfSection *initFromSectionTable(SgAsmElfSectionTableEntry*, SgAsmElfStringSection*, int id);
 
     /** Initializes the section from data parse from the ELF Segment Table.
      *
-     *  This is similar to @ref init_from_section_table but for segments instead of sections. */
+     *  This is similar to @ref initFromSectionTable but for segments instead of sections. */
     SgAsmElfSection *initFromSegmentTable(SgAsmElfSegmentTableEntry*, bool mmapOnly=false);
 
     /** Returns info about the size of the entries based on information already available.
@@ -81,7 +81,6 @@ public:
      *  sh_entsize), could be smaller than the total size of the section. */
     virtual rose_addr_t calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 
-    /** Called prior to unparse to make things consistent. */
     virtual bool reallocate() override;
 
     /** Print some debugging info */
@@ -92,7 +91,7 @@ public:
 
     /** Obtain ELF header.
      *
-     *  This is just a convenience function so we don't need to constantly cast the return value from @ref get_header. */
+     *  This is just a convenience function so we don't need to constantly cast the return value from the @ref header property. */
     SgAsmElfFileHeader *get_elfHeader() const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -1,5 +1,6 @@
 /** Base class for dynamically linked library information. */
 class SgAsmGenericDLL: public SgAsmExecutableFileFormat {
+public:
     /** Property: Name.
      *
      * @{ */

@@ -1,5 +1,6 @@
 /** ELF section containing dynamic linking information. */
 class SgAsmElfDynamicSection: public SgAsmElfSection {
+public:
     /** Property: List of entries.
      *
      *  This points to a node whose only purpose is to hold the list. The list cannot be contained directly here where it's
@@ -18,10 +19,9 @@ public:
     virtual void finishParsing() override;
 
     using SgAsmElfSection::calculateSizes;
-    /** Return sizes for various parts of the table. See documentation for @ref SgAsmElfSection::calculate_sizes. */
+    /** Return sizes for various parts of the table. See documentation for @ref SgAsmElfSection::calculateSizes. */
     virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const override;
 
-    /** Called prior to unparse to make things consistent. */
     virtual bool reallocate() override;
 
     /** Write the dynamic section back to disk */

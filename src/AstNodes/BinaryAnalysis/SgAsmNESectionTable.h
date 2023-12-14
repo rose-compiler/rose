@@ -1,4 +1,5 @@
 class SgAsmNESectionTable: public SgAsmGenericSection {
+public:
     [[using Rosebud: rosetta]]
     unsigned flags = 0;
 

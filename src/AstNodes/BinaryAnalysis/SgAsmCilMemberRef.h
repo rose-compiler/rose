@@ -1,6 +1,6 @@
 /** CIL MemberRef node (II.22.25). */
 class SgAsmCilMemberRef: public SgAsmCilMetadata {
-
+public:
     /** Property: Class.
      *
      *  An index into the MethodDef, ModuleRef, TypeDef, TypeRef, or TypeSpec tables. */

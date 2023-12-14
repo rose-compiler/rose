@@ -1,6 +1,6 @@
 /** CIL PropertyMap node (II.22.35). */
 class SgAsmCilPropertyMap: public SgAsmCilMetadata {
-
+public:
     /** Property: Parent.
      *
      *  An index into the TypeDef table. */

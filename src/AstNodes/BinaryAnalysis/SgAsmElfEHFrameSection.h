@@ -1,5 +1,6 @@
 /** Represents an ELF EH frame section. */
 class SgAsmElfEHFrameSection: public SgAsmElfSection {
+public:
     /** Property: CI entries.
      *
      *  See official ELF specification.  This property points to an AST node containing the list rather than the direct
@@ -16,7 +17,7 @@ public:
 
     /** Return sizes for various parts of the table.
      *
-     *  See documentation for @ref SgAsmElfSection::calculate_sizes. Since EH Frame Sections are run-length encoded, we
+     *  See documentation for @ref SgAsmElfSection::calculateSizes. Since EH Frame Sections are run-length encoded, we
      *  need to actually unparse the section in order to determine its size. */
     virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const override;
 

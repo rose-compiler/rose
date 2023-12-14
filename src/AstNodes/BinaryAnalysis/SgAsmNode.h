@@ -4,6 +4,7 @@
 /** Base class for all binary analysis IR nodes. */
 [[Rosebud::abstract]]
 class SgAsmNode: public SgNode {
+public:
     /** Attribute storage.
      *
      *  An attribute is extra user-defined data stored in an AST node.

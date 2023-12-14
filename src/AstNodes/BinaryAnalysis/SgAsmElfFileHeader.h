@@ -13,7 +13,7 @@ class SgAsmElfFileHeader: public SgAsmGenericHeader {
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Enum for the @ref get_e_type "e_type" property. */
+    /** Enum for the @ref e_type property. */
     enum ObjectType {
         ET_NONE         = 0                         /**< No file type */
         ,ET_REL          = 1                        /**< Relocatable file */
@@ -98,7 +98,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+public:
     /** Property: File class.
      *
      *  See ELF specification for details. */
@@ -201,7 +201,7 @@ public:
      *  The new section is placed at file offset zero and the size is initially one byte (calling @ref parse will extend it
      *  as necessary). Setting the initial size of non-parsed sections to a positive value works better when adding
      *  sections to the end-of-file since the sections will all have different starting offsets and therefore @ref
-     *  SgAsmGenericFile::shift_extend will know what order the sections should be in when they are eventually resized. */
+     *  SgAsmGenericFile::shiftExtend will know what order the sections should be in when they are eventually resized. */
     explicit SgAsmElfFileHeader(SgAsmGenericFile*);
 
     /** Maximum page size according to the ABI.
@@ -224,7 +224,6 @@ public:
      *  stored in the file, the size of the ELF File Header will be adjusted upward if necessary. */
     virtual SgAsmElfFileHeader *parse() override;
 
-    /** Update prior to unparsing */
     virtual bool reallocate() override;
 
     /** Write ELF contents back to a file. */

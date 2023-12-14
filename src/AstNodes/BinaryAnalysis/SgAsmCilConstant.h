@@ -1,6 +1,6 @@
 /** CIL Constant node (II.22.9). */
 class SgAsmCilConstant: public SgAsmCilMetadata {
-
+public:
     /** Property: Type.
      *
      *  A 1-byte constant. */

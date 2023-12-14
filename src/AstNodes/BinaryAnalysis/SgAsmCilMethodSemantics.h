@@ -1,6 +1,6 @@
 /** CIL MethodSemantics node (II.22.28). */
 class SgAsmCilMethodSemantics: public SgAsmCilMetadata {
-
+public:
     /** Property: Semantics.
      *
      *  A 2-byte bitmask of type MethodSemanticsAttributes. */

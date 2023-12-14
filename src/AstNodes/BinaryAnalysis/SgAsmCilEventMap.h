@@ -1,6 +1,6 @@
 /** CIL EventMap node (II.22.12). */
 class SgAsmCilEventMap: public SgAsmCilMetadata {
-
+public:
     /** Property: Parent.
      *
      *  An index into the TypeDef table. */

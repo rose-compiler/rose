@@ -2,6 +2,7 @@
 
 /** Basic information about an executable container. */
 class SgAsmGenericFormat: public SgAsmExecutableFileFormat {
+public:
     /** Property: Family. */
     [[using Rosebud: rosetta]]
     SgAsmGenericFormat::ExecFamily family = SgAsmGenericFormat::FAMILY_UNSPECIFIED;
@@ -20,7 +21,7 @@ class SgAsmGenericFormat: public SgAsmExecutableFileFormat {
 
     /** Property: Whether version is considered current.
      *
-     *  True if the @ref get_version "version" property is considered to be the current, supported version for this file
+     *  True if the @ref version property is considered to be the current, supported version for this file
      *  format. */
     [[using Rosebud: rosetta]]
     bool isCurrentVersion = false;

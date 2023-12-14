@@ -1,5 +1,6 @@
 // FIXME[Robb P Matzke 2016-10-31]: no idea what this is
 class SgAsmControlFlagsExpression: public SgAsmExpression {
+public:
     [[using Rosebud: rosetta]]
     unsigned long bitFlags = 0;
 

@@ -3,6 +3,7 @@
  *  The only purpose of this class is to store a list of node pointers which cannot be stored in the nodes that need it due to
  *  ROSETTA limitations. */
 class SgAsmPEImportDirectoryList: public SgAsmExecutableFileFormat {
+public:
     /** Property: List of nodes.
      *
      *  See PE specification. */

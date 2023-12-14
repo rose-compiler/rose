@@ -6,6 +6,7 @@
  *  structures in the PE file: (1) An entry in the Import Lookup Table, (2) an entry in the Import Address Table, and (3) an
  *  optional Hint/Name pair in the (implicit) Hint/Name Table. */
 class SgAsmPEImportItem: public SgAsmExecutableFileFormat {
+public:
     /** Property: Whether ordinal number is stored.
      *
      *  See PE specification. */

@@ -1,6 +1,6 @@
 /** CIL FieldMarshal node (II.22.17). */
 class SgAsmCilFieldMarshal: public SgAsmCilMetadata {
-
+public:
     /** Property: Parent.
      *
      *  An index into Field or Param table. */

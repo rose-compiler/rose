@@ -1,4 +1,5 @@
 class SgAsmDwarfLineList: public SgAsmDwarfInformation {
+public:
     [[using Rosebud: rosetta, traverse, large]]
     SgAsmDwarfLinePtrList line_list;
 

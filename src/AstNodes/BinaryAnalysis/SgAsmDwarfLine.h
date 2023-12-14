@@ -1,4 +1,5 @@
 class SgAsmDwarfLine: public SgAsmDwarfInformation {
+public:
     [[using Rosebud: rosetta, ctor_arg]]
     uint64_t address = 0;
 

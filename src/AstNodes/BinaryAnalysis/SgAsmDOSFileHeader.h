@@ -51,7 +51,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+public:
     /** Property: Last page size.
      *
      *  See DOS specification. */
@@ -167,7 +167,7 @@ public:
      *
      *  The DOS real-mode data+text section is assumed to appear immediately after the DOS Extended Header, which appears
      *  immediately after the DOS File Header, which appears at the beginning of the file. These assumptions are not checked until
-     *  SgAsmDOSFileHeader::unparse() is called. See also, @ref parse_rm_section. */
+     *  SgAsmDOSFileHeader::unparse() is called. See also, @ref parseRealModeSection. */
     void updateFromRealModeSection();
 
     /** Returns true if a cursory look at the file indicates that it could be a DOS executable file. */

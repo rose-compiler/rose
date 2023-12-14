@@ -3,6 +3,7 @@
 
 /** Represents one ARM A64 machine instruction. */
 class SgAsmAarch64Instruction: public SgAsmInstruction {
+public:
     /** Property: Instruction kind.
      *
      *  Returns an enum constant describing the AArch64 A64 instruction. These enum constants correspond roughly 1:1 with

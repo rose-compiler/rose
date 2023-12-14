@@ -6,6 +6,7 @@
  *  floating-point types; regions of unknown type; ease of improving type information by filling in more details as the
  *  type is discovered; etc. */
 class SgAsmStaticData: public SgAsmStatement {
+public:
     /** Property: Raw bytes.
      *
      *  These are the raw memory bytes of static data that appear in the binary specimen. Type information is painted onto

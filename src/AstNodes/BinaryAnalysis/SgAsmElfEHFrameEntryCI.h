@@ -2,6 +2,7 @@
  *
  *  Most of the properties of this class are documented in the official ELF specification. */
 class SgAsmElfEHFrameEntryCI: public SgAsmExecutableFileFormat {
+public:
     /** Property: Version number.
      *
      *  See official ELF specification. */

@@ -4,6 +4,7 @@
 
 /** Barriar operation operand for ISB, DMB, and DSB instructions. */
 class SgAsmAarch64BarrierOperand: public SgAsmExpression {
+public:
     /** Property: Barrier operation. */
     [[using Rosebud: ctor_arg]]
     Rose::BinaryAnalysis::Aarch64BarrierOperation operation;

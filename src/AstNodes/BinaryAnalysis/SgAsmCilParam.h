@@ -1,6 +1,6 @@
 /** CIL Param node (II.22.33). */
 class SgAsmCilParam: public SgAsmCilMetadata {
-
+public:
     /** Property: Flags.
      *
      *  A 2-byte bitmask of type ParamAttributes. */

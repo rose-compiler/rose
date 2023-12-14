@@ -1,6 +1,6 @@
 /** CIL Property node (II.22.34). */
 class SgAsmCilProperty: public SgAsmCilMetadata {
-
+public:
     /** Property: Flags.
      *
      *  A 2-byte bitmask of type PropertyAttributes. */

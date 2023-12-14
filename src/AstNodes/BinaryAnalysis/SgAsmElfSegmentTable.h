@@ -18,14 +18,14 @@ public:
     /** Attaches new segments to the segment table.
      *
      *  Attaches a previously unattached ELF Segment (@ref SgAsmElfSection) to the ELF Segment Table (@ref
-     *  SgAsmElfSegmentTable). This method complements @ref SgAsmElfSection::init_from_segment_table. This method
+     *  SgAsmElfSegmentTable). This method complements @ref SgAsmElfSection::initFromSegmentTable. This method
      *  initializes the segment table from the segment while init_from_segment_table initializes the segment from the
      *  segment table.
      *
-     *  ELF Segments are represented by @ref SgAsmElfSection objects since ELF Segments and ELF Sections overlap very much
-     *  in their features and thus should share an interface. An @ref SgAsmElfSection can appear in the ELF Section Table
-     *  and/or the ELF Segment Table and you can determine where it was located by calling @ref get_section_entry and
-     *  @ref get_segment_entry.
+     *  ELF Segments are represented by @ref SgAsmElfSection objects since ELF Segments and ELF Sections overlap very much in their
+     *  features and thus should share an interface. An @ref SgAsmElfSection can appear in the ELF Section Table and/or the ELF
+     *  Segment Table and you can determine where it was located with its @ref SgAsmElfSection::sectionEntry and @ref
+     *  SgAsmElfSection::segmentEntry properties.
      *
      *  Returns the new segment table entry linked into the AST. */
     SgAsmElfSegmentTableEntry *addSection(SgAsmElfSection*);
@@ -35,7 +35,6 @@ public:
      *  Any or all arguments may be null pointers if the caller is not interested in the value. */
     rose_addr_t calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 
-    /** Pre-unparsing updates */
     virtual bool reallocate() override;
 
     /** Write the segment table to disk. */

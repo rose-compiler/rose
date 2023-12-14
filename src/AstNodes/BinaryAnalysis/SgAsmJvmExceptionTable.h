@@ -3,6 +3,7 @@
  *  The JVM exceptions table is an SgAsmJvmNode containing SgAsmJvmExceptionHandler entries.
  *  Each entry in the table describes one exception handler in the code array. */
 class SgAsmJvmExceptionTable: public SgAsmJvmNode {
+public:
     /** Property: List of pointers to exceptions. */
     [[using Rosebud: rosetta, large]]
     SgAsmJvmExceptionHandlerPtrList handlers;

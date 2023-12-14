@@ -1,7 +1,6 @@
 /** CIL SgAsmCilMetadataRoot. */
 class SgAsmCilMetadataRoot: public SgAsmCilNode {
-
-
+public:
     /** Property: Magic signature for physical metadata (always 0x424A5342) */
     [[using Rosebud: rosetta]]
     uint32_t Signature = 0;

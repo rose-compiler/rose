@@ -1,5 +1,6 @@
 /** Represents an ELF relocation section. */
 class SgAsmElfRelocSection: public SgAsmElfSection {
+public:
     /** Property: Whether entries in this section use the addend format. */
     [[using Rosebud: rosetta]]
     bool usesAddend = true;
@@ -21,10 +22,9 @@ public:
     /** Parse an existing ELF Rela Section */
     virtual SgAsmElfRelocSection *parse() override;
 
-    /** Return sizes for various parts of the table. See doc for SgAsmElfSection::calculate_sizes. */
+    /** Return sizes for various parts of the table. See doc for SgAsmElfSection::calculateSizes. */
     virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const override;
 
-    /** Pre-unparsing adjustments */
     virtual bool reallocate() override;
 
     /** Write section back to disk */

@@ -1,6 +1,7 @@
 /** Base class for expressions. */
 [[Rosebud::abstract]]
 class SgAsmExpression: public SgAsmNode {
+public:
     /** Property: Type of expression.
      *
      *  The type node is not considered a child of this node in the AST. */

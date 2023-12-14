@@ -4,6 +4,7 @@
  *  may be used by debuggers to determine which part of the code array corresponds to a given line number in the original source
  *  file.  See section 4.7.12 of the JVM specification. */
 class SgAsmJvmLineNumberTable: public SgAsmJvmAttribute {
+public:
     /** Property: line_number_table
      *
      *  List of pointers to line_number_table entries (see the JVM specification 4.7.12). */

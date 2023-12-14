@@ -4,6 +4,7 @@
  *  address in the virtual address space. */
 [[Rosebud::abstract]]
 class SgAsmStatement: public SgAsmNode {
+public:
     /** Property: Starting virtual address.
      *
      *  Virtual address of first byte of instruction, block, or whatever, depending on subclass. */

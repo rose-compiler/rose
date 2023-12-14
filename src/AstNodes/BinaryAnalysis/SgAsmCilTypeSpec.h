@@ -1,6 +1,6 @@
 /** CIL TypeSpec node (II.22.39). */
 class SgAsmCilTypeSpec: public SgAsmCilMetadata {
-
+public:
     /** Property: Signature.
      *
      *  An index into the Blob heap. */

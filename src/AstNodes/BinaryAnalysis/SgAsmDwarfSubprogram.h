@@ -1,4 +1,5 @@
 class SgAsmDwarfSubprogram: public SgAsmDwarfConstruct {
+public:
     [[using Rosebud: rosetta, traverse]]
     SgAsmDwarfConstructList* body = NULL;
 

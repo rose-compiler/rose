@@ -1,4 +1,5 @@
 class SgAsmLEEntryTable: public SgAsmGenericSection {
+public:
     [[using Rosebud: rosetta]]
     SgSizeTList bundle_sizes;
 

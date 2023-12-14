@@ -1,5 +1,6 @@
 /** Base class for CIL branch of binary analysis IR nodes. */
 class SgAsmCilUint8Heap : public SgAsmCilDataStream {
+public:
     [[using Rosebud: rosetta, mutators(), large]]
     std::vector<uint8_t> Stream;
 

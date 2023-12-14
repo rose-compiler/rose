@@ -1,6 +1,6 @@
 /** CIL AssemblyRefProcessor node (II.22.7). */
 class SgAsmCilAssemblyRefProcessor: public SgAsmCilMetadata {
-
+public:
     /** Property: Processor.
      *
      *  A 4-byte constant. */

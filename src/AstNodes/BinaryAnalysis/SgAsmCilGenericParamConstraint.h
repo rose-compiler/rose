@@ -1,6 +1,6 @@
 /** CIL GenericParamConstraint node (II.22.21). */
 class SgAsmCilGenericParamConstraint: public SgAsmCilMetadata {
-
+public:
     /** Property: Owner.
      *
      *  An index into the GenericParam table. */

@@ -17,7 +17,7 @@ public:
     /** Range of bits used for various purposes within the values of this type. */
     typedef Sawyer::Container::BitVector::BitRange BitRange;
 
-
+public:
     [[using Rosebud: rosetta, accessors(), mutators()]]
     size_t significandOffset =(size_t)(-1);
 

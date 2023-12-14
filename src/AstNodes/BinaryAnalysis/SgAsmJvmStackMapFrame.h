@@ -3,6 +3,7 @@
  */
 class SgAsmJvmStackMapFrame: public SgAsmJvmNode {
 private:
+public:
     /** Property: List of verification_type_info stack variables. */
     [[using Rosebud: rosetta, large]]
     SgAsmJvmStackMapVerificationTypePtrList stack;

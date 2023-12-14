@@ -1,6 +1,6 @@
 /** CIL DeclSecurity node (II.22.11). */
 class SgAsmCilDeclSecurity: public SgAsmCilMetadata {
-
+public:
     /** Property: Action.
      *
      *  A 2-byte value. */

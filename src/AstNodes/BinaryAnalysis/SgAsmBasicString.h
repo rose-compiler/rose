@@ -3,6 +3,7 @@
  *  Basic strings need not be stored in the binary specimen; they can be generated on the fly by the parser. See also, @ref
  *  SgAsmStoredString, which is present in the binary specimen. */
 class SgAsmBasicString: public SgAsmGenericString {
+public:
     [[using Rosebud: rosetta, accessors(), mutators()]]
     std::string string;
     virtual std::string get_string(bool escape=false) const override;

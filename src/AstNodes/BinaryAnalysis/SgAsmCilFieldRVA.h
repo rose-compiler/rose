@@ -1,6 +1,6 @@
 /** CIL FieldRVA node (II.22.18). */
 class SgAsmCilFieldRVA: public SgAsmCilMetadata {
-
+public:
     /** Property: RVA.
      *
      *  A 4-byte constant. */

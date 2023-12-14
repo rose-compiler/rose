@@ -4,6 +4,7 @@
  *  struction (see section 4.6 of the JVM specification). The Exceptions attribute indicates which
  *  checked exceptions a method may throw. */
 class SgAsmJvmExceptions: public SgAsmJvmAttribute {
+public:
     /** Property: exception_index_table
      *
      *  Each value in the exception_index_table array must be a valid index into the constant_pool

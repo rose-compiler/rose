@@ -1,4 +1,5 @@
 class SgAsmDwarfCompilationUnit: public SgAsmDwarfConstruct {
+public:
     [[using Rosebud: rosetta]]
     std::string producer;
 

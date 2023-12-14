@@ -2,6 +2,7 @@
  *
  *  Each field is described by a field_info structure. */
 class SgAsmJvmField: public SgAsmJvmNode {
+public:
     /** Property: access_flags
      *
      *  The value of the access_flags item is a mask of flags used to denote access permission to and properties of this method (see

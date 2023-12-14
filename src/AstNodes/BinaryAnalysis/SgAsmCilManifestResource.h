@@ -1,6 +1,6 @@
 /** CIL ManifestResource node (II.22.24). */
 class SgAsmCilManifestResource: public SgAsmCilMetadata {
-
+public:
     /** Property: Offset.
      *
      *  A 4-byte constant. */

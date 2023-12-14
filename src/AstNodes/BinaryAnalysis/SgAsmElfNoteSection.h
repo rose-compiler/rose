@@ -1,4 +1,5 @@
 class SgAsmElfNoteSection: public SgAsmElfSection {
+public:
     /** Property: List of note entries.
      *
      *  This property points to an AST node that contains the list rather than being a list directly because of limitations
@@ -12,7 +13,6 @@ public:
 
     virtual SgAsmElfNoteSection *parse() override;
 
-    /** Pre-unparsing adjustments */
     virtual bool reallocate() override;
 
     /** Write data to note section */

@@ -3,6 +3,7 @@
  *  A method describes an instance of an initialization method (2.9.1) and the class or interface initialization method (2.9.2), see
  *  section 4.6 of the JVM specification. */
 class SgAsmJvmMethod: public SgAsmJvmNode {
+public:
     /** Property: access_flags
      *
      *  The value of the access_flags item is a mask of flags used to denote access permission to and properties of this method (see

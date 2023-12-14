@@ -1,4 +1,5 @@
 class SgAsmLESection: public SgAsmGenericSection {
+public:
     [[using Rosebud: rosetta, traverse]]
     SgAsmLESectionTableEntry* sectionTableEntry = nullptr;
 

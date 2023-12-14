@@ -1,6 +1,6 @@
 /** CIL NestedClass node (II.22.32). */
 class SgAsmCilNestedClass: public SgAsmCilMetadata {
-
+public:
     /** Property: NestedClass.
      *
      *  An index into the TypeDef table. */

@@ -1,6 +1,6 @@
 /** CIL Assembly node (II.22.2). */
 class SgAsmCilAssembly: public SgAsmCilMetadata {
-
+public:
     /** Property: HashAlgId.
      *
      *  A 4-byte constant of type AssemblyHashAlgorithm. */

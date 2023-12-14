@@ -2,6 +2,7 @@
 
 /** Represents one MIPS machine instruction. */
 class SgAsmMipsInstruction: public SgAsmInstruction {
+public:
     /** Property: Instruction kind.
      *
      *  Returns an enum constant describing the MIPS instruction. These enum constants correspond roughly 1:1 with
