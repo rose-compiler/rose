@@ -962,7 +962,6 @@ public:
         ConstEdgeIterator(const typename EdgeList::ConstNodeIterator &base): Super(base) {}
         ConstEdgeIterator(EdgePhase phase, const VirtualList<Edge> *vlist): Super(phase, vlist) {}
     };
-    /** @} */
 
     /** Bidirectional edge value iterator.
      *

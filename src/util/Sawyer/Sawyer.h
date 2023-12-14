@@ -349,8 +349,12 @@
 #define SAWYER_CHECK_LINKAGE Sawyer::initializeLibrary(SAWYER_LINKAGE_INFO)
     
 
-/** Name space for the entire library.  All %Sawyer functionality except for some C preprocessor macros exists inside this
- * namespace.  Most of the macros begin with the string "SAWYER_". */
+/** Sawyer support library.
+ *
+ *  All %Sawyer functionality except for some C preprocessor macros exists inside this namespace.  Most of the macros begin with the
+ *  string "SAWYER_".
+ *
+ *  See @ref sawyer "this page" for an overview of the Sawyer library. */
 namespace Sawyer {
     
 /** Explicitly initialize the library.

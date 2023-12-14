@@ -763,8 +763,8 @@ public:
      *
      *  Perform a depth-first traversal of the tree starting with this vertex. The visitor functor is called twice for each vertex,
      *  first in the forward direction from the parent, then in the reverse direction from the children. The functor takes two
-     *  arguments: the vertex being visited and an enum indicating whether the visit is the first (@ref Traverse::ENTER) or the
-     *  second (@ref Traverse::LEAVE) visitation. The traversal has the same return type as the functor. If the functor returns a
+     *  arguments: the vertex being visited and an enum indicating whether the visit is the first (@c Traverse::ENTER) or the
+     *  second (@c Traverse::LEAVE) visitation. The traversal has the same return type as the functor. If the functor returns a
      *  value which evaluates to true in Boolean context, then the traversal immediately returns that value, otherwise it continues
      *  until the entire subtree is visited and returns a default-constructed value. */
     template<class T, class Visitor>
@@ -961,6 +961,7 @@ Vertex<B>::Edge<T>::Edge(UserBase &parent)
     parent_.treeEdges_ = this;
 }
 
+#ifndef DOCUMENTATION                                   // doxygen has problems with this
 template<class B>
 template<class T>
 Vertex<B>::Edge<T>::Edge(UserBase &parent, const std::shared_ptr<T> &child)
@@ -970,7 +971,9 @@ Vertex<B>::Edge<T>::Edge(UserBase &parent, const std::shared_ptr<T> &child)
     if (child)
         child->parent.set(parent);
 }
+#endif
 
+#ifndef DOCUMENTATION                                   // doxygen has problems with this
 template<class B>
 template<class T>
 Vertex<B>::Edge<T>::Edge(Link link, UserBase &parent, const std::shared_ptr<T> &child)
@@ -981,6 +984,7 @@ Vertex<B>::Edge<T>::Edge(Link link, UserBase &parent, const std::shared_ptr<T> &
     if (child)
         child->parent.set(parent);
 }
+#endif
 
 template<class B>
 template<class T>

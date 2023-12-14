@@ -185,7 +185,6 @@ public:
         ASSERT_require(ownershipCount(pointee_)>0);
         return pointee_;
     }
-    /** @} */
 
     /** Dynamic cast.
      *

@@ -301,7 +301,6 @@ public:
         ConstValueIterator(const ProtoNode *base): Super(base) {}
         ConstValueIterator(const Node *node): Super(&node->linkage_) {}
     };
-    /** @} */
 
 private:
     Allocator allocator_;                               // provided allocator for list nodes

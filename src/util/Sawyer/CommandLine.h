@@ -1410,7 +1410,7 @@ private:
  *  integerParser(results); // saves more than one integer
  * @endcode
  *
- * @section factories Factories
+ * @section sawer_parser_factories_factories Factories
  */
 
 
@@ -1842,7 +1842,7 @@ protected:
  *  SwitchAction::Ptr action2 = userAction(myFunctor);
  * @endcode
  *
- * @section factories Factories */
+ * @section sawyer_action_factories_factories Factories */
 
 /** @ingroup sawyer_action_factories
  *  @brief Factory for switch action.
@@ -1963,7 +1963,7 @@ public:
  *  ValueAugmenter::Ptr a2 = sum<int>();
  * @endcode
  *
- * @section factories Factories */
+ * @section sawyer_augmenter_factories_factories Factories */
 
 /** @ingroup sawyer_augmenter_factories
  *  @brief Factory for value agumenter.

@@ -419,8 +419,8 @@ public:
      *
      *  Converts node to sequence/map type if needed.
      *
-     * @param index  Sequence index. Returns None type Node if index is unknown.
-     * @param key    Map key. Creates a new node if key is unknown unless this is const.
+     * @c index  Sequence index. Returns None type Node if index is unknown.
+     * @c key    Map key. Creates a new node if key is unknown unless this is const.
      *
      * @{ */
     Node& operator[](const size_t index);
@@ -562,11 +562,11 @@ void Serialize(const Node &root, std::ostream &stream, const SerializeConfig &co
 
 /** Serialize YAML.
 *
-* @param root       Root node to serialize.
-* @param filename   Path of output file.
-* @param stream     Output stream.
-* @param string     String of output data.
-* @param config     Serialization configurations.
+* @c root       Root node to serialize.
+* @c filename   Path of output file.
+* @c stream     Output stream.
+* @c string     String of output data.
+* @c config     Serialization configurations.
 *
 * @throw InternalException  An internal error occurred.
 * @throw OperationException If filename or buffer pointer is invalid.

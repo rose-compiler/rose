@@ -276,7 +276,6 @@ public:
     ConstIntervalIterator findFirstOverlap(const Interval &interval) const {
         return ConstIntervalIterator(map_.findFirstOverlap(interval));
     }
-    /** @} */
 
     /** Find first nodes that overlap.
      *
