@@ -211,7 +211,15 @@ package body Asis_Adapter.Unit is
            Include_Pragmas  => Include_Pragmas);
    begin
       for Context_Clause of Context_Clauses loop
-         This.Process_Element_Tree (Context_Clause);
+         declare
+            Pragma_Kind : constant Asis.Pragma_Kinds :=
+            Asis.Elements.Pragma_Kind (Context_Clause);
+            use all type Asis.Pragma_Kinds;
+         begin
+            if Pragma_Kind = Not_A_Pragma then
+               This.Process_Element_Tree (Context_Clause);
+            end if;
+         end;
       end loop;
    end Process_Context_Clauses;
 
@@ -224,7 +232,15 @@ package body Asis_Adapter.Unit is
         Asis.Elements.Compilation_Pragmas (Asis_Unit);
    begin
       for Compilation_Pragma of Compilation_Pragmas loop
-         This.Process_Element_Tree (Compilation_Pragma);
+         declare
+            Pragma_Kind : constant Asis.Pragma_Kinds :=
+            Asis.Elements.Pragma_Kind (Compilation_Pragma);
+            use all type Asis.Pragma_Kinds;
+         begin
+            if Pragma_Kind /= An_Implementation_Defined_Pragma then
+              This.Process_Element_Tree (Compilation_Pragma);
+            end if;
+         end;
       end loop;
    end Process_Compilation_Pragmas;
 
@@ -243,7 +259,7 @@ package body Asis_Adapter.Unit is
       end if;
       Process_Element_Tree (This, Top_Element_Asis);
       -- TODO: later
-      -- Process_Compilation_Pragmas (This, Asis_Unit);
+      Process_Compilation_Pragmas (This, Asis_Unit);
    end Process_Element_Trees;
 
 
@@ -550,7 +566,7 @@ package body Asis_Adapter.Unit is
          Add_Unit_Declaration;
          Add_Context_Clause_Elements;
          -- TODO: later
---           Add_Compilation_Pragmas;
+         Add_Compilation_Pragmas;
          Add_Is_Standard;
       end;
 
