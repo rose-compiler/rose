@@ -34,8 +34,8 @@ class ArmAarch64;
 using ArmAarch64Ptr = std::shared_ptr<ArmAarch64>;      /**< Reference counted pointer for @ref ArmAarch64. */
 
 class Base;
-using BasePtr = std::shared_ptr<Base>;                  /**< Reference counted pointer for @ref Base. */
-using BaseConstPtr = std::shared_ptr<const Base>;       /**< Reference counted pointer for @ref Base. */
+using BasePtr = std::shared_ptr<Base>;                  /**< Reference counted pointer for @ref Architecture::Base. */
+using BaseConstPtr = std::shared_ptr<const Base>;       /**< Reference counted pointer for @ref Architecture::Base. */
 
 class Cil;
 using CilPtr = std::shared_ptr<Cil>;                    /**< Reference counted pointer for @ref Cil. */
@@ -168,8 +168,8 @@ std::set<std::string> registeredNames();
 
 /** Look up a new architecture by name.
  *
- *  Looks through the list of registered architectures (from most recently registered to earliest registered) and returns
- *  the first one whose @c matchesName predicate returns true. If none match, then a @ref Architecture::NotFound error is returned.
+ *  Looks through the list of registered architectures (from most recently registered to earliest registered) and returns the first
+ *  one whose @c matchesName predicate returns true. If none match, then a @ref NotFound error is returned.
  *
  *  Thread safety: This function is thread safe. */
 Sawyer::Result<BasePtr, NotFound> findByName(const std::string&);
@@ -177,7 +177,8 @@ Sawyer::Result<BasePtr, NotFound> findByName(const std::string&);
 /** Finds a suitable architecture for a file header.
  *
  *  Looks through the list of registered architectures (from most recently registered to earliest registered) and returns the first
- *  one whose matchesHeader() predicate returns true. If none match, then a @ref Architecture::NotFound error is returned.
+ *  one whose matchesHeader() predicate returns true. If none match, then a @ref NotFound error
+ *  is returned.
  *
  *  Thread safety: This function is thread safe. However, no other thread can be modifying the AST at the same time. */
 Sawyer::Result<BasePtr, NotFound> findByHeader(SgAsmGenericHeader*);
@@ -186,7 +187,7 @@ Sawyer::Result<BasePtr, NotFound> findByHeader(SgAsmGenericHeader*);
  *
  *  Looks through the list of registered architectures (from most recently registered to earliest registered) and returns the first
  *  one whose matchesHeader() predicate returns true for all the headers in the interpration. Returns the architecture that matches,
- *  or a @ref Architecture::NotFound error.
+ *  or a @ref NotFound error.
  *
  *  Thread safety: This function is thread safe. However, no other thread can be modifying the AST at the same time. */
 Sawyer::Result<BasePtr, NotFound> findByInterpretation(SgAsmInterpretation*);
@@ -213,8 +214,8 @@ const std::string& name(const BaseConstPtr&);
 
 /** Create a new instruction dispatcher by name.
  *
- *  This is a conventient way to obtain a dispatcher without having to include "Base.h" and is therefore useful in header files that try
- *  to include a minimal number of type definitions. Throws a @ref Architecture::NotFound error if the name is not found. */
+ *  This is a conventient way to obtain a dispatcher without having to include "Base.h" and is therefore useful in header files that
+ *  try to include a minimal number of type definitions. Throws a @ref NotFound error if the name is not found. */
 InstructionSemantics::BaseSemantics::DispatcherPtr
 newInstructionDispatcher(const std::string &name, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
 

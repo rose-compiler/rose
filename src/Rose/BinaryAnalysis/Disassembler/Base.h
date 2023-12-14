@@ -46,7 +46,7 @@ typedef Map<rose_addr_t, SgAsmInstruction*> InstructionMap;
  *  will throw an exception.
  *
  *  New architectures can be added to ROSE without modifying any ROSE source code. One does this through the @ref
- *  Rose::Architecture API. */
+ *  Rose::BinaryAnalysis::Architecture API. */
 class Base: public Sawyer::SharedObject {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Types

@@ -112,9 +112,9 @@ namespace Partitioner2 {
  * @endcode
  *
  * In order for the tool to choose the correct engine, it needs to be able to find the positional command-line arguments that
- * describe the specimen. The tool could do all its own command-line parsing and adjust the values in a @ref Partitioner2::Settings
- * object which it ultimately copies into an engine instance, or it could use ROSE's command-line parsing mechanism. We'll show
- * the latter since we already started creating such a parser above.
+ * describe the specimen. The tool could do all its own command-line parsing and adjust the values in a @ref Engine::Settings object
+ * which it ultimately copies into an engine instance, or it could use ROSE's command-line parsing mechanism. We'll show the latter
+ * since we already started creating such a parser above.
  *
  * Since we're using ROSE to parse the command-line, we pass the command-line and our partial command-line parser to the @ref
  * Partitioner2::Engine::forge "forge" method like this:
@@ -132,8 +132,8 @@ namespace Partitioner2 {
  *       std::vector<std::string> specimen = parser.parse(argc, argv).apply().unreachedArgs();
  * @endcode
  *
- * Finally, now that the engine has been obtained, the tool can cause the engine to produce a fully initialized @ref
- * Parttioner2::Partitioner "Partitioner", or do any of the other things that an engine is designed to do.
+ * Finally, now that the engine has been obtained, the tool can cause the engine to produce a fully initialized @ref Partitioner, or
+ * do any of the other things that an engine is designed to do.
  *
  * @code
  *       P2::Partitioner::Ptr partitioner = engine.partition(specimen);
@@ -595,8 +595,8 @@ public:
      *  The @p description is a full, multi-line description written in the Sawyer markup language where "@" characters have
      *  special meaning.
      *
-     *  If an <code>std::runtime_exception</code> occurs and the @ref exitOnError property is set, then the exception is caught,
-     *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
+     *  If an <code>std::runtime_exception</code> occurs and the @ref EngineSettings::exitOnError property is set, then the
+     *  exception is caught, its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
      *
      * @{ */
     SgAsmBlock* frontend(int argc, char *argv[],
@@ -638,8 +638,8 @@ public:
      *  If the tool requires additional switches, an opportunity to adjust the parser, or other special handling, it can call
      *  @ref commandLineParser to obtain a parser and then call its @c parse and @c apply methods explicitly.
      *
-     *  If an <code>std::runtime_exception</code> occurs and the @ref exitOnError property is set, then the exception is caught,
-     *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
+     *  If an <code>std::runtime_exception</code> occurs and the @ref EngineSettings::exitOnError property is set, then the
+     *  exception is caught, its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
      *
      * @{ */
     Sawyer::CommandLine::ParserResult parseCommandLine(int argc, char *argv[],
@@ -658,8 +658,8 @@ public:
      *
      *  @li Call Modules::buildAst to build the AST.
      *
-     *  If an <code>std::runtime_exception</code> occurs and the @ref exitOnError property is set, then the exception is caught,
-     *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
+     *  If an <code>std::runtime_exception</code> occurs and the @ref EngineSettings::exitOnError property is set, then the
+     *  exception is caught, its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
      *
      * @{ */
     virtual SgAsmBlock* buildAst(const std::vector<std::string> &fileNames = std::vector<std::string>()) = 0;
@@ -701,8 +701,8 @@ public:
      *  interpretation. If the list of names has nothing suitable for ROSE's @c frontend function (the thing that does the
      *  container parsing) then the null pointer is returned.
      *
-     *  If an <code>std::runtime_exception</code> occurs and the @ref exitOnError property is set, then the exception is caught,
-     *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
+     *  If an <code>std::runtime_exception</code> occurs and the @ref EngineSettings::exitOnError property is set, then the
+     *  exception is caught, its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
      *
      * @{ */
     virtual SgAsmInterpretation* parseContainers(const std::vector<std::string> &fileNames) = 0;
@@ -719,14 +719,14 @@ public:
      *      binary interpretation) then @ref parseContainers is called with the same arguments.
      *
      *  @li If binary containers are present but the chosen binary interpretation's memory map is null or empty, then
-     *      initialize the memory map by calling @ref loadContainers with the same arguments.
+     *      initialize the memory map.
      *
-     *  @li Continue initializing the memory map by processing all non-container arguments via @ref loadNonContainers.
+     *  @li Continue initializing the memory map by processing all non-container arguments.
      *
      *  Returns a reference to the engine's memory map.
      *
-     *  If an <code>std::runtime_exception</code> occurs and the @ref exitOnError property is set, then the exception is caught,
-     *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
+     *  If an <code>std::runtime_exception</code> occurs and the @ref EngineSettings::exitOnError property is set, then the
+     *  exception is caught, its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
      *
      * @{ */
     virtual MemoryMapPtr loadSpecimens(const std::vector<std::string> &fileNames = std::vector<std::string>()) = 0;
@@ -748,8 +748,8 @@ public:
      *
      *  Returns the partitioner that was used and which contains the results.
      *
-     *  If an <code>std::runtime_exception</code> occurs and the @ref exitOnError property is set, then the exception is caught,
-     *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
+     *  If an <code>std::runtime_exception</code> occurs and the @ref EngineSettings::exitOnError property is set, then the
+     *  exception is caught, its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
      *
      * @{ */
     virtual PartitionerPtr partition(const std::vector<std::string> &fileNames = std::vector<std::string>()) = 0;
@@ -807,10 +807,9 @@ public:
 
     /** Property: memory map
      *
-     *  Returns the memory map resulting from the @ref loadSpecimens step.  This is a combination of the memory map created by
-     *  the BinaryLoader (via @ref loadContainers) and stored in the interpretation, and the application of any memory map
-     *  resources (via @ref loadNonContainers). During partitioning operations the memory map comes from the partitioner
-     *  itself.  See @ref loadSpecimens.
+     *  Returns the memory map resulting from the @ref loadSpecimens step.  This is a combination of the memory map created by the
+     *  BinaryLoader and stored in the interpretation, and the application of any memory map resources (non-container
+     *  arguments). During partitioning operations the memory map comes from the partitioner itself.  See @ref loadSpecimens.
      *
      * @{ */
     MemoryMapPtr memoryMap() const /*final*/;

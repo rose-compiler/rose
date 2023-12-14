@@ -144,11 +144,11 @@ public:
 
     /** Construct an analysis using a specified dispatcher.
      *
-     *  This constructor uses the supplied dispatcher and associated semantic domain. For best results, the semantic domain
-     *  should be a symbolic domain that uses @ref InstructionSemantics::BaseSemantics::RegisterStateGeneric
-     *  "RegisterStateGeneric". The memory state can be the @ref Semantics2::NullSemantics "NullSemantics" memory state to
-     *  speed up dataflow converging when the stack pointer is known to not be saved/restored (which is usually the case), and
-     *  is what the analysis uses when no state is specified. */
+     *  This constructor uses the supplied dispatcher and associated semantic domain. For best results, the semantic domain should
+     *  be a symbolic domain that uses @ref InstructionSemantics::BaseSemantics::RegisterStateGeneric "RegisterStateGeneric". The
+     *  memory state can be the @ref InstructionSemantics::NullSemantics memory state to speed up dataflow converging when the stack
+     *  pointer is known to not be saved/restored (which is usually the case), and is what the analysis uses when no state is
+     *  specified. */
     explicit Analysis(const InstructionSemantics::BaseSemantics::DispatcherPtr &cpu)
         : cpu_(cpu), hasResults_(false), didConverge_(false) {}
 

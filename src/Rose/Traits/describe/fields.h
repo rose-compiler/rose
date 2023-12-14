@@ -21,15 +21,14 @@ namespace Traits {
  *              It must be: `using type = TPL<&X::mbr>;` not `constexpr auto Xmbr = &X::mbr; using type = TPL<Xmbr>;`.
  * \note using decltype(nullptr) instead of nullptr_t because of ICC 19
  *
- * \link DescribeField<void, nullptr_t, nullptr>
- *
- */
+ * @{ */
 template <typename NodeT, typename FieldPtrT=decltype(nullptr), FieldPtrT fld_ptr = nullptr> struct DescribeField;
 
 template <typename NodeT, typename FieldTypeT, FieldTypeT NodeT::* fld_ptr>
 struct DescribeField<NodeT, FieldTypeT NodeT::*, fld_ptr> : generated::describe_field_t<NodeT, FieldTypeT, fld_ptr>, inspect_field<FieldTypeT> {
   using details::inspect_field_t<FieldTypeT>::inspect_field_t;
 };
+/** @} */
 
 /**
  * For documentation purpose.

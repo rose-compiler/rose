@@ -239,12 +239,11 @@ public:
     /** Attach to a specimen.
      *
      *  The @p onDelete argument specifies what to do with the subordinate process if this debugger object is deleted while the
-     *  subordinate is still attached. If @p onDelete is not specified, then a reasonable value is chosen: for subordinates
-     *  that existed prior to attaching (e.g., Linux process ID), the default detach mechanism is either @ref DETACH or @ref
-     *  NOTHING depending on whether the @ref Specimen ATTACH flag was set or clear. For subordniates that are created by this
-     *  @ref attach method (such as ELF executables), the detach mechanism is @ref KILL. */
+     *  subordinate is still attached. If @p onDelete is not specified, then a reasonable value is chosen: for subordinates that
+     *  existed prior to attaching (e.g., Linux process ID), the default detach mechanism is either @ref DetachMode::DETACH or @ref
+     *  DetachMode::NOTHING depending on whether the @ref Specimen ATTACH flag was set or clear. For subordniates that are created
+     *  by this @ref attach method (such as ELF executables), the detach mechanism is @ref DetachMode::KILL. */
     void attach(const Specimen&, Sawyer::Optional<DetachMode> onDelete = Sawyer::Nothing());
-    /** @} */
 
     /** Process ID of attached process. */
     Sawyer::Optional<int> processId() const;

@@ -16,7 +16,7 @@ namespace Rose {
  *  @li A @ref toString method that returns a string representation of the location.
  *  @li A @ref print method that sends a string representation of the location to an output stream.
  *  @li A @ref printableName method that returns a string that can be printed safely to a terminal.
- *  @li A @ref parse method that parses the string representation returned by @ref printableName.
+ *  @li A static @c parse method in subclasses that parses the string representation returned by @ref printableName.
  *  @li An @ref isEmpty method that returns true if the object is default constructed.
  *  @li Comparison operators (all six).
  *  @li An explicit conversion to @c bool returning false for default-constructed locations. */
@@ -43,10 +43,8 @@ public:
 
     /** Convert location to escaped, parsable string.
      *
-     *  Returns a string that can be safely emitted to a terminal. The format should also be parsable so the @ref parse method
-     *  can create an equal object from the string.
-     *
-     *  See also, @ref parse. */
+     *  Returns a string that can be safely emitted to a terminal. The format should also be parsable so the static @c parse method
+     *  in subclasses can create an equal object from the string. */
     virtual std::string printableName() const = 0;
 
     /** Equality and inequality.

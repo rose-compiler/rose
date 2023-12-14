@@ -100,8 +100,8 @@ public:
      *  The @p description is a full, multi-line description written in the Sawyer markup language where "@" characters have
      *  special meaning.
      *
-     *  If an <code>std::runtime_exception</code> occurs and the @ref exitOnError property is set, then the exception is caught,
-     *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
+     *  If an <code>std::runtime_exception</code> occurs and the @ref EngineSettings::exitOnError property is set, then the
+     *  exception is caught, its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
      *
      * @{ */
     virtual SgAsmBlock* frontend(const std::vector<std::string> &args,
@@ -138,8 +138,8 @@ public:
      *  interpretation. If the list of names has nothing suitable for ROSE's @c frontend function (the thing that does the
      *  container parsing) then the null pointer is returned.
      *
-     *  If an <code>std::runtime_exception</code> occurs and the @ref exitOnError property is set, then the exception is caught,
-     *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
+     *  If an <code>std::runtime_exception</code> occurs and the @ref EngineSettings::exitOnError property is set, then the
+     *  exception is caught, its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
      *
      * @{ */
     virtual SgAsmInterpretation* parseContainers(const std::vector<std::string> &fileNames) override;
@@ -169,26 +169,6 @@ public:
      *  Specifically, returns true if the memory map is non-empty. */
     virtual bool areSpecimensLoaded() const override;
 
-    /** Load interpretation.
-     *
-     *  Loads and/or links the engine's interpretation according to the engine's binary loader with these steps:
-     *
-     *  @li Clears any existing memory map in the engine.
-     *
-     *  @li If the binary containers have not been parsed (@ref areContainersParsed returns false, i.e., engine has a null
-     *      binary interpretation) then @ref parseContainers is called with the same arguments.
-     *
-     *  @li If binary containers are present but the chosen binary interpretation's memory map is null or empty, then
-     *      initialize the memory map by calling @ref loadContainers with the same arguments.
-     *
-     *  @li Continue initializing the memory map by processing all non-container arguments via @ref loadNonContainers.
-     *
-     *  Returns a reference to the engine's memory map.
-     *
-     *  If an <code>std::runtime_exception</code> occurs and the @ref exitOnError property is set, then the exception is caught,
-     *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
-     *
-     * @{ */
     virtual MemoryMapPtr loadSpecimens(const std::vector<std::string> &fileNames = std::vector<std::string>()) override;
 
     /** Load a class file by parsing its contents at the given address.
@@ -246,7 +226,7 @@ public:
      *  @li If the specimen is not loaded (@ref areSpecimensLoaded) then call @ref loadSpecimens. The no-argument version of
      *  this function requires that specimens have already been loaded.
      *
-     *  @li Obtain a disassembler by calling @ref obtainDisassembler.
+     *  @li Obtain a disassembler.
      *
      *  @li Create a partitioner by calling @ref createPartitioner.
      *
@@ -254,8 +234,8 @@ public:
      *
      *  Returns the partitioner that was used and which contains the results.
      *
-     *  If an <code>std::runtime_exception</code> occurs and the @ref exitOnError property is set, then the exception is caught,
-     *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
+     *  If an <code>std::runtime_exception</code> occurs and the @ref EngineSettings::exitOnError property is set, then the
+     *  exception is caught, its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
      *
      * @{ */
     virtual PartitionerPtr partition(const std::vector<std::string> &fileNames = std::vector<std::string>()) override;
@@ -277,31 +257,13 @@ public:
 
     /** Create a partitioner for JVM.
      *
-     *  Returns a partitioner that is tuned to operate on a JVM instruction set architecture. The engine must have @ref
-     *  disassembler (if @ref doDisassemble property is set) and @ref memoryMap properties assigned already, either explicitly
-     *  or as the result of earlier steps. */
+     *  Returns a partitioner that is tuned to operate on a JVM instruction set architecture. The @ref memoryMap must be assigned
+     *  already, either explicitly or as the result of earlier steps. */
     PartitionerPtr createJvmTunedPartitioner();
 
-    /** Create partitioner.
-     *
-     *  This is the method usually called to create a new partitioner.  The base class just calls @ref
-     *  createTunedPartitioner. */
     virtual PartitionerPtr createPartitioner() override;
-
-    /** Finds interesting things to work on initially.
-     *
-     *  Seeds the partitioner with addresses and functions where recursive disassembly should begin. */
     virtual void runPartitionerInit(const PartitionerPtr&) override;
-
-    /** Runs the recursive part of partioning.
-     *
-     *  This is the long-running guts of the partitioner. */
     virtual void runPartitionerRecursive(const PartitionerPtr&) override;
-
-    /** Runs the final parts of partitioning.
-     *
-     *  This does anything necessary after the main part of partitioning is finished. For instance, it might give names to some
-     *  functions that don't have names yet. */
     virtual void runPartitionerFinal(const PartitionerPtr&) override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -342,8 +304,8 @@ public:
      *
      *  @li Call Modules::buildAst to build the AST.
      *
-     *  If an <code>std::runtime_exception</code> occurs and the @ref exitOnError property is set, then the exception is caught,
-     *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
+     *  If an <code>std::runtime_exception</code> occurs and the @ref EngineSettings::exitOnError property is set, then the
+     *  exception is caught, its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
      *
      * @{ */
     virtual SgAsmBlock* buildAst(const std::vector<std::string> &fileNames = std::vector<std::string>()) override;

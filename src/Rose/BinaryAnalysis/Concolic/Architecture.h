@@ -209,7 +209,7 @@ public:
      *  last time the timer's memory was read so that the new return value can be constrained to be greater than or equal
      *  to the previously returned value.
      *
-     *  Each concrete address can have only one @ref SharedMemory object, although each object can have a list of callbacks. */
+     *  Each concrete address can have only one @ref SharedMemoryMap object, although each object can have a list of callbacks. */
     const SharedMemoryMap& sharedMemory() const;
 
     /** Properties: Input variables.
@@ -243,9 +243,10 @@ public:
 
     /** Add a shared memory callback for a range of addresses.
      *
-     *  A callback normally knows the range of addresses for which it is responsible. That same range is used when registering
-     *  the callback unless a specific range is specified. Specifying a range does not modify the @ref registrationVas range
-     *  that's inside the callback.  This can be useful when the same callback needs to be registered at multiple addresses.
+     *  A callback normally knows the range of addresses for which it is responsible. That same range is used when registering the
+     *  callback unless a specific range is specified. Specifying a range does not modify the @ref
+     *  SharedMemoryCallback::registrationVas range that's inside the callback.  This can be useful when the same callback needs to
+     *  be registered at multiple addresses.
      *
      * @{ */
     void sharedMemory(const SharedMemoryCallbackPtr&);
@@ -309,7 +310,7 @@ public:
     /** Saves a list of events.
      *
      *  Each event's test case is set to this object's test case, and the event locations set by calling @ref
-     *  nextLocationLocation for each event. The events are written to the database. */
+     *  ExecutionEvent::nextLocation for each event. The events are written to the database. */
     void saveEvents(const std::vector<ExecutionEventPtr>&, When);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

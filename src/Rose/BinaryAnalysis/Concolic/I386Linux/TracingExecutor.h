@@ -20,7 +20,7 @@ class TracingExecutor: public Concolic::ConcreteExecutor {
     using Super = Concolic::ConcreteExecutor;
 
 public:
-    /** Reference counting pointer to a @ref LinuxTraceConcrete. */
+    /** Reference counting pointer to a @ref TracingExecutor. */
     using Ptr = TracingExecutorPtr;
 
 

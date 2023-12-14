@@ -55,7 +55,7 @@ typedef InstructionSemantics::BaseSemantics::StatePtr StatePtr;
 template<class Super = InstructionSemantics::SymbolicSemantics::MemoryListState> // or MemoryMapState
 class MemoryState: public Super {
 public:
-    /** Shared-ownership pointer to a @ref MemoryState. See @ref heap_object_shared_ownership. */
+    /** Shared-ownership pointer to a @ref Semantics::MemoryState. See @ref heap_object_shared_ownership. */
     typedef boost::shared_ptr<MemoryState> Ptr;
 
 private:

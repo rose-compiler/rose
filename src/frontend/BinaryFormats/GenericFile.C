@@ -728,7 +728,7 @@ SgAsmGenericFile::shiftExtend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr_
         } else if (space & ADDRSP_MEMORY) {
             space_s = "memory";
         }
-        snprintf(p, 256, "SgAsmGenericFile::shift_extend[%" PRIuPTR "]: ", ncalls++);
+        snprintf(p, 256, "SgAsmGenericFile::shiftExtend[%" PRIuPTR "]: ", ncalls++);
         fprintf(stderr, "%s    -- START --\n", p);
         fprintf(stderr, "%s    S = [%d] \"%s\"\n", p, s->get_id(), s->get_name()->get_string(true).c_str());
         fprintf(stderr, "%s    %s Sa=0x%08" PRIx64 " (%" PRIu64 "), Sn=0x%08" PRIx64 " (%" PRIu64 ")\n",

@@ -52,7 +52,7 @@ protected:
         : Sawyer::CommandLine::ValueParser(valueSaver) {}
 
 public:
-    /** Shared-ownership pointer to a @ref SuffixMultiplierParser.
+    /** Shared-ownership pointer to a @ref Rose::CommandLine::SuffixMultiplierParser.
      *
      *  See @ref heap_object_shared_ownership. */
     using Ptr = Sawyer::SharedPointer<SuffixMultiplierParser>;
@@ -69,7 +69,7 @@ public:
 
     /** Insert a suffix definition.
      *
-     *  If @preferred is set, then this suffix can be used when converting a value to a string.  Alternatively, all suffixes
+     *  If @p preferred is set, then this suffix can be used when converting a value to a string.  Alternatively, all suffixes
      *  with the same multiplier can be specified in a single @ref with call and the first one can be used in string
      *  conversion.
      *

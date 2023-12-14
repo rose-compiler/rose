@@ -288,9 +288,10 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /** Expand register names to register values.
      *
-     *  This expansion uses a @ref BaseSemantics::RiscOperators "RiscOperators" object to convert register names in the parse
-     *  string into register values. The values are substituted at the time the string is parsed. At this time (2018-08) only
-     *  the symbolic semantic domain is supported since this is the one usually used with SMT solvers. */
+     *  This expansion uses a @ref BinaryAnalysis::InstructionSemantics::BaseSemantics::RiscOperators "RiscOperators" object to
+     *  convert register names in the parse string into register values. The values are substituted at the time the string is
+     *  parsed. At this time (2018-08) only the symbolic semantic domain is supported since this is the one usually used with SMT
+     *  solvers. */
     class RegisterToValue: public AtomExpansion {
     public:
         /** Shared-ownership pointer. See @ref heap_object_shared_ownership. */
@@ -550,7 +551,7 @@ public:
 
     /** Perform delayed expansion.
      *
-     *  This runs the @ref Expander::delayedExpansion "delayedExpansion" method for each of the registerd expansion functors. */
+     *  This runs the @ref Expansion::delayedExpansion "delayedExpansion" method for each of the registerd expansion functors. */
     SymbolicExpression::Ptr delayedExpansion(const SymbolicExpression::Ptr&) const;
 
 private:

@@ -91,8 +91,7 @@ enum SemanticMemoryParadigm {
 
 /** Settings that control building the AST.
  *
- *  The runtime descriptions and command-line parser for these switches can be obtained from @ref
- *  Engine::astConstructionSwitches. */
+ *  The runtime descriptions and command-line parser for these switches can be obtained from @ref Engine::settings. */
 struct AstConstructionSettings {
     /** Whether to allow an empty global block.
      *
@@ -191,7 +190,7 @@ enum MemoryDataAdjustment {
 
 /** Settings for loading specimens.
  *
- *  The runtime descriptions and command-line parser for these switches can be obtained from @ref Engine::loaderSwitches. */
+ *  The runtime descriptions and command-line parser for these switches can be obtained from @ref Engine::settings. */
 struct LoaderSettings {
     /** When to remove execute permission from zero bytes.
      *
@@ -235,7 +234,7 @@ struct LoaderSettings {
      *  thus machine instructions are not found. Turning on linking causes all the object files (and possibly library archives)
      *  to be linked into an output file and the output file is analyzed instead.
      *
-     *  See also, @ref linkStaticArchives, @ref linkerCommand. */
+     *  See also, @ref linkStaticArchives, @ref linker. */
     bool linkObjectFiles = true;
 
     /** Whether to link library archives before parsing.
@@ -244,7 +243,7 @@ struct LoaderSettings {
      *  is mapped in virtual memory. Turning on linking causes all archives (and possibly object files) to be linked into an
      *  output file that is analyzed instead.
      *
-     *  See also, @ref linkObjectFiles, @ref linkerCommand. */
+     *  See also, @ref linkObjectFiles, @ref linker. */
     bool linkStaticArchives = true;
 
     /** Linker command.
@@ -307,8 +306,7 @@ private:
 
 /** Settings that control the disassembler.
  *
- *  The runtime descriptions and command-line parser for these switches can be obtained from @ref
- *  Engine::disassemblerSwitches. */
+ *  The runtime descriptions and command-line parser for these switches can be obtained from @ref Engine::settings. */
 struct DisassemblerSettings {
     /** Whether to disassemble instructions.
      *
@@ -399,8 +397,7 @@ private:
  *  instructions into basic blocks, and basic blocks and static data into functions.  Some of these settings are copied into a
  *  @ref Partitioner object while others affect the @ref Engine directly.
  *
- *  The runtime descriptions and command-line parser for these switches can be obtained from @ref
- *  Engine::partitionerSwitches. */
+ *  The runtime descriptions and command-line parser for these switches can be obtained from @ref Engine::settings. */
 struct PartitionerSettings {
     /** Base partitioner settings. */
     BasePartitionerSettings base;
@@ -430,7 +427,7 @@ struct PartitionerSettings {
      *  predicate, that the only valid CFG successor is instruction 4, and that the edge from 3 to 5 is a \"ghost\". In fact,
      *  if there are no other incoming edges to these instructions, then instructions 1 through 4 will form a basic block with
      *  the (unconditional) branch instruction in its interior.  The ability to look at larger units of code than single
-     *  instructions is controlled by the @ref usingSemantics property.
+     *  instructions is controlled by the @ref BasePartitionerSettings::usingSemantics property.
      *
      *  If this @ref followingGhostEdges property is true then ghost edges will be added back into the CFG as real edges,
      *  which might force a basic block to end, as in this example, at the branch instruction and may attempt to disassemble
@@ -467,10 +464,10 @@ struct PartitionerSettings {
 
     /** Whether to find dead code.
      *
-     *  If ghost edges are being discovered (see @ref usingSemantics and @ref followingGhostEdges) and are not being inserted
-     *  into the global CFG, then the target address of the ghost edges might not be used as code addresses during the code
-     *  discovery phase.  This property, when true, will cause the target address of ghost edges to be used to discover
-     *  additional instructions even if they have no incoming CFG edges. */
+     *  If ghost edges are being discovered (see @ref BasePartitionerSettings::usingSemantics and @ref followingGhostEdges) and are
+     *  not being inserted into the global CFG, then the target address of the ghost edges might not be used as code addresses
+     *  during the code discovery phase.  This property, when true, will cause the target address of ghost edges to be used to
+     *  discover additional instructions even if they have no incoming CFG edges. */
     bool findingDeadCode = true;
 
     /** PE-Scrambler dispatcher address.
@@ -494,7 +491,7 @@ struct PartitionerSettings {
 
     /** Whether to search for function calls between exiting functions.
      *
-     *  If set, then @ref Engine::makeFunctionFromInterFunctionCalls is invoked, which looks for call-like code between
+     *  If set, then @ref EngineBinary::makeFunctionFromInterFunctionCalls is invoked, which looks for call-like code between
      *  existing functions in order to create new functions at the call target addresses. */
     bool findingInterFunctionCalls = true;
 
@@ -738,8 +735,6 @@ private:
         }
     }
 };
-
-// BOOST_CLASS_VERSION(PartitionerSettings, 1); -- see end of file (cannot be in a namespace)
 
 /** Settings for controling the engine behavior.
  *

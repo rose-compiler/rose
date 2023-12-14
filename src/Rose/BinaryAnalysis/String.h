@@ -245,7 +245,7 @@ public:
     /** Decode one code value.
      *
      *  Processes a single code value and updates the decoder state machine. Returns the decoder's new state. See documentation
-     *  for @ref State for restrictions on state transitions. */
+     *  for @ref Strings::State for restrictions on state transitions. */
     virtual State decode(CodeValue) = 0;
 
     /** Consume a decoded code point.
@@ -265,7 +265,7 @@ class ROSE_DLL_API NoopCharacterEncodingForm: public CharacterEncodingForm {
 protected:
     NoopCharacterEncodingForm(): cp_(0) {}
 public:
-    /** Shared-ownership pointer to a @ref NoopCharacterEncodingFormat. See @ref heap_object_shared_ownership. */
+    /** Shared-ownership pointer to a @ref NoopCharacterEncodingForm. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<NoopCharacterEncodingForm> Ptr;
 
     static Ptr instance() { return Ptr(new NoopCharacterEncodingForm); }
@@ -357,7 +357,7 @@ public:
     /** Decode one octet.
      *
      *  Processes a single octet and updates the decoder state machine. Returns the decoder's new state. See documentation for
-     *  @ref State for restrictions on state transitions. */
+     *  @ref Strings::State for restrictions on state transitions. */
     virtual State decode(Octet) = 0;
 
     /** Consume a decoded code value.
@@ -431,7 +431,7 @@ public:
     /** Decode one octet.
      *
      *  Processes a single octet and updates the decoder state machine.  Returns the decoder's new state. See documentation for
-     *  @ref State for restrictions on state transitions. */
+     *  @ref Strings::State for restrictions on state transitions. */
     virtual State decode(Octet) = 0;
 
     /** Consume a decoded length.
@@ -567,7 +567,7 @@ public:
     /** Decode one octet.
      *
      *  Processes a single octet and updates the decoder state machine.  Returns the new state. See documentation for @ref
-     *  State for restrictions on state transitions. */
+     *  Strings::State for restrictions on state transitions. */
     virtual State decode(Octet) = 0;
 
     /** Consume pending decoded code points.

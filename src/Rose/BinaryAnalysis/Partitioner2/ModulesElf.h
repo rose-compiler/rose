@@ -84,7 +84,7 @@ bool isStaticArchive(const boost::filesystem::path&);
 
 /** Boolean flag for @ref tryLink. */
 namespace FixUndefinedSymbols {
-/** Boolean flag for @ref tryLink. */
+/** Boolean flag for @ref Rose::BinaryAnalysis::Partitioner2::ModulesElf::tryLink. */
 enum Boolean {
     NO,                                                 /**< Do not try to fix undefined symbols. */
     YES                                                 /**< Yes, try to fix undefined symbols. */

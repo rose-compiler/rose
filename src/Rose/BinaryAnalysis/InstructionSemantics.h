@@ -123,15 +123,14 @@ namespace BinaryAnalysis {
  *
  *  Let's say you have an analysis that needs to process x86 instructions symbolically. The first thing you need to do is
  *  instantiate a semantics framework -- the lattice of objects that are instantiated from the particular semantics component
- *  subclasses.  You'll need a @ref InstructionSemantics::DispatcherX86 "DispatcherX86" object to handle the instructions,
- *  which invokes the RISC-like operations defined by an instance of @ref SymbolicSemantics::RiscOperators, which can use a
- *  chronological memory state and a generic register state, and whose values are symbolic (@ref
- *  SymbolicSemantics::SValue). You'll need to tie all these objects together into a lattice with the disptatcher at the top.
- *  The constructors for the various components generally take arguments which are the lower layers of the lattice, therefore
- *  you'll need to build the lattice from the bottom up; that is, start by constructing a proto-typical value (i.e., a value
- *  from which new values can be created), then the register and memory states, which are then joined together into a single
- *  state object. Then create the RISC-like operations object and give it an initial state, and finally create the dispatcher
- *  that points to the RISC-like operations.
+ *  subclasses.  You'll need a @ref InstructionSemantics::DispatcherX86 object to handle the instructions, which invokes the
+ *  RISC-like operations defined by an instance of @ref SymbolicSemantics::RiscOperators, which can use a chronological memory state
+ *  and a generic register state, and whose values are symbolic (@ref SymbolicSemantics::SValue). You'll need to tie all these
+ *  objects together into a lattice with the disptatcher at the top.  The constructors for the various components generally take
+ *  arguments which are the lower layers of the lattice, therefore you'll need to build the lattice from the bottom up; that is,
+ *  start by constructing a proto-typical value (i.e., a value from which new values can be created), then the register and memory
+ *  states, which are then joined together into a single state object. Then create the RISC-like operations object and give it an
+ *  initial state, and finally create the dispatcher that points to the RISC-like operations.
  *
  *  Most semantic domains (@ref SymbolicSemantics included) have a simplified @ref BaseSemantics::RiscOperators "RiscOperators"
  *  constructor that uses default types for some of the lower components, but we'll show the full monty here:

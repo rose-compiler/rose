@@ -15,34 +15,34 @@ namespace Architecture {
  *
  *  The 32-bit ARM architecture includes the following RISC features:
  *
- *  @item Load–store architecture.
+ *  @li Load–store architecture.
  *
- *  @item No support for unaligned memory accesses in the original version of the architecture. ARMv6 and later, except some
+ *  @li No support for unaligned memory accesses in the original version of the architecture. ARMv6 and later, except some
  *  microcontroller versions, support unaligned accesses for half-word and single-word load/store instructions with some
  *  limitations, such as no guaranteed atomicity.
  *
- *  @item Uniform 16 × 32-bit register file (including the program counter, stack pointer and the link register).
+ *  @li Uniform 16 × 32-bit register file (including the program counter, stack pointer and the link register).
  *
- *  @item Fixed instruction width of 32 bits to ease decoding and pipelining, at the cost of decreased code density. Later, the
+ *  @li Fixed instruction width of 32 bits to ease decoding and pipelining, at the cost of decreased code density. Later, the
  *  Thumb instruction set added 16-bit instructions and increased code density.
  *
- *  @item Mostly single clock-cycle execution.
+ *  @li Mostly single clock-cycle execution.
  *
  *  To compensate for the simpler design, compared with processors like the Intel 80286 and Motorola 68020, some additional design
  *  features were used:
  *
- *  @item Conditional execution of most instructions reduces branch overhead and compensates for the lack of a branch predictor in
+ *  @li Conditional execution of most instructions reduces branch overhead and compensates for the lack of a branch predictor in
  *  early chips.
  *
- *  @item Arithmetic instructions alter condition codes only when desired.
+ *  @li Arithmetic instructions alter condition codes only when desired.
  *
- *  @item 32-bit barrel shifter can be used without performance penalty with most arithmetic instructions and address calculations.
+ *  @li 32-bit barrel shifter can be used without performance penalty with most arithmetic instructions and address calculations.
  *
- *  @item Has powerful indexed addressing modes.
+ *  @li Has powerful indexed addressing modes.
  *
- *  @item A link register supports fast leaf function calls.
+ *  @li A link register supports fast leaf function calls.
  *
- *  @item A simple, but fast, 2-priority-level interrupt subsystem has switched register banks. */
+ *  @li A simple, but fast, 2-priority-level interrupt subsystem has switched register banks. */
 class ArmAarch32: public Base {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Types

@@ -177,7 +177,6 @@ public:
      *  Removes the high-order 16 bits that appear in the argument from the @ref reasons property. The low-order 16 bits are
      *  all cleared if any of the low-order 16 bits of the argument are set. */
     void eraseReasons(unsigned reasons);
-    /** @} */
 
     /** Property: Additional comment for why function was detected.
      *

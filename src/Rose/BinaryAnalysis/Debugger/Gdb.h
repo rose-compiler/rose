@@ -63,7 +63,7 @@ public:
          *  executed is run under the control of the GDB server which is configured seperately from the ROSE library which
          *  talks to the GDB client.
          *
-         *  The @p host and @port describe how to connect to the GDB server. */
+         *  The @p host and @p port describe how to connect to the GDB server. */
         Specimen(const boost::filesystem::path &exeName, const std::string &host, uint16_t port);
 
     public:

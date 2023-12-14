@@ -206,7 +206,7 @@ public:
      *
      *  Returns number of affected vertices.
      *
-     *  See also, @ref markEntryFunctions, @ref markExportFunctions, @ref markMemoryConstants. */
+     *  See also, @ref markEntryFunctions, @ref markExportFunctions. */
     size_t markStartingPoints(const Partitioner2::PartitionerConstPtr&, MemoryMapPtr map = MemoryMap::Ptr());
 
     /** Mark entry points as intrinsically reachable.
@@ -293,7 +293,7 @@ public:
     static bool hasReasons(ReasonFlags reasons,
                            ReasonFlags any = ReasonFlags(), ReasonFlags all = ReasonFlags(), ReasonFlags none = ReasonFlags());
     
-    /** Query whether a vertex is intrinsic reachable..
+    /** Query whether a vertex is intrinsic reachable.
      *
      *  Returns true if the specified vertex's intrinsic reachability matches according to @ref hasReasons. */
     bool isIntrinsicallyReachable(size_t vertexId,

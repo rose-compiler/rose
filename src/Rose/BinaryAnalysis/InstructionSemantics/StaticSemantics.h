@@ -23,20 +23,19 @@ namespace InstructionSemantics {        // documented elsewhere
  *  stored in memory just past (above or below according to stack direction) the stack pointer register, then the instruction
  *  is behaving like an x86 RET instruction, at least on architectures that use this calling convention.
  *
- *  On the other hand, some people like to work with semantics that are represented statically as part of the AST. In this
- *  case, each instruction has a non-null @ref SgAsmInstruction::get_semantics "semantics" property that returns a list (@ref
- *  SgAsmExprListExp) of semantic expression trees consisting mostly of @ref SgAsmRiscOperation nodes.  The list is in the
- *  order that the instruction's side effects occur.  Many subtrees of the @c semantics property are similar to each other, but
- *  cannot be shared due to the design of ROSE AST (each node has a single parent pointer). Thus the AST with static semantics
- *  attached can be many times larger than when using dynamic semantics.
+ *  On the other hand, some people like to work with semantics that are represented statically as part of the AST. In this case,
+ *  each instruction has a non-null @ref SgAsmInstruction::semantics property that returns a list (@ref SgAsmExprListExp) of
+ *  semantic expression trees consisting mostly of @ref SgAsmRiscOperation nodes.  The list is in the order that the instruction's
+ *  side effects occur.  Many subtrees of the @c semantics property are similar to each other, but cannot be shared due to the
+ *  design of ROSE AST (each node has a single parent pointer). Thus the AST with static semantics attached can be many times larger
+ *  than when using dynamic semantics.
  *
- *  By default, ROSE does not generate the static semantics, and each instruction's @ref SgAsmInstruction::get_semantics
- *  "semantics" property will be null.  Semantics can be added to any instruction by @ref
- *  BaseSemantics::Dispatcher::processInstruction "executing" the instruction in this StaticSemantics domain.  Each time the
- *  instruction is executed in this domain its previous semantics are thrown away and recalculated, so you should generally
- *  only do this once; that's the nature that makes these semantics "static".  If you want to calculate static semantics for
- *  lots of instructions, which is often the case, the @ref attachInstructionSemantics functions can do that: they process an
- *  entire AST, adding semantics to all the instructions they find. */
+ *  By default, ROSE does not generate the static semantics, and each instruction's @ref SgAsmInstruction::semantics property will
+ *  be null.  Semantics can be added to any instruction by @ref BaseSemantics::Dispatcher::processInstruction "executing" the
+ *  instruction in this StaticSemantics domain.  Each time the instruction is executed in this domain its previous semantics are
+ *  thrown away and recalculated, so you should generally only do this once; that's the nature that makes these semantics "static".
+ *  If you want to calculate static semantics for lots of instructions, which is often the case, the @ref attachInstructionSemantics
+ *  functions can do that: they process an entire AST, adding semantics to all the instructions they find. */
 namespace StaticSemantics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -45,9 +44,9 @@ namespace StaticSemantics {
 
 /** Build and attach static semantics to all instructions.
  *
- *  Traverses the specified AST to find instructions that have no static semantics yet. For each such instruction, static
- *  semantics are calculated and the instruction's @ref SgAsmInstruction::get_semantics "semantics" property is set to
- *  non-null and will contain a list of instruction side effects.
+ *  Traverses the specified AST to find instructions that have no static semantics yet. For each such instruction, static semantics
+ *  are calculated and the instruction's @ref SgAsmInstruction::semantics property is set to non-null and will contain a list of
+ *  instruction side effects.
  *
  *  If processing lots of unrelated instructions, it is best to use the version of this function that takes a dispatcher, or
  *  virtual CPU, so that the same dispatcher can be used over and over.  There is no register or memory state associated with a

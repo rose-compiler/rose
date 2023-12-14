@@ -86,147 +86,10 @@ public:
     /** Allocate a factory. */
     static EngineBinaryPtr factory();
 
-    virtual bool matchFactory(const std::vector<std::string> &specimen) const override;
-    virtual EnginePtr instanceFromFactory(const Settings&) override;
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  The very top-level use case
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-public:
-    /** Most basic usage of the partitioner.
-     *
-     *  This method does everything from parsing the command-line to generating an abstract syntax tree. If all is successful,
-     *  then an abstract syntax tree is returned.  The return value is a SgAsmBlock node that contains all the detected
-     *  functions. If the specimen consisted of an ELF or PE container then the parent nodes of the returned AST will lead
-     *  eventually to an SgProject node.
-     *
-     *  The command-line can be provided as a typical @c argc and @c argv pair, or as a vector of arguments. In the latter
-     *  case, the vector should not include <code>argv[0]</code> or <code>argv[argc]</code> (which is always a null pointer).
-     *
-     *  The command-line supports a "--help" (or "-h") switch to describe all other switches and arguments, essentially
-     *  generating output like a Unix man(1) page.
-     *
-     *  The @p purpose should be a single line string that will be shown in the title of the man page and should
-     *  not start with an upper-case letter, a hyphen, white space, or the name of the command. E.g., a disassembler tool might
-     *  specify the purpose as "disassembles a binary specimen".
-     *
-     *  The @p description is a full, multi-line description written in the Sawyer markup language where "@" characters have
-     *  special meaning.
-     *
-     *  If an <code>std::runtime_exception</code> occurs and the @ref exitOnError property is set, then the exception is caught,
-     *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
-     *
-     * @{ */
-    using Engine::frontend;
-    SgAsmBlock* frontend(const std::vector<std::string> &args,
-                         const std::string &purpose, const std::string &description) override;
-    /** @} */
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Basic top-level steps
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-public:
-    /** Reset the engine to its initial state.
-     *
-     *  This does not reset the settings properties since that can be done easily by constructing a new engine.  It only resets
-     *  the interpretation, binary loader, disassembler, and memory map so all the top-level steps get executed again. This is
-     *  a useful way to re-use the same partitioner to process multiple specimens. */
-    virtual void reset() override;
-
-    /** Parse specimen binary containers.
-     *
-     *  Parses the ELF and PE binary containers to create an abstract syntax tree (AST).  If @p fileNames contains names that
-     *  are recognized as raw data or other non-containers then they are skipped over at this stage but processed during the
-     *  @ref loadSpecimens stage.
-     *
-     *  This method tries to allocate a disassember if none is set and an ISA name is specified in the settings, otherwise the
-     *  disassembler is chosen later.  It also resets the interpretation to be the return value (see below), and clears the
-     *  memory map.
-     *
-     *  Returns a binary interpretation (perhaps one of many). ELF files have only one interpretation; PE files have a DOS and
-     *  a PE interpretation and this method will return the PE interpretation. The user may, at this point, select a different
-     *  interpretation. If the list of names has nothing suitable for ROSE's @c frontend function (the thing that does the
-     *  container parsing) then the null pointer is returned.
-     *
-     *  If an <code>std::runtime_exception</code> occurs and the @ref exitOnError property is set, then the exception is caught,
-     *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
-     *
-     * @{ */
-    using Engine::parseContainers;
-    virtual SgAsmInterpretation* parseContainers(const std::vector<std::string> &fileNames) override;
-    /** @} */
-
-    /** Load and/or link interpretation.
-     *
-     *  Loads and/or links the engine's interpretation according to the engine's binary loader with these steps:
-     *
-     *  @li Clears any existing memory map in the engine.
-     *
-     *  @li If the binary containers have not been parsed (@ref areContainersParsed returns false, i.e., engine has a null
-     *      binary interpretation) then @ref parseContainers is called with the same arguments.
-     *
-     *  @li If binary containers are present but the chosen binary interpretation's memory map is null or empty, then
-     *      initialize the memory map by calling @ref loadContainers with the same arguments.
-     *
-     *  @li Continue initializing the memory map by processing all non-container arguments via @ref loadNonContainers.
-     *
-     *  Returns a reference to the engine's memory map.
-     *
-     *  If an <code>std::runtime_exception</code> occurs and the @ref exitOnError property is set, then the exception is caught,
-     *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
-     *
-     * @{ */
-    using Engine::loadSpecimens;
-    virtual MemoryMapPtr loadSpecimens(const std::vector<std::string> &fileNames = std::vector<std::string>()) override;
-    /** @} */
-
-    /** Partition instructions into basic blocks and functions.
-     *
-     *  Disassembles and organizes instructions into basic blocks and functions with these steps:
-     *
-     *  @li If the specimen is not loaded (@ref areSpecimensLoaded) then call @ref loadSpecimens. The no-argument version of
-     *  this function requires that specimens have already been loaded.
-     *
-     *  @li Obtain a disassembler by calling @ref obtainDisassembler.
-     *
-     *  @li Create a partitioner by calling @ref createPartitioner.
-     *
-     *  @li Run the partitioner by calling @ref runPartitioner.
-     *
-     *  Returns the partitioner that was used and which contains the results.
-     *
-     *  If an <code>std::runtime_exception</code> occurs and the @ref exitOnError property is set, then the exception is caught,
-     *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
-     *
-     * @{ */
-    using Engine::partition;
-    virtual PartitionerPtr partition(const std::vector<std::string> &fileNames = std::vector<std::string>()) override;
-    /** @} */
-
-    /** Obtain an abstract syntax tree.
-     *
-     *  Constructs a new abstract syntax tree (AST) from partitioner information with these steps:
-     *
-     *  @li If the partitioner has not been run yet, then do that now with the same arguments.  The zero-argument version
-     *      invokes the zero-argument @ref partition, which requires that the specimen has already been loaded by @ref
-     *      loadSpecimens.
-     *
-     *  @li Call Modules::buildAst to build the AST.
-     *
-     *  If an <code>std::runtime_exception</code> occurs and the @ref exitOnError property is set, then the exception is caught,
-     *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
-     *
-     * @{ */
-    using Engine::buildAst;
-    virtual SgAsmBlock* buildAst(const std::vector<std::string> &fileNames = std::vector<std::string>()) override;
-    /** @} */
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Command-line parsing
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    virtual std::list<Sawyer::CommandLine::SwitchGroup> commandLineSwitches() override;
-    virtual std::pair<std::string, std::string> specimenNameDocumentation() override;
+public:
 
     /** Command-line switches related to the general engine behavior.
      *
@@ -260,19 +123,6 @@ public:
     // top-level: parseContainers
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Determine whether a specimen name is a non-container.
-     *
-     *  Certain strings are recognized as special instructions for how to adjust a memory map and are not intended to be passed
-     *  to ROSE's @c frontend function.  This predicate returns true for such strings. */
-    virtual bool isNonContainer(const std::string&) override;
-
-    /** Returns true if containers are parsed.
-     *
-     *  Specifically, returns true if the engine has a non-null interpretation.  If it has a null interpretation then
-     *  @ref parseContainers might have already been called but no binary containers specified, in which case calling it again
-     *  with the same file names will have no effect. */
-    virtual bool areContainersParsed() const override;
-
     /** Parses a vxcore specification and initializes memory.
      *
      *  Parses a VxWorks core dump in the format defined by Jim Leek and loads the data into ROSE's analysis memory. The argument
@@ -327,9 +177,8 @@ public:
 public:
     /** Create a tuned partitioner.
      *
-     *  Returns a partitioner that is tuned to operate on a specific instruction set architecture. The engine must have @ref
-     *  disassembler (if @ref doDisassemble property is set) and @ref memoryMap properties assigned already, either explicitly
-     *  or as the result of earlier steps. */
+     *  Returns a partitioner that is tuned to operate on a specific instruction set architecture. A @ref memoryMap must be assigned
+     *  already, either explicitly or as the result of earlier steps. */
     virtual PartitionerPtr createTunedPartitioner();
 
     /** Create a partitioner from an AST.
@@ -337,28 +186,6 @@ public:
      *  Partitioner data structures are often more useful and more efficient for analysis than an AST. This method initializes
      *  the engine and a new partitioner with information from the AST. */
     virtual PartitionerPtr createPartitionerFromAst(SgAsmInterpretation*);
-
-    /** Create partitioner.
-     *
-     *  This is the method usually called to create a new partitioner.  The binary engine class just calls @ref
-     *  createTunedPartitioner. */
-    virtual PartitionerPtr createPartitioner() override;
-
-    /** Finds interesting things to work on initially.
-     *
-     *  Seeds the partitioner with addresses and functions where recursive disassembly should begin. */
-    virtual void runPartitionerInit(const PartitionerPtr&) override;
-
-    /** Runs the recursive part of partioning.
-     *
-     *  This is the long-running guts of the partitioner. */
-    virtual void runPartitionerRecursive(const PartitionerPtr&) override;
-
-    /** Runs the final parts of partitioning.
-     *
-     *  This does anything necessary after the main part of partitioning is finished. For instance, it might give names to some
-     *  functions that don't have names yet. */
-    virtual void runPartitionerFinal(const PartitionerPtr&) override;
 
     /** Partition any sections containing CIL code.
      *
@@ -578,7 +405,8 @@ public:
      *  possible, creates more functions by looking for function calls, and attaches additional basic blocks to functions by
      *  following the CFG for each function.
      *
-     *  This method is called automatically by @ref Engine::runPartitioner if the @ref findingIntraFunctionCode property is set.
+     *  This method is called automatically by @ref Engine::runPartitioner if the @ref PartitionerSettings::findingIntraFunctionCode
+     *  property is set.
      *
      *  Returns the sum from all the calls to @ref attachSurroundedCodeToFunctions. */
     virtual size_t attachAllSurroundedCodeToFunctions(const PartitionerPtr&);
@@ -683,7 +511,7 @@ public:
      *  This collective predicate is used when searching for function prologues in order to create new functions. Its purpose
      *  is to try to match sequences of instructions that look like thunks and then create a function at that address. A suitable
      *  default list of predicates is created when the engine is initialized, and can either be replaced by a new list, an empty
-     *  list, or the list itself can be adjusted.  The list is consulted only when @ref findingThunks is set.
+     *  list, or the list itself can be adjusted.  The list is consulted only when @ref PartitionerSettings::findingThunks is set.
      *
      * @{ */
     ThunkPredicatesPtr functionMatcherThunks() const /*final*/;
@@ -695,7 +523,7 @@ public:
      *  This collective predicate is used when searching for thunks at the beginnings of existing functions in order to split
      *  those thunk instructions into their own separate function.  A suitable default list of predicates is created when the
      *  engine is initialized, and can either be replaced by a new list, an empty list, or the list itself can be adjusted.
-     *  The list is consulted only when @ref splittingThunks is set.
+     *  The list is consulted only when @ref PartitionerSettings::splittingThunks is set.
      *
      * @{ */
     ThunkPredicatesPtr functionSplittingThunks() const /*final*/;
@@ -719,7 +547,38 @@ public:
 private:
     void init();
 
-    // Similar to ::frontend but a lot less complicated.
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Overrides documented in the base class
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    virtual bool matchFactory(const std::vector<std::string> &specimen) const override;
+    virtual EnginePtr instanceFromFactory(const Settings&) override;
+    virtual void reset() override;
+
+    using Engine::frontend;
+    SgAsmBlock* frontend(const std::vector<std::string> &args,
+                         const std::string &purpose, const std::string &description) override;
+
+    using Engine::parseContainers;
+    virtual SgAsmInterpretation* parseContainers(const std::vector<std::string> &fileNames) override;
+
+    using Engine::loadSpecimens;
+    virtual MemoryMapPtr loadSpecimens(const std::vector<std::string> &fileNames = std::vector<std::string>()) override;
+
+    using Engine::partition;
+    virtual PartitionerPtr partition(const std::vector<std::string> &fileNames = std::vector<std::string>()) override;
+
+    using Engine::buildAst;
+    virtual SgAsmBlock* buildAst(const std::vector<std::string> &fileNames = std::vector<std::string>()) override;
+
+    virtual std::list<Sawyer::CommandLine::SwitchGroup> commandLineSwitches() override;
+    virtual std::pair<std::string, std::string> specimenNameDocumentation() override;
+    virtual bool isNonContainer(const std::string&) override;
+    virtual bool areContainersParsed() const override;
+    virtual PartitionerPtr createPartitioner() override;
+    virtual void runPartitionerInit(const PartitionerPtr&) override;
+    virtual void runPartitionerRecursive(const PartitionerPtr&) override;
+    virtual void runPartitionerFinal(const PartitionerPtr&) override;
     virtual SgProject* roseFrontendReplacement(const std::vector<boost::filesystem::path> &fileNames) override;
 };
 

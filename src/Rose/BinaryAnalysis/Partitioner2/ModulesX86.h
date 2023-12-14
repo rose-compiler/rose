@@ -154,7 +154,7 @@ bool matchPushSi(const PartitionerConstPtr&, SgAsmX86Instruction*);
 /** Reads a table of code addresses.
  *
  *  Reads a table of code addresses from within the @p tableLimits memory range starting at either the specified @p
- *  probableStartVa or the beginning of the @ref tableLimits. If @p nSkippable is positive, up to that many invalid entries can
+ *  probableStartVa or the beginning of the @p tableLimits. If @p nSkippable is positive, up to that many invalid entries can
  *  be skipped before actual valid entries are found.  If no entries are skipped and the @p probableStartVa is larger than the
  *  minimum @p tableLimits then we also look backward from the @p probableStartVa to consume as many valid table entries as
  *  possible within the @p tableLimits.  An entry is valid if it exists in read-only memory and its value (the target address)

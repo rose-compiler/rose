@@ -148,12 +148,12 @@ class Factory {
     /**
      * Build expression or type to access static member and subtype of the parent type. Args are forwarded to `instantiate` as needed.
      *
-     * \tparam otag must be one of a_class/a_typedef or a_variable/a_function
-     * \tparam Args types of template arguments (see instantiate)
+     * @c otag must be one of a_class/a_typedef or a_variable/a_function
+     * @c Args types of template arguments (see instantiate)
      *
-     * \param obj points to a symbol
-     * \param lhs
-     * \param args template arguments (see instantiate)
+     * @c obj points to a symbol
+     * @c lhs
+     * @c args template arguments (see instantiate)
      *
      */
     template <Object otag, typename... Args>

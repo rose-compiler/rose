@@ -121,7 +121,7 @@ public:
      *  Multiple functions can be created. For instance, if the matcher matches a thunk then two functions will likely be
      *  created: the thunk itself, and the function to which it points.
      *
-     *  The partitioner will never call @ref function without first having called @ref match. */
+     *  The partitioner will never call @ref functions without first having called @ref match. */
     virtual std::vector<FunctionPtr> functions() const = 0;
 };
 
@@ -287,7 +287,7 @@ public:
     static Ptr instance(const std::string &config);
     static Ptr instance(const std::vector<std::string> &args);
     static Sawyer::CommandLine::SwitchGroup switches(Settings&);
-    static std::string docString();
+    static std::string docString();                     /**< Documentation string. */
     virtual bool operator()(bool chain, const AttachedBasicBlock &args) override;
     virtual bool operator()(bool chain, const DetachedBasicBlock&) override { return chain; }
 };
@@ -315,14 +315,14 @@ public:
     static Ptr instance(const std::string &config);
     static Ptr instance(const std::vector<std::string> &args);
     static Sawyer::CommandLine::SwitchGroup switches(Settings&);
-    static std::string docString();
+    static std::string docString();                     /**< Documentation string. */
     virtual bool operator()(bool chain, const AttachedBasicBlock &args) override;
     virtual bool operator()(bool chain, const DetachedBasicBlock&) override { return chain; }
 };
 
 /** Produce a hexdump at a certain time.
  *
- *  See @ref docString for full documentation. */
+ *  See @ref HexDumper::docString result for full documentation. */
 class HexDumper: public CfgAdjustmentCallback {
 public:
     struct Settings {
@@ -342,7 +342,7 @@ public:
     static Ptr instance(const std::string &config);
     static Ptr instance(const std::vector<std::string> &args);
     static Sawyer::CommandLine::SwitchGroup switches(Settings&);
-    static std::string docString();
+    static std::string docString();                     /**< Documentation string. */
     virtual bool operator()(bool chain, const AttachedBasicBlock &args) override;
     virtual bool operator()(bool chain, const DetachedBasicBlock&) override { return chain; }
 };
@@ -366,7 +366,7 @@ public:
     static Ptr instance(const std::string &config);
     static Ptr instance(const std::vector<std::string> &args);
     static Sawyer::CommandLine::SwitchGroup switches(Settings&);
-    static std::string docString();
+    static std::string docString();                     /**< Documentation string. */
     virtual bool operator()(bool chain, const AttachedBasicBlock &args) override;
     virtual bool operator()(bool chain, const DetachedBasicBlock&) override { return chain; }
     void debug(rose_addr_t, const BasicBlockPtr&);
@@ -533,7 +533,7 @@ void fixupAstPointers(SgNode *ast, SgAsmInterpretation *interp=NULL);
  *  This function uses the results of previous calling convention analysis to assign calling convention definitions to the
  *  functions in the specified AST. There's often more than one definition that matches the analysis results, and this fixup
  *  pass attempts to assign the best definitions. It does so by first ranking the definitions according to how often they match
- *  across all the functions known to the partitioner. Then, for each function in the specified @ref ast, the we also get a
+ *  across all the functions known to the partitioner. Then, for each function in the specified @p ast, the we also get a
  *  list matching definitions (if a calling convention analysis has been run on that function). We copy into the AST that
  *  function's definition which has the highest global ranking. */
 void fixupAstCallingConventions(const PartitionerConstPtr&, SgNode *ast);

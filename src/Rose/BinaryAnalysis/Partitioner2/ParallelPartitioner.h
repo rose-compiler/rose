@@ -279,7 +279,7 @@ public:
      *  immutable. Instead of accessing the pointed-to object while its pointer remains in the cache, you should borrow the
      *  pointer from the cache for the duration of your access. This is regardless of whether you're modifying the object or
      *  only reading it. This prevents another thread from obtaining a pointer to the same object and accessing it at the same time.
-     *  You can use CachedItem::take or @ref borrow. */
+     *  You can use OptionalValue::take or @c borrow. */
     struct Cached: boost::noncopyable {
         CachedItem<bool, uint64_t> isFunctionCall; /**< Is this a function call. */
         CachedItem<Semantics::RiscOperatorsPtr, uint64_t> semantics;  /**< Symbolic semantics of basic block. */
@@ -358,7 +358,9 @@ public:
      *
      *  Returns informatio that's cached at a particular CFG vertex.
      *
-     *  Thread safety: This function is thread safe. */
+     *  Thread safety: This function is thread safe.
+     *
+     * @{ */
     const Cached& cached() const { return cached_; }
     Cached& cached() { return cached_; }
     /** @} */
@@ -504,9 +506,9 @@ protected:
      *
      *  Work items are always owned by a partitioner, which is passed as the first constructor argument.
      *
-     *  The priority is used as a coarse way to sort work items based on their types. Once items are sorted coarsely,
-     *  their @ref fineSort is used to sort them. Higher priority work must complete before lower priority work
-     *  is started. The priorities used internally are all less than or equal to zero. */
+     *  The priority is used as a coarse way to sort work items based on their types. Once items are sorted coarsely, their @p sort
+     *  is used to sort them. Higher priority work must complete before lower priority work is started. The priorities used
+     *  internally are all less than or equal to zero. */
     WorkItem(Partitioner &partitioner, Priority priority, uint64_t sort)
         : partitioner_(partitioner), priority_(priority), sort_(sort) {}
 
@@ -708,8 +710,7 @@ public:
 
     /** Accuracy setting.
      *
-     *  Returns @p a if not @ref Accuracy::DEFAULT, else returns @p b if not @ref Accuracy::DEFAULT, else returns @ref
-     *  Accuracy::LOW. */
+     *  Returns @p a if not @c Accuracy::DEFAULT, else returns @p b if not @c Accuracy::DEFAULT, else returns @c Accuracy::LOW. */
     static Accuracy choose(Accuracy a, Accuracy b);
 
     //--------------------------------------------------------------------------------------------------------------------
@@ -894,7 +895,7 @@ public:
      *
      *  Given at least one instruction of a basic block, find all the other instructions and return them as a list.
      *
-     *  Thread safety: This function is thread safe. If possible, use @ref basicBlockEnding at instead, which is slightly
+     *  Thread safety: This function is thread safe. If possible, use @ref basicBlockEndingAt instead, which is slightly
      *  faster and supports limiting the block size. */
     InsnInfo::List basicBlockContaining(rose_addr_t) const;
 

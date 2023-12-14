@@ -22,22 +22,29 @@ namespace Rose {
  *  run-time logic assertions can be found in the Sawyer::Assert name space in "assert/Assert.h" (which also defines a number
  *  of C preprocessor macros whose names begin with "ASSERT_".
  *
- *  Sawyer supports multiple instances of messaging facilities (@ref Sawyer::Message::Facility or @ref
+ *  To this API more ROSE-like, we create some aliases. Unfortunately these aliases aren't entirely understood by Doxygen, so we
+ *  list them here:
+ *
+ *  @li Rose::Diagnostics::Facility is an alias of @ref Sawyer::Message::Facility
+ *  @li Rose::Diagnostics::Stream is an alias of @ref Sawyer::Message::Stream
+ *  @li Rose::Diagnostics::mfacilities is an alias of @ref Sawyer::Message::mfacilities
+ *
+ *  Sawyer supports multiple instances of messaging facilities (@ref Sawyer::Message::Facility / @c
  *  Rose::Diagnostics::Facility) each of which defines a <code>std::ostream</code> object for each of a number of message
  *  importance levels.  ROSE defines one global library-wide facility, @ref Rose::Diagnostics::mlog whose string name (used in
  *  output) is simply "rose".  Software layers within ROSE may define their own facilities and give them names indicative of
  *  the software layer, like "Rose::BinaryAnalysis::StackDelta. Tools that use ROSE can also define and register their own
- *  facilities.  All these facilities are then grouped together into a single @ref Sawyer::Message::Facilities object, @ref
- *  Rose::Diagnostics::mfacilities, so they can be controlled collectively or individually from the ROSE command-line (e.g.,
+ *  facilities.  All these facilities are then grouped together into a single @ref Sawyer::Message::Facilities object,
+ *  @c Rose::Diagnostics::mfacilities, so they can be controlled collectively or individually from the ROSE command-line (e.g.,
  *  the @c frontend call).
  *
  * @section diagnostics_cmdline_usage Command-line usage
  *
- *  ROSE looks for the command-line switch (e.g., "-rose:log" for source analysis tools or "--log" for binary analysis tools)
- *  that takes one argument: @em what.  If @em what is the word "help" then usage information is displayed; if
- *  @em what is the word "list" then log settings are displayed.  Otherwise, @em what is expected to be a string to
- *  pass to the @ref Rose::Diagnostics::mfacilities.control function.  See the output from any tool that supports "--log help"
- *  for details about the syntax.
+ *  ROSE looks for the command-line switch (e.g., "-rose:log" for source analysis tools or "--log" for binary analysis tools) that
+ *  takes one argument: @em what.  If @em what is the word "help" then usage information is displayed; if @em what is the word
+ *  "list" then log settings are displayed.  Otherwise, @em what is expected to be a string to pass to the @ref
+ *  Sawyer::Message::mfacilities (@c Rose::Diagnostics::mfacilities.control) function.  See the output from any tool that supports
+ *  "--log help" for details about the syntax.
  *
  * @section diagnostics_in_rose Adding a facility to ROSE
  *
@@ -302,8 +309,8 @@ using Sawyer::Message::WARN;                            // warnings that users s
 using Sawyer::Message::ERROR;                           // recoverable errors, possibly followed by throw
 using Sawyer::Message::FATAL;                           // errors which are immediately followed by exit, abort, or similar
 
-using Sawyer::Message::Stream;                          // one message stream, e.g., 'mlog[INFO]'
-using Sawyer::Message::Facility;                        // collection of related streams, e.g., 'mlog'
+using Sawyer::Message::Stream;                          /**< One message stream, e.g., 'mlog[INFO]'. */
+using Sawyer::Message::Facility;                        /**< Collection of related streams, e.g., 'mlog'. */
 
 /** Default destination for ROSE diagnostics.  The user may set this explicitly before Rose::Diagnostics::initialize is called,
  *  otherwise that function will create a destination that points to standard error and uses the optional

@@ -174,7 +174,7 @@ ROSE_UTIL_API void copyFiles(const std::vector<Path> &files, const Path &root, c
  *
  *  Get a list of files by recursively matching files under @p root and then copy them to similar locations relative to @p
  *  destination. The @p root and @p destination must not overlap.  The @p select and @p descend arguments are the same as
- *  for the @ref findAllNames method. */
+ *  for the @ref findNamesRecursively method. */
 template<class Select, class Descend>
 void copyFilesRecursively(const Path &root, const Path &destination, Select select, Descend descend) {
     std::vector<Path> files = findNamesRecursively(root, select, descend);

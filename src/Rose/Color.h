@@ -244,7 +244,7 @@ public:
 
     /** Construct a mapping with two colors.
      *
-     *  Constructs a gradient that maps x less than or equal to zero to @ref color1; x greater than or equal to one to @ref
+     *  Constructs a gradient that maps x less than or equal to zero to @p color1; x greater than or equal to one to @p
      *  color2, and interpolates between zero and one. */
     Gradient(const HSV &color1, const HSV &color2) {
         colors_.insert(0.0, color1);

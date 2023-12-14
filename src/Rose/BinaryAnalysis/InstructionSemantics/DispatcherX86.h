@@ -23,6 +23,7 @@ namespace InstructionSemantics {
 /** Shared-ownership pointer to an x86 instruction dispatcher. */
 typedef boost::shared_ptr<class DispatcherX86> DispatcherX86Ptr;
 
+/** Semantically evaluates Intel x86 instructions. */
 class DispatcherX86: public BaseSemantics::Dispatcher {
 public:
     /** Base type. */

@@ -169,7 +169,7 @@ namespace Partitioner2 {
  *  created, and a subset of the instructions known to the instruction provider. Note: a final pass during AST construction
  *  might join certain CFG vertices into a single SgAsmBlock under certain circumstances.  The CFG is of type @ref
  *  ControlFlowGraph, a subset of @ref Sawyer::Container::Graph whose vertices and edges both carry information: the vertices
- *  are of type @ref ControlFlowGraph::CfgVertex and the edges are of type @ref ControlFlowGraph::CfgEdge.
+ *  are of type @ref CfgVertex and the edges are of type @ref CfgEdge.
  *
  *  Most CFG vertices represent basic blocks (vertex type @ref V_BASIC_BLOCK) and either point to a non-null @ref BasicBlock
  *  having at least one discovered instruction, or to a null basic block.  A "placeholder" usually refers to a vertex with a
@@ -186,43 +186,42 @@ namespace Partitioner2 {
  *  The CFG also has other special (non-basic block) vertices each represented by its own vertex type. Altogether, the special
  *  vertices, by their type, are:
  *
- *  @li @ref V_UNDISCOVERED: a unique, special vertex whose incoming edges originate only from pure placeholders, one edge per
- *      placeholder. This vertex is returned by @ref undiscoveredVertex and users can use its incoming edge list as a simple
+ *  @li @c VertexType::V_UNDISCOVERED: a unique, special vertex whose incoming edges originate only from pure placeholders, one edge
+ *      per placeholder. This vertex is returned by @ref undiscoveredVertex and users can use its incoming edge list as a simple
  *      work-list of places where instructions need to be discovered.
  *
- *  @li @ref V_NONEXISTING: a unique, special vertex whose incoming edges originate from pure placeholders that were discovered
- *      to have an unmapped or non-executable starting address, one edge per placeholder.  In other words, this vertex's incoming
- *      edges point back to addresses where the partitioner thinks there should be a basic block but there isn't. An example is
- *      entry addresses for dynamically linked functions that have not been loaded and linked. This vertex is returned by @ref
- *      nonexistingVertex.
+ *  @li @c VertexType::V_NONEXISTING: a unique, special vertex whose incoming edges originate from pure placeholders that were
+ *      discovered to have an unmapped or non-executable starting address, one edge per placeholder.  In other words, this vertex's
+ *      incoming edges point back to addresses where the partitioner thinks there should be a basic block but there isn't. An
+ *      example is entry addresses for dynamically linked functions that have not been loaded and linked. This vertex is returned by
+ *      @ref nonexistingVertex.
  *
- *  @li @ref V_INDETERMINATE: a unique, special vertex that serves as the destination for any basic block outgoing edge whose
- *      target address is not concrete.  For instance, an indirect jump through a register whose value is not known will have
- *      an edge to the indeterminate vertex.  An "unknown" instruction, which indicates that memory is executable but
- *      disassembly failed, also always point to the indeterminate vertex. This vertex is returned by @ref
- *      indeterminateVertex.
+ *  @li @c VertexType::V_INDETERMINATE: a unique, special vertex that serves as the destination for any basic block outgoing edge
+ *      whose target address is not concrete.  For instance, an indirect jump through a register whose value is not known will have
+ *      an edge to the indeterminate vertex.  An "unknown" instruction, which indicates that memory is executable but disassembly
+ *      failed, also always point to the indeterminate vertex. This vertex is returned by @ref indeterminateVertex.
  *
  *  CFG edges are also labeled with type information:
  *
- *  @li @ref E_FUNCTION_CALL: represents an edge known to be a function call. A function call is defined as an inter-function
- *      branch that pushes a return address onto the stack.
+ *  @li @c EdgeType::E_FUNCTION_CALL: represents an edge known to be a function call. A function call is defined as an
+ *      inter-function branch that pushes a return address onto the stack.
  *
- *  @li @ref E_FUNCTION_XFER: represents an inter-function edge which is not a function call.  These edges represent a transfer
- *      of control from the caller to the callee (even though there is no CALL instruction) where the callee inherits the stack
- *      frame of the caller.  When the callee returns it will skip over the caller because the caller does not have a distinct
+ *  @li @c EdgeType::E_FUNCTION_XFER: represents an inter-function edge which is not a function call.  These edges represent a
+ *      transfer of control from the caller to the callee (even though there is no CALL instruction) where the callee inherits the
+ *      stack frame of the caller.  When the callee returns it will skip over the caller because the caller does not have a distinct
  *      stack frame.  An example is an edge from a thunk consisting of an indirect jump instruction that branches to another
  *      function.
  *
- *  @li @ref E_FUNCTION_RETURN: represents a function return-to-caller, such as from a RET instruction.  If a function can
- *      return to multiple locations, rather than store a list edges for each possible return address, the CFG stores only one
- *      edge with an abstract value, thus pointing to the indeterminate vertex. Of course if a function can only return to one
- *      address then the edge is concrete and points to a placeholder at that address, but how often does that happen?
+ *  @li @c EdgeType::E_FUNCTION_RETURN: represents a function return-to-caller, such as from a RET instruction.  If a function can
+ *      return to multiple locations, rather than store a list edges for each possible return address, the CFG stores only one edge
+ *      with an abstract value, thus pointing to the indeterminate vertex. Of course if a function can only return to one address
+ *      then the edge is concrete and points to a placeholder at that address, but how often does that happen?
  *
- *  @li @ref E_CALL_RETURN: represents a function return with respect to a call site.  These edges normally originate at
+ *  @li @c EdgeType::E_CALL_RETURN: represents a function return with respect to a call site.  These edges normally originate at
  *      CALL instructions and point to the address following the call.  Lack of such an edge when the CFG is finished usually
  *      indicates that the called function cannot return.
  *
- *  @li @ref E_NORMAL: represents any edge not in one of the above categories.
+ *  @li @c EdgeType::E_NORMAL: represents any edge not in one of the above categories.
  *
  * @section partitioner_aum Address Usage Map
  *
@@ -290,7 +289,7 @@ namespace Partitioner2 {
  *    data structures such as the CFG and AUM are always consistent.  The class is final to guarantee these invariants. Its
  *    behavior can only be modified by registering callbacks.  High-level behavior is implemented above this class such as in
  *    module functions (various Module*.h files) or engines derived from the @ref Engine class.  Additional data can be
- *    attached to a partitioner via attributes (see @ref Attribute). */
+ *    attached to a partitioner via attributes (see @ref Sawyer::Attribute). */
 class ROSE_DLL_API Partitioner /*final*/
     : public Sawyer::SharedObject, public Sawyer::SharedFromThis<Partitioner>, public Sawyer::Attribute::Storage<> {
 #ifdef ROSE_PARTITIONER_MOVE
@@ -506,7 +505,7 @@ public:
     /** Construct a partitioner by loading it and an AST from a file.
      *
      *  The specified RBA file is opened and read to create a new @ref Partitioner object and associated AST. The @ref
-     *  partition function also understands how to open RBA files. */
+     *  Engine::partition function also understands how to open RBA files. */
     static PartitionerPtr instanceFromRbaFile(const boost::filesystem::path&, SerialIo::Format = SerialIo::BINARY);
 
     /** Save this partitioner as an RBA file. */
@@ -1149,7 +1148,7 @@ public:
      *  nothing if the basic block was already detached. If the basic block was specified by its starting address and the
      *  CFG/AUM has no record of such a block then a null pointer is returned.
      *
-     *  In order to completely remove a basic block, including its placeholder, use @ref eraseBasicBlock.
+     *  In order to completely remove a basic block, including its placeholder, use @ref erasePlaceholder.
      *
      *  Thread safety: Not thread safe.
      *
@@ -1316,10 +1315,10 @@ public:
 
     /** Determines concrete successors for a basic block.
      *
-     *  Returns a vector of distinct, concrete successor addresses.  Semantics is identical to @ref bblockSuccessors except
-     *  non-concrete values are removed from the list.  The optional @p isComplete argument is set to true or false depending
-     *  on whether the set of returned concrete successors represents the complete set of successors (true) or some member in
-     *  the complete set is not concrete (false).
+     *  Returns a vector of distinct, concrete successor addresses.  Semantics is identical to @ref basicBlockSuccessors except
+     *  non-concrete values are removed from the list.  The optional @p isComplete argument is set to true or false depending on
+     *  whether the set of returned concrete successors represents the complete set of successors (true) or some member in the
+     *  complete set is not concrete (false).
      *
      *  Thread safety: Not thread safe. */
     std::vector<rose_addr_t> basicBlockConcreteSuccessors(const BasicBlockPtr&, bool *isComplete=NULL) const;
@@ -1918,7 +1917,7 @@ public:
      *
      *  The returned function pointers are sorted by function entry address.
      *
-     *  See also @ref discoverFunctionCalls which returns a subset of the functions returned by this method.
+     *  See also @ref discoverCalledFunctions which returns a subset of the functions returned by this method.
      *
      *  Thread safety: Not thread safe. */
     std::vector<FunctionPtr> discoverFunctionEntryVertices() const;
@@ -1975,8 +1974,8 @@ public:
      *  Function::stackDelta property.
      *
      *  Since this analysis is based on data flow, which is based on a control flow graph, the function must be attached to the
-     *  CFG/AUM and all its basic blocks must also exist in the CFG/AUM.  Also, the @ref basicBlockStackDelta method must be
-     *  non-null for each reachable block in the function.
+     *  CFG/AUM and all its basic blocks must also exist in the CFG/AUM.  Also, the @ref basicBlockStackDeltaIn and @ref
+     *  basicBlockStackDeltaOut methods must be non-null for each reachable block in the function.
      *
      *  If the configuration information specifies a stack delta for this function then that delta is used instead of
      *  performing any analysis.
@@ -2293,7 +2292,7 @@ public:
      *  edges that go from a selected vertex to an unselected vertex are also emitted, with the target vertex having
      *  abbreviated information in the GraphViz output.
      *
-     *  This is only a simple wrapper around @ref GraphViz::dumpInterval. That API has many more options than are presented by
+     *  This is only a simple wrapper around @ref GraphViz::CfgEmitter. That API has many more options than are presented by
      *  this method.
      *
      *  Thread safety: Not thread safe. */

@@ -191,7 +191,7 @@ enum VisitAction {
 
 /** Maximum number of nodes that can be reported.
  *
- *  If @ref nnodes returns this value then the size of the expressions could not be counted. This can happens when the
+ *  If @ref nNodes returns this value then the size of the expressions could not be counted. This can happens when the
  *  expression contains a large number of common subexpressions. */
 extern const uint64_t MAX_NNODES;       // defined in .C so we don't pollute user namespace with limit macros
 

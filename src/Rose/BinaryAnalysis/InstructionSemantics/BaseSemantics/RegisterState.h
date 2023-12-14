@@ -147,7 +147,7 @@ public:
      *  register that was never accessed and a register that was only read, in which case @p dflt is not used since all
      *  registers are already initialized.
      *
-     *  See @ref RiscOperators::readRegister for more details. */
+     *  See @ref BaseSemantics::RiscOperators::readRegister for more details. */
     virtual SValuePtr readRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops) = 0;
 
     /** Read a register without side effects.
@@ -167,7 +167,7 @@ public:
      *  The register descriptor, @p reg, not only describes which register, but also which bits of that register (e.g., "al",
      *  "ah", "ax", "eax", and "rax" are all the same hardware register on an amd64, but refer to different parts of that
      *  register). The RISC operations are provided so that they can be used to insert the @p value bits into a wider the
-     *  hardware register if necessary. See @ref RiscOperators::readRegister for more details. */
+     *  hardware register if necessary. See @ref BaseSemantics::RiscOperators::readRegister for more details. */
     virtual void writeRegister(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops) = 0;
 
     /** Update register properties after writing to a register.

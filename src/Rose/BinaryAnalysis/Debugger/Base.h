@@ -168,6 +168,7 @@ public:
     virtual void writeRegister(ThreadId, RegisterDescriptor, uint64_t value) = 0;
     /** @} */
 
+    /** List of available registers. */
     virtual std::vector<RegisterDescriptor> availableRegisters() = 0;
 
     /** Read all available register values as a single bit vector.

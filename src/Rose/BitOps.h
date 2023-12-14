@@ -224,8 +224,8 @@ inline Unsigned shiftRightSigned(Unsigned src, size_t w, size_t n) {
 
 /** Extract part of a value.
  *
- *  Extracts the bits in the range @p least through @greatest (inclusive) and shifts them right by @p least bits. The @p least
- *  and @p greatest indices must be valid for @p src as defined by @ref mask. */
+ *  Extracts the bits in the range @p least through @p greatest (inclusive) and shifts them right by @p least bits. The @p least and
+ *  @p greatest indices must be valid for @p src as defined by @ref mask. */
 template<typename Unsigned>
 inline Unsigned bits(Unsigned src, size_t least, size_t greatest) {
     return shiftRight(src & mask<Unsigned>(least, greatest), least);
@@ -233,8 +233,8 @@ inline Unsigned bits(Unsigned src, size_t least, size_t greatest) {
 
 /** Extract part of a value limited by width.
  *
- *  Extracts the bits in the range @p least through @greatest (inclusive) and shifts them right by @p least bits. Any bits of
- *  @p src at index @p w or greater are treated as zeros. */
+ *  Extracts the bits in the range @p least through @p greatest (inclusive) and shifts them right by @p least bits. Any bits of @p
+ *  src at index @p w or greater are treated as zeros. */
 template<typename Unsigned>
 inline Unsigned bitsLsb(Unsigned src, size_t w, size_t least, size_t greatest) {
     return shiftRight(src & mask<Unsigned>(least, greatest) & lowMask<Unsigned>(w), least);

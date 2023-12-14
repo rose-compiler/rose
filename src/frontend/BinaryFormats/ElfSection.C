@@ -191,7 +191,7 @@ SgAsmElfSection::calculateSizes(size_t r32size, size_t r64size,       /*size of 
 
     /* Size of required part of each entry */
     if (0==r32size && 0==r64size) {
-        /* Probably called by four-argument SgAsmElfSection::calculate_sizes and we don't know the sizes of the required parts
+        /* Probably called by four-argument SgAsmElfSection::calculateSizes and we don't know the sizes of the required parts
          * because there isn't a parser for this type of section, or the section doesn't contain a table. In the latter case
          * the ELF Section Table has a zero sh_entsize and we'll treat the section as if it were a table with one huge entry.
          * Otherwise we'll assume that the struct size is the same as the sh_entsize and there's no optional data. */

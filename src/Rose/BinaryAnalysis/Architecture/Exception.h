@@ -19,6 +19,7 @@ public:
     ~Exception() throw();
 };
 
+/** Error when an architecture is not found. */
 class NotFound: public Exception {
 public:
     /** Constructs exception with message. */
