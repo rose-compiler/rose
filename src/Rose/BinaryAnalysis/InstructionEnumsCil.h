@@ -11,15 +11,11 @@
 namespace Rose {
 namespace BinaryAnalysis {
 
-/** Members of the Motorola Coldfire family of m68k processors.  These descriptions come from page 1-1 of the manual. In
- *  particular, when the manual mentions a processor (like "MC68020") it refers to both that particular processor and the
- *  embedded versions thereof ("MC68EC020"). We'll use the same approach here, and if we need to refer to only a paricular
- *  processor excluding embedded version, we append "_only" to the name. */
 enum CilFamily {
-    Cil_family         = 0xffffffff,                   /**< All CIL Instruction sets */
+    Cil_family         = 0xffffffff,                   // All CIL Instruction sets
 };
 
-/** CIL instruction types */
+// CIL instruction types
 enum CilInstructionKind {
   Cil_unknown_instruction= 0x0000,
 
