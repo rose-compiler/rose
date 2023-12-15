@@ -16,11 +16,12 @@ EXTRA_DIST =
 # ROSE was configured using "--with-ROSE_LONG_MAKE_CHECK_RULE"). If you want to build something in the non-smoke area
 # you should "cd" do that directory first, as in "make -C tests/nonsmoke ...".
 SUBDIRS = LicenseInformation libltdl config src python
+
 if ROSE_BUILD_TESTS_DIRECTORY_SUPPORT
-   SUBDIRS += tests/smoke
-endif
+  SUBDIRS += tests/smoke
 if ROSE_USE_LONG_MAKE_CHECK_RULE
   SUBDIRS += tests/nonsmoke
+endif
 endif
 
 if !ROSE_USE_CLANG_FRONTEND
@@ -99,8 +100,6 @@ install-core: core rosePublicConfig.h
 install-tools: install-core tools
 	$(MAKE) install -C $(top_builddir)/tools
 	$(MAKE) install -C $(top_builddir)/exampleTranslators
-	$(MAKE) install -C $(top_builddir)/tests/nonsmoke/functional/roseTests/astInliningTests
-	$(MAKE) install -C $(top_builddir)/tests/nonsmoke/functional/roseTests/astOutliningTests
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
 	$(MAKE) install -C $(top_builddir)/tutorial
 endif

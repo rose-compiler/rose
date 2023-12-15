@@ -44,7 +44,7 @@ EXTRA_DIST = CMakeLists.txt README $(distributedScripts) buildExampleRoseWorkspa
 	test_exit_status test_with_answer
 
 # install the tools in 'bin' (a subsect of EXTRA_DIST)
-bin_SCRIPTS =  $(distributedScripts)
+#bin_SCRIPTS =  $(distributedScripts)
 
 
 # DQ (12/7/2009): Test for the ROSE example workspace generator.
@@ -56,6 +56,9 @@ else
         ExampleRoseWorkspaceConfigure=./configure --with-boost=$(ac_boost_path) --prefix=@prefix@ --without-java
 endif
 # This tests the new ROSE workspace
+all:
+
+
 testExampleRoseWorkspace:
 	echo "absolute_path_srcdir = $(absolute_path_srcdir)"
 	echo "ac_boost_path = $(ac_boost_path)"

@@ -165,13 +165,16 @@ AM_CONDITIONAL(ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT, [test "x$ROSE_ENABLE_PROJE
 AC_MSG_CHECKING([if we should build & test the ROSE/tests directory])
 AC_ARG_ENABLE([tests-directory],AS_HELP_STRING([--disable-tests-directory],[Disable compilation and testing of the ROSE/tests directory]),[],[enableval=yes])
 support_tests_directory=yes
+AC_CHECK_FILE([$srcdir/tests/Readme.md],[],[enableval=no])
 if test "x$enableval" = "xyes"; then
    support_tests_directory=yes
    AC_MSG_RESULT(enabled)
-   AC_DEFINE([ROSE_BUILD_TESTS_DIRECTORY_SUPPORT], [], [Build ROSE tests directory])
+   AC_DEFINE([ROSE_BUILD_TESTS_DIRECTORY_SUPPORT], [yes], [Build ROSE tests directory])
 else
    support_tests_directory=no
    AC_MSG_RESULT(disabled)
+   AC_DEFINE([ROSE_BUILD_TESTS_DIRECTORY_SUPPORT], [no], [Build ROSE tests directory])
+   enableval=yes 
 fi
 AM_CONDITIONAL(ROSE_BUILD_TESTS_DIRECTORY_SUPPORT, [test "x$support_tests_directory" = xyes])
 # *******************************************************

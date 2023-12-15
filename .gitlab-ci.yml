@@ -271,6 +271,7 @@ Failure-Cleanup:
         - workpool
     resource_group: deployment
     script:
+        - git fetch origin staging-backup
         - git push -f $SSH_ORIGIN origin/staging-backup:refs/heads/staging-rc
         
 #jobs to relese edg binaries ------------------------------------------------------------------------------------------------------------------------------------
