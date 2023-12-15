@@ -177,7 +177,7 @@ boost::filesystem::path
 EngineJvm::pathToClass(const std::string &className) {
     boost::filesystem::path classPath{boost::filesystem::current_path().string() + "/" + className + ".class"};
     if (!boost::filesystem::exists(classPath)) {
-        if (className.substr(0,5) != "java/" && className.substr(0,16) != "bootstrap_method") {
+        if (!ByteCode::JvmContainer::isJvmSystemReserved(className)) {
             mlog[WARN] << "path to class " << className + ".class" << " does not exist\n";
         }
     }
@@ -191,7 +191,7 @@ EngineJvm::loadClass(uint16_t classIndex, SgAsmJvmConstantPool* pool, SgAsmGener
     std::string className{ByteCode::JvmClass::name(classIndex, pool)};
 
     // Don't load classes from java/lang/... or bootstrap_methods
-    if (className.substr(0,10) == "java/lang/" || className.substr(0,16) == "bootstrap_method") {
+    if (ByteCode::JvmContainer::isJvmSystemReserved(className)) {
         return baseVa;
     }
 
@@ -221,7 +221,7 @@ EngineJvm::loadClassFile(boost::filesystem::path path, SgAsmGenericFileList* fil
     file->parse(fileName); /* this loads file into memory, does no reading of file */
 
     auto jfh = new SgAsmJvmFileHeader(file);
-    jfh->set_base_va(baseVa);
+    jfh->set_baseVa(baseVa);
 
     // Check AST
     ASSERT_require(jfh == file->get_header(SgAsmGenericFile::FAMILY_JVM));
@@ -237,14 +237,14 @@ EngineJvm::loadClassFile(boost::filesystem::path path, SgAsmGenericFileList* fil
     file->set_parent(fileList);
 
     // Increase base virtual address for the next class
-    baseVa += file->get_orig_size() + vaDefaultIncrement;
+    baseVa += file->get_originalSize() + vaDefaultIncrement;
     baseVa -= baseVa % vaDefaultIncrement;
 
     // Decode instructions for usage downstream
     std::set<std::string> discoveredClasses{};
     auto disassembler = Disassembler::lookup("jvm");
     for (auto sgMethod: jfh->get_method_table()->get_methods()) {
-      ByteCode::JvmMethod method{jfh, sgMethod, jfh->get_base_va()};
+      ByteCode::JvmMethod method{jfh, sgMethod, jfh->get_baseVa()};
       method.decode(disassembler);
       discoverFunctionCalls(sgMethod, jfh->get_constant_pool(), functions_, discoveredClasses);
     }
@@ -417,7 +417,7 @@ EngineJvm::roseFrontendReplacement(const std::vector<boost::filesystem::path> &p
         SgAsmGenericHeaderList *headerList = file->get_headers();
         ASSERT_not_null(headerList);
         for (SgAsmGenericHeader *header: headerList->get_headers()) {
-            SgAsmGenericFormat *format = header->get_exec_format();
+            SgAsmGenericFormat *format = header->get_executableFormat();
             ASSERT_not_null(format);
 
             // Find or create the interpretation that holds this family of headers.
@@ -525,12 +525,12 @@ EngineJvm::runPartitionerRecursive(const Partitioner::Ptr &partitioner) {
     SgAsmGenericHeaderList *interpHeaders = interpretation()->get_headers();
     ASSERT_not_null(interpHeaders);
 
-    // Attach empty functions as targets for invoke of "java/" or bootstrap_method functions
+    // Attach empty functions as targets for invoke of "java/" or bootstrap_method functions (reserved names)
     auto rit = functions_.rbegin();
     while (rit != functions_.rend()) {
         rose_addr_t va = rit->second;
         std::string name = rit->first;
-        if (name.substr(0,5)=="java/" || name.substr(0,16)=="bootstrap_method") {
+        if (ByteCode::JvmContainer::isJvmSystemReserved(name)) {
             auto function = Partitioner2::Function::instance(va, name);
             auto block = Partitioner2::BasicBlock::instance(va, partitioner);
             function->insertBasicBlock(va);
@@ -549,15 +549,20 @@ EngineJvm::runPartitionerRecursive(const Partitioner::Ptr &partitioner) {
     // (e.g.) Base::<init> will be available for derived classes to call when they are created.
     for (auto rit = interpHeaders->get_headers().rbegin(); rit != interpHeaders->get_headers().rend(); rit++) {
         auto header = *rit;
-        auto jvmClass{ByteCode::JvmClass(dynamic_cast<SgAsmJvmFileHeader*>(header))};
+
+        // This is strange construction a ByteCode::Class needs information from its ByteCode::Namespace, like name
+        // Thus a cycle (is it more than strange, is it bad?)
+        std::shared_ptr<ByteCode::Namespace> ns{};
+        auto jvmClass{std::make_shared<ByteCode::JvmClass>(ns, isSgAsmJvmFileHeader(header))};
+        ns->append(jvmClass);
 
         // Start discovering instructions and forming them into basic blocks and functions
         SAWYER_MESG(where) <<"discovering and populating functions\n";
-        discoverFunctions(partitioner, &jvmClass);
+        jvmClass->partition(partitioner, functions_);
 
         if (DEBUG_WITH_DUMP) {
-            jvmClass.dump();
-            jvmClass.digraph();
+            jvmClass->dump();
+            jvmClass->digraph();
         }
     }
 }
@@ -595,6 +600,7 @@ EngineJvm::runPartitionerFinal(const Partitioner::Ptr &partitioner) {
         if (BasicBlock::Ptr bb = source->value().bblock()) {
           SgAsmInstruction* last = bb->instructions().back();
           std::string functionName = last->get_comment();
+          std::cout << "... indeterminate incoming: " << functionName << " at " << StringUtility::addrToString(bb->address()) << std::endl;
           if (functionNameMap.find(functionName) != functionNameMap.end()) {
             rose_addr_t functionVa = functionNameMap[functionName];
             sourceBlocks[bb] = functionVa;
@@ -682,12 +688,6 @@ EngineJvm::discoverBasicBlocks(const PartitionerPtr& partitioner, const ByteCode
         //TODO: void insertSuccessor(rose_addr_t va, size_t nBits, EdgeType type=E_NORMAL, Confidence confidence=ASSUMED);
 
     }
-}
-
-void
-EngineJvm::discoverFunctions(const PartitionerPtr& partitioner, const ByteCode::Class* bcClass) {
-  // Partition the instructions into basic blocks
-  bcClass->partition(partitioner, functions_);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

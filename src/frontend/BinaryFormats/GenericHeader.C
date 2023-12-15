@@ -52,19 +52,6 @@ SgAsmGenericHeader::SgAsmGenericHeader(SgAsmGenericFile *ef)
     get_file()->addHeader(this);
 }
 
-/* Destructor must remove header/file link. Children in the AST have already been deleted when called from
- * SageInterface::deleteAST() */
-void
-SgAsmGenericHeader::destructorHelper()
-{
-    /* Deletion of section children should have emptied the list of header-to-section links */
-    ROSE_ASSERT(p_sections->get_sections().empty() == true);
-
-    /* Destroy the header/file bidirectional link. See comment in constructor. */
-    ROSE_ASSERT(get_file()!=NULL);
-    get_file()->removeHeader(this);
-}
-
 bool
 SgAsmGenericHeader::reallocate()
 {

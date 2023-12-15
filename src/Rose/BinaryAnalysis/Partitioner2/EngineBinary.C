@@ -1582,7 +1582,8 @@ EngineBinary::runPartitionerRecursive(const Partitioner::Ptr &partitioner) {
 
     // Decode and partition any CIL byte code (sections with name "CLR Runtime Header")
     SAWYER_MESG(where) <<"decoding and partitioning CIL byte code\n";
-    partitionCilSections(partitioner);
+    bool foundCilSection = partitionCilSections(partitioner);
+    if (foundCilSection) return;
 
     // Start discovering instructions and forming them into basic blocks and functions
     SAWYER_MESG(where) <<"discovering and populating functions\n";
@@ -1698,10 +1699,13 @@ EngineBinary::partitionCilSections(const Partitioner::Ptr &partitioner) {
         }
     }
 
-    // If there is a "CLR Runtime Header" section, partition it's CIL byte code
+    // If there is a "CLR Runtime Header" section, it's CIL byte code
     if (mdr) {
-      auto cilContainer = new ByteCode::CilContainer(mdr);
-      cilContainer->partition(partitioner);
+      // Don't do post analysis on a dotnet specimen
+      settings().partitioner.doingPostAnalysis = false;
+
+      ByteCode::CilContainer cilContainer{mdr};
+      cilContainer.partition(partitioner);
       return true;
     }
 

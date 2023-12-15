@@ -1330,6 +1330,33 @@ SgAsmCilTypeDef::get_MethodList_object() const
 const SgAsmCilMetadata*
 SgAsmCilTypeDef::get_MethodList_object(const SgAsmCilMethodDef* methodDef) const
 {
+  // Also need to know the index of the next typedef (can I get my index, probably not)?
+  uint32_t methodListIndex{get_MethodList()};
+  uint32_t nextMethodListIndex{methodListIndex};
+
+  // Need to find current first?
+  uint32_t myTypeDefIndex{0};
+
+  auto mdh = getMetadataHeap(this);
+  SgAsmCilTypeDefTable* tdt = mdh.get_TypeDefTable();
+  auto types = tdt->get_elements();
+  for (uint32_t ii = 0; ii < types.size(); ii++) {
+    myTypeDefIndex = ii;
+    auto type = types[ii];
+    if (this == type) break;
+  }
+
+  uint32_t nextTypeDefIndex = myTypeDefIndex + 1;
+  if (nextTypeDefIndex < types.size()) {
+    nextMethodListIndex = types[nextTypeDefIndex]->get_MethodList();
+  }
+
+  for (uint32_t ii = methodListIndex; ii < nextMethodListIndex; ii++) {
+    auto md = mdh.get_CodedMetadataNode(ii, SgAsmCilMetadataHeap::e_ref_method_def);
+    if (md == methodDef) return md;
+  }
+
+  // It is not required that an object be found
   return nullptr;
 }
 

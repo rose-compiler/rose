@@ -4,9 +4,6 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
-// Please delete this capability any time after FY22 (October 2022)
-#define PRINT_DEBUG 0
-
 using namespace Rose::BinaryAnalysis;
 using namespace Rose::Diagnostics;
 

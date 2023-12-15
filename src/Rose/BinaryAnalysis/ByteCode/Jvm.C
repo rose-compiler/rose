@@ -50,6 +50,11 @@ const std::string JvmMethod::name() const
   return std::string{""};
 }
 
+bool JvmMethod::isSystemReserved(const std::string &name) const
+{
+  return JvmContainer::isJvmSystemReserved(name);
+}
+
 const Code &
 JvmMethod::code() const {
     return code_;
@@ -60,7 +65,8 @@ JvmMethod::instructions() const {
     return sgMethod_->get_instruction_list();
 }
 
-void const JvmMethod::decode(const Disassembler::Base::Ptr &disassembler) const {
+void
+JvmMethod::decode(const Disassembler::Base::Ptr &disassembler) const {
   rose_addr_t va{classAddr_ + code_.offset()};
   rose_addr_t endVa{va + code_.size()};
 
@@ -115,7 +121,7 @@ JvmMethod::annotate()
         if (auto expr = isSgAsmIntegerValueExpression(insn->get_operandList()->get_operands()[0])) {
           comment = JvmClass::name(expr->get_value(), pool);
           expr->set_comment(comment);
-          // Also store the callee name in the instruction's comment for convenience in partitioning
+          // Also store the name in the instruction's comment for later convenience in partitioning
           insn->set_comment(comment);
         }
         break;
@@ -152,8 +158,8 @@ const std::string JvmAttribute::name() const
   return std::string{""};
 }
 
-JvmClass::JvmClass(SgAsmJvmFileHeader* jfh)
-  : Class{jfh->get_baseVa()}, jfh_{jfh}, strings_{std::vector<std::string>()}
+JvmClass::JvmClass(std::shared_ptr<Namespace> ns, SgAsmJvmFileHeader* jfh)
+  : Class{ns,jfh->get_baseVa()}, jfh_{jfh}, strings_{std::vector<std::string>()}
 {
   ASSERT_not_null(jfh);
   ASSERT_not_null(jfh->get_field_table());
@@ -296,6 +302,21 @@ void JvmClass::dump()
     }
     cout << "-----------\n\n";
   }
+}
+
+bool
+JvmContainer::isSystemReserved(const std::string &name) const
+{
+  return isJvmSystemReserved(name);
+}
+
+bool
+JvmContainer::isJvmSystemReserved(const std::string &name)
+{
+  if (name.substr(0,5) == "java/" || name.substr(0,16) == "bootstrap_method") {
+    return true;
+  }
+  return false;
 }
 
 } // namespace

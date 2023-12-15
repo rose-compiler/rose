@@ -45,13 +45,13 @@ private:
 class CilMethod : public Method {
 public:
   virtual const std::string name() const override;
+  virtual bool isSystemReserved(const std::string &name) const override;
+
   virtual const Code & code() const override;
-  virtual const void decode(const Disassembler::BasePtr &disassembler) const override;
   virtual const SgAsmInstructionList* instructions() const override;
+  virtual void decode(const Disassembler::BasePtr &disassembler) const override;
 
   virtual void annotate() override;
-
-  static std::string name(const SgAsmCilMetadata*, SgAsmCilMetadataRoot*);
 
   CilMethod() = delete;
   explicit CilMethod(SgAsmCilMetadataRoot*, SgAsmCilMethodDef*, rose_addr_t);
@@ -88,11 +88,15 @@ private:
 class CilClass : public Class {
 public:
   virtual const std::string name() const {
-    return "CilClass::name():UNIMPLEMENTED";
+    return name_;
   }
   virtual const std::string super_name() const {
     return "CilClass::super_name():UNIMPLEMENTED";
   }
+  virtual const std::string typeSeparator() const {
+    return ".";
+  }
+
   virtual const std::vector<std::string> &strings() {
     return strings_;
   }
@@ -111,8 +115,10 @@ public:
 
   virtual void dump();
 
+  static std::string objectName(const SgAsmCilMetadata*, SgAsmCilMetadataRoot*);
+
   CilClass() = delete;
-  explicit CilClass(SgAsmCilMetadataRoot*, const std::uint8_t*, size_t, size_t);
+  explicit CilClass(std::shared_ptr<Namespace> ns, SgAsmCilMetadataRoot*, const std::string &, size_t, size_t);
 
 private:
     std::vector<const Field*> fields_;
@@ -120,7 +126,7 @@ private:
     std::vector<const Attribute*> attributes_;
     std::vector<const Interface*> interfaces_;
     std::vector<std::string> strings_;
-    const std::uint8_t* name_;
+    std::string name_;
     SgAsmCilMetadataRoot* mdr_;
     SgAsmCilTypeDef* sgCilTypeDef_;
 };
@@ -128,23 +134,20 @@ private:
 class CilNamespace : public Namespace {
 public:
     virtual const std::string name() const;
-    virtual const std::vector<const Class*> &classes() const;
-
-    void append(Class*);
 
     CilNamespace() = delete;
-    explicit CilNamespace(SgAsmCilMetadataRoot*, const std::uint8_t*);
+    explicit CilNamespace(SgAsmCilMetadataRoot*, const std::string &);
 
 private:
-    std::vector<const Class*> classes_;
     SgAsmCilMetadataRoot* mdr_;
-    const std::uint8_t* name_;
+    std::string name_;
 };
 
 class CilContainer : public Container {
 public:
-  virtual const std::string name() const;
-  virtual const std::vector<const Namespace*> &namespaces() const;
+  virtual const std::string name() const override;
+  virtual bool isSystemReserved(const std::string &name) const override;
+  static  bool isCilSystemReserved(const std::string &name);
 
   void printAssemblies(std::ostream& os) const;
   void printMethods(std::ostream& os, size_t beg, size_t lim) const;
@@ -157,7 +160,6 @@ public:
   explicit CilContainer(SgAsmCilMetadataRoot*);
 
 private:
-  std::vector<const Namespace*> namespaces_;
   SgAsmCilMetadataRoot* mdr_;
 };
 

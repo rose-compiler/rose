@@ -154,7 +154,7 @@ operator<<(std::ostream& os, PrintName pn)
   else if (const SgAsmCilTypeRef* tr = isSgAsmCilTypeRef(pn.n))
     os << tr->get_TypeName_string();
   else if (const SgAsmCilMemberRef* mref = isSgAsmCilMemberRef(pn.n))
-    os << PrintName{mref->get_Class_object()} << "::" << mref->get_Name_string();
+    os << PrintName{mref->get_Class_object()} << "." << mref->get_Name_string();
   else if (/*const SgAsmCilTypeSpec* tr =*/ isSgAsmCilTypeSpec(pn.n))
   {
     // \todo
@@ -200,6 +200,11 @@ CilMethod::name() const {
   return utf8ToString(sgMethod_->get_Name_string());
 }
 
+bool
+CilMethod::isSystemReserved(const std::string &name) const {
+  return CilContainer::isCilSystemReserved(name);
+}
+
 const SgAsmInstructionList*
 CilMethod::instructions() const {
   return insns_;
@@ -210,7 +215,7 @@ CilMethod::code() const {
   return code_;
 }
 
-const void
+void
 CilMethod::decode(const Disassembler::BasePtr &disassembler) const {
   std::cerr << "CilMethod::decode():UNIMPLEMENTED\n";
 }
@@ -221,12 +226,19 @@ CilMethod::annotate() {
     std::string comment{};
     auto cilInsn{isSgAsmCilInstruction(insn)};
     switch (cilInsn->get_kind()) {
-      case Cil_call: {
+      case Cil_call:
+      case Cil_callvirt:
+      case Cil_newarr:
+      case Cil_newobj:
+      case Cil_stfld:
+      case Cil_stsfld: {
         // metadata token for a methodref, methoddef, or methodspec
         if (auto token = isSgAsmIntegerValueExpression(insn->get_operandList()->get_operands()[0])) {
           if (SgAsmCilMetadata* obj = CilContainer::resolveToken(token, mdr_)) {
-            comment = CilMethod::name(obj, mdr_);
+            comment = CilClass::objectName(obj, mdr_);
             token->set_comment(comment);
+            // Also store the name in the instruction's comment for later convenience in partitioning
+            insn->set_comment(comment);
           }
         }
         break;
@@ -236,24 +248,79 @@ CilMethod::annotate() {
   }
 }
 
+CilClass::CilClass(std::shared_ptr<Namespace> ns, SgAsmCilMetadataRoot* root, const std::string &name, size_t methodBegin, size_t methodLimit)
+  : Class{ns,0}, mdr_{root}, name_{name}
+{
+    SgAsmCilMetadataHeap* metadataHeap = mdr_->get_MetadataHeap();
+    ASSERT_not_null(metadataHeap);
+
+    SgAsmCilMethodDefTable* methodDefs = metadataHeap->get_MethodDefTable();
+    ASSERT_not_null(methodDefs);
+
+    const std::vector<SgAsmCilMethodDef*>& methods = methodDefs->get_elements();
+    methodLimit = std::min(methodLimit, methods.size());
+
+    for (size_t i = methodBegin; i < methodLimit; ++i) {
+        SgAsmCilMethodDef* methodDef = methods.at(i);
+        ASSERT_not_null(methodDef);
+
+        if (methodDef->get_RVA() == 0) {
+            // TODO: double check test file to see if this is an interface (a nop!)
+            // std::cerr << "methodDef rva == 0 // abstract\n";
+            continue;
+        }
+
+        auto method = new CilMethod(mdr_, methodDef, address());
+        methods_.push_back(method);
+
+        if (TRACE_CONSTRUCTION) {
+          std::cout << "    .method " << method->name() << "\n    {\n";
+          for (auto insn : method->instructions()->get_instructions()) {
+            std::cout << "       " << insn->toString() << std::endl;
+          }
+          std::cout << "    }\n";
+        }
+    }
+}
+
 std::string
-CilMethod::name(const SgAsmCilMetadata* obj, SgAsmCilMetadataRoot* mdr)
+CilClass::objectName(const SgAsmCilMetadata* obj, SgAsmCilMetadataRoot* mdr)
 {
   std::string objName{};
   try {
     switch (obj->variantT()) {
+      case V_SgAsmCilField:
+        objName += utf8ToString(isSgAsmCilField(obj)->get_Name_string());
+        break;
       case V_SgAsmCilMemberRef: {
         auto memberRef = isSgAsmCilMemberRef(obj);
         if (const SgAsmCilMetadata* cls = memberRef->get_Class_object()) {
           // MethodDef, ModuleRef, TypeDef, TypeRef, or TypeSpec
-          objName += CilMethod::name(cls, mdr) + ".";
+          objName += CilClass::objectName(cls, mdr) + ".";
         }
         objName += utf8ToString(memberRef->get_Name_string());
         break;
       }
       case V_SgAsmCilMethodDef: {
         auto methodDef = isSgAsmCilMethodDef(obj);
+
+        // Search for owning TypeDef
+        auto mdh = mdr->get_MetadataHeap();
+        auto typeDefTable = mdh->get_TypeDefTable();
+        for (SgAsmCilTypeDef* typeDef: typeDefTable->get_elements()) {
+          if (isSgAsmCilTypeDef(typeDef)) {
+            // Ignore <Module> which doesn't extend any type/class
+            if (typeDef->get_Extends()) {
+              auto method = typeDef->get_MethodList_object(methodDef);
+              if (/*ignore module*/typeDef->get_Extends() && method == methodDef) {
+                objName += utf8ToString(typeDef->get_TypeNamespace_string()) + "." + utf8ToString(typeDef->get_TypeName_string()) + ".";
+                break;
+              }
+            }
+          }
+        }
         objName += utf8ToString(methodDef->get_Name_string());
+        ASSERT_require(objName.size() > 0);
         break;
       }
       case V_SgAsmCilMethodSpec: {
@@ -263,9 +330,9 @@ CilMethod::name(const SgAsmCilMetadata* obj, SgAsmCilMetadataRoot* mdr)
         if (index > 0) {
           auto mdh = mdr->get_MetadataHeap();
           SgAsmCilMetadata* specObj = mdh->get_CodedMetadataNode(index, SgAsmCilMetadataHeap::e_ref_method_def_or_ref);
-          objName += CilMethod::name(specObj, mdr);
+          objName += CilClass::objectName(specObj, mdr);
         } else {
-          mlog[WARN] << "index out_of_range: must be > 0: in CilMethod::name for " << obj->class_name() << "\n";
+          mlog[WARN] << "index out_of_range: must be > 0: in CilClass::objectName for " << obj->class_name() << "\n";
         }
         break;
       }
@@ -291,46 +358,11 @@ CilMethod::name(const SgAsmCilMetadata* obj, SgAsmCilMetadataRoot* mdr)
     }
   }
   catch(const std::out_of_range& e) {
-    mlog[WARN] << "out_of_range exception: " << e.what() << " in CilMethod::name for " << obj->class_name() << "\n";
+    mlog[WARN] << "out_of_range exception: " << e.what() << " in CilClass::objectName for " << obj->class_name() << "\n";
     objName = "UNKNOWN";
   }
 
   return objName;
-}
-
-CilClass::CilClass(SgAsmCilMetadataRoot* root, const std::uint8_t* name, size_t methodBegin, size_t methodLimit)
-    : Class{0}, name_{name}, mdr_{root}
-{
-    SgAsmCilMetadataHeap* metadataHeap = mdr_->get_MetadataHeap();
-    ASSERT_not_null(metadataHeap);
-  
-    SgAsmCilMethodDefTable* methodDefs = metadataHeap->get_MethodDefTable();
-    ASSERT_not_null(methodDefs);
-  
-    const std::vector<SgAsmCilMethodDef*>& methods = methodDefs->get_elements();
-    methodLimit = std::min(methodLimit, methods.size());
-  
-    for (size_t i = methodBegin; i < methodLimit; ++i) {
-        SgAsmCilMethodDef* methodDef = methods.at(i);     
-        ASSERT_not_null(methodDef);  
-
-        if (methodDef->get_RVA() == 0) {
-            // TODO: double check test file to see if this is an interface (a nop!)
-            // std::cerr << "methodDef rva == 0 // abstract\n";
-            continue;
-        }      
-
-        auto method = new CilMethod(mdr_, methodDef, address());
-        methods_.push_back(method);
-
-        if (TRACE_CONSTRUCTION) {
-          std::cout << "    .method " << method->name() << "\n    {\n";
-          for (auto insn : method->instructions()->get_instructions()) {
-            std::cout << "       " << insn->toString() << std::endl;
-          }
-          std::cout << "    }\n";
-        }
-    }
 }
 
 void CilClass::dump()
@@ -338,24 +370,14 @@ void CilClass::dump()
   mlog[WARN] << "CilClass::dump() unimplemented\n";
 }
 
-CilNamespace::CilNamespace(SgAsmCilMetadataRoot* root, const std::uint8_t* name)
+CilNamespace::CilNamespace(SgAsmCilMetadataRoot* root, const std::string &name)
   : mdr_{root}, name_{name}
 {
 }
 
 const std::string
 CilNamespace::name() const {
-    return utf8ToString(name_);
-}
-
-const std::vector<const Class*> &
-CilNamespace::classes() const {
-    return classes_;
-}
-
-void
-CilNamespace::append(Class* cls) {
-    classes_.push_back(cls);
+    return name_;
 }
 
 CilContainer::CilContainer(SgAsmCilMetadataRoot* root) : mdr_{root} {
@@ -367,28 +389,24 @@ CilContainer::CilContainer(SgAsmCilMetadataRoot* root) : mdr_{root} {
   
     const std::uint8_t* thisNamespace{nullptr};
     const std::uint8_t* lastNamespace{nullptr};
-    CilNamespace* cilNamespace{nullptr};
-
-    const std::vector<SgAsmCilTypeDef*>& tydefs = typedefs->get_elements();
+    const std::vector<SgAsmCilTypeDef*>& typeDefElements = typedefs->get_elements();
 
     // The first row of the TypeDef table represents the pseudo class that acts as parent
     // for functions and variables defined at module scope. Skip it for now (WARNING, be careful with names for i==0).
-    for (size_t i = 1; i < tydefs.size(); ++i) {
-        const SgAsmCilTypeDef* sgTypeDef = tydefs.at(i);
+    for (size_t i = 1; i < typeDefElements.size(); ++i) {
+        const SgAsmCilTypeDef* sgTypeDef = typeDefElements.at(i);
         ASSERT_not_null(sgTypeDef);
     
         thisNamespace = sgTypeDef->get_TypeNamespace_string();
         if (lastNamespace != thisNamespace) {
-            cilNamespace = new CilNamespace(mdr_, sgTypeDef->get_TypeNamespace_string());
-            namespaces_.push_back(cilNamespace);
+            namespaces_.push_back(std::make_shared<CilNamespace>(mdr_, utf8ToString(sgTypeDef->get_TypeNamespace_string())));
 
             if (TRACE_CONSTRUCTION) {
               if (lastNamespace) std::cout << "}" << std::endl;
-              std::cout << ".namespace " << cilNamespace->name() << "\n{";
+              std::cout << "\n.namespace " << namespaces().back()->name() << "\n{";
             }
             lastNamespace = thisNamespace;
         }
-        ASSERT_require(cilNamespace);
       
         if (TRACE_CONSTRUCTION) {
           // Appears that all typedefs with i>0 are classes (".class")
@@ -398,11 +416,13 @@ CilContainer::CilContainer(SgAsmCilMetadataRoot* root) : mdr_{root} {
         // Methods of class
         size_t numMethods = metadataHeap->get_MethodDefTable()->get_elements().size();
         size_t methodBegin = sgTypeDef->get_MethodList()-1;
-        size_t methodLimit = (i+1 < tydefs.size() ? tydefs.at(i+1)->get_MethodList()-1 : numMethods);
+        size_t methodLimit = (i+1 < typeDefElements.size() ? typeDefElements.at(i+1)->get_MethodList()-1 : numMethods);
 
         // Construct class
-        auto cilClass = new CilClass(mdr_, sgTypeDef->get_TypeName_string(), methodBegin, methodLimit);
-        cilNamespace->append(cilClass);
+        std::string typeName = namespaces().back()->name() + ".";
+        typeName += utf8ToString(sgTypeDef->get_TypeName_string());
+        auto cilClass = std::make_shared<CilClass>(namespaces_.back(), mdr_, typeName, methodBegin, methodLimit);
+        namespaces_.back()->append(cilClass);
     }
 }
 
@@ -411,9 +431,17 @@ CilContainer::name() const {
   return "CilContainer::name():UNIMPLEMENTED";
 }
 
-const std::vector<const Namespace*> &
-CilContainer::namespaces() const {
-  return namespaces_;
+bool
+CilContainer::isSystemReserved(const std::string &name) const {
+  return isCilSystemReserved(name);
+}
+
+bool
+CilContainer::isCilSystemReserved(const std::string &name) {
+  if (name.substr(0,6)=="System" || name.substr(0,9)=="Microsoft") {
+    return true;
+  }
+  return false;
 }
 
 SgAsmCilMetadata*
@@ -562,11 +590,11 @@ CilContainer::printTypeDefs(std::ostream& os) const
   ASSERT_not_null(typedefs);
   
   const std::uint8_t* lastNamespace = nullptr;
-  const std::vector<SgAsmCilTypeDef*>& tydefs = typedefs->get_elements();
+  const std::vector<SgAsmCilTypeDef*>& typeDefElements = typedefs->get_elements();
 
-  for (size_t i = 0; i < tydefs.size(); ++i)
+  for (size_t i = 0; i < typeDefElements.size(); ++i)
   {
-    const SgAsmCilTypeDef* td = tydefs.at(i);
+    const SgAsmCilTypeDef* td = typeDefElements.at(i);
     ASSERT_not_null(td);
     
     if (i)
@@ -587,7 +615,7 @@ CilContainer::printTypeDefs(std::ostream& os) const
     
     size_t numMethods = metadataHeap->get_MethodDefTable()->get_elements().size();
     size_t beg = td->get_MethodList()-1;
-    size_t lim  = (i+1 < tydefs.size() ? tydefs.at(i+1)->get_MethodList()-1 : numMethods);
+    size_t lim  = (i+1 < typeDefElements.size() ? typeDefElements.at(i+1)->get_MethodList()-1 : numMethods);
     
     printMethods(os, beg, lim);    
 

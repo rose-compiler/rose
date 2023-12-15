@@ -83,7 +83,7 @@ void Class::partition(const PartitionerPtr &partitioner, std::map<std::string,ro
     if (partitioner->placeholderExists(va)) continue;
 
     // Create the (Partitioner2) function
-    std::string functionName = name() + "::" + method->name();
+    std::string functionName = name() + typeSeparator() + method->name();
     function = Partitioner2::Function::instance(va, functionName);
 
     // Add newly discovered function to the list
@@ -93,6 +93,7 @@ void Class::partition(const PartitionerPtr &partitioner, std::map<std::string,ro
     else {
       // This occurs for a nested/inner class with a constructor having an input parameter
       // of a dynamic type (I think, for example, see T8_NestMembersAttribute.java).
+      // Also dotnet (see T1_Test1.cs).
       mlog[Diagnostics::WARN] << "Class::partition(): discovered duplicate function: " << functionName << "\n";
     }
 
@@ -131,28 +132,30 @@ void Class::partition(const PartitionerPtr &partitioner, std::map<std::string,ro
         }
       }
 
+      // If needed, create a new block and insert it into the function
       if (needNewBlock) {
-        needNewBlock = false;
         if (block && !block->isEmpty() && va != block->address()) {
-          // Attach the block only if the old block's address differs from the instruction's
+          // Attach old block only if its address differs from the new instruction's
           partitioner->attachBasicBlock(block);
         }
         block = Partitioner2::BasicBlock::instance(va, partitioner);
         function->insertBasicBlock(va);
         method->append(block);
+        needNewBlock = false;
       }
 
       // Warning: this instruction can't be linked into ROSE's AST (parent must be null)
       block->append(partitioner, insn);
 
-      // Add successors if this instruction terminates the block
-      if (insn->terminatesBasicBlock() && insn != instructions.back()) {
+      // If this instruction terminates the block, add successors and set block properties
+      if (insn->terminatesBasicBlock()) {
         bool complete;
         auto successors = insn->getSuccessors(complete/*out*/);
         for (auto successor : successors.values()) {
           mlog[DEBUG] << "Adding successor edge from va: " << addrToString(va) << " to: " << addrToString(successor) << "\n";
           block->insertSuccessor(successor, nBits, EdgeType::E_NORMAL, Confidence::PROVED);
         }
+
         // Set properties of the block
         SgAsmInstruction* last = block->instructions().back();
         if (last->isFunctionReturnFast(block->instructions())) {
@@ -160,34 +163,35 @@ void Class::partition(const PartitionerPtr &partitioner, std::map<std::string,ro
         }
         else if (last->isFunctionCallFast(block->instructions(), nullptr, nullptr)) {
           block->isFunctionCall(true);
+
           // Fully resoved function name is stored in the comment of the call instruction
-          std::string comment = last->get_comment();
-          if (discoveredFunctions.find(comment) != discoveredFunctions.end()) {
-            auto itr = discoveredFunctions.find(comment);
+          std::string callee = last->get_comment();
+
+          // Insert a partitioner function for a system call when first seen
+          if (discoveredFunctions.find(callee) == discoveredFunctions.end()) {
+            if (method->isSystemReserved(callee)) {
+              rose_addr_t reservedVa = Container::nextSystemReservedVa();
+              auto reservedFunction = Partitioner2::Function::instance(reservedVa, callee);
+              auto reservedBlock = Partitioner2::BasicBlock::instance(reservedVa, partitioner);
+              reservedFunction->insertBasicBlock(reservedVa);
+              partitioner->attachBasicBlock(reservedBlock);
+              partitioner->attachFunction(reservedFunction);
+
+              // It's been discovered
+              discoveredFunctions[callee] = reservedVa;
+            }
+          }
+
+          if (discoveredFunctions.find(callee) != discoveredFunctions.end()) {
+            auto itr = discoveredFunctions.find(callee);
             mlog[DEBUG] << "Adding call edge from va: " << addrToString(va) << " to: " << addrToString(itr->second)
-                        << " : " << comment << "\n";
+                        << " : " << callee << "\n";
             block->insertSuccessor(itr->second, nBits, EdgeType::E_FUNCTION_CALL, Confidence::PROVED);
           }
           else {
-            mlog[DEBUG] << "Failed to find function, NOT adding call edge from va: " <<addrToString(va) <<" to: " <<comment <<"\n";
+            mlog[DEBUG] << "Failed to find function, NOT adding call edge from va: " <<addrToString(va) <<" to: " <<callee <<"\n";
             // No fallthrough successor should be added to allow edge to indeterminate vertex to be created
             insertFallthroughSuccessors = false;
-
-// Ask Robb if there is a way to add a call edge to the indeterminate vertex, then it won't have to be magically
-// discovered later. Note that then insertFallthroughSuccessors won't be needed; it is kind of a hack.
-#if 0
-            auto indeterminate = partitioner->indeterminateVertex();
-            CfgEdge edge(EdgeType::E_FUNCTION_CALL, Confidence::PROVED);
-            std::pair<ControlFlowGraph::VertexIterator, CfgEdge> pair{indeterminate, edge};
-            // auto pair = VertexEdgePair(indeterminate, edge);
-            block->insertSuccessor(pair);
-#endif
-#if 0
-            rose_addr_t addr = indeterminate.address();
-            std::cout << "Adding call edge from va: " << addrToString(va) << " to: " << addrToString(addr)
-                      << " : " << comment << "\n";
-            block->insertSuccessor(addr, nBits, EdgeType::E_FUNCTION_CALL, Confidence::PROVED);
-#endif
           }
         }
         needNewBlock = true;
@@ -201,15 +205,7 @@ void Class::partition(const PartitionerPtr &partitioner, std::map<std::string,ro
         method->append(block);
     }
 
-    // Attach function return block and block to partitioner
-    if (block->instructions().size() > 0) {
-      SgAsmInstruction* last = block->instructions().back();
-      if (last->terminatesBasicBlock() && last->isFunctionReturnFast(block->instructions())) {
-        block->isFunctionReturn(true);
-      }
-    }
-
-    // Finally add block and function to the CFG
+    // Attach function return block and function to the partitioner
     partitioner->attachBasicBlock(block);
     partitioner->attachFunction(function);
   }
@@ -291,22 +287,53 @@ void Class::digraph() const
 // Namespace
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void
-Namespace::partition(const PartitionerPtr &partitioner) const {
-    for (auto cls: classes()) {
-      // No called functions available here, passing empty map
-      std::map<std::string,rose_addr_t> discoveredFunctions{};
-      cls->partition(partitioner, discoveredFunctions);
-    }
+Namespace::partition(const PartitionerPtr &partitioner, std::map<std::string,rose_addr_t> &discoveredFunctions) const {
+  for (auto cls: classes()) {
+    cls->partition(partitioner, discoveredFunctions);
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Container
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+rose_addr_t
+Container::nextSystemReservedVa_{static_cast<rose_addr_t>(-1)};
+
+rose_addr_t Container::nextSystemReservedVa() {
+  rose_addr_t va{nextSystemReservedVa_};
+  nextSystemReservedVa_ -= 1024;
+  return va;
+}
+
 void
 Container::partition(const PartitionerPtr &partitioner) const {
-    for (auto nmSpace: namespaces()) {
-        nmSpace->partition(partitioner);
+  // Both Cil and Jvm need call return edges to be added by Partitioner::attachBasicBlock()
+  partitioner->autoAddCallReturnEdges(true);
+
+  // Do the partitioning and keep track of functions discovered during the process
+  std::map<std::string,rose_addr_t> discoveredFunctions{};
+  for (auto nmSpace: namespaces_) {
+    nmSpace->partition(partitioner, discoveredFunctions);
+  }
+
+  // Attach empty functions as targets for invoke of system functions
+  for (auto discovered: discoveredFunctions) {
+    rose_addr_t va = discovered.second;
+    std::string name = discovered.first;
+
+    // Create and attach system functions if placeholder doesn't exist already
+    if (isSystemReserved(name)) {
+      if (!partitioner->placeholderExists(va)) {
+        auto function = Partitioner2::Function::instance(va, name);
+        auto block = Partitioner2::BasicBlock::instance(va, partitioner);
+        function->insertBasicBlock(va);
+        partitioner->attachBasicBlock(block);
+        partitioner->attachFunction(function);
+      }
     }
+  }
+
+  // partitioner->dumpCfg(std::cout, "Worker:", true, false);
 }
 
 } // namespace

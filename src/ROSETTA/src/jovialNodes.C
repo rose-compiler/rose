@@ -79,6 +79,11 @@ void Grammar::setUpJovialNodes() {
 DECLARE_LEAF_CLASS(JovialBitVal);
 
 #ifdef DOCUMENTATION
+/** An expression class for Jovial bit values.
+ *
+ *  A Jovial bit formula (expression) consists of bit operands and a bit operator.
+ *  The bit operators are NOT, AND, OR, XOR, and EQV.
+ */
 class SgJovialBitVal: public SgValueExp {
 #endif // DOCUMENTATION
 
@@ -98,8 +103,12 @@ class SgJovialBitVal: public SgValueExp {
 #if defined(SgJovialBitVal_OTHERS) || defined(DOCUMENTATION)
 
 public:
+    /** Property: A copy (as coded) of the bit value string.
+     *
+     * @{ */
     std::string const& get_valueString() const;
     void set_valueString(std::string const&);
+    /** @} */
     // FIXME[Robb Matzke 2023-04-21]: These pragmas are compatibility of last resort. Please remove when possible because in my
     // experience most of this stuff doesn't need to be generated--it can be written directly in C++ using virtual functions,
     // template meta programming, and introspection rather than text substitution.

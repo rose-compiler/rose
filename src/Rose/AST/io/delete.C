@@ -1,4 +1,3 @@
-
 #include "sage3basic.h"
 #include "AST_FILE_IO.h"
 
@@ -15,13 +14,14 @@ namespace EDG_ROSE_Translation { void clear_global_caches(); }
 
 namespace Rose { namespace AST { namespace IO {
 
-// Prevent double deletes by traversing the various subtree in a top down fashion
+// Prevent double deletes by traversing the various subtrees in a top down fashion
 static void ordered_delete(std::vector<SgNode*> const & deletes) {
   std::map< SgNode *, std::vector<SgNode *> > descendants; // direct descendants
   for (std::vector<SgNode *>::const_iterator i = deletes.begin(); i != deletes.end(); ++i) {
     descendants.insert(std::pair< SgNode *, std::vector<SgNode *> >(*i, std::vector<SgNode *>()));
   }
 
+  // Find all of the nodes that don't have a parent, these are the root nodes
   std::vector<SgNode *> roots;
   for (std::vector<SgNode *>::const_iterator i = deletes.begin(); i != deletes.end(); ++i) {
     SgNode * ni = *i;
@@ -40,7 +40,7 @@ static void ordered_delete(std::vector<SgNode*> const & deletes) {
   unsigned cnt = 0;
 #endif
 
-  // Delete starting from the roots
+  // Delete starting from the root nodes
   while (roots.size() > 0) {
     std::vector<SgNode *> next;
     for (std::vector<SgNode *>::const_iterator i = roots.begin(); i != roots.end(); ++i) {

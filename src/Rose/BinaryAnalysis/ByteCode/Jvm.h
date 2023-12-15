@@ -57,9 +57,11 @@ private:
 class JvmMethod : public Method {
 public:
   virtual const std::string name() const override;
+  virtual bool isSystemReserved(const std::string &name) const override;
+
   virtual const Code & code() const override;
-  virtual const void decode(const Disassembler::BasePtr &disassembler) const override;
   virtual const SgAsmInstructionList* instructions() const override;
+  virtual void decode(const Disassembler::BasePtr &disassembler) const override;
 
   virtual void annotate() override;
 
@@ -106,6 +108,10 @@ class JvmClass : public Class {
 public:
   virtual const std::string name() const;
   virtual const std::string super_name() const;
+  virtual const std::string typeSeparator() const {
+    return "::";
+  }
+
   virtual const std::vector<std::string> &strings();
   virtual const std::vector<const Interface*> &interfaces() const {
     return interfaces_;
@@ -128,7 +134,7 @@ public:
   static std::string name(uint16_t, const SgAsmJvmConstantPool*);
 
   JvmClass() = delete;
-  explicit JvmClass(SgAsmJvmFileHeader* jfh);
+  explicit JvmClass(std::shared_ptr<Namespace> ns, SgAsmJvmFileHeader* jfh);
 
 private:
   SgAsmJvmFileHeader* jfh_;
@@ -139,6 +145,11 @@ private:
   std::vector<std::string> strings_;
 };
 
+class JvmContainer : public Container {
+public:
+  static  bool isJvmSystemReserved(const std::string &name);
+  virtual bool isSystemReserved(const std::string &name) const override;
+};
 
 } // namespace
 } // namespace

@@ -320,14 +320,6 @@ public:
      *  to implement a more directed approach to discovering basic blocks. */
     virtual void discoverBasicBlocks(const PartitionerPtr&, const ByteCode::Method*);
 
-    /** Discover as many functions as possible.
-     *
-     *  Discover as many functions as possible by discovering as many basic blocks as possible (@ref discoverBasicBlocks), Each
-     *  time we run out of basic blocks to try, we look for another function prologue pattern at the lowest possible address
-     *  and then recursively discover more basic blocks.  When this procedure is exhausted a call to @ref
-     *  attachBlocksToFunctions tries to attach each basic block to a function. */
-    virtual void discoverFunctions(const PartitionerPtr&, const ByteCode::Class*);
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Partitioner low-level functions
     //

@@ -1,5 +1,11 @@
+/** An expression class for Jovial bit values.
+ *
+ *  A Jovial bit formula (expression) consists of bit operands and a bit operator.
+ *  The bit operators are NOT, AND, OR, XOR, and EQV.
+ */
 class SgJovialBitVal: public SgValueExp {
 
+    /** Property: A copy (as coded) of the bit value string. */
     [[using Rosebud: rosetta, ctor_arg]]
     std::string valueString;
 

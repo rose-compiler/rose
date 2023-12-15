@@ -13,8 +13,9 @@ namespace ByteCode {
 using BasicBlockPtr = Partitioner2::BasicBlockPtr;
 using PartitionerPtr = Partitioner2::PartitionerPtr;
 
-// Forward reference for Method
+// Forward references
 class Class;
+class Namespace;
 
 class Code {
 public:
@@ -36,9 +37,11 @@ protected:
 class Method {
 public:
   virtual const std::string name() const = 0;
+  virtual bool isSystemReserved(const std::string &name) const = 0;
+
   virtual const Code & code() const = 0;
-  virtual const void decode(const Disassembler::BasePtr&) const = 0;
   virtual const SgAsmInstructionList* instructions() const = 0;
+  virtual void decode(const Disassembler::BasePtr&) const = 0;
 
   /* Annotate the AST (.e.g., add comments to instructions) */
   virtual void annotate() = 0;
@@ -79,6 +82,7 @@ class Class {
 public:
   virtual const std::string name() const = 0;
   virtual const std::string super_name() const = 0;
+  virtual const std::string typeSeparator() const = 0;
   virtual const std::vector<const Field*> &fields() const = 0;
   virtual const std::vector<const Method*> &methods() const = 0;
   virtual const std::vector<const Attribute*> &attributes() const = 0;
@@ -94,27 +98,44 @@ public:
 
 protected:
   rose_addr_t address_;
-  Class(rose_addr_t va) : address_{va} {}
+  std::shared_ptr<Namespace> namespace_;
+  Class(std::shared_ptr<Namespace> ns, rose_addr_t va) : namespace_{ns}, address_{va} {}
 };
 
 class Namespace {
 public:
   virtual const std::string name() const = 0;
-  virtual const std::vector<const Class*> &classes() const = 0;
-  virtual void partition(const PartitionerPtr &partitioner) const;
+  virtual void partition(const PartitionerPtr &partitioner, std::map<std::string,rose_addr_t> &) const;
+
+  void append(std::shared_ptr<Class> ptr) {
+    classes_.push_back(ptr);
+  }
+  const std::vector<std::shared_ptr<Class>> &classes() const {
+    return classes_;
+  }
 
 protected:
   Namespace() {}
+  std::vector<std::shared_ptr<Class>> classes_;
 };
 
 class Container {
 public:
   virtual const std::string name() const = 0;
-  virtual const std::vector<const Namespace*> &namespaces() const = 0;
+  virtual bool isSystemReserved(const std::string &name) const = 0;
   virtual void partition(const PartitionerPtr &partitioner) const;
+
+  const std::vector<std::shared_ptr<Namespace>> &namespaces() const {return namespaces_;}
+
+  /* A unique (per container) virtual address for system/library functions */
+  static rose_addr_t nextSystemReservedVa();
 
 protected:
   Container() {}
+  std::vector<std::shared_ptr<Namespace>> namespaces_;
+
+private:
+  static rose_addr_t nextSystemReservedVa_;
 };
 
 } // namespace
