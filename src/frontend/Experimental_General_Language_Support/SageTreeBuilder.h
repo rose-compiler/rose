@@ -1,6 +1,9 @@
 #ifndef ROSE_SAGE_TREE_BUILDER_H_
 #define ROSE_SAGE_TREE_BUILDER_H_
 
+#include "sage3basic.h"
+#include "rose_config.h"
+
 #include "general_language_translation.h"
 #include "PosInfo.h"
 #include "Tokens.h"

@@ -946,6 +946,7 @@ void Build(const parser::Expr::IntrinsicBinary &x, SgExpression* &expr)
 #endif
 }
 
+// LiteralConstant
 void Build(const parser::LiteralConstant &x, SgExpression* &expr)
 {
 #if PRINT_FLANG_TRAVERSAL
@@ -958,7 +959,6 @@ void Build(const parser::LiteralConstant &x, SgExpression* &expr)
    std::visit(LiteralConstVisitor, x.u);
 }
 
-   // LiteralConstant
 void Build(const parser::HollerithLiteralConstant &x, SgExpression* &expr)
 {
 #if PRINT_FLANG_TRAVERSAL
@@ -966,13 +966,53 @@ void Build(const parser::HollerithLiteralConstant &x, SgExpression* &expr)
 #endif
 }
 
+// KindParam - for now create a string
+// TODO: I thought sage literal constants had fortran kind values
+void Build(const parser::KindParam &x, std::string &strVal)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(KindParam)\n";
+#endif
+   // std::variant<> = std::uint64_t, Scalar<Integer<Constant<Name>>>
+
+   auto visitor = common::visitors {
+     [&] (const std::uint64_t &y) {
+       strVal = std::to_string(y);
+     },
+     [&] (const auto &y) {
+       strVal = y.thing.thing.thing.ToString();
+     }
+   };
+
+   std::visit(visitor, x.u);
+}
+
 void Build(const parser::IntLiteralConstant &x, SgExpression* &expr)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(IntLiteralConstant)\n";
 #endif
+   // std::tuple<> - CharBlock, std::optional<KindParam>
 
-   expr = SageBuilderCpp17::buildIntVal_nfi(stoi(std::get<0>(x.t).ToString()));
+   // Use long long as integer representation because we don't really know
+   // except for default integer and kind param (compiler dependent).
+   long long llVal{0};
+   std::string strVal{std::get<0>(x.t).ToString()};
+
+   try {
+     llVal = std::stoll(strVal);
+   } catch (const std::out_of_range& e) {
+     std::cerr << "[WARN] IntLiteralConstant out of range: " << e.what() << std::endl;
+   } catch (const std::invalid_argument& e) {
+     std::cerr << "[WARN] IntLiteralConstant invalid argument: " << e.what() << std::endl;
+   }
+
+   if (std::get<1>(x.t)) {
+     std::string kind;
+     Build(std::get<1>(x.t).value(), kind);
+     strVal += "_" + kind;
+   }
+   expr = SageBuilder::buildLongLongIntVal_nfi(llVal, strVal);
 }
 
 void Build(const parser::SignedIntLiteralConstant &x, SgExpression* &expr)
@@ -980,7 +1020,7 @@ void Build(const parser::SignedIntLiteralConstant &x, SgExpression* &expr)
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(SignedIntLiteralConstant)\n";
 #endif
-   // std::tuple<CharBlock, std::optional<KindParam>> t;
+   // std::tuple<> - CharBlock, std::optional<KindParam>
 
    expr = SageBuilderCpp17::buildIntVal_nfi(stoi(std::get<0>(x.t).ToString()));
 }

@@ -119,6 +119,9 @@ void Build(const Fortran::parser::       BOZLiteralConstant &x, SgExpression* &e
 void Build(const Fortran::parser::      CharLiteralConstant &x, SgExpression* &expr);
 void Build(const Fortran::parser::   LogicalLiteralConstant &x, SgExpression* &expr);
 
+// KindParam
+void Build(const Fortran::parser::KindParam &x, std::string &strVal);
+
 void Build(const Fortran::parser::ComplexPart &x, SgExpression* &expr);
 void Build(const std::list<Fortran::parser::Statement<Fortran::common::Indirection<Fortran::parser::UseStmt>>> &x);
 void Build(const Fortran::parser::UseStmt &x);

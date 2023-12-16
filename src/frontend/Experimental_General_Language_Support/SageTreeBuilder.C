@@ -1,6 +1,3 @@
-#include "sage3basic.h"
-#include "rose_config.h"
-
 #include "SageTreeBuilder.h"
 #include "Jovial_to_ROSE_translation.h"
 #include "ModuleBuilder.h"

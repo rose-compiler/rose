@@ -102,7 +102,7 @@ struct Expr {
       DefinedBinary, ComplexConstructor, common::Indirection<SubstringInquiry>>
       u;
 };
-
+// end of struct Expr
 
 struct PartRef {
   PartRef(PartRef &&) = default; PartRef &operator=(PartRef &&) = default; PartRef(const PartRef &) = delete; PartRef &operator=(const PartRef &) = delete; PartRef() = delete;
