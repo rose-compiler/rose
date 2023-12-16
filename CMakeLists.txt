@@ -607,26 +607,7 @@ endif()
 # EDG (Edison Design Group) frontend C/C++ compiler
 ########################################################################################################################
 # Default EDG version
-set(EDG_VERSION "5.0" CACHE STRING "major.minor version number for EDG (e.g. 5.0).")
-string(SUBSTRING ${EDG_VERSION} 0 1 EDG_MAJOR_VERSION)
-string(SUBSTRING ${EDG_VERSION} 2 1 EDG_MINOR_VERSION)
-
-
-set(ROSE_EDG_MAJOR_VERSION_NUMBER ${EDG_MAJOR_VERSION})
-set(ROSE_EDG_MINOR_VERSION_NUMBER ${EDG_MINOR_VERSION})
-if("${EDG_MAJOR_VERSION}" VERSION_EQUAL "4")
-  if("${EDG_MINOR_VERSION}" VERSION_EQUAL "9")
-    set(ROSE_USE_EDG_VERSION_4_9 1)
-  endif()
-  if("${EDG_MINOR_VERSION}" VERSION_EQUAL "12")
-    set(ROSE_USE_EDG_VERSION_4_12 1)
-  endif()
-endif()
-if("${EDG_MAJOR_VERSION}" VERSION_EQUAL "5")
-  if("${EDG_MINOR_VERSION}" VERSION_EQUAL "0")
-    set(ROSE_USE_EDG_VERSION_5_0 1)
-  endif()
-endif()
+set(EDG_VERSION "6.5" CACHE STRING "major.minor version number for EDG (e.g. 5.0).")
 
 # Check whether we have the EDG source code. Even if we have it, we might pretend (for testing) that we don't.
 option(EDG_COMPILE "Compile EDG source code if available" TRUE)

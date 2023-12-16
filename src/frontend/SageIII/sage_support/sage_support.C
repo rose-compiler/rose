@@ -4037,46 +4037,6 @@ SgSourceFile::build_C_and_Cxx_AST( vector<string> argv, vector<string> inputComm
      int clang_main(int, char *[], SgSourceFile & sageFile );
      int frontendErrorLevel = clang_main (c_cxx_argc, c_cxx_argv, *this);
 #else /* default to EDG */
-
-  // DQ (1/24/2017): We want to conditionally support C++11 input files. It is an error
-  // to violate this conditions.  Within the ROSE regression test we don't test C++11
-  // files if they would violate this conditions.
-#if ((ROSE_EDG_MAJOR_VERSION_NUMBER == 4) && (ROSE_EDG_MINOR_VERSION_NUMBER == 9))
-     #ifdef BACKEND_CXX_IS_GNU_COMPILER
-       // DQ (1/24/2017): Add restrictions to handle exclusigon of C++11 specific files when ROSE is configured using EDG 4.9 and GNU 4.9 as the backend.
-          #if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER == 9))
-            // And if this is a C++11 file.
-               if (this->get_Cxx11_only() == true)
-                  {
-                    printf ("Note: C++11 input files to ROSE are NOT supported using EDG 4.9 configuration with GNU compilers 4.9 and greater (configure ROSE using EDG 4.12) \n");
-                    exit(1);
-                  }
-          #else
-               #if (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER >= 5)
-            // And if this is a C++11 file.
-               if (this->get_Cxx11_only() == true)
-                  {
-                    printf ("Note: C++11 input files to ROSE are NOT supported using EDG 4.9 configuration with GNU compilers 5.x and greater (configure ROSE using EDG 4.12) \n");
-                    exit(1);
-                  }
-               #endif
-          #endif
-     #else
-          #ifdef BACKEND_CXX_IS_CLANG_COMPILER
-               #if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 3) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER == 5))
-            // And if this is a C++11 file.
-               if (this->get_Cxx11_only() == true)
-                  {
-                    printf ("Note: C++11 input files to ROSE are NOT supported using EDG 4.9 configuration with Clang/LLVM compiler 3.5 (configure ROSE using EDG 4.12) \n");
-                    exit(1);
-                  }
-               #endif
-          #endif
-     #endif
-#else
-  // DQ (1/24/2017): C++, C++11, and C++14 files are allowed for EDG 4.12.
-#endif
-
      int edg_main(int, char *[], SgSourceFile & sageFile );
      int frontendErrorLevel = edg_main (c_cxx_argc, c_cxx_argv, *this);
 #endif /* clang or edg */

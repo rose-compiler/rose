@@ -220,8 +220,7 @@ void Rose::initDiagnostics()
 std::string edgVersionString()
    {
 #ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
-     string edg_version = string("edg-") + StringUtility::numberToString(ROSE_EDG_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_EDG_MINOR_VERSION_NUMBER);
-  // string edg_version = string("edg-") + StringUtility::numberToString(ROSE_EDG_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(ROSE_EDG_MINOR_VERSION_NUMBER) + " " + StringUtility::numberToString(__EDG_VERSION__);
+     string edg_version = string("edg-6.5");
 #else
      string edg_version = "unknown (EDG is disabled)";
 #endif

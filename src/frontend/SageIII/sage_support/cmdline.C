@@ -3340,16 +3340,6 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           cout << version_message() << endl;
           usage(0);
         }
-  //
-  // version option
-  //
-     if ( CommandlineProcessing::isOption(argv,"-rose:","(V|version)",true) == true )
-        {
-       // function in SAGE III to access version number of EDG
-          extern std::string edgVersionString();
-          cout << version_message() << endl;
-          printf ("     Using C++ and C frontend from EDG (version %s) internally \n",edgVersionString().c_str());
-        }
 
   //
   // Diagnostic logging.  We need all of the '-rose:log WHAT' command-line switches in the order they appear, which seems to
