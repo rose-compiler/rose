@@ -3,6 +3,8 @@
 #include <boost/optional.hpp>
 #include <iostream>
 
+#define ABORT_ON_UNIMPL ROSE_ABORT()
+
 // Helps with find source position information
 enum class Order { begin, end };
 
@@ -1422,10 +1424,13 @@ void Build(const parser::AttrSpec &x, LanguageTranslation::ExpressionKind &modif
 
    std::visit(
       common::visitors{
-         [] (const common::CUDADataAttr &y) { ; },
-         [] (const parser::CoarraySpec  &y) { ; },
-         [] (const parser::ArraySpec    &y) { ; },
-         [] (const parser::Parameter    &y) { ; },
+         [] (const common::CUDADataAttr &y) { ABORT_ON_UNIMPL; },
+         [] (const parser::CoarraySpec  &y) { ABORT_ON_UNIMPL; },
+         [] (const parser::ArraySpec    &y) { ABORT_ON_UNIMPL; },
+         [&] (const parser::Parameter    &y)
+            {
+               modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_parameter;
+            },
          [&] (const parser::Allocatable  &y)
             {
                modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_allocatable;

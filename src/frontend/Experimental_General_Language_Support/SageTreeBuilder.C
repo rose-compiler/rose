@@ -1921,6 +1921,11 @@ Leave(SgVariableDeclaration* var_decl, std::list<LanguageTranslation::Expression
                var_decl->get_declarationModifier().get_typeModifier().setIntent_inout();
                break;
             }
+         case LanguageTranslation::ExpressionKind::e_type_modifier_parameter:
+            {
+               var_decl->get_declarationModifier().get_typeModifier().get_constVolatileModifier().setConst();
+               break;
+            }
          default: break;
        }
    }

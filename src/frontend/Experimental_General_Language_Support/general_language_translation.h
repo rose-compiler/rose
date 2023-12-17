@@ -72,6 +72,7 @@ namespace LanguageTranslation
           e_type_modifier_intent_inout,
           e_type_modifier_intrinsic,
           e_type_modifier_optional,
+          e_type_modifier_parameter,
           e_type_modifier_pointer,
           e_type_modifier_protected,
           e_type_modifier_round,
