@@ -414,7 +414,7 @@ private:
         debugSerializationEnd("SgAsmVectorType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Number of elements in vector. 
      * 
@@ -934,7 +934,7 @@ private:
         debugSerializationEnd("SgAsmUnaryExpression");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Operand for a unary expression. 
      * 
@@ -1014,7 +1014,7 @@ private:
         debugSerializationEnd("SgAsmSynthesizedFieldDeclaration");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Name. 
      * 
@@ -1182,7 +1182,7 @@ private:
         debugSerializationEnd("SgAsmStringStorage");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: String table holding the string. 
      * 
@@ -1275,7 +1275,7 @@ private:
         debugSerializationEnd("SgAsmStoredString");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Storage area for this string. 
      * 
@@ -1380,7 +1380,7 @@ private:
         debugSerializationEnd("SgAsmStaticData");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Raw bytes.
      *
@@ -1463,7 +1463,7 @@ private:
         debugSerializationEnd("SgAsmStackExpression");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Position of element referenced on the stack.
      *
@@ -1624,7 +1624,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+public:
     // Note that the qualification for the type is necessary only for ROSETTA. Remove it when ROSETTA finally goes away.
 public:
     /** Property: Low-level semantic operation.
@@ -1640,8 +1640,8 @@ public:
 public:
     /** Property: Operands for the low-level operation.
      *
-     *  These are the operands used by the low-level operation. The actual list is stored in a separate @ref
-     *  SgAsmExprListExpr AST node instead of directly in this node due to limitations of ROSETTA. 
+     *  These are the operands used by the low-level operation. The actual list is stored in a separate @ref SgAsmExprListExp AST
+     *  node instead of directly in this node due to limitations of ROSETTA. 
      *  
      *  @{ */
     SgAsmExprListExp* const& get_operands() const;
@@ -1715,7 +1715,7 @@ private:
         debugSerializationEnd("SgAsmRegisterNames");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: List of registers.
      *
@@ -1890,7 +1890,7 @@ private:
         debugSerializationEnd("SgAsmPEStringSection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: String table.
      *
@@ -2154,6 +2154,7 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+public:
     /** Property: Name.
      *
      *  See PE specification. 
@@ -2317,7 +2318,7 @@ private:
         debugSerializationEnd("SgAsmPERVASizePairList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: List of pointers to other nodes. 
      * 
@@ -2423,6 +2424,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
 public:
     /** Property: RVA.
      *
@@ -2667,7 +2669,7 @@ private:
         debugSerializationEnd("SgAsmPEImportSection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: List of import directories.
      *
@@ -2774,7 +2776,7 @@ private:
         debugSerializationEnd("SgAsmPEImportItemList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: List of pointers to other nodes. 
      * 
@@ -2895,7 +2897,7 @@ private:
         debugSerializationEnd("SgAsmPEImportItem");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Whether ordinal number is stored.
      *
@@ -3066,7 +3068,7 @@ private:
         debugSerializationEnd("SgAsmPEImportDirectoryList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: List of nodes.
      *
@@ -3225,6 +3227,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
 public:
     /** Property: Name of library from which to import.
      *
@@ -3865,6 +3868,7 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+public:
     /** Property: CPU type.
      *
      *  See PE specification. 
@@ -4262,8 +4266,10 @@ public:
 
     /** Convert an RVA/Size Pair index number into a section name.
      *
-     *  This is different than @ref stringifySgAsmPEFileHeaderPairPurpose because it returns a section name rather than an
-     *  enum name. */
+     *  The enum value passed as the first argument is looked up in an internal table and its full, static name from the PE
+     *  documentation is returned. Additionally, if @p short_name is non-null then it points to a static abbreviated name. For
+     *  example, if the first argument is @c PAIR_EXPORTS from the @ref SgAsmPEFileHeader::PairPurpose enum, then this function
+     *  returns "Export Table" as the full name, and "Exports" as the abbreviated name. */
     std::string rvaSizePairName(PairPurpose, const char **short_name);
 
     /** Define an RVA/Size pair in the PE file header. */
@@ -4372,7 +4378,7 @@ private:
         debugSerializationEnd("SgAsmPEExportSection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Export directory.
      *
@@ -4493,7 +4499,7 @@ private:
         debugSerializationEnd("SgAsmPESection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Section table entry.
      *
@@ -4579,7 +4585,7 @@ private:
         debugSerializationEnd("SgAsmPEExportEntryList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: List of pointers to nodes. 
      * 
@@ -4666,7 +4672,7 @@ private:
         debugSerializationEnd("SgAsmPEExportEntry");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Name.
      *
@@ -4891,6 +4897,7 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+public:
     /** Property: Reserved aread #1.
      *
      *  See PE specification. 
@@ -5075,7 +5082,7 @@ private:
         debugSerializationEnd("SgAsmOperandList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Ordered list of instruction operands.
      *
@@ -5284,7 +5291,7 @@ private:
         debugSerializationEnd("SgAsmNESectionTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     unsigned const& get_flags() const;
     void set_flags(unsigned const&);
@@ -5436,6 +5443,7 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+public:
     unsigned const& get_flags() const;
     void set_flags(unsigned const&);
 
@@ -5529,7 +5537,7 @@ private:
         debugSerializationEnd("SgAsmNESection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     SgAsmNESectionTableEntry* const& get_sectionTableEntry() const;
     void set_sectionTableEntry(SgAsmNESectionTableEntry* const&);
@@ -5605,7 +5613,7 @@ private:
         debugSerializationEnd("SgAsmNERelocTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     SgAsmNERelocEntryPtrList const& get_entries() const;
     SgAsmNERelocEntryPtrList& get_entries();
@@ -5849,6 +5857,7 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+public:
     SgAsmNERelocEntry::NERelocSrcType const& get_src_type() const;
     void set_src_type(SgAsmNERelocEntry::NERelocSrcType const&);
 
@@ -5952,7 +5961,7 @@ private:
         debugSerializationEnd("SgAsmNENameTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     SgStringList const& get_names() const;
     void set_names(SgStringList const&);
@@ -6040,7 +6049,7 @@ private:
         debugSerializationEnd("SgAsmNEModuleTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     SgAsmNEStringTable* const& get_strtab() const;
     void set_strtab(SgAsmNEStringTable* const&);
@@ -6440,6 +6449,7 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+public:
     unsigned const& get_e_linker_major() const;
     void set_e_linker_major(unsigned const&);
 
@@ -6673,7 +6683,7 @@ private:
         debugSerializationEnd("SgAsmNEEntryTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     SgSizeTList const& get_bundle_sizes() const;
     void set_bundle_sizes(SgSizeTList const&);
@@ -6778,6 +6788,7 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+public:
     SgAsmNEEntryPoint::NEEntryFlags const& get_flags() const;
     void set_flags(SgAsmNEEntryPoint::NEEntryFlags const&);
 
@@ -6868,7 +6879,7 @@ private:
         debugSerializationEnd("SgAsmMipsInstruction");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Instruction kind.
      *
@@ -6952,7 +6963,7 @@ private:
         debugSerializationEnd("SgAsmMemoryReferenceExpression");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Memory address expression.
      *
@@ -7272,6 +7283,7 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+public:
     unsigned const& get_flags() const;
     void set_flags(unsigned const&);
 
@@ -7370,7 +7382,7 @@ private:
         debugSerializationEnd("SgAsmLESection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     SgAsmLESectionTableEntry* const& get_sectionTableEntry() const;
     void set_sectionTableEntry(SgAsmLESectionTableEntry* const&);
@@ -7439,7 +7451,7 @@ private:
         debugSerializationEnd("SgAsmLERelocTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     SgAsmLERelocEntryPtrList const& get_entries() const;
     SgAsmLERelocEntryPtrList& get_entries();
@@ -7502,7 +7514,7 @@ private:
         debugSerializationEnd("SgAsmLEPageTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     SgAsmLEPageTableEntryPtrList const& get_entries() const;
     SgAsmLEPageTableEntryPtrList& get_entries();
@@ -7613,6 +7625,7 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+public:
     unsigned const& get_pageno() const;
     void set_pageno(unsigned const&);
 
@@ -7689,7 +7702,7 @@ private:
         debugSerializationEnd("SgAsmLENameTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     SgStringList const& get_names() const;
     void set_names(SgStringList const&);
@@ -8219,6 +8232,7 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+public:
     unsigned const& get_e_byte_order() const;
     void set_e_byte_order(unsigned const&);
 
@@ -8528,7 +8542,7 @@ private:
         debugSerializationEnd("SgAsmLEEntryTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     SgSizeTList const& get_bundle_sizes() const;
     void set_bundle_sizes(SgSizeTList const&);
@@ -8666,6 +8680,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
 public:
     SgAsmLEEntryPointPtrList const& get_entries() const;
     SgAsmLEEntryPointPtrList& get_entries();
@@ -8842,7 +8857,7 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-private:
+public:
 public:
     /** Property: tag
      *
@@ -8948,10 +8963,10 @@ private:
         debugSerializationEnd("SgAsmJvmStackMapTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
 public:
     /** Property: List of stack map table entries/frames. 
      * 
@@ -9057,6 +9072,7 @@ private:
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
+public:
 public:
     /** Property: List of verification_type_info stack variables. 
      * 
@@ -9224,7 +9240,7 @@ private:
         debugSerializationEnd("SgAsmJvmSourceFile");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: sourcefile_index
      *
@@ -9307,7 +9323,7 @@ private:
         debugSerializationEnd("SgAsmJvmSignature");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: signature_index
      *
@@ -9391,7 +9407,7 @@ private:
         debugSerializationEnd("SgAsmJvmNestMembers");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: classes
      *
@@ -9477,7 +9493,7 @@ private:
         debugSerializationEnd("SgAsmJvmNestHost");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: classes
      *
@@ -9563,7 +9579,7 @@ private:
         debugSerializationEnd("SgAsmJvmModuleMainClass");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: main_class_index
      *
@@ -9647,7 +9663,7 @@ private:
         debugSerializationEnd("SgAsmJvmMethodTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: List of pointers to methods. 
      * 
@@ -9760,7 +9776,7 @@ private:
         debugSerializationEnd("SgAsmJvmMethod");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: access_flags
      *
@@ -9883,7 +9899,7 @@ private:
         debugSerializationEnd("SgAsmJvmLocalVariableTypeTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: local_variable_table
      *
@@ -9994,7 +10010,7 @@ private:
         debugSerializationEnd("SgAsmJvmLocalVariableTypeEntry");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: start_pc
      *
@@ -10126,7 +10142,7 @@ private:
         debugSerializationEnd("SgAsmJvmLocalVariableTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: local_variable_table
      *
@@ -10237,7 +10253,7 @@ private:
         debugSerializationEnd("SgAsmJvmLocalVariableEntry");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: start_pc
      *
@@ -10369,7 +10385,7 @@ private:
         debugSerializationEnd("SgAsmJvmLineNumberTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: line_number_table
      *
@@ -10459,7 +10475,7 @@ private:
         debugSerializationEnd("SgAsmJvmLineNumberEntry");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: start_pc
      *
@@ -10554,7 +10570,7 @@ private:
         debugSerializationEnd("SgAsmJvmInstruction");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Instruction kind.
      *
@@ -10635,7 +10651,7 @@ private:
         debugSerializationEnd("SgAsmJvmInnerClasses");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: List of pointers to InnerClasses attribute entry. 
      * 
@@ -10741,7 +10757,7 @@ private:
         debugSerializationEnd("SgAsmJvmInnerClassesEntry");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: inner_class_info_index.
      *
@@ -10924,7 +10940,7 @@ private:
         debugSerializationEnd("SgAsmJvmFileHeader");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Minor version.
      *
@@ -11119,7 +11135,7 @@ private:
         debugSerializationEnd("SgAsmJvmFieldTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: List of pointers to fields. 
      * 
@@ -11223,7 +11239,7 @@ private:
         debugSerializationEnd("SgAsmJvmField");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: access_flags
      *
@@ -11335,7 +11351,7 @@ private:
         debugSerializationEnd("SgAsmJvmExceptionTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: List of pointers to exceptions. 
      * 
@@ -11421,7 +11437,7 @@ private:
         debugSerializationEnd("SgAsmJvmExceptions");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: exception_index_table
      *
@@ -11526,7 +11542,7 @@ private:
         debugSerializationEnd("SgAsmJvmExceptionHandler");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: start_pc
      *
@@ -11650,7 +11666,7 @@ private:
         debugSerializationEnd("SgAsmJvmEnclosingMethod");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: class_index
      *
@@ -11743,7 +11759,7 @@ private:
         debugSerializationEnd("SgAsmJvmConstantValue");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: constantvalue_index
      *
@@ -11827,7 +11843,7 @@ private:
         debugSerializationEnd("SgAsmJvmConstantPool");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: List of constant pool entries. 
      * 
@@ -12158,6 +12174,7 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+public:
     /** Property: tag
      *
      *  Enum constant describing the kind of this entry in the pool. 
@@ -12437,7 +12454,7 @@ private:
         debugSerializationEnd("SgAsmJvmCodeAttribute");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: max_stack
      *
@@ -12636,10 +12653,10 @@ private:
         debugSerializationEnd("SgAsmJvmBootstrapMethods");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
 public:
     /** Property: List of bootstrap method entries. 
      * 
@@ -12732,7 +12749,7 @@ private:
         debugSerializationEnd("SgAsmJvmBootstrapMethod");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: bootstrap_method_ref.
      *
@@ -12828,7 +12845,7 @@ private:
         debugSerializationEnd("SgAsmJvmAttributeTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: List of pointers to attributes. 
      * 
@@ -12946,7 +12963,7 @@ private:
         debugSerializationEnd("SgAsmJvmAttribute");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: attribute_name_index
      *
@@ -13115,7 +13132,7 @@ private:
         debugSerializationEnd("SgAsmInterpretationList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Interpretation list.
      *
@@ -13218,7 +13235,7 @@ private:
         debugSerializationEnd("SgAsmInterpretation");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: File headers.
      *
@@ -13298,20 +13315,20 @@ public:
 public:
     /** Returns a list of all files referenced by an interpretation.
      *
-     *  It does this by looking at the file headers referenced by the interpretation, following their parent pointers up to
-     *  an SgAsmGenericFile node, and returning a vector of those nodes with duplicate files removed. */
+     *  It does this by looking at the file headers referenced by the interpretation, following their parent pointers up to an
+     *  SgAsmGenericFile node, and returning a vector of those nodes with duplicate files removed. */
     SgAsmGenericFilePtrList get_files() const;
 
     /** Populate a map of instructions indexed by their virtual addresses.
      *
-     *  This function traverses the AST rooted at the @ref get_global_block "global_block" and inserts each encountered
-     *  instruction into the provided @ref InstructionMap based on its starting virtual address. */
+     *  This function traverses the AST rooted at the @ref globalBlock and inserts each encountered instruction into the provided
+     *  @ref InstructionMap based on its starting virtual address. */
     void insertInstructions(InstructionMap&/*in,out*/);
 
     /** Erase instructions from a map.
      *
-     *  This function traverses the AST rooted at the @ref get_global_block "global_block" and erases each encountered
-     *  instruction from the provided @ref InstructionMap based on its starting virtual address. */
+     *  This function traverses the AST rooted at the @ref globalBlock and erases each encountered instruction from the provided
+     *  @ref InstructionMap based on its starting virtual address. */
     void eraseInstructions(InstructionMap&/*in,out*/);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -13394,7 +13411,7 @@ private:
         debugSerializationEnd("SgAsmIntegerValueExpression");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Base node associated with an integer.
      *
@@ -13439,12 +13456,12 @@ public:
      *  a known, unnamed function, a non-entry instruction within a function, or some memory location we didn't
      *  disassemble.  But when labeled with @p quiet being false, the output will be:
      *
-     *  <ul>
-     *    <li>call 0x004126bb<main>; points to a function with a name</li>
-     *    <li>call 0x004126bb<<Func>>; points to a function without a name</li>
-     *    <li>call 0x004126bb<<Insn>>; points to an instruction that's not a function entry point</li>
-     *    <li>call 0x004126bb; points to something that's not been disassembled</li>
-     *  </ul> */
+     *  @code
+     *  call 0x004126bb<main>; points to a function with a name
+     *  call 0x004126bb<<Func>>; points to a function without a name
+     *  call 0x004126bb<<Insn>>; points to an instruction that's not a function entry point
+     *  call 0x004126bb; points to something that's not been disassembled
+     *  @endcode */
     std::string get_label(bool quiet=false) const;
 
     /** Return the number of significant bits in the value. */
@@ -13551,7 +13568,7 @@ private:
         debugSerializationEnd("SgAsmIntegerType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: whether the integral type is signed or unsigned.
      *
@@ -13626,7 +13643,7 @@ private:
         debugSerializationEnd("SgAsmInstructionList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: List of @ref SgAsmInstruction entries.
      *
@@ -13672,15 +13689,14 @@ IS_SERIALIZABLE(AsmIndirectRegisterExpression);
 #ifdef DOCUMENTATION
 /** Registers accessed indirectly.
  *
- *  An indirect register is a register whose descriptor is computed dynamically.  The dynamic descriptor is computed by
- *  reading "offset" register to obtain an integral value and adding it to the integral "index" modulo the specified
- *  "modulus" to obtain an integer @ref i. (These are all properties of this node.)  Then, the final register descriptor
- *  is calculated by adding @ref i times "stride" to the base register descriptor (@ref get_descriptor). The @ref i times
- *  "stride" multiplies each member of "stride" by @em i, and addition of two register descriptors is defined as the
- *  pair-wise addition of their elements.
+ *  An indirect register is a register whose descriptor is computed dynamically.  The dynamic descriptor is computed by reading
+ *  "offset" register to obtain an integral value and adding it to the integral "index" modulo the specified "modulus" to obtain an
+ *  integer @em i. (These are all properties of this node.)  Then, the final register descriptor is calculated by adding @em i times
+ *  "stride" to the base register @ref SgAsmRegisterReferenceExpression::descriptor. The @em i times "stride" multiplies each member
+ *  of "stride" by @em i, and addition of two register descriptors is defined as the pair-wise addition of their elements.
  *
- *  An example of an indirect register is x86 ST(1) which has base register "st", stride={0,1,0,0}, offset
- *  register "fpstatus_top", index is 1, and modulus is 8. Thus, the dynamically-computed register is:
+ *  An example of an indirect register is x86 ST(1) which has base register "st", stride={0,1,0,0}, offset register "fpstatus_top",
+ *  index is 1, and modulus is 8. Thus, the dynamically-computed register is:
  *
  *  @code
  *   i = (read("fpstatus_top") + index) % modulo;
@@ -13732,9 +13748,9 @@ private:
         debugSerializationEnd("SgAsmIndirectRegisterExpression");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
 public:
-    /** Property: Register descriptor stride.
+public:
+   /** Property: Register descriptor stride.
      *
      *  This is the "stride" referred to in the documentation for this class.  This is not an actual register. 
      *  
@@ -13840,7 +13856,7 @@ private:
         debugSerializationEnd("SgAsmGenericSymbolList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: List of symbol nodes. 
      * 
@@ -13909,7 +13925,7 @@ private:
         debugSerializationEnd("SgAsmGenericSectionList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: List of section pointers. 
      * 
@@ -13978,7 +13994,7 @@ private:
         debugSerializationEnd("SgAsmGenericHeaderList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: List of file header nodes. 
      * 
@@ -14098,7 +14114,7 @@ private:
         debugSerializationEnd("SgAsmGenericFormat");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Family. 
      * 
@@ -14134,7 +14150,7 @@ public:
 public:
     /** Property: Whether version is considered current.
      *
-     *  True if the @ref get_version "version" property is considered to be the current, supported version for this file
+     *  True if the @ref version property is considered to be the current, supported version for this file
      *  format. 
      *  
      *  @{ */
@@ -14238,7 +14254,7 @@ private:
         debugSerializationEnd("SgAsmGenericFileList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: List of AST node pointers. 
      * 
@@ -14384,14 +14400,14 @@ private:
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Section modification functions for @ref shift_extend. */
+    /** Section modification functions for @ref shiftExtend. */
     enum AddressSpace {
         ADDRSP_MEMORY = 0x0001,
         ADDRSP_FILE   = 0x0002,
         ADDRSP_ALL    = 0x0003
     };
 
-    /** Elasticity argument for @ref shift_extend. */
+    /** Elasticity argument for @ref shiftExtend. */
     enum Elasticity {
         ELASTIC_NONE  = 0,                          /**< Nothing is elastic; other parts of space are shifted. */
         ELASTIC_UNREF = 1,                          /**< Unreferenced address space is elastic. */
@@ -14401,6 +14417,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
 public:
     /** Property: DWARF debugging hiearchy. 
      * 
@@ -14504,7 +14521,6 @@ public:
     /** Loads file contents into memory. */
     SgAsmGenericFile* parse(std::string file_name);
 
-    /** Call this before unparsing to make sure everything is consistent. */
     void reallocate();
 
     /** Mirror image of parsing an executable file.
@@ -14564,21 +14580,20 @@ public:
 
     /** Reads data from a file.
      *
-     *  Reads up to @p size bytes of data starting at the specified (absolute) virtual address. The @p map specifies how
-     *  virtual addresses are mapped to file offsets.  As bytes are read, if we encounter a virtual address that is not
-     *  mapped we stop reading and do one of two things: if @p strict is set then a @ref MemoryMap::NotMapped exception is
-     *  thrown; otherwise the rest of the @p dst_buf is zero filled and the number of bytes read (not filled) is
-     *  returned. */
+     *  Reads up to @p size bytes of data starting at the specified (absolute) virtual address. The @p map specifies how virtual
+     *  addresses are mapped to file offsets.  As bytes are read, if we encounter a virtual address that is not mapped we stop
+     *  reading and do one of two things: if @p strict is set then a @ref Rose::BinaryAnalysis::MemoryMap::NotMapped exception is
+     *  thrown; otherwise the rest of the @p dst_buf is zero filled and the number of bytes read (not filled) is returned. */
     size_t readContent(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t va, void *dst_buf,
                        rose_addr_t size, bool strict=true);
 
     /** Reads a string from a file.
      *
-     *  Returns the string stored at the specified (absolute) virtual address. The returned string contains the bytes
-     *  beginning at the starting virtual address and continuing until we reach a NUL byte or an address which is not
-     *  mapped. If we reach an address which is not mapped then one of two things happen: if @p strict is set then a @ref
-     *  MemoryMap::NotMapped exception is thrown; otherwise the string is simply terminated. The returned string does not
-     *  include the NUL byte. */
+     *  Returns the string stored at the specified (absolute) virtual address. The returned string contains the bytes beginning at
+     *  the starting virtual address and continuing until we reach a NUL byte or an address which is not mapped. If we reach an
+     *  address which is not mapped then one of two things happen: if @p strict is set then a @ref
+     *  Rose::BinaryAnalysis::MemoryMap::NotMapped exception is thrown; otherwise the string is simply terminated. The returned
+     *  string does not include the NUL byte. */
     std::string readContentString(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t va, bool strict=true);
 
     /** Reads a string from a file.
@@ -14659,20 +14674,20 @@ public:
     /** Find section by address.
      *
      *  Returns single section that is mapped to include the specified virtual address across all headers. See also
-     *  @ref get_best_section_by_va. */
+     *  @ref get_bestSectionByVa. */
     SgAsmGenericSection *get_sectionByVa(rose_addr_t va, size_t *nfound=0) const;
 
     /** Find section by address.
      *
-     *  Similar to @ref get_section_by_va except when more than one section contains the specified virtual address this
+     *  Similar to @ref get_sectionByVa except when more than one section contains the specified virtual address this
      *  choose the "best" one. All candidates must map the virtual address to the same file address or else we fail (return
-     *  null and number of candidates). See @ref best_section_by_va for definition of "best". */
+     *  null and number of candidates). See @ref bestSectionByVa for definition of "best". */
     SgAsmGenericSection *get_bestSectionByVa(rose_addr_t va, size_t *nfound=0) const;
 
     /** Definition for "best".
      *
-     *  This is the definition of "best" as used by @ref get_best_section_by_va and @ref
-     *  SgAsmGenericHeader::get_best_section_by_va.  The specified list of sections is scanned and the best one
+     *  This is the definition of "best" as used by @ref get_bestSectionByVa and @ref
+     *  SgAsmGenericHeader::get_bestSectionByVa.  The specified list of sections is scanned and the best one
      *  containing the specified virtual address is returned.  The operation is equivalent to the successive elimination of
      *  bad sections: first eliminate all sections that do not contain the virtual address.  If more than one remains,
      *  eliminate all but the smallest.  If two or more are tied in size and at least one has a name, eliminate those that
@@ -14747,7 +14762,7 @@ public:
 
     /** Deletes "hole" sections.
      *
-     *  Undoes what @ref fill_holes did. */
+     *  Undoes what @ref fillHoles did. */
     void unfillHoles();
 
     /** Adds a new header to the file.
@@ -14883,7 +14898,7 @@ private:
         debugSerializationEnd("SgAsmGenericDLLList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: List of AST node pointers. 
      * 
@@ -14956,7 +14971,7 @@ private:
         debugSerializationEnd("SgAsmGenericDLL");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Name.
      *
@@ -15020,7 +15035,7 @@ IS_SERIALIZABLE(AsmFunction);
  *
  *  A function is a collection of blocks holding instructions (basic blocks) or static data.  Instructions might have
  *  references to addresses or data which are described by symbols (not to be confused with the binary's symbol table) in
- *  the function's symbol table (@ref get_symbol_table).  Functions do not explicitly exist in a binary, but are
+ *  the function's symbol table (@ref symbolTable property).  Functions do not explicitly exist in a binary, but are
  *  synthesized by ROSE as part of the disassembly and partitioning steps. The individual instructions and/or individual
  *  static data areas need not cover a contiguous region of the address space.  Some synthesized functions will likely not
  *  be a "function" or "produceure" in the strict sense of those words due to such factors as compiler optimizations,
@@ -15254,6 +15269,7 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+public:
     /** Property: Name.
      *
      *  The optional string name of a function. 
@@ -15278,7 +15294,7 @@ public:
     /** Property: Additional function existance reason comment.
      *
      *  This reason comment gets filled in automatically by certain function analyses. It's a free-form string that
-     *  contains additional information about why this function exists and is used in conjunction with the @ref get_reason
+     *  contains additional information about why this function exists and is used in conjunction with the @ref reason
      *  property. 
      *  
      *  @{ */
@@ -15794,6 +15810,8 @@ public:
 
     /** Range of bits used for various purposes within the values of this type. */
     typedef Sawyer::Container::BitVector::BitRange BitRange;
+
+public:
 public:
 
 public:
@@ -15947,7 +15965,7 @@ private:
         debugSerializationEnd("SgAsmScalarType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
 
 public:
@@ -16156,7 +16174,7 @@ private:
         debugSerializationEnd("SgAsmExprListExp");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Pointers to expressions.
      *
@@ -16201,7 +16219,7 @@ IS_SERIALIZABLE(AsmElfSymverSection);
 #ifdef DOCUMENTATION
 /** The ELF symbol version table.
  *
- *  Often named ".gnu.version section", this section points to an @ref SgAsmElfSymverEntryPtrList containing a list of
+ *  Often named ".gnu.version section", this section points to an @ref SgAsmElfSymverEntryList containing a list of
  *  SgAsmElfSymverEntry objects. */
 class SgAsmElfSymverSection: public SgAsmElfSection {
 #endif // DOCUMENTATION
@@ -16228,7 +16246,7 @@ private:
         debugSerializationEnd("SgAsmElfSymverSection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: List of table entries.
      *
@@ -16249,7 +16267,7 @@ public:
     using SgAsmElfSection::calculateSizes;
     /** Return sizes for various parts of the table.
      *
-     *  See documentation for @ref SgAsmElfSection::calculate_sizes. */
+     *  See documentation for @ref SgAsmElfSection::calculateSizes. */
     virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const override;
 
     /** Write symver table sections back to disk */
@@ -16324,7 +16342,7 @@ private:
         debugSerializationEnd("SgAsmElfSymverNeededSection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: List of entries.
      *
@@ -16355,7 +16373,7 @@ public:
     using SgAsmElfSection::calculate_sizes;
     /** Return sizes for various parts of the table.
      *
-     *  See documentation for @ref SgAsmElfSection::calculate_sizes. */
+     *  See documentation for @ref SgAsmElfSection::calculateSizes. */
     virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const override;
 
     /** Write SymverNeeded section back to disk.
@@ -16430,7 +16448,7 @@ private:
         debugSerializationEnd("SgAsmElfSymverNeededEntryList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: List of entries. 
      * 
@@ -16544,6 +16562,7 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+public:
     /** Property: Version.
      *
      *  See ELF specification for details. 
@@ -16652,7 +16671,7 @@ private:
         debugSerializationEnd("SgAsmElfSymverNeededAuxList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: List of entries. 
      * 
@@ -16773,6 +16792,7 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+public:
     /** Property: Hash.
      *
      *  See ELF specification for details. 
@@ -16890,7 +16910,7 @@ private:
         debugSerializationEnd("SgAsmElfSymverEntryList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: List of symbol version table entries. 
      * 
@@ -16956,7 +16976,7 @@ private:
         debugSerializationEnd("SgAsmElfSymverEntry");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Value.
      *
@@ -17004,9 +17024,9 @@ IS_SERIALIZABLE(AsmElfSymverDefinedSection);
 #ifdef DOCUMENTATION
 /** The GNU symbol version definitions.
  *
- *  This section is usually named ".gnu.version_d".  The @ref SgAsmElfSymverDefinedSection points to a list of
- * entries (@ref SgAsmSymverDefinedEntry), which in turn point to a list of auxilliary members (@ref
- * SgAsmSymverDefinedAux). See @ref SgAsmSymverDefinedSection::parse for a good description of the disk format. */
+ *  This section is usually named ".gnu.version_d".  The @ref SgAsmElfSymverDefinedSection points to a list of entries (@ref
+ *  SgAsmElfSymverDefinedEntry), which in turn point to a list of auxilliary members (@ref SgAsmElfSymverDefinedAux). See @ref
+ *  SgAsmElfSymverDefinedSection::parse for a good description of the disk format. */
 class SgAsmElfSymverDefinedSection: public SgAsmElfSection {
 #endif // DOCUMENTATION
 
@@ -17032,7 +17052,7 @@ private:
         debugSerializationEnd("SgAsmElfSymverDefinedSection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: List of entries.
      *
@@ -17118,7 +17138,7 @@ public:
     virtual SgAsmElfSymverDefinedSection* parse() override;
 
     using SgAsmElfSection::calculateSizes;
-    /** Return sizes for various parts of the table. See doc for SgAsmElfSection::calculate_sizes. */
+    /** Return sizes for various parts of the table. See doc for SgAsmElfSection::calculateSizes. */
     virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const override;
 
     /** Write SymverDefined section back to disk.
@@ -17194,7 +17214,7 @@ private:
         debugSerializationEnd("SgAsmElfSymverDefinedEntryList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: List of table entries. 
      * 
@@ -17323,6 +17343,7 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+public:
     /** Property: Version.
      *
      *  See ELF specification for details. 
@@ -17446,7 +17467,7 @@ private:
         debugSerializationEnd("SgAsmElfSymverDefinedAuxList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: List of entries. 
      * 
@@ -17491,6 +17512,7 @@ DECLARE_HEADERS(AsmElfSymverDefinedAux);
 #endif // SgAsmElfSymverDefinedAux_HEADERS
 
 #ifdef DOCUMENTATION
+/** Auxiliary data for an ELF Symbol Version. */
 class SgAsmElfSymverDefinedAux: public SgAsmExecutableFileFormat {
 #endif // DOCUMENTATION
 
@@ -17541,6 +17563,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
 public:
     /** Property: Name. 
      * 
@@ -17632,7 +17655,7 @@ private:
         debugSerializationEnd("SgAsmElfSymbolSection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Whether this section represents dynamic linking symbols. 
      * 
@@ -17678,7 +17701,7 @@ public:
     using SgAsmElfSection::calculateSizes;
     /** Return sizes for various parts of the table.
      *
-     *  See documentation for @ref SgAsmElfSection::calculate_sizes. */
+     *  See documentation for @ref SgAsmElfSection::calculateSizes. */
     virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const override;
 
     /** Called prior to unparsing.
@@ -17757,7 +17780,7 @@ private:
         debugSerializationEnd("SgAsmElfSymbolList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Symbol list.
      *
@@ -17922,6 +17945,7 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+public:
     /** Property: Info.
      *
      *  See ELF specification for details. 
@@ -18084,7 +18108,7 @@ public:
 
     /** Free StringStorage objects associated with this string table.
      *
-     *  It may not be safe to blow them away yet since other objects may still have @ref SgAsmStoredStrings pointing to
+     *  It may not be safe to blow them away yet since other objects may still have @ref SgAsmStoredString objects pointing to
      *  these storage objects. So instead, we will mark all this strtab's storage objects as no longer being associated
      *  with a string table. This allows the @ref SgAsmStoredString objects to still function properly and their
      *  destructors will free their storage. */
@@ -18191,7 +18215,7 @@ private:
         debugSerializationEnd("SgAsmElfStringSection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: String table.
      *
@@ -18294,14 +18318,14 @@ public:
     /** Attaches new segments to the segment table.
      *
      *  Attaches a previously unattached ELF Segment (@ref SgAsmElfSection) to the ELF Segment Table (@ref
-     *  SgAsmElfSegmentTable). This method complements @ref SgAsmElfSection::init_from_segment_table. This method
+     *  SgAsmElfSegmentTable). This method complements @ref SgAsmElfSection::initFromSegmentTable. This method
      *  initializes the segment table from the segment while init_from_segment_table initializes the segment from the
      *  segment table.
      *
-     *  ELF Segments are represented by @ref SgAsmElfSection objects since ELF Segments and ELF Sections overlap very much
-     *  in their features and thus should share an interface. An @ref SgAsmElfSection can appear in the ELF Section Table
-     *  and/or the ELF Segment Table and you can determine where it was located by calling @ref get_section_entry and
-     *  @ref get_segment_entry.
+     *  ELF Segments are represented by @ref SgAsmElfSection objects since ELF Segments and ELF Sections overlap very much in their
+     *  features and thus should share an interface. An @ref SgAsmElfSection can appear in the ELF Section Table and/or the ELF
+     *  Segment Table and you can determine where it was located with its @ref SgAsmElfSection::sectionEntry and @ref
+     *  SgAsmElfSection::segmentEntry properties.
      *
      *  Returns the new segment table entry linked into the AST. */
     SgAsmElfSegmentTableEntry *addSection(SgAsmElfSection*);
@@ -18311,7 +18335,6 @@ public:
      *  Any or all arguments may be null pointers if the caller is not interested in the value. */
     rose_addr_t calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 
-    /** Pre-unparsing updates */
     virtual bool reallocate() override;
 
     /** Write the segment table to disk. */
@@ -18381,7 +18404,7 @@ private:
         debugSerializationEnd("SgAsmElfSegmentTableEntryList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Segment table entries.
      *
@@ -18608,6 +18631,7 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+public:
     /** Property: Index into table.
      *
      *  This is the index of this entry within the ELF segment table. 
@@ -18823,7 +18847,6 @@ public:
      *  Any or all arguments may be null pointers if the caller is not interested in the value. */
     rose_addr_t calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 
-    /** Update prior to unparsing. */
     virtual bool reallocate() override;
 
     /** Write the section table section back to disk */
@@ -19067,6 +19090,7 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+public:
     /** Property: sh_name.
      *
      *  The sh_name property of an ELF section table. See official ELF specification. 
@@ -19284,7 +19308,7 @@ private:
         debugSerializationEnd("SgAsmElfRelocSection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Whether entries in this section use the addend format. 
      * 
@@ -19317,10 +19341,9 @@ public:
     /** Parse an existing ELF Rela Section */
     virtual SgAsmElfRelocSection *parse() override;
 
-    /** Return sizes for various parts of the table. See doc for SgAsmElfSection::calculate_sizes. */
+    /** Return sizes for various parts of the table. See doc for SgAsmElfSection::calculateSizes. */
     virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const override;
 
-    /** Pre-unparsing adjustments */
     virtual bool reallocate() override;
 
     /** Write section back to disk */
@@ -19398,7 +19421,7 @@ private:
         debugSerializationEnd("SgAsmElfRelocEntryList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: List of relocation entries. 
      * 
@@ -19618,6 +19641,7 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+public:
     /** Property: Offset.
      *
      *  See ELF specification for details. 
@@ -19762,7 +19786,7 @@ private:
         debugSerializationEnd("SgAsmElfNoteSection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: List of note entries.
      *
@@ -19779,7 +19803,6 @@ public:
 
     virtual SgAsmElfNoteSection *parse() override;
 
-    /** Pre-unparsing adjustments */
     virtual bool reallocate() override;
 
     /** Write data to note section */
@@ -19846,7 +19869,7 @@ private:
         debugSerializationEnd("SgAsmElfNoteEntryList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: List of ELF not entries. 
      * 
@@ -19926,7 +19949,7 @@ private:
         debugSerializationEnd("SgAsmElfNoteEntry");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Type of note.
      *
@@ -20166,7 +20189,7 @@ private:
     // Local types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Enum for the @ref get_e_type "e_type" property. */
+    /** Enum for the @ref e_type property. */
     enum ObjectType {
         ET_NONE         = 0                         /**< No file type */
         ,ET_REL          = 1                        /**< Relocatable file */
@@ -20251,6 +20274,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
 public:
     /** Property: File class.
      *
@@ -20412,7 +20436,7 @@ public:
      *  The new section is placed at file offset zero and the size is initially one byte (calling @ref parse will extend it
      *  as necessary). Setting the initial size of non-parsed sections to a positive value works better when adding
      *  sections to the end-of-file since the sections will all have different starting offsets and therefore @ref
-     *  SgAsmGenericFile::shift_extend will know what order the sections should be in when they are eventually resized. */
+     *  SgAsmGenericFile::shiftExtend will know what order the sections should be in when they are eventually resized. */
     explicit SgAsmElfFileHeader(SgAsmGenericFile*);
 
     /** Maximum page size according to the ABI.
@@ -20435,7 +20459,6 @@ public:
      *  stored in the file, the size of the ELF File Header will be adjusted upward if necessary. */
     virtual SgAsmElfFileHeader *parse() override;
 
-    /** Update prior to unparsing */
     virtual bool reallocate() override;
 
     /** Write ELF contents back to a file. */
@@ -20531,7 +20554,7 @@ private:
         debugSerializationEnd("SgAsmElfEHFrameSection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: CI entries.
      *
@@ -20551,7 +20574,7 @@ public:
 
     /** Return sizes for various parts of the table.
      *
-     *  See documentation for @ref SgAsmElfSection::calculate_sizes. Since EH Frame Sections are run-length encoded, we
+     *  See documentation for @ref SgAsmElfSection::calculateSizes. Since EH Frame Sections are run-length encoded, we
      *  need to actually unparse the section in order to determine its size. */
     virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const override;
 
@@ -20631,7 +20654,7 @@ private:
         debugSerializationEnd("SgAsmElfEHFrameEntryFDList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: List of pointers to error handling frame descriptor entries. 
      * 
@@ -20718,7 +20741,7 @@ private:
         debugSerializationEnd("SgAsmElfEHFrameEntryFD");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Beginning relative virtual address.
      *
@@ -20832,7 +20855,7 @@ private:
         debugSerializationEnd("SgAsmElfEHFrameEntryCIList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: List of pointers to ELF EH frame CI entries. 
      * 
@@ -20991,7 +21014,7 @@ private:
         debugSerializationEnd("SgAsmElfEHFrameEntryCI");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Version number.
      *
@@ -21201,7 +21224,7 @@ private:
         debugSerializationEnd("SgAsmElfDynamicSection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: List of entries.
      *
@@ -21223,10 +21246,9 @@ public:
     virtual void finishParsing() override;
 
     using SgAsmElfSection::calculateSizes;
-    /** Return sizes for various parts of the table. See documentation for @ref SgAsmElfSection::calculate_sizes. */
+    /** Return sizes for various parts of the table. See documentation for @ref SgAsmElfSection::calculateSizes. */
     virtual rose_addr_t calculateSizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const override;
 
-    /** Called prior to unparse to make things consistent. */
     virtual bool reallocate() override;
 
     /** Write the dynamic section back to disk */
@@ -21333,7 +21355,7 @@ private:
         debugSerializationEnd("SgAsmElfSection");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Linked section.
      *
@@ -21367,15 +21389,14 @@ public:
 
     /** Initializes the section from data parsed from the ELF Section Table.
      *
-     *  This includes the section name, offset, size, memory mapping, and alignments. The @p id is the index into the
-     *  section table. This function complements @ref SgAsmElfSectionTable::add_section in that this function initializes
-     *  this section from the section table while @ref SgAsmElfSectionTable::add_section "add_section" initializes the
-     *  section table from the section. */
+     *  This includes the section name, offset, size, memory mapping, and alignments. The @p id is the index into the section
+     *  table. This function complements @ref SgAsmElfSectionTable::addSection in that this function initializes this section from
+     *  the section table while @ref SgAsmElfSectionTable::addSection initializes the section table from the section. */
     SgAsmElfSection *initFromSectionTable(SgAsmElfSectionTableEntry*, SgAsmElfStringSection*, int id);
 
     /** Initializes the section from data parse from the ELF Segment Table.
      *
-     *  This is similar to @ref init_from_section_table but for segments instead of sections. */
+     *  This is similar to @ref initFromSectionTable but for segments instead of sections. */
     SgAsmElfSection *initFromSegmentTable(SgAsmElfSegmentTableEntry*, bool mmapOnly=false);
 
     /** Returns info about the size of the entries based on information already available.
@@ -21421,7 +21442,6 @@ public:
      *  sh_entsize), could be smaller than the total size of the section. */
     virtual rose_addr_t calculateSizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 
-    /** Called prior to unparse to make things consistent. */
     virtual bool reallocate() override;
 
     /** Print some debugging info */
@@ -21432,7 +21452,7 @@ public:
 
     /** Obtain ELF header.
      *
-     *  This is just a convenience function so we don't need to constantly cast the return value from @ref get_header. */
+     *  This is just a convenience function so we don't need to constantly cast the return value from the @ref header property. */
     SgAsmElfFileHeader *get_elfHeader() const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -21514,7 +21534,7 @@ private:
         debugSerializationEnd("SgAsmElfDynamicEntryList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: List of entries. 
      * 
@@ -21713,6 +21733,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
 public:
     /** Property: Tag.
      *
@@ -22386,7 +22407,7 @@ private:
         debugSerializationEnd("SgAsmDwarfUnionType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     SgAsmDwarfConstructList* const& get_body() const;
     void set_body(SgAsmDwarfConstructList* const&);
@@ -22728,7 +22749,7 @@ private:
         debugSerializationEnd("SgAsmDwarfSubroutineType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     SgAsmDwarfConstructList* const& get_body() const;
     void set_body(SgAsmDwarfConstructList* const&);
@@ -22850,7 +22871,7 @@ private:
         debugSerializationEnd("SgAsmDwarfSubprogram");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     SgAsmDwarfConstructList* const& get_body() const;
     void set_body(SgAsmDwarfConstructList* const&);
@@ -22917,7 +22938,7 @@ private:
         debugSerializationEnd("SgAsmDwarfStructureType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     SgAsmDwarfConstructList* const& get_body() const;
     void set_body(SgAsmDwarfConstructList* const&);
@@ -23479,7 +23500,7 @@ private:
         debugSerializationEnd("SgAsmDwarfNamespace");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     SgAsmDwarfConstructList* const& get_body() const;
     void set_body(SgAsmDwarfConstructList* const&);
@@ -23821,7 +23842,7 @@ private:
         debugSerializationEnd("SgAsmDwarfMacroList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     SgAsmDwarfMacroPtrList const& get_macro_list() const;
     void set_macro_list(SgAsmDwarfMacroPtrList const&);
@@ -23881,7 +23902,7 @@ private:
         debugSerializationEnd("SgAsmDwarfMacro");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::string const& get_macro_string() const;
     void set_macro_string(std::string const&);
@@ -23941,7 +23962,7 @@ private:
         debugSerializationEnd("SgAsmDwarfLineList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     SgAsmDwarfLinePtrList const& get_line_list() const;
     SgAsmDwarfLinePtrList& get_line_list();
@@ -24044,7 +24065,7 @@ private:
         debugSerializationEnd("SgAsmDwarfLine");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     uint64_t const& get_address() const;
     void set_address(uint64_t const&);
@@ -24123,7 +24144,7 @@ private:
         debugSerializationEnd("SgAsmDwarfLexicalBlock");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     SgAsmDwarfConstructList* const& get_body() const;
     void set_body(SgAsmDwarfConstructList* const&);
@@ -24300,7 +24321,7 @@ private:
         debugSerializationEnd("SgAsmDwarfInlinedSubroutine");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     SgAsmDwarfConstructList* const& get_body() const;
     void set_body(SgAsmDwarfConstructList* const&);
@@ -24917,7 +24938,7 @@ private:
         debugSerializationEnd("SgAsmDwarfEnumerationType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     SgAsmDwarfConstructList* const& get_body() const;
     void set_body(SgAsmDwarfConstructList* const&);
@@ -25149,7 +25170,7 @@ private:
         debugSerializationEnd("SgAsmDwarfConstructList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     SgAsmDwarfConstructPtrList const& get_list() const;
     SgAsmDwarfConstructPtrList& get_list();
@@ -25320,7 +25341,7 @@ private:
         debugSerializationEnd("SgAsmDwarfCompilationUnitList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     SgAsmDwarfCompilationUnitPtrList const& get_cu_list() const;
     SgAsmDwarfCompilationUnitPtrList& get_cu_list();
@@ -25451,7 +25472,7 @@ private:
         debugSerializationEnd("SgAsmDwarfCompilationUnit");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::string const& get_producer() const;
     void set_producer(std::string const&);
@@ -25613,7 +25634,7 @@ private:
         debugSerializationEnd("SgAsmDwarfCommonBlock");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     SgAsmDwarfConstructList* const& get_body() const;
     void set_body(SgAsmDwarfConstructList* const&);
@@ -25680,7 +25701,7 @@ private:
         debugSerializationEnd("SgAsmDwarfClassType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     SgAsmDwarfConstructList* const& get_body() const;
     void set_body(SgAsmDwarfConstructList* const&);
@@ -25912,7 +25933,7 @@ private:
         debugSerializationEnd("SgAsmDwarfArrayType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     SgAsmDwarfConstructList* const& get_body() const;
     void set_body(SgAsmDwarfConstructList* const&);
@@ -26139,9 +26160,7 @@ private:
         debugSerializationEnd("SgAsmDwarfConstruct");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-    // AsmDwarfConstruct.setFunctionPrototype("HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
-    // AsmDwarfConstruct.setFunctionSource("SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
-
+public:
     // For now we will store the nesting level (just to support debugging), then it will be removed.
 public:
     int const& get_nesting_level() const;
@@ -26459,6 +26478,7 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+public:
     /** Property: Last page size.
      *
      *  See DOS specification. 
@@ -26636,7 +26656,7 @@ public:
      *
      *  The DOS real-mode data+text section is assumed to appear immediately after the DOS Extended Header, which appears
      *  immediately after the DOS File Header, which appears at the beginning of the file. These assumptions are not checked until
-     *  SgAsmDOSFileHeader::unparse() is called. See also, @ref parse_rm_section. */
+     *  SgAsmDOSFileHeader::unparse() is called. See also, @ref parseRealModeSection. */
     void updateFromRealModeSection();
 
     /** Returns true if a cursory look at the file indicates that it could be a DOS executable file. */
@@ -26774,7 +26794,7 @@ private:
         debugSerializationEnd("SgAsmGenericHeader");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: General info about the executable format. 
      * 
@@ -26842,7 +26862,6 @@ public:
      *  the destructors. */
     explicit SgAsmGenericHeader(SgAsmGenericFile*);
 
-    /** Allow all sections to reallocate themselves */
     virtual bool reallocate() override;
 
     /** Unparse headers and all they point to */
@@ -27110,6 +27129,7 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+public:
     /** Property: Rerserved area 1.
      *
      *  See PE specification. 
@@ -27338,7 +27358,7 @@ private:
         debugSerializationEnd("SgAsmRegisterReferenceExpression");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Descriptor for accessed register. 
      * 
@@ -27421,7 +27441,7 @@ private:
         debugSerializationEnd("SgAsmControlFlagsExpression");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     unsigned long const& get_bitFlags() const;
     void set_bitFlags(unsigned long const&);
@@ -27506,7 +27526,7 @@ private:
         debugSerializationEnd("SgAsmConstantExpression");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Bits for constant.
      *
@@ -27613,7 +27633,7 @@ private:
         debugSerializationEnd("SgAsmValueExpression");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Alternate expression without constant folding.
      *
@@ -27730,7 +27750,7 @@ private:
         debugSerializationEnd("SgAsmCommonSubExpression");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     SgAsmExpression* const& get_subexpression() const;
     void set_subexpression(SgAsmExpression* const&);
@@ -27800,7 +27820,7 @@ private:
         debugSerializationEnd("SgAsmCoffSymbolTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: String table.
      *
@@ -27880,7 +27900,7 @@ private:
         debugSerializationEnd("SgAsmCoffSymbolList");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: List of symbol pointers. 
      * 
@@ -28021,6 +28041,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties and data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
 public:
     /** Property: Symbol name. 
      * 
@@ -28246,6 +28267,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
 public:
     /** Property: Definition state. 
      * 
@@ -28483,6 +28505,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
 public:
     /** Property: Section storing this string table. 
      * 
@@ -28728,7 +28751,7 @@ private:
         debugSerializationEnd("SgAsmCliHeader");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Cb
      *
@@ -29110,6 +29133,7 @@ public:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+public:
     /** Property: File to which this section belongs. 
      * 
      * @{ */
@@ -29130,10 +29154,10 @@ public:
      *
      *  This is the current file size of the section in bytes as it exists in the file.. The original size of the
      *  section (available when @ref parse is called for the function, but possibly updated while parsing) is available
-     *  through the size of the original @ref p_data "data" property.
+     *  through the size of the original @ref data property.
      *
      *  When ths size is set, some types of sections may do additional work. That additional work must not adjust the size
-     *  of other sections or the mapping of any section (use @ref SgAsmGenericFile::resize to do that).
+     *  of other sections or the mapping of any section (use @ref SgAsmGenericFile::shiftExtend to do that).
      *
      *  @{ */
     rose_addr_t get_size() const;
@@ -29293,15 +29317,15 @@ public:
 public:
     /** Property: Virtual address where ROSE maps this section.
      *
-     *  The actual mapping is sometimes different than the preferred mapping indicated in the section table due to file
-     *  and/or memory alignment constraints or conflicts with other sections.  The only place values are assigned to this
-     *  data member is in the @ref BinaryLoader class and subclasses thereof.
+     *  The actual mapping is sometimes different than the preferred mapping indicated in the section table due to file and/or
+     *  memory alignment constraints or conflicts with other sections.  The only place values are assigned to this data member is in
+     *  the @ref Rose::BinaryAnalysis::BinaryLoader class and subclasses thereof.
      *
-     *  The address corresponds to the latest call into the @ref BinaryLoader classes.  Depending on the loader employed,
-     *  it's possible for a section to be mapped, this @c mapped_actual_va value to be set, and then some other section to
-     *  be mapped over the top of all or part of the first section. In that case, the @c mapped_actual_va of the first
-     *  section is not reset to zero.  The return value is not conditional upon @ref is_mapped since that predicate applies
-     *  only to preferred mapping attributes. 
+     *  The address corresponds to the latest call into the @ref Rose::BinaryAnalysis::BinaryLoader classes.  Depending on the
+     *  loader employed, it's possible for a section to be mapped, this @c mapped_actual_va value to be set, and then some other
+     *  section to be mapped over the top of all or part of the first section. In that case, the @c mapped_actual_va of the first
+     *  section is not reset to zero.  The return value is not conditional upon @ref isMapped since that predicate applies only to
+     *  preferred mapping attributes. 
      *  
      *  @{ */
     rose_addr_t const& get_mappedActualVa() const;
@@ -29314,7 +29338,7 @@ private:
     /* This is an optional local, writable pool for the p_data member. Normally a section will point into the pool
      * for its SgAsmGenericFile which is memory-mapped (read-only) from the actual file being parsed. The default
      * unparsing action is to write the original data back to the file. By allowing a section to allocate its own
-     * pool for p_data we create a very easy way to get data into the unparsed file (the alternative is to derive
+     * pool for `data` we create a very easy way to get data into the unparsed file (the alternative is to derive
      * a new class and override the unparse() method). */
     unsigned char *local_data_pool;
 
@@ -29339,12 +29363,15 @@ public:
      *  be extended, however, by calling @ref extend, which is typically done during parsing. */
     void grabContent();
 
+    /** Parse contents of the section.
+     *
+     *  This is normally reimplemented in subclasses. */
     virtual SgAsmGenericSection* parse();
 
     /** Print some debugging info. */
     virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 
-    // Implemented in subclasses
+    /** Called prior to unparse to make things consistent. */
     virtual bool reallocate() { return false; }
 
     /** Write a section back to the file.
@@ -29369,25 +29396,23 @@ public:
 
     /** Extend a section by some number of bytes during the construction and/or parsing phase.
      *
-     *  This is function is considered to be part of the parsing and construction of a section--it changes the part of the
-     *  file that's considered the "original size" of the section. To adjust the size of a section after the executable
-     *  file is parsed, see @ref SgAsmGenericFile::resize.  Sections are allowed to extend beyond the end of the file and
-     *  the original data (the @ref get_data "data" property) is extended only up to the end of the file. */
+     *  This is function is considered to be part of the parsing and construction of a section--it changes the part of the file
+     *  that's considered the "original size" of the section. To adjust the size of a section after the executable file is parsed,
+     *  see @ref SgAsmGenericFile::shiftExtend.  Sections are allowed to extend beyond the end of the file and the original data
+     *  (the @ref data property) is extended only up to the end of the file. */
     void extend(rose_addr_t nbytes);
 
     /** Write data to a file section.
      *
-     *  @param f       Output steam to which to write
-     *  @param offset  Byte offset relative to start of this section
-     *  @param bufsize Size of @p buf in bytes
-     *  @param buf     Buffer of bytes to be written
+     *  Writes data to the specified file at the specified offset (first two arguments). The remaining arguments specify the
+     *  data to be written.
      *
-     *  @returns Returns the section-relative byte offset for the first byte beyond what would have been written if all
-     *  bytes of the buffer were written.
+     *  Returns the section-relative byte offset for the first byte beyond what would have been written if all bytes of the buffer
+     *  were written.
      *
-     *  The buffer is allowed to extend past the end of the section as long as the part that extends beyond is all
-     *  zeros. The zeros will not be written to the output file.  Furthermore, any trailing zeros that extend beyond the
-     *  end of the file will not be written (end-of-file is determined by @ref SgAsmGenericFile::get_orig_size).
+     *  The buffer is allowed to extend past the end of the section as long as the part that extends beyond is all zeros. The zeros
+     *  will not be written to the output file.  Furthermore, any trailing zeros that extend beyond the end of the file will not be
+     *  written (end-of-file is determined by @ref SgAsmGenericFile::get_originalSize).
      *
      * @{ */
     rose_addr_t   write(std::ostream &f, rose_addr_t offset, size_t bufsize, const void *buf) const;
@@ -29418,13 +29443,13 @@ public:
 
     /** Reads data from a file.
      *
-     *  Reads up to @p size bytes of data beginning at byte @p start (absolute or relative virtual address) in the mapped
-     *  address space and placing the results in @p dst_buf and returning the number of bytes read. The return value could
-     *  be smaller than @p size if the reading encounters virtual addresses that are not mapped.  When an unmapped virtual
-     *  address is encountered the reading stops (even if subsequent virtual addresses are defined) and one of two things
-     *  happen: if @p strict is set (the default) then an @ref MemoryMap::NotMapped exception is thrown, otherwise the @p
-     *  dst_buf is padded with zeros so that all @p size bytes are initialized. The @p map is used to map virtual addresses
-     *  to file offsets; if @p map is NULL then the map defined in the underlying file is used.
+     *  Reads up to @p size bytes of data beginning at byte @p start (absolute or relative virtual address) in the mapped address
+     *  space and placing the results in @p dst_buf and returning the number of bytes read. The return value could be smaller than
+     *  @p size if the reading encounters virtual addresses that are not mapped.  When an unmapped virtual address is encountered
+     *  the reading stops (even if subsequent virtual addresses are defined) and one of two things happen: if @p strict is set (the
+     *  default) then an @ref Rose::BinaryAnalysis::MemoryMap::NotMapped exception is thrown, otherwise the @p dst_buf is padded
+     *  with zeros so that all @p size bytes are initialized. The @p map is used to map virtual addresses to file offsets; if @p map
+     *  is NULL then the map defined in the underlying file is used.
      *
      * @{ */
     size_t readContent(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t start,  void *dst_buf,
@@ -29435,18 +29460,18 @@ public:
 
     /** Reads data from a file.
      *
-     *  This behaves the same as @ref read_content except the starting offset is relative to the beginning of this section.
-     *  Reading past the end of the section is not allowed and treated as a short read, and one of two things happen: if @p
-     *  strict is set (the default) then an @ref SgAsmExecutableFileFormat::ShortRead exception is thrown, otherwise the
-     *  result is zero padded so as to contain exactly @p size bytes. */
+     *  This behaves the same as @ref readContent except the starting offset is relative to the beginning of this section.  Reading
+     *  past the end of the section is not allowed and treated as a short read, and one of two things happen: if @p strict is set
+     *  (the default) then an @ref SgAsmExecutableFileFormat::ShortRead exception is thrown, otherwise the result is zero padded so
+     *  as to contain exactly @p size bytes. */
     size_t readContentLocal(rose_addr_t rel_offset, void *dst_buf, rose_addr_t size, bool strict=true);
 
     /** Reads a string from the file.
      *
-     *  The string begins at the specified virtual address and continues until the first NUL byte or until we reach an
-     *  address that is not mapped. However, if @p strict is set (the default) and we reach an unmapped address then an
-     *  @ref MemoryMap::NotMapped exception is thrown. The @p map defines the mapping from virtual addresses to file
-     *  offsets; if @p map is NULL then the map defined in the underlying file is used. */
+     *  The string begins at the specified virtual address and continues until the first NUL byte or until we reach an address that
+     *  is not mapped. However, if @p strict is set (the default) and we reach an unmapped address then an @ref
+     *  Rose::BinaryAnalysis::MemoryMap::NotMapped exception is thrown. The @p map defines the mapping from virtual addresses to
+     *  file offsets; if @p map is NULL then the map defined in the underlying file is used. */
     std::string readContentString(const Rose::BinaryAnalysis::MemoryMap::Ptr&, rose_addr_t va, bool strict=true);
 
     /** Reads a string from the file.
@@ -29489,26 +29514,25 @@ public:
 
     /** Obtain a local, writable pool to hold content.
      *
-     *  Sections typically point into the memory mapped, read-only file stored in the SgAsmGenericFile parent initialized
-     *  by calling @ref grab_content (or indirectly by calling @ref parse).  This is also the same data which is, by
-     *  default, written back out to the new file during @ref unparse.  Programs modify section content by either
-     *  overriding the @ref unparse method or by modifying the @ref p_data "data" property. But in order to modify @ref
-     *  p_data "data" we have to make sure that it's pointing to a read/write memory pool. This function replaces the
-     *  read-only memory pool with a new one containing @p nbytes bytes of zeros. */
+     *  Sections typically point into the memory mapped, read-only file stored in the SgAsmGenericFile parent initialized by calling
+     *  @ref grabContent (or indirectly by calling @ref parse).  This is also the same data which is, by default, written back out
+     *  to the new file during @ref unparse.  Programs modify section content by either overriding the @ref unparse method or by
+     *  modifying the @ref data property. But in order to modify @ref data we have to make sure that it's pointing to a read/write
+     *  memory pool. This function replaces the read-only memory pool with a new one containing @p nbytes bytes of zeros. */
     unsigned char *writableContent(size_t nbytes);
 
     /** Returns a list of parts of a single section that have been referenced.
      *
-     *  The offsets are relative to the start of the section. The tracking actually happens at the entire file level (see
-     *  @ref SgAsmGenericFile::get_referenced_extents) and this function returns that same information but limits the
-     *  results to this section, and returns section offsets rather than file offsets. */
+     *  The offsets are relative to the start of the section. The tracking actually happens at the entire file level (see the @ref
+     *  SgAsmGenericFile::referencedExtents property) and this function returns that same information but limits the results to this
+     *  section, and returns section offsets rather than file offsets. */
     AddressIntervalSet get_referencedExtents() const;
 
     /** Returns a list of parts of a single section that have not been referenced.
      *
-     *  The offsets are relative to the start of the section. The tracking actually happens at the entire file level
-     *  (see @ref SgAsmGenericFile::get_unreferenced_extents) and this function returns that same information but
-     *  limits the results to this section, and returns section offsets rather than file offsets. */
+     *  The offsets are relative to the start of the section. The tracking actually happens at the entire file level (see @ref
+     *  SgAsmGenericFile::get_unreferencedExtents) and this function returns that same information but limits the results to this
+     *  section, and returns section offsets rather than file offsets. */
     AddressIntervalSet get_unreferencedExtents() const;
 
     /** Whether section desires to be mapped to memory.
@@ -29529,20 +29553,19 @@ public:
 
     /** Virtual address where section prefers to be mapped.
      *
-     *  Returns (non-relative) virtual address if mapped, zero otherwise. See also, the @ref get_mapped_preferred_rva
-     *  "mapped_preferred_rva" property. */
+     *  Returns (non-relative) virtual address if mapped, zero otherwise. See also, the @ref mappedPreferredRva property. */
     rose_addr_t get_mappedPreferredVa() const;
 
     /** File offset for specified virtual address.
      *
-     *  Returns the file offset associated with the virtual address of a mapped section. The @ref MemoryMap class is a
-     *  better interface to this same information. */
+     *  Returns the file offset associated with the virtual address of a mapped section. The @ref Rose::BinaryAnalysis::MemoryMap
+     *  class is a better interface to this same information. */
     rose_addr_t get_vaOffset(rose_addr_t va) const;
 
     /** File offset for specified relative virtual address.
      *
-     *  Returns the file offset associated with the relative virtual address of a mapped section.  The @ref MemoryMap class
-     *  is a better interface to this same information. */
+     *  Returns the file offset associated with the relative virtual address of a mapped section.  The @ref
+     *  Rose::BinaryAnalysis::MemoryMap class is a better interface to this same information. */
     rose_addr_t get_rvaOffset(rose_addr_t rva) const;
 
     /** Returns the file extent for the section.
@@ -29553,20 +29576,20 @@ public:
     /** Returns the memory extent for a mapped section.
      *
      *  If the section is not mapped then offset and size will be zero. The return value is computed from the @ref
-     *  get_mapped_preferred_rva "mapped_preferred_rva" and @ref get_mapped_size "mapped_size" properties. */
+     *  mappedPreferredRva and @ref mappedSize properties. */
     Extent get_mappedPreferredExtent() const;
 
     /** Increase file offset and mapping address to satisfy alignment constraints.
      *
-     *  This is typically done when initializing a new section. The constructor places the new section at the end of the
-     *  file before it knows what the alignment constraints will be. The user should then set the alignment constraints
-     *  (see @ref set_file_alignment "file_alignment" and @ref set_mapped_alignment "mapped_alignment" properties) and call
-     *  this method.  This method must be called before any additional sections are appended to the file.
+     *  This is typically done when initializing a new section. The constructor places the new section at the end of the file before
+     *  it knows what the alignment constraints will be. The user should then set the alignment constraints (see @ref fileAlignment
+     *  and @ref mappedAlignment properties) and call this method.  This method must be called before any additional sections are
+     *  appended to the file.
      *
      *  The file offset and memory mapping address are adjusted independently.
      *
      *  On the other hand, if additional sections are in the way, they must first be moved out of the way with the
-     *  @ref SgAsmGenericFile::shift_extend method.
+     *  @ref SgAsmGenericFile::shiftExtend method.
      *
      *  Returns true if the file offset and/or mapping address changed as a result of this call. */
     bool align();
@@ -29688,7 +29711,7 @@ private:
         debugSerializationEnd("SgAsmCilUint8Heap");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<uint8_t> const& get_Stream() const;
     std::vector<uint8_t>& get_Stream();
@@ -29757,7 +29780,7 @@ private:
         debugSerializationEnd("SgAsmCilUint32Heap");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<uint32_t> const& get_Stream() const;
     std::vector<uint32_t>& get_Stream();
@@ -29826,7 +29849,7 @@ private:
         debugSerializationEnd("SgAsmCilTypeSpecTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilTypeSpec*> const& get_elements() const;
     std::vector<SgAsmCilTypeSpec*>& get_elements();
@@ -29888,7 +29911,7 @@ private:
         debugSerializationEnd("SgAsmCilTypeSpec");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Signature.
      *
@@ -29958,7 +29981,7 @@ private:
         debugSerializationEnd("SgAsmCilTypeRefTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilTypeRef*> const& get_elements() const;
     std::vector<SgAsmCilTypeRef*>& get_elements();
@@ -30034,7 +30057,7 @@ private:
         debugSerializationEnd("SgAsmCilTypeRef");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: ResolutionScope.
      *
@@ -30126,7 +30149,7 @@ private:
         debugSerializationEnd("SgAsmCilTypeDefTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilTypeDef*> const& get_elements() const;
     std::vector<SgAsmCilTypeDef*>& get_elements();
@@ -30223,7 +30246,7 @@ private:
         debugSerializationEnd("SgAsmCilTypeDef");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Flags.
      *
@@ -30348,7 +30371,7 @@ private:
         debugSerializationEnd("SgAsmCilStandAloneSigTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilStandAloneSig*> const& get_elements() const;
     std::vector<SgAsmCilStandAloneSig*>& get_elements();
@@ -30410,7 +30433,7 @@ private:
         debugSerializationEnd("SgAsmCilStandAloneSig");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Signature.
      *
@@ -30480,7 +30503,7 @@ private:
         debugSerializationEnd("SgAsmCilPropertyTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilProperty*> const& get_elements() const;
     std::vector<SgAsmCilProperty*>& get_elements();
@@ -30542,7 +30565,7 @@ private:
         debugSerializationEnd("SgAsmCilPropertyMapTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilPropertyMap*> const& get_elements() const;
     std::vector<SgAsmCilPropertyMap*>& get_elements();
@@ -30611,7 +30634,7 @@ private:
         debugSerializationEnd("SgAsmCilPropertyMap");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Parent.
      *
@@ -30706,7 +30729,7 @@ private:
         debugSerializationEnd("SgAsmCilProperty");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Flags.
      *
@@ -30797,7 +30820,7 @@ private:
         debugSerializationEnd("SgAsmCilParamTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilParam*> const& get_elements() const;
     std::vector<SgAsmCilParam*>& get_elements();
@@ -30873,7 +30896,7 @@ private:
         debugSerializationEnd("SgAsmCilParam");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Flags.
      *
@@ -30963,7 +30986,7 @@ private:
         debugSerializationEnd("SgAsmCilNestedClassTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilNestedClass*> const& get_elements() const;
     std::vector<SgAsmCilNestedClass*>& get_elements();
@@ -31032,7 +31055,7 @@ private:
         debugSerializationEnd("SgAsmCilNestedClass");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: NestedClass.
      *
@@ -31113,7 +31136,7 @@ private:
         debugSerializationEnd("SgAsmCilModuleTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilModule*> const& get_elements() const;
     std::vector<SgAsmCilModule*>& get_elements();
@@ -31175,7 +31198,7 @@ private:
         debugSerializationEnd("SgAsmCilModuleRefTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilModuleRef*> const& get_elements() const;
     std::vector<SgAsmCilModuleRef*>& get_elements();
@@ -31237,7 +31260,7 @@ private:
         debugSerializationEnd("SgAsmCilModuleRef");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Name.
      *
@@ -31335,7 +31358,7 @@ private:
         debugSerializationEnd("SgAsmCilModule");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Generation.
      *
@@ -31448,7 +31471,7 @@ private:
         debugSerializationEnd("SgAsmCilMethodSpecTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilMethodSpec*> const& get_elements() const;
     std::vector<SgAsmCilMethodSpec*>& get_elements();
@@ -31517,7 +31540,7 @@ private:
         debugSerializationEnd("SgAsmCilMethodSpec");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Method.
      *
@@ -31598,7 +31621,7 @@ private:
         debugSerializationEnd("SgAsmCilMethodSemanticsTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilMethodSemantics*> const& get_elements() const;
     std::vector<SgAsmCilMethodSemantics*>& get_elements();
@@ -31674,7 +31697,7 @@ private:
         debugSerializationEnd("SgAsmCilMethodSemantics");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Semantics.
      *
@@ -31765,7 +31788,7 @@ private:
         debugSerializationEnd("SgAsmCilMethodImplTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilMethodImpl*> const& get_elements() const;
     std::vector<SgAsmCilMethodImpl*>& get_elements();
@@ -31841,7 +31864,7 @@ private:
         debugSerializationEnd("SgAsmCilMethodImpl");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Class.
      *
@@ -31933,7 +31956,7 @@ private:
         debugSerializationEnd("SgAsmCilMethodDefTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilMethodDef*> const& get_elements() const;
     std::vector<SgAsmCilMethodDef*>& get_elements();
@@ -32058,7 +32081,7 @@ private:
         debugSerializationEnd("SgAsmCilMethodDef");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: RVA.
      *
@@ -32283,7 +32306,7 @@ private:
         debugSerializationEnd("SgAsmCilMetadataRoot");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Magic signature for physical metadata (always 0x424A5342) 
      * 
@@ -32778,7 +32801,7 @@ private:
         debugSerializationEnd("SgAsmCilMetadataHeap");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: 4 reserved bytes. 
      * 
@@ -33236,18 +33259,18 @@ public:
     /** parses the metadata objects from the buffer. */
     void parse(std::vector<uint8_t>& buf, size_t startOfMetaData) override;
 
-    /** looks up the node associated with the coded index @ref idx in the metadata table
-     *  associated with @ref tblcode.
+    /** looks up the node associated with the coded index @p idx in the metadata table
+     *  associated with @p tblcode.
      */
     SgAsmCilMetadata* get_MetadataNode(std::uint32_t idx, TableKind tblcode) const;
 
-    /** looks up the node associated with the coded index @ref refcode in the metadata tables
-     *  under the assumption that @refval is of kind @ref knd
+    /** looks up the node associated with the coded index @p refcode in the metadata tables
+     *  under the assumption that @p refcode is of kind @p knd
      */
     SgAsmCilMetadata* get_CodedMetadataNode(std::uint32_t refcode, ReferenceKind knd) const;
 
-    /** looks up the node associated with the coded index @ref refcode in the metadata tables
-     *  under the assumption that @refval is of kind @ref knd
+    /** looks up the node associated with the coded index @p refcode in the metadata tables
+     *  under the assumption that @p refcode is of kind @p knd
      */
     SgAsmCilMetadata* get_MetadataNode(std::uint32_t refcode, ReferenceKind knd) const;
 public:
@@ -33313,7 +33336,7 @@ private:
         debugSerializationEnd("SgAsmCilMemberRefTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilMemberRef*> const& get_elements() const;
     std::vector<SgAsmCilMemberRef*>& get_elements();
@@ -33389,7 +33412,7 @@ private:
         debugSerializationEnd("SgAsmCilMemberRef");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Class.
      *
@@ -33481,7 +33504,7 @@ private:
         debugSerializationEnd("SgAsmCilManifestResourceTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilManifestResource*> const& get_elements() const;
     std::vector<SgAsmCilManifestResource*>& get_elements();
@@ -33564,7 +33587,7 @@ private:
         debugSerializationEnd("SgAsmCilManifestResource");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Offset.
      *
@@ -33665,7 +33688,7 @@ private:
         debugSerializationEnd("SgAsmCilInterfaceImplTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilInterfaceImpl*> const& get_elements() const;
     std::vector<SgAsmCilInterfaceImpl*>& get_elements();
@@ -33734,7 +33757,7 @@ private:
         debugSerializationEnd("SgAsmCilInterfaceImpl");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Class.
      *
@@ -33819,7 +33842,7 @@ private:
         debugSerializationEnd("SgAsmCilInstruction");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Instruction kind.
      *
@@ -33896,7 +33919,7 @@ private:
         debugSerializationEnd("SgAsmCilImplMapTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilImplMap*> const& get_elements() const;
     std::vector<SgAsmCilImplMap*>& get_elements();
@@ -33979,7 +34002,7 @@ private:
         debugSerializationEnd("SgAsmCilImplMap");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: MappingFlags.
      *
@@ -34081,7 +34104,7 @@ private:
         debugSerializationEnd("SgAsmCilGenericParamTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilGenericParam*> const& get_elements() const;
     std::vector<SgAsmCilGenericParam*>& get_elements();
@@ -34164,7 +34187,7 @@ private:
         debugSerializationEnd("SgAsmCilGenericParam");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Number.
      *
@@ -34265,7 +34288,7 @@ private:
         debugSerializationEnd("SgAsmCilGenericParamConstraintTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilGenericParamConstraint*> const& get_elements() const;
     std::vector<SgAsmCilGenericParamConstraint*>& get_elements();
@@ -34334,7 +34357,7 @@ private:
         debugSerializationEnd("SgAsmCilGenericParamConstraint");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Owner.
      *
@@ -34415,7 +34438,7 @@ private:
         debugSerializationEnd("SgAsmCilFileTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilFile*> const& get_elements() const;
     std::vector<SgAsmCilFile*>& get_elements();
@@ -34491,7 +34514,7 @@ private:
         debugSerializationEnd("SgAsmCilFile");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Flags.
      *
@@ -34582,7 +34605,7 @@ private:
         debugSerializationEnd("SgAsmCilFieldTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilField*> const& get_elements() const;
     std::vector<SgAsmCilField*>& get_elements();
@@ -34644,7 +34667,7 @@ private:
         debugSerializationEnd("SgAsmCilFieldRVATable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilFieldRVA*> const& get_elements() const;
     std::vector<SgAsmCilFieldRVA*>& get_elements();
@@ -34713,7 +34736,7 @@ private:
         debugSerializationEnd("SgAsmCilFieldRVA");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: RVA.
      *
@@ -34793,7 +34816,7 @@ private:
         debugSerializationEnd("SgAsmCilFieldMarshalTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilFieldMarshal*> const& get_elements() const;
     std::vector<SgAsmCilFieldMarshal*>& get_elements();
@@ -34862,7 +34885,7 @@ private:
         debugSerializationEnd("SgAsmCilFieldMarshal");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Parent.
      *
@@ -34943,7 +34966,7 @@ private:
         debugSerializationEnd("SgAsmCilFieldLayoutTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilFieldLayout*> const& get_elements() const;
     std::vector<SgAsmCilFieldLayout*>& get_elements();
@@ -35012,7 +35035,7 @@ private:
         debugSerializationEnd("SgAsmCilFieldLayout");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Offset.
      *
@@ -35106,7 +35129,7 @@ private:
         debugSerializationEnd("SgAsmCilField");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Flags.
      *
@@ -35197,7 +35220,7 @@ private:
         debugSerializationEnd("SgAsmCilExportedTypeTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilExportedType*> const& get_elements() const;
     std::vector<SgAsmCilExportedType*>& get_elements();
@@ -35287,7 +35310,7 @@ private:
         debugSerializationEnd("SgAsmCilExportedType");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: EventFlags.
      *
@@ -35399,7 +35422,7 @@ private:
         debugSerializationEnd("SgAsmCilEventTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilEvent*> const& get_elements() const;
     std::vector<SgAsmCilEvent*>& get_elements();
@@ -35461,7 +35484,7 @@ private:
         debugSerializationEnd("SgAsmCilEventMapTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilEventMap*> const& get_elements() const;
     std::vector<SgAsmCilEventMap*>& get_elements();
@@ -35530,7 +35553,7 @@ private:
         debugSerializationEnd("SgAsmCilEventMap");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Parent.
      *
@@ -35625,7 +35648,7 @@ private:
         debugSerializationEnd("SgAsmCilEvent");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: EventFlags.
      *
@@ -35716,7 +35739,7 @@ private:
         debugSerializationEnd("SgAsmCilDeclSecurityTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilDeclSecurity*> const& get_elements() const;
     std::vector<SgAsmCilDeclSecurity*>& get_elements();
@@ -35792,7 +35815,7 @@ private:
         debugSerializationEnd("SgAsmCilDeclSecurity");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Action.
      *
@@ -35919,7 +35942,7 @@ private:
         debugSerializationEnd("SgAsmCilDataStream");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Start offset of the byte stream. 
      * 
@@ -36036,7 +36059,7 @@ private:
         debugSerializationEnd("SgAsmCilCustomAttributeTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilCustomAttribute*> const& get_elements() const;
     std::vector<SgAsmCilCustomAttribute*>& get_elements();
@@ -36112,7 +36135,7 @@ private:
         debugSerializationEnd("SgAsmCilCustomAttribute");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Parent.
      *
@@ -36204,7 +36227,7 @@ private:
         debugSerializationEnd("SgAsmCilConstantTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilConstant*> const& get_elements() const;
     std::vector<SgAsmCilConstant*>& get_elements();
@@ -36287,7 +36310,7 @@ private:
         debugSerializationEnd("SgAsmCilConstant");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Type.
      *
@@ -36388,7 +36411,7 @@ private:
         debugSerializationEnd("SgAsmCilClassLayoutTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilClassLayout*> const& get_elements() const;
     std::vector<SgAsmCilClassLayout*>& get_elements();
@@ -36464,7 +36487,7 @@ private:
         debugSerializationEnd("SgAsmCilClassLayout");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: PackingSize.
      *
@@ -36554,7 +36577,7 @@ private:
         debugSerializationEnd("SgAsmCilAssemblyTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilAssembly*> const& get_elements() const;
     std::vector<SgAsmCilAssembly*>& get_elements();
@@ -36616,7 +36639,7 @@ private:
         debugSerializationEnd("SgAsmCilAssemblyRefTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilAssemblyRef*> const& get_elements() const;
     std::vector<SgAsmCilAssemblyRef*>& get_elements();
@@ -36678,7 +36701,7 @@ private:
         debugSerializationEnd("SgAsmCilAssemblyRefProcessorTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilAssemblyRefProcessor*> const& get_elements() const;
     std::vector<SgAsmCilAssemblyRefProcessor*>& get_elements();
@@ -36747,7 +36770,7 @@ private:
         debugSerializationEnd("SgAsmCilAssemblyRefProcessor");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Processor.
      *
@@ -36827,7 +36850,7 @@ private:
         debugSerializationEnd("SgAsmCilAssemblyRefOSTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilAssemblyRefOS*> const& get_elements() const;
     std::vector<SgAsmCilAssemblyRefOS*>& get_elements();
@@ -36910,7 +36933,7 @@ private:
         debugSerializationEnd("SgAsmCilAssemblyRefOS");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: OSPlatformID.
      *
@@ -37066,7 +37089,7 @@ private:
         debugSerializationEnd("SgAsmCilAssemblyRef");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: MajorVersion.
      *
@@ -37219,7 +37242,7 @@ private:
         debugSerializationEnd("SgAsmCilAssemblyProcessorTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilAssemblyProcessor*> const& get_elements() const;
     std::vector<SgAsmCilAssemblyProcessor*>& get_elements();
@@ -37281,7 +37304,7 @@ private:
         debugSerializationEnd("SgAsmCilAssemblyProcessor");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Processor.
      *
@@ -37349,7 +37372,7 @@ private:
         debugSerializationEnd("SgAsmCilAssemblyOSTable");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     std::vector<SgAsmCilAssemblyOS*> const& get_elements() const;
     std::vector<SgAsmCilAssemblyOS*>& get_elements();
@@ -37425,7 +37448,7 @@ private:
         debugSerializationEnd("SgAsmCilAssemblyOS");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: OSPlatformID.
      *
@@ -37569,7 +37592,7 @@ private:
         debugSerializationEnd("SgAsmCilAssembly");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: HashAlgId.
      *
@@ -37923,7 +37946,7 @@ private:
         debugSerializationEnd("SgAsmByteOrder");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 private:
     Rose::BinaryAnalysis::ByteOrder::Endianness byteOrder_;
 
@@ -38106,6 +38129,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
 
     // FIXME[Robb Matzke 2023-03-18]: is the no_serialize a bug?
 public:
@@ -39137,7 +39161,7 @@ private:
         debugSerializationEnd("SgAsmBinaryExpression");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Left-hand side operand. 
      * 
@@ -39218,7 +39242,7 @@ private:
         debugSerializationEnd("SgAsmBasicString");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     virtual std::string get_string(bool escape=false) const override;
     virtual void set_string(const std::string&) override;
@@ -39725,14 +39749,14 @@ public:
 
     /** Dump debugging information into a named text file.
      *
-     *  Writes a new file from the IR node for a parsed executable file. Warning: This function might modify the AST by
-     *  calling @ref reallocate, which makes sure all parts of the AST are consistent with respect to each other. */
+     *  Writes a new file from the IR node for a parsed executable file. Warning: This function might modify the AST by calling @ref
+     *  SgAsmGenericSection::reallocate, which makes sure all parts of the AST are consistent with respect to each other. */
     static void unparseBinaryFormat(const std::string &name, SgAsmGenericFile*);
 
     /** Dump debugging information to specified stream.
      *
-     *  Unparses an executable file into the supplied output stream. Warning: This function might modify the AST by calling
-     *  reallocate(), which makes sure all parts of the AST are consistent with respect to each other. */
+     *  Unparses an executable file into the supplied output stream. Warning: This function might modify the AST by calling @ref
+     *  SgAsmGenericSection::reallocate, which makes sure all parts of the AST are consistent with respect to each other. */
     static void unparseBinaryFormat(std::ostream&, SgAsmGenericFile*);
 
     /** Diagnostic stream. */
@@ -39740,7 +39764,7 @@ public:
 
     /** Initialize diagnostic streams.
      *
-     *  This is called automatically by @ref Rose::initializeLibrary. */
+     *  This is called automatically by @ref Rose::initialize. */
     static void initDiagnostics();
 
     /** Display binary data.
@@ -39850,7 +39874,7 @@ private:
         debugSerializationEnd("SgAsmAarch64SysMoveOperand");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 private:
     unsigned access_;
 
@@ -39928,7 +39952,7 @@ private:
         debugSerializationEnd("SgAsmAarch64PrefetchOperand");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 private:
     Rose::BinaryAnalysis::Aarch64PrefetchOperation operation_;
 
@@ -40024,7 +40048,7 @@ private:
         debugSerializationEnd("SgAsmAarch64Instruction");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Instruction kind.
      *
@@ -40120,7 +40144,7 @@ private:
         debugSerializationEnd("SgAsmAarch64CImmediateOperand");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 private:
     unsigned immediate_;
 
@@ -40198,7 +40222,7 @@ private:
         debugSerializationEnd("SgAsmAarch64BarrierOperand");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 private:
     Rose::BinaryAnalysis::Aarch64BarrierOperation operation_;
 
@@ -40274,7 +40298,7 @@ private:
         debugSerializationEnd("SgAsmAarch64AtOperand");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 private:
     Rose::BinaryAnalysis::Aarch64AtOperation operation_;
 
@@ -40623,6 +40647,7 @@ private:
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+public:
     /** Property: Architecture name.
      *
      *  The name of the architecture to which this instruction belongs. 
@@ -40634,10 +40659,10 @@ public:
 public:
     /** Property: Instruction mnemonic string.
      *
-     *  The short string that describes the instruction. When comparing instructions, it's faster to use the @ref get_kind
-     *  or @ref get_anyKind methods instead of comparing mnemonic strings. But be aware that some architectures have
-     *  mnemonics that include information about the instruction operands and this information is typically not represented
-     *  by the instruction kind enum constants. 
+     *  The short string that describes the instruction. When comparing instructions, it's faster to use the @c kind property
+     *  defined in the subclasses, or the @ref SgAsmInstruction::get_anyKind function instead of comparing mnemonic strings. But be
+     *  aware that some architectures have mnemonics that include information about the instruction operands and this information is
+     *  typically not represented by the instruction kind enum constants. 
      *  
      *  @{ */
     std::string const& get_mnemonic() const;
@@ -41115,7 +41140,7 @@ private:
         debugSerializationEnd("SgAsmStatement");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Starting virtual address.
      *
@@ -41188,7 +41213,7 @@ private:
         debugSerializationEnd("SgAsmAarch32Coprocessor");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 private:
     int coprocessor_;
 
@@ -41307,7 +41332,7 @@ private:
         debugSerializationEnd("SgAsmExpression");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 public:
     /** Property: Type of expression.
      *
@@ -41422,7 +41447,7 @@ private:
         debugSerializationEnd("SgAsmNode");
     }
 #endif // ROSE_HAVE_BOOST_SERIALIZATION_LIB
-
+public:
 private:
     Sawyer::Attribute::Storage<> attributes_;
 
