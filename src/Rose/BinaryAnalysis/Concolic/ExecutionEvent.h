@@ -24,7 +24,7 @@ namespace Concolic {
  *
  *  @li When creating a new test case from an existing test case, some input variables need to be assigned new values. The
  *  execution events indicate the points at which these values get written into the concrete state (and subsequently propagated
- *  by executing instructions concretely). For instance, if we indeed want to treat @ref getpid as an input because perhaps the
+ *  by executing instructions concretely). For instance, if we indeed want to treat @c getpid as an input because perhaps the
  *  specimen does something special for certain PIDs, then the events specifie what value should be returned by each call.
  *
  *  @li When starting a test case, there's a "replay" phase where the instructions are replayed concretely to get the process

@@ -260,7 +260,7 @@ public:
 
 /** Base class for constraints on return values.
  *
- *  Subclasses must implement the @ref playback and @ref makeReturnConstaint methods. */
+ *  Subclasses must implement the @ref playback and @ref makeReturnConstraint methods. */
 class SyscallReturn: public SyscallBase {
 protected:
     SyscallReturn();

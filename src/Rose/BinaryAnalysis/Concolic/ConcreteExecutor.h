@@ -14,10 +14,10 @@ namespace Concolic {
 
 /** Base class for executing test cases concretely.
  *
- *  The user is expected to subclass this object in order to define the specifics of how to execute a test case concretely,
- *  measure some properties of the execution, and return those properties. A basic @ref LinuxConcrete subclass is already
- *  provided, when ROSE is build on Linux, to give an example of how to run a program and measure its exit status. Other more
- *  complex executors might do things like measure code coverage.
+ *  The user is expected to subclass this object in order to define the specifics of how to execute a test case concretely, measure
+ *  some properties of the execution, and return those properties.  See @ref Concolic::I386Linux::ExitStatusExecutor for an example
+ *  example of how to run a program and measure its exit status. Other more complex executors might do things like measure code
+ *  coverage.
  *
  *  ConcreteExecutor objects are expected to be used in single-threaded applications. Supporting multi-threaded concrete
  *  executors would be difficult since calling fork[2] from multi-threaded C++ programs is fraught with danger. Therefore, none

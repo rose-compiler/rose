@@ -38,7 +38,7 @@ public:
      *  through the size of the original @ref data property.
      *
      *  When ths size is set, some types of sections may do additional work. That additional work must not adjust the size
-     *  of other sections or the mapping of any section (use @ref SgAsmGenericFile::resize to do that).
+     *  of other sections or the mapping of any section (use @ref SgAsmGenericFile::shiftExtend to do that).
      *
      *  @{ */
     [[using Rosebud: rosetta, accessors(), mutators()]]
@@ -245,8 +245,8 @@ public:
      *
      *  This is function is considered to be part of the parsing and construction of a section--it changes the part of the file
      *  that's considered the "original size" of the section. To adjust the size of a section after the executable file is parsed,
-     *  see @ref SgAsmGenericFile::resize.  Sections are allowed to extend beyond the end of the file and the original data (the
-     *  @ref data property) is extended only up to the end of the file. */
+     *  see @ref SgAsmGenericFile::shiftExtend.  Sections are allowed to extend beyond the end of the file and the original data
+     *  (the @ref data property) is extended only up to the end of the file. */
     void extend(rose_addr_t nbytes);
 
     /** Write data to a file section.

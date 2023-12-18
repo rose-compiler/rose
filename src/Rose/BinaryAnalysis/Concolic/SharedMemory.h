@@ -45,7 +45,7 @@ public:
 
     /** Phase of execution.
      *
-     *  During the @c REPLAY phase, the callback's @ref SharedMemoryCallback::replay "replay" method is called,
+     *  During the @c REPLAY phase, the callback's @ref SharedMemoryCallback::playback "playback" method is called,
      *  during the @c EMULATION phase, the callback's @ref SharedMemoryCallback::handlePreSharedMemory method is
      *  called, and during the @c POST_EMULATION phase, the callback's @ref SharedMemoryCallback::handlePostSharedMemory
      *  method is called. */

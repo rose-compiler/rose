@@ -42,9 +42,9 @@ public:
     /** Phase of execution.
      *
      *
-     *  During the @c REPLAY phase, the callback's @ref SyscallCallback::replay "replay" method is called, and during the @c
-     *  EMULATION phase, the callback's @ref SyscallCallback::handlePreSyscall "handlePreSyscall" and @ref
-     *  SyscallCallback::handlePostSyscall "handlePostSyscall" methods are called. */
+     *  During the @c REPLAY phase, the callback's @ref I386Linux::SyscallBase::playback "playback" method is called, and during the
+     *  @c EMULATION phase, the callback's @ref I386Linux::SyscallBase::handlePreSyscall "handlePreSyscall" and @ref
+     *  I386Linux::SyscallBase::handlePostSyscall "handlePostSyscall" methods are called. */
     ConcolicPhase phase = ConcolicPhase::EMULATION;
 
     /** Architecture on which system call occurs. */
@@ -100,8 +100,7 @@ public:
      *
      *  During non-playback (i.e., concolic execution) this property is initially null because the concrete system call has not
      *  yet been executed. Once it has been executed, the callback that performed the concrete execute step *must* set this to
-     *  a non-null value and should also push that event onto the @p relatedEvents list. The easiest way to do this is by calling
-     *  @ref SyscallCallback::createReturnEvent. */
+     *  a non-null value and should also push that event onto the @p relatedEvents list. */
     ExecutionEventPtr returnEvent;
 
     /** Optional return input variable.

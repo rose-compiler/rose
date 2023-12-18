@@ -66,8 +66,8 @@ namespace BinaryAnalysis {
  *
  *  @section rose_binaryanalysis_architecture_changes Changes from previous versions
  *
- *  The introduction of this namespace to support user-defined instruction sets necessitated a number of minor changes but also one
- *  major change.
+ *  The introduction of this namespace in December 2023 to support user-defined instruction sets necessitated a number of minor
+ *  changes but also one major change.
  *
  *  The major change is that instead of defining architecture-specific behavior in the subclasses of @ref SgAsmInstruction, they're
  *  now defined in the subclasses of @ref Rose::BinaryAnalysis::Architecture::Base. This means that the most of the @ref

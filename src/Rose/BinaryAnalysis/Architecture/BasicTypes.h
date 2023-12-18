@@ -118,24 +118,28 @@ void initDiagnostics();
  *  Thread safety: This function is thread safe. */
 void registerDefinition(const BasePtr&);
 
-/** Register definitions from shared libraries.
+/** Register definitions from a shared library.
  *
- *  If a vector of names is specified, then the files are loaded in the order specified. If a name is a directory, then all files
- *  whose names end with ".so" are loaded. If the shared library has a function named "registerArchitectures" then it will be
- *  called. It must have C linkage and a type of @c void(). This function is expected to register zero or more architecture
- *  definitions.  The library must be compiled and linked in a manner consistent with the ROSE library.
+ *  If the specified name is a directory, then all files in that directory whose names end with ".so" are loaded. If the shared
+ *  library has a function named "registerArchitectures" then it will be called. It must have C linkage and a type of @c
+ *  void(void). This function is expected to register zero or more architecture definitions.  The library must be compiled and
+ *  linked in a manner consistent with the ROSE library.
  *
  *  Thread safety: Thread safe.
  *
- * @{ */
+ *  See also, @ref registerDefinitions. */
+
 void registerDefinition(const std::string&);
 
+
+/** Register definitions from shared libraries.
+ *
+ *  Calls @ref registerDefinition for each library name, which should be a @c std::string. */
 template<class Iterator>
 void registerDefinitions(Iterator begin, Iterator end) {
     for (/*void*/; begin != end; ++begin)
         registerDefinition(*begin);
 }
-/** @} */
 
 /** Remove the specified architecture from the list of registered architectures.
  *

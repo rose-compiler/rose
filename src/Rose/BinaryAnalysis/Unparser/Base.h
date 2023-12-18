@@ -1,6 +1,5 @@
 #ifndef ROSE_BinaryAnalysis_Unparser_Base_H
 #define ROSE_BinaryAnalysis_Unparser_Base_H
-
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
@@ -21,7 +20,6 @@
 
 namespace Rose {
 namespace BinaryAnalysis {
-
 namespace Unparser {
 
 /** Map from address to label. */
@@ -199,7 +197,7 @@ public:
  *  unparser can be a const reference, and (2) multiple threads can be unparsing with the same unparser object. */
 class State {
 public:
-    typedef Sawyer::Container::Map<rose_addr_t, std::string> AddrString;/**< Map from address to string. */
+    typedef Sawyer::Container::Map<rose_addr_t, std::string> AddrString; /**< Map from address to string. */
 
 private:
     Partitioner2::PartitionerConstPtr partitioner_;
@@ -248,12 +246,12 @@ public:
 
     /** Control flow graph arrows within a function.
      *
-     *  This property holds information about how and when to draw arrows in the left margin to represent the edges of a
-     *  control flow graph whose endpoints are both within the same function. The object is initialized each time a function is
-     *  entered (see @code emitFunction) just before emitting the first basic block, but only if the unparser settings indicate
-     *  that these margin arrows should be displayed.  The object is reset just after printing the basic blocks. The object
-     *  should be in a default state when printing the function prologue and epilogue information, otherwise those parts
-     *  of the output would be unecessarily indented.
+     *  This property holds information about how and when to draw arrows in the left margin to represent the edges of a control
+     *  flow graph whose endpoints are both within the same function. The object is initialized each time a function is entered (see
+     *  @ref Base::emitFunction) just before emitting the first basic block, but only if the unparser settings indicate that these
+     *  margin arrows should be displayed.  The object is reset just after printing the basic blocks. The object should be in a
+     *  default state when printing the function prologue and epilogue information, otherwise those parts of the output would be
+     *  unecessarily indented.
      *
      *  See also, @ref intraFunctionBlockArrows, @ref globalBlockArrows.
      *
@@ -330,14 +328,14 @@ public:
      *
      *  The two-argument version of this function associates a name with a value. An empty name clears the association.
      *
-     *  The one-argument version returns the name corresponding to the value, or generates a name on the fly. To generate a
-     *  name, the value is first looked up in the mapping and that name is used if present. Otherwise, the value is broken down
-     *  into individual bits and the resulting string is the comma-separated names for each of the bits. If the mapping has a
-     *  name for a bit then it's used. Otherwise, if the bit is greater than or equal to @ref
-     *  Reachability::Reason::USER_DEFINED_0 the string will be "user-defined-x" where @p x is the number of bits to right
-     *  shift the flag to make it equal to USER_DEFINED_0. Otherwise, the name of the bit is obtained by treating the value as
-     *  an enum and obtaining the enum name. If that fails due to the fact that not all bits have corresponding enum constants,
-     *  the name is the hexadecimal string for the bit.
+     *  The one-argument version returns the name corresponding to the value, or generates a name on the fly. To generate a name,
+     *  the value is first looked up in the mapping and that name is used if present. Otherwise, the value is broken down into
+     *  individual bits and the resulting string is the comma-separated names for each of the bits. If the mapping has a name for a
+     *  bit then it's used. Otherwise, if the bit is greater than or equal to @ref
+     *  BinaryAnalysis::Reachability::Reason @c USER_DEFINED_0 the string will be "user-defined-x" where @p x is the number of bits to
+     *  right shift the flag to make it equal to USER_DEFINED_0. Otherwise, the name of the bit is obtained by treating the value as
+     *  an enum and obtaining the enum name. If that fails due to the fact that not all bits have corresponding enum constants, the
+     *  name is the hexadecimal string for the bit.
      *
      * @{ */
     void reachabilityName(Reachability::Reason value, const std::string &name);
@@ -359,6 +357,7 @@ public:
     const AddrString& basicBlockLabels() const;
     AddrString& basicBlockLabels();
 
+    /** First unparser in the chained list of unparsers. */
     const Base& frontUnparser() const;
 };
 
@@ -374,8 +373,8 @@ public:
  *  End users generally invoke the high-level output methods, which are provided by non-virtual function operators that are
  *  overloaded on the type of object being unparsed.
  *
- *  The high-level function operators each call a corresponding overloaded virtual @ref unparse function that kicks things off
- *  by creating an unparse @ref State object, setting the front parser to the one whose @ref unparse method was called, and
+ *  The high-level function operators each call a corresponding overloaded virtual @ref unparse function that kicks things off by
+ *  creating an unparse @ref Unparser::State object, setting the front parser to the one whose @ref unparse method was called, and
  *  invoking an appropriate mid-level "emit" function in that front parser.
  *
  *  Mid-level "emit" functions use a combination of C++ virtual functions and unparser object chaining as described in the
@@ -523,7 +522,7 @@ public:
      *  the behavior of another function and is used, for example, to provide HTML wrapping around various entities.
      *
      *  The object chaining is implemented in two parts: every unparser object has a @ref nextUnparser pointer and the final
-     *  unparser in the list has a null pointer for this property; the state object has a @ref State::frontUnparser
+     *  unparser in the list has a null pointer for this property; the @ref Unparser::State object has a @ref State::frontUnparser
      *  "frontUnparser" method that returns the first unparser in this list.  This mid-level function is expected to always
      *  invoke functions on the front unparser in order to give every parser in the chain a chance to influence behavior. The
      *  base implementation of this mid-level function defers to the next parser in the chain if there is one, otherwise it
@@ -602,9 +601,9 @@ public:
 public:
     /** Finish initializing the unparser state.
      *
-     *  This gets called by the @ref unparse and @ref operator() methods just after the state object is created. It
-     *  can be used to adjust the state before any unparsing actually starts. One common use is to initialize the
-     *  global margin arrows.  The base implementation does nothing except chain to the next unparser. */
+     *  This gets called by the @ref unparse methods just after the state object is created. It can be used to adjust the state
+     *  before any unparsing actually starts. One common use is to initialize the global margin arrows.  The base implementation
+     *  does nothing except chain to the next unparser. */
     virtual void initializeState(State&) const;
 
     /** Calculate intra-function arrows.
@@ -658,7 +657,6 @@ public:
     static std::vector<Partitioner2::ControlFlowGraph::ConstEdgeIterator>
     orderedBlockSuccessors(const Partitioner2::PartitionerConstPtr&, const Partitioner2::BasicBlockPtr&);
 };
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Python API wrappers and functions

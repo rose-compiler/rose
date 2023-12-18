@@ -399,8 +399,10 @@ public:
 
     /** Convert an RVA/Size Pair index number into a section name.
      *
-     *  This is different than @ref stringifySgAsmPEFileHeaderPairPurpose because it returns a section name rather than an
-     *  enum name. */
+     *  The enum value passed as the first argument is looked up in an internal table and its full, static name from the PE
+     *  documentation is returned. Additionally, if @p short_name is non-null then it points to a static abbreviated name. For
+     *  example, if the first argument is @c PAIR_EXPORTS from the @ref SgAsmPEFileHeader::PairPurpose enum, then this function
+     *  returns "Export Table" as the full name, and "Exports" as the abbreviated name. */
     std::string rvaSizePairName(PairPurpose, const char **short_name);
 
     /** Define an RVA/Size pair in the PE file header. */

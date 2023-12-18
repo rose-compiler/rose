@@ -8,4 +8,5 @@ ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
     run $(tool_compile_linkexe) binaryCFGTraversalTutorial.C
     run $(tool_compile_linkexe) staticSemantics.C
     run $(tool_compile_linkexe) insnCfg.C
+    run $(tool_compile_linkexe) disassembler.C
 endif

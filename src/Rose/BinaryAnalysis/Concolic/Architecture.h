@@ -309,8 +309,8 @@ public:
 
     /** Saves a list of events.
      *
-     *  Each event's test case is set to this object's test case, and the event locations set by calling @ref
-     *  ExecutionEvent::nextLocation for each event. The events are written to the database. */
+     *  Each event's test case is set to this object's test case, and each event has a new @ref ExecutionLocation assigned. Then
+     *  the events are all written to the database. */
     void saveEvents(const std::vector<ExecutionEventPtr>&, When);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

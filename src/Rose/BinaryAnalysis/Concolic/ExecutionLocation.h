@@ -68,7 +68,7 @@ public:
 
     /** Are two events sorted?
      *
-     *  Returns true if and only if this location occurs before the @ref other location in the sort order. */
+     *  Returns true if and only if this location occurs before the @p other location in the sort order. */
     bool operator<(const ExecutionLocation &other) const;
 
     /** Are two events sorted?

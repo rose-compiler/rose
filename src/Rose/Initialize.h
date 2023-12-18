@@ -1,7 +1,56 @@
 #ifndef ROSE_Initialize_H
 #define ROSE_Initialize_H
 
-/** Main namespace for the ROSE library. */
+/** The ROSE library.
+ *
+ *  All C++ symbols intended for use by users of the ROSE library are contained in this namespace, and other namespaces are used for
+ *  APIs that are useful outside the ROSE context (such as @ref Sawyer).
+ *
+ *  The main class for analyzing binary specimens is @ref BinaryAnalysis.
+ *
+ *  @note Many ROSE library symbols pollute the root namespace or appear in other non-"Rose" namespaces. These violate the policy
+ *  for the ROSE public API.
+ *
+ *  @section rose_namingconvention Naming conventions
+ *
+ *  The ROSE library uses a consistent naming convention for public symbols. Namespaces and type names (e.g., classes) that are part
+ *  of the public API use [PascalCase](https://en.wikipedia.org/wiki/Camel_case), macros all begin with the string "ROSE_", and
+ *  everything else that's part of the public API uses lower camel case (a.k.a., dromedary case).
+ *
+ *  Acronyms and abbreviations are typically not used--they are usually spelled out in full--unless they are extremely common in the
+ *  ROSE source code and are in standard use in the compiler field. When they are used, they are treated as words for the purpose of
+ *  capitalization in C++ symbols, except that API, AST, CFG, and IO are all upper-case when they appear alone as a C++ symbol.
+ *
+ *  @note Many ROSE library symbols violate this naming convention.
+ *
+ *  @section rose_headerfiles Header files
+ *
+ *  ROSE header files are installed and included using @c @#include with path names beginning with "Rose" and mirroring the
+ *  namespace hierarchy. The base names of public include files match the C++ symbol they primarily define and always end with a
+ *  ".h" extension. Base names and path components are capitalized the same as the C++ symbols (described above). For instance, the
+ *  header file for the @ref Rose::CommandLine::SelfTest class is included as <code>#include <Rose/CommandLine/SelfTest.h></code>.
+ *  To support file systems that are not POSIX compliant with regard to case sensitivity, no ROSE include directory will contain two
+ *  header files whose names are identical when converted to lower case.
+ *
+ *  Each namespace has a header file that recursively includes all header files under that namespace. Although users find this
+ *  convenient, the ROSE library itself doesn't include these into its own compilation units because doing so increases build times.
+ *
+ *  Each namespace also has a header file named "BasicTypes.h" that declares entities that are most useful to other header
+ *  files. They mostly declare class names (forward class declarations) and incomplete shared pointer types (names ending with
+ *  "Ptr"), but may also declare commonly used constants, enums, small classes, etc. The "BasicTypes.h" header files recursively
+ *  include all "BasicTypes.h" header files for child namespaces.
+ *
+ *  ROSE header files can be included in any order. They can also be included more than once without any ill effect.
+ *
+ *  @note Many ROSE header files violate this policy. In particular, the legacy "rose.h" header file must be included before any
+ *  other ROSE header file, and contributes negatively to compilation times.
+ *
+ *  @if rosedoc2024
+ *  @note This documentation may refer to headers under an "AstNodes" directory. These headers are actually inputs to the Rosebud
+ *  code generation system for AST node types and should not be included into user programs. Instead, users should include the
+ *  "rose.h" header, which automatically includes all AST node types.
+ *  @endif
+ */
 namespace Rose {
 
 /** Initialize the library.

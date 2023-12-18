@@ -25,9 +25,9 @@ namespace Rose {
  *  To this API more ROSE-like, we create some aliases. Unfortunately these aliases aren't entirely understood by Doxygen, so we
  *  list them here:
  *
- *  @li Rose::Diagnostics::Facility is an alias of @ref Sawyer::Message::Facility
- *  @li Rose::Diagnostics::Stream is an alias of @ref Sawyer::Message::Stream
- *  @li Rose::Diagnostics::mfacilities is an alias of @ref Sawyer::Message::mfacilities
+ *  @li @c Rose::Diagnostics::Facility is an alias of @ref Sawyer::Message::Facility
+ *  @li @c Rose::Diagnostics::Stream is an alias of @ref Sawyer::Message::Stream
+ *  @li @c Rose::Diagnostics::mfacilities is an alias of @ref Sawyer::Message::mfacilities
  *
  *  Sawyer supports multiple instances of messaging facilities (@ref Sawyer::Message::Facility / @c
  *  Rose::Diagnostics::Facility) each of which defines a <code>std::ostream</code> object for each of a number of message

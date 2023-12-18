@@ -1,9 +1,48 @@
 #!/bin/bash
 set -e
-set -o pipefail
 
 arg0="${0##*/}"
 dir0="${0%/*}"
+DEFAULT_CONFIG=RoseUser
+
+####################################################################################################################################
+help() {
+    echo "$arg0"
+    echo
+    echo "Name"
+    echo "        $arg0 - generate ROSE documentation"
+    echo
+    echo "Synopsis"
+    echo "        $arg0 [CONFIG]"
+    echo
+    echo "Description"
+    ######--------------------------------------------------------------------------------
+    echo "        This command runs Doxygen to parse ROSE header files and generate HTML"
+    echo "        documentation. The optional argument, CONFIG, is the name of a Doxygen"
+    echo "        configuration file. If the CONFIG file cannot be found as specified,"
+    echo "        then the ROSE/src/docs directory is searched for a file named CONFIG or"
+    echo "        CONFIG.cfg, and this file is passed as an argument to Doxygen."
+    echo
+    echo "        This command can be run from any directory, but the command must either"
+    echo "        be located inside the ROSE source directory hierarchy, or the ROSE_SOURCE"
+    echo "        environment variable must point to the ROSE source directory."
+    echo
+    echo "        The following command-line switches are understood:"
+    echo
+    echo "        --help | -h"
+    echo "                Show this documentation."
+    echo
+    echo "        --version | -V"
+    echo "                Print the tool version on standard output and exit success."
+    echo
+    echo "        This tool fails if doxygen produces any output that is not suppressed"
+    echo "        by the filter defined in this tool."
+}
+
+#
+# This script, which can be run from any working directory but which must live in the ROSE source directory hierarchy, runs Doxygen
+# to parse ROSE header files and generate HTML user documentation. The script takes one optional argument, the name of a Doxygen
+# configuration file.
 
 ####################################################################################################################################
 # Die with an error message
@@ -44,32 +83,104 @@ check-prerequisites() {
 }
 
 ####################################################################################################################################
-# Filter out some doxygen warnings
+# Name of the Doxygen configuration file
+config-file() {
+    local name="${1-}"
+    for config in "$name" "$(rose-source)/docs/$name" "$(rose-source)/docs/$name.cfg"; do
+	if [ -f "$config" ]; then
+	    echo "$config"
+	    echo "configuring Doxygen with $config" >&2
+	    return 0
+	fi
+    done
+    die "cannot find Doxygen config file for \"$name\""
+}
+
+####################################################################################################################################
+# Passes input to output and counts lines. Fails if there are any lines.
+fail-if-not-empty() {
+    local n=0
+    while IFS=$'\n' read -r line; do
+	echo "$line"
+	n=$[n + 1]
+    done
+    [ $n -eq 0 ] || false
+}
+
+####################################################################################################################################
+# Filter out some dangling references. These dangling references are pointing to parts of the ROSE API that have been excluded from
+# the generated documentation for one or more reasons, but yet the otherwise valid reference is still present in the non-excluded
+# documentation.
+#
+# Such references fall into a few main categories:
+#
+#   (1) The target symbol was not parsed by Doxygen because it falls outside the src/Rose directory (or other Doxygen inputs).
+#       Fix this by moving the source code into src/Rose and making sure all ::Rose namespace policies are followed. The
+#       $ROSE/scripts/policies/RoseNamespace.pl policy checker can help with this and contains documentation for the policies we
+#       try to enforce.
+#
+#   (2) The target symbol or its file is explicitly ignored by Doxygen. This can happen for a number of reasons:
+#
+#       (BAD_NAME) The name of the entity violates ROSE naming convention for public symbols. Fix this by changing the name so
+#       the file passes the RoseNamespace.pl policy checks without any warnings.
+#
+#       (UNDOC) Large parts of the public API for this namespace or class is undocumented. Presenting the few documented parts to the
+#       user would be confusing because of the incompleteness. Fix this by documenting the entire public API.
+#
+#       (PRIVATE) The entity is documented as part of the public API intended for users, but in fact serves an internal
+#       purpose. Fix this in any number of ways, such as (a) change the Doxygen comment to a normal C++- comment, or (b) make the
+#       entity "private" or "protected" in the C++ source code, or (c) mark the entity as internal by using the Doxygen @internal
+#       marker.
+#
+#   (3) A enclosing class or namespace is not documented. Fix this by documenting all enclosing namespaces and classes. These kinds
+#       of dangling references should NOT be added to the suppression list defined in this shell function!
+#
+# When adding a new suppression, please mark the reason for suppression.
+#
 filter-doxygen-warnings() {
     sed -e "
-	/unable to resolve reference to 'SageInterface/d
-        /unable to resolve reference to 'parse_rm_section'/d
-	/unable to resolve reference to 'stringify[A-Z]/d
-	/unable to resolve reference to 'heap_object_shared_ownership'/d
-
-	# Concolic testing framework is work in progress
-	/src\\/Rose\\/BinaryAnalysis\\/Concolic/d
-
-	# Need to figure out what this was renamed
-	/unable to resolve reference to 'SgAsmGenericFile::resize'/d
-
-	# Defined in outside of the Rose namespace or not under the src/Rose directory.
-	/unable to resolve reference to 'InstructionMap'/d
-	/unable to resolve reference to 'frontend'/d
-	/unable to resolve reference to 'Sg_File_Info'/d
-	/unable to resolve reference to 'rose_addr_t'/d
+        #   Pattern                                                               Reasons (see above)
+        #-----------------------------------------------------------------------#--------------------
+	/unable to resolve reference to 'SageInterface/d			# 1
+	/unable to resolve reference to 'InstructionMap'/d			# 1
+	/unable to resolve reference to 'frontend'/d				# 1, 2.BAD_NAME
+	/unable to resolve reference to 'Sg_File_Info'/d			# 1, 2.BAD_NAME
+	/unable to resolve reference to 'rose_addr_t'/d				# 1, 2.BAD_NAME
 	"
 }
 
 ####################################################################################################################################
 
+# Parse command-line
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+	--help|-h)
+	    help
+	    exit 0
+	    ;;
+	--version|-V)
+	    rose-version
+	    exit 0
+	    ;;
+	-*)
+	    die "invalid switch \"$1\"; see source code for help"
+	    ;;
+	*)
+	    break
+	    ;;
+    esac
+done
+if [ "$#" -gt 1 ]; then
+    die "incorrect usage; see source code for help"
+elif [ "$#" -eq 1 ]; then
+    CONFIG="$1"
+fi
+
 check-prerequisites
+CONFIG="$(config-file "${1-$DEFAULT_CONFIG}")"
+[ -r "$CONFIG" ] || die "cannot find Doxygen config file for \"${1-$DEFAULT_CONFIG}\""
 
 cd $(rose-source)
-env ROSE_SOURCE="$(rose-source)" ROSE_VERSION="$(rose-version)" \
-     doxygen "$(rose-source)/docs/Rose/robb.cfg" 2>&1 | filter-doxygen-warnings
+env ROSE_SOURCE="$(rose-source)" ROSE_VERSION="$(rose-version)" doxygen "$CONFIG" 2>&1 |
+    filter-doxygen-warnings |
+    fail-if-not-empty
