@@ -1,9 +1,12 @@
+#include "sage3basic.h"
+
 #include "sage-build.h"
 #include "SageTreeBuilder.h"
 #include <boost/optional.hpp>
 #include <iostream>
 
 #define ABORT_ON_UNIMPL ROSE_ABORT()
+#define ABORT_NO_TEST ROSE_ABORT()
 
 // Helps with find source position information
 enum class Order { begin, end };
@@ -363,45 +366,59 @@ void Build(const parser::SubroutineSubprogram &x)
    std::cout << "Rose::builder::Build(SubroutineSubprogram)\n";
 #endif
 
-   SgFunctionParameterList* param_list{nullptr};
-   SgScopeStatement* param_scope{nullptr};
-   SgFunctionDeclaration* function_decl{nullptr};
-   LanguageTranslation::FunctionModifierList function_modifiers;
-   std::list<std::string> dummy_arg_name_list;
+   // std::tuple<> - Statement<SubroutineStmt>, SpecificationPart, ExecutionPart, std::optional<InternalSubprogramPart>,
+   //                Statement<EndSubroutineStmt>
+
+   const auto & subStmt{std::get<0>(x.t)};
+   const auto & intrPart{std::get<3>(x.t)};
+   const auto & endSubStmt{std::get<4>(x.t)};
+
+   std::vector<std::string> labels{};
+   std::optional<SourcePosition> srcPosBody{FirstSourcePosition(std::get<parser::SpecificationPart>(x.t))};
+   std::optional<SourcePosition> srcPosBegin{BuildSourcePosition(subStmt, Order::begin)};
+   SourcePosition srcPosEnd{BuildSourcePosition(endSubStmt, Order::end)};
    std::vector<Rose::builder::Token> comments{};
+
+// There need not be any statements
+   if (!srcPosBody) {
+      srcPosBody.emplace(srcPosEnd);
+   }
+
+   Rose::builder::SourcePositions sources(*srcPosBegin, *srcPosBody, srcPosEnd);
+
+   SgFunctionParameterList* paramList{nullptr};
+   SgScopeStatement* paramScope{nullptr};
+   SgFunctionDeclaration* funcDecl{nullptr};
+   LanguageTranslation::FunctionModifierList modifiers;
+   std::list<std::string> dummyArgs;
    std::string name;
-   bool is_defining_decl = true;
+   bool isDefDecl = true;
 
    // Traverse SubroutineStmt to get dummy argument list and name
-   Build(std::get<0>(x.t).statement, dummy_arg_name_list, name, function_modifiers);
+   Build(subStmt.statement, dummyArgs, name, modifiers);
 
    // Enter SageTreeBuilder for SgFunctionParameterList
-   builder.Enter(param_list, param_scope, name, nullptr /* function_type */, is_defining_decl);
+   builder.Enter(paramList, paramScope, name, nullptr /* function_type */, isDefDecl);
 
    // Traverse SpecificationPart and ExecutionPart
-   Build(std::get<parser::SpecificationPart>(x.t), param_scope);
-   Build(std::get<parser::    ExecutionPart>(x.t), param_scope);
+   Build(std::get<parser::SpecificationPart>(x.t), paramScope);
+   Build(std::get<parser::    ExecutionPart>(x.t), paramScope);
 
    // Leave SageTreeBuilder for SgFunctionParameterList
-   builder.Leave(param_list, param_scope, dummy_arg_name_list);
-
-   Rose::builder::SourcePosition heading_start; // start of ProcedureHeading
-   Rose::builder::SourcePosition decl_start, decl_end; // start and end of Declaration
-   Rose::builder::SourcePositions sources(heading_start, decl_start, decl_end);
+   builder.Leave(paramList, paramScope, dummyArgs);
 
    // Begin SageTreeBuilder for SgFunctionDeclaration
-   builder.Enter(function_decl, name, nullptr /* return_type */, param_list,
-                 function_modifiers, is_defining_decl, sources, comments);
+  builder.Enter(funcDecl, name, nullptr /* return_type */, paramList,
+                modifiers, isDefDecl, sources, comments);
 
    // EndSubroutineStmt - std::optional<Name> v;
-   bool have_end_stmt = false;
-
-   if (auto & opt = std::get<4>(x.t).statement.v) {
-      have_end_stmt = true;
+   bool haveEndStmt = false;
+   if (endSubStmt.statement.v) {
+      haveEndStmt = true;
    }
 
    // Leave SageTreeBuilder for SgFunctionDeclaration
-   builder.Leave(function_decl, param_scope, have_end_stmt);
+   builder.Leave(funcDecl, paramScope, haveEndStmt);
 
    // TODO: implement optional InternalSubprogramPart
    // std::optional<InternalSubprogramPart>
@@ -1105,6 +1122,7 @@ void Build(const std::list<parser::Statement<common::Indirection<parser::UseStmt
 
    for (auto &use_stmt: x) {
       Build(use_stmt.statement.value());
+      ABORT_NO_TEST;
    }
 }
 
@@ -1124,6 +1142,7 @@ void Build(const parser::UseStmt &x)
 
    // TODO
    // std::variant<std::list<Rename>, std::list<Only>> u;
+   ABORT_NO_TEST;
 
    SgUseStatement* use_stmt{nullptr};
    builder.Enter(use_stmt, module_name, module_nature);
@@ -1136,6 +1155,32 @@ void Build(const parser::InternalSubprogramPart &x, T* scope)
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(InternalSubprogramPart)\n";
 #endif
+
+   // std::tuple<> - Statement<ContainsStmt>, std::list<InternalSubprogram>
+
+   // build ContainsStmt
+   //TODO: source position (looks like actual statement not needed, add?)
+   SgContainsStatement* containsStmt{nullptr};
+   builder.Enter(containsStmt);
+   builder.Leave(containsStmt);
+
+   Build(std::get<1>(x.t));
+}
+
+void Build(const parser::InternalSubprogram &x)
+{
+#if PRINT_FLANG_TRAVERSAL
+   std::cout << "Rose::builder::Build(InternalSubprogram)\n";
+#endif
+   std::cout << "Rose::builder::Build(InternalSubprogram): implementing\n";
+
+   // std::variant<> - common::Indirection<FunctionSubprogram>, common::Indirection<SubroutineSubprogram>
+
+   auto visitor = common::visitors {
+     [] (const auto &y) { Build(y.value()); },
+   };
+
+   std::visit(visitor, x.u);
 }
 
 template<typename T>
@@ -1682,13 +1727,16 @@ void Build(const parser::EntityDecl &x, std::string &name, SgExpression* &init, 
    SgScopeStatement* scope{nullptr};
    if (auto & opt = std::get<1>(x.t)) {    // ArraySpec
       Build(opt.value(), type, base_type);
+      ABORT_ON_UNIMPL;
    }
 
    if (auto & opt = std::get<2>(x.t)) {    // CoarraySpec
       Build(opt.value(), scope);
+      ABORT_NO_TEST;
    }
 
    if (auto & opt = std::get<3>(x.t)) {    // CharLength
+      ABORT_NO_TEST;
       //      Build(opt.value(), scope);
    }
 

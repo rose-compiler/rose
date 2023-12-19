@@ -126,7 +126,9 @@ void Build(const Fortran::parser::ComplexPart &x, SgExpression* &expr);
 void Build(const std::list<Fortran::parser::Statement<Fortran::common::Indirection<Fortran::parser::UseStmt>>> &x);
 void Build(const Fortran::parser::UseStmt &x);
 
+// InternalSubprogramPart
 template<typename T> void Build(const Fortran::parser::InternalSubprogramPart &x, T* scope);
+void Build(const Fortran::parser::InternalSubprogram &x);
 template<typename T> void Build(const Fortran::parser::          ImplicitPart &x, T* scope);
 
 #if NEW_LABELS==0
@@ -401,12 +403,17 @@ void Build(const Fortran::parser::LanguageBindingSpec &x, LanguageTranslation::E
 
 
 // Traversal of needed STL template classes (optional, list, tuple, variant)                                                                
+//
+template<typename LT>
+void Build(const std::list<LT> &x)
+{
+   for (const auto &elem : x) {
+      Build(elem);
+   }
+}
+
 template<typename LT> void Build(const std::list<LT> &x, SgScopeStatement* scope)
 {
-#if PRINT_FLANG_TRAVERSAL
-   std::cout << "Rose::builder::Build(std::list) for T* node\n";
-#endif
-
    for (const auto &elem : x) {
       Build(elem, scope);
    }

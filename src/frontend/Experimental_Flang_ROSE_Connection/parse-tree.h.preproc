@@ -35133,10 +35133,9 @@ struct SubroutineStmt {
 };
 
 
-struct EndSubroutineStmt { EndSubroutineStmt(EndSubroutineStmt &&) = default; EndSubroutineStmt &operator=(EndSubroutineStmt &&) = default; EndSubroutineStmt(const EndSubroutineStmt &) = delete; EndSubroutineStmt &operator=(const EndSubroutineStmt &) = delete; EndSubroutineStmt() = delete; EndSubroutineStmt(std::optional<Name> &&x) : v(std::move(x)) {} using WrapperTrait = std::true_type; std::optional<Name> v; };
-
-
-
+struct EndSubroutineStmt { EndSubroutineStmt(EndSubroutineStmt &&) = default; EndSubroutineStmt &operator=(EndSubroutineStmt &&) = default; EndSubroutineStmt(const EndSubroutineStmt &) = delete; EndSubroutineStmt &operator=(const EndSubroutineStmt &) = delete; EndSubroutineStmt() = delete; EndSubroutineStmt(std::optional<Name> &&x) : v(std::move(x)) {} using WrapperTrait = std::true_type;
+  std::optional<Name> v;
+};
 
 struct InterfaceBody {
   template <typename A, typename = common::NoLvalue<A>> InterfaceBody(A &&x) : u(std::move(x)) {} using UnionTrait = std::true_type; InterfaceBody(InterfaceBody &&) = default; InterfaceBody &operator=(InterfaceBody &&) = default; InterfaceBody(const InterfaceBody &) = delete; InterfaceBody &operator=(const InterfaceBody &) = delete; InterfaceBody() = delete;

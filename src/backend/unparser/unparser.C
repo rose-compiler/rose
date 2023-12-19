@@ -1197,30 +1197,19 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 #if DEBUG_UNPARSE_FILE
                     printf ("DONE: In Unparser::unparseFile(): case C/C++: unparseStatement(globalScope, info): globalScope = %p \n",globalScope);
 #endif
-#if 0
-                    printf ("Exiting as a test! \n");
-                    ROSE_ABORT();
-#endif
                   }
                break;
              }
 
           case SgFile::e_Fortran_language:
              {
-            // printf ("Error: SgFile::e_Fortran_language detected in unparser (unparser not implemented, unparsing ignored) \n");
-
-            // DQ (6/30/2013): Added support to time the unparsing of the file.
                TimingPerformance timer ("Source code generation from AST (Fortran):");
-
-            // Unparse using the new Fortran unparser!
                u_fortran_locatedNode->unparseStatement(globalScope, info);
                break;
              }
 
           case SgFile::e_Java_language:
              {
-            // printf ("Error: SgFile::e_Java_language detected in unparser (unparser not implemented, unparsing ignored) \n");
-
                Unparse_Java unparser(this, file->getFileName());
                unparser.unparseJavaFile(file, info);
                break;
