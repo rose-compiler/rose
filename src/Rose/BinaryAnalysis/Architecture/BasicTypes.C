@@ -58,10 +58,6 @@ initRegistryHelper() {
     // Order is important -- lookup searches progress from the end toward the beginning.  Therefore, most specific and/or newest
     // architectures should be closer to the end.
 
-    // Byte code
-    registry.push_back(Cil::instance());
-    registry.push_back(Jvm::instance());
-
     // ARM
 #ifdef ROSE_ENABLE_ASM_AARCH32
     registry.push_back(ArmAarch32::instance(ArmAarch32::InstructionSet::T32));
@@ -96,6 +92,10 @@ initRegistryHelper() {
     registry.push_back(IntelPentiumiii::instance());
     registry.push_back(IntelPentium4::instance());
     registry.push_back(Amd64::instance());
+
+    // Byte code
+    registry.push_back(Cil::instance());
+    registry.push_back(Jvm::instance());
 }
 
 // Initialize the registry with ROSE's built-in architecture definitions.
