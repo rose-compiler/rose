@@ -667,6 +667,7 @@ Enter(SgFunctionDeclaration* &function_decl,const std::string &name, SgType* ret
    }
 
    if (is_defining_decl) {
+      // Warning: this calls the unparser to get mangled function name (potentially slow)!
       function_decl = SB::buildProcedureHeaderStatement(SgName(name), return_type,
                                                         param_list, subprogram_kind, scope);
       ASSERT_not_null(function_decl);
@@ -926,7 +927,7 @@ Enter(SgExprStatement* &assign_stmt, SgExpression* &rhs, const std::vector<SgExp
       lhs = vars[0];
    }
    else if (vars.size() > 1) {
-      lhs = SageBuilder::buildExprListExp(vars);
+      lhs = SageBuilder::buildExprListExp_nfi(vars);
    }
    ASSERT_not_null(lhs);
 
@@ -2292,15 +2293,15 @@ SgType* buildStringType(SgExpression* stringLengthExpression)
    return SageBuilder::buildStringType(stringLengthExpression);
 }
 
-SgType* buildArrayType(SgType* base_type, std::list<SgExpression*> &explicit_shape_list)
+SgType* buildArrayType(SgType* baseType, std::list<SgExpression*> &explicitShapeList)
 {
-   SgExprListExp* dim_info = SageBuilder::buildExprListExp_nfi();
+   SgExprListExp* dimInfo = SageBuilder::buildExprListExp_nfi();
 
-   BOOST_FOREACH(SgExpression* expr, explicit_shape_list) {
-      dim_info->get_expressions().push_back(expr);
+   for (SgExpression* expr: explicitShapeList) {
+      dimInfo->get_expressions().push_back(expr);
    }
 
-   return SageBuilder::buildArrayType(base_type, dim_info);
+   return SageBuilder::buildArrayType(baseType, dimInfo);
 }
 
 // SgBasicBlock

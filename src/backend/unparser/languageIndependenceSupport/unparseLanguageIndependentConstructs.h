@@ -23,22 +23,16 @@ enum AssociativitySpecifier {
     e_assoc_last
 };
 
-// DQ (8/13/2007): This should not be in a header file!
-// using namespace std;
-
 class Unparser;
 
+// This is a base class for the language dependent parts of the unparser.
 class UnparseLanguageIndependentConstructs
    {
-  // DQ (8/13/2007): This is a base class for the language dependent parts of the unparser.
-
      protected:
           Unparser* unp;
           std::string currentOutputFileName;
 
      public:
-
-       // DQ (3/24/2016): Adding Robb's meageage mechanism (data member and function).
           static Sawyer::Message::Facility mlog;
           static void initDiagnostics();
 
@@ -96,6 +90,10 @@ class UnparseLanguageIndependentConstructs
 
           virtual ~UnparseLanguageIndependentConstructs() {};
 
+       // Where all the language specific statement unparsing is done
+          virtual void unparseLanguageSpecificStatement  (SgStatement* stmt,  SgUnparse_Info& info) = 0;
+          virtual void unparseLanguageSpecificExpression (SgExpression* expr, SgUnparse_Info& info) = 0;
+
       //! Support for unparsing of line directives into generated code to support debugging
           virtual void unparseLineDirectives ( SgStatement* stmt );
 
@@ -149,36 +147,14 @@ class UnparseLanguageIndependentConstructs
       //! Unparser support for compiler-generated statments
           void outputCompilerGeneratedStatements( SgUnparse_Info & info );
 
-#if USE_OLD_MECHANISM_OF_HANDLING_PREPROCESSING_INFO
-
-// DQ (5/6/2010): Actually we watn to keep this code since we will return to using this implementation soon!
-#error "DEAD CODE!: I think this is OLD code that can be removed."
-
-      //! functions that unparses directives and/or comments
-          void unparseDirectives(SgStatement* stmt);
-          void unparseFinalDirectives ( char* filename );
-  
-          void unparseDirectivesUptoButNotIncludingCurrentStatement ( SgStatement* stmt );
-          void unparseDirectivesSharingLineWithStatement ( SgStatement* stmt );
-  
-       // lower level member function called by unparseDirectives() and unparseFinalDirectives()
-          void unparseDirectives ( char* currentFilename, int currentPositionInListOfDirectives, int currentStatementLineNumber );
-#else
-      // virtual void unparseAttachedPreprocessingInfo(SgStatement* stmt, SgUnparse_Info& info, PreprocessingInfo::RelativePositionType whereToUnparse);
       //! This function unparses any attached comments or CPP directives.
           virtual void unparseAttachedPreprocessingInfo(SgLocatedNode* stmt, SgUnparse_Info& info, PreprocessingInfo::RelativePositionType whereToUnparse);
           virtual bool unparseLineReplacement(SgLocatedNode* stmt, SgUnparse_Info& info);
-
-#endif
   
           bool RemoveArgs(SgExpression* expr);
 
       //! Support for Fortran numeric labels (can appear on any statement), this is an empty function for C/C++.
           virtual void unparseStatementNumbers ( SgStatement* stmt, SgUnparse_Info& info );
-
-       // DQ (8/14/2007): This is where all the language specific statement unparsing is done
-          virtual void unparseLanguageSpecificStatement  (SgStatement* stmt,  SgUnparse_Info& info) = 0;
-          virtual void unparseLanguageSpecificExpression (SgExpression* expr, SgUnparse_Info& info) = 0;
 
        // DQ (9/6/2010): Mark the derived class to support debugging.
           virtual std::string languageName() const = 0;
@@ -404,26 +380,6 @@ class UnparseLanguageIndependentConstructs
           virtual void unparseOmpGenericStatement           (SgStatement* stmt,     SgUnparse_Info& info);
 
           virtual void unparseMapDistDataPoliciesToString (std::vector< std::pair< SgOmpClause::omp_map_dist_data_enum, SgExpression * > > policies, SgUnparse_Info& info);
-#if 0
-       // DQ (7/21/2006): Added support for GNU statement expression extension.
-          virtual void unparseStatementExpression (SgExpression* expr, SgUnparse_Info& info);
-
-      // DQ (7/22/2006): Added support for asm operands.
-         virtual void unparseAsmOp (SgExpression* expr, SgUnparse_Info& info);
-         virtual void unparse_asm_operand_modifier(SgAsmOp::asm_operand_modifier_enum flags);
-         std::string unparse_register_name (SgInitializedName::asm_register_name_enum register_name);
-
-       // DQ (2/29/2004): Added to support unparsing of template instantiations (similar to class declarations)
-          virtual void unparseTemplateInstantiationDeclStmt               (SgStatement* stmt, SgUnparse_Info& info);
-
-       // DQ (3/24/2004): Added to support template functions and template member functions
-          virtual void unparseTemplateInstantiationFunctionDeclStmt       (SgStatement* stmt, SgUnparse_Info& info);
-          virtual void unparseTemplateInstantiationMemberFunctionDeclStmt (SgStatement* stmt, SgUnparse_Info& info);
-
-       // DQ (4/16/2005): Added support for explicit template directives
-          virtual void unparseTemplateInstantiationDirectiveStmt          (SgStatement* stmt, SgUnparse_Info& info);
-#endif
-//        virtual void unparsePragmaDeclStmt   (SgStatement* stmt, SgUnparse_Info& info);
 
           bool isTransformed(SgStatement* stmt);
           void markGeneratedFile() const;
@@ -432,10 +388,6 @@ class UnparseLanguageIndependentConstructs
           void initializeDeclarationsFromParent ( SgDeclarationStatement* declarationStatement,
                                                   SgClassDefinition* & cdefn,
                                                   SgNamespaceDefinitionStatement* & namespaceDefn, int debugSupport = 0 );
-
-#if USE_OLD_MECHANISM_OF_HANDLING_PREPROCESSING_INFO
-          void getDirectives ( char* sourceFilename );
-#endif
 
        // Support for language-independent precedence
           virtual bool requiresParentheses(SgExpression* expr, SgUnparse_Info& info);

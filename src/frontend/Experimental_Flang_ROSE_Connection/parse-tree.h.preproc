@@ -33085,13 +33085,7 @@ struct ExplicitShapeSpec {
   std::tuple<std::optional<SpecificationExpr>, SpecificationExpr> t;
 };
 
-
-
 struct DeferredCoshapeSpecList { DeferredCoshapeSpecList(DeferredCoshapeSpecList &&) = default; DeferredCoshapeSpecList &operator=(DeferredCoshapeSpecList &&) = default; DeferredCoshapeSpecList(const DeferredCoshapeSpecList &) = delete; DeferredCoshapeSpecList &operator=(const DeferredCoshapeSpecList &) = delete; DeferredCoshapeSpecList() = delete; DeferredCoshapeSpecList(int &&x) : v(std::move(x)) {} using WrapperTrait = std::true_type; int v; };
-
-
-
-
 
 struct ExplicitCoshapeSpec {
   template <typename... Ts, typename = common::NoLvalue<Ts...>> ExplicitCoshapeSpec(Ts &&...args) : t(std::move(args)...) {} using TupleTrait = std::true_type; ExplicitCoshapeSpec(ExplicitCoshapeSpec &&) = default; ExplicitCoshapeSpec &operator=(ExplicitCoshapeSpec &&) = default; ExplicitCoshapeSpec(const ExplicitCoshapeSpec &) = delete; ExplicitCoshapeSpec &operator=(const ExplicitCoshapeSpec &) = delete; ExplicitCoshapeSpec() = delete;
@@ -33104,21 +33098,14 @@ struct CoarraySpec {
   std::variant<DeferredCoshapeSpecList, ExplicitCoshapeSpec> u;
 };
 
-
-
-struct DeferredShapeSpecList { DeferredShapeSpecList(DeferredShapeSpecList &&) = default; DeferredShapeSpecList &operator=(DeferredShapeSpecList &&) = default; DeferredShapeSpecList(const DeferredShapeSpecList &) = delete; DeferredShapeSpecList &operator=(const DeferredShapeSpecList &) = delete; DeferredShapeSpecList() = delete; DeferredShapeSpecList(int &&x) : v(std::move(x)) {} using WrapperTrait = std::true_type; int v; };
-
-
+struct DeferredShapeSpecList { DeferredShapeSpecList(DeferredShapeSpecList &&) = default; DeferredShapeSpecList &operator=(DeferredShapeSpecList &&) = default; DeferredShapeSpecList(const DeferredShapeSpecList &) = delete; DeferredShapeSpecList &operator=(const DeferredShapeSpecList &) = delete; DeferredShapeSpecList() = delete; DeferredShapeSpecList(int &&x) : v(std::move(x)) {} using WrapperTrait = std::true_type;
+ int v;
+ };
 
 struct ComponentArraySpec {
   template <typename A, typename = common::NoLvalue<A>> ComponentArraySpec(A &&x) : u(std::move(x)) {} using UnionTrait = std::true_type; ComponentArraySpec(ComponentArraySpec &&) = default; ComponentArraySpec &operator=(ComponentArraySpec &&) = default; ComponentArraySpec(const ComponentArraySpec &) = delete; ComponentArraySpec &operator=(const ComponentArraySpec &) = delete; ComponentArraySpec() = delete;
   std::variant<std::list<ExplicitShapeSpec>, DeferredShapeSpecList> u;
 };
-
-
-
-
-
 
 struct Allocatable { Allocatable() {} Allocatable(const Allocatable &) {} Allocatable(Allocatable &&) {} Allocatable &operator=(const Allocatable &) { return *this; }; Allocatable &operator=(Allocatable &&) { return *this; }; using EmptyTrait = std::true_type; };
 struct Pointer { Pointer() {} Pointer(const Pointer &) {} Pointer(Pointer &&) {} Pointer &operator=(const Pointer &) { return *this; }; Pointer &operator=(Pointer &&) { return *this; }; using EmptyTrait = std::true_type; };
@@ -33448,18 +33435,9 @@ struct AssumedSizeSpec {
   std::tuple<std::list<ExplicitShapeSpec>, AssumedImpliedSpec> t;
 };
 
-
-
-
-
 struct ImpliedShapeSpec { ImpliedShapeSpec(ImpliedShapeSpec &&) = default; ImpliedShapeSpec &operator=(ImpliedShapeSpec &&) = default; ImpliedShapeSpec(const ImpliedShapeSpec &) = delete; ImpliedShapeSpec &operator=(const ImpliedShapeSpec &) = delete; ImpliedShapeSpec() = delete; ImpliedShapeSpec(std::list<AssumedImpliedSpec> &&x) : v(std::move(x)) {} using WrapperTrait = std::true_type; std::list<AssumedImpliedSpec> v; };
 
-
 struct AssumedRankSpec { AssumedRankSpec() {} AssumedRankSpec(const AssumedRankSpec &) {} AssumedRankSpec(AssumedRankSpec &&) {} AssumedRankSpec &operator=(const AssumedRankSpec &) { return *this; }; AssumedRankSpec &operator=(AssumedRankSpec &&) { return *this; }; using EmptyTrait = std::true_type; };
-
-
-
-
 
 struct ArraySpec {
   template <typename A, typename = common::NoLvalue<A>> ArraySpec(A &&x) : u(std::move(x)) {} using UnionTrait = std::true_type; ArraySpec(ArraySpec &&) = default; ArraySpec &operator=(ArraySpec &&) = default; ArraySpec(const ArraySpec &) = delete; ArraySpec &operator=(const ArraySpec &) = delete; ArraySpec() = delete;

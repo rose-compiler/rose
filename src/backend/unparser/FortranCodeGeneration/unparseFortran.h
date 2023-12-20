@@ -19,7 +19,7 @@ class FortranCodeGeneration_locatedNode : public UnparseLanguageIndependentConst
           virtual void unparseFortranIncludeLine ( SgStatement* stmt, SgUnparse_Info& info );
 
       //! Support for Fortran numeric labels (can appear on any statement), this is an empty function for C/C++.
-          virtual void unparseStatementNumbers ( SgStatement* stmt, SgUnparse_Info& info );
+          virtual void unparseStatementNumbers(SgStatement* stmt, SgUnparse_Info& info) override;
 
       //! Supporting function for unparseStatementNumbers and for direct use in unparsing statments that have an end_numeric_label field.
           void unparseStatementNumbersSupport ( SgLabelRefExp* numeric_label_exp, SgUnparse_Info& info );
@@ -32,17 +32,18 @@ class FortranCodeGeneration_locatedNode : public UnparseLanguageIndependentConst
                                                      bool outputParameterDeclaration, 
                                                      SgUnparse_Info& info );
 
-          virtual void unparseLanguageSpecificStatement (SgStatement*  stmt, SgUnparse_Info& info);
-          virtual void unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_Info& info);
+          virtual void unparseLanguageSpecificStatement (SgStatement*  stmt, SgUnparse_Info& info) override;
+          virtual void unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_Info& info) override;
 
-       // DQ (9/6/2010): Mark the derived class to support debugging.
-          virtual std::string languageName() const { return "Fortran Unparser"; }
+          virtual std::string languageName() const override {
+            return "Fortran Unparser";
+          }
 
           virtual void unparseUnaryOperator           (SgExpression* expr, const char* op, SgUnparse_Info& info);
           virtual void unparseBinaryOperator          (SgExpression* expr, const char* op, SgUnparse_Info& info);
           virtual void unparseExprRoot                (SgExpression* expr, SgUnparse_Info& info);
 
-          virtual void unparseExprList                (SgExpression* expr, SgUnparse_Info& info);
+          virtual void unparseExprList                (SgExpression* expr, SgUnparse_Info& info) override;
           virtual void unparseVarRef                  (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseClassRef                (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseFuncRef                 (SgExpression* expr, SgUnparse_Info& info);
@@ -226,18 +227,18 @@ class FortranCodeGeneration_locatedNode : public UnparseLanguageIndependentConst
           void curprint(const std::string&) const;
 
        // unparsing for OpenMP AST
-          virtual void unparseOmpPrefix          (SgUnparse_Info& info);
+          virtual void unparseOmpPrefix          (SgUnparse_Info& info) override;
           virtual void unparseOmpDoStatement     (SgStatement* stmt, SgUnparse_Info& info);
-          virtual void unparseOmpBeginDirectiveClauses     (SgStatement* stmt,SgUnparse_Info& info);
-          virtual void unparseOmpEndDirectiveClauses       (SgStatement* stmt,     SgUnparse_Info& info);
-          virtual void unparseOmpEndDirectivePrefixAndName (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseOmpBeginDirectiveClauses    (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseOmpEndDirectiveClauses      (SgStatement* stmt, SgUnparse_Info& info);
+          virtual void unparseOmpEndDirectivePrefixAndName(SgStatement* stmt, SgUnparse_Info& info);
 
          /**
           * override to make unary plus/minus expressions have the same precedence as binary plus;
           * everything else remains the same.
           */
-          virtual bool requiresParentheses(SgExpression* expr, SgUnparse_Info& info);
-          virtual PrecedenceSpecifier getPrecedence(SgExpression* exp);
+          virtual bool requiresParentheses(SgExpression* expr, SgUnparse_Info& info) override;
+          virtual PrecedenceSpecifier getPrecedence(SgExpression* exp) override;
 
      private:
           /**

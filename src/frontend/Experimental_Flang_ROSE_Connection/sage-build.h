@@ -172,12 +172,13 @@ void Build(const Fortran::parser::     IntrinsicTypeSpec &x,       SgType* &);
 void Build(const Fortran::parser::       IntegerTypeSpec &x,       SgType* &);
 
 // ArraySpec
-void Build(const Fortran::parser::                   ExplicitShapeSpec &x, SgExpression* &expr);
-void Build(const Fortran::parser::                    AssumedShapeSpec &x, SgExpression* &expr);
-void Build(const Fortran::parser::               DeferredShapeSpecList &x, SgExpression* &expr);
-void Build(const Fortran::parser::                     AssumedSizeSpec &x, SgExpression* &expr);
-void Build(const Fortran::parser::                    ImpliedShapeSpec &x, SgExpression* &expr);
-void Build(const Fortran::parser::                     AssumedRankSpec &x, SgExpression* &expr);
+void Build(const Fortran::parser::                   ExplicitShapeSpec &x, SgExprListExp* &expr);
+void Build(const Fortran::parser::                    AssumedShapeSpec &x, SgExprListExp* &expr);
+void Build(const Fortran::parser::               DeferredShapeSpecList &x, SgExprListExp* &expr);
+void Build(const Fortran::parser::                     AssumedSizeSpec &x, SgExprListExp* &expr);
+void Build(const Fortran::parser::                    ImpliedShapeSpec &x, SgExprListExp* &expr);
+void Build(const Fortran::parser::                     AssumedRankSpec &x, SgExprListExp* &expr);
+
 void Build(const Fortran::parser::                   SpecificationExpr &x, SgExpression* &expr);
 void Build(const Fortran::parser::Scalar<Fortran::parser::IntExpr>     &x, SgExpression* &expr);
 void Build(const Fortran::parser::Scalar<Fortran::parser::LogicalExpr> &x, SgExpression* &expr);

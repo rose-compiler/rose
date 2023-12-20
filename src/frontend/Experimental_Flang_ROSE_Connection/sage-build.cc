@@ -5,7 +5,7 @@
 #include <boost/optional.hpp>
 #include <iostream>
 
-#define ABORT_ON_UNIMPL ROSE_ABORT()
+#define ABORT_NO_IMPL ROSE_ABORT()
 #define ABORT_NO_TEST ROSE_ABORT()
 
 // Helps with find source position information
@@ -1469,9 +1469,9 @@ void Build(const parser::AttrSpec &x, LanguageTranslation::ExpressionKind &modif
 
    std::visit(
       common::visitors{
-         [] (const common::CUDADataAttr &y) { ABORT_ON_UNIMPL; },
-         [] (const parser::CoarraySpec  &y) { ABORT_ON_UNIMPL; },
-         [] (const parser::ArraySpec    &y) { ABORT_ON_UNIMPL; },
+         [] (const common::CUDADataAttr &y) { ABORT_NO_IMPL; },
+         [] (const parser::CoarraySpec  &y) { ABORT_NO_IMPL; },
+         [] (const parser::ArraySpec    &y) { ABORT_NO_IMPL; },
          [&] (const parser::Parameter    &y)
             {
                modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_parameter;
@@ -1670,7 +1670,7 @@ void Build(const parser::LengthSelector &x, SgExpression* &expr)
    std::cout << "Rose::builder::Build(LengthSelector)\n";
 #endif
 
-   //  std::variant<TypeParamValue, CharLength> u;
+   // std::variant<TypeParamValue, CharLength> u;
    auto LengthSelectorVisitor = [&](const auto& y) { Build(y, expr); };
    std::visit(LengthSelectorVisitor, x.u);
 }
@@ -1716,6 +1716,7 @@ void Build(const std::list<Fortran::parser::EntityDecl> &x, std::list<EntityDecl
   }
 }
 
+// EntityDecl
 void Build(const parser::EntityDecl &x, std::string &name, SgExpression* &init, SgType* &type, SgType* base_type)
 {
 #if PRINT_FLANG_TRAVERSAL
@@ -1727,7 +1728,6 @@ void Build(const parser::EntityDecl &x, std::string &name, SgExpression* &init, 
    SgScopeStatement* scope{nullptr};
    if (auto & opt = std::get<1>(x.t)) {    // ArraySpec
       Build(opt.value(), type, base_type);
-      ABORT_ON_UNIMPL;
    }
 
    if (auto & opt = std::get<2>(x.t)) {    // CoarraySpec
@@ -1745,46 +1745,42 @@ void Build(const parser::EntityDecl &x, std::string &name, SgExpression* &init, 
    }
 }
 
-// EntityDecl
-void Build(const parser::ArraySpec &x, SgType* &type, SgType* base_type)
+// ArraySpec
+void Build(const parser::ArraySpec &x, SgType* &type, SgType* baseType)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ArraySpec)\n";
 #endif
 
-   SgExpression* expr{nullptr};
-   std::list<SgExpression*> expr_list{};
+   // std::variant<> - std::list<ExplicitShapeSpec>, std::list<AssumedShapeSpec>,
+   //                  DeferredShapeSpecList, AssumedSizeSpec, ImpliedShapeSpec, AssumedRankSpec
 
-   std::visit(
-      common::visitors{
-         [&] (const std::list<parser::ExplicitShapeSpec> &y)
-            {
-               Build(y, expr_list);
-               type = SageBuilderCpp17::buildArrayType(base_type, expr_list);
-            },
-         // std::list<AssumedShapeSpec>, DeferredShapeSpecList,
-         // AssumedSizeSpec, ImpliedShapeSpec, AssumedRankSpec
-         [&] (const auto &y)
-            {
-               Build(y, expr);
-            }
-      },
-      x.u);
+   auto visitor = common::visitors {
+     [&] (const auto &y) {
+            SgExprListExp* exprList{nullptr};
+            Build(y, exprList);
+            type = SageBuilder::buildArrayType(baseType, exprList);
+     }
+   };
+
+   std::visit(visitor, x.u);
 }
 
 template<typename T>
 void Build(const parser::CoarraySpec &x, T* scope)
 {
-#if PRINT_FLANG_TRAVERSAL
+//#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(CoarraySpec)\n";
-#endif
+//#endif
+   ABORT_NO_IMPL;
 }
 
 void Build(const parser::CharLength &x, SgExpression* &)
 {
-#if PRINT_FLANG_TRAVERSAL
+//#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(CharLength)\n";
-#endif
+//#endif
+   ABORT_NO_IMPL;
 }
 
 void Build(const parser::Initialization &x, SgExpression* &expr)
@@ -1802,59 +1798,75 @@ void Build(const parser::Initialization &x, SgExpression* &expr)
                }
             },
          [&] (const parser::ConstantExpr &y) { Build(y, expr); },
-         [&] (const auto &y)                               { ; }    // NullInit, InitialDataTarget
+         [&] (const auto &y)                 { ABORT_NO_IMPL; }    // NullInit, InitialDataTarget
       },
       x.u);
 }
 
-   // ArraySpec
-
-void Build(const parser::ExplicitShapeSpec &x, SgExpression* &expr)
+// ArraySpec
+//
+void Build(const parser::ExplicitShapeSpec &x, SgExprListExp* &exprList)
 {
-#if PRINT_FLANG_TRAVERSAL
-   std::cout << "Rose::builder::Build(ExplicitShapeSpec)\n";
+//#if PRINT_FLANG_TRAVERSAL
+  std::cout << "Rose::builder::Build(ExplicitShapeSpec)\n";
+//#endif
+
+  exprList = SageBuilder::buildExprListExp_nfi();
+#if 0
+  if (auto & specExpr1 = std::get<0>(x.t)) {
+    Build(specExpr1.value(), expr);      // 1st SpecificationExpr (optional)
+  }
+
+  Build(std::get<1>(x.t), expr);         // 2nd SpecificationExpr
 #endif
-
-   if (auto & specExpr1 = std::get<0>(x.t)) {
-      Build(specExpr1.value(), expr);      // 1st SpecificationExpr (optional)
-   }
-
-   Build(std::get<1>(x.t), expr);          // 2nd SpecificationExpr
+  ABORT_NO_IMPL;
 }
 
-void Build(const parser::AssumedShapeSpec &x, SgExpression* &expr)
+void Build(const parser::AssumedShapeSpec &x, SgExprListExp* &exprList)
 {
-#if PRINT_FLANG_TRAVERSAL
-   std::cout << "Rose::builder::Build(AssumedShapeSpec)\n";
-#endif
+//#if PRINT_FLANG_TRAVERSAL
+  std::cout << "Rose::builder::Build(AssumedShapeSpec)\n";
+//#endif
+  ABORT_NO_IMPL;
 }
 
-void Build(const parser::DeferredShapeSpecList &x, SgExpression* &expr)
+void Build(const parser::DeferredShapeSpecList &x, SgExprListExp* &exprList)
 {
 #if PRINT_FLANG_TRAVERSAL
-   std::cout << "Rose::builder::Build(DeferredShapeSpecList)\n";
+  std::cout << "Rose::builder::Build(DeferredShapeSpecList)\n";
 #endif
+
+  int rank{x.v};
+  exprList = SageBuilder::buildExprListExp_nfi();
+
+  for (int i = 0; i < rank; i++) {
+    SgColonShapeExp* colonExpr = SageBuilder::buildColonShapeExp_nfi();
+    exprList->get_expressions().push_back(colonExpr);
+  }
 }
 
-void Build(const parser::AssumedSizeSpec &x, SgExpression* &expr)
+void Build(const parser::AssumedSizeSpec &x, SgExprListExp* &exprList)
 {
-#if PRINT_FLANG_TRAVERSAL
+//#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(AssumedSizeSpec)\n";
-#endif
+//#endif
+   ABORT_NO_IMPL;
 }
 
-void Build(const parser::ImpliedShapeSpec &x, SgExpression* &expr)
+void Build(const parser::ImpliedShapeSpec &x, SgExprListExp* &exprList)
 {
-#if PRINT_FLANG_TRAVERSAL
+//#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ImpliedShapeSpec)\n";
-#endif
+//#endif
+   ABORT_NO_IMPL;
 }
 
-void Build(const parser::AssumedRankSpec &x, SgExpression* &expr)
+void Build(const parser::AssumedRankSpec &x, SgExprListExp* &exprList)
 {
-#if PRINT_FLANG_TRAVERSAL
+//#if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(AssumedRankSpec)\n";
-#endif
+//#endif
+   ABORT_NO_IMPL;
 }
 
 void Build(const parser::SpecificationExpr &x, SgExpression* &expr)
@@ -3626,7 +3638,8 @@ void Build(const parser::ComponentDecl &x, std::string &name, SgExpression* &ini
    }
 
    if (auto & opt = std::get<3>(x.t)) {    // CharLength
-      //      Build(opt.value(), scope);
+      // Build(opt.value(), scope);
+      ABORT_NO_IMPL;
    }
 
    if (auto & opt = std::get<4>(x.t)) {    // Initialization
@@ -3634,24 +3647,24 @@ void Build(const parser::ComponentDecl &x, std::string &name, SgExpression* &ini
    }
 }
 
-void Build(const parser::ComponentArraySpec &x, SgType* &type, SgType* base_type)
+void Build(const parser::ComponentArraySpec &x, SgType* &type, SgType* baseType)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(ComponentArraySpec)\n";
 #endif
 
-   std::list<SgExpression*> expr_list;
-
    std::visit(
       common::visitors{
          [&] (const std::list<parser::ExplicitShapeSpec> &y)
             {
-               Build(y, expr_list);
-               type = SageBuilderCpp17::buildArrayType(base_type, expr_list);
+               SgExprListExp* exprList{nullptr};
+               Build(y, exprList);
+               type = SageBuilder::buildArrayType(baseType, exprList);
+               ABORT_NO_TEST;
             },
          [&] (const parser::DeferredShapeSpecList &y)
             {
-               ;
+               ABORT_NO_IMPL;
             }
       },
       x.u);
@@ -3734,7 +3747,7 @@ void Build(const parser::OpenACCDeclarativeConstruct &x)
 #endif
 }
 
-   // AttrSpec
+// AccessSpec
 void Build(const parser::AccessSpec &x, LanguageTranslation::ExpressionKind &modifier_enum)
 {
 #if PRINT_FLANG_TRAVERSAL

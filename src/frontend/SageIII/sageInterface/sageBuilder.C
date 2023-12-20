@@ -5405,15 +5405,16 @@ SgArrayType* SageBuilder::buildArrayType(SgType* base_type, SgExprListExp* dim_i
    }
 
 SgArrayType* SageBuilder::buildArrayType(SgType* base_type/*=NULL*/, SgExpression* index/*=NULL*/)
-   {
-     SgArrayType* result = new SgArrayType(base_type,index);
-     ROSE_ASSERT(result);
+{
+  SgArrayType* result = new SgArrayType(base_type,index);
+  ASSERT_not_null(result);
 
-     if (index != NULL)
-          index->set_parent(result); // important!
+  if (index != nullptr) {
+    index->set_parent(result); // important!
+  }
 
-     return result;
-   }
+  return result;
+}
 
 SgConditionalExp* SageBuilder::buildConditionalExp(SgExpression* test, SgExpression* a, SgExpression* b)
 {
@@ -5434,6 +5435,7 @@ SgConditionalExp* SageBuilder::buildConditionalExp_nfi(SgExpression* test, SgExp
   setOneSourcePositionNull(result);
   return result;
 }
+
 SgVariantExpression * SageBuilder::buildVariantExpression()
 {
   SgVariantExpression * result =  new SgVariantExpression();
@@ -5442,8 +5444,7 @@ SgVariantExpression * SageBuilder::buildVariantExpression()
   return result;
 }
 
-SgNullExpression* SageBuilder::buildNullExpression_nfi()
-{
+SgNullExpression* SageBuilder::buildNullExpression_nfi() {
   SgNullExpression* ne = new SgNullExpression();
   ROSE_ASSERT(ne);
   setOneSourcePositionNull(ne);
@@ -5454,6 +5455,19 @@ SgNullExpression* SageBuilder::buildNullExpression() {
   SgNullExpression* e = buildNullExpression_nfi();
   setOneSourcePositionForTransformation(e);
   return e;
+}
+
+SgColonShapeExp* SageBuilder::buildColonShapeExp_nfi() {
+  SgColonShapeExp* expr = new SgColonShapeExp();
+  ASSERT_not_null(expr);
+  setOneSourcePositionNull(expr);
+  return expr;
+}
+
+SgColonShapeExp* SageBuilder::buildColonShapeExp() {
+  SgColonShapeExp* expr = buildColonShapeExp_nfi();
+  setOneSourcePositionForTransformation(expr);
+  return expr;
 }
 
 SgAssignInitializer * SageBuilder::buildAssignInitializer(SgExpression * operand_i /*= NULL*/, SgType * expression_type /* = NULL */)
@@ -6027,9 +6041,6 @@ SageBuilder::buildOpaqueVarRefExp(const std::string& name,SgScopeStatement* scop
        // cerr<<"Error: trying to build an opaque var ref when the variable is actual explicit!"<<endl;
           ROSE_ASSERT(isSgVariableSymbol(symbol));
           result = buildVarRefExp(isSgVariableSymbol(symbol));
-
-       // DQ (4/2/2012): Output a warning:
-       //   printf ("WARNING: In SageBuilder::buildOpaqueVarRefExp(): proper symbol used to build SgVarRefExp = %p \n",result);
         }
        else
         {
@@ -6042,9 +6053,6 @@ SageBuilder::buildOpaqueVarRefExp(const std::string& name,SgScopeStatement* scop
          file_info->unsetOutputInCodeGeneration ();
          SgVariableSymbol* fakeSymbol = getFirstVarSym (fakeVar);
          result = buildVarRefExp(fakeSymbol);
-
-       // DQ (4/2/2012): Output a warning:
-       //   printf ("WARNING: In SageBuilder::buildOpaqueVarRefExp(): fake symbol generated to build SgVarRefExp = %p (but not put into symbol table) \n",result);
         }
 
      return result;
@@ -6409,11 +6417,6 @@ SageBuilder::buildFunctionCallExp(const SgName& name, SgType* return_type, SgExp
      SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(func_ref,parameters,func_ref->get_type());
      parameters->set_parent(func_call_expr);
 
-#if 0
-  // DQ (7/12/2021): Debugging where nodes in the outliner are being marked as transformations (SgCastExpressions should not be marked as transformations).
-     printf ("In buildNondefiningFunctionDeclaration_T(): setting the source position information (calling setTransformation()) \n");
-#endif
-
      setOneSourcePositionForTransformation(func_call_expr);
      ASSERT_not_null(func_call_expr);
 
@@ -6433,9 +6436,6 @@ SageBuilder::buildFunctionCallExp(SgFunctionSymbol* sym,
   // DQ (8/21/2011): We want to preserve the support for member functions to be built as SgMemberFunctionRefExp.
   // This is important for the Java support and the C++ support else we will be lowering all mmember function calls
   // to function calls which will be a proble for eht analysis of object oriented languages.
-  // SgFunctionRefExp* func_ref = buildFunctionRefExp(sym);
-  // SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(func_ref,parameters,func_ref->get_type());
-  // func_ref->set_parent(func_call_expr);
      SgFunctionCallExp * func_call_expr = NULL;
      SgMemberFunctionSymbol* memberFunctionSymbol = isSgMemberFunctionSymbol(sym);
      if (memberFunctionSymbol != NULL)
@@ -6905,8 +6905,6 @@ SgForStatement * SageBuilder::buildForStatement(SgStatement* initialize_stmt, Sg
      SgForStatement * result = new SgForStatement(test,increment, loop_body);
      ROSE_ASSERT(result);
 
-  // CR (3/22/2020): Fixed setting case insensitivity
-  // if (symbol_table_case_insensitive_semantics == true)
      if (SageInterface::is_language_case_insensitive())
           result->setCaseInsensitive(true);
 

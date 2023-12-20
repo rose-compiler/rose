@@ -407,10 +407,15 @@ Expressions are usually built using bottomup approach, i.e. buiding operands fir
 
 ROSE_DLL_API SgVariantExpression * buildVariantExpression();
 
-//! Build a null expression, set file info as the default one
+//! Build a null expression, set file info as the default one.
 ROSE_DLL_API SgNullExpression* buildNullExpression();
 //! No file info version of buildNullExpression(). File info is to be set later on.
 ROSE_DLL_API SgNullExpression* buildNullExpression_nfi();
+
+//! Build a Fortran colon-shape expression, set file info as the default one.
+ROSE_DLL_API SgColonShapeExp* buildColonShapeExp();
+//! No file info version of buildColonShapeExp(). File info is to be set later on.
+ROSE_DLL_API SgColonShapeExp* buildColonShapeExp_nfi();
 
 //! Build a bool value expression, the name convention of SgBoolValExp is little different from others for some unknown reason
 ROSE_DLL_API SgBoolValExp* buildBoolValExp(int value = 0);
@@ -1150,23 +1155,6 @@ buildDefiningTemplateMemberFunctionDeclaration (const SgName & name, SgType* ret
 // SgMemberFunctionDeclaration* buildDefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, bool buildTemplateInstantiation, unsigned int functionConstVolatileFlags, SgMemberFunctionDeclaration* first_nondefinng_declaration);
 ROSE_DLL_API SgMemberFunctionDeclaration*
 buildDefiningMemberFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope, SgExprListExp* decoratorList, bool buildTemplateInstantiation, unsigned int functionConstVolatileFlags, SgMemberFunctionDeclaration* first_nondefinng_declaration, SgTemplateArgumentPtrList* templateArgumentsList);
-
-#if 0
-// DQ (3/20/2017): This function is not used (so let's see if we can remove it).
-// DQ (8/29/2012): This is re-enabled because the backstroke project is using it (also added back the default parameters; which I don't think I like in the API).
-// DQ (7/26/2012): I would like to remove this from the API (at least for now while debugging the newer API required for template argument handling).
-//! Build a defining ( non-prototype) member function declaration from a SgMemberFunctionType
-ROSE_DLL_API SgMemberFunctionDeclaration*
-buildDefiningMemberFunctionDeclaration (const SgName & name, SgMemberFunctionType* func_type, SgScopeStatement* scope, SgExprListExp* decoratorList = NULL /* , unsigned int functionConstVolatileFlags = 0 */, SgMemberFunctionDeclaration* first_nondefinng_declaration = NULL);
-#endif
-
-#if 0
-// DQ (3/20/2017): This function is not used (so let's see if we can remove it).
-//! Build a prototype for an existing member function declaration (defining or nondefining is fine)
-// SgMemberFunctionDeclaration*
-ROSE_DLL_API SgMemberFunctionDeclaration*
-buildNondefiningMemberFunctionDeclaration (const SgMemberFunctionDeclaration* funcdecl, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0);
-#endif
 
 // DQ (8/28/2012): This preserves the original API with a simpler function (however for C++ at least, it is frequently not sufficent).
 // We need to decide if the SageBuilder API should include these sorts of functions.

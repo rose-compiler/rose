@@ -373,7 +373,6 @@ namespace SageBuilderCpp17 {
    SgExpression*  buildStringVal_nfi(std::string);
    SgExpression*  buildFloatVal_nfi(const std::string &);
    SgExpression*  buildComplexVal_nfi(SgExpression* real_value, SgExpression* imaginary_value, const std::string &str);
-   SgExpression*  buildExprListExp_nfi();
    SgExpression*  buildVarRefExp_nfi(std::string &name, SgScopeStatement* scope = nullptr);
    SgExpression*  buildSubtractOp_nfi(SgExpression* lhs, SgExpression* rhs);
    SgExpression*  buildSubscriptExpression_nfi(SgExpression* lower_bound, SgExpression* upper_bound, SgExpression* stride);

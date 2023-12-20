@@ -40,7 +40,7 @@ Sawyer::Message::Facility UnparseLanguageIndependentConstructs::mlog;
 
 
 // DQ (12/5/2014): Adding support to track transitions between unparsing via the AST and unparsing via the Token Stream.
-SgStatement* global_lastStatementUnparsed = NULL;
+SgStatement* global_lastStatementUnparsed = nullptr;
 
 UnparseLanguageIndependentConstructs::unparsed_as_enum_type global_unparsed_as = UnparseLanguageIndependentConstructs::e_unparsed_as_error;
 
@@ -88,19 +88,6 @@ UnparseLanguageIndependentConstructs::resBool(bool val) const
    {
      return val ? "True" : "False" ;
    }
-
-#if 0
-// DQ (7/1/2013): This needs to be defined in the header file, else the GNU 4.5 and 4.6 compilers will have undefined references at link time.
-// DQ (8/13/2007): This function was implemented by Thomas
-template<typename T>
-std::string
-UnparseLanguageIndependentConstructs::tostring(T t) const
-   {
-     std::ostringstream myStream; //creates an ostringstream object
-     myStream << std::showpoint << t << std::flush; // Distinguish integer and floating-point numbers
-     return myStream.str(); //returns the string form of the stringstream object
-   }
-#endif
 
 // TODO: This code is identical to 'FortranCodeGeneration_locatedNode::curprint'. Factor this!
 void
@@ -211,8 +198,6 @@ UnparseLanguageIndependentConstructs::markGeneratedFile() const
 
 // This has been simplified by Markus Kowarschik. We need to introduce the
 // case of statements that have been introduced by transformations.
-// bool Unparser::statementFromFile ( SgStatement* stmt, char* sourceFilename )
-// bool UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, string sourceFilename )
 bool
 UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, string sourceFilename, SgUnparse_Info& info )
    {
@@ -251,7 +236,6 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
 
   // #if 0
   // DQ (4/9/2020): Added header file unparsing feature specific debug level.
-  // if (SgProject::get_unparseHeaderFilesDebug() >= 10)
      if (SgProject::get_unparseHeaderFilesDebug() >= 10)
         {
           printf ("\n");
@@ -396,9 +380,6 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
        // some compiler generated IR nodes (e.g. required templates) are required in the generated source code
        // so check explicitly for compiler generated IR nodes which are marked for output withn the generated
        // source code (unparser).
-       // DQ (5/26/2005): Query isCompilerGenerated and isTransformation before processing the filename.
-       // bool isCompilerGenerated = stmt->get_file_info()->isCompilerGenerated();
-       // bool isCompilerGenerated = stmt->get_file_info()->isCompilerGeneratedNodeToBeUnparsed();
        //
        // Liao, 2021/1/4: outliner will build a lib file from input file. The introduced transformation should be preserved.
        //
@@ -416,9 +397,6 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
        // DQ (5/19/2011): Output generated code... (allows unparseToString() to be used with template instantations to support name qualification).
           bool forceOutputOfGeneratedCode = info.outputCompilerGeneratedStatements();
 
-       // DQ (10/31/2018): Added assertion.
-       // ASSERT_not_null(sourceFile);
-
 #if DEBUG_STATEMENT_FROM_FILE
           printf ("In statementFromFile(): isOutputInCodeGeneration = %s \n",isOutputInCodeGeneration ? "true" : "false");
           printf ("   --- sourceFile = %p \n",sourceFile);
@@ -433,9 +411,6 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
 #endif
        // DQ (10/25/2018): If we are using the unarsing of header files then we require a more complex test to avoid
        // transformations in header files being unparsed in the output source (e.g. *.C) file.
-       // if (isOutputInCodeGeneration == true && sourceFile->get_unparse_tokens() == true)
-       // if (isOutputInCodeGeneration == true && (sourceFile->get_unparse_tokens() == true || sourceFile->get_unparseHeaderFiles() == true))
-       // if ((isOutputInCodeGeneration == true || forceOutputOfGeneratedCode == true) && (sourceFile->get_unparse_tokens() == true || sourceFile->get_unparseHeaderFiles() == true))
           if ((isOutputInCodeGeneration == true || forceOutputOfGeneratedCode == true) && (sourceFile != NULL) && (sourceFile->get_unparse_tokens() == true || sourceFile->get_unparseHeaderFiles() == true))
              {
             // We need to evaluate if this is a transformation which should be output, since under the header file unparsing it would
@@ -455,10 +430,6 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
 #endif
 
             // DQ (11/1/2018): If we are not unparsing header files then any/every transformation can be output in the default file (input source file).
-            // if (sourceFile->getFileName() != stmt->get_file_info()->get_physical_filename())
-            // if (sourceFile->get_file_info()->get_physical_file_id() != stmt->get_file_info()->get_physical_file_id())
-            // if (sourceFile->get_file_info()->get_physical_file_id() != stmt->get_file_info()->get_physical_file_id())
-            // if (sourceFile->get_file_info()->get_physical_file_id() != stmt->get_file_info()->get_physical_file_id() && sourceFile->get_unparseHeaderFiles() == true)
                bool isCompilerGenerated = stmt->get_file_info()->isCompilerGenerated();
 
 #if DEBUG_STATEMENT_FROM_FILE
@@ -507,8 +478,6 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
 #endif
        // DQ (1/11/2006): OutputCodeGeneration is not set to be true where transformations
        // require it.  Transformation to include header files don't set the OutputCodeGeneration flag.
-       // if (isOutputInCodeGeneration || isTransformation)
-       // if (isOutputInCodeGeneration == true)
 
        // DQ (5/19/2011): Output generated code is specified.
           if (isOutputInCodeGeneration == true || forceOutputOfGeneratedCode == true)
@@ -522,7 +491,6 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
             // statementfilename = Rose::getFileName(stmt);
 
             // DQ (9/20/2013): We need to use the physical file name in checking which statements to unparse.
-            // statementfilename = stmt->get_file_info()->get_filenameString();
                statementfilename = stmt->get_file_info()->get_physical_filename();
 #if DEBUG_STATEMENT_FROM_FILE
                printf ("In statementFromFile(): statementfilename = %s \n",statementfilename.c_str());
@@ -535,8 +503,6 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                  // more sophisticated (test autoconf test codes) and so it requires the physical source position.  Ideally, the
                  // fortran support would have the same implementation, but the handling of intermdiate preprocessed files makes
                  // this more complex (and it should be a seperate fix to handle that).
-                 // statementfilename = SgFile::generate_C_preprocessor_intermediate_filename(stmt->get_file_info()->get_physical_filename());
-                 // statementfilename = SgFile::generate_C_preprocessor_intermediate_filename(sourceFilename);
                     statementfilename = stmt->get_file_info()->get_filenameString();
 
 #if DEBUG_STATEMENT_FROM_FILE
@@ -569,16 +535,12 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
             // ROSE_ASSERT (statementfilename.empty() == false);
 
             // DQ (12/12/2018): Adding testing for failing test in virtual function analysis.
-            // ASSERT_not_null(sourceFile);
-            // ASSERT_not_null(sourceFile->get_file_info());
                ASSERT_not_null(stmt);
                ASSERT_not_null(stmt->get_file_info());
 
             // DQ (10/31/2018): Because the filenames are interpreted, we have to use the file_id values.
             // DQ (9/20/2013): If this is a performance issue, an optimization would be to use file_id's instead of strings (filenames).
             // However, this does not appear to be an important optimization.
-            // if ( statementfilename == sourceFilename )
-            // if (sourceFile->get_file_info()->get_physical_file_id() == stmt->get_file_info()->get_physical_file_id())
                if ((sourceFile != NULL) && (sourceFile->get_file_info()->get_physical_file_id() == stmt->get_file_info()->get_physical_file_id()))
                   {
                     statementInFile = true;
@@ -624,8 +586,6 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                if (includeDirectiveStatement != NULL)
                   {
                  // DQ (3/24/2019): The newest use of this IR nodes does not accomidate the headerFileBody.
-                 // if (includeDirectiveStatement->get_headerFileBody()->get_file_info()->get_filenameString() == sourceFilename)
-                 // if (includeDirectiveStatement->get_headerFileBody() != NULL && includeDirectiveStatement->get_headerFileBody()->get_file_info()->get_filenameString() == sourceFilename)
                     if (includeDirectiveStatement->get_headerFileBody() != NULL && includeDirectiveStatement->get_headerFileBody()->get_file_info()->get_filenameString() == sourceFilename)
                        {
                          statementInFile = true;
@@ -643,11 +603,8 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
        // DQ (4/11/2021): The case of just using the unparseHeaderFiles without the token needs to work as well.
        // DQ (3/15/2021): When generating the token sequence, some statements will not have a token sequence
        // and if they are not marked as transformations, then we want to skip their output. And example of
-       // if ((sourceFile != NULL) && (sourceFile->get_unparse_tokens() == true || sourceFile->get_unparseHeaderFiles() == true))
-       // if ((sourceFile != NULL) && (sourceFile->get_unparse_tokens() == true))
           if ((sourceFile != NULL) && (sourceFile->get_unparse_tokens() == true || sourceFile->get_unparseHeaderFiles() == true))
              {
-            // bool isOutputInCodeGeneration = stmt->get_file_info()->isOutputInCodeGeneration();
                bool isTransformation = stmt->get_file_info()->isTransformation();
                bool containsTransformation = stmt->get_containsTransformation();
 #if 0
@@ -759,8 +716,6 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                             {
                            // DQ (4/11/2021): If we are only unparsing headers without the token unparsing, then this is true,
                            // else if we needed the token subsequences, then it is false.
-                           // statementInFile = false;
-                           // if (sourceFile->get_unparseHeaderFiles() == true)
                               if (sourceFile->get_unparse_tokens() == true)
                                  {
                                    statementInFile = false;
@@ -5455,19 +5410,19 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
      }
 
      AstUnparseAttribute* unparseAttribute = dynamic_cast<AstUnparseAttribute*>(expr->getAttribute(AstUnparseAttribute::markerName));
-     if (unparseAttribute != NULL)
+     if (unparseAttribute != nullptr)
         {
           string code = unparseAttribute->toString(AstUnparseAttribute::e_before);
           curprint (code);
         }
 
   // Only replace the unparsing of the IR node with a string if a string is marked as AstUnparseAttribute::e_replace.
-     if (unparseAttribute != NULL && unparseAttribute->replacementStringExists() == true)
+     if (unparseAttribute != nullptr && unparseAttribute->replacementStringExists() == true)
         {
           string code = unparseAttribute->toString(AstUnparseAttribute::e_replace);
           curprint (code);
         }
-       else if (expressionTree != NULL && info.SkipConstantFoldedExpressions() == false)
+       else if (expressionTree != nullptr && info.SkipConstantFoldedExpressions() == false)
         {
           unparseExpression(expressionTree, info);
         }
@@ -5475,9 +5430,9 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
         {
           bool printParen = requiresParentheses(expr,info);
 
-          if (printParen == true)
+          if (printParen)
              {
-               if(isSgMatrixExp(expr))
+               if (isSgMatrixExp(expr))
                  {
                    printParen = false;
                  }
@@ -5520,8 +5475,8 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
 
                case NULLPTR_VAL:
 
-            // DQ: These cases are separated out so that we can handle the
-            // original expression tree from any possible constant folding by EDG.
+            // These cases are separated out so that we can handle the original expression tree
+            // from any possible constant folding by EDG.
                case BOOL_VAL:
                case SHORT_VAL:
                case CHAR_VAL:
@@ -5547,7 +5502,7 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
 
                default:
                   {
-                 // Call the derived class implementation for C, C++, or Fortran specific language unparsing.
+                 // Call the derived class implementation for language specific unparsing.
                     unparseLanguageSpecificExpression(expr,info);
                     break;
                   }
@@ -6134,32 +6089,26 @@ bool
 UnparseLanguageIndependentConstructs::unparseLineReplacement( SgLocatedNode* stmt, SgUnparse_Info& info )
    {
      int replacedLines = 0;
+
   // Get atached preprocessing info
-     AttachedPreprocessingInfoType *prepInfoPtr= stmt->getAttachedPreprocessingInfo();
-     if (prepInfoPtr == NULL)
+     AttachedPreprocessingInfoType* prepInfoPtr = stmt->getAttachedPreprocessingInfo();
+     if (prepInfoPtr == nullptr)
         {
        // There's no preprocessing info attached to the current statement
-       // printf ("No comments or CPP directives associated with this statement ... \n");
-          return replacedLines;
+          return false;
         }
 
-  // If we are skiping BOTH comments and CPP directives then there is nothing to do
+  // If we are skipping BOTH comments and CPP directives then there is nothing to do
      if ( info.SkipComments() && info.SkipCPPDirectives() )
         {
-       // There's no preprocessing info attached to the current statement
-       // printf ("Skipping output or comments and CPP directives \n");
-          return replacedLines;
+          return false;
         }
-
-#if 0
-     info.display("In Unparse_ExprStmt::unparseLineReplacement()");
-#endif
 
   // Traverse the container of PreprocessingInfo objects
      AttachedPreprocessingInfoType::iterator i;
-     for(i = prepInfoPtr->begin(); i != prepInfoPtr->end(); ++i)
+     for (i = prepInfoPtr->begin(); i != prepInfoPtr->end(); ++i)
         {
-       // i ist a pointer to the current prepInfo object, print current preprocessing info
+       // i is a pointer to the current prepInfo object, print current preprocessing info
        // Assert that i points to a valid preprocssingInfo object
           ASSERT_not_null( (*i));
           ROSE_ASSERT ( (*i)->getTypeOfDirective()  != PreprocessingInfo::CpreprocessorUnknownDeclaration );
@@ -6178,8 +6127,8 @@ UnparseLanguageIndependentConstructs::unparseLineReplacement( SgLocatedNode* stm
        // These might have to be handled on a case by case basis.
           bool infoSaysGoAhead = !info.SkipEnumDefinition() && !info.SkipClassDefinition() && !info.SkipFunctionDefinition();
 
-       // DQ (7/19/2008): Allow expressions to have their associated comments unparsed.
-          infoSaysGoAhead = (infoSaysGoAhead == true) || (isSgExpression(stmt) != NULL);
+       // Allow expressions to have their associated comments unparsed.
+          infoSaysGoAhead = (infoSaysGoAhead == true) || (isSgExpression(stmt) != nullptr);
 
 #if 0
           printf ("(*i)->getRelativePosition() == whereToUnparse (matches == %s) \n",(*i)->getRelativePosition() == whereToUnparse ? "true" : "false");
@@ -6190,8 +6139,10 @@ UnparseLanguageIndependentConstructs::unparseLineReplacement( SgLocatedNode* stm
              {
                case PreprocessingInfo::LineReplacement:
                   {
-                    if (isSgExpression(stmt) == NULL ) //Do this when line replacement matches a whole statement
-                         unp->cur.format(stmt, info, FORMAT_BEFORE_DIRECTIVE);
+                    if (isSgExpression(stmt) == nullptr) {
+                      // Do this when line replacement matches a whole statement
+                      unp->cur.format(stmt, info, FORMAT_BEFORE_DIRECTIVE);
+                    }
 
                     curprint ( (*i)->getString());
                  // unp->cur.format(stmt, info, FORMAT_AFTER_DIRECTIVE);
@@ -6205,12 +6156,11 @@ UnparseLanguageIndependentConstructs::unparseLineReplacement( SgLocatedNode* stm
              }
         }
 
-  // there should only be one linereplacement directive for a statement
-     ROSE_ASSERT(replacedLines <= 1);
+  // there should only be one line replacement directive for a statement
+     ASSERT_require(replacedLines <= 1);
 
-     return replacedLines;
+     return (replacedLines > 0);
    }
-
 
 void
 UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
