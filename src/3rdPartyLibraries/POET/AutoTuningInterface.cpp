@@ -355,7 +355,7 @@ std::cerr << "from loop tree: maping " << loop->toString() << " => " << res.get_
 #endif
 }
 
-void HandleMap::UpdateDeleteNode(LoopTreeNode* n)
+void HandleMap::UpdateDeleteNode(const LoopTreeNode* n)
 {
   loopMap.erase(n);
 }
@@ -437,7 +437,7 @@ std::cerr << "found trace var: " << v->toString() << "\n";
    const std::vector<LocalVar*>& get_top() { return top_handles; }
 };
 
-class SetTraceVarASTTraverse : public ProcessAstNode,  
+class SetTraceVarASTTraverse : public ProcessAstNode<AstInterface::AstNodePtr>,  
    public SetTraceVarTraverse< HandleMap::AstMapType, void>
 {
  public:

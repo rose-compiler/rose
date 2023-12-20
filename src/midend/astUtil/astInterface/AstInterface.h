@@ -149,9 +149,30 @@ public:
                                  AstList* inits = 0);
   bool IsExecutableStmt( const AstNodePtr& s) ;
   static bool IsStatement( const AstNodePtr& s);
+  //! Check whether the given AST n is an expresion statement, and if yes, save the expression in the given exp.
   static bool IsExprStmt(const AstNodePtr& n, AstNodePtr* exp = 0);
-
+  //! Check whether the given AST is a block of statements that may include local variables.
   static bool IsBlock( const AstNodePtr& exp);
+  //! Check whether the two given AST are identical syntax trees.
+  static bool AstIdentical(const AstNodePtr& first, const AstNodePtr& second);
+  //! Check whether the two given AST types are identical syntax trees.
+  static bool AstIdentical(const AstNodeType& first, const AstNodeType& second);
+  //! Check whether the two given lists are identical syntax trees.
+  template <class List, class Node>
+  static bool AstIdentical(const List& first, const List& second) {
+    if (first.size() != second.size()) {
+       return false;
+    }
+    for (typename List::const_iterator p1 = first.begin(), p2 = second.begin();
+         p1 != first.end(); p1++, p2++) {
+       Node cur1 = *p1, cur2 = *p2;
+       if (!AstIdentical(cur1, cur2)) {
+         return false;
+       }
+    }
+    return true;
+  }
+  //! Returns the list of statements inside a statement block.
   static AstList GetBlockStmtList( const AstNodePtr& n);
   AstNodePtr GetBlockFirstStmt( const AstNodePtr& n);
   AstNodePtr GetBlockLastStmt( const AstNodePtr& n);

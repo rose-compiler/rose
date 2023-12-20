@@ -1375,11 +1375,10 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
   SgNode* s = AstNodePtrImpl(_s).get_ptr();
   SgFunctionParameterList *l = 0;
   SgNode* d = s;
+  SgFunctionDefinition *def =  0;
   if (s->variantT() ==  V_SgFunctionDefinition) 
     {
-      SgFunctionDefinition *def =  isSgFunctionDefinition(s);
-      if (body != 0)
-        *body = AstNodePtrImpl(def->get_body());
+      def =  isSgFunctionDefinition(s);
       d = def->get_declaration();
   }
   
@@ -1393,6 +1392,9 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
         *name =  string(decl->get_name().str());
       if (paramtype != 0 || params != 0) 
         l = decl->get_parameterList();
+      if (def == 0) {
+        def = decl->get_definition();
+      }
       break;
     }
   case V_SgNonrealDecl: 
@@ -1443,6 +1445,9 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
       }
       if (paramtype != 0 || params != 0) 
         l = decl->get_parameterList();
+      if (def == 0) {
+        def = decl->get_definition();
+      }
       break;
     }
   // Liao, 11/18/2008: add support for instantiated template (member) function declarations  
@@ -1458,6 +1463,9 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
       }
       if (paramtype != 0 || params != 0) 
         l = decl->get_parameterList();
+      if (def == 0) {
+        def = decl->get_definition();
+      }
       break;
   }  
   case V_SgTemplateInstantiationFunctionDecl: 
@@ -1472,6 +1480,9 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
       }
       if (paramtype != 0 || params != 0) 
         l = decl->get_parameterList();
+      if (def == 0) {
+        def = decl->get_definition();
+      }
       break;
   }  
   
@@ -1489,6 +1500,9 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
       if (outpars != 0 && cur->get_type()->variantT() == V_SgReferenceType)
          outpars->push_back(cur);
     }
+  }
+  if (body != 0 && def != 0) {
+     *body = AstNodePtrImpl(def->get_body());
   }
   return true;
 }
@@ -2399,12 +2413,126 @@ bool AstInterface::IsBlock( const AstNodePtr& _exp)
   case V_SgGlobal:
   case V_SgNamespaceDeclarationStatement:
   case V_SgClassDeclaration:
+  case V_SgNamespaceDefinitionStatement:
     return true;
   default: break;
   };
   return false;
 }
 
+//@
+static bool IsBlock( const AstNodePtr& exp);
+
+bool AstInterface:: AstIdentical(const AstNodeType& _first, const AstNodeType& _second) {
+  SgType* first = AstNodeTypeImpl(_first).get_ptr(), *second = AstNodeTypeImpl(_second).get_ptr(); 
+  std::cerr << "Checking Type Identical:" << first->unparseToString() << " vs " << second->unparseToString() << "\n";
+  if (first->unparseToString() == second->unparseToString()) {
+    std::cerr << "Ast Type is equivalent.\n";
+    return true;
+  }
+  std::cerr << "Ast Type is not equivalent.\n";
+  return false;
+}
+
+bool AstInterface:: AstIdentical(const AstNodePtr& _first, const AstNodePtr& _second) {
+  SgNode* first = AstNodePtrImpl(_first).get_ptr(); 
+  SgNode* second = AstNodePtrImpl(_second).get_ptr(); 
+  if (first == second) {
+    return true;
+  }
+  if (first == 0 || second == 0) {
+     std::cerr << "AST different: one of them is null.\n";
+     return false;
+  }
+  std::cerr << "Checking AST Identical:" << AstToString(_first) << " vs " << AstToString(_second) << "\n";
+  if (first->variantT() != second->variantT()) {
+    std::cerr << "AST different: different variant: " << AstToString(_first) << " vs " << AstToString(_second) << "\n"; 
+    return false;
+  }
+  std::string name1, name2;
+  AstList params1, params2;
+  AstNodePtr body1, body2;
+  AstTypeList paramtypes1, paramtypes2;
+  AstNodeType returntype1, returntype2;
+  if (IsFunctionDefinition(first, &name1, &params1, 0, &body1, &paramtypes1, &returntype1)) {
+    if (!IsFunctionDefinition(_second,&name2, &params2, 0, &body2, &paramtypes2, &returntype2)) {
+        std::cerr << "AST different: one is definition the other is not: " << AstToString(_first) << " vs " << AstToString(_second) << "\n"; 
+        return false;
+    }
+    if (name1 != name2) {
+       std::cerr << "AST different function name: " << AstToString(_first) << " vs " << AstToString(_second) << "\n"; 
+       return false;
+    }
+    if (!AstIdentical<AstNodeList, AstNodePtr>(params1, params2)) {
+       std::cerr << "AST different function parameter: " << AstToString(_first) << " vs " << AstToString(_second) << "\n"; 
+       return false;
+    }
+    if (!AstIdentical(body1, body2)) {
+       std::cerr << "AST different function body: " << AstToString(_first) << " vs " << AstToString(_second) << "\n"; 
+       return false;
+    }
+    if (!AstIdentical<AstTypeList, AstNodeType>(paramtypes1, paramtypes2)) {
+       std::cerr << "AST different function parameter types: " << AstToString(_first) << " vs " << AstToString(_second) << "\n"; 
+       return false;
+    }
+    if (!AstIdentical(returntype1, returntype2)) {
+       std::cerr << "AST different function return types: " << AstToString(_first) << " vs " << AstToString(_second) << "\n"; 
+       return false;
+    }
+    std::cerr << "AST identical:" << AstToString(_first) << " vs " << AstToString(_second) << "\n";
+    return true;
+  }
+  if (IsBlock(_first)) {
+     return AstIdentical<AstNodeList,AstNodePtr>(GetBlockStmtList(_first), GetBlockStmtList(_second));
+  }
+  { AstNodePtr cond1, cond2, falsebody1, falsebody2;
+    if (IsIf(_first, &cond1, &body1, &falsebody1)) {
+      if (!IsIf(_second, &cond2, &body2, &falsebody2)) {
+        std::cerr << "AST different: one is if-else the other is not: " << AstToString(_first) << " vs " << AstToString(_second) << "\n"; 
+        return false;
+      }
+      if (AstIdentical(cond1, cond2) &&  AstIdentical(body1, body2) 
+            && AstIdentical(falsebody1, falsebody2)) {
+          std::cerr << "AST identical:" << AstToString(_first) << " vs " << AstToString(_second) << "\n";
+          return true;
+      }
+      std::cerr << "AST different If-else " << AstToString(_first) << " vs " << AstToString(_second) << "\n"; 
+      return false;
+    }
+  }
+  { AstNodePtr lhs1, lhs2, rhs1, rhs2;
+    if (IsAssignment(_first, &lhs1, &rhs1)) {
+      if (!IsAssignment(_second, &lhs2, &rhs2)) {
+          std::cerr << "AST different: one is assignment the other is not: " << AstToString(_first) << " vs " << AstToString(_second) << "\n"; 
+          return false;
+      }
+      if (AstIdentical(lhs1, lhs2) && AstIdentical(rhs1, rhs2)) {
+          std::cerr << "AST identical:" << AstToString(_first) << " vs " << AstToString(_second) << "\n";
+          return true;
+      }
+      std::cerr << "AST different assignment: " << AstToString(_first) << " vs " << AstToString(_second) << "\n"; 
+      return false;
+    }
+  }
+  switch (first->variantT()) {
+  // Todo: expand the following to check individual components if need more diff details.
+  case V_SgUsingDirectiveStatement:
+  case V_SgVariableDeclaration:
+  case V_SgInitializedName:
+  case V_SgExprStatement:
+  case V_SgForStatement:
+  case V_SgReturnStmt:
+  case V_SgVarRefExp:
+  case V_SgEnumVal:
+      break;
+  }
+  if (AstToString(_first) != AstToString(_second)) {
+    std::cerr << "AST different:" << AstToString(_first) << " vs " << AstToString(_second) << "\n";
+    return false;
+  } 
+  std::cerr << "AST identical:" << AstToString(_first) << " vs " << AstToString(_second) << "\n";
+  return true;
+}
 //! Check if $s$ is a function call; if yes, return the function and arguments
 bool AstInterfaceImpl::
 IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args)
@@ -2607,27 +2735,6 @@ AstInterface::IsPointerType(const AstNodeType& __type)
   AstNodeTypeImpl type(__type);
   return type.get_ptr()->variantT() == V_SgPointerType;
 }
-
-/*
-bool AstInterface::
-IsArrayType( const AstNodeType& s, AstNodeType* base)
-{
-  if (s->variantT() ==  V_SgArrayType) {
-      if (base != 0) {
-        SgType* n = s;
-        while (true) {
-          SgArrayType *arr = isSgArrayType(n);
-          if (arr == 0)
-            break;
-          n = arr->get_base_type();
-        }
-        *base = n;
-      }
-      return true;
-  }
-  return false;
-}
-*/
 
 bool
 AstInterface::IsArrayType(const AstNodeType& __type, int* __dim,

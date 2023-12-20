@@ -395,11 +395,7 @@ BlockSpec::BlockSpec(HandleMap& _handleMap,
             LocalVar* outerHandle, LoopTreeNode* _innerLoop,
             LoopBlocking* config,
             const std::vector<FuseLoopInfo>* _nonperfect)
-    : OptSpec(0, "")
-#if 0 // [Robb Matzke 2021-03-17]: unused
-      , handleMap(_handleMap)
-#endif
-
+    : OptSpec(0, ""), handleMap(_handleMap)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
   ROSE_ABORT();

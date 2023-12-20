@@ -18,6 +18,10 @@ class ParallelizeLoop;
 class ArrayAbstractionInterface;
 class CopyArrayConfig;
 
+/* Qing Yi (1/2024) This code has the interface for connecting the loop optimization to the POET language for autotuning.
+ * These interface classes are defined and used inside the 3rd party POET library, which is built inside ROSE
+ * only when --with-poet is turned on during build configuration */
+
 /*QY: map loop tree nodes and AST nodes to tracing variables in POET */
 class LoopTreeCodeGenInfo;
 class HandleMap : public LoopTreeObserver, public AstObserver
@@ -183,12 +187,9 @@ class AutoTuningInterface
 /*QY: loop unrolling optimization*/
 class UnrollSpec : public OptSpec
 {
-#if 0 // [Robb Matzke 2021-03-17]: unused
    /*QY: relevant POET invocation names 
          (need to be consistent with POET/lib/opt.pi*/
    LocalVar* paramVar;
-#endif
-
  public:
   UnrollSpec(LocalVar* handle, int unrollSize); 
   virtual OptEnum get_enum() const { return UNROLL; }
@@ -212,11 +213,9 @@ class UnrollSpec : public OptSpec
 
 class ParLoopSpec : public OptSpec
 {
-#if 0 // [Robb Matzke 2021-03-17]: unused
   POETCode* privateVars;
   POETCode* ivarName, *bvarName;
   LocalVar* parVar, *parblockVar;
-#endif
  public:
   ParLoopSpec(LocalVar* outerHandle, LoopTreeNode* loop, int bsize);
   virtual OptEnum get_enum() const { return PARLOOP; }
@@ -240,11 +239,9 @@ class ParLoopSpec : public OptSpec
 class BlockSpec : public OptSpec
 {
    std::vector<LoopInfo> loopVec; /*QY: the loops to block */ 
-#if 0 // [Robb Matzke 2021-03-17]: unused
    POETCode* nonperfect; /*QY: the non-perfect loops*/
    LocalVar* blockPar, *ujPar;
    HandleMap& handleMap;
-#endif
    unsigned loopnum;
 
    /*QY: compute the blocking dimension configuration */
