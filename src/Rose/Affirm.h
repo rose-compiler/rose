@@ -113,7 +113,7 @@ affirm(Value& value, Predicate predicate, std::string const& message) {
  *  This is the same as the version that takes a predicate, except the predicate is built-in and simply tests whether the value
  *  returns true in a Boolean context.
  *
- *  Example: Say we have a pointer to an @ref SgAssignOp object and we don't know if it's a null pointer. If it's not a null pointer
+ *  Example: Say we have a pointer to an @c SgAssignOp object and we don't know if it's a null pointer. If it's not a null pointer
  *  then we want to get the type of its right operand, which we also want to make sure is not null. Here's how ROSE was typically
  *  used:
  *
@@ -171,7 +171,7 @@ affirm(Value& value, std::string const& message) {
  *
  *  This is just a wrapper around affirm that uses a better default error message of "null pointer".
  *
- *  Example: Say we have a pointer to an @ref SgAssignOp object and we don't know if it's a null pointer. If it's not a null pointer
+ *  Example: Say we have a pointer to an @c SgAssignOp object and we don't know if it's a null pointer. If it's not a null pointer
  *  then we want to get the type of its right operand, which we also want to make sure is not null. Here's how ROSE was typically
  *  used:
  *

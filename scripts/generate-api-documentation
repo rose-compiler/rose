@@ -3,7 +3,7 @@ set -e
 
 arg0="${0##*/}"
 dir0="${0%/*}"
-DEFAULT_CONFIG=RoseUser
+DEFAULT_CONFIG=user
 
 ####################################################################################################################################
 help() {
@@ -31,6 +31,11 @@ help() {
     echo
     echo "        --help | -h"
     echo "                Show this documentation."
+    echo
+    echo "        --list | -l"
+    echo "                List the names of the standard ROSE documentation audiences."
+    echo "                These are the names that can appear on the command line for this"
+    echo "                tool."
     echo
     echo "        --version | -V"
     echo "                Print the tool version on standard output and exit success."
@@ -72,6 +77,17 @@ rose-source() {
 # Returns the ROSE version number
 rose-version() {
     cat "$(rose-source)/ROSE_VERSION"
+
+    local branch="$(git branch --show-current)"
+    if [ -n "$branch" ]; then
+	echo "$branch"
+    fi
+
+    local commit="$(git rev-parse --short HEAD)"
+    if [ -n "$commit" ]; then
+	echo "$commit"
+    fi
+
 }
 
 ####################################################################################################################################
@@ -81,6 +97,16 @@ check-prerequisites() {
     type -t doxygen >/dev/null || die "doxygen command is required"
     doxygen --version >/dev/null || die "cannot run doxygen command"
 }
+
+####################################################################################################################################
+# List known configuration files
+list-known-configs() {
+    for config in $(rose-source)/docs/*.cfg; do
+	local basename="${config##*/}"
+	echo "${basename%.cfg}"
+    done
+}
+
 
 ####################################################################################################################################
 # Name of the Doxygen configuration file
@@ -156,6 +182,10 @@ while [ "$#" -gt 0 ]; do
     case "$1" in
 	--help|-h)
 	    help
+	    exit 0
+	    ;;
+	--list|-l)
+	    list-known-configs
 	    exit 0
 	    ;;
 	--version|-V)

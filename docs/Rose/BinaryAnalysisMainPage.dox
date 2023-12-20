@@ -8,6 +8,10 @@
 
 /** @mainpage notitle
  *
+ *  @note This documentation is intentionally incomplete. It will be extended and improved as we review and fix existing
+ *  documentation.  Therefore, it is best to use this documentation in conjunction with the API documentation hosted at [Rose
+ *  Compiler](http://rosecompiler.org).
+ *
  *  @section mainpage_intro The ROSE library
  * 
  *  Developed at [Lawrence Livermore National Laboratory](https://llnl.gov) (LLNL), ROSE is an open source compiler infrastructure

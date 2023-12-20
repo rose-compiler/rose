@@ -541,7 +541,13 @@ namespace Rose {
  *  into classes derived from @ref Rose::BinaryAnalysis::Architecture::Base. A number of these architectures are built into the ROSE
  *  library, but users can also define their own architectures and register them using the functions in the @ref
  *  Rose::BinaryAnalysis::Architecture namespace. In fact, the user's architecture definition can be compiled into its own library
- *  and made available to standard ROSE tools at runtime with their "--architectures" switch. */
+ *  and made available to standard ROSE tools at runtime with their "--architectures" switch.
+ *
+ *  @subsection rose_binaryanalysis_example_listing Full listing
+ *
+ *  Here is the full listing of the example program with cross references.
+ *
+ *  @includelineno disassembler.C */
 namespace BinaryAnalysis {}
 } // namespace
 
