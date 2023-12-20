@@ -2,7 +2,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
-#include <util/Sawyer/FileSystem.h>
+#include <Sawyer/FileSystem.h>
 
 using std::string;
 using std::vector;

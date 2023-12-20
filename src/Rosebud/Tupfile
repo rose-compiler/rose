@@ -12,6 +12,6 @@ run $(support_compile_linklib) -I.. -o libRosebud \
     Serializer.C \
     Utility.C \
     YamlGenerator.C \
-    $(ROSE)/src/util/Sawyer/libsawyer
+    $(ROSE)/src/Sawyer/libsawyer
 
-run $(support_compile_linkexe) -I.. rosebud.C libRosebud $(ROSE)/src/util/Sawyer/libsawyer
+run $(support_compile_linkexe) -I.. rosebud.C libRosebud $(ROSE)/src/Sawyer/libsawyer

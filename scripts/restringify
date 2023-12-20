@@ -11,19 +11,19 @@ dir0="${0%/*}"
 top_srcdir="$(readlink -f "$1")"
 top_blddir="$(readlink -f "$2")"
 
-if [ -e "$top_blddir/src/util/Sawyer/stringify-enums" ]; then
+if [ -e "$top_blddir/src/Sawyer/stringify-enums" ]; then
     # The correct location
-    stringifier="$top_blddir/src/util/Sawyer/stringify-enums"
+    stringifier="$top_blddir/src/Sawyer/stringify-enums"
 else
     (
 	cat <<EOF
 $arg0: no stringify-enums tool. Follow these steps:
 $arg0: (1) Configure ROSE like normal
 $arg0: (2a) If you're building with Tup:
-$arg0:      (1) run "tup $ROSE_BUILD/src/util/Sawyer/stringify-enums"
+$arg0:      (1) run "tup $ROSE_BUILD/src/Sawyer/stringify-enums"
 $arg0: (2b) If you're building with GNU Autotools:
 $arg0:      (1) run "make -C \$ROSE_BUILD clean" since dependencies are incomplete
-$arg0:      (2) run "make -C \$ROSE_BUILD/src/util/Sawyer"
+$arg0:      (2) run "make -C \$ROSE_BUILD/src/Sawyer"
 $arg0: (2c) If you're building with CMake:
 $arg0:      This script is not supported in CMake
 $arg0: (3) Continue to build ROSE like normal
@@ -42,9 +42,9 @@ if [ ! -x "$stringifier" ]; then
 fi
 
 # When running the libraries from inside the ROSE build tree, the rpath to find libsawyer
-# is set to a directory relative to src/util/Sawyer. That's probably not our CWD, so temporarily
+# is set to a directory relative to src/Sawyer. That's probably not our CWD, so temporarily
 # override using LD_LIBRARY_PATH
-export LD_LIBRARY_PATH="$top_blddir/src/util/Sawyer:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH="$top_blddir/src/Sawyer:$LD_LIBRARY_PATH"
 
 # If $CHECK_ENUMS is non-empty (the name of the enum database), then
 # instead of generating any code, check that the current enums are

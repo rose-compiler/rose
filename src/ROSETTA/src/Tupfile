@@ -10,7 +10,7 @@ CxxGrammarMetaProgram_LIBS = \
     $(ROSE)/src/Rose/StringUtility/libRoseStringUtility \
     $(ROSE)/src/util/librose_util \
     $(ROSE)/src/util/stringSupport/libstringSupport \
-    $(ROSE)/src/util/Sawyer/libsawyer
+    $(ROSE)/src/Sawyer/libsawyer
 
 run $(support_compile_linkexe) $(CxxGrammarMetaProgram_SOURCES) $(CxxGrammarMetaProgram_LIBS) -o CxxGrammarMetaProgram
 

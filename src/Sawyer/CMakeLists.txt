@@ -1,3 +1,6 @@
+# needed to properly define ROSE_UTIL_API
+add_definitions(-DROSE_UTIL_EXPORTS)
+
 add_library(util_sawyer OBJECT
   Assert.C Attribute.C Clexer.C CommandLine.C CommandLineBoost.C DocumentBaseMarkup.C RoseDatabase.C DocumentMarkup.C
   DocumentPodMarkup.C DocumentTextMarkup.C GraphTraversal.C LineVector.C

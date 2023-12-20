@@ -3952,7 +3952,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/util/Sawyer/DocumentMarkup.h line 42
+// /src/Sawyer/DocumentMarkup.h line 42
 namespace stringify { namespace Sawyer { namespace Document { namespace Markup {
     /** Convert Sawyer::Document::Markup::TokenType enum constant to a string. */
     const char* TokenType(int64_t);
@@ -3970,7 +3970,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/util/Sawyer/CommandLine.h line 173
+// /src/Sawyer/CommandLine.h line 173
 namespace stringify { namespace Sawyer { namespace CommandLine {
     /** Convert Sawyer::CommandLine::SortOrder enum constant to a string. */
     const char* SortOrder(int64_t);
@@ -3988,7 +3988,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/util/Sawyer/CommandLine.h line 186
+// /src/Sawyer/CommandLine.h line 186
 namespace stringify { namespace Sawyer { namespace CommandLine {
     /** Convert Sawyer::CommandLine::Canonical enum constant to a string. */
     const char* Canonical(int64_t);
@@ -4006,7 +4006,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/util/Sawyer/CommandLine.h line 194
+// /src/Sawyer/CommandLine.h line 194
 namespace stringify { namespace Sawyer { namespace CommandLine {
     /** Convert Sawyer::CommandLine::ShowGroupName enum constant to a string. */
     const char* ShowGroupName(int64_t);
@@ -4024,7 +4024,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/util/Sawyer/CommandLine.h line 202
+// /src/Sawyer/CommandLine.h line 202
 namespace stringify { namespace Sawyer { namespace CommandLine {
     /** Convert Sawyer::CommandLine::SwitchSkipping enum constant to a string. */
     const char* SwitchSkipping(int64_t);
@@ -4042,7 +4042,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/util/Sawyer/CommandLine.h line 2010
+// /src/Sawyer/CommandLine.h line 2010
 namespace stringify { namespace Sawyer { namespace CommandLine {
     /** Convert Sawyer::CommandLine::WhichValue enum constant to a string. */
     const char* WhichValue(int64_t);
@@ -4060,7 +4060,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/util/Sawyer/CommandLine.h line 3065
+// /src/Sawyer/CommandLine.h line 3065
 namespace stringify { namespace Sawyer { namespace CommandLine { namespace Parser {
     /** Convert Sawyer::CommandLine::Parser::GroupingFlags enum constant to a string. */
     const char* GroupingFlags(int64_t);
@@ -4078,7 +4078,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/util/Sawyer/Graph.h line 636
+// /src/Sawyer/Graph.h line 636
 namespace stringify { namespace Sawyer { namespace Container { namespace Graph {
     /** Convert Sawyer::Container::Graph::EdgePhase enum constant to a string. */
     const char* EdgePhase(int64_t);
@@ -4096,7 +4096,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/util/Sawyer/Tree.h line 119
+// /src/Sawyer/Tree.h line 119
 namespace stringify { namespace Sawyer { namespace Tree {
     /** Convert Sawyer::Tree::TraversalEvent enum constant to a string. */
     const char* TraversalEvent(int64_t);
@@ -4114,7 +4114,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/util/Sawyer/Tree.h line 125
+// /src/Sawyer/Tree.h line 125
 namespace stringify { namespace Sawyer { namespace Tree {
     /** Convert Sawyer::Tree::TraversalAction enum constant to a string. */
     const char* TraversalAction(int64_t);
@@ -4132,7 +4132,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/util/Sawyer/Tree.h line 481
+// /src/Sawyer/Tree.h line 481
 namespace stringify { namespace Sawyer { namespace Tree { namespace Node {
     /** Convert Sawyer::Tree::Node::TraversalDirection enum constant to a string. */
     const char* TraversalDirection(int64_t);
@@ -4150,7 +4150,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/util/Sawyer/stringifyEnums.C line 39
+// /src/Sawyer/stringifyEnums.C line 39
 namespace stringify {
     /** Convert Generate enum constant to a string. */
     const char* Generate(int64_t);
@@ -4168,7 +4168,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/util/Sawyer/stringifyEnums.C line 46
+// /src/Sawyer/stringifyEnums.C line 46
 namespace stringify {
     /** Convert Flag enum constant to a string. */
     const char* Flag(int64_t);
@@ -4186,7 +4186,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/util/Sawyer/Access.h line 19
+// /src/Sawyer/Access.h line 19
 namespace stringify { namespace Sawyer { namespace Access {
     /** Convert Sawyer::Access::Access enum constant to a string. */
     const char* Access(int64_t);
@@ -4204,7 +4204,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/util/Sawyer/Clexer.h line 25
+// /src/Sawyer/Clexer.h line 25
 namespace stringify { namespace Sawyer { namespace Language { namespace Clexer {
     /** Convert Sawyer::Language::Clexer::TokenType enum constant to a string. */
     const char* TokenType(int64_t);
@@ -4222,7 +4222,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/util/Sawyer/GraphTraversal.h line 39
+// /src/Sawyer/GraphTraversal.h line 39
 namespace stringify { namespace Sawyer { namespace Container { namespace Algorithm {
     /** Convert Sawyer::Container::Algorithm::TraversalEvent enum constant to a string. */
     const char* TraversalEvent(int64_t);
@@ -4240,7 +4240,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/util/Sawyer/GraphAlgorithm.h line 374
+// /src/Sawyer/GraphAlgorithm.h line 374
 namespace stringify { namespace Sawyer { namespace Container { namespace Algorithm {
     /** Convert Sawyer::Container::Algorithm::CsiNextAction enum constant to a string. */
     const char* CsiNextAction(int64_t);
@@ -4258,7 +4258,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/util/Sawyer/Database.h line 293
+// /src/Sawyer/Database.h line 293
 namespace stringify { namespace Sawyer { namespace Database { namespace Statement {
     /** Convert Sawyer::Database::Statement::State enum constant to a string. */
     const char* State(int64_t);
@@ -4276,7 +4276,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/util/Sawyer/Message.h line 313
+// /src/Sawyer/Message.h line 313
 namespace stringify { namespace Sawyer { namespace Message {
     /** Convert Sawyer::Message::Importance enum constant to a string. */
     const char* Importance(int64_t);
@@ -4294,7 +4294,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/util/Sawyer/Message.h line 343
+// /src/Sawyer/Message.h line 343
 namespace stringify { namespace Sawyer { namespace Message {
     /** Convert Sawyer::Message::AnsiColor enum constant to a string. */
     const char* AnsiColor(int64_t);
@@ -4312,7 +4312,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/util/Sawyer/Message.h line 990
+// /src/Sawyer/Message.h line 990
 namespace stringify { namespace Sawyer { namespace Message { namespace Prefix {
     /** Convert Sawyer::Message::Prefix::When enum constant to a string. */
     const char* When(int64_t);

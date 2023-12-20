@@ -792,7 +792,6 @@ lcov_genhtml: coverage.info
 # DQ (2/22/2016): We can't include directories that ere not configured.
 # -d src/frontend/CxxFrontend/EDG/EDG_4.9/misc
 # -d src/frontend/CxxFrontend/EDG/EDG_4.9/src/.libs
-# -d src/util/Sawyer 
 
 # DQ (2/22/2016): The file genhtml has an error.
 #   ERROR: cannot read /export/tmp.schordan1/development/rosework/mainbranch/rose/src/midend/astMatching/matcherlexer.ll

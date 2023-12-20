@@ -22,7 +22,7 @@ AC_DEFUN([ROSE_SUPPORT_BLACKLIST],[
     while true; do
         # Boost 1.54 has numerous bugs related to threads. These manifest themselves as compile errors in
         # the first ROSE source that happens to include boost thread support, usually something in the
-        # src/util/Sawyer directory.
+        # src/Sawyer directory.
         if test "$rose_boost_version" = 105400 -a \
                 "$FRONTEND_CXX_COMPILER_VENDOR" = "gnu" -a \
                 "$FRONTEND_CXX_VERSION_MAJOR" = 4 -a \

@@ -89,6 +89,7 @@ endif()
 
 # Build in the subdirectories that make up the ROSE source code
 add_subdirectory(util)
+add_subdirectory(Sawyer)
 add_subdirectory(Rosebud)
 add_subdirectory(ROSETTA)
 add_subdirectory(roseSupport)

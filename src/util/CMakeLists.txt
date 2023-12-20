@@ -48,7 +48,6 @@ add_definitions(-DROSE_UTIL_EXPORTS)
 ######## build sub libraries ##########
 add_subdirectory(commandlineProcessing)
 add_subdirectory(graphs)
-add_subdirectory(Sawyer)
 add_subdirectory(stringSupport)
 add_subdirectory(support)
 

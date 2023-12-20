@@ -19,4 +19,4 @@ run $(public_header) -o include/Sawyer --license=LICENSE \
     Stopwatch.h Synchronization.h ThreadWorkers.h Time.h Trace.h Tracker.h Tree.h Type.h WarningsOff.h WarningsRestore.h \
     WorkList.h Yaml.h
 
-run $(support_compile_linkexe) --install -o stringify-enums stringifyEnums.C $(ROSE)/src/util/Sawyer/libsawyer
+run $(support_compile_linkexe) --install -o stringify-enums stringifyEnums.C $(ROSE)/src/Sawyer/libsawyer

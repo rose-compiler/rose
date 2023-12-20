@@ -1,7 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 bin_PROGRAMS =
 
-SUBDIRS = stringSupport commandlineProcessing support graphs Sawyer
+SUBDIRS = stringSupport commandlineProcessing support graphs
 
 # AUTOMAKE_OPTIONS = subdir-objects
 
