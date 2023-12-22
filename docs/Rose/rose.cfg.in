@@ -705,9 +705,9 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
 			 @top_srcdir@/src/Rose/BinaryAnalysis/Unparser \
 			 @top_srcdir@/src/Rose/CodeGen \
 			 @top_srcdir@/src/Rose/CommandLine \
+			 @top_srcdir@/src/Rose/Sarif \
 			 @top_srcdir@/src/Rose/StringUtility \
 			 @top_srcdir@/src/Rose/Traits \
-			 @top_srcdir@/src/Rose/Tree \			 
 			 @top_srcdir@/src/Rosebud \
                          @top_srcdir@/src/ROSETTA/src/binaryInstruction.C \
                          @top_srcdir@/src/frontend/Disassemblers \

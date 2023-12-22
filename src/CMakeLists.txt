@@ -165,6 +165,7 @@ set(rose_LIB_OBJS
   roseCommandLine
   roseDiagnostics
   roseFileSystem
+  roseSarif
   roseStringUtility
   RoseAST
   RoseCodeGen

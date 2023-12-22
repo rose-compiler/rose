@@ -275,6 +275,12 @@ librose_partial_la_SOURCES =								\
 	FormattedTable.C								\
 	Initialize.C									\
 	Progress.C									\
+	Sarif/Analysis.C								\
+	Sarif/Exception.C								\
+	Sarif/Location.C								\
+	Sarif/Log.C									\
+	Sarif/Node.C									\
+	Sarif/Result.C									\
 	SourceLocation.C								\
 	StringUtility/Convert.C								\
 	StringUtility/Diagnostics.C							\

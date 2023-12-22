@@ -3,6 +3,7 @@
 #include <Rose/StringUtility/StringToNumber.h>
 
 #include <boost/algorithm/string/case_conv.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/replace.hpp>
 
 namespace Rose {
@@ -185,7 +186,7 @@ bourneEscape(const std::string &s) {
     // If the string contains any shell meta characters or white space that must be quoted then single-quote the entire string
     // and escape backslashes.
     for (char ch: s) {
-        if (!::isalnum(ch) && !strchr("_-+./", ch))
+        if (!::isalnum(ch) && !strchr("_-+./=", ch))
             return "'" + boost::replace_all_copy(s, "\\", "\\\\") + "'";
     }
 
@@ -195,19 +196,26 @@ bourneEscape(const std::string &s) {
 
 std::string
 yamlEscape(const std::string &s) {
+    if (s.empty())
+        return "\"\"";
+
     const std::string escaped = cEscape(s);
-    if (s.empty() || s != escaped) {
+    if (s != escaped)
         return "\"" + escaped + "\"";
-    } else if (s.find(':') != std::string::npos) {
+
+    if (!std::isalnum(s[0]) || !std::isalnum(s[s.size()-1]))
         return "\"" + s + "\"";
-    } else {
-        const std::string lc = boost::to_lower_copy(s);
-        if ("yes" == lc || "true" == lc || "no" == lc || "false" == lc) {
-            return"\"" + s + "\"";
-        } else {
-            return s;
-        }
-    }
+    if (boost::contains(s, "  "))
+        return "\"" + s + "\"";
+
+    if (s.find(':') != std::string::npos)
+        return "\"" + s + "\"";
+
+    const std::string lc = boost::to_lower_copy(s);
+    if ("yes" == lc || "true" == lc || "no" == lc || "false" == lc)
+        return"\"" + escaped + "\"";
+
+    return s;
 }
 
 std::string

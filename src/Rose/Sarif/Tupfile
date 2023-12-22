@@ -1,0 +1,18 @@
+include_rules
+
+run $(librose_compile)				\
+    Analysis.C					\
+    Exception.C					\
+    Location.C					\
+    Log.C					\
+    Node.C					\
+    Result.C					\
+
+run $(public_header) -o include/rose/Rose/Sarif	\
+    Analysis.h					\
+    BasicTypes.h				\
+    Exception.h					\
+    Location.h					\
+    Log.h					\
+    Node.h					\
+    Result.h					\
