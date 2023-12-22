@@ -9,6 +9,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/unordered_set.hpp>
 #include <Sawyer/Optional.h>
+#include <Sawyer/Synchronization.h>
 #include <ostream>
 #include <string>
 

@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Sawyer/Interval.h>
 #include <boost/serialization/access.hpp>
 
 namespace Rose {
