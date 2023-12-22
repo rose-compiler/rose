@@ -335,11 +335,6 @@ public:
 namespace SageBuilderCpp17 {
 
 // Types
-   SgType* buildBoolType();
-   SgType* buildIntType();
-   SgType* buildFloatType();
-   SgType* buildCharType();
-   SgType* buildDoubleType();
    SgType* buildComplexType(SgType* base_type = nullptr);
    SgType* buildBoolType(SgExpression* kind_expr);
    SgType* buildIntType(SgExpression* kind_expr);

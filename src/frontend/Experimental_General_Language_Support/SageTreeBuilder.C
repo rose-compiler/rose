@@ -707,6 +707,11 @@ Enter(SgFunctionDeclaration* &function_decl,const std::string &name, SgType* ret
 
    if (list_contains(modifiers, e_function_modifier_pure     ))   function_decl->get_functionModifier().setPure();
    if (list_contains(modifiers, e_function_modifier_elemental))   function_decl->get_functionModifier().setElemental();
+
+   if (list_contains(modifiers, e_function_modifier_cuda_device)) function_decl->get_functionModifier().setCudaDevice();
+   if (list_contains(modifiers, e_function_modifier_cuda_host))   function_decl->get_functionModifier().setCudaHost();
+   if (list_contains(modifiers, e_function_modifier_cuda_global)) function_decl->get_functionModifier().setCudaGlobalFunction();
+   if (list_contains(modifiers, e_function_modifier_cuda_grid_global)) function_decl->get_functionModifier().setCudaGridGlobal();
 }
 
 void SageTreeBuilder::
@@ -1897,44 +1902,38 @@ Enter(SgVariableDeclaration* &var_decl, SgType* base_type, std::list<std::tuple<
 }
 
 void SageTreeBuilder::
-Leave(SgVariableDeclaration* var_decl)
+Leave(SgVariableDeclaration* varDecl)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgVariableDeclaration*) \n";
 }
 
 void SageTreeBuilder::
-Leave(SgVariableDeclaration* var_decl, std::list<LanguageTranslation::ExpressionKind> &modifier_enum_list)
+Leave(SgVariableDeclaration* varDecl, std::list<LanguageTranslation::ExpressionKind> &modifier_enum_list)
 {
-   mlog[TRACE] << "SageTreeBuilder::Leave(SgVariableDeclaration*) with modifiers \n";
+  mlog[TRACE] << "SageTreeBuilder::Leave(SgVariableDeclaration*) with modifiers \n";
 
-   for (LanguageTranslation::ExpressionKind modifier_enum : modifier_enum_list) {
-      switch(modifier_enum)
-       {
-         case LanguageTranslation::ExpressionKind::e_type_modifier_intent_in:
-            {
-               var_decl->get_declarationModifier().get_typeModifier().setIntent_in();
-               break;
-            }
-         case LanguageTranslation::ExpressionKind::e_type_modifier_intent_out:
-            {
-               var_decl->get_declarationModifier().get_typeModifier().setIntent_out();
-               break;
-            }
-         case LanguageTranslation::ExpressionKind::e_type_modifier_intent_inout:
-            {
-               var_decl->get_declarationModifier().get_typeModifier().setIntent_inout();
-               break;
-            }
-         case LanguageTranslation::ExpressionKind::e_type_modifier_parameter:
-            {
-               var_decl->get_declarationModifier().get_typeModifier().get_constVolatileModifier().setConst();
-               break;
-            }
-         default: break;
-       }
-   }
+  for (LanguageTranslation::ExpressionKind modifier_enum : modifier_enum_list) {
+    switch(modifier_enum) {
+      case LanguageTranslation::ExpressionKind::e_storage_modifier_contiguous:
+        varDecl->get_declarationModifier().get_storageModifier().setContiguous();
+        break;
+      case LanguageTranslation::ExpressionKind::e_type_modifier_intent_in:
+        varDecl->get_declarationModifier().get_typeModifier().setIntent_in();
+        break;
+      case LanguageTranslation::ExpressionKind::e_type_modifier_intent_out:
+        varDecl->get_declarationModifier().get_typeModifier().setIntent_out();
+        break;
+      case LanguageTranslation::ExpressionKind::e_type_modifier_intent_inout:
+        varDecl->get_declarationModifier().get_typeModifier().setIntent_inout();
+        break;
+      case LanguageTranslation::ExpressionKind::e_type_modifier_parameter:
+        varDecl->get_declarationModifier().get_typeModifier().get_constVolatileModifier().setConst();
+        break;
+      default: break;
+    }
+  }
 
-   Leave(var_decl);
+  Leave(varDecl);
 }
 
 void SageTreeBuilder::
@@ -2243,31 +2242,6 @@ namespace SageBuilderCpp17 {
 
 // Types
 //
-SgType* buildBoolType()
-{
-   return SageBuilder::buildBoolType();
-}
-
-SgType* buildIntType()
-{
-   return SageBuilder::buildIntType();
-}
-
-SgType* buildFloatType()
-{
-   return SageBuilder::buildFloatType();
-}
-
-SgType* buildCharType()
-{
-   return SageBuilder::buildCharType();
-}
-
-SgType* buildDoubleType()
-{
-   return SageBuilder::buildDoubleType();
-}
-
 SgType* buildComplexType(SgType* base_type)
 {
    return SageBuilder::buildComplexType(base_type);

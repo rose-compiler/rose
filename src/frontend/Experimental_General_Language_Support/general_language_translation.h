@@ -23,11 +23,18 @@ namespace LanguageTranslation
            e_function_modifier_reference,
 
         // Fortran
-        // e_function_modifier_list,
            e_function_modifier_elemental,
            e_function_modifier_impure,
            e_function_modifier_module,
+           e_function_modifier_non_recursive,
            e_function_modifier_pure,
+
+        // CUDA
+           e_function_modifier_cuda_host,
+           e_function_modifier_cuda_device,
+           e_function_modifier_cuda_host_device,
+           e_function_modifier_cuda_global,
+           e_function_modifier_cuda_grid_global,
 
            e_function_modifier_last
         };

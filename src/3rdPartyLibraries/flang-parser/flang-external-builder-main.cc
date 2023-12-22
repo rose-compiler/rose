@@ -319,6 +319,12 @@ int flang_external_builder_main(int argc, char *const argv[], SgSourceFile* rose
   options.features.Enable(
       Fortran::common::LanguageFeature::BackslashEscapes, true);
 
+  // enable parsing of CUDA Fortran
+  bool enableCUDA{true};
+  if (enableCUDA) {
+    options.features.Enable(Fortran::common::LanguageFeature::CUDA);
+  }
+
   Fortran::common::IntrinsicTypeDefaultKinds defaultKinds;
 
   std::vector<std::string> fortranSources, otherSources, relocatables;

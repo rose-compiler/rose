@@ -352,7 +352,7 @@ void Build(const parser::ModuleSubprogram &x)
 
    std::visit(
       common::visitors{
-         [] (const common::Indirection<parser::SeparateModuleSubprogram> &y) { ; },
+         [] (const common::Indirection<parser::SeparateModuleSubprogram> &y) { ABORT_NO_IMPL; },
          // common::Indirection<FunctionSubprogram>, common::Indirection<SubroutineSubprogram>
          [] (const auto &y) { Build(y.value()); },
       },
@@ -670,74 +670,89 @@ void Build(const parser::FunctionStmt &x, std::list<std::string> &dummy_arg_name
    }
 }
 
-void Build(const parser::SubroutineStmt &x, std::list<std::string> &dummy_arg_name_list, std::string &name, LanguageTranslation::FunctionModifierList &function_modifiers)
+void Build(const parser::SubroutineStmt &x, std::list<std::string> &dummyArgNameList, std::string &name, LanguageTranslation::FunctionModifierList &functionModifiers)
 {
 #if PRINT_FLANG_TRAVERSAL
-   std::cout << "Rose::builder::Build(SubroutineStmt)\n";
+  std::cout << "Rose::builder::Build(SubroutineStmt)\n";
 #endif
 
-   SgType* type;
+  SgType* type;
 
-   Build(std::get<0>(x.t), function_modifiers, type);    // std::list<PrefixSpec>
-   Build(std::get<1>(x.t), name);                        // Name
-   Build(std::get<2>(x.t), dummy_arg_name_list);         // std::list<DummyArg>
+  Build(std::get<0>(x.t), functionModifiers, type);    // std::list<PrefixSpec>
+  Build(std::get<1>(x.t), name);                       // Name
+  Build(std::get<2>(x.t), dummyArgNameList);           // std::list<DummyArg>
 
-#if 0
-   if (auto & opt = std::get<3>(x.t)) {                  // std::optional<LanguageBindingSpec>
-      Build(opt.value(), expr);
-   }
-#endif
+  if (auto & opt = std::get<3>(x.t)) {                 // std::optional<LanguageBindingSpec>
+    //Build(opt.value(), expr);
+    ABORT_NO_IMPL;
+  }
 }
 
-void Build(const std::list<parser::PrefixSpec> &x, LanguageTranslation::FunctionModifierList &function_modifiers, SgType* &type)
+void Build(const std::list<parser::PrefixSpec> &x, LanguageTranslation::FunctionModifierList &functionModifiers, SgType* &type)
+{
+#if PRINT_FLANG_TRAVERSAL
+  std::cout << "Rose::builder::Build(PrefixSpec)\n";
+#endif
+
+  // std::variant<> - DeclarationTypeSpec, Elemental, Impure, Module, Non_Recursive,
+  //                  Pure, Recursive, Attributes, Launch_Bounds, Cluster_Dims
+  for (const auto &elem : x) {
+    Build(elem, functionModifiers, type);
+  }
+}
+
+void Build(const parser::PrefixSpec &x, LanguageTranslation::FunctionModifierList &modifiers, SgType* &type)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(PrefixSpec)\n";
 #endif
 
-   for (const auto &elem : x) {
-      LanguageTranslation::FunctionModifier function_mod;
+   // std::variant<> - DeclarationTypeSpec, Elemental, Impure, Module, Non_Recursive,
+   //                  Pure, Recursive, Attributes, Launch_Bounds, Cluster_Dims
 
-      Build(elem, function_mod, type);
-
-      function_modifiers.push_back(function_mod);
-   }
-
-}
-
-void Build(const parser::PrefixSpec &x, LanguageTranslation::FunctionModifier &function_mod, SgType* &type)
-{
-#if PRINT_FLANG_TRAVERSAL
-   std::cout << "Rose::builder::Build(PrefixSpec)\n";
-#endif
+   using FM = LanguageTranslation::FunctionModifier;
 
    std::visit(
       common::visitors{
-         [&] (const parser::PrefixSpec::Elemental &y)
-            {
-               function_mod = LanguageTranslation::FunctionModifier::e_function_modifier_elemental;
-            },
-         [&] (const parser::PrefixSpec::Impure &y)
-            {
-               function_mod = LanguageTranslation::FunctionModifier::e_function_modifier_impure;
-            },
-         [&] (const parser::PrefixSpec::Module &y)
-            {
-               function_mod = LanguageTranslation::FunctionModifier::e_function_modifier_module;
-            },
-         [&] (const parser::PrefixSpec::Pure &y)
-            {
-               function_mod = LanguageTranslation::FunctionModifier::e_function_modifier_pure;
-            },
-         [&] (const parser::PrefixSpec::Recursive &y)
-            {
-               function_mod = LanguageTranslation::FunctionModifier::e_function_modifier_recursive;
-            },
-         [&] (const parser::DeclarationTypeSpec &y)
-            {
+         [&] (const parser::DeclarationTypeSpec &y) {
                Build(y, type);
+             },
+         [&] (const parser::PrefixSpec::Elemental &y) {
+               modifiers.push_back(FM::e_function_modifier_elemental);
+             },
+         [&] (const parser::PrefixSpec::Impure &y) {
+               modifiers.push_back(FM::e_function_modifier_impure);
+             },
+         [&] (const parser::PrefixSpec::Module &y) {
+               modifiers.push_back(FM::e_function_modifier_module);
+             },
+         [&] (const parser::PrefixSpec::Non_Recursive &y) {
+               modifiers.push_back(FM::e_function_modifier_non_recursive);
+             },
+         [&] (const parser::PrefixSpec::Pure &y) {
+               modifiers.push_back(FM::e_function_modifier_pure);
+             },
+         [&] (const parser::PrefixSpec::Recursive &y) {
+               modifiers.push_back(FM::e_function_modifier_recursive);
+             },
+         [&] (const parser::PrefixSpec::Attributes &y) {
+               for (auto attr: y.v) {
+                 // Host, Device, HostDevice, Global, Grid_Global
+                 switch(attr) {
+                   case Fortran::common::CUDASubprogramAttrs::Host:
+                     modifiers.push_back(FM::e_function_modifier_cuda_host);  break;
+                   case Fortran::common::CUDASubprogramAttrs::Device:
+                     modifiers.push_back(FM::e_function_modifier_cuda_device);  break;
+                   case Fortran::common::CUDASubprogramAttrs::HostDevice:
+                     modifiers.push_back(FM::e_function_modifier_cuda_host_device);  break;
+                   case Fortran::common::CUDASubprogramAttrs::Global:
+                     modifiers.push_back(FM::e_function_modifier_cuda_global);  break;
+                   case Fortran::common::CUDASubprogramAttrs::Grid_Global:
+                     modifiers.push_back(FM::e_function_modifier_cuda_grid_global);  break;
+                 }
+               }
             },
-         [&] (const auto &y) { ; }   // Non_Recursive
+         [&] (const auto &y) { ABORT_NO_IMPL; } // Launch_Bounds, Cluster_Dims
       },
       x.u);
 }
@@ -751,7 +766,7 @@ void Build(const parser::DummyArg &x, std::string &name)
    std::visit(
       common::visitors{
          [&] (const Fortran::parser::Name &y) { name = y.ToString(); },
-         [&] (const Fortran::parser::Star &y) { ; },
+         [&] (const Fortran::parser::Star &y) { ABORT_NO_IMPL; },
       },
       x.u);
 }
@@ -1469,10 +1484,14 @@ void Build(const parser::AttrSpec &x, LanguageTranslation::ExpressionKind &modif
 
    std::visit(
       common::visitors{
-         [] (const common::CUDADataAttr &y) { ABORT_NO_IMPL; },
+         [] (const common::CUDADataAttr &y)
+           {
+             // enum class CUDADataAttr { Constant, Device, Managed, Pinned, Shared, Texture };
+             ABORT_NO_IMPL;
+           },
          [] (const parser::CoarraySpec  &y) { ABORT_NO_IMPL; },
          [] (const parser::ArraySpec    &y) { ABORT_NO_IMPL; },
-         [&] (const parser::Parameter    &y)
+         [&] (const parser::Parameter   &y)
             {
                modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_parameter;
             },
@@ -1539,7 +1558,7 @@ void Build(const parser::KindSelector &x, SgExpression* &expr)
    std::visit(
       common::visitors{
          [&] (const parser::ScalarIntConstantExpr  &y) { Build(y.thing.thing, expr); },
-         [&] (const parser::KindSelector::StarSize &y) { ; },
+         [&] (const parser::KindSelector::StarSize &y) { ABORT_NO_IMPL; },
       },
       x.u);
 }
@@ -1564,9 +1583,9 @@ void Build(const parser::IntegerTypeSpec &x, SgType* &type)
    if (auto & kind = x.v) {   // std::optional<KindSelector>
       SgExpression* kind_expr = nullptr;
       Build(kind.value(), kind_expr);
-      type = SageBuilderCpp17::buildIntType(kind_expr);
+      type = SageBuilder::buildIntType(kind_expr);
    } else {
-      type = SageBuilderCpp17::buildIntType();
+      type = SageBuilder::buildIntType();
    }
 }
 
@@ -1579,9 +1598,9 @@ void Build(const parser::IntrinsicTypeSpec::Real &x, SgType* &type)
    if (auto & kind = x.kind) {   // std::optional<KindSelector>
       SgExpression* kind_expr = nullptr;
       Build(kind.value(), kind_expr);
-      type = SageBuilderCpp17::buildFloatType(kind_expr);
+      type = SageBuilder::buildFloatType(kind_expr);
    } else {
-      type = SageBuilderCpp17::buildFloatType();
+      type = SageBuilder::buildFloatType();
    }
 }
 
@@ -1591,7 +1610,7 @@ void Build(const parser::IntrinsicTypeSpec::DoublePrecision &x, SgType* &type)
    std::cout << "Rose::builder::Build(DoublePrecision)\n";
 #endif
 
-   type = SageBuilderCpp17::buildDoubleType();
+   type = SageBuilder::buildDoubleType();
 }
 
 void Build(const parser::IntrinsicTypeSpec::Complex &x, SgType* &type)
@@ -1600,7 +1619,7 @@ void Build(const parser::IntrinsicTypeSpec::Complex &x, SgType* &type)
    std::cout << "Rose::builder::Build(Complex)\n";
 #endif
 
-   SgType* base_type = SageBuilderCpp17::buildIntType();
+   SgType* base_type = SageBuilder::buildIntType();
    type = SageBuilderCpp17::buildComplexType(base_type);
 }
 
@@ -1616,7 +1635,7 @@ void Build(const parser::IntrinsicTypeSpec::Character &x, SgType* &type)
       Build(opt.value(), expr);
       type = SageBuilderCpp17::buildStringType(expr);
    } else {
-      type = SageBuilderCpp17::buildCharType();
+      type = SageBuilder::buildCharType();
    }
 }
 
@@ -1629,9 +1648,9 @@ void Build(const parser::IntrinsicTypeSpec::Logical &x, SgType* &type)
    if (auto & kind = x.kind) {   // std::optional<KindSelector>
       SgExpression* kind_expr = nullptr;
       Build(kind.value(), kind_expr);
-      type = SageBuilderCpp17::buildBoolType(kind_expr);
+      type = SageBuilder::buildBoolType(kind_expr);
    } else {
-      type = SageBuilderCpp17::buildBoolType();
+      type = SageBuilder::buildBoolType();
    }
 }
 
@@ -1641,7 +1660,7 @@ void Build(const parser::IntrinsicTypeSpec::DoubleComplex &x, SgType* &type)
    std::cout << "Rose::builder::Build(DoubleComplex)\n";
 #endif
 
-   SgType* base_type = SageBuilderCpp17::buildDoubleType();
+   SgType* base_type = SageBuilder::buildDoubleType();
    type = SageBuilderCpp17::buildComplexType(base_type);
 }
 
@@ -1694,7 +1713,7 @@ void Build(const parser::TypeParamValue &x, SgExpression* &expr)
    std::visit(
       common::visitors{
          [&] (const parser::ScalarIntExpr &y)  { Build(y, expr); },
-         [&] (const auto &y)                                 { ; },  // Star, Deferred
+         [&] (const auto &y)                   { ABORT_NO_IMPL; },  // Star, Deferred
       },
       x.u);
 }
@@ -1974,7 +1993,7 @@ void Build(const parser::DataStmtConstant &x, SgExpression* &expr)
    std::visit(
       common::visitors{
          [&] (const parser::Scalar<parser::LiteralConstant> &y) { Build(y.thing, expr); },
-         [&] (const auto &y) { ; }
+         [&] (const auto &y) { ABORT_NO_IMPL; }
       },
       x.u);
 }
@@ -2296,7 +2315,7 @@ void Build(const parser::OutputItem&x, SgExpression* &expr)
 
    std::visit(
       common::visitors{
-         [&] (const common::Indirection<parser::OutputImpliedDo> &y) { ; },
+         [&] (const common::Indirection<parser::OutputImpliedDo> &y) { ABORT_NO_IMPL; },
          [&] (const auto &y) { Build(y, expr); }   // Expr
       },
       x.u);
@@ -2628,7 +2647,7 @@ void Build(const parser::AcValue&x, SgExpression* &expr)
    std::visit(
       common::visitors{
          [&](const common::Indirection<parser::Expr>  &y) { Build(y.value(), expr); },
-         [&](const auto &y) { ; },   // Triplet, common::Indirection<AcImpliedDo>
+         [&](const auto &y) { ABORT_NO_IMPL; },   // Triplet, common::Indirection<AcImpliedDo>
 
       },
       x.u);
@@ -3093,7 +3112,7 @@ void Build(const parser::CaseSelector&x, std::list<SgExpression*> &case_list)
 
    std::visit(
       common::visitors{
-         [&] (const parser::Default &y) { ; },
+         [&] (const parser::Default &y) { ABORT_NO_IMPL; },
          [&] (const auto &y) { Build(y, case_list); }, // std::list<CaseValueRange>
       },
       x.u);
@@ -3530,7 +3549,7 @@ void Build(const parser::Statement<parser::ComponentDefStmt>&x, SgStatement* &st
    std::visit(
       common::visitors{
          [&] (const parser::DataComponentDefStmt &y) { Build(y, stmt); },
-         [&] (const auto &y) { ; } // ProcComponentDefStmt, ErrorRecovery
+         [&] (const auto &y) { ABORT_NO_IMPL; } // ProcComponentDefStmt, ErrorRecovery
       },
       x.statement.u);
 }
@@ -3567,7 +3586,7 @@ void Build(const parser::TypeAttrSpec &x, LanguageTranslation::ExpressionKind &m
 
    auto visitor = common::visitors {
      [&] (const parser::AccessSpec &y) { Build(y, modifier_enum); },
-     [ ] (const auto &y) { ; }
+     [ ] (const auto &y) { ABORT_NO_IMPL; }
    };
 
    std::visit(visitor, x.u);
@@ -3584,10 +3603,10 @@ void Build(const parser::ComponentAttrSpec &x, LanguageTranslation::ExpressionKi
 
    auto visitor = common::visitors {
      [&] (const parser::AccessSpec         &y) { Build(y, modifier_enum); },
-     [ ] (const parser::CoarraySpec        &y) { ; },
-     [ ] (const parser::ComponentArraySpec &y) { ; },
-     [ ] (const parser::ErrorRecovery      &y) { ; },
-     [ ] (const common::CUDADataAttr       &y) { ; },
+     [ ] (const parser::CoarraySpec        &y) { ABORT_NO_IMPL; },
+     [ ] (const parser::ComponentArraySpec &y) { ABORT_NO_IMPL; },
+     [ ] (const parser::ErrorRecovery      &y) { ABORT_NO_IMPL; },
+     [ ] (const common::CUDADataAttr       &y) { ABORT_NO_IMPL; },
      [&] (const parser::Allocatable &y) {
        modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_allocatable;
      },
@@ -3709,7 +3728,7 @@ void Build(const parser::OtherSpecificationStmt&x, T* scope)
          // AccessStmt, AllocatableStmt, AsynchronousStmt, BindStmt, CodimensionStmt, ContiguousStmt,
          // DimensionStmt, ExternalStmt, IntentStmt, IntrinsicStmt, OptionalStmt, PointerStmt, ProtectedStmt,
          // SaveStmt, TargetStmt, ValueStmt, VolatileStmt, CommonStmt, EquivalenceStmt, BasedPointerStmt
-         [&] (const auto &y) { ; },
+         [&] (const auto &y) { ABORT_NO_IMPL; },
       },
       x.u);
 
