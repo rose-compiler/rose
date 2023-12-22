@@ -7,6 +7,7 @@ DEFAULT_CONFIG=user
 
 ####################################################################################################################################
 help() {
+    ######--------------------------------------------------------------------------------##### 80 columns
     echo "$arg0"
     echo
     echo "Name"
@@ -16,7 +17,6 @@ help() {
     echo "        $arg0 [CONFIG]"
     echo
     echo "Description"
-    ######--------------------------------------------------------------------------------
     echo "        This command runs Doxygen to parse ROSE header files and generate HTML"
     echo "        documentation. The optional argument, CONFIG, is the name of a Doxygen"
     echo "        configuration file. If the CONFIG file cannot be found as specified,"
@@ -24,8 +24,9 @@ help() {
     echo "        CONFIG.cfg, and this file is passed as an argument to Doxygen."
     echo
     echo "        This command can be run from any directory, but the command must either"
-    echo "        be located inside the ROSE source directory hierarchy, or the ROSE_SOURCE"
-    echo "        environment variable must point to the ROSE source directory."
+    echo "        be located inside the ROSE source directory hierarchy, or the"
+    echo "        ROSE_SOURCE environment variable must point to the ROSE source"
+    echo "        directory."
     echo
     echo "        The following command-line switches are understood:"
     echo
@@ -34,14 +35,15 @@ help() {
     echo
     echo "        --list | -l"
     echo "                List the names of the standard ROSE documentation audiences."
-    echo "                These are the names that can appear on the command line for this"
-    echo "                tool."
+    echo "                These are the names that can appear on the command line for"
+    echo "                this tool."
     echo
     echo "        --version | -V"
     echo "                Print the tool version on standard output and exit success."
     echo
     echo "        This tool fails if doxygen produces any output that is not suppressed"
     echo "        by the filter defined in this tool."
+    ######--------------------------------------------------------------------------------##### 80 columns
 }
 
 #
@@ -75,9 +77,13 @@ rose-source() {
 
 ####################################################################################################################################
 # Returns the ROSE version number
-rose-version() {
+rose-version-short() {
     cat "$(rose-source)/ROSE_VERSION"
+}
 
+rose-version-long() {
+    rose-version-short
+    
     local branch="$(git branch --show-current)"
     if [ -n "$branch" ]; then
 	echo "$branch"
@@ -115,7 +121,7 @@ config-file() {
     for config in "$name" "$(rose-source)/docs/$name" "$(rose-source)/docs/$name.cfg"; do
 	if [ -f "$config" ]; then
 	    echo "$config"
-	    echo "configuring Doxygen with $config" >&2
+	    echo "$arg0: configuring Doxygen with $config" >&2
 	    return 0
 	fi
     done
@@ -176,6 +182,28 @@ filter-doxygen-warnings() {
 }
 
 ####################################################################################################################################
+# Figure out and report where the documentation was output, but also create the directory since Doxygen won't create the
+# intermediate directories if they don't exist.
+make-output-directories() {
+    local all_inputs=($(rose-source)/docs/DoxygenSettings/*.cfg "$1")
+    local config="$1"
+    local last_name=
+    for dir in $(sed -n 's/^OUTPUT_DIRECTORY[ \t]*=[ \t]*\([^ \t]\+\).*/\1/p' "${all_inputs[@]}" /dev/null); do
+	dir="$(echo "$dir" |sed "s|\$(ROSE_SOURCE)|$(rose-source)|g")"
+	dir="$(echo "$dir" |sed "s|\$(ROSE_VERSION)|$(rose-version-short)|g")"
+	last_name="$dir"
+
+	if [ -n "$(echo "$dir" |sed -n '/^[-+.\/_a-zA-Z0-9]\+$/p')" ]; then
+	    mkdir -p "$dir"
+	fi
+    done
+
+    if [ -n "$last_name" ]; then
+	echo "$arg0: documentation output to $last_name"
+    fi
+}
+
+####################################################################################################################################
 
 # Parse command-line
 while [ "$#" -gt 0 ]; do
@@ -189,7 +217,7 @@ while [ "$#" -gt 0 ]; do
 	    exit 0
 	    ;;
 	--version|-V)
-	    rose-version
+	    rose-version-long
 	    exit 0
 	    ;;
 	-*)
@@ -210,7 +238,9 @@ check-prerequisites
 CONFIG="$(config-file "${1-$DEFAULT_CONFIG}")"
 [ -r "$CONFIG" ] || die "cannot find Doxygen config file for \"${1-$DEFAULT_CONFIG}\""
 
-cd $(rose-source)
-env ROSE_SOURCE="$(rose-source)" ROSE_VERSION="$(rose-version)" doxygen "$CONFIG" 2>&1 |
+make-output-directories "$CONFIG"
+
+env ROSE_SOURCE="$(rose-source)" ROSE_VERSION="$(rose-version-short)" ROSE_VERSION_LONG="$(rose-version-long)" \
+    doxygen "$CONFIG" 2>&1 |
     filter-doxygen-warnings |
     fail-if-not-empty
