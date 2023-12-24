@@ -13,6 +13,7 @@
 
 #include <boost/lexical_cast.hpp>
 #include <boost/range/adaptor/reversed.hpp>
+#include <boost/signals2/signal.hpp>
 #include <memory>
 #include <string>
 #include <vector>
@@ -327,8 +328,13 @@ public:
         using ChildPtr = std::shared_ptr<Child>;
 
     private:
+        using ChangeSignal = boost::signals2::signal<void(ChildPtr, ChildPtr)>;
+
+    private:
         UserBase &parent_;                              // required parent owning this child edge
         ChildPtr child_;                                // optional child to which this edge points
+        ChangeSignal beforeChange_;                     // signal emitted before the child pointer is changed
+        ChangeSignal afterChange_;                      // signal emitted after the child pointer is changed
 
     public:
         /** Destructor clears child's parent. */
@@ -388,9 +394,12 @@ public:
          *  more concise and clear to assign the null pointer directly.
          *
          * @{ */
-        Edge& operator=(const ChildPtr &child) {
-            if (child != child_) {
-                checkChildInsertion(child);
+        Edge& operator=(const ChildPtr &newChild) {
+            if (newChild != child_) {
+                checkChildInsertion(newChild);
+
+                const ChildPtr oldChild = child_;
+                beforeChange_(oldChild, newChild);
 
                 // Unlink the child from the tree
                 if (child_) {
@@ -399,10 +408,12 @@ public:
                 }
 
                 // Link new child into the tree
-                if (child) {
-                    child->parent.set(parent_);
-                    child_ = child;
+                if (newChild) {
+                    newChild->parent.set(parent_);
+                    child_ = newChild;
                 }
+
+                afterChange_(oldChild, newChild);
             }
             return *this;
         }
@@ -415,6 +426,23 @@ public:
         /** True if child is not null. */
         explicit operator bool() const {
             return child_ != nullptr;
+        }
+
+        /** Functors to call before the child pointer is changed.
+         *
+         *  The functor is called before the child pointer is changed and may throw an exception to indicate that the change
+         *  should not occur. The two arguments are the old and new child pointers, either of which might be null. The callbacks
+         *  are not invoked during edge constructor or destructor calls. */
+        boost::signals2::connection beforeChange(const typename ChangeSignal::slot_type &slot) {
+            return beforeChange_.connect(slot);
+        }
+
+        /** Functors to call after the child pointer is changed.
+         *
+         *  The functor is called after the edge child pointer is changed. The two arguments are the old and new child pointers,
+         *  either of which might be null.  The callbacks are not invoked during edge constructor or destructor calls. */
+        boost::signals2::connection afterChange(const typename ChangeSignal::slot_type &slot) {
+            return afterChange_.connect(slot);
         }
 
     private:
@@ -448,6 +476,7 @@ public:
 
     private:
         using Vector = std::vector<std::unique_ptr<Edge<Child>>>;
+        using ResizeSignal = boost::signals2::signal<void(int, ChildPtr)>;
 
     public:
         using value_type = Edge<Child>;
@@ -568,6 +597,8 @@ public:
     private:
         UserBase &parent_;                              // required parent owning this child edge
         Vector edges_;
+        ResizeSignal beforeResize_;                     // signal emitted before a resize operation
+        ResizeSignal afterResize_;                      // signal emitted after a resize operation
 
     public:
         /** Destructor clears children's parents. */
@@ -610,8 +641,10 @@ public:
          *  If the new element is non-null, then it must satisfy all the requirements for inserting a vertex as a child of another
          *  vertex, and its parent pointer will be adjusted automatically. */
         void push_back(const ChildPtr& elmt) {
+            beforeResize_(+1, elmt);
             auto edge = std::unique_ptr<Edge<Child>>(new Edge<Child>(Link::NO, parent_, elmt));
             edges_.push_back(std::move(edge));
+            afterResize_(+1, elmt);
         }
 
         /** Erase a child edge from the end of this vertex.
@@ -619,7 +652,10 @@ public:
          *  If the edge being erased points to a child, then that child's parent pointer is reset. */
         void pop_back() {
             ASSERT_forbid(edges_.empty());
+            ChildPtr removed = (*edges_.back())();
+            beforeResize_(-1, removed);
             edges_.pop_back();
+            afterResize_(-1, removed);
         }
 
         /** Return the i'th edge.
@@ -675,6 +711,24 @@ public:
         /** Return an iterator to one past the last edge. */
         iterator end() {
             return iterator(edges_.end());
+        }
+
+        /** Functors to call before the vector size is changed.
+         *
+         *  The first argument is the change in size of the vector (1 for a @ref push_back call, or -1 for a @ref pop_back call),
+         *  and the second argument is the pointer being pushed or popped. If any of the callbacks throw an exception then the
+         *  push or pop operation is aborted without making any changes. */
+        boost::signals2::connection beforeResize(const typename ResizeSignal::slot_type &slot) {
+            return beforeResize_.connect(slot);
+        }
+
+        /** Functors to call after the vector size is changed.
+         *
+         *  The first argument is the change in size of the vector (1 for a @ref push_back call, or -1 for a @ref pop_back call),
+         *  and the second argument is the pointer being pushed or popped. Since these callbacks occur after the push or pop
+         *  operation, they do not affect its behavior. */
+        boost::signals2::connection afterResize(const typename ResizeSignal::slot_type &slot) {
+            return afterResize_.connect(slot);
         }
 
     protected:
@@ -1050,7 +1104,7 @@ template<class T>
 template<class U>
 bool
 Vertex<B>::Edge<T>::operator==(const Edge<U> &other) const {
-    return child_.get() == other.get();
+    return child_.get() == other().get();
 }
 
 template<class B>
@@ -1058,7 +1112,7 @@ template<class T>
 template<class U>
 bool
 Vertex<B>::Edge<T>::operator!=(const Edge<U> &other) const {
-    return child_.get() != other.get();
+    return child_.get() != other().get();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
