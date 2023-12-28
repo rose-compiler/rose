@@ -30,6 +30,7 @@ C. Liao, 12/27/2023
 #include <sstream>
 #include <cassert>
 #include <dirent.h>  // For directory operations
+#include <nlohmann/json.hpp>
 
 using namespace std;
 
@@ -204,15 +205,51 @@ void runTest(vector<vector<string>> linearOrders,
 }
 
 
-// input .json file has a format of 
+// input .json file has a format of array of arrays of 3 strings
 // [["path1", "name1", "0"],["path2", "name2","1"],["path3", "name3", "0"], ...] 
 // This function:read the file by its name and 
-//               extract the first element of each (path, name) pair and 
-//               store them into a vector of strings. 
-// The second and third fileds are also extracted. 
-/*
+//               extract three fields of each (path, name, flag) tuple and 
+// Store the header info. into a map of string vs.  pair<>
+// Also store and return all header paths into a vector of strings. 
+vector<string> extractHeaderPaths(const std::string& filename) {
+  vector<string> allPaths;
+  // Open the file
+  std::ifstream file(filename);
+  if (!file.is_open()) {
+    throw std::runtime_error("Unable to open file");
+  }
 
-   Better parsing algorithm
+  // Parse the JSON from the file
+  nlohmann::json json;
+  file >> json;
+
+  // Ensure that the parsed object is an array
+  if (!json.is_array()) {
+    throw std::runtime_error("JSON is not an array");
+  }
+
+  // Iterate over the array
+  for (const auto& item : json) {
+    // Each item is in turn an array of 3 elements
+    if (!item.is_array() || item.size() != 3) {
+      throw std::runtime_error("Invalid array format");
+    }
+
+    // Extract path, name, and flag
+    std::string path = item[0];
+    std::string name = item[1];
+    std::string flag = item[2];
+
+    // Process or store these values as needed
+    // For example, concatenate them and add to the paths vector
+    headerInfo[path]={name, flag};
+    allPaths.push_back(path);
+  }
+
+  return allPaths;
+}
+/*
+   old manual parsing algorithm
    two loops:  over "]," or "]]"
    inner loop:  over ""," or """
 
@@ -220,7 +257,7 @@ void runTest(vector<vector<string>> linearOrders,
    all possible leading prefix [["
 */
 
-std::vector<std::string> extractHeaderPaths(const std::string& filename) {
+std::vector<std::string> extractHeaderPathsOld(const std::string& filename) {
   std::vector<std::string> paths;
   std::ifstream file(filename);
   std::string line;
@@ -582,27 +619,29 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-#if 0
-  std::cout << "Extracted partial order is:" << std::endl; // Separator between files
-  // Optional: Print all extracted paths for each file
-  for (const auto& filePaths : allPaths) {
-    std::cout << "-----" << std::endl; // Separator between files
-    for (const std::string& path : filePaths) {
-      std::cout << path << std::endl;
+  if (verboseMode)
+  {
+    std::cout << "Extracted partial order is:" << std::endl; // Separator between files
+    // Optional: Print all extracted paths for each file
+    for (const auto& filePaths : allPaths) {
+      std::cout << "-----" << std::endl; // Separator between files
+      for (const std::string& path : filePaths) {
+        std::cout << path << std::endl;
+      }
     }
   }
-#endif 
 
   // Feed into the order generation function
   cout<<"Generating a total order for headers extracted from:"<< allPaths.size() << " json files"<<endl;
   auto totalOrder = generateTotalOrder(allPaths, true); // now add cycle deletion
 
-#if 0  
-  std::cout << "-----" << std::endl; // Separator 
-  cout << "Total Order is: "<<endl;
-  std::cout << "-----" << std::endl; // Separator
-  printTotalOrder(totalOrder);
-#endif
+  if (verboseMode)
+  {
+    std::cout << "-----" << std::endl; // Separator 
+    cout << "Total Order is: "<<endl;
+    std::cout << "-----" << std::endl; // Separator
+    printTotalOrder(totalOrder);
+  }
 
    string hfile_name="total_header.hh";
    cout<<"Writing out the resulting total order headers of count "<< totalOrder.size() <<" into:"<< hfile_name<<endl;

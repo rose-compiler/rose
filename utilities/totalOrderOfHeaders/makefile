@@ -1,5 +1,8 @@
 totalOrderGeneration:totalOrderGeneration.cpp
-	g++ -O0 -g -std=c++11 $^ -o $@
+ifndef ROSE_HOME
+	$(error ROSE_HOME is not set, it is needed to find nlohmann/json.hpp)
+endif
+	g++ -I$(ROSE_HOME)/include/rose -O0 -g -std=c++11 $^ -o $@
 
 .PHONY: install check test	
 clean:
@@ -16,9 +19,11 @@ endif
 		echo "Error: $(ROSE_HOME)/bin does not exist"; \
 		exit 1; \
 	fi	
+
 test:totalOrderGeneration
 	./totalOrderGeneration --test
 # run the program using some sample json files under json/ folder
 check:totalOrderGeneration
 	make test # run builtin tests
 	./totalOrderGeneration --input=json/ &>log.txt # run tests with .json input files
+	diff total_header.hh reference/total_header.hh
