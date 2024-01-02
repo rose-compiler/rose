@@ -19,7 +19,7 @@ endif
 		echo "Error: $(ROSE_HOME)/bin does not exist"; \
 		exit 1; \
 	fi	
-
+# this is the test using builtin test data inside of the tool
 test:totalOrderGeneration
 	./totalOrderGeneration --test
 # run the program using some sample json files under json/ folder
