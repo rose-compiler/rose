@@ -423,6 +423,13 @@ int __builtin_arm_stlex(T val, volatile T *addr);
 void __builtin_arm_clrex(void);
 */
 
+#ifdef __aarch64__
+      #define _LIBCPP_HAS_NO_INT128 1
+      typedef long long int __int128_t;
+      typedef unsigned long long int __uint128_t;
+#endif
+
+
 #endif //#ifdef __APPLE__
 
 
