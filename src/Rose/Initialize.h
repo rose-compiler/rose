@@ -28,7 +28,7 @@
  *  ROSE header files are installed and included using @c @#include with path names beginning with "Rose" and mirroring the
  *  namespace hierarchy. The base names of public include files match the C++ symbol they primarily define and always end with a
  *  ".h" extension. Base names and path components are capitalized the same as the C++ symbols (described above). For instance, the
- *  header file for the @ref Rose::CommandLine::SelfTest class is included as <code>#include <Rose/CommandLine/SelfTest.h></code>.
+ *  header file for the @ref Rose::CommandLine::SelfTest class is included as <code>@#include <Rose/CommandLine/SelfTest.h></code>.
  *  To support file systems that are not POSIX compliant with regard to case sensitivity, no ROSE include directory will contain two
  *  header files whose names are identical when converted to lower case.
  *

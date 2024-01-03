@@ -12,13 +12,17 @@ namespace Rose {
  * behavior. */
 namespace BitOps {
 
-/** Number of bits in a type or value. */
+/** Number of bits in a type or value.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C nBits */
 template<typename Unsigned>
 inline size_t nBits(Unsigned = Unsigned(0)) {
     return 8*sizeof(Unsigned);
 }
 
-/** Generate a value with all bits set or cleared. */
+/** Generate a value with all bits set or cleared.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C all */
 template<typename Unsigned>
 inline Unsigned all(bool b = true) {
     return Unsigned(0) - Unsigned(b ? 1 : 0);
@@ -26,9 +30,11 @@ inline Unsigned all(bool b = true) {
 
 template<typename Unsigned> inline Unsigned lowMask(size_t n);
 
-/** Set or clear the low-order @n bits.
+/** Set or clear the low-order @p w bits.
  *
- *  Sets or clears the low order bits of the input value without affecting any of the other bits. */
+ *  Sets or clears the low order bits of the input value without affecting any of the other bits.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C allLsb */
 template<typename Unsigned>
 inline Unsigned allLsb(Unsigned src, size_t w, bool b = true) {
     ASSERT_require(w <= nBits(src));
@@ -43,7 +49,9 @@ inline Unsigned allLsb(Unsigned src, size_t w, bool b = true) {
  *
  *  Returns a value whose @p n low-order bits are set and all the other higher order bits are cleared. If @p n is greater than
  *  or equal to the size of the unsigned type then the returned value has all bits set. If @p n is zero then no bits are set in
- *  the return value. */
+ *  the return value.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C lowMask */
 template<typename Unsigned>
 inline Unsigned lowMask(size_t n) {
     return n >= nBits<Unsigned>() ? all<Unsigned>(true) : (Unsigned(1) << n) - Unsigned(1);
@@ -52,7 +60,9 @@ inline Unsigned lowMask(size_t n) {
 /** Generate a value with high order bits set.
  *
  *  Returns a value whose @p n high-order bits are set and the other low order bits are cleared.  If @p n is greater than or
- *  equal to the size of the unsigned type then the returned value has all bits set. */
+ *  equal to the size of the unsigned type then the returned value has all bits set.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C highMask */
 template<typename Unsigned>
 inline Unsigned highMask(size_t n) {
     return n >= nBits<Unsigned>() ? all<Unsigned>(true) : lowMask<Unsigned>(n) << (nBits<Unsigned>() - n);
@@ -61,7 +71,9 @@ inline Unsigned highMask(size_t n) {
 /** Combine two values based on a bit mask.
  *
  *  The return value has bits from @p a and @p b depending on the mask @p cond.  If the mask bit @c i is set, then the return value
- *  bit @c i comes from @p a, otherwise it comes from @p b. */
+ *  bit @c i comes from @p a, otherwise it comes from @p b.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C select */
 template<typename Unsigned>
 inline Unsigned select(Unsigned cond, Unsigned a, Unsigned b) {
     return (a & cond) | (b & ~cond);
@@ -71,7 +83,9 @@ inline Unsigned select(Unsigned cond, Unsigned a, Unsigned b) {
  *
  *  The value @p src has its bits shifted @p n places toward higher order. The @n highest order bits are discarded and the @p n
  *  new low-order bits are either set or cleared depending on the value of @p b. If @p n is greater than or equal to the number
- *  of bits in @p src then the return value has either all bits set or all bits cleared depending on @p b. */
+ *  of bits in @p src then the return value has either all bits set or all bits cleared depending on @p b.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C shiftLeft */
 template<typename Unsigned>
 inline Unsigned shiftLeft(Unsigned src, size_t n, bool b = false) {
     if (n >= nBits(src)) {
@@ -83,10 +97,12 @@ inline Unsigned shiftLeft(Unsigned src, size_t n, bool b = false) {
 
 /** Left shift part of a value without affecting the rest.
  *
- *  The value @p src has its low-order @p w bits shifted @p n places toward higher order.  The @n highest bits are discarded and
+ *  The value @p src has its low-order @p w bits shifted @p n places toward higher order.  The @p n highest bits are discarded and
  *  the @p n new lower order bits are either set or cleared depending on the value of @p b. If @p n is greater than or equal to
  *  @p w then all affected bits are set or cleared, depending on @p b.  The bits not in the affected range are not affected and
- *  are returned. */
+ *  are returned.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C shiftLeftLsb */
 template<typename Unsigned>
 inline Unsigned shiftLeftLsb(Unsigned src, size_t w, size_t n, bool b = false) {
     ASSERT_require(w <= nBits(src));
@@ -101,7 +117,9 @@ inline Unsigned shiftLeftLsb(Unsigned src, size_t w, size_t n, bool b = false) {
  *
  *  Shift all bits of the value right (to lower indices) by @p n. The @p n low-order bits are discarded and the new @p n
  *  high-order bits are set or cleared depending on @p b.  If @p n is greater than or equal to the size of @p src then the return
- *  value has either all bits set or all bits cleared depending on @p b. */
+ *  value has either all bits set or all bits cleared depending on @p b.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C shiftRight */
 template<typename Unsigned>
 inline Unsigned shiftRight(Unsigned src, size_t n, bool b = false) {
     if (n >= nBits(src)) {
@@ -115,21 +133,27 @@ inline Unsigned shiftRight(Unsigned src, size_t n, bool b = false) {
  *
  *  The value @p src has its low-order @p w bits shifted right toward lower order. The @p n lowest bits are discarded and the
  *  @p n new higher order bits are either set or cleared depending on @p b. If @p n is greater than or equal to @p w then all
- *  affected bits are set or cleared, depending on @p b.  The bits not in the affected range are not affected and are returned. */
+ *  affected bits are set or cleared, depending on @p b.  The bits not in the affected range are not affected and are returned.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C shiftRightLsb */
 template<typename Unsigned>
 inline Unsigned shiftRightLsb(Unsigned src, size_t w, size_t n, bool b = false) {
     ASSERT_require(w <= nBits(src));
     if (n >= w) {
         return allLsb(src, w, b);
     } else {
-        return select(lowMask<Unsigned>(w), shiftRight(src & lowMask<Unsigned>(w), n, b), src);
+        const Unsigned affectedBits = lowMask<Unsigned>(w);
+        const Unsigned toShift = select(affectedBits, src, all<Unsigned>(b));
+        return select(affectedBits, shiftRight(toShift, n, b), src);
     }
 }
 
 /** Generate a single-bit mask.
  *
  *  Returns a value that has all bit cleared except the bit at position @p i. If @p i is outside the valid range of bit
- *  positions for the unsigned type, then zero is returned. */
+ *  positions for the unsigned type, then zero is returned.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C position */
 template<typename Unsigned>
 inline Unsigned position(size_t i) {
     return i < nBits<Unsigned>() ? shiftLeft(Unsigned(1), i) : Unsigned(0);
@@ -137,7 +161,9 @@ inline Unsigned position(size_t i) {
 
 /** Generate a single-bit mask without affecting the high-order bits.
  *
- *  The low order @p w bits of src are cleared except bit @p i is set, and other bits are not affected. */
+ *  The low order @p w bits of src are cleared except bit @p i is set, and other bits are not affected.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C positionLsb */
 template<typename Unsigned>
 inline Unsigned positionLsb(Unsigned src, size_t w, size_t i) {
     ASSERT_require(w <= nBits(src));
@@ -148,7 +174,9 @@ inline Unsigned positionLsb(Unsigned src, size_t w, size_t i) {
  *
  *  Returns a value where bits @p least through @p greatest (inclusive) are set and all other bits are cleared. The specified
  *  indexes must be valid for the type of @p x. In other words, @p greatest must be less than the number of bits in @p x and @p
- *  greatest must be greater than or equal to @p least. */
+ *  greatest must be greater than or equal to @p least.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C mask */
 template<typename Unsigned>
 inline Unsigned mask(size_t least, size_t greatest) {
     ASSERT_require(greatest < nBits<Unsigned>());
@@ -158,7 +186,9 @@ inline Unsigned mask(size_t least, size_t greatest) {
 
 /** Generate a mask without affecting other bits.
  *
- *  Generates a mask limited to the low order @p w bits without affecting the other bits of src. */
+ *  Generates a mask limited to the low order @p w bits without affecting the other bits of src.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C maskLsb */
 template<typename Unsigned>
 inline Unsigned maskLsb(Unsigned src, size_t w, size_t least, size_t greatest) {
     ASSERT_require(w <= nBits(src));
@@ -167,7 +197,9 @@ inline Unsigned maskLsb(Unsigned src, size_t w, size_t least, size_t greatest) {
 
 /** Extract a single bit.
  *
- *  The bit at position @p i of the value @p src is returned. If @p i is out of range for @p src then zero is returned. */
+ *  The bit at position @p i of the value @p src is returned. If @p i is out of range for @p src then zero is returned.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C bit */
 template<typename Unsigned>
 inline bool bit(Unsigned src, size_t i) {
     return i < nBits(src) ? (src & position<Unsigned>(i)) != 0 : false;
@@ -176,7 +208,9 @@ inline bool bit(Unsigned src, size_t i) {
 /** Extract a single bit.
  *
  *  The bit at position @p i of value @p src is returned. If @p i is out of range for the specified value width then zero is
- *  returned. */
+ *  returned.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C bitLsb */
 template<typename Unsigned>
 inline bool bitLsb(Unsigned src, size_t w, size_t i) {
     return i < w ? (src & position<Unsigned>(i)) != 0 : false;
@@ -184,7 +218,9 @@ inline bool bitLsb(Unsigned src, size_t w, size_t i) {
 
 /** Most significant bit.
  *
- *  Returns the most significant bit. This is the sign bit for two's complement values. */
+ *  Returns the most significant bit. This is the sign bit for two's complement values.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C msb */
 template<typename Unsigned>
 inline bool msb(Unsigned src) {
     return bit(src, nBits(src) - 1);
@@ -192,7 +228,9 @@ inline bool msb(Unsigned src) {
 
 /** Most significant bit within lsb region.
  *
- *  Returns the value of the most significant bit within the region of @p w low-order bits. If @p w is zero then returns false. */
+ *  Returns the value of the most significant bit within the region of @p w low-order bits. If @p w is zero then returns false.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C msbLsb */
 template<typename Unsigned>
 inline bool msbLsb(Unsigned src, size_t w) {
     ASSERT_require(w <= nBits(src));
@@ -204,28 +242,33 @@ inline bool msbLsb(Unsigned src, size_t w) {
  *  Shift all bits of the value right (to lower indices) by @p n. The @p n low-order bits are discarded and the new @p n
  *  high-order bits are set or cleared depending on the original most significant bit.  If @p n is greater than or equal to the
  *  size of @p src then the return value has either all bits set or all bits cleared depending on its original most significant
- *  bit. */
+ *  bit.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C shiftRightSigned */
 template<typename Unsigned>
 inline Unsigned shiftRightSigned(Unsigned src, size_t n) {
     return shiftRight(src, n, msb(src));
 }
-
 
 /** Right shift low bits without affecting other bits.
  *
  *  Right shift the low-order @p w bits by @p n without affecting higher order bits. The width, @p w, must not be larger than
  *  the @p src width. If @n is greater than or equal to @p w then the @p w low order bits are set or cleared depending on bit
  *  <code>w-1</code>. Otherwise, the @p n low order bits are discarded and the @p n new bits introduced at index
- *  <code>w-1</code> are either zero or one depending on bit <code>w-1</code>. */
+ *  <code>w-1</code> are either zero or one depending on bit <code>w-1</code>.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C shiftRightSignedLsb */
 template<typename Unsigned>
-inline Unsigned shiftRightSigned(Unsigned src, size_t w, size_t n) {
-    return shiftRightLsb(src, n, w, msbLsb(src, w));
+inline Unsigned shiftRightSignedLsb(Unsigned src, size_t w, size_t n) {
+    return shiftRightLsb(src, w, n, msbLsb(src, w));
 }
 
 /** Extract part of a value.
  *
  *  Extracts the bits in the range @p least through @p greatest (inclusive) and shifts them right by @p least bits. The @p least and
- *  @p greatest indices must be valid for @p src as defined by @ref mask. */
+ *  @p greatest indices must be valid for @p src as defined by @ref mask.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C bits */
 template<typename Unsigned>
 inline Unsigned bits(Unsigned src, size_t least, size_t greatest) {
     return shiftRight(src & mask<Unsigned>(least, greatest), least);
@@ -234,7 +277,9 @@ inline Unsigned bits(Unsigned src, size_t least, size_t greatest) {
 /** Extract part of a value limited by width.
  *
  *  Extracts the bits in the range @p least through @p greatest (inclusive) and shifts them right by @p least bits. Any bits of @p
- *  src at index @p w or greater are treated as zeros. */
+ *  src at index @p w or greater are treated as zeros.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C bitsLsb */
 template<typename Unsigned>
 inline Unsigned bitsLsb(Unsigned src, size_t w, size_t least, size_t greatest) {
     return shiftRight(src & mask<Unsigned>(least, greatest) & lowMask<Unsigned>(w), least);
@@ -244,7 +289,9 @@ inline Unsigned bitsLsb(Unsigned src, size_t w, size_t least, size_t greatest) {
 /** Extend or truncate a value.
  *
  *  When the destination type is smaller than the source type, the most significant bits of the source value are discarded,
- *  otherwise the most significant bits of the destination type are set to @p b. */
+ *  otherwise the most significant bits of the destination type are set to @p b.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C convert */
 template<typename UnsignedTarget, typename UnsignedSource>
 inline UnsignedTarget convert(UnsignedSource x, bool b = false) {
     if (nBits(x) < nBits<UnsignedTarget>()) {
@@ -259,7 +306,9 @@ inline UnsignedTarget convert(UnsignedSource x, bool b = false) {
 /** Sign extend or truncate a value.
  *
  *  This is identical to @ref convert except when the target value is wider than the source value the new bits of the return
- *  value are all set to the most significant bit of the source value. */
+ *  value are all set to the most significant bit of the source value.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C convertSigned */
 template<typename UnsignedTarget, typename UnsignedSource>
 inline UnsignedTarget convertSigned(UnsignedSource x) {
     return convert<UnsignedTarget>(x, msb(x));
@@ -267,7 +316,9 @@ inline UnsignedTarget convertSigned(UnsignedSource x) {
 
 /** Sign extend part of a value to the full width of the src type.
  *
- *  The low order @p n bits are treated as a signed integer and sign extended to fill the entire width of the return value. */
+ *  The low order @p n bits are treated as a signed integer and sign extended to fill the entire width of the return value.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C signExtend */
 template<typename Unsigned>
 inline Unsigned signExtend(Unsigned src, size_t n) {
     if (n < nBits(src)) {
@@ -283,7 +334,9 @@ inline Unsigned signExtend(Unsigned src, size_t n) {
 /** Sign extend part of value without affecting other bits.
  *
  *  Sign extends the low-order @p n bits of the input value to occupy the lower order @p m bits of the output, where @p m
- *  is greater than or equal to @p n and less than or equal to the number of bits in the @p src value. */
+ *  is greater than or equal to @p n and less than or equal to the number of bits in the @p src value.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C signExtendLsb */
 template<typename Unsigned>
 inline Unsigned signExtendLsb(Unsigned src, size_t n, size_t m) {
     ASSERT_require(n > 0);
@@ -305,7 +358,9 @@ inline Unsigned signExtendLsb(Unsigned src, size_t n, size_t m) {
  *
  *  Rotates the bits of @p src left (toward higher indices) by @p n bits. This is similar to @ref shiftLeft except the high order
  *  bits that would normally be discarded are reintroduced in the low order positions. If @p n is zero then this is a
- *  no-op. The rotation amount is calculated modulo the width of @p src */
+ *  no-op. The rotation amount is calculated modulo the width of @p src
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C rotateLeft */
 template<typename Unsigned>
 inline Unsigned rotateLeft(Unsigned src, size_t n) {
     n %= nBits(src);
@@ -315,13 +370,15 @@ inline Unsigned rotateLeft(Unsigned src, size_t n) {
 /** Rotate low-order bits left without affecting others.
  *
  *  Rotates the low-order @p w bits of @p src left by @p n bits without affecting the other bits, and returns the result. The
- *  rotation amount is modulo @p w.  If @p w is zero then the original value is returned. */
+ *  rotation amount is modulo @p w.  If @p w is zero then the original value is returned.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C rotateLeftLsb */
 template<typename Unsigned>
 inline Unsigned rotateLeftLsb(Unsigned src, size_t w, size_t n) {
     ASSERT_require(w <= nBits(src));
     n = w ? n % w : 0;
     return select(lowMask<Unsigned>(w),
-                  shiftLeftLsb(src, w, n) | shiftRightLsb(src, w-n),
+                  shiftLeftLsb(src, w, n) | shiftRightLsb(src, w, w-n),
                   src);
 }
 
@@ -329,7 +386,9 @@ inline Unsigned rotateLeftLsb(Unsigned src, size_t w, size_t n) {
  *
  *  Rotates the bits of @p src right (toward lower indices) by @p n bits. This is similar to @ref shiftRight except the low order
  *  bits that would normally be discarded are reintroduced in the high order positions. If @p n is zero then this is a no-op.
- *  The rotation amount is calculated modulo the width of @p src. */
+ *  The rotation amount is calculated modulo the width of @p src.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C rotateRight */
 template<typename Unsigned>
 inline Unsigned rotateRight(Unsigned src, size_t n) {
     n %= nBits(src);
@@ -339,7 +398,9 @@ inline Unsigned rotateRight(Unsigned src, size_t n) {
 /** Rotate low-order bits right without affecting others.
  *
  *  Rotates the low-order @p w bits of @p src right by @p n bits without affecting the higher-order bits, and returns the
- *  result.  The rotation amount is modulo @p w. If @p w is zero then the original value is returned. */
+ *  result.  The rotation amount is modulo @p w. If @p w is zero then the original value is returned.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C rotateRightLsb */
 template<typename Unsigned>
 inline Unsigned rotateRightLsb(Unsigned src, size_t w, size_t n) {
     ASSERT_require(w <= nBits(src));
@@ -354,14 +415,16 @@ inline Unsigned rotateRightLsb(Unsigned src, size_t w, size_t n) {
  *  The @p n low-order bits of @p src are repeated as a group as many times as necessary to fill the entire return value. For
  *  instance, if @p src contains 0xabcdef and @p n is 8 and the return type is a 32-bit unsigned integer, then the return value
  *  will be 0xefefefef.  If the width of the return value is not an integer multiple of @p n, then the high order bits of the
- *  return value will contain only some of the lowest order bits of the @p src. The value of @p n cannot be zero. */
+ *  return value will contain only some of the lowest order bits of the @p src. The value of @p n cannot be zero.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C replicate */
 template<typename Unsigned>
 inline Unsigned replicate(Unsigned src, size_t n) {
     ASSERT_require(n != 0);
     if (n >= nBits(src)) {
         return src;
     } else {
-        size_t ngroups = (nBits(src) + 1) / n;
+        size_t ngroups = (nBits(src) + n - 1) / n;
         Unsigned retval = 0;
         for (size_t i = 0; i < ngroups; ++i)
             retval |= shiftLeft(src & lowMask<Unsigned>(n), i*n);
@@ -373,7 +436,9 @@ inline Unsigned replicate(Unsigned src, size_t n) {
  *
  *  This is identical to @ref replicate except that instead of filling the entire return value with the replicated bits, at
  *  most @p w low-order bits of the return value are filled with replicated bits and the remaining high order bits are copied
- *  from @p src. */
+ *  from @p src.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C replicateLsb */
 template<typename Unsigned>
 inline Unsigned replicateLsb(Unsigned src, size_t w, size_t n) {
     ASSERT_require(w <= nBits(src));
@@ -382,7 +447,9 @@ inline Unsigned replicateLsb(Unsigned src, size_t w, size_t n) {
 
 /** Index of the highest set bit.
  *
- *  If no bits are set then this returns nothing. Otherwise it returns the zero-origin index of the highest order set bit. */
+ *  If no bits are set then this returns nothing. Otherwise it returns the zero-origin index of the highest order set bit.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C highestSetBit */
 template<typename Unsigned>
 inline Sawyer::Optional<size_t> highestSetBit(Unsigned src) {
     if (src) {
@@ -405,7 +472,9 @@ inline size_t nSet(Unsigned src) {
     return retval;
 }
 
-/** Reverse the bytes. */
+/** Reverse the bytes.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C reverseBytes */
 template<class T>
 typename std::enable_if<std::is_integral<T>::value, T>::type
 inline reverseBytes(const T &x) {
@@ -428,21 +497,27 @@ inline reverseBytes(const T &x) {
     return u;
 }
 
-/** True if host is big endian. */
+/** True if host is big endian.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C isBigEndian */
 inline bool
 isBigEndian() {
     static const unsigned i = 1;
     return *(unsigned char*)&i == 0;
 }
 
-/** True if host is little endian. */
+/** True if host is little endian.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C isLittleEndian */
 inline bool
 isLittleEndian() {
     static const unsigned i = 1;
     return *(unsigned char*)&i == 1;
 }
 
-/** Convert integral value from host order to big endian. */
+/** Convert integral value from host order to big endian.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C toBigEndian */
 template<class T>
 inline typename std::enable_if<std::is_integral<T>::value, T>::type
 toBigEndian(const T x) {
@@ -450,7 +525,9 @@ toBigEndian(const T x) {
     return isBigEndian() ? x : reverseBytes((U)x);
 }
 
-/** Convert integral value from host order to little endian. */
+/** Convert integral value from host order to little endian.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C toLittleEndian */
 template<class T>
 inline typename std::enable_if<std::is_integral<T>::value, T>::type
 toLittleEndian(const T x) {
@@ -458,7 +535,9 @@ toLittleEndian(const T x) {
     return isLittleEndian() ? x : reverseBytes((U)x);
 }
 
-/** Convert integral value from big endian to host order. */
+/** Convert integral value from big endian to host order.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C fromBigEndian */
 template<class T>
 inline typename std::enable_if<std::is_integral<T>::value, T>::type
 fromBigEndian(const T x) {
@@ -466,7 +545,9 @@ fromBigEndian(const T x) {
     return isBigEndian() ? x : reverseBytes((U)x);
 }
 
-/** Convert integral value from little endian to host order. */
+/** Convert integral value from little endian to host order.
+ *
+ *  @snippet{trimleft} bitOpUnitTests.C fromLittleEndian */
 template<class T>
 inline typename std::enable_if<std::is_integral<T>::value, T>::type
 fromLittleEndian(const T x) {
