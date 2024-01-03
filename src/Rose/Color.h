@@ -18,28 +18,24 @@ namespace Rose {
 namespace Color {
 
 /** Whether colored output is enabled. */
-namespace Enabled {                                     // done this way because ROSE must use only C++03
-enum Flag {
+enum class Enabled {
     OFF,                                                /**< Disable colored output. */
     ON,                                                 /**< Force colored output. */
     AUTO                                                /**< Use colored output if standard output is a terminal. */
 };
-} // namespace
 
 /** Color theme.
  *
  *  Controls whether to use dark text on a light background, or light text on a dark background. */
-namespace Theme {                                       // done this way because ROSE must use only C++03
-enum Flag {
+enum class Theme {
     DARK_ON_LIGHT,                                      /**< Dark text on light background. */
     LIGHT_ON_DARK                                       /**< Light text on dark background. */
 };
-} // namespace
 
 /** Control colored command output. */
 struct Colorization {
-    Sawyer::Optional<Enabled::Flag> enabled;            /**< Whether colored output is enabled. */
-    Sawyer::Optional<Theme::Flag> theme;                /**< The color theme. */
+    Sawyer::Optional<Enabled> enabled;                  /**< Whether colored output is enabled. */
+    Sawyer::Optional<Theme> theme;                      /**< The color theme. */
 
     /** True if color is enabled in this situation. */
     bool isEnabled() const;
@@ -49,15 +45,18 @@ struct Colorization {
 };
 
 /** Layer to which color applies. */
-namespace Layer {
-enum Flag {
+enum class Layer {
     NONE,                                               /**< No specific layer. */
     FOREGROUND,                                         /**< Foreground colors. */
     BACKGROUND                                          /**< Background colors. */
 };
-} // namespace
 
-/** Parses an output color specification. */
+/** Parses an output color specification.
+ *
+ *  This parser is used by @ref Sawyer::CommandLine when parsing command-line switches. For instance, many ROSE tools have a
+ *  "--color" switch. The canonical documentation for this parser comes from its @ref docString function. In short, it parses
+ *  one or two words separated by a comma, the words being when to use colorized output ("off", "on", "auto") and the basic
+ *  theme ("dark", or "light"). */
 class ColorizationParser: public Sawyer::CommandLine::ValueParser {
 protected:
     ColorizationParser() {}
@@ -118,9 +117,8 @@ public:
 
 /** Type for color components.
  *
- *  FIXME[Robb P. Matzke 2014-12-19]: This should ideally be a template parameter so we can support 8-bit color, 16-bit color,
- *  floating point color using float or double, etc.  At the moment, we'll use double since I don't expect that ROSE will be
- *  doing any heavy lifting of colors; i.e., no large image arrays, just color configuration kinds of things. */
+ *  ROSE doesn't do any heavy lifting of colors, so there's no need to distinguish between 8-bit colors, 16-bit colors, etc.
+ *  Therefore we just use floating point for everything. */
 typedef double Component;
 
 /** Clip a floating point value between 0 and 1. */
@@ -142,7 +140,9 @@ public:
      *  otherwise.  Therefore, a default constructed color will be bright red as a warning. */
     RGB(): r_(1.0), g_(0.0), b_(0.0), a_(1.0) {}        // bright red
 
-    /** Construct a color specified by components. */
+    /** Construct a color specified by components.
+     *
+     *  The components should be each be between 0 and 1. Values outside the domain are clipped. */
     RGB(Component r, Component g, Component b, Component a=1.0): r_(clip(r)), g_(clip(g)), b_(clip(b)), a_(clip(a)) {}
 
     /** Convert an HSV color to RGB space. */
@@ -151,6 +151,8 @@ public:
     /** Component of color.
      *
      *  RGB components are named @c red, @c green, @c blue, and @c alpha (or just the first letter of each).
+     *
+     *  Each component is a floating-point value between zero and one.
      *
      * @{ */
     Component r() const { return r_; }
@@ -167,13 +169,13 @@ public:
     std::string toHtml() const;
 
     /** Convert to ANSI color escape. */
-    std::string toAnsi(Layer::Flag) const;
+    std::string toAnsi(Layer) const;
 };
 
 /** Colors in HSV space.
  *
- *  Use this one when possible since most manipulations of color are defined in this domain and therefore must otherwise be
- *  converted to/from the RGB space. */
+ *  Use HSV when possible since most manipulations of color are defined in this domain and therefore must otherwise be
+ *  converted to/from the @ref RGB space. */
 class ROSE_UTIL_API HSV {
     Component h_, s_, v_, a_;
 public:
@@ -184,7 +186,9 @@ public:
      *  otherwise.  Therefore, a default constructed color will be bright red as a warning. */
     HSV(): h_(0.0), s_(1.0), v_(0.5), a_(1.0) {}        // bright red
 
-    /** Construct a color from components. */
+    /** Construct a color from components.
+     *
+     *  The components are each values between zero and one. Values outside this domain are clipped. */
     HSV(Component h, Component s, Component v, Component a=1.0): h_(clip(h)), s_(clip(s)), v_(clip(v)), a_(clip(a)) {}
 
     /** Convert an RGB color to HSV space. */
@@ -193,6 +197,8 @@ public:
     /** Component of color.
      *
      *  HSV components are named @c hue, @c saturation, @c value, and @c alpha (or just the first letter of each).
+     *
+     *  Components are floating-point values between zero and one.
      *
      * @{ */
     Component h() const { return h_; }
@@ -209,7 +215,7 @@ public:
     std::string toHtml() const;
 
     /** Convert to ANSI color escape. */
-    std::string toAnsi(Layer::Flag) const;
+    std::string toAnsi(Layer) const;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -217,7 +223,7 @@ public:
 
 /** Mapping from floating point to color.
  *
- *  Maps a floating point value in the range [0..1] to a color by linear interpolation between specified colors. */
+ *  Maps a floating point value to a color by linear interpolation between specified colors. */
 class ROSE_UTIL_API Gradient {
 public:
     typedef Sawyer::Container::Map<double, HSV> ColorMap;
@@ -332,7 +338,7 @@ ROSE_UTIL_API std::string toHtml(const RGB&);
  * background. The foreground and background colors can be canceled by emitting "\033[0m". If a layer is specified, then the
  * escape sequence is part of the return value. ANSI doesn't support alphas, so if the alpha is less than 0.5 the return value
  * is an empty string. */
-ROSE_UTIL_API std::string toAnsi(const RGB&, Layer::Flag layer);
+ROSE_UTIL_API std::string toAnsi(const RGB&, Layer);
 
 // printing
 std::ostream& operator<<(std::ostream&, const RGB&);
@@ -343,20 +349,29 @@ std::ostream& operator<<(std::ostream&, const Gradient&);
 //                                      Predefined colors
 
 extern const HSV HSV_CLEAR;                             // my favorite color ;-)
-extern const HSV HSV_BLACK;
-extern const HSV HSV_WHITE;
-extern const HSV HSV_RED;
-extern const HSV HSV_GREEN;
-extern const HSV HSV_BLUE;
-extern const HSV HSV_CYAN;
-extern const HSV HSV_MAGENTA;
-extern const HSV HSV_YELLOW;
-extern const HSV HSV_GRAY;
+extern const HSV HSV_BLACK;                             /**< Black. */
+extern const HSV HSV_WHITE;                             /**< White. */
+extern const HSV HSV_RED;                               /**< Red. */
+extern const HSV HSV_GREEN;                             /**< Green. */
+extern const HSV HSV_BLUE;                              /**< Blue. */
+extern const HSV HSV_CYAN;                              /**< Cyan. */
+extern const HSV HSV_MAGENTA;                           /**< Magenta. */
+extern const HSV HSV_YELLOW;                            /**< Yellow. */
+extern const HSV HSV_GRAY;                              /**< Gray. */
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** ANSI color names for terminal output. */
-enum AnsiColor { ANSI_CLEAR, ANSI_RED, ANSI_GREEN, ANSI_YELLOW, ANSI_BLUE, ANSI_MAGENTA, ANSI_CYAN, ANSI_GRAY };
+enum class AnsiColor {
+    CLEAR,                                              /**< Clear. */
+    RED,                                                /**< Red. */
+    GREEN,                                              /**< Green. */
+    YELLOW,                                             /**< Yellow. */
+    BLUE,                                               /**< Blue. */
+    MAGENTA,                                            /**< Magenta. */
+    CYAN,                                               /**< Cyan. */
+    GRAY                                                /**< Gray. */
+};
 
 /** Convert a color enum to a string. */
 std::string colorName(AnsiColor);

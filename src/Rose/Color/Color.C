@@ -93,11 +93,11 @@ std::string HSV::toHtml() const {
     return Color::toHtml(*this);
 }
 
-std::string RGB::toAnsi(Layer::Flag layer) const {
+std::string RGB::toAnsi(Layer layer) const {
     return Color::toAnsi(*this, layer);
 }
 
-std::string HSV::toAnsi(Layer::Flag layer) const {
+std::string HSV::toAnsi(Layer layer) const {
     return Color::toAnsi(*this, layer);
 }
 
@@ -139,7 +139,7 @@ std::string toHtml(const RGB &rgb) {
     return (boost::format("#%02x%02x%02x") % r % g % b).str();
 }
 
-std::string toAnsi(const RGB &rgb, Layer::Flag layer) {
+std::string toAnsi(const RGB &rgb, Layer layer) {
     std::string retval;
     // ANSI doesn't support alpha, so we treat the color as either clear or opaque.
     if (rgb.a() >= 0.5) {
@@ -213,14 +213,14 @@ operator<<(std::ostream &out, const Gradient &gradient) {
 std::string
 colorName(AnsiColor c) {
     switch (c) {
-        case ANSI_CLEAR:   return "clear";
-        case ANSI_RED:     return "red";
-        case ANSI_GREEN:   return "green";
-        case ANSI_YELLOW:  return "yellow";
-        case ANSI_BLUE:    return "blue";
-        case ANSI_MAGENTA: return "magenta";
-        case ANSI_CYAN:    return "cyan";
-        case ANSI_GRAY:    return "gray";
+        case AnsiColor::CLEAR:   return "clear";
+        case AnsiColor::RED:     return "red";
+        case AnsiColor::GREEN:   return "green";
+        case AnsiColor::YELLOW:  return "yellow";
+        case AnsiColor::BLUE:    return "blue";
+        case AnsiColor::MAGENTA: return "magenta";
+        case AnsiColor::CYAN:    return "cyan";
+        case AnsiColor::GRAY:    return "gray";
     }
     ASSERT_not_reachable("invalid ANSI color");
 }
@@ -228,14 +228,14 @@ colorName(AnsiColor c) {
 std::string
 ansiColorEscape(AnsiColor c) {
     switch (c) {
-        case ANSI_CLEAR:   return "";
-        case ANSI_RED:     return "\033[31m";
-        case ANSI_GREEN:   return "\033[32m";
-        case ANSI_YELLOW:  return "\033[33m";
-        case ANSI_BLUE:    return "\033[34m";
-        case ANSI_MAGENTA: return "\033[35m";
-        case ANSI_CYAN:    return "\033[36m";
-        case ANSI_GRAY:    return "\033[38;5;244m";
+        case AnsiColor::CLEAR:   return "";
+        case AnsiColor::RED:     return "\033[31m";
+        case AnsiColor::GREEN:   return "\033[32m";
+        case AnsiColor::YELLOW:  return "\033[33m";
+        case AnsiColor::BLUE:    return "\033[34m";
+        case AnsiColor::MAGENTA: return "\033[35m";
+        case AnsiColor::CYAN:    return "\033[36m";
+        case AnsiColor::GRAY:    return "\033[38;5;244m";
     }
     return "";
 }

@@ -13426,14 +13426,14 @@ namespace Rose {
 namespace stringify { namespace Rose { namespace Color {
     const char* AnsiColor(int64_t i) {
         switch (i) {
-            case 0L: return "ANSI_CLEAR";
-            case 1L: return "ANSI_RED";
-            case 2L: return "ANSI_GREEN";
-            case 3L: return "ANSI_YELLOW";
-            case 4L: return "ANSI_BLUE";
-            case 5L: return "ANSI_MAGENTA";
-            case 6L: return "ANSI_CYAN";
-            case 7L: return "ANSI_GRAY";
+            case 0L: return "CLEAR";
+            case 1L: return "RED";
+            case 2L: return "GREEN";
+            case 3L: return "YELLOW";
+            case 4L: return "BLUE";
+            case 5L: return "MAGENTA";
+            case 6L: return "CYAN";
+            case 7L: return "GRAY";
             default: return "";
         }
     }
