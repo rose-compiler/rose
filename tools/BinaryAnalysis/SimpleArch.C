@@ -997,7 +997,7 @@ class SimpleAssembler {
 public:
     SimpleAssembler(std::istream &in, std::ostream &out)
         : arch_(SimpleArch::instance()), in_(in), out_(out) {
-        ASSERT_not_null(arch);
+        ASSERT_not_null(arch_);
     }
 
 private:
