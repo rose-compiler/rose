@@ -7,6 +7,7 @@ run $(librose_compile)				\
     Log.C					\
     Node.C					\
     Result.C					\
+    Rule.C
 
 run $(public_header) -o include/rose/Rose/Sarif	\
     Analysis.h					\
@@ -16,3 +17,4 @@ run $(public_header) -o include/rose/Rose/Sarif	\
     Log.h					\
     Node.h					\
     Result.h					\
+    Rule.h

@@ -30,6 +30,7 @@ class Location;
 class Log;
 class Node;
 class Result;
+class Rule;
 
 /** Shared-ownership pointer to an @ref Analysis object.
  *
@@ -64,6 +65,13 @@ using NodeConstPtr = std::shared_ptr<const Node>;
  *  @{ */
 using ResultPtr = std::shared_ptr<Result>;
 using ResultConstPtr = std::shared_ptr<const Result>;
+/** @} */
+
+/** Shared-ownership pointer to a @ref Rule object.
+ *
+ * @{ */
+using RulePtr = std::shared_ptr<Rule>;
+using RuleConstPtr = std::shared_ptr<const Rule>;
 /** @} */
 
 } // namespace

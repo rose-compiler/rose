@@ -3,6 +3,7 @@
 
 #include <Rose/Sarif/Exception.h>
 #include <Rose/Sarif/Result.h>
+#include <Rose/Sarif/Rule.h>
 
 #include <boost/bind/bind.hpp>
 
@@ -14,7 +15,10 @@ namespace Sarif {
 Analysis::~Analysis() {}
 
 Analysis::Analysis(const std::string &name)
-    : name_(name), results(*this) {
+    : name_(name), rules(*this), results(*this) {
+    rules.beforeResize(boost::bind(&Analysis::checkRulesResize, this, _1, _2));
+    rules.afterResize(boost::bind(&Analysis::handleRulesResize, this, _1, _2));
+
     results.beforeResize(boost::bind(&Analysis::checkResultsResize, this, _1, _2));
     results.afterResize(boost::bind(&Analysis::handleResultsResize, this, _1, _2));
 }
@@ -45,6 +49,8 @@ Analysis::commandLine(const std::vector<std::string> &cmd) {
             throw IncrementalError::cannotChangeValue("Analysis::commandLine");
         if (exitStatus_)
             throw IncrementalError::cannotSetAfter("Analysis::commandLine", "Analysis::exitStatus");
+        if (!rules.empty())
+            throw IncrementalError::cannotSetAfter("Analysis::commandLine", "Analysis::rules");
         if (!results.empty())
             throw IncrementalError::cannotSetAfter("Analysis::commandLine", "Analysis::results");
     }
@@ -92,6 +98,8 @@ Analysis::exitStatus(const Sawyer::Optional<int> &status) {
     if (isIncremental()) {
         if (exitStatus_)
             throw IncrementalError::cannotChangeValue("Analysis::exitStatus");
+        if (!rules.empty())
+            throw IncrementalError::cannotSetAfter("Analysis::exitStatus", "Analysis::rules");
         if (!results.empty())
             throw IncrementalError::cannotSetAfter("Analysis::exitStatus", "Analysis::results");
     }
@@ -119,6 +127,38 @@ Analysis::emitExitStatus(std::ostream &out, const std::string &firstPrefix) {
 }
 
 void
+Analysis::checkRulesResize(int delta, const Rule::Ptr &rule) {
+    if (!rule)
+        throw Sarif::Exception("cannot add null rule to an analysis");
+    if (isIncremental() && delta < 0)
+        throw IncrementalError("rule cannot be removed from an analysis");
+}
+
+void
+Analysis::handleRulesResize(int delta, const Rule::Ptr &rule) {
+    if (isIncremental()) {
+        ASSERT_require(1 == delta);
+        ASSERT_forbid(results.empty());
+
+        // Make sure we can't change this pointer in the future
+        rules.back().beforeChange([](const Node::Ptr&, const Node::Ptr&) {
+            throw IncrementalError("rule cannot be reassigned");
+        });
+
+        // Prior rules can no longer be modified
+        if (rules.size() >= 2)
+            rules[rules.size() - 2]->freeze();
+
+        // Emit this new rule
+        std::ostream &out = incrementalStream();
+        const std::string p = emissionPrefix();
+        if (1 == rules.size())
+            out <<p <<"rules:\n";
+        rule->emitYaml(out, makeListPrefix(p));
+    }
+}
+
+void
 Analysis::checkResultsResize(int delta, const Result::Ptr &result) {
     if (!result)
         throw Sarif::Exception("cannot add null result to an anaysis");
@@ -136,6 +176,10 @@ Analysis::handleResultsResize(int delta, const Result::Ptr &result) {
         results.back().beforeChange([](const Node::Ptr&, const Node::Ptr&) {
             throw IncrementalError("result cannot be reassigned");
         });
+
+        // Prior rules can no longer be modified.
+        if (!rules.empty())
+            rules.back()->freeze();
 
         // Prior result can no longer be modified
         if (results.size() >= 2)
@@ -170,6 +214,16 @@ Analysis::emitYaml(std::ostream &out, const std::string &firstPrefix) {
 
     emitCommandLine(out, p);
     emitExitStatus(out, p);
+
+    if (!rules.empty()) {
+        out <<p <<"rules:\n";
+        const std::string pList = makeListPrefix(p);
+        for (const auto &rule: rules) {
+            rule->emitYaml(out, pList);
+            if (isIncremental() && rule != rules.back())
+                rule->freeze();
+        }
+    }
 
     if (!results.empty()) {
         out <<p <<"results:\n";

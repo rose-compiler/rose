@@ -281,6 +281,7 @@ librose_partial_la_SOURCES =								\
 	Sarif/Log.C									\
 	Sarif/Node.C									\
 	Sarif/Result.C									\
+	Sarif/Rule.C									\
 	SourceLocation.C								\
 	StringUtility/Convert.C								\
 	StringUtility/Diagnostics.C							\

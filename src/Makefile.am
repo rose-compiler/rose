@@ -601,6 +601,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/Sarif/Log.h								\
 	Rose/Sarif/Node.h								\
 	Rose/Sarif/Result.h								\
+	Rose/Sarif/Rule.h								\
 	Rose/SourceLocation.h								\
 	Rose/StringUtility.h								\
 	Rose/StringUtility/Convert.h							\

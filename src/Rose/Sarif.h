@@ -8,6 +8,7 @@
 #include <Rose/Sarif/Log.h>
 #include <Rose/Sarif/Node.h>
 #include <Rose/Sarif/Result.h>
+#include <Rose/Sarif/Rule.h>
 
 namespace Rose {
 

@@ -5,6 +5,7 @@ add_library(roseSarif OBJECT
   Log.C
   Node.C
   Result.C
+  Rule.C
 )
 
 add_dependencies(roseSarif rosetta_generated)
@@ -17,5 +18,6 @@ install(FILES
   Log.h
   Node.h
   Result.h
+  Rule.h
 
   DESTINATION ${INCLUDE_INSTALL_DIR}/Rose/Sarif)

@@ -13,7 +13,8 @@ namespace Sarif {
  *
  *  This class represents one run of one analysis and all the results from that run. An analysis can be one of many analyses run by
  *  a single tool, or can be the only analysis run by a tool.  Each analysis has a name and an optional command-line invocation. All
- *  the results for one analysis are stored in that object's @ref results vector. */
+ *  the results for one analysis are stored in that object's @ref results vector. The results may point to specific @ref rules
+ *  associated with this analysis. */
 class Analysis: public Node {
 public:
     /** Shared-ownership pointer to an @ref Analysis object.
@@ -29,6 +30,9 @@ private:
     Sawyer::Optional<int> exitStatus_;                  // exit status of the analysis
 
 public:
+    /** Rules for this analysis. */
+    EdgeVector<Rule> rules;
+
     /** Results for this analysis. */
     EdgeVector<Result> results;
 
@@ -81,6 +85,12 @@ private:
     // Emit YAML for an exit status if it isn't empty. If the command-line isn't empty, then this must be called immediately after
     // emitCommandLine.
     void emitExitStatus(std::ostream&, const std::string &prefix);
+
+    // Called before a new rule is added to the `rules` vector.
+    void checkRulesResize(int delta, const RulePtr&);
+
+    // Called after adding a new rule to the `rules` vector.
+    void handleRulesResize(int delta, const RulePtr&);
 
     // Called before a new result is added to the `results` vector.
     void checkResultsResize(int delta, const ResultPtr&);
