@@ -103,9 +103,7 @@ Result::handleLocationsResize(int delta, const Location::Ptr &location) {
         ASSERT_forbid(locations.empty());
 
         // Make sure we can't change this pointer in the future
-        locations.back().beforeChange([](const Node::Ptr&, const Node::Ptr&) {
-            throw IncrementalError("location cannot be reassigned");
-        });
+        lock(locations.back(), "locations");
 
         // Prior location can no longer be modified
         if (locations.size() >= 2)
@@ -168,10 +166,13 @@ Result::emitYaml(std::ostream &out, const std::string &firstPrefix) {
 
     if (!locations.empty()) {
         out <<p <<"locations:\n";
-        for (const auto &location: locations) {
+        for (auto &location: locations) {
             location->emitYaml(out, makeListPrefix(p));
-            if (location != locations.back())
-                location->freeze();
+            if (isIncremental()) {
+                lock(location, "locations");
+                if (location != locations.back())
+                    location->freeze();
+            }
         }
     }
 }

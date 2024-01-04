@@ -94,6 +94,7 @@ Rule::helpUri(const std::string &s) {
     }
 
     helpUri_ = s;
+
     if (isIncremental())
         emitHelpUri(incrementalStream(), emissionPrefix());
 }
@@ -101,6 +102,23 @@ Rule::helpUri(const std::string &s) {
 boost::uuids::uuid
 Rule::uuid() const {
     return uuid_;
+}
+
+void
+Rule::uuid(boost::uuids::uuid id) {
+    if (id == uuid_)
+        return;
+    if (isFrozen())
+        throw IncrementalError::frozenObject("Rule");
+    if (isIncremental()) {
+        if (!uuid_.is_nil())
+            throw IncrementalError::cannotChangeValue("Rule::uuid");
+    }
+
+    uuid_ = id;
+
+    if (isIncremental())
+        emitUuid(incrementalStream(), emissionPrefix());
 }
 
 void
@@ -120,19 +138,19 @@ Rule::emitName(std::ostream &out, const std::string &firstPrefix) {
 
 void
 Rule::emitDescription(std::ostream &out, const std::string &firstPrefix) {
-    out <<firstPrefix <<"fullDescription:" <<StringUtility::yamlEscape(description_) <<"\n";
+    out <<firstPrefix <<"fullDescription: " <<StringUtility::yamlEscape(description_) <<"\n";
 }
 
 void
 Rule::emitHelpUri(std::ostream &out, const std::string &firstPrefix) {
-    out <<firstPrefix <<"helpUri:" <<StringUtility::yamlEscape(helpUri_) <<"\n";
+    out <<firstPrefix <<"helpUri: " <<StringUtility::yamlEscape(helpUri_) <<"\n";
 }
 
 void
 Rule::emitYaml(std::ostream &out, const std::string &firstPrefix) {
     emitId(out, firstPrefix);
-    const std::string p = firstPrefix;
-    emitUuid(out, firstPrefix);
+    const std::string p = makeNextPrefix(firstPrefix);
+    emitUuid(out, p);
 
     if (!name_.empty())
         emitName(out, p);

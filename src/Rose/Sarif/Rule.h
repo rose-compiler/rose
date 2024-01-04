@@ -86,8 +86,12 @@ public:
 
     /** Property: Universally unique identifier.
      *
-     *  The UUID is set during construction and cannot be changed thereafter. */
+     *  The universally unique identification. This is assigned during construction, but can be changed later.
+     *
+     * @{ */
     boost::uuids::uuid uuid() const;
+    void uuid(boost::uuids::uuid);
+    /** @} */
 
 public:
     void emitYaml(std::ostream&, const std::string&) override;

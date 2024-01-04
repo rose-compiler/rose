@@ -138,12 +138,10 @@ void
 Analysis::handleRulesResize(int delta, const Rule::Ptr &rule) {
     if (isIncremental()) {
         ASSERT_require(1 == delta);
-        ASSERT_forbid(results.empty());
+        ASSERT_forbid(rules.empty());
 
         // Make sure we can't change this pointer in the future
-        rules.back().beforeChange([](const Node::Ptr&, const Node::Ptr&) {
-            throw IncrementalError("rule cannot be reassigned");
-        });
+        lock(rules.back(), "rules");
 
         // Prior rules can no longer be modified
         if (rules.size() >= 2)
@@ -173,9 +171,7 @@ Analysis::handleResultsResize(int delta, const Result::Ptr &result) {
         ASSERT_forbid(results.empty());
 
         // Make sure we can't change this pointer in the future
-        results.back().beforeChange([](const Node::Ptr&, const Node::Ptr&) {
-            throw IncrementalError("result cannot be reassigned");
-        });
+        lock(results.back(), "results");
 
         // Prior rules can no longer be modified.
         if (!rules.empty())
@@ -218,20 +214,26 @@ Analysis::emitYaml(std::ostream &out, const std::string &firstPrefix) {
     if (!rules.empty()) {
         out <<p <<"rules:\n";
         const std::string pList = makeListPrefix(p);
-        for (const auto &rule: rules) {
+        for (auto &rule: rules) {
             rule->emitYaml(out, pList);
-            if (isIncremental() && rule != rules.back())
-                rule->freeze();
+            if (isIncremental()) {
+                lock(rule, "rules");
+                if (rule != rules.back() || !results.empty())
+                    rule->freeze();
+            }
         }
     }
 
     if (!results.empty()) {
         out <<p <<"results:\n";
         const std::string pList = makeListPrefix(p);
-        for (const auto &result: results) {
+        for (auto &result: results) {
             result->emitYaml(out, pList);
-            if (isIncremental() && result != results.back())
-                result->freeze();
+            if (isIncremental()) {
+                lock(result, "results");
+                if (result != results.back())
+                    result->freeze();
+            }
         }
     }
 }

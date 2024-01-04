@@ -63,9 +63,7 @@ Log::handleAnalysesResize(int delta, const Analysis::Ptr &analysis) {
         ASSERT_forbid(analyses.empty());
 
         // Make sure we can't change this pointer in the future
-        analyses.back().beforeChange([](const Node::Ptr&, const Node::Ptr&) {
-            throw IncrementalError("analysis cannot be reassigned");
-        });
+        lock(analyses.back(), "analyses");
 
         // Prior analysis can no longer be modified
         if (analyses.size() >= 2)
@@ -88,10 +86,13 @@ Log::emitYaml(std::ostream &out, const std::string &firstPrefix) {
 
     if (!analyses.empty()) {
         out <<p <<"runs:\n";
-        for (const auto &analysis: analyses) {
+        for (auto &analysis: analyses) {
             analysis->emitYaml(out, makeListPrefix(p));
-            if (isIncremental() && analysis != analyses.back())
-                analysis->freeze();
+            if (isIncremental()) {
+                lock(analysis, "analyses");
+                if (analysis != analyses.back())
+                    analysis->freeze();
+            }
         }
     }
 }

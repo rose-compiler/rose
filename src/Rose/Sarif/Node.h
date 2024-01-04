@@ -66,6 +66,14 @@ protected:
 
     // Given a YAML line prefix, make a new prefix for an indented list item.
     std::string makeListPrefix(const std::string&);
+
+    template<class T>
+    static void lock(Edge<T> &edge, const char *dataMemberName) {
+        const std::string mesg = std::string(dataMemberName) + " cannot be reassigned";
+        edge.beforeChange([mesg](const Node::Ptr&, const Node::Ptr&) {
+            throw IncrementalError(mesg);
+        });
+    }
 };
 
 } // namespace
