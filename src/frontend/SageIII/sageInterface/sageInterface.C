@@ -25441,9 +25441,10 @@ void SageInterface::recursivePrintCurrentAndParent (SgNode* n)
   // track back to its parent
   recursivePrintCurrentAndParent (n->get_parent());
 }
-// forward declaration is needed here
-static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringstream& out, string& edgeLabel);
+// forward declaration is needed here,
+//static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringstream& out, string& edgeLabel);
 
+#if 0 // made it into a template function to handle various ptr lists in AST
 // A special node in the AST text dump
 static void serialize(SgTemplateArgumentPtrList& plist, string& prefix, bool hasRemaining, ostringstream& out, string& edgeLabel)
 {
@@ -25483,10 +25484,11 @@ static void serialize(SgTemplateArgumentPtrList& plist, string& prefix, bool has
       serialize (plist[i], n_prefix, n_hasRemaining, out,n_edge_label);
   }
 }
+#endif
 
 // print essential information from any AST node
 // hasRemaining if this node has a sibling node to be visited next.
-static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringstream& out, string& edgeLabel)
+static void SageInterface::serialize(SgNode* node, string& prefix, bool hasRemaining, ostringstream& out, string& edgeLabel)
 {
   // there may be NULL children!!
   //if (!node) return;
@@ -25710,17 +25712,21 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   {
     SgTemplateArgumentPtrList& plist = sn->get_templateArguments();
      bool n_hasRemaining=false;
-#if 0
-    if (current_index+1<total_count)
-      n_hasRemaining=true;
-    current_index++;
-#else
     if (last_non_null_child_idx>-1) n_hasRemaining = true;
-#endif
     string suffix= hasRemaining? "|   " : "    ";
     string n_prefix = prefix+suffix;
     string n_edge_label= "";
-    serialize(plist, n_prefix, n_hasRemaining, out, n_edge_label);
+    serialize_list(plist, "SgTemplateArgumentPtrList", n_prefix, n_hasRemaining, out, n_edge_label);
+  }
+  else if (SgImportStatement* import_stmt = isSgImportStatement(node))
+  {
+    SgExpressionPtrList& plist = import_stmt->get_import_list();
+    bool n_hasRemaining=false;
+    if (last_non_null_child_idx>-1) n_hasRemaining = true;
+    string suffix= hasRemaining? "|   " : "    ";
+    string n_prefix = prefix+suffix;
+    string n_edge_label= "";
+    serialize_list(plist, "SgExpressionPtrList", n_prefix, n_hasRemaining, out, n_edge_label);
   }
 
   std::vector< std::string >  successorNames= node->get_traversalSuccessorNamesContainer();

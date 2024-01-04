@@ -8,6 +8,9 @@
 #include "rosePublicConfig.h" // for ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 #include "OmpAttribute.h"
 
+#include <string>
+#include <iostream>
+#include <sstream>
 
 #if 0   // FMZ(07/07/2010): the argument "nextErrorCode" should be call-by-reference
 SgFile* determineFileType ( std::vector<std::string> argv, int nextErrorCode, SgProject* project );
@@ -1311,6 +1314,47 @@ static std::vector<NodeType*> getSgNodeListFromMemoryPool()
   MyTraversal my_traversal;
   NodeType::traverseMemoryPoolNodes(my_traversal);
   return my_traversal.resultlist;
+}
+
+
+//! we have two serialize function, one for a single node, the other for a list of pointers
+static void serialize(SgNode* node, std::string& prefix, bool hasRemaining, std::ostringstream& out, std::string& edgeLabel);
+
+// A special node in the AST text dump
+template<typename T>
+static void serialize_list(T& plist, std::string T_name, std::string& prefix, bool hasRemaining, std::ostringstream& out, std::string& edgeLabel)
+{       
+  out<<prefix;
+  out<< (hasRemaining?"|---": "|___");
+        
+//  out<<"+"<<edgeLabel<<"+>";
+  out<<" "<<edgeLabel<<" ->";
+  // print address and type name
+  //out<<"@"<<&plist<<" "<< typeid(T).name()<<" "; // mangled names are hard to read
+  out<<"@"<<&plist<<" "<< T_name<<" ";
+  
+  out<<std::endl;
+  
+  int last_non_null_child_idx =-1;
+  for (int i = (int) (plist.size())-1; i>=0; i--)
+  { 
+    if (plist[i])
+    {
+      last_non_null_child_idx = i;
+      break;
+    }
+  }
+
+  for (size_t i=0; i< plist.size(); i++ )
+  { 
+    bool n_hasRemaining=false;
+    if ((int)i< last_non_null_child_idx) n_hasRemaining = true;
+    std::string suffix= hasRemaining? "|   " : "    ";
+    std::string n_prefix = prefix+suffix;
+    std::string n_edge_label="";
+    if (plist[i])
+      serialize (plist[i], n_prefix, n_hasRemaining, out,n_edge_label);
+  }
 }
 
 
