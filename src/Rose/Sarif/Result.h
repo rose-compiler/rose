@@ -23,6 +23,7 @@ private:
     Severity severity_ = Severity::ERROR;
     std::string message_;
     std::string id_;                                    // optional stable ID for this result
+    RulePtr rule_;                                      // optional rule pointer
 
 public:
     /** Locations associated with this result. */
@@ -67,16 +68,27 @@ public:
     void id(const std::string&);
     /** @} */
 
+    /** Property: Associated rule.
+     *
+     *  Pointer to an optional rule associated with this result. If this result points to a rule, then the rule must be attached to
+     *  the same @ref Analysis as this result before this result can be emitted. Attempting to emit a result pointing to a detached
+     *  rule will result in an exception.
+     *
+     *  @{ */
+    RulePtr rule() const;
+    void rule(const RulePtr&);
+    /** @} */
+
 public:
     void emitYaml(std::ostream&, const std::string &prefix) override;
     std::string emissionPrefix() override;
 
 private:
     void emitId(std::ostream&, const std::string &prefix);
+    void emitRule(std::ostream&, const std::string &prefix);
     void checkLocationsResize(int delta, const LocationPtr&);
     void handleLocationsResize(int delta, const LocationPtr&);
-
-
+    Sawyer::Optional<size_t> findRuleIndex(const RulePtr&);
 };
 
 } // namespace

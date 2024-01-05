@@ -19,5 +19,10 @@ IncrementalError::frozenObject(const std::string &what) {
     return IncrementalError("cannot change " + what + " after emitting subsequent data");
 }
 
+IncrementalError
+IncrementalError::notAttached(const std::string &what) {
+    return IncrementalError(what + " is not attached to the log");
+}
+
 } // namespace
 } // namespace

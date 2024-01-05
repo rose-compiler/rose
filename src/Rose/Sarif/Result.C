@@ -1,8 +1,10 @@
 #include <sage3basic.h>
 #include <Rose/Sarif/Result.h>
 
+#include <Rose/Sarif/Analysis.h>
 #include <Rose/Sarif/Exception.h>
 #include <Rose/Sarif/Location.h>
+#include <Rose/Sarif/Rule.h>
 
 #include <boost/bind/bind.hpp>
 
@@ -88,6 +90,47 @@ Result::emitId(std::ostream &out, const std::string &firstPrefix) {
         out <<firstPrefix <<"id: " <<StringUtility::yamlEscape(id_) <<"\n";
 }
 
+Rule::Ptr
+Result::rule() const {
+    return rule_;
+}
+
+void
+Result::rule(const Rule::Ptr &r) {
+    if (r == rule_)
+        return;
+    if (isFrozen())
+        throw IncrementalError::frozenObject("Result");
+    if (isIncremental()) {
+        if (rule_)
+            throw IncrementalError::cannotChangeValue("Result::rule");
+        if (!locations.empty())
+            throw IncrementalError::cannotSetAfter("Result::rule", "Result::locations");
+        if (!findRuleIndex(r))
+            throw IncrementalError::notAttached("Result::rule");
+    }
+
+    rule_ = r;
+
+    if (isIncremental())
+        emitRule(incrementalStream(), emissionPrefix());
+}
+
+void
+Result::emitRule(std::ostream &out, const std::string &firstPrefix) {
+    if (rule_) {
+        out <<firstPrefix <<"ruleId: " <<StringUtility::yamlEscape(rule_->id()) <<"\n";
+        const std::string p = makeNextPrefix(firstPrefix);
+        if (auto idx = findRuleIndex(rule_)) {
+            out <<p <<"rule:\n";
+            const std::string pp = makeObjectPrefix(p);
+            out <<pp <<"index: " <<*idx <<"\n";
+        } else {
+            throw Sarif::Exception("Result::rule must be attached to the log before the result is emitted");
+        }
+    }
+}
+
 void
 Result::checkLocationsResize(int delta, const Location::Ptr &location) {
     if (!location)
@@ -163,6 +206,7 @@ Result::emitYaml(std::ostream &out, const std::string &firstPrefix) {
     out <<pp <<"text: " <<StringUtility::yamlEscape(message_) <<"\n";
 
     emitId(out, p);
+    emitRule(out, p);
 
     if (!locations.empty()) {
         out <<p <<"locations:\n";
@@ -180,6 +224,19 @@ Result::emitYaml(std::ostream &out, const std::string &firstPrefix) {
 std::string
 Result::emissionPrefix() {
     return makeObjectPrefix(makeObjectPrefix(parent->emissionPrefix()));
+}
+
+Sawyer::Optional<size_t>
+Result::findRuleIndex(const Rule::Ptr &rule) {
+    if (rule) {
+        if (auto ana = findFirstAncestor<Analysis>()) {
+            for (size_t i = 0; i < ana->rules.size(); ++i) {
+                if (ana->rules[i] == rule)
+                    return i;
+            }
+        }
+    }
+    return Sawyer::Nothing();
 }
 
 } // namespace

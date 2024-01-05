@@ -33,6 +33,9 @@ public:
 
     /** Cannot change anything about an object because a subsequent object has been emitted. */
     static IncrementalError frozenObject(const std::string &what);
+
+    /** The specified thing is not attached to the same log. */
+    static IncrementalError notAttached(const std::string &what);
 };
 
 } // namespace
