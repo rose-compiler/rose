@@ -2,6 +2,7 @@
 #include <Rose/Sarif/Rule.h>
 
 #include <Rose/Sarif/Exception.h>
+#include <Combinatorics.h>                              // rose
 
 #include <boost/uuid/random_generator.hpp>
 #include <boost/uuid/uuid_io.hpp>

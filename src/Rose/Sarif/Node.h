@@ -2,6 +2,7 @@
 #define ROSE_Sarif_Node_H
 #include <Rose/Sarif/BasicTypes.h>
 
+#include <Rose/Sarif/Exception.h>
 #include <Rose/StringUtility/Escape.h>
 #include <Sawyer/Tree.h>
 
