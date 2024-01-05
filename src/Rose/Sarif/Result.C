@@ -2,6 +2,7 @@
 #include <Rose/Sarif/Result.h>
 
 #include <Rose/Sarif/Analysis.h>
+#include <Rose/Sarif/Artifact.h>
 #include <Rose/Sarif/Exception.h>
 #include <Rose/Sarif/Location.h>
 #include <Rose/Sarif/Rule.h>
@@ -131,6 +132,43 @@ Result::emitRule(std::ostream &out, const std::string &firstPrefix) {
     }
 }
 
+Artifact::Ptr
+Result::analysisTarget() const {
+    return analysisTarget_;
+}
+
+void
+Result::analysisTarget(const Artifact::Ptr &artifact) {
+    if (artifact == analysisTarget_)
+        return;
+    if (isFrozen())
+        throw IncrementalError::frozenObject("Result");
+    if (isIncremental()) {
+        if (analysisTarget_)
+            throw IncrementalError::cannotChangeValue("Result::analysisTarget");
+        if (!locations.empty())
+            throw IncrementalError::cannotSetAfter("Result::analysisTarget", "Result::locations");
+        if (!findArtifactIndex(artifact))
+            throw IncrementalError::notAttached("Result::analysisTarget");
+    }
+
+    analysisTarget_ = artifact;
+
+    if (isIncremental())
+        emitAnalysisTarget(incrementalStream(), emissionPrefix());
+}
+
+void
+Result::emitAnalysisTarget(std::ostream &out, const std::string &firstPrefix) {
+    if (analysisTarget_) {
+        if (!findArtifactIndex(analysisTarget_))
+            throw Sarif::Exception("Result::analysisTarget must be attached to the log before the result is emitted");
+        out <<firstPrefix <<"analysisTarget:\n";
+        const std::string pp = makeObjectPrefix(firstPrefix);
+        out <<pp <<"uri: " <<StringUtility::yamlEscape(analysisTarget_->uri()) <<"\n";
+    }
+}
+
 void
 Result::checkLocationsResize(int delta, const Location::Ptr &location) {
     if (!location)
@@ -207,6 +245,7 @@ Result::emitYaml(std::ostream &out, const std::string &firstPrefix) {
 
     emitId(out, p);
     emitRule(out, p);
+    emitAnalysisTarget(out, p);
 
     if (!locations.empty()) {
         out <<p <<"locations:\n";
@@ -232,6 +271,19 @@ Result::findRuleIndex(const Rule::Ptr &rule) {
         if (auto ana = findFirstAncestor<Analysis>()) {
             for (size_t i = 0; i < ana->rules.size(); ++i) {
                 if (ana->rules[i] == rule)
+                    return i;
+            }
+        }
+    }
+    return Sawyer::Nothing();
+}
+
+Sawyer::Optional<size_t>
+Result::findArtifactIndex(const Artifact::Ptr &artifact) {
+    if (artifact) {
+        if (auto ana = findFirstAncestor<Analysis>()) {
+            for (size_t i = 0; i < ana->artifacts.size(); ++i) {
+                if (ana->artifacts[i] == artifact)
                     return i;
             }
         }

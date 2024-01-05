@@ -24,6 +24,7 @@ private:
     std::string message_;
     std::string id_;                                    // optional stable ID for this result
     RulePtr rule_;                                      // optional rule pointer
+    ArtifactPtr analysisTarget_;                        // optional analysis target
 
 public:
     /** Locations associated with this result. */
@@ -79,6 +80,17 @@ public:
     void rule(const RulePtr&);
     /** @} */
 
+    /** Property: Analysis target.
+     *
+     *  Pointer to an optional artifact associated with this result. If this result points to an analysis target, then that target
+     *  must be attached to the same @ref Analysis as one of its artifacts before this result can be emitted. Attempting to emit a
+     *  result pointing to a detached artifact will result in an exception.
+     *
+     * @{ */
+    ArtifactPtr analysisTarget() const;
+    void analysisTarget(const ArtifactPtr&);
+    /** @} */
+
 public:
     void emitYaml(std::ostream&, const std::string &prefix) override;
     std::string emissionPrefix() override;
@@ -86,9 +98,11 @@ public:
 private:
     void emitId(std::ostream&, const std::string &prefix);
     void emitRule(std::ostream&, const std::string &prefix);
+    void emitAnalysisTarget(std::ostream&, const std::string &prefix);
     void checkLocationsResize(int delta, const LocationPtr&);
     void handleLocationsResize(int delta, const LocationPtr&);
     Sawyer::Optional<size_t> findRuleIndex(const RulePtr&);
+    Sawyer::Optional<size_t> findArtifactIndex(const ArtifactPtr&);
 };
 
 } // namespace
