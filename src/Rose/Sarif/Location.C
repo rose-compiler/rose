@@ -9,18 +9,35 @@ namespace Sarif {
 
 Location::~Location() {}
 
-Location::Location(const SourceLocation &srcLoc, const std::string &mesg)
-    : sourceLocation_(srcLoc), message_(mesg) {
-    ASSERT_require(srcLoc);
+Location::Location(const SourceLocation &begin, const SourceLocation &end, const std::string &mesg)
+    : sourceBegin_(begin), sourceEnd_(end), message_(mesg) {
+    if (!begin)
+        throw Sarif::Exception("source location begin address must be valid");
+    if (end) {
+        if (begin.fileName() != end.fileName())
+            throw Sarif::Exception("source region endpoints must have the same file name");
+        if (begin.line() > end.line())
+            throw Sarif::Exception("source begin line number must be less than than or equal to end line number");
+        if (begin.line() == end.line() && begin.column() && end.column() && *begin.column() >= *end.column())
+            throw Sarif::Exception("source begin column number must be less than end column number on same line");
+    }
 }
 
-Location::Location(const std::string &binaryArtifact, rose_addr_t addr, const std::string &mesg)
-    : binaryArtifact_(binaryArtifact), address_(addr), message_(mesg) {}
+Location::Location(const std::string &binaryArtifact, const AddressInterval &addrs, const std::string &mesg)
+    : binaryArtifact_(binaryArtifact), binaryRegion_(addrs), message_(mesg) {
+    if (addrs.isEmpty())
+        throw Sarif::Exception("binary region cannot be empty");
+}
 
 Location::Ptr
 Location::instance(const SourceLocation &loc, const std::string &mesg) {
-    ASSERT_require(loc);
-    return Ptr(new Location(loc, mesg));
+    return Ptr(new Location(loc, SourceLocation(), mesg));
+}
+
+Location::Ptr
+Location::instance(const SourceLocation &begin, const SourceLocation &end, const std::string &mesg) {
+    ASSERT_require(end);
+    return Ptr(new Location(begin, end, mesg));
 }
 
 Location::Ptr
@@ -28,14 +45,33 @@ Location::instance(const std::string &binaryArtifact, rose_addr_t addr, const st
     return Ptr(new Location(binaryArtifact, addr, mesg));
 }
 
+Location::Ptr
+Location::instance(const std::string &binaryArtifact, const AddressInterval &addrs, const std::string &mesg) {
+    return Ptr(new Location(binaryArtifact, addrs, mesg));
+}
+
 const SourceLocation&
 Location::sourceLocation() const {
-    return sourceLocation_;
+    return sourceBegin_;
+}
+
+std::pair<SourceLocation, SourceLocation>
+Location::sourceRegion() const {
+    return std::make_pair(sourceBegin_, sourceEnd_);
 }
 
 std::pair<std::string, rose_addr_t>
 Location::binaryLocation() const {
-    return std::make_pair(binaryArtifact_, address_);
+    if (binaryRegion_) {
+        return std::make_pair(binaryArtifact_, binaryRegion_.least());
+    } else {
+        return std::make_pair("", 0);
+    }
+}
+
+std::pair<std::string, AddressInterval>
+Location::binaryRegion() const {
+    return std::make_pair(binaryArtifact_, binaryRegion_);
 }
 
 const std::string&
@@ -73,20 +109,33 @@ Location::emitYaml(std::ostream &out, const std::string &firstPrefix) {
     const std::string pp = makeObjectPrefix(p);
     const std::string ppp = makeObjectPrefix(pp);
 
-    if (sourceLocation_) {
+    if (sourceBegin_) {
         out <<firstPrefix <<"physicalLocation:\n";
         out <<pp <<"artifactLocation:\n";
-        out <<ppp <<"uri: " <<StringUtility::yamlEscape(sourceLocation_.fileName().string()) <<"\n";
+        out <<ppp <<"uri: " <<StringUtility::yamlEscape(sourceBegin_.fileName().string()) <<"\n";
         out <<p <<"region:\n";
-        out <<pp <<"startLine: " <<sourceLocation_.line() <<"\n";
-        if (auto col = sourceLocation_.column())
+        out <<pp <<"startLine: " <<sourceBegin_.line() <<"\n";
+        if (const auto col = sourceBegin_.column())
             out <<pp <<"startColumn: " <<*col <<"\n";
+        if (sourceEnd_) {
+            out <<pp <<"endLine: " <<sourceEnd_.line() <<"\n";
+            if (const auto col = sourceEnd_.column())
+                out <<pp <<"endColumn: " <<*col <<"\n";
+        }
+
     } else {
+        ASSERT_forbid(binaryRegion_.isEmpty());
         out <<firstPrefix <<"physicalLocation:\n";
         out <<pp <<"artifactLocation:\n";
         out <<ppp <<"uri: " <<StringUtility::yamlEscape(binaryArtifact_) <<"\n";
         out <<p <<"region:\n";
-        out <<pp <<"byteOffset: " <<StringUtility::addrToString(address_) <<"\n";
+        out <<pp <<"byteOffset: " <<StringUtility::addrToString(binaryRegion_.least()) <<"\n";
+        if (binaryRegion_ == AddressInterval::whole()) {
+            out <<pp <<"# WARNING: byteLength has been reduced by one to work around SARIF design flaw\n";
+            out <<pp <<"byteLength: " <<StringUtility::addrToString(binaryRegion_.greatest()) <<"\n";
+        } else {
+            out <<pp <<"byteLength: " <<StringUtility::addrToString(binaryRegion_.size()) <<"\n";
+        }
     }
 
     emitMessage(out, p);
