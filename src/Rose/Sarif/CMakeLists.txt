@@ -1,5 +1,6 @@
 add_library(roseSarif OBJECT
   Analysis.C
+  Artifact.C
   Exception.C
   Location.C
   Log.C
@@ -12,6 +13,7 @@ add_dependencies(roseSarif rosetta_generated)
 
 install(FILES
   Analysis.h
+  Artifact.h
   BasicTypes.h
   Exception.h
   Location.h

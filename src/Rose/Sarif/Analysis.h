@@ -33,6 +33,9 @@ public:
     /** Rules for this analysis. */
     EdgeVector<Rule> rules;
 
+    /** Artifacts for this analysis. */
+    EdgeVector<Artifact> artifacts;
+
     /** Results for this analysis. */
     EdgeVector<Result> results;
 
@@ -86,16 +89,12 @@ private:
     // emitCommandLine.
     void emitExitStatus(std::ostream&, const std::string &prefix);
 
-    // Called before a new rule is added to the `rules` vector.
+    // These signal slots are called before ("check") and after ("handle") a vector of edges is resized.
     void checkRulesResize(int delta, const RulePtr&);
-
-    // Called after adding a new rule to the `rules` vector.
     void handleRulesResize(int delta, const RulePtr&);
-
-    // Called before a new result is added to the `results` vector.
+    void checkArtifactsResize(int delta, const ArtifactPtr&);
+    void handleArtifactsResize(int delta, const ArtifactPtr&);
     void checkResultsResize(int delta, const ResultPtr&);
-
-    // Called after adding a new result to the `results` vector.
     void handleResultsResize(int delta, const ResultPtr&);
 };
 

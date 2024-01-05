@@ -2,6 +2,7 @@ include_rules
 
 run $(librose_compile)				\
     Analysis.C					\
+    Artifact.C					\
     Exception.C					\
     Location.C					\
     Log.C					\
@@ -11,6 +12,7 @@ run $(librose_compile)				\
 
 run $(public_header) -o include/rose/Rose/Sarif	\
     Analysis.h					\
+    Artifact.h					\
     BasicTypes.h				\
     Exception.h					\
     Location.h					\

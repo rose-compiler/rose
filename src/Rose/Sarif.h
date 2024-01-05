@@ -2,6 +2,7 @@
 #define ROSE_Sarif_H
 
 #include <Rose/Sarif/Analysis.h>
+#include <Rose/Sarif/Artifact.h>
 #include <Rose/Sarif/BasicTypes.h>
 #include <Rose/Sarif/Exception.h>
 #include <Rose/Sarif/Location.h>

@@ -276,6 +276,7 @@ librose_partial_la_SOURCES =								\
 	Initialize.C									\
 	Progress.C									\
 	Sarif/Analysis.C								\
+	Sarif/Artifact.C								\
 	Sarif/Exception.C								\
 	Sarif/Location.C								\
 	Sarif/Log.C									\

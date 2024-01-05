@@ -24,6 +24,7 @@ enum class Severity {
 };
 
 class Analysis;
+class Artifact;
 class Exception;
 class IncrementalError;
 class Location;
@@ -37,6 +38,13 @@ class Rule;
  * @{ */
 using AnalysisPtr = std::shared_ptr<Analysis>;
 using AnalysisConstPtr = std::shared_ptr<const Analysis>;
+/** @} */
+
+/** Shared-ownership pointer to an @ref Artifact object.
+ *
+ * @{ */
+using ArtifactPtr = std::shared_ptr<Artifact>;
+using ArtifactConstPtr = std::shared_ptr<const Artifact>;
 /** @} */
 
 /** Shared-ownership pointer to a @ref Location object.

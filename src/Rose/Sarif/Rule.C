@@ -3,11 +3,8 @@
 
 #include <Rose/Sarif/Exception.h>
 
-#include <boost/bind/bind.hpp>
 #include <boost/uuid/random_generator.hpp>
 #include <boost/uuid/uuid_io.hpp>
-
-using namespace boost::placeholders;
 
 namespace Rose {
 namespace Sarif {

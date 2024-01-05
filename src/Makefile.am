@@ -595,6 +595,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/Progress.h									\
 	Rose/RecursionCounter.h								\
 	Rose/Sarif/Analysis.h								\
+	Rose/Sarif/Artifact.h								\
 	Rose/Sarif/BasicTypes.h								\
 	Rose/Sarif/Exception.h								\
 	Rose/Sarif/Location.h								\
