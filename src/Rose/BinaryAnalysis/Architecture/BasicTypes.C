@@ -34,7 +34,7 @@
 #include <boost/lexical_cast.hpp>
 #include <set>
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__APPLE__)
 #include <dlfcn.h>
 #endif
 
