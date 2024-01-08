@@ -1743,6 +1743,7 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
        // case V_SgInterfaceStatement:     unparseInterfaceStmt(stmt, info); break;
        // case V_SgCommonBlock:            unparseCommonBlock  (stmt, info); break;
           case V_SgVariableDeclaration:    unparseVarDeclStmt  (stmt, info); break;
+          case V_SgTemplateVariableInstantiation: unparseVarDeclStmt(stmt, info); break;
           case V_SgVariableDefinition:     unparseVarDefnStmt  (stmt, info); break;
        // case V_SgParameterStatement:     unparseParamDeclStmt(stmt, info); break;
        // case V_SgUseStatement:           unparseUseStmt      (stmt, info); break;
@@ -3057,22 +3058,6 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
                return;
              }
 
-// TV (10/15/18): this is an issue when forcing ROSE to unparse the template instantiation in Kripke::Kernel
-#if 0
-          bool skipInlinedTemplates = templateInstantiationFunctionDeclaration->get_functionModifier().isInline();
-          if (skipInlinedTemplates == true)
-             {
-            // skip output of inlined templates since these are likely to have been used 
-            // previously and would be defined too late if provided as an inline template 
-            // specialization output in the source code.
-#if PRINT_DEVELOPER_WARNINGS || 0
-               printf ("This is an inlined template which might have been used previously (skipping output of late specialization) \n");
-               curprint ( string("\n/* Skipping output of inlined template specialization */"));
-#endif
-               return;
-             }
-#endif
-
 #if PRINT_DEVELOPER_WARNINGS || 0
           curprint ( string("\n/* In unparseTemplateInstantiationFunctionDeclStmt(): part of transformation - output the template function declaration */ \n "));
 #endif
@@ -3123,13 +3108,8 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
                  else
                   {
                  // DQ (8/2/2012): Else it was compiler generated and we have to explicitly ask if we have seperately determined that it should be output.
-#if 1
                  // We only look at the isOutputInCodeGeneration() if this is a compiler generated function.
                     if ( templateInstantiationFunctionDeclaration->get_file_info()->isOutputInCodeGeneration() == true )
-#else
-#error "DEAD CODE!"
-                    if ( true )
-#endif
                        {
 #if 0
                          printf ("Declaration appears in the current source file. \n");
@@ -3165,25 +3145,6 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
 
      if (outputInstantiatedTemplateFunction == true)
         {
-       // const SgTemplateArgumentPtrList& templateArgListPtr = templateInstantiationFunctionDeclaration->get_templateArguments();
-#if 0
-       // DQ (8/29/2005): This is now output by the Unparse_ExprStmt::outputTemplateSpecializationSpecifier() member function
-
-       // DQ (3/2/2005): Comment out use of "template<>"
-       // DQ (5/8/2004): Make this an explicit specialization (using the newer C++ syntax to support this)
-       // Output: "template <type>" before function declaration.
-          ASSERT_not_null(templateInstantiationFunctionDeclaration->get_templateArguments());
-          if (templateInstantiationFunctionDeclaration->get_templateArguments()->size() > 0)
-             {
-            // printf ("Declaration is a prototype functionDeclaration->get_definition() = %p \n",functionDeclaration->get_definition());
-               curprint ( string("\n/* ROSE generated template specialization " ) + 
-                      ( (functionDeclaration->get_definition() == NULL) ? "(prototype)" : "(explicit definition)") + " */");
-               curprint ( string("\ntemplate <> "));
-             }
-       // unparseTemplateArguments(templateArgListPtr,info);
-#endif
-
-       // Now output the function declaration
 #if 0
           printf ("Now output the function declaration (unparseFuncDeclStmt) \n");
           curprint ("\n/* Now output the function declaration (unparseFuncDeclStmt) */\n ");

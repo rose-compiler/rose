@@ -444,16 +444,19 @@ Unparse_ExprStmt::unparseFunctionParameterRefExpression (SgExpression* expr, SgU
 
 // DQ (7/24/2014): Added more general support for type expressions (required for C11 generic macro support).
 void
-Unparse_ExprStmt::unparseTypeExpression (SgExpression* expr, SgUnparse_Info &)
+Unparse_ExprStmt::unparseTypeExpression (SgExpression* expr, SgUnparse_Info & info)
    {
-     ASSERT_not_null(expr);
+     SgTypeExpression * type_exp = (SgTypeExpression*)expr;
+     SgType * type = type_exp->get_type();
 
-     printf ("In unparseTypeExpression(expr = %p = %s) \n",expr,expr->class_name().c_str());
+     printf ("In unparseTypeExpression = %p = %s \n", type, type->class_name().c_str());
 
-#if 1
-     printf ("Exiting as a test! \n");
-     ROSE_ABORT();
-#endif
+     SgUnparse_Info info_(info);
+     // info_.unset_SkipBaseType();
+     // info_.unset_isTypeFirstPart();
+     // info_.unset_isTypeSecondPart();
+     info_.set_reference_node_for_qualification(nullptr);
+     unp->u_type->unparseType(type, info_);
    }
 
 

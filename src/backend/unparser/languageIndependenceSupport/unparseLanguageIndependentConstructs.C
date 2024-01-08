@@ -9529,7 +9529,9 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
        // DQ (11/28/2020): Adding support for a expression that appeared in the Clang to ROSE translation.
           case V_SgCompoundInitializer: precedence_value = 0; break;
           case V_SgScopedRefExp: precedence_value = 17; break;
+
           case V_SgTypeRefExp: precedence_value = 16; break;
+          case V_SgTypeExpression: precedence_value = 16; break;
 
           default:
              {

@@ -15397,12 +15397,20 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                case V_SgSizeOfOp:
                   {
                     qualifiedType = sizeOfOp->get_operand_type();
-                    if (qualifiedType == NULL)
-                       {
-                      // This is the case of a value, which need not be qualified. Except that it could be a variable, but then it should be a SgVarRefExp
-                         ASSERT_not_null(sizeOfOp->get_operand_expr());
-                         skipQualification = true;
-                       }
+                    if (qualifiedType == NULL) {
+                      ASSERT_not_null(sizeOfOp->get_operand_expr());
+                      skipQualification = true;
+                    }
+                    break;
+                  }
+
+               case V_SgTypeIdOp:
+                  {
+                    qualifiedType = typeIdOp->get_operand_type();
+                    if (qualifiedType == NULL) {
+                      ASSERT_not_null(typeIdOp->get_operand_expr());
+                      skipQualification = true;
+                    }
                     break;
                   }
 
@@ -15413,14 +15421,6 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                     mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
                     ROSE_ABORT();
 #endif
-                    break;
-                  }
-
-            // DQ (1/26/2013): typeId operator can take either an expression or a type, get_type() returns the type independent of which is specified.
-            // case V_SgTypeIdOp: qualifiedType = typeIdOp->get_type(); break;
-               case V_SgTypeIdOp:
-                  {
-                    qualifiedType = typeIdOp->get_operand_type();
                     break;
                   }
 

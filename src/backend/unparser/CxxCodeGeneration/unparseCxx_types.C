@@ -278,24 +278,8 @@ string get_type_name(SgType* t)
 
                SgType *btype = mpointer_type->get_base_type();
                SgMemberFunctionType *ftype = NULL;
-
-#if 0
-               printf ("In get_type_name(): case T_MEMBER_POINTER: output name: btype = %p = %s \n",btype,btype->class_name().c_str());
-            // unp->u_sage->curprint ("/* In get_type_name(): output name */ \n ");
-#endif
-#if 0
-               printf ("In get_type_name(): case T_MEMBER_POINTER: I think this is not called here! \n");
-               printf ("Exting as a test! \n");
-// Liao 10/16/2019. We do see code reaches this point now.
-//               ROSE_ASSERT(false);
-#endif
-
                if ( (ftype = isSgMemberFunctionType(btype)) != NULL)
                   {
-#if 0
-                     printf ("In get_type_name(): ftype != NULL: output name: btype = %p = %s \n",btype,btype->class_name().c_str());
-                  // unp->u_sage->curprint ("/* In get_type_name(): ftype != NULL: output name */ \n ");
-#endif
                     string res = get_type_name(ftype->get_return_type()) +  "("
                                 + get_type_name(mpointer_type->get_class_type())
                                 + "::*" + ")" + "(" ;
@@ -309,67 +293,14 @@ string get_type_name(SgType* t)
 
                     res = res + ")";
 
-#if 0
-                    printf ("In get_type_name(): ftype != NULL: after unparsing function arguments: unparse modifiers \n");
-#endif
                     // add member function type qualifiers (&, &&, const, volatile)
                     for (auto qual : memberFunctionQualifiers(ftype)) res = res + qual;
                     return res;
                   }
                  else
                   {
-#if 0
-                    printf ("In get_type_name(): ftype == NULL: output name: btype = %p = %s \n",btype,btype->class_name().c_str());
-                 // unp->u_sage->curprint ("/* In get_type_name(): ftype == NULL: output name */ \n ");
-#endif
-
-#if 0
-                 // DQ (3/31/2019): We need access to the Sg_Unparse_Info and we don't have it, so implement this in the unparsePointerMember() function more directly.
-                 // NODE: This may be called as part of unparseToString() which often lacks the context needed to always get the name qualification correct.
-#error "DEAD CODE!"
-
-#if 0
-                 // DQ (3/31/2019): I think this is where the added name qualification for the associated class must be output.
-                    printf ("Additional name qualification for the associated class_type must be output here (inbetween the base type and the class type) \n");
-#endif
-
-#define DEBUG_UNPARSE_POINTER_MEMBER_TYPE 0
-
-#error "DEAD CODE!"
-
-                    if (info.get_reference_node_for_qualification() != NULL)
-                       {
-#if DEBUG_UNPARSE_POINTER_MEMBER_TYPE
-                         printf ("info.get_reference_node_for_qualification() = %p = %s \n",info.get_reference_node_for_qualification(),info.get_reference_node_for_qualification()->class_name().c_str());
-#endif
-                         SgName nameQualifier = unp->u_name->lookup_generated_qualified_name(info.get_reference_node_for_qualification());
-
-#error "DEAD CODE!"
-
-#if DEBUG_UNPARSE_POINTER_MEMBER_TYPE
-                         printf ("nameQualifier (from initializedName->get_qualified_name_prefix_for_type() function) = %s \n",nameQualifier.str());
-#endif
-#if 1
-                         printf ("Exiting as a test! \n");
-                         ROSE_ABORT();
-#endif
-                         return get_type_name(btype) + "(" + nameQualifier.str() + get_type_name(mpointer_type->get_class_type()) + "::*" + ")";
-                       }
-                      else
-                       {
-#error "DEAD CODE!"
-
-                         return get_type_name(btype) + "(" + get_type_name(mpointer_type->get_class_type()) + "::*" + ")";
-                       }
-#else
                     return get_type_name(btype) + "(" + get_type_name(mpointer_type->get_class_type()) + "::*" + ")";
-#endif
                   }
-
-#if 0
-                  printf ("In get_type_name(): DONE: output name: btype = %p = %s \n",btype,btype->class_name().c_str());
-               // unp->u_sage->curprint ("/* In get_type_name(): DONE: output name */ \n ");
-#endif
                }
 
           case T_CLASS:
@@ -1651,223 +1582,18 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                printf ("In unparseMemberPointerType(): pointer to member function: DONE unparse return type \n");
 #endif
 
-            // DQ (4/27/2019): Fixing up the function pointer handling to match the data member pointer handling.
-            // curprint ("(");
 #if 0
                printf ("Leading paren: info.inTypedefDecl() = %s \n",info.inArgList() ? "true" : "false");
                printf ("Leading paren: info.inArgList() = %s \n",info.inArgList() ? "true" : "false");
 #endif
             // DQ (2/3/2019): Suppress parenthesis (see Cxx11_tests/test2019_76.C)
             // Not clear yet where this was required in the first place.
-#if 1
             // DQ (4/27/2019): I think we always need this syntax for pointer to member functions.
                curprint ("(");
-#else
-            // if ( info.inTypedefDecl() == true)
-               if ( info.inTypedefDecl() == true || info.inArgList() == true)
-                  {
-#error "DEAD CODE!"
-                 // curprint(" /* leading paren */ ");
-                    curprint ("(");
-                  }
-                 else
-                  {
-                    curprint(" /* leading paren not output */ ");
-                  }
-#endif
 
 #if DEBUG_MEMBER_POINTER_TYPE || 0
                printf ("In unparseMemberPointerType(): pointer to member function: info.get_reference_node_for_qualification() = %p \n",info.get_reference_node_for_qualification());
 #endif
-
-
-#if 0
-            // DQ (4/10/2019): Need to introduce name qualification from the SgInitalizedName.  However, this needs
-            // to use the qualified name for the SgInitalizedName instead of for the SgInitalizedName's type.
-               if (info.get_reference_node_for_qualification() != NULL)
-                  {
-#if DEBUG_MEMBER_POINTER_TYPE || 0
-                    printf ("In unparseMemberPointerType(): pointer to member function: info.get_reference_node_for_qualification() = %p = %s \n",
-                         info.get_reference_node_for_qualification(),info.get_reference_node_for_qualification()->class_name().c_str());
-#endif
-
-                 // DQ (4/16/2019): The reference node can be only either:
-                 //    1) SgTypedefDeclaration
-                 //    2) SgTemplateArgument
-                 //    3) SgTypeIdOp
-                 //    4) SgNewExp
-                 //    5) SgSizeOfOp
-                 //    6) SgCastExp
-                 //    7) SgInitializedName
-
-#error "DEAD CODE!"
-                    SgName nameQualifier;
-                    SgNode* referenceNode = info.get_reference_node_for_qualification();
-                    ASSERT_not_null(referenceNode);
-                    switch (referenceNode->variantT())
-                       {
-                         case V_SgInitializedName:
-                            {
-                              SgInitializedName* xxx = isSgInitializedName(referenceNode);
-                              ASSERT_not_null(xxx);
-                              nameQualifier = xxx->get_qualified_name_prefix();
-                              break;
-                            }
-
-                         case V_SgTypedefDeclaration:
-                            {
-                              SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(referenceNode);
-                              ASSERT_not_null(typedefDeclaration);
-                              nameQualifier = typedefDeclaration->get_qualified_name_prefix();
-                              break;
-                            }
-
-                         case V_SgTemplateArgument:
-                            {
-                              SgTemplateArgument* xxx = isSgTemplateArgument(referenceNode);
-                              ASSERT_not_null(xxx);
-                              nameQualifier = xxx->get_qualified_name_prefix();
-                              break;
-                            }
-
-#error "DEAD CODE!"
-                         case V_SgTypeIdOp:
-                            {
-                              SgTypeIdOp* xxx = isSgTypeIdOp(referenceNode);
-                              ASSERT_not_null(xxx);
-                              nameQualifier = xxx->get_qualified_name_prefix();
-                              break;
-                            }
-
-                         case V_SgNewExp:
-                            {
-                              SgNewExp* xxx = isSgNewExp(referenceNode);
-                              ASSERT_not_null(xxx);
-                              nameQualifier = xxx->get_qualified_name_prefix();
-                              break;
-                            }
-
-                         case V_SgSizeOfOp:
-                            {
-                              SgSizeOfOp* xxx = isSgSizeOfOp(referenceNode);
-                              ASSERT_not_null(xxx);
-                              nameQualifier = xxx->get_qualified_name_prefix();
-                              break;
-                            }
-
-                         case V_SgCastExp:
-                            {
-                              SgCastExp* xxx = isSgCastExp(referenceNode);
-                              ASSERT_not_null(xxx);
-                              nameQualifier = xxx->get_qualified_name_prefix();
-                              break;
-                            }
-
-#error "DEAD CODE!"
-                         default:
-                            {
-                           // DQ (4/11/2019): NOTE: In the testRoseHeaders_03.C this can be a SgCastExp.
-                           // And in testRoseHeaders_05.C this can be a SgCastExp, SgTemplateFunctionDeclaration, or SgTemplateMemberFunctionDeclaration
-#if 0
-                              printf ("NOTE: In unparseMemberPointerType(): default case reached: info.get_reference_node_for_qualification() = %p = %s \n",
-                                   info.get_reference_node_for_qualification(),info.get_reference_node_for_qualification()->class_name().c_str());
-#endif
-#if 0
-                              printf ("Exiting as a test! \n");
-                              ROSE_ABORT();
-#endif
-                            }
-                       }
-#error "DEAD CODE!"
-
-#if 0
-                 // DQ (4/10/2019): Handling pointer to member types.
-                 // SgName nameQualifier = unp->u_name->lookup_generated_qualified_name(info.get_reference_node_for_qualification());
-                 // SgInitializedName* variable = isSgInitializedName(info.get_reference_node_for_qualification());
-                 // ASSERT_not_null(variable);
-                    SgInitializedName* variable = isSgInitializedName(info.get_reference_node_for_qualification());
-                    SgName nameQualifier;
-                 // ASSERT_not_null(variable);
-                    if (variable != NULL)
-                       {
-                         nameQualifier = variable->get_qualified_name_prefix();
-                       }
-                      else
-                       {
-#if 0
-                      // DQ (4/10/2019): In test2019_326.C this is a SgTypedefDeclaration.
-                         SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(info.get_reference_node_for_qualification());
-                         ASSERT_not_null(typedefDeclaration);
-#error "DEAD CODE!"
-                         nameQualifier = typedefDeclaration->get_qualified_name_prefix();
-#if 0
-                         printf ("ERROR: not a SgInitializedName: info.get_reference_node_for_qualification() = %p = %s \n",info.get_reference_node_for_qualification(),info.get_reference_node_for_qualification()->class_name().c_str());
-                         ASSERT_not_null(variable);
-#endif
-#else
-
-                      // DQ (4/10/2019): In test2019_326.C this is a SgTypedefDeclaration.
-                         SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(info.get_reference_node_for_qualification());
-                      // ASSERT_not_null(typedefDeclaration);
-                         if (typedefDeclaration != NULL)
-                            {
-#error "DEAD CODE!"
-                              ASSERT_not_null(typedefDeclaration);
-                              nameQualifier = typedefDeclaration->get_qualified_name_prefix();
-                            }
-                           else
-                            {
-                           // DQ (4/10/2019): Cxx11_tests/test2016_01.C demonstrates this can be a SgTemplateArgument.
-                              SgTemplateArgument* templateArgument = isSgTemplateArgument(info.get_reference_node_for_qualification());
-                              if (templateArgument != NULL)
-                                 {
-                                   nameQualifier = templateArgument->get_qualified_name_prefix();
-#error "DEAD CODE!"
-                                 }
-                                else
-                                 {
-                                   SgTypeIdOp* typeIdOp = isSgTypeIdOp(info.get_reference_node_for_qualification());
-                                   if (typeIdOp != NULL)
-                                      {
-                                        nameQualifier = typeIdOp->get_qualified_name_prefix();
-                                      }
-                                     else
-                                      {
-#error "DEAD CODE!"
-                                     // DQ (4/11/2019): NOTE: In the testRoseHeaders_03.C this can be a SgCastExp.
-                                     // And in testRoseHeaders_05.C this can be a SgCastExp, SgTemplateFunctionDeclaration, or SgTemplateMemberFunctionDeclaration
-#if 1
-                                        printf ("NOTE: In unparseMemberPointerType(): not a SgInitializedName, SgTypedefDeclaration, SgTemplateArgument, or SgTypeIdOp: info.get_reference_node_for_qualification() = %p = %s \n",
-                                             info.get_reference_node_for_qualification(),info.get_reference_node_for_qualification()->class_name().c_str());
-#endif
-#if 0
-                                        printf ("Exiting as a test! \n");
-                                        ROSE_ABORT();
-#endif
-                                      }
-                                 }
-                            }
-#endif
-                       }
-#endif
-                 // SgName nameQualifier = info.get_reference_node_for_qualification()->get_qualified_name_prefix();
-                 // SgName nameQualifier = variable->get_qualified_name_prefix();
-
-#error "DEAD CODE!"
-
-#if DEBUG_MEMBER_POINTER_TYPE
-                    printf ("nameQualifier (from xxx->get_qualified_name_prefix() function) = %s \n",nameQualifier.str());
-#endif
-                    curprint(nameQualifier.str());
-#if 0
-                    printf ("Exiting as a test! \n");
-                    ROSE_ABORT();
-#endif
-
-#error "DEAD CODE!"
-
-                  }
-#else
             // DQ (4/27/2019): Actually where this is a valid pointer we will have used it to get the fully
             // generated string of the type in unparseType() and we will not have called this function.
             // DQ (4/20/2019): This should be a valid pointer, but we will not be using it.
@@ -1879,7 +1605,6 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
 
 #if DEBUG_MEMBER_POINTER_TYPE
                printf ("nameQualifier (from xxx->get_qualified_name_prefix_for_class_of() function) = %s \n",nameQualifier.str());
-#endif
 #endif
 
 
@@ -1957,36 +1682,9 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                     for (auto qual : memberFunctionQualifiers(mfnType, true /* trailing space after keyword */))
                       curprint(qual);
 
-#if 0 /* WITH_UNPARSE_REF_QUALIFIER */
-                 // Liao, 2/27/2009, add "const" specifier to fix bug 327
-                    if (mfnType->isConstFunc())
-                       {
-                         curprint(" const ");
-                       }
-
-                 // DQ (1/11/2020): Adding support for volatile.
-                    if (mfnType->isVolatileFunc())
-                       {
-                         curprint(" volatile ");
-                       }
-
-                 // DQ (1/11/2020): Adding support for lvalue reference member function modifiers.
-                    if (mfnType->isLvalueReferenceFunc())
-                       {
-                         curprint(" &");
-                       }
-
-                 // DQ (1/11/2020): Adding support for rvalue reference member function modifiers.
-                    if (mfnType->isRvalueReferenceFunc())
-                       {
-                         curprint(" &&");
-                       }
-#endif /* WITH_UNPARSE_REF_QUALIFIER */
                   }
                  else
                   {
-                 // not called from statement level (not sure where this is used, but it does show up in Kull)
-                 // printf ("What is this 3rd case of neither 1st part nor 2nd part \n");
 #if DEBUG_MEMBER_POINTER_TYPE
                     printf ("In unparseMemberPointerType(): pointer to member function data: neither first not second part of type??? \n");
 #endif
@@ -2081,192 +1779,6 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
 
 #define DEBUG_UNPARSE_POINTER_MEMBER_TYPE 0
 
-#if 0
-               if (info.get_reference_node_for_qualification() != NULL)
-                  {
-#if DEBUG_UNPARSE_POINTER_MEMBER_TYPE
-                    printf ("info.get_reference_node_for_qualification() = %p = %s \n",info.get_reference_node_for_qualification(),info.get_reference_node_for_qualification()->class_name().c_str());
-#endif
-
-#error "DEAD CODE!"
-
-                 // DQ (4/16/2019): The reference node can be only either:
-                 //    1) SgTypedefDeclaration
-                 //    2) SgTemplateArgument
-                 //    3) SgTypeIdOp
-                 //    4) SgNewExp
-                 //    5) SgSizeOfOp
-                 //    6) SgCastExp
-                 //    7) SgInitializedName
-
-                    SgName nameQualifier;
-                    SgNode* referenceNode = info.get_reference_node_for_qualification();
-                    ASSERT_not_null(referenceNode);
-                    switch (referenceNode->variantT())
-                       {
-                         case V_SgInitializedName:
-                            {
-                              SgInitializedName* xxx = isSgInitializedName(referenceNode);
-                              ASSERT_not_null(xxx);
-                              nameQualifier = xxx->get_qualified_name_prefix();
-                              break;
-                            }
-
-                         case V_SgTypedefDeclaration:
-                            {
-                              SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(referenceNode);
-                              ASSERT_not_null(typedefDeclaration);
-                              nameQualifier = typedefDeclaration->get_qualified_name_prefix();
-                              break;
-                            }
-
-#error "DEAD CODE!"
-
-                         case V_SgTemplateArgument:
-                            {
-                              SgTemplateArgument* xxx = isSgTemplateArgument(referenceNode);
-                              ASSERT_not_null(xxx);
-                              nameQualifier = xxx->get_qualified_name_prefix();
-                              break;
-                            }
-
-                         case V_SgTypeIdOp:
-                            {
-                              SgTypeIdOp* xxx = isSgTypeIdOp(referenceNode);
-                              ASSERT_not_null(xxx);
-                              nameQualifier = xxx->get_qualified_name_prefix();
-                              break;
-                            }
-
-                         case V_SgNewExp:
-                            {
-                              SgNewExp* xxx = isSgNewExp(referenceNode);
-                              ASSERT_not_null(xxx);
-                           // nameQualifier = xxx->get_qualified_name_prefix();
-                              nameQualifier = xxx->get_qualified_name_prefix();
-                              break;
-                            }
-
-#error "DEAD CODE!"
-
-                         case V_SgSizeOfOp:
-                            {
-                              SgSizeOfOp* xxx = isSgSizeOfOp(referenceNode);
-                              ASSERT_not_null(xxx);
-                              nameQualifier = xxx->get_qualified_name_prefix();
-                              break;
-                            }
-
-                         case V_SgCastExp:
-                            {
-                              SgCastExp* xxx = isSgCastExp(referenceNode);
-                              ASSERT_not_null(xxx);
-                              nameQualifier = xxx->get_qualified_name_prefix();
-                              break;
-                            }
-
-#error "DEAD CODE!"
-
-                      // DQ (4/18/2019): Now the we have to traverse chains of types where there can
-                      // be SgPointerMemberType types, we have to handle this as a rererenceNode.
-                         case V_SgPointerMemberType:
-                            {
-                              SgPointerMemberType* xxx = isSgPointerMemberType(referenceNode);
-                              ASSERT_not_null(xxx);
-                              nameQualifier = xxx->get_qualified_name_prefix();
-                              break;
-                            }
-
-#error "DEAD CODE!"
-
-                         default:
-                            {
-                           // DQ (4/11/2019): NOTE: In the testRoseHeaders_03.C this can be a SgCastExp.
-                           // And in testRoseHeaders_05.C this can be a SgCastExp, SgTemplateFunctionDeclaration, or SgTemplateMemberFunctionDeclaration
-#if 0
-                              printf ("NOTE: In unparseMemberPointerType(): default case reached: info.get_reference_node_for_qualification() = %p = %s \n",
-                                   info.get_reference_node_for_qualification(),info.get_reference_node_for_qualification()->class_name().c_str());
-#endif
-#if 0
-                              printf ("Exiting as a test! \n");
-                              ROSE_ABORT();
-#endif
-                            }
-                       }
-
-#if 0
-                 // DQ (4/10/2019): We need to get the name qualification for the varialbe name from the SgInitializedName.
-                 // We don't want the name qualification for the SgInitializedName's type.
-                 // SgName nameQualifier = unp->u_name->lookup_generated_qualified_name(info.get_reference_node_for_qualification());
-                    SgInitializedName* variable = isSgInitializedName(info.get_reference_node_for_qualification());
-                    SgName nameQualifier;
-                 // ASSERT_not_null(variable);
-                    if (variable != NULL)
-                       {
-                         nameQualifier = variable->get_qualified_name_prefix();
-                       }
-                      else
-                       {
-                      // DQ (4/10/2019): In test2019_326.C this is a SgTypedefDeclaration.
-                         SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(info.get_reference_node_for_qualification());
-                      // ASSERT_not_null(typedefDeclaration);
-                         if (typedefDeclaration != NULL)
-                            {
-                              ASSERT_not_null(typedefDeclaration);
-                              nameQualifier = typedefDeclaration->get_qualified_name_prefix();
-#error "DEAD CODE!"
-                            }
-                           else
-                            {
-                           // DQ (4/10/2019): Cxx11_tests/test2016_01.C demonstrates this can be a SgTemplateArgument.
-                              SgTemplateArgument* templateArgument = isSgTemplateArgument(info.get_reference_node_for_qualification());
-                              if (templateArgument != NULL)
-                                 {
-                                   nameQualifier = templateArgument->get_qualified_name_prefix();
-                                 }
-                                else
-                                 {
-                                   SgTypeIdOp* typeIdOp = isSgTypeIdOp(info.get_reference_node_for_qualification());
-                                   if (typeIdOp != NULL)
-                                      {
-                                        nameQualifier = typeIdOp->get_qualified_name_prefix();
-                                      }
-                                     else
-                                      {
-#if 0
-                                        printf ("NOTE: In unparseMemberPointerType(): not a SgInitializedName, SgTypedefDeclaration, SgTemplateArgument, or SgTypeIdOp: info.get_reference_node_for_qualification() = %p = %s \n",
-                                             info.get_reference_node_for_qualification(),info.get_reference_node_for_qualification()->class_name().c_str());
-#endif
-#if 0
-                                        printf ("Exiting as a test! \n");
-                                        ROSE_ABORT();
-#endif
-                                      }
-                                 }
-                            }
-#if 0
-                         printf ("ERROR: unknown IR node with type reference: info.get_reference_node_for_qualification() = %p = %s \n",
-                              info.get_reference_node_for_qualification(),info.get_reference_node_for_qualification()->class_name().c_str());
-                         ASSERT_not_null(variable);
-#endif
-                       }
-#endif
-
-#error "DEAD CODE!"
-
-#if DEBUG_UNPARSE_POINTER_MEMBER_TYPE
-                    printf ("nameQualifier (from xxx->get_qualified_name_prefix_for_type() function) = %s \n",nameQualifier.str());
-#endif
-                    curprint(nameQualifier.str());
-#if 0
-                    printf ("Exiting as a test! \n");
-                    ROSE_ABORT();
-#endif
-
-#error "DEAD CODE!"
-
-                  }
-#else
             // DQ (4/20/2019): Actually where this is a valid pointer we will have used it to get the fully
             // generated string of the type in unparseType() and we will not have called this function.
             // DQ (4/20/2019): This should be a valid pointer, but we will not be using it.
@@ -2275,11 +1787,11 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
             // DQ (4/20/2019): Get the name qualification directly using the SgPointerMemberType.
                SgName nameQualifier = mpointer_type->get_qualified_name_prefix_for_class_of();
                curprint(nameQualifier.str());
-#endif
 
 #if 0
                curprint ( "\n/* calling get_type_name */ \n");
 #endif
+               curprint (" ");
                curprint ( get_type_name(mpointer_type->get_class_type()) );
                curprint ( "::*");
 #if 0
@@ -4007,6 +3519,7 @@ Unparse_Type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
                ROSE_ABORT();
 #endif
                ninfo.set_isTypeFirstPart();
+               curprint (" ");
                unparseType(func_type, ninfo);
 
 #if OUTPUT_DEBUGGING_FUNCTION_INTERNALS || DEBUG_FUNCTION_TYPE
@@ -4137,6 +3650,7 @@ Unparse_Type::unparseMemberFunctionType(SgType* type, SgUnparse_Info& info)
                unparseType(mfunc_type, ninfo);
 
                ninfo.unset_isTypeFirstPart();
+               curprint(" ");
                ninfo.set_isTypeSecondPart();
 #if 0
                printf ("In unparseMemberFunctionType(): ninfo.SkipClassDefinition() = %s \n",(ninfo.SkipClassDefinition() == true) ? "true" : "false");
