@@ -1643,6 +1643,13 @@ namespace
           res = isConv ? &mkCastExp(exp, ty)
                        : &mkQualifiedExp(exp, ty);
 
+          // fix-up aggregate type
+          if (SgAggregateInitializer* aggrexp = isSgAggregateInitializer(&exp))
+          {
+            ADA_ASSERT(isSgTypeUnknown(aggrexp->get_type()));
+            aggrexp->set_expression_type(&ty);
+          }
+
           /* unused fields: (Expression_Struct)
                Expression_ID         Predicate;
           */
@@ -1734,8 +1741,8 @@ namespace
 SgExpression&
 getExpr(Element_Struct& elem, AstContext ctx, OperatorCallSupplement suppl)
 {
-  SgExpression*      res  = &getExpr_undecorated(elem, ctx, std::move(suppl));
-  Expression_Struct& expr = elem.The_Union.Expression;
+  SgExpression*      res   = &getExpr_undecorated(elem, ctx, std::move(suppl));
+  Expression_Struct& expr  = elem.The_Union.Expression;
 
   switch (expr.Expression_Kind)
   {

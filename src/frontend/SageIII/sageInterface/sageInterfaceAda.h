@@ -410,6 +410,10 @@ namespace
   /// @}
 
   /// returns true if @ref ty refers to a scalar type
+  /// \details
+  ///   true if the ty's root type is a modular type, signed integer type,
+  ///   enumeration type, discrete type, fixed type, decimal fixed type,
+  ///   or enum type.
   /// @{
   bool isScalarType(const SgType* ty);
   bool isScalarType(const SgType& ty);

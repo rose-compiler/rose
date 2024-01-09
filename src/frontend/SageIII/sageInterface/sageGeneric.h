@@ -101,7 +101,34 @@ namespace sg
     return *ptr;
   }
 
-  // \note implemented in SageInterfaceAda.h
+  /// experimental class for returning non-null pointers
+  template <class T>
+  struct NotNull
+  {
+      // explicit
+      NotNull(T* p)
+      : ptr(p)
+      {
+        report_error_if(p == nullptr, "failed null pointer check.");
+      }
+
+      ~NotNull()                         = default;
+      NotNull(const NotNull&)            = default;
+      NotNull& operator=(const NotNull&) = default;
+      NotNull(NotNull&&)                 = default;
+      NotNull& operator=(NotNull&&)      = default;
+
+      operator T*()   const { return ptr; }
+      T& operator*()  const { return ptr; }
+      T* operator->() const { return ptr; }
+
+    private:
+      T* ptr = nullptr;
+
+      NotNull() = delete;
+  };
+
+
 
 /**
  * struct DispatchHandler
