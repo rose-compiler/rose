@@ -5,7 +5,7 @@ AM_CPPFLAGS = $(ROSE_INCLUDES)
 AM_LDFLAGS = $(ROSE_RPATHS)
 
 bin_PROGRAMS = matchPattern nopSourceTransform detectNopSequences nopBinaryTransform binaryCFGTraversalTutorial staticSemantics \
-	insnCfg
+	insnCfg cfgReturnEdges
 
 matchPattern_SOURCES = matchPattern.C
 detectNopSequences_SOURCES = detectNopSequences.C detectNopSequencesTraversal.C
@@ -14,6 +14,7 @@ nopBinaryTransform_SOURCES = nopBinaryTransform.C detectNopSequencesTraversal.C
 binaryCFGTraversalTutorial_SOURCES = binaryCFGTraversalTutorial.C
 staticSemantics_SOURCES = staticSemantics.C
 insnCfg_SOURCES = insnCfg.C
+cfgReturnEdges_SOURCES = cfgReturnEdges.C
 
 DEPENDENCIES = $(REQUIRED_LIBS)
 LDADD  = $(ROSE_LIBS)

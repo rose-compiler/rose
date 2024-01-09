@@ -1,5 +1,3 @@
-#if __cplusplus >= 201402L
-
 static const char *purpose = "demonstrate how to create an instruction-level CFG";
 static const char *description =
     "ROSE control flow graphs normally have vertices that are basic blocks, where a basic block is defined as a sequence of "
@@ -75,13 +73,3 @@ int main(int argc, char *argv[]) {
         }
     }
 }
-
-#else
-
-#include <iostream>
-int main() {
-    std::cerr <<"not supported in this ROSE configuration\n";
-    return 1;
-}
-
-#endif
