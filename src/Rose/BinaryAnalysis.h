@@ -413,12 +413,12 @@ namespace Rose {
  *  @li Create a command-line switch parser without engine-specific switches (presented above).
  *  @li Produce a man page that describes all available engines.
  *  @li Attempt to parse switches with each engine in order to get the the positional arguments.
- *  @li Parse the positional arguments in a too-specific manner to get the specimen description arguments.
+ *  @li Parse the positional arguments in a tool-specific manner to get the specimen description arguments.
  *  @li Test whether the engine can handle the specimen description arguments.
  *  @li If so, adjust the user-supplied parser by adding that engine's command-lines switches.
  *  @li Return the suitable engine for the tool to use later.
  *
- *  These steps are all performed with a two function calls from the tool. One to find the correct engine and another to process the
+ *  These steps are all performed with two function calls from the tool. One to find the correct engine and another to process the
  *  command-line using the adjusted parser. Command-line parsing has two parts: the actual parsing and verification of the
  *  command-line syntax, and then applying the parse results to update the C++ switch argument destination variables that were noted
  *  when the parser was built, namely our `Settings settings;` variable in `main` and the settings in the @ref
@@ -455,7 +455,7 @@ namespace Rose {
  *
  *  This is a good time to mention the various @c Ptr types already encountered in this example. ROSE binary analysis objects are
  *  mostly allocated on the heap and accessed through reference counting pointers. These objects are not created with the usual
- *  C++ constructors (which have been made protected to prevent accidental use), but rather with static member functions usually
+ *  C++ constructors (which have been made protected to prevent accidental misuse), but rather with static member functions usually
  *  named @c instance. Therefore, calls to the @c new and @c delete operators are almost never encountered in ROSE binary analysis
  *  tools and memory errors are less likely. The type @c ConstPtr is a shared-ownership pointer to a @c const object.
  *
@@ -464,7 +464,7 @@ namespace Rose {
  *
  *  @li `std::shared_ptr<T>` is used for the majority of most recently-written parts of ROSE.
  *  @li `boost::shared_ptr<T>` is used for most legacy parts of ROSE before C++11 was available.
- *  @li `Sawyer::SharedPointer<T>` is a type of intrusive pointer used where performance is critical.
+ *  @li @ref Sawyer::SharedPointer is a type of intrusive pointer used where performance is critical.
  *
  *  All of these pointers support the usual pointer-like operations of dereferencing with `operator*` and `operator->`, assignment
  *  from compatible pointers with `operator=`, and testing whether the pointer is null with `explicit operator bool`.
@@ -472,7 +472,7 @@ namespace Rose {
  *  When only forward declarations are present (when you only include "BasicTypes.h" header files), the pointer types are juxtaposed
  *  with the class name, as in `FooPtr` and `FooConstPtr` versus `Foo::Ptr` and `Foo::ConstPtr`. The binary analysis convention is
  *  that the juxtaposed names are used in header files (and thus most documentation) and the separate names are used everywhere
- *  else.
+ *  else. This convention enables header files to have fewer dependencies.
  *
  *  @subsection rose_binaryanalysis_example_types Other special types
  *
@@ -482,10 +482,10 @@ namespace Rose {
  *  complement paradigm is usually accomplished by overflow of unsigned addition.
  *
  *  Another reason for using almost exclusively unsigned types is that binary specimens routinely have values near the high end of
- *  the unsigned range, and even values like 32-bit 0xffffffff is common. This tidbit is one reason ROSE has its own @ref
+ *  the unsigned range, and even values like 32-bit `0xffffffff` is common. This tidbit is one reason ROSE has its own @ref
  *  Sawyer::Container::Interval "interval" types that store the interval's maximum value instead of the more usual C++
- *  one-after-the-end value, and why binary analysis tends to use intervals instead of size (e.g., the size of--number of values
- *  in--an interval that spans the entire domain is one larger than can be represented in that domain).
+ *  one-after-the-end value, and why binary analysis tends to use intervals instead of size (e.g., the size of (number of values
+ *  in) an interval that spans the entire domain is one larger than can be represented in that domain).
  *
  *  One important thing to be aware of for C++ signed integral values is that the compiler can assume that signed overflow is not
  *  possible, and if it actually occurs the behavior is [undefined](https://en.cppreference.com/w/cpp/language/ub). The C++ compiler

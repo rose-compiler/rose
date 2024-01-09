@@ -92,7 +92,7 @@ main(int argc, char *argv[]) {
     //! [partition]
     P2::Partitioner::Ptr partitioner = engine->partition(specimen);
     partitioner->memoryMap()->dump(mlog[INFO]);
-    mlog[INFO] <<"architecture is " <<engine->architecture()->name() <<"\n";
+    mlog[INFO] <<"architecture is " <<partitioner->architecture()->name() <<"\n";
     //! [partition]
 
     //! [unparse]
