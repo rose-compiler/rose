@@ -6493,17 +6493,12 @@ HEADER_APPLICATION_PROJECT_START
 
           int get_detect_dangling_pointers(void) const;
 
-#if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
-#else
        // DQ (1/21/2010): In this case we want to support the previous interface so that we can transition easily.
           SgFilePtrList & get_fileList() const;
           void set_fileList(SgFilePtrList & fileList);
-#endif
 
        // DQ (8/3/2018): Added support for evaluation of options at the project level (which are normally associated with files).
           bool get_unparse_tokens (void) const;
-       // void set_unparse_tokens (bool value);
-
 
 
 HEADER_APPLICATION_PROJECT_END
@@ -16525,7 +16520,6 @@ SgProject::get_files_without_errors() const
 void
 SgProject::unparse ( UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelegate )
    {
-  // DQ (1/24/2010): refactored code to call existing function.
      extern void unparseProject( SgProject* project, UnparseFormatHelp *unparseFormatHelp /* = NULL */, UnparseDelegate* unparseDelegate/* = NULL */);
      unparseProject( this, unparseFormatHelp, unparseDelegate);
    }

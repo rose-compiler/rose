@@ -1527,7 +1527,7 @@ void EngineBinary::runPartitionerInit(const Partitioner::Ptr &partitioner) {
 
     if (hasCilCodeSection()) {
         settings().partitioner.findingImportFunctions = false; // Don't find "_Cor_CorExeMain"
-        settings().partitioner.findingEntryFunctions = true; // Do find "_start"
+        settings().partitioner.findingEntryFunctions = false; // Do not find "_start"
         settings().partitioner.findingInterFunctionCalls = false; // chases memory willy nilly looking for instructions
         settings().partitioner.demangleNames = false; // throwing exception
 
