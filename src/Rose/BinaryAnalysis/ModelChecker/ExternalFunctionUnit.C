@@ -15,6 +15,7 @@
 #include <Rose/BinaryAnalysis/ModelChecker/Tag.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/RegisterNames.h>
+#include <Rose/Sarif/Location.h>
 
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
@@ -89,6 +90,20 @@ ExternalFunctionUnit::toYamlSteps(const Settings::Ptr&, std::ostream &out, const
                 out <<prefix <<"    source-column: " <<*sourceLocation().column() <<"\n";
         }
     }
+}
+
+std::vector<Sarif::Location::Ptr>
+ExternalFunctionUnit::toSarif(const size_t maxSteps) const {
+    std::vector<Sarif::Location::Ptr> retval;
+
+    if (maxSteps > 0) {
+        retval.push_back(Sarif::Location::instance("virtual memory", address().orElse(0), "extern function"));
+
+        if (const auto sloc = sourceLocation())
+            retval.push_back(Sarif::Location::instance(sloc));
+    }
+
+    return retval;
 }
 
 size_t

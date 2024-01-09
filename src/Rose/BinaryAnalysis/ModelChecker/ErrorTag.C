@@ -6,6 +6,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
+#include <Rose/Sarif/Result.h>
 
 namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
 namespace IS = Rose::BinaryAnalysis::InstructionSemantics;
@@ -99,6 +100,11 @@ ErrorTag::toYaml(std::ostream &out, const std::string &prefix1) const {
         out <<prefix <<"concrete-value: " <<StringUtility::toHex(*concrete_) <<"\n";
     if (symbolic_)
         out <<prefix <<"symbolic-value: " <<StringUtility::yamlEscape(boost::lexical_cast<std::string>(*svalue_)) <<"\n";
+}
+
+Sarif::Result::Ptr
+ErrorTag::toSarif() const {
+    return Sarif::Result::instance(Sarif::Severity::ERROR, mesg_);
 }
 
 } // namespace

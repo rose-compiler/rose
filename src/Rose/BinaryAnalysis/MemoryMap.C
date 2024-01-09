@@ -142,6 +142,16 @@ MemoryMap::segmentTitle(const Segment &segment) {
  *                                      MemoryMap methods
  ******************************************************************************************************************************/
 
+const std::string&
+MemoryMap::name() const {
+    return name_;
+}
+
+void
+MemoryMap::name(const std::string &s) {
+    name_ = s;
+}
+
 size_t
 MemoryMap::insertFile(const std::string &fileName, rose_addr_t startVa, InsertFileMapMode mode, std::string segmentName) {
     if (segmentName.empty())

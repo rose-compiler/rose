@@ -10,6 +10,7 @@
 #include <Rose/BinaryAnalysis/ModelChecker/SemanticCallbacks.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Tag.h>
+#include <Rose/Sarif/Location.h>
 
 #include <boost/format.hpp>
 
@@ -82,6 +83,19 @@ InstructionUnit::toYamlSteps(const Settings::Ptr&, std::ostream &out, const std:
                 out <<prefix <<"    source-column: " <<*sourceLocation().column() <<"\n";
         }
     }
+}
+
+std::vector<Sarif::Location::Ptr>
+InstructionUnit::toSarif(const size_t maxSteps) const {
+    std::vector<Sarif::Location::Ptr> retval;
+    if (maxSteps > 0) {
+        retval.push_back(Sarif::Location::instance("virtual memory",
+                                                   AddressInterval::baseSize(insn_->get_address(), insn_->get_size()),
+                                                   insn_->toString()));
+        if (const auto sloc = sourceLocation())
+            retval.push_back(Sarif::Location::instance(sloc));
+    }
+    return retval;
 }
 
 size_t

@@ -143,7 +143,8 @@ public:
      *  threads. */
     void toYaml(const SettingsPtr&, std::ostream&, const std::string &prefix, size_t maxSteps) const;
 
-
+    /** Return a list of SARIF locations. */
+    std::vector<Sarif::LocationPtr> toSarif(size_t maxSteps) const;
 };
 
 } // namespace

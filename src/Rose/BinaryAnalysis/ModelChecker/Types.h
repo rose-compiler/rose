@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_MODEL_CHECKER
 
+#include <Rose/Sarif/BasicTypes.h>
 #include <memory>
 
 namespace Rose {

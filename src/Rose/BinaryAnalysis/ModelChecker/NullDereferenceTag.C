@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/ModelChecker/NullDereferenceTag.h>
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
+#include <Rose/Sarif/Result.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -114,6 +115,11 @@ NullDereferenceTag::toYaml(std::ostream &out, const std::string &prefix1) const 
         out <<prefix <<"instruction: " <<StringUtility::yamlEscape(insn_->toString()) <<"\n";
 
     out <<prefix <<"memory-address: " <<StringUtility::yamlEscape(boost::lexical_cast<std::string>(*addr_)) <<"\n";
+}
+
+Sarif::Result::Ptr
+NullDereferenceTag::toSarif() const {
+    return Sarif::Result::instance(Sarif::Severity::ERROR, name());
 }
 
 } // namespace

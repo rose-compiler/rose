@@ -8,6 +8,7 @@
 #include <Rose/BinaryAnalysis/ModelChecker/PathNode.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
+#include <Rose/Sarif/Location.h>
 
 #include <rose_isnan.h>
 
@@ -181,6 +182,21 @@ Path::toYaml(const Settings::Ptr &settings, std::ostream &out, const std::string
             maxSteps -= std::min(maxSteps, vertices[i]->nSteps());
         }
     }
+}
+
+std::vector<Sarif::Location::Ptr>
+Path::toSarif(size_t maxSteps) const {
+    std::vector<Sarif::Location::Ptr> retval;
+    if (!isEmpty()) {
+        maxSteps = std::min(maxSteps, nSteps());
+        const std::vector<PathNode::Ptr> vertices = nodes();
+        for (size_t i = 0; i < vertices.size() && maxSteps > 0; ++i) {
+            const std::vector<Sarif::Location::Ptr> locations = vertices[i]->toSarif(maxSteps);
+            retval.insert(retval.end(), locations.begin(), locations.end());
+            maxSteps -= std::min(maxSteps, locations.size());
+        }
+    }
+    return retval;
 }
 
 } // namespace

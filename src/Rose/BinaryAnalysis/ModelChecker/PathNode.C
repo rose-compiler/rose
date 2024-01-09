@@ -10,6 +10,7 @@
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Tag.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
+#include <Rose/Sarif/Location.h>
 
 #include <rose_isnan.h>
 
@@ -320,6 +321,11 @@ void
 PathNode::toYamlSteps(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix1,
                       size_t stepOrigin, size_t maxSteps) const {
     executionUnit()->toYamlSteps(settings, out, prefix1, stepOrigin, maxSteps);
+}
+
+std::vector<Sarif::Location::Ptr>
+PathNode::toSarif(const size_t maxSteps) const {
+    return executionUnit()->toSarif(maxSteps);
 }
 
 } // namespace

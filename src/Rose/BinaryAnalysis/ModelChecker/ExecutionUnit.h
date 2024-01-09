@@ -61,6 +61,11 @@ public:
     virtual void toYamlSteps(const SettingsPtr&, std::ostream&, const std::string &prefix,
                              size_t stepOrigin, size_t maxSteps) const = 0;
 
+    /** Return the steps for this execution unit as SARIF locations.
+     *
+     *  Thread safety: The implementation must be thread safe. */
+    virtual std::vector<Sarif::LocationPtr> toSarif(size_t maxSteps) const = 0;
+
     /** List source location.
      *
      *  List some source lines if we can find them. If a source location is specified, use it, otherwise use the source

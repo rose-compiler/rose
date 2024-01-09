@@ -10,6 +10,7 @@
 #include <Rose/BinaryAnalysis/ModelChecker/SourceLister.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/Sarif/Location.h>
 
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
@@ -118,6 +119,36 @@ BasicBlockUnit::toYamlSteps(const Settings::Ptr&, std::ostream &out, const std::
             }
         }
     }
+}
+
+std::vector<Sarif::Location::Ptr>
+BasicBlockUnit::toSarif(size_t maxSteps) const {
+    // No lock necessary since the basic block pointer cannot be changed after construction. Howerver, the BasicBlock API itself
+    // might not be thread safe.
+    ASSERT_not_null(bblock_);
+    std::vector<Sarif::Location::Ptr> retval;
+    std::vector<SgAsmInstruction*> insns = bblock_->instructions();
+    SourceLocation prevLoc;
+    for (size_t i = 0; i < insns.size() && maxSteps > 0; ++i, --maxSteps) {
+        const std::string name = [this]() {
+            if (auto map = partitioner_->memoryMap()) {
+                const std::string mapName = map->name();
+                if (!mapName.empty())
+                    return mapName;
+            }
+            return std::string("virtual memory");
+        }();
+
+        retval.push_back(Sarif::Location::instance(name,
+                                                   AddressInterval::baseSize(insns[i]->get_address(), insns[i]->get_size()),
+                                                   insns[i]->toString()));
+
+        if (SourceLocation sloc = partitioner_->sourceLocations().get(insns[i]->get_address())) {
+            if (sloc != prevLoc)
+                retval.push_back(Sarif::Location::instance(sloc));
+        }
+    }
+    return retval;
 }
 
 size_t

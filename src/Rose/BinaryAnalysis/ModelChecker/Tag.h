@@ -4,6 +4,7 @@
 #ifdef ROSE_ENABLE_MODEL_CHECKER
 
 #include <Rose/BinaryAnalysis/ModelChecker/Types.h>
+#include <Rose/Sarif/BasicTypes.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -73,6 +74,9 @@ public:
      *  Thread safety: The implementation must be thread safe for gathering the information but need not concern itself
      *  with ensuring that no other threads are sending output to the same stream. */
     virtual void toYaml(std::ostream&, const std::string &prefix) const = 0;
+
+    /** Generate a SARIF result. */
+    virtual Sarif::ResultPtr toSarif() const = 0;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -112,6 +116,7 @@ public:
     virtual std::string printableName() const override;
     virtual void print(std::ostream&, const std::string &prefix) const override;
     virtual void toYaml(std::ostream&, const std::string &prefix) const override;
+    virtual Sarif::ResultPtr toSarif() const override;
 };
 
 } // namespace

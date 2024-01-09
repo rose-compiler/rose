@@ -139,6 +139,7 @@ public:
 
 private:
     ByteOrder::Endianness endianness_;
+    std::string name_;
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
@@ -271,7 +272,7 @@ public:
         return Ptr(new MemoryMap(*this));
     }
 
-    /** Property: byte order.
+    /** Property: Byte order.
      *
      *  Every map has a default byte order property which can be used by functions that read and write multi-byte values when
      *  the user does not provide a byte order to those functions.  The MemoryMap constructors initialize this property to @c
@@ -281,6 +282,15 @@ public:
     ByteOrder::Endianness byteOrder() const { return endianness_; }
     void byteOrder(ByteOrder::Endianness order) { endianness_ = order; }
      /** @} */
+
+    /** Property: Name.
+     *
+     *  Optional name of the map, mostly used for debugging.
+     *
+     * @{ */
+    const std::string& name() const;
+    void name(const std::string&);
+    /** @} */
 
     // Note that the order of the enum members is for backward compatibility with an older version of insertFile whose third
     // argument was "bool writable = false" (MAP_RDONLY, but now intended to be MAP_PRIVATE) and when it was true was the same

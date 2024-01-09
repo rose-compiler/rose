@@ -285,6 +285,9 @@ public:
     void toYamlSteps(const SettingsPtr&, std::ostream&, const std::string &prefix,
                      size_t stepOrigin, size_t maxSteps) const;
 
+    /** Return steps as SARIF locations. */
+    std::vector<Sarif::LocationPtr> toSarif(size_t maxSteps) const;
+
 private:
     void restoreOutgoingState(const InstructionSemantics::BaseSemantics::StatePtr&);
 };

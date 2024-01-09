@@ -9,6 +9,8 @@
 #include <Rose/BinaryAnalysis/ModelChecker/Tag.h>
 #include <Rose/BinaryAnalysis/ModelChecker/SemanticCallbacks.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
+#include <Rose/Sarif/Location.h>
+
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
@@ -93,6 +95,20 @@ FailureUnit::toYamlSteps(const Settings::Ptr&, std::ostream &out, const std::str
                 out <<prefix <<"    source-column: " <<*sourceLocation().column() <<"\n";
         }
     }
+}
+
+std::vector<Sarif::Location::Ptr>
+FailureUnit::toSarif(const size_t maxSteps) const {
+    std::vector<Sarif::Location::Ptr> retval;
+
+    if (maxSteps > 0) {
+        retval.push_back(Sarif::Location::instance("virtual memory", address().orElse(0), "automatic failure"));
+
+        if (const auto sloc = sourceLocation())
+            retval.push_back(Sarif::Location::instance(sloc));
+    }
+
+    return retval;
 }
 
 size_t

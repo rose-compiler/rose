@@ -5,6 +5,7 @@
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
+#include <Rose/Sarif/Result.h>
 
 namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
 
@@ -145,6 +146,12 @@ OutOfBoundsTag::toYaml(std::ostream &out, const std::string &prefix1) const {
         if (auto function = accessedVariable_.function())
             out <<prefix <<"  function: " <<StringUtility::yamlEscape(function->printableName()) <<"\n";
     }
+}
+
+Sarif::Result::Ptr
+OutOfBoundsTag::toSarif() const {
+    auto result = Sarif::Result::instance(Sarif::Severity::ERROR, name());
+    return result;
 }
 
 } // namespace

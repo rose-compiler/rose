@@ -51,6 +51,7 @@ public:
     virtual void toYamlHeader(const SettingsPtr&, std::ostream&, const std::string &prefix) const override;
     virtual void toYamlSteps(const SettingsPtr&, std::ostream&, const std::string &prefix,
                              size_t stepOrigin, size_t maxSteps) const override;
+    virtual std::vector<Sarif::LocationPtr> toSarif(size_t maxSteps) const override;
     virtual size_t nSteps() const override;
     virtual Sawyer::Optional<rose_addr_t> address() const override;
     virtual bool containsUnknownInsn() const override;

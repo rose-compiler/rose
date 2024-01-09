@@ -5,6 +5,7 @@
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
+#include <Rose/Sarif/Result.h>
 
 namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
 
@@ -106,6 +107,11 @@ UninitializedVariableTag::toYaml(std::ostream &out, const std::string &prefix1) 
     out <<prefix <<"location: " <<StringUtility::yamlEscape(StringUtility::addrToString(variable_.where())) <<"\n";
     if (auto function = variable_.function())
         out <<prefix <<"function: " <<StringUtility::yamlEscape(function->printableName()) <<"\n";
+}
+
+Sarif::Result::Ptr
+UninitializedVariableTag::toSarif() const {
+    return Sarif::Result::instance(Sarif::Severity::ERROR, name());
 }
 
 } // namespace
