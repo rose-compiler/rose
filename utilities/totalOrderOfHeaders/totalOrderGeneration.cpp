@@ -34,6 +34,8 @@ C. Liao, 12/27/2023
 
 using namespace std;
 
+// By default, this program will detect and remove cycles in the header dependency graph
+// To facilitate debugging, users can disable the cycle removal step and the program will abort on the first cycle encountered.
 bool abortOnCycle= false; 
 
 // prototypes of functions
@@ -93,7 +95,7 @@ bool topologicalSortDFS(const string& node, // starting node
     cout << node << endl; // To complete the cycle
     if (abortOnCycle)
     {
-       cerr << "Program aborted since abortOnCycle is set to true."<<endl;
+       cerr << "Program aborted since cycle removal is disabled and abortOnCycle is set to true."<<endl;
        assert (false);
     }
     return false; // Cycle detected
@@ -538,7 +540,7 @@ void show_help (const string& programName)
   std::cout << "Options:\n";
   std::cout << "  --help\tShow this help message\n";
   std::cout << "  --test\tRun the builtin test mode\n";
-  std::cout << "  --abortOnCycle\tAbort and issue error messages when encountering first cyclic order in header files\n";
+  std::cout << "  --abortOnCycle\t Disable cycle removal, abort and issue error messages when encountering first cyclic order in header files\n";
   std::cout << "  --verbose\tRun the program in a verbose mode\n";
   std::cout << "  --input=path\tSpecify the input path to search for input .json files recursively\n";
 

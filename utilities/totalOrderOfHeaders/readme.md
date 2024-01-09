@@ -23,8 +23,22 @@ Run its regression tests using .json files within json folder
 * make check
 
 
+Show help messages
+
+```
+./totalOrderGeneration --help
+Usage: totalOrderGeneration [options]
+Options:
+  --help        Show this help message
+  --test        Run the builtin test mode
+  --abortOnCycle         Disable cycle removal, abort and issue error messages when encountering first cyclic order in header files
+  --verbose     Run the program in a verbose mode
+  --input=path  Specify the input path to search for input .json files recursively
+
+```
+
 Run the tool processing all .json files under a given path
-*  totalOrderGeneration .  # assuming .json files are in current path
+*  totalOrderGeneration --input=jsonFiles  # assuming .json files are in a folder named jsonFiles
 
 
  In the end, the headers will be written into a file named:
