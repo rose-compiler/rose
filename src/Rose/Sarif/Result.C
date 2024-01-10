@@ -63,6 +63,30 @@ Result::severity() const {
 }
 
 const std::string&
+Result::message() const {
+    return message_;
+}
+
+void
+Result::message(const std::string &s) {
+    if (s == message_)
+        return;
+    checkPropertyChange("Result", "message", message_.empty(), {{"locations", locations.empty()}});
+    message_ = s;
+    if (isIncremental())
+        emitMessage(incrementalStream(), emissionPrefix());
+}
+
+void
+Result::emitMessage(std::ostream &out, const std::string &firstPrefix) {
+    if (!message_.empty()) {
+        out <<firstPrefix <<"message:\n";
+        const std::string pp = makeObjectPrefix(firstPrefix);
+        out <<pp <<"text: " <<StringUtility::yamlEscape(message_) <<"\n";
+    }
+}
+
+const std::string&
 Result::id() const {
     return id_;
 }
@@ -71,15 +95,7 @@ void
 Result::id(const std::string &s) {
     if (s == id_)
         return;
-    if (isFrozen())
-        throw IncrementalError::frozenObject("Result");
-    if (isIncremental()) {
-        if (!id_.empty())
-            throw IncrementalError::cannotChangeValue("Result::id");
-        if (!locations.empty())
-            throw IncrementalError::cannotSetAfter("Result::id", "Result::locations");
-    }
-
+    checkPropertyChange("Result", "id", id_.empty(), {{"locations", locations.empty()}});
     id_ = s;
     if (isIncremental())
         emitId(incrementalStream(), emissionPrefix());
@@ -100,19 +116,10 @@ void
 Result::rule(const Rule::Ptr &r) {
     if (r == rule_)
         return;
-    if (isFrozen())
-        throw IncrementalError::frozenObject("Result");
-    if (isIncremental()) {
-        if (rule_)
-            throw IncrementalError::cannotChangeValue("Result::rule");
-        if (!locations.empty())
-            throw IncrementalError::cannotSetAfter("Result::rule", "Result::locations");
-        if (!findRuleIndex(r))
-            throw IncrementalError::notAttached("Result::rule");
-    }
-
+    checkPropertyChange("Result", "rule", !rule_, {{"locations", locations.empty()}});
+    if (isIncremental() && !findRuleIndex(r))
+        throw IncrementalError::notAttached("Result::rule");
     rule_ = r;
-
     if (isIncremental())
         emitRule(incrementalStream(), emissionPrefix());
 }
@@ -141,19 +148,10 @@ void
 Result::analysisTarget(const Artifact::Ptr &artifact) {
     if (artifact == analysisTarget_)
         return;
-    if (isFrozen())
-        throw IncrementalError::frozenObject("Result");
-    if (isIncremental()) {
-        if (analysisTarget_)
-            throw IncrementalError::cannotChangeValue("Result::analysisTarget");
-        if (!locations.empty())
-            throw IncrementalError::cannotSetAfter("Result::analysisTarget", "Result::locations");
-        if (!findArtifactIndex(artifact))
-            throw IncrementalError::notAttached("Result::analysisTarget");
-    }
-
+    checkPropertyChange("Result", "analysisTarget", !analysisTarget_, {{"locations", locations.empty()}});
+    if (isIncremental() && !findArtifactIndex(artifact))
+        throw IncrementalError::notAttached("Result::analysisTarget");
     analysisTarget_ = artifact;
-
     if (isIncremental())
         emitAnalysisTarget(incrementalStream(), emissionPrefix());
 }
@@ -240,9 +238,7 @@ Result::emitYaml(std::ostream &out, const std::string &firstPrefix) {
             break;
     }
 
-    out <<p <<"message:\n";
-    out <<pp <<"text: " <<StringUtility::yamlEscape(message_) <<"\n";
-
+    emitMessage(out, p);
     emitId(out, p);
     emitRule(out, p);
     emitAnalysisTarget(out, p);

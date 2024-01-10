@@ -83,13 +83,7 @@ void
 Location::message(const std::string &s) {
     if (s == message_)
         return;
-    if (isFrozen())
-        throw IncrementalError::frozenObject("Location");
-    if (isIncremental()) {
-        if (!message_.empty())
-            throw IncrementalError::cannotChangeValue("Location::message");
-    }
-
+    checkPropertyChange("Location", "message", message_.empty(), {});
     message_ = s;
     if (isIncremental())
         emitMessage(incrementalStream(), emissionPrefix());

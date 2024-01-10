@@ -46,20 +46,12 @@ void
 Analysis::commandLine(const std::vector<std::string> &cmd) {
     if (std::equal(commandLine_.begin(), commandLine_.end(), cmd.begin(), cmd.end()))
         return;
-    if (isFrozen())
-        throw IncrementalError::frozenObject("Analysis");
-    if (isIncremental()) {
-        if (!commandLine_.empty())
-            throw IncrementalError::cannotChangeValue("Analysis::commandLine");
-        if (exitStatus_)
-            throw IncrementalError::cannotSetAfter("Analysis::commandLine", "Analysis::exitStatus");
-        if (!rules.empty())
-            throw IncrementalError::cannotSetAfter("Analysis::commandLine", "Analysis::rules");
-        if (!artifacts.empty())
-            throw IncrementalError::cannotSetAfter("Analysis::commandLine", "Analysis::artifacts");
-        if (!results.empty())
-            throw IncrementalError::cannotSetAfter("Analysis::commandLine", "Analysis::results");
-    }
+
+    checkPropertyChange("Anaylsis", "commandLine", commandLine_.empty(),
+                        {{"exitStatus", !exitStatus_},
+                         {"rules", rules.empty()},
+                         {"artifacts", artifacts.empty()},
+                         {"results", results.empty()}});
 
     // Modify
     commandLine_ = cmd;
@@ -90,6 +82,33 @@ Analysis::emitCommandLine(std::ostream &out, const std::string &firstPrefix) {
     }
 }
 
+const std::string&
+Analysis::version() const {
+    return version_;
+}
+
+void
+Analysis::version(const std::string &s) {
+    if (s == version_)
+        return;
+
+    checkPropertyChange("Anaylsis", "version", version_.empty(),
+                        {{"rules", rules.empty()},
+                         {"artifacts", artifacts.empty()},
+                         {"results", results.empty()}});
+
+    version_ = s;
+
+    if (isIncremental())
+        emitVersion(incrementalStream(), emissionPrefix());
+}
+
+void
+Analysis::emitVersion(std::ostream &out, const std::string &firstPrefix) {
+    if (!version_.empty())
+        out <<firstPrefix <<"version: " <<StringUtility::yamlEscape(version_) <<"\n";
+}
+
 const Sawyer::Optional<int>&
 Analysis::exitStatus() const {
     return exitStatus_;
@@ -99,18 +118,11 @@ void
 Analysis::exitStatus(const Sawyer::Optional<int> &status) {
     if (status.isEqual(exitStatus_))
         return;
-    if (isFrozen())
-        throw IncrementalError::frozenObject("Analysis");
-    if (isIncremental()) {
-        if (exitStatus_)
-            throw IncrementalError::cannotChangeValue("Analysis::exitStatus");
-        if (!rules.empty())
-            throw IncrementalError::cannotSetAfter("Analysis::exitStatus", "Analysis::rules");
-        if (!artifacts.empty())
-            throw IncrementalError::cannotSetAfter("Analysis::exitStatus", "Analysis::artifacts");
-        if (!results.empty())
-            throw IncrementalError::cannotSetAfter("Analysis::exitStatus", "Analysis::results");
-    }
+
+    checkPropertyChange("Anaylsis", "exitStatus", !exitStatus_,
+                        {{"rules", rules.empty()},
+                         {"artifacts", artifacts.empty()},
+                         {"results", results.empty()}});
 
     exitStatus_ = status;
 
@@ -255,6 +267,7 @@ Analysis::emitYaml(std::ostream &out, const std::string &firstPrefix) {
 
     emitCommandLine(out, p);
     emitExitStatus(out, p);
+    emitVersion(out, p);
 
     if (!rules.empty()) {
         out <<p <<"rules:\n";

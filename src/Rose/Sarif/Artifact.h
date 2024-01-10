@@ -5,7 +5,14 @@
 namespace Rose {
 namespace Sarif {
 
-/** Represents an analysis artifact such as a file. */
+/** Represents an analysis artifact such as a file.
+ *
+ *  An artifact is referred to by a [URI](https://en.wikipedia.org/wiki/Uniform_Resource_Identifier), and has additional optional
+ *  properties such as @ref description, @ref mimeType "MIME type", @ref sourceLanguage "source language", and @ref hash.
+ *
+ *  Example:
+ *
+ *  @snippet{trimleft} sarifUnitTests.C artifact_example */
 class Artifact: public Node {
 public:
     /** Shared ownership pointer to a @ref Artifact object.

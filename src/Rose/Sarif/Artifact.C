@@ -30,15 +30,8 @@ void
 Artifact::mimeType(const std::string &s) {
     if (s == mimeType_)
         return;
-    if (isFrozen())
-        throw IncrementalError::frozenObject("Artifact");
-    if (isIncremental()) {
-        if (!mimeType_.empty())
-            throw IncrementalError::cannotChangeValue("Artifact::mimeType");
-    }
-
+    checkPropertyChange("Artifact", "mimeType", mimeType_.empty(), {});
     mimeType_ = s;
-
     if (isIncremental())
         emitMimeType(incrementalStream(), emissionPrefix());
 }
@@ -52,15 +45,8 @@ void
 Artifact::sourceLanguage(const std::string &s) {
     if (s == sourceLanguage_)
         return;
-    if (isFrozen())
-        throw IncrementalError::frozenObject("Artifact");
-    if (isIncremental()) {
-        if (!sourceLanguage_.empty())
-            throw IncrementalError::cannotChangeValue("Artifact::sourceLanguage");
-    }
-
+    checkPropertyChange("Artifact", "sourceLanguage", sourceLanguage_.empty(), {});
     sourceLanguage_ = s;
-
     if (isIncremental())
         emitSourceLanguage(incrementalStream(), emissionPrefix());
 }
@@ -74,15 +60,8 @@ void
 Artifact::hash(const std::string &name, const std::string &value) {
     if (name == hash_.first && value == hash_.second)
         return;
-    if (isFrozen())
-        throw IncrementalError::frozenObject("Artifact");
-    if (isIncremental()) {
-        if (!hash_.first.empty() || !hash_.second.empty())
-            throw IncrementalError::cannotChangeValue("Artifact::hash");
-    }
-
+    checkPropertyChange("Artifact", "hash", hash_.first.empty() && hash_.second.empty(), {});
     hash_ = std::make_pair(name, value);
-
     if (isIncremental())
         emitHash(incrementalStream(), emissionPrefix());
 }
@@ -101,15 +80,8 @@ void
 Artifact::description(const std::string &s) {
     if (s == description_)
         return;
-    if (isFrozen())
-        throw IncrementalError::frozenObject("Artifact");
-    if (isIncremental()) {
-        if (!description_.empty())
-            throw IncrementalError::cannotChangeValue("Artifact::description");
-    }
-
+    checkPropertyChange("Artifact", "description", description_.empty(), {});
     description_ = s;
-
     if (isIncremental())
         emitDescription(incrementalStream(), emissionPrefix());
 }

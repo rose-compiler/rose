@@ -6,6 +6,8 @@
 #include <Rose/StringUtility/Escape.h>
 #include <Sawyer/Tree.h>
 
+#include <initializer_list>
+
 namespace Rose {
 namespace Sarif {
 
@@ -68,12 +70,30 @@ protected:
     // Given a YAML line prefix, make a new prefix for an indented list item.
     std::string makeListPrefix(const std::string&);
 
+    // Lock an edge so its value can no longer be modified.
     template<class T>
     static void lock(Edge<T> &edge, const char *dataMemberName) {
         const std::string mesg = std::string(dataMemberName) + " cannot be reassigned";
         edge.beforeChange([mesg](const Node::Ptr&, const Node::Ptr&) {
             throw IncrementalError(mesg);
         });
+    }
+
+    // Called when a property is about to be changed. Throws an exception if the change is not allowed. For incremental output,
+    // an error is thrown if any of the Boolean arguments are false.
+    void
+    checkPropertyChange(const std::string &typeName, const std::string &propertyName, bool isEmpty,
+                        std::initializer_list<std::pair<std::string /*name*/, bool /*empty*/>> notAfter) {
+        if (isFrozen())
+            throw IncrementalError::frozenObject(typeName);
+        if (isIncremental()) {
+            if (!isEmpty)
+                throw IncrementalError::cannotChangeValue(typeName + "::" + propertyName);
+            for (const auto &pair: notAfter) {
+                if (!pair.second)
+                    throw IncrementalError::cannotSetAfter(typeName + "::" + propertyName, typeName + "::" + pair.first);
+            }
+        }
     }
 };
 

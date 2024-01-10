@@ -18,7 +18,13 @@ namespace Sarif {
  *  refer to this descriptive information as 'reporting item metadata'. When referring to the metadata that describes a result, we
  *  use the more specific term 'rule metadata'. Some of the properties of the reportingDescriptor object are interpreted differently
  *  depending on whether the object represents a rule or a notification. The description of each property will specify any such
- *  differences." */
+ *  differences."
+ *
+ *  A rule has properties such as @ref id "ID", @ref name, @ref description, @ref helpUri "help URI", @ref uuid "UUID", etc.
+ *
+ *  Example:
+ *
+ *  @snippet{trimleft} sarifUnitTests.C rule_example */
 class Rule: public Node {
 public:
     /** Shared ownership pointer to a @ref Rule object.

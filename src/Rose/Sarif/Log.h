@@ -7,14 +7,22 @@ namespace Sarif {
 
 /** SARIF results log.
  *
- *  This class represents an entire SARIF log, which will accumulate results from analyses and eventually emit them as a document
- *  that can be stored in a file.  The log is a tree data structure, an internal representation of the SARIF data, which does not
- *  impart any particular file format to the data. The top level of the tree (children of the log) is a list of @ref Analysis
- *  objects stored in the @ref analyses data member, each of which in turn stores the results for that analysis.
+ *  This class represents an entire SARIF log, which accumulates results from analyses and eventually emits them as a document that
+ *  can be stored in a file.  The log is the root of a tree data structure, an internal representation of the SARIF data, which does
+ *  not impart any particular file format to the data. See @ref Rose::Sarif for an overview.
  *
- *  The SARIF internal representation can be unparsed in two ways: on demand by calling an "emit" function, or incrementally as
- *  nodes are added. The incremental output is intended for long-running analysis that wants to stream results to a consumer (such
- *  as a file or pipe) as they are produced. A log can be switched from on-demand to incremental mode at any time. */
+ *  A @ref Sarif::Log is a list of @ref Sarif::Analysis objects which correspond to analyses run individually or as part of a larger
+ *  tool.
+ *
+ *  For an incremental log the information is emitted in the following order. Once one of the information collections is emitted
+ *  it is an error to go back and modify an earlier collection. The error is indicated by throwing a @ref Sarif::IncrementalError.
+ *
+ *  @li Properties of this object.
+ *  @li The list of @ref analyses "analysis" objects.
+ *
+ *  Example:
+ *
+ *  @snippet{trimleft} sarifUnitTests.C log_example */
 class Log: public Node {
 public:
     /** Shared-ownership pointer to a @ref Log object.

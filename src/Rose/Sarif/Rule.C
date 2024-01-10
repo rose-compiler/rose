@@ -40,15 +40,8 @@ void
 Rule::name(const std::string &s) {
     if (s == name_)
         return;
-    if (isFrozen())
-        throw IncrementalError::frozenObject("Rule");
-    if (isIncremental()) {
-        if (!name_.empty())
-            throw IncrementalError::cannotChangeValue("Rule::name");
-    }
-
+    checkPropertyChange("Rule", "name", name_.empty(), {});
     name_ = s;
-
     if (isIncremental())
         emitName(incrementalStream(), emissionPrefix());
 }
@@ -62,15 +55,8 @@ void
 Rule::description(const std::string &s) {
     if (s == description_)
         return;
-    if (isFrozen())
-        throw IncrementalError::frozenObject("Rule");
-    if (isIncremental()) {
-        if (!description_.empty())
-            throw IncrementalError::cannotChangeValue("Rule::description");
-    }
-
+    checkPropertyChange("Rule", "description", description_.empty(), {});
     description_ = s;
-
     if (isIncremental())
         emitDescription(incrementalStream(), emissionPrefix());
 }
@@ -84,15 +70,8 @@ void
 Rule::helpUri(const std::string &s) {
     if (s == helpUri_)
         return;
-    if (isFrozen())
-        throw IncrementalError::frozenObject("Rule");
-    if (isIncremental()) {
-        if (!helpUri_.empty())
-            throw IncrementalError::cannotChangeValue("Rule::helpUri");
-    }
-
+    checkPropertyChange("Rule", "helpUri", helpUri_.empty(), {});
     helpUri_ = s;
-
     if (isIncremental())
         emitHelpUri(incrementalStream(), emissionPrefix());
 }
@@ -106,15 +85,8 @@ void
 Rule::uuid(boost::uuids::uuid id) {
     if (id == uuid_)
         return;
-    if (isFrozen())
-        throw IncrementalError::frozenObject("Rule");
-    if (isIncremental()) {
-        if (!uuid_.is_nil())
-            throw IncrementalError::cannotChangeValue("Rule::uuid");
-    }
-
+    checkPropertyChange("Rule", "uuid", uuid_.is_nil(), {});
     uuid_ = id;
-
     if (isIncremental())
         emitUuid(incrementalStream(), emissionPrefix());
 }

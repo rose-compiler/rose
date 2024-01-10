@@ -7,8 +7,20 @@ namespace Sarif {
 
 /** A single result from an analysis.
  *
- *  A result is the child of an @ref Analysis in a SARIF @ref Log. Each result has a severity level, a message, and zero or
- *  more locations.  */
+ *  A result is the child of an @ref Analysis in a SARIF @ref Log. A result has a @ref Kind such as @c PASS or @c FAIL. A failure
+ *  result has a @ref Severity such as @c WARNING or @c ERROR. Other result properties are a @ref message, an @ref id "ID", a
+ *  reference to a particular @ref rule, a reference to the @ref analysisTarget "analysis target artifact", etc. A result also has
+ *  a list of @ ref locations.
+ *
+ *  For an incremental log the information is emitted in the following order. Once one of the information collections is emitted
+ *  it is an error to go back and modify an earlier collection. The error is indicated by throwing a @ref Sarif::IncrementalError.
+ *
+ *  @li Properties such as @ref kind, @ref severity, @ref message, @ref id "ID", and @ref analysisTarget "analysis target".
+ *  @li The list of @ref locations.
+ *
+ *  Example:
+ *
+ *  @snippet{trimleft} sarifUnitTests.C analysis_example */
 class Result: public Node {
 public:
     /** Shared-ownership pointer to a @ref Result object.
@@ -60,6 +72,15 @@ public:
      *  The severity is set by the constructor and is read-only. */
     Severity severity() const;
 
+    /** Property: Message.
+     *
+     *  A multi-line text message.
+     *
+     * @{ */
+    const std::string& message() const;
+    void message(const std::string&);
+    /** @} */
+
     /** Property: Stable ID.
      *
      *  A result may have a stable ID.
@@ -96,6 +117,7 @@ public:
     std::string emissionPrefix() override;
 
 private:
+    void emitMessage(std::ostream&, const std::string &prefix);
     void emitId(std::ostream&, const std::string &prefix);
     void emitRule(std::ostream&, const std::string &prefix);
     void emitAnalysisTarget(std::ostream&, const std::string &prefix);

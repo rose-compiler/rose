@@ -13,8 +13,20 @@ namespace Sarif {
  *
  *  This class represents one run of one analysis and all the results from that run. An analysis can be one of many analyses run by
  *  a single tool, or can be the only analysis run by a tool.  Each analysis has a name and an optional command-line invocation. All
- *  the results for one analysis are stored in that object's @ref results vector. The results may point to specific @ref rules
- *  associated with this analysis. */
+ *  the results for one analysis are stored in that object's @ref results vector. The results may point to specific @ref rules and
+ *  @ref artifacts associated with this analysis.
+ *
+ *  For an incremental log the information is emitted in the following order. Once one of the information collections is emitted
+ *  it is an error to go back and modify an earlier collection. The error is indicated by throwing a @ref Sarif::IncrementalError.
+ *
+ *  @li Properties such as @ref Analysis::name "name", @ref commandLine "command-line", @ref exitStatus "exit status", etc.
+ *  @li The list of @ref rules.
+ *  @li The list of @ref artifacts.
+ *  @li The list of @ref results.
+ *
+ *  Example:
+ *
+ *  @snippet{trimleft} sarifUnitTests.C analysis_example */
 class Analysis: public Node {
 public:
     /** Shared-ownership pointer to an @ref Analysis object.
@@ -27,6 +39,7 @@ public:
 private:
     std::string name_;                                  // analysis name
     std::vector<std::string> commandLine_;              // command and arguments
+    std::string version_;
     Sawyer::Optional<int> exitStatus_;                  // exit status of the analysis
 
 public:
@@ -65,6 +78,15 @@ public:
     void commandLine(const std::vector<std::string>&);
     /** @} */
 
+    /** Property: Version.
+     *
+     *  Version string for the tool.
+     *
+     * @{ */
+    const std::string& version() const;
+    void version(const std::string&);
+    /** @} */
+
     /** Property: Command exit status.
      *
      *  This is the exit status of the command if the command did not exit because of a signal.
@@ -82,12 +104,9 @@ private:
     // Construct a shell command-line from the command-line arguments
     static std::string makeShellCommand(const std::vector<std::string>&);
 
-    // Emit YAML for a command line if it isn't empty.
     void emitCommandLine(std::ostream&, const std::string &prefix);
-
-    // Emit YAML for an exit status if it isn't empty. If the command-line isn't empty, then this must be called immediately after
-    // emitCommandLine.
     void emitExitStatus(std::ostream&, const std::string &prefix);
+    void emitVersion(std::ostream&, const std::string &prefix);
 
     // These signal slots are called before ("check") and after ("handle") a vector of edges is resized.
     void checkRulesResize(int delta, const RulePtr&);

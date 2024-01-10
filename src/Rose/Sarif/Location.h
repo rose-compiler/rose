@@ -16,7 +16,17 @@ namespace Sarif {
  *  A region consists of two locations: a begin location (inclusive) and an end location (exclusive). The two locations must refer
  *  to the same artifact, and the end location must be greater than the begin location. For source regions, if a begin location
  *  lacks a column number, then column 1 is assumed and if an end location lacks a column number then one past the last column is
- *  assumed. */
+ *  assumed.
+ *
+ *  Each location may also have a @ref message "text message" property.
+ *
+ *  Example source location:
+ *
+ *  @snippet{trimleft} sarifUnitTests.C position_source_example
+ *
+ *  Example binary location:
+ *
+ *  @snippet{trimleft} sarifUnitTests.C log_with_location */
 class Location: public Node {
 public:
     /** Shared-ownership pointer to a @ref Location object.
