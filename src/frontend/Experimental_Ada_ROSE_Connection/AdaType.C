@@ -966,7 +966,7 @@ namespace
   FormalTypeData
   getFormalTypeFoundation( const std::string& name,
                            Definition_Struct& def,
-                           SgScopeStatement& inheritedRoutineScope,
+                           SgScopeStatement& /*inheritedRoutineScope*/,
                            AstContext ctx
                          )
   {

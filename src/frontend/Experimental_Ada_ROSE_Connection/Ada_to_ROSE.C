@@ -1863,7 +1863,7 @@ namespace
     //
     // Relevant statements
 
-    void handle(const SgExprStatement& n)            { /* procedure call */ }
+    void handle(const SgExprStatement&)              { /* procedure call */ }
 
     void handle(const SgReturnStmt& n)
     {

@@ -151,13 +151,14 @@ namespace Cmdline {
 
     struct CmdlineSettings
     {
-      bool processPredefinedUnits     = true;
-      bool processImplementationUnits = true;
-      bool failhardAdb                = false;
-      bool asisDebug                  = false;
-      bool logTrace                   = false;
-      bool logInfo                    = false;
-      bool logWarn                    = false;
+      bool        processPredefinedUnits     = true;   // deprecated - should be always true
+      bool        processImplementationUnits = true;   // deprecated - should be always true
+      bool        failhardAdb                = false;
+      bool        asisDebug                  = false;
+      bool        logTrace                   = false;
+      bool        logInfo                    = false;
+      bool        logWarn                    = false;
+      std::string outputPath                 = "rose-ada-output";
     };
 
     /** @returns true if the Ada option requires a user-specified argument.

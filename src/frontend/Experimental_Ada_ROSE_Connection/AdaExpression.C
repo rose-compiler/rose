@@ -764,7 +764,7 @@ namespace
   /// \note currently True and False are handled separately, because
   ///       their definition in package Standard is not seen.
   SgExpression&
-  getEnumLiteral(Expression_Struct& expr, AstContext ctx)
+  getEnumLiteral(Expression_Struct& expr, AstContext /*ctx*/)
   {
     ADA_ASSERT(expr.Expression_Kind == An_Enumeration_Literal);
 
@@ -1997,7 +1997,7 @@ SgExpression& createCall(Element_ID tgtid, ElemIdRange args, bool operatorCallSy
 }
 
 SgExpression&
-getEnumRepresentationValue(Element_Struct& el, AstContext ctx)
+getEnumRepresentationValue(Element_Struct& el, AstContext /*ctx*/)
 {
   ADA_ASSERT(el.Element_Kind == A_Defining_Name);
 

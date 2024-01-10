@@ -30,6 +30,7 @@ namespace Ada_ROSE_Translation
   void initialize(const Rose::Cmdline::Ada::CmdlineSettings& settings);
 }
 
+#if OBSOLETE_CODE
 namespace
 {
   bool eq( const Rose::Cmdline::Ada::CmdlineSettings& lhs,
@@ -46,7 +47,7 @@ namespace
            );
   }
 }
-
+#endif /* OBSOLETE_CODE */
 
 #ifdef BUILD_EXECUTABLE
 int main(int argc, char** argv)
@@ -65,6 +66,7 @@ int main(int argc, char** argv)
      mlog = Sawyer::Message::Facility("Ada2ROSE", Rose::Diagnostics::destination);
 
      Rose::Cmdline::Ada::CmdlineSettings settings = Rose::Cmdline::Ada::commandlineSettings();
+#if OBSOLETE_CODE
      Rose::Cmdline::Ada::CmdlineSettings settingscpy = settings;
 
      scl::Parser p = Rose::CommandLine::createEmptyParserStage("", "");
@@ -106,6 +108,8 @@ int main(int argc, char** argv)
 
      // the unparsed commands is likely to be passed into ASIS
      std::vector<std::string> unparsedArgs = cmdline.unparsedArgs();
+#endif /* OBSOLETE_CODE */
+     std::vector<std::string> unparsedArgs = args;
      std::string ASISIncludeArgs;
      std::string GNATArgs;
      std::string ASISArgs;
@@ -137,13 +141,8 @@ int main(int argc, char** argv)
 
      ASISArgs = GNATArgs + ASISIncludeArgs;
 
-    if(!ASISArgs.empty() && ASISArgs.at(ASISArgs.length()-1) == ' ')
+     if(!ASISArgs.empty() && ASISArgs.at(ASISArgs.length()-1) == ' ')
         ASISArgs = ASISArgs.substr(0, ASISArgs.length()-1);
-
-
-
-     if (!eq(settings, settingscpy))
-       mprintf("--asis: options HAVE BEEN DEPRECATED and have been replaced by -rose:ada: options!\n");
 
      std::string warninglevels = "none, error, fatal";
      Sawyer::Message::Facilities logctrl;

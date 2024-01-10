@@ -2513,7 +2513,7 @@ namespace
       : ctx(astctx)
       {}
 
-      SgAssignOp& itemValuePair(Element_Struct& el, Element_ID item, SgExpression& enumval)
+      SgAssignOp& itemValuePair(Element_Struct& /*el*/, Element_ID item, SgExpression& enumval)
       {
         SgExpression& enumitem = getExprID(item, ctx);
 
@@ -2680,7 +2680,7 @@ namespace
   queryDefinitionDetails(Element_Struct& complElem, AstContext ctx);
 
   Type_Kinds
-  queryBaseDefinitionData(Definition_Struct& typeDefn, Type_Kinds tyKind, Element_ID currID, AstContext ctx)
+  queryBaseDefinitionData(Definition_Struct& typeDefn, Type_Kinds tyKind, Element_ID /*currID*/, AstContext ctx)
   {
     ADA_ASSERT (tyKind == A_Derived_Type_Definition);
 
@@ -3520,7 +3520,7 @@ queryScopeOfID(Element_ID el, AstContext ctx)
 }
 
 SgDeclarationStatement*
-queryDecl(Expression_Struct& expr, AstContext ctx)
+queryDecl(Expression_Struct& expr, AstContext /*ctx*/)
 {
   SgDeclarationStatement* res = findFirst(asisDecls(), expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration);
 
@@ -3699,7 +3699,7 @@ void handleClause(Element_Struct& elem, AstContext ctx)
   }
 }
 
-void handleVariant(Element_Struct& elem, Variant_Part_Struct& variant, AstContext ctx)
+void handleVariant(Element_Struct& /*elem*/, Variant_Part_Struct& variant, AstContext ctx)
 {
   ElemIdRange range = idRange(variant.Variants);
 
@@ -4041,7 +4041,7 @@ namespace
   };
 
 
-  void processAspects(Element_Struct& elem, Declaration_Struct& decl, SgDeclarationStatement* sgnode, AstContext ctx)
+  void processAspects(Element_Struct& /*elem*/, Declaration_Struct& decl, SgDeclarationStatement* sgnode, AstContext ctx)
   {
     ElemIdRange aspectRange = idRange(decl.Aspect_Specifications);
 

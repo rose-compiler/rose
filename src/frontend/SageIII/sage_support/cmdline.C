@@ -18,6 +18,7 @@
 
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string/replace.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <Sawyer/CommandLine.h>
 
 using namespace Rose;                                   // temporary, until this file lives in namespace Rose
@@ -813,7 +814,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
                               ROSE_ABORT();
                             }
                        }
-                  
+
                   }
              }
 
@@ -2116,7 +2117,7 @@ Rose::Cmdline::Ada::
 OptionRequiresArgument (const std::string& option)
 {
   // currently no option requires a second argument
-  return false;
+  return boost::algorithm::ends_with(option, "outputPath");
 }
 
 Rose::Cmdline::Ada::CmdlineSettings adaSettings;
@@ -2127,10 +2128,13 @@ Rose::Cmdline::Ada::commandlineSettings()
   return adaSettings;
 }
 
+
 void
 Rose::Cmdline::Ada::
 Process(SgProject*, std::vector<std::string>& argv)
 {
+  std::string tmp;
+
   if (CommandlineProcessing::isOption(argv, ADA_OPTION_PREFIX, "debug_external_frontend", true))
     adaSettings.asisDebug = true;
 
@@ -2151,28 +2155,35 @@ Process(SgProject*, std::vector<std::string>& argv)
 
   if (CommandlineProcessing::isOption(argv, ADA_OPTION_PREFIX, "info", true))
     adaSettings.logInfo = true;
+
+  if (CommandlineProcessing::isOptionWithParameter(argv, ADA_OPTION_PREFIX, "outputPath", tmp, true))
+    adaSettings.outputPath = tmp;
 }
 
 void
 Rose::Cmdline::Ada::
 StripRoseOptions (std::vector<std::string>& argv)
 {
-  //
-  // (1) Options WITHOUT an argument
-  //~ sla(argv, ADA_OPTION_PREFIX, "($)", "()", 1 /* remove */);
-  auto isAdaOption = [](const std::string& arg) -> bool
+  auto isAdaOption = [stripArg = 0](const std::string& arg) mutable -> bool
                      {
+                       if (stripArg > 0)
+                       {
+                         --stripArg;
+                         return true;
+                       }
+
+                       if (Rose::Cmdline::Ada::OptionRequiresArgument(arg))
+                       {
+                         stripArg = 1;
+                         return true;
+                       }
+
                        return arg.rfind(ADA_OPTION_PREFIX, 0) == 0;
                      };
 
   std::vector<std::string>::iterator zz  = argv.end();
   std::vector<std::string>::iterator pos = std::remove_if(argv.begin(), zz, isAdaOption);
   argv.erase(pos, zz);
-
-  //
-  // (2) Options WITH an argument
-
-  // see Java for an example
 }
 
 //------------------------------------------------------------------------------
@@ -3511,20 +3522,22 @@ SgFile::usage ( int status )
 "\n"
 "Control debugging of experimental Ada processing:\n"
 "     -rose:ada:debug_external_frontend\n"
-"                             turn on debugging flag in external Ada frontend\n"
+"                             turn on debugging flag in external Ada frontend. [DEPRECATED]\n"
 "     -rose:ada:without_predefined_units\n"
-"                             excludes processing of Ada predefined units (for debugging)\n"
+"                             excludes processing of Ada predefined units (for debugging) [DEPRECATED].\n"
 "     -rose:ada:without_implementation_defined_units\n"
-"                             excludes processing of Ada implementation defined units (for debugging)\n"
+"                             excludes processing of Ada implementation defined units (for debugging) [DEPRECATED].\n"
 "     -rose:ada:fail_hard_adb\n"
 "                             fails immediately with an assertion error when support for an Ada language element\n"
-"                             has not been implemented. This fails only in in .adb files. (for ACATS testing)\n"
+"                             has not been implemented. This fails only in in .adb files. (for ACATS testing).\n"
 "     -rose:ada:warn\n"
-"                             enable warnings messages\n"
+"                             enable warnings messages.\n"
 "     -rose:ada:info\n"
-"                             enable info messages\n"
+"                             enable info messages.\n"
 "     -rose:ada:trace\n"
-"                             enable tracing messages\n"
+"                             enable tracing messages.\n"
+"     -rose:ada:outputPath path\n"
+"                             specifies the output path for Ada unparsing.\n"
 "\n"
 "Control code generation:\n"
 "     -rose:unparser:clobber_input_file\n"
@@ -4200,7 +4213,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
          // DQ (12/23/2021): This is where it might be an issue for the C++ initializers in the unit-test application code.
          // DQ (12/23/2021): Isolating the fixes to try again.
          // DQ (12/22/2021): If we are suggesting this is using the C++ modes, then we have to treat it as a C++ file.
-         // And so it can't also be a C files (else --c and --c99 options to EDG could be added, which will cause 
+         // And so it can't also be a C files (else --c and --c99 options to EDG could be added, which will cause
          // the EDG error: "Command-line error: language modes specified are incompatible"  So turn C_only mode off.
             set_C_only(false);
 
@@ -5937,7 +5950,7 @@ SgFile::stripTranslationCommandLineOptions ( vector<string> & argv )
              printf ("     argv[%" PRIuPTR "] = %s \n",i,argv[i].c_str());
         }
 
-     // Pei-Hung (12/20/2021) gnatec is used when processing Ada input source code.  
+     // Pei-Hung (12/20/2021) gnatec is used when processing Ada input source code.
      // For ada2cpp translation, this option causes conflict in c++ compilation.
      CommandlineProcessing::removeArgsWithParameters (argv,"-gnatec=");
 
@@ -7725,10 +7738,10 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
           case SgFile::e_C_language:
              {
-            // DQ (12/22/2021): If this is the language for the backend, keep the backend compiler consistant 
-            // with the specified language.  We want to be able to override the language selected based on the 
-            // file suffix when the -std= option is used.  This allows for C language files to be compiled as 
-            // C++ files and 
+            // DQ (12/22/2021): If this is the language for the backend, keep the backend compiler consistant
+            // with the specified language.  We want to be able to override the language selected based on the
+            // file suffix when the -std= option is used.  This allows for C language files to be compiled as
+            // C++ files and
 #if 0
                printf ("################################################ \n");
                printf ("In case SgFile::e_C_language: display_standard() = %s \n",display_standard(get_standard()).c_str());
@@ -7738,14 +7751,14 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #if 0
                compilerNameString[0] = BACKEND_C_COMPILER_NAME_WITH_PATH;
 #else
-               switch (get_standard()) 
+               switch (get_standard())
                   {
-                    case e_cxx98_standard: 
-                    case e_cxx03_standard: 
-                    case e_cxx11_standard: 
-                    case e_cxx14_standard: 
-                    case e_cxx17_standard: 
-                    case e_cxx20_standard: 
+                    case e_cxx98_standard:
+                    case e_cxx03_standard:
+                    case e_cxx11_standard:
+                    case e_cxx14_standard:
+                    case e_cxx17_standard:
+                    case e_cxx20_standard:
                        {
                       // Don't change the backend compiler.
                          compilerNameString[0] = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
@@ -7753,14 +7766,14 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                        }
 
                  // DQ (12/23/2021): UPC tests need to use the C compiler.
-                    case e_upc_standard: 
+                    case e_upc_standard:
 
-                    case e_c89_standard: 
-                    case e_c90_standard: 
-                    case e_c99_standard: 
-                    case e_c11_standard: 
-                    case e_c14_standard: 
-                    case e_c18_standard: 
+                    case e_c89_standard:
+                    case e_c90_standard:
+                    case e_c99_standard:
+                    case e_c11_standard:
+                    case e_c14_standard:
+                    case e_c18_standard:
                        {
                          compilerNameString[0] = BACKEND_C_COMPILER_NAME_WITH_PATH;
                          break;

@@ -30,7 +30,9 @@
 
 // DQ (8/1/2018): This is the suppport for unparsing of header files.
 #include "IncludedFilesUnparser.h"
-#include "FileHelper.h"
+
+// PP (1/9/24): commented out b/c FileHelper.h gets included through cmdline.h and has no include guards
+// #include "FileHelper.h"
 
 #include <boost/algorithm/string.hpp>
 
@@ -39,6 +41,9 @@
 
 // DQ (9/26/2018): Added so that we can call the display function for TokenStreamSequenceToNodeMapping (for debugging).
 #include "tokenStreamMapping.h"
+
+// PP (1/9/24): added so the Ada unparser can access the Ada specific command line options (i.e., outputPath).
+#include "cmdline.h"
 
 using namespace std;
 using namespace Rose;
@@ -844,8 +849,8 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
         }
 
 #if 0
-  // DQ (6/11/2021): This is debugging code to support output fo the token stream as a file for inspection.  
-  // However, because of changes to the unparseFileUsingTokenStream() it not longer works for the case of 
+  // DQ (6/11/2021): This is debugging code to support output fo the token stream as a file for inspection.
+  // However, because of changes to the unparseFileUsingTokenStream() it not longer works for the case of
   // the dynamic library file when one if constructed within some of the recent ROSE tools.
      if ( SgProject::get_verbose() > 0 )
         {
@@ -2356,7 +2361,7 @@ resetSourcePositionToGeneratedCode( SgFile* file, UnparseFormatHelp *unparseHelp
 // DQ (9/13/2014): Added support for unparsing of STL lists (specifically SgTemplateArgumentPtrList and SgTemplateParameterPtrList).
 // This allows us to define a simpler API for the name qualification and refactor as much of the support as possible.
 // string globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputUnparseInfoPointer );
-string globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgumentPtrList* templateArgumentList, 
+string globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgumentPtrList* templateArgumentList,
                                           const SgTemplateParameterPtrList* templateParameterList, SgUnparse_Info* inputUnparseInfoPointer );
 
 
@@ -2447,7 +2452,7 @@ globalUnparseToString ( const SgTemplateParameterPtrList* templateParameterList,
 // DQ (9/13/2014): Modified to extend the API of this internal function.
 // string globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputUnparseInfoPointer )
 string
-globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgumentPtrList* templateArgumentList, 
+globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgumentPtrList* templateArgumentList,
                                    const SgTemplateParameterPtrList* templateParameterList, SgUnparse_Info* inputUnparseInfoPointer )
    {
   // This global function permits any SgNode (including it's subtree) to be turned into a string
@@ -3598,11 +3603,11 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                  // GNAT Ada does not allow the flename to be changed, but we can put it into the build tree instead of the source tree (same as Java).
                  // This detail is not a part of the language standard.
                     // RC-285 requested output be produced to a separate directory
-                    static const std::string adaOutputPath = "rose-ada-output";
+                    Rose::Cmdline::Ada::CmdlineSettings settings = Rose::Cmdline::Ada::commandlineSettings();
 
-                    boost::filesystem::create_directory(adaOutputPath);
+                    boost::filesystem::create_directory(settings.outputPath);
 
-                    outputFilename = adaOutputPath + "/" + file->get_sourceFileNameWithoutPath();
+                    outputFilename = settings.outputPath + "/" + file->get_sourceFileNameWithoutPath();
 
                     printf ("Ada output language: outputFilename = %s \n",outputFilename.c_str());
                     printf ("INFO: SgFile::e_Ada_language detected in unparser (unparsing is experimental) \n");
@@ -4174,7 +4179,7 @@ buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
         }
 #endif
 
-  // DQ (5/8/2021): If the applicationRootDirectory is set and does not match the first part of the filename, 
+  // DQ (5/8/2021): If the applicationRootDirectory is set and does not match the first part of the filename,
   // then there is no include_sourceFile built., and include_sourceFile->get_isApplicationFile() should be false.
   // DQ (4/11/2021): I think that we should already ahave an associated source file for every header file.
      if (include_sourceFile == NULL)
@@ -4631,8 +4636,8 @@ void outputFirstAndLastIncludeFileInfo( SgSourceFile* sourceFile )
 void
 computeFileAndScopeRelations()
    {
-  // DQ (5/8/2021): Adding computation of scope and file relationships so that we can have a file dependent concept 
-  // of when a scope includes a transformation (we used to juat set the containsTransformation flag in the scope, 
+  // DQ (5/8/2021): Adding computation of scope and file relationships so that we can have a file dependent concept
+  // of when a scope includes a transformation (we used to juat set the containsTransformation flag in the scope,
   // however, this is not enough to support the token-based unparsing when compbined with header file unparsing.
 
      int counter = 0;
@@ -4745,7 +4750,7 @@ computeFileAndScopeRelations()
                     if (scopeOfFirstStatement->containsOnlyDeclarations() == true)
                        {
                          SgDeclarationStatementPtrList & declarationStatementList = scopeOfFirstStatement->getDeclarationList();
- 
+
                          printf ("In computeFileAndScopeRelations(): DeclarationStatementList not implemented \n");
 
 #if DEBUG_FILE_AND_SCOPE_RELATION
@@ -5205,7 +5210,7 @@ void buildFirstAndLastStatementsForIncludeFiles ( SgProject* project )
                             }
                            else
                             {
-                           // Not all statements will be in the header files, however this could be the input source file, 
+                           // Not all statements will be in the header files, however this could be the input source file,
                            // so we need to support computing the first and last statements in that file as well.
 #if DEBUG_FIRST_LAST_STMTS
                               printf ("filename not found in edg_include_file_map: filename = %s \n",filename.c_str());
@@ -5223,7 +5228,7 @@ void buildFirstAndLastStatementsForIncludeFiles ( SgProject* project )
 #endif
                            // ROSE_ASSERT(statementBoundsMap.find(includeFile) != statementBoundsMap.end());
 
-                           // DQ (5/20/2021): The firstStatment and lastStatement in the source file are only used for the 
+                           // DQ (5/20/2021): The firstStatment and lastStatement in the source file are only used for the
                            // input source file (the include files used their own data member).
                               if (sourceFile->get_firstStatement() == NULL)
                                  {
@@ -5364,7 +5369,7 @@ void buildFirstAndLastStatementsForIncludeFiles ( SgProject* project )
           printf ("sourceFile->get_isDynamicLibrary() = %s \n",sourceFile->get_isDynamicLibrary() ? "true" : "false");
 #endif
        // DQ (5/24/2021): Since we have to unparse all the files, we need to compute first and last on all of the files.
-       // What is less clear is what to do with the information about shared header files. I think that at worst it is 
+       // What is less clear is what to do with the information about shared header files. I think that at worst it is
        // redundant information.
        // if (sourceFile->get_isDynamicLibrary() == false)
              {
@@ -5425,7 +5430,7 @@ void buildFirstAndLastStatementsForIncludeFiles ( SgProject* project )
 
 #if 0
   // DQ (5/9/2021): This is no longer required.
-  // DQ (5/8/2021): Adding computation of scope and file relationships so that we can have a file dependent concept 
+  // DQ (5/8/2021): Adding computation of scope and file relationships so that we can have a file dependent concept
   // of when a scope includes a transforamtion.
      computeFileAndScopeRelations();
 #endif
@@ -5445,7 +5450,7 @@ void buildFirstAndLastStatementsForIncludeFiles ( SgProject* project )
           ROSE_ASSERT(sourceFile != NULL);
 
        // DQ (5/24/2021): Since we have to unparse all the files, we need to compute first and last on all of the files.
-       // What is less clear is what to do with the information about shared header files. I think that at worst it is 
+       // What is less clear is what to do with the information about shared header files. I think that at worst it is
        // redundant information.
        // if (sourceFile->get_isDynamicLibrary() == false)
              {
@@ -5477,8 +5482,8 @@ void buildFirstAndLastStatementsForIncludeFiles ( SgProject* project )
 
 void buildFirstAndLastStatementsForScopes ( SgProject* project )
    {
-  // DQ (5/27/2021): We need a more comprehensive handling of identifing first and last statements specific 
-  // to each scope and for each file.  It is similar to the function above that computed the first and last 
+  // DQ (5/27/2021): We need a more comprehensive handling of identifing first and last statements specific
+  // to each scope and for each file.  It is similar to the function above that computed the first and last
   // statement for each file (source files and header files that have been transformed).
 
 
@@ -5592,8 +5597,8 @@ void buildFirstAndLastStatementsForScopes ( SgProject* project )
                     printf ("processStatement = %s \n",processStatement ? "true" : "false");
 #endif
 
-                 // DQ (5/27/2021): Add an entry for the global scope (even through we don't process the global scope directly 
-                 // (see definition of processStatement), we store information specific to the parent of the statements that 
+                 // DQ (5/27/2021): Add an entry for the global scope (even through we don't process the global scope directly
+                 // (see definition of processStatement), we store information specific to the parent of the statements that
                  // we process and so we store information in the entry for the global scope).
                     if (globalScope != NULL)
                        {
@@ -5686,7 +5691,7 @@ void buildFirstAndLastStatementsForScopes ( SgProject* project )
                                         Rose::tokenSubsequenceMapOfMapsBySourceFile.find(header_file_asssociated_source_file) != Rose::tokenSubsequenceMapOfMapsBySourceFile.end() ? "true" : "false");
 #endif
                                 // DQ (6/28/2021): Header files that have not been transformed will not have had their token streams collected.
-                                // Since this is an important performance optimization to only collect information about header files that will 
+                                // Since this is an important performance optimization to only collect information about header files that will
                                 // be transformed (and then unparsed), we can't expect that Rose::tokenSubsequenceMapOfMapsBySourceFile will have
                                 // and entry for each header file that we will want to compute the first and last statement for.  Because this is
                                 // handled in a single pass, per source file in the projects file list, we can compute the first and last statement
@@ -5695,14 +5700,14 @@ void buildFirstAndLastStatementsForScopes ( SgProject* project )
                                 // if (Rose::tokenSubsequenceMapOfMapsBySourceFile.find(header_file_asssociated_source_file) != Rose::tokenSubsequenceMapOfMapsBySourceFile.end())
                                    if (true)
                                       {
-                                     // DQ (5/27/2021): Add an entry for the global scope (even through we don't process the global scope directly 
-                                     // (see definition of processStatement), we store information specific to the parent of the statements that 
+                                     // DQ (5/27/2021): Add an entry for the global scope (even through we don't process the global scope directly
+                                     // (see definition of processStatement), we store information specific to the parent of the statements that
                                      // we process and so we store information in the entry for the global scope).
                                      // if (globalScope != NULL)
                                            {
                                           // firstAndLastStatementsToUnparseInScopeMap[globalScope] = std::pair<SgStatement*,SgStatement*>(NULL,NULL);
                                           // firstAndLastStatementsToUnparseInScopeMap->[sourceFile][globalScope] = std::pair<SgStatement*,SgStatement*>(NULL,NULL);
-                                             if (Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile.find(header_file_asssociated_source_file) == 
+                                             if (Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile.find(header_file_asssociated_source_file) ==
                                                  Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile.end())
                                                 {
 #if DEBUG_FIRST_LAST_STMTS_SCOPES || 0
@@ -5723,16 +5728,16 @@ void buildFirstAndLastStatementsForScopes ( SgProject* project )
 
                                      // if (skipScope == false && scope != NULL)
                                      //   {
-                                             ROSE_ASSERT(Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile.find(header_file_asssociated_source_file) != 
+                                             ROSE_ASSERT(Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile.find(header_file_asssociated_source_file) !=
                                                          Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile.end());
 
-                                             if (Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile.find(header_file_asssociated_source_file) == 
+                                             if (Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile.find(header_file_asssociated_source_file) ==
                                                  Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile.end())
                                                 {
 #if DEBUG_FIRST_LAST_STMTS_SCOPES || 0
                                                   printf ("A map for this file already exists \n");
 #endif
-                                                  Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile[header_file_asssociated_source_file] = 
+                                                  Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile[header_file_asssociated_source_file] =
                                                        std::map<SgScopeStatement*,std::pair<SgStatement*,SgStatement*> >();
                                                 }
                                                else
@@ -5750,7 +5755,7 @@ void buildFirstAndLastStatementsForScopes ( SgProject* project )
 #if DEBUG_FIRST_LAST_STMTS_SCOPES || 0
                                                   printf ("parentScope != NULL \n");
 #endif
-                                                  if (Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile[header_file_asssociated_source_file].find(parentScope) == 
+                                                  if (Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile[header_file_asssociated_source_file].find(parentScope) ==
                                                       Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile[header_file_asssociated_source_file].end())
                                                      {
 #if DEBUG_FIRST_LAST_STMTS_SCOPES || 0
@@ -5780,7 +5785,7 @@ void buildFirstAndLastStatementsForScopes ( SgProject* project )
                                           // ROSE_ASSERT(firstAndLastStatementsToUnparseInScopeMap != NULL);
                                           // ROSE_ASSERT (firstAndLastStatementsToUnparseInScopeMap->find(scope) == firstAndLastStatementsToUnparseInScopeMap->end());
                                           // if (firstAndLastStatementsToUnparseInScopeMap->find(scope) == firstAndLastStatementsToUnparseInScopeMap->end())
-                                             if (Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile[header_file_asssociated_source_file].find(scope) == 
+                                             if (Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile[header_file_asssociated_source_file].find(scope) ==
                                                  Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile[header_file_asssociated_source_file].end())
                                                 {
                                                   printf ("Adding scope = %p = %s \n",scope,scope->class_name().c_str());
@@ -5794,15 +5799,15 @@ void buildFirstAndLastStatementsForScopes ( SgProject* project )
 #endif
                                         // }
 
-                                     // std::map<SgScopeStatement*,std::pair<SgStatement*,SgStatement*> > & firstAndLastStatementsToUnparseInScopeMap = 
+                                     // std::map<SgScopeStatement*,std::pair<SgStatement*,SgStatement*> > & firstAndLastStatementsToUnparseInScopeMap =
                                      //      Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile[header_file_asssociated_source_file];
 
                                         if (parentScope != NULL)
                                            {
-                                             ROSE_ASSERT (Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile.find(header_file_asssociated_source_file) != 
+                                             ROSE_ASSERT (Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile.find(header_file_asssociated_source_file) !=
                                                           Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile.end());
                                           // if (firstAndLastStatementsToUnparseInScopeMap->find(parentScope) == firstAndLastStatementsToUnparseInScopeMap->end())
-                                             if (Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile[header_file_asssociated_source_file].find(parentScope) == 
+                                             if (Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile[header_file_asssociated_source_file].find(parentScope) ==
                                                  Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile[header_file_asssociated_source_file].end())
                                                 {
                                                // printf ("Error: (firstAndLastStatementsToUnparseInScopeMap->find(parentScope) == firstAndLastStatementsToUnparseInScopeMap->end()) == true \n");
@@ -5811,7 +5816,7 @@ void buildFirstAndLastStatementsForScopes ( SgProject* project )
                                                   printf (" --- parentScope = %p = %s = %s \n",parentScope,parentScope->class_name().c_str(),SageInterface::get_name(parentScope).c_str());
                                                 }
                                           // ROSE_ASSERT (firstAndLastStatementsToUnparseInScopeMap->find(parentScope) != firstAndLastStatementsToUnparseInScopeMap->end());
-                                             ROSE_ASSERT (Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile[header_file_asssociated_source_file].find(parentScope) != 
+                                             ROSE_ASSERT (Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile[header_file_asssociated_source_file].find(parentScope) !=
                                                           Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile[header_file_asssociated_source_file].end());
                                           // ROSE_ASSERT (firstAndLastStatementsToUnparseInScopeMap[scope].first == scope);
 
@@ -5959,7 +5964,7 @@ void buildFirstAndLastStatementsForScopes ( SgProject* project )
                             }
                            else
                             {
-                           // Not all statements will be in the header files, however this could be the input source file, 
+                           // Not all statements will be in the header files, however this could be the input source file,
                            // so we need to support computing the first and last statements in that file as well.
 #if DEBUG_FIRST_LAST_STMTS_SCOPES || 0
                               printf ("filename not found in edg_include_file_map: filename = %s \n",filename.c_str());
@@ -5997,16 +6002,16 @@ void buildFirstAndLastStatementsForScopes ( SgProject* project )
                                              ROSE_ASSERT(false);
                                            }
 #endif
-                                        ROSE_ASSERT(Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile.find(sourceFile) != 
+                                        ROSE_ASSERT(Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile.find(sourceFile) !=
                                                     Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile.end());
 
-                                        if (Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile.find(sourceFile) == 
+                                        if (Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile.find(sourceFile) ==
                                             Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile.end())
                                            {
 #if DEBUG_FIRST_LAST_STMTS_SCOPES || 0
                                              printf ("A map for this file DOES already exist \n");
 #endif
-                                             Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile[sourceFile] = 
+                                             Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile[sourceFile] =
                                                   std::map<SgScopeStatement*,std::pair<SgStatement*,SgStatement*> >();
                                            }
                                           else
@@ -6023,7 +6028,7 @@ void buildFirstAndLastStatementsForScopes ( SgProject* project )
 #if DEBUG_FIRST_LAST_STMTS_SCOPES
                                         printf ("parentScope != NULL \n");
 #endif
-                                        if (Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile[sourceFile].find(parentScope) == 
+                                        if (Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile[sourceFile].find(parentScope) ==
                                             Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile[sourceFile].end())
                                            {
 #if DEBUG_FIRST_LAST_STMTS_SCOPES
@@ -6045,11 +6050,11 @@ void buildFirstAndLastStatementsForScopes ( SgProject* project )
                                    if (parentScope != NULL)
                                       {
                                      // ROSE_ASSERT (firstAndLastStatementsToUnparseInScopeMap.find(parentScope) != firstAndLastStatementsToUnparseInScopeMap.end());
-                                        ROSE_ASSERT (Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile[sourceFile].find(parentScope) != 
+                                        ROSE_ASSERT (Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile[sourceFile].find(parentScope) !=
                                                      Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile[sourceFile].end());
                                      // ROSE_ASSERT (firstAndLastStatementsToUnparseInScopeMap[scope].first == scope);
 
-                                     // DQ (5/20/2021): The firstStatment and lastStatement in the source file are only used for the 
+                                     // DQ (5/20/2021): The firstStatment and lastStatement in the source file are only used for the
                                      // input source file (the include files used their own data member).
                                      // if (sourceFile->get_firstStatement() == NULL)
                                         if (Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile[sourceFile][parentScope].first == NULL)
@@ -6120,7 +6125,7 @@ void buildFirstAndLastStatementsForScopes ( SgProject* project )
                                  }
                                 else
                                  {
-                                // The token stream was not found, however, I think that w still must compute the first and last statment, 
+                                // The token stream was not found, however, I think that w still must compute the first and last statment,
                                 // independent of if there was a token stream associated with it.
 
 #if DEBUG_FIRST_LAST_STMTS_SCOPES
@@ -6154,7 +6159,7 @@ void buildFirstAndLastStatementsForScopes ( SgProject* project )
         {
           SgSourceFile* sourceFile = isSgSourceFile(fileList[i]);
 
-       // DQ (8/23/2021): If this is a binary file then sourceFile == NULL (see tests in 
+       // DQ (8/23/2021): If this is a binary file then sourceFile == NULL (see tests in
        // tests/nonsmoke/functional/CompilerOptionsTests/testGenerateSourceFileNames)
        // ROSE_ASSERT(sourceFile != NULL);
           if (sourceFile != NULL)
@@ -6167,7 +6172,7 @@ void buildFirstAndLastStatementsForScopes ( SgProject* project )
                printf ("sourceFile->get_isDynamicLibrary() = %s \n",sourceFile->get_isDynamicLibrary() ? "true" : "false");
 #endif
             // DQ (5/24/2021): Since we have to unparse all the files, we need to compute first and last on all of the files.
-            // What is less clear is what to do with the information about shared header files. I think that at worst it is 
+            // What is less clear is what to do with the information about shared header files. I think that at worst it is
             // redundant information.
 #if DEBUG_FIRST_LAST_STMTS_SCOPES
                printf ("Calling traversal for filename = %s \n",sourceFile->getFileName().c_str());
@@ -6200,7 +6205,7 @@ void buildFirstAndLastStatementsForScopes ( SgProject* project )
   //      printf ("In buildFirstAndLastStatementsForScopes(): iteration i = %d \n",i);
 
        // DQ (5/24/2021): Since we have to unparse all the files, we need to compute first and last on all of the files.
-       // What is less clear is what to do with the information about shared header files. I think that at worst it is 
+       // What is less clear is what to do with the information about shared header files. I think that at worst it is
        // redundant information.
        // if (sourceFile->get_isDynamicLibrary() == false)
        //    {
@@ -6391,7 +6396,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                buildFirstAndLastStatementsForIncludeFiles(project);
 
 #if 1
-            // DQ (5/27/2021): We need to debug the collection of first and last statements associated with each scope 
+            // DQ (5/27/2021): We need to debug the collection of first and last statements associated with each scope
             // (actually we just need the last statement for each scope). This only important for the token-based unarpsing.
                buildFirstAndLastStatementsForScopes(project);
 #endif
@@ -7494,7 +7499,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 #endif
 
 #if 0
-                 // DQ (5/8/2021): This was an attempt to provide the corrdct include path when the application directory does 
+                 // DQ (5/8/2021): This was an attempt to provide the corrdct include path when the application directory does
                  // not match any part of the header file or source file path.  However, I think it is a mistake to persue this.
                  // This case is likely hwat happens when the application directory path is specified incorectly.
                     if (EDG_ROSE_Translation::edg_include_file_map.find(originalFileName) != EDG_ROSE_Translation::edg_include_file_map.end())
@@ -7732,7 +7737,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                buildFirstAndLastStatementsForIncludeFiles(project);
 
 #if 1
-            // DQ (5/27/2021): We need to debug the collection of first and last statements associated with each scope 
+            // DQ (5/27/2021): We need to debug the collection of first and last statements associated with each scope
             // (actually we just need the last statement for each scope). This only important for the token-based unarpsing.
                buildFirstAndLastStatementsForScopes(project);
 #endif
