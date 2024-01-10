@@ -25507,7 +25507,8 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   //optionally file info
   if (SgLocatedNode* lnode= isSgLocatedNode(node))
   {
-    out<< Rose::StringUtility::stripPathFromFileName ( lnode->get_file_info()->get_filename() )<<" "<<lnode->get_file_info()->get_line()<<":"<<lnode->get_file_info()->get_col();
+    //Rose::StringUtility::stripPathFromFileName()
+    out<< lnode->get_file_info()->get_filename() <<" "<<lnode->get_file_info()->get_line()<<":"<<lnode->get_file_info()->get_col();
     // also preprocessing info. attached.
     AttachedPreprocessingInfoType *comments =
       lnode->getAttachedPreprocessingInfo ();
