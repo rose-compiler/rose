@@ -31,6 +31,7 @@ unparser_la_sources=\
 
 unparser_includeHeaders=\
 	$(unparser_headers) \
+	$(unparserPath)/UnparserDelegate.h \
 	$(unparseCxxCodeGeneration_includeHeaders) \
 	$(unparseFormat_includeHeaders) \
 	$(unparseFortran_includeHeaders) \

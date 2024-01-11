@@ -68,30 +68,14 @@ void buildTokenStreamFrontier(SgSourceFile* sourceFile, bool traverseHeaderFiles
 
 //-----------------------------------------------------------------------------------
 //  Unparser::Unparser
-//
-//  Constructor that takes a SgFile*, iostream*, ROSEAttributesList*, Unparser_Opt,
-//  and int. All other fields are set to NULL or 0.
 //-----------------------------------------------------------------------------------
-// [DT] Old version: Unparser::Unparser(SgFile* nfile, iostream* nos,
-//                         ROSEAttributesList* nlist, Unparser_Opt nopt, int nline) {
-// Unparser::Unparser(SgFile* nfile, ostream* nos, char *fname,
-//                    ROSEAttributesList* nlist,
-//                    ROSEAttributesListContainer* nlistList,
-//                    Unparser_Opt nopt, int nline)
-// Unparser::Unparser(SgFile* nfile, ostream* nos, char *fname,
-//                    Unparser_Opt nopt, int nline)
-// Unparser::Unparser( ostream* nos, char *fname, Unparser_Opt nopt, int nline,
-//                    UnparseFormatHelp *h, UnparseDelegate* r)
-
-// DQ (8/19/2007): I have removed the "int nline" function parameter becuase it was part of an old mechanism
-// to unparse a specific line, now replaced by the unparseToString() member function on each IR node.
-// Unparser::Unparser( ostream* nos, string fname, Unparser_Opt nopt, int nline, UnparseFormatHelp *h, UnparseDelegate* r)
-Unparser::Unparser( ostream* nos, string fname, Unparser_Opt nopt, UnparseFormatHelp *h, UnparseDelegate* r)
-   : cur(nos, h), repl(r)
+Unparser::Unparser(ostream* nos, string fname, Unparser_Opt nopt, UnparseFormatHelp* h, UnparseDelegate* d)
+   : cur(nos, h), delegate(d)
    {
+     ASSERT_not_null(nos);
+
      u_type     = new Unparse_Type(this);
      u_name     = new Unparser_Nameq(this);
-  // u_support  = new Unparse_Support(this);
      u_sym      = new Unparse_Sym(this);
      u_debug    = new Unparse_Debug(this);
      u_sage     = new Unparse_MOD_SAGE(this);
@@ -103,41 +87,11 @@ Unparser::Unparser( ostream* nos, string fname, Unparser_Opt nopt, UnparseFormat
      u_fortran_type = new UnparseFortran_type(this);
      u_fortran_locatedNode = new FortranCodeGeneration_locatedNode(this, fname);
 
-  // ASSERT_not_null(nfile);
-     ASSERT_not_null(nos);
+     opt = nopt;
+     cur_index = 0;
+     currentFile = nullptr;
 
-  // ASSERT_not_null(nlist);
-  // file       = nfile;
-  //   primary_os = nos; // [DT] 3/9/2000
-  //
-  // [DT] 3/17/2000 -- Should be careful here.  fname could include a path,
-  //      and I think currentOutputFileName should be in the local directory,
-  //      or a subdirectory of the local directory, perhaps.
-  //
-  //   strcpy(primaryOutputFileName, fname);
-  // strcpy(currentOutputFileName, fname.c_str());
-
-
-  // dir_list         = nlist;
-  // dir_listList     = nlistList;
-     opt              = nopt;
-
-  // MK: If overload option is set true, the keyword "operator" occurs in the output.
-  // Usually, that's not what you want, but it can be used to avoid a current bug,
-  // see file TODO_MK. The default is to set this flag to false, see file
-  // preprocessorSupport.C in the src directory
-  // opt.set_overload_opt(true);
-
-     cur_index        = 0;
-
-     currentFile      = NULL;
-
-  // DQ (5/8/2010): The default setting for this if "false".
      set_resetSourcePosition(false);
-
-  // DQ (8/19/2007): Removed this old unpasing mechanism.
-  // line_to_unparse  = nline;
-  // ltu  = nline;
    }
 
 //-----------------------------------------------------------------------------------
@@ -157,68 +111,13 @@ Unparser::~Unparser()
      delete u_fortran_locatedNode;
    }
 
-Unparser::Unparser(const Unparser & X)
-   {
-  // DQ (9/11/2011): Added explicit copy constructor to avoid possible double free of formatHelpInfo (reported by static analysis).
-  // DQ (9/11/2011): This function is provided to make this code better so that can be analyized using static analysis
-  // (static analysis tools don't understand access functions).
-
-  // Call the operator=() member function.
-     *this = X;
-
-     mlog[FATAL] << "Error: I think we likely don't want to be using this constructor (UnparseFormat(const UnparseFormat & X))\n";
-     ROSE_ABORT();
-   }
-
-Unparser & Unparser::operator=(const Unparser & X)
-   {
-  // DQ (9/11/2011): Added explicit operator=() to avoid possible double free of formatHelpInfo (reported by static analysis).
-  // DQ (9/11/2011): This function is provided to make this code better so that can be analyized using static analysis
-  // (static analysis tools don't understand access functions).
-
-  // DQ (9/12/2011): This avoids the memory leak that could happend with self assignment.
-     if (&X == this)
-        {
-          return *this;
-        }
-
-     u_type      = NULL; // new Unparse_Type(this);
-     u_name      = NULL; // new Unparser_Nameq(this);
-     u_sym       = NULL; // new Unparse_Sym(this);
-     u_debug     = NULL; // new Unparse_Debug(this);
-     u_sage      = NULL; // new Unparse_MOD_SAGE(this);
-     u_exprStmt  = NULL; // new Unparse_ExprStmt(this, fname);
-
-     opt         = X.opt;
-     cur_index   = 0;
-     currentFile = NULL;
-
-     prevdir_was_cppDeclaration = false;
-
-     cur         = X.cur;
-     repl        = X.repl;
-
-     embedColorCodesInGeneratedCode = 0;
-     generateSourcePositionCodes    = 0;
-
-     p_resetSourcePosition = false;
-
-     printf ("Error: I think we likely don't want to be using this operator (UnparseFormat::operator=(const UnparseFormat & X)). \n");
-     ROSE_ABORT();
-
-     return *this;
-   }
-
-UnparseFormat& Unparser::get_output_stream()
+UnparseFormat &Unparser::get_output_stream()
    {
      return cur;
    }
 
-
-
-
 bool
-Unparser::isPartOfTransformation( SgLocatedNode *n)
+Unparser::isPartOfTransformation(SgLocatedNode* n)
    {
   // return (n->get_file_info()==0 || n->get_file_info()->get_isPartOfTransformation());
 
@@ -235,7 +134,7 @@ Unparser::isCompilerGenerated( SgLocatedNode *n)
      ASSERT_not_null(n);
      ASSERT_not_null(n->get_file_info());
 
-  // DQ (5/22/2005): Support for including any compiler generated code (such as instatiated templates).
+  // Support for including any compiler generated code (such as instatiated templates).
      return n->get_file_info()->isCompilerGenerated();
    }
 
@@ -1204,7 +1103,12 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
           case SgFile::e_Fortran_language:
              {
                TimingPerformance timer ("Source code generation from AST (Fortran):");
-               u_fortran_locatedNode->unparseStatement(globalScope, info);
+               if (delegate) {
+                 delegate->unparse_statement(globalScope, info);
+               }
+               else {
+                 u_fortran_locatedNode->unparseStatement(globalScope, info);
+               }
                break;
              }
 
@@ -1897,7 +1801,7 @@ Unparser::unparseFile(SgBinaryComposite *binary, SgUnparse_Info &info)
         SgAsmGenericFilePtrList interp_files = interps[i]->get_files();
         if (interp_files.size()>1) {
             char interp_name[64];
-            sprintf(interp_name, "interp-%03zu.dump", nwritten++);
+            snprintf(interp_name, sizeof(interp_name), "interp-%03zu.dump", nwritten++);
             FILE *interp_file = fopen(interp_name, "wb");
             ASSERT_not_null(interp_file);
             fprintf(interp_file, "Interpretation spanning these input files:\n");
@@ -3234,21 +3138,13 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
 
 string get_output_filename( SgFile& file)
    {
-  // DQ (10/15/2005): This can now be made to be a simpler function!
      if (file.get_unparse_output_filename().empty() == true)
         {
           printf ("Error: no output file name specified, use \"-o <output filename>\" option on commandline (see --help for options) \n");
         }
      ROSE_ASSERT(file.get_unparse_output_filename().empty() == false);
 
-  // return file.get_unparse_output_filename();
-     string returnString = file.get_unparse_output_filename();
-
-#if 0
-     printf ("Leaving get_output_filename(): returnString = %s \n",returnString.c_str());
-#endif
-
-     return returnString;
+     return file.get_unparse_output_filename();
    }
 
 
@@ -3259,16 +3155,10 @@ string get_output_filename( SgFile& file)
 void
 unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unparseDelegate, SgScopeStatement* unparseScope )
    {
-  // DQ (1/24/2010): Refactored code to cal this more directly (part of support for SgDirectory).
-  // DQ (7/12/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST Code Generation (unparsing):");
+     ASSERT_not_null(file);
 
   // Call the unparser mechanism
-
-#if 0
-     printf ("Inside of unparseFile ( SgFile* file,x,x,SgScopeStatement* ) (using file->get_unparse_output_filename() = %s) \n",file->get_unparse_output_filename().c_str());
-     printf (" --- file->get_unparse_tokens() = %s \n",file->get_unparse_tokens() ? "true" : "false");
-#endif
 
 #if 0
   // DQ (10/29/2018): I now think we need to support this mechanism of specifying the scope to be unparsed separately.
@@ -3285,18 +3175,6 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
      ROSE_ASSERT(unparseScope == NULL);
 #endif
 
-#if 0
-     printf ("Exiting as a test! \n");
-     ROSE_ABORT();
-#endif
-
-#if 0
-     printf ("In unparseFile(SgFile* file): file->get_outputLanguage() = %d \n",file->get_outputLanguage());
-     printf ("In unparseFile(SgFile* file): file->get_outputLanguage() = %s \n",SgFile::get_outputLanguageOptionName(file->get_outputLanguage()).c_str());
-#endif
-
-     ASSERT_not_null(file);
-
   // FMZ (12/21/2009) the imported files by "use" statements should not be unparsed
      if (file->get_skip_unparse() == true)
         {
@@ -3304,19 +3182,6 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
           return;
         }
 
-#if 0
-  // DQ (5/31/2006): It is a message that I think we can ignore (was a problem for Yarden)
-  // DQ (4/21/2006): This would prevent the file from being unparsed twice,
-  // but then I am not so sure we want to support that.
-     if (file->get_unparse_output_filename().empty() == false)
-        {
-          printf ("Warning, the unparse_output_filename should be set by the unparser or the backend compilation if not set by the unparser ... \n");
-        }
-#endif
-  // Not that this fails in the AST File I/O tests and since the file in unparsed a second time
-  // ROSE_ASSERT (file->get_unparse_output_filename().empty() == true);
-
-  // DQ (4/22/2006): This can be true when the "-E" option is used, but then we should not have called unparse()!
      ROSE_ASSERT(file->get_skip_unparse() == false);
 
 #if 0
@@ -3916,31 +3781,15 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                        }
                   }
 
-#if 0
-               printf ("In unparseFile(SgFile*): calling set_unparse_output_filename(): outputFilename = %s \n",outputFilename.c_str());
-#endif
                file->set_unparse_output_filename(outputFilename);
              }
 
-#if 0
-          printf ("In unparseFile(SgFile*): open file for output of generated source code: outputFilename = %s \n",outputFilename.c_str());
-#endif
-          fstream ROSE_OutputFile(outputFilename.c_str(),ios::out);
-       // ROSE_OutputFile.open(s_file.c_str());
+          fstream ROSE_OutputFile(outputFilename.c_str(), ios::out);
 
-       // DQ (12/8/2007): Added error checking for opening out output file.
-          if (!ROSE_OutputFile)
-             {
-               mlog[FATAL] << "Error detected in opening file " << outputFilename << " for output\n";
-               ROSE_ABORT();
-             }
-
-#if 0
-          printf ("Exiting as a test! \n");
-          ROSE_ABORT();
-#endif
-       // file.set_unparse_includes(false);
-       // ROSE_ASSERT (file.get_unparse_includes() == false);
+          if (!ROSE_OutputFile.is_open()) {
+             mlog[FATAL] << "Error detected in opening file " << outputFilename << " for output\n";
+             ROSE_ABORT();
+          }
 
        // This is the new unparser that Gary Lee is developing
        // The goal of this unparser is to provide formatting
@@ -3953,14 +3802,8 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
        // all options are now defined to be false. When these options can be passed in
        // from the prompt, these options will be set accordingly.
           bool UseAutoKeyword                = false;
-       // bool linefile                      = false;
           bool generateLineDirectives        = file->get_unparse_line_directives();
-
-       // DQ (6/19/2007): note that test2004_24.C will fail if this is false.
-       // If false, this will cause A.operator+(B) to be unparsed as "A+B". This is a confusing point!
           bool useOverloadedOperators        = false;
-       // bool useOverloadedOperators        = true;
-
           bool num                           = false;
 
        // It is an error to have this always turned off (e.g. pointer = this; will not unparse correctly)
@@ -8102,34 +7945,14 @@ void unparseProject ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, 
      printf ("IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII \n");
 #endif
 
-#if 0
-     printf ("Exiting as a test! \n");
-     ROSE_ABORT();
-#endif
-
-#if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
-#error "This implementation of the support for the older interface has been refactored"
-     for (int i=0; i < project->numberOfFiles(); ++i)
-        {
-          SgFile & file = project->get_file(i);
-          unparseFile(&file,unparseFormatHelp,unparseDelegate);
-        }
-#else
      if ( SgProject::get_verbose() >= 1 )
         {
           printf ("In unparseProject(): Unparse the file list first, then the directory list \n");
         }
-
-  // DQ (4/13/2020): Added header file unparsing feature specific debug level.
      if (SgProject::get_unparseHeaderFilesDebug() >= 4)
         {
           printf ("In unparseProject(): Unparse the file list first, then the directory list \n");
         }
-
-#if 0
-     printf ("Exiting as a test: BEFORE call to unparseFileList() \n");
-     ROSE_ABORT();
-#endif
 
 #if 0
      printf ("IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII \n");
@@ -8140,59 +7963,31 @@ void unparseProject ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, 
      printf ("IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII \n");
 #endif
 
-  // DQ (1/23/2010): refactored the SgFileList
      unparseFileList(project->get_fileList_ptr(),unparseFormatHelp,unparseDelegate);
 
-#if 0
-     printf ("Exiting as a test: AFTER call to unparseFileList() \n");
-     ROSE_ABORT();
-#endif
+     if (SgProject::get_verbose() >= 1) {
+        printf ("In unparseProject(): Unparse the directory list... \n");
+     }
+     if (SgProject::get_unparseHeaderFilesDebug() >= 4) {
+        printf ("In unparseProject(): Unparse the directory list... \n");
+     }
 
-     if ( SgProject::get_verbose() >= 1 )
-        {
-          printf ("In unparseProject(): Unparse the directory list... \n");
+     for (int i = 0; i < project->numberOfDirectories(); ++i) {
+        if (SgProject::get_verbose() > 0) {
+           printf ("Unparse each directory (i = %d) \n",i);
         }
+        ASSERT_not_null(project->get_directoryList());
+        SgDirectory* directory = project->get_directoryList()->get_listOfDirectories()[i];
+        unparseDirectory(directory,unparseFormatHelp,unparseDelegate);
+     }
 
-  // DQ (4/13/2020): Added header file unparsing feature specific debug level.
-     if (SgProject::get_unparseHeaderFilesDebug() >= 4)
-        {
-          printf ("In unparseProject(): Unparse the directory list... \n");
-        }
-
-#if 0
-     printf ("project->numberOfDirectories() = %d \n",project->numberOfDirectories());
-#endif
-
-     for (int i = 0; i < project->numberOfDirectories(); ++i)
-        {
-          if ( SgProject::get_verbose() > 0 )
-               printf ("Unparse each directory (i = %d) \n",i);
-
-          ASSERT_not_null(project->get_directoryList());
-          SgDirectory* directory = project->get_directoryList()->get_listOfDirectories()[i];
-          unparseDirectory(directory,unparseFormatHelp,unparseDelegate);
-        }
-#endif
-
-#if 0
-     printf ("Leaving unparseProject(): project = %p \n",project);
-#endif
-
-  // DQ (4/13/2020): Added header file unparsing feature specific debug level.
-     if (SgProject::get_unparseHeaderFilesDebug() >= 4)
-        {
-          printf ("Leaving unparseProject(): project = %p \n",project);
-        }
-
-#if 0
-     printf ("Exiting as a test! \n");
-     ROSE_ABORT();
-#endif
+     if (SgProject::get_unparseHeaderFilesDebug() >= 4) {
+        printf ("Leaving unparseProject(): project = %p \n",project);
+     }
    }
 
 
-// DQ (1/19/2010): Added support for handling directories of files.
-void unparseDirectory ( SgDirectory* directory, UnparseFormatHelp* unparseFormatHelp, UnparseDelegate *unparseDelegate )
+void unparseDirectory(SgDirectory* directory, UnparseFormatHelp* unparseFormatHelp, UnparseDelegate* unparseDelegate)
    {
      int status = 0;
 
@@ -8212,20 +8007,16 @@ void unparseDirectory ( SgDirectory* directory, UnparseFormatHelp* unparseFormat
      string mkdirCommand = string("mkdir -p ") + directoryName;
 
   // DQ (1/24/2010): This is a potential security problem!
-     if ( SgProject::get_verbose() > 0 )
-          printf ("WARNING: calling system using mkdirCommand = %s \n",mkdirCommand.c_str());
+     if (SgProject::get_verbose() > 0) {
+        printf ("WARNING: calling system using mkdirCommand = %s \n",mkdirCommand.c_str());
+     }
 
      status = system (mkdirCommand.c_str());
-     ROSE_ASSERT(status == 0);
-
-#if 0
-     printf ("In unparseDirectory(): After building directory using system() function: mkdirCommand = %s \n",mkdirCommand.c_str());
-     ROSE_ABORT();
-#endif
+     ASSERT_require(status == 0);
 
   // Now change the current working directory to the new directory
      status = chdir(directoryName.c_str());
-     ROSE_ASSERT(status == 0);
+     ASSERT_require(status == 0);
 
 #if 0
   // Check the current directory
@@ -8234,13 +8025,10 @@ void unparseDirectory ( SgDirectory* directory, UnparseFormatHelp* unparseFormat
      ROSE_ASSERT(status == 0);
 #endif
 
-  // DQ (1/23/2010): refactored the SgFileList
      unparseFileList(directory->get_fileList(),unparseFormatHelp,unparseDelegate);
 
-  // printf ("Unparse the directory list... \n");
      for (int i = 0; i < directory->numberOfDirectories(); ++i)
         {
-       // printf ("Unparse each directory (i = %d) \n",i);
           ASSERT_not_null(directory->get_directoryList());
           SgDirectory* subdirectory = directory->get_directoryList()->get_listOfDirectories()[i];
           unparseDirectory(subdirectory,unparseFormatHelp,unparseDelegate);
@@ -8264,10 +8052,6 @@ void unparseDirectory ( SgDirectory* directory, UnparseFormatHelp* unparseFormat
 #endif
    }
 
-
-
-// DQ (1/19/2010): Added support for refactored handling directories of files.
-
 /* Disable address sanitizer for this function */
 // __attribute__((no_sanitize("address")))
 void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparseDelegate)
@@ -8276,61 +8060,39 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
 
      int status_of_function = 0;
 
-  // DQ (4/9/2020): Added header file unparsing feature specific debug level.
-     if (SgProject::get_unparseHeaderFilesDebug() >= 3)
-        {
-          printf ("In unparseFileList(): fileList->get_listOfFiles().size() = %zu \n",fileList->get_listOfFiles().size());
-        }
+     if (SgProject::get_unparseHeaderFilesDebug() >= 3) {
+        printf ("In unparseFileList(): fileList->get_listOfFiles().size() = %zu \n",fileList->get_listOfFiles().size());
+     }
 
-  // DQ (9/17/2020): Testing using address sanitizer.
-     ROSE_ASSERT(fileList != NULL);
-
-     auto & listOfFiles = fileList->get_listOfFiles();
-     for (size_t i=0; i < listOfFiles.size(); ++i)
+     for (SgFile* file : fileList->get_listOfFiles())
         {
-          SgFile* file = listOfFiles[i];
-#if 1
+          ASSERT_not_null(file);
+
        // DQ (4/9/2020): Added header file unparsing feature specific debug level.
-          if (SgProject::get_unparseHeaderFilesDebug() >= 4)
-             {
+          if (SgProject::get_unparseHeaderFilesDebug() >= 4) {
                printf ("\n**************************************************** \n");
                printf ("**************************************************** \n");
                printf ("**************************************************** \n");
                printf ("**************************************************** \n");
                printf ("In unparseFileList(): unparse file = %p filename = %s \n",file,file->getFileName().c_str());
-             }
-#endif
-
-          ASSERT_not_null(file);
-
-          if (SgProject::get_verbose() > 1)
-             {
-               printf("Unparsing file = %p = %s \n",file,file->class_name().c_str());
-             }
+          }
+          if (SgProject::get_verbose() > 1) {
+             printf("Unparsing file = %p = %s \n",file,file->class_name().c_str());
+          }
 
 #ifndef _MSC_VER
-          if (KEEP_GOING_CAUGHT_BACKEND_UNPARSER_SIGNAL)
-             {
-               std::cout
-                   << "[WARN] "
-                   << "Configured to keep going after catching a "
-                   << "signal in Unparser::unparseFile()"
-                   << std::endl;
+          if (KEEP_GOING_CAUGHT_BACKEND_UNPARSER_SIGNAL) {
+               mlog[WARN] << "Configured to keep going after catching a signal in Unparser::unparseFile()\n";
 
-               if (file != NULL)
-                  {
-                    file->set_unparserErrorCode(100);
-                    status_of_function = max(100, status_of_function);
-                  }
-                 else
-                  {
-                    std::cout
-                        << "[FATAL] "
-                        << "Unable to keep going due to an unrecoverable internal error"
-                        << std::endl;
-                    exit(1);
-                  }
-             }
+               if (file != nullptr) {
+                  file->set_unparserErrorCode(100);
+                  status_of_function = max(100, status_of_function);
+               }
+               else {
+                  mlog[FATAL] << "Unable to keep going due to an unrecoverable internal error\n";
+                  exit(1);
+               }
+          }
 #else
           if (false)
              {
@@ -8340,17 +8102,9 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
              {
                if (!isSgSourceFile(file) || isSgSourceFile(file) -> get_frontendErrorCode() == 0)
                   {
-                 // #if 0
-                 // DQ (4/9/2020): Added header file unparsing feature specific debug level.
-                    if (SgProject::get_unparseHeaderFilesDebug() >= 3)
-                       {
+                    if (SgProject::get_unparseHeaderFilesDebug() >= 3) {
                          printf ("In unparseFileList(): calling unparseFile(): filename = %s \n",file->getFileName().c_str());
-                       }
-                 // #endif
-#if 0
-                    printf ("In unparseFileList(): Exiting as a test: before unparseFile: i = %zu \n",i);
-                    ROSE_ABORT();
-#endif
+                    }
                     unparseFile(file, unparseFormatHelp, unparseDelegate);
                   }
                  else
@@ -8365,31 +8119,13 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
                        }
                   }
              }
-       // }//file
 
-#if 1
-       // DQ (4/9/2020): Added header file unparsing feature specific debug level.
-          if (SgProject::get_unparseHeaderFilesDebug() >= 4)
-             {
+          if (SgProject::get_unparseHeaderFilesDebug() >= 4) {
                printf ("In unparseFileList(): base of loop \n");
                printf ("**************************************************** \n");
                printf ("**************************************************** \n");
                printf ("**************************************************** \n");
                printf ("**************************************************** \n");
-             }
-#endif
-
-#if 0
-          if (i > 0)
-             {
-               printf ("In unparseFileList(): Exiting as a test! i = %zu \n",i);
-               ROSE_ABORT();
-             }
-#endif
-        }//for each
-
-#if 0
-     printf ("Leaving unparseFileList(): fileList->get_listOfFiles().size() = %zu \n",fileList->get_listOfFiles().size());
-#endif
+          }
+        } // for each file in fileList
    }
-

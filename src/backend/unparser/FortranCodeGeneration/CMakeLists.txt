@@ -8,7 +8,7 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 ########### install files ###############
 
 set(unparseFortranCodeGeneration_headers
-  unparseFortran.h unparseFortran_types.h unparseFortran_modfile.h)
+  UnparserFortran.h unparseFortran.h unparseFortran_types.h unparseFortran_modfile.h)
 install(FILES  ${unparseFortranCodeGeneration_headers} DESTINATION ${INCLUDE_INSTALL_DIR})
 
 
@@ -19,7 +19,7 @@ install(FILES  ${unparseFortranCodeGeneration_headers} DESTINATION ${INCLUDE_INS
 #
 #INCLUDES = $(ROSE_INCLUDES)
 #
-#unparseFortranCodeGeneration_headers = unparseFortran.h unparseFortran_types.h unparseFortran_modfile.h
+#unparseFortranCodeGeneration_headers = UnparserFortran.h unparseFortran.h unparseFortran_types.h unparseFortran_modfile.h
 #unparseFortranCodeGeneration_sources = unparseFortran_expressions.C unparseFortran_statements.C unparseFortran_types.C unparseFortran_modfile.C
 #
 #include_HEADERS = $(unparseFortranCodeGeneration_headers)

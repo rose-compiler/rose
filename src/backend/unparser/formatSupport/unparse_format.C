@@ -31,8 +31,7 @@ UnparseFormat::UnparseFormat( ostream* nos, UnparseFormatHelp *inputFormatHelp)
      linewrap      = MAXCHARSONLINE;
      userDefinedLinewrap = linewrap;
 
-  // indentstop    = MAXINDENT;
-     indentstop    = (formatHelpInfo != NULL) ? formatHelpInfo->maxLineLength() : MAXINDENT;
+     indentstop    = (formatHelpInfo != nullptr) ? formatHelpInfo->maxLineLength() : MAXINDENT;
 
      prevnode      = NULL;
    }
@@ -51,66 +50,10 @@ UnparseFormat::~UnparseFormat()
         }
 
   // Delete the UnparseFormatHelp object if one was used (C++ does not need this conditional test)
-     if (formatHelpInfo != NULL)
-          delete formatHelpInfo;
+     if (formatHelpInfo != nullptr) {
+         delete formatHelpInfo;
+     }
    }
-
-
-UnparseFormat::UnparseFormat(const UnparseFormat & X)
-   {
-  // DQ (9/11/2011): Added explicit copy constructor to avoid possible double free of formatHelpInfo (reported by static analysis).
-  // DQ (9/11/2011): This function is provided to make this code better so that can be analyized using static analysis
-  // (static analysis tools don't understand access functions).
-
-#if 0
-     currentLine    = 0;            //! stores current line number being unparsed
-     currentIndent  = 0;            //! indent of the current line
-     chars_on_line  = 0;            //! the number of characters printed on the line
-     stmtIndent     = 0;            //! the current indent for statement
-     linewrap       = X.linewrap;   //! the characters allowed perline before wraping the line
-     indentstop     = X.indentstop; //! the number of spaces allowed for indenting
-     prevnode       = NULL;         //! The previous SgLocatedNode unparsed
-     os             = X.os;         //! the directed output for the current file
-
-  // Don't copy this else the destructor will cause a double free.
-     formatHelpInfo = NULL;
-#else
-  // Call the operator=() member function.
-     *this = X;
-#endif
-
-     printf ("Error: I think we likely don't want to be using this constructor (UnparseFormat(const UnparseFormat & X)). \n");
-     ROSE_ABORT();
-   }
-
-UnparseFormat & UnparseFormat::operator=(const UnparseFormat & X)
-   {
-  // DQ (9/11/2011): Added explicit operator=() to avoid possible double free of formatHelpInfo (reported by static analysis).
-  // DQ (9/11/2011): This function is provided to make this code better so that can be analyized using static analysis
-  // (static analysis tools don't understand access functions).
-
-  // DQ (9/12/2011): This avoids the memory leak that could happen with self assignment.
-     if (&X == this)
-        {
-          return *this;
-        }
-
-     currentLine    = 0;            //! stores current line number being unparsed
-     currentIndent  = 0;            //! indent of the current line
-     chars_on_line  = 0;            //! the number of characters printed on the line
-     stmtIndent     = 0;            //! the current indent for statement
-     linewrap       = X.linewrap;   //! the characters allowed perline before wraping the line
-     indentstop     = X.indentstop; //! the number of spaces allowed for indenting
-     prevnode       = NULL;         //! The previous SgLocatedNode unparsed
-     os             = X.os;         //! the directed output for the current file
-
-  // Don't copy this else the destructor will cause a double free.
-     formatHelpInfo = NULL;
-
-     printf ("Error: I think we likely don't want to be using this operator (UnparseFormat::operator=(const UnparseFormat & X)). \n");
-     ROSE_ABORT();
-   }
-
 
 // DQ (12/10/2014): Reset the chars_on_line to zero, used in token based unparsing to reset the
 // formatting for AST subtrees unparsed using the AST in conjunction with the token based unparsing.
@@ -304,9 +247,8 @@ UnparseFormat& UnparseFormat::operator << ( string out)
 UnparseFormat& UnparseFormat:: operator << (int num)
    {
      char buffer[MAX_DIGITS];
-     sprintf(buffer, "%d", num);
+     snprintf(buffer, sizeof(buffer), "%d", num);
      assert (strlen(buffer) < MAX_DIGITS);
-  // (*os) << buffer;
      (*this) << buffer;
      return *this;
    }
@@ -314,14 +256,7 @@ UnparseFormat& UnparseFormat:: operator << (int num)
 UnparseFormat& UnparseFormat:: operator << (short num)
    {
      char buffer[MAX_DIGITS];
-
-  // [DTdbug] 3/13/2000 -- Changing the format specifier.  I don't think
-  //          that %su is conventional, and I think that's what's making
-  //          the code crash in this case (using SUN's CC compiler).
-  //
-  // sprintf(buffer, "%sd", num);
-
-     sprintf(buffer, "%hd", num);
+     snprintf(buffer, sizeof(buffer), "%hd", num);
      assert (strlen(buffer) < MAX_DIGITS);
      (*this) << buffer;
      return *this;
@@ -330,14 +265,7 @@ UnparseFormat& UnparseFormat:: operator << (short num)
 UnparseFormat& UnparseFormat:: operator << (unsigned short num)
    {
      char buffer[MAX_DIGITS];
-
-  // [DTdbug] 3/13/2000 -- Changing the format specifier.  I don't think
-  //          that %su is conventional, and I think that's what's making
-  //          the code crash in this case (using SUN's CC compiler).
-  //
-  // sprintf(buffer, "%su", num);
-
-     sprintf(buffer, "%hu", num);
+     snprintf(buffer, sizeof(buffer), "%hu", num);
      assert (strlen(buffer) < MAX_DIGITS);
      (*this) << buffer;
      return *this;
@@ -346,7 +274,7 @@ UnparseFormat& UnparseFormat:: operator << (unsigned short num)
 UnparseFormat& UnparseFormat:: operator <<(unsigned int num)
    {
      char buffer[MAX_DIGITS];
-     sprintf(buffer, "%u", num);
+     snprintf(buffer, sizeof(buffer), "%u", num);
      assert (strlen(buffer) < MAX_DIGITS);
      (*this) << buffer;
      return *this;
@@ -355,7 +283,7 @@ UnparseFormat& UnparseFormat:: operator <<(unsigned int num)
 UnparseFormat& UnparseFormat:: operator << (long num)
    {
      char buffer[MAX_DIGITS];
-     sprintf(buffer, "%ld", num);
+     snprintf(buffer, sizeof(buffer), "%ld", num);
      assert (strlen(buffer) < MAX_DIGITS);
      (*this) << buffer;
      return *this;
@@ -364,7 +292,7 @@ UnparseFormat& UnparseFormat:: operator << (long num)
 UnparseFormat& UnparseFormat:: operator << (unsigned long num)
    {
      char buffer[MAX_DIGITS];
-     sprintf(buffer, "%lu", num);
+     snprintf(buffer, sizeof(buffer), "%lu", num);
      assert (strlen(buffer) < MAX_DIGITS);
      (*this) << buffer;
      return *this;
@@ -373,7 +301,7 @@ UnparseFormat& UnparseFormat:: operator << (unsigned long num)
 UnparseFormat& UnparseFormat:: operator << (long long num)
    {
      char buffer[MAX_DIGITS];
-     sprintf(buffer, "%ld", (long)num);
+     snprintf(buffer, sizeof(buffer), "%ld", (long)num);
      assert (strlen(buffer) < MAX_DIGITS);
      (*this) << buffer;
      return *this;
@@ -382,7 +310,7 @@ UnparseFormat& UnparseFormat:: operator << (long long num)
 UnparseFormat& UnparseFormat:: operator << (unsigned long long num)
    {
      char buffer[MAX_DIGITS];
-     sprintf(buffer, "%lu", (long)num);
+     snprintf(buffer, sizeof(buffer), "%lu", (long)num);
      assert (strlen(buffer) < MAX_DIGITS);
      (*this) << buffer;
      return *this;
@@ -407,29 +335,9 @@ UnparseFormat::removeTrailingZeros ( char* inputString )
 
 UnparseFormat& UnparseFormat:: operator << (float num)
    {
-  // DQ (4/21/2005): Modified to use ostream instead of sprintf
-#if 0
-     ROSE_ASSERT (MAX_DIGITS < 1024);
-     ROSE_ASSERT (MAX_DIGITS_DISPLAY < MAX_DIGITS);
-     char buffer[1024];
-  // sprintf(buffer, "%e", num);
-     sprintf(buffer, "%0.8f", num);
-
-  // If it is a REALLY large number then regenerate the string in exponential form.
-     if (strlen(buffer) > MAX_DIGITS_DISPLAY)
-          sprintf(buffer, "%8e", num);
-
-     assert (strlen(buffer) < MAX_DIGITS_DISPLAY);
-     removeTrailingZeros(buffer);
-     (*os) << buffer;
-#else
-  // DQ (4/21/2005): Set the precision higher than required and let the ostream operators remove trailing zeros etc.
-  // (*os) << setiosflags(ios::showpoint) << setprecision(8) << num;
-  // (*this) << setiosflags(ios::showpoint) << setprecision(12) << num;
      stringstream  out;
      out << setiosflags(ios::showpoint) << setprecision(12) << num;
      (*this) << out.str();
-#endif
      return *this;
    }
 
@@ -468,48 +376,13 @@ UnparseFormat& UnparseFormat:: operator << (double num)
      return *this;
    }
 
-// DQ (4/21/2005): It makes not difference to make the function parameter const ref!
-// UnparseFormat& UnparseFormat:: operator << (const long double & num)
 UnparseFormat& UnparseFormat:: operator << (long double num)
    {
-  // DQ (4/21/2005): Modified to use ostream instead of sprintf
-#if 0
-     char buffer[MAX_DIGITS];
-  // sprintf(buffer, "%Lf", num); // this generates an assert error below
-     sprintf(buffer, "%1.32lf", num); // g++ warns of passing long double to double
-     assert (strlen(buffer) < MAX_DIGITS);
-     removeTrailingZeros(buffer);
-     (*os) << buffer;
-#else
-  // This does not work (some sort of bug in the stadard library, I think)!
-  // (*os) << setiosflags(ios::showpoint) << setprecision(32) << num;
-  // (*os) << setiosflags(ios::showpoint) << setprecision(16) << num;
-  // (*os) << num;
-
-  // DQ (4/21/2005): Set the precision higher than required and let the ostream operators remove trailing zeros etc.
-  // (*os) << setiosflags(ios::showpoint) << setprecision(48) << num;
      stringstream  out;
      out << setiosflags(ios::showpoint) << setprecision(48) << num;
      (*this) << out.str();
-#endif
      return *this;
    }
-
-#if 0
-UnparseFormat& UnparseFormat:: operator << (void* pointer)
-   {
-#if 0
-     char buffer[MAX_DIGITS];
-     sprintf(buffer, "%p", pointer);
-     assert (strlen(buffer) < MAX_DIGITS);
-#else
-     string buffer = StringUtility::numberToString(pointer);
-#endif
-     (*this) << buffer;
-     return *this;
-   }
-#endif
-
 
 void UnparseFormat::set_linewrap( int w) { userDefinedLinewrap = linewrap = w; } // no wrapping if linewrap <= 0
 int UnparseFormat::get_linewrap() const { return linewrap; }

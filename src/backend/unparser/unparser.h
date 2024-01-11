@@ -29,13 +29,13 @@
 #include "unparseAda.h"
 #include "unparseJovial.h"
 
+#include "UnparserDelegate.h"
+#include "UnparserFortran.h"
+
 // DQ (7/20/2008): New mechanism to permit unparsing of arbitrary strings at IR nodes.
 // This is intended to suppport non standard backend compiler annotations.
 #include "astUnparseAttribute.h"
-
-
 #include "includeFileSupport.h"
-
 
 class Unparser_Nameq;
 
@@ -101,21 +101,6 @@ std::string unparseStatementWithoutBasicBlockToString      ( SgStatement* statem
 // void outputFirstAndLastIncludeFileInfo();
 void outputFirstAndLastIncludeFileInfo( SgSourceFile* sourceFile );
 
-// This is the base class for the support or alternative code generation mechanisms (by Qing Yi)
-// and is the basis of the copy based unparsing that unparses the code by copying parts of the
-// AST not transformed directly from the source file (character by character, to preserve
-// absolutely ALL formatting).  Patch files can then be generated from such files, where the
-// patches represent only the transformations introduced.
-class UnparseDelegate
-   {
-     public:
-     virtual ~UnparseDelegate() {};
-       // This class need only support the unparsing of statements since all other IR nodes are
-       // unparsed by the functions that unparse statements.
-          virtual bool unparse_statement( SgStatement* stmt, SgUnparse_Info& info, UnparseFormat& out) = 0;
-   };
-
-
 // This is the class representing all the code generation support for C and C++.  It is separated from
 // being a part of the AST IR so that it can be more easily developed as a separate modular piece of ROSE.
 class Unparser
@@ -124,7 +109,6 @@ class Unparser
        // DQ (8/13/2007): This was added by Thomas and will be commented later.
           Unparse_Type* u_type;
           Unparser_Nameq* u_name;
-       // Unparse_Support* u_support;
           Unparse_Sym* u_sym;
           Unparse_Debug* u_debug;
           Unparse_MOD_SAGE* u_sage;
@@ -134,11 +118,6 @@ class Unparser
           UnparseFortran_type* u_fortran_type;
           FortranCodeGeneration_locatedNode* u_fortran_locatedNode;
 
-     private:
-
-
-       // CI (03/06/2007): Changed private to protected, to enable user-derivated classes to access these variables, especially to access cur to output
-  // private:
      public:
 
       //! Used to support unparsing of doubles and long double as x.0 instead of just x if they are whole number values.
@@ -153,13 +132,6 @@ class Unparser
       //! The previous directive was a CPP statment (otherwise it was a comment)
           bool prevdir_was_cppDeclaration;
 
-#if 0
-      // These have been removed from use (it was a ackard mechanism).
-      //! the line number of the statement/directive to be unparsed note that 0 means unparse ALL lines
-       // int line_to_unparse;
-          int ltu;
-#endif
-
        // DQ (8/19/2007): Added simple access to the SgFile so that options specified there are easily available.
        // Using this data member a number of mechanism in the unparser could be simplified to be more efficient
        // (they currently search bacj through the AST to get the SgFile).
@@ -171,25 +143,14 @@ class Unparser
 
      public:
       //! delegate unparser that can be used to replace the output of this unparser
-          UnparseDelegate *repl;
+          UnparseDelegate* delegate;
 
-#if USE_OLD_MECHANISM_OF_HANDLING_PREPROCESSING_INFO
-
-#error "Dead Code!"
-
-      /*! \brief Old approach to handling comments separately from the AST, it
-                 is included for compatability while it is evaluated.
-          \deprecated This approach is currently not used (will be removed soon).
-       */
-          ROSEAttributesListContainer directiveListContainer;
-#endif
       // DQ (10/23/2006): Moved to be private after Thomas noticed this was incorrectly marked
       // public in this program vizualization.
       //! compiler generated code statements are pushed into a temporary queue so that they can
       //! be output after any statements attached to the next statements and before the next statement
           std::list<SgStatement*> compilerGeneratedStatementQueue;
 
-   // DQ (5/8/2010): Switched this to be private.
       private:
        // DQ (12/5/2006): Output information that can be used to colorize properties of generated code (useful for debugging).
           int embedColorCodesInGeneratedCode;
@@ -214,19 +175,15 @@ class Unparser
              };
 #endif
 
-       // DQ (8/19/2007): I have removed the "int lineNumberToUnparse" function parameter (see code for details).
-       // Unparser( std::ostream* localStream, std::string filename, Unparser_Opt info, int lineNumberToUnparse, UnparseFormatHelp *h = NULL, UnparseDelegate* repl = NULL);
       //! constructor
-          Unparser( std::ostream* localStream, std::string filename, Unparser_Opt info, UnparseFormatHelp *h = NULL, UnparseDelegate* repl = NULL);
+          Unparser(std::ostream* localStream, std::string filename, Unparser_Opt info,
+                   UnparseFormatHelp*h = nullptr, UnparseDelegate* delegate = nullptr);
 
       //! destructor
           virtual ~Unparser();
 
-       // DQ (9/11/2011): Added copy constructor.
-          Unparser(const Unparser & X);
-
-       // DQ (9/11/2011): Added operator==() to fix issue detected in static analysis.
-          Unparser & operator=(const Unparser & X);
+          Unparser(const Unparser &) = delete;
+          Unparser & operator=(const Unparser &) = delete;
 
       //! get the output stream wrapper
           UnparseFormat& get_output_stream();
@@ -291,28 +248,28 @@ class Unparser
 
 
 // DQ (5/8/2010): Refactored code to generate the Unparser object.
-void resetSourcePositionToGeneratedCode( SgFile* file, UnparseFormatHelp *unparseHelp );
-
-// DQ (10/11/2007): I think this is redundant with the Unparser::unparseProject() member function
-// DQ (3/18/2006): Modified to include UnparseFormatHelp in the interface.  These function can be
-// called by the user if backend compilation using the vendor compiler is not required.
+void resetSourcePositionToGeneratedCode(SgFile* file, UnparseFormatHelp* unparseHelp);
 
 //! User callable function available if compilation using the backend compiler is not required.
-ROSE_DLL_API void unparseFile   ( SgFile*    file,    UnparseFormatHelp* unparseHelp = NULL, UnparseDelegate *repl  = NULL, SgScopeStatement* unparseScope = NULL );
+ROSE_DLL_API void unparseFile(SgFile* file, UnparseFormatHelp* unparseHelp = nullptr,
+                              UnparseDelegate *delegate = nullptr, SgScopeStatement* unparseScope = nullptr);
 
 //! User callable function available if compilation using the backend compiler is not required.
-ROSE_DLL_API void unparseIncludedFiles( SgProject* project, UnparseFormatHelp* unparseHelp = NULL, UnparseDelegate *repl  = NULL );
+ROSE_DLL_API void unparseIncludedFiles(SgProject* project, UnparseFormatHelp* unparseHelp = nullptr,
+                                       UnparseDelegate* delegate = nullptr);
 
 //! User callable function available if compilation using the backend compiler is not required.
-ROSE_DLL_API void unparseProject( SgProject* project, UnparseFormatHelp* unparseHelp = NULL, UnparseDelegate *repl  = NULL );
+ROSE_DLL_API void unparseProject(SgProject* project, UnparseFormatHelp* unparseHelp = nullptr,
+                                 UnparseDelegate *delegate = nullptr);
 
 //! Support for handling directories of files in ROSE (useful for code generation).
-void unparseDirectory   ( SgDirectory* directory, UnparseFormatHelp* unparseHelp = NULL, UnparseDelegate *repl  = NULL );
+void unparseDirectory(SgDirectory* directory, UnparseFormatHelp* unparseHelp = nullptr,
+                      UnparseDelegate* delegate = nullptr);
 
 // DQ (1/19/2010): Added support for refactored handling directories of files.
 //! Support for refactored handling directories of files.
-void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHelp = NULL, UnparseDelegate* unparseDelegate = NULL);
-
+void unparseFileList(SgFileList* fileList, UnparseFormatHelp* unparseFormatHelp = nullptr,
+                     UnparseDelegate* unparseDelegate = nullptr);
 
 // DQ (10/1/2019): Adding support to generate SgSourceFile for individual header files on demand.
 // This is required for the optimization of the header files because in this optimization all the
@@ -322,6 +279,5 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
 // directives and comments and weaving them into those subsequences of the AST and then perform the
 // defered transforamtion, and then unparse the header files.  This is a moderately complex operation.
 SgSourceFile* buildSourceFileForHeaderFile(SgProject* project, std::string originalFileName);
-
 
 #endif

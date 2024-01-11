@@ -3064,16 +3064,12 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
   // This is the added code to support the copy based unparsing mechanism.
   // Since there is a return here, it might be that comments after the
   // statement will not be unparsed properly (check this at some point).
-     if (unp->repl != NULL)
+     if (unp->delegate != nullptr)
         {
-       // printf ("Unparser Delegate found! \n");
-          if (unp->repl->unparse_statement(stmt,info, unp->cur))
-             {
-#if 0
-               printf ("Delegate unparser returned true for repl->unparse_statement(%p) \n",stmt);
-#endif
-               return;
-             }
+          if (unp->delegate->unparse_statement(stmt,info)) {
+             mlog[INFO] << "[INFO]: Delegate unparser returned true for repl->unparse_statement()\n";
+             return;
+          }
         }
 
   // DQ (1/30/2004): We need this to permit knowing when to unparse the trialing CPP directives and
