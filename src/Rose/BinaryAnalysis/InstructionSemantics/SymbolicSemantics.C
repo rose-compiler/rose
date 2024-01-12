@@ -663,16 +663,19 @@ RiscOperators::invert(const BaseSemantics::SValue::Ptr &a_)
 }
 
 BaseSemantics::SValue::Ptr
-RiscOperators::extract(const BaseSemantics::SValue::Ptr &a_, size_t begin_bit, size_t end_bit)
+RiscOperators::extract(const BaseSemantics::SValue::Ptr &a_, const size_t begin_bit, const size_t end_bit)
 {
     SValue::Ptr a = SValue::promote(a_);
     ASSERT_require(end_bit<=a->nBits());
     ASSERT_require(begin_bit<end_bit);
-    if (a->isBottom())
-        return filterResult(bottom_(end_bit-begin_bit));
-
     SymbolicExpression::Ptr beginExpr = SymbolicExpression::makeIntegerConstant(32, begin_bit);
     SymbolicExpression::Ptr endExpr = SymbolicExpression::makeIntegerConstant(32, end_bit);
+
+    if (a->isBottom()) {
+        return filterResult(svalueExpr(SymbolicExpression::makeExtract(beginExpr, endExpr, a->get_expression(), solver(),
+                                                                       "", SymbolicExpression::Node::BOTTOM)));
+    }
+
     SValue::Ptr retval = svalueExpr(SymbolicExpression::makeExtract(beginExpr, endExpr, a->get_expression(), solver()));
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
@@ -700,8 +703,10 @@ RiscOperators::concat(const BaseSemantics::SValue::Ptr &lo_bits_, const BaseSema
 {
     SValue::Ptr lo = SValue::promote(lo_bits_);
     SValue::Ptr hi = SValue::promote(hi_bits_);
-    if (lo->isBottom() || hi->isBottom())
-        return filterResult(bottom_(lo->nBits() + hi->nBits()));
+    if (lo->isBottom() || hi->isBottom()) {
+        return filterResult(svalueExpr(SymbolicExpression::makeConcat(hi->get_expression(), lo->get_expression(), solver(),
+                                                                      "", SymbolicExpression::Node::BOTTOM)));
+    }
 
     SValue::Ptr retval = svalueExpr(SymbolicExpression::makeConcat(hi->get_expression(), lo->get_expression(), solver()));
     switch (computingDefiners_) {
