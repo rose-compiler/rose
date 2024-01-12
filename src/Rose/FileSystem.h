@@ -136,10 +136,12 @@ std::vector<Path> findNamesRecursively(const Path &root, Select select, Descend 
     std::vector<Path> matching;
     RecursiveDirectoryIterator end;
     for (RecursiveDirectoryIterator dentry(root); dentry!=end; ++dentry) {
-        if (select(dentry->path()))
+        if (select(dentry->path())) {
             matching.push_back(dentry->path());
-        if (!descend(dentry->path()))
-            dentry.no_push();
+        }
+        if (!descend(dentry->path())) {
+            dentry.disable_recursion_pending();
+        }
     }
     std::sort(matching.begin(), matching.end());
     return matching;

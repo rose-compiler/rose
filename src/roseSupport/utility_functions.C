@@ -929,51 +929,29 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
        // need that as a solution at some point if this fails to be sufficently robust.
        // if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL-2 )
        //      printf ("Calling fixupInstantiatedTemplates() \n");
-       // DQ (9/6/2005): I think this is handled separately within post processing
-       // (either that or they are just marked for output n the post processing)
-       // fixupInstantiatedTemplates(project);
 
        // generate C++ source code
-          if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
-               printf ("Calling project->unparse() \n");
+          if (SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL) {
+              cout <<  "Calling project->unparse()\n";
+          }
 
-#if 0
-          printf ("In backend(): Calling project->unparse() \n");
-#endif
+          project->unparse(unparseFormatHelp, unparseDelegate);
 
-          project->unparse(unparseFormatHelp,unparseDelegate);
-
-#if 0
-          printf ("DONE: In backend(): Calling project->unparse() \n");
-#endif
-
-          if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
-               cout << "source file(s) generated. (from AST)" << endl;
+          if (SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL) {
+              cout << "source file(s) generated. (from AST)\n" << endl;
+          }
         }
 
-#if 0
-     printf ("In backend(SgProject*): SgProject::get_verbose()       = %d \n",SgProject::get_verbose());
-     printf ("In backend(SgProject*): project->numberOfFiles()       = %d \n",project->numberOfFiles());
-     printf ("In backend(SgProject*): project->numberOfDirectories() = %d \n",project->numberOfDirectories());
-#endif
-
-  // DQ (1/25/2010): We have to now test for both numberOfFiles() and numberOfDirectories(),
-  // or perhaps define a more simple function to use more directly.
-  // if (project->numberOfFiles() > 0)
      if (project->numberOfFiles() > 0 || project->numberOfDirectories() > 0)
         {
        // Compile generated C++ source code with vendor compiler.
        // Generate object file (required for further template processing
        // if templates exist).
-          if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
-               printf ("Calling project->compileOutput() \n");
-#if 0
-          printf ("In backend(SgProject*): calling project->compileOutput() \n");
-#endif
+          if (SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL) {
+              cout << "Calling project->compileOutput()\n";
+          }
+
           finalCombinedExitStatus = project->compileOutput();
-#if 0
-          printf ("DONE: In backend(SgProject*): calling project->compileOutput() \n");
-#endif
         }
        else
         {

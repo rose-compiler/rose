@@ -315,7 +315,7 @@ public:
     SgSymbolTable* get_symbol_table() const ROSE_DEPRECATED("use get_symbolTable");
     void set_symbol_table(SgSymbolTable*) ROSE_DEPRECATED("use set_symbolTable");
     size_t get_cached_vertex() const ROSE_DEPRECATED("use get_cachedVertex");
-    void set_cached_vertex(size_t) ROSE_DEPRECATED("use set_cahcedVertex");
+    void set_cached_vertex(size_t) ROSE_DEPRECATED("use set_cachedVertex");
     void append_statement(SgAsmStatement*) ROSE_DEPRECATED("use appendStatement");
     void remove_statement(SgAsmStatement* statement) ROSE_DEPRECATED("use removeStatement");
     SgAsmBlock* get_entry_block() const ROSE_DEPRECATED("use get_entryBlock");

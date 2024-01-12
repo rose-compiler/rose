@@ -241,7 +241,7 @@ FunctionCall::cache_vertex_descriptors(const FunctionCallGraph &cg)
     for (boost::tie(vi, vi_end)=boost::vertices(cg); vi!=vi_end; ++vi) {
         SgAsmFunction *func = get_ast_node(cg, *vi);
         if (func && !is_vertex_filtered(func))
-            func->set_cached_vertex(*vi);
+            func->set_cachedVertex(*vi);
     }
 }
 

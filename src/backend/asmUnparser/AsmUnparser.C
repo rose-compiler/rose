@@ -580,7 +580,7 @@ AsmUnparser::InsnBlockEntry::operator()(bool enabled, const InsnArgs &args)
             if (func && is_first_insn) {
                 snprintf(buf, sizeof buf, "F%08" PRIx64, func->get_entryVa());
             } else {
-                sprintf(buf, "%*s", 9, "");
+                snprintf(buf, sizeof buf, "%*s", 9, "");
             }
             args.output <<" " <<buf;
         }
@@ -905,7 +905,7 @@ AsmUnparser::StaticDataBlockEntry::operator()(bool enabled, const StaticDataArgs
             if (func && is_first_data) {
                 snprintf(buf, sizeof buf, "F%08" PRIx64, func->get_entryVa());
             } else {
-                sprintf(buf, "%*s", 9, "");
+                snprintf(buf, sizeof buf, "%*s", 9, "");
             }
             args.output <<" " <<buf;
         }
@@ -933,7 +933,7 @@ AsmUnparser::StaticDataRawBytes::operator()(bool enabled, const StaticDataArgs &
             addr_fmt = strdup(args.unparser->get_prefix_format().c_str());
             if (show_offset) {
                 start_address = 0;
-                sprintf(prefix, "0x%08" PRIx64 "+", args.data->get_address());
+                snprintf(prefix, sizeof(prefix), "0x%08" PRIx64 "+", args.data->get_address());
                 tmp_fmt.prefix = prefix;
             } else {
                 start_address = args.data->get_address();

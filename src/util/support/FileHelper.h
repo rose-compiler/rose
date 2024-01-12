@@ -104,7 +104,7 @@ public:
     
     static std::string normalizePath(const std::string& aPath) {
         boost::filesystem::path boostPath(aPath);
-        std::string normalizedPath = boostPath.normalize().string();
+        std::string normalizedPath = boostPath.lexically_normal().string();
         return normalizedPath;
     }
 
