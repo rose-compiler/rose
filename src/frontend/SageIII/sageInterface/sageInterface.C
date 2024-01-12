@@ -25524,6 +25524,8 @@ static void SageInterface::serialize(SgNode* node, string& prefix, bool hasRemai
       out <<"{";
       for (i = comments->begin (); i != comments->end (); i++)
       {
+        if (i!=comments->begin ())
+          out<<endl;
         out<<"<id=";
         out<<counter++<<" ";
   //        printf("-------------PreprocessingInfo #%d ----------- : \n",counter++);
@@ -25561,6 +25563,9 @@ static void SageInterface::serialize(SgNode* node, string& prefix, bool hasRemai
 
   if (SgAdaFunctionRenamingDecl* f = isSgAdaFunctionRenamingDecl(node) )
     out<<" renamed_function "<< f->get_renamed_function();
+
+  if (SgAdaRenamingDecl* f = isSgAdaRenamingDecl(node) )
+    out<<" name="<< f->get_name() << " renamed decl "<<f->get_renamed() ;
 
   if (SgClassDeclaration* f = isSgClassDeclaration(node) )
     out<<" "<< f->get_qualified_name();
@@ -25658,6 +25663,12 @@ static void SageInterface::serialize(SgNode* node, string& prefix, bool hasRemai
   {
     SgFunctionSymbol* sym= func_ref->get_symbol_i();
     out<<" func decl@"<< sym->get_declaration() << " func sym name="<<sym->get_name();
+  }
+
+  if (SgAdaRenamingRefExp* renaming_ref= isSgAdaRenamingRefExp(node) )
+  {
+    SgAdaRenamingDecl * renaming_decl = renaming_ref->get_decl();
+    out<<" ada renaming decl@"<< renaming_decl;
   }
 
   // base type of several types of nodes:

@@ -539,7 +539,7 @@ fi
     automake -a -c $header_file_dependence_checking --warnings=no-unsupported
 ) 2>&1 |$ROSE_DISTRIBUTION/scripts/autoconf-filter.pl |sed '/^[^+]/s/^/    /'
 if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
-    echo "$0: unable to initialize your build environment!" 2>&1
+    echo "$0: unable to initialize your build environment! Please look through latest error messages for reasons." 2>&1
     exit 1
 fi
 
