@@ -10,12 +10,10 @@
 
 #include "CallGraph.h"
 #include "staticSingleAssignment.h"
+
+// Required for Boost v1.83.0
+#define BOOST_TIMER_ENABLE_DEPRECATED
 #include <boost/timer.hpp>
-
-// warning: poor practice and possible name conflicts according to Boost documentation
-#define foreach BOOST_FOREACH
-#define reverse_foreach BOOST_REVERSE_FOREACH
-
 //#define DISPLAY_TIMINGS
 
 using namespace std;
@@ -44,7 +42,7 @@ void StaticSingleAssignment::interproceduralDefPropagation(const unordered_set<S
         iteration++;
         bool changedDefs = false;
 
-        foreach(SgFunctionDefinition* func, topologicalFunctionOrder)
+        for (SgFunctionDefinition* func : topologicalFunctionOrder)
         {
             ROSE_ASSERT(func != NULL);
             bool newDefsForFunc = insertInterproceduralDefs(func, interestingFunctions, &classHierarchy);
@@ -79,7 +77,7 @@ vector<SgFunctionDefinition*> StaticSingleAssignment::calculateInterproceduralPr
     boost::unordered::unordered_map<SgFunctionDefinition*, SgGraphNode*> graphNodeToFunction;
     set<SgGraphNode*> allNodes = callGraph->computeNodeSet();
 
-    foreach(SgGraphNode* graphNode, allNodes)
+    for (SgGraphNode* graphNode : allNodes)
     {
         SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(graphNode->get_SgNode());
         ROSE_ASSERT(funcDecl != NULL);
@@ -93,7 +91,7 @@ vector<SgFunctionDefinition*> StaticSingleAssignment::calculateInterproceduralPr
     //Order the functions of interest such that callees are processed before callers whenever possible
     vector<SgFunctionDefinition*> processingOrder;
 
-    foreach(SgFunctionDefinition* interestingFunction, interestingFunctions)
+    for (SgFunctionDefinition* interestingFunction : interestingFunctions)
     {
         if (find(processingOrder.begin(), processingOrder.end(), interestingFunction) != processingOrder.end())
             continue;
@@ -129,7 +127,7 @@ void StaticSingleAssignment::processCalleesThenFunction(SgFunctionDefinition* ta
 
     //Recursively process all the callees before adding this function to the list
 
-    foreach(SgGraphNode* callerNode, callees)
+    for (SgGraphNode* callerNode : callees)
     {
         SgFunctionDeclaration* callerDecl = isSgFunctionDeclaration(callerNode->get_SgNode());
         ROSE_ASSERT(callerDecl != NULL);
@@ -164,7 +162,7 @@ bool StaticSingleAssignment::insertInterproceduralDefs(SgFunctionDefinition* fun
 
     bool changedDefs = false;
 
-    foreach(SgExpression* callSite, functionCalls)
+    for (SgExpression* callSite : functionCalls)
     {
         //First, see which functions this call site leads too
         vector<SgFunctionDeclaration*> callees;
@@ -174,7 +172,7 @@ bool StaticSingleAssignment::insertInterproceduralDefs(SgFunctionDefinition* fun
 
         //process each callee
 
-        foreach(SgFunctionDeclaration* callee, callees)
+        for (SgFunctionDeclaration* callee : callees)
         {
             processOneCallSite(callSite, callee, processed, classHierarchy);
         }
@@ -218,7 +216,7 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 
     //Filter the variables that are not accessible from the caller and insert the rest as definitions
 
-    foreach(const VarName& definedVar, varsDefinedinCallee)
+    for (const VarName& definedVar : varsDefinedinCallee)
     {
         if (isVarAccessibleFromCaller(definedVar, callSite, callee))
             originalDefTable[callSite].insert(definedVar);
@@ -262,11 +260,12 @@ void StaticSingleAssignment::processOneCallSite(SgExpression* callSite, SgFuncti
 
                 //If any of the callee's defined variables is a member variable, then the "this" instance has been modified
 
-                foreach(const VarName& definedVar, varsDefinedinCallee)
+                for (const VarName& definedVar : varsDefinedinCallee)
                 {
                     //Only consider defs of member variables
-                    if (!varRequiresThisPointer(definedVar))
+                    if (!varRequiresThisPointer(definedVar)) {
                         continue;
+                    }
 
                     //If the modified var is in the callee class scope, we know "this" has been modified
                     SgScopeStatement* varScope = SageInterface::getScope(definedVar[0]);
