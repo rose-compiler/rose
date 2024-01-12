@@ -235,21 +235,8 @@ Unparser::computeNameQualification(SgSourceFile* file)
      printf ("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ \n");
 #endif
 
-  // DQ (11/10/2007): Moved computation of hidden list from astPostProcessing.C to unparseFile so that
-  // it will be called AFTER any transformations and immediately before code generation where it is
-  // really required.  This part of a fix for Liao's outliner, but should be useful for numerous
-  // transformations.  This also make simple analysis much cheaper since the hidel list computation is
-  // expensive (in this implementation).
-  // DQ (8/6/2007): Only compute the hidden lists if working with C++ code!
-  // if (isCxxFile == true)
      if ((isCxxFile == true) || SageInterface::is_Ada_language())
         {
-       // DQ (5/15/2011): Test clearing the mangled name map.
-       // printf ("Calling SgNode::clearGlobalMangledNameMap() \n");
-
-       // DQ (6/25/2011): Test if this is required...it works, I think we don't need to clear the global managled name table...
-       // SgNode::clearGlobalMangledNameMap();
-
        // Build the local set to use to record when declaration that might required qualified references have been seen.
           std::set<SgNode*> referencedNameSet;
 
@@ -283,8 +270,6 @@ Unparser::computeNameQualification(SgSourceFile* file)
                printf ("DONE: Calling name qualification support \n");
              }
 
-       // DQ (6/5/2007): We actually need this now since the hidden lists are not pushed to lower scopes where they are required.
-       // DQ (5/22/2007): Added support for passing hidden list information about types, declarations and elaborated types to child scopes.
           propagateHiddenListData(file);
 
        // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.
@@ -343,9 +328,6 @@ Unparser::computeNameQualification(SgSourceFile* file)
 #endif
 
 #if 0
-  // if (file->getFileName() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/test_176/rose_test_176_lib.cpp")
-  // if (file->getFileName() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/sources/test_176.cpp")
-  // if (file->getFileName() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/sources/test_176.cpp" && file->get_isDynamicLibrary() == true)
      if (file->getFileName() == "rose_test_176_lib.cpp" && file->get_isDynamicLibrary() == true)
         {
           printf (" --- file->get_isDynamicLibrary() = %s \n",file->get_isDynamicLibrary() ? "true" : "false");
@@ -360,9 +342,6 @@ Unparser::computeNameQualification(SgSourceFile* file)
         }
 #endif
 #if 0
-  // if (file->getFileName() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/test_176/rose_test_176_lib.cpp")
-  // if (file->getFileName() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/sources/test_176.cpp")
-  // if (file->getFileName() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/sources/test_176.cpp" && file->get_isDynamicLibrary() == true)
      if (file->getFileName() == "rose_test_120_lib.cpp" && file->get_isDynamicLibrary() == true)
         {
           printf (" --- file->getFileName() = %s \n",file->getFileName().c_str());
@@ -458,16 +437,11 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
         {
           printf ("NOTE: In unparseFile(): file->get_processedToIncludeCppDirectivesAndComments() == false \n");
         }
-  // ROSE_ASSERT(file->get_processedToIncludeCppDirectivesAndComments() == true);
 #endif
 
 #if 0
   // DQ (10/23/2018): Output report of AST nodes marked as modified!
      SageInterface::reportModifiedStatements("In unparseFile()",file);
-#endif
-
-#if 0
-     printf ("In Unparser::unparseFile(): file->getFileName()         = %s \n",file->getFileName().c_str());
 #endif
 
 #if 1
@@ -618,10 +592,6 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 #endif
 
 #if 0
-  // DQ (12/6/2014): We need this computed in terms of the original AST before transformations, so we have to move this to after the
-  // AST is built, instead of before it is unparsed.  This makes no difference if we don't do transformations, but if transformations
-  // are done if this is computed here then statements removed from the AST showup in the white space between statements (an error).
-
 #error "DEAD CODE!"
 
   // DQ (10/27/2013): Adding support for token stream use in unparser. We might want to only turn this of when -rose:unparse_tokens is specified.
@@ -800,11 +770,6 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
        // We only need to support the case of file->get_unparseHeaderFiles() == true.
           bool traverseHeaderFiles = true;
           buildTokenStreamFrontier(file,traverseHeaderFiles);
-#if 0
-       // DQ (5/9/2021): Testing support for unparsing headers.
-          printf ("Exiting as a test! \n");
-          ROSE_ABORT();
-#endif
 #endif
 #endif
   // DQ (5/10/2021): Moved to be called once one for each file in the SgProject.
@@ -1023,10 +988,6 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 #endif
 
 #endif
-#if 0
-                    printf ("Exiting as a test! \n");
-                    ROSE_ABORT();
-#endif
                   }
                  else
                   {
@@ -1233,12 +1194,6 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
              {
 
 #error "DEAD CODE!"
-
-            // Unparse using C/C++ unparser by default
-#if 0
-               printf ("Unparse using C/C++ unparser by default: unparseScope = %p \n",unparseScope);
-#endif
-
 #error "DEAD CODE!"
 
             // negara1 (06/29/2011): If unparseScope is provided, unparse it. Otherwise, unparse the global scope (the default behavior).
@@ -2546,10 +2501,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
 #if 1
                     fileNameOfStatementsToUnparse = Rose::getFileNameByTraversalBackToFileNode(locatedNode);
 #else
-                    SgSourceFile* sourceFile = TransformationSupport::getSourceFile(locatedNode);
-                    ASSERT_not_null(sourceFile);
 #error "DEAD CODE!"
-                    fileNameOfStatementsToUnparse = sourceFile->getFileName();
 #endif
                   }
              }
@@ -3190,35 +3142,20 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
      ROSE_ASSERT(file->get_skip_unparse() == false);
 
 #if 0
-     // OLD CODE: before adding more general support for more languages.
-
 #error "DEAD CODE!"
 
   // If we did unparse an intermediate file then we want to compile that file instead of the original source file.
      if (file->get_unparse_output_filename().empty() == true)
         {
           string outputFilename = "rose_" + file->get_sourceFileNameWithoutPath();
-#if 0
-          printf ("In unparseFile(SgFile* file): outputFilename not set using default: outputFilename = %s \n",outputFilename.c_str());
-#endif
        // DQ (9/15/2013): Added support for generated file to be placed into the same directory as the source file.
           SgProject* project = TransformationSupport::getProject(file);
        // ASSERT_not_null(project);
           if (project != NULL)
              {
-#if 0
-               printf ("project->get_unparse_in_same_directory_as_input_file() = %s \n",project->get_unparse_in_same_directory_as_input_file() ? "true" : "false");
-#endif
                if (project->get_unparse_in_same_directory_as_input_file() == true)
                   {
                     outputFilename = Rose::getPathFromFileName(file->get_sourceFileNameWithPath()) + "/rose_" + file->get_sourceFileNameWithoutPath();
-#if 0
-                    printf ("Using filename for unparsed file into same directory as input file: outputFilename = %s \n",outputFilename.c_str());
-#endif
-#if 0
-                    printf("Exiting as test! \n");
-                    ROSE_ABORT();
-#endif
                   }
              }
             else
@@ -3312,9 +3249,6 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
             #ifdef _MSC_VER
             boost::replace_all(outputFilename, "\\", "/");
             #endif
-#if 0
-            printf ("In unparseFile(): generated Java outputFilename = %s \n",outputFilename.c_str());
-#endif
         }
 
 #error "DEAD CODE!"
@@ -4381,18 +4315,8 @@ buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
 
      headerFileGlobal->set_parent(include_sourceFile);
 
-#if 0
-  // DQ (10/23/2018): Output report of AST nodes marked as modified!
-     SageInterface::reportModifiedStatements("In buildSourceFileForHeaderFile():after calling set functions",include_sourceFile);
-#endif
-
   // DQ (10/23/2018): We need to reset the isModified flag for the headerFileGlobal.
      headerFileGlobal->set_isModified(false);
-
-#if 0
-  // DQ (10/23/2018): Output report of AST nodes marked as modified!
-     SageInterface::reportModifiedStatements("In buildSourceFileForHeaderFile():after reset of isModifiedFlag",include_sourceFile);
-#endif
 
      ASSERT_not_null(headerFileGlobal->get_parent());
      ASSERT_not_null(include_sourceFile->get_globalScope());
@@ -4711,19 +4635,10 @@ computeFileAndScopeRelations()
 #error "DEAD CODE!"
 
 #if 0
-            // std::map<SgScopeStatement*,bool>* scopeContainsTransformationMap = new std::map<SgScopeStatement*,bool>();
-            // std::map<SgScopeStatement*,bool>* scopeContainsTransformationMap = NULL;
-            // std::map<SgScopeStatement*,bool>* headerFileRepresentsAllStatementsInParentScope = NULL;
-            // std::map<SgScopeStatement*,bool>* headerFileRepresentsAllStatementsInParentScope = NULL;
-
 #error "DEAD CODE!"
 
-            // if (Rose::containsTransformationMap.find(includeFile) == Rose::containsTransformationMap.end())
                if (Rose::containsTransformationMap.find(includeFile) == Rose::headerFileRepresentsAllStatementsInParentScope.end())
                   {
-#if DEBUG_FILE_AND_SCOPE_RELATION
-                    printf ("Build a new entry for this file: includeFile = %p filename = %s \n",includeFile,includeFile->get_filename().str());
-#endif
                     scopeContainsTransformationMap = new std::map<SgScopeStatement*,bool>();
                   }
                  else
@@ -4809,26 +4724,11 @@ computeFileAndScopeRelations()
                            else
                             {
 #error "DEAD CODE!"
-
-                           // The header file does NOT completely represents the statements in the scope
 #if DEBUG_FILE_AND_SCOPE_RELATION
                               printf ("The header file does NOT completely represent the statements in the scope \n");
 #endif
-                           // ROSE_ASSERT(scopeContainsTransformationMap->find(scopeOfFirstStatement) == scopeContainsTransformationMap->end());
-                           // std::map<SgIncludeFile*,std::map<SgScopeStatement*,bool>*> Rose::containsTransformationMap;
-                           // std::map<SgScopeStatement*,bool>* scopeContainsTransformationMap = new std::map<SgScopeStatement*,bool>()
-                           // scopeContainsTransformationMap[scopeOfFirstStatement] = false;
-                           // scopeContainsTransformationMap->operator[](scopeOfFirstStatement) = false;
                               includeFile->set_headerFileRepresentsAllStatementsInParentScope(false);
-#if 0
-                              printf ("Exiting as a test! \n");
-                              ROSE_ASSERT(false);
-#endif
                             }
-#if 0
-                         printf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
-#endif
                        }
                   }
                  else
@@ -4844,15 +4744,6 @@ computeFileAndScopeRelations()
 
 #error "DEAD CODE!"
 
-#if DEBUG_FILE_AND_SCOPE_RELATION
-            // printf ("Before adding entry: Rose::containsTransformationMap.size() = %zu \n",Rose::containsTransformationMap.size());
-#endif
-            // This may or may not be required to be a multi-map.
-            // Rose::containsTransformationMap[includeFile] = scopeContainsTransformationMap;
-
-#if DEBUG_FILE_AND_SCOPE_RELATION
-            // printf ("After adding entry: Rose::containsTransformationMap.size() = %zu \n",Rose::containsTransformationMap.size());
-#endif
              }
 
           counter++;
@@ -4916,11 +4807,6 @@ computeFileAndScopeRelations()
 #endif
 
 #error "DEAD CODE!"
-
-#if 0
-     printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
-#endif
    }
 #endif
 

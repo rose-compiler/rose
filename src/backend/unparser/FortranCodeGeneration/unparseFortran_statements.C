@@ -78,13 +78,13 @@ FortranCodeGeneration_locatedNode::unparseStatementNumbersSupport ( SgLabelRefEx
   // and the 6th column is for the line continuation character (any character, I think).
      const int NumericLabelIndentation = 6;
 
-     if (info.SkipFormatting() == true)
+     if (info.SkipFormatting())
         {
           return;
         }
 
   // Let the default be fixed format for now (just for fun)
-     bool fixedFormat = (unp->currentFile==NULL) ||
+     bool fixedFormat = (unp->currentFile == nullptr) ||
                         (unp->currentFile->get_outputFormat() == SgFile::e_unknown_output_format) ||
                         (unp->currentFile->get_outputFormat() == SgFile::e_fixed_form_output_format);
 
@@ -108,7 +108,7 @@ FortranCodeGeneration_locatedNode::unparseStatementNumbersSupport ( SgLabelRefEx
             // then this puts a blank into column 6 as required for this to be a code statement).
                numeric_label_string += " ";
 
-               if (fixedFormat == true)
+               if (fixedFormat)
                   {
                  // Now indent the statement so that it will appear uniform (just for fun!)
                     int spacing = numeric_label_string.size();
@@ -125,7 +125,7 @@ FortranCodeGeneration_locatedNode::unparseStatementNumbersSupport ( SgLabelRefEx
              }
             else
              {
-               if (fixedFormat == true)
+               if (fixedFormat)
                   {
                  // if fixed format then output 6 blanks
                     curprint("      ");
@@ -134,7 +134,7 @@ FortranCodeGeneration_locatedNode::unparseStatementNumbersSupport ( SgLabelRefEx
         }
        else
         {
-          if (fixedFormat == true)
+          if (fixedFormat)
              {
             // if fixed format then output 6 blanks
                curprint("      ");
@@ -163,7 +163,7 @@ FortranCodeGeneration_locatedNode::unparseStatementNumbers ( SgStatement* stmt, 
        else
         {
           SgProgramHeaderStatement* program_header = isSgProgramHeaderStatement(stmt);
-          if (program_header != NULL)
+          if (program_header != nullptr)
              {
                if (program_header->get_name() != ROSE_IMPLICIT_FORTRAN_PROGRAM_NAME)
                   {
@@ -379,7 +379,7 @@ FortranCodeGeneration_locatedNode::unparseEntryStatement   (SgStatement* stmt, S
      curprint(")");
 
   // Unparse the result(<name>) suffix if present
-     if (entryStatement->get_result_name() != NULL)
+     if (entryStatement->get_result_name() != nullptr)
         {
           curprint(" result(");
           curprint(entryStatement->get_result_name()->get_name());
@@ -463,13 +463,13 @@ FortranCodeGeneration_locatedNode::unparseFormatItemList (SgFormatItemList* form
 
             // The string is stored without quotes, and we put them back on as required in code generation
                string str;
-               if (stringValue->get_usesSingleQuotes() == true)
+               if (stringValue->get_usesSingleQuotes())
                   {
                     str = string("\'") + stringValue->get_value() + string("\'");
                   }
                  else
                   {
-                    if (stringValue->get_usesDoubleQuotes() == true)
+                    if (stringValue->get_usesDoubleQuotes())
                        {
                          str = string("\"") + stringValue->get_value() + string("\"");
                        }
@@ -488,7 +488,7 @@ FortranCodeGeneration_locatedNode::unparseFormatItemList (SgFormatItemList* form
              }
             else
              {
-               if (formatItem->get_format_item_list() != NULL)
+               if (formatItem->get_format_item_list() != nullptr)
                   {
                     curprint("(");
                     unparseFormatItemList(formatItem->get_format_item_list(),info);
@@ -625,7 +625,7 @@ unparseDimensionStatementForArrayVariable( SgPntrArrRefExp* arrayReference )
           while (i != statementList.end())
              {
                SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(*i);
-               if (variableDeclaration != NULL)
+               if (variableDeclaration != nullptr)
                   {
                     SgInitializedNamePtrList & variableList = variableDeclaration->get_variables();
                     SgInitializedNamePtrList::iterator i = find(variableList.begin(),variableList.end(),variableName);
@@ -668,7 +668,7 @@ unparseDimensionStatement(SgStatement* stmt)
           ASSERT_not_null(arrayReference);
           bool unparseForArrayVariable = unparseDimensionStatementForArrayVariable(arrayReference);
 
-          if (unparseForArrayVariable == true)
+          if (unparseForArrayVariable)
                unparseDimensionStatementResult = true;
           i++;
         }
@@ -776,7 +776,7 @@ FortranCodeGeneration_locatedNode::unparseAttributeSpecificationStatement(SgStat
      if ( attributeSpecificationStatement->get_attribute_kind() == SgAttributeSpecificationStatement::e_bindStatement )
         {
           ASSERT_not_null(attributeSpecificationStatement->get_bind_list());
-          ROSE_ASSERT(attributeSpecificationStatement->get_declarationModifier().isBind() == true);
+          ROSE_ASSERT(attributeSpecificationStatement->get_declarationModifier().isBind());
           
           curprint("(");
           curprint(attributeSpecificationStatement->get_linkage());
@@ -793,7 +793,7 @@ FortranCodeGeneration_locatedNode::unparseAttributeSpecificationStatement(SgStat
           (attributeSpecificationStatement->get_attribute_kind() != SgAttributeSpecificationStatement::e_dataStatement) && 
           ( (attributeSpecificationStatement->get_attribute_kind() != SgAttributeSpecificationStatement::e_accessStatement_private && 
              attributeSpecificationStatement->get_attribute_kind() != SgAttributeSpecificationStatement::e_accessStatement_public) && 
-             attributeSpecificationStatement->get_parameter_list() != NULL) )
+             attributeSpecificationStatement->get_parameter_list() != nullptr) )
         {
        // The parameter and data statement do not use "::" in their syntax
           curprint(" :: ");
@@ -885,7 +885,7 @@ FortranCodeGeneration_locatedNode::unparseAttributeSpecificationStatement(SgStat
 
                          case SgDataStatementValue::e_implicit_list:
                             {
-                              ROSE_ASSERT((*i_value)->get_initializer_list()->get_expressions().empty() == true);
+                              ROSE_ASSERT((*i_value)->get_initializer_list()->get_expressions().empty());
 
                               SgExpression* repeatExpression   = (*i_value)->get_repeat_expression();
                               ASSERT_not_null(repeatExpression);
@@ -946,9 +946,9 @@ FortranCodeGeneration_locatedNode::unparseAttributeSpecificationStatement(SgStat
                ASSERT_not_null(arrayReference);
 
                bool unparseForArrayVariable = unparseDimensionStatementForArrayVariable(arrayReference);
-               if (unparseForArrayVariable == true)
+               if (unparseForArrayVariable)
                   {
-                    if (unparseComma == true)
+                    if (unparseComma)
                        {
                          curprint(", ");
                        }
@@ -1002,7 +1002,7 @@ FortranCodeGeneration_locatedNode::unparseImplicitStmt(SgStatement* stmt, SgUnpa
    {
      SgImplicitStatement* implicitStatement = isSgImplicitStatement(stmt);
 
-     if (implicitStatement->get_implicit_none() == true)
+     if (implicitStatement->get_implicit_none())
         {
           curprint_keyword("IMPLICIT", info);
           curprint(" ");
@@ -1022,7 +1022,7 @@ FortranCodeGeneration_locatedNode::unparseImplicitStmt(SgStatement* stmt, SgUnpa
        // This is a range such as "DOUBLE PRECISION (D-E)" or a singleton such as "COMPLEX (C)"
 
           SgInitializedNamePtrList & nameList =  implicitStatement->get_variables();
-          if (nameList.empty() == true)
+          if (nameList.empty())
              {
             // For now I just want to skip where alternative implicit rules are specified.
                if ( SgProject::get_verbose() >= 1 )
@@ -1088,7 +1088,7 @@ FortranCodeGeneration_locatedNode::unparseWhereStmt(SgStatement* stmt, SgUnparse
 
      bool output_endwhere = whereStatement->get_has_end_statement();
 
-     if (output_endwhere == true)
+     if (output_endwhere)
         {
           ASSERT_not_null(whereStatement->get_body());
           unparseStatement(whereStatement->get_body(),info);
@@ -1105,9 +1105,9 @@ FortranCodeGeneration_locatedNode::unparseWhereStmt(SgStatement* stmt, SgUnparse
         }
 
      SgElseWhereStatement* elsewhereStatement = whereStatement->get_elsewhere();
-     if (elsewhereStatement != NULL)
+     if (elsewhereStatement != nullptr)
         {
-          if (output_endwhere == true)
+          if (output_endwhere)
              {
                unparseStatement(elsewhereStatement,info);
              }
@@ -1126,7 +1126,7 @@ FortranCodeGeneration_locatedNode::unparseWhereStmt(SgStatement* stmt, SgUnparse
         }
 
   // The end where statement can have a label
-     if (output_endwhere == true)
+     if (output_endwhere)
         {
           unparseStatementNumbersSupport(whereStatement->get_end_numeric_label(),info);
           curprint("END WHERE");
@@ -1348,7 +1348,7 @@ FortranCodeGeneration_locatedNode::unparseProgHdrStmt(SgStatement* stmt, SgUnpar
      SgProgramHeaderStatement* proghdr = isSgProgramHeaderStatement(stmt);
      ASSERT_not_null(proghdr);
 
-     if (!proghdr->isForward() && proghdr->get_definition() != NULL && !info.SkipFunctionDefinition())
+     if (!proghdr->isForward() && proghdr->get_definition() != nullptr && !info.SkipFunctionDefinition())
         {
        // Output the function declaration with definition
 
@@ -1366,7 +1366,7 @@ FortranCodeGeneration_locatedNode::unparseProgHdrStmt(SgStatement* stmt, SgUnpar
              {
             // The "END" has just been output by the unparsing of the SgFunctionDefinition so just add "PROGRAM <name>".
                curprint("END PROGRAM ");
-               if (proghdr->get_named_in_end_statement() == true)
+               if (proghdr->get_named_in_end_statement())
                   {
                     curprint(proghdr->get_name().str());
                   }
@@ -1457,7 +1457,7 @@ FortranCodeGeneration_locatedNode::unparseInterfaceStmt(SgStatement* stmt, SgUnp
           SgName functionName = interfaceStatement->get_interface_body_list()[i]->get_function_name();
           SgFunctionDeclaration* functionDeclaration = interfaceStatement->get_interface_body_list()[i]->get_functionDeclaration();
 
-          if (outputFunctionName == true)
+          if (outputFunctionName)
              {
                curprint("MODULE PROCEDURE ");
                curprint(functionName.str());
@@ -1505,7 +1505,7 @@ FortranCodeGeneration_locatedNode::unparseCommonBlock(SgStatement* stmt, SgUnpar
                while (true)
                   {
                     SgVarRefExp* varRef = isSgVarRefExp(*iexp);
-                    if(varRef != NULL)
+                    if(varRef != nullptr)
                     {
                       SgVariableSymbol* varSym = isSgVariableSymbol(varRef->get_symbol());
                       ASSERT_not_null(varSym);
@@ -1515,7 +1515,7 @@ FortranCodeGeneration_locatedNode::unparseCommonBlock(SgStatement* stmt, SgUnpar
                       ASSERT_not_null(varDecl);
                       SgType* type = initName->get_typeptr();
                       ASSERT_not_null(type);
-                      if(isSgBasicBlock(parentScope) != NULL)
+                      if(isSgBasicBlock(parentScope) != nullptr)
                       {
                         SgBasicBlock* basicBlock = isSgBasicBlock(parentScope); 
                         ASSERT_not_null(basicBlock);
@@ -1528,8 +1528,8 @@ FortranCodeGeneration_locatedNode::unparseCommonBlock(SgStatement* stmt, SgUnpar
                         }
                         else
                           unparseExpression(*iexp,info);
-                      } 
-                      else if(isSgGlobal(parentScope) != NULL)
+                      }
+                      else if(isSgGlobal(parentScope) != nullptr)
                       {
                         SgGlobal* globalScope = isSgGlobal(parentScope); 
                         ASSERT_not_null(globalScope);
@@ -1653,7 +1653,7 @@ FortranCodeGeneration_locatedNode::unparseUseStmt(SgStatement* stmt, SgUnparse_I
    
      curprint(useStmt->get_name().str());
 
-     if (useStmt->get_only_option() == true)
+     if (useStmt->get_only_option())
         {
          // FMZ: move comma here
           curprint(", ");
@@ -1668,7 +1668,7 @@ FortranCodeGeneration_locatedNode::unparseUseStmt(SgStatement* stmt, SgUnparse_I
           SgRenamePair* renamePair = useStmt->get_rename_list()[i];
           ASSERT_not_null(renamePair);
 
-          if (renamePair->isRename() == true)
+          if (renamePair->isRename())
              {
                SgName local_name = renamePair->get_local_name();
                SgName use_name   = renamePair->get_use_name();
@@ -1741,7 +1741,7 @@ getElseIfStatement ( SgIfStmt* parentIfStatement )
    {
   // This returns the elseif statement in a SgIfStmt object, else returns NULL.
 
-     SgIfStmt* childIfStatement = NULL;
+     SgIfStmt* childIfStatement{nullptr};
 
      SgBasicBlock* falseBlock = isSgBasicBlock(parentIfStatement->get_false_body());
 
@@ -1754,11 +1754,11 @@ getElseIfStatement ( SgIfStmt* parentIfStatement )
           if (falseBlock->get_statements().empty() == false)
              {
                childIfStatement = isSgIfStmt(*(falseBlock->get_statements().begin()));
-               if (childIfStatement != NULL)
+               if (childIfStatement != nullptr)
                   {
                      if (childIfStatement->get_is_else_if_statement() == false)
                         {
-                           childIfStatement = NULL;
+                           childIfStatement = nullptr;
                         }
                   }
              }
@@ -1769,7 +1769,7 @@ getElseIfStatement ( SgIfStmt* parentIfStatement )
   // SgBasicBlock immediately preceding the SgIfStmt (the SgIfStmt is the false branch).
   //
      SgIfStmt* else_if_stmt = isSgIfStmt(parentIfStatement->get_false_body());
-     if (else_if_stmt != NULL)
+     if (else_if_stmt != nullptr)
         {
            childIfStatement = else_if_stmt;
         }
@@ -1822,11 +1822,11 @@ FortranCodeGeneration_locatedNode::unparseIfStmt(SgStatement* stmt, SgUnparse_In
 
   // THEN keyword
   // DQ (12/26/2007): If this is an elseif statement then output the "THEN" even though we will not output an "ENDIF"
-     if (output_endif == true)
+     if (output_endif)
         {
        // IF THEN statement branch
        //
-          ROSE_ASSERT(if_stmt->get_use_then_keyword() == true);
+          ROSE_ASSERT(if_stmt->get_use_then_keyword());
        // This branch taken for an if-then-stmt.
        // Note that the string label if output before "IF", not after "THEN"
           curprint("THEN");
@@ -1834,7 +1834,7 @@ FortranCodeGeneration_locatedNode::unparseIfStmt(SgStatement* stmt, SgUnparse_In
         }
        else
         {
-          if (if_stmt->get_use_then_keyword() == true)
+          if (if_stmt->get_use_then_keyword())
              {
             // ELSE IF statement branch (uses if_stmt to unparse the "IF")
             //
@@ -1881,10 +1881,10 @@ FortranCodeGeneration_locatedNode::unparseIfStmt(SgStatement* stmt, SgUnparse_In
        // However, currently there is no information on else if-construct name in
        // SgIfStmt so we won't try to unparse it.  NOTE, output could be different from input.
 
-          if (elseIfStatement != NULL)
+          if (elseIfStatement != nullptr)
              {
              // ELSE IF statement branch
-                ROSE_ASSERT(elseIfStatement->get_is_else_if_statement() == true);
+                ROSE_ASSERT(elseIfStatement->get_is_else_if_statement());
 
              // Call the associated unparse function directly to avoid formatting
                 curprint(" ");
@@ -1899,7 +1899,7 @@ FortranCodeGeneration_locatedNode::unparseIfStmt(SgStatement* stmt, SgUnparse_In
 
   // END IF statement
   //
-     if (output_endif == true)
+     if (output_endif)
         {
           unparseStatementNumbersSupport(if_stmt->get_end_numeric_label(),info);
           curprint("END IF");
@@ -1938,8 +1938,8 @@ FortranCodeGeneration_locatedNode::unparseForAllStatement(SgStatement* stmt, SgU
      unparseExpression(forAllHeader,info);
      curprint(" ) ");
 
-     SgStatement* statement = NULL;
-     if (forAllStatement->get_has_end_statement() == true)
+     SgStatement* statement{nullptr};
+     if (forAllStatement->get_has_end_statement())
         {
           statement = forAllStatement->get_body();
           ASSERT_not_null(statement);
@@ -1961,7 +1961,7 @@ FortranCodeGeneration_locatedNode::unparseForAllStatement(SgStatement* stmt, SgU
 
      unp->cur.insert_newline(1);
 
-     if (forAllStatement->get_has_end_statement() == true)
+     if (forAllStatement->get_has_end_statement())
         {
           unparseStatementNumbersSupport(forAllStatement->get_end_numeric_label(),info);
           curprint("END FORALL");
@@ -1999,8 +1999,8 @@ FortranCodeGeneration_locatedNode::unparseDoConcurrentStatement(SgStatement* stm
      unp->cur.insert_newline(1);
 
   // Unparse the body
-     SgStatement* statement = NULL;
-     if (forAllStatement->get_has_end_statement() == true)
+     SgStatement* statement{nullptr};
+     if (forAllStatement->get_has_end_statement())
         {
           statement = forAllStatement->get_body();
           ASSERT_not_null(statement);
@@ -2023,7 +2023,7 @@ FortranCodeGeneration_locatedNode::unparseDoConcurrentStatement(SgStatement* stm
      unp->cur.insert_newline(1);
 
   // Unparse the end statement
-     if (forAllStatement->get_has_end_statement() == true)
+     if (forAllStatement->get_has_end_statement())
         {
           unparseStatementNumbersSupport(forAllStatement->get_end_numeric_label(),info);
           curprint("END DO");
@@ -2075,14 +2075,14 @@ FortranCodeGeneration_locatedNode::unparseDoStmt(SgStatement* stmt, SgUnparse_In
         }
 
      unparseExpression(initExp, info);
-     if (isSgNullExpression(initExp) == NULL)
+     if (isSgNullExpression(initExp) == nullptr)
         {
           curprint(", ");
           unparseExpression(condExp, info);
         }
 
   // If this is NOT a SgNullExpression, then output the "," and the stride expression.
-     if (isSgNullExpression(updateExp) == NULL)
+     if (isSgNullExpression(updateExp) == nullptr)
         {
           curprint(", ");
           unparseExpression(updateExp, info);
@@ -2104,7 +2104,7 @@ FortranCodeGeneration_locatedNode::unparseDoStmt(SgStatement* stmt, SgUnparse_In
   // DQ (12/26/2007): handling cases where enddo is not in the source code and not required (stmt vs. construct)
      bool output_enddo = doloop->get_has_end_statement();
 
-     if (output_enddo == true)
+     if (output_enddo)
         {
           unparseStatementNumbersSupport(doloop->get_end_numeric_label(),info);
 
@@ -2437,7 +2437,7 @@ FortranCodeGeneration_locatedNode::unparseReturnStmt(SgStatement* stmt, SgUnpars
      SgExpression* altret = return_stmt->get_expression();
      ASSERT_not_null(altret);
 
-     if (isSgNullExpression(altret) == NULL)
+     if (isSgNullExpression(altret) == nullptr)
         {
        // ROSE_ASSERT(isSgValueExp(altret));
           curprint(" ");
@@ -2461,7 +2461,7 @@ FortranCodeGeneration_locatedNode::unparsePrintStatement(SgStatement* stmt, SgUn
      curprint("PRINT ");
 
      SgExpression* fmt = printStatement->get_format();
-     if (fmt != NULL)
+     if (fmt != nullptr)
         {
           unparseExpression(fmt, info);
           curprint(", ");
@@ -2491,13 +2491,13 @@ FortranCodeGeneration_locatedNode::unparse_IO_Support(SgStatement* stmt, bool sk
         {
        // DQ (12/12/2010): Also for at least the gnu gfortran version 4.2.4, we can't output the "UNIT=" 
        // string for the write statement. See test2010_144.f90 for an example of this.
-          bool skipOutputOfUnitString = (isSgWriteStatement(stmt) != NULL);
+          bool skipOutputOfUnitString = (isSgWriteStatement(stmt) != nullptr);
           if (skipOutputOfUnitString == false)
              {
                curprint("UNIT=");
              }
 
-          if (io_stmt->get_unit() != NULL)
+          if (io_stmt->get_unit() != nullptr)
              {
                unparseExpression(io_stmt->get_unit(), info);
              }
@@ -2512,13 +2512,13 @@ FortranCodeGeneration_locatedNode::unparse_IO_Support(SgStatement* stmt, bool sk
         }
 
      unparse_IO_Control_Support("IOSTAT",io_stmt->get_iostat(),isLeadingEntry,info);
-     isLeadingEntry = isLeadingEntry && (io_stmt->get_iostat() == NULL);
+     isLeadingEntry = isLeadingEntry && (io_stmt->get_iostat() == nullptr);
 
      unparse_IO_Control_Support("ERR",io_stmt->get_err(),isLeadingEntry,info);
-     isLeadingEntry = isLeadingEntry && (io_stmt->get_err() == NULL);
+     isLeadingEntry = isLeadingEntry && (io_stmt->get_err() == nullptr);
 
      unparse_IO_Control_Support("IOMSG",io_stmt->get_iomsg(),isLeadingEntry,info);
-     isLeadingEntry = isLeadingEntry && (io_stmt->get_iomsg() == NULL);
+     isLeadingEntry = isLeadingEntry && (io_stmt->get_iomsg() == nullptr);
 
      return isLeadingEntry;
    }
@@ -2526,7 +2526,7 @@ FortranCodeGeneration_locatedNode::unparse_IO_Support(SgStatement* stmt, bool sk
 void 
 FortranCodeGeneration_locatedNode::unparse_IO_Control_Support( string name, SgExpression* expr, bool isLeadingEntry, SgUnparse_Info& info)
    {
-     if (expr != NULL)
+     if (expr != nullptr)
         {
           if (isLeadingEntry == false)
                curprint(", ");
@@ -2550,7 +2550,7 @@ FortranCodeGeneration_locatedNode::unparseReadStatement(SgStatement* stmt, SgUnp
 
   // If only "READ 1,A" then this is using the format label "1" which is an alternative form of the read statement.
   // In this case the unit is not specified.
-     if (readStatement->get_format() != NULL && readStatement->get_unit() == NULL)
+     if (readStatement->get_format() != nullptr && readStatement->get_unit() == nullptr)
         {
           unparseExpression(readStatement->get_format(), info);
           if (iolist->get_expressions().empty() == false)
@@ -2687,7 +2687,7 @@ FortranCodeGeneration_locatedNode::unparseInquireStatement(SgStatement* stmt, Sg
      curprint("INQUIRE (");
 
      bool isLeadingEntry = true;
-     if (inquireStatement->get_iolengthExp() != NULL)
+     if (inquireStatement->get_iolengthExp() != nullptr)
         {
           curprint("IOLENGTH=");
           unparseExpression(inquireStatement->get_iolengthExp(),info);
@@ -2705,7 +2705,7 @@ FortranCodeGeneration_locatedNode::unparseInquireStatement(SgStatement* stmt, Sg
 
           unparse_IO_Control_Support("FILE",inquireStatement->get_file(),isLeadingEntry,info);
 
-          isLeadingEntry = isLeadingEntry && (inquireStatement->get_file() == NULL);
+          isLeadingEntry = isLeadingEntry && (inquireStatement->get_file() == nullptr);
           ROSE_ASSERT(isLeadingEntry == false);
 
           unparse_IO_Control_Support("ACCESS",inquireStatement->get_access(),false,info);
@@ -2743,7 +2743,7 @@ FortranCodeGeneration_locatedNode::unparseInquireStatement(SgStatement* stmt, Sg
      curprint(") ");
 
      SgExprListExp* iolist = inquireStatement->get_io_stmt_list();
-     if (iolist != NULL)
+     if (iolist != nullptr)
         {
        // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
        // unparseExprList(iolist, info, false /*paren*/);
@@ -2788,7 +2788,7 @@ FortranCodeGeneration_locatedNode::unparseRewindStatement(SgStatement* stmt, SgU
      curprint(") ");
 
      SgExprListExp* iolist = rewindStatement->get_io_stmt_list();
-     if (iolist != NULL)
+     if (iolist != nullptr)
         {
        // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
        // unparseExprList(iolist, info, false /*paren*/);
@@ -2812,7 +2812,7 @@ FortranCodeGeneration_locatedNode::unparseBackspaceStatement(SgStatement* stmt, 
      curprint(") ");
 
      SgExprListExp* iolist = backspaceStatement->get_io_stmt_list();
-     if (iolist != NULL)
+     if (iolist != nullptr)
         {
        // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
        // unparseExprList(iolist, info, false /*paren*/);
@@ -2835,7 +2835,7 @@ FortranCodeGeneration_locatedNode::unparseEndfileStatement(SgStatement* stmt, Sg
      curprint(") ");
 
      SgExprListExp* iolist = endfileStatement->get_io_stmt_list();
-     if (iolist != NULL)
+     if (iolist != nullptr)
         {
        // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
        // unparseExprList(iolist, info, false /*paren*/);
@@ -2859,7 +2859,7 @@ FortranCodeGeneration_locatedNode::unparseWaitStatement(SgStatement* stmt, SgUnp
      curprint(") ");
 
      SgExprListExp* iolist = waitStatement->get_io_stmt_list();
-     if (iolist != NULL)
+     if (iolist != nullptr)
         {
        // DQ (3/28/2017): Eliminate warning of overloaded virtual function in base class (from Clang).
        // unparseExprList(iolist, info, false /*paren*/);
@@ -3213,7 +3213,7 @@ void FortranCodeGeneration_locatedNode::unparseEntityTypeAttr(SgType* type, SgUn
     if (type->get_isCoArray())
     {
         SgType* baseType;
-        SgArrayType* arrayType = NULL;
+        SgArrayType* arrayType = nullptr;
         if (isSgPointerType(type))
             baseType = isSgPointerType(type)->get_base_type();
         else
@@ -3284,37 +3284,37 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
              unp->u_fortran_type->unparseType(type, info, true);  // print type attribute on the left of ::
           }
 
-          if (variableDeclaration->get_declarationModifier().get_typeModifier().isAllocatable() == true)
+          if (variableDeclaration->get_declarationModifier().get_typeModifier().isAllocatable())
              {
                curprint(", ALLOCATABLE");
              }
 
-          if (variableDeclaration->get_declarationModifier().get_typeModifier().isAsynchronous() == true)
+          if (variableDeclaration->get_declarationModifier().get_typeModifier().isAsynchronous())
              {
                curprint(", ASYNCHRONOUS");
              }
 
-          if (variableDeclaration->get_declarationModifier().get_typeModifier().isIntent_in() == true)
+          if (variableDeclaration->get_declarationModifier().get_typeModifier().isIntent_in())
              {
                curprint(", INTENT(IN)");
              }
 
-          if (variableDeclaration->get_declarationModifier().get_typeModifier().isIntent_out() == true)
+          if (variableDeclaration->get_declarationModifier().get_typeModifier().isIntent_out())
              {
                curprint(", INTENT(OUT)");
              }
 
-          if (variableDeclaration->get_declarationModifier().get_typeModifier().isIntent_inout() == true)
+          if (variableDeclaration->get_declarationModifier().get_typeModifier().isIntent_inout())
              {
                curprint(", INTENT(INOUT)");
              }
 
-          if (variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isVolatile() == true)
+          if (variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isVolatile())
              {
                curprint(", VOLATILE");
              }
 
-          if (variableDeclaration->get_declarationModifier().get_storageModifier().isExtern() == true)
+          if (variableDeclaration->get_declarationModifier().get_storageModifier().isExtern())
              {
                if (type->variantT()==V_SgTypeVoid) //FMZ 6/17/2009
                   curprint("EXTERNAL");
@@ -3323,47 +3323,47 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
              }
 
        // Fortran contiguous array storage attribute
-          if (variableDeclaration->get_declarationModifier().get_storageModifier().isContiguous() == true)
+          if (variableDeclaration->get_declarationModifier().get_storageModifier().isContiguous())
              {
                curprint(", CONTIGUOUS");
              }
 
        // Fortran CUDA support
-          if (variableDeclaration->get_declarationModifier().get_storageModifier().isCudaDeviceMemory() == true)
+          if (variableDeclaration->get_declarationModifier().get_storageModifier().isCudaDeviceMemory())
              {
                curprint(", device");
              }
-          if (variableDeclaration->get_declarationModifier().get_storageModifier().isCudaManaged() == true)
+          if (variableDeclaration->get_declarationModifier().get_storageModifier().isCudaManaged())
              {
                curprint(", managed");
              }
-          if (variableDeclaration->get_declarationModifier().get_storageModifier().isCudaConstant() == true)
+          if (variableDeclaration->get_declarationModifier().get_storageModifier().isCudaConstant())
              {
                curprint(", constant");
              }
-          if (variableDeclaration->get_declarationModifier().get_storageModifier().isCudaShared() == true)
+          if (variableDeclaration->get_declarationModifier().get_storageModifier().isCudaShared())
              {
                curprint(", shared");
              }
-          if (variableDeclaration->get_declarationModifier().get_storageModifier().isCudaPinned() == true)
+          if (variableDeclaration->get_declarationModifier().get_storageModifier().isCudaPinned())
              {
                curprint(", pinned");
              }
-          if (variableDeclaration->get_declarationModifier().get_storageModifier().isCudaTexture() == true)
+          if (variableDeclaration->get_declarationModifier().get_storageModifier().isCudaTexture())
              {
                curprint(", texture");
              }
 
-          if (variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst() == true)
+          if (variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst())
              {
             // PARAMETER in Fortran implies const in C/C++
                curprint(", PARAMETER");
              }
 
-          if (variableDeclaration->get_declarationModifier().get_accessModifier().isPublic() == true)
+          if (variableDeclaration->get_declarationModifier().get_accessModifier().isPublic())
              {
             // The PUBLIC keyword is only permitted within Modules
-               if ( TransformationSupport::getModuleStatement(variableDeclaration) != NULL )
+               if ( TransformationSupport::getModuleStatement(variableDeclaration) != nullptr )
                   {
                     curprint(", PUBLIC");
                   }
@@ -3377,10 +3377,10 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
                   }
              }
 
-          if (variableDeclaration->get_declarationModifier().get_accessModifier().isPrivate() == true)
+          if (variableDeclaration->get_declarationModifier().get_accessModifier().isPrivate())
              {
             // The PRIVATE keyword is only permitted within Modules
-               if ( TransformationSupport::getModuleStatement(variableDeclaration) != NULL )
+               if ( TransformationSupport::getModuleStatement(variableDeclaration) != nullptr )
                   {
                     curprint(", PRIVATE");
                   }
@@ -3400,17 +3400,17 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
                     is_protected = false;
                i++;
              }
-          if (is_protected == true && (variableList.empty() == false))
+          if (is_protected && (variableList.empty() == false))
              {
                curprint(", PROTECTED");
              }
 
-          if (variableDeclaration->get_declarationModifier().get_typeModifier().isIntrinsic() == true)
+          if (variableDeclaration->get_declarationModifier().get_typeModifier().isIntrinsic())
              {
                curprint(", INTRINSIC");
              }
 
-          if (variableDeclaration->get_declarationModifier().isBind() == true)
+          if (variableDeclaration->get_declarationModifier().isBind())
              {
                curprint(", ");
 
@@ -3418,22 +3418,22 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
                unparseBindAttribute(variableDeclaration);
              }
 
-          if (variableDeclaration->get_declarationModifier().get_typeModifier().isOptional() == true)
+          if (variableDeclaration->get_declarationModifier().get_typeModifier().isOptional())
              {
                curprint(", OPTIONAL");
              }
 
-          if (variableDeclaration->get_declarationModifier().get_typeModifier().isSave() == true)
+          if (variableDeclaration->get_declarationModifier().get_typeModifier().isSave())
              {
                curprint(", SAVE");
              }
 
-          if (variableDeclaration->get_declarationModifier().get_typeModifier().isTarget() == true)
+          if (variableDeclaration->get_declarationModifier().get_typeModifier().isTarget())
              {
                curprint(", TARGET");
              }
 
-          if (variableDeclaration->get_declarationModifier().get_typeModifier().isValue() == true)
+          if (variableDeclaration->get_declarationModifier().get_typeModifier().isValue())
              {
                curprint(", VALUE");
              }
@@ -3452,7 +3452,7 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
       // FIXME: currenly use "prev_decl_item" to denote the pointee
      curprint(name.str());
 
-     if (isSgTypeCrayPointer(type) != NULL)
+     if (isSgTypeCrayPointer(type) != nullptr)
      {
            SgInitializedName *pointeeVar = initializedName->get_prev_decl_item();
            ASSERT_not_null(pointeeVar);
@@ -3466,7 +3466,7 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
 
        // Unparse the initializers if any exist
        // printf ("In FortranCodeGeneration_locatedNode::unparseVarDecl(initializedName=%p): variable initializer = %p \n",initializedName,init);
-      if (init != NULL)
+      if (init != nullptr)
       {
            if (isSgPointerType(type))
            {  // this is a pointer null-init; OFP 0.8.2 has yet to implement pointer => init-data-object
@@ -3521,7 +3521,7 @@ void
 FortranCodeGeneration_locatedNode::unparseBindAttribute ( SgDeclarationStatement* declaration )
    {
   // Code generation support for "bind" attribute
-     if (declaration->get_declarationModifier().isBind() == true)
+     if (declaration->get_declarationModifier().isBind())
         {
           curprint(" bind(");
 
@@ -3548,151 +3548,129 @@ FortranCodeGeneration_locatedNode::printStorageModifier(SgDeclarationStatement* 
 
 void
 FortranCodeGeneration_locatedNode::unparseProcHdrStmt(SgStatement* stmt, SgUnparse_Info& info)
-   {
+{
   // Sage node corresponds to Fortran procedure program unit
 
-     SgProcedureHeaderStatement* procedureHeader = isSgProcedureHeaderStatement(stmt);
-     ASSERT_not_null(procedureHeader);
+  SgProcedureHeaderStatement* procedureHeader = isSgProcedureHeaderStatement(stmt);
+  ASSERT_not_null(procedureHeader);
 
-     string typeOfFunction;
-     if (procedureHeader->isFunction() == true)
-        {
-          typeOfFunction = " FUNCTION";
-        }
-       else
-        {
-          if (procedureHeader->isSubroutine() == true)
-             {
-               typeOfFunction = "SUBROUTINE";
-             }
-            else
-             {
-               ROSE_ASSERT (procedureHeader->isBlockData() == true);
-               typeOfFunction = "BLOCK DATA";
-             }
-        }
+  string typeOfFunction;
+  if (procedureHeader->isFunction()) {
+    typeOfFunction = " FUNCTION";
+  }
+  else {
+    if (procedureHeader->isSubroutine()) {
+      typeOfFunction = "SUBROUTINE";
+    }
+    else {
+      ASSERT_require(procedureHeader->isBlockData());
+      typeOfFunction = "BLOCK DATA";
+    }
+  }
 
-     if (!procedureHeader->isForward() && procedureHeader->get_definition() != NULL && !info.SkipFunctionDefinition())
-        {
-       // Output the function declaration with definition
+  if (!procedureHeader->isForward() && procedureHeader->get_definition() != nullptr && !info.SkipFunctionDefinition()) {
+    // Output the function declaration with definition
 
-       // The unparsing of the definition will cause the unparsing of the declaration (with SgUnparse_Info
-       // flags set to just unparse a forward declaration!)
-          SgUnparse_Info ninfo(info);
+    // The unparsing of the definition will cause the unparsing of the declaration (with SgUnparse_Info
+    // flags set to just unparse a forward declaration!)
+    SgUnparse_Info ninfo(info);
 
-       // To avoid end of statement formatting (added CR's) we call the unparseFuncDefnStmt directly
-          unparseFuncDefnStmt(procedureHeader->get_definition(), ninfo);
+    // To avoid end of statement formatting (added CR's) we call the unparseFuncDefnStmt directly
+    unparseFuncDefnStmt(procedureHeader->get_definition(), ninfo);
 
-          unp->cur.insert_newline(1);
+    unp->cur.insert_newline(1);
 
-       // The "END" has just been output by the unparsing of the SgFunctionDefinition
-       // so we just want to finish it off with "PROGRAM <name>".
+    // The "END" has just been output by the unparsing of the SgFunctionDefinition
+    // so we just want to finish it off with "PROGRAM <name>".
 
-          unparseStatementNumbersSupport(procedureHeader->get_end_numeric_label(),info);
-          curprint("END " + typeOfFunction + " ");
-          if (procedureHeader->get_named_in_end_statement() == true)
-             {
-               curprint(procedureHeader->get_name().str());
-             }
+    unparseStatementNumbersSupport(procedureHeader->get_end_numeric_label(),info);
+    curprint("END " + typeOfFunction + " ");
+    if (procedureHeader->get_named_in_end_statement()) {
+      curprint(procedureHeader->get_name().str());
+    }
 
-       // Output 2 new lines to better separate functions visually in the output
-          unp->cur.insert_newline(1);
-          unp->cur.insert_newline(2); //FMZ
-        }
-       else
-        {
-       // Code generation support for "pure" attribute
-          if (procedureHeader->get_functionModifier().isPure() == true)
-             {
-               curprint("PURE ");
-             }
+    // Output 2 new lines to better separate functions visually in the output
+    unp->cur.insert_newline(1);
+    unp->cur.insert_newline(2); //FMZ
+  }
+  else {
+    if (procedureHeader->get_functionModifier().isPure()) {
+      curprint("PURE ");
+    }
+    if (procedureHeader->get_functionModifier().isElemental()) {
+      curprint("ELEMENTAL ");
+    }
+    if (procedureHeader->get_functionModifier().isRecursive()) {
+      curprint("RECURSIVE ");
+    }
+    if (procedureHeader->get_functionModifier().isCudaHost()) {
+      curprint("attributes(host) ");
+    }
+    if (procedureHeader->get_functionModifier().isCudaGlobalFunction()) {
+      curprint("attributes(global) ");
+    }
+    if (procedureHeader->get_functionModifier().isCudaDevice()) {
+      curprint("attributes(device) ");
+    }
+    if (procedureHeader->get_functionModifier().isCudaGridGlobal()) {
+      curprint("attributes(grid_global) ");
+    }
 
-          if (procedureHeader->get_functionModifier().isElemental() == true)
-             {
-               curprint("ELEMENTAL ");
-             }
-
-          if (procedureHeader->get_functionModifier().isRecursive() == true)
-             {
-               curprint("RECURSIVE ");
-             }
-
-          if (procedureHeader->get_functionModifier().isCudaHost() == true)
-             {
-               curprint("attributes(host) ");
-             }
-          if (procedureHeader->get_functionModifier().isCudaGlobalFunction() == true)
-             {
-               curprint("attributes(global) ");
-             }
-          if (procedureHeader->get_functionModifier().isCudaDevice() == true)
-             {
-               curprint("attributes(device) ");
-             }
-          if (procedureHeader->get_functionModifier().isCudaGridGlobal() == true)
-             {
-               curprint("attributes(grid_global) ");
-             }
-
-       //FMZ (5/13/2010): If there is declaration of "result", we need to check if the 
-       //                 type of the function is already declared by the "result"
-          bool need_type = true;
-          string result_name_str;
+    //FMZ (5/13/2010): If there is declaration of "result", we need to check if the
+    //                 type of the function is already declared by the "result"
+    bool need_type = true;
+    string result_name_str;
           
-          if (procedureHeader->get_result_name() != NULL) {
-              SgInitializedName* rslt_name = procedureHeader->get_result_name();
-              SgDeclarationStatement* rslt_decl = rslt_name->get_definition();
+    if (procedureHeader->get_result_name() != nullptr) {
+      SgInitializedName* rslt_name = procedureHeader->get_result_name();
+      SgDeclarationStatement* rslt_decl = rslt_name->get_definition();
 
-              // check declaraion stmts
-              if (rslt_decl !=NULL) {
-                   need_type = false;
-                   result_name_str = rslt_name->get_name().str();
-              }
-   
-          } 
+      // check declaraion stmts
+      if (rslt_decl != nullptr) {
+        need_type = false;
+        result_name_str = rslt_name->get_name().str();
+      }
+    }
 
+    if (procedureHeader->isFunction() && need_type) {
+      // Unparse the return type
+      SgFunctionType* functionType = procedureHeader->get_type();
+      ASSERT_not_null(functionType);
+      SgType* returnType = functionType->get_return_type();
+      ASSERT_not_null(returnType);
 
-          if (procedureHeader->isFunction() == true && need_type == true)
-             {
-            // Unparse the return type
-               SgFunctionType* functionType = procedureHeader->get_type();
-               ASSERT_not_null(functionType);
-               SgType* returnType = functionType->get_return_type();
-               ASSERT_not_null(returnType);
+      unp->u_fortran_type->unparseType(returnType,info);
+    }
 
-               unp->u_fortran_type->unparseType(returnType,info);
-             }
+    // Are there possible qualifiers that we are missing?
+    curprint(typeOfFunction + " ");
+    curprint(procedureHeader->get_name().str());
 
-       // Are there possible qualifiers that we are missing?
-          curprint(typeOfFunction + " ");
-          curprint(procedureHeader->get_name().str());
+    SgUnparse_Info ninfo2(info);
+    ninfo2.set_inArgList();
 
-          SgUnparse_Info ninfo2(info);
-          ninfo2.set_inArgList();
+    // Fortran Block Data statements don't have operands (I think)
+    if (procedureHeader->isBlockData() == false) {
+      curprint("(");
+      unparseFunctionArgs(procedureHeader,ninfo2);
+      curprint(")");
+    }
 
-       // Fortran Block Data statements don't have operands (I think)
-          if (procedureHeader->isBlockData() == false)
-             {
-               curprint("(");
-               unparseFunctionArgs(procedureHeader,ninfo2);     
-               curprint(")");
-             }
+    unparseBindAttribute(procedureHeader);
 
-          unparseBindAttribute(procedureHeader);
+    // Unparse the result(<name>) suffix if present
+    if (procedureHeader->get_result_name() != nullptr &&
+        procedureHeader->get_name()!= procedureHeader->get_result_name()->get_name())
+      {
+        curprint(" result(");
+        curprint(procedureHeader->get_result_name()->get_name());
+        curprint(")");
+      }
 
-       // Unparse the result(<name>) suffix if present
-          if (procedureHeader->get_result_name() != NULL &&
-                  procedureHeader->get_name()!= procedureHeader->get_result_name()->get_name())
-             {
-               curprint(" result(");
-               curprint(procedureHeader->get_result_name()->get_name());
-               curprint(")");
-             }
-
-       // Output 1 new line so that new statements will appear on their own line after the SgProgramHeaderStatement declaration.
-          unp->cur.insert_newline(1);
-        }
-   }
+    // Output 1 new line so that new statements will appear on their own line after the SgProgramHeaderStatement declaration.
+    unp->cur.insert_newline(1);
+  }
+}
 
 void
 FortranCodeGeneration_locatedNode::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
@@ -3702,7 +3680,7 @@ FortranCodeGeneration_locatedNode::unparseFuncDefnStmt(SgStatement* stmt, SgUnpa
 
   // Unparse any comments of directives attached to the SgFunctionParameterList
      ASSERT_not_null(funcdefn_stmt->get_declaration());
-     if (funcdefn_stmt->get_declaration()->get_parameterList() != NULL)
+     if (funcdefn_stmt->get_declaration()->get_parameterList() != nullptr)
          unparseAttachedPreprocessingInfo(funcdefn_stmt->get_declaration()->get_parameterList(), info, PreprocessingInfo::before);
 
      info.set_SkipFunctionDefinition();
@@ -3852,10 +3830,10 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
 
           curprint ("TYPE ");
 
-          if (classdecl_stmt->get_declarationModifier().get_accessModifier().isPublic() == true)
+          if (classdecl_stmt->get_declarationModifier().get_accessModifier().isPublic())
              {
             // The PUBLIC keyword is only permitted within Modules
-               if ( TransformationSupport::getModuleStatement(classdecl_stmt) != NULL )
+               if ( TransformationSupport::getModuleStatement(classdecl_stmt) != nullptr )
                   {
                     curprint(", PUBLIC");
                   }
@@ -3865,10 +3843,10 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
                   }
              }
 
-          if (classdecl_stmt->get_declarationModifier().get_accessModifier().isPrivate() == true)
+          if (classdecl_stmt->get_declarationModifier().get_accessModifier().isPrivate())
              {
             // The PRIVATE keyword is only permitted within Modules
-               if ( TransformationSupport::getModuleStatement(classdecl_stmt) != NULL )
+               if ( TransformationSupport::getModuleStatement(classdecl_stmt) != nullptr )
                   {
                     curprint(", PRIVATE");
                   }
@@ -3878,10 +3856,10 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
                   }
              }
 
-          if (classdecl_stmt->get_declarationModifier().get_typeModifier().isBind() == true)
+          if (classdecl_stmt->get_declarationModifier().get_typeModifier().isBind())
              {
             // The BIND keyword is only permitted within Modules
-               if ( TransformationSupport::getModuleStatement(classdecl_stmt) != NULL )
+               if ( TransformationSupport::getModuleStatement(classdecl_stmt) != nullptr )
                   {
                  // I think that bind implies "BIND(C)"
                     curprint(", BIND(C)");
@@ -3892,10 +3870,10 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
                   }
              }
 
-          if (classdecl_stmt->get_declarationModifier().get_typeModifier().isExtends() == true)
+          if (classdecl_stmt->get_declarationModifier().get_typeModifier().isExtends())
              {
             // The EXTENDS keyword is only permitted within Modules
-               if ( TransformationSupport::getModuleStatement(classdecl_stmt) != NULL )
+               if ( TransformationSupport::getModuleStatement(classdecl_stmt) != nullptr )
                   {
                     curprint(", EXTENDS(PARENT-TYPE-NAME-NOT-IMPLEMENTED)");
                   }
@@ -3905,10 +3883,10 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
                   }
              }
 
-          if (classdecl_stmt->get_declarationModifier().get_typeModifier().isAbstract() == true)
+          if (classdecl_stmt->get_declarationModifier().get_typeModifier().isAbstract())
              {
             // The ABSTRACT keyword is only permitted within Modules
-               if ( TransformationSupport::getModuleStatement(classdecl_stmt) != NULL )
+               if ( TransformationSupport::getModuleStatement(classdecl_stmt) != nullptr )
                   {
                     curprint(", ABSTRACT");
                   }
@@ -4011,7 +3989,7 @@ FortranCodeGeneration_locatedNode::unparseClassDefnStmt(SgStatement* stmt, SgUnp
      ninfo.set_current_context(classDeclaration->get_type());
 
   // For Fortran we don't have an inheritance concept, I think.
-     ROSE_ASSERT(classdefn_stmt->get_inheritances().empty() == true);
+     ROSE_ASSERT(classdefn_stmt->get_inheritances().empty());
 
   // DQ (9/28/2004): Turn this back on as the only way to prevent this from being unparsed!
   // DQ (11/22/2003): Control unparsing of the {} part of the definition
@@ -4029,16 +4007,16 @@ FortranCodeGeneration_locatedNode::unparseClassDefnStmt(SgStatement* stmt, SgUnp
           unp->cur.format(classdefn_stmt, info, FORMAT_BEFORE_BASIC_BLOCK1);
           unp->cur.format(classdefn_stmt, info, FORMAT_AFTER_BASIC_BLOCK1);
 
-          if (classdefn_stmt->get_isSequence() == true)
+          if (classdefn_stmt->get_isSequence())
              {
-               unparseStatementNumbersSupport(NULL,info);
+               unparseStatementNumbersSupport(nullptr,info);
                curprint ("sequence");
                unp->u_sage->curprint_newline();
              }
 
-          if (classdefn_stmt->get_isPrivate() == true)
+          if (classdefn_stmt->get_isPrivate())
              {
-               unparseStatementNumbersSupport(NULL,info);
+               unparseStatementNumbersSupport(nullptr,info);
                curprint ("private");
                unp->u_sage->curprint_newline();
              }
@@ -4112,13 +4090,13 @@ FortranCodeGeneration_locatedNode::unparseDeallocateStatement(SgStatement* stmt,
   // unparseExprList(exprList, info, false /*paren*/);
      unparseExprList(exprList, info);
 
-     if (s->get_stat_expression() != NULL)
+     if (s->get_stat_expression() != nullptr)
         {
           curprint(", STAT = ");
           unparseExpression(s->get_stat_expression(), info);
         }
 
-     if (s->get_errmsg_expression() != NULL)
+     if (s->get_errmsg_expression() != nullptr)
         {
           curprint(", ERRMSG = ");
           unparseExpression(s->get_errmsg_expression(), info);
@@ -4165,7 +4143,7 @@ FortranCodeGeneration_locatedNode::curprint(const std::string & str) const
 {
 #if USE_RICE_FORTRAN_WRAPPING
 
-    if( unp->currentFile != NULL && unp->currentFile->get_Fortran_only() )
+    if( unp->currentFile != nullptr && unp->currentFile->get_Fortran_only() )
     {
         // determine line wrapping parameters -- 'pos' variables are one-based
         bool is_fixed_format = unp->currentFile->get_outputFormat() == SgFile::e_fixed_form_output_format;
@@ -4214,7 +4192,7 @@ FortranCodeGeneration_locatedNode::curprint(const std::string & str) const
 #else  // ! USE_RICE_FORTRAN_WRAPPING
 
      // FMZ (3/22/2010) added fortran continue line support
-     bool is_fortran90 =  (unp->currentFile != NULL ) &&
+     bool is_fortran90 =  (unp->currentFile != nullptr ) &&
                               (unp->currentFile->get_F90_only() ||
                                   unp->currentFile->get_CoArrayFortran_only());
 
@@ -4226,7 +4204,7 @@ FortranCodeGeneration_locatedNode::curprint(const std::string & str) const
                (str_len + curr_line_len)> MAX_F90_LINE_LEN) {
           unp->u_sage->curprint("&");
           unp->cur.insert_newline(1);
-     } 
+     }
 
      if (str_len <= MAX_F90_LINE_LEN || str[0] == '#' || str[0] == '!')
      {
@@ -4243,7 +4221,7 @@ FortranCodeGeneration_locatedNode::curprint(const std::string & str) const
            unp->u_sage->curprint("&");
            unp->cur.insert_newline(1);
          }
-       } 
+       }
      }
      
 #endif  // USE_RICE_FORTRAN_WRAPPING

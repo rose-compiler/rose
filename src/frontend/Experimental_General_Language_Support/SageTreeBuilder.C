@@ -14,10 +14,10 @@ namespace Rose {
 namespace builder {
 
 using namespace Rose::Diagnostics;
-using namespace LanguageTranslation;
 
 namespace SB = SageBuilder;
 namespace SI = SageInterface;
+namespace LT = LanguageTranslation;
 
 /// Initialize the global scope and push it onto the scope stack
 ///
@@ -563,7 +563,7 @@ Enter(SgFunctionParameterList* &param_list, SgScopeStatement* &param_scope,
 }
 
 void SageTreeBuilder::
-Leave(SgFunctionParameterList* param_list, SgScopeStatement* param_scope, const std::list<FormalParameter> &param_name_list)
+Leave(SgFunctionParameterList* param_list, SgScopeStatement* param_scope, const std::list<LT::FormalParameter> &param_name_list)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgFunctionParameterList*) \n";
 
@@ -574,7 +574,7 @@ Leave(SgFunctionParameterList* param_list, SgScopeStatement* param_scope, const 
    ASSERT_require(param_scope == SageBuilder::topScopeStack());
 
 // Populate the function parameter list from declarations in the parameter block
-   for (const FormalParameter &param : param_name_list)
+   for (const LT::FormalParameter &param : param_name_list)
      {
        SgVariableSymbol* symbol = SageInterface::lookupVariableSymbolInParentScopes(param.name, param_scope);
 
@@ -699,19 +699,19 @@ Enter(SgFunctionDeclaration* &function_decl,const std::string &name, SgType* ret
 
    SageInterface::setSourcePosition(function_decl->get_parameterList());
 
-   if (list_contains(modifiers, e_function_modifier_definition))  function_decl->get_declarationModifier().setJovialDef();
-   if (list_contains(modifiers, e_function_modifier_reference ))  function_decl->get_declarationModifier().setJovialRef();
+   if (list_contains(modifiers, LT::e_function_modifier_definition))  function_decl->get_declarationModifier().setJovialDef();
+   if (list_contains(modifiers, LT::e_function_modifier_reference ))  function_decl->get_declarationModifier().setJovialRef();
 
-   if (list_contains(modifiers, e_function_modifier_recursive))   function_decl->get_functionModifier().setRecursive();
-   if (list_contains(modifiers, e_function_modifier_reentrant))   function_decl->get_functionModifier().setReentrant();
+   if (list_contains(modifiers, LT::e_function_modifier_recursive))   function_decl->get_functionModifier().setRecursive();
+   if (list_contains(modifiers, LT::e_function_modifier_reentrant))   function_decl->get_functionModifier().setReentrant();
 
-   if (list_contains(modifiers, e_function_modifier_pure     ))   function_decl->get_functionModifier().setPure();
-   if (list_contains(modifiers, e_function_modifier_elemental))   function_decl->get_functionModifier().setElemental();
+   if (list_contains(modifiers, LT::e_function_modifier_pure     ))   function_decl->get_functionModifier().setPure();
+   if (list_contains(modifiers, LT::e_function_modifier_elemental))   function_decl->get_functionModifier().setElemental();
 
-   if (list_contains(modifiers, e_function_modifier_cuda_device)) function_decl->get_functionModifier().setCudaDevice();
-   if (list_contains(modifiers, e_function_modifier_cuda_host))   function_decl->get_functionModifier().setCudaHost();
-   if (list_contains(modifiers, e_function_modifier_cuda_global)) function_decl->get_functionModifier().setCudaGlobalFunction();
-   if (list_contains(modifiers, e_function_modifier_cuda_grid_global)) function_decl->get_functionModifier().setCudaGridGlobal();
+   if (list_contains(modifiers, LT::e_function_modifier_cuda_device)) function_decl->get_functionModifier().setCudaDevice();
+   if (list_contains(modifiers, LT::e_function_modifier_cuda_host))   function_decl->get_functionModifier().setCudaHost();
+   if (list_contains(modifiers, LT::e_function_modifier_cuda_global)) function_decl->get_functionModifier().setCudaGlobalFunction();
+   if (list_contains(modifiers, LT::e_function_modifier_cuda_grid_global)) function_decl->get_functionModifier().setCudaGridGlobal();
 }
 
 void SageTreeBuilder::
@@ -845,10 +845,33 @@ Enter(SgDerivedTypeStatement* & derived_type_stmt, const std::string & name)
 }
 
 void SageTreeBuilder::
-Leave(SgDerivedTypeStatement* derived_type_stmt)
+Leave(SgDerivedTypeStatement*)
 {
-   mlog[TRACE] << "SageTreeBuilder::Leave(SgDerivedTypeStatement*) \n";
-   SageBuilder::popScopeStack();  // class definition
+  mlog[TRACE] << "SageTreeBuilder::Leave(SgDerivedTypeStatement*) \n";
+  SageBuilder::popScopeStack();  // class definition
+}
+
+void SageTreeBuilder::
+Leave(SgDerivedTypeStatement* stmt, std::list<LanguageTranslation::ExpressionKind> &modifiers)
+{
+  mlog[TRACE] << "SageTreeBuilder::Leave(SgDerivedTypeStatement*) \n";
+  using namespace LanguageTranslation;
+
+  for (ExpressionKind modifier : modifiers) {
+    switch(modifier) {
+      case ExpressionKind::e_access_modifier_private:
+        stmt->get_declarationModifier().get_accessModifier().setPrivate();
+        break;
+      case ExpressionKind::e_access_modifier_public:
+        stmt->get_declarationModifier().get_accessModifier().setPublic();
+        break;
+      case ExpressionKind::e_type_modifier_bind_c:
+        stmt->get_declarationModifier().get_typeModifier().setBind();
+        break;
+      default: break;
+    }
+  }
+  Leave(stmt);
 }
 
 // Statements
@@ -1911,22 +1934,23 @@ void SageTreeBuilder::
 Leave(SgVariableDeclaration* varDecl, std::list<LanguageTranslation::ExpressionKind> &modifier_enum_list)
 {
   mlog[TRACE] << "SageTreeBuilder::Leave(SgVariableDeclaration*) with modifiers \n";
+  using namespace LanguageTranslation;
 
-  for (LanguageTranslation::ExpressionKind modifier_enum : modifier_enum_list) {
+  for (ExpressionKind modifier_enum : modifier_enum_list) {
     switch(modifier_enum) {
-      case LanguageTranslation::ExpressionKind::e_storage_modifier_contiguous:
+      case ExpressionKind::e_storage_modifier_contiguous:
         varDecl->get_declarationModifier().get_storageModifier().setContiguous();
         break;
-      case LanguageTranslation::ExpressionKind::e_type_modifier_intent_in:
+      case ExpressionKind::e_type_modifier_intent_in:
         varDecl->get_declarationModifier().get_typeModifier().setIntent_in();
         break;
-      case LanguageTranslation::ExpressionKind::e_type_modifier_intent_out:
+      case ExpressionKind::e_type_modifier_intent_out:
         varDecl->get_declarationModifier().get_typeModifier().setIntent_out();
         break;
-      case LanguageTranslation::ExpressionKind::e_type_modifier_intent_inout:
+      case ExpressionKind::e_type_modifier_intent_inout:
         varDecl->get_declarationModifier().get_typeModifier().setIntent_inout();
         break;
-      case LanguageTranslation::ExpressionKind::e_type_modifier_parameter:
+      case ExpressionKind::e_type_modifier_parameter:
         varDecl->get_declarationModifier().get_typeModifier().get_constVolatileModifier().setConst();
         break;
       default: break;

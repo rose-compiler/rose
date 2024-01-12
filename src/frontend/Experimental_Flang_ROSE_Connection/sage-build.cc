@@ -1401,17 +1401,18 @@ void Build(const parser::TypeDeclarationStmt &x, T* scope)
 #endif
 
    SgVariableDeclaration* var_decl{nullptr};
-   SgType* type{nullptr}, * base_type{nullptr};
+   SgType* type{nullptr};
+   SgType* base_type{nullptr};
    SgExpression* init{nullptr};
-   std::list<LanguageTranslation::ExpressionKind> modifier_enum_list{};
+   std::list<LanguageTranslation::ExpressionKind> modifiers{};
    std::list<EntityDeclTuple> init_info{};
 
-   Build(std::get<0>(x.t), base_type);                    // DeclarationTypeSpec
-   Build(std::get<1>(x.t), modifier_enum_list);           // std::list<AttrSpec>
-   Build(std::get<2>(x.t), init_info, base_type);         // std::list<EntityDecl>
+   Build(std::get<0>(x.t), base_type);               // DeclarationTypeSpec
+   Build(std::get<1>(x.t), modifiers);               // std::list<AttrSpec>
+   Build(std::get<2>(x.t), init_info, base_type);    // std::list<EntityDecl>
 
    builder.Enter(var_decl, base_type, init_info);
-   builder.Leave(var_decl, modifier_enum_list);
+   builder.Leave(var_decl, modifiers);
 }
 
 void Build(const parser::DeclarationTypeSpec &x, SgType* &type)
@@ -1476,77 +1477,55 @@ void Build(const parser::DerivedTypeSpec&x, SgType* &type)
    std::cout << "DerivedTypeSpec name is " << name << "\n";
 }
 
-void Build(const parser::AttrSpec &x, LanguageTranslation::ExpressionKind &modifier_enum)
+void Build(const parser::AttrSpec &x, LanguageTranslation::ExpressionKind &modifier)
 {
 #if PRINT_FLANG_TRAVERSAL
-   std::cout << "Rose::builder::Build(AttrSpec)\n";
+  std::cout << "Rose::builder::Build(AttrSpec)\n";
 #endif
+  using namespace LanguageTranslation;
 
-   std::visit(
-      common::visitors{
-         [] (const common::CUDADataAttr &y)
-           {
-             // enum class CUDADataAttr { Constant, Device, Managed, Pinned, Shared, Texture };
-             ABORT_NO_IMPL;
-           },
-         [] (const parser::CoarraySpec  &y) { ABORT_NO_IMPL; },
-         [] (const parser::ArraySpec    &y) { ABORT_NO_IMPL; },
-         [&] (const parser::Parameter   &y)
-            {
-               modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_parameter;
-            },
-         [&] (const parser::Allocatable  &y)
-            {
-               modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_allocatable;
-            },
-         [&] (const parser::Asynchronous &y)
-            {
-               modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_asynchronous;
-            },
-         [&] (const parser::Contiguous &y)
-            {
-               modifier_enum = LanguageTranslation::ExpressionKind::e_storage_modifier_contiguous;
-            },
-         [&] (const parser::External &y)
-            {
-               modifier_enum = LanguageTranslation::ExpressionKind::e_storage_modifier_external;
-            },
-         [&] (const parser::Intrinsic &y)
-            {
-               modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_intrinsic;
-            },
-         [&] (const parser::Optional &y)
-            {
-               modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_optional;
-            },
-         [&] (const parser::Pointer &y)
-            {
-               modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_pointer;
-            },
-         [&] (const parser::Protected &y)
-            {
-               modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_protected;
-            },
-         [&] (const parser::Save &y)
-            {
-               modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_save;
-            },
-         [&] (const parser::Target &y)
-            {
-               modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_target;
-            },
-         [&] (const parser::Value &y)
-            {
-               modifier_enum = LanguageTranslation::ExpressionKind::e_param_binding_value;
-            },
-         [&] (const parser::Volatile &y)
-            {
-               modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_volatile;
-            },
-         // AccessSpec, IntentSpec, LanguageBindingSpec
-         [&] (const auto &y) { Build(y, modifier_enum); },
-      },
-      x.u);
+  std::visit(common::visitors
+  {
+    [ ] (const common::CUDADataAttr &y)
+          {
+            // enum class CUDADataAttr { Constant, Device, Managed, Pinned, Shared, Texture };
+            ABORT_NO_IMPL;
+          },
+    [ ] (const parser::CoarraySpec &y) { ABORT_NO_IMPL; },
+    [ ] (const parser::ArraySpec &y) { ABORT_NO_IMPL; },
+    [&] (const parser::Parameter &y)
+          { modifier = ExpressionKind::e_type_modifier_parameter; },
+    [&] (const parser::Allocatable  &y)
+          { modifier = ExpressionKind::e_type_modifier_allocatable; },
+    [&] (const parser::Asynchronous &y)
+          { modifier = ExpressionKind::e_type_modifier_asynchronous; },
+    [&] (const parser::Contiguous &y)
+          { modifier = ExpressionKind::e_storage_modifier_contiguous; },
+    [&] (const parser::External &y)
+          { modifier = ExpressionKind::e_storage_modifier_external; },
+    [&] (const parser::Intrinsic &y)
+          { modifier = ExpressionKind::e_type_modifier_intrinsic; },
+    [&] (const parser::Optional &y)
+          { modifier = ExpressionKind::e_type_modifier_optional; },
+    [&] (const parser::Pointer &y)
+          { modifier = ExpressionKind::e_type_modifier_pointer; },
+    [&] (const parser::Protected &y)
+          { modifier = ExpressionKind::e_type_modifier_protected; },
+    [&] (const parser::Save &y)
+          { modifier = ExpressionKind::e_type_modifier_save; },
+    [&] (const parser::Target &y)
+          { modifier = ExpressionKind::e_type_modifier_target; },
+    [&] (const parser::Value &y)
+          { modifier = ExpressionKind::e_param_binding_value; },
+    [&] (const parser::Volatile &y)
+          { modifier = ExpressionKind::e_type_modifier_volatile; },
+    [&] (const auto &y)
+          {
+            // AccessSpec, IntentSpec, LanguageBindingSpec
+            Build(y, modifier);
+          }
+  }
+  , x.u);
 }
 
 void Build(const parser::KindSelector &x, SgExpression* &expr)
@@ -3497,7 +3476,7 @@ void Build(const parser::LoopControl::Concurrent &x, SgExpression* &expr)
 
 // SpecificationConstruct
 template<typename T>
-void Build(const parser::DerivedTypeDef&x, T* scope)
+void Build(const parser::DerivedTypeDef &x, T* scope)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(DerivedTypeDef)\n";
@@ -3507,37 +3486,37 @@ void Build(const parser::DerivedTypeDef&x, T* scope)
    //     std::list<Statement<PrivateOrSequence>>, std::list<Statement<ComponentDefStmt>>,
    //     std::optional<TypeBoundProcedurePart>, Statement<EndTypeStmt>> t;
 
-   std::string type_name{};
-   std::list<LanguageTranslation::ExpressionKind> modifier_enum_list;
-   Build(std::get<parser::Statement<parser::DerivedTypeStmt>>(x.t).statement, type_name, modifier_enum_list);
+   std::string name{};
+   std::list<LanguageTranslation::ExpressionKind> modifiers;
+   Build(std::get<parser::Statement<parser::DerivedTypeStmt>>(x.t).statement, name, modifiers);
 
    // Begin SageTreeBuilder for SgDerivedTypeStatement
-   SgDerivedTypeStatement* derived_type_stmt{nullptr};
-   builder.Enter(derived_type_stmt, type_name);
+   SgDerivedTypeStatement* derivedTypeStmt{nullptr};
+   builder.Enter(derivedTypeStmt, name);
 
    // Traverse body of type-def
-   std::list<SgStatement*> stmt_list;
-   Build(std::get<3>(x.t), stmt_list);
+   std::list<SgStatement*> stmts{};
+   Build(std::get<3>(x.t), stmts);
 
    // EndTypeStmt - std::optional<Name> v;
-   bool have_end_stmt = false;
-   if (auto & opt = std::get<parser::Statement<parser::EndTypeStmt>>(x.t).statement.v) {
-      have_end_stmt = true;
+   bool haveEndStmt{false};
+   if (auto &opt = std::get<parser::Statement<parser::EndTypeStmt>>(x.t).statement.v) {
+      haveEndStmt = true;
    }
 
    // Leave SageTreeBuilder for SgDerivedTypeStatement
-   builder.Leave(derived_type_stmt);
+   builder.Leave(derivedTypeStmt, modifiers);
 }
 
-void Build(const parser::DerivedTypeStmt&x, std::string &name, std::list<LanguageTranslation::ExpressionKind> &modifier_enum_list)
+void Build(const parser::DerivedTypeStmt&x, std::string &name, std::list<LanguageTranslation::ExpressionKind> &modifiers)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(DerivedTypeStmt)\n";
 #endif
    // std::tuple<std::list<TypeAttrSpec>, Name, std::list<Name>> t;
 
-   Build(std::get<0>(x.t), modifier_enum_list);  // std::list<TypeAttrSpec>
-   name = std::get<1>(x.t).ToString();           // Name
+   Build(std::get<0>(x.t), modifiers);  // std::list<TypeAttrSpec>
+   name = std::get<1>(x.t).ToString();  // Name
 }
 
 void Build(const parser::Statement<parser::ComponentDefStmt>&x, SgStatement* &stmt)
@@ -3557,68 +3536,72 @@ void Build(const parser::Statement<parser::ComponentDefStmt>&x, SgStatement* &st
 void Build(const parser::DataComponentDefStmt&x, SgStatement* &stmt)
 {
 #if PRINT_FLANG_TRAVERSAL
-   std::cout << "Rose::builder::Build(DataComponentDefStmt)\n";
+  std::cout << "Rose::builder::Build(DataComponentDefStmt)\n";
+#endif
+  using namespace LanguageTranslation;
+
+  SgVariableDeclaration* varDecl{nullptr};
+  SgType* type{nullptr};
+  SgType* baseType{nullptr};
+  SgExpression* init{nullptr};
+  std::list<ExpressionKind> modifiers{};
+  std::list<EntityDeclTuple> initInfo{};
+
+  Build(std::get<0>(x.t), baseType);              // DeclarationTypeSpec
+  Build(std::get<1>(x.t), modifiers);             // std::list<ComponentAttrSpec>
+#if 0
+  Build(std::get<2>(x.t), initInfo, baseType);  // std::list<ComponentDecl>
 #endif
 
-   SgVariableDeclaration* var_decl = nullptr;
-   SgType * type = nullptr, * base_type = nullptr;
-   SgExpression* init = nullptr;
-   std::list<LanguageTranslation::ExpressionKind> modifier_enum_list;
-   std::list<EntityDeclTuple> init_info;
-
-#if TODO_BUILD_WITH_FLANG
-   Build(std::get<0>(x.t), base_type);                    // DeclarationTypeSpec
-   Build(std::get<1>(x.t), modifier_enum_list);           // std::list<ComponentAttrSpec>
-   Build(std::get<2>(x.t), init_info, base_type);         // std::list<ComponentDecl>
-
-   builder.Enter(var_decl, base_type, init_info);
-   builder.Leave(var_decl, modifier_enum_list);
-#endif
+  builder.Enter(varDecl, baseType, initInfo);
+  builder.Leave(varDecl, modifiers);
 }
 
-void Build(const parser::TypeAttrSpec &x, LanguageTranslation::ExpressionKind &modifier_enum)
+void Build(const parser::TypeAttrSpec &x, LanguageTranslation::ExpressionKind &modifier)
 {
 #if PRINT_FLANG_TRAVERSAL
-   std::cout << "Rose::builder::Build(TypeAttrSpec)\n";
+  std::cout << "Rose::builder::Build(TypeAttrSpec)\n";
 #endif
+  using namespace LanguageTranslation;
 
-   // std::variant<> - Abstract, AccessSpec, BindC, Extends
+  // std::variant<> - Abstract, AccessSpec, BindC, Extends
 
-   auto visitor = common::visitors {
-     [&] (const parser::AccessSpec &y) { Build(y, modifier_enum); },
-     [ ] (const auto &y) { ABORT_NO_IMPL; }
-   };
+  auto visitor = common::visitors {
+    [&] (const parser::AccessSpec &y) { Build(y, modifier); },
+    [&] (const parser::TypeAttrSpec::BindC &y)
+          { modifier = ExpressionKind::e_type_modifier_bind_c; },
+    [ ] (const parser::TypeAttrSpec::Extends &y) { ABORT_NO_IMPL; },
+    [ ] (const parser::Abstract &y) { ABORT_NO_IMPL; }
+  };
 
-   std::visit(visitor, x.u);
+  std::visit(visitor, x.u);
 }
 
-void Build(const parser::ComponentAttrSpec &x, LanguageTranslation::ExpressionKind &modifier_enum)
+void Build(const parser::ComponentAttrSpec &x, LanguageTranslation::ExpressionKind &modifier)
 {
 #if PRINT_FLANG_TRAVERSAL
-   std::cout << "Rose::builder::Build(ComponentAttrSpec)\n";
+  std::cout << "Rose::builder::Build(ComponentAttrSpec)\n";
 #endif
+  using namespace LanguageTranslation;
 
-   // std::variant<> - AccessSpec, Allocatable, CoarraySpec, Contiguous, ComponentArraySpec, Pointer,
-   //                  common::CUDADataAttr, ErrorRecovery
+  // std::variant<> - AccessSpec, Allocatable, CoarraySpec, Contiguous, ComponentArraySpec, Pointer,
+  //                  common::CUDADataAttr, ErrorRecovery
 
-   auto visitor = common::visitors {
-     [&] (const parser::AccessSpec         &y) { Build(y, modifier_enum); },
-     [ ] (const parser::CoarraySpec        &y) { ABORT_NO_IMPL; },
-     [ ] (const parser::ComponentArraySpec &y) { ABORT_NO_IMPL; },
-     [ ] (const parser::ErrorRecovery      &y) { ABORT_NO_IMPL; },
-     [ ] (const common::CUDADataAttr       &y) { ABORT_NO_IMPL; },
-     [&] (const parser::Allocatable &y) {
-       modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_allocatable;
-     },
-     [&] (const parser::Contiguous &y) {
-       modifier_enum = LanguageTranslation::ExpressionKind::e_storage_modifier_contiguous;
-     },
-     [&] (const parser::Pointer &y) {
-       modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_pointer;
-     }
-   };
+  auto visitor = common::visitors {
+    [&] (const parser::AccessSpec         &y) { Build(y, modifier); },
+    [ ] (const parser::CoarraySpec        &y) { ABORT_NO_IMPL; },
+    [ ] (const parser::ComponentArraySpec &y) { ABORT_NO_IMPL; },
+    [ ] (const parser::ErrorRecovery      &y) { ABORT_NO_IMPL; },
+    [ ] (const common::CUDADataAttr       &y) { ABORT_NO_IMPL; },
+    [&] (const parser::Allocatable &y)
+          { modifier = ExpressionKind::e_type_modifier_allocatable; },
+    [&] (const parser::Contiguous &y)
+          { modifier = ExpressionKind::e_storage_modifier_contiguous; },
+    [&] (const parser::Pointer &y)
+          { modifier = ExpressionKind::e_type_modifier_pointer; }
+  };
 
-   std::visit(visitor, x.u);
+  std::visit(visitor, x.u);
 }
 
 void Build(const std::list<Fortran::parser::ComponentDecl> &x, std::list<EntityDeclTuple> &component_decls, SgType* base_type)
@@ -3767,56 +3750,44 @@ void Build(const parser::OpenACCDeclarativeConstruct &x)
 }
 
 // AccessSpec
-void Build(const parser::AccessSpec &x, LanguageTranslation::ExpressionKind &modifier_enum)
+void Build(const parser::AccessSpec &x, LanguageTranslation::ExpressionKind &modifier)
 {
 #if PRINT_FLANG_TRAVERSAL
-   std::cout << "Rose::builder::Build(AccessSpec)\n";
+  std::cout << "Rose::builder::Build(AccessSpec)\n";
 #endif
+  using namespace LanguageTranslation;
 
-   switch(x.v)
-    {
-      case parser::AccessSpec::Kind::Public:
-         {
-           std::cout << "Rose::builder::Build(AccessSpec): public\n";
-            modifier_enum = LanguageTranslation::ExpressionKind::e_access_modifier_public;
-            break;
-         }
-      case parser::AccessSpec::Kind::Private:
-         {
-           std::cout << "Rose::builder::Build(AccessSpec): private\n";
-            modifier_enum = LanguageTranslation::ExpressionKind::e_access_modifier_private;
-            break;
-         }
-    }
+  switch(x.v) {
+    case parser::AccessSpec::Kind::Public:
+      modifier = ExpressionKind::e_access_modifier_public;
+      break;
+    case parser::AccessSpec::Kind::Private:
+      modifier = ExpressionKind::e_access_modifier_private;
+      break;
+  }
 }
 
-void Build(const parser::IntentSpec &x, LanguageTranslation::ExpressionKind &modifier_enum)
+void Build(const parser::IntentSpec &x, LanguageTranslation::ExpressionKind &modifier)
 {
 #if PRINT_FLANG_TRAVERSAL
-   std::cout << "Rose::builder::Build(IntentSpec)\n";
+  std::cout << "Rose::builder::Build(IntentSpec)\n";
 #endif
+  using namespace LanguageTranslation;
 
-   switch(x.v)
-    {
-      case parser::IntentSpec::Intent::In:
-         {
-            modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_intent_in;
-            break;
-         }
-      case parser::IntentSpec::Intent::Out:
-         {
-            modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_intent_out;
-            break;
-         }
-      case parser::IntentSpec::Intent::InOut:
-         {
-            modifier_enum = LanguageTranslation::ExpressionKind::e_type_modifier_intent_inout;
-            break;
-         }
-    }
+  switch(x.v) {
+    case parser::IntentSpec::Intent::In:
+      modifier = ExpressionKind::e_type_modifier_intent_in;
+      break;
+    case parser::IntentSpec::Intent::Out:
+      modifier = ExpressionKind::e_type_modifier_intent_out;
+      break;
+    case parser::IntentSpec::Intent::InOut:
+      modifier = ExpressionKind::e_type_modifier_intent_inout;
+      break;
+  }
 }
 
-void Build(const parser::LanguageBindingSpec &x, LanguageTranslation::ExpressionKind &modifier_enum)
+void Build(const parser::LanguageBindingSpec &x, LanguageTranslation::ExpressionKind &modifier)
 {
 #if PRINT_FLANG_TRAVERSAL
    std::cout << "Rose::builder::Build(LanguageBindingSpec)\n";

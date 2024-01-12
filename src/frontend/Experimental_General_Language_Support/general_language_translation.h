@@ -73,6 +73,7 @@ namespace LanguageTranslation
           e_type_modifier_list,
           e_type_modifier_allocatable,
           e_type_modifier_asynchronous,
+          e_type_modifier_bind_c,
           e_type_modifier_const,
           e_type_modifier_intent_in,
           e_type_modifier_intent_out,
