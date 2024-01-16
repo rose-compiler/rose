@@ -260,7 +260,7 @@ private:
         virtual size_t size() const = 0;
 
         // Return the i'th pointer. The argument is expected to be in the domain.
-        virtual Vertex* pointer(size_t i) const = 0;
+        virtual UserBasePtr pointer(size_t i) const = 0;
 
         // Traverse through all the non-null children of appropriate type pointed to by all edges in the order that the edges were
         // initialized. The visitor is invoked with two arguments: a non-null shared pointer to the child, and an indication of
@@ -452,9 +452,9 @@ public:
             return 1;
         }
 
-        Vertex* pointer(size_t i) const override {
+        UserBasePtr pointer(size_t i) const override {
             ASSERT_always_require(0 == i);
-            return child_.get();
+            return child_;
         }
     };
 
@@ -732,8 +732,8 @@ public:
         }
 
     protected:
-        Vertex* pointer(size_t i) const override {
-            return at(i)().get();
+        UserBasePtr pointer(size_t i) const override {
+            return at(i)();
         }
     };
 
