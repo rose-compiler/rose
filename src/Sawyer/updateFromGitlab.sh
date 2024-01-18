@@ -2,7 +2,7 @@
 # Update ROSE with the latest Sawyer source code
 set -e
 
-SAWYER_DOC_REPO=https://github.com/matzke1/sawyer
+SAWYER_DOC_REPO=https://gitlab.com/charger7534/sawyer.git
 SAWYER_REPO=${1-$SAWYER_DOC_REPO}
 
 
@@ -88,7 +88,7 @@ for f in                                        \
     Tree/treeUnitTests.C
 do
     srcbase="$SAWYER_ROOT/tests/$f";
-    ( emit_cpp_warning; cat "$srcbase" ) > ../../../tests/smoke/unit/Sawyer/$(basename "$f")
+    ( emit_cpp_warning; cat "$srcbase" ) > ../../tests/smoke/unit/Sawyer/$(basename "$f")
 done
 
 # Copy some of Sawyer's tools into the ROSE source tree
