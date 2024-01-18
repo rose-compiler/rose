@@ -5,6 +5,7 @@
 // include Types.h (forward declarations for most things), and only those other headers you actually need.
 
 #include <Rose/BinaryAnalysis/ModelChecker/BasicBlockUnit.h>
+#include <Rose/BinaryAnalysis/ModelChecker/BasicTypes.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Engine.h>
 #include <Rose/BinaryAnalysis/ModelChecker/ErrorTag.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Exception.h>
@@ -25,7 +26,6 @@
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
 #include <Rose/BinaryAnalysis/ModelChecker/SourceLister.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Tag.h>
-#include <Rose/BinaryAnalysis/ModelChecker/Types.h>
 #include <Rose/BinaryAnalysis/ModelChecker/UninitializedVariableTag.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Variables.h>
 #include <Rose/BinaryAnalysis/ModelChecker/WorkerStatus.h>

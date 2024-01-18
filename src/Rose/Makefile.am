@@ -174,6 +174,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/MagicNumber.C							\
 	BinaryAnalysis/MemoryMap.C							\
 	BinaryAnalysis/ModelChecker/BasicBlockUnit.C					\
+	BinaryAnalysis/ModelChecker/BasicTypes.C					\
 	BinaryAnalysis/ModelChecker/Engine.C						\
 	BinaryAnalysis/ModelChecker/ErrorTag.C						\
 	BinaryAnalysis/ModelChecker/ExecutionUnit.C					\

@@ -6,6 +6,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
+#include <Rose/Sarif/Analysis.h>
 #include <Rose/Sarif/Result.h>
 
 namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
@@ -103,8 +104,13 @@ ErrorTag::toYaml(std::ostream &out, const std::string &prefix1) const {
 }
 
 Sarif::Result::Ptr
-ErrorTag::toSarif() const {
-    return Sarif::Result::instance(Sarif::Severity::ERROR, mesg_);
+ErrorTag::toSarif(const Sarif::Analysis::Ptr &analysis) const {
+    auto result = Sarif::Result::instance(Sarif::Severity::ERROR, mesg_);
+    if (analysis) {
+        if (auto rule = analysis->findRuleByName("Error"))
+            result->rule(rule);
+    }
+    return result;
 }
 
 } // namespace

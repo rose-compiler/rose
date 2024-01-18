@@ -467,6 +467,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/MemoryMap.h							\
 	Rose/BinaryAnalysis/ModelChecker.h						\
 	Rose/BinaryAnalysis/ModelChecker/BasicBlockUnit.h				\
+	Rose/BinaryAnalysis/ModelChecker/BasicTypes.h					\
 	Rose/BinaryAnalysis/ModelChecker/Engine.h					\
 	Rose/BinaryAnalysis/ModelChecker/ErrorTag.h					\
 	Rose/BinaryAnalysis/ModelChecker/Exception.h					\
@@ -487,7 +488,6 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/ModelChecker/Settings.h					\
 	Rose/BinaryAnalysis/ModelChecker/SourceLister.h					\
 	Rose/BinaryAnalysis/ModelChecker/Tag.h						\
-	Rose/BinaryAnalysis/ModelChecker/Types.h					\
 	Rose/BinaryAnalysis/ModelChecker/UninitializedVariableTag.h			\
 	Rose/BinaryAnalysis/ModelChecker/Variables.h					\
 	Rose/BinaryAnalysis/ModelChecker/WorkerStatus.h					\

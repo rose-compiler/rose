@@ -3,7 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_MODEL_CHECKER
 
-#include <Rose/BinaryAnalysis/ModelChecker/Types.h>
+#include <Rose/BinaryAnalysis/ModelChecker/BasicTypes.h>
 #include <Rose/Sarif/BasicTypes.h>
 
 namespace Rose {
@@ -75,8 +75,10 @@ public:
      *  with ensuring that no other threads are sending output to the same stream. */
     virtual void toYaml(std::ostream&, const std::string &prefix) const = 0;
 
-    /** Generate a SARIF result. */
-    virtual Sarif::ResultPtr toSarif() const = 0;
+    /** Generate a SARIF result.
+     *
+     *  If an analysis is provided and has the appropriate rules, then the returned result will point to the rule. */
+    virtual Sarif::ResultPtr toSarif(const Sarif::AnalysisPtr&) const = 0;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -116,7 +118,7 @@ public:
     virtual std::string printableName() const override;
     virtual void print(std::ostream&, const std::string &prefix) const override;
     virtual void toYaml(std::ostream&, const std::string &prefix) const override;
-    virtual Sarif::ResultPtr toSarif() const override;
+    virtual Sarif::ResultPtr toSarif(const Sarif::AnalysisPtr&) const override;
 };
 
 } // namespace

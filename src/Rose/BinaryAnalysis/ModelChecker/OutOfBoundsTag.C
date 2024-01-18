@@ -5,6 +5,7 @@
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
+#include <Rose/Sarif/Analysis.h>
 #include <Rose/Sarif/Result.h>
 
 namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
@@ -149,8 +150,12 @@ OutOfBoundsTag::toYaml(std::ostream &out, const std::string &prefix1) const {
 }
 
 Sarif::Result::Ptr
-OutOfBoundsTag::toSarif() const {
+OutOfBoundsTag::toSarif(const Sarif::Analysis::Ptr &analysis) const {
     auto result = Sarif::Result::instance(Sarif::Severity::ERROR, name());
+    if (analysis) {
+        if (auto rule = analysis->findRuleByName("OutOfBoundsAccess"))
+            result->rule(rule);
+    }
     return result;
 }
 

@@ -136,7 +136,7 @@ BasicBlockUnit::toSarif(size_t maxSteps) const {
                 if (!mapName.empty())
                     return mapName;
             }
-            return std::string("virtual memory");
+            return std::string("file:///proc/self/mem");
         }();
 
         retval.push_back(Sarif::Location::instance(name,

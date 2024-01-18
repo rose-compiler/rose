@@ -17,7 +17,7 @@
 #include <Rose/BinaryAnalysis/HotPatch.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
 #include <Rose/BinaryAnalysis/LibraryIdentification.h>
-#include <Rose/BinaryAnalysis/ModelChecker/Types.h>
+#include <Rose/BinaryAnalysis/ModelChecker/BasicTypes.h>
 #include <Rose/BinaryAnalysis/NoOperation.h>
 #include <Rose/BinaryAnalysis/Reachability.h>
 #include <Rose/BinaryAnalysis/SmtSolver.h>

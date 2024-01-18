@@ -73,7 +73,7 @@ public:
 public:
     void print(std::ostream &out, const std::string &prefix) const override;
     void toYaml(std::ostream &out, const std::string &prefix) const override;
-    Sarif::ResultPtr toSarif() const override;
+    Sarif::ResultPtr toSarif(const Sarif::AnalysisPtr&) const override;
 };
 
 } // namespace

@@ -5,6 +5,7 @@
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
+#include <Rose/Sarif/Analysis.h>
 #include <Rose/Sarif/Result.h>
 
 namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
@@ -110,8 +111,13 @@ UninitializedVariableTag::toYaml(std::ostream &out, const std::string &prefix1) 
 }
 
 Sarif::Result::Ptr
-UninitializedVariableTag::toSarif() const {
-    return Sarif::Result::instance(Sarif::Severity::ERROR, name());
+UninitializedVariableTag::toSarif(const Sarif::Analysis::Ptr &analysis) const {
+    auto result = Sarif::Result::instance(Sarif::Severity::ERROR, name());
+    if (analysis) {
+        if (auto rule = analysis->findRuleByName("UninitializedRead"))
+            result->rule(rule);
+    }
+    return result;
 }
 
 } // namespace

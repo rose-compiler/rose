@@ -3,7 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_MODEL_CHECKER
 
-#include <Rose/BinaryAnalysis/ModelChecker/Types.h>
+#include <Rose/BinaryAnalysis/ModelChecker/BasicTypes.h>
 
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>

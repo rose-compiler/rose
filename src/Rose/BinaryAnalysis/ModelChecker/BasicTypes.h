@@ -1,10 +1,12 @@
-#ifndef ROSE_BinaryAnalysis_ModelChecker_Types_H
-#define ROSE_BinaryAnalysis_ModelChecker_Types_H
+#ifndef ROSE_BinaryAnalysis_ModelChecker_BasicTypes_H
+#define ROSE_BinaryAnalysis_ModelChecker_BasicTypes_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_MODEL_CHECKER
 
 #include <Rose/Sarif/BasicTypes.h>
+#include <Sawyer/Message.h>
 #include <memory>
+#include <boost/shared_ptr.hpp>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -147,6 +149,12 @@ enum class WorkerState {
 };
 
 #define UNMANAGED_WORKER ((size_t)-1)                   // non-ID for an unmanaged worker; I.e., a user thread
+
+/** Create a SARIF log for model checker results. */
+Rose::Sarif::LogPtr makeSarifLog();
+
+/** Add model checker rules to a SARIF analysis. */
+void insertSarifRules(const Rose::Sarif::AnalysisPtr&);
 
 } // namespace
 } // namespace

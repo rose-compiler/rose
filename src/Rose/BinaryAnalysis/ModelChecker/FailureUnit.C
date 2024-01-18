@@ -102,7 +102,7 @@ FailureUnit::toSarif(const size_t maxSteps) const {
     std::vector<Sarif::Location::Ptr> retval;
 
     if (maxSteps > 0) {
-        retval.push_back(Sarif::Location::instance("virtual memory", address().orElse(0), "automatic failure"));
+        retval.push_back(Sarif::Location::instance("file:///proc/self/mem", address().orElse(0), "automatic failure"));
 
         if (const auto sloc = sourceLocation())
             retval.push_back(Sarif::Location::instance(sloc));

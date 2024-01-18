@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Tag.h>
 
+#include <Rose/Sarif/Analysis.h>
 #include <Rose/Sarif/Result.h>
 
 namespace Rose {
@@ -60,7 +61,7 @@ NameTag::toYaml(std::ostream &out, const std::string &prefix) const {
 }
 
 Sarif::Result::Ptr
-NameTag::toSarif() const {
+NameTag::toSarif(const Sarif::Analysis::Ptr&) const {
     return Sarif::Result::instance(Sarif::Severity::ERROR, name_);
 }
 

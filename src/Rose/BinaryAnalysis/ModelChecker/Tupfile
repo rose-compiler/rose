@@ -2,6 +2,7 @@ include_rules
 
 run $(public_header) -o include/rose/Rose/BinaryAnalysis/ModelChecker \
     BasicBlockUnit.h \
+    BasicTypes.h \
     Engine.h \
     ErrorTag.h \
     Exception.h \
@@ -22,13 +23,13 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis/ModelChecker \
     Settings.h \
     SourceLister.h \
     Tag.h \
-    Types.h \
     UninitializedVariableTag.h \
     Variables.h \
     WorkerStatus.h
 
 run $(librose_compile) \
     BasicBlockUnit.C \
+    BasicTypes.C \
     Engine.C \
     ErrorTag.C \
     ExecutionUnit.C \

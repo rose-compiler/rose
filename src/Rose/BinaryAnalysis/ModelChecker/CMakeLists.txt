@@ -1,5 +1,6 @@
 add_library(roseBinaryAnalysisModelChecker OBJECT
   BasicBlockUnit.C
+  BasicTypes.C
   Engine.C
   ErrorTag.C
   ExecutionUnit.C
@@ -27,6 +28,7 @@ add_dependencies(roseBinaryAnalysisModelChecker rosetta_generated)
 
 install(FILES
   BasicBlockUnit.h
+  BasicTypes.h
   Engine.h
   ErrorTag.h
   Exception.h
@@ -47,7 +49,6 @@ install(FILES
   SemanticCallbacks.h
   SourceLister.h
   Tag.h
-  Types.h
   UninitializedVariableTag.h
   Variables.h
   WorkerStatus.h

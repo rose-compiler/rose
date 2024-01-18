@@ -89,7 +89,7 @@ std::vector<Sarif::Location::Ptr>
 InstructionUnit::toSarif(const size_t maxSteps) const {
     std::vector<Sarif::Location::Ptr> retval;
     if (maxSteps > 0) {
-        retval.push_back(Sarif::Location::instance("virtual memory",
+        retval.push_back(Sarif::Location::instance("file:///proc/self/mem",
                                                    AddressInterval::baseSize(insn_->get_address(), insn_->get_size()),
                                                    insn_->toString()));
         if (const auto sloc = sourceLocation())

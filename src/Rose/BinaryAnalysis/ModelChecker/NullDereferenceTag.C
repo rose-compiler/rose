@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/ModelChecker/NullDereferenceTag.h>
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
+#include <Rose/Sarif/Analysis.h>
 #include <Rose/Sarif/Result.h>
 
 #include <boost/lexical_cast.hpp>
@@ -118,8 +119,13 @@ NullDereferenceTag::toYaml(std::ostream &out, const std::string &prefix1) const 
 }
 
 Sarif::Result::Ptr
-NullDereferenceTag::toSarif() const {
-    return Sarif::Result::instance(Sarif::Severity::ERROR, name());
+NullDereferenceTag::toSarif(const Sarif::Analysis::Ptr &analysis) const {
+    auto result = Sarif::Result::instance(Sarif::Severity::ERROR, name());
+    if (analysis) {
+        if (auto rule = analysis->findRuleByName("NullPointerDereference"))
+            result->rule(rule);
+    }
+    return result;
 }
 
 } // namespace
