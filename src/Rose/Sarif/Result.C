@@ -130,9 +130,7 @@ Result::emitRule(std::ostream &out, const std::string &firstPrefix) {
         out <<firstPrefix <<"ruleId: " <<StringUtility::yamlEscape(rule_->id()) <<"\n";
         const std::string p = makeNextPrefix(firstPrefix);
         if (auto idx = findRuleIndex(rule_)) {
-            out <<p <<"rule:\n";
-            const std::string pp = makeObjectPrefix(p);
-            out <<pp <<"index: " <<*idx <<"\n";
+            out <<p <<"ruleIndex: " <<*idx <<"\n";
         } else {
             throw Sarif::Exception("Result::rule must be attached to the log before the result is emitted");
         }

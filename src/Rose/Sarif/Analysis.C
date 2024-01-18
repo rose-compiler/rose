@@ -37,6 +37,115 @@ Analysis::name() const {
     return name_;
 }
 
+const std::string&
+Analysis::version() const {
+    return version_;
+}
+
+void
+Analysis::version(const std::string &s) {
+    if (s == version_)
+        return;
+
+    checkPropertyChange("Anaylsis", "version", version_.empty(),
+                        {
+                            // Group 2
+                            {"rules", rules.empty()},
+
+                            // Group 3
+                            {"commandLine", commandLine_.empty()},
+                            {"exitStatus", !exitStatus_},
+
+                            // Group 4
+                            {"artifacts", artifacts.empty()},
+                            {"results", results.empty()},
+                        });
+
+    version_ = s;
+
+    if (isIncremental())
+        emitVersion(incrementalStream(), emissionPrefix());
+}
+
+void
+Analysis::emitVersion(std::ostream &out, const std::string &firstPrefix) {
+    if (!version_.empty())
+        out <<firstPrefix <<"version: " <<StringUtility::yamlEscape(version_) <<"\n";
+}
+
+const std::string&
+Analysis::informationUri() const {
+    return informationUri_;
+}
+
+void
+Analysis::informationUri(const std::string &s) {
+    if (s == informationUri_)
+        return;
+    checkPropertyChange("Anslysis", "informationUri", informationUri_.empty(),
+                        {
+                            // Group 2
+                            {"rules", rules.empty()},
+
+                            // Group 3
+                            {"commandLine", commandLine_.empty()},
+                            {"exitStatus", !exitStatus_},
+
+                            // Group 4
+                            {"artifacts", artifacts.empty()},
+                            {"results", results.empty()}
+                        });
+    informationUri_ = s;
+    if (isIncremental())
+        emitInformationUri(incrementalStream(), emissionPrefix());
+}
+
+void
+Analysis::emitInformationUri(std::ostream &out, const std::string &firstPrefix) {
+    if (!informationUri_.empty())
+        out <<firstPrefix <<"informationUri: " <<StringUtility::yamlEscape(informationUri_) <<"\n";
+}
+
+void
+Analysis::checkRulesResize(int delta, const Rule::Ptr &rule) {
+    if (!rule)
+        throw Sarif::Exception("cannot add null rule to an analysis");
+    if (isIncremental() && delta < 0)
+        throw IncrementalError("rule cannot be removed from an analysis");
+    checkPropertyChange("Analysis", "rules", true,
+                        {
+                            // Group 3
+                            {"commandLine", commandLine_.empty()},
+                            {"exitStatus", !exitStatus_},
+
+                            // Group 4
+                            {"artifacts", artifacts.empty()},
+                            {"results", results.empty()}
+                        });
+}
+
+void
+Analysis::handleRulesResize(int delta, const Rule::Ptr &rule) {
+    if (isIncremental()) {
+        ASSERT_require(1 == delta);
+        ASSERT_forbid(rules.empty());
+
+        // Make sure we can't change this pointer in the future
+        lock(rules.back(), "rules");
+
+        // Prior rules can no longer be modified
+        if (rules.size() >= 2)
+            rules[rules.size() - 2]->freeze();
+
+        // Emit this new rule
+        std::ostream &out = incrementalStream();
+        const std::string p = emissionPrefix();
+        if (1 == rules.size())
+            out <<p <<"rules:\n";
+        rule->emitYaml(out, makeListPrefix(p));
+    }
+}
+
 const std::vector<std::string>&
 Analysis::commandLine() const {
     return commandLine_;
@@ -46,17 +155,16 @@ void
 Analysis::commandLine(const std::vector<std::string> &cmd) {
     if (std::equal(commandLine_.begin(), commandLine_.end(), cmd.begin(), cmd.end()))
         return;
-
     checkPropertyChange("Anaylsis", "commandLine", commandLine_.empty(),
-                        {{"exitStatus", !exitStatus_},
-                         {"rules", rules.empty()},
-                         {"artifacts", artifacts.empty()},
-                         {"results", results.empty()}});
+                        {
+                            // Group 3
+                            {"exitStatus", !exitStatus_},
 
-    // Modify
+                            // Group 4
+                            {"artifacts", artifacts.empty()},
+                            {"results", results.empty()}
+                        });
     commandLine_ = cmd;
-
-    // Emit new yaml
     if (isIncremental())
         emitCommandLine(incrementalStream(), emissionPrefix());
 }
@@ -82,33 +190,6 @@ Analysis::emitCommandLine(std::ostream &out, const std::string &firstPrefix) {
     }
 }
 
-const std::string&
-Analysis::version() const {
-    return version_;
-}
-
-void
-Analysis::version(const std::string &s) {
-    if (s == version_)
-        return;
-
-    checkPropertyChange("Anaylsis", "version", version_.empty(),
-                        {{"rules", rules.empty()},
-                         {"artifacts", artifacts.empty()},
-                         {"results", results.empty()}});
-
-    version_ = s;
-
-    if (isIncremental())
-        emitVersion(incrementalStream(), emissionPrefix());
-}
-
-void
-Analysis::emitVersion(std::ostream &out, const std::string &firstPrefix) {
-    if (!version_.empty())
-        out <<firstPrefix <<"version: " <<StringUtility::yamlEscape(version_) <<"\n";
-}
-
 const Sawyer::Optional<int>&
 Analysis::exitStatus() const {
     return exitStatus_;
@@ -118,14 +199,13 @@ void
 Analysis::exitStatus(const Sawyer::Optional<int> &status) {
     if (status.isEqual(exitStatus_))
         return;
-
     checkPropertyChange("Anaylsis", "exitStatus", !exitStatus_,
-                        {{"rules", rules.empty()},
-                         {"artifacts", artifacts.empty()},
-                         {"results", results.empty()}});
-
+                        {
+                            // Group 4
+                            {"artifacts", artifacts.empty()},
+                            {"results", results.empty()}
+                        });
     exitStatus_ = status;
-
     if (isIncremental())
         emitExitStatus(incrementalStream(), emissionPrefix());
 }
@@ -136,43 +216,21 @@ Analysis::emitExitStatus(std::ostream &out, const std::string &firstPrefix) {
         // Exit status lives inside an object listed under "invocations". If we just emitted a command-line, then the object to
         // receive the exit status is still open, otherwise we have to create the "invocations" list and the object that holds the
         // exit status.
+        const std::string listPrefix = makeListPrefix(firstPrefix);
+        const std::string pp = makeNextPrefix(listPrefix);
+
         if (commandLine_.empty()) {
             out <<firstPrefix <<"invocations:\n";
-            out <<makeListPrefix(firstPrefix) <<"exitCode: " <<*exitStatus_ <<"\n";
-
+            out <<listPrefix <<"exitCode: " <<*exitStatus_ <<"\n";
         } else {
-            out <<makeNextPrefix(makeListPrefix(firstPrefix)) <<"exitCode: " <<*exitStatus_ <<"\n";
+            out <<pp <<"exitCode: " <<*exitStatus_ <<"\n";
         }
-    }
-}
 
-void
-Analysis::checkRulesResize(int delta, const Rule::Ptr &rule) {
-    if (!rule)
-        throw Sarif::Exception("cannot add null rule to an analysis");
-    if (isIncremental() && delta < 0)
-        throw IncrementalError("rule cannot be removed from an analysis");
-}
-
-void
-Analysis::handleRulesResize(int delta, const Rule::Ptr &rule) {
-    if (isIncremental()) {
-        ASSERT_require(1 == delta);
-        ASSERT_forbid(rules.empty());
-
-        // Make sure we can't change this pointer in the future
-        lock(rules.back(), "rules");
-
-        // Prior rules can no longer be modified
-        if (rules.size() >= 2)
-            rules[rules.size() - 2]->freeze();
-
-        // Emit this new rule
-        std::ostream &out = incrementalStream();
-        const std::string p = emissionPrefix();
-        if (1 == rules.size())
-            out <<p <<"rules:\n";
-        rule->emitYaml(out, makeListPrefix(p));
+        if (*exitStatus_ == 0) {
+            out <<pp <<"executionSuccessful: true\n";
+        } else {
+            out <<pp <<"executionSuccessful: false\n";
+        }
     }
 }
 
@@ -182,6 +240,11 @@ Analysis::checkArtifactsResize(int delta, const Artifact::Ptr &artifact) {
         throw Sarif::Exception("cannot add null artifact to an analysis");
     if (isIncremental() && delta < 0)
         throw IncrementalError("artifact cannot be removed from an analysis");
+    checkPropertyChange("Analysis", "artifacts", true,
+                        {
+                            // Group 4
+                            {"results", results.empty()}
+                        });
 }
 
 void
@@ -216,6 +279,7 @@ Analysis::checkResultsResize(int delta, const Result::Ptr &result) {
         throw Sarif::Exception("cannot add null result to an anaysis");
     if (isIncremental() && delta < 0)
         throw IncrementalError("result cannot be removed from an analysis");
+    checkPropertyChange("Analysis", "results", true, {});
 }
 
 void
@@ -255,6 +319,24 @@ Analysis::makeShellCommand(const std::vector<std::string> &args) {
     return retval;
 }
 
+Rule::Ptr
+Analysis::findRuleById(const std::string &id) {
+    for (auto &rule: rules) {
+        if (rule->id() == id)
+            return rule();
+    }
+    return nullptr;
+}
+
+Rule::Ptr
+Analysis::findRuleByName(const std::string &name) {
+    for (auto &rule: rules) {
+        if (rule->name() == name)
+            return rule();
+    }
+    return nullptr;
+}
+
 void
 Analysis::emitYaml(std::ostream &out, const std::string &firstPrefix) {
     const std::string p = makeNextPrefix(firstPrefix);
@@ -262,16 +344,17 @@ Analysis::emitYaml(std::ostream &out, const std::string &firstPrefix) {
     const std::string ppp = makeObjectPrefix(pp);
 
     out <<firstPrefix <<"tool:\n";
+
+    // Group 1: tool.driver
     out <<pp <<"driver:\n";
     out <<ppp <<"name: " <<StringUtility::yamlEscape(name_) <<"\n";
+    emitVersion(out, ppp);
+    emitInformationUri(out, ppp);
 
-    emitCommandLine(out, p);
-    emitExitStatus(out, p);
-    emitVersion(out, p);
-
+    // Group 2, tool.driver.rules
     if (!rules.empty()) {
-        out <<p <<"rules:\n";
-        const std::string pList = makeListPrefix(p);
+        out <<ppp <<"rules:\n";
+        const std::string pList = makeListPrefix(ppp);
         for (auto &rule: rules) {
             rule->emitYaml(out, pList);
             if (isIncremental()) {
@@ -282,6 +365,11 @@ Analysis::emitYaml(std::ostream &out, const std::string &firstPrefix) {
         }
     }
 
+    // Group 3: tool
+    emitCommandLine(out, p);
+    emitExitStatus(out, p);
+
+    // Group 4: tool
     if (!artifacts.empty()) {
         out <<p <<"artifacts:\n";
         const std::string pList = makeListPrefix(p);
@@ -294,7 +382,6 @@ Analysis::emitYaml(std::ostream &out, const std::string &firstPrefix) {
             }
         }
     }
-
     if (!results.empty()) {
         out <<p <<"results:\n";
         const std::string pList = makeListPrefix(p);

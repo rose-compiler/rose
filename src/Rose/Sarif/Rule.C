@@ -103,12 +103,15 @@ Rule::emitUuid(std::ostream &out, const std::string &firstPrefix) {
 
 void
 Rule::emitName(std::ostream &out, const std::string &firstPrefix) {
-    out <<firstPrefix <<"name: " <<StringUtility::yamlEscape(name_) <<"\n";
+    if (!name_.empty() && name_ != id_)
+        out <<firstPrefix <<"name: " <<StringUtility::yamlEscape(name_) <<"\n";
 }
 
 void
 Rule::emitDescription(std::ostream &out, const std::string &firstPrefix) {
-    out <<firstPrefix <<"fullDescription: " <<StringUtility::yamlEscape(description_) <<"\n";
+    out <<firstPrefix <<"fullDescription:\n";
+    const std::string pp = makeObjectPrefix(firstPrefix);
+    out <<pp <<"text: " <<StringUtility::yamlEscape(description_) <<"\n";
 }
 
 void

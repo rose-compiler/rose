@@ -4,8 +4,14 @@
 #include <Rose/Sarif/Analysis.h>
 #include <Rose/Sarif/Exception.h>
 
+#include <Sawyer/FileSystem.h>
 #include <boost/bind/bind.hpp>
 #include <fstream>
+
+#ifndef _MSC_VER
+#include <array>
+#include <cstdio>
+#endif
 
 using namespace boost::placeholders;
 
@@ -82,7 +88,7 @@ void
 Log::emitYaml(std::ostream &out, const std::string &firstPrefix) {
     out <<firstPrefix <<"version: 2.1.0\n";
     const std::string p = makeNextPrefix(firstPrefix);
-    out <<p <<"$schema: \"https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.4.json\"\n";
+    out <<p <<"$schema: \"https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json\"\n";
 
     if (!analyses.empty()) {
         out <<p <<"runs:\n";
@@ -98,8 +104,37 @@ Log::emitYaml(std::ostream &out, const std::string &firstPrefix) {
 }
 
 void
-Log::emit(std::ostream &out) {
+Log::emitYaml(std::ostream &out) {
     emitYaml(out, "");
+}
+
+void
+Log::emitJson(std::ostream &out) {
+#ifdef _MSC_VER
+    throw Sarif::Exception("JSON output is not supported when ROSE is configured to be built with a Microsoft compiler");
+#else
+    Sawyer::FileSystem::TemporaryFile yamlFile;
+    emitYaml(yamlFile.stream());
+    yamlFile.stream().close();
+
+    const std::string cmd = "yq -ojson " + StringUtility::bourneEscape(yamlFile.name().string());
+    std::array<char, 4096> buf;
+    std::unique_ptr<FILE, decltype(&pclose)> input(popen(cmd.c_str(), "r"), pclose);
+    if (!input)
+        throw Sarif::Exception("cannot run command \"" + StringUtility::cEscape(cmd) + "\"");
+    while (true) {
+        const size_t nRead = fread(buf.data(), 1, buf.size(), input.get());
+        if (0 == nRead) {
+            if (ferror(input.get()))
+                throw Sarif::Exception("problem reading command output from \"" + StringUtility::cEscape(cmd) + "\"");
+            break;
+        }
+
+        out.write(buf.data(), nRead);
+        if (!out)
+            throw Sarif::Exception("problem writing to stream");
+    }
+#endif
 }
 
 std::string

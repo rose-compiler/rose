@@ -36,19 +36,27 @@ public:
     using ConstPtr = AnalysisConstPtr;
     /** @} */
 
+    // Data is emitted in this order. Each group of data members must be fully emitted before the next group.
+    // Group 1: These are all part of the runs[*].tool.driver object
 private:
     std::string name_;                                  // analysis name
-    std::vector<std::string> commandLine_;              // command and arguments
     std::string version_;
-    Sawyer::Optional<int> exitStatus_;                  // exit status of the analysis
+    std::string informationUri_;                        // optional URI pointing to more information
 
+    // Group 2: Stored in runs[*].tool.driver.rules
 public:
     /** Rules for this analysis. */
-    EdgeVector<Rule> rules;
+    EdgeVector<Rule> rules;                             // part of runs[*].tool object
 
+    // Group 3: These are all part of the "runs[*].invocations[0]" object
+private:
+    std::vector<std::string> commandLine_;              // command and arguments, must be emitted before exit status
+    Sawyer::Optional<int> exitStatus_;                  // exit status of the analysis
+
+    // Group 4: each vector must be emitted in full before the next vector
+public:
     /** Artifacts for this analysis. */
     EdgeVector<Artifact> artifacts;
-
     /** Results for this analysis. */
     EdgeVector<Result> results;
 
@@ -66,7 +74,7 @@ public:
      *
      *  The analysis name is any string, usually one line, breifly describing the analysis. This property is set by the
      *  constructor. */
-    const std::string &name() const;
+    const std::string& name() const;
 
     /** Property: Command-line.
      *
@@ -78,6 +86,15 @@ public:
     void commandLine(const std::vector<std::string>&);
     /** @} */
 
+    /** Property: Command exit status.
+     *
+     *  This is the exit status of the command if the command did not exit because of a signal.
+     *
+     * @{ */
+    const Sawyer::Optional<int>& exitStatus() const;
+    void exitStatus(const Sawyer::Optional<int>&);
+    /** @} */
+
     /** Property: Version.
      *
      *  Version string for the tool.
@@ -87,14 +104,25 @@ public:
     void version(const std::string&);
     /** @} */
 
-    /** Property: Command exit status.
+    /** Property: Information URI.
      *
-     *  This is the exit status of the command if the command did not exit because of a signal.
+     *  URI pointing to more information about this analysis.
      *
      * @{ */
-    const Sawyer::Optional<int>& exitStatus() const;
-    void exitStatus(const Sawyer::Optional<int>&);
+    const std::string& informationUri() const;
+    void informationUri(const std::string&);
     /** @} */
+
+    /** Find a rule by its ID.
+     *
+     *  Scans through the @ref rules and returns the first one whose ID is the specified string, or null if no such rule exists. */
+    RulePtr findRuleById(const std::string&);
+
+    /** Find a rule by its name.
+     *
+     *  Scans through the @ref rules and returns the first one whose name property matches the specified string, or null if no such
+     *  rule exists. */
+    RulePtr findRuleByName(const std::string&);
 
 public:
     void emitYaml(std::ostream&, const std::string &prefix) override;
@@ -107,6 +135,7 @@ private:
     void emitCommandLine(std::ostream&, const std::string &prefix);
     void emitExitStatus(std::ostream&, const std::string &prefix);
     void emitVersion(std::ostream&, const std::string &prefix);
+    void emitInformationUri(std::ostream&, const std::string &prefix);
 
     // These signal slots are called before ("check") and after ("handle") a vector of edges is resized.
     void checkRulesResize(int delta, const RulePtr&);

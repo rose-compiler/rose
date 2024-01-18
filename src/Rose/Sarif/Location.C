@@ -107,14 +107,14 @@ Location::emitYaml(std::ostream &out, const std::string &firstPrefix) {
         out <<firstPrefix <<"physicalLocation:\n";
         out <<pp <<"artifactLocation:\n";
         out <<ppp <<"uri: " <<StringUtility::yamlEscape(sourceBegin_.fileName().string()) <<"\n";
-        out <<p <<"region:\n";
-        out <<pp <<"startLine: " <<sourceBegin_.line() <<"\n";
+        out <<pp <<"region:\n";
+        out <<ppp <<"startLine: " <<sourceBegin_.line() <<"\n";
         if (const auto col = sourceBegin_.column())
-            out <<pp <<"startColumn: " <<*col <<"\n";
+            out <<ppp <<"startColumn: " <<*col <<"\n";
         if (sourceEnd_) {
-            out <<pp <<"endLine: " <<sourceEnd_.line() <<"\n";
+            out <<ppp <<"endLine: " <<sourceEnd_.line() <<"\n";
             if (const auto col = sourceEnd_.column())
-                out <<pp <<"endColumn: " <<*col <<"\n";
+                out <<ppp <<"endColumn: " <<*col <<"\n";
         }
 
     } else {
@@ -122,13 +122,13 @@ Location::emitYaml(std::ostream &out, const std::string &firstPrefix) {
         out <<firstPrefix <<"physicalLocation:\n";
         out <<pp <<"artifactLocation:\n";
         out <<ppp <<"uri: " <<StringUtility::yamlEscape(binaryArtifact_) <<"\n";
-        out <<p <<"region:\n";
-        out <<pp <<"byteOffset: " <<StringUtility::addrToString(binaryRegion_.least()) <<"\n";
+        out <<pp <<"region:\n";
+        out <<ppp <<"byteOffset: " <<StringUtility::addrToString(binaryRegion_.least()) <<"\n";
         if (binaryRegion_ == AddressInterval::whole()) {
-            out <<pp <<"# WARNING: byteLength has been reduced by one to work around SARIF design flaw\n";
-            out <<pp <<"byteLength: " <<StringUtility::addrToString(binaryRegion_.greatest()) <<"\n";
+            out <<ppp <<"# WARNING: byteLength has been reduced by one to work around SARIF design flaw\n";
+            out <<ppp <<"byteLength: " <<StringUtility::addrToString(binaryRegion_.greatest()) <<"\n";
         } else {
-            out <<pp <<"byteLength: " <<StringUtility::addrToString(binaryRegion_.size()) <<"\n";
+            out <<ppp <<"byteLength: " <<StringUtility::addrToString(binaryRegion_.size()) <<"\n";
         }
     }
 
