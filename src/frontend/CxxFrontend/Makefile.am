@@ -49,6 +49,7 @@ PHONIES += edg-prerequisites binary_edg_tarball upload_edg_binary check-network 
 #(see above): .PHONY: edg-prerequisites
 edg-prerequisites:
 	$(MAKE) -C ../../util
+	$(MAKE) -C ../../Sawyer
 	$(MAKE) -C ../../ROSETTA/src
 
 # Run the edg-generate-sig script to find an appropriate version number.  We don't use make's $(shell...) function
