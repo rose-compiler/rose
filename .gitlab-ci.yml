@@ -38,11 +38,6 @@ workflow:
           variables:
               PIPE_TYPE: "pack"
               PIPE_NAME: "Packaging branch $CI_COMMIT_BRANCH for release"
-        - if: $CI_COMMIT_BRANCH =~ /-test/
-          when: always 
-          variables:
-              PIPE_TYPE: "develop"
-              PIPE_NAME: "Develop test for $CI_COMMIT_BRANCH"
         - if: $CI_PIPELINE_SOURCE == "merge_request_event"
           when: always 
           variables:
@@ -109,6 +104,7 @@ Build-Pack:
         - workpool
     before_script:
         - if [ -d $TEST_DIRECTORY ] ; then cd $TEST_DIRECTORY ; git pull origin master ; cd .. ; else git clone $TEST_SCRIPTS $TEST_DIRECTORY ; fi
+        - git pull origin develop
     script:
         - ./$TEST_DIRECTORY/develop_launcher.sh $CI_JOB_NAME
 
@@ -131,6 +127,8 @@ Deploy-Blocker:
 Policy-Checker:
     extends: .develop-base
     stage: Policy
+    before_script:
+        - if [ -d $TEST_DIRECTORY ] ; then cd $TEST_DIRECTORY ; git pull origin master ; cd .. ; else git clone $TEST_SCRIPTS $TEST_DIRECTORY ; fi
     script:
         - ./$TEST_DIRECTORY/util/policy_check.sh
 
@@ -159,6 +157,9 @@ Jovial:
     extends: .develop-base
 
 Ada:
+    extends: .develop-base
+
+EDG-Binary-Test:
     extends: .develop-base
 
 Language-Test:
