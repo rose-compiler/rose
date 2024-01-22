@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SARIF
 #include <sage3basic.h>
 #include <Rose/Sarif/Exception.h>
 
@@ -26,3 +28,5 @@ IncrementalError::notAttached(const std::string &what) {
 
 } // namespace
 } // namespace
+
+#endif

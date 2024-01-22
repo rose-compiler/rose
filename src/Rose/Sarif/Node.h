@@ -1,5 +1,7 @@
 #ifndef ROSE_Sarif_Node_H
 #define ROSE_Sarif_Node_H
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SARIF
 #include <Rose/Sarif/BasicTypes.h>
 
 #include <Rose/Sarif/Exception.h>
@@ -100,4 +102,5 @@ protected:
 } // namespace
 } // namespace
 
+#endif
 #endif

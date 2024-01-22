@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SARIF
 #include <sage3basic.h>
 #include <Rose/Sarif/Location.h>
 
@@ -142,3 +144,5 @@ Location::emissionPrefix() {
 
 } // namespace
 } // namespace
+
+#endif

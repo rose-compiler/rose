@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SARIF
 #include <sage3basic.h>
 #include <Rose/Sarif/Rule.h>
 
@@ -142,3 +144,5 @@ Rule::emissionPrefix() {
 
 } // namespace
 } // namespace
+
+#endif

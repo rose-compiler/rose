@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SARIF
 #include <sage3basic.h>
 #include <Rose/Sarif/Artifact.h>
 
@@ -144,3 +146,5 @@ Artifact::emissionPrefix() {
 
 } // namespace
 } // namespace
+
+#endif

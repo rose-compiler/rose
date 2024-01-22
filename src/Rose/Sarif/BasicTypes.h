@@ -1,5 +1,7 @@
 #ifndef ROSE_Sarif_BasicTypes_H
 #define ROSE_Sarif_BasicTypes_H
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SARIF
 #include <memory>
 
 namespace Rose {
@@ -85,4 +87,5 @@ using RuleConstPtr = std::shared_ptr<const Rule>;
 } // namespace
 } // namespace
 
+#endif
 #endif

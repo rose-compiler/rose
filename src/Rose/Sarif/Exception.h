@@ -1,6 +1,7 @@
 #ifndef ROSE_Sarif_Exception_H
 #define ROSE_Sarif_Exception_H
-
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SARIF
 #include <Rose/Exception.h>
 
 namespace Rose {
@@ -41,4 +42,5 @@ public:
 } // namespace
 } // namespace
 
+#endif
 #endif

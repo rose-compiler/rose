@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SARIF
 #ifndef ROSE_Sarif_Location_H
 #define ROSE_Sarif_Location_H
 #include <Rose/Sarif/Node.h>
@@ -121,4 +123,6 @@ private:
 
 } // namespace
 } // namespace
+
+#endif
 #endif

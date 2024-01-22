@@ -1,5 +1,7 @@
 #ifndef ROSE_Sarif_Rule_H
 #define ROSE_Sarif_Rule_H
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SARIF
 #include <Rose/Sarif/Node.h>
 
 #include <boost/uuid/uuid.hpp>
@@ -113,4 +115,6 @@ private:
 
 } // namespace
 } // namespace
+
+#endif
 #endif

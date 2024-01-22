@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SARIF
 #include <sage3basic.h>
 #include <Rose/Sarif/Result.h>
 
@@ -287,3 +289,5 @@ Result::findArtifactIndex(const Artifact::Ptr &artifact) {
 
 } // namespace
 } // namespace
+
+#endif

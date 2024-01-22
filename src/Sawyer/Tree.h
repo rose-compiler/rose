@@ -733,29 +733,7 @@ public:
 
     protected:
         UserBasePtr pointer(size_t i) const override {
-#if 1
-            // WARNING: Windows compilers have problems upcasting a shared_ptr
-            //
-            // Windows MSVC 192829913 (Visual Studio 2019 version 16.9.2) in C++14 mode cannot convert from, e.g., `const
-            // std::shared_ptr<Rose::Sarif::Result>` to `std::shared_ptr<Rose::Sarif::Node>` at the following `return` statement
-            // even though `Rose::Sarif::Result*` is implicitly convertible to `Rose::Sarif::Node*`. CPPReference.com states:
-            //
-            //   +-------------------------------------------------------------------------------------------------------+
-            //   |std::shared_ptr<T>::shared_ptr                                                                         |
-            //   |    template<class Y> shared_ptr(const shared_ptr<Y>& r) noexcept; (9)                                 |
-            //   |                                                                                                       |
-            //   |(9) Constructs a `shared_ptr` which shares ownership of the object managed by `r`. If `r` manages no   |
-            //   |    object, `*this` manages no object either. The template overload doesn't participate in overload    |
-            //   |    resolution if `Y*` is not implicitly [convertible to[until C++17] | compatible with[since C++20]]  |
-            //   |    `T*`.
-            //   +-------------------------------------------------------------------------------------------------------+
-            //
-            auto ptr = at(i)();                         // e.g., `const std::shared_ptr<Rose::Sarif::Result>`
-            UserBasePtr retval = std::static_pointer_cast<UserBase>(ptr);
-            return retval;
-#else
-            return at(i)();                             // use this simpler code after Windows compilers are fixed
-#endif
+            return at(i)();
         }
     };
 

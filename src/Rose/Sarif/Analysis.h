@@ -1,5 +1,7 @@
 #ifndef ROSE_Sarif_Analysis_H
 #define ROSE_Sarif_Analysis_H
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SARIF
 #include <Rose/Sarif/Node.h>
 
 #include <Sawyer/Optional.h>
@@ -148,4 +150,6 @@ private:
 
 } // namespace
 } // namespace
+
+#endif
 #endif

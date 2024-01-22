@@ -1,5 +1,7 @@
 #ifndef ROSE_Sarif_Log_H
 #define ROSE_Sarif_Log_H
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_SARIF
 #include <Rose/Sarif/Node.h>
 
 namespace Rose {
@@ -94,4 +96,6 @@ private:
 
 } // namespace
 } // namespace
+
+#endif
 #endif
