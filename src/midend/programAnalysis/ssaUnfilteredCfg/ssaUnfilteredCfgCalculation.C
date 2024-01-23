@@ -1,8 +1,6 @@
 //Author: George Vulov <georgevulov@hotmail.com>
 //Based on work by Justin Frye <jafrye@tamu.edu>
 
-// DQ (10/5/2014): This is more strict now that we include rose_config.h in the sage3basic.h.
-// #include "rose.h"
 #include "sage3basic.h"
 
 #include "CallGraph.h"
@@ -15,7 +13,6 @@
 #include <queue>
 #include <fstream>
 #include <stack>
-#include <boost/timer.hpp>
 #include <boost/foreach.hpp>
 #include <boost/unordered_set.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -24,11 +21,16 @@
 #include <iteratedDominanceFrontier.h>
 #include <fstream>
 
+#define DISPLAY_TIMINGS 0
+#if DISPLAY_TIMINGS
+// Required for Boost v1.83.0
+#  include <boost/timer.hpp>
+#  define BOOST_TIMER_ENABLE_DEPRECATED
+#endif
+
 // warning: poor practice and possible name conflicts according to Boost documentation
 #define foreach BOOST_FOREACH
 #define reverse_foreach BOOST_REVERSE_FOREACH
-
-//#define DISPLAY_TIMINGS
 
 using namespace std;
 using namespace ssa_unfiltered_cfg;
@@ -94,7 +96,7 @@ void SSA_UnfilteredCfg::run()
     outgoingDefTable.clear();
     astNodeToUses.clear();
 
-#ifdef DISPLAY_TIMINGS
+#if DISPLAY_TIMINGS
     timer time;
 #endif
     if (getDebug())
@@ -125,7 +127,7 @@ void SSA_UnfilteredCfg::run()
 
     if (getDebug())
         cout << "Finished UniqueNameTraversal." << endl;
-#ifdef DISPLAY_TIMINGS
+#if DISPLAY_TIMINGS
     printf("-- Timing: UniqueNameTraversal took %.2f seconds.\n", time.elapsed());
     fflush(stdout);
     time.restart();

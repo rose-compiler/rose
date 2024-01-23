@@ -4,17 +4,17 @@
  * variables are defined at function call expressions. If interprocedural analysis is turned off, function call expressions
  * never have definitions of variables. */
 
-// DQ (10/5/2014): This is more strict now that we include rose_config.h in the sage3basic.h.
-// #include "rose.h"
 #include "sage3basic.h"
 
 #include "CallGraph.h"
 #include "staticSingleAssignment.h"
 
+#define DISPLAY_TIMINGS 0
+#if DISPLAY_TIMINGS
 // Required for Boost v1.83.0
-#define BOOST_TIMER_ENABLE_DEPRECATED
-#include <boost/timer.hpp>
-//#define DISPLAY_TIMINGS
+#  include <boost/timer.hpp>
+#  define BOOST_TIMER_ENABLE_DEPRECATED
+#endif
 
 using namespace std;
 using namespace ssa_private;
@@ -24,12 +24,12 @@ void StaticSingleAssignment::interproceduralDefPropagation(const unordered_set<S
 {
     ClassHierarchyWrapper classHierarchy(project);
 
-#ifdef DISPLAY_TIMINGS
+#if DISPLAY_TIMINGS
     timer time;
 #endif
     vector<SgFunctionDefinition*> topologicalFunctionOrder = calculateInterproceduralProcessingOrder(interestingFunctions);
 
-#ifdef DISPLAY_TIMINGS
+#if DISPLAY_TIMINGS
     printf("-- Timing: Sorting functions in topological order took %.2f seconds.\n", time.elapsed());
     fflush(stdout);
 #endif
@@ -63,11 +63,11 @@ vector<SgFunctionDefinition*> StaticSingleAssignment::calculateInterproceduralPr
     //So that callees are processed before callers. This way we would have exact information at each call site
     CallGraphBuilder cgBuilder(project);
     FunctionFilter functionFilter;
-#ifdef DISPLAY_TIMINGS
+#if DISPLAY_TIMINGS
     timer time;
 #endif
     cgBuilder.buildCallGraph(functionFilter);
-#ifdef DISPLAY_TIMINGS
+#if DISPLAY_TIMINGS
     printf("-- Timing: Building call graph took %.2f seconds.\n", time.elapsed());
 #endif
 
