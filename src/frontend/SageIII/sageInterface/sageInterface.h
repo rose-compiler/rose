@@ -1317,12 +1317,12 @@ static std::vector<NodeType*> getSgNodeListFromMemoryPool()
 }
 
 
-//! we have two serialize function, one for a single node, the other for a list of pointers
-static void serialize(SgNode* node, std::string& prefix, bool hasRemaining, std::ostringstream& out, std::string& edgeLabel);
+//! we have two serialize() functions, one for a single node, the other for a list of pointers
+void serialize(SgNode* node, std::string& prefix, bool hasRemaining, std::ostringstream& out, std::string& edgeLabel);
 
 // A special node in the AST text dump
 template<typename T>
-static void serialize_list(T& plist, std::string T_name, std::string& prefix, bool hasRemaining, std::ostringstream& out, std::string& edgeLabel)
+void serialize_list(T& plist, std::string T_name, std::string& prefix, bool hasRemaining, std::ostringstream& out, std::string& edgeLabel)
 {       
   out<<prefix;
   out<< (hasRemaining?"|---": "|___");

@@ -25488,7 +25488,7 @@ static void serialize(SgTemplateArgumentPtrList& plist, string& prefix, bool has
 
 // print essential information from any AST node
 // hasRemaining if this node has a sibling node to be visited next.
-static void SageInterface::serialize(SgNode* node, string& prefix, bool hasRemaining, ostringstream& out, string& edgeLabel)
+void SageInterface::serialize(SgNode* node, string& prefix, bool hasRemaining, ostringstream& out, string& edgeLabel)
 {
   // there may be NULL children!!
   //if (!node) return;
