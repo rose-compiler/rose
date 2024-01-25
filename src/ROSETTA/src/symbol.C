@@ -477,11 +477,18 @@ Grammar::setUpSymbols ()
      AdaPackageSymbol.setFunctionSource     ( "SOURCE_EMPTY_GET_TYPE", "../Grammar/Symbol.code" );
 
      AdaTaskSymbol.setFunctionSource        ( "SOURCE_ADA_TASK_SYMBOL", "../Grammar/Symbol.code" );
-     AdaTaskSymbol.setFunctionSource        ( "SOURCE_EMPTY_GET_TYPE", "../Grammar/Symbol.code" );
+     AdaTaskSymbol.editSubstitute           ( "SPECDECL_TYPE", "SgAdaTaskSpecDecl" );
+     AdaTaskSymbol.editSubstitute           ( "TYPEDECL_TYPE", "SgAdaTaskTypeDecl" );
+     AdaTaskSymbol.editSubstitute           ( "TYPE_TYPE", "SgAdaTaskType" );
+     AdaTaskSymbol.setFunctionSource        ( "SOURCE_ADA_CONCURRENT_GET_TYPE", "../Grammar/Symbol.code" );
+
 
   // PP (01/11/22): + protected objects
      AdaProtectedSymbol.setFunctionSource   ( "SOURCE_ADA_PROTECTED_SYMBOL", "../Grammar/Symbol.code" );
-     AdaProtectedSymbol.setFunctionSource   ( "SOURCE_EMPTY_GET_TYPE", "../Grammar/Symbol.code" );
+     AdaProtectedSymbol.editSubstitute      ( "SPECDECL_TYPE", "SgAdaProtectedSpecDecl" );
+     AdaProtectedSymbol.editSubstitute      ( "TYPEDECL_TYPE", "SgAdaProtectedTypeDecl" );
+     AdaProtectedSymbol.editSubstitute      ( "TYPE_TYPE", "SgAdaProtectedType" );
+     AdaProtectedSymbol.setFunctionSource   ( "SOURCE_ADA_CONCURRENT_GET_TYPE", "../Grammar/Symbol.code" );
 
   // MS (05/01/21): Ada generics
      AdaGenericSymbol.setFunctionSource     ( "SOURCE_ADA_GENERIC_SYMBOL", "../Grammar/Symbol.code" );
@@ -496,7 +503,7 @@ Grammar::setUpSymbols ()
      AdaFormalPackageSymbol.setFunctionSource ( "SOURCE_EMPTY_GET_TYPE", "../Grammar/Symbol.code" );
 
      AdaRenamingSymbol.setFunctionSource    ( "SOURCE_ADA_RENAMING_SYMBOL", "../Grammar/Symbol.code" );
-     AdaRenamingSymbol.setFunctionSource    ( "SOURCE_EMPTY_GET_TYPE", "../Grammar/Symbol.code" );
+     AdaRenamingSymbol.setFunctionSource    ( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );
 
      AdaInheritedFunctionSymbol.setFunctionSource ( "SOURCE_ADA_INHERITED_FUNCTION_SYMBOL", "../Grammar/Symbol.code" );
 

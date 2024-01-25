@@ -1194,9 +1194,14 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                        }
 
                     // PP (01/22/21) used in Ada
-                    case V_SgTypeBool: // \todo remove BOOL_IS_ENUM_IN_ADA
-                    case V_SgTypeLongLong:
-                    case V_SgTypeDefault:  // PP (4/14/23): added SgTypeDefault
+                    case V_SgTypeDefault:       // PP (4/14/23): added
+                    case V_SgAdaSubroutineType: // PP (22/1/23): added
+                    case V_SgAdaFormalType:     // PP (22/1/23): added
+                    case V_SgAdaSubtype:        // PP (22/1/23): added \todo get to the bottom of the subtype
+                      // below cases that return unusual types
+                    //~ case V_SgTypeLongLong:
+                    //~ case V_SgTypeChar:          // PP (22/1/23): added
+                    case V_SgTypeBool:          // \todo remove BOOL_IS_ENUM_IN_ADA
                        {
                          // \todo check for examples in regression tests
                          ROSE_ASSERT(SageInterface::is_Ada_language());

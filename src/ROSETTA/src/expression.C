@@ -99,6 +99,7 @@ Grammar::setUpExpressions () {
     AdaProtectedRefExp.editSubstitute       ( "DECLARATION_TYPE", "SgDeclarationStatement" );
     AdaProtectedRefExp.setFunctionPrototype ( "HEADER_DECLARATION_FROM_SYMBOL", "../Grammar/Expression.code" );
     AdaProtectedRefExp.setFunctionSource    ( "SOURCE_DECLARATION_FROM_SYMBOL", "../Grammar/Expression.code" );
+    AdaProtectedRefExp.setFunctionSource    ( "SOURCE_GET_TYPE_FROM_SYMBOL", "../Grammar/Expression.code" );
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (AdaRenamingRefExp,      "AdaRenamingRefExp",      "ADA_RENAMING_REF" );
     AdaRenamingRefExp.setDataPrototype ( "SgAdaRenamingSymbol*", "symbol", "= nullptr",
@@ -108,6 +109,7 @@ Grammar::setUpExpressions () {
     AdaRenamingRefExp.editSubstitute       ( "DECLARATION_TYPE", "SgAdaRenamingDecl" );
     AdaRenamingRefExp.setFunctionPrototype ( "HEADER_DECLARATION_FROM_SYMBOL", "../Grammar/Expression.code" );
     AdaRenamingRefExp.setFunctionSource    ( "SOURCE_DECLARATION_FROM_SYMBOL", "../Grammar/Expression.code" );
+    AdaRenamingRefExp.setFunctionSource    ( "SOURCE_GET_TYPE_FROM_SYMBOL", "../Grammar/Expression.code" );
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -119,6 +121,7 @@ Grammar::setUpExpressions () {
     AdaTaskRefExp.editSubstitute       ( "DECLARATION_TYPE", "SgDeclarationStatement" );
     AdaTaskRefExp.setFunctionPrototype ( "HEADER_DECLARATION_FROM_SYMBOL", "../Grammar/Expression.code" );
     AdaTaskRefExp.setFunctionSource    ( "SOURCE_DECLARATION_FROM_SYMBOL", "../Grammar/Expression.code" );
+    AdaTaskRefExp.setFunctionSource    ( "SOURCE_GET_TYPE_FROM_SYMBOL", "../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (AdaUnitRefExp,          "AdaUnitRefExp",          "ADA_UNIT_REF" );

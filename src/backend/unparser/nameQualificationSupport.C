@@ -1803,6 +1803,9 @@ namespace
     if (/*const SgEnumVal* castexp =*/ isSgNullExpression(e))
       return;
 
+    if (/*const SgEnumVal* castexp =*/ isSgCharVal(e))
+      return;
+
     if (e == nullptr)
     {
       mlog[WARN] << "nullptr in AdaPreNameQualifier::addRenamedScopeIfNeeded"
@@ -1810,7 +1813,7 @@ namespace
     }
     else
     {
-      mlog[WARN] << "unexpected type in AdaPreNameQualifier::addRenamedScopeIfNeeded" << typeid(*e).name()
+      mlog[WARN] << "unexpected type in AdaPreNameQualifier::addRenamedScopeIfNeeded " << typeid(*e).name()
                  << std::endl;
     }
   }
