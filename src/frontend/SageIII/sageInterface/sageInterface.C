@@ -10057,7 +10057,7 @@ void SageInterface::removeStatement(SgStatement* targetStmt, bool autoRelocatePr
                        {
                       // Remove these comments and/or CPP directives and put them into the previous statement (marked to be output after the statement).
                       // Find the surrounding statement by first looking up in the sequence of statements in this block, then down, we need another
-                      // statement from the same file.
+                      // statement from the same file.  SgGlobal may be returned if nothing else is found.
                          bool surroundingStatementPreceedsTargetStatement = false;
                          SgStatement* surroundingStatement = findSurroundingStatementFromSameFile(targetStmt,surroundingStatementPreceedsTargetStatement);
 
@@ -10198,6 +10198,13 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
      printf (" --- sourceStatement = %p = %s name = %s \n",sourceStatement,sourceStatement->class_name().c_str(),get_name(sourceStatement).c_str());
      printf (" --- targetStatement = %p = %s name = %s \n",targetStatement,targetStatement->class_name().c_str(),get_name(targetStatement).c_str());
 #endif
+     // Liao 2024/1/24
+     // There is a corner case: #if #endif may span very wide in the code. The lead #if may be moved without the matching #endif being found.
+     // A solution : pcounter++  whenever a leading #if #ifdef #ifndef is encountered. 
+     //  pcounter -- if #endif is countered
+     //  Normally the final pcounter ==0, if pcounter>=1, a #endif is missing somewhere. We should patch it up.
+     int pcounter=0; // relevant preprocessing directive counter  
+     PreprocessingInfo::RelativePositionType rpos;  // relative position of the leading #if encountered
 
   // Now add the entries from the captureList to the surroundingStatement and remove them from the targetStmt.
   // printf ("This is a valid surrounding statement = %s for insertBefore = %s \n",surroundingStatement->class_name().c_str(),insertBefore ? "true" : "false");
@@ -10214,6 +10221,19 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
 
           printf ("(*comments)[*j]->getRelativePosition() = %s \n",PreprocessingInfo::relativePositionName((*comments)[*j]->getRelativePosition()).c_str());
 #endif
+
+          PreprocessingInfo::DirectiveType dtype= (*comments)[*j]->getTypeOfDirective();
+          if (dtype == PreprocessingInfo::CpreprocessorIfdefDeclaration  ||
+              dtype == PreprocessingInfo::CpreprocessorIfndefDeclaration ||
+              dtype == PreprocessingInfo::CpreprocessorIfDeclaration )
+          {
+            pcounter++;
+            rpos = (*comments)[*j]->getRelativePosition();
+          }
+          else if (dtype==PreprocessingInfo::CpreprocessorEndifDeclaration)
+          {
+            pcounter--;
+           }
 
           if (surroundingStatementPreceedsTargetStatement == true)
              {
@@ -10265,6 +10285,35 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
 
           j++;
         }
+
+        if (pcounter<0)
+        {
+          cerr<<"Error: the count of #endif is larger than #if, #ifdef, and #ifnedf counts. This is unexpected. Relevant stmt is:"<<endl;
+          SageInterface::printAST(sourceStatement);
+          ROSE_ASSERT (pcounter>=0);
+        }
+
+        // We have encountered #if, #ifdef, and #ifnedf, but not enough #endif. We need to add extra #endif
+        while (pcounter>=1)
+        {
+           // adjust rpos based on surroundingStatementPreceedsTargetStatement
+           // if the new stmt is in front of the current stmt
+           // the current preprocessing info attached to the current stmt's before position will become the after position of the preceeding new stmt
+           if (surroundingStatementPreceedsTargetStatement == true)
+           {
+               if (rpos==PreprocessingInfo::before)
+                   rpos = PreprocessingInfo::after;
+           }
+           else
+           {   // reverse adjustment for the new stmt which is after the current stmt with the comments/cpp directives
+               if (rpos==PreprocessingInfo::after)
+                   rpos = PreprocessingInfo::before;
+           }
+
+           PreprocessingInfo* end_if  = new PreprocessingInfo (PreprocessingInfo::CpreprocessorEndifDeclaration, string("#endif"),  "Compiler-Generated", 0, 0, 0, rpos);
+           targetStatement->addToAttachedPreprocessingInfo (end_if);
+           pcounter--;
+        } // TODO: what to do with the original #endif somewhere later in the code? We may need to find and remove this. But hard to find the matching one!
 
   // Now remove each NULL entries in the comments vector.
   // Because of iterator invalidation we must reset the iterators after each call to erase (I think).
@@ -16910,7 +16959,11 @@ SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_
      counter = 0;
 #endif
 
+      // Similar revise like SageInterface::moveCommentsToNewStatement(), balancing #if .. #endif for some corner cases
+     int pcounter =0;
      PreprocessingInfo* prevItem = NULL;
+     PreprocessingInfo::RelativePositionType rpos;
+
      for (Rose_STL_Container<PreprocessingInfo*>::iterator i = (*infoList).begin(); i != (*infoList).end(); i++)
         {
        // DQ (11/19/2020): Added assertion.
@@ -16931,6 +16984,19 @@ SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_
           printf ("   --- TOP of loop: info->getTypeOfDirective()      = %s \n",PreprocessingInfo::directiveTypeName(info->getTypeOfDirective()).c_str());
           printf ("   --- TOP of loop: info->getRelativePosition()     = %s \n",PreprocessingInfo::relativePositionName(info->getRelativePosition()).c_str());
 #endif
+		  PreprocessingInfo::DirectiveType dtype= info->getTypeOfDirective();
+		  if (dtype == PreprocessingInfo::CpreprocessorIfdefDeclaration  ||
+				  dtype == PreprocessingInfo::CpreprocessorIfndefDeclaration ||
+				  dtype == PreprocessingInfo::CpreprocessorIfDeclaration )
+		  {
+			  pcounter++;
+			  rpos = info->getRelativePosition();
+		  }
+		  else if (dtype==PreprocessingInfo::CpreprocessorEndifDeclaration)
+		  {
+			  pcounter--;
+		  }
+
           if (   // match enum values in http://rosecompiler.org/ROSE_HTML_Reference/classPreprocessingInfo.html
                (info->getTypeOfDirective()==PreprocessingInfo::C_StyleComment)||
                (info->getTypeOfDirective()==PreprocessingInfo::CplusplusStyleComment)||
@@ -16995,6 +17061,7 @@ SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_
                               printf (" --- Skip upper inner body (part 1.1) of loop over the comments and CPP directives \n");
 #else
                               stmt_dst->addToAttachedPreprocessingInfo(info,PreprocessingInfo::before);
+                              rpos = PreprocessingInfo::before;
 #endif
                             }
                            else // there is a previous item, insert after it
@@ -17004,6 +17071,7 @@ SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_
                               printf (" --- Skip upper inner body (part 1.2) of loop over the comments and CPP directives \n");
 #else
                               stmt_dst->insertToAttachedPreprocessingInfo(info, prevItem);
+                              // TODO: what to do now for rpos of the patching #endif ??
 #endif
                             }
 #if 0
@@ -17027,6 +17095,7 @@ SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_
                          printf ("In SageInterface::movePreprocessingInfo(): before addToAttachedPreprocessingInfo(): stmt_dst                 = %p \n",stmt_dst);
 #endif
                          stmt_dst->addToAttachedPreprocessingInfo(info,PreprocessingInfo::after);
+                         rpos = PreprocessingInfo::after;
 #if 0
                          printf ("In SageInterface::movePreprocessingInfo(): after addToAttachedPreprocessingInfo(): infoList->size()          = %zu \n",infoList->size());
                          printf ("In SageInterface::movePreprocessingInfo(): after addToAttachedPreprocessingInfo(): infoToRemoveList->size()  = %zu \n",infoToRemoveList->size());
@@ -17095,6 +17164,7 @@ SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_
                     printf ("In SageInterface::movePreprocessingInfo(): adjust dst position: dst_position = %s \n",PreprocessingInfo::relativePositionName(dst_position).c_str());
 #endif
                     info->setRelativePosition(dst_position);
+                    rpos = dst_position;
                   }
 #endif
              } // end if
@@ -17104,6 +17174,24 @@ SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_
           printf ("   --- BOTTOM of loop: infoToRemoveList->size()        = %zu \n",infoToRemoveList->size());
 #endif
         } // end for
+
+       if (pcounter<0)
+       {
+         cerr<<"Error: the count of #endif is larger than #if, #ifdef, and #ifnedf counts. This is unexpected. Relevant stmt is:"<<endl;
+         SageInterface::printAST(stmt_src);
+         ROSE_ASSERT (pcounter>=0);
+       }
+
+       // We have encountered #if, #ifdef, and #ifnedf, but not enough #endif. We need to add extra #endif
+       while (pcounter>=1)
+       {
+          PreprocessingInfo* end_if  = new PreprocessingInfo (PreprocessingInfo::CpreprocessorEndifDeclaration, string("#endif"),  "Compiler-Generated", 0, 0, 0, rpos);
+          //stmt_dst->addToAttachedPreprocessingInfo(end_if,rpos);// TODO: rpos used here again??
+          stmt_dst->addToAttachedPreprocessingInfo(end_if);// 
+          pcounter--;
+       } // TODO: what to do with the original #endif somewhere later in the code? We may need to find and remove this. But hard to find the matching one!
+
+
 
 #if 0
      printf ("In SageInterface::movePreprocessingInfo(): Remove the element transfered to the new statement from the old statement list \n");
