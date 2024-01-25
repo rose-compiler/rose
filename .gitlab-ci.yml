@@ -335,9 +335,6 @@ EDG-Binary-Build:
 NPB-OMP:
     extends: .release-base
 
-PolyOpt:
-    extends: .release-base
-
 LULESH:
     extends: .release-base
 
@@ -361,6 +358,16 @@ OMP-Runtime:
     
 GPU:
     extends: .release-base 
+    
+Plumhall-CVS:
+    extends: .release-base 
+    script:
+        - ./$TEST_DIRECTORY/release_launcher.sh $CI_JOB_NAME 103 #Second arg is EXPECTED_FAILS
+    
+Plumhall-XVS:
+    extends: .release-base 
+    script:
+        - ./$TEST_DIRECTORY/release_launcher.sh $CI_JOB_NAME 3660 #Second arg is EXPECTED_SUCCESS
     
 Doxygen:
     extends: .release-base 
