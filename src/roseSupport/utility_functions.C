@@ -15,6 +15,7 @@
 #include "plugin.h"  // dlopen() is not available on Windows
 #endif
 
+#include <thread>
 #include <time.h>
 
 // Headers required only to obtain version numbers
@@ -320,6 +321,13 @@ std::string version_message() {
 #else
     ss <<"  --- logic assertions:           enabled\n";
     ss <<"  --- full optimization:          disabled\n";
+#endif
+
+#ifdef _REENTRANT
+    ss <<"  --- multi-threading:            enabled, "
+       <<StringUtility::plural(std::thread::hardware_concurrency(), "hardware threads") <<"\n";
+#else
+    ss <<"  --- multi-threading:            disabled\n";
 #endif
 
     ss <<"  --- boost library:              " <<boostVersionString() <<" (" <<rose_boost_version_path() <<")\n";
