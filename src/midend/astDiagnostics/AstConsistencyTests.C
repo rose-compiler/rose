@@ -3361,7 +3361,8 @@ TestAstSymbolTables::visit ( SgNode* node )
                        {
                          SgAdaPackageSymbol* sy = isSgAdaPackageSymbol(symbol);
 
-                         ROSE_ASSERT(sy && sy->get_declaration());
+                         ASSERT_not_null(sy);
+                         ASSERT_not_null(sy->get_declaration());
                          break;
                        }
 
@@ -3369,7 +3370,8 @@ TestAstSymbolTables::visit ( SgNode* node )
                        {
                          SgAdaTaskSymbol* sy = isSgAdaTaskSymbol(symbol);
 
-                         ROSE_ASSERT(sy && sy->get_declaration());
+                         ASSERT_not_null(sy);
+                         ASSERT_not_null(sy->get_declaration());
                          break;
                        }
 
@@ -3377,7 +3379,8 @@ TestAstSymbolTables::visit ( SgNode* node )
                        {
                          SgAdaProtectedSymbol* sy = isSgAdaProtectedSymbol(symbol);
 
-                         ROSE_ASSERT(sy && sy->get_declaration());
+                         ASSERT_not_null(sy);
+                         ASSERT_not_null(sy->get_declaration());
                          break;
                        }
 
@@ -3385,7 +3388,8 @@ TestAstSymbolTables::visit ( SgNode* node )
                        {
                          SgAdaRenamingSymbol* sy = isSgAdaRenamingSymbol(symbol);
 
-                         ROSE_ASSERT(sy && sy->get_declaration());
+                         ASSERT_not_null(sy);
+                         ASSERT_not_null(sy->get_declaration());
                          break;
                        }
 
@@ -3393,7 +3397,8 @@ TestAstSymbolTables::visit ( SgNode* node )
                        {
                          SgAdaGenericSymbol* sy = isSgAdaGenericSymbol(symbol);
 
-                         ROSE_ASSERT(sy && sy->get_declaration() != NULL);
+                         ASSERT_not_null(sy);
+                         ASSERT_not_null(sy->get_declaration());
                          break;
                        }
 
@@ -3401,7 +3406,17 @@ TestAstSymbolTables::visit ( SgNode* node )
                        {
                          SgAdaGenericInstanceSymbol* sy = isSgAdaGenericInstanceSymbol(symbol);
 
-                         ROSE_ASSERT(sy && sy->get_declaration() != NULL);
+                         ASSERT_not_null(sy);
+                         ASSERT_not_null(sy->get_declaration());
+                         break;
+                       }
+
+                    case V_SgAdaFormalPackageSymbol:
+                       {
+                         SgAdaFormalPackageSymbol* sy = isSgAdaFormalPackageSymbol(symbol);
+
+                         ASSERT_not_null(sy);
+                         ASSERT_not_null(sy->get_declaration());
                          break;
                        }
 

@@ -835,6 +835,9 @@ mkAdaFormalPackageDecl(const std::string& name, SgDeclarationStatement& gendecl,
   sg::linkParentChild(sgnode, dclscope, &SgAdaFormalPackageDecl::set_prototypeScope);
   sgnode.set_firstNondefiningDeclaration(&sgnode);
   scope.insert_symbol(name, &mkBareNode<SgAdaFormalPackageSymbol>(&sgnode));
+
+  logTrace() << "ins sym: " << name << std::endl;
+  ASSERT_not_null(scope.find_symbol_from_declaration(&sgnode));
   return sgnode;
 }
 

@@ -5599,10 +5599,10 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
 
         /* unused field
-             Declaration_ID                 Corresponding_Declaration;
           +  A_Formal_Package_Declaration
              Declaration_ID                 Corresponding_Body;
         */
+
         assocdecl = &sgnode;
         break;
       }

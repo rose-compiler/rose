@@ -7741,6 +7741,13 @@ SgSymbolTable::get_name( const SgNode* node) const
                break;
              }
 
+          case V_SgAdaFormalPackageDecl:
+             {
+               const SgAdaFormalPackageDecl* dcl = isSgAdaFormalPackageDecl(node);
+               name = dcl->get_name();
+               break;
+             }
+
           case V_SgAdaTaskSpecDecl:
              {
                const SgAdaTaskSpecDecl* dcl = isSgAdaTaskSpecDecl(node);

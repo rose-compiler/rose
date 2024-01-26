@@ -2,6 +2,8 @@
 #include "sage3basic.h"
 #include "Rose/AST/IO.h"
 
+#include "midend/astDiagnostics/AstConsistencyTests.h"
+
 int main( int argc, char * argv[] ) {
   ROSE_INITIALIZE;
   std::vector<std::string> args(argv, argv+argc);
