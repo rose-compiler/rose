@@ -129,6 +129,14 @@ Path::lastNode() const {
     return end_;
 }
 
+PathNode::Ptr
+Path::firstNode() const {
+    PathNode::Ptr retval;
+    for (PathNode::Ptr node = end_; node; node = node->parent())
+        retval = node;
+    return retval;
+}
+
 std::vector<PathNode::Ptr>
 Path::nodes() const {
     std::vector<PathNode::Ptr> retval;
@@ -142,7 +150,7 @@ std::string
 Path::printableName() const {
     // FIXME[Robb Matzke 2021-03-30]: this name isn't unique to this path
     if (end_) {
-        return "path ending at " + end_->executionUnit()->printableName();
+        return "from " + firstNode()->executionUnit()->printableName() + " to " + end_->executionUnit()->printableName();
     } else {
         return "empty path";
     }

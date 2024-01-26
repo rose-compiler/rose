@@ -880,9 +880,8 @@ Engine::showStatistics(std::ostream &out, const std::string &prefix) const {
             out <<prefix <<"  thread " <<work.threadId;
             if (work.tid > 0)
                 out <<" (LWP " <<work.tid <<")";
-            out <<": " <<work.path->printableName()
-                <<" having " <<StringUtility::plural(work.path->nSteps(), "steps")
-                <<"; " <<work.elapsed <<" elapsed\n";
+            out <<": " <<work.elapsed <<" in " <<StringUtility::plural(work.path->nSteps(), "steps")
+                <<" " <<work.path->printableName() <<"\n";
         }
     }
 

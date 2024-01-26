@@ -112,6 +112,14 @@ public:
      *  Thread safety: This method is thread safe. */
     PathNodePtr lastNode() const;
 
+    /** First node of the path.
+     *
+     *  Returns the first node of the path if the path is not empty. Returns null if the path is empty. Paths point to their last
+     *  node, which means this function needs to traverse the entire path node list in order to get to the first node.
+     *
+     *  Thread safety: This method is thread safe. */
+    PathNodePtr firstNode() const;
+
     /** Nodes composing path.
      *
      *  Returns a vector of the nodes that make up the path in the order they were executed.
