@@ -5,6 +5,7 @@
 
 #include <Rose/Sarif/Analysis.h>
 #include <Rose/Sarif/Artifact.h>
+#include <Rose/Sarif/CodeFlow.h>
 #include <Rose/Sarif/Exception.h>
 #include <Rose/Sarif/Location.h>
 #include <Rose/Sarif/Rule.h>
@@ -19,11 +20,14 @@ namespace Sarif {
 Result::~Result() {}
 
 Result::Result(Kind kind, Severity severity, const std::string &mesg)
-    : kind_(kind), severity_(severity), message_(mesg), locations(*this) {
+    : kind_(kind), severity_(severity), message_(mesg), locations(*this), codeFlows(*this) {
     ASSERT_require((kind == Kind::FAIL && severity != Severity::NONE) ||
                    (kind != Kind::FAIL && severity == Severity::NONE));
     locations.beforeResize(boost::bind(&Result::checkLocationsResize, this, _1, _2));
     locations.afterResize(boost::bind(&Result::handleLocationsResize, this, _1, _2));
+
+    codeFlows.beforeResize(boost::bind(&Result::checkCodeFlowsResize, this, _1, _2));
+    codeFlows.afterResize(boost::bind(&Result::handleCodeFlowsResize, this, _1, _2));
 }
 
 Result::Ptr
@@ -73,7 +77,9 @@ void
 Result::message(const std::string &s) {
     if (s == message_)
         return;
-    checkPropertyChange("Result", "message", message_.empty(), {{"locations", locations.empty()}});
+    checkPropertyChange("Result", "message", message_.empty(),
+                        {{"locations", locations.empty()},
+                         {"codeFlows", codeFlows.empty()}});
     message_ = s;
     if (isIncremental())
         emitMessage(incrementalStream(), emissionPrefix());
@@ -97,7 +103,9 @@ void
 Result::id(const std::string &s) {
     if (s == id_)
         return;
-    checkPropertyChange("Result", "id", id_.empty(), {{"locations", locations.empty()}});
+    checkPropertyChange("Result", "id", id_.empty(),
+                        {{"locations", locations.empty()},
+                         {"codeFlows", codeFlows.empty()}});
     id_ = s;
     if (isIncremental())
         emitId(incrementalStream(), emissionPrefix());
@@ -118,7 +126,9 @@ void
 Result::rule(const Rule::Ptr &r) {
     if (r == rule_)
         return;
-    checkPropertyChange("Result", "rule", !rule_, {{"locations", locations.empty()}});
+    checkPropertyChange("Result", "rule", !rule_,
+                        {{"locations", locations.empty()},
+                         {"codeFlows", codeFlows.empty()}});
     if (isIncremental() && !findRuleIndex(r))
         throw IncrementalError::notAttached("Result::rule");
     rule_ = r;
@@ -148,7 +158,9 @@ void
 Result::analysisTarget(const Artifact::Ptr &artifact) {
     if (artifact == analysisTarget_)
         return;
-    checkPropertyChange("Result", "analysisTarget", !analysisTarget_, {{"locations", locations.empty()}});
+    checkPropertyChange("Result", "analysisTarget", !analysisTarget_,
+                        {{"locations", locations.empty()},
+                         {"codeFlows", codeFlows.empty()}});
     if (isIncremental() && !findArtifactIndex(artifact))
         throw IncrementalError::notAttached("Result::analysisTarget");
     analysisTarget_ = artifact;
@@ -173,6 +185,8 @@ Result::checkLocationsResize(int delta, const Location::Ptr &location) {
         throw Sarif::Exception("cannot add null location to a result");
     if (isIncremental() && delta < 0)
         throw IncrementalError("location cannot be removed from a result");
+    checkPropertyChange("Result", "locations", true,
+                        {{"codeFlows", codeFlows.empty()}});
 }
 
 void
@@ -194,6 +208,32 @@ Result::handleLocationsResize(int delta, const Location::Ptr &location) {
         if (1 == locations.size())
             out <<p <<"locations:\n";
         location->emitYaml(out, makeListPrefix(p));
+    }
+}
+
+void
+Result::checkCodeFlowsResize(int delta, const CodeFlow::Ptr &codeFlow) {
+    if (!codeFlow)
+        throw Sarif::Exception("cannot add null code flow to a result");
+    if (isIncremental() && delta < 0)
+        throw IncrementalError("code flow cannot be removed from a result");
+    checkPropertyChange("Result", "codeFlows", true, {});
+}
+
+void
+Result::handleCodeFlowsResize(int delta, const CodeFlow::Ptr &codeFlow) {
+    if (isIncremental()) {
+        ASSERT_require(1 == delta);
+        ASSERT_forbid(codeFlows.empty());
+        lock(codeFlows.back(), "codeFlows");
+        if (codeFlows.size() >= 2)
+            codeFlows[codeFlows.size() - 2]->freeze();
+
+        std::ostream &out = incrementalStream();
+        const std::string p = emissionPrefix();
+        if (1 == codeFlows.size())
+            out <<p <<"codeFlows:\n";
+        codeFlow->emitYaml(out, makeListPrefix(p));
     }
 }
 
@@ -251,6 +291,18 @@ Result::emitYaml(std::ostream &out, const std::string &firstPrefix) {
                 lock(location, "locations");
                 if (location != locations.back())
                     location->freeze();
+            }
+        }
+    }
+
+    if (!codeFlows.empty()) {
+        out <<p <<"codeFlows:\n";
+        for (auto &codeFlow: codeFlows) {
+            codeFlow->emitYaml(out, makeListPrefix(p));
+            if (isIncremental()) {
+                lock(codeFlow, "codeFlows");
+                if (codeFlow != codeFlows.back())
+                    codeFlow->freeze();
             }
         }
     }

@@ -278,12 +278,15 @@ librose_partial_la_SOURCES =								\
 	Progress.C									\
 	Sarif/Analysis.C								\
 	Sarif/Artifact.C								\
+	Sarif/CodeFlow.C								\
 	Sarif/Exception.C								\
 	Sarif/Location.C								\
 	Sarif/Log.C									\
 	Sarif/Node.C									\
 	Sarif/Result.C									\
 	Sarif/Rule.C									\
+	Sarif/ThreadFlow.C								\
+	Sarif/ThreadFlowLocation.C							\
 	SourceLocation.C								\
 	StringUtility/Convert.C								\
 	StringUtility/Diagnostics.C							\

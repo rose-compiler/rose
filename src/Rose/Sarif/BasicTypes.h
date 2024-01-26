@@ -27,6 +27,7 @@ enum class Severity {
 
 class Analysis;
 class Artifact;
+class CodeFlow;
 class Exception;
 class IncrementalError;
 class Location;
@@ -34,6 +35,8 @@ class Log;
 class Node;
 class Result;
 class Rule;
+class ThreadFlow;
+class ThreadFlowLocation;
 
 /** Shared-ownership pointer to an @ref Analysis object.
  *
@@ -47,6 +50,13 @@ using AnalysisConstPtr = std::shared_ptr<const Analysis>;
  * @{ */
 using ArtifactPtr = std::shared_ptr<Artifact>;
 using ArtifactConstPtr = std::shared_ptr<const Artifact>;
+/** @} */
+
+/** Shared-ownership pointer to a @ref CodeFlow object.
+ *
+ * @{ */
+using CodeFlowPtr = std::shared_ptr<CodeFlow>;
+using CodeFlowConstPtr = std::shared_ptr<const CodeFlow>;
 /** @} */
 
 /** Shared-ownership pointer to a @ref Location object.
@@ -82,6 +92,20 @@ using ResultConstPtr = std::shared_ptr<const Result>;
  * @{ */
 using RulePtr = std::shared_ptr<Rule>;
 using RuleConstPtr = std::shared_ptr<const Rule>;
+/** @} */
+
+/** Shared-ownership pointer to a @ref ThreadFlow object.
+ *
+ *  @{ */
+using ThreadFlowPtr = std::shared_ptr<ThreadFlow>;
+using ThreadFlowConstPtr = std::shared_ptr<const ThreadFlow>;
+/** @} */
+
+/** Shared-ownership pointer to a @ref ThreadFlowLocation object.
+ *
+ *  @{ */
+using ThreadFlowLocationPtr = std::shared_ptr<ThreadFlowLocation>;
+using ThreadFlowLocationConstPtr = std::shared_ptr<const ThreadFlowLocation>;
 /** @} */
 
 } // namespace

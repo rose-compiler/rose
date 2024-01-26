@@ -597,12 +597,15 @@ nobase_pkginclude_HEADERS=								\
 	Rose/Sarif/Analysis.h								\
 	Rose/Sarif/Artifact.h								\
 	Rose/Sarif/BasicTypes.h								\
+	Rose/Sarif/CodeFlow.h								\
 	Rose/Sarif/Exception.h								\
 	Rose/Sarif/Location.h								\
 	Rose/Sarif/Log.h								\
 	Rose/Sarif/Node.h								\
 	Rose/Sarif/Result.h								\
 	Rose/Sarif/Rule.h								\
+	Rose/Sarif/ThreadFlow.h								\
+	Rose/Sarif/ThreadFlowLocation.h							\
 	Rose/SourceLocation.h								\
 	Rose/StringUtility.h								\
 	Rose/StringUtility/Convert.h							\

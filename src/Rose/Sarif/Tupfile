@@ -3,20 +3,26 @@ include_rules
 run $(librose_compile)				\
     Analysis.C					\
     Artifact.C					\
+    CodeFlow.C					\
     Exception.C					\
     Location.C					\
     Log.C					\
     Node.C					\
     Result.C					\
-    Rule.C
+    Rule.C					\
+    ThreadFlow.C				\
+    ThreadFlowLocation.C
 
 run $(public_header) -o include/rose/Rose/Sarif	\
     Analysis.h					\
     Artifact.h					\
     BasicTypes.h				\
+    CodeFlow.h					\
     Exception.h					\
     Location.h					\
     Log.h					\
     Node.h					\
     Result.h					\
-    Rule.h
+    Rule.h					\
+    ThreadFlow.h				\
+    ThreadFlowLocation.h

@@ -4,12 +4,15 @@
 #include <Rose/Sarif/Analysis.h>
 #include <Rose/Sarif/Artifact.h>
 #include <Rose/Sarif/BasicTypes.h>
+#include <Rose/Sarif/CodeFlow.h>
 #include <Rose/Sarif/Exception.h>
 #include <Rose/Sarif/Location.h>
 #include <Rose/Sarif/Log.h>
 #include <Rose/Sarif/Node.h>
 #include <Rose/Sarif/Result.h>
 #include <Rose/Sarif/Rule.h>
+#include <Rose/Sarif/ThreadFlow.h>
+#include <Rose/Sarif/ThreadFlowLocation.h>
 
 namespace Rose {
 

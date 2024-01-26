@@ -42,7 +42,10 @@ private:
 
 public:
     /** Locations associated with this result. */
-    EdgeVector<Location> locations;
+    EdgeVector<Location> locations;                     // zero or more
+
+    /** Code flows associated with this result. */
+    EdgeVector<CodeFlow> codeFlows;                     // zero or more
 
 public:
     ~Result();
@@ -125,6 +128,8 @@ private:
     void emitAnalysisTarget(std::ostream&, const std::string &prefix);
     void checkLocationsResize(int delta, const LocationPtr&);
     void handleLocationsResize(int delta, const LocationPtr&);
+    void checkCodeFlowsResize(int delta, const CodeFlowPtr&);
+    void handleCodeFlowsResize(int delta, const CodeFlowPtr&);
     Sawyer::Optional<size_t> findRuleIndex(const RulePtr&);
     Sawyer::Optional<size_t> findArtifactIndex(const ArtifactPtr&);
 };
