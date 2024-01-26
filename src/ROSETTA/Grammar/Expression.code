@@ -1537,6 +1537,12 @@ HEADER_TYPE_EXPRESSION_START
 HEADER_TYPE_EXPRESSION_END
 
 
+HEADER_DECLARATION_FROM_SYMBOL_START
+          DECLARATION_TYPE* get_decl() const;
+HEADER_DECLARATION_FROM_SYMBOL_END
+
+
+
 //NOTES: SgAggregateInitializer, SgConstructorInitializer, and
 //       SgAssignInitializer all have different set_type functions
 //       (is this a bug?).
@@ -1691,3 +1697,36 @@ $CLASSNAME::get_type(void) const
      return returnType;
    }
 SOURCE_GET_TYPE_CLASS_DECL_END
+
+SOURCE_DECLARATION_FROM_SYMBOL_START
+DECLARATION_TYPE*
+$CLASSNAME::get_decl() const
+{
+  DECLARATION_TYPE* res = nullptr;
+  const auto*       sym = this->get_symbol();
+  ASSERT_not_null(sym);
+
+  res = sym->get_declaration();
+  ASSERT_not_null(res);
+  return res;
+}
+SOURCE_DECLARATION_FROM_SYMBOL_END
+
+SOURCE_DECLARATION_FROM_SYMBOL_UNIT_REF_START
+DECLARATION_TYPE*
+$CLASSNAME::get_decl() const
+{
+  DECLARATION_TYPE* res = nullptr;
+  const SgSymbol*   sym = this->get_symbol();
+
+  if (const SgAdaPackageSymbol* pkgsym = isSgAdaPackageSymbol(sym))
+    res = pkgsym->get_declaration();
+  else if (const SgAdaGenericSymbol* gensym = isSgAdaGenericSymbol(sym))
+    res = gensym->get_declaration();
+  else if (const SgAdaGenericInstanceSymbol* instsym = isSgAdaGenericInstanceSymbol(sym))
+    res = instsym->get_declaration();
+
+  ASSERT_not_null(res);
+  return res;
+}
+SOURCE_DECLARATION_FROM_SYMBOL_UNIT_REF_END

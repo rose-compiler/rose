@@ -461,10 +461,10 @@ namespace
     template <class SageAdaRefExp>
     void handleConcurrentObjectRef(SageAdaRefExp& n)
     {
-      auto& dcl = SG_DEREF(n.get_decl());
+      auto& sym = SG_DEREF(n.get_symbol());
 
       prnNameQual(n);
-      prn(dcl.get_name());
+      prn(sym.get_name());
     }
 
     void handle(SgAdaTaskRefExp& n) { handleConcurrentObjectRef(n); }

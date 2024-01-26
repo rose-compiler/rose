@@ -1991,16 +1991,6 @@ namespace Ada
         {
           res = ReturnType{ nameOf(n), n.get_decl(), n.get_decl(), &n};
         }
-
-#if OBSOLETE_CODE
-        void handle(const SgVarRefExp& n)
-        {
-          res = ReturnType{ nameOf(n), &impdcl, nullptr };
-        }
-
-      private:
-        const SgImportStatement& impdcl; // fallback package when unit is not avail
-#endif /* OBSOLETE_CODE */
     };
   } // end anonymous namespace
 

@@ -92,35 +92,51 @@ Grammar::setUpExpressions () {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (AdaProtectedRefExp,     "AdaProtectedRefExp",     "ADA_PROTECTED_REF" );
-    AdaProtectedRefExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
-                                           "../Grammar/Expression.code" );
 
-    AdaProtectedRefExp.setDataPrototype ( "SgAdaProtectedSpecDecl*", "decl", "= NULL",
+    AdaProtectedRefExp.setDataPrototype ( "SgAdaProtectedSymbol*", "symbol", "= nullptr",
                                           CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
+    AdaProtectedRefExp.setFunctionSource    ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+    AdaProtectedRefExp.editSubstitute       ( "DECLARATION_TYPE", "SgDeclarationStatement" );
+    AdaProtectedRefExp.setFunctionPrototype ( "HEADER_DECLARATION_FROM_SYMBOL", "../Grammar/Expression.code" );
+    AdaProtectedRefExp.setFunctionSource    ( "SOURCE_DECLARATION_FROM_SYMBOL", "../Grammar/Expression.code" );
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (AdaRenamingRefExp,      "AdaRenamingRefExp",      "ADA_RENAMING_REF" );
+    AdaRenamingRefExp.setDataPrototype ( "SgAdaRenamingSymbol*", "symbol", "= nullptr",
+                                         CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     AdaRenamingRefExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                           "../Grammar/Expression.code" );
-    AdaRenamingRefExp.setDataPrototype ( "SgAdaRenamingDecl*", "decl", "= NULL",
-                                         CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    AdaRenamingRefExp.editSubstitute       ( "DECLARATION_TYPE", "SgAdaRenamingDecl" );
+    AdaRenamingRefExp.setFunctionPrototype ( "HEADER_DECLARATION_FROM_SYMBOL", "../Grammar/Expression.code" );
+    AdaRenamingRefExp.setFunctionSource    ( "SOURCE_DECLARATION_FROM_SYMBOL", "../Grammar/Expression.code" );
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (AdaTaskRefExp,          "AdaTaskRefExp",          "ADA_TASK_REF" );
+    AdaTaskRefExp.setDataPrototype ( "SgAdaTaskSymbol*", "symbol", "= nullptr",
+                                     CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     AdaTaskRefExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                       "../Grammar/Expression.code" );
-    AdaTaskRefExp.setDataPrototype ( "SgAdaTaskSpecDecl*", "decl", "= NULL",
-                                     CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    AdaTaskRefExp.editSubstitute       ( "DECLARATION_TYPE", "SgDeclarationStatement" );
+    AdaTaskRefExp.setFunctionPrototype ( "HEADER_DECLARATION_FROM_SYMBOL", "../Grammar/Expression.code" );
+    AdaTaskRefExp.setFunctionSource    ( "SOURCE_DECLARATION_FROM_SYMBOL", "../Grammar/Expression.code" );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (AdaUnitRefExp,          "AdaUnitRefExp",          "ADA_UNIT_REF" );
+    AdaUnitRefExp.setDataPrototype ( "SgSymbol*", "symbol", "= nullptr",
+                                     CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     AdaUnitRefExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                       "../Grammar/Expression.code" );
+    AdaUnitRefExp.editSubstitute       ( "DECLARATION_TYPE", "SgDeclarationStatement" );
+    AdaUnitRefExp.setFunctionPrototype ( "HEADER_DECLARATION_FROM_SYMBOL", "../Grammar/Expression.code" );
+    AdaUnitRefExp.setFunctionSource    ( "SOURCE_DECLARATION_FROM_SYMBOL_UNIT_REF", "../Grammar/Expression.code" );
+
+    //~ AdaUnitRefExp.editSubstitute       ( "DECLARATION_TYPE", "SgDeclarationStatement" );
+    //~ AdaUnitRefExp.setFunctionPrototype ( "HEADER_DECLARATION_FROM_SYMBOL", "../Grammar/Expression.code" );
+    //~ AdaUnitRefExp.setFunctionSource    ( "SOURCE_DECLARATION_FROM_SYMBOL", "../Grammar/Expression.code" );
+
     // PP (06/30/21): For now AdaUnitRefExp can refer to any declaration.
     //                Consider narrowing that to packages via SgAdaPackageSymbol/SgAdaPackageSpecDecl
     //                once we have generic packages.
-    AdaUnitRefExp.setDataPrototype ( "SgDeclarationStatement*", "decl", "= NULL",
-                                     CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     NEW_TERMINAL_MACRO (AddOp,                  "AddOp",                  "ADD_OP" );

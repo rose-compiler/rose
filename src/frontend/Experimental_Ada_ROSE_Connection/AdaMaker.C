@@ -1985,25 +1985,40 @@ mkSelectedComponent(SgExpression& prefix, SgExpression& selector)
 SgAdaTaskRefExp&
 mkAdaTaskRefExp(SgAdaTaskSpecDecl& task)
 {
-  return mkLocatedNode<SgAdaTaskRefExp>(&task);
+  SgSymbol*        sym    = task.search_for_symbol_from_symbol_table();
+  SgAdaTaskSymbol* tsksym = isSgAdaTaskSymbol(sym);
+
+  ASSERT_not_null(tsksym);
+  return mkLocatedNode<SgAdaTaskRefExp>(tsksym);
 }
 
 SgAdaProtectedRefExp&
 mkAdaProtectedRefExp(SgAdaProtectedSpecDecl& po)
 {
-  return mkLocatedNode<SgAdaProtectedRefExp>(&po);
+  SgSymbol*             sym   = po.search_for_symbol_from_symbol_table();
+  SgAdaProtectedSymbol* posym = isSgAdaProtectedSymbol(sym);
+
+  ASSERT_not_null(posym);
+  return mkLocatedNode<SgAdaProtectedRefExp>(posym);
 }
 
 SgAdaUnitRefExp&
 mkAdaUnitRefExp(SgDeclarationStatement& unit)
 {
-  return mkLocatedNode<SgAdaUnitRefExp>(&unit);
+  SgSymbol* sym = unit.search_for_symbol_from_symbol_table();
+
+  ASSERT_not_null(sym);
+  return mkLocatedNode<SgAdaUnitRefExp>(sym);
 }
 
 SgAdaRenamingRefExp&
 mkAdaRenamingRefExp(SgAdaRenamingDecl& decl)
 {
-  return mkLocatedNode<SgAdaRenamingRefExp>(&decl);
+  SgSymbol*            sym    = decl.search_for_symbol_from_symbol_table();
+  SgAdaRenamingSymbol* rensym = isSgAdaRenamingSymbol(sym);
+
+  ASSERT_not_null(rensym);
+  return mkLocatedNode<SgAdaRenamingRefExp>(rensym);
 }
 
 

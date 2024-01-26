@@ -77,13 +77,19 @@ namespace
   inline
   SgAdaTaskSpecDecl& declOf(const SgAdaTaskRefExp& n)
   {
-    return declOfRef(n);
+    SgAdaTaskSpecDecl* res = isSgAdaTaskSpecDecl(&declOfRef(n));
+
+    ASSERT_not_null(res);
+    return *res;
   }
 
   inline
   SgAdaProtectedSpecDecl& declOf(const SgAdaProtectedRefExp& n)
   {
-    return declOfRef(n);
+    SgAdaProtectedSpecDecl* res = isSgAdaProtectedSpecDecl(&declOfRef(n));
+
+    ASSERT_not_null(res);
+    return *res;
   }
 
   inline
@@ -122,14 +128,6 @@ namespace
   {
     return nameOf(symOf(n));
   }
-
-  template <class SageRefExp>
-  inline
-  auto nameOf(const SageRefExp& n) -> decltype( n.get_decl()->get_name() )
-  {
-    return declOf(n).get_name();
-  }
-
 
   inline
   SgName nameOf(const SgEnumVal& n)
